@@ -1,0 +1,20 @@
+--- src/lib/coil/posix/coil/Routing.cpp.orig	2013-08-27 13:08:59.000000000 +0900
++++ src/lib/coil/posix/coil/Routing.cpp	2013-08-27 13:14:05.000000000 +0900
+@@ -105,7 +105,7 @@
+           {
+             dest_if = vs[ifname_pos];
+             pclose(fp);
+-	    wait(NULL);
++	    waitpid(0, NULL, NULL);
+             return true;
+           }
+ #endif // COIL_OS_FREEBSD || COIL_OS_DARWIN || COIL_OS_CYGWIN
+@@ -164,7 +164,7 @@
+           }
+       } while (!feof(fp));
+     pclose(fp);
+-    wait(NULL);
++    waitpid(0, NULL, NULL);
+     return false;
+   }
+   

@@ -1,0 +1,411 @@
+#VRML V2.0 utf8
+
+PROTO Joint [
+  exposedField     SFVec3f      center              0 0 0
+  exposedField     MFNode       children            []
+  exposedField     MFFloat      llimit              []
+  exposedField     MFFloat      lvlimit             []
+  exposedField     SFRotation   limitOrientation    0 0 1 0
+  exposedField     SFString     name                ""
+  exposedField     SFRotation   rotation            0 0 1 0
+  exposedField     SFVec3f      scale               1 1 1
+  exposedField     SFRotation   scaleOrientation    0 0 1 0
+  exposedField     MFFloat      stiffness           [ 0 0 0 ]
+  exposedField     SFVec3f      translation         0 0 0
+  exposedField     MFFloat      ulimit              []
+  exposedField     MFFloat      uvlimit             []
+  exposedField     SFString     jointType           ""
+  exposedField     SFInt32      jointId             -1
+  exposedField     SFVec3f      jointAxis           0 0 1
+
+  exposedField     SFFloat      gearRatio           1
+  exposedField     SFFloat      rotorInertia        0
+  exposedField     SFFloat      rotorResistor       0
+  exposedField     SFFloat      torqueConst         1
+  exposedField     SFFloat      encoderPulse        1
+]
+{
+  Transform {
+    center           IS center
+    children         IS children
+    rotation         IS rotation
+    scale            IS scale
+    scaleOrientation IS scaleOrientation
+    translation      IS translation
+  }
+}
+
+PROTO Segment [
+  field           SFVec3f     bboxCenter        0 0 0
+  field           SFVec3f     bboxSize          -1 -1 -1
+  exposedField    SFVec3f     centerOfMass      0 0 0
+  exposedField    MFNode      children          [ ]
+  exposedField    SFNode      coord             NULL
+  exposedField    MFNode      displacers        [ ]
+  exposedField    SFFloat     mass              0 
+  exposedField    MFFloat     momentsOfInertia  [ 0 0 0 0 0 0 0 0 0 ]
+  exposedField    SFString    name              ""
+  eventIn         MFNode      addChildren
+  eventIn         MFNode      removeChildren
+]
+{
+  Group {
+    addChildren    IS addChildren
+    bboxCenter     IS bboxCenter
+    bboxSize       IS bboxSize
+    children       IS children
+    removeChildren IS removeChildren
+  }
+}
+
+PROTO Humanoid [
+  field           SFVec3f    bboxCenter            0 0 0
+  field           SFVec3f    bboxSize              -1 -1 -1
+  exposedField    SFVec3f    center                0 0 0
+  exposedField    MFNode     humanoidBody          [ ]
+  exposedField    MFString   info                  [ ]
+  exposedField    MFNode     joints                [ ]
+  exposedField    SFString   name                  ""
+  exposedField    SFRotation rotation              0 0 1 0
+  exposedField    SFVec3f    scale                 1 1 1
+  exposedField    SFRotation scaleOrientation      0 0 1 0
+  exposedField    MFNode     segments              [ ]
+  exposedField    MFNode     sites                 [ ]
+  exposedField    SFVec3f    translation           0 0 0
+  exposedField    SFString   version               "1.1"
+  exposedField    MFNode     viewpoints            [ ]
+]
+{
+  Transform {
+    bboxCenter       IS bboxCenter
+    bboxSize         IS bboxSize
+    center           IS center
+    rotation         IS rotation
+    scale            IS scale
+    scaleOrientation IS scaleOrientation
+    translation      IS translation
+    children [
+      Group {
+        children IS viewpoints
+      }
+      Group {
+        children IS humanoidBody 
+      }
+    ]
+  }
+}
+
+PROTO VisionSensor [
+  exposedField SFVec3f    translation       0 0 0
+  exposedField SFRotation rotation          0 0 1 0
+  exposedField MFNode     children          [ ]
+  exposedField SFFloat    fieldOfView       0.785398
+  exposedField SFString   name              ""
+  exposedField SFFloat    frontClipDistance 0.01
+  exposedField SFFloat    backClipDistance  10.0
+  exposedField SFString   type              "NONE"
+  exposedField SFInt32    sensorId          -1
+  exposedField SFInt32    width             320
+  exposedField SFInt32    height            240
+  exposedField SFFloat    frameRate         30
+]
+{
+  Transform {
+    rotation         IS rotation
+    translation      IS translation
+    children         IS children
+  }
+}
+
+
+PROTO RangeSensor [
+ exposedField SFVec3f    translation       0 0 0
+ exposedField SFRotation rotation          0 0 1 0
+ exposedField MFNode     children          [ ]
+ exposedField SFInt32    sensorId          -1
+ exposedField SFFloat    scanAngle         3.14159 #[rad]
+ exposedField SFFloat    scanStep          0.1     #[rad]
+ exposedField SFFloat    scanRate          10      #[Hz]
+ exposedField SFFloat    maxDistance	    10
+]
+{
+  Transform {
+    rotation         IS rotation
+    translation      IS translation
+    children         IS children
+  }
+}
+
+
+PROTO ForceSensor [  
+  exposedField SFVec3f    maxForce    -1 -1 -1
+  exposedField SFVec3f    maxTorque   -1 -1 -1
+  exposedField SFVec3f    translation 0 0 0
+  exposedField SFRotation rotation    0 0 1 0
+  exposedField SFInt32    sensorId    -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO Gyro [
+  exposedField SFVec3f    maxAngularVelocity -1 -1 -1
+  exposedField SFVec3f    translation        0 0 0
+  exposedField SFRotation rotation           0 0 1 0
+  exposedField SFInt32    sensorId           -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO AccelerationSensor [
+  exposedField SFVec3f    maxAcceleration -1 -1 -1
+  exposedField SFVec3f    translation     0 0 0
+  exposedField SFRotation rotation        0 0 1 0
+  exposedField SFInt32    sensorId        -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO SpotLightDevice [
+  exposedField SFVec3f attenuation       1 0 0     # [0,)
+  exposedField SFFloat beamWidth         1.570796  # (0,/2]
+  exposedField SFColor color             1 1 1     # [0,1]
+  exposedField SFFloat cutOffAngle       0.785398  # (0,/2]
+  exposedField SFVec3f direction         0 0 -1    # (-,)
+  exposedField SFFloat intensity         1         # [0,1]
+  exposedField SFBool  on                TRUE
+  exposedField SFVec3f    translation 0 0 0
+  exposedField SFRotation rotation    0 0 1 0
+]
+{
+  Transform {
+    translation      IS translation
+    rotation         IS rotation
+  }
+}
+
+DEF Crawler Humanoid {
+  name "vehicle"
+  version "1.1"
+  info [
+  ]
+
+  humanoidBody [
+
+    DEF CHASSIS Joint {
+      jointType "free"
+      translation 0 0 0.1
+      children [
+
+        DEF CHASSIS_LINK Segment {
+          centerOfMass  0 0 0
+          mass    8.0
+          momentsOfInertia [ 0.1 0 0 0 0.1 0 0 0 0.5 ]
+
+          children [
+
+	    Transform {
+	      translation 0 0 0
+	      rotation 1 0 0 0
+	      children Shape {
+		appearance Appearance {
+		  material DEF green Material {
+		    diffuseColor 0.0 0.6 0.0
+		    ambientIntensity 0.3
+		    specularColor 0.7 0.7 0.7
+		    emissiveColor 0 0 0
+		    shininess 0.25
+		    transparency 0
+		  }
+		}
+		geometry Box {
+		  size 0.4 0.3 0.1
+		}
+	      }  # End of Shape node
+	    }
+	  ]
+	} # End BODY_LINK
+	
+
+        DEF CRAWLER_TRACK_L Joint {
+          translation 0.0 0.15 0
+          jointType "crawler"           
+          jointAxis 0 1 0
+          jointId 0
+          children [
+            DEF CRAWLER_TRACK_L_LINK Segment {
+              centerOfMass 0 0 0
+              mass 1
+              momentsOfInertia [ 0.02 0 0 0 0.02 0 0 0 0.02 ]
+
+              children [
+               Transform {
+                translation 0 0.05 0
+                children DEF CRAWLER Shape {
+                  appearance Appearance {
+                    material DEF black Material {
+                      diffuseColor 0.1 0.1 0.1
+                      ambientIntensity 0.01
+                      specularColor 0.3 0.3 0.3
+                      emissiveColor 0 0 0
+                      shininess 0.01
+                      transparency 0
+                    }
+                  }
+                  geometry Extrusion {
+		    crossSection [
+		      -0.2 -0.1,
+		       0.2 -0.1,
+		       0.3 0.06,
+		      -0.3 0.06,
+		      -0.2 -0.1
+		    ]
+		    spine [0 -0.05 0, 0 0.05 0]
+                  }  # End of Box
+                }  # End of Shape node
+               }
+              ]
+            } # End of CRAWLER_TRACK_L_LINK
+          ]
+        } # End of CRAWLER_TRACK_L
+
+        DEF CRAWLER_TRACK_R Joint {
+          translation 0.0 -0.15 0
+          jointType "crawler"
+          jointAxis 0 1 0
+          jointId 1
+	  
+          children [
+            DEF CRAWLER_TRACK_R_LINK Segment {
+              centerOfMass          0 0 0
+              mass                  1
+              momentsOfInertia      [ 0.02 0 0 0 0.02 0 0 0 0.02 ]
+	      
+              children [
+		Transform {
+		  translation 0.0 -0.05 0
+		  children USE CRAWLER
+		}
+	      ]
+	    }  # End of CRAWLER_TRACK_R_LINK
+	  ]
+	}  # End of CRAWLER_TRACK_R
+
+	DEF CANNON_Y Joint {
+	  translation -0.05 0 0.08
+	  jointType "rotate"
+	  jointAxis 0 0 1
+	  jointId 2
+	  children [
+	    DEF CANNON_Y_LINK Segment {
+	      centerOfMass 0 0 0.025
+	      mass 4.0
+	      momentsOfInertia [ 0.1 0 0 0 0.1 0 0 0 0.1 ]
+	      children [
+		Shape {
+		  appearance Appearance{
+		    material USE green
+		  }
+		  geometry Box{
+		    size 0.2 0.2 0.08
+		  }
+		}
+	      ]
+	    }
+	    DEF CANNON_P Joint {
+	      translation 0 0 0.04
+	      jointType "rotate"
+	      jointAxis 0 1 0
+	      jointId 3
+	      children [
+		DEF CANNON_P_LINK Segment {
+		  centerOfMass 0.1 0 0
+		  mass 4.0
+		  momentsOfInertia [ 0.1 0 0 0 1.0 0 0 0 1.0 ]
+		  children [
+		    Transform {
+		      children [
+			Shape {
+			  appearance Appearance{
+			    material USE green
+			  }
+			  geometry Cylinder{
+			    height 0.1
+			    radius 0.11
+			  }
+			}
+			Transform {
+			  translation 0.20 0.0 0.0
+			  rotation 0 0 1 1.5708
+			  children Shape{
+			    appearance Appearance{
+			      material USE green
+			    }
+			    geometry Cylinder{
+			      height 0.2
+			      radius 0.02
+			    }
+			  }
+			}
+		      ]
+		    }
+		    DEF Camera VisionSensor {
+		      translation 0 0 0.13
+		      rotation 0.540716 -0.540716 -0.6444 1.99673
+		      type "COLOR_DEPTH"
+		      width 320
+		      height 240
+		      sensorId 0
+		      frameRate 30
+		    }
+		    DEF RangeSensor RangeSensor {
+		      translation 0.2 0 0.15
+		      rotation 0.540716 -0.540716 -0.6444 1.99673
+		      sensorId 0
+		      scanAngle 1.5707963267948966 # 90 [deg]
+		      scanStep  0.008726646259971648 # 0.5 [deg]
+		      scanRate  10
+		      maxDistance 10
+		    }
+		    DEF MainLight SpotLightDevice {
+		      direction 1 0 0
+		      cutOffAngle 0.6
+		      attenuation 1 0 0.01
+		      translation 0 0 0.2
+		    }
+		  ]
+		}
+	      ]
+	    } # End of CANNON_P joint
+	  ]
+	} # End of CANNON_Y Joint
+
+     ]
+    }
+  ]
+  joints [
+    USE CHASSIS,
+    USE CRAWLER_TRACK_L,
+    USE CRAWLER_TRACK_R,
+    USE CANNON_Y
+    USE CANNON_P
+  ]
+  segments [
+    USE CHASSIS_LINK,
+    USE CRAWLER_TRACK_L_LINK,
+    USE CRAWLER_TRACK_R_LINK,
+    USE CANNON_Y_LINK
+    USE CANNON_P_LINK
+  ]
+}

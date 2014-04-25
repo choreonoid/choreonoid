@@ -1,0 +1,30 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/Base" >
+
+  <file>icons/setup.png</file>
+
+  <file>icons/projectsave.png</file>
+
+  <file>icons/play.png</file>
+  <file>icons/resume.png</file>
+  <file>icons/stop.png</file>
+  <file>icons/refresh.png</file>
+
+  <file>icons/sceneedit.png</file>
+  <file>icons/walkthrough.png</file>
+  <file>icons/viewfitting.png</file>
+  <file>icons/perspective.png</file>
+  <file>icons/floorgrid.png</file>
+  <file>icons/collisionlines.png</file>
+  <file>icons/wireframe.png</file>
+  <file>icons/scenecapture.png</file>
+
+  <file>icons/graph.png</file>
+  <file>icons/velocitygraph.png</file>
+  <file>icons/accgraph.png</file>
+
+  <file alias="LICENSE">../../LICENSE</file>
+
+</qresource>
+</RCC>

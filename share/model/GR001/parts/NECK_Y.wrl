@@ -1,0 +1,165 @@
+#VRML V2.0 utf8
+WorldInfo {
+  title "Exported tringle mesh to VRML97"
+  info ["Created by FreeCAD"
+        "<http://free-cad.sourceforge.net>"]
+}
+Background
+{
+  skyAngle    1.57
+  skyColor    0.1 0.2 0.2
+}
+Transform
+{
+scale             0.001 0.001 0.001
+rotation          0 0 1 0
+scaleOrientation  0 0 1 0
+bboxCenter        0 0 0
+bboxSize      31.000 30.000 18.500
+center        0.000  0.000  0.000
+#translation  -0.000  -0.000  -9.250
+children
+[
+Shape
+{
+  appearance Appearance
+  {
+    material Material
+    {
+      ambientIntensity 0.2
+      diffuseColor      0.80 0.80 0.80
+      emissiveColor     0.00 0.00 0.00
+#      specularColor     0.98 0.98 0.98
+      shininess        0.06
+      transparency     0.00
+    }
+  }
+  geometry IndexedFaceSet
+  {
+    solid   FALSE
+    coord Coordinate
+    {
+      point
+      [
+        -15.500 -15.000 0.000,
+        -15.500 15.000 0.000,
+        15.500 15.000 0.000,
+        15.500 -15.000 0.000,
+        -15.500 15.000 2.774,
+        -15.500 14.928 3.033,
+        -15.500 -15.000 2.774,
+        -15.500 -14.928 3.033,
+        -15.500 0.000 1.517,
+        15.500 15.000 2.774,
+        15.500 14.936 3.005,
+        15.500 -14.936 3.005,
+        15.500 -15.000 2.774,
+        15.500 0.000 1.503,
+        0.000 -12.819 10.637,
+        -11.500 -10.639 18.500,
+        11.637 -10.639 18.500,
+        -13.500 0.000 10.767,
+        -11.500 10.639 18.500,
+        0.000 12.819 10.637,
+        11.637 10.639 18.500,
+        13.568 -0.000 10.753
+      ]
+    }
+    colorPerVertex  FALSE
+    coordIndex
+    [
+      0, 1, 2, -1,
+      3, 0, 2, -1,
+      4, 1, 5, -1,
+      0, 6, 7, -1,
+      1, 0, 8, -1,
+      7, 5, 8, -1,
+      5, 1, 8, -1,
+      0, 7, 8, -1,
+      9, 1, 4, -1,
+      9, 2, 1, -1,
+      10, 2, 9, -1,
+      11, 12, 3, -1,
+      13, 3, 2, -1,
+      13, 10, 11, -1,
+      13, 2, 10, -1,
+      13, 11, 3, -1,
+      6, 0, 12, -1,
+      0, 3, 12, -1,
+      14, 7, 6, -1,
+      14, 15, 7, -1,
+      14, 16, 15, -1,
+      14, 11, 16, -1,
+      14, 12, 11, -1,
+      14, 6, 12, -1,
+      17, 18, 5, -1,
+      17, 15, 18, -1,
+      17, 7, 15, -1,
+      17, 5, 7, -1,
+      9, 4, 19, -1,
+      4, 5, 19, -1,
+      5, 18, 19, -1,
+      18, 20, 19, -1,
+      20, 10, 19, -1,
+      10, 9, 19, -1,
+      21, 10, 20, -1,
+      21, 11, 10, -1,
+      21, 16, 11, -1,
+      21, 20, 16, -1,
+      16, 18, 15, -1,
+      20, 18, 16, -1
+    ]
+  }
+}
+]
+}
+Viewpoint
+{
+  jump         TRUE
+  orientation   1.000 0.000 0.000 0.000
+  description  "top"
+  position     0.000 0.000 56.189
+}
+Viewpoint
+{
+  jump         TRUE
+  orientation   1.000 0.000 0.000 3.142
+  description  "bottom"
+  position     0.000 0.000 -37.689
+}
+Viewpoint
+{
+  jump         TRUE
+  orientation   1.000 0.000 0.000 1.571
+  description  "front"
+  position     0.000 -46.939 9.250
+}
+Viewpoint
+{
+  jump         TRUE
+  orientation   -0.000 -0.707 -0.707 3.142
+  description  "back"
+  position     0.000 46.939 9.250
+}
+Viewpoint
+{
+  jump         TRUE
+  orientation   0.577 -0.577 -0.577 2.094
+  description  "right"
+  position     -46.939 0.000 9.250
+}
+Viewpoint
+{
+  jump         TRUE
+  orientation   0.577 0.577 0.577 2.094
+  description  "left"
+  position     46.939 0.000 9.250
+}
+NavigationInfo
+{
+  avatarSize       [0.25, 1.6, 0.75]
+  headlight        TRUE
+  speed            1.0
+  type             "EXAMINE"
+  visibilityLimit  0.0
+}

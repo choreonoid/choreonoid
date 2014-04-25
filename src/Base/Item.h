@@ -1,0 +1,248 @@
+/**
+   @author Shin'ichiro Nakaoka
+*/
+
+#ifndef CNOID_BASE_ITEM_H_INCLUDED
+#define CNOID_BASE_ITEM_H_INCLUDED
+
+#include "PutPropertyFunction.h"
+#include <cnoid/Referenced>
+#include <cnoid/SignalProxy>
+#include <cnoid/NullOut>
+#include <ctime>
+#include <bitset>
+#include <string>
+#include <list>
+#include "exportdecl.h"
+
+namespace cnoid {
+
+class Item;
+typedef ref_ptr<Item> ItemPtr;
+    
+class RootItem;
+class ItemTreeArchiver;
+class ExtensionManager;
+class PutPropertyFunction;
+class Archive;
+
+/**
+   @if not jp
+   @endif
+
+   @if jp
+   フレームワーク上で共有されるオブジェクトを表すクラス。   
+   モデル・ビュー・コントローラフレームワークにおけるモデル部分の核となる。   
+   @endif
+*/
+class CNOID_EXPORT Item : public Referenced
+{
+public:
+
+    enum Attribute {
+        SUB_ITEM,
+        TEMPORAL,
+        LOAD_ONLY,
+        NUM_ATTRIBUTES
+    };
+
+    Item();
+    Item(const Item& item);
+    virtual ~Item(); // The destructor should not be called in usual ways
+
+    inline const std::string& name() const { return name_; }
+    virtual void setName(const std::string& name);
+
+    inline bool hasAttribute(Attribute attribute) const { return attributes[attribute]; }
+
+    inline Item* childItem() const { return firstChild_; }
+    inline Item* prevItem() const { return prevItem_; }
+    inline Item* nextItem() const { return nextItem_; }
+    inline Item* parentItem() const { return parent_; }
+
+    bool addChildItem(ItemPtr item, bool isManualOperation = false);
+    bool addSubItem(ItemPtr item);
+    bool isSubItem() const;
+    void detachFromParentItem();
+    void emitSigDetachedFromRootForSubTree();
+    bool insertChildItem(ItemPtr item, ItemPtr nextItem, bool isManualOperation = false);
+    bool insertSubItem(ItemPtr item, ItemPtr nextItem);
+
+    bool isTemporal() const;
+    void setTemporal(bool on = true);
+
+    RootItem* findRootItem() const;
+    Item* findItem(const std::string& path) const;
+
+    template<class ItemType>
+        inline ItemType* findItem(const std::string& path) const {
+        return dynamic_cast<ItemType*>(findItem(path));
+    }
+
+    /*
+      The function 'template <class ItemType> inline ItemList<ItemType> getSubItems() const'
+      has been removed. Please use ItemList::extractChildItems(Item* item) instead of it.
+    */
+
+    Item* headItem() const;
+
+    template <class ItemType> ItemType* findOwnerItem(bool includeSelf = false) {
+        Item* parentItem__ = includeSelf ? this : parentItem();
+        while(parentItem__){
+            ItemType* ownerItem = dynamic_cast<ItemType*>(parentItem__);
+            if(ownerItem){
+                return ownerItem;
+            }
+            parentItem__ = parentItem__->parentItem();
+        }
+        return 0;
+    }
+
+    void traverse(boost::function<void(Item*)> function);
+
+    ItemPtr duplicate() const;
+    ItemPtr duplicateAll() const;
+
+    void assign(Item* srcItem);
+
+    bool load(const std::string& filename, const std::string& formatId = std::string());
+    bool load(const std::string& filename, Item* parent, const std::string& formatId = std::string());
+    bool save(const std::string& filename, const std::string& formatId = std::string());
+    bool overwrite(bool forceOverwrite = false, const std::string& formatId = std::string());
+    void clearLastAccessInformation();
+
+    const std::string& lastAccessedFilePath() const { return lastAccessedFilePath_; }
+    const std::string& lastAccessedFileFormatId() const { return lastAccessedFileFormatId_; }
+    std::time_t timeStampOfLastFileWriting() const { return timeStampOfLastFileWriting_; }
+
+    //void setInconsistencyWithLastAccessedFile() { isConsistentWithLastAccessedFile_ = false; }
+    void suggestFileUpdate() { isConsistentWithLastAccessedFile_ = false; }
+
+    bool isConsistentWithLastAccessedFile() const { return isConsistentWithLastAccessedFile_; }
+
+    void putProperties(PutPropertyFunction& putProperty);
+
+    virtual void notifyUpdate();
+
+    inline SignalProxy< boost::signal<void(const std::string& oldName)> > sigNameChanged() {
+        return sigNameChanged_;
+    }
+
+    SignalProxy< boost::signal<void()> > sigUpdated() {
+        return sigUpdated_;
+    }
+
+    /**
+       This signal is emitted when the position of this item in the item tree is changed.
+       Being added to the tree and being removed from the tree are also the events
+       to emit this signal.
+       This signal is also emitted for descendent items when the position of an ancestor item
+       is changed.
+       This signal is emitted before RootItem::sigTreeChanged();
+    */
+    SignalProxy< boost::signal<void()> > sigPositionChanged() {
+        return sigPositionChanged_;
+    }
+
+    /**
+       @note obsolete.
+    */
+    SignalProxy< boost::signal<void()> > sigDetachedFromRoot() {
+        return sigDetachedFromRoot_;
+    }
+    /**
+       @note Please use this instead of sigDetachedFromRoot()
+    */
+    SignalProxy< boost::signal<void()> > sigDisconnectedFromRoot() {
+        return sigDetachedFromRoot_;
+    }
+
+    SignalProxy< boost::signal<void()> > sigSubTreeChanged() {
+        return sigSubTreeChanged_;
+    }
+
+    static SignalProxy< boost::signal<void(const char* type_info_name)> > sigClassUnregistered() {
+        return sigClassUnregistered_;
+    }
+
+    Referenced* customData(int id);
+    const Referenced* customData(int id) const;
+    void setCustomData(int id, ReferencedPtr data);
+    void clearCustomData(int id);
+
+protected:
+
+    virtual void onConnectedToRoot();
+    virtual void onDisconnectedFromRoot();
+    virtual void onPositionChanged();
+    virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
+        
+    virtual ItemPtr doDuplicate() const;
+    virtual void doAssign(Item* srcItem);
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty);
+
+    void setAttribute(Attribute attribute) { attributes.set(attribute); }
+    inline void unsetAttribute(Attribute attribute) { attributes.reset(attribute); }
+
+private:
+
+    Item* parent_;
+    Item* firstChild_;
+    Item* lastChild_;
+    Item* prevItem_;
+    Item* nextItem_;
+
+    int numChildren_;
+
+    std::string name_;
+
+    std::bitset<NUM_ATTRIBUTES> attributes;
+
+    std::vector<int> extraStates;
+    std::vector<ReferencedPtr> extraData;
+
+    boost::signal<void(const std::string& oldName)> sigNameChanged_;
+    boost::signal<void()> sigDetachedFromRoot_;
+    boost::signal<void()> sigUpdated_;
+    boost::signal<void()> sigPositionChanged_;
+    boost::signal<void()> sigSubTreeChanged_;
+
+    static boost::signal<void(const char* type_info_name)> sigClassUnregistered_;
+
+    // for file overwriting management, mainly accessed by ItemManagerImpl
+    bool isConsistentWithLastAccessedFile_;
+    std::string lastAccessedFilePath_;
+    std::string lastAccessedFileFormatId_;
+    std::time_t timeStampOfLastFileWriting_;
+
+    // disable the assignment operator
+    Item& operator=(const Item& rhs);
+
+    void init();
+    bool doInsertChildItem(Item* item, Item* nextItem, bool isManualOperation);
+    void callSlotsOnPositionChanged();
+    void callFuncOnConnectedToRoot();
+    void addToItemsToEmitSigSubTreeChanged();
+    void addToItemsToEmitSigSubTreeChangedSub(std::list<Item*>::iterator& pos);
+    void emitSigSubTreeChanged();
+
+    void detachFromParentItemSub(bool isMoving);
+    void traverse(Item* item, const boost::function<void(Item*)>& function);
+    ItemPtr duplicateAllSub(ItemPtr duplicated) const;
+        
+    void updateLastAccessInformation(const std::string& filename, const std::string& formatId);
+        
+    friend class RootItem;
+    friend class ItemTreeArchiver;
+    friend class ItemManagerImpl;
+};
+
+#ifndef CNOID_BASE_MVOUT_DECLARED
+#define CNOID_BASE_MVOUT_DECLARED
+CNOID_EXPORT std::ostream& mvout(bool doFlush = false);
+#endif
+}
+
+#endif

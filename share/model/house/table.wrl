@@ -1,0 +1,99 @@
+#VRML V2.0 utf8 
+
+  Transform {
+    children	      Group {
+	children	Transform {
+	  children	[
+	    Transform {
+	      children	Shape {
+		appearance	Appearance {
+		  material	Material {
+		  }
+
+		  texture	ImageTexture {
+		    url	"textures/wood.4.png"
+		  }
+
+		  textureTransform	TextureTransform {
+		    translation	0 0
+		    rotation	0
+		    scale	1.0139 1.90015
+		    center	0.5 0.5
+		  }
+
+		}
+
+		geometry	Box {
+		}
+
+	      }
+
+	      translation	2.02399 0.815218 1.0783
+	      rotation	1.84775e-06 1 -1.84775e-06  4.71239
+	      scale	1 0.02 0.6
+	      scaleOrientation	0 0 1  0
+	    }
+	    Transform {
+	      children	Shape {
+		appearance	Appearance {
+		  material	Material {
+		    ambientIntensity	0.574468
+		    diffuseColor	1 0.769946 0.418716
+		    specularColor	0 0 0
+		    emissiveColor	0 0 0
+		    shininess	0.414894
+		    transparency	0
+		  }
+
+		}
+
+		geometry	Cylinder {
+		}
+
+	      }
+
+	      translation	2 0.3952 1.7
+	      rotation	1.84775e-06 1 -1.84775e-06  4.71239
+	      scale	0.15 0.4 0.15
+	      scaleOrientation	2.97959e-08 1 -1.87755e-06  1.5708
+	    }
+	    Transform {
+	      children	Shape {
+		appearance	Appearance {
+		  material	Material {
+		    ambientIntensity	0.521277
+		    diffuseColor	1 0.75361 0.353117
+		    specularColor	0 0 0
+		    emissiveColor	0 0 0
+		    shininess	0.414894
+		    transparency	0
+		  }
+
+		}
+
+		geometry	Cylinder {
+		}
+
+	      }
+
+	      translation	2 0.3952 0.5
+	      rotation	0 0 1  0
+	      scale	0.15 0.4 0.15
+	      scaleOrientation	0 0 1  0
+	    }
+	  ]
+	  translation	3.12287 0 -0.934591
+	  rotation	0 1 0  4.7022
+	  scale	0.999999 0.999998 0.999999
+	}
+
+      }
+
+      translation	0.81736 -0.000393301 3.09967
+      rotation	0 1 0  1.57295
+      scale	1 1 1
+      scaleOrientation	0 0 1  0
+    }
+    
+    
+ 

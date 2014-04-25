@@ -1,0 +1,88 @@
+/*
+  @author Shin'ichiro Nakaoka
+*/
+
+#include "LinkGroup.h"
+#include "Body.h"
+#include "Link.h"
+#include <cnoid/ValueTree>
+#include <boost/make_shared.hpp>
+
+using namespace std;
+using namespace boost;
+using namespace cnoid;
+
+
+LinkGroup::LinkGroup(private_tag tag)
+{
+
+}
+
+
+LinkGroup::LinkGroup(const LinkGroup& org)
+{
+
+}
+
+
+LinkGroup::~LinkGroup()
+{
+
+}
+
+
+/**
+   @param linkGroupSeq YAML node defining a ling group set.
+   If linkGroupSeq.isValid() is false, a whole body group that contains all the links is created.
+*/
+LinkGroupPtr LinkGroup::create(const Body& body)
+{
+    const Listing& linkGroupList = *body.info()->findListing("linkGroup");
+    LinkGroupPtr group = make_shared<LinkGroup>(private_tag());
+    group->setName("Whole Body");
+    if(!linkGroupList.isValid() || !group->load(body, linkGroupList)){
+        group->setFlatLinkList(body);
+    }
+    return group;
+}
+
+
+bool LinkGroup::load(const Body& body, const Listing& linkGroupList)
+{
+    for(int i=0; i < linkGroupList.size(); ++i){
+
+        const ValueNode& node = linkGroupList[i];
+        ValueNode::Type type = node.type();
+
+        if(type == ValueNode::SCALAR){
+            Link* link = body.link(node.toString());
+            if(!link){
+                return false;
+            }
+            elements.push_back(link->index());
+
+        } else if(type == ValueNode::MAPPING){
+            const Mapping& group = *node.toMapping();
+            LinkGroupPtr linkGroup = make_shared<LinkGroup>(private_tag());
+            linkGroup->setName(group["name"]);
+            if(linkGroup->load(body, *group["links"].toListing())){
+                elements.push_back(linkGroup);
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+void LinkGroup::setFlatLinkList(const Body& body)
+{
+    for(int i=0; i < body.numLinks(); ++i){
+        elements.push_back(i);
+    }
+}
+

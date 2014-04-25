@@ -1,0 +1,8 @@
+# pkg-config source file
+
+Name: choreonoid-body-plugin
+Description: Body plugin of choreonoid
+Version: @CNOID_FULL_VERSION@
+Requires: choreonoid >= @CNOID_FULL_VERSION@
+Conflicts:
+Libs: -lCnoidBody -lCnoidBodyPlugin

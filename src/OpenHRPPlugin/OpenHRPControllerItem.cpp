@@ -1,0 +1,257 @@
+/*!
+  @file
+  @author Shin'ichiro Nakaoka
+*/
+
+#include "OpenHRPControllerItem.h"
+#include "DynamicsSimulator_impl.h"
+#include <cnoid/MessageView>
+#include <cnoid/Archive>
+#include <cnoid/Sleep>
+#include <boost/bind.hpp>
+#include <boost/filesystem.hpp>
+#include <iostream>
+#include "gettext.h"
+
+using namespace std;
+using namespace boost;
+using namespace cnoid;
+using namespace OpenHRP;
+
+
+OpenHRPControllerItem::OpenHRPControllerItem()
+{
+    signalReadyStandardOutputConnected = false;
+    mv = MessageView::instance();
+}
+
+
+OpenHRPControllerItem::OpenHRPControllerItem(const OpenHRPControllerItem& org)
+    : ControllerItem(org)
+{
+    controllerServerName = org.controllerServerName;
+    controllerServerCommand = org.controllerServerCommand;
+    signalReadyStandardOutputConnected = false;
+    mv = MessageView::instance();
+}
+
+
+OpenHRPControllerItem::~OpenHRPControllerItem()
+{
+    controllerServerProcess.waitForFinished(100);
+}
+
+
+void OpenHRPControllerItem::onDisconnectedFromRoot()
+{
+    if(controllerServerProcess.state() != QProcess::NotRunning){
+        controllerServerProcess.kill();
+    }
+    ControllerItem::onDisconnectedFromRoot();
+}
+
+
+ItemPtr OpenHRPControllerItem::doDuplicate() const
+{
+    return new OpenHRPControllerItem(*this);
+}
+
+
+void OpenHRPControllerItem::setControllerServerName(const std::string& name)
+{
+    controllerServerName = name;
+}
+
+
+void OpenHRPControllerItem::setControllerServerCommand(const std::string& command)
+{
+    controllerServerCommand = command;
+}
+
+
+bool OpenHRPControllerItem::start(const Target& target)
+{
+    ncHelper = getDefaultNamingContextHelper();
+    
+    if(!ncHelper->isAlive()){
+        return false;
+    }
+
+#ifdef OPENHRP_3_0
+    typedef OpenHRP::ControllerFactory_var ControllerServer_var;
+    typedef OpenHRP::ControllerFactory ControllerServer;
+#elif OPENHRP_3_1
+    typedef OpenHRP::Controller_var ControllerServer_var;
+    typedef OpenHRP::Controller ControllerServer;
+#endif
+        
+    ControllerServer_var server = ncHelper->findObject<ControllerServer>(controllerServerName.c_str());
+    
+    // do null check here
+
+    bool serverReady = ncHelper->isObjectAlive(server);
+
+    if(!serverReady){
+
+        // invoke the controller command
+        if(!controllerServerCommand.empty()){
+            if(controllerServerProcess.state() != QProcess::NotRunning){
+                controllerServerProcess.kill();
+                controllerServerProcess.waitForFinished(100);
+            }
+            string command(controllerServerCommand);
+#ifdef _WIN32
+            if(filesystem::path(controllerServerCommand).extension() != ".exe"){
+                command += ".exe";
+            }
+            // quote the command string to support a path including spaces
+            controllerServerProcess.start(QString("\"") + command.c_str() + "\"");
+#else
+            controllerServerProcess.start(command.c_str());
+#endif
+
+            if(!controllerServerProcess.waitForStarted()){
+                mv->put(fmt(_("Controller server process \"%1%\" cannot be executed.")) % command);
+                if(!filesystem::exists(command)){
+                    mv->putln(_(" This file does not exist."));
+                } else {
+                    mv->putln("");
+                }
+
+            } else {
+                mv->putln(fmt(_("Controller server process \"%1%\" has been executed by %2%."))
+                          % command % name());
+                
+                for(int i=0; i < 20; ++i){
+                    controllerServerProcess.waitForReadyRead(10);
+                    server = ncHelper->findObject<ControllerServer>(controllerServerName.c_str());
+                    serverReady = ncHelper->isObjectAlive(server);
+                    if(serverReady){
+                        if(!signalReadyStandardOutputConnected){
+                            controllerServerProcess.sigReadyReadStandardOutput().connect(
+                                bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
+                            signalReadyStandardOutputConnected = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if(!serverReady){
+        mv->putln(fmt(_("Controller server object \"%1%\" is not found in the name server."))
+                  % controllerServerName);
+        if(controllerServerProcess.state() != QProcess::NotRunning){
+            controllerServerProcess.kill();
+        }
+        return false;
+    }
+
+    BodyPtr body = target.body();
+
+#ifdef OPENHRP_3_0
+    controller = server->create(body->name().c_str());
+    // do null check here
+    mv->putln(fmt(_("The CORBA object of controller \"%1%\" has been created by the factory \"%2%\"."))
+              % name() % controllerServerName);
+
+#elif OPENHRP_3_1
+    controller = server;
+    controller->setModelName(body->name().c_str());
+    controller->initialize();
+    mv->putln(fmt(_("The CORBA object \"%1%\" of controller \"%2%\" has been obtained."))
+              % controllerServerName % name());
+#endif
+
+    timeStep_ = target.worldTimeStep();
+
+    dynamicsSimulator.reset(new DynamicsSimulator_impl(body));
+    
+    controller->setDynamicsSimulator(dynamicsSimulator->_this());
+    controller->setTimeStep(timeStep_);
+    controller->start();
+
+    return true;
+}
+
+
+double OpenHRPControllerItem::timeStep() const
+{
+    return timeStep_;
+}
+
+
+void OpenHRPControllerItem::input()
+{
+    controller->input();
+}
+
+
+bool OpenHRPControllerItem::control()
+{
+    controller->control();
+    return true;
+}
+
+
+void OpenHRPControllerItem::output()
+{
+    controller->output();
+}
+
+    
+void OpenHRPControllerItem::stop()
+{
+    controller->stop();
+
+#ifdef OPENHRP_3_0
+    controller->destroy();
+#endif
+
+    if(controllerServerProcess.state() != QProcess::NotRunning){
+#ifdef OPENHRP_3_1
+        controller->destroy();
+#endif
+        controllerServerProcess.kill();
+    }
+}
+
+
+void OpenHRPControllerItem::onReadyReadServerProcessOutput()
+{
+    MessageView::instance()->put(QString(controllerServerProcess.readAll()));
+}
+
+
+void OpenHRPControllerItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    ControllerItem::doPutProperties(putProperty);
+    
+    putProperty(_("Controller server name"), controllerServerName,
+                bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
+    putProperty(_("Controller server command"), controllerServerCommand,
+                bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
+}
+
+
+bool OpenHRPControllerItem::store(Archive& archive)
+{
+    if(!ControllerItem::store(archive)){
+        return false;
+    }
+    archive.write("controllerServerName", controllerServerName);
+    archive.writeRelocatablePath("controllerServerCommand", controllerServerCommand);
+    return true;
+}
+
+
+bool OpenHRPControllerItem::restore(const Archive& archive)
+{
+    if(!ControllerItem::restore(archive)){
+        return false;
+    }
+    setControllerServerName(archive.get("controllerServerName", controllerServerName));
+    archive.readRelocatablePath("controllerServerCommand", controllerServerCommand);
+    return true;
+}

@@ -1,0 +1,107 @@
+# Japanese translations for Hrpsys package.
+# Copyright (C) 2013 THE Hrpsys'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Hrpsys package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Hrpsys 31Plugin\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-09-25 14:40+0900\n"
+"PO-Revision-Date: 2013-09-25 14:40+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: Hrpsys31Item.cpp:71
+msgid "Voltage"
+msgstr "電圧"
+
+#: Hrpsys31Item.cpp:72
+msgid "Current"
+msgstr "電流"
+
+#: Hrpsys31Item.cpp:78
+msgid "Target"
+msgstr "目標"
+
+#: Hrpsys31Item.cpp:79
+msgid "Calib"
+msgstr "キャリブ"
+
+#: Hrpsys31Item.cpp:80
+msgid "Power"
+msgstr "パワー"
+
+#: Hrpsys31Item.cpp:81
+msgid "Servo"
+msgstr "サーボ"
+
+#: Hrpsys31Item.cpp:82
+msgid "Temp"
+msgstr "温度"
+
+#: Hrpsys31Item.cpp:83
+msgid "Alarm"
+msgstr "警告"
+
+#: Hrpsys31Item.cpp:164
+msgid "Hrpsys31Item"
+msgstr "HRPSYS-3.1アイテム"
+
+#: Hrpsys31Item.cpp:261
+msgid "Nameserver is not found at %1%:%2%."
+msgstr "%1%:%2% のネームサーバを検出できません。"
+
+#: Hrpsys31Item.cpp:285
+msgid "Component \"%1%\" is not found."
+msgstr "コンポーネント \"%1%\" を検出できません。"
+
+#: Hrpsys31Item.cpp:287
+msgid "Component \"%1%\" has been found."
+msgstr "コンポーネント \"%1%\" を検出しました。"
+
+#: Hrpsys31Item.cpp:290
+msgid "Service port \"%1%\" is not found."
+msgstr "サービスポート \"%1%\" を検出できません。"
+
+#: Hrpsys31Item.cpp:292
+msgid "Service port \"%1%\" has been found."
+msgstr "サービスポート \"%1%\" を検出しました。"
+
+#: Hrpsys31Item.cpp:335 Hrpsys31Item.cpp:383
+msgid "%1%: Access to %2% failed. The connection is terminated."
+msgstr "%1%: %2%へのアクセスに失敗しました。接続を解除します。"
+
+#: Hrpsys31Item.cpp:447
+msgid "Host"
+msgstr "ホスト"
+
+#: Hrpsys31Item.cpp:448
+msgid "Port"
+msgstr "ポート"
+
+#: Hrpsys31Item.cpp:449
+msgid "RobotHardware"
+msgstr ""
+
+#: Hrpsys31Item.cpp:450
+msgid "StateHolder"
+msgstr ""
+
+#: Hrpsys31Item.cpp:451
+msgid "State reading"
+msgstr "状態読込"
+
+#: Hrpsys31Item.cpp:453
+msgid "Read inverval"
+msgstr "読込間隔"
+
+#: Hrpsys31Item.cpp:455
+msgid "Connect on loading"
+msgstr "ロード時に接続"
+

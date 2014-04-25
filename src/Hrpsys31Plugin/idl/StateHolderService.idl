@@ -1,0 +1,31 @@
+/**
+ * @file StateHolderService.idl
+ * @brief Services for the state holder interface
+ */
+module OpenHRP
+{
+  interface StateHolderService
+  {
+    typedef sequence<double> DblSequence;
+
+    /**
+     * @brief output current joint angles as reference joint angles
+     */
+    void goActual();
+
+    /**
+       @brief reference joint angles and transfrom of the base link
+     */
+    struct Command{
+      DblSequence jointRefs;     ///< reference joint angles[rad]
+      DblSequence baseTransform; ///< reference transform of the base link
+      DblSequence zmp;           ///< reference zmp[m] w.r.t. the base link
+    };
+
+    /**
+       @brief get reference joint angles and a transform of the base link
+       @param com reference joint angles and a transform of the base link
+     */
+    void getCommand(out Command com);
+  };
+};

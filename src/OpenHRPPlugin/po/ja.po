@@ -1,0 +1,89 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-08-09 15:28+0900\n"
+"PO-Revision-Date: 2012-02-01 15:19+0000\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: OnlineViewerServer.cpp:139
+msgid ""
+"OnlineViewer: The model file at \"%1%\" cannot be read. %2% protocol is not "
+"supported."
+msgstr ""
+"オンラインビューア: %2%プロトコルはサポートされていないため、\"%1%\"のモデル"
+"ファイルは読み込めません。"
+
+#: OnlineViewerServer.cpp:168
+msgid "OnlineViewer: Loading \"%1%\" at \"%2%\"."
+msgstr "オンラインビューア: \"%1%\"を\"%2%\"から読み込んでいます。"
+
+#: OnlineViewerServer.cpp:172
+msgid "OnlineViewer: Loading \"%1%\" failed."
+msgstr "オンラインビューア: \"%1%\"の読み込みに失敗しました。"
+
+#: OnlineViewerServer.cpp:209
+msgid ""
+"OnlineViewer: \"%1%\" is unregistered because the name has been changed."
+msgstr ""
+"オンラインビューア: \"%1%\"は名前が変更されたため登録が解除されました。"
+
+#: OnlineViewerServer.cpp:217
+msgid "OnlineViewer: \"%1%\" has been removed."
+msgstr "オンラインビューア: \"%1%\"は削除されました。"
+
+#: OpenHRPControllerItem.cpp:113
+msgid "Controller server process \"%1%\" cannot be executed."
+msgstr "コントローラサーバプロセス\"%1%\"は実行できません。"
+
+#: OpenHRPControllerItem.cpp:115
+msgid " This file does not exist."
+msgstr " このファイルは存在しません。"
+
+#: OpenHRPControllerItem.cpp:121
+msgid "Controller server process \"%1%\" has been executed by %2%."
+msgstr "%2%によってコントローラサーバプロセス\"%1%\"が起動されました。"
+
+#: OpenHRPControllerItem.cpp:142
+msgid "Controller server object \"%1%\" is not found in the name server."
+msgstr ""
+"コントローラサーバオブジェクト\"%1%\"はネームサーバに登録されていません。"
+
+#: OpenHRPControllerItem.cpp:155
+msgid ""
+"The CORBA object of controller \"%1%\" has been created by the factory \"%2%"
+"\"."
+msgstr ""
+"コントローラ\"%1%\"のCORBAオブジェクトがファクトリ\"%2%\"によって生成されまし"
+"た。"
+
+#: OpenHRPControllerItem.cpp:162
+msgid "The CORBA object \"%1%\" of controller \"%2%\" has been obtained."
+msgstr "コントローラ\"%2%\"のCORBAオブジェクト\"%1%\"を取得しました。"
+
+#: OpenHRPControllerItem.cpp:230
+msgid "Controller server name"
+msgstr "コントローラファクトリ名"
+
+#: OpenHRPControllerItem.cpp:232
+msgid "Controller server command"
+msgstr "コントローラサーバコマンド"
+
+#: OpenHRPPlugin.cpp:17
+msgid "OpenHRP3.0ControllerItem"
+msgstr "OpenHRP3.0コントローラアイテム"
+
+#: OpenHRPPlugin.cpp:20
+msgid "OpenHRP3.1ControllerItem"
+msgstr "OpenHRP3.1コントローラアイテム"

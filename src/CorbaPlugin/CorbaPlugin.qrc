@@ -1,0 +1,16 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/Corba" >
+
+  <file>icons/NSCateCxt.png</file>
+  <file>icons/NSElse.png</file>
+  <file>icons/NSHostCxt.png</file>
+  <file>icons/NSMgr.png</file>
+  <file>icons/NSMgrCxt.png</file>
+  <file>icons/NSModCxt.png</file>
+  <file>icons/NSObj.png</file>
+  <file>icons/NSRTC.png</file>
+  <file>icons/NSZombi.png</file>
+
+</qresource>
+</RCC>

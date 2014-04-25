@@ -1,0 +1,95 @@
+
+
+Choreonoid 1.4.0 released on August 29, 2013
+============================================
+
+Changes since 1.3.1:
+
+* Improved the OpenRTM plugin to support simulation using RT-components
+* Added the Bullet plugin, which allows the use of the Bullet physics library as one of the simulation engines
+* Added the Media plugin for playing movie and audio files
+* Introduced a new SceneView implementation based on the pure OpenGL API
+* Supported cameras and lights defined in models on the new SceneView
+* Supported the simulation of the crawler mechanism
+* Path variables can be set and used in project files
+* Added the RIC30 robot model
+* Added sample projects for the new functions and models
+* A lot of other minor improvements
+* A lot of bug fixes
+* Refactoring the API of the Body library and plugin
+
+
+Choreonoid 1.3.1 released on August 20, 2012
+============================================
+
+Changes since 1.3.0:
+
+* Fixed a bug of reloading items
+* Fixed a bug of the execution file path detection on Mac OS X
+* Fixed a problem where a filename cannot be specified on file save dialogs on Mac OS X
+* Fixed a crash caused by ItemPropertyView
+
+
+Choreonoid 1.3.0 released on July 29, 2012
+==========================================
+
+Changes since 1.2.0:
+
+* Improved the AIST Simulator
+
+  - Improved the high-gain dynamics mode to be more accurate
+  - Made the integration methods selectable
+
+* Improved the support for Mac OS X
+
+  - Introduced relative path setting for shared libraries to make
+    the binary files relocatable on the file system
+  - Fixed the BalancerPlugin binary to be loadable
+
+* Supported Boost C++ libraries version 1.50
+* Fixed some other bugs
+
+
+Choreonoid 1.2.0 released on July 20, 2012
+==========================================
+
+Changes since 1.1.0:
+
+* Supported Mac OS X (Only tested on Lion)
+* Added a general dynamics simulation function
+* Improved the robustness of the automatic dynamic balance adjustment
+* Improved the numerical inverse kinematics to be more robust
+* SceneView's sequential image output function for creating movies
+* Online viewer function whose API is same as OpenHRP3
+* Forward kinematics dragging for slide joints on SceneView
+* Added the Corba module and CorbaPlugin which support some CORBA functions
+* Supported Clang compiler
+* Ended the use of Boost.multi_array library which caused some problems
+* Removed the Eigen library source from the source archive
+* Fixed many other bugs
+
+
+Choreonoid 1.1.0 released on December 30, 2011
+==============================================
+
+Changes since 1.0.0:
+
+* Supported internationalization
+
+ - Messages can be translated into other languages
+ - Added Japanese translations
+ - International  characters (any characters defined in Unicode) can be used
+   in data and filenames in the Linux distributions based on UTF-8
+ - Local character encoding (such as shift-jis) can be used in data and filenames in Windows
+ - Added some scripts for handling gettext files
+
+* New graphical tool bar icons
+* New application icon
+* Fixed a compile error in Visual C++ 2010
+* Fixed some other bugs
+
+
+Choreonoid 1.0.0 released on November 8, 2011
+=============================================
+
+This is the initial release version.

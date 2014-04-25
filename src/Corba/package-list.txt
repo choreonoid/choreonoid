@@ -1,0 +1,14 @@
+
+Ubuntu 10.04:
+
+libomniorb4-dev
+libcos4-dev
+omniidl4
+omniorb4-nameserver
+
+Ubuntu 11.04 - 
+
+omniidl
+omniorb-nameserver
+
+

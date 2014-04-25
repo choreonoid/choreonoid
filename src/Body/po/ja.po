@@ -1,0 +1,39 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-08-09 22:51+0900\n"
+"PO-Revision-Date: 2013-12-11 13:29+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "root link not found"
+msgstr "[提案]ルートとなるlinkがみつかりませんでした、またはlinkが定義されていません。このデータはVRMLのInlineとしての利用をお勧めします。"
+
+msgid "joint node can not be root link"
+msgstr "[警告]jointはルートになることはできません。jointタグの親にlinkタグを利用して、linkタグをルートとして定義する必要があります。"
+
+msgid "we are sorry, It does not support axis more than one."
+msgstr "[警告]申し訳ございません。複数の可動軸の定義に対応していません。もし複数の可動軸を指定する場合は一つのaxisの中で可動軸をご定義ください。"
+
+msgid "invalid sensor-type:%1%"
+msgstr "[警告]sensorタグに対応していないセンサーの種別(%1%)が指定されています。force6d(ForceSensor)、imu(AccelerrationSensor)、pin-hole-camera(VisionSensor)、空文字(GyroSensor)の内のいずれかをご定義ください。"
+
+msgid "[WARNING]there is no mass:%1%" 
+msgstr "[警告]この剛体にはmassタグによる質量が指定されていません。剛体には質量をご指定ください。"
+
+msgid "[WARNING]mass_frame has not translation(center of mass):%1%"
+msgstr "[警告]この剛体には重心を示す平行移動の値が指定されていません。剛体には重心をご指定ください。"
+
+msgid "duplicate shape:%1%"
+msgstr "[警告]一つのリンク(%1%)に複数のshapeを設定しようとしています。linkとjointの関係は1:nですが、jointとlinkの関係は1:1である必要があります。"

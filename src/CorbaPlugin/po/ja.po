@@ -1,0 +1,55 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2011 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-08-24 00:34+0900\n"
+"PO-Revision-Date: 2011-12-15 14:08+0000\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: CorbaPlugin.cpp:62
+msgid "An external CORBA name server has been detected."
+msgstr "稼働中のCORBAネームサーバを検出しました。"
+
+#: CorbaPlugin.cpp:64
+msgid "No external CORBA name server was detected."
+msgstr "稼働中のCORBAネームサーバを検出できません。"
+
+#: CorbaPlugin.cpp:69
+msgid "Namer server %1% is not found."
+msgstr "ネームサーバ %1% が見つかりません。"
+
+#: CorbaPlugin.cpp:79
+msgid "Name server process %1% has been invoked."
+msgstr "ネームサーバプロセス %1% を起動しました。"
+
+#: CorbaPlugin.cpp:81
+msgid "Name server \"%1%\" cannot be invoked."
+msgstr "ネームサーバ \"%1%\" を起動できません。"
+
+#: CorbaPlugin.cpp:129
+msgid "Use Choreonoid's name server when no server is found"
+msgstr "ネームサーバ未検出時に自前のネームサーバを起動"
+
+#: NameServerView.cpp:59
+msgid "Nameserver"
+msgstr "ネームサーバ"
+
+#: NameServerView.cpp:76
+msgid "Update"
+msgstr "更新"
+
+#: NameServerView.cpp:82
+msgid "Object Name"
+msgstr "オブジェクト名"
+

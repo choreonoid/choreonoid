@@ -1,0 +1,38 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2014 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# hattori <hattori@hattori-desktop>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-03-18 14:26+0900\n"
+"PO-Revision-Date: 2014-03-18 14:26+0900\n"
+"Last-Translator: hattori <s.hattori@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: PhysXSimulatorItem.cpp:766
+msgid "PhysXSimulatorItem"
+msgstr "PhysXシミュレータアイテム"
+
+#: PhysXSimulatorItem.cpp:1081
+msgid "Static Friction"
+msgstr "静摩擦係数"
+
+#: PhysXSimulatorItem.cpp:1084
+msgid "Dynamic Friction"
+msgstr "動摩擦係数"
+
+#: PhysXSimulatorItem.cpp:1087
+msgid "Restitution"
+msgstr "反発係数"
+
+#: PhysXSimulatorItem.cpp:1089
+msgid "Limit joint range"
+msgstr "関節範囲拘束"

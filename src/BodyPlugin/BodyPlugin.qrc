@@ -1,0 +1,35 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/Body" >
+
+  <file>icons/fkik.png</file>
+  <file>icons/fk.png</file>
+  <file>icons/ik.png</file>
+  <file>icons/rotation.png</file>
+  <file>icons/block.png</file>
+  <file>icons/collisionoutline.png</file>
+
+  <file>icons/storepose.png</file>
+  <file>icons/restorepose.png</file>
+  <file>icons/origin.png</file>
+  <file>icons/initialpose.png</file>
+  <file>icons/stdpose.png</file>
+  <file>icons/right-to-left.png</file>
+  <file>icons/left-to-right.png</file>
+  <file>icons/flip.png</file>
+  <file>icons/center-cm.png</file>
+  <file>icons/zmp-to-cm.png</file>
+  <file>icons/cm-to-zmp.png</file>
+  <file>icons/center-zmp.png</file>
+  <file>icons/left-zmp.png</file>
+  <file>icons/right-zmp.png</file>
+  <file>icons/stancelength.png</file>
+
+  <file>icons/start-simulation.png</file>
+  <file>icons/restart-simulation.png</file>
+  <file>icons/stop-simulation.png</file>
+  <file>icons/store-world-initial.png</file>
+  <file>icons/restore-world-initial.png</file>
+
+</qresource>
+</RCC>

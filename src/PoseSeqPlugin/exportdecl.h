@@ -1,0 +1,38 @@
+  
+#ifndef CNOID_POSESEQPLUGIN_EXPORTDECL_H_INCLUDED
+# define CNOID_POSESEQPLUGIN_EXPORTDECL_H_INCLUDED
+
+# if defined _WIN32 || defined __CYGWIN__
+#  define CNOID_POSESEQPLUGIN_DLLIMPORT __declspec(dllimport)
+#  define CNOID_POSESEQPLUGIN_DLLEXPORT __declspec(dllexport)
+#  define CNOID_POSESEQPLUGIN_DLLLOCAL
+# else
+#  if __GNUC__ >= 4
+#   define CNOID_POSESEQPLUGIN_DLLIMPORT __attribute__ ((visibility("default")))
+#   define CNOID_POSESEQPLUGIN_DLLEXPORT __attribute__ ((visibility("default")))
+#   define CNOID_POSESEQPLUGIN_DLLLOCAL  __attribute__ ((visibility("hidden")))
+#  else
+#   define CNOID_POSESEQPLUGIN_DLLIMPORT
+#   define CNOID_POSESEQPLUGIN_DLLEXPORT
+#   define CNOID_POSESEQPLUGIN_DLLLOCAL
+#  endif
+# endif
+
+# ifdef CNOID_POSESEQPLUGIN_STATIC
+#  define CNOID_POSESEQPLUGIN_DLLAPI
+#  define CNOID_POSESEQPLUGIN_LOCAL
+# else
+#  ifdef CnoidPoseSeqPlugin_EXPORTS
+#   define CNOID_POSESEQPLUGIN_DLLAPI CNOID_POSESEQPLUGIN_DLLEXPORT
+#  else
+#   define CNOID_POSESEQPLUGIN_DLLAPI CNOID_POSESEQPLUGIN_DLLIMPORT
+#  endif
+#  define CNOID_POSESEQPLUGIN_LOCAL CNOID_POSESEQPLUGIN_DLLLOCAL
+# endif
+
+#endif
+
+#ifdef CNOID_EXPORT
+# undef CNOID_EXPORT
+#endif
+#define CNOID_EXPORT CNOID_POSESEQPLUGIN_DLLAPI

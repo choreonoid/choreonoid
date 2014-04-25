@@ -1,0 +1,36 @@
+#ifndef CNOID_BULLETPLUGIN_EXPORTDECL_H_INCLUDED
+# define CNOID_BULLETPLUGIN_EXPORTDECL_H_INCLUDED
+# if defined _WIN32 || defined __CYGWIN__
+#  define CNOID_BULLETPLUGIN_DLLIMPORT __declspec(dllimport)
+#  define CNOID_BULLETPLUGIN_DLLEXPORT __declspec(dllexport)
+#  define CNOID_BULLETPLUGIN_DLLLOCAL
+# else
+#  if __GNUC__ >= 4
+#   define CNOID_BULLETPLUGIN_DLLIMPORT __attribute__ ((visibility("default")))
+#   define CNOID_BULLETPLUGIN_DLLEXPORT __attribute__ ((visibility("default")))
+#   define CNOID_BULLETPLUGIN_DLLLOCAL  __attribute__ ((visibility("hidden")))
+#  else
+#   define CNOID_BULLETPLUGIN_DLLIMPORT
+#   define CNOID_BULLETPLUGIN_DLLEXPORT
+#   define CNOID_BULLETPLUGIN_DLLLOCAL
+#  endif
+# endif
+
+# ifdef CNOID_BULLETPLUGIN_STATIC
+#  define CNOID_BULLETPLUGIN_DLLAPI
+#  define CNOID_BULLETPLUGIN_LOCAL
+# else
+#  ifdef CnoidBulletPlugin_EXPORTS
+#   define CNOID_BULLETPLUGIN_DLLAPI CNOID_BULLETPLUGIN_DLLEXPORT
+#  else
+#   define CNOID_BULLETPLUGIN_DLLAPI CNOID_BULLETPLUGIN_DLLIMPORT
+#  endif
+#  define CNOID_BULLETPLUGIN_LOCAL CNOID_BULLETPLUGIN_DLLLOCAL
+# endif
+
+#endif
+
+#ifdef CNOID_EXPORT
+# undef CNOID_EXPORT
+#endif
+#define CNOID_EXPORT CNOID_BULLETPLUGIN_DLLAPI

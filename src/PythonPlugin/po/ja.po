@@ -1,0 +1,100 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2013 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-10-03 11:43+0900\n"
+"PO-Revision-Date: 2013-09-10 16:13+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: PythonBar.cpp:28
+msgid "PythonBar"
+msgstr "Pythonバー"
+
+#: PythonBar.cpp:30
+msgid "Py"
+msgstr ""
+
+#: PythonBar.cpp:30
+msgid "Execute python scripts"
+msgstr "Pythonスクリプトを実行する"
+
+#: PythonConsoleView.cpp:86
+msgid "Python Console"
+msgstr "Pythonコンソール"
+
+#: PythonScriptItem.cpp:53
+msgid "PythonScriptItem"
+msgstr "Pythonスクリプトアイテム"
+
+#: PythonScriptItem.cpp:55
+msgid "Python Script"
+msgstr "Pythonスクリプト"
+
+#: PythonScriptItem.cpp:137
+msgid "Python script file \"%1%\" cannot be loaded. The file does not exist."
+msgstr "Pythonスクリプトファイル \"%1%\" は存在しないため読みこむことができません。"
+
+#: PythonScriptItem.cpp:200
+msgid "Python Script Termination"
+msgstr "Pythonスクリプトの停止"
+
+#: PythonScriptItem.cpp:201
+msgid ""
+"Python script \"%1%\" is still running in the background thread. Do you want "
+"to terminate and restart it?"
+msgstr ""
+"Pythonスクリプト\"%1%\"はまだバックグラウンドスレッドで実行中です。これを停止"
+"して再実行しますか？"
+
+#: PythonScriptItem.cpp:209
+msgid "The python script cannot be terminated. It cannot be restarted."
+msgstr "Pythonスクリプトを終了できません。再実行できません。"
+
+#: PythonScriptItem.cpp:220
+msgid " Python script \"%1%\" is empty."
+msgstr "Pythonスクリプト \"%1%\" は空です。"
+
+#: PythonScriptItem.cpp:226
+msgid "The file of Python script \"%1%\" does not exist."
+msgstr "Pythonスクリプト \"%1%\" のファイルが存在しません。"
+
+#: PythonScriptItem.cpp:229
+msgid "Execution of Python script \"%1%\" has been started."
+msgstr "Pythonスクリプト \"%1%\" の実行を開始しました。"
+
+#: PythonScriptItem.cpp:246
+msgid "The execution of Python script \"%1%\" has been finished."
+msgstr "Pythonスクリプト \"%1%\" の実行が完了しました。"
+
+#: PythonScriptItem.cpp:248
+msgid "The execution of Python script \"%1%\" failed.\n"
+msgstr "Pythonスクリプト \"%1%\" の実行が失敗しました。\n"
+
+#: PythonScriptItem.cpp:267
+msgid "Python script \"%1%\" has been terminated."
+msgstr "Pythonスクリプト \"%1%\" を停止しました。"
+
+#: PythonScriptItem.cpp:269
+msgid ""
+"Python script \"%1%\" cannot be terminated. Some internal errors may happen."
+msgstr "Pythonスクリプト \"%1%\" の実行を停止できません。再実行できません。"
+
+#: PythonScriptItem.cpp:286
+msgid "Script"
+msgstr "スクリプト"
+
+#: PythonScriptItem.cpp:287
+msgid "Background execution"
+msgstr "バックグラウンド実行"
+

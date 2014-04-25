@@ -1,0 +1,82 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2014 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# hattori <hattori@hattori-desktop>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-04-11 09:45+0900\n"
+"PO-Revision-Date: 2014-04-11 09:45+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ODESimulatorItem.cpp:24
+msgid "GazeboODESimulatorItem"
+msgstr "GazeboODEシミュレータアイテム"
+
+#: ODESimulatorItem.cpp:27
+msgid "ODESimulatorItem"
+msgstr "ODEシミュレータアイテム"
+
+#: ODESimulatorItem.cpp:789
+msgid "Iterative (quick step)"
+msgstr "反復(quick step)"
+
+#: ODESimulatorItem.cpp:790
+msgid "Big matrix"
+msgstr "Big matrix"
+
+#: ODESimulatorItem.cpp:1187
+msgid "Step mode"
+msgstr "ステップモード"
+
+#: ODESimulatorItem.cpp:1189
+msgid "Gravity"
+msgstr "重力加速度"
+
+#: ODESimulatorItem.cpp:1192
+msgid "Friction"
+msgstr "摩擦係数"
+
+#: ODESimulatorItem.cpp:1194
+msgid "Limit joint range"
+msgstr "関節範囲拘束"
+
+#: ODESimulatorItem.cpp:1197
+msgid "Global ERP"
+msgstr "グローバルERP"
+
+#: ODESimulatorItem.cpp:1199
+msgid "Global CFM"
+msgstr "グローバルCFM"
+
+#: ODESimulatorItem.cpp:1203
+msgid "Iterations"
+msgstr "反復回数"
+
+#: ODESimulatorItem.cpp:1206
+msgid "Over relaxation"
+msgstr "SOR係数"
+
+#: ODESimulatorItem.cpp:1208
+msgid "Limit correcting vel."
+msgstr "深度補正速度制限"
+
+#: ODESimulatorItem.cpp:1210
+msgid "Max correcting vel."
+msgstr "最大深度補正速度"
+
+#: ODESimulatorItem.cpp:1213
+msgid "2D mode"
+msgstr "2Dモード"
+
+#: ODESimulatorItem.cpp:1215
+msgid "Use WorldItem's Collision Detector"
+msgstr "外部Collision Detector使用"

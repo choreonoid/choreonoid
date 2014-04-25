@@ -1,0 +1,58 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2011 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-08-09 15:30+0900\n"
+"PO-Revision-Date: 2011-11-15 22:02+0000\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: GRobotBar.cpp:20
+msgid "GRobotBar"
+msgstr "GRobotバー"
+
+#: GRobotBar.cpp:23
+msgid "G-Robot toolbar which provides buttons for handling actual G-Robots"
+msgstr "G-Robot実機を扱うボタンをまとめたG-Robotツールバー"
+
+#: GRobotBar.cpp:28
+msgid "Turn on / off servo gains"
+msgstr "サーボON/OFF"
+
+#: GRobotBar.cpp:31
+msgid "Send the current pose of virtual robots to actual robots"
+msgstr "ロボットの姿勢を実機に送信"
+
+#: GRobotBar.cpp:34
+msgid "Synchronize the pose of actual robots pose with virtual robots"
+msgstr "ロボットの姿勢を実機に同期"
+
+#: GRobotControllerItem.cpp:176
+msgid "Port"
+msgstr "ポート"
+
+#: GRobotPlugin.cpp:28
+msgid "GRobotControllerItem"
+msgstr "GRobotコントローラアイテム"
+
+#: GRobotPlugin.cpp:36
+msgid "GRobot Plugin Version %1%\n"
+msgstr "GRobot プラグイン バージョン %1%\n"
+
+#: GRobotPlugin.cpp:38
+msgid ""
+"This plugin has been developed by Shin'ichiro Nakaoka and Choreonoid "
+"Development Team, AIST, and is distributed as a part of the Choreonoid "
+"package.\n"
+"\n"
+msgstr ""

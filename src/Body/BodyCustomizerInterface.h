@@ -1,0 +1,87 @@
+/**
+   \file
+   \brief The definitions of the body customizer interface for increasing binary compatibility
+   \author Shin'ichiro Nakaoka
+*/
+
+#ifndef CNOID_BODY_CUSTOMIZER_INTERFACE_H_INCLUDED
+#define CNOID_BODY_CUSTOMIZER_INTERFACE_H_INCLUDED
+
+#include <string>
+#include <cnoid/EigenTypes>
+#include <cnoid/Config>
+#include "exportdecl.h"
+
+namespace cnoid {
+
+typedef void* BodyHandle;
+typedef void* BodyCustomizerHandle;
+
+typedef int         (*BodyGetLinkIndexFromNameFunc) (BodyHandle bodyHandle, const char* linkName);
+typedef const char* (*BodyGetLinkNameFunc)          (BodyHandle bodyHandle, int linkIndex);
+typedef double*     (*BodyGetLinkDoubleValuePtrFunc)(BodyHandle bodyHandle, int linkIndex);
+
+static const int BODY_INTERFACE_VERSION = 1;
+
+struct BodyInterface
+{
+    int version;
+		
+    BodyGetLinkIndexFromNameFunc   getLinkIndexFromName;
+    BodyGetLinkNameFunc            getLinkName;
+    BodyGetLinkDoubleValuePtrFunc  getJointValuePtr;
+    BodyGetLinkDoubleValuePtrFunc  getJointVelocityPtr;
+    BodyGetLinkDoubleValuePtrFunc  getJointForcePtr;
+};
+    
+typedef const char** (*BodyCustomizerGetTargetModelNamesFunc)();
+typedef BodyCustomizerHandle (*BodyCustomizerCreateFunc)(BodyHandle bodyHandle, const char* modelName);
+	
+typedef void (*BodyCustomizerDestroyFunc)              (BodyCustomizerHandle customizerHandle);
+typedef int  (*BodyCustomizerInitializeAnalyticIkFunc) (BodyCustomizerHandle customizerHandle, int baseLinkIndex, int targetLinkIndex);
+
+/*
+  p and R are based on the coordinate of a base link
+*/
+typedef bool (*BodyCustomizerCalcAnalyticIkFunc)       (BodyCustomizerHandle customizerHandle, int ikPathId, const Vector3& p, const Matrix3& R);
+	
+typedef void (*BodyCustomizerSetVirtualJointForcesFunc)(BodyCustomizerHandle customizerHandle);
+	
+
+static const int BODY_CUSTOMIZER_INTERFACE_VERSION = 1;
+
+struct BodyCustomizerInterface
+{
+    int version;
+
+    BodyCustomizerGetTargetModelNamesFunc getTargetModelNames;
+    BodyCustomizerCreateFunc create;
+    BodyCustomizerDestroyFunc destroy;
+    BodyCustomizerInitializeAnalyticIkFunc initializeAnalyticIk;
+    BodyCustomizerCalcAnalyticIkFunc calcAnalyticIk;
+    BodyCustomizerSetVirtualJointForcesFunc setVirtualJointForces;
+};
+
+typedef BodyCustomizerInterface* (*GetBodyCustomizerInterfaceFunc)(BodyInterface* bodyInterface);
+
+CNOID_EXPORT int loadBodyCustomizers(const std::string pathString, BodyInterface* bodyInterface);
+CNOID_EXPORT int loadBodyCustomizers(const std::string pathString);
+CNOID_EXPORT int loadBodyCustomizers(BodyInterface* bodyInterface);
+CNOID_EXPORT int loadBodyCustomizers();
+    
+CNOID_EXPORT BodyCustomizerInterface* findBodyCustomizer(std::string modelName);
+}
+
+
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#define CNOID_BODY_CUSTOMIZER_EXPORT extern "C" __declspec(dllexport)
+//extern "C" __declspec(dllexport) cnoid::BodyCustomizerInterface*
+//getHrpBodyCustomizerInterface(cnoid::Bodyinterface* bodyinterface);
+#else
+#define CNOID_BODY_CUSTOMIZER_EXPORT extern "C"
+//extern "C" cnoid::BodyCustomizerInterface*
+//getHrpBodyCustomizerInterface(cnoid::Bodyinterface* bodyinterface);
+#endif
+
+#endif

@@ -1,0 +1,57 @@
+#VRML V2.0 utf8	
+	DEF TARGET_CASSETTE0 Transform {
+	  children	DEF CASSETTE Transform {
+	    children	Shape {
+	      appearance	Appearance {
+		material	Material {
+		  diffuseColor	0.2 0.7 0.8
+		  specularColor	1 1 1
+#		  shininess	0.8
+		}
+
+		texture	ImageTexture {
+		  url	"textures/tape1.front.png"
+		}
+
+	      }
+
+	      geometry	IndexedFaceSet {
+		coord	Coordinate {
+		  point	[ -0.085 0.01 0.06,
+			    -0.085 -0.01 0.06,
+			    0.085 -0.01 0.06,
+			    0.085 0.01 0.06,
+			    -0.085 0.01 -0.06,
+			    -0.085 -0.01 -0.06,
+			    0.085 -0.01 -0.06,
+			    0.085 0.01 -0.06 ]
+		}
+
+		coordIndex	[ 0, 1, 2, 3, -1, 0, 4, 5,
+			  1, -1, 0, 3, 7, 4, -1, 1,
+			  5, 6, 2, -1, 3, 2, 6, 7,
+			  -1, 4, 7, 6, 5, -1 ]
+		texCoord	TextureCoordinate {
+		  point	[ 1 1,
+			    1 1,
+			    0 1,
+			    0 1,
+			    1 0,
+			    1 0,
+			    0 0,
+			    0 0 ]
+		}
+
+		texCoordIndex	[ 0, 1, 2, 3, -1, 0, 4, 5,
+			  1, -1, 0, 3, 7, 4, -1, 1,
+			   5, 6, 2, -1, 3, 2, 6, 7,
+			  -1, 4, 7, 6, 5, -1 ]
+	      }
+
+	    }
+
+#   translation	-2.45807 0.533842 3.35385
+#	    rotation	0 1 0  1.97609
+	  }
+
+	}

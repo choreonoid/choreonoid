@@ -1,0 +1,26 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2013 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-10-03 15:32+0900\n"
+"PO-Revision-Date: 2013-10-03 15:32+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: PythonSimScriptItem.cpp:20
+msgid "PythonSimScriptItem"
+msgstr "Pythonシミュレーションスクリプトアイテム"
+
+#: PythonSimScriptItem.cpp:22
+msgid "Python Script for Simulation"
+msgstr "シミュレーション用Pythonスクリプト"

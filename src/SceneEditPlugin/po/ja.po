@@ -1,0 +1,213 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2014 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# hattori <hattori@hattori-desktop>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-01-07 11:54+0900\n"
+"PO-Revision-Date: 2014-01-06 14:28+0900\n"
+"Last-Translator: hattori <hattori@hattori-desktop>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: SceneGraphPropertyView.cpp:260
+msgid "Scene Graph Property"
+msgstr "シーングラフ　プロパティ"
+
+#: SceneGraphPropertyView.cpp:332
+msgid "name"
+msgstr "名前"
+
+#: SceneGraphPropertyView.cpp:352
+msgid "num of children"
+msgstr "子の個数"
+
+#: SceneGraphPropertyView.cpp:371 SceneGraphPropertyView.cpp:411
+msgid "translation"
+msgstr "位置"
+
+#: SceneGraphPropertyView.cpp:375 SceneGraphPropertyView.cpp:405
+msgid "rotation"
+msgstr "姿勢"
+
+#: SceneGraphPropertyView.cpp:382 SceneGraphPropertyView.cpp:408
+msgid "scale"
+msgstr "スケール"
+
+#: SceneGraphPropertyView.cpp:388 SceneGraphPropertyView.cpp:526
+msgid "ambientIntensity"
+msgstr "反射率"
+
+#: SceneGraphPropertyView.cpp:390
+msgid "diffuseColor"
+msgstr "物体の色"
+
+#: SceneGraphPropertyView.cpp:392
+msgid "emissiveColor"
+msgstr "発光色"
+
+#: SceneGraphPropertyView.cpp:393
+msgid "shininess"
+msgstr "輝き"
+
+#: SceneGraphPropertyView.cpp:395
+msgid "specularColor"
+msgstr "ハイライトの色"
+
+#: SceneGraphPropertyView.cpp:396
+msgid "transparency"
+msgstr "透明度"
+
+#: SceneGraphPropertyView.cpp:404
+msgid "center"
+msgstr "中央の位置"
+
+#: SceneGraphPropertyView.cpp:417
+msgid "width"
+msgstr "幅"
+
+#: SceneGraphPropertyView.cpp:418 SceneGraphPropertyView.cpp:461
+#: SceneGraphPropertyView.cpp:470 SceneGraphPropertyView.cpp:570
+msgid "height"
+msgstr "高さ"
+
+#: SceneGraphPropertyView.cpp:419
+msgid "num of components"
+msgstr "コンポーネント数"
+
+#: SceneGraphPropertyView.cpp:420
+msgid "repeatS"
+msgstr "S方向の繰り返し"
+
+#: SceneGraphPropertyView.cpp:421
+msgid "repeatT"
+msgstr "T方向の繰り返し"
+
+#: SceneGraphPropertyView.cpp:428 SceneGraphPropertyView.cpp:493
+msgid "num of vertices"
+msgstr "頂点の数"
+
+#: SceneGraphPropertyView.cpp:430 SceneGraphPropertyView.cpp:495
+msgid "num of normals"
+msgstr "法線の数"
+
+#: SceneGraphPropertyView.cpp:432 SceneGraphPropertyView.cpp:497
+msgid "num of colors"
+msgstr "色ベクトルの数"
+
+#: SceneGraphPropertyView.cpp:434
+msgid "num of texCoord"
+msgstr "テクスチャ座標の数"
+
+#: SceneGraphPropertyView.cpp:435
+msgid "num of normalIndices"
+msgstr "法線インデックスの数"
+
+#: SceneGraphPropertyView.cpp:436 SceneGraphPropertyView.cpp:510
+msgid "num of colorIndices"
+msgstr "色インデックスの数"
+
+#: SceneGraphPropertyView.cpp:437
+msgid "num of texCoordIndices"
+msgstr "テクスチャ座標インデックスの数"
+
+#: SceneGraphPropertyView.cpp:438
+msgid "is Solid"
+msgstr "剛体"
+
+#: SceneGraphPropertyView.cpp:444
+msgid "num of triangles"
+msgstr "三角形の数"
+
+#: SceneGraphPropertyView.cpp:448 SceneGraphPropertyView.cpp:454
+#: SceneGraphPropertyView.cpp:458 SceneGraphPropertyView.cpp:467
+msgid "primitive type"
+msgstr "基本形状タイプ"
+
+#: SceneGraphPropertyView.cpp:450
+msgid "size"
+msgstr "サイズ"
+
+#: SceneGraphPropertyView.cpp:455 SceneGraphPropertyView.cpp:460
+#: SceneGraphPropertyView.cpp:469
+msgid "radius"
+msgstr "半径"
+
+#: SceneGraphPropertyView.cpp:462 SceneGraphPropertyView.cpp:471
+msgid "bottom"
+msgstr "底の有無"
+
+#: SceneGraphPropertyView.cpp:463 SceneGraphPropertyView.cpp:472
+msgid "side"
+msgstr "側の有無"
+
+#: SceneGraphPropertyView.cpp:464
+msgid "top"
+msgstr "頂の有無"
+
+#: SceneGraphPropertyView.cpp:480
+msgid "num of polygonVertices"
+msgstr "ポリゴン頂点の数"
+
+#: SceneGraphPropertyView.cpp:503
+msgid "point size"
+msgstr "点のサイズ"
+
+#: SceneGraphPropertyView.cpp:509
+msgid "line width"
+msgstr "線のサイズ"
+
+#: SceneGraphPropertyView.cpp:522
+msgid "on/off"
+msgstr "オン/オフ"
+
+#: SceneGraphPropertyView.cpp:524
+msgid "color"
+msgstr "色"
+
+#: SceneGraphPropertyView.cpp:525
+msgid "intensity"
+msgstr "照度"
+
+#: SceneGraphPropertyView.cpp:533 SceneGraphPropertyView.cpp:549
+msgid "direction"
+msgstr "方向"
+
+#: SceneGraphPropertyView.cpp:540
+msgid "location"
+msgstr "位置"
+
+#: SceneGraphPropertyView.cpp:542
+msgid "attenuation"
+msgstr "減衰"
+
+#: SceneGraphPropertyView.cpp:550
+msgid "beam width"
+msgstr "光線の幅"
+
+#: SceneGraphPropertyView.cpp:551
+msgid "cut off Angle"
+msgstr "カットオフ角"
+
+#: SceneGraphPropertyView.cpp:557
+msgid "near distance"
+msgstr "クリッピング深度　近距離"
+
+#: SceneGraphPropertyView.cpp:558
+msgid "far distance"
+msgstr "クリッピング深度　遠距離"
+
+#: SceneGraphPropertyView.cpp:564
+msgid "field of view"
+msgstr "視野角"
+
+#: SceneGraphView.cpp:129
+msgid "Scene Graph"
+msgstr "シーングラフ"

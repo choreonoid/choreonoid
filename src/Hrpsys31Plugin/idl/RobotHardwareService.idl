@@ -1,0 +1,166 @@
+/**
+ * @file RobotHardwareService.idl
+ * @brief Services for the robot hardware interface
+ */
+module OpenHRP
+{
+  interface RobotHardwareService
+  {
+    const unsigned long CALIB_STATE_MASK = 0x00000001;
+    const unsigned long CALIB_STATE_SHIFT = 0;
+    const unsigned long SERVO_STATE_MASK = 0x00000002;
+    const unsigned long SERVO_STATE_SHIFT = 1;
+    const unsigned long POWER_STATE_MASK = 0x00000004;
+    const unsigned long POWER_STATE_SHIFT = 2;
+    const unsigned long SERVO_ALARM_MASK = 0x0007fff8;
+    const unsigned long SERVO_ALARM_SHIFT = 3;
+    const unsigned long DRIVER_TEMP_MASK = 0xff000000;
+    const unsigned long DRIVER_TEMP_SHIFT = 24;
+
+    typedef sequence<octet>  OctSequence;
+    typedef sequence<double> DblSequence;
+    typedef sequence<long>   LongSequence;
+    typedef sequence<string> StrSequence;
+    typedef sequence<LongSequence>  LongSequenceSequence;
+
+    typedef double DblArray3[3];
+    typedef double DblArray6[6];
+
+    typedef sequence<double, 3> DblSequence3;
+    typedef sequence<double, 6> DblSequence6;
+
+    /**
+     * @brief status of the robot
+     */
+    struct RobotState
+    {
+      DblSequence		angle;  ///< current joint angles[rad]
+      DblSequence		command;///< reference joint angles[rad]
+      DblSequence		torque; ///< joint torques[Nm]
+      /**
+       * @brief servo statuses(32bit+extra states)
+       * 
+       * 0: calib status ( 1 => done )\n 
+       * 1: servo status ( 1 => on )\n
+       * 2: power status ( 1 => supplied )\n
+       * 3-18: servo alarms (see @ref iob.h)\n
+       * 19-23: unused
+       * 24-31: driver temperature (deg)
+       */
+      LongSequenceSequence		servoState;
+      
+      sequence<DblSequence6>	force;    ///< forces[N] and torques[Nm]
+      sequence<DblSequence3>	rateGyro; ///< angular velocities[rad/s]
+      sequence<DblSequence3>	accel;    ///< accelerations[m/(s^2)]
+      double			voltage;  ///< voltage of power supply[V]
+      double			current;  ///< current[A] 
+    };
+
+    /**
+     * @brief get status of the robot
+     * @param rs status of the robot
+     */
+    void getStatus(out RobotState rs);
+
+    enum SwitchStatus {SWITCH_ON, SWITCH_OFF};
+
+    /**
+     * @brief turn on/off power supply for motor driver
+     * @param name joint name, part name or "all"
+     * @param _ss SWITCH_ON or SWITCH_OFF
+     * @retval true if turned on/off successfully
+     * @retval false otherwise
+     */
+    boolean power(in string name, in SwitchStatus _ss);
+
+    /**
+     * @brief servo on/off
+     * @param name joint name, part name or "all"
+     * @param _ss SWITCH_ON or SWITCH_OFF
+     * @retval true if servo on/off successfully
+     * @retval false otherwise
+     */
+    boolean servo(in string name, in SwitchStatus _ss);
+
+    /**
+     * @brief set the parcentage to the default servo gain
+     * @param name joint name, part name or "all"
+     * @param percentage to joint servo gain[0-100]
+     */
+    void setServoGainPercentage(in string name, in double percentage);
+
+    /**
+     * @brief set the maximum joint servo error angle
+     * @param name joint name, part name or "all"
+     * @param limit the maximum joint servo error angle[rad]
+     */
+    void setServoErrorLimit(in string name, in double limit);
+
+    /**
+     * @brief remove offsets on sensor outputs form gyro sensors and accelerometers
+     */
+    void calibrateInertiaSensor();
+
+    /**
+     * @brief remove offsets on sensor outputs form force/torque sensors
+     */
+    void removeForceSensorOffset();
+
+    /**
+     * @brief initialize joint angle
+     * @param name joint name, part name or "all"
+     * @param option string of joint angle initialization
+     */
+    void initializeJointAngle(in string name, in string option);
+
+    /**
+     * @brief add definition of joint group
+     * @param gname name of the joint group
+     * @param jnames list of joint name 
+     * @return true if the group is added successfully, false otherwise
+     */
+    boolean addJointGroup(in string gname, in StrSequence jnames);
+
+
+    /**
+     * @brief get digital input to robot
+     * @param dOut will hold the input bits as an array of bytes
+     * @return true if applicable, false otherwise
+     */
+    boolean readDigitalInput(out OctSequence din);
+
+    /**
+     * @brief get digital input length of robot, non-applicable bits are nop
+     * @return length of digital input in bytes
+     */
+    long lengthDigitalInput();
+
+    /**
+     * @brief set digital output from robot
+     * @param dOut sends the output from the robot in a byte array
+     * @return true if applicable, false otherwise
+     */
+    boolean writeDigitalOutput(in OctSequence dout);
+
+    /**
+     * @brief set digital output from robot
+     * @param dOut sends the output from the robot in a byte array
+     * @param mask binary vector which selects output to be set
+     * @return true if applicable, false otherwise
+     */
+    boolean writeDigitalOutputWithMask(in OctSequence dout, in OctSequence mask);
+
+    /**
+     * @brief get digital output length of robot, non-applicable bits are nop
+     * @return length of digital output in bytes
+     */
+    long lengthDigitalOutput();
+
+    /**
+     * @brief get digital output to robot
+     * @param dOut will hold the input bits as an array of bytes
+     * @return true if applicable, false otherwise
+     */
+    boolean readDigitalOutput(out OctSequence dOut);
+  };
+};

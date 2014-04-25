@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.1
+Name=Choreonoid
+GenericName=Integrated Robotics Platform
+Comment=Integrated Robotics Platform
+MimeType=
+Exec=/home/nakaoka/choreonoid/bin/choreonoid %F
+TryExec=choreonoid
+Icon=/usr/share/icons/hicolor/scalable/apps/choreonoid.svg
+Type=Application
+Terminal=false
+Categories=

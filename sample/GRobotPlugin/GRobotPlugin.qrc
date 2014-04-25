@@ -1,0 +1,11 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/GRobot" >
+
+  <file>icons/grobo-logo.png</file>
+  <file>icons/servo-on.png</file>
+  <file>icons/sendpose.png</file>
+  <file>icons/syncpose.png</file>
+
+</qresource>
+</RCC>

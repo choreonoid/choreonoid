@@ -1,0 +1,74 @@
+# Japanese translations for PACKAGE package.
+# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# nakaoka <s.nakaoka@aist.go.jp>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-08-09 15:28+0900\n"
+"PO-Revision-Date: 2012-07-17 00:29+0100\n"
+"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: SimpleControllerItem.cpp:57
+msgid "The DLL of %1% \"%2%\" has been unloaded."
+msgstr "%1%のDLL \"%2%\" をアンロードしました。"
+
+#: SimpleControllerItem.cpp:101
+msgid "The DLL of %1% has already been loaded."
+msgstr "%1%のDLL \"%2%\" をロードしました。"
+
+#: SimpleControllerItem.cpp:108
+msgid "Loading the DLL of %1%: \"%2%\" ... "
+msgstr "%1%のDLL \"%2%\" をロード中･･･"
+
+#: SimpleControllerItem.cpp:110
+msgid "Failed.\n"
+msgstr "失敗。\n"
+
+#: SimpleControllerItem.cpp:113
+msgid "OK!"
+msgstr "OK!"
+
+#: SimpleControllerItem.cpp:121
+msgid ""
+"The factory function \"createSimpleController()\" is not found in the "
+"controller DLL."
+msgstr ""
+"ファクトリ関数\"createSimpleController()\"がコントローラDLL内に見つかりませ"
+"ん。"
+
+#: SimpleControllerItem.cpp:125
+msgid "The factory failed to create a controller instance."
+msgstr "ファクトリはコントローラインスタンスの生成に失敗しました。"
+
+#: SimpleControllerItem.cpp:127
+msgid "A controller instance has successfully been created."
+msgstr "コントローラインスタンスを生成しました。"
+
+#: SimpleControllerItem.cpp:162
+msgid "%1%'s initialize method failed."
+msgstr "%1%のinitializeメソッドが失敗しました。"
+
+#: SimpleControllerItem.cpp:273
+msgid "Controller DLL"
+msgstr "コントローラDLL"
+
+#: SimpleControllerItem.cpp:275
+msgid "Reloading"
+msgstr "再読込"
+
+#: SimpleControllerItem.cpp:277
+msgid "Input link positions"
+msgstr "リンク位置の入力"
+
+#: SimpleControllerPlugin.cpp:23
+msgid "SimpleControllerItem"
+msgstr "シンプルコントローラアイテム"

@@ -1,0 +1,301 @@
+/**
+   @author Shin'ichiro Nakaoka
+*/
+
+#include "OpenHRPInterpreterServiceItem.h"
+#include <cnoid/corba/OpenHRP/3.1/InterpreterService.hh>
+#include <cnoid/ItemManager>
+#include <cnoid/Archive>
+#include <cnoid/MessageView>
+#include <cnoid/OpenRTMUtil>
+#include <cnoid/LazyCaller>
+#include <cnoid/ScriptItem>
+#include <rtm/DataFlowComponentBase.h>
+#include <rtm/CorbaPort.h>
+#include <boost/bind.hpp>
+#include "gettext.h"
+
+using namespace std;
+using namespace boost;
+using namespace cnoid;
+
+namespace {
+const bool TRACE_FUNCTIONS = false;
+
+class InterpreterService_impl
+    : public virtual POA_OpenHRP::InterpreterService,
+      public virtual PortableServer::RefCountServantBase
+{
+public:
+    char* interpret(const char* expr);
+    void interpretMain(const char* expr);
+        
+    OpenHRPInterpreterServiceItem* item;
+    string result;
+};
+
+class InterpreterRTC : public RTC::DataFlowComponentBase
+{
+public:
+    InterpreterRTC(RTC::Manager* manager);
+    virtual ~InterpreterRTC();
+    virtual RTC::ReturnCode_t onInitialize();
+
+    RTC::CorbaPort interpreterServicePort;
+    InterpreterService_impl interpreterService;
+};
+}
+
+namespace cnoid {
+
+class OpenHRPInterpreterServiceItemImpl
+{
+public:
+    OpenHRPInterpreterServiceItem* self;
+    InterpreterRTC* rtc;
+    string rtcInstanceName;
+    ostream& os;
+
+    OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self);
+    OpenHRPInterpreterServiceItemImpl(
+        OpenHRPInterpreterServiceItem* self, const OpenHRPInterpreterServiceItemImpl& org);
+    ~OpenHRPInterpreterServiceItemImpl();
+
+    void setRTCinstanceName(const std::string& name);
+    bool createRTC();
+    bool deleteRTC();
+};
+
+typedef OpenHRPInterpreterServiceItemImpl ItemImpl;
+}
+
+
+void OpenHRPInterpreterServiceItem::initializeClass(ExtensionManager* ext)
+{
+    static const char* spec[] = {
+        "implementation_id", "OpenHRPInterpreterService",
+        "type_name",         "OpenHRPInterpreterService",
+        "description",       "Component for accessing the python interpreter executing a script",
+        "version",           "1.0",
+        "vendor",            "AIST",
+        "category",          "Choreonoid",
+        "activity_type",     "DataFlowComponent",
+        "max_instance",      "100",
+        "language",          "C++",
+        "lang_type",         "compile",
+        ""
+    };
+
+    RTC::Properties profile(spec);
+    RTC::Manager::instance().registerFactory(
+        profile, RTC::Create<InterpreterRTC>, RTC::Delete<InterpreterRTC>);
+
+    ext->itemManager()
+        .registerClass<OpenHRPInterpreterServiceItem>(N_("OpenHRPInterpreterServiceItem"))
+        .addCreationPanel<OpenHRPInterpreterServiceItem>();
+}
+
+
+OpenHRPInterpreterServiceItem::OpenHRPInterpreterServiceItem()
+{
+    impl = new ItemImpl(this);
+}
+
+
+ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self)
+    : self(self),
+      os(MessageView::instance()->cout())
+{
+    rtc = 0;
+}
+
+
+OpenHRPInterpreterServiceItem::OpenHRPInterpreterServiceItem(const OpenHRPInterpreterServiceItem& org)
+    : Item(org)
+{
+    impl = new ItemImpl(this, *org.impl);
+}
+
+
+ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self, const ItemImpl& org)
+    : self(self),
+      os(MessageView::instance()->cout())
+{
+    rtc = 0;
+}
+    
+
+OpenHRPInterpreterServiceItem::~OpenHRPInterpreterServiceItem()
+{
+    delete impl;
+}
+
+
+ItemImpl::~ItemImpl()
+{
+    deleteRTC();
+}
+
+
+ItemPtr OpenHRPInterpreterServiceItem::doDuplicate() const
+{
+    return new OpenHRPInterpreterServiceItem(*this);
+}
+
+
+void ItemImpl::setRTCinstanceName(const std::string& name)
+{
+    if(rtcInstanceName != name){
+        rtcInstanceName = name;
+        if(self->findRootItem()){
+            createRTC();
+        }
+    }
+}
+
+
+bool ItemImpl::createRTC()
+{
+    if(rtc){
+        deleteRTC();
+    }
+    if(rtc || rtcInstanceName.empty()){
+        return false;
+    }
+    
+    format param("OpenHRPInterpreterService?"
+                 "instance_name=%1%&"
+                 "exec_cxt.periodic_type=PeriodicExecutionContext&"
+                 "exec_cxt.periodic.rate=10");
+    
+    rtc = dynamic_cast<InterpreterRTC*>(cnoid::createManagedRTC(str(param % rtcInstanceName).c_str()));
+    
+    if(rtc){
+        rtc->interpreterService.item = self;
+        
+        os << (format(_("RTC \"%1%\" of \"%2%\" has been created."))
+               % rtcInstanceName % self->name()) << endl;
+    } else {
+        os << (format(_("RTC \"%1%\" of \"%2%\" cannot be created."))
+               % rtcInstanceName % self->name()) << endl;
+    }
+    
+    return (rtc != 0);
+}
+
+
+bool ItemImpl::deleteRTC()
+{
+    if(rtc){
+        if(cnoid::deleteRTC(rtc, true)){
+            os << (format(_("RTC \"%1%\" of \"%2%\" has been deleted."))
+                   % rtcInstanceName % self->name()) << endl;
+            rtc = 0;
+        } else {
+            os << (format(_("RTC \"%1%\" of \"%2%\" cannot be deleted."))
+                   % rtcInstanceName % self->name()) << endl;
+        }
+    }
+
+    return (rtc == 0);
+}
+
+
+void OpenHRPInterpreterServiceItem::onConnectedToRoot()
+{
+    impl->createRTC();
+}
+
+
+void OpenHRPInterpreterServiceItem::onDisconnectedFromRoot()
+{
+    impl->deleteRTC();
+}
+
+
+void OpenHRPInterpreterServiceItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("RTC Instance name"), impl->rtcInstanceName,
+                bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
+}
+
+
+bool OpenHRPInterpreterServiceItem::store(Archive& archive)
+{
+    archive.write("rtcInstance", impl->rtcInstanceName);
+    return true;
+}
+
+
+bool OpenHRPInterpreterServiceItem::restore(const Archive& archive)
+{
+    impl->setRTCinstanceName(archive.get("rtcInstance", impl->rtcInstanceName));
+    return true;
+}
+
+
+InterpreterRTC::InterpreterRTC(RTC::Manager* manager)
+    : RTC::DataFlowComponentBase(manager),
+      interpreterServicePort("InterpreterService")
+{
+
+}
+      
+
+InterpreterRTC:: ~InterpreterRTC()
+{
+
+}
+
+
+RTC::ReturnCode_t InterpreterRTC::onInitialize()
+{
+    interpreterServicePort.registerProvider("service0", "InterpreterService", interpreterService);
+    addPort(interpreterServicePort);
+    return RTC::RTC_OK;
+}
+
+
+char* InterpreterService_impl::interpret(const char* expr)
+{
+    result.clear();
+    
+    callSynchronously(bind(&InterpreterService_impl::interpretMain, this, expr));
+
+    CORBA::String_var ret(result.c_str());
+    return ret._retn();;
+}
+
+
+void InterpreterService_impl::interpretMain(const char* expr)
+{
+    ostream& os = MessageView::instance()->cout();
+    
+    os << (format(_("%1%: interpret(\"%2%\")")) % item->name() % expr) << endl;
+
+    ScriptItem* scriptItem = item->findOwnerItem<ScriptItem>();
+    if(!scriptItem){
+        os <<(format(_("The owner script item of %1% is not found. The interpret function cannot be executed."))
+              % item->name()) << endl;
+    } else {
+        if(scriptItem->isRunning()){
+            os << (format(_("Owner script item \"%1%\" is running now. The interpret function cannot be executed."))
+                   % scriptItem->name()) << endl;
+        } else {
+            if(!scriptItem->executeCode(expr)){
+                os << (format(_("Executing the script given to the interpret function failed."))) << endl;
+            } else {
+                if(!scriptItem->waitToFinish()){
+                    os << (format(_("The script does not return.")) % item->name()) << endl;
+                } else {
+                    result = scriptItem->resultString();
+                    if(!result.empty()){
+                        os << (format(_("%1%: interpret() returns %2%.")) % item->name() % result) << endl;
+                    } else {
+                        os << (format(_("%1%: interpret() finished.")) % item->name()) << endl;
+                    }
+                }
+            }
+        }
+    }
+}
