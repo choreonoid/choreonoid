@@ -85,33 +85,37 @@ OptionManager::~OptionManager()
 */
 
 
-void OptionManager::addOption(const char* name, const char* description)
+OptionManager& OptionManager::addOption(const char* name, const char* description)
 {
     if(info){
         info->options.add_options()(name, description);
     }
+    return *this;
 }
 
 
-void OptionManager::addOption(const char* name, const program_options::value_semantic* s)
+OptionManager& OptionManager::addOption(const char* name, const program_options::value_semantic* s)
 {
     if(info){
         info->options.add_options()(name, s);
     }
+    return *this;
 }
 
 
-void OptionManager::addOption(const char* name, const program_options::value_semantic* s, const char* description)
+OptionManager& OptionManager::addOption(const char* name, const program_options::value_semantic* s, const char* description)
 {
     if(info){
         info->options.add_options()(name, s, description);
     }
+    return *this;
 }
 
 
-void OptionManager::addPositionalOption(const char* name, int maxCount)
+OptionManager& OptionManager::addPositionalOption(const char* name, int maxCount)
 {
     if(info){
         info->positionalOptions.add(name, maxCount);
     }
+    return *this;
 }

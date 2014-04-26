@@ -65,7 +65,7 @@ public:
 
         addToolBar(BodyBar::instance());
         addToolBar(KinematicsBar::instance());
-        addToolBar(SimulationBar::initialize(this));
+        SimulationBar::initialize(this);
 
         LinkSelectionView::initializeClass(this);
         BodyLinkView::initializeClass(this);

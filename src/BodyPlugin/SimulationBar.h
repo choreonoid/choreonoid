@@ -17,7 +17,7 @@ class SimulatorItem;
 class CNOID_EXPORT SimulationBar : public ToolBar
 {
 public:
-    static SimulationBar* initialize(ExtensionManager* ext);
+    static void initialize(ExtensionManager* ext);
     static SimulationBar* instance();
 
     SignalProxy< boost::signal<void(SimulatorItem*)> > sigSimulationAboutToStart() {
@@ -25,6 +25,7 @@ public:
     }
             
     void startSimulation(SimulatorItem* simulator, bool doRest);
+    void startSimulation(bool doRest = true);
     void stopSimulation(SimulatorItem* simulator);
 
     virtual ~SimulationBar();

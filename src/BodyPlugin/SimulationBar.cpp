@@ -9,6 +9,8 @@
 #include <cnoid/RootItem>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
+#include <cnoid/OptionManager>
+#include <cnoid/LazyCaller>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
@@ -16,17 +18,33 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
+static SimulationBar* instance_ = 0;
+    
 
-SimulationBar* SimulationBar::initialize(ExtensionManager* ext)
+static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
-    return instance();
+    if(v.count("start-simulation")){
+        callLater(bind(&SimulationBar::startSimulation, instance_, true));
+    }
+}
+
+
+void SimulationBar::initialize(ExtensionManager* ext)
+{
+    if(!instance_){
+        instance_ = new SimulationBar();
+        ext->addToolBar(instance_);
+        
+        ext->optionManager()
+            .addOption("start-simulation", "start simulation automatically")
+            .sigOptionsParsed().connect(onSigOptionsParsed);
+    }
 }
 
 
 SimulationBar* SimulationBar::instance()
 {
-    static SimulationBar* instance = new SimulationBar();
-    return instance;
+    return instance_;
 }
 
 
@@ -44,13 +62,11 @@ SimulationBar::SimulationBar()
     typedef boost::function<void(SimulatorItem* simulator)> Callback;
 
     addButton(QIcon(":/Body/icons/start-simulation.png"), _("Start simulation from the beginning"))->
-        sigClicked().connect(bind(&SimulationBar::forEachSimulator, this,
-                                  Callback(bind(&SimulationBar::startSimulation, this, _1, true))));
+        sigClicked().connect(bind(&SimulationBar::startSimulation, this, true));
 
     addButton(QIcon(":/Body/icons/restart-simulation.png"),
               _("Start simulation from the current state"))->
-        sigClicked().connect(bind(&SimulationBar::forEachSimulator, this,
-                                  Callback(bind(&SimulationBar::startSimulation, this, _1, false))));
+        sigClicked().connect(bind(&SimulationBar::startSimulation, this, false));
     
     addButton(QIcon(":/Body/icons/stop-simulation.png"), _("Stop simulation"))->
         sigClicked().connect(bind(&SimulationBar::onStopSimulationClicked, this));
@@ -163,6 +179,12 @@ void SimulationBar::forEachSimulator(function<void(SimulatorItem* simulator)> ca
             }
         }
     }
+}
+
+
+void SimulationBar::startSimulation(bool doRest)
+{
+    forEachSimulator(bind(&SimulationBar::startSimulation, this, _1, doRest));
 }
 
 

@@ -250,8 +250,9 @@ void TimeBar::initialize(ExtensionManager* ext)
     if(!initialized){
         ext->addToolBar(TimeBar::instance());
 
-        ext->optionManager().addOption("start-playback", "start playback automatically");
-        ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
+        ext->optionManager()
+            .addOption("start-playback", "start playback automatically")
+            .sigOptionsParsed().connect(onSigOptionsParsed);
             
         initialized = true;
     }

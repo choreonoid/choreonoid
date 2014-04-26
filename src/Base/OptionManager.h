@@ -18,10 +18,10 @@ class CNOID_EXPORT OptionManager
 public:
     //boost::program_options::options_description_easy_init addOptions();
 
-    void addOption(const char* name, const char* description);
-    void addOption(const char* name, const boost::program_options::value_semantic* s);
-    void addOption(const char* name, const boost::program_options::value_semantic* s, const char* description);
-    void addPositionalOption(const char* name, int maxCount);
+    OptionManager& addOption(const char* name, const char* description);
+    OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s);
+    OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s, const char* description);
+    OptionManager& addPositionalOption(const char* name, int maxCount);
 
     typedef boost::signal<void(boost::program_options::variables_map& variables)> SigOptionsParsed;
 
