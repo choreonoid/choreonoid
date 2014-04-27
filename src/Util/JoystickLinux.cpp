@@ -12,6 +12,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <cmath>
 #include "gettext.h"
 
 using namespace std;
@@ -179,15 +180,19 @@ bool JoystickImpl::readEvent()
     }
 
     const int id = event.number;
-    const double pos = (double)event.value / MAX_VALUE_16BIT;
-    if(event.type & JS_EVENT_AXIS) {
-        // normalize value (-1.0〜1.0)
-        axes[id] = pos;
-        self->onJoystickEvent(Joystick::AXIS, id, pos);
-    } else {
+    double pos = (double)event.value / MAX_VALUE_16BIT;
+    if(event.type & JS_EVENT_BUTTON) {
         // button 
         buttons[id] = (pos > 0.0);
         self->onJoystickEvent(Joystick::BUTTON, id, pos);
+    } else if(event.type & JS_EVENT_AXIS){
+        // normalize value (-1.0〜1.0)
+        pos = nearbyint(pos * 10.0) / 10.0;
+        double prevPos = axes[id];
+        if(pos != prevPos){
+            axes[id] = pos;
+            self->onJoystickEvent(Joystick::AXIS, id, pos);
+        }
     }
     return true;
 }
