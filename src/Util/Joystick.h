@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_JOYSTICK_H_INCLUDED
-#define CNOID_UTIL_JOYSTICK_H_INCLUDED
+#ifndef CNOID_UTIL_JOYSTICK_H
+#define CNOID_UTIL_JOYSTICK_H
 
 #include "exportdecl.h"
 
@@ -17,7 +17,9 @@ class CNOID_EXPORT Joystick
 public:
     Joystick();
     Joystick(const char* device);
-    ~Joystick();
+    virtual ~Joystick();
+
+    int fileDescriptor() const;
 
     bool isReady() const;
     const char* errorMessage() const;
@@ -27,10 +29,16 @@ public:
     bool readCurrentState();
     double getPosition(int axis) const;
     bool getButtonState(int button) const;
+
+protected:
+    enum EventType { BUTTON, AXIS };
+    virtual void onJoystickEvent(EventType type, int id, double position);
        
 private:
     JoystickImpl* impl;
+    friend class JoystickImpl;
 };
+
 }
 
 #endif

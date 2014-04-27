@@ -1,0 +1,122 @@
+/*!
+  @author Shin'ichiro Nakaoka
+*/
+
+#include "JoystickCapture.h"
+#include "SocketNotifier.h"
+#include <cnoid/Joystick>
+#include <boost/bind.hpp>
+
+using namespace boost;
+using namespace cnoid;
+
+namespace {
+
+class JoystickEx : public Joystick
+{
+    JoystickCaptureImpl* capture;
+public:
+    JoystickEx(JoystickCaptureImpl* capture, const char* device)
+        : Joystick(device), capture(capture) { }
+    virtual void onJoystickEvent(EventType type, int id, double position);
+};
+
+}
+
+namespace cnoid {
+
+class JoystickCaptureImpl
+{
+public:
+    JoystickEx* joystick;
+    SocketNotifier* notifier;
+    
+    signal<void(int id, double position)> sigButton;
+    signal<void(int id, double position)> sigAxis;
+    
+    JoystickCaptureImpl();
+    ~JoystickCaptureImpl();
+    bool setDevice(const char* device);
+};
+
+}
+
+
+JoystickCapture::JoystickCapture()
+{
+    impl = new JoystickCaptureImpl;
+}
+
+
+JoystickCaptureImpl::JoystickCaptureImpl()
+{
+    joystick = 0;
+    notifier = 0;
+}
+
+
+JoystickCapture::~JoystickCapture()
+{
+    delete impl;
+}
+
+
+JoystickCaptureImpl::~JoystickCaptureImpl()
+{
+    setDevice(0);
+}
+
+
+bool JoystickCapture::setDevice(const char* device)
+{
+    return impl->setDevice(device);
+}
+
+
+bool JoystickCaptureImpl::setDevice(const char* device)
+{
+    if(notifier){
+        delete notifier;
+    }
+    if(joystick){
+        delete joystick;
+    }
+    if(device){
+        joystick = new JoystickEx(this, device);
+        if(joystick->isReady()){
+            notifier = new SocketNotifier(joystick->fileDescriptor(), QSocketNotifier::Read);
+            notifier->sigActivated().connect(
+                bind(&Joystick::readCurrentState, joystick));
+            return true;
+        }
+    }
+    return false;
+}
+
+
+boost::signal<void(int id, double position)>& JoystickCapture::sigButton()
+{
+    return impl->sigButton;
+}
+
+
+boost::signal<void(int id, double position)>& JoystickCapture::sigAxis()
+{
+    return impl->sigAxis;
+}
+
+
+bool JoystickCapture::isReady() const
+{
+    return (impl->joystick && impl->joystick->isReady());
+}
+
+
+void JoystickEx::onJoystickEvent(EventType type, int id, double position)
+{
+    if(type == Joystick::BUTTON){
+        capture->sigButton(id, position);
+    } else if(type == Joystick::AXIS){
+        capture->sigAxis(id, position);
+    }
+}

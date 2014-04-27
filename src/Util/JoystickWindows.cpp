@@ -98,6 +98,12 @@ const char* Joystick::errorMessage() const
 }
 
 
+int Joystick::fileDescriptor() const
+{
+    return -1; // invalid
+}
+
+
 int Joystick::numAxes() const
 {
     return impl->numAvailableAxes;
@@ -107,6 +113,12 @@ int Joystick::numAxes() const
 int Joystick::numButtons() const
 {
     return impl->buttons.size();
+}
+
+
+void Joystick::onJoystickEvent(EventType type, int id, double position)
+{
+
 }
 
 

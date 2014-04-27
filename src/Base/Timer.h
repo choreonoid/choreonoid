@@ -1,9 +1,9 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_TIMER_H_INCLUDED
-#define CNOID_BASE_TIMER_H_INCLUDED
+#ifndef CNOID_BASE_TIMER_H
+#define CNOID_BASE_TIMER_H
 
 #include <cnoid/SignalProxy>
 #include <QTimer>
@@ -15,7 +15,7 @@ class CNOID_EXPORT Timer : public QTimer
 {
     Q_OBJECT
 
-        public:
+public:
     Timer(QObject* parent = 0);
                                
     SignalProxy< boost::signal<void()> > sigTimeout() {

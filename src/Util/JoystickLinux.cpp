@@ -31,6 +31,7 @@ public:
 
     JoystickImpl(Joystick* self, const char* device);
     ~JoystickImpl();
+    bool openDevice(const char* device);
     void closeDevice();
     bool readCurrentState();
     bool readEvent();
@@ -53,11 +54,19 @@ Joystick::Joystick(const char* device)
 JoystickImpl::JoystickImpl(Joystick* self, const char* device)
     : self(self)
 {
+    openDevice(device);
+}
+
+
+bool JoystickImpl::openDevice(const char* device)
+{
+    closeDevice();
+    
     fd = open(device, O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
         errorMessage = str(format(_("Device \"%1%\": %2%")) % device % strerror(errno));
-        return;
+        return false;
     }
     errorMessage.clear();
         
@@ -70,8 +79,8 @@ JoystickImpl::JoystickImpl(Joystick* self, const char* device)
     buttons.resize(numButtons, false);
 
     // read initial state
-    readCurrentState();
-}
+    return readCurrentState();
+}    
 
 
 Joystick::~Joystick()
@@ -107,6 +116,12 @@ const char* Joystick::errorMessage() const
 }
 
 
+int Joystick::fileDescriptor() const
+{
+    return impl->fd;
+}
+
+
 int Joystick::numAxes() const
 {
     return impl->axes.size();
@@ -116,6 +131,12 @@ int Joystick::numAxes() const
 int Joystick::numButtons() const
 {
     return impl->buttons.size();
+}
+
+
+void Joystick::onJoystickEvent(EventType type, int id, double position)
+{
+
 }
 
 
@@ -157,12 +178,16 @@ bool JoystickImpl::readEvent()
         return false;
     }
 
+    const int id = event.number;
+    const double pos = (double)event.value / MAX_VALUE_16BIT;
     if(event.type & JS_EVENT_AXIS) {
         // normalize value (-1.0〜1.0)
-        axes[event.number] = (double)event.value / MAX_VALUE_16BIT;
+        axes[id] = pos;
+        self->onJoystickEvent(Joystick::AXIS, id, pos);
     } else {
         // button 
-        buttons[event.number] = (event.value != 0);
+        buttons[id] = (pos > 0.0);
+        self->onJoystickEvent(Joystick::BUTTON, id, pos);
     }
     return true;
 }

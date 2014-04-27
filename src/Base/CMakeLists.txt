@@ -52,11 +52,12 @@ set(sources
   ComboBox.cpp
   Dialog.cpp
   DescriptionDialog.cpp
+  Timer.cpp
+  SocketNotifier.cpp
   ImageWidget.cpp
   TreeView.cpp
   TreeWidget.cpp
   ItemSelectionModel.cpp
-  Timer.cpp
   ExtensionManager.cpp
   OptionManager.cpp
   Plugin.cpp
@@ -92,6 +93,13 @@ set(sources
   ImageView.cpp
   )
 
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+  set(sources ${sources} JoystickCaptureLinux.cpp)
+elseif(WIN32)
+  #set(sources ${sources} JoystickCaptureWindows.cpp)
+elseif(APPLE)
+  #set(sources ${sources} JoystickCaptureOSX.cpp)
+endif()
 
 set(headers
   App.h
@@ -107,11 +115,12 @@ set(headers
   LineEdit.h
   ComboBox.h
   Dialog.h
+  Timer.h
+  SocketNotifier.h
   ImageWidget.h
   TreeView.h
   TreeWidget.h
   ItemSelectionModel.h
-  Timer.h
   MenuManager.h
   Menu.h
   ToolBar.h
@@ -163,6 +172,7 @@ set(headers
   PointSetItem.h
   TextEditView.h
   ImageView.h
+  JoystickCapture.h
   exportdecl.h
   gettext.h
   )
@@ -196,6 +206,7 @@ QT4_WRAP_CPP(sources
   TreeWidget.h
   ItemSelectionModel.h
   Timer.h
+  SocketNotifier.h
   InfoBar.h
   ItemTreeView.h
   SelectionListEditor.h
