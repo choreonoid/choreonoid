@@ -58,6 +58,8 @@ public:
     */
     bool updateKeyPosesWithBalancedTrajectories(std::ostream& os);
 
+    double barLength() const { return barLength_; }
+
 protected:
 
     virtual ItemPtr doDuplicate() const;
@@ -117,6 +119,8 @@ protected:
     TimeBar* timeBar;
 
     bool isSelectedPoseMoving;
+
+    double barLength_;
 
     void init();
     void convert(BodyPtr orgBody);

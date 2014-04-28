@@ -101,6 +101,8 @@ PoseSeqItem::PoseSeqItem()
     : seq(new PoseSeq())
 {
     init();
+
+    barLength_ = 1.0;
 }
 
 
@@ -109,6 +111,8 @@ PoseSeqItem::PoseSeqItem(const PoseSeqItem& org)
       seq(new PoseSeq(*org.seq))
 {
     init();
+
+    barLength_ = org.barLength_;
 }
 
 
@@ -591,6 +595,7 @@ bool PoseSeqItem::updateKeyPosesWithBalancedTrajectories(std::ostream& os)
 void PoseSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Target body"), seq->targetBodyName());
+    putProperty(_("Bar length"), barLength_, changeProperty(barLength_));
 }
 
 
@@ -599,6 +604,7 @@ bool PoseSeqItem::store(Archive& archive)
     if(overwrite()){
         archive.writeRelocatablePath("filename", lastAccessedFilePath());
         archive.write("format", lastAccessedFileFormatId());
+        archive.write("barLength", barLength_);
         return true;
     }
     return false;
@@ -610,6 +616,7 @@ bool PoseSeqItem::restore(const Archive& archive)
     std::string filename, formatId;
     if(archive.readRelocatablePath("filename", filename) && archive.read("format", formatId)){
         if(load(filename, archive.currentParentItem(), formatId)){
+            archive.read("barLength", barLength_);
             return true;
         }
     }

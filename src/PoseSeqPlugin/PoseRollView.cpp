@@ -93,7 +93,7 @@ public:
     double screenHeight;
     double treeBottomOnScreen;
     double timeToScreenX;
-    double gridStep;
+    double barLength;
 
     double timeLength;
     DoubleSpinBox timeLengthSpin;
@@ -426,7 +426,7 @@ void PoseRollViewImpl::setupScreen()
     screenWidth = 0.0;
     screenHeight = 0.0;
     timeToScreenX = 120.0;
-    gridStep = 1.0;
+    barLength = 1.0;
 
     dash.push_back(2.0);
     dash.push_back(2.0);
@@ -502,6 +502,7 @@ void PoseRollViewImpl::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
         if(timeLengthSpin.value() < upper){
             timeLengthSpin.setValue(upper);
         }
+        barLength = poseSeqItem->barLength();
     }
 
     if(body != prevBody){
@@ -699,7 +700,6 @@ void PoseRollViewImpl::onHScrollbarChanged(double value)
 
 void PoseRollViewImpl::onGridResolutionChanged(double value)
 {
-    gridStep = 1.0 / value;
     screen->update();
 }
 
@@ -995,8 +995,12 @@ void PoseRollViewImpl::drawBackground()
     }
 
     // draw time grid lines
-    double t = floor(left + 0.9999); // for avoiding -0.0
+    //double t = floor(left + 0.9999); // for avoiding -0.0
 
+    double step = barLength / gridIntervalSpin.value();
+    double t = floor(left / step) * step;
+    if(t != left) t += step;
+    
     while(true){
 
         double x = timeToScreenX * (t - left);
@@ -1014,7 +1018,7 @@ void PoseRollViewImpl::drawBackground()
 
         painter.drawLine(x, treeTopOnScreen, x, rowBottom);
 
-        t += gridStep;
+        t += step;
     }
 }
 
