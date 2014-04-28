@@ -22,11 +22,6 @@ if(UNIX)
     GSMediaView.cpp
     AudioItem.cpp
     )
-  set(libraries 
-    CnoidUtil CnoidBase 
-    ${GSTREAMER_LIBRARIES}
-    ${SNDFILE_LIBRARIES}
-    )
 
   pkg_check_modules(GSTREAMER REQUIRED gstreamer-interfaces-0.10)
   include_directories(${GSTREAMER_INCLUDE_DIRS})
@@ -34,6 +29,12 @@ if(UNIX)
   pkg_check_modules(SNDFILE REQUIRED sndfile)
   include_directories(${SNDFILE_INCLUDE_DIRS})
   set_source_files_properties(AudioItem.cpp PROPERTIES COMPILE_DEFINITIONS "CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE")
+
+  set(libraries 
+    CnoidUtil CnoidBase 
+    ${GSTREAMER_LIBRARIES}
+    ${SNDFILE_LIBRARIES}
+    )
 
   if(NOT APPLE)
     pkg_check_modules(LIBPULSE REQUIRED libpulse)
@@ -69,6 +70,8 @@ make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} ${libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
+
+message(STATUS "libraries = ${libraries}")
 
 
 if(ENABLE_PYTHON)
