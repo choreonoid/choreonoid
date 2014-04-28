@@ -53,6 +53,10 @@ public:
     SgOrthographicCamera* builtinOrthographicCamera() const;
     bool isBuiltinCameraCurrent() const;
 
+    void startBuiltinCameraViewChange(const Vector3& center);
+    void rotateBuiltinCameraView(double dPitch, double dYaw);
+    void translateBuiltinCameraView(const Vector3& dp_local);
+
     const Affine3& viewMatrix() const;
     const Array4i& viewport() const;
 
