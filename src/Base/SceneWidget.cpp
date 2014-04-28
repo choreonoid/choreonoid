@@ -162,6 +162,7 @@ Affine3 normalizedCameraTransform(const Affine3& T)
 }
 
 boost::signal<void(SceneWidget*)> sigSceneWidgetCreated;
+
 }
 
 
@@ -218,6 +219,7 @@ public:
     Vector3 orgPointedPos;
     Affine3 orgCameraPosition;
     double orgOrthoCameraHeight;
+    Vector3 cameraViewChangeCenter;
         
     double dragAngleRatio;
     double viewTranslationRatioX;
@@ -335,6 +337,9 @@ public:
     void startViewZoom();
     void dragViewZoom();
     void zoomView(double ratio);
+
+    void rotateBuiltinCameraView(double dPitch, double dYaw);
+    void translateBuiltinCameraView(const Vector3& dp_local);
 
     void showViewModePopupMenu(const QPoint& globalPos);
     void showEditModePopupMenu(const QPoint& globalPos);
@@ -1573,6 +1578,50 @@ void SceneWidgetImpl::zoomView(double ratio)
         builtinOrthoCamera->setHeight(builtinOrthoCamera->height() * expf(ratio));
         builtinOrthoCamera->notifyUpdate(modified);
     }
+}
+
+
+void SceneWidget::startBuiltinCameraViewChange(const Vector3& center)
+{
+    impl->orgCameraPosition = impl->builtinCameraTransform->T();
+    impl->cameraViewChangeCenter = center;
+}
+
+
+void SceneWidget::rotateBuiltinCameraView(double dPitch, double dYaw)
+{
+    impl->rotateBuiltinCameraView(dPitch, dYaw);
+}
+
+
+void SceneWidgetImpl::rotateBuiltinCameraView(double dPitch, double dYaw)
+{
+    const Affine3 T = builtinCameraTransform->T();
+    builtinCameraTransform->setTransform(
+        normalizedCameraTransform(
+            Translation3(cameraViewChangeCenter) *
+            AngleAxis(dYaw, Vector3::UnitZ()) *
+            AngleAxis(dPitch, SgCamera::right(T)) *
+            Translation3(-cameraViewChangeCenter) *
+            T));
+
+    builtinCameraTransform->notifyUpdate(modified);
+}
+
+
+void SceneWidget::translateBuiltinCameraView(const Vector3& dp_local)
+{
+    impl->translateBuiltinCameraView(dp_local);
+}
+
+
+void SceneWidgetImpl::translateBuiltinCameraView(const Vector3& dp_local)
+{
+    const Affine3 T = builtinCameraTransform->T();
+    builtinCameraTransform->setTransform(
+        normalizedCameraTransform(
+            Translation3(T.linear() * dp_local) * T));
+    builtinCameraTransform->notifyUpdate(modified);
 }
 
 

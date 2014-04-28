@@ -214,3 +214,19 @@ bool Joystick::getButtonState(int button) const
     }
     return false;
 }
+
+
+bool Joystick::isActive() const
+{
+    for(size_t i=0; i < impl->axes.size(); ++i){
+        if(impl->axes[i] != 0.0){
+            return true;
+        }
+    }
+    for(size_t i=0; i < impl->buttons.size(); ++i){
+        if(impl->buttons[i]){
+            return true;
+        }
+    }
+    return false;
+}

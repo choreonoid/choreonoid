@@ -5,7 +5,6 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 include(FindPkgConfig)
 include(CheckIncludeFiles)
-#include(FindPythonLibs)
 
 project(Choreonoid)
 
@@ -240,7 +239,6 @@ if(ENABLE_PYTHON)
 
   find_package(PythonLibs 2.7 REQUIRED)
   include_directories(${PYTHON_INCLUDE_PATH})
-  #set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python/cnoid)
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
@@ -626,13 +624,6 @@ if(ENABLE_CORBA)
       set(path ${dest_subdir})
       set(dir "dummy")
       while(path AND dir)
-	#set(fullpath ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/${path})
-	#if(NOT EXISTS ${fullpath}/__init__.py)
-	#  set(init_py "${fullpath}/__init__.py")
-	#  file(WRITE ${init_py} "")
-	#  install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/${path}
-	#    CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-	#endif()
 	get_filename_component(dir ${path} NAME)
 	if(dir)
 	  if(package)
@@ -1011,6 +1002,7 @@ endif()
 # installing share directory files
 # This must be written not in share directory but in this top CMakeLists.txt
 # to prevent the share directory from being created in the binary directory
+
 set(subdirs model project motion)
 foreach(subdir ${subdirs})
   get_filename_component(path share/${subdir} ABSOLUTE)

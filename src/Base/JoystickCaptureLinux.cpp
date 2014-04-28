@@ -94,6 +94,12 @@ bool JoystickCaptureImpl::setDevice(const char* device)
 }
 
 
+void JoystickCapture::releaseDevice()
+{
+    impl->setDevice(0);
+}
+
+
 boost::signal<void(int id, double position)>& JoystickCapture::sigButton()
 {
     return impl->sigButton;
@@ -119,4 +125,36 @@ void JoystickEx::onJoystickEvent(EventType type, int id, double position)
     } else if(type == Joystick::AXIS){
         capture->sigAxis(id, position);
     }
+}
+
+
+int JoystickCapture::numAxes() const
+{
+    return impl->joystick ? impl->joystick->numAxes() : 0;
+}
+
+int JoystickCapture::numButtons() const
+{
+    return impl->joystick ? impl->joystick->numButtons() : 0;
+}
+
+bool JoystickCapture::readCurrentState()
+{
+    return impl->joystick ? impl->joystick->readCurrentState() : false;
+}
+
+double JoystickCapture::getPosition(int axis) const
+{
+    return impl->joystick ? impl->joystick->getPosition(axis) : 0.0;
+}
+
+bool JoystickCapture::getButtonState(int button) const
+{
+    return impl->joystick ? impl->joystick->getButtonState(button) : false;
+}
+
+
+bool JoystickCapture::isActive() const
+{
+    return impl->joystick ? impl->joystick->isActive() : false;
 }

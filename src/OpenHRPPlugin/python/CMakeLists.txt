@@ -1,12 +1,15 @@
 
 # @author Shin'ichiro Nakaoka
 
-idl_compile_python(OpenHRP30PythonStubs OpenHRP/3.0 OpenHRP_3_0 OpenHRP
-  OpenHRPCommon
-  DynamicsSimulator
-  ModelLoader
-  CollisionDetector
-  Controller
-  OnlineViewer
-  ViewSimulator
-)
+if(BUILD_OPENHRP_PLUGIN_FOR_3_0)
+  idl_compile_python(OpenHRP30PythonStubs OpenHRP/3.0 OpenHRP_3_0 OpenHRP
+    OpenHRPCommon
+    DynamicsSimulator
+    ModelLoader
+    CollisionDetector
+    Controller
+    OnlineViewer
+    ViewSimulator
+    )
+endif()
+
