@@ -21,9 +21,16 @@ public:
 
     bool setDevice(const char* device);
     bool isReady() const;
+    void releaseDevice();
 
     boost::signal<void(int id, double position)>& sigButton();
     boost::signal<void(int id, double position)>& sigAxis();
+
+    int numAxes() const;
+    int numButtons() const;
+    bool readCurrentState();
+    double getPosition(int axis) const;
+    bool getButtonState(int button) const;
        
 private:
     JoystickCaptureImpl* impl;
