@@ -3,6 +3,7 @@
 
 option(BUILD_ODE_PLUGIN "Building ODEPlugin" OFF)
 option(BUILD_GAZEBO_ODE_PLUGIN "Building Gazebo ODE Plugin" OFF)
+option(USE_ODE_STATIC_LIB "Gazebo ODE Plugin and ODE Plugin use a static library." ON)
 
 if(NOT BUILD_ODE_PLUGIN AND NOT BUILD_GAZEBO_ODE_PLUGIN)
   return()
@@ -24,7 +25,11 @@ if(BUILD_ODE_PLUGIN)
   if(UNIX)
     if(NOT ODE_DIR)
       pkg_check_modules(ODE REQUIRED ode)
-      set(ODE_LIBRARIES ode.a)
+      if(USE_ODE_STATIC_LIB)
+        set(ODE_LIBRARIES ode.a)
+      else()
+        set(ODE_LIBRARIES ode)
+      endif()
     endif()
   elseif(MSVC)
     if(NOT ODE_DIR)
@@ -72,11 +77,15 @@ if(BUILD_GAZEBO_ODE_PLUGIN)
       pkg_check_modules(GAZEBO_ODE REQUIRED gazebo_ode)
       include_directories(${GAZEBO_ODE_INCLUDE_DIRS})
       link_directories(${GAZEBO_ODE_LIBRARY_DIRS})
-      set(GAZEBO_ODE_LIBRARIES gazebo_ode 
+      if(USE_ODE_STATIC_LIB)
+        set(GAZEBO_ODE_LIBRARIES gazebo_ode 
                         gazebo_opcode
                         gazebo_gimpact
                         gazebo_opende_ou
                         gazebo_ccd)
+      else()
+        set(GAZEBO_ODE_LIBRARIES gazebo_ode)
+      endif()
     endif()
   elseif(MSVC)
   endif()
