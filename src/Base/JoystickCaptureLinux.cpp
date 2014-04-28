@@ -152,3 +152,9 @@ bool JoystickCapture::getButtonState(int button) const
 {
     return impl->joystick ? impl->joystick->getButtonState(button) : false;
 }
+
+
+bool JoystickCapture::isActive() const
+{
+    return impl->joystick ? impl->joystick->isActive() : false;
+}

@@ -29,6 +29,7 @@ public:
     bool readCurrentState();
     double getPosition(int axis) const;
     bool getButtonState(int button) const;
+    bool isActive() const;
 
 protected:
     enum EventType { BUTTON, AXIS };
