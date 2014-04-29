@@ -265,6 +265,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
         }
         if(result){
             messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
+            mainWindow->setProjectTitle(getBasename(filename));
             lastAccessedProjectFile = filename;
         } else {
             messageView->notify(str(fmt(_("Project \"%1%\" cannot be loaded.")) % filename));

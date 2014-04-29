@@ -31,6 +31,8 @@ public:
     class LayoutPath;
 
     void show();
+
+    void setProjectTitle(const std::string& title);
         
     bool addView(View* view);
     bool removeView(View* view);

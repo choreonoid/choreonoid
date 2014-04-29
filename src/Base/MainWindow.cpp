@@ -98,6 +98,8 @@ public:
     QVBoxLayout* centralVBox;
     QSplitter* topSplitter;
 
+    string appName;
+
     MappingPtr config;
     ArchivePtr initialLayoutArchive;
     Action* storeLastLayoutCheck;
@@ -222,7 +224,8 @@ MainWindow::MainWindow(const char* appName, ExtensionManager* ext)
 
 
 MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionManager* ext)
-    : self(self)
+    : self(self),
+      appName(appName)
 {
     isBeforeDoingInitialLayout = true;
     isMaximized = false;
@@ -261,6 +264,13 @@ MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionM
 
     normalStateSize.setWidth(config->get("width", self->width()));
     normalStateSize.setHeight(config->get("height", self->width()));
+}
+
+
+void MainWindow::setProjectTitle(const std::string& title)
+{
+    QString qtitle(_("%1 - %2"));
+    setWindowTitle(qtitle.arg(title.c_str()).arg(impl->appName.c_str()));
 }
 
 
