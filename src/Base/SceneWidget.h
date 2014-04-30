@@ -18,7 +18,7 @@ class Archive;
 class MenuManager;
 class SceneWidgetEvent;
 class SceneWidgetRoot;
-
+class Menu;
 
 class CNOID_EXPORT SceneWidget : public QWidget
 {
@@ -102,6 +102,8 @@ public:
     bool setSceneFocus(const SgNodePath& path);
     void setCursor(const QCursor cursor);
 
+    Menu* contextMenu();
+    void showContextMenu();
     SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> > sigContextMenuRequest();
 
     void showSetupDialog();

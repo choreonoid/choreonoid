@@ -1673,6 +1673,23 @@ void SceneWidgetImpl::showEditModePopupMenu(const QPoint& globalPos)
 }
 
 
+Menu* SceneWidget::contextMenu()
+{
+    return impl->menuManager.popupMenu();
+}
+
+
+void SceneWidget::showContextMenu()
+{
+    QPoint pos = QWidget::mapToGlobal(QPoint(0, 0));
+    if(impl->isEditMode){
+        impl->showEditModePopupMenu(pos);
+    } else {
+        impl->showViewModePopupMenu(pos);
+    }
+}
+
+
 SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> >
 SceneWidget::sigContextMenuRequest()
 {
