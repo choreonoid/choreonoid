@@ -135,7 +135,13 @@ int Joystick::numButtons() const
 }
 
 
-void Joystick::onJoystickEvent(EventType type, int id, double position)
+void Joystick::onJoystickButtonEvent(int id, bool isPressed)
+{
+
+}
+
+
+void Joystick::onJoystickAxisEvent(int id, double position)
 {
 
 }
@@ -182,16 +188,17 @@ bool JoystickImpl::readEvent()
     const int id = event.number;
     double pos = (double)event.value / MAX_VALUE_16BIT;
     if(event.type & JS_EVENT_BUTTON) {
-        // button 
-        buttons[id] = (pos > 0.0);
-        self->onJoystickEvent(Joystick::BUTTON, id, pos);
+        // button
+        bool isPressed = (pos > 0.0);
+        buttons[id] = isPressed;
+        self->onJoystickButtonEvent(id, isPressed);
     } else if(event.type & JS_EVENT_AXIS){
         // normalize value (-1.0〜1.0)
         pos = nearbyint(pos * 10.0) / 10.0;
         double prevPos = axes[id];
         if(pos != prevPos){
             axes[id] = pos;
-            self->onJoystickEvent(Joystick::AXIS, id, pos);
+            self->onJoystickAxisEvent(id, pos);
         }
     }
     return true;

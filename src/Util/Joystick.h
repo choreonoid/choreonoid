@@ -32,8 +32,8 @@ public:
     bool isActive() const;
 
 protected:
-    enum EventType { BUTTON, AXIS };
-    virtual void onJoystickEvent(EventType type, int id, double position);
+    virtual void onJoystickButtonEvent(int id, bool isPressed);
+    virtual void onJoystickAxisEvent(int id, double position);
        
 private:
     JoystickImpl* impl;

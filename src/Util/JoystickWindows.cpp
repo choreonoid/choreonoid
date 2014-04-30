@@ -116,7 +116,13 @@ int Joystick::numButtons() const
 }
 
 
-void Joystick::onJoystickEvent(EventType type, int id, double position)
+void Joystick::onJoystickButtonEvent(int id, bool isPressed)
+{
+
+}
+
+
+void Joystick::onJoystickAxisEvent(int id, double position)
 {
 
 }

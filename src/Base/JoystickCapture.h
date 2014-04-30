@@ -23,7 +23,7 @@ public:
     bool isReady() const;
     void releaseDevice();
 
-    boost::signal<void(int id, double position)>& sigButton();
+    boost::signal<void(int id, bool isPressed)>& sigButton();
     boost::signal<void(int id, double position)>& sigAxis();
 
     int numAxes() const;

@@ -18,7 +18,8 @@ class JoystickEx : public Joystick
 public:
     JoystickEx(JoystickCaptureImpl* capture, const char* device)
         : Joystick(device), capture(capture) { }
-    virtual void onJoystickEvent(EventType type, int id, double position);
+    virtual void onJoystickButtonEvent(int id, bool isPressed);
+    virtual void onJoystickAxisEvent(int id, double position);
 };
 
 }
@@ -31,7 +32,7 @@ public:
     JoystickEx* joystick;
     SocketNotifier* notifier;
     
-    signal<void(int id, double position)> sigButton;
+    signal<void(int id, bool isPressed)> sigButton;
     signal<void(int id, double position)> sigAxis;
     
     JoystickCaptureImpl();
@@ -100,7 +101,7 @@ void JoystickCapture::releaseDevice()
 }
 
 
-boost::signal<void(int id, double position)>& JoystickCapture::sigButton()
+boost::signal<void(int id, bool isPressed)>& JoystickCapture::sigButton()
 {
     return impl->sigButton;
 }
@@ -118,13 +119,15 @@ bool JoystickCapture::isReady() const
 }
 
 
-void JoystickEx::onJoystickEvent(EventType type, int id, double position)
+void JoystickEx::onJoystickButtonEvent(int id, bool isPressed)
 {
-    if(type == Joystick::BUTTON){
-        capture->sigButton(id, position);
-    } else if(type == Joystick::AXIS){
-        capture->sigAxis(id, position);
-    }
+    capture->sigButton(id, isPressed);
+}
+
+
+void JoystickEx::onJoystickAxisEvent(int id, double position)
+{
+    capture->sigAxis(id, position);
 }
 
 
