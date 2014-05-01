@@ -27,6 +27,7 @@ public:
     boost::signal<void(int id, double position)>& sigAxis();
 
     int numAxes() const;
+    void setAxisEnabled(int axis, bool on);
     int numButtons() const;
     bool readCurrentState();
     double getPosition(int axis) const;

@@ -23,8 +23,9 @@ public:
 
     bool isReady() const;
     const char* errorMessage() const;
-        
+
     int numAxes() const;
+    void setAxisEnabled(int axis, bool on);
     int numButtons() const;
     bool readCurrentState();
     double getPosition(int axis) const;

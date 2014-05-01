@@ -110,6 +110,13 @@ int Joystick::numAxes() const
 }
 
 
+//! \todo implement this function
+void Joystick::setAxisEnabled(int axis, bool on)
+{
+
+}
+
+
 int Joystick::numButtons() const
 {
     return impl->buttons.size();

@@ -4,6 +4,7 @@
 
 #include "Joystick.h"
 #include <boost/format.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <linux/joystick.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -27,6 +28,7 @@ public:
     Joystick* self;
     int fd;
     vector<double> axes;
+    dynamic_bitset<> axisEnabled;
     vector<bool> buttons;
     string errorMessage;
 
@@ -74,6 +76,7 @@ bool JoystickImpl::openDevice(const char* device)
     char numAxes;
     ioctl(fd, JSIOCGAXES, &numAxes);
     axes.resize(numAxes, 0.0);
+    axisEnabled.resize(numAxes, true);
 
     char numButtons;
     ioctl(fd, JSIOCGBUTTONS, &numButtons);
@@ -126,6 +129,15 @@ int Joystick::fileDescriptor() const
 int Joystick::numAxes() const
 {
     return impl->axes.size();
+}
+
+
+void Joystick::setAxisEnabled(int axis, bool on)
+{
+    if(axis < impl->axes.size()){
+        impl->axes[axis] = 0.0;
+        impl->axisEnabled[axis] = on;
+    }
 }
 
 
@@ -193,12 +205,14 @@ bool JoystickImpl::readEvent()
         buttons[id] = isPressed;
         self->onJoystickButtonEvent(id, isPressed);
     } else if(event.type & JS_EVENT_AXIS){
-        // normalize value (-1.0〜1.0)
-        pos = nearbyint(pos * 10.0) / 10.0;
-        double prevPos = axes[id];
-        if(pos != prevPos){
-            axes[id] = pos;
-            self->onJoystickAxisEvent(id, pos);
+        if(axisEnabled[id]){
+            // normalize value (-1.0〜1.0)
+            pos = nearbyint(pos * 10.0) / 10.0;
+            double prevPos = axes[id];
+            if(pos != prevPos){
+                axes[id] = pos;
+                self->onJoystickAxisEvent(id, pos);
+            }
         }
     }
     return true;

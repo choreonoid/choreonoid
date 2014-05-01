@@ -38,6 +38,7 @@ public:
     JoystickCaptureImpl();
     ~JoystickCaptureImpl();
     bool setDevice(const char* device);
+    void onNotifierActivated();
 };
 
 }
@@ -78,16 +79,17 @@ bool JoystickCaptureImpl::setDevice(const char* device)
 {
     if(notifier){
         delete notifier;
+        notifier = 0;
     }
     if(joystick){
         delete joystick;
+        joystick = 0;
     }
     if(device){
         joystick = new JoystickEx(this, device);
         if(joystick->isReady()){
             notifier = new SocketNotifier(joystick->fileDescriptor(), QSocketNotifier::Read);
-            notifier->sigActivated().connect(
-                bind(&Joystick::readCurrentState, joystick));
+            notifier->sigActivated().connect(bind(&JoystickCaptureImpl::onNotifierActivated, this));
             return true;
         }
     }
@@ -119,6 +121,14 @@ bool JoystickCapture::isReady() const
 }
 
 
+void JoystickCaptureImpl::onNotifierActivated()
+{
+    notifier->setEnabled(false);
+    joystick->readCurrentState();
+    notifier->setEnabled(true);
+}
+
+
 void JoystickEx::onJoystickButtonEvent(int id, bool isPressed)
 {
     capture->sigButton(id, isPressed);
@@ -134,6 +144,13 @@ void JoystickEx::onJoystickAxisEvent(int id, double position)
 int JoystickCapture::numAxes() const
 {
     return impl->joystick ? impl->joystick->numAxes() : 0;
+}
+
+void JoystickCapture::setAxisEnabled(int axis, bool on)
+{
+    if(impl->joystick){
+        impl->joystick->setAxisEnabled(axis, on);
+    }
 }
 
 int JoystickCapture::numButtons() const
