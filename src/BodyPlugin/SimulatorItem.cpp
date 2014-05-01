@@ -1258,13 +1258,21 @@ bool SimulatorItemImpl::stepSimulationMain()
         preDynamicsFunctions[i]();
     }
 
-    for(size_t i=0; i < activeControllers.size(); ++i){
-        ControllerItem* controller = activeControllers[i];
-        controller->input();
-        if(useControllerThreads){
+    if(useControllerThreads){
+        if(activeControllers.empty()){
+            isControlFinished = true;
+        } else {
+            for(size_t i=0; i < activeControllers.size(); ++i){
+                ControllerItem* controller = activeControllers[i];
+                controller->input();
+            }
             isControlRequested = true;
             controlCondition.notify_all();
-        } else {
+        }
+    } else {
+        for(size_t i=0; i < activeControllers.size(); ++i){
+            ControllerItem* controller = activeControllers[i];
+            controller->input();
             doContinue |= controller->control();
             if(controller->isImmediateMode()){
                 controller->output();
