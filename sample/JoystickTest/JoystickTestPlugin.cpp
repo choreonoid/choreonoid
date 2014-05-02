@@ -34,8 +34,8 @@ public:
         return true;
     }
 
-    void onButtonEvent(int id, double position) {
-        mv->putln(format("Joystick button %1%: %2%") % id % position);
+    void onButtonEvent(int id, bool isPressed) {
+        mv->putln(format("Joystick button %1%: %2%") % id % isPressed);
     }
 
     void onAxisEvent(int id, double position) {

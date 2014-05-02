@@ -57,6 +57,7 @@ Joystick::Joystick(const char* device)
 JoystickImpl::JoystickImpl(Joystick* self, const char* device)
     : self(self)
 {
+    fd = -1;
     openDevice(device);
 }
 
