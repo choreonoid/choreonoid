@@ -266,6 +266,14 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
     case Link::FIXED_JOINT:
     default:
+#ifdef GAZEBO_ODE
+    	jointID = dJointCreateFixed(worldID, 0);
+        dJointAttach(jointID, bodyID, parentBodyID);
+    	dJointSetFixed(jointID);
+    	if(link->jointType() == Link::CRAWLER_JOINT){
+    	    simImpl->crawlerLinks.insert(make_pair(bodyID, link));
+    	}
+#else
         if(parentBodyID){
             jointID = dJointCreateFixed(worldID, 0);
             dJointAttach(jointID, bodyID, parentBodyID);
@@ -276,6 +284,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
         } else {
             dBodySetKinematic(bodyID);
         }
+#endif
         break;
     }
 }
