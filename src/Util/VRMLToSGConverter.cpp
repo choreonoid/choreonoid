@@ -11,7 +11,7 @@
 #include "ImageIO.h"
 #include "Exception.h"
 #include "DaeParser.h"
-#include "StlParser.h"
+#include "STLSceneLoader.h"
 #include "NullOut.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/algorithm/string.hpp>
@@ -112,7 +112,7 @@ public:
     SgNode* createPointLight(VRMLPointLight* vlight);
     SgSpotLight* createSpotLight(VRMLSpotLight* vlight);
     SgDirectionalLight* createDirectionalLight(VRMLDirectionalLight* vlight);
-    SgGroup* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
+    SgNode* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
 };
 }
 
@@ -1782,7 +1782,7 @@ SgDirectionalLight* VRMLToSGConverterImpl::createDirectionalLight(VRMLDirectiona
 }
 
 
-SgGroup* VRMLToSGConverterImpl::readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat)
+SgNode* VRMLToSGConverterImpl::readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat)
 {
     BOOST_ASSERT(!anotherFormat->url.empty());
     if (algorithm::iends_with(anotherFormat->url, "dae")) {
@@ -1792,8 +1792,8 @@ SgGroup* VRMLToSGConverterImpl::readAnotherFormatFile(VRMLAnotherFormatFile* ano
 
     } else if (algorithm::iends_with(anotherFormat->url, "stl")) {
         // In the case of stl, we have to create a Sg-object directly from stl-file by using the stl-parser.
-        StlParser parser;
-        return parser.createScene(anotherFormat->url);
+        STLSceneLoader loader;
+        return loader.load(anotherFormat->url);
 
     } else {
         // File format of the other is an error.

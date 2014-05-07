@@ -1,6 +1,4 @@
 
-# @author Shin'ichiro Nakaoka
-
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
@@ -42,7 +40,7 @@ set(sources
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
   DaeParser.cpp
-  StlParser.cpp
+  STLSceneLoader.cpp
   ConnectionSet.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
@@ -113,7 +111,8 @@ set(headers
   Parser.h
   DaeNode.h
   DaeParser.h
-  StlParser.h
+  AbstractSceneLoader.h
+  STLSceneLoader.h
   ValueTree.h
   ValueTreeUtil.h
   YAMLReader.h

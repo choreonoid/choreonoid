@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_ABSTRACT_BODY_LOADER_H_INCLUDED
-#define CNOID_BODY_ABSTRACT_BODY_LOADER_H_INCLUDED
+#ifndef CNOID_BODY_ABSTRACT_BODY_LOADER_H
+#define CNOID_BODY_ABSTRACT_BODY_LOADER_H
 
 #include "Body.h"
 #include <iosfwd>
