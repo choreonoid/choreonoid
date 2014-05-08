@@ -129,101 +129,86 @@ template<class T> class ref_ptr
 public:
     ref_ptr() : px(0) { }
 
-    ref_ptr(T* p) : px(p)
-        {
-            if(px != 0){
-                px->addRef();
-            }
+    ref_ptr(T* p) : px(p){
+        if(px != 0){
+            px->addRef();
         }
+    }
 
     template<class U>
-    ref_ptr(ref_ptr<U> const & rhs) : px(rhs.get())
-        {
-            if(px != 0){
-                px->addRef();
-            }
+    ref_ptr(ref_ptr<U> const & rhs) : px(rhs.get()){
+        if(px != 0){
+            px->addRef();
         }
+    }
 
-    ref_ptr(ref_ptr const & rhs) : px(rhs.px)
-        {
-            if(px != 0){
-                px->addRef();
-            }
+    ref_ptr(ref_ptr const & rhs) : px(rhs.px){
+        if(px != 0){
+            px->addRef();
         }
+    }
 
-    ~ref_ptr()
-        {
-            if(px != 0){
-                px->releaseRef();
-            }
+    ~ref_ptr(){
+        if(px != 0){
+            px->releaseRef();
         }
+    }
 
-    template<class U> ref_ptr& operator=(ref_ptr<U> const & rhs)
-        {
-            ref_ptr(rhs).swap(*this);
-            return *this;
-        }
+    template<class U> ref_ptr& operator=(ref_ptr<U> const & rhs){
+        ref_ptr(rhs).swap(*this);
+        return *this;
+    }
 
 #if defined( BOOST_HAS_RVALUE_REFS )
 
-    ref_ptr(ref_ptr&& rhs) : px(rhs.px)
-        {
-            rhs.px = 0;
-        }
+    ref_ptr(ref_ptr&& rhs) : px(rhs.px){
+        rhs.px = 0;
+    }
 
-    ref_ptr & operator=(ref_ptr&& rhs)
-        {
-            ref_ptr(static_cast<ref_ptr &&>(rhs)).swap(*this);
-            return *this;
-        }
+    ref_ptr & operator=(ref_ptr&& rhs){
+        ref_ptr(static_cast<ref_ptr &&>(rhs)).swap(*this);
+        return *this;
+    }
 
 #endif
 
-    ref_ptr& operator=(ref_ptr const & rhs)
-        {
-            ref_ptr(rhs).swap(*this);
-            return *this;
-        }
+    ref_ptr& operator=(ref_ptr const & rhs){
+        ref_ptr(rhs).swap(*this);
+        return *this;
+    }
 
-    ref_ptr& operator=(T* rhs)
-        {
-            ref_ptr(rhs).swap(*this);
-            return *this;
-        }
+    ref_ptr& operator=(T* rhs){
+        ref_ptr(rhs).swap(*this);
+        return *this;
+    }
 
-    void reset()
-        {
-            ref_ptr().swap(*this);
-        }
+    void reset(){
+        ref_ptr().swap(*this);
+    }
 
-    void reset(T* rhs)
-        {
-            ref_ptr(rhs).swap(*this);
-        }
+    void reset(T* rhs){
+        ref_ptr(rhs).swap(*this);
+    }
 
     // explicit conversion to the raw pointer
-    T* get() const
-        {
-            return px;
-        }
+    T* get() const{
+        return px;
+    }
 
     // implict conversion to the raw pointer
-    operator T*() const
-        {
-            return px;
-        }        
+    operator T*() const {
+        return px;
+    }        
 
-    T& operator*() const
-        {
-            assert(px != 0);
-            return *px;
-        }
+    T& operator*() const {
+        assert(px != 0);
+        return *px;
+    }
 
-    T* operator->() const
-        {
-            assert(px != 0);
-            return px;
-        }
+    T* operator->() const {
+        assert(px != 0);
+        return px;
+    }
 
     /*
       typedef T * ref_ptr::*unspecified_bool_type;
@@ -233,17 +218,15 @@ public:
       return px == 0 ? 0: &ref_ptr::px;
       }
     */
-    operator bool() const
-        {
-            return (px != 0);
-        }
+    operator bool() const {
+        return (px != 0);
+    }
 
-    void swap(ref_ptr& rhs)
-        {
-            T* tmp = px;
-            px = rhs.px;
-            rhs.px = tmp;
-        }
+    void swap(ref_ptr& rhs){
+        T* tmp = px;
+        px = rhs.px;
+        rhs.px = tmp;
+    }
 
 private:
     template<class Y> friend class weak_ref_ptr;
@@ -333,95 +316,82 @@ public:
     weak_ref_ptr() : px(0), counter(0) { }
 
     template<class Y>
-    weak_ref_ptr(weak_ref_ptr<Y> const & rhs) : px(rhs.lock().get())
-        {
-            setCounter();
-        }
+    weak_ref_ptr(weak_ref_ptr<Y> const & rhs) : px(rhs.lock().get()){
+        setCounter();
+    }
 
     template<class Y>
-    weak_ref_ptr& operator=(weak_ref_ptr<Y> const & rhs)
-        {
-            px = rhs.lock().get();
-            setCounter();
-            return *this;
-        }
+    weak_ref_ptr& operator=(weak_ref_ptr<Y> const & rhs){
+        px = rhs.lock().get();
+        setCounter();
+        return *this;
+    }
         
 #if defined( BOOST_HAS_RVALUE_REFS )
 
     template<class Y>
-    weak_ref_ptr(weak_ref_ptr<Y>&& rhs) : px(rhs.lock().get()), counter(rhs.counter)
-        {
-            rhs.px = 0;
-            rhs.counter = 0;
-        }
+    weak_ref_ptr(weak_ref_ptr<Y>&& rhs) : px(rhs.lock().get()), counter(rhs.counter){
+        rhs.px = 0;
+        rhs.counter = 0;
+    }
 
-    weak_ref_ptr(weak_ref_ptr&& rhs) : px(rhs.px), counter(rhs.counter)
-        {
-            rhs.px = 0;
-            rhs.counter = 0;
-        }
+    weak_ref_ptr(weak_ref_ptr&& rhs) : px(rhs.px), counter(rhs.counter){
+        rhs.px = 0;
+        rhs.counter = 0;
+    }
 
-    weak_ref_ptr& operator=(weak_ref_ptr&& rhs)
-        {
-            weak_ref_ptr(static_cast<weak_ref_ptr&&>(rhs)).swap(*this);
-            rhs.px = 0;
-            rhs.counter = 0;
-        }
+    weak_ref_ptr& operator=(weak_ref_ptr&& rhs){
+        weak_ref_ptr(static_cast<weak_ref_ptr&&>(rhs)).swap(*this);
+        rhs.px = 0;
+        rhs.counter = 0;
+    }
 
 #endif
     template<class Y>
-    weak_ref_ptr(ref_ptr<Y> const & rhs) : px(rhs.px)
-        {
-            setCounter();
-        }
+    weak_ref_ptr(ref_ptr<Y> const & rhs) : px(rhs.px){
+        setCounter();
+    }
 
     template<class Y>
-    weak_ref_ptr(Y* const & rhs) : px(rhs)
-        {
-            setCounter();
-        }
+    weak_ref_ptr(Y* const & rhs) : px(rhs){
+        setCounter();
+    }
         
     template<class Y>
-    weak_ref_ptr& operator=(ref_ptr<Y> const & rhs)
-        {
-            px = rhs.px;
-            setCounter();
-            return *this;
-        }
+    weak_ref_ptr& operator=(ref_ptr<Y> const & rhs){
+        px = rhs.px;
+        setCounter();
+        return *this;
+    }
 
-    ref_ptr<T> lock() const
-        {
-            if(counter->isObjectAlive()){
-                return ref_ptr<T>(px);
-            } else {
-                return ref_ptr<T>();
-            }
+    ref_ptr<T> lock() const {
+        if(counter->isObjectAlive()){
+            return ref_ptr<T>(px);
+        } else {
+            return ref_ptr<T>();
         }
+    }
 
-    bool expired() const 
-        {
-            return !counter || !counter->isObjectAlive();
-        }
+    bool expired() const {
+        return !counter || !counter->isObjectAlive();
+    }
 
-    void reset()
-        {
-            weak_ref_ptr().swap(*this);
-        }
+    void reset(){
+        weak_ref_ptr().swap(*this);
+    }
 
-    void swap(weak_ref_ptr& other)
-        {
-            T* px_ = px;
-            px = other.px;
-            other.px = px_;
-            WeakCounter* counter_ = counter;
-            counter = other.counter;
-            other.counter = counter_;
-        }
+    void swap(weak_ref_ptr& other){
+        T* px_ = px;
+        px = other.px;
+        other.px = px_;
+        WeakCounter* counter_ = counter;
+        counter = other.counter;
+        other.counter = counter_;
+    }
 
-    template<class Y> bool _internal_less(weak_ref_ptr<Y> const & rhs) const
-        {
-            return counter < rhs.counter;
-        }
+    template<class Y> bool _internal_less(weak_ref_ptr<Y> const & rhs) const {
+        return counter < rhs.counter;
+    }
         
 private:
     template<class Y> friend class weak_ref_ptr;
