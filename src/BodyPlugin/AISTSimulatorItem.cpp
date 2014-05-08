@@ -369,6 +369,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     cfs.setFriction(staticFriction, slipFriction);
     cfs.setContactCullingDistance(contactCullingDistance.value());
+    cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
     
@@ -491,8 +492,6 @@ void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 bind(&FloatingNumberString::setNonNegativeValue, ref(contactCorrectionDepth), _1));
-    putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                bind(&FloatingNumberString::setNonNegativeValue, ref(contactCorrectionVelocityRatio), _1));
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
                 bind(&FloatingNumberString::setNonNegativeValue, ref(contactCorrectionVelocityRatio), _1));
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,

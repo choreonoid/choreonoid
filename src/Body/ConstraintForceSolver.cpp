@@ -77,10 +77,10 @@ static const bool ENABLE_CONTACT_DEPTH_CORRECTION = true;
 static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.0001;
 //static const double PENETRATION_A = 500.0;
 //static const double PENETRATION_B = 80.0;
-static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 25.0;
+static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 1.0;
 
 static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
-static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.05;
+static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.01;
 
 
 // test for mobile robots with wheels
@@ -1618,7 +1618,7 @@ void CFSImpl::setConstantVectorAndMuBlock()
                     if(depth <= 0.0){
                         velOffset = contactCorrectionVelocityRatio * depth;
                     } else {
-                        velOffset = contactCorrectionVelocityRatio * log(depth + 1.0);
+                        velOffset = contactCorrectionVelocityRatio * (-1.0 / (depth + 1.0) + 1.0);
                     }
                     b(globalIndex) = an0(globalIndex) + (constraint.normalProjectionOfRelVelocityOn0 - velOffset) * dtinv;
                 } else {
