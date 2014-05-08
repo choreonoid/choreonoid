@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "RangeSensor.h"
 #include "Light.h"
+#include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLParser>
@@ -379,6 +380,9 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         sgConverter.setDivisionNumber(divisionNumber);
         vrmlParser.load(filename);
         readTopNodes();
+        if(body->modelName().empty()){
+            body->setModelName(getBasename(filename));
+        }
         result = true;
         os().flush();
         
@@ -401,6 +405,8 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 void VRMLBodyLoaderImpl::readTopNodes()
 {
     bool humanoidNodeLoaded = false;
+
+    VRMLGroupPtr nonHumanoidNodeGroup;
     
     while(VRMLNodePtr node = vrmlParser.readNode()){
         if(node->isCategoryOf(PROTO_DEF_NODE)){
@@ -410,6 +416,7 @@ void VRMLBodyLoaderImpl::readTopNodes()
                 ProtoInfo& info = p->second;
                 (this->*info.protoCheckFunc)(proto);
             }
+            continue;
         } else if(node->isCategoryOf(PROTO_INSTANCE_NODE)){
             VRMLProtoInstance* instance = static_cast<VRMLProtoInstance*>(node.get());
             if(instance->proto->protoName == "Humanoid") {
@@ -418,18 +425,38 @@ void VRMLBodyLoaderImpl::readTopNodes()
                 }
                 readHumanoidNode(instance);
                 humanoidNodeLoaded = true;
+                continue;
             } else if(instance->proto->protoName == "ExtraJoint") {
                 extraJointNodes.push_back(instance);
+                continue;
             }
         }
+        if(!nonHumanoidNodeGroup){
+            nonHumanoidNodeGroup = new VRMLGroup;
+        }
+        nonHumanoidNodeGroup->children.push_back(node);
     }
     vrmlParser.checkEOF();
 
-    if(!humanoidNodeLoaded){
-        throw invalid_argument(_("The Humanoid node is not found."));
-    }
+    bool loaded = humanoidNodeLoaded;
     
-    setExtraJoints();
+    if(humanoidNodeLoaded){
+        setExtraJoints();
+    } else if(!nonHumanoidNodeGroup->children.empty()){
+        SgNodePtr scene = sgConverter.convert(nonHumanoidNodeGroup);
+        if(scene){
+            Link* link = body->createLink();
+            link->setName("Root");
+            link->setShape(scene);
+            link->setMass(1.0);
+            link->setInertia(Matrix3::Identity());
+            body->setRootLink(link);
+            loaded = true;
+        }
+    }
+    if(!loaded){
+        throw invalid_argument(_("There are no VRML nodes which can be loaded as a Body."));
+    }
 }
 
 
