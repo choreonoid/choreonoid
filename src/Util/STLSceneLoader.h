@@ -11,6 +11,7 @@ class STLSceneLoaderImpl;
 class CNOID_EXPORT STLSceneLoader : public AbstractSceneLoader
 {
 public:
+    virtual const char* format() const;
     virtual SgNode* load(const std::string& fileName);
 
 private:
@@ -20,4 +21,3 @@ private:
 };
 
 #endif
-

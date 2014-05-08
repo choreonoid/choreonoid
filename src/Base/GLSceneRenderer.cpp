@@ -1519,11 +1519,7 @@ void GLSceneRendererImpl::visitShape(SgShape* shape)
             } else {
                 pushPickName(shape);
                 if(!isPicking){
-                    if(material){
-                        renderMaterial(shape->material());
-                    } else {
-                        lastAlpha = 1.0;
-                    }
+                    renderMaterial(material);
                     if(texture){
                         renderTexture(texture, material);
                     }

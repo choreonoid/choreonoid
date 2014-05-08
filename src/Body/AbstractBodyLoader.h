@@ -17,7 +17,13 @@ class CNOID_EXPORT AbstractBodyLoader
 public:
     AbstractBodyLoader();
     virtual ~AbstractBodyLoader();
+
+    /**
+       \todo Modify the API for getting the format information so that multipule formats can be
+       supported and more detailed information can be obtained.
+    */
     virtual const char* format() const = 0;
+    
     virtual void setMessageSink(std::ostream& os);
     virtual void setVerbose(bool on);
     virtual void setShapeLoadingEnabled(bool on);

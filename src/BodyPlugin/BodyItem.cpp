@@ -161,7 +161,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         ext->itemManager().registerClass<BodyItem>(N_("BodyItem"));
         ext->itemManager().addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae", bind(loadBodyItem, _1, _2));
+            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", bind(loadBodyItem, _1, _2));
         ext->optionManager().addOption("hrpmodel", program_options::value< vector<string> >(), "load an OpenHRP model file");
         ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
 

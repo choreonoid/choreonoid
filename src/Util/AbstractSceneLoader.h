@@ -14,6 +14,7 @@ class AbstractSceneLoader
 {
 public:
     virtual ~AbstractSceneLoader() { }
+    virtual const char* format() const = 0;
     virtual SgNode* load(const std::string& fileName) = 0;
 };
 

@@ -10,6 +10,12 @@ using namespace boost::algorithm;
 using namespace cnoid;
 
 
+const char* STLSceneLoader::format() const
+{
+    return "STL";
+}
+
+
 static void readVector3(string text, SgVectorArray<Vector3f>* array)
 {
     trim(text);
