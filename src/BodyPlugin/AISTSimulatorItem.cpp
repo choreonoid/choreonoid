@@ -122,8 +122,8 @@ public:
     Vector3 gravity;
     double staticFriction;
     double slipFriction;
-    //double cullingThresh;
-    FloatingNumberString cullingThresh;
+    FloatingNumberString contactCullingDistance;
+    FloatingNumberString contactCullingDepth;
     FloatingNumberString errorCriterion;
     int maxNumIterations;
     FloatingNumberString contactCorrectionDepth;
@@ -178,15 +178,16 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
 
     ConstraintForceSolver& cfs = world.constraintForceSolver;
-    staticFriction = cfs.defaultStaticFriction();
-    slipFriction = cfs.defaultSlipFriction();
-    cullingThresh = cfs.defaultCullingThresh();
-    epsilon = cfs.defaultCoefficientOfRestitution();
+    staticFriction = cfs.staticFriction();
+    slipFriction = cfs.slipFriction();
+    contactCullingDistance = cfs.contactCullingDistance();
+    contactCullingDepth = cfs.contactCullingDepth();
+    epsilon = cfs.coefficientOfRestitution();
     
-    errorCriterion = ConstraintForceSolver::defaultGaussSeidelErrorCriterion();
-    maxNumIterations = ConstraintForceSolver::defaultGaussSeidelMaxNumIterations();
-    contactCorrectionDepth = ConstraintForceSolver::defaultContactCorrectionDepth();
-    contactCorrectionVelocityRatio = ConstraintForceSolver::defaultContactCorrectionVelocityRatio();
+    errorCriterion = cfs.gaussSeidelErrorCriterion();
+    maxNumIterations = cfs.gaussSeidelMaxNumIterations();
+    contactCorrectionDepth = cfs.contactCorrectionDepth();
+    contactCorrectionVelocityRatio = cfs.contactCorrectionVelocityRatio();
 
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
@@ -209,7 +210,8 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AIST
     gravity = org.gravity;
     staticFriction = org.staticFriction;
     slipFriction = org.slipFriction;
-    cullingThresh = org.cullingThresh;
+    contactCullingDistance = org.contactCullingDistance;
+    contactCullingDepth = org.contactCullingDepth;
     errorCriterion = org.errorCriterion;
     maxNumIterations = org.maxNumIterations;
     contactCorrectionDepth = org.contactCorrectionDepth;
@@ -256,9 +258,15 @@ void AISTSimulatorItem::setSlipFriction(double value)
 }
 
 
-void AISTSimulatorItem::setCullingThresh(double value)    
+void AISTSimulatorItem::setContactCullingDistance(double value)    
 {
-    impl->cullingThresh = value;
+    impl->contactCullingDistance = value;
+}
+
+
+void AISTSimulatorItem::setContactCullingDepth(double value)    
+{
+    impl->contactCullingDepth = value;
 }
 
     
@@ -359,9 +367,9 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
         addBody(simBodies[i]);
     }
 
-    cfs.setDefaultFriction(staticFriction, slipFriction);
-    cfs.setDefaultCullingThresh(cullingThresh.value());
-    cfs.setDefaultCoefficientOfRestitution(epsilon);
+    cfs.setFriction(staticFriction, slipFriction);
+    cfs.setContactCullingDistance(contactCullingDistance.value());
+    cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
     
     if(is2Dmode){
@@ -474,15 +482,19 @@ void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
     putProperty(_("Slip friction"), slipFriction, changeProperty(slipFriction));
-    putProperty(_("Culling thresh"), cullingThresh,
-                (bind(&FloatingNumberString::setNonNegativeValue, ref(cullingThresh), _1)));
+    putProperty(_("Contact culling distance"), contactCullingDistance,
+                (bind(&FloatingNumberString::setNonNegativeValue, ref(contactCullingDistance), _1)));
+    putProperty(_("Contact culling depth"), contactCullingDepth,
+                (bind(&FloatingNumberString::setNonNegativeValue, ref(contactCullingDepth), _1)));
     putProperty(_("Error criterion"), errorCriterion,
                 bind(&FloatingNumberString::setPositiveValue, ref(errorCriterion), _1));
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 bind(&FloatingNumberString::setNonNegativeValue, ref(contactCorrectionDepth), _1));
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                bind(&FloatingNumberString::setPositiveValue, ref(contactCorrectionVelocityRatio), _1));
+                bind(&FloatingNumberString::setNonNegativeValue, ref(contactCorrectionVelocityRatio), _1));
+    putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
+                bind(&FloatingNumberString::setNonNegativeValue, ref(contactCorrectionVelocityRatio), _1));
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
@@ -503,7 +515,8 @@ bool AISTSimulatorItemImpl::store(Archive& archive)
     write(archive, "gravity", gravity);
     archive.write("staticFriction", staticFriction);
     archive.write("slipFriction", slipFriction);
-    archive.write("cullingThresh", cullingThresh);
+    archive.write("cullingThresh", contactCullingDistance);
+    archive.write("contactCullingDepth", contactCullingDepth);
     archive.write("errorCriterion", errorCriterion);
     archive.write("maxNumIterations", maxNumIterations);
     archive.write("contactCorrectionDepth", contactCorrectionDepth);
@@ -533,7 +546,8 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     read(archive, "gravity", gravity);
     archive.read("staticFriction", staticFriction);
     archive.read("slipFriction", slipFriction);
-    cullingThresh = archive.get("cullingThresh", cullingThresh.string());
+    contactCullingDistance = archive.get("cullingThresh", contactCullingDistance.string());
+    contactCullingDepth = archive.get("contactCullingDepth", contactCullingDepth.string());
     errorCriterion = archive.get("errorCriterion", errorCriterion.string());
     archive.read("maxNumIterations", maxNumIterations);
     contactCorrectionDepth = archive.get("contactCorrectionDepth", contactCorrectionDepth.string());
