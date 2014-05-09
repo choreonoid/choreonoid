@@ -1303,10 +1303,7 @@ bool SimulatorItemImpl::stepSimulationMain()
     if(useControllerThreads){
         {
             boost::unique_lock<boost::mutex> lock(controlMutex);
-            while(true){
-                if(isControlFinished){
-                    break;
-                }
+            while(!isControlFinished){
                 controlCondition.wait(lock);
             }
         }

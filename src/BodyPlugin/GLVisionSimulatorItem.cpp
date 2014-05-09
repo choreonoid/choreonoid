@@ -595,7 +595,6 @@ void VisionRenderer::concurrentRenderingLoop()
                 }
                 if(isRenderingRequested){
                     isRenderingRequested = false;
-                    isRenderingFinished = false;
                     break;
                 }
                 renderingCondition.wait(lock);
@@ -657,18 +656,18 @@ void GLVisionSimulatorItemImpl::onPostDynamics()
 
 bool VisionRenderer::waitForRenderingToFinish()
 {
-    if(!isRenderingFinished){
-        if(simImpl->isBestEffortMode){
-            elapsedTime -= simImpl->worldTimeStep;
-            return false;
-        }
+    {
         boost::unique_lock<boost::mutex> lock(renderingMutex);
-        while(true){
-            if(isRenderingFinished){
-                break;
+        if(!isRenderingFinished){
+            if(simImpl->isBestEffortMode){
+                elapsedTime -= simImpl->worldTimeStep;
+                return false;
             }
-            renderingCondition.wait(lock);
+            while(!isRenderingFinished){
+                renderingCondition.wait(lock);
+            }
         }
+        isRenderingFinished = false;
     }
 
     if(hasUpdatedData){
