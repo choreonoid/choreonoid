@@ -24,7 +24,7 @@ namespace {
 
 bool loadMediaItem(MediaItemPtr item, const std::string& filepath, std::ostream& os, Item* parentItem)
 {
-    bool loaded = item->setFilepath(filepath);
+    bool loaded = item->setMediaFilePath(filepath);
     if(!loaded){
         os << item->lastErrorMessage() << endl;
     }
@@ -38,7 +38,7 @@ void onSigOptionsParsed(program_options::variables_map& v)
             
         for(size_t i=0; i < mediaFilenames.size(); ++i){
             MediaItemPtr item(new MediaItem());
-            if(item->setFilepath(mediaFilenames[i])){
+            if(item->setMediaFilePath(mediaFilenames[i])){
                 RootItem::mainInstance()->addChildItem(item);
             }
         }
@@ -68,10 +68,10 @@ MediaItem::MediaItem(const MediaItem& org)
 {
     offsetTime_ = org.offsetTime_;
 
-    if(!org.filepath().empty()){
-        setFilepath(org.filepath());
+    if(!org.mediaFilePath().empty()){
+        setMediaFilePath(org.mediaFilePath());
     } else {
-        setUri(org.uri());
+        setMediaURI(org.mediaURI());
     }
 }
 
@@ -82,25 +82,25 @@ MediaItem::~MediaItem()
 }
 
 
-bool MediaItem::setUri(const std::string& uri)
+bool MediaItem::setMediaURI(const std::string& uri)
 {
-    uri_ = uri;
-    filepath_.clear(); /// \todo set filenae_ when uri points a local file path
+    mediaURI_ = uri;
+    mediaFilePath_.clear(); /// \todo set filenae_ when uri points a local file path
     return true;
 }
     
 
-bool MediaItem::setFilepath(const std::string& filepath)
+bool MediaItem::setMediaFilePath(const std::string& filepath)
 {
-    filepath_.clear();
-    uri_.clear();
+    mediaFilePath_.clear();
+    mediaURI_.clear();
     
     filesystem::path fpath(filepath);
 
     if(filesystem::exists(fpath) && !filesystem::is_directory(fpath)){
-        filepath_ = filepath;
+        mediaFilePath_ = filepath;
         filesystem::path fullpath = getAbsolutePath(fpath);
-        uri_ = str(fmt("file://%1%") % getPathString(fullpath));
+        mediaURI_ = str(fmt("file://%1%") % getPathString(fullpath));
         return true;
 
     } else {
@@ -124,20 +124,20 @@ ItemPtr MediaItem::doDuplicate() const
 
 void MediaItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("uri"), uri_);
+    putProperty(_("uri"), mediaURI_);
     putProperty(_("offset"), offsetTime_, (bind(&MediaItem::setOffsetTime, this, _1), true));
 }
 
 
 bool MediaItem::store(Archive& archive)
 {
-    if(!filepath_.empty()){
-        archive.writeRelocatablePath("file", filepath_);
-        if(!lastAccessedFileFormatId().empty()){
-            archive.write("format", lastAccessedFileFormatId());
+    if(!mediaFilePath_.empty()){
+        archive.writeRelocatablePath("file", mediaFilePath_);
+        if(!fileFormat().empty()){
+            archive.write("format", fileFormat());
         }
-    } else if(!uri_.empty()){
-        archive.write("uri", uri_, DOUBLE_QUOTED);
+    } else if(!mediaURI_.empty()){
+        archive.write("uri", mediaURI_, DOUBLE_QUOTED);
     }
     archive.write("offsetTime", offsetTime_);
 
@@ -156,7 +156,7 @@ bool MediaItem::restore(const Archive& archive)
         archive.read("format", format);
         restored = load(location, format);
     } else {
-        restored = setUri(archive.get("uri", ""));
+        restored = setMediaURI(archive.get("uri", ""));
     }
 
     setOffsetTime(archive.get("offsetTime", 0.0));

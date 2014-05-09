@@ -1,9 +1,9 @@
-/** \file
+/** 
     \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H_INCLUDED
-#define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H_INCLUDED
+#ifndef CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
+#define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 
 #include "exportdecl.h"
 
@@ -26,32 +26,38 @@ public:
     void setCollisionDetector(CollisionDetectorPtr detector);
     CollisionDetectorPtr collisionDetector();
 
-    void setDefaultFriction(double staticFriction, double slipFliction);
-    void setDefaultCullingThresh(double thresh);
-    void setDefaultCoefficientOfRestitution(double epsilon);
+    void setFriction(double staticFriction, double slipFliction);
+    double staticFriction() const;
+    double slipFriction() const;
 
-    double defaultStaticFriction() const;
-    double defaultSlipFriction() const;
-    double defaultCullingThresh() const;
-    double defaultCoefficientOfRestitution() const;
+    void setContactCullingDistance(double thresh);
+    double contactCullingDistance() const;
+    
+    void setContactCullingDepth(double depth);
+    double contactCullingDepth();
+    
+    void setCoefficientOfRestitution(double epsilon);
+    double coefficientOfRestitution() const;
 
     void setGaussSeidelErrorCriterion(double e);
+    double gaussSeidelErrorCriterion();
+
     void setGaussSeidelMaxNumIterations(int n);
+    int gaussSeidelMaxNumIterations();
+
     void setContactDepthCorrection(double depth, double velocityRatio);
-    void setNegativeVelocityRatioForPenetration(double ratio);
+    double contactCorrectionDepth();
+    double contactCorrectionVelocityRatio();
+
     void set2Dmode(bool on);
     void enableConstraintForceOutput(bool on);
 
-    static double defaultGaussSeidelErrorCriterion();
-    static int defaultGaussSeidelMaxNumIterations();
-    static double defaultContactCorrectionDepth();
-    static double defaultContactCorrectionVelocityRatio();
 
     void initialize(void);
     void solve();
     void clearExternalForces();
 };
-};
 
+};
 
 #endif

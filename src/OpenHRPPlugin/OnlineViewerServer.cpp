@@ -146,7 +146,7 @@ void OnlineViewerServerImpl::load(string name, string url)
         
     // search for registered body items
     BodyItemInfo* info = findInfo(name);
-    if(info && info->bodyItem->lastAccessedFilePath() == filepath){
+    if(info && info->bodyItem->filePath() == filepath){
         info->needToSelectLogItem = true;
         // mv->putln(fmt(_("OnlineViewer: \"%1%\" at \"%2%\" has already been loaded.")) % name % url);
         return;
@@ -158,7 +158,7 @@ void OnlineViewerServerImpl::load(string name, string url)
     bodyItems.extractChildItems(rootItem);
     for(int i=0; i < bodyItems.size(); ++i){
         BodyItemPtr bodyItem = bodyItems[i];
-        if(bodyItem->name() == name && bodyItem->lastAccessedFilePath() == filepath){
+        if(bodyItem->name() == name && bodyItem->filePath() == filepath){
             registerBodyItem(bodyItem);
             return;
         }

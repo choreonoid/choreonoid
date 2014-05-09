@@ -132,8 +132,8 @@ void PythonSimScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 bool PythonSimScriptItem::store(Archive& archive)
 {
     if(SimulationScriptItem::store(archive) && impl->store(archive)){
-        if(!lastAccessedFilePath().empty()){
-            archive.writeRelocatablePath("file", lastAccessedFilePath());
+        if(!filePath().empty()){
+            archive.writeRelocatablePath("file", filePath());
         }
         return true;
     }

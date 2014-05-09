@@ -1301,15 +1301,14 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
 
     if(useControllerThreads){
-        if(!isControlFinished){
+        {
             boost::unique_lock<boost::mutex> lock(controlMutex);
-            while(true){
-                if(isControlFinished){
-                    break;
-                }
+            while(!isControlFinished){
                 controlCondition.wait(lock);
             }
         }
+        isControlFinished = false;
+
         doContinue |= isControlToBeContinued;
 
         for(size_t i=0; i < activeControllers.size(); ++i){
@@ -1339,7 +1338,6 @@ void SimulatorItemImpl::concurrentControlLoop()
                 }
                 if(isControlRequested){
                     isControlRequested = false;
-                    isControlFinished = false;
                     isControlToBeContinued = false;
                     break;
                 }

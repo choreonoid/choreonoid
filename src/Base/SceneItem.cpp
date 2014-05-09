@@ -9,6 +9,7 @@
 #include "PutPropertyFunction.h"
 #include <cnoid/FileUtil>
 #include <cnoid/VRMLParser>
+#include <cnoid/STLSceneLoader>
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/EigenArchive>
@@ -59,6 +60,19 @@ bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
     }
     return false;
 }
+
+bool loadSTL(SceneItem* item, const std::string& filename, std::ostream& os)
+{
+    STLSceneLoader loader;
+    SgNode* scene = loader.load(filename);
+    if(!scene){
+        os << _("The STL file cannot be loaded.") << endl;
+    } else {
+        item->topNode()->addChild(scene);
+    }
+    return (scene != 0);
+}
+
 }
 
 
@@ -71,6 +85,10 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().addLoader<SceneItem>(
             _("VRML"), "VRML-FILE", "wrl",
             bind(::loadVRML, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+
+        ext->itemManager().addLoader<SceneItem>(
+            _("Stereolithography (STL)"), "STL-FILE", "stl",
+            bind(::loadSTL, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
         
         initialized = true;
     }
@@ -119,7 +137,7 @@ ItemPtr SceneItem::doDuplicate() const
 
 void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("File"), getFilename(filesystem::path(lastAccessedFilePath())));
+    putProperty(_("File"), getFilename(filePath()));
     putProperty(_("Translation"), str(Vector3(topNode_->translation())),
                 bind(&SceneItem::onTranslationChanged, this, _1));
     Vector3 rpy(rpyFromRot(topNode_->rotation()));
@@ -153,9 +171,9 @@ bool SceneItem::onRotationChanged(const std::string& value)
 
 bool SceneItem::store(Archive& archive)
 {
-    if(!lastAccessedFilePath().empty()){
-        archive.writeRelocatablePath("file", lastAccessedFilePath());
-        archive.write("format", lastAccessedFileFormatId());
+    if(!filePath().empty()){
+        archive.writeRelocatablePath("file", filePath());
+        archive.write("format", fileFormat());
         write(archive, "translation", topNode_->translation());
         write(archive, "rotation", AngleAxis(topNode_->rotation()));
     }

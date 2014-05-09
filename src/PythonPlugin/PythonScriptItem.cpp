@@ -123,7 +123,7 @@ ItemPtr PythonScriptItem::doDuplicate() const
 
 void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Script"), getFilename(lastAccessedFilePath()));
+    putProperty(_("Script"), getFilename(filePath()));
 
     impl->doPutProperties(putProperty);
 }
@@ -131,8 +131,8 @@ void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool PythonScriptItem::store(Archive& archive)
 {
-    if(!lastAccessedFilePath().empty()){
-        archive.writeRelocatablePath("file", lastAccessedFilePath());
+    if(!filePath().empty()){
+        archive.writeRelocatablePath("file", filePath());
     }
     return impl->store(archive);
 }

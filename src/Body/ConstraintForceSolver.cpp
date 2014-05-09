@@ -77,7 +77,10 @@ static const bool ENABLE_CONTACT_DEPTH_CORRECTION = true;
 static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.0001;
 //static const double PENETRATION_A = 500.0;
 //static const double PENETRATION_B = 80.0;
-static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 30.0;
+static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 1.0;
+
+static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
+static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.01;
 
 
 // test for mobile robots with wheels
@@ -194,7 +197,8 @@ public:
         bool isNonContactConstraint;
         double muStatic;
         double muDynamic;
-        double culling_thresh;
+        double contactCullingDistance;
+        double contactCullingDepth;
         double epsilon;
     };
     typedef shared_ptr<LinkPair> LinkPairPtr;
@@ -207,9 +211,9 @@ public:
         
     double defaultStaticFriction;
     double defaultSlipFriction;
-    double defaultCullingThresh;
+    double defaultContactCullingDistance;
+    double defaultContactCullingDepth;
     double defaultCoefficientOfRestitution;
- 		
 
     class ExtraJointLinkPair : public LinkPair
     {
@@ -390,14 +394,15 @@ CFSImpl::CFSImpl(WorldBase& world) :
 {
     defaultStaticFriction = 1.0;
     defaultSlipFriction = 1.0;
-    defaultCullingThresh = 0.005;
+    defaultContactCullingDistance = DEFAULT_CONTACT_CULLING_DISTANCE;
+    defaultContactCullingDepth = DEFAULT_CONTACT_CULLING_DEPTH;
     defaultCoefficientOfRestitution = 0.0;
     
     maxNumGaussSeidelIteration = DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION;
     numGaussSeidelInitialIteration = DEFAULT_NUM_GAUSS_SEIDEL_INITIAL_ITERATION;
     gaussSeidelErrorCriterion = DEFAULT_GAUSS_SEIDEL_ERROR_CRITERION;
     contactCorrectionDepth = DEFAULT_CONTACT_CORRECTION_DEPTH;
-    contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO; 
+    contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
     isConstraintForceOutputMode = false;
     is2Dmode = false;
@@ -747,7 +752,8 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
         linkPair.isNonContactConstraint = false;
         linkPair.muStatic = defaultStaticFriction;
         linkPair.muDynamic = defaultSlipFriction;
-        linkPair.culling_thresh = defaultCullingThresh;
+        linkPair.contactCullingDistance = defaultContactCullingDistance;
+        linkPair.contactCullingDepth = defaultContactCullingDepth;
         linkPair.epsilon = defaultCoefficientOfRestitution;
         pLinkPair = &linkPair;
     }
@@ -770,6 +776,11 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 */
 bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& collision)
 {
+    // skip the contact which has too much depth
+    if(collision.depth > linkPair.contactCullingDepth){
+        return false;
+    }
+    
     ConstraintPointArray& constraintPoints = linkPair.constraintPoints;
     constraintPoints.push_back(ConstraintPoint());
     ConstraintPoint& contact = constraintPoints.back();
@@ -779,7 +790,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
     // dense contact points are eliminated
     int nPrevPoints = constraintPoints.size() - 1;
     for(int i=0; i < nPrevPoints; ++i){
-        if((constraintPoints[i].point - contact.point).norm() < linkPair.culling_thresh){
+        if((constraintPoints[i].point - contact.point).norm() < linkPair.contactCullingDistance){
             constraintPoints.pop_back();
             return false;
         }
@@ -993,7 +1004,7 @@ void CFSImpl::putContactPoints()
             os << "<-->";
             os << " " << linkPair->link[1]->name() << " of " << linkPair->bodyData[1]->body->modelName();
             os << "\n";
-            os << " culling thresh: " << linkPair->culling_thresh << "\n";
+            os << " culling thresh: " << linkPair->contactCullingDistance << "\n";
 
             ConstraintPointArray& constraintPoints = linkPair->constraintPoints;
             for(size_t j=0; j < constraintPoints.size(); ++j){
@@ -1602,10 +1613,14 @@ void CFSImpl::setConstantVectorAndMuBlock()
             } else {
                 // contact constraint
                 if(ENABLE_CONTACT_DEPTH_CORRECTION){
-                    double extraNegativeVel;
-                    double newDepth = contactCorrectionDepth - constraint.depth;
-                    extraNegativeVel = contactCorrectionVelocityRatio * newDepth;
-                    b(globalIndex) = an0(globalIndex) + (constraint.normalProjectionOfRelVelocityOn0 + extraNegativeVel) * dtinv;
+                    double velOffset;
+                    const double depth = constraint.depth - contactCorrectionDepth;
+                    if(depth <= 0.0){
+                        velOffset = contactCorrectionVelocityRatio * depth;
+                    } else {
+                        velOffset = contactCorrectionVelocityRatio * (-1.0 / (depth + 1.0) + 1.0);
+                    }
+                    b(globalIndex) = an0(globalIndex) + (constraint.normalProjectionOfRelVelocityOn0 - velOffset) * dtinv;
                 } else {
                     b(globalIndex) = an0(globalIndex) + constraint.normalProjectionOfRelVelocityOn0 * dtinv;
                 }
@@ -2149,44 +2164,56 @@ CollisionDetectorPtr ConstraintForceSolver::collisionDetector()
 }
 
 
-void ConstraintForceSolver::setDefaultFriction(double staticFriction, double slipFliction)
+void ConstraintForceSolver::setFriction(double staticFriction, double slipFliction)
 {
     impl->defaultStaticFriction = staticFriction;
     impl->defaultSlipFriction = slipFliction;
 }
 
 
-double ConstraintForceSolver::defaultStaticFriction() const
+double ConstraintForceSolver::staticFriction() const
 {
     return impl->defaultStaticFriction;
 }
 
 
-double ConstraintForceSolver::defaultSlipFriction() const
+double ConstraintForceSolver::slipFriction() const
 {
     return impl->defaultSlipFriction;
 }
 
 
-void ConstraintForceSolver::setDefaultCullingThresh(double thresh)
+void ConstraintForceSolver::setContactCullingDistance(double distance)
 {
-    impl->defaultCullingThresh = thresh;
+    impl->defaultContactCullingDistance = distance;
 }
 
 
-void ConstraintForceSolver::setDefaultCoefficientOfRestitution(double epsilon)
+double ConstraintForceSolver::contactCullingDistance() const
+{
+    return impl->defaultContactCullingDistance;
+}
+
+
+void ConstraintForceSolver::setContactCullingDepth(double depth)
+{
+    impl->defaultContactCullingDepth = depth;
+}
+
+
+double ConstraintForceSolver::contactCullingDepth()
+{
+    return impl->defaultContactCullingDepth;
+}
+
+
+void ConstraintForceSolver::setCoefficientOfRestitution(double epsilon)
 {
     impl->defaultCoefficientOfRestitution = epsilon;
 }
 
 
-double ConstraintForceSolver::defaultCullingThresh() const
-{
-    return impl->defaultCullingThresh;
-}
-
-
-double ConstraintForceSolver::defaultCoefficientOfRestitution() const
+double ConstraintForceSolver::coefficientOfRestitution() const
 {
     return impl->defaultCoefficientOfRestitution;
 }
@@ -2198,9 +2225,9 @@ void ConstraintForceSolver::setGaussSeidelErrorCriterion(double e)
 }
 
 
-double ConstraintForceSolver::defaultGaussSeidelErrorCriterion()
+double ConstraintForceSolver::gaussSeidelErrorCriterion()
 {
-    return DEFAULT_GAUSS_SEIDEL_ERROR_CRITERION;
+    return impl->gaussSeidelErrorCriterion;
 }
 
 
@@ -2210,27 +2237,9 @@ void ConstraintForceSolver::setGaussSeidelMaxNumIterations(int n)
 }
 
 
-int ConstraintForceSolver::defaultGaussSeidelMaxNumIterations()
+int ConstraintForceSolver::gaussSeidelMaxNumIterations()
 {
-    return DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION;
-}
-
-
-double ConstraintForceSolver::defaultContactCorrectionDepth()
-{
-    return DEFAULT_CONTACT_CORRECTION_DEPTH;
-}
-
-
-double ConstraintForceSolver::defaultContactCorrectionVelocityRatio()
-{
-    return DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
-}
-
-
-void ConstraintForceSolver::enableConstraintForceOutput(bool on)
-{
-    impl->isConstraintForceOutputMode = on;
+    return impl->maxNumGaussSeidelIteration;
 }
 
 
@@ -2238,6 +2247,24 @@ void ConstraintForceSolver::setContactDepthCorrection(double depth, double veloc
 {
     impl->contactCorrectionDepth = depth;
     impl->contactCorrectionVelocityRatio = velocityRatio;
+}
+
+
+double ConstraintForceSolver::contactCorrectionDepth()
+{
+    return impl->contactCorrectionDepth;
+}
+
+
+double ConstraintForceSolver::contactCorrectionVelocityRatio()
+{
+    return impl->contactCorrectionVelocityRatio;
+}
+
+
+void ConstraintForceSolver::enableConstraintForceOutput(bool on)
+{
+    impl->isConstraintForceOutputMode = on;
 }
 
 

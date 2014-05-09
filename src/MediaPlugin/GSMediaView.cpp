@@ -608,7 +608,7 @@ void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
             }
             currentMediaItem = targetItem;
 
-            if(!currentMediaItem || currentMediaItem->uri().empty()){
+            if(!currentMediaItem || currentMediaItem->mediaURI().empty()){
                 g_object_set(G_OBJECT(playbin), "uri", "", NULL);
                 timeBarConnections.disconnect();
 
@@ -639,7 +639,7 @@ void GSMediaViewImpl::activateCurrentMediaItem()
     if(currentMediaItem){
 
         g_object_set(G_OBJECT(videoSink), "show-preroll-frame", (gboolean)FALSE, NULL);
-        g_object_set(G_OBJECT(playbin), "uri", currentMediaItem->uri().c_str(), NULL);
+        g_object_set(G_OBJECT(playbin), "uri", currentMediaItem->mediaURI().c_str(), NULL);
         
         gst_element_set_state(GST_ELEMENT(playbin), GST_STATE_PAUSED);
         

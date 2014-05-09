@@ -19,11 +19,11 @@ public:
     MediaItem();
     MediaItem(const MediaItem& org);
             
-    bool setUri(const std::string& uri);
-    const std::string& uri() const { return uri_; }
+    bool setMediaURI(const std::string& uri);
+    const std::string& mediaURI() const { return mediaURI_; }
             
-    bool setFilepath(const std::string& filepath);
-    const std::string& filepath() const { return filepath_; }
+    bool setMediaFilePath(const std::string& path);
+    const std::string& mediaFilePath() const { return mediaFilePath_; }
             
     void setOffsetTime(double offset);
     double offsetTime() const { return offsetTime_; }
@@ -39,8 +39,8 @@ protected:
     virtual bool restore(const Archive& archive);
             
 private:
-    std::string uri_;
-    std::string filepath_;
+    std::string mediaURI_;
+    std::string mediaFilePath_;
     double offsetTime_;
     std::string lastErrorMessage_;
 };

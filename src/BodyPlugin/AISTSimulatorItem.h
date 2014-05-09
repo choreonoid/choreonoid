@@ -31,7 +31,8 @@ public:
     void setGravity(const Vector3& gravity);
     void setStaticFriction(double value);
     void setSlipFriction(double value);
-    void setCullingThresh(double value);        
+    void setContactCullingDistance(double value);        
+    void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);        
     void setMaxNumIterations(int value);
     void setContactCorrectionDepth(double value);

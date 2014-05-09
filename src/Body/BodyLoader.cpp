@@ -6,6 +6,7 @@
 #include "BodyLoader.h"
 #include "VRMLBodyLoader.h"
 #include "ColladaBodyLoader.h"
+#include <cnoid/STLSceneLoader>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/FileUtil>
@@ -36,11 +37,47 @@ AbstractBodyLoaderPtr colladaBodyLoaderFactory()
     return make_shared<ColladaBodyLoader>();
 }
 
+class SceneLoaderAdapter : public AbstractBodyLoader
+{
+    AbstractSceneLoader* loader;
+public:
+    SceneLoaderAdapter(AbstractSceneLoader* loader) : loader(loader) { }
+    ~SceneLoaderAdapter() { delete loader; }
+    virtual const char* format() const { return loader->format(); }
+
+    virtual bool load(BodyPtr body, const std::string& filename) {
+
+        body->clearDevices();
+        body->clearExtraJoints();
+
+        SgNode* scene = loader->load(filename);
+        if(scene){
+            Link* link = body->createLink();
+            link->setName("Root");
+            link->setShape(scene);
+            link->setMass(1.0);
+            link->setInertia(Matrix3::Identity());
+            body->setRootLink(link);
+            body->setModelName(getBasename(filename));
+        }
+
+        return (scene != 0);
+    }
+};
+
+
+AbstractBodyLoaderPtr stlBodyLoaderFactory()
+{
+    return make_shared<SceneLoaderAdapter>(new STLSceneLoader);
+}
+
+    
 struct FactoryRegistration
 {
     FactoryRegistration(){
         BodyLoader::registerLoader("wrl", vrmlBodyLoaderFactory);
         BodyLoader::registerLoader("dae", colladaBodyLoaderFactory);
+        BodyLoader::registerLoader("stl", stlBodyLoaderFactory);
     }
 } factoryRegistration;
     

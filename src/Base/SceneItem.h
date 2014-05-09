@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_ITEM_H_INCLUDED
-#define CNOID_BASE_SCENE_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_ITEM_H
+#define CNOID_BASE_SCENE_ITEM_H
 
 #include "Item.h"
 #include <cnoid/SceneGraph>
@@ -24,8 +24,8 @@ public:
     virtual void setName(const std::string& name);
     virtual SgNode* scene();
 
-    SgPosTransform* topNode() { return topNode_.get(); }
-    const SgPosTransform* topNode() const { return topNode_.get(); }
+    SgPosTransform* topNode() { return topNode_; }
+    const SgPosTransform* topNode() const { return topNode_; }
 
 protected:
     virtual ItemPtr doDuplicate() const;

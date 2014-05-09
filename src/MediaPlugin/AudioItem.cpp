@@ -88,7 +88,7 @@ void AudioItem::clear()
     comment.clear();
     date.clear();
 
-    clearLastAccessInformation();
+    clearFileInformation();
 }
 
 
@@ -195,10 +195,10 @@ void AudioItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool AudioItem::store(Archive& archive)
 {
-    if(!lastAccessedFilePath().empty()){
-        archive.writeRelocatablePath("file", lastAccessedFilePath());
-        if(!lastAccessedFileFormatId().empty()){
-            archive.write("format", lastAccessedFileFormatId());
+    if(!filePath().empty()){
+        archive.writeRelocatablePath("file", filePath());
+        if(!fileFormat().empty()){
+            archive.write("format", fileFormat());
         }
     }
     archive.write("offsetTime", offsetTime_);

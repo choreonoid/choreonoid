@@ -343,9 +343,9 @@ BOOST_PYTHON_MODULE(Base)
         .def("load", load2, (args("filename"), args("parent"), args("formatId") = std::string()))
         .def("save", &Item::save, (args("filename"), args("formatId") = std::string()))
         .def("overwrite", &Item::overwrite, (args("forceOverwrite") = false, args("formatId") = std::string()))
-        .def("clearLastAccessInformation", &Item::clearLastAccessInformation)
-        .def("lastAccessedFilePath", &Item::lastAccessedFilePath, return_value_policy<return_by_value>())
-        .def("lastAccessedFileFormatId", &Item::lastAccessedFileFormatId, return_value_policy<return_by_value>())
+        .def("clearFileInformation", &Item::clearFileInformation)
+        .def("filePath", &Item::filePath, return_value_policy<return_by_value>())
+        .def("fileFormat", &Item::fileFormat, return_value_policy<return_by_value>())
         .def("suggestFileUpdate", &Item::suggestFileUpdate);
 
     //.def("customData", customData, return_internal_reference<>())
