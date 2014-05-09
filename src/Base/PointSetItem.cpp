@@ -128,7 +128,10 @@ void PointSetItem::notifyUpdate()
 
 void PointSetItem::updateVisiblePointSet()
 {
-    topTransform->removeChild(invariant);
+    if(invariant){
+        topTransform->removeChild(invariant);
+        invariant->removeChild(visiblePointSet);
+    }
     invariant = new SgInvariantGroup;
 
     //! \todo implement the assignment operator to SgPlot and SgPointSet and use it

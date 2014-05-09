@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_POINT_SET_ITEM_H_INCLUDED
-#define CNOID_BASE_POINT_SET_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_POINT_SET_ITEM_H
+#define CNOID_BASE_POINT_SET_ITEM_H
 
 #include <cnoid/Item>
 #include <cnoid/SceneShape>

@@ -411,7 +411,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
         renderingThread = boost::thread(bind(&VisionRenderer::concurrentRenderingLoop, this));
     }
 
-    elapsedTime = cycleTime;
+    elapsedTime = cycleTime + 1.0e-6;
     latency = std::min(cycleTime, simImpl->maxLatency);
     
     hasUpdatedData = false;

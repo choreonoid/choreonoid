@@ -2094,6 +2094,7 @@ void GLSceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVertic
     
     if(!plot->hasNormals()){
         enableLighting(false);
+        //glDisableClientState(GL_NORMAL_ARRAY);
         lastAlpha = 1.0;
         if(!plot->hasColors()){
             setColor(createColorWithAlpha(material->diffuseColor()));
@@ -2144,6 +2145,7 @@ void GLSceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVertic
         glEnableClientState(GL_COLOR_ARRAY);
         glColorPointer(4, GL_FLOAT, 0, &colors[0][0]);
         stateFlag.set(CURRENT_COLOR);
+        //setColor(colors.back()); // set the last color
     }
     
     pushPickName(plot);
