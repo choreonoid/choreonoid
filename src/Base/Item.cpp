@@ -45,8 +45,8 @@ Item::Item(const Item& org) :
     init();
 
     if(attributes[LOAD_ONLY]){
-        lastAccessedFilePath_ = org.lastAccessedFilePath_;
-        lastAccessedFileFormatId_ = org.lastAccessedFileFormatId_;
+        filePath_ = org.filePath_;
+        fileFormat_ = org.fileFormat_;
     }
 }
 
@@ -64,8 +64,8 @@ void Item::init()
     attributes.reset(SUB_ITEM);
     attributes.reset(TEMPORAL);
 
-    isConsistentWithLastAccessedFile_ = false;
-    timeStampOfLastFileWriting_ = 0;
+    isConsistentWithFile_ = false;
+    fileModificationTime_ = 0;
 }
 
 
@@ -567,9 +567,9 @@ void Item::doAssign(Item* srcItem)
    this function cannot be used.
    Note that this function should not be overloaded or overridden in the derived classes.
 */
-bool Item::load(const std::string& filename, const std::string& formatId)
+bool Item::load(const std::string& filename, const std::string& format)
 {
-    return ItemManager::load(this, filename, parentItem(), formatId);
+    return ItemManager::load(this, filename, parentItem(), format);
 }
 
 
@@ -577,9 +577,9 @@ bool Item::load(const std::string& filename, const std::string& formatId)
    @param parentItem specify this when the item is newly created one and will be attached to a parent item
    if loading succeeds.
 */
-bool Item::load(const std::string& filename, Item* parent, const std::string& formatId)
+bool Item::load(const std::string& filename, Item* parent, const std::string& format)
 {
-    return ItemManager::load(this, filename, parent, formatId);
+    return ItemManager::load(this, filename, parent, format);
 }
 
 
@@ -591,9 +591,9 @@ bool Item::load(const std::string& filename, Item* parent, const std::string& fo
    this function cannot be used.
    Note that this function should not be overloaded or overridden in the derived classes.
 */
-bool Item::save(const std::string& filename, const std::string& formatId)
+bool Item::save(const std::string& filename, const std::string& format)
 {
-    return ItemManager::save(this, filename, formatId);
+    return ItemManager::save(this, filename, format);
 }
 
 
@@ -602,25 +602,25 @@ bool Item::save(const std::string& filename, const std::string& formatId)
    
    If the data has not been loaded from a file, a file save dialog opens and user specifies a file.
 */
-bool Item::overwrite(bool forceOverwrite, const std::string& formatId)
+bool Item::overwrite(bool forceOverwrite, const std::string& format)
 {
-    return ItemManager::overwrite(this, forceOverwrite, formatId);
+    return ItemManager::overwrite(this, forceOverwrite, format);
 }
 
 
-void Item::updateLastAccessInformation(const std::string& filename, const std::string& formatId)
+void Item::updateFileInformation(const std::string& filename, const std::string& format)
 {
     filesystem::path fpath(filename);
     if(filesystem::exists(fpath)){
-        lastAccessedFilePath_ = filename;
-        lastAccessedFileFormatId_ = formatId;
-        timeStampOfLastFileWriting_ = filesystem::last_write_time(fpath);
-        isConsistentWithLastAccessedFile_ = true;
+        filePath_ = filename;
+        fileFormat_ = format;
+        fileModificationTime_ = filesystem::last_write_time(fpath);
+        isConsistentWithFile_ = true;
     } else {
-        lastAccessedFilePath_.clear();
-        lastAccessedFileFormatId_.clear();
-        timeStampOfLastFileWriting_ = 0;
-        isConsistentWithLastAccessedFile_ = false;
+        filePath_.clear();
+        fileFormat_.clear();
+        fileModificationTime_ = 0;
+        isConsistentWithFile_ = false;
     }
 }
 
@@ -628,11 +628,11 @@ void Item::updateLastAccessInformation(const std::string& filename, const std::s
 /**
    Use this function to disable the implicit overwrite next time
 */
-void Item::clearLastAccessInformation()
+void Item::clearFileInformation()
 {
-    lastAccessedFilePath_.clear();
-    lastAccessedFileFormatId_.clear();
-    isConsistentWithLastAccessedFile_ = true;
+    filePath_.clear();
+    fileFormat_.clear();
+    isConsistentWithFile_ = true;
 }
 
 
@@ -692,8 +692,8 @@ void Item::putProperties(PutPropertyFunction& putProperty)
     
     doPutProperties(putProperty);
 
-    if(!lastAccessedFilePath_.empty()){
-        putProperty(_("File"), lastAccessedFilePath_);
+    if(!filePath_.empty()){
+        putProperty(_("File"), filePath_);
     }
 
     putProperty(_("Children"), numChildren_);

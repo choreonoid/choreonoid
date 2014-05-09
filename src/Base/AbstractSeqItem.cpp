@@ -67,8 +67,8 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 bool AbstractSeqItem::store(Archive& archive)
 {
     if(overwrite()){
-        archive.writeRelocatablePath("filename", lastAccessedFilePath());
-        archive.write("format", lastAccessedFileFormatId());
+        archive.writeRelocatablePath("filename", filePath());
+        archive.write("format", fileFormat());
         return true;
     }
     return false;

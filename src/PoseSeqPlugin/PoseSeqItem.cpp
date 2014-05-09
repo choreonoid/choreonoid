@@ -222,7 +222,7 @@ void PoseSeqItem::convert(BodyPtr orgBody)
                     beginEditing();
                     if(endEditing(convertSub(orgBody, convInfo))){
                         
-                        clearLastAccessInformation();
+                        clearFileInformation();
                         BodyPtr body = ownerBodyItem->body();
                         seq->setTargetBodyName(body->name());
                         format m(_("Pose seq \"%1%\" has been converted. Its target has been changed from %2% to %3%"));
@@ -602,8 +602,8 @@ void PoseSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 bool PoseSeqItem::store(Archive& archive)
 {
     if(overwrite()){
-        archive.writeRelocatablePath("filename", lastAccessedFilePath());
-        archive.write("format", lastAccessedFileFormatId());
+        archive.writeRelocatablePath("filename", filePath());
+        archive.write("format", fileFormat());
         archive.write("barLength", barLength_);
         return true;
     }

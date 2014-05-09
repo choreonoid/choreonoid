@@ -1087,7 +1087,7 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
                 (bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
-    putProperty(_("Model file"), getFilename(filesystem::path(self->lastAccessedFilePath())));
+    putProperty(_("Model file"), getFilename(filesystem::path(self->filePath())));
     putProperty(_("Self-collision"), isSelfCollisionDetectionEnabled,
                 (bind(&BodyItemImpl::onSelfCollisionDetectionPropertyChanged, this, _1)));
     putProperty(_("Editable"), isEditable, bind(&BodyItemImpl::onEditableChanged, this, _1));
@@ -1104,7 +1104,7 @@ bool BodyItemImpl::store(Archive& archive)
 {
     archive.setDoubleFormat("% .6f");
 
-    archive.writeRelocatablePath("modelFile", self->lastAccessedFilePath());
+    archive.writeRelocatablePath("modelFile", self->filePath());
     archive.write("currentBaseLink", (currentBaseLink ? currentBaseLink->name() : ""), DOUBLE_QUOTED);
 
     /// \todo Improve the following for current / initial position representations

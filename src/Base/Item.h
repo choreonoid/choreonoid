@@ -105,20 +105,25 @@ public:
 
     void assign(Item* srcItem);
 
-    bool load(const std::string& filename, const std::string& formatId = std::string());
-    bool load(const std::string& filename, Item* parent, const std::string& formatId = std::string());
-    bool save(const std::string& filename, const std::string& formatId = std::string());
-    bool overwrite(bool forceOverwrite = false, const std::string& formatId = std::string());
-    void clearLastAccessInformation();
+    bool load(const std::string& filename, const std::string& format = std::string());
+    bool load(const std::string& filename, Item* parent, const std::string& format = std::string());
+    bool save(const std::string& filename, const std::string& format = std::string());
+    bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
 
-    const std::string& lastAccessedFilePath() const { return lastAccessedFilePath_; }
-    const std::string& lastAccessedFileFormatId() const { return lastAccessedFileFormatId_; }
-    std::time_t timeStampOfLastFileWriting() const { return timeStampOfLastFileWriting_; }
+    const std::string& filePath() const { return filePath_; }
+    const std::string& fileFormat() const { return fileFormat_; }
 
-    //void setInconsistencyWithLastAccessedFile() { isConsistentWithLastAccessedFile_ = false; }
-    void suggestFileUpdate() { isConsistentWithLastAccessedFile_ = false; }
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+    const std::string& lastAccessedFilePath() const { return filePath_; }
+    const std::string& lastAccessedFileFormatId() const { return fileFormat_; }
+#endif
 
-    bool isConsistentWithLastAccessedFile() const { return isConsistentWithLastAccessedFile_; }
+    std::time_t fileModificationTime() const { return fileModificationTime_; }
+    bool isConsistentWithFile() const { return isConsistentWithFile_; }
+
+    void clearFileInformation();
+
+    void suggestFileUpdate() { isConsistentWithFile_ = false; }
 
     void putProperties(PutPropertyFunction& putProperty);
 
@@ -212,10 +217,10 @@ private:
     static boost::signal<void(const char* type_info_name)> sigClassUnregistered_;
 
     // for file overwriting management, mainly accessed by ItemManagerImpl
-    bool isConsistentWithLastAccessedFile_;
-    std::string lastAccessedFilePath_;
-    std::string lastAccessedFileFormatId_;
-    std::time_t timeStampOfLastFileWriting_;
+    bool isConsistentWithFile_;
+    std::string filePath_;
+    std::string fileFormat_;
+    std::time_t fileModificationTime_;
 
     // disable the assignment operator
     Item& operator=(const Item& rhs);
@@ -232,7 +237,7 @@ private:
     void traverse(Item* item, const boost::function<void(Item*)>& function);
     ItemPtr duplicateAllSub(ItemPtr duplicated) const;
         
-    void updateLastAccessInformation(const std::string& filename, const std::string& formatId);
+    void updateFileInformation(const std::string& filename, const std::string& format);
         
     friend class RootItem;
     friend class ItemTreeArchiver;

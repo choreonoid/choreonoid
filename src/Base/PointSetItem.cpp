@@ -153,7 +153,7 @@ ItemPtr PointSetItem::doDuplicate() const
 
 void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("File"), getFilename(lastAccessedFilePath()));
+    putProperty(_("File"), getFilename(filePath()));
     putProperty.decimals(1).min(0.0)(_("Point size"), visiblePointSet->pointSize(),
                                      bind(&PointSetItem::setPointSize, this, _1), true);
 }
@@ -161,9 +161,9 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool PointSetItem::store(Archive& archive)
 {
-    if(!lastAccessedFilePath().empty()){
-        archive.writeRelocatablePath("file", lastAccessedFilePath());
-        archive.write("format", lastAccessedFileFormatId());
+    if(!filePath().empty()){
+        archive.writeRelocatablePath("file", filePath());
+        archive.write("format", fileFormat());
     }
     archive.write("pointSize", visiblePointSet->pointSize());
     return true;

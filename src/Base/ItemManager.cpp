@@ -676,7 +676,7 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const std::string& file
             if(item->name().empty()){
                 item->setName(filesystem::basename(filesystem::path(filename)));
             }
-            item->updateLastAccessInformation(filename, loader->formatId);
+            item->updateFileInformation(filename, loader->formatId);
             item->notifyUpdate();
             loaded = true;
         }
@@ -840,7 +840,7 @@ bool ItemManagerImpl::save
             saved = true;
             bool isExporter = (targetSaver->priority <= ItemManager::PRIORITY_CONVERSION);
             if(!isExporter){
-                item->updateLastAccessInformation(filename, targetSaver->formatId);
+                item->updateFileInformation(filename, targetSaver->formatId);
             }
         }
         
@@ -1018,8 +1018,8 @@ bool ItemManagerImpl::overwrite(Item* item, bool forceOverwrite, const std::stri
     
     bool needToOverwrite = forceOverwrite;
 
-    string filename(item->lastAccessedFilePath());
-    string lastFormatId(item->lastAccessedFileFormatId());
+    string filename(item->filePath());
+    string lastFormatId(item->fileFormat());
 
     string defaultFilenameOnDialog;
     if(filename.empty()){
@@ -1032,13 +1032,13 @@ bool ItemManagerImpl::overwrite(Item* item, bool forceOverwrite, const std::stri
         if(!filename.empty()){
             filesystem::path fpath(filename);
             if(!filesystem::exists(fpath) ||
-               filesystem::last_write_time(fpath) > item->timeStampOfLastFileWriting()){
+               filesystem::last_write_time(fpath) > item->fileModificationTime()){
                 needToOverwrite = true;
                 filename.clear();
             }
         }
     }
-    if(!needToOverwrite && !item->isConsistentWithLastAccessedFile()){
+    if(!needToOverwrite && !item->isConsistentWithFile()){
         needToOverwrite = true;
     }
 
@@ -1070,11 +1070,11 @@ void ItemManager::reloadItems(const ItemList<>& items)
         Item* item = items.get(i);
 
         if(item->parentItem() && !item->isSubItem() &&
-           !item->lastAccessedFilePath().empty() && !item->lastAccessedFileFormatId().empty()){
+           !item->filePath().empty() && !item->fileFormat().empty()){
 
             ItemPtr reloaded = item->duplicate();
             if(reloaded){
-                if(reloaded->load(item->lastAccessedFilePath(), item->parentItem(), item->lastAccessedFileFormatId())){
+                if(reloaded->load(item->filePath(), item->parentItem(), item->fileFormat())){
 
                     item->parentItem()->insertChildItem(reloaded, item);
                     
