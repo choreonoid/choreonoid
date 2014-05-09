@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_REFERENCED_H_INCLUDED
-#define CNOID_UTIL_REFERENCED_H_INCLUDED
+#ifndef CNOID_UTIL_REFERENCED_H
+#define CNOID_UTIL_REFERENCED_H
 
 #include <boost/version.hpp>
 
@@ -73,6 +73,7 @@ class Referenced
 
 public:
     Referenced() : refCount_(0), weakCounter_(0) { }
+    Referenced(const Referenced& org) : refCount_(0), weakCounter_(0) { }
 
     virtual ~Referenced() {
         if(weakCounter_){
