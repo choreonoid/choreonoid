@@ -98,6 +98,8 @@ public:
     void setDefaultPointSize(double size);
     void setDefaultLineWidth(double width);
 
+    void setNewDisplayListDoubleRenderingEnabled(bool on);
+
     void showNormalVectors(double length);
 
     void requestToClearCache();

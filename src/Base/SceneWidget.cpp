@@ -124,6 +124,7 @@ public:
     CheckBox coordinateAxesCheck;
     CheckBox fpsCheck;
     PushButton fpsTestButton;
+    CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
 
     LazyCaller updateDefaultLightsLater;
@@ -305,6 +306,7 @@ public:
     void onEntityAdded(SgNode* node);
     void onEntityRemoved(SgNode* node);
 
+    void onNewDisplayListDoubleRenderingToggled(bool on);
     void onBufferForPickingToggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
@@ -873,6 +875,12 @@ void SceneWidgetImpl::viewAll()
     }
 
     builtinOrthoCamera->notifyUpdate(modified);
+}
+
+
+void SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled(bool on)
+{
+    renderer.setNewDisplayListDoubleRenderingEnabled(on);
 }
 
 
@@ -2091,6 +2099,12 @@ void SceneWidget::setCoordinateAxes(bool on)
 }
 
 
+void SceneWidget::setNewDisplayListDoubleRenderingEnabled(bool on)
+{
+    impl->setup->newDisplayListDoubleRenderingCheck.setChecked(on);
+}
+
+
 void SceneWidget::setUseBufferForPicking(bool on)
 {
     impl->setup->bufferForPickingCheck.setChecked(on);
@@ -2624,6 +2638,13 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
+    newDisplayListDoubleRenderingCheck.setText(_("Do double rendering when a new display list is created."));
+    newDisplayListDoubleRenderingCheck.sigToggled().connect(bind(&SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled, impl, _1));
+    hbox->addWidget(&newDisplayListDoubleRenderingCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
     bufferForPickingCheck.setText(_("Use an OpenGL pixel buffer for picking"));
     bufferForPickingCheck.setChecked(true);
     bufferForPickingCheck.sigToggled().connect(bind(&SceneWidgetImpl::onBufferForPickingToggled, impl, _1));
@@ -2664,6 +2685,7 @@ void SetupDialog::storeState(Archive& archive)
     archive.write("normalLength", normalLengthSpin.value());
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
     archive.write("showFPS", fpsCheck.isChecked());
+    archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
     archive.write("useBufferForPicking", bufferForPickingCheck.isChecked());
 }
 
@@ -2687,5 +2709,6 @@ void SetupDialog::restoreState(const Archive& archive)
     normalLengthSpin.setValue(archive.get("normalLength", normalLengthSpin.value()));
     coordinateAxesCheck.setChecked(archive.get("coordinateAxes", coordinateAxesCheck.isChecked()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
+    newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
 }

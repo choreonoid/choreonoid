@@ -384,6 +384,8 @@ public:
     double normalLength;
 
     bool isCompiling;
+    bool isNewDisplayListDoubleRenderingEnabled;
+    bool isNewDisplayListCreated;
     bool isPicking;
 
     GLdouble pickX;
@@ -568,6 +570,8 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root)
     normalLength = 0.0;
 
     isCompiling = false;
+    isNewDisplayListDoubleRenderingEnabled = false;
+    isNewDisplayListCreated = false;
     isPicking = false;
     pickedPoint.setZero();
 
@@ -979,6 +983,8 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
         } else {
             glShadeModel(GL_FLAT);
         }
+
+        isNewDisplayListCreated = false;
             
         clearGLState();
         
@@ -1218,6 +1224,10 @@ void GLSceneRendererImpl::endRendering()
         currentCacheMap->clear();
         hasValidNextCacheMap = true;
     }
+
+    if(isNewDisplayListDoubleRenderingEnabled && isNewDisplayListCreated){
+        sceneRoot->notifyUpdate();
+    }
 }
 
 
@@ -1410,6 +1420,8 @@ void GLSceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
                     cache->useIDforPicking = true;
                 }
                 glEndList();
+
+                isNewDisplayListCreated = true;
             }
         }
 
@@ -2716,6 +2728,12 @@ void GLSceneRenderer::showNormalVectors(double length)
         impl->normalLength = length;
         requestToClearCache();
     }
+}
+
+
+void GLSceneRenderer::setNewDisplayListDoubleRenderingEnabled(bool on)
+{
+    impl->isNewDisplayListDoubleRenderingEnabled = on;
 }
 
 
