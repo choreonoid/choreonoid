@@ -34,10 +34,11 @@ public:
 
     virtual void notifyUpdate();
         
-protected:
-    virtual ItemPtr doDuplicate() const;
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
+
+protected:
+    virtual ItemPtr doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     void updateVisiblePointSet();
 

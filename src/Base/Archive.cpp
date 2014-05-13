@@ -13,6 +13,8 @@
 #include <vector>
 #include <boost/signals.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 #include <QRegExp>
 #include <iostream>
 #include "gettext.h"
@@ -42,11 +44,11 @@ public:
     QString topDirString;
     QString shareDirString;
 
-    vector<Item*> idToItems;
-    ItemToIdMap itemToIds;
+    vector<Item*> idToItemMap;
+    ItemToIdMap itemToIdMap;
 
-    vector<View*> idToViews;
-    ViewToIdMap viewToIds;
+    vector<View*> idToViewMap;
+    ViewToIdMap viewToIdMap;
         
     Item* currentParentItem;
 
@@ -185,17 +187,43 @@ Archive* Archive::findSubArchive(const std::string& name)
             return archive;
         }
     }
-
     return invalidArchive().get();
+}
+
+
+const Archive* Archive::findSubArchive(const std::string& name) const
+{
+    return const_cast<Archive*>(this)->findSubArchive(name);
+}
+
+
+bool Archive::forSubArchive(const std::string& name, boost::function<bool(const Archive& archive)> func) const
+{
+    const Archive* subArchive = findSubArchive(name);
+    if(subArchive->isValid()){
+        return func(*subArchive);
+    }
+    return false;
 }
 
 
 Archive* Archive::openSubArchive(const std::string& name)
 {
-    Archive* archive = findSubArchive(name);
+    Mapping* mapping = findMapping(name);
+    Archive* archive = 0;
+    if(mapping->isValid()){
+        archive = dynamic_cast<Archive*>(mapping);
+    }
     if(!archive){
         archive = new Archive();
         archive->inheritSharedInfoFrom(*this);
+        if(mapping->isValid()){
+            Mapping::const_iterator p = mapping->begin();
+            while(p != mapping->end()){
+                archive->insert(p->first, p->second);
+                ++p;
+            }
+        }
         insert(name, archive);
     }
     return archive;
@@ -299,10 +327,10 @@ void Archive::writeRelocatablePath(const std::string& key, const std::string& pa
 void Archive::clearIds()
 {
     if(shared){
-        shared->idToItems.clear();
-        shared->itemToIds.clear();
-        shared->idToViews.clear();
-        shared->viewToIds.clear();
+        shared->idToItemMap.clear();
+        shared->itemToIdMap.clear();
+        shared->idToViewMap.clear();
+        shared->viewToIdMap.clear();
     }
 }
         
@@ -310,36 +338,50 @@ void Archive::clearIds()
 void Archive::registerItemId(Item* item, int id)
 {
     if(shared){
-        if(id >= (signed)shared->idToItems.size()){
-            shared->idToItems.resize(id + 1);
+        if(id >= (signed)shared->idToItemMap.size()){
+            shared->idToItemMap.resize(id + 1);
         }
-        shared->idToItems[id] = item;
-        shared->itemToIds[item] = id;
+        shared->idToItemMap[id] = item;
+        shared->itemToIdMap[item] = id;
     }
 }
 
 
-/**
-   @return -1 if item does not belong to the archive
-*/
-//int Archive::getItemId(Item* item) const
-int Archive::getItemId(ItemPtr item) const
+ValueNodePtr Archive::getItemId(Item* item) const
 {
-    if(shared && item){
-        ItemToIdMap::const_iterator p = shared->itemToIds.find(item);
-        if(p != shared->itemToIds.end()){
-            return p->second;
+    if(shared){
+        int i = 0;
+        Item* mainItem = item;
+        while(mainItem->isSubItem()){
+            ++i;
+            mainItem = mainItem->parentItem();
+        }
+        ItemToIdMap::const_iterator p = shared->itemToIdMap.find(mainItem);
+        if(p != shared->itemToIdMap.end()){
+            const int id = p->second;
+            if(i == 0){
+                return new ScalarNode(id);
+            } else {
+                ListingPtr idPath = new Listing(i + 1);
+                idPath->setFlowStyle(true);
+                while(item->isSubItem()){
+                    idPath->write(i--, item->name(), DOUBLE_QUOTED);
+                    item = item->parentItem();
+                }
+                idPath->write(0, id);
+                return idPath;
+            }
         }
     }
-    return -1;
+    return 0;
 }
 
 
-void Archive::writeItemId(const std::string& key, ItemPtr item)
+void Archive::writeItemId(const std::string& key, Item* item)
 {
     if(item){
-        int id = getItemId(item);
-        if(id >= 0){
+        ValueNodePtr id = getItemId(item);
+        if(id){
             write(key, id);
         }
     }
@@ -349,22 +391,49 @@ void Archive::writeItemId(const std::string& key, ItemPtr item)
 Item* Archive::findItem(int id) const
 {
     if(shared){
-        if(id >= 0 && id < (signed)shared->idToItems.size()){
-            return shared->idToItems[id];
+        if(id >= 0 && id < (signed)shared->idToItemMap.size()){
+            return shared->idToItemMap[id];
         }
     }
     return 0;
 }
 
 
+Item* Archive::findItem(const ValueNodePtr idNode) const
+{
+    Item* item = 0;
+    if(idNode && shared){
+        if(idNode->isScalar()){
+            item = findItem(idNode->toInt());
+        } else if(idNode->isListing()){
+            const Listing& idPath = *idNode->toListing();
+            const int n = idPath.size();
+            if(n >= 2){
+                item = findItem(idPath.front()->toInt());
+                if(item){
+                    for(int i=1; i < n; ++i){
+                        item = item->findSubItem(idPath[i].toString());
+                        if(!item){
+                            item = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return item;
+}
+
+
 void Archive::registerViewId(View* view, int id)
 {
     if(shared){
-        if(id >= (signed)shared->idToViews.size()){
-            shared->idToViews.resize(id + 1);
+        if(id >= (signed)shared->idToViewMap.size()){
+            shared->idToViewMap.resize(id + 1);
         }
-        shared->idToViews[id] = view;
-        shared->viewToIds[view] = id;
+        shared->idToViewMap[id] = view;
+        shared->viewToIdMap[view] = id;
     }
 }
 
@@ -375,8 +444,8 @@ void Archive::registerViewId(View* view, int id)
 int Archive::getViewId(View* view) const
 {
     if(shared && view){
-        ViewToIdMap::const_iterator p = shared->viewToIds.find(view);
-        if(p != shared->viewToIds.end()){
+        ViewToIdMap::const_iterator p = shared->viewToIdMap.find(view);
+        if(p != shared->viewToIdMap.end()){
             return p->second;
         }
     }
@@ -387,8 +456,8 @@ int Archive::getViewId(View* view) const
 View* Archive::findView(int id) const
 {
     if(shared){
-        if(id >= 0 && id < (signed)shared->idToViews.size()){
-            return shared->idToViews[id];
+        if(id >= 0 && id < (signed)shared->idToViewMap.size()){
+            return shared->idToViewMap[id];
         }
     }
     return 0;

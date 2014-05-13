@@ -281,6 +281,40 @@ bool Item::isSubItem() const
 }
 
 
+/*
+int Item::subItemIndex() const
+{
+    if(isSubItem() && parentItem()){
+        int index = 0;
+        for(Item* sibling = parent->childItem(); sibling = sibling->nextItem(); sibling){
+            if(sibling == this){
+                return index;
+            }
+            if(sibling->isSubItem()){
+                ++index;
+            }
+        }
+    }
+    return -1;
+}
+
+
+Item* Item::subItem(int subItemIndex)
+{
+    int index = 0;
+    for(Item* child = parent->childItem(); child = sibling->nextItem(); child){
+        if(child->isSubItem()){
+            if(index == subItemIndex){
+                return child;
+            }
+            ++index;
+        }
+    }
+    return 0;
+}
+*/
+            
+
 /**
    If this is true, the item is not automatically saved or overwritten
    when a project is saved. For example, a motion item which is produced as a
@@ -388,16 +422,12 @@ void Item::onPositionChanged()
 }
 
 
-namespace {
-
-Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
 {
     if(it == end){
         return current;
     }
-        
     Item* item = 0;
-        
     for(Item* child = current->childItem(); child; child = child->nextItem()){
         if(child->name() == *it){
             item = findItemSub(child, ++it, end);
@@ -406,9 +436,7 @@ Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
             }
         }
     }
-        
     return item;
-}
 }
 
 
@@ -416,6 +444,31 @@ Item* Item::findItem(const std::string& path) const
 {
     ItemPath ipath(path);
     return findItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+}
+
+
+static Item* findSubItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+{
+    if(it == end){
+        return current;
+    }
+    Item* item = 0;
+    for(Item* child = current->childItem(); child; child = child->nextItem()){
+        if(child->name() == *it && child->isSubItem()){
+            item = findSubItemSub(child, ++it, end);
+            if(item){
+                break;
+            }
+        }
+    }
+    return item;
+}
+
+
+Item* Item::findSubItem(const std::string& path) const
+{
+    ItemPath ipath(path);
+    return findSubItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
 }
 
 

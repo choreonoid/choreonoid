@@ -62,6 +62,7 @@ public:
     double toDouble() const;
     bool toBool() const;
 
+    bool isScalar() const { return type_ == SCALAR; }
     bool isString() const { return type_ == SCALAR; }
 
 #ifdef _WIN32
@@ -208,10 +209,13 @@ typedef boost::intrusive_ptr<ValueNode> ValueNodePtr;
     
 class CNOID_EXPORT ScalarNode : public ValueNode
 {
+public:
+    ScalarNode(const std::string& value, StringStyle stringStyle = PLAIN_STRING);
+    ScalarNode(int value);
+    
 private:
     ScalarNode(const char* text, size_t length);
     ScalarNode(const char* text, size_t length, StringStyle stringStyle);
-    ScalarNode(const std::string& value, StringStyle stringStyle);
 
     std::string stringValue;
     StringStyle stringStyle;
@@ -452,16 +456,6 @@ public:
         return values.back().get();
     }
 
-    /*
-      ValueNode& front() const {
-      return *values.front();
-      }
-
-      ValueNode& back() const {
-      return *values.back();
-      }
-    */
-
     ValueNode* at(int i) const {
         return values[i].get();
     }
@@ -480,6 +474,9 @@ public:
     bool read(int i, int &out_value) const;
     bool read(int i, double &out_value) const;
 
+    /**
+       \todo This operator should return ValueNode*.
+    */
     ValueNode& operator[](int i) const {
         return *values[i];
     }

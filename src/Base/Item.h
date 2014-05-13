@@ -63,6 +63,8 @@ public:
     bool addChildItem(ItemPtr item, bool isManualOperation = false);
     bool addSubItem(ItemPtr item);
     bool isSubItem() const;
+    //int subItemIndex() const;
+    //Item* subItem(int subItemIndex);
     void detachFromParentItem();
     void emitSigDetachedFromRootForSubTree();
     bool insertChildItem(ItemPtr item, ItemPtr nextItem, bool isManualOperation = false);
@@ -79,6 +81,13 @@ public:
         return dynamic_cast<ItemType*>(findItem(path));
     }
 
+    Item* findSubItem(const std::string& path) const;
+
+    template<class ItemType>
+        inline ItemType* findSubItem(const std::string& path) const {
+        return dynamic_cast<ItemType*>(findSubItem(path));
+    }
+    
     /*
       The function 'template <class ItemType> inline ItemList<ItemType> getSubItems() const'
       has been removed. Please use ItemList::extractChildItems(Item* item) instead of it.
@@ -166,14 +175,17 @@ public:
         return sigSubTreeChanged_;
     }
 
-    static SignalProxy< boost::signal<void(const char* type_info_name)> > sigClassUnregistered() {
-        return sigClassUnregistered_;
-    }
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
 
     Referenced* customData(int id);
     const Referenced* customData(int id) const;
     void setCustomData(int id, ReferencedPtr data);
     void clearCustomData(int id);
+
+    static SignalProxy< boost::signal<void(const char* type_info_name)> > sigClassUnregistered() {
+        return sigClassUnregistered_;
+    }
 
 protected:
 
@@ -184,8 +196,6 @@ protected:
         
     virtual ItemPtr doDuplicate() const;
     virtual void doAssign(Item* srcItem);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
     void setAttribute(Attribute attribute) { attributes.set(attribute); }

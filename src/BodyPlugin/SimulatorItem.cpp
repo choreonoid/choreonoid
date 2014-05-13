@@ -287,8 +287,8 @@ public:
         idseq->setFlowStyle(true);
         for(size_t i=0; i < engines.size(); ++i){
             BodyMotionEnginePtr engine = engines[i];
-            int id = archive.getItemId(engine->motionItem());
-            if(id >= 0){
+            ValueNodePtr id = archive.getItemId(engine->motionItem());
+            if(id){
                 idseq->append(id);
             }
         }
@@ -306,8 +306,8 @@ public:
         const Listing& idseq = *archive.findListing("motionItems");
         if(idseq.isValid()){
             for(int i=0; i < idseq.size(); ++i){
-                int id = idseq[i].toInt();
-                if(id >= 0){
+                ValueNode* id = idseq.at(i);
+                if(id){
                     BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(archive.findItem(id));
                     if(motionItem){
                         addMotionItem(motionItem);

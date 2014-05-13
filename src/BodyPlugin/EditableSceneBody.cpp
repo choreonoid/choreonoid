@@ -1160,11 +1160,11 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
         BodyItem* bodyItem = bodyItems[i];
         EditableSceneBody* sceneBody = bodyItem->existingSceneBody();
         if(sceneBody){
-            const int id = archive.getItemId(bodyItem);
-            if(id >= 0){
+            ValueNodePtr id = archive.getItemId(bodyItem);
+            if(id){
                 EditableSceneBodyImpl* impl = sceneBody->impl;
                 MappingPtr state = new Mapping();
-                state->write("bodyItem", id);
+                state->insert("bodyItem", id);
                 state->write("showCenterOfMass", impl->isCmVisible);
                 state->write("showZmp", impl->isZmpVisible);
                 states->append(state);
@@ -1184,7 +1184,7 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
     Listing& states = *archive["editableSceneBodies"].toListing();
     for(int i=0; i < states.size(); ++i){
         Mapping* state = states[i].toMapping();
-        BodyItem* bodyItem = archive.findItem<BodyItem>(state->get("bodyItem", -1));
+        BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
         if(bodyItem){
             EditableSceneBodyImpl* impl = bodyItem->sceneBody()->impl;
             impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));

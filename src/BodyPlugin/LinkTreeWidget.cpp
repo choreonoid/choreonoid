@@ -1150,7 +1150,7 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
             MappingPtr bodyItemNode = new Mapping();
             bool isEmpty = true;
 
-            bodyItemNode->write("id", archive.getItemId(bodyItem));
+            bodyItemNode->insert("id", archive.getItemId(bodyItem));
             
             const vector<int>& indices = getSelectedLinkIndices(bodyItem);
             if(!indices.empty()){
@@ -1210,8 +1210,8 @@ bool LinkTreeWidgetImpl::restoreState(const Archive& archive)
         if(nodes.isValid() && !nodes.empty()){
             for(int i=0; i < nodes.size(); ++i){
                 const Mapping& node = *nodes[i].toMapping();
-                int id = node.get("id", -1);
-                if(id >= 0){
+                ValueNode* id = node.find("id");
+                if(id->isValid()){
                     BodyItem* bodyItem = archive.findItem<BodyItem>(id);
                     if(bodyItem){
                         int numLinks = bodyItem->body()->numLinks();

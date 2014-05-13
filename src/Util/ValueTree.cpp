@@ -303,6 +303,16 @@ ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
 }
 
 
+ScalarNode::ScalarNode(int value)
+    : stringValue(lexical_cast<string>(value))
+{
+    type_ = SCALAR;
+    line_ = -1;
+    column_ = -1;
+    stringStyle = PLAIN_STRING;
+}
+
+
 const Mapping* ValueNode::toMapping() const
 {
     if(type_ != MAPPING){
@@ -510,7 +520,8 @@ inline void Mapping::insertSub(const std::string& key, ValueNode* node)
         EmptyKeyException ex;
         throw ex;
     }
-    values.insert(make_pair(key, node));
+    //values.insert(make_pair(key, node));
+    values[key] = node;
     node->indexInMapping = indexCounter++;
 }
 
@@ -521,10 +532,6 @@ void Mapping::insert(const std::string& key, ValueNodePtr node)
         throwNotMappingException();
     }
     const string uKey(toUTF8(key));
-    iterator p = values.find(uKey);
-    if(p != values.end()){
-        values.erase(p);
-    }
     insertSub(uKey, node.get());
 }
 

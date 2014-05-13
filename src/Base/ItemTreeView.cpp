@@ -1123,8 +1123,8 @@ void ItemTreeViewImpl::storeItemIds(Archive& archive, const char* key, const Ite
     ListingPtr idseq = new Listing();
     idseq->setFlowStyle(true);
     for(size_t i=0; i < items.size(); ++i){
-        int id = archive.getItemId(items[i]);
-        if(id >= 0){
+        ValueNodePtr id = archive.getItemId(items[i]);
+        if(id){
             idseq->append(id);
         }
     }
@@ -1163,11 +1163,11 @@ bool ItemTreeViewImpl::restoreItemStates
     if(idseq.isValid()){
         completed = true;
         for(int i=0; i < idseq.size(); ++i){
-            int id = idseq[i].toInt();
-            if(id < 0){
+            ValueNode* id = idseq.at(i);
+            if(!id){
                 completed = false;
             } else {
-                ItemPtr item = archive.findItem(id);
+                Item* item = archive.findItem(id);
                 if(item){
                     stateChangeFunc(item);
                 } else {
@@ -1198,30 +1198,9 @@ void ItemTreeViewImpl::storeExpandedItemsSub(QTreeWidgetItem* parentTwItem, Arch
         ItvItem* itvItem = dynamic_cast<ItvItem*>(parentTwItem->child(i));
         if(itvItem){
             if(itvItem->isExpanded()){
-                Item* item = itvItem->item.get();
-                if(!item->isSubItem()){
-                    int id = archive.getItemId(item);
-                    if(id >= 0){
-                        expanded->append(id);
-                    }
-                } else {
-                    int j = 0;
-                    Item* p = item;
-                    while(p->isSubItem()){
-                        ++j;
-                        p = p->parentItem();
-                    }
-                    int id = archive.getItemId(p);
-                    if(id >= 0){
-                        ListingPtr path = new Listing(j+1);
-                        path->setFlowStyle(true);
-                        while(item->isSubItem()){
-                            path->write(j--, item->name(), DOUBLE_QUOTED);
-                            item = item->parentItem();
-                        }
-                        path->write(0, id);
-                        expanded->append(path);
-                    }
+                ValueNodePtr id = archive.getItemId(itvItem->item);
+                if(id){
+                    expanded->append(id);
                 }
             }
             if(itvItem->childCount() > 0){
@@ -1238,19 +1217,7 @@ void ItemTreeViewImpl::restoreExpandedItems(const Archive& archive)
     if(expanded.isValid()){
         collapseAll();
         for(int i=0; i < expanded.size(); ++i){
-            Item* item = 0;
-            if(!expanded[i].isListing()){
-                item = archive.findItem(expanded[i].toInt());
-            } else {
-                const Listing& path = *expanded[i].toListing();
-                int n = path.size();
-                if(n >= 2){
-                    item = archive.findItem(path[0].toInt());
-                    for(int j=1; item && j < n; ++j){
-                        item = item->findItem(path[j].toString());
-                    }
-                }
-            }
+            Item* item = archive.findItem(expanded.at(i));
             if(item){
                 ItvItem* itvItem = getItvItem(item);
                 if(itvItem){
