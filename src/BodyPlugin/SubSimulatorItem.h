@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_SUB_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_SUB_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_SUB_SIMULATOR_ITEM_H
+#define CNOID_BODYPLUGIN_SUB_SIMULATOR_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"

@@ -382,7 +382,7 @@ void Archive::writeItemId(const std::string& key, Item* item)
     if(item){
         ValueNodePtr id = getItemId(item);
         if(id){
-            write(key, id);
+            insert(key, id);
         }
     }
 }
