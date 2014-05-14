@@ -369,15 +369,15 @@ namespace {
 void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vector<SgNodePath>& paths)
 {
     reversedPath.push_back(node);
-    if(!node->hasOwners()){
+    if(!node->hasParents()){
         SceneWidgetRoot* sceneWidgetRoot = dynamic_cast<SceneWidgetRoot*>(node);
         if(sceneWidgetRoot){
             paths.push_back(reversedPath);
             std::reverse(paths.back().begin(), paths.back().end());
         }
     } else {
-        SgObject::const_ownerIter p;
-        for(p = node->ownerBegin(); p != node->ownerEnd(); ++p){
+        SgObject::const_parentIter p;
+        for(p = node->parentBegin(); p != node->parentEnd(); ++p){
             SgNode* node = dynamic_cast<SgNode*>(*p);
             if(node){
                 extractPathsFromSceneWidgetRoot(node, reversedPath, paths);

@@ -109,36 +109,36 @@ void SgObject::transferUpdate(SgUpdate& update)
 {
     update.push(this);
     sigUpdated_(update);
-    for(const_ownerIter p = owners.begin(); p != owners.end(); ++p){
+    for(const_parentIter p = parents.begin(); p != parents.end(); ++p){
         (*p)->transferUpdate(update);
     }
     update.pop();
 }
 
 
-void SgObject::addOwner(SgObject* node)
+void SgObject::addParent(SgObject* node)
 {
-    owners.insert(node);
-    if(owners.size() == 1){
+    parents.insert(node);
+    if(parents.size() == 1){
         sigGraphConnection_(true);
     }
 }
 
 
-void SgObject::addOwner(SgObject* node, SgUpdate& update)
+void SgObject::addParent(SgObject* node, SgUpdate& update)
 {
-    owners.insert(node);
+    parents.insert(node);
     transferUpdate(update);
-    if(owners.size() == 1){
+    if(parents.size() == 1){
         sigGraphConnection_(true);
     }
 }
 
 
-void SgObject::removeOwner(SgObject* node)
+void SgObject::removeParent(SgObject* node)
 {
-    owners.erase(node);
-    if(owners.empty()){
+    parents.erase(node);
+    if(parents.empty()){
         sigGraphConnection_(false);
     }
 }
@@ -206,7 +206,7 @@ SgGroup::SgGroup(const SgGroup& org, SgCloneMap& cloneMap)
 SgGroup::~SgGroup()
 {
     for(const_iterator p = begin(); p != end(); ++p){
-        (*p)->removeOwner(this);
+        (*p)->removeParent(this);
     }
 }
 
@@ -293,9 +293,9 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
         children.push_back(node);
         if(doNotify){
             SgUpdate update(SgUpdate::ADDED);
-            node->addOwner(this, update);
+            node->addParent(this, update);
         } else {
-            node->addOwner(this);
+            node->addParent(this);
         }
     }
 }
@@ -312,7 +312,7 @@ bool SgGroup::removeChild(SgNode* node, bool doNotify)
                 child->notifyUpdate(SgUpdate::REMOVED);
             }
             p = children.erase(p);
-            child->removeOwner(this);
+            child->removeParent(this);
             removed = true;
         } else {
             ++p;
@@ -328,8 +328,25 @@ void SgGroup::removeChildAt(int index, bool doNotify)
     if(doNotify){
         (*p)->notifyUpdate(SgUpdate::REMOVED);
     }
-    (*p)->removeOwner(this);
+    (*p)->removeParent(this);
     children.erase(p);
+}
+
+
+void SgGroup::moveChildren(SgGroup* group, bool doNotify)
+{
+    const int destTop = group->children.size();
+    
+    for(int i=0; i < children.size(); ++i){
+        group->addChild(child(i));
+    }
+    clearChildren(doNotify);
+    if(doNotify){
+        SgUpdate update(SgUpdate::ADDED);
+        for(int i=destTop; i < group->numChildren(); ++i){
+            group->child(i)->notifyUpdate(update);
+        }
+    }
 }
 
 
@@ -720,11 +737,11 @@ SgObject* SgTexture::element(int index)
 SgImage* SgTexture::setImage(SgImage* image)
 {
     if(image_){
-        image_->removeOwner(this);
+        image_->removeParent(this);
     }
     image_ = image;
     if(image){
-        image->addOwner(this);
+        image->addParent(this);
     }
     return image;
 }
@@ -742,11 +759,11 @@ SgImage* SgTexture::getOrCreateImage()
 SgTextureTransform* SgTexture::setTextureTransform(SgTextureTransform* textureTransform)
 {
     if(textureTransform_){
-        textureTransform_->removeOwner(this);
+        textureTransform_->removeParent(this);
     }
     textureTransform_ = textureTransform;
     if(textureTransform){
-        textureTransform->addOwner(this);
+        textureTransform->addParent(this);
     }
     return textureTransform;
 }
@@ -827,11 +844,11 @@ void SgMeshBase::updateBoundingBox()
 SgVertexArray* SgMeshBase::setVertices(SgVertexArray* vertices)
 {
     if(vertices_){
-        vertices_->removeOwner(this);
+        vertices_->removeParent(this);
     }
     vertices_ = vertices;
     if(vertices){
-        vertices->addOwner(this);
+        vertices->addParent(this);
     }
     return vertices;
 }
@@ -849,11 +866,11 @@ SgVertexArray* SgMeshBase::getOrCreateVertices()
 SgNormalArray* SgMeshBase::setNormals(SgNormalArray* normals)
 {
     if(normals_){
-        normals_->removeOwner(this);
+        normals_->removeParent(this);
     }
     normals_ = normals;
     if(normals){
-        normals->addOwner(this);
+        normals->addParent(this);
     }
     return normals;
 }
@@ -871,11 +888,11 @@ SgNormalArray* SgMeshBase::getOrCreateNormals()
 SgColorArray* SgMeshBase::setColors(SgColorArray* colors)
 {
     if(colors_){
-        colors_->removeOwner(this);
+        colors_->removeParent(this);
     }
     colors_ = colors;
     if(colors){
-        colors->addOwner(this);
+        colors->addParent(this);
     }
     return colors;
 }
@@ -893,11 +910,11 @@ SgColorArray* SgMeshBase::getOrCreateColors()
 SgTexCoordArray* SgMeshBase::setTexCoords(SgTexCoordArray* texCoords)
 {
     if(texCoords_){
-        texCoords_->removeOwner(this);
+        texCoords_->removeParent(this);
     }
     texCoords_ = texCoords;
     if(texCoords){
-        texCoords->addOwner(this);
+        texCoords->addParent(this);
     }
     return texCoords;
 }
@@ -1227,11 +1244,11 @@ const BoundingBox& SgShape::boundingBox() const
 SgMesh* SgShape::setMesh(SgMesh* mesh)
 {
     if(mesh_){
-        mesh_->removeOwner(this);
+        mesh_->removeParent(this);
     }
     mesh_ = mesh;
     if(mesh){
-        mesh->addOwner(this);
+        mesh->addParent(this);
     }
     return mesh;
 }
@@ -1249,11 +1266,11 @@ SgMesh* SgShape::getOrCreateMesh()
 SgMaterial* SgShape::setMaterial(SgMaterial* material)
 {
     if(material_){
-        material_->removeOwner(this);
+        material_->removeParent(this);
     }
     material_ = material;
     if(material){
-        material->addOwner(this);
+        material->addParent(this);
     }
     return material;
 }
@@ -1271,11 +1288,11 @@ SgMaterial* SgShape::getOrCreateMaterial()
 SgTexture* SgShape::setTexture(SgTexture* texture)
 {
     if(texture_){
-        texture_->removeOwner(this);
+        texture_->removeParent(this);
     }
     texture_ = texture;
     if(texture){
-        texture->addOwner(this);
+        texture->addParent(this);
     }
     return texture;
 }
@@ -1362,11 +1379,11 @@ void SgPlot::updateBoundingBox()
 SgVertexArray* SgPlot::setVertices(SgVertexArray* vertices)
 {
     if(vertices_){
-        vertices_->removeOwner(this);
+        vertices_->removeParent(this);
     }
     vertices_ = vertices;
     if(vertices){
-        vertices->addOwner(this);
+        vertices->addParent(this);
     }
     return vertices;
 }
@@ -1384,11 +1401,11 @@ SgVertexArray* SgPlot::getOrCreateVertices()
 SgNormalArray* SgPlot::setNormals(SgNormalArray* normals)
 {
     if(normals_){
-        normals_->removeOwner(this);
+        normals_->removeParent(this);
     }
     normals_ = normals;
     if(normals){
-        normals->addOwner(this);
+        normals->addParent(this);
     }
     return normals;
 }
@@ -1406,11 +1423,11 @@ SgNormalArray* SgPlot::getOrCreateNormals()
 SgMaterial* SgPlot::setMaterial(SgMaterial* material)
 {
     if(material_){
-        material_->removeOwner(this);
+        material_->removeParent(this);
     }
     material_ = material;
     if(material){
-        material->addOwner(this);
+        material->addParent(this);
     }
     return material;
 }
@@ -1419,11 +1436,11 @@ SgMaterial* SgPlot::setMaterial(SgMaterial* material)
 SgColorArray* SgPlot::setColors(SgColorArray* colors)
 {
     if(colors_){
-        colors_->removeOwner(this);
+        colors_->removeParent(this);
     }
     colors_ = colors;
     if(colors){
-        colors->addOwner(this);
+        colors->addParent(this);
     }
     return colors;
 }

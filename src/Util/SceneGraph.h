@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_GRAPH_H_INCLUDED
-#define CNOID_UTIL_SCENE_GRAPH_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_GRAPH_H
+#define CNOID_UTIL_SCENE_GRAPH_H
 
 #include "Referenced.h"
 #include "BoundingBox.h"
@@ -77,9 +77,9 @@ private:
 class CNOID_EXPORT SgObject : public Referenced
 {
 public:
-    typedef std::set<SgObject*> OwnerContainer;
-    typedef OwnerContainer::iterator ownerIter;
-    typedef OwnerContainer::const_iterator const_ownerIter;
+    typedef std::set<SgObject*> ParentContainer;
+    typedef ParentContainer::iterator parentIter;
+    typedef ParentContainer::const_iterator const_parentIter;
         
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
@@ -103,15 +103,15 @@ public:
         transferUpdate(update);
     }
 
-    void addOwner(SgObject* node);
-    void addOwner(SgObject* node, SgUpdate& update);
-    void removeOwner(SgObject* node);
-    int numOwners() const { return owners.size(); }
-    bool hasOwners() const { return !owners.empty(); }
+    void addParent(SgObject* node);
+    void addParent(SgObject* node, SgUpdate& update);
+    void removeParent(SgObject* node);
+    int numParents() const { return parents.size(); }
+    bool hasParents() const { return !parents.empty(); }
 
-    const_ownerIter ownerBegin() const { return owners.begin(); }
-    const_ownerIter ownerEnd() const { return owners.end(); }
-
+    const_parentIter parentBegin() const { return parents.begin(); }
+    const_parentIter parentEnd() const { return parents.end(); }
+    
     /**
        This signal is emitted when the object is first attached to an upper node
        or the object is detached from all the upper node.
@@ -127,7 +127,7 @@ protected:
             
 private:
     std::string name_;
-    OwnerContainer owners;
+    ParentContainer parents;
     boost::signal<void(const SgUpdate& update)> sigUpdated_;
     boost::signal<void(bool on)> sigGraphConnection_;
 };
@@ -196,10 +196,11 @@ public:
     int numChildren() const { return children.size(); }
     SgNode* child(int index) { return children[index]; }
 
-    virtual void clearChildren(bool doNotify = false);
-    virtual void addChild(SgNode* node, bool doNotify = false);
-    virtual bool removeChild(SgNode* node, bool doNotify = false);
-    virtual void removeChildAt(int index, bool doNotify = false);
+    void clearChildren(bool doNotify = false);
+    void addChild(SgNode* node, bool doNotify = false);
+    bool removeChild(SgNode* node, bool doNotify = false);
+    void removeChildAt(int index, bool doNotify = false);
+    void moveChildren(SgGroup* group, bool doNotify = false);
 
     template<class NodeType> NodeType* findNodeOfType() {
         for(size_t i=0; i < numChildren(); ++i){
