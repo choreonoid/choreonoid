@@ -6,6 +6,7 @@
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>
+#include <cnoid/MeshExtractor>
 #include <cnoid/EigenUtil>
 #include <boost/bind.hpp>
 
@@ -80,63 +81,53 @@ public:
 
 TranslationDragger::TranslationDragger()
 {
-    MeshGenerator meshGenerator;
-
-    scale = new SgScaleTransform;
     axisCylinderNormalizedRadius = 0.04;
 
-    for(int i=0; i < 6; ++i){
+    MeshGenerator meshGenerator;
 
-        const int axis = i / 2;
+    SgShape* cone = new SgShape;
+    meshGenerator.setDivisionNumber(20);
+    cone->setMesh(meshGenerator.generateCone(0.1, 0.2, true, true));
+    SgPosTransform* conePos = new SgPosTransform;
+    conePos->setTranslation(Vector3(0.0, 0.9, 0.0));
+    conePos->addChild(cone);
 
-        SgMaterial* material = new SgMaterial;
+    SgShape* cylinder = new SgShape;
+    meshGenerator.setDivisionNumber(12);
+    cylinder->setMesh(meshGenerator.generateCylinder(axisCylinderNormalizedRadius, 1.8, true, false));
+    SgPosTransform* cylinderPos = new SgPosTransform;
+    cylinderPos->setTranslation(Vector3(0.0, -0.1, 0.0));
+    cylinderPos->addChild(cylinder);
+
+    MeshExtractor meshExtractor;
+    SgGroupPtr group = new SgGroup;
+    group->addChild(conePos);
+    group->addChild(cylinderPos);
+    SgMeshPtr mesh = meshExtractor.integrate(group);
+    
+    scale = new SgScaleTransform;
+    for(int i=0; i < 3; ++i){
+        SgShape* shape = new SgShape;
+        shape->setMesh(mesh);
+        
+        SgMaterial* material = shape->getOrCreateMaterial();
         Vector3f color(0.2f, 0.2f, 0.2f);
-        color[axis] = 1.0f;
+        color[i] = 1.0f;
         material->setDiffuseColor(Vector3f::Zero());
         material->setEmissiveColor(color);
         material->setAmbientIntensity(0.0f);
         material->setTransparency(0.6f);
-        
-        SgInvariantGroupPtr group = new SgInvariantGroup;
-
-        double cylinderLength = 1.0;
-
-        if(i % 2 == 0){
-            SgShape* cone = new SgShape;
-            meshGenerator.setDivisionNumber(20);
-            cone->setMesh(meshGenerator.generateCone(0.1, 0.2, true, true));
-            cone->setMaterial(material);
-            SgPosTransform* conePos = new SgPosTransform;
-            conePos->setTranslation(Vector3(0.0, 0.9, 0.0));
-            conePos->addChild(cone);
-            group->addChild(conePos);
-            cylinderLength = 0.8;
-        }
-
-        SgShape* cylinder = new SgShape;
-        meshGenerator.setDivisionNumber(12);
-        cylinder->setMesh(
-            meshGenerator.generateCylinder(
-                axisCylinderNormalizedRadius, cylinderLength, true, false));
-        cylinder->setMaterial(material);
-        SgPosTransform* cylinderPos = new SgPosTransform;
-        cylinderPos->setTranslation(Vector3(0.0, cylinderLength / 2.0, 0.0));
-        cylinderPos->addChild(cylinder);
-        group->addChild(cylinderPos);
 
         SgPosTransform* arrow = new SgPosTransform;
-        arrow->addChild(group);
-        arrow->setName(axisNames[axis]);
+        arrow->setName(axisNames[i]);
+        arrow->addChild(shape);
+        if(i == 0){
+            arrow->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+        } else if(i == 2){
+            arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
+        }
         scale->addChild(arrow);
-        arrows[i] = arrow;
     }
-
-    arrows[0]->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
-    arrows[1]->setRotation(AngleAxis( PI / 2.0, Vector3::UnitZ()));
-    arrows[3]->setRotation(AngleAxis( PI,       Vector3::UnitX()));
-    arrows[4]->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
-    arrows[5]->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
-
     addChild(scale);
 
     isContainerMode_ = false;
@@ -147,10 +138,7 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org)
 {
     scale = new SgScaleTransform;
     scale->setScale(org.scale->scale());
-    for(int i=0; i < 6; ++i){
-        arrows[i] = org.arrows[i];
-        scale->addChild(arrows[i]);
-    }
+    org.scale->copyChildren(scale);
     addChild(scale);
 
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
@@ -161,10 +149,7 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org)
 TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap& cloneMap)
     : SgPosTransform(org, cloneMap)
 {
-    scale = findNodeOfType<SgScaleTransform>();
-    for(int i=0; i < 6; ++i){
-        arrows[i] = dynamic_cast<SgPosTransform*>(scale->child(i));
-    }
+    scale = getChild<SgScaleTransform>(0);
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
     isContainerMode_ = org.isContainerMode_;
 }

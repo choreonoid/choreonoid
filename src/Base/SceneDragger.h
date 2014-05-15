@@ -49,7 +49,6 @@ public:
         
 private:
     SgScaleTransformPtr scale;
-    SgPosTransformPtr arrows[6];
     SceneDragProjector dragProjector;
     double axisCylinderNormalizedRadius;
     bool isContainerMode_;
