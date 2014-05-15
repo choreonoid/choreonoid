@@ -89,7 +89,7 @@ SgMesh* MeshGenerator::generateBox(Vector3 size)
     vertices.push_back(Vector3f(-x,-y,-z));
     vertices.push_back(Vector3f( x,-y,-z));
 
-    mesh->triangleVertices().reserve(12);
+    mesh->reserveNumTriangles(12);
     mesh->addTriangle(0,1,2);
     mesh->addTriangle(2,3,0);
     mesh->addTriangle(0,5,1);
@@ -139,7 +139,7 @@ SgMesh* MeshGenerator::generateSphere(double radius)
     const int bottomIndex = vertices.size();
     vertices.push_back(Vector3f(0.0f, -radius, 0.0f));
 
-    mesh->triangleVertices().reserve(vdn * hdn * 2 * 3);
+    mesh->reserveNumTriangles(vdn * hdn * 2);
 
     // top faces
     for(int i=0; i < hdn; ++i){
@@ -183,7 +183,7 @@ SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool botto
     SgMesh* mesh = new SgMesh();
     
     SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.resize(divisionNumber_ * 2);
+    vertices.resize(divisionNumber_ * 2 + 2);
 
     const double y = height / 2.0;
     for(int i=0 ; i < divisionNumber_ ; i++ ){
@@ -201,7 +201,7 @@ SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool botto
     const int bottomCenterIndex = vertices.size();
     vertices.push_back(Vector3f(0.0f, -y, 0.0f));
 
-    mesh->triangleVertices().reserve((divisionNumber_ * 4) * 4);
+    mesh->reserveNumTriangles(divisionNumber_ * 4);
 
     for(int i=0; i < divisionNumber_; ++i){
         // top face
@@ -238,7 +238,7 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
     SgMesh* mesh = new SgMesh();
     
     SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.reserve(divisionNumber_ + 1);
+    vertices.reserve(divisionNumber_ + 2);
 
     for(int i=0;  i < divisionNumber_; ++i){
         const double angle = i * 2.0 * PI / divisionNumber_;
@@ -250,7 +250,7 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
     const int bottomCenterIndex = vertices.size();
     vertices.push_back(Vector3f(0.0f, -height / 2.0, 0.0f));
 
-    mesh->triangleVertices().reserve((divisionNumber_ * 2) * 4);
+    mesh->reserveNumTriangles(divisionNumber_ * 2);
 
     for(int i=0; i < divisionNumber_; ++i){
         // side faces
@@ -267,6 +267,46 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
     mesh->updateBoundingBox();
 
     generateNormals(mesh, PI / 2.0);
+
+    return mesh;
+}
+
+
+SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
+{
+    if(innerRadius <= 0.0 || radius <= innerRadius){
+        return 0;
+    }
+
+    SgMesh* mesh = new SgMesh();
+
+    SgVertexArray& vertices = *mesh->getOrCreateVertices();
+    vertices.reserve(divisionNumber_ * 2);
+
+    mesh->getOrCreateNormals()->push_back(Vector3f::UnitZ());
+    SgIndexArray& normalIndices = mesh->normalIndices();
+    normalIndices.reserve(divisionNumber_ * 2);
+
+    for(int i=0;  i < divisionNumber_; ++i){
+        const double angle = i * 2.0 * PI / divisionNumber_;
+        const double x = cos(angle);
+        const double y = sin(angle);
+        vertices.push_back(Vector3f(innerRadius * x, innerRadius * y, 0.0f));
+        vertices.push_back(Vector3f(radius * x, radius * y, 0.0f));
+        normalIndices.push_back(0);
+        normalIndices.push_back(0);
+    }
+
+    mesh->reserveNumTriangles(divisionNumber_ * 2);
+    for(int i=0; i < divisionNumber_; ++i){
+        const int j = (i + 1) % divisionNumber_;
+        const int current = i * 2;
+        const int next = j * 2;
+        mesh->addTriangle(current, current + 1, next + 1);
+        mesh->addTriangle(current, next + 1, next);
+    }
+
+    mesh->updateBoundingBox();
 
     return mesh;
 }

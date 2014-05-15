@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_DRAGGER_H_INCLUDED
-#define CNOID_BASE_SCENE_DRAGGER_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_DRAGGER_H
+#define CNOID_BASE_SCENE_DRAGGER_H
 
 #include "SceneWidgetEditable.h"
 #include "SceneDragProjector.h"

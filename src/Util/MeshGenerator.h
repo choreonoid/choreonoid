@@ -30,6 +30,7 @@ public:
     SgMesh* generateSphere(double radius);
     SgMesh* generateCylinder(double radius, double height, bool bottom = true, bool side = true, bool top = true);
     SgMesh* generateCone(double radius, double height, bool bottom = true, bool side = true);
+    SgMesh* generateDisc(double radius, double innerRadius);
 
     typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Array;
     typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3> > Vector3Array;
