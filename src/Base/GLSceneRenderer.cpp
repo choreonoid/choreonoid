@@ -857,7 +857,7 @@ void GLSceneRendererImpl::setViewport(int x, int y, int width, int height)
 }
 
 
-const Array4i& GLSceneRenderer::viewport() const
+Array4i GLSceneRenderer::viewport() const
 {
     return impl->viewport;
 }

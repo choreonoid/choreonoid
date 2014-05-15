@@ -91,6 +91,7 @@ set(headers
   SceneCamera.h
   SceneLight.h
   SceneVisitor.h
+  SceneRenderer.h
   SceneUtil.h
   MeshGenerator.h
   MeshNormalGenerator.h

@@ -3,11 +3,11 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_GL_SCENE_RENDERER_H_INCLUDED
-#define CNOID_BASE_GL_SCENE_RENDERER_H_INCLUDED
+#ifndef CNOID_BASE_GL_SCENE_RENDERER_H
+#define CNOID_BASE_GL_SCENE_RENDERER_H
 
 #include <cnoid/SceneGraph>
-#include <cnoid/SceneVisitor>
+#include <cnoid/SceneRenderer>
 #include <boost/function.hpp>
 #include "exportdecl.h"
 
@@ -17,37 +17,35 @@ class GLSceneRendererImpl;
 class SgCustomGLNode;
 class Mapping;
     
-class CNOID_EXPORT GLSceneRenderer : public SceneVisitor
+class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
 public:
     GLSceneRenderer();
     GLSceneRenderer(SgGroup* sceneRoot);
-    ~GLSceneRenderer();
+    virtual ~GLSceneRenderer();
 
-    SgGroup* sceneRoot();
-    void clearScene();
+    virtual SgGroup* sceneRoot();
+    virtual void clearScene();
 
-    int numCameras() const;
-    const SgNodePath& cameraPath(int index) const;
-    bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const;
-    SignalProxy<boost::signal<void()> > sigCamerasChanged() const; 
+    virtual int numCameras() const;
+    virtual const SgNodePath& cameraPath(int index) const;
+    virtual bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const;
+    virtual SignalProxy<boost::signal<void()> > sigCamerasChanged() const; 
         
-    SgCamera* currentCamera() const;
-    int currentCameraIndex() const;
-    void setCurrentCamera(int index);
-    bool setCurrentCamera(SgCamera* camera);
-    bool setCurrentCamera(std::vector<std::string>& simplifiedPathStrings);
-    SignalProxy<boost::signal<void()> > sigCurrentCameraChanged();
+    virtual SgCamera* currentCamera() const;
+    virtual int currentCameraIndex() const;
+    virtual void setCurrentCamera(int index);
+    virtual bool setCurrentCamera(SgCamera* camera);
+    virtual bool setCurrentCamera(std::vector<std::string>& simplifiedPathStrings);
+    virtual SignalProxy<boost::signal<void()> > sigCurrentCameraChanged();
 
-    SignalProxy<boost::signal<void()> > sigRenderingRequest();
-        
-    void setViewport(int x, int y, int width, int height);
-    const Array4i& viewport() const;
+    virtual void setViewport(int x, int y, int width, int height);
+    virtual Array4i viewport() const;
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
-    double aspectRatio() const; // width / height;
+    virtual double aspectRatio() const; // width / height;
 
-    const Affine3& lastViewMatrix() const;
-    const Matrix4& lastProjectionMatrix() const;
+    virtual const Affine3& lastViewMatrix() const;
+    virtual const Matrix4& lastProjectionMatrix() const;
         
     void getViewFrustum(const SgPerspectiveCamera& camera,
                         double& left, double& right, double& bottom, double& top) const;
@@ -64,22 +62,24 @@ public:
        For example, you can obtain cameras without rendering, and you can render the scene
        after selecting the current camera.
     */
-    void initializeRendering();
+    virtual void initializeRendering();
         
-    void beginRendering();
-    void endRendering();
-    void render();
-    void flush();
+    virtual SignalProxy<boost::signal<void()> > sigRenderingRequest();
+        
+    virtual void beginRendering();
+    virtual void endRendering();
+    virtual void render();
+    virtual void flush();
 
-    virtual bool pick(int x, int y);
+    bool pick(int x, int y);
     const Vector3& pickedPoint() const;
     const SgNodePath& pickedNodePath() const;
 
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
 
-    SgLight* headLight();
-    void setHeadLight(SgLight* light);
+    virtual SgLight* headLight();
+    virtual void setHeadLight(SgLight* light);
     void setHeadLightLightingFromBackEnabled(bool on);
 
     void setAsDefaultLight(SgLight* light);
