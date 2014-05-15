@@ -80,7 +80,7 @@ static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.0001;
 static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 1.0;
 
 static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
-static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.01;
+static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.05;
 
 
 // test for mobile robots with wheels
