@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_LIGHT_H_INCLUDED
-#define CNOID_UTIL_SCENE_LIGHT_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_LIGHT_H
+#define CNOID_UTIL_SCENE_LIGHT_H
 
 #include "SceneGraph.h"
 #include "exportdecl.h"

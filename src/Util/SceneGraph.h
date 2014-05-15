@@ -86,8 +86,8 @@ public:
     const std::string& name() const { return name_; }
     void setName(const std::string& name) { name_ = name; }
 
-    virtual int numElements() const;
-    virtual SgObject* element(int index);
+    virtual int numChildObjects() const;
+    virtual SgObject* childObject(int index);
 
     SignalProxy<boost::signal<void(const SgUpdate& update)> > sigUpdated() {
         return sigUpdated_;
@@ -175,8 +175,8 @@ public:
     ~SgGroup();
         
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual int numElements() const;
-    virtual SgObject* element(int index);
+    virtual int numChildObjects() const;
+    virtual SgObject* childObject(int index);
     virtual void accept(SceneVisitor& visitor);
     virtual void transferUpdate(SgUpdate& update);
     virtual const BoundingBox& boundingBox() const;

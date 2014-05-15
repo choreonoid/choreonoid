@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_CAMERA_H_INCLUDED
-#define CNOID_UTIL_SCENE_CAMERA_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_CAMERA_H
+#define CNOID_UTIL_SCENE_CAMERA_H
 
 #include "SceneGraph.h"
 #include "exportdecl.h"

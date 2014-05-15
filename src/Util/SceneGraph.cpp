@@ -93,13 +93,13 @@ SgObject* SgObject::clone(SgCloneMap& cloneMap) const
 }
 
 
-int SgObject::numElements() const
+int SgObject::numChildObjects() const
 {
     return 0;
 }
 
 
-SgObject* SgObject::element(int index)
+SgObject* SgObject::childObject(int index)
 {
     return 0;
 }
@@ -217,13 +217,13 @@ SgObject* SgGroup::clone(SgCloneMap& cloneMap) const
 }
 
 
-int SgGroup::numElements() const
+int SgGroup::numChildObjects() const
 {
     return children.size();
 }
 
 
-SgObject* SgGroup::element(int index)
+SgObject* SgGroup::childObject(int index)
 {
     return children[index].get();
 }
@@ -715,7 +715,7 @@ SgObject* SgTexture::clone(SgCloneMap& cloneMap) const
 }
 
 
-int SgTexture::numElements() const
+int SgTexture::numChildObjects() const
 {
     int n = 0;
     if(image_) ++n;
@@ -724,13 +724,13 @@ int SgTexture::numElements() const
 }
 
 
-SgObject* SgTexture::element(int index)
+SgObject* SgTexture::childObject(int index)
 {
-    SgObject* elements[2] = { 0, 0 };
+    SgObject* objects[2] = { 0, 0 };
     int i = 0;
-    if(image_) elements[i++] = image_;
-    if(textureTransform_) elements[i++] = textureTransform_;
-    return elements[index];
+    if(image_) objects[i++] = image_;
+    if(textureTransform_) objects[i++] = textureTransform_;
+    return objects[index];
 }
 
 
@@ -800,7 +800,7 @@ SgMeshBase::SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap)
 }
 
     
-int SgMeshBase::numElements() const
+int SgMeshBase::numChildObjects() const
 {
     int n = 0;
     if(vertices_) ++n;
@@ -810,14 +810,14 @@ int SgMeshBase::numElements() const
 }
 
 
-SgObject* SgMeshBase::element(int index)
+SgObject* SgMeshBase::childObject(int index)
 {
-    SgObject* elements[3] = { 0, 0, 0 };
+    SgObject* objects[3] = { 0, 0, 0 };
     int i = 0;
-    if(vertices_) elements[i++] = vertices_.get();
-    if(normals_) elements[i++] = normals_.get();
-    if(colors_) elements[i++] = colors_.get();
-    return elements[index];
+    if(vertices_) objects[i++] = vertices_.get();
+    if(normals_) objects[i++] = normals_.get();
+    if(colors_) objects[i++] = colors_.get();
+    return objects[index];
 }
 
 
@@ -1205,7 +1205,7 @@ SgObject* SgShape::clone(SgCloneMap& cloneMap) const
 }
 
 
-int SgShape::numElements() const
+int SgShape::numChildObjects() const
 {
     int n = 0;
     if(mesh_) ++n;
@@ -1215,14 +1215,14 @@ int SgShape::numElements() const
 }
 
 
-SgObject* SgShape::element(int index)
+SgObject* SgShape::childObject(int index)
 {
-    SgObject* elements[3] = { 0, 0, 0 };
+    SgObject* objects[3] = { 0, 0, 0 };
     int i = 0;
-    if(mesh_) elements[i++] = mesh_.get();
-    if(material_) elements[i++] = material_.get();
-    if(texture_) elements[i++] = texture_.get();
-    return elements[index];
+    if(mesh_) objects[i++] = mesh_.get();
+    if(material_) objects[i++] = material_.get();
+    if(texture_) objects[i++] = texture_.get();
+    return objects[index];
 }
 
 
@@ -1337,7 +1337,7 @@ SgPlot::SgPlot(const SgPlot& org, SgCloneMap& cloneMap)
 }
 
 
-int SgPlot::numElements() const
+int SgPlot::numChildObjects() const
 {
     int n = 0;
     if(vertices_) ++n;
@@ -1346,13 +1346,13 @@ int SgPlot::numElements() const
 }
     
 
-SgObject* SgPlot::element(int index)
+SgObject* SgPlot::childObject(int index)
 {
-    SgObject* elements[2] = { 0, 0 };
+    SgObject* objects[2] = { 0, 0 };
     int i = 0;
-    if(vertices_) elements[i++] = vertices_.get();
-    if(colors_) elements[i++] = colors_.get();
-    return elements[index];
+    if(vertices_) objects[i++] = vertices_.get();
+    if(colors_) objects[i++] = colors_.get();
+    return objects[index];
 }
     
 

@@ -115,8 +115,8 @@ public:
     SgTexture();
     SgTexture(const SgTexture& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual int numElements() const;
-    virtual SgObject* element(int index);
+    virtual int numChildObjects() const;
+    virtual SgObject* childObject(int index);
 
     SgImage* image() { return image_; }
     const SgImage* image() const { return image_; }
@@ -226,8 +226,8 @@ protected:
     SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap);
         
 public:
-    virtual int numElements() const;
-    virtual SgObject* element(int index);
+    virtual int numChildObjects() const;
+    virtual SgObject* childObject(int index);
     virtual const BoundingBox& boundingBox() const;
     void updateBoundingBox();
 
@@ -418,8 +418,8 @@ class CNOID_EXPORT SgShape : public SgNode
 public:
     SgShape();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual int numElements() const;
-    virtual SgObject* element(int index);
+    virtual int numChildObjects() const;
+    virtual SgObject* childObject(int index);
     virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
         
@@ -453,8 +453,8 @@ class CNOID_EXPORT SgPlot : public SgNode
 {
 public:
     SgPlot();
-    virtual int numElements() const;
-    virtual SgObject* element(int index);
+    virtual int numChildObjects() const;
+    virtual SgObject* childObject(int index);
     virtual const BoundingBox& boundingBox() const;
     void updateBoundingBox();
         

@@ -2782,20 +2782,20 @@ void DaeParserImpl::setRigid(DaeNodePtr extNode, SgGroup* sgGroup, SgGroup* sgTr
 {
     try {
         DaeRigidPtr rigid = findRigidBody(extNode->id);
-        if (0 < rigid->shapes.size() && sgTransParent->numElements() != rigid->shapes.size()) {
+        if (0 < rigid->shapes.size() && sgTransParent->numChildren() != rigid->shapes.size()) {
             throwException(line(), (format(_("[%1%]invalid number of mesh and rigid:%2%")) % line() % extNode->id).str());
         }
         unsigned int i = 0;
         for (DaeShapes::iterator iters = rigid->shapes.begin(); iters != rigid->shapes.end(); iters++) {
             DaeShapePtr extShape = *iters;
             if (extShape->box.presence) {
-                static_cast<SgShape*>(sgTransParent->element(i))->mesh()->setBox(extShape->box.halfExtents);
+                static_cast<SgShape*>(sgTransParent->child(i))->mesh()->setBox(extShape->box.halfExtents);
             } else
                 if (extShape->sphere.presence) {
-                    static_cast<SgShape*>(sgTransParent->element(i))->mesh()->setSphere(extShape->sphere.radius);
+                    static_cast<SgShape*>(sgTransParent->child(i))->mesh()->setSphere(extShape->sphere.radius);
                 } else
                     if (extShape->cylinder.presence) {
-                        static_cast<SgShape*>(sgTransParent->element(i))->mesh()->setCylinder(extShape->cylinder.radius,
+                        static_cast<SgShape*>(sgTransParent->child(i))->mesh()->setCylinder(extShape->cylinder.radius,
                                                                                               extShape->cylinder.height);
                     } else
                         if (extShape->cone.presence) {
