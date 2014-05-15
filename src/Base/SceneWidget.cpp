@@ -250,9 +250,6 @@ public:
     Timer fpsRenderingTimer;
     bool fpsRendered;
 
-    boost::signal<void()> sigCamerasChanged;
-    boost::signal<void(int)> sigCurrentCameraChanged;
-        
     SetupDialog* setup;
     QLabel* indicatorLabel;
 
@@ -544,6 +541,12 @@ SceneWidgetImpl::~SceneWidgetImpl()
 SceneWidgetRoot* SceneWidget::sceneRoot()
 {
     return impl->sceneRoot;
+}
+
+
+SceneRenderer& SceneWidget::renderer()
+{
+    return impl->renderer;
 }
 
 
@@ -1751,53 +1754,15 @@ void SceneWidgetImpl::showDefaultColorDialog()
 }
 
 
-SignalProxy<boost::signal<void()> > SceneWidget::sigCamerasChanged() const
-{
-    return impl->sigCamerasChanged;
-}
-
-
-SignalProxy<boost::signal<void(int)> > SceneWidget::sigCurrentCameraChanged() const
-{
-    return impl->sigCurrentCameraChanged;
-}
-
-
-int SceneWidget::numCameras() const
-{
-    return impl->renderer.numCameras();
-}
-
-
-bool SceneWidget::getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const
-{
-    return impl->renderer.getSimplifiedCameraPathStrings(index, pathStrings);
-}
-
-
-int SceneWidget::currentCameraIndex() const
-{
-    return impl->renderer.currentCameraIndex();
-}
-
-
 void SceneWidgetImpl::updateCurrentCamera()
 {
     const int index = renderer.currentCameraIndex();
     if(index >= 0){
         latestEvent.cameraPath_ = renderer.cameraPath(index);
-        sigCurrentCameraChanged(renderer.currentCameraIndex());
     }
 }
     
         
-void SceneWidget::setCurrentCamera(int index)
-{
-    impl->renderer.setCurrentCamera(index);
-    impl->updateCurrentCamera();
-}
-
-
 SgPosTransform* SceneWidget::builtinCameraTransform()
 {
     return impl->builtinCameraTransform.get();
@@ -1831,7 +1796,6 @@ void SceneWidgetImpl::setCurrentCameraPath(std::vector<std::string>& simplifiedP
 
 void SceneWidgetImpl::onCamerasChanged()
 {
-    sigCamerasChanged();
     updateCurrentCamera();
 }
 
@@ -2058,7 +2022,7 @@ void SceneWidget::setNormalLength(double value)
 }
 
 
-void SceneWidget::setHeadLight(bool on)
+void SceneWidget::setHeadLightEnabled(bool on)
 {
     impl->setup->headLightCheck.setChecked(on);
 }

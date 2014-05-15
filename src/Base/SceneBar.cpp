@@ -5,6 +5,7 @@
 #include "SceneBar.h"
 #include "ExtensionManager.h"
 #include "SceneWidget.h"
+#include "GLSceneRenderer.h"
 #include "ComboBox.h"
 #include <cnoid/ConnectionSet>
 #include <boost/bind.hpp>
@@ -27,6 +28,7 @@ public:
     SceneBar* self;
 
     SceneWidget* targetSceneWidget;
+    SceneRenderer* targetRenderer;
 
     struct SceneWidgetInfo
     {
@@ -59,7 +61,7 @@ public:
     void updateFirstPersonModeButton();
     void onCameraComboCurrentIndexChanged(int index);
     void updateCameraCombo();
-    void updateCameraComboCurrentIndex(int cameraIndex);
+    void onCurrentCameraChanged();
     void onCollisionLineButtonToggled(bool on);
     void onWireframeButtonToggled(bool on);
 };
@@ -94,6 +96,7 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
 {
     self->setEnabled(false);
     targetSceneWidget = 0;
+    targetRenderer = 0;
     
     editModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/sceneedit.png"), _("Switch to the edit mode"));
@@ -183,9 +186,11 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
     targetSceneWidget = sceneWidget;
 
     if(!sceneWidget){
+        targetRenderer = 0;
         self->setEnabled(false);
 
     } else {
+        targetRenderer = &sceneWidget->renderer();
         
         updateEditModeButton();
         connectionsToTargetSceneWidget.add(
@@ -207,11 +212,11 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
 
         updateCameraCombo();
         connectionsToTargetSceneWidget.add(
-            sceneWidget->sigCamerasChanged().connect(
+            targetRenderer->sigCamerasChanged().connect(
                 bind(&SceneBarImpl::updateCameraCombo, this)));
         connectionsToTargetSceneWidget.add(
-            sceneWidget->sigCurrentCameraChanged().connect(
-                bind(&SceneBarImpl::updateCameraComboCurrentIndex, this, _1)));
+            targetRenderer->sigCurrentCameraChanged().connect(
+                bind(&SceneBarImpl::onCurrentCameraChanged, this)));
 
         self->setEnabled(true);
     }
@@ -253,7 +258,7 @@ void SceneBarImpl::updateFirstPersonModeButton()
 void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
 {
     connectionsToTargetSceneWidget.block();
-    targetSceneWidget->setCurrentCamera(index);
+    targetRenderer->setCurrentCamera(index);
     connectionsToTargetSceneWidget.unblock();
 }
     
@@ -264,9 +269,9 @@ void SceneBarImpl::updateCameraCombo()
     
     vector<string> pathStrings;
     cameraCombo->clear();
-    const int n = targetSceneWidget->numCameras();
+    const int n = targetRenderer->numCameras();
     for(int i=0; i < n; ++i){
-        targetSceneWidget->getSimplifiedCameraPathStrings(i, pathStrings);
+        targetRenderer->getSimplifiedCameraPathStrings(i, pathStrings);
         string label;
         if(pathStrings.empty()){
             label = str(boost::format(_("Camera %1%")) % i);
@@ -277,16 +282,16 @@ void SceneBarImpl::updateCameraCombo()
         }
         cameraCombo->addItem(label.c_str());
     }
-    cameraCombo->setCurrentIndex(targetSceneWidget->currentCameraIndex());
+    cameraCombo->setCurrentIndex(targetRenderer->currentCameraIndex());
 
     cameraCombo->blockSignals(false);
 }
 
 
-void SceneBarImpl::updateCameraComboCurrentIndex(int cameraIndex)
+void SceneBarImpl::onCurrentCameraChanged()
 {
     cameraCombo->blockSignals(true);
-    cameraCombo->setCurrentIndex(cameraIndex);
+    cameraCombo->setCurrentIndex(targetRenderer->currentCameraIndex());
     cameraCombo->blockSignals(false);
 }
 

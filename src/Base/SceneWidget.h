@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_WIDGET_H_INCLUDED
-#define CNOID_BASE_SCENE_WIDGET_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_WIDGET_H
+#define CNOID_BASE_SCENE_WIDGET_H
 
 #include <QWidget>
 #include <cnoid/SceneGraph>
@@ -14,6 +14,7 @@
 namespace cnoid {
 
 class SceneWidgetImpl;
+class SceneRenderer;
 class Archive;
 class MenuManager;
 class SceneWidgetEvent;
@@ -32,6 +33,8 @@ public:
 
     SceneWidgetRoot* sceneRoot();
 
+    SceneRenderer& renderer();
+
     void setEditMode(bool on);
     bool isEditMode() const;
     SignalProxy< boost::signal<void(bool)> > sigEditModeToggled() const;
@@ -40,13 +43,6 @@ public:
     void setViewpointControlMode(ViewpointControlMode mode);
     ViewpointControlMode viewpointControlMode() const;
     SignalProxy< boost::signal<void(int mode)> > sigViewpointControlModeChanged() const;
-
-    SignalProxy<boost::signal<void()> > sigCamerasChanged() const; 
-    SignalProxy<boost::signal<void(int)> > sigCurrentCameraChanged() const; 
-    int numCameras() const;
-    bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const;
-    int currentCameraIndex() const;
-    void setCurrentCamera(int index);
 
     SgPosTransform* builtinCameraTransform(void);
     SgPerspectiveCamera* builtinPerspectiveCamera() const;
@@ -80,7 +76,7 @@ public:
     void setPointSize(double value);
     void setNormalLength(double value);
 
-    void setHeadLight(bool on);
+    void setHeadLightEnabled(bool on);
     void setHeadLightLightingFromBack(bool on);
     void setWorldLight(bool on);
     void setAdditionalLights(bool on);

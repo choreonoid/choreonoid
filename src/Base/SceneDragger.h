@@ -60,6 +60,7 @@ private:
 
 typedef ref_ptr<TranslationDragger> TranslationDraggerPtr;
 
+
 class CNOID_EXPORT RotationDragger : public SgPosTransform, public SceneWidgetEditable
 {
 public:

@@ -92,5 +92,4 @@ private:
 typedef boost::shared_ptr<ColdetModelPair> ColdetModelPairPtr;
 }
 
-
 #endif

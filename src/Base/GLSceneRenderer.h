@@ -44,6 +44,7 @@ public:
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
     virtual double aspectRatio() const; // width / height;
 
+    virtual const Affine3& currentModelMatrix() const;
     virtual const Affine3& lastViewMatrix() const;
     virtual const Matrix4& lastProjectionMatrix() const;
         

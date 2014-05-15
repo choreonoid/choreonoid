@@ -141,7 +141,7 @@ bool SceneDragProjectorImpl::startRotation(const SceneWidgetEvent& event)
     rotationBaseY = rotationAxis.cross(rotationBaseX);
 
     const Affine3 C = event.viewMatrix().inverse();
-    if(abs(rotationAxis.dot(SgCamera::direction(C))) > 0.4){
+    if(fabs(rotationAxis.dot(SgCamera::direction(C))) > 0.4){
         projector.reset(new ScenePlaneProjector(rotationAxis, initialPoint));
     } else {
         Quat rotation;
@@ -268,7 +268,7 @@ bool SceneDragProjectorImpl::startTranslation(const SceneWidgetEvent& event)
         const Vector3 center = SgCamera::direction(C) + eye;
         const Vector3 z = (eye - center).normalized();
         const Vector3& a = translationAxis;
-        if(abs(a.dot(z)) > 0.99){
+        if(fabs(a.dot(z)) > 0.99){
             return false;
         }
         const Vector3 normal = (AngleAxis(M_PI / 2.0, z) * a).cross(a).normalized();

@@ -36,9 +36,17 @@ public:
     virtual Array4i viewport() const = 0;
     virtual double aspectRatio() const = 0; // width / height;
 
+    virtual const Affine3& currentModelMatrix() const = 0;
+
+    //! This should be removed
     virtual const Affine3& lastViewMatrix() const = 0;
+    //virtual const Affine3& currentCameraPosition() const = 0;
+
+    //! This should be removed
     virtual const Matrix4& lastProjectionMatrix() const = 0;
-        
+    //virtual const Matrix4& projectionMatrix() const = 0;
+
+    
     virtual void initializeRendering() = 0;
 
     virtual SignalProxy< boost::signal<void()> > sigRenderingRequest() = 0;
