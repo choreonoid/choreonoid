@@ -32,9 +32,9 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
 }
 
 
-const Affine3& SceneWidgetEvent::viewMatrix() const
+const Affine3& SceneWidgetEvent::currentCameraPosition() const
 {
-    return sceneWidget_->renderer().lastViewMatrix();
+    return sceneWidget_->renderer().currentCameraPosition();
 }
 
 

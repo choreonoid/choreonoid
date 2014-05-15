@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_WIDGET_EDITABLE_H_INCLUDED
-#define CNOID_BASE_SCENE_WIDGET_EDITABLE_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_WIDGET_EDITABLE_H
+#define CNOID_BASE_SCENE_WIDGET_EDITABLE_H
 
 #include <cnoid/SceneGraph>
 #include "exportdecl.h"
@@ -45,7 +45,7 @@ public:
 
     const SgNodePath& cameraPath() const { return cameraPath_; }
 
-    const Affine3& viewMatrix() const;
+    const Affine3& currentCameraPosition() const;
 
     SceneWidget* sceneWidget() const { return sceneWidget_; }
 

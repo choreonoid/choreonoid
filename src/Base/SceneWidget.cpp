@@ -1332,8 +1332,8 @@ bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected
     p[2] = 2.0 * z - 1.0;
     p[3] = 1.0;
 
-    const Matrix4 V = impl->renderer.lastViewMatrix().matrix();
-    const Vector4 projected = (impl->renderer.lastProjectionMatrix() * V).inverse() * p;
+    const Matrix4 V = impl->renderer.currentCameraPosition().inverse().matrix();
+    const Vector4 projected = (impl->renderer.projectionMatrix() * V).inverse() * p;
 
     if(projected[3] == 0.0){
         return false;

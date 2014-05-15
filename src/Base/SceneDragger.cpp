@@ -29,7 +29,7 @@ class ViewpointDependentRenderingSelector : public SgGroup
 public:
     ViewpointDependentRenderingSelector(){
         axis = Vector3::UnitX();
-        thresh = acos(radian(45.0));
+        thresh = cos(radian(45.0));
     }
 
     ViewpointDependentRenderingSelector(const ViewpointDependentRenderingSelector& org, SgCloneMap& cloneMap)
@@ -47,7 +47,7 @@ public:
     }
 
     void setSwitchAngle(double rad){
-        thresh = acos(rad);
+        thresh = cos(rad);
     }
 
     virtual void accept(SceneVisitor& visitor) {
@@ -55,9 +55,9 @@ public:
         if(!renderer){
             visitor.visitGroup(this);
         } else {
-            const Affine3 C = renderer->lastViewMatrix().inverse(); // Camera position matrix
-            const Affine3& M = renderer->currentModelMatrix();
-            bool isPerspetiveCamera = (renderer->lastProjectionMatrix()(3, 3) == 0.0);
+            const Affine3& C = renderer->currentCameraPosition();
+            const Affine3& M = renderer->currentModelTransform();
+            bool isPerspetiveCamera = (renderer->projectionMatrix()(3, 3) == 0.0);
             if(isPerspetiveCamera){
                 double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
                 if(d > thresh){
@@ -104,7 +104,7 @@ TranslationDragger::TranslationDragger()
     group->addChild(conePos);
     group->addChild(cylinderPos);
     SgMeshPtr mesh = meshExtractor.integrate(group);
-    
+
     scale = new SgScaleTransform;
     for(int i=0; i < 3; ++i){
         SgShape* shape = new SgShape;
@@ -119,14 +119,16 @@ TranslationDragger::TranslationDragger()
         material->setTransparency(0.6f);
 
         SgPosTransform* arrow = new SgPosTransform;
-        arrow->setName(axisNames[i]);
         arrow->addChild(shape);
         if(i == 0){
             arrow->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
         } else if(i == 2){
             arrow->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
         }
-        scale->addChild(arrow);
+        SgInvariantGroup* invariant = new SgInvariantGroup;
+        invariant->setName(axisNames[i]);
+        invariant->addChild(arrow);
+        scale->addChild(invariant);
     }
     addChild(scale);
 

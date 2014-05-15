@@ -749,7 +749,7 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 
     float* depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
-    const Matrix4f Pinv = renderer.lastProjectionMatrix().inverse().cast<float>();
+    const Matrix4f Pinv = renderer.projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
     Vector4f n;
@@ -819,7 +819,7 @@ bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
     const double pitchStep = rangeSensorForRendering->pitchStep();
     const double maxTanPitchAngle = tan(pitchRange / 2.0);
 
-    const Matrix4 Pinv = renderer.lastProjectionMatrix().inverse();
+    const Matrix4 Pinv = renderer.projectionMatrix().inverse();
     const double Pinv_32 = Pinv(3, 2);
     const double Pinv_33 = Pinv(3, 3);
     const double fw = pixelWidth;

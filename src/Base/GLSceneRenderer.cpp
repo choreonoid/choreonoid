@@ -348,7 +348,8 @@ public:
 
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
-    Affine3 tmpCurrentModelPosition;
+    Affine3 tmpCurrentCameraPosition;
+    Affine3 tmpCurrentModelTransform;
 
     struct LightInfo
     {
@@ -2747,20 +2748,21 @@ void GLSceneRenderer::enableUnusedCacheCheck(bool on)
 }
 
 
-const Affine3& GLSceneRenderer::currentModelMatrix() const
+const Affine3& GLSceneRenderer::currentModelTransform() const
 {
-    impl->tmpCurrentModelPosition = impl->lastViewMatrix.inverse() * impl->Vstack.back();
-    return impl->tmpCurrentModelPosition;
+    impl->tmpCurrentModelTransform = impl->lastViewMatrix.inverse() * impl->Vstack.back();
+    return impl->tmpCurrentModelTransform;
 }
 
 
-const Affine3& GLSceneRenderer::lastViewMatrix() const
+const Affine3& GLSceneRenderer::currentCameraPosition() const
 {
-    return impl->lastViewMatrix;
+    impl->tmpCurrentCameraPosition = impl->lastViewMatrix.inverse();
+    return impl->tmpCurrentCameraPosition;
 }
 
 
-const Matrix4& GLSceneRenderer::lastProjectionMatrix() const
+const Matrix4& GLSceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
 }
