@@ -28,7 +28,7 @@ public:
 
     SgMesh* generateBox(Vector3 size);
     SgMesh* generateSphere(double radius);
-    SgMesh* generateCylinder(double radius, double height, bool bottom = true, bool side = true, bool top = true);
+    SgMesh* generateCylinder(double radius, double height, bool bottom = true, bool top = true, bool side = true);
     SgMesh* generateCone(double radius, double height, bool bottom = true, bool side = true);
     SgMesh* generateDisc(double radius, double innerRadius);
 

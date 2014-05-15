@@ -196,10 +196,18 @@ public:
     int numChildren() const { return children.size(); }
     SgNode* child(int index) { return children[index]; }
 
+    //! This throws an exeption when the index is invalid or the type is not matched.
+    template<class NodeType> NodeType* getChild(int index) {
+        NodeType* node = dynamic_cast<NodeType*>(children.at(index).get());
+        if(!node) throwTypeMismatchError();
+        return node;
+    }
+
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
+    void copyChildren(SgGroup* group, bool doNotify = false);
     void moveChildren(SgGroup* group, bool doNotify = false);
 
     template<class NodeType> NodeType* findNodeOfType() {
@@ -220,9 +228,9 @@ protected:
 
 private:
     Container children;
-
-    SgNode* findNodeSub(const std::type_info& nodeType);
+    static void throwTypeMismatchError();
 };
+
 typedef ref_ptr<SgGroup> SgGroupPtr;
 
 

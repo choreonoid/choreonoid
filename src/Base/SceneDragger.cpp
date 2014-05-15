@@ -6,6 +6,7 @@
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>
 #include <cnoid/MeshNormalGenerator>
+#include <cnoid/EigenUtil>
 #include <boost/bind.hpp>
 
 using namespace std;
@@ -13,7 +14,6 @@ using namespace boost;
 using namespace cnoid;
 
 namespace {
-const double PI = 3.14159265358979323846;
 const char* axisNames[3] = { "x", "y", "z" };
 }
 
@@ -55,7 +55,7 @@ TranslationDragger::TranslationDragger()
         SgShape* cylinder = new SgShape;
         cylinder->setMesh(
             meshGenerator.generateCylinder(
-                axisCylinderNormalizedRadius, cylinderLength, true, true, false));
+                axisCylinderNormalizedRadius, cylinderLength, true, false));
         cylinder->setMaterial(material);
         SgPosTransform* cylinderPos = new SgPosTransform;
         cylinderPos->setTranslation(Vector3(0.0, cylinderLength / 2.0, 0.0));
@@ -236,13 +236,16 @@ void TranslationDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 RotationDragger::RotationDragger()
 {
     static const int numDivisions = 30;
-    static const float beltWidthRatio = 0.1f;
-    static const int axes[3][3] = { { 0, 1, 2 }, { 1, 0, 2 }, { 2, 1, 0 } };
-    static const double PI = 3.14159265358979323846;
+    static const double beltWidthRatio = 0.1f;
 
-    MeshNormalGenerator normalGenerator;
+    MeshGenerator meshGenerator;
+    meshGenerator.setDivisionNumber(24);
+    SgMeshPtr beltMesh1 = meshGenerator.generateCylinder(1.0, beltWidthRatio * 2.0, false, false);
+    meshGenerator.setDivisionNumber(36);
+    SgMeshPtr beltMesh2 = meshGenerator.generateDisc(1.0 + beltWidthRatio, 1.0 - beltWidthRatio);
+
     scale = new SgScaleTransform;
-
+    
     // make dragger belts
     for(int i=0; i < 3; ++i){
         
@@ -254,38 +257,35 @@ RotationDragger::RotationDragger()
         material->setAmbientIntensity(0.0f);
         material->setTransparency(0.6f);
 
-        const int x = axes[i][0];
-        const int y = axes[i][1];
-        const int z = axes[i][2];
+        SgShape* beltShape1 = new SgShape;
+        beltShape1->setMesh(beltMesh1);
+        beltShape1->setMaterial(material);
 
-        SgMeshPtr mesh = new SgMesh;
-        SgVertexArray& vertices = *mesh->getOrCreateVertices();
-        vertices.reserve(numDivisions * 2);
-        mesh->reserveNumTriangles(numDivisions * 2);
-        
-        for(int j=0; j < numDivisions; ++j){
-            const double theta = j * 2.0 * PI / numDivisions;
-            Vector3f v1, v2;
-            v1[x] =  beltWidthRatio;
-            v2[x] = -beltWidthRatio;
-            v1[y] = v2[y] = cos(theta);
-            v1[z] = v2[z] = sin(theta);
-            vertices.push_back(v1);
-            vertices.push_back(v2);
-
-            const int s = j * 2;
-            const int t = ((j + 1) % numDivisions) * 2;
-            mesh->addTriangle(s, t, t+1);
-            mesh->addTriangle(s, t+1, s+1);
+        SgPosTransform* transform1 = new SgPosTransform;
+        if(i == 0){ // x-axis
+            transform1->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+        } else if(i == 2) { // z-axis
+            transform1->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
         }
-        normalGenerator.generateNormals(mesh);
+        transform1->addChild(beltShape1);
 
-        SgShape* belt = new SgShape;
-        belt->setMesh(mesh);
-        belt->setMaterial(material);
-        belt->setName(axisNames[i]);
-        scale->addChild(belt);
-        belts[i] = belt;
+        SgShape* beltShape2 = new SgShape;
+        beltShape2->setMesh(beltMesh2);
+        beltShape2->setMaterial(material);
+        
+        SgPosTransform* transform2 = new SgPosTransform;
+        if(i == 0){ // x-axis
+            transform2->setRotation(AngleAxis(PI / 2.0, Vector3::UnitY()));
+        } else if(i == 1) { // y-axis
+            transform2->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
+        }
+        transform2->addChild(beltShape2);
+
+        SgInvariantGroup* invariant = new SgInvariantGroup;
+        invariant->setName(axisNames[i]);
+        invariant->addChild(transform1);
+        invariant->addChild(transform2);
+        scale->addChild(invariant);
     }
 
     addChild(scale);
@@ -298,13 +298,8 @@ RotationDragger::RotationDragger(const RotationDragger& org)
 {
     scale = new SgScaleTransform;
     scale->setScale(org.scale->scale());
-    const int n = org.scale->numChildren();
-    for(int i=0; i < 3; ++i){
-        belts[i] = org.belts[i];
-        scale->addChild(belts[i]);
-    }
+    org.scale->copyChildren(scale);
     addChild(scale);
-    
     isContainerMode_ = org.isContainerMode_;
 }
 
@@ -312,10 +307,7 @@ RotationDragger::RotationDragger(const RotationDragger& org)
 RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap& cloneMap)
     : SgPosTransform(org, cloneMap)
 {
-    scale = findNodeOfType<SgScaleTransform>();
-    for(int i=0; i < 3; ++i){
-        belts[i] = dynamic_cast<SgShape*>(scale->child(i));
-    }
+    scale = getChild<SgScaleTransform>(0);
     isContainerMode_ = org.isContainerMode_;
 }
 
@@ -364,9 +356,9 @@ const Affine3& RotationDragger::draggedPosition() const
 
 bool RotationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    SgShape* belt = dynamic_cast<SgShape*>(event.nodePath().back());
-    int axisIndex = -1;
+    SgInvariantGroup* belt = dynamic_cast<SgInvariantGroup*>(event.nodePath().back());
     if(belt){
+        int axisIndex = -1;
         if(belt->name() == "x"){
             axisIndex = 0;
         } else if(belt->name() == "y"){

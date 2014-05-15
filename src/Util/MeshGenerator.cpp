@@ -174,7 +174,7 @@ SgMesh* MeshGenerator::generateSphere(double radius)
 }
 
 
-SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool bottom, bool side, bool top)
+SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool bottom, bool top, bool side)
 {
     if(height < 0.0 || radius < 0.0){
         return 0;
@@ -283,27 +283,28 @@ SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
     SgVertexArray& vertices = *mesh->getOrCreateVertices();
     vertices.reserve(divisionNumber_ * 2);
 
-    mesh->getOrCreateNormals()->push_back(Vector3f::UnitZ());
-    SgIndexArray& normalIndices = mesh->normalIndices();
-    normalIndices.reserve(divisionNumber_ * 2);
-
     for(int i=0;  i < divisionNumber_; ++i){
         const double angle = i * 2.0 * PI / divisionNumber_;
         const double x = cos(angle);
         const double y = sin(angle);
         vertices.push_back(Vector3f(innerRadius * x, innerRadius * y, 0.0f));
         vertices.push_back(Vector3f(radius * x, radius * y, 0.0f));
-        normalIndices.push_back(0);
-        normalIndices.push_back(0);
     }
 
     mesh->reserveNumTriangles(divisionNumber_ * 2);
+    mesh->getOrCreateNormals()->push_back(Vector3f::UnitZ());
+    SgIndexArray& normalIndices = mesh->normalIndices();
+    normalIndices.reserve(divisionNumber_ * 2 * 3);
+
     for(int i=0; i < divisionNumber_; ++i){
         const int j = (i + 1) % divisionNumber_;
         const int current = i * 2;
         const int next = j * 2;
         mesh->addTriangle(current, current + 1, next + 1);
         mesh->addTriangle(current, next + 1, next);
+        for(int j=0; j < 6; ++j){
+            normalIndices.push_back(0);
+        }
     }
 
     mesh->updateBoundingBox();

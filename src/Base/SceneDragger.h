@@ -99,7 +99,6 @@ public:
         
 private:
     SgScaleTransformPtr scale;
-    SgShapePtr belts[3];
     SceneDragProjector dragProjector;
     bool isContainerMode_;
     boost::signal<void()> sigRotationStarted_;

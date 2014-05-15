@@ -8,6 +8,7 @@
 #include "SceneLight.h"
 #include "SceneCamera.h"
 #include "SceneVisitor.h"
+#include "Exception.h"
 #include "MeshNormalGenerator.h"
 #include <boost/unordered_map.hpp>
 #include <boost/make_shared.hpp>
@@ -333,6 +334,14 @@ void SgGroup::removeChildAt(int index, bool doNotify)
 }
 
 
+void SgGroup::copyChildren(SgGroup* group, bool doNotify)
+{
+    for(int i=0; i < children.size(); ++i){
+        group->addChild(child(i), doNotify);
+    }
+}
+
+
 void SgGroup::moveChildren(SgGroup* group, bool doNotify)
 {
     const int destTop = group->children.size();
@@ -347,6 +356,12 @@ void SgGroup::moveChildren(SgGroup* group, bool doNotify)
             group->child(i)->notifyUpdate(update);
         }
     }
+}
+
+
+void SgGroup::throwTypeMismatchError()
+{
+    throw type_mismatch_error();
 }
 
 
