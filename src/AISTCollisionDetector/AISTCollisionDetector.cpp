@@ -62,7 +62,7 @@ ModelMap modelCache;
 
 namespace cnoid {
 
-class AISTCollisionDetectorImpl : public SceneVisitor
+class AISTCollisionDetectorImpl
 {
 public:
     vector<ColdetModelExPtr> models;

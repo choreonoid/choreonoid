@@ -1322,29 +1322,18 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
 }
 
 
-const Affine3& SceneWidget::viewMatrix() const
-{
-    return impl->renderer.lastViewMatrix();
-}
-
-
-const Array4i& SceneWidget::viewport() const
-{
-    return impl->renderer.viewport();
-}
-
-
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const Array4i& vp = viewport();
+    const Array4i& vp = impl->renderer.viewport();
 
     Vector4 p;
     p[0] = 2.0 * (x - vp[0]) / vp[2] - 1.0;
     p[1] = 2.0 * (y - vp[1]) / vp[3] - 1.0;
     p[2] = 2.0 * z - 1.0;
     p[3] = 1.0;
-    
-    const Vector4 projected = (impl->renderer.lastProjectionMatrix() * viewMatrix().matrix()).inverse() * p;
+
+    const Matrix4 V = impl->renderer.lastViewMatrix().matrix();
+    const Vector4 projected = (impl->renderer.lastProjectionMatrix() * V).inverse() * p;
 
     if(projected[3] == 0.0){
         return false;

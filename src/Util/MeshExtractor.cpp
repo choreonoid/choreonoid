@@ -4,22 +4,11 @@
 */
 
 #include "MeshExtractor.h"
+#include <boost/bind.hpp>
 
 using namespace std;
+using namespace boost;
 using namespace cnoid;
-
-
-bool MeshExtractor::extract(SgNode* node, boost::function<void()> callback)
-{
-    this->callback = callback;
-    currentMesh_ = 0;
-    currentTransform_.setIdentity();
-    currentTransformWithoutScaling_.setIdentity();
-    isCurrentScaled_ = false;
-    meshFound = false;
-    node->accept(*this);
-    return meshFound;
-}
 
 
 void MeshExtractor::visitPosTransform(SgPosTransform* transform)
@@ -79,4 +68,77 @@ void MeshExtractor::visitLight(SgLight* light)
 void MeshExtractor::visitCamera(SgCamera* camera)
 {
 
+}
+
+
+bool MeshExtractor::extract(SgNode* node, boost::function<void()> callback)
+{
+    this->callback = callback;
+    currentMesh_ = 0;
+    currentTransform_.setIdentity();
+    currentTransformWithoutScaling_.setIdentity();
+    isCurrentScaled_ = false;
+    meshFound = false;
+    node->accept(*this);
+    return meshFound;
+}
+
+
+static void integrateMesh(MeshExtractor* extractor, SgMesh* mesh)
+{
+    SgMesh* srcMesh = extractor->currentMesh();
+    const Affine3f T = extractor->currentTransform().cast<Affine3f::Scalar>();
+
+    if(srcMesh->hasVertices()){
+        SgVertexArray& vertices = *mesh->getOrCreateVertices();
+        const int numVertices = vertices.size();
+        SgVertexArray& srcVertices = *srcMesh->vertices();
+        const int numSrcVertices = srcVertices.size();
+        vertices.reserve(numVertices + numSrcVertices);
+        for(int i=0; i < numSrcVertices; ++i){
+            vertices.push_back(T * srcVertices[i]);
+        }
+
+        SgIndexArray& indices = mesh->triangleVertices();
+        const int numIndices = indices.size();
+        SgIndexArray& srcIndices = srcMesh->triangleVertices();
+        const int numSrcIndices = srcIndices.size();
+        indices.reserve(numIndices + numSrcIndices);
+        for(int i=0; i < numSrcIndices; ++i){
+            indices.push_back(srcIndices[i] + numVertices);
+        }
+        
+        if(srcMesh->hasNormals()){
+            SgNormalArray& normals = *mesh->getOrCreateNormals();
+            const int numNormals = normals.size();
+            SgNormalArray& srcNormals = *srcMesh->normals();
+            const int numSrcNormals = srcNormals.size();
+            normals.reserve(numNormals + numSrcNormals);
+            const Affine3f U = extractor->currentTransformWithoutScaling().cast<Affine3f::Scalar>();
+            for(int i=0; i < numSrcNormals; ++i){
+                normals.push_back(U * srcNormals[i]);
+            }
+            
+            SgIndexArray& indices = mesh->normalIndices();
+            const int numIndices = indices.size();
+            SgIndexArray& srcIndices = srcMesh->normalIndices();
+            const int numSrcIndices = srcIndices.size();
+            indices.reserve(numIndices + numSrcIndices);
+            for(int i=0; i < numSrcIndices; ++i){
+                indices.push_back(srcIndices[i] + numNormals);
+            }
+        }
+    }
+}
+
+
+/**
+   \todo take into acount the case where some meshes have normals or colors
+   and others don't have them.
+*/
+SgMesh* MeshExtractor::integrate(SgNode* node)
+{
+    SgMesh* mesh = new SgMesh;
+    extract(node, bind(integrateMesh, this, mesh));
+    return mesh;
 }

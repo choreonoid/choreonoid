@@ -37,6 +37,7 @@ public:
     virtual double aspectRatio() const = 0; // width / height;
 
     virtual const Affine3& currentModelMatrix() const = 0;
+    // virtual const Affine3& currentModelTransform() const = 0;
 
     //! This should be removed
     virtual const Affine3& lastViewMatrix() const = 0;

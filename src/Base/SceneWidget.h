@@ -53,9 +53,6 @@ public:
     void rotateBuiltinCameraView(double dPitch, double dYaw);
     void translateBuiltinCameraView(const Vector3& dp_local);
 
-    const Affine3& viewMatrix() const;
-    const Array4i& viewport() const;
-
     bool unproject(double x, double y, double z, Vector3& out_projected) const;
         
     void viewAll();

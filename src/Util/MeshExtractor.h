@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_MESH_EXTRACTOR_H_INCLUDED
-#define CNOID_UTIL_MESH_EXTRACTOR_H_INCLUDED
+#ifndef CNOID_UTIL_MESH_EXTRACTOR_H
+#define CNOID_UTIL_MESH_EXTRACTOR_H
 
 #include "SceneShape.h"
 #include "SceneVisitor.h"
@@ -18,6 +18,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     bool extract(SgNode* node, boost::function<void()> callback);
+    SgMesh* integrate(SgNode* node);
 
     SgMesh* currentMesh() const { return currentMesh_; }
     const Affine3& currentTransform() const { return currentTransform_; }

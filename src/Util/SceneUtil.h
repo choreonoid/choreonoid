@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_UTIL_H_INCLUDED
-#define CNOID_UTIL_SCENE_UTIL_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_UTIL_H
+#define CNOID_UTIL_SCENE_UTIL_H
 
 #include "SceneGraph.h"
 #include "exportdecl.h"
@@ -15,6 +15,7 @@ CNOID_EXPORT Affine3 calcTotalTransform(const SgNodePath& path, const SgNode* ta
 CNOID_EXPORT Affine3 calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::const_iterator end);
 
 CNOID_EXPORT int makeTransparent(SgNode* topNode, float transparency, SgCloneMap& cloneMap, bool doKeepOrgTransparency = true);
+
 }
 
 #endif

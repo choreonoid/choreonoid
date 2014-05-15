@@ -4,6 +4,7 @@
 
 #include "SceneWidgetEditable.h"
 #include "SceneWidget.h"
+#include <cnoid/SceneRenderer>
 
 using namespace cnoid;
 
@@ -33,7 +34,7 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
 
 const Affine3& SceneWidgetEvent::viewMatrix() const
 {
-    return sceneWidget_->viewMatrix();
+    return sceneWidget_->renderer().lastViewMatrix();
 }
 
 
