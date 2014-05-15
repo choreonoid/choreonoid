@@ -4,7 +4,7 @@
 */
 
 #include "SceneMarker.h"
-#include "MeshNormalGenerator.h"
+#include "MeshGenerator.h"
 
 using namespace std;
 using namespace cnoid;
@@ -54,7 +54,8 @@ void CrossMarker::setSize(double size)
 SphereMarker::SphereMarker(double radius, const Vector3f& color, float transparency)
 {
     SgShapePtr shape = new SgShape;
-    shape->setMesh(new SgMesh)->setSphere(radius);
+    MeshGenerator meshGenerator;
+    shape->setMesh(meshGenerator.generateSphere(radius));
     SgMaterial* material = shape->setMaterial(new SgMaterial);
     material->setDiffuseColor(color);
     material->setEmissiveColor(color);
@@ -82,7 +83,8 @@ BoundingBoxMarker::BoundingBoxMarker(const BoundingBox& bbox, const Vector3f& co
 void BoundingBoxMarker::create(const BoundingBox& bbox, const Vector3f& color, float transparency, double width)
 {
     SgShape* shape = new SgShape;
-    shape->setMesh(new SgMesh)->setBox(Vector3(width, width, width));
+    MeshGenerator meshGenerator;
+    shape->setMesh(meshGenerator.generateBox(Vector3(width, width, width)));
     
     SgMaterial* material = shape->setMaterial(new SgMaterial);
     material->setTransparency(transparency);

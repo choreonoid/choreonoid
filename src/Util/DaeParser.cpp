@@ -23,6 +23,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <cnoid/MeshGenerator>
 #include <cnoid/MeshNormalGenerator>
 #include <cnoid/MeshGenerator>
 #include <cnoid/SceneGraph>
@@ -450,6 +451,8 @@ protected:
     DaeSensors             sensors;
     DaeResultSensorsPtr    sensorResults;
     DaeSensorRelations     srelations;
+
+    MeshGenerator meshGenerator;
 };
 
 
@@ -2789,14 +2792,16 @@ void DaeParserImpl::setRigid(DaeNodePtr extNode, SgGroup* sgGroup, SgGroup* sgTr
         for (DaeShapes::iterator iters = rigid->shapes.begin(); iters != rigid->shapes.end(); iters++) {
             DaeShapePtr extShape = *iters;
             if (extShape->box.presence) {
-                static_cast<SgShape*>(sgTransParent->child(i))->mesh()->setBox(extShape->box.halfExtents);
+                static_cast<SgShape*>(sgTransParent->child(i))->setMesh(
+                    meshGenerator.generateBox(extShape->box.halfExtents));
             } else
                 if (extShape->sphere.presence) {
-                    static_cast<SgShape*>(sgTransParent->child(i))->mesh()->setSphere(extShape->sphere.radius);
+                    static_cast<SgShape*>(sgTransParent->child(i))->setMesh(
+                        meshGenerator.generateSphere(extShape->sphere.radius));
                 } else
                     if (extShape->cylinder.presence) {
-                        static_cast<SgShape*>(sgTransParent->child(i))->mesh()->setCylinder(extShape->cylinder.radius,
-                                                                                              extShape->cylinder.height);
+                        static_cast<SgShape*>(sgTransParent->child(i))->setMesh(
+                            meshGenerator.generateCylinder(extShape->cylinder.radius, extShape->cylinder.height));
                     } else
                         if (extShape->cone.presence) {
                             *os << ((format(_("[%1%]no implementation yet")) % line()).str()) << endl;

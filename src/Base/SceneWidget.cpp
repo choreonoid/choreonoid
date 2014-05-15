@@ -20,6 +20,7 @@
 #include <cnoid/SceneShape>
 #include <cnoid/SceneCamera>
 #include <cnoid/SceneLight>
+#include <cnoid/MeshGenerator>
 #include <QGLWidget>
 #include <QGLPixelBuffer>
 #include <QLabel>
@@ -2355,10 +2356,9 @@ void SceneWidgetImpl::setupCoordinateAxes()
     float length = 16;
     float width = 2;
 
-    SgMeshPtr cylinder = new SgMesh();
-    cylinder->setCylinder(width, length);
-    SgMeshPtr cone = new SgMesh();
-    cone->setCone(width * 2.0, width * 4.0);
+    MeshGenerator meshGenerator;
+    SgMeshPtr cylinder = meshGenerator.generateCylinder(width, length);
+    SgMeshPtr cone = meshGenerator.generateCone(width * 2.0, width * 4.0);
 
     SgShapePtr xCylinderShape = new SgShape;
     xCylinderShape->setMesh(cylinder);

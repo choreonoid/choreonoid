@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_MESH_NORMAL_GENERATOR_H_INCLUDED
-#define CNOID_UTIL_MESH_NORMAL_GENERATOR_H_INCLUDED
+#ifndef CNOID_UTIL_MESH_NORMAL_GENERATOR_H
+#define CNOID_UTIL_MESH_NORMAL_GENERATOR_H
 
 #include "SceneShape.h"
 #include "exportdecl.h"
@@ -29,6 +29,7 @@ public:
 private:
     MeshNormalGeneratorImpl* impl;
 };
+
 }
 
 #endif

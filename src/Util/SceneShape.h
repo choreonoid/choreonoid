@@ -372,11 +372,6 @@ public:
     template<class TPrimitive> const TPrimitive& primitive() const { return boost::get<TPrimitive>(primitive_); }
     template<class TPrimitive> void setPrimitive(const TPrimitive& prim) { primitive_ = prim; }
 
-    bool setBox(Vector3 size);
-    bool setSphere(double radius, int divisionNumber = 20);
-    bool setCylinder(double radius, double height, bool bottom = true, bool side = true, bool top = true, int divisionNumber = 20);
-    bool setCone(double radius, double height, bool bottom = true, bool side = true, int divisionNumber = 20);
-
 protected:
     SgMesh(const SgMesh& org, SgCloneMap& cloneMap);
 
