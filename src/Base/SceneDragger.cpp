@@ -540,13 +540,7 @@ bool PositionDragger::isContainerMode() const
 void PositionDragger::setDraggerAlwaysShown(bool on)
 {
     if(on != isDraggerAlwaysShown_){
-        if(on){
-            addChild(translationDragger_);
-            addChild(rotationDragger_, true);
-        } else {
-            removeChild(translationDragger_);
-            removeChild(rotationDragger_, true);
-        }
+        showDragMarkers(on);
     }
     isDraggerAlwaysShown_ = on;
 }
@@ -556,6 +550,22 @@ bool PositionDragger::isDraggerAlwaysShown() const
 {
     return isDraggerAlwaysShown_;
 }
+
+
+void PositionDragger::showDragMarkers(bool on)
+{
+    if(on){
+        if(!contains(translationDragger_)){
+            addChild(translationDragger_, true);
+        }
+        if(!contains(rotationDragger_)){
+            addChild(rotationDragger_, true);
+        }
+    } else {
+        removeChild(translationDragger_, true);
+        removeChild(rotationDragger_, true);
+    }
+}    
 
 
 Affine3 PositionDragger::draggedPosition() const
@@ -586,12 +596,7 @@ bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     if(isContainerMode_){
         if(!isDraggerAlwaysShown_){
-            if(!contains(translationDragger_)){
-                addChild(translationDragger_, true);
-            }
-            if(!contains(rotationDragger_)){
-                addChild(rotationDragger_, true);
-            }
+            showDragMarkers(true);
         }
         dragProjector.setInitialPosition(T());
         dragProjector.setTranslationAlongViewPlane();
@@ -637,13 +642,7 @@ void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
 {
     if(event.sceneWidget()->isEditMode() && isContainerMode_ && !isDraggerAlwaysShown_){
-        if(on){
-            addChild(translationDragger_, true);
-            addChild(rotationDragger_, true);
-        } else {
-            removeChild(translationDragger_, true);
-            removeChild(rotationDragger_, true);
-        }
+        showDragMarkers(on);
     }
 }
 
@@ -651,7 +650,6 @@ void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
 void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     if(!event.sceneWidget()->isEditMode()){
-        removeChild(translationDragger_, true);
-        removeChild(rotationDragger_, true);
+        showDragMarkers(false);
     }
 }

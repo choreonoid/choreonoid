@@ -160,6 +160,7 @@ private:
 
     void initalizeDraggers();
     void onPositionDragged();
+    void showDragMarkers(bool on);
 };
     
 typedef ref_ptr<PositionDragger> PositionDraggerPtr;
