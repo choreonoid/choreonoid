@@ -78,10 +78,10 @@ bool SceneLink::isVisible() const
 void SceneLink::setVisible(bool on)
 {
     if(shape_){
-        if(!contains(shape_) && on){
-            addChild(shape_);
-        } else if(contains(shape_) && !on){
-            removeChild(shape_);
+        if(on){
+            addChildOnce(shape_, true);
+        } else {
+            removeChild(shape_, true);
         }
     }
 }

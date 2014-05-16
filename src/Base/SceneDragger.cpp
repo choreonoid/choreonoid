@@ -555,12 +555,8 @@ bool PositionDragger::isDraggerAlwaysShown() const
 void PositionDragger::showDragMarkers(bool on)
 {
     if(on){
-        if(!contains(translationDragger_)){
-            addChild(translationDragger_, true);
-        }
-        if(!contains(rotationDragger_)){
-            addChild(rotationDragger_, true);
-        }
+        addChildOnce(translationDragger_, true);
+        addChildOnce(rotationDragger_, true);
     } else {
         removeChild(translationDragger_, true);
         removeChild(rotationDragger_, true);

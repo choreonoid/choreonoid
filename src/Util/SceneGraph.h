@@ -205,6 +205,7 @@ public:
 
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
+    void addChildOnce(SgNode* node, bool doNotify = false);
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
     void copyChildren(SgGroup* group, bool doNotify = false);

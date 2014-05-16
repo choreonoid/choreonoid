@@ -280,6 +280,14 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
 }
 
 
+void SgGroup::addChildOnce(SgNode* node, bool doNotify)
+{
+    if(!contains(node)){
+        addChild(node, doNotify);
+    }
+}
+
+
 SgGroup::iterator SgGroup::removeChild(iterator childIter, bool doNotify)
 {
     iterator next;
