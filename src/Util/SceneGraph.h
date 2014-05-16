@@ -103,12 +103,12 @@ public:
         transferUpdate(update);
     }
 
-    void addParent(SgObject* node);
-    void addParent(SgObject* node, SgUpdate& update);
-    void removeParent(SgObject* node);
+    void addParent(SgObject* parent, bool doNotify = false);
+    void removeParent(SgObject* parent);
     int numParents() const { return parents.size(); }
     bool hasParents() const { return !parents.empty(); }
 
+public:
     const_parentIter parentBegin() const { return parents.begin(); }
     const_parentIter parentEnd() const { return parents.end(); }
     

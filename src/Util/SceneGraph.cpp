@@ -117,28 +117,23 @@ void SgObject::transferUpdate(SgUpdate& update)
 }
 
 
-void SgObject::addParent(SgObject* node)
+void SgObject::addParent(SgObject* parent, bool doNotify)
 {
-    parents.insert(node);
+    parents.insert(parent);
+    if(doNotify){
+        SgUpdate update(SgUpdate::ADDED);
+        update.push(this);
+        parent->transferUpdate(update);
+    }
     if(parents.size() == 1){
         sigGraphConnection_(true);
     }
 }
 
 
-void SgObject::addParent(SgObject* node, SgUpdate& update)
+void SgObject::removeParent(SgObject* parent)
 {
-    parents.insert(node);
-    transferUpdate(update);
-    if(parents.size() == 1){
-        sigGraphConnection_(true);
-    }
-}
-
-
-void SgObject::removeParent(SgObject* node)
-{
-    parents.erase(node);
+    parents.erase(parent);
     if(parents.empty()){
         sigGraphConnection_(false);
     }
@@ -280,12 +275,7 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
 {
     if(node){
         children.push_back(node);
-        if(doNotify){
-            SgUpdate update(SgUpdate::ADDED);
-            node->addParent(this, update);
-        } else {
-            node->addParent(this);
-        }
+        node->addParent(this, doNotify);
     }
 }
 
