@@ -6,7 +6,7 @@ apt-get source libode-dev
 2.コンパイル
 cd ode-0.11.1/
 
-CXXFLAGS="-fPIC -fvisibility=hidden" ./configure --enable-static --enable-release --enable-double-precision --with-trimesh=opcode
+CXXFLAGS="-fPIC -fvisibility=hidden" ./configure --enable-static --enable-release --enable-double-precision --with-trimesh=opcode --disable-demos 
 
 make
 sudo make install
@@ -15,6 +15,16 @@ sudo make install
 
 
 **Gazebo_ode　ソースからコンパイルしてstaticライブラリを作成する**
+
+http://gazebosim.org/wiki/3.0/installに従って、依存ライブラリをインストール。
+
+Build And Install GazeboのConfigure Gazebo (choose either method a or b below)の前に
+
+/gazebo/CMakeLists.txtの中の
+set (BUILD_GAZEBO ON CACHE INTERNAL "Build Gazebo" FORCE)
+を
+set (BUILD_GAZEBO OFF CACHE INTERNAL "Build Gazebo" FORCE)
+に書き換える。
 
 /gazebo/cmake/GazeboUtils.cmakeファイルに
 
@@ -40,7 +50,7 @@ gz_add_library(gazebo_*** ${sources})
 gz_add_static_library(gazebo_*** ${sources})
 に書き換える。
 
-cmake .
+cmake ..
 make
 sudo make install
 
