@@ -3,6 +3,7 @@
 */
 
 #include "SceneDragger.h"
+#include <cnoid/SceneWidget>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>
@@ -219,7 +220,7 @@ bool TranslationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
             const string& name = node->name();
             if(!name.empty()){
                 for(int j=0; j < 3; ++j){
-                    if(name == axisNames[j]){
+                     if(name == axisNames[j]){
                         axisIndex = j;
                         goto exit;
                     }
@@ -584,31 +585,36 @@ void PositionDragger::onPositionDragged()
 
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(!isDraggerAlwaysShown_){
-        bool added = false;
-        if(!contains(translationDragger_)){
-            addChild(translationDragger_);
-            added = true;
+    if(isContainerMode_){
+        if(!isDraggerAlwaysShown_){
+            bool added = false;
+            if(!contains(translationDragger_)){
+                addChild(translationDragger_);
+                added = true;
+            }
+            if(!contains(rotationDragger_)){
+                addChild(rotationDragger_);
+                added = true;
+            }
+            if(added){
+                notifyUpdate(SgUpdate::ADDED);
+            }
         }
-        if(!contains(rotationDragger_)){
-            addChild(rotationDragger_);
-            added = true;
-        }
-        if(added){
-            notifyUpdate(SgUpdate::ADDED);
-        }
+        dragProjector.setInitialPosition(T());
+        dragProjector.setTranslationAlongViewPlane();
+        return dragProjector.startTranslation(event);
     }
-    dragProjector.setInitialPosition(T());
-    dragProjector.setTranslationAlongViewPlane();
-    return dragProjector.startTranslation(event);
+    return false;
 }
 
 
 bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
-    if(dragProjector.isDragging()){
-        dragProjector.resetDragMode();
-        return true;
+    if(isContainerMode_){
+        if(dragProjector.isDragging()){
+            dragProjector.resetDragMode();
+            return true;
+        }
     }
     return false;
 }
@@ -616,10 +622,12 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(dragProjector.drag(event)){
-        setPosition(dragProjector.position());
-        notifyUpdate();
-        return true;
+    if(isContainerMode_){
+        if(dragProjector.drag(event)){
+            setPosition(dragProjector.position());
+            notifyUpdate();
+            return true;
+        }
     }
     return false;
 }
@@ -627,19 +635,41 @@ bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    dragProjector.resetDragMode();
+    if(isContainerMode_){
+        dragProjector.resetDragMode();
+    }
 }
 
 
 void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
 {
-    if(!isDraggerAlwaysShown_){
-        if(on){
-            addChild(translationDragger_);
-            addChild(rotationDragger_, true);
-        } else {
-            removeChild(translationDragger_);
-            removeChild(rotationDragger_, true);
+    if(isContainerMode_){
+        if(!isDraggerAlwaysShown_){
+            if(on){
+                addChild(translationDragger_, true);
+                addChild(rotationDragger_, true);
+            } else {
+                removeChild(translationDragger_, true);
+                removeChild(rotationDragger_, true);
+            }
         }
+    }
+}
+
+
+void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
+{
+    if(event.sceneWidget()->isEditMode()){
+        if(isDraggerAlwaysShown_ || !isContainerMode_){
+            if(!contains(translationDragger_)){
+                addChild(translationDragger_, true);
+            }
+            if(!contains(rotationDragger_)){
+                addChild(rotationDragger_, true);
+            }
+        }
+    } else {
+        removeChild(translationDragger_, true);
+        removeChild(rotationDragger_, true);
     }
 }

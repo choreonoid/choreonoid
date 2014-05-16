@@ -145,6 +145,7 @@ public:
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on);
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
         
 private:
     TranslationDraggerPtr translationDragger_;
@@ -152,6 +153,7 @@ private:
     SceneDragProjector dragProjector;
     bool isContainerMode_;
     bool isDraggerAlwaysShown_;
+    bool isDraggerShown;
     boost::signal<void()> sigDragStarted_;
     boost::signal<void()> sigPositionDragged_;
     boost::signal<void()> sigDragFinished_;

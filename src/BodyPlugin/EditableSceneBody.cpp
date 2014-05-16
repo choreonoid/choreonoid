@@ -166,8 +166,7 @@ public:
     PinDragIKptr pinDragIK;
     InverseKinematicsPtr ik;
     PenetrationBlockerPtr penetrationBlocker;
-    RotationDraggerPtr rotationDragger;
-    TranslationDraggerPtr translationDragger;
+    PositionDraggerPtr positionDragger;
 
     bool isEditMode;
 
@@ -206,7 +205,7 @@ public:
         
     EditableSceneBodyImpl::PointedType findPointedObject(const vector<SgNode*>& path);
     void updateMarkersAndManipulators();
-    void attachRotationDragger(Link* link);
+    void attachPositionDragger(Link* link);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
     bool onKeyReleaseEvent(const SceneWidgetEvent& event);
@@ -220,14 +219,12 @@ public:
     void onSceneModeChanged(const SceneWidgetEvent& event);
     bool onUndoRequest();
     bool onRedoRequest();
-
+    void onDraggerIKstarted();
+    void onDraggerIKdragged();
+    
     bool initializeIK();
     void startIK(const SceneWidgetEvent& event);
     void dragIK(const SceneWidgetEvent& event);
-    void onIKRotationStarted();
-    void onIKRotationDragged();
-    void onIKTranslationStarted();
-    void onIKTranslationDragged();
     void doIK(const Position& position);
     void startFK(const SceneWidgetEvent& event);
     void dragFKRotation(const SceneWidgetEvent& event);
@@ -266,18 +263,11 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     pointedSceneLink = 0;
     outlinedLink = 0;
     targetLink = 0;
-    
-    rotationDragger = new RotationDragger;
-    rotationDragger->sigRotationStarted().connect(
-        bind(&EditableSceneBodyImpl::onIKRotationStarted, this));;
-    rotationDragger->sigRotationDragged().connect(
-        bind(&EditableSceneBodyImpl::onIKRotationDragged, this));
 
-    translationDragger = new TranslationDragger;
-    translationDragger->sigTranslationStarted().connect(
-        bind(&EditableSceneBodyImpl::onIKTranslationStarted, this));;
-    translationDragger->sigTranslationDragged().connect(
-        bind(&EditableSceneBodyImpl::onIKTranslationDragged, this));
+    positionDragger = new PositionDragger;
+    positionDragger->setDraggerAlwaysShown(true);
+    positionDragger->sigDragStarted().connect(bind(&EditableSceneBodyImpl::onDraggerIKstarted, this));
+    positionDragger->sigPositionDragged().connect(bind(&EditableSceneBodyImpl::onDraggerIKdragged, this));
     
     dragMode = DRAG_NONE;
     isDragging = false;
@@ -551,8 +541,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
     for(int i=0; i < n; ++i){
         EditableSceneLink* sceneLink = editableSceneLink(i);
         sceneLink->hideMarker();
-        sceneLink->removeChild(rotationDragger);
-        sceneLink->removeChild(translationDragger);
+        sceneLink->removeChild(positionDragger);
         if(show){
             Link* link = sceneLink->link();
             if(link == baseLink){
@@ -567,21 +556,19 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
     }
 
     if(show && targetLink && (kinematicsBar->mode() == KinematicsBar::IK_MODE) && kinematicsBar->isAttitudeMode()){
-        attachRotationDragger(targetLink);
+        attachPositionDragger(targetLink);
     }
 
     self->notifyUpdate(modified);
 }
 
 
-void EditableSceneBodyImpl::attachRotationDragger(Link* link)
+void EditableSceneBodyImpl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
     double r = sceneLink->untransformedBoundingBox().boundingSphereRadius();
-    rotationDragger->setRadius(r);
-    translationDragger->setRadius(r * 2.0);
-    sceneLink->addChild(rotationDragger);
-    sceneLink->addChild(translationDragger);
+    positionDragger->setRadius(r);
+    sceneLink->addChild(positionDragger);
 }
 
 
@@ -699,7 +686,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             case KinematicsBar::AUTO_MODE:
                 ik = bodyItem->getDefaultIK(targetLink);
                 if(ik){
-                    attachRotationDragger(targetLink);
+                    attachPositionDragger(targetLink);
                     startIK(event);
                 } else {
                     startFK(event);
@@ -989,6 +976,18 @@ bool EditableSceneBodyImpl::onRedoRequest()
 }
 
 
+void EditableSceneBodyImpl::onDraggerIKstarted()
+{
+    initializeIK();
+}
+
+
+void EditableSceneBodyImpl::onDraggerIKdragged()
+{
+    doIK(positionDragger->draggedPosition());
+}
+
+
 bool EditableSceneBodyImpl::initializeIK()
 {
     Link* baseLink = bodyItem->currentBaseLink();
@@ -1051,30 +1050,6 @@ void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
             doIK(T);
         }
     }
-}
-
-
-void EditableSceneBodyImpl::onIKRotationStarted()
-{
-    initializeIK();
-}
-
-
-void EditableSceneBodyImpl::onIKRotationDragged()
-{
-    doIK(rotationDragger->draggedPosition());
-}
-
-
-void EditableSceneBodyImpl::onIKTranslationStarted()
-{
-    initializeIK();
-}
-
-
-void EditableSceneBodyImpl::onIKTranslationDragged()
-{
-    doIK(translationDragger->draggedPosition());
 }
 
 

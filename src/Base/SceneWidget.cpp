@@ -317,6 +317,7 @@ public:
         EditablePath& editablePath, function<bool(SceneWidgetEditable* editable)> function);
     bool setFocusToEditablePath(EditablePath& editablePath);
     bool setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable);
+    void clearFocusToEditables();
 
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void keyReleaseEvent(QKeyEvent* event);
@@ -612,11 +613,7 @@ void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
                     }
                 }
                 if(isEntityFocused){
-                    for(size_t i=0; i < focusedEditablePath.size(); ++i){
-                        focusedEditablePath[i]->onFocusChanged(latestEvent, false);
-                    }
-                    focusedEditablePath.clear();
-                    focusedEditable = 0;
+                    clearFocusToEditables();
                 }
                 editableEntities.erase(editable);
             }
@@ -1036,18 +1033,34 @@ bool SceneWidgetImpl::setFocusToEditablePath(EditablePath& editablePath)
 
 bool SceneWidgetImpl::setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable)
 {
-    if(!targetEditable){
-        return false;
-    }
-    EditablePath path;
-    for(size_t i=0; i < pointedEditablePath.size(); ++i){
-        SceneWidgetEditable* editable = pointedEditablePath[i];
-        path.push_back(editable);
-        if(editable == targetEditable){
-            return setFocusToEditablePath(path);
+    if(targetEditable){
+        EditablePath path;
+        for(size_t i=0; i < pointedEditablePath.size(); ++i){
+            SceneWidgetEditable* editable = pointedEditablePath[i];
+            path.push_back(editable);
+            if(editable == targetEditable){
+                return setFocusToEditablePath(path);
+            }
         }
     }
+
+    // No editable is pointed
+    // The following command is disabled because keeping the focus seems better.
+    // clearFocusToEditables();
+    
     return false;
+}
+
+
+void SceneWidgetImpl::clearFocusToEditables()
+{
+    os << "SceneWidgetImpl::clearFocusToEditables()" << endl;
+    
+    for(size_t i=0; i < focusedEditablePath.size(); ++i){
+        focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+    }
+    focusedEditablePath.clear();
+    focusedEditable = 0;
 }
 
 
