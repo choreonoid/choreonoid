@@ -585,21 +585,17 @@ void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
     SgNode* node = dynamic_cast<SgNode*>(update.path().front());
 
     if(node && (update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED))){
-
         EditableExtractor extractor;
         extractor.apply(node);
         const int numEditables = extractor.numEditables();
 
         if(update.action() & SgUpdate::ADDED){
-
             for(int i=0; i < numEditables; ++i){
                 SceneWidgetEditable* editable = extractor.editable(i);
                 editableEntities.insert(editable);
                 editable->onSceneModeChanged(latestEvent);
             }
-            
         } else if(update.action() & SgUpdate::REMOVED){
-
             for(int i=0; i < numEditables; ++i){
                 SceneWidgetEditable* editable = extractor.editable(i);
                 if(editable == lastMouseMovedEditable){
@@ -1054,8 +1050,6 @@ bool SceneWidgetImpl::setFocusToPointedEditablePath(SceneWidgetEditable* targetE
 
 void SceneWidgetImpl::clearFocusToEditables()
 {
-    os << "SceneWidgetImpl::clearFocusToEditables()" << endl;
-    
     for(size_t i=0; i < focusedEditablePath.size(); ++i){
         focusedEditablePath[i]->onFocusChanged(latestEvent, false);
     }
