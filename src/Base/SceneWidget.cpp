@@ -804,12 +804,21 @@ void SceneWidgetImpl::setEditMode(bool on)
         isEditMode = on;
         sigEditModeToggled(on);
 
+        if(!isEditMode){
+            for(size_t i=0; i < focusedEditablePath.size(); ++i){
+                focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+            }
+        }
         set<SceneWidgetEditable*>::iterator p;
         for(p = editableEntities.begin(); p != editableEntities.end(); ++p){
             SceneWidgetEditable* editable = *p;
             editable->onSceneModeChanged(latestEvent);
         }
-
+        if(isEditMode){
+            for(size_t i=0; i < focusedEditablePath.size(); ++i){
+                focusedEditablePath[i]->onFocusChanged(latestEvent, true);
+            }
+        }
         if(!isEditMode){
             setCursor(defaultCursor);
         }
