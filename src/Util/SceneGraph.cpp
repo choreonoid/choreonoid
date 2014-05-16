@@ -276,18 +276,6 @@ bool SgGroup::contains(SgNode* node) const
 }
 
 
-void SgGroup::clearChildren(bool doNotify)
-{
-    if(doNotify){
-        SgUpdate update(SgUpdate::REMOVED);
-        for(const_iterator p = begin(); p != end(); ++p){
-            (*p)->notifyUpdate(update);
-        }
-    }
-    children.clear();
-}
-
-
 void SgGroup::addChild(SgNode* node, bool doNotify)
 {
     if(node){
@@ -302,18 +290,32 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
 }
 
 
+SgGroup::iterator SgGroup::removeChild(iterator childIter, bool doNotify)
+{
+    iterator next;
+    SgNode* child = *childIter;
+    child->removeParent(this);
+    
+    if(!doNotify){
+        next = children.erase(childIter);
+    } else {
+        SgNodePtr childHolder = child;
+        next = children.erase(childIter);
+        SgUpdate update(SgUpdate::REMOVED);
+        update.push(child);
+        transferUpdate(update);
+    }
+    return next;
+}
+
+
 bool SgGroup::removeChild(SgNode* node, bool doNotify)
 {
     bool removed = false;
     iterator p = children.begin();
     while(p != children.end()){
         if((*p) == node){
-            SgNode* child = *p;
-            if(doNotify){
-                child->notifyUpdate(SgUpdate::REMOVED);
-            }
-            p = children.erase(p);
-            child->removeParent(this);
+            p = removeChild(p, doNotify);
             removed = true;
         } else {
             ++p;
@@ -321,16 +323,20 @@ bool SgGroup::removeChild(SgNode* node, bool doNotify)
     }
     return removed;
 }
-    
+
 
 void SgGroup::removeChildAt(int index, bool doNotify)
 {
-    iterator p = children.begin() + index;
-    if(doNotify){
-        (*p)->notifyUpdate(SgUpdate::REMOVED);
+    removeChild(children.begin() + index, doNotify);
+}
+
+
+void SgGroup::clearChildren(bool doNotify)
+{
+    iterator p = children.begin();
+    while(p != children.end()){
+        p = removeChild(p, doNotify);
     }
-    (*p)->removeParent(this);
-    children.erase(p);
 }
 
 

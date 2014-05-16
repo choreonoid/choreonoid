@@ -26,7 +26,7 @@ public:
     enum Action {
         NONE = 0,
         ADDED = 1 << 0,
-        REMOVED = 1 << 1, // about to be removed
+        REMOVED = 1 << 1,
         BBOX_UPDATED = 1 << 2,
         MODIFIED = 1 << 3
     };
@@ -229,6 +229,7 @@ protected:
 private:
     Container children;
     static void throwTypeMismatchError();
+    iterator removeChild(iterator childIter, bool doNotify);    
 };
 
 typedef ref_ptr<SgGroup> SgGroupPtr;
