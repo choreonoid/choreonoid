@@ -1,5 +1,5 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #include "Action.h"

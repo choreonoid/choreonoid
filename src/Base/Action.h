@@ -1,9 +1,9 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_ACTION_H_INCLUDED
-#define CNOID_BASE_ACTION_H_INCLUDED
+#ifndef CNOID_BASE_ACTION_H
+#define CNOID_BASE_ACTION_H
 
 #include <cnoid/SignalProxy>
 #include <QAction>
@@ -15,7 +15,7 @@ class CNOID_EXPORT Action : public QAction
 {
     Q_OBJECT
 
-        public:
+public:
     Action(QObject* parent);
     Action(const QString& text, QObject* parent);
     Action(const QIcon& icon, QObject* parent);
@@ -35,7 +35,7 @@ private:
 
     void initialize();
 };
+
 }
 
 #endif
-

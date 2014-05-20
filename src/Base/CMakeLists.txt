@@ -42,6 +42,7 @@ set(sources
   MultiSE3SeqGraphView.cpp
   Process.cpp
   Action.cpp
+  ActionGroup.cpp
   SpinBox.cpp
   FloatingNumberBox.cpp
   Slider.cpp
@@ -106,6 +107,7 @@ set(headers
   MainWindow.h
   Process.h
   Action.h
+  ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
   Slider.h
@@ -192,6 +194,7 @@ QT4_WRAP_CPP(sources
   ToolBar.h
   Process.h
   Action.h
+  ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
   Slider.h
