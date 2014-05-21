@@ -7,6 +7,7 @@
 #include <cnoid/ViewManager>
 #include <cnoid/MainWindow>
 #include <cnoid/MessageView>
+#include <cnoid/Dialog>
 #include <cnoid/Button>
 #include <cnoid/LineEdit>
 #include <cnoid/PythonExecutor>
@@ -331,6 +332,39 @@ bool GrxUIMenuView::waitInputConfirm(const std::string& message)
     eventLoop.exec();
 
     return (box.result() == QMessageBox::Ok);
+}
+
+
+/*
+  This function is defined here instead of PyGrxUI.cpp so that the message translations can be edited with one file
+*/
+std::string GrxUIMenuView::waitInputMessage(const std::string& message)
+{
+    Dialog dialog;
+    dialog.setWindowTitle(_("Wait input message"));
+    QVBoxLayout* vbox = new QVBoxLayout();
+    dialog.setLayout(vbox);
+
+    vbox->addWidget(new QLabel(message.c_str()));
+    
+    LineEdit* lineEdit = new LineEdit();
+    connect(lineEdit, SIGNAL(returnPressed()), &dialog, SLOT(accept()));
+    vbox->addWidget(lineEdit);
+
+    PushButton* okButton = new PushButton(_("&OK"));
+    okButton->setDefault(true);
+    connect(okButton, SIGNAL(clicked()), &dialog, SLOT(accept()));
+    vbox->addWidget(okButton);
+    vbox->addStretch();
+    
+    dialog.show();
+
+    MenuButtonBlock block(instance()->impl);
+    QEventLoop eventLoop;
+    connect(&dialog, SIGNAL(finished(int)), &eventLoop, SLOT(quit()));
+    eventLoop.exec();
+
+    return lineEdit->string();
 }
 
 

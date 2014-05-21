@@ -86,6 +86,33 @@ namespace {
 
         return true;
     }
+
+    void waitInputMessageMain(const std::string& message, std::string& out_result)
+    {
+        if(GrxUIPlugin::isActive()){
+            out_result = GrxUIMenuView::waitInputMessage(message);
+        }
+    }
+
+    std::string waitInputMessage(const std::string& message)
+    {
+        checkGrxUIPlugin();
+
+        std::string result;
+
+        Py_BEGIN_ALLOW_THREADS        
+        callSynchronously(bind(waitInputMessageMain, message, ref(result)));
+        Py_END_ALLOW_THREADS
+
+        /*
+        if(!result){
+            PyErr_SetObject(cancelExceptionType.ptr(), 0);
+            python::throw_error_already_set();
+        }
+        */
+
+       return result;
+    }
 }
 
 
@@ -100,6 +127,7 @@ BOOST_PYTHON_MODULE(grxui)
     python::def("waitInputSequentialMenu", waitInputSequentialMenu);
     python::def("waitInputSelect", waitInputSelect);
     python::def("waitInputConfirm", waitInputConfirm);
+    python::def("waitInputMessage", waitInputMessage);
 
     // define the GrxUICancelException class which inherits the built-in Exception class
     python::object mainModule = python::import("__main__");
