@@ -12,8 +12,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 
 MultiSE3Seq::MultiSE3Seq()
@@ -39,7 +39,7 @@ MultiSE3Seq::MultiSE3Seq(const MultiSE3Seq& org)
 
 AbstractSeqPtr MultiSE3Seq::cloneSeq() const
 {
-    return make_shared<MultiSE3Seq>(*this);
+    return boost::make_shared<MultiSE3Seq>(*this);
 }
 
 
@@ -96,7 +96,7 @@ bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename)
 bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
 {
     clearSeqMessage();
-    format f("%1$.4f");
+    boost::format f("%1$.4f");
     const int nFrames = numFrames();
 
     if(nFrames > 0 && numParts() > 0){

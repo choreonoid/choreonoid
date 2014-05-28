@@ -151,12 +151,12 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     Item::doPutProperties(putProperty);
     putProperty(_("RTC module Name"), moduleName,
-                bind(&RTCItem::setModuleName, this, _1), true);
+                boost::bind(&RTCItem::setModuleName, this, _1), true);
     putProperty(_("Periodic type"), periodicType,
-                bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
     putProperty(_("Periodic Rate"), periodicRate,
-                bind(&RTCItem::setPeriodicRate, this, _1), true);
+                boost::bind(&RTCItem::setPeriodicRate, this, _1), true);
 }
 
 
@@ -347,7 +347,7 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
     } else {
         mv->putln(fmt(_("RT Component process \"%1%\" has been executed.")) % command );
         rtcProcess.sigReadyReadStandardOutput().connect(
-            bind(&RTComponent::onReadyReadServerProcessOutput, this));
+            boost::bind(&RTComponent::onReadyReadServerProcessOutput, this));
     }
 }
 

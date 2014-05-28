@@ -17,11 +17,9 @@
 #include <list>
 #include <limits>
 #include <algorithm>
-
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -45,7 +43,7 @@ public:
     HSeparator separator;
     int height;
 };
-typedef shared_ptr<ToolBarRow> ToolBarRowPtr;
+typedef boost::shared_ptr<ToolBarRow> ToolBarRowPtr;
 
 
 // for archiving
@@ -122,7 +120,7 @@ ToolBarArea::ToolBarArea(QWidget* parent)
 ToolBarAreaImpl::ToolBarAreaImpl(ToolBarArea* self)
     : self(self),
       spilledToolBarRow(new ToolBarRow(self)),
-      layoutToolBarsLater(bind(&ToolBarAreaImpl::layoutToolBars, this))
+      layoutToolBarsLater(boost::bind(&ToolBarAreaImpl::layoutToolBars, this))
 {
     isBeforeDoingInitialLayout = true;
     

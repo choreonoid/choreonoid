@@ -15,7 +15,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -33,58 +32,58 @@ public:
     CheckBox lazyCollisionDetectionModeCheck;
     PushButton okButton;
         
-    KinematicsBarSetupDialog()
-        {
-            setWindowTitle(_("Kinematics Operation Setup"));
+    KinematicsBarSetupDialog() {
 
-            QVBoxLayout* vbox = new QVBoxLayout();
-            setLayout(vbox);
+        setWindowTitle(_("Kinematics Operation Setup"));
+        
+        QVBoxLayout* vbox = new QVBoxLayout();
+        setLayout(vbox);
+        
+        QHBoxLayout* hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Snap thresholds:")));
+        hbox->addSpacing(10);
+        
+        hbox->addWidget(new QLabel(_("distance")));
+        snapDistanceSpin.setAlignment(Qt::AlignCenter);
+        snapDistanceSpin.setDecimals(3);
+        snapDistanceSpin.setRange(0.0, 0.999);
+        snapDistanceSpin.setSingleStep(0.001);
+        snapDistanceSpin.setValue(0.025);
+        hbox->addWidget(&snapDistanceSpin);
+        hbox->addWidget(new QLabel(_("[m]")));
 
-            QHBoxLayout* hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Snap thresholds:")));
-            hbox->addSpacing(10);
+        hbox->addSpacing(5);
+        hbox->addWidget(new QLabel(_("angle")));
+        snapAngleSpin.setAlignment(Qt::AlignCenter);
+        snapAngleSpin.setRange(0, 90);
+        snapAngleSpin.setValue(30);
+        hbox->addWidget(&snapAngleSpin);
+        hbox->addWidget(new QLabel(_("[deg]")));
+        vbox->addLayout(hbox);
 
-            hbox->addWidget(new QLabel(_("distance")));
-            snapDistanceSpin.setAlignment(Qt::AlignCenter);
-            snapDistanceSpin.setDecimals(3);
-            snapDistanceSpin.setRange(0.0, 0.999);
-            snapDistanceSpin.setSingleStep(0.001);
-            snapDistanceSpin.setValue(0.025);
-            hbox->addWidget(&snapDistanceSpin);
-            hbox->addWidget(new QLabel(_("[m]")));
+        hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Penetration block depth")));
+        penetrationBlockDepthSpin.setAlignment(Qt::AlignCenter);
+        penetrationBlockDepthSpin.setDecimals(4);
+        penetrationBlockDepthSpin.setRange(0.0, 0.0099);
+        penetrationBlockDepthSpin.setSingleStep(0.0001);
+        penetrationBlockDepthSpin.setValue(0.0005);
+        hbox->addWidget(&penetrationBlockDepthSpin);
+        hbox->addWidget(new QLabel(_("[m]")));
+        vbox->addLayout(hbox);
 
-            hbox->addSpacing(5);
-            hbox->addWidget(new QLabel(_("angle")));
-            snapAngleSpin.setAlignment(Qt::AlignCenter);
-            snapAngleSpin.setRange(0, 90);
-            snapAngleSpin.setValue(30);
-            hbox->addWidget(&snapAngleSpin);
-            hbox->addWidget(new QLabel(_("[deg]")));
-            vbox->addLayout(hbox);
+        hbox = new QHBoxLayout();
+        lazyCollisionDetectionModeCheck.setText(_("Lazy collision detection mode"));
+        lazyCollisionDetectionModeCheck.setChecked(true);
+        hbox->addWidget(&lazyCollisionDetectionModeCheck);
+        vbox->addLayout(hbox);
 
-            hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Penetration block depth")));
-            penetrationBlockDepthSpin.setAlignment(Qt::AlignCenter);
-            penetrationBlockDepthSpin.setDecimals(4);
-            penetrationBlockDepthSpin.setRange(0.0, 0.0099);
-            penetrationBlockDepthSpin.setSingleStep(0.0001);
-            penetrationBlockDepthSpin.setValue(0.0005);
-            hbox->addWidget(&penetrationBlockDepthSpin);
-            hbox->addWidget(new QLabel(_("[m]")));
-            vbox->addLayout(hbox);
-
-            hbox = new QHBoxLayout();
-            lazyCollisionDetectionModeCheck.setText(_("Lazy collision detection mode"));
-            lazyCollisionDetectionModeCheck.setChecked(true);
-            hbox->addWidget(&lazyCollisionDetectionModeCheck);
-            vbox->addLayout(hbox);
-
-            hbox = new QHBoxLayout();
-            okButton.setText(_("OK"));
-            okButton.setDefault(true);
-            hbox->addWidget(&okButton);
-            vbox->addLayout(hbox);
-        }
+        hbox = new QHBoxLayout();
+        okButton.setText(_("OK"));
+        okButton.setDefault(true);
+        hbox->addWidget(&okButton);
+        vbox->addLayout(hbox);
+    }
 
     void storeState(Archive& archive){
         archive.write("snapDistance", snapDistanceSpin.value());
@@ -103,8 +102,8 @@ public:
       hide();
       }
     */
-
 };
+
 }
 
 
@@ -147,12 +146,12 @@ KinematicsBar::KinematicsBar() : ToolBar(N_("KinematicsBar"))
 
     collisionLinkHighlightToggle = addToggleButton(QIcon(":/Body/icons/collisionoutline.png"), _("Highlight colliding links"));
     collisionLinkHighlightToggle->setChecked(false);
-    collisionLinkHighlightToggle->sigToggled().connect(bind(&KinematicsBar::onCollisionVisualizationChanged, this));
+    collisionLinkHighlightToggle->sigToggled().connect(boost::bind(&KinematicsBar::onCollisionVisualizationChanged, this));
 
-    addButton(QIcon(":/Base/icons/setup.png"))->sigClicked().connect(bind(&KinematicsBarSetupDialog::show, setup));
+    addButton(QIcon(":/Base/icons/setup.png"))->sigClicked().connect(boost::bind(&KinematicsBarSetupDialog::show, setup));
     
     setup->lazyCollisionDetectionModeCheck.sigToggled().connect(
-        bind(&KinematicsBar::onLazyCollisionDetectionModeToggled, this));
+        boost::bind(&KinematicsBar::onLazyCollisionDetectionModeToggled, this));
     
     onLazyCollisionDetectionModeToggled();
 }

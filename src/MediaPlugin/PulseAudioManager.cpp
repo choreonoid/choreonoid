@@ -71,7 +71,7 @@ public:
     void stop();
 };
 
-typedef shared_ptr<Source> SourcePtr;
+typedef boost::shared_ptr<Source> SourcePtr;
 }
 
 
@@ -210,26 +210,26 @@ PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
 
     fullSyncPlaybackMenuItem = mm.addCheckItem(_("Fully-Synchronized Audio Playback"));
     fullSyncPlaybackMenuItem->sigToggled().connect(
-        bind(&PulseAudioManagerImpl::onFullSyncPlaybackToggled, this));
+        boost::bind(&PulseAudioManagerImpl::onFullSyncPlaybackToggled, this));
 
     ext->setProjectArchiver(
         "PulseAudioManager",
-        bind(&PulseAudioManagerImpl::store, this, _1),
-        bind(&PulseAudioManagerImpl::restore, this, _1));
+        boost::bind(&PulseAudioManagerImpl::store, this, _1),
+        boost::bind(&PulseAudioManagerImpl::restore, this, _1));
     
     ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        bind(&PulseAudioManagerImpl::onItemCheckToggled, this, _1, _2));
+        boost::bind(&PulseAudioManagerImpl::onItemCheckToggled, this, _1, _2));
 
     timeBar = TimeBar::instance();
 
     timeBar->sigPlaybackInitialized().connect(
-        bind(&PulseAudioManagerImpl::onPlaybackInitialized, this, _1));
+        boost::bind(&PulseAudioManagerImpl::onPlaybackInitialized, this, _1));
 
     timeBar->sigPlaybackStarted().connect(
-        bind(&PulseAudioManagerImpl::onPlaybackStarted, this, _1));
+        boost::bind(&PulseAudioManagerImpl::onPlaybackStarted, this, _1));
 
     timeBar->sigPlaybackStopped().connect(
-        bind(&PulseAudioManagerImpl::onPlaybackStopped, this, _1));
+        boost::bind(&PulseAudioManagerImpl::onPlaybackStopped, this, _1));
 
     // In some environments, the initial stream connection after starting up an
     // operating system produces an undesired playback timing offset.
@@ -286,7 +286,7 @@ bool PulseAudioManagerImpl::playAudioFile(const std::string& filename)
 {
     AudioItemPtr audioItem = new AudioItem();
     if(audioItem->load(filename)){
-        SourcePtr source = make_shared<Source>(this, audioItem);
+        SourcePtr source = boost::make_shared<Source>(this, audioItem);
         if(source->initialize()){
             if(timeBar->isDoingPlayback()){
                 timeBar->stopPlayback();
@@ -294,7 +294,7 @@ bool PulseAudioManagerImpl::playAudioFile(const std::string& filename)
             activeSources[audioItem] = source;
 
             timeBar->sigPlaybackStopped().connect(
-                bind(&PulseAudioManagerImpl::onAudioFilePlaybackStopped, this, audioItem));
+                boost::bind(&PulseAudioManagerImpl::onAudioFilePlaybackStopped, this, audioItem));
 
             timeBar->setTime(0.0);
             timeBar->startPlayback();
@@ -315,7 +315,7 @@ void PulseAudioManagerImpl::onItemCheckToggled(Item* item, bool isChecked)
 {
     if(AudioItem* audioItem = dynamic_cast<AudioItem*>(item)){
         if(isChecked){
-            SourcePtr source = make_shared<Source>(this, audioItem);
+            SourcePtr source = boost::make_shared<Source>(this, audioItem);
             if(source->initialize()){
                 activeSources[audioItem] = source;
                 if(sigTimeChangedConnection.connected()){
@@ -346,7 +346,7 @@ bool PulseAudioManagerImpl::onPlaybackInitialized(double time)
             source->initializePlayback(time);
         }
         sigTimeChangedConnection = timeBar->sigTimeChanged().connect(
-            bind(&PulseAudioManagerImpl::onTimeChanged, this, _1));
+            boost::bind(&PulseAudioManagerImpl::onTimeChanged, this, _1));
     }
     return true;
 }
@@ -403,7 +403,7 @@ void PulseAudioManagerImpl::restore(const Archive& archive)
 Source::Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem)
     : manager(manager),
       audioItem(audioItem),
-      stopLater(bind(&Source::stop, this))
+      stopLater(boost::bind(&Source::stop, this))
 {
     stream = 0;
     currentFrame = 0;
@@ -445,14 +445,14 @@ void pa_stream_success_callback(pa_stream* stream, int success, void* userdata)
 void pa_stream_overflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
-    callLater(bind(&Source::onBufferOverflow, source));
+    callLater(boost::bind(&Source::onBufferOverflow, source));
 }
 
 void pa_stream_underflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
     if(!source->hasAllFramesWritten){
-        callLater(bind(&Source::onBufferUnderflow, source));
+        callLater(boost::bind(&Source::onBufferUnderflow, source));
     }
 }
 }
@@ -679,7 +679,7 @@ void Source::write(size_t nbytes, bool isDoingInitialization)
             if(negative){
                 latency = 0;
             }
-            callLater(bind(&Source::onAllFramesWritten, this, latency));
+            callLater(boost::bind(&Source::onAllFramesWritten, this, latency));
         }
     }
 }

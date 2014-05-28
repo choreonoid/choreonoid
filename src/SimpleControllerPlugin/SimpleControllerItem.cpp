@@ -146,10 +146,10 @@ bool SimpleControllerItem::start(const Target& target)
         for(size_t i=0; i < devices.size(); ++i){
             inputDeviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    bind(&SimpleControllerItem::onInputDeviceStateChanged, this, i)));
+                    boost::bind(&SimpleControllerItem::onInputDeviceStateChanged, this, i)));
             outputDeviceStateConnections.add(
                 ioDevices[i]->sigStateChanged().connect(
-                    bind(&SimpleControllerItem::onOutputDeviceStateChanged, this, i)));
+                    boost::bind(&SimpleControllerItem::onOutputDeviceStateChanged, this, i)));
         }
                 
         controller->setIoBody(ioBody);
@@ -275,9 +275,9 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     
     putProperty(_("Controller DLL"), controllerDllName,
-                bind(&SimpleControllerItem::setControllerDllName, this, _1), true);
+                boost::bind(&SimpleControllerItem::setControllerDllName, this, _1), true);
     putProperty(_("Reloading"), doReloading,
-                bind(&SimpleControllerItem::onReloadingChanged, this, _1));
+                boost::bind(&SimpleControllerItem::onReloadingChanged, this, _1));
     putProperty(_("Input link positions"), doInputLinkPositions, changeProperty(doInputLinkPositions));
 }
 

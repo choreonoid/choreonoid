@@ -29,8 +29,8 @@ public:
         interpolator = poseSeqItem->interpolator();
         bodyMotionGenerationBar = BodyMotionGenerationBar::instance();
 
-        poseSeqItem->sigUpdated().connect(bind(&PoseSeqEngine::notifyUpdate, this));
-        interpolator->sigUpdated().connect(bind(&PoseSeqEngine::notifyUpdate, this));
+        poseSeqItem->sigUpdated().connect(boost::bind(&PoseSeqEngine::notifyUpdate, this));
+        interpolator->sigUpdated().connect(boost::bind(&PoseSeqEngine::notifyUpdate, this));
     }
         
     virtual bool onTimeChanged(double time){
@@ -80,7 +80,7 @@ TimeSyncItemEnginePtr createPoseSeqEngine(Item* sourceItem)
     if(poseSeqItem){
         BodyItem* bodyItem = poseSeqItem->findOwnerItem<BodyItem>();
         if(bodyItem){
-            engine = make_shared<PoseSeqEngine>(poseSeqItem, bodyItem);
+            engine = boost::make_shared<PoseSeqEngine>(poseSeqItem, bodyItem);
         }
     }
     return engine;

@@ -13,7 +13,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -500,15 +499,15 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
 
 void PositionDragger::initalizeDraggers()
 {
-    translationDragger_->sigTranslationStarted().connect(ref(sigDragStarted_));
+    translationDragger_->sigTranslationStarted().connect(boost::ref(sigDragStarted_));
     translationDragger_->sigTranslationDragged().connect(
-        bind(&PositionDragger::onPositionDragged, this));
-    translationDragger_->sigTranslationFinished().connect(ref(sigDragFinished_));
+        boost::bind(&PositionDragger::onPositionDragged, this));
+    translationDragger_->sigTranslationFinished().connect(boost::ref(sigDragFinished_));
     
-    rotationDragger_->sigRotationStarted().connect(ref(sigDragStarted_));
+    rotationDragger_->sigRotationStarted().connect(boost::ref(sigDragStarted_));
     rotationDragger_->sigRotationDragged().connect(
-        bind(&PositionDragger::onPositionDragged, this));
-    rotationDragger_->sigRotationFinished().connect(ref(sigDragFinished_));
+        boost::bind(&PositionDragger::onPositionDragged, this));
+    rotationDragger_->sigRotationFinished().connect(boost::ref(sigDragFinished_));
 }
 
 

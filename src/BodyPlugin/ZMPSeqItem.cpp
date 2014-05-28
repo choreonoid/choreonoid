@@ -12,8 +12,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -33,7 +33,7 @@ public:
     ZMPSeqEngine(ZMPSeqItemPtr seqItem, BodyItemPtr bodyItem)
         : seq(seqItem->zmpseq()), bodyItem(bodyItem)
         {
-            seqItem->sigUpdated().connect(bind(&TimeSyncItemEngine::notifyUpdate, this));
+            seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
         }
 
     virtual bool onTimeChanged(double time)
@@ -56,7 +56,7 @@ TimeSyncItemEnginePtr createZMPSeqEngine(BodyItemPtr bodyItem, AbstractSeqItemPt
 {
     ZMPSeqItemPtr item = dynamic_pointer_cast<ZMPSeqItem>(seqItem);
     if(item){
-        return make_shared<ZMPSeqEngine>(item, bodyItem);
+        return boost::make_shared<ZMPSeqEngine>(item, bodyItem);
     }
     return TimeSyncItemEnginePtr();
 }
@@ -73,7 +73,7 @@ void ZMPSeqItem::initializeClass(ExtensionManager* ext)
 
 
 ZMPSeqItem::ZMPSeqItem()
-    : Vector3SeqItem(make_shared<ZMPSeq>())
+    : Vector3SeqItem(boost::make_shared<ZMPSeq>())
 {
     zmpseq_ = static_pointer_cast<ZMPSeq>(seq());
 }
@@ -88,7 +88,7 @@ ZMPSeqItem::ZMPSeqItem(ZMPSeqPtr seq)
 
 
 ZMPSeqItem::ZMPSeqItem(const ZMPSeqItem& org)
-    : Vector3SeqItem(org, make_shared<ZMPSeq>(*org.zmpseq_))
+    : Vector3SeqItem(org, boost::make_shared<ZMPSeq>(*org.zmpseq_))
 {
     zmpseq_ = static_pointer_cast<ZMPSeq>(seq());
 }
@@ -129,5 +129,5 @@ void ZMPSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqItem::doPutProperties(putProperty);
     putProperty(_("Root relative"), zmpseq_->isRootRelative(),
-                bind(&ZMPSeqItem::makeRootRelative, this, _1));
+                boost::bind(&ZMPSeqItem::makeRootRelative, this, _1));
 }

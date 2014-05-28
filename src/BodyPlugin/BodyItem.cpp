@@ -37,7 +37,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -117,8 +116,8 @@ public:
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
 
-    signals::connection connectionToSigLinkSelectionChanged;
-    signals::connection connectionToSigLinkVisibilityToggled;
+    boost::signals::connection connectionToSigLinkSelectionChanged;
+    boost::signals::connection connectionToSigLinkVisibilityToggled;
 
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
@@ -161,8 +160,8 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         ext->itemManager().registerClass<BodyItem>(N_("BodyItem"));
         ext->itemManager().addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", bind(loadBodyItem, _1, _2));
-        ext->optionManager().addOption("hrpmodel", program_options::value< vector<string> >(), "load an OpenHRP model file");
+            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", boost::bind(loadBodyItem, _1, _2));
+        ext->optionManager().addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
         ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
 
         linkVisibilityCheck = ext->menuManager().setPath("/Options/Scene View").addCheckItem(_("Show selected links only"));
@@ -181,8 +180,8 @@ BodyItem::BodyItem()
 
 BodyItemImpl::BodyItemImpl(BodyItem* self)
     : self(self),
-      sigKinematicStateChanged(bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
+      sigKinematicStateChanged(boost::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
+      sigKinematicStateEdited(boost::bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
 {
     body = new Body();
     isEditable = true;
@@ -201,8 +200,8 @@ BodyItem::BodyItem(const BodyItem& org)
 BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     : self(self),
       body(org.body->clone()),
-      sigKinematicStateChanged(bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
+      sigKinematicStateChanged(boost::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
+      sigKinematicStateEdited(boost::bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
       initialState(org.initialState)
 {
     if(org.currentBaseLink){
@@ -228,7 +227,7 @@ void BodyItemImpl::init(bool calledFromCopyConstructor)
 
     initBody(calledFromCopyConstructor);
 
-    self->sigPositionChanged().connect(bind(&BodyItemImpl::onPositionChanged, this));
+    self->sigPositionChanged().connect(boost::bind(&BodyItemImpl::onPositionChanged, this));
 }
 
 
@@ -468,7 +467,7 @@ void BodyItemImpl::appendKinematicStateToHistory()
         cout << "BodyItem::appendKinematicStateToHistory()" << endl;
     }
 
-    BodyStatePtr state = make_shared<BodyState>();
+    BodyStatePtr state = boost::make_shared<BodyState>();
     self->storeKinematicState(*state);
 
     if(kinematicStateHistory.empty() || (currentHistoryIndex == kinematicStateHistory.size() - 1)){
@@ -557,7 +556,7 @@ bool BodyItemImpl::redoKinematicState()
 PinDragIKptr BodyItem::pinDragIK()
 {
     if(!impl->pinDragIK){
-        impl->pinDragIK = make_shared<PinDragIK>(impl->body);
+        impl->pinDragIK = boost::make_shared<PinDragIK>(impl->body);
     }
     return impl->pinDragIK;
 }
@@ -644,7 +643,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
 {
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
-        blocker = make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
+        blocker = boost::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
         const ItemList<BodyItem>& bodyItems = worldItem->bodyItems();
         for(int i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
@@ -1011,7 +1010,7 @@ EditableSceneBody* BodyItem::sceneBody()
         impl->sceneBody->setSceneDeviceUpdateConnection(true);
         impl->connectionToSigLinkVisibilityToggled =
             linkVisibilityCheck->sigToggled().connect(
-                bind(&BodyItemImpl::onLinkVisibilityCheckToggled, impl));
+                boost::bind(&BodyItemImpl::onLinkVisibilityCheckToggled, impl));
         impl->onLinkVisibilityCheckToggled();
     }
 
@@ -1044,10 +1043,10 @@ void BodyItemImpl::onLinkVisibilityCheckToggled()
         }
         connectionToSigLinkSelectionChanged =
             selectionView->sigSelectionChanged(self).connect(
-                bind(&BodyItemImpl::onLinkSelectionChanged, this));
+                boost::bind(&BodyItemImpl::onLinkSelectionChanged, this));
     } else {
         if(sceneBody){
-            dynamic_bitset<> visibilities;
+            boost::dynamic_bitset<> visibilities;
             visibilities.resize(body->numLinks(), true);
             sceneBody->setLinkVisibilities(visibilities);
         }
@@ -1086,11 +1085,11 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
-                (bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
-    putProperty(_("Model file"), getFilename(filesystem::path(self->filePath())));
+                (boost::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
+    putProperty(_("Model file"), getFilename(boost::filesystem::path(self->filePath())));
     putProperty(_("Self-collision"), isSelfCollisionDetectionEnabled,
-                (bind(&BodyItemImpl::onSelfCollisionDetectionPropertyChanged, this, _1)));
-    putProperty(_("Editable"), isEditable, bind(&BodyItemImpl::onEditableChanged, this, _1));
+                (boost::bind(&BodyItemImpl::onSelfCollisionDetectionPropertyChanged, this, _1)));
+    putProperty(_("Editable"), isEditable, boost::bind(&BodyItemImpl::onEditableChanged, this, _1));
 }
 
 

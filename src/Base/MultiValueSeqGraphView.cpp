@@ -9,7 +9,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -54,14 +53,14 @@ void MultiValueSeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std
 
         GraphDataHandlerPtr handler(new GraphDataHandler());
         handler->setID(partIndex);
-        handler->setLabel(lexical_cast<string>(partIndex));
+        handler->setLabel(boost::lexical_cast<string>(partIndex));
         //handler->setValueLimits(llimit, ulimit);
         //handler->setVelocityLimits(lvlimit, uvlimit);
         handler->setFrameProperties(seq->numFrames(), seq->frameRate());
         handler->setDataRequestCallback(
-            bind(&MultiValueSeqGraphView::onDataRequest, this, seq, partIndex, _1, _2, _3));
+            boost::bind(&MultiValueSeqGraphView::onDataRequest, this, seq, partIndex, _1, _2, _3));
         handler->setDataModifiedCallback(
-            bind(&MultiValueSeqGraphView::onDataModified, this, seqItem, partIndex, _1, _2, _3));
+            boost::bind(&MultiValueSeqGraphView::onDataModified, this, seqItem, partIndex, _1, _2, _3));
 
         out_handlers.push_back(handler);
     }

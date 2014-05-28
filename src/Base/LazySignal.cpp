@@ -5,19 +5,18 @@
 #include "LazySignal.h"
 #include <boost/bind.hpp>
 
-using namespace boost;
 using namespace cnoid;
 
 
 LazySignalBase::LazySignalBase()
-    : LazyCaller(bind(&LazySignalBase::doEmit, this))
+    : LazyCaller(boost::bind(&LazySignalBase::doEmit, this))
 {
 
 }
 
 
 LazySignalBase::LazySignalBase(boost::function<void()> emitFunction, int priority)
-    : LazyCaller(bind(&LazySignalBase::doEmit, this), priority),
+    : LazyCaller(boost::bind(&LazySignalBase::doEmit, this), priority),
       emitFunction(emitFunction)
 {
 

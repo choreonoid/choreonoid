@@ -13,7 +13,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -49,7 +48,7 @@ LinkGraphView::LinkGraphView()
 
     itemTreeViewConnection = 
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            bind(&LinkGraphView::onItemSelectionChanged, this, _1));
+            boost::bind(&LinkGraphView::onItemSelectionChanged, this, _1));
 
     linkSelection = LinkSelectionView::mainInstance();
 }
@@ -66,7 +65,7 @@ void LinkGraphView::setupElementToggleSet
 
         toggleConnections.add(
             toggles[i].sigToggled().connect(
-                bind(&LinkGraphView::setupGraphWidget, this)));
+                boost::bind(&LinkGraphView::setupGraphWidget, this)));
     }
 }
 
@@ -116,10 +115,10 @@ void LinkGraphView::onItemSelectionChanged(const ItemList<MultiSE3SeqItem>& item
             it->bodyItem = bodyItem;
 
             it->connections.add(it->item->sigUpdated().connect(
-                                    bind(&LinkGraphView::onDataItemUpdated, this, it)));
+                                    boost::bind(&LinkGraphView::onDataItemUpdated, this, it)));
 
             it->connections.add(it->item->sigDetachedFromRoot().connect(
-                                    bind(&LinkGraphView::onDataItemDetachedFromRoot, this, it)));
+                                    boost::bind(&LinkGraphView::onDataItemDetachedFromRoot, this, it)));
         }
     }
 
@@ -151,11 +150,11 @@ void LinkGraphView::updateBodyItems()
 
             bodyItemConnections.add(
                 linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    bind(&LinkGraphView::setupGraphWidget, this)));
+                    boost::bind(&LinkGraphView::setupGraphWidget, this)));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDetachedFromRoot().connect(
-                    bind(&LinkGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
+                    boost::bind(&LinkGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
         }
     }
 }
@@ -220,9 +219,9 @@ void LinkGraphView::addPositionTrajectory
             
                 handler->setFrameProperties(seq->numFrames(), seq->frameRate());
                 handler->setDataRequestCallback(
-                    bind(&LinkGraphView::onDataRequest, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
+                    boost::bind(&LinkGraphView::onDataRequest, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
                 handler->setDataModifiedCallback(
-                    bind(&LinkGraphView::onDataModified, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
+                    boost::bind(&LinkGraphView::onDataModified, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
             
                 graph.addDataHandler(handler);
                 itemInfoIter->handlers.push_back(handler);

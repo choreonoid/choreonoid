@@ -42,7 +42,7 @@ template<> void MultiSeqItem<MultiValueSeq>::initializeClass(ExtensionManager* e
     
     ext->itemManager().addLoaderAndSaver<MultiValueSeqItem>(
         _("Plain Format of a Multi Value Sequence"), "PLAIN-MULTI-VALUE-SEQ", "*",
-        bind(loadPlainSeqFormat, _1, _2, _3), bind(saveAsPlainSeqFormat, _1, _2, _3), 
+        boost::bind(loadPlainSeqFormat, _1, _2, _3), boost::bind(saveAsPlainSeqFormat, _1, _2, _3), 
         ItemManager::PRIORITY_CONVERSION);
 }
 

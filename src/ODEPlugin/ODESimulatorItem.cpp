@@ -294,7 +294,7 @@ void ODELink::createGeometry(ODEBody* odeBody)
 {
     if(link->shape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), bind(&ODELink::addMesh, this, extractor, odeBody))){
+        if(extractor->extract(link->shape(), boost::bind(&ODELink::addMesh, this, extractor, odeBody))){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
@@ -1163,7 +1163,7 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
                 collisionDetector->updatePosition( k, geometryIdToLink[k]->link->T());
             }
         }
-        collisionDetector->detectCollisions(bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
+        collisionDetector->detectCollisions(boost::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
     }else{
         dSpaceCollide(spaceID, (void*)this, &nearCallback);
     }
@@ -1272,7 +1272,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
 
-    putProperty(_("Gravity"), str(gravity), bind(toVector3, _1, ref(gravity)));
+    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
 
     putProperty.decimals(2).min(0.0)
         (_("Friction"), friction, changeProperty(friction));
@@ -1283,7 +1283,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
         (_("Global ERP"), globalERP, changeProperty(globalERP));
 
     putProperty(_("Global CFM"), globalCFM,
-                bind(&FloatingNumberString::setNonNegativeValue, ref(globalCFM), _1));
+                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(globalCFM), _1));
 
     putProperty.min(1)
         (_("Iterations"), numIterations, changeProperty(numIterations));
@@ -1294,7 +1294,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Limit correcting vel."), enableMaxCorrectingVel, changeProperty(enableMaxCorrectingVel));
 
     putProperty(_("Max correcting vel."), maxCorrectingVel,
-                bind(&FloatingNumberString::setNonNegativeValue, ref(maxCorrectingVel), _1));
+                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(maxCorrectingVel), _1));
 
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 

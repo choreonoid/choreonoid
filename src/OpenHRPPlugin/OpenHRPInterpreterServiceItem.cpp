@@ -216,7 +216,7 @@ void OpenHRPInterpreterServiceItem::onDisconnectedFromRoot()
 void OpenHRPInterpreterServiceItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("RTC Instance name"), impl->rtcInstanceName,
-                bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
+                boost::bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
 }
 
 
@@ -260,7 +260,7 @@ char* InterpreterService_impl::interpret(const char* expr)
 {
     result.clear();
     
-    callSynchronously(bind(&InterpreterService_impl::interpretMain, this, expr));
+    callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr));
 
     CORBA::String_var ret(result.c_str());
     return ret._retn();;

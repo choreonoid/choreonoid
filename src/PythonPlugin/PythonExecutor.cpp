@@ -68,7 +68,7 @@ public:
     bool isBackgroundMode;
     bool isRunningForeground;
     bool isModuleRefreshEnabled;
-    function<boost::python::object()> functionToExecScript;
+    boost::function<boost::python::object()> functionToExecScript;
     Qt::HANDLE threadId;
     mutable QMutex stateMutex;
     QWaitCondition stateCondition;
@@ -97,8 +97,8 @@ public:
     void resetLastResultObjects();
     ~PythonExecutorImpl();
     PythonExecutor::State state() const;
-    bool exec(function<boost::python::object()> execScript, const string& filename);
-    bool execMain(function<boost::python::object()> execScript);
+    bool exec(boost::function<boost::python::object()> execScript, const string& filename);
+    bool execMain(boost::function<boost::python::object()> execScript);
     virtual void run();
     bool waitToFinish(double timeout);
     void onBackgroundExecutionFinished();
@@ -217,11 +217,11 @@ bool PythonExecutor::execCode(const std::string& code)
 
 bool PythonExecutor::execFile(const std::string& filename)
 {
-    return impl->exec(bind(&cnoid::execPythonFile, filename), filename);
+    return impl->exec(boost::bind(&cnoid::execPythonFile, filename), filename);
 }
 
 
-bool PythonExecutorImpl::exec(function<boost::python::object()> execScript, const string& filename)
+bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScript, const string& filename)
 {
     if(state() != PythonExecutor::NOT_RUNNING){
         return false;
@@ -297,7 +297,7 @@ bool PythonExecutorImpl::exec(function<boost::python::object()> execScript, cons
 }
 
 
-bool PythonExecutorImpl::execMain(function<boost::python::object()> execScript)
+bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execScript)
 {
     bool executed = false;
     bool terminated = false;
@@ -359,7 +359,7 @@ bool PythonExecutorImpl::execMain(function<boost::python::object()> execScript)
     
     if(!terminated){
         if(QThread::isRunning()){
-            callLater(bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
+            callLater(boost::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
         } else {
             sigFinished();
         }

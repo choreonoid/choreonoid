@@ -58,17 +58,17 @@ NameServerViewImpl::NameServerViewImpl(NameServerView* self)
     QHBoxLayout* hbox = new QHBoxLayout();
     hostAddressBox.setText("localhost");
     hostAddressBox.sigEditingFinished().connect
-        (bind(&NameServerViewImpl::updateObjectList, this));
+        (boost::bind(&NameServerViewImpl::updateObjectList, this));
     hbox->addWidget(&hostAddressBox);
 
     portNumberSpin.setRange(0, 65535);
     portNumberSpin.setValue(2809);
     portNumberSpin.sigEditingFinished().connect
-        (bind(&NameServerViewImpl::updateObjectList, this));
+        (boost::bind(&NameServerViewImpl::updateObjectList, this));
     hbox->addWidget(&portNumberSpin);
 
     PushButton* updateButton = new PushButton(_("Update"));
-    updateButton->sigClicked().connect(bind(&NameServerViewImpl::updateObjectList, this));
+    updateButton->sigClicked().connect(boost::bind(&NameServerViewImpl::updateObjectList, this));
     hbox->addWidget(updateButton);
 
     vbox->addLayout(hbox);

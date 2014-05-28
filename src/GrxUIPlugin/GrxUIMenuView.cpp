@@ -391,7 +391,7 @@ MenuWidget::MenuWidget
     this->isLocalSequentialMode = isLocalSequentialMode;
     sequenceModeButton.setText("V");
     sequenceModeButton.setToolTip(_("Show buttons executed sequentially"));
-    sequenceModeButton.sigClicked().connect(bind(&MenuWidget::showSequencePages, this));
+    sequenceModeButton.sigClicked().connect(boost::bind(&MenuWidget::showSequencePages, this));
     hbox->addWidget(&sequenceModeButton);
     hbox->addStretch();
             
@@ -400,7 +400,7 @@ MenuWidget::MenuWidget
             
     quitButton1.setText("X");
     quitButton1.setToolTip(_("Quit this menu"));
-    quitButton1.sigClicked().connect(bind(&MenuWidget::onQuitClicked, this));
+    quitButton1.sigClicked().connect(boost::bind(&MenuWidget::onQuitClicked, this));
     hbox->addWidget(&quitButton1);
             
     regularBar->setLayout(hbox);
@@ -413,39 +413,39 @@ MenuWidget::MenuWidget
 
     regularModeButton.setText("^");
     regularModeButton.setToolTip(_("Show buttons always enabled"));
-    regularModeButton.sigClicked().connect(bind(&MenuWidget::showRegularPage, this));
+    regularModeButton.sigClicked().connect(boost::bind(&MenuWidget::showRegularPage, this));
     hbox->addWidget(&regularModeButton);
             
     hbox->addStretch();
 
     prevPageButton.setText("<");
     prevPageButton.setToolTip(_("Show previous menu"));
-    prevPageButton.sigClicked().connect(bind(&MenuWidget::moveSequentialPage, this, -1));
+    prevPageButton.sigClicked().connect(boost::bind(&MenuWidget::moveSequentialPage, this, -1));
     hbox->addWidget(&prevPageButton);
             
     hbox->addWidget(&pageIndexLabel);
             
     nextPageButton.setText(">");
     nextPageButton.setToolTip(_("Show next menu"));
-    nextPageButton.sigClicked().connect(bind(&MenuWidget::moveSequentialPage, this, +1));
+    nextPageButton.sigClicked().connect(boost::bind(&MenuWidget::moveSequentialPage, this, +1));
     hbox->addWidget(&nextPageButton);
             
     sequentialCheck.setText(_("sequential"));
     sequentialCheck.setToolTip(_("Enable sequential execution"));
     sequentialCheck.setChecked(true);
-    sequentialCheck.sigToggled().connect(bind(&MenuWidget::onSequentialCheckToggled, this, _1));
+    sequentialCheck.sigToggled().connect(boost::bind(&MenuWidget::onSequentialCheckToggled, this, _1));
     hbox->addWidget(&sequentialCheck);
 
     hbox->addStretch();
             
     retryButton.setText("<-|");
     retryButton.setToolTip(_("Retry from first"));
-    retryButton.sigClicked().connect(bind(&MenuWidget::onRetryClicked, this));
+    retryButton.sigClicked().connect(boost::bind(&MenuWidget::onRetryClicked, this));
     hbox->addWidget(&retryButton);
             
     quitButton2.setText("X");
     quitButton2.setToolTip(_("Quit this menu"));
-    quitButton2.sigClicked().connect(bind(&MenuWidget::onQuitClicked, this));
+    quitButton2.sigClicked().connect(boost::bind(&MenuWidget::onQuitClicked, this));
     hbox->addWidget(&quitButton2);
             
     sequenceBar->setLayout(hbox);
@@ -456,7 +456,7 @@ MenuWidget::MenuWidget
     createPages(menu);
 
     pythonExecutor.setBackgroundMode(doBackgroundExecution);
-    pythonExecutor.sigFinished().connect(bind(&MenuWidget::onScriptFinished, this));
+    pythonExecutor.sigFinished().connect(boost::bind(&MenuWidget::onScriptFinished, this));
 
     currentButton = 0;
     currentButtonPage = 0;
@@ -517,7 +517,7 @@ void MenuWidget::addSection(const python::list& section)
 
         } else {
             FuncButtonBox* box = new FuncButtonBox(label, function);
-            box->button.sigClicked().connect(bind(&MenuWidget::onButtonClicked, this, buttons.size(), box));
+            box->button.sigClicked().connect(boost::bind(&MenuWidget::onButtonClicked, this, buttons.size(), box));
             vbox->addWidget(box, 0, Qt::AlignCenter);
             buttons.push_back(box);
         }

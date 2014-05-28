@@ -9,7 +9,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace cnoid {
@@ -101,7 +100,7 @@ void SimulationScriptItem::doPutProperties(PutPropertyFunction& putProperty)
     ScriptItem::doPutProperties(putProperty);
     
     putProperty(_("Timing"), impl->execTiming,
-                bind((bool(Selection::*)(int))&Selection::select, &impl->execTiming, _1));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->execTiming, _1));
     putProperty(_("Delay"), impl->execDelay, changeProperty(impl->execDelay));
     putProperty(_("Simulation only"), impl->isOnlyExecutedAsSimulationScript,
                 changeProperty(impl->isOnlyExecutedAsSimulationScript));

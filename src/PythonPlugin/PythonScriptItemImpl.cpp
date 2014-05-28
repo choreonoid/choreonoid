@@ -119,7 +119,7 @@ bool PythonScriptItemImpl::execute()
             sigFinishedConnection.disconnect();
             sigFinishedConnection =
                 executor.sigFinished().connect(
-                    bind(&PythonScriptItemImpl::onScriptFinished, this));
+                    boost::bind(&PythonScriptItemImpl::onScriptFinished, this));
             
             result = executor.execFile(scriptFilename_);
         }
@@ -197,7 +197,7 @@ bool PythonScriptItemImpl::terminate()
 void PythonScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Background execution"), executor.isBackgroundMode(),
-                bind(&PythonScriptItemImpl::onBackgroundModeChanged, this, _1));
+                boost::bind(&PythonScriptItemImpl::onBackgroundModeChanged, this, _1));
 }
 
 

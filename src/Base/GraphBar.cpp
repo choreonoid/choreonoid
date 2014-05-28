@@ -15,7 +15,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -112,6 +111,8 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
     : self(self),
       setup(this)
 {
+    using boost::bind;
+    
     orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icons/graph.png"),
                                                _("Plot trajectories of the target data on the graph view"));
     orgRenderingToggle->setChecked(true);
@@ -147,6 +148,8 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     : connections(barImpl->connections),
       focusedGraphWidget(barImpl->focusedGraphWidget)
 {
+    using boost::bind;
+    
     setWindowTitle(_("Graph Setup"));
 
     QVBoxLayout* vbox = new QVBoxLayout();

@@ -9,7 +9,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -35,7 +34,7 @@ FileBar::FileBar()
 {
     addButton(QIcon(":/Base/icons/projectsave.png"), _("Save the project"))
         ->sigClicked().connect(
-            bind(&ProjectManager::overwriteCurrentProject, ProjectManager::instance()));
+            boost::bind(&ProjectManager::overwriteCurrentProject, ProjectManager::instance()));
 }
 
 

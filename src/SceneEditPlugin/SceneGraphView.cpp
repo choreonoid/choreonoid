@@ -170,10 +170,10 @@ SceneGraphViewImpl::SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot)
     setIndentation(12);
     setSelectionMode(QAbstractItemView::SingleSelection);
 
-    self->sigActivated().connect(bind(&SceneGraphViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(bind(&SceneGraphViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(boost::bind(&SceneGraphViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(boost::bind(&SceneGraphViewImpl::onActivated, this ,false));
 
-    sigItemSelectionChanged().connect(bind(&SceneGraphViewImpl::onSelectionChanged, this));
+    sigItemSelectionChanged().connect(boost::bind(&SceneGraphViewImpl::onSelectionChanged, this));
 
     parentItem = rootItem = 0;
     visitNode(sceneRoot);
@@ -376,7 +376,7 @@ void SceneGraphViewImpl::onActivated(bool on)
 {
     if(on){
         createGraph();
-        connectionOfsceneUpdated = sceneRoot->sigUpdated().connect(bind(&SceneGraphViewImpl::onSceneGraphUpdated, this, _1));
+        connectionOfsceneUpdated = sceneRoot->sigUpdated().connect(boost::bind(&SceneGraphViewImpl::onSceneGraphUpdated, this, _1));
     }else{
         connectionOfsceneUpdated.disconnect();
     }
@@ -488,7 +488,7 @@ void SceneGraphViewImpl::addSelectedMarker()
     if(!selectedSgvItem->markerItem()){
         selectedSgvItem->setMarkerItem( new SgvMarkerItem() );
         selectedSgvItem->markerItem()->marker->setRenderingFunction(
-            bind(&SceneGraphViewImpl::renderMarker, this, _1));
+            boost::bind(&SceneGraphViewImpl::renderMarker, this, _1));
     }
     SgCustomGLNodePtr marker = selectedSgvItem->markerItem()->marker;
     if(marker && !selectedSgvItem->group->contains(marker)){

@@ -18,7 +18,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -61,7 +60,7 @@ void PathVariableEditor::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/File").setPath(N_("Project File Options"));
         mm.addItem(_("Edit Path Variables"))
-            ->sigTriggered().connect(bind(&PathVariableEditor::initAndShow, editor));
+            ->sigTriggered().connect(boost::bind(&PathVariableEditor::initAndShow, editor));
         initialized = true;
     }
 }
@@ -98,7 +97,7 @@ PathVariableEditor::PathVariableEditor()
     hbox->addWidget(newVariableEntry);
     PushButton* button = new PushButton(_("Append"));
     hbox->addWidget(button);
-    button->sigClicked().connect(bind(&PathVariableEditor::onAppendActivated, this));
+    button->sigClicked().connect(boost::bind(&PathVariableEditor::onAppendActivated, this));
     vbox->addLayout(hbox);
     
     QPushButton* createButton = new QPushButton(_("&Apply"));
@@ -171,7 +170,7 @@ void PathVariableEditor::writePathVariablesToArchive()
             string name = tableWidget->item(i, 0)->text().toStdString();
             if(!name.empty() && !item->path.isEmpty()){
                 Listing* listing = pathVars->openListing(name);
-                filesystem::path path(item->path.toStdString());
+                boost::filesystem::path path(item->path.toStdString());
                 listing->append(getGenericPathString(path), DOUBLE_QUOTED);
             }
         }

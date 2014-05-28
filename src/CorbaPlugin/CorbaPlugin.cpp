@@ -143,7 +143,7 @@ public:
         NameServerView::initializeClass(this);
 
         if(doSetupCorbaMainLoop){
-            orbMainLoopThread = thread(bind(&CorbaPlugin::orbMainLoop, this));
+            orbMainLoopThread = thread(boost::bind(&CorbaPlugin::orbMainLoop, this));
         }
 
         return true;

@@ -10,7 +10,6 @@
 #include <boost/bind.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -59,7 +58,7 @@ SgNode* createPerspectiveCamera(SceneDevice* sdev)
 {
     Camera* camera = sdev->device<Camera>();
     SgPerspectiveCamera* scamera = new SgPerspectiveCamera();
-    sdev->setSceneUpdateFunction(bind(updatePerspectiveCamera, camera, scamera));
+    sdev->setSceneUpdateFunction(boost::bind(updatePerspectiveCamera, camera, scamera));
     return scamera;
 }
         
@@ -67,7 +66,7 @@ SgNode* createPointLight(SceneDevice* sdev)
 {
     PointLight* light = sdev->device<PointLight>();
     SgPointLight* slight = new SgPointLight();
-    sdev->setSceneUpdateFunction(bind(updatePointLight, light, slight));
+    sdev->setSceneUpdateFunction(boost::bind(updatePointLight, light, slight));
     return slight;
 }
         
@@ -75,7 +74,7 @@ SgNode* createSpotLight(SceneDevice* sdev)
 {
     SpotLight* light = sdev->device<SpotLight>();
     SgSpotLight* slight = new SgSpotLight();
-    sdev->setSceneUpdateFunction(bind(updateSpotLight, light, slight));
+    sdev->setSceneUpdateFunction(boost::bind(updateSpotLight, light, slight));
     return slight;
 }
 
@@ -100,7 +99,7 @@ void SceneDevice::registerDeviceNodeFactory_(const std::type_info* pTypeInfo, co
 SceneDevice::SceneDevice(Device* device)
     : device_(device)
 {
-    device->forEachActualType(bind(&SceneDevice::setDeviceNode, this, _1));
+    device->forEachActualType(boost::bind(&SceneDevice::setDeviceNode, this, _1));
     setTransform(device->T_local());
 }
 

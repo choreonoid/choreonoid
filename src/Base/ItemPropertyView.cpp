@@ -33,7 +33,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -70,10 +69,13 @@ struct Double {
     };
 };
 
-typedef variant<bool, Int, Double, string, Selection> ValueVariant;
+typedef boost::variant<bool, Int, Double, string, Selection> ValueVariant;
 
-typedef variant<function<bool(bool)>, function<bool(int)>, function<bool(double)>,
-                function<bool(const string&)> > FunctionVariant;
+typedef boost::variant<boost::function<bool(bool)>,
+                       boost::function<bool(int)>,
+                       boost::function<bool(double)>,
+                       boost::function<bool(const string&)>
+                       > FunctionVariant;
 
 template<class ValueType> class ReturnTrue {
 public:
@@ -95,7 +97,7 @@ struct Property {
     FunctionVariant func;
     bool hasValidFunction;
 };
-typedef shared_ptr<Property> PropertyPtr;
+typedef boost::shared_ptr<Property> PropertyPtr;
 
 
 class PropertyItem : public QTableWidgetItem
@@ -141,13 +143,13 @@ public:
             if(QSpinBox* spinBox = dynamic_cast<QSpinBox*>(editor)){
                 ValueVariant& value = item->value;
                 if(value.which() == TYPE_INT){
-                    Int& v = get<Int>(value);
+                    Int& v = boost::get<Int>(value);
                     spinBox->setRange(v.min, v.max);
                 }
             } else if(QDoubleSpinBox* doubleSpinBox = dynamic_cast<QDoubleSpinBox*>(editor)){
                 ValueVariant& value = item->value;
                 if(value.which() == TYPE_DOUBLE){
-                    Double& v = get<Double>(value);
+                    Double& v = boost::get<Double>(value);
                     if(v.decimals >= 0){
                         doubleSpinBox->setDecimals(v.decimals);
                         doubleSpinBox->setSingleStep(pow(10.0, -v.decimals));
@@ -171,7 +173,7 @@ public:
         PropertyItem* item = tableWidget->itemFromIndex(index);
         if(item && item->value.which() == TYPE_DOUBLE){
             int& d = const_cast<int&>(decimals);
-            d = get<Double>(item->value).decimals;
+            d = boost::get<Double>(item->value).decimals;
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
@@ -210,7 +212,7 @@ public:
         
     bool isPressedPathValid;
 
-    signals::connection selectionChangedConnection;
+    boost::signals::connection selectionChangedConnection;
 
     // PutPropertyFunction's virtual functions
     PutPropertyFunction& decimals(int d) {
@@ -334,14 +336,14 @@ QVariant PropertyItem::data(int role) const
 {
     if(role == Qt::DisplayRole || role == Qt::EditRole){
         switch(value.which()){
-        case TYPE_BOOL:      return get<bool>(value);
-        case TYPE_INT:       return get<Int>(value).value;
-        case TYPE_DOUBLE:    return get<Double>(value).value;
-        case TYPE_STRING:    return get<string>(value).c_str();
+        case TYPE_BOOL:      return boost::get<bool>(value);
+        case TYPE_INT:       return boost::get<Int>(value).value;
+        case TYPE_DOUBLE:    return boost::get<Double>(value).value;
+        case TYPE_STRING:    return boost::get<string>(value).c_str();
 
         case TYPE_SELECTION:
         {
-            const Selection& s = get<Selection>(value);
+            const Selection& s = boost::get<Selection>(value);
             if(role == Qt::DisplayRole){
                 return s.selectedLabel();
             } else if(role == Qt::EditRole){
@@ -372,26 +374,26 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             switch(qvalue.type()){
                 
             case QVariant::Bool:
-                accepted = get< function<bool(bool)> >(func)(qvalue.toBool());
+                accepted = boost::get< boost::function<bool(bool)> >(func)(qvalue.toBool());
                 break;
                 
             case QVariant::String:
-                accepted = get< function<bool(const string&)> >(func)(qvalue.toString().toStdString());
+                accepted = boost::get< boost::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
                 break;
                 
             case QVariant::Int:
-                accepted = get< function<bool(int)> >(func)(qvalue.toInt());
+                accepted = boost::get< boost::function<bool(int)> >(func)(qvalue.toInt());
                 break;
                 
             case QVariant::Double:
-                accepted = get< function<bool(double)> >(func)(qvalue.toDouble());
+                accepted = boost::get< boost::function<bool(double)> >(func)(qvalue.toDouble());
                 break;
                 
             case QVariant::StringList:
             {
                 const QStringList& slist = qvalue.toStringList();
                 if(!slist.empty()){
-                    accepted = get< function<bool(int)> >(func)(slist[0].toInt());
+                    accepted = boost::get< boost::function<bool(int)> >(func)(slist[0].toInt());
                 }
             }
             break;
@@ -410,7 +412,7 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             }
         }
         if(itemPropertyViewImpl->updateRequestedDuringPropertyEditing){
-            callLater(bind(&ItemPropertyViewImpl::updateProperties, itemPropertyViewImpl));
+            callLater(boost::bind(&ItemPropertyViewImpl::updateProperties, itemPropertyViewImpl));
         }
     }
 
@@ -472,7 +474,7 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
 
     selectionChangedConnection =
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            bind(&ItemPropertyViewImpl::onItemSelectionChanged, this, _1));
+            boost::bind(&ItemPropertyViewImpl::onItemSelectionChanged, this, _1));
 
     fontPointSizeDiff = 0;
     MappingPtr config = AppConfig::archive()->openMapping("ItemPropertyView");
@@ -564,13 +566,13 @@ void ItemPropertyViewImpl::onItemSelectionChanged(const ItemList<>& items)
         if(item){
             itemConnections.add(
                 item->sigUpdated().connect(
-                    bind(&ItemPropertyViewImpl::updateProperties, this)));
+                    boost::bind(&ItemPropertyViewImpl::updateProperties, this)));
             itemConnections.add(
                 item->sigNameChanged().connect(
-                    bind(&ItemPropertyViewImpl::updateProperties, this)));
+                    boost::bind(&ItemPropertyViewImpl::updateProperties, this)));
             itemConnections.add(
                 item->sigDetachedFromRoot().connect(
-                    bind(&ItemPropertyViewImpl::clear, this)));
+                    boost::bind(&ItemPropertyViewImpl::clear, this)));
         }
         updateProperties();
     }

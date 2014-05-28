@@ -11,7 +11,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -31,7 +30,7 @@ Vector3Seq::Vector3Seq(const Vector3Seq& org)
 
 AbstractSeqPtr Vector3Seq::cloneSeq() const
 {
-    return make_shared<Vector3Seq>(*this);
+    return boost::make_shared<Vector3Seq>(*this);
 }
 
 
@@ -80,7 +79,7 @@ bool Vector3Seq::saveAsPlainFormat(const std::string& filename)
         return false;
     }
 
-    static format f("%1$.4f %2$.6f %3$.6f %4$.6f\n");
+    static boost::format f("%1$.4f %2$.6f %3$.6f %4$.6f\n");
 
     const int n = numFrames();
     const double r = frameRate();

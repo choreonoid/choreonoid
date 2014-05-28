@@ -17,24 +17,24 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
 typedef boost::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
-mutex loaderFactoryMapMutex;
+boost::mutex loaderFactoryMapMutex;
 
 AbstractBodyLoaderPtr vrmlBodyLoaderFactory()
 {
-    return make_shared<VRMLBodyLoader>();
+    return boost::make_shared<VRMLBodyLoader>();
 }
 
 AbstractBodyLoaderPtr colladaBodyLoaderFactory()
 {
-    return make_shared<ColladaBodyLoader>();
+    return boost::make_shared<ColladaBodyLoader>();
 }
 
 class SceneLoaderAdapter : public AbstractBodyLoader
@@ -68,7 +68,7 @@ public:
 
 AbstractBodyLoaderPtr stlBodyLoaderFactory()
 {
-    return make_shared<SceneLoaderAdapter>(new STLSceneLoader);
+    return boost::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
 }
 
     
@@ -86,7 +86,7 @@ struct FactoryRegistration
 
 bool BodyLoader::registerLoader(const std::string& extension, boost::function<AbstractBodyLoaderPtr()> factory)
 {
-    lock_guard<mutex> lock(loaderFactoryMapMutex);
+    boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
     loaderFactoryMap[extension] = factory;
     return  true;
 }
@@ -223,7 +223,7 @@ bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
         if(p != loaderMap.end()){
             loader = p->second;
         } else {
-            lock_guard<mutex> lock(loaderFactoryMapMutex);
+            boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
             LoaderFactoryMap::iterator q = loaderFactoryMap.find(ext);
             if(q != loaderFactoryMap.end()){
                 LoaderFactory factory = q->second;
@@ -233,7 +233,7 @@ bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
         }
 
         if(!loader){
-            (*os) << str(format(_("The file format of \"%1%\" is not supported by the body loader.\n"))
+            (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the body loader.\n"))
                          % getFilename(filesystem::path(modelFilename)));
 
         } else {
@@ -270,7 +270,7 @@ bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
     } catch(const ValueNode::Exception& ex){
         (*os) << ex.message();
     } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
+        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             (*os) << *message;
         }
     } catch(const std::exception& ex){

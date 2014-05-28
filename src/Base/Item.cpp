@@ -14,7 +14,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace filesystem = boost::filesystem;
 using namespace cnoid;
 
 //tmp
@@ -737,7 +737,7 @@ bool onNamePropertyChanged(Item* item, const string& name)
 
 void Item::putProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Name"), name_, bind(onNamePropertyChanged, this, _1));
+    putProperty(_("Name"), name_, boost::bind(onNamePropertyChanged, this, _1));
 
     std::string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);

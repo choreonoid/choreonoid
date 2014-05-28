@@ -29,8 +29,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 ProjectManager* instance_ = 0;
@@ -105,6 +105,8 @@ ProjectManager::ProjectManager(ExtensionManager* em)
 
 ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
 {
+    using boost::bind;
+    
     MappingPtr config = AppConfig::archive()->openMapping("ProjectManager");
     
     MenuManager& mm = em->menuManager();
@@ -126,7 +128,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     mm.addSeparator();
 
     OptionManager& om = em->optionManager();
-    om.addOption("project", program_options::value< vector<string> >(), "load a project file");
+    om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
     om.addPositionalOption("project", 1);
     om.sigOptionsParsed().connect(bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
@@ -261,7 +263,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                 }
             }
 
-            callLater(bind(&Archive::callPostProcesses, ArchivePtr(archive)));
+            callLater(boost::bind(&Archive::callPostProcesses, ArchivePtr(archive)));
         }
         if(result){
             messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));

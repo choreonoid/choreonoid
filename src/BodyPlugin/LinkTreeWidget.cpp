@@ -24,8 +24,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::dynamic_bitset;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -82,7 +82,7 @@ public:
         dynamic_bitset<> linkExpansions;
         std::set<string> expandedParts;
                 
-        signals::connection detachedFromRootConnection;
+        boost::signals::connection detachedFromRootConnection;
 
         BodyItemInfo() {
             isRestoringTreeStateNeeded = true;
@@ -100,7 +100,7 @@ public:
             linkExpansions.resize(n, true);
         }
     };
-    typedef shared_ptr<BodyItemInfo> BodyItemInfoPtr;
+    typedef boost::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
 
     typedef map<BodyItemPtr, BodyItemInfoPtr> BodyItemInfoMap;
     BodyItemInfoMap bodyItemInfoCache;
@@ -145,8 +145,8 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
-}
 
+}
 
 namespace {
 
@@ -315,7 +315,7 @@ void LinkTreeWidgetImpl::initialize()
     listingMode = LinkTreeWidget::LINK_LIST;
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.sigCurrentIndexChanged().connect(
-        bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
+        boost::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
 }
 
 
@@ -561,10 +561,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
             if(!isCacheEnabled){
                 bodyItemInfoCache.clear();
             }
-            info = make_shared<BodyItemInfo>();
+            info = boost::make_shared<BodyItemInfo>();
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem.get()));
+                boost::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem.get()));
             bodyItemInfoCache[bodyItem] = info;
         }
 

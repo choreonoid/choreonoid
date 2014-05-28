@@ -20,7 +20,7 @@ void PythonScriptItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().registerClass<PythonScriptItem>(N_("PythonScriptItem"));
     ext->itemManager().addLoader<PythonScriptItem>(
         _("Python Script"), "PYTHON-SCRIPT-FILE", "py",
-        bind(&PythonScriptItem::setScriptFilename, _1, _2));
+        boost::bind(&PythonScriptItem::setScriptFilename, _1, _2));
 }
 
 

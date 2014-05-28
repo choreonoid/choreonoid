@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_GRAPH_VIEW_BASE_H_INCLUDED
-#define CNOID_BASE_GRAPH_VIEW_BASE_H_INCLUDED
+#ifndef CNOID_BASE_GRAPH_VIEW_BASE_H
+#define CNOID_BASE_GRAPH_VIEW_BASE_H
 
 #include "GraphWidget.h"
 #include <cnoid/View>

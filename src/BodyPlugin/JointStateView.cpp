@@ -17,7 +17,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -122,16 +121,16 @@ JointStateViewImpl::JointStateViewImpl(JointStateView* self)
         jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
     }
     
-    jointStateWidget.sigUpdateRequest().connect(bind(&JointStateViewImpl::updateJointList, this));
+    jointStateWidget.sigUpdateRequest().connect(boost::bind(&JointStateViewImpl::updateJointList, this));
     
     vbox->addWidget(&jointStateWidget);
 
     self->setLayout(vbox);
 
-    self->sigActivated().connect(bind(&JointStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(bind(&JointStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(boost::bind(&JointStateViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(boost::bind(&JointStateViewImpl::onActivated, this ,false));
 
-    updateViewLater.setFunction(bind(&JointStateViewImpl::updateView, this));
+    updateViewLater.setFunction(boost::bind(&JointStateViewImpl::updateView, this));
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -167,7 +166,7 @@ void JointStateViewImpl::onActivated(bool on)
         BodyBar* bodyBar = BodyBar::instance();
         connections.add(
             bodyBar->sigCurrentBodyItemChanged().connect(
-                bind(&JointStateViewImpl::setCurrentBodyItem, this, _1)));
+                boost::bind(&JointStateViewImpl::setCurrentBodyItem, this, _1)));
         
         setCurrentBodyItem(bodyBar->currentBodyItem());
     }
@@ -229,13 +228,13 @@ void JointStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
     if(bodyItem){
         connectionsToBody.add(
             bodyItem->sigKinematicStateChanged().connect(
-                bind(&JointStateViewImpl::onKinematicStateChanged, this)));
+                boost::bind(&JointStateViewImpl::onKinematicStateChanged, this)));
     }
 
     for(int i=0; i < accessors.size(); ++i){
         connectionsToBody.add(
             accessors[i]->sigStateChanged().connect(
-                bind(&JointStateViewImpl::onExtraJointStateChanged, this)));
+                boost::bind(&JointStateViewImpl::onExtraJointStateChanged, this)));
     }
 }
 

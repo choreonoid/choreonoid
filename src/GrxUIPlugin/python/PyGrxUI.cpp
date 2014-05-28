@@ -27,7 +27,7 @@ namespace {
     {
         checkGrxUIPlugin();
         callSynchronously(
-            bind(&GrxUIMenuView::setMenu, GrxUIMenuView::instance(),
+            boost::bind(&GrxUIMenuView::setMenu, GrxUIMenuView::instance(),
                  menu, false, !isRunningInMainThread()));
     }
 
@@ -35,7 +35,7 @@ namespace {
     {
         checkGrxUIPlugin();
         callSynchronously(
-            bind(&GrxUIMenuView::setMenu, GrxUIMenuView::instance(),
+            boost::bind(&GrxUIMenuView::setMenu, GrxUIMenuView::instance(),
                  menu, true, !isRunningInMainThread()));
     }
 
@@ -52,7 +52,7 @@ namespace {
         QMessageBox::StandardButton result = QMessageBox::Cancel;
 
         Py_BEGIN_ALLOW_THREADS        
-        callSynchronously(bind(waitInputSelectMain, message, ref(result)));
+        callSynchronously(boost::bind(waitInputSelectMain, message, boost::ref(result)));
         Py_END_ALLOW_THREADS
         
         if(result == QMessageBox::Cancel){
@@ -76,7 +76,7 @@ namespace {
         bool result = false;
 
         Py_BEGIN_ALLOW_THREADS        
-        callSynchronously(bind(waitInputConfirmMain, message, ref(result)));
+        callSynchronously(boost::bind(waitInputConfirmMain, message, boost::ref(result)));
         Py_END_ALLOW_THREADS
             
         if(!result){
@@ -101,7 +101,7 @@ namespace {
         std::string result;
 
         Py_BEGIN_ALLOW_THREADS        
-        callSynchronously(bind(waitInputMessageMain, message, ref(result)));
+        callSynchronously(boost::bind(waitInputMessageMain, message, boost::ref(result)));
         Py_END_ALLOW_THREADS
 
         /*

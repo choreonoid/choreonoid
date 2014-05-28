@@ -20,7 +20,7 @@ void PythonSimScriptItem::initialize(ExtensionManager* ext)
     ext->itemManager().registerClass<PythonSimScriptItem>(N_("PythonSimScriptItem"));
     ext->itemManager().addLoader<PythonSimScriptItem>(
         _("Python Script for Simulation"), "PYTHON-SCRIPT-FILE", "py",
-        bind(&PythonSimScriptItem::setScriptFilename, _1, _2));
+        boost::bind(&PythonSimScriptItem::setScriptFilename, _1, _2));
 }
 
 

@@ -10,7 +10,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -49,7 +48,7 @@ void MultiSE3SeqGraphView::setupElementToggleSet
 
         toggleConnections.add(
             toggles[i].sigToggled().connect(
-                bind(&MultiSE3SeqGraphView::updateSelections, this)));
+                boost::bind(&MultiSE3SeqGraphView::updateSelections, this)));
     }
 }
 
@@ -88,12 +87,12 @@ void MultiSE3SeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std::
     
                     GraphDataHandlerPtr handler(new GraphDataHandler());
 
-                    handler->setLabel(lexical_cast<string>(partIndex));
+                    handler->setLabel(boost::lexical_cast<string>(partIndex));
                     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
                     handler->setDataRequestCallback(
-                        bind(&MultiSE3SeqGraphView::onDataRequest, this, seq, partIndex, i, j, _1, _2, _3));
+                        boost::bind(&MultiSE3SeqGraphView::onDataRequest, this, seq, partIndex, i, j, _1, _2, _3));
                     handler->setDataModifiedCallback(
-                        bind(&MultiSE3SeqGraphView::onDataModified, this, seqItem, partIndex, i, j, _1, _2, _3));
+                        boost::bind(&MultiSE3SeqGraphView::onDataModified, this, seqItem, partIndex, i, j, _1, _2, _3));
 
                     out_handlers.push_back(handler);
                 }

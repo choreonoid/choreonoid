@@ -11,7 +11,6 @@
 #include <boost/format.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -44,7 +43,7 @@ MultiAffine3Seq::~MultiAffine3Seq()
 
 AbstractSeqPtr MultiAffine3Seq::cloneSeq() const
 {
-    return make_shared<MultiAffine3Seq>(*this);
+    return boost::make_shared<MultiAffine3Seq>(*this);
 }
 
 
@@ -87,7 +86,7 @@ bool MultiAffine3Seq::loadPlainFormat(const std::string& filename)
 bool MultiAffine3Seq::saveTopPartAsPlainFormat(const std::string& filename)
 {
     clearSeqMessage();
-    format f("%1$.4f");
+    boost::format f("%1$.4f");
     const int nFrames = numFrames();
 
     if(nFrames > 0 && numParts() > 0){

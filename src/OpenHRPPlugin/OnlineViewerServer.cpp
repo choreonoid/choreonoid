@@ -58,7 +58,7 @@ public:
     void onBodyItemDetachedFromRoot(BodyItem* bodyItem);
     void forEachBody(
         const WorldState& state,
-        function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback);
+        boost::function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback);
     void drawScene(const OpenHRP::WorldState& state);
     void updateBodyState(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time);
     void update(const OpenHRP::WorldState& state);
@@ -121,7 +121,7 @@ void OnlineViewerServer::load(const char* name, const char* url)
     // Wait for the load function to finish because
     // the function does MessageView::flush(), which may execute other OnlineViewer's functions
     // before finishing the loading.
-    callSynchronously(bind(&OnlineViewerServerImpl::load, impl, string(name), string(url)));
+    callSynchronously(boost::bind(&OnlineViewerServerImpl::load, impl, string(name), string(url)));
 }
 
 
@@ -194,10 +194,10 @@ void OnlineViewerServerImpl::registerBodyItem(BodyItemPtr bodyItem)
 
     info.bodyItemConnections.add(
         bodyItem->sigNameChanged().connect(
-            bind(&OnlineViewerServerImpl::onBodyItemNameChanged, this, bodyItem.get(), _1)));
+            boost::bind(&OnlineViewerServerImpl::onBodyItemNameChanged, this, bodyItem.get(), _1)));
     info.bodyItemConnections.add(
         bodyItem->sigDisconnectedFromRoot().connect(
-            bind(&OnlineViewerServerImpl::onBodyItemDetachedFromRoot, this, bodyItem.get())));
+            boost::bind(&OnlineViewerServerImpl::onBodyItemDetachedFromRoot, this, bodyItem.get())));
 
     bodyItemInfoMap.insert(make_pair(bodyItem->name(), info));
 }
@@ -220,7 +220,7 @@ void OnlineViewerServerImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
 
 void OnlineViewerServerImpl::forEachBody
 (const WorldState& state,
- function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback)
+ boost::function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback)
 {
     int numBodies = state.characterPositions.length();
     for(int i=0; i < numBodies; ++i){
@@ -242,13 +242,13 @@ void OnlineViewerServerImpl::forEachBody
 
 void OnlineViewerServer::drawScene(const WorldState& state)
 {
-    callLater(bind(&OnlineViewerServerImpl::drawScene, impl, state));
+    callLater(boost::bind(&OnlineViewerServerImpl::drawScene, impl, state));
 }
 
 
 void OnlineViewerServerImpl::drawScene(const WorldState& state)
 {
-    forEachBody(state, bind(&OnlineViewerServerImpl::updateBodyState, this, _1, _2, _3, _4));
+    forEachBody(state, boost::bind(&OnlineViewerServerImpl::updateBodyState, this, _1, _2, _3, _4));
 }
 
 
@@ -267,13 +267,13 @@ void OnlineViewerServerImpl::updateBodyState
 
 void OnlineViewerServer::update(const WorldState& state)
 {
-    callLater(bind(&OnlineViewerServerImpl::update, impl, state));
+    callLater(boost::bind(&OnlineViewerServerImpl::update, impl, state));
 }
 
 
 void OnlineViewerServerImpl::update(const WorldState& state)
 {
-    forEachBody(state, bind(&OnlineViewerServerImpl::updateLog, this, _1, _2, _3, _4));
+    forEachBody(state, boost::bind(&OnlineViewerServerImpl::updateLog, this, _1, _2, _3, _4));
 }
 
 
@@ -327,10 +327,10 @@ void OnlineViewerServerImpl::resetLogItem(BodyItemInfo* info, BodyMotionItem* ne
 
         info->logItemConnections.add(
             newLogItem->sigPositionChanged().connect(
-                bind(&OnlineViewerServerImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
+                boost::bind(&OnlineViewerServerImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
         info->logItemConnections.add(
             newLogItem->sigNameChanged().connect(
-                bind(&OnlineViewerServerImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
+                boost::bind(&OnlineViewerServerImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
     }
 }
 
@@ -338,7 +338,7 @@ void OnlineViewerServerImpl::resetLogItem(BodyItemInfo* info, BodyMotionItem* ne
 #ifdef OPENHRP_3_1
 void OnlineViewerServer::setLogName(const char* name)
 {
-    callLater(bind(&OnlineViewerServerImpl::setLogName, impl, string(name)));
+    callLater(boost::bind(&OnlineViewerServerImpl::setLogName, impl, string(name)));
 }
 
 void OnlineViewerServerImpl::setLogName(string name)
@@ -356,7 +356,7 @@ void OnlineViewerServerImpl::setLogName(string name)
 
 void OnlineViewerServer::clearLog()
 {
-    callLater(bind(&OnlineViewerServerImpl::clearLog, impl));
+    callLater(boost::bind(&OnlineViewerServerImpl::clearLog, impl));
 }
 
 
@@ -373,7 +373,7 @@ void OnlineViewerServerImpl::clearLog()
 
 void OnlineViewerServer::clearData()
 {
-    callLater(bind(&OnlineViewerServerImpl::clearData, impl));
+    callLater(boost::bind(&OnlineViewerServerImpl::clearData, impl));
 }
 
 

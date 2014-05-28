@@ -7,9 +7,7 @@
 #include "BodyMotion.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
 
 namespace {
 static const string mdskey("Devices");
@@ -57,7 +55,7 @@ MultiDeviceStateSeq& MultiDeviceStateSeq::operator=(const MultiDeviceStateSeq& r
 */
 AbstractSeqPtr MultiDeviceStateSeq::cloneSeq() const
 {
-    return make_shared<MultiDeviceStateSeq>(*this);
+    return boost::make_shared<MultiDeviceStateSeq>(*this);
 }
 
 

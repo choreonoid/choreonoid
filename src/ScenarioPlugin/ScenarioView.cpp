@@ -52,7 +52,7 @@ public:
     }
 };
 
-typedef shared_ptr<MotionInfo> MotionInfoPtr;
+typedef boost::shared_ptr<MotionInfo> MotionInfoPtr;
             
 
 class ScenarioViewImpl : public boost::signals::trackable
@@ -110,15 +110,15 @@ ScenarioViewImpl::ScenarioViewImpl(ScenarioView* self)
     QHBoxLayout* hbox = new QHBoxLayout();
 
     updateButton.setText(_("Update"));
-    updateButton.sigClicked().connect(bind(&ScenarioViewImpl::update, this));
+    updateButton.sigClicked().connect(boost::bind(&ScenarioViewImpl::update, this));
     hbox->addWidget(&updateButton);
 
     startButton.setText(_("Start"));
-    startButton.sigClicked().connect(bind(&ScenarioViewImpl::start, this));
+    startButton.sigClicked().connect(boost::bind(&ScenarioViewImpl::start, this));
     hbox->addWidget(&startButton);
 
     sequentialCheck.setText(_("Sequential"));
-    sequentialCheck.sigToggled().connect(bind(&ScenarioViewImpl::update, this));
+    sequentialCheck.sigToggled().connect(boost::bind(&ScenarioViewImpl::update, this));
     hbox->addWidget(&sequentialCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -136,7 +136,7 @@ ScenarioViewImpl::ScenarioViewImpl(ScenarioView* self)
     self->setLayout(vbox);
     
     ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-        bind(&ScenarioViewImpl::onItemSelectionChanged, this, _1));
+        boost::bind(&ScenarioViewImpl::onItemSelectionChanged, this, _1));
 }
 
 
@@ -179,7 +179,7 @@ void ScenarioViewImpl::setCurrentScenarioItem(ScenarioItemPtr scenarioItem)
     if(scenarioItem){
         connectionOfCurrentScenarioItemDetachedFromRoot =
             scenarioItem->sigDetachedFromRoot().connect(
-                bind(&ScenarioViewImpl::onScenarioItemDetachedFromRoot, this, scenarioItem));
+                boost::bind(&ScenarioViewImpl::onScenarioItemDetachedFromRoot, this, scenarioItem));
     }
 
     update();
@@ -200,7 +200,7 @@ void ScenarioViewImpl::update()
             for(int i=0; i < motionItems.size(); ++i){
                 MotionInfoPtr info(new MotionInfo(motionItems[i], sequentialCheck.isChecked()));
                 scenarioBox.addLayout(&info->hbox);
-                info->startButton.sigClicked().connect(bind(&ScenarioViewImpl::startMotion, this, i));
+                info->startButton.sigClicked().connect(boost::bind(&ScenarioViewImpl::startMotion, this, i));
                 motions.push_back(info);
             }
         }
@@ -291,7 +291,7 @@ void ScenarioViewImpl::startMotion(int index)
             playbackStopConnection.disconnect();
             playbackStopConnection =
                 timeBar->sigPlaybackStopped().connect(
-                    bind(&ScenarioViewImpl::onPlaybackStopped, this, index));
+                    boost::bind(&ScenarioViewImpl::onPlaybackStopped, this, index));
 
             timeBar->setTime(0.0);
             timeBar->startPlayback();

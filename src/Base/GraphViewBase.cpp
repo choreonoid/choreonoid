@@ -15,12 +15,10 @@
 #include <QBoxLayout>
 #include <QHeaderView>
 #include <QScrollBar>
+#include <iostream>
 #include "gettext.h"
 
-#include <iostream>
-
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -77,8 +75,8 @@ public:
     QVBoxLayout* leftvbox;
     GraphWidget graph;
     TreeWidgetEx treeWidget;
-    signals::connection itemSelectionChangedConnection;
-    signals::connection partSelectionChangedConnection;
+    boost::signals::connection itemSelectionChangedConnection;
+    boost::signals::connection partSelectionChangedConnection;
 
     list<ItemInfo> itemInfos;
 
@@ -146,11 +144,11 @@ GraphViewBaseImpl::GraphViewBaseImpl(GraphViewBase* self)
     
     itemSelectionChangedConnection =
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            bind(&GraphViewBaseImpl::onItemSelectionChanged, this, _1));
+            boost::bind(&GraphViewBaseImpl::onItemSelectionChanged, this, _1));
 
     partSelectionChangedConnection =
         treeWidget.sigItemSelectionChanged().connect(
-            bind(&GraphViewBaseImpl::updateSelections, this));
+            boost::bind(&GraphViewBaseImpl::updateSelections, this));
 }
 
 
@@ -211,10 +209,10 @@ void GraphViewBaseImpl::onItemSelectionChanged(const ItemList<>& allItems)
 
         ConnectionSet& connections = itemToConnectionSetMap[it->item.get()];
         connections.add(it->item->sigUpdated().connect(
-                            bind(&GraphViewBaseImpl::onItemUpdated, this, it)));
+                            boost::bind(&GraphViewBaseImpl::onItemUpdated, this, it)));
 
         connections.add(it->item->sigDetachedFromRoot().connect(
-                            bind(&GraphViewBaseImpl::onItemDetachedFromRoot, this, it)));
+                            boost::bind(&GraphViewBaseImpl::onItemDetachedFromRoot, this, it)));
     }
 
     updatePartList();

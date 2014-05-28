@@ -13,7 +13,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -388,7 +387,7 @@ bool JointPath::calcInverseKinematics()
         ik = new JointPathIkImpl();
     }
     if(!ik->jacobianFunc){
-        ik->jacobianFunc = bind(setJacobian<0x3f, 0, 0>, ref(*this), endLink(), _1);
+        ik->jacobianFunc = boost::bind(setJacobian<0x3f, 0, 0>, boost::ref(*this), endLink(), _1);
     }
     ik->resize(n);
     
@@ -626,8 +625,8 @@ bool CustomJointPath::hasAnalyticalIK() const
 JointPathPtr cnoid::getCustomJointPath(BodyPtr body, Link* baseLink, Link* targetLink)
 {
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
-        return make_shared<CustomJointPath>(body, baseLink, targetLink);
+        return boost::make_shared<CustomJointPath>(body, baseLink, targetLink);
     } else {
-        return make_shared<JointPath>(baseLink, targetLink);
+        return boost::make_shared<JointPath>(baseLink, targetLink);
     }
 }

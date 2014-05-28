@@ -7,8 +7,6 @@
 #include "ItemManager.h"
 #include "gettext.h"
 
-
-using namespace boost;
 using namespace cnoid;
 
 void Vector3SeqItem::initializeClass(ExtensionManager* ext)
@@ -18,7 +16,7 @@ void Vector3SeqItem::initializeClass(ExtensionManager* ext)
 
 
 Vector3SeqItem::Vector3SeqItem()
-    : seq_(make_shared<Vector3Seq>())
+    : seq_(boost::make_shared<Vector3Seq>())
 {
 
 }
@@ -33,7 +31,7 @@ Vector3SeqItem::Vector3SeqItem(Vector3SeqPtr seq)
 
 Vector3SeqItem::Vector3SeqItem(const Vector3SeqItem& org)
     : AbstractSeqItem(org),
-      seq_(make_shared<Vector3Seq>(*org.seq_))
+      seq_(boost::make_shared<Vector3Seq>(*org.seq_))
 {
 
 }

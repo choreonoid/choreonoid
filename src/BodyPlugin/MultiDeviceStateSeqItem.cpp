@@ -12,9 +12,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
 
 namespace {
 
@@ -36,7 +34,7 @@ public:
     MultiDeviceStateSeqEngine(MultiDeviceStateSeqItemPtr seqItem, BodyItemPtr bodyItem)
         : seq(seqItem->seq()), body(bodyItem->body())
         {
-            seqItem->sigUpdated().connect(bind(&TimeSyncItemEngine::notifyUpdate, this));
+            seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
         }
 
     virtual bool onTimeChanged(double time)
@@ -65,7 +63,7 @@ public:
 TimeSyncItemEnginePtr createMultiDeviceStateSeqEngine(BodyItemPtr bodyItem, AbstractSeqItemPtr seqItem)
 {
     if(MultiDeviceStateSeqItemPtr item = dynamic_pointer_cast<MultiDeviceStateSeqItem>(seqItem)){
-        return make_shared<MultiDeviceStateSeqEngine>(item, bodyItem);
+        return boost::make_shared<MultiDeviceStateSeqEngine>(item, bodyItem);
     }
     return TimeSyncItemEnginePtr();
 }
@@ -89,7 +87,7 @@ void MultiDeviceStateSeqItem::initializeClass(ExtensionManager* ext)
 
         
 MultiDeviceStateSeqItem::MultiDeviceStateSeqItem()
-    : seq_(make_shared<MultiDeviceStateSeq>())
+    : seq_(boost::make_shared<MultiDeviceStateSeq>())
 {
 
 }
@@ -104,7 +102,7 @@ MultiDeviceStateSeqItem::MultiDeviceStateSeqItem(MultiDeviceStateSeqPtr seq)
 
 MultiDeviceStateSeqItem::MultiDeviceStateSeqItem(const MultiDeviceStateSeqItem& org)
     : AbstractMultiSeqItem(org),
-      seq_(make_shared<MultiDeviceStateSeq>(*org.seq_))
+      seq_(boost::make_shared<MultiDeviceStateSeq>(*org.seq_))
 {
 
 }

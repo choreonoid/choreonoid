@@ -6,8 +6,6 @@
 #include "MeshExtractor.h"
 #include <boost/bind.hpp>
 
-using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -139,6 +137,6 @@ static void integrateMesh(MeshExtractor* extractor, SgMesh* mesh)
 SgMesh* MeshExtractor::integrate(SgNode* node)
 {
     SgMesh* mesh = new SgMesh;
-    extract(node, bind(integrateMesh, this, mesh));
+    extract(node, boost::bind(integrateMesh, this, mesh));
     return mesh;
 }

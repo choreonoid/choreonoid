@@ -20,7 +20,7 @@ namespace {
     bool pyPlayAudioFile(const std::string& filename)
     {
         bool result;
-        callSynchronously(bind(pyPlayAudioFileMain, filename, ref(result)));
+        callSynchronously(boost::bind(pyPlayAudioFileMain, filename, boost::ref(result)));
         return result;
     }
 }

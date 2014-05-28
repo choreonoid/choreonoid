@@ -20,7 +20,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -138,7 +137,7 @@ void captureView(View* view)
         for(int i=0; i < 2; ++i){
             QTabWidget* tab = dynamic_cast<QTabWidget*>(owner);
             if(tab){
-                save(view, bind(saveTabViewImage, tab, view, _1));
+                save(view, boost::bind(saveTabViewImage, tab, view, _1));
                 return;
             }
             owner = owner->parentWidget();
@@ -148,13 +147,13 @@ void captureView(View* view)
         }
     }
 
-    save(view, bind(saveWidgetImage, view, _1));
+    save(view, boost::bind(saveWidgetImage, view, _1));
 }
 
 
 void captureToolbar(ToolBar* bar)
 {
-    save(bar, bind(saveWidgetImage, bar, _1));
+    save(bar, boost::bind(saveWidgetImage, bar, _1));
 }
 }
 
@@ -191,7 +190,7 @@ CaptureBar::CaptureBar()
     : ToolBar(N_("CaptureBar"))
 {
     addButton(QIcon(":/Base/icons/scenecapture.png"), _("Capture the image of a view or toolbar"))
-        ->sigClicked().connect(bind(&CaptureBar::grabMouse, this));
+        ->sigClicked().connect(boost::bind(&CaptureBar::grabMouse, this));
 }
 
 

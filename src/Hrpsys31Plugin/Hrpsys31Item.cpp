@@ -257,7 +257,7 @@ Hrpsys31ItemImpl::Hrpsys31ItemImpl(Hrpsys31Item* self, const Hrpsys31ItemImpl& o
 void Hrpsys31ItemImpl::init()
 {
     mv = MessageView::instance();
-    timer.sigTimeout().connect(bind(&Hrpsys31ItemImpl::onReadRequest, this));
+    timer.sigTimeout().connect(boost::bind(&Hrpsys31ItemImpl::onReadRequest, this));
 }
 
 
@@ -644,11 +644,11 @@ void Hrpsys31ItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("RobotHardware"), robotHardwareName, changeProperty(robotHardwareName));
     putProperty(_("StateHolder"), stateHolderName, changeProperty(stateHolderName));
     putProperty(_("State reading"), isStateReadingEnabled,
-                bind(&Hrpsys31Item::setStateReadingEnabled, self, _1));
+                boost::bind(&Hrpsys31Item::setStateReadingEnabled, self, _1));
     putProperty(_("Read inverval"), (int)readInterval,
-                bind(&Hrpsys31ItemImpl::onReadIntervalEdited, this, _1));
+                boost::bind(&Hrpsys31ItemImpl::onReadIntervalEdited, this, _1));
     putProperty(_("Body update mode"), bodyJointUpdateMode,
-                bind((bool(Selection::*)(int))&Selection::select, &bodyJointUpdateMode, _1));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &bodyJointUpdateMode, _1));
     putProperty(_("Connect on loading"), doConnectOnLoading, changeProperty(doConnectOnLoading));
 }
 

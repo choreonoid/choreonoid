@@ -14,7 +14,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -28,7 +27,7 @@ SgUpdate::~SgUpdate()
 }
 
 namespace {
-typedef unordered_map<const SgObject*, SgObjectPtr> CloneMap;
+typedef boost::unordered_map<const SgObject*, SgObjectPtr> CloneMap;
 }
 
 namespace cnoid {
@@ -612,14 +611,14 @@ SgObject* SgMaterial::clone(SgCloneMap& cloneMap) const
 
 
 SgImage::SgImage()
-    : image_(make_shared<Image>())
+    : image_(boost::make_shared<Image>())
 {
 
 }
 
 
 SgImage::SgImage(const Image& image)
-    : image_(make_shared<Image>(image))
+    : image_(boost::make_shared<Image>(image))
 {
 
 }
@@ -649,7 +648,7 @@ SgObject* SgImage::clone(SgCloneMap& cloneMap) const
 Image& SgImage::image()
 {
     if(image_.use_count() > 1){
-        image_ = make_shared<Image>(*image_);
+        image_ = boost::make_shared<Image>(*image_);
     }
     return *image_;
 }
@@ -658,7 +657,7 @@ Image& SgImage::image()
 unsigned char* SgImage::pixels()
 {
     if(image_.use_count() > 1){
-        image_ = make_shared<Image>(*image_);
+        image_ = boost::make_shared<Image>(*image_);
     }
     return image_->pixels();
 }

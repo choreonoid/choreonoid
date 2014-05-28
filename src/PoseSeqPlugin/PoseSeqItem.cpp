@@ -87,10 +87,10 @@ void PoseSeqItem::initializeClass(ExtensionManager* ext)
             _("Pose Sequence"), "POSE-SEQ-YAML", "pseq", loadPoseSeqItem, savePoseSeqItem);
         im.addSaver<PoseSeqItem>(
             _("Talk Plugin File"), "TALK-PLUGIN-FORMAT", "talk",
-            bind(exportTalkPluginFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
+            boost::bind(exportTalkPluginFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
         im.addSaver<PoseSeqItem>(
             _("Seq File for the Face Controller"), "FACE-CONTROLLER-SEQ-FORMAT", "poseseq",
-            bind(exportFaceControllerFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
+            boost::bind(exportFaceControllerFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
 
         initialized = true;
     }
@@ -129,7 +129,7 @@ void PoseSeqItem::init()
 
     clearEditHistory();
 
-    sigPositionChanged().connect(bind(&PoseSeqItem::onPositionChanged, this));
+    sigPositionChanged().connect(boost::bind(&PoseSeqItem::onPositionChanged, this));
 
     generationBar = BodyMotionGenerationBar::instance();
 
@@ -157,7 +157,7 @@ void PoseSeqItem::onPositionChanged()
     if(!sigInterpolationParametersChangedConnection.connected()){
         sigInterpolationParametersChangedConnection =
             BodyMotionGenerationBar::instance()->sigInterpolationParametersChanged().connect(
-                bind(&PoseSeqItem::updateInterpolationParameters, this));
+                boost::bind(&PoseSeqItem::updateInterpolationParameters, this));
         updateInterpolationParameters();
     }
 
@@ -374,10 +374,10 @@ void PoseSeqItem::beginEditing()
 
     if(editConnections.empty()){
         editConnections = seq->connectSignalSet(
-            bind(&PoseSeqItem::onInserted, this, _1, _2),
-            bind(&PoseSeqItem::onRemoving, this, _1, _2),
-            bind(&PoseSeqItem::onModifying, this, _1),
-            bind(&PoseSeqItem::onModified, this, _1));
+            boost::bind(&PoseSeqItem::onInserted, this, _1, _2),
+            boost::bind(&PoseSeqItem::onRemoving, this, _1, _2),
+            boost::bind(&PoseSeqItem::onModifying, this, _1),
+            boost::bind(&PoseSeqItem::onModified, this, _1));
     }
 }
 

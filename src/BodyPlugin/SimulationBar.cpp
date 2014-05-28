@@ -15,8 +15,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 static SimulationBar* instance_ = 0;
     
@@ -24,7 +24,7 @@ static SimulationBar* instance_ = 0;
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-simulation")){
-        callLater(bind(&SimulationBar::startSimulation, instance_, true));
+        callLater(boost::bind(&SimulationBar::startSimulation, instance_, true));
     }
 }
 
@@ -51,6 +51,8 @@ SimulationBar* SimulationBar::instance()
 SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
+    using boost::bind;
+    
     addButton(QIcon(":/Body/icons/store-world-initial.png"),
               _("Store body positions to the initial world state"))->
         sigClicked().connect(bind(&SimulationBar::onStoreInitialClicked, this));
@@ -79,7 +81,7 @@ SimulationBar::~SimulationBar()
 }
 
 
-static void forEachTargetBodyItem(function<void(BodyItem*)> callback)
+static void forEachTargetBodyItem(boost::function<void(BodyItem*)> callback)
 {
     ItemTreeView* itemTreeView = ItemTreeView::instance();
 
@@ -118,11 +120,11 @@ void SimulationBar::onStoreInitialClicked()
 
 void SimulationBar::onRestoreInitialClicked()
 {
-    forEachTargetBodyItem(function<void(BodyItem*)>(bind(&BodyItem::restoreInitialState, _1)));
+    forEachTargetBodyItem(boost::function<void(BodyItem*)>(boost::bind(&BodyItem::restoreInitialState, _1)));
 }
 
 
-void SimulationBar::forEachSimulator(function<void(SimulatorItem* simulator)> callback)
+void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback)
 {
     MessageView* mv = MessageView::instance();
     /*
@@ -184,7 +186,7 @@ void SimulationBar::forEachSimulator(function<void(SimulatorItem* simulator)> ca
 
 void SimulationBar::startSimulation(bool doRest)
 {
-    forEachSimulator(bind(&SimulationBar::startSimulation, this, _1, doRest));
+    forEachSimulator(boost::bind(&SimulationBar::startSimulation, this, _1, doRest));
 }
 
 
@@ -203,7 +205,7 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 
 void SimulationBar::onStopSimulationClicked()
 {
-    forEachSimulator(bind(&SimulationBar::stopSimulation, this, _1));
+    forEachSimulator(boost::bind(&SimulationBar::stopSimulation, this, _1));
 
     TimeBar* timeBar = TimeBar::instance();
     if(timeBar->isDoingPlayback()){

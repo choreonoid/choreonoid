@@ -11,7 +11,6 @@
 #include "PoseProvider.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 PoseProviderToBodyMotionConverter::PoseProviderToBodyMotionConverter()
@@ -60,7 +59,7 @@ bool PoseProviderToBodyMotionConverter::convert(BodyPtr body, PoseProvider* prov
     Link* rootLink = body->rootLink();
     Link* baseLink = rootLink;
 
-    shared_ptr<LinkTraverse> fkTraverse;
+    boost::shared_ptr<LinkTraverse> fkTraverse;
     if(allLinkPositionOutputMode){
         fkTraverse.reset(new LinkTraverse(baseLink, true, true));
     } else {
@@ -97,7 +96,7 @@ bool PoseProviderToBodyMotionConverter::convert(BodyPtr body, PoseProvider* prov
         MultiValueSeq::Frame qs = qseq.frame(frame);
         provider->getJointPositions(jointPositions);
         for(int i=0; i < numJoints; ++i){
-            const optional<double>& q = jointPositions[i];
+            const boost::optional<double>& q = jointPositions[i];
             qs[i] = q ? *q : 0.0;
             body->joint(i)->q() = qs[i];
         }
@@ -112,7 +111,7 @@ bool PoseProviderToBodyMotionConverter::convert(BodyPtr body, PoseProvider* prov
             p.set(link->p(), link->R());
         }
 
-        optional<Vector3> zmp = provider->ZMP();
+        boost::optional<Vector3> zmp = provider->ZMP();
         if(zmp){
             zmpseq[frame] = *zmp;
             isZmpValid = true;

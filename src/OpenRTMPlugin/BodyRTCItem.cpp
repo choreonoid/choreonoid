@@ -424,18 +424,18 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     putProperty(_("Auto Connect"), autoConnect, changeProperty(autoConnect));
     putProperty(_("RTC Instance name"), instanceName,
-                bind(&BodyRTCItem::setInstanceName, this, _1), true);
+                boost::bind(&BodyRTCItem::setInstanceName, this, _1), true);
     
     putProperty.decimals(3)(_("Periodic rate"), bodyPeriodicRateProperty,
                             changeProperty(bodyPeriodicRateProperty));
 
     putProperty(_("Controller module name"), moduleName,
-                bind(&BodyRTCItem::setModuleName, this, _1), true);
+                boost::bind(&BodyRTCItem::setModuleName, this, _1), true);
     putProperty(_("Configuration mode"), configMode,
-                bind((bool(Selection::*)(int))&Selection::select, &configMode, _1));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &configMode, _1));
     setConfigMode(configMode.selectedIndex());
     putProperty(_("Configuration file name"), confFileName,
-                bind(&BodyRTCItem::setConfFileName, this, _1), true);
+                boost::bind(&BodyRTCItem::setConfFileName, this, _1), true);
 }
 
 
