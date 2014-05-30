@@ -48,6 +48,12 @@ set(headers
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Opcode)
 
+if(MSVC)
+  if(MSVC_VERSION GREATER 1600)
+    add_definitions(-D_ALLOW_KEYWORD_MACROS)
+  endif()
+endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl")
 elseif(UNIX)

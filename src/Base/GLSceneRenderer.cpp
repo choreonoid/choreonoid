@@ -12,6 +12,9 @@
 #include <Windows.h>
 #endif
 #include <GL/glew.h>
+#ifdef _WIN32
+#include <GL/wglew.h>
+#endif
 #include <boost/unordered_map.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/bind.hpp>
@@ -805,6 +808,24 @@ int GLSceneRenderer::currentCameraIndex() const
 SignalProxy<boost::signal<void()> > GLSceneRenderer::sigCurrentCameraChanged()
 {
     return impl->sigCurrentCameraChanged;
+}
+
+
+bool GLSceneRenderer::setSwapInterval(int interval)
+{
+#ifdef _WIN32
+    return wglSwapIntervalEXT(interval);
+#endif
+    return false;
+}
+
+
+int GLSceneRenderer::getSwapInterval() const
+{
+#ifdef _WIN32
+    return wglGetSwapIntervalEXT();
+#endif
+    return -1;
 }
 
 

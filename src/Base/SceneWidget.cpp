@@ -420,6 +420,14 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
       sceneRoot(new SceneWidgetRoot(self)),
       renderer(sceneRoot)
 {
+    if(false){ // test
+        cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
+        QGLFormat glfmt = QGLWidget::format();
+        glfmt.setSwapInterval(0);
+        QGLWidget::setFormat(glfmt);
+        cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
+    }
+    
     setFocusPolicy(Qt::WheelFocus);
 
     setAutoBufferSwap(true);
@@ -565,6 +573,11 @@ void SceneWidgetImpl::initializeGL()
     if(!renderer.initializeGL()){
         os << "OpenGL initialization failed." << endl;
         // This view shoulbe be disabled when the glew initialization is failed.
+    } else {
+#ifdef _WIN32
+        // Qt5 does not seem to support setting the swap interval for QGLWidget.
+        renderer.setSwapInterval(QGLFormat::defaultFormat().swapInterval());
+#endif
     }
 }
 

@@ -130,7 +130,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     OptionManager& om = em->optionManager();
     om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
     om.addPositionalOption("project", 1);
-    om.sigOptionsParsed().connect(bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
+    om.sigOptionsParsed().connect(boost::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
     mainWindow = MainWindow::instance();
     messageView = MessageView::mainInstance();

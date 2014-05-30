@@ -402,16 +402,19 @@ else()
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
   list(APPEND QT_INST_LIBRARIES 
-		optimized Qt5Core debug Qt5Cored
-		optimized Qt5Gui debug Qt5Guid
-		optimized Qt5OpenGL debug Qt5OpenGLd
-		optimized Qt5Network debug Qt5Networkd
-		optimized Qt5Widgets debug Qt5Widgetsd
-		optimized libEGL debug libEGLd
-		optimized libGLESv2 debug libGLESv2d
-		optimized icuin51 debug icuin51d
-		optimized icuuc51 debug icuuc51d
-		optimized icudt51 debug icudt51d)
+    optimized Qt5Core debug Qt5Cored
+    optimized Qt5Gui debug Qt5Guid
+    optimized Qt5OpenGL debug Qt5OpenGLd
+    optimized Qt5Network debug Qt5Networkd
+    optimized Qt5Widgets debug Qt5Widgetsd
+    optimized libEGL debug libEGLd
+    optimized libGLESv2 debug libGLESv2d
+    optimized icuin51 debug icuin51d
+    optimized icuuc51 debug icuuc51d
+    optimized icudt51 debug icudt51d
+    # for the Qt 5.3 binary package
+    general icuin52 general icuuc52 general icudt52)
+
   install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
   if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
     foreach(dir

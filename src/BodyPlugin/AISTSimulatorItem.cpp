@@ -474,27 +474,25 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    using boost::bind;
-    
     putProperty(_("Dynamics mode"), dynamicsMode,
-                bind((bool(Selection::*)(int))&Selection::select, &dynamicsMode, _1));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &dynamicsMode, _1));
     putProperty(_("Integration mode"), integrationMode,
-                bind((bool(Selection::*)(int))&Selection::select, &integrationMode, _1));
-    putProperty(_("Gravity"), str(gravity), bind(toVector3, _1, boost::ref(gravity)));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &integrationMode, _1));
+    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
     putProperty(_("Slip friction"), slipFriction, changeProperty(slipFriction));
     putProperty(_("Contact culling distance"), contactCullingDistance,
-                (bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDistance), _1)));
+                (boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDistance), _1)));
     putProperty(_("Contact culling depth"), contactCullingDepth,
-                (bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDepth), _1)));
+                (boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDepth), _1)));
     putProperty(_("Error criterion"), errorCriterion,
-                bind(&FloatingNumberString::setPositiveValue, boost::ref(errorCriterion), _1));
+                boost::bind(&FloatingNumberString::setPositiveValue, boost::ref(errorCriterion), _1));
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
-                bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionDepth), _1));
+                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionDepth), _1));
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionVelocityRatio), _1));
+                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionVelocityRatio), _1));
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));

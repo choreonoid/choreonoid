@@ -143,8 +143,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 
     // OpenGL settings
     Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
-    QGLFormat glfmt;
-    glfmt.setSwapInterval(glConfig->get("vsync", glfmt.swapInterval()));
+    QGLFormat glfmt = QGLFormat::defaultFormat();
+    glfmt.setSwapInterval(glConfig->get("vsync", 0));
     QGLFormat::setDefaultFormat(glfmt);
     
     MainWindow::initialize(appName, ext);

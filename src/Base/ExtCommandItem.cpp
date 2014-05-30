@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 
 void ExtCommandItem::initializeClass(ExtensionManager* ext)

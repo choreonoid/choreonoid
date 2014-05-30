@@ -12,13 +12,12 @@
 
 using namespace std;
 using namespace cnoid;
-using boost::make_shared;
 
 namespace {
 
 CollisionDetectorPtr factory()
 {
-    return make_shared<AISTCollisionDetector>();
+    return boost::make_shared<AISTCollisionDetector>();
 }
 
 struct FactoryRegistration

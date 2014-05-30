@@ -104,6 +104,7 @@ endif()
 
 set(headers
   App.h
+  AppImpl.h
   MainWindow.h
   Process.h
   Action.h
@@ -247,7 +248,7 @@ elseif(MSVC)
 
   target_link_libraries(${target}
     ${QT_LIBRARIES}
-    general opengl32 glu32
+    general glu32
     CnoidUtil
     ${GLEW_LIBRARIES}
     )
