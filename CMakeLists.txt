@@ -287,7 +287,11 @@ if(MSVC)
   find_package(Boost 1.36.0 QUIET OPTIONAL_COMPONENTS  bzip2 zlib)
 endif()
 
-set(boost_packages system filesystem program_options regex signals thread iostreams date_time python)
+set(boost_packages system filesystem program_options regex signals thread iostreams date_time)
+
+if(ENABLE_PYTHON)
+  set(boost_packages ${boost_packages} python)
+endif()
 
 find_package(Boost 1.36.0 REQUIRED COMPONENTS ${boost_packages})
 
@@ -325,19 +329,10 @@ if(MSVC)
 
   #MSVC 2010 problem
   if(MSVC_VERSION EQUAL 1600)
-
     # for VC++2010 Express Edition
     IF(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
       SET(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
     ENDIF()
-
-    # to avoid the conflict between C++0x and boost
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
-      _HAS_CPP0X=0
-      BOOST_NO_0X_HDR_TYPEINDEX
-      BOOST_NO_0X_HDR_TUPLE
-      BOOST_NO_0X_HDR_ARRAY
-    )
   endif()
 endif()
 

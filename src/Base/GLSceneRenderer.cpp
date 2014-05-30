@@ -8,6 +8,7 @@
 #include <cnoid/SceneCamera>
 #include <cnoid/SceneLight>
 #include <cnoid/EigenUtil>
+#include <Eigen/StdVector>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
