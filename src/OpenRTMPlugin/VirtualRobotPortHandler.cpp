@@ -267,6 +267,10 @@ void SensorDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
                 for(size_t i=0; i < sensorNames.size(); ++i){
                     if(Sensor* sensor = body->findDevice<Sensor>(sensorNames[i])){
                         sensor->writeState(&value.data[i * dataSize]);
+                        //value.data[0] = value.data[1] = value.data[2] = value.data[3] = value.data[4] = value.data[5] = 0;
+                        //cout << sensorNames[0] << " " <<
+                    	//value.data[0] << " " << value.data[1] << " " << value.data[2] << " " <<
+                    	//value.data[3] << " " << value.data[4] << " " << value.data[5] << endl;
                     }
                 }
             }

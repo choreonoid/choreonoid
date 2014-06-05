@@ -183,7 +183,7 @@ SgMesh* MeshGenerator::generateCylinder(double radius, double height, bool botto
     SgMesh* mesh = new SgMesh();
     
     SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
-    vertices.resize(divisionNumber_ * 2 + 2);
+    vertices.resize(divisionNumber_ * 2);
 
     const double y = height / 2.0;
     for(int i=0 ; i < divisionNumber_ ; i++ ){

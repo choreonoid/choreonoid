@@ -26,7 +26,7 @@
 #include <ode/ode.h>
 #define ITEM_NAME N_("ODESimulatorItem")
 #endif
-
+#include <iostream>
 
 using namespace std;
 using namespace boost;
@@ -78,6 +78,8 @@ public:
     typedef map< dGeomID, Position, std::less<dGeomID>, 
                  Eigen::aligned_allocator< pair<const dGeomID, Position> > > OffsetMap;
     OffsetMap offsetMap;
+    //dReal pgain;
+    dJointID motorID;
 
     ODELink(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent,
             const Vector3& parentOrigin, Link* link);
@@ -87,6 +89,7 @@ public:
     void setKinematicStateToODE();
     void setKinematicStateToODEflip();
     void setTorqueToODE();
+    void setVelocityToODE();
     void getKinematicStateFromODE();
     void getKinematicStateFromODEflip();
     void addMesh(MeshExtractor* extractor, ODEBody* odeBody);
@@ -110,6 +113,7 @@ public:
     void setExtraJoints(bool flipYZ);
     void setKinematicStateToODE(bool flipYZ);
     void setTorqueToODE();
+    void setVelocityToODE();
     void getKinematicStateFromODE(bool flipYZ);
     void updateForceSensors(bool flipYZ);
     void alignToZAxisIn2Dmode();
@@ -148,6 +152,10 @@ public:
     double surfaceLayerDepth;
     bool useWorldCollision;
     CollisionDetectorPtr collisionDetector;
+    bool velocityMode;
+    //typedef std::map< string, vector<double> > PgainMap;
+    //PgainMap pgainMap;
+    //string pgainString;
 
     ODESimulatorItemImpl(ODESimulatorItem* self);
     ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimulatorItemImpl& org);
@@ -161,6 +169,7 @@ public:
     void store(Archive& archive);
     void restore(const Archive& archive);
     void collisionCallback(const CollisionPair& collisionPair);
+    //bool toPgain(const std::string& str);
 };
 }
 
@@ -175,6 +184,7 @@ ODELink::ODELink
     jointID = 0;
     triMeshDataID = 0;
     geomID.clear();
+    motorID = 0;
     
     Vector3 o = parentOrigin + link->b();
     
@@ -188,6 +198,16 @@ ODELink::ODELink
     for(Link* child = link->child(); child; child = child->sibling()){
         new ODELink(simImpl, odeBody, this, o, child);
     }
+
+    //pgain = 0;
+    //ODESimulatorItemImpl::PgainMap::iterator it = simImpl->pgainMap.find(odeBody->body()->name());
+    //if(it!=simImpl->pgainMap.end()){
+    //	int id = link->jointId();
+    //	vector<double> pgains = it->second;
+    //	if(id < pgains.size())
+    //		pgain = pgains[id];
+    //	std::cout << id << " " << pgain << endl;
+    //}
 }
 
 
@@ -245,6 +265,16 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetHingeParam(jointID, dParamLoStop, link->q_lower());
             }
         }
+        if(simImpl->velocityMode){
+        	dJointSetHingeParam(jointID, dParamFMax, numeric_limits<dReal>::max());
+   			dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
+   			//motorID = dJointCreateAMotor(worldID, 0);
+   			//dJointAttach(motorID, bodyID, parentBodyID);
+   			//dJointSetAMotorMode(motorID, dAMotorUser);
+   			//dJointSetAMotorNumAxes(motorID, 1);
+   			//dJointSetAMotorAxis(motorID, 0, 2, a.x(), a.y(), a.z());
+   			//dJointSetAMotorParam(motorID, dParamFMax, numeric_limits<dReal>::max() );
+        }
         break;
         
     case Link::SLIDE_JOINT:
@@ -258,6 +288,10 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
             if(link->q_lower() > -numeric_limits<double>::max()){
                 dJointSetSliderParam(jointID, dParamLoStop, link->q_lower());
             }
+        }
+        if(simImpl->velocityMode){
+        	dJointSetSliderParam(jointID, dParamFMax, numeric_limits<dReal>::max() );
+  			dJointSetSliderParam(jointID, dParamFudgeFactor, 1 );
         }
         break;
 
@@ -421,6 +455,9 @@ ODELink::~ODELink()
     if(jointID){
         dJointDestroy(jointID);
     }
+    if(motorID){
+    	dJointDestroy(motorID);
+    }
     for(vector<dGeomID>::iterator it=geomID.begin(); it!=geomID.end(); it++)
         dGeomDestroy(*it);
     if(triMeshDataID){
@@ -552,7 +589,7 @@ void ODELink::getKinematicStateFromODEflip()
     const Vector3 v = toVector3(dBodyGetLinearVel(bodyID)) - w.cross(c);
     
     link->p() << p.x(), -p.z(), p.y();
-    link->w() << w.x(), -w.z(), w.y(); 
+    link->w() << w.x(), -w.z(), w.y();
     link->v() << v.x(), -v.z(), v.y();
 }
 
@@ -566,6 +603,24 @@ void ODELink::setTorqueToODE()
         dJointAddHingeTorque(jointID, link->u());
     } else if(link->isSlideJoint()){
         dJointAddSliderForce(jointID, link->u());
+    }
+}
+
+
+void ODELink::setVelocityToODE()
+{
+    if(link->isRotationalJoint()){
+    	//dReal q = dJointGetHingeAngle(jointID);//dJointGetAMotorAngle(motorID, 0);
+    	//dReal v = pgain * (link->q() - q);
+    	dReal v = link->dq();
+        dJointSetHingeParam(jointID, dParamVel, v);
+    	//dJointSetAMotorParam(motorID, dParamVel, v);
+
+    } else if(link->isSlideJoint()){
+    	//dReal q = dJointGetSliderPosition(jointID);
+    	//dReal v = pgain * (link->q() - q);
+    	dReal v = link->dq();
+    	dJointSetSliderParam(jointID, dParamVel, v);
     }
 }
 
@@ -711,6 +766,15 @@ void ODEBody::setTorqueToODE()
 }
 
 
+void ODEBody::setVelocityToODE()
+{
+    // Skip the root link
+    for(size_t i=1; i < odeLinks.size(); ++i){
+        odeLinks[i]->setVelocityToODE();
+    }
+}
+
+
 void ODEBody::getKinematicStateFromODE(bool flipYZ)
 {
     if(!flipYZ){
@@ -741,7 +805,16 @@ void ODEBody::updateForceSensors(bool flipYZ)
             tau << fb.t2[0], -fb.t2[2], fb.t2[1];
         }
         const Matrix3 R = link->R() * sensor->R_local();
-        const Vector3 p = link->p() + link->R() * sensor->p_local();
+        //const Vector3 p = link->p() + link->R() * sensor->p_local();
+
+        //const Vector3 p = link->R() * (sensor->p_local() - link->parent()->c());
+
+        //const Matrix3 R = link->parent()->R().transpose() * link->R() * sensor->R_local();
+        const Vector3 sp = link->p() + link->R() * sensor->p_local();
+        const Vector3 pcp = link->parent()->p() + link->parent()->R() * link->parent()->c();
+        //const Vector3 p = sp - pcp;
+        const Vector3 p = link->R() * sensor->p_local();
+
         sensor->f()   = R.transpose() * f;
         sensor->tau() = R.transpose() * (tau - p.cross(f));
         sensor->notifyStateChange();
@@ -811,6 +884,8 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     is2Dmode = false;
     flipYZ = false;
     useWorldCollision = false;
+    velocityMode = true;
+    //pgainMap.clear();
 }
 
 
@@ -840,6 +915,8 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     is2Dmode = org.is2Dmode;
     flipYZ = org.flipYZ;
     useWorldCollision = org.useWorldCollision;
+    velocityMode = org.velocityMode;
+    //pgainMap = org.pgainMap;
 }
 
 
@@ -1148,10 +1225,14 @@ bool ODESimulatorItem::stepSimulation(const std::vector<SimulationBody*>& active
 
 bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    for(size_t i=0; i < activeSimBodies.size(); ++i){
+    //std::cout << "one step" << std::endl;
+	for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
-        odeBody->setTorqueToODE();
+        if(velocityMode)
+        	odeBody->setVelocityToODE();
+        else
+        	odeBody->setTorqueToODE();
     }
 
     dJointGroupEmpty(contactJointGroupID);
@@ -1299,8 +1380,30 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 
     putProperty(_("Use WorldItem's Collision Detector"), useWorldCollision, changeProperty(useWorldCollision));
+
+    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
+
+    //putProperty(_("Pgain"), pgainString, bind(&ODESimulatorItemImpl::toPgain, this, _1));
+
 }
 
+/*
+bool ODESimulatorItemImpl::toPgain(const std::string& str)
+{
+	pgainString = str;
+	if(str.empty())
+		return true;
+	istringstream iss(str);
+	string name, tmp;
+	getline(iss, name, ' ');
+	vector<double> pgain;
+	char* endptr;
+	while(getline(iss, tmp, ' '))
+		pgain.push_back(strtod(tmp.c_str(), &endptr));
+	pgainMap[name] = pgain;
+	return true;
+}
+*/
 
 bool ODESimulatorItem::store(Archive& archive)
 {
@@ -1324,6 +1427,8 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("maxCorrectingVel", maxCorrectingVel);
     archive.write("2Dmode", is2Dmode);
     archive.write("UseWorldItem'sCollisionDetector", useWorldCollision);
+    archive.write("velocityMode", velocityMode);
+    //archive.write("Pgain", pgainString);
 }
 
 
@@ -1352,4 +1457,8 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     maxCorrectingVel = archive.get("maxCorrectingVel", maxCorrectingVel.string());
     archive.read("2Dmode", is2Dmode);
     archive.read("UseWorldItem'sCollisionDetector", useWorldCollision);
+    archive.read("velocityMode", velocityMode);
+    //if(archive.read("Pgain", pgainString)){
+    //	toPgain(pgainString);
+    //}
 }
