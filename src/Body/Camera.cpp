@@ -6,8 +6,6 @@
 #include "Camera.h"
 #include <boost/make_shared.hpp>
 
-using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -22,7 +20,7 @@ Camera::Camera()
     nearDistance_ = 0.01;
     farDistance_ = 100.0;
     frameRate_ = 30.0;
-    image_ = make_shared<Image>();
+    image_ = boost::make_shared<Image>();
 }
 
 
@@ -40,7 +38,7 @@ void Camera::copyStateFrom(const Camera& other)
     if(other.isShotDataSetAsState_){
         image_ = other.image_;
     } else {
-        image_ = make_shared<Image>();
+        image_ = boost::make_shared<Image>();
     }
 }
 
@@ -85,7 +83,7 @@ void Camera::forEachActualType(boost::function<bool(const std::type_info& type)>
 Image& Camera::image()
 {
     if(image_.use_count() > 1){
-        image_ = make_shared<Image>(*image_);
+        image_ = boost::make_shared<Image>(*image_);
     }
     return *image_;
 }
@@ -93,7 +91,7 @@ Image& Camera::image()
 
 Image& Camera::newImage()
 {
-    image_ = make_shared<Image>();
+    image_ = boost::make_shared<Image>();
     return *image_;
 }
 
@@ -103,7 +101,7 @@ void Camera::setImage(boost::shared_ptr<Image>& image)
     if(image.use_count() == 1){
         image_ = image;
     } else {
-        image_ = make_shared<Image>(*image);
+        image_ = boost::make_shared<Image>(*image);
     }
     image.reset();
 }
@@ -114,7 +112,7 @@ void Camera::clearState()
     if(image_.use_count() == 1){
         image_->clear();
     } else {
-        image_ = make_shared<Image>();
+        image_ = boost::make_shared<Image>();
     }
 }
 
@@ -154,7 +152,7 @@ double* Camera::writeState(double* out_buf) const
 RangeCamera::RangeCamera()
 {
     setImageType(NO_IMAGE);
-    points_ = make_shared<PointData>();
+    points_ = boost::make_shared<PointData>();
     isOrganized_ = false;
 }
 
@@ -166,7 +164,7 @@ void RangeCamera::copyStateFrom(const RangeCamera& other)
     if(other.isShotDataSetAsState()){
         points_ = other.points_;
     } else {
-        points_ = make_shared<PointData>();
+        points_ = boost::make_shared<PointData>();
     }
     isOrganized_ = other.isOrganized_;
 }
@@ -187,7 +185,7 @@ RangeCamera::RangeCamera(const RangeCamera& org, bool copyAll)
     if(org.isShotDataSetAsState()){
         points_ = org.points_;
     } else {
-        points_ = make_shared<PointData>();
+        points_ = boost::make_shared<PointData>();
     }
     isOrganized_ = org.isOrganized_;
 }
@@ -216,7 +214,7 @@ void RangeCamera::forEachActualType(boost::function<bool(const std::type_info& t
 RangeCamera::PointData& RangeCamera::points()
 {
     if(points_.use_count() > 1){
-        points_ = make_shared<PointData>(*points_);
+        points_ = boost::make_shared<PointData>(*points_);
     }
     return *points_;
 }
@@ -224,7 +222,7 @@ RangeCamera::PointData& RangeCamera::points()
 
 RangeCamera::PointData& RangeCamera::newPoints()
 {
-    points_ = make_shared<PointData>();
+    points_ = boost::make_shared<PointData>();
     return *points_;
 }
 
@@ -234,7 +232,7 @@ void RangeCamera::setPoints(boost::shared_ptr<PointData>& points)
     if(points.use_count() == 1){
         points_ = points;
     } else {
-        points_ = make_shared<PointData>(*points);
+        points_ = boost::make_shared<PointData>(*points);
     }
     points.reset();
 }
@@ -247,7 +245,7 @@ void RangeCamera::clearState()
     if(points_.use_count() == 1){
         points_->clear();
     } else {
-        points_ = make_shared<PointData>();
+        points_ = boost::make_shared<PointData>();
     }
 }
 

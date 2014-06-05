@@ -8,15 +8,12 @@
 
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneVisitor>
-#include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT SceneRenderer : public SceneVisitor
+class SceneRenderer : public SceneVisitor
 {
 public:
-    virtual ~SceneRenderer() { };
-
     virtual SgGroup* sceneRoot() = 0;
     virtual void clearScene() = 0;
 

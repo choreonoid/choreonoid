@@ -43,7 +43,6 @@
 #endif
 
 using namespace std;
-using namespace boost;
 using namespace Eigen;
 using namespace cnoid;
 
@@ -119,7 +118,7 @@ public:
     DoubleSpinBox pointSizeSpin;
     DoubleSpinBox lineWidthSpin;
     CheckBox pointRenderingModeCheck;
-    signals::connection pointRenderingModeCheckConnection;
+    boost::signals::connection pointRenderingModeCheckConnection;
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
     CheckBox coordinateAxesCheck;
@@ -314,9 +313,10 @@ public:
     void updateLastClickedPoint();
         
     SceneWidgetEditable* applyFunction(
-        EditablePath& editablePath, function<bool(SceneWidgetEditable* editable)> function);
+        EditablePath& editablePath, boost::function<bool(SceneWidgetEditable* editable)> function);
     bool setFocusToEditablePath(EditablePath& editablePath);
     bool setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable);
+    void clearFocusToEditables();
 
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void keyReleaseEvent(QKeyEvent* event);
@@ -420,20 +420,28 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
       sceneRoot(new SceneWidgetRoot(self)),
       renderer(sceneRoot)
 {
+    if(false){ // test
+        cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
+        QGLFormat glfmt = QGLWidget::format();
+        glfmt.setSwapInterval(0);
+        QGLWidget::setFormat(glfmt);
+        cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
+    }
+    
     setFocusPolicy(Qt::WheelFocus);
 
     setAutoBufferSwap(true);
 
     renderer.enableUnusedCacheCheck(true);
-    renderer.sigRenderingRequest().connect(bind(&SceneWidgetImpl::update, this));
-    renderer.sigCamerasChanged().connect(bind(&SceneWidgetImpl::onCamerasChanged, this));
-    renderer.sigCurrentCameraChanged().connect(bind(&SceneWidgetImpl::onCurrentCameraChanged, this));
+    renderer.sigRenderingRequest().connect(boost::bind(&SceneWidgetImpl::update, this));
+    renderer.sigCamerasChanged().connect(boost::bind(&SceneWidgetImpl::onCamerasChanged, this));
+    renderer.sigCurrentCameraChanged().connect(boost::bind(&SceneWidgetImpl::onCurrentCameraChanged, this));
 
-    sceneRoot->sigUpdated().connect(bind(&SceneWidgetImpl::onSceneGraphUpdated, this, _1));
+    sceneRoot->sigUpdated().connect(boost::bind(&SceneWidgetImpl::onSceneGraphUpdated, this, _1));
 
     buffer = 0;
 
-    initializeRenderingLater.setFunction(bind(&GLSceneRenderer::initializeRendering, &renderer));
+    initializeRenderingLater.setFunction(boost::bind(&GLSceneRenderer::initializeRendering, &renderer));
 
     modified.setAction(SgUpdate::MODIFIED);
     added.setAction(SgUpdate::ADDED);
@@ -510,13 +518,13 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     setupCoordinateAxes();
 
-    floorGrid = new SgCustomGLNode(bind(&SceneWidgetImpl::renderFloorGrid, this, _1));
+    floorGrid = new SgCustomGLNode(boost::bind(&SceneWidgetImpl::renderFloorGrid, this, _1));
     floorGrid->setName("FloorGrid");
     activateSystemNode(floorGrid, setup->floorGridCheck.isChecked());
 
-    fpsTimer.sigTimeout().connect(bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
+    fpsTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
     fpsRenderingTimer.setSingleShot(true);
-    fpsRenderingTimer.sigTimeout().connect(bind(&SceneWidgetImpl::onFPSRenderingRequest, this));
+    fpsRenderingTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSRenderingRequest, this));
 }
 
 
@@ -565,6 +573,11 @@ void SceneWidgetImpl::initializeGL()
     if(!renderer.initializeGL()){
         os << "OpenGL initialization failed." << endl;
         // This view shoulbe be disabled when the glew initialization is failed.
+    } else {
+#ifdef _WIN32
+        // Qt5 does not seem to support setting the swap interval for QGLWidget.
+        renderer.setSwapInterval(QGLFormat::defaultFormat().swapInterval());
+#endif
     }
 }
 
@@ -584,21 +597,17 @@ void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
     SgNode* node = dynamic_cast<SgNode*>(update.path().front());
 
     if(node && (update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED))){
-
         EditableExtractor extractor;
         extractor.apply(node);
         const int numEditables = extractor.numEditables();
 
         if(update.action() & SgUpdate::ADDED){
-
             for(int i=0; i < numEditables; ++i){
                 SceneWidgetEditable* editable = extractor.editable(i);
                 editableEntities.insert(editable);
                 editable->onSceneModeChanged(latestEvent);
             }
-            
         } else if(update.action() & SgUpdate::REMOVED){
-
             for(int i=0; i < numEditables; ++i){
                 SceneWidgetEditable* editable = extractor.editable(i);
                 if(editable == lastMouseMovedEditable){
@@ -612,11 +621,7 @@ void SceneWidgetImpl::onSceneGraphUpdated(const SgUpdate& update)
                     }
                 }
                 if(isEntityFocused){
-                    for(size_t i=0; i < focusedEditablePath.size(); ++i){
-                        focusedEditablePath[i]->onFocusChanged(latestEvent, false);
-                    }
-                    focusedEditablePath.clear();
-                    focusedEditable = 0;
+                    clearFocusToEditables();
                 }
                 editableEntities.erase(editable);
             }
@@ -811,12 +816,21 @@ void SceneWidgetImpl::setEditMode(bool on)
         isEditMode = on;
         sigEditModeToggled(on);
 
+        if(!isEditMode){
+            for(size_t i=0; i < focusedEditablePath.size(); ++i){
+                focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+            }
+        }
         set<SceneWidgetEditable*>::iterator p;
         for(p = editableEntities.begin(); p != editableEntities.end(); ++p){
             SceneWidgetEditable* editable = *p;
             editable->onSceneModeChanged(latestEvent);
         }
-
+        if(isEditMode){
+            for(size_t i=0; i < focusedEditablePath.size(); ++i){
+                focusedEditablePath[i]->onFocusChanged(latestEvent, true);
+            }
+        }
         if(!isEditMode){
             setCursor(defaultCursor);
         }
@@ -992,7 +1006,7 @@ void SceneWidgetImpl::updateLastClickedPoint()
    If there are no functions which returns true, null object is returned.
 */
 SceneWidgetEditable* SceneWidgetImpl::applyFunction
-(EditablePath& editablePath, function<bool(SceneWidgetEditable* editable)> function)
+(EditablePath& editablePath, boost::function<bool(SceneWidgetEditable* editable)> function)
 {
     SceneWidgetEditable* targetEditable = 0;
     for(EditablePath::reverse_iterator p = editablePath.rbegin(); p != editablePath.rend(); ++p){
@@ -1036,18 +1050,32 @@ bool SceneWidgetImpl::setFocusToEditablePath(EditablePath& editablePath)
 
 bool SceneWidgetImpl::setFocusToPointedEditablePath(SceneWidgetEditable* targetEditable)
 {
-    if(!targetEditable){
-        return false;
-    }
-    EditablePath path;
-    for(size_t i=0; i < pointedEditablePath.size(); ++i){
-        SceneWidgetEditable* editable = pointedEditablePath[i];
-        path.push_back(editable);
-        if(editable == targetEditable){
-            return setFocusToEditablePath(path);
+    if(targetEditable){
+        EditablePath path;
+        for(size_t i=0; i < pointedEditablePath.size(); ++i){
+            SceneWidgetEditable* editable = pointedEditablePath[i];
+            path.push_back(editable);
+            if(editable == targetEditable){
+                return setFocusToEditablePath(path);
+            }
         }
     }
+
+    // No editable is pointed
+    // The following command is disabled because keeping the focus seems better.
+    // clearFocusToEditables();
+    
     return false;
+}
+
+
+void SceneWidgetImpl::clearFocusToEditables()
+{
+    for(size_t i=0; i < focusedEditablePath.size(); ++i){
+        focusedEditablePath[i]->onFocusChanged(latestEvent, false);
+    }
+    focusedEditablePath.clear();
+    focusedEditable = 0;
 }
 
 
@@ -1075,7 +1103,7 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
 
     bool handled = false;
     if(isEditMode){
-        handled = applyFunction(focusedEditablePath, bind(&SceneWidgetEditable::onKeyPressEvent, _1, ref(latestEvent)));
+        handled = applyFunction(focusedEditablePath, boost::bind(&SceneWidgetEditable::onKeyPressEvent, _1, boost::ref(latestEvent)));
     }
 
     if(!handled){
@@ -1089,9 +1117,9 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Z:
             if(event->modifiers() & Qt::ControlModifier){
                 if(event->modifiers() & Qt::ShiftModifier){
-                    handled = applyFunction(focusedEditablePath, bind(&SceneWidgetEditable::onRedoRequest, _1));
+                    handled = applyFunction(focusedEditablePath, boost::bind(&SceneWidgetEditable::onRedoRequest, _1));
                 } else {
-                    handled = applyFunction(focusedEditablePath, bind(&SceneWidgetEditable::onUndoRequest, _1));
+                    handled = applyFunction(focusedEditablePath, boost::bind(&SceneWidgetEditable::onUndoRequest, _1));
                 }
             }
             break;
@@ -1176,7 +1204,7 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
         } else {
             if(setFocusToPointedEditablePath(
                    applyFunction(
-                       pointedEditablePath, bind(&SceneWidgetEditable::onButtonPressEvent, _1, ref(latestEvent))))){
+                       pointedEditablePath, boost::bind(&SceneWidgetEditable::onButtonPressEvent, _1, boost::ref(latestEvent))))){
                 handled = true;
                 dragMode = EDITING;
             }
@@ -1205,7 +1233,7 @@ void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
     if(isEditMode){
         handled = setFocusToPointedEditablePath(
             applyFunction(
-                pointedEditablePath, bind(&SceneWidgetEditable::onDoubleClickEvent, _1, ref(latestEvent))));
+                pointedEditablePath, boost::bind(&SceneWidgetEditable::onDoubleClickEvent, _1, boost::ref(latestEvent))));
     }
     if(!handled){
         toggleEditMode();
@@ -1271,7 +1299,7 @@ void SceneWidgetImpl::updatePointerPosition()
         updateIndicator(str(f % p.x() % p.y() % p.z()));
     } else {
         SceneWidgetEditable* mouseMovedEditable = applyFunction(
-            pointedEditablePath, bind(&SceneWidgetEditable::onPointerMoveEvent, _1, ref(latestEvent)));
+            pointedEditablePath, boost::bind(&SceneWidgetEditable::onPointerMoveEvent, _1, boost::ref(latestEvent)));
 
         if(mouseMovedEditable){
             if(!QWidget::hasFocus()){
@@ -1309,7 +1337,7 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
     if(isEditMode){
         handled = setFocusToPointedEditablePath(
             applyFunction(
-                pointedEditablePath, bind(&SceneWidgetEditable::onScrollEvent, _1, ref(latestEvent))));
+                pointedEditablePath, boost::bind(&SceneWidgetEditable::onScrollEvent, _1, boost::ref(latestEvent))));
     }    
 
     if(isBuiltinCameraCurrent){
@@ -1634,7 +1662,7 @@ void SceneWidgetImpl::showViewModePopupMenu(const QPoint& globalPos)
 
     menuManager.setPath("/");
     menuManager.addItem(_("Edit Mode"))
-        ->sigTriggered().connect(bind(&SceneWidgetImpl::toggleEditMode, this));
+        ->sigTriggered().connect(boost::bind(&SceneWidgetImpl::toggleEditMode, this));
 
     menuManager.popupMenu()->popup(globalPos);
 }
@@ -1668,7 +1696,7 @@ void SceneWidgetImpl::showEditModePopupMenu(const QPoint& globalPos)
 
     menuManager.setPath("/");
     menuManager.addItem(_("View Mode"))
-        ->sigTriggered().connect(bind(&SceneWidgetImpl::toggleEditMode, this));
+        ->sigTriggered().connect(boost::bind(&SceneWidgetImpl::toggleEditMode, this));
     
     menuManager.popupMenu()->popup(globalPos);
 }
@@ -2261,7 +2289,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
         setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
         setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
         
-        archive.addPostProcess(bind(&SceneWidgetImpl::restoreCurrentCamera, this, ref(cameraData)));
+        archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
     }
 
     Vector3f bgColor;
@@ -2303,7 +2331,7 @@ void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 
 void SceneWidgetImpl::setupCoordinateAxes()
 {
-    coordinateAxes = new SgCustomGLNode(bind(&SceneWidgetImpl::renderCoordinateAxes, this, _1));
+    coordinateAxes = new SgCustomGLNode(boost::bind(&SceneWidgetImpl::renderCoordinateAxes, this, _1));
     coordinateAxes->setName("CoordinateAxes");
 
     float length = 16;
@@ -2380,7 +2408,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox->addWidget(new QLabel(_("Field of view")));
     fieldOfViewSpin.setRange(1, 179);
     fieldOfViewSpin.setValue(45);
-    fieldOfViewSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::onFieldOfViewChanged, impl));
+    fieldOfViewSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onFieldOfViewChanged, impl));
     hbox->addWidget(&fieldOfViewSpin);
     hbox->addWidget(new QLabel(_("[deg]")));
     hbox->addStretch();
@@ -2394,30 +2422,30 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     zNearSpin.setRange(0.0001, 9.9999);
     zNearSpin.setSingleStep(0.0001);
     zNearSpin.setValue(impl->builtinPersCamera->nearDistance());
-    zNearSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
+    zNearSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
     hbox->addWidget(&zNearSpin);
     hbox->addWidget(new QLabel(_("Far")));
     zFarSpin.setDecimals(1);
     zFarSpin.setRange(0.1, 9999999.9);
     zFarSpin.setSingleStep(0.1);
     zFarSpin.setValue(impl->builtinPersCamera->farDistance());
-    zFarSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
+    zFarSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
     hbox->addWidget(&zFarSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    updateDefaultLightsLater.setFunction(bind(&SceneWidgetImpl::updateDefaultLights, impl));
+    updateDefaultLightsLater.setFunction(boost::bind(&SceneWidgetImpl::updateDefaultLights, impl));
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Light"))));
     hbox = new QHBoxLayout();
     lightingCheck.setText(_("Lighiting"));
     lightingCheck.setChecked(true);
-    lightingCheck.sigToggled().connect(bind(&SceneWidgetImpl::onLightingToggled, impl, _1));
+    lightingCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::onLightingToggled, impl, _1));
     hbox->addWidget(&lightingCheck);
 
     smoothShadingCheck.setText(_("Smooth shading"));
     smoothShadingCheck.setChecked(true);
-    smoothShadingCheck.sigToggled().connect(bind(&SceneWidgetImpl::onSmoothShadingToggled, impl, _1));
+    smoothShadingCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::onSmoothShadingToggled, impl, _1));
     hbox->addWidget(&smoothShadingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2425,7 +2453,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout();
     headLightCheck.setText(_("Head light"));
     headLightCheck.setChecked(true);
-    headLightCheck.sigToggled().connect(bind(updateDefaultLightsLater));
+    headLightCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&headLightCheck);
 
     hbox->addWidget(new QLabel(_("Intensity")));
@@ -2433,11 +2461,11 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     headLightIntensitySpin.setSingleStep(0.01);    
     headLightIntensitySpin.setRange(0.0, 1.0);
     headLightIntensitySpin.setValue(0.75);
-    headLightIntensitySpin.sigValueChanged().connect(bind(updateDefaultLightsLater));
+    headLightIntensitySpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&headLightIntensitySpin);
 
     headLightFromBackCheck.setText(_("Back lighting"));
-    headLightFromBackCheck.sigToggled().connect(bind(updateDefaultLightsLater));
+    headLightFromBackCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&headLightFromBackCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2445,7 +2473,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout();
     worldLightCheck.setText(_("World light"));
     worldLightCheck.setChecked(true);
-    worldLightCheck.sigToggled().connect(bind(updateDefaultLightsLater));
+    worldLightCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&worldLightCheck);
 
     hbox->addWidget(new QLabel(_("Intensity")));
@@ -2453,7 +2481,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     worldLightIntensitySpin.setSingleStep(0.01);    
     worldLightIntensitySpin.setRange(0.0, 1.0);
     worldLightIntensitySpin.setValue(0.5);
-    worldLightIntensitySpin.sigValueChanged().connect(bind(updateDefaultLightsLater));
+    worldLightIntensitySpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&worldLightIntensitySpin);
 
     hbox->addWidget(new QLabel(_("Ambient")));
@@ -2461,7 +2489,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     worldLightAmbientSpin.setSingleStep(0.01);    
     worldLightAmbientSpin.setRange(0.0, 1.0);
     worldLightAmbientSpin.setValue(0.3);
-    worldLightAmbientSpin.sigValueChanged().connect(bind(updateDefaultLightsLater));
+    worldLightAmbientSpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&worldLightAmbientSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2469,7 +2497,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout();
     additionalLightsCheck.setText(_("Additional lights"));
     additionalLightsCheck.setChecked(true);
-    additionalLightsCheck.sigToggled().connect(bind(updateDefaultLightsLater));
+    additionalLightsCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&additionalLightsCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2477,7 +2505,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
     hbox = new QHBoxLayout();
     backgroundColorButton.setText(_("Background color"));
-    backgroundColorButton.sigClicked().connect(bind(&SceneWidgetImpl::showBackgroundColorDialog, impl));
+    backgroundColorButton.sigClicked().connect(boost::bind(&SceneWidgetImpl::showBackgroundColorDialog, impl));
     hbox->addWidget(&backgroundColorButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2486,7 +2514,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     floorGridCheck.setText(_("Show the floor grid"));
     floorGridCheck.setChecked(true);
     floorGridCheck.sigToggled().connect(
-        bind(&SceneWidgetImpl::activateSystemNode, impl, boost::ref(impl->floorGrid), _1));
+        boost::bind(&SceneWidgetImpl::activateSystemNode, impl, boost::ref(impl->floorGrid), _1));
     hbox->addWidget(&floorGridCheck);
     
     hbox->addWidget(new QLabel(_("Span")));
@@ -2495,7 +2523,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     floorGridSpanSpin.setRange(0.0, 99.9);
     floorGridSpanSpin.setSingleStep(0.1);
     floorGridSpanSpin.setValue(10.0);
-    floorGridSpanSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::update, impl));
+    floorGridSpanSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::update, impl));
     hbox->addWidget(&floorGridSpanSpin);
     hbox->addSpacing(8);
     
@@ -2505,11 +2533,11 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     floorGridIntervalSpin.setRange(0.01, 9.99);
     floorGridIntervalSpin.setSingleStep(0.01);
     floorGridIntervalSpin.setValue(0.5);
-    floorGridIntervalSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::update, impl));
+    floorGridIntervalSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::update, impl));
     hbox->addWidget(&floorGridIntervalSpin);
 
     gridColorButton.setText(_("Color"));
-    gridColorButton.sigClicked().connect(bind(&SceneWidgetImpl::showGridColorDialog, impl));
+    gridColorButton.sigClicked().connect(boost::bind(&SceneWidgetImpl::showGridColorDialog, impl));
     hbox->addWidget(&gridColorButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2518,14 +2546,14 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout();
     textureCheck.setText(_("Texture"));
     textureCheck.setChecked(true);
-    textureCheck.sigToggled().connect(bind(&SceneWidgetImpl::onTextureToggled, impl, _1));
+    textureCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::onTextureToggled, impl, _1));
     hbox->addWidget(&textureCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
     defaultColorButton.setText(_("Default color"));
-    defaultColorButton.sigClicked().connect(bind(&SceneWidgetImpl::showDefaultColorDialog, impl));
+    defaultColorButton.sigClicked().connect(boost::bind(&SceneWidgetImpl::showDefaultColorDialog, impl));
     hbox->addWidget(&defaultColorButton);
     
     hbox->addWidget(new QLabel(_("Default line width")));
@@ -2533,7 +2561,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     lineWidthSpin.setRange(0.1, 9.9);
     lineWidthSpin.setSingleStep(0.1);
     lineWidthSpin.setValue(1.0);
-    lineWidthSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::onLineWidthChanged, impl, _1));
+    lineWidthSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onLineWidthChanged, impl, _1));
     hbox->addWidget(&lineWidthSpin);
 
     hbox->addWidget(new QLabel(_("Default point size")));
@@ -2541,7 +2569,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     pointSizeSpin.setRange(0.1, 9.9);
     pointSizeSpin.setSingleStep(0.1);
     pointSizeSpin.setValue(1.0);
-    pointSizeSpin.sigValueChanged().connect(bind(&SceneWidgetImpl::onPointSizeChanged, impl, _1));
+    pointSizeSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onPointSizeChanged, impl, _1));
     hbox->addWidget(&pointSizeSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2550,7 +2578,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     pointRenderingModeCheck.setText(_("Do point rendering in the wireframe mode"));
     pointRenderingModeCheckConnection =
         pointRenderingModeCheck.sigToggled().connect(
-            bind(&SceneWidgetImpl::onPointRenderingModeToggled, impl, _1));
+            boost::bind(&SceneWidgetImpl::onPointRenderingModeToggled, impl, _1));
     hbox->addWidget(&pointRenderingModeCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2558,14 +2586,14 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout();
     normalVisualizationCheck.setText(_("Normal Visualization"));
     normalVisualizationCheck.sigToggled().connect(
-        bind(&SceneWidgetImpl::onNormalVisualizationChanged, impl));
+        boost::bind(&SceneWidgetImpl::onNormalVisualizationChanged, impl));
     hbox->addWidget(&normalVisualizationCheck);
     normalLengthSpin.setDecimals(3);
     normalLengthSpin.setRange(0.0, 1000.0);
     normalLengthSpin.setSingleStep(0.001);
     normalLengthSpin.setValue(0.01);
     normalLengthSpin.sigValueChanged().connect(
-        bind(&SceneWidgetImpl::onNormalVisualizationChanged, impl));
+        boost::bind(&SceneWidgetImpl::onNormalVisualizationChanged, impl));
     hbox->addWidget(&normalLengthSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2576,23 +2604,23 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     coordinateAxesCheck.setText(_("Coordinate axes"));
     coordinateAxesCheck.setChecked(true);
     coordinateAxesCheck.sigToggled().connect(
-        bind(&SceneWidgetImpl::activateSystemNode, impl, boost::ref(impl->coordinateAxes), _1));
+        boost::bind(&SceneWidgetImpl::activateSystemNode, impl, boost::ref(impl->coordinateAxes), _1));
     hbox->addWidget(&coordinateAxesCheck);
     
     fpsCheck.setText(_("Show FPS"));
     fpsCheck.setChecked(false);
-    fpsCheck.sigToggled().connect(bind(&SceneWidgetImpl::showFPS, impl, _1));
+    fpsCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::showFPS, impl, _1));
     hbox->addWidget(&fpsCheck);
 
     fpsTestButton.setText(_("Test"));
-    fpsTestButton.sigClicked().connect(bind(&SceneWidgetImpl::doFPSTest, impl));
+    fpsTestButton.sigClicked().connect(boost::bind(&SceneWidgetImpl::doFPSTest, impl));
     hbox->addWidget(&fpsTestButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
     newDisplayListDoubleRenderingCheck.setText(_("Do double rendering when a new display list is created."));
-    newDisplayListDoubleRenderingCheck.sigToggled().connect(bind(&SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled, impl, _1));
+    newDisplayListDoubleRenderingCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled, impl, _1));
     hbox->addWidget(&newDisplayListDoubleRenderingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2600,7 +2628,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox = new QHBoxLayout();
     bufferForPickingCheck.setText(_("Use an OpenGL pixel buffer for picking"));
     bufferForPickingCheck.setChecked(true);
-    bufferForPickingCheck.sigToggled().connect(bind(&SceneWidgetImpl::onBufferForPickingToggled, impl, _1));
+    bufferForPickingCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::onBufferForPickingToggled, impl, _1));
     hbox->addWidget(&bufferForPickingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);

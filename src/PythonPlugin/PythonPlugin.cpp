@@ -111,7 +111,7 @@ bool PythonPlugin::initialize()
     redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
                                   
     refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
-    refreshModulesCheck->sigToggled().connect(bind(&PythonExecutor::setModuleRefreshEnabled, _1));
+    refreshModulesCheck->sigToggled().connect(boost::bind(&PythonExecutor::setModuleRefreshEnabled, _1));
     if(pythonConfig->get("refreshModules", false)){
         refreshModulesCheck->setChecked(true);
     }
@@ -121,11 +121,11 @@ bool PythonPlugin::initialize()
     
     OptionManager& opm = optionManager();
     opm.addOption("python,p", program_options::value< vector<string> >(), "load a python script file");
-    opm.sigOptionsParsed().connect(bind(&PythonPlugin::onSigOptionsParsed, this, _1));
+    opm.sigOptionsParsed().connect(boost::bind(&PythonPlugin::onSigOptionsParsed, this, _1));
 
     setProjectArchiver(
-        bind(&PythonPlugin::storeProperties, this, _1),
-        bind(&PythonPlugin::restoreProperties, this, _1));
+        boost::bind(&PythonPlugin::storeProperties, this, _1),
+        boost::bind(&PythonPlugin::restoreProperties, this, _1));
 
     return true;
 }

@@ -19,9 +19,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
+using boost::format;
 
 namespace {
 
@@ -220,11 +219,11 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
     im.addLoaderAndSaver<BodyMotionItem>(
         _("Body Motion"), "BODY-MOTION-YAML", "yaml",
-        bind(loadStandardYamlFormat, _1, _2, _3),  bind(saveAsStandardYamlFormat, _1, _2, _3));
+        boost::bind(loadStandardYamlFormat, _1, _2, _3),  boost::bind(saveAsStandardYamlFormat, _1, _2, _3));
 
     im.addLoaderAndSaver<BodyMotionItem>(
         _("HRPSYS Sequence File Set"), "HRPSYS-SEQ-FILE-SET", "pos;vel;acc;hip;waist;gsens;zmp",
-        bind(importHrpsysSeqFileSet, _1, _2, _3), bind(exportHrpsysSeqFileSet, _1, _2, _3),
+        boost::bind(importHrpsysSeqFileSet, _1, _2, _3), boost::bind(exportHrpsysSeqFileSet, _1, _2, _3),
         ItemManager::PRIORITY_CONVERSION);
 
     initialized = true;
@@ -275,7 +274,7 @@ void BodyMotionItemImpl::initialize()
 
     jointPosSeqUpdateConnection =
         self->jointPosSeqItem_->sigUpdated().connect(
-            bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+            boost::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
 
     self->linkPosSeqItem_ = new MultiSE3SeqItem(self->bodyMotion_->linkPosSeq());
     self->linkPosSeqItem_->setName("Cartesian");
@@ -283,11 +282,11 @@ void BodyMotionItemImpl::initialize()
 
     linkPosSeqUpdateConnection = 
         self->linkPosSeqItem_->sigUpdated().connect(
-            bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+            boost::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
 
     extraSeqsChangedConnection =
         self->bodyMotion_->sigExtraSeqsChanged().connect(
-            bind(&BodyMotionItemImpl::onExtraSeqItemSetChanged, this));
+            boost::bind(&BodyMotionItemImpl::onExtraSeqItemSetChanged, this));
 
     updateExtraSeqItems();
 }
@@ -374,7 +373,7 @@ SignalProxy< boost::signal<void()> > BodyMotionItem::sigExtraSeqItemsChanged()
 
 void BodyMotionItemImpl::onExtraSeqItemSetChanged()
 {
-    callLater(bind(&BodyMotionItemImpl::updateExtraSeqItems, this));
+    callLater(boost::bind(&BodyMotionItemImpl::updateExtraSeqItems, this));
 }
 
 
@@ -413,7 +412,7 @@ void BodyMotionItemImpl::updateExtraSeqItems()
                     ExtraSeqItemInfo* info = new ExtraSeqItemInfo(key, newItem);
                     info->sigUpdateConnection =
                         newItem->sigUpdated().connect(
-                            bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+                            boost::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
                     extraSeqItemInfos.push_back(info);
                 }
             }

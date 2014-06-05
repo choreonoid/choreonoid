@@ -7,7 +7,6 @@
 #include <cnoid/Joystick>
 #include <boost/bind.hpp>
 
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -32,8 +31,8 @@ public:
     JoystickEx* joystick;
     SocketNotifier* notifier;
     
-    signal<void(int id, bool isPressed)> sigButton;
-    signal<void(int id, double position)> sigAxis;
+    boost::signal<void(int id, bool isPressed)> sigButton;
+    boost::signal<void(int id, double position)> sigAxis;
     
     JoystickCaptureImpl();
     ~JoystickCaptureImpl();
@@ -89,7 +88,7 @@ bool JoystickCaptureImpl::setDevice(const char* device)
         joystick = new JoystickEx(this, device);
         if(joystick->isReady()){
             notifier = new SocketNotifier(joystick->fileDescriptor(), QSocketNotifier::Read);
-            notifier->sigActivated().connect(bind(&JoystickCaptureImpl::onNotifierActivated, this));
+            notifier->sigActivated().connect(boost::bind(&JoystickCaptureImpl::onNotifierActivated, this));
             return true;
         }
     }

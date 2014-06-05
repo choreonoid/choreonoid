@@ -66,20 +66,20 @@ RobotAccessBar::~RobotAccessBar()
 RobotAccessBarImpl::RobotAccessBarImpl(RobotAccessBar* self)
 {
     self->addButton(_("C"), _("Connect to robots"))
-        ->sigClicked().connect(bind(&RobotAccessBarImpl::connectToRobots, this));
+        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::connectToRobots, this));
 
     self->addButton(_("D"), _("Disconnect from robots"))
-        ->sigClicked().connect(bind(&RobotAccessBarImpl::disconnectFromRobots, this));
+        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::disconnectFromRobots, this));
     
     self->addButton(QIcon(":/RobotAccess/icons/servo-on.png"), _("Turn on servos"))
-        ->sigClicked().connect(bind(&RobotAccessBarImpl::turnOnServos, this));
+        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::turnOnServos, this));
 
     self->addButton(_("OFF"), _("Turn off servos"))
-        ->sigClicked().connect(bind(&RobotAccessBarImpl::turnOffServos, this));
+        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::turnOffServos, this));
     
     self->addButton(QIcon(":/RobotAccess/icons/sendpose.png"),
                     _("Send the current pose of virtual robots to actual robots"))
-        ->sigClicked().connect(bind(&RobotAccessBarImpl::onSendPoseButtonClicked, this));
+        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::onSendPoseButtonClicked, this));
     
     syncToggle = self->addToggleButton(QIcon(":/RobotAccess/icons/syncpose.png"),
                                        _("Synchronize the pose of actual robots pose with virtual robots"));
@@ -89,7 +89,7 @@ RobotAccessBarImpl::RobotAccessBarImpl(RobotAccessBar* self)
 void RobotAccessBarImpl::connectToRobots()
 {
     forEachCheckedRobotAccessItems(
-        bind(&RobotAccessItem::connectToRobot, _1),
+        boost::bind(&RobotAccessItem::connectToRobot, _1),
         _("There are no checked items to connect to robots"));
 }
 
@@ -97,7 +97,7 @@ void RobotAccessBarImpl::connectToRobots()
 void RobotAccessBarImpl::disconnectFromRobots()
 {
     forEachCheckedRobotAccessItems(
-        bind(&RobotAccessItem::disconnectFromRobot, _1),
+        boost::bind(&RobotAccessItem::disconnectFromRobot, _1),
         _("There are no checked items to disconnect from robots"));
 }
 
@@ -105,7 +105,7 @@ void RobotAccessBarImpl::disconnectFromRobots()
 void RobotAccessBarImpl::turnOnServos()
 {
     forEachCheckedRobotAccessItems(
-        bind(&RobotAccessItem::activateServos, _1, true),
+        boost::bind(&RobotAccessItem::activateServos, _1, true),
         _("There are no checked items to activate servos"));
 }
 
@@ -113,7 +113,7 @@ void RobotAccessBarImpl::turnOnServos()
 void RobotAccessBarImpl::turnOffServos()
 {
     forEachCheckedRobotAccessItems(
-        bind(&RobotAccessItem::activateServos, _1, false),
+        boost::bind(&RobotAccessItem::activateServos, _1, false),
         _("There are no checked items to deactivate servos"));
 }
 

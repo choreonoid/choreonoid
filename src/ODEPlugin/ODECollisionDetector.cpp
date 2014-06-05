@@ -22,7 +22,7 @@ namespace {
 
 CollisionDetectorPtr factory()
 {
-    return make_shared<ODECollisionDetector>();
+    return boost::make_shared<ODECollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -51,7 +51,7 @@ public :
     vector<Vertex> vertices;
     vector<Triangle> triangles;
 };
-typedef shared_ptr<GeometryEx> GeometryExPtr;
+typedef boost::shared_ptr<GeometryEx> GeometryExPtr;
 
 GeometryEx::GeometryEx()
 {
@@ -153,7 +153,7 @@ const char* ODECollisionDetector::name() const
 
 CollisionDetectorPtr ODECollisionDetector::clone() const
 {
-    return make_shared<ODECollisionDetector>();
+    return boost::make_shared<ODECollisionDetector>();
 }
 
         
@@ -184,10 +184,10 @@ int ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
     bool isValid = false;
 
     if(geometry){
-        GeometryExPtr model =  make_shared<GeometryEx>();
+        GeometryExPtr model =  boost::make_shared<GeometryEx>();
         model->spaceID = dHashSpaceCreate(spaceID);
         dSpaceSetCleanup(model->spaceID, 0);
-        if(meshExtractor->extract(geometry, bind(&ODECollisionDetectorImpl::addMesh, this, model.get()))){
+        if(meshExtractor->extract(geometry, boost::bind(&ODECollisionDetectorImpl::addMesh, this, model.get()))){
             if(!model->vertices.empty()){
                 model->triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(model->triMeshDataID,

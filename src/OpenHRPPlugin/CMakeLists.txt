@@ -91,7 +91,13 @@ foreach(version ${versions})
   make_gettext_mofiles(${target} mofiles)
   add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS ${defver})
-  target_link_libraries(${target} CnoidOpenRTMPlugin CnoidBodyPlugin CnoidOpenHRP${version})
+
+  if(version EQUAL 3.0)
+    target_link_libraries(${target} CnoidBodyPlugin CnoidOpenHRP${version})
+  else()
+    target_link_libraries(${target} CnoidOpenRTMPlugin CnoidBodyPlugin CnoidOpenHRP${version})
+  endif()
+
   apply_common_setting_for_plugin(${target} "${headers}")
 
 endforeach()

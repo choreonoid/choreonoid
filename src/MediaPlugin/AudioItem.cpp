@@ -29,12 +29,12 @@ void AudioItem::initialize(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        emptySamplingData = make_shared< std::vector<float> >();
+        emptySamplingData = boost::make_shared< std::vector<float> >();
         ext->itemManager().registerClass<AudioItem>("AudioItem");
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
         ext->itemManager().addLoader<AudioItem>(_("Audio File"), "AUDIO-GENERIC", "wav;ogg",
-                                                bind(&AudioItem::loadAudioFile, _1, _2, _3, _4));
+                                                boost::bind(&AudioItem::loadAudioFile, _1, _2, _3, _4));
 #endif
         initialized = true;
     }
@@ -143,7 +143,7 @@ bool AudioItem::loadAudioFile(const std::string& filename, std::ostream& os, Ite
         numChannels_ = sfinfo.channels;
         samplingRate_ = sfinfo.samplerate;
 
-        samplingData_ = make_shared< std::vector<float> >(sfinfo.frames * sfinfo.channels);
+        samplingData_ = boost::make_shared< std::vector<float> >(sfinfo.frames * sfinfo.channels);
         sf_count_t framesRead = sf_readf_float(sndfile, &(*samplingData_)[0], sfinfo.frames);
 
         if(framesRead < sfinfo.frames){
@@ -182,7 +182,7 @@ void AudioItem::doPutProperties(PutPropertyFunction& putProperty)
     if(!samplingData_->empty()){
         putProperty("title", title);
         putProperty("length", timeLength());
-        putProperty("offset", offsetTime(), bind(&AudioItem::setOffsetTime, this, _1), true);
+        putProperty("offset", offsetTime(), boost::bind(&AudioItem::setOffsetTime, this, _1), true);
         putProperty("channels", numChannels());
         putProperty("sampling rate", samplingRate());
         if(!copyright.empty()) putProperty("copyright", copyright);

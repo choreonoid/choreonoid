@@ -7,6 +7,7 @@
 #define CNOID_UTIL_MESH_GENERATOR_H
 
 #include "SceneShape.h"
+#include <Eigen/StdVector>
 #include "exportdecl.h"
 
 namespace cnoid {

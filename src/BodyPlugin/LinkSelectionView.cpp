@@ -12,7 +12,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -67,7 +66,7 @@ LinkSelectionViewImpl::LinkSelectionViewImpl(LinkSelectionView* self)
     self->setLayout(vbox);
 
     BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-        bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
+        boost::bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
 }
 
 

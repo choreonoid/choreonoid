@@ -3,15 +3,16 @@
 */
 
 #include "SceneDragger.h"
+#include <cnoid/SceneWidget>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>
 #include <cnoid/MeshExtractor>
 #include <cnoid/EigenUtil>
 #include <boost/bind.hpp>
+#include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -205,30 +206,35 @@ const Affine3& TranslationDragger::draggedPosition() const
 }
 
 
-bool TranslationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
+static bool detectAxisFromNodePath(const SgNodePath& path, SgNode* topNode, int& out_axis, int& out_indexOfTopNode)
 {
-    int indexOfTopNode = -1;
-    int axisIndex = -1;
-    const SgNodePath& path = event.nodePath();
     for(size_t i=0; i < path.size(); ++i){
         const SgNode* node = path[i];
-        if(node == this){
-            indexOfTopNode = i;
+        if(node == topNode){
+            out_indexOfTopNode = i;
         }
-        if(indexOfTopNode >= 0){
+        if(out_indexOfTopNode >= 0){
             const string& name = node->name();
             if(!name.empty()){
                 for(int j=0; j < 3; ++j){
-                    if(name == axisNames[j]){
-                        axisIndex = j;
-                        goto exit;
+                     if(name == axisNames[j]){
+                        out_axis = j;
+                        return true;
                     }
                 }
             }
         }
     }
-exit:
-    if(axisIndex >= 0){
+    return false;
+}
+
+
+bool TranslationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    int axis;
+    int indexOfTopNode;
+    const SgNodePath& path = event.nodePath();
+    if(detectAxisFromNodePath(path, this, axis, indexOfTopNode)){
         SgNodePath::const_iterator axisIter = path.begin() + indexOfTopNode + 1;
         const Affine3 T_global = calcTotalTransform(path.begin(), axisIter);
         dragProjector.setInitialPosition(T_global);
@@ -237,7 +243,7 @@ exit:
         if(p_local.norm() < 2.0 * axisCylinderNormalizedRadius){
             dragProjector.setTranslationAlongViewPlane();
         } else {
-            dragProjector.setTranslationAxis(T_global.linear().col(axisIndex));
+            dragProjector.setTranslationAxis(T_global.linear().col(axis));
         }
         if(dragProjector.startTranslation(event)){
             sigTranslationStarted_();
@@ -412,19 +418,12 @@ const Affine3& RotationDragger::draggedPosition() const
 
 bool RotationDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    SgNode* belt = event.nodePath().back();
-    int axisIndex = -1;
-    if(belt->name() == "x"){
-        axisIndex = 0;
-    } else if(belt->name() == "y"){
-        axisIndex = 1;
-    } else if(belt->name() == "z"){
-        axisIndex = 2;
-    }
-    if(axisIndex >= 0){
+    int axis;
+    int indexOfTopNode;
+    if(detectAxisFromNodePath(event.nodePath(), this, axis, indexOfTopNode)){
         Affine3 T = calcTotalTransform(event.nodePath(), this);
         dragProjector.setInitialPosition(T);
-        dragProjector.setRotationAxis(T.linear().col(axisIndex));
+        dragProjector.setRotationAxis(T.linear().col(axis));
         if(dragProjector.startRotation(event)){
             sigRotationStarted_();
             return true;
@@ -500,15 +499,15 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
 
 void PositionDragger::initalizeDraggers()
 {
-    translationDragger_->sigTranslationStarted().connect(ref(sigDragStarted_));
+    translationDragger_->sigTranslationStarted().connect(boost::ref(sigDragStarted_));
     translationDragger_->sigTranslationDragged().connect(
-        bind(&PositionDragger::onPositionDragged, this));
-    translationDragger_->sigTranslationFinished().connect(ref(sigDragFinished_));
+        boost::bind(&PositionDragger::onPositionDragged, this));
+    translationDragger_->sigTranslationFinished().connect(boost::ref(sigDragFinished_));
     
-    rotationDragger_->sigRotationStarted().connect(ref(sigDragStarted_));
+    rotationDragger_->sigRotationStarted().connect(boost::ref(sigDragStarted_));
     rotationDragger_->sigRotationDragged().connect(
-        bind(&PositionDragger::onPositionDragged, this));
-    rotationDragger_->sigRotationFinished().connect(ref(sigDragFinished_));
+        boost::bind(&PositionDragger::onPositionDragged, this));
+    rotationDragger_->sigRotationFinished().connect(boost::ref(sigDragFinished_));
 }
 
 
@@ -540,13 +539,7 @@ bool PositionDragger::isContainerMode() const
 void PositionDragger::setDraggerAlwaysShown(bool on)
 {
     if(on != isDraggerAlwaysShown_){
-        if(on){
-            addChild(translationDragger_);
-            addChild(rotationDragger_, true);
-        } else {
-            removeChild(translationDragger_);
-            removeChild(rotationDragger_, true);
-        }
+        showDragMarkers(on);
     }
     isDraggerAlwaysShown_ = on;
 }
@@ -556,6 +549,18 @@ bool PositionDragger::isDraggerAlwaysShown() const
 {
     return isDraggerAlwaysShown_;
 }
+
+
+void PositionDragger::showDragMarkers(bool on)
+{
+    if(on){
+        addChildOnce(translationDragger_, true);
+        addChildOnce(rotationDragger_, true);
+    } else {
+        removeChild(translationDragger_, true);
+        removeChild(rotationDragger_, true);
+    }
+}    
 
 
 Affine3 PositionDragger::draggedPosition() const
@@ -584,31 +589,25 @@ void PositionDragger::onPositionDragged()
 
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(!isDraggerAlwaysShown_){
-        bool added = false;
-        if(!contains(translationDragger_)){
-            addChild(translationDragger_);
-            added = true;
+    if(isContainerMode_){
+        if(!isDraggerAlwaysShown_){
+            showDragMarkers(true);
         }
-        if(!contains(rotationDragger_)){
-            addChild(rotationDragger_);
-            added = true;
-        }
-        if(added){
-            notifyUpdate(SgUpdate::ADDED);
-        }
+        dragProjector.setInitialPosition(T());
+        dragProjector.setTranslationAlongViewPlane();
+        return dragProjector.startTranslation(event);
     }
-    dragProjector.setInitialPosition(T());
-    dragProjector.setTranslationAlongViewPlane();
-    return dragProjector.startTranslation(event);
+    return false;
 }
 
 
 bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
-    if(dragProjector.isDragging()){
-        dragProjector.resetDragMode();
-        return true;
+    if(isContainerMode_){
+        if(dragProjector.isDragging()){
+            dragProjector.resetDragMode();
+            return true;
+        }
     }
     return false;
 }
@@ -616,10 +615,12 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(dragProjector.drag(event)){
-        setPosition(dragProjector.position());
-        notifyUpdate();
-        return true;
+    if(isContainerMode_){
+        if(dragProjector.drag(event)){
+            setPosition(dragProjector.position());
+            notifyUpdate();
+            return true;
+        }
     }
     return false;
 }
@@ -627,19 +628,23 @@ bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    dragProjector.resetDragMode();
+    if(isContainerMode_){
+        dragProjector.resetDragMode();
+    }
 }
 
 
 void PositionDragger::onFocusChanged(const SceneWidgetEvent& event, bool on)
 {
-    if(!isDraggerAlwaysShown_){
-        if(on){
-            addChild(translationDragger_);
-            addChild(rotationDragger_, true);
-        } else {
-            removeChild(translationDragger_);
-            removeChild(rotationDragger_, true);
-        }
+    if(isContainerMode_){
+        showDragMarkers(on || isDraggerAlwaysShown_);
+    }
+}
+
+
+void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
+{
+    if(!event.sceneWidget()->isEditMode()){
+        showDragMarkers(false);
     }
 }

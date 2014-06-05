@@ -340,24 +340,24 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     balancer = 0;
 
     addButton(QIcon(":/PoseSeq/icons/trajectory-generation.png"), _("Generate body motions"))
-        ->sigClicked().connect(bind(&BodyMotionGenerationBar::onGenerationButtonClicked, this));
+        ->sigClicked().connect(boost::bind(&BodyMotionGenerationBar::onGenerationButtonClicked, this));
 
     interpolationParameterWidgetsConnection.add(
         setup->timeScaleRatioSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->preInitialDurationSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->postFinalDurationSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     
     interpolationParameterWidgetsConnection.add(
         setup->onlyTimeBarRangeCheck.sigToggled().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     autoGenerationToggle = addToggleButton(QIcon(":/PoseSeq/icons/auto-update.png"), _("Automatic Balance Adjustment Mode"));
     autoGenerationToggle->setChecked(false);
@@ -366,55 +366,55 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     balancerToggle->setEnabled(false);
     balancerToggle->setChecked(false);
 
-    addButton(QIcon(":/Base/icons/setup.png"))->sigClicked().connect(bind(&BodyMotionGenerationSetupDialog::show, setup));
+    addButton(QIcon(":/Base/icons/setup.png"))->sigClicked().connect(boost::bind(&BodyMotionGenerationSetupDialog::show, setup));
     
     interpolationParameterWidgetsConnection.add(
         setup->stealthyStepCheck.sigToggled().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->stealthyHeightRatioThreshSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->flatLiftingHeightSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->flatLandingHeightSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->impactReductionHeightSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->impactReductionTimeSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->autoZmpCheck.sigToggled().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->minZmpTransitionTimeSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->zmpCenteringTimeThreshSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->zmpTimeMarginBeforeLiftingSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->zmpMaxDistanceFromCenterSpin.sigValueChanged().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->lipSyncMixCheck.sigToggled().connect(
-            bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 }
 
 

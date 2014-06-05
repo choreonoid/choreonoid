@@ -95,6 +95,8 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
     : moduleName(moduleName),
       menuManager(menuManager)
 {
+    using boost::bind;
+    
     if(!isStaticMembersInitialized){
 
         menuManager.setPath("/File").setPath(N_("New ..."));
@@ -394,7 +396,7 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
             base = new CreationPanelBase(title, protoItem);
             base->hide();
             menuManager.setPath("/File/New ...").addItem(translatedName)
-                ->sigTriggered().connect(bind(ItemManagerImpl::onNewItemActivated, base));
+                ->sigTriggered().connect(boost::bind(ItemManagerImpl::onNewItemActivated, base));
             info->creationPanelBase = base;
         }
     }
@@ -575,7 +577,7 @@ void ItemManagerImpl::addLoader
         }
         menuManager.addItem(caption.c_str())
             ->sigTriggered().connect(
-                bind(&ItemManagerImpl::onLoadSpecificTypeItemActivated, loader));
+                boost::bind(&ItemManagerImpl::onLoadSpecificTypeItemActivated, loader));
         
         registeredLoaders.insert(loader);
 

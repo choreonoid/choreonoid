@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_GETTEXT_UTIL_H_INCLUDED
-#define CNOID_UTIL_GETTEXT_UTIL_H_INCLUDED
+#ifndef CNOID_UTIL_GETTEXT_UTIL_H
+#define CNOID_UTIL_GETTEXT_UTIL_H
 
 #include "exportdecl.h"
 

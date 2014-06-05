@@ -287,7 +287,11 @@ if(MSVC)
   find_package(Boost 1.36.0 QUIET OPTIONAL_COMPONENTS  bzip2 zlib)
 endif()
 
-set(boost_packages system filesystem program_options regex signals thread iostreams date_time python)
+set(boost_packages system filesystem program_options regex signals thread iostreams date_time)
+
+if(ENABLE_PYTHON)
+  set(boost_packages ${boost_packages} python)
+endif()
 
 find_package(Boost 1.36.0 REQUIRED COMPONENTS ${boost_packages})
 
@@ -325,19 +329,10 @@ if(MSVC)
 
   #MSVC 2010 problem
   if(MSVC_VERSION EQUAL 1600)
-
     # for VC++2010 Express Edition
     IF(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
       SET(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
     ENDIF()
-
-    # to avoid the conflict between C++0x and boost
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
-      _HAS_CPP0X=0
-      BOOST_NO_0X_HDR_TYPEINDEX
-      BOOST_NO_0X_HDR_TUPLE
-      BOOST_NO_0X_HDR_ARRAY
-    )
   endif()
 endif()
 
@@ -402,16 +397,19 @@ else()
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
   list(APPEND QT_INST_LIBRARIES 
-		optimized Qt5Core debug Qt5Cored
-		optimized Qt5Gui debug Qt5Guid
-		optimized Qt5OpenGL debug Qt5OpenGLd
-		optimized Qt5Network debug Qt5Networkd
-		optimized Qt5Widgets debug Qt5Widgetsd
-		optimized libEGL debug libEGLd
-		optimized libGLESv2 debug libGLESv2d
-		optimized icuin51 debug icuin51d
-		optimized icuuc51 debug icuuc51d
-		optimized icudt51 debug icudt51d)
+    optimized Qt5Core debug Qt5Cored
+    optimized Qt5Gui debug Qt5Guid
+    optimized Qt5OpenGL debug Qt5OpenGLd
+    optimized Qt5Network debug Qt5Networkd
+    optimized Qt5Widgets debug Qt5Widgetsd
+    optimized libEGL debug libEGLd
+    optimized libGLESv2 debug libGLESv2d
+    optimized icuin51 debug icuin51d
+    optimized icuuc51 debug icuuc51d
+    optimized icudt51 debug icudt51d
+    # for the Qt 5.3 binary package
+    general icuin52 general icuuc52 general icudt52)
+
   install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
   if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
     foreach(dir

@@ -52,8 +52,12 @@ public:
                         double& left, double& right, double& bottom, double& top) const;
     void getViewVolume(const SgOrthographicCamera& camera,
                        double& left, double& right, double& bottom, double& top) const;
-        
+
     bool initializeGL();
+
+    // The following functions cannot be called bofore calling the initializeGL() function.
+    bool setSwapInterval(int interval);
+    int getSwapInterval() const;
 
     /**
        This function does the same things as beginRendering() except that

@@ -2,20 +2,16 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_SCENE_BODY_H_INCLUDED
-#define CNOID_BODY_SCENE_BODY_H_INCLUDED
+#ifndef CNOID_BODY_SCENE_BODY_H
+#define CNOID_BODY_SCENE_BODY_H
 
 #include "Body.h"
+#include "SceneDevice.h"
 #include <cnoid/SceneGraph>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Device;
-class Camera;
-class SceneDevice;
-typedef ref_ptr<SceneDevice> SceneDevicePtr;
-    
 class CNOID_EXPORT SceneLink : public SgPosTransform
 {
 public:

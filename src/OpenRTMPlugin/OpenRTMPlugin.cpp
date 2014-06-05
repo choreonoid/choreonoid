@@ -138,17 +138,17 @@ public:
         rtcManagerMainLoopThread = boost::thread(rtcManagerMainLoop);
 
         menuManager().setPath("/Tools/OpenRTM").addItem(_("Delete unmanaged RT components"))
-            ->sigTriggered().connect(bind(&OpenRTMPlugin::deleteUnmanagedRTCs, this, true));
+            ->sigTriggered().connect(boost::bind(&OpenRTMPlugin::deleteUnmanagedRTCs, this, true));
 
         deleteRTCsOnSimulationStartCheck =
             menuManager().setPath("/Options/OpenRTM").addCheckItem(
                 _("Delete unmanaged RT components on starting a simulation"));
         deleteRTCsOnSimulationStartCheck->sigToggled().connect(
-            bind(&OpenRTMPlugin::onDeleteRTCsOnSimulationStartToggled, this, _1));
+            boost::bind(&OpenRTMPlugin::onDeleteRTCsOnSimulationStartToggled, this, _1));
 
         setProjectArchiver(
-            bind(&OpenRTMPlugin::store, this, _1),
-            bind(&OpenRTMPlugin::restore, this, _1));
+            boost::bind(&OpenRTMPlugin::store, this, _1),
+            boost::bind(&OpenRTMPlugin::restore, this, _1));
             
         return true;
     }
@@ -181,7 +181,7 @@ public:
             if(on){
                 connectionToSigSimulaionAboutToStart = 
                     SimulationBar::instance()->sigSimulationAboutToStart().connect(
-                        bind(&OpenRTMPlugin::deleteUnmanagedRTCs, this, false));
+                        boost::bind(&OpenRTMPlugin::deleteUnmanagedRTCs, this, false));
             }
         }
 

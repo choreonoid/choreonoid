@@ -9,8 +9,6 @@
 #include <boost/bind.hpp>
 #include "gettext.h"
 
-using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -28,7 +26,7 @@ ScriptBar::ScriptBar()
     : ToolBar(N_("ScriptBar"))
 {
     addButton(_("Script"), _("Execute scripts"))
-        ->sigClicked().connect(bind(&ScriptBar::executeCheckedScriptItems, this));
+        ->sigClicked().connect(boost::bind(&ScriptBar::executeCheckedScriptItems, this));
 }
 
 

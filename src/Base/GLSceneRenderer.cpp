@@ -8,10 +8,14 @@
 #include <cnoid/SceneCamera>
 #include <cnoid/SceneLight>
 #include <cnoid/EigenUtil>
+#include <Eigen/StdVector>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 #include <GL/glew.h>
+#ifdef _WIN32
+#include <GL/wglew.h>
+#endif
 #include <boost/unordered_map.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/bind.hpp>
@@ -25,7 +29,6 @@ QElapsedTimer timer;
 #endif
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -46,7 +49,7 @@ struct TransparentShapeInfo
     unsigned int pickId;
     Affine3 V; // view matrix
 };
-typedef shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
+typedef boost::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 
     
 /*
@@ -129,7 +132,7 @@ struct PreproNode
         if(next) delete next;
     }
     enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, CAMERA };
-    variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgCamera*> node;
+    boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgCamera*> node;
     SgNode* base;
     PreproNode* parent;
     PreproNode* child;
@@ -287,14 +290,14 @@ public:
         ColorArray colors;
         SgTexCoordArray texCoords;
     };
-    scoped_ptr<Buf> buf;
+    boost::scoped_ptr<Buf> buf;
         
     struct SgObjectPtrHash {
         std::size_t operator()(const SgObjectPtr& p) const {
             return boost::hash_value<SgObject*>(p.get());
         }
     };
-    typedef unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
+    typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
     CacheMap cacheMaps[2];
     bool doUnusedCacheCheck;
     bool isCheckingUnusedCaches;
@@ -308,7 +311,7 @@ public:
     int currentShapeCacheTopViewMatrixIndex;
 
     bool doPreprocessedNodeTreeExtraction;
-    scoped_ptr<PreproNode> preproTree;
+    boost::scoped_ptr<PreproNode> preproTree;
 
     Array4i viewport;
 
@@ -341,8 +344,8 @@ public:
     int currentCameraIndex;
     SgCamera* currentCamera;
     vector<SgNodePath> cameraPaths;
-    signal<void()> sigCamerasChanged;
-    signal<void()> sigCurrentCameraChanged;
+    boost::signal<void()> sigCamerasChanged;
+    boost::signal<void()> sigCurrentCameraChanged;
         
     GLfloat aspectRatio; // width / height;
 
@@ -392,7 +395,7 @@ public:
 
     GLdouble pickX;
     GLdouble pickY;
-    typedef shared_ptr<SgNodePath> SgNodePathPtr;
+    typedef boost::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     vector<SgNodePathPtr> pickingNodePathList;
     SgNodePath pickedNodePath;
@@ -420,7 +423,7 @@ public:
         NUM_STATE_FLAGS
     };
 
-    dynamic_bitset<> stateFlag;
+    boost::dynamic_bitset<> stateFlag;
         
     Vector4f currentColor;
     Vector4f diffuseColor;
@@ -521,7 +524,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root)
     : self(self),
       root(root)
 {
-    root->sigUpdated().connect(bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
+    root->sigUpdated().connect(boost::bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
 
     Vstack.reserve(16);
     
@@ -809,6 +812,24 @@ SignalProxy<boost::signal<void()> > GLSceneRenderer::sigCurrentCameraChanged()
 }
 
 
+bool GLSceneRenderer::setSwapInterval(int interval)
+{
+#ifdef _WIN32
+    return wglSwapIntervalEXT(interval);
+#endif
+    return false;
+}
+
+
+int GLSceneRenderer::getSwapInterval() const
+{
+#ifdef _WIN32
+    return wglGetSwapIntervalEXT();
+#endif
+    return -1;
+}
+
+
 bool GLSceneRenderer::initializeGL()
 {
     return impl->initializeGL();
@@ -1013,7 +1034,7 @@ void GLSceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
         
     case PreproNode::TRANSFORM:
     {
-        SgTransform* transform = get<SgTransform*>(node->node);
+        SgTransform* transform = boost::get<SgTransform*>(node->node);
         Affine3 T1;
         transform->getTransform(T1);
         const Affine3 T2 = T * T1;
@@ -1029,7 +1050,7 @@ void GLSceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
 
     case PreproNode::LIGHT:
     {
-        SgLight* light = get<SgLight*>(node->node);
+        SgLight* light = boost::get<SgLight*>(node->node);
         if(additionalLightsEnabled || defaultLights.find(light) != defaultLights.end()){
             lights.push_back(LightInfo(light, T));
         }
@@ -1038,7 +1059,7 @@ void GLSceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
 
     case PreproNode::CAMERA:
     {
-        SgCamera* camera = get<SgCamera*>(node->node);
+        SgCamera* camera = boost::get<SgCamera*>(node->node);
         size_t index = cameras->size();
         if(!camerasChanged){
             if(index >= prevCameras->size() || camera != (*prevCameras)[index].camera){
@@ -1358,7 +1379,7 @@ inline unsigned int GLSceneRendererImpl::pushPickName(SgNode* node, bool doSetCo
     if(isPicking && !isCompiling){
         id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
-        pickingNodePathList.push_back(make_shared<SgNodePath>(currentNodePath));
+        pickingNodePathList.push_back(boost::make_shared<SgNodePath>(currentNodePath));
         if(doSetColor){
             setPickColor(id);
         }

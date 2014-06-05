@@ -27,8 +27,9 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 
 namespace {
@@ -36,7 +37,7 @@ namespace {
 class MovieGenerator : public Dialog
 {
 public:
-    signals::connection focusViewChangedConnection;
+    boost::signals::connection focusViewChangedConnection;
 
     TimeBar* timeBar;
     View* targetView;
@@ -95,7 +96,7 @@ void cnoid::initializeMovieGenerator(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(N_("Movie Generator"))
-            ->sigTriggered().connect(bind(&MovieGenerator::show, movieGenerator));
+            ->sigTriggered().connect(boost::bind(&MovieGenerator::show, movieGenerator));
     }
 }
 
@@ -130,7 +131,7 @@ MovieGenerator::MovieGenerator()
     } else {
         directoryButton.setIcon(folderIcon);
     }
-    directoryButton.sigClicked().connect(bind(&MovieGenerator::showDirectorySelectionDialog, this));
+    directoryButton.sigClicked().connect(boost::bind(&MovieGenerator::showDirectorySelectionDialog, this));
     hbox->addWidget(&directoryButton);
 
     hbox->addWidget(new QLabel(_("Basename")));
@@ -185,17 +186,17 @@ MovieGenerator::MovieGenerator()
     PushButton* applyButton = new PushButton(_("&Generate"));
     applyButton->setDefault(true);
     buttonBox->addButton(applyButton, QDialogButtonBox::ActionRole);
-    applyButton->sigClicked().connect(bind(&MovieGenerator::generate, this));
+    applyButton->sigClicked().connect(boost::bind(&MovieGenerator::generate, this));
     hbox->addWidget(applyButton);
 
     PushButton* captureButton = new PushButton(_("&Capture"));
     buttonBox->addButton(captureButton, QDialogButtonBox::ActionRole);
-    captureButton->sigClicked().connect(bind(&MovieGenerator::capture, this));
+    captureButton->sigClicked().connect(boost::bind(&MovieGenerator::capture, this));
     hbox->addWidget(captureButton);
 
     PushButton* stopButton = new PushButton(_("&Stop"));
     buttonBox->addButton(stopButton, QDialogButtonBox::ActionRole);
-    stopButton->sigClicked().connect(bind(&MovieGenerator::onStopRequest, this));
+    stopButton->sigClicked().connect(boost::bind(&MovieGenerator::onStopRequest, this));
 
     Mapping& config = *AppConfig::archive()->findMapping("MovieGenerator");
     if(config.isValid()){
@@ -252,7 +253,7 @@ void MovieGenerator::showEvent(QShowEvent* event)
     if(!focusViewChangedConnection.connected()){
         focusViewChangedConnection =
             View::sigFocusChanged().connect(
-                bind(&MovieGenerator::onFocusViewChanged, this, _1));
+                boost::bind(&MovieGenerator::onFocusViewChanged, this, _1));
     }
     if(!isRecording){
         targetView = View::lastFocusView();
@@ -438,15 +439,15 @@ void MovieGenerator::capture()
             } else {
                 timeBarConnections.add(
                     timeBar->sigPlaybackStarted().connect(
-                        bind(&MovieGenerator::onPlaybackStarted, this, _1)));
+                        boost::bind(&MovieGenerator::onPlaybackStarted, this, _1)));
             }
 
             timeBarConnections.add(
                 timeBar->sigTimeChanged().connect(
-                    bind(&MovieGenerator::onTimeChanged, this, _1)));
+                    boost::bind(&MovieGenerator::onTimeChanged, this, _1)));
             timeBarConnections.add(
                 timeBar->sigPlaybackStopped().connect(
-                    bind(&MovieGenerator::onPlaybackStopped, this)));
+                    boost::bind(&MovieGenerator::onPlaybackStopped, this)));
         }
     }
 }

@@ -317,7 +317,7 @@ void PhysXLink::createGeometry(PhysXBody* physXBody)
 {
     if(link->shape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), bind(&PhysXLink::addMesh, this, extractor, physXBody))){
+        if(extractor->extract(link->shape(), boost::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
             if(!vertices.empty()){
                 if(pxRigidActor->isRigidStatic()){
                     PxTriangleMesh* triangleMesh = createTriangleMesh();

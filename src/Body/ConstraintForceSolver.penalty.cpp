@@ -35,7 +35,6 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace tvmet;
 using namespace boost::numeric::ublas;
 using namespace cnoid;
@@ -214,7 +213,7 @@ public:
         Body::LinkConnection* connection;
 
     };
-    typedef shared_ptr<LinkPair> LinkPairPtr;
+    typedef boost::shared_ptr<LinkPair> LinkPairPtr;
     typedef std::vector<LinkPairPtr> LinkPairArray;
 
     LinkPairArray collisionCheckLinkPairs;
@@ -385,7 +384,7 @@ bool CFSImpl::addCollisionCheckLinkPair
     int index;
     int isRegistered;
 
-    tie(index, isRegistered) = world.getIndexOfLinkPairs(link1, link2);
+    boost::tie(index, isRegistered) = world.getIndexOfLinkPairs(link1, link2);
 
     if(index >= 0){
 

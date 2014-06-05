@@ -12,12 +12,10 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
 SceneBar* sceneBar;
-
 }
 
 namespace cnoid {
@@ -32,8 +30,8 @@ public:
 
     struct SceneWidgetInfo
     {
-        signals::connection connectionToSigFocusChanged;
-        signals::connection connectionToSigAboutToBeDestroyed;
+        boost::signals::connection connectionToSigFocusChanged;
+        boost::signals::connection connectionToSigAboutToBeDestroyed;
         ~SceneWidgetInfo(){
             connectionToSigAboutToBeDestroyed.disconnect();
             connectionToSigAboutToBeDestroyed.disconnect();
@@ -94,6 +92,8 @@ SceneBar::SceneBar()
 SceneBarImpl::SceneBarImpl(SceneBar* self)
     : self(self)
 {
+    using boost::bind;
+    
     self->setEnabled(false);
     targetSceneWidget = 0;
     targetRenderer = 0;
@@ -117,7 +117,7 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
     self->addWidget(cameraCombo);
 
     self->addButton(QIcon(":/Base/icons/viewfitting.png"), _("Move the camera to look at the objects"))
-        ->sigClicked().connect(bind(&SceneWidget::viewAll, ref(targetSceneWidget)));
+        ->sigClicked().connect(bind(&SceneWidget::viewAll, boost::ref(targetSceneWidget)));
 
     collisionLineToggle = self->addToggleButton(
         QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
@@ -130,7 +130,7 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
         bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
 
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the dialog to setup scene rendering"))
-        ->sigClicked().connect(bind(&SceneWidget::showSetupDialog, ref(targetSceneWidget)));
+        ->sigClicked().connect(bind(&SceneWidget::showSetupDialog, boost::ref(targetSceneWidget)));
 
     SceneWidget::sigSceneWidgetCreated().connect(bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
 }
@@ -142,11 +142,11 @@ void SceneBarImpl::onSceneWidgetCreated(SceneWidget* sceneWidget)
 
     info.connectionToSigFocusChanged =
         sceneWidget->sigWidgetFocusChanged().connect(
-            bind(&SceneBarImpl::onSceneWidgetFocusChanged, this, sceneWidget, _1));
+            boost::bind(&SceneBarImpl::onSceneWidgetFocusChanged, this, sceneWidget, _1));
 
     info.connectionToSigAboutToBeDestroyed =
         sceneWidget->sigAboutToBeDestroyed().connect(
-            bind(&SceneBarImpl::onSceneWidgetAboutToBeDestroyed, this, sceneWidget));
+            boost::bind(&SceneBarImpl::onSceneWidgetAboutToBeDestroyed, this, sceneWidget));
 
     if(!targetSceneWidget){
         setTargetSceneWidget(sceneWidget);
@@ -195,12 +195,12 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
         updateEditModeButton();
         connectionsToTargetSceneWidget.add(
             sceneWidget->sigEditModeToggled().connect(
-                bind(&SceneBarImpl::updateEditModeButton, this)));
+                boost::bind(&SceneBarImpl::updateEditModeButton, this)));
 
         updateFirstPersonModeButton();
         connectionsToTargetSceneWidget.add(
             sceneWidget->sigViewpointControlModeChanged().connect(
-                bind(&SceneBarImpl::updateFirstPersonModeButton, this)));
+                boost::bind(&SceneBarImpl::updateFirstPersonModeButton, this)));
 
         collisionLineToggle->blockSignals(true);
         collisionLineToggle->setChecked(sceneWidget->collisionLinesVisible());
@@ -213,10 +213,10 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
         updateCameraCombo();
         connectionsToTargetSceneWidget.add(
             targetRenderer->sigCamerasChanged().connect(
-                bind(&SceneBarImpl::updateCameraCombo, this)));
+                boost::bind(&SceneBarImpl::updateCameraCombo, this)));
         connectionsToTargetSceneWidget.add(
             targetRenderer->sigCurrentCameraChanged().connect(
-                bind(&SceneBarImpl::onCurrentCameraChanged, this)));
+                boost::bind(&SceneBarImpl::onCurrentCameraChanged, this)));
 
         self->setEnabled(true);
     }

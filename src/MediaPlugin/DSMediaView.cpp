@@ -181,13 +181,13 @@ DSMediaViewImpl::DSMediaViewImpl(DSMediaView* self)
     orgWinProc = NULL;
 
     aspectRatioCheck->sigToggled().connect(
-        bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
+        boost::bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
 
     orgSizeCheck->sigToggled().connect(
-        bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
+        boost::bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
     
     ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
+        boost::bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
 }
 
 
@@ -530,16 +530,16 @@ void DSMediaViewImpl::connectTimeBarSignals()
         TimeBar* timeBar = TimeBar::instance();
         timeBarConnections.add(
             timeBar->sigPlaybackInitialized().connect(
-                bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                boost::bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
         timeBarConnections.add(
             timeBar->sigPlaybackStarted().connect(
-                bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
+                boost::bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
         timeBarConnections.add(
             timeBar->sigPlaybackStopped().connect(
-                bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
+                boost::bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
         timeBarConnections.add(
             timeBar->sigTimeChanged().connect(
-                bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
+                boost::bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
     }
 }
 

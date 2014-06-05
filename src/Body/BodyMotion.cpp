@@ -11,7 +11,6 @@
 #include <cnoid/YAMLWriter>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -61,7 +60,7 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
 
 AbstractSeqPtr BodyMotion::cloneSeq() const
 {
-    return make_shared<BodyMotion>(*this);
+    return boost::make_shared<BodyMotion>(*this);
 }
 
 

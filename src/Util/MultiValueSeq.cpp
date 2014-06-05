@@ -10,7 +10,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -37,7 +36,7 @@ MultiValueSeq::MultiValueSeq(const MultiValueSeq& org)
 
 AbstractSeqPtr MultiValueSeq::cloneSeq() const
 {
-    return make_shared<MultiValueSeq>(*this);
+    return boost::make_shared<MultiValueSeq>(*this);
 }
 
 

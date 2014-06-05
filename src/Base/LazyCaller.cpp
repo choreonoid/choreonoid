@@ -12,7 +12,6 @@
 #include <boost/bind.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -36,7 +35,7 @@ public:
         completed = false;
     }
 };
-typedef shared_ptr<SyncInfo> SyncInfoPtr;
+typedef boost::shared_ptr<SyncInfo> SyncInfoPtr;
     
 
 class CallEvent : public QEvent
@@ -115,7 +114,7 @@ bool cnoid::callSynchronously(const boost::function<void(void)>& function, int p
         //callLater(function, priority);
         return true;
     } else {
-        SyncInfoPtr syncInfo = make_shared<SyncInfo>();
+        SyncInfoPtr syncInfo = boost::make_shared<SyncInfo>();
         QCoreApplication::postEvent(
             &callEventHandler, new CallEvent(function, syncInfo), toQtPriority(priority));
         syncInfo->semaphore.acquire(); // wait for finish

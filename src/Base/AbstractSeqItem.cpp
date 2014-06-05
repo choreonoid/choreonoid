@@ -9,7 +9,6 @@
 #include <boost/bind.hpp>
 #include "gettext.h"
 
-using namespace boost;
 using namespace cnoid;
 
 
@@ -58,8 +57,8 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqPtr seq = abstractSeq();
     putProperty(_("Frame rate"), seq->getFrameRate());
-    putProperty(_("Number of frames"), seq->getNumFrames(), bind(setPropertyNumFrames, this, _1));
-    putProperty(_("Time length"), seq->getTimeLength(), bind(setPropertyTimeLength, this, _1));
+    putProperty(_("Number of frames"), seq->getNumFrames(), boost::bind(setPropertyNumFrames, this, _1));
+    putProperty(_("Time length"), seq->getTimeLength(), boost::bind(setPropertyTimeLength, this, _1));
     putProperty.decimals(3)(_("Time step"), seq->getTimeStep());
 }
 

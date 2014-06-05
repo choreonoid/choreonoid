@@ -7,7 +7,6 @@
 #include "BodyMotion.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -61,7 +60,7 @@ AbstractSeq& ZMPSeq::operator=(const AbstractSeq& rhs)
 
 AbstractSeqPtr ZMPSeq::cloneSeq() const
 {
-    return make_shared<ZMPSeq>(*this);
+    return boost::make_shared<ZMPSeq>(*this);
 }
 
 

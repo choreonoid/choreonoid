@@ -231,7 +231,7 @@ void BulletLink::createGeometry()
 {
     if(link->shape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), bind(&BulletLink::addMesh, this, extractor, meshOnly))){
+        if(extractor->extract(link->shape(), boost::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
             if(!simImpl->useHACD){
                 if(!mixedPrimitiveMesh){
                     if(!vertices.empty()){
@@ -245,7 +245,7 @@ void BulletLink::createGeometry()
                             collisionShape = 0;
                             vertices.clear();
                             triangles.clear();
-                            extractor->extract(link->shape(), bind(&BulletLink::addMesh, this, ref(extractor), true));
+                            extractor->extract(link->shape(), boost::bind(&BulletLink::addMesh, this, boost::ref(extractor), true));
                         }
                     }
                 }

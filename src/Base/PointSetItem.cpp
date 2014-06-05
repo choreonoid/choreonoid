@@ -13,7 +13,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -26,7 +25,7 @@ bool loadPCD(PointSetItem* item, const std::string& filename, std::ostream& os)
         os << pointSet->vertices()->size() << " points have been loaded.";
         return true;
     } catch (boost::exception& ex) {
-        if(std::string const * message = get_error_info<error_info_message>(ex)){
+        if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
             os << *message;
         }
     }
@@ -39,7 +38,7 @@ bool saveAsPCD(PointSetItem* item, const std::string& filename, std::ostream& os
         cnoid::savePCD(item->pointSet(), filename, item->offsetPosition());
         return true;
     } catch (boost::exception& ex) {
-        if(std::string const * message = get_error_info<error_info_message>(ex)){
+        if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
             os << *message;
         }
     }
@@ -57,7 +56,7 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
         im.addCreationPanel<PointSetItem>();
         im.addLoaderAndSaver<PointSetItem>(
             _("Point Cloud (PCD)"), "PCD-FILE", "pcd",
-            bind(::loadPCD, _1, _2, _3), bind(::saveAsPCD, _1, _2, _3),
+            boost::bind(::loadPCD, _1, _2, _3), boost::bind(::saveAsPCD, _1, _2, _3),
             ItemManager::PRIORITY_CONVERSION);
         
         initialized = true;
@@ -85,7 +84,7 @@ PointSetItem::PointSetItem(const PointSetItem& org)
 void PointSetItem::initMembers()
 {
     visiblePointSet = new SgPointSet;
-    pointSet_->sigUpdated().connect(bind(&PointSetItem::updateVisiblePointSet, this));
+    pointSet_->sigUpdated().connect(boost::bind(&PointSetItem::updateVisiblePointSet, this));
 }
 
 
@@ -158,7 +157,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("File"), getFilename(filePath()));
     putProperty.decimals(1).min(0.0)(_("Point size"), visiblePointSet->pointSize(),
-                                     bind(&PointSetItem::setPointSize, this, _1), true);
+                                     boost::bind(&PointSetItem::setPointSize, this, _1), true);
 }
 
 

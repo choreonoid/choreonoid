@@ -29,7 +29,6 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -201,7 +200,7 @@ public:
         double contactCullingDepth;
         double epsilon;
     };
-    typedef shared_ptr<LinkPair> LinkPairPtr;
+    typedef boost::shared_ptr<LinkPair> LinkPairPtr;
 
     CollisionDetectorPtr collisionDetector;
     vector<int> geometryIdToBodyIndexMap;
@@ -221,7 +220,7 @@ public:
         Vector3 jointPoint[2];
         Vector3 jointConstraintAxes[3];
     };
-    typedef shared_ptr<ExtraJointLinkPair> ExtraJointLinkPairPtr;
+    typedef boost::shared_ptr<ExtraJointLinkPair> ExtraJointLinkPairPtr;
     vector<ExtraJointLinkPairPtr> extraJointLinkPairs;
 
     bool is2Dmode;
@@ -233,7 +232,7 @@ public:
     public:
         double globalYpositions[3];
     };
-    typedef shared_ptr<Constrain2dLinkPair> Constrain2dLinkPairPtr;
+    typedef boost::shared_ptr<Constrain2dLinkPair> Constrain2dLinkPairPtr;
     vector<Constrain2dLinkPairPtr> constrain2dLinkPairs;
         
 
@@ -268,7 +267,7 @@ public:
     VectorX solution;
 
     // random number generator
-    variate_generator<mt19937, uniform_real<> > randomAngle;
+    boost::variate_generator<boost::mt19937, boost::uniform_real<> > randomAngle;
 
     // for special version of gauss sidel iterative solver
     std::vector<int> frictionIndexToContactIndex;
@@ -390,7 +389,7 @@ public:
 
 CFSImpl::CFSImpl(WorldBase& world) :
     world(world),
-    randomAngle(mt19937(), uniform_real<>(0.0, 2.0 * PI))
+    randomAngle(boost::mt19937(), boost::uniform_real<>(0.0, 2.0 * PI))
 {
     defaultStaticFriction = 1.0;
     defaultSlipFriction = 1.0;
@@ -445,7 +444,7 @@ void CFSImpl::initExtraJoints(int bodyIndex)
         Body::ExtraJoint& bodyExtraJoint = body->extraJoint(j);
         ExtraJointLinkPairPtr linkPair;
         if(bodyExtraJoint.type == Body::EJ_PISTON){
-            linkPair = make_shared<ExtraJointLinkPair>();
+            linkPair = boost::make_shared<ExtraJointLinkPair>();
             linkPair->isSameBodyPair = true;
             linkPair->isNonContactConstraint = true;
         
@@ -505,7 +504,7 @@ void CFSImpl::init2Dconstraint(int bodyIndex)
 
     DyLink* rootLink = world.body(bodyIndex)->rootLink();
 
-    Constrain2dLinkPairPtr linkPair = make_shared<Constrain2dLinkPair>();
+    Constrain2dLinkPairPtr linkPair = boost::make_shared<Constrain2dLinkPair>();
     linkPair->isSameBodyPair = false;
     linkPair->isNonContactConstraint = true;
     
@@ -536,7 +535,7 @@ void CFSImpl::initialize(void)
     if(CFS_DEBUG || CFS_MCP_DEBUG){
         static int ntest = 0;
         os.close();
-        os.open((string("cfs-log-") + lexical_cast<string>(ntest++) + ".log").c_str());
+        os.open((string("cfs-log-") + boost::lexical_cast<string>(ntest++) + ".log").c_str());
         //os << setprecision(50);
     }
 
@@ -551,7 +550,7 @@ void CFSImpl::initialize(void)
     bodiesData.resize(numBodies);
 
     if(!collisionDetector){
-        collisionDetector = make_shared<AISTCollisionDetector>();
+        collisionDetector = boost::make_shared<AISTCollisionDetector>();
     } else {
         collisionDetector->clearGeometries();
     }
@@ -711,7 +710,7 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
-    collisionDetector->detectCollisions(bind(&CFSImpl::extractConstraintPoints, this, _1));
+    collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
 

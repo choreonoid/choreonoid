@@ -18,8 +18,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 const double PI = 3.14159265358979323846;
@@ -256,7 +256,7 @@ SgNode* VRMLToSGConverterImpl::convertGroupNode(AbstractVRMLGroup* vgroup)
     SgGroup* group;
 
     if(VRMLTransform* transform = dynamic_cast<VRMLTransform*>(vgroup)){
-        tie(top, group) = createTransformNodeSet(transform);
+        boost::tuples::tie(top, group) = createTransformNodeSet(transform);
     } else {
         group = new SgGroup;
         top = group;
@@ -1613,7 +1613,7 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
                         imagePathToSgImageMap[url] = image;
                         break;
                     } catch(const exception_base& ex){
-                        putMessage(*get_error_info<error_info_message>(ex));
+                        putMessage(*boost::get_error_info<error_info_message>(ex));
                     }
                 }
             }
@@ -1785,12 +1785,12 @@ SgDirectionalLight* VRMLToSGConverterImpl::createDirectionalLight(VRMLDirectiona
 SgNode* VRMLToSGConverterImpl::readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat)
 {
     BOOST_ASSERT(!anotherFormat->url.empty());
-    if (algorithm::iends_with(anotherFormat->url, "dae")) {
+    if (boost::algorithm::iends_with(anotherFormat->url, "dae")) {
         // In the case of dae, we have to create a Sg-object directly from dae-file by using the dae-parser.
         DaeParser parser(&os());
         return parser.createScene(anotherFormat->url);
 
-    } else if (algorithm::iends_with(anotherFormat->url, "stl")) {
+    } else if (boost::algorithm::iends_with(anotherFormat->url, "stl")) {
         // In the case of stl, we have to create a Sg-object directly from stl-file by using the stl-parser.
         STLSceneLoader loader;
         return loader.load(anotherFormat->url);

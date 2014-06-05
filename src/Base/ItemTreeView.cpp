@@ -25,7 +25,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -33,7 +32,7 @@ namespace {
 ItemTreeView* itemTreeView = 0;
 
 typedef boost::signal<void(bool isChecked)> SigCheckToggled;
-typedef shared_ptr<SigCheckToggled> SigCheckToggledPtr;
+typedef boost::shared_ptr<SigCheckToggled> SigCheckToggledPtr;
 
 // Item of the item tree view
 class ItvItem : public QTreeWidgetItem
@@ -55,7 +54,7 @@ public:
             sigCheckToggledList.resize(id + 1);
         }
         if(!sigCheckToggledList[id]){
-            sigCheckToggledList[id] = make_shared<SigCheckToggled>();
+            sigCheckToggledList[id] = boost::make_shared<SigCheckToggled>();
         }
         return *sigCheckToggledList[id];
     }
@@ -94,10 +93,9 @@ typedef ref_ptr<CheckColumn> CheckColumnPtr;
 
 namespace cnoid {
 
-class ItemTreeViewImpl : public TreeWidget, public boost::signals::trackable
+class ItemTreeViewImpl : public TreeWidget
 {
 public:
-
     ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
     ~ItemTreeViewImpl();
 
@@ -153,7 +151,7 @@ public:
     void extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items);
     ItemList<>& checkedItems(int id);
     void extractCheckedItems(QTreeWidgetItem* twItem, int column, ItemList<>& checkdItems);
-    void forEachTopItems(const ItemList<>& orgItemList, function<void(Item*)> callback);
+    void forEachTopItems(const ItemList<>& orgItemList, boost::function<void(Item*)> callback);
     void cutSelectedItems();
     void copySelectedItems();
     void copySelectedItemsSub(Item* item, ItemPtr& duplicated, set<Item*>& items);
@@ -166,7 +164,7 @@ public:
     bool storeState(Archive& archive);
     void storeItemIds(Archive& archive, const char* key, const ItemList<>& items);
     bool restoreState(const Archive& archive);
-    bool restoreItemStates(const Archive& archive, const char* key, function<void(ItemPtr)> stateChangeFunc);
+    bool restoreItemStates(const Archive& archive, const char* key, boost::function<void(ItemPtr)> stateChangeFunc);
     void storeExpandedItems(Archive& archive);
     void storeExpandedItemsSub(QTreeWidgetItem* parentTwItem, Archive& archive, ListingPtr& expanded);
     void restoreExpandedItems(const Archive& archive);
@@ -291,6 +289,8 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
     : self(self),
       rootItem(rootItem)
 {
+    using boost::bind;
+    
     isProceccingSlotForRootItemSignals = 0;
     isDropping = false;
     
@@ -892,7 +892,7 @@ ItemList<>& ItemTreeView::allSelectedItems()
 
 void ItemTreeView::extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& io_items)
 {
-    topItem->traverse(bind(&ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse, impl, _1, &io_items));
+    topItem->traverse(boost::bind(&ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse, impl, _1, &io_items));
 }
 
 
@@ -944,7 +944,7 @@ void ItemTreeViewImpl::extractCheckedItems(QTreeWidgetItem* twItem, int column, 
 }
 
 
-void ItemTreeViewImpl::forEachTopItems(const ItemList<>& items, function<void(Item*)> callback)
+void ItemTreeViewImpl::forEachTopItems(const ItemList<>& items, boost::function<void(Item*)> callback)
 {
     set<Item*> itemSet;
     for(size_t i=0; i < items.size(); ++i){
@@ -974,7 +974,7 @@ void ItemTreeViewImpl::cutSelectedItems()
 {
     copiedItemList.clear();
     ItemList<> selected = selectedItemList;
-    forEachTopItems(selected, bind(&ItemTreeViewImpl::moveCutItemsToCopiedItemList, this, _1));
+    forEachTopItems(selected, boost::bind(&ItemTreeViewImpl::moveCutItemsToCopiedItemList, this, _1));
 }
 
 
@@ -1037,7 +1037,7 @@ void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set
 void ItemTreeViewImpl::copySelectedItemsWithChildren()
 {
     copiedItemList.clear();
-    forEachTopItems(selectedItemList, bind(&ItemTreeViewImpl::addCopiedItemToCopiedItemList, this, _1));
+    forEachTopItems(selectedItemList, boost::bind(&ItemTreeViewImpl::addCopiedItemToCopiedItemList, this, _1));
 }
 
 
@@ -1142,8 +1142,8 @@ bool ItemTreeView::restoreState(const Archive& archive)
 
 bool ItemTreeViewImpl::restoreState(const Archive& archive)
 {
-    restoreItemStates(archive, "checked", bind(&ItemTreeView::checkItem, self, _1, true, 0));
-    restoreItemStates(archive, "selected", bind(&ItemTreeView::selectItem, self, _1, true));
+    restoreItemStates(archive, "checked", boost::bind(&ItemTreeView::checkItem, self, _1, true, 0));
+    restoreItemStates(archive, "selected", boost::bind(&ItemTreeView::selectItem, self, _1, true));
     restoreExpandedItems(archive);
     return true;
 }
@@ -1151,12 +1151,12 @@ bool ItemTreeViewImpl::restoreState(const Archive& archive)
 
 bool ItemTreeView::restoreCheckColumnState(int id, const Archive& archive)
 {
-    return impl->restoreItemStates(archive, "checked", bind(&ItemTreeView::checkItem, this, _1, true, id));
+    return impl->restoreItemStates(archive, "checked", boost::bind(&ItemTreeView::checkItem, this, _1, true, id));
 }
 
 
 bool ItemTreeViewImpl::restoreItemStates
-(const Archive& archive, const char* key, function<void(ItemPtr)> stateChangeFunc)
+(const Archive& archive, const char* key, boost::function<void(ItemPtr)> stateChangeFunc)
 {
     bool completed = false;
     const Listing& idseq = *archive.findListing(key);

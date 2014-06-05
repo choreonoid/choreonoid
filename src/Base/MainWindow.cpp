@@ -27,11 +27,9 @@
 #include <set>
 #include <bitset>
 #include <iostream>
-
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -294,7 +292,7 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     MenuManager& mm = ext->menuManager();
 
     mm.setPath("/" N_("File")).setBackwardMode().addItem(_("Exit"))
-        ->sigTriggered().connect(bind(&MainWindow::close, self));
+        ->sigTriggered().connect(boost::bind(&MainWindow::close, self));
 
     mm.setPath("/" N_("Edit"));
 
@@ -307,7 +305,7 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     mm.addSeparator();
     fullScreenCheck = mm.addCheckItem(_("Full Screen"));
     fullScreenCheck->setChecked(config->get("fullScreen", false));
-    fullScreenCheck->sigToggled().connect(bind(&MainWindowImpl::onFullScreenToggled, this, _1));
+    fullScreenCheck->sigToggled().connect(boost::bind(&MainWindowImpl::onFullScreenToggled, this, _1));
 
     mm.setPath("/View");
     mm.setPath(N_("Layout"));
@@ -315,7 +313,7 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     storeLastLayoutCheck = mm.addCheckItem(_("Store Last Toolbar Layout"));
     storeLastLayoutCheck->setChecked(config->get("storeLastLayout", false));
     
-    mm.addItem(_("Reset Layout"))->sigTriggered().connect(bind(&MainWindowImpl::resetLayout, this));
+    mm.addItem(_("Reset Layout"))->sigTriggered().connect(boost::bind(&MainWindowImpl::resetLayout, this));
     
     mm.setPath("/" N_("Tools"));
     mm.setPath("/" N_("Filters"));

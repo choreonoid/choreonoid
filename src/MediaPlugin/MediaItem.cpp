@@ -16,9 +16,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
-using namespace boost::lambda;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -31,7 +30,7 @@ bool loadMediaItem(MediaItemPtr item, const std::string& filepath, std::ostream&
     return loaded;
 }
 
-void onSigOptionsParsed(program_options::variables_map& v)
+void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("media")){
         vector<string> mediaFilenames = v["media"].as< vector<string> >();
@@ -52,7 +51,7 @@ void MediaItem::initialize(ExtensionManager* ext)
     ext->itemManager().registerClass<MediaItem>(N_("MediaItem"));
     ext->itemManager().addLoader<MediaItem>(_("Media file"), "MEDIA-GENERIC", "", loadMediaItem);
 
-    ext->optionManager().addOption("media", program_options::value< vector<string> >(), _("load an media file"));
+    ext->optionManager().addOption("media", boost::program_options::value< vector<string> >(), _("load an media file"));
     ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
 }
 
@@ -125,7 +124,7 @@ ItemPtr MediaItem::doDuplicate() const
 void MediaItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("uri"), mediaURI_);
-    putProperty(_("offset"), offsetTime_, (bind(&MediaItem::setOffsetTime, this, _1), true));
+    putProperty(_("offset"), offsetTime_, (boost::lambda::bind(&MediaItem::setOffsetTime, this, boost::lambda::_1), true));
 }
 
 

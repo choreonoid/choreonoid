@@ -10,7 +10,6 @@
 #include <boost/format.hpp>
 #include "gettext.h"
 
-using namespace boost;
 using namespace cnoid;
 
 BodyBar* BodyBar::instance()
@@ -24,6 +23,8 @@ BodyBar::BodyBar()
     : ToolBar("BodyBar"),
       mes(*MessageView::mainInstance())
 {
+    using boost::bind;
+    
     addButton(QIcon(":/Body/icons/storepose.png"), _("Memory the current pose"))
         ->sigClicked().connect(bind(&BodyBar::onCopyButtonClicked, this));
 
@@ -138,7 +139,7 @@ void BodyBar::onItemSelectionChanged(const ItemList<BodyItem>& bodyItems)
         currentBodyItem_ = firstItem;
         connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
         connectionOfCurrentBodyItemDetachedFromRoot = currentBodyItem_->sigDetachedFromRoot().connect(
-            bind(&BodyBar::onBodyItemDetachedFromRoot, this));
+            boost::bind(&BodyBar::onBodyItemDetachedFromRoot, this));
         sigCurrentBodyItemChanged_(currentBodyItem_.get());
     }
 
@@ -244,13 +245,13 @@ void BodyBar::moveCM(BodyItem::PositionType position)
     for(size_t i=0; i < targetBodyItems.size(); ++i){
         BodyItem* bodyItem = targetBodyItems.get(i);
         Vector3 c = bodyItem->centerOfMass();
-        optional<Vector3> p = bodyItem->getParticularPosition(position);
+        boost::optional<Vector3> p = bodyItem->getParticularPosition(position);
         if(p){
             c[0] = (*p)[0];
             c[1] = (*p)[1];
         }
         if(!bodyItem->doLegIkToMoveCm(c, true)){
-            static format f(_("The center of mass of %1% cannt be moved to the target position\n"));
+            static boost::format f(_("The center of mass of %1% cannt be moved to the target position\n"));
             mes.notify(str(f % bodyItem->name()));
         }
     }
@@ -260,7 +261,7 @@ void BodyBar::moveCM(BodyItem::PositionType position)
 void BodyBar::setZmp(BodyItem::PositionType position)
 {
     for(size_t i=0; i < targetBodyItems.size(); ++i){
-        optional<Vector3> p = targetBodyItems[i]->getParticularPosition(position);
+        boost::optional<Vector3> p = targetBodyItems[i]->getParticularPosition(position);
         if(p){
             targetBodyItems[i]->editZmp(*p);
         }

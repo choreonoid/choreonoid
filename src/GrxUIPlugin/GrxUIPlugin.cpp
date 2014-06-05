@@ -47,7 +47,7 @@ bool GrxUIPlugin::initialize()
         importGrxUICheck->setChecked(on);
         onImportGrxUICheckToggled(on, false);
     }
-    importGrxUICheck->sigToggled().connect(bind(&GrxUIPlugin::onImportGrxUICheckToggled, this, _1, true));
+    importGrxUICheck->sigToggled().connect(boost::bind(&GrxUIPlugin::onImportGrxUICheckToggled, this, _1, true));
 
     return true;
 }

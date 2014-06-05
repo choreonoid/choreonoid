@@ -11,7 +11,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace filesystem = boost::filesystem;
+using boost::format;
 using namespace cnoid;
 
 using boost::filesystem::path;
@@ -24,7 +25,7 @@ path configDirPath;
 path filePath;
 path fullPath;
 
-shared_ptr<YAMLReader> pYAMLReader;
+boost::shared_ptr<YAMLReader> pYAMLReader;
 };
 
 bool AppConfig::initialize(const std::string& application_, const std::string& organization_)
@@ -135,6 +136,6 @@ bool AppConfig::load(const std::string& filename)
         }
     }
     
-    pYAMLReader = shared_ptr<YAMLReader>(pyaml);
+    pYAMLReader = boost::shared_ptr<YAMLReader>(pyaml);
     return true;
 }

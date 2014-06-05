@@ -185,7 +185,7 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
       playbin(0),
       videoSink(0),
       windowId(0),
-      seekLater(bind(&GSMediaViewImpl::onSeekLater, this))
+      seekLater(boost::bind(&GSMediaViewImpl::onSeekLater, this))
 {
     if(TRACE_FUNCTIONS){
         cout << "GSMediaViewImpl::GSMediaViewImpl()" << endl;
@@ -239,11 +239,11 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     currentSeekPos = 0;
     prepareXwindowIdProcessed = false;
 
-    aspectRatioCheck->sigToggled().connect(bind(&GSMediaViewImpl::onZoomPropertyChanged, this));
-    orgSizeCheck->sigToggled().connect(bind(&GSMediaViewImpl::onZoomPropertyChanged, this));
+    aspectRatioCheck->sigToggled().connect(boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this));
+    orgSizeCheck->sigToggled().connect(boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this));
     
     ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2));
+        boost::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2));
 }
 
 
@@ -451,7 +451,7 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
         break;
     }
 
-    callLater(bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
+    callLater(boost::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
 
     return GST_BUS_PASS;
 }
@@ -653,16 +653,16 @@ void GSMediaViewImpl::activateCurrentMediaItem()
         if(timeBarConnections.empty()){
             timeBarConnections.add(
                 timeBar->sigPlaybackInitialized().connect(
-                    bind(&GSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                    boost::bind(&GSMediaViewImpl::onPlaybackInitialized, this, _1)));
             timeBarConnections.add(
                 timeBar->sigPlaybackStarted().connect(
-                    bind(&GSMediaViewImpl::onPlaybackStarted, this, _1)));
+                    boost::bind(&GSMediaViewImpl::onPlaybackStarted, this, _1)));
             timeBarConnections.add(
                 timeBar->sigPlaybackStopped().connect(
-                    bind(&GSMediaViewImpl::onPlaybackStopped, this, _1)));
+                    boost::bind(&GSMediaViewImpl::onPlaybackStopped, this, _1)));
             timeBarConnections.add(
                 timeBar->sigTimeChanged().connect(
-                    bind(&GSMediaViewImpl::onTimeChanged, this, _1)));
+                    boost::bind(&GSMediaViewImpl::onTimeChanged, this, _1)));
         }
 
         self->update();

@@ -30,8 +30,9 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::dynamic_bitset;
+using boost::format;
 
 namespace {
 
@@ -103,12 +104,12 @@ void KinematicFaultChecker::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(_("Kinematic Fault Checker"))
-            ->sigTriggered().connect(bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
+            ->sigTriggered().connect(boost::bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
         
         ext->setProjectArchiver(
             "KinematicFaultChecker",
-            bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
-            bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
+            boost::bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
+            boost::bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
     }
 }
 
@@ -223,7 +224,7 @@ KinematicFaultCheckerImpl::KinematicFaultCheckerImpl()
     applyButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
     buttonBox->addButton(applyButton, QDialogButtonBox::AcceptRole);
-    applyButton->sigClicked().connect(bind(&KinematicFaultCheckerImpl::apply, this));
+    applyButton->sigClicked().connect(boost::bind(&KinematicFaultCheckerImpl::apply, this));
     
     vbox->addWidget(buttonBox);
 }
@@ -457,7 +458,7 @@ int KinematicFaultCheckerImpl::checkFaults
                 collisionDetector->updatePosition(i, link->position());
             }
             collisionDetector->detectCollisions(
-                bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, ref(os)));
+                boost::bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, boost::ref(os)));
         }
     }
 

@@ -9,6 +9,7 @@
 #include "AbstractTextItem.h"
 #include "Button.h"
 #include "Timer.h"
+#include <cnoid/ConnectionSet>
 #include <QAction>
 #include <QHBoxLayout>
 #include <QFile>
@@ -20,23 +21,24 @@
 #include <boost/filesystem.hpp>
 #include "gettext.h"
 
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 #define FILE_CHECK_TIME 1000   //msec
 
 namespace cnoid {
 
-class TextEditViewImpl : public boost::signals::trackable
+class TextEditViewImpl
 {
 public:
     TextEditViewImpl(TextEditView* self);
     ~TextEditViewImpl();
             
     TextEditView* self;
-
     TextEdit textEdit;
+    
 private:
+    ConnectionSet connections;
     boost::signals::connection connectionOfCurrentBodyItemDetachedFromRoot;
     AbstractTextItemPtr currentTextItem_;
     ItemList<AbstractTextItem> selectedTextItems_;
@@ -126,7 +128,7 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
     fileNameLabel.setSizePolicy(QSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred));
     hbox->addWidget(&fileNameLabel, 10);
     PushButton* saveButton = new PushButton(_("Save"));
-    saveButton->sigClicked().connect(bind(&TextEditViewImpl::save, this));
+    saveButton->sigClicked().connect(boost::bind(&TextEditViewImpl::save, this));
     hbox->addWidget(saveButton);
     vbox->addLayout(hbox);
     vbox->addWidget(&textEdit);
@@ -135,15 +137,18 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
     self->setLayout(vbox);
 
     textEdit.sigCursorPositionChanged().connect(
-        bind(&TextEditViewImpl::cursorPositionChanged, this));
+        boost::bind(&TextEditViewImpl::cursorPositionChanged, this));
 
-    ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-        bind(&TextEditViewImpl::onItemSelectionChanged, this, _1));
+    connections.add(
+        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+            boost::bind(&TextEditViewImpl::onItemSelectionChanged, this, _1)));
     timer.setSingleShot(true);
-    timer.sigTimeout().connect(bind(&TextEditViewImpl::timeOut, this));
+    connections.add(
+        timer.sigTimeout().connect(
+            boost::bind(&TextEditViewImpl::timeOut, this)));
 
-    self->sigActivated().connect(bind(&TextEditViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(bind(&TextEditViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(boost::bind(&TextEditViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(boost::bind(&TextEditViewImpl::onActivated, this ,false));
 
     viewActive = false;
 }
@@ -151,6 +156,7 @@ TextEditViewImpl::TextEditViewImpl(TextEditView* self)
 
 TextEditViewImpl::~TextEditViewImpl()
 {
+    connections.disconnect();
     connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
 }
 
@@ -170,7 +176,7 @@ void TextEditViewImpl::onItemSelectionChanged(const ItemList<AbstractTextItem>& 
         currentTextItem_ = firstItem;
         connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
         connectionOfCurrentBodyItemDetachedFromRoot = currentTextItem_->sigDetachedFromRoot().connect(
-            bind(&TextEditViewImpl::onTextItemDetachedFromRoot, this));
+            boost::bind(&TextEditViewImpl::onTextItemDetachedFromRoot, this));
         open();
     }
 }

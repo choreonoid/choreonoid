@@ -9,7 +9,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -201,7 +200,7 @@ MenuManager& MenuManager::setPath(const QString& path)
     QAction* item;
     QWidget* menu;
 
-    tie(item, menu) = findPath(path, true);
+    boost::tie(item, menu) = findPath(path, true);
 
     if(!menu){
         cerr << "cnoid::MenuManager warning: setting path to " << path.toLocal8Bit().data() << " failed." << endl;

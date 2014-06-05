@@ -12,8 +12,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 
 void ExtCommandItem::initializeClass(ExtensionManager* ext)
@@ -35,7 +35,7 @@ ExtCommandItem::ExtCommandItem()
     doExecuteOnLoading = true;
 
     process.sigReadyReadStandardOutput().connect(
-        bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
+        boost::bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
 }
 
 
@@ -48,7 +48,7 @@ ExtCommandItem::ExtCommandItem(const ExtCommandItem& org)
     doExecuteOnLoading = org.doExecuteOnLoading;
 
     process.sigReadyReadStandardOutput().connect(
-        bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
+        boost::bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
 }
 
 
@@ -103,7 +103,7 @@ bool ExtCommandItem::execute()
 
         } else {
             mv->put(fmt(_("External command \"%1%\" cannot be executed.")) % actualCommand);
-            if(!filesystem::exists(actualCommand)){
+            if(!boost::filesystem::exists(actualCommand)){
                 mv->putln(_(" The command does not exist."));
             } else {
                 mv->putln("");
@@ -133,7 +133,7 @@ void ExtCommandItem::onReadyReadServerProcessOutput()
 void ExtCommandItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Command"), command_,
-                bind(&ExtCommandItem::setCommand, this, _1), true);
+                boost::bind(&ExtCommandItem::setCommand, this, _1), true);
     putProperty(_("Execute on loading"), doExecuteOnLoading,
                 changeProperty(doExecuteOnLoading));
 }

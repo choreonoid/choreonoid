@@ -42,6 +42,7 @@ set(sources
   MultiSE3SeqGraphView.cpp
   Process.cpp
   Action.cpp
+  ActionGroup.cpp
   SpinBox.cpp
   FloatingNumberBox.cpp
   Slider.cpp
@@ -103,9 +104,11 @@ endif()
 
 set(headers
   App.h
+  AppImpl.h
   MainWindow.h
   Process.h
   Action.h
+  ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
   Slider.h
@@ -192,6 +195,7 @@ QT4_WRAP_CPP(sources
   ToolBar.h
   Process.h
   Action.h
+  ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
   Slider.h
@@ -244,7 +248,7 @@ elseif(MSVC)
 
   target_link_libraries(${target}
     ${QT_LIBRARIES}
-    general opengl32 glu32
+    general glu32
     CnoidUtil
     ${GLEW_LIBRARIES}
     )

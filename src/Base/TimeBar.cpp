@@ -20,11 +20,9 @@
 #include <boost/lexical_cast.hpp>
 #include <limits>
 #include <iostream>
-
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -239,7 +237,7 @@ public:
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-playback")){
-        callLater(bind(&TimeBar::startPlayback, TimeBar::instance()));
+        callLater(boost::bind(&TimeBar::startPlayback, TimeBar::instance()));
     }
 }
 
@@ -293,29 +291,29 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     isFillLevelActive = false;
 
     self->addButton(QIcon(":/Base/icons/play.png"), _("Start animation"))
-        ->sigClicked().connect(bind(&TimeBarImpl::onPlayActivated, this));
+        ->sigClicked().connect(boost::bind(&TimeBarImpl::onPlayActivated, this));
 
     stopResumeButton = self->addButton(resumeIcon, _("Resume animation"));
     stopResumeButton->setIcon(resumeIcon);
-    stopResumeButton->sigClicked().connect(bind(&TimeBarImpl::onResumeActivated, this));
+    stopResumeButton->sigClicked().connect(boost::bind(&TimeBarImpl::onResumeActivated, this));
 
     self->addButton(QIcon(":/Base/icons/refresh.png"), _("Refresh state at the current time"))
-        ->sigClicked().connect(bind(&TimeBarImpl::onRefreshButtonClicked, this));
+        ->sigClicked().connect(boost::bind(&TimeBarImpl::onRefreshButtonClicked, this));
     
     timeSpin = new DoubleSpinBox();
     timeSpin->setAlignment(Qt::AlignCenter);
-    timeSpin->sigValueChanged().connect(bind(&TimeBarImpl::onTimeSpinChanged, this, _1));
+    timeSpin->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeSpinChanged, this, _1));
     self->addWidget(timeSpin);
 
     timeSlider = new Slider(Qt::Horizontal);
-    timeSlider->sigValueChanged().connect(bind(&TimeBarImpl::onTimeSliderChangeValue, this, _1));
+    timeSlider->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeSliderChangeValue, this, _1));
     timeSlider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     self->addWidget(timeSlider);
 
     minTimeSpin = new DoubleSpinBox();
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(-999.0, 999.0);
-    minTimeSpin->sigValueChanged().connect(bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
+    minTimeSpin->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
     self->addWidget(minTimeSpin);
 
     self->addLabel(" : ");
@@ -323,15 +321,15 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     maxTimeSpin = new DoubleSpinBox();
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(-999.0, 999.0);
-    maxTimeSpin->sigValueChanged().connect(bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
+    maxTimeSpin->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
     self->addWidget(maxTimeSpin);
 
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the setup dialog"))
-        ->sigClicked().connect(bind(&QDialog::show, &setup));
+        ->sigClicked().connect(boost::bind(&QDialog::show, &setup));
 
-    setup.frameRateSpin.sigValueChanged().connect(bind(&TimeBarImpl::onFrameRateSpinChanged, this));
-    setup.playbackFrameRateSpin.sigValueChanged().connect(bind(&TimeBarImpl::onPlaybackFrameRateChanged, this));
-    setup.playbackSpeedScaleSpin.sigValueChanged().connect(bind(&TimeBarImpl::onPlaybackSpeedScaleChanged, this));
+    setup.frameRateSpin.sigValueChanged().connect(boost::bind(&TimeBarImpl::onFrameRateSpinChanged, this));
+    setup.playbackFrameRateSpin.sigValueChanged().connect(boost::bind(&TimeBarImpl::onPlaybackFrameRateChanged, this));
+    setup.playbackSpeedScaleSpin.sigValueChanged().connect(boost::bind(&TimeBarImpl::onPlaybackSpeedScaleChanged, this));
 
     playbackSpeedScale = setup.playbackSpeedScaleSpin.value();
     playbackFrameRate = setup.playbackFrameRateSpin.value();

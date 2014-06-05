@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_GRAPH_WIDGET_H_INCLUDED
-#define CNOID_GUIBASE_GRAPH_WIDGET_H_INCLUDED
+#ifndef CNOID_BASE_GRAPH_WIDGET_H
+#define CNOID_BASE_GRAPH_WIDGET_H
 
 #include <cnoid/Archive>
 #include <string>
@@ -13,9 +13,7 @@
 #include <boost/signals.hpp>
 #include <QWidget>
 #include <QLabel>
-
 #include "exportdecl.h"
-
 
 namespace cnoid {
 
@@ -68,7 +66,7 @@ private:
 };
 
 
-class CNOID_EXPORT GraphWidget : public QWidget, public boost::signals::trackable
+class CNOID_EXPORT GraphWidget : public QWidget
 {
 public:
 

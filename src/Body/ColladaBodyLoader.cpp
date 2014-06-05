@@ -25,15 +25,16 @@
 #ifdef _OLD_VERSION
 #include <cnoid/ColdetModel>
 #endif
-#include "../Util/DaeParser.h"
-#include "../Util/DaeNode.h"
+#include <cnoid/DaeParser>
+#include <cnoid/DaeNode>
 #include "ColladaBodyLoader.h"
 
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace boost::algorithm;
+using boost::format;
+using boost::lexical_cast;
 
 namespace cnoid {
 
@@ -400,7 +401,7 @@ DevicePtr ColladaBodyLoaderImpl::createSensor(DaeSensor* sensor)
 #ifdef _OLD_VERSION
 void ColladaBodyLoaderImpl::setColdetModel(Link* link, SgGroup* group)
 {
-    ColdetModelPtr model(make_shared<ColdetModel>());
+    ColdetModelPtr model(boost::make_shared<ColdetModel>());
     createColdetModel(group, NULL, model.get());
     model->setName(link->name());
     model->build();

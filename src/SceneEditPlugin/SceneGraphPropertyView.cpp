@@ -57,8 +57,8 @@ struct Double {
 
 typedef variant<bool, Int, Double, string> ValueVariant;
 
-typedef variant<function<bool(bool)>, function<bool(int)>, function<bool(double)>,
-                function<bool(const string&)> > FunctionVariant;
+typedef variant<boost::function<bool(bool)>, boost::function<bool(int)>, boost::function<bool(double)>,
+                boost::function<bool(const string&)> > FunctionVariant;
 
 enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING };
 
@@ -235,19 +235,19 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             switch(qvalue.type()){
                 
             case QVariant::Bool:
-                accepted = get< function<bool(bool)> >(func)(qvalue.toBool());
+                accepted = get< boost::function<bool(bool)> >(func)(qvalue.toBool());
                 break;
                 
             case QVariant::String:
-                accepted = get< function<bool(const string&)> >(func)(qvalue.toString().toStdString());
+                accepted = get< boost::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
                 break;
                 
             case QVariant::Int:
-                accepted = get< function<bool(int)> >(func)(qvalue.toInt());
+                accepted = get< boost::function<bool(int)> >(func)(qvalue.toInt());
                 break;
                 
             case QVariant::Double:
-                accepted = get< function<bool(double)> >(func)(qvalue.toDouble());
+                accepted = get< boost::function<bool(double)> >(func)(qvalue.toDouble());
                 break;
             default:
                 break;
@@ -315,8 +315,8 @@ SceneGraphPropertyViewImpl::SceneGraphPropertyViewImpl(SceneGraphPropertyView* s
     layout->addWidget(tableWidget);
     self->setLayout(layout);
     
-    self->sigActivated().connect(bind(&SceneGraphPropertyViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(bind(&SceneGraphPropertyViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(boost::bind(&SceneGraphPropertyViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(boost::bind(&SceneGraphPropertyViewImpl::onActivated, this ,false));
 
     currentObject = 0;
 
@@ -338,7 +338,7 @@ SceneGraphPropertyViewImpl::~SceneGraphPropertyViewImpl()
 
 void SceneGraphPropertyViewImpl::setProperty(SgObject* obj)
 {
-//    function<bool(const string&)> f = bind(&SceneGraphPropertyViewImpl::setName, this, _1);
+//    boost::function<bool(const string&)> f = boost::bind(&SceneGraphPropertyViewImpl::setName, this, _1);
 //    addProperty("name", new PropertyItem(this, obj->name(), (FunctionVariant)f));
     addProperty(_("name"), new PropertyItem(this, obj->name()));
 }
@@ -744,7 +744,7 @@ void SceneGraphPropertyViewImpl::onActivated(bool on)
         if(sceneGraphView){
             onItemSelectionChanged(sceneGraphView->selectedObject());
             selectionChangedConnection = sceneGraphView->sigSelectionChanged().connect(
-                bind(&SceneGraphPropertyViewImpl::onItemSelectionChanged, this, _1));
+                boost::bind(&SceneGraphPropertyViewImpl::onItemSelectionChanged, this, _1));
         }
     } else {
         connectionOfsceneUpdated.disconnect();
@@ -762,7 +762,7 @@ void SceneGraphPropertyViewImpl::onItemSelectionChanged(const SgObject* object)
         connectionOfsceneUpdated.disconnect();
         currentObject = (SgObject*)object;
         if(currentObject)
-            connectionOfsceneUpdated = currentObject->sigUpdated().connect(bind(&SceneGraphPropertyViewImpl::onSceneGraphUpdated, this, _1));
+            connectionOfsceneUpdated = currentObject->sigUpdated().connect(boost::bind(&SceneGraphPropertyViewImpl::onSceneGraphUpdated, this, _1));
         updateProperties();
     }
 }

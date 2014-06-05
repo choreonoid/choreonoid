@@ -24,7 +24,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -144,7 +143,7 @@ public:
     SgUpdate modified;
 
     ConnectionSet connections;
-    signals::connection connectionToSigCollisionsUpdated;
+    boost::signals::connection connectionToSigCollisionsUpdated;
     boost::dynamic_bitset<> collisionLinkBitSet;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
@@ -166,8 +165,7 @@ public:
     PinDragIKptr pinDragIK;
     InverseKinematicsPtr ik;
     PenetrationBlockerPtr penetrationBlocker;
-    RotationDraggerPtr rotationDragger;
-    TranslationDraggerPtr translationDragger;
+    PositionDraggerPtr positionDragger;
 
     bool isEditMode;
 
@@ -206,7 +204,7 @@ public:
         
     EditableSceneBodyImpl::PointedType findPointedObject(const vector<SgNode*>& path);
     void updateMarkersAndManipulators();
-    void attachRotationDragger(Link* link);
+    void attachPositionDragger(Link* link);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
     bool onKeyReleaseEvent(const SceneWidgetEvent& event);
@@ -220,14 +218,12 @@ public:
     void onSceneModeChanged(const SceneWidgetEvent& event);
     bool onUndoRequest();
     bool onRedoRequest();
-
+    void onDraggerIKstarted();
+    void onDraggerIKdragged();
+    
     bool initializeIK();
     void startIK(const SceneWidgetEvent& event);
     void dragIK(const SceneWidgetEvent& event);
-    void onIKRotationStarted();
-    void onIKRotationDragged();
-    void onIKTranslationStarted();
-    void onIKTranslationDragged();
     void doIK(const Position& position);
     void startFK(const SceneWidgetEvent& event);
     void dragFKRotation(const SceneWidgetEvent& event);
@@ -266,18 +262,11 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     pointedSceneLink = 0;
     outlinedLink = 0;
     targetLink = 0;
-    
-    rotationDragger = new RotationDragger;
-    rotationDragger->sigRotationStarted().connect(
-        bind(&EditableSceneBodyImpl::onIKRotationStarted, this));;
-    rotationDragger->sigRotationDragged().connect(
-        bind(&EditableSceneBodyImpl::onIKRotationDragged, this));
 
-    translationDragger = new TranslationDragger;
-    translationDragger->sigTranslationStarted().connect(
-        bind(&EditableSceneBodyImpl::onIKTranslationStarted, this));;
-    translationDragger->sigTranslationDragged().connect(
-        bind(&EditableSceneBodyImpl::onIKTranslationDragged, this));
+    positionDragger = new PositionDragger;
+    positionDragger->setDraggerAlwaysShown(true);
+    positionDragger->sigDragStarted().connect(boost::bind(&EditableSceneBodyImpl::onDraggerIKstarted, this));
+    positionDragger->sigPositionDragged().connect(boost::bind(&EditableSceneBodyImpl::onDraggerIKdragged, this));
     
     dragMode = DRAG_NONE;
     isDragging = false;
@@ -314,7 +303,7 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     }
     isZmpVisible = false;
 
-    self->sigGraphConnection().connect(bind(&EditableSceneBodyImpl::onSceneGraphConnection, this, _1));
+    self->sigGraphConnection().connect(boost::bind(&EditableSceneBodyImpl::onSceneGraphConnection, this, _1));
 }
 
 
@@ -332,15 +321,15 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
 
     if(on){
         connections.add(bodyItem->sigUpdated().connect(
-                            bind(&EditableSceneBodyImpl::onBodyItemUpdated, this)));
+                            boost::bind(&EditableSceneBodyImpl::onBodyItemUpdated, this)));
         onBodyItemUpdated();
 
         connections.add(bodyItem->sigKinematicStateChanged().connect(
-                            bind(&EditableSceneBodyImpl::onKinematicStateChanged, this)));
+                            boost::bind(&EditableSceneBodyImpl::onKinematicStateChanged, this)));
         onKinematicStateChanged();
 
         connections.add(kinematicsBar->sigCollisionVisualizationChanged().connect(
-                            bind(&EditableSceneBodyImpl::onCollisionLinkHighlightModeChanged, this)));
+                            boost::bind(&EditableSceneBodyImpl::onCollisionLinkHighlightModeChanged, this)));
         onCollisionLinkHighlightModeChanged();
     }
 }
@@ -395,7 +384,7 @@ void EditableSceneBodyImpl::changeCollisionLinkHighlightMode(bool on)
     if(!connectionToSigCollisionsUpdated.connected() && on){
         connectionToSigCollisionsUpdated =
             bodyItem->sigCollisionsUpdated().connect(
-                bind(&EditableSceneBodyImpl::onCollisionsUpdated, this));
+                boost::bind(&EditableSceneBodyImpl::onCollisionsUpdated, this));
         onCollisionsUpdated();
 
     } else if(connectionToSigCollisionsUpdated.connected() && !on){
@@ -551,8 +540,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
     for(int i=0; i < n; ++i){
         EditableSceneLink* sceneLink = editableSceneLink(i);
         sceneLink->hideMarker();
-        sceneLink->removeChild(rotationDragger);
-        sceneLink->removeChild(translationDragger);
+        sceneLink->removeChild(positionDragger);
         if(show){
             Link* link = sceneLink->link();
             if(link == baseLink){
@@ -567,21 +555,19 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
     }
 
     if(show && targetLink && (kinematicsBar->mode() == KinematicsBar::IK_MODE) && kinematicsBar->isAttitudeMode()){
-        attachRotationDragger(targetLink);
+        attachPositionDragger(targetLink);
     }
 
     self->notifyUpdate(modified);
 }
 
 
-void EditableSceneBodyImpl::attachRotationDragger(Link* link)
+void EditableSceneBodyImpl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
     double r = sceneLink->untransformedBoundingBox().boundingSphereRadius();
-    rotationDragger->setRadius(r);
-    translationDragger->setRadius(r * 2.0);
-    sceneLink->addChild(rotationDragger);
-    sceneLink->addChild(translationDragger);
+    positionDragger->setRadius(r);
+    sceneLink->addChild(positionDragger);
 }
 
 
@@ -699,7 +685,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             case KinematicsBar::AUTO_MODE:
                 ik = bodyItem->getDefaultIK(targetLink);
                 if(ik){
-                    attachRotationDragger(targetLink);
+                    attachPositionDragger(targetLink);
                     startIK(event);
                 } else {
                     startFK(event);
@@ -812,7 +798,7 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
             }
         }
         
-        static format f(_("%1% / %2%"));
+        static boost::format f(_("%1% / %2%"));
         if(pointedSceneLink){
             event.updateIndicator(str(f % bodyItem->name() % pointedSceneLink->link()->name()));
         } else {
@@ -901,20 +887,20 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
     if(bodyItem && pointedType == PT_SCENE_LINK){
 
         menuManager.addItem(_("Set Free"))->sigTriggered().connect(
-            bind(&EditableSceneBodyImpl::makeLinkFree, this, pointedSceneLink));
+            boost::bind(&EditableSceneBodyImpl::makeLinkFree, this, pointedSceneLink));
         menuManager.addItem(_("Set Base"))->sigTriggered().connect(
-            bind(&EditableSceneBodyImpl::setBaseLink, this, pointedSceneLink));
+            boost::bind(&EditableSceneBodyImpl::setBaseLink, this, pointedSceneLink));
         menuManager.addItem(_("Set Translation Pin"))->sigTriggered().connect(
-            bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, false));
+            boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, false));
         menuManager.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
-            bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, false, true));
+            boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, false, true));
         menuManager.addItem(_("Set Both Pins"))->sigTriggered().connect(
-            bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, true));
+            boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, true));
 
         menuManager.addSeparator();
 
         menuManager.addItem(_("Level Attitude"))->sigTriggered().connect(
-            bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
+            boost::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
 
         menuManager.addSeparator();
         
@@ -922,11 +908,11 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
         
         Action* item = menuManager.addCheckItem(_("Center of Mass"));
         item->setChecked(isCmVisible);
-        item->sigToggled().connect(bind(&EditableSceneBodyImpl::showCenterOfMass, this, _1));
+        item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showCenterOfMass, this, _1));
 
         item = menuManager.addCheckItem(_("ZMP"));
         item->setChecked(isZmpVisible);
-        item->sigToggled().connect(bind(&EditableSceneBodyImpl::showZmp, this, _1));
+        item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showZmp, this, _1));
 
         menuManager.setPath("/");
         menuManager.addSeparator();
@@ -986,6 +972,18 @@ bool EditableSceneBodyImpl::onRedoRequest()
         return false;
     }
     return bodyItem->redoKinematicState();
+}
+
+
+void EditableSceneBodyImpl::onDraggerIKstarted()
+{
+    initializeIK();
+}
+
+
+void EditableSceneBodyImpl::onDraggerIKdragged()
+{
+    doIK(positionDragger->draggedPosition());
 }
 
 
@@ -1051,30 +1049,6 @@ void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
             doIK(T);
         }
     }
-}
-
-
-void EditableSceneBodyImpl::onIKRotationStarted()
-{
-    initializeIK();
-}
-
-
-void EditableSceneBodyImpl::onIKRotationDragged()
-{
-    doIK(rotationDragger->draggedPosition());
-}
-
-
-void EditableSceneBodyImpl::onIKTranslationStarted()
-{
-    initializeIK();
-}
-
-
-void EditableSceneBodyImpl::onIKTranslationDragged()
-{
-    doIK(translationDragger->draggedPosition());
 }
 
 

@@ -11,14 +11,13 @@
 #include <boost/bind.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
 
 CollisionDetectorPtr factory()
 {
-    return make_shared<AISTCollisionDetector>();
+    return boost::make_shared<AISTCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -35,7 +34,7 @@ public:
     ColdetModelEx() { isStatic = false; }
     bool isStatic;
 };
-typedef shared_ptr<ColdetModelEx> ColdetModelExPtr;
+typedef boost::shared_ptr<ColdetModelEx> ColdetModelExPtr;
         
 
 class ColdetModelPairEx : public ColdetModelPair
@@ -53,7 +52,7 @@ public:
     const int id1() const { return id1_; }
     const int id2() const { return id2_; }
 };
-typedef shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
+typedef boost::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 
 typedef map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
@@ -117,7 +116,7 @@ const char* AISTCollisionDetector::name() const
 
 CollisionDetectorPtr AISTCollisionDetector::clone() const
 {
-    return make_shared<AISTCollisionDetector>();
+    return boost::make_shared<AISTCollisionDetector>();
 }
 
         
@@ -147,8 +146,8 @@ int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
     bool isValid = false;
 
     if(geometry){
-        ColdetModelExPtr model = make_shared<ColdetModelEx>();
-        if(meshExtractor->extract(geometry, bind(&AISTCollisionDetectorImpl::addMesh, this, model.get()))){
+        ColdetModelExPtr model = boost::make_shared<ColdetModelEx>();
+        if(meshExtractor->extract(geometry, boost::bind(&AISTCollisionDetectorImpl::addMesh, this, model.get()))){
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
@@ -243,7 +242,7 @@ bool AISTCollisionDetectorImpl::makeReady()
                 if(model2){
                     if(!model1->isStatic || !model2->isStatic){
                         if(nonInterfarencePairs.find(IdPair<>(i, j)) == nonInterfarencePairs.end()){
-                            modelPairs.push_back(make_shared<ColdetModelPairEx>(model1, i, model2, j));
+                            modelPairs.push_back(boost::make_shared<ColdetModelPairEx>(model1, i, model2, j));
                         }
                     }
                 }

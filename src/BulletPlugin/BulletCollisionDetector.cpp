@@ -24,7 +24,7 @@ const bool useHACD = true;
 
 CollisionDetectorPtr factory()
 {
-    return make_shared<BulletCollisionDetector>();
+    return boost::make_shared<BulletCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -47,7 +47,7 @@ public :
     btTriangleMesh* trimesh;
     bool isStatic;
 };
-typedef shared_ptr<GeometryEx> GeometryExPtr;
+typedef boost::shared_ptr<GeometryEx> GeometryExPtr;
 
 GeometryEx::GeometryEx()
 {
@@ -132,7 +132,7 @@ const char* BulletCollisionDetector::name() const
 
 CollisionDetectorPtr BulletCollisionDetector::clone() const
 {
-    return make_shared<BulletCollisionDetector>();
+    return boost::make_shared<BulletCollisionDetector>();
 }
 
 
@@ -188,8 +188,8 @@ int BulletCollisionDetectorImpl::addGeometry(SgNode* geometry)
     const int index = models.size();
 
     if(geometry){
-        GeometryExPtr model =  make_shared<GeometryEx>();
-        if(meshExtractor->extract(geometry, bind(&BulletCollisionDetectorImpl::addMesh, this, model.get()))){
+        GeometryExPtr model =  boost::make_shared<GeometryEx>();
+        if(meshExtractor->extract(geometry, boost::bind(&BulletCollisionDetectorImpl::addMesh, this, model.get()))){
             if(!useHACD){
                 if(!model->vertices.empty()){
                     model->meshData = new btTriangleIndexVertexArray( model->triangles.size()/3, &model->triangles[0], sizeof(int)*3,

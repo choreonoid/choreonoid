@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_MULTI_SE3_SEQ_GRAPH_VIEW_H_INCLUDED
-#define CNOID_BASE_MULTI_SE3_SEQ_GRAPH_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_MULTI_SE3_SEQ_GRAPH_VIEW_H
+#define CNOID_BASE_MULTI_SE3_SEQ_GRAPH_VIEW_H
 
 #include "GraphViewBase.h"
 #include "MultiSE3SeqItem.h"

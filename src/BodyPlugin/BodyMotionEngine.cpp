@@ -14,7 +14,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -69,11 +68,11 @@ public:
             
             connections.add(
                 motionItem->sigUpdated().connect(
-                    bind(&BodyMotionEngine::notifyUpdate, self)));
+                    boost::bind(&BodyMotionEngine::notifyUpdate, self)));
 
             connections.add(
                 motionItem->sigExtraSeqItemsChanged().connect(
-                    bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
+                    boost::bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
         }
 
 
@@ -164,7 +163,7 @@ TimeSyncItemEnginePtr createBodyMotionEngine(Item* sourceItem)
     if(motionItem){
         BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
         if(bodyItem){
-            return make_shared<BodyMotionEngine>(bodyItem, motionItem);
+            return boost::make_shared<BodyMotionEngine>(bodyItem, motionItem);
         }
     }
     return TimeSyncItemEnginePtr();

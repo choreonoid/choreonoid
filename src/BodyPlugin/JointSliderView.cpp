@@ -25,7 +25,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -37,7 +36,7 @@ const double r = 1000000.0;
 
 namespace cnoid {
 
-class JointSliderViewImpl : public boost::signals::trackable, public QObject
+class JointSliderViewImpl : public QObject
 {
 public:
     JointSliderViewImpl(JointSliderView* self);
@@ -49,11 +48,13 @@ public:
     vector<SliderUnit*> jointSliders;
     BodyItemPtr currentBodyItem;
             
-    signals::connection connectionOfKinematicStateChanged;
+    boost::signals::connection connectionOfKinematicStateChanged;
+    boost::signals::connection connectionOfCurrentBodyItemChanged;
+    
     LazyCaller updateJointPositionsLater;
         
-    signals::connection connectionOfBodyItemDetachedFromRoot;
-    signals::connection connectionOfLinkSelectionChanged;
+    boost::signals::connection connectionOfBodyItemDetachedFromRoot;
+    boost::signals::connection connectionOfLinkSelectionChanged;
 
     ToggleToolButton showAllToggle;
     ToggleToolButton jointIdToggle;
@@ -86,8 +87,8 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
-}
 
+}
 
 namespace {
     
@@ -120,12 +121,12 @@ public:
         upperLimitLabel.setAlignment(Qt::AlignCenter);
             
         spin.setAlignment(Qt::AlignCenter);
-        spin.sigValueChanged().connect(bind(&SliderUnit::onSpinValueChanged, this, _1));
+        spin.sigValueChanged().connect(boost::bind(&SliderUnit::onSpinValueChanged, this, _1));
             
         slider.setSingleStep(0.1 * r);
         slider.setProperty("JointSliderIndex", index);
         slider.installEventFilter(viewImpl);
-        slider.sigValueChanged().connect(bind(&SliderUnit::onSliderValueChanged, this, _1));
+        slider.sigValueChanged().connect(boost::bind(&SliderUnit::onSliderValueChanged, this, _1));
     }
 
     void initialize(Link* joint){
@@ -253,6 +254,8 @@ JointSliderView::JointSliderView()
 JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     self(self)
 {
+    using boost::bind;
+    
     self->setDefaultLayoutArea(View::CENTER);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
@@ -355,8 +358,9 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     updateJointPositionsLater.setFunction(bind(&JointSliderViewImpl::updateJointPositions, this));
     updateJointPositionsLater.setPriority(LazyCaller::PRIORITY_LOW);
 
-    BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-        bind(&JointSliderViewImpl::onCurrentBodyItemChanged, this, _1));
+    connectionOfCurrentBodyItemChanged = 
+        BodyBar::instance()->sigCurrentBodyItemChanged().connect(
+            bind(&JointSliderViewImpl::onCurrentBodyItemChanged, this, _1));
 
     self->sigActivated().connect(bind(&JointSliderViewImpl::enableConnectionToSigKinematicStateChanged, this, true));
     self->sigDeactivated().connect(bind(&JointSliderViewImpl::enableConnectionToSigKinematicStateChanged, this, false));
@@ -374,6 +378,8 @@ JointSliderViewImpl::~JointSliderViewImpl()
     for(size_t i=0; i < jointSliders.size(); ++i){
         delete jointSliders[i];
     }
+    connectionOfKinematicStateChanged.disconnect();
+    connectionOfCurrentBodyItemChanged.disconnect();
 }
 
 
@@ -388,7 +394,7 @@ void JointSliderViewImpl::updateSliderGrid()
         int numJoints = body->numJoints();
         
         if(!showAllToggle.isChecked()){
-            const dynamic_bitset<>& linkSelection =
+            const boost::dynamic_bitset<>& linkSelection =
                 LinkSelectionView::mainInstance()->getLinkSelection(currentBodyItem);
             activeJointIds.clear();
             for(int i=0; i < numJoints; ++i){
@@ -485,7 +491,7 @@ void JointSliderViewImpl::initializeSliders(int num)
 
 void JointSliderViewImpl::onNumColumnsChanged(int n)
 {
-    callLater(bind(&JointSliderViewImpl::updateSliderGrid, this));
+    callLater(boost::bind(&JointSliderViewImpl::updateSliderGrid, this));
 }
 
 
@@ -574,7 +580,7 @@ void JointSliderViewImpl::onCurrentBodyItemChanged(BodyItem* bodyItem)
     if(currentBodyItem){
         connectionOfLinkSelectionChanged =
             LinkSelectionView::mainInstance()->sigSelectionChanged(bodyItem).connect
-            (bind(&JointSliderViewImpl::updateSliderGrid, this));
+            (boost::bind(&JointSliderViewImpl::updateSliderGrid, this));
     }
     
     updateSliderGrid();
@@ -590,7 +596,7 @@ void JointSliderViewImpl::enableConnectionToSigKinematicStateChanged(bool on)
     if(on && self->isActive() && currentBodyItem){
         connectionOfKinematicStateChanged = currentBodyItem->sigKinematicStateChanged().connect(
             //bind(&JointSliderViewImpl::updateJointPositions, this));
-            bind(updateJointPositionsLater));
+            boost::bind(updateJointPositionsLater));
         updateJointPositions();
     }
 }

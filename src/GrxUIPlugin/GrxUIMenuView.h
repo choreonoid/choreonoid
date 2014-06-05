@@ -29,7 +29,8 @@ public:
 
     static QMessageBox::StandardButton waitInputSelect(const std::string& message);
     static bool waitInputConfirm(const std::string& message);
-        
+    static std::string waitInputMessage(const std::string& message);
+    
 private:
     friend class GrxUIMenuViewImpl;
     GrxUIMenuViewImpl* impl;

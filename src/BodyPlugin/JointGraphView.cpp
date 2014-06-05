@@ -12,7 +12,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -34,7 +33,7 @@ JointGraphView::JointGraphView()
 
     itemTreeViewConnection = 
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            bind(&JointGraphView::onItemSelectionChanged, this, _1));
+            boost::bind(&JointGraphView::onItemSelectionChanged, this, _1));
 
     linkSelection = LinkSelectionView::mainInstance();
 }
@@ -85,10 +84,10 @@ void JointGraphView::onItemSelectionChanged(const ItemList<MultiValueSeqItem>& i
             it->bodyItem = bodyItem;
 
             it->connections.add(it->item->sigUpdated().connect(
-                                    bind(&JointGraphView::onDataItemUpdated, this, it)));
+                                    boost::bind(&JointGraphView::onDataItemUpdated, this, it)));
 
             it->connections.add(it->item->sigDetachedFromRoot().connect(
-                                    bind(&JointGraphView::onDataItemDetachedFromRoot, this, it)));
+                                    boost::bind(&JointGraphView::onDataItemDetachedFromRoot, this, it)));
         }
     }
 
@@ -120,11 +119,11 @@ void JointGraphView::updateBodyItems()
 
             bodyItemConnections.add(
                 linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    bind(&JointGraphView::setupGraphWidget, this)));
+                    boost::bind(&JointGraphView::setupGraphWidget, this)));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDetachedFromRoot().connect(
-                    bind(&JointGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
+                    boost::bind(&JointGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
         }
     }
 }
@@ -183,9 +182,9 @@ void JointGraphView::addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIt
                 
     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
     handler->setDataRequestCallback(
-        bind(&JointGraphView::onDataRequest, this, itemInfoIter, joint->jointId(), _1, _2, _3));
+        boost::bind(&JointGraphView::onDataRequest, this, itemInfoIter, joint->jointId(), _1, _2, _3));
     handler->setDataModifiedCallback(
-        bind(&JointGraphView::onDataModified, this, itemInfoIter, joint->jointId(), _1, _2, _3));
+        boost::bind(&JointGraphView::onDataModified, this, itemInfoIter, joint->jointId(), _1, _2, _3));
                 
     graph.addDataHandler(handler);
     itemInfoIter->handlers.push_back(handler);

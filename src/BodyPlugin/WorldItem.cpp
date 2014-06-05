@@ -22,7 +22,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -54,7 +53,7 @@ public:
 
     ItemList<BodyItem> bodyItems;
 
-    signals::connection sigItemTreeChangedConnection;
+    boost::signals::connection sigItemTreeChangedConnection;
     ConnectionSet sigKinematicStateChangedConnections;
 
     bool isCollisionDetectionEnabled;
@@ -66,7 +65,7 @@ public:
     Selection collisionDetectorType;
     CollisionDetectorPtr collisionDetector;
     vector<BodyItemInfoMap::iterator> geometryIdToBodyInfoMap;
-    shared_ptr< vector<CollisionLinkPairPtr> > collisions;
+    boost::shared_ptr< vector<CollisionLinkPairPtr> > collisions;
     boost::signal<void()> sigCollisionsUpdated;
 
     SceneCollisionPtr sceneCollision;
@@ -99,7 +98,7 @@ WorldItem::WorldItem()
 WorldItemImpl::WorldItemImpl(WorldItem* self)
     : self(self),
       os(MessageView::mainInstance()->cout()),
-      updateCollisionsLater(bind(&WorldItemImpl::updateCollisions, this, false))
+      updateCollisionsLater(boost::bind(&WorldItemImpl::updateCollisions, this, false))
 {
     const int n = CollisionDetector::numFactories();
     collisionDetectorType.resize(n);
@@ -123,7 +122,7 @@ WorldItem::WorldItem(const WorldItem& org)
 WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
     : self(self),
       os(org.os),
-      updateCollisionsLater(bind(&WorldItemImpl::updateCollisions, this, false))
+      updateCollisionsLater(boost::bind(&WorldItemImpl::updateCollisions, this, false))
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
@@ -136,7 +135,7 @@ void WorldItemImpl::init()
 {
     kinematicsBar = KinematicsBar::instance();
     collisionDetector = CollisionDetector::create(collisionDetectorType.selectedIndex());
-    collisions = make_shared< vector<CollisionLinkPairPtr> >();
+    collisions = boost::make_shared< vector<CollisionLinkPairPtr> >();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
 }
@@ -222,7 +221,7 @@ void WorldItemImpl::enableCollisionDetection(bool on)
         updateCollisionDetector(true);
         sigItemTreeChangedConnection =
             RootItem::mainInstance()->sigTreeChanged().connect(
-                bind(&WorldItemImpl::updateCollisionDetector, this, false));
+                boost::bind(&WorldItemImpl::updateCollisionDetector, this, false));
         changed = true;
     }
 
@@ -298,7 +297,7 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 
         sigKinematicStateChangedConnections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
+                boost::bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
     }
 
     collisionDetector->makeReady();
@@ -351,7 +350,7 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 
     collisions->clear();
 
-    collisionDetector->detectCollisions(bind(&WorldItemImpl::extractCollisions, this, _1));
+    collisionDetector->detectCollisions(boost::bind(&WorldItemImpl::extractCollisions, this, _1));
 
     sceneCollision->setDirty();
 
@@ -367,7 +366,7 @@ void WorldItemImpl::updateCollisions(bool forceUpdate)
 
 void WorldItemImpl::extractCollisions(const CollisionPair& collisionPair)
 {
-    CollisionLinkPairPtr collisionLinkPair = make_shared<CollisionLinkPair>();
+    CollisionLinkPairPtr collisionLinkPair = boost::make_shared<CollisionLinkPair>();
     collisionLinkPair->collisions = collisionPair.collisions;
     BodyItem* bodyItem = 0;
     for(int i=0; i < 2; ++i){
@@ -410,9 +409,9 @@ ItemPtr WorldItem::doDuplicate() const
 void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Collision detection"), isCollisionDetectionEnabled(),
-                bind(&WorldItem::enableCollisionDetection, this, _1), true);
+                boost::bind(&WorldItem::enableCollisionDetection, this, _1), true);
     putProperty(_("Collision detector"), impl->collisionDetectorType,
-                bind(&WorldItemImpl::selectCollisionDetector, impl, _1));
+                boost::bind(&WorldItemImpl::selectCollisionDetector, impl, _1));
 }
 
 
@@ -431,7 +430,7 @@ bool WorldItem::restore(const Archive& archive)
         selectCollisionDetector(symbol);
     }
     if(archive.get("collisionDetection", false)){
-        archive.addPostProcess(bind(&WorldItemImpl::enableCollisionDetection, impl, true));
+        archive.addPostProcess(boost::bind(&WorldItemImpl::enableCollisionDetection, impl, true));
     }
     return true;
 }

@@ -7,7 +7,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -31,7 +30,7 @@ RangeSensor::RangeSensor()
 
     frameRate_ = 10.0;
 
-    rangeData_ = make_shared<RangeData>();
+    rangeData_ = boost::make_shared<RangeData>();
 }
 
 
@@ -49,7 +48,7 @@ void RangeSensor::copyStateFrom(const RangeSensor& other)
     if(other.isRangeDataSetAsState_){
         rangeData_ = other.rangeData_;
     } else {
-        rangeData_ = make_shared<RangeData>();
+        rangeData_ = boost::make_shared<RangeData>();
     }
 }
 
@@ -178,7 +177,7 @@ void RangeSensor::setFrameRate(double r)
 RangeSensor::RangeData& RangeSensor::rangeData()
 {
     if(rangeData_.use_count() > 1){
-        rangeData_ = make_shared<RangeData>(*rangeData_);
+        rangeData_ = boost::make_shared<RangeData>(*rangeData_);
     }
     return *rangeData_;
 }
@@ -186,7 +185,7 @@ RangeSensor::RangeData& RangeSensor::rangeData()
 
 RangeSensor::RangeData& RangeSensor::newRangeData()
 {
-    rangeData_ = make_shared<RangeData>();
+    rangeData_ = boost::make_shared<RangeData>();
     return *rangeData_;
 }
 
@@ -196,7 +195,7 @@ void RangeSensor::setRangeData(boost::shared_ptr<RangeData>& data)
     if(data.use_count() == 1){
         rangeData_ = data;
     } else {
-        rangeData_ = make_shared<RangeData>(*data);
+        rangeData_ = boost::make_shared<RangeData>(*data);
     }
     data.reset();
 }
@@ -207,7 +206,7 @@ void RangeSensor::clearState()
     if(rangeData_.use_count() == 1){
         rangeData_->clear();
     } else {
-        rangeData_ = make_shared<RangeData>();
+        rangeData_ = boost::make_shared<RangeData>();
     }
 }
 

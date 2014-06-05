@@ -41,7 +41,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
+using boost::format;
 using namespace boost::algorithm;
 using namespace boost::uuids;
 using namespace irr::io;
@@ -1451,7 +1452,7 @@ void DaeParserImpl::array(string& value, DaeVectorXArrayPtr array)
          iter != split_iterator<string::iterator>(); 
          iter++)
         {
-            if ((copy_range<std::string>(*iter)).size() <= 0) {     
+            if ((boost::copy_range<std::string>(*iter)).size() <= 0) {     
                 throwException(line(), (format(_("[%1%]invalid value:%2%")) % line() % value).str());
             }
             try {
@@ -2526,16 +2527,16 @@ void DaeParserImpl::index(string &value, DaeVectorXArrayPtr index, int offset, i
     trim(value);
     index->clear();
     for (split_iterator<string::iterator> iter  = make_split_iterator(value, token_finder(is_space(), token_compress_on));
-         iter != algorithm::split_iterator<string::iterator>(); 
+         iter != split_iterator<string::iterator>(); 
          iter++)
         {
-            if ((copy_range<std::string>(*iter)).size() <= 0) {     
-                throwException(line(), (format(_("[%1%]invalid value:%2%")) % line() % copy_range<std::string>(*iter)).str());
+            if ((boost::copy_range<std::string>(*iter)).size() <= 0) {     
+                throwException(line(), (format(_("[%1%]invalid value:%2%")) % line() % boost::copy_range<std::string>(*iter)).str());
             }
             for (int n = 0; n < offset; n++) {
                 // It will skip the offset of the first
                 iter++;
-                if (iter == algorithm::split_iterator<string::iterator>()) {
+                if (iter == split_iterator<string::iterator>()) {
                     *os << ((format(_("[%1%]invalid offset(before token):%2%")) % line() % offset).str()) << endl;
                     return;
                 }
@@ -2544,7 +2545,7 @@ void DaeParserImpl::index(string &value, DaeVectorXArrayPtr index, int offset, i
             for (int n = 0; n < (offsetMaximum - offset); n++) {
                 // It will skip the rest of the offset
                 iter++;
-                if (iter == algorithm::split_iterator<string::iterator>()) {
+                if (iter == split_iterator<string::iterator>()) {
                     return; // it finish
                 }
             }
@@ -2765,7 +2766,6 @@ void DaeParserImpl::setNode(DaeNodePtr extNode, SgGroup* sgGroup, bool createTra
     if (sgTransParent) {
         static_cast<SgObject*>(sgTransParent)->setName(extNode->name);
     }
-    tie(sgTransParent, sgTransChild);
     sgGroup->addChild(sgTransParent);
 
     BOOST_FOREACH(GEOMETRY_PAIR g, extNode->geometries) {
@@ -2864,7 +2864,6 @@ void DaeParserImpl::setRigid(DaeNodePtr extNode, SgGroup* sgGroup, SgGroup* sgTr
                     sgTransParent->addChild(sgShape);
                 }
 
-                tie(sgTransParent, sgTransChild);
                 sgGroup->addChild(sgTransParent);
             }
         }

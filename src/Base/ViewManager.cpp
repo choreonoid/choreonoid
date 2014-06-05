@@ -19,7 +19,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -30,10 +29,10 @@ Menu* createViewMenu = 0;
 Menu* deleteViewMenu = 0;
 
 class ViewInfo;
-typedef shared_ptr<ViewInfo> ViewInfoPtr;
+typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
 
 class InstanceInfo;
-typedef shared_ptr<InstanceInfo> InstanceInfoPtr;
+typedef boost::shared_ptr<InstanceInfo> InstanceInfoPtr;
 typedef list<InstanceInfoPtr> InstanceInfoList;
 
 class InstanceInfo {
@@ -93,7 +92,7 @@ public:
 
     View* createView() {
         View* view = factory->create();
-        InstanceInfoPtr instance = make_shared<InstanceInfo>(this, view);
+        InstanceInfoPtr instance = boost::make_shared<InstanceInfo>(this, view);
             
         instances.push_back(instance);
         instance->iterInViewInfo = instances.end();
@@ -161,7 +160,7 @@ typedef std::map<const type_info*, ViewInfoPtr, compare_type_info> TypeToViewInf
 TypeToViewInfoMap typeToViewInfoMap;
 
 typedef map<string, ViewInfoPtr> ClassNameToViewInfoMap;
-typedef shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
+typedef boost::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
 
 typedef map<string, ClassNameToViewInfoMapPtr> ModuleNameToClassNameToViewInfoMap;
 ModuleNameToClassNameToViewInfoMap moduleNameToClassNameToViewInfoMap;
@@ -317,7 +316,7 @@ void onViewMenuAboutToShow(Menu* menu)
     if(menu == deleteViewMenu){
         Action* action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
-        action->sigTriggered().connect(bind(deleteAllInvisibleViews));
+        action->sigTriggered().connect(boost::bind(deleteAllInvisibleViews));
         menu->addAction(action);
         needSeparator = true;
     }
@@ -344,7 +343,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->setCheckable(true);
-                    action->sigToggled().connect(bind(onShowViewToggled, viewInfo, view, _1));
+                    action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
                     menu->addAction(action);
                 } else {
                     for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
@@ -354,7 +353,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
                         action->setChecked(view->isManagedByMainWindow());
-                        action->sigToggled().connect(bind(onShowViewToggled, viewInfo, view, _1));
+                        action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
                         menu->addAction(action);
                     }
                 }
@@ -363,7 +362,7 @@ void onViewMenuAboutToShow(Menu* menu)
                    (viewInfo->itype == ViewManager::MULTI_DEFAULT || viewInfo->itype == ViewManager::MULTI_OPTIONAL)){
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
-                    action->sigTriggered().connect(bind(onCreateViewTriggered, viewInfo));
+                    action->sigTriggered().connect(boost::bind(onCreateViewTriggered, viewInfo));
                     menu->addAction(action);
                 }
             } else if(menu == deleteViewMenu){
@@ -375,7 +374,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     InstanceInfoPtr& instance = (*p++);
                     Action* action = new Action(menu);
                     action->setText(instance->view->windowTitle());
-                    action->sigTriggered().connect(bind(onDeleteViewTriggered, instance));
+                    action->sigTriggered().connect(boost::bind(onDeleteViewTriggered, instance));
                     menu->addAction(action);
                 }
             }
@@ -397,17 +396,17 @@ void ViewManager::initializeClass(ExtensionManager* ext)
 
         QAction* showViewAction = mm.findItem("Show View");
         showViewMenu = new Menu(viewMenu);
-        showViewMenu->sigAboutToShow().connect(bind(onViewMenuAboutToShow, showViewMenu));
+        showViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, showViewMenu));
         showViewAction->setMenu(showViewMenu);
 
         QAction* createViewAction = mm.setCurrent(viewMenu).findItem("Create View");
         createViewMenu = new Menu(viewMenu);
-        createViewMenu->sigAboutToShow().connect(bind(onViewMenuAboutToShow, createViewMenu));
+        createViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, createViewMenu));
         createViewAction->setMenu(createViewMenu);
 
         QAction* deleteViewAction = mm.setCurrent(viewMenu).findItem("Delete View");
         deleteViewMenu = new Menu(viewMenu);
-        deleteViewMenu->sigAboutToShow().connect(bind(onViewMenuAboutToShow, deleteViewMenu));
+        deleteViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, deleteViewMenu));
         deleteViewAction->setMenu(deleteViewMenu);
         
         initialized = true;
@@ -426,7 +425,7 @@ ViewManagerImpl::ViewManagerImpl(ExtensionManager* ext)
       textDomain(ext->textDomain()),
       menuManager(ext->menuManager())
 {
-    classNameToViewInfoMap = make_shared<ClassNameToViewInfoMap>();
+    classNameToViewInfoMap = boost::make_shared<ClassNameToViewInfoMap>();
     moduleNameToClassNameToViewInfoMap[moduleName] = classNameToViewInfoMap;
 }
 
@@ -462,7 +461,7 @@ View* ViewManager::registerClassSub
 (const type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
  ViewManager::InstantiationType itype, FactoryBase* factory)
 {
-    ViewInfoPtr info = make_shared<ViewInfo>(
+    ViewInfoPtr info = boost::make_shared<ViewInfo>(
         impl, view_type_info, className, defaultInstanceName, impl->textDomain, itype, factory);
     
     (*impl->classNameToViewInfoMap)[className] = info;

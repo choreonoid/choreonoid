@@ -26,7 +26,7 @@ public:
     enum Action {
         NONE = 0,
         ADDED = 1 << 0,
-        REMOVED = 1 << 1, // about to be removed
+        REMOVED = 1 << 1,
         BBOX_UPDATED = 1 << 2,
         MODIFIED = 1 << 3
     };
@@ -103,12 +103,12 @@ public:
         transferUpdate(update);
     }
 
-    void addParent(SgObject* node);
-    void addParent(SgObject* node, SgUpdate& update);
-    void removeParent(SgObject* node);
+    void addParent(SgObject* parent, bool doNotify = false);
+    void removeParent(SgObject* parent);
     int numParents() const { return parents.size(); }
     bool hasParents() const { return !parents.empty(); }
 
+public:
     const_parentIter parentBegin() const { return parents.begin(); }
     const_parentIter parentEnd() const { return parents.end(); }
     
@@ -205,6 +205,7 @@ public:
 
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
+    void addChildOnce(SgNode* node, bool doNotify = false);
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
     void copyChildren(SgGroup* group, bool doNotify = false);
@@ -229,6 +230,7 @@ protected:
 private:
     Container children;
     static void throwTypeMismatchError();
+    iterator removeChild(iterator childIter, bool doNotify);    
 };
 
 typedef ref_ptr<SgGroup> SgGroupPtr;

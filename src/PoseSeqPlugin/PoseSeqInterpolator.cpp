@@ -962,9 +962,9 @@ void PSIImpl::setPoseSeq(PoseSeqPtr seq)
 
     // for auto update mode (not implemented yet)
     poseSeqConnections = seq->connectSignalSet(
-        bind(&PSIImpl::onPoseInserted, this, _1),
-        bind(&PSIImpl::onPoseRemoving, this, _1, _2),
-        bind(&PSIImpl::onPoseModified, this, _1));
+        boost::bind(&PSIImpl::onPoseInserted, this, _1),
+        boost::bind(&PSIImpl::onPoseRemoving, this, _1, _2),
+        boost::bind(&PSIImpl::onPoseModified, this, _1));
     
     invalidateCurrentInterpolation();
     needUpdate = true;

@@ -10,7 +10,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -74,7 +73,7 @@ void ColdetModel::initialize()
 
 ColdetModelPtr ColdetModel::clone() const
 {
-    return make_shared<ColdetModel>(*this);
+    return boost::make_shared<ColdetModel>(*this);
 }
 
 

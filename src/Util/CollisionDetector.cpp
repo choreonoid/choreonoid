@@ -7,7 +7,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -35,7 +34,7 @@ class NullCollisionDetector : public CollisionDetector
 public:
     NullCollisionDetector() { numGeometries_ = 0; }
     virtual const char* name() const { return "NullCollisionDetector"; }
-    virtual CollisionDetectorPtr clone() const { return make_shared<NullCollisionDetector>(); }
+    virtual CollisionDetectorPtr clone() const { return boost::make_shared<NullCollisionDetector>(); }
     virtual bool enableGeometryCache(bool on) { return true; }
     virtual void clearGeometryCache(SgNodePtr geometry) { }
     virtual void clearAllGeometryCaches() { }
@@ -54,7 +53,7 @@ public:
 
 CollisionDetectorPtr factory()
 {
-    return make_shared<NullCollisionDetector>();
+    return boost::make_shared<NullCollisionDetector>();
 }
 
 struct FactoryRegistration

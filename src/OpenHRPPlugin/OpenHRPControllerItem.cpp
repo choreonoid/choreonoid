@@ -129,7 +129,7 @@ bool OpenHRPControllerItem::start(const Target& target)
                     if(serverReady){
                         if(!signalReadyStandardOutputConnected){
                             controllerServerProcess.sigReadyReadStandardOutput().connect(
-                                bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
+                                boost::bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
                             signalReadyStandardOutputConnected = true;
                         }
                         break;
@@ -229,9 +229,9 @@ void OpenHRPControllerItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     
     putProperty(_("Controller server name"), controllerServerName,
-                bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
+                boost::bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
     putProperty(_("Controller server command"), controllerServerCommand,
-                bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
+                boost::bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
 }
 
 

@@ -16,7 +16,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -49,7 +48,7 @@ public:
     vector< vector<int> > extraStateItemMap;
     vector<ExtraBodyStateAccessor::Value> extraState;
 
-    signals::connection bodyItemChangeConnection;
+    boost::signals::connection bodyItemChangeConnection;
     ConnectionSet stateConnections;
 
     BodyStateViewImpl(BodyStateView* self);
@@ -100,8 +99,8 @@ BodyStateViewImpl::BodyStateViewImpl(BodyStateView* self)
     vbox->addWidget(&stateTreeWidget);
     self->setLayout(vbox);
 
-    self->sigActivated().connect(bind(&BodyStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(bind(&BodyStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(boost::bind(&BodyStateViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(boost::bind(&BodyStateViewImpl::onActivated, this ,false));
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -140,7 +139,7 @@ void BodyStateViewImpl::onActivated(bool on)
 
         bodyItemChangeConnection =
             bodyBar->sigCurrentBodyItemChanged().connect(
-                bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
+                boost::bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
     }
 }
 
@@ -182,7 +181,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
             }
             stateConnections.add(
                 device->sigStateChanged().connect(
-                    bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
+                    boost::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
         }
 
         vector<string> names;
@@ -204,7 +203,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
                 }
                 stateConnections.add(
                     accessor.sigStateChanged().connect(
-                        bind(&BodyStateViewImpl::updateExtraStates, this)));
+                        boost::bind(&BodyStateViewImpl::updateExtraStates, this)));
             }
             extraStateItemMap.push_back(itemMap);
         }

@@ -17,8 +17,10 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::get;
+using boost::dynamic_pointer_cast;
 
 namespace {
 
@@ -372,13 +374,13 @@ public:
     VRMLParserImpl(VRMLParser* self);
     VRMLParser* self;
 
-    shared_ptr<EasyScanner> topScanner;
+    boost::shared_ptr<EasyScanner> topScanner;
     EasyScanner* scanner; // current one
     VRMLProtoInstancePtr currentProtoInstance;
 
     bool protoInstanceActualNodeExtractionMode;
 
-    typedef map<VRMLProto*, shared_ptr<EasyScanner> > ProtoToEntityScannerMap;
+    typedef map<VRMLProto*, boost::shared_ptr<EasyScanner> > ProtoToEntityScannerMap;
     ProtoToEntityScannerMap protoToEntityScannerMap;
 
     typedef map<string, VRMLNodePtr> TDefNodeMap;
@@ -853,7 +855,7 @@ VRMLNodePtr VRMLParserImpl::readInlineNode(VRMLNodeCategory nodeCategory)
         VRMLInlinePtr inlineNode = new VRMLInline();
         for(size_t i=0; i < inlineUrls.size(); ++i){
             string url(fromUTF8(inlineUrls[i]));
-            if(algorithm::iends_with(url, "wrl")){
+            if(boost::algorithm::iends_with(url, "wrl")){
                 inlineNode->children.push_back(newInlineSource(url));
             } else {
                 inlineNode->children.push_back(createAnotherFormatFileNode(url));
@@ -1017,7 +1019,7 @@ VRMLProtoPtr VRMLParserImpl::defineProto()
         }
     }
 
-    shared_ptr<EasyScanner> entityScanner = make_shared<EasyScanner>(*scanner, false);
+    boost::shared_ptr<EasyScanner> entityScanner = boost::make_shared<EasyScanner>(*scanner, false);
     entityScanner->setText(begin, scanner->text - begin - 1);
     entityScanner->setLineNumberOffset(scanner->lineNumber);
 
@@ -2500,7 +2502,7 @@ void VRMLParserImpl::init()
     currentProtoInstance = 0;
     protoInstanceActualNodeExtractionMode = true;
 
-    topScanner = make_shared<EasyScanner>();
+    topScanner = boost::make_shared<EasyScanner>();
     scanner = topScanner.get();
     setSymbols();
 }

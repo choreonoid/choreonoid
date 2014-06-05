@@ -27,8 +27,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 
 #ifdef Q_OS_WIN32
@@ -79,7 +79,7 @@ public:
     QRegExp pluginNamePattern;
 
     struct PluginInfo;
-    typedef shared_ptr<PluginInfo> PluginInfoPtr;
+    typedef boost::shared_ptr<PluginInfo> PluginInfoPtr;
     typedef map<std::string, PluginInfoPtr> PluginMap;
 
     struct PluginInfo {
@@ -193,14 +193,14 @@ PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
     MappingPtr config = AppConfig::archive()->openMapping("PluginManager");
 
     // for the base module
-    PluginInfoPtr info = make_shared<PluginInfo>();
+    PluginInfoPtr info = boost::make_shared<PluginInfo>();
     info->name = "Base";
     nameToPluginInfoMap.insert(make_pair(string("Base"), info));
 
     MenuManager& mm = ext->menuManager();
     mm.setPath("/File");
     mm.addItem(_("Load Plugin"))
-        ->sigTriggered().connect(bind(&PluginManagerImpl::onLoadPluginTriggered, this));
+        ->sigTriggered().connect(boost::bind(&PluginManagerImpl::onLoadPluginTriggered, this));
 
     startupLoadingCheck = mm.addCheckItem(_("Startup Plugin Loading"));
     startupLoadingCheck->setChecked(config->get("startupPluginLoading", true));
@@ -273,9 +273,9 @@ void PluginManager::scanPluginFilesInPathList(const std::string& pathList)
 
 void PluginManagerImpl::scanPluginFilesInDefaultPath(const std::string& pathList)
 {
-    char_separator<char> sep(PATH_DELIMITER);
-    tokenizer< char_separator<char> > paths(pathList, sep);
-    tokenizer< char_separator<char> >::iterator p;
+    boost::char_separator<char> sep(PATH_DELIMITER);
+    boost::tokenizer< boost::char_separator<char> > paths(pathList, sep);
+    boost::tokenizer< boost::char_separator<char> >::iterator p;
     for(p = paths.begin(); p != paths.end(); ++p){
         const string& path = *p;
         scanPluginFiles(path, false);
@@ -336,7 +336,7 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
             if(pluginNamePattern.exactMatch(filename)){
                 PluginMap::iterator p = pathToPluginInfoMap.find(pathString);
                 if(p == pathToPluginInfoMap.end()){
-                    PluginInfoPtr info = make_shared<PluginInfo>();
+                    PluginInfoPtr info = boost::make_shared<PluginInfo>();
                     info->pathString = pathString;
                     allPluginInfos.push_back(info);
                     pathToPluginInfoMap[pathString] = info;
@@ -606,7 +606,7 @@ bool PluginManagerImpl::activatePlugin(int index)
                 info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
                     .addItem(str(fmt(_("About %1% Plugin")) % info->name).c_str())
                     ->sigTriggered().connect(
-                        bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
+                        boost::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
                 
                 
                 // register old names
@@ -748,7 +748,7 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
 
             if(allDependentsFinalized){
                 if(!info->plugin->finalize()){
-                    mv->putln(format(_("Plugin %1% cannot be finalized.")) % info->name);
+                    mv->putln(boost::format(_("Plugin %1% cannot be finalized.")) % info->name);
                     mv->flush();
                 } else {
                     bool isUnloadable = info->plugin->isUnloadable();
@@ -763,7 +763,7 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
 
                     if(isUnloadable){
                         pluginsToUnload.push_back(info);
-                        callLater(bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW);
+                        callLater(boost::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW);
                     }
                 }
             }

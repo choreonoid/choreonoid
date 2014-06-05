@@ -38,8 +38,8 @@ typedef QTime QElapsedTimer;
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
@@ -118,9 +118,9 @@ public:
         
     vector<SimulationBodyImpl*> simBodyImplsToNotifyResult;
     ItemList<SubSimulatorItem> subSimulatorItems;
-    vector< function<void()> > preDynamicsFunctions;
-    vector< function<void()> > midDynamicsFunctions;
-    vector< function<void()> > postDynamicsFunctions;
+    vector< boost::function<void()> > preDynamicsFunctions;
+    vector< boost::function<void()> > midDynamicsFunctions;
+    vector< boost::function<void()> > postDynamicsFunctions;
         
     CollisionDetectorPtr collisionDetector;
         
@@ -224,7 +224,7 @@ public:
             doExecAfterInit = true;
             time = 0.0;
             delay = scriptItem->execDelay();
-            executeLater.setFunction(bind(&ScriptControllerItem::execute, this));
+            executeLater.setFunction(boost::bind(&ScriptControllerItem::execute, this));
         }
         return true;
     }
@@ -270,7 +270,7 @@ public:
         {
             BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
             if(bodyItem){
-                engines.push_back(make_shared<BodyMotionEngine>(bodyItem, motionItem));
+                engines.push_back(boost::make_shared<BodyMotionEngine>(bodyItem, motionItem));
             }
         }
 
@@ -298,7 +298,7 @@ public:
     }
 
     void restore(const Archive& archive) {
-        archive.addPostProcess(bind(&SimulatedMotionEngine::restoreMotionItems, this, ref(archive)));
+        archive.addPostProcess(boost::bind(&SimulatedMotionEngine::restoreMotionItems, this, boost::ref(archive)));
     }
 
     void restoreMotionItems(const Archive& archive) {
@@ -554,7 +554,7 @@ void SimulationBodyImpl::setupDeviceStateRecording()
             prevFlushedDeviceStateInDirectMode[i] = s;
             deviceStateConnections.add(
                 device->sigStateChanged().connect(
-                    bind(&SimulationBodyImpl::onDeviceStateChanged, this, i)));
+                    boost::bind(&SimulationBodyImpl::onDeviceStateChanged, this, i)));
         }
         if(simImpl->isRecordingEnabled){
             deviceStateResult = getOrCreateMultiDeviceStateSeq(*motion);
@@ -775,7 +775,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       itemTreeView(ItemTreeView::instance())
 {
-    flushTimer.sigTimeout().connect(bind(&SimulatorItemImpl::flushResult, this));
+    flushTimer.sigTimeout().connect(boost::bind(&SimulatorItemImpl::flushResult, this));
     
     timeBar = TimeBar::instance();
     isDoingSimulationLoop = false;
@@ -792,7 +792,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     isAllLinkPositionOutputMode = false;
     isDeviceStateOutputEnabled = true;
     
-    motionEngine = make_shared<SimulatedMotionEngine>();
+    motionEngine = boost::make_shared<SimulatedMotionEngine>();
 }
 
 
@@ -1088,14 +1088,14 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
-            controlThread = boost::thread(bind(&SimulatorItemImpl::concurrentControlLoop, this));
+            controlThread = boost::thread(boost::bind(&SimulatorItemImpl::concurrentControlLoop, this));
             isExitingControlLoopRequested = false;
             isControlRequested = false;
             isControlFinished = false;
         }
 
         aboutToQuitConnection.disconnect();
-        aboutToQuitConnection = cnoid::sigAboutToQuit().connect(bind(&SimulatorItemImpl::stopSimulation, this, true));
+        aboutToQuitConnection = cnoid::sigAboutToQuit().connect(boost::bind(&SimulatorItemImpl::stopSimulation, this, true));
 
         if(isRecordingEnabled){
             fillLevelId = timeBar->startFillLevelUpdate();
@@ -1214,7 +1214,7 @@ void SimulatorItemImpl::run()
     }
 
     if(!isWaitingForSimulationToStop){
-        callLater(bind(&SimulatorItemImpl::onSimulationLoopStopped, this));
+        callLater(boost::bind(&SimulatorItemImpl::onSimulationLoopStopped, this));
     }
 }
 
@@ -1502,16 +1502,16 @@ bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
 void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Sync with realtime"), impl->isRealtimeSyncMode,
-                bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
+                boost::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
     putProperty(_("Recording"), impl->isRecordingEnabled, changeProperty(impl->isRecordingEnabled));
     putProperty(_("Time range mode"), impl->timeRangeMode,
-                bind((bool(Selection::*)(int))&Selection::select, &impl->timeRangeMode, _1));
+                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->timeRangeMode, _1));
     putProperty(_("Active control period only"), impl->isActiveControlPeriodOnlyMode,
                 changeProperty(impl->isActiveControlPeriodOnlyMode));
     putProperty(_("Time length"), impl->specifiedTimeLength,
-                bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, _1));
+                boost::bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, _1));
     putProperty(_("All link positions"), impl->isAllLinkPositionOutputMode,
-                bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, _1));
+                boost::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, _1));
     putProperty(_("Device state output"), impl->isDeviceStateOutputEnabled,
                 changeProperty(impl->isDeviceStateOutputEnabled));
     putProperty(_("Controller Threads"), impl->useControllerThreadsProperty,
