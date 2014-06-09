@@ -32,6 +32,8 @@ public:
 
     void setPointSize(double size);
 
+    void setEditable(bool on);
+
     virtual void notifyUpdate();
         
     virtual bool store(Archive& archive);
@@ -47,8 +49,10 @@ private:
     SgPointSetPtr visiblePointSet;
     SgPosTransformPtr topTransform;
     SgInvariantGroupPtr invariant;
+    bool isEditable_;
 
     void initMembers();
+    bool onEditableChanged(bool on);
 };
 
 typedef ref_ptr<PointSetItem> PointSetItemPtr;

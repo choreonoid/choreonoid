@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_PUT_PROPERTY_FUNCTION_H_INCLUDED
-#define CNOID_BASE_PUT_PROPERTY_FUNCTION_H_INCLUDED
+#ifndef CNOID_BASE_PUT_PROPERTY_FUNCTION_H
+#define CNOID_BASE_PUT_PROPERTY_FUNCTION_H
 
 #include <cnoid/Selection>
 #include <boost/function.hpp>
@@ -89,6 +89,7 @@ template<class ValueType>
 ChangeProperty<ValueType> changeProperty(ValueType& variable) {
     return ChangeProperty<ValueType>(variable);
 }
+
 }
 
 #endif

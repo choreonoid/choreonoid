@@ -68,6 +68,7 @@ PointSetItem::PointSetItem()
 {
     topTransform = new SgPosTransform;
     pointSet_ = new SgPointSet;
+    isEditable_ = false;
     initMembers();
 }
 
@@ -77,6 +78,7 @@ PointSetItem::PointSetItem(const PointSetItem& org)
 {
     topTransform = new SgPosTransform(*org.topTransform);
     pointSet_ = new SgPointSet(*org.pointSet_);
+    isEditable_ = org.isEditable_;
     initMembers();
 }
 
@@ -119,6 +121,23 @@ void PointSetItem::setPointSize(double size)
 }
 
 
+void PointSetItem::setEditable(bool on)
+{
+
+
+}
+
+
+bool PointSetItem::onEditableChanged(bool on)
+{
+    if(on != isEditable_){
+        setEditable(on);
+        return true;
+    }
+    return false;
+}
+
+
 void PointSetItem::notifyUpdate()
 {
     updateVisiblePointSet();
@@ -158,6 +177,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("File"), getFilename(filePath()));
     putProperty.decimals(1).min(0.0)(_("Point size"), visiblePointSet->pointSize(),
                                      boost::bind(&PointSetItem::setPointSize, this, _1), true);
+    putProperty(_("Editable"), isEditable_, boost::bind(&PointSetItem::onEditableChanged, this, _1));
 }
 
 
@@ -168,6 +188,7 @@ bool PointSetItem::store(Archive& archive)
         archive.write("format", fileFormat());
     }
     archive.write("pointSize", visiblePointSet->pointSize());
+    archive.write("isEditable", isEditable_);
     return true;
 }
 
@@ -175,6 +196,7 @@ bool PointSetItem::store(Archive& archive)
 bool PointSetItem::restore(const Archive& archive)
 {
     setPointSize(archive.get("pointSize", 0.0));
+    setEditable(archive.get("isEditable", isEditable_));
     
     std::string filename, formatId;
     if(archive.readRelocatablePath("file", filename) && archive.read("format", formatId)){
