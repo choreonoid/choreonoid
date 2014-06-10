@@ -35,6 +35,8 @@ using namespace cnoid;
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
+const bool USE_AMOTOR = false;
+
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
@@ -78,7 +80,6 @@ public:
     typedef map< dGeomID, Position, std::less<dGeomID>, 
                  Eigen::aligned_allocator< pair<const dGeomID, Position> > > OffsetMap;
     OffsetMap offsetMap;
-    //dReal pgain;
     dJointID motorID;
 
     ODELink(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent,
@@ -153,9 +154,6 @@ public:
     bool useWorldCollision;
     CollisionDetectorPtr collisionDetector;
     bool velocityMode;
-    //typedef std::map< string, vector<double> > PgainMap;
-    //PgainMap pgainMap;
-    //string pgainString;
 
     ODESimulatorItemImpl(ODESimulatorItem* self);
     ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimulatorItemImpl& org);
@@ -169,7 +167,6 @@ public:
     void store(Archive& archive);
     void restore(const Archive& archive);
     void collisionCallback(const CollisionPair& collisionPair);
-    //bool toPgain(const std::string& str);
 };
 }
 
@@ -199,15 +196,6 @@ ODELink::ODELink
         new ODELink(simImpl, odeBody, this, o, child);
     }
 
-    //pgain = 0;
-    //ODESimulatorItemImpl::PgainMap::iterator it = simImpl->pgainMap.find(odeBody->body()->name());
-    //if(it!=simImpl->pgainMap.end()){
-    //	int id = link->jointId();
-    //	vector<double> pgains = it->second;
-    //	if(id < pgains.size())
-    //		pgain = pgains[id];
-    //	std::cout << id << " " << pgain << endl;
-    //}
 }
 
 
@@ -266,14 +254,27 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
             }
         }
         if(simImpl->velocityMode){
-        	dJointSetHingeParam(jointID, dParamFMax, numeric_limits<dReal>::max());
-   			dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
-   			//motorID = dJointCreateAMotor(worldID, 0);
-   			//dJointAttach(motorID, bodyID, parentBodyID);
-   			//dJointSetAMotorMode(motorID, dAMotorUser);
-   			//dJointSetAMotorNumAxes(motorID, 1);
-   			//dJointSetAMotorAxis(motorID, 0, 2, a.x(), a.y(), a.z());
-   			//dJointSetAMotorParam(motorID, dParamFMax, numeric_limits<dReal>::max() );
+        	if(!USE_AMOTOR){
+#ifdef GAZEBO_ODE
+				dJointSetHingeParam(jointID, dParamFMax, 100);   //???
+				dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
+#else
+				dJointSetHingeParam(jointID, dParamFMax, numeric_limits<dReal>::max());
+				dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
+#endif
+        	}else{
+				motorID = dJointCreateAMotor(worldID, 0);
+				dJointAttach(motorID, bodyID, parentBodyID);
+				dJointSetAMotorMode(motorID, dAMotorUser);
+				dJointSetAMotorNumAxes(motorID, 1);
+				dJointSetAMotorAxis(motorID, 0, 2, a.x(), a.y(), a.z());
+#ifdef GAZEBO_ODE
+				dJointSetAMotorParam(motorID, dParamFMax, 100);
+#else
+				dJointSetAMotorParam(motorID, dParamFMax, numeric_limits<dReal>::max() );
+#endif
+				dJointSetAMotorParam(motorID, dParamFudgeFactor, 1);
+        	}
         }
         break;
         
@@ -610,15 +611,13 @@ void ODELink::setTorqueToODE()
 void ODELink::setVelocityToODE()
 {
     if(link->isRotationalJoint()){
-    	//dReal q = dJointGetHingeAngle(jointID);//dJointGetAMotorAngle(motorID, 0);
-    	//dReal v = pgain * (link->q() - q);
     	dReal v = link->dq();
-        dJointSetHingeParam(jointID, dParamVel, v);
-    	//dJointSetAMotorParam(motorID, dParamVel, v);
+    	if(!USE_AMOTOR)
+    		dJointSetHingeParam(jointID, dParamVel, v);
+    	else
+    		dJointSetAMotorParam(motorID, dParamVel, v);
 
     } else if(link->isSlideJoint()){
-    	//dReal q = dJointGetSliderPosition(jointID);
-    	//dReal v = pgain * (link->q() - q);
     	dReal v = link->dq();
     	dJointSetSliderParam(jointID, dParamVel, v);
     }
@@ -805,14 +804,6 @@ void ODEBody::updateForceSensors(bool flipYZ)
             tau << fb.t2[0], -fb.t2[2], fb.t2[1];
         }
         const Matrix3 R = link->R() * sensor->R_local();
-        //const Vector3 p = link->p() + link->R() * sensor->p_local();
-
-        //const Vector3 p = link->R() * (sensor->p_local() - link->parent()->c());
-
-        //const Matrix3 R = link->parent()->R().transpose() * link->R() * sensor->R_local();
-        const Vector3 sp = link->p() + link->R() * sensor->p_local();
-        const Vector3 pcp = link->parent()->p() + link->parent()->R() * link->parent()->c();
-        //const Vector3 p = sp - pcp;
         const Vector3 p = link->R() * sensor->p_local();
 
         sensor->f()   = R.transpose() * f;
@@ -884,8 +875,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     is2Dmode = false;
     flipYZ = false;
     useWorldCollision = false;
-    velocityMode = true;
-    //pgainMap.clear();
+    velocityMode = false;
 }
 
 
@@ -916,7 +906,6 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     flipYZ = org.flipYZ;
     useWorldCollision = org.useWorldCollision;
     velocityMode = org.velocityMode;
-    //pgainMap = org.pgainMap;
 }
 
 
@@ -1225,7 +1214,6 @@ bool ODESimulatorItem::stepSimulation(const std::vector<SimulationBody*>& active
 
 bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    //std::cout << "one step" << std::endl;
 	for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
@@ -1383,27 +1371,8 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
 
-    //putProperty(_("Pgain"), pgainString, bind(&ODESimulatorItemImpl::toPgain, this, _1));
-
 }
 
-/*
-bool ODESimulatorItemImpl::toPgain(const std::string& str)
-{
-	pgainString = str;
-	if(str.empty())
-		return true;
-	istringstream iss(str);
-	string name, tmp;
-	getline(iss, name, ' ');
-	vector<double> pgain;
-	char* endptr;
-	while(getline(iss, tmp, ' '))
-		pgain.push_back(strtod(tmp.c_str(), &endptr));
-	pgainMap[name] = pgain;
-	return true;
-}
-*/
 
 bool ODESimulatorItem::store(Archive& archive)
 {
@@ -1428,7 +1397,6 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("2Dmode", is2Dmode);
     archive.write("UseWorldItem'sCollisionDetector", useWorldCollision);
     archive.write("velocityMode", velocityMode);
-    //archive.write("Pgain", pgainString);
 }
 
 
@@ -1458,7 +1426,4 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     archive.read("2Dmode", is2Dmode);
     archive.read("UseWorldItem'sCollisionDetector", useWorldCollision);
     archive.read("velocityMode", velocityMode);
-    //if(archive.read("Pgain", pgainString)){
-    //	toPgain(pgainString);
-    //}
 }

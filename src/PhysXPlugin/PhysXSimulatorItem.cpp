@@ -232,8 +232,13 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
         Vector3 u(1,0,0);
         Vector3 ty = a.cross(u);
         PxMat33 R0;
-        if(ty.norm() == 0){
-            R0 = PxMat33::createIdentity();
+        if(ty.norm() < 1.0e-8){
+           	if(a.x() == -1.0){
+           		R0.column0 = PxVec3(-1.0, 0.0, 0.0);
+                R0.column1 = PxVec3(0.0, -1.0, 0.0);
+                R0.column2 = PxVec3(0.0, 0.0, 1.0);
+            }else
+            	R0 = PxMat33::createIdentity();
         } else {
             ty.normalized();
             Vector3 tz = a.cross(ty).normalized();
@@ -256,7 +261,7 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
         }
         if(simImpl->velocityMode){
         	joint->setDriveForceLimit(numeric_limits<double>::max());
-        	//joint->setRevoluteJointFlag(PxRevoluteJointFlag::eDRIVE_ENABLED, true);
+        	joint->setRevoluteJointFlag(PxRevoluteJointFlag::eDRIVE_ENABLED, true);
         }
         q_offset = joint->getAngle();
         pxJoint = joint;
@@ -267,8 +272,13 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
         Vector3 u(1,0,0);
         Vector3 ty = d.cross(u);
         PxMat33 R0;
-        if(ty.norm() == 0){
-            R0 = PxMat33::createIdentity();
+        if(ty.norm() < 1.0e-8){
+        	if(a.x() == -1.0){
+        		R0.column0 = PxVec3(-1.0, 0.0, 0.0);
+        		R0.column1 = PxVec3(0.0, -1.0, 0.0);
+        		R0.column2 = PxVec3(0.0, 0.0, 1.0);
+        	}else
+        		R0 = PxMat33::createIdentity();
         } else {
             ty.normalized();
             Vector3 tz = d.cross(ty).normalized();
@@ -627,8 +637,7 @@ void PhysXLink::setVelocityToPhysX()
     if(link->isRotationalJoint()){
     	PxRevoluteJoint* joint = pxJoint->is<PxRevoluteJoint>();
     	double v = link->dq();
-    	joint->setDriveVelocity(0);
-    	joint->setRevoluteJointFlag(PxRevoluteJointFlag::eDRIVE_ENABLED, true);
+    	joint->setDriveVelocity(v);
     } else if(link->isSlideJoint()){
 
 
@@ -795,8 +804,9 @@ void PhysXBody::updateForceSensors()
         Vector3 f(force[0], force[1], force[2]);
         Vector3 tau(torque[0], torque[1], torque[2]);
         const Matrix3 R = sensor->R_local();
+        const Vector3 p = sensor->p_local();
         sensor->f()   = R.transpose() * f;
-        sensor->tau() = R.transpose() * (tau - sensor->p_local().cross(f));
+        sensor->tau() = R.transpose() * (tau - p.cross(f));
         sensor->notifyStateChange();
     }
 }
@@ -1099,11 +1109,11 @@ bool PhysXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& 
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         PhysXBody* physXBody = static_cast<PhysXBody*>(activeSimBodies[i]);
 
+        physXBody->getKinematicStateFromPhysX();
+
         if(!physXBody->sensorHelper.forceSensors().empty()){
             physXBody->updateForceSensors();
         }
-
-        physXBody->getKinematicStateFromPhysX();
 
         if(physXBody->sensorHelper.hasGyroOrAccelSensors()){
             physXBody->sensorHelper.updateGyroAndAccelSensors();
