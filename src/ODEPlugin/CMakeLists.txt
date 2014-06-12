@@ -78,11 +78,11 @@ if(BUILD_GAZEBO_ODE_PLUGIN)
       include_directories(${GAZEBO_ODE_INCLUDE_DIRS})
       link_directories(${GAZEBO_ODE_LIBRARY_DIRS})
       if(USE_ODE_STATIC_LIB)
-        set(GAZEBO_ODE_LIBRARIES gazebo_ode 
-                        gazebo_opcode
-                        gazebo_gimpact
-                        gazebo_opende_ou
-                        gazebo_ccd)
+        set(GAZEBO_ODE_LIBRARIES gazebo_ode.a
+                        gazebo_opcode.a
+                        gazebo_gimpact.a
+                        gazebo_opende_ou.a
+                        gazebo_ccd.a)
       else()
         set(GAZEBO_ODE_LIBRARIES gazebo_ode)
       endif()

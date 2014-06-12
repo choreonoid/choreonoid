@@ -77,6 +77,7 @@ public:
     void getKinematicStateFromBullet();
     void setKinematicStateToBullet();
     void setTorqueToBullet();
+    void setVelocityToBullet();
 };
 typedef ref_ptr<BulletLink> BulletLinkPtr;
 
@@ -99,6 +100,7 @@ public:
     void setTorqueToBullet();
     void setExtraJoints();
     void updateForceSensors();
+    void setVelocityToBullet();
 };
 }
 
@@ -129,6 +131,7 @@ public:
     double collisionMargin;
     CollisionDetectorPtr collisionDetector;
     vector<BulletLink*> geometryIdToLink;
+    bool velocityMode;
 
     BulletSimulatorItemImpl(BulletSimulatorItem* self);
     BulletSimulatorItemImpl(BulletSimulatorItem* self, const BulletSimulatorItemImpl& org);
@@ -781,6 +784,21 @@ void BulletLink::setTorqueToBullet()
     }
 }
 
+void BulletLink::setVelocityToBullet()
+{
+    if(link->isRotationalJoint()){
+    	double v = link->dq();
+    	((btHingeConstraint*)joint)->enableAngularMotor(true, v, numeric_limits<double>::max());
+
+    } else if(link->isSlideJoint()){
+    	double v = link->dq();
+    	((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_enableMotor[2] = true;
+		((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_targetVelocity[2] = v;
+		((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_maxMotorForce[2] =  numeric_limits<double>::max();
+    }
+}
+
+
 ////////////////////////////////Body////////////////////////////////////////
 BulletBody::BulletBody(const Body& orgBody)
     : SimulationBody(new Body(orgBody))
@@ -965,12 +983,23 @@ void BulletBody::updateForceSensors()
         }
        
         const Matrix3 R = link->R() * sensor->R_local();
-        const Vector3 p = link->p() + link->R() * sensor->p_local();
+        //const Vector3 p = link->p() + link->R() * sensor->p_local();
+        const Vector3 p = link->R() * sensor->p_local();
         sensor->f()   = R.transpose() * f;
         sensor->tau() = R.transpose() * (tau - p.cross(f));
         sensor->notifyStateChange();
     }
 }
+
+
+void BulletBody::setVelocityToBullet()
+{
+    // Skip the root link
+    for(size_t i=1; i < bulletLinks.size(); ++i){
+        bulletLinks[i]->setVelocityToBullet();
+    }
+}
+
 
 ////////////////////////////////////SimItem imple////////////////////////////////////////
 void BulletSimulatorItem::initialize(ExtensionManager* ext)
@@ -1002,6 +1031,7 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self)
     collisionMargin = DEFAULT_COLLISION_MARGIN;
 
     useWorldCollision = false;
+    velocityMode = false;
 }
 
 
@@ -1027,6 +1057,7 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self, cons
     collisionMargin = org.collisionMargin;
 
     useWorldCollision = org.useWorldCollision;
+    velocityMode = org.velocityMode;
 }
 
 void BulletSimulatorItemImpl::initialize()
@@ -1163,7 +1194,10 @@ bool BulletSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>&
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         BulletBody* bulletBody = static_cast<BulletBody*>(activeSimBodies[i]);
         bulletBody->body->setVirtualJointForces();
-        bulletBody->setTorqueToBullet();
+        if(velocityMode)
+        	bulletBody->setVelocityToBullet();
+        else
+        	bulletBody->setTorqueToBullet();
     }
 
     dynamicsWorld->stepSimulation(timeStep,2,timeStep/2.);
@@ -1223,6 +1257,7 @@ void BulletSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("SplitImpulsePenetrationThreshold"), splitImpulsePenetrationThreshold, changeProperty(splitImpulsePenetrationThreshold));
     putProperty(_("use HACD"), useHACD, changeProperty(useHACD));
     putProperty(_("Collision Margin"), collisionMargin, changeProperty(collisionMargin));
+    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
 }
 
 
@@ -1244,6 +1279,7 @@ void BulletSimulatorItemImpl::store(Archive& archive)
     archive.write("SplitImpulsePenetrationThreshold", splitImpulsePenetrationThreshold);
     archive.write("useHACD", useHACD);
     archive.write("CollisionMargin", collisionMargin);
+    archive.write("velocityMode", velocityMode);
 }
 
 
@@ -1265,6 +1301,7 @@ void BulletSimulatorItemImpl::restore(const Archive& archive)
     archive.read("SplitImpulsePenetrationThreshold", splitImpulsePenetrationThreshold);
     archive.read("useHACD", useHACD);
     archive.read("CollisionMargin", collisionMargin);
+    archive.read("velocityMode", velocityMode);
 }
 
 void BulletSimulatorItemImpl::setSolverParameter()
