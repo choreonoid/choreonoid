@@ -21,6 +21,37 @@ using namespace cnoid;
 
 namespace {
 
+class SceneWidgetEventFilter : public SceneWidgetEditable
+{
+public:
+    std::set<SceneWidget*> sceneWidgets;
+
+    void attach(SceneWidget* sceneWidget){
+        if(!sceneWidget->findEventFilter(this)){
+        sceneWidget->setEventFilter(this);
+        
+        if(this->sceneWidget){
+            this->sceneWidget->removeEventFilter(this);
+        }
+        sceneWidget->installEventFilter(this);
+        this->sceneWidget = sceneWidget;
+
+        sceneWidget->sigAboutToBeDestroyed().connect(
+            boost::bind(&SceneWidgetEventFilter::onSceneWidgetAboutToBeDestroyed, this));
+    }
+
+    ~SceneWidgetEventFilter(){
+        if(sceneWidget){
+            sceneWidget->removeEventFilter(this);
+        }
+    }
+
+    void onSceneWidgetAboutToBeDestroyed() {
+        sceneWidget = 0;
+    }
+};
+    
+
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
 public:
@@ -32,12 +63,18 @@ public:
     SgInvariantGroupPtr invariant;
     boost::optional<Vector3> attentionPoint;
     CrossMarkerPtr attentionPointMarker;
+    SceneWidgetEventFilter
 
     ScenePointSet(SgPointSet* pointSet) {
         orgPointSet = pointSet;
         visiblePointSet = new SgPointSet;
         isEditable_ = false;
+    }
 
+    ~ScenePointSet() {
+        if(eventFilter){
+            delete eventFilter;
+        }
     }
 
     bool isEditable() const {
@@ -121,6 +158,18 @@ public:
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) {
         menuManager.addItem(_("Clear Attention Point"))->sigTriggered().connect(
             boost::bind(&ScenePointSet::clearAttentionPoint, this));
+        menuManager.addSeparator();
+        menuManager.addItem(_("Start Eraser Mode"))->sigTriggered().connect(
+            boost::bind(&ScenePointSet::startEraserMode, this, event->sceneWidget()));
+    }
+
+    void startEraserMode(SceneWidget* sceneWidget) {
+        if(!eventFilter){
+            eventFilter = new SceneWidgetEventFilter(sceneWidget);
+        }
+        sceneWidget->installEventFilter(eventFilter);
+        sceneWidget->sigAboutToBeDestroyed().connect(
+            boost::bind(&ScenePointSet::onSceneWidgetAboutToBeDestroyed, this));
     }
     
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) {
