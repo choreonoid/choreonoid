@@ -14,6 +14,7 @@ namespace cnoid {
 class ToolBar;
 class Archive;
 class ExtensionManager;
+class MenuManager;
 
 class CNOID_EXPORT ViewClass
 {
@@ -75,6 +76,7 @@ protected:
 
     virtual void onActivated();
     virtual void onDeactivated();
+    virtual void onAttachedMenuRequest(MenuManager& menuManager);
 
     virtual void keyPressEvent(QKeyEvent* event);
         

@@ -89,7 +89,7 @@ public:
     }
     
     /*
-      The function 'template <class ItemType> inline ItemList<ItemType> getSubItems() const'
+      The function 'template <class ItemType> ItemList<ItemType> getSubItems() const'
       has been removed. Please use ItemList::extractChildItems(Item* item) instead of it.
     */
 
