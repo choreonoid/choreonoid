@@ -8,6 +8,7 @@
 #include <cnoid/Item>
 #include <cnoid/SceneShape>
 #include <cnoid/SceneProvider>
+#include <boost/optional.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -38,7 +39,7 @@ public:
     void setEditable(bool on);
     bool isEditable() const;
 
-    SignalProxy< boost::signal<void(const Vector3& point)> > sigPointPicked();
+    boost::optional<Vector3> attentionPoint() const;
 
     virtual void notifyUpdate();
         

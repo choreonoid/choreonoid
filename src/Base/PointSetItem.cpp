@@ -5,6 +5,7 @@
 
 #include "PointSetItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/MenuManager>
 #include <cnoid/Archive>
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/PointSetUtil>
@@ -29,8 +30,8 @@ public:
     SgPointSetPtr orgPointSet;
     SgPointSetPtr visiblePointSet;
     SgInvariantGroupPtr invariant;
-    CrossMarkerPtr clickPointMarker;
-    boost::signal<void(const Vector3& point)> sigPointPicked;
+    boost::optional<Vector3> attentionPoint;
+    CrossMarkerPtr attentionPointMarker;
 
     ScenePointSet(SgPointSet* pointSet) {
         orgPointSet = pointSet;
@@ -56,6 +57,14 @@ public:
         }
     }
 
+    void clearAttentionPoint() {
+        attentionPoint = boost::none;
+        if(attentionPointMarker){
+            removeChild(attentionPointMarker);
+            notifyUpdate();
+        }
+    }
+
     void updateVisiblePointSet() {
         if(invariant){
             removeChild(invariant);
@@ -73,8 +82,8 @@ public:
         invariant->addChild(visiblePointSet);
         addChild(invariant, true);
 
-        if(clickPointMarker){
-            removeChild(clickPointMarker);
+        if(attentionPointMarker){
+            removeChild(attentionPointMarker);
         }
     }
 
@@ -84,21 +93,34 @@ public:
             return false;
         }
 
-        if(!clickPointMarker){
-            Vector3f color(1.0f, 1.0f, 0.0f);
-            clickPointMarker = new CrossMarker(0.01, color);
+        bool processed = false;
+        
+        if(event.button() == Qt::LeftButton){
+            if(!attentionPointMarker){
+                Vector3f color(1.0f, 1.0f, 0.0f);
+                attentionPointMarker = new CrossMarker(0.01, color);
+            }
+            if(attentionPoint && event.point().isApprox(*attentionPoint, 1.0e-3)){
+                clearAttentionPoint();
+            } else {
+                attentionPoint = event.point();
+                attentionPointMarker->setTranslation(T().inverse() * *attentionPoint);
+                addChildOnce(attentionPointMarker);
+                attentionPointMarker->notifyUpdate();
+            }
+            processed = true;
         }
-        clickPointMarker->setTranslation(T().inverse() * event.point());
-        addChildOnce(clickPointMarker);
-        clickPointMarker->notifyUpdate();
 
-        sigPointPicked(event.point());
-
-        return true;
+        return processed;
     }
     
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) {
         return false;
+    }
+
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) {
+        menuManager.addItem(_("Clear Attention Point"))->sigTriggered().connect(
+            boost::bind(&ScenePointSet::clearAttentionPoint, this));
     }
     
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) {
@@ -288,9 +310,9 @@ bool PointSetItemImpl::onEditableChanged(bool on)
 }
 
 
-SignalProxy< boost::signal<void(const Vector3& point)> > PointSetItem::sigPointPicked()
+boost::optional<Vector3> PointSetItem::attentionPoint() const
 {
-    return impl->scenePointSet->sigPointPicked;
+    return impl->scenePointSet->attentionPoint;
 }
 
 
