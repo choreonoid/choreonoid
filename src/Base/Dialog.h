@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_DIALOG_H_INCLUDED
-#define CNOID_GUIBASE_DIALOG_H_INCLUDED
+#ifndef CNOID_BASE_DIALOG_H
+#define CNOID_BASE_DIALOG_H
 
 #include <cnoid/SignalProxy>
 #include <QDialog>
@@ -15,7 +15,7 @@ class CNOID_EXPORT Dialog : public QDialog
 {
     Q_OBJECT
 
-        public:
+public:
     Dialog();
     Dialog(QWidget* parent, Qt::WindowFlags f = 0);
         
@@ -46,6 +46,7 @@ private:
 
     void initialize();
 };
+
 }
 
 #endif

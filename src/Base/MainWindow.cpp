@@ -119,6 +119,8 @@ public:
     int dropEdge;
     QRubberBand* rubberBand;
 
+    MenuManager viewMenuManager;
+
     void setupMenus(ExtensionManager* ext);
     void createDefaultPanes();
 
@@ -1063,9 +1065,17 @@ MappingPtr MainWindowImpl::storePaneState(TabWidget* pane, ArchivePtr& archive)
 
 
 bool MainWindowImpl::viewTabMousePressEvent(TabWidget* pane, QMouseEvent* event)
-{            
+{
     if(event->button() == Qt::LeftButton){
         tabDragStartPosition = event->pos();
+    } else if(event->button() == Qt::RightButton){
+        if(View* view = dynamic_cast<View*>(pane->currentWidget())){
+            viewMenuManager.setNewPopupMenu(view);
+            view->onAttachedMenuRequest(viewMenuManager);
+            if(viewMenuManager.numItems() > 0){
+                viewMenuManager.popupMenu()->popup(event->globalPos());
+            }
+        }
     }
     return false;
 }

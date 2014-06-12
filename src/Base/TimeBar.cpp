@@ -59,106 +59,105 @@ public:
     SpinBox beatmSpin;
     DoubleSpinBox beatOffsetSpin;
 
-    SetupDialog()
-        {
-            setWindowTitle(_("Time Bar Setup"));
+    SetupDialog() {
+        setWindowTitle(_("Time Bar Setup"));
 
-            QVBoxLayout* vbox = new QVBoxLayout();
-            setLayout(vbox);
+        QVBoxLayout* vbox = new QVBoxLayout();
+        setLayout(vbox);
+        
+        QHBoxLayout* hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Internal frame rate")));
+        frameRateSpin.setAlignment(Qt::AlignCenter);
+        frameRateSpin.setRange(1, 10000);
+        hbox->addWidget(&frameRateSpin);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
 
-            QHBoxLayout* hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Internal frame rate")));
-            frameRateSpin.setAlignment(Qt::AlignCenter);
-            frameRateSpin.setRange(1, 10000);
-            hbox->addWidget(&frameRateSpin);
-            hbox->addStretch();
-            vbox->addLayout(hbox);
+        hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Playback frame rate")));
+        playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
+        playbackFrameRateSpin.setRange(0, 1000);
+        playbackFrameRateSpin.setValue(50);
+        hbox->addWidget(&playbackFrameRateSpin);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
 
-            hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Playback frame rate")));
-            playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
-            playbackFrameRateSpin.setRange(0, 1000);
-            playbackFrameRateSpin.setValue(50);
-            hbox->addWidget(&playbackFrameRateSpin);
-            hbox->addStretch();
-            vbox->addLayout(hbox);
-
-            hbox = new QHBoxLayout();
-            idleLoopDrivenCheck.setText(_("Idle loop driven mode"));
-            hbox->addWidget(&idleLoopDrivenCheck);
-            hbox->addStretch();
-            vbox->addLayout(hbox);
+        hbox = new QHBoxLayout();
+        idleLoopDrivenCheck.setText(_("Idle loop driven mode"));
+        hbox->addWidget(&idleLoopDrivenCheck);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
             
-            hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Playback speed scale")));
-            playbackSpeedScaleSpin.setAlignment(Qt::AlignCenter);
-            playbackSpeedScaleSpin.setDecimals(1);
-            playbackSpeedScaleSpin.setRange(0.1, 99.9);
-            playbackSpeedScaleSpin.setSingleStep(0.1);
-            playbackSpeedScaleSpin.setValue(1.0);
-            hbox->addWidget(&playbackSpeedScaleSpin);
-            hbox->addStretch();
-            vbox->addLayout(hbox);
+        hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Playback speed scale")));
+        playbackSpeedScaleSpin.setAlignment(Qt::AlignCenter);
+        playbackSpeedScaleSpin.setDecimals(1);
+        playbackSpeedScaleSpin.setRange(0.1, 99.9);
+        playbackSpeedScaleSpin.setSingleStep(0.1);
+        playbackSpeedScaleSpin.setValue(1.0);
+        hbox->addWidget(&playbackSpeedScaleSpin);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
 
-            hbox = new QHBoxLayout();
-            fillLevelSyncCheck.setText(_("Sync to ongoing updates"));
-            fillLevelSyncCheck.setChecked(true);
-            hbox->addWidget(&fillLevelSyncCheck);
-            hbox->addStretch();
-            vbox->addLayout(hbox);
+        hbox = new QHBoxLayout();
+        fillLevelSyncCheck.setText(_("Sync to ongoing updates"));
+        fillLevelSyncCheck.setChecked(true);
+        hbox->addWidget(&fillLevelSyncCheck);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
 
-            hbox = new QHBoxLayout();
-            autoExpandCheck.setText(_("Automatically expand the time range"));
-            autoExpandCheck.setChecked(true);
-            hbox->addWidget(&autoExpandCheck);
-            hbox->addStretch();
-            vbox->addLayout(hbox);
+        hbox = new QHBoxLayout();
+        autoExpandCheck.setText(_("Automatically expand the time range"));
+        autoExpandCheck.setChecked(true);
+        hbox->addWidget(&autoExpandCheck);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
             
-            /*
-              hbox = new QHBoxLayout();
-              vbox->addLayout(hbox);
+        /*
+          hbox = new QHBoxLayout();
+          vbox->addLayout(hbox);
             
-              beatModeCheck = new QCheckBox(_("Beat mode"));
-              hbox->addWidget(beatModeCheck);
+          beatModeCheck = new QCheckBox(_("Beat mode"));
+          hbox->addWidget(beatModeCheck);
 
-              beatcSpin = new SpinBox();
-              beatcSpin->setRange(1, 99);
-              hbox->addWidget(beatcSpin);
+          beatcSpin = new SpinBox();
+          beatcSpin->setRange(1, 99);
+          hbox->addWidget(beatcSpin);
 
-              hbox->addWidget(new QLabel("/"));
+          hbox->addWidget(new QLabel("/"));
 
-              beatmSpin = new SpinBox();
-              beatmSpin->setRange(1, 99);
-              hbox->addWidget(beatmSpin);
+          beatmSpin = new SpinBox();
+          beatmSpin->setRange(1, 99);
+          hbox->addWidget(beatmSpin);
 
-              hbox->addStretch();
-              hbox = new QHBoxLayout();
-              vbox->addLayout(hbox);
+          hbox->addStretch();
+          hbox = new QHBoxLayout();
+          vbox->addLayout(hbox);
 
-              hbox->addWidget(new QLabel(_("Tempo")));
-              tempoSpin = new DoubleSpinBox();
-              tempoSpin->setRange(1.0, 999.99);
-              tempoSpin->setDecimals(2);
-              hbox->addWidget(tempoSpin);
+          hbox->addWidget(new QLabel(_("Tempo")));
+          tempoSpin = new DoubleSpinBox();
+          tempoSpin->setRange(1.0, 999.99);
+          tempoSpin->setDecimals(2);
+          hbox->addWidget(tempoSpin);
 
-              hbox->addWidget(new QLabel(_("Offset")));
-              beatOffsetSpin = new DoubleSpinBox();
-              beatOffsetSpin->setRange(-9.99, 9.99);
-              beatOffsetSpin->setDecimals(2);
-              beatOffsetSpin->setSingleStep(0.1);
-              hbox->addWidget(beatOffsetSpin);
-              hbox->addWidget(new QLabel(_("[s]")));
+          hbox->addWidget(new QLabel(_("Offset")));
+          beatOffsetSpin = new DoubleSpinBox();
+          beatOffsetSpin->setRange(-9.99, 9.99);
+          beatOffsetSpin->setDecimals(2);
+          beatOffsetSpin->setSingleStep(0.1);
+          hbox->addWidget(beatOffsetSpin);
+          hbox->addWidget(new QLabel(_("[s]")));
 
-              hbox->addStretch();
-            */
+          hbox->addStretch();
+        */
 
-            vbox->addStretch();
+        vbox->addStretch();
 
-            PushButton* okButton = new PushButton(_("&OK"));
-            okButton->setDefault(true);
-            connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
-            vbox->addWidget(okButton);
-        }
+        PushButton* okButton = new PushButton(_("&OK"));
+        okButton->setDefault(true);
+        connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+        vbox->addWidget(okButton);
+    }
 };
 
 }

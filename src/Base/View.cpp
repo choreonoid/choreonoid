@@ -217,6 +217,12 @@ void View::zoomFontSizeSub(int zoom, const QList<QWidget*>& widgets)
 }
 
 
+void View::onAttachedMenuRequest(MenuManager& menuManager)
+{
+
+}
+
+
 bool View::storeState(Archive& archive)
 {
     return true;

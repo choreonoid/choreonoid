@@ -175,6 +175,7 @@ SgGroup::SgGroup(const SgGroup& org)
 {
     children.reserve(org.numChildren());
 
+    // shallow copy
     for(const_iterator p = org.begin(); p != org.end(); ++p){
         addChild(*p, false);
     }

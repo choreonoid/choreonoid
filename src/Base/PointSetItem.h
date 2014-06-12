@@ -12,6 +12,8 @@
 
 namespace cnoid {
 
+class PointSetItemImpl;
+
 class CNOID_EXPORT PointSetItem : public Item, public SceneProvider
 {
 public:
@@ -24,13 +26,19 @@ public:
     virtual void setName(const std::string& name);
     virtual SgNode* scene();
 
-    const SgPointSet* pointSet() const { return pointSet_; }
-    SgPointSet* pointSet() { return pointSet_; }
+    const SgPointSet* pointSet() const;
+    SgPointSet* pointSet();
 
-    Affine3& offsetPosition() { return topTransform->T(); }
-    const Affine3& offsetPosition() const { return topTransform->T(); }
+    Affine3& offsetPosition();
+    const Affine3& offsetPosition() const;
 
     void setPointSize(double size);
+    double pointSize() const;
+
+    void setEditable(bool on);
+    bool isEditable() const;
+
+    SignalProxy< boost::signal<void(const Vector3& point)> > sigPointPicked();
 
     virtual void notifyUpdate();
         
@@ -40,15 +48,10 @@ public:
 protected:
     virtual ItemPtr doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
-    void updateVisiblePointSet();
 
 private:
-    SgPointSetPtr pointSet_;
-    SgPointSetPtr visiblePointSet;
-    SgPosTransformPtr topTransform;
-    SgInvariantGroupPtr invariant;
-
-    void initMembers();
+    PointSetItemImpl* impl;
+    void initialize();
 };
 
 typedef ref_ptr<PointSetItem> PointSetItemPtr;
