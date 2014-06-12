@@ -838,7 +838,7 @@ PhysXSimulatorItemImpl::PhysXSimulatorItemImpl(PhysXSimulatorItem* self)
     staticFriction = 0.5;
     dynamicFriction = 0.5;
     restitution = 0.1;
-    velocityMode = true;
+    velocityMode = false;
 
 }
 

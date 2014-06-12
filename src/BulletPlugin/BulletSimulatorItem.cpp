@@ -1031,7 +1031,7 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self)
     collisionMargin = DEFAULT_COLLISION_MARGIN;
 
     useWorldCollision = false;
-    velocityMode = true;
+    velocityMode = false;
 }
 
 
