@@ -234,7 +234,7 @@ void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
         
     } else if(!infoIter->isShown && show){
         if(!infoIter->scene){
-            infoIter->scene = infoIter->provider->scene();
+            infoIter->scene = infoIter->provider->getScene();
         }
         if(infoIter->scene){
             sceneRoot->addChild(infoIter->scene, true);

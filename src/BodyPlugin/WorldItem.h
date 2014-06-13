@@ -37,7 +37,7 @@ public:
     const std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy< boost::signal<void()> > sigCollisionsUpdated();
 
-    virtual SgNode* scene();
+    virtual SgNode* getScene();
 
 protected:
     virtual ItemPtr doDuplicate() const;

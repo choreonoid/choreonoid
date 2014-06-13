@@ -458,9 +458,9 @@ void VisionRenderer::initializeScene(const vector<SimulationBody*>& simBodies)
                 Item* item = items.get(i);
                 SceneProvider* sceneProvider = dynamic_cast<SceneProvider*>(item);
                 if(sceneProvider && !dynamic_cast<BodyItem*>(item)){
-                    SgNode* scene = sceneProvider->scene();
+                    SgNode* scene = sceneProvider->getScene(simImpl->cloneMap);
                     if(scene){
-                        sceneGroup->addChild(scene->cloneNode(simImpl->cloneMap));
+                        sceneGroup->addChild(scene);
                     }
                 }
             }

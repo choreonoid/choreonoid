@@ -18,6 +18,7 @@ class SceneRenderer;
 class Archive;
 class MenuManager;
 class SceneWidgetEvent;
+class SceneWidgetEditable;
 class SceneWidgetRoot;
 class Menu;
 
@@ -101,7 +102,6 @@ public:
     SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> > sigContextMenuRequest();
 
     void installEventFilter(SceneWidgetEditable* filter);
-    bool findEventFilter(SceneWidgetEditable* filter);
     void removeEventFilter(SceneWidgetEditable* filter);
 
     void showSetupDialog();

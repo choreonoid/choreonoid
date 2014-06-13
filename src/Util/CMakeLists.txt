@@ -25,6 +25,7 @@ set(sources
   BoundingBox.cpp
   SceneGraph.cpp
   SceneVisitor.cpp
+  SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp
   MeshNormalGenerator.cpp
