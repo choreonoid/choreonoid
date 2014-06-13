@@ -22,7 +22,7 @@ public:
     virtual ~SceneItem();
 
     virtual void setName(const std::string& name);
-    virtual SgNode* scene();
+    virtual SgNode* getScene();
 
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }

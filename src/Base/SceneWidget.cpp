@@ -227,8 +227,9 @@ public:
     double viewTranslationRatioY;
 
     SceneWidgetEvent latestEvent;
-
     Vector3 lastClickedPoint;
+
+    SceneWidgetEditable* eventFilter;
 
     SgGroupPtr systemNodeGroup;
 
@@ -1723,6 +1724,20 @@ SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuM
 SceneWidget::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;
+}
+
+
+void SceneWidget::installEventFilter(SceneWidgetEditable* filter)
+{
+    impl->eventFilter = filter;
+}
+
+
+void SceneWidget::removeEventFilter(SceneWidgetEditable* filter)
+{
+    if(impl->eventFilter == filter){
+        impl->eventFilter = 0;
+    }
 }
 
 

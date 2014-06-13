@@ -125,7 +125,7 @@ public:
 
     bool setStance(double width);
             
-    virtual SgNode* scene();
+    virtual SgNode* getScene();
     EditableSceneBody* sceneBody();
     EditableSceneBody* existingSceneBody();
 

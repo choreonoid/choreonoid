@@ -394,7 +394,7 @@ SignalProxy< boost::signal<void()> > WorldItem::sigCollisionsUpdated()
 }
 
 
-SgNode* WorldItem::scene()
+SgNode* WorldItem::getScene()
 {
     return impl->sceneCollision;
 }

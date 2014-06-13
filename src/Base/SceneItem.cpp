@@ -122,7 +122,7 @@ void SceneItem::setName(const std::string& name)
 }
 
 
-SgNode* SceneItem::scene()
+SgNode* SceneItem::getScene()
 {
     return topNode_.get();
 }

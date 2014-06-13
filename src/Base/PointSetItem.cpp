@@ -7,6 +7,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/MenuManager>
 #include <cnoid/Archive>
+#include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/PointSetUtil>
 #include <cnoid/SceneMarker>
@@ -21,35 +22,29 @@ using namespace cnoid;
 
 namespace {
 
-class SceneWidgetEventFilter : public SceneWidgetEditable
+class PointSetEraser : public SceneWidgetEditable, public Referenced
 {
 public:
-    std::set<SceneWidget*> sceneWidgets;
+    SceneWidget* sceneWidget;
 
-    void attach(SceneWidget* sceneWidget){
-        if(!sceneWidget->findEventFilter(this)){
-        sceneWidget->setEventFilter(this);
-        
-        if(this->sceneWidget){
-            this->sceneWidget->removeEventFilter(this);
-        }
+    PointSetEraser(SceneWidget* sceneWidget) : sceneWidget(sceneWidget) {
         sceneWidget->installEventFilter(this);
-        this->sceneWidget = sceneWidget;
-
         sceneWidget->sigAboutToBeDestroyed().connect(
-            boost::bind(&SceneWidgetEventFilter::onSceneWidgetAboutToBeDestroyed, this));
-    }
-
-    ~SceneWidgetEventFilter(){
-        if(sceneWidget){
-            sceneWidget->removeEventFilter(this);
-        }
+            boost::bind(&PointSetEraser::onSceneWidgetAboutToBeDestroyed, this));
     }
 
     void onSceneWidgetAboutToBeDestroyed() {
         sceneWidget = 0;
     }
+
+    ~PointSetEraser(){
+        if(sceneWidget){
+            sceneWidget->removeEventFilter(this);
+        }
+    }
 };
+
+typedef ref_ptr<PointSetEraser> PointSetEraserPtr;
     
 
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
@@ -63,18 +58,12 @@ public:
     SgInvariantGroupPtr invariant;
     boost::optional<Vector3> attentionPoint;
     CrossMarkerPtr attentionPointMarker;
-    SceneWidgetEventFilter
+    PointSetEraserPtr eraser;
 
     ScenePointSet(SgPointSet* pointSet) {
         orgPointSet = pointSet;
         visiblePointSet = new SgPointSet;
         isEditable_ = false;
-    }
-
-    ~ScenePointSet() {
-        if(eventFilter){
-            delete eventFilter;
-        }
     }
 
     bool isEditable() const {
@@ -160,16 +149,11 @@ public:
             boost::bind(&ScenePointSet::clearAttentionPoint, this));
         menuManager.addSeparator();
         menuManager.addItem(_("Start Eraser Mode"))->sigTriggered().connect(
-            boost::bind(&ScenePointSet::startEraserMode, this, event->sceneWidget()));
+            boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
     }
 
     void startEraserMode(SceneWidget* sceneWidget) {
-        if(!eventFilter){
-            eventFilter = new SceneWidgetEventFilter(sceneWidget);
-        }
-        sceneWidget->installEventFilter(eventFilter);
-        sceneWidget->sigAboutToBeDestroyed().connect(
-            boost::bind(&ScenePointSet::onSceneWidgetAboutToBeDestroyed, this));
+        eraser = new PointSetEraser(sceneWidget);
     }
     
     virtual void onSceneModeChanged(const SceneWidgetEvent& event) {
@@ -298,7 +282,7 @@ void PointSetItem::setName(const std::string& name)
 }
 
 
-SgNode* PointSetItem::scene()
+SgNode* PointSetItem::getScene()
 {
     return impl->scenePointSet;
 }

@@ -1018,7 +1018,7 @@ EditableSceneBody* BodyItem::sceneBody()
 }
 
 
-SgNode* BodyItem::scene()
+SgNode* BodyItem::getScene()
 {
     return sceneBody();
 }
