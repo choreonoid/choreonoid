@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_ARRAY_2D_H_INCLUDED
-#define CNOID_UTIL_ARRAY_2D_H_INCLUDED
+#ifndef CNOID_UTIL_ARRAY_2D_H
+#define CNOID_UTIL_ARRAY_2D_H
 
 #include <vector>
 #include <iterator>
