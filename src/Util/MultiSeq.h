@@ -8,39 +8,39 @@
 
 #include <Eigen/StdVector>
 #include "AbstractSeq.h"
-#include "Array2D.h"
+#include "Deque2D.h"
 #include <boost/make_shared.hpp>
 #include <algorithm>
 
 namespace cnoid {
 
 template <typename ElementType, typename Allocator = std::allocator<ElementType> >
-class MultiSeq : public Array2D<ElementType, Allocator>, public AbstractMultiSeq
+class MultiSeq : public Deque2D<ElementType, Allocator>, public AbstractMultiSeq
 {
     typedef MultiSeq<ElementType, Allocator> MultiSeqType;
         
 public:
-    typedef Array2D<ElementType, Allocator> Array2DType;
-    typedef typename Array2DType::Element Element;
+    typedef Deque2D<ElementType, Allocator> Deque2DType;
+    typedef typename Deque2DType::Element Element;
     typedef boost::shared_ptr< MultiSeqType > Ptr;
-    typedef typename Array2DType::Row Frame;
-    typedef typename Array2DType::Column Part;
+    typedef typename Deque2DType::Row Frame;
+    typedef typename Deque2DType::Column Part;
 
     MultiSeq(const char* seqType)
         : AbstractMultiSeq(seqType),
-          Array2DType(0, 1) {
+          Deque2DType(0, 1) {
         frameRate_ = defaultFrameRate();
     }
 
     MultiSeq(const char* seqType, int numFrames, int numParts)
         : AbstractMultiSeq(seqType),
-          Array2DType(numFrames, numParts) {
+          Deque2DType(numFrames, numParts) {
         frameRate_ = defaultFrameRate();
     }
 
     MultiSeq(const MultiSeqType& org)
         : AbstractMultiSeq(org),
-          Array2DType(org) {
+          Deque2DType(org) {
         frameRate_ = org.frameRate_;
     }
     
@@ -49,7 +49,7 @@ public:
     MultiSeqType& operator=(const MultiSeqType& rhs) {
         if(this != &rhs){
             AbstractMultiSeq::operator=(rhs);
-            Array2DType::operator=(rhs);
+            Deque2DType::operator=(rhs);
             frameRate_ = rhs.frameRate_;
         }
         return *this;
@@ -79,17 +79,17 @@ public:
         const int prevNumParts = numParts();
         const int prevNumFrames = numFrames();
 
-        Array2DType::resize(newNumFrames, newNumParts);
+        Deque2DType::resize(newNumFrames, newNumParts);
 
         if(clearNewElements){
             if(newNumParts == prevNumParts){
                 if(newNumFrames > prevNumFrames){
-                    std::fill(Array2DType::begin() + prevNumFrames * newNumParts,
-                              Array2DType::end(),
+                    std::fill(Deque2DType::begin() + prevNumFrames * newNumParts,
+                              Deque2DType::end(),
                               defaultValue());
                 }
             } else {
-                std::fill(Array2DType::begin(), Array2DType::end(), defaultValue());
+                std::fill(Deque2DType::begin(), Deque2DType::end(), defaultValue());
             }
         }
     }
@@ -115,11 +115,11 @@ public:
     }
 
     virtual int getNumFrames() const {
-        return Array2DType::rowSize();
+        return Deque2DType::rowSize();
     }
 
     inline int numFrames() const {
-        return Array2DType::rowSize();
+        return Deque2DType::rowSize();
     }
 
     virtual void setNumFrames(int newNumFrames, bool clearNewElements = false) {
@@ -127,11 +127,11 @@ public:
     }
 
     virtual int getNumParts() const {
-        return Array2DType::colSize();
+        return Deque2DType::colSize();
     }
 
     inline int numParts() const {
-        return Array2DType::colSize();
+        return Deque2DType::colSize();
     }
 
     inline double timeLength() const {
@@ -147,19 +147,19 @@ public:
     }
 
     inline const Part part(int index) const {
-        return Array2DType::column(index);
+        return Deque2DType::column(index);
     }
 
     inline Part part(int index) {
-        return Array2DType::column(index);
+        return Deque2DType::column(index);
     }
 
     inline Frame frame(int index) {
-        return Array2DType::row(index);
+        return Deque2DType::row(index);
     }
 
     inline const Frame frame(int index) const {
-        return Array2DType::row(index);
+        return Deque2DType::row(index);
     }
 
     int clampFrameIndex(int frameIndex, bool& out_isValidRange){
