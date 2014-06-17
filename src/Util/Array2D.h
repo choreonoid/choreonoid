@@ -110,7 +110,6 @@ public:
         };
 
     private:
-
         typename Container::iterator top;
         iterator end_;
         int part;
@@ -127,12 +126,12 @@ public:
             end_ =  iterator(top + colSize * size_, colSize);
         }
 
-        int size() const {
-            return size_;
-        }
-
         bool empty() const {
             return (size_ == 0);
+        }
+
+        int size() const {
+            return size_;
         }
 
         ElementType& operator[](int index){

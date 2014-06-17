@@ -26,18 +26,21 @@ class Deque2D
     int size_;
 
 public:
+    typedef ElementType Element;
 
-    class const_iterator : public std::iterator<std::bidirectional_iterator_tag, ElementType> {
+    class const_iterator : public std::iterator<std::random_access_iterator_tag, ElementType> {
 
+        friend class Deque2D<ElementType, Allocator>;
+        
     protected:
         ElementType* current;
         ElementType* term;
-        ElementType* top;
+        ElementType* buf;
 
-        const_iterator(Deque2DType& owner, ElementType* pos){
+        const_iterator(const Deque2DType& owner, ElementType* pos) {
             current = pos;
-            top = owner.buf;
-            term = top + owner.capacity;
+            buf = owner.buf;
+            term = buf + owner.capacity_;
         }
             
     public:
@@ -46,24 +49,49 @@ public:
         const_iterator(const const_iterator& org) {
             current = org.current;
             term = org.term;
-            top = org.top;
+            buf = org.buf;
         }
         
         const ElementType& operator*() const {
             return *current;
         }
-        void operator++() {
+        const_iterator& operator++() {
             ++current;
             if(current == term){
-                current = top;
+                current = buf;
             }
+            return *this;
         }
-        void operator--() {
-            if(current == top){
+        const_iterator& operator--() {
+            if(current == buf){
                 current = term - 1;
             } else {
                 --current;
             }
+        }
+        const_iterator& operator+=(size_t n){
+            current += n;
+            if(current >= term){
+                current = buf + (current - term);
+            }
+            return *this;
+        }
+        const_iterator& operator-=(size_t n){
+            current -= n;
+            if(current < buf){
+                current = term - (buf - current);
+            }
+            return *this;
+        }
+        const_iterator operator+(size_t n){
+            const_iterator iter(*this);
+            iter += n;
+            return iter;
+        }
+        const_iterator operator-(size_t n){
+            const_iterator iter(*this);
+            iter -= n;
+            return iter;
         }
         bool operator==(const const_iterator& rhs) const {
             return (current == rhs.current);
@@ -74,6 +102,11 @@ public:
     };
 
     class iterator : public const_iterator {
+
+        friend class Deque2D<ElementType, Allocator>;
+
+        iterator(Deque2DType& owner, ElementType* pos) : const_iterator(owner, pos) { }
+
     public:
         iterator() { }
         iterator(const iterator& org) : const_iterator(org) { }
@@ -81,18 +114,46 @@ public:
         ElementType& operator*() {
             return *const_iterator::current;
         }
+        iterator& operator+=(size_t n){
+            const_iterator::current += n;
+            if(const_iterator::current >= const_iterator::term){
+                const_iterator::current = const_iterator::buf + (const_iterator::current - const_iterator::term);
+            }
+            return *this;
+        }
+        iterator& operator-=(size_t n){
+            const_iterator::current -= n;
+            if(const_iterator::current < const_iterator::buf){
+                const_iterator::current = const_iterator::term - (const_iterator::buf - const_iterator::current);
+            }
+            return *this;
+        }
+        iterator operator+(size_t n){
+            iterator iter(*this);
+            iter += n;
+            return iter;
+        }
+        iterator operator-(size_t n){
+            iterator iter(*this);
+            iter -= n;
+            return iter;
+        }
     };
         
     iterator begin() {
         return iterator(*this, buf + offset);
     }
 
-    const_iterator const_begin() const {
+    const_iterator cbegin() const {
         return const_iterator(*this, buf + offset);
     }
 
-    const_iterator end() const {
+    iterator end() {
         //! \todo cache this value for the performance?
+        return iterator(*this, buf + (offset + size_) % capacity_);
+    }
+
+    const_iterator cend() const {
         return const_iterator(*this, buf + (offset + size_) % capacity_);
     }
 
@@ -102,9 +163,17 @@ public:
         int size_;
 
     public:
-        Row(Deque2D<ElementType, Allocator>& owner, int rowIndex) {
+        Row() {
+            size_ = 0;
+        }
+        
+        Row(const Deque2D<ElementType, Allocator>& owner, int rowIndex) {
             size_ = owner.colSize_;
             top = owner.buf + (owner.offset + rowIndex * owner.colSize_) % owner.capacity_;
+        }
+
+        bool empty() const {
+            return (size_ == 0);
         }
 
         int size() const {
@@ -116,6 +185,10 @@ public:
         }
 
         const ElementType& operator[](int index) const {
+            return top[index];
+        }
+
+        ElementType& at(int index) {
             return top[index];
         }
 
@@ -131,14 +204,22 @@ public:
     class Column
     {
     public:
-        Column(Deque2D<ElementType, Allocator>& owner, int column) {
+        Column() {
+            colSize = 0;
+            rowSize = 0;
+        }
+        
+        Column(const Deque2D<ElementType, Allocator>& owner, int column) {
             top = owner.buf + column;
-            offset = owner.offset_;
+            offset = owner.offset;
             colSize = owner.colSize_;
             capacity = owner.capacity_;
             rowSize = owner.rowSize_;
-
             end_ = iterator(*this, top + (offset + owner.size_) % owner.capacity_);
+        }
+
+        bool empty() const {
+            return (rowSize == 0);
         }
 
         int size() const {
@@ -151,6 +232,10 @@ public:
 
         const ElementType& operator[](int rowIndex) const {
             return top[(offset + rowIndex * colSize) % capacity];
+        }
+
+        ElementType& at(int index) {
+            return top[index * colSize];
         }
 
         class iterator : public std::iterator<std::bidirectional_iterator_tag, ElementType, int> {
@@ -200,9 +285,9 @@ public:
         iterator end() {
             return end_;
         }
-                    
+
     private:
-        ElementType top;
+        ElementType* top;
         int offset;
         int colSize;
         int capacity;
@@ -228,7 +313,7 @@ public:
         capacity_ = 0;
         size_ = 0;
 
-        resize(rowSize_, colSize_);
+        resizeMain(rowSize_, colSize_, false);
     }
 
     Deque2D(const Deque2D<ElementType, Allocator>& org)
@@ -258,12 +343,14 @@ public:
 
     Deque2DType& operator=(const Deque2DType& rhs) {
         if(this != &rhs){
-            resize(rhs.rowSize_, rhs.colSize_);
+            resizeMain(rhs.rowSize_, rhs.colSize_, false);
             iterator p = begin();
-            iterator q = rhs.begin();
-            iterator qend = rhs.end();
+            const_iterator q = rhs.cbegin();
+            const_iterator qend = rhs.cend();
             while(q != qend){
-                *p++ = *q++;
+                *p = *q;
+                ++p;
+                ++q;
             }
         }
         return *this;
@@ -350,7 +437,7 @@ private:
         offset = 0;
     }
 
-    void resize(int newRowSize, int newColSize, bool doCopy) {
+    void resizeMain(int newRowSize, int newColSize, bool doCopy) {
 
         const int newSize = newRowSize * newColSize;
             
@@ -421,7 +508,7 @@ private:
 
 public:
     void resize(int newRowSize, int newColSize) {
-        resize(newRowSize, newColSize, true);
+        resizeMain(newRowSize, newColSize, true);
     }
 
     void resizeColumn(int newColSize){
