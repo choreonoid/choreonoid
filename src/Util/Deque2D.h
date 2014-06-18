@@ -313,7 +313,7 @@ public:
         capacity_ = 0;
         size_ = 0;
 
-        resizeMain(rowSize_, colSize_, false);
+        resizeMain(rowSize, colSize, false);
     }
 
     Deque2D(const Deque2D<ElementType, Allocator>& org)
