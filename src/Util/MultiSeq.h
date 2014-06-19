@@ -6,37 +6,22 @@
 #ifndef CNOID_UTIL_MULTI_SEQ_H
 #define CNOID_UTIL_MULTI_SEQ_H
 
-#include <Eigen/StdVector>
 #include "AbstractSeq.h"
+#include "Deque2D.h"
+#include <Eigen/StdVector>
 #include <boost/make_shared.hpp>
 #include <algorithm>
-
-#define USE_DEQUE_FOR_MULTI_SEQ 1
-
-#if USE_DEQUE_FOR_MULTI_SEQ
-#include "Deque2D.h"
-#else
-#include "Array2D.h"
-#endif
 
 
 namespace cnoid {
 
 template <typename ElementType, typename Allocator = std::allocator<ElementType> >
-#if USE_DEQUE_FOR_MULTI_SEQ
 class MultiSeq : public Deque2D<ElementType, Allocator>, public AbstractMultiSeq
-#else
-class MultiSeq : public Array2D<ElementType, Allocator>, public AbstractMultiSeq
-#endif
 {
     typedef MultiSeq<ElementType, Allocator> MultiSeqType;
         
 public:
-#if USE_DEQUE_FOR_MULTI_SEQ
     typedef Deque2D<ElementType, Allocator> Container;
-#else
-    typedef Array2D<ElementType, Allocator> Container;
-#endif
     
     typedef typename Container::Element Element;
     typedef boost::shared_ptr< MultiSeqType > Ptr;
@@ -47,18 +32,21 @@ public:
         : AbstractMultiSeq(seqType),
           Container(0, 1) {
         frameRate_ = defaultFrameRate();
+        offsetTimeFrame_ = 0;
     }
 
     MultiSeq(const char* seqType, int numFrames, int numParts)
         : AbstractMultiSeq(seqType),
           Container(numFrames, numParts) {
         frameRate_ = defaultFrameRate();
+        offsetTimeFrame_ = 0;
     }
 
     MultiSeq(const MultiSeqType& org)
         : AbstractMultiSeq(org),
           Container(org) {
         frameRate_ = org.frameRate_;
+        offsetTimeFrame_ = org.offsetTimeFrame_;
     }
     
     virtual ~MultiSeq() { }
@@ -109,13 +97,15 @@ public:
                 std::fill(Container::begin(), Container::end(), defaultValue());
             }
         }
+
+        offsetTimeFrame_ = 0;
     }
 
     virtual double getFrameRate() const {
         return frameRate_;
     }
 
-    inline double frameRate() const {
+    double frameRate() const {
         return frameRate_;
     }
 
@@ -135,7 +125,7 @@ public:
         return Container::rowSize();
     }
 
-    inline int numFrames() const {
+    int numFrames() const {
         return Container::rowSize();
     }
 
@@ -143,51 +133,73 @@ public:
         setDimension(newNumFrames, numParts(), clearNewElements);
     }
 
+    void clearFrames(){
+        setNumFrames(0);
+        offsetTimeFrame_ = 0;
+    }
+
     virtual int getNumParts() const {
         return Container::colSize();
     }
 
-    inline int numParts() const {
+    int numParts() const {
         return Container::colSize();
     }
 
-    inline double timeLength() const {
+    double timeLength() const {
         return numFrames() / frameRate();
     }
 
-    inline int frameOfTime(double time) const {
-        return (int)(time * frameRate_);
+    void setOffsetTimeFrame(int frameOffset) {
+        offsetTimeFrame_ = frameOffset;
+    }
+
+    int offsetTimeFrame() const {
+        return offsetTimeFrame_;
+    }
+
+    virtual int getOffsetTimeFrame() const {
+        return offsetTimeFrame_;
+    }
+
+    int frameOfTime(double time) const {
+        return (int)(time * frameRate_) - offsetTimeFrame_;
     }
             
-    inline double timeOfFrame(int frame) const {
-        return (frame / frameRate_);
+    double timeOfFrame(int frame) const {
+        return ((frame + offsetTimeFrame_) / frameRate_);
     }
 
-    inline const Part part(int index) const {
+    const Part part(int index) const {
         return Container::column(index);
     }
 
-    inline Part part(int index) {
+    Part part(int index) {
         return Container::column(index);
     }
 
-    inline Frame frame(int index) {
+    Frame frame(int index) {
         return Container::row(index);
     }
 
-    inline const Frame frame(int index) const {
+    const Frame frame(int index) const {
         return Container::row(index);
     }
 
-    int clampFrameIndex(int frameIndex, bool& out_isValidRange){
+    void popFrontFrame() {
+        Container::pop_front();
+        offsetTimeFrame_ += 1;
+    }
+
+    Frame appendFrame() {
+        return Container::append();
+    }
+
+    int clampFrameIndex(int frameIndex){
         if(frameIndex < 0){
-            frameIndex = 0;
-            out_isValidRange = false;
+            return 0;
         } else if(frameIndex >= numFrames()){
-            frameIndex = numFrames() - 1;
-            out_isValidRange = false;
-        } else {
-            out_isValidRange = true;
+            return numFrames() - 1;
         }
         return frameIndex;
     }
@@ -195,6 +207,7 @@ public:
 protected:
 
     double frameRate_;
+    int offsetTimeFrame_;
 
     virtual ElementType defaultValue() const { return ElementType(); }
 };

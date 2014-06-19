@@ -130,6 +130,7 @@ public:
     Timer flushTimer;
 
     bool isRecordingEnabled;
+    bool isRingBufferMode;
     bool isActiveControlPeriodOnlyMode;
     bool useControllerThreads;
     bool useControllerThreadsProperty;
@@ -145,6 +146,7 @@ public:
         
     double specifiedTimeLength;
     int maxFrame;
+    int ringBufferSize;
 
     TimeBar* timeBar;
     int fillLevelId;
@@ -671,25 +673,34 @@ bool SimulationBody::flushResult()
 void SimulationBodyImpl::flushResult()
 {
     if(simImpl->isRecordingEnabled){
-        const int frame = linkPosResult->numFrames();
+
+        const int ringBufferSize = simImpl->ringBufferSize;
         const int numBufFrames = linkPosBuf.rowSize();
-        linkPosResult->setNumFrames(frame + numBufFrames);
+
         for(int i=0; i < numBufFrames; ++i){
             MultiSE3Deque::Row buf = linkPosBuf.row(i);
-            std::copy(buf.begin(), buf.end(), linkPosResult->frame(frame + i).begin());
+            if(linkPosResult->numFrames() >= ringBufferSize){
+                linkPosResult->popFrontFrame();
+            }
+            std::copy(buf.begin(), buf.end(), linkPosResult->appendFrame().begin());
         }
+            
         if(jointPosBuf.colSize() > 0){
-            jointPosResult->setNumFrames(frame + numBufFrames);
             for(int i=0; i < numBufFrames; ++i){
                 Deque2D<double>::Row buf = jointPosBuf.row(i);
-                std::copy(buf.begin(), buf.end(), jointPosResult->frame(frame + i).begin());
+                if(jointPosResult->numFrames() >= ringBufferSize){
+                    jointPosResult->popFrontFrame();
+                }
+                std::copy(buf.begin(), buf.end(), jointPosResult->appendFrame().begin());
             }
         }
         if(deviceStateBuf.colSize() > 0){
-            deviceStateResult->setNumFrames(frame + numBufFrames);
             for(int i=0; i < numBufFrames; ++i){
                 Deque2D<DeviceStatePtr>::Row buf = deviceStateBuf.row(i);
-                std::copy(buf.begin(), buf.end(), deviceStateResult->frame(frame + i).begin());
+                if(deviceStateResult->numFrames() >= ringBufferSize){
+                    deviceStateResult->popFrontFrame();
+                }
+                std::copy(buf.begin(), buf.end(), deviceStateResult->appendFrame().begin());
             }
             // keep the last state so that unchanged states can be shared
             deviceStateBuf.pop_front(deviceStateBuf.rowSize() - 1);
@@ -784,6 +795,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     isRecordingEnabled = true;
     timeRangeMode.setSymbol(SimulatorItem::TIMEBAR_RANGE, N_("TimeBar range"));
     timeRangeMode.setSymbol(SimulatorItem::SPECIFIED_PERIOD, N_("Specified period"));
+    timeRangeMode.setSymbol(SimulatorItem::RING_BUFFER,     N_("Ring Buffer"));
     timeRangeMode.setSymbol(SimulatorItem::UNLIMITED,     N_("Unlimited"));
     timeRangeMode.select(SimulatorItem::TIMEBAR_RANGE);
     specifiedTimeLength = 60.0;
@@ -989,6 +1001,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     activeSimBodies.clear();
     motionEngine->clear();
     needToUpdateSimBodyLists = true;
+    isRingBufferMode = timeRangeMode.is(SimulatorItem::RING_BUFFER);
 
     for(size_t i=0; i < targetItems.size(); ++i){
 
@@ -1027,10 +1040,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         isWaitingForSimulationToStop = false;
         stopRequested = false;
 
+        ringBufferSize = std::numeric_limits<int>::max();
+        
         if(timeRangeMode.is(SimulatorItem::SPECIFIED_PERIOD)){
             maxFrame = specifiedTimeLength / self->worldTimeStep();
         } else if(timeRangeMode.is(SimulatorItem::TIMEBAR_RANGE)){
             maxFrame = TimeBar::instance()->maxTime() / self->worldTimeStep();
+        } else if(timeRangeMode.is(SimulatorItem::RING_BUFFER)){
+            maxFrame = std::numeric_limits<int>::max();
+            ringBufferSize = specifiedTimeLength / self->worldTimeStep();
         } else {
             maxFrame = std::numeric_limits<int>::max();
         }

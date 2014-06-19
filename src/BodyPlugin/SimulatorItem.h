@@ -76,7 +76,7 @@ public:
 
     SignalProxy< boost::signal<void()> > sigSimulationFinished();
 
-    enum TimeRangeMode { TIMEBAR_RANGE, SPECIFIED_PERIOD, UNLIMITED, N_TIME_RANGE_MODES };
+    enum TimeRangeMode { TIMEBAR_RANGE, SPECIFIED_PERIOD, RING_BUFFER, UNLIMITED, N_TIME_RANGE_MODES };
 
     void setTimeRangeMode(int selection);
     void setRealtimeSyncMode(bool on);

@@ -266,6 +266,7 @@ private:
     int rowSize_;
     int colSize_;
 };
+
 }
 
 #endif

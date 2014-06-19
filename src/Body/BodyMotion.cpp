@@ -116,6 +116,11 @@ void BodyMotion::setNumFrames(int n, bool clearNewArea)
 }
 
 
+int BodyMotion::getOffsetTimeFrame() const {
+    return linkPosSeq_->offsetTimeFrame();
+}
+
+
 void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea)
 {
     jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);

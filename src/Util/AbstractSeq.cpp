@@ -49,6 +49,12 @@ AbstractSeq::~AbstractSeq()
 }
 
 
+int AbstractSeq::getOffsetTimeFrame() const
+{
+    return 0;
+}
+
+
 bool AbstractSeq::readSeq(const Mapping& archive)
 {
     try {

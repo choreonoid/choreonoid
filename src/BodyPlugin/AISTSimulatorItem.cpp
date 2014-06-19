@@ -145,6 +145,7 @@ public:
     // for debug
     ofstream os;
 };
+
 }
 
 

@@ -32,31 +32,31 @@ class MultiDeviceStateSeqEngine : public TimeSyncItemEngine
 public:
         
     MultiDeviceStateSeqEngine(MultiDeviceStateSeqItemPtr seqItem, BodyItemPtr bodyItem)
-        : seq(seqItem->seq()), body(bodyItem->body())
-        {
-            seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
-        }
+        : seq(seqItem->seq()), body(bodyItem->body()) {
+        seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
+    }
 
-    virtual bool onTimeChanged(double time)
-        {
-            bool isValidTime = false;
-            if(!seq->empty()){
-                const DeviceList<>& devices = body->devices();
-                MultiDeviceStateSeq::Frame states = seq->frame(seq->clampFrameIndex(seq->frameOfTime(time), isValidTime));
-                const int n = std::min((int)devices.size(), states.size());
-                prevStates.resize(n);
-                for(int i=0; i < n; ++i){
-                    const DeviceStatePtr& state = states[i];
-                    if(state != prevStates[i]){
-                        const DevicePtr& device = devices[i];
-                        device->copyStateFrom(*state);
-                        device->notifyStateChange();
-                        prevStates[i] = state;
-                    }
+    virtual bool onTimeChanged(double time){
+        bool isValidTime = false;
+        if(!seq->empty()){
+            const DeviceList<>& devices = body->devices();
+            const int frame = seq->frameOfTime(time);
+            isValidTime = (frame < seq->numFrames());
+            MultiDeviceStateSeq::Frame states = seq->frame(seq->clampFrameIndex(frame));
+            const int n = std::min((int)devices.size(), states.size());
+            prevStates.resize(n);
+            for(int i=0; i < n; ++i){
+                const DeviceStatePtr& state = states[i];
+                if(state != prevStates[i]){
+                    const DevicePtr& device = devices[i];
+                    device->copyStateFrom(*state);
+                    device->notifyStateChange();
+                    prevStates[i] = state;
                 }
             }
-            return isValidTime;
         }
+        return isValidTime;
+    }
 };
 
 
@@ -67,6 +67,7 @@ TimeSyncItemEnginePtr createMultiDeviceStateSeqEngine(BodyItemPtr bodyItem, Abst
     }
     return TimeSyncItemEnginePtr();
 }
+
 }
 
 

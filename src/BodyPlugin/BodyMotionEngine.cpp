@@ -26,16 +26,17 @@ ExtraSeqEngineFactoryMap extraSeqEngineFactories;
 
 Action* updateVelocityCheck;
 
-bool storeProperties(Archive& archive)
+}
+
+static bool storeProperties(Archive& archive)
 {
     archive.write("updateJointVelocities", updateVelocityCheck->isChecked());
     return true;
 }
 
-void restoreProperties(const Archive& archive)
+static void restoreProperties(const Archive& archive)
 {
     updateVelocityCheck->setChecked(archive.get("updateJointVelocities", updateVelocityCheck->isChecked()));
-}
 }
 
 namespace cnoid {
@@ -52,51 +53,47 @@ public:
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ConnectionSet connections;
         
+    BodyMotionEngineImpl(BodyMotionEngine* self, BodyItemPtr& bodyItem, BodyMotionItemPtr& motionItem){
 
-    BodyMotionEngineImpl(BodyMotionEngine* self, BodyItemPtr& bodyItem, BodyMotionItemPtr& motionItem)
-        {
-            this->bodyItem = bodyItem;
-            body = bodyItem->body();
-            this->motionItem = motionItem;
+        this->bodyItem = bodyItem;
+        body = bodyItem->body();
+        this->motionItem = motionItem;
+        
+        const BodyMotionPtr& motion = motionItem->motion();
+        qSeq = motion->jointPosSeq();
+        positions = motion->linkPosSeq();
+        calcForwardKinematics = !(positions && positions->numParts() > 1);
+        
+        updateExtraSeqEngines();
+        
+        connections.add(
+            motionItem->sigUpdated().connect(
+                boost::bind(&BodyMotionEngine::notifyUpdate, self)));
+        
+        connections.add(
+            motionItem->sigExtraSeqItemsChanged().connect(
+                boost::bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
+    }
+    
+    void updateExtraSeqEngines(){
 
-            const BodyMotionPtr& motion = motionItem->motion();
-            qSeq = motion->jointPosSeq();
-            positions = motion->linkPosSeq();
-            calcForwardKinematics = !(positions && positions->numParts() > 1);
+        extraSeqEngines.clear();
 
-            updateExtraSeqEngines();
-            
-            connections.add(
-                motionItem->sigUpdated().connect(
-                    boost::bind(&BodyMotionEngine::notifyUpdate, self)));
-
-            connections.add(
-                motionItem->sigExtraSeqItemsChanged().connect(
-                    boost::bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
-        }
-
-
-    void updateExtraSeqEngines()
-        {
-            extraSeqEngines.clear();
-
-            const int n = motionItem->numExtraSeqItems();
-            for(int i=0; i < n; ++i){
-                const string& key = motionItem->extraSeqKey(i);
-                AbstractSeqItem* seqItem = motionItem->extraSeqItem(i);
-                ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
-                if(q != extraSeqEngineFactories.end()){
-                    ExtraSeqEngineFactory& createEngine = q->second;
-                    extraSeqEngines.push_back(createEngine(bodyItem, seqItem));
-                }
+        const int n = motionItem->numExtraSeqItems();
+        for(int i=0; i < n; ++i){
+            const string& key = motionItem->extraSeqKey(i);
+            AbstractSeqItem* seqItem = motionItem->extraSeqItem(i);
+            ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
+            if(q != extraSeqEngineFactories.end()){
+                ExtraSeqEngineFactory& createEngine = q->second;
+                extraSeqEngines.push_back(createEngine(bodyItem, seqItem));
             }
         }
+    }
 
-
-    ~BodyMotionEngineImpl()
-        {
-            connections.disconnect();
-        }
+    ~BodyMotionEngineImpl(){
+        connections.disconnect();
+    }
         
 
     virtual bool onTimeChanged(double time){
@@ -109,14 +106,16 @@ public:
             const int numAllJoints = std::min(body->numAllJoints(), qSeq->numParts());
             const int numFrames = qSeq->numFrames();
             if(numAllJoints > 0 && numFrames > 0){
-                const int frame = qSeq->clampFrameIndex(qSeq->frameOfTime(time), isValid);
-                const MultiValueSeq::Frame q = qSeq->frame(frame);
+                const int frame = qSeq->frameOfTime(time);
+                isValid = (frame < numFrames);
+                const int clampedFrame = qSeq->clampFrameIndex(frame);
+                const MultiValueSeq::Frame q = qSeq->frame(clampedFrame);
                 for(int i=0; i < numAllJoints; ++i){
                     body->joint(i)->q() = q[i];
                 }
                 if(updateVelocityCheck->isChecked()){
                     const double dt = qSeq->timeStep();
-                    const MultiValueSeq::Frame q_prev = qSeq->frame((frame == 0) ? 0 : (frame -1));
+                    const MultiValueSeq::Frame q_prev = qSeq->frame((clampedFrame == 0) ? 0 : (clampedFrame -1));
                     for(int i=0; i < numAllJoints; ++i){
                         body->joint(i)->dq() = (q[i] - q_prev[i]) / dt;
                     }
@@ -130,10 +129,12 @@ public:
             const int numLinks = positions->numParts();
             const int numFrames = positions->numFrames();
             if(numLinks > 0 && numFrames > 0){
-                const int frame = positions->clampFrameIndex(positions->frameOfTime(time), isValid);
+                const int frame = positions->frameOfTime(time);
+                isValid = (frame < numFrames);
+                const int clampedFrame = positions->clampFrameIndex(frame);
                 for(int i=0; i < numLinks; ++i){
                     Link* link = body->link(i);
-                    const SE3& position = positions->at(frame, i);
+                    const SE3& position = positions->at(clampedFrame, i);
                     link->p() = position.translation();
                     link->R() = position.rotation().toRotationMatrix();
                 }

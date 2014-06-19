@@ -15,7 +15,7 @@ class CNOID_EXPORT Menu : public QMenu
 {
     Q_OBJECT
 
-        public:
+public:
     Menu(QWidget* parent = 0);
     Menu(const QString& title, QWidget* parent = 0);
     ~Menu();
