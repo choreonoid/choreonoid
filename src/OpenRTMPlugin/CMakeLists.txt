@@ -133,6 +133,7 @@ add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles}
 target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM ${OPENRTM_LIBRARIES})
 if(UNIX)
   target_link_libraries(${plugin} ${Boost_REGEX_LIBRARY})
+  add_definitions(-DOPENRTM_VERSION110)
 endif()
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
