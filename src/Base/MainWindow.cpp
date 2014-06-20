@@ -1070,7 +1070,7 @@ bool MainWindowImpl::viewTabMousePressEvent(TabWidget* pane, QMouseEvent* event)
         tabDragStartPosition = event->pos();
     } else if(event->button() == Qt::RightButton){
         if(View* view = dynamic_cast<View*>(pane->currentWidget())){
-            viewMenuManager.setNewPopupMenu(view);
+            viewMenuManager.setNewPopupMenu(self);
             view->onAttachedMenuRequest(viewMenuManager);
             if(viewMenuManager.numItems() > 0){
                 viewMenuManager.popupMenu()->popup(event->globalPos());

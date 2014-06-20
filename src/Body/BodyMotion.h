@@ -38,6 +38,8 @@ public:
     virtual double getFrameRate() const;
     virtual void setFrameRate(double frameRate);
 
+    virtual int getOffsetTimeFrame() const;
+
     inline int numFrames() const {
         return std::max(jointPosSeq_->numFrames(), linkPosSeq_->numFrames());
     }

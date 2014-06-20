@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_ARRAY_2D_H_INCLUDED
-#define CNOID_UTIL_ARRAY_2D_H_INCLUDED
+#ifndef CNOID_UTIL_ARRAY_2D_H
+#define CNOID_UTIL_ARRAY_2D_H
 
 #include <vector>
 #include <iterator>
@@ -110,7 +110,6 @@ public:
         };
 
     private:
-
         typename Container::iterator top;
         iterator end_;
         int part;
@@ -127,12 +126,12 @@ public:
             end_ =  iterator(top + colSize * size_, colSize);
         }
 
-        int size() const {
-            return size_;
-        }
-
         bool empty() const {
             return (size_ == 0);
+        }
+
+        int size() const {
+            return size_;
         }
 
         ElementType& operator[](int index){
@@ -267,6 +266,7 @@ private:
     int rowSize_;
     int colSize_;
 };
+
 }
 
 #endif

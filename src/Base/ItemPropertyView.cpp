@@ -8,6 +8,7 @@
 #include "ItemList.h"
 #include "ItemManager.h"
 #include "ViewManager.h"
+#include "MenuManager.h"
 #include "MessageView.h"
 #include "PutPropertyFunction.h"
 #include "SelectionListEditor.h"
@@ -605,4 +606,11 @@ void ItemPropertyViewImpl::zoomFontSize(int pointSizeDiff)
     tableWidget->setFont(font);
     fontPointSizeDiff += pointSizeDiff;
     AppConfig::archive()->openMapping("ItemPropertyView")->write("fontZoom", fontPointSizeDiff);
+}
+
+
+void ItemPropertyView::onAttachedMenuRequest(MenuManager& menuManager)
+{
+    menuManager.addItem(_("Update"))->sigTriggered().connect(
+        boost::bind(&ItemPropertyViewImpl::updateProperties, impl));
 }

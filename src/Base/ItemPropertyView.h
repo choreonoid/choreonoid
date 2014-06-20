@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_ITEM_PROPERTY_VIEW_H_INCLUDED
-#define CNOID_BASE_ITEM_PROPERTY_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_ITEM_PROPERTY_VIEW_H
+#define CNOID_BASE_ITEM_PROPERTY_VIEW_H
 
 #include <cnoid/View>
 
@@ -18,6 +18,8 @@ public:
         
     ItemPropertyView();
     ~ItemPropertyView();
+
+    virtual void onAttachedMenuRequest(MenuManager& menuManager);
 
 private:
     ItemPropertyViewImpl* impl;

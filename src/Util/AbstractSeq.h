@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_ABSTRACT_SEQ_H_INCLUDED
-#define CNOID_UTIL_ABSTRACT_SEQ_H_INCLUDED
+#ifndef CNOID_UTIL_ABSTRACT_SEQ_H
+#define CNOID_UTIL_ABSTRACT_SEQ_H
 
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -52,6 +52,12 @@ public:
         return frame / getFrameRate();
     }
 
+    virtual int getOffsetTimeFrame() const;
+
+    double getOffsetTime() const {
+        return getOffsetTimeFrame() / getFrameRate();
+    }
+    
     virtual int getNumFrames() const = 0;
     virtual void setNumFrames(int n, bool clearNewElements = false) = 0;
 
@@ -69,7 +75,7 @@ public:
     inline double getTimeLength() const {
         return getNumFrames() / getFrameRate();
     }
-            
+
     inline const std::string& seqContentName() {
         return content;
     }
