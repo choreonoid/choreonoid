@@ -79,6 +79,7 @@ set(headers
   Referenced.h
   Seq.h
   AbstractSeq.h
+  Timeval.h
   TimeMeasure.h
   Sleep.h
   Vector3Seq.h

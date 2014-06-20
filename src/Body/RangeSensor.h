@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_RANGE_SENSOR_H_INCLUDED
-#define CNOID_BODY_RANGE_SENSOR_H_INCLUDED
+#ifndef CNOID_BODY_RANGE_SENSOR_H
+#define CNOID_BODY_RANGE_SENSOR_H
 
 #include "VisionSensor.h"
 #include <boost/shared_ptr.hpp>
