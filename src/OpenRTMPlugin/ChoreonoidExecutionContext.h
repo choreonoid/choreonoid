@@ -9,7 +9,11 @@
 #include <rtm/RTC.h>
 #include <coil/Task.h>
 #include <rtm/Manager.h>
-#include <rtm/PeriodicExecutionContext.h>
+#ifdef OPENRTM_VERSION110
+  #include <rtm/PeriodicExecutionContext.h>
+#else
+  #include <rtm/OpenHRPExecutionContext.h>
+#endif
 
 #ifdef WIN32
 #pragma warning( disable : 4290 )
@@ -22,7 +26,11 @@ namespace cnoid
   OpenHRPExecutionContext is redefined as this class in the OpenRTM plugin.
   See post 02356 to the openrtm-users mailing list.
 */
-class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
+#ifdef OPENRTM_VERSION110
+  class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
+#else
+  class ChoreonoidExecutionContext : public RTC::OpenHRPExecutionContext
+#endif
 {
 public:
     ChoreonoidExecutionContext();

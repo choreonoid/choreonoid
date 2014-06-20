@@ -112,10 +112,15 @@ public:
         if(CORBA::is_nil(servantRef)){
             manager->servant()->createINSManager();
         }
-
+#ifdef OPENRTM_VERSION110
         if(manager->registerECFactory("ChoreonoidExecutionContext",
                                       RTC::ECCreate<cnoid::ChoreonoidExecutionContext>,
                                       RTC::ECDelete<cnoid::ChoreonoidExecutionContext>)){
+#else
+        if(RTC::ExecutionContextFactory::instance().addFactory("ChoreonoidExecutionContext",
+                ::coil::Creator< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>,
+                ::coil::Destructor< ::RTC::ExecutionContextBase, ::cnoid::ChoreonoidExecutionContext>)){
+#endif
             mv->putln(_("ChoreonoidExecutionContext has been registered."));
         }
             

@@ -27,6 +27,15 @@ elseif(MSVC)
 endif()
 
 if(OPENRTM_DIR)
+  if(MSVC)
+    set(OPENRTM_DIR_BACK ${OPENRTM_DIR})
+    include(${OPENRTM_DIR}/cmake/OpenRTMConfig.cmake)
+    set(OPENRTM_DIR ${OPENRTM_DIR_BACK})
+    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/bin)
+  else()
+    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
+  endif()
+  message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
 
   set(OPENRTM_PREFIX ${OPENRTM_DIR})
 
@@ -40,22 +49,25 @@ if(OPENRTM_DIR)
     ${OPENRTM_DIR}
     )
 
-  if(MSVC)
-    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/bin)
-  else()
-    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
-  endif()
-
   if(UNIX)
     set(OPENRTM_LIBRARIES RTC coil)
   elseif(MSVC)
-    file(GLOB librtc RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/RTC???.lib")
-    get_filename_component(librtc ${librtc} NAME_WE)
-    file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???.lib")
-    get_filename_component(libcoil ${libcoil} NAME_WE)
+    if(OPENRTM_VERSION STREQUAL "1.1.0")
+      file(GLOB librtc RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/RTC???.lib")
+      get_filename_component(librtc ${librtc} NAME_WE)
+      file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???.lib")
+      get_filename_component(libcoil ${libcoil} NAME_WE)
+      add_definitions(-DOPENRTM_VERSION110)
+    else()
+      file(GLOB librtc RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/RTC???_????.lib")
+      get_filename_component(librtc ${librtc} NAME_WE)
+      file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???_????.lib")
+      get_filename_component(libcoil ${libcoil} NAME_WE)
+    endif()
     set(OPENRTM_LIBRARIES 
       optimized ${librtc} debug ${librtc}d
-      optimized ${libcoil} debug ${libcoil}d)
+      optimized ${libcoil} debug ${libcoil}d
+      optimized ws2_32 debug ws2_32)
     message(STATUS "bin dir = ${OPENRTM_DIR}/bin, lib dir = ${OPENRTM_LIBRARY_DIRS}, rtm libs = ${librtc}, ${libcoil}")
     install_external_libraries(${OPENRTM_DIR}/bin ${OPENRTM_LIBRARY_DIRS} ${librtc} ${libcoil})
   endif()
@@ -104,8 +116,8 @@ set(plugin_sources
   VirtualRobotPortHandler.cpp
   BridgeConf.cpp
   RTCItem.cpp
-  ChoreonoidExecutionContext.cpp
   OpenHRPClockGeneratorItem.cpp
+  ChoreonoidExecutionContext.cpp
   )
 
 set(plugin_headers
