@@ -1313,7 +1313,18 @@ bool SimulatorItemImpl::stepSimulationMain()
         midDynamicsFunctions[i]();
     }
     self->stepSimulation(activeSimBodies);
-    
+
+    if(useControllerThreads){
+        {
+            boost::unique_lock<boost::mutex> lock(controlMutex);
+            while(!isControlFinished){
+                controlCondition.wait(lock);
+            }
+        }
+        isControlFinished = false;
+        doContinue |= isControlToBeContinued;
+    }
+
     for(size_t i=0; i < postDynamicsFunctions.size(); ++i){
         postDynamicsFunctions[i]();
     }
@@ -1330,16 +1341,6 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
 
     if(useControllerThreads){
-        {
-            boost::unique_lock<boost::mutex> lock(controlMutex);
-            while(!isControlFinished){
-                controlCondition.wait(lock);
-            }
-        }
-        isControlFinished = false;
-
-        doContinue |= isControlToBeContinued;
-
         for(size_t i=0; i < activeControllers.size(); ++i){
             activeControllers[i]->output();
         }
