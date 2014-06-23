@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_SIMULATOR_ITEM_H
+#define CNOID_BODYPLUGIN_SIMULATOR_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
@@ -73,6 +73,7 @@ public:
     void stopSimulation();
     bool isRunning() const;
     int currentFrame() const;
+    double currentTime() const;
 
     SignalProxy< boost::signal<void()> > sigSimulationFinished();
 

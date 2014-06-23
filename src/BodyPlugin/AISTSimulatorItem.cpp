@@ -49,8 +49,8 @@ public:
         setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
     }
 
-    virtual bool start(const Target& target) {
-        body = target.body();
+    virtual bool start(Target* target) {
+        body = target->body();
         currentFrame = 0;
         lastFrame = std::max(0, qseqRef->numFrames() - 1);
         numJoints = std::min(body->numJoints(), qseqRef->numParts());
@@ -58,7 +58,7 @@ public:
             putMessage(_("Reference motion is empty()."));
             return false;
         }
-        if(fabs(qseqRef->frameRate() - (1.0 / target.worldTimeStep())) > 1.0e-6){
+        if(fabs(qseqRef->frameRate() - (1.0 / target->worldTimeStep())) > 1.0e-6){
             putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
             return false;
         }

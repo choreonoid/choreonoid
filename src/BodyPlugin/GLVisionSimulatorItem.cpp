@@ -86,6 +86,7 @@ public:
     double elapsedTime;
     double cycleTime;
     double latency;
+    double onsetTime;
     boost::thread renderingThread;
     boost::condition_variable renderingCondition;
     boost::mutex renderingMutex;
@@ -143,6 +144,7 @@ public:
     ostream& os;
     SimulatorItem* simulatorItem;
     double worldTimeStep;
+    double currentTime;
     vector<VisionRendererPtr> visionRenderers;
     vector<VisionRenderer*> renderersInRendering;
     bool useThreadForRendering;
@@ -273,6 +275,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     
     this->simulatorItem = simulatorItem;
     worldTimeStep = simulatorItem->worldTimeStep();
+    currentTime = 0;
     visionRenderers.clear();
     useThreadForRendering = useThreadForRenderingProperty;
     isBestEffortMode = isBestEffortModeProperty;
@@ -416,6 +419,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 
     elapsedTime = cycleTime + 1.0e-6;
     latency = std::min(cycleTime, simImpl->maxLatency);
+    onsetTime = 0.0;
     
     hasUpdatedData = false;
 
@@ -533,6 +537,8 @@ SgCamera* VisionRenderer::initializeCamera()
 
 void GLVisionSimulatorItemImpl::onPreDynamics()
 {
+    currentTime = simulatorItem->currentTime();
+    
     if(!useThreadForRendering){
         renderersInRendering.clear();
     }
@@ -540,6 +546,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
     for(size_t i=0; i < visionRenderers.size(); ++i){
         VisionRenderer* renderer = visionRenderers[i];
         if(renderer->elapsedTime >= renderer->cycleTime){
+            renderer->onsetTime = currentTime;
             if(useThreadForRendering){
                 renderer->startConcurrentRendering();
             } else {
@@ -684,6 +691,7 @@ bool VisionRenderer::waitForRenderingToFinish()
         } else if(rangeSensor){
             rangeSensor->setRangeData(tmpRangeData);
         }
+        sensor->setDelay(simImpl->currentTime - onsetTime);
         if(simImpl->isVisionDataRecordingEnabled){
             sensor->notifyStateChange();
         } else {
@@ -712,6 +720,7 @@ void VisionRenderer::updateVisionData()
     pixelBuffer->doneCurrent();
     
     if(updated){
+        sensor->setDelay(simImpl->currentTime - onsetTime);
         if(simImpl->isVisionDataRecordingEnabled){
             sensor->notifyStateChange();
         } else {
@@ -910,7 +919,7 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
 {
     putProperty(_("Target bodies"), bodyNameListString, boost::bind(updateNames, _1, boost::ref(bodyNameListString), boost::ref(bodyNames)));
     putProperty(_("Target sensors"), sensorNameListString, boost::bind(updateNames, _1, boost::ref(sensorNameListString), boost::ref(sensorNames)));
-    putProperty(_("Max latency"), maxLatency, changeProperty(maxLatency));
+    putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));
     putProperty(_("Use thread"), useThreadForRenderingProperty, changeProperty(useThreadForRenderingProperty));
     putProperty(_("Best effort"), isBestEffortModeProperty, changeProperty(isBestEffortModeProperty));

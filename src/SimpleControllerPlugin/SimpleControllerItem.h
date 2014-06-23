@@ -26,7 +26,7 @@ public:
         
     void setControllerDllName(const std::string& name);
         
-    virtual bool start(const Target& target);
+    virtual bool start(Target* target);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
