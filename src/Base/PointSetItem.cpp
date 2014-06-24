@@ -25,6 +25,7 @@ namespace {
 class RectLineOverlay : public SgOverlay
 {
 public:
+    int left, right, top, bottom;
     SgVertexArrayPtr vertices;
     RectLineOverlay();
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
@@ -39,7 +40,7 @@ class PointSetEraser : public SceneWidgetEditable, public Referenced
 public:
     SceneWidget* sceneWidget;
     boost::signals::connection connection;
-    RectLineOverlayPtr rectLineOverlay;
+    RectLineOverlayPtr rect;
     int x0, y0;
 
     PointSetEraser(SceneWidget* sceneWidget);
@@ -410,7 +411,7 @@ bool PointSetItem::restore(const Archive& archive)
 PointSetEraser::PointSetEraser(SceneWidget* sceneWidget)
   : sceneWidget(sceneWidget)
 {
-    rectLineOverlay = new RectLineOverlay;
+    rect = new RectLineOverlay;
     
     sceneWidget->installEventFilter(this);
     connection = sceneWidget->sigAboutToBeDestroyed().connect(
@@ -427,8 +428,8 @@ void PointSetEraser::onSceneWidgetAboutToBeDestroyed()
 PointSetEraser::~PointSetEraser()
 {
     if(sceneWidget){
-        if(rectLineOverlay->hasParents()){
-            sceneWidget->sceneRoot()->removeChild(rectLineOverlay, true);
+        if(rect->hasParents()){
+            sceneWidget->sceneRoot()->removeChild(rect, true);
         }
         sceneWidget->removeEventFilter(this);
         connection.disconnect();
@@ -440,23 +441,36 @@ bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     x0 = event.x();
     y0 = event.y();
-    rectLineOverlay->setRect(x0, y0, x0, y0);
+    rect->setRect(x0, y0, x0, y0);
     
-    if(!rectLineOverlay->hasParents()){
-        sceneWidget->sceneRoot()->addChild(rectLineOverlay, true);
+    if(!rect->hasParents()){
+        sceneWidget->sceneRoot()->addChild(rect, true);
     }
 }
 
 
 bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
+    const Affine3& C = event.currentCameraPosition();
 
+    Vector3 p0, p1, p2;
+    event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p0);
+    event.sceneWidget()->unproject(rect->left, rect->top, 1.0, p1);
+    event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p2);
+
+    /*
+    cout << "unprojected:\n";
+    cout << p0 << ", " << p1 << ", " << p2 << endl;
+    */
+
+    Vector3 normal = (p2 - p0).cross(p1 - p0);
+    cout << "normal = " << normal << endl;
 }
 
 
 bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    rectLineOverlay->setRect(x0, y0, event.x(), event.y());
+    rect->setRect(x0, y0, event.x(), event.y());
 }
 
 
@@ -495,8 +509,6 @@ void RectLineOverlay::calcViewVolume(double viewportWidth, double viewportHeight
 
 void RectLineOverlay::setRect(int x0, int y0, int x1, int y1)
 {
-    float left, right, top, bottom;
-
     if(x0 <= x1){
         left = x0;
         right = x1;
