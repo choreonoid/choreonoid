@@ -439,4 +439,3 @@ void PointSetEraser::onContextMenuRequest(const SceneWidgetEvent& event, MenuMan
 {
     //cout << "PointSetEraser::onContextMenuRequest()" << endl;
 }
-
