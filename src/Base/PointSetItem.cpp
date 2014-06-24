@@ -26,26 +26,20 @@ class PointSetEraser : public SceneWidgetEditable, public Referenced
 {
 public:
     SceneWidget* sceneWidget;
+    boost::signals::connection connection;
 
-    PointSetEraser(SceneWidget* sceneWidget) : sceneWidget(sceneWidget) {
-        sceneWidget->installEventFilter(this);
-        sceneWidget->sigAboutToBeDestroyed().connect(
-            boost::bind(&PointSetEraser::onSceneWidgetAboutToBeDestroyed, this));
-    }
+    PointSetEraser(SceneWidget* sceneWidget);
+    void onSceneWidgetAboutToBeDestroyed();
+    ~PointSetEraser();
 
-    void onSceneWidgetAboutToBeDestroyed() {
-        sceneWidget = 0;
-    }
-
-    ~PointSetEraser(){
-        if(sceneWidget){
-            sceneWidget->removeEventFilter(this);
-        }
-    }
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
+    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
 };
 
 typedef ref_ptr<PointSetEraser> PointSetEraserPtr;
-    
+
 
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
@@ -164,6 +158,7 @@ public:
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
 
 }
+
 
 namespace cnoid {
         
@@ -396,3 +391,52 @@ bool PointSetItem::restore(const Archive& archive)
     }
     return true;
 }
+
+
+PointSetEraser::PointSetEraser(SceneWidget* sceneWidget)
+  : sceneWidget(sceneWidget)
+{
+    sceneWidget->installEventFilter(this);
+    connection = sceneWidget->sigAboutToBeDestroyed().connect(
+        boost::bind(&PointSetEraser::onSceneWidgetAboutToBeDestroyed, this));
+}
+
+
+void PointSetEraser::onSceneWidgetAboutToBeDestroyed()
+{
+    sceneWidget = 0;
+}
+
+
+PointSetEraser::~PointSetEraser()
+{
+    if(sceneWidget){
+        sceneWidget->removeEventFilter(this);
+        connection.disconnect();
+    }
+}
+
+
+bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    //cout << "PointSetEraser::onButtonPressEvent()" << endl;
+}
+
+
+bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
+{
+    //cout << "PointSetEraser::onButtonReleaseEvent()" << endl;
+}
+
+
+bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
+{
+    //cout << "PointSetEraser::onPointerMoveEvent()" << endl;
+}
+
+
+void PointSetEraser::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+{
+    //cout << "PointSetEraser::onContextMenuRequest()" << endl;
+}
+

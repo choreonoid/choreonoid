@@ -88,6 +88,7 @@ public:
     virtual bool onUndoRequest();
     virtual bool onRedoRequest();
 };
+
 }
 
 #endif
