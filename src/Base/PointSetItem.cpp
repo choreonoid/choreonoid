@@ -38,19 +38,23 @@ typedef ref_ptr<RectLineOverlay> RectLineOverlayPtr;
 class PointSetEraser : public SceneWidgetEditable, public Referenced
 {
 public:
+    weak_ref_ptr<PointSetItem> weakPointSetItem;
     SceneWidget* sceneWidget;
     boost::signals::connection connection;
     RectLineOverlayPtr rect;
     int x0, y0;
 
-    PointSetEraser(SceneWidget* sceneWidget);
+    PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
     void onSceneWidgetAboutToBeDestroyed();
     ~PointSetEraser();
 
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+
+    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[]);
 };
 
 typedef ref_ptr<PointSetEraser> PointSetEraserPtr;
@@ -61,6 +65,7 @@ class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+    weak_ref_ptr<PointSetItem> weakPointSetItem;
     bool isEditable_;
     SgPointSetPtr orgPointSet;
     SgPointSetPtr visiblePointSet;
@@ -69,105 +74,20 @@ public:
     CrossMarkerPtr attentionPointMarker;
     PointSetEraserPtr eraser;
 
-    ScenePointSet(SgPointSet* pointSet) {
-        orgPointSet = pointSet;
-        visiblePointSet = new SgPointSet;
-        isEditable_ = false;
-    }
+    ScenePointSet(PointSetItemImpl* pointSetItem);
 
-    bool isEditable() const {
-        return isEditable_;
-    }
+    bool isEditable() const { return isEditable_; }
+    void setEditable(bool on) { isEditable_ = on; }
+    void setPointSize(double size);
+    void clearAttentionPoint();
+    void updateVisiblePointSet();
 
-    void setEditable(bool on) {
-        isEditable_ = on;
-    }
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
 
-    void setPointSize(double size){
-        if(size != visiblePointSet->pointSize()){
-            visiblePointSet->setPointSize(size);
-            if(invariant){
-                updateVisiblePointSet();
-            }
-        }
-    }
-
-    void clearAttentionPoint() {
-        attentionPoint = boost::none;
-        if(attentionPointMarker){
-            removeChild(attentionPointMarker);
-            notifyUpdate();
-        }
-    }
-
-    void updateVisiblePointSet() {
-        if(invariant){
-            removeChild(invariant);
-            invariant->removeChild(visiblePointSet);
-        }
-        invariant = new SgInvariantGroup;
-
-        //! \todo implement the assignment operator to SgPlot and SgPointSet and use it
-        visiblePointSet->setVertices(orgPointSet->vertices());
-        visiblePointSet->setNormals(orgPointSet->normals());
-        visiblePointSet->normalIndices() = orgPointSet->normalIndices();
-        visiblePointSet->setColors(orgPointSet->colors());
-        visiblePointSet->colorIndices() = orgPointSet->colorIndices();
-    
-        invariant->addChild(visiblePointSet);
-        addChild(invariant, true);
-
-        if(attentionPointMarker){
-            removeChild(attentionPointMarker);
-        }
-    }
-
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event) {
-
-        if(!isEditable_){
-            return false;
-        }
-
-        bool processed = false;
-        
-        if(event.button() == Qt::LeftButton){
-            if(!attentionPointMarker){
-                Vector3f color(1.0f, 1.0f, 0.0f);
-                attentionPointMarker = new CrossMarker(0.01, color);
-            }
-            if(attentionPoint && event.point().isApprox(*attentionPoint, 1.0e-3)){
-                clearAttentionPoint();
-            } else {
-                attentionPoint = event.point();
-                attentionPointMarker->setTranslation(T().inverse() * *attentionPoint);
-                addChildOnce(attentionPointMarker);
-                attentionPointMarker->notifyUpdate();
-            }
-            processed = true;
-        }
-
-        return processed;
-    }
-    
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event) {
-        return false;
-    }
-
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager) {
-        menuManager.addItem(_("Clear Attention Point"))->sigTriggered().connect(
-            boost::bind(&ScenePointSet::clearAttentionPoint, this));
-        menuManager.addSeparator();
-        menuManager.addItem(_("Start Eraser Mode"))->sigTriggered().connect(
-            boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
-    }
-
-    void startEraserMode(SceneWidget* sceneWidget) {
-        eraser = new PointSetEraser(sceneWidget);
-    }
-    
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event) {
-
-    }
+    void startEraserMode(SceneWidget* sceneWidget);
 };
 
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
@@ -180,12 +100,13 @@ namespace cnoid {
 class PointSetItemImpl
 {
 public:
+    PointSetItem* self;
     SgPointSetPtr pointSet;
     ScenePointSetPtr scenePointSet;
     boost::signals::connection pointSetUpdateConnection;
 
-    PointSetItemImpl();
-    PointSetItemImpl(const PointSetItemImpl& org);
+    PointSetItemImpl(PointSetItem* self);
+    PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
     bool onEditableChanged(bool on);
 };
 
@@ -241,30 +162,32 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
 
 PointSetItem::PointSetItem()
 {
-    impl = new PointSetItemImpl();
+    impl = new PointSetItemImpl(this);
     initialize();
 }
 
 
-PointSetItemImpl::PointSetItemImpl()
+PointSetItemImpl::PointSetItemImpl(PointSetItem* self)
+    : self(self)
 {
     pointSet = new SgPointSet;
-    scenePointSet = new ScenePointSet(pointSet);
+    scenePointSet = new ScenePointSet(this);
 }
 
 
 PointSetItem::PointSetItem(const PointSetItem& org)
     : Item(org)
 {
-    impl = new PointSetItemImpl(*org.impl);
+    impl = new PointSetItemImpl(this, *org.impl);
     initialize();
 }
 
 
-PointSetItemImpl::PointSetItemImpl(const PointSetItemImpl& org)
+PointSetItemImpl::PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org)
+    : self(self)
 {
     pointSet = new SgPointSet(*org.pointSet);
-    scenePointSet = new ScenePointSet(pointSet);
+    scenePointSet = new ScenePointSet(this);
     scenePointSet->T() = org.scenePointSet->T();
 }
 
@@ -408,14 +331,129 @@ bool PointSetItem::restore(const Archive& archive)
 }
 
 
-PointSetEraser::PointSetEraser(SceneWidget* sceneWidget)
-  : sceneWidget(sceneWidget)
+ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
+    : weakPointSetItem(pointSetItemImpl->self),
+      orgPointSet(pointSetItemImpl->pointSet)
+{
+    visiblePointSet = new SgPointSet;
+    isEditable_ = false;
+}
+
+
+void ScenePointSet::setPointSize(double size)
+{
+    if(size != visiblePointSet->pointSize()){
+        visiblePointSet->setPointSize(size);
+        if(invariant){
+            updateVisiblePointSet();
+        }
+    }
+}
+
+
+void ScenePointSet::clearAttentionPoint()
+{
+    attentionPoint = boost::none;
+    if(attentionPointMarker){
+        removeChild(attentionPointMarker);
+        notifyUpdate();
+    }
+}
+
+
+void ScenePointSet::updateVisiblePointSet()
+{
+    if(invariant){
+        removeChild(invariant);
+        invariant->removeChild(visiblePointSet);
+    }
+    invariant = new SgInvariantGroup;
+    
+    //! \todo implement the assignment operator to SgPlot and SgPointSet and use it
+    visiblePointSet->setVertices(orgPointSet->vertices());
+    visiblePointSet->setNormals(orgPointSet->normals());
+    visiblePointSet->normalIndices() = orgPointSet->normalIndices();
+    visiblePointSet->setColors(orgPointSet->colors());
+    visiblePointSet->colorIndices() = orgPointSet->colorIndices();
+    
+    invariant->addChild(visiblePointSet);
+    addChild(invariant, true);
+    
+    if(attentionPointMarker){
+        removeChild(attentionPointMarker);
+    }
+}
+
+
+bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    if(!isEditable_){
+        return false;
+    }
+    
+    bool processed = false;
+    
+    if(event.button() == Qt::LeftButton){
+        if(!attentionPointMarker){
+            Vector3f color(1.0f, 1.0f, 0.0f);
+            attentionPointMarker = new CrossMarker(0.01, color);
+        }
+        if(attentionPoint && event.point().isApprox(*attentionPoint, 1.0e-3)){
+            clearAttentionPoint();
+        } else {
+            attentionPoint = event.point();
+            attentionPointMarker->setTranslation(T().inverse() * *attentionPoint);
+            addChildOnce(attentionPointMarker);
+            attentionPointMarker->notifyUpdate();
+        }
+        processed = true;
+    }
+    
+    return processed;
+}
+
+
+bool ScenePointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
+{
+    return false;
+}
+
+
+void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+{
+    menuManager.addItem(_("Clear Attention Point"))->sigTriggered().connect(
+        boost::bind(&ScenePointSet::clearAttentionPoint, this));
+    menuManager.addSeparator();
+    menuManager.addItem(_("Start Eraser Mode"))->sigTriggered().connect(
+        boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
+}
+
+
+void ScenePointSet::onSceneModeChanged(const SceneWidgetEvent& event)
+{
+
+}
+
+
+void ScenePointSet::startEraserMode(SceneWidget* sceneWidget)
+{
+    if(!weakPointSetItem.expired()){
+        eraser = new PointSetEraser(weakPointSetItem, sceneWidget);
+    }
+}
+
+
+PointSetEraser::PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
+    : weakPointSetItem(weakPointSetItem),
+      sceneWidget(sceneWidget)
 {
     rect = new RectLineOverlay;
-    
+
     sceneWidget->installEventFilter(this);
     connection = sceneWidget->sigAboutToBeDestroyed().connect(
         boost::bind(&PointSetEraser::onSceneWidgetAboutToBeDestroyed, this));
+
+    onSceneModeChanged(sceneWidget->latestEvent());
 }
 
 
@@ -437,6 +475,15 @@ PointSetEraser::~PointSetEraser()
 }
 
 
+void PointSetEraser::onSceneModeChanged(const SceneWidgetEvent& event)
+{
+    if(event.sceneWidget()->isEditMode()){
+        event.sceneWidget()->setCursor(
+            QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
+    }
+}
+
+
 bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     x0 = event.x();
@@ -451,20 +498,19 @@ bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
-    const Affine3& C = event.currentCameraPosition();
-
-    Vector3 p0, p1, p2;
-    event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p0);
-    event.sceneWidget()->unproject(rect->left, rect->top, 1.0, p1);
-    event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p2);
-
-    /*
-    cout << "unprojected:\n";
-    cout << p0 << ", " << p1 << ", " << p2 << endl;
-    */
-
-    Vector3 normal = (p2 - p0).cross(p1 - p0);
-    cout << "normal = " << normal << endl;
+    PointSetItemPtr pointSetItem = weakPointSetItem.lock();
+    if(pointSetItem){
+        if(rect->left < rect->right && rect->bottom < rect->top){
+            Vector3 p[4];
+            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p[0]);
+            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
+            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
+            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
+            removePointSetInRectangle(
+                pointSetItem, event.currentCameraPosition().translation(), p);
+        }
+    }
+    return true;
 }
 
 
@@ -477,6 +523,53 @@ bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
 void PointSetEraser::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
 
+}
+
+
+void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[])
+{
+    Vector3 n[4];
+    double d[4];
+
+    for(int i=0; i < 4; ++i){
+        n[i] = (r[(i+1)%4] - c).cross(r[i] - c).normalized();
+        d[i] = n[i].dot(c);
+    }
+
+    vector<int> indicesToRemove;
+    SgPointSet* pointSet = pointSetItem->pointSet();
+    SgVertexArray orgPoints(*pointSet->vertices());
+    const int numOrgPoints = orgPoints.size();
+
+    for(int i=0; i < numOrgPoints; ++i){
+        const Vector3& p = orgPoints[i].cast<Vector3::Scalar>();
+        for(int j=0; j < 4; ++j){
+            const double distance = p.dot(n[j]) - d[j];
+            if(distance < 0.0){
+                goto notInRegion;
+            }
+        }
+        indicesToRemove.push_back(i);
+notInRegion:
+        ;
+    }
+
+    if(!indicesToRemove.empty()){
+        SgVertexArray& points = *pointSet->vertices();
+        points.clear();
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgPoints; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                points.push_back(orgPoints[i]);
+            }
+        }
+        pointSetItem->notifyUpdate();
+    }
 }
 
 

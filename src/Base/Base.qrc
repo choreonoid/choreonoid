@@ -24,6 +24,8 @@
   <file>icons/velocitygraph.png</file>
   <file>icons/accgraph.png</file>
 
+  <file>icons/eraser-cursor.png</file>
+
   <file alias="LICENSE">../../LICENSE</file>
 
 </qresource>

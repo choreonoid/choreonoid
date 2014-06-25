@@ -824,6 +824,9 @@ void SceneWidgetImpl::setEditMode(bool on)
                 focusedEditablePath[i]->onFocusChanged(latestEvent, false);
             }
         }
+        if(eventFilter){
+            eventFilter->onSceneModeChanged(latestEvent);
+        }
         set<SceneWidgetEditable*>::iterator p;
         for(p = editableEntities.begin(); p != editableEntities.end(); ++p){
             SceneWidgetEditable* editable = *p;
@@ -844,6 +847,12 @@ void SceneWidgetImpl::setEditMode(bool on)
 void SceneWidgetImpl::toggleEditMode()
 {
     setEditMode(!isEditMode);
+}
+
+
+const SceneWidgetEvent& SceneWidget::latestEvent() const
+{
+    return impl->latestEvent;
 }
 
 

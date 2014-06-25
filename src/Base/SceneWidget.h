@@ -40,6 +40,8 @@ public:
     bool isEditMode() const;
     SignalProxy< boost::signal<void(bool)> > sigEditModeToggled() const;
 
+    const SceneWidgetEvent& latestEvent() const;
+
     enum ViewpointControlMode { THIRD_PERSON_MODE, FIRST_PERSON_MODE  };
     void setViewpointControlMode(ViewpointControlMode mode);
     ViewpointControlMode viewpointControlMode() const;
@@ -95,6 +97,13 @@ public:
     void setFar(double value);
  
     bool setSceneFocus(const SgNodePath& path);
+
+    /**
+       @return cursor id which is passed to releaseCursor()
+    */
+    //int setCursor(const QCursor cursor);
+    //void releaseCursor(int cursorId);
+
     void setCursor(const QCursor cursor);
 
     Menu* contextMenu();
