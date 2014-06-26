@@ -1269,7 +1269,7 @@ void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
     updateLatestEvent(event);
 
     bool handled = false;
-    if(isEditMode){
+    if(isEditMode && dragMode == EDITING){
         if(eventFilter){
             handled = eventFilter->onButtonReleaseEvent(latestEvent);
         }
