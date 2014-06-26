@@ -14,13 +14,16 @@
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <boost/bind.hpp>
-#include <iostream>
+#include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace boost;
 using namespace cnoid;
 
 namespace {
+
+class ScenePointSet;
 
 class RectLineOverlay : public SgOverlay
 {
@@ -40,24 +43,23 @@ class PointSetEraser : public SceneWidgetEditable, public Referenced
 public:
     weak_ref_ptr<PointSetItem> weakPointSetItem;
     SceneWidget* sceneWidget;
-    boost::signals::connection connection;
     RectLineOverlayPtr rect;
     int x0, y0;
 
     PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
-    void onSceneWidgetAboutToBeDestroyed();
     ~PointSetEraser();
+
+    void showRectangle(bool on);
+    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[]);
+    template<class ElementContainer>
+    void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
 
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-
-    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[]);
 };
-
-typedef ref_ptr<PointSetEraser> PointSetEraserPtr;
 
 
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
@@ -72,7 +74,6 @@ public:
     SgInvariantGroupPtr invariant;
     boost::optional<Vector3> attentionPoint;
     CrossMarkerPtr attentionPointMarker;
-    PointSetEraserPtr eraser;
 
     ScenePointSet(PointSetItemImpl* pointSetItem);
 
@@ -421,11 +422,14 @@ bool ScenePointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-    menuManager.addItem(_("Clear Attention Point"))->sigTriggered().connect(
+    menuManager.addItem(_("PointSet: Clear Attention Point"))->sigTriggered().connect(
         boost::bind(&ScenePointSet::clearAttentionPoint, this));
-    menuManager.addSeparator();
-    menuManager.addItem(_("Start Eraser Mode"))->sigTriggered().connect(
-        boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
+
+    PointSetEraser* eraser = dynamic_cast<PointSetEraser*>(event.sceneWidget()->activeEventFilter());
+    if(!eraser || eraser->weakPointSetItem.lock() != this->weakPointSetItem.lock()){
+        menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+            boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
+    }
 }
 
 
@@ -438,94 +442,43 @@ void ScenePointSet::onSceneModeChanged(const SceneWidgetEvent& event)
 void ScenePointSet::startEraserMode(SceneWidget* sceneWidget)
 {
     if(!weakPointSetItem.expired()){
-        eraser = new PointSetEraser(weakPointSetItem, sceneWidget);
+        sceneWidget->installEventFilter(new PointSetEraser(weakPointSetItem, sceneWidget));
     }
 }
 
 
 PointSetEraser::PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
-    : weakPointSetItem(weakPointSetItem),
-      sceneWidget(sceneWidget)
+  : weakPointSetItem(weakPointSetItem),
+    sceneWidget(sceneWidget)
 {
     rect = new RectLineOverlay;
-
-    sceneWidget->installEventFilter(this);
-    connection = sceneWidget->sigAboutToBeDestroyed().connect(
-        boost::bind(&PointSetEraser::onSceneWidgetAboutToBeDestroyed, this));
-
     onSceneModeChanged(sceneWidget->latestEvent());
-}
-
-
-void PointSetEraser::onSceneWidgetAboutToBeDestroyed()
-{
-    sceneWidget = 0;
 }
 
 
 PointSetEraser::~PointSetEraser()
 {
-    if(sceneWidget){
+    showRectangle(false);
+}
+
+
+void PointSetEraser::showRectangle(bool on)
+{
+    if(on){
+        if(!rect->hasParents()){
+            sceneWidget->sceneRoot()->addChild(rect, true);
+        }
+    } else {
         if(rect->hasParents()){
             sceneWidget->sceneRoot()->removeChild(rect, true);
         }
-        sceneWidget->removeEventFilter(this);
-        connection.disconnect();
     }
 }
 
 
-void PointSetEraser::onSceneModeChanged(const SceneWidgetEvent& event)
-{
-    if(event.sceneWidget()->isEditMode()){
-        event.sceneWidget()->setCursor(
-            QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
-    }
-}
-
-
-bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
-{
-    x0 = event.x();
-    y0 = event.y();
-    rect->setRect(x0, y0, x0, y0);
-    
-    if(!rect->hasParents()){
-        sceneWidget->sceneRoot()->addChild(rect, true);
-    }
-}
-
-
-bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
-{
-    PointSetItemPtr pointSetItem = weakPointSetItem.lock();
-    if(pointSetItem){
-        if(rect->left < rect->right && rect->bottom < rect->top){
-            Vector3 p[4];
-            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p[0]);
-            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
-            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
-            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
-            removePointSetInRectangle(
-                pointSetItem, event.currentCameraPosition().translation(), p);
-        }
-    }
-    return true;
-}
-
-
-bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
-{
-    rect->setRect(x0, y0, event.x(), event.y());
-}
-
-
-void PointSetEraser::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
-{
-
-}
-
-
+/**
+   \todo support the orthogonal camera
+*/
 void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[])
 {
     Vector3 n[4];
@@ -538,11 +491,12 @@ void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const
 
     vector<int> indicesToRemove;
     SgPointSet* pointSet = pointSetItem->pointSet();
+    const Affine3 T = pointSetItem->offsetPosition();
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
     for(int i=0; i < numOrgPoints; ++i){
-        const Vector3& p = orgPoints[i].cast<Vector3::Scalar>();
+        const Vector3 p = T * orgPoints[i].cast<Vector3::Scalar>();
         for(int j=0; j < 4; ++j){
             const double distance = p.dot(n[j]) - d[j];
             if(distance < 0.0){
@@ -566,12 +520,125 @@ notInRegion:
                 }
             } else {
                 points.push_back(orgPoints[i]);
+                
             }
         }
+        if(pointSet->hasNormals()){
+            removeSubElements(*pointSet->normals(), pointSet->normalIndices(), indicesToRemove);
+        }
+        if(pointSet->hasColors()){
+            removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
+        }
+        
         pointSetItem->notifyUpdate();
     }
 }
 
+
+template<class ElementContainer>
+void PointSetEraser::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
+{
+    const ElementContainer orgElements(elements);
+    const int numOrgElements = orgElements.size();
+    elements.clear();
+    
+    if(indices.empty()){
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgElements; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                elements.push_back(orgElements[i]);
+            }
+        }
+    } else {
+        const SgIndexArray orgIndices(indices);
+        const int numOrgIndices = orgIndices.size();
+        indices.clear();
+        dynamic_bitset<> elementValidness(numOrgElements);
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgIndices; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                int index = orgIndices[i];
+                elementValidness.set(index);
+                indices.push_back(index);
+            }
+        }
+        vector<int> indexMap(numOrgElements);
+        int newIndex = 0;
+        for(int i=0; i < numOrgElements; ++i){
+            if(elementValidness.test(i)){
+                elements.push_back(orgElements[i]);
+                ++newIndex;
+            }
+            indexMap[i] = newIndex;
+        }
+        for(size_t i=0; i < indices.size(); ++i){
+            indices[i] = indexMap[i];
+        }
+    }
+}
+
+
+void PointSetEraser::onSceneModeChanged(const SceneWidgetEvent& event)
+{
+    if(event.sceneWidget()->isEditMode()){
+        event.sceneWidget()->setCursor(
+            QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
+    } else {
+        showRectangle(false);
+    }
+}
+
+
+bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+    x0 = event.x();
+    y0 = event.y();
+    rect->setRect(x0, y0, x0, y0);
+    showRectangle(true);
+}
+
+
+bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
+{
+    PointSetItemPtr pointSetItem = weakPointSetItem.lock();
+    if(pointSetItem){
+        if(rect->left < rect->right && rect->bottom < rect->top){
+            Vector3 p[4];
+            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p[0]);
+            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
+            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
+            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
+            removePointSetInRectangle(
+                pointSetItem, event.currentCameraPosition().translation(), p);
+        }
+    }
+    showRectangle(false);
+    return true;
+}
+
+
+bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
+{
+    rect->setRect(x0, y0, event.x(), event.y());
+}
+
+
+void PointSetEraser::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+{
+    menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
+        boost::bind(&SceneWidget::removeEventFilter, event.sceneWidget(), this));
+}
+        
 
 RectLineOverlay::RectLineOverlay()
 {

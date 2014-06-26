@@ -111,6 +111,7 @@ public:
     SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> > sigContextMenuRequest();
 
     void installEventFilter(SceneWidgetEditable* filter);
+    SceneWidgetEditable* activeEventFilter();
     void removeEventFilter(SceneWidgetEditable* filter);
 
     void showSetupDialog();

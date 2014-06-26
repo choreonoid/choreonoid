@@ -421,6 +421,7 @@ class SgCamera;
 class SgPerspectiveCamera;
 class SgOrthographicCamera;
 class SgOverlay;
+
 }
 
 #endif

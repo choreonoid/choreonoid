@@ -230,6 +230,7 @@ public:
     Vector3 lastClickedPoint;
 
     SceneWidgetEditable* eventFilter;
+    ReferencedPtr eventFilterRef;
 
     SgGroupPtr systemNodeGroup;
 
@@ -1208,7 +1209,7 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
 
     bool handled = false;
     bool forceViewMode = (event->modifiers() & Qt::AltModifier);
-    
+
     if(isEditMode && !forceViewMode){
         if(event->button() == Qt::RightButton){
             showEditModePopupMenu(event->globalPos());
@@ -1777,6 +1778,13 @@ SceneWidget::sigContextMenuRequest()
 void SceneWidget::installEventFilter(SceneWidgetEditable* filter)
 {
     impl->eventFilter = filter;
+    impl->eventFilterRef = dynamic_cast<Referenced*>(filter);
+}
+
+
+SceneWidgetEditable* SceneWidget::activeEventFilter()
+{
+    return impl->eventFilter;
 }
 
 
@@ -1784,6 +1792,8 @@ void SceneWidget::removeEventFilter(SceneWidgetEditable* filter)
 {
     if(impl->eventFilter == filter){
         impl->eventFilter = 0;
+        impl->eventFilterRef.reset();
+        impl->setCursor(impl->defaultCursor);
     }
 }
 
