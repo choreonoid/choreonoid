@@ -15,10 +15,40 @@ else()
   endif()
 endif()
 
+function(add_cnoid_openRTM_plugin)
+
+  add_library(${ARGV})
+
+  set_target_properties(${ARGV0} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
+
+  if(ENABLE_INSTALL_RPATH)
+    if(APPLE)
+      set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "@rpath")
+      set_target_properties(${ARGV0} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path,-rpath,@loader_path/..")
+    else()
+      set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
+    endif()
+  else()
+    if(APPLE)
+      set_target_properties(${ARGV0} PROPERTIES INSTALL_NAME_DIR "")
+    else()
+      set_target_properties(${ARGV0} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    endif()
+  endif()
+
+endfunction()
+
 set(OPENRTM_DIR ${OPENRTM_DIR} CACHE PATH "set the top directory of OpenRTM-aist")
 if(UNIX)
   if(NOT OPENRTM_DIR)
     pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
+    message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
+    if(OPENRTM_VERSION STREQUAL "1.1.0")
+      add_definitions(-DOPENRTM_VERSION110)
+    endif()
   endif()
 elseif(MSVC)
   if(NOT OPENRTM_DIR)
@@ -33,7 +63,11 @@ if(OPENRTM_DIR)
     set(OPENRTM_DIR ${OPENRTM_DIR_BACK})
     set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/bin)
   else()
+    include(${OPENRTM_DIR}/lib/openrtm-1.1/cmake/OpenRTMConfig.cmake)
     set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/lib)
+    if(OPENRTM_VERSION STREQUAL "1.1.0")
+      add_definitions(-DOPENRTM_VERSION110)
+    endif()
   endif()
   message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
 
@@ -129,11 +163,25 @@ endif()
 
 make_gettext_mofiles(${plugin} mofiles)
 
-add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+if(OPENRTM_VERSION STREQUAL "1.1.0")
+  add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+else()
+  add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+  if(ENABLE_GCC_FVISIBILITY_HIDDEN)
+    set_source_files_properties(BodyRTCItem.cpp
+                                VirtualRobotRTC.cpp
+                                VirtualRobotPortHandler.cpp
+                                BridgeConf.cpp
+                                RTCItem.cpp
+                                OpenHRPClockGeneratorItem.cpp
+                                ChoreonoidExecutionContext.cpp 
+                                PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  endif()
+endif()
+
 target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM ${OPENRTM_LIBRARIES})
 if(UNIX)
   target_link_libraries(${plugin} ${Boost_REGEX_LIBRARY})
-  add_definitions(-DOPENRTM_VERSION110)
 endif()
 apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
