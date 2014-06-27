@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_EDITABLE_SCENE_BODY_H_INCLUDED
-#define CNOID_BODYPLUGIN_EDITABLE_SCENE_BODY_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_EDITABLE_SCENE_BODY_H
+#define CNOID_BODYPLUGIN_EDITABLE_SCENE_BODY_H
 
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/SceneBody>

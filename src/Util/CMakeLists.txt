@@ -25,6 +25,7 @@ set(sources
   BoundingBox.cpp
   SceneGraph.cpp
   SceneVisitor.cpp
+  SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp
   MeshNormalGenerator.cpp
@@ -79,6 +80,7 @@ set(headers
   Referenced.h
   Seq.h
   AbstractSeq.h
+  Timeval.h
   TimeMeasure.h
   Sleep.h
   Vector3Seq.h

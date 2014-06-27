@@ -26,7 +26,7 @@ public:
     BodyRTCItem(const BodyRTCItem& org);
     virtual ~BodyRTCItem();
         
-    virtual bool start(const Target& target);
+    virtual bool start(Target* target);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
@@ -71,6 +71,7 @@ private:
     double bodyPeriodicRate;
     double bodyPeriodicCounter;
         
+    const Target* controllerTarget;
     double controlTime_;
     std::ostream& os;
 

@@ -18,6 +18,7 @@ class SceneRenderer;
 class Archive;
 class MenuManager;
 class SceneWidgetEvent;
+class SceneWidgetEditable;
 class SceneWidgetRoot;
 class Menu;
 
@@ -38,6 +39,8 @@ public:
     void setEditMode(bool on);
     bool isEditMode() const;
     SignalProxy< boost::signal<void(bool)> > sigEditModeToggled() const;
+
+    const SceneWidgetEvent& latestEvent() const;
 
     enum ViewpointControlMode { THIRD_PERSON_MODE, FIRST_PERSON_MODE  };
     void setViewpointControlMode(ViewpointControlMode mode);
@@ -94,11 +97,22 @@ public:
     void setFar(double value);
  
     bool setSceneFocus(const SgNodePath& path);
+
+    /**
+       @return cursor id which is passed to releaseCursor()
+    */
+    //int setCursor(const QCursor cursor);
+    //void releaseCursor(int cursorId);
+
     void setCursor(const QCursor cursor);
 
     Menu* contextMenu();
     void showContextMenu();
     SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> > sigContextMenuRequest();
+
+    void installEventFilter(SceneWidgetEditable* filter);
+    SceneWidgetEditable* activeEventFilter();
+    void removeEventFilter(SceneWidgetEditable* filter);
 
     void showSetupDialog();
     QVBoxLayout* setupDialogVBox();

@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_CONTROLLER_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_CONTROLLER_ITEM_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_CONTROLLER_ITEM_H
+#define CNOID_BODYPLUGIN_CONTROLLER_ITEM_H
 
 #include "SimulatorItem.h"
 #include "exportdecl.h"
@@ -22,8 +22,9 @@ public:
     class Target
     {
     public:
-        virtual Body* body() const = 0;
+        virtual Body* body() = 0;
         virtual double worldTimeStep() const = 0;
+        virtual double currentTime() const = 0;
     };
         
     ControllerItem();
@@ -41,7 +42,7 @@ public:
            
        @note This function is called from the main thread.
     */
-    virtual bool start(const Target& target) = 0;
+    virtual bool start(Target* target) = 0;
 
     virtual double timeStep() const = 0;
 

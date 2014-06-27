@@ -82,7 +82,7 @@ void SimpleControllerItem::setControllerDllName(const std::string& name)
 }
 
 
-bool SimpleControllerItem::start(const Target& target)
+bool SimpleControllerItem::start(Target* target)
 {
     bool result = false;
 
@@ -131,8 +131,8 @@ bool SimpleControllerItem::start(const Target& target)
     }
 
     if(controller){
-        timeStep_ = target.worldTimeStep();
-        BodyPtr body = target.body();
+        timeStep_ = target->worldTimeStep();
+        BodyPtr body = target->body();
         ioBody = body->clone();
 
         inputDeviceStateConnections.disconnect();

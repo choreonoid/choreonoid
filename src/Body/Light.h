@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LIGHT_H_INCLUDED
-#define CNOID_BODY_LIGHT_H_INCLUDED
+#ifndef CNOID_BODY_LIGHT_H
+#define CNOID_BODY_LIGHT_H
 
 #include "Device.h"
 #include "exportdecl.h"

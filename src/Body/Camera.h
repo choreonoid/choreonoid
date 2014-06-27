@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_CAMERA_H_INCLUDED
-#define CNOID_BODY_CAMERA_H_INCLUDED
+#ifndef CNOID_BODY_CAMERA_H
+#define CNOID_BODY_CAMERA_H
 
 #include "VisionSensor.h"
 #include <cnoid/Image>

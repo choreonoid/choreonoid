@@ -44,6 +44,7 @@ BodyRTCItem::BodyRTCItem()
     : os(MessageView::instance()->cout()),
       configMode(N_CONFIG_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
+    controllerTarget = 0;
     virtualRobotRTC = 0;
     rtcomp = 0;
     bridgeConf = 0;
@@ -67,6 +68,7 @@ BodyRTCItem::BodyRTCItem(const BodyRTCItem& org)
       os(MessageView::instance()->cout()),
       configMode(org.configMode)
 {
+    controllerTarget = 0;
     virtualRobotRTC = org.virtualRobotRTC;
     rtcomp = org.rtcomp;
     bridgeConf = org.bridgeConf;
@@ -258,18 +260,18 @@ ItemPtr BodyRTCItem::doDuplicate() const
 }
 
 
-bool BodyRTCItem::start(const Target& target)
+bool BodyRTCItem::start(Target* target)
 {
-    simulationBody = target.body();
+    controllerTarget = target;
+    simulationBody = target->body();
+    timeStep_ = target->worldTimeStep();
+    controlTime_ = target->currentTime();
 
     const DeviceList<Sensor> sensors(simulationBody->devices());
     sensors.makeIdMap(forceSensors_);
     sensors.makeIdMap(gyroSensors_);
     sensors.makeIdMap(accelSensors_);
 
-    timeStep_ = target.worldTimeStep();
-
-    controlTime_ = 0.0;
     bodyPeriodicRate = (bodyPeriodicRateProperty > 0.0) ? bodyPeriodicRateProperty : timeStep_;
     bodyPeriodicCounter = bodyPeriodicRate;
 
@@ -307,6 +309,8 @@ double BodyRTCItem::timeStep() const
 
 void BodyRTCItem::input()
 {
+    controlTime_ = controllerTarget->currentTime();
+
     // write the state of simulationBody to out-ports
     virtualRobotRTC->inputDataFromSimulator(this);
 }
@@ -338,7 +342,6 @@ bool BodyRTCItem::control()
 
     virtualRobotRTC->readDataFromInPorts();
 
-    controlTime_ += timeStep_;
     return true;
 }
 

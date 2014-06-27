@@ -36,6 +36,8 @@ RangeSensor::RangeSensor()
 
 void RangeSensor::copyStateFrom(const RangeSensor& other)
 {
+    VisionSensor::copyStateFrom(other);
+    
     on_ = other.on_;
     yawResolution_ = other.yawResolution_;
     pitchResolution_ = other.pitchResolution_;
@@ -219,6 +221,7 @@ int RangeSensor::stateSize() const
 
 const double* RangeSensor::readState(const double* buf)
 {
+    buf = VisionSensor::readState(buf);
     on_ = buf[0];
     yawRange_ = buf[1];
     yawResolution_ = buf[2];
@@ -233,6 +236,7 @@ const double* RangeSensor::readState(const double* buf)
 
 double* RangeSensor::writeState(double* out_buf) const
 {
+    out_buf = VisionSensor::writeState(out_buf);
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = yawRange_;
     out_buf[2] = yawResolution_;

@@ -420,7 +420,7 @@ void CameraImageOutPortHandler::onCameraStateChanged()
         }
         prevImage = camera->sharedImage();
         boost::lock_guard<boost::mutex> lock(mtx);
-        setTime(value, controlTime);
+        setTime(value, controlTime - camera->delay());
         outPort.write();
     }
 }
@@ -559,7 +559,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
 
         prevPoints = rangeCamera->sharedPoints();
         boost::lock_guard<boost::mutex> lock(mtx);
-        setTime(value, controlTime);
+        setTime(value, controlTime - rangeCamera->delay());
         outPort.write();
     }
 }
@@ -635,7 +635,7 @@ void RangeSensorOutPortHandler::onRangeSensorStateChanged()
 
         prevRangeData = rangeSensor->sharedRangeData();
         boost::lock_guard<boost::mutex> lock(mtx);
-        setTime(value, controlTime);
+        setTime(value, controlTime - rangeSensor->delay());
         outPort.write();
     }
 }

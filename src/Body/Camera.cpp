@@ -26,6 +26,8 @@ Camera::Camera()
 
 void Camera::copyStateFrom(const Camera& other)
 {
+    VisionSensor::copyStateFrom(other);
+    
     on_ = other.on_;
     imageType_ = other.imageType_;
     resolutionX_ = other.resolutionX_;
@@ -125,6 +127,7 @@ int Camera::stateSize() const
 
 const double* Camera::readState(const double* buf)
 {
+    buf = VisionSensor::readState(buf);
     on_ = buf[0];
     resolutionX_ = buf[1];
     resolutionY_ = buf[2];
@@ -138,6 +141,7 @@ const double* Camera::readState(const double* buf)
 
 double* Camera::writeState(double* out_buf) const
 {
+    out_buf = VisionSensor::writeState(out_buf);
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = resolutionX_;
     out_buf[2] = resolutionY_;

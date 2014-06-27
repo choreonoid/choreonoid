@@ -35,7 +35,7 @@ public:
     void setControllerServerName(const std::string& name);
     void setControllerServerCommand(const std::string& command);
 
-    virtual bool start(const Target& target);
+    virtual bool start(Target* target);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();

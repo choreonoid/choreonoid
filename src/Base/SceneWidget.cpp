@@ -227,8 +227,10 @@ public:
     double viewTranslationRatioY;
 
     SceneWidgetEvent latestEvent;
-
     Vector3 lastClickedPoint;
+
+    SceneWidgetEditable* eventFilter;
+    ReferencedPtr eventFilterRef;
 
     SgGroupPtr systemNodeGroup;
 
@@ -466,6 +468,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     latestEvent.sceneWidget_ = self;
 
     lastClickedPoint.setZero();
+
+    eventFilter = 0;
     
     indicatorLabel = new QLabel();
     indicatorLabel->setAlignment(Qt::AlignLeft);
@@ -821,6 +825,9 @@ void SceneWidgetImpl::setEditMode(bool on)
                 focusedEditablePath[i]->onFocusChanged(latestEvent, false);
             }
         }
+        if(eventFilter){
+            eventFilter->onSceneModeChanged(latestEvent);
+        }
         set<SceneWidgetEditable*>::iterator p;
         for(p = editableEntities.begin(); p != editableEntities.end(); ++p){
             SceneWidgetEditable* editable = *p;
@@ -841,6 +848,12 @@ void SceneWidgetImpl::setEditMode(bool on)
 void SceneWidgetImpl::toggleEditMode()
 {
     setEditMode(!isEditMode);
+}
+
+
+const SceneWidgetEvent& SceneWidget::latestEvent() const
+{
+    return impl->latestEvent;
 }
 
 
@@ -1196,16 +1209,21 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
 
     bool handled = false;
     bool forceViewMode = (event->modifiers() & Qt::AltModifier);
-    
+
     if(isEditMode && !forceViewMode){
         if(event->button() == Qt::RightButton){
             showEditModePopupMenu(event->globalPos());
             handled = true;
         } else {
-            if(setFocusToPointedEditablePath(
-                   applyFunction(
-                       pointedEditablePath, boost::bind(&SceneWidgetEditable::onButtonPressEvent, _1, boost::ref(latestEvent))))){
-                handled = true;
+            if(eventFilter){
+                handled = eventFilter->onButtonPressEvent(latestEvent);
+            }
+            if(!handled){
+                handled = setFocusToPointedEditablePath(
+                    applyFunction(
+                        pointedEditablePath, boost::bind(&SceneWidgetEditable::onButtonPressEvent, _1, boost::ref(latestEvent))));
+            }
+            if(handled){
                 dragMode = EDITING;
             }
         }
@@ -1231,9 +1249,14 @@ void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
     
     bool handled = false;
     if(isEditMode){
-        handled = setFocusToPointedEditablePath(
-            applyFunction(
-                pointedEditablePath, boost::bind(&SceneWidgetEditable::onDoubleClickEvent, _1, boost::ref(latestEvent))));
+        if(eventFilter){
+            handled = eventFilter->onDoubleClickEvent(latestEvent);
+        }
+        if(!handled){
+            handled = setFocusToPointedEditablePath(
+                applyFunction(
+                    pointedEditablePath, boost::bind(&SceneWidgetEditable::onDoubleClickEvent, _1, boost::ref(latestEvent))));
+        }
     }
     if(!handled){
         toggleEditMode();
@@ -1245,10 +1268,16 @@ void SceneWidgetImpl::mouseReleaseEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
-    if(isEditMode){
-        if(focusedEditable){
-            updateLatestEventPath();
-            focusedEditable->onButtonReleaseEvent(latestEvent);
+    bool handled = false;
+    if(isEditMode && dragMode == EDITING){
+        if(eventFilter){
+            handled = eventFilter->onButtonReleaseEvent(latestEvent);
+        }
+        if(!handled){
+            if(focusedEditable){
+                updateLatestEventPath();
+                focusedEditable->onButtonReleaseEvent(latestEvent);
+            }
         }
     }
     
@@ -1260,10 +1289,17 @@ void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
 {
     updateLatestEvent(event);
 
+    bool handled = false;
+
     switch(dragMode){
 
     case EDITING:
-        focusedEditable->onPointerMoveEvent(latestEvent);
+        if(eventFilter){
+            handled = eventFilter->onPointerMoveEvent(latestEvent);
+        }
+        if(!handled){
+            handled = focusedEditable->onPointerMoveEvent(latestEvent);
+        }
         break;
 
     case VIEW_ROTATION:
@@ -1335,9 +1371,14 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
 
     bool handled = false;
     if(isEditMode){
-        handled = setFocusToPointedEditablePath(
-            applyFunction(
-                pointedEditablePath, boost::bind(&SceneWidgetEditable::onScrollEvent, _1, boost::ref(latestEvent))));
+        if(eventFilter){
+            handled = eventFilter->onScrollEvent(latestEvent);
+        }
+        if(!handled){
+            handled = setFocusToPointedEditablePath(
+                applyFunction(
+                    pointedEditablePath, boost::bind(&SceneWidgetEditable::onScrollEvent, _1, boost::ref(latestEvent))));
+        }
     }    
 
     if(isBuiltinCameraCurrent){
@@ -1689,6 +1730,14 @@ void SceneWidgetImpl::showEditModePopupMenu(const QPoint& globalPos)
         setFocusToPointedEditablePath(editableToFocus);
     }
 
+    if(eventFilter){
+        eventFilter->onContextMenuRequest(latestEvent, menuManager);
+        if(menuManager.numItems() > prevNumItems){
+            menuManager.addSeparator();
+            prevNumItems = menuManager.numItems();
+        }
+    }
+
     sigContextMenuRequest(latestEvent, menuManager);
     if(menuManager.numItems() > prevNumItems){
         menuManager.addSeparator();
@@ -1723,6 +1772,29 @@ SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuM
 SceneWidget::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;
+}
+
+
+void SceneWidget::installEventFilter(SceneWidgetEditable* filter)
+{
+    impl->eventFilter = filter;
+    impl->eventFilterRef = dynamic_cast<Referenced*>(filter);
+}
+
+
+SceneWidgetEditable* SceneWidget::activeEventFilter()
+{
+    return impl->eventFilter;
+}
+
+
+void SceneWidget::removeEventFilter(SceneWidgetEditable* filter)
+{
+    if(impl->eventFilter == filter){
+        impl->eventFilter = 0;
+        impl->eventFilterRef.reset();
+        impl->setCursor(impl->defaultCursor);
+    }
 }
 
 

@@ -42,10 +42,25 @@ using namespace cnoid;
 using boost::format;
 
 namespace {
+
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
 
 class SimulatedMotionEngine;
 typedef boost::shared_ptr<SimulatedMotionEngine> SimulatedMotionEnginePtr;
+
+class ControllerTarget : public ControllerItem::Target
+{
+    SimulatorItemImpl* simImpl;
+    BodyPtr body_;
+public:
+    ControllerTarget() : simImpl(0) { }
+    void setSimImpl(SimulatorItemImpl* simImpl);
+    void setSimBodyImpl(SimulationBodyImpl* simBodyImpl);
+    virtual Body* body();
+    virtual double worldTimeStep() const;
+    virtual double currentTime() const;
+};
+
 }
 
 namespace cnoid {
@@ -56,6 +71,7 @@ public:
     BodyPtr body;
     BodyItemPtr bodyItem;
     ControllerItemPtr controller;
+    ControllerTarget controllerTarget;
     double frameRate;
     SimulatorItemImpl* simImpl;
 
@@ -107,6 +123,7 @@ public:
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
 
+    ControllerTarget controllerTarget;
     vector<ControllerItem*> activeControllers;
     boost::thread controlThread;
     boost::condition_variable controlCondition;
@@ -126,6 +143,7 @@ public:
         
     int currentFrame;
     double worldFrameRate;
+    double worldTimeStep;
     int frameAtLastBufferWriting;
     Timer flushTimer;
 
@@ -168,6 +186,7 @@ public:
         
     ItemTreeView* itemTreeView;
 
+    double currentTime() const;
     void selectMotionItems();
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
@@ -191,16 +210,6 @@ public:
 
 namespace {
 
-class ControllerTarget : public ControllerItem::Target
-{
-public:
-    BodyPtr body_;
-    double worldTimeStep_;
-    virtual Body* body() const { return body_.get(); }
-    virtual double worldTimeStep() const { return worldTimeStep_; }
-};
-
-
 /**
    This is a class for executing a script as a controller
    \todo Reimplement this class as a SubSimulatorItem?
@@ -218,8 +227,8 @@ public:
         this->scriptItem = scriptItem;
         doExecAfterInit = false;
     }
-    virtual bool start(const Target& target) {
-        timeStep_ = target.worldTimeStep();
+    virtual bool start(Target* target) {
+        timeStep_ = target->worldTimeStep();
         if(scriptItem->execTiming() == SimulationScriptItem::DURING_INITIALIZATION){
             scriptItem->executeAsSimulationScript();
         } else if(scriptItem->execTiming() == SimulationScriptItem::AFTER_INITIALIZATION){
@@ -328,6 +337,37 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
 }
 
 
+void ControllerTarget::setSimImpl(SimulatorItemImpl* simImpl)
+{
+    this->simImpl = simImpl;
+}
+
+
+void ControllerTarget::setSimBodyImpl(SimulationBodyImpl* simBodyImpl)
+{
+    simImpl = simBodyImpl->simImpl;
+    body_ = simBodyImpl->body;
+}
+
+
+Body* ControllerTarget::body()
+{
+    return body_;
+}
+
+
+double ControllerTarget::worldTimeStep() const
+{
+    return simImpl->worldTimeStep;
+}
+
+
+double ControllerTarget::currentTime() const
+{
+    return simImpl->currentTime();
+}
+
+
 SimulationBody::SimulationBody(BodyPtr body)
 {
     impl = new SimulationBodyImpl(body);
@@ -402,6 +442,8 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
 {
     this->simImpl = simImpl;
     this->bodyItem = bodyItem;
+
+    controllerTarget.setSimBodyImpl(this);
 
     // needed ?
     //body->clearExternalForces();
@@ -787,6 +829,8 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       itemTreeView(ItemTreeView::instance())
 {
+    controllerTarget.setSimImpl(this);
+    
     flushTimer.sigTimeout().connect(boost::bind(&SimulatorItemImpl::flushResult, this));
     
     timeBar = TimeBar::instance();
@@ -998,7 +1042,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
     sgCloneMap.clear();
 
-    worldFrameRate = 1.0 / self->worldTimeStep();
+    worldTimeStep = self->worldTimeStep();
+    worldFrameRate = 1.0 / worldTimeStep;
 
     if(recordingMode.is(SimulatorItem::RECORD_NONE)){
         isRecordingEnabled = false;
@@ -1054,12 +1099,12 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         ringBufferSize = std::numeric_limits<int>::max();
         
         if(timeRangeMode.is(SimulatorItem::SPECIFIED_PERIOD)){
-            maxFrame = specifiedTimeLength / self->worldTimeStep();
+            maxFrame = specifiedTimeLength / worldTimeStep;
         } else if(timeRangeMode.is(SimulatorItem::TIMEBAR_RANGE)){
-            maxFrame = TimeBar::instance()->maxTime() / self->worldTimeStep();
+            maxFrame = TimeBar::instance()->maxTime() / worldTimeStep;
         } else if(isRingBufferMode){
             maxFrame = std::numeric_limits<int>::max();
-            ringBufferSize = specifiedTimeLength / self->worldTimeStep();
+            ringBufferSize = specifiedTimeLength / worldTimeStep;
         } else {
             maxFrame = std::numeric_limits<int>::max();
         }
@@ -1079,9 +1124,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             simBodiesWithBody[i]->impl->setupDeviceStateRecording();
         }
 
-        ControllerTarget target;
-        target.worldTimeStep_ = self->worldTimeStep();
-
         for(size_t i=0; i < allSimBodies.size(); ++i){
             SimulationBodyImpl* simBodyImpl = allSimBodies[i]->impl;
             ControllerItemPtr controller = simBodyImpl->controller;
@@ -1090,15 +1132,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
-                    target.body_ = body;
-                    ready = controller->start(target);
+                    ready = controller->start(&simBodyImpl->controllerTarget);
                     if(!ready){
                         os << (fmt(_("%1% for %2% failed to initialize."))
                                % controller->name() % simBodyImpl->bodyItem->name()) << endl;
                     }
                 } else {
-                    target.body_.reset(); // pass null body
-                    ready = controller->start(target);
+                    ready = controller->start(&controllerTarget);
                     if(!ready){
                         os << (fmt(_("%1% failed to initialize."))
                                % controller->name()) << endl;
@@ -1197,7 +1237,7 @@ void SimulatorItemImpl::run()
     int frame = 0;
 
     if(isRealtimeSyncMode){
-        const double dt = self->worldTimeStep();
+        const double dt = worldTimeStep;
         const double compensationRatio = (dt > 0.1) ? 0.1 : dt;
         const double dtms = dt * 1000.0;
         double compensatedSimulationTime = 0.0;
@@ -1313,7 +1353,18 @@ bool SimulatorItemImpl::stepSimulationMain()
         midDynamicsFunctions[i]();
     }
     self->stepSimulation(activeSimBodies);
-    
+
+    if(useControllerThreads){
+        {
+            boost::unique_lock<boost::mutex> lock(controlMutex);
+            while(!isControlFinished){
+                controlCondition.wait(lock);
+            }
+        }
+        isControlFinished = false;
+        doContinue |= isControlToBeContinued;
+    }
+
     for(size_t i=0; i < postDynamicsFunctions.size(); ++i){
         postDynamicsFunctions[i]();
     }
@@ -1330,16 +1381,6 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
 
     if(useControllerThreads){
-        {
-            boost::unique_lock<boost::mutex> lock(controlMutex);
-            while(!isControlFinished){
-                controlCondition.wait(lock);
-            }
-        }
-        isControlFinished = false;
-
-        doContinue |= isControlToBeContinued;
-
         for(size_t i=0; i < activeControllers.size(); ++i){
             activeControllers[i]->output();
         }
@@ -1498,6 +1539,18 @@ bool SimulatorItem::isRunning() const
 int SimulatorItem::currentFrame() const
 {
     return impl->currentFrame;
+}
+
+
+double SimulatorItem::currentTime() const
+{
+    return impl->currentFrame / impl->worldFrameRate;
+}
+
+
+double SimulatorItemImpl::currentTime() const
+{
+    return currentFrame / worldFrameRate;
 }
 
 

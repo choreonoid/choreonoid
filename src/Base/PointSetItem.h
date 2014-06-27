@@ -25,7 +25,7 @@ public:
     virtual ~PointSetItem();
 
     virtual void setName(const std::string& name);
-    virtual SgNode* scene();
+    virtual SgNode* getScene();
 
     const SgPointSet* pointSet() const;
     SgPointSet* pointSet();

@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_OPENHRP_CLOCK_GENERATOR_ITEM_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_OPENHRP_CLOCK_GENERATOR_ITEM_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_OPENHRP_CLOCK_GENERATOR_ITEM_H
+#define CNOID_OPENRTM_PLUGIN_OPENHRP_CLOCK_GENERATOR_ITEM_H
 
 #include <cnoid/ControllerItem>
 
@@ -21,7 +21,7 @@ public:
     OpenHRPClockGeneratorItem(const OpenHRPClockGeneratorItem& org);
     virtual ~OpenHRPClockGeneratorItem();
 
-    virtual bool start(const Target& target);
+    virtual bool start(Target* target);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
