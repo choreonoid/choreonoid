@@ -1516,6 +1516,25 @@ void SceneWidgetImpl::dragViewRotation()
             AngleAxis(dy * dragAngleRatio, right) *
             Translation3(-orgPointedPos) *
             orgCameraPosition));
+
+    if(latestEvent.modifiers() & Qt::ShiftModifier){
+        Affine3& T = builtinCameraTransform->T();
+        Vector3 rpy = rpyFromRot(T.linear());
+        for(int i=0; i < 3; ++i){
+            double& a = rpy[i];
+            for(int j=0; j < 5; ++j){
+                double b = j * (PI / 2.0) - PI;
+                if(fabs(b - a) < (PI / 8)){
+                    a = b;
+                    break;
+                }
+            }
+        }
+        Matrix3 S = rotFromRpy(rpy);
+        T.translation() = orgPointedPos + S * T.linear().transpose() * (T.translation() - orgPointedPos);
+        T.linear() = S;
+    }
+    
     builtinCameraTransform->notifyUpdate(modified);
 }
 
