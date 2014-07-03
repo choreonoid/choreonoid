@@ -11,7 +11,7 @@
 #include <memory>
 #endif
 
-#if (BOOST_VERSION >= 105300)
+#if (BOOST_VERSION >= 105300) && !defined(NOT_USE_BOOST_ATOMIC)
 #include <boost/atomic.hpp>
 #define CNOID_REFERENCED_USE_ATOMIC_COUNTER
 #endif

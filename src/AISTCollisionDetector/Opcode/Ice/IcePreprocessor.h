@@ -122,9 +122,11 @@
 
 	// ANSI compliance
 	#ifdef  _DEBUG
+                #if(_MSC_VER < 1700 )
 		// Remove painful warning in debug
 		inline_ bool __False__(){ return false; }
 		#define for if(__False__()){}	else for
+                #endif
 	#else
 		#define for if(0){}	else for
 	#endif

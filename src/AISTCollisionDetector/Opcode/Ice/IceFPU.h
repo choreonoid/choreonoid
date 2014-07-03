@@ -42,7 +42,7 @@
 	//! Fast square root for floating-point values.
 	inline_ float FastSqrt(float square)
 	{
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && not defined(_WIN64)
 			float retval;
 
 			__asm {
@@ -226,7 +226,7 @@
 	//! A global function to find MAX(a,b) using FCOMI/FCMOV
 	inline_ float FCMax2(float a, float b)
 	{
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && not defined(_WIN64)
 		float Res;
 		_asm	fld		[a]
 		_asm	fld		[b]
@@ -243,7 +243,7 @@
 	//! A global function to find MIN(a,b) using FCOMI/FCMOV
 	inline_ float FCMin2(float a, float b)
 	{
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && not defined(_WIN64)
 		float Res;
 		_asm	fld		[a]
 		_asm	fld		[b]
@@ -260,7 +260,7 @@
 	//! A global function to find MAX(a,b,c) using FCOMI/FCMOV
 	inline_ float FCMax3(float a, float b, float c)
 	{
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && not defined(_WIN64)
 		float Res;
 		_asm	fld		[a]
 		_asm	fld		[b]
@@ -280,7 +280,7 @@
 	//! A global function to find MIN(a,b,c) using FCOMI/FCMOV
 	inline_ float FCMin3(float a, float b, float c)
 	{
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && not defined(_WIN64)
 		float Res;
 		_asm	fld		[a]
 		_asm	fld		[b]

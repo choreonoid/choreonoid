@@ -605,6 +605,7 @@ bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
     y0 = event.y();
     rect->setRect(x0, y0, x0, y0);
     showRectangle(true);
+    return true;
 }
 
 
@@ -630,6 +631,7 @@ bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
 bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     rect->setRect(x0, y0, event.x(), event.y());
+    return true;
 }
 
 

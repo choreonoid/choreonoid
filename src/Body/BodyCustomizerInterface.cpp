@@ -4,6 +4,10 @@
    \author Shin'ichiro Nakaoka
 */
 
+#ifdef _WIN64
+#define NOT_USE_BOOST_ATOMIC
+#endif
+
 #include "BodyCustomizerInterface.h"
 #include "Body.h"
 #include <cnoid/FileUtil>

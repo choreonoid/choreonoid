@@ -54,7 +54,7 @@
 		//
 		//	2) for(udword i=0;i<nb;i++)	dest[i] = value;
 		//
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && not defined(_WIN64)
 		_asm push eax
 		_asm push ecx
 		_asm push edi
