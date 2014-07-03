@@ -71,7 +71,7 @@ protected:
     PoseSeqPtr seq;
     PoseSeqInterpolatorPtr interpolator_;
     BodyMotionItemPtr bodyMotionItem_;
-    boost::signals::connection sigInterpolationParametersChangedConnection;
+    Connection sigInterpolationParametersChangedConnection;
 
     ConnectionSet editConnections;
 

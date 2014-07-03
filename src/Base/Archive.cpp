@@ -11,7 +11,6 @@
 #include <cnoid/FileUtil>
 #include <map>
 #include <vector>
-#include <boost/signals.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
@@ -52,7 +51,7 @@ public:
         
     Item* currentParentItem;
 
-    boost::signal<void()> postProcesses;
+    Signal<void()> postProcesses;
 };
 
 

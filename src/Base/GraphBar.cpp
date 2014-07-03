@@ -12,6 +12,7 @@
 #include <cnoid/ConnectionSet>
 #include <QFileDialog>
 #include <boost/bind.hpp>
+#include <cmath>
 #include "gettext.h"
 
 using namespace std;

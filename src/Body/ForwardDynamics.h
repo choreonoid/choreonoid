@@ -3,11 +3,12 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_FORWARD_DYNAMICS_H_INCLUDED
-#define CNOID_BODY_FORWARD_DYNAMICS_H_INCLUDED
+#ifndef CNOID_BODY_FORWARD_DYNAMICS_H
+#define CNOID_BODY_FORWARD_DYNAMICS_H
 
 #include "BasicSensorSimulationHelper.h"
 #include "Link.h"
+#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid

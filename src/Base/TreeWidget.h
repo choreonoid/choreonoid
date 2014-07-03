@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_TREE_WIDGET_H_INCLUDED
-#define CNOID_GUIBASE_TREE_WIDGET_H_INCLUDED
+#ifndef CNOID_BASE_TREE_WIDGET_H
+#define CNOID_BASE_TREE_WIDGET_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QTreeWidget>
 #include <QHeaderView>
 #include "exportdecl.h"
@@ -23,34 +23,40 @@ class CNOID_EXPORT TreeWidget : public QTreeWidget
     void setHeaderSectionResizeMode(int column, QHeaderView::ResizeMode mode);
     void setVerticalGridLineShown(bool on);
 
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> > sigCurrentItemChanged() {
+    SignalProxy<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> sigCurrentItemChanged() {
         return sigCurrentItemChanged_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item, int column)> > sigItemActivated() {
+    /*
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemActivated() {
         return sigItemActivated_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item, int column)> > sigItemChanged() {
+    */
+    
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemActivated() {
+        return sigItemActivated_;
+    }
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemChanged() {
         return sigItemChanged_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item, int column)> > sigItemClicked() {
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemClicked() {
         return sigItemClicked_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item)> > sigItemCollapsed() {
+    SignalProxy<void(QTreeWidgetItem* item)> sigItemCollapsed() {
         return sigItemCollapsed_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item, int column)> > sigItemDoubleClicked() {
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemDoubleClicked() {
         return sigItemDoubleClicked_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item, int column)> > sigItemEntered() {
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemEntered() {
         return sigItemEntered_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item)> > sigItemExpanded() {
+    SignalProxy<void(QTreeWidgetItem* item)> sigItemExpanded() {
         return sigItemExpanded_;
     }
-    inline SignalProxy< boost::signal<void(QTreeWidgetItem* item, int column)> > sigItemPressed() {
+    SignalProxy<void(QTreeWidgetItem* item, int column)> sigItemPressed() {
         return sigItemPressed_;
     }
-    inline SignalProxy< boost::signal<void()> > sigItemSelectionChanged() {
+    SignalProxy<void()> sigItemSelectionChanged() {
         return sigItemSelectionChanged_;
     }
 
@@ -71,20 +77,21 @@ private Q_SLOTS:
     void onItemSelectionChanged(void);
 
 private:
-    boost::signal<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> sigCurrentItemChanged_;
-    boost::signal<void(QTreeWidgetItem* item, int column)> sigItemActivated_;
-    boost::signal<void(QTreeWidgetItem* item, int column)> sigItemChanged_;
-    boost::signal<void(QTreeWidgetItem* item, int column)> sigItemClicked_;
-    boost::signal<void(QTreeWidgetItem* item)> sigItemCollapsed_;
-    boost::signal<void(QTreeWidgetItem* item, int column)> sigItemDoubleClicked_;
-    boost::signal<void(QTreeWidgetItem* item, int column)> sigItemEntered_;
-    boost::signal<void(QTreeWidgetItem* item)> sigItemExpanded_;
-    boost::signal<void(QTreeWidgetItem* item, int column)> sigItemPressed_;
-    boost::signal<void()> sigItemSelectionChanged_;
+    Signal<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> sigCurrentItemChanged_;
+    Signal<void(QTreeWidgetItem* item, int column)> sigItemActivated_;
+    Signal<void(QTreeWidgetItem* item, int column)> sigItemChanged_;
+    Signal<void(QTreeWidgetItem* item, int column)> sigItemClicked_;
+    Signal<void(QTreeWidgetItem* item)> sigItemCollapsed_;
+    Signal<void(QTreeWidgetItem* item, int column)> sigItemDoubleClicked_;
+    Signal<void(QTreeWidgetItem* item, int column)> sigItemEntered_;
+    Signal<void(QTreeWidgetItem* item)> sigItemExpanded_;
+    Signal<void(QTreeWidgetItem* item, int column)> sigItemPressed_;
+    Signal<void()> sigItemSelectionChanged_;
 
     int gridColorRGB;
     bool isVerticalGridLineShown;
 };
+
 }
 
 #endif

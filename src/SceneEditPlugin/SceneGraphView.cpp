@@ -70,11 +70,11 @@ public:
     SgvItem* rootItem;
     SgvItem* parentItem;
     SgvItem* sgvItem;
-    boost::signals::connection connectionOfsceneUpdated;
+    Connection connectionOfsceneUpdated;
 
     SgvItem* selectedSgvItem;
     SgObject* selectedSgObject;
-    boost::signal<void(const SgObject*)> sigSelectionChanged;
+    Signal<void(const SgObject*)> sigSelectionChanged;
 
     void createGraph();
     void createGraph(SgvItem* item, SgNode* node);
@@ -612,7 +612,7 @@ void SceneGraphViewImpl::renderMarker(GLSceneRenderer& renderer)
 }
 
 
-SignalProxy< boost::signal< void(const SgObject*) > > SceneGraphView::sigSelectionChanged()
+SignalProxy<void(const SgObject*)> SceneGraphView::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
 }

@@ -1,11 +1,11 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_SCROLLBAR_H_INCLUDED
-#define CNOID_GUIBASE_SCROLLBAR_H_INCLUDED
+#ifndef CNOID_BASE_SCROLLBAR_H
+#define CNOID_BASE_SCROLLBAR_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QScrollBar>
 #include "exportdecl.h"
 
@@ -15,11 +15,11 @@ class CNOID_EXPORT ScrollBar : public QScrollBar
 {
     Q_OBJECT
 
-        public:
+public:
     ScrollBar(QWidget* parent = 0);
     ScrollBar(Qt::Orientation orientation, QWidget* parent = 0);
 
-    inline SignalProxy< boost::signal<void(int)> > sigValueChanged() {
+    SignalProxy<void(int)> sigValueChanged() {
         return sigValueChanged_;
     }
 
@@ -27,7 +27,7 @@ private Q_SLOTS:
     void onValueChanged(int value);
 
 private:
-    boost::signal<void(int)> sigValueChanged_;
+    Signal<void(int)> sigValueChanged_;
     void initialize();
 };
     
@@ -36,33 +36,33 @@ class CNOID_EXPORT DoubleScrollBar : public QScrollBar
 {
     Q_OBJECT
 
-        public:
+public:
     DoubleScrollBar(QWidget* parent = 0);
     DoubleScrollBar(Qt::Orientation orientation, QWidget* parent = 0);
 
-    inline double getMaximum() const { return QScrollBar::maximum() / resolution; }
-    inline double getMinimum() const { return QScrollBar::minimum() / resolution; }
-    inline double getPageStep() const { return QScrollBar::pageStep() / resolution; }
-    inline double getSingleStep() const { return QScrollBar::singleStep() / resolution; }
-    inline double getValue() const { return value() / resolution; }
+    double getMaximum() const { return QScrollBar::maximum() / resolution; }
+    double getMinimum() const { return QScrollBar::minimum() / resolution; }
+    double getPageStep() const { return QScrollBar::pageStep() / resolution; }
+    double getSingleStep() const { return QScrollBar::singleStep() / resolution; }
+    double getValue() const { return value() / resolution; }
         
-    inline void setRange(double min, double max) {
+    void setRange(double min, double max) {
         QScrollBar::setRange(min * resolution, max * resolution);
     }
         
-    inline void setPageStep(double step) {
+    void setPageStep(double step) {
         QScrollBar::setPageStep(step * resolution);
     }
         
-    inline void setSingleStep(double step) {
+    void setSingleStep(double step) {
         QScrollBar::setSingleStep(step * resolution);
     }
 
-    inline void setValue(double value) {
+    void setValue(double value) {
         QScrollBar::setValue(value * resolution);
     }
 
-    inline SignalProxy< boost::signal<void(double)> > sigValueChanged() {
+    SignalProxy<void(double)> sigValueChanged() {
         return sigValueChanged_;
     }
 
@@ -70,7 +70,7 @@ private Q_SLOTS:
     void onValueChanged(int value);
 
 private:
-    boost::signal<void(double)> sigValueChanged_;
+    Signal<void(double)> sigValueChanged_;
     double resolution;
 
     void initialize();        
@@ -88,6 +88,7 @@ private:
     void setSingleStep(int step) { QScrollBar::setSingleStep(step); }
     void setValue(int value) { QScrollBar::setValue(value); }
 };
+
 }
 
 #endif

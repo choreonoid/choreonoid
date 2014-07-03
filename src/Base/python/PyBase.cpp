@@ -10,7 +10,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/Button>
 #include <cnoid/Action>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <boost/python.hpp>
 #include "../ToolBarArea.h"
 
@@ -460,7 +460,7 @@ BOOST_PYTHON_MODULE(Base)
     // We want to take over easily ToolButton all methods from QToolButton.
     class_ <QToolButton, bases<QObject>, boost::noncopyable>("QToolButton", no_init);
     class_ <ToolButton, bases<QToolButton>, boost::noncopyable>("ToolButton", no_init)
-        .def(PySignalClickVisitor< ToolButton, boost::signal<void(bool)> >());
+        .def(PySignalClickVisitor< ToolButton, Signal<void(bool)> >());
 
 
     /*!

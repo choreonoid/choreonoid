@@ -10,7 +10,6 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
-#include <boost/signals.hpp>
 #include <QWidget>
 #include <QLabel>
 #include "exportdecl.h"

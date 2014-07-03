@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_ACTION_GROUP_H
 #define CNOID_BASE_ACTION_GROUP_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QActionGroup>
 #include "exportdecl.h"
 
@@ -19,16 +19,16 @@ public:
     ActionGroup(QObject* parent);
     ~ActionGroup();
                                
-    SignalProxy< boost::signal<void(QAction* action)> > sigHovered();
-    SignalProxy< boost::signal<void(QAction* action)> > sigTriggered();
+    SignalProxy<void(QAction* action)> sigHovered();
+    SignalProxy<void(QAction* action)> sigTriggered();
 
 private Q_SLOTS:
     void onHovered(QAction* action);
     void onTriggered(QAction* action);
 
 private:
-    boost::signal<void(QAction*)>* sigHovered_;
-    boost::signal<void(QAction*)>* sigTriggered_;
+    Signal<void(QAction*)>* sigHovered_;
+    Signal<void(QAction*)>* sigTriggered_;
 };
 
 }

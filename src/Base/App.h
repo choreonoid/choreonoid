@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_APP_H_INCLUDED
-#define CNOID_BASE_APP_H_INCLUDED
+#ifndef CNOID_BASE_APP_H
+#define CNOID_BASE_APP_H
 
 #include <string>
 #include <QIcon>
@@ -35,6 +35,7 @@ private:
 
     AppImpl* impl;
 };
+
 }
 
 

@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_MESSAGE_VIEW_H_INCLUDED
-#define CNOID_BASE_MESSAGE_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_MESSAGE_VIEW_H
+#define CNOID_BASE_MESSAGE_VIEW_H
 
 #include <cnoid/View>
 #include <string>
@@ -69,7 +69,7 @@ public:
     void endStdioRedirect();
 
     static bool isFlushing();
-    static SignalProxy< boost::signal<void()> > sigFlushFinished();
+    static SignalProxy<void()> sigFlushFinished();
 
 protected:
     virtual bool event(QEvent* e);

@@ -2,11 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_ITEM_TREE_VIEW_H_INCLUDED
-#define CNOID_BASE_ITEM_TREE_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_ITEM_TREE_VIEW_H
+#define CNOID_BASE_ITEM_TREE_VIEW_H
 
 #include "ItemList.h"
-#include <cnoid/SignalProxy>
 #include <cnoid/View>
 #include <QAbstractItemModel>
 #include "exportdecl.h"
@@ -25,7 +24,7 @@ class CNOID_EXPORT ItemTreeView : public View
 {
     Q_OBJECT
 
-        public:
+public:
     static void initializeClass(ExtensionManager* ext);
     static ItemTreeView* instance();
     static ItemTreeView* mainInstance(); // obsolete
@@ -47,7 +46,7 @@ class CNOID_EXPORT ItemTreeView : public View
         return allSelectedItems();
     }
 
-    inline const ItemList<>& selectedItems() {
+    const ItemList<>& selectedItems() {
         return allSelectedItems();
     }
 
@@ -105,7 +104,7 @@ class CNOID_EXPORT ItemTreeView : public View
        アイテムの選択状態が変化したときに発行されるシグナル。
        @endif
     */
-    SignalProxy< boost::signal<void(const ItemList<>&)> > sigSelectionChanged();
+    SignalProxy<void(const ItemList<>&)> sigSelectionChanged();
 
     /**
        @if jp
@@ -113,11 +112,11 @@ class CNOID_EXPORT ItemTreeView : public View
        アイテム間の親子関係もみるようなハンドラはこのシグナルと接続するとよい。
        @endif
     */
-    SignalProxy< boost::signal<void(const ItemList<>&)> > sigSelectionOrTreeChanged();
+    SignalProxy<void(const ItemList<>&)> sigSelectionOrTreeChanged();
 
-    SignalProxy< boost::signal<void(Item* item, bool isChecked)> > sigCheckToggled(int id = 0);
+    SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int id = 0);
 
-    SignalProxy< boost::signal<void(bool isChecked)> > sigCheckToggled(Item* targetItem, int id = 0);
+    SignalProxy<void(bool isChecked)> sigCheckToggled(Item* targetItem, int id = 0);
 
     void cutSelectedItems();
 
@@ -139,6 +138,7 @@ private Q_SLOTS:
     void onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onRowsInserted(const QModelIndex& parent, int start, int end);
 };
+
 }
 
 #endif

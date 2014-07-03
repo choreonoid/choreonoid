@@ -6,6 +6,7 @@
 #include "SceneDragProjector.h"
 #include "SceneProjector.h"
 #include <cnoid/SceneCamera>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 using namespace boost;

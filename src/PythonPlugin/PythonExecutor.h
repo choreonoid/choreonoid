@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H_INCLUDED
-#define CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H_INCLUDED
+#ifndef CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
+#define CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
 
 #include "PythonUtil.h"
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -34,7 +34,7 @@ public:
     bool waitToFinish(double timeout);
     boost::python::object resultObject();
     const std::string resultString() const;
-    SignalProxy< boost::signal<void()> > sigFinished();
+    SignalProxy<void()> sigFinished();
 
     bool hasException() const;
     const std::string exceptionTypeName() const;
@@ -47,6 +47,7 @@ public:
 private:
     PythonExecutorImpl* impl;
 };
+
 }
 
 #endif

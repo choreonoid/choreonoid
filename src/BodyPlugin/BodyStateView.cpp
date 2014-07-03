@@ -48,7 +48,7 @@ public:
     vector< vector<int> > extraStateItemMap;
     vector<ExtraBodyStateAccessor::Value> extraState;
 
-    boost::signals::connection bodyItemChangeConnection;
+    Connection bodyItemChangeConnection;
     ConnectionSet stateConnections;
 
     BodyStateViewImpl(BodyStateView* self);

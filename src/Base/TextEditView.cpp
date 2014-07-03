@@ -19,6 +19,7 @@
 #include <QTextDocumentWriter>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <sstream>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -39,7 +40,7 @@ public:
     
 private:
     ConnectionSet connections;
-    boost::signals::connection connectionOfCurrentBodyItemDetachedFromRoot;
+    Connection connectionOfCurrentBodyItemDetachedFromRoot;
     AbstractTextItemPtr currentTextItem_;
     ItemList<AbstractTextItem> selectedTextItems_;
     bool viewActive;

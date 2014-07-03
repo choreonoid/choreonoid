@@ -31,8 +31,8 @@ public:
     JoystickEx* joystick;
     SocketNotifier* notifier;
     
-    boost::signal<void(int id, bool isPressed)> sigButton;
-    boost::signal<void(int id, double position)> sigAxis;
+    Signal<void(int id, bool isPressed)> sigButton;
+    Signal<void(int id, double position)> sigAxis;
     
     JoystickCaptureImpl();
     ~JoystickCaptureImpl();
@@ -102,13 +102,13 @@ void JoystickCapture::releaseDevice()
 }
 
 
-boost::signal<void(int id, bool isPressed)>& JoystickCapture::sigButton()
+Signal<void(int id, bool isPressed)>& JoystickCapture::sigButton()
 {
     return impl->sigButton;
 }
 
 
-boost::signal<void(int id, double position)>& JoystickCapture::sigAxis()
+Signal<void(int id, double position)>& JoystickCapture::sigAxis()
 {
     return impl->sigAxis;
 }

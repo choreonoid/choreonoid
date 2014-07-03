@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_CHOREOGRAPHY_BODY_MOTION_GENERATION_BAR_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_BODY_MOTION_GENERATION_BAR_H_INCLUDED
+#ifndef CNOID_POSE_SEQ_PLUGIN_BODY_MOTION_GENERATION_BAR_H
+#define CNOID_POSE_SEQ_PLUGIN_BODY_MOTION_GENERATION_BAR_H
 
 #include <cnoid/ToolBar>
 #include <cnoid/LazySignal>
@@ -78,7 +78,7 @@ public:
     bool isSe3Enabled() const;
     bool isLipSyncMixMode() const;
             
-    SignalProxy< boost::signal<void()> > sigInterpolationParametersChanged() {
+    SignalProxy<void()> sigInterpolationParametersChanged() {
         return sigInterpolationParametersChanged_.signal();
     }
             
@@ -96,7 +96,7 @@ private:
     ToolButton* balancerToggle;
     ToolButton* autoGenerationToggle;
 
-    LazySignal< boost::signal<void()> >sigInterpolationParametersChanged_;
+    LazySignal< Signal<void()> >sigInterpolationParametersChanged_;
 
     ConnectionSet interpolationParameterWidgetsConnection;
 
@@ -112,6 +112,7 @@ private:
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
 };
+
 }
 
 #endif

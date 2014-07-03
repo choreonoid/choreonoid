@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_SIMULATION_BAR_H_INCLUDED
-#define CNOID_BODYPLUGIN_SIMULATION_BAR_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_SIMULATION_BAR_H
+#define CNOID_BODY_PLUGIN_SIMULATION_BAR_H
 
 #include <cnoid/ToolBar>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <boost/function.hpp>
 #include "exportdecl.h"
 
@@ -20,7 +20,7 @@ public:
     static void initialize(ExtensionManager* ext);
     static SimulationBar* instance();
 
-    SignalProxy< boost::signal<void(SimulatorItem*)> > sigSimulationAboutToStart() {
+    SignalProxy<void(SimulatorItem*)> sigSimulationAboutToStart() {
         return sigSimulationAboutToStart_;
     }
             
@@ -38,8 +38,9 @@ private:
     void forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback);
     void onStopSimulationClicked();
 
-    boost::signal<void(SimulatorItem*)> sigSimulationAboutToStart_;
+    Signal<void(SimulatorItem*)> sigSimulationAboutToStart_;
 };
+
 }
 
 #endif

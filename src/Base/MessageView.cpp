@@ -72,7 +72,7 @@ public:
 };
 
 int flushingRef = 0;
-boost::signal<void()> sigFlushFinished_;    
+Signal<void()> sigFlushFinished_;    
 }
 
 namespace cnoid {
@@ -377,7 +377,7 @@ bool MessageView::isFlushing()
 }
 
 
-SignalProxy< boost::signal<void()> > MessageView::sigFlushFinished()
+SignalProxy<void()> MessageView::sigFlushFinished()
 {
     return sigFlushFinished_;
 }

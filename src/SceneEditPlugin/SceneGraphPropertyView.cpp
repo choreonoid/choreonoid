@@ -155,8 +155,8 @@ public:
     int fontPointSizeDiff;
     SgObject* currentObject;
 
-    signals::connection selectionChangedConnection;
-    signals::connection connectionOfsceneUpdated;
+    Connection selectionChangedConnection;
+    Connection connectionOfsceneUpdated;
 
     void setProperty(SgObject* obj);
     bool setName(const string& name);

@@ -9,6 +9,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <boost/bind.hpp>
+#include <map>
 
 using namespace std;
 using namespace boost;
@@ -74,7 +75,7 @@ public:
     QWaitCondition stateCondition;
     python::object resultObject;
     string resultString;
-    boost::signal<void()> sigFinished;
+    Signal<void()> sigFinished;
 
     string scriptDirectory;
     PathRefMap::iterator pathRefIter;
@@ -469,7 +470,7 @@ void PythonExecutorImpl::releasePythonPathRef()
 }
 
 
-SignalProxy< boost::signal<void()> > PythonExecutor::sigFinished()
+SignalProxy<void()> PythonExecutor::sigFinished()
 {
     return impl->sigFinished;
 }

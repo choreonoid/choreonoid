@@ -25,7 +25,7 @@ class Menu;
 class CNOID_EXPORT SceneWidget : public QWidget
 {
 public:
-    static SignalProxy< boost::signal<void(SceneWidget*)> > sigSceneWidgetCreated();
+    static SignalProxy<void(SceneWidget*)> sigSceneWidgetCreated();
 
     SceneWidget();
     ~SceneWidget();
@@ -38,14 +38,14 @@ public:
 
     void setEditMode(bool on);
     bool isEditMode() const;
-    SignalProxy< boost::signal<void(bool)> > sigEditModeToggled() const;
+    SignalProxy<void(bool)> sigEditModeToggled() const;
 
     const SceneWidgetEvent& latestEvent() const;
 
     enum ViewpointControlMode { THIRD_PERSON_MODE, FIRST_PERSON_MODE  };
     void setViewpointControlMode(ViewpointControlMode mode);
     ViewpointControlMode viewpointControlMode() const;
-    SignalProxy< boost::signal<void(int mode)> > sigViewpointControlModeChanged() const;
+    SignalProxy<void(int mode)> sigViewpointControlModeChanged() const;
 
     SgPosTransform* builtinCameraTransform(void);
     SgPerspectiveCamera* builtinPerspectiveCamera() const;
@@ -108,7 +108,7 @@ public:
 
     Menu* contextMenu();
     void showContextMenu();
-    SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> > sigContextMenuRequest();
+    SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
 
     void installEventFilter(SceneWidgetEditable* filter);
     SceneWidgetEditable* activeEventFilter();
@@ -127,8 +127,8 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 
-    SignalProxy< boost::signal<void(bool isFocused)> > sigWidgetFocusChanged();
-    SignalProxy< boost::signal<void()> > sigAboutToBeDestroyed();
+    SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
+    SignalProxy<void()> sigAboutToBeDestroyed();
 
 private:
     SceneWidgetImpl* impl;

@@ -47,7 +47,7 @@ private:
     ToggleToolButton rpyToggles[3];
 
     ConnectionSet toggleConnections;
-    boost::signals::connection itemTreeViewConnection;
+    Connection itemTreeViewConnection;
 
     struct ItemInfo
     {

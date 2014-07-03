@@ -2,11 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_KINEMATICS_BAR_H_INCLUDED
-#define CNOID_BODYPLUGIN_KINEMATICS_BAR_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_KINEMATICS_BAR_H
+#define CNOID_BODY_PLUGIN_KINEMATICS_BAR_H
 
 #include <cnoid/ToolBar>
-#include <boost/signals.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -33,7 +32,7 @@ public:
     bool isCollisionLinkHighlihtMode() const { return collisionLinkHighlightToggle->isChecked(); }
     int collisionDetectionPriority() const { return collisionDetectionPriority_; }
 
-    SignalProxy< boost::signal<void()> > sigCollisionVisualizationChanged() {
+    SignalProxy<void()> sigCollisionVisualizationChanged() {
         return sigCollisionVisualizationChanged_;
     }
 
@@ -54,7 +53,7 @@ private:
 
     int collisionDetectionPriority_;
 
-    boost::signal<void()> sigCollisionVisualizationChanged_;            
+    Signal<void()> sigCollisionVisualizationChanged_;            
 
     KinematicsBarSetupDialog* setup;
 
@@ -63,6 +62,7 @@ private:
     void onCollisionVisualizationChanged();
     void onLazyCollisionDetectionModeToggled();
 };
+
 }
 
 #endif

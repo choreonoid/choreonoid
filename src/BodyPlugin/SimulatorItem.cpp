@@ -176,11 +176,11 @@ public:
 
     bool doReset;
     bool isWaitingForSimulationToStop;
-    boost::signal<void()> sigSimulationFinished_;
+    Signal<void()> sigSimulationFinished_;
 
     SimulatedMotionEnginePtr motionEngine;
 
-    boost::signals::connection aboutToQuitConnection;
+    Connection aboutToQuitConnection;
 
     SgCloneMap sgCloneMap;
         
@@ -1554,7 +1554,7 @@ double SimulatorItemImpl::currentTime() const
 }
 
 
-SignalProxy< boost::signal<void()> > SimulatorItem::sigSimulationFinished()
+SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 {
     return impl->sigSimulationFinished_;
 }

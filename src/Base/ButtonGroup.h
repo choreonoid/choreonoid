@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_BUTTON_GROUP_H_INCLUDED
-#define CNOID_GUIBASE_BUTTON_GROUP_H_INCLUDED
+#ifndef CNOID_BASE_BUTTON_GROUP_H
+#define CNOID_BASE_BUTTON_GROUP_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QButtonGroup>
 #include "exportdecl.h"
 
@@ -15,10 +15,10 @@ class CNOID_EXPORT ButtonGroup : public QButtonGroup
 {
     Q_OBJECT
 
-        public:
+public:
     ButtonGroup(QObject* parent = 0);
 
-    inline SignalProxy< boost::signal<void(int id)> > sigButtonClicked() {
+    SignalProxy<void(int id)> sigButtonClicked() {
         return sigButtonClicked_;
     }
 
@@ -26,8 +26,9 @@ private Q_SLOTS:
     void onButtonClicked(int id);
 
 private:
-    boost::signal<void(int id)> sigButtonClicked_;
+    Signal<void(int id)> sigButtonClicked_;
 };
+
 }
 
 #endif

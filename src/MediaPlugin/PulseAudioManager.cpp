@@ -18,6 +18,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <map>
+#include <cmath>
 #include "gettext.h"
 
 using namespace std;
@@ -103,7 +104,7 @@ public:
     pa_context* context;
     typedef map<AudioItemPtr, SourcePtr> SourceMap;
     SourceMap activeSources;
-    boost::signals::connection sigTimeChangedConnection;
+    Connection sigTimeChangedConnection;
         
     PulseAudioManagerImpl(ExtensionManager* ext);
     ~PulseAudioManagerImpl();

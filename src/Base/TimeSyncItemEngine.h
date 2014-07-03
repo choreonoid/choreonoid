@@ -3,19 +3,18 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H_INCLUDED
-#define CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H_INCLUDED
+#ifndef CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
+#define CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 
 #include "Item.h"
 #include <boost/function.hpp>
-#include <boost/signals.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class AppImpl;
 
-class CNOID_EXPORT TimeSyncItemEngine : public boost::signals::trackable
+class CNOID_EXPORT TimeSyncItemEngine
 {
 public:
     virtual ~TimeSyncItemEngine();
@@ -38,6 +37,7 @@ public:
 private:
     std::string moduleName;
 };
+
 }
 
 #endif

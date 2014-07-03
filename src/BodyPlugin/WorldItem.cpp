@@ -53,7 +53,7 @@ public:
 
     ItemList<BodyItem> bodyItems;
 
-    boost::signals::connection sigItemTreeChangedConnection;
+    Connection sigItemTreeChangedConnection;
     ConnectionSet sigKinematicStateChangedConnections;
 
     bool isCollisionDetectionEnabled;
@@ -66,7 +66,7 @@ public:
     CollisionDetectorPtr collisionDetector;
     vector<BodyItemInfoMap::iterator> geometryIdToBodyInfoMap;
     boost::shared_ptr< vector<CollisionLinkPairPtr> > collisions;
-    boost::signal<void()> sigCollisionsUpdated;
+    Signal<void()> sigCollisionsUpdated;
 
     SceneCollisionPtr sceneCollision;
 
@@ -388,7 +388,7 @@ void WorldItemImpl::extractCollisions(const CollisionPair& collisionPair)
 }
 
 
-SignalProxy< boost::signal<void()> > WorldItem::sigCollisionsUpdated()
+SignalProxy<void()> WorldItem::sigCollisionsUpdated()
 {
     return impl->sigCollisionsUpdated;
 }

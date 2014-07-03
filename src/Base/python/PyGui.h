@@ -152,7 +152,7 @@ public:
 
     static void clicked(QtGuiClass& self, boost::python::object& callback, boost::python::object& args) {
         PyObject *pfunc = callback.ptr(), *pargs = args.ptr();
-        cnoid::SignalProxy<SignalClass> sig = self.sigClicked();
+        cnoid::SignalProxy<typename SignalClass::Signature> sig = self.sigClicked();
         sig.connect(boost::bind(calling, pfunc));
     }
 

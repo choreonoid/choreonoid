@@ -53,7 +53,7 @@ private:
 
     std::set<BodyItemPtr> bodyItems;
     ConnectionSet bodyItemConnections;
-    boost::signals::connection itemTreeViewConnection;
+    Connection itemTreeViewConnection;
 
     void onItemSelectionChanged(const ItemList<MultiValueSeqItem>& items);
     void onDataItemDetachedFromRoot(std::list<ItemInfo>::iterator itemInfoIter);

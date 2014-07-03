@@ -26,10 +26,10 @@ ActionGroup::~ActionGroup()
 }
 
 
-SignalProxy< boost::signal<void(QAction*)> > ActionGroup::sigHovered()
+SignalProxy<void(QAction*)> ActionGroup::sigHovered()
 {    
     if(!sigHovered_){
-        sigHovered_ = new boost::signal<void(QAction*)>();
+        sigHovered_ = new Signal<void(QAction*)>();
         connect(this, SIGNAL(triggered(QAction*)), this, SLOT(onHovered(QAction*)));
     }
     return *sigHovered_;
@@ -42,10 +42,10 @@ void ActionGroup::onHovered(QAction* action)
 }
 
 
-SignalProxy< boost::signal<void(QAction*)> > ActionGroup::sigTriggered()
+SignalProxy<void(QAction*)> ActionGroup::sigTriggered()
 {    
     if(!sigTriggered_){
-        sigTriggered_ = new boost::signal<void(QAction*)>();
+        sigTriggered_ = new Signal<void(QAction*)>();
         connect(this, SIGNAL(triggered(QAction*)), this, SLOT(onTriggered(QAction*)));
     }
     return *sigTriggered_;

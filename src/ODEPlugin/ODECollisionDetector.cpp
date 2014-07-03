@@ -7,6 +7,7 @@
 #include <cnoid/MeshExtractor>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
+#include <boost/optional.hpp>
 #ifdef GAZEBO_ODE
 #include <gazebo/ode/ode.h>
 #else

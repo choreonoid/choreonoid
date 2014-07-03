@@ -2,14 +2,13 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_GRAPH_BAR_H_INCLUDED
-#define CNOID_BASE_GRAPH_BAR_H_INCLUDED
+#ifndef CNOID_BASE_GRAPH_BAR_H
+#define CNOID_BASE_GRAPH_BAR_H
 
 #include <cnoid/ToolBar>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <boost/signals.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {

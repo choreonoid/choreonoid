@@ -65,7 +65,7 @@ private:
     bool onReloadingChanged(bool on);
 };
         
-typedef boost::intrusive_ptr<SimpleControllerItem> SimpleControllerItemPtr;
+typedef ref_ptr<SimpleControllerItem> SimpleControllerItemPtr;
 }
 
 #endif

@@ -7,6 +7,7 @@
 #include "GLGearsView.h"
 #include <cnoid/MessageView>
 #include <boost/bind.hpp>
+#include <cmath>
 
 using namespace std;
 using namespace boost;
@@ -243,8 +244,6 @@ void GearsScene::gear(GLfloat innerRadius, GLfloat outerRadius, GLfloat width, G
 
 GLGearsView::GLGearsView() : gearsScene(0)
 {
-    setName("Gears");
-
     gearsScene = new GearsScene(this);
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->addWidget(gearsScene);

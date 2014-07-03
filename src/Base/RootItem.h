@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_ROOT_ITEM_H_INCLUDED
-#define CNOID_BASE_ROOT_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_ROOT_ITEM_H
+#define CNOID_BASE_ROOT_ITEM_H
 
 #include "Item.h"
 #include "ItemList.h"
@@ -31,16 +31,16 @@ public:
     RootItem(const RootItem& org);
     virtual ~RootItem();
 
-    SignalProxy< boost::signal<void(RootItem* rootItem)> > sigDestroyed();
-    SignalProxy< boost::signal<void(Item* item)> > sigSubTreeAdded();
-    SignalProxy< boost::signal<void(Item* item)> > sigItemAdded();
-    SignalProxy< boost::signal<void(Item* item)> > sigSubTreeMoved();
-    SignalProxy< boost::signal<void(Item* item)> > sigItemMoved();
-    SignalProxy< boost::signal<void(Item* item, bool isMoving)> > sigSubTreeRemoving();
-    SignalProxy< boost::signal<void(Item* item, bool isMoving)> > sigSubTreeRemoved();
-    SignalProxy< boost::signal<void()> > sigTreeChanged();
+    SignalProxy<void(RootItem* rootItem)> sigDestroyed();
+    SignalProxy<void(Item* item)> sigSubTreeAdded();
+    SignalProxy<void(Item* item)> sigItemAdded();
+    SignalProxy<void(Item* item)> sigSubTreeMoved();
+    SignalProxy<void(Item* item)> sigItemMoved();
+    SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoving();
+    SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoved();
+    SignalProxy<void()> sigTreeChanged();
 
-    SignalProxy< boost::signal<void(Item* assigned, Item* srcItem)> > sigItemAssigned();
+    SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
 
 protected:
 

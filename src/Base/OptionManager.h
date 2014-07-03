@@ -2,13 +2,12 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_OPTION_MANAGER_H_INCLUDED
-#define CNOID_GUIBASE_OPTION_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_OPTION_MANAGER_H
+#define CNOID_BASE_OPTION_MANAGER_H
 
 #include "ExtensionManager.h"
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <boost/program_options.hpp>
-#include <boost/signal.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,15 +22,13 @@ public:
     OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s, const char* description);
     OptionManager& addPositionalOption(const char* name, int maxCount);
 
-    typedef boost::signal<void(boost::program_options::variables_map& variables)> SigOptionsParsed;
-
     /**
        @if jp
        コマンドラインオプションがパースされ、オプション解析処理の準備が整ったときに
        発行されるシグナルをハンドラ関数と接続する。
        @endif
     */
-    inline SignalProxy<SigOptionsParsed> sigOptionsParsed() {
+    SignalProxy<void(boost::program_options::variables_map& variables)> sigOptionsParsed() {
         return sigOptionsParsed_;
     }
 
@@ -41,11 +38,12 @@ private:
 
     bool parseCommandLine(int argc, char *argv[]);
 
-    SigOptionsParsed sigOptionsParsed_;
+    Signal<void(boost::program_options::variables_map& variables)> sigOptionsParsed_;
 
     friend class ExtensionManager;
     friend class AppImpl;
 };
+
 }
 
 #endif

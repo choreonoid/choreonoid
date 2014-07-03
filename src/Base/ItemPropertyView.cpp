@@ -16,13 +16,6 @@
 #include "AppConfig.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
-#include <string>
-#include <iostream>
-#include <boost/signals.hpp>
-#include <boost/bind.hpp>
-#include <boost/variant.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QBoxLayout>
@@ -31,6 +24,12 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
+#include <boost/bind.hpp>
+#include <boost/variant.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+#include <cmath>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -213,7 +212,7 @@ public:
         
     bool isPressedPathValid;
 
-    boost::signals::connection selectionChangedConnection;
+    Connection selectionChangedConnection;
 
     // PutPropertyFunction's virtual functions
     PutPropertyFunction& decimals(int d) {

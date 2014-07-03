@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_SUB_SIMULATOR_ITEM_H
-#define CNOID_BODYPLUGIN_SUB_SIMULATOR_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_SUB_SIMULATOR_ITEM_H
+#define CNOID_BODY_PLUGIN_SUB_SIMULATOR_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
@@ -20,7 +20,7 @@ public:
     virtual void finalizeSimulation() = 0;
 };
 
-typedef boost::intrusive_ptr<SubSimulatorItem> SubSimulatorItemPtr;
+typedef ref_ptr<SubSimulatorItem> SubSimulatorItemPtr;
 }
 
 #endif

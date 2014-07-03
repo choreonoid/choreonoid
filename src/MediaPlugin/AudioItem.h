@@ -3,10 +3,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_MEDIAPLUGIN_AUDIO_ITEM_H_INCLUDED
-#define CNOID_MEDIAPLUGIN_AUDIO_ITEM_H_INCLUDED
+#ifndef CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
+#define CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
 
 #include <cnoid/Item>
+#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {

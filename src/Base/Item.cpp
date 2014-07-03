@@ -27,7 +27,7 @@ list<Item*> itemsToEmitSigSubTreeChanged;
 }
 
 namespace cnoid {
-boost::signal<void(const char* type_info_name)> Item::sigClassUnregistered_;
+Signal<void(const char* type_info_name)> Item::sigClassUnregistered_;
 }
 
 

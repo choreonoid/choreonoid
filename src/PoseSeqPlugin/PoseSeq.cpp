@@ -466,9 +466,9 @@ void PoseSeq::getDomain(double& out_lower, double& out_upper)
 
 
 ConnectionSet PoseSeq::connectSignalSet
-(const boost::signal<void(iterator, bool isMoving)>::slot_type& slotInserted,
- const boost::signal<void(iterator, bool isMoving)>::slot_type& slotRemoving,
- const boost::signal<void(iterator)>::slot_type& slotModified)
+(const Signal<void(iterator, bool isMoving)>::slot_type& slotInserted,
+ const Signal<void(iterator, bool isMoving)>::slot_type& slotRemoving,
+ const Signal<void(iterator)>::slot_type& slotModified)
 {
     ConnectionSet connections;
 
@@ -481,10 +481,10 @@ ConnectionSet PoseSeq::connectSignalSet
 
 
 ConnectionSet PoseSeq::connectSignalSet
-(const boost::signal<void(iterator, bool isMoving)>::slot_type& slotInserted,
- const boost::signal<void(iterator, bool isMoving)>::slot_type& slotRemoving,
- const boost::signal<void(iterator)>::slot_type& slotModifying,
- const boost::signal<void(iterator)>::slot_type& slotModified)
+(const Signal<void(iterator, bool isMoving)>::slot_type& slotInserted,
+ const Signal<void(iterator, bool isMoving)>::slot_type& slotRemoving,
+ const Signal<void(iterator)>::slot_type& slotModifying,
+ const Signal<void(iterator)>::slot_type& slotModified)
 {
     ConnectionSet connections;
 

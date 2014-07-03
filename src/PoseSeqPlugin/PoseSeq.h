@@ -3,14 +3,14 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_CHOREOGRAPHY_POSE_SEQ_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_POSE_SEQ_H_INCLUDED
+#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_H
+#define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_H
 
 #include "Pose.h"
 #include <set>
 #include <list>
 #include <cnoid/Body>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <cnoid/ConnectionSet>
 #include "exportdecl.h"
 
@@ -74,7 +74,7 @@ private:
 };
 
         
-class CNOID_EXPORT PoseSeq : public PoseUnit, public boost::signals::trackable
+class CNOID_EXPORT PoseSeq : public PoseUnit
 {
 public:
 
@@ -158,18 +158,18 @@ public:
 
     void getDomain(double& out_lower, double& out_upper);
 
-    //SignalProxy< boost::signal<void(PoseUnitPtr, const std::string& oldName)> > sigNameChanged();
+    //SignalProxy<void(PoseUnitPtr, const std::string& oldName)> sigNameChanged();
 
     /*
-      SignalProxy< boost::signal<void(iterator, bool isMoving)> > sigPoseInserted() {
+      SignalProxy<void(iterator, bool isMoving)> sigPoseInserted() {
       return sigPoseInserted_;
       }
 
-      SignalProxy< boost::signal<void(iterator, bool isMoving)> > sigPoseRemoving(){
+      SignalProxy<void(iterator, bool isMoving)> sigPoseRemoving(){
       return sigPoseRemoving_;
       }
 
-      SignalProxy< boost::signal<void(iterator)> > sigPoseModified(){
+      SignalProxy<void(iterator)> sigPoseModified(){
       return sigPoseModified_;
       }
     */
@@ -189,15 +189,15 @@ public:
     }
 
     ConnectionSet connectSignalSet(
-        const boost::signal<void(iterator, bool isMoving)>::slot_type& slotInserted,
-        const boost::signal<void(iterator, bool isMoving)>::slot_type& slotRemoving,
-        const boost::signal<void(iterator)>::slot_type& slotModified);
+        const Signal<void(iterator, bool isMoving)>::Slot& slotInserted,
+        const Signal<void(iterator, bool isMoving)>::Slot& slotRemoving,
+        const Signal<void(iterator)>::slot_type& slotModified);
 
     ConnectionSet connectSignalSet(
-        const boost::signal<void(iterator, bool isMoving)>::slot_type& slotInserted,
-        const boost::signal<void(iterator, bool isMoving)>::slot_type& slotRemoving,
-        const boost::signal<void(iterator)>::slot_type& slotModifying,
-        const boost::signal<void(iterator)>::slot_type& slotModified);
+        const Signal<void(iterator, bool isMoving)>::Slot& slotInserted,
+        const Signal<void(iterator, bool isMoving)>::Slot& slotRemoving,
+        const Signal<void(iterator)>::Slot& slotModifying,
+        const Signal<void(iterator)>::Slot& slotModified);
 
     /// \todo Implement and use the followings. For example for loading a file.
     void blockSignals();
@@ -212,10 +212,10 @@ private:
     PoseUnitMap poseUnitMap;
     std::set<std::string> storedNames;
 
-    boost::signal<void(iterator, bool isMoving)> sigPoseInserted_;
-    boost::signal<void(iterator, bool isMoving)> sigPoseRemoving_;
-    boost::signal<void(iterator)> sigPoseModifying_;
-    boost::signal<void(iterator)> sigPoseModified_;
+    Signal<void(iterator, bool isMoving)> sigPoseInserted_;
+    Signal<void(iterator, bool isMoving)> sigPoseRemoving_;
+    Signal<void(iterator)> sigPoseModifying_;
+    Signal<void(iterator)> sigPoseModified_;
 
     std::string targetBodyName_;
 
@@ -226,6 +226,7 @@ private:
 
     friend class PoseRef;
 };
+
 }
 
 #endif

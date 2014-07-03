@@ -28,15 +28,15 @@ public:
     RootItemImpl(RootItem* self);
     ~RootItemImpl();
 
-    boost::signal<void(RootItem* rootItem)> sigDestroyed;
-    boost::signal<void(Item* item)> sigSubTreeAdded;
-    boost::signal<void(Item* item)> sigItemAdded;
-    boost::signal<void(Item* item)> sigSubTreeMoved;
-    boost::signal<void(Item* item)> sigItemMoved;
-    boost::signal<void(Item* item, bool isMoving)> sigSubTreeRemoving;
-    boost::signal<void(Item* item, bool isMoving)> sigSubTreeRemoved;
-    LazySignal< boost::signal<void()> > sigTreeChanged;
-    boost::signal<void(Item* assigned, Item* srcItem)> sigItemAssigned;
+    Signal<void(RootItem* rootItem)> sigDestroyed;
+    Signal<void(Item* item)> sigSubTreeAdded;
+    Signal<void(Item* item)> sigItemAdded;
+    Signal<void(Item* item)> sigSubTreeMoved;
+    Signal<void(Item* item)> sigItemMoved;
+    Signal<void(Item* item, bool isMoving)> sigSubTreeRemoving;
+    Signal<void(Item* item, bool isMoving)> sigSubTreeRemoved;
+    LazySignal< Signal<void()> > sigTreeChanged;
+    Signal<void(Item* assigned, Item* srcItem)> sigItemAssigned;
     
     void emitSigItemAddedForItemTree(Item* item);
     void emitSigItemMovedForItemTree(Item* item);
@@ -120,31 +120,31 @@ RootItemImpl::~RootItemImpl()
 }
 
 
-SignalProxy< boost::signal<void(RootItem* rootItem)> > RootItem::sigDestroyed()
+SignalProxy<void(RootItem* rootItem)> RootItem::sigDestroyed()
 {
     return impl->sigDestroyed;
 }
 
 
-SignalProxy< boost::signal<void(Item* item)> > RootItem::sigSubTreeAdded()
+SignalProxy<void(Item* item)> RootItem::sigSubTreeAdded()
 {
     return impl->sigSubTreeAdded;
 }
 
 
-SignalProxy< boost::signal<void(Item* item)> > RootItem::sigItemAdded()
+SignalProxy<void(Item* item)> RootItem::sigItemAdded()
 {
     return impl->sigItemAdded;
 }
 
 
-SignalProxy< boost::signal<void(Item* item)> > RootItem::sigSubTreeMoved()
+SignalProxy<void(Item* item)> RootItem::sigSubTreeMoved()
 {
     return impl->sigSubTreeMoved;
 }
 
 
-SignalProxy< boost::signal<void(Item* item)> > RootItem::sigItemMoved()
+SignalProxy<void(Item* item)> RootItem::sigItemMoved()
 {
     return impl->sigItemMoved;
 }
@@ -160,7 +160,7 @@ SignalProxy< boost::signal<void(Item* item)> > RootItem::sigItemMoved()
    
    @todo できれば本シグナルは itemRemoved() シグナルで置き換えてdeprecatedとしたい。
 */
-SignalProxy< boost::signal<void(Item* item, bool isMoving)> > RootItem::sigSubTreeRemoving()
+SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoving()
 {
     return impl->sigSubTreeRemoving;
 }
@@ -174,7 +174,7 @@ SignalProxy< boost::signal<void(Item* item, bool isMoving)> > RootItem::sigSubTr
    @param isMoving アイテムが移動中であって、再び本ルートアイテムからのパスに
    所属する場合、true となる。
 */
-SignalProxy< boost::signal<void(Item* item, bool isMoving)> > RootItem::sigSubTreeRemoved()
+SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoved()
 {
     return impl->sigSubTreeRemoved;
 }
@@ -192,7 +192,7 @@ SignalProxy< boost::signal<void(Item* item, bool isMoving)> > RootItem::sigSubTr
    この点改善しておく．
    @endif
 */
-SignalProxy< boost::signal<void()> > RootItem::sigTreeChanged()
+SignalProxy<void()> RootItem::sigTreeChanged()
 {
     return impl->sigTreeChanged.signal();
 }
@@ -201,7 +201,7 @@ SignalProxy< boost::signal<void()> > RootItem::sigTreeChanged()
 /**
    This signal is emitted when Item::asign() is called.
 */
-SignalProxy< boost::signal<void(Item* assigned, Item* srcItem)> > RootItem::sigItemAssigned()
+SignalProxy<void(Item* assigned, Item* srcItem)> RootItem::sigItemAssigned()
 {
     return impl->sigItemAssigned;
 }

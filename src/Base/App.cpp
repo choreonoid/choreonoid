@@ -64,9 +64,9 @@ using namespace cnoid;
 namespace {
 
 View* lastFocusView_ = 0;
-boost::signal<void(View*)> sigFocusViewChanged;
+Signal<void(View*)> sigFocusViewChanged;
 
-boost::signal<void()> sigAboutToQuit_;
+Signal<void()> sigAboutToQuit_;
 
 void onCtrl_C_Input(int p)
 {
@@ -301,7 +301,7 @@ bool AppImpl::eventFilter(QObject* watched, QEvent* event)
 }
 
 
-SignalProxy< boost::signal<void()> > cnoid::sigAboutToQuit()
+SignalProxy<void()> cnoid::sigAboutToQuit()
 {
     return sigAboutToQuit_;
 }
@@ -375,7 +375,7 @@ View* View::lastFocusView()
 }
 
 
-SignalProxy< boost::signal<void(View*)> > View::sigFocusChanged()
+SignalProxy<void(View*)> View::sigFocusChanged()
 {
     return sigFocusViewChanged;
 }

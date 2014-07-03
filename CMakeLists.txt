@@ -287,7 +287,7 @@ if(MSVC)
   find_package(Boost 1.36.0 QUIET OPTIONAL_COMPONENTS  bzip2 zlib)
 endif()
 
-set(boost_packages system filesystem program_options regex signals thread iostreams date_time)
+set(boost_packages system filesystem program_options regex thread iostreams date_time)
 
 if(ENABLE_PYTHON)
   set(boost_packages ${boost_packages} python)
@@ -308,11 +308,10 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_SIGNALS_NO_DEPRECATION_WARNING)
 # set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_FILESYSTEM_VERSION=2)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
-  ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
+  ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
   ${Boost_DATE_TIME_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_CHRONO_LIBRARY} ${Boost_PYTHON_LIBRARY})
 
 
@@ -1042,9 +1041,9 @@ if(WIN32)
 elseif(UNIX)
   set(CPACK_GENERATOR DEB)
   set(CPACK_PACKAGE_FILE_NAME "choreonoid_${CNOID_FULL_VERSION}_i386")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libgcc1, libstdc++6, libpng12-0, libjpeg62, libyaml-0-2, zlib1g, libboost-filesystem1.42.0, libboost-date-time1.42.0, libboost-program-options1.42.0, libboost-python1.42.0, libboost-regex1.42.0, libboost-signals1.42.0, libboost-system1.42.0, libboost-thread1.42.0, libqtcore4, libqtgui4, libqt4-test, libqt4-opengl")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libgcc1, libstdc++6, libpng12-0, libjpeg62, libyaml-0-2, zlib1g, libboost-filesystem1.42.0, libboost-date-time1.42.0, libboost-program-options1.42.0, libboost-python1.42.0, libboost-regex1.42.0, libboost-system1.42.0, libboost-thread1.42.0, libqtcore4, libqtgui4, libqt4-test, libqt4-opengl")
   if(INSTALL_SDK)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libstdc++-dev, libboost-dev, libboost-program-options-dev, libboost-python-dev, libboost-signals-dev, libqt4-dev, libqt4-opengl-dev")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libstdc++-dev, libboost-dev, libboost-program-options-dev, libboost-python-dev, libqt4-dev, libqt4-opengl-dev")
   endif()
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Shin'ichiro Nakaoka")
 endif()

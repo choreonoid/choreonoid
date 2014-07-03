@@ -3,12 +3,12 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BODY_BODY_MOTION_H_INCLUDED
-#define CNOID_BODY_BODY_MOTION_H_INCLUDED
+#ifndef CNOID_BODY_BODY_MOTION_H
+#define CNOID_BODY_BODY_MOTION_H
 
 #include <cnoid/MultiValueSeq>
 #include <cnoid/MultiSE3Seq>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <boost/make_shared.hpp>
 #include <map>
 #include "exportdecl.h"
@@ -31,34 +31,34 @@ public:
     virtual void setNumParts(int numParts, bool clearNewElements = false);
     virtual int getNumParts() const;
 
-    inline int numJoints() const { return jointPosSeq_->numParts(); }
-    inline int numLinks() const { return linkPosSeq_->numParts(); }
+    int numJoints() const { return jointPosSeq_->numParts(); }
+    int numLinks() const { return linkPosSeq_->numParts(); }
 
-    inline double frameRate() const { return jointPosSeq_->frameRate(); }
+    double frameRate() const { return jointPosSeq_->frameRate(); }
     virtual double getFrameRate() const;
     virtual void setFrameRate(double frameRate);
 
     virtual int getOffsetTimeFrame() const;
 
-    inline int numFrames() const {
+    int numFrames() const {
         return std::max(jointPosSeq_->numFrames(), linkPosSeq_->numFrames());
     }
     virtual int getNumFrames() const;
     virtual void setNumFrames(int n, bool clearNewArea = false);
 
-    inline MultiValueSeqPtr& jointPosSeq() {
+    MultiValueSeqPtr& jointPosSeq() {
         return jointPosSeq_;
     }
 
-    inline const MultiValueSeqPtr& jointPosSeq() const {
+    const MultiValueSeqPtr& jointPosSeq() const {
         return jointPosSeq_;
     }
 
-    inline MultiSE3SeqPtr& linkPosSeq() {
+    MultiSE3SeqPtr& linkPosSeq() {
         return linkPosSeq_;
     }
 
-    inline const MultiSE3SeqPtr& linkPosSeq() const {
+    const MultiSE3SeqPtr& linkPosSeq() const {
         return linkPosSeq_;
     }
 
@@ -75,8 +75,8 @@ public:
         friend class BodyMotion;
     };
             
-    inline Frame frame(int frame) { return Frame(*this, frame); }
-    inline const Frame frame(int frame) const { return Frame(*this, frame); }
+    Frame frame(int frame) { return Frame(*this, frame); }
+    const Frame frame(int frame) const { return Frame(*this, frame); }
 
     virtual bool read(const Mapping& archive);
     virtual bool write(YAMLWriter& writer);
@@ -117,7 +117,7 @@ public:
 
     void clearExtraSeq(const std::string& contentName);
 
-    SignalProxy< boost::signal<void()> > sigExtraSeqsChanged() {
+    SignalProxy<void()> sigExtraSeqsChanged() {
         return sigExtraSeqsChanged_;
     }
         
@@ -128,7 +128,7 @@ private:
 
     ExtraSeqMap extraSeqs;
 
-    boost::signal<void()> sigExtraSeqsChanged_;
+    Signal<void()> sigExtraSeqsChanged_;
 };
 
 typedef boost::shared_ptr<BodyMotion> BodyMotionPtr;

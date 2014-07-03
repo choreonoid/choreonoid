@@ -3,14 +3,15 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_BODY_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_BODY_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_BODY_ITEM_H
+#define CNOID_BODY_PLUGIN_BODY_ITEM_H
 
 #include <cnoid/Item>
 #include <cnoid/Body>
 #include <cnoid/CollisionLinkPair>
 #include <cnoid/SceneProvider>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/optional.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -86,16 +87,16 @@ public:
        Item::sigUpdated() はモデル自体が変わった場合とし、そちらとは区別して使う。
        @endif
     */
-    SignalProxy< boost::signal<void()> > sigKinematicStateChanged();
+    SignalProxy<void()> sigKinematicStateChanged();
 
     void notifyKinematicStateChange(
         bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
             
     void notifyKinematicStateChange(
-        boost::signals::connection& connectionToBlock,
+        Connection& connectionToBlock,
         bool requestFK = false, bool requestVelFK = false, bool requestAccFK = false);
 
-    SignalProxy< boost::signal<void()> > sigKinematicStateEdited();
+    SignalProxy<void()> sigKinematicStateEdited();
 
     void enableSelfCollisionDetection(bool on);
     bool isSelfCollisionDetectionEnabled() const;        
@@ -108,7 +109,7 @@ public:
     const boost::dynamic_bitset<>& collisionLinkBitSet() const { return collisionLinkBitSet_; }
     std::vector<CollisionLinkPairPtr>& collisionsOfLink(int linkIndex) { return collisionsOfLink_[linkIndex]; }
     const std::vector<CollisionLinkPairPtr>& collisionsOfLink(int linkIndex) const { return collisionsOfLink_[linkIndex]; }
-    SignalProxy< boost::signal<void()> > sigCollisionsUpdated() { return sigCollisionsUpdated_; }
+    SignalProxy<void()> sigCollisionsUpdated() { return sigCollisionsUpdated_; }
     void notifyCollisionUpdate() { sigCollisionsUpdated_(); }
 
     const Vector3& centerOfMass();
@@ -143,7 +144,7 @@ private:
     std::vector<CollisionLinkPairPtr> collisions_;
     boost::dynamic_bitset<> collisionLinkBitSet_;
     std::vector< std::vector<CollisionLinkPairPtr> > collisionsOfLink_;
-    boost::signal<void()> sigCollisionsUpdated_;
+    Signal<void()> sigCollisionsUpdated_;
 };
 }
 

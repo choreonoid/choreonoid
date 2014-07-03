@@ -60,7 +60,7 @@ class GraphDataHandlerImpl
 public:
     GraphDataHandlerImpl();
         
-    boost::signal<void()> sigDataUpdated;
+    Signal<void()> sigDataUpdated;
 
     /**
        The size of this array is the actual data size + 2 and the actual data is
@@ -184,7 +184,7 @@ public:
 
     TimeBar* timeBar;
     bool timeBarSyncMode;
-    boost::signals::connection timeChangedConnetion;
+    Connection timeChangedConnetion;
 
     QLabel statusLabel;
 

@@ -2,12 +2,11 @@
    @author Shizuko Hattori
 */
 
-#ifndef CNOID_SCENE_GRAPH_VIEW_H_INCLUDED
-#define CNOID_SCENE_GRAPH_VIEW_H_INCLUDED
+#ifndef CNOID_SCENE_GRAPH_VIEW_H
+#define CNOID_SCENE_GRAPH_VIEW_H
 
 #include <cnoid/View>
 #include <cnoid/SceneGraph>
-#include <cnoid/SignalProxy>
 
 namespace cnoid {
 
@@ -23,11 +22,10 @@ public:
 
     const SgObject* selectedObject();
 
-    SignalProxy< boost::signal<void(const SgObject*)> > sigSelectionChanged();
+    SignalProxy<void(const SgObject*)> sigSelectionChanged();
 
 private:
     SceneGraphViewImpl* impl;
-
 };
 
 }

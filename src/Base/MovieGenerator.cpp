@@ -37,7 +37,7 @@ namespace {
 class MovieGenerator : public Dialog
 {
 public:
-    boost::signals::connection focusViewChangedConnection;
+    Connection focusViewChangedConnection;
 
     TimeBar* timeBar;
     View* targetView;

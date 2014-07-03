@@ -2,12 +2,12 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_ITEM_H_INCLUDED
-#define CNOID_BASE_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_ITEM_H
+#define CNOID_BASE_ITEM_H
 
 #include "PutPropertyFunction.h"
 #include <cnoid/Referenced>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <cnoid/NullOut>
 #include <ctime>
 #include <bitset>
@@ -50,15 +50,15 @@ public:
     Item(const Item& item);
     virtual ~Item(); // The destructor should not be called in usual ways
 
-    inline const std::string& name() const { return name_; }
+    const std::string& name() const { return name_; }
     virtual void setName(const std::string& name);
 
-    inline bool hasAttribute(Attribute attribute) const { return attributes[attribute]; }
+    bool hasAttribute(Attribute attribute) const { return attributes[attribute]; }
 
-    inline Item* childItem() const { return firstChild_; }
-    inline Item* prevItem() const { return prevItem_; }
-    inline Item* nextItem() const { return nextItem_; }
-    inline Item* parentItem() const { return parent_; }
+    Item* childItem() const { return firstChild_; }
+    Item* prevItem() const { return prevItem_; }
+    Item* nextItem() const { return nextItem_; }
+    Item* parentItem() const { return parent_; }
 
     bool addChildItem(ItemPtr item, bool isManualOperation = false);
     bool addSubItem(ItemPtr item);
@@ -138,11 +138,11 @@ public:
 
     virtual void notifyUpdate();
 
-    inline SignalProxy< boost::signal<void(const std::string& oldName)> > sigNameChanged() {
+    SignalProxy<void(const std::string& oldName)> sigNameChanged() {
         return sigNameChanged_;
     }
 
-    SignalProxy< boost::signal<void()> > sigUpdated() {
+    SignalProxy<void()> sigUpdated() {
         return sigUpdated_;
     }
 
@@ -154,24 +154,24 @@ public:
        is changed.
        This signal is emitted before RootItem::sigTreeChanged();
     */
-    SignalProxy< boost::signal<void()> > sigPositionChanged() {
+    SignalProxy<void()> sigPositionChanged() {
         return sigPositionChanged_;
     }
 
     /**
        @note obsolete.
     */
-    SignalProxy< boost::signal<void()> > sigDetachedFromRoot() {
+    SignalProxy<void()> sigDetachedFromRoot() {
         return sigDetachedFromRoot_;
     }
     /**
        @note Please use this instead of sigDetachedFromRoot()
     */
-    SignalProxy< boost::signal<void()> > sigDisconnectedFromRoot() {
+    SignalProxy<void()> sigDisconnectedFromRoot() {
         return sigDetachedFromRoot_;
     }
 
-    SignalProxy< boost::signal<void()> > sigSubTreeChanged() {
+    SignalProxy<void()> sigSubTreeChanged() {
         return sigSubTreeChanged_;
     }
 
@@ -183,7 +183,7 @@ public:
     void setCustomData(int id, ReferencedPtr data);
     void clearCustomData(int id);
 
-    static SignalProxy< boost::signal<void(const char* type_info_name)> > sigClassUnregistered() {
+    static SignalProxy<void(const char* type_info_name)> sigClassUnregistered() {
         return sigClassUnregistered_;
     }
 
@@ -218,13 +218,13 @@ private:
     std::vector<int> extraStates;
     std::vector<ReferencedPtr> extraData;
 
-    boost::signal<void(const std::string& oldName)> sigNameChanged_;
-    boost::signal<void()> sigDetachedFromRoot_;
-    boost::signal<void()> sigUpdated_;
-    boost::signal<void()> sigPositionChanged_;
-    boost::signal<void()> sigSubTreeChanged_;
+    Signal<void(const std::string& oldName)> sigNameChanged_;
+    Signal<void()> sigDetachedFromRoot_;
+    Signal<void()> sigUpdated_;
+    Signal<void()> sigPositionChanged_;
+    Signal<void()> sigSubTreeChanged_;
 
-    static boost::signal<void(const char* type_info_name)> sigClassUnregistered_;
+    static Signal<void(const char* type_info_name)> sigClassUnregistered_;
 
     // for file overwriting management, mainly accessed by ItemManagerImpl
     bool isConsistentWithFile_;
@@ -258,6 +258,7 @@ private:
 #define CNOID_BASE_MVOUT_DECLARED
 CNOID_EXPORT std::ostream& mvout(bool doFlush = false);
 #endif
+
 }
 
 #endif

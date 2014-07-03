@@ -6,10 +6,11 @@
 #ifndef CNOID_UTIL_SCENE_GRAPH_H
 #define CNOID_UTIL_SCENE_GRAPH_H
 
-#include "Referenced.h"
-#include "BoundingBox.h"
-#include "SignalProxy.h"
+#include <cnoid/Referenced>
+#include <cnoid/BoundingBox>
+#include <cnoid/Signal>
 #include <string>
+#include <vector>
 #include <set>
 #include "exportdecl.h"
 
@@ -89,7 +90,7 @@ public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
 
-    SignalProxy<boost::signal<void(const SgUpdate& update)> > sigUpdated() {
+    SignalProxy<void(const SgUpdate& update)> sigUpdated() {
         return sigUpdated_;
     }
         
@@ -116,7 +117,7 @@ public:
        This signal is emitted when the object is first attached to an upper node
        or the object is detached from all the upper node.
     */
-    SignalProxy<boost::signal<void(bool on)> > sigGraphConnection() {
+    SignalProxy<void(bool on)> sigGraphConnection() {
         return sigGraphConnection_;
     }
 
@@ -128,8 +129,8 @@ protected:
 private:
     std::string name_;
     ParentContainer parents;
-    boost::signal<void(const SgUpdate& update)> sigUpdated_;
-    boost::signal<void(bool on)> sigGraphConnection_;
+    Signal<void(const SgUpdate& update)> sigUpdated_;
+    Signal<void(bool on)> sigGraphConnection_;
 };
 
 

@@ -311,7 +311,7 @@ public:
     dynamic_bitset<> validIkLinkFlag;
     Vector3 waistTranslation;
 
-    boost::signal<void()> sigUpdated;
+    Signal<void()> sigUpdated;
 
     void setBody(const BodyPtr& body0);
     void setLinearInterpolationJoint(int jointId);
@@ -1057,7 +1057,7 @@ bool PoseSeqInterpolator::update()
 }
 
 
-SignalProxy< boost::signal<void()> > PoseSeqInterpolator::sigUpdated()
+SignalProxy<void()> PoseSeqInterpolator::sigUpdated()
 {
     return impl->sigUpdated;
 }

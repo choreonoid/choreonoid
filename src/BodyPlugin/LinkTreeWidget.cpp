@@ -60,9 +60,9 @@ public:
     Menu popupMenu; // This must be defined before popupMenuManager
     MenuManager popupMenuManager;
 
-    boost::signal<void(bool isInitialCreation)> sigUpdateRequest;
-    boost::signal<void(LinkTreeItem* item, int column)> sigItemChanged;
-    boost::signal<void()> sigSelectionChanged;
+    Signal<void(bool isInitialCreation)> sigUpdateRequest;
+    Signal<void(LinkTreeItem* item, int column)> sigItemChanged;
+    Signal<void()> sigSelectionChanged;
 
     int defaultExpansionLevel;
     bool isCacheEnabled;
@@ -76,13 +76,13 @@ public:
 
         dynamic_bitset<> selection;
         vector<int> selectedLinkIndices;
-        boost::signal<void()> sigSelectionChanged;
+        Signal<void()> sigSelectionChanged;
 
         bool needTreeExpansionUpdate;
         dynamic_bitset<> linkExpansions;
         std::set<string> expandedParts;
                 
-        boost::signals::connection detachedFromRootConnection;
+        Connection detachedFromRootConnection;
 
         BodyItemInfo() {
             isRestoringTreeStateNeeded = true;
@@ -110,7 +110,7 @@ public:
     BodyItemPtr currentBodyItem;
     BodyItemInfoPtr currentBodyItemInfo;
 
-    boost::signal<void()> dummySigSelectionChanged; // never emitted
+    Signal<void()> dummySigSelectionChanged; // never emitted
     vector<int> emptyLinkIndices;
     dynamic_bitset<> emptySelection;
 
@@ -134,7 +134,7 @@ public:
     void addCustomRows();
     void onListingModeChanged(int index);
     void onSelectionChanged();
-    boost::signal<void()>& sigSelectionChangedOf(BodyItemPtr bodyItem);
+    Signal<void()>& sigSelectionChangedOf(BodyItemPtr bodyItem);
     const std::vector<int>& getSelectedLinkIndices(BodyItemPtr bodyItem);
     const boost::dynamic_bitset<>& getLinkSelection(BodyItemPtr bodyItem);
     void onCustomContextMenuRequested(const QPoint& pos);
@@ -518,7 +518,7 @@ int LinkTreeWidget::numLinkTreeItems()
 }
 
 
-SignalProxy< boost::signal<void(bool isInitialCreation)> > LinkTreeWidget::sigUpdateRequest()
+SignalProxy<void(bool isInitialCreation)> LinkTreeWidget::sigUpdateRequest()
 {
     return impl->sigUpdateRequest;
 }
@@ -913,7 +913,7 @@ void LinkTreeWidgetImpl::onSelectionChanged()
 }
 
 
-SignalProxy< boost::signal<void(LinkTreeItem* item, int column)> > LinkTreeWidget::sigItemChanged()
+SignalProxy<void(LinkTreeItem* item, int column)> LinkTreeWidget::sigItemChanged()
 {
     return impl->sigItemChanged;
 }
@@ -928,19 +928,19 @@ void LinkTreeWidget::onItemChanged(QTreeWidgetItem* item, int column)
 }
 
 
-SignalProxy< boost::signal<void()> > LinkTreeWidget::sigSelectionChanged()
+SignalProxy<void()> LinkTreeWidget::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
 }
 
 
-SignalProxy< boost::signal<void()> > LinkTreeWidget::sigSelectionChanged(BodyItemPtr bodyItem)
+SignalProxy<void()> LinkTreeWidget::sigSelectionChanged(BodyItemPtr bodyItem)
 {
     return impl->sigSelectionChangedOf(bodyItem);
 }
 
 
-boost::signal<void()>& LinkTreeWidgetImpl::sigSelectionChangedOf(BodyItemPtr bodyItem)
+Signal<void()>& LinkTreeWidgetImpl::sigSelectionChangedOf(BodyItemPtr bodyItem)
 {
     BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
     if(info){

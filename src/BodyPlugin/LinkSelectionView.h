@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_LINK_SELECTION_VIEW_H_INCLUDED
-#define CNOID_BODYPLUGIN_LINK_SELECTION_VIEW_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_LINK_SELECTION_VIEW_H
+#define CNOID_BODY_PLUGIN_LINK_SELECTION_VIEW_H
 
 #include "BodyItem.h"
 #include <cnoid/View>
@@ -15,7 +15,7 @@ namespace cnoid {
 
 class LinkSelectionViewImpl;
     
-class CNOID_EXPORT LinkSelectionView : public cnoid::View, public boost::signals::trackable
+class CNOID_EXPORT LinkSelectionView : public cnoid::View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -24,7 +24,7 @@ public:
     LinkSelectionView();
     virtual ~LinkSelectionView();
             
-    SignalProxy< boost::signal<void()> > sigSelectionChanged(BodyItemPtr bodyItem);
+    SignalProxy<void()> sigSelectionChanged(BodyItemPtr bodyItem);
 
     const std::vector<int>& getSelectedLinkIndices(BodyItemPtr bodyItem);
     const boost::dynamic_bitset<>& getLinkSelection(BodyItemPtr bodyItem);
@@ -38,6 +38,7 @@ private:
             
     LinkSelectionViewImpl* impl;
 };
+
 }
 
 #endif

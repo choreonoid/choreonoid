@@ -88,8 +88,8 @@ public:
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
 
-    LazySignal< boost::signal<void()> > sigKinematicStateChanged;
-    LazySignal< boost::signal<void()> > sigKinematicStateEdited;
+    LazySignal< Signal<void()> > sigKinematicStateChanged;
+    LazySignal< Signal<void()> > sigKinematicStateEdited;
 
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
@@ -116,8 +116,8 @@ public:
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
 
-    boost::signals::connection connectionToSigLinkSelectionChanged;
-    boost::signals::connection connectionToSigLinkVisibilityToggled;
+    Connection connectionToSigLinkSelectionChanged;
+    Connection connectionToSigLinkVisibilityToggled;
 
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
@@ -286,13 +286,13 @@ void BodyItem::setEditable(bool on)
 }
 
 
-SignalProxy< boost::signal<void()> > BodyItem::sigKinematicStateChanged()
+SignalProxy<void()> BodyItem::sigKinematicStateChanged()
 {
     return impl->sigKinematicStateChanged.signal();
 }
 
 
-SignalProxy< boost::signal<void()> > BodyItem::sigKinematicStateEdited()
+SignalProxy<void()> BodyItem::sigKinematicStateEdited()
 {
     return impl->sigKinematicStateEdited.signal();
 }
@@ -859,7 +859,7 @@ void BodyItem::notifyKinematicStateChange(bool requestFK, bool requestVelFK, boo
 
 
 void BodyItem::notifyKinematicStateChange
-(boost::signals::connection& connectionToBlock, bool requestFK, bool requestVelFK, bool requestAccFK)
+(Connection& connectionToBlock, bool requestFK, bool requestVelFK, bool requestAccFK)
 {
     impl->sigKinematicStateChanged.requestBlocking(connectionToBlock);
     notifyKinematicStateChange(requestFK, requestVelFK, requestAccFK);

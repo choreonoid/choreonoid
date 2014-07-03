@@ -2,10 +2,10 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BASE_MENU_H_INCLUDED
-#define CNOID_BASE_MENU_H_INCLUDED
+#ifndef CNOID_BASE_MENU_H
+#define CNOID_BASE_MENU_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QMenu>
 #include "exportdecl.h"
 
@@ -20,9 +20,9 @@ public:
     Menu(const QString& title, QWidget* parent = 0);
     ~Menu();
 
-    SignalProxy< boost::signal<void(QAction*)> > sigTriggered();
-    SignalProxy< boost::signal<void()> > sigAboutToShow();
-    SignalProxy< boost::signal<void()> > sigAboutToHide();
+    SignalProxy<void(QAction*)> sigTriggered();
+    SignalProxy<void()> sigAboutToShow();
+    SignalProxy<void()> sigAboutToHide();
 
 private Q_SLOTS:
     void onTriggered(QAction* action);
@@ -30,12 +30,13 @@ private Q_SLOTS:
     void onAboutToHide();
 
 private:
-    boost::signal<void(QAction*)>* sigTriggered_;
-    boost::signal<void()>* sigAboutToShow_;
-    boost::signal<void()>* sigAboutToHide_;
+    Signal<void(QAction*)>* sigTriggered_;
+    Signal<void()>* sigAboutToShow_;
+    Signal<void()>* sigAboutToHide_;
 
     void initialize();
 };
+
 }
 
 #endif

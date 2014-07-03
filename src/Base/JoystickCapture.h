@@ -6,7 +6,7 @@
 #ifndef CNOID_BASE_JOYSTICK_CAPTURE_H
 #define CNOID_BASE_JOYSTICK_CAPTURE_H
 
-#include <boost/signals.hpp>
+#include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,8 +23,8 @@ public:
     bool isReady() const;
     void releaseDevice();
 
-    boost::signal<void(int id, bool isPressed)>& sigButton();
-    boost::signal<void(int id, double position)>& sigAxis();
+    Signal<void(int id, bool isPressed)>& sigButton();
+    Signal<void(int id, double position)>& sigAxis();
 
     int numAxes() const;
     void setAxisEnabled(int axis, bool on);

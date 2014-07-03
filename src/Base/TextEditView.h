@@ -2,10 +2,10 @@
    @author Shizuko Hattori
 */
 
-#ifndef CNOID_BASE_TEXT_EDIT_VIEW_H_INCLUDED
-#define CNOID_BASE_TEXT_EDIT_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_TEXT_EDIT_VIEW_H
+#define CNOID_BASE_TEXT_EDIT_VIEW_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QPlainTextEdit>
 #include <cnoid/View>
 
@@ -18,7 +18,7 @@ class TextEdit : public QPlainTextEdit
     public:
     TextEdit(QWidget* parent = 0);
                                
-    SignalProxy< boost::signal<void()> > sigCursorPositionChanged() {
+    SignalProxy<void()> sigCursorPositionChanged() {
         return sigCursorPositionChanged_;
     }
 
@@ -26,12 +26,12 @@ private Q_SLOTS:
     void onCursorPositionChanged();
 
 private:
-    boost::signal<void()> sigCursorPositionChanged_;
+    Signal<void()> sigCursorPositionChanged_;
 };
 
 class TextEditViewImpl;
     
-class TextEditView : public View, public boost::signals::trackable
+class TextEditView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -42,6 +42,7 @@ public:
 private:
     TextEditViewImpl* impl;
 };
+
 }
 
 #endif

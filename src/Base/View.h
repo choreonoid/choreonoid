@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_VIEW_H_INCLUDED
-#define CNOID_BASE_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_VIEW_H
+#define CNOID_BASE_VIEW_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QWidget>
 #include "exportdecl.h"
 
@@ -39,11 +39,11 @@ public:
 
     void bringToFront();
 
-    inline SignalProxy< boost::signal<void()> > sigActivated() {
+    SignalProxy<void()> sigActivated() {
         return sigActivated_;
     }
 
-    inline SignalProxy< boost::signal<void()> > sigDeactivated() {
+    SignalProxy<void()> sigDeactivated() {
         return sigDeactivated_;
     }
 
@@ -65,7 +65,7 @@ public:
     void enableFontSizeZoomKeys(bool on);
 
     static View* lastFocusView();
-    static SignalProxy< boost::signal<void(View*)> > sigFocusChanged();
+    static SignalProxy<void(View*)> sigFocusChanged();
 
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
@@ -90,8 +90,8 @@ private:
     bool isManagedByMainWindow_;
     bool isFontSizeZoomKeysEnabled;
 
-    boost::signal<void()> sigActivated_;
-    boost::signal<void()> sigDeactivated_;
+    Signal<void()> sigActivated_;
+    Signal<void()> sigDeactivated_;
 
     LayoutArea defaultLayoutArea_;
     int fontZoom;
@@ -101,6 +101,7 @@ private:
     friend class MainWindow;
     friend class MainWindowImpl;
 };
+
 }
 
 #endif

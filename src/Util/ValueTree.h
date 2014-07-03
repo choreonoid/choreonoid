@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VALUE_TREE_H_INCLUDED
-#define CNOID_UTIL_VALUE_TREE_H_INCLUDED
+#ifndef CNOID_UTIL_VALUE_TREE_H
+#define CNOID_UTIL_VALUE_TREE_H
 
 #include "UTF8.h"
 #include <map>

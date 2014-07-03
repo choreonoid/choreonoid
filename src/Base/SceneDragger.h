@@ -28,13 +28,13 @@ public:
     bool isContainerMode() const;
     void setContainerMode(bool on);
 
-    SignalProxy< boost::signal<void()> > sigTranslationStarted() {
+    SignalProxy<void()> sigTranslationStarted() {
         return sigTranslationStarted_;
     }
-    SignalProxy< boost::signal<void()> > sigTranslationDragged() {
+    SignalProxy<void()> sigTranslationDragged() {
         return sigTranslationDragged_;
     }
-    SignalProxy< boost::signal<void()> > sigTranslationFinished() {
+    SignalProxy<void()> sigTranslationFinished() {
         return sigTranslationFinished_;
     }
 
@@ -52,9 +52,9 @@ private:
     SceneDragProjector dragProjector;
     double axisCylinderNormalizedRadius;
     bool isContainerMode_;
-    boost::signal<void()> sigTranslationStarted_;
-    boost::signal<void()> sigTranslationDragged_;
-    boost::signal<void()> sigTranslationFinished_;
+    Signal<void()> sigTranslationStarted_;
+    Signal<void()> sigTranslationDragged_;
+    Signal<void()> sigTranslationFinished_;
 };
 
 typedef ref_ptr<TranslationDragger> TranslationDraggerPtr;
@@ -75,16 +75,16 @@ public:
     void setContainerMode(bool on);
     bool isContainerMode() const;
 
-    SignalProxy< boost::signal<void()> > sigRotationStarted() {
+    SignalProxy<void()> sigRotationStarted() {
         return sigRotationStarted_;
     }
     /**
        \todo The rotation parameter should be removed.
     */
-    SignalProxy< boost::signal<void(const AngleAxis& rotation)> > sigRotationDragged() {
+    SignalProxy<void(const AngleAxis& rotation)> sigRotationDragged() {
         return sigRotationDragged_;
     }
-    SignalProxy< boost::signal<void()> > sigRotationFinished() {
+    SignalProxy<void()> sigRotationFinished() {
         return sigRotationFinished_;
     }
 
@@ -101,9 +101,9 @@ private:
     SgScaleTransformPtr scale;
     SceneDragProjector dragProjector;
     bool isContainerMode_;
-    boost::signal<void()> sigRotationStarted_;
-    boost::signal<void(const AngleAxis& rotation)> sigRotationDragged_;
-    boost::signal<void()> sigRotationFinished_;
+    Signal<void()> sigRotationStarted_;
+    Signal<void(const AngleAxis& rotation)> sigRotationDragged_;
+    Signal<void()> sigRotationFinished_;
 };
     
 typedef ref_ptr<RotationDragger> RotationDraggerPtr;
@@ -128,13 +128,13 @@ public:
     TranslationDragger* translationDragger() { return translationDragger_; }
     RotationDragger* rotationDragger() { return rotationDragger_; }
 
-    SignalProxy< boost::signal<void()> > sigDragStarted() {
+    SignalProxy<void()> sigDragStarted() {
         return sigDragStarted_;
     }
-    SignalProxy< boost::signal<void()> > sigPositionDragged() {
+    SignalProxy<void()> sigPositionDragged() {
         return sigPositionDragged_;
     }
-    SignalProxy< boost::signal<void()> > sigDragFinished() {
+    SignalProxy<void()> sigDragFinished() {
         return sigDragFinished_;
     }
 
@@ -154,9 +154,9 @@ private:
     bool isContainerMode_;
     bool isDraggerAlwaysShown_;
     bool isDraggerShown;
-    boost::signal<void()> sigDragStarted_;
-    boost::signal<void()> sigPositionDragged_;
-    boost::signal<void()> sigDragFinished_;
+    Signal<void()> sigDragStarted_;
+    Signal<void()> sigPositionDragged_;
+    Signal<void()> sigDragFinished_;
 
     void initalizeDraggers();
     void onPositionDragged();

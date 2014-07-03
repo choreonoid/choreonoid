@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_FLOATING_NUMBER_BOX_H_INCLUDED
-#define CNOID_BASE_FLOATING_NUMBER_BOX_H_INCLUDED
+#ifndef CNOID_BASE_FLOATING_NUMBER_BOX_H
+#define CNOID_BASE_FLOATING_NUMBER_BOX_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <cnoid/FloatingNumberString>
 #include <QLineEdit>
 #include "exportdecl.h"
@@ -16,10 +16,10 @@ class CNOID_EXPORT FloatingNumberBox : public QLineEdit
 {
     Q_OBJECT
 
-        public:
+public:
     FloatingNumberBox(QWidget* parent = 0);
                                
-    inline SignalProxy< boost::signal<void(int)> > sigValueChanged() {
+    SignalProxy<void(int)> sigValueChanged() {
         return sigValueChanged_;
     }
 
@@ -30,10 +30,11 @@ private Q_SLOTS:
     void onEditingFinishded();
 
 private:
-    boost::signal<void(int)> sigValueChanged_;
+    Signal<void(int)> sigValueChanged_;
     QString oldText;
     FloatingNumberString value_;
 };
+
 }
 
 #endif
