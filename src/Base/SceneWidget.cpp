@@ -214,6 +214,7 @@ public:
     SceneWidgetEditable* focusedEditable;
 
     QCursor defaultCursor;
+    QCursor editModeCursor;
 
     double orgMouseX;
     double orgMouseY;
@@ -298,6 +299,7 @@ public:
     void updateDefaultLights();
     void onNormalVisualizationChanged();
 
+    void resetCursor();
     void setEditMode(bool on);
     void toggleEditMode();
     void viewAll();
@@ -461,6 +463,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     viewpointControlMode.select(SceneWidget::THIRD_PERSON_MODE);
     dragMode = NO_DRAGGING;
     defaultCursor = self->cursor();
+    editModeCursor = QCursor(Qt::PointingHandCursor);
 
     lastMouseMovedEditable = 0;
     focusedEditable = 0;
@@ -796,6 +799,18 @@ void SceneWidgetImpl::doFPSTest()
 }
 
 
+void SceneWidget::setCursor(const QCursor cursor)
+{
+    impl->setCursor(cursor);
+}
+
+
+void SceneWidgetImpl::resetCursor()
+{
+    setCursor(isEditMode ? editModeCursor : defaultCursor);
+}
+
+
 void SceneWidget::setEditMode(bool on)
 {
     impl->setEditMode(on);
@@ -818,6 +833,7 @@ void SceneWidgetImpl::setEditMode(bool on)
 {
     if(on != isEditMode){
         isEditMode = on;
+        resetCursor();
         sigEditModeToggled(on);
 
         if(!isEditMode){
@@ -837,9 +853,6 @@ void SceneWidgetImpl::setEditMode(bool on)
             for(size_t i=0; i < focusedEditablePath.size(); ++i){
                 focusedEditablePath[i]->onFocusChanged(latestEvent, true);
             }
-        }
-        if(!isEditMode){
-            setCursor(defaultCursor);
         }
     }
 }
@@ -1344,7 +1357,7 @@ void SceneWidgetImpl::updatePointerPosition()
         }
         if(lastMouseMovedEditable != mouseMovedEditable){
             if(!mouseMovedEditable){
-                setCursor(defaultCursor);
+                resetCursor();
             }
             if(lastMouseMovedEditable){
                 lastMouseMovedEditable->onPointerLeaveEvent(latestEvent);
@@ -1413,12 +1426,6 @@ bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected
     out_projected.z() = projected.z() / projected[3];
 
     return true;
-}
-
-
-void SceneWidget::setCursor(const QCursor cursor)
-{
-    impl->setCursor(cursor);
 }
 
 
@@ -1516,6 +1523,25 @@ void SceneWidgetImpl::dragViewRotation()
             AngleAxis(dy * dragAngleRatio, right) *
             Translation3(-orgPointedPos) *
             orgCameraPosition));
+
+    if(latestEvent.modifiers() & Qt::ShiftModifier){
+        Affine3& T = builtinCameraTransform->T();
+        Vector3 rpy = rpyFromRot(T.linear());
+        for(int i=0; i < 3; ++i){
+            double& a = rpy[i];
+            for(int j=0; j < 5; ++j){
+                double b = j * (PI / 2.0) - PI;
+                if(fabs(b - a) < (PI / 8)){
+                    a = b;
+                    break;
+                }
+            }
+        }
+        Matrix3 S = rotFromRpy(rpy);
+        T.translation() = orgPointedPos + S * T.linear().transpose() * (T.translation() - orgPointedPos);
+        T.linear() = S;
+    }
+    
     builtinCameraTransform->notifyUpdate(modified);
 }
 
@@ -1793,7 +1819,7 @@ void SceneWidget::removeEventFilter(SceneWidgetEditable* filter)
     if(impl->eventFilter == filter){
         impl->eventFilter = 0;
         impl->eventFilterRef.reset();
-        impl->setCursor(impl->defaultCursor);
+        impl->resetCursor();
     }
 }
 
