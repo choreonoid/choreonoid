@@ -143,7 +143,7 @@ public:
     SgUpdate modified;
 
     ConnectionSet connections;
-    boost::signals::connection connectionToSigCollisionsUpdated;
+    Connection connectionToSigCollisionsUpdated;
     boost::dynamic_bitset<> collisionLinkBitSet;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };

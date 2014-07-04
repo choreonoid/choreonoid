@@ -30,14 +30,14 @@ public:
     virtual int numCameras() const;
     virtual const SgNodePath& cameraPath(int index) const;
     virtual bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const;
-    virtual SignalProxy<boost::signal<void()> > sigCamerasChanged() const; 
+    virtual SignalProxy<void()> sigCamerasChanged() const; 
         
     virtual SgCamera* currentCamera() const;
     virtual int currentCameraIndex() const;
     virtual void setCurrentCamera(int index);
     virtual bool setCurrentCamera(SgCamera* camera);
     virtual bool setCurrentCamera(std::vector<std::string>& simplifiedPathStrings);
-    virtual SignalProxy<boost::signal<void()> > sigCurrentCameraChanged();
+    virtual SignalProxy<void()> sigCurrentCameraChanged();
 
     virtual void setViewport(int x, int y, int width, int height);
     virtual Array4i viewport() const;
@@ -69,7 +69,7 @@ public:
     */
     virtual void initializeRendering();
         
-    virtual SignalProxy<boost::signal<void()> > sigRenderingRequest();
+    virtual SignalProxy<void()> sigRenderingRequest();
         
     virtual void beginRendering();
     virtual void endRendering();

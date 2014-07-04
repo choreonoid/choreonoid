@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_LINK_TREE_WIDGET_H_INCLUDED
-#define CNOID_BODYPLUGIN_LINK_TREE_WIDGET_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_LINK_TREE_WIDGET_H
+#define CNOID_BODY_PLUGIN_LINK_TREE_WIDGET_H
 
 #include "BodyItem.h"
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <cnoid/ComboBox>
 #include <cnoid/TreeWidget>
 #include <boost/dynamic_bitset.hpp>
@@ -70,7 +70,7 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
     void setListingMode(ListingMode mode);
     void fixListingMode(bool on = true);
 
-    SignalProxy< boost::signal<void(bool isInitialCreation)> > sigUpdateRequest();
+    SignalProxy<void(bool isInitialCreation)> sigUpdateRequest();
             
     void setBodyItem(BodyItemPtr bodyItem);
     BodyItem* bodyItem();
@@ -104,14 +104,14 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
 
     int numLinkTreeItems();
 
-    SignalProxy< boost::signal<void(LinkTreeItem* item, int column)> > sigItemChanged();
+    SignalProxy<void(LinkTreeItem* item, int column)> sigItemChanged();
                     
-    SignalProxy< boost::signal<void()> > sigSelectionChanged();
+    SignalProxy<void()> sigSelectionChanged();
     const std::vector<int>& getSelectedLinkIndices();
     const boost::dynamic_bitset<>& getLinkSelection();
 
     /// This signal is available after calling 'enableCache(true)'.
-    SignalProxy< boost::signal<void()> > sigSelectionChanged(BodyItemPtr bodyItem);
+    SignalProxy<void()> sigSelectionChanged(BodyItemPtr bodyItem);
     /// This member is available after calling 'enableCache(true)'.
     const std::vector<int>& getSelectedLinkIndices(BodyItemPtr bodyItem);
     /// This member is available after calling 'enableCache(true)'.
@@ -142,6 +142,7 @@ private:
 
     friend class LinkTreeItem;
 };
+
 }
 
 #endif

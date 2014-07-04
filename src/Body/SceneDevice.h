@@ -52,7 +52,7 @@ private:
     SceneDevice(const SceneDevice& org);
     Device* device_;
     boost::function<void()> sceneUpdateFunction;
-    boost::signals::connection connection;
+    Connection connection;
 
     bool setDeviceNode(const std::type_info& type);
 

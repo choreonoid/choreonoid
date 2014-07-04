@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_TREE_VIEW_H_INCLUDED
-#define CNOID_GUIBASE_TREE_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_TREE_VIEW_H
+#define CNOID_BASE_TREE_VIEW_H
 
 #include "ItemSelectionModel.h"
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QTreeView>
 #include "exportdecl.h"
 
@@ -23,28 +23,28 @@ class CNOID_EXPORT TreeView : public QTreeView
 
     ItemSelectionModel* itemSelectionModel() const;
         
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigCollapsed() {
+    SignalProxy<void(const QModelIndex& index)> sigCollapsed() {
         return sigCollapsed_;
     }
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigExpanded() {
+    SignalProxy<void(const QModelIndex& index)> sigExpanded() {
         return sigExpanded_;
     }
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigActivated() {
+    SignalProxy<void(const QModelIndex& index)> sigActivated() {
         return sigActivated_;
     }
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigClicked() {
+    SignalProxy<void(const QModelIndex& index)> sigClicked() {
         return sigClicked_;
     }
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigDoubleClicked() {
+    SignalProxy<void(const QModelIndex& index)> sigDoubleClicked() {
         return sigDoubleClicked_;
     }
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigEntered() {
+    SignalProxy<void(const QModelIndex& index)> sigEntered() {
         return sigEntered_;
     }
-    inline SignalProxy< boost::signal<void(const QModelIndex& index)> > sigPressed() {
+    SignalProxy<void(const QModelIndex& index)> sigPressed() {
         return sigPressed_;
     }
-    inline SignalProxy< boost::signal<void()> > sigViewportEntered() {
+    SignalProxy<void()> sigViewportEntered() {
         return sigViewportEntered_;
     }
 
@@ -59,16 +59,16 @@ private Q_SLOTS:
     void onViewportEntered(void);
 
 private:
-    boost::signal<void(const QModelIndex& index)> sigCollapsed_;
-    boost::signal<void(const QModelIndex& index)> sigExpanded_;
-    boost::signal<void(const QModelIndex& index)> sigActivated_;
-    boost::signal<void(const QModelIndex& index)> sigClicked_;
-    boost::signal<void(const QModelIndex& index)> sigDoubleClicked_;
-    boost::signal<void(const QModelIndex& index)> sigEntered_;
-    boost::signal<void(const QModelIndex& index)> sigPressed_;
-    boost::signal<void()> sigViewportEntered_;
+    Signal<void(const QModelIndex& index)> sigCollapsed_;
+    Signal<void(const QModelIndex& index)> sigExpanded_;
+    Signal<void(const QModelIndex& index)> sigActivated_;
+    Signal<void(const QModelIndex& index)> sigClicked_;
+    Signal<void(const QModelIndex& index)> sigDoubleClicked_;
+    Signal<void(const QModelIndex& index)> sigEntered_;
+    Signal<void(const QModelIndex& index)> sigPressed_;
+    Signal<void()> sigViewportEntered_;
 };
+
 }
 
 #endif
-

@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_ITEM_H_INCLUDED
-#define CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_ITEM_H_INCLUDED
+#ifndef CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_ITEM_H
+#define CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
@@ -31,7 +31,7 @@ protected:
     virtual bool restore(const Archive& archive);
 };
 
-typedef boost::intrusive_ptr<RobotAccessItem> RobotAccessItemPtr;
+typedef ref_ptr<RobotAccessItem> RobotAccessItemPtr;
 }
 
 #endif

@@ -1,6 +1,7 @@
 
 #include "GLGearsView.h"
 #include <cnoid/Plugin>
+#include <cnoid/ViewManager>
 
 using namespace cnoid;
 
@@ -12,8 +13,9 @@ public:
     
     virtual bool initialize() {
 
-        addView(new GLGearsView());
-            
+        viewManager().registerClass<GLGearsView>(
+            "GLGearsView", "GL Gears", ViewManager::SINGLE_OPTIONAL);
+
         return true;
     }
 };

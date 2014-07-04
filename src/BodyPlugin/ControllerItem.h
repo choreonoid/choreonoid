@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_CONTROLLER_ITEM_H
-#define CNOID_BODYPLUGIN_CONTROLLER_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_CONTROLLER_ITEM_H
+#define CNOID_BODY_PLUGIN_CONTROLLER_ITEM_H
 
 #include "SimulatorItem.h"
 #include "exportdecl.h"
@@ -69,7 +69,7 @@ public:
     */
     virtual void stop();
 
-    SignalProxy< boost::signal<void(const std::string& message)> > sigMessage();
+    SignalProxy<void(const std::string& message)> sigMessage();
     std::string getMessage();
 
 protected:
@@ -83,7 +83,7 @@ private:
     SimulatorItemPtr simulatorItem_;
     bool isImmediateMode_;
     std::string message_;
-    boost::signal<void(const std::string& message)> sigMessage_;
+    Signal<void(const std::string& message)> sigMessage_;
 
     friend class SimulatorItemImpl;
 

@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_TIMER_H
 #define CNOID_BASE_TIMER_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QTimer>
 #include "exportdecl.h"
 
@@ -18,7 +18,7 @@ class CNOID_EXPORT Timer : public QTimer
 public:
     Timer(QObject* parent = 0);
                                
-    SignalProxy< boost::signal<void()> > sigTimeout() {
+    SignalProxy<void()> sigTimeout() {
         return sigTimeout_;
     }
 
@@ -26,7 +26,7 @@ private Q_SLOTS:
     void onTimeout();
 
 private:
-    boost::signal<void()> sigTimeout_;
+    Signal<void()> sigTimeout_;
 };
     
 }

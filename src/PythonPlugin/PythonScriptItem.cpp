@@ -103,7 +103,7 @@ std::string PythonScriptItem::resultString() const
 }
 
 
-SignalProxy< boost::signal<void()> > PythonScriptItem::sigScriptFinished()
+SignalProxy<void()> PythonScriptItem::sigScriptFinished()
 {
     return impl->sigScriptFinished();
 }

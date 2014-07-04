@@ -18,7 +18,7 @@ using namespace cnoid;
 
 namespace {
 vector<SceneView*> instances;
-boost::signals::connection sigItemAddedConnection;
+Connection sigItemAddedConnection;
 }
 
 namespace cnoid {
@@ -35,8 +35,8 @@ public:
         SceneProvider* provider;
         SgNodePtr scene;
         bool isShown;
-        boost::signals::connection sigDetachedFromRootConnection;
-        boost::signals::connection sigCheckToggledConnection;
+        Connection sigDetachedFromRootConnection;
+        Connection sigCheckToggledConnection;
         SceneInfo(Item* item, SceneProvider* provider)
             : item(item), provider(provider) {
             isShown = false;

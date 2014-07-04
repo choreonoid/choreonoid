@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_CHOREOGRAPHY_POSE_SEQ_VIEW_BASE_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_POSE_SEQ_VIEW_BASE_H_INCLUDED
+#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_VIEW_BASE_H
+#define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_VIEW_BASE_H
 
 #include "PoseSeqItem.h"
 #include <cnoid/ItemList>
@@ -20,7 +20,6 @@
 #include <cnoid/LinkTreeWidget>
 #include <QBoxLayout>
 #include <QLabel>
-#include <boost/signal.hpp>
 #include <boost/function.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <ostream>
@@ -33,7 +32,7 @@ class PoseSelectionDialog; /// \todo this should be independent ?
 class LinkPositionAdjustmentDialog; /// \todo this should be independent ?
 class YawOrientationRotationDialog;
         
-class PoseSeqViewBase : public boost::signals::trackable
+class PoseSeqViewBase
 {
 public:
     PoseSeqViewBase(View* view);
@@ -63,14 +62,15 @@ public:
     PoseIterSet selectedPoseIters;
 
     PoseSeqPtr copiedPoses;
-
+    
+    ConnectionSet staticConnections;
     ConnectionSet poseSeqConnections;
-    boost::signals::connection connectionOfBodyKinematicStateEdited;
+    Connection connectionOfBodyKinematicStateEdited;
 
     ConnectionSet linkTreeAttributeChangeConnections;
 
     TimeBar* timeBar;
-    boost::signals::connection connectionOfTimeChanged;
+    Connection connectionOfTimeChanged;
 
     LinkTreeWidget* linkTreeWidget;
     int baseLinkColumn;
@@ -193,6 +193,7 @@ public:
     bool setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* linkInfo);
     ChildrenState updateLinkTreeModelSub(LinkTreeItem* item,  const BodyPtr& body, const Pose& pose);
 };
+
 }
 
 #endif

@@ -61,7 +61,7 @@ void ControllerItem::putMessage(const std::string& message)
 }
 
 
-SignalProxy< boost::signal<void(const std::string& message)> > ControllerItem::sigMessage()
+SignalProxy<void(const std::string& message)> ControllerItem::sigMessage()
 {
     return sigMessage_;
 }

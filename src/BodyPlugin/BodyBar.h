@@ -2,13 +2,13 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_BODY_BAR_H_INCLUDED
-#define CNOID_BODYPLUGIN_BODY_BAR_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_BODY_BAR_H
+#define CNOID_BODY_PLUGIN_BODY_BAR_H
 
 #include "BodyItem.h"
 #include <cnoid/ItemList>
 #include <cnoid/ToolBar>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <cnoid/SpinBox>
 #include "exportdecl.h"
 
@@ -16,7 +16,7 @@ namespace cnoid {
 
 class MessageView;
     
-class CNOID_EXPORT BodyBar : public ToolBar, public boost::signals::trackable
+class CNOID_EXPORT BodyBar : public ToolBar
 {
 public:
 
@@ -24,19 +24,19 @@ public:
 
     virtual ~BodyBar();
 
-    boost::signal<void(const ItemList<BodyItem>& selectedBodyItems)>& sigBodyItemSelectionChanged() {
+    Signal<void(const ItemList<BodyItem>& selectedBodyItems)>& sigBodyItemSelectionChanged() {
         return sigBodyItemSelectionChanged_;
     }
 
-    SignalProxy< boost::signal<void(BodyItem* currentBodyItem)> > sigCurrentBodyItemChanged() {
+    SignalProxy<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged() {
         return sigCurrentBodyItemChanged_;
     }
 
-    inline const ItemList<BodyItem>& selectedBodyItems() {
+    const ItemList<BodyItem>& selectedBodyItems() {
         return selectedBodyItems_;
     }
 
-    inline BodyItem* currentBodyItem() {
+    BodyItem* currentBodyItem() {
         return currentBodyItem_.get();
     }
 
@@ -59,10 +59,11 @@ private:
 
     DoubleSpinBox* stanceWidthSpin;
 
-    boost::signals::connection connectionOfCurrentBodyItemDetachedFromRoot;
+    Connection connectionOfItemSelectionChanged;
+    Connection connectionOfCurrentBodyItemDetachedFromRoot;
             
-    boost::signal<void(const ItemList<BodyItem>& selectedBodyItems)> sigBodyItemSelectionChanged_;
-    boost::signal<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged_;
+    Signal<void(const ItemList<BodyItem>& selectedBodyItems)> sigBodyItemSelectionChanged_;
+    Signal<void(BodyItem* currentBodyItem)> sigCurrentBodyItemChanged_;
 
     void onItemSelectionChanged(const ItemList<BodyItem>& bodyItems);
     void onBodyItemDetachedFromRoot();
@@ -75,6 +76,7 @@ private:
     void setZmp(BodyItem::PositionType position);
     void setStance();
 };
+
 }
 
 #endif

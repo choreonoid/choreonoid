@@ -3,11 +3,12 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_COLLISION_DETECTOR_H_INCLUDED
-#define CNOID_UTIL_COLLISION_DETECTOR_H_INCLUDED
+#ifndef CNOID_UTIL_COLLISION_DETECTOR_H
+#define CNOID_UTIL_COLLISION_DETECTOR_H
 
 #include "SceneGraph.h"
 #include "EigenTypes.h"
+#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -73,6 +74,7 @@ public:
     // virtual void detectCollisions(std::vector<CollisionPair>& out_collisionPairs) = 0;
 
 };
+
 }
 
 #endif

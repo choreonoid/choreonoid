@@ -88,13 +88,15 @@ BodyBar::BodyBar()
     stanceWidthSpin->setValue(0.15);
     addWidget(stanceWidthSpin);
 
-    ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-        bind(&BodyBar::onItemSelectionChanged, this, _1));
+    connectionOfItemSelectionChanged = 
+        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+            bind(&BodyBar::onItemSelectionChanged, this, _1));
 }
 
 
 BodyBar::~BodyBar()
 {
+    connectionOfItemSelectionChanged.disconnect();
     connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
 }
 

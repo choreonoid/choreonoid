@@ -19,6 +19,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <iostream>
 
 //#define DO_DEPTH_BUFFER_TYPE_TEST
@@ -271,7 +272,7 @@ public:
 
     GLSceneRenderer* self;
 
-    boost::signal<void()> sigRenderingRequest;
+    Signal<void()> sigRenderingRequest;
 
     SgGroupPtr root;
     SgGroupPtr sceneRoot;
@@ -344,8 +345,8 @@ public:
     int currentCameraIndex;
     SgCamera* currentCamera;
     vector<SgNodePath> cameraPaths;
-    boost::signal<void()> sigCamerasChanged;
-    boost::signal<void()> sigCurrentCameraChanged;
+    Signal<void()> sigCamerasChanged;
+    Signal<void()> sigCurrentCameraChanged;
         
     GLfloat aspectRatio; // width / height;
 
@@ -627,13 +628,13 @@ void GLSceneRendererImpl::onSceneGraphUpdated(const SgUpdate& update)
 }
 
 
-SignalProxy<boost::signal<void()> > GLSceneRenderer::sigRenderingRequest()
+SignalProxy<void()> GLSceneRenderer::sigRenderingRequest()
 {
     return impl->sigRenderingRequest;
 }
 
 
-SignalProxy<boost::signal<void()> > GLSceneRenderer::sigCamerasChanged() const
+SignalProxy<void()> GLSceneRenderer::sigCamerasChanged() const
 {
     return impl->sigCamerasChanged;
 }
@@ -806,7 +807,7 @@ int GLSceneRenderer::currentCameraIndex() const
 }
 
 
-SignalProxy<boost::signal<void()> > GLSceneRenderer::sigCurrentCameraChanged()
+SignalProxy<void()> GLSceneRenderer::sigCurrentCameraChanged()
 {
     return impl->sigCurrentCameraChanged;
 }

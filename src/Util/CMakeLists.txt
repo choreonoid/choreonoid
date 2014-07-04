@@ -123,7 +123,8 @@ set(headers
   EigenTypes.h
   EigenUtil.h
   EigenArchive.h
-  SignalProxy.h
+  Signal.h
+  SignalTemplate.h
   ConnectionSet.h
   GettextUtil.h
   Selection.h
@@ -141,7 +142,7 @@ add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
 if(UNIX)
   set(libraries 
     yaml irrXML ${PNG_LIBRARY} ${JPEG_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY} ${Boost_THREAD_LIBRARY} 
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
 

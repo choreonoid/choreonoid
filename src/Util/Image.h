@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_IMAGE_H_INCLUDED
-#define CNOID_UTIL_IMAGE_H_INCLUDED
+#ifndef CNOID_UTIL_IMAGE_H
+#define CNOID_UTIL_IMAGE_H
 
 #include <string>
 #include <vector>
@@ -46,6 +46,7 @@ private:
     int height_;
     int numComponents_;
 };
+
 }
 
 #endif

@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_LINE_EDIT_H_INCLUDED
-#define CNOID_GUIBASE_LINE_EDIT_H_INCLUDED
+#ifndef CNOID_BASE_LINE_EDIT_H
+#define CNOID_BASE_LINE_EDIT_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QLineEdit>
 #include "exportdecl.h"
 
@@ -15,7 +15,7 @@ class CNOID_EXPORT LineEdit : public QLineEdit
 {
     Q_OBJECT
 
-        public:
+public:
     LineEdit(QWidget* parent = 0);
     LineEdit(const QString& contents, QWidget* parent = 0);
 
@@ -31,25 +31,24 @@ class CNOID_EXPORT LineEdit : public QLineEdit
     std::string string() const {
         return QLineEdit::text().toStdString();
     }
-    inline SignalProxy< boost::signal<void(int oldpos, int newpos)> > sigCursorPositoinChanged() {
+    SignalProxy<void(int oldpos, int newpos)> sigCursorPositoinChanged() {
         return sigCursorPositionChanged_;
     }
-    inline SignalProxy< boost::signal<void()> > sigEditingFinished() {
+    SignalProxy<void()> sigEditingFinished() {
         return sigEditingFinished_;
     }
-    inline SignalProxy< boost::signal<void()> > sigReturnPressed() {
+    SignalProxy<void()> sigReturnPressed() {
         return sigReturnPressed_;
     }
-    inline SignalProxy< boost::signal<void()> > sigSelectionChanged() {
+    SignalProxy<void()> sigSelectionChanged() {
         return sigSelectionChanged_;
     }
-    inline SignalProxy< boost::signal<void(const QString& text)> > sigTextChanged() {
+    SignalProxy<void(const QString& text)> sigTextChanged() {
         return sigTextChanged_;
     }
-    inline SignalProxy< boost::signal<void(const QString& text)> > sigTextEdited() {
+    SignalProxy<void(const QString& text)> sigTextEdited() {
         return sigTextEdited_;
     }
-
 
 private Q_SLOTS:
     void onCursorPositionChanged(int oldpos, int newpos);
@@ -60,15 +59,16 @@ private Q_SLOTS:
     void onTextEdited(const QString& text);
 
 private:
-    boost::signal<void(int oldpos, int newpos)> sigCursorPositionChanged_;
-    boost::signal<void()> sigEditingFinished_;
-    boost::signal<void()> sigReturnPressed_;
-    boost::signal<void()> sigSelectionChanged_;
-    boost::signal<void(const QString& text)> sigTextChanged_;
-    boost::signal<void(const QString& text)> sigTextEdited_;
+    Signal<void(int oldpos, int newpos)> sigCursorPositionChanged_;
+    Signal<void()> sigEditingFinished_;
+    Signal<void()> sigReturnPressed_;
+    Signal<void()> sigSelectionChanged_;
+    Signal<void(const QString& text)> sigTextChanged_;
+    Signal<void(const QString& text)> sigTextEdited_;
 
     void initialize();
 };
+
 }
 
 #endif

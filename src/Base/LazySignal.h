@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_LAZY_SIGNAL_H_INCLUDED
-#define CNOID_BASE_LAZY_SIGNAL_H_INCLUDED
+#ifndef CNOID_BASE_LAZY_SIGNAL_H
+#define CNOID_BASE_LAZY_SIGNAL_H
 
 #include "LazyCaller.h"
-#include <boost/signal.hpp>
+#include <cnoid/Signal>
 #include <vector>
 #include "exportdecl.h"
 
@@ -16,14 +16,14 @@ class CNOID_EXPORT LazySignalBase : public LazyCaller
 {
 public:
     void request();
-    void requestBlocking(boost::signals::connection connection){
+    void requestBlocking(Connection connection){
         connectionsToBlock.push_back(connection);
     }
 protected:
     LazySignalBase();
     LazySignalBase(boost::function<void()> emitFunction, int priority);
     boost::function<void()> emitFunction;
-    std::vector<boost::signals::connection> connectionsToBlock;
+    std::vector<Connection> connectionsToBlock;
     virtual void defaultEmitFunction() = 0;
 
 private:
@@ -49,6 +49,7 @@ protected:
 private:
     SignalType signal_;
 };
+
 }
         
 #endif

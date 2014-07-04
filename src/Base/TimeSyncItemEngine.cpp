@@ -6,6 +6,7 @@
 #include "ItemTreeView.h"
 #include "TimeBar.h"
 #include "LazyCaller.h"
+#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <map>
 
@@ -24,8 +25,8 @@ typedef map<string, FactoryArray> FactoryArrayMap;
 FactoryArrayMap allFactories;
 
 vector<TimeSyncItemEnginePtr> engines;
-signals::connection connectionOfSelectionOrTreeChanged;
-signals::connection connectionOfTimeChanged;
+Connection connectionOfSelectionOrTreeChanged;
+Connection connectionOfTimeChanged;
 
 LazyCaller updateLater;
 

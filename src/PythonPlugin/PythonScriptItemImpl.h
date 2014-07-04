@@ -31,7 +31,7 @@ public:
     bool waitToFinish(double timeout);
     boost::python::object resultObject();
     const std::string resultString() const;
-    boost::signal<void()>& sigScriptFinished() { return sigScriptFinished_; }
+    Signal<void()>& sigScriptFinished() { return sigScriptFinished_; }
     bool terminate();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
@@ -45,8 +45,8 @@ private:
     std::string scriptFilename_;
     MessageView* mv;
     PythonExecutor executor;
-    boost::signals::connection sigFinishedConnection;
-    boost::signal<void()> sigScriptFinished_;
+    Connection sigFinishedConnection;
+    Signal<void()> sigScriptFinished_;
 };
 }
 

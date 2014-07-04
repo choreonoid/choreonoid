@@ -3,13 +3,13 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_EXTRA_BODY_STATE_ACCESSOR_H_INCLUDED
-#define CNOID_BODY_EXTRA_BODY_STATE_ACCESSOR_H_INCLUDED
+#ifndef CNOID_BODY_EXTRA_BODY_STATE_ACCESSOR_H
+#define CNOID_BODY_EXTRA_BODY_STATE_ACCESSOR_H
 
 #include <cnoid/Referenced>
 #include <cnoid/Array2D>
 #include <cnoid/EigenTypes>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <boost/variant.hpp>
 #include <string>
 #include "exportdecl.h"
@@ -19,7 +19,7 @@ namespace cnoid {
 class CNOID_EXPORT ExtraBodyStateAccessor : public Referenced
 {
     static int elementSizes[];
-    boost::signal<void()> sigStateChanged_;
+    Signal<void()> sigStateChanged_;
         
 public:
 
@@ -110,7 +110,7 @@ public:
     */
     virtual bool setJointState(const Array2D<Value>& jointState) const;
 
-    SignalProxy<boost::signal<void()> > sigStateChanged() { return sigStateChanged_; }
+    SignalProxy<void()> sigStateChanged() { return sigStateChanged_; }
     void notifyStateChange() { sigStateChanged_(); }
 };
 

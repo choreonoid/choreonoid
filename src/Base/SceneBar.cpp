@@ -30,8 +30,8 @@ public:
 
     struct SceneWidgetInfo
     {
-        boost::signals::connection connectionToSigFocusChanged;
-        boost::signals::connection connectionToSigAboutToBeDestroyed;
+        Connection connectionToSigFocusChanged;
+        Connection connectionToSigAboutToBeDestroyed;
         ~SceneWidgetInfo(){
             connectionToSigAboutToBeDestroyed.disconnect();
             connectionToSigAboutToBeDestroyed.disconnect();

@@ -55,7 +55,7 @@ public:
 typedef boost::shared_ptr<MotionInfo> MotionInfoPtr;
             
 
-class ScenarioViewImpl : public boost::signals::trackable
+class ScenarioViewImpl
 {
 public:
     ScenarioViewImpl(ScenarioView* self);
@@ -70,10 +70,11 @@ public:
     PushButton startButton;
     QLabel currentScenarioLabel;
     CheckBox sequentialCheck;
-    signals::connection connectionOfCurrentScenarioItemDetachedFromRoot;
+    Connection connectionOfItemSelectionChanged;
+    Connection connectionOfCurrentScenarioItemDetachedFromRoot;
 
     vector<MotionInfoPtr> motions;
-    signals::connection playbackStopConnection;
+    Connection playbackStopConnection;
             
     void onItemSelectionChanged(const ItemList<ScenarioItem>& scenarioItems);
     void setCurrentScenarioItem(ScenarioItemPtr scenarioItem);
@@ -83,6 +84,7 @@ public:
     void startMotion(int index);
     void onPlaybackStopped(int index);
 };
+
 }
 
 
@@ -134,9 +136,10 @@ ScenarioViewImpl::ScenarioViewImpl(ScenarioView* self)
     vbox->addLayout(&scenarioBox);
     vbox->addStretch();
     self->setLayout(vbox);
-    
-    ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-        boost::bind(&ScenarioViewImpl::onItemSelectionChanged, this, _1));
+
+    connectionOfItemSelectionChanged = 
+        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+            boost::bind(&ScenarioViewImpl::onItemSelectionChanged, this, _1));
 }
 
 
@@ -148,7 +151,8 @@ ScenarioView::~ScenarioView()
 
 ScenarioViewImpl::~ScenarioViewImpl()
 {
-
+    connectionOfItemSelectionChanged.disconnect();
+    playbackStopConnection.disconnect();
 }
 
 

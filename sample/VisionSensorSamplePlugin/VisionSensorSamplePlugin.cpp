@@ -23,7 +23,7 @@ using namespace cnoid;
 class VisionSensorSamplePlugin : public Plugin
 {
     ImageView* imageView;
-    signals::connection sigItemAddedConnection;
+    Connection sigItemAddedConnection;
     CameraPtr camera;
     shared_ptr<const Image> prevImage;
     RangeCameraPtr rangeCamera;

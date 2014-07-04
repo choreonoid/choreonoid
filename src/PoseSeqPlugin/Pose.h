@@ -3,10 +3,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_CHOREOGRAPHY_POSE_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_POSE_H_INCLUDED
+#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_H
+#define CNOID_POSE_SEQ_PLUGIN_POSE_H
 
 #include <cnoid/Body>
+#include <map>
 #include "exportdecl.h"
 
 namespace cnoid {

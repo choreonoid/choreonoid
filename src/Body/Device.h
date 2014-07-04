@@ -3,13 +3,12 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_DEVICE_H_INCLUDED
-#define CNOID_BODY_DEVICE_H_INCLUDED
+#ifndef CNOID_BODY_DEVICE_H
+#define CNOID_BODY_DEVICE_H
 
 #include <cnoid/PolymorphicReferencedArray>
 #include <cnoid/EigenTypes>
-#include <cnoid/SignalProxy>
-#include <boost/function.hpp>
+#include <cnoid/Signal>
 #include <string>
 #include <typeinfo>
 #include "exportdecl.h"
@@ -60,7 +59,7 @@ class CNOID_EXPORT Device : public DeviceState
         Isometry3 T_local;
         double cycle;
         const Isometry3& const_T_local() const { return T_local; }
-        boost::signal<void()> sigStateChanged;
+        Signal<void()> sigStateChanged;
     };
         
     NonState* ns;
@@ -114,7 +113,7 @@ public:
     double cycle() const { return ns->cycle; }
     void setCycle(double msec) { ns->cycle = msec; }
 
-    SignalProxy<boost::signal<void()> > sigStateChanged() {
+    SignalProxy<void()> sigStateChanged() {
         return ns->sigStateChanged;
     }
 

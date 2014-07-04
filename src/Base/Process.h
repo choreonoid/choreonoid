@@ -2,10 +2,10 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BASE_PROCESS_H_INCLUDED
-#define CNOID_BASE_PROCESS_H_INCLUDED
+#ifndef CNOID_BASE_PROCESS_H
+#define CNOID_BASE_PROCESS_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QProcess>
 #include "exportdecl.h"
 
@@ -25,10 +25,10 @@ class CNOID_EXPORT Process : public QProcess
 {
     Q_OBJECT
 
-        public:
+public:
     Process(QObject* parent = 0);
                                
-    SignalProxy< boost::signal<void()> > sigReadyReadStandardOutput() {
+    SignalProxy<void()> sigReadyReadStandardOutput() {
         return sigReadyReadStandardOutput_;
     }
 
@@ -39,7 +39,7 @@ private Q_SLOTS:
     void onReadyReadStandardOutput();
 
 private:
-    boost::signal<void()> sigReadyReadStandardOutput_;
+    Signal<void()> sigReadyReadStandardOutput_;
 };
 
 }

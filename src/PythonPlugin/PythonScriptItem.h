@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_H_INCLUDED
-#define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_H_INCLUDED
+#ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_H
+#define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_H
 
 #include <cnoid/ScriptItem>
 #include "exportdecl.h"
@@ -32,7 +32,7 @@ public:
     virtual bool executeCode(const char* code);
     virtual bool waitToFinish(double timeout = 0.0);
     virtual std::string resultString() const;
-    virtual SignalProxy< boost::signal<void()> > sigScriptFinished();
+    virtual SignalProxy<void()> sigScriptFinished();
         
     virtual bool terminate();
 

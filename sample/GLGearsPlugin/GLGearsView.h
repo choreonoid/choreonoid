@@ -7,7 +7,8 @@
 #include <cnoid/View>
 #include <cnoid/TimeBar>
 #include <QGLWidget>
-#include <boost/signals.hpp>
+
+namespace cnoid {
 
 class GearsScene : public QGLWidget
 {
@@ -34,7 +35,7 @@ protected:
 };
 
     
-class GLGearsView : public cnoid::View
+class GLGearsView : public View
 {
 public:
     GLGearsView();
@@ -46,5 +47,7 @@ protected:
 private:
     GearsScene* gearsScene;
     cnoid::TimeBar* timeBar;
-    boost::signals::connection timeChangeConnection;
+    Connection timeChangeConnection;
 };
+
+}

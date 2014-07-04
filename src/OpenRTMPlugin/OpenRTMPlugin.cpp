@@ -61,7 +61,7 @@ class OpenRTMPlugin : public Plugin
     MessageView* mv;
     boost::thread rtcManagerMainLoopThread;
     Action* deleteRTCsOnSimulationStartCheck;
-    boost::signals::connection connectionToSigSimulaionAboutToStart;
+    Connection connectionToSigSimulaionAboutToStart;
         
 public:
     OpenRTMPlugin() : Plugin("OpenRTM") {

@@ -5,6 +5,7 @@
 
 #include "CollisionDetector.h"
 #include <boost/make_shared.hpp>
+#include <map>
 
 using namespace std;
 using namespace cnoid;

@@ -31,7 +31,7 @@ namespace {
 
 ItemTreeView* itemTreeView = 0;
 
-typedef boost::signal<void(bool isChecked)> SigCheckToggled;
+typedef Signal<void(bool isChecked)> SigCheckToggled;
 typedef boost::shared_ptr<SigCheckToggled> SigCheckToggledPtr;
 
 // Item of the item tree view
@@ -79,7 +79,7 @@ class CheckColumn : public Referenced
 public:
     ItemList<> checkedItemList;
     bool needToUpdateCheckedItemList;
-    boost::signal<void(Item* item, bool isChecked)> sigCheckToggled;
+    Signal<void(Item* item, bool isChecked)> sigCheckToggled;
     QString tooltip;
 
     CheckColumn() {
@@ -107,10 +107,10 @@ public:
 
     vector<CheckColumnPtr> checkColumns;
 
-    boost::signal<void(Item* item, bool isChecked)> sigCheckToggledForInvalidId;
-    boost::signal<void(bool isChecked)> sigCheckToggledForInvalidItem;
-    boost::signal<void(const ItemList<>&)> sigSelectionChanged;
-    boost::signal<void(const ItemList<>&)> sigSelectionOrTreeChanged;
+    Signal<void(Item* item, bool isChecked)> sigCheckToggledForInvalidId;
+    Signal<void(bool isChecked)> sigCheckToggledForInvalidItem;
+    Signal<void(const ItemList<>&)> sigSelectionChanged;
+    Signal<void(const ItemList<>&)> sigSelectionOrTreeChanged;
 
     ItemList<> emptyItemList;
     ItemList<> selectedItemList;
@@ -854,19 +854,19 @@ bool ItemTreeViewImpl::checkItem(Item* item, bool checked, int id)
 }
 
 
-SignalProxy< boost::signal<void(const ItemList<>&)> > ItemTreeView::sigSelectionChanged()
+SignalProxy<void(const ItemList<>&)> ItemTreeView::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
 }
 
 
-SignalProxy< boost::signal<void(const ItemList<>&)> > ItemTreeView::sigSelectionOrTreeChanged()
+SignalProxy<void(const ItemList<>&)> ItemTreeView::sigSelectionOrTreeChanged()
 {
     return impl->sigSelectionOrTreeChanged;
 }
 
 
-SignalProxy< boost::signal<void(Item* item, bool isChecked)> > ItemTreeView::sigCheckToggled(int id)
+SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int id)
 {
     if(id < impl->checkColumns.size()){
         return impl->checkColumns[id]->sigCheckToggled;
@@ -875,7 +875,7 @@ SignalProxy< boost::signal<void(Item* item, bool isChecked)> > ItemTreeView::sig
 }
 
 
-SignalProxy< boost::signal<void(bool isChecked)> > ItemTreeView::sigCheckToggled(Item* targetItem, int id)
+SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* targetItem, int id)
 {
     if(id < impl->checkColumns.size()){
         return impl->getOrCreateItvItem(targetItem)->getOrCreateSigCheckToggled(id);

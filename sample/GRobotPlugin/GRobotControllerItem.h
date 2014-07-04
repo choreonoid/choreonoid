@@ -36,9 +36,9 @@ private:
     GRobotController* controller;
     BodyItem* bodyItem;
     ConnectionSet connections;
-    boost::signals::connection checkToggledConnection;
-    boost::signals::connection kinematicStateChangeConnection;
-    boost::signals::connection playbackInitilizeConnection;
+    Connection checkToggledConnection;
+    Connection kinematicStateChangeConnection;
+    Connection playbackInitilizeConnection;
     ConnectionSet playbackConnections;
     MessageView* mv;
 
@@ -51,7 +51,7 @@ private:
     void onPlaybackStopped();
 };
 
-typedef boost::intrusive_ptr<GRobotControllerItem> GRobotControllerItemPtr;
+typedef ref_ptr<GRobotControllerItem> GRobotControllerItemPtr;
 }
 
 #endif

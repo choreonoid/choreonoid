@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_SOCKET_NOTIFIER_H
 #define CNOID_BASE_SOCKET_NOTIFIER_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QSocketNotifier>
 #include "exportdecl.h"
 
@@ -18,7 +18,7 @@ class CNOID_EXPORT SocketNotifier : public QSocketNotifier
 public:
     SocketNotifier(int socket, Type type, QObject* parent = 0);
                                
-    SignalProxy< boost::signal<void(int socket)> > sigActivated() {
+    SignalProxy<void(int socket)> sigActivated() {
         return sigActivated_;
     }
 
@@ -26,7 +26,7 @@ private Q_SLOTS:
     void onActivated(int socket);
 
 private:
-    boost::signal<void(int)> sigActivated_;
+    Signal<void(int)> sigActivated_;
 };
     
 }

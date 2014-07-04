@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_WORLD_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_WORLD_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_WORLD_ITEM_H
+#define CNOID_BODY_PLUGIN_WORLD_ITEM_H
 
 #include "BodyItem.h"
 #include <cnoid/Item>
@@ -35,7 +35,7 @@ public:
     void updateCollisionDetector();
     void updateCollisions();
     const std::vector<CollisionLinkPairPtr>& collisions() const;
-    SignalProxy< boost::signal<void()> > sigCollisionsUpdated();
+    SignalProxy<void()> sigCollisionsUpdated();
 
     virtual SgNode* getScene();
 

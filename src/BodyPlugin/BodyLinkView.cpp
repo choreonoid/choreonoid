@@ -37,7 +37,7 @@ static const double sliderResolution = 1000000.0;
 
 namespace cnoid {
 
-class BodyLinkViewImpl : public boost::signals::trackable
+class BodyLinkViewImpl
 {
 public:
     BodyLinkViewImpl(BodyLinkView* self);
@@ -81,6 +81,7 @@ public:
     BodyItemPtr currentBodyItem;
     Link* currentLink;
 
+    Connection currentBodyItemChangeConnection;
     ConnectionSet bodyItemConnections;
     LazyCaller updateKinematicStateLater;
     ConnectionSet propertyWidgetConnections;
@@ -146,8 +147,9 @@ BodyLinkViewImpl::BodyLinkViewImpl(BodyLinkView* self)
     updateKinematicStateLater.setFunction(boost::bind(&BodyLinkViewImpl::updateKinematicState, this, true));
     updateKinematicStateLater.setPriority(LazyCaller::PRIORITY_LOW);
 
-    BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-        boost::bind(&BodyLinkViewImpl::onCurrentBodyItemChanged, this, _1));
+    currentBodyItemChangeConnection = 
+        BodyBar::instance()->sigCurrentBodyItemChanged().connect(
+            boost::bind(&BodyLinkViewImpl::onCurrentBodyItemChanged, this, _1));
     
     self->sigActivated().connect(boost::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, true));
     self->sigDeactivated().connect(boost::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, false));
@@ -162,6 +164,7 @@ BodyLinkView::~BodyLinkView()
 
 BodyLinkViewImpl::~BodyLinkViewImpl()
 {
+    currentBodyItemChangeConnection.disconnect();
     bodyItemConnections.disconnect();
 }
 

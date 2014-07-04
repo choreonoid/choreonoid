@@ -18,6 +18,7 @@
 #include <QLayout>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cmath>
 #include <limits>
 #include <iostream>
 #include "gettext.h"
@@ -225,10 +226,10 @@ public:
     double fillLevel;
     bool isFillLevelActive;
 
-    boost::signal<bool(double time), TimeBar::LogicalProduct> sigPlaybackInitialized;
-    boost::signal<void(double time)> sigPlaybackStarted;
-    boost::signal<bool(double time), TimeBar::LogicalSum> sigTimeChanged;
-    boost::signal<void(double time, bool isStoppedManually)> sigPlaybackStopped;
+    Signal<bool(double time), TimeBar::LogicalProduct> sigPlaybackInitialized;
+    Signal<void(double time)> sigPlaybackStarted;
+    Signal<bool(double time), TimeBar::LogicalSum> sigTimeChanged;
+    Signal<void(double time, bool isStoppedManually)> sigPlaybackStopped;
 };
 }
 
@@ -349,13 +350,13 @@ TimeBarImpl::~TimeBarImpl()
 }
 
 
-SignalProxy< boost::signal<bool(double time), TimeBar::LogicalProduct> > TimeBar::sigPlaybackInitialized()
+SignalProxy<bool(double time), TimeBar::LogicalProduct> TimeBar::sigPlaybackInitialized()
 {
     return impl->sigPlaybackInitialized;
 }
 
 
-SignalProxy< boost::signal<void(double time)> > TimeBar::sigPlaybackStarted()
+SignalProxy<void(double time)> TimeBar::sigPlaybackStarted()
 {
     return impl->sigPlaybackStarted;
 }
@@ -368,13 +369,13 @@ SignalProxy< boost::signal<void(double time)> > TimeBar::sigPlaybackStarted()
    and return false if the time is not valid. The example of the latter case is that
    the time is over the length of the data processed in the function.
 */
-SignalProxy< boost::signal<bool(double time), TimeBar::LogicalSum> > TimeBar::sigTimeChanged()
+SignalProxy<bool(double time), TimeBar::LogicalSum> TimeBar::sigTimeChanged()
 {
     return impl->sigTimeChanged;
 }
 
 
-SignalProxy< boost::signal<void(double time, bool isStoppedManually)> > TimeBar::sigPlaybackStopped()
+SignalProxy<void(double time, bool isStoppedManually)> TimeBar::sigPlaybackStopped()
 {
     return impl->sigPlaybackStopped;
 }

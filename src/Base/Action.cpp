@@ -54,10 +54,10 @@ Action::~Action()
 }
 
 
-SignalProxy< boost::signal<void(void)> > Action::sigTriggered()
+SignalProxy<void(void)> Action::sigTriggered()
 {    
     if(!sigTriggered_){
-        sigTriggered_ = new boost::signal<void(void)>();
+        sigTriggered_ = new Signal<void(void)>();
         connect(this, SIGNAL(triggered(bool)), this, SLOT(onTriggered(bool)));
     }
     return *sigTriggered_;
@@ -70,10 +70,10 @@ void Action::onTriggered(bool checked)
 }
 
 
-SignalProxy< boost::signal<void(bool)> > Action::sigToggled()
+SignalProxy<void(bool)> Action::sigToggled()
 {    
     if(!sigToggled_){
-        sigToggled_ = new boost::signal<void(bool)>();
+        sigToggled_ = new Signal<void(bool)>();
         connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
     }
     return *sigToggled_;

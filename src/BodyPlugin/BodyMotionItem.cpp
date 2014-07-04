@@ -32,7 +32,7 @@ struct ExtraSeqItemInfo : public Referenced
 {
     string key;
     AbstractSeqItemPtr item;
-    boost::signals::connection sigUpdateConnection;
+    Connection sigUpdateConnection;
 
     ExtraSeqItemInfo(const string& key, AbstractSeqItemPtr& item) : key(key), item(item) { }
     ~ExtraSeqItemInfo() {
@@ -54,13 +54,13 @@ class BodyMotionItemImpl
 public:
     BodyMotionItem* self;
         
-    boost::signals::connection jointPosSeqUpdateConnection;
-    boost::signals::connection linkPosSeqUpdateConnection;
+    Connection jointPosSeqUpdateConnection;
+    Connection linkPosSeqUpdateConnection;
 
     ExtraSeqItemInfoMap extraSeqItemInfoMap;
     vector<ExtraSeqItemInfoPtr> extraSeqItemInfos;
-    boost::signal<void()> sigExtraSeqItemsChanged;
-    boost::signals::connection extraSeqsChangedConnection;
+    Signal<void()> sigExtraSeqItemsChanged;
+    Connection extraSeqsChangedConnection;
 
     BodyMotionItemImpl(BodyMotionItem* self);
     ~BodyMotionItemImpl();
@@ -365,7 +365,7 @@ const AbstractSeqItem* BodyMotionItem::extraSeqItem(int index) const
 }
 
 
-SignalProxy< boost::signal<void()> > BodyMotionItem::sigExtraSeqItemsChanged()
+SignalProxy<void()> BodyMotionItem::sigExtraSeqItemsChanged()
 {
     return impl->sigExtraSeqItemsChanged;
 }

@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_BODY_MOTION_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_BODY_MOTION_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_BODY_MOTION_ITEM_H
+#define CNOID_BODY_PLUGIN_BODY_MOTION_ITEM_H
 
 #include <cnoid/BodyMotion>
 #include <cnoid/MultiValueSeqItem>
@@ -50,8 +50,8 @@ public:
     int numExtraSeqItems() const;
     const std::string& extraSeqKey(int index) const;
     AbstractSeqItem* extraSeqItem(int index);
-    const AbstractSeqItem* extraSeqItem(int index) const ;
-    SignalProxy< boost::signal<void()> > sigExtraSeqItemsChanged();
+    const AbstractSeqItem* extraSeqItem(int index) const;
+    SignalProxy<void()> sigExtraSeqItemsChanged();
     void updateExtraSeqItems();
 
     virtual void notifyUpdate();

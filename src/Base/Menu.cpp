@@ -44,10 +44,10 @@ Menu::~Menu()
 }
 
 
-SignalProxy< boost::signal<void(QAction*)> > Menu::sigTriggered()
+SignalProxy<void(QAction*)> Menu::sigTriggered()
 {
     if(!sigTriggered_){
-        sigTriggered_ = new boost::signal<void(QAction*)>();
+        sigTriggered_ = new Signal<void(QAction*)>();
         connect(this, SIGNAL(triggered(QAction*)), this, SLOT(onTriggered(QAction*)));
     }
     return *sigTriggered_;
@@ -60,10 +60,10 @@ void Menu::onTriggered(QAction* action)
 }
 
 
-SignalProxy< boost::signal<void()> > Menu::sigAboutToShow()
+SignalProxy<void()> Menu::sigAboutToShow()
 {
     if(!sigAboutToShow_){
-        sigAboutToShow_ = new boost::signal<void()>();
+        sigAboutToShow_ = new Signal<void()>();
         connect(this, SIGNAL(aboutToShow()), this, SLOT(onAboutToShow()));
     }
     return *sigAboutToShow_;
@@ -76,10 +76,10 @@ void Menu::onAboutToShow()
 }
 
 
-SignalProxy< boost::signal<void()> > Menu::sigAboutToHide()
+SignalProxy<void()> Menu::sigAboutToHide()
 {
     if(!sigAboutToHide_){
-        sigAboutToHide_ = new boost::signal<void()>();
+        sigAboutToHide_ = new Signal<void()>();
         connect(this, SIGNAL(aboutToHide()), this, SLOT(onAboutToHide()));
     }
     return *sigAboutToHide_;

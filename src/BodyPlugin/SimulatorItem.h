@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_SIMULATOR_ITEM_H
-#define CNOID_BODYPLUGIN_SIMULATOR_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
+#define CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
@@ -75,7 +75,7 @@ public:
     int currentFrame() const;
     double currentTime() const;
 
-    SignalProxy< boost::signal<void()> > sigSimulationFinished();
+    SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };
     enum TimeRangeMode { TIMEBAR_RANGE, SPECIFIED_PERIOD, UNLIMITED, N_TIME_RANGE_MODES };
@@ -114,7 +114,7 @@ public:
     /**
        emitted from the simulation thread
     */
-    SignalProxy< boost::signal<void(const std::vector<SimulationBodyPtr>& simulationBodies)> >
+    SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
 
 protected:

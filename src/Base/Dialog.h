@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_DIALOG_H
 #define CNOID_BASE_DIALOG_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QDialog>
 #include "exportdecl.h"
 
@@ -19,13 +19,13 @@ public:
     Dialog();
     Dialog(QWidget* parent, Qt::WindowFlags f = 0);
         
-    inline SignalProxy< boost::signal<void()> > sigAccepted() {
+    SignalProxy<void()> sigAccepted() {
         return sigAccepted_;
     }
-    inline SignalProxy< boost::signal<void(int)> > sigFinished() {
+    SignalProxy<void(int)> sigFinished() {
         return sigFinished_;
     }
-    inline SignalProxy< boost::signal<void()> > sigRejected() {
+    SignalProxy<void()> sigRejected() {
         return sigRejected_;
     }
 
@@ -40,9 +40,9 @@ private Q_SLOTS:
     void onSigRejected();
 
 private:
-    boost::signal<void()> sigAccepted_;
-    boost::signal<void(int)> sigFinished_;
-    boost::signal<void()> sigRejected_;
+    Signal<void()> sigAccepted_;
+    Signal<void(int)> sigFinished_;
+    Signal<void()> sigRejected_;
 
     void initialize();
 };

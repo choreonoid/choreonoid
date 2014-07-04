@@ -7,6 +7,7 @@
 #define CNOID_BODY_SENSORS_H
 
 #include "Device.h"
+#include <boost/scoped_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {

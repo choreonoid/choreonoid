@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCRIPT_ITEM_H_INCLUDED
-#define CNOID_BASE_SCRIPT_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_SCRIPT_ITEM_H
+#define CNOID_BASE_SCRIPT_ITEM_H
 
 #include "AbstractTextItem.h"
 #include "exportdecl.h"
@@ -44,7 +44,7 @@ public:
         
     virtual std::string resultString() const;
 
-    virtual SignalProxy< boost::signal<void()> > sigScriptFinished() = 0;
+    virtual SignalProxy<void()> sigScriptFinished() = 0;
         
     virtual bool terminate() = 0;
 

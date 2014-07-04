@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VRML_H_INCLUDED
-#define CNOID_UTIL_VRML_H_INCLUDED
+#ifndef CNOID_UTIL_VRML_H
+#define CNOID_UTIL_VRML_H
 
 #include <map>
 #include <string>

@@ -118,7 +118,7 @@ public:
     DoubleSpinBox pointSizeSpin;
     DoubleSpinBox lineWidthSpin;
     CheckBox pointRenderingModeCheck;
-    boost::signals::connection pointRenderingModeCheckConnection;
+    Connection pointRenderingModeCheckConnection;
     CheckBox normalVisualizationCheck;
     DoubleSpinBox normalLengthSpin;
     CheckBox coordinateAxesCheck;
@@ -162,7 +162,7 @@ Affine3 normalizedCameraTransform(const Affine3& T)
     return N;
 }
 
-boost::signal<void(SceneWidget*)> sigSceneWidgetCreated;
+Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
 }
 
@@ -197,10 +197,10 @@ public:
     SgDirectionalLightPtr worldLight;
 
     bool isEditMode;
-    boost::signal<void(bool)> sigEditModeToggled;
+    Signal<void(bool)> sigEditModeToggled;
 
     Selection viewpointControlMode;
-    boost::signal<void(int mode)> sigViewpointControlModeChanged;
+    Signal<void(int mode)> sigViewpointControlModeChanged;
     bool isFirstPersionMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
         
     enum DragMode { NO_DRAGGING, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
@@ -256,10 +256,10 @@ public:
     QLabel* indicatorLabel;
 
     MenuManager menuManager;
-    boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
+    Signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
 
-    boost::signal<void(bool isFocused)> sigWidgetFocusChanged;
-    boost::signal<void()> sigAboutToBeDestroyed;
+    Signal<void(bool isFocused)> sigWidgetFocusChanged;
+    Signal<void()> sigAboutToBeDestroyed;
 
     virtual void initializeGL();
     virtual void resizeGL(int width, int height);
@@ -823,7 +823,7 @@ bool SceneWidget::isEditMode() const
 }
 
 
-SignalProxy< boost::signal<void(bool)> > SceneWidget::sigEditModeToggled() const
+SignalProxy<void(bool)> SceneWidget::sigEditModeToggled() const
 {
     return impl->sigEditModeToggled;
 }
@@ -883,7 +883,7 @@ SceneWidget::ViewpointControlMode SceneWidget::viewpointControlMode() const
 }
 
 
-SignalProxy< boost::signal<void(int mode)> > SceneWidget::sigViewpointControlModeChanged() const
+SignalProxy<void(int mode)> SceneWidget::sigViewpointControlModeChanged() const
 {
     return impl->sigViewpointControlModeChanged;
 }
@@ -1429,13 +1429,13 @@ bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected
 }
 
 
-SignalProxy< boost::signal<void(SceneWidget*)> > SceneWidget::sigSceneWidgetCreated()
+SignalProxy<void(SceneWidget*)> SceneWidget::sigSceneWidgetCreated()
 {
     return ::sigSceneWidgetCreated;
 }
 
 
-SignalProxy< boost::signal<void(bool isFocused)> > SceneWidget::sigWidgetFocusChanged()
+SignalProxy<void(bool isFocused)> SceneWidget::sigWidgetFocusChanged()
 {
     return impl->sigWidgetFocusChanged;
 }
@@ -1453,7 +1453,7 @@ void SceneWidgetImpl::focusOutEvent(QFocusEvent* event)
 }
 
 
-SignalProxy< boost::signal<void()> > SceneWidget::sigAboutToBeDestroyed()
+SignalProxy<void()> SceneWidget::sigAboutToBeDestroyed()
 {
     return impl->sigAboutToBeDestroyed;
 }
@@ -1794,7 +1794,7 @@ void SceneWidget::showContextMenu()
 }
 
 
-SignalProxy<boost::signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> >
+SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)>
 SceneWidget::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;

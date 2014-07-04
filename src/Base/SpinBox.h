@@ -2,10 +2,10 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_GUIBASE_SPINBOX_H_INCLUDED
-#define CNOID_GUIBASE_SPINBOX_H_INCLUDED
+#ifndef CNOID_BASE_SPINBOX_H
+#define CNOID_BASE_SPINBOX_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include "exportdecl.h"
@@ -16,13 +16,13 @@ class CNOID_EXPORT SpinBox : public QSpinBox
 {
     Q_OBJECT
 
-        public:
+public:
     SpinBox(QWidget* parent = 0);
                                
-    inline SignalProxy< boost::signal<void(int)> > sigValueChanged() {
+    SignalProxy<void(int)> sigValueChanged() {
         return sigValueChanged_;
     }
-    inline SignalProxy< boost::signal<void()> > sigEditingFinished() {
+    SignalProxy<void()> sigEditingFinished() {
         return sigEditingFinished_;
     }
 
@@ -31,21 +31,21 @@ private Q_SLOTS:
     void onEditingFinishded();
 
 private:
-    boost::signal<void(int)> sigValueChanged_;
-    boost::signal<void()> sigEditingFinished_;
+    Signal<void(int)> sigValueChanged_;
+    Signal<void()> sigEditingFinished_;
 };
 
 class CNOID_EXPORT DoubleSpinBox : public QDoubleSpinBox
 {
     Q_OBJECT
 
-        public:
+public:
     DoubleSpinBox(QWidget* parent = 0);
                                
-    inline SignalProxy< boost::signal<void(double)> > sigValueChanged() {
+    SignalProxy<void(double)> sigValueChanged() {
         return sigValueChanged_;
     }
-    inline SignalProxy< boost::signal<void()> > sigEditingFinished() {
+    SignalProxy<void()> sigEditingFinished() {
         return sigEditingFinished_;
     }
 
@@ -54,8 +54,8 @@ private Q_SLOTS:
     void onEditingFinishded();
 
 private:
-    boost::signal<void(double)> sigValueChanged_;
-    boost::signal<void()> sigEditingFinished_;
+    Signal<void(double)> sigValueChanged_;
+    Signal<void()> sigEditingFinished_;
 };
 
 }

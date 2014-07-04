@@ -48,13 +48,13 @@ public:
     vector<SliderUnit*> jointSliders;
     BodyItemPtr currentBodyItem;
             
-    boost::signals::connection connectionOfKinematicStateChanged;
-    boost::signals::connection connectionOfCurrentBodyItemChanged;
+    Connection connectionOfKinematicStateChanged;
+    Connection connectionOfCurrentBodyItemChanged;
     
     LazyCaller updateJointPositionsLater;
         
-    boost::signals::connection connectionOfBodyItemDetachedFromRoot;
-    boost::signals::connection connectionOfLinkSelectionChanged;
+    Connection connectionOfBodyItemDetachedFromRoot;
+    Connection connectionOfLinkSelectionChanged;
 
     ToggleToolButton showAllToggle;
     ToggleToolButton jointIdToggle;

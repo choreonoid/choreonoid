@@ -76,14 +76,14 @@ public:
 
     QLabel poseNameLabel;
     DoubleSpinBox currentTimeSpin;
-    signals::connection currentTimeSpinConnection;
+    Connection currentTimeSpinConnection;
     DoubleSpinBox poseTimeSpin;
-    signals::connection poseTimeSpinConnection;
+    Connection poseTimeSpinConnection;
     DoubleSpinBox poseTTimeSpin;
-    signals::connection poseTTimeSpinConnection;
+    Connection poseTTimeSpinConnection;
 
     DoubleScrollBar* hScrollBar;
-    signals::connection hScrollBarChangedConnection;
+    Connection hScrollBarChangedConnection;
     bool isTmpScrollBlocked;
 
     double left;

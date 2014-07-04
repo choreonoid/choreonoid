@@ -2,10 +2,10 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BASE_BUTTON_H_INCLUDED
-#define CNOID_BASE_BUTTON_H_INCLUDED
+#ifndef CNOID_BASE_BUTTON_H
+#define CNOID_BASE_BUTTON_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QCheckBox>
 #include <QPushButton>
 #include <QRadioButton>
@@ -19,14 +19,14 @@ class CNOID_EXPORT CheckBox : public QCheckBox
 {
     Q_OBJECT
 
-        public:
+public:
     CheckBox(QWidget* parent = 0);
     CheckBox(const QString& text, QWidget* parent = 0);
                                
-    SignalProxy< boost::signal<void(int)> > sigStateChanged() {
+    SignalProxy<void(int)> sigStateChanged() {
         return sigStateChanged_;
     }
-    SignalProxy< boost::signal<void(bool)> > sigToggled() {
+    SignalProxy<void(bool)> sigToggled() {
         return sigToggled_;
     }
 
@@ -35,8 +35,8 @@ private Q_SLOTS:
     void onToggled(bool checked);
 
 private:
-    boost::signal<void(int)> sigStateChanged_;
-    boost::signal<void(bool)> sigToggled_;
+    Signal<void(int)> sigStateChanged_;
+    Signal<void(bool)> sigToggled_;
 
     void initialize();
 };
@@ -45,15 +45,15 @@ class CNOID_EXPORT PushButton : public QPushButton
 {
     Q_OBJECT
 
-        public:
+public:
     PushButton(QWidget* parent = 0);
     PushButton(const QString& text, QWidget* parent = 0);
     PushButton(const QIcon& icon, const QString& text, QWidget* parent = 0);
 
-    SignalProxy< boost::signal<void(bool)> > sigClicked() {
+    SignalProxy<void(bool)> sigClicked() {
         return sigClicked_;
     }
-    SignalProxy< boost::signal<void(bool)> > sigToggled() {
+    SignalProxy<void(bool)> sigToggled() {
         return sigToggled_;
     }
 
@@ -62,8 +62,8 @@ private Q_SLOTS:
     void onToggled(bool checked);
 
 private:
-    boost::signal<void(bool)> sigClicked_;
-    boost::signal<void(bool)> sigToggled_;
+    Signal<void(bool)> sigClicked_;
+    Signal<void(bool)> sigToggled_;
 
     void initialize();
 };
@@ -80,11 +80,11 @@ class CNOID_EXPORT RadioButton : public QRadioButton
 {
     Q_OBJECT
 
-        public:
+public:
     RadioButton(QWidget* parent = 0);
     RadioButton(const QString & text, QWidget* parent = 0);
 
-    SignalProxy< boost::signal<void(bool)> > sigToggled() {
+    SignalProxy<void(bool)> sigToggled() {
         return sigToggled_;
     }
 
@@ -92,7 +92,7 @@ private Q_SLOTS:
     void onToggled(bool checked);
 
 private:
-    boost::signal<void(bool)> sigToggled_;
+    Signal<void(bool)> sigToggled_;
 
     void initialize();
 };
@@ -101,13 +101,13 @@ class CNOID_EXPORT ToolButton : public QToolButton
 {
     Q_OBJECT
 
-        public:
+public:
     ToolButton(QWidget* parent = 0);
 
-    SignalProxy< boost::signal<void(bool)> > sigClicked() {
+    SignalProxy<void(bool)> sigClicked() {
         return sigClicked_;
     }
-    SignalProxy< boost::signal<void(bool)> > sigToggled() {
+    SignalProxy<void(bool)> sigToggled() {
         return sigToggled_;
     }
 
@@ -116,8 +116,8 @@ private Q_SLOTS:
     void onToggled(bool checked);
 
 private:
-    boost::signal<void(bool)> sigClicked_;
-    boost::signal<void(bool)> sigToggled_;
+    Signal<void(bool)> sigClicked_;
+    Signal<void(bool)> sigToggled_;
 
     void initialize();
 };
@@ -129,6 +129,7 @@ public:
     //ToggleButton(const QString& text, QWidget* parent = 0);
     //ToggleButton(const QIcon& icon, const QString& text, QWidget* parent = 0);
 };
+
 }
 
 #endif

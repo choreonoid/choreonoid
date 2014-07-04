@@ -51,8 +51,8 @@ public:
 
     stack<ExtensionManager::PtrHolderBase*> pointerHolders;
 
-    boost::signal<void()> sigSystemUpdated;
-    boost::signal<void()> sigReleaseRequest;
+    Signal<void()> sigSystemUpdated;
+    Signal<void()> sigReleaseRequest;
 
 };
 
@@ -222,7 +222,7 @@ void ExtensionManagerImpl::deleteManagedObjects()
 }
 
 
-SignalProxy< boost::signal<void()> > ExtensionManager::sigSystemUpdated()
+SignalProxy<void()> ExtensionManager::sigSystemUpdated()
 {
     return impl->sigSystemUpdated;
 }
@@ -234,7 +234,7 @@ void ExtensionManager::notifySystemUpdate()
 }
 
 
-SignalProxy< boost::signal<void()> > ExtensionManager::sigReleaseRequest()
+SignalProxy<void()> ExtensionManager::sigReleaseRequest()
 {
     return impl->sigReleaseRequest;
 }

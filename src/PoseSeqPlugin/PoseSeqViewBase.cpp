@@ -268,14 +268,16 @@ PoseSeqViewBase::PoseSeqViewBase(View* view)
 
     BodyMotionGenerationBar* generationBar = BodyMotionGenerationBar::instance();
     timeScale = generationBar->timeScaleRatio();
-    generationBar->sigInterpolationParametersChanged().connect(
-        boost::bind(&PoseSeqViewBase::onInterpolationParametersChanged, this));
+    staticConnections.add(
+        generationBar->sigInterpolationParametersChanged().connect(
+            boost::bind(&PoseSeqViewBase::onInterpolationParametersChanged, this)));
 
     setupOperationParts();
     setupLinkTreeWidget();
 
-    ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-        boost::bind(&PoseSeqViewBase::onItemSelectionChanged, this, _1));
+    staticConnections.add(
+        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+            boost::bind(&PoseSeqViewBase::onItemSelectionChanged, this, _1)));
 
     isSelectedPoseMoving = false;
 
@@ -307,6 +309,7 @@ PoseSeqViewBase::PoseSeqViewBase(View* view)
 
 PoseSeqViewBase::~PoseSeqViewBase()
 {
+    staticConnections.disconnect();
     poseSeqConnections.disconnect();
     connectionOfBodyKinematicStateEdited.disconnect();
 }

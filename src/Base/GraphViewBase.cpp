@@ -75,8 +75,8 @@ public:
     QVBoxLayout* leftvbox;
     GraphWidget graph;
     TreeWidgetEx treeWidget;
-    boost::signals::connection itemSelectionChangedConnection;
-    boost::signals::connection partSelectionChangedConnection;
+    Connection itemSelectionChangedConnection;
+    Connection partSelectionChangedConnection;
 
     list<ItemInfo> itemInfos;
 

@@ -8,6 +8,7 @@
 #include <cnoid/SceneCamera>
 #include <cnoid/SceneLight>
 #include <boost/bind.hpp>
+#include <map>
 
 using namespace std;
 using namespace cnoid;

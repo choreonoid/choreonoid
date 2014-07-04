@@ -2,10 +2,10 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BASE_EXTENSION_MANAGER_H_INCLUDED
-#define CNOID_BASE_EXTENSION_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_EXTENSION_MANAGER_H
+#define CNOID_BASE_EXTENSION_MANAGER_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <string>
 #include "exportdecl.h"
 
@@ -79,7 +79,7 @@ public:
        発行される 'SystemUpdated' シグナルと接続する。  
        @endif
     */
-    SignalProxy< boost::signal<void()> > sigSystemUpdated();
+    SignalProxy<void()> sigSystemUpdated();
         
     /**
        @if jp
@@ -92,7 +92,7 @@ public:
     */
     static void notifySystemUpdate();
 
-    SignalProxy< boost::signal<void()> > sigReleaseRequest();
+    SignalProxy<void()> sigReleaseRequest();
 
     void setProjectArchiver(
         const std::string& name,

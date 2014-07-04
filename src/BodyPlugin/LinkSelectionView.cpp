@@ -24,8 +24,11 @@ class LinkSelectionViewImpl
 {
 public:
     LinkSelectionViewImpl(LinkSelectionView* self);
+    ~LinkSelectionViewImpl();
     LinkTreeWidget linkTreeWidget;
+    Connection currentBodyItemChangeConnection;
 };
+
 }
 
 
@@ -65,8 +68,9 @@ LinkSelectionViewImpl::LinkSelectionViewImpl(LinkSelectionView* self)
     vbox->addWidget(&linkTreeWidget);
     self->setLayout(vbox);
 
-    BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-        boost::bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
+    currentBodyItemChangeConnection =
+        BodyBar::instance()->sigCurrentBodyItemChanged().connect(
+            boost::bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
 }
 
 
@@ -76,7 +80,13 @@ LinkSelectionView::~LinkSelectionView()
 }
 
 
-SignalProxy< boost::signal<void()> > LinkSelectionView::sigSelectionChanged(BodyItemPtr bodyItem)
+LinkSelectionViewImpl::~LinkSelectionViewImpl()
+{
+    currentBodyItemChangeConnection.disconnect();
+}
+
+
+SignalProxy<void()> LinkSelectionView::sigSelectionChanged(BodyItemPtr bodyItem)
 {
     return impl->linkTreeWidget.sigSelectionChanged(bodyItem);
 }

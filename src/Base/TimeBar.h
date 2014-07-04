@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_TIME_BAR_H_INCLUDED
-#define CNOID_GUIBASE_TIME_BAR_H_INCLUDED
+#ifndef CNOID_BASE_TIME_BAR_H
+#define CNOID_BASE_TIME_BAR_H
 
 #include <cnoid/ToolBar>
 #include "exportdecl.h"
@@ -51,11 +51,11 @@ public:
     /**
        \note If any connected slot returns false, the playback is canceled.
     */
-    SignalProxy< boost::signal<bool(double time), LogicalProduct> > sigPlaybackInitialized();
+    SignalProxy<bool(double time), LogicalProduct> sigPlaybackInitialized();
         
-    SignalProxy< boost::signal<void(double time)> > sigPlaybackStarted();
-    SignalProxy< boost::signal<bool(double time), LogicalSum> > sigTimeChanged();
-    SignalProxy< boost::signal<void(double time, bool isStoppedManually)> > sigPlaybackStopped();
+    SignalProxy<void(double time)> sigPlaybackStarted();
+    SignalProxy<bool(double time), LogicalSum> sigTimeChanged();
+    SignalProxy<void(double time, bool isStoppedManually)> sigPlaybackStopped();
 
     inline double time() const { return time_; }
         

@@ -3,12 +3,12 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_CHOREOGRAPHY_POSE_SEQ_INTERPOLATOR_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_POSE_SEQ_INTERPOLATOR_H_INCLUDED
+#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_INTERPOLATOR_H
+#define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_INTERPOLATOR_H
 
 #include "PoseSeq.h"
 #include <cnoid/PoseProvider>
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
@@ -60,7 +60,7 @@ public:
             
     bool update();
 
-    SignalProxy< boost::signal<void()> > sigUpdated();
+    SignalProxy<void()> sigUpdated();
             
     bool interpolate(double time);
     bool interpolate(double time, int waistLinkIndex, const Vector3& waistTranslation);

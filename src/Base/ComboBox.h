@@ -2,10 +2,10 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_GUIBASE_COMBO_BOX_H_INCLUDED
-#define CNOID_GUIBASE_COMBO_BOX_H_INCLUDED
+#ifndef CNOID_BASE_COMBO_BOX_H
+#define CNOID_BASE_COMBO_BOX_H
 
-#include <cnoid/SignalProxy>
+#include <cnoid/Signal>
 #include <QComboBox>
 #include "exportdecl.h"
 
@@ -15,7 +15,7 @@ class CNOID_EXPORT ComboBox : public QComboBox
 {
     Q_OBJECT
 
-        public:
+public:
     ComboBox(QWidget* parent = 0);
 
     void enableI18n(const char* domainname);
@@ -26,19 +26,19 @@ class CNOID_EXPORT ComboBox : public QComboBox
     QString currentOrgText() const;
     int findOrgText(const std::string& text, bool setFoundItemCurrent = false);
 
-    inline SignalProxy< boost::signal<void(int)> > sigActivated() {
+    SignalProxy<void(int)> sigActivated() {
         return sigActivated_;
     }
             
-    inline SignalProxy< boost::signal<void(int)> > sigCurrentIndexChanged() {
+    SignalProxy<void(int)> sigCurrentIndexChanged() {
         return sigCurrentIndexChanged_;
     }
 
-    inline SignalProxy< boost::signal<void(const QString&)> > sigEditTextChanged() {
+    SignalProxy<void(const QString&)> sigEditTextChanged() {
         return sigEditTextChanged_;
     }
         
-    inline SignalProxy< boost::signal<void(int)> > sigHighlighted() {
+    SignalProxy<void(int)> sigHighlighted() {
         return sigHighlighted_;
     }
 
@@ -52,11 +52,12 @@ private:
     bool isI18nEnabled;
     std::string domainName;
         
-    boost::signal<void(int)> sigActivated_;
-    boost::signal<void(int)> sigCurrentIndexChanged_;
-    boost::signal<void(const QString&)> sigEditTextChanged_;
-    boost::signal<void(int)> sigHighlighted_;
+    Signal<void(int)> sigActivated_;
+    Signal<void(int)> sigCurrentIndexChanged_;
+    Signal<void(const QString&)> sigEditTextChanged_;
+    Signal<void(int)> sigHighlighted_;
 };
+
 }
 
 #endif

@@ -8,6 +8,7 @@
 
 #include "SceneGraph.h"
 #include "Image.h"
+#include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 #include "exportdecl.h"
 

@@ -104,7 +104,7 @@ public:
     PointSetItem* self;
     SgPointSetPtr pointSet;
     ScenePointSetPtr scenePointSet;
-    boost::signals::connection pointSetUpdateConnection;
+    Connection pointSetUpdateConnection;
 
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);

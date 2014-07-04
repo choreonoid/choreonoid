@@ -15,6 +15,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/Exception>
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 #include "gettext.h"
 
 using namespace std;
