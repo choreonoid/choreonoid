@@ -1335,7 +1335,10 @@ bool SimulatorItemImpl::stepSimulationMain()
                 ControllerItem* controller = activeControllers[i];
                 controller->input();
             }
-            isControlRequested = true;
+            {
+                boost::unique_lock<boost::mutex> lock(controlMutex);                
+                isControlRequested = true;
+            }
             controlCondition.notify_all();
         }
     } else {
@@ -1392,7 +1395,7 @@ bool SimulatorItemImpl::stepSimulationMain()
             }
         }
     }
-    
+
     return doContinue;
 }
 
