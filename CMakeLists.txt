@@ -586,6 +586,7 @@ if(ENABLE_CORBA)
   function(idl_compile_cpp out_cpp_files out_header_files subdir)
   
     set(corba_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+    set(corba_dir ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir})
 
     set(idl_names ${ARGV})
     list(REMOVE_AT idl_names 0 1 2)
@@ -596,19 +597,32 @@ if(ENABLE_CORBA)
       set(idl_flags ${idl_flags} -I${idl_include_dir})
     endforeach()
     
+    # copy idl files to the system include directory
     foreach(idl_name ${idl_names})
       set(idl_file ${subdir}/${idl_name}.idl)
-      set(idl_files ${idl_files} ${idl_file})
-      configure_file(${idl_file} ${PROJECT_SOURCE_DIR}/include/cnoid/${idl_file} COPYONLY)
+      if(UNIX)
+	add_custom_command(
+	  OUTPUT ${corba_dir}/${idl_name}.idl
+	  COMMAND cp ${idl_file} ${corba_dir}
+	  DEPENDS ${idl_file})
+      elseif(MSVC)
+	file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.idl src)
+	file(TO_NATIVE_PATH ${corba_dir} dest)
+	add_custom_command(
+	  OUTPUT ${corba_dir}/${idl_name}.idl
+	  COMMAND copy ${src} ${dest}
+	  DEPENDS ${idl_file})
+      endif()
+      set(idl_files ${idl_files} ${corba_dir}/${idl_name}.idl)
       set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
       set(idl_h_files ${idl_h_files} ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir}/${idl_name}.hh)
     endforeach()
     
+    # idl compile
     foreach(idl_name ${idl_names})
-      set(corba_dir ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir})
       if(UNIX)
 	add_custom_command(
-	  OUTPUT ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
+	  OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
 	  COMMAND omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
 	  COMMAND cp ${corba_src_dir}/${idl_name}.hh ${corba_dir}
 	  DEPENDS ${idl_files}
@@ -617,7 +631,7 @@ if(ENABLE_CORBA)
 	file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
 	file(TO_NATIVE_PATH ${corba_dir} dest)
 	add_custom_command(
-	  OUTPUT ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
+	  OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
 	  COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
 	  COMMAND copy ${src} ${dest}
 	  DEPENDS ${idl_files}
