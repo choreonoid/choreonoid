@@ -598,6 +598,7 @@ if(ENABLE_CORBA)
     endforeach()
     
     # copy idl files to the system include directory
+    file(MAKE_DIRECTORY ${corba_dir})
     foreach(idl_name ${idl_names})
       set(idl_file ${subdir}/${idl_name}.idl)
       if(UNIX)
