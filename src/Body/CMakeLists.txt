@@ -99,6 +99,7 @@ set(headers
   BodyState.h
   exportdecl.h
   gettext.h
+	CollisionLinkPair.h
   )
 
 
