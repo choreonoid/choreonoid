@@ -16,6 +16,17 @@ module OpenHRP {
    * また、 update() を使用すると情報は記録され、後で再生することもできます。
    */
   interface OnlineViewer {
+	
+	exception OnlineViewerException
+    {
+      /**
+         @if jp
+         エラーの説明
+         @endif
+      */
+      string  description;
+    };
+
     /**
      * @if jp
      * 表示内容を更新します
@@ -35,7 +46,7 @@ module OpenHRP {
      * @param url モデルファイルURL
      * @endif 
      */
-    void load(in string name, in string url);
+    void load(in string name, in string url) raises (OnlineViewerException);
 
     /**
      * @if jp
