@@ -320,8 +320,7 @@ void OnlineViewerServerImpl::resetLogItem(BodyItemInfo* info, BodyMotionItem* ne
 
     if(newLogItem){
         BodyMotionPtr motion = newLogItem->motion();
-        motion->jointPosSeq()->setNumParts(0);
-        motion->jointPosSeq()->setNumFrames(0);
+        motion->jointPosSeq()->setDimension(0, 0);
         motion->linkPosSeq()->setNumParts(info->bodyItem->body()->numLinks());
         motion->setFrameRate(timeBar->frameRate());
 

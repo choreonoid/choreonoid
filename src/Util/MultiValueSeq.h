@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_MULTI_VALUE_SEQ_H_INCLUDED
-#define CNOID_UTIL_MULTI_VALUE_SEQ_H_INCLUDED
+#ifndef CNOID_UTIL_MULTI_VALUE_SEQ_H
+#define CNOID_UTIL_MULTI_VALUE_SEQ_H
 
 #include "MultiSeq.h"
 #include "exportdecl.h"
