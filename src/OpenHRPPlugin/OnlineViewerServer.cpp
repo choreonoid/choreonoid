@@ -259,7 +259,7 @@ void OnlineViewerServerImpl::updateBodyState
     for(int j=0; j < numLinks; ++j){
         Link* link = body->link(j);
         link->p() = Eigen::Map<Vector3>(const_cast<double*>(links[j].p));
-        link->R() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R));
+        link->R() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R)).transpose();
     }
     info->bodyItem->notifyKinematicStateChange();
 }
@@ -306,7 +306,7 @@ void OnlineViewerServerImpl::updateLog
         for(int j=0; j < numLinks; ++j){
             SE3& se3 = positions[j];
             se3.translation() = Eigen::Map<Vector3>(const_cast<double*>(links[j].p));
-            se3.rotation() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R));
+            se3.rotation() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R)).transpose();
         }
     }
 }
@@ -320,8 +320,7 @@ void OnlineViewerServerImpl::resetLogItem(BodyItemInfo* info, BodyMotionItem* ne
 
     if(newLogItem){
         BodyMotionPtr motion = newLogItem->motion();
-        motion->jointPosSeq()->setNumParts(0);
-        motion->jointPosSeq()->setNumFrames(0);
+        motion->jointPosSeq()->setDimension(0, 0);
         motion->linkPosSeq()->setNumParts(info->bodyItem->body()->numLinks());
         motion->setFrameRate(timeBar->frameRate());
 

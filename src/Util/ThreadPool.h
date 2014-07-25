@@ -1,6 +1,6 @@
 
-#ifndef CNOID_UTIL_THREAD_POOL_H_INCLUDED
-#define CNOID_UTIL_THREAD_POOL_H_INCLUDED
+#ifndef CNOID_UTIL_THREAD_POOL_H
+#define CNOID_UTIL_THREAD_POOL_H
 
 #include <queue>
 #include <boost/thread.hpp>

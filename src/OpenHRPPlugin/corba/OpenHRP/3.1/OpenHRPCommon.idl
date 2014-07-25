@@ -1,3 +1,4 @@
+// -*- mode: idl; indent-tabs-mode: t; tab-width: 4; c-basic-offset: 4; -*-
 #ifndef OPENHRP_COMMON_IDL_INCLUDED
 #define OPENHRP_COMMON_IDL_INCLUDED
 
@@ -267,6 +268,13 @@ module OpenHRP {
 		 */
 		oneway void shutdown();
 	};
+
+	/**
+	 * @if jp
+	 * Extra Joint の型
+	 * @endif
+	 */
+	enum ExtraJointType { EJ_XYZ, EJ_XY, EJ_Z };
 
 };
 

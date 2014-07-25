@@ -586,6 +586,7 @@ if(ENABLE_CORBA)
   function(idl_compile_cpp out_cpp_files out_header_files subdir)
   
     set(corba_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+    set(corba_dir ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir})
 
     set(idl_names ${ARGV})
     list(REMOVE_AT idl_names 0 1 2)
@@ -596,31 +597,50 @@ if(ENABLE_CORBA)
       set(idl_flags ${idl_flags} -I${idl_include_dir})
     endforeach()
     
+    # copy idl files to the system include directory
+    file(MAKE_DIRECTORY ${corba_dir})
     foreach(idl_name ${idl_names})
       set(idl_file ${subdir}/${idl_name}.idl)
-      set(idl_files ${idl_files} ${idl_file})
-      configure_file(${idl_file} ${PROJECT_SOURCE_DIR}/include/cnoid/${idl_file} COPYONLY)
+      if(UNIX)
+	add_custom_command(
+	  OUTPUT ${corba_dir}/${idl_name}.idl
+	  COMMAND cp ${idl_file} ${corba_dir}
+	  DEPENDS ${idl_file}
+	  COMMENT "Copying ${idl_name}.idl to ${corba_dir}"
+	  )
+      elseif(MSVC)
+	file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.idl src)
+	file(TO_NATIVE_PATH ${corba_dir} dest)
+	add_custom_command(
+	  OUTPUT ${corba_dir}/${idl_name}.idl
+	  COMMAND copy ${src} ${dest}
+	  DEPENDS ${idl_file}
+	  COMMENT "Copying ${idl_name}.idl to ${corba_dir}")
+      endif()
+      set(idl_files ${idl_files} ${corba_dir}/${idl_name}.idl)
       set(idl_cpp_files ${idl_cpp_files} ${subdir}/${idl_name}Sk.cpp ${subdir}/${idl_name}DynSk.cpp)
       set(idl_h_files ${idl_h_files} ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir}/${idl_name}.hh)
     endforeach()
-    
+
+    # idl compile
     foreach(idl_name ${idl_names})
-      set(corba_dir ${PROJECT_SOURCE_DIR}/include/cnoid/${subdir})
       if(UNIX)
 	add_custom_command(
-	  OUTPUT ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
+	  OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}DynSk.cpp ${corba_src_dir}/${idl_name}Sk.cpp
 	  COMMAND omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
 	  COMMAND cp ${corba_src_dir}/${idl_name}.hh ${corba_dir}
 	  DEPENDS ${idl_files}
+	  COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
 	  )
       elseif(MSVC)
 	file(TO_NATIVE_PATH ${corba_src_dir}/${idl_name}.hh src)
 	file(TO_NATIVE_PATH ${corba_dir} dest)
 	add_custom_command(
-	  OUTPUT ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
+	  OUTPUT ${corba_src_dir}/${idl_name}.hh ${corba_dir}/${idl_name}.hh ${corba_src_dir}/${idl_name}Sk.cpp ${corba_src_dir}/${idl_name}DynSk.cpp
 	  COMMAND for %%A in \("${OMNIORB_DIR}/bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${corba_dir}/${idl_name}.idl
 	  COMMAND copy ${src} ${dest}
 	  DEPENDS ${idl_files}
+	  COMMENT "Generating the C++ stubs and skeletons of ${idl_name}.idl"
 	  )
       endif()
     endforeach()
@@ -638,9 +658,21 @@ if(ENABLE_CORBA)
       FILES_MATCHING PATTERN "*.py")
 
     function(idl_compile_python target src_subdir dest_subdir global_scope)
-  
-      set(idl_names ${ARGV})
-      list(REMOVE_AT idl_names 0 1 2 3)
+
+      set(args ${ARGV})
+      list(REMOVE_AT args 0 1 2 3)
+      set(is_dependencies FALSE)
+      foreach(arg ${args})
+	if(arg STREQUAL "DEPENDS")
+	  set(is_dependencies TRUE)
+	else()
+	  if(is_dependencies)
+	    set(dependencies ${dependencies} ${arg})
+	  else()
+	    set(idl_names ${idl_names} ${arg})
+	  endif()
+	endif()
+      endforeach()
 
       set(package "")
       set(path ${dest_subdir})
@@ -671,23 +703,25 @@ if(ENABLE_CORBA)
 	set(outputs ${outputs} ${output_dir}/${idl_name}_idl.py)
       endforeach()
 
+      set(prev_output)
       foreach(idl_name ${idl_names})
 	set(idl_file ${PROJECT_SOURCE_DIR}/include/cnoid/corba/${src_subdir}/${idl_name}.idl)
 	if(UNIX)
 	  add_custom_command(
 	    OUTPUT ${output_dir}/${idl_name}_idl.py
 	    COMMAND omniidl ${idl_flags} ${idl_file}
-	    DEPENDS ${idl_files}
+	    DEPENDS ${idl_files} ${dependencies} ${prev_output} # prev_output is necessary to make the compile sequential
 	    WORKING_DIRECTORY ${python_dir}
 	    )
 	elseif(MSVC)
 	  add_custom_command(
 	    OUTPUT ${output_dir}/${idl_name}_idl.py
 	    COMMAND for %%A in \("${PYTHON_INCLUDE_PATH}/../bin/x86_win32"\) do %%~sA\\omniidl ${idl_flags} ${idl_file}
-	    DEPENDS ${idl_files}
+	    DEPENDS ${idl_files} ${dependencies}
 	    WORKING_DIRECTORY ${python_dir}
 	    )
 	endif()
+	set(prev_output ${output_dir}/${idl_name}_idl.py)
       endforeach()
 
       add_custom_target(${target} ALL DEPENDS ${outputs})

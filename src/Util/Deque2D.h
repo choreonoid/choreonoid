@@ -17,14 +17,6 @@ class Deque2D
 {
     typedef Deque2D<ElementType, Allocator> Deque2DType;
     
-    Allocator allocator;
-    ElementType* buf;
-    int offset;
-    int rowSize_;
-    int colSize_;
-    int capacity_;
-    int size_;
-
 public:
     typedef ElementType Element;
 
@@ -149,12 +141,11 @@ public:
     }
 
     iterator end() {
-        //! \todo cache this value for the performance?
-        return iterator(*this, buf + (offset + size_) % capacity_);
+        return end_;
     }
 
     const_iterator cend() const {
-        return const_iterator(*this, buf + (offset + size_) % capacity_);
+        return end_;
     }
 
     class Row
@@ -169,7 +160,10 @@ public:
         
         Row(const Deque2D<ElementType, Allocator>& owner, int rowIndex) {
             size_ = owner.colSize_;
-            top = owner.buf + (owner.offset + rowIndex * owner.colSize_) % owner.capacity_;
+            top = owner.buf;
+            if(owner.capacity_ > 0){
+                top += (owner.offset + rowIndex * owner.colSize_) % owner.capacity_;
+            }
         }
 
         bool empty() const {
@@ -215,7 +209,7 @@ public:
             colSize = owner.colSize_;
             capacity = owner.capacity_;
             rowSize = owner.rowSize_;
-            end_ = iterator(*this, top + (offset + owner.size_) % owner.capacity_);
+            end_ = iterator(*this, top + ((owner.capacity_ > 0) ? ((offset + owner.size_) % owner.capacity_) : 0));
         }
 
         bool empty() const {
@@ -385,33 +379,37 @@ public:
 private:
     void reallocMemory(int newColSize, int newSize, int newCapacity, bool doCopy) {
 
-        ElementType* newBuf = allocator.allocate(newCapacity);
+        ElementType* newBuf;
+        if(newCapacity > 0){
+            newBuf = allocator.allocate(newCapacity);
+        } else {
+            newBuf = 0;
+        }
         ElementType* p = newBuf;
         ElementType* pend = newBuf + newSize;
-                    
-        if(newColSize == colSize_ && doCopy){
-            // copy the existing elements
-            ElementType* q = buf + offset;
+
+        if(capacity_ > 0){
             ElementType* qend = buf + (offset + size_) % capacity_;
-            if(q <= qend){
-                while(q != qend){
-                    allocator.construct(p++, *q);
-                    allocator.destroy(q++);
-                }
-            } else {
-                for(ElementType* r = buf; r != qend; ++r){
-                    allocator.construct(p++, *r);
-                    allocator.destroy(r);
-                }
-                ElementType* qterm = buf + capacity_;
-                for(ElementType* r = q; r != qterm; ++r){
-                    allocator.construct(p++, *r);
-                    allocator.destroy(r);
+            
+            // copy the existing elements
+            if(newCapacity > 0 && newColSize == colSize_ && doCopy){
+                ElementType* q = buf + offset;
+                if(q <= qend){
+                    while(q != qend && p != pend){
+                        allocator.construct(p++, *q++);
+                    }
+                } else {
+                    for(ElementType* r = buf; r != qend && p != pend; ++r){
+                        allocator.construct(p++, *r);
+                    }
+                    ElementType* qterm = buf + capacity_;
+                    for(ElementType* r = q; r != qterm && p != pend; ++r){
+                        allocator.construct(p++, *r);
+                    }
                 }
             }
-        } else {
+            // destory the old elements
             ElementType* q = buf + offset;
-            ElementType* qend = buf + (offset + size_) % capacity_;
             if(q <= qend){
                 while(q != qend){
                     allocator.destroy(q++);
@@ -426,12 +424,15 @@ private:
                 }
             }
         }
+        
         // construct new elements
         while(p != pend){
             allocator.construct(p++, ElementType());
         }
 
-        allocator.deallocate(buf, capacity_);
+        if(buf){
+            allocator.deallocate(buf, capacity_);
+        }
         buf = newBuf;
         capacity_ = newCapacity;
         offset = 0;
@@ -440,70 +441,80 @@ private:
     void resizeMain(int newRowSize, int newColSize, bool doCopy) {
 
         const int newSize = newRowSize * newColSize;
+
+        if(newSize == 0){
+            reallocMemory(newColSize, newSize, 0, false);
             
-        // The area for the 'end' iterator should be reserved
-        const int minCapacity = newSize + newColSize;
-
-        if(minCapacity <= capacity_){
-
-            if((newColSize != colSize_) && (capacity_ % newColSize > 0)){
-                reallocMemory(newColSize, newSize, capacity_ - (capacity_ % newColSize), doCopy);
-
-            } else if(newSize > size_){
-
-                ElementType* p = buf + (offset + size_) % capacity_;
-                const ElementType* pend = buf + (offset + newSize) % capacity_;
-                if(p <= pend){
-                    while(p != pend){
-                        allocator.construct(p++, ElementType());
-                    }
-                } else {
-                    for(ElementType* r = buf; r != pend; ++r){
-                        allocator.construct(r, ElementType());
-                    }
-                    const ElementType* pterm = buf + capacity_;
-                    for(ElementType* r = p; r != pterm; ++r){
-                        allocator.construct(r, ElementType());
-                    }
-                }
-            } else if(newSize < size_){
-
-                ElementType* p = buf + (offset + newSize) % capacity_;
-                ElementType* pend = buf + (offset + size_) % capacity_;
-                if(p <= pend){
-                    while(p != pend){
-                        allocator.destroy(p++);
-                    }
-                } else {
-                    for(ElementType* r = buf; r != pend; ++r){
-                        allocator.destroy(r);
-                    }
-                    const ElementType* pterm = buf + capacity_;
-                    for(ElementType* r = p; r != pterm; ++r){
-                        allocator.destroy(r);
-                    }
-                }
-            }
         } else {
-            if(!buf){
-                capacity_ = minCapacity;
-                buf = allocator.allocate(minCapacity);
-                ElementType* p = buf;
-                ElementType* pend = buf + newSize;
-                // construct new elements
-                while(p != pend){
-                    allocator.construct(p++, ElementType());
+            // The area for the 'end' iterator should be reserved
+            const int minCapacity = newSize + newColSize;
+        
+            if(capacity_ > 0 && minCapacity <= capacity_){
+                if(newColSize != colSize_ && (capacity_ % newColSize > 0)){
+                    reallocMemory(newColSize, newSize, capacity_ - (capacity_ % newColSize), doCopy);
+
+                } else if(newSize > size_){
+                    ElementType* p = buf + (offset + size_) % capacity_;
+                    const ElementType* pend = buf + (offset + newSize) % capacity_;
+                    if(p <= pend){
+                        while(p != pend){
+                            allocator.construct(p++, ElementType());
+                        }
+                    } else {
+                        for(ElementType* r = buf; r != pend; ++r){
+                            allocator.construct(r, ElementType());
+                        }
+                        const ElementType* pterm = buf + capacity_;
+                        for(ElementType* r = p; r != pterm; ++r){
+                            allocator.construct(r, ElementType());
+                        }
+                    }
+                } else if(newSize < size_){
+                    ElementType* p = buf + (offset + newSize) % capacity_;
+                    ElementType* pend = buf + (offset + size_) % capacity_;
+                    if(p <= pend){
+                        while(p != pend){
+                            allocator.destroy(p++);
+                        }
+                    } else {
+                        for(ElementType* r = buf; r != pend; ++r){
+                            allocator.destroy(r);
+                        }
+                        const ElementType* pterm = buf + capacity_;
+                        for(ElementType* r = p; r != pterm; ++r){
+                            allocator.destroy(r);
+                        }
+                    }
                 }
             } else {
-                int newCapacity = newSize * 3 / 2;
-                newCapacity = newCapacity - (newCapacity % newColSize) + newColSize;
-                reallocMemory(newColSize, newSize, newCapacity, doCopy);
+                if(!buf){
+                    capacity_ = minCapacity;
+                    if(capacity_ > 0){
+                        buf = allocator.allocate(minCapacity);
+                        ElementType* p = buf;
+                        ElementType* pend = buf + newSize;
+                        // construct new elements
+                        while(p != pend){
+                            allocator.construct(p++, ElementType());
+                        }
+                    }
+                } else {
+                    int newCapacity;
+                    const int expandedSize = size_ * 3 / 2;
+                    if(expandedSize > newSize){
+                        newCapacity = expandedSize - (expandedSize % newColSize) + newColSize;
+                    } else {
+                        newCapacity = minCapacity;
+                    }
+                    reallocMemory(newColSize, newSize, newCapacity, doCopy);
+                }
             }
         }
             
         rowSize_ = newRowSize;
         colSize_ = newColSize;
         size_ = newSize;
+        end_ = iterator(*this, buf + ((capacity_ > 0) ? ((offset + size_) % capacity_) : 0));
     }
 
 public:
@@ -624,6 +635,16 @@ public:
         pop_front(1);
     }
 
+
+private:
+    Allocator allocator;
+    ElementType* buf;
+    int offset;
+    int rowSize_;
+    int colSize_;
+    int capacity_;
+    int size_;
+    iterator end_;
 };
 
 }

@@ -11,14 +11,12 @@
 #include <cnoid/TimeBar>
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
-#include <pulse/thread-mainloop.h>
-#include <pulse/context.h>
-#include <pulse/stream.h>
-#include <pulse/error.h>
+#include <pulse/pulseaudio.h>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <map>
 #include <cmath>
+//#include <iostream> // for debug
 #include "gettext.h"
 
 using namespace std;
@@ -43,6 +41,7 @@ public:
     bool doAdjustTime;
     bool initialWritingDone;
     bool hasAllFramesWritten;
+    double volumeRatio;
     double timeToFinish;
     pa_sample_spec sampleSpec;
     vector<float> silenceBuf;
@@ -117,15 +116,16 @@ public:
     bool onTimeChanged(double time);
     bool store(Archive& archive);
     void restore(const Archive& archive);
-    bool playAudioFile(const std::string& filename);
+    bool playAudioFile(const std::string& filename, double volumeRatio);
     void onAudioFilePlaybackStopped(AudioItemPtr audioItem);
 };
 
 
-bool playAudioFile(const std::string& filename)
+bool playAudioFile(const std::string& filename, double volumeRatio)
 {    
-    return PulseAudioManager::instance()->playAudioFile(filename);
+    return PulseAudioManager::instance()->playAudioFile(filename, volumeRatio);
 }
+
 }
 
 
@@ -277,17 +277,18 @@ void PulseAudioManagerImpl::finalize()
 /**
    This function must be thread safe
 */
-bool PulseAudioManager::playAudioFile(const std::string& filename)
+bool PulseAudioManager::playAudioFile(const std::string& filename, double volumeRatio)
 {
-    return impl->playAudioFile(filename);
+    return impl->playAudioFile(filename, volumeRatio);
 }
 
 
-bool PulseAudioManagerImpl::playAudioFile(const std::string& filename)
+bool PulseAudioManagerImpl::playAudioFile(const std::string& filename, double volumeRatio)
 {
     AudioItemPtr audioItem = new AudioItem();
     if(audioItem->load(filename)){
         SourcePtr source = boost::make_shared<Source>(this, audioItem);
+        source->volumeRatio = volumeRatio;
         if(source->initialize()){
             if(timeBar->isDoingPlayback()){
                 timeBar->stopPlayback();
@@ -414,6 +415,7 @@ Source::Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem)
     doAdjustTime = false;
     initialWritingDone = false;
     hasAllFramesWritten = false;
+    volumeRatio = -1.0; // using the default volume
 }
 
 
@@ -515,7 +517,7 @@ bool Source::connectStream()
     if(isConnected){
         return true;
     }
-    
+
     pa_buffer_attr* pattr = 0;
     //pa_stream_flags_t flags = PA_STREAM_START_CORKED;
     pa_stream_flags_t flags = (pa_stream_flags)(PA_STREAM_START_CORKED | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_INTERPOLATE_TIMING);
@@ -538,6 +540,7 @@ bool Source::connectStream()
         manager->os << "PulseAudio stream cannot be connected: "
                     << pa_strerror(result) << endl;
     } else {
+
         // wait for ready
         pa_stream_state_t state;
         while(true){
@@ -552,6 +555,17 @@ bool Source::connectStream()
             manager->os << "PulseAudio stream cannot be ready." << endl;
             result = -1;
         } else {
+
+            if(volumeRatio >= 0.0 && volumeRatio <= 1.0){
+                const int sinkIndex = pa_stream_get_index(stream);
+                //const int sinkIndex = pa_stream_get_device_index(stream);
+                pa_volume_t v = pa_sw_volume_from_linear(volumeRatio);
+                pa_cvolume volume;
+                pa_cvolume_set(&volume, sampleSpec.channels, v);
+                pa_context_set_sink_input_volume(manager->context, sinkIndex, &volume, NULL, NULL);
+                //pa_context_set_sink_volume_by_index(manager->context, sinkIndex, &volume, NULL, NULL);
+            }
+            
             isConnected = true;
         }
     }

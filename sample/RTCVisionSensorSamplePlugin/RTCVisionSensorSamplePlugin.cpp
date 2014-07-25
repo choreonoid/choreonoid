@@ -370,7 +370,7 @@ class RTCVisionSensorSamplePlugin : public Plugin
 {
 
     ImageView* imageView;
-    signals::connection sigItemAddedConnection;
+    Connection sigItemAddedConnection;
     VisionSensorSampleRTC* visionSensorSampleRTC;
     CameraPtr camera;
     RangeSensorPtr rangeSensor;

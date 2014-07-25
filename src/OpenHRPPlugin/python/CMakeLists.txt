@@ -10,6 +10,7 @@ if(BUILD_OPENHRP_PLUGIN_FOR_3_0)
     Controller
     OnlineViewer
     ViewSimulator
+    DEPENDS CnoidOpenHRP3.0Plugin
     )
 endif()
 

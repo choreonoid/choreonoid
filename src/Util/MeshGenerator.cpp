@@ -324,11 +324,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
        extrusion.spine[0][2] == extrusion.spine[numSpines - 1][2] ){
         isClosed = true;
     }
-    bool crossSectionisClosed = false;
-    if(extrusion.crossSection[0][0] == extrusion.crossSection[numCrosses - 1][0] &&
-       extrusion.crossSection[0][1] == extrusion.crossSection[numCrosses - 1][1] ){
-        crossSectionisClosed = true;
-    }
+    bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[numCrosses - 1]);
 
     SgMesh* mesh = new SgMesh;
     SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
@@ -448,7 +444,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
     }
 
     int j = 0;
-    if(crossSectionisClosed){
+    if(isCrossSectionClosed){
         j = 1;
     }
 
@@ -500,15 +496,19 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
     lineSet->setVertices(mesh->vertices());
 
     const int n = ns - 1;
+
+    bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[nc - 1]);
+    const int m = isCrossSectionClosed ? nc - 1 : nc;
+    
     int o = 0;
     for(int i=0; i < n; ++i){
-        for(int j=0; j < nc; ++j){
+        for(int j=0; j < m; ++j){
             lineSet->addLine(o + j, o + (j + 1) % nc);
             lineSet->addLine(o + j, o + j + nc);
         }
         o += nc;
     }
-    for(int j=0; j < nc; ++j){
+    for(int j=0; j < m; ++j){
         lineSet->addLine(o + j, o + (j + 1) % nc);
     }
 

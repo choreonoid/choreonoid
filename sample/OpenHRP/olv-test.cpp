@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
         for(int j=0; j < body->numLinks(); ++j){
             Link* link = body->link(j);
             Eigen::Map<Vector3>(position.linkPositions[j].p) = link->p();
-            Eigen::Map<Matrix3>(position.linkPositions[j].R) = link->R();
+            Eigen::Map<Matrix3>(position.linkPositions[j].R) = link->R().transpose();
         }
         world.time = time;
         //viewer->drawScene(world);

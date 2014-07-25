@@ -26,7 +26,7 @@ set(headers
   Hrpsys31Item.h
   )
 
-idl_compile_cpp(idl_cpp_files idl_h_files idl
+idl_compile_cpp(idl_cpp_files idl_h_files corba/hrpsys
   RobotHardwareService
   StateHolderService
   )
