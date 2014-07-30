@@ -250,7 +250,7 @@ void BodyRTCItem::onDisconnectedFromRoot()
 {
     // This is not necessary because onPositionChanged() is also called
     // when the item is disconnected from the root
-    // deleteModule(false);
+    deleteModule(false);
 }
 
 
@@ -968,7 +968,7 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
     if(virtualRobotRTC){
         deleteList.push_back(virtualRobotRTC->getInstanceName());
         mv->putln(fmt(_("delete %1%")) % virtualRobotRTC->getInstanceName());
-        virtualRobotRTC->exit();
+        cnoid::deleteRTC(virtualRobotRTC, waitToBeDeleted);
         virtualRobotRTC = 0;
     }
 
