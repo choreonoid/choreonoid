@@ -600,7 +600,7 @@ if(ENABLE_CORBA)
     # copy idl files to the system include directory
     file(MAKE_DIRECTORY ${corba_dir})
     foreach(idl_name ${idl_names})
-      set(idl_file ${subdir}/${idl_name}.idl)
+      set(idl_file ${corba_src_dir}/${idl_name}.idl)
       if(UNIX)
 	add_custom_command(
 	  OUTPUT ${corba_dir}/${idl_name}.idl
