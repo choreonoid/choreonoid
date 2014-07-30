@@ -177,37 +177,39 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
                 
             tokenizer::iterator it = tokens.begin();
             if(it != tokens.end()){
-                PoseSeq::iterator poseIter = seq->begin();
-                double time = lexical_cast<double>(*it++);
-                int numParts = parts.size();
-                bool poseAdded = false;
-                for(int i=0; it != tokens.end(); ++i, ++it){
-                    if(i == numParts){
-                        os << "line at time " << time << " contains parts more than defined ones." << endl;
-                        break;
-                    }
-                    Part& part = *parts[i];
-                    string label(*it);
+                if(*it != "#"){
+                    PoseSeq::iterator poseIter = seq->begin();
+                    double time = lexical_cast<double>(*it++);
+                    int numParts = parts.size();
+                    bool poseAdded = false;
+                    for(int i=0; it != tokens.end(); ++i, ++it){
+                        if(i == numParts){
+                            os << "line at time " << time << " contains parts more than defined ones." << endl;
+                            break;
+                        }
+                        Part& part = *parts[i];
+                        string label(*it);
                         
-                    if(!label.empty()){
-                        map<string,FcPose>::iterator p = part.poses.find(label);
-                        if(p == part.poses.end()){
-                            os << "label \"" << label << "\" is not defined";
-                            os << " at line " << nLines << "." << endl;
-                        } else {
-                            const FcPose& fcPose = p->second;
-                            PosePtr pose(new Pose());
-                            for(size_t j=0; j < part.jointIds.size(); ++j){
-                                pose->setJointPosition(part.jointIds[j], fcPose.q[j]);
+                        if(!label.empty()){
+                            map<string,FcPose>::iterator p = part.poses.find(label);
+                            if(p == part.poses.end()){
+                                os << "label \"" << label << "\" is not defined";
+                                os << " at line " << nLines << "." << endl;
+                            } else {
+                                const FcPose& fcPose = p->second;
+                                PosePtr pose(new Pose());
+                                for(size_t j=0; j < part.jointIds.size(); ++j){
+                                    pose->setJointPosition(part.jointIds[j], fcPose.q[j]);
+                                }
+                                poseIter = seq->insert(poseIter, time, pose);
+                                poseIter->setMaxTransitionTime(fcPose.transitionTime);
+                                poseAdded = true;
                             }
-                            poseIter = seq->insert(poseIter, time, pose);
-                            poseIter->setMaxTransitionTime(fcPose.transitionTime);
-                            poseAdded = true;
                         }
                     }
-                }
-                if(poseAdded){
-                    nPoses++;
+                    if(poseAdded){
+                        nPoses++;
+                    }
                 }
             }
         }
