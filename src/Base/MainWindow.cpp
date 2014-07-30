@@ -13,6 +13,7 @@
 #include "LazyCaller.h"
 #include "Archive.h"
 #include "ViewManager.h"
+#include "TimeBar.h"
 #include <QSplitter>
 #include <QTabWidget>
 #include <QTabBar>
@@ -705,9 +706,26 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 void MainWindowImpl::keyPressEvent(QKeyEvent* event)
 {
     switch(event->key()){
+        
     case Qt::Key_F11:
         fullScreenCheck->toggle();
         break;
+
+    // TimeBar operations
+    case Qt::Key_F5:
+    case Qt::Key_F6:
+    {
+        TimeBar* timeBar = TimeBar::instance();
+        if(timeBar->isDoingPlayback()){
+            timeBar->stopPlayback(true);
+        } else {
+            if(event->key() == Qt::Key_F5){
+                timeBar->setTime(0.0);
+            }
+            timeBar->startPlayback();
+        }
+        break;
+    }
 
     default:
         break;
