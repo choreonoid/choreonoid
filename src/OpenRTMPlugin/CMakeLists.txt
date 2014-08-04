@@ -152,6 +152,7 @@ set(plugin_sources
   RTCItem.cpp
   OpenHRPClockGeneratorItem.cpp
   ChoreonoidExecutionContext.cpp
+  ChoreonoidPeriodicExecutionContext.cpp
   )
 
 set(plugin_headers
