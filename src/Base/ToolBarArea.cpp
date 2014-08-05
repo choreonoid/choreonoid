@@ -99,6 +99,14 @@ public:
 
     bool isBeforeDoingInitialLayout;
 
+    int defaultOrderIndex;
+    
+    struct DefaultOrderCmp {
+        bool operator() (ToolBar* bar1, ToolBar* bar2) {
+            return (bar1->defaultOrderIndex < bar2->defaultOrderIndex);
+        }
+    };
+        
     set<ToolBar*> toolBars;
     ToolBarArray newToolBarsToShow;
     deque<ToolBarRowPtr> toolBarRows;
@@ -113,6 +121,8 @@ public:
     int dragY;
 
     LazyCaller layoutToolBarsLater;
+
+    
 };
 
 }
@@ -131,6 +141,7 @@ ToolBarAreaImpl::ToolBarAreaImpl(ToolBarArea* self)
       layoutToolBarsLater(boost::bind(&ToolBarAreaImpl::layoutToolBars, this))
 {
     isBeforeDoingInitialLayout = true;
+    defaultOrderIndex = 0;
     
     draggedToolBar = 0;
     draggedToolBarHasNotBeenInserted = false;
@@ -193,6 +204,7 @@ bool ToolBarAreaImpl::addToolBar(ToolBar* toolBar)
             toolBars.insert(toolBar);
 
             toolBar->toolBarArea_ = self;
+            toolBar->defaultOrderIndex = defaultOrderIndex++;
             toolBar->hide();
             toolBar->setParent(self);
 
@@ -260,10 +272,12 @@ void ToolBarAreaImpl::setVisibilityMenuItems(Menu* menu)
 {
     menu->clear();
 
-    //! \todo do sort
-
-    for(set<ToolBar*>::iterator p = toolBars.begin(); p != toolBars.end(); ++p){
-        ToolBar* toolBar = *p;
+    vector<ToolBar*> sorted(toolBars.size());
+    std::copy(toolBars.begin(), toolBars.end(), sorted.begin());
+    std::sort(sorted.begin(), sorted.end(), DefaultOrderCmp());
+    
+    for(size_t i=0; i < sorted.size(); ++i){
+        ToolBar* toolBar = sorted[i];
         Action* action = new Action(menu);
         action->setText(toolBar->objectName());
         action->setCheckable(true);
@@ -478,7 +492,7 @@ void ToolBarAreaImpl::resetLayout(MappingPtr& archive)
             newToolBarsToShow.push_back(toolBar);
         }
     }
-    //! \todo sort newToolBarsToShow
+    std::sort(newToolBarsToShow.begin(), newToolBarsToShow.end(), DefaultOrderCmp());
     
     toolBarRows.clear();
     layoutToolBars();

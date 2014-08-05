@@ -100,6 +100,7 @@ ToolBar::ToolBar(const QString& title)
     toolBarArea_ = 0;
 
     isVisibleByDefault_ = false;
+    defaultOrderIndex = 0;
     
     desiredX = 0;
     layoutPriority = 0;

@@ -81,6 +81,7 @@ private:
     ToolBarArea* toolBarArea_;
 
     bool isVisibleByDefault_;
+    int defaultOrderIndex;
     
     // used for layouting tool bars on a ToolBarArea
     bool isStretchable_;

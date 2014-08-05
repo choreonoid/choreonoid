@@ -25,8 +25,6 @@ void ScriptBar::initialize(ExtensionManager* ext)
 ScriptBar::ScriptBar()
     : ToolBar(N_("ScriptBar"))
 {
-    setVisibleByDefault(true);
-
     addButton(_("Script"), _("Execute scripts"))
         ->sigClicked().connect(boost::bind(&ScriptBar::executeCheckedScriptItems, this));
 }
