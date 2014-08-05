@@ -32,6 +32,8 @@ FileBar* FileBar::instance()
 FileBar::FileBar()
     : ToolBar(N_("FileBar"))
 {
+    setVisibleByDefault(true);
+    
     addButton(QIcon(":/Base/icons/projectsave.png"), _("Save the project"))
         ->sigClicked().connect(
             boost::bind(&ProjectManager::overwriteCurrentProject, ProjectManager::instance()));

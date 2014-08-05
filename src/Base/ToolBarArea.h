@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_TOOL_BAR_AREA_H_INCLUDED
-#define CNOID_BASE_TOOL_BAR_AREA_H_INCLUDED
+#ifndef CNOID_BASE_TOOL_BAR_AREA_H
+#define CNOID_BASE_TOOL_BAR_AREA_H
 
 #include <cnoid/ValueTree>
 #include <QWidget>
@@ -14,6 +14,7 @@ namespace cnoid {
 
 class ToolBar;
 class ToolBarAreaImpl;
+class Menu;
 class Mapping;
 
 class CNOID_EXPORT ToolBarArea : public QWidget
@@ -22,7 +23,8 @@ public:
     ToolBarArea(QWidget* parent);
     ~ToolBarArea();
 
-    std::vector<ToolBar*> getAllToolBars();
+    void getAllToolBars(std::vector<ToolBar*>& out_toolBars);
+    void getVisibleToolBars(std::vector<ToolBar*>& out_toolBars);
 
     void setInitialLayout(MappingPtr archive);
     void storeLayout(MappingPtr archive);
@@ -32,6 +34,8 @@ public:
 
     bool addToolBar(ToolBar* toolBar);
     void removeToolBar(ToolBar* toolBar);
+
+    void setVisibilityMenuItems(Menu* menu);
 
     // called from ToolBar
     void dragToolBar(ToolBar* toolBar, const QPoint& globalPos);
@@ -50,6 +54,7 @@ private:
 
     friend class MainWindowImpl;
 };
+
 }
 
 #endif

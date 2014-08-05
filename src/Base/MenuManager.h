@@ -2,8 +2,8 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BASE_MENU_MANAGER_H_INCLUDED
-#define CNOID_BASE_MENU_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_MENU_MANAGER_H
+#define CNOID_BASE_MENU_MANAGER_H
 
 #include "Action.h"
 #include "Menu.h"
@@ -64,6 +64,7 @@ private:
     std::pair<QAction*, QWidget*> findPath(const QString& path, bool createPath);
     void addItem(QWidget* menu, QAction* item);
 };
+
 }
 
 #endif

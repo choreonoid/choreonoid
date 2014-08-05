@@ -138,7 +138,7 @@ std::pair<QAction*, QWidget*> MenuManager::findPath(const QString& path, bool cr
                 }
                 item->setObjectName(name);
                 addItem(menu, item);
-                item->setMenu(new QMenu());
+                item->setMenu(new Menu());
             } else {
                 break;
             }

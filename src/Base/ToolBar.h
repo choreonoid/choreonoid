@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_TOOL_BAR_H_INCLUDED
-#define CNOID_BASE_TOOL_BAR_H_INCLUDED
+#ifndef CNOID_BASE_TOOL_BAR_H
+#define CNOID_BASE_TOOL_BAR_H
 
 #include "Button.h"
 #include "Action.h"
@@ -22,7 +22,7 @@ class MainWindow;
 class CNOID_EXPORT ToolBar : public QWidget
 {
     Q_OBJECT
-        public:
+public:
 
     ToolBar(const QString& title);
     virtual ~ToolBar();
@@ -49,10 +49,13 @@ class CNOID_EXPORT ToolBar : public QWidget
     QWidget* addSeparator(int spacing = 0);
     void addSpacing(int size);
 
-    inline void setStretchable(bool on) { isStretchable_ = on; }
-    inline bool isStretchable() { return isStretchable_; }
+    void setVisibleByDefault(bool on);
+    bool isVisibleByDefault() const { return isVisibleByDefault_; }
 
-    inline ToolBarArea* toolBarArea() { return toolBarArea_; }
+    void setStretchable(bool on);
+    bool isStretchable() const { return isStretchable_; }
+
+    ToolBarArea* toolBarArea() { return toolBarArea_; }
 
     class LayoutPriorityCmp {
     public:
@@ -77,6 +80,8 @@ private:
     MainWindow* mainWindow;
     ToolBarArea* toolBarArea_;
 
+    bool isVisibleByDefault_;
+    
     // used for layouting tool bars on a ToolBarArea
     bool isStretchable_;
     int desiredX;
@@ -88,6 +93,7 @@ private:
 
     void changeIconSizeSub(QLayout* layout, const QSize& iconSize);
 };
+
 }
 
 #endif

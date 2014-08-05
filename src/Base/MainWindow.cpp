@@ -232,6 +232,8 @@ MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionM
     isMaximized = false;
     isViewDragging = false;
     
+    config = AppConfig::archive()->openMapping("MainWindow");
+
     centralWidget = new QWidget(self);
     
     centralVBox = new QVBoxLayout(centralWidget);
@@ -243,17 +245,15 @@ MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionM
 
     self->setCentralWidget(centralWidget);
 
+    setupMenus(ext);
+
     rubberBand = new QRubberBand(QRubberBand::Rectangle, centralWidget);
     rubberBand->hide();
-
-    config = AppConfig::archive()->openMapping("MainWindow");
 
     topSplitter = 0;
     createDefaultPanes();
 
     self->setStatusBar(InfoBar::instance());
-
-    setupMenus(ext);
 
     toolBarArea->setInitialLayout(config);
 
@@ -299,11 +299,15 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
 
     mm.setPath("/" N_("Edit"));
 
-    QWidget* menu = mm.setPath("/" N_("View")).current();
+    Menu* viewMenu = static_cast<Menu*>(mm.setPath("/" N_("View")).current());
     mm.setPath(N_("Show View"));
-    mm.setCurrent(menu).setPath(N_("Create View"));
-    mm.setCurrent(menu).setPath(N_("Delete View"));
+    mm.setCurrent(viewMenu).setPath(N_("Create View"));
+    mm.setCurrent(viewMenu).setPath(N_("Delete View"));
 
+    mm.setCurrent(viewMenu).addSeparator().setPath(N_("Show Toolbar"));
+    Menu* showToolBarMenu = static_cast<Menu*>(mm.current());
+    showToolBarMenu->sigAboutToShow().connect(boost::bind(&ToolBarArea::setVisibilityMenuItems, toolBarArea, showToolBarMenu));
+    
     mm.setPath("/View");
     mm.addSeparator();
     fullScreenCheck = mm.addCheckItem(_("Full Screen"));
@@ -564,9 +568,15 @@ void MainWindow::addToolBar(ToolBar* toolbar)
 }
 
 
-std::vector<ToolBar*> MainWindow::allToolBars()
+void MainWindow::getAllToolBars(std::vector<ToolBar*>& out_toolBars)
 {
-    return impl->toolBarArea->getAllToolBars();
+    impl->toolBarArea->getAllToolBars(out_toolBars);
+}
+
+
+void MainWindow::getVisibleToolBars(std::vector<ToolBar*>& out_toolBars)
+{
+    impl->toolBarArea->getVisibleToolBars(out_toolBars);
 }
 
 

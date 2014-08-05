@@ -177,6 +177,7 @@ void InstanceInfo::remove()
     viewInfo->instancesInViewManager.erase(iterInViewManager);
     iterInViewManager = viewInfo->instancesInViewManager.end();
 }
+
 }
 
 
@@ -194,6 +195,7 @@ public:
     ViewManagerImpl(ExtensionManager* ext);
     ~ViewManagerImpl();
 };
+
 }
 
 

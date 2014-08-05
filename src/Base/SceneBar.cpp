@@ -15,7 +15,9 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 SceneBar* sceneBar;
+
 }
 
 namespace cnoid {
@@ -63,6 +65,7 @@ public:
     void onCollisionLineButtonToggled(bool on);
     void onWireframeButtonToggled(bool on);
 };
+
 }
 
 
@@ -93,6 +96,8 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
     : self(self)
 {
     using boost::bind;
+
+    self->setVisibleByDefault(true);
     
     self->setEnabled(false);
     targetSceneWidget = 0;

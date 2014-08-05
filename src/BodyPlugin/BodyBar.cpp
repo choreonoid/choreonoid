@@ -25,6 +25,8 @@ BodyBar::BodyBar()
 {
     using boost::bind;
     
+    setVisibleByDefault(true);
+
     addButton(QIcon(":/Body/icons/storepose.png"), _("Memory the current pose"))
         ->sigClicked().connect(bind(&BodyBar::onCopyButtonClicked, this));
 

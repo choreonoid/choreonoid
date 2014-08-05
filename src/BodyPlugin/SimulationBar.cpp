@@ -52,6 +52,8 @@ SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
     using boost::bind;
+
+    setVisibleByDefault(true);    
     
     addButton(QIcon(":/Body/icons/store-world-initial.png"),
               _("Store body positions to the initial world state"))->
