@@ -679,7 +679,6 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const std::string& file
                 item->setName(filesystem::basename(filesystem::path(filename)));
             }
             item->updateFileInformation(filename, loader->formatId);
-            item->notifyUpdate();
             loaded = true;
         }
 
