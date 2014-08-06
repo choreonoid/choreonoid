@@ -12,7 +12,7 @@
 #include <fcl/collision.h>
 #include <fcl/shape/geometric_shapes.h>
 #include <fcl/BVH/BVH_model.h>
-
+#include <boost/optional.hpp>
 
 using namespace std;
 using namespace boost;
