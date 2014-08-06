@@ -119,6 +119,7 @@ static bool loadPCD(PointSetItem* item, const std::string& filename, std::ostrea
     try {
         cnoid::loadPCD(item->pointSet(), filename);
         os << item->pointSet()->vertices()->size() << " points have been loaded.";
+        item->pointSet()->notifyUpdate();
         return true;
     } catch (boost::exception& ex) {
         if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
@@ -529,8 +530,8 @@ notInRegion:
         if(pointSet->hasColors()){
             removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
         }
-        
-        pointSetItem->notifyUpdate();
+
+        pointSet->notifyUpdate();
     }
 }
 
