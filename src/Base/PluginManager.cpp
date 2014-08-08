@@ -248,6 +248,16 @@ int PluginManager::pluginStatus(int index) const
 }
 
 
+Plugin* PluginManager::findPlugin(const std::string& name)
+{
+    PluginManagerImpl::PluginMap::iterator p = impl->nameToPluginInfoMap.find(name);
+    if(p != impl->nameToPluginInfoMap.end()){
+        return p->second->plugin;
+    }
+    return 0;
+}
+
+
 void PluginManager::doStartupLoading(const char* pluginPathList)
 {
     if(impl->startupLoadingCheck->isChecked()){

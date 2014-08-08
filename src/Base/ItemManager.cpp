@@ -18,6 +18,7 @@
 #include <QRegExp>
 #include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/make_shared.hpp>
 #include <sstream>
 #include "gettext.h"
 
@@ -55,21 +56,14 @@ bool isStaticMembersInitialized = false;
 typedef map<string, ItemManagerImpl::ClassInfoPtr> ClassInfoMap;
 ClassInfoMap typeIdToClassInfoMap;
     
-typedef map<string, ClassInfoMap> ClassInfoMapMap;
-ClassInfoMapMap moduleNameToClassNameToClassInfoMap;
+typedef map<string, ItemManagerImpl*> ModuleNameToItemManagerImplMap;
+ModuleNameToItemManagerImplMap moduleNameToItemManagerImplMap;
     
 typedef map<string, ItemManagerImpl::CreationPanelBase*> CreationPanelBaseMap;
 CreationPanelBaseMap creationPanelBaseMap;
 
 typedef map<string, ItemManagerImpl::LoaderPtr> LoaderMap;
 LoaderMap extToLoaderMap;
-
-typedef list<ItemManagerImpl::LoaderPtr> LoaderList;
-typedef map<string, LoaderList> LoaderListMap;
-LoaderListMap typeIdToLoaderListMap;
-
-typedef map<string, ItemManagerImpl::SaverList> SaverListMap;
-static SaverListMap typeIdToSaverListMap;
 
 QWidget* importMenu;
 
@@ -82,6 +76,7 @@ void expandExtensionsToVector(const string& extensions, vector<string>& out_exte
         out_extensions.push_back(*it);
     }
 }
+
 }
 
 
@@ -133,6 +128,8 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
 
         isStaticMembersInitialized = true;
     }
+
+    moduleNameToItemManagerImplMap[moduleName] = this;
 }
 
 
@@ -170,13 +167,17 @@ ItemManagerImpl::~ItemManagerImpl()
                 }
             }
         }
-        LoaderList& loaders = typeIdToLoaderListMap[loader->typeId];
-        LoaderList::iterator p = loaders.begin();
-        while(p != loaders.end()){
-            if(loader == *p){
-                p = loaders.erase(p);
-            } else {
-                p++;
+
+        ClassInfoMap::iterator p = typeIdToClassInfoMap.find(loader->typeId);
+        if(p != typeIdToClassInfoMap.end()){
+            list<LoaderPtr>& loaders = p->second->loaders;
+            list<LoaderPtr>::iterator q = loaders.begin();
+            while(q != loaders.end()){
+                if(loader == *q){
+                    q = loaders.erase(q);
+                } else {
+                    q++;
+                }
             }
         }
     }
@@ -184,13 +185,16 @@ ItemManagerImpl::~ItemManagerImpl()
     // unregister savers
     for(set<SaverPtr>::iterator it = registeredSavers.begin(); it != registeredSavers.end(); ++it){
         SaverPtr saver = *it;
-        SaverList& savers = typeIdToSaverListMap[saver->typeId];
-        SaverList::iterator p = savers.begin();
-        while(p != savers.end()){
-            if(saver == *p){
-                p = savers.erase(p);
-            } else {
-                p++;
+        ClassInfoMap::iterator p = typeIdToClassInfoMap.find(saver->typeId);
+        if(p != typeIdToClassInfoMap.end()){
+            list<SaverPtr>& savers = p->second->savers;
+            list<SaverPtr>::iterator q = savers.begin();
+            while(q != savers.end()){
+                if(saver == *q){
+                    q = savers.erase(q);
+                } else {
+                    q++;
+                }
             }
         }
     }
@@ -202,8 +206,6 @@ ItemManagerImpl::~ItemManagerImpl()
 
         Item::sigClassUnregistered_(id.c_str());
 
-        typeIdToClassInfoMap[id].reset();
-
         CreationPanelBaseMap::iterator s = creationPanelBaseMap.find(id);
         if(s != creationPanelBaseMap.end()){
             CreationPanelBase* base = s->second;
@@ -211,21 +213,22 @@ ItemManagerImpl::~ItemManagerImpl()
             creationPanelBaseMap.erase(s);
         }
 
-        typeIdToLoaderListMap[id].clear();
-        typeIdToSaverListMap[id].clear();
+        typeIdToClassInfoMap.erase(id);
     }
 
     // unregister creation panel filters
     for(CreationPanelFilterSet::iterator p = registeredCreationPanelFilters.begin();
         p != registeredCreationPanelFilters.end(); ++p){
-        ClassInfoPtr classInfo = typeIdToClassInfoMap[p->first];
-        if(classInfo){
+
+        ClassInfoMap::iterator q = typeIdToClassInfoMap.find(p->first);
+        if(q != typeIdToClassInfoMap.end()){
+            ClassInfoPtr& classInfo = q->second;
             classInfo->creationPanelBase->preFilters.remove(p->second);
             classInfo->creationPanelBase->postFilters.remove(p->second);
         }
     }
     
-    moduleNameToClassNameToClassInfoMap.erase(moduleName);
+    moduleNameToItemManagerImplMap.erase(moduleName);
 }
 
 
@@ -265,17 +268,18 @@ void ItemManager::registerClassSub(FactoryBase* factory, const std::string& type
 
 void ItemManagerImpl::registerClass(ItemManager::FactoryBase* factory, const string& typeId, const string& className)
 {
-    ClassInfoPtr info(new ClassInfo());
-
-    info->moduleName = moduleName;
-    info->className = className;
-    info->factory = factory;
-
-    typeIdToClassInfoMap[typeId] = info;
-    
-    moduleNameToClassNameToClassInfoMap[moduleName][className] = info;
-
+    pair<ClassInfoMap::iterator, bool> ret = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
+    ClassInfoPtr& info = ret.first->second;
+    if(ret.second){
+        info = boost::make_shared<ClassInfo>();
+        info->moduleName = moduleName;
+        info->className = className;
+        info->factory = factory;
+    } else {
+        info->factory = factory;
+    }
     registeredTypeIds.insert(typeId);
+    typeIdToClassInfoMap[typeId] = info;
 }
 
 
@@ -291,7 +295,7 @@ bool ItemManagerImpl::getClassIdentifier(ItemPtr item, string& out_moduleName, s
 
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeid(*item).name());
     if(p != typeIdToClassInfoMap.end()){
-        ClassInfoPtr info = p->second;
+        ClassInfoPtr& info = p->second;
         out_moduleName = info->moduleName;
         out_className = info->className;
         result = true;
@@ -315,12 +319,12 @@ ItemPtr ItemManagerImpl::create(const string& moduleName, const string& classNam
 {
     ItemPtr item;
 
-    ClassInfoMapMap::iterator p = moduleNameToClassNameToClassInfoMap.find(moduleName);
-    if(p != moduleNameToClassNameToClassInfoMap.end()){
-        ClassInfoMap& classNameToClassInfoMap = p->second;
+    ModuleNameToItemManagerImplMap::iterator p = moduleNameToItemManagerImplMap.find(moduleName);
+    if(p != moduleNameToItemManagerImplMap.end()){
+        ClassInfoMap& classNameToClassInfoMap = p->second->classNameToClassInfoMap;
         ClassInfoMap::iterator q = classNameToClassInfoMap.find(className);
         if(q != classNameToClassInfoMap.end()){
-            ClassInfoPtr info = q->second;
+            ClassInfoPtr& info = q->second;
             ItemManager::FactoryBase* factory = info->factory;
             if(factory){
                 item = factory->create();
@@ -376,7 +380,7 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
     
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
-        ClassInfoPtr info = p->second;
+        ClassInfoPtr& info = p->second;
         base = info->creationPanelBase;
         if(!base){
             QString className(info->className.c_str());
@@ -552,14 +556,15 @@ void ItemManagerImpl::addLoader
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
 
-        LoaderPtr loader(new Loader());
+        ClassInfoPtr& classInfo = p->second;
         
+        LoaderPtr loader = boost::make_shared<Loader>();
         loader->typeId = typeId;
         loader->caption = caption;
         loader->formatId = formatId;
         loader->priority = priority;
         loader->loadingFunction = function;
-        loader->factory = p->second->factory;
+        loader->classInfo = classInfo;
 
         expandExtensionsToVector(extensions, loader->extensions);
 
@@ -582,8 +587,8 @@ void ItemManagerImpl::addLoader
         registeredLoaders.insert(loader);
 
         // insert loader to a proper position of the list considering priorities 
-        LoaderList& loaders = typeIdToLoaderListMap[typeId];
-        LoaderList::iterator it = loaders.begin();
+        list<LoaderPtr>& loaders = classInfo->loaders;
+        list<LoaderPtr>::iterator it = loaders.begin();
         while(true){
             if(it == loaders.end()){
                 loaders.push_back(loader);
@@ -608,15 +613,21 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 
 bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId)
 {
+    const string& typeId = typeid(*item).name();
+    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
+    if(p == typeIdToClassInfoMap.end()){
+        messageView->putln(fmt(_("\"%1%\" cannot be loaded because item type \"%2%\" is not registered."))
+                           % filename % typeId);
+        return false;
+    }
+    
+    ClassInfoPtr& classInfo = p->second;
+    list<LoaderPtr>& loaders = classInfo->loaders;
     bool loaded = false;
-
     LoaderPtr targetLoader;
 
-    const string& typeId = typeid(*item).name();
-    LoaderList& loaders = typeIdToLoaderListMap[typeId];
-
     if(!formatId.empty()){
-        for(LoaderList::iterator p = loaders.begin(); p != loaders.end(); ++p){
+        for(list<LoaderPtr>::iterator p = loaders.begin(); p != loaders.end(); ++p){
             LoaderPtr& loader = *p;
             if(loader->formatId == formatId){
                 targetLoader = loader;
@@ -627,7 +638,7 @@ bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parent
         string extension = filesystem::extension(filesystem::path(filename));
         if(extension.size() >= 2){
             string ext = extension.substr(1); // remove dot
-            for(LoaderList::iterator p = loaders.begin(); p != loaders.end(); ++p){
+            for(list<LoaderPtr>::iterator p = loaders.begin(); p != loaders.end(); ++p){
                 LoaderPtr& loader = *p;
                 for(size_t i=0; i < loader->extensions.size(); ++i){
                     if(ext == loader->extensions[i]){
@@ -734,9 +745,11 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
         if(!parentItem){
             parentItem = RootItem::mainInstance();
         }
-        
+
+        ClassInfoPtr classInfo = loader->classInfo.lock();
+        ItemManager::FactoryBase* factory = classInfo->factory;
         for(int i=0; i < filenames.size(); ++i){
-            ItemPtr item = loader->factory->create();
+            ItemPtr item = factory->create();
             string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
             if(load(loader, item.get(), filename, parentItem)){
                 parentItem->addChildItem(item, true);
@@ -760,7 +773,7 @@ void ItemManagerImpl::addSaver
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
 
-        SaverPtr saver(new Saver());
+        SaverPtr saver = boost::make_shared<Saver>();
         
         saver->typeId = typeId;
         saver->formatId = formatId;
@@ -770,9 +783,9 @@ void ItemManagerImpl::addSaver
 
         expandExtensionsToVector(extensions, saver->extensions);
 
-        // insert saver to a proper position of the list considering priorities 
-        SaverList& savers = typeIdToSaverListMap[typeId];
-        SaverList::iterator it = savers.begin();
+        // insert saver to a proper position of the list considering priorities
+        list<SaverPtr>& savers = p->second->savers;
+        list<SaverPtr>::iterator it = savers.begin();
         while(true){
             if(it == savers.end()){
                 savers.push_back(saver);
@@ -807,13 +820,13 @@ bool ItemManagerImpl::save
         return false;
     }
 
-    ClassInfoPtr classInfo = p->second;
+    ClassInfoPtr& classInfo = p->second;
    
     bool saved = false;
     bool tryToSave = false;
 
     string itemLabel = classInfo->className + " \"" + item->name() + "\"";
-    SaverList& savers = typeIdToSaverListMap[typeid(*item).name()];
+    list<SaverPtr>& savers = classInfo->savers;
     SaverPtr targetSaver;
     
     if(useDialogToGetFilename){
@@ -870,7 +883,7 @@ bool ItemManagerImpl::save
 
 
 ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
-(SaverList& savers, bool doExport, const string& itemLabel, const string& formatId, string& io_filename)
+(list<SaverPtr>& savers, bool doExport, const string& itemLabel, const string& formatId, string& io_filename)
 {
     QFileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(str(fmt(_("Save %1% as")) % itemLabel).c_str());
@@ -888,7 +901,7 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
     QStringList filters;
     vector<SaverPtr> activeSavers;
     
-    for(SaverList::iterator p = savers.begin(); p != savers.end(); ++p){
+    for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
 
         SaverPtr& saver = *p;
 
@@ -975,12 +988,12 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::getSaverAndFilenameFromSaveDialog
 
 
 ItemManagerImpl::SaverPtr ItemManagerImpl::determineSaver
-(SaverList& savers, const string& filename, const string& formatId)
+(list<SaverPtr>& savers, const string& filename, const string& formatId)
 {
     SaverPtr targetSaver;
 
     if(!formatId.empty()){
-        for(SaverList::iterator p = savers.begin(); p != savers.end(); ++p){
+        for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
             SaverPtr& saver = *p;
             if(saver->formatId == formatId){
                 targetSaver = saver;
@@ -989,7 +1002,7 @@ ItemManagerImpl::SaverPtr ItemManagerImpl::determineSaver
         }
     } else {
         string extension = filesystem::extension(filesystem::path(filename));
-        for(SaverList::iterator p = savers.begin(); p != savers.end(); ++p){
+        for(list<SaverPtr>::iterator p = savers.begin(); p != savers.end(); ++p){
             SaverPtr& saver = *p;
             for(size_t i=0; i < saver->extensions.size(); ++i){
                 if(saver->extensions[i] == extension){

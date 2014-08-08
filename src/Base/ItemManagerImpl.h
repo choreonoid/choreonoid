@@ -2,8 +2,8 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_ITEMMANAGERIMPL_H_INCLUDED
-#define CNOID_ITEMMANAGERIMPL_H_INCLUDED
+#ifndef CNOID_BASE_ITEM_MANAGER_IMPL_H
+#define CNOID_BASE_ITEM_MANAGER_IMPL_H
 
 #include <cnoid/Item>
 #include <cnoid/ItemManager>
@@ -12,6 +12,7 @@
 #include <QDialog>
 #include <QLayout>
 #include <QSignalMapper>
+#include <boost/weak_ptr.hpp>
 #include <set>
 
 using namespace std;
@@ -42,6 +43,12 @@ public:
         ItemPtr protoItem;
     };
 
+    struct Saver;
+    typedef boost::shared_ptr<Saver> SaverPtr;
+
+    struct Loader;
+    typedef boost::shared_ptr<Loader> LoaderPtr;
+
     struct ClassInfo
     {
         ClassInfo() { factory = 0; creationPanelBase = 0; }
@@ -50,9 +57,13 @@ public:
         string className;
         ItemManager::FactoryBase* factory;
         CreationPanelBase* creationPanelBase;
+        list<LoaderPtr> loaders;
+        list<SaverPtr> savers;
     };
     typedef boost::shared_ptr<ClassInfo> ClassInfoPtr;
 
+    typedef map<string, ClassInfoPtr> ClassInfoMap;
+    
     class Loader : public QObject
     {
     public:
@@ -61,10 +72,9 @@ public:
         string caption;
         int priority;
         ItemManager::FileFunctionBasePtr loadingFunction;
-        ItemManager::FactoryBase* factory;
+        boost::weak_ptr<ClassInfo> classInfo;
         vector<string> extensions;
     };
-    typedef boost::shared_ptr<Loader> LoaderPtr;
         
     struct Saver
     {
@@ -75,13 +85,12 @@ public:
         vector<string> extensions;
         ItemManager::FileFunctionBasePtr savingFunction;
     };
-    typedef boost::shared_ptr<Saver> SaverPtr;
-
-    typedef list<SaverPtr> SaverList;
-
+    
     string moduleName;
     string textDomain;
     MenuManager& menuManager;
+
+    ClassInfoMap classNameToClassInfoMap;
     set<string> registeredTypeIds;
     set<ItemCreationPanel*> registeredCreationPanels;
     CreationPanelFilterSet registeredCreationPanelFilters;
@@ -116,9 +125,9 @@ public:
 
     static bool save(Item* item, bool useDialogToGetFilename, bool doExport, std::string filename, const std::string& formatId);
     static SaverPtr getSaverAndFilenameFromSaveDialog(
-        SaverList& savers, bool doExport,
+        list<SaverPtr>& savers, bool doExport,
         const string& itemLabel, const string& formatId, string& io_filename);
-    static SaverPtr determineSaver(SaverList& savers, const string& filename, const string& formatId);
+    static SaverPtr determineSaver(list<SaverPtr>& savers, const string& filename, const string& formatId);
     static bool overwrite(Item* item, bool forceOverwrite, const std::string& formatId);
 
     static void onNewItemActivated(CreationPanelBase* base);
@@ -130,6 +139,7 @@ public:
     void onSaveAllItemsActivated();
     void onExportSelectedItemsActivated();
 };
+
 }
 
 #endif

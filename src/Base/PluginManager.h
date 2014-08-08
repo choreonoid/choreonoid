@@ -2,17 +2,19 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_PLUGIN_MANAGER_H_INCLUDED
-#define CNOID_BASE_PLUGIN_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_PLUGIN_MANAGER_H
+#define CNOID_BASE_PLUGIN_MANAGER_H
 
 #include <string>
+#include "exportdecl.h"
 
 namespace cnoid {
 
+class Plugin;
 class ExtensionManager;
 class PluginManagerImpl;
 
-class PluginManager
+class CNOID_EXPORT PluginManager
 {
 public:
 
@@ -38,6 +40,8 @@ public:
     enum PluginStatus { NOT_LOADED, LOADED, ACTIVE, FINALIZED, INVALID, CONFLICT };
     int pluginStatus(int index) const;
 	
+    Plugin* findPlugin(const std::string& name);
+
     bool loadPlugin(int index);
     bool unloadPlugin(int index);
 
@@ -48,7 +52,7 @@ private:
 
     PluginManagerImpl* impl;
 };
-};
 
+}
 
 #endif
