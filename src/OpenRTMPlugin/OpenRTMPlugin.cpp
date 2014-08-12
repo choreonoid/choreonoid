@@ -74,6 +74,7 @@ public:
 
         const char* argv[] = {
             "choreonoid",
+            "-f", "./rtc.conf.choreonoid",
             "-o", "manager.shutdown_on_nortcs: NO",
             "-o", "manager.shutdown_auto: NO",
             "-o", "naming.formats: %n.rtc",
@@ -349,6 +350,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
             }
         }
     }
+
     for(int i=0; i < rtcs.size(); ++i){
         RTObject_impl* rtc = rtcs[i];
         if(managedComponents.find(rtc) == managedComponents.end()){
@@ -364,6 +366,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
 bool cnoid::deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted)
 {
     if(rtc){
+
     	RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
     	for(CORBA::ULong i=0; i < eclist->length(); ++i){
     		if(!CORBA::is_nil(eclist[i])){

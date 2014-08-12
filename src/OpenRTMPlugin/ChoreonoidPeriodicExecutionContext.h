@@ -9,11 +9,7 @@
 #include <rtm/RTC.h>
 #include <coil/Task.h>
 #include <rtm/Manager.h>
-#ifdef OPENRTM_VERSION110
-  #include <rtm/PeriodicExecutionContext.h>
-#else
-  #include <rtm/OpenHRPExecutionContext.h>
-#endif
+#include <rtm/PeriodicExecutionContext.h>
 
 #ifdef WIN32
 #pragma warning( disable : 4290 )
@@ -29,7 +25,7 @@ namespace cnoid
 #ifdef OPENRTM_VERSION110
   class ChoreonoidPeriodicExecutionContext : public virtual RTC::PeriodicExecutionContext
 #else
-  class ChoreonoidPeriodicExecutionContext : public RTC::PeriodicExecutionContext
+  class ChoreonoidPeriodicExecutionContext : public virtual RTC_exp::PeriodicExecutionContext
 #endif
 {
 public:

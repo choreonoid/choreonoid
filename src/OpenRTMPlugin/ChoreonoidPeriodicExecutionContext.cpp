@@ -11,13 +11,8 @@
 
 using namespace cnoid;
 
-#ifdef OPENRTM_VERSION110
-  ChoreonoidPeriodicExecutionContext::ChoreonoidPeriodicExecutionContext()
+ ChoreonoidPeriodicExecutionContext::ChoreonoidPeriodicExecutionContext()
       : PeriodicExecutionContext()
-#else
-  ChoreonoidExecutionContext::ChoreonoidExecutionContext()
-      : PeriodicExecutionContext()
-#endif
 {
 
 }
@@ -65,9 +60,16 @@ RTC::ReturnCode_t ChoreonoidPeriodicExecutionContext::deactivate_component(RTC::
     {
         return RTC::PRECONDITION_NOT_MET;
     }
+
     rtobj->goTo(RTC::INACTIVE_STATE);
 
-    return RTC::RTC_OK;
+    rtobj->workerDo();
+
+    if (!(rtobj->isCurrentState(RTC::INACTIVE_STATE)))
+    {
+    	return RTC::RTC_OK;
+    }
+    return RTC::RTC_ERROR;
 #endif
 }
 

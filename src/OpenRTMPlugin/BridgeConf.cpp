@@ -339,7 +339,7 @@ void BridgeConf::setupModules()
 {
     RTC::Manager& rtcManager = RTC::Manager::instance();
     ModuleInfoList::iterator moduleInfo = moduleInfoList.begin();
-    format param("%1%?exec_cxt.periodic.type=SynchExtTriggerEC&exec_cxt.periodic.rate=1000000");
+    format param("%1%?exec_cxt.periodic.type=ChoreonoidExecutionContext&exec_cxt.periodic.rate=1000000");
     while(moduleInfo != moduleInfoList.end()){
         if(!moduleInfo->isLoaded){
             rtcManager.load(moduleInfo->fileName.c_str(), moduleInfo->initFuncName.c_str());
