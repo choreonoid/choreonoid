@@ -51,10 +51,14 @@ public:
     }
 };
 
-python::object pythonNullInput(python::object prompt)
+class MessageViewIn
 {
-    return python::str();
-}
+public:
+    python::object readline() {
+        return python::str("\n");
+    }
+};
+            
 
 python::object pythonExit()
 {
@@ -66,6 +70,7 @@ python::object pythonExit()
 class PythonPlugin : public Plugin
 {
     python::object messageViewOut;
+    python::object messageViewIn;
         
 public:
     PythonPlugin();
@@ -78,15 +83,6 @@ public:
     void restoreProperties(const Archive& archive);
 };
 
-PyObject* input_raw_input(PyObject *self, PyObject *args)
-{
-    return PyString_FromString("");
-}
-
-PyMethodDef input_methods[] = {
-    { "raw_input", input_raw_input, METH_VARARGS, "" },
-    { NULL, NULL, 0, NULL }
-};
 };
 
 
@@ -172,12 +168,15 @@ bool PythonPlugin::initializeInterpreter()
     sysModule.attr("stdout") = messageViewOut;
     sysModule.attr("stderr") = messageViewOut;
 
-    python::object builtins = mainNamespace["__builtins__"];
-
     // Disable waiting for input
-    builtins.attr("raw_input") = python::make_function(pythonNullInput);
+    python::object messageViewInClass =
+        python::class_<MessageViewIn>("MessageViewIn", python::init<>())
+        .def("readline", &MessageViewIn::readline);
+    messageViewIn = messageViewInClass();
+    sysModule.attr("stdin") = messageViewIn;
 
     // Override exit and quit
+    python::object builtins = mainNamespace["__builtins__"];
     exitExceptionType = python::import("cnoid.Python").attr("ExitException");
     python::object exitFunc = python::make_function(pythonExit);
     builtins.attr("exit") = exitFunc;

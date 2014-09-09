@@ -9,6 +9,7 @@
 #include <QPlainTextEdit>
 #include <QBoxLayout>
 #include <QTextBlock>
+#include <QEventLoop>
 #include <list>
 #include "gettext.h"
 
@@ -26,6 +27,16 @@ public:
     void setConsole(PythonConsoleViewImpl* console);
     void write(std::string const& text);
 };
+
+class PythonConsoleIn
+{
+public:
+    PythonConsoleViewImpl* console;
+    void setConsole(PythonConsoleViewImpl* console);
+    python::object readline();
+};
+
+
 }
 
 namespace cnoid {
@@ -37,29 +48,40 @@ public:
     ~PythonConsoleViewImpl();
 
     PythonConsoleView* self;
+    bool isConsoleInMode;
+    QEventLoop eventLoop;
+    string stringFromConsoleIn;
+    int inputColumnOffset;
     QString prompt;
     std::list<QString>::iterator histIter;
     std::list<QString> history;
 
     python::object consoleOut;
+    python::object consoleIn;
     python::object sys;
     python::object orgStdout;
     python::object orgStderr;
+    python::object orgStdin;
     python::object interpreter;
 
     void setPrompt(const char* newPrompt);
     void put(const QString& message);
     void putln(const QString& message);
+    void putPrompt();
     void execCommand();
-    QString getCommand();
-    void setCommand(const QString& command);
+    QString getInputString();
+    void setInputString(const QString& command);
     void addToHistory(const QString& command);
     QString getPrevHistoryEntry();
     QString getNextHistoryEntry();
 
+    string getInputFromConsoleIn();
+    void fixInput();
+    
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void insertFromMimeData(const QMimeData* source);
 };
+
 }
 
 
@@ -72,6 +94,18 @@ void PythonConsoleOut::setConsole(PythonConsoleViewImpl* console)
 void PythonConsoleOut::write(std::string const& text)
 {
     console->put(QString(text.c_str()));
+}
+
+
+void PythonConsoleIn::setConsole(PythonConsoleViewImpl* console)
+{
+    this->console = console;
+}
+
+
+python::object PythonConsoleIn::readline()
+{
+    return python::str(console->getInputFromConsoleIn());
 }
 
 
@@ -91,6 +125,9 @@ PythonConsoleView::PythonConsoleView()
 PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     : self(self)
 {
+    isConsoleInMode = false;
+    inputColumnOffset = 0;
+    
     self->setDefaultLayoutArea(View::BOTTOM);
 
     setFrameShape(QFrame::NoFrame);
@@ -117,7 +154,14 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     consoleOut = consoleOutClass();
     PythonConsoleOut& consoleOut_ = python::extract<PythonConsoleOut&>(consoleOut);
     consoleOut_.setConsole(this);
-        
+
+    python::object consoleInClass =
+        python::class_<PythonConsoleIn>("PythonConsoleIn", python::init<>())
+        .def("readline", &PythonConsoleIn::readline);
+    consoleIn = consoleInClass();
+    PythonConsoleIn& consoleIn_ = python::extract<PythonConsoleIn&>(consoleIn);
+    consoleIn_.setConsole(this);
+    
     sys = pythonSysModule();
 
     histIter = history.end();
@@ -125,7 +169,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     putln(QString("Python %1").arg(Py_GetVersion()));
     
     prompt = ">>> ";
-    put(prompt);
+    putPrompt();
 }
 
 
@@ -187,19 +231,28 @@ void PythonConsoleView::clear()
 }
 
 
+void PythonConsoleViewImpl::putPrompt()
+{
+    put(prompt);
+    inputColumnOffset = textCursor().columnNumber();
+}
+
+
 void PythonConsoleViewImpl::execCommand()
 {
     PyGILock lock;
     
     orgStdout = sys.attr("stdout");
     orgStderr = sys.attr("stderr");
+    orgStdin = sys.attr("stdin");
     
     sys.attr("stdout") = consoleOut;
     sys.attr("stderr") = consoleOut;
+    sys.attr("stdin") = consoleIn;
     
-    QString command = getCommand();
+    QString command = getInputString();
     
-    put("\n"); // This must be done after getCommand().
+    put("\n"); // This must be done after getInputString().
         
     if(python::extract<bool>(interpreter.attr("push")(command.toStdString()))){
         setPrompt("... ");
@@ -213,36 +266,36 @@ void PythonConsoleViewImpl::execCommand()
     
     sys.attr("stdout") = orgStdout;
     sys.attr("stderr") = orgStderr;
+    sys.attr("stdin") = orgStdin;
 
     addToHistory(command);
 
-    put(prompt);
+    putPrompt();
 }
 
 
-QString PythonConsoleViewImpl::getCommand()
+QString PythonConsoleViewImpl::getInputString()
 {
     QTextDocument* doc = document();
     QString line = doc->findBlockByLineNumber(doc->lineCount() - 1).text();
-    line.remove(0, prompt.length());
+    line.remove(0, inputColumnOffset);
     line.remove(QRegExp("\\s*$"));
     return line;
 }
 
 
-void PythonConsoleViewImpl::setCommand(const QString& command)
+void PythonConsoleViewImpl::setInputString(const QString& command)
 {
-    if(getCommand() == command){
+    if(getInputString() == command){
         return;
     }
 
-    moveCursor(QTextCursor::End);
-    moveCursor(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-    for(int i=0; i < prompt.length(); ++i){
-        moveCursor(QTextCursor::Right, QTextCursor::KeepAnchor);
-    }
-    textCursor().removeSelectedText();
-    textCursor().insertText(command);
+    QTextCursor cursor = textCursor();
+    cursor.movePosition(QTextCursor::End);
+    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, inputColumnOffset);
+    cursor.removeSelectedText();
+    cursor.insertText(command);
     moveCursor(QTextCursor::End);
 }
 
@@ -287,6 +340,32 @@ QString PythonConsoleViewImpl::getNextHistoryEntry()
 }
 
 
+string PythonConsoleViewImpl::getInputFromConsoleIn()
+{
+    isConsoleInMode = true;
+    inputColumnOffset = textCursor().columnNumber();
+    
+    int result = eventLoop.exec();
+    isConsoleInMode = false;
+
+    if(result == 0){
+        return stringFromConsoleIn;
+    } else {
+        put("\n");
+        //! \todo put an error message here
+        return string();
+    }
+}
+
+
+void PythonConsoleViewImpl::fixInput()
+{
+    stringFromConsoleIn = getInputString().toStdString();
+    put("\n");
+    eventLoop.exit();
+}
+
+
 void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 {
     bool done = false;
@@ -295,23 +374,27 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_Left:
     case Qt::Key_Backspace:
-        if((textCursor().columnNumber() - prompt.length()) <= 0){
+        if(textCursor().columnNumber() <= inputColumnOffset){
             done = true;
         }
         break;
         
     case Qt::Key_Up:
-        setCommand(getPrevHistoryEntry());
+        setInputString(getPrevHistoryEntry());
         done = true;
         break;
         
     case Qt::Key_Down:
-        setCommand(getNextHistoryEntry());
+        setInputString(getNextHistoryEntry());
         done = true;
         break;
         
     case Qt::Key_Return:
-        execCommand();
+        if(isConsoleInMode){
+            fixInput();
+        } else {
+            execCommand();
+        }
         done = true;
         break;
         
