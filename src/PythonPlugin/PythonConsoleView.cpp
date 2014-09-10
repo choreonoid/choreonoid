@@ -279,7 +279,6 @@ QString PythonConsoleViewImpl::getInputString()
     QTextDocument* doc = document();
     QString line = doc->findBlockByLineNumber(doc->lineCount() - 1).text();
     line.remove(0, inputColumnOffset);
-    line.remove(QRegExp("\\s*$"));
     return line;
 }
 
@@ -349,7 +348,7 @@ string PythonConsoleViewImpl::getInputFromConsoleIn()
     isConsoleInMode = false;
 
     if(result == 0){
-        return stringFromConsoleIn;
+        return stringFromConsoleIn + "\n";
     } else {
         put("\n");
         //! \todo put an error message here

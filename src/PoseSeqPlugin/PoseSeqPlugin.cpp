@@ -6,6 +6,11 @@
 #include <cnoid/Config>
 #include <cnoid/Plugin>
 #include <cnoid/App>
+
+#include <cnoid/BodyItem>
+#include <cnoid/ItemManager>
+#include <cnoid/PluginManager>
+
 #include "PoseSeqItem.h"
 #include "PoseSeqEngine.h"
 #include "BodyMotionGenerationBar.h"
@@ -17,6 +22,23 @@
 using namespace cnoid;
 
 namespace {
+
+
+class ExtBodyItem : public BodyItem
+{
+public:
+    ExtBodyItem() { }
+    ExtBodyItem(const ExtBodyItem& org) : BodyItem(org) { }
+
+    virtual ItemPtr doDuplicate() const{
+        return new ExtBodyItem(*this);
+    }
+
+    virtual void doPutProperties(PutPropertyFunction& putProperty) {
+        BodyItem::doPutProperties(putProperty);
+        putProperty(_("This is ExtBodyItem"), true);
+    }
+};
   
 class PoseSeqPlugin : public Plugin
 {
@@ -33,6 +55,11 @@ public:
         BodyMotionGenerationBar::initializeInstance(this);
         PoseRollView::initializeClass(this);
         initializeFcpFileLoader(*this);
+
+        Plugin* bodyPlugin = PluginManager::instance()->findPlugin("Body");
+        if(bodyPlugin){
+            bodyPlugin->itemManager().registerClass<ExtBodyItem>("BodyItem");
+        }
             
         return true;
     }
@@ -49,6 +76,7 @@ public:
         return text.c_str();
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PoseSeqPlugin);
