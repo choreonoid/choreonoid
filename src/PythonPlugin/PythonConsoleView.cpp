@@ -342,11 +342,25 @@ QString PythonConsoleViewImpl::getNextHistoryEntry()
 
 string PythonConsoleViewImpl::getInputFromConsoleIn()
 {
+    sys.attr("stdout") = orgStdout;
+    sys.attr("stderr") = orgStderr;
+    sys.attr("stdin") = orgStdin;
+
+    int result;
+
+    Py_BEGIN_ALLOW_THREADS
+        
     isConsoleInMode = true;
     inputColumnOffset = textCursor().columnNumber();
     
-    int result = eventLoop.exec();
+    result = eventLoop.exec();
     isConsoleInMode = false;
+
+    Py_END_ALLOW_THREADS
+
+    sys.attr("stdout") = consoleOut;
+    sys.attr("stderr") = consoleOut;
+    sys.attr("stdin") = consoleIn;
 
     if(result == 0){
         return stringFromConsoleIn + "\n";

@@ -183,6 +183,9 @@ bool PythonPlugin::initializeInterpreter()
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
 
+    PyEval_InitThreads();
+    PyEval_SaveThread();
+
     return true;
 }
 
