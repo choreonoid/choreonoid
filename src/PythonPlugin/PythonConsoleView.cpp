@@ -105,6 +105,7 @@ void PythonConsoleIn::setConsole(PythonConsoleViewImpl* console)
 
 python::object PythonConsoleIn::readline()
 {
+    //! \todo release the GIL inside this function
     return python::str(console->getInputFromConsoleIn());
 }
 
