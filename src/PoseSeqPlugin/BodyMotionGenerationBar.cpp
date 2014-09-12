@@ -333,6 +333,8 @@ BodyMotionGenerationBar* BodyMotionGenerationBar::instance()
 BodyMotionGenerationBar::BodyMotionGenerationBar()
     : ToolBar("BodyMotionGenerationBar")
 {
+    setVisibleByDefault(true);
+
     bodyMotionPoseProvider = new BodyMotionPoseProvider();
     poseProviderToBodyMotionConverter = new PoseProviderToBodyMotionConverter();
     timeBar = TimeBar::instance();

@@ -501,12 +501,12 @@ void PositionDragger::initalizeDraggers()
 {
     translationDragger_->sigTranslationStarted().connect(boost::ref(sigDragStarted_));
     translationDragger_->sigTranslationDragged().connect(
-        boost::bind(&PositionDragger::onPositionDragged, this));
+        boost::bind(&PositionDragger::onSubDraggerDragged, this));
     translationDragger_->sigTranslationFinished().connect(boost::ref(sigDragFinished_));
     
     rotationDragger_->sigRotationStarted().connect(boost::ref(sigDragStarted_));
     rotationDragger_->sigRotationDragged().connect(
-        boost::bind(&PositionDragger::onPositionDragged, this));
+        boost::bind(&PositionDragger::onSubDraggerDragged, this));
     rotationDragger_->sigRotationFinished().connect(boost::ref(sigDragFinished_));
 }
 
@@ -577,7 +577,7 @@ Affine3 PositionDragger::draggedPosition() const
 }
 
 
-void PositionDragger::onPositionDragged()
+void PositionDragger::onSubDraggerDragged()
 {
     if(isContainerMode_){
         setPosition(draggedPosition());
@@ -619,6 +619,7 @@ bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
         if(dragProjector.drag(event)){
             setPosition(dragProjector.position());
             notifyUpdate();
+            sigPositionDragged_();
             return true;
         }
     }

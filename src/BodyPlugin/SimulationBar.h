@@ -27,6 +27,7 @@ public:
     void startSimulation(SimulatorItem* simulator, bool doRest);
     void startSimulation(bool doRest = true);
     void stopSimulation(SimulatorItem* simulator);
+    void pauseSimulation(SimulatorItem* simulator);
 
     virtual ~SimulationBar();
 
@@ -37,6 +38,8 @@ private:
     void onRestoreInitialClicked();
     void forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback);
     void onStopSimulationClicked();
+    void onPauseSimulationClicked();
+    ToolButton* pauseToggle;
 
     Signal<void(SimulatorItem*)> sigSimulationAboutToStart_;
 };

@@ -158,6 +158,8 @@ public:
 
     SgVectorArray() { }
 
+    SgVectorArray(size_t size) : values(size) { }
+
     SgVectorArray(const std::vector<T>& org) : values(org) { }
 
     template<class Element>

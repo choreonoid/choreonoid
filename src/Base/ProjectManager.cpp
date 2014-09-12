@@ -237,7 +237,9 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
 
             Archive* barStates = archive->findSubArchive("toolbars");
             if(barStates->isValid()){
-                restoreObjectStates(archive, barStates, mainWindow->allToolBars());
+                vector<ToolBar*> toolBars;
+                mainWindow->getAllToolBars(toolBars);
+                restoreObjectStates(archive, barStates, toolBars);
             }
 
             ArchiverMapMap::iterator p;
@@ -330,8 +332,10 @@ void ProjectManagerImpl::saveProject(const string& filename)
     }
 
     bool stored = ViewManager::storeViewStates(archive, "views");
-    
-    stored |= storeObjects(*archive, "toolbars", mainWindow->allToolBars());
+
+    vector<ToolBar*> toolBars;
+    mainWindow->getAllToolBars(toolBars);
+    stored |= storeObjects(*archive, "toolbars", toolBars);
 
     ArchiverMapMap::iterator p;
     for(p = archivers.begin(); p != archivers.end(); ++p){

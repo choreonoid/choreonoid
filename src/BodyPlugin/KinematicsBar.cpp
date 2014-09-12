@@ -116,6 +116,8 @@ KinematicsBar* KinematicsBar::instance()
 
 KinematicsBar::KinematicsBar() : ToolBar(N_("KinematicsBar"))
 {
+    setVisibleByDefault(true);
+    
     setup = new KinematicsBarSetupDialog();
 
     //addSeparator(2);

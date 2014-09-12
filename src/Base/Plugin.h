@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_PLUGIN_H_INCLUDED
-#define CNOID_BASE_PLUGIN_H_INCLUDED
+#ifndef CNOID_BASE_PLUGIN_H
+#define CNOID_BASE_PLUGIN_H
 
 #include "ExtensionManager.h"
 #include "exportdecl.h"

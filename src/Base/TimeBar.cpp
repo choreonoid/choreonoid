@@ -277,6 +277,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
       resumeIcon(QIcon(":/Base/icons/resume.png")),
       stopIcon(QIcon(":/Base/icons/stop.png"))
 {
+    self->setVisibleByDefault(true);
     self->setStretchable(true);
     
     self->time_ = 0.0;

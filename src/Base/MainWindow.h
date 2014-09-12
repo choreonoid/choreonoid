@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_MAIN_WINDOW_H_INCLUDED
-#define CNOID_BASE_MAIN_WINDOW_H_INCLUDED
+#ifndef CNOID_BASE_MAIN_WINDOW_H
+#define CNOID_BASE_MAIN_WINDOW_H
 
 #include "Archive.h"
 #include <QMainWindow>
@@ -38,8 +38,8 @@ public:
     bool removeView(View* view);
 
     void addToolBar(ToolBar* toolbar);
-        
-    std::vector<ToolBar*> allToolBars();
+    void getAllToolBars(std::vector<ToolBar*>& out_toolBars);
+    void getVisibleToolBars(std::vector<ToolBar*>& out_toolBars);
 
     MappingPtr getLayoutPath(View* view) const;
 
@@ -64,6 +64,7 @@ private:
     friend class ExtensionManager;
     friend class View;
 };
+
 }
 
 #endif

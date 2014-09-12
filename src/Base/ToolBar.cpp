@@ -98,6 +98,10 @@ ToolBar::ToolBar(const QString& title)
     isNewRadioGroupRequested = true;
 
     toolBarArea_ = 0;
+
+    isVisibleByDefault_ = false;
+    defaultOrderIndex = 0;
+    
     desiredX = 0;
     layoutPriority = 0;
     isStretchable_ = false;
@@ -110,6 +114,18 @@ ToolBar::ToolBar(const QString& title)
 ToolBar::~ToolBar()
 {
 
+}
+
+
+void ToolBar::setVisibleByDefault(bool on)
+{
+    isVisibleByDefault_ = on;
+}
+
+
+void ToolBar::setStretchable(bool on)
+{
+    isStretchable_ = on;
 }
 
 

@@ -3,7 +3,7 @@
 
 option(BUILD_ODE_PLUGIN "Building ODEPlugin" OFF)
 option(BUILD_GAZEBO_ODE_PLUGIN "Building Gazebo ODE Plugin" OFF)
-option(USE_ODE_STATIC_LIB "Gazebo ODE Plugin and ODE Plugin use a static library." ON)
+option(USE_ODE_STATIC_LIB "Gazebo ODE Plugin and ODE Plugin use a static library." OFF)
 
 if(NOT BUILD_ODE_PLUGIN AND NOT BUILD_GAZEBO_ODE_PLUGIN)
   return()

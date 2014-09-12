@@ -63,9 +63,9 @@ public:
 
         EditableSceneBody::initializeClass(this);
 
+        SimulationBar::initialize(this);
         addToolBar(BodyBar::instance());
         addToolBar(KinematicsBar::instance());
-        SimulationBar::initialize(this);
 
         LinkSelectionView::initializeClass(this);
         BodyLinkView::initializeClass(this);

@@ -20,6 +20,7 @@ public:
 private:
     FileBar();
 };
+
 }
 
 #endif

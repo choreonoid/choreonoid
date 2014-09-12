@@ -59,8 +59,8 @@ public:
     void onControlPointStepOrOffsetChanged();
     void onHighlightingControlPointToggled(bool on);
 };
-}
 
+}
 
 namespace cnoid {
 
@@ -83,6 +83,7 @@ public:
     void focus(GraphWidget* graphWidget, bool forceUpdate);
     void onRenderingTypesToggled();
 };
+
 }
 
 
@@ -113,6 +114,8 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
       setup(this)
 {
     using boost::bind;
+
+    self->setVisibleByDefault(true);    
     
     orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icons/graph.png"),
                                                _("Plot trajectories of the target data on the graph view"));

@@ -52,6 +52,8 @@ SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
     using boost::bind;
+
+    setVisibleByDefault(true);    
     
     addButton(QIcon(":/Body/icons/store-world-initial.png"),
               _("Store body positions to the initial world state"))->
@@ -70,8 +72,13 @@ SimulationBar::SimulationBar()
               _("Start simulation from the current state"))->
         sigClicked().connect(bind(&SimulationBar::startSimulation, this, false));
     
+    pauseToggle = addToggleButton(QIcon(":/Body/icons/pause-simulation.png"), _("Pause simulation"));
+    pauseToggle->sigClicked().connect(bind(&SimulationBar::onPauseSimulationClicked, this));
+    pauseToggle->setChecked(false);
+
     addButton(QIcon(":/Body/icons/stop-simulation.png"), _("Stop simulation"))->
         sigClicked().connect(bind(&SimulationBar::onStopSimulationClicked, this));
+
 }
 
 
@@ -192,13 +199,18 @@ void SimulationBar::startSimulation(bool doRest)
 
 void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 {
-    if(simulator->isRunning()){
+	if(simulator->isRunning()){
+    	if(pauseToggle->isChecked() && !doReset){
+    		simulator->restartSimulation();
+    		pauseToggle->setChecked(false);
+    	}
         //simulator->selectMotionItems();
         TimeBar::instance()->startPlaybackFromFillLevel();
 
     } else {
         sigSimulationAboutToStart_(simulator);
         simulator->startSimulation(doReset);
+        pauseToggle->setChecked(false);
     }
 }
 
@@ -211,6 +223,7 @@ void SimulationBar::onStopSimulationClicked()
     if(timeBar->isDoingPlayback()){
         timeBar->stopPlayback();
     }
+    pauseToggle->setChecked(false);
 }
 
 
@@ -218,3 +231,27 @@ void SimulationBar::stopSimulation(SimulatorItem* simulator)
 {
     simulator->stopSimulation();
 }
+
+
+void SimulationBar::onPauseSimulationClicked()
+{
+	forEachSimulator(boost::bind(&SimulationBar::pauseSimulation, this, _1));
+}
+
+
+void SimulationBar::pauseSimulation(SimulatorItem* simulator)
+{
+	if(pauseToggle->isChecked()){
+		if(simulator->isRunning())
+			simulator->pauseSimulation();
+		TimeBar* timeBar = TimeBar::instance();
+		if(timeBar->isDoingPlayback()){
+			timeBar->stopPlayback();
+		}
+	}else{
+		if(simulator->isRunning())
+			simulator->restartSimulation();
+		TimeBar::instance()->startPlaybackFromFillLevel();
+	}
+}
+

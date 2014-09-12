@@ -28,6 +28,7 @@
   <file>icons/start-simulation.png</file>
   <file>icons/restart-simulation.png</file>
   <file>icons/stop-simulation.png</file>
+  <file>icons/pause-simulation.png</file>
   <file>icons/store-world-initial.png</file>
   <file>icons/restore-world-initial.png</file>
 
