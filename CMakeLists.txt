@@ -55,6 +55,10 @@ if(MSVC AND CMAKE_CL_64)
    add_definitions(-D_WIN64)
 endif()
 
+if(MSVC)
+  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG _ITERATOR_DEBUG_LEVEL=1)
+endif()
+
 function(install_external_libraries dll_dir lib_dir)
 
   set(libraries ${ARGV})

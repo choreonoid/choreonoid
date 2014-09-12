@@ -35,6 +35,10 @@ idl_compile_cpp(idl_cpp_files idl_h_files corba Naming)
 add_cnoid_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
 target_link_libraries(${target} CnoidUtil ${OMNIORB_LIBRARIES} ${Boost_THREAD_LIBRARY})
 
+if(QT5)
+  qt5_use_modules(${target} OpenGL Network)
+endif()
+
 # test program
 # add_cnoid_executable(corba-test test.cpp ${idl_cpp_files})
 # target_link_libraries(corba-test CnoidCorba ${OMNIORB_LIBRARIES})
