@@ -159,7 +159,7 @@ private:
     Signal<void()> sigDragFinished_;
 
     void initalizeDraggers();
-    void onPositionDragged();
+    void onSubDraggerDragged();
     void showDragMarkers(bool on);
 };
     

@@ -59,6 +59,7 @@ public:
 private:
     SceneDragProjectorImpl* impl;
 };
+
 }
 
 #endif

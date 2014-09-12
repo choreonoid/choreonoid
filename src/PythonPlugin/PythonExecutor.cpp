@@ -231,10 +231,6 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
     if(!isInitialized){
         initializeStaticObjects();
     }
-    if(isBackgroundMode && !PyEval_ThreadsInitialized()){
-        PyEval_InitThreads();
-        PyEval_SaveThread();
-    }
 
     bool doAddPythonPath = false;
     pathRefIter = additionalPythonPathRefMap.end();
