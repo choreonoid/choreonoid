@@ -327,13 +327,14 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
         }
     }
 
+#ifdef OPENRTM_VERSION110
     for(int i=0; i < rtcs.size(); ++i){
         RTObject_impl* rtc = rtcs[i];
         if(managedComponents.find(rtc) == managedComponents.end()){
             RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
             for(CORBA::ULong j=0; j < eclist->length(); ++j){
-            	if(!CORBA::is_nil(eclist[j])){
-            		eclist[j]->remove_component(rtc->getObjRef());
+               if(!CORBA::is_nil(eclist[j])){
+                       eclist[j]->remove_component(rtc->getObjRef());
                 }
             }
             PortServiceList_var ports = rtc->get_ports();
@@ -350,10 +351,41 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
             }
         }
     }
+#else
+    typedef std::map<RTC::ExecutionContextService_var, std::set<RTC::RTObject_impl*> > RemoveMap;
+    RemoveMap removeMap;
+    for(int i=0; i < rtcs.size(); ++i){
+    	RTObject_impl* rtc = rtcs[i];
+    	RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
+    	for(CORBA::ULong j=0; j < eclist->length(); ++j){
+    		if(!CORBA::is_nil(eclist[j])){
+    			RTC::ExecutionContextService_var execContext = RTC::ExecutionContextService::_narrow(eclist[j]);
+    			RemoveMap::iterator it = removeMap.find(execContext);
+    			if(it==removeMap.end()){
+    				std::set<RTC::RTObject_impl*> rtcs;
+    				rtcs.insert(rtc);
+    				removeMap.insert(make_pair(execContext,rtcs));
+    			}else
+    				it->second.insert(rtc);
+    		}
+    	}
+    }
+    for(RemoveMap::iterator it=removeMap.begin(); it!=removeMap.end(); it++){
+    	std::set<RTC::RTObject_impl*> removeRTCs = it->second;
+    	RTC::ExecutionContextService_var ec = it->first;
+    	for(std::set<RTC::RTObject_impl*>::iterator it = removeRTCs.begin(); it != removeRTCs.end(); it++){
+    		ec->remove_component((*it)->getObjRef());
+    	}
+    	OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(ec);
+    	if(!CORBA::is_nil(execContext))
+    		execContext->tick();
+    }
+#endif
 
     for(int i=0; i < rtcs.size(); ++i){
         RTObject_impl* rtc = rtcs[i];
         if(managedComponents.find(rtc) == managedComponents.end()){
+        	//std::cout << rtc->getInstanceName() << std::endl;
         	rtc->exit();
         	manager->cleanupComponents();
         	++numDeleted;
@@ -371,15 +403,31 @@ bool cnoid::deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted)
     	for(CORBA::ULong i=0; i < eclist->length(); ++i){
     		if(!CORBA::is_nil(eclist[i])){
     			eclist[i]->remove_component(rtc->getObjRef());
+#ifndef OPENRTM_VERSION110
+    			OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
+    			if(!CORBA::is_nil(execContext))
+    				execContext->tick();
+#endif
     		}
 		}
     	RTC::ExecutionContextList_var myEClist = rtc->get_owned_contexts();
     	if(myEClist->length() > 0 && !CORBA::is_nil(myEClist[0])){
+#ifdef OPENRTM_VERSION110
     		OpenRTM::ExtTrigExecutionContextService_var myEC = OpenRTM::ExtTrigExecutionContextService::_narrow(myEClist[0]);
     		RTCList rtcs = myEC->get_profile()->participants;
     		for(int i=0; i < rtcs.length(); ++i){
     			myEC->remove_component(rtcs[i]);
     		}
+#else
+    		RTC::ExecutionContextService_var myEC = RTC::ExecutionContextService::_narrow(myEClist[0]);
+   			RTCList rtcs = myEC->get_profile()->participants;
+   			for(int i=0; i < rtcs.length(); ++i){
+   				myEC->remove_component(rtcs[i]);
+   			}
+   			OpenRTM::ExtTrigExecutionContextService_var execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(myEC);
+   			if(!CORBA::is_nil(execContext))
+   				execContext->tick();
+#endif
     	}
 
         rtc->exit();
