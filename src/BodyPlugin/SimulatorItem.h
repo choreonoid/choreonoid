@@ -71,6 +71,8 @@ public:
             
     bool startSimulation(bool doReset = true);
     void stopSimulation();
+    void pauseSimulation();
+    void restartSimulation();
     bool isRunning() const;
     int currentFrame() const;
     double currentTime() const;

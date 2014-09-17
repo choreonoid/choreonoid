@@ -156,7 +156,8 @@ public:
     bool isAllLinkPositionOutputMode;
     bool isDeviceStateOutputEnabled;
     bool isDoingSimulationLoop;
-    bool stopRequested;
+    volatile bool stopRequested;
+    volatile bool pauseRequested;
     bool isRealtimeSyncMode;
     bool needToUpdateSimBodyLists;
     bool hasActiveFreeBodies;
@@ -198,6 +199,8 @@ public:
     void concurrentControlLoop();
     void flushResult();
     void stopSimulation(bool doSync);
+    void pauseSimulation();
+    void restartSimulation();
     void onSimulationLoopStopped();
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
@@ -1095,6 +1098,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         isDoingSimulationLoop = true;
         isWaitingForSimulationToStop = false;
         stopRequested = false;
+        pauseRequested = false;
 
         ringBufferSize = std::numeric_limits<int>::max();
         
@@ -1231,10 +1235,12 @@ void SimulatorItemImpl::run()
 {
     self->initializeSimulationThread();
 
+    double elapsedTime = 0.0;
     QElapsedTimer timer;
     timer.start();
 
     int frame = 0;
+    bool onPause = false;
 
     if(isRealtimeSyncMode){
         const double dt = worldTimeStep;
@@ -1242,33 +1248,61 @@ void SimulatorItemImpl::run()
         const double dtms = dt * 1000.0;
         double compensatedSimulationTime = 0.0;
         while(true){
-            if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
-                break;
-            }
-            double diff = (double)compensatedSimulationTime - timer.elapsed();
-            if(diff >= 1.0){
-                QThread::msleep(diff);
-            } else if(diff < 0.0){
-                const double compensationTime = -diff * compensationRatio;
-                compensatedSimulationTime += compensationTime;
-                diff += compensationTime;
-                const double delayOverThresh = -diff - 100.0;
-                if(delayOverThresh > 0.0){
-                    compensatedSimulationTime += delayOverThresh;
-                }
-            }
-            compensatedSimulationTime += dtms;
-            ++frame;
+        	if(!pauseRequested){
+        		if(onPause){
+        			timer.start();
+        			onPause = false;
+        		}
+				if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
+					break;
+				}
+				double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
+				if(diff >= 1.0){
+					QThread::msleep(diff);
+				} else if(diff < 0.0){
+					const double compensationTime = -diff * compensationRatio;
+					compensatedSimulationTime += compensationTime;
+					diff += compensationTime;
+					const double delayOverThresh = -diff - 100.0;
+					if(delayOverThresh > 0.0){
+						compensatedSimulationTime += delayOverThresh;
+					}
+				}
+				compensatedSimulationTime += dtms;
+				++frame;
+        	}else{
+        		if(stopRequested)
+        			break;
+        		if(!onPause){
+        			elapsedTime += timer.elapsed();
+        			onPause = true;
+        		}
+        	}
         }
     } else {
         while(true){
-            if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
-                break;
-            }
+        	if(!pauseRequested){
+        		if(onPause){
+        			timer.start();
+        			onPause = false;
+        		}
+				if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
+					break;
+				}
+        	}else{
+        		if(stopRequested)
+        			break;
+        		if(!onPause){
+        			elapsedTime += timer.elapsed();
+        			onPause = true;
+        		}
+        	}
         }
     }
 
-    actualSimulationTime = (timer.elapsed() / 1000.0);
+    if(!onPause)
+    	elapsedTime += timer.elapsed();
+    actualSimulationTime = (elapsedTime / 1000.0);
     finishTime = frame / worldFrameRate;
 
     isDoingSimulationLoop = false;
@@ -1462,6 +1496,30 @@ void SimulatorItemImpl::flushResult()
         }
         timeBar->setTime(frame / worldFrameRate);
     }
+}
+
+
+void SimulatorItem::pauseSimulation()
+{
+    impl->pauseSimulation();
+}
+
+
+void SimulatorItemImpl::pauseSimulation()
+{
+	pauseRequested = true;
+}
+
+
+void SimulatorItem::restartSimulation()
+{
+	impl->restartSimulation();
+}
+
+
+void SimulatorItemImpl::restartSimulation()
+{
+	pauseRequested = false;
 }
 
 
