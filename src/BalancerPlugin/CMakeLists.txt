@@ -6,6 +6,8 @@
 option(BUILD_BALANCER_PLUGIN "Building BalancerPlugin" ON)
 if(NOT BUILD_BALANCER_PLUGIN)
   return()
+elseif(NOT BUILD_POSE_SEQ_PLUGIN)
+  message(FATAL_ERROR "BalancerPlugin requires PoseSeqPlugin.")
 endif()
 
 set(target CnoidBalancerPlugin)
