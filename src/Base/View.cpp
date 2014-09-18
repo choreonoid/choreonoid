@@ -3,8 +3,8 @@
 */
 
 #include "View.h"
+#include "ViewArea.h"
 #include "ViewManager.h"
-#include "MainWindow.h"
 #include "AppConfig.h"
 #include "AppImpl.h"
 #include <QLayout>
@@ -18,9 +18,8 @@ using namespace cnoid;
 View::View()
 {
     isActive_ = false;
-    isManagedByMainWindow_ = false;
+    viewArea_ = 0;
     defaultLayoutArea_ = CENTER;
-
     isFontSizeZoomKeysEnabled = false;
     fontZoom = 0;
 }
@@ -32,8 +31,8 @@ View::~View()
         onDeactivated();
     }
 
-    if(isManagedByMainWindow_){
-        MainWindow::instance()->removeView(this);
+    if(viewArea_){
+        viewArea_->removeView(this);
     }
 
     View* focusView = lastFocusView();
@@ -99,15 +98,6 @@ void View::setName(const std::string& name)
 }
 
 
-/*
-  void View::setName(const QString& name)
-  {
-  setObjectName(name);
-  setWindowTitle(name);
-  }
-*/
-
-
 ViewClass* View::viewClass() const
 {
     return ViewManager::viewClass(typeid(*this));
@@ -116,7 +106,7 @@ ViewClass* View::viewClass() const
 
 void View::bringToFront()
 {
-    if(isManagedByMainWindow_){
+    if(viewArea_){
         QTabWidget* tab = 0;
         for(QWidget* widget = parentWidget(); widget; widget = widget->parentWidget()){
             if(tab = dynamic_cast<QTabWidget*>(widget)){

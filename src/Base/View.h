@@ -11,10 +11,11 @@
 
 namespace cnoid {
 
-class ToolBar;
-class Archive;
 class ExtensionManager;
+class Archive;
 class MenuManager;
+class ViewArea;
+class ViewAreaImpl;
 
 class CNOID_EXPORT ViewClass
 {
@@ -25,7 +26,6 @@ public:
 class CNOID_EXPORT View : public QWidget
 {
 public:
-        
     View();
     virtual ~View();
 
@@ -34,8 +34,9 @@ public:
 
     ViewClass* viewClass() const;
 
+    ViewArea* viewArea() const { return viewArea_; }
+        
     bool isActive() const;
-    bool isManagedByMainWindow() const { return isManagedByMainWindow_; }
 
     void bringToFront();
 
@@ -87,19 +88,18 @@ private:
     virtual void hideEvent(QHideEvent* event);
 
     bool isActive_;
-    bool isManagedByMainWindow_;
-    bool isFontSizeZoomKeysEnabled;
+    mutable ViewArea* viewArea_;
 
     Signal<void()> sigActivated_;
     Signal<void()> sigDeactivated_;
 
     LayoutArea defaultLayoutArea_;
+    bool isFontSizeZoomKeysEnabled;
     int fontZoom;
 
     void zoomFontSizeSub(int zoom, const QList<QWidget*>& widgets);
 
-    friend class MainWindow;
-    friend class MainWindowImpl;
+    friend class ViewAreaImpl;
 };
 
 }

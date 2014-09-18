@@ -17,6 +17,7 @@ set(sources
   PathVariableEditor.cpp
   PluginManager.cpp
   MainWindow.cpp
+  ViewArea.cpp
   ToolBarArea.cpp
   InfoBar.cpp
   ViewManager.cpp

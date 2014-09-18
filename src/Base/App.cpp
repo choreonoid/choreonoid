@@ -292,6 +292,15 @@ bool AppImpl::eventFilter(QObject* watched, QEvent* event)
         if(event->type() == QEvent::Close){
             sigAboutToQuit_();
             mainWindow->storeWindowStateConfig();
+
+            QWidgetList windows = QApplication::topLevelWidgets();
+            for(int i=0; i < windows.size(); ++i){
+                QWidget* window = windows[i];
+                if(window != mainWindow){
+                    window->close();
+                }
+            }
+            
             event->accept();
             return true;
         } 
