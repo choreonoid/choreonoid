@@ -15,6 +15,7 @@
 #include <QTabBar>
 #include <QRubberBand>
 #include <QMouseEvent>
+#include <QDesktopWidget>
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <bitset>
@@ -770,25 +771,44 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
                 mainViewAreaImpl->restoreLayout(layoutOfViews);
             }
         } else {
+            QDesktopWidget* desktop = QApplication::desktop();
+            
             for(int i=0; i < layouts.size(); ++i){
                 Mapping& layout = *layouts[i].toMapping();
                 Archive* contents = dynamic_cast<Archive*>(layout.get("contents").toMapping());
                 if(contents){
                     contents->inheritSharedInfoFrom(*archive);
                     const string type = layout.get("type").toString();
+
                     if(type == "embedded"){
                         mainViewAreaImpl->restoreLayout(contents);
+                        mainViewAreaImpl->self->setViewTabsVisible(layout.get("tabs", mainViewAreaImpl->viewTabsVisible));
+
                     } else if(type == "independent"){
                         ViewArea* viewWindow = new ViewArea();
+                        viewWindow->impl->viewTabsVisible = layout.get("tabs", true);
+
                         viewWindow->impl->restoreLayout(contents);
+
                         if(viewWindow->impl->numViews == 0){
                             delete viewWindow;
                         } else {
                             const Listing& geo = *layout.findListing("geometry");
                             if(geo.isValid() && geo.size() == 4){
-                                viewWindow->setGeometry(QRect(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt()));
+                                const QRect s = desktop->screenGeometry(layout.get("screen", 0));
+                                const QRect r(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt());
+                                viewWindow->setGeometry(r.translated(s.x(), s.y()));
                             }
-                            viewWindow->show();
+                            if(layout.get("fullScreen", false)){
+                                layout.read("maximized", viewWindow->impl->isMaximizedBeforeFullScreen);
+                                viewWindow->showFullScreen();
+                            } else {
+                                if(layout.get("maximized"), false){
+                                    viewWindow->showMaximized();
+                                } else {
+                                    viewWindow->show();
+                                }
+                            }
                         }
                     }
                 }
@@ -1026,6 +1046,8 @@ void ViewArea::storeLayout(ArchivePtr archive)
 
 void ViewAreaImpl::storeLayout(Archive* archive)
 {
+    QDesktopWidget* desktop = QApplication::desktop();
+    
     try {
         MappingPtr state = storeSplitterState(topSplitter, archive);
         if(state){
@@ -1033,8 +1055,11 @@ void ViewAreaImpl::storeLayout(Archive* archive)
                 archive->write("type", "embedded");
             } else {
                 archive->write("type", "independent");
+                const int screen = desktop->screenNumber(self->pos());
+                archive->write("screen", screen);
+                const QRect s = desktop->screenGeometry(screen);
+                const QRect r = self->geometry().translated(-s.x(), -s.y());
                 Listing* geometry = archive->createFlowStyleListing("geometry");
-                const QRect r = self->geometry();
                 geometry->append(r.x());
                 geometry->append(r.y());
                 geometry->append(r.width());
