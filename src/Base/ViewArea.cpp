@@ -18,7 +18,6 @@
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <bitset>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -28,6 +27,9 @@ namespace {
 
 enum DropArea { OVER = -1, LEFT = 0, TOP, RIGHT, BOTTOM, NUM_DROP_AREAS };
 const int SPLIT_DISTANCE_THRESHOLD = 35;
+
+vector<ViewArea*> viewAreas;
+bool isBeforeDoingInitialLayout = true;
 
 class TabWidget : public QTabWidget
 {
@@ -98,9 +100,7 @@ public:
     bool viewTabsVisible;
     bool isMaximizedBeforeFullScreen;
     bool needToUpdateDefaultPaneAreas;
-    bool isBeforeDoingInitialLayout;
     boost::scoped_ptr< vector<View*> > defaultViewsToShow;
-    ArchivePtr initialLayoutArchive;
 
     ViewPane* areaToPane[View::NUM_AREAS];
 
@@ -164,12 +164,13 @@ public:
     void getAllViews(vector<View*>& out_views);
     void getAllViewsSub(QSplitter* splitter, vector<View*>& out_views);
 
-    void storeLayout(ArchivePtr& archive);
-    MappingPtr storeSplitterState(QSplitter* splitter, ArchivePtr& archive);
-    MappingPtr storePaneState(ViewPane* pane, ArchivePtr& archive);
-    void restoreLayout(ArchivePtr& archive);
-    QWidget* restoreSplitterState(const Mapping& state, ViewPane*& out_firstPane, ArchivePtr& archive);
-    ViewPane* restorePaneState(const Mapping& state, ArchivePtr& archive);
+    void storeLayout(Archive* archive);
+    MappingPtr storeSplitterState(QSplitter* splitter, Archive* archive);
+    MappingPtr storePaneState(ViewPane* pane, Archive* archive);
+    void restoreLayout(Archive* archive);
+    QWidget* restoreViewContainer(const Mapping& state, Archive* archive);
+    QWidget* restoreSplitter(const Mapping& state, Archive* archive);
+    ViewPane* restorePane(const Mapping& state, Archive* archive);
     void resetLayout();
 
     void removePaneIfEmpty(ViewPane* pane);
@@ -299,15 +300,10 @@ bool ViewPane::eventFilter(QObject* object, QEvent* event)
 ViewArea::ViewArea(QWidget* parent)
     : QWidget(parent)
 {
+    if(parent == 0){
+        setAttribute(Qt::WA_DeleteOnClose);
+    }
     impl = new ViewAreaImpl(this);
-}
-
-
-ViewArea::ViewArea(View* view)
-{
-    setAttribute(Qt::WA_DeleteOnClose);
-    impl = new ViewAreaImpl(this);
-    impl->setSingleView(view);
 }
 
 
@@ -317,7 +313,6 @@ ViewAreaImpl::ViewAreaImpl(ViewArea* self)
     numViews = 0;
     viewTabsVisible = true;
     isMaximizedBeforeFullScreen = false;
-    isBeforeDoingInitialLayout = true;
     isViewDragging = false;
     draggedView = 0;
     dragSrcPane = 0;
@@ -332,12 +327,15 @@ ViewAreaImpl::ViewAreaImpl(ViewArea* self)
     rubberBand->hide();
 
     topSplitter = 0;
-    needToUpdateDefaultPaneAreas = false;
+    needToUpdateDefaultPaneAreas = true;
+
+    viewAreas.push_back(self);
 }
 
 
 ViewArea::~ViewArea()
 {
+    viewAreas.erase(std::find(viewAreas.begin(), viewAreas.end(), this));
     delete impl;
 }
 
@@ -349,9 +347,15 @@ ViewAreaImpl::~ViewAreaImpl()
 }
 
 
+void ViewArea::setSingleView(View* view)
+{
+    impl->setSingleView(view);
+}
+
+
 void ViewAreaImpl::setSingleView(View* view)
 {
-    //! \todo check if the current viewArea of the view is null
+    clearAllPanes();
 
     viewTabsVisible = false;
     
@@ -367,7 +371,6 @@ void ViewAreaImpl::setSingleView(View* view)
 
     addView(pane, view, true);
 
-    isBeforeDoingInitialLayout = false;
     defaultViewsToShow.reset();
 }
 
@@ -380,10 +383,10 @@ void ViewArea::createDefaultPanes()
 
 void ViewAreaImpl::createDefaultPanes()
 {
-    if(!topSplitter){
-        topSplitter = new QSplitter(self);
-        vbox->addWidget(topSplitter);
-    }
+    clearAllPanes();
+
+    topSplitter = new QSplitter(self);
+    vbox->addWidget(topSplitter);
     topSplitter->setOrientation(Qt::Horizontal);
     
     QSplitter* vSplitter0 = new QSplitter(Qt::Vertical, topSplitter);
@@ -724,9 +727,9 @@ View* ViewAreaImpl::findFirstView(QSplitter* splitter)
 }
 
 
-void ViewArea::setInitialLayout(ArchivePtr archive)
+int ViewArea::numViews() const
 {
-    impl->initialLayoutArchive = archive;
+    return impl->numViews;
 }
 
 
@@ -753,35 +756,78 @@ void ViewArea::keyPressEvent(QKeyEvent* event)
 }
 
 
-void ViewArea::restoreLayout(ArchivePtr archive)
+void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
 {
-    impl->restoreLayout(archive);
+    ViewAreaImpl* mainViewAreaImpl = MainWindow::instance()->viewArea()->impl;
+    
+    if(archive){
+        Listing& layouts = *archive->findListing("viewAreas");
+        if(!layouts.isValid()){
+            // for the compatibility with the older (1.4 or earlier) versions
+            Archive* layoutOfViews = archive->findSubArchive("layoutOfViews");
+            if(layoutOfViews->isValid()){
+                layoutOfViews->inheritSharedInfoFrom(*archive);
+                mainViewAreaImpl->restoreLayout(layoutOfViews);
+            }
+        } else {
+            for(int i=0; i < layouts.size(); ++i){
+                Mapping& layout = *layouts[i].toMapping();
+                Archive* contents = dynamic_cast<Archive*>(layout.get("contents").toMapping());
+                if(contents){
+                    contents->inheritSharedInfoFrom(*archive);
+                    const string type = layout.get("type").toString();
+                    if(type == "embedded"){
+                        mainViewAreaImpl->restoreLayout(contents);
+                    } else if(type == "independent"){
+                        ViewArea* viewWindow = new ViewArea();
+                        viewWindow->impl->restoreLayout(contents);
+                        if(viewWindow->impl->numViews == 0){
+                            delete viewWindow;
+                        } else {
+                            const Listing& geo = *layout.findListing("geometry");
+                            if(geo.isValid() && geo.size() == 4){
+                                viewWindow->setGeometry(QRect(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt()));
+                            }
+                            viewWindow->show();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if(isBeforeDoingInitialLayout){
+        mainViewAreaImpl->resetLayout();
+    }
 }
 
 
-void ViewAreaImpl::restoreLayout(ArchivePtr& archive)
+void ViewArea::restoreLayout(ArchivePtr archive)
+{
+    impl->restoreLayout(archive.get());
+}
+
+
+void ViewAreaImpl::restoreLayout(Archive* archive)
 {
     clearAllPanes();
 
-    ViewPane* firstPane = 0;
+    QWidget* topWidget = restoreViewContainer(*archive, archive);
 
-    QWidget* restoredWidget = restoreSplitterState(*archive, firstPane, archive);
-
-    topSplitter = dynamic_cast<QSplitter*>(restoredWidget);
+    topSplitter = dynamic_cast<QSplitter*>(topWidget);
     
     if(!topSplitter){
         topSplitter = new QSplitter();
-        firstPane = dynamic_cast<ViewPane*>(restoredWidget);
-        if(!firstPane){
-            firstPane = new ViewPane(this);
+        ViewPane* topPane = dynamic_cast<ViewPane*>(topWidget);
+        if(!topPane){
+            topPane = new ViewPane(this);
         }
-        topSplitter->addWidget(firstPane);
+        topSplitter->addWidget(topPane);
     }
     vbox->addWidget(topSplitter);
     
     needToUpdateDefaultPaneAreas = true;
 
-    isBeforeDoingInitialLayout = true;
+    isBeforeDoingInitialLayout = false;
     defaultViewsToShow.reset();
 }
 
@@ -850,9 +896,24 @@ void ViewAreaImpl::getAllViewsSub(QSplitter* splitter, vector<View*>& out_views)
 }
 
 
-QWidget* ViewAreaImpl::restoreSplitterState(const Mapping& state, ViewPane*& out_firstPane, ArchivePtr& archive)
+QWidget* ViewAreaImpl::restoreViewContainer(const Mapping& state, Archive* archive)
 {
-    QWidget* restoredWidget = 0;
+    QWidget* widget = 0;
+    string type;
+    if(state.read("type", type)){
+        if(type == "splitter"){
+            widget = restoreSplitter(state, archive);
+        } else if(type == "pane"){
+            widget = restorePane(state, archive);
+        }
+    }
+    return widget;
+}
+
+
+QWidget* ViewAreaImpl::restoreSplitter(const Mapping& state, Archive* archive)
+{
+    QWidget* widget = 0;
     QWidget* childWidgets[2] = { 0, 0 };
     
     const Listing& children = *state.findListing("children");
@@ -861,32 +922,22 @@ QWidget* ViewAreaImpl::restoreSplitterState(const Mapping& state, ViewPane*& out
         for(int i=0; i < numChildren; ++i){
             if(children[i].isMapping()){
                 const Mapping& childState = *children[i].toMapping();
-                string type;
-                if(childState.read("type", type)){
-                    if(type == "splitter"){
-                        childWidgets[i] = restoreSplitterState(childState, out_firstPane, archive);
-                    } else if(type == "pane"){
-                        ViewPane* pane = restorePaneState(childState, archive);
-                        if(pane){
-                            childWidgets[i] = pane;
-                            if(!out_firstPane){
-                                out_firstPane = pane;
-                            }
-                        }
-                    }
-                }
+                childWidgets[i] = restoreViewContainer(childState, archive);
             }
         }
-
-        if(childWidgets[0] && childWidgets[1]){
-
+        if(!childWidgets[0] || !childWidgets[1]){
+            for(int i=0; i < 2; ++i){
+                if(childWidgets[i]){
+                    widget = childWidgets[i];
+                    break;
+                }
+            }
+        } else {
             QSplitter* splitter = new QSplitter();
-
             string orientation;
             if(state.read("orientation", orientation)){
                 splitter->setOrientation((orientation == "vertical") ? Qt::Vertical : Qt::Horizontal);
             }
-
             splitter->addWidget(childWidgets[0]);
             splitter->addWidget(childWidgets[1]);
 
@@ -901,36 +952,25 @@ QWidget* ViewAreaImpl::restoreSplitterState(const Mapping& state, ViewPane*& out
                 }
                 splitter->setSizes(s);
             }
-            restoredWidget = splitter;
-            
-        } else {
-            for(int i=0; i < 2; ++i){
-                if(childWidgets[i]){
-                    restoredWidget = childWidgets[i];
-                    break;
-                }
-            }
+            widget = splitter;
         }
     }
-
-    return restoredWidget;
+    return widget;
 }
 
 
-ViewPane* ViewAreaImpl::restorePaneState(const Mapping& state, ArchivePtr& archive)
+ViewPane* ViewAreaImpl::restorePane(const Mapping& state, Archive* archive)
 {
     ViewPane* pane = 0;
     const Listing& views = *state.findListing("views");
     
     if(views.isValid() && !views.empty()){
         pane = new ViewPane(this);
-
         int currentId = 0;
         string currentName;
         if(!state.read("current", currentId)){
             state.read("current", currentName);
         }
-        
         for(int i=0; i < views.size(); ++i){
             const ValueNode& node = views[i];
             View* view = 0;
@@ -959,23 +999,56 @@ ViewPane* ViewAreaImpl::restorePaneState(const Mapping& state, ArchivePtr& archi
             pane = 0;
         }
     }
-
     return pane;
+}
+
+
+void ViewArea::storeAllViewAreaLayouts(ArchivePtr archive)
+{
+    ListingPtr layouts = new Listing();
+    for(size_t i=0; i < viewAreas.size(); ++i){
+        ArchivePtr layout = new Archive();
+        layout->inheritSharedInfoFrom(*archive);
+        viewAreas[i]->storeLayout(layout);
+        layouts->append(layout);
+    }
+    if(!layouts->empty()){
+        archive->insert("viewAreas", layouts);
+    }
 }
 
 
 void ViewArea::storeLayout(ArchivePtr archive)
 {
-    impl->storeLayout(archive);
+    impl->storeLayout(archive.get());
 }
 
 
-void ViewAreaImpl::storeLayout(ArchivePtr& archive)
+void ViewAreaImpl::storeLayout(Archive* archive)
 {
     try {
         MappingPtr state = storeSplitterState(topSplitter, archive);
         if(state){
-            archive->insert("layoutOfViews", state);
+            if(!self->isWindow()){
+                archive->write("type", "embedded");
+            } else {
+                archive->write("type", "independent");
+                Listing* geometry = archive->createFlowStyleListing("geometry");
+                const QRect r = self->geometry();
+                geometry->append(r.x());
+                geometry->append(r.y());
+                geometry->append(r.width());
+                geometry->append(r.height());
+                if(self->isFullScreen()){
+                    archive->write("fullScreen", true);
+                    archive->write("maximized", isMaximizedBeforeFullScreen);
+                } else {
+                    archive->write("fullScreen", false);
+                    archive->write("maximized", self->isMaximized());
+                }
+            }
+            archive->write("tabs", viewTabsVisible);
+            archive->insert("contents", state);
         }
     }
     catch(const ValueNode::Exception& ex){
@@ -984,7 +1057,7 @@ void ViewAreaImpl::storeLayout(ArchivePtr& archive)
 }
 
 
-MappingPtr ViewAreaImpl::storeSplitterState(QSplitter* splitter, ArchivePtr& archive)
+MappingPtr ViewAreaImpl::storeSplitterState(QSplitter* splitter, Archive* archive)
 {
     MappingPtr state = new Mapping;
 
@@ -1028,7 +1101,7 @@ MappingPtr ViewAreaImpl::storeSplitterState(QSplitter* splitter, ArchivePtr& arc
 }
 
 
-MappingPtr ViewAreaImpl::storePaneState(ViewPane* pane, ArchivePtr& archive)
+MappingPtr ViewAreaImpl::storePaneState(ViewPane* pane, Archive* archive)
 {
     MappingPtr state = new Mapping();
     
@@ -1050,6 +1123,15 @@ MappingPtr ViewAreaImpl::storePaneState(ViewPane* pane, ArchivePtr& archive)
         state.reset();
     }
     return state;
+}
+
+
+void ViewArea::resetAllViewAreaLayouts()
+{
+    ViewArea* mainViewArea = MainWindow::instance()->viewArea();
+    mainViewArea->impl->resetLayout();
+    
+    //! \todo close all the independent view windows
 }
 
 
@@ -1404,7 +1486,8 @@ void ViewAreaImpl::dragViewOutside(const QPoint& pos)
 
 void ViewAreaImpl::dropViewOutside(const QPoint& pos)
 {
-    ViewArea* viewWindow = new ViewArea(draggedView);
+    ViewArea* viewWindow = new ViewArea();
+    viewWindow->setSingleView(draggedView);
     viewWindow->move(pos);
     viewWindow->resize(draggedViewWindowSize);
     viewWindow->show();
@@ -1415,7 +1498,8 @@ void ViewAreaImpl::separateView(View* view)
 {
     QPoint pos = view->mapToGlobal(QPoint(0, 0));
     removeView(view);
-    ViewArea* viewWindow = new ViewArea(view);
+    ViewArea* viewWindow = new ViewArea();
+    viewWindow->setSingleView(view);
     viewWindow->setGeometry(pos.x(), pos.y(), view->width(), view->height());
     viewWindow->show();
 }    

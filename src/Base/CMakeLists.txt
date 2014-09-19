@@ -128,8 +128,9 @@ set(headers
   MenuManager.h
   Menu.h
   ToolBar.h
-  ViewManager.h
   View.h
+  ViewArea.h
+  ViewManager.h
   GraphWidget.h
   GraphViewBase.h
   ExtensionManager.h

@@ -366,7 +366,7 @@ void ProjectManagerImpl::saveProject(const string& filename)
     }
 
     if(perspectiveCheck->isChecked()){
-        MainWindow::instance()->storeLayout(archive);
+        mainWindow->storeLayout(archive);
         stored = true;
     }
 

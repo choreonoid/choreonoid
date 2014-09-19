@@ -19,9 +19,9 @@ class CNOID_EXPORT ViewArea : public QWidget
 {
 public:
     ViewArea(QWidget* parent = 0);
-    ViewArea(View* view);
     ~ViewArea();
 
+    void setSingleView(View* view);
     void createDefaultPanes();
 
     bool viewTabsVisible() const;
@@ -30,10 +30,15 @@ public:
     bool addView(View* view);
     bool removeView(View* view);
 
-    void resetLayout();
+    int numViews() const;
+
     void storeLayout(ArchivePtr archive);
     void restoreLayout(ArchivePtr archive);
-    void setInitialLayout(ArchivePtr archive);
+    void resetLayout();
+    
+    static void storeAllViewAreaLayouts(ArchivePtr archive);
+    static void restoreAllViewAreaLayouts(ArchivePtr archive);
+    static void resetAllViewAreaLayouts();
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event);

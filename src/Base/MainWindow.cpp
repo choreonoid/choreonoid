@@ -60,25 +60,24 @@ public:
     Action* fullScreenCheck;
 
     void setupMenus(ExtensionManager* ext);
-
     void showFirst();
     void onFullScreenToggled(bool on);
     void resizeEvent(QResizeEvent* event);
-    void keyPressEvent(QKeyEvent* event);
-
     void restoreLayout(ArchivePtr& archive);
     void resetLayout();
     void storeWindowStateConfig();
+    void keyPressEvent(QKeyEvent* event);
 };
 
 }
 
 
-void MainWindow::initialize(const char* appName, ExtensionManager* ext)
+MainWindow* MainWindow::initialize(const char* appName, ExtensionManager* ext)
 {
     if(!mainWindow){
         new MainWindow(appName, ext);
     }
+    return mainWindow;
 }
 
 
@@ -202,6 +201,12 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
 }
 
 
+ToolBarArea* MainWindow::toolBarArea()
+{
+    return impl->toolBarArea;
+}
+
+
 ViewArea* MainWindow::viewArea()
 {
     return impl->viewArea;
@@ -233,7 +238,6 @@ void MainWindow::setInitialLayout(ArchivePtr archive)
     }
     if(impl->isBeforeDoingInitialLayout){
         impl->initialLayoutArchive = archive;
-        impl->viewArea->setInitialLayout(archive);
         impl->toolBarArea->setInitialLayout(archive);
     }
 }
@@ -321,7 +325,6 @@ void MainWindowImpl::resizeEvent(QResizeEvent* event)
         bool isMaximized = self->windowState() & (Qt::WindowMaximized | Qt::WindowFullScreen);
 
         if(!isMaximized || self->isVisible()){
-
             if(!isMaximized){
                 /**
                    This is needed to do the default layout of toolbars correctly
@@ -334,21 +337,75 @@ void MainWindowImpl::resizeEvent(QResizeEvent* event)
                 cout << "MainWindowImpl::resizeEvent(): initializeLayout" << endl;
             }
             
-            if(initialLayoutArchive){
-                restoreLayout(initialLayoutArchive);
-            } else {
-                toolBarArea->doInitialLayout();
-                viewArea->resetLayout();
-            }
+            restoreLayout(initialLayoutArchive);
             initialLayoutArchive = 0;
             isBeforeDoingInitialLayout = false;
         }
-
     } else {
         if(!(self->windowState() &
              (Qt::WindowMinimized | Qt::WindowMaximized | Qt::WindowFullScreen))){ // normal state ?
             normalStateSize = self->size();
         }
+    }
+}
+
+
+void MainWindow::restoreLayout(ArchivePtr archive)
+{
+    impl->restoreLayout(archive);
+}
+
+
+void MainWindowImpl::restoreLayout(ArchivePtr& archive)
+{
+    if(!isBeforeDoingInitialLayout){
+        toolBarArea->restoreLayout(archive);
+    } else {
+        toolBarArea->doInitialLayout();
+    }
+
+    ViewArea::restoreAllViewAreaLayouts(archive);
+}
+
+
+void MainWindowImpl::resetLayout()
+{
+    toolBarArea->resetLayout(config);
+    viewArea->resetLayout();
+}
+
+
+void MainWindow::storeLayout(ArchivePtr archive)
+{
+    try {
+        ViewArea::storeAllViewAreaLayouts(archive);
+        toolBarArea()->storeLayout(archive);
+    }
+    catch(const ValueNode::Exception& ex){
+        std::cout << ex.message() << std::endl;
+    }
+}
+
+
+void MainWindow::storeWindowStateConfig()
+{
+    impl->storeWindowStateConfig();
+}
+
+
+void MainWindowImpl::storeWindowStateConfig()
+{
+    config->write("showViewTabs", showViewTabCheck->isChecked());
+    config->write("fullScreen", self->isFullScreen());
+    config->write("maximized", isMaximized);
+    config->write("width", normalStateSize.width());
+    config->write("height", normalStateSize.height());
+    config->write("storeLastLayout", storeLastLayoutCheck->isChecked());
+    
+    if(storeLastLayoutCheck->isChecked()){
+        toolBarArea->storeLayout(config);
+    } else {
+        toolBarArea->removeLayout(config);
     }
 }
 
@@ -390,75 +447,5 @@ void MainWindowImpl::keyPressEvent(QKeyEvent* event)
     default:
         event->ignore();
         break;
-    }
-}
-
-
-void MainWindowImpl::resetLayout()
-{
-    toolBarArea->resetLayout(config);
-    viewArea->resetLayout();
-}
-
-
-void MainWindow::restoreLayout(ArchivePtr archive)
-{
-    impl->restoreLayout(archive);
-}
-
-
-void MainWindowImpl::restoreLayout(ArchivePtr& archive)
-{
-    if(TRACE_FUNCTIONS){
-        cout << "MainWindowImpl::restoreLayout()" << endl;
-    }
-
-    if(!isBeforeDoingInitialLayout){
-        toolBarArea->restoreLayout(archive);
-    } else {
-        toolBarArea->doInitialLayout();
-    }
-
-    ArchivePtr layoutOfViews = archive->findSubArchive("layoutOfViews");
-    if(layoutOfViews->isValid()){
-        layoutOfViews->inheritSharedInfoFrom(*archive);
-        viewArea->restoreLayout(layoutOfViews);
-    } else if(isBeforeDoingInitialLayout){
-        viewArea->resetLayout();
-    }
-}
-
-
-void MainWindow::storeLayout(ArchivePtr archive)
-{
-    try {
-        impl->viewArea->storeLayout(archive);
-        impl->toolBarArea->storeLayout(archive);
-    }
-    catch(const ValueNode::Exception& ex){
-        cout << ex.message() << endl;
-    }
-}
-
-
-void MainWindow::storeWindowStateConfig()
-{
-    impl->storeWindowStateConfig();
-}
-
-
-void MainWindowImpl::storeWindowStateConfig()
-{
-    config->write("showViewTabs", showViewTabCheck->isChecked());
-    config->write("fullScreen", self->isFullScreen());
-    config->write("maximized", isMaximized);
-    config->write("width", normalStateSize.width());
-    config->write("height", normalStateSize.height());
-    config->write("storeLastLayout", storeLastLayoutCheck->isChecked());
-    
-    if(storeLastLayoutCheck->isChecked()){
-        toolBarArea->storeLayout(config);
-    } else {
-        toolBarArea->removeLayout(config);
     }
 }

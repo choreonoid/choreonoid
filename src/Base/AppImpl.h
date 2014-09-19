@@ -10,6 +10,8 @@
 
 namespace cnoid {
 
+class MainWindow;
+
 class AppImpl : public QObject
 {
     Q_OBJECT
@@ -25,6 +27,7 @@ class AppImpl : public QObject
     int& argc;
     char**& argv;
     ExtensionManager* ext;
+    MainWindow* mainWindow;
     std::string appName;
     std::string vendorName;
     DescriptionDialog* descriptionDialog;
@@ -43,4 +46,5 @@ class AppImpl : public QObject
 private Q_SLOTS:
     void onFocusChanged(QWidget* old, QWidget* now);
 };
+
 }

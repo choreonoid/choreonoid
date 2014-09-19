@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_PROJECT_MANAGER_H_INCLUDED
-#define CNOID_GUIBASE_PROJECT_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_PROJECT_MANAGER_H_INCLUDED
+#define CNOID_BASE_PROJECT_MANAGER_H_INCLUDED
 
 #include "Archive.h"
 #include <string>
@@ -43,6 +43,7 @@ private:
 
     void resetArchivers(const std::string& moduleName);
 };
+
 }
 
 #endif

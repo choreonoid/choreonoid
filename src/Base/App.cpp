@@ -17,7 +17,6 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
-#include "View.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -147,7 +146,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     glfmt.setSwapInterval(glConfig->get("vsync", 0));
     QGLFormat::setDefaultFormat(glfmt);
     
-    MainWindow::initialize(appName, ext);
+    mainWindow = MainWindow::initialize(appName, ext);
+    
     ViewManager::initializeClass(ext);
     
     MessageView::initializeClass(ext);
@@ -197,7 +197,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
 
-    MainWindow::instance()->installEventFilter(this);
+    mainWindow->installEventFilter(this);
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
@@ -261,8 +261,6 @@ int App::exec()
 
 int AppImpl::exec()
 {
-    MainWindow* mainWindow = MainWindow::instance();
-
     processCommandLineOptions();
 
     if(!mainWindow->isVisible()){
@@ -280,6 +278,7 @@ int AppImpl::exec()
     PluginManager::finalize();
     delete ext;
     delete mainWindow;
+    mainWindow = 0;
     
     return result;
 }
@@ -287,7 +286,6 @@ int AppImpl::exec()
 
 bool AppImpl::eventFilter(QObject* watched, QEvent* event)
 {
-    MainWindow* mainWindow = MainWindow::instance();
     if(watched == mainWindow){
         if(event->type() == QEvent::Close){
             sigAboutToQuit_();

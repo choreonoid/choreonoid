@@ -17,7 +17,6 @@ class AppImpl;
 class CNOID_EXPORT App
 {
 public:
-
     /**
        @if jp
        @param appName アプリケーション名
@@ -32,11 +31,9 @@ public:
     int exec();
 
 private:
-
     AppImpl* impl;
 };
 
 }
-
 
 #endif

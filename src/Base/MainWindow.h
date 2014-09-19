@@ -11,6 +11,7 @@
 
 namespace cnoid {
 
+class ToolBarArea;
 class ViewArea;
 class ToolBar;
 class MainWindowImpl;
@@ -19,17 +20,18 @@ class ExtensionManager;
 class CNOID_EXPORT MainWindow : public QMainWindow
 {
 public:
-    static void initialize(const char* appName, ExtensionManager* ext);
+    static MainWindow* initialize(const char* appName, ExtensionManager* ext);
     static MainWindow* instance();
 
     void show();
     void setProjectTitle(const std::string& title);
+    ToolBarArea* toolBarArea();
     ViewArea* viewArea();
     void addToolBar(ToolBar* toolbar);
     void getAllToolBars(std::vector<ToolBar*>& out_toolBars);
     void getVisibleToolBars(std::vector<ToolBar*>& out_toolBars);
-    void storeLayout(ArchivePtr archive);
     void restoreLayout(ArchivePtr archive);
+    void storeLayout(ArchivePtr archive);
     void setInitialLayout(ArchivePtr archive);
 
 protected:
