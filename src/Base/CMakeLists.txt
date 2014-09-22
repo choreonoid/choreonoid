@@ -105,7 +105,6 @@ endif()
 
 set(headers
   App.h
-  AppImpl.h
   MainWindow.h
   Process.h
   Action.h
@@ -192,7 +191,7 @@ endif()
 
 if(NOT QT5)
 QT4_WRAP_CPP(sources
-  AppImpl.h
+  App.h
   Menu.h
   ToolBar.h
   Process.h

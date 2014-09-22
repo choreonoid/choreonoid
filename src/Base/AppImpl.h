@@ -12,9 +12,10 @@ namespace cnoid {
 
 class MainWindow;
 
-class AppImpl : public QObject
+//class AppImpl : public QObject
+class AppImpl
 {
-    Q_OBJECT
+    //Q_OBJECT
 
     friend class App;
     friend class View;
@@ -35,16 +36,16 @@ class AppImpl : public QObject
         
     void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);
     int exec();
+    void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     bool processCommandLineOptions();
-    virtual bool eventFilter(QObject* watched, QEvent* event);
         
     void showInformationDialog();
     void onOpenGLVSyncToggled(bool on);
     static void clearFocusView();
                              
-private Q_SLOTS:
-    void onFocusChanged(QWidget* old, QWidget* now);
+//private Q_SLOTS:
+    //  void onFocusChanged(QWidget* old, QWidget* now);
 };
 
 }

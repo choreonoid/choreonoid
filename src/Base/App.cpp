@@ -3,9 +3,10 @@
 */
 
 #include "App.h"
-#include "AppImpl.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
+#include "ExtensionManager.h"
+#include "OptionManager.h"
 #include "PluginManager.h"
 #include "ItemManager.h"
 #include "ProjectManager.h"
@@ -40,8 +41,10 @@
 #include "MovieGenerator.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
+#include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
+#include <QApplication>
 #include <QTextCodec>
 #include <QGLFormat>
 #include <QTextStream>
@@ -53,8 +56,6 @@
 #ifdef Q_OS_WIN32
 #include <windows.h>
 #endif
-
-#include <iostream>
 
 #include "gettext.h"
 
@@ -79,6 +80,39 @@ BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
     return FALSE;
 }
 #endif
+
+}
+
+
+namespace cnoid {
+
+class AppImpl
+{
+    App* self;
+    QApplication* qapplication;
+    int& argc;
+    char**& argv;
+    ExtensionManager* ext;
+    MainWindow* mainWindow;
+    std::string appName;
+    std::string vendorName;
+    DescriptionDialog* descriptionDialog;
+    bool doQuit;
+        
+    AppImpl(App* self, int& argc, char**& argv);
+    ~AppImpl();
+    void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);
+    int exec();
+    void onMainWindowCloseEvent();
+    void onSigOptionsParsed(boost::program_options::variables_map& v);
+    bool processCommandLineOptions();
+    void showInformationDialog();
+    void onOpenGLVSyncToggled(bool on);
+    static void clearFocusView();
+
+    friend class App;
+    friend class View;
+};
 
 }
 
@@ -110,7 +144,8 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
 
     qapplication = new QApplication(argc, argv);
 
-    connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(onFocusChanged(QWidget*, QWidget*)));
+    self->connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)),
+                  self, SLOT(onFocusChanged(QWidget*, QWidget*)));
 }
 
 
@@ -197,7 +232,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
 
-    mainWindow->installEventFilter(this);
+    mainWindow->installEventFilter(self);
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
@@ -284,28 +319,30 @@ int AppImpl::exec()
 }
 
 
-bool AppImpl::eventFilter(QObject* watched, QEvent* event)
+bool App::eventFilter(QObject* watched, QEvent* event)
 {
-    if(watched == mainWindow){
-        if(event->type() == QEvent::Close){
-            sigAboutToQuit_();
-            mainWindow->storeWindowStateConfig();
-
-            QWidgetList windows = QApplication::topLevelWidgets();
-            for(int i=0; i < windows.size(); ++i){
-                QWidget* window = windows[i];
-                if(window != mainWindow){
-                    window->close();
-                }
-            }
-            
-            event->accept();
-            return true;
-        } 
+    if(watched == impl->mainWindow && event->type() == QEvent::Close){
+        impl->onMainWindowCloseEvent();
+        event->accept();
+        return true;
     }
-                
     return false;
 }
+
+
+void AppImpl::onMainWindowCloseEvent()
+{
+    sigAboutToQuit_();
+    mainWindow->storeWindowStateConfig();
+
+    QWidgetList windows = QApplication::topLevelWidgets();
+    for(int i=0; i < windows.size(); ++i){
+        QWidget* window = windows[i];
+        if(window != mainWindow){
+            window->close();
+        }
+    }
+}    
 
 
 SignalProxy<void()> cnoid::sigAboutToQuit()
@@ -362,7 +399,7 @@ void AppImpl::onOpenGLVSyncToggled(bool on)
 }
 
 
-void AppImpl::onFocusChanged(QWidget* old, QWidget* now)
+void App::onFocusChanged(QWidget* old, QWidget* now)
 {
     while(now){
         View* view = dynamic_cast<View*>(now);
