@@ -19,6 +19,7 @@
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <bitset>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -772,6 +773,7 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
             }
         } else {
             QDesktopWidget* desktop = QApplication::desktop();
+            const int numScreens = desktop->screenCount();
             
             for(int i=0; i < layouts.size(); ++i){
                 Mapping& layout = *layouts[i].toMapping();
@@ -795,7 +797,14 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
                         } else {
                             const Listing& geo = *layout.findListing("geometry");
                             if(geo.isValid() && geo.size() == 4){
-                                const QRect s = desktop->screenGeometry(layout.get("screen", 0));
+                                // -1 means the primary screen
+                                int screen = -1;
+                                if(layout.read("screen", screen)){
+                                    if(screen >= numScreens){
+                                        screen = -1;
+                                    }
+                                }
+                                const QRect s = desktop->screenGeometry(screen);
                                 const QRect r(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt());
                                 viewWindow->setGeometry(r.translated(s.x(), s.y()));
                             }
@@ -1047,6 +1056,7 @@ void ViewArea::storeLayout(ArchivePtr archive)
 void ViewAreaImpl::storeLayout(Archive* archive)
 {
     QDesktopWidget* desktop = QApplication::desktop();
+    const int primaryScreen = desktop->primaryScreen();
     
     try {
         MappingPtr state = storeSplitterState(topSplitter, archive);
@@ -1056,7 +1066,9 @@ void ViewAreaImpl::storeLayout(Archive* archive)
             } else {
                 archive->write("type", "independent");
                 const int screen = desktop->screenNumber(self->pos());
-                archive->write("screen", screen);
+                if(screen != primaryScreen){
+                    archive->write("screen", screen);
+                }
                 const QRect s = desktop->screenGeometry(screen);
                 const QRect r = self->geometry().translated(-s.x(), -s.y());
                 Listing* geometry = archive->createFlowStyleListing("geometry");
