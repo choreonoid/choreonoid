@@ -5,8 +5,8 @@
 #include "View.h"
 #include "ViewArea.h"
 #include "ViewManager.h"
+#include "App.h"
 #include "AppConfig.h"
-#include "AppImpl.h"
 #include <QLayout>
 #include <QKeyEvent>
 #include <QTabWidget>
@@ -37,7 +37,7 @@ View::~View()
 
     View* focusView = lastFocusView();
     if(this == focusView){
-        AppImpl::clearFocusView();
+        App::clearFocusView();
     }
 }
 

@@ -108,7 +108,6 @@ class AppImpl
     bool processCommandLineOptions();
     void showInformationDialog();
     void onOpenGLVSyncToggled(bool on);
-    static void clearFocusView();
 
     friend class App;
     friend class View;
@@ -429,7 +428,7 @@ SignalProxy<void(View*)> View::sigFocusChanged()
    This function is called by a View oject when the object to delete
    is the current focus view.
 */
-void AppImpl::clearFocusView()
+void App::clearFocusView()
 {
     if(lastFocusView_){
         lastFocusView_ = 0;

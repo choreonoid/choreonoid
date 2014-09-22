@@ -32,6 +32,8 @@ public:
 
     int exec();
 
+    static void clearFocusView();
+
     virtual bool eventFilter(QObject* watched, QEvent* event);
 
 private:
