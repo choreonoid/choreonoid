@@ -356,6 +356,8 @@ void Item::detachFromParentItemSub(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoving(this, isMoving);
     }
 
+    addToItemsToEmitSigSubTreeChanged();
+
     if(parent_){
         if(prevItem_){
             prevItem_->nextItem_ = nextItem_;
@@ -384,7 +386,6 @@ void Item::detachFromParentItemSub(bool isMoving)
             emitSigDetachedFromRootForSubTree();
         }
     }
-    addToItemsToEmitSigSubTreeChanged();
     if(!isMoving){
         emitSigSubTreeChanged();
     }
