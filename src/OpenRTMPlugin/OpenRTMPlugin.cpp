@@ -94,9 +94,9 @@ public:
         };
 
 #ifdef Q_OS_WIN32
-        int numArgs = 9;
+        int numArgs = 11;
 #else
-        int numArgs = 7;
+        int numArgs = 9;
 #endif
         bool FORCE_DISABLE_LOG = true;
         if(FORCE_DISABLE_LOG){
