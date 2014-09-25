@@ -51,8 +51,7 @@ void PythonSimScriptItem::onDisconnectedFromRoot()
 
 bool PythonSimScriptItem::setScriptFilename(const std::string& filename)
 {
-    impl->setScriptFilename(filename);
-    return true;
+    return impl->setScriptFilename(filename);
 }
 
 
