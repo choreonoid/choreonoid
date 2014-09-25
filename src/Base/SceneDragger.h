@@ -120,6 +120,7 @@ public:
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
     void setRadius(double r, double translationAxisRatio = 2.0f);
+    void adjustSize();
     void setContainerMode(bool on);
     bool isContainerMode() const;
     void setDraggerAlwaysShown(bool on);
