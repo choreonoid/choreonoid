@@ -95,8 +95,6 @@ SceneBar::SceneBar()
 SceneBarImpl::SceneBarImpl(SceneBar* self)
     : self(self)
 {
-    using boost::bind;
-
     self->setVisibleByDefault(true);
     
     self->setEnabled(false);
@@ -106,38 +104,38 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
     editModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/sceneedit.png"), _("Switch to the edit mode"));
     editModeToggle->sigToggled().connect(
-        bind(&SceneBarImpl::onEditModeButtonToggled, this, _1));
+        boost::bind(&SceneBarImpl::onEditModeButtonToggled, this, _1));
 
     firstPersonModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/walkthrough.png"), _("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect(
-        bind(&SceneBarImpl::onFirstPersonModeButtonToggled, this, _1));
+        boost::bind(&SceneBarImpl::onFirstPersonModeButtonToggled, this, _1));
 
     cameraCombo = new ComboBox();
     cameraCombo->setToolTip(_("Select a camera"));
     cameraCombo->setMinimumContentsLength(1);
     cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     cameraCombo->sigCurrentIndexChanged().connect(
-        bind(&SceneBarImpl::onCameraComboCurrentIndexChanged, this, _1));
+        boost::bind(&SceneBarImpl::onCameraComboCurrentIndexChanged, this, _1));
     self->addWidget(cameraCombo);
 
     self->addButton(QIcon(":/Base/icons/viewfitting.png"), _("Move the camera to look at the objects"))
-        ->sigClicked().connect(bind(&SceneWidget::viewAll, boost::ref(targetSceneWidget)));
+        ->sigClicked().connect(boost::bind(&SceneWidget::viewAll, boost::ref(targetSceneWidget)));
 
     collisionLineToggle = self->addToggleButton(
         QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
     collisionLineToggle->sigToggled().connect(
-        bind(&SceneBarImpl::onCollisionLineButtonToggled, this, _1));
+        boost::bind(&SceneBarImpl::onCollisionLineButtonToggled, this, _1));
     
     wireframeToggle = self->addToggleButton(
         QIcon(":/Base/icons/wireframe.png"), _("Toggle the wireframe mode"));
     wireframeToggle->sigToggled().connect(
-        bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
+        boost::bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
 
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the dialog to setup scene rendering"))
-        ->sigClicked().connect(bind(&SceneWidget::showSetupDialog, boost::ref(targetSceneWidget)));
+        ->sigClicked().connect(boost::bind(&SceneWidget::showSetupDialog, boost::ref(targetSceneWidget)));
 
-    SceneWidget::sigSceneWidgetCreated().connect(bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
+    SceneWidget::sigSceneWidgetCreated().connect(boost::bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
 }
 
 

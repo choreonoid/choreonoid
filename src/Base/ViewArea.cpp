@@ -51,6 +51,7 @@ public:
     void makeDirect();
 
     QTabBar* tabBar() { return tabWidget->tabBar(); }
+    const QTabBar* tabBar() const { return tabWidget->tabBar(); }
     int currentIndex() const {
         return directView ? 0 : tabWidget->currentIndex();
     }
@@ -77,6 +78,14 @@ public:
     }
     
     virtual bool eventFilter(QObject* object, QEvent* event);
+
+    virtual QSize minimumSizeHint () const {
+        QSize s = QWidget::minimumSizeHint();
+        if(!tabBar()->isVisible()){
+            s.rheight() -= tabBar()->minimumSizeHint().height();
+        }
+        return s;
+    }
 
     TabWidget* tabWidget;
     QVBoxLayout* vbox;
