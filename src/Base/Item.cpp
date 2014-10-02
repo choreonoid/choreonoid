@@ -588,7 +588,7 @@ ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
 */
 ItemPtr Item::doDuplicate() const
 {
-    return new Item(*this);
+    return 0;
 }
 
 
