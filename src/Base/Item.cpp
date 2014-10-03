@@ -81,6 +81,7 @@ Item::~Item()
     if(TRACE_FUNCTIONS){
         cout << "Item::~Item() of " << name_ << endl;
     }
+    sigSubTreeChanged_.disconnect_all_slots();
 
     Item* child = childItem();
     while(child){
@@ -356,9 +357,9 @@ void Item::detachFromParentItemSub(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoving(this, isMoving);
     }
 
-    addToItemsToEmitSigSubTreeChanged();
 
     if(parent_){
+        parent_->addToItemsToEmitSigSubTreeChanged();
         if(prevItem_){
             prevItem_->nextItem_ = nextItem_;
         } else {

@@ -19,7 +19,6 @@ class MessageView;
 class CNOID_EXPORT BodyBar : public ToolBar
 {
 public:
-
     static BodyBar* instance();
 
     virtual ~BodyBar();
