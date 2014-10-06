@@ -20,6 +20,19 @@ struct SubMass
     }
 };
 
+struct SubMassInertia
+{
+    double m;
+    Vector3 mwc;
+    Matrix3d Iw;
+    SubMassInertia& operator+=(const SubMassInertia& rhs){
+        m += rhs.m;
+        mwc += rhs.mwc;
+        Iw += rhs.Iw;
+			  return *this;
+    }
+};
+
 void calcSubMass(Link* link, vector<SubMass>& subMasses)
 {
     SubMass& sub = subMasses[link->index()];
@@ -33,6 +46,29 @@ void calcSubMass(Link* link, vector<SubMass>& subMasses)
         sub.mwc += childSub.mwc;
     }
 }
+
+void calcSubMassInertia(Link* link, std::vector<SubMassInertia>& subMassInertias)
+{
+  Matrix3d R = link->R();
+
+  SubMassInertia& sub = subMassInertias[link->index()];
+  sub.m = link->m();
+  sub.mwc = link->m() * link->wc();
+
+  for(Link* child = link->child(); child; child = child->sibling()){
+    calcSubMassInertia(child, subMassInertias);
+    SubMassInertia& childSub = subMassInertias[child->index()];
+    sub.m += childSub.m;
+    sub.mwc += childSub.mwc;
+  }
+
+  sub.Iw = R * link->I() * R.transpose() + link->m() * D( link->wc() - sub.mwc/sub.m );
+  for(Link* child = link->child(); child; child = child->sibling()){
+    SubMassInertia& childSub = subMassInertias[child->index()];
+    sub.Iw += childSub.Iw + childSub.m * D( childSub.mwc/childSub.m - sub.mwc/sub.m );
+  }
+}
+
 }
 
 namespace cnoid {
