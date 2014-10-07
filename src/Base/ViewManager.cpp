@@ -5,6 +5,7 @@
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "MainWindow.h"
+#include "ViewArea.h"
 #include "MessageView.h"
 #include "Dialog.h"
 #include "Archive.h"
@@ -111,7 +112,7 @@ public:
             view->setName(defaultInstanceName);
             view->setWindowTitle(translatedDefaultInstanceName.c_str());
             if(doMountCreatedView){
-                mainWindow->addView(view);
+                mainWindow->viewArea()->addView(view);
             }
         }
         return instances.front()->view;
@@ -144,7 +145,7 @@ public:
         if(!view){
             view = createView(name);
             if(doMountCreatedView){
-                mainWindow->addView(view);
+                mainWindow->viewArea()->addView(view);
             }
         }
         return view;
@@ -265,10 +266,12 @@ void onShowViewToggled(ViewInfoPtr viewInfo, View* view, bool on)
         if(!view){
             view = viewInfo->getOrCreateView();
         }
-        mainWindow->addView(view);
+        mainWindow->viewArea()->addView(view);
         view->bringToFront();
     } else {
-        mainWindow->removeView(view);
+        if(view->viewArea()){
+            view->viewArea()->removeView(view);
+        }
     }
 }
 
@@ -282,7 +285,7 @@ void onCreateViewTriggered(ViewInfoPtr viewInfo)
             showWarningDialog(_("Please specify the name of the new view."));
         } else {
             View* view = viewInfo->createView(name);
-            mainWindow->addView(view);
+            mainWindow->viewArea()->addView(view);
             view->bringToFront();
             break;
         }
@@ -301,7 +304,7 @@ void deleteAllInvisibleViews()
         InstanceInfoList::iterator q = info.instances.begin();
         while(q != info.instances.end()){
             InstanceInfoPtr& instance = (*q++);
-            if(!instance->view->isManagedByMainWindow()){
+            if(!instance->view->viewArea()){
                 instance->remove();
             }
         }
@@ -354,7 +357,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         Action* action = new Action(menu);
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
-                        action->setChecked(view->isManagedByMainWindow());
+                        action->setChecked(view->viewArea());
                         action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
                         menu->addAction(action);
                     }
@@ -471,7 +474,7 @@ View* ViewManager::registerClassSub
 
     if(itype == ViewManager::SINGLE_DEFAULT || itype == ViewManager::MULTI_DEFAULT){
         View* view = info->getOrCreateView();
-        mainWindow->addView(view);
+        mainWindow->viewArea()->addView(view);
         return view;
     }
     return 0;
@@ -618,7 +621,7 @@ ArchivePtr storeView(Archive& parentArchive, const string& moduleName, ViewInfo&
         archive->write("plugin", moduleName);
         archive->write("class", viewInfo.className_);
 
-        if(view->isManagedByMainWindow()){
+        if(view->viewArea()){
             archive->write("mounted", true);
         }
 
@@ -769,7 +772,7 @@ ViewManager::ViewStateInfo ViewManager::restoreViews(ArchivePtr archive, const s
                         }
 
                         if(viewArchive->get("mounted", false)){
-                            mainWindow->addView(view);
+                            mainWindow->viewArea()->addView(view);
                         }
                     }
                 }

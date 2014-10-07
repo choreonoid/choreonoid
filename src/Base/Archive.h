@@ -93,6 +93,7 @@ private:
     friend class ViewManager;
     friend class ProjectManagerImpl;
 };
+
 }
 
 #endif

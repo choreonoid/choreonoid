@@ -3,9 +3,10 @@
 */
 
 #include "App.h"
-#include "AppImpl.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
+#include "ExtensionManager.h"
+#include "OptionManager.h"
 #include "PluginManager.h"
 #include "ItemManager.h"
 #include "ProjectManager.h"
@@ -17,7 +18,6 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
-#include "View.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -41,8 +41,10 @@
 #include "MovieGenerator.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
+#include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
+#include <QApplication>
 #include <QTextCodec>
 #include <QGLFormat>
 #include <QTextStream>
@@ -54,8 +56,6 @@
 #ifdef Q_OS_WIN32
 #include <windows.h>
 #endif
-
-#include <iostream>
 
 #include "gettext.h"
 
@@ -80,6 +80,38 @@ BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
     return FALSE;
 }
 #endif
+
+}
+
+
+namespace cnoid {
+
+class AppImpl
+{
+    App* self;
+    QApplication* qapplication;
+    int& argc;
+    char**& argv;
+    ExtensionManager* ext;
+    MainWindow* mainWindow;
+    std::string appName;
+    std::string vendorName;
+    DescriptionDialog* descriptionDialog;
+    bool doQuit;
+        
+    AppImpl(App* self, int& argc, char**& argv);
+    ~AppImpl();
+    void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);
+    int exec();
+    void onMainWindowCloseEvent();
+    void onSigOptionsParsed(boost::program_options::variables_map& v);
+    bool processCommandLineOptions();
+    void showInformationDialog();
+    void onOpenGLVSyncToggled(bool on);
+
+    friend class App;
+    friend class View;
+};
 
 }
 
@@ -111,7 +143,8 @@ AppImpl::AppImpl(App* self, int& argc, char**& argv)
 
     qapplication = new QApplication(argc, argv);
 
-    connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(onFocusChanged(QWidget*, QWidget*)));
+    self->connect(qapplication, SIGNAL(focusChanged(QWidget*, QWidget*)),
+                  self, SLOT(onFocusChanged(QWidget*, QWidget*)));
 }
 
 
@@ -147,7 +180,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     glfmt.setSwapInterval(glConfig->get("vsync", 0));
     QGLFormat::setDefaultFormat(glfmt);
     
-    MainWindow::initialize(appName, ext);
+    mainWindow = MainWindow::initialize(appName, ext);
+    
     ViewManager::initializeClass(ext);
     
     MessageView::initializeClass(ext);
@@ -197,7 +231,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
 
-    MainWindow::instance()->installEventFilter(this);
+    mainWindow->installEventFilter(self);
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
@@ -261,8 +295,6 @@ int App::exec()
 
 int AppImpl::exec()
 {
-    MainWindow* mainWindow = MainWindow::instance();
-
     processCommandLineOptions();
 
     if(!mainWindow->isVisible()){
@@ -280,25 +312,36 @@ int AppImpl::exec()
     PluginManager::finalize();
     delete ext;
     delete mainWindow;
+    mainWindow = 0;
     
     return result;
 }
 
 
-bool AppImpl::eventFilter(QObject* watched, QEvent* event)
+bool App::eventFilter(QObject* watched, QEvent* event)
 {
-    MainWindow* mainWindow = MainWindow::instance();
-    if(watched == mainWindow){
-        if(event->type() == QEvent::Close){
-            sigAboutToQuit_();
-            mainWindow->storeWindowStateConfig();
-            event->accept();
-            return true;
-        } 
+    if(watched == impl->mainWindow && event->type() == QEvent::Close){
+        impl->onMainWindowCloseEvent();
+        event->accept();
+        return true;
     }
-                
     return false;
 }
+
+
+void AppImpl::onMainWindowCloseEvent()
+{
+    sigAboutToQuit_();
+    mainWindow->storeWindowStateConfig();
+
+    QWidgetList windows = QApplication::topLevelWidgets();
+    for(int i=0; i < windows.size(); ++i){
+        QWidget* window = windows[i];
+        if(window != mainWindow){
+            window->close();
+        }
+    }
+}    
 
 
 SignalProxy<void()> cnoid::sigAboutToQuit()
@@ -355,7 +398,7 @@ void AppImpl::onOpenGLVSyncToggled(bool on)
 }
 
 
-void AppImpl::onFocusChanged(QWidget* old, QWidget* now)
+void App::onFocusChanged(QWidget* old, QWidget* now)
 {
     while(now){
         View* view = dynamic_cast<View*>(now);
@@ -385,7 +428,7 @@ SignalProxy<void(View*)> View::sigFocusChanged()
    This function is called by a View oject when the object to delete
    is the current focus view.
 */
-void AppImpl::clearFocusView()
+void App::clearFocusView()
 {
     if(lastFocusView_){
         lastFocusView_ = 0;

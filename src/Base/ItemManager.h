@@ -47,15 +47,9 @@ public:
 
 private:
 
-    class FactoryBase {
+    template <class ItemType> class Factory {
     public:
-        virtual ItemPtr create() = 0;
-        virtual ~FactoryBase() { }
-    };
-
-    template <class ItemType> class Factory : public FactoryBase {
-    public:
-        virtual ItemPtr create() { return new ItemType(); }
+        virtual Item* operator()() { return new ItemType(); }
     };
 
     class CreationPanelFilterBase
@@ -84,19 +78,6 @@ private:
     };
     typedef boost::shared_ptr<OverwritingCheckFunctionBase> OverwritingCheckFunctionBasePtr;
         
-
-    void registerClassSub(FactoryBase* factory, const std::string& typeId, const std::string& className);
-        
-    void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
-
-    void addCreationPanelFilterSub(
-        const std::string& typeId, CreationPanelFilterBasePtr filter, bool afterInitializionByPanels);
-
-    void addLoaderSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
-                      const std::string& extensions, FileFunctionBasePtr function, int priority);
-
-    void addSaverSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
-                     const std::string& extensions, FileFunctionBasePtr function, int priority);
 
 public:
 
@@ -129,16 +110,26 @@ public:
     };
 
     template <class ItemType> ItemManager& registerClass(const std::string& className) {
-        registerClassSub(new Factory<ItemType>(), typeid(ItemType).name(), className);
+        registerClassSub(Factory<ItemType>(), 0, typeid(ItemType).name(), className);
         return *this;
     }
 
+    //! This function registers a singleton item class
+    template <class ItemType> ItemManager& registerClass(const std::string& className, ItemType* singletonInstance){
+        registerClassSub(0, singletonInstance, typeid(ItemType).name(), className);
+        return *this;
+    }
+    
     template <class ItemType, class BaseType>
         void registerDerivedClass(const std::string& className) {
         // registerClassSub(new Factory<ItemType>(), typeid(ItemType).name(), className);
     }
 
     static bool getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className);
+
+    template <class ItemType> static ItemType* singletonInstance() {
+        return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType).name()));
+    }
 
     static ItemPtr create(const std::string& moduleName, const std::string& itemClassName);
 
@@ -194,6 +185,18 @@ public:
 
 private:
         
+    void registerClassSub(
+        boost::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
+    void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
+    void addCreationPanelFilterSub(
+        const std::string& typeId, CreationPanelFilterBasePtr filter, bool afterInitializionByPanels);
+    void addLoaderSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
+                      const std::string& extensions, FileFunctionBasePtr function, int priority);
+    void addSaverSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
+                     const std::string& extensions, FileFunctionBasePtr function, int priority);
+
+    static Item* getSingletonInstance(const std::string& typeId);
+
     // The following static functions are called from functions in the Item class
     static bool load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId);
     static bool save(Item* item, const std::string& filename, const std::string& formatId);

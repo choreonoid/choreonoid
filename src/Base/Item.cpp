@@ -81,6 +81,7 @@ Item::~Item()
     if(TRACE_FUNCTIONS){
         cout << "Item::~Item() of " << name_ << endl;
     }
+    sigSubTreeChanged_.disconnect_all_slots();
 
     Item* child = childItem();
     while(child){
@@ -356,7 +357,9 @@ void Item::detachFromParentItemSub(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoving(this, isMoving);
     }
 
+
     if(parent_){
+        parent_->addToItemsToEmitSigSubTreeChanged();
         if(prevItem_){
             prevItem_->nextItem_ = nextItem_;
         } else {
@@ -384,7 +387,6 @@ void Item::detachFromParentItemSub(bool isMoving)
             emitSigDetachedFromRootForSubTree();
         }
     }
-    addToItemsToEmitSigSubTreeChanged();
     if(!isMoving){
         emitSigSubTreeChanged();
     }
@@ -587,7 +589,7 @@ ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
 */
 ItemPtr Item::doDuplicate() const
 {
-    return new Item(*this);
+    return 0;
 }
 
 

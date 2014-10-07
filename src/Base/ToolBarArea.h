@@ -27,10 +27,11 @@ public:
     void getVisibleToolBars(std::vector<ToolBar*>& out_toolBars);
 
     void setInitialLayout(MappingPtr archive);
-    void storeLayout(MappingPtr archive);
+    void doInitialLayout();
     void restoreLayout(MappingPtr archive);
     void resetLayout(MappingPtr archive);
     void removeLayout(MappingPtr archive);
+    void storeLayout(MappingPtr archive);
 
     bool addToolBar(ToolBar* toolBar);
     void removeToolBar(ToolBar* toolBar);
@@ -49,9 +50,6 @@ protected:
 
 private:
     ToolBarAreaImpl* impl;
-
-    void doInitialLayout(); // called from MainWindowImpl;
-
     friend class MainWindowImpl;
 };
 

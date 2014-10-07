@@ -524,6 +524,21 @@ void PositionDragger::setRadius(double r, double translationAxisRatio)
 }
 
 
+void PositionDragger::adjustSize()
+{
+    BoundingBox bb;
+    for(int i=0; i < numChildren(); ++i){
+        SgNode* node = child(i);
+        if(node != translationDragger_ && node != rotationDragger_){
+            bb.expandBy(node->boundingBox());
+        }
+    }
+    if(!bb.empty()){
+        setRadius(bb.boundingSphereRadius());
+    }
+}
+
+
 void PositionDragger::setContainerMode(bool on)
 {
     isContainerMode_ = on;

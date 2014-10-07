@@ -1682,13 +1682,20 @@ bool SimulatorItem::restore(const Archive& archive)
 {
     bool boolValue;
     string symbol;
-    if(archive.read("recording", symbol)){
-        impl->recordingMode.select(symbol);
-    } else if(archive.read("recording", boolValue)){ // for the compatibility with older version
-        impl->recordingMode.select(SimulatorItem::RECORD_FULL);
-    }
     if(archive.read("timeRangeMode", symbol)){
         impl->timeRangeMode.select(symbol);
+    }
+    if(archive.read("recording", symbol)){
+        impl->recordingMode.select(symbol);
+    }
+    // for the compatibility with older version
+    else if(archive.read("recording", boolValue)){ 
+        impl->recordingMode.select(SimulatorItem::RECORD_FULL);
+    } else if(archive.read("recordingMode", symbol)){
+        if(symbol == "Direct"){
+            impl->recordingMode.select(SimulatorItem::RECORD_NONE);
+            impl->timeRangeMode.select(SimulatorItem::UNLIMITED);
+        }
     }
     archive.read("realtimeSync", impl->isRealtimeSyncMode);
     archive.read("onlyActiveControlPeriod", impl->isActiveControlPeriodOnlyMode);

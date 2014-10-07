@@ -43,11 +43,11 @@ public:
 
     typedef list<ItemManager::CreationPanelFilterBasePtr> CreationPanelFilterList;
     typedef set< pair<string, ItemManager::CreationPanelFilterBasePtr> > CreationPanelFilterSet;
-
+    
     class CreationPanelBase : public QDialog
     {
     public:
-        CreationPanelBase(const QString& title, ItemPtr protoItem);
+        CreationPanelBase(const QString& title, ItemPtr protoItem, bool isSingleton);
         void addPanel(ItemCreationPanel* panel);
         ItemPtr createItem(ItemPtr parentItem);
         CreationPanelFilterList preFilters;
@@ -55,27 +55,31 @@ public:
     private:
         QVBoxLayout* panelLayout;
         ItemPtr protoItem;
+        bool isSingleton;
     };
-
+    
     struct Saver;
     typedef boost::shared_ptr<Saver> SaverPtr;
-
+    
     struct Loader;
     typedef boost::shared_ptr<Loader> LoaderPtr;
-
+    
     struct ClassInfo
     {
-        ClassInfo() { factory = 0; creationPanelBase = 0; }
-        ~ClassInfo() { delete factory; delete creationPanelBase; }
+        ClassInfo() { creationPanelBase = 0; }
+        ~ClassInfo() { delete creationPanelBase; }
         string moduleName;
         string className;
-        ItemManager::FactoryBase* factory;
+        string name; // without the 'Item' suffix
+        boost::function<Item*()> factory;
         CreationPanelBase* creationPanelBase;
         list<LoaderPtr> loaders;
         list<SaverPtr> savers;
+        bool isSingleton;
+        ItemPtr singletonInstance;
     };
     typedef boost::shared_ptr<ClassInfo> ClassInfoPtr;
-
+    
     typedef map<string, ClassInfoPtr> ClassInfoMap;
     
     class Loader : public QObject
@@ -116,11 +120,9 @@ public:
 
     void detachManagedTypeItems(Item* parentItem);
         
-    void registerClass(ItemManager::FactoryBase* factory, const string& typeId, const string& className);
-    static bool getClassIdentifier(ItemPtr item, string& out_moduleName, string& out_className);
-
-    static ItemPtr create(const string& moduleName, const string& className);
-
+    void registerClass(
+        boost::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className);
+    
     void addCreationPanel(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilter(
         const std::string& typeId, ItemManager::CreationPanelFilterBasePtr filter, bool afterInitializionByPanels);
@@ -394,13 +396,15 @@ void ItemManager::bindTextDomain(const std::string& domain)
 }
 
 
-void ItemManager::registerClassSub(FactoryBase* factory, const std::string& typeId, const std::string& className)
+void ItemManager::registerClassSub
+(boost::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className)
 {
-    impl->registerClass(factory, typeId, className);
+    impl->registerClass(factory, singletonInstance, typeId, className);
 }
 
 
-void ItemManagerImpl::registerClass(ItemManager::FactoryBase* factory, const string& typeId, const string& className)
+void ItemManagerImpl::registerClass
+(boost::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className)
 {
     pair<ClassInfoMap::iterator, bool> ret = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
     ClassInfoPtr& info = ret.first->second;
@@ -408,10 +412,24 @@ void ItemManagerImpl::registerClass(ItemManager::FactoryBase* factory, const str
         info = boost::make_shared<ClassInfo>();
         info->moduleName = moduleName;
         info->className = className;
-        info->factory = factory;
+
+        // set the class name without the "Item" suffix
+        QString name(className.c_str());
+        name.replace(QRegExp("Item$"), "");
+        info->name = name.toStdString();
+    }
+
+    if(singletonInstance){
+        if(singletonInstance->name().empty()){
+            singletonInstance->setName(info->name);
+        }
+        info->singletonInstance = singletonInstance;
+        info->isSingleton = true;
     } else {
         info->factory = factory;
+        info->isSingleton = false;
     }
+
     registeredTypeIds.insert(typeId);
     typeIdToClassInfoMap[typeId] = info;
 }
@@ -419,17 +437,11 @@ void ItemManagerImpl::registerClass(ItemManager::FactoryBase* factory, const str
 
 bool ItemManager::getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className)
 {
-    return ItemManagerImpl::getClassIdentifier(item, out_moduleName, out_className);
-}
-
-
-bool ItemManagerImpl::getClassIdentifier(ItemPtr item, string& out_moduleName, string& out_className)
-{
     bool result;
 
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeid(*item).name());
     if(p != typeIdToClassInfoMap.end()){
-        ClassInfoPtr& info = p->second;
+        ItemManagerImpl::ClassInfoPtr& info = p->second;
         out_moduleName = info->moduleName;
         out_className = info->className;
         result = true;
@@ -443,13 +455,20 @@ bool ItemManagerImpl::getClassIdentifier(ItemPtr item, string& out_moduleName, s
 }
 
 
-ItemPtr ItemManager::create(const std::string& moduleName, const std::string& className)
+Item* ItemManager::getSingletonInstance(const std::string& typeId)
 {
-    return ItemManagerImpl::create(moduleName, className);
+    ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
+    if(p != typeIdToClassInfoMap.end()){
+        ItemManagerImpl::ClassInfoPtr& info = p->second;
+        if(info->isSingleton){
+            return info->singletonInstance;
+        }
+    }
+    return 0;
 }
 
 
-ItemPtr ItemManagerImpl::create(const string& moduleName, const string& className)
+ItemPtr ItemManager::create(const std::string& moduleName, const std::string& className)
 {
     ItemPtr item;
 
@@ -458,10 +477,17 @@ ItemPtr ItemManagerImpl::create(const string& moduleName, const string& classNam
         ClassInfoMap& classNameToClassInfoMap = p->second->classNameToClassInfoMap;
         ClassInfoMap::iterator q = classNameToClassInfoMap.find(className);
         if(q != classNameToClassInfoMap.end()){
-            ClassInfoPtr& info = q->second;
-            ItemManager::FactoryBase* factory = info->factory;
-            if(factory){
-                item = factory->create();
+            ItemManagerImpl::ClassInfoPtr& info = q->second;
+            if(info->isSingleton){
+                if(info->singletonInstance->parentItem()){
+                    //! \todo put a warning message to notify that the instance of this singleton class has been in the item tree
+                } else {
+                    item = info->singletonInstance;
+                }
+            } else {
+                if(info->factory){
+                    item = info->factory();
+                }
             }
         }
     }
@@ -519,19 +545,17 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
         if(!base){
             QString className(info->className.c_str());
             QString translatedClassName(dgettext(textDomain.c_str(), info->className.c_str()));
-
-            // set the class name without the "Item" suffix
-            QString name(className);
-            name.replace(QRegExp("Item$"), "");
             QString translatedName(translatedClassName);
             translatedName.replace(QRegExp(_("Item$")), "");
-            
             QString title(QString(_("Create New %1")).arg(translatedClassName));
-            
-            ItemPtr protoItem = info->factory->create();
-            protoItem->setName(name.toStdString());
-            
-            base = new CreationPanelBase(title, protoItem);
+            ItemPtr protoItem;
+            if(info->isSingleton){
+                protoItem = info->singletonInstance;
+            } else {
+                protoItem = info->factory();
+                protoItem->setName(info->name);
+            }
+            base = new CreationPanelBase(title, protoItem, info->isSingleton);
             base->hide();
             menuManager.setPath("/File/New ...").addItem(translatedName)
                 ->sigTriggered().connect(boost::bind(ItemManagerImpl::onNewItemActivated, base));
@@ -561,9 +585,10 @@ void ItemManagerImpl::onNewItemActivated(CreationPanelBase* base)
 }
 
 
-ItemManagerImpl::CreationPanelBase::CreationPanelBase(const QString& title, ItemPtr protoItem)
+ItemManagerImpl::CreationPanelBase::CreationPanelBase(const QString& title, ItemPtr protoItem, bool isSingleton)
     : QDialog(MainWindow::instance()),
-      protoItem(protoItem)
+      protoItem(protoItem),
+      isSingleton(isSingleton)
 {
     setWindowTitle(title);
     
@@ -594,6 +619,12 @@ void ItemManagerImpl::CreationPanelBase::addPanel(ItemCreationPanel* panel)
 
 ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
 {
+    if(isSingleton){
+        if(protoItem->parentItem()){
+            return 0;
+        }
+    }
+            
     vector<ItemCreationPanel*> panels;
 
     int n = panelLayout->count();
@@ -647,9 +678,12 @@ ItemPtr ItemManagerImpl::CreationPanelBase::createItem(ItemPtr parentItem)
     }
     
     ItemPtr newItem;
-    
     if(result){
-        newItem = protoItem->duplicate();
+        if(isSingleton){
+            newItem = protoItem;
+        } else {
+            newItem = protoItem->duplicate();
+        }
     }
     
     return newItem;
@@ -881,9 +915,8 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
         }
 
         ClassInfoPtr classInfo = loader->classInfo.lock();
-        ItemManager::FactoryBase* factory = classInfo->factory;
         for(int i=0; i < filenames.size(); ++i){
-            ItemPtr item = factory->create();
+            ItemPtr item = classInfo->factory();
             string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
             if(load(loader, item.get(), filename, parentItem)){
                 parentItem->addChildItem(item, true);

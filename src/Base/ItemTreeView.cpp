@@ -1007,8 +1007,12 @@ void ItemTreeViewImpl::copySelectedItems()
         }
         if(!isChild){
             ItemPtr duplicated = item->duplicate();
-            copiedItemList.push_back(duplicated);
-            copySelectedItemsSub(item, duplicated, items);
+            if(!duplicated){
+                //! \todo Put warning message. The item is probably a singleton item.
+            } else {
+                copiedItemList.push_back(duplicated);
+                copySelectedItemsSub(item, duplicated, items);
+            }
         }
     }
 }
@@ -1024,7 +1028,9 @@ void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set
                 duplicatedChild = duplicated->findItem(childItem->name());
             } else {
                 duplicatedChild = childItem->duplicate();
-                duplicated->addChildItem(duplicatedChild);
+                if(duplicatedChild){
+                    duplicated->addChildItem(duplicatedChild);
+                }
             }
             if(duplicatedChild){
                 copySelectedItemsSub(childItem, duplicatedChild, items);
@@ -1063,7 +1069,9 @@ void ItemTreeViewImpl::pasteItems()
             for(size_t i=0; i < copiedItemList.size(); ++i){
                 ItemPtr org = copiedItemList[i];
                 ItemPtr duplicated = org->duplicateAll();
-                copiedItemList[i] = duplicated;
+                if(duplicated){
+                    copiedItemList[i] = duplicated;
+                }
                 parentItem->addChildItem(org, true); // paste the original items
             }
         }

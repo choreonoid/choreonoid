@@ -17,6 +17,7 @@ set(sources
   PathVariableEditor.cpp
   PluginManager.cpp
   MainWindow.cpp
+  ViewArea.cpp
   ToolBarArea.cpp
   InfoBar.cpp
   ViewManager.cpp
@@ -104,7 +105,6 @@ endif()
 
 set(headers
   App.h
-  AppImpl.h
   MainWindow.h
   Process.h
   Action.h
@@ -127,8 +127,9 @@ set(headers
   MenuManager.h
   Menu.h
   ToolBar.h
-  ViewManager.h
   View.h
+  ViewArea.h
+  ViewManager.h
   GraphWidget.h
   GraphViewBase.h
   ExtensionManager.h
@@ -190,7 +191,7 @@ endif()
 
 if(NOT QT5)
 QT4_WRAP_CPP(sources
-  AppImpl.h
+  App.h
   Menu.h
   ToolBar.h
   Process.h

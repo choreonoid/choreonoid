@@ -98,7 +98,7 @@ public:
     ToolBarArea* self;
 
     bool isBeforeDoingInitialLayout;
-
+    
     int defaultOrderIndex;
     
     struct DefaultOrderCmp {
@@ -121,8 +121,6 @@ public:
     int dragY;
 
     LazyCaller layoutToolBarsLater;
-
-    
 };
 
 }
@@ -350,25 +348,6 @@ void ToolBarAreaImpl::resizeEvent(QResizeEvent* event)
 }
 
 
-void ToolBarArea::doInitialLayout()
-{
-    if(DEBUG_MODE){
-        cout << "ToolBarAreaImpl::doInitialLayout()" << endl;
-        cout << "width = " << width() << endl;
-    }
-    
-    if(impl->isBeforeDoingInitialLayout){
-        impl->isBeforeDoingInitialLayout = false;
-        if(impl->initialLayout){
-            impl->restoreLayout(impl->initialLayout);
-            impl->initialLayout = 0;
-        } else {
-            impl->layoutToolBars();
-        }
-    }
-}
-
-
 bool ToolBarArea::event(QEvent* event)
 {
     if(false){ // Is this needed?
@@ -384,31 +363,20 @@ bool ToolBarArea::event(QEvent* event)
 }
 
 
-void ToolBarArea::storeLayout(MappingPtr archive)
+void ToolBarArea::doInitialLayout()
 {
-    impl->storeLayout(archive);
-}
-
-
-void ToolBarAreaImpl::storeLayout(MappingPtr& archive)
-{
-    Mapping* layoutOfToolBars = archive->createMapping("layoutOfToolBars");
-    Listing* rows = layoutOfToolBars->createListing("rows");
+    if(DEBUG_MODE){
+        cout << "ToolBarAreaImpl::doInitialLayout()" << endl;
+        cout << "width = " << width() << endl;
+    }
     
-    for(size_t i=0; i < toolBarRows.size(); ++i){
-        ToolBarArray& toolBars = toolBarRows[i]->toolBars;
-        if(!toolBars.empty()){
-            Listing* bars = new Listing();
-            for(ToolBarArray::iterator p = toolBars.begin(); p != toolBars.end(); ++p){
-                ToolBar* toolBar = *p;
-                Mapping* state = new Mapping();
-                state->setFlowStyle(true);
-                state->write("name", toolBar->objectName().toStdString(), DOUBLE_QUOTED);
-                state->write("x", toolBar->desiredX);
-                state->write("priority", toolBar->layoutPriority);
-                bars->append(state);
-            }
-            rows->append(bars);
+    if(impl->isBeforeDoingInitialLayout){
+        impl->isBeforeDoingInitialLayout = false;
+        if(impl->initialLayout){
+            impl->restoreLayout(impl->initialLayout);
+            impl->initialLayout = 0;
+        } else {
+            impl->layoutToolBars();
         }
     }
 }
@@ -430,13 +398,13 @@ void ToolBarAreaImpl::restoreLayout(MappingPtr& archive)
         initialLayout = archive;
         return;
     }
-       
+
     const MappingPtr layoutOfToolBars = archive->findMapping("layoutOfToolBars");
     if(!layoutOfToolBars->isValid()){
         layoutToolBars();
         return;
     }
-    
+
     // make the map from name to toolBar
     typedef map<QString, ToolBar*> NameToToolBarMap;
     NameToToolBarMap nameToToolBarMap;
@@ -484,6 +452,9 @@ void ToolBarArea::resetLayout(MappingPtr archive)
 
 void ToolBarAreaImpl::resetLayout(MappingPtr& archive)
 {
+    if(DEBUG_MODE){
+        cout << "ToolBarAreaImpl::resetLayout()" << endl;
+    }
     newToolBarsToShow.clear();
     for(set<ToolBar*>::iterator p = toolBars.begin(); p != toolBars.end(); ++p){
         ToolBar* toolBar = *p;
@@ -504,6 +475,36 @@ void ToolBarAreaImpl::resetLayout(MappingPtr& archive)
 void ToolBarArea::removeLayout(MappingPtr archive)
 {
     archive->remove("layoutOfToolBars");
+}
+
+
+void ToolBarArea::storeLayout(MappingPtr archive)
+{
+    impl->storeLayout(archive);
+}
+
+
+void ToolBarAreaImpl::storeLayout(MappingPtr& archive)
+{
+    Mapping* layoutOfToolBars = archive->createMapping("layoutOfToolBars");
+    Listing* rows = layoutOfToolBars->createListing("rows");
+    
+    for(size_t i=0; i < toolBarRows.size(); ++i){
+        ToolBarArray& toolBars = toolBarRows[i]->toolBars;
+        if(!toolBars.empty()){
+            Listing* bars = new Listing();
+            for(ToolBarArray::iterator p = toolBars.begin(); p != toolBars.end(); ++p){
+                ToolBar* toolBar = *p;
+                Mapping* state = new Mapping();
+                state->setFlowStyle(true);
+                state->write("name", toolBar->objectName().toStdString(), DOUBLE_QUOTED);
+                state->write("x", toolBar->desiredX);
+                state->write("priority", toolBar->layoutPriority);
+                bars->append(state);
+            }
+            rows->append(bars);
+        }
+    }
 }
 
 
