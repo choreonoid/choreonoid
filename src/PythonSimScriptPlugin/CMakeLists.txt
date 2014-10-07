@@ -1,7 +1,11 @@
 
 # @author Shin'ichiro Nakaoka
 
-option(BUILD_PYTHON_SIM_SCRIPT_PLUGIN "Building the PythonSimScript plugin" ON)
+if(WIN32)
+  option(BUILD_PYTHON_SIM_SCRIPT_PLUGIN "Building the PythonSimScript plugin" OFF)
+else()
+  option(BUILD_PYTHON_SIM_SCRIPT_PLUGIN "Building the PythonSimScript plugin" ON)
+endif()
 
 if(NOT BUILD_PYTHON_SIM_SCRIPT_PLUGIN)
   return()

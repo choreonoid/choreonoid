@@ -256,7 +256,11 @@ else()
 endif()
 
 # Python
-option(ENABLE_PYTHON "Enable Python functions" ON)
+if(WIN32)
+  option(ENABLE_PYTHON "Enable Python functions" OFF)
+else()
+  option(ENABLE_PYTHON "Enable Python functions" ON)
+endif()
 
 if(ENABLE_PYTHON)
 

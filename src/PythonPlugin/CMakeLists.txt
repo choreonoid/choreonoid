@@ -1,7 +1,11 @@
 
 # @author Shin'ichiro Nakaoka
 
-option(BUILD_PYTHON_PLUGIN "Building Python Plugin" ON)
+if(WIN32)
+  option(BUILD_PYTHON_PLUGIN "Building Python Plugin" OFF)
+else()
+  option(BUILD_PYTHON_PLUGIN "Building Python Plugin" ON)
+endif()
 
 if(NOT BUILD_PYTHON_PLUGIN)
   return()

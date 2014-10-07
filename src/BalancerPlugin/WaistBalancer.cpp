@@ -171,9 +171,9 @@ void WaistBalancer::setBoundarySmoother(int type, double smoothingTime)
 {
     boundarySmootherType_ = type;
     if(type == CUBIC_SMOOTHER){
-        boundarySmootherFunction = bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction = boost::bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
     } else if(type == QUINTIC_SMOOTHER){
-        boundarySmootherFunction = bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction = boost::bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
     } else {
         boundarySmootherType_ = NO_SMOOTHER;
     }
