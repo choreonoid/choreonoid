@@ -20,7 +20,7 @@ target_link_libraries(${target} CnoidUtil CnoidBase)
 set_target_properties(${target} PROPERTIES PROJECT_LABEL Application)
 
 if(QT5)
-  qt5_use_modules(${target} Gui)
+  qt5_use_modules(${target} Gui Widgets)
 endif()
 
 if(MSVC)

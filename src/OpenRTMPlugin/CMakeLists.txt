@@ -103,7 +103,7 @@ if(OPENRTM_DIR)
       optimized ${libcoil} debug ${libcoil}d
       optimized ws2_32 debug ws2_32)
     message(STATUS "bin dir = ${OPENRTM_DIR}/bin, lib dir = ${OPENRTM_LIBRARY_DIRS}, rtm libs = ${librtc}, ${libcoil}")
-    install_external_libraries(${OPENRTM_DIR}/bin ${OPENRTM_LIBRARY_DIRS} ${librtc} ${libcoil})
+    install_external_libraries(${OPENRTM_DIR}/bin ${OPENRTM_LIBRARY_DIRS} ${OPENRTM_LIBRARIES})
   endif()
 endif()
 

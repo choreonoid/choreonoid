@@ -225,7 +225,7 @@ make_gettext_mofiles(${target} mofiles)
 add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
 
 if(QT5)
-  qt5_use_modules(${target} Gui OpenGL Network)
+  qt5_use_modules(${target} Gui OpenGL Network Widgets)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

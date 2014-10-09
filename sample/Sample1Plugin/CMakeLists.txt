@@ -8,4 +8,8 @@ if(BUILD_SAMPLE1_SAMPLE)
   apply_common_setting_for_plugin(${target})
 endif()
 
+if(QT5)
+  qt5_use_modules(${target} Widgets)
+endif()
+
 install_sample_source(Sample1Plugin.cpp)
