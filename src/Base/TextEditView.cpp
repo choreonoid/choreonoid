@@ -3,6 +3,7 @@
 */
 
 #include "TextEditView.h"
+#include "TextEdit.h"
 #include "MainWindow.h"
 #include "ViewManager.h"
 #include "ItemTreeView.h"
@@ -36,7 +37,7 @@ public:
     ~TextEditViewImpl();
             
     TextEditView* self;
-    TextEdit textEdit;
+    PlainTextEdit textEdit;
     
 private:
     ConnectionSet connections;
@@ -67,19 +68,6 @@ private:
     void cursorPositionChanged();
     void onActivated(bool on);
 };
-}
-
-
-TextEdit::TextEdit(QWidget* parent)
-    : QPlainTextEdit(parent)
-{
-    connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorPositionChanged()));
-}
-
-
-void TextEdit::onCursorPositionChanged()
-{
-    sigCursorPositionChanged_();
 }
 
 
