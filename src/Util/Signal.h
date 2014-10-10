@@ -152,6 +152,22 @@ public:
     }
 };
 
+class ScopedConnection : private Connection
+{
+public:
+    ScopedConnection(const Connection& org) : Connection(org) { }
+    ~ScopedConnection() { Connection::disconnect(); }
+    void disconnect() { Connection::disconnect(); }
+    bool connected() { Connection::connected(); }
+    void block() { Connection::block(); }
+    void unblock() { Connection::unblock(); }
+    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); }
+
+private:
+    ScopedConnection(const ScopedConnection& org) { }
+    ScopedConnection& operator=(const ScopedConnection& rhs) { }
+};
+
 }
 
 
