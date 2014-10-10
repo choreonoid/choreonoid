@@ -7,11 +7,12 @@
 #include "ViewManager.h"
 #include "InfoBar.h"
 #include "Item.h"
+#include "TextEdit.h"
 #include <stack>
 #include <iostream>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
-#include <QTextEdit>
+#include <boost/bind.hpp>
 #include <QTextCursor>
 #include <QBoxLayout>
 #include <QMessageBox>
@@ -85,7 +86,7 @@ public:
 
     Qt::HANDLE mainThreadId;
         
-    QTextEdit textEdit;
+    TextEdit textEdit;
     QTextCursor cursor;
     QTextCharFormat preFmt;
 
@@ -104,6 +105,8 @@ public:
     QColor normalForeCol;
     QColor normalBackCol;
     int cursorPos;
+    int scrollPos;
+    bool enableScroll;
 
     MessageViewImpl(MessageView* self);
 
@@ -504,6 +507,10 @@ public:
 
     void doPut(const QString& message, bool doLF, bool doNotify, bool doFlush) {
 
+    	scrollPos = textEdit.getScrollPos();
+    	if(scrollPos < (textEdit.maxScrollPos() - textEdit.scrollSingleStep()*2))
+    		enableScroll = false;
+
     	cursor.setPosition(cursorPos, QTextCursor::MoveAnchor);
     	textEdit.setTextCursor(cursor);
     	textEdit.setCurrentCharFormat(preFmt);
@@ -536,6 +543,7 @@ public:
 
         cursorPos = cursor.position();
         preFmt = textEdit.currentCharFormat();
+        enableScroll = true;
     }
 
     void put(const QString& message, bool doLF, bool doNotify, bool doFlush) {
@@ -546,6 +554,7 @@ public:
             MessageViewEvent* event = new MessageViewEvent(message, doLF, doNotify, doFlush);
             QCoreApplication::postEvent(self, event, Qt::NormalEventPriority);
         }
+
     }
 
     void handleMessageViewEvent(MessageViewEvent* event);
@@ -562,6 +571,11 @@ public:
         } else {
             QCoreApplication::postEvent(self, new MessageViewEvent(MV_CLEAR), Qt::NormalEventPriority);
         }
+    }
+
+    void onScroll(int pos) {
+    	if(!enableScroll)
+    		textEdit.setScrollPos(scrollPos);
     }
 
 };
@@ -648,6 +662,9 @@ MessageViewImpl::MessageViewImpl(MessageView* self) :
 
     cursor = textEdit.textCursor();
     cursorPos = cursor.position();
+
+    enableScroll = true;
+    textEdit.sigScroll().connect(boost::bind(&MessageViewImpl::onScroll, this, _1));
 }
 
 

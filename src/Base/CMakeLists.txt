@@ -93,6 +93,7 @@ set(sources
   MovieGenerator.cpp
   TextEditView.cpp
   ImageView.cpp
+  TextEdit.cpp
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -179,6 +180,7 @@ set(headers
   JoystickCapture.h
   exportdecl.h
   gettext.h
+  TextEdit.h
   )
 
 set(target CnoidBase)
@@ -216,6 +218,7 @@ QT4_WRAP_CPP(sources
   ItemTreeView.h
   SelectionListEditor.h
   TextEditView.h
+  TextEdit.h
   OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 endif()
