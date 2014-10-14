@@ -25,10 +25,9 @@ public:
 CNOID_EXPORT boost::python::object pythonMainModule();
 CNOID_EXPORT boost::python::object pythonMainNamespace();
 CNOID_EXPORT boost::python::object pythonSysModule();
-CNOID_EXPORT boost::python::object evalPythonExpression(const char* expression);
-CNOID_EXPORT boost::python::object execPythonCode(const std::string& code);
-CNOID_EXPORT boost::python::object execPythonCode(const char* code);
-CNOID_EXPORT boost::python::object execPythonFile(const std::string& filename);
+
+CNOID_EXPORT bool execPythonCode(const std::string& code);
+
 }
 
 #endif

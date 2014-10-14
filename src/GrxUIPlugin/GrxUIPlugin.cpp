@@ -59,7 +59,7 @@ void GrxUIPlugin::onImportGrxUICheckToggled(bool on, bool doWriteConfig)
         PyGILock lock;
         python::object grxuiModule = python::import("cnoid.grxui");
         if(!grxuiModule.is_none()){
-            execPythonCode("from cnoid.grxui import *");
+            python::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
         }
     }
     if(doWriteConfig){

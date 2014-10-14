@@ -210,15 +210,27 @@ PythonExecutor::State PythonExecutor::state() const
 }
 
 
+static boost::python::object execPythonCodeSub(const std::string& code)
+{
+    return python::exec(code.c_str(), cnoid::pythonMainNamespace());
+}
+
+
+static boost::python::object execPythonFileSub(const std::string& filename)
+{
+    return python::exec_file(filename.c_str(), cnoid::pythonMainNamespace());
+}
+
+
 bool PythonExecutor::execCode(const std::string& code)
 {
-    return impl->exec(bind<python::object, const std::string&>(cnoid::execPythonCode, code), "");
+    return impl->exec(boost::bind(execPythonCodeSub, code), "");
 }
 
 
 bool PythonExecutor::execFile(const std::string& filename)
 {
-    return impl->exec(boost::bind(&cnoid::execPythonFile, filename), filename);
+    return impl->exec(boost::bind(execPythonFileSub, filename), filename);
 }
 
 

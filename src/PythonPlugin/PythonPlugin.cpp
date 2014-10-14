@@ -15,13 +15,13 @@
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
 #include <boost/python.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using namespace boost;
-
 
 namespace {
     
@@ -30,7 +30,6 @@ python::object mainNamespace;
 python::object cnoidModule;
 python::object sysModule;
 python::object exitExceptionType;
-
 MappingPtr pythonConfig;
 Action* redirectionCheck;
 Action* refreshModulesCheck;
@@ -67,12 +66,14 @@ python::object pythonExit()
     return python::object();
 }
 
+
 class PythonPlugin : public Plugin
 {
+public:
+    boost::scoped_ptr<PythonExecutor> executor_;
     python::object messageViewOut;
     python::object messageViewIn;
         
-public:
     PythonPlugin();
     virtual bool initialize();
     bool initializeInterpreter();
@@ -81,15 +82,27 @@ public:
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     bool storeProperties(Archive& archive);
     void restoreProperties(const Archive& archive);
+
+    PythonExecutor& executor() {
+        if(!executor_){
+            executor_.reset(new PythonExecutor);
+        }
+        return *executor_;
+    }
 };
 
 };
+
+
+namespace {
+PythonPlugin* pythonPlugin = 0;
+}
 
 
 PythonPlugin::PythonPlugin()
     : Plugin("Python")
 {
-
+    pythonPlugin = this;
 }
 
 
@@ -131,11 +144,10 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if (v.count("python")) {
         try {
-            PythonExecutor pyexec;
             vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
             for(unsigned int i = 0; i < pythonScriptFileNames.size(); i++){
                 MessageView::instance()->putln((format(_("Loading python script file \"%1%\" ...")) % pythonScriptFileNames[i]).str());
-                pyexec.execFile(pythonScriptFileNames[i]);
+                executor().execFile(pythonScriptFileNames[i]);
             }
         } catch (const std::exception& err) {
             MessageView::instance()->putln((format(_("%1%")) % err.what()).str());
@@ -264,31 +276,15 @@ boost::python::object cnoid::pythonSysModule()
 }
 
 
-boost::python::object cnoid::evalPythonExpression(const char* expression)
+bool cnoid::execPythonCode(const std::string& code)
 {
-    return python::eval(expression, mainNamespace);
+    PythonExecutor& executor = pythonPlugin->executor();
+    bool result = executor.execCode(code);
+    if(executor.hasException()){
+        PyGILock lock;
+        MessageView::instance()->putln(executor.exceptionText());
+        result = false;
+    }
+    return result;
 }
 
-
-boost::python::object cnoid::execPythonFile(const std::string& filename)
-{
-    /*
-      python::dict global;
-      python::dict local;
-      global["__builtins__"] = mainNamespace["__builtins__"];
-      return python::exec_file(filename.c_str(), global, global);
-    */
-    return python::exec_file(filename.c_str(), mainNamespace);
-}
-
-
-boost::python::object cnoid::execPythonCode(const char* code)
-{
-    return python::exec(code, mainNamespace);
-}
-
-
-boost::python::object cnoid::execPythonCode(const std::string& code)
-{
-    return python::exec(code.c_str(), mainNamespace);
-}
