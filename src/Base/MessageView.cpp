@@ -508,7 +508,7 @@ public:
     void doPut(const QString& message, bool doLF, bool doNotify, bool doFlush) {
 
     	scrollPos = textEdit.getScrollPos();
-    	if(scrollPos < (textEdit.maxScrollPos() - textEdit.scrollSingleStep()*2))
+    	if(scrollPos < textEdit.maxScrollPos())
     		enableScroll = false;
 
     	cursor.setPosition(cursorPos, QTextCursor::MoveAnchor);
@@ -543,6 +543,8 @@ public:
 
         cursorPos = cursor.position();
         preFmt = textEdit.currentCharFormat();
+        if(enableScroll && cursor.atEnd())
+        	textEdit.setScrollPos(textEdit.maxScrollPos());
         enableScroll = true;
     }
 
@@ -653,6 +655,9 @@ MessageViewImpl::MessageViewImpl(MessageView* self) :
 
     textEdit.moveCursor(QTextCursor::End);
 
+    QFont font("monospace");
+    font.setStyleHint(QFont::TypeWriter);
+    textEdit.setFont(font);
     normalForeCol = QColor("black");
     normalBackCol = QColor("white");
     normalFmt.setForeground(normalForeCol);
