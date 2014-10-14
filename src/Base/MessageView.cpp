@@ -655,6 +655,9 @@ MessageViewImpl::MessageViewImpl(MessageView* self) :
 
     textEdit.moveCursor(QTextCursor::End);
 
+    QFont font("monospace");
+    font.setStyleHint(QFont::TypeWriter);
+    textEdit.setFont(font);
     normalForeCol = QColor("black");
     normalBackCol = QColor("white");
     normalFmt.setForeground(normalForeCol);
