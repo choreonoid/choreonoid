@@ -5,9 +5,7 @@
 
 #include "BodyMotionItem.h"
 #include "BodyItem.h"
-#include "KinematicFaultChecker.h"
 #include <cnoid/MultiSeqItemCreationPanel>
-#include <cnoid/BodyMotionUtil>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/ZMPSeq>
@@ -15,7 +13,6 @@
 #include <cnoid/MessageView>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
-#include <QMessageBox>
 #include "gettext.h"
 
 using namespace std;
@@ -72,14 +69,6 @@ public:
 }
 
 
-static bool confirm(const std::string& message)
-{
-    return (QMessageBox::warning(
-                0, _("Warning"), message.c_str(),
-                QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Ok) == QMessageBox::Ok);
-}
-
-
 static bool fileIoSub(BodyMotionItem* item, std::ostream& os, bool loaded, bool isLoading)
 {
     if(!loaded){
@@ -99,65 +88,6 @@ static bool saveAsStandardYamlFormat(BodyMotionItem* item, const std::string& fi
 {
     return fileIoSub(item, os, item->motion()->saveAsStandardYAMLformat(filename), false);
 }
-
-
-static bool importHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, std::ostream& os)
-{
-    if(loadHrpsysSeqFileSet(*item->motion(), filename, os)){
-        return true;
-    }
-    return false;
-}
-    
-    
-static bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, std::ostream& os)
-{
-    double frameRate = item->motion()->frameRate();
-    if(frameRate != 200.0){
-        static format m1(_("The frame rate of a body motion exported as HRPSYS files should be standard value 200, "
-                           "but the frame rate of \"%1%\" is %2%. The exported data may cause a problem.\n\n"
-                           "Do you continue to export ?"));
-        
-        if(!confirm(str(m1 % item->name() % frameRate))){
-            return false;
-        }
-    }
-    
-    BodyPtr body;
-    BodyItem* bodyItem = item->findOwnerItem<BodyItem>();
-    if(bodyItem){
-        body = bodyItem->body();
-        KinematicFaultChecker* checker = KinematicFaultChecker::instance();
-        int numFaults = checker->checkFaults(bodyItem, item, os);
-        if(numFaults > 0){
-            static string m2(_("A fault has been detected. Please check the report in the MessageView.\n\n"
-                               "Do you continue to export ?"));
-            static format m3(_("%1% faults have been detected. Please check the report in the MessageView.\n\n"
-                               "Do you continue to export ?"));
-            
-            bool result;
-            
-            if(numFaults == 1){
-                result = confirm(m2);
-            } else {
-                result = confirm(str(m3 % numFaults));
-            }
-            
-            if(!result){
-                return false;
-            }
-        }
-    }
-    
-    if(!getZMPSeq(*item->motion())){
-        if(!confirm(_("There is no ZMP data. Do you continue to export ?"))){
-            return false;
-        }
-    }
-    
-    return saveHrpsysSeqFileSet(*item->motion(), body, filename, os);
-}
-
 
 static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
 {
@@ -220,11 +150,6 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
     im.addLoaderAndSaver<BodyMotionItem>(
         _("Body Motion"), "BODY-MOTION-YAML", "yaml",
         boost::bind(loadStandardYamlFormat, _1, _2, _3),  boost::bind(saveAsStandardYamlFormat, _1, _2, _3));
-
-    im.addLoaderAndSaver<BodyMotionItem>(
-        _("HRPSYS Sequence File Set"), "HRPSYS-SEQ-FILE-SET", "pos;vel;acc;hip;waist;gsens;zmp",
-        boost::bind(importHrpsysSeqFileSet, _1, _2, _3), boost::bind(exportHrpsysSeqFileSet, _1, _2, _3),
-        ItemManager::PRIORITY_CONVERSION);
 
     initialized = true;
 }

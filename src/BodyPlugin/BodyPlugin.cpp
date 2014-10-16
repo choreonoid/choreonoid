@@ -24,6 +24,7 @@
 #include "GLVisionSimulatorItem.h"
 #include "BodyMotionEngine.h"
 #include "EditableSceneBody.h"
+#include "HrpsysFileIO.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
@@ -74,6 +75,8 @@ public:
         BodyStateView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
+
+        initializeHrpsysFileIO(this);
 
         return true;
     }

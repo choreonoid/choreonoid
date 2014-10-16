@@ -32,6 +32,7 @@ set(sources
   BodyStateView.cpp
   JointGraphView.cpp
   LinkGraphView.cpp
+  HrpsysFileIO.cpp
   )
 
 set(headers
@@ -76,7 +77,12 @@ if(QT5)
   qt5_use_modules(${target} Gui OpenGL Network)
 endif()
 
-target_link_libraries(${target} CnoidUtil CnoidBase CnoidBody)
+set(boost_libraries ${Boost_REGEX_LIBRARY} ${Boost_IOSTREAMS_LIBRARY})
+if(MSVC)
+  set(boost_libraries ${boost_libraries} ${Boost_BZIP2_LIBRARY} ${Boost_ZLIB_LIBRARY})
+endif()
+
+target_link_libraries(${target} CnoidBase CnoidBody ${boost_libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
 if(ENABLE_PYTHON)
