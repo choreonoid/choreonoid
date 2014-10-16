@@ -359,7 +359,7 @@ bool MovieGenerator::doRecordingLoop()
 
     isRecording = true;
 
-    while(time < endingTime && doContinue){
+    while(time <= endingTime && doContinue){
 
         doContinue = timeBar->setTime(time);
 
