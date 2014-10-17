@@ -27,13 +27,17 @@ public Q_SLOTS:
     void setScalingEnabled(bool on);
     bool isScalingEnabled() const;
 
+    void setTransform(QTransform& transform);
+
 protected:
     virtual void paintEvent(QPaintEvent* event);
     virtual QSize sizeHint() const;
         
 private:
     QPixmap pixmap_;
+    QTransform transform_;
     bool isScalingEnabled_;
+
 };
 }
 

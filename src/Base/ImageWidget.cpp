@@ -21,6 +21,7 @@ ImageWidget::ImageWidget(QWidget* parent) :
     setAutoFillBackground(true);
 
     isScalingEnabled_ = false;
+    transform_.reset();
 }
 
 
@@ -73,6 +74,13 @@ void ImageWidget::setImage(const Image& image)
 }
 
 
+void ImageWidget::setTransform(QTransform& transform)
+{
+	transform_ = transform;
+	update();
+}
+
+
 void ImageWidget::paintEvent(QPaintEvent* event)
 {
     QWidget::paintEvent(event);
@@ -83,6 +91,7 @@ void ImageWidget::paintEvent(QPaintEvent* event)
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+    painter.setWorldTransform(transform_);
 
     QSize r = event->rect().size();
     QSize s = pixmap_.size();
