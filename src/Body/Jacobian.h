@@ -11,6 +11,8 @@ namespace cnoid {
 
 CNOID_EXPORT void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J);
 
+CNOID_EXPORT void calcAngularMomentumJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& H);
+
 template<int elementMask, int rowOffset, int colOffset, bool useTargetLinkLocalPos>
 void setJacobian(const JointPath& path, Link* targetLink, const Vector3& targetLinkLocalPos,
                  MatrixXd& out_J) {
