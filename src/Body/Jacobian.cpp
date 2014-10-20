@@ -32,7 +32,7 @@ struct SubMass
     }
 };
 
-void calcSubMass(Link* link, vector<SubMass>& subMasses)
+void calcSubMass(Link* link, vector<SubMass>& subMasses, bool calcIw)
 {
     Matrix3d R = link->R();
     SubMass& sub = subMasses[link->index()];
@@ -40,16 +40,18 @@ void calcSubMass(Link* link, vector<SubMass>& subMasses)
     sub.mwc = link->m() * link->wc();
 
     for(Link* child = link->child(); child; child = child->sibling()){
-        calcSubMass(child, subMasses);
+        calcSubMass(child, subMasses, calcIw);
         SubMass& childSub = subMasses[child->index()];
         sub.m += childSub.m;
         sub.mwc += childSub.mwc;
     }
-
-    sub.Iw = R * link->I() * R.transpose() + link->m() * D( link->wc() - sub.mwc/sub.m );
-    for(Link* child = link->child(); child; child = child->sibling()){
-        SubMass& childSub = subMasses[child->index()];
-        sub.Iw += childSub.Iw + childSub.m * D( childSub.mwc/childSub.m - sub.mwc/sub.m );
+    
+    if(calcIw){
+        sub.Iw = R * link->I() * R.transpose() + link->m() * D( link->wc() - sub.mwc/sub.m );
+        for(Link* child = link->child(); child; child = child->sibling()){
+            SubMass& childSub = subMasses[child->index()];
+            sub.Iw += childSub.Iw + childSub.m * D( childSub.mwc/childSub.m - sub.mwc/sub.m );
+        }
     }
 }
 
@@ -73,7 +75,7 @@ void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J)
         
     JointPath path;
     if(!base){
-        calcSubMass(rootLink, subMasses);
+        calcSubMass(rootLink, subMasses, false);
         J.resize(3, nj + 6);
 
     } else {
@@ -85,8 +87,10 @@ void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J)
             
         for(Link* child = rootLink->child(); child; child = child->sibling()){
             if(child != skip){
-                calcSubMass(child, subMasses);
-                subMasses[skip->index()] += subMasses[child->index()];
+                calcSubMass(child, subMasses, false);
+                const SubMass& c = subMasses[child->index()];
+                sub.m += c.m;
+                sub.mwc += c.mwc;
             }
         }
             
@@ -97,7 +101,9 @@ void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J)
             SubMass& sub = subMasses[joint->index()];
             sub.m = parent->m();
             sub.mwc = parent->m() * parent->wc();
-            sub += subMasses[parent->index()];
+            const SubMass& p = subMasses[parent->index()];
+            sub.m += p.m;
+            sub.mwc += p.mwc;
         }
             
         J.resize(3, nj);
@@ -157,7 +163,7 @@ void calcAngularMomentumJacobian(const BodyPtr& body, Link* base, Eigen::MatrixX
 
     JointPath path;
     if(!base){
-        calcSubMass(rootLink, subMasses);
+        calcSubMass(rootLink, subMasses, true);
         H.resize(3, nj + 6);
 
     } else {
@@ -169,8 +175,8 @@ void calcAngularMomentumJacobian(const BodyPtr& body, Link* base, Eigen::MatrixX
             
         for(Link* child = rootLink->child(); child; child = child->sibling()){
             if(child != skip){
-                calcSubMass(child, subMasses);
-                subMasses[skip->index()] += subMasses[child->index()];
+                calcSubMass(child, subMasses, true);
+                sub += subMasses[child->index()];
             }
         }
             
