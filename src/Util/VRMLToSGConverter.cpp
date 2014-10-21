@@ -422,24 +422,26 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     texture = createTexture(vt);
                     vrmlTextureToSgTextureMap[vt] = texture;
                 }
-                texture->setTextureTransform(textureTransform);
-                shape->setTexture(texture);
+                if(texture){
+                    texture->setTextureTransform(textureTransform);
+                    shape->setTexture(texture);
 
-                if(!mesh->texCoords()){
-                    if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForIndexedFaceSet(mesh);
-                    } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForBox(mesh);
-                    } else if(VRMLSphere* sphere = dynamic_cast<VRMLSphere*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForSphere(mesh);
-                    } else if(VRMLCylinder* cylinder = dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForCylinder(mesh);
-                    } else if(VRMLCone* cone = dynamic_cast<VRMLCone*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForCone(mesh);
-                    } else if(VRMLElevationGrid* elevationGrid = dynamic_cast<VRMLElevationGrid*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForElevationGrid(mesh, elevationGrid);
-                    } else if(VRMLExtrusion* extrusion = dynamic_cast<VRMLExtrusion*>(vrmlGeometry)){
-                        setDefaultTextureCoordinateForExtrusion(mesh, extrusion);
+                    if(!mesh->texCoords()){
+                        if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForIndexedFaceSet(mesh);
+                        } else if(VRMLBox* box = dynamic_cast<VRMLBox*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForBox(mesh);
+                        } else if(VRMLSphere* sphere = dynamic_cast<VRMLSphere*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForSphere(mesh);
+                        } else if(VRMLCylinder* cylinder = dynamic_cast<VRMLCylinder*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForCylinder(mesh);
+                        } else if(VRMLCone* cone = dynamic_cast<VRMLCone*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForCone(mesh);
+                        } else if(VRMLElevationGrid* elevationGrid = dynamic_cast<VRMLElevationGrid*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForElevationGrid(mesh, elevationGrid);
+                        } else if(VRMLExtrusion* extrusion = dynamic_cast<VRMLExtrusion*>(vrmlGeometry)){
+                            setDefaultTextureCoordinateForExtrusion(mesh, extrusion);
+                        }
                     }
                 }
             }
@@ -1587,12 +1589,10 @@ SgTextureTransform* VRMLToSGConverterImpl::createTextureTransform(VRMLTextureTra
 
 SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
 {
-    SgTexture* texture = new SgTexture;
+    SgTexture* texture = 0;
 
     VRMLImageTexturePtr imageTextureNode = dynamic_node_cast<VRMLImageTexture>(vt);
     if(imageTextureNode){
-        texture->setRepeat(imageTextureNode->repeatS, imageTextureNode->repeatT);
-
         SgImagePtr image;
         SgImagePtr imageForLoading;
         const MFString& urls = imageTextureNode->url;
@@ -1619,31 +1619,35 @@ SgTexture* VRMLToSGConverterImpl::createTexture(VRMLTexture* vt)
             }
         }
         if(image){
+            texture = new SgTexture;
             texture->setImage(image);
+            texture->setRepeat(imageTextureNode->repeatS, imageTextureNode->repeatT);
         }
         
     } else if(VRMLPixelTexturePtr pixelTextureNode =  dynamic_node_cast<VRMLPixelTexture>(vt)){
 
-        texture->setRepeat(pixelTextureNode->repeatS, pixelTextureNode->repeatT);
-        
         const int width = pixelTextureNode->image.width;
         const int height = pixelTextureNode->image.height;
         const int nc = pixelTextureNode->image.numComponents;
-        SgImage* image = new SgImage;
-        image->setSize(width, height, nc);
 
-        // copy the pixels in the upside-down way
-        std::vector<unsigned char>& src = pixelTextureNode->image.pixels;
-        unsigned char* dest = image->pixels();
-        for(int i=0; i<height; ++i){
-            int ii = height - i - 1;
-            for(int j=0; j < width; ++j){
-                for(int l=0; l < nc; ++l)
+        if(width > 0 && height > 0 && nc > 0){
+            texture = new SgTexture;
+            SgImage* image = new SgImage;
+            image->setSize(width, height, nc);
+
+            // copy the pixels in the upside-down way
+            std::vector<unsigned char>& src = pixelTextureNode->image.pixels;
+            unsigned char* dest = image->pixels();
+            for(int i=0; i<height; ++i){
+                int ii = height - i - 1;
+                for(int j=0; j < width; ++j){
+                    for(int l=0; l < nc; ++l)
                     dest[(i * width + j) * nc + l] = src[(ii * width +j) * nc + l];
+                }
             }
+            texture->setImage(image);
+            texture->setRepeat(pixelTextureNode->repeatS, pixelTextureNode->repeatT);
         }
-        texture->setImage(image);
-        
     } else {
         putMessage("MovieTextureNode is not supported");
     }
