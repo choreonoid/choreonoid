@@ -473,11 +473,11 @@ public:
     void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
     void visitLineSet(SgLineSet* lineSet);
     void renderMaterial(const SgMaterial* material);
-    void renderTexture(SgTexture* texture, bool withMaterial);
+    bool renderTexture(SgTexture* texture, bool withMaterial);
     void putMeshData(SgMesh* mesh);
-    void renderMesh(SgMesh* mesh);
+    void renderMesh(SgMesh* mesh, bool hasTexture);
     void renderTransparentShapes();
-    void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache);
+    void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
 
     void clearGLState();
     void setColor(const Vector4f& color);
@@ -1554,13 +1554,16 @@ void GLSceneRendererImpl::visitShape(SgShape* shape)
                 }
             } else {
                 pushPickName(shape);
-                if(!isPicking){
+                bool hasTexture;
+                if(isPicking){
+                    hasTexture = false;
+                } else {
                     renderMaterial(material);
-                    if(texture){
-                        renderTexture(texture, material);
+                    if(texture && mesh->hasTexCoords()){
+                        hasTexture = renderTexture(texture, material);
                     }
                 }
-                renderMesh(mesh);
+                renderMesh(mesh, hasTexture);
                 popPickName();
             }
         }
@@ -1610,14 +1613,11 @@ void GLSceneRendererImpl::renderMaterial(const SgMaterial* material)
 }
 
 
-void GLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
+bool GLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
 {
-    if(isPicking){
-        return;
-    }
     SgImage* sgImage = texture->image();
     if(!sgImage || sgImage->empty()){
-        return;
+        return false;
     }
 
     const Image& image = sgImage->constImage();
@@ -1674,7 +1674,7 @@ void GLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
             format = GL_RGBA;
             break;
         default :
-            return;
+            return false;
         }
         
         if(image.numComponents() == 3){
@@ -1708,7 +1708,6 @@ void GLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, withMaterial ? GL_MODULATE : GL_REPLACE);
     
-
     if(SgTextureTransform* tt = texture->textureTransform()){
         glMatrixMode(GL_TEXTURE);
         glLoadIdentity();
@@ -1723,6 +1722,8 @@ void GLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
         glLoadIdentity();
         glMatrixMode(GL_MODELVIEW);
     }
+
+    return true;
 }
 
 
@@ -1744,16 +1745,18 @@ void GLSceneRendererImpl::renderTransparentShapes()
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixd(info.V.data());
         SgShape* shape = info.shape;
+        bool hasTexture;
         if(isPicking){
             setPickColor(info.pickId);
+            hasTexture = false;
         } else {
             renderMaterial(shape->material());
             SgTexture* texture = isTextureEnabled ? shape->texture() : 0;
-            if(texture){
-                renderTexture(texture, shape->material());
+            if(texture && shape->mesh()->hasTexCoords()){
+                hasTexture = renderTexture(texture, shape->material());
             }
         }
-        renderMesh(shape->mesh());
+        renderMesh(shape->mesh(), hasTexture);
     }
 
     if(!isPicking){
@@ -1828,7 +1831,7 @@ void GLSceneRendererImpl::putMeshData(SgMesh* mesh)
 }
 
 
-void GLSceneRendererImpl::renderMesh(SgMesh* mesh)
+void GLSceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 {
     if(false){
         putMeshData(mesh);
@@ -1846,7 +1849,7 @@ void GLSceneRendererImpl::renderMesh(SgMesh* mesh)
     glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
     if(!USE_VBO){
-        writeVertexBuffers(mesh, 0);
+        writeVertexBuffers(mesh, 0, hasTexture);
 
     } else {
         ShapeCache* cache;
@@ -1856,7 +1859,7 @@ void GLSceneRendererImpl::renderMesh(SgMesh* mesh)
         } else {
             it = currentCacheMap->insert(CacheMap::value_type(mesh, new ShapeCache)).first;
             cache = static_cast<ShapeCache*>(it->second.get());
-            writeVertexBuffers(mesh, cache);
+            writeVertexBuffers(mesh, cache, hasTexture);
         }
         if(isCheckingUnusedCaches){
             nextCacheMap->insert(*it);
@@ -1895,7 +1898,7 @@ void GLSceneRendererImpl::renderMesh(SgMesh* mesh)
 }
 
 
-void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
+void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture)
 {
     SgVertexArray& orgVertices = *mesh->vertices();
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
@@ -1903,7 +1906,6 @@ void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
     const size_t totalNumVertices = orgTriangleVertices.size();
     const bool hasNormals = mesh->hasNormals() && !isPicking;
     const bool hasColors = mesh->hasColors() && !isPicking;
-    const bool hasTexCoords = mesh->texCoords() && isTextureEnabled && !isPicking;
     SgVertexArray* vertices = 0;
     SgNormalArray* normals = 0;
     SgIndexArray* triangleVertices = 0;
@@ -1921,7 +1923,7 @@ void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
                 normals->resize(orgVertices.size());
             }
         }
-        if(hasTexCoords){
+        if(hasTexture){
             if(mesh->texCoordIndices().empty() && mesh->texCoords()->size() == orgVertices.size()){
                 texCoords = mesh->texCoords();
             } else {
@@ -1943,7 +1945,7 @@ void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
             colors->clear();
             colors->reserve(totalNumVertices);
         }
-        if(hasTexCoords){
+        if(hasTexture){
             texCoords = &buf->texCoords;
             texCoords->clear();
             texCoords->reserve(totalNumVertices);
@@ -1987,7 +1989,7 @@ void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
                     }
                 }
             }
-            if(hasTexCoords){
+            if(hasTexture){
                 if(mesh->texCoordIndices().empty()){
                     if(!USE_INDEXING){
                         texCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
@@ -2037,7 +2039,7 @@ void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
             useColorArray = true;
         }
     }
-    if(texCoords){
+    if(hasTexture){
         if(USE_VBO){
             if(cache->texCoordBufferName() == GL_INVALID_VALUE){
                 glGenBuffers(1, &cache->texCoordBufferName());
@@ -2074,7 +2076,7 @@ void GLSceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache)
         glDisable(GL_COLOR_MATERIAL);
         stateFlag.set(CURRENT_COLOR);
     }
-    if(texCoords){
+    if(hasTexture){
         glDisable(GL_TEXTURE_2D);
     }
 
