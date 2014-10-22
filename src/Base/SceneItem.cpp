@@ -28,6 +28,8 @@ boost::scoped_ptr<VRMLToSGConverter> vrmlConverter;
     
 bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
 {
+    item->topNode()->clearChildren(true);
+    
     if(!vrmlParser){
         vrmlParser.reset(new VRMLParser);
         vrmlConverter.reset(new VRMLToSGConverter);
@@ -55,7 +57,7 @@ bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
     if(group->empty()){
         os << _("The VRML file does not have any valid entity.") << endl;
     } else {
-        item->topNode()->addChild(group);
+        item->topNode()->addChild(group, true);
         return true;
     }
     return false;
