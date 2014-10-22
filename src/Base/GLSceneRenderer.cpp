@@ -1554,10 +1554,8 @@ void GLSceneRendererImpl::visitShape(SgShape* shape)
                 }
             } else {
                 pushPickName(shape);
-                bool hasTexture;
-                if(isPicking){
-                    hasTexture = false;
-                } else {
+                bool hasTexture = false;
+                if(!isPicking){
                     renderMaterial(material);
                     if(texture && mesh->hasTexCoords()){
                         hasTexture = renderTexture(texture, material);
@@ -1745,10 +1743,9 @@ void GLSceneRendererImpl::renderTransparentShapes()
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixd(info.V.data());
         SgShape* shape = info.shape;
-        bool hasTexture;
+        bool hasTexture = false;
         if(isPicking){
             setPickColor(info.pickId);
-            hasTexture = false;
         } else {
             renderMaterial(shape->material());
             SgTexture* texture = isTextureEnabled ? shape->texture() : 0;
