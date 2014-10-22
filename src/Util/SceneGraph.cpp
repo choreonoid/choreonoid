@@ -797,7 +797,8 @@ SgMeshBase::SgMeshBase()
 SgMeshBase::SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap)
     : SgObject(org),
       normalIndices_(org.normalIndices_),
-      colorIndices_(org.colorIndices_)
+      colorIndices_(org.colorIndices_),
+      texCoordIndices_(org.texCoordIndices_)
 {
     if(cloneMap.isNonNodeCloningEnabled()){
         if(org.vertices_){
@@ -809,10 +810,14 @@ SgMeshBase::SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap)
         if(org.colors_){
             setColors(cloneMap.getClone<SgColorArray>(org.colors()));
         }
+        if(org.texCoords_){
+            setTexCoords(cloneMap.getClone<SgTexCoordArray>(org.texCoords()));
+        }
     } else {
         setVertices(const_cast<SgVertexArray*>(org.vertices()));
         setNormals(const_cast<SgNormalArray*>(org.normals()));
         setColors(const_cast<SgColorArray*>(org.colors()));
+        setTexCoords(const_cast<SgTexCoordArray*>(org.texCoords()));
     }
     isSolid_ = org.isSolid_;
     bbox = org.bbox;
