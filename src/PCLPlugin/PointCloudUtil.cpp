@@ -9,6 +9,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
+#include <pcl/registration/icp.h>
 #include <iostream>
 
 using namespace std;
@@ -99,4 +100,49 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
     }
 
     return mesh;
+}
+
+
+bool cnoid::alignPointSet(SgPointSet* target, SgPointSet* source, Affine3& io_T)
+{
+    typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;    
+
+    if(!target->hasVertices() || !source->hasVertices()){
+        return false;
+    }
+    
+    const SgVertexArray& targetPoints = *target->vertices();
+    PointCloud::Ptr targetCloud(new PointCloud(targetPoints.size(), 1));
+    //targetCloud->is_dense = false;
+    for(size_t i=0; i < targetPoints.size(); ++i){
+        const Vector3f& p = targetPoints[i];
+        targetCloud->points[i] = pcl::PointXYZ(p.x(), p.y(), p.z());
+    }
+
+    const SgVertexArray& sourcePoints = *source->vertices();
+    PointCloud::Ptr sourceCloud(new PointCloud(sourcePoints.size(), 1));
+    sourceCloud->is_dense = false;
+    for(size_t i=0; i < sourcePoints.size(); ++i){
+        //const Vector3 p = io_T * sourcePoints[i].cast<Vector3::Scalar>();
+        const Vector3f& p = sourcePoints[i];
+        sourceCloud->points[i] = pcl::PointXYZ(p.x(), p.y(), p.z());
+    }
+
+    typedef pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> ICP;
+    ICP icp;
+    icp.setInputTarget(targetCloud);
+    icp.setInputSource(sourceCloud);
+    double initialScore = icp.getFitnessScore();
+    pcl::PointCloud<pcl::PointXYZ> Final;
+    const ICP::Matrix4 guess(io_T.matrix().cast<ICP::Matrix4::Scalar>());
+    icp.align(Final, guess);
+    bool hasConverged = icp.hasConverged();
+    double score = icp.getFitnessScore();
+    std::cout << "has converged: " << hasConverged << " score: " << score << std::endl;
+    std::cout << icp.getFinalTransformation() << std::endl;
+
+    io_T = icp.getFinalTransformation().cast<Affine3::Scalar>();
+
+    return hasConverged;
+    // return (icp.getFitnessScore() < initialFitness);
 }
