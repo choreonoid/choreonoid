@@ -25,6 +25,8 @@
 #include <boost/bind.hpp>
 #include "gettext.h"
 
+#include <iostream>
+
 using namespace std;
 using namespace cnoid;
 using boost::format;
@@ -284,8 +286,10 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     cloneMap.clear();
 #ifdef CNOID_REFERENCED_USE_ATOMIC_COUNTER
     cloneMap.setNonNodeCloning(false);
+    cout << "cloneMap.setNonNodeCloning(false);" << endl;
 #else
     cloneMap.setNonNodeCloning(true);
+    cout << "cloneMap.setNonNodeCloning(true);" << endl;
 #endif
 
     std::set<string> bodyNameSet;

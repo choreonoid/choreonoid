@@ -12,7 +12,7 @@
 namespace cnoid {
 
 CNOID_EXPORT SgMesh* createSurfaceMesh(SgPointSet* pointSet);
-CNOID_EXPORT bool alignPointSet(SgPointSet* target, SgPointSet* source, Affine3& io_T);
+CNOID_EXPORT bool alignPointCloud(SgPointSet* target, SgPointSet* source, Affine3& io_T);
 
 }
 

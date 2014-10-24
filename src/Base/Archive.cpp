@@ -183,6 +183,7 @@ Archive* Archive::findSubArchive(const std::string& name)
     if(mapping->isValid()){
         Archive* archive = dynamic_cast<Archive*>(mapping);
         if(archive){
+            archive->inheritSharedInfoFrom(*this);
             return archive;
         }
     }
