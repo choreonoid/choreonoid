@@ -106,6 +106,7 @@ public:
     CameraPtr cameraForRendering;
     RangeCameraPtr rangeCameraForRendering;
     RangeSensorPtr rangeSensorForRendering;
+    double depthError;
         
     SgGroupPtr sceneGroup;
     vector<SceneBodyPtr> sceneBodies;
@@ -154,6 +155,7 @@ public:
     bool isBestEffortMode;
     double maxLatency;
     double rangeSensorPrecisionRatio;
+    double depthError;
     SgCloneMap cloneMap;
     QGLFormat glFormat;
     vector<string> bodyNames;
@@ -201,6 +203,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
+    depthError = 0.0;
     isVisionDataRecordingEnabled = false;
     useThreadForRenderingProperty = true;
     isBestEffortModeProperty = false;
@@ -531,6 +534,8 @@ SgCamera* VisionRenderer::initializeCamera()
                 if(simImpl->isVisionDataRecordingEnabled){
                     rangeSensor->setRangeDataAsState(true);
                 }
+
+                depthError = simImpl->depthError;
             }
         }
     }
@@ -872,7 +877,7 @@ bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
             if(depth > 0.0f && depth < 1.0f){
                 const double z0 = 2.0 * depth - 1.0;
                 const double w = Pinv_32 * z0 + Pinv_33;
-                const double z = -1.0 / w;
+                const double z = -1.0 / w + depthError;
                 rangeData.push_back(fabs((z / cosPitchAngle) / cos(yawAngle)));
             } else {
                 rangeData.push_back(std::numeric_limits<double>::infinity());
@@ -930,6 +935,7 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty(_("All scene objects"), shootAllSceneObjects, changeProperty(shootAllSceneObjects));
     putProperty.min(1.0)(_("Precision ratio of range sensors"),
                          rangeSensorPrecisionRatio, changeProperty(rangeSensorPrecisionRatio));
+    putProperty.reset()(_("Depth error"), depthError, changeProperty(depthError));
 }
 
 
@@ -950,6 +956,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("bestEffort", isBestEffortModeProperty);
     archive.write("allSceneObjects", shootAllSceneObjects);
     archive.write("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
+    archive.write("depthError", depthError);
     return true;
 }
 
@@ -974,5 +981,6 @@ bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
     archive.read("bestEffort", isBestEffortModeProperty);
     archive.read("allSceneObjects", shootAllSceneObjects);
     archive.read("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
+    archive.read("depthError", depthError);
     return true;
 }
