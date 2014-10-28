@@ -8,6 +8,7 @@
 #include <cnoid/MeshExtractor>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
+#include <boost/optional.hpp>
 #include <btBulletDynamicsCommon.h>
 #include <HACD/hacdHACD.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
