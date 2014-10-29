@@ -113,6 +113,7 @@ bool cnoid::alignPointCloud(SgPointSet* target, SgPointSet* source, Affine3& io_
     
     const SgVertexArray& targetPoints = *target->vertices();
     PointCloud::Ptr targetCloud(new PointCloud(targetPoints.size(), 1));
+    targetCloud->is_dense = false;
     for(size_t i=0; i < targetPoints.size(); ++i){
         const Vector3f& p = targetPoints[i];
         targetCloud->points[i] = pcl::PointXYZ(p.x(), p.y(), p.z());
@@ -130,6 +131,7 @@ bool cnoid::alignPointCloud(SgPointSet* target, SgPointSet* source, Affine3& io_
     ICP icp;
     icp.setInputTarget(targetCloud);
     icp.setInputSource(sourceCloud);
+    icp.setMaxCorrespondenceDistance(0.02);
     pcl::PointCloud<pcl::PointXYZ> Final;
     const ICP::Matrix4 guess(io_T.matrix().cast<ICP::Matrix4::Scalar>());
     icp.align(Final, guess);
