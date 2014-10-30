@@ -103,12 +103,13 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
 }
 
 
-bool cnoid::alignPointCloud(SgPointSet* target, SgPointSet* source, Affine3& io_T)
+boost::optional<double> cnoid::alignPointCloud
+(SgPointSet* target, SgPointSet* source, Affine3& io_T, double maxCorrespondenceDistance, int maxIterations)
 {
     typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;    
 
     if(!target->hasVertices() || !source->hasVertices()){
-        return false;
+        return boost::none;
     }
     
     const SgVertexArray& targetPoints = *target->vertices();
@@ -129,15 +130,22 @@ bool cnoid::alignPointCloud(SgPointSet* target, SgPointSet* source, Affine3& io_
 
     typedef pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> ICP;
     ICP icp;
+
+    cout << "icp.getMaxCorrespondenceDistance(): " << icp.getMaxCorrespondenceDistance() << endl;
+    cout << "icp.getMaximumIterations(): " << icp.getMaximumIterations() << endl;
+    
     icp.setInputTarget(targetCloud);
     icp.setInputSource(sourceCloud);
-    icp.setMaxCorrespondenceDistance(0.02);
+    icp.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
+    icp.setMaximumIterations(maxIterations);
     pcl::PointCloud<pcl::PointXYZ> Final;
     const ICP::Matrix4 guess(io_T.matrix().cast<ICP::Matrix4::Scalar>());
     icp.align(Final, guess);
-    bool hasConverged = icp.hasConverged();
-    double score = icp.getFitnessScore();
-    //std::cout << "has converged: " << hasConverged << " score: " << score << std::endl;
+
     io_T = icp.getFinalTransformation().cast<Affine3::Scalar>();
-    return hasConverged;
+
+    if(icp.hasConverged()){
+        return icp.getFitnessScore();
+    }
+    return boost::none;
 }
