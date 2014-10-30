@@ -204,6 +204,16 @@ void LazyCaller::setConservative(bool on)
 }
 
 
+void LazyCaller::flush()
+{
+    if(isPending_){
+        QCoreApplication::removePostedEvents(impl);
+        isPending_ = false;
+    }
+    impl->function();
+}
+
+
 void LazyCaller::postCallEvent()
 {
     CallEvent* event = new CallEvent(impl->function);
