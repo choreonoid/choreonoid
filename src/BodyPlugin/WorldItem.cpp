@@ -67,6 +67,7 @@ public:
     vector<BodyItemInfoMap::iterator> geometryIdToBodyInfoMap;
     boost::shared_ptr< vector<CollisionLinkPairPtr> > collisions;
     Signal<void()> sigCollisionsUpdated;
+    LazyCaller updateCollisionDetectorLater;
 
     SceneCollisionPtr sceneCollision;
 
@@ -98,7 +99,8 @@ WorldItem::WorldItem()
 WorldItemImpl::WorldItemImpl(WorldItem* self)
     : self(self),
       os(MessageView::mainInstance()->cout()),
-      updateCollisionsLater(boost::bind(&WorldItemImpl::updateCollisions, this, false))
+      updateCollisionsLater(boost::bind(&WorldItemImpl::updateCollisions, this, false)),
+      updateCollisionDetectorLater(boost::bind(&WorldItemImpl::updateCollisionDetector, this, false))
 {
     const int n = CollisionDetector::numFactories();
     collisionDetectorType.resize(n);
@@ -122,7 +124,8 @@ WorldItem::WorldItem(const WorldItem& org)
 WorldItemImpl::WorldItemImpl(WorldItem* self, const WorldItemImpl& org)
     : self(self),
       os(org.os),
-      updateCollisionsLater(boost::bind(&WorldItemImpl::updateCollisions, this, false))
+      updateCollisionsLater(boost::bind(&WorldItemImpl::updateCollisions, this, false)),
+      updateCollisionDetectorLater(boost::bind(&WorldItemImpl::updateCollisionDetector, this, false))
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
@@ -191,6 +194,7 @@ bool WorldItemImpl::selectCollisionDetector(int index)
 
 CollisionDetectorPtr WorldItem::collisionDetector()
 {
+    impl->updateCollisionDetectorLater.flush();
     return impl->collisionDetector;
 }
 
@@ -221,7 +225,7 @@ void WorldItemImpl::enableCollisionDetection(bool on)
         updateCollisionDetector(true);
         sigItemTreeChangedConnection =
             RootItem::mainInstance()->sigTreeChanged().connect(
-                boost::bind(&WorldItemImpl::updateCollisionDetector, this, false));
+                boost::bind(&WorldItem::updateCollisionDetectorLater, self));
         changed = true;
     }
 
@@ -255,6 +259,12 @@ void WorldItemImpl::clearCollisionDetector()
 }
 
 
+void WorldItem::updateCollisionDetectorLater()
+{
+    impl->updateCollisionDetectorLater();
+}
+
+
 void WorldItem::updateCollisionDetector()
 {
     impl->updateCollisionDetector(true);
@@ -284,20 +294,22 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 
     for(size_t i=0; i < bodyItems.size(); ++i){
         BodyItem* bodyItem = bodyItems.get(i);
-        const BodyPtr& body = bodyItem->body();
-        const int numLinks = body->numLinks();
-        
-        pair<BodyItemInfoMap::iterator, bool> inserted =
-            bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
-        BodyItemInfo& info = inserted.first->second;
-
-        info.geometryId = addBodyToCollisionDetector(
-            *body, *collisionDetector, bodyItem->isSelfCollisionDetectionEnabled());
-        geometryIdToBodyInfoMap.resize(collisionDetector->numGeometries(), inserted.first);
-
-        sigKinematicStateChangedConnections.add(
-            bodyItem->sigKinematicStateChanged().connect(
-                boost::bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
+        if(bodyItem->isCollisionDetectionEnabled()){
+            const BodyPtr& body = bodyItem->body();
+            const int numLinks = body->numLinks();
+            
+            pair<BodyItemInfoMap::iterator, bool> inserted =
+                bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
+            BodyItemInfo& info = inserted.first->second;
+            
+            info.geometryId = addBodyToCollisionDetector(
+                *body, *collisionDetector, bodyItem->isSelfCollisionDetectionEnabled());
+            geometryIdToBodyInfoMap.resize(collisionDetector->numGeometries(), inserted.first);
+            
+            sigKinematicStateChangedConnections.add(
+                bodyItem->sigKinematicStateChanged().connect(
+                    boost::bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
+        }
     }
 
     collisionDetector->makeReady();

@@ -98,6 +98,9 @@ public:
 
     SignalProxy<void()> sigKinematicStateEdited();
 
+    void enableCollisionDetection(bool on);
+    bool isCollisionDetectionEnabled() const;
+    
     void enableSelfCollisionDetection(bool on);
     bool isSelfCollisionDetectionEnabled() const;        
 
