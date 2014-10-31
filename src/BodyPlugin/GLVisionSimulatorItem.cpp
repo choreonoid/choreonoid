@@ -17,6 +17,7 @@
 #include <cnoid/SceneBody>
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneCamera>
+#include <cnoid/SceneLight>
 #include <cnoid/EigenUtil>
 #include <QGLPixelBuffer>
 #include <boost/thread.hpp>
@@ -153,6 +154,7 @@ public:
     bool useThreadForRendering;
     bool isVisionDataRecordingEnabled;
     bool isBestEffortMode;
+    bool isHeadLightEnabled;
     double maxLatency;
     double rangeSensorPrecisionRatio;
     double depthError;
@@ -207,6 +209,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     isVisionDataRecordingEnabled = false;
     useThreadForRenderingProperty = true;
     isBestEffortModeProperty = false;
+    isHeadLightEnabled = true;
     shootAllSceneObjects = false;
 }
 
@@ -233,6 +236,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
     useThreadForRenderingProperty = org.useThreadForRenderingProperty;
     isBestEffortModeProperty = org.isBestEffortModeProperty;
+    isHeadLightEnabled = org.isHeadLightEnabled;
     shootAllSceneObjects = org.shootAllSceneObjects;
 }
 
@@ -414,6 +418,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     renderer.initializeGL();
     renderer.setViewport(0, 0, pixelWidth, pixelHeight);
     renderer.initializeRendering();
+    renderer.headLight()->on(simImpl->isHeadLightEnabled);
     renderer.setCurrentCamera(sceneCamera);
     pixelBuffer->doneCurrent();
 
@@ -936,6 +941,7 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty.min(1.0)(_("Precision ratio of range sensors"),
                          rangeSensorPrecisionRatio, changeProperty(rangeSensorPrecisionRatio));
     putProperty.reset()(_("Depth error"), depthError, changeProperty(depthError));
+    putProperty.reset()(_("Head light"), isHeadLightEnabled, changeProperty(isHeadLightEnabled));
 }
 
 
@@ -957,6 +963,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("allSceneObjects", shootAllSceneObjects);
     archive.write("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
     archive.write("depthError", depthError);
+    archive.write("isHeadLightEnabled", isHeadLightEnabled);    
     return true;
 }
 
@@ -982,5 +989,6 @@ bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
     archive.read("allSceneObjects", shootAllSceneObjects);
     archive.read("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
     archive.read("depthError", depthError);
+    archive.read("isHeadLightEnabled", isHeadLightEnabled);
     return true;
 }
