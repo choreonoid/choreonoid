@@ -131,8 +131,8 @@ boost::optional<double> cnoid::alignPointCloud
     typedef pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> ICP;
     ICP icp;
 
-    cout << "icp.getMaxCorrespondenceDistance(): " << icp.getMaxCorrespondenceDistance() << endl;
-    cout << "icp.getMaximumIterations(): " << icp.getMaximumIterations() << endl;
+    //cout << "icp.getMaxCorrespondenceDistance(): " << icp.getMaxCorrespondenceDistance() << endl;
+    //cout << "icp.getMaximumIterations(): " << icp.getMaximumIterations() << endl;
     
     icp.setInputTarget(targetCloud);
     icp.setInputSource(sourceCloud);
