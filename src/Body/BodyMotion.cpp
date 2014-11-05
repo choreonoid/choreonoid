@@ -6,6 +6,7 @@
 #include "BodyMotion.h"
 #include "Body.h"
 #include "Link.h"
+#include "ZMPSeq.h"
 #include <cnoid/Vector3Seq>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
@@ -173,10 +174,7 @@ bool BodyMotion::read(const Mapping& archive)
 
     bool result = true;
     bool loaded = false;
-    bool linkPosLoaded = false;
-    bool zmpLoaded = false;
-    bool isRelativeZmp = false;
-    Vector3SeqPtr zmpSeq;
+    ZMPSeqPtr zmpSeq;
     
     try {
         if(archive["type"].toString() != "BodyMotion"){
@@ -204,20 +202,22 @@ bool BodyMotion::read(const Mapping& archive)
                     result &= linkPosSeq_->readSeq(component);
                     if(result){
                         loaded = true;
-                        linkPosLoaded = true;
                     } else {
                         addSeqMessage(linkPosSeq_->seqMessage());
                     }
                 } else if(type == "Vector3Seq") {
-                    if(content == "RelativeZmp"){
+                    bool isRelativeZmp = false;
+                    if(content == "RelativeZMP" || content == "RelativeZmp"){
                         isRelativeZmp = true;
                     } else if(content != "ZMP"){
                         continue;
                     }
-                    zmpSeq = getOrCreateExtraSeq<Vector3Seq>("ZMP");
+                    zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
                     result = zmpSeq->readSeq(component);
                     if(result){
-                        zmpLoaded = true;
+                        if(isRelativeZmp){
+                            zmpSeq->setRootRelative(true);
+                        }
                     } else {
                         addSeqMessage(zmpSeq->seqMessage());
                     }
@@ -235,23 +235,6 @@ bool BodyMotion::read(const Mapping& archive)
     if(!result){
         setDimension(0, 1, 1);
 
-    } else if(zmpLoaded && isRelativeZmp){
-        if(!linkPosLoaded){
-            zmpLoaded = false;
-        } else {
-            const int n = zmpSeq->numFrames();
-            const int m = linkPosSeq_->numFrames() - 1;
-            const MultiSE3Seq::Part rootSeq = linkPosSeq_->part(0);
-            for(int i=0; i < n; ++i){
-                const SE3& p = rootSeq[std::min(i, m)];
-                Vector3& zmp = zmpSeq->at(i);
-                zmp = p.rotation() * zmp + p.translation();
-            }
-        }
-    }
-    
-    if(!zmpLoaded){
-        clearExtraSeq("ZMP");
     }
     
     return (result && loaded);

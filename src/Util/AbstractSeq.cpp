@@ -4,7 +4,6 @@
 */
 
 #include "AbstractSeq.h"
-#include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "gettext.h"
 
