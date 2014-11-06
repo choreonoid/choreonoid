@@ -35,6 +35,7 @@ const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
+
 class HighGainControllerItem : public ControllerItem
 {
     BodyPtr body;
@@ -102,8 +103,28 @@ public:
     }
         
     virtual void stop() { }
-
 };
+
+
+class KinematicWalkBody : public SimulationBody
+{
+public:
+    KinematicWalkBody(DyBody* body, LeggedBodyHelper* legged)
+        : SimulationBody(body),
+          legged(legged) {
+        supportFootIndex = 0;
+        for(int i=1; i < legged->numFeet(); ++i){
+            if(legged->footLink(i)->p().z() < legged->footLink(supportFootIndex)->p().z()){
+                supportFootIndex = i;
+            }
+        }
+        traverse.find(legged->footLink(supportFootIndex), true, true);
+    }
+    LeggedBodyHelper* legged;
+    int supportFootIndex;
+    LinkTraverse traverse;
+};
+
 }
 
 
@@ -320,7 +341,20 @@ ItemPtr AISTSimulatorItem::doDuplicate() const
 
 SimulationBodyPtr AISTSimulatorItem::createSimulationBody(BodyPtr orgBody)
 {
-    return new SimulationBody(new DyBody(*orgBody));
+    SimulationBody* simBody = 0;
+    DyBody* body = new DyBody(*orgBody);
+    
+    if(impl->dynamicsMode.is(KINEMATICS) && impl->isKinematicWalkingEnabled){
+        LeggedBodyHelper* legged = getLeggedBodyHelper(body);
+        if(legged->isValid()){
+            simBody = new KinematicWalkBody(body, legged);
+        }
+    }
+    if(!simBody){
+        simBody = new SimulationBody(body);
+    }
+
+    return simBody;
 }
 
 
@@ -436,21 +470,35 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
         }
     } else {
         for(size_t i=0; i < activeSimBodies.size(); ++i){
-            Body* body = activeSimBodies[i]->body();
-            LeggedBodyHelper* legged = getLeggedBodyHelper(body);
-            if(!legged->isValid()){
-                body->calcForwardKinematics(true, true);
+            SimulationBody* simBody = activeSimBodies[i];
+            KinematicWalkBody* walkBody = dynamic_cast<KinematicWalkBody*>(simBody);
+            if(!walkBody){
+                simBody->body()->calcForwardKinematics(true, true);
             } else {
-                Link* supportFoot = 0;
+                walkBody->traverse.calcForwardKinematics(true, true);
+                
+                LeggedBodyHelper* legged = walkBody->legged;
+                const int supportFootIndex = walkBody->supportFootIndex;
+                int nextSupportFootIndex = supportFootIndex;
+                Link* supportFoot = legged->footLink(supportFootIndex);
+                Link* nextSupportFoot = supportFoot;
                 const int n = legged->numFeet();
                 for(int i=0; i < n; ++i){
-                    Link* foot = legged->footLink(i);
-                    if(!supportFoot || foot->p().z() < supportFoot->p().z()){
-                        supportFoot = foot;
+                    if(i != supportFootIndex){
+                        Link* foot = legged->footLink(i);
+                        if(foot->p().z() < nextSupportFoot->p().z()){
+                            nextSupportFootIndex = i;
+                            nextSupportFoot = foot;
+                        }
                     }
                 }
-                LinkTraverse traverse(supportFoot, true, true);
-                traverse.calcForwardKinematics(true, true);
+                if(nextSupportFoot != supportFoot){
+                    nextSupportFoot->p().z() = supportFoot->p().z();
+                    walkBody->supportFootIndex = nextSupportFootIndex;
+                    supportFoot = nextSupportFoot;
+                    walkBody->traverse.find(supportFoot, true, true);
+                    walkBody->traverse.calcForwardKinematics(true, true);
+                }
             }
         }
     }
