@@ -3,6 +3,7 @@
 */
 
 #include "PythonExecutor.h"
+#include <cnoid/PyUtil>
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
 #include <QThread>

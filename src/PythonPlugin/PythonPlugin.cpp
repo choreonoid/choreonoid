@@ -6,6 +6,7 @@
 #include "PythonScriptItem.h"
 #include "PythonConsoleView.h"
 #include "PythonExecutor.h"
+#include <cnoid/PyUtil>
 #include <cnoid/Plugin>
 #include <cnoid/AppConfig>
 #include <cnoid/MenuManager>

@@ -19,7 +19,7 @@ class MeshNormalGeneratorImpl
 public:
     float minCreaseAngle;
     float maxCreaseAngle;
-    SgNormalArray faceNormals;
+    SgNormalArrayPtr faceNormals;
     vector< vector<int> > vertexIndexToTriangleIndicesMap;
     vector< vector<int> > vertexIndexToNormalIndicesMap;
     bool isOverwritingEnabled;
@@ -93,6 +93,9 @@ bool MeshNormalGenerator::generateNormals(SgMesh* mesh, float creaseAngle)
         return false;
     }
 
+    if(!impl->faceNormals){
+        impl->faceNormals = new SgNormalArray;
+    }
     impl->calculateFaceNormals(mesh);
     impl->setVertexNormals(mesh, creaseAngle);
 
@@ -106,8 +109,8 @@ void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
     const int numVertices = vertices.size();
     const int numTriangles = mesh->numTriangles();
 
-    faceNormals.clear();
-    faceNormals.reserve(numTriangles);
+    faceNormals->clear();
+    faceNormals->reserve(numTriangles);
     vertexIndexToTriangleIndicesMap.clear();
     vertexIndexToTriangleIndicesMap.resize(numVertices);
 
@@ -119,7 +122,7 @@ void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
         const Vector3f& v1 = vertices[triangle[1]];
         const Vector3f& v2 = vertices[triangle[2]];
         const Vector3f normal((v1 - v0).cross(v2 - v0).normalized());
-        faceNormals.push_back(normal);
+        faceNormals->push_back(normal);
 
         for(int j=0; j < 3; ++j){
             vector<int>& trianglesOfVertex = vertexIndexToTriangleIndicesMap[triangle[j]];
@@ -130,7 +133,7 @@ void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
             */
             bool isSameNormalFaceFound = false;
             for(size_t k=0; k < trianglesOfVertex.size(); ++k){
-                const Vector3f& otherNormal = faceNormals[trianglesOfVertex[k]];
+                const Vector3f& otherNormal = (*faceNormals)[trianglesOfVertex[k]];
                 // the same face is not appended
                 if(otherNormal.isApprox(normal, 5.0e-4)){
                     isSameNormalFaceFound = true;
@@ -170,14 +173,14 @@ void MeshNormalGeneratorImpl::setVertexNormals(SgMesh* mesh, float givenCreaseAn
 
             const int vertexIndex = triangle[i];
             const vector<int>& trianglesOfVertex = vertexIndexToTriangleIndicesMap[vertexIndex];
-            const Vector3f& currentFaceNormal = faceNormals[faceIndex];
+            const Vector3f& currentFaceNormal = (*faceNormals)[faceIndex];
             Vector3f normal = currentFaceNormal;
             bool normalIsFaceNormal = true;
                 
             // avarage normals of the faces whose crease angle is below the 'creaseAngle' variable
             for(size_t j=0; j < trianglesOfVertex.size(); ++j){
                 const int adjacentFaceIndex = trianglesOfVertex[j];
-                const Vector3f& adjacentFaceNormal = faceNormals[adjacentFaceIndex];
+                const Vector3f& adjacentFaceNormal = (*faceNormals)[adjacentFaceIndex];
                 const float angle = acosf(currentFaceNormal.dot(adjacentFaceNormal)
                                           / (currentFaceNormal.norm() * adjacentFaceNormal.norm()));
                 if(angle > 0.0f && angle < creaseAngle){

@@ -25,25 +25,26 @@ public:
 
     BodyMotionItem();
     BodyMotionItem(BodyMotionPtr bodyMotion);
+    BodyMotionItem(const BodyMotionItem& org);
     ~BodyMotionItem();
 
     virtual AbstractMultiSeqPtr abstractMultiSeq();
 
-    inline const BodyMotionPtr& motion() { return bodyMotion_; }
+    const BodyMotionPtr& motion() { return bodyMotion_; }
 
-    inline MultiValueSeqItem* jointPosSeqItem() {
+    MultiValueSeqItem* jointPosSeqItem() {
         return jointPosSeqItem_.get();
     }
 
-    inline const MultiValueSeqPtr& jointPosSeq() {
+    const MultiValueSeqPtr& jointPosSeq() {
         return bodyMotion_->jointPosSeq();
     }
 
-    inline MultiSE3SeqItem* linkPosSeqItem() {
+    MultiSE3SeqItem* linkPosSeqItem() {
         return linkPosSeqItem_.get();
     }
             
-    inline const MultiSE3SeqPtr& linkPosSeq() {
+    const MultiSE3SeqPtr& linkPosSeq() {
         return bodyMotion_->linkPosSeq();
     }
 
@@ -57,8 +58,6 @@ public:
     virtual void notifyUpdate();
 
 protected:
-    BodyMotionItem(const BodyMotionItem& org);
-
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
     virtual ItemPtr doDuplicate() const;
     virtual bool store(Archive& archive);

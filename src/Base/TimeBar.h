@@ -15,19 +15,9 @@ class TimeBarImpl;
 
 class CNOID_EXPORT TimeBar : public ToolBar
 {
-    class LogicalSum
-    {
-    public:
-        typedef bool result_type;
-        template<typename InputIterator>
-        bool operator()(InputIterator first, InputIterator last) const {
-            bool result = false;
-            while(first != last){
-                result |= *first++;
-            }
-            return result;
-        }
-    };
+public:
+    static void initialize(ExtensionManager* ext);
+    static TimeBar* instance();
 
     class LogicalProduct
     {
@@ -43,18 +33,30 @@ class CNOID_EXPORT TimeBar : public ToolBar
         }
     };
         
-public:
-
-    static void initialize(ExtensionManager* ext);
-    static TimeBar* instance();
-
     /**
        \note If any connected slot returns false, the playback is canceled.
+       
     */
     SignalProxy<bool(double time), LogicalProduct> sigPlaybackInitialized();
         
     SignalProxy<void(double time)> sigPlaybackStarted();
+
+    class LogicalSum
+    {
+    public:
+        typedef bool result_type;
+        template<typename InputIterator>
+        bool operator()(InputIterator first, InputIterator last) const {
+            bool result = false;
+            while(first != last){
+                result |= *first++;
+            }
+            return result;
+        }
+    };
+
     SignalProxy<bool(double time), LogicalSum> sigTimeChanged();
+    
     SignalProxy<void(double time, bool isStoppedManually)> sigPlaybackStopped();
 
     inline double time() const { return time_; }

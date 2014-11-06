@@ -71,10 +71,11 @@ class Referenced
     template<class Y> friend class weak_ref_ptr;
     template<class Y> friend class ref_ptr;
 
-public:
+protected:
     Referenced() : refCount_(0), weakCounter_(0) { }
     Referenced(const Referenced& org) : refCount_(0), weakCounter_(0) { }
 
+public:
     virtual ~Referenced() {
         if(weakCounter_){
             weakCounter_->setDestructed();

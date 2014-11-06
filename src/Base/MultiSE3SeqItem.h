@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_MULTI_SE3_SEQ_ITEM_H_INCLUDED
-#define CNOID_BASE_MULTI_SE3_SEQ_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_MULTI_SE3_SEQ_ITEM_H
+#define CNOID_BASE_MULTI_SE3_SEQ_ITEM_H
 
 #include "MultiSeqItem.h"
 #include <cnoid/MultiSE3Seq>

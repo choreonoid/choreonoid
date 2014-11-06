@@ -56,6 +56,9 @@ public:
     void setRangeDataAsState(bool on) { isRangeDataSetAsState_ = on; }
     bool isRangeDataSetAsState() const { return isRangeDataSetAsState_; }
 
+    /**
+       \note You must check if the range data is not empty before accessing the data
+    */
     const RangeData& rangeData() const { return *rangeData_; }
     const RangeData& constRangeData() const { return *rangeData_; }
     RangeData& rangeData();

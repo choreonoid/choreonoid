@@ -25,7 +25,7 @@ public:
     int divisionNumber() const;
 
     void enableNormalGeneration(bool on);
-    bool isNormanGenerationEnabled() const;
+    bool isNormalGenerationEnabled() const;
 
     SgMesh* generateBox(Vector3 size);
     SgMesh* generateSphere(double radius);
@@ -58,7 +58,7 @@ public:
 
 private:
     int divisionNumber_;
-    bool isNormanGenerationEnabled_;
+    bool isNormalGenerationEnabled_;
     MeshNormalGenerator* normalGenerator;
 
     void generateNormals(SgMesh* mesh, double creaseAngle);

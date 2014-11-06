@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_VECTOR3_SEQ_ITEM_H_INCLUDED
-#define CNOID_GUIBASE_VECTOR3_SEQ_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_VECTOR3_SEQ_ITEM_H
+#define CNOID_BASE_VECTOR3_SEQ_ITEM_H
 
 #include "AbstractSeqItem.h"
 #include <cnoid/Vector3Seq>
@@ -18,18 +18,17 @@ public:
     static void initializeClass(ExtensionManager* ext);
             
     Vector3SeqItem();
+    Vector3SeqItem(const Vector3SeqItem& org);
     Vector3SeqItem(Vector3SeqPtr seq);
 
     virtual AbstractSeqPtr abstractSeq();
         
-    inline const Vector3SeqPtr& seq() { return seq_; }
+    Vector3SeqPtr seq() { return seq_; }
 
     bool loadPlainFormat(const std::string& filename);
     bool saveAsPlainFormat(const std::string& filename);
 
 protected:
-    Vector3SeqItem(const Vector3SeqItem& org);
-
     /**
        This is for the copy constructor of an inherited class
     */

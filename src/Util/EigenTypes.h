@@ -87,11 +87,11 @@ public:
     SE3(const Vector3& translation, const Matrix3& rotation)
         : p(translation), q(rotation) { }
 
-    void set(const Vector3 translation, const Quat& rotation) {
+    void set(const Vector3& translation, const Quat& rotation) {
         this->p = translation;
         this->q = rotation;
     }
-    void set(const Vector3 translation, const Matrix3& R) {
+    void set(const Vector3& translation, const Matrix3& R) {
         this->p = translation;
         this->q = R;
     }

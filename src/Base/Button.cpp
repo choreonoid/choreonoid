@@ -124,13 +124,12 @@ void RadioButton::onToggled(bool checked)
     sigToggled_(checked);
 }
 
-
 ToolButton::ToolButton(QWidget* parent)
     : QToolButton(parent)
 {
     initialize();
 }
-    
+
 
 /*
   ToolButton::ToolButton(const QString& text, QWidget* parent)

@@ -64,7 +64,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     SimulatorItem();
-    SimulatorItem(const SimulatorItem& org);
     virtual ~SimulatorItem();
 
     virtual double worldTimeStep();
@@ -120,6 +119,7 @@ public:
         sigSimulationBodyListUpdated();
 
 protected:
+    SimulatorItem(const SimulatorItem& org);
 
     virtual void onDisconnectedFromRoot();
 

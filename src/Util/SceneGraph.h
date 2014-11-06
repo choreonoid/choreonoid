@@ -141,8 +141,9 @@ typedef std::vector<SgNode*> SgNodePath;
 class CNOID_EXPORT SgNode : public SgObject
 {
 public:
-    SgNode() { }
-    SgNode(const SgNode& org) : SgObject(org) { }
+    SgNode();
+    SgNode(const SgNode& org);
+    ~SgNode();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;

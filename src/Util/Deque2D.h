@@ -44,7 +44,7 @@ public:
             buf = org.buf;
         }
         
-        const ElementType& operator*() const {
+        const Element& operator*() const {
             return *current;
         }
         const_iterator& operator++() {
@@ -103,7 +103,7 @@ public:
         iterator() { }
         iterator(const iterator& org) : const_iterator(org) { }
         
-        ElementType& operator*() {
+        Element& operator*() {
             return *const_iterator::current;
         }
         iterator& operator+=(size_t n){
@@ -174,23 +174,23 @@ public:
             return size_;
         }
 
-        ElementType& operator[](int index){
+        Element& operator[](int index){
             return top[index];
         }
 
-        const ElementType& operator[](int index) const {
+        const Element& operator[](int index) const {
             return top[index];
         }
 
-        ElementType& at(int index) {
+        Element& at(int index) {
             return top[index];
         }
 
-        ElementType* begin() {
+        Element* begin() {
             return top;
         }
 
-        ElementType* end() {
+        Element* end() {
             return top + size_;
         }
     };
@@ -220,15 +220,15 @@ public:
             return rowSize;
         }
 
-        ElementType& operator[](int rowIndex){
+        Element& operator[](int rowIndex){
             return top[(offset + rowIndex * colSize) % capacity];
         }
 
-        const ElementType& operator[](int rowIndex) const {
+        const Element& operator[](int rowIndex) const {
             return top[(offset + rowIndex * colSize) % capacity];
         }
 
-        ElementType& at(int index) {
+        Element& at(int index) {
             return top[index * colSize];
         }
 
@@ -243,13 +243,13 @@ public:
                 
             iterator() { }
                 
-            iterator(Column& column, ElementType* pos){
+            iterator(Column& column, Element* pos){
                 current = pos;
                 top = column.top;
                 term = top + column.capacity;
                 colSize = column.colSize;
             }
-            ElementType& operator*() {
+            Element& operator*() {
                 return *current;
             }
             void operator++() {
@@ -545,19 +545,19 @@ public:
         resize(0, 0);
     }
 
-    const ElementType& operator()(int rowIndex, int colIndex) const {
+    const Element& operator()(int rowIndex, int colIndex) const {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    ElementType& operator()(int rowIndex, int colIndex) {
+    Element& operator()(int rowIndex, int colIndex) {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    const ElementType& at(int rowIndex, int colIndex) const {
+    const Element& at(int rowIndex, int colIndex) const {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    ElementType& at(int rowIndex, int colIndex) {
+    Element& at(int rowIndex, int colIndex) {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 

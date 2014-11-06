@@ -10,6 +10,7 @@
 #include <cnoid/Dialog>
 #include <cnoid/Button>
 #include <cnoid/LineEdit>
+#include <cnoid/PyUtil>
 #include <cnoid/PythonExecutor>
 #include <QBoxLayout>
 #include <QStackedLayout>

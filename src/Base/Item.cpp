@@ -81,6 +81,7 @@ Item::~Item()
     if(TRACE_FUNCTIONS){
         cout << "Item::~Item() of " << name_ << endl;
     }
+    
     sigSubTreeChanged_.disconnect_all_slots();
 
     Item* child = childItem();
@@ -116,9 +117,9 @@ void Item::setName(const std::string& name)
    @param item 追加するアイテム
    @endif
 */
-bool Item::addChildItem(ItemPtr item, bool isManualOperation)
+bool Item::addChildItem(Item* item, bool isManualOperation)
 {
-    return doInsertChildItem(item.get(), 0, isManualOperation);
+    return doInsertChildItem(item, 0, isManualOperation);
 }
 
 
@@ -130,23 +131,23 @@ bool Item::addChildItem(ItemPtr item, bool isManualOperation)
    この関数によって追加されたアイテムは isSubItem() が true となる。   
    @endif
 */
-bool Item::addSubItem(ItemPtr item)
+bool Item::addSubItem(Item* item)
 {
     item->attributes.set(SUB_ITEM);
     return addChildItem(item, false);
 }
 
 
-bool Item::insertChildItem(ItemPtr item, ItemPtr nextItem, bool isManualOperation)
+bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 {
-    return doInsertChildItem(item.get(), nextItem.get(), isManualOperation);
+    return doInsertChildItem(item, nextItem, isManualOperation);
 }
 
 
-bool Item::insertSubItem(ItemPtr item, ItemPtr nextItem)
+bool Item::insertSubItem(Item* item, Item* nextItem)
 {
     item->attributes.set(SUB_ITEM);
-    return doInsertChildItem(item.get(), nextItem.get(), false);
+    return doInsertChildItem(item, nextItem, false);
 }
 
 

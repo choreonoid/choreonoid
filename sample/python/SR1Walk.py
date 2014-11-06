@@ -1,9 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # @author Hisashi Ikari
 
-import cnoid.Util as util
+from cnoid.Util import *
+from cnoid.Base import *
+from cnoid.Body import *
+from cnoid.BodyPlugin import *
+
 import cnoid.Base as base
 import cnoid.Body as body
 import cnoid.BodyPlugin as bp

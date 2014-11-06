@@ -2,25 +2,13 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_UTIL_H_INCLUDED
-#define CNOID_PYTHON_PLUGIN_PYTHON_UTIL_H_INCLUDED
+#ifndef CNOID_PYTHON_PLUGIN_PYTHON_UTIL_H
+#define CNOID_PYTHON_PLUGIN_PYTHON_UTIL_H
 
 #include <boost/python.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class PyGILock
-{
-    PyGILState_STATE gstate;
-public:
-    PyGILock(){
-        gstate = PyGILState_Ensure();
-    }
-    ~PyGILock() {
-        PyGILState_Release(gstate);
-    }
-};
 
 CNOID_EXPORT boost::python::object pythonMainModule();
 CNOID_EXPORT boost::python::object pythonMainNamespace();

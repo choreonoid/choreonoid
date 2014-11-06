@@ -122,6 +122,7 @@ private:
     void initialize();
 };
 
+
 class CNOID_EXPORT ToggleToolButton : public ToolButton
 {
 public:

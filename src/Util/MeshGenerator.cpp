@@ -16,7 +16,7 @@ const double PI = 3.14159265358979323846;
 
 MeshGenerator::MeshGenerator()
 {
-    isNormanGenerationEnabled_ = true;
+    isNormalGenerationEnabled_ = true;
     normalGenerator = 0;
     divisionNumber_ = 20;
 }
@@ -44,19 +44,19 @@ int MeshGenerator::divisionNumber() const
 
 void MeshGenerator::enableNormalGeneration(bool on)
 {
-    isNormanGenerationEnabled_ = on;
+    isNormalGenerationEnabled_ = on;
 }
 
 
-bool MeshGenerator::isNormanGenerationEnabled() const
+bool MeshGenerator::isNormalGenerationEnabled() const
 {
-    return isNormanGenerationEnabled_;
+    return isNormalGenerationEnabled_;
 }
 
 
 void MeshGenerator::generateNormals(SgMesh* mesh, double creaseAngle)
 {
-    if(isNormanGenerationEnabled_){
+    if(isNormalGenerationEnabled_){
         if(!normalGenerator){
             normalGenerator = new MeshNormalGenerator;
         }

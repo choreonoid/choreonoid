@@ -29,7 +29,4 @@ libgstreamer-plugins-base0.10-dev \
 libpulse-dev \
 libsndfile1-dev \
 python2.7-dev \
-uuid-dev \
-libshiboken-dev \
-libpyside-dev
-
+uuid-dev

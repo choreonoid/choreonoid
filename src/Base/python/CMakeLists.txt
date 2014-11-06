@@ -3,17 +3,37 @@
 
 set(PYTHON_SUFFIX -python2.7)
 
-find_package(Shiboken REQUIRED)
-find_package(PySide REQUIRED)
+add_cnoid_python_module(CnoidPyQtCore
+  PyQtCore.cpp
+  )
 
-include_directories(
-  ${SHIBOKEN_INCLUDE_DIR} 
-  ${PYSIDE_INCLUDE_DIR} ${PYSIDE_INCLUDE_DIR}/QtCore ${PYSIDE_INCLUDE_DIR}/QtGui)
+target_link_libraries(CnoidPyQtCore
+  ${QT_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${Boost_PYTHON_LIBRARY}
+  )
 
-set(target CnoidPyBase)
-add_cnoid_python_module(${target} PyBase.cpp)
-target_link_libraries(${target}
+add_cnoid_python_module(CnoidPyQtGui
+  PyQtGui.cpp
+  )
+
+target_link_libraries(CnoidPyQtGui
+  ${QT_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${Boost_PYTHON_LIBRARY}
+  )
+
+
+add_cnoid_python_module(CnoidPyBase
+  PyBase.cpp
+  PyQtEx.cpp
+  PyItems.cpp
+  PyToolBars.cpp
+  #PyViews.cpp
+)
+
+target_link_libraries(CnoidPyBase
   CnoidBase 
-  ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY}
-  ${SHIBOKEN_LIBRARY} ${PYSIDE_LIBRARY}
+  ${PYTHON_LIBRARIES}
+  ${Boost_PYTHON_LIBRARY}
   )

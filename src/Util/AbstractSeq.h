@@ -22,9 +22,11 @@ typedef boost::shared_ptr<AbstractSeq> AbstractSeqPtr;
 
 class CNOID_EXPORT AbstractSeq
 {
-public:
+protected:
     AbstractSeq(const char* seqType);
     AbstractSeq(const AbstractSeq& org);
+    
+public:
     virtual ~AbstractSeq();
 
     virtual AbstractSeqPtr cloneSeq() const = 0;

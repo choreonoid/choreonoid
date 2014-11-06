@@ -2,7 +2,6 @@
   @author Shin'ichiro Nakaoka
 */
 
-
 #include <boost/python.hpp>
 #include "omniORBpy.h"
 #include <cnoid/CorbaUtil>

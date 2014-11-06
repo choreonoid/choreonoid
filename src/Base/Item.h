@@ -37,6 +37,10 @@ class Archive;
 */
 class CNOID_EXPORT Item : public Referenced
 {
+protected:
+    Item();
+    Item(const Item& item);
+    
 public:
 
     enum Attribute {
@@ -46,8 +50,6 @@ public:
         NUM_ATTRIBUTES
     };
 
-    Item();
-    Item(const Item& item);
     virtual ~Item(); // The destructor should not be called in usual ways
 
     const std::string& name() const { return name_; }
@@ -60,15 +62,15 @@ public:
     Item* nextItem() const { return nextItem_; }
     Item* parentItem() const { return parent_; }
 
-    bool addChildItem(ItemPtr item, bool isManualOperation = false);
-    bool addSubItem(ItemPtr item);
+    bool addChildItem(Item* item, bool isManualOperation = false);
+    bool addSubItem(Item* item);
     bool isSubItem() const;
     //int subItemIndex() const;
     //Item* subItem(int subItemIndex);
     void detachFromParentItem();
     void emitSigDetachedFromRootForSubTree();
-    bool insertChildItem(ItemPtr item, ItemPtr nextItem, bool isManualOperation = false);
-    bool insertSubItem(ItemPtr item, ItemPtr nextItem);
+    bool insertChildItem(Item* item, Item* nextItem, bool isManualOperation = false);
+    bool insertSubItem(Item* item, Item* nextItem);
 
     bool isTemporal() const;
     void setTemporal(bool on = true);

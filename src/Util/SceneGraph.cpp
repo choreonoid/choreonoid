@@ -139,6 +139,25 @@ void SgObject::removeParent(SgObject* parent)
 }
 
 
+SgNode::SgNode()
+{
+
+}
+
+
+SgNode::SgNode(const SgNode& org)
+    : SgObject(org)
+{
+
+}
+
+
+SgNode::~SgNode()
+{
+
+}
+
+
 SgObject* SgNode::clone(SgCloneMap& cloneMap) const
 {
     return new SgNode(*this);

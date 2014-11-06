@@ -896,6 +896,12 @@ Selection SimulatorItem::recordingMode() const
 }
 
 
+bool SimulatorItem::isRecordingEnabled() const
+{
+    return impl->isRecordingEnabled;
+}
+
+
 void SimulatorItem::setTimeRangeMode(int selection)
 {
     impl->timeRangeMode.select(selection);
