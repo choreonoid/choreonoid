@@ -508,8 +508,12 @@ public:
     void doPut(const QString& message, bool doLF, bool doNotify, bool doFlush) {
 
     	scrollPos = textEdit.getScrollPos();
-    	if(scrollPos < textEdit.maxScrollPos())
+    	if(scrollPos < textEdit.maxScrollPos()-3*textEdit.scrollSingleStep())
     		enableScroll = false;
+
+    	//cout << "scroll= " << scrollPos << " " << textEdit.maxScrollPos() << " " << textEdit.scrollSingleStep();
+    	//if(doLF)
+    	//	cout << endl;
 
     	cursor.setPosition(cursorPos, QTextCursor::MoveAnchor);
     	textEdit.setTextCursor(cursor);
