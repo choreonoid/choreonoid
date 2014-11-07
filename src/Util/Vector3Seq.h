@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VECTOR3_SEQ_H_INCLUDED
-#define CNOID_UTIL_VECTOR3_SEQ_H_INCLUDED
+#ifndef CNOID_UTIL_VECTOR3_SEQ_H
+#define CNOID_UTIL_VECTOR3_SEQ_H
 
 #include "Seq.h"
 #include "EigenUtil.h"

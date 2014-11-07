@@ -101,6 +101,7 @@ public:
     PinDragIKptr pinDragIK;
     Vector3 zmp;
 
+    bool isCollisionDetectionEnabled;
     bool isSelfCollisionDetectionEnabled;
 
     BodyState initialState;
@@ -129,7 +130,9 @@ public:
     void setCurrentBaseLink(Link* link);
     void emitSigKinematicStateChanged();
     void emitSigKinematicStateEdited();
-    bool onSelfCollisionDetectionPropertyChanged(bool on);
+    bool enableCollisionDetection(bool on);
+    bool enableSelfCollisionDetection(bool on);
+    void updateCollisionDetectorLater();
     void appendKinematicStateToHistory();
     bool onStaticModelPropertyChanged(bool on);
     void onLinkVisibilityCheckToggled();
@@ -150,6 +153,7 @@ public:
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 };
+
 }
     
 
@@ -185,6 +189,7 @@ BodyItemImpl::BodyItemImpl(BodyItem* self)
 {
     body = new Body();
     isEditable = true;
+    isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
 }
 
@@ -210,6 +215,7 @@ BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     zmp = org.zmp;
     isEditable = org.isEditable;
     isOriginalModelStatic = org.isOriginalModelStatic;
+    isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
 }
 
@@ -895,26 +901,57 @@ void BodyItemImpl::emitSigKinematicStateEdited()
 }
 
 
-void BodyItem::enableSelfCollisionDetection(bool on)
+void BodyItem::enableCollisionDetection(bool on)
 {
-    impl->isSelfCollisionDetectionEnabled = on;
+    enableCollisionDetection(on);
 }
 
 
-bool BodyItemImpl::onSelfCollisionDetectionPropertyChanged(bool on)
+bool BodyItemImpl::enableCollisionDetection(bool on)
 {
-    if(on != isSelfCollisionDetectionEnabled){
-        isSelfCollisionDetectionEnabled = on;
-        WorldItem* worldItem = self->findOwnerItem<WorldItem>();
-        if(worldItem){
-            worldItem->updateCollisionDetector();
-        }
+    if(on != isCollisionDetectionEnabled){
+        isCollisionDetectionEnabled = on;
+        updateCollisionDetectorLater();
         return true;
     }
     return false;
 }
+
+
+void BodyItem::enableSelfCollisionDetection(bool on)
+{
+    enableSelfCollisionDetection(on);
+}
+
+
+bool BodyItemImpl::enableSelfCollisionDetection(bool on)
+{
+    if(on != isSelfCollisionDetectionEnabled){
+        isSelfCollisionDetectionEnabled = on;
+        updateCollisionDetectorLater();
+        return true;
+    }
+    return false;
+}
+
+
+void BodyItemImpl::updateCollisionDetectorLater()
+{
+    cout << "BodyItemImpl::updateCollisionDetectorLater(): " << self->name() << endl;
     
+    WorldItem* worldItem = self->findOwnerItem<WorldItem>();
+    if(worldItem){
+        worldItem->updateCollisionDetectorLater();
+    }
+}
+
         
+bool BodyItem::isCollisionDetectionEnabled() const
+{
+    return impl->isCollisionDetectionEnabled;
+}
+
+
 bool BodyItem::isSelfCollisionDetectionEnabled() const
 {
     return impl->isSelfCollisionDetectionEnabled;
@@ -1087,8 +1124,10 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Static model"), body->isStaticModel(),
                 (boost::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
     putProperty(_("Model file"), getFilename(boost::filesystem::path(self->filePath())));
-    putProperty(_("Self-collision"), isSelfCollisionDetectionEnabled,
-                (boost::bind(&BodyItemImpl::onSelfCollisionDetectionPropertyChanged, this, _1)));
+    putProperty(_("Collision detection"), isCollisionDetectionEnabled,
+                (boost::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
+    putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
+                (boost::bind(&BodyItemImpl::enableSelfCollisionDetection, this, _1)));
     putProperty(_("Editable"), isEditable, boost::bind(&BodyItemImpl::onEditableChanged, this, _1));
 }
 
@@ -1135,6 +1174,7 @@ bool BodyItemImpl::store(Archive& archive)
         archive.write("staticModel", body->isStaticModel());
     }
 
+    archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("isEditable", isEditable);
 
@@ -1204,7 +1244,14 @@ bool BodyItemImpl::restore(const Archive& archive)
             onStaticModelPropertyChanged(staticModel);
         }
 
-        archive.read("selfCollisionDetection", isSelfCollisionDetectionEnabled);
+        bool on;
+        if(archive.read("collisionDetection", on)){
+            enableCollisionDetection(on);
+        }
+        if(archive.read("selfCollisionDetection", on)){
+            enableSelfCollisionDetection(on);
+        }
+
         archive.read("isEditable", isEditable);
 
         self->notifyKinematicStateChange();

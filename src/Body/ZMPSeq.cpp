@@ -1,10 +1,11 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #include "ZMPSeq.h"
 #include "BodyMotion.h"
+#include <cnoid/YAMLWriter>
 
 using namespace std;
 using namespace cnoid;
@@ -67,6 +68,34 @@ AbstractSeqPtr ZMPSeq::cloneSeq() const
 const std::string& ZMPSeq::key()
 {
     return zmpkey;
+}
+
+
+void ZMPSeq::setRootRelative(bool on)
+{
+    isRootRelative_ = on;
+}
+
+
+bool ZMPSeq::doWriteSeq(YAMLWriter& writer)
+{
+    if(Vector3Seq::doWriteSeq(writer)){
+        if(isRootRelative_){
+            writer.putKeyValue("isRootRelative", true);
+        }
+        return true;
+    }
+    return false;
+}
+
+
+bool ZMPSeq::doReadSeq(const Mapping& archive)
+{
+    if(Vector3Seq::doReadSeq(archive)){
+        archive.read("isRootRelative", isRootRelative_);
+        return true;
+    }
+    return false;
 }
 
 

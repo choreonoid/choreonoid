@@ -1,10 +1,10 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_ZMP_SEQ_H_INCLUDED
-#define CNOID_BODY_ZMP_SEQ_H_INCLUDED
+#ifndef CNOID_BODY_ZMP_SEQ_H
+#define CNOID_BODY_ZMP_SEQ_H
 
 #include <cnoid/Vector3Seq>
 #include "exportdecl.h"
@@ -26,7 +26,11 @@ public:
     virtual AbstractSeqPtr cloneSeq() const;
 
     bool isRootRelative() const { return isRootRelative_; }
-    void setRootRelative(bool on) { isRootRelative_ = on; }
+    void setRootRelative(bool on);
+
+protected:
+    virtual bool doWriteSeq(YAMLWriter& writer);
+    virtual bool doReadSeq(const Mapping& archive);
 
 private:
     bool isRootRelative_;

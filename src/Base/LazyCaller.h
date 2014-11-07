@@ -40,6 +40,8 @@ public:
 
     bool isPending() const { return isPending_; }
 
+    void flush();
+
     typedef void result_type;
 
     /**

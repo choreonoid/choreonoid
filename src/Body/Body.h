@@ -257,6 +257,7 @@ private:
     void insertCache(const std::string& name, Referenced* cache);
     void setVirtualJointForcesSub();
 };
+
 };
 
 #endif

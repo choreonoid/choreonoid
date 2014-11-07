@@ -32,6 +32,7 @@ public:
     CollisionDetectorPtr collisionDetector();
     void enableCollisionDetection(bool on);
     bool isCollisionDetectionEnabled();
+    void updateCollisionDetectorLater();
     void updateCollisionDetector();
     void updateCollisions();
     const std::vector<CollisionLinkPairPtr>& collisions() const;
