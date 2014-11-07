@@ -21,9 +21,6 @@ ImageWidget::ImageWidget(QWidget* parent) :
     setAutoFillBackground(true);
 
     isScalingEnabled_ = false;
-    scale_ = 1;
-    position_.setX(0);
-    position_.setY(0);
 }
 
 
@@ -75,37 +72,58 @@ void ImageWidget::setImage(const Image& image)
     update();
 }
 
+
 void ImageWidget::zoom(double scale)
 {
 	if(pixmap_.isNull()){
-	        return;
+		return;
 	}
 
-	scale_ = scale;
+	QSize r = rect().size();
+	QTransform invT = transform_.inverted();
+	double x,y;
+	invT.map(r.width()/2,r.height()/2,&x,&y);
+
+	transform_.translate(x,y);
+	transform_.scale(scale, scale);
+	transform_.translate(-x,-y);
+
 	update();
-}
-
-
-void ImageWidget::setScale(double scale)
-{
-	scale_ = scale;
 }
 
 
 void ImageWidget::translate(QPoint pos)
 {
 	if(pixmap_.isNull()){
-		        return;
-		}
+		return;
+	}
 
-	position_ = pos;
+	QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
+	QTransform invT = T.inverted();
+	double x,y;
+	invT.map(pos.x(), pos.y(),&x,&y);
+	transform_.translate(x,y);
+
 	update();
 }
 
 
-void ImageWidget::setPosition(QPoint pos)
+void ImageWidget::rotate(double rotation)
 {
-	position_ = pos;
+	if(pixmap_.isNull()){
+		return;
+	}
+
+	QSize r = rect().size();
+	QTransform invT = transform_.inverted();
+	double x,y;
+	invT.map(r.width()/2,r.height()/2,&x,&y);
+
+	transform_.translate(x,y);
+	transform_.rotate(rotation);
+	transform_.translate(-x,-y);
+
+	update();
 }
 
 
@@ -117,26 +135,17 @@ void ImageWidget::paintEvent(QPaintEvent* event)
         return;
     }
 
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    QSize r = event->rect().size();
-    QSize s = pixmap_.size();
-
     //for(int i=0; i<r.width(); i+=50)
     //   	painter.drawLine(i,0,i,r.height());
     //for( int j=0; j<r.height(); j+=50)
     //   	painter.drawLine(0,j,r.width(),j);
 
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setWorldTransform(transform_);
 
-    painter.translate(position_);
-    double x = r.width()/2 - position_.x();
-    double y = r.height()/2 -position_.y();
-    x = x - scale_ * x;
-    y = y - scale_ * y;
-    painter.translate(x,y);
-    painter.scale(scale_, scale_);
-
+    QSize r = event->rect().size();
+    QSize s = pixmap_.size();
     if(isScalingEnabled_){
         s.scale(r, Qt::KeepAspectRatio);
         QPixmap scaled = pixmap_.scaled(s, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -146,6 +155,7 @@ void ImageWidget::paintEvent(QPaintEvent* event)
         QPoint o((r.width() - pixmap_.width()) / 2, (r.height() - pixmap_.height()) / 2);
         painter.drawPixmap(o, pixmap_);
     }
+
 
 }
 

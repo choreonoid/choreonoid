@@ -28,9 +28,8 @@ public Q_SLOTS:
     bool isScalingEnabled() const;
 
     void zoom(double scale);
-    void setScale(double scale);
     void translate(QPoint pos);
-    void setPosition(QPoint pos);
+    void rotate(double rotation);
 
 protected:
     virtual void paintEvent(QPaintEvent* event);
@@ -39,8 +38,7 @@ protected:
 private:
     QPixmap pixmap_;
     bool isScalingEnabled_;
-    double scale_;
-    QPoint position_;
+    QTransform transform_;
 
 };
 }
