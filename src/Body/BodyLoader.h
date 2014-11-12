@@ -24,7 +24,7 @@ public:
     virtual const char* format() const;
     virtual void setMessageSink(std::ostream& os);
     virtual void setVerbose(bool on);
-    virtual void enableShapeLoading(bool on);
+    virtual void setShapeLoadingEnabled(bool on);
     virtual void setDefaultDivisionNumber(int n);
     virtual void setDefaultCreaseAngle(double theta);
     virtual bool load(BodyPtr body, const std::string& filename);

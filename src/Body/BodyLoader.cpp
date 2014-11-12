@@ -160,7 +160,7 @@ void BodyLoader::setVerbose(bool on)
 }
 
 
-void BodyLoader::enableShapeLoading(bool on)
+void BodyLoader::setShapeLoadingEnabled(bool on)
 {
     impl->isShapeLoadingEnabled = on;
 }

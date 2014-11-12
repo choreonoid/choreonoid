@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LINK_H_INCLUDED
-#define CNOID_BODY_LINK_H_INCLUDED
+#ifndef CNOID_BODY_LINK_H
+#define CNOID_BODY_LINK_H
 
 #include <cnoid/SceneGraph>
 #include "exportdecl.h"
@@ -108,10 +108,10 @@ public:
     double u() const { return u_; }
     double& u() { return u_; }
 
-    const double& q_upper() const { return q_upper_; }  ///< the upper limit of joint values
-    const double& q_lower() const { return q_lower_; }  ///< the lower limit of joint values
-    const double& dq_upper() const { return dq_upper_; } ///< the upper limit of joint velocities
-    const double& dq_lower() const { return dq_lower_; } ///< the upper limit of joint velocities
+    double q_upper() const { return q_upper_; }  ///< the upper limit of joint values
+    double q_lower() const { return q_lower_; }  ///< the lower limit of joint values
+    double dq_upper() const { return dq_upper_; } ///< the upper limit of joint velocities
+    double dq_lower() const { return dq_lower_; } ///< the upper limit of joint velocities
 
     const Vector3& v() const { return v_; }
     Vector3& v() { return v_; }
@@ -149,7 +149,7 @@ public:
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
     const std::string& name() const { return name_; }
-    SgNode* shape() const { return shape_.get(); }
+    SgNode* shape() const { return shape_; }
 
     // functions for constructing a link
     void setIndex(int index) { index_ = index; }
@@ -239,6 +239,7 @@ private:
     std::string name_;
     SgNodePtr shape_;
 };
-};
+
+}
 	
 #endif
