@@ -4,6 +4,8 @@
 
 #include <boost/python.hpp>
 
+namespace cnoid {
+
 void exportQtExTypes();
 void exportItems();
 void exportToolBars();
@@ -17,5 +19,7 @@ BOOST_PYTHON_MODULE(Base)
     exportQtExTypes();
     exportItems();
     exportToolBars();
-    //exportViews();
+    exportViews();
+}
+
 }

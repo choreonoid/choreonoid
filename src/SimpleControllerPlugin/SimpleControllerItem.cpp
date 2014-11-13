@@ -20,6 +20,7 @@ using namespace cnoid;
 
 SimpleControllerItem::SimpleControllerItem()
 {
+    setName("SimpleController");
     controller = 0;
     doReloading = true;
     doInputLinkPositions = false;

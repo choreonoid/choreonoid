@@ -29,7 +29,7 @@ add_cnoid_python_module(CnoidPyBase
   PyQtEx.cpp
   PyItems.cpp
   PyToolBars.cpp
-  #PyViews.cpp
+  PyViews.cpp
 )
 
 target_link_libraries(CnoidPyBase

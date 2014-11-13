@@ -15,6 +15,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(TimeBar_stopPlayback_overloads, stopPlayb
 
 }
 
+namespace cnoid {
+
 void exportToolBars()
 {
     ToolButton* (ToolBar::*ToolBar_addButton1)(const QString& text, const QString& tooltip) = &ToolBar::addButton;
@@ -89,4 +91,6 @@ void exportToolBars()
         PySignalProxy<bool(double time), TimeBar::LogicalProduct>("SigPlaybackInitialized");
         PySignalProxy<bool(double time), TimeBar::LogicalSum>("SigTimeChanged");
     }
+}
+
 }

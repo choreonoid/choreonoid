@@ -97,7 +97,7 @@ public:
     }
 
     bool isItemChecked(ItemPtr item, int id = 0);
-    bool checkItem(ItemPtr item, bool check, int id = 0);
+    bool checkItem(ItemPtr item, bool check = true, int id = 0);
 
     /**
        @if jp

@@ -23,10 +23,10 @@
 #include "ItemTreeView.h"
 #include "ItemPropertyView.h"
 #include "SceneView.h"
-#include "SceneBar.h"
-#include "TimeBar.h"
-#include "ScriptBar.h"
 #include "FileBar.h"
+#include "ScriptBar.h"
+#include "TimeBar.h"
+#include "SceneBar.h"
 #include "CaptureBar.h"
 #include "ImageView.h"
 #include "GraphBar.h"
@@ -189,8 +189,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     ProjectManager::initialize(ext);
 
     FileBar::initialize(ext);
-    TimeBar::initialize(ext);
     ScriptBar::initialize(ext);
+    TimeBar::initialize(ext);
     ItemTreeView::initializeClass(ext);
     ItemPropertyView::initializeClass(ext);
     TextEditView::initializeClass(ext);

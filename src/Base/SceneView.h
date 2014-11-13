@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_VIEW_H_INCLUDED
-#define CNOID_BASE_SCENE_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_VIEW_H
+#define CNOID_BASE_SCENE_VIEW_H
 
 #include "View.h"
 #include "SceneWidget.h"

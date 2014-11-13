@@ -61,11 +61,12 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
 template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1, ARG2> {
     boost::python::object func;
     python_function_caller2(boost::python::object func) : func(func) { }
-    void operator()(ARG1 arg1, ARG1 arg2) {
+    void operator()(ARG1 arg1, ARG2 arg2) {
         PyGILock lock;
         func(arg1, arg2);
     }
 };
+
 
 template<int Arity, typename Signature, typename Combiner>
 class py_signal_proxy_impl;

@@ -13,10 +13,47 @@
 #include "../MultiSE3SeqItem.h"
 #include "../Vector3SeqItem.h"
 
+using namespace boost;
 using namespace boost::python;
 using namespace cnoid;
 
 namespace {
+
+template<typename ItemType>
+struct ItemList_to_pylist_converter {
+    static PyObject* convert(const ItemList<ItemType>& items){
+        python::list retval;
+        for(int i=0; i < items.size(); ++i){
+            retval.append(items[i]);
+        }
+        return python::incref(retval.ptr());
+    }
+};
+
+/*
+template<typename VectorType, int dim>
+struct pylist_to_Vector_converter {
+    pylist_to_Vector_converter(){
+        converter::registry::push_back(
+            &pylist_to_Vector_converter::convertible,
+            &pylist_to_Vector_converter::construct,
+            python::type_id<VectorType>());
+    }
+    static void* convertible(PyObject* pyo){
+        if(PySequence_Check(pyo) && PySequence_Size(pyo) == dim){
+            return pyo;
+        }
+        return 0;
+    }
+    static void construct(PyObject* pyo, python::converter::rvalue_from_python_stage1_data* data){
+        VectorType* pv = new(reinterpret_cast<python::converter::rvalue_from_python_storage<VectorType>*>(data)->storage.bytes) VectorType();
+        for(python::ssize_t i = 0; i < dim; ++i) {
+            (*pv)[i] = python::extract<typename VectorType::Scalar>(PySequence_GetItem(pyo, i));
+        }
+        data->convertible = pv;
+    }
+};
+*/
 
 ItemPtr Item_childItem(Item& self) { return self.childItem(); }
 ItemPtr Item_prevItem(Item& self) { return self.prevItem(); }
@@ -39,8 +76,20 @@ RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
 } // namespace
 
+namespace cnoid {
+
 void exportItems()
 {
+    to_python_converter<ItemList<Item>, ItemList_to_pylist_converter<Item> >();
+    to_python_converter<ItemList<RootItem>, ItemList_to_pylist_converter<RootItem> >();
+    to_python_converter<ItemList<FolderItem>, ItemList_to_pylist_converter<FolderItem> >();
+    to_python_converter<ItemList<ScriptItem>, ItemList_to_pylist_converter<ScriptItem> >();
+    to_python_converter<ItemList<ExtCommandItem>, ItemList_to_pylist_converter<ExtCommandItem> >();
+    to_python_converter<ItemList<MultiValueSeqItem>, ItemList_to_pylist_converter<MultiValueSeqItem> >();
+    to_python_converter<ItemList<MultiAffine3SeqItem>, ItemList_to_pylist_converter<MultiAffine3SeqItem> >();
+    to_python_converter<ItemList<MultiSE3SeqItem>, ItemList_to_pylist_converter<MultiSE3SeqItem> >();
+    to_python_converter<ItemList<Vector3SeqItem>, ItemList_to_pylist_converter<Vector3SeqItem> >();
+    
     {
         bool (Item::*Item_load1)(const std::string& filename, const std::string& formatId) = &Item::load;
         bool (Item::*Item_load2)(const std::string& filename, Item* parent, const std::string& formatId) = &Item::load;
@@ -143,4 +192,6 @@ void exportItems()
         .def("seq", &MultiSE3SeqItem::seq);
     
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
+}
+
 }

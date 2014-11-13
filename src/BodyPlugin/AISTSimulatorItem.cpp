@@ -180,6 +180,7 @@ void AISTSimulatorItem::initializeClass(ExtensionManager* ext)
 AISTSimulatorItem::AISTSimulatorItem()
 {
     impl = new AISTSimulatorItemImpl(this);
+    setName("AISTSimulator");
 }
 
 
