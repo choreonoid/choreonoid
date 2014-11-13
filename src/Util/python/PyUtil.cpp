@@ -20,9 +20,7 @@ void exportSceneGraph();
 
 BOOST_PYTHON_MODULE(Util)
 {
-    class_<Referenced, boost::noncopyable>("Referenced", no_init);
-
-    class_< ref_ptr<Referenced> >("ReferencedPtr");
+    class_<Referenced, ReferencedPtr, boost::noncopyable>("Referenced", no_init);
 
     exportSignalTypes();
     exportEigenTypes();

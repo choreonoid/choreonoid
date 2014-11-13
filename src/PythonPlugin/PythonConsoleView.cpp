@@ -3,7 +3,7 @@
 */
 
 #include "PythonConsoleView.h"
-#include "PythonUtil.h"
+#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>

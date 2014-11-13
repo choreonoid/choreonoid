@@ -20,9 +20,9 @@ sceneWidget.setWorldLightIntensity(0.1)
 sceneWidget.setWorldLightAmbient(0.0)
 sceneWidget.setBackgroundColor([0, 0, 0])
 sceneWidget.setCameraPosition(
-    [ -2.86824, 6.25331, 2.49127 ],
-    [ 0.412288, -0.847325, -0.334751 ],
-    [ 0.146464, -0.301009, 0.942307 ])
+    [ -2.86824,   6.25331,   2.49127  ],
+    [  0.412288, -0.847325, -0.334751 ],
+    [  0.146464, -0.301009,  0.942307 ])
 
 laboItem = loadBodyItem(shareDirectory() + "/model/Labo1/Labo1.wrl")
 worldItem.addChildItem(laboItem)

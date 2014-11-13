@@ -46,7 +46,7 @@ void initializeStaticObjects()
 
         PyGILock lock;
 
-        exitExceptionType = python::import("cnoid.Python").attr("ExitException");
+        exitExceptionType = python::import("cnoid.PythonPlugin").attr("ExitException");
         sys = python::import("sys");
             
         StringOutClass =

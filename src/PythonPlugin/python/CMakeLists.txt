@@ -1,6 +1,6 @@
 
 # @author Shin'ichiro Nakaoka
 
-set(target CnoidPyPython)
-add_cnoid_python_module(${target} PyPython.cpp)
+set(target CnoidPyPythonPlugin)
+add_cnoid_python_module(${target} PyPythonPlugin.cpp)
 target_link_libraries(${target} CnoidPythonPlugin)

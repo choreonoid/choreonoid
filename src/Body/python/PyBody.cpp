@@ -214,6 +214,8 @@ BOOST_PYTHON_MODULE(Body)
             .value("EJ_BALL", Body::EJ_BALL);
     }
 
+    implicitly_convertible<BodyPtr, ReferencedPtr>();
+
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
         .def("format", &AbstractBodyLoader::format)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)

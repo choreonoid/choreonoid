@@ -30,31 +30,6 @@ struct ItemList_to_pylist_converter {
     }
 };
 
-/*
-template<typename VectorType, int dim>
-struct pylist_to_Vector_converter {
-    pylist_to_Vector_converter(){
-        converter::registry::push_back(
-            &pylist_to_Vector_converter::convertible,
-            &pylist_to_Vector_converter::construct,
-            python::type_id<VectorType>());
-    }
-    static void* convertible(PyObject* pyo){
-        if(PySequence_Check(pyo) && PySequence_Size(pyo) == dim){
-            return pyo;
-        }
-        return 0;
-    }
-    static void construct(PyObject* pyo, python::converter::rvalue_from_python_stage1_data* data){
-        VectorType* pv = new(reinterpret_cast<python::converter::rvalue_from_python_storage<VectorType>*>(data)->storage.bytes) VectorType();
-        for(python::ssize_t i = 0; i < dim; ++i) {
-            (*pv)[i] = python::extract<typename VectorType::Scalar>(PySequence_GetItem(pyo, i));
-        }
-        data->convertible = pv;
-    }
-};
-*/
-
 ItemPtr Item_childItem(Item& self) { return self.childItem(); }
 ItemPtr Item_prevItem(Item& self) { return self.prevItem(); }
 ItemPtr Item_nextItem(Item& self) { return self.nextItem(); }

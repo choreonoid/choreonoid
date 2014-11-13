@@ -34,6 +34,5 @@ add_cnoid_python_module(CnoidPyBase
 
 target_link_libraries(CnoidPyBase
   CnoidBase 
-  ${PYTHON_LIBRARIES}
-  ${Boost_PYTHON_LIBRARY}
+  CnoidPython
   )

@@ -28,9 +28,13 @@ void exportSceneGraph()
         .def("name", &SgObject::name, return_value_policy<return_by_value>())
         .def("setName", &SgObject::setName);
 
+    implicitly_convertible<SgObjectPtr, ReferencedPtr>();
+
     class_< SgNode, SgNodePtr, bases<SgObject> >("SgNode")
         .def("isGroup", &SgNode::isGroup);
 
+    implicitly_convertible<SgNodePtr, SgObjectPtr>();
+    
     class_< SgGroup, SgGroupPtr, bases<SgNode> >("SgGroup")
         .def("empty", &SgGroup::empty)
         .def("numChildren", &SgGroup::numChildren)
@@ -38,6 +42,8 @@ void exportSceneGraph()
         .def("child", SgGroup_child)
         .def("addChild", &SgGroup::addChild, SgGroup_addChild());
 
+    implicitly_convertible<SgGroupPtr, SgNodePtr>();
+    
     class_<SceneProvider, boost::noncopyable>("SceneProvider", no_init)
         .def("getScene", SceneProvider_getScene);
 }

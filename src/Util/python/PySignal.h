@@ -7,6 +7,7 @@
 
 #include "../Signal.h"
 #include "PyUtil.h"
+#include <cnoid/PythonUtil>
 #include <boost/python.hpp>
 
 namespace cnoid {
@@ -18,7 +19,13 @@ template<typename T> struct python_function_caller0 {
     python_function_caller0(boost::python::object func) : func(func) { }
     T operator()() {
         PyGILock lock;
-        return func();
+        T result;
+        try {
+            result = func();
+        } catch(boost::python::error_already_set const& ex) {
+            cnoid::handlePythonException();
+        }
+        return result;
     }
 };
 
@@ -27,7 +34,11 @@ template<> struct python_function_caller0<void> {
     python_function_caller0(boost::python::object func) : func(func) { }
     void operator()() {
         PyGILock lock;
-        func();
+        try {
+            func();
+        } catch(boost::python::error_already_set const& ex) {
+            cnoid::handlePythonException();
+        }
     }
 };
 
@@ -36,7 +47,13 @@ template<typename T, typename ARG1> struct python_function_caller1 {
     python_function_caller1(boost::python::object func) : func(func) { }
     T operator()(ARG1 arg1) {
         PyGILock lock;
-        return func(arg1);
+        T result;
+        try {
+            result = func(arg1);
+        } catch(boost::python::error_already_set const& ex) {
+            handlePythonException();
+        }
+        return result;
     }
 };
 
@@ -45,7 +62,11 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
     python_function_caller1(boost::python::object func) : func(func) { }
     void operator()(ARG1 arg1) {
         PyGILock lock;
-        func(arg1);
+        try {
+            func(arg1);
+        } catch(boost::python::error_already_set const& ex) {
+            handlePythonException();
+        }
     }
 };
 
@@ -54,7 +75,13 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
     python_function_caller2(boost::python::object func) : func(func) { }
     T operator()(ARG1 arg1, ARG2 arg2) {
         PyGILock lock;
-        return func(arg1, arg2);
+        T result;
+        try {
+            result = func(arg1, arg2);
+        } catch(boost::python::error_already_set const& ex) {
+            handlePythonException();
+        }
+        return result;
     }
 };
 
@@ -63,7 +90,11 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
     python_function_caller2(boost::python::object func) : func(func) { }
     void operator()(ARG1 arg1, ARG2 arg2) {
         PyGILock lock;
-        func(arg1, arg2);
+        try {
+            func(arg1, arg2);
+        } catch(boost::python::error_already_set const& ex) {
+            handlePythonException();
+        }
     }
 };
 

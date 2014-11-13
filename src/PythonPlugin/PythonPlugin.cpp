@@ -2,7 +2,7 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "PythonUtil.h"
+#include "PythonPlugin.h"
 #include "PythonScriptItem.h"
 #include "PythonConsoleView.h"
 #include "PythonExecutor.h"
@@ -144,16 +144,17 @@ bool PythonPlugin::initialize()
 void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if (v.count("python")) {
-        try {
-            vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
-            for(unsigned int i = 0; i < pythonScriptFileNames.size(); i++){
-                MessageView::instance()->putln((format(_("Loading python script file \"%1%\" ...")) % pythonScriptFileNames[i]).str());
-                executor().execFile(pythonScriptFileNames[i]);
+        vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
+        for(unsigned int i = 0; i < pythonScriptFileNames.size(); i++){
+            MessageView::instance()->putln((format(_("Executing python script file \"%1%\" ...")) % pythonScriptFileNames[i]).str());
+            executor().execFile(pythonScriptFileNames[i]);
+            if(!executor().hasException()){
+                MessageView::instance()->putln(_("The script finished."));
+            } else {
+                MessageView::instance()->putln(_("Failed to run the python script file."));
+                PyGILock lock;
+                MessageView::instance()->put(executor().exceptionText());
             }
-        } catch (const std::exception& err) {
-            MessageView::instance()->putln((format(_("%1%")) % err.what()).str());
-        } catch (...) {
-            MessageView::instance()->putln(format(_("Failed to run the python script file.")));
         }
     }
 }
@@ -190,7 +191,7 @@ bool PythonPlugin::initializeInterpreter()
 
     // Override exit and quit
     python::object builtins = mainNamespace["__builtins__"];
-    exitExceptionType = python::import("cnoid.Python").attr("ExitException");
+    exitExceptionType = python::import("cnoid.PythonPlugin").attr("ExitException");
     python::object exitFunc = python::make_function(pythonExit);
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;

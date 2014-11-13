@@ -5,7 +5,7 @@
 #ifndef CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
 #define CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
 
-#include "PythonUtil.h"
+#include "PythonPlugin.h"
 #include <cnoid/Signal>
 #include "exportdecl.h"
 

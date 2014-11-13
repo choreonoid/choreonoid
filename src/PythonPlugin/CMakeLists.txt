@@ -26,7 +26,7 @@ set(sources
   )
 
 set(headers
-  PythonUtil.h
+  PythonPlugin.h
   PythonExecutor.h
   PythonScriptItem.h
   PythonScriptItemImpl.h

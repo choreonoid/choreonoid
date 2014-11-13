@@ -129,6 +129,8 @@ void exportItems()
         .def("bodyItem", SimulationBody_bodyItem)
         .def("body", SimulationBody_body);
 
+    implicitly_convertible<SimulationBodyPtr, ReferencedPtr>();
+
     {
         scope simulatorItemScope = 
             class_<SimulatorItem, SimulatorItemPtr, bases<Item>, boost::noncopyable>("SimulatorItem", no_init)
