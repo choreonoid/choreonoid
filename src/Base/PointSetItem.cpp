@@ -13,6 +13,8 @@
 #include <cnoid/SceneMarker>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
+#include <cnoid/GLSceneRenderer>
+#include <cnoid/SceneCamera>
 #include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
@@ -50,7 +52,7 @@ public:
     ~PointSetEraser();
 
     void showRectangle(bool on);
-    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[]);
+    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const bool isPerspectiveCamera, const Vector3 r[]);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
 
@@ -391,7 +393,7 @@ void ScenePointSet::updateVisiblePointSet()
 
 bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(!isEditable_){
+	if(!isEditable_){
         return false;
     }
     
@@ -479,17 +481,23 @@ void PointSetEraser::showRectangle(bool on)
 }
 
 
-/**
-   \todo support the orthogonal camera
-*/
-void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const Vector3 r[])
+void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const bool isPerspectiveCamera, const Vector3 r[])
 {
     Vector3 n[4];
     double d[4];
 
-    for(int i=0; i < 4; ++i){
-        n[i] = (r[(i+1)%4] - c).cross(r[i] - c).normalized();
-        d[i] = n[i].dot(c);
+    if(isPerspectiveCamera){
+    	for(int i=0; i < 4; ++i){
+    		n[i] = (r[(i+1)%4] - c).cross(r[i] - c).normalized();
+    		d[i] = n[i].dot(c);
+    	}
+    }else{		// orthogonal camera
+    	Vector3 c0;
+    	c0 = (r[3]-r[0]).cross(r[1]-r[0]).normalized();
+    	for(int i=0; i<4; i++){
+    		n[i] = (r[(i+1)%4] - r[i]).cross(c0).normalized();
+    		d[i] = n[i].dot(r[i]);
+    	}
     }
 
     vector<int> indicesToRemove;
@@ -622,8 +630,12 @@ bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
             event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
             event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
             event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
-            removePointSetInRectangle(
-                pointSetItem, event.currentCameraPosition().translation(), p);
+        	bool isPerspectiveCamera = false;
+        	SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
+        	if(dynamic_cast<SgPerspectiveCamera*>(camera))
+        		isPerspectiveCamera = true;
+        	removePointSetInRectangle(
+                pointSetItem, event.currentCameraPosition().translation(), isPerspectiveCamera, p);
         }
     }
     showRectangle(false);
