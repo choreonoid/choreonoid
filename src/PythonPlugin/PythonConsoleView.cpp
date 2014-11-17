@@ -3,7 +3,7 @@
 */
 
 #include "PythonConsoleView.h"
-#include "PythonUtil.h"
+#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>
@@ -114,7 +114,7 @@ python::object PythonConsoleIn::readline()
 void PythonConsoleView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<PythonConsoleView>(
-        "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_OPTIONAL);
+        "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
 }
 
 

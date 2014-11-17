@@ -2,6 +2,7 @@
 add_subdirectory(Util)
 add_subdirectory(Corba)
 add_subdirectory(Base)
+add_subdirectory(Python)
 add_subdirectory(PythonPlugin)
 
 add_subdirectory(AISTCollisionDetector)

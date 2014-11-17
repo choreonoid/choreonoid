@@ -58,6 +58,7 @@ void exportSeqTypes()
         .def("partLabel", &AbstractMultiSeq::partLabel, return_value_policy<copy_const_reference>());
 
     register_ptr_to_python<AbstractMultiSeqPtr>();
+    implicitly_convertible<AbstractMultiSeqPtr, AbstractSeqPtr>();
 
     const MultiValueSeq::Element& (MultiValueSeq::*MultiValueSeq_at_const)(int, int) const = &MultiValueSeq::at;
     MultiValueSeq::Element& (MultiValueSeq::*MultiValueSeq_at)(int, int) = &MultiValueSeq::at;
@@ -114,7 +115,8 @@ void exportSeqTypes()
         .def("loadPlainFormat", &MultiValueSeq::loadPlainFormat)
         .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat);
 
-    register_ptr_to_python<MultiValueSeqPtr>();    
+    register_ptr_to_python<MultiValueSeqPtr>();
+    implicitly_convertible<MultiValueSeqPtr, AbstractMultiSeqPtr>();
 }
 
 }

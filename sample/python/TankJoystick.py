@@ -1,71 +1,50 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-# @author Hisashi Ikari
+from cnoid.Util import *
+from cnoid.Base import *
+from cnoid.Body import *
+from cnoid.BodyPlugin import *
+from cnoid.SimpleControllerPlugin import *
+import math;
 
-import sys
-import cnoid.Util as util
-import cnoid.Base as base
-import cnoid.Body as body
-import cnoid.BodyPlugin as bp
-import cnoid.SimpleControllerPlugin as simple
-import minieigen as eigen
+worldItem = WorldItem()
+RootItem.instance().addChildItem(worldItem)
 
-shared = util.shareDirectory()
-top = util.executableTopDirectory()
+timeBar = TimeBar.instance()
+timeBar.setFrameRate(1000)
+timeBar.setFillLevelSync(False)
 
-root = base.RootItem.instance()
-view = base.ItemTreeView.instance()
+sceneWidget = SceneView.instance().sceneWidget()
+sceneWidget.setHeadLightEnabled(False)
+sceneWidget.setFloorGrid(False)
+sceneWidget.setWorldLightIntensity(0.1)
+sceneWidget.setWorldLightAmbient(0.0)
+sceneWidget.setBackgroundColor([0, 0, 0])
+sceneWidget.setCameraPosition(
+    [ -2.86824,   6.25331,   2.49127  ],
+    [  0.412288, -0.847325, -0.334751 ],
+    [  0.146464, -0.301009,  0.942307 ])
 
-world = bp.WorldItem()
-world.setName("World")
-root.addChildItem(world)
+laboItem = loadBodyItem(shareDirectory() + "/model/Labo1/Labo1.wrl")
+worldItem.addChildItem(laboItem)
+ItemTreeView.instance().checkItem(laboItem)
 
-time = base.TimeBar.instance()
-time.setFillLevelSyncCheck(False)
-time.setFrameRate(1000)
-time.setPlaybackFrameRate(100)
-time.setTimeRange(0.0, 5.0)
+tankItem = loadBodyItem(shareDirectory() + "/model/misc/tank.wrl")
+tank = tankItem.body()
+tank.rootLink().setTranslation([-0.8, 2.4, 0.1])
+tank.rootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
+tank.calcForwardKinematics()
+tankItem.storeInitialState()
+worldItem.addChildItem(tankItem)
+ItemTreeView.instance().checkItem(tankItem)
 
-scene = base.SceneView.instance()
-scene.setHeadLight(False)
-scene.setFloorGrid(False)
-scene.setWorldLightIntensity(0.1)
-scene.setWorldLightAmbient(0.0)
-scene.setBackgroundColor(eigen.Vector3(0.0, 0.0, 0.0))
+controllerItem = SimpleControllerItem()
+controllerItem.setControllerDllName("TankJoystickController")
+tankItem.addChildItem(controllerItem)
 
-scene.setCameraPosition(
-	eigen.Vector3(-2.86824, 6.25331, 2.49127),
-	eigen.Vector3(0.412288, -0.847325, -0.334751),
-	eigen.Vector3(0.146464, -0.301009, 0.942307))
-scene.setFieldOfView(0.6978);
-scene.setNear(0.01);
-scene.setFar(10000.0);
-scene.setHeight(20);
+simulatorItem = AISTSimulatorItem()
+simulatorItem.setRealtimeSyncMode(True)
+simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.UNLIMITED)
+worldItem.addChildItem(simulatorItem)
+ItemTreeView.instance().selectItem(simulatorItem)
 
-labo = bp.BodyItem()
-labo.setName("Labo1")
-labo.loadModelFile(shared + "/model/Labo1/Labo1.wrl")
-world.addChildItem(labo)
-view.checkItem(labo)
-
-tank = bp.BodyItem()
-tank.setName("Tank")
-tank.loadModelFile(shared + "/model/misc/tank.wrl")
-world.addChildItem(tank)
-view.checkItem(tank)
-
-cont = simple.SimpleControllerItem()
-cont.setName("JoystickControlller")
-tank.addChildItem(cont)
-cont.setControllerDllName(top + "/lib/choreonoid-1.5/simplecontroller/TankJoystickController")
-
-aistsim = bp.AISTSimulatorItem()
-aistsim.setName("AISTSimulatorItem")
-aistsim.setRealtimeSyncMode(True)
-aistsim.setTimeRangeMode(bp.TimeRangeMode.UNLIMITED)
-world.addChildItem(aistsim)
-
-view.selectItem(aistsim)
-sim = bp.SimulationBar.instance()
-sim.startSimulation(aistsim)
+simulatorItem.startSimulation()

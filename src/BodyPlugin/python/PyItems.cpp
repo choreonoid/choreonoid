@@ -15,15 +15,21 @@ using namespace cnoid;
 
 namespace {
 
+BodyItemPtr loadBodyItem(const std::string& filename) {
+    BodyItem* bodyItem = new BodyItem;
+    bodyItem->load(filename);
+    return bodyItem;
+}
+
 BodyPtr BodyItem_body(BodyItem& self) { return self.body(); }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(BodyItem_calcForwardKinematics_overloads, calcForwardKinematics, 0, 2)
 
 void (BodyItem::*BodyItem_notifyKinematicStateChange1)(bool, bool, bool) = &BodyItem::notifyKinematicStateChange;
-//BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(BodyItem_notifyKinematicStateChange1_overloads, notifyKinematicStateChange, 0, 2)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(BodyItem_notifyKinematicStateChange1_overloads, notifyKinematicStateChange, 0, 2)
 
 void (BodyItem::*BodyItem_notifyKinematicStateChange2)(Connection&, bool, bool, bool) = &BodyItem::notifyKinematicStateChange;
-//BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(BodyItem_notifyKinematicStateChange2_overloads, notifyKinematicStateChange, 1, 3)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(BodyItem_notifyKinematicStateChange2_overloads, notifyKinematicStateChange, 1, 3)
 
 MultiValueSeqItemPtr BodyMotionItem_jointPosSeqItem(BodyMotionItem& self) { return self.jointPosSeqItem(); }
 MultiSE3SeqItemPtr BodyMotionItem_linkPosSeqItem(BodyMotionItem& self) { return self.linkPosSeqItem(); }
@@ -32,10 +38,14 @@ AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) 
 BodyItemPtr SimulationBody_bodyItem(SimulationBody& self) { return self.bodyItem(); }
 BodyPtr SimulationBody_body(SimulationBody& self) { return self.body(); }
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_startSimulation_overloads, startSimulation, 0, 1)
+
 }
 
 void exportItems()
 {
+    def("loadBodyItem", loadBodyItem);
+    
     {
         scope bodyItemScope = 
             class_< BodyItem, BodyItemPtr, bases<Item, SceneProvider> >("BodyItem")
@@ -60,8 +70,8 @@ void exportItems()
             .def("undoKinematicState", &BodyItem::undoKinematicState)
             .def("redoKinematicState", &BodyItem::redoKinematicState)
             .def("sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
-            .def("notifyKinematicStateChange", BodyItem_notifyKinematicStateChange1)
-            .def("notifyKinematicStateChange", BodyItem_notifyKinematicStateChange2)
+            .def("notifyKinematicStateChange", BodyItem_notifyKinematicStateChange1, BodyItem_notifyKinematicStateChange1_overloads())
+            .def("notifyKinematicStateChange", BodyItem_notifyKinematicStateChange2, BodyItem_notifyKinematicStateChange2_overloads())
             .def("enableCollisionDetection", &BodyItem::enableCollisionDetection)
             .def("isCollisionDetectionEnabled", &BodyItem::isCollisionDetectionEnabled)
             .def("enableSelfCollisionDetection", &BodyItem::enableSelfCollisionDetection)
@@ -86,6 +96,8 @@ void exportItems()
             .value("ZERO_MOMENT_POINT", BodyItem::ZERO_MOMENT_POINT);
     }
 
+    implicitly_convertible<BodyItemPtr, ItemPtr>();    
+
     class_< WorldItem, WorldItemPtr, bases<Item, SceneProvider> >("WorldItem")
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
         .def("enableCollisionDetection", &WorldItem::enableCollisionDetection)
@@ -96,6 +108,9 @@ void exportItems()
         .def("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
         ;
 
+    implicitly_convertible<WorldItemPtr, ItemPtr>();
+    implicitly_convertible<WorldItemPtr, SceneProvider*>();
+    
     class_< BodyMotionItem, BodyMotionItemPtr, bases<AbstractMultiSeqItem> >("BodyMotionItem")
         .def("motion", &BodyMotionItem::motion, return_value_policy<copy_const_reference>())
         .def("jointPosSeqItem", BodyMotionItem_jointPosSeqItem)
@@ -108,15 +123,19 @@ void exportItems()
         .def("updateExtraSeqItems", &BodyMotionItem::updateExtraSeqItems)
         ;
 
+    implicitly_convertible<BodyMotionItemPtr, AbstractMultiSeqItemPtr>();
+    
     class_<SimulationBody, SimulationBodyPtr, bases<Referenced>, boost::noncopyable>("SimulationBody", no_init)
         .def("bodyItem", SimulationBody_bodyItem)
         .def("body", SimulationBody_body);
+
+    implicitly_convertible<SimulationBodyPtr, ReferencedPtr>();
 
     {
         scope simulatorItemScope = 
             class_<SimulatorItem, SimulatorItemPtr, bases<Item>, boost::noncopyable>("SimulatorItem", no_init)
             .def("worldTimeStep", &SimulatorItem::worldTimeStep)
-            .def("startSimulation", &SimulatorItem::startSimulation)
+            .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
             .def("stopSimulation", &SimulatorItem::stopSimulation)
             .def("pauseSimulation", &SimulatorItem::pauseSimulation)
             .def("restartSimulation", &SimulatorItem::restartSimulation)
@@ -150,6 +169,8 @@ void exportItems()
                 .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES);
     }
 
+    implicitly_convertible<SimulatorItemPtr, ItemPtr>();
+
     {
         scope aistSimulatorItemScope = 
             class_< AISTSimulatorItem, AISTSimulatorItemPtr, bases<SimulatorItem> >("AISTSimulatorItem")
@@ -180,4 +201,6 @@ void exportItems()
             .value("RUNGE_KUTTA_INTEGRATION", AISTSimulatorItem::RUNGE_KUTTA_INTEGRATION)
             .value("N_INTEGRATION_MODES", AISTSimulatorItem::N_INTEGRATION_MODES);
     }
+
+    implicitly_convertible<AISTSimulatorItemPtr, SimulatorItemPtr>();
 }

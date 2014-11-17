@@ -13,8 +13,16 @@ using namespace cnoid;
 namespace
 {
 
+Position Link_get_position(Link& self) { return self.position(); }
+void Link_set_position(Link& self, const Position& T) { self.position() = T; }
 Vector3 Link_get_translation(Link& self) { return self.translation(); }
 void Link_set_translation(Link& self, const Vector3& p) { self.translation() = p; }
+Matrix3 Link_get_rotation(Link& self) { return self.rotation(); }
+void Link_set_rotation(Link& self, const Matrix3& R) { self.rotation() = R; }
+Position Link_get_Tb(Link& self) { return self.Tb(); }
+void Link_set_Tb(Link& self, const Position& T) { self.Tb() = T; }
+Vector3 Link_get_offsetTranslation(Link& self) { return self.offsetTranslation(); }
+Matrix3 Link_get_offsetRotation(Link& self) { return self.offsetRotation(); }
 double Link_get_q(Link& self) { return self.q(); }
 void Link_set_q(Link& self, double q) { self.q() = q; }
 double Link_get_dq(Link& self) { return self.dq(); }
@@ -33,7 +41,15 @@ Vector3 Link_get_dw(Link& self) { return self.dw(); }
 void Link_set_dw(Link& self, const Vector3& dw) { self.dw() = dw; }
 Vector3 Link_get_wc(Link& self) { return self.wc(); }
 void Link_set_wc(Link& self, const Vector3& wc) { self.wc() = wc; }
+Vector6 Link_get_F_ext(Link& self) { return self.F_ext(); }
+void Link_set_F_ext(Link& self, const Vector6& F) { self.F_ext() = F; }
+Vector3 Link_get_f_ext(Link& self) { return self.f_ext(); }
+void Link_set_f_ext(Link& self, const Vector3& f) { self.f_ext() = f; }
+Vector3 Link_get_tau_ext(Link& self) { return self.tau_ext(); }
+void Link_set_tau_ext(Link& self, const Vector3& tau) { self.tau_ext() = tau; }
 SgNodePtr Link_shape(const Link& self) { return self.shape(); }
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Body_calcForwardKinematics_overloads, calcForwardKinematics, 0, 2)
 
 BodyPtr Body_clone(Body& self) { return self.clone(); }
 Link* (Body::*Body_link1)(int) const = &Body::link;
@@ -72,12 +88,20 @@ BOOST_PYTHON_MODULE(Body)
             .def("sibling", &Link::sibling, return_value_policy<reference_existing_object>())
             .def("child", &Link::child, return_value_policy<reference_existing_object>())
             .def("isRoot", &Link::isRoot)
+            .add_property("T", Link_get_position, Link_set_position)
+            .def("position", Link_get_position)
+            .def("setPosition", Link_set_position)
             .add_property("p", Link_get_translation, Link_set_translation)
             .def("translation", Link_get_translation)
             .def("setTranslation", Link_set_translation)
-            //.add_property("R", Link_get_rotation, Link_set_rotation)
-            //.def("rotation", Link_get_rotation)
-            //.def("setRotation", Link_set_rotation)
+            .add_property("R", Link_get_rotation, Link_set_rotation)
+            .def("rotation", Link_get_rotation)
+            .def("setRotation", Link_set_rotation)
+            .add_property("Tb", Link_get_Tb, Link_set_Tb)
+            .def("b", Link_get_offsetTranslation)
+            .def("offsetTranslation", Link_get_offsetTranslation)
+            .add_property("Rb", Link_get_offsetRotation)
+            .def("offsetRotation", Link_get_offsetRotation)
             .def("jointId", &Link::jointId)
             .def("jointType", &Link::jointType)
             .def("isFixedJoint", &Link::isFixedJoint)
@@ -105,11 +129,11 @@ BOOST_PYTHON_MODULE(Body)
             .def("centerOfMassGlobal", &Link::centerOfMassGlobal, return_value_policy<return_by_value>())
             .add_property("m", &Link::m)
             .def("mass", &Link::mass)
-            //.add_property("I", &Link::I, return_value_policy<return_by_value>())
+            .add_property("I", make_function(&Link::I, return_value_policy<return_by_value>()))
             .add_property("Jm2", &Link::Jm2)
-            //.add_property("F_ext", make_function(Link_get_F_ext, return_value_policy<return_by_value>()), Link_set_F_ext)
-            //.add_property("f_ext", make_function(Link_get_f_ext, return_value_policy<return_by_value>()), Link_set_f_ext)
-            //.add_property("tau_ext", make_function(Link_get_tau_ext, return_value_policy<return_by_value>()), Link_set_tau_ext)
+            .add_property("F_ext", Link_get_F_ext, Link_set_F_ext)
+            .add_property("f_ext", Link_get_f_ext, Link_set_f_ext)
+            .add_property("tau_ext", Link_get_tau_ext, Link_set_tau_ext)
             .def("name", &Link::name, return_value_policy<copy_const_reference>())
             .def("shape", Link_shape)
             .def("setIndex", &Link::setIndex)
@@ -122,7 +146,7 @@ BOOST_PYTHON_MODULE(Body)
             .def("setJointRange", &Link::setJointRange)
             .def("setJointVelocityRange", &Link::setJointVelocityRange)
             .def("setMass", &Link::setMass)
-            //.def("setInertia", &Link::setInertia)
+            .def("setInertia", &Link::setInertia)
             .def("setCenterOfMass", &Link::setCenterOfMass)
             .def("setEquivalentRotorInertia", &Link::setEquivalentRotorInertia)
             .def("setName", &Link::setName)
@@ -168,12 +192,12 @@ BOOST_PYTHON_MODULE(Body)
             .def("isStaticModel", &Body::isStaticModel)
             .def("isFixedRootModel", &Body::isFixedRootModel)
             .def("resetDefaultPosition", &Body::resetDefaultPosition)
-            //.def("defaultPosition", &Body::defaultPosition)
+            .def("defaultPosition", &Body::defaultPosition, return_value_policy<return_by_value>())
             .def("mass", &Body::mass)
             .def("calcCenterOfMass", &Body::calcCenterOfMass, return_value_policy<return_by_value>())
             .def("centerOfMass", &Body::centerOfMass, return_value_policy<return_by_value>())
             .def("calcTotalMomentum", Body_calcTotalMomentum)
-            .def("calcForwardKinematics", &Body::calcForwardKinematics)
+            .def("calcForwardKinematics", &Body::calcForwardKinematics, Body_calcForwardKinematics_overloads())
             .def("clearExternalForces", &Body::clearExternalForces)
             .def("numExtraJoints", &Body::numExtraJoints)
             //.def("extraJoint", extraJoint, , return_value_policy<reference_existing_object>())
@@ -189,6 +213,8 @@ BOOST_PYTHON_MODULE(Body)
             .value("EJ_PISTON", Body::EJ_PISTON) 
             .value("EJ_BALL", Body::EJ_BALL);
     }
+
+    implicitly_convertible<BodyPtr, ReferencedPtr>();
 
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
         .def("format", &AbstractBodyLoader::format)

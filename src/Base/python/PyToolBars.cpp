@@ -15,6 +15,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(TimeBar_stopPlayback_overloads, stopPlayb
 
 }
 
+namespace cnoid {
+
 void exportToolBars()
 {
     ToolButton* (ToolBar::*ToolBar_addButton1)(const QString& text, const QString& tooltip) = &ToolBar::addButton;
@@ -29,7 +31,7 @@ void exportToolBars()
 
     //class_ < ToolBarArea, boost::noncopyable >("ToolBarArea", no_init);
 
-    class_<ToolBar, bases<QWidget>, boost::noncopyable>("Toolbar", no_init)
+    class_<ToolBar, ToolBar*, bases<QWidget>, boost::noncopyable>("Toolbar", no_init)
         .def("addButton", ToolBar_addButton1, return_value_policy<reference_existing_object>())
         .def("addButton", ToolBar_addButton2, return_value_policy<reference_existing_object>())
         .def("addButton", ToolBar_addButton3, return_value_policy<reference_existing_object>())
@@ -56,7 +58,7 @@ void exportToolBars()
 
     {
         scope timeBarScope =
-            class_<TimeBar, bases<ToolBar>, boost::noncopyable>("TimeBar", no_init)
+            class_<TimeBar, TimeBar*, bases<ToolBar>, boost::noncopyable>("TimeBar", no_init)
             .def("instance", &TimeBar::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
             .def("sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)
             .def("sigPlaybackStarted", &TimeBar::sigPlaybackStarted)
@@ -89,4 +91,6 @@ void exportToolBars()
         PySignalProxy<bool(double time), TimeBar::LogicalProduct>("SigPlaybackInitialized");
         PySignalProxy<bool(double time), TimeBar::LogicalSum>("SigTimeChanged");
     }
+}
+
 }

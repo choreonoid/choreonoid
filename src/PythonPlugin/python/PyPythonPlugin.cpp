@@ -6,7 +6,7 @@
 
 using namespace boost;
 
-BOOST_PYTHON_MODULE(Python)
+BOOST_PYTHON_MODULE(PythonPlugin)
 {
     // define the ExitException class which inherits the built-in Exception class
     python::object mainModule = python::import("__main__");

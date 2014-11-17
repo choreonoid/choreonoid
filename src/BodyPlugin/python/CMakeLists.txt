@@ -8,4 +8,4 @@ add_cnoid_python_module(${target}
   PyItems.cpp
 )
 
-target_link_libraries(${target} CnoidBodyPlugin ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
+target_link_libraries(${target} CnoidBodyPlugin CnoidPython)

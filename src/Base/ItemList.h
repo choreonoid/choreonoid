@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_ITEM_LIST_H_INCLUDED
-#define CNOID_BASE_ITEM_LIST_H_INCLUDED
+#ifndef CNOID_BASE_ITEM_LIST_H
+#define CNOID_BASE_ITEM_LIST_H
 
 #include "Item.h"
 #include <cnoid/PolymorphicPointerArray>
@@ -63,6 +63,7 @@ private:
         }
     }
 };
+
 }
 
 #endif

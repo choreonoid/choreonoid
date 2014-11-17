@@ -2,89 +2,111 @@
  * @author Shin'ichiro Nakaoka
 */
 
-#include "PyBase.h"
-#include <cnoid/View>
-#include <cnoid/MessageView>
-#include <cnoid/ItemTreeView>
-#include <cnoid/SceneWidget>
-#include <cnoid/SceneView>
+#include "../View.h"
+#include "../MessageView.h"
+#include "../ItemTreeView.h"
+#include "../SceneWidget.h"
+#include "../SceneView.h"
+#include "../RootItem.h"
+#include <cnoid/PySignal>
 
 using namespace boost::python;
 using namespace cnoid;
 
 namespace {
 
-class PyItemTreeViewVisitor : public def_visitor<PyItemTreeViewVisitor>
-{
-    friend class def_visitor_access;
-    
-public:
-    template <class classT>
-    void visit(classT& c) const {
-        c
-            .def("isItemSelected", &PyItemTreeViewVisitor::isItemSelected, return_value_policy<return_by_value>())
-            .def("selectItem", &PyItemTreeViewVisitor::selectItem, (args("item"), args("select") = true))
-            .def("isItemChecked", &PyItemTreeViewVisitor::isItemChecked, return_value_policy<return_by_value>())
-            .def("checkItem", &PyItemTreeViewVisitor::checkItem, (args("item"), args("check") = true))
-            ;
-    }
+void (MessageView::*MessageView_put)(const std::string& message) = &MessageView::put;
+void (MessageView::*MessageView_putln)(const std::string& message) = &MessageView::putln;
+void (MessageView::*MessageView_notify)(const std::string& message) = &MessageView::notify;
+ 
+RootItemPtr ItemTreeView_rootItem(ItemTreeView& self) { return self.rootItem(); }
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_selectItem_overloads, selectItem, 1, 2)
+ItemList<Item> ItemTreeView_checkedItems(ItemTreeView& self, int id = 0) { return self.checkedItems<Item>(id); }
+BOOST_PYTHON_FUNCTION_OVERLOADS(ItemTreeView_checkedItems_overloads, ItemTreeView_checkedItems, 1, 2)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_isItemChecked_overloads, isItemChecked, 1, 2)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_checkItem_overloads, checkItem, 1, 3)
+SignalProxy<void(Item*, bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled1)(int) = &ItemTreeView::sigCheckToggled;
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled1_overloads, sigCheckToggled, 0, 1)
+SignalProxy<void(bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled2)(Item*, int) = &ItemTreeView::sigCheckToggled;
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled2_overloads, sigCheckToggled, 1, 2)
 
-    // For interface of ItemTreeView (External interface for python)
-    static bool isItemSelected(ItemTreeView& self, Item* item) {
-        return self.isItemSelected(ItemPtr(item));
-    }
-    static bool selectItem(ItemTreeView& self, Item* item, bool select = true) {
-        return self.selectItem(item, select);
-    }
-    static bool isItemChecked(ItemTreeView& self, Item* item) {
-        return self.isItemChecked(item);
-    }
-    static bool checkItem(ItemTreeView& self, Item* item, bool check = true) {
-        return self.checkItem(item, check);
-    }
-};
+}
 
+namespace cnoid {
 
 void exportViews()
 {
-    class_<View, boost::noncopyable>("View", init<>())
-        .def("isActive", &View::isActive, return_value_policy<return_by_value>())
-        .def("setName", &View::setName)                                   // ...(*1)
-        .def("name", &View::name, return_value_policy<return_by_value>()) // ...(*1)
-        .def("defaultLayoutArea", &View::defaultLayoutArea, return_value_policy<return_by_value>()) // ... (*2)
-        .def("setDefaultLayoutArea", &View::setDefaultLayoutArea)
-        .def("enableFontSizeZoomKeys", &View::enableFontSizeZoomKeys)
-        .def("lastFocusView", &View::lastFocusView, return_value_policy<reference_existing_object>()).staticmethod("lastFocusView");
+    PySignalProxy<void(View*)>("ViewSignal");
 
+    {
+        scope viewScope = 
+            class_<View, View*, boost::noncopyable>("View", no_init)
+            .def("setName", &View::setName)
+            .def("name", &View::name)
+            .def("isActive", &View::isActive)
+            .def("bringToFront", &View::bringToFront)
+            .def("sigActivated", &View::sigActivated)
+            .def("sigDeactivated", &View::sigDeactivated)
+            .def("setDefaultLayoutArea", &View::setDefaultLayoutArea)
+            .def("defaultLayoutArea", &View::defaultLayoutArea)
+            .def("indicatorOnInfoBar", &View::indicatorOnInfoBar, return_value_policy<reference_existing_object>())
+            .def("enableFontSizeZoomKeys", &View::enableFontSizeZoomKeys)
+            .def("lastFocusView", &View::lastFocusView, return_value_policy<reference_existing_object>()).staticmethod("lastFocusView")
+            .def("sigFocusChanged", &View::sigFocusChanged)
+            ;
 
-    class_<ItemTreeView, bases<View>, boost::noncopyable>("ItemTreeView", no_init)
-        .def(PyItemTreeViewVisitor())
-        .def("instance", &ItemTreeView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
-        .def("selectAllItems", &ItemTreeView::selectAllItems)
-        .def("clearSelection", &ItemTreeView::clearSelection);
+        enum_<View::LayoutArea>("LayoutArea")
+            .value("LEFT", View::LEFT) 
+            .value("LEFT_TOP", View::LEFT_TOP)
+            .value("LEFT_BOTTOM", View::LEFT_BOTTOM)
+            .value("CENTER", View::CENTER)
+            .value("RIGHT", View::RIGHT)
+            .value("BOTTOM", View::BOTTOM)
+            .value("NUM_AREAS", View::NUM_AREAS);
+    }
 
-    
-    /*!
-     * @brief Reference of the output of the message-view.
-     * @note  BOOST_PYTHON_FUNCTION_OVERLOADS is available only if the first argument matches.
-     *        Otherwise, we must define the wrapped manually.
-     */
-    void (MessageView::*put)(const std::string& message) = &MessageView::put;
-    void (MessageView::*putln)(const std::string& message) = &MessageView::putln;
-    void (MessageView::*notify)(const std::string& message) = &MessageView::notify;
- 
-    class_<MessageView, bases<View>, boost::noncopyable>("MessageView", no_init)
+    class_<MessageView, MessageView*, bases<View>, boost::noncopyable>("MessageView", no_init)
         .def("instance", &MessageView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
-        .def("put", put)
-        .def("putln", putln)
-        .def("notify", notify)
+        .def("put", MessageView_put)
+        .def("putln", MessageView_putln)
+        .def("notify", MessageView_notify)
         .def("flush", &MessageView::flush)
         .def("clear", &MessageView::clear)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
         .def("endStdioRedirect", &MessageView::endStdioRedirect)
-        .def("isFlushing", &MessageView::isFlushing).staticmethod("isFlushing");
- 
-    class_<SceneWidget, boost::noncopyable >("SceneWidget", no_init)        
+        .def("isFlushing", &MessageView::isFlushing).staticmethod("isFlushing")
+        .def("sigFlushFinished", &MessageView::sigFlushFinished)
+        ;
+
+    PySignalProxy<void(const ItemList<>&)>("ItemListSignal");
+    PySignalProxy<void(Item* item, bool isChecked)>("ItemBoolSignal");
+    
+    class_<ItemTreeView, ItemTreeView*, bases<View>, boost::noncopyable>("ItemTreeView", no_init)
+        .def("instance", &ItemTreeView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
+        .def("rootItem", ItemTreeView_rootItem)
+        .def("showRoot", &ItemTreeView::showRoot)
+        .def("selectedItems", &ItemTreeView::selectedItems<Item>)
+        .def("isItemSelected", &ItemTreeView::isItemSelected)
+        .def("selectItem", &ItemTreeView::selectItem, ItemTreeView_selectItem_overloads())
+        .def("selectAllItems", &ItemTreeView::selectAllItems)
+        .def("clearSelection", &ItemTreeView::clearSelection)
+        .def("checkedItems", ItemTreeView_checkedItems, ItemTreeView_checkedItems_overloads())
+        .def("isItemChecked", &ItemTreeView::isItemChecked, ItemTreeView_isItemChecked_overloads())
+        .def("checkItem", &ItemTreeView::checkItem, ItemTreeView_checkItem_overloads())
+        .def("sigSelectionChanged", &ItemTreeView::sigSelectionChanged)
+        .def("sigSelectionOrTreeChanged", &ItemTreeView::sigSelectionOrTreeChanged)
+        .def("sigCheckToggled", ItemTreeView_sigCheckToggled1, ItemTreeView_sigCheckToggled1_overloads())
+        .def("sigCheckToggled", ItemTreeView_sigCheckToggled2, ItemTreeView_sigCheckToggled2_overloads())
+        .def("cutSelectedItems", &ItemTreeView::cutSelectedItems)
+        ;
+
+    class_<SceneWidget, SceneWidget*, boost::noncopyable >("SceneWidget")
+        .def("setEditMode", &SceneWidget::setEditMode)
+        .def("sigEditModeToggled", &SceneWidget::sigEditModeToggled)
+        
+        .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)
+        .def("collisionLinesVisible", &SceneWidget::collisionLinesVisible, return_value_policy<return_by_value>())
+
         .def("setHeadLightIntensity", &SceneWidget::setHeadLightIntensity)
         .def("setWorldLightIntensity", &SceneWidget::setWorldLightIntensity)
         .def("setWorldLightAmbient", &SceneWidget::setWorldLightAmbient)
@@ -93,8 +115,7 @@ void exportViews()
         .def("setLineWidth", &SceneWidget::setLineWidth)
         .def("setPointSize", &SceneWidget::setPointSize)
         .def("setNormalLength", &SceneWidget::setNormalLength)
-        .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)
-        .def("collisionLinesVisible", &SceneWidget::collisionLinesVisible, return_value_policy<return_by_value>())
+
         .def("setHeadLightEnabled", &SceneWidget::setHeadLightEnabled)
         .def("setHeadLightLightingFromBack", &SceneWidget::setHeadLightLightingFromBack)
         .def("setWorldLight", &SceneWidget::setWorldLight)
@@ -103,33 +124,23 @@ void exportViews()
         .def("setNormalVisualization", &SceneWidget::setNormalVisualization)
         .def("setCoordinateAxes", &SceneWidget::setCoordinateAxes)
         .def("setShowFPS", &SceneWidget::setShowFPS)
+        .def("setNewDisplayListDoubleRenderingEnabled", &SceneWidget::setNewDisplayListDoubleRenderingEnabled)
         .def("setUseBufferForPicking", &SceneWidget::setUseBufferForPicking)
+
         .def("setBackgroundColor", &SceneWidget::setBackgroundColor)
+        .def("setColor", &SceneWidget::setBackgroundColor)
+        
         .def("setCameraPosition", &SceneWidget::setCameraPosition)
         .def("setFieldOfView", &SceneWidget::setFieldOfView)
         .def("setHeight", &SceneWidget::setHeight)
         .def("setNear", &SceneWidget::setNear)
-        .def("setFar", &SceneWidget::setFar);
-    
-    /*!
-     * @brief Provides a reference the SceneView for operations are add.
-     */
-    class_<SceneView, bases<View>, boost::noncopyable>("SceneView", no_init)
+        .def("setFar", &SceneWidget::setFar)
+        ;
+
+    class_<SceneView, SceneView*, bases<View>, boost::noncopyable>("SceneView", no_init)
         .def("instance", &SceneView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
-        .def("sceneWidget", &SceneView::sceneWidget, return_value_policy<reference_existing_object>());
-
-
-    /*!
-     * @brief Provides following enum value of the View.
-     */
-    enum_ <View::LayoutArea>("LayoutArea")
-        .value("LEFT", View::LEFT) 
-        .value("LEFT_TOP", View::LEFT_TOP)
-        .value("LEFT_BOTTOM", View::LEFT_BOTTOM)
-        .value("CENTER", View::CENTER)
-        .value("RIGHT", View::RIGHT)
-        .value("BOTTOM", View::BOTTOM)
-        .value("NUM_AREAS", View::NUM_AREAS);
-    
+        .def("sceneWidget", &SceneView::sceneWidget, return_value_policy<reference_existing_object>())
+        ;
 }
 
+}

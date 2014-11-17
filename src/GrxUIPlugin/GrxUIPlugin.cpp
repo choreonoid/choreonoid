@@ -5,7 +5,7 @@
 #include "GrxUIPlugin.h"
 #include "GrxUIMenuView.h"
 #include <cnoid/PyUtil>
-#include <cnoid/PythonUtil>
+#include <cnoid/PythonPlugin>
 #include <cnoid/MenuManager>
 #include <cnoid/AppConfig>
 #include "gettext.h"

@@ -11,4 +11,4 @@ add_cnoid_python_module(${target}
   PySceneGraph.cpp
   )
 
-target_link_libraries(${target} CnoidUtil ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
+target_link_libraries(${target} CnoidUtil CnoidPython)

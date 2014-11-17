@@ -93,6 +93,7 @@ void WorldItem::initializeClass(ExtensionManager* ext)
 WorldItem::WorldItem()
 {
     impl = new WorldItemImpl(this);
+    setName("World");
 }
 
 
