@@ -152,7 +152,9 @@ public:
 
     SgGroupPtr markerGroup;
     CrossMarkerPtr cmMarker;
+    CrossMarkerPtr ppcomMarker;
     bool isCmVisible;
+    bool isPpcomVisible;
     SphereMarkerPtr zmpMarker;
     bool isZmpVisible;
     Vector3 orgZmpPos;
@@ -195,6 +197,7 @@ public:
     void changeCollisionLinkHighlightMode(bool on);
 
     void showCenterOfMass(bool on);
+    void showPpcom(bool on);
     void showZmp(bool on);
     void makeLinkFree(EditableSceneLink* sceneLink);
     void setBaseLink(EditableSceneLink* sceneLink);
@@ -290,6 +293,10 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     cmMarker->setName("centerOfMass");
     cmMarker->setSize(radius);
     isCmVisible = false;
+    ppcomMarker = new CrossMarker(0.25, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
+    ppcomMarker->setName("ProjectionPointCoM");
+    ppcomMarker->setSize(radius);
+    isPpcomVisible = false;
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(self->body());
     if(legged->isValid() && legged->numFeet() > 0){
@@ -345,6 +352,11 @@ void EditableSceneBodyImpl::onKinematicStateChanged()
 {
     if(isCmVisible){
         cmMarker->setTranslation(bodyItem->centerOfMass());
+    }
+    if(isPpcomVisible){
+    	Vector3 com = bodyItem->centerOfMass();
+    	com(2) = 0.0;
+    	ppcomMarker->setTranslation(com);
     }
     if(isZmpVisible){
         zmpMarker->setTranslation(bodyItem->zmp());
@@ -436,6 +448,20 @@ void EditableSceneBodyImpl::showCenterOfMass(bool on)
         cmMarker->setTranslation(bodyItem->centerOfMass());
     } else {
         markerGroup->removeChild(cmMarker, true);
+    }
+}
+
+
+void EditableSceneBodyImpl::showPpcom(bool on)
+{
+    isPpcomVisible = on;
+    if(on){
+        markerGroup->addChild(ppcomMarker, true);
+        Vector3 com = bodyItem->centerOfMass();
+        com(2) = 0.0;
+        ppcomMarker->setTranslation(com);
+    } else {
+        markerGroup->removeChild(ppcomMarker, true);
     }
 }
 
@@ -910,6 +936,10 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
         item->setChecked(isCmVisible);
         item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showCenterOfMass, this, _1));
 
+        item = menuManager.addCheckItem(_("Projection Point of CoM"));
+        item->setChecked(isPpcomVisible);
+        item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showPpcom, this, _1));
+
         item = menuManager.addCheckItem(_("ZMP"));
         item->setChecked(isZmpVisible);
         item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showZmp, this, _1));
@@ -1140,6 +1170,7 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
                 MappingPtr state = new Mapping();
                 state->insert("bodyItem", id);
                 state->write("showCenterOfMass", impl->isCmVisible);
+                state->write("showPpcom", impl->isPpcomVisible);
                 state->write("showZmp", impl->isZmpVisible);
                 states->append(state);
             }
@@ -1162,6 +1193,7 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
         if(bodyItem){
             EditableSceneBodyImpl* impl = bodyItem->sceneBody()->impl;
             impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));
+            impl->showPpcom(state->get("showPpcom", impl->isPpcomVisible));
             impl->showZmp(state->get("showZmp", impl->isZmpVisible));
         }
     }
