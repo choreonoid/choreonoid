@@ -33,6 +33,7 @@
 #include <QMessageBox>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <set>
 #include <iostream>
 #include "gettext.h"
@@ -91,7 +92,8 @@ public:
     virtual void visitOverlay(SgOverlay* overlay) { }
 };
 
-    
+enum Plane { FLOOR = 0, XZ, YZ };
+
 class SetupDialog : public Dialog
 {
 public:
@@ -108,11 +110,11 @@ public:
     DoubleSpinBox worldLightIntensitySpin;
     DoubleSpinBox worldLightAmbientSpin;
     CheckBox additionalLightsCheck;
-    CheckBox floorGridCheck;
-    DoubleSpinBox floorGridSpanSpin;
-    DoubleSpinBox floorGridIntervalSpin;
+    CheckBox gridCheck[3];
+    DoubleSpinBox gridSpanSpin[3];
+    DoubleSpinBox gridIntervalSpin[3];
     PushButton backgroundColorButton;
-    PushButton gridColorButton;
+    PushButton gridColorButton[3];
     CheckBox textureCheck;
     PushButton defaultColorButton;
     DoubleSpinBox pointSizeSpin;
@@ -243,8 +245,8 @@ public:
     SgPosTransform* yAxis;
     SgPosTransform* zAxis;
 
-    SgCustomGLNodePtr floorGrid;
-    Vector4f gridColor;
+    SgCustomGLNodePtr grid[3];
+    Vector4f gridColor[3];
 
     double fps;
     Timer fpsTimer;
@@ -265,7 +267,7 @@ public:
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
 
-    void renderFloorGrid(GLSceneRenderer& renderer);
+    void renderGrid(GLSceneRenderer& renderer, Plane p);
     void setupCoordinateAxes();
     void renderCoordinateAxes(GLSceneRenderer& renderer);
 
@@ -278,7 +280,7 @@ public:
     void renderFPS();
 
     void showBackgroundColorDialog();
-    void showGridColorDialog();
+    void showGridColorDialog(Plane p);
     void showDefaultColorDialog();
 
     void updateCurrentCamera();
@@ -356,6 +358,7 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
     void restoreCurrentCamera(const Mapping& cameraData);
+
 };
 }
 
@@ -451,7 +454,9 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     added.setAction(SgUpdate::ADDED);
     removed.setAction(SgUpdate::REMOVED);
 
-    gridColor << 0.9f, 0.9f, 0.9f, 1.0f;
+    BOOST_FOREACH(Vector4f& color, gridColor){
+    	color << 0.9f, 0.9f, 0.9f, 1.0f;
+    }
 
     setAutoFillBackground(false);
     setMouseTracking(true);
@@ -525,9 +530,13 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     setupCoordinateAxes();
 
-    floorGrid = new SgCustomGLNode(boost::bind(&SceneWidgetImpl::renderFloorGrid, this, _1));
-    floorGrid->setName("FloorGrid");
-    activateSystemNode(floorGrid, setup->floorGridCheck.isChecked());
+    for(int i=0; i<3; i++){
+    	grid[i] = new SgCustomGLNode(boost::bind(&SceneWidgetImpl::renderGrid, this, _1, static_cast<Plane>(i)));
+    	activateSystemNode(grid[i], setup->gridCheck[i].isChecked());
+    }
+    grid[FLOOR]->setName("FloorGrid");
+    grid[XZ]->setName("XZplaneGrid");
+    grid[YZ]->setName("YZplaneGrid");
 
     fpsTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
     fpsRenderingTimer.setSingleShot(true);
@@ -652,19 +661,19 @@ void SceneWidgetImpl::paintGL()
 }
 
 
-void SceneWidgetImpl::renderFloorGrid(GLSceneRenderer& renderer)
+void SceneWidgetImpl::renderGrid(GLSceneRenderer& renderer, Plane p)
 {
-    if(!setup->floorGridCheck.isChecked()){
+    if(!setup->gridCheck[p].isChecked()){
         return;
     }
 
     glPushAttrib(GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
 
-    renderer.setColor(gridColor);
+    renderer.setColor(gridColor[p]);
 
-    float half = setup->floorGridSpanSpin.value() / 2.0f;
-    float interval = setup->floorGridIntervalSpin.value();
+    float half = setup->gridSpanSpin[p].value() / 2.0f;
+    float interval = setup->gridIntervalSpin[p].value();
     float i = 0.0f;
     float x = 0.0f;
 
@@ -672,16 +681,44 @@ void SceneWidgetImpl::renderFloorGrid(GLSceneRenderer& renderer)
 
     do {
         x = i * interval;
-        // y-line
-        glVertex3f( x, -half, 0.0f);
-        glVertex3f( x,  half, 0.0f);
-        glVertex3f(-x, -half, 0.0f);
-        glVertex3f(-x,  half, 0.0f);
-        // x-line
-        glVertex3f(-half,  x, 0.0f);
-        glVertex3f( half,  x, 0.0f);
-        glVertex3f(-half, -x, 0.0f);
-        glVertex3f( half, -x, 0.0f);
+        switch(p){
+        case FLOOR :
+        	// y-line
+        	glVertex3f( x, -half, 0.0f);
+        	glVertex3f( x,  half, 0.0f);
+        	glVertex3f(-x, -half, 0.0f);
+        	glVertex3f(-x,  half, 0.0f);
+        	// x-line
+        	glVertex3f(-half,  x, 0.0f);
+        	glVertex3f( half,  x, 0.0f);
+        	glVertex3f(-half, -x, 0.0f);
+        	glVertex3f( half, -x, 0.0f);
+        	break;
+        case XZ :
+        	// z-line
+        	glVertex3f( x, 0.0f, -half);
+        	glVertex3f( x, 0.0f,  half);
+        	glVertex3f(-x, 0.0f, -half);
+        	glVertex3f(-x, 0.0f,  half);
+        	// x-line
+        	glVertex3f(-half, 0.0f,  x);
+        	glVertex3f( half, 0.0f,  x);
+        	glVertex3f(-half, 0.0f, -x);
+        	glVertex3f( half, 0.0f, -x);
+        	break;
+        case YZ :
+        	// z-line
+        	glVertex3f(0.0f,  x, -half);
+        	glVertex3f(0.0f,  x,  half);
+        	glVertex3f(0.0f, -x, -half);
+        	glVertex3f(0.0f, -x,  half);
+        	// y-line
+        	glVertex3f(0.0f, -half,  x);
+        	glVertex3f(0.0f,  half,  x);
+        	glVertex3f(0.0f, -half, -x);
+        	glVertex3f(0.0f,  half, -x);
+        	break;
+        }
         ++i;
     } while(x < half);
 
@@ -1020,7 +1057,7 @@ void SceneWidgetImpl::updateLastClickedPoint()
 {
     const SgNodePath& path = latestEvent.nodePath();
     if(!path.empty()){
-        if(path.back() != floorGrid.get()){
+        if(path.back() != grid[FLOOR].get() && path.back() != grid[XZ].get() && path.back() != grid[YZ].get()){
             lastClickedPoint = latestEvent.point();
         }
     }
@@ -1839,14 +1876,14 @@ void SceneWidgetImpl::showBackgroundColorDialog()
 }
 
 
-void SceneWidgetImpl::showGridColorDialog()
+void SceneWidgetImpl::showGridColorDialog(Plane p)
 {
     QColor newColor = QColorDialog::getColor(
-        QColor::fromRgbF(gridColor[0], gridColor[1], gridColor[2], gridColor[3]),
+        QColor::fromRgbF(gridColor[p][0], gridColor[p][1], gridColor[p][2], gridColor[p][3]),
         MainWindow::instance(), _("Floor Grid Color"));
     
     if(newColor.isValid()){
-        gridColor << newColor.redF(), newColor.greenF(), newColor.blueF(), newColor.alphaF();
+        gridColor[p] << newColor.redF(), newColor.greenF(), newColor.blueF(), newColor.alphaF();
         update();
     }
 }
@@ -1855,7 +1892,7 @@ void SceneWidgetImpl::showGridColorDialog()
 void SceneWidgetImpl::showDefaultColorDialog()
 {
     QColor c = QColorDialog::getColor(
-        QColor::fromRgbF(gridColor[0], gridColor[1], gridColor[2], gridColor[3]),
+        QColor::fromRgbF(gridColor[FLOOR][0], gridColor[FLOOR][1], gridColor[FLOOR][2], gridColor[FLOOR][3]),
         MainWindow::instance(), _("Default Color"));
     
     if(c.isValid()){
@@ -2109,13 +2146,13 @@ void SceneWidget::setWorldLightAmbient(double value)
 
 void SceneWidget::setFloorGridSpan(double value)
 {
-    impl->setup->floorGridSpanSpin.setValue(value);
+    impl->setup->gridSpanSpin[FLOOR].setValue(value);
 }
 
 
 void SceneWidget::setFloorGridInterval(double value)
 {
-    impl->setup->floorGridIntervalSpin.setValue(value);
+    impl->setup->gridIntervalSpin[FLOOR].setValue(value);
 }
 
 
@@ -2163,7 +2200,7 @@ void SceneWidget::setAdditionalLights(bool on)
 
 void SceneWidget::setFloorGrid(bool on)
 {
-    impl->setup->floorGridCheck.setChecked(on);
+    impl->setup->gridCheck[FLOOR].setChecked(on);
 }
 
 
@@ -2333,7 +2370,9 @@ bool SceneWidgetImpl::storeState(Archive& archive)
     cameraData.write("orthoHeight", builtinOrthoCamera->height());
 
     write(archive, "backgroundColor", renderer.backgroundColor());
-    write(archive, "gridColor", gridColor);
+    write(archive, "gridColor", gridColor[FLOOR]);
+    write(archive, "xzgridColor", gridColor[XZ]);
+    write(archive, "yzgridColor", gridColor[YZ]);
     
     return true;
 }
@@ -2395,8 +2434,14 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
         renderer.setBackgroundColor(bgColor);
         doUpdate = true;
     }
-    if(read(archive, "gridColor", gridColor)){
+    if(read(archive, "gridColor", gridColor[FLOOR])){
         doUpdate = true;
+    }
+    if(read(archive, "xzgridColor", gridColor[XZ])){
+    	doUpdate = true;
+    }
+    if(read(archive, "yzgridColor", gridColor[YZ])){
+    	doUpdate = true;
     }
     if(doUpdate){
         update();
@@ -2608,37 +2653,42 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
-    floorGridCheck.setText(_("Show the floor grid"));
-    floorGridCheck.setChecked(true);
-    floorGridCheck.sigToggled().connect(
-        boost::bind(&SceneWidgetImpl::activateSystemNode, impl, boost::ref(impl->floorGrid), _1));
-    hbox->addWidget(&floorGridCheck);
+    for(int i=0; i<3; i++){
+    	hbox = new QHBoxLayout();
+    	gridCheck[i].setChecked(false);
+    	gridCheck[i].sigToggled().connect(
+    			boost::bind(&SceneWidgetImpl::activateSystemNode, impl, boost::ref(impl->grid[i]), _1));
+    	hbox->addWidget(&gridCheck[i]);
     
-    hbox->addWidget(new QLabel(_("Span")));
-    floorGridSpanSpin.setAlignment(Qt::AlignCenter);
-    floorGridSpanSpin.setDecimals(1);
-    floorGridSpanSpin.setRange(0.0, 99.9);
-    floorGridSpanSpin.setSingleStep(0.1);
-    floorGridSpanSpin.setValue(10.0);
-    floorGridSpanSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::update, impl));
-    hbox->addWidget(&floorGridSpanSpin);
-    hbox->addSpacing(8);
+    	hbox->addWidget(new QLabel(_("Span")));
+    	gridSpanSpin[i].setAlignment(Qt::AlignCenter);
+    	gridSpanSpin[i].setDecimals(1);
+    	gridSpanSpin[i].setRange(0.0, 99.9);
+		gridSpanSpin[i].setSingleStep(0.1);
+		gridSpanSpin[i].setValue(10.0);
+		gridSpanSpin[i].sigValueChanged().connect(boost::bind(&SceneWidgetImpl::update, impl));
+		hbox->addWidget(&gridSpanSpin[i]);
+		hbox->addSpacing(8);
     
-    hbox->addWidget(new QLabel(_("Interval")));
-    floorGridIntervalSpin.setAlignment(Qt::AlignCenter);
-    floorGridIntervalSpin.setDecimals(2);
-    floorGridIntervalSpin.setRange(0.01, 9.99);
-    floorGridIntervalSpin.setSingleStep(0.01);
-    floorGridIntervalSpin.setValue(0.5);
-    floorGridIntervalSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::update, impl));
-    hbox->addWidget(&floorGridIntervalSpin);
+		hbox->addWidget(new QLabel(_("Interval")));
+		gridIntervalSpin[i].setAlignment(Qt::AlignCenter);
+		gridIntervalSpin[i].setDecimals(2);
+		gridIntervalSpin[i].setRange(0.01, 9.99);
+		gridIntervalSpin[i].setSingleStep(0.01);
+		gridIntervalSpin[i].setValue(0.5);
+		gridIntervalSpin[i].sigValueChanged().connect(boost::bind(&SceneWidgetImpl::update, impl));
+		hbox->addWidget(&gridIntervalSpin[i]);
 
-    gridColorButton.setText(_("Color"));
-    gridColorButton.sigClicked().connect(boost::bind(&SceneWidgetImpl::showGridColorDialog, impl));
-    hbox->addWidget(&gridColorButton);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
+		gridColorButton[i].setText(_("Color"));
+		gridColorButton[i].sigClicked().connect(boost::bind(&SceneWidgetImpl::showGridColorDialog, impl, static_cast<Plane>(i)));
+		hbox->addWidget(&gridColorButton[i]);
+		hbox->addStretch();
+		vbox->addLayout(hbox);
+    }
+    gridCheck[FLOOR].setText(_("Show the floor grid"));
+    gridCheck[XZ].setText(_("Show the xz plane grid"));
+    gridCheck[YZ].setText(_("Show the yz plane grid"));
+    gridCheck[FLOOR].setChecked(true);
 
     vbox->addWidget(new HSeparator());
     hbox = new QHBoxLayout();
@@ -2754,9 +2804,15 @@ void SetupDialog::storeState(Archive& archive)
     archive.write("worldLightIntensity", worldLightIntensitySpin.value());
     archive.write("worldLightAmbient", worldLightAmbientSpin.value());
     archive.write("additionalLights", additionalLightsCheck.isChecked());
-    archive.write("floorGrid", floorGridCheck.isChecked());
-    archive.write("floorGridSpan", floorGridSpanSpin.value());
-    archive.write("floorGridInterval", floorGridIntervalSpin.value());
+    archive.write("floorGrid", gridCheck[FLOOR].isChecked());
+    archive.write("floorGridSpan", gridSpanSpin[FLOOR].value());
+    archive.write("floorGridInterval", gridIntervalSpin[FLOOR].value());
+    archive.write("xzGrid", gridCheck[XZ].isChecked());
+    archive.write("xzGridSpan", gridSpanSpin[XZ].value());
+    archive.write("xzGridInterval", gridIntervalSpin[YZ].value());
+    archive.write("xzGrid", gridCheck[YZ].isChecked());
+    archive.write("yzGridSpan", gridSpanSpin[YZ].value());
+    archive.write("yzGridInterval", gridIntervalSpin[YZ].value());
     archive.write("texture", textureCheck.isChecked());
     archive.write("lineWidth", lineWidthSpin.value());
     archive.write("pointSize", pointSizeSpin.value());
@@ -2778,9 +2834,15 @@ void SetupDialog::restoreState(const Archive& archive)
     worldLightIntensitySpin.setValue(archive.get("worldLightIntensity", worldLightIntensitySpin.value()));
     worldLightAmbientSpin.setValue(archive.get("worldLightAmbient", worldLightAmbientSpin.value()));
     additionalLightsCheck.setChecked(archive.get("additionalLights", additionalLightsCheck.isChecked()));
-    floorGridCheck.setChecked(archive.get("floorGrid", floorGridCheck.isChecked()));
-    floorGridSpanSpin.setValue(archive.get("floorGridSpan", floorGridSpanSpin.value()));
-    floorGridIntervalSpin.setValue(archive.get("floorGridInterval", floorGridIntervalSpin.value()));
+    gridCheck[FLOOR].setChecked(archive.get("floorGrid", gridCheck[FLOOR].isChecked()));
+    gridSpanSpin[FLOOR].setValue(archive.get("floorGridSpan", gridSpanSpin[FLOOR].value()));
+    gridIntervalSpin[FLOOR].setValue(archive.get("floorGridInterval", gridIntervalSpin[FLOOR].value()));
+    gridCheck[XZ].setChecked(archive.get("xzGrid", gridCheck[XZ].isChecked()));
+    gridSpanSpin[XZ].setValue(archive.get("xzGridSpan", gridSpanSpin[XZ].value()));
+    gridIntervalSpin[XZ].setValue(archive.get("xzGridInterval", gridIntervalSpin[XZ].value()));
+    gridCheck[YZ].setChecked(archive.get("yzGrid", gridCheck[YZ].isChecked()));
+    gridSpanSpin[YZ].setValue(archive.get("yzGridSpan", gridSpanSpin[YZ].value()));
+    gridIntervalSpin[YZ].setValue(archive.get("yzGridInterval", gridIntervalSpin[YZ].value()));
     textureCheck.setChecked(archive.get("texture", textureCheck.isChecked()));
     lineWidthSpin.setValue(archive.get("lineWidth", lineWidthSpin.value()));
     pointSizeSpin.setValue(archive.get("pointSize", pointSizeSpin.value()));
