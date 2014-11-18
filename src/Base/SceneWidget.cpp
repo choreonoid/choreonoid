@@ -2688,7 +2688,9 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     gridCheck[FLOOR].setText(_("Show the floor grid"));
     gridCheck[XZ].setText(_("Show the xz plane grid"));
     gridCheck[YZ].setText(_("Show the yz plane grid"));
+    gridCheck[FLOOR].blockSignals(true);
     gridCheck[FLOOR].setChecked(true);
+    gridCheck[FLOOR].blockSignals(false);
 
     vbox->addWidget(new HSeparator());
     hbox = new QHBoxLayout();
