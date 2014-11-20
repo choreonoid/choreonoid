@@ -13,6 +13,7 @@
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 #include <QTextCursor>
 #include <QBoxLayout>
 #include <QMessageBox>
@@ -107,6 +108,7 @@ public:
     int cursorPos;
     int scrollPos;
     bool enableScroll;
+    Connection scrollConnection;
 
     MessageViewImpl(MessageView* self);
 
@@ -547,13 +549,18 @@ public:
 
         cursorPos = cursor.position();
         preFmt = textEdit.currentCharFormat();
-        if(enableScroll && cursor.atEnd())
+        if(enableScroll && cursor.atEnd()){
+        	scrollConnection.block();
         	textEdit.setScrollPos(textEdit.maxScrollPos());
+        	scrollConnection.unblock();
+        }
         enableScroll = true;
     }
 
+    boost::mutex mtx;
     void put(const QString& message, bool doLF, bool doNotify, bool doFlush) {
 
+    	boost::mutex::scoped_lock lock(mtx);
         if(QThread::currentThreadId() == mainThreadId){
             doPut(message, doLF, doNotify, doFlush);
         } else {
@@ -580,8 +587,11 @@ public:
     }
 
     void onScroll(int pos) {
-    	if(!enableScroll)
+    	if(!enableScroll){
+    		scrollConnection.block();
     		textEdit.setScrollPos(scrollPos);
+    		scrollConnection.unblock();
+    	}
     }
 
 };
@@ -673,7 +683,7 @@ MessageViewImpl::MessageViewImpl(MessageView* self) :
     cursorPos = cursor.position();
 
     enableScroll = true;
-    textEdit.sigScroll().connect(boost::bind(&MessageViewImpl::onScroll, this, _1));
+    scrollConnection = textEdit.sigScroll().connect(boost::bind(&MessageViewImpl::onScroll, this, _1));
 }
 
 
