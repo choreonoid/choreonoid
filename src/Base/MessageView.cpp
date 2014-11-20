@@ -510,15 +510,20 @@ public:
     void doPut(const QString& message, bool doLF, bool doNotify, bool doFlush) {
 
     	scrollPos = textEdit.getScrollPos();
-    	if(scrollPos < textEdit.maxScrollPos()-3*textEdit.scrollSingleStep())
-    		enableScroll = false;
+    	if(scrollPos < textEdit.maxScrollPos()-3*textEdit.scrollSingleStep()){
+            enableScroll = false;
+        } else {
+            enableScroll = true;
+        }
 
     	//cout << "scroll= " << scrollPos << " " << textEdit.maxScrollPos() << " " << textEdit.scrollSingleStep();
     	//if(doLF)
     	//	cout << endl;
 
+        /*
     	cursor.setPosition(cursorPos, QTextCursor::MoveAnchor);
     	textEdit.setTextCursor(cursor);
+        */
     	textEdit.setCurrentCharFormat(preFmt);
 
     	QString txt(message);
@@ -532,6 +537,10 @@ public:
     		escapeSequence(txt);
     	}
     	insertPlainText(txt, doLF);
+
+        if(enableScroll){
+            textEdit.moveCursor(QTextCursor::End);
+        }
 
         if(PUT_COUT_TOO){
             cout << message.toStdString();
@@ -547,20 +556,22 @@ public:
             flush();
         }
 
-        cursorPos = cursor.position();
+        //cursorPos = cursor.position();
         preFmt = textEdit.currentCharFormat();
+        /*
         if(enableScroll && cursor.atEnd()){
         	scrollConnection.block();
         	textEdit.setScrollPos(textEdit.maxScrollPos());
         	scrollConnection.unblock();
         }
         enableScroll = true;
+        */
     }
 
     boost::mutex mtx;
     void put(const QString& message, bool doLF, bool doNotify, bool doFlush) {
 
-    	boost::mutex::scoped_lock lock(mtx);
+    	//boost::mutex::scoped_lock lock(mtx);
         if(QThread::currentThreadId() == mainThreadId){
             doPut(message, doLF, doNotify, doFlush);
         } else {
@@ -683,7 +694,7 @@ MessageViewImpl::MessageViewImpl(MessageView* self) :
     cursorPos = cursor.position();
 
     enableScroll = true;
-    scrollConnection = textEdit.sigScroll().connect(boost::bind(&MessageViewImpl::onScroll, this, _1));
+    //scrollConnection = textEdit.sigScroll().connect(boost::bind(&MessageViewImpl::onScroll, this, _1));
 }
 
 
