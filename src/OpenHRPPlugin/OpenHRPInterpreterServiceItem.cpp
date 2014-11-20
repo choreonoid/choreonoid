@@ -30,7 +30,7 @@ public:
     char* interpret(const char* expr);
     void interpretMain(const char* expr);
         
-    OpenHRPInterpreterServiceItem* item;
+    OpenHRPInterpreterServiceItemImpl* itemImpl;    
     string result;
 };
 
@@ -54,6 +54,10 @@ public:
     OpenHRPInterpreterServiceItem* self;
     InterpreterRTC* rtc;
     string rtcInstanceName;
+    Connection scriptItemUpdateConnection;
+    ScriptItem* scriptItem;
+    bool isScriptItemBackgroundMode;
+    bool forceMainThreadExecution;
     ostream& os;
 
     OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self);
@@ -64,8 +68,8 @@ public:
     void setRTCinstanceName(const std::string& name);
     bool createRTC();
     bool deleteRTC();
+    void onScriptItemUpdated();
 };
-
 typedef OpenHRPInterpreterServiceItemImpl ItemImpl;
 }
 
@@ -107,6 +111,9 @@ ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self)
       os(MessageView::instance()->cout())
 {
     rtc = 0;
+    scriptItem = 0;
+    isScriptItemBackgroundMode = false;
+    forceMainThreadExecution = false;
 }
 
 
@@ -119,9 +126,12 @@ OpenHRPInterpreterServiceItem::OpenHRPInterpreterServiceItem(const OpenHRPInterp
 
 ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self, const ItemImpl& org)
     : self(self),
-      os(MessageView::instance()->cout())
+      os(MessageView::instance()->cout()),
+      forceMainThreadExecution(org.forceMainThreadExecution)
 {
     rtc = 0;
+    scriptItem = 0;
+    isScriptItemBackgroundMode = false;
 }
     
 
@@ -171,7 +181,7 @@ bool ItemImpl::createRTC()
     rtc = dynamic_cast<InterpreterRTC*>(cnoid::createManagedRTC(str(param % rtcInstanceName).c_str()));
     
     if(rtc){
-        rtc->interpreterService.item = self;
+        rtc->interpreterService.itemImpl = this;
         
         os << (format(_("RTC \"%1%\" of \"%2%\" has been created."))
                % rtcInstanceName % self->name()) << endl;
@@ -207,6 +217,25 @@ void OpenHRPInterpreterServiceItem::onConnectedToRoot()
 }
 
 
+void OpenHRPInterpreterServiceItem::onPositionChanged()
+{
+    impl->scriptItemUpdateConnection.disconnect();
+    impl->scriptItem = findOwnerItem<ScriptItem>();
+    if(impl->scriptItem){
+        impl->onScriptItemUpdated();
+        impl->scriptItemUpdateConnection =
+            impl->scriptItem->sigUpdated().connect(bind(&ItemImpl::onScriptItemUpdated, impl));
+    }
+}
+
+
+void ItemImpl::onScriptItemUpdated()
+{
+    // This property is stored to avoid the access from a background thread
+    isScriptItemBackgroundMode = scriptItem->isBackgroundMode();
+}
+
+
 void OpenHRPInterpreterServiceItem::onDisconnectedFromRoot()
 {
     impl->deleteRTC();
@@ -217,12 +246,15 @@ void OpenHRPInterpreterServiceItem::doPutProperties(PutPropertyFunction& putProp
 {
     putProperty(_("RTC Instance name"), impl->rtcInstanceName,
                 boost::bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
+    putProperty(_("Force main thread execution"), impl->forceMainThreadExecution,
+                changeProperty(impl->forceMainThreadExecution));
 }
 
 
 bool OpenHRPInterpreterServiceItem::store(Archive& archive)
 {
     archive.write("rtcInstance", impl->rtcInstanceName);
+    archive.write("forceMainThreadExecution", impl->forceMainThreadExecution);
     return true;
 }
 
@@ -230,6 +262,7 @@ bool OpenHRPInterpreterServiceItem::store(Archive& archive)
 bool OpenHRPInterpreterServiceItem::restore(const Archive& archive)
 {
     impl->setRTCinstanceName(archive.get("rtcInstance", impl->rtcInstanceName));
+    archive.read("forceMainThreadExecution", impl->forceMainThreadExecution);
     return true;
 }
 
@@ -259,8 +292,12 @@ RTC::ReturnCode_t InterpreterRTC::onInitialize()
 char* InterpreterService_impl::interpret(const char* expr)
 {
     result.clear();
-    
-    callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr));
+
+    if(!itemImpl->isScriptItemBackgroundMode || itemImpl->forceMainThreadExecution){
+        callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr));
+    } else {
+        interpretMain(expr);
+    }
 
     CORBA::String_var ret(result.c_str());
     return ret._retn();;
@@ -270,7 +307,8 @@ char* InterpreterService_impl::interpret(const char* expr)
 void InterpreterService_impl::interpretMain(const char* expr)
 {
     ostream& os = MessageView::instance()->cout();
-    
+
+    Item* item = itemImpl->self;
     os << (format(_("%1%: interpret(\"%2%\")")) % item->name() % expr) << endl;
 
     ScriptItem* scriptItem = item->findOwnerItem<ScriptItem>();

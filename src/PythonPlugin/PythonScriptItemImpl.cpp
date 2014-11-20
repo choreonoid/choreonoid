@@ -62,7 +62,10 @@ bool PythonScriptItemImpl::setScriptFilename(const std::string& filename)
 
 bool PythonScriptItemImpl::setBackgroundMode(bool on)
 {
-    executor.setBackgroundMode(on);
+    if(on != executor.isBackgroundMode()){
+        executor.setBackgroundMode(on);
+        scriptItem_->notifyUpdate();
+    }
     return true;
 }
 

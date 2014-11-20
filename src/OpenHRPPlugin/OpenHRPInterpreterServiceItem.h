@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENHRP_INTERPRETER_SERVICE_PLUGIN_INTERPRETER_SERVICE_ITEM_H_INCLUDED
-#define CNOID_OPENHRP_INTERPRETER_SERVICE_PLUGIN_INTERPRETER_SERVICE_ITEM_H_INCLUDED
+#ifndef CNOID_OPENHRP_PLUGIN_INTERPRETER_SERVICE_ITEM_H
+#define CNOID_OPENHRP_PLUGIN_INTERPRETER_SERVICE_ITEM_H
 
 #include <cnoid/Item>
 
@@ -23,6 +23,7 @@ public:
 protected:
     virtual ItemPtr doDuplicate() const;
     virtual void onConnectedToRoot();
+    virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
