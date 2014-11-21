@@ -10,6 +10,7 @@ void exportQtExTypes();
 void exportItems();
 void exportToolBars();
 void exportViews();
+void exportItemTreeView();
 
 BOOST_PYTHON_MODULE(Base)
 {
@@ -20,6 +21,7 @@ BOOST_PYTHON_MODULE(Base)
     exportItems();
     exportToolBars();
     exportViews();
+    exportItemTreeView();
 }
 
 }
