@@ -23,8 +23,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled1_overloads, 
 SignalProxy<void(bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled2)(Item*, int) = &ItemTreeView::sigCheckToggled;
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled2_overloads, sigCheckToggled, 1, 2)
 
-//python::object ItemTreeView_selectedItems(ItemTreeView& self, PyObject* classObject)
-python::object ItemTreeView_selectedItems(ItemTreeView& self, PyTypeObject* typeObject)
+python::object ItemTreeView_selectedItems(ItemTreeView& self, python::object classObject)
 {
     python::list selected;
 
@@ -34,13 +33,18 @@ python::object ItemTreeView_selectedItems(ItemTreeView& self, PyTypeObject* type
     }
     PyObject* pyItemClass = itemClass.ptr();
     */
-    
+
+    python::object isinstance = python::import("__main__").attr("__builtins__").attr("isinstance");
     ItemList<> src = self.selectedItems();
     for(int i=0; i < src.size(); ++i){
         python::object item(src[i]);
-        if(PyObject_TypeCheck(item.ptr(), typeObject)){
+        if(extract<bool>(isinstance(item, classObject))){
             selected.append(item);
         }
+        
+        //if(PyObject_TypeCheck(item.ptr(), typeObject)){
+        //    selected.append(item);
+        // }
     }
     return selected;
 }
@@ -58,7 +62,7 @@ void exportItemTreeView()
         .def("instance", &ItemTreeView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
         .def("rootItem", ItemTreeView_rootItem)
         .def("showRoot", &ItemTreeView::showRoot)
-        //.def("selectedItems", &ItemTreeView::selectedItems<Item>)
+        .def("selectedItems", &ItemTreeView::selectedItems<Item>)
         .def("selectedItems", ItemTreeView_selectedItems)
         .def("isItemSelected", &ItemTreeView::isItemSelected)
         .def("selectItem", &ItemTreeView::selectItem, ItemTreeView_selectItem_overloads())
