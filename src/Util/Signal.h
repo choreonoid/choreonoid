@@ -155,8 +155,10 @@ public:
 class ScopedConnection : private Connection
 {
 public:
+    ScopedConnection() { }
     ScopedConnection(const Connection& org) : Connection(org) { }
     ~ScopedConnection() { Connection::disconnect(); }
+    void reset(const Connection& c) { Connection::disconnect(); Connection::operator=(c); }
     void disconnect() { Connection::disconnect(); }
     bool connected() { Connection::connected(); }
     void block() { Connection::block(); }
