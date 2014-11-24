@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <cnoid/PyUtil>
+#include "PyBase.h"
 #include "../Item.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
@@ -12,12 +12,15 @@
 #include "../MultiAffine3SeqItem.h"
 #include "../MultiSE3SeqItem.h"
 #include "../Vector3SeqItem.h"
+#include <cnoid/PyUtil>
 
 using namespace boost;
 using namespace boost::python;
 using namespace cnoid;
 
 namespace {
+
+python::object pythonItemClass_;
 
 template<typename ItemType>
 struct ItemList_to_pylist_converter {
@@ -53,6 +56,10 @@ RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
 namespace cnoid {
 
+python::object pythonItemClass() {
+    return pythonItemClass_;
+}
+
 void exportItems()
 {
     to_python_converter<ItemList<Item>, ItemList_to_pylist_converter<Item> >();
@@ -69,8 +76,9 @@ void exportItems()
         bool (Item::*Item_load1)(const std::string& filename, const std::string& formatId) = &Item::load;
         bool (Item::*Item_load2)(const std::string& filename, Item* parent, const std::string& formatId) = &Item::load;
 
-        scope itemScope =
-            class_<Item, ItemPtr, boost::noncopyable>("Item", no_init)
+        class_<Item, ItemPtr, boost::noncopyable> itemClass("Item", no_init);
+        
+        itemClass
             .def("name", &Item::name, return_value_policy<copy_const_reference>())
             .def("setName", &Item::setName)
             .def("hasAttribute", &Item::hasAttribute)
@@ -108,6 +116,9 @@ void exportItems()
             .def("sigPositionChanged", &Item::sigPositionChanged)
             .def("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
             .def("sigSubTreeChanged", &Item::sigSubTreeChanged);
+
+        pythonItemClass_ = itemClass;
+        scope itemScope = itemClass;
         
         enum_<Item::Attribute>("Attribute")
             .value("SUB_ITEM", Item::SUB_ITEM) 

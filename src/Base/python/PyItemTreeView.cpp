@@ -2,9 +2,11 @@
  * @author Shin'ichiro Nakaoka
 */
 
+#include "PyBase.h"
 #include "../ItemTreeView.h"
 #include "../RootItem.h"
 #include <cnoid/PySignal>
+#include <iostream>
 
 using namespace boost;
 using namespace boost::python;
@@ -25,26 +27,21 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled2_overloads, 
 
 python::object ItemTreeView_selectedItems(ItemTreeView& self, python::object classObject)
 {
-    python::list selected;
-
     /*
-    if(!PyType_Check(typeObject)){
-        return selected;
+    int isSubclass = PyObject_IsSubclass(classObject.ptr(), pythonItemClass().ptr());
+    if(isSubclass <= 0){
+        PyErr_SetString(PyExc_TypeError, "parameter must be Item class or a sub class of it");
+        return python::object();
     }
-    PyObject* pyItemClass = itemClass.ptr();
     */
 
-    python::object isinstance = python::import("__main__").attr("__builtins__").attr("isinstance");
+    python::list selected;
     ItemList<> src = self.selectedItems();
     for(int i=0; i < src.size(); ++i){
         python::object item(src[i]);
-        if(extract<bool>(isinstance(item, classObject))){
+        if(PyObject_IsInstance(item.ptr(), classObject.ptr()) > 0){
             selected.append(item);
         }
-        
-        //if(PyObject_TypeCheck(item.ptr(), typeObject)){
-        //    selected.append(item);
-        // }
     }
     return selected;
 }
