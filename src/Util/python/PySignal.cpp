@@ -10,7 +10,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-void exportSignalTypes()
+void exportPySignalTypes()
 {
     class_<Connection>("Connection")
         .def("disconnect", &Connection::disconnect)

@@ -150,7 +150,7 @@ struct pylist_to_Transform_converter {
 
 namespace cnoid {
 
-void exportEigenTypes()
+void exportPyEigenTypes()
 {
     to_python_converter<Vector2, Vector_to_pylist_converter<Vector2> >();
     pylist_to_Vector_converter<Vector2, 2>();

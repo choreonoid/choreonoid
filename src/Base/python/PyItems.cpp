@@ -20,7 +20,7 @@ using namespace cnoid;
 
 namespace {
 
-python::object pythonItemClass_;
+python::object pyItemClass;
 
 template<typename ItemType>
 struct ItemList_to_pylist_converter {
@@ -56,11 +56,48 @@ RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
 namespace cnoid {
 
-python::object pythonItemClass() {
-    return pythonItemClass_;
+boost::python::object getPyItemClass() {
+    return pyItemClass;
 }
 
-void exportItems()
+boost::python::list getPyNarrowedItemList(const ItemList<>& orgItemList, boost::python::object itemClass)
+{
+    int isSubclass = PyObject_IsSubclass(itemClass.ptr(), getPyItemClass().ptr());
+    if(isSubclass <= 0){
+        PyErr_SetString(PyExc_TypeError, "argument 1 must be an Item class");
+        python::throw_error_already_set();
+    }
+
+    python::list narrowedItemList;
+    for(int i=0; i < orgItemList.size(); ++i){
+        python::object item(orgItemList[i]);
+        if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
+            narrowedItemList.append(item);
+        }
+    }
+    return narrowedItemList;
+}
+
+
+boost::python::object getPyNarrowedFirstItem(const ItemList<>& orgItemList, boost::python::object itemClass)
+{
+    int isSubclass = PyObject_IsSubclass(itemClass.ptr(), getPyItemClass().ptr());
+    if(isSubclass <= 0){
+        PyErr_SetString(PyExc_TypeError, "argument 1 must be an Item class");
+        python::throw_error_already_set();
+    }
+
+    for(int i=0; i < orgItemList.size(); ++i){
+        python::object item(orgItemList[i]);
+        if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
+            return item;
+        }
+    }
+    return python::object();
+}
+
+
+void exportPyItems()
 {
     to_python_converter<ItemList<Item>, ItemList_to_pylist_converter<Item> >();
     to_python_converter<ItemList<RootItem>, ItemList_to_pylist_converter<RootItem> >();
@@ -117,7 +154,7 @@ void exportItems()
             .def("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
             .def("sigSubTreeChanged", &Item::sigSubTreeChanged);
 
-        pythonItemClass_ = itemClass;
+        pyItemClass = itemClass;
         scope itemScope = itemClass;
         
         enum_<Item::Attribute>("Attribute")
@@ -180,4 +217,4 @@ void exportItems()
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
 }
 
-}
+} // namespace cnoid

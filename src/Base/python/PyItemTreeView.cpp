@@ -6,7 +6,6 @@
 #include "../ItemTreeView.h"
 #include "../RootItem.h"
 #include <cnoid/PySignal>
-#include <iostream>
 
 using namespace boost;
 using namespace boost::python;
@@ -15,9 +14,35 @@ using namespace cnoid;
 namespace {
 
 RootItemPtr ItemTreeView_rootItem(ItemTreeView& self) { return self.rootItem(); }
+
+python::object ItemTreeView_selectedItems(ItemTreeView& self, python::object itemClass){
+    return getPyNarrowedItemList(self.selectedItems(), itemClass);
+}
+
+python::object ItemTreeView_selectedItem(ItemTreeView& self, python::object itemClass){
+    return getPyNarrowedFirstItem(self.selectedItems(), itemClass);
+}
+
+python::object ItemTreeView_selectedSubItems(ItemTreeView& self, ItemPtr topItem, python::object itemClass){
+    return getPyNarrowedItemList(self.selectedSubItems<Item>(topItem), itemClass);
+}
+
+python::object ItemTreeView_selectedSubItem(ItemTreeView& self, ItemPtr topItem, python::object itemClass){
+    return getPyNarrowedFirstItem(self.selectedSubItems<Item>(topItem), itemClass);
+}
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_selectItem_overloads, selectItem, 1, 2)
-ItemList<Item> ItemTreeView_checkedItems(ItemTreeView& self, int id = 0) { return self.checkedItems<Item>(id); }
-BOOST_PYTHON_FUNCTION_OVERLOADS(ItemTreeView_checkedItems_overloads, ItemTreeView_checkedItems, 1, 2)
+
+ItemList<Item> ItemTreeView_checkedItems1(ItemTreeView& self, int id = 0) {
+    return self.checkedItems<Item>(id);
+}
+BOOST_PYTHON_FUNCTION_OVERLOADS(ItemTreeView_checkedItems1_overloads, ItemTreeView_checkedItems1, 1, 2)
+
+python::object ItemTreeView_checkedItems2(ItemTreeView& self, python::object itemClass, int id = 0) {
+    return getPyNarrowedItemList(self.checkedItems<Item>(id), itemClass);
+}
+BOOST_PYTHON_FUNCTION_OVERLOADS(ItemTreeView_checkedItems2_overloads, ItemTreeView_checkedItems2, 2, 3)
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_isItemChecked_overloads, isItemChecked, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_checkItem_overloads, checkItem, 1, 3)
 SignalProxy<void(Item*, bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled1)(int) = &ItemTreeView::sigCheckToggled;
@@ -25,32 +50,11 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled1_overloads, 
 SignalProxy<void(bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled2)(Item*, int) = &ItemTreeView::sigCheckToggled;
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled2_overloads, sigCheckToggled, 1, 2)
 
-python::object ItemTreeView_selectedItems(ItemTreeView& self, python::object classObject)
-{
-    /*
-    int isSubclass = PyObject_IsSubclass(classObject.ptr(), pythonItemClass().ptr());
-    if(isSubclass <= 0){
-        PyErr_SetString(PyExc_TypeError, "parameter must be Item class or a sub class of it");
-        return python::object();
-    }
-    */
-
-    python::list selected;
-    ItemList<> src = self.selectedItems();
-    for(int i=0; i < src.size(); ++i){
-        python::object item(src[i]);
-        if(PyObject_IsInstance(item.ptr(), classObject.ptr()) > 0){
-            selected.append(item);
-        }
-    }
-    return selected;
-}
-
 }
 
 namespace cnoid {
 
-void exportItemTreeView()
+void exportPyItemTreeView()
 {
     PySignalProxy<void(const ItemList<>&)>("ItemListSignal");
     PySignalProxy<void(Item* item, bool isChecked)>("ItemBoolSignal");
@@ -61,11 +65,15 @@ void exportItemTreeView()
         .def("showRoot", &ItemTreeView::showRoot)
         .def("selectedItems", &ItemTreeView::selectedItems<Item>)
         .def("selectedItems", ItemTreeView_selectedItems)
+        .def("selectedItem", ItemTreeView_selectedItem)
+        .def("selectedSubItems", ItemTreeView_selectedSubItems)
+        .def("selectedSubItem", ItemTreeView_selectedSubItem)
         .def("isItemSelected", &ItemTreeView::isItemSelected)
         .def("selectItem", &ItemTreeView::selectItem, ItemTreeView_selectItem_overloads())
         .def("selectAllItems", &ItemTreeView::selectAllItems)
         .def("clearSelection", &ItemTreeView::clearSelection)
-        .def("checkedItems", ItemTreeView_checkedItems, ItemTreeView_checkedItems_overloads())
+        .def("checkedItems", ItemTreeView_checkedItems1, ItemTreeView_checkedItems1_overloads())
+        .def("checkedItems", ItemTreeView_checkedItems2, ItemTreeView_checkedItems2_overloads())
         .def("isItemChecked", &ItemTreeView::isItemChecked, ItemTreeView_isItemChecked_overloads())
         .def("checkItem", &ItemTreeView::checkItem, ItemTreeView_checkItem_overloads())
         .def("sigSelectionChanged", &ItemTreeView::sigSelectionChanged)

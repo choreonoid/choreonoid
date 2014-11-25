@@ -11,6 +11,7 @@
 #include <QWaitCondition>
 #include <boost/bind.hpp>
 #include <map>
+#include <iostream>
 
 using namespace std;
 using namespace boost;
@@ -316,7 +317,7 @@ bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execS
     
     try {
         resultObject = execScript();
-        resultString = python::extract<string>(python::import("__builtin__").attr("str")(resultObject));
+        resultString =  python::extract<string>(python::str(resultObject));
         executed = true;
     }
     catch(python::error_already_set const & ex) {
@@ -331,7 +332,7 @@ bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execS
                 PyErr_Fetch(&ptype, &pvalue, &ptraceback);
                 if(ptype){
                     exceptionType = python::object(python::handle<>(python::borrowed(ptype)));
-                    exceptionTypeName = python::extract<string>(python::import("__builtin__").attr("str")(exceptionType));
+                    exceptionTypeName = python::extract<string>(python::str(exceptionType));
                 }
                 if(pvalue){
                     exceptionValue = python::object(python::handle<>(python::borrowed(pvalue)));

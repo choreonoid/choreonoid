@@ -20,7 +20,7 @@ void (MessageView::*MessageView_notify)(const std::string& message) = &MessageVi
 
 namespace cnoid {
 
-void exportViews()
+void exportPyViews()
 {
     PySignalProxy<void(View*)>("ViewSignal");
 

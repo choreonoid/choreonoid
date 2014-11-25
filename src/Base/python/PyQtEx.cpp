@@ -12,7 +12,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-void exportQtExTypes()
+void exportPyQtExTypes()
 {
     class_<ToolButton, ToolButton*, bases<QToolButton>, boost::noncopyable>("ToolButton")
         .def("sigClicked", &ToolButton::sigClicked)

@@ -2,30 +2,29 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <boost/python.hpp>
+#include "PyBase.h"
 
 namespace cnoid {
 
-void exportQtExTypes();
-void exportItems();
-void exportToolBars();
-void exportViews();
-void exportItemTreeView();
+void exportPyQtExTypes();
+void exportPyItems();
+void exportPyToolBars();
+void exportPyViews();
+void exportPyItemTreeView();
 
 BOOST_PYTHON_MODULE(Base)
 {
     //! \todo check if this module is imported from the Choreonoid process with PythonPlugin
 
     
-    
     boost::python::import("cnoid.Util");
     boost::python::import("cnoid.QtGui");
     
-    exportQtExTypes();
-    exportItems();
-    exportToolBars();
-    exportViews();
-    exportItemTreeView();
+    exportPyQtExTypes();
+    exportPyItems();
+    exportPyToolBars();
+    exportPyViews();
+    exportPyItemTreeView();
 }
 
 }
