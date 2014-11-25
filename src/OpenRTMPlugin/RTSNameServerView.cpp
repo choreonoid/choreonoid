@@ -13,7 +13,6 @@
 #include <QIcon>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
-//#include <cnoid/MainWindow>
 //#include "RTSPropertiesView.h"
 //#include "RTSDiagramView.h"
 //#include "RTSCorbaUtil.h"
@@ -121,14 +120,6 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
 
     vbox->addWidget(&treeWidget);
     self->setLayout(vbox);
-
-    /*
-    ncHelper = NamingContextHelperPtr(new NamingContextHelper);
-    QString addressText = hostAddressBox.text();
-    string address = string(qtos(addressText));
-    int port = portNumberSpin.value(); 
-    ncHelper->setLocation(address, port);
-    */
 }
 
 #if 0
@@ -249,11 +240,7 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
             #endif
                 QTreeWidgetItem* item = new QTreeWidgetItem();
                 QString name = info.id.c_str();
-                //string rtcName = string(qtos(name));
                 item->setText(0, name);
-                //item->setIcon(0, iequals(info.kind, "rtc")
-                //    ? (RTCCorbaUtil::isAlive(ncHelper, rtcName) ? QIcon(":/Corba/icons/NSRTC.png")
-                //    : QIcon(":/Corba/icons/NSZombi.png")) : QIcon(":/Corba/icons/NSObj.png"));
                 item->setIcon(0, info.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
                 		QIcon(":/Corba/icons/NSZombi.png"));
                 if (parent == NULL) treeWidget.addTopLevelItem(item);
