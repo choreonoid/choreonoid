@@ -1,0 +1,12 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+
+<qresource prefix="/Corba" >
+
+  <file>icons/NSObj.png</file>
+  <file>icons/NSRTC.png</file>
+  <file>icons/NSZombi.png</file>
+
+</qresource>
+
+</RCC>
