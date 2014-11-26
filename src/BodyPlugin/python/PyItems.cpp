@@ -134,46 +134,49 @@ void exportItems()
 
     implicitly_convertible<SimulationBodyPtr, ReferencedPtr>();
 
+    class_<SimulatorItem, SimulatorItemPtr, bases<Item>, boost::noncopyable>
+        simulatorItemClass("SimulatorItem", no_init);
+
+    simulatorItemClass
+        .def("worldTimeStep", &SimulatorItem::worldTimeStep)
+        .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
+        .def("stopSimulation", &SimulatorItem::stopSimulation)
+        .def("pauseSimulation", &SimulatorItem::pauseSimulation)
+        .def("restartSimulation", &SimulatorItem::restartSimulation)
+        .def("isRunning", &SimulatorItem::isRunning)
+        .def("currentFrame", &SimulatorItem::currentFrame)
+        .def("currentTime", &SimulatorItem::currentTime)
+        .def("sigSimulationFinished", &SimulatorItem::sigSimulationFinished)
+        .def("setRecordingMode", &SimulatorItem::setRecordingMode)
+        .def("recordingMode", &SimulatorItem::recordingMode)
+        .def("setTimeRangeMode", &SimulatorItem::setTimeRangeMode)
+        .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
+        .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
+        .def("setActiveControlPeriodOnlyMode", &SimulatorItem::setActiveControlPeriodOnlyMode)
+        .def("isRecordingEnabled", &SimulatorItem::isRecordingEnabled)
+        .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
+        .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
+        .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
+        .def("selectMotionItems", &SimulatorItem::selectMotionItems)
+        ;
     {
-        scope simulatorItemScope = 
-            class_<SimulatorItem, SimulatorItemPtr, bases<Item>, boost::noncopyable>("SimulatorItem", no_init)
-            .def("worldTimeStep", &SimulatorItem::worldTimeStep)
-            .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
-            .def("stopSimulation", &SimulatorItem::stopSimulation)
-            .def("pauseSimulation", &SimulatorItem::pauseSimulation)
-            .def("restartSimulation", &SimulatorItem::restartSimulation)
-            .def("isRunning", &SimulatorItem::isRunning)
-            .def("currentFrame", &SimulatorItem::currentFrame)
-            .def("currentTime", &SimulatorItem::currentTime)
-            .def("sigSimulationFinished", &SimulatorItem::sigSimulationFinished)
-            .def("setRecordingMode", &SimulatorItem::setRecordingMode)
-            .def("recordingMode", &SimulatorItem::recordingMode)
-            .def("setTimeRangeMode", &SimulatorItem::setTimeRangeMode)
-            .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
-            .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
-            .def("setActiveControlPeriodOnlyMode", &SimulatorItem::setActiveControlPeriodOnlyMode)
-            .def("isRecordingEnabled", &SimulatorItem::isRecordingEnabled)
-            .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
-            .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
-            .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
-            .def("selectMotionItems", &SimulatorItem::selectMotionItems)
-            ;
+        scope simulatorItemScope = simulatorItemClass;
 
-            enum_<SimulatorItem::RecordingMode>("RecordingMode")
-                .value("RECORD_FULL", SimulatorItem::RECORD_FULL) 
-                .value("RECORD_TAIL", SimulatorItem::RECORD_TAIL)
-                .value("RECORD_NONE", SimulatorItem::RECORD_NONE)
-                .value("N_RECORDING_MODES", SimulatorItem::N_RECORDING_MODES);
-
-            enum_<SimulatorItem::TimeRangeMode>("TimeRangeMode")
-                .value("TIMEBAR_RANGE", SimulatorItem::TIMEBAR_RANGE) 
-                .value("SPECIFIED_PERIOD", SimulatorItem::SPECIFIED_PERIOD)
-                .value("UNLIMITED", SimulatorItem::UNLIMITED)
-                .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES);
+        enum_<SimulatorItem::RecordingMode>("RecordingMode")
+            .value("RECORD_FULL", SimulatorItem::RECORD_FULL) 
+            .value("RECORD_TAIL", SimulatorItem::RECORD_TAIL)
+            .value("RECORD_NONE", SimulatorItem::RECORD_NONE)
+            .value("N_RECORDING_MODES", SimulatorItem::N_RECORDING_MODES);
+        
+        enum_<SimulatorItem::TimeRangeMode>("TimeRangeMode")
+            .value("TIMEBAR_RANGE", SimulatorItem::TIMEBAR_RANGE) 
+            .value("SPECIFIED_PERIOD", SimulatorItem::SPECIFIED_PERIOD)
+            .value("UNLIMITED", SimulatorItem::UNLIMITED)
+            .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES);
     }
 
     implicitly_convertible<SimulatorItemPtr, ItemPtr>();
-    PyItemList<SimulatorItem>("SimulatorItemList");
+    PyItemList<SimulatorItem>("SimulatorItemList", simulatorItemClass);
 
     {
         scope aistSimulatorItemScope = 

@@ -18,14 +18,28 @@ CNOID_EXPORT boost::python::object getPyNarrowedFirstItem(const ItemList<>& orgI
 template<typename ItemType>
 class PyItemList
 {
-    static boost::python::list construct(boost::python::list items){
+    static boost::python::object itemType;
+    
+    static boost::python::list construct1(boost::python::list items){
         return getPyNarrowedItemList(items, boost::python::converter::registered_pytype<ItemType>::get_pytype());
+    }
+    static boost::python::list construct2(boost::python::list items){
+        return getPyNarrowedItemList(items, (PyTypeObject*)itemType.ptr());
     }
 public:
     PyItemList(const char* name){
-        boost::python::def(name, &PyItemList::construct);
+        boost::python::def(name, &PyItemList::construct1);
+    }
+    /**
+       Use this constructor to avoid a compile error for a pure abstract class
+    */
+    PyItemList(const char* name, boost::python::object itemType_){
+        itemType = itemType_;
+        boost::python::def(name, &PyItemList::construct2);
     }
 };
+
+template<typename ItemType> boost::python::object PyItemList<ItemType>::itemType;
 
 }
 
