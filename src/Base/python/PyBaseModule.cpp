@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyBase.h"
+#include <boost/python.hpp>
 
 namespace cnoid {
 

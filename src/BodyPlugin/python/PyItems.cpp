@@ -8,7 +8,7 @@
 #include "../SimulatorItem.h"
 #include "../AISTSimulatorItem.h"
 #include <cnoid/BodyState>
-#include <cnoid/PyUtil>
+#include <cnoid/PyBase>
 
 using namespace boost::python;
 using namespace cnoid;
@@ -96,7 +96,8 @@ void exportItems()
             .value("ZERO_MOMENT_POINT", BodyItem::ZERO_MOMENT_POINT);
     }
 
-    implicitly_convertible<BodyItemPtr, ItemPtr>();    
+    implicitly_convertible<BodyItemPtr, ItemPtr>();
+    PyItemList<BodyItem>("BodyItemList");
 
     class_< WorldItem, WorldItemPtr, bases<Item, SceneProvider> >("WorldItem")
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
@@ -110,6 +111,7 @@ void exportItems()
 
     implicitly_convertible<WorldItemPtr, ItemPtr>();
     implicitly_convertible<WorldItemPtr, SceneProvider*>();
+    PyItemList<WorldItem>("WorldItemList");
     
     class_< BodyMotionItem, BodyMotionItemPtr, bases<AbstractMultiSeqItem> >("BodyMotionItem")
         .def("motion", &BodyMotionItem::motion, return_value_policy<copy_const_reference>())
@@ -124,6 +126,7 @@ void exportItems()
         ;
 
     implicitly_convertible<BodyMotionItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<BodyMotionItem>("BodyMotionItemList");
     
     class_<SimulationBody, SimulationBodyPtr, bases<Referenced>, boost::noncopyable>("SimulationBody", no_init)
         .def("bodyItem", SimulationBody_bodyItem)
@@ -170,6 +173,7 @@ void exportItems()
     }
 
     implicitly_convertible<SimulatorItemPtr, ItemPtr>();
+    PyItemList<SimulatorItem>("SimulatorItemList");
 
     {
         scope aistSimulatorItemScope = 
@@ -203,4 +207,5 @@ void exportItems()
     }
 
     implicitly_convertible<AISTSimulatorItemPtr, SimulatorItemPtr>();
+    PyItemList<AISTSimulatorItem>("AISTSimulatorItemList");
 }

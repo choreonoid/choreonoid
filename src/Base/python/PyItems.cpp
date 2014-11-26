@@ -20,8 +20,6 @@ using namespace cnoid;
 
 namespace {
 
-python::object pyItemClass;
-
 template<typename ItemType>
 struct ItemList_to_pylist_converter {
     static PyObject* convert(const ItemList<ItemType>& items){
@@ -55,47 +53,6 @@ RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 } // namespace
 
 namespace cnoid {
-
-boost::python::object getPyItemClass() {
-    return pyItemClass;
-}
-
-boost::python::list getPyNarrowedItemList(const ItemList<>& orgItemList, boost::python::object itemClass)
-{
-    int isSubclass = PyObject_IsSubclass(itemClass.ptr(), getPyItemClass().ptr());
-    if(isSubclass <= 0){
-        PyErr_SetString(PyExc_TypeError, "argument 1 must be an Item class");
-        python::throw_error_already_set();
-    }
-
-    python::list narrowedItemList;
-    for(int i=0; i < orgItemList.size(); ++i){
-        python::object item(orgItemList[i]);
-        if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
-            narrowedItemList.append(item);
-        }
-    }
-    return narrowedItemList;
-}
-
-
-boost::python::object getPyNarrowedFirstItem(const ItemList<>& orgItemList, boost::python::object itemClass)
-{
-    int isSubclass = PyObject_IsSubclass(itemClass.ptr(), getPyItemClass().ptr());
-    if(isSubclass <= 0){
-        PyErr_SetString(PyExc_TypeError, "argument 1 must be an Item class");
-        python::throw_error_already_set();
-    }
-
-    for(int i=0; i < orgItemList.size(); ++i){
-        python::object item(orgItemList[i]);
-        if(PyObject_IsInstance(item.ptr(), itemClass.ptr()) > 0){
-            return item;
-        }
-    }
-    return python::object();
-}
-
 
 void exportPyItems()
 {
@@ -154,7 +111,6 @@ void exportPyItems()
             .def("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
             .def("sigSubTreeChanged", &Item::sigSubTreeChanged);
 
-        pyItemClass = itemClass;
         scope itemScope = itemClass;
         
         enum_<Item::Attribute>("Attribute")
@@ -164,14 +120,18 @@ void exportPyItems()
             .value("NUM_ATTRIBUTES", Item::NUM_ATTRIBUTES);
     }
 
+    PyItemList<Item>("ItemList");
+
     class_< RootItem, RootItemPtr, bases<Item> >("RootItem")
         .def("instance", RootItem_Instance).staticmethod("instance");
 
     implicitly_convertible<RootItemPtr, ItemPtr>();
+    PyItemList<RootItem>("RootItemList");
 
     class_< FolderItem, FolderItemPtr, bases<Item> >("FolderItem");
 
     implicitly_convertible<FolderItemPtr, ItemPtr>();
+    PyItemList<FolderItem>("FolderItemList");
 
     class_< ExtCommandItem, ExtCommandItemPtr, bases<Item> >("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
@@ -180,41 +140,48 @@ void exportPyItems()
         .def("terminate", &ExtCommandItem::terminate);
     
     implicitly_convertible<ExtCommandItemPtr, ItemPtr>();
+    PyItemList<ExtCommandItem>("ExtCommandItemList");
 
     // seq items
     class_< AbstractSeqItem, AbstractSeqItemPtr, bases<Item>, boost::noncopyable >("AbstractSeqItem", no_init)
         .def("abstractSeq", &AbstractSeqItem::abstractSeq);
 
     implicitly_convertible<AbstractSeqItemPtr, ItemPtr>();    
+    PyItemList<AbstractSeqItem>("AbstractSeqItemList");
 
     class_< Vector3SeqItem, Vector3SeqItemPtr, bases<AbstractSeqItem> >("Vector3SeqItem")
         .def("seq", &Vector3SeqItem::seq);
     
     implicitly_convertible<Vector3SeqItemPtr, AbstractSeqItemPtr>();
+    PyItemList<Vector3SeqItem>("Vector3SeqItemList");
 
     // multi seq items
     class_< AbstractMultiSeqItem, AbstractMultiSeqItemPtr, bases<AbstractSeqItem>, boost::noncopyable >("AbstractMultiSeqItem", no_init)
         .def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
 
     implicitly_convertible<AbstractMultiSeqItemPtr, AbstractSeqItemPtr>();
+    PyItemList<AbstractMultiSeqItem>("AbstractMultiSeqItemList");
     
     class_< MultiValueSeqItem, MultiValueSeqItemPtr, bases<AbstractMultiSeqItem> >("MultiValueSeqItem")
         .def("abstractMultiSeq", &MultiValueSeqItem::abstractMultiSeq)
         .def("seq", &MultiValueSeqItem::seq);
 
     implicitly_convertible<MultiValueSeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiValueSeqItem>("MultiValueSeqItemList");
 
     class_< MultiAffine3SeqItem, MultiAffine3SeqItemPtr, bases<AbstractMultiSeqItem> >("MultiAffine3SeqItem")
         .def("abstractMultiSeq", &MultiAffine3SeqItem::abstractMultiSeq)
         .def("seq", &MultiAffine3SeqItem::seq);
 
     implicitly_convertible<MultiAffine3SeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiAffine3SeqItem>("MultiAffine3SeqItemList");
 
     class_< MultiSE3SeqItem, MultiSE3SeqItemPtr, bases<AbstractMultiSeqItem> >("MultiSE3SeqItem")
         .def("abstractMultiSeq", &MultiSE3SeqItem::abstractMultiSeq)
         .def("seq", &MultiSE3SeqItem::seq);
     
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
 }
 
 } // namespace cnoid

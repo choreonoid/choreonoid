@@ -4,6 +4,7 @@
 
 #include <boost/python.hpp>
 #include <QObject>
+#include <QTimer>
 
 using namespace boost;
 using namespace boost::python;
@@ -36,6 +37,9 @@ struct QString_from_python_str {
     }
 };
 
+void (QTimer::*QTimer_start1)() = &QTimer::start;
+void (QTimer::*QTimer_start2)(int) = &QTimer::start;
+
 }
 
 BOOST_PYTHON_MODULE(QtCore)
@@ -54,4 +58,17 @@ BOOST_PYTHON_MODULE(QtCore)
         .def("setParent", &QObject::setParent)
         .def("startTimer", &QObject::startTimer)
         .def("deleteLater", &QObject::deleteLater);
+
+    class_<QTimer, QTimer*, boost::noncopyable>("QTimer")
+        .def("interval", &QTimer::interval)
+        .def("isActive", &QTimer::isActive)
+        .def("isSingleShot", &QTimer::isSingleShot)
+        .def("setInterval", &QTimer::setInterval)
+        .def("setSingleShot", &QTimer::singleShot)
+        .def("timerId", &QTimer::timerId)
+        .def("start", QTimer_start1)
+        .def("start", QTimer_start2)
+        .def("stop", &QTimer::stop)
+        .def("singleShot", &QTimer::singleShot).staticmethod("singleShot");
 }
+

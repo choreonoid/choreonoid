@@ -2,8 +2,8 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_BASE_VIEW_MANAGER_H_INCLUDED
-#define CNOID_BASE_VIEW_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_VIEW_MANAGER_H
+#define CNOID_BASE_VIEW_MANAGER_H
 
 #include "View.h"
 #include "ExtensionManager.h"

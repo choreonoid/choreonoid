@@ -1,11 +1,11 @@
 
 # @author Shin'ichiro Nakaoka
 
-set(target CnoidPyBodyPlugin)
+set(target PyBodyPlugin)
 
 add_cnoid_python_module(${target}
-  PyBodyPlugin.cpp
+  PyBodyPluginModule.cpp
   PyItems.cpp
 )
 
-target_link_libraries(${target} CnoidBodyPlugin CnoidPython)
+target_link_libraries(${target} CnoidBodyPlugin CnoidPyBase)
