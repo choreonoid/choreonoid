@@ -8,7 +8,6 @@
 #include "../Signal.h"
 #include "PyUtil.h"
 #include <cnoid/PythonUtil>
-#include <boost/python.hpp>
 
 namespace cnoid {
 

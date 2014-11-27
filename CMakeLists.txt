@@ -275,7 +275,7 @@ if(ENABLE_PYTHON)
   function(add_cnoid_python_module)
   
     set(target ${ARGV0})
-    string(REGEX REPLACE "^CnoidPy(.+)$" "\\1" module ${target})
+    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
     set(sources ${ARGV})
     list(REMOVE_AT sources 0)
 
@@ -298,6 +298,7 @@ if(ENABLE_PYTHON)
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 
   endfunction()
+
 
 endif()
 

@@ -11,10 +11,10 @@ using namespace cnoid;
 
 namespace cnoid {
 
-void exportSignalTypes();
-void exportEigenTypes();
-void exportSeqTypes();
-void exportSceneGraph();
+void exportPySignalTypes();
+void exportPyEigenTypes();
+void exportPySeqTypes();
+void exportPySceneGraph();
 
 }
 
@@ -22,10 +22,10 @@ BOOST_PYTHON_MODULE(Util)
 {
     class_<Referenced, ReferencedPtr, boost::noncopyable>("Referenced", no_init);
 
-    exportSignalTypes();
-    exportEigenTypes();
-    exportSeqTypes();
-    exportSceneGraph();
+    exportPySignalTypes();
+    exportPyEigenTypes();
+    exportPySeqTypes();
+    exportPySceneGraph();
 
     def("shareDirectory", &cnoid::shareDirectory, return_value_policy<copy_const_reference>());
     def("executablePath", &cnoid::executablePath, return_value_policy<copy_const_reference>());

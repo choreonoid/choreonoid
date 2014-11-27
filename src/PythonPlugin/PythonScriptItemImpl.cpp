@@ -169,10 +169,13 @@ void PythonScriptItemImpl::onScriptFinished()
     const string iname = scriptItem()->identityName();
     
     if(!executor.hasException()){
+        if(!executor.resultObject().is_none()){
+            mv->putln(executor.resultString());
+        }
         mv->putln(format(_("The execution of Python script \"%1%\" has been finished.")) % iname);
     } else {
-        mv->put(format(_("The execution of Python script \"%1%\" failed.\n")) % iname);
-        mv->putln(executor.exceptionText());
+        mv->putln(format(_("The execution of Python script \"%1%\" failed.\n%2%"))
+                  % iname % executor.exceptionText());
     }
     
     sigScriptFinished_();

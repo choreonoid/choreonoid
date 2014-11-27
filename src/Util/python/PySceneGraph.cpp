@@ -22,7 +22,7 @@ SgNodePtr SceneProvider_getScene(SceneProvider& self) { return self.getScene(); 
 
 namespace cnoid {
 
-void exportSceneGraph()
+void exportPySceneGraph()
 {
     class_< SgObject, SgObjectPtr, bases<Referenced>, boost::noncopyable >("SgObject", no_init)
         .def("name", &SgObject::name, return_value_policy<return_by_value>())

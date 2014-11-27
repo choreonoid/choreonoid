@@ -17,7 +17,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(TimeBar_stopPlayback_overloads, stopPlayb
 
 namespace cnoid {
 
-void exportToolBars()
+void exportPyToolBars()
 {
     ToolButton* (ToolBar::*ToolBar_addButton1)(const QString& text, const QString& tooltip) = &ToolBar::addButton;
     ToolButton* (ToolBar::*ToolBar_addButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addButton;

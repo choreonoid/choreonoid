@@ -20,8 +20,6 @@ using namespace cnoid;
 
 namespace {
 
-python::object pythonItemClass_;
-
 template<typename ItemType>
 struct ItemList_to_pylist_converter {
     static PyObject* convert(const ItemList<ItemType>& items){
@@ -54,13 +52,10 @@ RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
 } // namespace
 
+
 namespace cnoid {
 
-python::object pythonItemClass() {
-    return pythonItemClass_;
-}
-
-void exportItems()
+void exportPyItems()
 {
     to_python_converter<ItemList<Item>, ItemList_to_pylist_converter<Item> >();
     to_python_converter<ItemList<RootItem>, ItemList_to_pylist_converter<RootItem> >();
@@ -71,53 +66,52 @@ void exportItems()
     to_python_converter<ItemList<MultiAffine3SeqItem>, ItemList_to_pylist_converter<MultiAffine3SeqItem> >();
     to_python_converter<ItemList<MultiSE3SeqItem>, ItemList_to_pylist_converter<MultiSE3SeqItem> >();
     to_python_converter<ItemList<Vector3SeqItem>, ItemList_to_pylist_converter<Vector3SeqItem> >();
+
+    bool (Item::*Item_load1)(const std::string& filename, const std::string& formatId) = &Item::load;
+    bool (Item::*Item_load2)(const std::string& filename, Item* parent, const std::string& formatId) = &Item::load;
+    
+    class_<Item, ItemPtr, boost::noncopyable> itemClass("Item", no_init);
+    
+    itemClass
+        .def("name", &Item::name, return_value_policy<copy_const_reference>())
+        .def("setName", &Item::setName)
+        .def("hasAttribute", &Item::hasAttribute)
+        .def("childItem", Item_childItem)
+        .def("prevItem", Item_prevItem)
+        .def("nextItem", Item_nextItem)
+        .def("parentItem", Item_parentItem)
+        .def("addChildItem", &Item::addChildItem, Item_addChildItem_overloads())
+        .def("addSubItem", &Item::addSubItem)
+        .def("isSubItem", &Item::isSubItem)
+        .def("detachFromParentItem", &Item::detachFromParentItem)
+        .def("emitSigDetachedFromRootForSubTree", &Item::emitSigDetachedFromRootForSubTree)
+        .def("insertChildItem", &Item::insertChildItem, Item_insertChildItem())
+        .def("insertSubItem", &Item::insertSubItem)
+        .def("isTemporal", &Item::isTemporal)
+        .def("setTemporal", &Item::setTemporal, Item_setTemporal())
+        .def("findRootItem", Item_findRootItem)
+        .def("findItem", Item_findItem)
+        .def("findSubItem", Item_findSubItem)
+        .def("headItem", Item_headItem)
+        .def("duplicate", &Item::duplicate)
+        .def("duplicateAll", &Item::duplicateAll)
+        .def("assign", &Item::assign)
+        .def("load", Item_load1, Item_load1_overloads())
+        .def("load", Item_load2, Item_load2_overloads())
+        .def("save", &Item::save, Item_save())
+        .def("overwrite", &Item::overwrite, Item_overwrite())
+        .def("filePath", &Item::filePath, return_value_policy<copy_const_reference>())
+        .def("fileFormat", &Item::fileFormat, return_value_policy<copy_const_reference>())
+        .def("clearFileInformation", &Item::clearFileInformation)
+        .def("suggestFileUpdate", &Item::suggestFileUpdate)
+        .def("notifyUpdate", &Item::notifyUpdate)
+        .def("sigNameChanged", &Item::sigNameChanged)
+        .def("sigUpdated", &Item::sigUpdated)
+        .def("sigPositionChanged", &Item::sigPositionChanged)
+        .def("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
+        .def("sigSubTreeChanged", &Item::sigSubTreeChanged);
     
     {
-        bool (Item::*Item_load1)(const std::string& filename, const std::string& formatId) = &Item::load;
-        bool (Item::*Item_load2)(const std::string& filename, Item* parent, const std::string& formatId) = &Item::load;
-
-        class_<Item, ItemPtr, boost::noncopyable> itemClass("Item", no_init);
-        
-        itemClass
-            .def("name", &Item::name, return_value_policy<copy_const_reference>())
-            .def("setName", &Item::setName)
-            .def("hasAttribute", &Item::hasAttribute)
-            .def("childItem", Item_childItem)
-            .def("prevItem", Item_prevItem)
-            .def("nextItem", Item_nextItem)
-            .def("parentItem", Item_parentItem)
-            .def("addChildItem", &Item::addChildItem, Item_addChildItem_overloads())
-            .def("addSubItem", &Item::addSubItem)
-            .def("isSubItem", &Item::isSubItem)
-            .def("detachFromParentItem", &Item::detachFromParentItem)
-            .def("emitSigDetachedFromRootForSubTree", &Item::emitSigDetachedFromRootForSubTree)
-            .def("insertChildItem", &Item::insertChildItem, Item_insertChildItem())
-            .def("insertSubItem", &Item::insertSubItem)
-            .def("isTemporal", &Item::isTemporal)
-            .def("setTemporal", &Item::setTemporal, Item_setTemporal())
-            .def("findRootItem", Item_findRootItem)
-            .def("findItem", Item_findItem)
-            .def("findSubItem", Item_findSubItem)
-            .def("headItem", Item_headItem)
-            .def("duplicate", &Item::duplicate)
-            .def("duplicateAll", &Item::duplicateAll)
-            .def("assign", &Item::assign)
-            .def("load", Item_load1, Item_load1_overloads())
-            .def("load", Item_load2, Item_load2_overloads())
-            .def("save", &Item::save, Item_save())
-            .def("overwrite", &Item::overwrite, Item_overwrite())
-            .def("filePath", &Item::filePath, return_value_policy<copy_const_reference>())
-            .def("fileFormat", &Item::fileFormat, return_value_policy<copy_const_reference>())
-            .def("clearFileInformation", &Item::clearFileInformation)
-            .def("suggestFileUpdate", &Item::suggestFileUpdate)
-            .def("notifyUpdate", &Item::notifyUpdate)
-            .def("sigNameChanged", &Item::sigNameChanged)
-            .def("sigUpdated", &Item::sigUpdated)
-            .def("sigPositionChanged", &Item::sigPositionChanged)
-            .def("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
-            .def("sigSubTreeChanged", &Item::sigSubTreeChanged);
-
-        pythonItemClass_ = itemClass;
         scope itemScope = itemClass;
         
         enum_<Item::Attribute>("Attribute")
@@ -127,14 +121,18 @@ void exportItems()
             .value("NUM_ATTRIBUTES", Item::NUM_ATTRIBUTES);
     }
 
+    PyItemList<Item>("ItemList");
+
     class_< RootItem, RootItemPtr, bases<Item> >("RootItem")
         .def("instance", RootItem_Instance).staticmethod("instance");
 
     implicitly_convertible<RootItemPtr, ItemPtr>();
+    PyItemList<RootItem>("RootItemList");
 
     class_< FolderItem, FolderItemPtr, bases<Item> >("FolderItem");
 
     implicitly_convertible<FolderItemPtr, ItemPtr>();
+    PyItemList<FolderItem>("FolderItemList");
 
     class_< ExtCommandItem, ExtCommandItemPtr, bases<Item> >("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
@@ -143,41 +141,50 @@ void exportItems()
         .def("terminate", &ExtCommandItem::terminate);
     
     implicitly_convertible<ExtCommandItemPtr, ItemPtr>();
+    PyItemList<ExtCommandItem>("ExtCommandItemList");
 
     // seq items
-    class_< AbstractSeqItem, AbstractSeqItemPtr, bases<Item>, boost::noncopyable >("AbstractSeqItem", no_init)
-        .def("abstractSeq", &AbstractSeqItem::abstractSeq);
+    class_< AbstractSeqItem, AbstractSeqItemPtr, bases<Item>, boost::noncopyable >
+        abstractSeqItemClass("AbstractSeqItem", no_init);
+    abstractSeqItemClass.def("abstractSeq", &AbstractSeqItem::abstractSeq);
 
     implicitly_convertible<AbstractSeqItemPtr, ItemPtr>();    
+    PyItemList<AbstractSeqItem>("AbstractSeqItemList", abstractSeqItemClass);
 
     class_< Vector3SeqItem, Vector3SeqItemPtr, bases<AbstractSeqItem> >("Vector3SeqItem")
         .def("seq", &Vector3SeqItem::seq);
     
     implicitly_convertible<Vector3SeqItemPtr, AbstractSeqItemPtr>();
+    PyItemList<Vector3SeqItem>("Vector3SeqItemList");
 
     // multi seq items
-    class_< AbstractMultiSeqItem, AbstractMultiSeqItemPtr, bases<AbstractSeqItem>, boost::noncopyable >("AbstractMultiSeqItem", no_init)
-        .def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
+    class_< AbstractMultiSeqItem, AbstractMultiSeqItemPtr, bases<AbstractSeqItem>, boost::noncopyable >
+        abstractMultiSeqItemClass("AbstractMultiSeqItem", no_init);
+    abstractMultiSeqItemClass.def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
 
     implicitly_convertible<AbstractMultiSeqItemPtr, AbstractSeqItemPtr>();
+    //PyItemList<AbstractMultiSeqItem>("AbstractMultiSeqItemList", abstractMultiSeqItemClass);
     
     class_< MultiValueSeqItem, MultiValueSeqItemPtr, bases<AbstractMultiSeqItem> >("MultiValueSeqItem")
         .def("abstractMultiSeq", &MultiValueSeqItem::abstractMultiSeq)
         .def("seq", &MultiValueSeqItem::seq);
 
     implicitly_convertible<MultiValueSeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiValueSeqItem>("MultiValueSeqItemList");
 
     class_< MultiAffine3SeqItem, MultiAffine3SeqItemPtr, bases<AbstractMultiSeqItem> >("MultiAffine3SeqItem")
         .def("abstractMultiSeq", &MultiAffine3SeqItem::abstractMultiSeq)
         .def("seq", &MultiAffine3SeqItem::seq);
 
     implicitly_convertible<MultiAffine3SeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiAffine3SeqItem>("MultiAffine3SeqItemList");
 
     class_< MultiSE3SeqItem, MultiSE3SeqItemPtr, bases<AbstractMultiSeqItem> >("MultiSE3SeqItem")
         .def("abstractMultiSeq", &MultiSE3SeqItem::abstractMultiSeq)
         .def("seq", &MultiSE3SeqItem::seq);
     
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
+    PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
 }
 
-}
+} // namespace cnoid

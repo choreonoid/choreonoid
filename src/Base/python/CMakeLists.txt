@@ -3,29 +3,32 @@
 
 set(PYTHON_SUFFIX -python2.7)
 
-add_cnoid_python_module(CnoidPyQtCore
+add_cnoid_library(CnoidPyBase SHARED PyBase.cpp)
+target_link_libraries(CnoidPyBase CnoidBase CnoidPython)
+
+add_cnoid_python_module(PyQtCore
   PyQtCore.cpp
   )
 
-target_link_libraries(CnoidPyQtCore
+target_link_libraries(PyQtCore
   ${QT_LIBRARIES}
   ${PYTHON_LIBRARIES}
   ${Boost_PYTHON_LIBRARY}
   )
 
-add_cnoid_python_module(CnoidPyQtGui
+add_cnoid_python_module(PyQtGui
   PyQtGui.cpp
   )
 
-target_link_libraries(CnoidPyQtGui
+target_link_libraries(PyQtGui
   ${QT_LIBRARIES}
   ${PYTHON_LIBRARIES}
   ${Boost_PYTHON_LIBRARY}
   )
 
 
-add_cnoid_python_module(CnoidPyBase
-  PyBase.cpp
+add_cnoid_python_module(PyBase
+  PyBaseModule.cpp
   PyQtEx.cpp
   PyItems.cpp
   PyToolBars.cpp
@@ -33,7 +36,4 @@ add_cnoid_python_module(CnoidPyBase
   PyItemTreeView.cpp
 )
 
-target_link_libraries(CnoidPyBase
-  CnoidBase 
-  CnoidPython
-  )
+target_link_libraries(PyBase CnoidPyBase)

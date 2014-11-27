@@ -1,4 +1,3 @@
 
-set(target CnoidPyBody)
-add_cnoid_python_module(${target} PyBody.cpp)
-target_link_libraries(${target} CnoidBody CnoidPython)
+add_cnoid_python_module(PyBody PyBodyModule.cpp)
+target_link_libraries(PyBody CnoidBody CnoidPython)

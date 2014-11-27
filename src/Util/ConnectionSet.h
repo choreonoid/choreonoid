@@ -53,6 +53,26 @@ private:
 #endif
 };
 
+
+class CNOID_EXPORT ScopedConnectionSet : private ConnectionSet
+{
+public:
+    ScopedConnectionSet() { }
+    ~ScopedConnectionSet() { ConnectionSet::disconnect(); }
+    bool empty() const { return ConnectionSet::empty(); }
+    size_t numConnections() const { return ConnectionSet::numConnections(); }
+    void add(const Connection& connection) { ConnectionSet::add(connection); }
+    void block() { ConnectionSet::block(); }
+    void block(int index) { ConnectionSet::block(index); }
+    void unblock() { ConnectionSet::unblock(); }
+    void unblock(int index) { ConnectionSet::unblock(index); }
+    void disconnect() { ConnectionSet::disconnect(); }
+
+private:
+    ScopedConnectionSet(const ScopedConnection& org) { }
+    ScopedConnectionSet& operator=(const ScopedConnection& rhs) { }
+};
+
 }
         
 #endif

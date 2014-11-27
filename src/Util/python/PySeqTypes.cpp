@@ -23,7 +23,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(AbstractMultiSeq_setNumParts, setNumParts
 
 namespace cnoid {
 
-void exportSeqTypes()
+void exportPySeqTypes()
 {
     class_<AbstractSeq, boost::noncopyable>("AbstractSeq", no_init)
         .def("cloneSeq", &AbstractSeq::cloneSeq)
