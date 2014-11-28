@@ -31,6 +31,7 @@ add_cnoid_python_module(PyBase
   PyBaseModule.cpp
   PyQtEx.cpp
   PyItems.cpp
+  PyMainWindow.cpp
   PyToolBars.cpp
   PyViews.cpp
   PyItemTreeView.cpp
