@@ -10,6 +10,7 @@
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include "OpenRTMUtil.h"
 #include "RTSNameServerView.h"
+#include "RTSPropertiesView.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -169,7 +170,8 @@ public:
             boost::bind(&OpenRTMPlugin::restore, this, _1));
 
         RTSNameServerView::initializeClass(this);
-            
+        RTSPropertiesView::initializeClass(this);
+
         return true;
     }
 

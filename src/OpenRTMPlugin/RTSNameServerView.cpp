@@ -3,7 +3,7 @@
    @author Hisashi Ikari
 */
 #include "RTSNameServerView.h"
-#include <cnoid/CorbaUtil>
+#include "RTSPropertiesView.h"
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
 #include <cnoid/Button>
@@ -13,7 +13,6 @@
 #include <QIcon>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
-//#include "RTSPropertiesView.h"
 //#include "RTSDiagramView.h"
 //#include "RTSCorbaUtil.h"
 //#include "RTSCommonImpl.h"
@@ -22,8 +21,22 @@
 #undef _HOST_CXT_VERSION
 
 using namespace boost;
+using namespace std;
 
 namespace cnoid {
+
+class RTSVItem : public QTreeWidgetItem
+{
+public :
+	RTSVItem(const NamingContextHelper::ObjectInfo& info){
+		info_ = info;
+        QString name = info_.id.c_str();
+        setText(0, name);
+        setIcon(0, info_.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
+        		QIcon(":/Corba/icons/NSZombi.png"));
+	}
+	NamingContextHelper::ObjectInfo info_;
+};
 
 class RTSNameServerViewImpl
 {
@@ -33,16 +46,20 @@ public:
 	void updateObjectList();
 	void updateObjectList(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent);
 	void setConnection();
-	void selectedItem();
+	void onSelectionChanged();
+	//void selectedItem();
 #ifdef _HOST_CXT_VERSION
 	void extendDiagram(const NamingContextHelper::ObjectInfo& info, QTreeWidgetItem* parent);
 #endif
 	void clearDiagram();
+
+	Signal<void(const list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
 	TreeWidget treeWidget;
 	LineEdit hostAddressBox;
 	SpinBox portNumberSpin;
 
 	NamingContextHelper ncHelper;
+	list<NamingContextHelper::ObjectInfo> selectedItemList;
 };
 
 }
@@ -87,6 +104,13 @@ RTSNameServerView::RTSNameServerView()
 }
 
 
+SignalProxy<void(const list<NamingContextHelper::ObjectInfo>&)>
+	RTSNameServerView::sigSelectionChanged()
+{
+    return impl->sigSelectionChanged;
+}
+
+
 RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
 {
     self->setDefaultLayoutArea(View::LEFT_BOTTOM);
@@ -115,11 +139,18 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     treeWidget.setDragEnabled(true);
     treeWidget.setDropIndicatorShown(true);
     //treeWidget.sigItemClicked().connect(bind(&RTSNameServerViewImpl::selectedItem, this));
+    treeWidget.sigItemSelectionChanged().connect(bind(&RTSNameServerViewImpl::onSelectionChanged, this));
     treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeWidget.header()->close();
 
     vbox->addWidget(&treeWidget);
     self->setLayout(vbox);
+
+    RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
+    if(propertiesView){
+    	propertiesView->setSelectionChangedConnection();
+    }
+
 }
 
 #if 0
@@ -196,7 +227,10 @@ RTSNameServerView::~RTSNameServerView()
 
 RTSNameServerViewImpl::~RTSNameServerViewImpl()
 {
-
+	RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
+	if(propertiesView){
+		propertiesView->clearSelectionChangedConnection();
+	}
 }
 
 
@@ -238,16 +272,33 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
             #else
             } else if (iequals(info.kind, "rtc")){
             #endif
-                QTreeWidgetItem* item = new QTreeWidgetItem();
-                QString name = info.id.c_str();
-                item->setText(0, name);
-                item->setIcon(0, info.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
-                		QIcon(":/Corba/icons/NSZombi.png"));
+            	RTSVItem* item = new RTSVItem(info);
+                //QTreeWidgetItem* item = new QTreeWidgetItem();
+                //QString name = info.id.c_str();
+                //item->setText(0, name);
+                //item->setIcon(0, info.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
+                //		QIcon(":/Corba/icons/NSZombi.png"));
                 if (parent == NULL) treeWidget.addTopLevelItem(item);
                 else parent->addChild(item);
             }
         }
     }
+}
+
+
+void RTSNameServerViewImpl::onSelectionChanged()
+{
+	selectedItemList.clear();
+
+	QList<QTreeWidgetItem*> selected = treeWidget.selectedItems();
+	for(int i=0; i < selected.size(); ++i){
+		RTSVItem* item = dynamic_cast<RTSVItem*>(selected[i]);
+		if(item){
+			selectedItemList.push_back(item->info_);
+		}
+	}
+
+	sigSelectionChanged(selectedItemList);
 }
 
 

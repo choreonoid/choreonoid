@@ -154,6 +154,7 @@ set(plugin_sources
   ChoreonoidExecutionContext.cpp
   ChoreonoidPeriodicExecutionContext.cpp
   RTSNameServerView.cpp
+  RTSPropertiesView.cpp
   )
 
 set(plugin_headers
