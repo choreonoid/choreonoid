@@ -118,8 +118,10 @@ void save(QWidget* widget, boost::function<bool(const QString& filename)> saveIm
         if(!filename.isEmpty()){
             if(saveImage(filename)){
                 lastCaptureFile = filename;
+                /*
                 MessageView::instance()->putln(
                     QString(_("The image of %1 has successfully been saved into \"%2\".")).arg(name).arg(filename));
+                */
             } else {
                 MessageView::instance()->putln(
                     QString(_("The image of %1 cannot be saved into \"%2\".")).arg(name).arg(filename));
