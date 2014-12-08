@@ -207,6 +207,7 @@ void ExtensionManager::manageSub(PtrHolderBase* holder)
 
 void ExtensionManager::addToolBar(ToolBar* toolBar)
 {
+    toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->objectName().toAscii()));
     manage(toolBar);
     MainWindow::instance()->addToolBar(toolBar);
 }
