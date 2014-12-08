@@ -6,7 +6,6 @@
 #include "PolygonMeshTriangulator.h"
 #include "Triangulator.h"
 #include <boost/format.hpp>
-#include "gettext.h"
 
 using namespace std;
 using namespace boost;
@@ -120,7 +119,7 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
         const int index = polygonVertices[i];
         if(index >= numVertices){
             if(numInvalidIndices == 0){
-                addErrorMessage(str(format(_("Vertex index %1% is over the number of vertices (%2%).")) % index % numVertices));
+                addErrorMessage(str(format("Vertex index %1% is over the number of vertices (%2%).") % index % numVertices));
             }
             ++numInvalidIndices;
         } else if(index >= 0){
@@ -151,11 +150,11 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
     }
 
     if(numInvalidIndices > 1){
-        addErrorMessage(str(format(_("There are %1% invalied vertex indices that are over the number of vertices (%2%)."))
+        addErrorMessage(str(format("There are %1% invalied vertex indices that are over the number of vertices (%2%).")
                             % numInvalidIndices % numVertices));
     }
     if(mesh->numTriangles() == 0){
-        addErrorMessage(_("There is no valid polygons to triangulete."));
+        addErrorMessage("There is no valid polygons to triangulete.");
         return SgMeshPtr(); // null
     }
 
@@ -202,27 +201,27 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
 namespace {
 const char* message1(int elementTypeId){
     switch(elementTypeId){
-    case 0: return _("The number of normals is less than the number of vertices.");
-    case 1: return _("The number of colors is less than the number of vertices.");
-    case 2: return _("The number of texCoords is less than the number of vertices.");
+    case 0: return "The number of normals is less than the number of vertices.";
+    case 1: return "The number of colors is less than the number of vertices.";
+    case 2: return "The number of texCoords is less than the number of vertices.";
     default: return 0;
     }
 }
 
 const char* message2(int elementTypeId){
     switch(elementTypeId){
-    case 0: return _("The number of normal indices is less than the number of polygon vertices.");
-    case 1: return _("The number of color indices is less than the number of polygon vertices.");
-    case 2: return _("The number of texCoord indices is less than the number of polygon vertices.");
+    case 0: return "The number of normal indices is less than the number of polygon vertices.";
+    case 1: return "The number of color indices is less than the number of polygon vertices.";
+    case 2: return "The number of texCoord indices is less than the number of polygon vertices.";
     default: return 0;
     }
 }
 
 const char* message3(int elementTypeId){
     switch(elementTypeId){
-    case 0: return _("Normal index %1% is over the range of given normals.");
-    case 1: return _("Color index %1% is over the range of given colors.");
-    case 2: return _("TexCoord index %1% is over the range of given texCoords.");
+    case 0: return "Normal index %1% is over the range of given normals.";
+    case 1: return "Color index %1% is over the range of given colors.";
+    case 2: return "TexCoord index %1% is over the range of given texCoords.";
     default: return 0;
     }
 }

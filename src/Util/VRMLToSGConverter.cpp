@@ -13,9 +13,9 @@
 #include "DaeParser.h"
 #include "STLSceneLoader.h"
 #include "NullOut.h"
+#include <boost/format.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/algorithm/string.hpp>
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -331,9 +331,9 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                     if(!errorMessage.empty()){
                         string message;
                         if(faceSet->defName.empty()){
-                            message = _("Error of an IndexedFaceSet node: \n");
+                            message = "Error of an IndexedFaceSet node: \n";
                         } else {
-                            message = str(format(_("Error of IndexedFaceSet node \"%1%\": \n")) % faceSet->defName);
+                            message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
                         }
                         putMessage(message + errorMessage);
                     }
@@ -369,7 +369,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                 converted = convertLineSet(lineSet);
                 
             } else {
-                putMessage(_("Unsupported VRML node type is used."));
+                putMessage("Unsupported VRML node type is used.");
             }
             
             if(mesh){
@@ -506,10 +506,10 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet
 
     if(!removedFaceIndices.empty()){
         if(vface->defName.empty()){
-            putMessage(str(fmt(_("An IndexedFaceSet node contains %1% non-triangle polygon(s)."))
+            putMessage(str(format("An IndexedFaceSet node contains %1% non-triangle polygon(s).")
                            % removedFaceIndices.size()));
         } else {
-            putMessage(str(fmt(_("IndexedFaceSet node \"%1%\" contains %2% non-triangle polygon(s)."))
+            putMessage(str(format("IndexedFaceSet node \"%1%\" contains %2% non-triangle polygon(s).")
                            % vface->defName % removedFaceIndices.size()));
         }
     }
@@ -524,7 +524,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet
         if(converted){
             mesh->setNormals(new SgNormalArray(vface->normal->vector));
         } else {
-            putMessage(_("The normalIndex field of an IndexedFaceSet node contains illegal data."));
+            putMessage("The normalIndex field of an IndexedFaceSet node contains illegal data.");
         }
     }
 
@@ -538,7 +538,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet
         if(converted){
             mesh->setColors(new SgColorArray(vface->color->color));
         } else {
-            putMessage(_("The colorIndex field of an IndexedFaceSet node contains illegal data."));
+            putMessage("The colorIndex field of an IndexedFaceSet node contains illegal data.");
         }
     }
 
@@ -546,7 +546,7 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet
         if(convertIndicesForTriangles(mesh->texCoordIndices(), vface->texCoordIndex, true, ccw)){
             mesh->setTexCoords(new SgTexCoordArray(vface->texCoord->point));
         } else {
-            putMessage(_("The texCoordIndex field of an IndexedFaceSet node contains illegal data."));
+            putMessage("The texCoordIndex field of an IndexedFaceSet node contains illegal data.");
         }
     }
 
