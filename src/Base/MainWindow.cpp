@@ -140,7 +140,7 @@ MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionM
 
 void MainWindow::setProjectTitle(const std::string& title)
 {
-    QString qtitle(_("%1 - %2"));
+    QString qtitle("%1 - %2");
     setWindowTitle(qtitle.arg(title.c_str()).arg(impl->appName.c_str()));
 }
 

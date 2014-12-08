@@ -306,7 +306,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                                      boost::bind(&PointSetItem::setPointSize, this, _1), true);
     putProperty(_("Editable"), isEditable(), boost::bind(&PointSetItemImpl::onEditableChanged, impl, _1));
     const SgVertexArray* points = impl->pointSet->vertices();
-    putProperty(_("Points"), static_cast<int>(points ? points->size() : 0));
+    putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
 }
 
 
