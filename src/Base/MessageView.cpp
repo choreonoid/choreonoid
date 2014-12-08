@@ -364,7 +364,7 @@ void MessageViewImpl::put(const QString& message, bool doLF, bool doNotify, bool
 void MessageViewImpl::doPut(const QString& message, bool doLF, bool doNotify, bool doFlush)
 {
     int scrollPos = textEdit.getScrollPos();
-    bool enableScroll = (scrollPos < textEdit.maxScrollPos()-3*textEdit.scrollSingleStep());
+    bool enableScroll = (scrollPos > textEdit.maxScrollPos()-3*textEdit.scrollSingleStep());
 
     textEdit.setCurrentCharFormat(preFmt);
 
