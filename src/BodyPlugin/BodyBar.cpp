@@ -20,7 +20,7 @@ BodyBar* BodyBar::instance()
 
 
 BodyBar::BodyBar()
-    : ToolBar("BodyBar"),
+    : ToolBar(N_("BodyBar")),
       mes(*MessageView::mainInstance())
 {
     using boost::bind;

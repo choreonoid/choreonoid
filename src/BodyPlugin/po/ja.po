@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-17 10:07+0900\n"
+"POT-Creation-Date: 2014-12-08 22:07+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -34,78 +34,81 @@ msgstr "参照動作のフレームレートがワールドのフレームレー
 msgid "AISTSimulatorItem"
 msgstr "AISTシミュレータアイテム"
 
-#: AISTSimulatorItem.cpp:191
+#: AISTSimulatorItem.cpp:192
 msgid "Forward dynamics"
 msgstr "順動力学"
 
-#: AISTSimulatorItem.cpp:192
+#: AISTSimulatorItem.cpp:193
 msgid "High-gain dynamics"
 msgstr "ハイゲイン動力学"
 
-#: AISTSimulatorItem.cpp:193
+#: AISTSimulatorItem.cpp:194
 msgid "Kinematics"
 msgstr "運動学"
 
-#: AISTSimulatorItem.cpp:195
+#: AISTSimulatorItem.cpp:196
 msgid "Euler"
 msgstr "オイラー"
 
-#: AISTSimulatorItem.cpp:196
+#: AISTSimulatorItem.cpp:197
 msgid "Runge Kutta"
 msgstr "ルンゲクッタ"
 
-#: AISTSimulatorItem.cpp:526
+#: AISTSimulatorItem.cpp:527
 msgid "Dynamics mode"
 msgstr "動力学モード"
 
-#: AISTSimulatorItem.cpp:528
+#: AISTSimulatorItem.cpp:529
 msgid "Integration mode"
 msgstr "積分モード"
 
-#: AISTSimulatorItem.cpp:530
+#: AISTSimulatorItem.cpp:531
 msgid "Gravity"
 msgstr "重力加速度"
 
-#: AISTSimulatorItem.cpp:532
+#: AISTSimulatorItem.cpp:533
 msgid "Static friction"
 msgstr "静止摩擦係数"
 
-#: AISTSimulatorItem.cpp:533
+#: AISTSimulatorItem.cpp:534
 msgid "Slip friction"
 msgstr "動摩擦係数"
 
-#: AISTSimulatorItem.cpp:534
+#: AISTSimulatorItem.cpp:535
 msgid "Contact culling distance"
-msgstr ""
+msgstr "接触間引き距離"
 
-#: AISTSimulatorItem.cpp:536
+#: AISTSimulatorItem.cpp:537
 msgid "Contact culling depth"
-msgstr ""
+msgstr "接触間引き深度"
 
-#: AISTSimulatorItem.cpp:538
+#: AISTSimulatorItem.cpp:539
 msgid "Error criterion"
 msgstr "収束判定誤差基準"
 
-#: AISTSimulatorItem.cpp:540
+#: AISTSimulatorItem.cpp:541
 msgid "Max iterations"
 msgstr "最大反復計算回数"
 
-#: AISTSimulatorItem.cpp:541
+#: AISTSimulatorItem.cpp:542
 msgid "CC depth"
 msgstr "接触補正深度"
 
-#: AISTSimulatorItem.cpp:543
+#: AISTSimulatorItem.cpp:544
 msgid "CC v-ratio"
 msgstr "接触補正速度係数"
 
-#: AISTSimulatorItem.cpp:545
-#, fuzzy
+#: AISTSimulatorItem.cpp:546
 msgid "Kinematic walking"
-msgstr "運動学"
+msgstr "運動学歩行モード"
 
-#: AISTSimulatorItem.cpp:547
+#: AISTSimulatorItem.cpp:548
 msgid "2D mode"
 msgstr "2Dモード"
+
+#: BodyBar.cpp:23
+msgid "BodyBar"
+msgstr "ボディバー"
 
 #: BodyBar.cpp:30
 msgid "Memory the current pose"
@@ -186,9 +189,8 @@ msgid "OpenHRP Model File"
 msgstr "OpenHRP モデルファイル"
 
 #: BodyItem.cpp:171
-#, fuzzy
 msgid "Show selected links only"
-msgstr "選択リンクのみ表示する"
+msgstr "選択リンクのみ表示"
 
 #: BodyItem.cpp:1117
 msgid "Model name"
@@ -226,18 +228,17 @@ msgstr "静的モデル"
 msgid "Model file"
 msgstr "モデルファイル"
 
-#: BodyItem.cpp:1127 WorldItem.cpp:423
+#: BodyItem.cpp:1127 WorldItem.cpp:424
 msgid "Collision detection"
 msgstr "干渉検出"
 
 #: BodyItem.cpp:1129
-#, fuzzy
 msgid "Self-collision detection"
-msgstr "干渉検出"
+msgstr "自己干渉検出"
 
 #: BodyItem.cpp:1131
 msgid "Editable"
-msgstr ""
+msgstr "編集可能"
 
 #: BodyLinkView.cpp:126
 msgid "Body / Link"
@@ -345,15 +346,15 @@ msgstr "ボディモーション"
 
 #: BodyMotionItem.cpp:368 BodyMotionItem.cpp:378
 msgid "Confirm"
-msgstr ""
+msgstr "確認"
 
 #: BodyMotionItem.cpp:369
 msgid "Do you want to replace the data of %1%?"
-msgstr ""
+msgstr "%1%のデータを置き換えますか？"
 
 #: BodyMotionItem.cpp:379
 msgid "Do you want to set %1% as a sequence data of %2%?"
-msgstr ""
+msgstr "%2%のシーケンスデータとして%1%をセットしますか？"
 
 #: BodyPlugin.cpp:87
 msgid "Body Plugin Version %1%\n"
@@ -379,11 +380,11 @@ msgstr "ボディ状態"
 
 #: BodyStateView.cpp:269 JointStateView.cpp:361
 msgid "ON"
-msgstr ""
+msgstr "オン"
 
 #: BodyStateView.cpp:269 JointStateView.cpp:361
 msgid "OFF"
-msgstr ""
+msgstr "オフ"
 
 #: ControllerItem.cpp:72
 msgid "Immediate mode"
@@ -478,45 +479,42 @@ msgid "Merge selected MultiValueSeqItems (Temporary version)"
 msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
 
 #: GLVisionSimulatorItem.cpp:189
-#, fuzzy
 msgid "GLVisionSimulatorItem"
-msgstr "AISTシミュレータアイテム"
+msgstr "GL視覚センサシミュレータアイテム"
 
 #: GLVisionSimulatorItem.cpp:277
 msgid ""
 "The vision sensor simulation by %1% cannot be performed because the OpenGL "
 "pbuffer is not available."
-msgstr ""
+msgstr "OpenGLのpbufferが利用できないため、%1%による視覚センサのシミュレーションは利用できません。"
 
 #: GLVisionSimulatorItem.cpp:327
 msgid "%1% has no target sensors"
-msgstr ""
+msgstr "%1%は対象センサを有していません"
 
 #: GLVisionSimulatorItem.cpp:352
-#, fuzzy
 msgid "%1%: Target sensor \"%2%\" cannot be initialized."
 msgstr "%2%用の%1%の初期化に失敗しました。"
 
 #: GLVisionSimulatorItem.cpp:370
 msgid "%1% detected vision sensor \"%2%\" of %3% as a target."
-msgstr ""
+msgstr "%1%は%3%の\"%2%\"を対象視覚センサとして検出しました。"
 
 #: GLVisionSimulatorItem.cpp:934
 msgid "Target bodies"
-msgstr ""
+msgstr "対象ボディ"
 
 #: GLVisionSimulatorItem.cpp:935
 msgid "Target sensors"
-msgstr ""
+msgstr "対象センサ"
 
 #: GLVisionSimulatorItem.cpp:936
 msgid "Max latency [s]"
-msgstr ""
+msgstr "最大遅延時間 [秒]"
 
 #: GLVisionSimulatorItem.cpp:937
-#, fuzzy
 msgid "Record vision data"
-msgstr "記録モード"
+msgstr "ビジョンデータの記録"
 
 #: GLVisionSimulatorItem.cpp:938
 msgid "Use thread"
@@ -590,9 +588,8 @@ msgid "HRPSYS Sequence File Set"
 msgstr "HRPSYSシーケンスファイル一式"
 
 #: HrpsysFileIO.cpp:318
-#, fuzzy
 msgid "HRPSYS Log File"
-msgstr "HRPSYSシーケンスファイル一式"
+msgstr "HRPSYSログファイル"
 
 #: JointGraphView.cpp:21
 msgid "Joint Trajectories"
@@ -844,9 +841,8 @@ msgid "Highlight colliding links"
 msgstr "干渉リンクのハイライト表示"
 
 #: LinkGraphView.cpp:22
-#, fuzzy
 msgid "Link Trajectories"
-msgstr "関節軌道"
+msgstr "リンク軌道"
 
 #: LinkSelectionView.cpp:39
 msgid "Links"
@@ -906,23 +902,20 @@ msgid "Start simulation from the current state"
 msgstr "現在位置からのシミュレーションを開始"
 
 #: SimulationBar.cpp:75
-#, fuzzy
 msgid "Pause simulation"
-msgstr "シミュレーション停止"
+msgstr "シミュレーションの一時停止"
 
 #: SimulationBar.cpp:79
 msgid "Stop simulation"
-msgstr "シミュレーション停止"
+msgstr "シミュレーションの停止"
 
 #: SimulationBar.cpp:118
-#, fuzzy
 msgid "Current state of %1% has been set to the initial state."
-msgstr "%1%の現在の状態を初期状態にセットしました。\n"
+msgstr "%1%の現在の状態を初期状態にセットしました。"
 
 #: SimulationBar.cpp:147
-#, fuzzy
 msgid "There is no simulator item."
-msgstr "対象シミュレータアイテムを選択してください。"
+msgstr "シミュレータアイテムが存在しません。"
 
 #: SimulationBar.cpp:150
 msgid "Please select a simulator item to simulate."
@@ -989,7 +982,7 @@ msgstr "タイムバー範囲"
 
 #: SimulatorItem.cpp:849
 msgid "Specified period"
-msgstr ""
+msgstr "指定時間"
 
 #: SimulatorItem.cpp:850
 msgid "Unlimited"
@@ -1000,9 +993,8 @@ msgid "%1% must be in a WorldItem to do simulation."
 msgstr "%1%はシミュレーションを行うワールドである必要があります。"
 
 #: SimulatorItem.cpp:1127
-#, fuzzy
 msgid "SubSimulatorItem \"%1%\" has been detected."
-msgstr "障害が検出されました。"
+msgstr "サブシミュレータアイテム\"%1%\"が検出されました。"
 
 #: SimulatorItem.cpp:1129
 msgid "The initialization of \"%1%\" failed."
@@ -1033,12 +1025,10 @@ msgid "Sync with realtime"
 msgstr "実時間同期"
 
 #: SimulatorItem.cpp:1655
-#, fuzzy
 msgid "Recording"
 msgstr "記録モード"
 
 #: SimulatorItem.cpp:1657
-#, fuzzy
 msgid "Time range"
 msgstr "タイムバー範囲"
 
@@ -1055,7 +1045,6 @@ msgid "All link positions"
 msgstr "全リンク位置姿勢出力"
 
 #: SimulatorItem.cpp:1665
-#, fuzzy
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
@@ -1067,8 +1056,7 @@ msgstr ""
 msgid "WorldItem"
 msgstr "ワールドアイテム"
 
-#: WorldItem.cpp:425
-#, fuzzy
+#: WorldItem.cpp:426
 msgid "Collision detector"
 msgstr "干渉検出"
 
@@ -1078,15 +1066,15 @@ msgstr ""
 
 #: ZMPSeqItem.cpp:108
 msgid "%1% of %2% has been converted to %3%."
-msgstr ""
+msgstr "%2%の%1%は%3%に変換されました。"
 
 #: ZMPSeqItem.cpp:110
 msgid "the root relative coordinate"
-msgstr ""
+msgstr "ルート相対座標"
 
 #: ZMPSeqItem.cpp:110
 msgid "the global coordinate"
-msgstr ""
+msgstr "グローバル座標"
 
 #: ZMPSeqItem.cpp:115
 msgid ""
@@ -1095,27 +1083,6 @@ msgid ""
 msgstr ""
 
 #: ZMPSeqItem.cpp:131
-#, fuzzy
 msgid "Root relative"
-msgstr "ルートリンク"
+msgstr "ルート相対"
 
-#~ msgid "Culling thresh"
-#~ msgstr "間引き閾値"
-
-#~ msgid "Self-collision"
-#~ msgstr "自己干渉"
-
-#~ msgid "Multi Affine3 Seq"
-#~ msgstr "リンク軌道"
-
-#~ msgid "Save scenes bodies"
-#~ msgstr "シーンボディの保存"
-
-#~ msgid "Specific time length"
-#~ msgstr "指定時間長"
-
-#~ msgid "Direct"
-#~ msgstr "直接"
-
-#~ msgid "World"
-#~ msgstr "ワールド"
