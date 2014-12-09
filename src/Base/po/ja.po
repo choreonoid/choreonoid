@@ -493,7 +493,7 @@ msgstr "ビューの生成"
 
 #: MainWindow.cpp:175
 msgid "Delete View"
-msgstr "ビューの削除"
+msgstr "ビューの消去"
 
 #: MainWindow.cpp:177
 msgid "Show View Tabs"
@@ -1167,5 +1167,5 @@ msgstr "作成するビューの名前を指定してください。"
 
 #: ViewManager.cpp:323
 msgid "Delete All Invisible Views"
-msgstr "全ての非表示ビューの削除"
+msgstr "全ての非表示ビューを消去"
 
