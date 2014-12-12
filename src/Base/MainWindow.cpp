@@ -170,7 +170,12 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     mm.setPath("/" N_("Edit"));
 
     Menu* viewMenu = static_cast<Menu*>(mm.setPath("/" N_("View")).current());
-    mm.setPath(N_("Show View"));
+
+    mm.setPath(N_("Show Toolbar"));
+    Menu* showToolBarMenu = static_cast<Menu*>(mm.current());
+    showToolBarMenu->sigAboutToShow().connect(boost::bind(&ToolBarArea::setVisibilityMenuItems, toolBarArea, showToolBarMenu));
+    
+    mm.setCurrent(viewMenu).setPath(N_("Show View"));
     mm.setCurrent(viewMenu).setPath(N_("Create View"));
     mm.setCurrent(viewMenu).setPath(N_("Delete View"));
 
@@ -178,11 +183,15 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     showViewTabCheck->sigToggled().connect(boost::bind(&ViewArea::setViewTabsVisible, viewArea, _1));
     showViewTabCheck->setChecked(config->get("showViewTabs", true));
 
-    mm.setCurrent(viewMenu).addSeparator().setPath(N_("Show Toolbar"));
-    Menu* showToolBarMenu = static_cast<Menu*>(mm.current());
-    showToolBarMenu->sigAboutToShow().connect(boost::bind(&ToolBarArea::setVisibilityMenuItems, toolBarArea, showToolBarMenu));
-    
     mm.setCurrent(viewMenu).addSeparator();
+
+    Action* showStatusBarCheck = mm.setCurrent(viewMenu).addCheckItem(_("Show Status Bar"));
+    bool showStatusBar = config->get("showStatusBar", true);
+    QWidget* statusBar = InfoBar::instance();
+    statusBar->setVisible(showStatusBar);
+    showStatusBarCheck->setChecked(showStatusBarCheck);
+    showStatusBarCheck->sigToggled().connect(boost::bind(&QWidget::setVisible, statusBar, _1));
+    
     fullScreenCheck = mm.addCheckItem(_("Full Screen"));
     fullScreenCheck->setChecked(config->get("fullScreen", false));
     fullScreenCheck->sigToggled().connect(boost::bind(&MainWindowImpl::onFullScreenToggled, this, _1));
@@ -191,7 +200,7 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     
     storeLastLayoutCheck = mm.addCheckItem(_("Store Last Toolbar Layout"));
     storeLastLayoutCheck->setChecked(config->get("storeLastLayout", false));
-    
+
     mm.addItem(_("Reset Layout"))->sigTriggered().connect(boost::bind(&MainWindowImpl::resetLayout, this));
     
     mm.setPath("/" N_("Tools"));
@@ -396,6 +405,7 @@ void MainWindow::storeWindowStateConfig()
 void MainWindowImpl::storeWindowStateConfig()
 {
     config->write("showViewTabs", showViewTabCheck->isChecked());
+    config->write("showStatusBar", InfoBar::instance()->isVisible());
     config->write("fullScreen", self->isFullScreen());
     config->write("maximized", isMaximized);
     config->write("width", normalStateSize.width());
