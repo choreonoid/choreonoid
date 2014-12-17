@@ -276,6 +276,7 @@ ItemTreeView::ItemTreeView(RootItem* rootItem, bool showRoot)
 void ItemTreeView::construct(RootItem* rootItem, bool showRoot)
 {
     setDefaultLayoutArea(View::LEFT);
+    setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     
     impl = new ItemTreeViewImpl(this, rootItem, showRoot);
 
@@ -339,9 +340,9 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
 
     menuManager.addItem(_("Cut"))
         ->sigTriggered().connect(bind(&ItemTreeViewImpl::cutSelectedItems, this));
-    menuManager.addItem(_("Copy"))
+    menuManager.addItem(_("Copy (single)"))
         ->sigTriggered().connect(bind(&ItemTreeViewImpl::copySelectedItems, this));
-    menuManager.addItem(_("Copy with Children"))
+    menuManager.addItem(_("Copy (sub tree)"))
         ->sigTriggered().connect(bind(&ItemTreeViewImpl::copySelectedItemsWithChildren, this));
     menuManager.addItem(_("Paste"))
         ->sigTriggered().connect(bind(&ItemTreeViewImpl::pasteItems, this));
