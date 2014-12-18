@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-08 22:07+0900\n"
+"POT-Creation-Date: 2014-12-18 14:07+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -478,67 +478,73 @@ msgstr "マージン"
 msgid "Merge selected MultiValueSeqItems (Temporary version)"
 msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
 
-#: GLVisionSimulatorItem.cpp:189
+#: GLVisionSimulatorItem.cpp:190
 msgid "GLVisionSimulatorItem"
 msgstr "GL視覚センサシミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:277
+#: GLVisionSimulatorItem.cpp:280
 msgid ""
 "The vision sensor simulation by %1% cannot be performed because the OpenGL "
 "pbuffer is not available."
-msgstr "OpenGLのpbufferが利用できないため、%1%による視覚センサのシミュレーションは利用できません。"
+msgstr ""
+"OpenGLのpbufferが利用できないため、%1%による視覚センサのシミュレーションは利"
+"用できません。"
 
-#: GLVisionSimulatorItem.cpp:327
+#: GLVisionSimulatorItem.cpp:330
 msgid "%1% has no target sensors"
 msgstr "%1%は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:352
+#: GLVisionSimulatorItem.cpp:355
 msgid "%1%: Target sensor \"%2%\" cannot be initialized."
 msgstr "%2%用の%1%の初期化に失敗しました。"
 
-#: GLVisionSimulatorItem.cpp:370
+#: GLVisionSimulatorItem.cpp:373
 msgid "%1% detected vision sensor \"%2%\" of %3% as a target."
 msgstr "%1%は%3%の\"%2%\"を対象視覚センサとして検出しました。"
 
-#: GLVisionSimulatorItem.cpp:934
+#: GLVisionSimulatorItem.cpp:938
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:935
+#: GLVisionSimulatorItem.cpp:939
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:936
+#: GLVisionSimulatorItem.cpp:940
 msgid "Max latency [s]"
 msgstr "最大遅延時間 [秒]"
 
-#: GLVisionSimulatorItem.cpp:937
+#: GLVisionSimulatorItem.cpp:941
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:938
+#: GLVisionSimulatorItem.cpp:942
 msgid "Use thread"
-msgstr ""
-
-#: GLVisionSimulatorItem.cpp:939
-msgid "Best effort"
-msgstr ""
-
-#: GLVisionSimulatorItem.cpp:940
-msgid "All scene objects"
-msgstr ""
-
-#: GLVisionSimulatorItem.cpp:941
-msgid "Precision ratio of range sensors"
-msgstr ""
+msgstr "スレッドを利用"
 
 #: GLVisionSimulatorItem.cpp:943
-msgid "Depth error"
-msgstr ""
+msgid "Best effort"
+msgstr "ベストエフォート"
 
 #: GLVisionSimulatorItem.cpp:944
+msgid "All scene objects"
+msgstr "全てのシーンオブジェクト"
+
+#: GLVisionSimulatorItem.cpp:945
+msgid "Precision ratio of range sensors"
+msgstr "レンジセンサ精度係数"
+
+#: GLVisionSimulatorItem.cpp:947
+msgid "Depth error"
+msgstr "深度エラー"
+
+#: GLVisionSimulatorItem.cpp:948
 msgid "Head light"
-msgstr ""
+msgstr "ヘッドライト"
+
+#: GLVisionSimulatorItem.cpp:949
+msgid "Additional lights"
+msgstr "追加のライト"
 
 #: HrpsysFileIO.cpp:236
 msgid "Warning"
@@ -966,15 +972,15 @@ msgstr "シミュレーション用に限定"
 
 #: SimulatorItem.cpp:843
 msgid "full"
-msgstr ""
+msgstr "全て"
 
 #: SimulatorItem.cpp:844
 msgid "tail"
-msgstr ""
+msgstr "末尾"
 
 #: SimulatorItem.cpp:845
 msgid "off"
-msgstr ""
+msgstr "オフ"
 
 #: SimulatorItem.cpp:848
 msgid "TimeBar range"
@@ -1030,7 +1036,7 @@ msgstr "記録モード"
 
 #: SimulatorItem.cpp:1657
 msgid "Time range"
-msgstr "タイムバー範囲"
+msgstr "時間範囲"
 
 #: SimulatorItem.cpp:1659
 msgid "Active control period only"
@@ -1050,7 +1056,7 @@ msgstr "デバイス状態の記録"
 
 #: SimulatorItem.cpp:1667
 msgid "Controller Threads"
-msgstr ""
+msgstr "コントローラスレッド"
 
 #: WorldItem.cpp:88
 msgid "WorldItem"
@@ -1080,9 +1086,8 @@ msgstr "グローバル座標"
 msgid ""
 "%1%'s coordinate system cannot be changed because there is no root link "
 "motion associated with %1%."
-msgstr ""
+msgstr "%1%と関連付けられた動作はルートリンクが含まれていないため%1%の座標系は変更できません。"
 
 #: ZMPSeqItem.cpp:131
 msgid "Root relative"
 msgstr "ルート相対"
-
