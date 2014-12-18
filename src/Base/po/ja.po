@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-08 21:48+0900\n"
+"POT-Creation-Date: 2014-12-17 18:14+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -422,39 +422,39 @@ msgstr "%1% \"%2%\" は読み込み出来ません。"
 msgid "Items"
 msgstr "アイテム"
 
-#: ItemTreeView.cpp:340
+#: ItemTreeView.cpp:341
 msgid "Cut"
 msgstr "カット"
 
-#: ItemTreeView.cpp:342
-msgid "Copy"
-msgstr "コピー"
+#: ItemTreeView.cpp:343
+msgid "Copy (single)"
+msgstr "コピー（単独）"
 
-#: ItemTreeView.cpp:344
-msgid "Copy with Children"
-msgstr "小アイテムも含めてコピー"
+#: ItemTreeView.cpp:345
+msgid "Copy (sub tree)"
+msgstr "コピー（サブツリー）"
 
-#: ItemTreeView.cpp:346
+#: ItemTreeView.cpp:347
 msgid "Paste"
 msgstr "ペースト"
 
-#: ItemTreeView.cpp:350
+#: ItemTreeView.cpp:351
 msgid "Check"
 msgstr "チェック"
 
-#: ItemTreeView.cpp:352
+#: ItemTreeView.cpp:353
 msgid "Uncheck"
 msgstr "アンチェック"
 
-#: ItemTreeView.cpp:354
+#: ItemTreeView.cpp:355
 msgid "Toggle checks"
 msgstr "チェックの反転"
 
-#: ItemTreeView.cpp:358
+#: ItemTreeView.cpp:359
 msgid "Select all"
 msgstr "全て選択"
 
-#: ItemTreeView.cpp:360
+#: ItemTreeView.cpp:361
 msgid "Clear selection"
 msgstr "選択解除"
 
@@ -483,55 +483,59 @@ msgstr "編集"
 msgid "View"
 msgstr "表示"
 
-#: MainWindow.cpp:173
-msgid "Show View"
-msgstr "ビューの表示"
-
 #: MainWindow.cpp:174
-msgid "Create View"
-msgstr "ビューの生成"
-
-#: MainWindow.cpp:175
-msgid "Delete View"
-msgstr "ビューの消去"
-
-#: MainWindow.cpp:177
-msgid "Show View Tabs"
-msgstr "ビュー選択タブの表示"
-
-#: MainWindow.cpp:181
 msgid "Show Toolbar"
 msgstr "ツールバーの表示"
 
-#: MainWindow.cpp:186
+#: MainWindow.cpp:178
+msgid "Show View"
+msgstr "ビューの表示"
+
+#: MainWindow.cpp:179
+msgid "Create View"
+msgstr "ビューの生成"
+
+#: MainWindow.cpp:180
+msgid "Delete View"
+msgstr "ビューの消去"
+
+#: MainWindow.cpp:182
+msgid "Show View Tabs"
+msgstr "ビュータブの表示"
+
+#: MainWindow.cpp:188
+msgid "Show Status Bar"
+msgstr ""
+
+#: MainWindow.cpp:195
 msgid "Full Screen"
 msgstr "フルスクリーン"
 
-#: MainWindow.cpp:190
+#: MainWindow.cpp:199
 msgid "Layout"
 msgstr "レイアウト"
 
-#: MainWindow.cpp:192
+#: MainWindow.cpp:201
 msgid "Store Last Toolbar Layout"
 msgstr "終了時のレイアウトを保存"
 
-#: MainWindow.cpp:195
+#: MainWindow.cpp:204
 msgid "Reset Layout"
 msgstr "レイアウトのリセット"
 
-#: MainWindow.cpp:197
+#: MainWindow.cpp:206
 msgid "Tools"
 msgstr "ツール"
 
-#: MainWindow.cpp:198
+#: MainWindow.cpp:207
 msgid "Filters"
 msgstr "フィルタ"
 
-#: MainWindow.cpp:199
+#: MainWindow.cpp:208
 msgid "Options"
 msgstr "オプション"
 
-#: MainWindow.cpp:200
+#: MainWindow.cpp:209
 msgid "Help"
 msgstr "ヘルプ"
 
@@ -1068,10 +1072,6 @@ msgid "ScriptBar"
 msgstr "スクリプトバー"
 
 #: ScriptBar.cpp:30
-msgid "Script"
-msgstr "スクリプト"
-
-#: ScriptBar.cpp:30
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
@@ -1169,3 +1169,11 @@ msgstr "作成するビューの名前を指定してください。"
 msgid "Delete All Invisible Views"
 msgstr "全ての非表示ビューを消去"
 
+#~ msgid "Copy"
+#~ msgstr "コピー"
+
+#~ msgid "Copy with Children"
+#~ msgstr "小アイテムも含めてコピー"
+
+#~ msgid "Script"
+#~ msgstr "スクリプト"
