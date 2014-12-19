@@ -78,7 +78,7 @@ PathVariableEditor::PathVariableEditor()
     tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
 
     tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem(_("Variable")));
-    tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem(_("Path List")));
+    tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem(_("Path")));
     tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     tableWidget->verticalHeader()->hide();

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-17 18:14+0900\n"
+"POT-Creation-Date: 2014-12-19 22:19+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -377,13 +377,17 @@ msgstr "\"%1%\"が解放されました。"
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
-#: ItemPropertyView.cpp:426
+#: ItemPropertyView.cpp:462
 msgid "Property"
 msgstr "プロパティ"
 
-#: ItemPropertyView.cpp:613
+#: ItemPropertyView.cpp:653
 msgid "Update"
 msgstr "更新"
+
+#: ItemPropertyView.cpp:655
+msgid "Reset Column Sizes"
+msgstr ""
 
 #: ItemTreeArchiver.cpp:46
 msgid "\"%1%\" cannot be stored. Its type is not registered."
@@ -653,7 +657,7 @@ msgstr "プロジェクトファイルオプション"
 
 #: PathVariableEditor.cpp:62
 msgid "Edit Path Variables"
-msgstr "パスセットの編集"
+msgstr "パス変数の設定"
 
 #: PathVariableEditor.cpp:72
 msgid "Path Variables"
@@ -664,8 +668,8 @@ msgid "Variable"
 msgstr "変数"
 
 #: PathVariableEditor.cpp:81
-msgid "Path List"
-msgstr "パスリスト"
+msgid "Path"
+msgstr "パス"
 
 #: PathVariableEditor.cpp:98
 msgid "Append"
