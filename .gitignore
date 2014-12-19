@@ -12,6 +12,7 @@ CPackSourceConfig.cmake
 /postinst
 *.hh
 moc_*.cxx
+moc_*.cxx_parameters
 qrc_*.cxx
 *.qrc.depends
 *DynSk.cpp
