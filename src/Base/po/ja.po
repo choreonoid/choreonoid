@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-18 10:00+0900\n"
+"POT-Creation-Date: 2014-12-19 22:19+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -22,9 +22,8 @@ msgid "Frame rate"
 msgstr "フレームレート:"
 
 #: AbstractSeqItem.cpp:60
-#, fuzzy
 msgid "Offset time"
-msgstr "オフセット"
+msgstr "オフセット時間"
 
 #: AbstractSeqItem.cpp:61
 msgid "Number of frames"
@@ -52,7 +51,7 @@ msgstr "垂直同期"
 
 #: Archive.cpp:101
 msgid "Warning: ${%1} of \"%2\" cannot be expanded !"
-msgstr "警告: \"%2\"の${%1}は展開できません。"
+msgstr "警告: \"%2\"の${%1}は展開できません！"
 
 #: CaptureBar.cpp:92
 msgid "Save the image of %1"
@@ -73,31 +72,27 @@ msgstr "キャンセル"
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
 
-#: CaptureBar.cpp:122
-msgid "The image of %1 has successfully been saved into \"%2\"."
-msgstr "%1の画像を\"%2\"に保存しました。"
-
-#: CaptureBar.cpp:125
+#: CaptureBar.cpp:127
 msgid "The image of %1 cannot be saved into \"%2\"."
 msgstr "%1の画像を\"%2\"に保存できませんでした。"
 
-#: CaptureBar.cpp:169
+#: CaptureBar.cpp:171
 msgid "Capture Bar"
 msgstr "キャプチャバー"
 
-#: CaptureBar.cpp:171
+#: CaptureBar.cpp:173
 msgid "Include Tab"
 msgstr "タブを含める"
 
-#: CaptureBar.cpp:190
+#: CaptureBar.cpp:192
 msgid "CaptureBar"
 msgstr "キャプチャバー"
 
-#: CaptureBar.cpp:192
+#: CaptureBar.cpp:194
 msgid "Capture the image of a view or toolbar"
 msgstr "ビューやツールバーの画像をキャプチャします"
 
-#: DescriptionDialog.cpp:28 SceneWidget.cpp:2787
+#: DescriptionDialog.cpp:28 SceneWidget.cpp:2789
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -243,9 +238,8 @@ msgid "File"
 msgstr "ファイル"
 
 #: Item.cpp:755
-#, fuzzy
-msgid "Children"
-msgstr "小アイテムも含めてコピー"
+msgid "Num children"
+msgstr "小アイテムの数"
 
 #: Item.cpp:756
 msgid "Sub item?"
@@ -316,9 +310,8 @@ msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
 #: ItemManager.cpp:787
-#, fuzzy
 msgid "\"%1%\" cannot be loaded because item type \"%2%\" is not registered."
-msgstr "\"%1%\" はフォーマットが不明なため読み込めません。"
+msgstr "\"%1%\" は\"%2%\"タイプが未登録のため読み込めません。"
 
 #: ItemManager.cpp:824
 msgid "\"%1%\" cannot be loaded because the file format is unknown."
@@ -384,12 +377,16 @@ msgstr "\"%1%\"が解放されました。"
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
-#: ItemPropertyView.cpp:426
+#: ItemPropertyView.cpp:462
 msgid "Property"
 msgstr "プロパティ"
 
-#: ItemPropertyView.cpp:613
+#: ItemPropertyView.cpp:653
 msgid "Update"
+msgstr "更新"
+
+#: ItemPropertyView.cpp:655
+msgid "Reset Column Sizes"
 msgstr ""
 
 #: ItemTreeArchiver.cpp:46
@@ -407,6 +404,7 @@ msgstr "\"%1%\" は書き出し出来ません。"
 #: ItemTreeArchiver.cpp:138
 msgid "Sub item \"%1%\" is not found. Its children cannot be restored."
 msgstr ""
+"サブアイテム\"%1%\"が見つからないため、その小アイテムの読み込みが出来ません。"
 
 #: ItemTreeArchiver.cpp:144
 msgid "Archive is broken."
@@ -428,39 +426,39 @@ msgstr "%1% \"%2%\" は読み込み出来ません。"
 msgid "Items"
 msgstr "アイテム"
 
-#: ItemTreeView.cpp:340
+#: ItemTreeView.cpp:341
 msgid "Cut"
 msgstr "カット"
 
-#: ItemTreeView.cpp:342
-msgid "Copy"
-msgstr "コピー"
+#: ItemTreeView.cpp:343
+msgid "Copy (single)"
+msgstr "コピー（単独）"
 
-#: ItemTreeView.cpp:344
-msgid "Copy with Children"
-msgstr "小アイテムも含めてコピー"
+#: ItemTreeView.cpp:345
+msgid "Copy (sub tree)"
+msgstr "コピー（サブツリー）"
 
-#: ItemTreeView.cpp:346
+#: ItemTreeView.cpp:347
 msgid "Paste"
 msgstr "ペースト"
 
-#: ItemTreeView.cpp:350
+#: ItemTreeView.cpp:351
 msgid "Check"
 msgstr "チェック"
 
-#: ItemTreeView.cpp:352
+#: ItemTreeView.cpp:353
 msgid "Uncheck"
 msgstr "アンチェック"
 
-#: ItemTreeView.cpp:354
+#: ItemTreeView.cpp:355
 msgid "Toggle checks"
 msgstr "チェックの反転"
 
-#: ItemTreeView.cpp:358
+#: ItemTreeView.cpp:359
 msgid "Select all"
 msgstr "全て選択"
 
-#: ItemTreeView.cpp:360
+#: ItemTreeView.cpp:361
 msgid "Clear selection"
 msgstr "選択解除"
 
@@ -477,10 +475,6 @@ msgid ""
 "for more details.\n"
 msgstr ""
 
-#: MainWindow.cpp:143
-msgid "%1 - %2"
-msgstr ""
-
 #: MainWindow.cpp:167
 msgid "Exit"
 msgstr "終了"
@@ -493,63 +487,67 @@ msgstr "編集"
 msgid "View"
 msgstr "表示"
 
-#: MainWindow.cpp:173
-msgid "Show View"
-msgstr ""
-
 #: MainWindow.cpp:174
-msgid "Create View"
-msgstr ""
-
-#: MainWindow.cpp:175
-msgid "Delete View"
-msgstr ""
-
-#: MainWindow.cpp:177
-msgid "Show View Tabs"
-msgstr ""
-
-#: MainWindow.cpp:181
 msgid "Show Toolbar"
+msgstr "ツールバーの表示"
+
+#: MainWindow.cpp:178
+msgid "Show View"
+msgstr "ビューの表示"
+
+#: MainWindow.cpp:179
+msgid "Create View"
+msgstr "ビューの生成"
+
+#: MainWindow.cpp:180
+msgid "Delete View"
+msgstr "ビューの消去"
+
+#: MainWindow.cpp:182
+msgid "Show View Tabs"
+msgstr "ビュータブの表示"
+
+#: MainWindow.cpp:188
+msgid "Show Status Bar"
 msgstr ""
 
-#: MainWindow.cpp:186
+#: MainWindow.cpp:195
 msgid "Full Screen"
 msgstr "フルスクリーン"
 
-#: MainWindow.cpp:190
+#: MainWindow.cpp:199
 msgid "Layout"
 msgstr "レイアウト"
 
-#: MainWindow.cpp:192
+#: MainWindow.cpp:201
 msgid "Store Last Toolbar Layout"
 msgstr "終了時のレイアウトを保存"
 
-#: MainWindow.cpp:195
+#: MainWindow.cpp:204
 msgid "Reset Layout"
 msgstr "レイアウトのリセット"
 
-#: MainWindow.cpp:197
+#: MainWindow.cpp:206
 msgid "Tools"
 msgstr "ツール"
 
-#: MainWindow.cpp:198
+#: MainWindow.cpp:207
 msgid "Filters"
 msgstr "フィルタ"
 
-#: MainWindow.cpp:199
+#: MainWindow.cpp:208
 msgid "Options"
 msgstr "オプション"
 
-#: MainWindow.cpp:200
+#: MainWindow.cpp:209
 msgid "Help"
 msgstr "ヘルプ"
 
-#: MessageView.cpp:611
+#: MessageView.cpp:173
 msgid "Message"
 msgstr "メッセージ"
 
-#: MessageView.cpp:881 TextEditView.cpp:208 TextEditView.cpp:264
+#: MessageView.cpp:925 TextEditView.cpp:208 TextEditView.cpp:264
 msgid "Warning"
 msgstr "警告"
 
@@ -659,7 +657,7 @@ msgstr "プロジェクトファイルオプション"
 
 #: PathVariableEditor.cpp:62
 msgid "Edit Path Variables"
-msgstr "パスセットの編集"
+msgstr "パス変数の設定"
 
 #: PathVariableEditor.cpp:72
 msgid "Path Variables"
@@ -670,8 +668,8 @@ msgid "Variable"
 msgstr "変数"
 
 #: PathVariableEditor.cpp:81
-msgid "Path List"
-msgstr "パスリスト"
+msgid "Path"
+msgstr "パス"
 
 #: PathVariableEditor.cpp:98
 msgid "Append"
@@ -766,23 +764,23 @@ msgstr "デフォルト点サイズ"
 
 #: PointSetItem.cpp:307
 msgid "Editable"
-msgstr ""
+msgstr "編集可能"
 
 #: PointSetItem.cpp:309
-msgid "Points"
-msgstr ""
+msgid "Num points"
+msgstr "ポイント数"
 
 #: PointSetItem.cpp:430
 msgid "PointSet: Clear Attention Point"
-msgstr ""
+msgstr "PointSet: 注視点のクリア"
 
 #: PointSetItem.cpp:435
 msgid "PointSet: Start Eraser Mode"
-msgstr ""
+msgstr "PointSet: 消去モード開始"
 
 #: PointSetItem.cpp:655
 msgid "PointSet: Exit Eraser Mode"
-msgstr ""
+msgstr "PointSet: 消去モード終了"
 
 #: ProjectManager.cpp:116
 msgid "Open Project"
@@ -854,7 +852,7 @@ msgstr "編集モードへの切り替え"
 
 #: SceneBar.cpp:110
 msgid "First-person viewpoint control mode"
-msgstr ""
+msgstr "一人称視点制御"
 
 #: SceneBar.cpp:115
 msgid "Select a camera"
@@ -865,7 +863,6 @@ msgid "Move the camera to look at the objects"
 msgstr "全ての物体が見えるように視点を移動"
 
 #: SceneBar.cpp:126
-#, fuzzy
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
 
@@ -874,7 +871,6 @@ msgid "Toggle the wireframe mode"
 msgstr "ワイヤフレーム表示"
 
 #: SceneBar.cpp:135
-#, fuzzy
 msgid "Open the dialog to setup scene rendering"
 msgstr "シーンビューの設定ダイアログを開く"
 
@@ -884,32 +880,19 @@ msgstr "カメラ %1%"
 
 #: SceneItem.cpp:58
 msgid "The VRML file does not have any valid entity."
-msgstr ""
+msgstr "VRMLファイルに有効な実態が含まれていません。"
 
 #: SceneItem.cpp:71
-#, fuzzy
 msgid "The STL file cannot be loaded."
-msgstr "プロジェクト \"%1%\" は読み込めませんでした。"
+msgstr "STLファイルは読み込めませんでした。"
 
 #: SceneItem.cpp:85
 msgid "SceneItem"
 msgstr "シーンアイテム"
 
-#: SceneItem.cpp:88
-msgid "VRML"
-msgstr ""
-
-#: SceneItem.cpp:92
-msgid "Stereolithography (STL)"
-msgstr ""
-
 #: SceneItem.cpp:143
 msgid "Translation"
-msgstr ""
-
-#: SceneItem.cpp:146
-msgid "RPY"
-msgstr ""
+msgstr "並進"
 
 #: SceneView.cpp:81
 msgid "Scene"
@@ -917,7 +900,7 @@ msgstr "シーン"
 
 #: SceneView.cpp:119
 msgid "Use dedicated item tree view checks to select the target items"
-msgstr ""
+msgstr "対象アイテム選択用の専用のチェックをアイテムツリービューに追加"
 
 #: SceneWidget.cpp:832
 msgid "FPS Test Result"
@@ -964,10 +947,6 @@ msgstr "デフォルトカメラ"
 msgid "Field of view"
 msgstr "視野角"
 
-#: SceneWidget.cpp:2556
-msgid "[deg]"
-msgstr ""
-
 #: SceneWidget.cpp:2561
 msgid "Clipping depth"
 msgstr "クリッピング深度"
@@ -990,7 +969,7 @@ msgstr "照明"
 
 #: SceneWidget.cpp:2589
 msgid "Smooth shading"
-msgstr ""
+msgstr "スムーズシェーディング"
 
 #: SceneWidget.cpp:2597
 msgid "Head light"
@@ -1002,7 +981,7 @@ msgstr "照度"
 
 #: SceneWidget.cpp:2610
 msgid "Back lighting"
-msgstr ""
+msgstr "裏面照射"
 
 #: SceneWidget.cpp:2617
 msgid "World light"
@@ -1048,61 +1027,57 @@ msgstr "xz平面グリッド線の表示"
 msgid "Show the yz plane grid"
 msgstr "ｙｚ平面グリッド線の表示"
 
-#: SceneWidget.cpp:2695
+#: SceneWidget.cpp:2697
 msgid "Texture"
-msgstr ""
+msgstr "テクスチャ"
 
-#: SceneWidget.cpp:2703
+#: SceneWidget.cpp:2705
 msgid "Default color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:2707
+#: SceneWidget.cpp:2709
 msgid "Default line width"
 msgstr "デフォルトの線幅"
 
-#: SceneWidget.cpp:2715
+#: SceneWidget.cpp:2717
 msgid "Default point size"
 msgstr "デフォルト点サイズ"
 
-#: SceneWidget.cpp:2726
+#: SceneWidget.cpp:2728
 msgid "Do point rendering in the wireframe mode"
 msgstr "ワイヤフレームモードでポイントレンダリングを行う"
 
-#: SceneWidget.cpp:2735
+#: SceneWidget.cpp:2737
 msgid "Normal Visualization"
 msgstr "法線の表示"
 
-#: SceneWidget.cpp:2752
+#: SceneWidget.cpp:2754
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-#: SceneWidget.cpp:2758
+#: SceneWidget.cpp:2760
 msgid "Show FPS"
 msgstr "フレームレートの表示"
 
-#: SceneWidget.cpp:2763
+#: SceneWidget.cpp:2765
 msgid "Test"
 msgstr "テスト"
 
-#: SceneWidget.cpp:2770
+#: SceneWidget.cpp:2772
 msgid "Do double rendering when a new display list is created."
-msgstr ""
+msgstr "新規ディスプレイリスト生成時に二重にレンダリングを行う"
 
-#: SceneWidget.cpp:2777
+#: SceneWidget.cpp:2779
 msgid "Use an OpenGL pixel buffer for picking"
 msgstr "ピッキングにOpenGLピクセルバッファを使う"
 
 #: ScriptBar.cpp:26
 msgid "ScriptBar"
-msgstr ""
-
-#: ScriptBar.cpp:30
-msgid "Script"
-msgstr ""
+msgstr "スクリプトバー"
 
 #: ScriptBar.cpp:30
 msgid "Execute scripts"
-msgstr ""
+msgstr "スクリプトの実行"
 
 #: TextEditView.cpp:77
 msgid "Text Editor"
@@ -1182,78 +1157,27 @@ msgstr "アニメーションの停止"
 msgid "Vector3SeqItem"
 msgstr "３次元ベクタ列アイテム"
 
-#: ViewArea.cpp:654
-#, fuzzy
-msgid "Views"
-msgstr "表示"
-
 #: ViewArea.cpp:1226
 msgid "Separate the view"
-msgstr ""
+msgstr "ビューの分離"
 
 #: ViewManager.cpp:249
-#, fuzzy
 msgid "Create %1"
-msgstr "新しい%1の生成"
+msgstr "%1の生成"
 
 #: ViewManager.cpp:285
 msgid "Please specify the name of the new view."
-msgstr ""
+msgstr "作成するビューの名前を指定してください。"
 
 #: ViewManager.cpp:323
 msgid "Delete All Invisible Views"
-msgstr ""
+msgstr "全ての非表示ビューを消去"
 
-#~ msgid "Store the Current Layout"
-#~ msgstr "現在のレイアウトを保存"
+#~ msgid "Copy"
+#~ msgstr "コピー"
 
-#~ msgid "Scene File (OSG)"
-#~ msgstr "シーンビュー(OSG)"
+#~ msgid "Copy with Children"
+#~ msgstr "小アイテムも含めてコピー"
 
-#~ msgid "Scene file"
-#~ msgstr "シーンファイル"
-
-#~ msgid "SceneView Setup"
-#~ msgstr "シーンビューの設定"
-
-#~ msgid "Back Ground"
-#~ msgstr "背景"
-
-#~ msgid "Color Selection"
-#~ msgstr "色の選択"
-
-#~ msgid "Floor Grid"
-#~ msgstr "床グリッド"
-
-#~ msgid "Hi-priority rendering mode"
-#~ msgstr "高優先度描画モード"
-
-#~ msgid "Scene View (OSG)"
-#~ msgstr "シーンビュー(OSG)"
-
-#~ msgid "Scribe mode"
-#~ msgstr "Scribe モード"
-
-#~ msgid "Cartoon mode on/off"
-#~ msgstr "アニメ調モードのオン／オフ"
-
-#~ msgid "toggle shadow on/off"
-#~ msgstr "影のオン／オフ"
-
-#~ msgid "Over paint mode"
-#~ msgstr "上描きモード"
-
-#~ msgid "OSGSceneBar"
-#~ msgstr "OSGシーンバー"
-
-#~ msgid "Toggle the perspective / orthogonal view mode"
-#~ msgstr "透視法射影/正射影の切り替え"
-
-#~ msgid "Walk-through mode"
-#~ msgstr "ウォークスルーモード"
-
-#~ msgid "file"
-#~ msgstr "ファイル"
-
-#~ msgid "There are %2% non-triangle polygon(s) in a IndexedFaceSet node%1%."
-#~ msgstr "IndexedFaceSetノード%1%には%2%個の非三角形ポリゴンがあります。"
+#~ msgid "Script"
+#~ msgstr "スクリプト"

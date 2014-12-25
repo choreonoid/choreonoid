@@ -85,11 +85,11 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().registerClass<SceneItem>(N_("SceneItem"));
 
         ext->itemManager().addLoader<SceneItem>(
-            _("VRML"), "VRML-FILE", "wrl",
+            "VRML", "VRML-FILE", "wrl",
             boost::bind(::loadVRML, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
 
         ext->itemManager().addLoader<SceneItem>(
-            _("Stereolithography (STL)"), "STL-FILE", "stl",
+            "Stereolithography (STL)", "STL-FILE", "stl",
             boost::bind(::loadSTL, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
         
         initialized = true;
@@ -143,7 +143,7 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Translation"), str(Vector3(topNode_->translation())),
                 boost::bind(&SceneItem::onTranslationChanged, this, _1));
     Vector3 rpy(rpyFromRot(topNode_->rotation()));
-    putProperty(_("RPY"), str(TO_DEGREE * rpy), boost::bind(&SceneItem::onRotationChanged, this, _1));
+    putProperty("RPY", str(TO_DEGREE * rpy), boost::bind(&SceneItem::onRotationChanged, this, _1));
 }
 
 

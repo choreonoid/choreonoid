@@ -7,7 +7,6 @@
 #include "PlainSeqFormatLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -132,7 +131,7 @@ bool MultiValueSeq::doReadSeq(const Mapping& archive)
         }
         const Listing& values = *archive.findListing("frames");
         if(!values.isValid()){
-            addSeqMessage(_("Actual frame data is missing."));
+            addSeqMessage("Actual frame data is missing.");
         } else {
             const int nFrames = values.size();
             setDimension(nFrames, nParts);

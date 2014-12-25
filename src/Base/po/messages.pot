@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-17 10:56+0900\n"
+"POT-Creation-Date: 2014-12-08 21:49+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,12 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: AbstractSeqItem.cpp:60 MultiSeqItemCreationPanel.cpp:46
+#: AbstractSeqItem.cpp:59 MultiSeqItemCreationPanel.cpp:46
 msgid "Frame rate"
+msgstr ""
+
+#: AbstractSeqItem.cpp:60
+msgid "Offset time"
 msgstr ""
 
 #: AbstractSeqItem.cpp:61
@@ -37,7 +41,7 @@ msgstr ""
 msgid "Num parts"
 msgstr ""
 
-#: App.cpp:223 App.cpp:350
+#: App.cpp:223 App.cpp:377
 msgid "About Choreonoid"
 msgstr ""
 
@@ -45,7 +49,7 @@ msgstr ""
 msgid "Vertical Sync"
 msgstr ""
 
-#: Archive.cpp:96
+#: Archive.cpp:101
 msgid "Warning: ${%1} of \"%2\" cannot be expanded !"
 msgstr ""
 
@@ -53,47 +57,42 @@ msgstr ""
 msgid "Save the image of %1"
 msgstr ""
 
-#: CaptureBar.cpp:96 ItemManager.cpp:890 ProjectManager.cpp:427
-#: TextEditView.cpp:127
+#: CaptureBar.cpp:96 ItemManager.cpp:1060 ProjectManager.cpp:453
+#: TextEditView.cpp:119
 msgid "Save"
 msgstr ""
 
-#: CaptureBar.cpp:97 ItemManager.cpp:711 ItemManager.cpp:891
-#: PluginManager.cpp:643 ProjectManager.cpp:403 ProjectManager.cpp:428
+#: CaptureBar.cpp:97 ItemManager.cpp:884 ItemManager.cpp:1061
+#: PluginManager.cpp:653 ProjectManager.cpp:429 ProjectManager.cpp:454
 msgid "Cancel"
 msgstr ""
 
-#: CaptureBar.cpp:100 ItemManager.cpp:729 PluginManager.cpp:647
-#: ProjectManager.cpp:407 ProjectManager.cpp:432
+#: CaptureBar.cpp:100 ItemManager.cpp:902 PluginManager.cpp:657
+#: ProjectManager.cpp:433 ProjectManager.cpp:458
 msgid "Any files (*)"
 msgstr ""
 
-#: CaptureBar.cpp:122
-msgid "The image of %1 has successfully been saved into \"%2\"."
-msgstr ""
-
-#: CaptureBar.cpp:125
+#: CaptureBar.cpp:127
 msgid "The image of %1 cannot be saved into \"%2\"."
 msgstr ""
 
-#: CaptureBar.cpp:169
+#: CaptureBar.cpp:171
 msgid "Capture Bar"
 msgstr ""
 
-#: CaptureBar.cpp:171
+#: CaptureBar.cpp:173
 msgid "Include Tab"
 msgstr ""
 
-#: CaptureBar.cpp:190
+#: CaptureBar.cpp:192
 msgid "CaptureBar"
 msgstr ""
 
-#: CaptureBar.cpp:192
+#: CaptureBar.cpp:194
 msgid "Capture the image of a view or toolbar"
 msgstr ""
 
-#: DescriptionDialog.cpp:28 OSGSceneView.cpp:332 SceneView.cpp:1961
-#: SceneWidget.cpp:1886
+#: DescriptionDialog.cpp:28 SceneWidget.cpp:2789
 msgid "&Ok"
 msgstr ""
 
@@ -121,11 +120,11 @@ msgstr ""
 msgid "Execute on loading"
 msgstr ""
 
-#: FileBar.cpp:34
+#: FileBar.cpp:33
 msgid "FileBar"
 msgstr ""
 
-#: FileBar.cpp:36
+#: FileBar.cpp:37
 msgid "Save the project"
 msgstr ""
 
@@ -133,312 +132,328 @@ msgstr ""
 msgid "FolderItem"
 msgstr ""
 
-#: GraphBar.cpp:105
+#: GraphBar.cpp:106
 msgid "GraphBar"
 msgstr ""
 
-#: GraphBar.cpp:116
+#: GraphBar.cpp:121
 msgid "Plot trajectories of the target data on the graph view"
 msgstr ""
 
-#: GraphBar.cpp:123
+#: GraphBar.cpp:128
 msgid "Plot velocity trajectories"
 msgstr ""
 
-#: GraphBar.cpp:129
+#: GraphBar.cpp:134
 msgid "Plot acceleration trajectories"
 msgstr ""
 
-#: GraphBar.cpp:137 TimeBar.cpp:319
+#: GraphBar.cpp:142 TimeBar.cpp:328
 msgid "Open the setup dialog"
 msgstr ""
 
-#: GraphBar.cpp:150
+#: GraphBar.cpp:157
 msgid "Graph Setup"
 msgstr ""
 
-#: GraphBar.cpp:156
+#: GraphBar.cpp:163
 msgid "Line width"
 msgstr ""
 
-#: GraphBar.cpp:168
+#: GraphBar.cpp:175
 msgid "y-range, 10^"
 msgstr ""
 
-#: GraphBar.cpp:179
+#: GraphBar.cpp:186
 msgid "Show limit values"
 msgstr ""
 
-#: GraphBar.cpp:188
+#: GraphBar.cpp:195
 msgid "Show grid"
 msgstr ""
 
-#: GraphBar.cpp:203
+#: GraphBar.cpp:210
 msgid "Show rulers"
 msgstr ""
 
-#: GraphBar.cpp:213
+#: GraphBar.cpp:220
 msgid "Edit mode"
 msgstr ""
 
-#: GraphBar.cpp:222
+#: GraphBar.cpp:229
 msgid "Free line"
 msgstr ""
 
-#: GraphBar.cpp:229
+#: GraphBar.cpp:236
 msgid "Line edit"
 msgstr ""
 
-#: GraphBar.cpp:238
+#: GraphBar.cpp:245
 msgid "Control points"
 msgstr ""
 
-#: GraphBar.cpp:244
+#: GraphBar.cpp:251
 msgid "Step"
 msgstr ""
 
-#: GraphBar.cpp:252
+#: GraphBar.cpp:259
 msgid "Offset"
 msgstr ""
 
-#: GraphBar.cpp:263
+#: GraphBar.cpp:270
 msgid "Time bar sync"
 msgstr ""
 
-#: GraphBar.cpp:270
+#: GraphBar.cpp:277
 msgid "off"
 msgstr ""
 
-#: GraphBar.cpp:271
+#: GraphBar.cpp:278
 msgid "cont."
 msgstr ""
 
-#: GraphBar.cpp:272
+#: GraphBar.cpp:279
 msgid "page"
 msgstr ""
 
-#: GraphWidget.cpp:1150
+#: GraphWidget.cpp:1149
 #, c-format
 msgid "Graph: Position = (%1$.5f, %2$.5f)"
 msgstr ""
 
-#: Item.cpp:709 MultiSeqItemCreationPanel.cpp:27
+#: ImageView.cpp:28
+msgid "Image"
+msgstr ""
+
+#: Item.cpp:743 MultiSeqItemCreationPanel.cpp:27
 msgid "Name"
 msgstr ""
 
-#: Item.cpp:713
+#: Item.cpp:747
 msgid "Class"
 msgstr ""
 
-#: Item.cpp:718 MainWindow.cpp:291
+#: Item.cpp:752 MainWindow.cpp:167 PointSetItem.cpp:304 SceneItem.cpp:142
 msgid "File"
 msgstr ""
 
-#: Item.cpp:721
-msgid "Children"
+#: Item.cpp:755
+msgid "Num children"
 msgstr ""
 
-#: Item.cpp:722
+#: Item.cpp:756
 msgid "Sub item?"
 msgstr ""
 
-#: Item.cpp:723
+#: Item.cpp:757
 msgid "Temporal"
 msgstr ""
 
-#: Item.cpp:724
+#: Item.cpp:758
 msgid "Refs"
 msgstr ""
 
-#: ItemManager.cpp:36
+#: ItemManager.cpp:172 ViewManager.cpp:231
 msgid "Name:"
 msgstr ""
 
-#: ItemManager.cpp:101
+#: ItemManager.cpp:233
 msgid "New ..."
 msgstr ""
 
-#: ItemManager.cpp:104
+#: ItemManager.cpp:236
 msgid "Open Item"
 msgstr ""
 
-#: ItemManager.cpp:106
+#: ItemManager.cpp:238
 msgid "Open ..."
 msgstr ""
 
-#: ItemManager.cpp:108
+#: ItemManager.cpp:240
 msgid "Reload Selected Items"
 msgstr ""
 
-#: ItemManager.cpp:113
+#: ItemManager.cpp:245
 msgid "Save Selected Items"
 msgstr ""
 
-#: ItemManager.cpp:115
+#: ItemManager.cpp:247
 msgid "Save Selected Items As"
 msgstr ""
 
-#: ItemManager.cpp:117
+#: ItemManager.cpp:249
 msgid "Save All Items"
 msgstr ""
 
-#: ItemManager.cpp:122
+#: ItemManager.cpp:254
 msgid "Import ..."
 msgstr ""
 
-#: ItemManager.cpp:126
+#: ItemManager.cpp:258
 msgid "Export Selected Items"
 msgstr ""
 
-#: ItemManager.cpp:388
+#: ItemManager.cpp:549
 msgid "Item$"
 msgstr ""
 
-#: ItemManager.cpp:390
+#: ItemManager.cpp:550
 msgid "Create New %1"
 msgstr ""
 
-#: ItemManager.cpp:431
+#: ItemManager.cpp:595 ViewManager.cpp:237
 msgid "&Create"
 msgstr ""
 
-#: ItemManager.cpp:434 PathVariableEditor.cpp:106
+#: ItemManager.cpp:598 PathVariableEditor.cpp:105 ViewManager.cpp:242
 msgid "&Cancel"
 msgstr ""
 
-#: ItemManager.cpp:645
+#: ItemManager.cpp:787
+msgid "\"%1%\" cannot be loaded because item type \"%2%\" is not registered."
+msgstr ""
+
+#: ItemManager.cpp:824
 msgid "\"%1%\" cannot be loaded because the file format is unknown."
 msgstr ""
 
-#: ItemManager.cpp:648
+#: ItemManager.cpp:827
 msgid "\"%1%\" cannot be loaded because file format \"%2%\" is unknown."
 msgstr ""
 
-#: ItemManager.cpp:670 ItemManager.cpp:671
+#: ItemManager.cpp:849 ItemManager.cpp:850
 msgid "Loading %1% \"%2%\""
 msgstr ""
 
-#: ItemManager.cpp:689 ItemManager.cpp:855
+#: ItemManager.cpp:864 ItemManager.cpp:1028
 msgid " -> ok!\n"
 msgstr ""
 
-#: ItemManager.cpp:689 ItemManager.cpp:855
+#: ItemManager.cpp:864 ItemManager.cpp:1028
 msgid " -> failed.\n"
 msgstr ""
 
-#: ItemManager.cpp:707
+#: ItemManager.cpp:880
 msgid "Load %1%"
 msgstr ""
 
-#: ItemManager.cpp:710 PluginManager.cpp:642 ProjectManager.cpp:402
+#: ItemManager.cpp:883 PluginManager.cpp:652 ProjectManager.cpp:428
 msgid "Open"
 msgstr ""
 
-#: ItemManager.cpp:836
+#: ItemManager.cpp:1010
 msgid "Saving %1% to \"%2%\""
 msgstr ""
 
-#: ItemManager.cpp:838
+#: ItemManager.cpp:1012
 msgid "Exporting %1% into \"%2%\""
 msgstr ""
 
-#: ItemManager.cpp:865
+#: ItemManager.cpp:1035
 msgid "%1% cannot be saved.\n"
 msgstr ""
 
-#: ItemManager.cpp:867
+#: ItemManager.cpp:1037
 msgid "%1% cannot be exported.\n"
 msgstr ""
 
-#: ItemManager.cpp:871
+#: ItemManager.cpp:1041
 msgid "%1% cannot be saved as the %2% format.\n"
 msgstr ""
 
-#: ItemManager.cpp:873
+#: ItemManager.cpp:1043
 msgid "%1% cannot be exported into the %2% format.\n"
 msgstr ""
 
-#: ItemManager.cpp:886
+#: ItemManager.cpp:1056
 msgid "Save %1% as"
 msgstr ""
 
-#: ItemManager.cpp:1103
+#: ItemManager.cpp:1273
 msgid "\"%1%\" has been reloaded."
 msgstr ""
 
-#: ItemManager.cpp:1168
+#: ItemManager.cpp:1338
 msgid ";;Any files (*)"
 msgstr ""
 
-#: ItemPropertyView.cpp:439
+#: ItemPropertyView.cpp:426
 msgid "Property"
+msgstr ""
+
+#: ItemPropertyView.cpp:613
+msgid "Update"
 msgstr ""
 
 #: ItemTreeArchiver.cpp:46
 msgid "\"%1%\" cannot be stored. Its type is not registered."
 msgstr ""
 
-#: ItemTreeArchiver.cpp:53
+#: ItemTreeArchiver.cpp:56
 msgid "Storing %1% \"%2%\""
 msgstr ""
 
-#: ItemTreeArchiver.cpp:60
+#: ItemTreeArchiver.cpp:63
 msgid "\"%1%\" cannot be stored."
 msgstr ""
 
-#: ItemTreeArchiver.cpp:122
+#: ItemTreeArchiver.cpp:138
+msgid "Sub item \"%1%\" is not found. Its children cannot be restored."
+msgstr ""
+
+#: ItemTreeArchiver.cpp:144
 msgid "Archive is broken."
 msgstr ""
 
-#: ItemTreeArchiver.cpp:133
+#: ItemTreeArchiver.cpp:154
 msgid "Item type %1% of %2% cannot be restored. It's not a registered type."
 msgstr ""
 
-#: ItemTreeArchiver.cpp:149
+#: ItemTreeArchiver.cpp:167
 msgid "Restoring %1% \"%2%\""
 msgstr ""
 
-#: ItemTreeArchiver.cpp:170
+#: ItemTreeArchiver.cpp:188
 msgid "%1% \"%2%\" cannot be restored."
 msgstr ""
 
-#: ItemTreeView.cpp:222
+#: ItemTreeView.cpp:248
 msgid "Items"
 msgstr ""
 
-#: ItemTreeView.cpp:281
+#: ItemTreeView.cpp:340
 msgid "Cut"
 msgstr ""
 
-#: ItemTreeView.cpp:283
+#: ItemTreeView.cpp:342
 msgid "Copy"
 msgstr ""
 
-#: ItemTreeView.cpp:285
+#: ItemTreeView.cpp:344
 msgid "Copy with Children"
 msgstr ""
 
-#: ItemTreeView.cpp:287
+#: ItemTreeView.cpp:346
 msgid "Paste"
 msgstr ""
 
-#: ItemTreeView.cpp:291
+#: ItemTreeView.cpp:350
 msgid "Check"
 msgstr ""
 
-#: ItemTreeView.cpp:293
+#: ItemTreeView.cpp:352
 msgid "Uncheck"
 msgstr ""
 
-#: ItemTreeView.cpp:295
+#: ItemTreeView.cpp:354
 msgid "Toggle checks"
 msgstr ""
 
-#: ItemTreeView.cpp:299
+#: ItemTreeView.cpp:358
 msgid "Select all"
 msgstr ""
 
-#: ItemTreeView.cpp:301
+#: ItemTreeView.cpp:360
 msgid "Clear selection"
 msgstr ""
 
@@ -455,111 +470,139 @@ msgid ""
 "for more details.\n"
 msgstr ""
 
-#: MainWindow.cpp:291
+#: MainWindow.cpp:167
 msgid "Exit"
 msgstr ""
 
-#: MainWindow.cpp:294
+#: MainWindow.cpp:170
 msgid "Edit"
 msgstr ""
 
-#: MainWindow.cpp:296
+#: MainWindow.cpp:172
 msgid "View"
 msgstr ""
 
-#: MainWindow.cpp:298
+#: MainWindow.cpp:173
+msgid "Show View"
+msgstr ""
+
+#: MainWindow.cpp:174
+msgid "Create View"
+msgstr ""
+
+#: MainWindow.cpp:175
+msgid "Delete View"
+msgstr ""
+
+#: MainWindow.cpp:177
+msgid "Show View Tabs"
+msgstr ""
+
+#: MainWindow.cpp:181
+msgid "Show Toolbar"
+msgstr ""
+
+#: MainWindow.cpp:186
 msgid "Full Screen"
 msgstr ""
 
-#: MainWindow.cpp:302
+#: MainWindow.cpp:190
 msgid "Layout"
 msgstr ""
 
-#: MainWindow.cpp:304
-msgid "Store the Current Layout"
+#: MainWindow.cpp:192
+msgid "Store Last Toolbar Layout"
 msgstr ""
 
-#: MainWindow.cpp:307
-msgid "Store the Last Layout"
-msgstr ""
-
-#: MainWindow.cpp:310
+#: MainWindow.cpp:195
 msgid "Reset Layout"
 msgstr ""
 
-#: MainWindow.cpp:312
+#: MainWindow.cpp:197
 msgid "Tools"
 msgstr ""
 
-#: MainWindow.cpp:313
+#: MainWindow.cpp:198
 msgid "Filters"
 msgstr ""
 
-#: MainWindow.cpp:314
+#: MainWindow.cpp:199
 msgid "Options"
 msgstr ""
 
-#: MainWindow.cpp:315
+#: MainWindow.cpp:200
 msgid "Help"
 msgstr ""
 
-#: MessageView.cpp:216
+#: MessageView.cpp:173
 msgid "Message"
 msgstr ""
 
-#: MessageView.cpp:430 TextEditView.cpp:207 TextEditView.cpp:262
+#: MessageView.cpp:925 TextEditView.cpp:208 TextEditView.cpp:264
 msgid "Warning"
 msgstr ""
 
-#: MovieGenerator.cpp:68 MovieGenerator.cpp:81
+#: MovieGenerator.cpp:98 MovieGenerator.cpp:106
 msgid "Movie Generator"
 msgstr ""
 
-#: MovieGenerator.cpp:90
+#: MovieGenerator.cpp:118
+msgid "Target view:"
+msgstr ""
+
+#: MovieGenerator.cpp:119 MovieGenerator.cpp:276
+msgid "Not specified"
+msgstr ""
+
+#: MovieGenerator.cpp:125
 msgid "Directory"
 msgstr ""
 
-#: MovieGenerator.cpp:95
+#: MovieGenerator.cpp:130
 msgid "Select"
 msgstr ""
 
-#: MovieGenerator.cpp:102
+#: MovieGenerator.cpp:137
 msgid "Basename"
 msgstr ""
 
-#: MovieGenerator.cpp:109
+#: MovieGenerator.cpp:144
 msgid "Begin"
 msgstr ""
 
-#: MovieGenerator.cpp:115
+#: MovieGenerator.cpp:150
 msgid "End"
 msgstr ""
 
-#: MovieGenerator.cpp:133
+#: MovieGenerator.cpp:168
 msgid "Image size"
 msgstr ""
 
-#: MovieGenerator.cpp:150
+#: MovieGenerator.cpp:186
 msgid "&Generate"
 msgstr ""
 
-#: MovieGenerator.cpp:156
+#: MovieGenerator.cpp:192
+msgid "&Capture"
+msgstr ""
+
+#: MovieGenerator.cpp:197
 msgid "&Stop"
 msgstr ""
 
-#: MovieGenerator.cpp:200
+#: MovieGenerator.cpp:287
 msgid "Select Directory"
 msgstr ""
 
-#: MovieGenerator.cpp:240
+#: MovieGenerator.cpp:324
 msgid "Please set a directory to output image files."
 msgstr ""
 
-#: MovieGenerator.cpp:246
+#: MovieGenerator.cpp:330
 msgid "%1% is not a directory."
 msgstr ""
 
-#: MovieGenerator.cpp:272
+#: MovieGenerator.cpp:401
 msgid "Saving an image to \"%1%\" failed."
 msgstr ""
 
@@ -571,7 +614,7 @@ msgstr ""
 msgid "Number of Affine3 values in a frame"
 msgstr ""
 
-#: MultiSE3SeqGraphView.cpp:25
+#: MultiSE3SeqGraphView.cpp:19
 msgid "Multi SE3 Seq"
 msgstr ""
 
@@ -583,7 +626,7 @@ msgstr ""
 msgid "Number of SE3 values in a frame"
 msgstr ""
 
-#: MultiValueSeqGraphView.cpp:23
+#: MultiValueSeqGraphView.cpp:18
 msgid "Multi Value Seq"
 msgstr ""
 
@@ -599,148 +642,31 @@ msgstr ""
 msgid "Plain Format of a Multi Value Sequence"
 msgstr ""
 
-#: OSGSceneItem.cpp:52
-msgid "Scene File (OSG)"
-msgstr ""
-
-#: OSGSceneItem.cpp:157
-msgid "Scene file"
-msgstr ""
-
-#: OSGSceneView.cpp:279 SceneView.cpp:1748
-msgid "SceneView Setup"
-msgstr ""
-
-#: OSGSceneView.cpp:284
-msgid "Back Ground"
-msgstr ""
-
-#: OSGSceneView.cpp:286 OSGSceneView.cpp:316
-msgid "Color Selection"
-msgstr ""
-
-#: OSGSceneView.cpp:291
-msgid "Floor Grid"
-msgstr ""
-
-#: OSGSceneView.cpp:294 SceneView.cpp:1860 SceneWidget.cpp:1785
-msgid "Span"
-msgstr ""
-
-#: OSGSceneView.cpp:304 SceneView.cpp:1870 SceneWidget.cpp:1795
-msgid "Interval"
-msgstr ""
-
-#: OSGSceneView.cpp:324
-msgid "Hi-priority rendering mode"
-msgstr ""
-
-#: OSGSceneView.cpp:388
-msgid "OSG"
-msgstr ""
-
-#: OSGSceneView.cpp:507
-msgid "Scene View (OSG)"
-msgstr ""
-
-#: OSGSceneView.cpp:509 SceneView.cpp:1935 SceneWidget.cpp:1860
-msgid "Coordinate axes"
-msgstr ""
-
-#: OSGSceneView.cpp:513
-msgid "Scribe mode"
-msgstr ""
-
-#: OSGSceneView.cpp:516
-msgid "Cartoon mode on/off"
-msgstr ""
-
-#: OSGSceneView.cpp:519
-msgid "toggle shadow on/off"
-msgstr ""
-
-#: OSGSceneView.cpp:522
-msgid "Over paint mode"
-msgstr ""
-
-#: OSGSceneView.cpp:529
-msgid "OSGSceneBar"
-msgstr ""
-
-#: OSGSceneView.cpp:531 SceneBar.cpp:59 SceneView.cpp:427
-msgid "Switch to the edit mode"
-msgstr ""
-
-#: OSGSceneView.cpp:535 SceneBar.cpp:75 SceneView.cpp:443
-msgid "Move the camera to look at the objects"
-msgstr ""
-
-#: OSGSceneView.cpp:538
-msgid "Toggle the perspective / orthogonal view mode"
-msgstr ""
-
-#: OSGSceneView.cpp:542 SceneView.cpp:1854 SceneWidget.cpp:1779
-msgid "Show the floor grid"
-msgstr ""
-
-#: OSGSceneView.cpp:546 SceneBar.cpp:78 SceneView.cpp:446
-msgid "Toggle the collision visualization"
-msgstr ""
-
-#: OSGSceneView.cpp:551 SceneBar.cpp:83 SceneView.cpp:451
-msgid "Toggle the wireframe mode"
-msgstr ""
-
-#: OSGSceneView.cpp:554 SceneBar.cpp:86 SceneView.cpp:454
-msgid "Open the dialog to setup SceneView"
-msgstr ""
-
-#: OSGSceneView.cpp:990 SceneView.cpp:1343 SceneWidget.cpp:1262
-msgid "Background Color"
-msgstr ""
-
-#: OSGSceneView.cpp:1016 SceneView.cpp:1356 SceneWidget.cpp:1275
-msgid "Floor Grid Color"
-msgstr ""
-
-#: OSGSceneView.cpp:1437 SceneView.cpp:1058 SceneWidget.cpp:977
-#, c-format
-msgid "Position = (%.3f %.3f %.3f)"
-msgstr ""
-
-#: OSGSceneView.cpp:1532 SceneView.cpp:1307 SceneWidget.cpp:1226
-msgid "Edit Mode"
-msgstr ""
-
-#: OSGSceneView.cpp:1543 SceneView.cpp:1318 SceneWidget.cpp:1237
-msgid "View Mode"
-msgstr ""
-
-#: PathVariableEditor.cpp:62 ProjectManager.cpp:120
+#: PathVariableEditor.cpp:61 ProjectManager.cpp:123
 msgid "Project File Options"
 msgstr ""
 
-#: PathVariableEditor.cpp:63
+#: PathVariableEditor.cpp:62
 msgid "Edit Path Variables"
 msgstr ""
 
-#: PathVariableEditor.cpp:73
+#: PathVariableEditor.cpp:72
 msgid "Path Variables"
 msgstr ""
 
-#: PathVariableEditor.cpp:81 PathVariableEditor.cpp:95
+#: PathVariableEditor.cpp:80 PathVariableEditor.cpp:94
 msgid "Variable"
 msgstr ""
 
-#: PathVariableEditor.cpp:82
+#: PathVariableEditor.cpp:81
 msgid "Path List"
 msgstr ""
 
-#: PathVariableEditor.cpp:99
+#: PathVariableEditor.cpp:98
 msgid "Append"
 msgstr ""
 
-#: PathVariableEditor.cpp:104
+#: PathVariableEditor.cpp:103
 msgid "&Apply"
 msgstr ""
 
@@ -752,121 +678,153 @@ msgstr ""
 msgid "Startup Plugin Loading"
 msgstr ""
 
-#: PluginManager.cpp:428
+#: PluginManager.cpp:438
 msgid ""
 "%1%-plugin cannot be initialized because required plugin(s) %2% are not "
 "found."
 msgstr ""
 
-#: PluginManager.cpp:455 PluginManager.cpp:544
+#: PluginManager.cpp:465 PluginManager.cpp:554
 msgid "Plugin file \"%1%\" has already been activated."
 msgstr ""
 
-#: PluginManager.cpp:458
+#: PluginManager.cpp:468
 msgid "Detecting plugin file \"%1%\""
 msgstr ""
 
-#: PluginManager.cpp:478
+#: PluginManager.cpp:488
 msgid "The plugin entry function \"getChoreonoidPlugin\" is not found.\n"
 msgstr ""
 
-#: PluginManager.cpp:488
+#: PluginManager.cpp:498
 msgid "The plugin object cannot be created."
 msgstr ""
 
-#: PluginManager.cpp:519
+#: PluginManager.cpp:529
 msgid "Plugin file \"%1%\" conflicts with \"%2%\"."
 msgstr ""
 
-#: PluginManager.cpp:528 PluginManager.cpp:627
+#: PluginManager.cpp:538 PluginManager.cpp:637
 msgid "Loading the plugin failed."
 msgstr ""
 
-#: PluginManager.cpp:584
+#: PluginManager.cpp:594
 msgid "The plugin object cannot be intialized."
 msgstr ""
 
-#: PluginManager.cpp:606
+#: PluginManager.cpp:616
 msgid "About Plugins"
 msgstr ""
 
-#: PluginManager.cpp:607 PluginManager.cpp:680
+#: PluginManager.cpp:617 PluginManager.cpp:690
 msgid "About %1% Plugin"
 msgstr ""
 
-#: PluginManager.cpp:619
+#: PluginManager.cpp:629
 msgid "%1%-plugin has been activated."
 msgstr ""
 
-#: PluginManager.cpp:639
+#: PluginManager.cpp:649
 msgid "Load plugins"
 msgstr ""
 
-#: PluginManager.cpp:646
+#: PluginManager.cpp:656
 msgid "Plugin files (*.%1)"
 msgstr ""
 
-#: PluginManager.cpp:751
+#: PluginManager.cpp:761
 msgid "Plugin %1% cannot be finalized."
 msgstr ""
 
-#: PluginManager.cpp:783
+#: PluginManager.cpp:793
 msgid "Plugin dll %1% has been unloaded."
 msgstr ""
 
-#: ProjectManager.cpp:113
+#: PointSetItem.cpp:154
+msgid "PointSetItem"
+msgstr ""
+
+#: PointSetItem.cpp:157
+msgid "Point Cloud (PCD)"
+msgstr ""
+
+#: PointSetItem.cpp:305
+msgid "Point size"
+msgstr ""
+
+#: PointSetItem.cpp:307
+msgid "Editable"
+msgstr ""
+
+#: PointSetItem.cpp:309
+msgid "Num points"
+msgstr ""
+
+#: PointSetItem.cpp:430
+msgid "PointSet: Clear Attention Point"
+msgstr ""
+
+#: PointSetItem.cpp:435
+msgid "PointSet: Start Eraser Mode"
+msgstr ""
+
+#: PointSetItem.cpp:655
+msgid "PointSet: Exit Eraser Mode"
+msgstr ""
+
+#: ProjectManager.cpp:116
 msgid "Open Project"
 msgstr ""
 
-#: ProjectManager.cpp:115
+#: ProjectManager.cpp:118
 msgid "Save Project"
 msgstr ""
 
-#: ProjectManager.cpp:117
+#: ProjectManager.cpp:120
 msgid "Save Project As"
 msgstr ""
 
-#: ProjectManager.cpp:120
+#: ProjectManager.cpp:123
 msgid "Perspective"
 msgstr ""
 
-#: ProjectManager.cpp:179
+#: ProjectManager.cpp:181
 msgid "Loading project file \"%1%\" ..."
 msgstr ""
 
-#: ProjectManager.cpp:190
+#: ProjectManager.cpp:192
 msgid "The project file is empty.\n"
 msgstr ""
 
-#: ProjectManager.cpp:256
+#: ProjectManager.cpp:271
 msgid "Project \"%1%\" has successfully been loaded."
 msgstr ""
 
-#: ProjectManager.cpp:259
+#: ProjectManager.cpp:275
 msgid "Project \"%1%\" cannot be loaded."
 msgstr ""
 
-#: ProjectManager.cpp:306
+#: ProjectManager.cpp:322
 msgid "Saving a project to \"%1%\" ...\n"
 msgstr ""
 
-#: ProjectManager.cpp:360
+#: ProjectManager.cpp:386
 msgid "Saving a project file has been finished.\n"
 msgstr ""
 
-#: ProjectManager.cpp:363
+#: ProjectManager.cpp:389
 msgid "Saving a project file failed.\n"
 msgstr ""
 
-#: ProjectManager.cpp:399
+#: ProjectManager.cpp:425
 msgid "Open a choreonoid project file"
 msgstr ""
 
-#: ProjectManager.cpp:406 ProjectManager.cpp:431
+#: ProjectManager.cpp:432 ProjectManager.cpp:457
 msgid "Project files (*.cnoid)"
 msgstr ""
 
-#: ProjectManager.cpp:423
+#: ProjectManager.cpp:449
 msgid "Save a choreonoid project file"
 msgstr ""
 
@@ -874,152 +832,236 @@ msgstr ""
 msgid "RootItem"
 msgstr ""
 
-#: SceneBar.cpp:50 SceneView.cpp:425
+#: SceneBar.cpp:89
 msgid "SceneBar"
 msgstr ""
 
-#: SceneBar.cpp:63 SceneView.cpp:431
-msgid "Walk-through mode"
+#: SceneBar.cpp:105
+msgid "Switch to the edit mode"
 msgstr ""
 
-#: SceneBar.cpp:67 SceneView.cpp:435
+#: SceneBar.cpp:110
+msgid "First-person viewpoint control mode"
+msgstr ""
+
+#: SceneBar.cpp:115
 msgid "Select a camera"
 msgstr ""
 
-#: SceneItem.cpp:25
-msgid "SceneItem"
+#: SceneBar.cpp:122
+msgid "Move the camera to look at the objects"
 msgstr ""
 
-#: SceneItem.cpp:27
-msgid "Point Cloud (PCD)"
+#: SceneBar.cpp:126
+msgid "Toggle the collision line visibility"
 msgstr ""
 
-#: SceneItem.cpp:76
-msgid "file"
+#: SceneBar.cpp:131
+msgid "Toggle the wireframe mode"
 msgstr ""
 
-#: SceneView.cpp:310
-msgid "Scene"
+#: SceneBar.cpp:135
+msgid "Open the dialog to setup scene rendering"
 msgstr ""
 
-#: SceneView.cpp:683 SceneWidget.cpp:602
-msgid "FPS Test Result"
-msgstr ""
-
-#: SceneView.cpp:684 SceneWidget.cpp:603
-msgid "FPS: %1 frames / %2 [s] = %3"
-msgstr ""
-
-#: SceneView.cpp:1369 SceneWidget.cpp:1288
-msgid "Default Color"
-msgstr ""
-
-#: SceneView.cpp:1418 SceneWidget.cpp:1337
+#: SceneBar.cpp:280
 msgid "Camera %1%"
 msgstr ""
 
-#: SceneView.cpp:1753 SceneWidget.cpp:1678
-msgid "Default Camera"
+#: SceneItem.cpp:58
+msgid "The VRML file does not have any valid entity."
 msgstr ""
 
-#: SceneView.cpp:1755 SceneWidget.cpp:1680
-msgid "Field of view"
+#: SceneItem.cpp:71
+msgid "The STL file cannot be loaded."
 msgstr ""
 
-#: SceneView.cpp:1760 SceneWidget.cpp:1685
-msgid "[deg]"
+#: SceneItem.cpp:85
+msgid "SceneItem"
 msgstr ""
 
-#: SceneView.cpp:1765 SceneWidget.cpp:1690
-msgid "Clipping depth"
+#: SceneItem.cpp:143
+msgid "Translation"
 msgstr ""
 
-#: SceneView.cpp:1769 SceneWidget.cpp:1694
-msgid "Near"
+#: SceneView.cpp:81
+msgid "Scene"
 msgstr ""
 
-#: SceneView.cpp:1776 SceneWidget.cpp:1701
-msgid "Far"
+#: SceneView.cpp:119
+msgid "Use dedicated item tree view checks to select the target items"
 msgstr ""
 
-#: SceneView.cpp:1788 SceneWidget.cpp:1713
-msgid "Light"
+#: SceneWidget.cpp:832
+msgid "FPS Test Result"
 msgstr ""
 
-#: SceneView.cpp:1790 SceneWidget.cpp:1715
-msgid "Lighiting"
+#: SceneWidget.cpp:833
+msgid "FPS: %1 frames / %2 [s] = %3"
 msgstr ""
 
-#: SceneView.cpp:1798 SceneWidget.cpp:1723
-msgid "Head light"
+#: SceneWidget.cpp:1383
+#, c-format
+msgid "Position = (%.3f %.3f %.3f)"
 msgstr ""
 
-#: SceneView.cpp:1803 SceneView.cpp:1819 SceneWidget.cpp:1728
-#: SceneWidget.cpp:1744
-msgid "Intensity"
+#: SceneWidget.cpp:1768
+msgid "Edit Mode"
 msgstr ""
 
-#: SceneView.cpp:1814 SceneWidget.cpp:1739
-msgid "World light"
+#: SceneWidget.cpp:1810
+msgid "View Mode"
 msgstr ""
 
-#: SceneView.cpp:1827 SceneWidget.cpp:1752
-msgid "Ambient"
+#: SceneWidget.cpp:1870
+msgid "Background Color"
 msgstr ""
 
-#: SceneView.cpp:1838 SceneWidget.cpp:1763
-msgid "Additional lights"
+#: SceneWidget.cpp:1883
+msgid "Floor Grid Color"
 msgstr ""
 
-#: SceneView.cpp:1845 SceneWidget.cpp:1770
-msgid "Background"
+#: SceneWidget.cpp:1896
+msgid "Default Color"
 msgstr ""
 
-#: SceneView.cpp:1847 SceneWidget.cpp:1772
-msgid "Background color"
-msgstr ""
-
-#: SceneView.cpp:1879 SceneWidget.cpp:1804
-msgid "Color"
-msgstr ""
-
-#: SceneView.cpp:1887 SceneWidget.cpp:1812
-msgid "Default color"
-msgstr ""
-
-#: SceneView.cpp:1891 SceneWidget.cpp:1816
-msgid "Default line width"
-msgstr ""
-
-#: SceneView.cpp:1899 SceneWidget.cpp:1824
-msgid "Default point size"
-msgstr ""
-
-#: SceneView.cpp:1910 SceneWidget.cpp:1835
-msgid "Do point rendering in the wireframe mode"
-msgstr ""
-
-#: SceneView.cpp:1918 SceneWidget.cpp:1843
-msgid "Normal Visualization"
-msgstr ""
-
-#: SceneView.cpp:1941 SceneWidget.cpp:1866
-msgid "Show FPS"
-msgstr ""
-
-#: SceneView.cpp:1946 SceneWidget.cpp:1871
-msgid "Test"
-msgstr ""
-
-#: SceneView.cpp:1953 SceneWidget.cpp:1878
-msgid "Use an OpenGL pixel buffer for picking"
-msgstr ""
-
-#: SceneWidget.cpp:1673
+#: SceneWidget.cpp:2543
 msgid "SceneWidget Setup"
 msgstr ""
 
-#: ScriptBar.cpp:28
+#: SceneWidget.cpp:2549
+msgid "Default Camera"
+msgstr ""
+
+#: SceneWidget.cpp:2551
+msgid "Field of view"
+msgstr ""
+
+#: SceneWidget.cpp:2561
+msgid "Clipping depth"
+msgstr ""
+
+#: SceneWidget.cpp:2563
+msgid "Near"
+msgstr ""
+
+#: SceneWidget.cpp:2570
+msgid "Far"
+msgstr ""
+
+#: SceneWidget.cpp:2582
+msgid "Light"
+msgstr ""
+
+#: SceneWidget.cpp:2584
+msgid "Lighiting"
+msgstr ""
+
+#: SceneWidget.cpp:2589
+msgid "Smooth shading"
+msgstr ""
+
+#: SceneWidget.cpp:2597
+msgid "Head light"
+msgstr ""
+
+#: SceneWidget.cpp:2602 SceneWidget.cpp:2622
+msgid "Intensity"
+msgstr ""
+
+#: SceneWidget.cpp:2610
+msgid "Back lighting"
+msgstr ""
+
+#: SceneWidget.cpp:2617
+msgid "World light"
+msgstr ""
+
+#: SceneWidget.cpp:2630
+msgid "Ambient"
+msgstr ""
+
+#: SceneWidget.cpp:2641
+msgid "Additional lights"
+msgstr ""
+
+#: SceneWidget.cpp:2648
+msgid "Background"
+msgstr ""
+
+#: SceneWidget.cpp:2650
+msgid "Background color"
+msgstr ""
+
+#: SceneWidget.cpp:2663
+msgid "Span"
+msgstr ""
+
+#: SceneWidget.cpp:2673
+msgid "Interval"
+msgstr ""
+
+#: SceneWidget.cpp:2682
+msgid "Color"
+msgstr ""
+
+#: SceneWidget.cpp:2688
+msgid "Show the floor grid"
+msgstr ""
+
+#: SceneWidget.cpp:2689
+msgid "Show the xz plane grid"
+msgstr ""
+
+#: SceneWidget.cpp:2690
+msgid "Show the yz plane grid"
+msgstr ""
+
+#: SceneWidget.cpp:2697
+msgid "Texture"
+msgstr ""
+
+#: SceneWidget.cpp:2705
+msgid "Default color"
+msgstr ""
+
+#: SceneWidget.cpp:2709
+msgid "Default line width"
+msgstr ""
+
+#: SceneWidget.cpp:2717
+msgid "Default point size"
+msgstr ""
+
+#: SceneWidget.cpp:2728
+msgid "Do point rendering in the wireframe mode"
+msgstr ""
+
+#: SceneWidget.cpp:2737
+msgid "Normal Visualization"
+msgstr ""
+
+#: SceneWidget.cpp:2754
+msgid "Coordinate axes"
+msgstr ""
+
+#: SceneWidget.cpp:2760
+msgid "Show FPS"
+msgstr ""
+
+#: SceneWidget.cpp:2765
+msgid "Test"
+msgstr ""
+
+#: SceneWidget.cpp:2772
+msgid "Do double rendering when a new display list is created."
+msgstr ""
+
+#: SceneWidget.cpp:2779
+msgid "Use an OpenGL pixel buffer for picking"
+msgstr ""
+
+#: ScriptBar.cpp:26
 msgid "ScriptBar"
 msgstr ""
 
@@ -1031,78 +1073,94 @@ msgstr ""
 msgid "Execute scripts"
 msgstr ""
 
-#: TextEditView.cpp:104
+#: TextEditView.cpp:77
 msgid "Text Editor"
 msgstr ""
 
-#: TextEditView.cpp:208
+#: TextEditView.cpp:209
 msgid ""
 "The document has been modified.\n"
 " Do you want to save your changes?"
 msgstr ""
 
-#: TextEditView.cpp:236
+#: TextEditView.cpp:237
 msgid "unselected"
 msgstr ""
 
-#: TextEditView.cpp:263
+#: TextEditView.cpp:265
 msgid ""
 "The file has been modified outside of text editor.\n"
 "Do you want to reload it?"
 msgstr ""
 
-#: TimeBar.cpp:65
+#: TimeBar.cpp:64
 msgid "Time Bar Setup"
 msgstr ""
 
-#: TimeBar.cpp:71
+#: TimeBar.cpp:70
 msgid "Internal frame rate"
 msgstr ""
 
-#: TimeBar.cpp:79
+#: TimeBar.cpp:78
 msgid "Playback frame rate"
 msgstr ""
 
-#: TimeBar.cpp:88
+#: TimeBar.cpp:87
 msgid "Idle loop driven mode"
 msgstr ""
 
-#: TimeBar.cpp:94
+#: TimeBar.cpp:93
 msgid "Playback speed scale"
 msgstr ""
 
-#: TimeBar.cpp:105
+#: TimeBar.cpp:104
 msgid "Sync to ongoing updates"
 msgstr ""
 
-#: TimeBar.cpp:150
+#: TimeBar.cpp:111
+msgid "Automatically expand the time range"
+msgstr ""
+
+#: TimeBar.cpp:157
 msgid "&OK"
 msgstr ""
 
-#: TimeBar.cpp:260
+#: TimeBar.cpp:268
 msgid "TimeBar"
 msgstr ""
 
-#: TimeBar.cpp:285
+#: TimeBar.cpp:294
 msgid "Start animation"
 msgstr ""
 
-#: TimeBar.cpp:288 TimeBar.cpp:631
+#: TimeBar.cpp:297 TimeBar.cpp:666
 msgid "Resume animation"
 msgstr ""
 
-#: TimeBar.cpp:292
+#: TimeBar.cpp:301
 msgid "Refresh state at the current time"
 msgstr ""
 
-#: TimeBar.cpp:603
+#: TimeBar.cpp:638
 msgid "Stop animation"
 msgstr ""
 
-#: VRMLToOSGConverter.cpp:404
-msgid "There are %2% non-triangle polygon(s) in a IndexedFaceSet node%1%."
+#: Vector3SeqItem.cpp:14
+msgid "Vector3SeqItem"
 msgstr ""
 
-#: Vector3SeqItem.cpp:17
-msgid "Vector3SeqItem"
+#: ViewArea.cpp:1226
+msgid "Separate the view"
+msgstr ""
+
+#: ViewManager.cpp:249
+msgid "Create %1"
+msgstr ""
+
+#: ViewManager.cpp:285
+msgid "Please specify the name of the new view."
+msgstr ""
+
+#: ViewManager.cpp:323
+msgid "Delete All Invisible Views"
 msgstr ""

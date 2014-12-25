@@ -651,7 +651,7 @@ void ViewAreaImpl::addView(ViewPane* pane, View* view, bool makeCurrent)
     if(numViews == 1){
         self->setWindowTitle(view->windowTitle());
     } else if(numViews == 2){
-        self->setWindowTitle(_("Views"));
+        self->setWindowTitle("Views");
         self->setViewTabsVisible(true);
     }
 }

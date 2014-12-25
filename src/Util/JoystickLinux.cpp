@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include "gettext.h"
 
 using namespace std;
 using namespace boost;
@@ -69,7 +68,7 @@ bool JoystickImpl::openDevice(const char* device)
     fd = open(device, O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
-        errorMessage = str(format(_("Device \"%1%\": %2%")) % device % strerror(errno));
+        errorMessage = str(format("Device \"%1%\": %2%") % device % strerror(errno));
         return false;
     }
     errorMessage.clear();

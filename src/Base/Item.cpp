@@ -752,7 +752,7 @@ void Item::putProperties(PutPropertyFunction& putProperty)
         putProperty(_("File"), filePath_);
     }
 
-    putProperty(_("Children"), numChildren_);
+    putProperty(_("Num children"), numChildren_);
     putProperty(_("Sub item?"), isSubItem());
     putProperty(_("Temporal"), isTemporal());
     putProperty(_("Refs"), refCount());

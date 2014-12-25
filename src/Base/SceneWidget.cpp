@@ -2553,7 +2553,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     fieldOfViewSpin.setValue(45);
     fieldOfViewSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onFieldOfViewChanged, impl));
     hbox->addWidget(&fieldOfViewSpin);
-    hbox->addWidget(new QLabel(_("[deg]")));
+    hbox->addWidget(new QLabel("[deg]"));
     hbox->addStretch();
     vbox->addLayout(hbox);
 
