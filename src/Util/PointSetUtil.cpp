@@ -7,7 +7,6 @@
 #include <cnoid/EasyScanner>
 #include <cnoid/Exception>
 #include <fstream>
-#include "gettext.h"
 
 using namespace std;
 using namespace boost;
@@ -42,7 +41,7 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
 
         bool hasIllegalValue = false;
         for(int i=0; i < numElements; ++i){
-            //double value = scanner.readDoubleEx(_("Illeagel point values"));
+            //double value = scanner.readDoubleEx("Illeagel point values");
 
             if(!scanner.readDouble()){
                 // put warning here
@@ -72,7 +71,7 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
     }
 
     if(vertices->empty()){
-        throw file_read_error() << error_info_message(_("No valid points"));
+        throw file_read_error() << error_info_message("No valid points");
     } else {
         out_pointSet->setVertices(vertices);
         out_pointSet->setNormals(normals);
@@ -96,7 +95,7 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
 
         while(true){
             scanner.skipBlankLines();
-            scanner.readWordEx(_("Illegal header key"));
+            scanner.readWordEx("Illegal header key");
 
             if(scanner.stringValue == "FIELDS"){
                 while(scanner.readWord()){
@@ -115,23 +114,23 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
                     }
                 }
             } else if(scanner.stringValue == "POINTS"){
-                numPoints = scanner.readIntEx(_("The 'POINTS' field is not correctly specified."));
+                numPoints = scanner.readIntEx("The 'POINTS' field is not correctly specified.");
             } else if(scanner.stringValue == "DATA"){
-                scanner.readWordEx(_("The 'DATA' field is not correctly specified."));
+                scanner.readWordEx("The 'DATA' field is not correctly specified.");
                 if(scanner.stringValue == "ascii"){
                     scanner.readLFex();
                     if(elements.empty()){
-                        scanner.throwException(_("The specification of field elements is not found."));
+                        scanner.throwException("The specification of field elements is not found.");
                     }
                     readPoints(out_pointSet, scanner, elements, numPoints);
                     break;
                 } else {
-                    scanner.throwException(_("The 'ascii' format is only supported for the point DATA."));
+                    scanner.throwException("The 'ascii' format is only supported for the point DATA.");
                 }
             } else {
                 scanner.skipToLineEnd();
             }
-            scanner.readLFEOFex(_("The field value is not correctly specified."));
+            scanner.readLFEOFex("The field value is not correctly specified.");
         }
     } catch(EasyScanner::Exception& ex){
         throw file_read_error() << error_info_message(ex.getFullMessage());
@@ -142,7 +141,7 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
 void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Affine3& viewpoint)
 {
     if(!pointSet->hasVertices()){
-        throw empty_data_error() << error_info_message(_("Empty pointset"));
+        throw empty_data_error() << error_info_message("Empty pointset");
     }
 
     ofstream ofs;

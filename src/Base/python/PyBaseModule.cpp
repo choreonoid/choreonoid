@@ -8,6 +8,7 @@ namespace cnoid {
 
 void exportPyQtExTypes();
 void exportPyItems();
+void exportPyMainWindow();
 void exportPyToolBars();
 void exportPyViews();
 void exportPyItemTreeView();
@@ -22,6 +23,7 @@ BOOST_PYTHON_MODULE(Base)
     
     exportPyQtExTypes();
     exportPyItems();
+    exportPyMainWindow();
     exportPyToolBars();
     exportPyViews();
     exportPyItemTreeView();

@@ -11,6 +11,22 @@ using namespace cnoid;
 
 namespace {
 
+ToolButton* (ToolBar::*ToolBar_addButton1)(const QString& text, const QString& tooltip) = &ToolBar::addButton;
+ToolButton* (ToolBar::*ToolBar_addButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addButton;
+ToolButton* (ToolBar::*ToolBar_addButton3)(const char* const* xpm, const QString& tooltip) = &ToolBar::addButton;
+
+ToolButton* ToolBar_addToggleButton1(ToolBar& self, const QString& text, const QString& tooltip = QString()){
+    return self.addToggleButton(text, tooltip);
+}
+BOOST_PYTHON_FUNCTION_OVERLOADS(ToolBar_addToggleButton1_overloads, ToolBar_addToggleButton1, 2, 3)
+
+ToolButton* (ToolBar::*ToolBar_addToggleButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addToggleButton;
+ToolButton* (ToolBar::*ToolBar_addToggleButton3)(const char* const* xpm, const QString& tooltip) = &ToolBar::addToggleButton;
+ToolButton* (ToolBar::*ToolBar_addRadioButton1)(const QString& text, const QString& tooltip) = &ToolBar::addRadioButton;
+ToolButton* (ToolBar::*ToolBar_addRadioButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addRadioButton;
+ToolButton* (ToolBar::*ToolBar_addRadioButton3)(const char* const* xpm, const QString& tooltip) = &ToolBar::addRadioButton;
+
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(TimeBar_stopPlayback_overloads, stopPlayback, 0, 1)
 
 }
@@ -19,23 +35,11 @@ namespace cnoid {
 
 void exportPyToolBars()
 {
-    ToolButton* (ToolBar::*ToolBar_addButton1)(const QString& text, const QString& tooltip) = &ToolBar::addButton;
-    ToolButton* (ToolBar::*ToolBar_addButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addButton;
-    ToolButton* (ToolBar::*ToolBar_addButton3)(const char* const* xpm, const QString& tooltip) = &ToolBar::addButton;
-    ToolButton* (ToolBar::*ToolBar_addToggleButton1)(const QString& text, const QString& tooltip) = &ToolBar::addToggleButton;
-    ToolButton* (ToolBar::*ToolBar_addToggleButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addToggleButton;
-    ToolButton* (ToolBar::*ToolBar_addToggleButton3)(const char* const* xpm, const QString& tooltip) = &ToolBar::addToggleButton;
-    ToolButton* (ToolBar::*ToolBar_addRadioButton1)(const QString& text, const QString& tooltip) = &ToolBar::addRadioButton;
-    ToolButton* (ToolBar::*ToolBar_addRadioButton2)(const QIcon& icon, const QString& tooltip) = &ToolBar::addRadioButton;
-    ToolButton* (ToolBar::*ToolBar_addRadioButton3)(const char* const* xpm, const QString& tooltip) = &ToolBar::addRadioButton;
-
-    //class_ < ToolBarArea, boost::noncopyable >("ToolBarArea", no_init);
-
-    class_<ToolBar, ToolBar*, bases<QWidget>, boost::noncopyable>("Toolbar", no_init)
+    class_<ToolBar, ToolBar*, bases<QWidget>, boost::noncopyable>("ToolBar", init<const QString&>())
         .def("addButton", ToolBar_addButton1, return_value_policy<reference_existing_object>())
         .def("addButton", ToolBar_addButton2, return_value_policy<reference_existing_object>())
         .def("addButton", ToolBar_addButton3, return_value_policy<reference_existing_object>())
-        .def("addToggleButton", ToolBar_addToggleButton1, return_value_policy<reference_existing_object>())
+        .def("addToggleButton", ToolBar_addToggleButton1, ToolBar_addToggleButton1_overloads()[return_value_policy<reference_existing_object>()])
         .def("addToggleButton", ToolBar_addToggleButton2, return_value_policy<reference_existing_object>())
         .def("addToggleButton", ToolBar_addToggleButton3, return_value_policy<reference_existing_object>())
         .def("requestNewRadioGroup", &ToolBar::requestNewRadioGroup)

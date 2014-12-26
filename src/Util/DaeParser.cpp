@@ -38,8 +38,6 @@
 #include "DaeNode.h"
 #include "FileUtil.h"
 
-#include "gettext.h"
-
 using namespace std;
 using boost::lexical_cast;
 using boost::format;
@@ -932,13 +930,13 @@ DaeNodePtr DaeParserImpl::readNode(DaeNodePtr node)
  
     pair<DaeNodes::iterator, bool> pib = nodes.insert(pair<string, DaeNodePtr>(node->id, node));
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate node:%2%")) % line() % node->id).str());
+        throwException(line(), (format("[%1%]duplicate node:%2%") % line() % node->id).str());
     }
     // for the context of the link name
     pib = nodeNames.insert(pair<string, DaeNodePtr>(node->name, node));
     if (!pib.second) {
         if (!inlineParse) {
-            throwException(line(), ((format(_("[%1%][WARNING]duplicate node-name:%2%")) % line() % node->name).str()));
+            throwException(line(), ((format("[%1%][WARNING]duplicate node-name:%2%") % line() % node->name).str()));
         }
     }
 
@@ -1074,7 +1072,7 @@ void DaeParserImpl::matrix(string& value, Matrix4d& matrix)
             point[j][i++] = lexical_cast<double>(*iter);
             if (i == 4) {
                 if (4 < j) {
-                    throwException(line(), (format(_("[%1%]invalid matrix")) % line()).str());
+                    throwException(line(), (format("[%1%]invalid matrix") % line()).str());
                 }
                 i = 0; j++;
             }
@@ -1092,7 +1090,7 @@ DaeNodePtr DaeParserImpl::readMatrix(DaeNodePtr node)
     string value = reader->getNodeData();
 
     if (node->transform.matrix) {
-        throwException(line(), (format(_("[%1%]duplicate matrix:%2%")) % line() % node->id).str());
+        throwException(line(), (format("[%1%]duplicate matrix:%2%") % line() % node->id).str());
     }
     node->transform.matrix = new Matrix4d;
     matrix(value, *(node->transform.matrix));
@@ -1128,7 +1126,7 @@ DaeNodePtr DaeParserImpl::readInstanceGeometryForNodes(DaeNodePtr node)
 
     DaeGeometries::iterator itern = node->geometries.find(url);
     if (itern != node->geometries.end()) {
-        throwException(line(), (format(_("[%1%]duplicate geometry object found:%2%")) % line() % url).str());
+        throwException(line(), (format("[%1%]duplicate geometry object found:%2%") % line() % url).str());
     } else {
         node->geometries.insert(pair<string, DaeGeometryPtr>(url, geometry));
     }
@@ -1141,13 +1139,13 @@ DaeRigidPtr DaeParserImpl::findRigidBody(string& refNodeId)
 {
     DaeRigidRelations::iterator itern = rrelations.find(refNodeId);
     if (itern == rrelations.end()) {
-        throwException(line(), (format(_("[%1%][1]node-id not found on rigid-body:%2%")) 
+        throwException(line(), (format("[%1%][1]node-id not found on rigid-body:%2%") 
                                 % line() % refNodeId).str());
     }
 
     DaeRigids::iterator iterr = rigids.find(itern->second);
     if (iterr == rigids.end()) {
-        throwException(line(), (format(_("[%1%][2]rigid-id not found on rigid-body:%2%")) % line() % itern->second).str());
+        throwException(line(), (format("[%1%][2]rigid-id not found on rigid-body:%2%") % line() % itern->second).str());
     }
 
     return iterr->second;
@@ -1157,13 +1155,13 @@ DaeRigidPtr DaeParserImpl::findRigidBody(string& refNodeId)
 DaeNodePtr DaeParserImpl::readInstanceGeometryForPhysics(DaeNodePtr node)
 {
     if (!reader->getAttributeValue("url")) {
-        throwException(line(), (format(_("[%1%]invalid geometry")) % line()).str());
+        throwException(line(), (format("[%1%]invalid geometry") % line()).str());
     }
     string url = reader->getAttributeValue("url");
     url = url.substr(1);
     DaeGeometries::iterator iterg = geometries.find(url);
     if (iterg == geometries.end()) {
-        throwException(line(), (format(_("[%1%]invalid geometry-id:%2%")) % line() % url).str());
+        throwException(line(), (format("[%1%]invalid geometry-id:%2%") % line() % url).str());
     }
 
     DaeShape* shape = static_cast<DaeShape*>(node.get());
@@ -1176,10 +1174,10 @@ DaeNodePtr DaeParserImpl::readInstanceGeometryForPhysics(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readInstanceMaterial(DaeNodePtr node)
 {
     if (!reader->getAttributeValue("target")) {
-        throwException(line(), (format(_("[%1%]invalid target attribute on instance material")) % line()).str());
+        throwException(line(), (format("[%1%]invalid target attribute on instance material") % line()).str());
     }
     if (!reader->getAttributeValue("symbol")) {
-        throwException(line(), (format(_("[%1%]invalid symbol attribute on instance material")) % line()).str());
+        throwException(line(), (format("[%1%]invalid symbol attribute on instance material") % line()).str());
     }
 
     string target = reader->getAttributeValue("target");
@@ -1194,7 +1192,7 @@ DaeNodePtr DaeParserImpl::readInstanceMaterial(DaeNodePtr node)
         // creating the relation of geometryid + symbol and material-id for "geometry".
         DaeGeometries::iterator iterg = geometries.find(refGeometryId);
         if (iterg == geometries.end()) {
-            throwException(line(), (format(_("[%1%]invalid geometry structure found:%2%")) % line() % target).str());
+            throwException(line(), (format("[%1%]invalid geometry structure found:%2%") % line() % target).str());
         }
         DaeGeometryPtr geometry = iterg->second;
         geometry->refMaterialId = target;
@@ -1236,7 +1234,7 @@ DaeNodePtr DaeParserImpl::readInstanceEffect(DaeNodePtr node)
 {
     DaeMaterials::iterator iter = materials.find(refMaterialId);
     if (iter == materials.end()) {
-        throwException(line(), (format(_("[%1%]invalid effect structure:%2%")) % line() % refMaterialId).str());
+        throwException(line(), (format("[%1%]invalid effect structure:%2%") % line() % refMaterialId).str());
     } 
 
     DaeMaterialPtr material = iter->second;
@@ -1288,7 +1286,7 @@ DaeEffectPtr DaeParserImpl::moveToColor(string& refEffectId)
         throwException(line(), "");
     }
     if (!iequals(reader->getNodeName(), "color")) {
-        throwException(line(), (format(_("[%1%]invalid effect-color structure:%2%")) % line() % refEffectId).str());
+        throwException(line(), (format("[%1%]invalid effect-color structure:%2%") % line() % refEffectId).str());
     }
     reader->read(); // It go to the text-node
 
@@ -1305,7 +1303,7 @@ DaeEffectPtr DaeParserImpl::moveToFloat(string& refEffectId)
         reader->read();
     }
     if (!iequals(reader->getNodeName(), "float")) {
-        throwException(line(), (format(_("[%1%]invalid effect-float structure:%2%")) % line() % refEffectId).str());
+        throwException(line(), (format("[%1%]invalid effect-float structure:%2%") % line() % refEffectId).str());
     }
     reader->read(); // It go to the text-node
 
@@ -1453,7 +1451,7 @@ void DaeParserImpl::array(string& value, DaeVectorXArrayPtr array)
          iter++)
         {
             if ((boost::copy_range<std::string>(*iter)).size() <= 0) {     
-                throwException(line(), (format(_("[%1%]invalid value:%2%")) % line() % value).str());
+                throwException(line(), (format("[%1%]invalid value:%2%") % line() % value).str());
             }
             try {
                 // It holds the number of the number of specified.
@@ -1471,7 +1469,7 @@ DaeNodePtr DaeParserImpl::readFloatArray(DaeNodePtr node)
 {
     DaeVectorMap::iterator iter = sources.find(refSourceId);
     if (iter != sources.end()) {
-        throwException(line(), (format(_("[%1%]invalid source-float structure:%2%")) % line() % refSourceId).str());
+        throwException(line(), (format("[%1%]invalid source-float structure:%2%") % line() % refSourceId).str());
     }
 
     int icount = (reader->getAttributeValue("count") ? lexical_cast<int>(reader->getAttributeValue("count")) : -1);
@@ -1485,7 +1483,7 @@ DaeNodePtr DaeParserImpl::readFloatArray(DaeNodePtr node)
     array(value, source);
     pair<DaeVectorMap::iterator, bool> pib = sources.insert(pair<string, DaeVectorXArrayPtr>(refSourceId, source));
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate source:%2%")) % line() % refSourceId).str());
+        throwException(line(), (format("[%1%]duplicate source:%2%") % line() % refSourceId).str());
     }
 
     return node; 
@@ -1495,12 +1493,12 @@ DaeNodePtr DaeParserImpl::readFloatArray(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readAccessor(DaeNodePtr node)
 {
     if (!reader->getAttributeValue("stride")) {
-        throwException(line(), (format(_("[%1%]invalid stride,source-id:%2%")) % line() % refSourceId).str());
+        throwException(line(), (format("[%1%]invalid stride,source-id:%2%") % line() % refSourceId).str());
     }
     int stride = lexical_cast<int>(reader->getAttributeValue("stride")); 
     pair<DaeStrides::iterator, bool> pib = strides.insert(pair<string, int>(refSourceId, stride));
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate stride:%2%")) % line() % refSourceId).str());
+        throwException(line(), (format("[%1%]duplicate stride:%2%") % line() % refSourceId).str());
     }
 
     return node;
@@ -1519,7 +1517,7 @@ void DaeParserImpl::createMesh(int line)
 {
     DaeGeometries::iterator iter = geometries.find(refGeometryId);
     if (iter == geometries.end()) {
-        throwException(line, (format(_("[%1%]invalid mesh on geometry(geimeotry-id:%2%)")) % line % refGeometryId).str());
+        throwException(line, (format("[%1%]invalid mesh on geometry(geimeotry-id:%2%)") % line % refGeometryId).str());
     }
     DaeGeometryPtr geometry = iter->second;
     DaeMeshPtr mesh = new DaeMesh;
@@ -1544,7 +1542,7 @@ DaeNodePtr DaeParserImpl::readPolylist(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readBox(DaeNodePtr node)
 {
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid box-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid box-tag, it not join to the physics-tag") % line()).str());
     }
 
     for (int i = 0; i < 3; i++) reader->read();
@@ -1554,7 +1552,7 @@ DaeNodePtr DaeParserImpl::readBox(DaeNodePtr node)
 
     DaeShape* shape = static_cast<DaeShape*>(node.get());
     if (shape->isPresence()) {
-        throwException(line(), (format(_("[%1%]duplicate primitive-physics on shape, rigid-id:%2%")) 
+        throwException(line(), (format("[%1%]duplicate primitive-physics on shape, rigid-id:%2%") 
                                 % line() % befRigid->id).str());
     }
     shape->setBox(Vector3(values->at(0), values->at(1), values->at(2)));
@@ -1566,14 +1564,14 @@ DaeNodePtr DaeParserImpl::readBox(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readSphere(DaeNodePtr node)
 {
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid sphere-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid sphere-tag, it not join to the physics-tag") % line()).str());
     }
     for (int i = 0; i < 3; i++) reader->read();
     string value = reader->getNodeData();
 
     DaeShape* shape = static_cast<DaeShape*>(node.get());
     if (shape->isPresence()) {
-        throwException(line(), (format(_("[%1%]duplicate primitive-physics on shape, rigid-id:%2%")) 
+        throwException(line(), (format("[%1%]duplicate primitive-physics on shape, rigid-id:%2%") 
                                 % line() % befRigid->id).str());
     }
     shape->setSphere(lexical_cast<double>(value));
@@ -1585,7 +1583,7 @@ DaeNodePtr DaeParserImpl::readSphere(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readCylinder(DaeNodePtr node)
 {
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid cylinder-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid cylinder-tag, it not join to the physics-tag") % line()).str());
     }
 
     std::string name = "";
@@ -1605,7 +1603,7 @@ DaeNodePtr DaeParserImpl::readCylinder(DaeNodePtr node)
 
     DaeShape* shape = static_cast<DaeShape*>(node.get());
     if (shape->isPresence()) {
-        throwException(line(), (format(_("[%1%]duplicate primitive-physics on shape, rigid-id:%2%")) 
+        throwException(line(), (format("[%1%]duplicate primitive-physics on shape, rigid-id:%2%") 
                                 % line() % befRigid->id).str());
     }
     shape->setCylinder(height, radius);
@@ -1635,7 +1633,7 @@ void DaeParserImpl::readTaperedCylinderConcrete(std::string& name, std::string& 
 DaeNodePtr DaeParserImpl::readTaperedCylinder(DaeNodePtr node)
 {
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid tapered-cylinder-tag, it not join to the physics-tag")) 
+        throwException(line(), (format("[%1%]invalid tapered-cylinder-tag, it not join to the physics-tag") 
                                 % line()).str());
     }
 
@@ -1660,7 +1658,7 @@ DaeNodePtr DaeParserImpl::readTaperedCylinder(DaeNodePtr node)
 
     DaeShape* shape = static_cast<DaeShape*>(node.get());
     if (shape->isPresence()) {
-        throwException(line(), (format(_("[%1%]duplicate primitive-physics on shape, rigid-id:%2%")) 
+        throwException(line(), (format("[%1%]duplicate primitive-physics on shape, rigid-id:%2%") 
                                 % line() % befRigid->id).str());
     }
     shape->setCone(height, Vector2(radius1[0], radius1[1]), Vector2(radius2[0], radius2[1]));
@@ -1681,10 +1679,10 @@ DaeNodePtr DaeParserImpl::readLink(DaeNodePtr node)
 {  
     // There is a clear distinction between link and node in collada. 
     if (accessible != EXT_KINEMATICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid link-tag, it not join to the kinematics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid link-tag, it not join to the kinematics-tag") % line()).str());
     }              
     if (!reader->getAttributeValue("sid")) {
-        throwException(line(), (format(_("[%1%]invalid link-tag, it haven't the sid:%2%")) 
+        throwException(line(), (format("[%1%]invalid link-tag, it haven't the sid:%2%") 
                                 % line() % refKinematicsId).str());
     }
     DaeLinkPtr link = new DaeLink;
@@ -1696,11 +1694,11 @@ DaeNodePtr DaeParserImpl::readLink(DaeNodePtr node)
 
     pair<DaeLinks::iterator, bool> pib = links.insert(pair<string, DaeLinkPtr>(id, link));
     if (!pib.second) {    
-        throwException(line(), (format(_("[%1%]duplicate link:%2%")) % line() % id).str());
+        throwException(line(), (format("[%1%]duplicate link:%2%") % line() % id).str());
     }
     pib = linkNames.insert(pair<string, DaeLinkPtr>(name, link));
     if (!pib.second) {    
-        throwException(line(), (format(_("[%1%]duplicate link-name:%2%")) % line() % name).str());
+        throwException(line(), (format("[%1%]duplicate link-name:%2%") % line() % name).str());
     }
     if (!rootLinkPresence) {
         stack.clear();
@@ -1728,10 +1726,10 @@ DaeNodePtr DaeParserImpl::readAttachmentFull(DaeNodePtr node)
     // There is a clear distinction between joint and node in collada. 
     // Attachment_full tags are the "INSTANCE" of definition of joint.
     if (accessible != EXT_KINEMATICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid attachment-tag, it not join to the kinematics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid attachment-tag, it not join to the kinematics-tag") % line()).str());
     }              
     if (!reader->getAttributeValue("joint")) {
-        throwException(line(), (format(_("[%1%]invalid attachment-tag, it haven't a joint attribute")) % line()).str());
+        throwException(line(), (format("[%1%]invalid attachment-tag, it haven't a joint attribute") % line()).str());
     }
     string target = reader->getAttributeValue("joint");
 
@@ -1758,10 +1756,10 @@ DaeNodePtr DaeParserImpl::readJoint(DaeNodePtr node)
 {
     // Joint tags are the "CONCRETE(like Library)" of definition of joint.
     if (accessible != EXT_KINEMATICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid joint-tag, it not join to the kinematics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid joint-tag, it not join to the kinematics-tag") % line()).str());
     }              
     if (!reader->getAttributeValue("sid")) {
-        throwException(line(), (format(_("[%1%]invalid joint-tag, it haven't a sid attribute")) % line()).str());
+        throwException(line(), (format("[%1%]invalid joint-tag, it haven't a sid attribute") % line()).str());
     }
 
     string id   = refKinematicsId + "/" + reader->getAttributeValue("sid");
@@ -1789,13 +1787,13 @@ DaeNodePtr DaeParserImpl::readPrismatic(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readRevolute(DaeNodePtr node)
 {
     if (accessible != EXT_KINEMATICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid revolute-tag, it not join to the kinematics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid revolute-tag, it not join to the kinematics-tag") % line()).str());
     }              
     if (!reader->getAttributeValue("sid")) {
-        throwException(line(), (format(_("[%1%]invalid revolute-tag, it haven't a sid attribute")) % line()).str());
+        throwException(line(), (format("[%1%]invalid revolute-tag, it haven't a sid attribute") % line()).str());
     }
     if (!befJoint) {
-        throwException(line(), (format(_("[%1%]invalid revolute-tag, it haven't a parent joint-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid revolute-tag, it haven't a parent joint-tag") % line()).str());
     }
 
     // The structure of this hierarchy is deterministic. 
@@ -1815,14 +1813,14 @@ DaeNodePtr DaeParserImpl::readAxis(DaeNodePtr node)
         if (befJoint && befRevolute) {
             reader->read(); 
             if (!reader->getNodeData()) {
-                throwException(line(), (format(_("[%1%]invalid axis-tag, it haven't a content")) % line()).str());
+                throwException(line(), (format("[%1%]invalid axis-tag, it haven't a content") % line()).str());
             }
                      
             string content = reader->getNodeData();
             vector<string> ret;
             boost::split(ret, content, is_any_of(" "));
             if (ret.size() != 3) {
-                throwException(line(), (format(_("[%1%]invalid axis-tag, it have a invalid content")) % line()).str());
+                throwException(line(), (format("[%1%]invalid axis-tag, it have a invalid content") % line()).str());
             }
             // The structure of this hierarchy is deterministic.
             befRevolute->axis = Vector3(lexical_cast<double>(ret[0]),
@@ -1841,7 +1839,7 @@ DaeNodePtr DaeParserImpl::readMin(DaeNodePtr node)
         if (befJoint && befRevolute) {
             reader->read(); 
             if (!reader->getNodeData()) {
-                throwException(line(), (format(_("[%1%]invalid min-tag, it haven't a content")) % line()).str());
+                throwException(line(), (format("[%1%]invalid min-tag, it haven't a content") % line()).str());
             }
                      
             string content = reader->getNodeData();
@@ -1859,7 +1857,7 @@ DaeNodePtr DaeParserImpl::readMax(DaeNodePtr node)
         if (befJoint && befRevolute) {
             reader->read(); 
             if (!reader->getNodeData()) {
-                throwException(line(), (format(_("[%1%]invalid max-tag, it haven't a content")) % line()).str());
+                throwException(line(), (format("[%1%]invalid max-tag, it haven't a content") % line()).str());
             }
         
             // The structure of this hierarchy is deterministic.             
@@ -1883,11 +1881,11 @@ DaeNodePtr DaeParserImpl::readInstanceRigidBody(DaeNodePtr node)
 {
     // Rigid is related to the link.
     if (accessible != EXT_PHYSICS_SCENES) {
-        throwException(line(), (format(_("[%1%]invalid instance-rigid-tag, it not join to the physics-scene-tag")) 
+        throwException(line(), (format("[%1%]invalid instance-rigid-tag, it not join to the physics-scene-tag") 
                                 % line()).str());
     }
     if (!reader->getAttributeValue("body") || !reader->getAttributeValue("target")) {
-        throwException(line(), (format(_("[%1%]invalid instance-rigid-tag, it haven't a body or target")) 
+        throwException(line(), (format("[%1%]invalid instance-rigid-tag, it haven't a body or target") 
                                 % line()).str());
     }
 
@@ -1897,7 +1895,7 @@ DaeNodePtr DaeParserImpl::readInstanceRigidBody(DaeNodePtr node)
  
     pair<DaeRigidRelations::iterator, bool> pib = rrelations.insert(pair<string, string>(target, body)); 
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate instance-rigid-tag:%2%(%3%)")) 
+        throwException(line(), (format("[%1%]duplicate instance-rigid-tag:%2%(%3%)") 
                                 % line() % target % body).str());
     }
 
@@ -1909,12 +1907,12 @@ DaeNodePtr DaeParserImpl::readMass(DaeNodePtr node)
 {
     // mass is the mass of the link.
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid mass-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid mass-tag, it not join to the physics-tag") % line()).str());
     }
 
     reader->read();
     if (!reader->getNodeData()) {
-        throwException(line(), (format(_("[%1%]invalid mass-tag, it haven't a content")) % line()).str());
+        throwException(line(), (format("[%1%]invalid mass-tag, it haven't a content") % line()).str());
     }
     string value = reader->getNodeData();
     DaeRigid* rigid = static_cast<DaeRigid*>(node.get());
@@ -1928,7 +1926,7 @@ DaeNodePtr DaeParserImpl::readMassFrame(DaeNodePtr node)
 {
     // mass_frame is translation and rotation to the center of gravity.
     if (!befRigid) {
-        throwException(line(), (format(_("[%1%]invalid mass-frmae-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid mass-frmae-tag") % line()).str());
     }
     DaeMassFramePtr massFrame = new DaeMassFrame;
     befRigid->massFrame = massFrame; // easy to access this node on next(child) node.
@@ -1940,12 +1938,12 @@ DaeNodePtr DaeParserImpl::readInertia(DaeNodePtr node)
 {
     // This is the inertia of the link.
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid inertia-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid inertia-tag, it not join to the physics-tag") % line()).str());
     }
 
     reader->read();
     if (!reader->getNodeData()) {
-        throwException(line(), (format(_("[%1%]invalid inertia-tag, it haven't a content")) % line()).str());
+        throwException(line(), (format("[%1%]invalid inertia-tag, it haven't a content") % line()).str());
     }
     string value = reader->getNodeData();
     DaeVectorXArrayPtr values = DaeVectorXArrayPtr(new DaeVectorXArray);
@@ -1962,7 +1960,7 @@ DaeNodePtr DaeParserImpl::readShape(DaeNodePtr node)
 {
     // This is a graphic of primitive.
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid shape-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid shape-tag, it not join to the physics-tag") % line()).str());
     }
 
     DaeShapePtr shape = new DaeShape;
@@ -1975,10 +1973,10 @@ DaeNodePtr DaeParserImpl::readShape(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readRigidBody(DaeNodePtr node)
 {
     if (accessible != EXT_PHYSICS_MODELS) {
-        throwException(line(), (format(_("[%1%]invalid rigid-body-tag, it not join to the physics-tag")) % line()).str());
+        throwException(line(), (format("[%1%]invalid rigid-body-tag, it not join to the physics-tag") % line()).str());
     }
     if (!reader->getAttributeValue("sid")) {
-        throwException(line(), (format(_("[%1%]invalid rigid-body-tag, it haven't a sid")) % line()).str());
+        throwException(line(), (format("[%1%]invalid rigid-body-tag, it haven't a sid") % line()).str());
     }
 
     DaeRigidPtr rigid = DaeRigidPtr(new DaeRigid);
@@ -1993,11 +1991,11 @@ DaeNodePtr DaeParserImpl::readRigidBody(DaeNodePtr node)
         
     pair<DaeRigids::iterator, bool> pib = rigids.insert(pair<string, DaeRigidPtr>(id, rigid)); 
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate rigid-body-tag:%2%")) % line() % id).str());
+        throwException(line(), (format("[%1%]duplicate rigid-body-tag:%2%") % line() % id).str());
     }
     pib = rigidNames.insert(pair<string, DaeRigidPtr>(name, rigid)); 
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate rigid-body-tag:%2%")) % line() % name).str());
+        throwException(line(), (format("[%1%]duplicate rigid-body-tag:%2%") % line() % name).str());
     }
 
     return static_cast<DaeNodePtr>(rigid); 
@@ -2008,11 +2006,11 @@ DaeNodePtr DaeParserImpl::readVcount(DaeNodePtr node)
 {
     // vcount is the number of vertices of the shape. (vertices count)
     if (figure != EXT_POLYLIST) {
-        throwException(line(), (format(_("[%1%]invalid structure of vcount:%2%")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid structure of vcount:%2%") % line() % refGeometryId).str());
     }
     DaeGeometries::iterator iterg = geometries.find(refGeometryId);
     if (iterg == geometries.end()) {
-        throwException(line(), (format(_("[%1%]invalid vcount on geometry:%2%")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid vcount on geometry:%2%") % line() % refGeometryId).str());
     }
     DaeGeometryPtr geometry = iterg->second;
        
@@ -2048,7 +2046,7 @@ DaeNodePtr DaeParserImpl::readInitFrom(DaeNodePtr node)
         DaeTexturePtr texture = new DaeTexture(path + "/" + fileName);
         pair<DaeTextures::iterator, bool> pib = textures.insert(pair<string, DaeTexturePtr>(refImageId, texture));
         if (!pib.second) {
-            throwException(line(), (format(_("[%1%]duplicate texture:%2%")) % line() % refImageId).str());
+            throwException(line(), (format("[%1%]duplicate texture:%2%") % line() % refImageId).str());
         } 
  
     } else if (accessible == EXT_EFFECTS) {
@@ -2058,7 +2056,7 @@ DaeNodePtr DaeParserImpl::readInitFrom(DaeNodePtr node)
         effect->refImageId = id;            
  
     } else {
-        throwException(line(), (format(_("[%1%]invalid structure of init_from")) % line()).str());
+        throwException(line(), (format("[%1%]invalid structure of init_from") % line()).str());
     }
 
     return node;            
@@ -2068,7 +2066,7 @@ DaeNodePtr DaeParserImpl::readInitFrom(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readActuator(DaeNodePtr node)
 {
     if (!reader->getAttributeValue("id")) {
-        throwException(line(), (format(_("[%1%]invalid actuator")) % line()).str());
+        throwException(line(), (format("[%1%]invalid actuator") % line()).str());
     }
     string id = reader->getAttributeValue("id");
     DaeActuatorPtr actuator = new DaeActuator;
@@ -2076,7 +2074,7 @@ DaeNodePtr DaeParserImpl::readActuator(DaeNodePtr node)
 
     pair<DaeActuators::iterator, bool> pib = actuators.insert(pair<string, DaeActuatorPtr>(id, actuator));
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate actuator:%2%")) % line() % id).str());
+        throwException(line(), (format("[%1%]duplicate actuator:%2%") % line() % id).str());
     }
  
     return static_cast<DaeNodePtr>(actuator);
@@ -2090,7 +2088,7 @@ void DaeParserImpl::setActuator(DaeNodePtr node, double& value, string message)
         string data = reader->getNodeData(); 
         value = lexical_cast<double>(data); 
     } else {
-        *os << format(_(message.c_str())) % line() % node->id << endl;
+        *os << format(message.c_str()) % line() % node->id << endl;
     }
 }
 
@@ -2187,7 +2185,7 @@ DaeNodePtr DaeParserImpl::readInstanceActuator(DaeNodePtr node)
 {
     if (DaeAttachActuator* attach = dynamic_cast<DaeAttachActuator*>(node.get())) {
         if (!reader->getAttributeValue("url")) {
-            throwException(line(), (format(_("[%1%]invalid instance actuator-tag, url attribute not found:%2%")) 
+            throwException(line(), (format("[%1%]invalid instance actuator-tag, url attribute not found:%2%") 
                                     % line() % node->id).str()); 
         } 
         string url = reader->getAttributeValue("url");
@@ -2204,7 +2202,7 @@ DaeNodePtr DaeParserImpl::readBindActuator(DaeNodePtr node)
 {
     if (DaeAttachActuator* attach = dynamic_cast<DaeAttachActuator*>(node.get())) {
         if (!reader->getAttributeValue("joint")) {
-            throwException(line(), (format(_("[%1%]invalid bind actuator-tag, joint attribute not found:%2%")) 
+            throwException(line(), (format("[%1%]invalid bind actuator-tag, joint attribute not found:%2%") 
                                     % line() % node->id).str()); 
         } 
         string joint = reader->getAttributeValue("joint");
@@ -2221,7 +2219,7 @@ void DaeParserImpl::createActuatorRelation(DaeAttachActuatorPtr attach)
         pair<DaeActuatorRelations::iterator, bool> pib = arelations.insert(pair<string, string>(attach->bindActuator, 
                                                                                                 attach->instanceActuator));
         if (!pib.second) {
-            throwException(line(), (format(_("[%1%]duplicate actuator-relation:%2%")) 
+            throwException(line(), (format("[%1%]duplicate actuator-relation:%2%") 
                                     % line() % attach->bindActuator).str());
         }
     }
@@ -2232,7 +2230,7 @@ DaeNodePtr DaeParserImpl::readInstanceSensor(DaeNodePtr node)
 {
     if (DaeAttachSensor* attach = dynamic_cast<DaeAttachSensor*>(node.get())) {
         if (!reader->getAttributeValue("url")) {
-            throwException(line(), (format(_("[%1%]invalid instance sensor-tag, url attribute not found:%2%")) 
+            throwException(line(), (format("[%1%]invalid instance sensor-tag, url attribute not found:%2%") 
                                     % line() % node->id).str()); 
         } 
         string url = reader->getAttributeValue("url");
@@ -2249,7 +2247,7 @@ DaeNodePtr DaeParserImpl::readFrameOrigin(DaeNodePtr node)
 {
     if (DaeAttachSensor* attach = dynamic_cast<DaeAttachSensor*>(node.get())) {
         if (!reader->getAttributeValue("link")) {
-            throwException(line(), (format(_("[%1%]invalid frame-origin-tag, link attribute not found:%2%")) 
+            throwException(line(), (format("[%1%]invalid frame-origin-tag, link attribute not found:%2%") 
                                     % line() % node->id).str()); 
         } 
         string link = reader->getAttributeValue("link");
@@ -2291,7 +2289,7 @@ DaeNodePtr DaeParserImpl::readExtra(DaeNodePtr node)
 DaeNodePtr DaeParserImpl::readSensor(DaeNodePtr node)
 {
     if (!reader->getAttributeValue("id")) {
-        throwException(line(), (format(_("[%1%]invalid sensor-tag, id attribute not found")) % line()).str()); 
+        throwException(line(), (format("[%1%]invalid sensor-tag, id attribute not found") % line()).str()); 
     }
     DaeSensorPtr sensor = new DaeSensor;
     sensor->id   = reader->getAttributeValue("id");
@@ -2299,7 +2297,7 @@ DaeNodePtr DaeParserImpl::readSensor(DaeNodePtr node)
 
     pair<DaeSensors::iterator, bool> pib = sensors.insert(pair<string, DaeSensorPtr>(sensor->id, sensor));        
     if (!pib.second) {
-        throwException(line(), (format(_("[%1%]duplicate sensor:%2%")) % line() % sensor->id).str()); 
+        throwException(line(), (format("[%1%]duplicate sensor:%2%") % line() % sensor->id).str()); 
     }
 
     return static_cast<DaeNodePtr>(sensor);
@@ -2326,7 +2324,7 @@ DaeNodePtr DaeParserImpl::readIntrinsic(DaeNodePtr node)
         DaeVectorXArrayPtr source = DaeVectorXArrayPtr(new DaeVectorXArray);
         array(value, source);
         if (source->size() != 6) {
-            throwException(line(), (format(_("[%1%]invalid intrinsic-tag, not 6-dimensions")) % line()).str()); 
+            throwException(line(), (format("[%1%]invalid intrinsic-tag, not 6-dimensions") % line()).str()); 
         }
         sensor->intrinsic << source->at(0), source->at(1), source->at(2),
             source->at(3), source->at(4), source->at(5);
@@ -2345,7 +2343,7 @@ DaeNodePtr DaeParserImpl::readImageDimensions(DaeNodePtr node)
         DaeVectorXArrayPtr source = DaeVectorXArrayPtr(new DaeVectorXArray);
         array(value, source);
         if (source->size() != 3) {
-            throwException(line(), (format(_("[%1%]invalid image-dimensions-tag, not 3-dimensions")) % line()).str()); 
+            throwException(line(), (format("[%1%]invalid image-dimensions-tag, not 3-dimensions") % line()).str()); 
         }
         sensor->imageDimensions << source->at(0), source->at(1), source->at(2);
     }
@@ -2402,7 +2400,7 @@ DaeNodePtr DaeParserImpl::readInput(DaeNodePtr node)
 
         pair<DaeVerticesRef::iterator, bool> pia = verticesRef.insert(pair<string, string>(refVerticesId, refPositionId));
         if (!pia.second) {
-            throwException(line(), (format(_("[%1%]duplicate vertices-id:%2%,position-id:%3%")) 
+            throwException(line(), (format("[%1%]duplicate vertices-id:%2%,position-id:%3%") 
                                     % line() % refVerticesId % refPositionId).str());
         }
         break;
@@ -2430,21 +2428,21 @@ DaeNodePtr DaeParserImpl::readInput(DaeNodePtr node)
 void DaeParserImpl::createVertexAndNormal(int type, string& source, int offset)
 {
     if (!checkOrder(meshes)) {
-        throwException(line(), (format(_("[%1%]invalid triangle")) % line()).str());
+        throwException(line(), (format("[%1%]invalid triangle") % line()).str());
     }
     if (!refMesh) {
-        throwException(line(), (format(_("[%1%]invalid mesh structure. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid mesh structure. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)") % line() % refGeometryId).str());
     }
     DaeGeometries::iterator iterv = geometries.find(refGeometryId);
     if (iterv == geometries.end()) {
-        throwException(line(), (format(_("[%1%]invalid geometry:%2%")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid geometry:%2%") % line() % refGeometryId).str());
     }
     DaeGeometryPtr geometry = iterv->second;
 
     // check the valid mesh on geometry
     DaeMeshes::iterator iterm = std::find(geometry->meshes.begin(), geometry->meshes.end(), refMesh);
     if (iterm == geometry->meshes.end()) {
-        throwException(line(), (format(_("[%1%]invalid mesh is invoked. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid mesh is invoked. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)") % line() % refGeometryId).str());
     }
 
     switch (type) {
@@ -2452,12 +2450,12 @@ void DaeParserImpl::createVertexAndNormal(int type, string& source, int offset)
         if (!iequals(refVerticesId, source)) {
             source = refGeometryId + "/" + source;
             if (!iequals(refVerticesId, source)) {
-                throwException(line(), (format(_("[%1%]invalid vertices(1):%2%")) % line() % refVerticesId).str());
+                throwException(line(), (format("[%1%]invalid vertices(1):%2%") % line() % refVerticesId).str());
             }
         }
         DaeVectorMap::iterator iter = sources.find(refPositionId);
         if (iter == sources.end()) {
-            throwException(line(), (format(_("[%1%]invalid position:%2%")) % line() % refPositionId).str());
+            throwException(line(), (format("[%1%]invalid position:%2%") % line() % refPositionId).str());
         }           
         offsetVertex = offset;
         refMesh->refVerticesId = source;
@@ -2468,7 +2466,7 @@ void DaeParserImpl::createVertexAndNormal(int type, string& source, int offset)
         refNormalsId = source;
         DaeVectorMap::iterator iter = sources.find(refNormalsId);
         if (iter == sources.end()) {
-            throwException(line(), (format(_("[%1%]invalid normals(1):%2%")) % line() % refNormalsId).str());
+            throwException(line(), (format("[%1%]invalid normals(1):%2%") % line() % refNormalsId).str());
         }            
         offsetNormal = offset;
         refMesh->refNormalsId = source;
@@ -2479,7 +2477,7 @@ void DaeParserImpl::createVertexAndNormal(int type, string& source, int offset)
         refColorId = source;
         DaeVectorMap::iterator iter = sources.find(refColorId);
         if (iter == sources.end()) {
-            throwException(line(), (format(_("[%1%]invalid colors:%2%")) % line() % refColorId).str());
+            throwException(line(), (format("[%1%]invalid colors:%2%") % line() % refColorId).str());
         }            
         offsetColor = offset;
         refMesh->refColorId = source;
@@ -2490,7 +2488,7 @@ void DaeParserImpl::createVertexAndNormal(int type, string& source, int offset)
         refTexcoordId = source;
         DaeVectorMap::iterator iter = sources.find(refTexcoordId);
         if (iter == sources.end()) {
-            throwException(line(), (format(_("[%1%]invalid texcoords:%2%")) % line() % refTexcoordId).str());
+            throwException(line(), (format("[%1%]invalid texcoords:%2%") % line() % refTexcoordId).str());
         }            
         offsetTexcoord = offset;
         refMesh->refTexcoordId = source;
@@ -2531,13 +2529,13 @@ void DaeParserImpl::index(string &value, DaeVectorXArrayPtr index, int offset, i
          iter++)
         {
             if ((boost::copy_range<std::string>(*iter)).size() <= 0) {     
-                throwException(line(), (format(_("[%1%]invalid value:%2%")) % line() % boost::copy_range<std::string>(*iter)).str());
+                throwException(line(), (format("[%1%]invalid value:%2%") % line() % boost::copy_range<std::string>(*iter)).str());
             }
             for (int n = 0; n < offset; n++) {
                 // It will skip the offset of the first
                 iter++;
                 if (iter == split_iterator<string::iterator>()) {
-                    *os << ((format(_("[%1%]invalid offset(before token):%2%")) % line() % offset).str()) << endl;
+                    *os << ((format("[%1%]invalid offset(before token):%2%") % line() % offset).str()) << endl;
                     return;
                 }
             }
@@ -2557,21 +2555,21 @@ void DaeParserImpl::index(string &value, DaeVectorXArrayPtr index, int offset, i
 DaeNodePtr DaeParserImpl::readP(DaeNodePtr node)
 {
     if (!checkOrder(meshes, 1)) {
-        throwException(line(), (format(_("[%1%]invalid p structure(p order on mesh)")) % line()).str());
+        throwException(line(), (format("[%1%]invalid p structure(p order on mesh)") % line()).str());
     }
     if (!refMesh) {
-        throwException(line(), (format(_("[%1%]invalid mesh structure. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid mesh structure. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)") % line() % refGeometryId).str());
     }
     DaeGeometries::iterator iter = geometries.find(refGeometryId);
     if (iter == geometries.end()) {
-        throwException(line(), (format(_("[%1%]invalid geometry(geimeotry-id:%2%)")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid geometry(geimeotry-id:%2%)") % line() % refGeometryId).str());
     }
     DaeGeometryPtr geometry = iter->second;
 
     // check the valid mesh on geometry
     DaeMeshes::iterator iterm = std::find(geometry->meshes.begin(), geometry->meshes.end(), refMesh);
     if (iterm == geometry->meshes.end()) {
-        throwException(line(), (format(_("[%1%]invalid mesh is invoked. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)")) % line() % refGeometryId).str());
+        throwException(line(), (format("[%1%]invalid mesh is invoked. Currently, only the lines and polylist and triangles are eligible(geometry-id:%2%)") % line() % refGeometryId).str());
     }
 
     reader->read();
@@ -2600,13 +2598,13 @@ bool DaeParserImpl::checkConcreteNode(DaeNodePtr node)
             // It replaced with a copy of the actual node to instance_node
             DaeNodes::iterator itern = nodes.find(child->refNodeId);
             if (itern == nodes.end()) { 
-                throwException(line(), (format(_("[-1]concrete node not found:%1%")) % child->refNodeId).str());
+                throwException(line(), (format("[-1]concrete node not found:%1%") % child->refNodeId).str());
             }
             node->children.erase(iter++);
             DaeNodePtr concrete = itern->second->clone(); 
             pair<DaeNodes::iterator, bool> pib = node->children.insert(pair<string, DaeNodePtr>(concrete->id, concrete));
             if (!pib.second) {
-                throwException(line(), (format(_("[%1%]duplicate node:%2%")) % line() % concrete->id).str());
+                throwException(line(), (format("[%1%]duplicate node:%2%") % line() % concrete->id).str());
             }
         } else {
             iter++;
@@ -2670,7 +2668,7 @@ bool DaeParserImpl::checkSafetyNode()
     BOOST_FOREACH(NODES_PAIR n, lists) {
         if (0 < n.second->refNodeId.length()) {
             // If there is a instance_node, it is an error.
-            throwException(line(), (format(_("[%1%]invalid instance_node:%2%")) 
+            throwException(line(), (format("[%1%]invalid instance_node:%2%") 
                                     % line() % n.second->id).str());
         }
         BOOST_FOREACH(GEOMETRY_PAIR g, n.second->geometries) {
@@ -2704,13 +2702,13 @@ void DaeParserImpl::createEmptyMaterial(DaeGeometryPtr geometry)
     // New material add
     pair<DaeMaterials::iterator, bool> pibm = materials.insert(pair<string, DaeMaterialPtr>(uuidMaterial, newMaterial));
     if (!pibm.second) {
-        throwException(line(), (format(_("[%1%]duplicate material:%2%")) % line() % uuidMaterial).str());
+        throwException(line(), (format("[%1%]duplicate material:%2%") % line() % uuidMaterial).str());
     }
 
     // New Effect add
     pair<DaeEffects::iterator, bool> pibe = effects.insert(pair<string, DaeEffectPtr>(uuidEffect, newEffect));
     if (!pibe.second) {
-        throwException(line(), (format(_("[%1%]duplicate effect:%2%")) % line() % uuidEffect).str());
+        throwException(line(), (format("[%1%]duplicate effect:%2%") % line() % uuidEffect).str());
     }
 }
 
@@ -2719,12 +2717,12 @@ int DaeParserImpl::createStride(string& verticesId)
 {
     DaeVerticesRef::iterator iterv = verticesRef.find(verticesId);
     if (iterv == verticesRef.end()) {
-        throwException(line(), (format(_("[%1%]invalid vertices-id:%2%")) 
+        throwException(line(), (format("[%1%]invalid vertices-id:%2%") 
                                 % line() % verticesId).str());
     }
     DaeStrides::iterator iters = strides.find(iterv->second);
     if (iters == strides.end()) {
-        throwException(line(), (format(_("[%1%]invalid position-id:%2%")) 
+        throwException(line(), (format("[%1%]invalid position-id:%2%") 
                                 % line() % iterv->second).str());
     }
     int stride = iters->second;
@@ -2786,7 +2784,7 @@ void DaeParserImpl::setRigid(DaeNodePtr extNode, SgGroup* sgGroup, SgGroup* sgTr
     try {
         DaeRigidPtr rigid = findRigidBody(extNode->id);
         if (0 < rigid->shapes.size() && sgTransParent->numChildren() != rigid->shapes.size()) {
-            throwException(line(), (format(_("[%1%]invalid number of mesh and rigid:%2%")) % line() % extNode->id).str());
+            throwException(line(), (format("[%1%]invalid number of mesh and rigid:%2%") % line() % extNode->id).str());
         }
         unsigned int i = 0;
         for (DaeShapes::iterator iters = rigid->shapes.begin(); iters != rigid->shapes.end(); iters++) {
@@ -2804,7 +2802,7 @@ void DaeParserImpl::setRigid(DaeNodePtr extNode, SgGroup* sgGroup, SgGroup* sgTr
                             meshGenerator.generateCylinder(extShape->cylinder.radius, extShape->cylinder.height));
                     } else
                         if (extShape->cone.presence) {
-                            *os << ((format(_("[%1%]no implementation yet")) % line()).str()) << endl;
+                            *os << ((format("[%1%]no implementation yet") % line()).str()) << endl;
                             return;
                         }
             i++;
@@ -2852,10 +2850,10 @@ void DaeParserImpl::setRigid(DaeNodePtr extNode, SgGroup* sgGroup, SgGroup* sgTr
                                                                                 extShape->cylinder.height));
                             } else 
                                 if (extShape->cone.presence) {
-                                    *os << ((format(_("[%1%]no implementation yet")) % line()).str()) << endl;
+                                    *os << ((format("[%1%]no implementation yet") % line()).str()) << endl;
                                     return;
                                 } else {
-                                    throwException(line(), (format(_("[%1%]invalid figure,node-id:%2%")) % line() % extNode->id).str());
+                                    throwException(line(), (format("[%1%]invalid figure,node-id:%2%") % line() % extNode->id).str());
                                 }
                     SgMaterialPtr sgMaterial = SgMaterialPtr(new SgMaterial);
                     sgMaterial->setTransparency(1.0);
@@ -2905,13 +2903,13 @@ void DaeParserImpl::setGeometry(DaeGeometryPtr extGeometry, DaeNodePtr extNode, 
 
         // create a new materials by TRIANGLES.
         if ((*iterm)->refMaterialId.size() <= 0) {
-            throwException(line(), (format(_("[%1%]invalid material symbol:%2%")) % line() % extGeometry->geometryId).str());
+            throwException(line(), (format("[%1%]invalid material symbol:%2%") % line() % extGeometry->geometryId).str());
         }
 
         string symbol = extGeometry->geometryId + "/" + (*iterm)->refMaterialId;
         DaeMaterialRef::iterator itersr = materialRef.find(symbol); 
         if (itersr == materialRef.end()) {
-            throwException(line(), (format(_("[%1%]invalid material symbol:%2%")) % line() % symbol).str());
+            throwException(line(), (format("[%1%]invalid material symbol:%2%") % line() % symbol).str());
         }
         tmpEffect = findEffect(itersr->second);
         setMaterial(tmpEffect, sgMaterial);                   
@@ -2932,7 +2930,7 @@ void DaeParserImpl::setGeometry(DaeGeometryPtr extGeometry, DaeNodePtr extNode, 
 void DaeParserImpl::setMesh(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, SgMeshBase* sgMesh, bool polygon)
 { 
     if (!sgMesh) {
-        throwException(line(), (format(_("[%1%]invalid sg-mesh created")) % line()).str());
+        throwException(line(), (format("[%1%]invalid sg-mesh created") % line()).str());
     }
 
     // Read side is responsible, It will generate the recording area of the normal and vertex
@@ -2975,7 +2973,7 @@ void DaeParserImpl::setTexture(string meshImageId, SgTexture* sg)
 {
     DaeTextures::iterator iter = textures.find(meshImageId);
     if (iter == textures.end()) {
-        throwException(line(), (format(_("[%1%]invalid image-id:%2%")) % line() % meshImageId).str());
+        throwException(line(), (format("[%1%]invalid image-id:%2%") % line() % meshImageId).str());
     } 
     DaeTexturePtr texture = iter->second;
     sg->getOrCreateImage()->image().load(texture->fileName());
@@ -2990,7 +2988,7 @@ void DaeParserImpl::setVertices(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
     if (extMesh->vertices) {
         int tstride = createStride(extMesh->refVerticesId);
         if (3 != tstride) { // only 3-dimension
-            throwException(line(), (format(_("[%1%]It does not correspond to the vertices of the polygon.")) % line()).str());
+            throwException(line(), (format("[%1%]It does not correspond to the vertices of the polygon.") % line()).str());
         }
 
         DaeVectorXArrayPtr vertices = extMesh->vertices;
@@ -3006,7 +3004,7 @@ void DaeParserImpl::setVertices(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
             }
         }
     } else {
-        throwException(line(), (format(_("[%1%]invalid vertices(2):%2%")) % line() % extGeometry->geometryId).str());
+        throwException(line(), (format("[%1%]invalid vertices(2):%2%") % line() % extGeometry->geometryId).str());
     }
 }
 
@@ -3023,7 +3021,7 @@ void DaeParserImpl::setNormals(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, S
         }
         int tstride = iter->second;
         if (3 != tstride) { // only 3-dimension
-            throwException(line(), (format(_("[%1%]It does not correspond to the normal of the polygon.")) % line()).str());
+            throwException(line(), (format("[%1%]It does not correspond to the normal of the polygon.") % line()).str());
         }
 
         DaeVectorXArrayPtr normals = extMesh->normals;
@@ -3038,7 +3036,7 @@ void DaeParserImpl::setNormals(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, S
             }
         }
     } else {
-        throwException(line(), (format(_("[%1%]invalid normals(2):%2%")) % line() % extMesh->refNormalsId).str());
+        throwException(line(), (format("[%1%]invalid normals(2):%2%") % line() % extMesh->refNormalsId).str());
     }
 }
 
@@ -3055,7 +3053,7 @@ void DaeParserImpl::setTexcoord(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
         }
         int tstride = iter->second;
         if (2 != tstride) { // only S and T
-            throwException(line(), (format(_("[%1%]It does not correspond to the texcoord of the polygon.")) 
+            throwException(line(), (format("[%1%]It does not correspond to the texcoord of the polygon.") 
                                     % line()).str());
         }
 
@@ -3074,7 +3072,7 @@ void DaeParserImpl::setTexcoord(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
             }
         }
     } else {
-        throwException(line(), (format(_("[%1%]invalid texcoord")) % line()).str());
+        throwException(line(), (format("[%1%]invalid texcoord") % line()).str());
     }
 }  
 
@@ -3090,7 +3088,7 @@ void DaeParserImpl::setColors(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, Sg
         }
         int tstride = iter->second;
         if (3 != tstride) { // Three primary colors
-            throwException(line(), (format(_("[%1%]It does not correspond to the colors of the polygon.")) 
+            throwException(line(), (format("[%1%]It does not correspond to the colors of the polygon.") 
                                     % line()).str());
         }
 
@@ -3106,7 +3104,7 @@ void DaeParserImpl::setColors(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, Sg
             }
         }
     } else {
-        throwException(line(), (format(_("[%1%]invalid colors")) % line()).str());
+        throwException(line(), (format("[%1%]invalid colors") % line()).str());
     }
 } 
 
@@ -3149,7 +3147,7 @@ void DaeParserImpl::setVIndexes(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
         }
 
     } else {
-        throwException(line(), (format(_("[%1%]invalid v-index")) % line()).str());
+        throwException(line(), (format("[%1%]invalid v-index") % line()).str());
     }
 }
 
@@ -3168,7 +3166,7 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
         }
         int tstride = iter->second;
         if (stride != tstride) { // only 3-dimension
-            throwException(line(), (format(_("[%1%]It does not correspond to the %2% of the polygon.")) 
+            throwException(line(), (format("[%1%]It does not correspond to the %2% of the polygon.") 
                                     % line() % text).str());
         }
 
@@ -3199,7 +3197,7 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
         }
 
     } else {
-        throwException(line(), (format(_("[%1%]invalid %2%")) % line() % text).str());
+        throwException(line(), (format("[%1%]invalid %2%") % line() % text).str());
     }
  
 }
@@ -3209,16 +3207,16 @@ DaeEffectPtr DaeParserImpl::findEffect(string& geoMaterialId)
 {
     DaeMaterials::iterator iterm = materials.find(geoMaterialId);
     if (iterm == materials.end()) {
-        throwException(line(), (format(_("[-1]invalid material:%1%")) % geoMaterialId).str());
+        throwException(line(), (format("[-1]invalid material:%1%") % geoMaterialId).str());
     }
     DaeMaterialPtr extMaterial = iterm->second; 
     if (extMaterial->refEffectId.length() <= 0) {
-        throwException(line(), (format(_("[-1]invalid ref-effect:%1%")) % extMaterial->refEffectId).str());
+        throwException(line(), (format("[-1]invalid ref-effect:%1%") % extMaterial->refEffectId).str());
     }
 
     DaeEffects::iterator itere = effects.find(extMaterial->refEffectId);
     if (itere == effects.end()) {
-        throwException(line(), (format(_("[-1]invalid effect:%1%")) % extMaterial->refEffectId).str());
+        throwException(line(), (format("[-1]invalid effect:%1%") % extMaterial->refEffectId).str());
     } 
     DaeEffectPtr extEffect = itere->second;
 
@@ -3241,7 +3239,7 @@ void DaeParserImpl::setMaterial(DaeEffectPtr extEffect, SgMaterial* sgMaterial)
 void DaeParserImpl::setTransform(DaeNodePtr extNode, SgGroup** sgParent, SgGroup** sgChild)
 {
     if (extNode->transform.affine) {
-        throwException(line(), (format(_("[-1][WARNING]duplicate transform:%1%, previous transform is used.")) 
+        throwException(line(), (format("[-1][WARNING]duplicate transform:%1%, previous transform is used.") 
                                 % extNode->id).str());
     }
  
@@ -3342,7 +3340,7 @@ DaeNode* DaeParserImpl::findNode(const string& nodeName)
     // node and joint and link to define the relationship in the attribute of the "name". 
     DaeNodes::iterator iter = nodeNames.find(nodeName);
     if (iter == nodeNames.end()) {
-        throwException(line(), (format(_("[-1]invalid nodeName on nodes:%1%")) % nodeName).str());
+        throwException(line(), (format("[-1]invalid nodeName on nodes:%1%") % nodeName).str());
     }
     return iter->second.get();
 }
@@ -3353,7 +3351,7 @@ DaeNode* DaeParserImpl::findLinkByJoint(const string& jointName)
     // node and joint and link to define the relationship in the attribute of the "name". 
     DaeLinks::iterator iter = linkNames.find(jointName);
     if (iter == linkNames.end()) {
-        throwException(line(), (format(_("[-1]invalid jointName on links:%1%")) % jointName).str());
+        throwException(line(), (format("[-1]invalid jointName on links:%1%") % jointName).str());
     }
     return iter->second.get();
 }
@@ -3363,7 +3361,7 @@ DaeNode* DaeParserImpl::findJointByLink(const string& linkName)
 {
     DaeJoints::iterator iter = joints.find(linkName);
     if (iter == joints.end()) {
-        throwException(line(), (format(_("[-1]invalid linkName on joints:%1%")) % linkName).str());
+        throwException(line(), (format("[-1]invalid linkName on joints:%1%") % linkName).str());
     }
     return iter->second.get();
 }
@@ -3373,7 +3371,7 @@ DaeNode* DaeParserImpl::findRigidByLink(const string& linkName)
 {
     DaeRigids::iterator iter = rigidNames.find(linkName);
     if (iter == rigidNames.end()) {
-        throwException(line(), (format(_("[-1]invalid linkName on rigids:%1%")) % linkName).str());
+        throwException(line(), (format("[-1]invalid linkName on rigids:%1%") % linkName).str());
     }
     return iter->second.get();
 }
@@ -3383,11 +3381,11 @@ DaeNode* DaeParserImpl::findActuator(const string& jointId)
 {
     DaeActuatorRelations::iterator iterr = arelations.find(jointId);
     if (iterr == arelations.end()) {
-        throwException(line(), (format(_("[-1]invalid joint-id on actuator-relations:%1%")) % jointId).str());
+        throwException(line(), (format("[-1]invalid joint-id on actuator-relations:%1%") % jointId).str());
     }
     DaeActuators::iterator itera = actuators.find(iterr->second);
     if (itera == actuators.end()) {
-        throwException(line(), (format(_("[-1]invalid actuator-id on actuator:%1%,%2%")) % itera->second % jointId).str());
+        throwException(line(), (format("[-1]invalid actuator-id on actuator:%1%,%2%") % itera->second % jointId).str());
     }
     return static_cast<DaeNode*>(itera->second.get());
 }
@@ -3408,7 +3406,4 @@ DaeResultSensors* DaeParserImpl::findSensor(const string& linkId)
     return sensorResults.get();
 }
 
-
 };
-
-

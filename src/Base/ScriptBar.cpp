@@ -27,7 +27,7 @@ ScriptBar::ScriptBar()
 {
     setVisibleByDefault(true);
     
-    addButton(_("Script"), _("Execute scripts"))
+    addButton(QIcon(":/Base/icons/script.png"), _("Execute scripts"))
         ->sigClicked().connect(boost::bind(&ScriptBar::executeCheckedScriptItems, this));
 }
 

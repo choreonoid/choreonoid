@@ -277,7 +277,7 @@ void ToolBarAreaImpl::setVisibilityMenuItems(Menu* menu)
     for(size_t i=0; i < sorted.size(); ++i){
         ToolBar* toolBar = sorted[i];
         Action* action = new Action(menu);
-        action->setText(toolBar->objectName());
+        action->setText(toolBar->windowTitle());
         action->setCheckable(true);
         if(toolBar->isVisible()){
             action->setChecked(true);

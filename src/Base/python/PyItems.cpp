@@ -121,6 +121,7 @@ void exportPyItems()
             .value("NUM_ATTRIBUTES", Item::NUM_ATTRIBUTES);
     }
 
+    implicitly_convertible<ItemPtr, ReferencedPtr>();
     PyItemList<Item>("ItemList");
 
     class_< RootItem, RootItemPtr, bases<Item> >("RootItem")

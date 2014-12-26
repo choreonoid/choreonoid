@@ -8,7 +8,6 @@
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include <boost/format.hpp>
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -120,7 +119,7 @@ bool Vector3Seq::doReadSeq(const Mapping& archive)
         if(archive["type"].toString() == seqType()){
             const Listing& frames = *archive.findListing("frames");
             if(!frames.isValid()){
-                addSeqMessage(_("Valid \"frames\" field of Vector3Seq is not found."));
+                addSeqMessage("Valid \"frames\" field of Vector3Seq is not found.");
             } else {
                 const int n = frames.size();
                 setNumFrames(n);

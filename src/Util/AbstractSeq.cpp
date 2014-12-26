@@ -5,7 +5,7 @@
 
 #include "AbstractSeq.h"
 #include "YAMLWriter.h"
-#include "gettext.h"
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace boost;
@@ -92,11 +92,11 @@ bool AbstractSeq::checkSeqContent(const Mapping& archive, const std::string cont
 
         if(content_.empty()){
             message =
-                str(fmt(_("Content of %1% should be \"%2%\" but it is not specified."))
+                str(format("Content of %1% should be \"%2%\" but it is not specified.")
                     % seqType() % contentName);
         } else {
             message =
-                str(fmt(_("Content \"%1%\" of %2% is different from the required content \"%3%\"."))
+                str(format("Content \"%1%\" of %2% is different from the required content \"%3%\".")
                     % content_ % seqType() % contentName);
         }
         if(throwEx){

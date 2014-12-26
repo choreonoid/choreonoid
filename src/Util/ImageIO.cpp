@@ -15,8 +15,6 @@ extern "C" {
 #include <jpeglib.h>
 }
 
-#include "gettext.h"
-
 using namespace std;
 using namespace boost;
 using namespace cnoid;
@@ -27,7 +25,7 @@ void throwException(const string& filename, const std::string& description)
 {
     exception_base exception;
     exception << error_info_message(
-        str(format(_("Image file \"%1%\" cannot be loaded. %2%")) % filename % description));
+        str(format("Image file \"%1%\" cannot be loaded. %2%") % filename % description));
     BOOST_THROW_EXCEPTION(exception);
 }
     
@@ -48,14 +46,14 @@ void loadPNG(Image& image, const std::string& filename, bool isUpsideDown)
         if(fp){
             fclose(fp);
         }
-        throwException(filename, _("The file is not the PNG format."));
+        throwException(filename, "The file is not the PNG format.");
     }
     is_png = !png_sig_cmp(header, 0, number);
     if(!is_png){
         if(fp){
             fclose(fp);
         }
-        throwException(filename, _("The file is not the PNG format."));
+        throwException(filename, "The file is not the PNG format.");
     }
         
     png_structp pPng;
@@ -64,7 +62,7 @@ void loadPNG(Image& image, const std::string& filename, bool isUpsideDown)
         if(fp){
             fclose(fp);
         }
-        throwException(filename, _("Failed to create png_struct."));
+        throwException(filename, "Failed to create png_struct.");
     }
         
     png_infop pInfo;            
@@ -74,7 +72,7 @@ void loadPNG(Image& image, const std::string& filename, bool isUpsideDown)
         if(fp){
             fclose(fp);
         }
-        throwException(filename, _("Failed to create png_info"));
+        throwException(filename, "Failed to create png_info");
     }
         
     png_init_io(pPng, fp);
@@ -129,7 +127,7 @@ void loadPNG(Image& image, const std::string& filename, bool isUpsideDown)
             
     default:
         image.reset();
-        throwException(filename, _("Unsupported color type."));
+        throwException(filename, "Unsupported color type.");
     }
         
     png_read_update_info(pPng, pInfo);        
@@ -215,6 +213,6 @@ void ImageIO::load(Image& image, const std::string& filename)
     } else if(iends_with(filename, "jpg") || iends_with(filename, "jpeg")) {
         loadJPEG(image, filename, isUpsideDown_);
     } else {
-        throwException(filename, _("The image format type is not supported."));
+        throwException(filename, "The image format type is not supported.");
     }
 }

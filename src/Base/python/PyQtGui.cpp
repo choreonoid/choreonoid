@@ -4,10 +4,17 @@
 
 #include <boost/python.hpp>
 #include <QWidget>
+#include <QMainWindow>
 #include <QToolButton>
 
 using namespace boost;
 using namespace boost::python;
+
+namespace {
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(QAbstractButton_animateClick_overloads, animateClick, 0, 1)
+
+}
 
 BOOST_PYTHON_MODULE(QtGui)
 {
@@ -66,6 +73,9 @@ BOOST_PYTHON_MODULE(QtGui)
         .def("showNormal", &QWidget::showNormal)
         .def("update", QWidget_update1);
 
+
+    class_<QMainWindow, QMainWindow*, bases<QWidget>, boost::noncopyable>("QMainWindow");
+
     //class_ < QButtonGroup, boost::noncopyable >("QButtonGroup", init<>());
 
     class_<QAbstractButton, QAbstractButton*, bases<QWidget>, boost::noncopyable>("QAbstractButton", no_init)
@@ -89,7 +99,12 @@ BOOST_PYTHON_MODULE(QtGui)
         //.def("setShortcut", &QAbstractButton::setShortcut)
         .def("setText", &QAbstractButton::setText)
         //.def("shortcut", &QAbstractButton::shortcut)
-        .def("text", &QAbstractButton::text);
+        .def("text", &QAbstractButton::text)
+        .def("animateClick", &QAbstractButton::animateClick, QAbstractButton_animateClick_overloads())
+        .def("click", &QAbstractButton::click)
+        .def("setChecked", &QAbstractButton::setChecked)
+        //.def("setIconSize", QAbstractButton::setIconSize)
+        .def("toggle", &QAbstractButton::toggle);
     
     class_<QToolButton, QToolButton*, bases<QAbstractButton>, boost::noncopyable>("QToolButton")
         .def("autoRaise", &QToolButton::autoRaise);

@@ -117,11 +117,47 @@ public:
 
 class CustomizedTableWidget : public QTableWidget
 {
+    bool isResizing;
+    int offsetX;
+    
 public:
-    CustomizedTableWidget(QWidget* parent) : QTableWidget(parent) { }
+    CustomizedTableWidget(QWidget* parent) : QTableWidget(parent) {
+        setMouseTracking(true);
+        isResizing = false;
+    }
         
     PropertyItem* itemFromIndex(const QModelIndex& index) const {
         return dynamic_cast<PropertyItem*>(QTableWidget::itemFromIndex(index));
+    }
+
+    bool isPointingBorder(int x){
+        int border = columnWidth(0);
+        offsetX = border - x;
+        return (x >= border - 2 && x <= border + 2);
+    }
+
+    virtual void mouseMoveEvent(QMouseEvent* event) {
+        if(isResizing){
+            int border = std::max(0, event->x() + offsetX);
+            setColumnWidth(0, border);
+        } else if(isPointingBorder(event->x())){
+            setCursor(Qt::SizeHorCursor);
+        } else {
+            setCursor(QCursor());
+            QTableWidget::mouseMoveEvent(event);
+        }
+    }
+
+    virtual void mousePressEvent(QMouseEvent* event){
+        if(isPointingBorder(event->x())){
+            isResizing = true;
+        } else {
+            QTableWidget::mousePressEvent(event);
+        }
+    }
+    
+    virtual void mouseReleaseEvent(QMouseEvent* event){
+        isResizing = false;
     }
 };
 
@@ -177,8 +213,8 @@ public:
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
-
 };
+
 }
 
 
@@ -447,15 +483,18 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
 
-    tableWidget->horizontalHeader()->hide();
-    tableWidget->horizontalHeader()->setStretchLastSection(true);
-
-    tableWidget->verticalHeader()->hide();
+    QHeaderView* hh = tableWidget->horizontalHeader();
+    QHeaderView* vh = tableWidget->verticalHeader();
+    hh->hide();
+    vh->hide();
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    tableWidget->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    hh->setResizeMode(QHeaderView::Fixed);
+    vh->setResizeMode(QHeaderView::ResizeToContents);    
 #else
-    tableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    hh->setSectionResizeMode(QHeaderView::Stretch);
+    vh->setSectionResizeMode(QHeaderView::ResizeToContents);
 #endif
+    hh->setStretchLastSection(true);
 
     QStyledItemDelegate* delegate = new CustomizedItemDelegate(tableWidget);
     QItemEditorFactory* factory = new QItemEditorFactory;
@@ -529,6 +568,7 @@ void ItemPropertyViewImpl::updateProperties()
 
     } else {
         tableWidget->setRowCount(0);
+        
         tmpListIndex = 0;
         properties.clear();
         if(currentItem){
@@ -612,4 +652,6 @@ void ItemPropertyView::onAttachedMenuRequest(MenuManager& menuManager)
 {
     menuManager.addItem(_("Update"))->sigTriggered().connect(
         boost::bind(&ItemPropertyViewImpl::updateProperties, impl));
+    menuManager.addItem(_("Reset Column Sizes"))->sigTriggered().connect(
+        boost::bind(&QTableWidget::resizeColumnsToContents, impl->tableWidget));
 }
