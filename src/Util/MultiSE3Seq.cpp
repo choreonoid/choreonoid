@@ -116,17 +116,26 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
             for(int j=0; j < 3; ++j){
                 os << " " << x.translation()[j];
             }
-            Matrix3 R(x.rotation());
+
+            Vector3 rpy(rpyFromRot(Matrix3(base[i].rotation())));
             for(int j=0; j < 3; ++j){
-                for(int k=0; k < 3; ++k){
-                    double m = R(j, k);
-                    if(fabs(m) < 1.0e-14){
-                        m = 0.0;
-                    }
-                    os << " " << m;
+                if(fabs(rpy[j]) < 1.0e-14){
+                    rpy[j] = 0.0;
                 }
+                os << " " << rpy[i];
             }
-            os << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
+
+            // Matrix3 R(x.rotation());
+            // for(int j=0; j < 3; ++j){
+            //     for(int k=0; k < 3; ++k){
+            //         double m = R(j, k);
+            //         if(fabs(m) < 1.0e-14){
+            //             m = 0.0;
+            //         }
+            //         os << " " << m;
+            //     }
+            // }
+            // os << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
             os << "\n";
         }
 
