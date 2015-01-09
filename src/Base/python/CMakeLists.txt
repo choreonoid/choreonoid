@@ -5,6 +5,7 @@ set(PYTHON_SUFFIX -python2.7)
 
 add_cnoid_library(CnoidPyBase SHARED PyBase.cpp)
 target_link_libraries(CnoidPyBase CnoidBase CnoidPython)
+apply_common_setting_for_library(CnoidPyBase)
 
 add_cnoid_python_module(PyQtCore
   PyQtCore.cpp
@@ -39,4 +40,3 @@ add_cnoid_python_module(PyBase
 
 target_link_libraries(PyBase CnoidPyBase)
 
-apply_common_setting_for_library(CnoidPyBase)

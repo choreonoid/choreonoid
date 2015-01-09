@@ -216,7 +216,7 @@ void NamingContextHelper::appendBindingList(CosNaming::BindingList_var& bList, O
         ObjectInfo info;
         info.id = bList[i].binding_name[0].id;
         info.kind = bList[i].binding_name[0].kind;
-        CORBA::Object_ptr obj = findObject(info.id);
+        CORBA::Object_ptr obj = findObject(info.id, info.kind);
         info.isAlive = isObjectAlive(obj);
         CORBA::release(obj);
         objects.push_back(info);

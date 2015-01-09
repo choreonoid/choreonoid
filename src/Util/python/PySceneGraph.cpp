@@ -22,7 +22,9 @@ Affine3 SgPosTransform_get_position(SgPosTransform& self) { return self.position
 void SgPosTransform_set_position(SgPosTransform& self, const Affine3& T) { self.position() = T; }
 Affine3 SgPosTransform_get_T(SgPosTransform& self) { return self.T(); }
 void SgPosTransform_set_T(SgPosTransform& self, const Affine3& T) { self.T() = T; }
-
+Vector3 SgPosTransform_get_translation(SgPosTransform& self) { return self.translation(); }
+Matrix3 SgPosTransform_get_rotation(SgPosTransform& self) { return self.rotation(); }
+void SgPosTransform_set_rotation(SgPosTransform& self, const Matrix3& R){ self.setRotation(R); }
 }
 
 namespace cnoid {
@@ -62,6 +64,9 @@ void exportPySceneGraph()
         .def("setPosition", SgPosTransform_set_position)
         .def("T", SgPosTransform_get_T)
         .def("setT", SgPosTransform_set_T)
+        .def("translation", SgPosTransform_get_translation)
+        .def("rotation", SgPosTransform_get_rotation)
+        .def("setRotation", SgPosTransform_set_rotation)
         ;
     implicitly_convertible<SgPosTransformPtr, SgTransformPtr>();
 }

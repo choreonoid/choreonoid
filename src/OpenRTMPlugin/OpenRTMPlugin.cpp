@@ -9,6 +9,7 @@
 #include "ChoreonoidExecutionContext.h"
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include "OpenRTMUtil.h"
+#include "RTSNameServerView.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -166,7 +167,9 @@ public:
         setProjectArchiver(
             boost::bind(&OpenRTMPlugin::store, this, _1),
             boost::bind(&OpenRTMPlugin::restore, this, _1));
-            
+
+        RTSNameServerView::initializeClass(this);
+
         return true;
     }
 

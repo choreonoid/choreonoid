@@ -153,10 +153,24 @@ set(plugin_sources
   OpenHRPClockGeneratorItem.cpp
   ChoreonoidExecutionContext.cpp
   ChoreonoidPeriodicExecutionContext.cpp
+  RTSNameServerView.cpp
   )
 
 set(plugin_headers
   )
+
+if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+else()
+  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
+endif()
+
+if(NOT QT5)
+QT4_WRAP_CPP(
+  RTSNameServerView.cpp
+  OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+  )
+endif()
 
 if(MSVC)
 add_definitions(-D__WIN32__ -D__x86__ -D__NT__ -D__OSVERSION__=4 -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0500 -DRTC_CORBA_CXXMAPPING11)
