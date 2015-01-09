@@ -580,7 +580,9 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         }
     }
 
-    if(show && targetLink && (kinematicsBar->mode() == KinematicsBar::IK_MODE) && kinematicsBar->isAttitudeMode()){
+    if(show && targetLink &&
+       (kinematicsBar->mode() == KinematicsBar::IK_MODE) &&
+       kinematicsBar->isPositionDraggerEnabled()){
         attachPositionDragger(targetLink);
     }
 
@@ -711,14 +713,12 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             case KinematicsBar::AUTO_MODE:
                 ik = bodyItem->getDefaultIK(targetLink);
                 if(ik){
-                    attachPositionDragger(targetLink);
                     startIK(event);
-                } else {
-                    startFK(event);
+                    break;
                 }
-                break;
             case KinematicsBar::FK_MODE:
                 if(targetLink == bodyItem->currentBaseLink()){
+                    // Translation of the base link
                     startIK(event);
                 } else {
                     startFK(event);
@@ -1035,7 +1035,7 @@ bool EditableSceneBodyImpl::initializeIK()
     if(!ik){
         pinDragIK = bodyItem->pinDragIK();
         pinDragIK->setBaseLink(baseLink);
-        pinDragIK->setTargetLink(targetLink, kinematicsBar->isAttitudeMode());
+        pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
         if(pinDragIK->initialize()){
             ik = pinDragIK;
         }
@@ -1051,6 +1051,9 @@ void EditableSceneBodyImpl::startIK(const SceneWidgetEvent& event)
     Link* baseLink = bodyItem->currentBaseLink();
 
     if(initializeIK()){
+        if(kinematicsBar->isPositionDraggerEnabled()){
+            attachPositionDragger(targetLink);
+        }
         dragProjector.setInitialPosition(targetLink->position());
         dragProjector.setTranslationAlongViewPlane();
         if(dragProjector.startTranslation(event)){
