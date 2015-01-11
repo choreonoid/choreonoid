@@ -117,12 +117,12 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
                 os << " " << x.translation()[j];
             }
 
-            Vector3 rpy(rpyFromRot(Matrix3(base[i].rotation())));
+            Vector3 rpy(rpyFromRot(Matrix3(x.rotation())));
             for(int j=0; j < 3; ++j){
                 if(fabs(rpy[j]) < 1.0e-14){
                     rpy[j] = 0.0;
                 }
-                os << " " << rpy[i];
+                os << " " << rpy[j];
             }
 
             // Matrix3 R(x.rotation());
