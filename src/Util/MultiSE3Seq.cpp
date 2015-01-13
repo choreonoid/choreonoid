@@ -116,7 +116,49 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
             for(int j=0; j < 3; ++j){
                 os << " " << x.translation()[j];
             }
+            Matrix3 R(x.rotation());
+            for(int j=0; j < 3; ++j){
+                for(int k=0; k < 3; ++k){
+                    double m = R(j, k);
+                    if(fabs(m) < 1.0e-14){
+                        m = 0.0;
+                    }
+                    os << " " << m;
+                }
+            }
+            os << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
+            os << "\n";
+        }
 
+        return true;
+    }
+
+    return false;
+}
+
+bool MultiSE3Seq::saveTopPartAsPosAndRPYFormat(const std::string& filename)
+{
+    clearSeqMessage();
+    boost::format f("%1$.4f");
+    const int nFrames = numFrames();
+
+    if(nFrames > 0 && numParts() > 0){
+
+        ofstream os(filename.c_str());
+        if(!os){
+            addSeqMessage(filename + " cannot be opened.");
+            return false;
+        }
+
+        const double r = frameRate();
+
+        Part base = part(0);
+        for(int i=0; i < nFrames; ++i){
+            os << (f % (i / r));
+            const SE3& x = base[i];
+            for(int j=0; j < 3; ++j){
+                os << " " << x.translation()[j];
+            }
             Vector3 rpy(rpyFromRot(Matrix3(x.rotation())));
             for(int j=0; j < 3; ++j){
                 if(fabs(rpy[j]) < 1.0e-14){
@@ -124,18 +166,6 @@ bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
                 }
                 os << " " << rpy[j];
             }
-
-            // Matrix3 R(x.rotation());
-            // for(int j=0; j < 3; ++j){
-            //     for(int k=0; k < 3; ++k){
-            //         double m = R(j, k);
-            //         if(fabs(m) < 1.0e-14){
-            //             m = 0.0;
-            //         }
-            //         os << " " << m;
-            //     }
-            // }
-            // os << " 0 0 0 0 0 0"; // velocity elements (dv, omega)
             os << "\n";
         }
 

@@ -244,7 +244,7 @@ bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, BodyPtr body, const std::st
     if(motion.jointPosSeq()->saveAsPlainFormat(
            getNativePathString(filesystem::change_extension(orgpath, ".pos"))) &&
            
-       motion.linkPosSeq()->saveTopPartAsPlainMatrixFormat(
+       motion.linkPosSeq()->saveTopPartAsPosAndRPYFormat(
            getNativePathString(filesystem::change_extension(orgpath, ".waist"))) &&
            
        saveRootLinkAttAsRpyFormat(

@@ -34,6 +34,7 @@ public:
 
     bool loadPlainMatrixFormat(const std::string& filename);
     bool saveTopPartAsPlainMatrixFormat(const std::string& filename);
+    bool saveTopPartAsPosAndRPYFormat(const std::string& filename);
 
 protected:
     virtual SE3 defaultValue() const { return SE3(Vector3::Zero(), Quat::Identity()); }
