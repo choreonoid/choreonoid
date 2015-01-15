@@ -650,7 +650,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
         blocker = boost::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
-        const ItemList<BodyItem>& bodyItems = worldItem->bodyItems();
+        const ItemList<BodyItem>& bodyItems = worldItem->collisionBodyItems();
         for(int i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
             if(bodyItem != self && bodyItem->body()->isStaticModel()){

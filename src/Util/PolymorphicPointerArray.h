@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_POLYMORPHIC_POINTER_ARRAY_H_INCLUDED
-#define CNOID_UTIL_POLYMORPHIC_POINTER_ARRAY_H_INCLUDED
+#ifndef CNOID_UTIL_POLYMORPHIC_POINTER_ARRAY_H
+#define CNOID_UTIL_POLYMORPHIC_POINTER_ARRAY_H
 
 #include <boost/pointer_cast.hpp>
 #include <vector>
@@ -123,7 +123,12 @@ public:
     void pop_back(){
         elements.pop_back();
     }
+
+    iterator erase(iterator pos){
+        return elements.erase(pos);
+    }
 };
+
 }
 
 #endif

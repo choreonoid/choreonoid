@@ -26,7 +26,7 @@ public:
     WorldItem(const WorldItem& org);
     virtual ~WorldItem();
 
-    const ItemList<BodyItem>& bodyItems() const;
+    const ItemList<BodyItem>& collisionBodyItems() const;
 
     bool selectCollisionDetector(const std::string& name);
     CollisionDetectorPtr collisionDetector();
