@@ -198,11 +198,12 @@ public:
         
     SgDirectionalLightPtr worldLight;
 
+    Signal<void()> sigStateChanged;
+    LazyCaller emitSigStateChangedLater;
+    
     bool isEditMode;
-    Signal<void(bool)> sigEditModeToggled;
 
     Selection viewpointControlMode;
-    Signal<void(int mode)> sigViewpointControlModeChanged;
     bool isFirstPersionMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
         
     enum DragMode { NO_DRAGGING, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
@@ -358,8 +359,8 @@ public:
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
     void restoreCurrentCamera(const Mapping& cameraData);
-
 };
+
 }
 
 
@@ -370,8 +371,7 @@ SceneWidgetRoot::SceneWidgetRoot(SceneWidget* sceneWidget)
 }
 
 
-namespace {
-void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vector<SgNodePath>& paths)
+static void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vector<SgNodePath>& paths)
 {
     reversedPath.push_back(node);
     if(!node->hasParents()){
@@ -391,8 +391,7 @@ void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vec
     }
     reversedPath.pop_back();
 }
-}
-    
+
 
 void SceneWidget::forEachInstance(SgNode* node, boost::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function)
 {
@@ -425,7 +424,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
       self(self),
       os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
-      renderer(sceneRoot)
+      renderer(sceneRoot),
+      emitSigStateChangedLater(boost::ref(sigStateChanged))
 {
     if(false){ // test
         cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
@@ -848,6 +848,12 @@ void SceneWidgetImpl::resetCursor()
 }
 
 
+SignalProxy<void()> SceneWidget::sigStateChanged() const
+{
+    return impl->sigStateChanged;
+}
+
+
 void SceneWidget::setEditMode(bool on)
 {
     impl->setEditMode(on);
@@ -860,18 +866,11 @@ bool SceneWidget::isEditMode() const
 }
 
 
-SignalProxy<void(bool)> SceneWidget::sigEditModeToggled() const
-{
-    return impl->sigEditModeToggled;
-}
-
-
 void SceneWidgetImpl::setEditMode(bool on)
 {
     if(on != isEditMode){
         isEditMode = on;
         resetCursor();
-        sigEditModeToggled(on);
 
         if(!isEditMode){
             for(size_t i=0; i < focusedEditablePath.size(); ++i){
@@ -891,6 +890,8 @@ void SceneWidgetImpl::setEditMode(bool on)
                 focusedEditablePath[i]->onFocusChanged(latestEvent, true);
             }
         }
+
+        emitSigStateChangedLater();
     }
 }
 
@@ -910,19 +911,13 @@ const SceneWidgetEvent& SceneWidget::latestEvent() const
 void SceneWidget::setViewpointControlMode(ViewpointControlMode mode)
 {
     impl->viewpointControlMode.select(mode);
-    impl->sigViewpointControlModeChanged(mode);
+    impl->emitSigStateChangedLater();
 }
 
 
 SceneWidget::ViewpointControlMode SceneWidget::viewpointControlMode() const
 {
     return static_cast<SceneWidget::ViewpointControlMode>(impl->viewpointControlMode.which());
-}
-
-
-SignalProxy<void(int mode)> SceneWidget::sigViewpointControlModeChanged() const
-{
-    return impl->sigViewpointControlModeChanged;
 }
 
 
@@ -2054,6 +2049,7 @@ void SceneWidgetImpl::setCollisionLinesVisible(bool on)
         collisionLinesVisible = on;
         renderer.property()->write("collision", on);
         update();
+        emitSigStateChangedLater();
     }
 }
 
@@ -2339,6 +2335,7 @@ bool SceneWidget::storeState(Archive& archive)
 
 bool SceneWidgetImpl::storeState(Archive& archive)
 {
+    archive.write("editMode", isEditMode);
     archive.write("viewpointControlMode", viewpointControlMode.selectedSymbol());
     archive.write("collisionLines", collisionLinesVisible);
     archive.write("polygonMode", polygonMode.selectedSymbol());
@@ -2388,13 +2385,11 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 {
     bool doUpdate = false;
 
-    int oldViewpointControlMode = viewpointControlMode.which();
+    setEditMode(archive.get("editMode", isEditMode));
+    
     string symbol;
     if(archive.read("viewpointControlMode", symbol)){
-        viewpointControlMode.select(symbol);
-        if(viewpointControlMode.which() != oldViewpointControlMode){
-            sigViewpointControlModeChanged(viewpointControlMode.which());
-        }
+        self->setViewpointControlMode((SceneWidget::ViewpointControlMode(viewpointControlMode.index(symbol))));
     }
     if(archive.read("polygonMode", symbol)){
         setPolygonMode(polygonMode.index(symbol));
@@ -2446,6 +2441,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
     if(doUpdate){
         update();
     }
+
     return true;
 }
 

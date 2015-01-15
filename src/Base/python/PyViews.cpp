@@ -65,12 +65,10 @@ void exportPyViews()
         ;
 
     class_<SceneWidget, SceneWidget*, boost::noncopyable >("SceneWidget")
+        .def("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
-        .def("sigEditModeToggled", &SceneWidget::sigEditModeToggled)
-        
         .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)
         .def("collisionLinesVisible", &SceneWidget::collisionLinesVisible, return_value_policy<return_by_value>())
-
         .def("setHeadLightIntensity", &SceneWidget::setHeadLightIntensity)
         .def("setWorldLightIntensity", &SceneWidget::setWorldLightIntensity)
         .def("setWorldLightAmbient", &SceneWidget::setWorldLightAmbient)
@@ -79,7 +77,6 @@ void exportPyViews()
         .def("setLineWidth", &SceneWidget::setLineWidth)
         .def("setPointSize", &SceneWidget::setPointSize)
         .def("setNormalLength", &SceneWidget::setNormalLength)
-
         .def("setHeadLightEnabled", &SceneWidget::setHeadLightEnabled)
         .def("setHeadLightLightingFromBack", &SceneWidget::setHeadLightLightingFromBack)
         .def("setWorldLight", &SceneWidget::setWorldLight)
@@ -90,10 +87,8 @@ void exportPyViews()
         .def("setShowFPS", &SceneWidget::setShowFPS)
         .def("setNewDisplayListDoubleRenderingEnabled", &SceneWidget::setNewDisplayListDoubleRenderingEnabled)
         .def("setUseBufferForPicking", &SceneWidget::setUseBufferForPicking)
-
         .def("setBackgroundColor", &SceneWidget::setBackgroundColor)
         .def("setColor", &SceneWidget::setBackgroundColor)
-        
         .def("setCameraPosition", &SceneWidget::setCameraPosition)
         .def("setFieldOfView", &SceneWidget::setFieldOfView)
         .def("setHeight", &SceneWidget::setHeight)

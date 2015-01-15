@@ -42,7 +42,8 @@ public:
     typedef map<SceneWidget*, SceneWidgetInfo> InfoMap;
     InfoMap sceneWidgetInfos;
 
-    ConnectionSet connectionsToTargetSceneWidget;
+    Connection sceneWidgetStateConnection;
+    ConnectionSet rendererStateConnections;
         
     ToolButton* editModeToggle;
     ToolButton* firstPersonModeToggle;
@@ -55,13 +56,12 @@ public:
     void onSceneWidgetFocusChanged(SceneWidget* sceneWidget, bool isFocused);
     void onSceneWidgetAboutToBeDestroyed(SceneWidget* sceneWidget);
     void setTargetSceneWidget(SceneWidget* sceneWidget);
+    void onSceneWidgetStateChanged();
     void onEditModeButtonToggled(bool on);
-    void updateEditModeButton();
     void onFirstPersonModeButtonToggled(bool on);
-    void updateFirstPersonModeButton();
+    void onSceneRendererCamerasChanged();
+    void onSceneRendererCurrentCameraChanged();
     void onCameraComboCurrentIndexChanged(int index);
-    void updateCameraCombo();
-    void onCurrentCameraChanged();
     void onCollisionLineButtonToggled(bool on);
     void onWireframeButtonToggled(bool on);
 };
@@ -184,7 +184,8 @@ SceneWidget* SceneBar::targetSceneWidget()
 
 void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
 {
-    connectionsToTargetSceneWidget.disconnect();
+    sceneWidgetStateConnection.disconnect();
+    rendererStateConnections.disconnect();
     
     targetSceneWidget = sceneWidget;
 
@@ -194,79 +195,81 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
 
     } else {
         targetRenderer = &sceneWidget->renderer();
+
+        onSceneWidgetStateChanged();
+
+        sceneWidgetStateConnection =
+            sceneWidget->sigStateChanged().connect(
+                boost::bind(&SceneBarImpl::onSceneWidgetStateChanged, this));
+
+        onSceneRendererCamerasChanged();
         
-        updateEditModeButton();
-        connectionsToTargetSceneWidget.add(
-            sceneWidget->sigEditModeToggled().connect(
-                boost::bind(&SceneBarImpl::updateEditModeButton, this)));
-
-        updateFirstPersonModeButton();
-        connectionsToTargetSceneWidget.add(
-            sceneWidget->sigViewpointControlModeChanged().connect(
-                boost::bind(&SceneBarImpl::updateFirstPersonModeButton, this)));
-
-        collisionLineToggle->blockSignals(true);
-        collisionLineToggle->setChecked(sceneWidget->collisionLinesVisible());
-        collisionLineToggle->blockSignals(false);
-
-        wireframeToggle->blockSignals(true);
-        wireframeToggle->setChecked(sceneWidget->polygonMode() != SceneWidget::FILL_MODE);
-        wireframeToggle->blockSignals(false);
-
-        updateCameraCombo();
-        connectionsToTargetSceneWidget.add(
+        rendererStateConnections.add(
             targetRenderer->sigCamerasChanged().connect(
-                boost::bind(&SceneBarImpl::updateCameraCombo, this)));
-        connectionsToTargetSceneWidget.add(
+                boost::bind(&SceneBarImpl::onSceneRendererCamerasChanged, this)));
+        
+        rendererStateConnections.add(
             targetRenderer->sigCurrentCameraChanged().connect(
-                boost::bind(&SceneBarImpl::onCurrentCameraChanged, this)));
+                boost::bind(&SceneBarImpl::onSceneRendererCurrentCameraChanged, this)));
 
         self->setEnabled(true);
     }
 }
 
 
-void SceneBarImpl::onEditModeButtonToggled(bool on)
-{
-    connectionsToTargetSceneWidget.block();
-    targetSceneWidget->setEditMode(on);
-    connectionsToTargetSceneWidget.unblock();
-}
-
-
-void SceneBarImpl::updateEditModeButton()
+void SceneBarImpl::onSceneWidgetStateChanged()
 {
     editModeToggle->blockSignals(true);
     editModeToggle->setChecked(targetSceneWidget->isEditMode());
     editModeToggle->blockSignals(false);
+
+    firstPersonModeToggle->blockSignals(true);
+    firstPersonModeToggle->setChecked(targetSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
+    firstPersonModeToggle->blockSignals(false);
+
+    collisionLineToggle->blockSignals(true);
+    collisionLineToggle->setChecked(targetSceneWidget->collisionLinesVisible());
+    collisionLineToggle->blockSignals(false);
+    
+    wireframeToggle->blockSignals(true);
+    wireframeToggle->setChecked(targetSceneWidget->polygonMode() != SceneWidget::FILL_MODE);
+    wireframeToggle->blockSignals(false);
+}
+
+
+void SceneBarImpl::onEditModeButtonToggled(bool on)
+{
+    sceneWidgetStateConnection.block();
+    targetSceneWidget->setEditMode(on);
+    sceneWidgetStateConnection.unblock();
 }
 
 
 void SceneBarImpl::onFirstPersonModeButtonToggled(bool on)
 {
-    connectionsToTargetSceneWidget.block();
+    sceneWidgetStateConnection.block();
     targetSceneWidget->setViewpointControlMode(on ? SceneWidget::FIRST_PERSON_MODE : SceneWidget::THIRD_PERSON_MODE);
-    connectionsToTargetSceneWidget.unblock();
+    sceneWidgetStateConnection.unblock();
 }
 
 
-void SceneBarImpl::updateFirstPersonModeButton()
+void SceneBarImpl::onCollisionLineButtonToggled(bool on)
 {
-    firstPersonModeToggle->blockSignals(true);
-    firstPersonModeToggle->setChecked(targetSceneWidget->viewpointControlMode() != SceneWidget::THIRD_PERSON_MODE);
-    firstPersonModeToggle->blockSignals(false);
+    sceneWidgetStateConnection.block();
+    targetSceneWidget->setCollisionLinesVisible(on);
+    sceneWidgetStateConnection.unblock();
 }
 
 
-void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
+void SceneBarImpl::onWireframeButtonToggled(bool on)
 {
-    connectionsToTargetSceneWidget.block();
-    targetRenderer->setCurrentCamera(index);
-    connectionsToTargetSceneWidget.unblock();
+    sceneWidgetStateConnection.block();
+    targetSceneWidget->setPolygonMode(on ? SceneWidget::LINE_MODE : SceneWidget::FILL_MODE);
+    sceneWidgetStateConnection.unblock();
 }
-    
 
-void SceneBarImpl::updateCameraCombo()
+
+void SceneBarImpl::onSceneRendererCamerasChanged()
 {
     cameraCombo->blockSignals(true);
     
@@ -291,7 +294,7 @@ void SceneBarImpl::updateCameraCombo()
 }
 
 
-void SceneBarImpl::onCurrentCameraChanged()
+void SceneBarImpl::onSceneRendererCurrentCameraChanged()
 {
     cameraCombo->blockSignals(true);
     cameraCombo->setCurrentIndex(targetRenderer->currentCameraIndex());
@@ -299,17 +302,9 @@ void SceneBarImpl::onCurrentCameraChanged()
 }
 
 
-void SceneBarImpl::onCollisionLineButtonToggled(bool on)
+void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
 {
-    //connectionsToTargetSceneWidget.block();
-    targetSceneWidget->setCollisionLinesVisible(on);
-    //connectionsToTargetSceneWidget.unblock();
-}
-
-
-void SceneBarImpl::onWireframeButtonToggled(bool on)
-{
-    //connectionsToTargetSceneWidget.block();
-    targetSceneWidget->setPolygonMode(on ? SceneWidget::LINE_MODE : SceneWidget::FILL_MODE);
-    //connectionsToTargetSceneWidget.unblock();
+    rendererStateConnections.block();
+    targetRenderer->setCurrentCamera(index);
+    rendererStateConnections.unblock();
 }
