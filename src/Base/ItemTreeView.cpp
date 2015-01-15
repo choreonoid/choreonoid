@@ -699,7 +699,9 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     connectionsFromRootItem.block();
 
     QTreeWidgetItem* parentTwItem = itemFromIndex(parent);
-    if(!parentTwItem){
+    if(parentTwItem){
+        parentTwItem->setExpanded(true);
+    } else {
         parentTwItem = invisibleRootItem();
     }
 
