@@ -52,6 +52,7 @@ public:
     ostream& os;
 
     ItemList<BodyItem> collisionBodyItems;
+    boost::dynamic_bitset<> collisionBodyItemsSelfCollisionFlags;
 
     Connection sigItemTreeChangedConnection;
     ConnectionSet sigKinematicStateChangedConnections;
@@ -290,8 +291,10 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 
     if(!forceUpdate){
         ItemList<BodyItem> prevBodyItems = collisionBodyItems;
+        boost::dynamic_bitset<> prevSelfCollisionFlags = collisionBodyItemsSelfCollisionFlags;
         updateCollisionBodyItems();
-        if(collisionBodyItems == prevBodyItems){
+        if(collisionBodyItems == prevBodyItems &&
+            collisionBodyItemsSelfCollisionFlags == prevSelfCollisionFlags){
             return;
         }
     } else {
@@ -325,10 +328,14 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
 
 void WorldItemImpl::updateCollisionBodyItems()
 {
+    collisionBodyItemsSelfCollisionFlags.clear();
     collisionBodyItems.extractChildItems(self);
     ItemList<BodyItem>::iterator p = collisionBodyItems.begin();
     while(p != collisionBodyItems.end()){
-        if((*p)->isCollisionDetectionEnabled()){
+        BodyItemPtr& bodyItem = *p;
+        if(bodyItem->isCollisionDetectionEnabled()){
+            collisionBodyItemsSelfCollisionFlags.push_back(
+                bodyItem->isSelfCollisionDetectionEnabled());
             ++p;
         } else {
             p = collisionBodyItems.erase(p);

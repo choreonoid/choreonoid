@@ -937,7 +937,9 @@ bool BodyItemImpl::enableSelfCollisionDetection(bool on)
 
 void BodyItemImpl::updateCollisionDetectorLater()
 {
-    cout << "BodyItemImpl::updateCollisionDetectorLater(): " << self->name() << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "BodyItemImpl::updateCollisionDetectorLater(): " << self->name() << endl;
+    }
     
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){

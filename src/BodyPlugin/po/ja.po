@@ -1064,7 +1064,7 @@ msgstr "ワールドアイテム"
 
 #: WorldItem.cpp:426
 msgid "Collision detector"
-msgstr "干渉検出"
+msgstr "干渉検出器"
 
 #: ZMPSeqItem.cpp:68
 msgid "ZMPSeqItem"
