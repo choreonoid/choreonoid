@@ -390,9 +390,9 @@ void BodyLinkViewImpl::setupWidgets()
 
     hbox = new QHBoxLayout();
     hbox->setSpacing(4);
-    hbox->addWidget(new HSeparator());
-    hbox->addWidget(new QLabel(_("Self-Collisions")));
-    hbox->addWidget(new HSeparator());
+    hbox->addWidget(new HSeparator(), 1);
+    hbox->addWidget(new QLabel(_("Self-Collisions")), 0);
+    hbox->addWidget(new HSeparator(), 1);
     vbox->addLayout(hbox);
     
     selfCollisionsLabel.setAlignment(Qt::AlignCenter);
