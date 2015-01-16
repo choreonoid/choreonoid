@@ -75,6 +75,7 @@ public:
         isDragging = false;
     }
 };
+
 }
 
 
@@ -126,6 +127,12 @@ void ToolBar::setVisibleByDefault(bool on)
 void ToolBar::setStretchable(bool on)
 {
     isStretchable_ = on;
+}
+
+
+int ToolBar::stretchableDefaultWidth() const
+{
+    return QWidget::sizeHint().width();
 }
 
 

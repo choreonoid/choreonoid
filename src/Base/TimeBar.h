@@ -101,8 +101,7 @@ public:
     void stopFillLevelUpdate(int id);
     void setFillLevelSync(bool on);
 
-    virtual QSize minimumSizeHint () const;
-    virtual QSize sizeHint () const;
+    virtual int stretchableDefaultWidth() const;
 
 protected:
 
@@ -124,6 +123,7 @@ private:
 
     friend class TimeBarImpl;
 };
+
 }
 
 #endif

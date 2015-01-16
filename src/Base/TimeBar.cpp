@@ -308,7 +308,7 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
 
     timeSlider = new Slider(Qt::Horizontal);
     timeSlider->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeSliderChangeValue, this, _1));
-    timeSlider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    timeSlider->setMinimumWidth(timeSlider->sizeHint().width());
     self->addWidget(timeSlider);
 
     minTimeSpin = new DoubleSpinBox();
@@ -818,21 +818,11 @@ void TimeBarImpl::onRefreshButtonClicked()
 }
 
 
-QSize TimeBar::minimumSizeHint () const
+int TimeBar::stretchableDefaultWidth() const
 {
-    QSize s = ToolBar::minimumSizeHint();
-    s.setWidth(s.width() * 2);
-    return s;
+    return sizeHint().width() + impl->timeSlider->sizeHint().width() * 5;
 }
-
-
-QSize TimeBar::sizeHint () const
-{
-    QSize s = ToolBar::minimumSizeHint();
-    s.setWidth(s.width() * 3);
-    return s;
-}
-
+    
 
 bool TimeBar::storeState(Archive& archive)
 {
