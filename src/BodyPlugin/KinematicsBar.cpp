@@ -107,7 +107,7 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
     */
     
     penetrationBlockToggle = self->addToggleButton(QIcon(":/Body/icons/block.png"), _("Penetration block mode"));
-    penetrationBlockToggle->setChecked(true);
+    penetrationBlockToggle->setChecked(false);
 
     collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icons/collisionoutline.png"), _("Highlight colliding links"));
     collisionLinkHighlightToggle->setChecked(false);
