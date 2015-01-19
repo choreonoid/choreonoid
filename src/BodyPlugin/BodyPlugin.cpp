@@ -11,6 +11,7 @@
 //#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
 #include "BodyBar.h"
+#include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
 #include "BodyLinkView.h"
 #include "JointSliderView.h"
@@ -66,6 +67,7 @@ public:
 
         SimulationBar::initialize(this);
         addToolBar(BodyBar::instance());
+        addToolBar(LeggedBodyBar::instance());
         addToolBar(KinematicsBar::instance());
 
         LinkSelectionView::initializeClass(this);

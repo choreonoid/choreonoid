@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-18 14:07+0900\n"
+"POT-Creation-Date: 2015-01-20 02:21+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -106,79 +106,41 @@ msgstr "運動学歩行モード"
 msgid "2D mode"
 msgstr "2Dモード"
 
-#: BodyBar.cpp:23
+#: BodyBar.cpp:51
 msgid "BodyBar"
 msgstr "ボディバー"
 
-#: BodyBar.cpp:30
+#: BodyBar.cpp:63
 msgid "Memory the current pose"
 msgstr "現在姿勢を記憶"
 
-#: BodyBar.cpp:33
+#: BodyBar.cpp:66
 msgid "Recall the memorized pose"
 msgstr "記憶した姿勢の呼び出し"
 
-#: BodyBar.cpp:36
+#: BodyBar.cpp:69
 msgid "Move the selected bodies to the origin"
 msgstr "選択ボディを原点へ移動"
 
-#: BodyBar.cpp:39
+#: BodyBar.cpp:72
 msgid "Set the preset initial pose to the selected bodies"
 msgstr "選択ボディを初期姿勢に"
 
-#: BodyBar.cpp:42
+#: BodyBar.cpp:75
 msgid "Set the preset standard pose to the selected bodies"
 msgstr "選択ボディを標準姿勢に"
 
-#: BodyBar.cpp:47
+#: BodyBar.cpp:80
 msgid "Copy the right side pose to the left side"
 msgstr "右側の姿勢を左側にコピー"
 
-#: BodyBar.cpp:50
+#: BodyBar.cpp:83
 msgid "Mirror copy"
 msgstr "反転コピー"
 
-#: BodyBar.cpp:53
+#: BodyBar.cpp:86
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
-
-#: BodyBar.cpp:59
-msgid ""
-"Move the center of mass to the position where its projection corresponds to "
-"the support feet cener"
-msgstr "重心投影点が支持脚中心に一致するよう移動"
-
-#: BodyBar.cpp:62
-msgid "Move the center of mass to fit its projection to ZMP"
-msgstr "重心投影点がZMPに一致するよう移動"
-
-#: BodyBar.cpp:67
-msgid "Set ZMP to the projection of the center of mass"
-msgstr "ZMPを重心投影点に移動"
-
-#: BodyBar.cpp:70
-msgid "Set ZMP under the right foot"
-msgstr "ZMPを右足に移動"
-
-#: BodyBar.cpp:73
-msgid "Set ZMP at the center of the feet"
-msgstr "ZMPを両足中心に移動"
-
-#: BodyBar.cpp:76
-msgid "Set ZMP under the left foot"
-msgstr "ZMPを左足に移動"
-
-#: BodyBar.cpp:81
-msgid "Adjust the width between the feet"
-msgstr "足幅の調整"
-
-#: BodyBar.cpp:86
-msgid "Width between the feet [m]"
-msgstr "両足中心間距離"
-
-#: BodyBar.cpp:258
-msgid "The center of mass of %1% cannt be moved to the target position\n"
-msgstr "%1% の重心を指定の位置まで移動できません。\n"
 
 #: BodyItem.cpp:165
 msgid "BodyItem"
@@ -192,51 +154,51 @@ msgstr "OpenHRP モデルファイル"
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
-#: BodyItem.cpp:1117
+#: BodyItem.cpp:1119
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1118
+#: BodyItem.cpp:1120
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1119
+#: BodyItem.cpp:1121
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1120
+#: BodyItem.cpp:1122
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1121
+#: BodyItem.cpp:1123
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1122
+#: BodyItem.cpp:1124
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1123
+#: BodyItem.cpp:1125
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1124
+#: BodyItem.cpp:1126
 msgid "Static model"
 msgstr "静的モデル"
 
-#: BodyItem.cpp:1126
+#: BodyItem.cpp:1128
 msgid "Model file"
 msgstr "モデルファイル"
 
-#: BodyItem.cpp:1127 WorldItem.cpp:424
+#: BodyItem.cpp:1129 WorldItem.cpp:447
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: BodyItem.cpp:1129
+#: BodyItem.cpp:1131
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1131
+#: BodyItem.cpp:1133
 msgid "Editable"
 msgstr "編集可能"
 
@@ -356,11 +318,11 @@ msgstr "%1%のデータを置き換えますか？"
 msgid "Do you want to set %1% as a sequence data of %2%?"
 msgstr "%2%のシーケンスデータとして%1%をセットしますか？"
 
-#: BodyPlugin.cpp:87
+#: BodyPlugin.cpp:89
 msgid "Body Plugin Version %1%\n"
 msgstr "Body Plugin バージョン %1%\n"
 
-#: BodyPlugin.cpp:89
+#: BodyPlugin.cpp:91
 msgid ""
 "This plugin has been developed by Shin'ichiro Nakaoka and Choreonoid "
 "Development Team, AIST, and is distributed as a part of the Choreonoid "
@@ -368,7 +330,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: BodyPlugin.cpp:94
+#: BodyPlugin.cpp:96
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -782,69 +744,111 @@ msgstr ""
 msgid "%1$7.3f [s]: Collision between %2% and %3%"
 msgstr "%1$7.3f [秒]: %2% と %3% の干渉を検出"
 
-#: KinematicsBar.cpp:37
-msgid "Kinematics Operation Setup"
-msgstr "運動学操作の設定"
-
-#: KinematicsBar.cpp:43
-msgid "Snap thresholds:"
-msgstr "スナップ閾値"
-
-#: KinematicsBar.cpp:46
-msgid "distance"
-msgstr "足幅"
-
-#: KinematicsBar.cpp:53 KinematicsBar.cpp:72
-msgid "[m]"
-msgstr ""
-
-#: KinematicsBar.cpp:56
-msgid "angle"
-msgstr "角度"
-
-#: KinematicsBar.cpp:61
-msgid "[deg]"
-msgstr ""
-
-#: KinematicsBar.cpp:65
-msgid "Penetration block depth"
-msgstr "貫通防止における許容深度"
-
-#: KinematicsBar.cpp:76
-msgid "Lazy collision detection mode"
-msgstr "遅延干渉検出モード"
-
-#: KinematicsBar.cpp:82
-msgid "OK"
-msgstr "了解"
-
-#: KinematicsBar.cpp:117
+#: KinematicsBar.cpp:78
 msgid "KinematicsBar"
 msgstr "運動学バー"
 
-#: KinematicsBar.cpp:125
+#: KinematicsBar.cpp:90
 msgid "Forward kinematics mode"
 msgstr "順運動学モード"
 
-#: KinematicsBar.cpp:126
+#: KinematicsBar.cpp:91
 msgid "Preset kinematics mode"
 msgstr "プリセット運動学モード"
 
-#: KinematicsBar.cpp:127
+#: KinematicsBar.cpp:92
 msgid "Inverse kinematics mode"
 msgstr "逆運動学モード"
 
-#: KinematicsBar.cpp:132
+#: KinematicsBar.cpp:96
 msgid "Enable link orientation editing"
 msgstr "リンク姿勢編集の許可"
 
-#: KinematicsBar.cpp:146
+#: KinematicsBar.cpp:109
 msgid "Penetration block mode"
 msgstr "貫通ブロックモード"
 
-#: KinematicsBar.cpp:149
+#: KinematicsBar.cpp:112
 msgid "Highlight colliding links"
 msgstr "干渉リンクのハイライト表示"
+
+#: KinematicsBar.cpp:265
+msgid "Kinematics Operation Setup"
+msgstr "運動学操作の設定"
+
+#: KinematicsBar.cpp:271
+msgid "Snap thresholds:"
+msgstr "スナップ閾値"
+
+#: KinematicsBar.cpp:274
+msgid "distance"
+msgstr "足幅"
+
+#: KinematicsBar.cpp:281 KinematicsBar.cpp:300
+msgid "[m]"
+msgstr ""
+
+#: KinematicsBar.cpp:284
+msgid "angle"
+msgstr "角度"
+
+#: KinematicsBar.cpp:289
+msgid "[deg]"
+msgstr ""
+
+#: KinematicsBar.cpp:293
+msgid "Penetration block depth"
+msgstr "貫通防止における許容深度"
+
+#: KinematicsBar.cpp:304
+msgid "Lazy collision detection mode"
+msgstr "遅延干渉検出モード"
+
+#: KinematicsBar.cpp:310
+msgid "OK"
+msgstr "了解"
+
+#: LeggedBodyBar.cpp:42
+msgid "LeggedBodyBar"
+msgstr "脚型ボディバー"
+
+#: LeggedBodyBar.cpp:54
+msgid ""
+"Move the center of mass to the position where its projection corresponds to "
+"the support feet cener"
+msgstr "重心投影点が支持脚中心に一致するよう移動"
+
+#: LeggedBodyBar.cpp:57
+msgid "Move the center of mass to fit its projection to ZMP"
+msgstr "重心投影点がZMPに一致するよう移動"
+
+#: LeggedBodyBar.cpp:62
+msgid "Set ZMP to the projection of the center of mass"
+msgstr "ZMPを重心投影点に移動"
+
+#: LeggedBodyBar.cpp:65
+msgid "Set ZMP under the right foot"
+msgstr "ZMPを右足に移動"
+
+#: LeggedBodyBar.cpp:68
+msgid "Set ZMP at the center of the feet"
+msgstr "ZMPを両足中心に移動"
+
+#: LeggedBodyBar.cpp:71
+msgid "Set ZMP under the left foot"
+msgstr "ZMPを左足に移動"
+
+#: LeggedBodyBar.cpp:76
+msgid "Adjust the width between the feet"
+msgstr "足幅の調整"
+
+#: LeggedBodyBar.cpp:81
+msgid "Width between the feet [m]"
+msgstr "両足中心間距離"
+
+#: LeggedBodyBar.cpp:108
+msgid "The center of mass of %1% cannt be moved to the target position\n"
+msgstr "%1% の重心を指定の位置まで移動できません。\n"
 
 #: LinkGraphView.cpp:22
 msgid "Link Trajectories"
@@ -1058,11 +1062,11 @@ msgstr "デバイス状態の記録"
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
-#: WorldItem.cpp:88
+#: WorldItem.cpp:90
 msgid "WorldItem"
 msgstr "ワールドアイテム"
 
-#: WorldItem.cpp:426
+#: WorldItem.cpp:449
 msgid "Collision detector"
 msgstr "干渉検出器"
 
@@ -1086,7 +1090,9 @@ msgstr "グローバル座標"
 msgid ""
 "%1%'s coordinate system cannot be changed because there is no root link "
 "motion associated with %1%."
-msgstr "%1%と関連付けられた動作はルートリンクが含まれていないため%1%の座標系は変更できません。"
+msgstr ""
+"%1%と関連付けられた動作はルートリンクが含まれていないため%1%の座標系は変更で"
+"きません。"
 
 #: ZMPSeqItem.cpp:131
 msgid "Root relative"
