@@ -1127,7 +1127,7 @@ msgstr "進行中の更新に同期"
 
 #: TimeBar.cpp:111
 msgid "Automatically expand the time range"
-msgstr ""
+msgstr "時間範囲の自動拡張"
 
 #: TimeBar.cpp:157
 msgid "&OK"
