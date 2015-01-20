@@ -342,11 +342,11 @@ msgstr "ボディ状態"
 
 #: BodyStateView.cpp:269 JointStateView.cpp:361
 msgid "ON"
-msgstr "オン"
+msgstr ""
 
 #: BodyStateView.cpp:269 JointStateView.cpp:361
 msgid "OFF"
-msgstr "オフ"
+msgstr ""
 
 #: ControllerItem.cpp:72
 msgid "Immediate mode"
