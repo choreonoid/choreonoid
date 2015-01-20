@@ -929,8 +929,9 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
             boost::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
 
         menuManager.addSeparator();
+
         
-        menuManager.setPath(N_("/Markers"));
+        menuManager.setPath(_("Markers"));
         
         Action* item = menuManager.addCheckItem(_("Center of Mass"));
         item->setChecked(isCmVisible);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-20 02:21+0900\n"
+"POT-Creation-Date: 2015-01-21 01:36+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -142,147 +142,147 @@ msgstr "反転コピー"
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
 
-#: BodyItem.cpp:165
+#: BodyItem.cpp:166
 msgid "BodyItem"
 msgstr "ボディアイテム"
 
-#: BodyItem.cpp:167
+#: BodyItem.cpp:168
 msgid "OpenHRP Model File"
 msgstr "OpenHRP モデルファイル"
 
-#: BodyItem.cpp:171
+#: BodyItem.cpp:172
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
-#: BodyItem.cpp:1119
+#: BodyItem.cpp:1121
 msgid "Model name"
 msgstr "モデル名"
 
-#: BodyItem.cpp:1120
+#: BodyItem.cpp:1122
 msgid "Num links"
 msgstr "リンク数"
 
-#: BodyItem.cpp:1121
+#: BodyItem.cpp:1123
 msgid "Num joints"
 msgstr "関節数"
 
-#: BodyItem.cpp:1122
+#: BodyItem.cpp:1124
 msgid "Num devices"
 msgstr "デバイス数"
 
-#: BodyItem.cpp:1123
+#: BodyItem.cpp:1125
 msgid "Root link"
 msgstr "ルートリンク"
 
-#: BodyItem.cpp:1124
+#: BodyItem.cpp:1126
 msgid "Base link"
 msgstr "ベースリンク"
 
-#: BodyItem.cpp:1125
+#: BodyItem.cpp:1127
 msgid "Mass"
 msgstr "質量"
 
-#: BodyItem.cpp:1126
+#: BodyItem.cpp:1128
 msgid "Static model"
 msgstr "静的モデル"
 
-#: BodyItem.cpp:1128
+#: BodyItem.cpp:1130
 msgid "Model file"
 msgstr "モデルファイル"
 
-#: BodyItem.cpp:1129 WorldItem.cpp:447
+#: BodyItem.cpp:1131 WorldItem.cpp:447
 msgid "Collision detection"
 msgstr "干渉検出"
 
-#: BodyItem.cpp:1131
+#: BodyItem.cpp:1133
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-#: BodyItem.cpp:1133
+#: BodyItem.cpp:1135
 msgid "Editable"
 msgstr "編集可能"
 
-#: BodyLinkView.cpp:126
+#: BodyLinkView.cpp:129
 msgid "Body / Link"
 msgstr "ボディ／リンク"
 
-#: BodyLinkView.cpp:205
+#: BodyLinkView.cpp:208
 msgid "Index:"
 msgstr "インデックス"
 
-#: BodyLinkView.cpp:207
+#: BodyLinkView.cpp:210
 msgid "Joint ID:"
 msgstr "関節ID"
 
-#: BodyLinkView.cpp:209
+#: BodyLinkView.cpp:212
 msgid "Joint Type:"
 msgstr "関節タイプ"
 
-#: BodyLinkView.cpp:211
+#: BodyLinkView.cpp:214
 msgid "Joint Axis:"
 msgstr "関節軸"
 
-#: BodyLinkView.cpp:252
-msgid "min"
-msgstr "最小"
-
-#: BodyLinkView.cpp:262
-msgid "max"
-msgstr "最大"
-
-#: BodyLinkView.cpp:282
+#: BodyLinkView.cpp:221
 msgid "Link Position [m],[deg]"
 msgstr "リンク位置 [m],[deg]"
 
-#: BodyLinkView.cpp:322
+#: BodyLinkView.cpp:264
 msgid "Matrix"
 msgstr "行列"
 
-#: BodyLinkView.cpp:353
-msgid "ZMP [m]"
-msgstr "ZMP [m]"
+#: BodyLinkView.cpp:329
+msgid "min"
+msgstr "最小"
 
-#: BodyLinkView.cpp:380
+#: BodyLinkView.cpp:339
+msgid "max"
+msgstr "最大"
+
+#: BodyLinkView.cpp:353
 msgid "Collisions"
 msgstr "干渉"
 
-#: BodyLinkView.cpp:394
+#: BodyLinkView.cpp:369
 msgid "Self-Collisions"
 msgstr "自己干渉"
 
-#: BodyLinkView.cpp:512
+#: BodyLinkView.cpp:380
+msgid "ZMP [m]"
+msgstr "ZMP [m]"
+
+#: BodyLinkView.cpp:522
 msgid "Free"
 msgstr "非拘束"
 
-#: BodyLinkView.cpp:515
+#: BodyLinkView.cpp:524
 msgid "Fixed"
 msgstr "固定"
 
-#: BodyLinkView.cpp:518
+#: BodyLinkView.cpp:526
 msgid "Crawler"
 msgstr "クローラ"
 
-#: BodyLinkView.cpp:522
+#: BodyLinkView.cpp:534
 msgid "Rotation"
 msgstr "回転"
 
-#: BodyLinkView.cpp:524
+#: BodyLinkView.cpp:537
 msgid "Joint Angle [deg]"
 msgstr "関節角 [deg]"
 
-#: BodyLinkView.cpp:539
+#: BodyLinkView.cpp:553
 msgid "Joint Velocity [deg/s]"
 msgstr "関節角速度 [deg/s]"
 
-#: BodyLinkView.cpp:553
+#: BodyLinkView.cpp:569
 msgid "Slide"
 msgstr "直動"
 
-#: BodyLinkView.cpp:555
+#: BodyLinkView.cpp:572
 msgid "Joint Translation [m]:"
 msgstr "関節並進位置 [m]"
 
-#: BodyLinkView.cpp:569
+#: BodyLinkView.cpp:587
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
@@ -381,8 +381,8 @@ msgid "Level Attitude"
 msgstr "水平姿勢に"
 
 #: EditableSceneBody.cpp:933
-msgid "/Markers"
-msgstr "/マーカー"
+msgid "Markers"
+msgstr "マーカー"
 
 #: EditableSceneBody.cpp:935
 msgid "Center of Mass"
