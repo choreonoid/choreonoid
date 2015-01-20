@@ -190,6 +190,8 @@ DEF PA10 Humanoid {
 	 rotation 0 0 1 0
 	 ulimit 3.08923278
 	 llimit -3.08923278
+	 uvlimit 3.141592653589793
+	 lvlimit -3.141592653589793
 	 rotorInertia 3.0E-4
 	 children [
 	   DEF J1_LINK Segment {
@@ -210,6 +212,8 @@ DEF PA10 Humanoid {
 	     rotation 0 0 1 0
 	     ulimit 1.6406095
 	     llimit -1.6406095
+	     uvlimit 3.141592653589793
+	     lvlimit -3.141592653589793
 	     rotorInertia 3.0E-04
 	     children [
 	       DEF J2_LINK Segment {
@@ -230,6 +234,8 @@ DEF PA10 Humanoid {
 		 rotation 0 0 1 0
 		 ulimit 3.0368729
 		 llimit -3.0368729
+		 uvlimit 3.141592653589793
+		 lvlimit -3.141592653589793
 		 rotorInertia 8.5E-5
 		 children [
 		   DEF J3_LINK Segment {
@@ -250,6 +256,8 @@ DEF PA10 Humanoid {
 		     rotation 0 0 1 0
 		     ulimit 2.39110108
 		     llimit -2.39110108
+		     uvlimit 3.141592653589793
+		     lvlimit -3.141592653589793
 		     rotorInertia 8.5E-5
 		     children [
 		       DEF J4_LINK Segment {
@@ -270,6 +278,8 @@ DEF PA10 Humanoid {
 			 rotation 0 0 1 0
 			 ulimit 4.45058959
 			 llimit -4.45058959
+			 uvlimit 3.141592653589793
+			 lvlimit -3.141592653589793
 			 rotorInertia 2.3E-6
 			 children [
 			   DEF J5_LINK Segment {
@@ -290,6 +300,8 @@ DEF PA10 Humanoid {
 			     rotation 0 0 1 0
 			     ulimit 2.87979327
 			     llimit -2.87979327
+			     uvlimit 3.141592653589793
+			     lvlimit -3.141592653589793
 			     rotorInertia 2.3E-6
 			     children [
 			       DEF J6_LINK Segment {
@@ -310,6 +322,8 @@ DEF PA10 Humanoid {
 				 rotation 0 0 1 0
 				 ulimit 4.45058959
 				 llimit -4.45058959
+				 uvlimit 3.141592653589793
+				 lvlimit -3.141592653589793
 				 rotorInertia 2.3E-6
 				 children [
 				   DEF J7_LINK Segment {
@@ -330,6 +344,8 @@ DEF PA10 Humanoid {
 				     rotation 1 0 0 0
 				     ulimit  0.03
 				     llimit -0.03
+				     uvlimit 1.0
+				     lvlimit -1.0
 				     children [
 				       DEF HAND_L_LINK Segment {
 					 mass 0.5
@@ -350,6 +366,8 @@ DEF PA10 Humanoid {
 				     rotation 0 0 1 0
 				     ulimit  0.03
 				     llimit -0.03
+				     uvlimit 1.0
+				     lvlimit -1.0
 				     children [
 				       DEF HAND_R_LINK Segment {
 					 mass 0.5
