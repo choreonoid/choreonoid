@@ -57,8 +57,6 @@ LeggedBodyBarImpl::LeggedBodyBarImpl(LeggedBodyBar* self)
     self->addButton(QIcon(":/Body/icons/zmp-to-cm.png"), _("Move the center of mass to fit its projection to ZMP"))->
         sigClicked().connect(bind(&LeggedBodyBarImpl::moveCM, this, BodyItem::ZERO_MOMENT_POINT));
     
-    self->addSeparator();
-
     self->addButton(QIcon(":/Body/icons/cm-to-zmp.png"), _("Set ZMP to the projection of the center of mass"))
         ->sigClicked().connect(bind(&LeggedBodyBarImpl::setZmp, this, BodyItem::CM_PROJECTION));
 
