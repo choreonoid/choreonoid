@@ -195,7 +195,7 @@ PROTO SpotLightDevice [
   }
 }
 
-DEF Crawler Humanoid {
+DEF Tank Humanoid {
   name "vehicle"
   version "1.1"
   info [

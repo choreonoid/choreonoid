@@ -509,7 +509,7 @@ msgstr "ビュータブの表示"
 
 #: MainWindow.cpp:188
 msgid "Show Status Bar"
-msgstr ""
+msgstr "ステータスバーの表示"
 
 #: MainWindow.cpp:195
 msgid "Full Screen"
