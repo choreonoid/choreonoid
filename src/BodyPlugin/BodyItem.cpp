@@ -84,7 +84,9 @@ class BodyItemImpl
 public:
     BodyItem* self;
     BodyPtr body;
-
+    LeggedBodyHelperPtr legged;
+    Vector3 zmp;
+    
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_FLAGS };
     std::bitset<NUM_UPUDATE_FLAGS> updateFlags;
 
@@ -99,7 +101,6 @@ public:
     Link* currentBaseLink;
     LinkTraverse fkTraverse;
     PinDragIKptr pinDragIK;
-    Vector3 zmp;
 
     bool isCollisionDetectionEnabled;
     bool isSelfCollisionDetectionEnabled;
@@ -720,6 +721,14 @@ const Vector3& BodyItem::centerOfMass()
 }
 
 
+bool BodyItem::isLeggedBody() const
+{
+    if(!impl->legged){
+        impl->legged = getLeggedBodyHelper(impl->body);
+    }
+    return (impl->legged->numFeet() > 0);
+}
+        
 /**
    \todo use getDefaultIK() if the kinematics bar is in the AUTO mode.
 */
@@ -735,7 +744,7 @@ bool BodyItemImpl::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(body);
 
-    if(legged->isValid()){
+    if(self->isLeggedBody()){
         
         BodyState orgKinematicState;
         self->storeKinematicState(orgKinematicState);
@@ -766,9 +775,7 @@ bool BodyItemImpl::setStance(double width)
 {
     bool result = false;
     
-    LeggedBodyHelperPtr legged = getLeggedBodyHelper(body);
-
-    if(legged->isValid()){
+    if(self->isLeggedBody()){
         
         BodyState orgKinematicState;
         self->storeKinematicState(orgKinematicState);
@@ -805,17 +812,13 @@ void BodyItemImpl::getParticularPosition(BodyItem::PositionType position, boost:
         if(position == BodyItem::CM_PROJECTION){
             pos = self->centerOfMass();
 
-        } else {
-            LeggedBodyHelperPtr legged = getLeggedBodyHelper(body);
-            if(legged->isValid()){
-                if(position == BodyItem::HOME_COP){
-                    pos = legged->homeCopOfSoles();
-                } else if(position == BodyItem::RIGHT_HOME_COP || position == BodyItem::LEFT_HOME_COP) {
-                    if(legged->numFeet() == 2){
-                        pos = legged->homeCopOfSole((position == BodyItem::RIGHT_HOME_COP) ? 0 : 1);
-                    }
+        } else if(self->isLeggedBody()){
+            if(position == BodyItem::HOME_COP){
+                pos = legged->homeCopOfSoles();
+            } else if(position == BodyItem::RIGHT_HOME_COP || position == BodyItem::LEFT_HOME_COP) {
+                if(legged->numFeet() == 2){
+                    pos = legged->homeCopOfSole((position == BodyItem::RIGHT_HOME_COP) ? 0 : 1);
                 }
-
             }
         }
         if(pos){
@@ -823,7 +826,6 @@ void BodyItemImpl::getParticularPosition(BodyItem::PositionType position, boost:
         }
     }
 }
-
 
 
 const Vector3& BodyItem::zmp() const

@@ -22,6 +22,7 @@ set(sources
   #FilterDialogs.cpp
   EditableSceneBody.cpp
   BodyBar.cpp
+  LeggedBodyBar.cpp
   KinematicsBar.cpp
   SimulationBar.cpp
   LinkTreeWidget.cpp
