@@ -27,6 +27,7 @@ void PythonScriptItem::initializeClass(ExtensionManager* ext)
 PythonScriptItem::PythonScriptItem()
 {
     impl = new PythonScriptItemImpl(this);
+    doExecutionOnLoading = false;
 }
 
 
@@ -34,6 +35,7 @@ PythonScriptItem::PythonScriptItem(const PythonScriptItem& org)
     : ScriptItem(org)
 {
     impl = new PythonScriptItemImpl(this, *org.impl);
+    doExecutionOnLoading = org.doExecutionOnLoading;
 }
 
 
@@ -124,8 +126,8 @@ ItemPtr PythonScriptItem::doDuplicate() const
 void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Script"), getFilename(filePath()));
-
     impl->doPutProperties(putProperty);
+    putProperty(_("Execution on loading"), doExecutionOnLoading, changeProperty(doExecutionOnLoading));
 }
 
 
@@ -134,16 +136,22 @@ bool PythonScriptItem::store(Archive& archive)
     if(!filePath().empty()){
         archive.writeRelocatablePath("file", filePath());
     }
+    archive.write("executionOnLoading", doExecutionOnLoading);
     return impl->store(archive);
 }
 
 
 bool PythonScriptItem::restore(const Archive& archive)
 {
+    archive.read("executionOnLoading", doExecutionOnLoading);
     string filename;
     if(archive.readRelocatablePath("file", filename)){
         if(load(filename)){
-            return impl->restore(archive);
+            if(impl->restore(archive)){
+                if(doExecutionOnLoading){
+                    archive.addPostProcess(boost::bind(&PythonScriptItem::execute, this));
+                }
+            }
         }
     }
     return false;

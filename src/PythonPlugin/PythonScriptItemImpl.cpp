@@ -28,7 +28,7 @@ PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem, const PythonS
       mv(MessageView::instance()),
       executor(org.executor)
 {
-
+    
 }
 
 
