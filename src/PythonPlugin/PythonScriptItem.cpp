@@ -151,6 +151,7 @@ bool PythonScriptItem::restore(const Archive& archive)
                 if(doExecutionOnLoading){
                     archive.addPostProcess(boost::bind(&PythonScriptItem::execute, this));
                 }
+                return true;
             }
         }
     }
