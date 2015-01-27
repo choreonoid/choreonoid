@@ -29,6 +29,7 @@
 #include "SceneBar.h"
 #include "CaptureBar.h"
 #include "ImageView.h"
+#include "TaskView.h"
 #include "GraphBar.h"
 #include "MultiValueSeqGraphView.h"
 #include "MultiSE3SeqGraphView.h"
@@ -194,15 +195,14 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     ItemTreeView::initializeClass(ext);
     ItemPropertyView::initializeClass(ext);
     TextEditView::initializeClass(ext);
-
     SceneBar::initialize(ext);
     SceneView::initializeClass(ext);
-
     ImageView::initializeClass(ext);
-
     GraphBar::initialize(ext);
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
+    TaskView::initializeClass(ext);
+
     TimeSyncItemEngineManager::initialize();
     
     FolderItem::initializeClass(ext);

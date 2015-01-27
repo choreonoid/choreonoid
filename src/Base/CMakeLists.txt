@@ -94,6 +94,7 @@ set(sources
   TextEditView.cpp
   ImageView.cpp
   TextEdit.cpp
+  TaskView.cpp
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -181,6 +182,7 @@ set(headers
   exportdecl.h
   gettext.h
   TextEdit.h
+  TaskView.h
   )
 
 set(target CnoidBase)

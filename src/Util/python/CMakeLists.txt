@@ -7,6 +7,7 @@ add_cnoid_python_module(PyUtil
   PyEigenTypes.cpp
   PySeqTypes.cpp
   PySceneGraph.cpp
+  PyTask.cpp
   )
 
 target_link_libraries(PyUtil CnoidUtil CnoidPython)

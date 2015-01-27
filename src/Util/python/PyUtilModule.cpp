@@ -15,6 +15,7 @@ void exportPySignalTypes();
 void exportPyEigenTypes();
 void exportPySeqTypes();
 void exportPySceneGraph();
+void exportPyTaskTypes();
 
 }
 
@@ -26,6 +27,7 @@ BOOST_PYTHON_MODULE(Util)
     exportPyEigenTypes();
     exportPySeqTypes();
     exportPySceneGraph();
+    exportPyTaskTypes();
 
     def("shareDirectory", &cnoid::shareDirectory, return_value_policy<copy_const_reference>());
     def("executablePath", &cnoid::executablePath, return_value_policy<copy_const_reference>());

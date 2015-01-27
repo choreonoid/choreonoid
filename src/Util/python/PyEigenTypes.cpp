@@ -146,6 +146,22 @@ struct pylist_to_Transform_converter {
 };
 
 
+//! \todo replace this function with another python functions
+Affine3 getAffine3FromAngleAxis(double angle, const Vector3& vec){
+    /*
+    Affine3 m;
+    m = AngleAxis(angle, vec);
+    return m;
+    */
+    return Affine3(AngleAxis(angle, vec));
+}
+
+
+//! \todo replace this function with another python functions
+Vector3 getNormalized(const Vector3& vec){
+    return vec.normalized();
+}
+
 }
 
 namespace cnoid {
@@ -193,6 +209,10 @@ void exportPyEigenTypes()
     Matrix3 (*cnoid_rotFromRpy1)(const Vector3& rpy) = cnoid::rotFromRpy;
     python::def("rotFromRpy", cnoid_rotFromRpy1);
     python::def("omegaFromRot", cnoid::omegaFromRot);
+
+    //! \todo replace the following functions with another python functions
+    python::def("angleAxis", getAffine3FromAngleAxis);
+    python::def("normalized", getNormalized);
 }
 
 }
