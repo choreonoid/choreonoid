@@ -9,6 +9,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <vector>
 #include "exportdecl.h"
 
@@ -27,19 +28,13 @@ public:
     virtual bool waitForCommandToFinish(double timeout = 0.0) = 0;
     virtual bool waitForCommandToFinish(Connection connectionToDisconnect, double timeout) = 0;
 
-    bool waitForSignal(SignalProxy<void()> signalProxy, double timeout = 0.0);
-    /*
     template<class Signature> bool waitForSignal(SignalProxy<Signature> signalProxy, double timeout = 0.0){
         return waitForCommandToFinish(signalProxy.connect(boost::bind(&TaskProc::notifyCommandFinish, this, true)), timeout);
     }
-    */
 
-    bool waitForSignal(SignalProxy<void(bool isCompleted)> signalProxy, double timeout = 0.0);
-    /*
     template<class Signature> bool waitForBooleanSignal(SignalProxy<Signature> signalProxy, double timeout = 0.0){
         return waitForCommandToFinish(signalProxy.connect(boost::bind(&TaskProc::notifyCommandFinish, this, _1)), timeout);
     }
-    */
     
     virtual void notifyCommandFinish(bool isCompleted = true) = 0;
 };

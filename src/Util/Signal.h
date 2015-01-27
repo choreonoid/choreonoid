@@ -342,7 +342,10 @@ struct signal_traits< boost::signal<Signature, Combiner, Group, GroupCompare, Sl
 */
 
 
-template<typename Signature, typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type> >
+template<
+    typename Signature,
+    typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
+    >
 class SignalProxy
 {
 public:

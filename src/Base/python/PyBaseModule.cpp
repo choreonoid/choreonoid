@@ -17,7 +17,6 @@ BOOST_PYTHON_MODULE(Base)
 {
     //! \todo check if this module is imported from the Choreonoid process with PythonPlugin
 
-    
     boost::python::import("cnoid.Util");
     boost::python::import("cnoid.QtGui");
     

@@ -4,7 +4,6 @@
 */
 
 #include "Task.h"
-#include <boost/bind.hpp>
 
 using namespace cnoid;
 
@@ -14,19 +13,6 @@ TaskProc::~TaskProc()
 
 }
 
-
-bool TaskProc::waitForSignal(SignalProxy<void()> signalProxy, double timeout)
-{
-    return waitForCommandToFinish(signalProxy.connect(boost::bind(&TaskProc::notifyCommandFinish, this, true)), timeout);
-}
-
-
-bool TaskProc::waitForSignal(SignalProxy<void(bool isCompleted)> signalProxy, double timeout)
-{
-    return waitForCommandToFinish(signalProxy.connect(boost::bind(&TaskProc::notifyCommandFinish, this, _1)), timeout);
-}
-    
-    
 TaskCommand::TaskCommand(const std::string& caption)
     : caption_(caption)
 {
