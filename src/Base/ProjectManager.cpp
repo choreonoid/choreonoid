@@ -31,6 +31,7 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 ProjectManager* instance_ = 0;
@@ -183,8 +184,10 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
         if(!isInvokingApplication){
             messageView->flush();
         }
+
+        int numArchivedItems = 0;
+        int numRestoredItems = 0;
         
-        bool result = false;
         if(!reader.load(filename)){
             messageView->put(reader.errorMessage() + "\n");
 
@@ -221,10 +224,19 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
               }
             */
 
+            itemTreeArchiver.reset();
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
-                result = itemTreeArchiver.restore(items, RootItem::mainInstance());
+                itemTreeArchiver.restore(items, RootItem::mainInstance());
+                numArchivedItems = itemTreeArchiver.numArchivedItems();
+                numRestoredItems = itemTreeArchiver.numRestoredItems();
+                messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
+                if(numRestoredItems < numArchivedItems){
+                    messageView->putln(MessageView::WARNING,
+                                       format(_("%1% item(s) are not correctly loaded."))
+                                       % (numArchivedItems - numRestoredItems));
+                }
             }
 
             if(!ViewManager::restoreViewStates(viewStateInfo)){
@@ -267,10 +279,15 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
 
             callLater(boost::bind(&Archive::callPostProcesses, ArchivePtr(archive)));
         }
-        if(result){
-            messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
+        if(numRestoredItems > 0){
             mainWindow->setProjectTitle(getBasename(filename));
             lastAccessedProjectFile = filename;
+
+            if(numRestoredItems == numArchivedItems){
+                messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
+            } else {
+                messageView->notify(str(fmt(_("Project \"%1%\" has been loaded.")) % filename));
+            }
         } else {
             messageView->notify(str(fmt(_("Project \"%1%\" cannot be loaded.")) % filename));
             lastAccessedProjectFile.clear();

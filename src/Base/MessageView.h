@@ -27,17 +27,29 @@ public:
     MessageView();
     ~MessageView();
 
+    enum MessageType { NORMAL, ERROR, WARNING };
+
     void put(const char* message);
     void put(const std::string& message);
     void put(const boost::format& message);
     void put(const QString& message);
 
+    void put(int type, const char* message);
+    void put(int type, const std::string& message);
+    void put(int type, const boost::format& message);
+    void put(int type, const QString& message);
+    
     void putln();
     void putln(const char* message);
     void putln(const std::string& message);
     void putln(const boost::format& message);
     void putln(const QString& message);
-        
+
+    void putln(int type, const char* message);
+    void putln(int type, const std::string& message);
+    void putln(int type, const boost::format& message);
+    void putln(int type, const QString& message);
+
     void notify(const char* message);
     void notify(const std::string& message);
     void notify(const boost::format& message);

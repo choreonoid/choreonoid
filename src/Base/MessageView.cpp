@@ -117,6 +117,7 @@ public:
     MessageViewImpl(MessageView* self);
 
     void put(const QString& message, bool doLF, bool doNotify, bool doFlush);
+    void put(int type, const QString& message, bool doLF, bool doNotify, bool doFlush);
     void doPut(const QString& message, bool doLF, bool doNotify, bool doFlush);
     void handleMessageViewEvent(MessageViewEvent* event);
     void flush();
@@ -272,6 +273,12 @@ void MessageView::endStdioRedirect()
 }
 
 
+void MessageView::put(const char* message)
+{
+    impl->put(message, false, false, false);
+}
+
+
 void MessageView::put(const std::string& message)
 {
     impl->put(message.c_str(), false, false, false);
@@ -284,15 +291,33 @@ void MessageView::put(const boost::format& message)
 }
 
 
-void MessageView::put(const char* message)
+void MessageView::put(const QString& message)
 {
     impl->put(message, false, false, false);
 }
 
 
-void MessageView::put(const QString& message)
+void MessageView::put(int type, const char* message)
 {
-    impl->put(message, false, false, false);
+    impl->put(type, message, false, false, false);
+}
+
+
+void MessageView::put(int type, const std::string& message)
+{
+    impl->put(type, message.c_str(), false, false, false);
+}
+
+
+void MessageView::put(int type, const boost::format& message)
+{
+    impl->put(type, message.str().c_str(), false, false, false);
+}
+
+
+void MessageView::put(int type, const QString& message)
+{
+    impl->put(type, message, false, false, false);
 }
 
 
@@ -323,6 +348,30 @@ void MessageView::putln(const char* message)
 void MessageView::putln(const QString& message)
 {
     impl->put(message, true, false, false);
+}
+
+
+void MessageView::putln(int type, const char* message)
+{
+    impl->put(type, message, true, false, false);
+}
+
+
+void MessageView::putln(int type, const std::string& message)
+{
+    impl->put(type, message.c_str(), true, false, false);
+}
+
+
+void MessageView::putln(int type, const boost::format& message)
+{
+    impl->put(type, message.str().c_str(), true, false, false);
+}
+
+
+void MessageView::putln(int type, const QString& message)
+{
+    impl->put(type, message, true, false, false);
 }
 
 
@@ -357,6 +406,25 @@ void MessageViewImpl::put(const QString& message, bool doLF, bool doNotify, bool
     } else {
         MessageViewEvent* event = new MessageViewEvent(message, doLF, doNotify, doFlush);
         QCoreApplication::postEvent(self, event, Qt::NormalEventPriority);
+    }
+}
+
+
+void MessageViewImpl::put(int type, const QString& message, bool doLF, bool doNotify, bool doFlush)
+{
+    if(type == MessageView::NORMAL){
+        put(message, doLF, doNotify, doFlush);
+    } else {
+        // add the escape sequence to make the text red
+        QString highlighted("\033[31m");
+        if(type == MessageView::ERROR){
+            highlighted.append("Error: ");
+        } else if(type == MessageView::WARNING){
+            highlighted.append("Warning: ");
+        }
+        highlighted.append(message);
+        highlighted.append("\033[0m");
+        put(highlighted, doLF, doNotify, doFlush);
     }
 }
 
