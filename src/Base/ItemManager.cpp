@@ -1273,8 +1273,7 @@ void ItemManager::reloadItems(const ItemList<>& items)
                         child = nextChild;
                     }
                     reloaded->assign(item);
-                    messageView->putln(format(_("\"%1%\" has been reloaded.")) % reloaded->name());
-                    
+
                     item->detachFromParentItem();
                 }
             }

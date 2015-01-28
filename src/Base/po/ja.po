@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-28 15:54+0900\n"
+"POT-Creation-Date: 2015-01-28 17:02+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -370,11 +370,7 @@ msgstr "%1% はフォーマット%2%としてエクスポートできません�
 msgid "Save %1% as"
 msgstr "名前を付けて%1%を保存"
 
-#: ItemManager.cpp:1276
-msgid "\"%1%\" has been reloaded."
-msgstr "\"%1%\"が解放されました。"
-
-#: ItemManager.cpp:1341
+#: ItemManager.cpp:1340
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
@@ -1237,4 +1233,3 @@ msgstr "作成するビューの名前を指定してください。"
 #: ViewManager.cpp:323
 msgid "Delete All Invisible Views"
 msgstr "全ての非表示ビューを消去"
-

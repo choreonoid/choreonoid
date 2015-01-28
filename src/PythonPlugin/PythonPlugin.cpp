@@ -146,12 +146,12 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
     if (v.count("python")) {
         vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
         for(unsigned int i = 0; i < pythonScriptFileNames.size(); i++){
-            MessageView::instance()->putln((format(_("Executing python script file \"%1%\" ...")) % pythonScriptFileNames[i]).str());
+            MessageView::instance()->putln((format(_("Executing python script \"%1%\" ...")) % pythonScriptFileNames[i]).str());
             executor().execFile(pythonScriptFileNames[i]);
             if(!executor().hasException()){
                 MessageView::instance()->putln(_("The script finished."));
             } else {
-                MessageView::instance()->putln(_("Failed to run the python script file."));
+                MessageView::instance()->putln(_("Failed to run the python script."));
                 PyGILock lock;
                 MessageView::instance()->put(executor().exceptionText());
             }

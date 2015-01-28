@@ -8,6 +8,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
+#include <cnoid/LazyCaller>
 #include "gettext.h"
 
 using namespace std;
@@ -53,7 +54,11 @@ void PythonScriptItem::onDisconnectedFromRoot()
 
 bool PythonScriptItem::setScriptFilename(const std::string& filename)
 {
-    return impl->setScriptFilename(filename);
+    bool result = impl->setScriptFilename(filename);
+    if(result && doExecutionOnLoading){
+        callLater(bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
+    }
+    return result;
 }
 
 
@@ -144,16 +149,16 @@ bool PythonScriptItem::store(Archive& archive)
 bool PythonScriptItem::restore(const Archive& archive)
 {
     archive.read("executionOnLoading", doExecutionOnLoading);
+    impl->restore(archive);
     string filename;
     if(archive.readRelocatablePath("file", filename)){
-        if(load(filename)){
-            if(impl->restore(archive)){
-                if(doExecutionOnLoading){
-                    archive.addPostProcess(boost::bind(&PythonScriptItem::execute, this));
-                }
-                return true;
-            }
+        bool doExecution = doExecutionOnLoading;
+        doExecutionOnLoading = false; // disable execution in the load function
+        bool loaded = load(filename);
+        doExecutionOnLoading = doExecution;
+        if(loaded && doExecution){
+            archive.addPostProcess(boost::bind(&PythonScriptItem::execute, this));
         }
     }
-    return false;
+    return true;
 }
