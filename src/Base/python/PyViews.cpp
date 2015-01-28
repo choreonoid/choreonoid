@@ -107,6 +107,7 @@ void exportPyViews()
         .def("instance", &TaskView::instance,
                 return_value_policy<reference_existing_object>()).staticmethod("instance")
         .def("addTask", &TaskView::addTask)
+        .def("updateTask", &TaskView::updateTask)
         ;
 }
 

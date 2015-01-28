@@ -24,6 +24,7 @@ public:
     ~TaskView();
 
     void addTask(Task* task);
+    bool updateTask(Task* task);
 
 protected:
     virtual bool storeState(Archive& archive);

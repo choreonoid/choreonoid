@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-28 17:05+0900\n"
+"POT-Creation-Date: 2015-01-28 18:59+0900\n"
 "PO-Revision-Date: 2013-09-10 16:13+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -43,8 +43,8 @@ msgstr "Pythonスクリプトの実行に失敗しました。"
 
 #: PythonPlugin.cpp:243
 msgid ""
-"PythonPlugin: \"%1%\" has been added to the python module search path list."
-msgstr "PythonPlugin: \"%1%\" がpythonのモジュールパスに追加されました。"
+"PythonPlugin: \"%1%\" has been added to the Python module search path list."
+msgstr "PythonPlugin: \"%1%\" がPythonのモジュールパスに追加されました。"
 
 #: PythonScriptItem.cpp:21
 msgid "PythonScriptItem"
@@ -72,8 +72,8 @@ msgid ""
 "Python script \"%1%\" is now running in the foreground. The execution of the "
 "script cannot be overlapped."
 msgstr ""
-"Pythonスクリプト \"%1%\" はバックグラウンドスレッドで実行中です。"
-"スクリプトを重複して実行することはできません。"
+"Pythonスクリプト \"%1%\" はバックグラウンドスレッドで実行中です。スクリプトを"
+"重複して実行することはできません。"
 
 #: PythonScriptItemImpl.cpp:97
 msgid "Python Script Termination"
@@ -84,8 +84,8 @@ msgid ""
 "Python script \"%1%\" is running now. Do you want to terminate and restart "
 "it?"
 msgstr ""
-"Pythonスクリプト\"%1%\"はバックグラウンドスレッドで実行中です。これを停止"
-"して再実行しますか？"
+"Pythonスクリプト\"%1%\"はバックグラウンドスレッドで実行中です。これを停止して"
+"再実行しますか？"
 
 #: PythonScriptItemImpl.cpp:103
 msgid "The python script cannot be terminated. It cannot be restarted."
@@ -119,7 +119,9 @@ msgstr "Pythonスクリプト \"%1%\" の実行が完了しました。"
 msgid ""
 "The execution of Python script \"%1%\" failed.\n"
 "%2%"
-msgstr "Pythonスクリプト \"%1%\" の実行が失敗しました。\n%2%"
+msgstr ""
+"Pythonスクリプト \"%1%\" の実行が失敗しました。\n"
+"%2%"
 
 #: PythonScriptItemImpl.cpp:192
 msgid "Python script \"%1%\" has been terminated."
@@ -133,4 +135,3 @@ msgstr "Pythonスクリプト \"%1%\" の実行を停止できません。再実
 #: PythonScriptItemImpl.cpp:205
 msgid "Background execution"
 msgstr "バックグラウンド実行"
-

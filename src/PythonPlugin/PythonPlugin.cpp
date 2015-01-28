@@ -240,7 +240,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
                 if(!isExisting){
                     syspath.insert(0, getNativePathString(filesystem::path(newPath)));
                     additionalSearchPathList.push_back(newPath);
-                    mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the python module search path list."))
+                    mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the Python module search path list."))
                               % newPath);
                 }
             }

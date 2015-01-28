@@ -30,6 +30,7 @@ class TaskViewImpl : public TaskProc, public TaskMenu
 {
 public:
     TaskView* self;
+    MessageView* mv;
     ostream& os;
     ComboBox taskCombo;
     PushButton menuButton;
@@ -61,6 +62,7 @@ public:
     TaskViewImpl(TaskView* self);
     ~TaskViewImpl();
     void addTask(Task* task);
+    bool updateTask(Task* task);
     void setCurrentTask(int index);
     void onTaskUpdated();
     PushButton* getOrCreateCommandButton(int index);
@@ -78,14 +80,16 @@ public:
     virtual void setNextCommand(int commandIndex);
     virtual void setNextPhase(int phaseIndex);
     virtual void setCommandLinkAutomatic();
-    virtual bool executeCommand(int index);    
+    virtual bool executeCommand(int index);
     virtual bool wait(double sec);
-    void onWaitTimeout();
     virtual bool waitForCommandToFinish(double timeout);
     virtual bool waitForCommandToFinish(Connection connection, double timeout);
     virtual void notifyCommandFinish(bool isCompleted);
+
+    bool isWaiting() const;
     bool cancelWaiting();
     bool stopWaiting(bool isCompleted);
+    void onWaitTimeout();
 
     void onMenuButtonClicked();
     virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
@@ -117,7 +121,8 @@ TaskView::TaskView()
 
 TaskViewImpl::TaskViewImpl(TaskView* self)
     : self(self),
-      os(MessageView::instance()->cout())
+      mv(MessageView::instance()),
+      os(mv->cout())
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     self->setDefaultLayoutArea(View::CENTER);
@@ -214,6 +219,38 @@ void TaskViewImpl::addTask(Task* task)
     if(tasks.size() == 1){
         setCurrentTask(0);
     }
+
+    os << format(_("Task \"%1%\" has been added.")) % task->name() << endl;
+}
+
+
+bool TaskView::updateTask(Task* task)
+{
+    return impl->updateTask(task);
+}
+
+
+bool TaskViewImpl::updateTask(Task* task)
+{
+    bool updated = false;
+    
+    int index = taskCombo.findText(task->name().c_str());
+
+    if(index >= 0 && index < tasks.size()){
+        if(isWaiting()){
+            mv->putln(MessageView::WARNING,
+                      format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
+                      % task->name());
+        } else {
+            tasks[index] = task;
+            os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
+            updated = true;
+        }
+    } else {
+        addTask(task);
+    }
+
+    return updated;
 }
 
 
@@ -571,15 +608,6 @@ bool TaskViewImpl::wait(double sec)
 }
 
 
-void TaskViewImpl::onWaitTimeout()
-{
-    if(eventLoop.isRunning()){
-        isPendingCommandCompleted = true;
-        eventLoop.quit();
-    }
-}
-
-
 bool TaskViewImpl::waitForCommandToFinish(double timeout)
 {
     bool completed = false;
@@ -620,6 +648,12 @@ void TaskViewImpl::notifyCommandFinish(bool isCompleted)
 }
 
 
+bool TaskViewImpl::isWaiting() const
+{
+    return eventLoop.isRunning();
+}
+
+
 bool TaskViewImpl::cancelWaiting()
 {
     if(eventLoop.isRunning()){
@@ -642,6 +676,15 @@ bool TaskViewImpl::stopWaiting(bool isCompleted)
         return true;
     }
     return false;
+}
+
+
+void TaskViewImpl::onWaitTimeout()
+{
+    if(eventLoop.isRunning()){
+        isPendingCommandCompleted = true;
+        eventLoop.quit();
+    }
 }
 
 
