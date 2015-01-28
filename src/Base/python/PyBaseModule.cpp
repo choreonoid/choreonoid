@@ -12,6 +12,7 @@ void exportPyMainWindow();
 void exportPyToolBars();
 void exportPyViews();
 void exportPyItemTreeView();
+void exportPySceneTypes();
 
 BOOST_PYTHON_MODULE(Base)
 {
@@ -26,6 +27,7 @@ BOOST_PYTHON_MODULE(Base)
     exportPyToolBars();
     exportPyViews();
     exportPyItemTreeView();
+    exportPySceneTypes();
 }
 
 }
