@@ -4,7 +4,8 @@
  */
 
 #include "../Task.h"
-#include <cnoid/PyUtil>
+#include "../ValueTree.h"
+#include "PyUtil.h"
 #include <cnoid/PythonUtil>
 
 using namespace boost;
@@ -144,17 +145,65 @@ public :
     TaskWrap(){};
     TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) {};
     TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) {};
+
     void onMenuRequest(TaskMenu& menu){
-        PyGILock lock;
-        try {
-            if(override onMenuRequest = this->get_override("onMenuRequest"))
-                onMenuRequest(boost::ref(menu));
-            else
-                Task::onMenuRequest(menu);
-        } catch(boost::python::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        bool called = false;
+        {
+            PyGILock lock;
+            try {
+                if(override onMenuRequest = this->get_override("onMenuRequest")){
+                    called = true;
+                    onMenuRequest(boost::ref(menu));
+                } 
+            } catch(boost::python::error_already_set const& ex) {
+                cnoid::handlePythonException();
+            }
+        }
+        if(!called){
+            Task::onMenuRequest(menu);
         }
     }
+
+    bool storeState(TaskProc* proc, Mapping& archive){
+        bool called = false;
+        bool result = false;
+        {
+            PyGILock lock;
+            try {
+                if(override storeState = this->get_override("storeState")){
+                    called = true;
+                    result = storeState(proc, boost::ref(archive));
+                }
+            } catch(boost::python::error_already_set const& ex) {
+                cnoid::handlePythonException();
+            }
+        }
+        if(!called){
+            result = Task::storeState(proc, archive);
+        }
+        return result;
+    }
+
+    bool restoreState(TaskProc* proc, const Mapping& archive){
+        bool called = false;
+        bool result = false;
+        {
+            PyGILock lock;
+            try {
+                if(override restoreState = this->get_override("restoreState")){
+                    called = true;
+                    result = restoreState(proc, boost::ref(archive));
+                }
+            } catch(boost::python::error_already_set const& ex) {
+                cnoid::handlePythonException();
+            }
+        }
+        if(!called){
+            result = Task::restoreState(proc, archive);
+        }
+        return result;
+    }
+    
 };
 
 typedef ref_ptr<TaskWrap> TaskWrapPtr;
@@ -167,9 +216,7 @@ void Task_setPreCommand(Task& self, boost::python::object func, boost::python::o
 
 }
 
-
-namespace cnoid
-{
+namespace cnoid {
 
 void exportPyTaskTypes()
 {

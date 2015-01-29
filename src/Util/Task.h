@@ -15,6 +15,8 @@
 
 namespace cnoid {
 
+class Mapping;
+
 class CNOID_EXPORT TaskProc
 {
 public:
@@ -155,6 +157,9 @@ public:
     void notifyUpdate() { sigUpdated_(); }
 
     virtual void onMenuRequest(TaskMenu& menu);
+
+    virtual bool storeState(TaskProc* proc, Mapping& archive);
+    virtual bool restoreState(TaskProc* proc, const Mapping& archive);
 
 private:
     std::string name_;

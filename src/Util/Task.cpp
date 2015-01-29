@@ -258,3 +258,15 @@ void Task::onMenuRequest(TaskMenu& menu)
 {
 
 }
+
+
+bool Task::storeState(TaskProc* proc, Mapping& archive)
+{
+    return true;
+}
+
+
+bool Task::restoreState(TaskProc* proc, const Mapping& archive)
+{
+    return true;
+}
