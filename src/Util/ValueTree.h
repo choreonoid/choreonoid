@@ -5,25 +5,17 @@
 #ifndef CNOID_UTIL_VALUE_TREE_H
 #define CNOID_UTIL_VALUE_TREE_H
 
+#include "Referenced.h"
 #include "UTF8.h"
 #include <map>
 #include <vector>
-#include <cstring>
-#include <iosfwd>
-#include <boost/intrusive_ptr.hpp>
-#include <boost/function.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class YAMLReaderImpl;
 class YAMLWriter;
-
 class ValueNode;
-
-void intrusive_ptr_add_ref(cnoid::ValueNode* obj);
-void intrusive_ptr_release(cnoid::ValueNode* obj);
-
 class ScalarNode;
 class Mapping;
 class Listing;
@@ -39,7 +31,7 @@ enum StringStyle { PLAIN_STRING, YAML_PLAIN_STRING = PLAIN_STRING,
 };
 #endif
 
-class CNOID_EXPORT ValueNode
+class CNOID_EXPORT ValueNode : public Referenced
 {
     struct Initializer {
         Initializer();
@@ -163,14 +155,10 @@ private:
     class FileException : public Exception {
     };
         
-private:
-        
-    int refCounter;
-        
 protected:
 
-    ValueNode() : refCounter(0) { }
-    ValueNode(Type type) : refCounter(0), type_(type), line_(-1), column_(-1) { }
+    ValueNode() { }
+    ValueNode(Type type) : type_(type), line_(-1), column_(-1) { }
 
     virtual ~ValueNode() { }
 
@@ -195,16 +183,13 @@ private:
     friend class ScalarNode;
     friend class Mapping;
     friend class Listing;
-
-    friend void cnoid::intrusive_ptr_add_ref(ValueNode* obj);
-    friend void cnoid::intrusive_ptr_release(ValueNode* obj);
 };
 
 template<> inline double ValueNode::to<double>() const { return toDouble(); }
 template<> inline int ValueNode::to<int>() const { return toInt(); }
 template<> inline std::string ValueNode::to<std::string>() const { return toString(); }
     
-typedef boost::intrusive_ptr<ValueNode> ValueNodePtr;
+typedef ref_ptr<ValueNode> ValueNodePtr;
 
     
 class CNOID_EXPORT ScalarNode : public ValueNode
@@ -262,7 +247,7 @@ public:
         return get(key);
     }
 
-    void insert(const std::string& key, ValueNodePtr node);
+    void insert(const std::string& key, ValueNode* node);
 
     Mapping* openMapping(const std::string& key) {
         return openMapping(key, false);
@@ -304,9 +289,6 @@ public:
     bool read(const std::string &key, int &out_value) const;
     bool read(const std::string &key, double &out_value) const;
 
-    bool read(const std::string &key, boost::function<void(double)> setterFunc) const;
-
-        
     template <class T>
         T read(const std::string& key) const {
         T value;
@@ -416,7 +398,7 @@ private:
     friend class YAMLWriter;
 };
 
-typedef boost::intrusive_ptr<Mapping> MappingPtr;
+typedef ref_ptr<Mapping> MappingPtr;
 
 
 /**
@@ -486,7 +468,7 @@ public:
 
     Mapping* newMapping();
 
-    void append(ValueNodePtr node) {
+    void append(ValueNode* node) {
         values.push_back(node);
     }
         
@@ -566,18 +548,7 @@ private:
     friend class YAMLWriter;
 };
 
-typedef boost::intrusive_ptr<Listing> ListingPtr;
-
-inline void intrusive_ptr_add_ref(cnoid::ValueNode* obj){
-    obj->refCounter++;
-}
-
-inline void intrusive_ptr_release(cnoid::ValueNode* obj){
-    obj->refCounter--;
-    if(obj->refCounter == 0){
-        delete obj;
-    }
-}
+typedef ref_ptr<Listing> ListingPtr;
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
 typedef ValueNode YamlNode;

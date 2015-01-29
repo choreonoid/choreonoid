@@ -6,7 +6,6 @@
 #define CNOID_BASE_ARCHIVE_H
 
 #include <cnoid/ValueTree>
-#include <cnoid/Referenced>
 #include <boost/function.hpp>
 #include <string>
 #include "exportdecl.h"
@@ -20,7 +19,7 @@ class View;
 class ViewManager;
 
 class Archive;
-typedef boost::intrusive_ptr<Archive> ArchivePtr;
+typedef ref_ptr<Archive> ArchivePtr;
 
 class ArchiveSharedData;
 
