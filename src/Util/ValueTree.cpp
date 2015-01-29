@@ -18,8 +18,8 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-
 namespace {
+
 const bool debugTrace = false;
 const char* typeNames[] = { "unknown node", "mapping", "sequence", "scalar" };
 map<string, bool> booleanSymbols;
@@ -29,6 +29,7 @@ const char* defaultDoubleFormat = "%.6g";
 ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
 ListingPtr invalidListing;
+
 }
 
 ValueNode::Initializer ValueNode::initializer;

@@ -12,6 +12,7 @@ using namespace cnoid;
 namespace cnoid {
 
 void exportPySignalTypes();
+void exportPyValueTree();
 void exportPyEigenTypes();
 void exportPySeqTypes();
 void exportPySceneGraph();
@@ -24,6 +25,7 @@ BOOST_PYTHON_MODULE(Util)
     class_<Referenced, ReferencedPtr, boost::noncopyable>("Referenced", no_init);
 
     exportPySignalTypes();
+    exportPyValueTree();
     exportPyEigenTypes();
     exportPySeqTypes();
     exportPySceneGraph();
