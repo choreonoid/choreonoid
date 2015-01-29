@@ -46,10 +46,11 @@ public:
 
     std::vector<TaskPtr> tasks;
     TaskPtr currentTask;
+    int currentTaskIndex;
     ScopedConnection taskUpdatedConnection;
     TaskPhasePtr currentPhase;
     boost::optional<int> currentCommandIndex;
-    int currentPhaseIndex_;
+    int currentPhaseIndex;
     boost::optional<int> nextPhaseIndex;
     boost::optional<int> nextCommandIndex; // -1 means the pre-command
     bool forceCommandLinkAutomatic;    
@@ -172,7 +173,8 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     vbox->addStretch();
     self->setLayout(vbox);
 
-    currentPhaseIndex_ = 0;
+    currentTaskIndex = 0;
+    currentPhaseIndex = 0;
     forceCommandLinkAutomatic = false;
     
     commandTimer.setSingleShot(true);
@@ -242,7 +244,17 @@ bool TaskViewImpl::updateTask(Task* task)
                       format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
                       % task->name());
         } else {
+            MappingPtr state;
+            if(index == currentTaskIndex){
+                TaskPtr oldTask = tasks[index];
+                state = new Mapping();
+                oldTask->storeState(this, *state);
+            }
             tasks[index] = task;
+            if(state){
+                setCurrentTask(index);
+                task->restoreState(this, *state);
+            }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
         }
@@ -266,6 +278,7 @@ void TaskViewImpl::setCurrentTask(int index)
         taskCombo.blockSignals(false);
     }
 
+    currentTaskIndex = index;
     currentTask = tasks[index];
 
     taskUpdatedConnection.reset(
@@ -278,7 +291,7 @@ void TaskViewImpl::setCurrentTask(int index)
 
 void TaskViewImpl::onTaskUpdated()
 {
-    setPhaseIndex(currentPhaseIndex_, false);
+    setPhaseIndex(currentPhaseIndex, false);
 }
 
 
@@ -384,18 +397,18 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         numPhases = currentTask->numPhases();
     }
 
-    currentPhaseIndex_ = std::max(0, std::min(index, numPhases));
+    currentPhaseIndex = std::max(0, std::min(index, numPhases));
 
     // check if the phase should be skipped
     if(isSuccessivelyCalled){
         std::set<int> skippedIndices;
         while(true){
-            if(skippedIndices.find(currentPhaseIndex_) == skippedIndices.end()){
-                if(currentPhaseIndex_ >= 0 && currentPhaseIndex_ < numPhases){
-                    TaskPhase* phase = currentTask->phase(currentPhaseIndex_);
+            if(skippedIndices.find(currentPhaseIndex) == skippedIndices.end()){
+                if(currentPhaseIndex >= 0 && currentPhaseIndex < numPhases){
+                    TaskPhase* phase = currentTask->phase(currentPhaseIndex);
                     if(phase->isSkipped()){
-                        skippedIndices.insert(currentPhaseIndex_);
-                        currentPhaseIndex_ = getClosestNextPhaseIndex(currentPhaseIndex_);
+                        skippedIndices.insert(currentPhaseIndex);
+                        currentPhaseIndex = getClosestNextPhaseIndex(currentPhaseIndex);
                         continue;
                     }
                 }
@@ -404,10 +417,10 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         }
     }
 
-    prevButton.setEnabled(currentPhaseIndex_ > 0);
+    prevButton.setEnabled(currentPhaseIndex > 0);
     nextButton.setEnabled(
-        (currentPhaseIndex_ < numPhases - 1) ||
-        (getLoopBackPhaseIndex(currentPhaseIndex_) < numPhases - 1));
+        (currentPhaseIndex < numPhases - 1) ||
+        (getLoopBackPhaseIndex(currentPhaseIndex) < numPhases - 1));
 
     int numVisibleButtons = 0;
     if(!numPhases){
@@ -419,7 +432,7 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         currentPhase = 0;
         numVisibleButtons = 1;
     } else {
-        currentPhase = currentTask->phase(currentPhaseIndex_);
+        currentPhase = currentTask->phase(currentPhaseIndex);
         phaseLabel.setText(currentPhase->caption().c_str());
         numVisibleButtons = currentPhase->numCommands();
         for(int i=0; i < numVisibleButtons; ++i){
@@ -434,7 +447,7 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         commandButtons[i]->hide();
     }
     
-    phaseIndexLabelButton.setText(QString("%1 / %2").arg(currentPhaseIndex_).arg(numPhases - 1));
+    phaseIndexLabelButton.setText(QString("%1 / %2").arg(currentPhaseIndex).arg(numPhases - 1));
 
     currentCommandIndex = boost::none;
 
@@ -456,7 +469,7 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
     nextCommandIndex = boost::none;
     
     if(currentTask && currentPhase){
-        nextPhaseIndex = currentPhaseIndex_;
+        nextPhaseIndex = currentPhaseIndex;
         TaskFunc commandFunc;
         if(commandIndex < 0){
             commandFunc = currentPhase->preCommand();
@@ -475,7 +488,7 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
             TaskCommand* command = currentPhase->command(commandIndex);
             if(command){
                 commandFunc = command->function();
-                nextPhaseIndex = command->nextPhaseIndex(currentPhaseIndex_);
+                nextPhaseIndex = command->nextPhaseIndex(currentPhaseIndex);
                 nextCommandIndex = command->nextCommandIndex(commandIndex);
             }
         }
@@ -492,7 +505,7 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 void TaskViewImpl::goToNextCommand()
 {
     if(!eventLoop.isRunning()){
-        if(nextPhaseIndex && *nextPhaseIndex != currentPhaseIndex_){
+        if(nextPhaseIndex && *nextPhaseIndex != currentPhaseIndex){
             nextCommandIndex = -1;
             callLater(boost::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
 
@@ -533,9 +546,9 @@ void TaskViewImpl::retry()
 
 void TaskViewImpl::onNextOrPrevButtonClicked(int direction)
 {
-    int index = currentPhaseIndex_ + direction;
+    int index = currentPhaseIndex + direction;
     if(currentPhase && index == currentTask->numPhases()){
-        index = getLoopBackPhaseIndex(currentPhaseIndex_);
+        index = getLoopBackPhaseIndex(currentPhaseIndex);
     }
     setPhaseIndex(index, false);
 }

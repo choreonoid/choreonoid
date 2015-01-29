@@ -172,7 +172,8 @@ public :
             try {
                 if(override storeState = this->get_override("storeState")){
                     called = true;
-                    result = storeState(proc, boost::ref(archive));
+                    //result = storeState(proc, boost::ref(archive));
+                    result = storeState(proc, &archive);
                 }
             } catch(boost::python::error_already_set const& ex) {
                 cnoid::handlePythonException();
@@ -192,7 +193,8 @@ public :
             try {
                 if(override restoreState = this->get_override("restoreState")){
                     called = true;
-                    result = restoreState(proc, boost::ref(archive));
+                    //result = restoreState(proc, boost::ref(archive));
+                    result = restoreState(proc, &archive);
                 }
             } catch(boost::python::error_already_set const& ex) {
                 cnoid::handlePythonException();
