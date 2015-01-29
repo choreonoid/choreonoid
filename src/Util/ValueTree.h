@@ -452,10 +452,6 @@ public:
     void write(int i, int value);
     void write(int i, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
 
-    bool read(int i, bool &out_value) const;
-    bool read(int i, int &out_value) const;
-    bool read(int i, double &out_value) const;
-
     /**
        \todo This operator should return ValueNode*.
     */
