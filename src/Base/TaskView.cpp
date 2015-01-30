@@ -64,6 +64,7 @@ public:
     void addTask(Task* task);
     bool updateTask(Task* task);
     void setCurrentTask(int index);
+    void setCurrentTaskByName(const std::string& name);
     PushButton* getOrCreateCommandButton(int index);
     void enableCommandButtons(bool on);
     void setFocusToCommandButton(int commandIndex);
@@ -281,6 +282,21 @@ void TaskViewImpl::setCurrentTask(int index)
     currentTaskIndex = index;
     currentTask = tasks[index];
     setPhaseIndex(0, false);
+}
+
+
+void TaskViewImpl::setCurrentTaskByName(const std::string& name)
+{
+    if(currentTask && currentTask->name() == name){
+        return;
+    }
+    for(size_t i=0; i < tasks.size(); ++i){
+        Task* task = tasks[i];
+        if(task->name() == name){
+            setCurrentTask(i);
+            break;
+        }
+    }
 }
 
 
@@ -745,6 +761,9 @@ void TaskViewImpl::addMenuSeparator()
 bool TaskView::storeState(Archive& archive)
 {
     archive.write("isAutoMode", impl->autoModeToggle.isChecked());
+    if(impl->currentTask){
+        archive.write("currentTask", impl->currentTask->name());
+    }
     return true;
 }
 
@@ -752,5 +771,9 @@ bool TaskView::storeState(Archive& archive)
 bool TaskView::restoreState(const Archive& archive)
 {
     impl->autoModeToggle.setChecked(archive.get("isAutoMode", false));
+    string name;
+    if(archive.read("currentTask", name)){
+        impl->setCurrentTaskByName(name);
+    }
     return true;
 }
