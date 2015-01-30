@@ -559,7 +559,8 @@ void TaskViewImpl::breakSequence()
     nextPhaseIndex = boost::none;
     nextCommandIndex = boost::none;
 
-    os << "\033[31mThe task sequence was breaked.\033[0m" << endl;
+    mv->putln(MessageView::HIGHLIGHT,
+              "Transition to the next task-command was interrupted.");
 }
 
 

@@ -27,7 +27,7 @@ public:
     MessageView();
     ~MessageView();
 
-    enum MessageType { NORMAL, ERROR, WARNING };
+    enum MessageType { NORMAL, ERROR, WARNING, HIGHLIGHT };
 
     void put(const char* message);
     void put(const std::string& message);
