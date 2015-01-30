@@ -843,13 +843,13 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     recordingMode.setSymbol(SimulatorItem::RECORD_FULL, N_("full"));
     recordingMode.setSymbol(SimulatorItem::RECORD_TAIL, N_("tail"));
     recordingMode.setSymbol(SimulatorItem::RECORD_NONE, N_("off"));
-    recordingMode.select(SimulatorItem::RECORD_FULL);
+    recordingMode.select(SimulatorItem::RECORD_TAIL);
     
     timeRangeMode.setSymbol(SimulatorItem::TIMEBAR_RANGE, N_("TimeBar range"));
     timeRangeMode.setSymbol(SimulatorItem::SPECIFIED_PERIOD, N_("Specified period"));
     timeRangeMode.setSymbol(SimulatorItem::UNLIMITED, N_("Unlimited"));
-    timeRangeMode.select(SimulatorItem::TIMEBAR_RANGE);
-    specifiedTimeLength = 60.0;
+    timeRangeMode.select(SimulatorItem::UNLIMITED);
+    specifiedTimeLength = 180.0; // 3 min.
     isActiveControlPeriodOnlyMode = true;
     useControllerThreadsProperty = true;
     isAllLinkPositionOutputMode = false;
