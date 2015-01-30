@@ -132,20 +132,31 @@ python::object Mapping_readFloat(Mapping& self, const std::string& key){
     return python::object();
 }
 
-python::object Mapping_get2(Mapping& self, const std::string& key, PyObject* defaultValue){
-    if(PyBool_Check(defaultValue)){
-        return python::object(true);
+python::object Mapping_get2(Mapping& self, const std::string& key, python::object defaultValue){
+    if(PyBool_Check(defaultValue.ptr())){
+        bool value;
+        if(self.read(key, value)){
+            return python::object(value);
+        }
+    } else if(PyInt_Check(defaultValue.ptr())){
+        int value;
+        if(self.read(key, value)){
+            return python::object(value);
+        }
+    } else if(PyFloat_Check(defaultValue.ptr())){
+        double value;
+        if(self.read(key, value)){
+            return python::object(value);
+        }
+    } else if(PyString_Check(defaultValue.ptr())){
+        string value;
+        if(self.read(key, value)){
+            return python::object(value);
+        }
+    } else {
+        return python::object();
     }
-    if(PyInt_Check(defaultValue)){
-        return python::object(1);
-    }
-    if(PyFloat_Check(defaultValue)){
-        return python::object(0.1);
-    }
-    if(PyString_Check(defaultValue)){
-        return python::object("hoge");
-    }
-    return python::object();
+    return defaultValue;
 }
 
 void Mapping_writeString1(Mapping& self, const std::string &key, const std::string& value){

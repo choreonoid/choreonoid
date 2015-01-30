@@ -170,10 +170,10 @@ public :
         {
             PyGILock lock;
             try {
-                if(override storeState = this->get_override("storeState")){
+                if(override storeStateFunc = this->get_override("storeState")){
                     called = true;
-                    //result = storeState(proc, boost::ref(archive));
-                    result = storeState(proc, &archive);
+                    MappingPtr a = &archive;
+                    result = storeStateFunc(boost::ref(proc), a);
                 }
             } catch(boost::python::error_already_set const& ex) {
                 cnoid::handlePythonException();
@@ -193,8 +193,8 @@ public :
             try {
                 if(override restoreState = this->get_override("restoreState")){
                     called = true;
-                    //result = restoreState(proc, boost::ref(archive));
-                    result = restoreState(proc, &archive);
+                    MappingPtr a = const_cast<Mapping*>(&archive);
+                    result = restoreState(boost::ref(proc), a);
                 }
             } catch(boost::python::error_already_set const& ex) {
                 cnoid::handlePythonException();
@@ -223,6 +223,8 @@ namespace cnoid {
 void exportPyTaskTypes()
 {
     class_<TaskProc, TaskProc*, boost::noncopyable>("TaskProc", no_init)
+        .def("currentPhaseIndex", &TaskProc::currentPhaseIndex)
+        .def("setCurrentPhaseIndex", &TaskProc::setCurrentPhaseIndex)
         .def("breakSequence", &TaskProc::breakSequence)
         .def("setNextCommand", &TaskProc::setNextCommand)
         .def("setNextPhase", &TaskProc::setNextPhase)
@@ -313,15 +315,11 @@ void exportPyTaskTypes()
         .def("addCommand", &Task::addCommand, return_value_policy<reference_existing_object>())
         .def("lastCommand", &Task::lastCommand, return_value_policy<reference_existing_object>())
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
-        .def("sigUpdated", &Task::sigUpdated)
-        .def("notifyUpdate", &Task::notifyUpdate)
         .def("onMenuRequest", &Task::onMenuRequest)
         ;
     
     implicitly_convertible<TaskWrapPtr, TaskPtr>();
     implicitly_convertible<TaskPtr, ReferencedPtr>();
-    
-    //python::def("execPythonCode", cnoid::execPythonCode);
 }
 
 }
