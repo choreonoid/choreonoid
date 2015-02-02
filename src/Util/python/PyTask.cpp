@@ -3,13 +3,15 @@
   @author Shin'ichiro Nakaoka
  */
 
+#include <iostream>
 #include "../Task.h"
 #include "../ValueTree.h"
 #include "PyUtil.h"
 #include <cnoid/PythonUtil>
+#include <boost/python/raw_function.hpp>
 
-using namespace boost;
 using namespace boost::python;
+namespace python = boost::python;
 using namespace cnoid;
 
 namespace {
@@ -18,32 +20,32 @@ void TaskProc_notifyCommandFinishTrue(TaskProc& self){
     self.notifyCommandFinish(true);
 }
 
-bool TaskPorc_waitForSignal1(boost::python::object self, boost::python::object signalProxy)
+bool TaskPorc_waitForSignal1(python::object self, python::object signalProxy)
 {
-    boost::python::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
-    boost::python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    self.attr("waitForCommandToFinish")(connection, 0.0);
+    python::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
+    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, 0.0));
 }
 
-bool TaskPorc_waitForSignal2(boost::python::object self, boost::python::object signalProxy, double timeout)
+bool TaskPorc_waitForSignal2(python::object self, python::object signalProxy, double timeout)
 {
-    boost::python::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
-    boost::python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    self.attr("waitForCommandToFinish")(connection, timeout);
+    python::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
+    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, timeout));
 }
 
-bool TaskPorc_waitForBooleanSignal1(boost::python::object self, boost::python::object signalProxy)
+bool TaskPorc_waitForBooleanSignal1(python::object self, python::object signalProxy)
 {
-    boost::python::object notifyCommandFinish = self.attr("notifyCommandFinish");
-    boost::python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    self.attr("waitForCommandToFinish")(connection, 0.0);
+    python::object notifyCommandFinish = self.attr("notifyCommandFinish");
+    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, 0.0));
 }
 
-bool TaskPorc_waitForBooleanSignal2(boost::python::object self, boost::python::object signalProxy, double timeout)
+bool TaskPorc_waitForBooleanSignal2(python::object self, python::object signalProxy, double timeout)
 {
-    boost::python::object notifyCommandFinish = self.attr("notifyCommandFinish");
-    boost::python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    self.attr("waitForCommandToFinish")(connection, timeout);
+    python::object notifyCommandFinish = self.attr("notifyCommandFinish");
+    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, timeout));
 }
 
 bool TaskProc_waitForCommandToFinish1(TaskProc& self)
@@ -75,71 +77,156 @@ bool TaskProc_waitForCommandToFinish3(TaskProc& self, Connection connectionToDis
 
 struct PyTaskFunc
 {
-    boost::python::object obj;
-    boost::python::object func;
-    PyTaskFunc(boost::python::object o, boost::python::object f) : obj(o), func(f) { }
+    python::object func;
+    PyTaskFunc(python::object f) : func(f) { }
     void operator()(TaskProc* proc) {
         PyGILock lock;
         try {
-            func(obj, boost::ref(proc));
-        } catch(boost::python::error_already_set const& ex) {
-            handlePythonException();
-        }
-    }
-    void operator()(bool on) {
-        PyGILock lock;
-        try {
-            func(obj, on);
-        } catch(boost::python::error_already_set const& ex) {
-            handlePythonException();
-        }
-    }
-    void operator()() {
-        PyGILock lock;
-        try {
-            func(obj);
-        } catch(boost::python::error_already_set const& ex) {
+            func(boost::ref(proc));
+        } catch(python::error_already_set const& ex) {
             handlePythonException();
         }
     }
 };
 
-TaskCommand* TaskCommand_setFunction(TaskCommand& self, boost::python::object func, boost::python::object obj){
-    return self.setFunction(PyTaskFunc(obj, func)); }
+struct PyMenuItemFunc
+{
+    python::object func;
+    PyMenuItemFunc(python::object f) : func(f) { }
+    void operator()() {
+        PyGILock lock;
+        try {
+            func();
+        } catch(python::error_already_set const& ex) {
+            handlePythonException();
+        }
+    }
+};
 
-TaskCommand* TaskCommand_setDefault1(TaskCommand& self) {
-    return self.setDefault(); }
+struct PyCheckMenuItemFunc
+{
+    python::object func;
+    PyCheckMenuItemFunc(python::object f) : func(f) { }
+    void operator()(bool on) {
+        PyGILock lock;
+        try {
+            func(on);
+        } catch(python::error_already_set const& ex) {
+            handlePythonException();
+        }
+    }
+};
+    
 
-TaskCommand* TaskCommand_setDefault2(TaskCommand& self, bool on) {
-    return self.setDefault(on); }
+TaskCommandPtr TaskCommand_setFunction(TaskCommand& self, python::object func){
+    return self.setFunction(PyTaskFunc(func));
+}
 
-TaskCommand* TaskCommand_setCommandLinkAutomatic1(TaskCommand& self) {
-    return self.setCommandLinkAutomatic(); }
+TaskCommandPtr TaskCommand_setDefault1(TaskCommand& self) {
+    return self.setDefault();
+}
 
-TaskCommand* TaskCommand_setCommandLinkAutomatic2(TaskCommand& self, bool on) {
-    return self.setCommandLinkAutomatic(on); }
+TaskCommandPtr TaskCommand_setDefault2(TaskCommand& self, bool on) {
+    return self.setDefault(on);
+}
 
-TaskPhase* TaskPhase_clone1(TaskPhase& self){
-    return self.clone(); }
+TaskCommandPtr TaskCommand_setPhaseLink(TaskCommand& self, int phaseIndex) {
+    return self.setPhaseLink(phaseIndex);
+}
 
-TaskPhase*  TaskPhase_clone2(TaskPhase& self, bool doDeepCopy ){
-    return self.clone(doDeepCopy); }
+TaskCommandPtr TaskCommand_setPhaseLinkStep(TaskCommand& self, int phaseIndexStep) {
+    return self.setPhaseLinkStep(phaseIndexStep);
+}
 
-void TaskPhase_setPreCommand(TaskPhase& self, boost::python::object func, boost::python::object obj){
-    return self.setPreCommand(PyTaskFunc(obj, func)); }
+TaskCommandPtr TaskCommand_linkToNextPhase(TaskCommand& self) {
+    return self.linkToNextPhase();
+}
 
-void TaskMenu_addMenuItem1(TaskMenu& self, const std::string& caption,
-        boost::python::object func, boost::python::object obj){
-    self.addMenuItem(caption, PyTaskFunc(obj, func)); }
+TaskCommandPtr TaskCommand_setCommandLink(TaskCommand& self, int commandIndex){
+    return self.setCommandLink(commandIndex);
+}
 
-void TaskMenu_addCheckMenuItem1(TaskMenu& self,const std::string& caption,
-        bool isChecked, boost::python::object func, boost::python::object obj){
-    self.addCheckMenuItem(caption, isChecked, PyTaskFunc(obj, func)); }
+TaskCommandPtr TaskCommand_setCommandLinkStep(TaskCommand& self, int commandIndexStep){
+    return self.setCommandLinkStep(commandIndexStep);
+}
+
+TaskCommandPtr TaskCommand_linkToNextCommand(TaskCommand& self) {
+    return self.linkToNextCommand();
+}
+
+TaskCommandPtr TaskCommand_setCommandLinkAutomatic1(TaskCommand& self) {
+    return self.setCommandLinkAutomatic();
+}
+
+TaskCommandPtr TaskCommand_setCommandLinkAutomatic2(TaskCommand& self, bool on) {
+    return self.setCommandLinkAutomatic(on);
+}
+
+TaskPhasePtr TaskPhase_clone1(TaskPhase& self){
+    return self.clone();
+}
+
+TaskPhasePtr  TaskPhase_clone2(TaskPhase& self, bool doDeepCopy ){
+    return self.clone(doDeepCopy);
+}
+
+void TaskPhase_setPreCommand(TaskPhase& self, python::object func){
+    return self.setPreCommand(PyTaskFunc(func));
+}
+
+TaskCommandPtr TaskPhase_addCommand(TaskPhase& self, const std::string& caption) {
+    return self.addCommand(caption);
+}
+
+TaskCommandPtr TaskPhase_addCommandExMain(TaskPhase* self, const std::string& caption, python::dict kw) {
+
+    TaskCommandPtr command = self->addCommand(caption);
+
+    python::list args = kw.items();
+    const int n = python::len(args);
+    for(int i=0; i < n; ++i){
+        python::object arg(args[i]);
+        std::string key = python::extract<std::string>(arg[0]);
+        python::object value(arg[1]);
+        if(key == "default" && PyBool_Check(value.ptr())){
+            if(python::extract<bool>(value)){
+                command->setDefault();
+            }
+        } else if(key == "function"){
+            //TaskCommand_setFunction(*command, value);
+        }
+    }
+    return command;
+}
+
+TaskCommandPtr TaskPhase_addCommandEx(python::tuple args_, python::dict kw) {
+    TaskPhasePtr self = python::extract<TaskPhasePtr>(args_[0]);
+    const std::string caption = python::extract<std::string>(args_[1]);
+    return TaskPhase_addCommandExMain(self, caption, kw);
+}    
+
+
+TaskCommandPtr TaskPhase_command(TaskPhase& self, int index) {
+    return self.command(index);
+}
+
+TaskCommandPtr TaskPhase_lastCommand(TaskPhase& self) {
+    return self.lastCommand();
+}
+
+void TaskMenu_addMenuItem1(TaskMenu& self, const std::string& caption, python::object func){
+    self.addMenuItem(caption, PyMenuItemFunc(func));
+}
+
+void TaskMenu_addCheckMenuItem1(TaskMenu& self, const std::string& caption, bool isChecked, python::object func){
+    self.addCheckMenuItem(caption, isChecked, PyCheckMenuItemFunc(func));
+}
 
 void TaskMenu_addMenuSeparator(TaskMenu& self){
-    self.addMenuSeparator(); }
+    self.addMenuSeparator();
+}
 
-class TaskWrap : public Task, public wrapper<Task>
+class TaskWrap : public Task, public python::wrapper<Task>
 {
 public :
     TaskWrap(){};
@@ -151,11 +238,11 @@ public :
         {
             PyGILock lock;
             try {
-                if(override onMenuRequest = this->get_override("onMenuRequest")){
+                if(python::override onMenuRequest = this->get_override("onMenuRequest")){
                     called = true;
                     onMenuRequest(boost::ref(menu));
                 } 
-            } catch(boost::python::error_already_set const& ex) {
+            } catch(python::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -170,12 +257,12 @@ public :
         {
             PyGILock lock;
             try {
-                if(override storeStateFunc = this->get_override("storeState")){
+                if(python::override storeStateFunc = this->get_override("storeState")){
                     called = true;
                     MappingPtr a = &archive;
                     result = storeStateFunc(boost::ref(proc), a);
                 }
-            } catch(boost::python::error_already_set const& ex) {
+            } catch(python::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -191,12 +278,12 @@ public :
         {
             PyGILock lock;
             try {
-                if(override restoreState = this->get_override("restoreState")){
+                if(python::override restoreState = this->get_override("restoreState")){
                     called = true;
                     MappingPtr a = const_cast<Mapping*>(&archive);
                     result = restoreState(boost::ref(proc), a);
                 }
-            } catch(boost::python::error_already_set const& ex) {
+            } catch(python::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -210,11 +297,39 @@ public :
 
 typedef ref_ptr<TaskWrap> TaskWrapPtr;
 
-TaskPhase* (Task::*addPhase1)(TaskPhase*) = &Task::addPhase;
-TaskPhase* (Task::*addPhase2)(const std::string&) = &Task::addPhase;
+TaskPhasePtr Task_phase(Task& self, int index){
+    return self.phase(index);
+}
 
-void Task_setPreCommand(Task& self, boost::python::object func, boost::python::object obj){
-    return self.setPreCommand(PyTaskFunc(obj, func)); }
+TaskPhasePtr Task_addPhase1(Task& self, TaskPhase* phase){
+    return self.addPhase(phase);
+}
+
+TaskPhasePtr Task_addPhase2(Task& self, const std::string& caption){
+    return self.addPhase(caption);
+}
+
+TaskPhasePtr Task_lastPhase(Task& self){
+    return self.lastPhase();
+}
+
+void Task_setPreCommand(Task& self, python::object func){
+    return self.setPreCommand(PyTaskFunc(func));
+}
+
+TaskCommandPtr Task_addCommand(Task& self, const std::string& caption){
+    return self.addCommand(caption);
+}
+
+TaskCommandPtr Task_lastCommand(Task& self){
+    return self.lastCommand();
+}
+
+TaskCommandPtr Task_addCommandEx(python::tuple args_, python::dict kw){
+    TaskWrapPtr self = python::extract<TaskWrapPtr>(args_[0]);
+    const std::string caption = python::extract<std::string>(args_[1]);
+    return TaskPhase_addCommandExMain(self->lastPhase(), caption, kw);
+}    
 
 }
 
@@ -245,26 +360,26 @@ void exportPyTaskTypes()
     class_<TaskFunc>("TaskFunc")
         .def("__call__", &TaskFunc::operator())
         ;
-    
+
     class_<TaskCommand, TaskCommandPtr, bases<Referenced> >
         ("TaskCommand", init<const std::string&>())
         .def("caption", &TaskCommand::caption, return_value_policy<copy_const_reference>())
         .def("function", &TaskCommand::function)
-        .def("setFunction", TaskCommand_setFunction, return_value_policy<reference_existing_object>())
-        .def("setDefault", TaskCommand_setDefault1, return_value_policy<reference_existing_object>())
-        .def("setDefault", TaskCommand_setDefault2, return_value_policy<reference_existing_object>())
+        .def("setFunction", TaskCommand_setFunction)
+        .def("setDefault", TaskCommand_setDefault1)
+        .def("setDefault", TaskCommand_setDefault2)
         .def("isDefault", &TaskCommand::isDefault)
         .def("nextPhaseIndex", &TaskCommand::nextPhaseIndex)
-        .def("setPhaseLink", &TaskCommand::setPhaseLink, return_value_policy<reference_existing_object>())
-        .def("setPhaseLinkStep", &TaskCommand::setPhaseLinkStep, return_value_policy<reference_existing_object>())
-        .def("linkToNextPhase", &TaskCommand::linkToNextPhase, return_value_policy<reference_existing_object>())
+        .def("setPhaseLink", TaskCommand_setPhaseLink)
+        .def("setPhaseLinkStep", TaskCommand_setPhaseLinkStep)
+        .def("linkToNextPhase", TaskCommand_linkToNextPhase)
         .def("nextCommandIndex", &TaskCommand::nextCommandIndex)
-        .def("setCommandLink", &TaskCommand::setCommandLink, return_value_policy<reference_existing_object>())
-        .def("setCommandLinkStep", &TaskCommand::setCommandLinkStep, return_value_policy<reference_existing_object>())
-        .def("linkToNextCommand", &TaskCommand::linkToNextCommand, return_value_policy<reference_existing_object>())
+        .def("setCommandLink", TaskCommand_setCommandLink)
+        .def("setCommandLinkStep", TaskCommand_setCommandLinkStep)
+        .def("linkToNextCommand", TaskCommand_linkToNextCommand)
         .def("isCommandLinkAutomatic", &TaskCommand::isCommandLinkAutomatic)
-        .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic1, return_value_policy<reference_existing_object>())
-        .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic2, return_value_policy<reference_existing_object>())
+        .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic1)
+        .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic2)
         ;
     
     implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
@@ -273,8 +388,8 @@ void exportPyTaskTypes()
         ("TaskPhase", init<const std::string&>())
         .def(init<const TaskPhase&>())
         .def(init<const TaskPhase&, bool>())
-        .def("clone", TaskPhase_clone1, return_value_policy<reference_existing_object>())
-        .def("clone", TaskPhase_clone2, return_value_policy<reference_existing_object>())
+        .def("clone", TaskPhase_clone1)
+        .def("clone", TaskPhase_clone2)
         .def("caption", &TaskPhase::caption, return_value_policy<copy_const_reference>())
         .def("setCaption", &TaskPhase::setCaption)
         .def("isSkipped", &TaskPhase::isSkipped)
@@ -282,11 +397,12 @@ void exportPyTaskTypes()
         .def("setPreCommand", TaskPhase_setPreCommand)
         .def("setPreCommand", &TaskPhase::setPreCommand)
         .def("preCommand", &TaskPhase::preCommand)
-        .def("addCommand", &TaskPhase::addCommand, return_value_policy<reference_existing_object>())
+        .def("addCommand", TaskPhase_addCommand)
+        .def("addCommandEx", python::raw_function(TaskPhase_addCommandEx, 2))
         .def("numCommands", &TaskPhase::numCommands)
-        .def("command", &TaskPhase::command, return_value_policy<reference_existing_object>())
+        .def("command", TaskPhase_command)
         .def("lastCommandIndex", &TaskPhase::lastCommandIndex)
-        .def("lastCommand", &TaskPhase::lastCommand, return_value_policy<reference_existing_object>())
+        .def("lastCommand", TaskPhase_lastCommand)
         ;
     
     implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
@@ -297,7 +413,7 @@ void exportPyTaskTypes()
         .def("addMenuSeparator", TaskMenu_addMenuSeparator)
         ;
     
-    class_<TaskWrap, TaskWrapPtr, boost::noncopyable >("Task")
+    class_<TaskWrap, TaskWrapPtr, bases<Referenced>, boost::noncopyable >("Task")
         .def(init<const std::string&, const std::string&>())
         .def(init<const Task&, bool>())
         .def(init<const Task&>())
@@ -306,20 +422,20 @@ void exportPyTaskTypes()
         .def("caption", &Task::caption, return_value_policy<copy_const_reference>())
         .def("setCaption", &Task::setCaption)
         .def("numPhases", &Task::numPhases)
-        .def("phase", &Task::phase, return_value_policy<reference_existing_object>())
-        .def("addPhase", addPhase1, return_value_policy<reference_existing_object>())
-        .def("addPhase", addPhase2, return_value_policy<reference_existing_object>())
-        .def("lastPhase", &Task::lastPhase, return_value_policy<reference_existing_object>())
+        .def("phase", Task_phase)
+        .def("addPhase", Task_addPhase1)
+        .def("addPhase", Task_addPhase2)
+        .def("lastPhase", Task_lastPhase)
         .def("setPreCommand", Task_setPreCommand)
         .def("setPreCommand", &Task::setPreCommand)
-        .def("addCommand", &Task::addCommand, return_value_policy<reference_existing_object>())
-        .def("lastCommand", &Task::lastCommand, return_value_policy<reference_existing_object>())
+        .def("addCommand", Task_addCommand)
+        .def("addCommandEx", python::raw_function(Task_addCommandEx, 2))
+        .def("lastCommand", Task_lastCommand)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
         .def("onMenuRequest", &Task::onMenuRequest)
         ;
     
-    implicitly_convertible<TaskWrapPtr, TaskPtr>();
-    implicitly_convertible<TaskPtr, ReferencedPtr>();
+    implicitly_convertible<TaskWrapPtr, ReferencedPtr>();
 }
 
 }
