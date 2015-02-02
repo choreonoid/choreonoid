@@ -413,7 +413,7 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         numPhases = currentTask->numPhases();
     }
 
-    currentPhaseIndex_ = std::max(0, std::min(index, numPhases));
+    currentPhaseIndex_ = std::max(0, std::min(index, numPhases - 1));
 
     // check if the phase should be skipped
     if(isSuccessivelyCalled){

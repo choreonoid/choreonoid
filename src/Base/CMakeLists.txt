@@ -7,7 +7,7 @@
 #set_source_files_properties(ToolBar.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(GLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(SceneItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(SceneWidget.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(TaskView.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
   App.cpp
