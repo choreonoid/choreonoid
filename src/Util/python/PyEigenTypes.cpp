@@ -5,13 +5,53 @@
 #include "PyUtil.h"
 #include "../EigenTypes.h"
 #include "../EigenUtil.h"
-#include <boost/format.hpp>
 
 namespace python = boost::python;
 using namespace boost::python;
 using namespace cnoid;
 
 namespace {
+
+python::object numpy;
+python::object numpy_ndarray;
+python::object numpy_array;
+python::object numpy_ndarray_tolist;
+
+template<typename VectorType>
+struct Vector_to_ndarray_converter {
+    static PyObject* convert(const VectorType& v){
+        python::list elements;
+        for(int i=0; i < v.size(); ++i){
+            elements.append(v[i]);
+        }
+        python::object array = numpy_array(elements);
+        return python::incref(array.ptr());
+    }
+};
+
+template<typename VectorType, int dim>
+struct ndarray_to_Vector_converter {
+    ndarray_to_Vector_converter(){
+        converter::registry::push_back(
+            &ndarray_to_Vector_converter::convertible,
+            &ndarray_to_Vector_converter::construct,
+            python::type_id<VectorType>());
+    }
+    static void* convertible(PyObject* pyo){
+        if(PyObject_IsInstance(pyo, numpy_ndarray.ptr()) == 1){
+            return pyo;
+        }
+        return 0;
+    }
+    static void construct(PyObject* pyo, python::converter::rvalue_from_python_stage1_data* data){
+        VectorType* pv = new(reinterpret_cast<python::converter::rvalue_from_python_storage<VectorType>*>
+                             (data)->storage.bytes) VectorType();
+        for(python::ssize_t i = 0; i < dim; ++i) {
+            (*pv)[i] = python::extract<typename VectorType::Scalar>(PySequence_GetItem(pyo, i));
+        }
+        data->convertible = pv;
+    }
+};
 
 template<typename VectorType, int dim>
 struct pylist_to_Vector_converter {
@@ -22,17 +62,77 @@ struct pylist_to_Vector_converter {
             python::type_id<VectorType>());
     }
     static void* convertible(PyObject* pyo){
-        if(PySequence_Check(pyo) && PySequence_Size(pyo) == dim){
+        if(PySequence_Check(pyo)){
             return pyo;
         }
         return 0;
     }
     static void construct(PyObject* pyo, python::converter::rvalue_from_python_stage1_data* data){
-        VectorType* pv = new(reinterpret_cast<python::converter::rvalue_from_python_storage<VectorType>*>(data)->storage.bytes) VectorType();
+        VectorType* pv = new(reinterpret_cast<python::converter::rvalue_from_python_storage<VectorType>*>
+                             (data)->storage.bytes) VectorType();
         for(python::ssize_t i = 0; i < dim; ++i) {
             (*pv)[i] = python::extract<typename VectorType::Scalar>(PySequence_GetItem(pyo, i));
         }
         data->convertible = pv;
+    }
+};
+
+template<typename MatrixType>
+struct Matrix_to_ndarray_converter {
+    static PyObject* convert(const MatrixType& R){
+        python::list elements;
+        for(int i=0; i < R.rows(); ++i){
+            python::list row;
+            for(int j=0; j < R.cols(); ++j){
+                row.append(R(i, j));
+            }
+            elements.append(row);
+        }
+        python::object array = numpy_array(elements);
+        return python::incref(array.ptr());
+    }
+};
+
+template<typename MatrixType, int rows, int cols>
+struct ndarray_to_Matrix_converter {
+    ndarray_to_Matrix_converter(){
+        converter::registry::push_back(
+            &ndarray_to_Matrix_converter::convertible,
+            &ndarray_to_Matrix_converter::construct,
+            python::type_id<MatrixType>());
+    }
+    static void* convertible(PyObject* pyo){
+
+        typename boost::python::object hoge ( boost::python::handle<>(pyobj));
+        python::object tolist = hoge.attr("tolist");
+        
+        if(PyObject_IsInstance(pyo, numpy_ndarray.ptr()) == 1){
+            return pyo;
+        }
+        return 0;
+    }
+    static void construct(PyObject* pyobj, python::converter::rvalue_from_python_stage1_data* data){
+        /*
+        MatrixType* M =
+            new(reinterpret_cast<python::converter::rvalue_from_python_storage<MatrixType>*>(data)->storage.bytes)
+            MatrixType();
+        */
+
+        //boost::python::object hoge ( boost::python::handle<>(pyobj));
+        //python::object tolist = src.attr("tolist");
+        //python::list elements(python::extract<python::list>(hoge.attr("tolist")));
+        //python::list array_tolist = python::call<python::list>(numpy_ndarray_tolist.ptr(), pyo);
+        //python::object array_tolist(numpy_ndarray_tolist(array));
+        //python::list elements(python::extract<python::list>(array_tolist));
+        /*
+        for(python::ssize_t i = 0; i < rows; ++i) {
+            python::list row = python::extract<python::list>(elements[i]);
+            for(python::ssize_t j = 0; j < rows; ++j) {
+                (*M)(i, j) = python::extract<typename MatrixType::Scalar>(row[j]);
+            }
+        }
+        */
+        //data->convertible = M;
     }
 };
 
@@ -61,6 +161,28 @@ struct pylist_to_Matrix_converter {
             }
         }
         data->convertible = M;
+    }
+};
+
+template<typename TransformType>
+struct Transform_to_pylist_converter {
+    static PyObject* convert(const TransformType& T){
+        python::list Tout;
+        typename TransformType::ConstLinearPart R = T.linear();
+        typename TransformType::ConstTranslationPart p = T.translation();
+        python::list bottom;
+        for(int i=0; i < 3; ++i){
+            python::list row;
+            row.append(R(i, 0));
+            row.append(R(i, 1));
+            row.append(R(i, 2));
+            row.append(p[i]);
+            Tout.append(row);
+            bottom.append(static_cast<typename TransformType::Scalar>(0.0));
+        }
+        bottom.append(static_cast<typename TransformType::Scalar>(1.0));
+        Tout.append(bottom);
+        return python::incref(Tout.ptr());
     }
 };
 
@@ -110,279 +232,58 @@ Affine3 getAffine3FromAngleAxis(double angle, const Vector3& vec){
 }
 
 
-typedef Eigen::Matrix<int,1,1>::Index Index;
-
-void checkIndex(Index i, Index size) {
-    if(i < 0 || i >= size) {
-        static boost::format message("Index %1% out of range 0..%2%"); 
-        PyErr_SetString(PyExc_IndexError, (message % i % (size - 1)).str().c_str());
-        python::throw_error_already_set();
-    }
+//! \todo replace this function with another python functions
+Vector3 getNormalized(const Vector3& vec){
+    return vec.normalized();
 }
 
-void extractIndex(python::tuple indexTuple, Index rows, Index cols, Index out_index[2]){
-    if(python::len(indexTuple) != 2) {
-        PyErr_SetString(PyExc_IndexError,"Index must be integer or a 2-tuple");
-        python::throw_error_already_set();
-    }
-    for(int i=0; i < 2; ++i) {
-        python::extract<Index> e(indexTuple[i]);
-        if(!e.check()){
-            PyErr_SetString(
-                PyExc_ValueError,
-                (boost::format("Unable to convert %1%-th index to integer.") % i).str().c_str());
-            python::throw_error_already_set();
-        }
-        out_index[i] = e(); 
-    }
-    checkIndex(out_index[0], rows);
-    checkIndex(out_index[1], cols);
 }
-
-std::string getClassName(const python::object& obj){
-    return python::extract<std::string>(obj.attr("__class__").attr("__name__"))();
-}
-
-template<typename TMatrixBase>
-class MatrixBaseVisitor : public python::def_visitor<MatrixBaseVisitor<TMatrixBase> >{
-
-    typedef typename TMatrixBase::Scalar Scalar;
-    
-public:
-    template<class PyClass>
-    void visit(PyClass& pyClass) const {
-        pyClass
-            .def("__neg__", &MatrixBaseVisitor::__neg__)
-            .def("__add__", &MatrixBaseVisitor::__add__)
-            .def("__iadd__", &MatrixBaseVisitor::__iadd__)
-            .def("__sub__", &MatrixBaseVisitor::__sub__)
-            .def("__isub__", &MatrixBaseVisitor::__isub__)
-            .def("__eq__", &MatrixBaseVisitor::__eq__)
-            .def("__ne__", &MatrixBaseVisitor::__ne__)
-
-            .def("__mul__", &MatrixBaseVisitor::__mul__scalar<long>)
-            .def("__imul__", &MatrixBaseVisitor::__imul__scalar<long>)
-            .def("__rmul__", &MatrixBaseVisitor::__rmul__scalar<long>)
-            .def("__div__",&MatrixBaseVisitor::__div__scalar<long>)
-            .def("__idiv__",&MatrixBaseVisitor::__idiv__scalar<long>)
-
-            .def("__mul__",&MatrixBaseVisitor::__mul__scalar<Scalar>)
-            .def("__rmul__",&MatrixBaseVisitor::__rmul__scalar<Scalar>)
-            .def("__imul__",&MatrixBaseVisitor::__imul__scalar<Scalar>)
-            .def("__div__",&MatrixBaseVisitor::__div__scalar<Scalar>)
-            .def("__idiv__",&MatrixBaseVisitor::__idiv__scalar<Scalar>)
-            
-            .def("rows", &TMatrixBase::rows)
-            .def("cols", &TMatrixBase::cols)
-            .add_static_property("Ones", &MatrixBaseVisitor::Ones)
-            .add_static_property("Zero", &MatrixBaseVisitor::Zero)
-            .add_static_property("Identity", &MatrixBaseVisitor::Identity)
-
-            .def("norm",&TMatrixBase::norm)
-            .def("__abs__",&TMatrixBase::norm)
-            .def("squaredNorm",&TMatrixBase::squaredNorm)
-            .def("normalize",&TMatrixBase::normalize)
-            .def("normalized",&TMatrixBase::normalized)
-            ;
-    }
-
-    static TMatrixBase Ones(){ return TMatrixBase::Ones(); }
-    static TMatrixBase Zero(){ return TMatrixBase::Zero(); }
-    static TMatrixBase Identity(){ return TMatrixBase::Identity(); }
-
-    static bool __eq__(const TMatrixBase& a, const TMatrixBase& b){
-        if(a.rows()!=b.rows() || a.cols()!=b.cols()){
-            return false;
-        }
-        return a.cwiseEqual(b).all();
-    }
-    static bool __ne__(const TMatrixBase& a, const TMatrixBase& b){ return !__eq__(a,b); }
-    static TMatrixBase __neg__(const TMatrixBase& a){ return -a; };
-    static TMatrixBase __add__(const TMatrixBase& a, const TMatrixBase& b){ return a + b; }
-    static TMatrixBase __sub__(const TMatrixBase& a, const TMatrixBase& b){ return a - b; }
-    static TMatrixBase __iadd__(TMatrixBase& a, const TMatrixBase& b){ a += b; return a; };
-    static TMatrixBase __isub__(TMatrixBase& a, const TMatrixBase& b){ a -= b; return a; };
-
-    template<typename Scalar2> static TMatrixBase __mul__scalar(const TMatrixBase& a, const Scalar2& scalar){ return a * scalar; }
-    template<typename Scalar2> static TMatrixBase __imul__scalar(TMatrixBase& a, const Scalar2& scalar){ a *= scalar; return a; }
-    template<typename Scalar2> static TMatrixBase __rmul__scalar(const TMatrixBase& a, const Scalar2& scalar){ return a * scalar; }
-    template<typename Scalar2> static TMatrixBase __div__scalar(const TMatrixBase& a, const Scalar2& scalar){ return a / scalar; }
-    template<typename Scalar2> static TMatrixBase __idiv__scalar(TMatrixBase& a, const Scalar2& scalar){ a /= scalar; return a; }
-};
-
-template<typename TVector>
-class VectorVisitor : public python::def_visitor< VectorVisitor<TVector> > {
-
-    friend class python::def_visitor_access;
-    typedef typename TVector::Scalar Scalar;
-    enum { Dim = TVector::RowsAtCompileTime };
-
-public:    
-    template<class PyClass> void visit(PyClass& pyClass) const {
-
-        MatrixBaseVisitor<TVector>().visit(pyClass);
-
-        pyClass
-            .def(python::init<Scalar, Scalar, Scalar>())
-            .def("__setitem__", &VectorVisitor::__setitem__)
-            .def("__getitem__", &VectorVisitor::__getitem__)
-            .def("__str__", &VectorVisitor::__str__)
-            .def("__repr__", &VectorVisitor::__str__)
-            .def("dot", &VectorVisitor::dot)
-            .def("__len__", &VectorVisitor::__len__).staticmethod("__len__")
-            .def("cross", &VectorVisitor::cross)
-            .add_static_property("UnitX", &VectorVisitor::UnitX)
-            .add_static_property("UnitY", &VectorVisitor::UnitY)
-            .add_static_property("UnitZ", &VectorVisitor::UnitZ)
-            .add_property("x", &VectorVisitor::get_x, &VectorVisitor::set_x)
-            .add_property("y", &VectorVisitor::get_y, &VectorVisitor::set_y)
-            .add_property("z", &VectorVisitor::get_z, &VectorVisitor::set_z)
-            ;
-    };
-
-    static void __setitem__(TVector& self, Index i, Scalar value){
-        checkIndex(i, Dim);
-        self[i] = value;
-    }
-    static Scalar __getitem__(const TVector& self, Index i){
-        checkIndex(i, Dim);
-        return self[i];
-    }
-    static Index __len__(){ return Dim; }
-    static Scalar dot(const TVector& self, const TVector& other){ return self.dot(other); }
-    static TVector cross(const TVector& self, const TVector& other){ return self.cross(other); }
-    static TVector UnitX(){ return TVector::UnitX(); }
-    static TVector UnitY(){ return TVector::UnitY(); }
-    static TVector UnitZ(){ return TVector::UnitZ(); }
-    static Scalar get_x(const TVector& self) { return self.x(); }
-    static Scalar set_x(TVector& self, Scalar value) { self.x() = value; }
-    static Scalar get_y(const TVector& self) { return self.y(); }
-    static Scalar set_y(TVector& self, Scalar value) { self.y() = value; }
-    static Scalar get_z(const TVector& self) { return self.z(); }
-    static Scalar set_z(TVector& self, Scalar value) { self.z() = value; }
-            
-    static std::string __str__(const python::object& obj){
-        const TVector& self = python::extract<TVector>(obj)();
-        std::ostringstream oss;
-        oss << getClassName(obj) << "(";
-        Index i=0;
-        while(true){
-            oss << self[i++];
-            if(i == Dim){
-                break;
-            }
-            oss << ", ";
-        }
-        oss << ")";
-        return oss.str();
-    }
-};
-
-template<typename TMatrix>
-class MatrixVisitor : public python::def_visitor< MatrixVisitor<TMatrix> > {
-
-    friend class python::def_visitor_access;
-    typedef typename TMatrix::Scalar Scalar;
-    typedef typename Eigen::Matrix<Scalar, TMatrix::RowsAtCompileTime, 1> ColumnVector;
-    enum { Rows = TMatrix::RowsAtCompileTime };
-    enum { Cols = TMatrix::RowsAtCompileTime };
-
-public:
-    template<class PyClass>
-    void visit(PyClass& pyClass) const {
-
-        MatrixBaseVisitor<TMatrix>().visit(pyClass);
-
-	pyClass
-            .def("transpose", &MatrixVisitor::transpose)
-            .def("inverse", &MatrixVisitor::inverse)
-            .def("diagonal",&MatrixVisitor::diagonal)
-            .def("row", &MatrixVisitor::row)
-            .def("col", &MatrixVisitor::col)
-            .def("__mul__", &MatrixVisitor::__mul__matrix)
-            .def("__imul__",&MatrixVisitor::__imul__matrix)
-            .def("__mul__", &MatrixVisitor::__mul__vector)
-            .def("__rmul__",&MatrixVisitor::__mul__vector)
-            .def("__setitem__", &MatrixVisitor::__setitem__row)
-            .def("__getitem__", &MatrixVisitor::__getitem__row)
-            .def("__setitem__", &MatrixVisitor::__setitem__element)
-            .def("__getitem__", &MatrixVisitor::__getitem__element)
-            .def("__str__", &MatrixVisitor::__str__)
-            .def("__repr__", &MatrixVisitor::__str__)
-            .def("__len__", &MatrixVisitor::__len__).staticmethod("__len__")
-            ;
-	}
-    
-    static Index __len__(){ return TMatrix::RowsAtCompileTime; }
-    static TMatrix transpose(const TMatrix& M){ return M.transpose(); }
-    static ColumnVector diagonal(const TMatrix& M){ return M.diagonal(); }
-
-    static ColumnVector __getitem__row(const TMatrix& M, Index i){
-        checkIndex(i, M.rows());
-        return M.row(i);
-    }
-    static void __setitem__row(TMatrix& M, Index i, const ColumnVector& v){
-        checkIndex(i, M.rows());
-        M.row(i) = v;
-    }
-    static Scalar __getitem__element(const TMatrix& M, python::tuple indexTuple){
-        Index index[2];
-        extractIndex(indexTuple, M.rows(), M.cols(), index);
-        return M(index[0], index[1]);
-    }
-    static void __setitem__element(TMatrix& M, python::tuple indexTuple, const Scalar& value){
-        Index index[2];
-        extractIndex(indexTuple, M.rows(), M.cols(), index);
-        M(index[0], index[1]) = value;
-    }
-
-    static TMatrix __mul__matrix(const TMatrix& A, const TMatrix& B){ return A * B; }
-    static TMatrix __imul__matrix(TMatrix& A, const TMatrix& B){ A *= B; return A; };
-    static ColumnVector __mul__vector(const TMatrix& M, const ColumnVector& v){ return M * v; }
-    static TMatrix inverse(const TMatrix& M){ return M.inverse(); }
-    static ColumnVector row(const TMatrix& M, Index i){ checkIndex(i, M.rows()); return M.row(i); }
-    static ColumnVector col(const TMatrix& M, Index i){ checkIndex(i, M.cols()); return M.col(i); }
-    
-    static std::string __str__(const python::object& obj){
-        std::ostringstream oss;
-        const TMatrix& M = python::extract<TMatrix>(obj)();
-        oss << getClassName(obj) << "(";
-        for(Index i=0; i < M.rows(); ++i){
-            oss << "\t(";
-            Index j=0;
-            while(true){
-                oss << M(i, j++);
-                if(j == Cols){
-                    break;
-                }
-                oss << ", ";
-            }
-            oss < ")\n";
-        }
-        oss < ")";
-        return oss.str();
-    }
-};
-
-}
-
 
 namespace cnoid {
 
 void exportPyEigenTypes()
 {
-    class_<Vector3>("Vector3", init<>())
-        .def(VectorVisitor<Vector3>());
-
-    class_<Vector3f>("Vector3f", init<>())
-        .def(VectorVisitor<Vector3f>());
-
-    class_<Matrix3>("Matrix3", init<>())
-        .def(MatrixVisitor<Matrix3>());
+    numpy = python::import("numpy");
+    numpy_ndarray = numpy.attr("ndarray");
+    numpy_array = numpy.attr("array");
+    numpy_ndarray_tolist = numpy_ndarray.attr("tolist");
     
-    class_<Matrix4>("Matrix4", init<>())
-        .def(MatrixVisitor<Matrix4>());
+    //to_python_converter<Vector2, Vector_to_pylist_converter<Vector2> >();
+    to_python_converter<Vector2, Vector_to_ndarray_converter<Vector2> >();
+    //pylist_to_Vector_converter<Vector2, 2>();
+    ndarray_to_Vector_converter<Vector2, 2>();
     
+    //to_python_converter<Vector3, Vector_to_pylist_converter<Vector3> >();
+    to_python_converter<Vector3, Vector_to_ndarray_converter<Vector3> >();
+    //pylist_to_Vector_converter<Vector3, 3>();
+    ndarray_to_Vector_converter<Vector3, 3>();
+
+    //to_python_converter<Vector4, Vector_to_pylist_converter<Vector4> >();
+    to_python_converter<Vector4, Vector_to_ndarray_converter<Vector4> >();
+    //pylist_to_Vector_converter<Vector4, 4>();
+    ndarray_to_Vector_converter<Vector4, 4>();
+    
+    //to_python_converter<Vector6, Vector_to_pylist_converter<Vector6> >();
+    to_python_converter<Vector6, Vector_to_ndarray_converter<Vector6> >();
+    //pylist_to_Vector_converter<Vector6, 6>();
+    ndarray_to_Vector_converter<Vector6, 6>();
+
+    //to_python_converter<Matrix3, Matrix_to_pylist_converter<Matrix3> >();
+    to_python_converter<Matrix3, Matrix_to_ndarray_converter<Matrix3> >();
+    //pylist_to_Matrix_converter<Matrix3, 3, 3>();
+    ndarray_to_Matrix_converter<Matrix3, 3, 3>();
+
+    //to_python_converter<Matrix4, Matrix_to_pylist_converter<Matrix4> >();
+    //to_python_converter<Matrix4, Matrix_to_ndarray_converter<Matrix4> >();
+    //pylist_to_Matrix_converter<Matrix4, 4, 4>();
+    //ndarray_to_Matrix_converter<Matrix4, 4, 4>();
+
+    to_python_converter<Affine3, Transform_to_pylist_converter<Affine3> >();
+    pylist_to_Transform_converter<Affine3>();
+
+    to_python_converter<Position, Transform_to_pylist_converter<Position> >();
+    pylist_to_Transform_converter<Position>();
+
     void (SE3::*SE3_set1)(const Vector3& translation, const Quat& rotation) = &SE3::set;
     void (SE3::*SE3_set2)(const Vector3& translation, const Matrix3& R) = &SE3::set;
     void (SE3::*SE3_set3)(const Position& T) = &SE3::set;
@@ -403,15 +304,7 @@ void exportPyEigenTypes()
 
     //! \todo replace the following functions with another python functions
     python::def("angleAxis", getAffine3FromAngleAxis);
-
-    pylist_to_Vector_converter<Vector2, 2>();
-    pylist_to_Vector_converter<Vector3, 3>();
-    pylist_to_Vector_converter<Vector4, 4>();
-    pylist_to_Vector_converter<Vector6, 6>();
-    pylist_to_Matrix_converter<Matrix3, 3, 3>();
-    pylist_to_Matrix_converter<Matrix4, 4, 4>();
-    pylist_to_Transform_converter<Affine3>();
-    pylist_to_Transform_converter<Position>();
+    python::def("normalized", getNormalized);
 }
 
 }
