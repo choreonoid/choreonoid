@@ -4,10 +4,8 @@
 
 #include "PyUtil.h"
 #include "../EigenTypes.h"
-#include "../EigenUtil.h"
 
 namespace python = boost::python;
-using namespace boost::python;
 using namespace cnoid;
 
 namespace {
@@ -32,7 +30,7 @@ struct Vector_to_ndarray_converter {
 template<typename VectorType, int dim>
 struct ndarray_to_Vector_converter {
     ndarray_to_Vector_converter(){
-        converter::registry::push_back(
+        python::converter::registry::push_back(
             &ndarray_to_Vector_converter::convertible,
             &ndarray_to_Vector_converter::construct,
             python::type_id<VectorType>());
@@ -56,7 +54,7 @@ struct ndarray_to_Vector_converter {
 template<typename VectorType, int dim>
 struct pylist_to_Vector_converter {
     pylist_to_Vector_converter(){
-        converter::registry::push_back(
+        python::converter::registry::push_back(
             &pylist_to_Vector_converter::convertible,
             &pylist_to_Vector_converter::construct,
             python::type_id<VectorType>());
@@ -96,7 +94,7 @@ struct Matrix_to_ndarray_converter {
 template<typename MatrixType, int rows, int cols>
 struct ndarray_to_Matrix_converter {
     ndarray_to_Matrix_converter(){
-        converter::registry::push_back(
+        python::converter::registry::push_back(
             &ndarray_to_Matrix_converter::convertible,
             &ndarray_to_Matrix_converter::construct,
             python::type_id<MatrixType>());
@@ -111,9 +109,8 @@ struct ndarray_to_Matrix_converter {
         MatrixType* M =
             new(reinterpret_cast<python::converter::rvalue_from_python_storage<MatrixType>*>(data)->storage.bytes)
             MatrixType();
-
-        python::object array((boost::python::handle<>(pyobj)));
-        python::list elements((python::extract<python::list>(numpy_ndarray_tolist(array))));
+        python::object array((boost::python::handle<>(python::borrowed(pyobj))));
+        python::list elements = python::extract<python::list>(numpy_ndarray_tolist(array));
         for(python::ssize_t i = 0; i < rows; ++i) {
             python::list row = python::extract<python::list>(elements[i]);
             for(python::ssize_t j = 0; j < rows; ++j) {
@@ -127,7 +124,7 @@ struct ndarray_to_Matrix_converter {
 template<typename MatrixType, int rows, int cols>
 struct pylist_to_Matrix_converter {
     pylist_to_Matrix_converter(){
-        converter::registry::push_back(
+        python::converter::registry::push_back(
             &pylist_to_Matrix_converter::convertible,
             &pylist_to_Matrix_converter::construct,
             python::type_id<MatrixType>());
@@ -178,7 +175,7 @@ struct Transform_to_ndarray_converter {
 template<typename TransformType>
 struct ndarray_to_Transform_converter {
     ndarray_to_Transform_converter(){
-        converter::registry::push_back(
+        python::converter::registry::push_back(
             &ndarray_to_Transform_converter::convertible,
             &ndarray_to_Transform_converter::construct,
             python::type_id<TransformType>());
@@ -193,9 +190,8 @@ struct ndarray_to_Transform_converter {
         TransformType* T =
             new(reinterpret_cast<python::converter::rvalue_from_python_storage<TransformType>*>(data)->storage.bytes)
             TransformType();
-
-        python::object array((boost::python::handle<>(pyobj)));
-        python::list elements((python::extract<python::list>(numpy_ndarray_tolist(array))));
+        python::object array((boost::python::handle<>(python::borrowed(pyobj))));
+        python::list elements = python::extract<python::list>(numpy_ndarray_tolist(array));
         for(python::ssize_t i = 0; i < 3; ++i) {
             typename TransformType::LinearPart R = T->linear();
             typename TransformType::TranslationPart p = T->translation();
@@ -212,7 +208,7 @@ struct ndarray_to_Transform_converter {
 template<typename TransformType>
 struct pylist_to_Transform_converter {
     pylist_to_Transform_converter(){
-        converter::registry::push_back(
+        python::converter::registry::push_back(
             &pylist_to_Transform_converter::convertible,
             &pylist_to_Transform_converter::construct,
             python::type_id<TransformType>());
@@ -240,23 +236,6 @@ struct pylist_to_Transform_converter {
     }
 };
 
-
-//! \todo replace this function with another python functions
-Affine3 getAffine3FromAngleAxis(double angle, const Vector3& vec){
-    /*
-    Affine3 m;
-    m = AngleAxis(angle, vec);
-    return m;
-    */
-    return Affine3(AngleAxis(angle, vec));
-}
-
-
-//! \todo replace this function with another python functions
-Vector3 getNormalized(const Vector3& vec){
-    return vec.normalized();
-}
-
 }
 
 namespace cnoid {
@@ -268,60 +247,37 @@ void exportPyEigenTypes()
     numpy_array = numpy.attr("array");
     numpy_ndarray_tolist = numpy_ndarray.attr("tolist");
     
-    to_python_converter<Vector2, Vector_to_ndarray_converter<Vector2> >();
+    python::to_python_converter<Vector2, Vector_to_ndarray_converter<Vector2> >();
     ndarray_to_Vector_converter<Vector2, 2>();
     pylist_to_Vector_converter<Vector2, 2>();
     
-    to_python_converter<Vector3, Vector_to_ndarray_converter<Vector3> >();
+    python::to_python_converter<Vector3, Vector_to_ndarray_converter<Vector3> >();
     ndarray_to_Vector_converter<Vector3, 3>();
     pylist_to_Vector_converter<Vector3, 3>();
 
-    to_python_converter<Vector4, Vector_to_ndarray_converter<Vector4> >();
+    python::to_python_converter<Vector4, Vector_to_ndarray_converter<Vector4> >();
     ndarray_to_Vector_converter<Vector4, 4>();
     pylist_to_Vector_converter<Vector4, 4>();
     
-    to_python_converter<Vector6, Vector_to_ndarray_converter<Vector6> >();
+    python::to_python_converter<Vector6, Vector_to_ndarray_converter<Vector6> >();
     ndarray_to_Vector_converter<Vector6, 6>();
     pylist_to_Vector_converter<Vector6, 6>();
 
-    to_python_converter<Matrix3, Matrix_to_ndarray_converter<Matrix3> >();
+    python::to_python_converter<Matrix3, Matrix_to_ndarray_converter<Matrix3> >();
     ndarray_to_Matrix_converter<Matrix3, 3, 3>();
     pylist_to_Matrix_converter<Matrix3, 3, 3>();
 
-    to_python_converter<Matrix4, Matrix_to_ndarray_converter<Matrix4> >();
+    python::to_python_converter<Matrix4, Matrix_to_ndarray_converter<Matrix4> >();
     ndarray_to_Matrix_converter<Matrix4, 4, 4>();
     pylist_to_Matrix_converter<Matrix4, 4, 4>();
 
-    to_python_converter<Affine3, Transform_to_ndarray_converter<Affine3> >();
+    python::to_python_converter<Affine3, Transform_to_ndarray_converter<Affine3> >();
     ndarray_to_Transform_converter<Affine3>();
     pylist_to_Transform_converter<Affine3>();
 
-    to_python_converter<Position, Transform_to_ndarray_converter<Position> >();
+    python::to_python_converter<Position, Transform_to_ndarray_converter<Position> >();
     ndarray_to_Transform_converter<Position>();
     pylist_to_Transform_converter<Position>();
-
-    void (SE3::*SE3_set1)(const Vector3& translation, const Quat& rotation) = &SE3::set;
-    void (SE3::*SE3_set2)(const Vector3& translation, const Matrix3& R) = &SE3::set;
-    void (SE3::*SE3_set3)(const Position& T) = &SE3::set;
-    const Vector3& (SE3::*SE3_translation_const)() const = &SE3::translation;
-    const Quat& (SE3::*SE3_rotation_const)() const = &SE3::rotation;
-
-    class_<SE3, boost::noncopyable>("SE3", init<>()) 
-        .def("set", SE3_set1)
-        .def("set", SE3_set2)
-        .def("set", SE3_set3)
-        .def("translation", SE3_translation_const, return_value_policy<copy_const_reference>())
-        .def("rotation", SE3_rotation_const, return_value_policy<copy_const_reference>());
-
-    python::def("rpyFromRot", cnoid::rpyFromRot);
-    Matrix3 (*cnoid_rotFromRpy1)(const Vector3& rpy) = cnoid::rotFromRpy;
-    python::def("rotFromRpy", cnoid_rotFromRpy1);
-    python::def("omegaFromRot", cnoid::omegaFromRot);
-
-    //! \todo replace the following functions with another python functions
-    python::def("angleAxis", getAffine3FromAngleAxis);
-    python::def("normalized", getNormalized);
 }
 
 }
-

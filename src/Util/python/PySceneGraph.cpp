@@ -11,6 +11,10 @@ using namespace cnoid;
 
 namespace {
 
+void SgObject_notifyUpdate1(SgObject& self){ self.notifyUpdate(); }
+void SgObject_notifyUpdate2(SgObject& self, SgUpdate& update){ self.notifyUpdate(update); }
+void SgObject_notifyUpdate3(SgObject& self, SgUpdate::Action action){ self.notifyUpdate(action); }
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SgGroup_clearChildren, clearChildren, 0, 1)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SgGroup_addChild, addChild, 1, 2)
 
@@ -23,18 +27,40 @@ void SgPosTransform_set_position(SgPosTransform& self, const Affine3& T) { self.
 Affine3 SgPosTransform_get_T(SgPosTransform& self) { return self.T(); }
 void SgPosTransform_set_T(SgPosTransform& self, const Affine3& T) { self.T() = T; }
 Vector3 SgPosTransform_get_translation(SgPosTransform& self) { return self.translation(); }
+void SgPosTransform_set_translation(SgPosTransform& self, const Vector3& p) { self.setTranslation(p); }
 Matrix3 SgPosTransform_get_rotation(SgPosTransform& self) { return self.rotation(); }
 void SgPosTransform_set_rotation(SgPosTransform& self, const Matrix3& R){ self.setRotation(R); }
+
 }
 
 namespace cnoid {
 
 void exportPySceneGraph()
 {
+    {
+        scope sgObjectScope = 
+            class_< SgUpdate >("SgUpdate")
+            .def("action", &SgUpdate::action)
+            .def("setAction", &SgUpdate::setAction)
+            ;
+
+        enum_<SgUpdate::Action>("Action")
+            .value("NONE", SgUpdate::NONE)
+            .value("ADDED", SgUpdate::ADDED)
+            .value("REMOVED", SgUpdate::REMOVED)
+            .value("BBOX_UPDATED", SgUpdate::BBOX_UPDATED)
+            .value("MODIFIED", SgUpdate::MODIFIED)
+            ;
+    }
+        
     class_< SgObject, SgObjectPtr, bases<Referenced>, boost::noncopyable >("SgObject", no_init)
         .def("name", &SgObject::name, return_value_policy<return_by_value>())
-        .def("setName", &SgObject::setName);
-
+        .def("setName", &SgObject::setName)
+        .def("notifyUpdate", SgObject_notifyUpdate1)
+        .def("notifyUpdate", SgObject_notifyUpdate2)
+        .def("notifyUpdate", SgObject_notifyUpdate3)
+        ;
+        
     implicitly_convertible<SgObjectPtr, ReferencedPtr>();
 
     class_< SgNode, SgNodePtr, bases<SgObject> >("SgNode")
@@ -51,25 +77,22 @@ void exportPySceneGraph()
 
     implicitly_convertible<SgGroupPtr, SgNodePtr>();
     
-    class_<SceneProvider, boost::noncopyable>("SceneProvider", no_init)
-        .def("getScene", SceneProvider_getScene);
-
-    class_< SgTransform, SgTransformPtr, bases<SgGroup>, boost::noncopyable >("SgTransform", no_init)
-        ;
+    class_< SgTransform, SgTransformPtr, bases<SgGroup>, boost::noncopyable>("SgTransform", no_init);
 
     implicitly_convertible<SgTransformPtr, SgGroupPtr>();
 
     class_< SgPosTransform, SgPosTransformPtr, bases<SgTransform> >("SgPosTransform")
         .def("position", SgPosTransform_get_position)
         .def("setPosition", SgPosTransform_set_position)
-        .def("T", SgPosTransform_get_T)
-        .def("setT", SgPosTransform_set_T)
+        .add_property("T", SgPosTransform_get_position, SgPosTransform_set_position)
         .def("translation", SgPosTransform_get_translation)
+        .def("setTranslation", SgPosTransform_set_translation)        
         .def("rotation", SgPosTransform_get_rotation)
         .def("setRotation", SgPosTransform_set_rotation)
         ;
     implicitly_convertible<SgPosTransformPtr, SgTransformPtr>();
+
+    class_<SceneProvider, SceneProvider*, boost::noncopyable>("SceneProvider", no_init);
 }
 
 }
-

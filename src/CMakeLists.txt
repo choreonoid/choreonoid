@@ -31,4 +31,8 @@ add_subdirectory(Hrpsys31Plugin)
 add_subdirectory(GrxUIPlugin)
 add_subdirectory(PythonSimScriptPlugin)
 
+if(ENABLE_PYTHON)
+  add_subdirectory(python)
+endif()
+
 add_subdirectory(Choreonoid)
