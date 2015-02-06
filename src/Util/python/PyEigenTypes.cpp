@@ -4,6 +4,7 @@
 
 #include "PyUtil.h"
 #include "../EigenTypes.h"
+#include "../EigenUtil.h"
 
 namespace python = boost::python;
 using namespace cnoid;
@@ -236,6 +237,23 @@ struct pylist_to_Transform_converter {
     }
 };
 
+
+Matrix3 angleAxis(double angle, const Vector3& vec){
+    return Matrix3(AngleAxis(angle, vec));
+}
+
+Affine3 angleAxis44(double angle, const Vector3& vec){
+    return Affine3(AngleAxis(angle, vec));
+}
+
+Vector3 getNormalized(const Vector3& vec){
+    return vec.normalized();
+}
+
+Affine3 rotFromRpy44(const Vector3& vec){
+    return Affine3(rotFromRpy(vec));
+}
+
 }
 
 namespace cnoid {
@@ -278,6 +296,15 @@ void exportPyEigenTypes()
     python::to_python_converter<Position, Transform_to_ndarray_converter<Position> >();
     ndarray_to_Transform_converter<Position>();
     pylist_to_Transform_converter<Position>();
+
+    python::def("rpyFromRot", cnoid::rpyFromRot);
+    Matrix3 (*cnoid_rotFromRpy1)(const Vector3& rpy) = cnoid::rotFromRpy;
+    python::def("rotFromRpy", cnoid_rotFromRpy1);
+    python::def("rotFromRpy44", rotFromRpy44);
+    python::def("omegaFromRot", cnoid::omegaFromRot);
+    python::def("angleAxis", angleAxis);
+    python::def("angleAxis44", angleAxis44);
+    python::def("normalized", getNormalized);
 }
 
 }
