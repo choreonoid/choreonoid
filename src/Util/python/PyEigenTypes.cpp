@@ -254,6 +254,18 @@ Affine3 rotFromRpy44(const Vector3& vec){
     return Affine3(rotFromRpy(vec));
 }
 
+Vector3 getUnitX(){
+    return Vector3::UnitX();
+}
+
+Vector3 getUnitY(){
+    return Vector3::UnitY();
+}
+
+Vector3 getUnitZ(){
+    return Vector3::UnitZ();
+}
+
 }
 
 namespace cnoid {
@@ -305,6 +317,9 @@ void exportPyEigenTypes()
     python::def("angleAxis", angleAxis);
     python::def("angleAxis44", angleAxis44);
     python::def("normalized", getNormalized);
+    python::def("unitX", getUnitX);
+    python::def("unitY", getUnitY);
+    python::def("unitZ", getUnitZ);
 }
 
 }
