@@ -864,7 +864,11 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const std::string& file
             loaded = true;
         }
 
-        messageView->put(loaded ? _(" -> ok!\n") : _(" -> failed.\n"));
+        if(loaded){
+            messageView->put(_(" -> ok!\n"));
+        } else {
+            messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
+        }
         messageView->flush();
     }
 

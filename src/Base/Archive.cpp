@@ -98,8 +98,11 @@ void replaceDirectoryVariable(ArchiveSharedData* shared, QString& io_pathString,
             }
         }
     }
-    MessageView::mainInstance()->putln(QString(_("Warning: ${%1} of \"%2\" cannot be expanded !")).arg(varname).arg(io_pathString));
+    MessageView::mainInstance()->putln(
+        MessageView::WARNING,
+        QString(_("${%1} of \"%2\" cannot be expanded !")).arg(varname).arg(io_pathString));
 }
+
 }
 
 
