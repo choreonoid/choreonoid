@@ -177,10 +177,10 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
     : item(item),
       itemTreeViewImpl(itemTreeViewImpl)
 {
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsDropEnabled);
 
     if(!item->isSubItem()){
-        setFlags(flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled);
+        setFlags(flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
     }
 
     setToolTip(0, QString());
