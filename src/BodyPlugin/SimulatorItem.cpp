@@ -1653,9 +1653,9 @@ void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Sync with realtime"), impl->isRealtimeSyncMode,
                 boost::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
     putProperty(_("Recording"), impl->recordingMode,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->recordingMode, _1));
+                boost::bind(&Selection::selectIndex, &impl->recordingMode, _1));
     putProperty(_("Time range"), impl->timeRangeMode,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->timeRangeMode, _1));
+                boost::bind(&Selection::selectIndex, &impl->timeRangeMode, _1));
     putProperty(_("Active control period only"), impl->isActiveControlPeriodOnlyMode,
                 changeProperty(impl->isActiveControlPeriodOnlyMode));
     putProperty(_("Time length"), impl->specifiedTimeLength,
