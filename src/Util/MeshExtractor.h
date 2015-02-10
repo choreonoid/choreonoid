@@ -42,9 +42,7 @@ private:
     bool isCurrentScaled_;
     bool meshFound;
 };
+
 }
 
 #endif
-
-                              
-

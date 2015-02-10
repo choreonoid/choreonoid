@@ -3,20 +3,30 @@
 */
 
 #include "SceneBar.h"
-#include "ExtensionManager.h"
 #include "SceneWidget.h"
 #include "GLSceneRenderer.h"
-#include "ComboBox.h"
+#include <cnoid/ExtensionManager>
+#include <cnoid/MenuManager>
+#include <cnoid/MessageView>
+#include <cnoid/ComboBox>
+#include <cnoid/ItemTreeView>
 #include <cnoid/ConnectionSet>
+#include <cnoid/SceneShape>
+#include <cnoid/SceneProvider>
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
 SceneBar* sceneBar;
+
+// "tool" menu commands
+void putSceneStatistics();
 
 }
 
@@ -81,6 +91,8 @@ void SceneBar::initialize(ExtensionManager* ext)
     if(!sceneBar){
         sceneBar = new SceneBar();
         ext->addToolBar(sceneBar);
+        ext->menuManager().setPath("/Tools").addItem(N_("Put scene statistics"))
+            ->sigTriggered().connect(putSceneStatistics);
     }
 }
 
@@ -307,4 +319,75 @@ void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
     rendererStateConnections.block();
     targetRenderer->setCurrentCamera(index);
     rendererStateConnections.unblock();
+}
+
+
+namespace {
+
+class SceneCounter : public SceneVisitor
+{
+public:
+    int numVertices;
+    int numTriangles;
+    
+    void count(SgNode* node) {
+        numVertices = 0;
+        numTriangles = 0;
+        node->accept(*this);
+    }
+
+    virtual void visitShape(SgShape* shape) {
+        SgMesh* mesh = shape->mesh();
+        if(mesh){
+            if(mesh->hasVertices()){
+                numVertices += mesh->vertices()->size();
+            }
+            numTriangles += mesh->numTriangles();
+        }
+    }
+            
+    virtual void visitPointSet(SgPointSet* pointSet){
+        if(pointSet->hasVertices()){
+            numVertices += pointSet->vertices()->size();
+        }
+    }
+};
+
+void putSceneStatistics()
+{
+    ostream& os = MessageView::instance()->cout();
+    os << _("Scene statistics:") << endl;
+    
+    int numSceneItems = 0;
+    int totalNumVertics = 0;
+    int totalNumTriangles = 0;
+    SceneCounter counter;
+
+    ItemList<> selected = ItemTreeView::instance()->selectedItems();
+    for(size_t i=0; i < selected.size(); ++i){
+        Item* item = selected[i];
+        SceneProvider* provider = dynamic_cast<SceneProvider*>(item);
+        if(provider){
+            SgNodePtr scene = provider->getScene();
+            if(scene){
+                os << format(_(" Scene \"%1%\":")) % item->name() << endl;
+                counter.count(scene);
+                os << format(_("  Vertices: %1%\n")) % counter.numVertices;
+                os << format(_("  Triangles: %1%")) % counter.numTriangles << endl;
+                totalNumVertics += counter.numVertices;
+                totalNumTriangles += counter.numTriangles;
+                ++numSceneItems;
+            }
+        }
+    }
+
+    if(!numSceneItems){
+        os << _("No valid scene item is selected.") << endl;
+    } else {
+        os << format(_("The total number of %1% scene items:\n")) % numSceneItems;
+        os << format(_(" Vertices: %1%\n")) % totalNumVertics;
+        os << format(_(" Triangles: %1%")) % totalNumTriangles << endl;
+    }
+}
+
 }
