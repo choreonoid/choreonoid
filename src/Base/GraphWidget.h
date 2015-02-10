@@ -28,7 +28,6 @@ typedef boost::shared_ptr<GraphDataHandler> GraphDataHandlerPtr;
 class CNOID_EXPORT GraphDataHandler
 {
 public:
-
     GraphDataHandler();
     ~GraphDataHandler();
 
@@ -138,6 +137,4 @@ private:
 
 }
 
-
 #endif
-

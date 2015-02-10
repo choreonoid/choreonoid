@@ -21,6 +21,7 @@ class BodyMotionItem;
 class ControllerItem;
 class SimulationBodyImpl;
 class SimulatorItemImpl;
+class SimulatedMotionEngineManager;
 class SgCloneMap;
 
 class CNOID_EXPORT SimulationBody : public Referenced
@@ -94,8 +95,6 @@ public:
     bool isAllLinkPositionOutputMode();
     virtual void setAllLinkPositionOutputMode(bool on);
         
-    virtual void selectMotionItems();
-
     /**
        For sub simulators
     */
@@ -160,6 +159,7 @@ private:
             
     SimulatorItemImpl* impl;
     friend class SimulatorItemImpl;
+    friend class SimulatedMotionEngineManager;
 };
         
 typedef ref_ptr<SimulatorItem> SimulatorItemPtr;

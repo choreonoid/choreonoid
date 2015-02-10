@@ -10,7 +10,6 @@
 #include <cnoid/TimeSyncItemEngine>
 #include <boost/bind.hpp>
 
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -43,7 +42,7 @@ public:
         
             const int numJoints = body->numJoints();
             for(int i=0; i < numJoints; ++i){
-                optional<double> q = interpolator->jointPosition(i);
+                boost::optional<double> q = interpolator->jointPosition(i);
                 if(q){
                     body->joint(i)->q() = (*q);
                 }
@@ -58,7 +57,7 @@ public:
                 fkTraverse.calcForwardKinematics();
             }
             
-            optional<Vector3> zmp = interpolator->ZMP();
+            boost::optional<Vector3> zmp = interpolator->ZMP();
             if(zmp){
                 bodyItem->setZmp(*zmp);
             }
@@ -70,21 +69,22 @@ public:
     }
 };
 
-typedef boost::shared_ptr<PoseSeqEngine> PoseSeqEnginePtr;
+typedef ref_ptr<PoseSeqEngine> PoseSeqEnginePtr;
     
 
-TimeSyncItemEnginePtr createPoseSeqEngine(Item* sourceItem)
+TimeSyncItemEngine* createPoseSeqEngine(Item* sourceItem)
 {
-    PoseSeqEnginePtr engine;
+    PoseSeqEngine* engine = 0;
     PoseSeqItem* poseSeqItem = dynamic_cast<PoseSeqItem*>(sourceItem);
     if(poseSeqItem){
         BodyItem* bodyItem = poseSeqItem->findOwnerItem<BodyItem>();
         if(bodyItem){
-            engine = boost::make_shared<PoseSeqEngine>(poseSeqItem, bodyItem);
+            engine = new PoseSeqEngine(poseSeqItem, bodyItem);
         }
     }
     return engine;
 }
+
 }
 
 

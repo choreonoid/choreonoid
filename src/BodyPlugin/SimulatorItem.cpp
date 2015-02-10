@@ -45,9 +45,6 @@ namespace {
 
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
 
-class SimulatedMotionEngine;
-typedef boost::shared_ptr<SimulatedMotionEngine> SimulatedMotionEnginePtr;
-
 class ControllerTarget : public ControllerItem::Target
 {
     SimulatorItemImpl* simImpl;
@@ -179,7 +176,7 @@ public:
     bool isWaitingForSimulationToStop;
     Signal<void()> sigSimulationFinished_;
 
-    SimulatedMotionEnginePtr motionEngine;
+    vector<BodyMotionEnginePtr> bodyMotionEngines;
 
     Connection aboutToQuitConnection;
 
@@ -188,7 +185,6 @@ public:
     ItemTreeView* itemTreeView;
 
     double currentTime() const;
-    void selectMotionItems();
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     bool startSimulation(bool doReset);
@@ -205,10 +201,56 @@ public:
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
     bool setSpecifiedRecordingTimeLength(double length);
-
-    static TimeSyncItemEnginePtr getSimulatedMotionEngine(Item* sourceItem);
+    bool store(Archive& archive);
+    bool restore(const Archive& archive);
+    void restoreBodyMotionEngines(const Archive& archive);
+    void addBodyMotionEngine(BodyMotionItem* motionItem);
+    bool setPlaybackTime(double time);
 };
 
+
+class SimulatedMotionEngineManager
+{
+public:
+    ItemList<SimulatorItem> simulatorItems;
+    double currentTime;
+
+    ScopedConnection selectionOrTreeChangedConnection;
+    ScopedConnection timeChangeConnection;
+
+    SimulatedMotionEngineManager(){
+
+        selectionOrTreeChangedConnection.reset(
+            ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(
+                boost::bind(&SimulatedMotionEngineManager::onItemSelectionOrTreeChanged, this, _1)));
+
+        TimeBar* timeBar = TimeBar::instance();
+        currentTime = timeBar->time();
+        timeChangeConnection.reset(
+            timeBar->sigTimeChanged().connect(
+                boost::bind(&SimulatedMotionEngineManager::setTime, this, _1)));
+    }
+
+    void onItemSelectionOrTreeChanged(const ItemList<SimulatorItem>& selected){
+
+        if(selected.empty()){
+            vector<SimulatorItemPtr>::iterator p = simulatorItems.begin();
+            while(p != simulatorItems.end()){
+                if((*p)->isRunning() && (*p)->findRootItem()){
+                    ++p;
+                } else {
+                    p = simulatorItems.erase(p);
+                }
+            }
+        } else {
+            simulatorItems = selected;
+            setTime(currentTime);
+        }
+    }
+
+    bool setTime(double time);
+};
+    
 }
 
 namespace {
@@ -271,72 +313,13 @@ public:
 };
 
 
-class SimulatedMotionEngine : public TimeSyncItemEngine
-{
-public:
-    vector<BodyMotionEnginePtr> engines;
 
-    void clear() {
-        engines.clear();
-    }
-
-    void addMotionItem(BodyMotionItem* motionItem)
-        {
-            BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
-            if(bodyItem){
-                engines.push_back(boost::make_shared<BodyMotionEngine>(bodyItem, motionItem));
-            }
-        }
-
-    virtual bool onTimeChanged(double time) {
-        bool processed = false;
-        for(size_t i=0; i < engines.size(); ++i){
-            processed |= engines[i]->onTimeChanged(time);
-        }
-        return processed;
-    }
-
-    void store(Archive& archive) {
-        ListingPtr idseq = new Listing();
-        idseq->setFlowStyle(true);
-        for(size_t i=0; i < engines.size(); ++i){
-            BodyMotionEnginePtr engine = engines[i];
-            ValueNodePtr id = archive.getItemId(engine->motionItem());
-            if(id){
-                idseq->append(id);
-            }
-        }
-        if(!idseq->empty()){
-            archive.insert("motionItems", idseq);
-        }
-    }
-
-    void restore(const Archive& archive) {
-        archive.addPostProcess(boost::bind(&SimulatedMotionEngine::restoreMotionItems, this, boost::ref(archive)));
-    }
-
-    void restoreMotionItems(const Archive& archive) {
-        clear();
-        const Listing& idseq = *archive.findListing("motionItems");
-        if(idseq.isValid()){
-            for(int i=0; i < idseq.size(); ++i){
-                ValueNode* id = idseq.at(i);
-                if(id){
-                    BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(archive.findItem(id));
-                    if(motionItem){
-                        addMotionItem(motionItem);
-                    }
-                }
-            }
-        }
-    }
-};
 }
 
 
 void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->timeSyncItemEngineManger().addEngineFactory(SimulatorItemImpl::getSimulatedMotionEngine);
+    ext->manage(new SimulatedMotionEngineManager());
 }
 
 
@@ -553,7 +536,7 @@ void SimulationBodyImpl::setupResultMotion
         }
     }
 
-    simImpl->motionEngine->addMotionItem(motionItem);
+    simImpl->addBodyMotionEngine(motionItem);
     motion = motionItem->motion();
     motion->setFrameRate(frameRate);
     motion->setDimension(1, numAllJoints, numLinksToRecord);
@@ -854,8 +837,6 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     useControllerThreadsProperty = true;
     isAllLinkPositionOutputMode = false;
     isDeviceStateOutputEnabled = true;
-    
-    motionEngine = boost::make_shared<SimulatedMotionEngine>();
 }
 
 
@@ -964,29 +945,6 @@ CollisionDetectorPtr SimulatorItem::collisionDetector()
 }
 
 
-void SimulatorItem::selectMotionItems()
-{
-    impl->selectMotionItems();
-}
-
-
-void SimulatorItemImpl::selectMotionItems()
-{
-    for(size_t i=0; i < allSimBodies.size(); ++i){
-        SimulationBody& simBody = *allSimBodies[i];
-        MultiSE3SeqItem* linkPosResultItem = simBody.impl->linkPosResultItem.get();
-        if(linkPosResultItem){
-            BodyMotionItem* bodyMotionItem = dynamic_cast<BodyMotionItem*>(linkPosResultItem->parentItem());
-            if(bodyMotionItem){
-                itemTreeView->selectItem(bodyMotionItem);
-            } else {
-                itemTreeView->selectItem(linkPosResultItem);
-            }
-        }
-    }
-}
-
-
 ControllerItem* SimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
 {
     return 0;
@@ -1065,7 +1023,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     allSimBodies.clear();
     simBodiesWithBody.clear();;
     activeSimBodies.clear();
-    motionEngine->clear();
+    bodyMotionEngines.clear();
     needToUpdateSimBodyLists = true;
 
     for(size_t i=0; i < targetItems.size(); ++i){
@@ -1627,13 +1585,6 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
-TimeSyncItemEnginePtr SimulatorItemImpl::getSimulatedMotionEngine(Item* sourceItem)
-{
-    SimulatorItem* simulatorItem = dynamic_cast<SimulatorItem*>(sourceItem);
-    return simulatorItem ? simulatorItem->impl->motionEngine : TimeSyncItemEnginePtr();
-}
-
-
 bool SimulatorItemImpl::onRealtimeSyncChanged(bool on)
 {
     isRealtimeSyncMode = on;
@@ -1641,6 +1592,9 @@ bool SimulatorItemImpl::onRealtimeSyncChanged(bool on)
 }
 
 
+/**
+   This function may be overridden.
+*/
 bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
 {
     self->setAllLinkPositionOutputMode(on);
@@ -1671,44 +1625,121 @@ void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool SimulatorItem::store(Archive& archive)
 {
-    archive.write("realtimeSync", impl->isRealtimeSyncMode);
-    archive.write("recording", impl->recordingMode.selectedSymbol());
-    archive.write("timeRangeMode", impl->timeRangeMode.selectedSymbol());
-    archive.write("onlyActiveControlPeriod", impl->isActiveControlPeriodOnlyMode);
-    archive.write("timeLength", impl->specifiedTimeLength);
-    archive.write("allLinkPositionOutputMode", impl->isAllLinkPositionOutputMode);
-    archive.write("deviceStateOutput", impl->isDeviceStateOutputEnabled);
-    archive.write("controllerThreads", impl->useControllerThreadsProperty);
-    impl->motionEngine->store(archive);
+    return impl->store(archive);
+}
+
+
+bool SimulatorItemImpl::store(Archive& archive)
+{
+    archive.write("realtimeSync", isRealtimeSyncMode);
+    archive.write("recording", recordingMode.selectedSymbol());
+    archive.write("timeRangeMode", timeRangeMode.selectedSymbol());
+    archive.write("onlyActiveControlPeriod", isActiveControlPeriodOnlyMode);
+    archive.write("timeLength", specifiedTimeLength);
+    archive.write("allLinkPositionOutputMode", isAllLinkPositionOutputMode);
+    archive.write("deviceStateOutput", isDeviceStateOutputEnabled);
+    archive.write("controllerThreads", useControllerThreadsProperty);
+
+    ListingPtr idseq = new Listing();
+    idseq->setFlowStyle(true);
+    for(size_t i=0; i < bodyMotionEngines.size(); ++i){
+        BodyMotionEnginePtr engine = bodyMotionEngines[i];
+        ValueNodePtr id = archive.getItemId(engine->motionItem());
+        if(id){
+            idseq->append(id);
+        }
+    }
+    if(!idseq->empty()){
+        archive.insert("motionItems", idseq);
+    }
+
     return true;
 }
 
 
 bool SimulatorItem::restore(const Archive& archive)
 {
+    return impl->restore(archive);
+}
+
+
+bool SimulatorItemImpl::restore(const Archive& archive)
+{
     bool boolValue;
     string symbol;
     if(archive.read("timeRangeMode", symbol)){
-        impl->timeRangeMode.select(symbol);
+        timeRangeMode.select(symbol);
     }
     if(archive.read("recording", symbol)){
-        impl->recordingMode.select(symbol);
+        recordingMode.select(symbol);
     }
     // for the compatibility with older version
     else if(archive.read("recording", boolValue)){ 
-        impl->recordingMode.select(SimulatorItem::RECORD_FULL);
+        recordingMode.select(SimulatorItem::RECORD_FULL);
     } else if(archive.read("recordingMode", symbol)){
         if(symbol == "Direct"){
-            impl->recordingMode.select(SimulatorItem::RECORD_NONE);
-            impl->timeRangeMode.select(SimulatorItem::UNLIMITED);
+            recordingMode.select(SimulatorItem::RECORD_NONE);
+            timeRangeMode.select(SimulatorItem::UNLIMITED);
         }
     }
-    archive.read("realtimeSync", impl->isRealtimeSyncMode);
-    archive.read("onlyActiveControlPeriod", impl->isActiveControlPeriodOnlyMode);
-    archive.read("timeLength", impl->specifiedTimeLength);
-    setAllLinkPositionOutputMode(archive.get("allLinkPositionOutputMode", impl->isAllLinkPositionOutputMode));
-    archive.read("deviceStateOutput", impl->isDeviceStateOutputEnabled);
-    archive.read("controllerThreads", impl->useControllerThreadsProperty);
-    impl->motionEngine->restore(archive);
+    archive.read("realtimeSync", isRealtimeSyncMode);
+    archive.read("onlyActiveControlPeriod", isActiveControlPeriodOnlyMode);
+    archive.read("timeLength", specifiedTimeLength);
+    self->setAllLinkPositionOutputMode(archive.get("allLinkPositionOutputMode", isAllLinkPositionOutputMode));
+    archive.read("deviceStateOutput", isDeviceStateOutputEnabled);
+    archive.read("controllerThreads", useControllerThreadsProperty);
+
+    archive.addPostProcess(
+        boost::bind(&SimulatorItemImpl::restoreBodyMotionEngines, this, boost::ref(archive)));
+    
     return true;
+}
+
+
+void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
+{
+    bodyMotionEngines.clear();
+
+    const Listing& idseq = *archive.findListing("motionItems");
+    if(idseq.isValid()){
+        for(int i=0; i < idseq.size(); ++i){
+            ValueNode* id = idseq.at(i);
+            if(id){
+                BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(archive.findItem(id));
+                if(motionItem){
+                    addBodyMotionEngine(motionItem);
+                }
+            }
+        }
+    }
+}
+
+
+void SimulatorItemImpl::addBodyMotionEngine(BodyMotionItem* motionItem)
+{
+    BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
+    if(bodyItem){
+        bodyMotionEngines.push_back(new BodyMotionEngine(bodyItem, motionItem));
+    }
+}
+
+
+bool SimulatorItemImpl::setPlaybackTime(double time)
+{
+    bool processed = false;
+    for(size_t i=0; i < bodyMotionEngines.size(); ++i){
+        processed |= bodyMotionEngines[i]->onTimeChanged(time);
+    }
+    return processed;
+}
+
+
+bool SimulatedMotionEngineManager::setTime(double time)
+{
+    bool isActive = false;
+    currentTime = time;
+    for(size_t i=0; i < simulatorItems.size(); ++i){
+        isActive |= simulatorItems[i]->impl->setPlaybackTime(currentTime);
+    }
+    return isActive;
 }

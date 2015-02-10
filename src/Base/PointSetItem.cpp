@@ -329,9 +329,7 @@ bool PointSetItem::restore(const Archive& archive)
     
     std::string filename, formatId;
     if(archive.readRelocatablePath("file", filename) && archive.read("format", formatId)){
-        if(load(filename, archive.currentParentItem(), formatId)){
-            return true;
-        }
+        return load(filename, archive.currentParentItem(), formatId);
     }
     return true;
 }

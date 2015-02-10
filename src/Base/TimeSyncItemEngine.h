@@ -6,22 +6,23 @@
 #ifndef CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 #define CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 
-#include "Item.h"
+#include <cnoid/Referenced>
 #include <boost/function.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class AppImpl;
+class Item;
 
-class CNOID_EXPORT TimeSyncItemEngine
+class CNOID_EXPORT TimeSyncItemEngine : public Referenced
 {
 public:
     virtual ~TimeSyncItemEngine();
     virtual bool onTimeChanged(double time);
     void notifyUpdate();
 };
-typedef boost::shared_ptr<TimeSyncItemEngine> TimeSyncItemEnginePtr;
+
+typedef ref_ptr<TimeSyncItemEngine> TimeSyncItemEnginePtr;
 
 
 class CNOID_EXPORT TimeSyncItemEngineManager
@@ -32,7 +33,7 @@ public:
     TimeSyncItemEngineManager(const std::string& moduleName);
     ~TimeSyncItemEngineManager();
         
-    void addEngineFactory(boost::function<TimeSyncItemEnginePtr(Item* sourceItem)> factory);
+    void addEngineFactory(boost::function<TimeSyncItemEngine*(Item* sourceItem)> factory);
         
 private:
     std::string moduleName;
