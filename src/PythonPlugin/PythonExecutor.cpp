@@ -108,6 +108,7 @@ public:
     void releasePythonPathRef();
     bool terminateScript();
 };
+
 }
 
 
@@ -249,10 +250,13 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
     bool doAddPythonPath = false;
     pathRefIter = additionalPythonPathRefMap.end();
 
+    filesystem::path filepath;
+
     if(filename.empty()){
         scriptDirectory.clear();
     } else {
-        scriptDirectory = getPathString(getAbsolutePath(filesystem::path(filename)).parent_path());
+        filepath = getAbsolutePath(filesystem::path(filename));
+        scriptDirectory = getPathString(filepath.parent_path());
         if(!scriptDirectory.empty()){
             pathRefIter = additionalPythonPathRefMap.find(scriptDirectory);
             if(pathRefIter == additionalPythonPathRefMap.end()){
@@ -284,6 +288,13 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
 
         if(isModuleRefreshEnabled){
             rollBackImporter.attr("refresh")(scriptDirectory);
+        }
+
+        if(!filename.empty()){
+            filesystem::path relative;
+            if(findRelativePath(filesystem::current_path(), filepath, relative)){
+                pythonMainNamespace()["__file__"] = getPathString(relative);
+            }
         }
 
         if(!isBackgroundMode){
