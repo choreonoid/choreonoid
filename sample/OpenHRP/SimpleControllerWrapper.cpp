@@ -38,7 +38,7 @@ public:
             
             BodyLoader loader;
             loader.setMessageSink(cout);
-            loader.enableShapeLoading(false);
+            loader.setShapeLoadingEnabled(false);
             body = loader.load(modelfile);
             if(body){
                 ready = true;

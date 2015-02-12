@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
     BodyLoader loader;
     loader.setMessageSink(cout);
-    loader.enableShapeLoading(false);
+    loader.setShapeLoadingEnabled(false);
     BodyPtr body = loader.load(filepath);
     if(!body){
         cout << filepath << " cannot be loaded." << endl;
