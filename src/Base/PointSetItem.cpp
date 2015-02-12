@@ -64,26 +64,32 @@ public:
 };
 
 
+enum RenderingMode {
+    POINT_MODE, VOXEL_MODE, N_RENDERING_MODES
+};
+
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     weak_ref_ptr<PointSetItem> weakPointSetItem;
-    bool isEditable_;
     SgPointSetPtr orgPointSet;
     SgPointSetPtr visiblePointSet;
     SgInvariantGroupPtr invariant;
+    Selection renderingMode;
+    bool isEditable_;
     boost::optional<Vector3> attentionPoint;
     CrossMarkerPtr attentionPointMarker;
 
     ScenePointSet(PointSetItemImpl* pointSetItem);
 
-    bool isEditable() const { return isEditable_; }
-    void setEditable(bool on) { isEditable_ = on; }
+    bool setRenderingMode(int mode);
     void setPointSize(double size);
     void clearAttentionPoint();
     void updateVisiblePointSet();
+    bool isEditable() const { return isEditable_; }
+    void setEditable(bool on) { isEditable_ = on; }
 
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
@@ -302,6 +308,8 @@ ItemPtr PointSetItem::doDuplicate() const
 void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("File"), getFilename(filePath()));
+    putProperty(_("Rendering mode"), impl->scenePointSet->renderingMode,
+                boost::bind(&ScenePointSet::setRenderingMode, impl->scenePointSet.get(), _1));
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
                                      boost::bind(&PointSetItem::setPointSize, this, _1), true);
     putProperty(_("Editable"), isEditable(), boost::bind(&PointSetItemImpl::onEditableChanged, impl, _1));
@@ -316,6 +324,7 @@ bool PointSetItem::store(Archive& archive)
         archive.writeRelocatablePath("file", filePath());
         archive.write("format", fileFormat());
     }
+    archive.write("renderingMode", impl->scenePointSet->renderingMode.selectedSymbol());
     archive.write("pointSize", pointSize());
     archive.write("isEditable", isEditable());
     return true;
@@ -324,6 +333,10 @@ bool PointSetItem::store(Archive& archive)
 
 bool PointSetItem::restore(const Archive& archive)
 {
+    string symbol;
+    if(archive.read("renderingMode", symbol)){
+        impl->scenePointSet->setRenderingMode(impl->scenePointSet->renderingMode.index(symbol));
+    }
     setPointSize(archive.get("pointSize", 0.0));
     setEditable(archive.get("isEditable", isEditable()));
     
@@ -337,10 +350,29 @@ bool PointSetItem::restore(const Archive& archive)
 
 ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     : weakPointSetItem(pointSetItemImpl->self),
-      orgPointSet(pointSetItemImpl->pointSet)
+      orgPointSet(pointSetItemImpl->pointSet),
+      renderingMode(N_RENDERING_MODES)
 {
     visiblePointSet = new SgPointSet;
+
+    renderingMode.setSymbol(POINT_MODE, N_("Point"));
+    renderingMode.setSymbol(VOXEL_MODE, N_("Voxel"));
+    renderingMode.select(POINT_MODE);
+
     isEditable_ = false;
+}
+
+
+bool ScenePointSet::setRenderingMode(int mode)
+{
+    bool result = true;
+    if(mode != renderingMode.which()){
+        result = renderingMode.select(mode);
+        if(invariant){
+            updateVisiblePointSet();
+        }
+    }
+    return result;
 }
 
 
