@@ -773,7 +773,7 @@ bool TaskView::restoreState(const Archive& archive)
     impl->autoModeToggle.setChecked(archive.get("isAutoMode", false));
     string name;
     if(archive.read("currentTask", name)){
-        impl->setCurrentTaskByName(name);
+        archive.addPostProcess(boost::bind(&TaskViewImpl::setCurrentTaskByName, impl, name));
     }
     return true;
 }
