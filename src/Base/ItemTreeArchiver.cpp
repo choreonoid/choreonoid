@@ -62,6 +62,7 @@ ItemTreeArchiver::~ItemTreeArchiver()
 
 void ItemTreeArchiver::reset()
 {
+    impl->itemIdCounter = 0;
     impl->numArchivedItems = 0;
     impl->numRestoredItems = 0;
     impl->noExistingPluginNames.clear();
@@ -263,7 +264,7 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem)
     } else {
         int id;
         if(archive.read("id", id) && (id >= 0)){
-            archive.registerItemId(item.get(), id);
+            archive.registerItemId(item, id);
         }
         ListingPtr children = archive.findListing("children");
         if(children->isValid()){

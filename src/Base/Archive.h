@@ -13,14 +13,8 @@
 namespace cnoid {
 
 class Item;
-typedef ref_ptr<Item> ItemPtr;
-
 class View;
 class ViewManager;
-
-class Archive;
-typedef ref_ptr<Archive> ArchivePtr;
-
 class ArchiveSharedData;
 
 class CNOID_EXPORT Archive : public Mapping
@@ -81,7 +75,7 @@ private:
 
     Item* findItem(int id) const;
     void setCurrentParentItem(Item* parentItem);
-    static ArchivePtr invalidArchive();
+    static Archive* invalidArchive();
     void registerItemId(Item* item, int id);
     void registerViewId(View* view, int id);
 
@@ -92,6 +86,8 @@ private:
     friend class ViewManager;
     friend class ProjectManagerImpl;
 };
+
+typedef ref_ptr<Archive> ArchivePtr;
 
 }
 
