@@ -1,6 +1,6 @@
 
-#ifndef CNOID_COS_NAMING_IMPL_H_INCLUDED
-#define CNOID_COS_NAMING_IMPL_H_INCLUDED
+#ifndef CNOID_COS_NAMING_IMPL_H
+#define CNOID_COS_NAMING_IMPL_H
 
 #include <omniORB4/Naming.hh>
 #include <boost/thread/shared_mutex.hpp>
@@ -83,6 +83,7 @@ private:
 
     ~BindingIterator_impl();
 };
+
 }
 
 #endif

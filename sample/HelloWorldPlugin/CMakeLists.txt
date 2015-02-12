@@ -1,4 +1,8 @@
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_HELLO_WORLD_SAMPLE "Building a Hello World sample plugin" OFF)
 
 if(BUILD_HELLO_WORLD_SAMPLE)

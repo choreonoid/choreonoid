@@ -39,6 +39,8 @@ set(CNOID_SHARE_DIR "${CNOID_DIR}/${CNOID_SHARE_SUBDIR}")
 set(CNOID_SOURCE_SHARE_DIR "${PROJECT_SOURCE_DIR}/share")
 
 
+option(ENABLE_GUI "Enable GUI components" ON)
+
 if(WIN32)
   set(DEFAULT_INSTALL_SDK OFF)
   set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES ON)
@@ -157,8 +159,10 @@ if(MSVC)
 endif()
 
 
-FIND_PACKAGE(OpenGL)
-include_directories(${OPENGL_INCLUDE_DIR})
+if(ENABLE_GUI)
+  FIND_PACKAGE(OpenGL)
+  include_directories(${OPENGL_INCLUDE_DIR})
+endif()
 
 
 option(ENABLE_INSTALL_RPATH "Enable RPATH setting for installed binary files" ON)
@@ -399,122 +403,60 @@ endif()
 
 
 # qt
-if(NOT MSVC OR MSVC_VERSION LESS 1700)
-  find_package(Qt4 4.7.0 REQUIRED)
-  set(QT_USE_QTOPENGL TRUE)
-  set(QT_USE_QTNETWORK TRUE)
-  #set(QT_USE_QTTEST TRUE)
-  include(${QT_USE_FILE})
-  add_definitions(-DQT_NO_KEYWORDS)
-  set(QT5 FALSE)
-
-  install_external_libraries(${QT_BINARY_DIR} ${QT_LIBRARY_DIR} ${QT_LIBRARIES})
-  if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
-    foreach(dir
+if(ENABLE_GUI)
+  if(NOT MSVC OR MSVC_VERSION LESS 1700)
+    find_package(Qt4 4.7.0 REQUIRED)
+    set(QT_USE_QTOPENGL TRUE)
+    set(QT_USE_QTNETWORK TRUE)
+    #set(QT_USE_QTTEST TRUE)
+    include(${QT_USE_FILE})
+    add_definitions(-DQT_NO_KEYWORDS)
+    set(QT5 FALSE)
+    
+    install_external_libraries(${QT_BINARY_DIR} ${QT_LIBRARY_DIR} ${QT_LIBRARIES})
+    if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
+      foreach(dir
   	  ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} ${QT_QTNETWORK_INCLUDE_DIR})
-      install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
-    endforeach()
-  endif()
-else()
-  if(MSVC)
-    if(CMAKE_CL_64)
-      set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x64")
-    else()
-      set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x86")
+	install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+      endforeach()
+    endif()
+  else()
+    if(MSVC)
+      if(CMAKE_CL_64)
+	set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x64")
+      else()
+	set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x86")
+      endif()
+    endif()
+    find_package(Qt5Core)
+    set(QT5 TRUE)
+    
+    add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_INCLUDE_CURRENT_DIR ON)
+    
+    list(APPEND QT_INST_LIBRARIES 
+      optimized Qt5Core debug Qt5Cored
+      optimized Qt5Gui debug Qt5Guid
+      optimized Qt5OpenGL debug Qt5OpenGLd
+      optimized Qt5Network debug Qt5Networkd
+      optimized Qt5Widgets debug Qt5Widgetsd
+      optimized libEGL debug libEGLd
+      optimized libGLESv2 debug libGLESv2d
+      optimized icuin51 debug icuin51d
+      optimized icuuc51 debug icuuc51d
+      optimized icudt51 debug icudt51d
+      # for the Qt 5.3 binary package
+      general icuin52 general icuuc52 general icudt52)
+    
+    install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
+    if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
+      foreach(dir
+  	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+	install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+      endforeach()
     endif()
   endif()
-  find_package(Qt5Core)
-  set(QT5 TRUE)
-
-  add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
-  set(CMAKE_AUTOMOC ON)
-  set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-  list(APPEND QT_INST_LIBRARIES 
-    optimized Qt5Core debug Qt5Cored
-    optimized Qt5Gui debug Qt5Guid
-    optimized Qt5OpenGL debug Qt5OpenGLd
-    optimized Qt5Network debug Qt5Networkd
-    optimized Qt5Widgets debug Qt5Widgetsd
-    optimized libEGL debug libEGLd
-    optimized libGLESv2 debug libGLESv2d
-    optimized icuin51 debug icuin51d
-    optimized icuuc51 debug icuuc51d
-    optimized icudt51 debug icudt51d
-    # for the Qt 5.3 binary package
-    general icuin52 general icuuc52 general icudt52)
-
-  install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
-  if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
-    foreach(dir
-  	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
-      install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
-    endforeach()
-  endif()
-endif()
-
-
-# libyaml
-if(UNIX)
-  set(USE_EXTERNAL_YAML_DEFAULT ON)
-elseif(MSVC)
-  set(USE_EXTERNAL_YAML_DEFAULT OFF)
-endif()
-option(USE_EXTERNAL_YAML "Use the yaml library installed in an external directory" ${USE_EXTERNAL_YAML_DEFAULT})
-
-if(USE_EXTERNAL_YAML)
-  set(LIBYAML_DIR CACHE PATH "set the top directory of the libyaml")
-  if(LIBYAML_DIR)
-    include_directories(${LIBYAML_DIR}/include)
-    link_directories(${LIBYAML_DIR}/lib)
-  endif()
-else()
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.3/include)
-endif()
-
-# irrxml
-set(IRRXML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/irrxml-1.2/src)
-include_directories(${IRRXML_INCLUDE_DIRS})
-
-
-# glew library
-if(UNIX)
-  set(USE_EXTERNAL_GLEW_DEFAULT ON)
-elseif(MSVC)
-  set(USE_EXTERNAL_GLEW_DEFAULT OFF)
-endif()
-option(USE_EXTERNAL_GLEW "Use the GLEW library installed in an external directory" ${USE_EXTERNAL_GLEW_DEFAULT})
-
-if(USE_EXTERNAL_GLEW)
-  set(GLEW_DIR CACHE PATH "set the top directory of the GLEW library")
-  if(GLEW_DIR)
-    include_directories(${GLEW_DIR}/include)
-    link_directories(${GLEW_DIR}/lib)
-    set(GLEW_LIBRARIES GLEW)
-  elseif(UNIX)
-    pkg_check_modules(GLEW glew REQUIRED)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    link_directories(${GLEW_LIBRARY_DIRS})
-  endif()
-else()
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/glew-1.9.0/include)
-  set(GLEW_LIBRARIES glew32)
-endif()
-
-if(UNIX)
-  # png
-  find_package(PNG REQUIRED)
-  include_directories(${PNG_INCLUDE_DIR})
-  # jpeg
-  find_package(JPEG REQUIRED)
-  include_directories(${JPEG_INCLUDE_DIR})
-
-elseif(MSVC)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
-  set(PNG_LIBRARY libpng)
-  set(JPEG_LIBRARY jpeg)
 endif()
 
 
@@ -1043,22 +985,103 @@ function(make_gettext_mofiles target out_mofiles)
 
 endfunction()
 
+if(MSVC)
+  add_subdirectory(thirdparty/windows)
+endif()
 
-add_subdirectory(thirdparty)
+# libyaml
+if(UNIX)
+  set(USE_EXTERNAL_YAML_DEFAULT ON)
+elseif(MSVC)
+  set(USE_EXTERNAL_YAML_DEFAULT OFF)
+endif()
+option(USE_EXTERNAL_YAML "Use the yaml library installed in an external directory" ${USE_EXTERNAL_YAML_DEFAULT})
+
+if(USE_EXTERNAL_YAML)
+  set(LIBYAML_DIR CACHE PATH "set the top directory of the libyaml")
+  if(LIBYAML_DIR)
+    include_directories(${LIBYAML_DIR}/include)
+    link_directories(${LIBYAML_DIR}/lib)
+  endif()
+else()
+  add_subdirectory(thirdparty/yaml-0.1.3)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.3/include)
+endif()
+
+# irrxml
+add_subdirectory(thirdparty/irrxml-1.2)
+set(IRRXML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/irrxml-1.2/src)
+include_directories(${IRRXML_INCLUDE_DIRS})
+
+
+# glew library
+if(ENABLE_GUI)
+  if(UNIX)
+    set(USE_EXTERNAL_GLEW_DEFAULT ON)
+  elseif(MSVC)
+    set(USE_EXTERNAL_GLEW_DEFAULT OFF)
+  endif()
+  option(USE_EXTERNAL_GLEW "Use the GLEW library installed in an external directory" ${USE_EXTERNAL_GLEW_DEFAULT})
+  
+  if(USE_EXTERNAL_GLEW)
+    set(GLEW_DIR CACHE PATH "set the top directory of the GLEW library")
+    if(GLEW_DIR)
+      include_directories(${GLEW_DIR}/include)
+      link_directories(${GLEW_DIR}/lib)
+      set(GLEW_LIBRARIES GLEW)
+    elseif(UNIX)
+      pkg_check_modules(GLEW glew REQUIRED)
+      include_directories(${GLEW_INCLUDE_DIRS})
+      link_directories(${GLEW_LIBRARY_DIRS})
+    endif()
+  else()
+    add_subdirectory(thirdparty/glew-1.9.0)
+    include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/glew-1.9.0/include)
+    set(GLEW_LIBRARIES glew32)
+  endif()
+endif()
+  
+if(UNIX)
+  # png
+  find_package(PNG REQUIRED)
+  include_directories(${PNG_INCLUDE_DIR})
+  # jpeg
+  find_package(JPEG REQUIRED)
+  include_directories(${JPEG_INCLUDE_DIR})
+  
+elseif(MSVC)
+  add_subdirectory(thirdparty/lpng1232)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
+  add_subdirectory(thirdparty/Jpeg-6b)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
+  add_subdirectory(thirdparty/zlib123)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
+  set(PNG_LIBRARY libpng)
+  set(JPEG_LIBRARY jpeg)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(include)
-add_subdirectory(sample)
-add_subdirectory(ext)
 
-# additional ext directories
-set(ADDITIONAL_EXT_DIRECTORIES ${ADDITIONAL_EXT_DIRECTORIES} CACHE FILEPATH "Additional ext directories")
-if(ADDITIONAL_EXT_DIRECTORIES)
-  foreach(dir ${ADDITIONAL_EXT_DIRECTORIES})
-    if(EXISTS ${dir}/CMakeLists.txt)
-      add_subdirectory(${dir})
-    endif()
-  endforeach()
+option(ENABLE_SAMPLES "Enable samples in the sample directory" ON)
+if(ENABLE_SAMPLES)
+  add_subdirectory(sample)
 endif()
+
+option(ENABLE_EXT "Enable components in the ext directory" ON)
+if(ENABLE_EXT)
+  add_subdirectory(ext)
+  # additional ext directories
+  set(ADDITIONAL_EXT_DIRECTORIES ${ADDITIONAL_EXT_DIRECTORIES} CACHE FILEPATH "Additional ext directories")
+  if(ADDITIONAL_EXT_DIRECTORIES)
+    foreach(dir ${ADDITIONAL_EXT_DIRECTORIES})
+      if(EXISTS ${dir}/CMakeLists.txt)
+	add_subdirectory(${dir})
+      endif()
+    endforeach()
+  endif()
+endif()
+
 
 
 configure_file(Doxyfile.in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile @ONLY)
