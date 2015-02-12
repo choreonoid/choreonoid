@@ -78,11 +78,21 @@ bool TaskProc_waitForCommandToFinish3(TaskProc& self, Connection connectionToDis
 struct PyTaskFunc
 {
     python::object func;
-    PyTaskFunc(python::object f) : func(f) { }
+    PyTaskFunc(python::object f) : func(f) {
+        if(!PyFunction_Check(f.ptr()) && !PyMethod_Check(f.ptr())){
+            PyErr_SetString(PyExc_TypeError, "Task command must be a function type object");
+            python::throw_error_already_set();
+        }
+    }
     void operator()(TaskProc* proc) {
         PyGILock lock;
         try {
-            func(boost::ref(proc));
+            int numArgs = python::extract<int>(func.attr("func_code").attr("co_argcount"));
+            if(numArgs == 0){
+                func();
+            } else {
+                func(boost::ref(proc));
+            }
         } catch(python::error_already_set const& ex) {
             handlePythonException();
         }
