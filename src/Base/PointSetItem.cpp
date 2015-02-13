@@ -380,7 +380,7 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
 
     voxels = new SgShape;
     voxels->getOrCreateMaterial();
-    voxelSize = 0.005f;
+    voxelSize = 0.01f;
 
     renderingMode.setSymbol(POINT_MODE, N_("Point"));
     renderingMode.setSymbol(VOXEL_MODE, N_("Voxel"));
@@ -492,7 +492,7 @@ void ScenePointSet::updateVoxels()
         SgIndexArray& normalIndices = mesh->normalIndices();
         normalIndices.reserve(12 * 3 * n);
         mesh->reserveNumTriangles(n * 12);
-        const float s = voxelSize;
+        const float s = voxelSize / 2.0;
         for(int i=0; i < n; ++i){
             const int top = vertices.size();
             const Vector3f& p = points[i];
