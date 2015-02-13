@@ -76,6 +76,8 @@ public:
     weak_ref_ptr<PointSetItem> weakPointSetItem;
     SgPointSetPtr orgPointSet;
     SgPointSetPtr visiblePointSet;
+    SgShapePtr voxels;
+    float voxelSize;
     SgInvariantGroupPtr invariant;
     Selection renderingMode;
     bool isEditable_;
@@ -86,8 +88,11 @@ public:
 
     bool setRenderingMode(int mode);
     void setPointSize(double size);
+    void setVoxelSize(double size);
     void clearAttentionPoint();
+    void updateVisualization(bool updateContents);
     void updateVisiblePointSet();
+    void updateVoxels();
     bool isEditable() const { return isEditable_; }
     void setEditable(bool on) { isEditable_ = on; }
 
@@ -112,7 +117,7 @@ public:
     PointSetItem* self;
     SgPointSetPtr pointSet;
     ScenePointSetPtr scenePointSet;
-    Connection pointSetUpdateConnection;
+    ScopedConnection pointSetUpdateConnection;
 
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
@@ -204,15 +209,14 @@ PointSetItemImpl::PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& o
 
 void PointSetItem::initialize()
 {
-    impl->pointSetUpdateConnection = 
+    impl->pointSetUpdateConnection.reset(
         impl->pointSet->sigUpdated().connect(
-            boost::bind(&PointSetItem::notifyUpdate, this));
+            boost::bind(&PointSetItem::notifyUpdate, this)));
 }
 
 
 PointSetItem::~PointSetItem()
 {
-    impl->pointSetUpdateConnection.disconnect();
     delete impl;
 }
 
@@ -255,17 +259,29 @@ const Affine3& PointSetItem::offsetPosition() const
 }
 
 
+double PointSetItem::pointSize() const
+{
+    return impl->scenePointSet->visiblePointSet->pointSize();
+}
+    
+
 void PointSetItem::setPointSize(double size)
 {
     impl->scenePointSet->setPointSize(size);
 }
 
 
-double PointSetItem::pointSize() const
+double PointSetItem::voxelSize() const
 {
-    return impl->scenePointSet->visiblePointSet->pointSize();
+    return impl->scenePointSet->voxelSize;
 }
     
+
+void PointSetItem::setVoxelSize(double size)
+{
+    impl->scenePointSet->setVoxelSize(size);
+}
+
 
 void PointSetItem::setEditable(bool on)
 {
@@ -294,7 +310,7 @@ boost::optional<Vector3> PointSetItem::attentionPoint() const
 
 void PointSetItem::notifyUpdate()
 {
-    impl->scenePointSet->updateVisiblePointSet();
+    impl->scenePointSet->updateVisualization(true);
     Item::notifyUpdate();
 }
 
@@ -307,11 +323,14 @@ ItemPtr PointSetItem::doDuplicate() const
 
 void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    ScenePointSet* scene = impl->scenePointSet;
     putProperty(_("File"), getFilename(filePath()));
-    putProperty(_("Rendering mode"), impl->scenePointSet->renderingMode,
-                boost::bind(&ScenePointSet::setRenderingMode, impl->scenePointSet.get(), _1));
+    putProperty(_("Rendering mode"), scene->renderingMode,
+                boost::bind(&ScenePointSet::setRenderingMode, scene, _1));
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
-                                     boost::bind(&PointSetItem::setPointSize, this, _1), true);
+                                     boost::bind(&ScenePointSet::setPointSize, scene, _1), true);
+    putProperty.decimals(4)(_("Voxel size"), voxelSize(),
+                            boost::bind(&ScenePointSet::setVoxelSize, scene, _1), true);
     putProperty(_("Editable"), isEditable(), boost::bind(&PointSetItemImpl::onEditableChanged, impl, _1));
     const SgVertexArray* points = impl->pointSet->vertices();
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
@@ -320,12 +339,14 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool PointSetItem::store(Archive& archive)
 {
+    ScenePointSet* scene = impl->scenePointSet;
     if(!filePath().empty()){
         archive.writeRelocatablePath("file", filePath());
         archive.write("format", fileFormat());
     }
-    archive.write("renderingMode", impl->scenePointSet->renderingMode.selectedSymbol());
+    archive.write("renderingMode", scene->renderingMode.selectedSymbol());
     archive.write("pointSize", pointSize());
+    archive.write("voxelSize", scene->voxelSize);
     archive.write("isEditable", isEditable());
     return true;
 }
@@ -333,11 +354,13 @@ bool PointSetItem::store(Archive& archive)
 
 bool PointSetItem::restore(const Archive& archive)
 {
+    ScenePointSet* scene = impl->scenePointSet;
     string symbol;
     if(archive.read("renderingMode", symbol)){
-        impl->scenePointSet->setRenderingMode(impl->scenePointSet->renderingMode.index(symbol));
+        scene->setRenderingMode(scene->renderingMode.index(symbol));
     }
-    setPointSize(archive.get("pointSize", 0.0));
+    scene->setPointSize(archive.get("pointSize", pointSize()));
+    scene->setVoxelSize(archive.get("voxelSize", voxelSize()));
     setEditable(archive.get("isEditable", isEditable()));
     
     std::string filename, formatId;
@@ -355,6 +378,10 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
 {
     visiblePointSet = new SgPointSet;
 
+    voxels = new SgShape;
+    voxels->getOrCreateMaterial();
+    voxelSize = 0.005f;
+
     renderingMode.setSymbol(POINT_MODE, N_("Point"));
     renderingMode.setSymbol(VOXEL_MODE, N_("Voxel"));
     renderingMode.select(POINT_MODE);
@@ -369,7 +396,7 @@ bool ScenePointSet::setRenderingMode(int mode)
     if(mode != renderingMode.which()){
         result = renderingMode.select(mode);
         if(invariant){
-            updateVisiblePointSet();
+            updateVisualization(true);
         }
     }
     return result;
@@ -380,8 +407,18 @@ void ScenePointSet::setPointSize(double size)
 {
     if(size != visiblePointSet->pointSize()){
         visiblePointSet->setPointSize(size);
-        if(invariant){
-            updateVisiblePointSet();
+        if(renderingMode.is(POINT_MODE) && invariant){
+            updateVisualization(false);
+        }
+    }
+}
+
+void ScenePointSet::setVoxelSize(double size)
+{
+    if(size != voxelSize){
+        voxelSize = size;
+        if(renderingMode.is(VOXEL_MODE) && invariant){
+            updateVisualization(true);
         }
     }
 }
@@ -397,27 +434,128 @@ void ScenePointSet::clearAttentionPoint()
 }
 
 
-void ScenePointSet::updateVisiblePointSet()
+void ScenePointSet::updateVisualization(bool updateContents)
 {
     if(invariant){
         removeChild(invariant);
         invariant->removeChild(visiblePointSet);
+        invariant->removeChild(voxels);
     }
     invariant = new SgInvariantGroup;
     
-    //! \todo implement the assignment operator to SgPlot and SgPointSet and use it
+    if(renderingMode.is(POINT_MODE)){
+        if(updateContents){
+            updateVisiblePointSet();
+        }
+        invariant->addChild(visiblePointSet);
+    } else {
+        if(updateContents){
+            updateVoxels();
+        }
+        invariant->addChild(voxels);
+    }
+    addChild(invariant, true);
+        
+    if(attentionPointMarker){
+        removeChild(attentionPointMarker);
+    }
+}
+
+
+void ScenePointSet::updateVisiblePointSet()
+{
     visiblePointSet->setVertices(orgPointSet->vertices());
     visiblePointSet->setNormals(orgPointSet->normals());
     visiblePointSet->normalIndices() = orgPointSet->normalIndices();
     visiblePointSet->setColors(orgPointSet->colors());
     visiblePointSet->colorIndices() = orgPointSet->colorIndices();
-    
-    invariant->addChild(visiblePointSet);
-    addChild(invariant, true);
-    
-    if(attentionPointMarker){
-        removeChild(attentionPointMarker);
+}
+
+
+void ScenePointSet::updateVoxels()
+{
+    SgMeshPtr mesh;
+    if(orgPointSet->hasVertices()){
+        mesh = new SgMesh;
+        mesh->setSolid(true);
+        const SgVertexArray& points = *orgPointSet->vertices();
+        const int n = points.size();
+        SgVertexArray& vertices = *mesh->getOrCreateVertices();
+        vertices.reserve(n * 8);
+        SgNormalArray& normals = *mesh->setNormals(new SgNormalArray(6));
+        normals[0] <<  1.0f,  0.0f,  0.0f;
+        normals[1] << -1.0f,  0.0f,  0.0f;
+        normals[2] <<  0.0f,  1.0f,  0.0f;
+        normals[3] <<  0.0f, -1.0f,  0.0f;
+        normals[4] <<  0.0f,  0.0f,  1.0f;
+        normals[5] <<  0.0f,  0.0f, -1.0f;
+        SgIndexArray& normalIndices = mesh->normalIndices();
+        normalIndices.reserve(12 * 3 * n);
+        mesh->reserveNumTriangles(n * 12);
+        const float s = voxelSize;
+        for(int i=0; i < n; ++i){
+            const int top = vertices.size();
+            const Vector3f& p = points[i];
+            const float x0 = p.x() + s;
+            const float x1 = p.x() - s;
+            const float y0 = p.y() + s;
+            const float y1 = p.y() - s;
+            const float z0 = p.z() + s;
+            const float z1 = p.z() - s;
+            vertices.push_back(Vector3f(x0, y0, z0));
+            vertices.push_back(Vector3f(x1, y0, z0));
+            vertices.push_back(Vector3f(x1, y1, z0));
+            vertices.push_back(Vector3f(x0, y1, z0));
+            vertices.push_back(Vector3f(x0, y0, z1));
+            vertices.push_back(Vector3f(x1, y0, z1));
+            vertices.push_back(Vector3f(x1, y1, z1));
+            vertices.push_back(Vector3f(x0, y1, z1));
+
+            static const int boxTriangles[][3] = {
+                { 0, 1, 2 }, { 0, 2, 3 }, // +Z
+                { 0, 5, 1 }, { 0, 4, 5 }, // +Y
+                { 1, 5, 2 }, { 2, 5, 6 }, // -X
+                { 2, 6, 3 }, { 3, 6, 7 }, // -Y
+                { 0, 3, 4 }, { 3, 7, 4 }, // +X
+                { 4, 6, 5 }, { 4, 7, 6 }  // -Z
+            };
+            static const int boxNormalIndices[] = {
+                4, 4, 2, 2, 1, 1, 3, 3, 0, 0, 5, 5
+            };
+            for(int j=0; j < 12; ++j){
+                const int* tri = boxTriangles[j];
+                mesh->addTriangle(top + tri[0], top + tri[1], top + tri[2]);
+                const int normalIndex = boxNormalIndices[j];
+                normalIndices.push_back(normalIndex);
+                normalIndices.push_back(normalIndex);
+                normalIndices.push_back(normalIndex);
+            }
+        }
+        if(orgPointSet->hasColors()){
+            SgColorArray& colors = *mesh->setColors(orgPointSet->colors());
+            const int m = colors.size();
+            const SgIndexArray& orgColorIndices = orgPointSet->colorIndices();
+            SgIndexArray& colorIndices = mesh->colorIndices();
+            if(orgColorIndices.empty()){
+                colorIndices.reserve(m * 36);
+                for(int i=0; i < m; ++i){
+                    for(int j=0; j < 36; ++j){
+                        colorIndices.push_back(i);
+                    }
+                }
+            } else {
+                const int l = orgColorIndices.size();
+                colorIndices.reserve(l * 36);
+                for(int i=0; i < l; ++i){
+                    const int index = orgColorIndices[l];
+                    for(int j=0; j < 36; ++j){
+                        colorIndices.push_back(index);
+                    }
+                }
+            }
+        }
     }
+    voxels->setMesh(mesh);
 }
 
 
