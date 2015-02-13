@@ -10,7 +10,7 @@ using namespace cnoid;
 
 
 Selection::Selection(const char* domainname)
-        : domainname_(domainname)
+    : domainname_(domainname)
 {
     selectedIndex_ = -1;
 }
@@ -42,9 +42,11 @@ void Selection::clear()
 
 void Selection::setSymbol(int index, const std::string& symbol)
 {
+    if(index >= symbols_.size()){
+        symbols_.resize(index + 1);
+    }
     symbols_[index] = symbol;
 }
-
 
 
 Selection& Selection::operator<<(const std::string& symbol)
