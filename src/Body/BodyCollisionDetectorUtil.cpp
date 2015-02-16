@@ -14,20 +14,16 @@ using namespace cnoid;
 
 namespace {
 
-void addLinkToCollisionDetector(Link* link, CollisionDetector& detector, bool isStatic)
+void setStaticFlags(Link* link, dynamic_bitset<>& staticFlags)
 {
-    const int id = detector.addGeometry(link->shape());
-    if(isStatic){
-        if(link->isFixedJoint()){
-            detector.setGeometryStatic(id);
-        } else {
-            isStatic = false;
+    staticFlags.set(link->index());
+    for(Link* child = link->child(); child; child = child->sibling()){
+        if(child->isFixedJoint()){
+            setStaticFlags(child, staticFlags);
         }
     }
-    for(Link* child = link->child(); child; child = child->sibling()){
-        addLinkToCollisionDetector(child, detector, isStatic);
-    }
 }
+
 }
 
 
@@ -41,6 +37,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
     const int numLinks = body.numLinks();
     int excludeTreeDepth = 3;
     dynamic_bitset<> exclusions(numLinks);
+    dynamic_bitset<> staticFlags(numLinks);
     
     const Mapping& cdInfo = *body.info()->findMapping("collisionDetection");
     if(cdInfo.isValid()){
@@ -54,15 +51,16 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
         }
     }
 
-    bool isStatic = (body.isStaticModel() || body.rootLink()->isFixedJoint());
-    if(isStatic){
-        addLinkToCollisionDetector(body.rootLink(), detector, isStatic);
-    } else {
-        for(int i=0; i < numLinks; ++i){
-            if(exclusions[i]){
-                detector.addGeometry(0);
-            } else {
-                detector.addGeometry(body.link(i)->shape());
+    if(body.isStaticModel() || body.rootLink()->isFixedJoint()){
+        setStaticFlags(body.rootLink(), staticFlags);
+    }
+    for(int i=0; i < numLinks; ++i){
+        if(exclusions[i]){
+            detector.addGeometry(0);
+        } else {
+            int id = detector.addGeometry(body.link(i)->shape());
+            if(staticFlags[i]){
+                detector.setGeometryStatic(id);
             }
         }
     }
