@@ -1,3 +1,4 @@
+
 /**
    @author Shin'ichiro Nakaoka
 */
@@ -17,14 +18,18 @@ class CNOID_EXPORT TranslationDragger : public SgPosTransform, public SceneWidge
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    TranslationDragger();
+    TranslationDragger(bool setDefaultAxes = true);
     TranslationDragger(const TranslationDragger& org);
     TranslationDragger(const TranslationDragger& org, SgCloneMap& cloneMap);
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
+    void addCustomAxis(int axis, SgNode* node);
+    void clearCustomAxes();
+
     double radius() const;
     void setRadius(double r);
+    
     bool isContainerMode() const;
     void setContainerMode(bool on);
 
@@ -48,7 +53,9 @@ public:
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
         
 private:
-    SgScaleTransformPtr scale;
+    SgScaleTransformPtr defaultAxesScale;
+    SgGroupPtr customAxes;
+    SgMaterialPtr axisMaterials[3];
     SceneDragProjector dragProjector;
     double axisCylinderNormalizedRadius;
     bool isContainerMode_;
@@ -121,6 +128,7 @@ public:
 
     void setRadius(double r, double translationAxisRatio = 2.0f);
     void adjustSize();
+    void adjustSize(const BoundingBox& bb);
     void setContainerMode(bool on);
     bool isContainerMode() const;
     void setDraggerAlwaysShown(bool on);
