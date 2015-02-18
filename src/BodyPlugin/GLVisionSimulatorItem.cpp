@@ -623,6 +623,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
                         pQueueMutex->lock();
                     }
                     renderer->updateScene(true);
+                    renderer->isRendering = true;
                     rendererQueue.push(renderer);
                 } else {
                     renderer->updateScene(false);
@@ -706,8 +707,8 @@ void VisionRenderer::startConcurrentRendering()
         boost::unique_lock<boost::mutex> lock(renderingMutex);
         updateScene(true);
         isRenderingRequested = true;
-        isRendering = true;
     }
+    isRendering = true;
     renderingCondition.notify_all();
 }
 
@@ -776,7 +777,6 @@ void GLVisionSimulatorItemImpl::onPostDynamics()
         for(size_t i=0; i < renderersInRendering.size(); ++i){
             VisionRenderer* renderer = renderersInRendering[i];
             renderer->updateVisionData();
-            renderer->isRendering = false;
         }
         renderersInRendering.clear();
     }
@@ -809,7 +809,9 @@ bool VisionRenderer::waitForRenderingToFinish()
 
     if(!isRenderingFinished){
         if(simImpl->isBestEffortMode){
-            elapsedTime -= simImpl->worldTimeStep;
+            if(elapsedTime > cycleTime){
+                elapsedTime = cycleTime;
+            }
             return false;
         } else {
             while(!isRenderingFinished){
@@ -848,7 +850,9 @@ bool VisionRenderer::waitForRenderingToFinish(boost::unique_lock<boost::mutex>& 
 {
     if(!isRenderingFinished){
         if(simImpl->isBestEffortMode){
-            elapsedTime -= simImpl->worldTimeStep;
+            if(elapsedTime > cycleTime){
+                elapsedTime = cycleTime;
+            }
             return false;
         } else {
             while(!isRenderingFinished){
