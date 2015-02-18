@@ -1080,11 +1080,24 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         preDynamicsFunctions.clear();
         postDynamicsFunctions.clear();
         subSimulatorItems.extractChildItems(self);
-        for(size_t i=0; i < subSimulatorItems.size(); ++i){
-            SubSimulatorItem* item = subSimulatorItems.get(i);
-            os << (fmt(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name()) << endl;
-            if(!subSimulatorItems[i]->initializeSimulation(self)){
-                os << (fmt(_("The initialization of \"%1%\" failed.")) % item->name()) << endl;
+        ItemList<SubSimulatorItem>::iterator p = subSimulatorItems.begin();
+        while(p != subSimulatorItems.end()){
+            SubSimulatorItem* item = *p;
+            bool initialized = false;
+            if(item->isEnabled()){
+                os << (fmt(_("SubSimulatorItem \"%1%\" has been detected.")) % item->name()) << endl;
+                if(item->initializeSimulation(self)){
+                    initialized = true;
+                } else {
+                    os << (fmt(_("The initialization of \"%1%\" failed.")) % item->name()) << endl;
+                }
+            } else {
+                os << (fmt(_("SubSimulatorItem \"%1%\" is disabled.")) % item->name()) << endl;
+            }
+            if(initialized){
+                ++p;
+            } else {
+                p = subSimulatorItems.erase(p);
             }
         }
 
@@ -1742,4 +1755,10 @@ bool SimulatedMotionEngineManager::setTime(double time)
         isActive |= simulatorItems[i]->impl->setPlaybackTime(currentTime);
     }
     return isActive;
+}
+
+
+bool SubSimulatorItem::isEnabled()
+{
+    return true;
 }
