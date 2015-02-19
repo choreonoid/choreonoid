@@ -158,36 +158,37 @@ public:
     vector<VisionRendererPtr> visionRenderers;
     vector<VisionRenderer*> renderersInRendering;
 
-    bool isEnabled;
     bool useThread;
     bool useQueueThreadForAllSensors;
     bool useThreadsForSensors;
     bool isVisionDataRecordingEnabled;
     bool isBestEffortMode;
-    bool isHeadLightEnabled;
-    bool areAdditionalLightsEnabled;
-    double maxLatency;
-    double rangeSensorPrecisionRatio;
-    double depthError;
-    SgCloneMap cloneMap;
-    QGLFormat glFormat;
+    bool isQueueRenderingTerminationRequested;
 
     // for the single vision simulator thread rendering
     boost::thread queueThread;
     boost::condition_variable queueCondition;
     boost::mutex queueMutex;
     queue<VisionRenderer*> rendererQueue;
-    bool isQueueRenderingFinished;
-    bool isQueueRenderingTerminationRequested;
     
+    double rangeSensorPrecisionRatio;
+    double depthError;
+
     vector<string> bodyNames;
     string bodyNameListString;
     vector<string> sensorNames;
     string sensorNameListString;
+    bool isEnabled;
     bool useThreadProperty;
     bool useThreadsForSensorsProperty;
     bool isBestEffortModeProperty;
     bool shootAllSceneObjects;
+    bool isHeadLightEnabled;
+    bool areAdditionalLightsEnabled;
+    double maxFrameRate;
+    double maxLatency;
+    SgCloneMap cloneMap;
+    QGLFormat glFormat;
         
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self);
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
@@ -227,6 +228,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 {
     simulatorItem = 0;
     isEnabled = true;
+    maxFrameRate = 1000.0;
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
     depthError = 0.0;
@@ -255,19 +257,20 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 {
     simulatorItem = 0;
 
-    isEnabled = org.isEnabled;
-    
+    isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
+    rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
+    depthError = org.depthError;
     bodyNameListString = getNameListString(bodyNames);
     sensorNameListString = getNameListString(sensorNames);
-
-    rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
-    isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
+    isEnabled = org.isEnabled;
     useThreadProperty = org.useThreadProperty;
     useThreadsForSensorsProperty = org.useThreadsForSensorsProperty;
     isBestEffortModeProperty = org.isBestEffortModeProperty;
+    shootAllSceneObjects = org.shootAllSceneObjects;
     isHeadLightEnabled = org.isHeadLightEnabled;
     areAdditionalLightsEnabled = org.areAdditionalLightsEnabled;
-    shootAllSceneObjects = org.shootAllSceneObjects;
+    maxFrameRate = org.maxFrameRate;
+    maxLatency = org.maxLatency;
 }
 
 
@@ -404,6 +407,10 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         simulatorItem->addPostDynamicsFunction(boost::bind(&GLVisionSimulatorItemImpl::onPostDynamics, this));
 
         if(useQueueThreadForAllSensors){
+            while(!rendererQueue.empty()){
+                rendererQueue.pop();
+            }
+            isQueueRenderingTerminationRequested = false;
             queueThread = boost::thread(
                 boost::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
         }
@@ -546,7 +553,8 @@ SgCamera* VisionRenderer::initializeCamera()
             sceneCamera = sceneDevice->findNodeOfType<SgCamera>();
             pixelWidth = camera->resolutionX();
             pixelHeight = camera->resolutionY();
-            cycleTime = 1.0 / camera->frameRate();
+            double frameRate = std::max(0.1, std::min(camera->frameRate(), simImpl->maxFrameRate));
+            cycleTime = 1.0 / frameRate;
             if(simImpl->isVisionDataRecordingEnabled){
                 camera->setShotDataAsState(true);
             }
@@ -589,7 +597,8 @@ SgCamera* VisionRenderer::initializeCamera()
                         persCamera->setFieldOfView(rangeSensor->yawRange());
                     }
                 }
-                cycleTime = 1.0 / rangeSensor->frameRate();
+                double frameRate = std::max(0.1, std::min(rangeSensor->frameRate(), simImpl->maxFrameRate));
+                cycleTime = 1.0 / frameRate;
                 if(simImpl->isVisionDataRecordingEnabled){
                     rangeSensor->setRangeDataAsState(true);
                 }
@@ -623,7 +632,6 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
                         pQueueMutex->lock();
                     }
                     renderer->updateScene(true);
-                    renderer->isRendering = true;
                     rendererQueue.push(renderer);
                 } else {
                     renderer->updateScene(false);
@@ -1080,6 +1088,9 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
         }
         queueCondition.notify_all();
         queueThread.join();
+        while(!rendererQueue.empty()){
+            rendererQueue.pop();
+        }
     }
         
     visionRenderers.clear();
@@ -1114,6 +1125,7 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty(_("Enabled"), isEnabled, changeProperty(isEnabled));
     putProperty(_("Target bodies"), bodyNameListString, boost::bind(updateNames, _1, boost::ref(bodyNameListString), boost::ref(bodyNames)));
     putProperty(_("Target sensors"), sensorNameListString, boost::bind(updateNames, _1, boost::ref(sensorNameListString), boost::ref(sensorNames)));
+    putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));
     putProperty(_("Use thread"), useThreadProperty, changeProperty(useThreadProperty));
@@ -1140,6 +1152,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("enabled", isEnabled);
     writeElements(archive, "targetBodies", bodyNames, true);
     writeElements(archive, "targetSensors", sensorNames, true);
+    archive.write("maxFrameRate", maxFrameRate);
     archive.write("maxLatency", maxLatency);
     archive.write("recordVisionData", isVisionDataRecordingEnabled);
     archive.write("useThread", useThreadProperty);
@@ -1149,7 +1162,7 @@ bool GLVisionSimulatorItemImpl::store(Archive& archive)
     archive.write("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
     archive.write("depthError", depthError);
     archive.write("enableHeadLight", isHeadLightEnabled);    
-    archive.write("enableAdditionalLights", areAdditionalLightsEnabled);    
+    archive.write("enableAdditionalLights", areAdditionalLightsEnabled);
     return true;
 }
 
@@ -1169,7 +1182,8 @@ bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
     bodyNameListString = getNameListString(bodyNames);
     readElements(archive, "targetSensors", sensorNames);
     sensorNameListString = getNameListString(sensorNames);
-    
+
+    archive.read("maxFrameRate", maxFrameRate);
     archive.read("maxLatency", maxLatency);
     archive.read("recordVisionData", isVisionDataRecordingEnabled);
 
