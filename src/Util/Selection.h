@@ -62,10 +62,7 @@ public:
         return (index == selectedIndex_);
     }
 
-    const std::string& selectedSymbol() const {
-        return symbols_[selectedIndex_];
-    }
-
+    const char* selectedSymbol() const;
     const char* selectedLabel() const;
 
 private:

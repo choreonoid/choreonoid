@@ -28,7 +28,7 @@ void Selection::resize(int s)
 {
     symbols_.resize(s);
     if(selectedIndex_ >= s){
-        selectedIndex_ = s - 1;
+        selectedIndex_ = -1;
     }
 }
 
@@ -98,6 +98,15 @@ bool Selection::select(const std::string& symbol)
         }
     }
     return false;
+}
+
+
+const char* Selection::selectedSymbol() const
+{
+    if(selectedIndex_ >= 0){
+        return symbols_[selectedIndex_].c_str();
+    }
+    return 0;
 }
 
 
