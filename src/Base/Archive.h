@@ -24,8 +24,8 @@ public:
     Archive(int line, int column);
     virtual ~Archive();
 
-    void initSharedInfo();
-    void initSharedInfo(const std::string& projectFile);
+    void initSharedInfo(bool useHomeRelativeDirectories = false);
+    void initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories = false);
     void inheritSharedInfoFrom(Archive& archive);
 
     void addPostProcess(const boost::function<void()>& func) const;

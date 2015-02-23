@@ -61,6 +61,7 @@ public:
     void openDialogToSaveProject();
 
     void onPerspectiveCheckToggled();
+    void onHomeRelativeCheckToggled();
         
     void connectArchiver(
         const std::string& name,
@@ -72,6 +73,7 @@ public:
     MessageView* messageView;
     string lastAccessedProjectFile;
     Action* perspectiveCheck;
+    Action* homeRelativeCheck;
 
     struct ArchiverInfo {
         boost::function<bool(Archive&)> storeFunction;
@@ -120,10 +122,17 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
         ->sigTriggered().connect(bind(&ProjectManagerImpl::overwriteCurrentProject, this));
     mm.addItem(_("Save Project As"))
         ->sigTriggered().connect(bind(&ProjectManagerImpl::openDialogToSaveProject, this));
-    
-    perspectiveCheck = mm.setPath(N_("Project File Options")).addCheckItem(_("Perspective"));
+
+
+    mm.setPath(N_("Project File Options"));
+
+    perspectiveCheck = mm.addCheckItem(_("Perspective"));
     perspectiveCheck->setChecked(config->get("storePerspective", false));
     perspectiveCheck->sigToggled().connect(bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
+
+    homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));
+    homeRelativeCheck->setChecked(config->get("useHomeRelative", false));
+    homeRelativeCheck->sigToggled().connect(bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
 
     mm.setPath("/File");
     mm.addSeparator();
@@ -356,7 +365,7 @@ void ProjectManagerImpl::saveProject(const string& filename)
     messageView->flush();
     
     ArchivePtr archive = new Archive();
-    archive->initSharedInfo(filename);
+    archive->initSharedInfo(filename, homeRelativeCheck->isChecked());
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, RootItem::mainInstance());
 
@@ -512,6 +521,13 @@ void ProjectManagerImpl::onPerspectiveCheckToggled()
         ->write("storePerspective", perspectiveCheck->isChecked());
 }
 
+
+void ProjectManagerImpl::onHomeRelativeCheckToggled()
+{
+    AppConfig::archive()->openMapping("ProjectManager")
+        ->write("useHomeRelative", homeRelativeCheck->isChecked());
+}
+                                           
 
 void ProjectManager::setArchiver(
     const std::string& moduleName,
