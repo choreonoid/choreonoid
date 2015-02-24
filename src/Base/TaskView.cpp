@@ -505,6 +505,9 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
             if(command){
                 commandFunc = command->function();
                 nextPhaseIndex = command->nextPhaseIndex(currentPhaseIndex_);
+                if(nextPhaseIndex >= currentTask->numPhases()){
+                    nextPhaseIndex = boost::none;
+                }
                 nextCommandIndex = command->nextCommandIndex(commandIndex);
             }
         }
