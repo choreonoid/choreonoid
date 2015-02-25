@@ -152,6 +152,7 @@ public:
     void setPreCommand(TaskFunc func);
     TaskCommand* addCommand(const std::string& caption);
     TaskCommand* lastCommand();
+    int lastCommandIndex();
 
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 

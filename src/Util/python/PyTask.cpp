@@ -441,6 +441,7 @@ void exportPyTaskTypes()
         .def("addCommand", Task_addCommand)
         .def("addCommandEx", python::raw_function(Task_addCommandEx, 2))
         .def("lastCommand", Task_lastCommand)
+        .def("lastCommandIndex", &Task::lastCommandIndex)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
         .def("onMenuRequest", &Task::onMenuRequest)
         ;

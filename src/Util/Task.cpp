@@ -237,6 +237,16 @@ TaskCommand* Task::lastCommand()
 }
 
 
+int Task::lastCommandIndex()
+{
+    TaskPhase* last = lastPhase();
+    if(last){
+        return last->lastCommandIndex();
+    }
+    return -1;
+}
+
+
 namespace {
     struct FuncToSetCommandLink {
         int commandIndex;
