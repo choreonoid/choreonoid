@@ -285,6 +285,10 @@ void exportPyEigenTypes()
     ndarray_to_Vector_converter<Vector3, 3>();
     pylist_to_Vector_converter<Vector3, 3>();
 
+    python::to_python_converter<Vector3f, Vector_to_ndarray_converter<Vector3f> >();
+    ndarray_to_Vector_converter<Vector3f, 3>();
+    pylist_to_Vector_converter<Vector3f, 3>();
+    
     python::to_python_converter<Vector4, Vector_to_ndarray_converter<Vector4> >();
     ndarray_to_Vector_converter<Vector4, 4>();
     pylist_to_Vector_converter<Vector4, 4>();
