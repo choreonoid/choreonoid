@@ -554,17 +554,18 @@ void MenuWidget::onButtonClicked(int indexInPage, FuncButtonBox* box)
     lastIndexInPage = indexInPage;
 
     if(pythonExecutor.state() == PythonExecutor::RUNNING_BACKGROUND){
-        bool doTermination =
+        bool doExecute =
             showConfirmDialog(
                 _("Python Script Termination"),
                 str(format(_("The Python script assigned to button \"%1%\" is still running in the background thread. "
                              "Do you want to terminate it to execute the command you clicked?"))
                     % box->label()));
-        if(doTermination){
-            if(!pythonExecutor.terminate()){
-                showWarningDialog(_("The script cannot be terminated and the command you clicked cannot be executed."));
-                return;
-            }
+        if(!doExecute){
+            MessageView::instance()->putln(MessageView::WARNING, _("The script was canceled."));
+            return;
+        } else if(!pythonExecutor.terminate()){
+            showWarningDialog(_("The script cannot be terminated and the command you clicked cannot be executed."));
+            return;
         }
     }
 
