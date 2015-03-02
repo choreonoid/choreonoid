@@ -554,13 +554,15 @@ void MenuWidget::onButtonClicked(int indexInPage, FuncButtonBox* box)
     lastIndexInPage = indexInPage;
 
     if(pythonExecutor.state() == PythonExecutor::RUNNING_BACKGROUND){
-        bool doExecute =
-            showConfirmDialog(
-                _("Python Script Termination"),
-                str(format(_("The Python script assigned to button \"%1%\" is still running in the background thread. "
-                             "Do you want to terminate it to execute the command you clicked?"))
-                    % box->label()));
-        if(!doExecute){
+        QMessageBox mbox;
+        mbox.setWindowTitle(_("Python Script Termination"));
+        mbox.setText(_("The previously executed Python script is still running in the background thread. "
+                       "Do you want to terminate it and execute the command you clicked or cancel the command you clicked?"));
+        mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        mbox.setDefaultButton(QMessageBox::Cancel);
+        int result = mbox.exec();
+                           
+        if(result == QMessageBox::Cancel){
             MessageView::instance()->putln(MessageView::WARNING, _("The script was canceled."));
             return;
         } else if(!pythonExecutor.terminate()){
