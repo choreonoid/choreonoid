@@ -114,7 +114,7 @@ public:
     QStackedLayout barStack;
 
     ToolButton sequenceModeButton;
-    ToolButton quitButton1;
+    ToolButton terminateButton1;
         
     ToolButton regularModeButton;
     ToolButton prevPageButton;
@@ -122,7 +122,7 @@ public:
     ToolButton nextPageButton;
     CheckBox sequentialCheck;
     ToolButton retryButton;
-    ToolButton quitButton2;
+    ToolButton terminateButton2;
 
     bool isLocalSequentialMode;
     int currentSequencePageIndex;
@@ -146,8 +146,10 @@ public:
     void setCurrentSequentialPage(int index);
     void onSequentialCheckToggled(bool on);
     void onRetryClicked();
+    void onTerminateClicked();
     void onQuitClicked();
 };
+
 }
 
 namespace cnoid {
@@ -167,6 +169,7 @@ public:
     void setMenu(const python::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution);
     void blockMenuButtons(bool on);
 };
+
 }
 
 
@@ -279,7 +282,7 @@ void GrxUIMenuViewImpl::blockMenuButtons(bool on)
     if(on){
         ++menuButtonsBlockCount;
     } else{
-        --menuButtonsBlockCount;
+        menuButtonsBlockCount = std::max(0, menuButtonsBlockCount - 1);
     }
     if(menuWidget){
         bool enabled = (menuButtonsBlockCount <= 0);
@@ -399,10 +402,10 @@ MenuWidget::MenuWidget
     hbox->addWidget(new QLabel(_("Command Always Enabled")));
     hbox->addStretch();
             
-    quitButton1.setText("X");
-    quitButton1.setToolTip(_("Quit this menu"));
-    quitButton1.sigClicked().connect(boost::bind(&MenuWidget::onQuitClicked, this));
-    hbox->addWidget(&quitButton1);
+    terminateButton1.setText("X");
+    terminateButton1.setToolTip(_("Terminate the command being executed"));
+    terminateButton1.sigClicked().connect(boost::bind(&MenuWidget::onTerminateClicked, this));
+    hbox->addWidget(&terminateButton1);
             
     regularBar->setLayout(hbox);
     barStack.addWidget(regularBar);
@@ -444,10 +447,10 @@ MenuWidget::MenuWidget
     retryButton.sigClicked().connect(boost::bind(&MenuWidget::onRetryClicked, this));
     hbox->addWidget(&retryButton);
             
-    quitButton2.setText("X");
-    quitButton2.setToolTip(_("Quit this menu"));
-    quitButton2.sigClicked().connect(boost::bind(&MenuWidget::onQuitClicked, this));
-    hbox->addWidget(&quitButton2);
+    terminateButton2.setText("X");
+    terminateButton2.setToolTip(_("Terminate the command being executed"));
+    terminateButton2.sigClicked().connect(boost::bind(&MenuWidget::onTerminateClicked, this));
+    hbox->addWidget(&terminateButton2);
             
     sequenceBar->setLayout(hbox);
     barStack.addWidget(sequenceBar);
@@ -571,25 +574,32 @@ void MenuWidget::onButtonClicked(int indexInPage, FuncButtonBox* box)
         }
     }
 
+    view->blockMenuButtons(true);
     pythonExecutor.execCode(code);
 }
 
 
 void MenuWidget::onScriptFinished()
 {
-    bool result = true;
-    
-    if(pythonExecutor.hasException()){
+    bool completed = false;
+
+    view->blockMenuButtons(false);
+
+    if(pythonExecutor.isTerminated()){
+        MessageView::instance()->putln(_("The script has been terminated."));
+        
+    } else if(pythonExecutor.hasException()){
         PyGILock lock;
         if(pythonExecutor.exceptionType() == cancelExceptionType){
             showWarningDialog(_("The script has been cancelled."));
         } else {
             MessageView::instance()->putln(pythonExecutor.exceptionText());
         }
-        result = false;
+    } else {
+        completed = true;
     }
 
-    if(result){
+    if(completed){
         moveNext();
     }
 }
@@ -682,6 +692,25 @@ void MenuWidget::onRetryClicked()
     currentButton = 0;
     currentButtonPage = 0;
     setCurrentSequentialPage(0);
+}
+
+
+void MenuWidget::onTerminateClicked()
+{
+    if(pythonExecutor.state() == PythonExecutor::RUNNING_BACKGROUND){
+        bool doTermination =
+            showConfirmDialog(
+                _("Python Script Termination"),
+                _("Do you really want to terminate the script being executed?"));
+        if(doTermination){
+            if(!pythonExecutor.terminate()){
+                showWarningDialog(_("The script cannot be terminated."));
+                view->blockMenuButtons(false);
+            }
+        }
+    } else {
+        view->blockMenuButtons(false);
+    }
 }
 
 
