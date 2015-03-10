@@ -41,6 +41,8 @@ public:
     const std::string exceptionText() const;
     boost::python::object exceptionType() const;
     boost::python::object exceptionValue() const;
+
+    bool isTerminated() const;
         
     bool terminate();
 
