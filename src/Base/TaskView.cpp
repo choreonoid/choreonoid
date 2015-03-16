@@ -488,14 +488,22 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
         nextPhaseIndex = currentPhaseIndex_;
         TaskFunc commandFunc;
         if(commandIndex < 0){
+            int defaultCommandIndex = -1;
+            for(int i=0; i < currentPhase->numCommands(); ++i){
+                TaskCommand* command = currentPhase->command(i);
+                if(command->isDefault()){
+                    defaultCommandIndex = i;
+                    break;
+                }
+            }
             commandFunc = currentPhase->preCommand();
-            if(!commandFunc){
-                for(int i=0; i < currentPhase->numCommands(); ++i){
-                    TaskCommand* command = currentPhase->command(i);
-                    if(command->isDefault()){
-                        commandIndex = i;
-                        break;
-                    }
+
+            if(defaultCommandIndex >= 0){
+                if(commandFunc){
+                    nextCommandIndex = defaultCommandIndex;
+                    setCommandLinkAutomatic();
+                } else {
+                    commandIndex = defaultCommandIndex;
                 }
             }
         }
@@ -530,7 +538,7 @@ void TaskViewImpl::goToNextCommand()
 
         } else {
             if(nextCommandIndex &&
-                  (!currentCommandIndex || *nextCommandIndex != *currentCommandIndex)){
+               (!currentCommandIndex || *nextCommandIndex != *currentCommandIndex)){
                 int index = *nextCommandIndex;
                 nextCommandIndex = boost::none;
                 setFocusToCommandButton(index);
