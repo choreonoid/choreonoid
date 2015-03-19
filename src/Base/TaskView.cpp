@@ -9,6 +9,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Button>
 #include <cnoid/ComboBox>
+#include <cnoid/SpinBox>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
 #include <QBoxLayout>
@@ -36,7 +37,9 @@ public:
     PushButton menuButton;
     PushButton prevButton;
     PushButton cancelButton;
-    PushButton phaseIndexLabelButton;
+    SpinBox phaseIndexSpin;
+    Connection phaseIndexSpinConnection;
+    ToolButton defaultCommandButton;
     ToggleButton autoModeToggle;
     PushButton nextButton;
     QLabel phaseLabel;
@@ -155,9 +158,20 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     cancelButton.sigClicked().connect(boost::bind(&TaskViewImpl::cancelWaiting, this));
     hbox->addWidget(&cancelButton);
 
-    phaseIndexLabelButton.setToolTip(_("Execute the default command of the current phase"));
-    phaseIndexLabelButton.sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, -1));
-    hbox->addWidget(&phaseIndexLabelButton);
+    phaseIndexSpin.setToolTip(_("Phase index"));
+    phaseIndexSpin.setSuffix(" / 0");
+    phaseIndexSpin.setAlignment(Qt::AlignCenter);
+    phaseIndexSpin.setRange(0, 0);
+    phaseIndexSpinConnection =
+        phaseIndexSpin.sigValueChanged().connect(
+            boost::bind(&TaskViewImpl::setPhaseIndex, this, _1, false));
+    hbox->addWidget(&phaseIndexSpin);
+
+    defaultCommandButton.setText(_("V"));
+    defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
+    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, -1));
+    hbox->addWidget(&defaultCommandButton);
 
     autoModeToggle.setText(_("Auto"));
     autoModeToggle.setToolTip(_("Automatic mode"));
@@ -462,9 +476,14 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
     for(size_t i=numVisibleButtons; i < commandButtons.size(); ++i){
         commandButtons[i]->hide();
     }
-    
-    phaseIndexLabelButton.setText(QString("%1 / %2").arg(currentPhaseIndex_).arg(numPhases - 1));
 
+
+    phaseIndexSpinConnection.block();
+    phaseIndexSpin.setRange(0, numPhases);
+    phaseIndexSpin.setValue(currentPhaseIndex_);
+    phaseIndexSpinConnection.unblock();
+    phaseIndexSpin.setSuffix(QString(" / %1").arg(numPhases - 1));
+    
     currentCommandIndex = boost::none;
 
     if(isSuccessivelyCalled && currentPhase){
