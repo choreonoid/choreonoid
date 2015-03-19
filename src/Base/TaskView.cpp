@@ -38,6 +38,7 @@ public:
     QHBoxLayout hbox1;
     QHBoxLayout hbox2;
     QHBoxLayout hbox3;
+    QVBoxLayout vspace;
     ComboBox taskCombo;
     PushButton menuButton;
     PushButton prevButton;
@@ -186,10 +187,10 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     nextButton.setToolTip(_("Skip to the next phase"));
     nextButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, +1));
 
-    //topVBox.setAlignment(Qt::AlignHCenter);
     topVBox.addLayout(&hbox1);
     topVBox.addLayout(&hbox2);
     topVBox.addLayout(&hbox3);
+    topVBox.addLayout(&vspace);
     topVBox.addWidget(&phaseLabel, 0, Qt::AlignHCenter);
     topVBox.addStretch();
     self->setLayout(&topVBox);
@@ -233,6 +234,7 @@ void TaskViewImpl::doLayout(bool isVertical)
     removeWidgetsInLayout(&hbox1);
     removeWidgetsInLayout(&hbox2);
     removeWidgetsInLayout(&hbox3);
+    removeWidgetsInLayout(&vspace);
     
     if(commandButtonBoxLayout){
         delete commandButtonBoxLayout;
@@ -249,12 +251,15 @@ void TaskViewImpl::doLayout(bool isVertical)
         hbox3.addWidget(&phaseIndexSpin);
         hbox3.addWidget(&defaultCommandButton);
         hbox3.addWidget(&nextButton);
-        
+
+        vspace.addSpacing(4);
+
         commandButtonBoxLayout = new QVBoxLayout;
+        QMargins m = commandButtonBoxLayout->contentsMargins();
+        m.setTop(m.top() + 8);
+        m.setBottom(m.bottom() + 8);
+        commandButtonBoxLayout->setContentsMargins(m);
         commandButtonBoxLayout->setSpacing(16);
-        //commandButtonBoxLayout->setAlignment(Qt::AlignHCenter);
-        //commandButtonBoxLayout->setSizeConstraint(QLayout::SetNoConstraint);
-        //commandButtonBoxLayout->setSizeConstraint(QLayout::SetMaximumSize);
         
     } else {
         hbox1.addWidget(&taskCombo, 1);
@@ -270,7 +275,7 @@ void TaskViewImpl::doLayout(bool isVertical)
         commandButtonBoxLayout = new QHBoxLayout;
     }
 
-    topVBox.insertLayout(4, commandButtonBoxLayout);
+    topVBox.insertLayout(5, commandButtonBoxLayout);
 
     if(isVertical){
         for(size_t i=0; i < commandButtons.size(); ++i){
