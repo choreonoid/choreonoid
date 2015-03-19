@@ -33,6 +33,11 @@ public:
     TaskView* self;
     MessageView* mv;
     ostream& os;
+    bool isVerticalLayout;
+    QVBoxLayout topVBox;
+    QHBoxLayout hbox1;
+    QHBoxLayout hbox2;
+    QHBoxLayout hbox3;
     ComboBox taskCombo;
     PushButton menuButton;
     PushButton prevButton;
@@ -43,7 +48,7 @@ public:
     ToggleButton autoModeToggle;
     PushButton nextButton;
     QLabel phaseLabel;
-    QHBoxLayout commandButtonBox;
+    QBoxLayout* commandButtonBoxLayout;
     vector<PushButton*> commandButtons;
     MenuManager menuManager;
 
@@ -64,6 +69,7 @@ public:
 
     TaskViewImpl(TaskView* self);
     ~TaskViewImpl();
+    void doLayout(bool on);
     void addTask(Task* task);
     bool updateTask(Task* task);
     void setCurrentTask(int index);
@@ -131,62 +137,6 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     self->setDefaultLayoutArea(View::CENTER);
-    QVBoxLayout* vbox = new QVBoxLayout;
-    QHBoxLayout* hbox = new QHBoxLayout;
-
-    taskCombo.setToolTip(_("Select a task type"));
-    taskCombo.addItem("  ----------  ");
-    taskCombo.sigCurrentIndexChanged().connect(
-        boost::bind(&TaskViewImpl::setCurrentTask, this, _1));
-    hbox->addWidget(&taskCombo, 1);
-
-    menuButton.setText("*");
-    menuButton.setToolTip(_("Option Menu"));
-    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
-    hbox->addWidget(&menuButton);
-    vbox->addLayout(hbox);
-
-    hbox = new QHBoxLayout;
-    prevButton.setText("<");
-    prevButton.setToolTip(_("Go back to the previous phase"));
-    prevButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, -1));
-    hbox->addWidget(&prevButton);
-
-    cancelButton.setText(_("Cancel"));
-    cancelButton.setToolTip(_("Cancel waiting for the command to finish"));
-    cancelButton.setEnabled(false);
-    cancelButton.sigClicked().connect(boost::bind(&TaskViewImpl::cancelWaiting, this));
-    hbox->addWidget(&cancelButton);
-
-    phaseIndexSpin.setToolTip(_("Phase index"));
-    phaseIndexSpin.setSuffix(" / 0");
-    phaseIndexSpin.setAlignment(Qt::AlignCenter);
-    phaseIndexSpin.setRange(0, 0);
-    phaseIndexSpinConnection =
-        phaseIndexSpin.sigValueChanged().connect(
-            boost::bind(&TaskViewImpl::setPhaseIndex, this, _1, false));
-    hbox->addWidget(&phaseIndexSpin);
-
-    defaultCommandButton.setText(_("V"));
-    defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-    defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
-    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, -1));
-    hbox->addWidget(&defaultCommandButton);
-
-    autoModeToggle.setText(_("Auto"));
-    autoModeToggle.setToolTip(_("Automatic mode"));
-    hbox->addWidget(&autoModeToggle);
-
-    nextButton.setText(">");
-    nextButton.setToolTip(_("Skip to the next phase"));
-    nextButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, +1));
-    hbox->addWidget(&nextButton);
-    vbox->addLayout(hbox);
-
-    vbox->addWidget(&phaseLabel, 0, Qt::AlignHCenter);
-    vbox->addLayout(&commandButtonBox);
-    vbox->addStretch();
-    self->setLayout(vbox);
 
     currentTaskIndex = 0;
     currentPhaseIndex_ = 0;
@@ -198,6 +148,56 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     waitTimer.setSingleShot(true);
     waitTimer.sigTimeout().connect(bind(&TaskViewImpl::onWaitTimeout, this));
 
+    taskCombo.setToolTip(_("Select a task type"));
+    taskCombo.addItem("  ----------  ");
+    taskCombo.sigCurrentIndexChanged().connect(
+        boost::bind(&TaskViewImpl::setCurrentTask, this, _1));
+
+    menuButton.setText("*");
+    menuButton.setToolTip(_("Option Menu"));
+    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
+
+    prevButton.setText("<");
+    prevButton.setToolTip(_("Go back to the previous phase"));
+    prevButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, -1));
+
+    cancelButton.setText(_("Cancel"));
+    cancelButton.setToolTip(_("Cancel waiting for the command to finish"));
+    cancelButton.setEnabled(false);
+    cancelButton.sigClicked().connect(boost::bind(&TaskViewImpl::cancelWaiting, this));
+
+    phaseIndexSpin.setToolTip(_("Phase index"));
+    phaseIndexSpin.setSuffix(" / 0");
+    phaseIndexSpin.setAlignment(Qt::AlignCenter);
+    phaseIndexSpin.setRange(0, 0);
+    phaseIndexSpinConnection =
+        phaseIndexSpin.sigValueChanged().connect(
+            boost::bind(&TaskViewImpl::setPhaseIndex, this, _1, false));
+
+    defaultCommandButton.setText(_("V"));
+    defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
+    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, -1));
+
+    autoModeToggle.setText(_("Auto"));
+    autoModeToggle.setToolTip(_("Automatic mode"));
+
+    nextButton.setText(">");
+    nextButton.setToolTip(_("Skip to the next phase"));
+    nextButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, +1));
+
+    //topVBox.setAlignment(Qt::AlignHCenter);
+    topVBox.addLayout(&hbox1);
+    topVBox.addLayout(&hbox2);
+    topVBox.addLayout(&hbox3);
+    topVBox.addWidget(&phaseLabel, 0, Qt::AlignHCenter);
+    topVBox.addStretch();
+    self->setLayout(&topVBox);
+
+    commandButtonBoxLayout = 0;
+    isVerticalLayout = true;
+    doLayout(false);
+    
     setPhaseIndex(0, false);
 }
 
@@ -211,6 +211,80 @@ TaskView::~TaskView()
 TaskViewImpl::~TaskViewImpl()
 {
 
+}
+
+
+static void removeWidgetsInLayout(QLayout* layout)
+{
+    QLayoutItem* child;
+    while((child = layout->takeAt(0)) != 0){
+        delete child;
+    }
+}
+
+
+void TaskViewImpl::doLayout(bool isVertical)
+{
+    if(isVertical == this->isVerticalLayout){
+        return;
+    }
+    this->isVerticalLayout = isVertical;
+
+    removeWidgetsInLayout(&hbox1);
+    removeWidgetsInLayout(&hbox2);
+    removeWidgetsInLayout(&hbox3);
+    
+    if(commandButtonBoxLayout){
+        delete commandButtonBoxLayout;
+    }
+
+    if(isVertical){
+        hbox1.addWidget(&taskCombo);
+
+        hbox2.addWidget(&cancelButton);
+        hbox2.addWidget(&autoModeToggle);
+        hbox2.addWidget(&menuButton);
+
+        hbox3.addWidget(&prevButton);
+        hbox3.addWidget(&phaseIndexSpin);
+        hbox3.addWidget(&defaultCommandButton);
+        hbox3.addWidget(&nextButton);
+        
+        commandButtonBoxLayout = new QVBoxLayout;
+        commandButtonBoxLayout->setSpacing(16);
+        //commandButtonBoxLayout->setAlignment(Qt::AlignHCenter);
+        //commandButtonBoxLayout->setSizeConstraint(QLayout::SetNoConstraint);
+        //commandButtonBoxLayout->setSizeConstraint(QLayout::SetMaximumSize);
+        
+    } else {
+        hbox1.addWidget(&taskCombo, 1);
+        hbox1.addWidget(&menuButton);
+
+        hbox2.addWidget(&prevButton);
+        hbox2.addWidget(&cancelButton);
+        hbox2.addWidget(&phaseIndexSpin);
+        hbox2.addWidget(&defaultCommandButton);
+        hbox2.addWidget(&autoModeToggle);
+        hbox2.addWidget(&nextButton);
+        
+        commandButtonBoxLayout = new QHBoxLayout;
+    }
+
+    topVBox.insertLayout(4, commandButtonBoxLayout);
+
+    if(isVertical){
+        for(size_t i=0; i < commandButtons.size(); ++i){
+            PushButton* button = commandButtons[i];
+            button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+            commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
+        }
+    } else {
+        for(size_t i=0; i < commandButtons.size(); ++i){
+            PushButton* button = commandButtons[i];
+            button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+            commandButtonBoxLayout->addWidget(button);
+        }
+    }
 }
 
 
@@ -322,7 +396,13 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
     } else {
         button = new PushButton;
         button->sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, commandIndex));
-        commandButtonBox.addWidget(button);
+        if(isVerticalLayout){
+            button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+            commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
+        } else {
+            button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+            commandButtonBoxLayout->addWidget(button);
+        }
         if(commandButtons.empty()){
             QWidget::setTabOrder(&menuButton, button);
         } else {
@@ -758,6 +838,9 @@ void TaskViewImpl::onMenuButtonClicked()
         menuManager.addSeparator();
     }
     menuManager.addItem(_("Retry"))->sigTriggered().connect(bind(&TaskViewImpl::retry, this));
+    Action* verticalCheck = menuManager.addCheckItem(_("Vertical Layout"));
+    verticalCheck->setChecked(isVerticalLayout);
+    verticalCheck->sigToggled().connect(boost::bind(&TaskViewImpl::doLayout, this, _1));
     
     menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
 }
@@ -790,6 +873,7 @@ void TaskViewImpl::addMenuSeparator()
 
 bool TaskView::storeState(Archive& archive)
 {
+    archive.write("layoutMode", impl->isVerticalLayout ? "vertical" : "horizontal");
     archive.write("isAutoMode", impl->autoModeToggle.isChecked());
     if(impl->currentTask){
         archive.write("currentTask", impl->currentTask->name());
@@ -800,6 +884,14 @@ bool TaskView::storeState(Archive& archive)
 
 bool TaskView::restoreState(const Archive& archive)
 {
+    string layoutMode;
+    if(archive.read("layoutMode", layoutMode)){
+        if(layoutMode == "horizontal"){
+            impl->doLayout(false);
+        } else if(layoutMode == "vertical"){
+            impl->doLayout(true);
+        }
+    }
     impl->autoModeToggle.setChecked(archive.get("isAutoMode", false));
     string name;
     if(archive.read("currentTask", name)){
