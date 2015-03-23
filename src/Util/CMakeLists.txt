@@ -133,6 +133,7 @@ set(headers
   Joystick.h
   Task.h
   exportdecl.h
+  Config.h
   )
 
 include_directories(${IRRXML_INCLUDE_DIRS})
