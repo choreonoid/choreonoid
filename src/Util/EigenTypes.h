@@ -78,8 +78,8 @@ using Eigen::Isometry3d;
 typedef Eigen::Isometry3d Isometry3;
     
 class SE3 {
-    Quat q;
     Vector3 p;
+    Quat q;
 public:
     SE3() { }
     SE3(const Vector3& translation, const Quat& rotation)

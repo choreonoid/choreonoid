@@ -149,6 +149,7 @@ public:
         if(slot){
             slot->changeOrder(order);
         }
+        return *this;
     }
 };
 
@@ -160,14 +161,14 @@ public:
     ~ScopedConnection() { Connection::disconnect(); }
     void reset(const Connection& c) { Connection::disconnect(); Connection::operator=(c); }
     void disconnect() { Connection::disconnect(); }
-    bool connected() { Connection::connected(); }
+    bool connected() { return Connection::connected(); }
     void block() { Connection::block(); }
     void unblock() { Connection::unblock(); }
-    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); }
+    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); return *this; }
 
 private:
-    ScopedConnection(const ScopedConnection& org) { }
-    ScopedConnection& operator=(const ScopedConnection& rhs) { }
+    ScopedConnection(const ScopedConnection& org);
+    ScopedConnection& operator=(const ScopedConnection& rhs);
 };
 
 }
