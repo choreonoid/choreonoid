@@ -113,12 +113,14 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             
         case Link::FIXED_JOINT:
         default:
+            arm.noalias() = link->R() * child->b();
             link->R() = child->R();
-            link->p().noalias() = child->p() - (link->R() * child->b());
+            link->p().noalias() = child->p() - arm;
 
             if(calcVelocity){
+                
                 link->w() = child->w();
-                link->v() = child->v();
+                link->v() = child->v() - link->w().cross(arm);
 				
                 if(calcAcceleration){
                     link->dw() = child->dw();
@@ -174,12 +176,13 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
 
         case Link::FIXED_JOINT:
         default:
+            arm.noalias() = parent->R() * link->b();
             link->R() = parent->R();
-            link->p().noalias() = parent->R() * link->b() + parent->p();
+            link->p().noalias() = arm + parent->p();
 
             if(calcVelocity){
                 link->w() = parent->w();
-                link->v() = parent->v();
+                link->v() = parent->v() + parent->w().cross(arm);;
 
                 if(calcAcceleration){
                     link->dw() = parent->dw();
