@@ -23,7 +23,7 @@ public:
     }
 
     operator bool() const {
-        return !symbols_.empty() && selectedIndex_ >= 0;
+        return selectedIndex_ >= 0;
     }
         
     void resize(int s);
