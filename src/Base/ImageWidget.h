@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_IMAGE_WIDGET_H_INCLUDED
-#define CNOID_BASE_IMAGE_WIDGET_H_INCLUDED
+#ifndef CNOID_BASE_IMAGE_WIDGET_H
+#define CNOID_BASE_IMAGE_WIDGET_H
 
 #include <QWidget>
 #include "exportdecl.h"
@@ -16,10 +16,10 @@ class CNOID_EXPORT ImageWidget : public QWidget
 {
     Q_OBJECT
 
-        public:
+  public:
     explicit ImageWidget(QWidget* parent = 0);
 
-public Q_SLOTS:
+  public Q_SLOTS:
     void setPixmap(const QPixmap& pixmap);
     void setImage(const Image& image);
     void setImage(const QImage& image);
@@ -29,18 +29,18 @@ public Q_SLOTS:
 
     void zoom(double scale);
     void translate(QPoint pos);
-    void rotate(double rotation);
+    void rotate(double angle);
 
-protected:
+  protected:
     virtual void paintEvent(QPaintEvent* event);
     virtual QSize sizeHint() const;
-        
-private:
+    
+  private:
     QPixmap pixmap_;
     bool isScalingEnabled_;
     QTransform transform_;
-
 };
+
 }
 
 #endif
