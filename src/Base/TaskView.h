@@ -14,7 +14,7 @@ namespace cnoid {
 
 class TaskViewImpl;
 
-class CNOID_EXPORT TaskView : public View
+class CNOID_EXPORT TaskView : public View//, public AbstractTaskProcessor
 {
 public:
     static void initializeClass(ExtensionManager* ext);

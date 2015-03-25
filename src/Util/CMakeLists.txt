@@ -132,6 +132,7 @@ set(headers
   DataMap.h
   Joystick.h
   Task.h
+  AbstractTaskProcessor.h
   exportdecl.h
   Config.h
   )
