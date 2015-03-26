@@ -21,27 +21,24 @@ public:
     virtual int numTasks() const = 0;
     virtual Task* task(int index) = 0;
     virtual int currentTaskIndex() const = 0;
-    virtual SignalProxy<void(int index)> sigCurrentTaskIndexChanged() = 0;
-    virtual int currentPhaseIndex() const = 0;
+    virtual bool setCurrentTask(int taskIndex) = 0;
+    virtual SignalProxy<void()> sigCurrentTaskChanged() = 0;
 
-    /**
-       \note This signal is emitted when the current task is changed as well.
-    */
-    virtual SignalProxy<void(int index)> sigCurrentPhaseIndexChanged() = 0;
+    virtual int currentPhaseIndex() const = 0;
+    virtual void setCurrentPhase(int phaseIndex) = 0;
+    virtual SignalProxy<void()> sigCurrentPhaseChanged() = 0;
 
     /*
       @return The -1 value is returned when the current command is an implicit pre-processing command.
     */
     virtual int currentCommandIndex() const = 0;
 
-    /**
-       \note This signal is emitted when the current task or phase is changed as well.
-    */       
-    virtual SignalProxy<void(int index)> sigCurrentCommandIndexChanged() = 0;
-
+    virtual SignalProxy<void()> sigCurrentCommandChanged() = 0;
     virtual bool isBusy() const = 0;
-    virtual SignalProxy<void(bool isBusy)> sigBusyStateChanged() = 0;
+    virtual SignalProxy<void()> sigBusyStateChanged() = 0;
     virtual bool isAutoMode() const = 0;
+    virtual void setAutoMode(bool on) = 0;
+    virtual SignalProxy<void(bool isAutoMode)> sigAutoModeToggled() =0;
 };
 
 }
