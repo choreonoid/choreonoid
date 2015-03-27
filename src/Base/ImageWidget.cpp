@@ -248,7 +248,6 @@ void ImageWidget::resize(const QSize& size)
 
 void ImageWidget::setTransform(const QTransform& transform)
 {
-    std::cout << "setTransform" << std::endl;
     transform_ = transform;
     oldSize = rect().size();
     settedT = true;
