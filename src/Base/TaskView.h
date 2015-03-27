@@ -6,15 +6,15 @@
 #ifndef CNOID_BASE_TASK_VIEW_H
 #define CNOID_BASE_TASK_VIEW_H
 
-#include <cnoid/Task>
 #include <cnoid/View>
+#include <cnoid/AbstractTaskSequencer>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class TaskViewImpl;
 
-class CNOID_EXPORT TaskView : public View
+class CNOID_EXPORT TaskView : public View, public AbstractTaskSequencer
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -23,8 +23,30 @@ public:
     TaskView();
     ~TaskView();
 
-    void addTask(Task* task);
-    bool updateTask(Task* task);
+    virtual void addTask(Task* task);
+    virtual bool updateTask(Task* task);
+    virtual int numTasks() const;
+    virtual Task* task(int index);
+    virtual int currentTaskIndex() const;
+    virtual bool setCurrentTask(int taskIndex);
+    virtual SignalProxy<void()> sigCurrentTaskChanged();
+    virtual int currentPhaseIndex() const;
+    virtual void setCurrentPhase(int phaseIndex);
+    virtual SignalProxy<void()> sigCurrentPhaseChanged();
+    virtual int currentCommandIndex() const;
+    virtual SignalProxy<void()> sigCurrentCommandChanged();
+    virtual bool isBusy() const;
+    virtual SignalProxy<void()> sigBusyStateChanged();
+    virtual bool isAutoMode() const;
+    virtual void setAutoMode(bool on);
+    virtual SignalProxy<void(bool isAutoMode)> sigAutoModeToggled();
+
+    void setNoExecutionMode(bool on);
+    bool isNoExecutionMode() const;
+    void setCurrentCommand(int commandIndex, bool doExecution);
+    void blockCommandButtons(bool on);
+
+    
 
 protected:
     virtual bool storeState(Archive& archive);

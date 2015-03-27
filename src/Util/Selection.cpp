@@ -17,9 +17,9 @@ Selection::Selection(const char* domainname)
 
 
 Selection::Selection(size_t size, const char* domainname)
-    : symbols_(size),
-      domainname_(domainname)
+    : domainname_(domainname)
 {
+    symbols_.reserve(size);
     selectedIndex_ = -1;
 }
 
@@ -28,7 +28,11 @@ void Selection::resize(int s)
 {
     symbols_.resize(s);
     if(selectedIndex_ >= s){
-        selectedIndex_ = -1;
+        if(s >= 0){
+            selectedIndex_ = 0;
+        } else {
+            selectedIndex_ = -1;
+        }
     }
 }
 
@@ -46,11 +50,18 @@ void Selection::setSymbol(int index, const std::string& symbol)
         symbols_.resize(index + 1);
     }
     symbols_[index] = symbol;
+
+    if(selectedIndex_ < 0 && index == 0){
+        selectedIndex_ = 0;
+    }
 }
 
 
 Selection& Selection::operator<<(const std::string& symbol)
 {
+    if(symbols_.empty()){
+        selectedIndex_ = 0;
+    }
     symbols_.push_back(symbol);
     return *this;
 }

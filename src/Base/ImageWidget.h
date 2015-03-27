@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_IMAGE_WIDGET_H_INCLUDED
-#define CNOID_BASE_IMAGE_WIDGET_H_INCLUDED
+#ifndef CNOID_BASE_IMAGE_WIDGET_H
+#define CNOID_BASE_IMAGE_WIDGET_H
 
 #include <QWidget>
 #include "exportdecl.h"
@@ -29,11 +29,12 @@ public:
 
     void zoom(double scale);
     void translate(QPoint pos);
-    void rotate(double rotation);
+
     const QTransform& transform() { return transform_; }
     void setTransform(const QTransform& transform);
+    void rotate(double angle);
 
-protected:
+  protected:
     virtual void paintEvent(QPaintEvent* event);
     virtual QSize sizeHint() const;
     virtual void resizeEvent(QResizeEvent *event);
@@ -50,6 +51,7 @@ private:
     bool settedT;
 
 };
+
 }
 
 #endif

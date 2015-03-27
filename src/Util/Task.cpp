@@ -251,8 +251,8 @@ namespace {
     struct FuncToSetCommandLink {
         int commandIndex;
         FuncToSetCommandLink(int commandIndex) : commandIndex(commandIndex) { }
-        void operator()(TaskProc* state) {
-            state->setNextCommand(commandIndex);
+        void operator()(TaskProc* proc) {
+            proc->setNextCommand(commandIndex);
         }
     };
 }

@@ -538,13 +538,20 @@ void BodyLinkViewImpl::updateRotationalJointState()
 
     double qmin = degree(currentLink->q_lower());
     double qmax = degree(currentLink->q_upper());
-    
-    qSpin.setDecimals(1);
-    //qSpin.setRange(qmin, qmax);
-    qSpin.setRange(-360.0, 360.0); // Limit over values should be shown
-    qSpin.setSingleStep(0.1);
+
     qMinLabel.setText(QString::number(qmin, 'f', 1));
     qMaxLabel.setText(QString::number(qmax, 'f', 1));
+    
+    qSpin.setDecimals(1);
+    qSpin.setRange(-9999.9, 9999.9); // Limit over values should be shown
+    qSpin.setSingleStep(0.1);
+
+    if(qmin <= -std::numeric_limits<double>::max()){
+        qmin = -1080.0;
+    }
+    if(qmax >= std::numeric_limits<double>::max()){
+        qmax = 1080.0;
+    }
     
     qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
     qSlider.setSingleStep(0.1 * sliderResolution);
@@ -577,9 +584,17 @@ void BodyLinkViewImpl::updateSlideJointState()
     qSpin.setDecimals(4);
     qSpin.setRange(-999.9999, 999.9999);
     qSpin.setSingleStep(0.0001);
+
+    if(qmin <= -std::numeric_limits<double>::max()){
+        qmin = -999.9999;
+    }
+    if(qmax >= std::numeric_limits<double>::max()){
+        qmax = 999.9999;
+    }
+    
     qMinLabel.setText(QString::number(qmin, 'f', 3));
     qMaxLabel.setText(QString::number(qmax, 'f', 3));
-    
+
     qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
     qSlider.setSingleStep(0.001 * sliderResolution);
 

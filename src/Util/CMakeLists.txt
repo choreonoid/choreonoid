@@ -25,6 +25,7 @@ set(sources
   MultiVector3Seq.cpp
   PlainSeqFormatLoader.cpp
   Task.cpp
+  AbstractTaskSequencer.cpp
   CollisionDetector.cpp
   RangeLimiter.cpp
   BoundingBox.cpp
@@ -132,7 +133,9 @@ set(headers
   DataMap.h
   Joystick.h
   Task.h
+  AbstractTaskSequencer.h
   exportdecl.h
+  Config.h
   )
 
 include_directories(${IRRXML_INCLUDE_DIRS})
