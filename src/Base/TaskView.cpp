@@ -472,11 +472,14 @@ bool TaskView::isNoExecutionMode() const
 }
 
 
-void TaskView::setCurrentCommand(int commandIndex)
+void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 {
     if(impl->currentPhase){
         if(commandIndex < impl->currentPhase->numCommands()){
             impl->currentCommandIndex = commandIndex;
+            if(doExecution){
+                impl->executeCommandSuccessively(commandIndex);
+            }
         }
     }
 }
