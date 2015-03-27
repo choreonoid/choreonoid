@@ -7,6 +7,7 @@
 #include <QImage>
 #include <QPaintEvent>
 #include <QPainter>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -21,6 +22,8 @@ ImageWidget::ImageWidget(QWidget* parent) :
     setAutoFillBackground(true);
 
     isScalingEnabled_ = false;
+    fitted = false;
+    settedT = false;
 }
 
 
@@ -42,6 +45,7 @@ bool ImageWidget::isScalingEnabled() const
 void ImageWidget::setPixmap(const QPixmap& pixmap)
 {
     pixmap_ = pixmap;
+    fitCenter();
     update();
 }
 
@@ -49,6 +53,7 @@ void ImageWidget::setPixmap(const QPixmap& pixmap)
 void ImageWidget::setImage(const QImage& image)
 {
     pixmap_ = QPixmap::fromImage(image);
+    fitCenter();
     update();
 }
 
@@ -69,6 +74,7 @@ void ImageWidget::setImage(const Image& image)
             QImage(image.pixels(), image.width(), image.height(), f));
     }
 
+    fitCenter();
     update();
 }
 
@@ -144,19 +150,34 @@ void ImageWidget::paintEvent(QPaintEvent* event)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setWorldTransform(transform_);
 
-    QSize r = event->rect().size();
-    QSize s = pixmap_.size();
-    if(isScalingEnabled_){
-        s.scale(r, Qt::KeepAspectRatio);
-        QPixmap scaled = pixmap_.scaled(s, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        QPoint o((r.width() - scaled.width()) / 2, (r.height() - scaled.height()) / 2);
-        painter.drawPixmap(o, scaled);
-    } else {
-        QPoint o((r.width() - pixmap_.width()) / 2, (r.height() - pixmap_.height()) / 2);
-        painter.drawPixmap(o, pixmap_);
+    painter.drawPixmap(0, 0, pixmap_);
+}
+
+
+void ImageWidget::fitCenter()
+{
+    if(fitted)
+        return;
+
+    if(settedT){
+        resize(rect().size());
+        return;
     }
 
+    QSize r = rect().size();
+    QSize s = pixmap_.size();
+    double scale = 1.0;
+    if(isScalingEnabled_){
+        s.scale(r, Qt::KeepAspectRatio);
+        scale = (double)s.width() / (double)pixmap_.size().width();
+        transform_.scale(scale, scale);
+    }
+    double x = (r.width() - s.width()) / 2;
+    double y = (r.height() - s.height()) / 2;
+    transform_.translate(x/scale, y/scale);
 
+    oldSize = r;
+    fitted = true;
 }
 
 
@@ -167,4 +188,68 @@ QSize ImageWidget::sizeHint() const
     } else {
         return pixmap_.size();
     }
+}
+
+
+void ImageWidget::resizeEvent(QResizeEvent *event)
+{
+    if(pixmap_.isNull())
+            return;
+
+    resize(event->size());
+}
+
+
+void ImageWidget::resize(const QSize& size)
+{
+    if(isScalingEnabled_){
+        if(size.width() <= 0 || size.height() <= 0){
+            return;
+        }
+        double wscale = (double)size.width() / (double)oldSize.width();
+        double hscale = (double)size.height() / (double)oldSize.height();
+
+        QRect rect(0, 0, pixmap_.width(), pixmap_.height());
+        QRect trect = transform_.mapRect(rect);
+        if(trect.width() < size.width() && wscale < 1.0)
+            wscale = 1.0;
+        if(trect.height() < size.height() && hscale < 1.0)
+            hscale = 1.0;
+
+        QSize difSize = size - oldSize;
+        double scale = 1;
+        if(!difSize.width())
+            scale = hscale;
+        else if(!difSize.height())
+            scale = wscale;
+        else
+            scale = wscale < hscale ? wscale : hscale;
+
+        QTransform invT = transform_.inverted();
+        double cx = (double)oldSize.width()/2.0;
+        double cy = (double)oldSize.height()/2.0;
+        double x,y;
+        invT.map(cx, cy, &x, &y);
+        transform_.translate(x,y);
+        transform_.scale(scale, scale);
+        transform_.translate(-x,-y);
+
+        QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
+        invT = T.inverted();
+        double dx = ((double)size.width()-(double)oldSize.width())/2.0;
+        double dy = ((double)size.height()-(double)oldSize.height())/2.0;
+        invT.map(dx, dy,&x,&y);
+        transform_.translate(x, y);
+
+        oldSize = size;
+    }
+}
+
+
+void ImageWidget::setTransform(const QTransform& transform)
+{
+    std::cout << "setTransform" << std::endl;
+    transform_ = transform;
+    oldSize = rect().size();
+    settedT = true;
 }

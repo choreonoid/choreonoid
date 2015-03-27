@@ -16,10 +16,10 @@ class CNOID_EXPORT ImageWidget : public QWidget
 {
     Q_OBJECT
 
-        public:
+public:
     explicit ImageWidget(QWidget* parent = 0);
 
-public Q_SLOTS:
+//public Q_SLOTS:
     void setPixmap(const QPixmap& pixmap);
     void setImage(const Image& image);
     void setImage(const QImage& image);
@@ -30,15 +30,24 @@ public Q_SLOTS:
     void zoom(double scale);
     void translate(QPoint pos);
     void rotate(double rotation);
+    const QTransform& transform() { return transform_; }
+    void setTransform(const QTransform& transform);
 
 protected:
     virtual void paintEvent(QPaintEvent* event);
     virtual QSize sizeHint() const;
+    virtual void resizeEvent(QResizeEvent *event);
         
 private:
     QPixmap pixmap_;
     bool isScalingEnabled_;
     QTransform transform_;
+
+    void fitCenter();
+    void resize(const QSize& size);
+    bool fitted;
+    QSize oldSize;
+    bool settedT;
 
 };
 }
