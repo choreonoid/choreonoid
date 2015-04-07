@@ -133,6 +133,8 @@ public:
     bool isContainerMode() const;
     void setDraggerAlwaysShown(bool on);
     bool isDraggerAlwaysShown() const;
+    void setDraggerAlwaysHidden(bool on);
+    bool isDraggerAlwaysHidden() const;
 
     TranslationDragger* translationDragger() { return translationDragger_; }
     RotationDragger* rotationDragger() { return rotationDragger_; }
@@ -162,6 +164,7 @@ private:
     SceneDragProjector dragProjector;
     bool isContainerMode_;
     bool isDraggerAlwaysShown_;
+    bool isDraggerAlwaysHidden_;
     bool isDraggerShown;
     Signal<void()> sigDragStarted_;
     Signal<void()> sigPositionDragged_;

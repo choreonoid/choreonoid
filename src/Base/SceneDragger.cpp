@@ -477,6 +477,7 @@ PositionDragger::PositionDragger()
     rotationDragger_ = new RotationDragger;
     initalizeDraggers();
     isDraggerAlwaysShown_ = false;
+    isDraggerAlwaysHidden_ = false;
     isContainerMode_ = false;
 }
 
@@ -488,6 +489,7 @@ PositionDragger::PositionDragger(const PositionDragger& org)
     initalizeDraggers();
     isContainerMode_ = org.isContainerMode_;
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
+    isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
 }
 
 
@@ -498,6 +500,7 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
     initalizeDraggers();
     isContainerMode_ = org.isContainerMode_;
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
+    isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
 }
 
 
@@ -567,10 +570,14 @@ bool PositionDragger::isContainerMode() const
 
 void PositionDragger::setDraggerAlwaysShown(bool on)
 {
-    if(on != isDraggerAlwaysShown_){
-        showDragMarkers(on);
+    if(on){
+        isDraggerAlwaysHidden_ = false;
     }
+    bool changed = (on != isDraggerAlwaysShown_);
     isDraggerAlwaysShown_ = on;
+    if(on && changed){
+        showDragMarkers(true);
+    }
 }
 
 
@@ -580,8 +587,33 @@ bool PositionDragger::isDraggerAlwaysShown() const
 }
 
 
+void PositionDragger::setDraggerAlwaysHidden(bool on)
+{
+    if(on){
+        isDraggerAlwaysShown_ = false;
+    }
+    bool changed = (on != isDraggerAlwaysHidden_);
+    isDraggerAlwaysHidden_ = on;
+    if(on && changed){
+        showDragMarkers(false);
+    }
+}
+
+
+bool PositionDragger::isDraggerAlwaysHidden() const
+{
+    return isDraggerAlwaysHidden_;
+}
+
+
 void PositionDragger::showDragMarkers(bool on)
 {
+    if(isDraggerAlwaysHidden_){
+        on = false;
+    } else if(isDraggerAlwaysShown_){
+        on = true;
+    }
+    
     if(on){
         addChildOnce(translationDragger_, true);
         addChildOnce(rotationDragger_, true);
