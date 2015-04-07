@@ -160,7 +160,10 @@ void ImageWidget::fitCenter()
         return;
 
     if(settedT){
+        oldSize = pixmap_.size();
+        oldScale = 1.0;
         resize(rect().size());
+        fitted = true;
         return;
     }
 
@@ -176,6 +179,7 @@ void ImageWidget::fitCenter()
     double y = (r.height() - s.height()) / 2;
     transform_.translate(x/scale, y/scale);
 
+    oldScale = scale;
     oldSize = r;
     fitted = true;
 }
@@ -206,6 +210,7 @@ void ImageWidget::resize(const QSize& size)
         if(size.width() <= 0 || size.height() <= 0){
             return;
         }
+        /*
         double wscale = (double)size.width() / (double)oldSize.width();
         double hscale = (double)size.height() / (double)oldSize.height();
 
@@ -224,6 +229,12 @@ void ImageWidget::resize(const QSize& size)
             scale = wscale;
         else
             scale = wscale < hscale ? wscale : hscale;
+        */
+        QSize s = pixmap_.size();
+        s.scale(size, Qt::KeepAspectRatio);
+        double newScale = (double)s.width() / (double)pixmap_.size().width();
+        double scale = newScale / oldScale;
+        oldScale = newScale;
 
         QTransform invT = transform_.inverted();
         double cx = (double)oldSize.width()/2.0;
@@ -249,6 +260,33 @@ void ImageWidget::resize(const QSize& size)
 void ImageWidget::setTransform(const QTransform& transform)
 {
     transform_ = transform;
-    oldSize = rect().size();
     settedT = true;
 }
+
+
+const QTransform& ImageWidget::transform()
+{
+    notScaledTransform_ = transform_;
+    if(isScalingEnabled_){
+        QSize size = pixmap_.size();
+        double scale = 1.0 / oldScale;
+
+        QTransform invT = transform_.inverted();
+        double cx = (double)oldSize.width()/2.0;
+        double cy = (double)oldSize.height()/2.0;
+        double x,y;
+        invT.map(cx, cy, &x, &y);
+        notScaledTransform_.translate(x,y);
+        notScaledTransform_.scale(scale, scale);
+        notScaledTransform_.translate(-x,-y);
+
+        QTransform T(notScaledTransform_.m11(), notScaledTransform_.m12(),notScaledTransform_.m21(), notScaledTransform_.m22(), 0,0);
+        invT = T.inverted();
+        double dx = ((double)size.width()-(double)oldSize.width())/2.0;
+        double dy = ((double)size.height()-(double)oldSize.height())/2.0;
+        invT.map(dx, dy,&x,&y);
+        notScaledTransform_.translate(x, y);
+    }
+    return notScaledTransform_;
+}
+

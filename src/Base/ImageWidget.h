@@ -30,7 +30,7 @@ public:
     void zoom(double scale);
     void translate(QPoint pos);
 
-    const QTransform& transform() { return transform_; }
+    const QTransform& transform();
     void setTransform(const QTransform& transform);
     void rotate(double angle);
 
@@ -43,11 +43,13 @@ private:
     QPixmap pixmap_;
     bool isScalingEnabled_;
     QTransform transform_;
+    QTransform notScaledTransform_;
 
     void fitCenter();
     void resize(const QSize& size);
     bool fitted;
     QSize oldSize;
+    double oldScale;
     bool settedT;
 
 };
