@@ -91,10 +91,10 @@ public:
     void executeCommandSuccessively(int commandIndex);
     void goToNextCommand();    
     void retry();
+    void onCommandButtonClicked(int commandIndex);
     void onNextOrPrevButtonClicked(int direction);
 
     virtual int currentPhaseIndex() const;
-    virtual void setCurrentPhaseIndex(int index);
     virtual void breakSequence();
     virtual void setNextCommand(int commandIndex);
     virtual void setNextPhase(int phaseIndex);
@@ -390,6 +390,7 @@ int TaskView::currentTaskIndex() const
 
 bool TaskView::setCurrentTask(int taskIndex)
 {
+    cout << "TaskView::setCurrentTask(" << taskIndex << ")" << endl;
     return impl->setCurrentTask(taskIndex, false);
 }
 
@@ -408,6 +409,7 @@ int TaskView::currentPhaseIndex() const
 
 void TaskView::setCurrentPhase(int phaseIndex)
 {
+    cout << "TaskView::setCurrentPhase(" << phaseIndex << ")" << endl;
     impl->setPhaseIndex(phaseIndex, false);
 }
 
@@ -450,6 +452,7 @@ bool TaskView::isAutoMode() const
 
 void TaskView::setAutoMode(bool on)
 {
+    cout << "TaskView::setAutoMode(" << on << ")" << endl;
     impl->autoModeToggle.setChecked(on);
 }
 
@@ -474,6 +477,8 @@ bool TaskView::isNoExecutionMode() const
 
 void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 {
+    cout << "TaskView::setCurrentCommand(" << commandIndex << ", " << doExecution << ")" << endl;
+    
     if(impl->currentPhase){
         if(commandIndex < impl->currentPhase->numCommands()){
             impl->currentCommandIndex = commandIndex;
@@ -487,6 +492,7 @@ void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 
 void TaskView::blockCommandButtons(bool on)
 {
+    cout << "TaskView::blockCommandButtons(" << on << ")" << endl;
     impl->enableCommandButtons(!on);
 }
 
@@ -545,7 +551,7 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
         button = commandButtons[commandIndex];
     } else {
         button = new PushButton;
-        button->sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, commandIndex));
+        button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
         if(isVerticalLayout){
             button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
             commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
@@ -642,14 +648,10 @@ int TaskViewImpl::getLoopBackPhaseIndex(int phaseIndex)
 }
 
 
-void TaskViewImpl::setCurrentPhaseIndex(int index)
-{
-    setPhaseIndex(index, false);
-}
-
-
 void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
 {
+    cout << "TaskViewImpl::setPhaseIndex(" << index << ", " << isSuccessivelyCalled << ")" << endl;
+    
     cancelWaiting();
     
     int numPhases = 0;
@@ -709,7 +711,6 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         commandButtons[i]->hide();
     }
 
-
     phaseIndexSpinConnection.block();
     phaseIndexSpin.setRange(0, numPhases);
     phaseIndexSpin.setValue(currentPhaseIndex_);
@@ -746,6 +747,7 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
 
 void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 {
+    cout << "TaskViewImpl::executeCommandSuccessively(" << commandIndex << ")" << endl;
     cancelWaiting();
 
     nextCommandIndex = boost::none;
@@ -807,6 +809,8 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 
 void TaskViewImpl::goToNextCommand()
 {
+    cout << "TaskViewImpl::goToNextCommand()" << endl;
+    
     if(!eventLoop.isRunning()){
         if(nextPhaseIndex && *nextPhaseIndex != currentPhaseIndex_){
             nextCommandIndex = -1;
@@ -851,8 +855,23 @@ void TaskViewImpl::retry()
 }
 
 
+void TaskViewImpl::onCommandButtonClicked(int commandIndex)
+{
+    cout << "TaskViewImpl::onCommandButtonClicked(" << commandIndex << ")" << endl;
+    
+    if(isNoExecutionMode){
+        currentCommandIndex = commandIndex;
+        sigCurrentCommandChanged();
+    } else {
+        executeCommandSuccessively(commandIndex);
+    }
+}
+
+
 void TaskViewImpl::onNextOrPrevButtonClicked(int direction)
 {
+    cout << "TaskViewImpl::onNextOrPrevButtonClicked(" << direction << ")" << endl;
+    
     int index = currentPhaseIndex_ + direction;
     if(currentPhase && index == currentTask->numPhases()){
         index = getLoopBackPhaseIndex(currentPhaseIndex_);

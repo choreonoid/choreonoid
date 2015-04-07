@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include "../Task.h"
+#include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
 #include "PyUtil.h"
 #include <cnoid/PythonUtil>
@@ -339,7 +340,14 @@ TaskCommandPtr Task_addCommandEx(python::tuple args_, python::dict kw){
     TaskWrapPtr self = python::extract<TaskWrapPtr>(args_[0]);
     const std::string caption = python::extract<std::string>(args_[1]);
     return TaskPhase_addCommandExMain(self->lastPhase(), caption, kw);
-}    
+}
+
+
+TaskPtr AbstractTaskSequencer_task(AbstractTaskSequencer& self, int index)
+{
+    return self.task(index);
+}
+
 
 }
 
@@ -349,7 +357,6 @@ void exportPyTaskTypes()
 {
     class_<TaskProc, TaskProc*, boost::noncopyable>("TaskProc", no_init)
         .def("currentPhaseIndex", &TaskProc::currentPhaseIndex)
-        .def("setCurrentPhaseIndex", &TaskProc::setCurrentPhaseIndex)
         .def("breakSequence", &TaskProc::breakSequence)
         .def("setNextCommand", &TaskProc::setNextCommand)
         .def("setNextPhase", &TaskProc::setNextPhase)
@@ -447,6 +454,26 @@ void exportPyTaskTypes()
         ;
     
     implicitly_convertible<TaskWrapPtr, ReferencedPtr>();
+
+    class_<AbstractTaskSequencer, AbstractTaskSequencer*, boost::noncopyable>("AbstractTaskSequencer", no_init)
+        .def("addTask", &AbstractTaskSequencer::addTask)
+        .def("updateTask", &AbstractTaskSequencer::updateTask)
+        .def("numTasks", &AbstractTaskSequencer::numTasks)
+        .def("task", AbstractTaskSequencer_task)
+        .def("currentTaskIndex", &AbstractTaskSequencer::currentTaskIndex)
+        .def("setCurrentTask", &AbstractTaskSequencer::setCurrentTask)
+        .def("sigCurrentTaskChanged", &AbstractTaskSequencer::sigCurrentTaskChanged)
+        .def("currentPhaseIndex", &AbstractTaskSequencer::currentPhaseIndex)
+        .def("setCurrentPhase", &AbstractTaskSequencer::setCurrentPhase)
+        .def("sigCurrentPhaseChanged", &AbstractTaskSequencer::sigCurrentPhaseChanged)
+        .def("currentCommandIndex", &AbstractTaskSequencer::currentCommandIndex)
+        .def("sigCurrentCommandChanged", &AbstractTaskSequencer::sigCurrentCommandChanged)
+        .def("isBusy", &AbstractTaskSequencer::isBusy)
+        .def("sigBusyStateChanged", &AbstractTaskSequencer::sigBusyStateChanged)
+        .def("isAutoMode", &AbstractTaskSequencer::isAutoMode)
+        .def("setAutoMode", &AbstractTaskSequencer::setAutoMode)
+        .def("sigAutoModeToggled", &AbstractTaskSequencer::sigAutoModeToggled)
+        ;
 }
 
 }
