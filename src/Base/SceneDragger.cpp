@@ -479,6 +479,7 @@ PositionDragger::PositionDragger()
     isDraggerAlwaysShown_ = false;
     isDraggerAlwaysHidden_ = false;
     isContainerMode_ = false;
+    isContentsDragEnabled_ = true;
 }
 
 
@@ -490,6 +491,7 @@ PositionDragger::PositionDragger(const PositionDragger& org)
     isContainerMode_ = org.isContainerMode_;
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
     isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
+    isContentsDragEnabled_ = org.isContentsDragEnabled_;
 }
 
 
@@ -501,6 +503,7 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
     isContainerMode_ = org.isContainerMode_;
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
     isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
+    isContentsDragEnabled_ = org.isContentsDragEnabled_;
 }
 
 
@@ -565,6 +568,18 @@ void PositionDragger::setContainerMode(bool on)
 bool PositionDragger::isContainerMode() const
 {
     return isContainerMode_;
+}
+
+
+void PositionDragger::setContentsDragEnabled(bool on)
+{
+    isContentsDragEnabled_ = on;
+}
+
+
+bool PositionDragger::isContentsDragEnabled() const
+{
+    return isContentsDragEnabled_;
 }
 
 
@@ -641,16 +656,20 @@ Affine3 PositionDragger::draggedPosition() const
 void PositionDragger::onSubDraggerDragged()
 {
     if(isContainerMode_){
-        setPosition(draggedPosition());
-        notifyUpdate();
+        if(isContentsDragEnabled_){
+            setPosition(draggedPosition());
+            notifyUpdate();
+            sigPositionDragged_();
+        }
+    } else {
+        sigPositionDragged_();
     }
-    sigPositionDragged_();
 }
 
 
 bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(isContainerMode_){
+    if(isContainerMode_ && isContentsDragEnabled_){
         if(!isDraggerAlwaysShown_){
             showDragMarkers(true);
         }
@@ -664,7 +683,7 @@ bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
-    if(isContainerMode_){
+    if(isContainerMode_ && isContentsDragEnabled_){
         if(dragProjector.isDragging()){
             dragProjector.resetDragMode();
             return true;
@@ -676,7 +695,7 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 
 bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(isContainerMode_){
+    if(isContainerMode_ && isContentsDragEnabled_){
         if(dragProjector.drag(event)){
             setPosition(dragProjector.position());
             notifyUpdate();
@@ -690,7 +709,7 @@ bool PositionDragger::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 void PositionDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(isContainerMode_){
+    if(isContainerMode_ && isContentsDragEnabled_){
         dragProjector.resetDragMode();
     }
 }
