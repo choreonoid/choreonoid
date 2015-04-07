@@ -352,12 +352,12 @@ bool TaskViewImpl::updateTask(Task* task)
             if(index == currentTaskIndex){
                 TaskPtr oldTask = tasks[index];
                 state = new Mapping();
-                oldTask->storeState(this, *state);
+                oldTask->storeState(self, *state);
             }
             tasks[index] = task;
             if(state){
                 setCurrentTask(index, true);
-                task->restoreState(this, *state);
+                task->restoreState(self, *state);
             }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;

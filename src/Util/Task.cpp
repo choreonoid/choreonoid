@@ -270,13 +270,13 @@ void Task::onMenuRequest(TaskMenu& menu)
 }
 
 
-bool Task::storeState(TaskProc* proc, Mapping& archive)
+bool Task::storeState(AbstractTaskSequencer* sequencer, Mapping& archive)
 {
     return true;
 }
 
 
-bool Task::restoreState(TaskProc* proc, const Mapping& archive)
+bool Task::restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive)
 {
     return true;
 }

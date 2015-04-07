@@ -262,7 +262,7 @@ public :
         }
     }
 
-    bool storeState(TaskProc* proc, Mapping& archive){
+    bool storeState(AbstractTaskSequencer* sequencer, Mapping& archive){
         bool called = false;
         bool result = false;
         {
@@ -271,19 +271,19 @@ public :
                 if(python::override storeStateFunc = this->get_override("storeState")){
                     called = true;
                     MappingPtr a = &archive;
-                    result = storeStateFunc(boost::ref(proc), a);
+                    result = storeStateFunc(boost::ref(sequencer), a);
                 }
             } catch(python::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
         if(!called){
-            result = Task::storeState(proc, archive);
+            result = Task::storeState(sequencer, archive);
         }
         return result;
     }
 
-    bool restoreState(TaskProc* proc, const Mapping& archive){
+    bool restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive){
         bool called = false;
         bool result = false;
         {
@@ -292,14 +292,14 @@ public :
                 if(python::override restoreState = this->get_override("restoreState")){
                     called = true;
                     MappingPtr a = const_cast<Mapping*>(&archive);
-                    result = restoreState(boost::ref(proc), a);
+                    result = restoreState(boost::ref(sequencer), a);
                 }
             } catch(python::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
         if(!called){
-            result = Task::restoreState(proc, archive);
+            result = Task::restoreState(sequencer, archive);
         }
         return result;
     }
