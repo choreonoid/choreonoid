@@ -44,9 +44,7 @@ public:
     void setNoExecutionMode(bool on);
     bool isNoExecutionMode() const;
     void setCurrentCommand(int commandIndex, bool doExecution);
-    void blockCommandButtons(bool on);
-
-    
+    void setBusyState(bool on);
 
 protected:
     virtual bool storeState(Archive& archive);
