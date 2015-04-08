@@ -65,7 +65,11 @@ public:
     enum { NO_CURRENT_COMMAND = -2, PRE_COMMAND = -1 };
     int currentCommandIndex;
     boost::optional<int> nextCommandIndex; // -1 means the pre-command
+
+    LazyCaller goToNextCommandLater;
+    
     Signal<void()> sigCurrentCommandChanged;
+    Signal<void()> sigCurrentCommandCanceled;
     bool forceCommandLinkAutomatic;    
     bool isBusy;
     QEventLoop eventLoop;
@@ -90,7 +94,7 @@ public:
     int getLoopBackPhaseIndex(int phaseIndex);
     void setPhaseIndex(int index, bool isSuccessivelyCalled);
     void executeCommandSuccessively(int commandIndex);
-    void goToNextCommand();    
+    void setTransitionToNextCommand();    
     void retry();
     void onCommandButtonClicked(int commandIndex);
     void onNextOrPrevButtonClicked(int direction);
@@ -107,7 +111,7 @@ public:
     virtual void notifyCommandFinish(bool isCompleted);
 
     bool isWaiting() const;
-    bool cancelWaiting(bool doBreak = false);
+    void cancelWaiting(bool doBreak = false);
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
@@ -153,6 +157,8 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     forceCommandLinkAutomatic = false;
     isBusy = false;
     isNoExecutionMode = false;
+
+    goToNextCommandLater.setPriority(LazyCaller::PRIORITY_NORMAL);
     
     commandTimer.setSingleShot(true);
     commandTimer.sigTimeout().connect(bind(&TaskViewImpl::cancelWaiting, this, true));
@@ -442,6 +448,18 @@ bool TaskView::isBusy() const
 SignalProxy<void()> TaskView::sigBusyStateChanged()
 {
     return impl->sigBusyStateChanged;
+}
+
+
+void TaskView::cancelCurrentCommand()
+{
+    impl->cancelWaiting(true);
+}
+
+
+SignalProxy<void()> TaskView::sigCurrentCommandCanceled()
+{
+    return impl->sigCurrentCommandCanceled;
 }
 
 
@@ -825,21 +843,24 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
             commandFunc(this);
         }
 
-        goToNextCommand();
+        setTransitionToNextCommand();
     }
 }
 
 
-void TaskViewImpl::goToNextCommand()
+void TaskViewImpl::setTransitionToNextCommand()
 {
-    cout << "TaskViewImpl::goToNextCommand()" << endl;
+    cout << "TaskViewImpl::setTransitionToNextCommand()" << endl;
 
     bool isNextDispatched = false;
+
+    goToNextCommandLater.cancel();
     
     if(!eventLoop.isRunning()){
         if(nextPhaseIndex && *nextPhaseIndex != currentPhaseIndex_){
             nextCommandIndex = -1;
-            callLater(boost::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
+            goToNextCommandLater.setFunction(boost::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
+            goToNextCommandLater();
             isNextDispatched = true;
 
         } else {
@@ -862,7 +883,8 @@ void TaskViewImpl::goToNextCommand()
                     sigCurrentCommandChanged();
                 }
                 if(executeNext){
-                    callLater(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, index));
+                    goToNextCommandLater.setFunction(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, index));
+                    goToNextCommandLater();
                     isNextDispatched = true;
                 }
             }
@@ -1019,20 +1041,25 @@ bool TaskViewImpl::isWaiting() const
 }
 
 
-bool TaskViewImpl::cancelWaiting(bool doBreak)
+void TaskViewImpl::cancelWaiting(bool doBreak)
 {
-    bool result = false;
-    
-    if(eventLoop.isRunning()){
-        autoModeToggle.setChecked(false); // stop the auto mode, too
-        nextPhaseIndex = boost::none;
-        nextCommandIndex = boost::none;
-        result = stopWaiting(false);
+    if(isNoExecutionMode){
+        if(doBreak){
+            sigCurrentCommandCanceled();
+        }
+    } else {
+        if(eventLoop.isRunning()){
+            autoModeToggle.setChecked(false); // stop the auto mode, too
+            nextPhaseIndex = boost::none;
+            nextCommandIndex = boost::none;
+            stopWaiting(false);
+        }
+        if(doBreak){
+            goToNextCommandLater.cancel();
+            setBusyState(false);
+            sigCurrentCommandCanceled();
+        }
     }
-    if(doBreak){
-        setBusyState(false);
-    }
-    return result;
 }
 
 

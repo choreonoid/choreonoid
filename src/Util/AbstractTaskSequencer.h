@@ -36,6 +36,8 @@ public:
     virtual SignalProxy<void()> sigCurrentCommandChanged() = 0;
     virtual bool isBusy() const = 0;
     virtual SignalProxy<void()> sigBusyStateChanged() = 0;
+    virtual void cancelCurrentCommand() = 0;
+    virtual SignalProxy<void()> sigCurrentCommandCanceled() = 0;
     virtual bool isAutoMode() const = 0;
     virtual void setAutoMode(bool on) = 0;
     virtual SignalProxy<void(bool isAutoMode)> sigAutoModeToggled() =0;
