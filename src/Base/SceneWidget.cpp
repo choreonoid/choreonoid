@@ -1343,7 +1343,9 @@ void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
             handled = eventFilter->onPointerMoveEvent(latestEvent);
         }
         if(!handled){
-            handled = focusedEditable->onPointerMoveEvent(latestEvent);
+            if(focusedEditable){
+                handled = focusedEditable->onPointerMoveEvent(latestEvent);
+            }
         }
         break;
 

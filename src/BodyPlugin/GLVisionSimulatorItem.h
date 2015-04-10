@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_GL_VISION_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_GL_VISION_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_GL_VISION_SIMULATOR_ITEM_H
+#define CNOID_BODYPLUGIN_GL_VISION_SIMULATOR_ITEM_H
 
 #include "SubSimulatorItem.h"
 #include "exportdecl.h"
@@ -22,6 +22,7 @@ public:
     GLVisionSimulatorItem(const GLVisionSimulatorItem& org);
     ~GLVisionSimulatorItem();
         
+    virtual bool isEnabled();
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
     virtual void finalizeSimulation();
 
@@ -34,6 +35,7 @@ protected:
 private:
     GLVisionSimulatorItemImpl* impl;
 };
+
 }
 
 #endif

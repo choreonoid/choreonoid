@@ -1,12 +1,11 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #include "TimeSyncItemEngine.h"
 #include "ItemTreeView.h"
 #include "TimeBar.h"
 #include "LazyCaller.h"
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <map>
 
@@ -127,7 +126,7 @@ TimeSyncItemEngineManager::~TimeSyncItemEngineManager()
 }
 
 
-void TimeSyncItemEngineManager::addEngineFactory(boost::function<TimeSyncItemEnginePtr(Item* sourceItem)> factory)
+void TimeSyncItemEngineManager::addEngineFactory(boost::function<TimeSyncItemEngine*(Item* sourceItem)> factory)
 {
     allFactories[moduleName].push_back(factory);
 }

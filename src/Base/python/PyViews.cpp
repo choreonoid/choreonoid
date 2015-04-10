@@ -5,7 +5,9 @@
 #include "../MessageView.h"
 #include "../SceneWidget.h"
 #include "../SceneView.h"
+#include "../TaskView.h"
 #include <cnoid/PySignal>
+#include <QWidget>
 
 using namespace boost::python;
 using namespace cnoid;
@@ -26,7 +28,7 @@ void exportPyViews()
 
     {
         scope viewScope = 
-            class_<View, View*, boost::noncopyable>("View", no_init)
+            class_<View, View*, bases<QWidget>, boost::noncopyable>("View", no_init)
             .def("setName", &View::setName)
             .def("name", &View::name)
             .def("isActive", &View::isActive)
@@ -99,6 +101,13 @@ void exportPyViews()
     class_<SceneView, SceneView*, bases<View>, boost::noncopyable>("SceneView", no_init)
         .def("instance", &SceneView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
         .def("sceneWidget", &SceneView::sceneWidget, return_value_policy<reference_existing_object>())
+        ;
+
+    class_<TaskView, TaskView*, bases<View, AbstractTaskSequencer>, boost::noncopyable>("TaskView", no_init)
+        .def("instance", &TaskView::instance,
+                return_value_policy<reference_existing_object>()).staticmethod("instance")
+        .def("addTask", &TaskView::addTask)
+        .def("updateTask", &TaskView::updateTask)
         ;
 }
 

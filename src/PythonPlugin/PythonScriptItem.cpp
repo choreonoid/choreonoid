@@ -8,6 +8,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
+#include <cnoid/LazyCaller>
 #include "gettext.h"
 
 using namespace std;
@@ -27,6 +28,7 @@ void PythonScriptItem::initializeClass(ExtensionManager* ext)
 PythonScriptItem::PythonScriptItem()
 {
     impl = new PythonScriptItemImpl(this);
+    doExecutionOnLoading = false;
 }
 
 
@@ -34,6 +36,7 @@ PythonScriptItem::PythonScriptItem(const PythonScriptItem& org)
     : ScriptItem(org)
 {
     impl = new PythonScriptItemImpl(this, *org.impl);
+    doExecutionOnLoading = org.doExecutionOnLoading;
 }
 
 
@@ -51,7 +54,11 @@ void PythonScriptItem::onDisconnectedFromRoot()
 
 bool PythonScriptItem::setScriptFilename(const std::string& filename)
 {
-    return impl->setScriptFilename(filename);
+    bool result = impl->setScriptFilename(filename);
+    if(result && doExecutionOnLoading){
+        callLater(bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
+    }
+    return result;
 }
 
 
@@ -124,8 +131,8 @@ ItemPtr PythonScriptItem::doDuplicate() const
 void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Script"), getFilename(filePath()));
-
     impl->doPutProperties(putProperty);
+    putProperty(_("Execution on loading"), doExecutionOnLoading, changeProperty(doExecutionOnLoading));
 }
 
 
@@ -134,17 +141,25 @@ bool PythonScriptItem::store(Archive& archive)
     if(!filePath().empty()){
         archive.writeRelocatablePath("file", filePath());
     }
+    archive.write("executionOnLoading", doExecutionOnLoading);
     return impl->store(archive);
 }
 
 
 bool PythonScriptItem::restore(const Archive& archive)
 {
+    archive.read("executionOnLoading", doExecutionOnLoading);
+    impl->restore(archive);
     string filename;
     if(archive.readRelocatablePath("file", filename)){
-        if(load(filename)){
-            return impl->restore(archive);
+        bool doExecution = doExecutionOnLoading;
+        doExecutionOnLoading = false; // disable execution in the load function
+        bool loaded = load(filename);
+        doExecutionOnLoading = doExecution;
+        if(loaded && doExecution){
+            archive.addPostProcess(boost::bind(&PythonScriptItem::execute, this));
         }
+        return loaded;
     }
-    return false;
+    return true;
 }

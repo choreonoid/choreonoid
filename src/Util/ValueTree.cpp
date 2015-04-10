@@ -18,8 +18,8 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-
 namespace {
+
 const bool debugTrace = false;
 const char* typeNames[] = { "unknown node", "mapping", "sequence", "scalar" };
 map<string, bool> booleanSymbols;
@@ -29,6 +29,7 @@ const char* defaultDoubleFormat = "%.6g";
 ValueNodePtr invalidNode;
 MappingPtr invalidMapping;
 ListingPtr invalidListing;
+
 }
 
 ValueNode::Initializer ValueNode::initializer;
@@ -526,13 +527,13 @@ inline void Mapping::insertSub(const std::string& key, ValueNode* node)
 }
 
 
-void Mapping::insert(const std::string& key, ValueNodePtr node)
+void Mapping::insert(const std::string& key, ValueNode* node)
 {
     if(!isValid()){
         throwNotMappingException();
     }
     const string uKey(toUTF8(key));
-    insertSub(uKey, node.get());
+    insertSub(uKey, node);
 }
 
 
@@ -667,17 +668,6 @@ bool Mapping::read(const std::string &key, double &out_value) const
     ValueNode* node = find(toUTF8(key));
     if(node->isValid()){
         return node->read(out_value);
-    }
-    return false;
-}
-
-
-bool Mapping::read(const std::string &key, boost::function<void(double)> setterFunc) const
-{
-    double value;
-    if(read(key, value)){
-        setterFunc(value);
-        return true;
     }
     return false;
 }

@@ -6,7 +6,6 @@
 #define CNOID_BASE_ARCHIVE_H
 
 #include <cnoid/ValueTree>
-#include <cnoid/Referenced>
 #include <boost/function.hpp>
 #include <string>
 #include "exportdecl.h"
@@ -14,14 +13,8 @@
 namespace cnoid {
 
 class Item;
-typedef ref_ptr<Item> ItemPtr;
-
 class View;
 class ViewManager;
-
-class Archive;
-typedef boost::intrusive_ptr<Archive> ArchivePtr;
-
 class ArchiveSharedData;
 
 class CNOID_EXPORT Archive : public Mapping
@@ -31,8 +24,8 @@ public:
     Archive(int line, int column);
     virtual ~Archive();
 
-    void initSharedInfo();
-    void initSharedInfo(const std::string& projectFile);
+    void initSharedInfo(bool useHomeRelativeDirectories = false);
+    void initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories = false);
     void inheritSharedInfoFrom(Archive& archive);
 
     void addPostProcess(const boost::function<void()>& func) const;
@@ -82,17 +75,19 @@ private:
 
     Item* findItem(int id) const;
     void setCurrentParentItem(Item* parentItem);
-    static ArchivePtr invalidArchive();
+    static Archive* invalidArchive();
     void registerItemId(Item* item, int id);
     void registerViewId(View* view, int id);
 
     // called from ItemTreeArchiver
     void callPostProcesses();
 
-    friend class ItemTreeArchiver;
+    friend class ItemTreeArchiverImpl;
     friend class ViewManager;
     friend class ProjectManagerImpl;
 };
+
+typedef ref_ptr<Archive> ArchivePtr;
 
 }
 

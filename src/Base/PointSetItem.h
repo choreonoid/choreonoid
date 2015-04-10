@@ -36,6 +36,9 @@ public:
     void setPointSize(double size);
     double pointSize() const;
 
+    double voxelSize() const;
+    void setVoxelSize(double size);
+    
     void setEditable(bool on);
     bool isEditable() const;
 

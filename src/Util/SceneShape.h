@@ -451,11 +451,12 @@ class CNOID_EXPORT SgPlot : public SgNode
 {
 public:
     SgPlot();
+
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
     virtual const BoundingBox& boundingBox() const;
     void updateBoundingBox();
-        
+    
     bool hasVertices() const { return (vertices_ && !vertices_->empty()); }
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }

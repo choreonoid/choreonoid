@@ -14,7 +14,6 @@ namespace cnoid {
 class View;
 class ViewAreaImpl;
 
-
 class CNOID_EXPORT ViewArea : public QWidget
 {
 public:

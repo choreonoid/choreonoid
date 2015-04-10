@@ -7,7 +7,7 @@
 #set_source_files_properties(ToolBar.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(GLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(SceneItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(SceneWidget.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(MessageView.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
   App.cpp
@@ -94,6 +94,7 @@ set(sources
   TextEditView.cpp
   ImageView.cpp
   TextEdit.cpp
+  TaskView.cpp
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -181,6 +182,7 @@ set(headers
   exportdecl.h
   gettext.h
   TextEdit.h
+  TaskView.h
   )
 
 set(target CnoidBase)

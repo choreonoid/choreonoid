@@ -1,6 +1,10 @@
 
 # @author Shin'ichiro Nakaoka
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_SIMPLE_CONTROLLER_SAMPLES "Building sample simulation controllers built as simple controllers" ON)
 
 if(NOT BUILD_SIMPLE_CONTROLLER_SAMPLES)

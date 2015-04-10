@@ -41,6 +41,11 @@ public:
     Position& position() { return T_; }
     const Position& position() const { return T_; }
 
+    template<class Scalar, int Mode, int Options>
+        void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Position::Scalar>();
+    }
+
     template<typename Derived1, typename Derived2>
         void setPosition(const Eigen::MatrixBase<Derived1>& rotation, const Eigen::MatrixBase<Derived2>& translation) {
         T_.linear() = rotation;

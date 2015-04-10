@@ -10,12 +10,12 @@
 #include <cnoid/Referenced>
 #include <cnoid/FileUtil>
 #include <map>
-#include <vector>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <QRegExp>
 #include <iostream>
+#include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
@@ -26,8 +26,10 @@ using namespace cnoid;
 namespace {
 QRegExp regexVar("^\\$\\{(\\w+)\\}");
 
-typedef map<ItemPtr, int> ItemToIdMap;
+typedef map<Item*, int> ItemToIdMap;
+typedef map<int, Item*> IdToItemMap;
 typedef map<View*, int> ViewToIdMap;
+typedef map<int, View*> IdToViewMap;
 }
 
 
@@ -40,13 +42,15 @@ public:
     filesystem::path projectDirPath;
     filesystem::path topDirPath;
     filesystem::path shareDirPath;
+    filesystem::path homeDirPath;
     QString topDirString;
     QString shareDirString;
+    QString homeDirString;
 
-    vector<Item*> idToItemMap;
+    IdToItemMap idToItemMap;
     ItemToIdMap itemToIdMap;
 
-    vector<View*> idToViewMap;
+    IdToViewMap idToViewMap;
     ViewToIdMap viewToIdMap;
         
     Item* currentParentItem;
@@ -98,12 +102,15 @@ void replaceDirectoryVariable(ArchiveSharedData* shared, QString& io_pathString,
             }
         }
     }
-    MessageView::mainInstance()->putln(QString(_("Warning: ${%1} of \"%2\" cannot be expanded !")).arg(varname).arg(io_pathString));
+    MessageView::mainInstance()->putln(
+        MessageView::WARNING,
+        QString(_("${%1} of \"%2\" cannot be expanded !")).arg(varname).arg(io_pathString));
 }
+
 }
 
 
-ArchivePtr Archive::invalidArchive()
+Archive* Archive::invalidArchive()
 {
     static ArchivePtr invalidArchive_ = new Archive();
     invalidArchive_->type_ = ValueNode::INVALID_NODE;
@@ -130,7 +137,7 @@ Archive::~Archive()
 }
 
 
-void Archive::initSharedInfo()
+void Archive::initSharedInfo(bool useHomeRelativeDirectories)
 {
     shared = new ArchiveSharedData;
 
@@ -139,14 +146,22 @@ void Archive::initSharedInfo()
 
     shared->topDirString = executableTopDirectory().c_str();
     shared->shareDirString = shareDirectory().c_str();
+
+    char* home = getenv("HOME");
+    if(home){
+        if(useHomeRelativeDirectories){
+            shared->homeDirPath = filesystem::path(home);
+        }
+        shared->homeDirString = home;
+    }
     
     shared->currentParentItem = 0;
 }    
     
 
-void Archive::initSharedInfo(const std::string& projectFile)
+void Archive::initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories)
 {
-    initSharedInfo();
+    initSharedInfo(useHomeRelativeDirectories);
     
     shared->directoryVariableMap = AppConfig::archive()->openMapping("pathVariables");
 
@@ -187,7 +202,7 @@ Archive* Archive::findSubArchive(const std::string& name)
             return archive;
         }
     }
-    return invalidArchive().get();
+    return invalidArchive();
 }
 
 
@@ -244,8 +259,10 @@ std::string Archive::expandPathVariables(const std::string& path) const
                 qpath.replace(pos, len, shared->shareDirString);
             } else if(varname == "PROGRAM_TOP"){
                 qpath.replace(pos, len, shared->topDirString);
+            } else if(varname == "HOME"){
+                qpath.replace(pos, len, shared->homeDirString);
             } else {
-                replaceDirectoryVariable(shared.get(), qpath, varname, pos, len);
+                replaceDirectoryVariable(shared, qpath, varname, pos, len);
             }
         }
     }
@@ -301,7 +318,7 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
     } else if(findSubDirectory(shared->projectDirPath, orgPath, relativePath)){
         return getGenericPathString(relativePath);
     
-    } else if(findSubDirectoryOfDirectoryVariable(shared.get(), orgPath, varName, relativePath)){
+    } else if(findSubDirectoryOfDirectoryVariable(shared, orgPath, varName, relativePath)){
         return string("${") + varName + ("}/") + getGenericPathString(relativePath);
 
     } else if(findSubDirectory(shared->shareDirPath, orgPath, relativePath)){
@@ -309,6 +326,9 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
 
     } else if(findSubDirectory(shared->topDirPath, orgPath, relativePath)){
         return string("${PROGRAM_TOP}/") + getGenericPathString(relativePath);
+
+    } else if(findSubDirectory(shared->homeDirPath, orgPath, relativePath)){
+        return string("${HOME}/") + getGenericPathString(relativePath);
 
     } else if(findRelativePath(shared->projectDirPath, orgPath, relativePath)){
         return getGenericPathString(relativePath);
@@ -338,9 +358,6 @@ void Archive::clearIds()
 void Archive::registerItemId(Item* item, int id)
 {
     if(shared){
-        if(id >= (signed)shared->idToItemMap.size()){
-            shared->idToItemMap.resize(id + 1);
-        }
         shared->idToItemMap[id] = item;
         shared->itemToIdMap[item] = id;
     }
@@ -391,8 +408,9 @@ void Archive::writeItemId(const std::string& key, Item* item)
 Item* Archive::findItem(int id) const
 {
     if(shared){
-        if(id >= 0 && id < (signed)shared->idToItemMap.size()){
-            return shared->idToItemMap[id];
+        IdToItemMap::iterator p = shared->idToItemMap.find(id);
+        if(p != shared->idToItemMap.end()){
+            return p->second;
         }
     }
     return 0;
@@ -429,9 +447,6 @@ Item* Archive::findItem(const ValueNodePtr idNode) const
 void Archive::registerViewId(View* view, int id)
 {
     if(shared){
-        if(id >= (signed)shared->idToViewMap.size()){
-            shared->idToViewMap.resize(id + 1);
-        }
         shared->idToViewMap[id] = view;
         shared->viewToIdMap[view] = id;
     }
@@ -456,8 +471,9 @@ int Archive::getViewId(View* view) const
 View* Archive::findView(int id) const
 {
     if(shared){
-        if(id >= 0 && id < (signed)shared->idToViewMap.size()){
-            return shared->idToViewMap[id];
+        IdToViewMap::iterator p = shared->idToViewMap.find(id);
+        if(p != shared->idToViewMap.end()){
+            return p->second;
         }
     }
     return 0;

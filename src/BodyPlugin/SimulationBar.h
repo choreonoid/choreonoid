@@ -36,7 +36,7 @@ private:
 
     void onStoreInitialClicked();
     void onRestoreInitialClicked();
-    void forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback);
+    void forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback, bool doSelect = false);
     void onStopSimulationClicked();
     void onPauseSimulationClicked();
     ToolButton* pauseToggle;

@@ -94,6 +94,7 @@ public:
     python::object lastExceptionValue;
     string lastExceptionTypeName;
     string lastExceptionText;
+    bool isTerminated;
 
     PythonExecutorImpl();
     PythonExecutorImpl(const PythonExecutorImpl& org);
@@ -108,6 +109,7 @@ public:
     void releasePythonPathRef();
     bool terminateScript();
 };
+
 }
 
 
@@ -129,6 +131,7 @@ PythonExecutorImpl::PythonExecutorImpl()
     isRunningForeground = false;
     isModuleRefreshEnabled = isDefaultModuleRefreshEnabled;
     hasException = false;
+    isTerminated = false;
 
     resetLastResultObjects();
 }
@@ -146,6 +149,7 @@ PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
     isRunningForeground = false;
     isModuleRefreshEnabled = isDefaultModuleRefreshEnabled;
     hasException = false;
+    isTerminated = false;
 
     resetLastResultObjects();
 }
@@ -249,10 +253,13 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
     bool doAddPythonPath = false;
     pathRefIter = additionalPythonPathRefMap.end();
 
+    filesystem::path filepath;
+
     if(filename.empty()){
         scriptDirectory.clear();
     } else {
-        scriptDirectory = getPathString(getAbsolutePath(filesystem::path(filename)).parent_path());
+        filepath = getAbsolutePath(filesystem::path(filename));
+        scriptDirectory = getPathString(filepath.parent_path());
         if(!scriptDirectory.empty()){
             pathRefIter = additionalPythonPathRefMap.find(scriptDirectory);
             if(pathRefIter == additionalPythonPathRefMap.end()){
@@ -275,6 +282,8 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
         exceptionType = python::object();
         exceptionValue = python::object();
 
+        isTerminated = false;
+
         functionToExecScript = execScript;
 
         if(doAddPythonPath){
@@ -284,6 +293,13 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
 
         if(isModuleRefreshEnabled){
             rollBackImporter.attr("refresh")(scriptDirectory);
+        }
+
+        if(!filename.empty()){
+            filesystem::path relative;
+            if(findRelativePath(filesystem::current_path(), filepath, relative)){
+                pythonMainNamespace()["__file__"] = getPathString(relative);
+            }
         }
 
         if(!isBackgroundMode){
@@ -310,21 +326,20 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
 
 bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execScript)
 {
-    bool executed = false;
-    bool terminated = false;
+    bool completed = false;
     resultObject = boost::python::object();
     resultString.clear();
     
     try {
         resultObject = execScript();
         resultString =  python::extract<string>(python::str(resultObject));
-        executed = true;
+        completed = true;
     }
     catch(python::error_already_set const & ex) {
         if(PyErr_Occurred()){
             if(PyErr_ExceptionMatches(exitExceptionType.ptr())){
-                terminated = true;
                 PyErr_Clear();
+                isTerminated = true;
             } else {
                 PyObject* ptype;
                 PyObject* pvalue;
@@ -368,15 +383,13 @@ bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execS
     stateCondition.wakeAll();
     stateMutex.unlock();
     
-    if(!terminated){
-        if(QThread::isRunning()){
-            callLater(boost::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
-        } else {
-            sigFinished();
-        }
+    if(QThread::isRunning()){
+        callLater(boost::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
+    } else {
+        sigFinished();
     }
 
-    return executed;
+    return completed;
 }
 
 
@@ -499,7 +512,7 @@ bool PythonExecutorImpl::terminateScript()
     if(QThread::isRunning()){
         terminated = false;
 
-        for(int i=0; i < 100; ++i){
+        for(int i=0; i < 400; ++i){
             {
                 PyGILock lock;
                 PyThreadState_SetAsyncExc((long)threadId, exitExceptionType().ptr());
@@ -570,4 +583,10 @@ boost::python::object PythonExecutor::exceptionValue() const
     python::object value = impl->lastExceptionValue;
     impl->stateMutex.unlock();
     return value;
+}
+
+
+bool PythonExecutor::isTerminated() const
+{
+    return impl->isTerminated;
 }

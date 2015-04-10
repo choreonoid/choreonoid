@@ -1,5 +1,6 @@
 /**
    @author Shizuko Hattori
+   @author Shin'ichiro Nakaoka   
 */
 
 #include "TextEdit.h"
@@ -22,8 +23,10 @@ void PlainTextEdit::onCursorPositionChanged()
 TextEdit::TextEdit(QWidget* parent)
     : QTextEdit(parent)
 {
-	vScrollBar = verticalScrollBar();
+    vScrollBar = verticalScrollBar();
 
+    connect(this, SIGNAL(currentCharFormatChanged(const QTextCharFormat&)),
+            this, SLOT(onCurrentCharFormatChanged(const QTextCharFormat&)));
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorPositionChanged()));
     connect(vScrollBar, SIGNAL(valueChanged(int)), this, SLOT(onScroll(int)));
 }
@@ -31,25 +34,31 @@ TextEdit::TextEdit(QWidget* parent)
 
 int TextEdit::getScrollPos()
 {
-	return vScrollBar->value();
+    return vScrollBar->value();
 }
 
 
 void TextEdit::setScrollPos(int pos)
 {
-	vScrollBar->setValue(pos);
+    vScrollBar->setValue(pos);
 }
 
 
 int TextEdit::maxScrollPos()
 {
-	return vScrollBar->maximum();
+    return vScrollBar->maximum();
 }
 
 
 int TextEdit::scrollSingleStep()
 {
-	return vScrollBar->singleStep();
+    return vScrollBar->singleStep();
+}
+
+
+void TextEdit::onCurrentCharFormatChanged(const QTextCharFormat& f)
+{
+    sigCurrentCharFormatChanged_(boost::ref(f));
 }
 
 
@@ -61,5 +70,5 @@ void TextEdit::onCursorPositionChanged()
 
 void TextEdit::onScroll(int value)
 {
-	sigScroll_(value);
+    sigScroll_(value);
 }

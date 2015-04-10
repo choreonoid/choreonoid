@@ -157,7 +157,6 @@ void exportItems()
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
-        .def("selectMotionItems", &SimulatorItem::selectMotionItems)
         ;
     {
         scope simulatorItemScope = simulatorItemClass;

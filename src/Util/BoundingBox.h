@@ -28,6 +28,7 @@ public:
     const Vector3& min() const { return min_; }
     const Vector3& max() const { return max_; }
     Vector3 center() const;
+    Vector3 size() const;
     double boundingSphereRadius() const;
         
     void expandBy(const BoundingBox& bbox);

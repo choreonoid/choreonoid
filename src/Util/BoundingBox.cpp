@@ -58,6 +58,12 @@ Vector3 BoundingBox::center() const
 }
 
 
+Vector3 BoundingBox::size() const
+{
+    return (max_ - min_);
+}
+
+
 double BoundingBox::boundingSphereRadius() const
 {
     return (max_ - center()).norm();

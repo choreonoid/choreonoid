@@ -17,7 +17,7 @@ using boost::format;
 
 namespace {
 
-AbstractSeqItemPtr createZMPSeqItem(AbstractSeqPtr seq)
+AbstractSeqItem* createZMPSeqItem(AbstractSeqPtr seq)
 {
     ZMPSeqPtr zmpseq = dynamic_pointer_cast<ZMPSeq>(seq);
     return zmpseq ? new ZMPSeqItem(zmpseq) : 0;
@@ -30,7 +30,7 @@ class ZMPSeqEngine : public TimeSyncItemEngine
     BodyItemPtr bodyItem;
 public:
         
-    ZMPSeqEngine(ZMPSeqItemPtr seqItem, BodyItemPtr bodyItem)
+    ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->zmpseq()), bodyItem(bodyItem)
         {
             seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
@@ -52,14 +52,15 @@ public:
 };
 
 
-TimeSyncItemEnginePtr createZMPSeqEngine(BodyItemPtr bodyItem, AbstractSeqItemPtr seqItem)
+TimeSyncItemEngine* createZMPSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqItem)
 {
-    ZMPSeqItemPtr item = dynamic_pointer_cast<ZMPSeqItem>(seqItem);
+    ZMPSeqItem* item = dynamic_cast<ZMPSeqItem*>(seqItem);
     if(item){
-        return boost::make_shared<ZMPSeqEngine>(item, bodyItem);
+        return new ZMPSeqEngine(item, bodyItem);
     }
-    return TimeSyncItemEnginePtr();
+    return 0;
 }
+
 }
 
 

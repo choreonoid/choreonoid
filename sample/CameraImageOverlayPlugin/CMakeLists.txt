@@ -1,4 +1,8 @@
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_CAMERA_IMAGE_OVERLAY_SAMPLE "Building a sample of overlaying a camea image" OFF)
 
 if(BUILD_CAMERA_IMAGE_OVERLAY_SAMPLE)

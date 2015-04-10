@@ -16,6 +16,7 @@ class SimulatorItem;
 class CNOID_EXPORT SubSimulatorItem : public Item
 {
 public:
+    virtual bool isEnabled();
     virtual bool initializeSimulation(SimulatorItem* simulatorItem) = 0;
     virtual void finalizeSimulation() = 0;
 };

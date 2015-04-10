@@ -10,11 +10,16 @@ endif()
 # set(CMAKE_BUILD_TYPE Debug)
 
 set(target CnoidSimpleControllerPlugin)
-set(sources 
+set(sources
   SimpleControllerPlugin.cpp
   SimpleControllerItem.cpp
 )
-set(headers "")
+set(headers
+  SimpleControllerItem.h
+  SimpleController.h
+  exportdecl.h
+  gettext.h
+)
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin)

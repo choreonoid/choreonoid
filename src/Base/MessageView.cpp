@@ -97,7 +97,10 @@ public:
         
     TextEditEx textEdit;
     QTextCursor cursor;
-    QTextCharFormat preFmt;
+    QTextCharFormat orgCharFormat;
+    QTextCharFormat currentCharFormat;
+    QColor orgForeColor;
+    QColor orgBackColor;
 
     TextSink textSink;
     iostreams::stream_buffer<TextSink> sbuf;
@@ -110,13 +113,10 @@ public:
     std::stack<StdioInfo> stdios;
     bool exitEventLoopRequested;
 
-    QTextCharFormat normalFmt;
-    QColor normalForeCol;
-    QColor normalBackCol;
-
     MessageViewImpl(MessageView* self);
 
     void put(const QString& message, bool doLF, bool doNotify, bool doFlush);
+    void put(int type, const QString& message, bool doLF, bool doNotify, bool doFlush);
     void doPut(const QString& message, bool doLF, bool doNotify, bool doFlush);
     void handleMessageViewEvent(MessageViewEvent* event);
     void flush();
@@ -223,18 +223,19 @@ MessageViewImpl::MessageViewImpl(MessageView* self) :
     self->setLayout(layout);
 
     textEdit.moveCursor(QTextCursor::End);
-
+    cursor = textEdit.textCursor();
+    
     QFont font("monospace");
     font.setStyleHint(QFont::TypeWriter);
     textEdit.setFont(font);
-    normalForeCol = QColor("black");
-    normalBackCol = QColor("white");
-    normalFmt.setForeground(normalForeCol);
-    normalFmt.setBackground(normalBackCol);
-    textEdit.mergeCurrentCharFormat(normalFmt);
-    preFmt = normalFmt = textEdit.currentCharFormat();
 
-    cursor = textEdit.textCursor();
+    orgForeColor = textEdit.palette().color(QPalette::Text);
+    orgBackColor = textEdit.palette().color(QPalette::Base);
+    
+    currentCharFormat = cursor.charFormat();
+    orgCharFormat = currentCharFormat;
+    orgCharFormat.setForeground(orgForeColor);
+    orgCharFormat.setBackground(orgBackColor);
 }
 
 
@@ -272,6 +273,12 @@ void MessageView::endStdioRedirect()
 }
 
 
+void MessageView::put(const char* message)
+{
+    impl->put(message, false, false, false);
+}
+
+
 void MessageView::put(const std::string& message)
 {
     impl->put(message.c_str(), false, false, false);
@@ -284,15 +291,33 @@ void MessageView::put(const boost::format& message)
 }
 
 
-void MessageView::put(const char* message)
+void MessageView::put(const QString& message)
 {
     impl->put(message, false, false, false);
 }
 
 
-void MessageView::put(const QString& message)
+void MessageView::put(int type, const char* message)
 {
-    impl->put(message, false, false, false);
+    impl->put(type, message, false, false, false);
+}
+
+
+void MessageView::put(int type, const std::string& message)
+{
+    impl->put(type, message.c_str(), false, false, false);
+}
+
+
+void MessageView::put(int type, const boost::format& message)
+{
+    impl->put(type, message.str().c_str(), false, false, false);
+}
+
+
+void MessageView::put(int type, const QString& message)
+{
+    impl->put(type, message, false, false, false);
 }
 
 
@@ -323,6 +348,30 @@ void MessageView::putln(const char* message)
 void MessageView::putln(const QString& message)
 {
     impl->put(message, true, false, false);
+}
+
+
+void MessageView::putln(int type, const char* message)
+{
+    impl->put(type, message, true, false, false);
+}
+
+
+void MessageView::putln(int type, const std::string& message)
+{
+    impl->put(type, message.c_str(), true, false, false);
+}
+
+
+void MessageView::putln(int type, const boost::format& message)
+{
+    impl->put(type, message.str().c_str(), true, false, false);
+}
+
+
+void MessageView::putln(int type, const QString& message)
+{
+    impl->put(type, message, true, false, false);
 }
 
 
@@ -361,28 +410,51 @@ void MessageViewImpl::put(const QString& message, bool doLF, bool doNotify, bool
 }
 
 
+void MessageViewImpl::put(int type, const QString& message, bool doLF, bool doNotify, bool doFlush)
+{
+    if(type == MessageView::NORMAL){
+        put(message, doLF, doNotify, doFlush);
+    } else {
+        // add the escape sequence to make the text red
+        QString highlighted("\033[31m");
+        if(type == MessageView::ERROR){
+            highlighted.append("Error: ");
+        } else if(type == MessageView::WARNING){
+            highlighted.append("Warning: ");
+        }
+        highlighted.append(message);
+        highlighted.append("\033[0m");
+
+        put(highlighted, doLF, doNotify, doFlush);
+    }
+}
+
+
 void MessageViewImpl::doPut(const QString& message, bool doLF, bool doNotify, bool doFlush)
 {
+    
     int scrollPos = textEdit.getScrollPos();
     bool enableScroll = (scrollPos > textEdit.maxScrollPos()-3*textEdit.scrollSingleStep());
-
-    textEdit.setCurrentCharFormat(preFmt);
+    if(enableScroll){
+        textEdit.moveCursor(QTextCursor::End);
+    }
 
     QString txt(message);
     int i=0;
     while(1){
         int i = txt.indexOf("\x1b");
-        if(i<0){
+        if(i < 0){
             break;
         }
-        insertPlainText(txt.left(i), false);
+        if(i > 0){
+            insertPlainText(txt.left(i), false);
+        }
         txt = txt.mid(++i);
         escapeSequence(txt);
     }
     insertPlainText(txt, doLF);
-    
+
     if(enableScroll){
-        textEdit.moveCursor(QTextCursor::End);
         textEdit.ensureCursorVisible();
     }
     
@@ -399,8 +471,6 @@ void MessageViewImpl::doPut(const QString& message, bool doLF, bool doNotify, bo
     if(doFlush){
         flush();
     }
-    
-    preFmt = textEdit.currentCharFormat();
 }
 
 
@@ -502,9 +572,9 @@ void MessageViewImpl::clear()
 void MessageViewImpl::insertPlainText(const QString& message, bool doLF)
 {
     if(!doLF){
-        textEdit.insertPlainText(message);
+        cursor.insertText(message);
     } else {
-        textEdit.insertPlainText(message + "\n");
+        cursor.insertText(message + "\n");
     }
 }
 
@@ -602,35 +672,34 @@ void MessageViewImpl::inttoColor(int n, QColor& col)
 
 void MessageViewImpl::textProperties(const vector<int>& n)
 {
-    QTextCharFormat fmt;
     QColor col;
     for(int i=0; i<n.size(); i++){
         switch(n[i]){
         case 0:  //全て解除 //
-            textEdit.setCurrentCharFormat(normalFmt);
+            currentCharFormat = orgCharFormat;
             break;
         case 1:  //太字 //
-            fmt.setFontWeight(QFont::Bold);
+            currentCharFormat.setFontWeight(QFont::Bold);
             break;
         case 4:  //下線 //
-            fmt.setFontUnderline(true);
+            currentCharFormat.setFontUnderline(true);
             break;
         case 5:  //点滅 //
             break;
         case 7:  //反転 //
         case 27:  //反転解除 //
         {
-            QColor fore = textEdit.currentCharFormat().foreground().color();
-            QColor back = textEdit.currentCharFormat().background().color();
-            fmt.setForeground(back);
-            fmt.setBackground(fore);
+            QColor fore = currentCharFormat.foreground().color();
+            QColor back = currentCharFormat.background().color();
+            currentCharFormat.setForeground(back);
+            currentCharFormat.setBackground(fore);
             break;
         }
         case 22:  //太字解除 //
-            fmt.setFontWeight(QFont::Normal);
+            currentCharFormat.setFontWeight(QFont::Normal);
             break;
         case 24:  //下線解除 //
-            fmt.setFontUnderline(false);
+            currentCharFormat.setFontUnderline(false);
             break;
         case 25:  //点滅解除 //
             break;
@@ -643,7 +712,7 @@ void MessageViewImpl::textProperties(const vector<int>& n)
         case 36:  //文字を水色  //
         case 37:  //文字を白  //
             inttoColor(n[i]-30, col);
-            fmt.setForeground(col);
+            currentCharFormat.setForeground(col);
             break;
         case 38:
         {
@@ -652,13 +721,13 @@ void MessageViewImpl::textProperties(const vector<int>& n)
                 if(n[j]==2){  //文字をRGB指定 //
                     if(j+3<n.size()){
                         col = QColor(n[j+1], n[j+2], n[j+3]);
-                        fmt.setForeground(col);
+                        currentCharFormat.setForeground(col);
                         i += 4;
                     }
                 }else if(n[j]==5){  //文字を番号指定 //
                     if(j+1<n.size()){
                         inttoColor(n[j+1], col);
-                        fmt.setForeground(col);
+                        currentCharFormat.setForeground(col);
                         i += 2;
                     }
                 }
@@ -666,7 +735,7 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             break;
         }
         case 39:  //文字を標準色  //
-            fmt.setForeground(normalForeCol);
+            currentCharFormat.setForeground(orgForeColor);
             break;
         case 40:  //背景を黒  //
         case 41:  //背景を赤  //
@@ -677,7 +746,7 @@ void MessageViewImpl::textProperties(const vector<int>& n)
         case 46:  //背景を水色  //
         case 47:  //背景を白  //
             inttoColor(n[i]-40, col);
-            fmt.setBackground(col);
+            currentCharFormat.setBackground(col);
             break;
         case 48:
         {
@@ -686,13 +755,13 @@ void MessageViewImpl::textProperties(const vector<int>& n)
                 if(n[j]==2){  //背景をRGB指定 //
                     if(j+3<n.size()){
                         col = QColor(n[j+1], n[j+2], n[j+3]);
-                        fmt.setBackground(col);
+                        currentCharFormat.setBackground(col);
                         i += 4;
                     }
                 }else if(n[j]==5){  //背景を番号指定 //
                     if(j+1<n.size()){
                         inttoColor(n[j+1], col);
-                        fmt.setBackground(col);
+                        currentCharFormat.setBackground(col);
                         i += 2;
                     }
                 }
@@ -700,7 +769,7 @@ void MessageViewImpl::textProperties(const vector<int>& n)
             break;
         }
         case 49:  //背景を標準色  //
-            fmt.setBackground(normalBackCol);
+            currentCharFormat.setBackground(orgBackColor);
             break;
         case 90:
         case 91:
@@ -711,7 +780,7 @@ void MessageViewImpl::textProperties(const vector<int>& n)
         case 96:
         case 97:
             inttoColor(n[i]-82, col);
-            fmt.setForeground(col);
+            currentCharFormat.setForeground(col);
             break;
         case 100:
         case 101:
@@ -722,11 +791,12 @@ void MessageViewImpl::textProperties(const vector<int>& n)
         case 106:
         case 107:
             inttoColor(n[i]-92, col);
-            fmt.setBackground(col);
+            currentCharFormat.setBackground(col);
             break;
         }
     }
-    textEdit.mergeCurrentCharFormat(fmt);
+    cursor.setCharFormat(currentCharFormat);
+    textEdit.setTextCursor(cursor);
 }
 
 
@@ -736,14 +806,14 @@ void MessageViewImpl::escapeSequence(QString& txt)
         return;
     }
 
-    int i = txt.indexOf(QRegExp("[@A-z`]"),1);
-    if(i<0){
+    int i = txt.indexOf(QRegExp("[@A-z`]"), 1);
+    if(i < 0){
         return;
     }
     QChar c = txt.at(i);
     vector<int> n;
-    if(i>1){
-        if(!paramtoInt(txt.mid(1,i-1), n)){
+    if(i > 1){
+        if(!paramtoInt(txt.mid(1, i-1), n)){
             return;
         }
     }
@@ -899,7 +969,9 @@ void MessageViewImpl::escapeSequence(QString& txt)
         //}else if(c=='l'){  //モード解除 //
     }else if(c=='m'){  //文字属性を設定  //
         if(!n.size()){
-            textEdit.setCurrentCharFormat(normalFmt);
+            currentCharFormat = orgCharFormat;
+            cout << "!n.size()" << endl;
+            textEdit.setCurrentCharFormat(currentCharFormat);            
             return;
         }else{
             textProperties(n);

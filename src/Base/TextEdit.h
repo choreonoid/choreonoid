@@ -1,5 +1,6 @@
 /**
    @author Shizuko Hattori
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_BASE_TEXT_EDIT_H
@@ -42,6 +43,9 @@ class CNOID_EXPORT TextEdit : public QTextEdit
     int maxScrollPos();
     int scrollSingleStep();
 
+    SignalProxy<void(const QTextCharFormat& f)> sigCurrentCharFormatChanged() {
+        return sigCurrentCharFormatChanged_;
+    }
     SignalProxy<void()> sigCursorPositionChanged() {
         return sigCursorPositionChanged_;
     }
@@ -50,11 +54,13 @@ class CNOID_EXPORT TextEdit : public QTextEdit
     }
 
 private Q_SLOTS:
+    void onCurrentCharFormatChanged(const QTextCharFormat& f);
     void onCursorPositionChanged();
     void onScroll(int value);
 
 private:
     QScrollBar *vScrollBar;
+    Signal<void(const QTextCharFormat& f)> sigCurrentCharFormatChanged_;
     Signal<void()> sigCursorPositionChanged_;
     Signal<void(int)> sigScroll_;
 };

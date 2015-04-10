@@ -14,7 +14,7 @@
 #include "../Vector3SeqItem.h"
 #include <cnoid/PyUtil>
 
-using namespace boost;
+namespace python = boost::python;
 using namespace boost::python;
 using namespace cnoid;
 
@@ -39,6 +39,19 @@ RootItemPtr Item_findRootItem(Item& self) { return self.findRootItem(); }
 ItemPtr Item_findItem(Item& self, const std::string& path) { return self.findItem(path); }
 ItemPtr Item_findSubItem(Item& self, const std::string& path) { return self.findSubItem(path); }
 ItemPtr Item_headItem(Item& self) { return self.headItem(); }
+
+ItemList<Item> Item_getDescendantItems1(Item& self){
+    ItemList<Item> items;
+    items.extractChildItems(&self);
+    return items;
+}
+
+python::object Item_getDescendantItems2(Item& self, python::object itemClass){
+    ItemList<Item> items;
+    items.extractChildItems(&self);
+    return getPyNarrowedItemList(items, itemClass);
+}
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_addChildItem_overloads, addChildItem, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_insertChildItem, insertChildItem, 2, 3)
@@ -93,6 +106,8 @@ void exportPyItems()
         .def("findItem", Item_findItem)
         .def("findSubItem", Item_findSubItem)
         .def("headItem", Item_headItem)
+        .def("getDescendantItems", Item_getDescendantItems1)
+        .def("getDescendantItems", Item_getDescendantItems2)
         .def("duplicate", &Item::duplicate)
         .def("duplicateAll", &Item::duplicateAll)
         .def("assign", &Item::assign)

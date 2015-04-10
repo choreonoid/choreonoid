@@ -525,9 +525,9 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &dynamicsMode, _1));
+                boost::bind(&Selection::selectIndex, &dynamicsMode, _1));
     putProperty(_("Integration mode"), integrationMode,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &integrationMode, _1));
+                boost::bind(&Selection::selectIndex, &integrationMode, _1));
     putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));

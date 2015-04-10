@@ -1,6 +1,6 @@
 # @author Shin'ichiro Nakaoka
 
-if(APPLE)
+if(NOT ENABLE_GUI OR APPLE)
   return()
 endif()
 

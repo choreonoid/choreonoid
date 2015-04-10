@@ -36,6 +36,7 @@ add_cnoid_python_module(PyBase
   PyToolBars.cpp
   PyViews.cpp
   PyItemTreeView.cpp
+  PySceneTypes.cpp
 )
 
 target_link_libraries(PyBase CnoidPyBase)

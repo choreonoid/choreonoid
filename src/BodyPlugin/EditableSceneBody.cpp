@@ -593,8 +593,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
 void EditableSceneBodyImpl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
-    double r = sceneLink->untransformedBoundingBox().boundingSphereRadius();
-    positionDragger->setRadius(r);
+    positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
     sceneLink->addChild(positionDragger);
 }
 

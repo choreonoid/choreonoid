@@ -31,6 +31,7 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 ProjectManager* instance_ = 0;
@@ -45,7 +46,7 @@ public:
     ~ProjectManagerImpl();
         
     template <class TObject>
-    void restoreObjectStates(Archive* projectArchive, Archive* states, const vector<TObject*>& objects);
+    bool restoreObjectStates(Archive* projectArchive, Archive* states, const vector<TObject*>& objects);
         
     void loadProject(const string& filename, bool isInvokingApplication);
 
@@ -60,6 +61,7 @@ public:
     void openDialogToSaveProject();
 
     void onPerspectiveCheckToggled();
+    void onHomeRelativeCheckToggled();
         
     void connectArchiver(
         const std::string& name,
@@ -71,6 +73,7 @@ public:
     MessageView* messageView;
     string lastAccessedProjectFile;
     Action* perspectiveCheck;
+    Action* homeRelativeCheck;
 
     struct ArchiverInfo {
         boost::function<bool(Archive&)> storeFunction;
@@ -119,10 +122,17 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
         ->sigTriggered().connect(bind(&ProjectManagerImpl::overwriteCurrentProject, this));
     mm.addItem(_("Save Project As"))
         ->sigTriggered().connect(bind(&ProjectManagerImpl::openDialogToSaveProject, this));
-    
-    perspectiveCheck = mm.setPath(N_("Project File Options")).addCheckItem(_("Perspective"));
+
+
+    mm.setPath(N_("Project File Options"));
+
+    perspectiveCheck = mm.addCheckItem(_("Perspective"));
     perspectiveCheck->setChecked(config->get("storePerspective", false));
     perspectiveCheck->sigToggled().connect(bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
+
+    homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));
+    homeRelativeCheck->setChecked(config->get("useHomeRelative", false));
+    homeRelativeCheck->sigToggled().connect(bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
 
     mm.setPath("/File");
     mm.addSeparator();
@@ -151,17 +161,21 @@ ProjectManagerImpl::~ProjectManagerImpl()
 
 
 template <class TObject>
-void ProjectManagerImpl::restoreObjectStates
+bool ProjectManagerImpl::restoreObjectStates
 (Archive* projectArchive, Archive* states, const vector<TObject*>& objects)
 {
+    bool restored = false;
     for(size_t i=0; i < objects.size(); ++i){
         TObject* object = objects[i];
         Archive* state = states->findSubArchive(object->objectName().toStdString());
         if(state->isValid()){
             state->inheritSharedInfoFrom(*projectArchive);
-            object->restoreState(*state);
+            if(object->restoreState(*state)){
+                restored = true;
+            }
         }
     }
+    return restored;
 }
 
 
@@ -173,6 +187,7 @@ void ProjectManager::loadProject(const std::string& filename)
 
 void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokingApplication)
 {
+    bool loaded = false;
     YAMLReader reader;
     reader.setMappingClass<Archive>();
 
@@ -183,8 +198,10 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
         if(!isInvokingApplication){
             messageView->flush();
         }
+
+        int numArchivedItems = 0;
+        int numRestoredItems = 0;
         
-        bool result = false;
         if(!reader.load(filename)){
             messageView->put(reader.errorMessage() + "\n");
 
@@ -221,17 +238,31 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
               }
             */
 
+            itemTreeArchiver.reset();
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
-                result = itemTreeArchiver.restore(items, RootItem::mainInstance());
+                itemTreeArchiver.restore(items, RootItem::mainInstance());
+                numArchivedItems = itemTreeArchiver.numArchivedItems();
+                numRestoredItems = itemTreeArchiver.numRestoredItems();
+                messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
+                if(numRestoredItems < numArchivedItems){
+                    messageView->putln(MessageView::WARNING,
+                                       format(_("%1% item(s) are not correctly loaded."))
+                                       % (numArchivedItems - numRestoredItems));
+                }
+                if(numRestoredItems > 0){
+                    loaded = true;
+                }
             }
 
             if(!ViewManager::restoreViewStates(viewStateInfo)){
                 // load the old format (version 1.4 or earlier)
                 Archive* viewStates = archive->findSubArchive("views");
                 if(viewStates->isValid()){
-                    restoreObjectStates(archive, viewStates, ViewManager::allViews());
+                    if(restoreObjectStates(archive, viewStates, ViewManager::allViews())){
+                        loaded = true;
+                    }
                 }
             }
 
@@ -239,7 +270,9 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             if(barStates->isValid()){
                 vector<ToolBar*> toolBars;
                 mainWindow->getAllToolBars(toolBars);
-                restoreObjectStates(archive, barStates, toolBars);
+                if(restoreObjectStates(archive, barStates, toolBars)){
+                    loaded = true;
+                }
             }
 
             ArchiverMapMap::iterator p;
@@ -260,23 +293,32 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                             ArchiverInfo& info = q->second;
                             objArchive->inheritSharedInfoFrom(*archive);
                             info.restoreFunction(*objArchive);
+                            loaded = true;
                         }
                     }
                 }
             }
 
-            callLater(boost::bind(&Archive::callPostProcesses, ArchivePtr(archive)));
-        }
-        if(result){
-            messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
-            mainWindow->setProjectTitle(getBasename(filename));
-            lastAccessedProjectFile = filename;
-        } else {
-            messageView->notify(str(fmt(_("Project \"%1%\" cannot be loaded.")) % filename));
-            lastAccessedProjectFile.clear();
+            if(loaded){
+                mainWindow->setProjectTitle(getBasename(filename));
+                lastAccessedProjectFile = filename;
+                
+                if(numRestoredItems == numArchivedItems){
+                    messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
+                } else {
+                    messageView->notify(str(fmt(_("Project \"%1%\" has been loaded.")) % filename));
+                }
+
+                archive->callPostProcesses();
+            }
         }
     } catch (const ValueNode::Exception& ex){
         messageView->put(ex.message());
+    }
+
+    if(!loaded){                
+        messageView->notify(str(fmt(_("Project \"%1%\" cannot be loaded.")) % filename));
+        lastAccessedProjectFile.clear();
     }
 }
 
@@ -323,7 +365,7 @@ void ProjectManagerImpl::saveProject(const string& filename)
     messageView->flush();
     
     ArchivePtr archive = new Archive();
-    archive->initSharedInfo(filename);
+    archive->initSharedInfo(filename, homeRelativeCheck->isChecked());
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, RootItem::mainInstance());
 
@@ -479,6 +521,13 @@ void ProjectManagerImpl::onPerspectiveCheckToggled()
         ->write("storePerspective", perspectiveCheck->isChecked());
 }
 
+
+void ProjectManagerImpl::onHomeRelativeCheckToggled()
+{
+    AppConfig::archive()->openMapping("ProjectManager")
+        ->write("useHomeRelative", homeRelativeCheck->isChecked());
+}
+                                           
 
 void ProjectManager::setArchiver(
     const std::string& moduleName,

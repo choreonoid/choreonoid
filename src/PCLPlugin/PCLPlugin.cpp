@@ -3,6 +3,7 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "MultiPointSetItem.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -13,7 +14,10 @@ public:
     
     PCLPlugin() : Plugin("PCL") { }
     
-    virtual bool initialize() {
+    virtual bool initialize(){
+
+        MultiPointSetItem::initializeClass(this);
+        
         return true;
     }
 };

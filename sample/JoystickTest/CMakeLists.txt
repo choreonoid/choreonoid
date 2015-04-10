@@ -1,4 +1,8 @@
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_JOYSTICK_TEST_PLUGIN "Building a joystick test plugin" OFF)
 
 if(BUILD_JOYSTICK_TEST_PLUGIN)

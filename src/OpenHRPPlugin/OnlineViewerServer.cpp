@@ -259,7 +259,7 @@ void OnlineViewerServerImpl::updateBodyState
     for(int j=0; j < numLinks; ++j){
         Link* link = body->link(j);
         link->p() = Eigen::Map<Vector3>(const_cast<double*>(links[j].p));
-        link->R() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R)).transpose();
+        link->setAttitude(Eigen::Map<Matrix3>(const_cast<double*>(links[j].R)).transpose());
     }
     info->bodyItem->notifyKinematicStateChange();
 }
@@ -301,12 +301,14 @@ void OnlineViewerServerImpl::updateLog
     int lastFrame = std::max(0, std::min(frame, seq->numFrames()));
     seq->setNumFrames(frame + 1);
 
+    const BodyPtr& body = info->bodyItem->body();
     for(int i=lastFrame; i <= frame; ++i){
         MultiSE3Seq::Frame positions = seq->frame(i);
         for(int j=0; j < numLinks; ++j){
             SE3& se3 = positions[j];
             se3.translation() = Eigen::Map<Vector3>(const_cast<double*>(links[j].p));
-            se3.rotation() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R)).transpose();
+            Matrix3 Rs = body->link(j)->Rs().transpose();
+            se3.rotation() = Eigen::Map<Matrix3>(const_cast<double*>(links[j].R)).transpose() * Rs;
         }
     }
 }

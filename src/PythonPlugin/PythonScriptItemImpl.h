@@ -48,6 +48,7 @@ private:
     Connection sigFinishedConnection;
     Signal<void()> sigScriptFinished_;
 };
+
 }
 
 #endif

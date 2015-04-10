@@ -178,10 +178,7 @@ LazyCaller::LazyCaller(const LazyCaller& org)
 
 LazyCaller::~LazyCaller()
 {
-    if(isPending_){
-        QCoreApplication::removePostedEvents(impl);
-        isPending_ = false;
-    }
+    cancel();
     delete impl;
 }
 
@@ -201,6 +198,15 @@ void LazyCaller::setPriority(int priority)
 void LazyCaller::setConservative(bool on)
 {
     impl->isConservative = on;
+}
+
+
+void LazyCaller::cancel()
+{
+    if(isPending_){
+        QCoreApplication::removePostedEvents(impl);
+        isPending_ = false;
+    }
 }
 
 
@@ -236,3 +242,4 @@ bool LazyCallerImpl::event(QEvent* e)
     }
     return false;
 }
+
