@@ -987,7 +987,7 @@ bool TaskViewImpl::wait(double sec)
     if(!eventLoop.isRunning()){
         waitTimer.start(sec * 1000.0);
         isPendingCommandCompleted = false;
-        eventLoop.exec();
+        eventLoop.exec(QEventLoop::AllEvents);
         completed = isPendingCommandCompleted;
     }
     if(!completed){
@@ -1007,7 +1007,7 @@ bool TaskViewImpl::waitForCommandToFinish(double timeout)
         } else {
             commandTimer.stop();
         }
-        eventLoop.exec();
+        eventLoop.exec(QEventLoop::AllEvents);
         completed = isPendingCommandCompleted;
     }
     if(!completed){
