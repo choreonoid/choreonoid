@@ -60,7 +60,7 @@ ostream& operator<<(std::ostream& out, const SFRotation& v)
     const SFRotation::Vector3& a = v.axis();
     return out << a[0] << " " << a[1] << " " << a[2] << " " << v.angle();
 }
-    
+
 }
 
 
@@ -111,7 +111,7 @@ void VRMLWriter::writeMFInt32SeparatedByMinusValue(MFInt32& values)
 }
 
 
-VRMLWriter::VRMLWriter(std::ostream& out) : out(out)
+VRMLWriter::VRMLWriter(std::ostream& out) : out(out), ofname()
 {
     if(nodeMethodMap.empty()){
         registerNodeMethodMap();
@@ -122,8 +122,16 @@ void VRMLWriter::registerNodeMethodMap()
 {
     registerNodeMethod(typeid(VRMLGroup),          &VRMLWriter::writeGroupNode);
     registerNodeMethod(typeid(VRMLTransform),      &VRMLWriter::writeTransformNode);
+    registerNodeMethod(typeid(VRMLInline),         &VRMLWriter::writeInlineNode);
     registerNodeMethod(typeid(VRMLShape),          &VRMLWriter::writeShapeNode);
     registerNodeMethod(typeid(VRMLIndexedFaceSet), &VRMLWriter::writeIndexedFaceSetNode);
+    registerNodeMethod(typeid(VRMLBox),            &VRMLWriter::writeBoxNode);
+    registerNodeMethod(typeid(VRMLCone),           &VRMLWriter::writeConeNode);
+    registerNodeMethod(typeid(VRMLCylinder),       &VRMLWriter::writeCylinderNode);
+    registerNodeMethod(typeid(VRMLSphere),         &VRMLWriter::writeSphereNode);
+    registerNodeMethod(typeid(VRMLHumanoid),       &VRMLWriter::writeHumanoidNode);
+    registerNodeMethod(typeid(VRMLJoint),          &VRMLWriter::writeJointNode);
+    registerNodeMethod(typeid(VRMLSegment),        &VRMLWriter::writeSegmentNode);
 }
 
 void VRMLWriter::writeHeader()
@@ -146,6 +154,8 @@ void VRMLWriter::writeNodeIter(VRMLNodePtr node)
     VRMLWriterNodeMethod method = getNodeMethod(node);
     if(method){
         (this->*method)(node);
+    } else {
+        cout << "cannot find writer for " << typeid(*node).name() << " node." << endl; 
     }
 }
 
@@ -214,6 +224,58 @@ void VRMLWriter::writeTransformNode(VRMLNodePtr node)
 }
 
 
+/**
+ * create relative path from absolute path
+ * http://stackoverflow.com/questions/10167382/boostfilesystem-get-relative-path
+ **/
+std::string VRMLWriter::abstorel(std::string& fname)
+{
+    filesystem::path from(ofname);
+    filesystem::path to(fname);
+    filesystem::path::const_iterator fromIter = from.begin();
+    filesystem::path::const_iterator toIter = to.begin();
+    
+    while(fromIter != from.end() && toIter != to.end() && (*toIter) == (*fromIter)) {
+        ++toIter;
+        ++fromIter;
+    }
+    
+    if (fromIter != from.end()) ++fromIter;
+    
+    filesystem::path finalPath;
+    while(fromIter != from.end()) {
+        finalPath /= "..";
+        ++fromIter;
+    }
+    while(toIter != to.end()) {
+        finalPath /= *toIter;
+        ++toIter;
+    }
+    return finalPath.string();
+}
+
+
+void VRMLWriter::writeInlineNode(VRMLNodePtr node)
+{
+    VRMLInlinePtr vinline = static_pointer_cast<VRMLInline>(node);
+
+    beginNode("Inline", vinline);
+
+    int n = vinline->urls.size();
+    if (n == 1) {
+        out << indent << "url \"" << abstorel(vinline->urls[0]) << "\"\n";
+    } else {
+        out << indent << "urls [\n";
+        for(int i=0; i < n; i++){
+            out << indent << "   \"" << abstorel(vinline->urls[i]) << "\"\n";
+        }
+        out << indent << "]\n";
+    }
+
+    endNode();
+}
+
+
 void VRMLWriter::writeShapeNode(VRMLNodePtr node)
 {
     VRMLShapePtr shape = static_pointer_cast<VRMLShape>(node);
@@ -270,6 +332,61 @@ void VRMLWriter::writeMaterialNode(VRMLMaterialPtr material)
 }
 
 
+void VRMLWriter::writeBoxNode(VRMLNodePtr node)
+{
+    VRMLBoxPtr box = static_pointer_cast<VRMLBox>(node);
+
+    beginNode("Box", box);
+
+    out << indent << "size " << box->size << "\n";
+
+    endNode();
+}
+
+
+void VRMLWriter::writeConeNode(VRMLNodePtr node)
+{
+    VRMLConePtr cone = static_pointer_cast<VRMLCone>(node);
+
+    beginNode("Cone", cone);
+
+    out << indent << "bottomRadius " << cone->bottomRadius << "\n";
+    out << indent << "height " << cone->height << "\n";
+    out << indent << "bottom " << boolstr(cone->bottom) << "\n";
+    out << indent << "side " << boolstr(cone->side) << "\n";
+
+    endNode();
+}
+
+
+void VRMLWriter::writeCylinderNode(VRMLNodePtr node)
+{
+    VRMLCylinderPtr cylinder = static_pointer_cast<VRMLCylinder>(node);
+
+    beginNode("Cylinder", cylinder);
+
+    out << indent << "radius " << cylinder->radius << "\n";
+    out << indent << "height " << cylinder->height << "\n";
+    out << indent << "top " << boolstr(cylinder->top) << "\n";
+    out << indent << "bottom " << boolstr(cylinder->bottom) << "\n";
+    out << indent << "side " << boolstr(cylinder->side) << "\n";
+
+    endNode();
+}
+
+
+void VRMLWriter::writeSphereNode(VRMLNodePtr node)
+{
+    VRMLSpherePtr sphere = static_pointer_cast<VRMLSphere>(node);
+
+    beginNode("Sphere", sphere);
+
+    out << indent << "radius " << sphere->radius << "\n";
+
+    endNode();
+}
+
+
 void VRMLWriter::writeIndexedFaceSetNode(VRMLNodePtr node)
 {
     VRMLIndexedFaceSetPtr faceset = static_pointer_cast<VRMLIndexedFaceSet>(node);
@@ -304,6 +421,99 @@ void VRMLWriter::writeCoordinateNode(VRMLCoordinatePtr coord)
         out << indent << "point\n";
         writeMFValues(coord->point, 1);
     }
+
+    endNode();
+}
+
+
+void VRMLWriter::writeHumanoidNode(VRMLNodePtr node)
+{
+    VRMLHumanoidPtr humanoid = static_pointer_cast<VRMLHumanoid>(node);
+
+    beginNode("Humanoid", humanoid);
+    if(!humanoid->humanoidBody.empty()){
+        out << indent << "humanoidBody [\n";
+        ++indent;
+        for(size_t i=0; i < humanoid->humanoidBody.size(); i++){
+            writeNodeIter(humanoid->humanoidBody[i]);
+        }
+        out << --indent << "]\n";
+    }
+    if(!humanoid->joints.empty()){
+        out << indent << "joints [\n";
+        ++indent;
+        for(size_t i=0; i < humanoid->joints.size(); i++){
+            out << indent << "USE " << humanoid->joints[i]->defName;
+            if (i == humanoid->joints.size() - 1) {
+                out << "\n";
+            } else {
+                out << ",\n";
+            }
+        }
+        out << --indent << "]\n";
+    }
+    if(!humanoid->segments.empty()){
+        out << indent << "segments [\n";
+        ++indent;
+        for(size_t i=0; i < humanoid->segments.size(); i++){
+            out << indent << "USE " << humanoid->segments[i]->defName;
+            if (i == humanoid->segments.size() - 1) {
+                out << "\n";
+            } else {
+                out << ",\n";
+            }
+        }
+        out << --indent << "]\n";
+    }
+    endNode();
+}
+
+
+void VRMLWriter::writeJointNode(VRMLNodePtr node)
+{
+    VRMLJointPtr joint = static_pointer_cast<VRMLJoint>(node);
+
+    beginNode("Joint", joint);
+
+    if (joint->jointId >= 0) {
+        out << indent << "jointId " << joint->jointId << "\n";
+    }
+    out << indent << "jointType \"" << joint->jointType << "\"\n";
+    if (joint->jointType != "free" && joint->jointType != "fixed") {
+        out << indent << "jointAxis " << joint->jointAxis << "\n";
+        out << indent << "llimit\n";
+        writeMFValues(joint->llimit, 1);
+        out << indent << "lvlimit\n";
+        writeMFValues(joint->lvlimit, 1);
+        out << indent << "ulimit\n";
+        writeMFValues(joint->ulimit, 1);
+        out << indent << "uvlimit\n";
+        writeMFValues(joint->uvlimit, 1);
+    }
+    out << indent << "center " << joint->center << "\n";
+    out << indent << "rotation " << joint->rotation << "\n";
+    out << indent << "scale " << joint->scale << "\n";
+    out << indent << "scaleOrientation " << joint->scaleOrientation << "\n";
+    out << indent << "translation " << joint->translation << "\n";
+
+    writeGroupFields(joint);
+
+    endNode();
+}
+
+
+void VRMLWriter::writeSegmentNode(VRMLNodePtr node)
+{
+    VRMLSegmentPtr segment = static_pointer_cast<VRMLSegment>(node);
+
+    beginNode("Segment", segment);
+
+    out << indent << "mass " << segment->mass << "\n";
+    out << indent << "centerOfMass " << segment->centerOfMass << "\n";
+    out << indent << "momentsOfInertia\n";
+    writeMFValues(segment->momentsOfInertia, 3);
+
+    writeGroupFields(segment);
 
     endNode();
 }

@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include <ostream>
+#include <boost/filesystem.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -20,7 +21,10 @@ class CNOID_EXPORT VRMLWriter
 {
 public:
     VRMLWriter(std::ostream& out);
-  
+
+    void setOutFileName(const std::string& ofname) {
+        this->ofname = ofname;
+    };
     void writeHeader();
     bool writeNode(VRMLNodePtr node);
 
@@ -38,6 +42,7 @@ public:
 
 private:
     std::ostream& out;
+    std::string ofname;
 
     TIndent indent;
 
@@ -50,11 +55,20 @@ private:
     void writeGroupNode(VRMLNodePtr node);
     void writeGroupFields(VRMLGroupPtr group);
     void writeTransformNode(VRMLNodePtr node);
+    std::string abstorel(std::string& fname);
+    void writeInlineNode(VRMLNodePtr node);
     void writeShapeNode(VRMLNodePtr node);
     void writeAppearanceNode(VRMLAppearancePtr appearance);
     void writeMaterialNode(VRMLMaterialPtr material);
+    void writeBoxNode(VRMLNodePtr node);
+    void writeConeNode(VRMLNodePtr node);
+    void writeCylinderNode(VRMLNodePtr node);
+    void writeSphereNode(VRMLNodePtr node);
     void writeIndexedFaceSetNode(VRMLNodePtr node);
     void writeCoordinateNode(VRMLCoordinatePtr coord);
+    void writeHumanoidNode(VRMLNodePtr node);
+    void writeJointNode(VRMLNodePtr node);
+    void writeSegmentNode(VRMLNodePtr node);
 
 };
 
