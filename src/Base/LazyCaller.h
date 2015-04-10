@@ -12,6 +12,11 @@ namespace cnoid {
     
 class LazyCallerImpl;
 
+
+/**
+   \note This is not thread safe
+   \todo Make this thread safe so that the function can be called non-main threads
+*/
 class CNOID_EXPORT LazyCaller
 {
     friend class LazyCallerImpl;
@@ -53,6 +58,8 @@ public:
             postCallEvent();
         }
     }
+
+    void cancel();
 
 private:
     void postCallEvent();

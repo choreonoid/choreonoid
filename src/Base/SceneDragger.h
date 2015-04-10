@@ -131,8 +131,12 @@ public:
     void adjustSize(const BoundingBox& bb);
     void setContainerMode(bool on);
     bool isContainerMode() const;
+    void setContentsDragEnabled(bool on);
+    bool isContentsDragEnabled() const;
     void setDraggerAlwaysShown(bool on);
     bool isDraggerAlwaysShown() const;
+    void setDraggerAlwaysHidden(bool on);
+    bool isDraggerAlwaysHidden() const;
 
     TranslationDragger* translationDragger() { return translationDragger_; }
     RotationDragger* rotationDragger() { return rotationDragger_; }
@@ -161,7 +165,9 @@ private:
     RotationDraggerPtr rotationDragger_;
     SceneDragProjector dragProjector;
     bool isContainerMode_;
+    bool isContentsDragEnabled_;
     bool isDraggerAlwaysShown_;
+    bool isDraggerAlwaysHidden_;
     bool isDraggerShown;
     Signal<void()> sigDragStarted_;
     Signal<void()> sigPositionDragged_;

@@ -103,7 +103,7 @@ void exportPyViews()
         .def("sceneWidget", &SceneView::sceneWidget, return_value_policy<reference_existing_object>())
         ;
 
-    class_<TaskView, TaskView*, bases<View>, boost::noncopyable>("TaskView", no_init)
+    class_<TaskView, TaskView*, bases<View, AbstractTaskSequencer>, boost::noncopyable>("TaskView", no_init)
         .def("instance", &TaskView::instance,
                 return_value_policy<reference_existing_object>()).staticmethod("instance")
         .def("addTask", &TaskView::addTask)

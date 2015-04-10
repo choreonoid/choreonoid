@@ -142,7 +142,7 @@ void ImageWidget::paintEvent(QPaintEvent* event)
     //   	painter.drawLine(0,j,r.width(),j);
 
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
     painter.setWorldTransform(transform_);
 
     painter.drawPixmap(0, 0, pixmap_);

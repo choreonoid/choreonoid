@@ -65,9 +65,13 @@ public:
     enum { NO_CURRENT_COMMAND = -2, PRE_COMMAND = -1 };
     int currentCommandIndex;
     boost::optional<int> nextCommandIndex; // -1 means the pre-command
+
+    LazyCaller goToNextCommandLater;
+    
     Signal<void()> sigCurrentCommandChanged;
+    Signal<void()> sigCurrentCommandCanceled;
     bool forceCommandLinkAutomatic;    
-    bool isExecutingCommand;
+    bool isBusy;
     QEventLoop eventLoop;
     bool isPendingCommandCompleted;
     Connection commandConnection;
@@ -83,18 +87,19 @@ public:
     bool setCurrentTask(int index, bool forceUpdate);
     void setCurrentTaskByName(const std::string& name);
     PushButton* getOrCreateCommandButton(int index);
-    void enableCommandButtons(bool on);
+    bool setCurrentCommandIndex(int index);
+    void setBusyState(bool on);
     void setFocusToCommandButton(int commandIndex);
     int getClosestNextPhaseIndex(int phaseIndex);
     int getLoopBackPhaseIndex(int phaseIndex);
     void setPhaseIndex(int index, bool isSuccessivelyCalled);
     void executeCommandSuccessively(int commandIndex);
-    void goToNextCommand();    
+    void setTransitionToNextCommand();    
     void retry();
+    void onCommandButtonClicked(int commandIndex);
     void onNextOrPrevButtonClicked(int direction);
 
     virtual int currentPhaseIndex() const;
-    virtual void setCurrentPhaseIndex(int index);
     virtual void breakSequence();
     virtual void setNextCommand(int commandIndex);
     virtual void setNextPhase(int phaseIndex);
@@ -106,7 +111,7 @@ public:
     virtual void notifyCommandFinish(bool isCompleted);
 
     bool isWaiting() const;
-    bool cancelWaiting();
+    void cancelWaiting(bool doBreak = false);
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
@@ -150,11 +155,13 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     currentPhaseIndex_ = 0;
     currentCommandIndex = NO_CURRENT_COMMAND;
     forceCommandLinkAutomatic = false;
-    isExecutingCommand = false;
+    isBusy = false;
     isNoExecutionMode = false;
+
+    goToNextCommandLater.setPriority(LazyCaller::PRIORITY_NORMAL);
     
     commandTimer.setSingleShot(true);
-    commandTimer.sigTimeout().connect(bind(&TaskViewImpl::cancelWaiting, this));
+    commandTimer.sigTimeout().connect(bind(&TaskViewImpl::cancelWaiting, this, true));
 
     waitTimer.setSingleShot(true);
     waitTimer.sigTimeout().connect(bind(&TaskViewImpl::onWaitTimeout, this));
@@ -175,7 +182,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     cancelButton.setText(_("Cancel"));
     cancelButton.setToolTip(_("Cancel waiting for the command to finish"));
     cancelButton.setEnabled(false);
-    cancelButton.sigClicked().connect(boost::bind(&TaskViewImpl::cancelWaiting, this));
+    cancelButton.sigClicked().connect(boost::bind(&TaskViewImpl::cancelWaiting, this, true));
 
     phaseIndexSpin.setToolTip(_("Phase index"));
     phaseIndexSpin.setSuffix(" / 0");
@@ -352,12 +359,12 @@ bool TaskViewImpl::updateTask(Task* task)
             if(index == currentTaskIndex){
                 TaskPtr oldTask = tasks[index];
                 state = new Mapping();
-                oldTask->storeState(this, *state);
+                oldTask->storeState(self, *state);
             }
             tasks[index] = task;
             if(state){
                 setCurrentTask(index, true);
-                task->restoreState(this, *state);
+                task->restoreState(self, *state);
             }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
@@ -390,6 +397,7 @@ int TaskView::currentTaskIndex() const
 
 bool TaskView::setCurrentTask(int taskIndex)
 {
+    cout << "TaskView::setCurrentTask(" << taskIndex << ")" << endl;
     return impl->setCurrentTask(taskIndex, false);
 }
 
@@ -408,6 +416,7 @@ int TaskView::currentPhaseIndex() const
 
 void TaskView::setCurrentPhase(int phaseIndex)
 {
+    cout << "TaskView::setCurrentPhase(" << phaseIndex << ")" << endl;
     impl->setPhaseIndex(phaseIndex, false);
 }
 
@@ -432,13 +441,25 @@ SignalProxy<void()> TaskView::sigCurrentCommandChanged()
 
 bool TaskView::isBusy() const
 {
-    return impl->isExecutingCommand;
+    return impl->isBusy;
 }
 
 
 SignalProxy<void()> TaskView::sigBusyStateChanged()
 {
     return impl->sigBusyStateChanged;
+}
+
+
+void TaskView::cancelCurrentCommand()
+{
+    impl->cancelWaiting(true);
+}
+
+
+SignalProxy<void()> TaskView::sigCurrentCommandCanceled()
+{
+    return impl->sigCurrentCommandCanceled;
 }
 
 
@@ -450,6 +471,7 @@ bool TaskView::isAutoMode() const
 
 void TaskView::setAutoMode(bool on)
 {
+    cout << "TaskView::setAutoMode(" << on << ")" << endl;
     impl->autoModeToggle.setChecked(on);
 }
 
@@ -474,20 +496,16 @@ bool TaskView::isNoExecutionMode() const
 
 void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 {
+    cout << "TaskView::setCurrentCommand(" << commandIndex << ", " << doExecution << ")" << endl;
+    
     if(impl->currentPhase){
         if(commandIndex < impl->currentPhase->numCommands()){
-            impl->currentCommandIndex = commandIndex;
+            impl->setCurrentCommandIndex(commandIndex);
             if(doExecution){
                 impl->executeCommandSuccessively(commandIndex);
             }
         }
     }
-}
-
-
-void TaskView::blockCommandButtons(bool on)
-{
-    impl->enableCommandButtons(!on);
 }
 
 
@@ -545,7 +563,7 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
         button = commandButtons[commandIndex];
     } else {
         button = new PushButton;
-        button->sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, commandIndex));
+        button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
         if(isVerticalLayout){
             button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
             commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
@@ -564,16 +582,46 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
 }
 
 
-void TaskViewImpl::enableCommandButtons(bool on)
+bool TaskViewImpl::setCurrentCommandIndex(int index)
 {
     for(size_t i=0; i < commandButtons.size(); ++i){
         commandButtons[i]->setDown(false);
-        commandButtons[i]->setEnabled(on);
     }
-    if(!on && (currentCommandIndex >= 0)){
-        commandButtons[currentCommandIndex]->setDown(true);
+    if(isBusy && index >= 0 && index < commandButtons.size()){
+        commandButtons[index]->setDown(true);
     }
-    cancelButton.setEnabled(!on);
+    bool changed = (index != currentCommandIndex);
+    currentCommandIndex = index;
+    return changed;
+}
+    
+
+void TaskView::setBusyState(bool on)
+{
+    impl->setBusyState(on);
+}
+
+
+void TaskViewImpl::setBusyState(bool on)
+{
+    cout << "TaskViewImpl::setBusyState(" << on << ")" << endl;
+    if(on != isBusy){
+        cout << "on != isBusy" << endl;
+        isBusy = on;
+
+        for(size_t i=0; i < commandButtons.size(); ++i){
+            commandButtons[i]->setDown(false);
+            commandButtons[i]->setEnabled(!isBusy);
+        }
+        if(isBusy && currentCommandIndex >= 0 && currentCommandIndex < commandButtons.size()){
+            commandButtons[currentCommandIndex]->setDown(true);
+        }
+        cancelButton.setEnabled(isBusy);
+
+        MessageView::instance()->flush();
+    
+        sigBusyStateChanged();
+    }
 }
 
 
@@ -642,15 +690,11 @@ int TaskViewImpl::getLoopBackPhaseIndex(int phaseIndex)
 }
 
 
-void TaskViewImpl::setCurrentPhaseIndex(int index)
-{
-    setPhaseIndex(index, false);
-}
-
-
 void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
 {
-    cancelWaiting();
+    cout << "TaskViewImpl::setPhaseIndex(" << index << ", " << isSuccessivelyCalled << ")" << endl;
+    
+    cancelWaiting(false);
     
     int numPhases = 0;
     if(currentTask){
@@ -700,7 +744,8 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         for(int i=0; i < numVisibleButtons; ++i){
             PushButton* button = getOrCreateCommandButton(i);
             button->setText(currentPhase->command(i)->caption().c_str());
-            button->setEnabled(true);
+            button->setEnabled(!isBusy);
+            button->setDown(false);
             button->show();
         }
     }
@@ -708,7 +753,6 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
     for(size_t i=numVisibleButtons; i < commandButtons.size(); ++i){
         commandButtons[i]->hide();
     }
-
 
     phaseIndexSpinConnection.block();
     phaseIndexSpin.setRange(0, numPhases);
@@ -728,15 +772,16 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
     if(isSuccessivelyCalled && currentPhase){
         if(nextCommandIndex){
             if(*nextCommandIndex < 0 || autoModeToggle.isChecked()){
-                currentCommandIndex = NO_CURRENT_COMMAND;
+                setCurrentCommandIndex(NO_CURRENT_COMMAND);
                 executeCommandSuccessively(*nextCommandIndex);
                 nextCommandProcessed = true;
             }
         }
     }
     if(!nextCommandProcessed){
+        setBusyState(false);
         bool doEmit = currentCommandIndex >= 0;
-        currentCommandIndex = NO_CURRENT_COMMAND;
+        setCurrentCommandIndex(NO_CURRENT_COMMAND);
         if(doEmit){
             sigCurrentCommandChanged();
         }
@@ -746,7 +791,8 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
 
 void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 {
-    cancelWaiting();
+    cout << "TaskViewImpl::executeCommandSuccessively(" << commandIndex << ")" << endl;
+    cancelWaiting(false);
 
     nextCommandIndex = boost::none;
     
@@ -787,30 +833,35 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 
         setFocusToCommandButton(commandIndex < 0 ? 0 : commandIndex);
         bool doEmit = commandIndex != currentCommandIndex;
-        currentCommandIndex = commandIndex;
-        if(doEmit){
+        
+        if(setCurrentCommandIndex(commandIndex)){
             sigCurrentCommandChanged();
         }
 
         if(commandFunc){
-            isExecutingCommand = true;
-            sigBusyStateChanged();
+            setBusyState(true);
             commandFunc(this);
-            isExecutingCommand = false;
-            sigBusyStateChanged();
         }
 
-        goToNextCommand();
+        setTransitionToNextCommand();
     }
 }
 
 
-void TaskViewImpl::goToNextCommand()
+void TaskViewImpl::setTransitionToNextCommand()
 {
+    cout << "TaskViewImpl::setTransitionToNextCommand()" << endl;
+
+    bool isNextDispatched = false;
+
+    goToNextCommandLater.cancel();
+    
     if(!eventLoop.isRunning()){
         if(nextPhaseIndex && *nextPhaseIndex != currentPhaseIndex_){
             nextCommandIndex = -1;
-            callLater(boost::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
+            goToNextCommandLater.setFunction(boost::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
+            goToNextCommandLater();
+            isNextDispatched = true;
 
         } else {
             if(nextCommandIndex && *nextCommandIndex != currentCommandIndex){
@@ -828,18 +879,22 @@ void TaskViewImpl::goToNextCommand()
                     }
                 }
                 setFocusToCommandButton(index);
-                bool doEmit = index != currentCommandIndex;
-                currentCommandIndex = index;
-                if(doEmit){
+                if(setCurrentCommandIndex(index)){
                     sigCurrentCommandChanged();
                 }
                 if(executeNext){
-                    callLater(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, index));
+                    goToNextCommandLater.setFunction(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, index));
+                    goToNextCommandLater();
+                    isNextDispatched = true;
                 }
             }
         }
     }
     forceCommandLinkAutomatic = false;
+
+    if(!isNextDispatched){
+        setBusyState(false);
+    }
 }
 
 
@@ -851,8 +906,23 @@ void TaskViewImpl::retry()
 }
 
 
+void TaskViewImpl::onCommandButtonClicked(int commandIndex)
+{
+    cout << "TaskViewImpl::onCommandButtonClicked(" << commandIndex << ")" << endl;
+    
+    if(isNoExecutionMode){
+        setCurrentCommandIndex(commandIndex);
+        sigCurrentCommandChanged();
+    } else {
+        executeCommandSuccessively(commandIndex);
+    }
+}
+
+
 void TaskViewImpl::onNextOrPrevButtonClicked(int direction)
 {
+    cout << "TaskViewImpl::onNextOrPrevButtonClicked(" << direction << ")" << endl;
+    
     int index = currentPhaseIndex_ + direction;
     if(currentPhase && index == currentTask->numPhases()){
         index = getLoopBackPhaseIndex(currentPhaseIndex_);
@@ -898,11 +968,11 @@ bool TaskViewImpl::executeCommand(int commandIndex)
             TaskFunc func = command->function();
             if(func){
                 int callerCommandIndex = currentCommandIndex;
-                currentCommandIndex = commandIndex;
+                setCurrentCommandIndex(commandIndex);
                 isPendingCommandCompleted = false;
                 func(this);
                 QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
-                currentCommandIndex = callerCommandIndex;
+                setCurrentCommandIndex(callerCommandIndex);
                 completed = isPendingCommandCompleted;
             }
         }
@@ -915,12 +985,10 @@ bool TaskViewImpl::wait(double sec)
 {
     bool completed = false;
     if(!eventLoop.isRunning()){
-        enableCommandButtons(false);
         waitTimer.start(sec * 1000.0);
         isPendingCommandCompleted = false;
-        eventLoop.exec();
+        eventLoop.exec(QEventLoop::AllEvents);
         completed = isPendingCommandCompleted;
-        enableCommandButtons(true);
     }
     if(!completed){
         breakSequence();
@@ -933,16 +1001,14 @@ bool TaskViewImpl::waitForCommandToFinish(double timeout)
 {
     bool completed = false;
     if(!eventLoop.isRunning()){
-        enableCommandButtons(false);
         isPendingCommandCompleted = false;
         if(timeout > 0.0){
             commandTimer.start(timeout * 1000.0);
         } else {
             commandTimer.stop();
         }
-        eventLoop.exec();
+        eventLoop.exec(QEventLoop::AllEvents);
         completed = isPendingCommandCompleted;
-        enableCommandButtons(true);
     }
     if(!completed){
         breakSequence();
@@ -975,15 +1041,25 @@ bool TaskViewImpl::isWaiting() const
 }
 
 
-bool TaskViewImpl::cancelWaiting()
+void TaskViewImpl::cancelWaiting(bool doBreak)
 {
-    if(eventLoop.isRunning()){
-        autoModeToggle.setChecked(false); // stop the auto mode, too
-        nextPhaseIndex = boost::none;
-        nextCommandIndex = boost::none;
-        return stopWaiting(false);
+    if(isNoExecutionMode){
+        if(doBreak){
+            sigCurrentCommandCanceled();
+        }
+    } else {
+        if(eventLoop.isRunning()){
+            autoModeToggle.setChecked(false); // stop the auto mode, too
+            nextPhaseIndex = boost::none;
+            nextCommandIndex = boost::none;
+            stopWaiting(false);
+        }
+        if(doBreak){
+            goToNextCommandLater.cancel();
+            setBusyState(false);
+            sigCurrentCommandCanceled();
+        }
     }
-    return false;
 }
 
 

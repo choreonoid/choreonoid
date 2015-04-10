@@ -16,13 +16,13 @@
 namespace cnoid {
 
 class Mapping;
+class AbstractTaskSequencer;
 
 class CNOID_EXPORT TaskProc
 {
 public:
     virtual ~TaskProc();
     virtual int currentPhaseIndex() const = 0;
-    virtual void setCurrentPhaseIndex(int index) = 0;
     virtual void breakSequence() = 0;
     virtual void setNextCommand(int commandIndex) = 0;
     virtual void setNextPhase(int phaseIndex) = 0;
@@ -157,8 +157,8 @@ public:
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 
     virtual void onMenuRequest(TaskMenu& menu);
-    virtual bool storeState(TaskProc* proc, Mapping& archive);
-    virtual bool restoreState(TaskProc* proc, const Mapping& archive);
+    virtual bool storeState(AbstractTaskSequencer* sequencer, Mapping& archive);
+    virtual bool restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive);
 
 private:
     std::string name_;
