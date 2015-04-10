@@ -7,6 +7,7 @@
 #define CNOID_BODY_VRML_BODY_LOADER_H_INCLUDED
 
 #include "AbstractBodyLoader.h"
+#include <cnoid/VRML>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -24,6 +25,7 @@ public:
     virtual void enableShapeLoading(bool on);
     virtual void setDefaultDivisionNumber(int n);
     virtual bool load(BodyPtr body, const std::string& filename);
+    virtual VRMLNodePtr retriveOriginalNode(Link* link);
 
 private:
     VRMLBodyLoaderImpl* impl;

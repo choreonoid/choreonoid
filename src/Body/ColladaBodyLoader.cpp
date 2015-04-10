@@ -27,6 +27,7 @@
 #endif
 #include <cnoid/DaeParser>
 #include <cnoid/DaeNode>
+#include <cnoid/FileUtil>
 #include "ColladaBodyLoader.h"
 
 #include "gettext.h"
@@ -69,6 +70,8 @@ public:
     Link*     createLink  (Body& body, string name, bool* duplicate);
     DevicePtr createSensor(DaeSensor* sensor);    
 
+    VRMLNodePtr retriveOriginalNode(Link* link);
+
 protected:
     void throwException(const string& message);
 public:
@@ -80,6 +83,9 @@ protected:
 
     LoaderLinks  links;
     LoaderJoints joints;
+
+    typedef map<Link*, VRMLNode*> LinkOriginalMap;
+    LinkOriginalMap linkOriginalMap;
 };
 
 
@@ -163,12 +169,30 @@ void ColladaBodyLoaderImpl::throwException(const string& message)
 
 void ColladaBodyLoaderImpl::convertToBody(Body& body)
 {
-    if (!parser->findRootLink()) {
-        throwException((format(_("root link not found"))).str());
+    DaeNode* extNode = parser->findRootLink();
+
+    if (!extNode) {
+        SgGroup* scene = parser->createScene(fileName);
+        if(scene){
+            Link* link = body.createLink();
+            link->setName("Root");
+            link->setShape(scene);
+            link->setMass(1.0);
+            link->setInertia(Matrix3::Identity());
+            body.setRootLink(link);
+            body.setModelName(getBasename(fileName));
+            VRMLProtoInstance* proto = new VRMLProtoInstance(new VRMLProto(""));
+            VRMLInlinePtr inl = new VRMLInline();
+            inl->urls.push_back(fileName);
+            MFNode* children = new MFNode();
+            children->push_back(inl);
+            proto->fields["children"] = *children;
+            linkOriginalMap[link] = proto;
+        }
+        return;
     }
 
     int jointId = 0;
-    DaeNode* extNode = parser->findRootLink();
     links.clear();
     joints.clear();
 
@@ -189,6 +213,22 @@ void ColladaBodyLoaderImpl::convertToBody(Body& body)
     buildLinks(extNode, extNode, link, body, jointId);
 
     body.updateLinkTree();
+}
+
+VRMLNodePtr ColladaBodyLoader::retriveOriginalNode(Link* link)
+{
+    return impl->retriveOriginalNode(link);
+}
+
+
+VRMLNodePtr ColladaBodyLoaderImpl::retriveOriginalNode(Link* link)
+{
+    LinkOriginalMap::iterator it;
+    it = linkOriginalMap.find(link);
+    if (it == linkOriginalMap.end()) {
+        return NULL;
+    }
+    return it->second;
 }
 
 

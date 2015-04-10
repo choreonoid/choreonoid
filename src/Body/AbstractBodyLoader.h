@@ -7,6 +7,7 @@
 #define CNOID_BODY_ABSTRACT_BODY_LOADER_H
 
 #include "Body.h"
+#include <cnoid/VRML>
 #include <iosfwd>
 #include "exportdecl.h"
 
@@ -30,6 +31,9 @@ public:
     virtual void setDefaultDivisionNumber(int n);
     virtual void setDefaultCreaseAngle(double theta);
     virtual bool load(BodyPtr body, const std::string& filename) = 0;
+    virtual VRMLNodePtr retriveOriginalNode(Link* link) {
+        return NULL;
+    };
 };
 
 typedef boost::shared_ptr<AbstractBodyLoader> AbstractBodyLoaderPtr;

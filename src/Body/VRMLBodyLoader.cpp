@@ -74,6 +74,9 @@ public:
     typedef map<string, DeviceFactory> DeviceFactoryMap;
     static DeviceFactoryMap deviceFactories;
 
+    typedef map<Link*, VRMLNode*> LinkOriginalMap;
+    static LinkOriginalMap linkOriginalMap;
+
     ostream& os() { return *os_; }
 
     void putVerboseMessage(const std::string& message){
@@ -111,11 +114,14 @@ public:
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
     static SpotLightPtr createSpotLight(VRMLProtoInstance* node);
     void setExtraJoints();
+    VRMLNodePtr retriveOriginalNode(Link* link);
 };
 }
 
 
 VRMLBodyLoaderImpl::DeviceFactoryMap VRMLBodyLoaderImpl::deviceFactories;
+
+VRMLBodyLoaderImpl::LinkOriginalMap VRMLBodyLoaderImpl::linkOriginalMap;
 
 
 namespace {
@@ -907,8 +913,26 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     ProtoIdSet acceptableProtoIds;
     acceptableProtoIds.set(PROTO_DEVICE);
     readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
+
+    linkOriginalMap[iLink.link] = segmentNode;
 }
     
+
+VRMLNodePtr VRMLBodyLoader::retriveOriginalNode(Link* link)
+{
+    return impl->retriveOriginalNode(link);
+}
+
+VRMLNodePtr VRMLBodyLoaderImpl::retriveOriginalNode(Link* link)
+{
+    LinkOriginalMap::iterator it;
+    it = linkOriginalMap.find(link);
+    if (it == linkOriginalMap.end()) {
+        return NULL;
+    }
+    return it->second;
+}
+
 
 void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* deviceNode, const Affine3& T)
 {
