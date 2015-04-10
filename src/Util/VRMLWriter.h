@@ -9,7 +9,7 @@
 #include "VRML.h"
 #include <map>
 #include <string>
-#include <ostream>
+#include <iostream>
 #include <boost/filesystem.hpp>
 #include "exportdecl.h"
 
