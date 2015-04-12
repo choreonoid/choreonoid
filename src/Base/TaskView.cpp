@@ -636,9 +636,8 @@ void TaskViewImpl::setBusyState(bool on)
             commandButtons[currentCommandIndex]->setDown(true);
         }
         cancelButton.setEnabled(isBusy);
-
         MessageView::instance()->flush();
-    
+        
         sigBusyStateChanged();
     }
 }
@@ -819,8 +818,13 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
     cancelWaiting(false);
 
     nextCommandIndex = boost::none;
+
+    setBusyState(true);
     
-    if(currentTask && currentPhase){
+    if(!currentTask || !currentPhase){
+        setBusyState(false);
+        
+    } else {
         nextPhaseIndex = currentPhaseIndex_;
         TaskFunc commandFunc;
         if(commandIndex < 0){
@@ -863,7 +867,6 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
         }
 
         if(commandFunc){
-            setBusyState(true);
             commandFunc(this);
         }
 
@@ -939,6 +942,7 @@ void TaskViewImpl::onCommandButtonClicked(int commandIndex)
     }
     
     if(isNoExecutionMode){
+        setBusyState(true);
         setCurrentCommandIndex(commandIndex);
         sigCurrentCommandChanged();
     } else {
@@ -1075,6 +1079,7 @@ void TaskViewImpl::cancelWaiting(bool doBreak)
 {
     if(isNoExecutionMode){
         if(doBreak){
+            setBusyState(false);
             sigCurrentCommandCanceled();
         }
     } else {
