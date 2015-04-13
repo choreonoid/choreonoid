@@ -82,6 +82,7 @@ public:
     Selection renderingMode;
     bool isEditable_;
     boost::optional<Vector3> attentionPoint;
+    Signal<void()> sigAttentionPointChanged;
     CrossMarkerPtr attentionPointMarker;
 
     ScenePointSet(PointSetItemImpl* pointSetItem);
@@ -90,6 +91,7 @@ public:
     void setPointSize(double size);
     void setVoxelSize(double size);
     void clearAttentionPoint();
+    void setAttentionPoint(const Vector3& point);
     void updateVisualization(bool updateContents);
     void updateVisiblePointSet();
     void updateVoxels();
@@ -308,6 +310,24 @@ boost::optional<Vector3> PointSetItem::attentionPoint() const
 }
 
 
+SignalProxy<void()> PointSetItem::sigAttentionPointChanged()
+{
+    return impl->scenePointSet->sigAttentionPointChanged;
+}
+
+
+void PointSetItem::clearAttentionPoint()
+{
+    impl->scenePointSet->clearAttentionPoint();
+}
+
+
+void PointSetItem::setAttentionPoint(const Vector3& p)
+{
+    impl->scenePointSet->setAttentionPoint(p);
+}
+
+
 void PointSetItem::notifyUpdate()
 {
     impl->scenePointSet->updateVisualization(true);
@@ -426,11 +446,28 @@ void ScenePointSet::setVoxelSize(double size)
 
 void ScenePointSet::clearAttentionPoint()
 {
-    attentionPoint = boost::none;
-    if(attentionPointMarker){
-        removeChild(attentionPointMarker);
-        notifyUpdate();
+    if(attentionPoint){
+        attentionPoint = boost::none;
+        if(attentionPointMarker){
+            removeChild(attentionPointMarker);
+            notifyUpdate();
+        }
+        sigAttentionPointChanged();
     }
+}
+
+
+void ScenePointSet::setAttentionPoint(const Vector3& point)
+{
+    if(!attentionPointMarker){
+        Vector3f color(1.0f, 1.0f, 0.0f);
+        attentionPointMarker = new CrossMarker(0.01, color);
+    }
+    attentionPoint = point;
+    attentionPointMarker->setTranslation(T().inverse() * *attentionPoint);
+    addChildOnce(attentionPointMarker);
+    attentionPointMarker->notifyUpdate();
+    sigAttentionPointChanged();
 }
 
 
@@ -568,17 +605,10 @@ bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
     bool processed = false;
     
     if(event.button() == Qt::LeftButton){
-        if(!attentionPointMarker){
-            Vector3f color(1.0f, 1.0f, 0.0f);
-            attentionPointMarker = new CrossMarker(0.01, color);
-        }
         if(attentionPoint && event.point().isApprox(*attentionPoint, 1.0e-3)){
             clearAttentionPoint();
         } else {
-            attentionPoint = event.point();
-            attentionPointMarker->setTranslation(T().inverse() * *attentionPoint);
-            addChildOnce(attentionPointMarker);
-            attentionPointMarker->notifyUpdate();
+            setAttentionPoint(event.point());
         }
         processed = true;
     }
