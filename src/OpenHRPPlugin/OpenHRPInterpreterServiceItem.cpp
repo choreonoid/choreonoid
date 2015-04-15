@@ -296,18 +296,12 @@ char* InterpreterService_impl::interpret(const char* expr)
     ostream& os = MessageView::instance()->cout();
     int no = counter++;
     
-    os << "InterpreterService_impl::interpret(" << expr << "): No. " << no << endl;
-    
     result.clear();
 
     if(!itemImpl->isScriptItemBackgroundMode || itemImpl->forceMainThreadExecution){
-        os << "callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr));" << endl;
         callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr));
-        os << "Finish callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr)); no " << no << endl;
     } else {
-        os << "interpretMain(expr);" << endl;
         interpretMain(expr);
-        os << "Finish interpretMain(expr); no " << no << endl;
     }
 
     CORBA::String_var ret(result.c_str());
