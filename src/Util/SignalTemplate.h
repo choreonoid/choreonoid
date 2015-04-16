@@ -199,7 +199,7 @@ public:
     }
 
     bool empty() const {
-        return (firstSlot != 0);
+        return (firstSlot == 0);
     }
 
     result_type operator()(CNOID_SIGNAL_PARMS) {
