@@ -50,12 +50,7 @@ public:
 
     PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
     ~PointSetEraser();
-
     void showRectangle(bool on);
-    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const bool isPerspectiveCamera, const Vector3 r[]);
-    template<class ElementContainer>
-    void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
-
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
@@ -124,6 +119,9 @@ public:
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
     bool onEditableChanged(bool on);
+    void removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes);
+    template<class ElementContainer>
+    void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
 };
 
 }
@@ -223,6 +221,12 @@ PointSetItem::~PointSetItem()
 }
 
 
+ItemPtr PointSetItem::doDuplicate() const
+{
+    return new PointSetItem(*this);
+}
+
+
 void PointSetItem::setName(const std::string& name)
 {
     impl->scenePointSet->setName(name);
@@ -234,6 +238,13 @@ void PointSetItem::setName(const std::string& name)
 SgNode* PointSetItem::getScene()
 {
     return impl->scenePointSet;
+}
+
+
+void PointSetItem::notifyUpdate()
+{
+    impl->scenePointSet->updateVisualization(true);
+    Item::notifyUpdate();
 }
 
 
@@ -328,16 +339,114 @@ void PointSetItem::setAttentionPoint(const Vector3& p)
 }
 
 
-void PointSetItem::notifyUpdate()
+void PointSetItem::removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes)
 {
-    impl->scenePointSet->updateVisualization(true);
-    Item::notifyUpdate();
+    impl->removePointsSurroundedByPlanes(n, p, numPlanes);
 }
 
 
-ItemPtr PointSetItem::doDuplicate() const
+void PointSetItemImpl::removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes)
 {
-    return new PointSetItem(*this);
+    vector<int> indicesToRemove;
+    const Affine3 T = scenePointSet->T();
+    SgVertexArray orgPoints(*pointSet->vertices());
+    const int numOrgPoints = orgPoints.size();
+
+    vector<double> d(numPlanes);
+    for(int i=0; i < numPlanes; ++i){
+        d[i] = n[i].dot(p[i]);
+    }
+
+    for(int i=0; i < numOrgPoints; ++i){
+        const Vector3 point = T * orgPoints[i].cast<Vector3::Scalar>();
+        for(int j=0; j < numPlanes; ++j){
+            const double distance = point.dot(n[j]) - d[j];
+            if(distance < 0.0){
+                goto notInRegion;
+            }
+        }
+        indicesToRemove.push_back(i);
+      notInRegion:
+        ;
+    }
+
+    if(!indicesToRemove.empty()){
+        SgVertexArray& points = *pointSet->vertices();
+        points.clear();
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgPoints; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                points.push_back(orgPoints[i]);
+                
+            }
+        }
+        if(pointSet->hasNormals()){
+            removeSubElements(*pointSet->normals(), pointSet->normalIndices(), indicesToRemove);
+        }
+        if(pointSet->hasColors()){
+            removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
+        }
+
+        pointSet->notifyUpdate();
+    }
+}    
+
+
+template<class ElementContainer>
+void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
+{
+    const ElementContainer orgElements(elements);
+    const int numOrgElements = orgElements.size();
+    elements.clear();
+    
+    if(indices.empty()){
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgElements; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                elements.push_back(orgElements[i]);
+            }
+        }
+    } else {
+        const SgIndexArray orgIndices(indices);
+        const int numOrgIndices = orgIndices.size();
+        indices.clear();
+        dynamic_bitset<> elementValidness(numOrgElements);
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgIndices; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                int index = orgIndices[i];
+                elementValidness.set(index);
+                indices.push_back(index);
+            }
+        }
+        vector<int> indexMap(numOrgElements);
+        int newIndex = 0;
+        for(int i=0; i < numOrgElements; ++i){
+            if(elementValidness.test(i)){
+                elements.push_back(orgElements[i]);
+                ++newIndex;
+            }
+            indexMap[i] = newIndex;
+        }
+        for(size_t i=0; i < indices.size(); ++i){
+            indices[i] = indexMap[i];
+        }
+    }
 }
 
 
@@ -679,124 +788,6 @@ void PointSetEraser::showRectangle(bool on)
 }
 
 
-void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const bool isPerspectiveCamera, const Vector3 r[])
-{
-    Vector3 n[4];
-    double d[4];
-
-    if(isPerspectiveCamera){
-    	for(int i=0; i < 4; ++i){
-    		n[i] = (r[(i+1)%4] - c).cross(r[i] - c).normalized();
-    		d[i] = n[i].dot(c);
-    	}
-    }else{		// orthogonal camera
-    	Vector3 c0;
-    	c0 = (r[3]-r[0]).cross(r[1]-r[0]).normalized();
-    	for(int i=0; i<4; i++){
-    		n[i] = (r[(i+1)%4] - r[i]).cross(c0).normalized();
-    		d[i] = n[i].dot(r[i]);
-    	}
-    }
-
-    vector<int> indicesToRemove;
-    SgPointSet* pointSet = pointSetItem->pointSet();
-    const Affine3 T = pointSetItem->offsetPosition();
-    SgVertexArray orgPoints(*pointSet->vertices());
-    const int numOrgPoints = orgPoints.size();
-
-    for(int i=0; i < numOrgPoints; ++i){
-        const Vector3 p = T * orgPoints[i].cast<Vector3::Scalar>();
-        for(int j=0; j < 4; ++j){
-            const double distance = p.dot(n[j]) - d[j];
-            if(distance < 0.0){
-                goto notInRegion;
-            }
-        }
-        indicesToRemove.push_back(i);
-notInRegion:
-        ;
-    }
-
-    if(!indicesToRemove.empty()){
-        SgVertexArray& points = *pointSet->vertices();
-        points.clear();
-        int j = 0;
-        int nextIndexToRemove = indicesToRemove[j++];
-        for(int i=0; i < numOrgPoints; ++i){
-            if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
-                    nextIndexToRemove = indicesToRemove[j++];
-                }
-            } else {
-                points.push_back(orgPoints[i]);
-                
-            }
-        }
-        if(pointSet->hasNormals()){
-            removeSubElements(*pointSet->normals(), pointSet->normalIndices(), indicesToRemove);
-        }
-        if(pointSet->hasColors()){
-            removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
-        }
-
-        pointSet->notifyUpdate();
-    }
-}
-
-
-template<class ElementContainer>
-void PointSetEraser::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
-{
-    const ElementContainer orgElements(elements);
-    const int numOrgElements = orgElements.size();
-    elements.clear();
-    
-    if(indices.empty()){
-        int j = 0;
-        int nextIndexToRemove = indicesToRemove[j++];
-        for(int i=0; i < numOrgElements; ++i){
-            if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
-                    nextIndexToRemove = indicesToRemove[j++];
-                }
-            } else {
-                elements.push_back(orgElements[i]);
-            }
-        }
-    } else {
-        const SgIndexArray orgIndices(indices);
-        const int numOrgIndices = orgIndices.size();
-        indices.clear();
-        dynamic_bitset<> elementValidness(numOrgElements);
-        int j = 0;
-        int nextIndexToRemove = indicesToRemove[j++];
-        for(int i=0; i < numOrgIndices; ++i){
-            if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
-                    nextIndexToRemove = indicesToRemove[j++];
-                }
-            } else {
-                int index = orgIndices[i];
-                elementValidness.set(index);
-                indices.push_back(index);
-            }
-        }
-        vector<int> indexMap(numOrgElements);
-        int newIndex = 0;
-        for(int i=0; i < numOrgElements; ++i){
-            if(elementValidness.test(i)){
-                elements.push_back(orgElements[i]);
-                ++newIndex;
-            }
-            indexMap[i] = newIndex;
-        }
-        for(size_t i=0; i < indices.size(); ++i){
-            indices[i] = indexMap[i];
-        }
-    }
-}
-
-
 void PointSetEraser::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     if(event.sceneWidget()->isEditMode()){
@@ -828,12 +819,20 @@ bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
             event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
             event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
             event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
-        	bool isPerspectiveCamera = false;
+            const Vector3 c = event.currentCameraPosition().translation();
         	SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
-        	if(dynamic_cast<SgPerspectiveCamera*>(camera))
-        		isPerspectiveCamera = true;
-        	removePointSetInRectangle(
-                pointSetItem, event.currentCameraPosition().translation(), isPerspectiveCamera, p);
+            Vector3 n[4];
+        	if(dynamic_cast<SgPerspectiveCamera*>(camera)){
+                for(int i=0; i < 4; ++i){
+                    n[i] = (p[(i + 1) % 4] - c).cross(p[i] - c).normalized();
+                }
+            } else if(dynamic_cast<SgOrthographicCamera*>(camera)){
+                const Vector3 n0 = (p[3] - p[0]).cross(p[1] - p[0]).normalized();
+                for(int i=0; i< 4; ++i){
+                    n[i] = (p[(i + 1) % 4] - p[i]).cross(n0).normalized();
+                }
+            }
+            pointSetItem->removePointsSurroundedByPlanes(n, p, 4);
         }
     }
     showRectangle(false);

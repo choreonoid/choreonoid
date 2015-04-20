@@ -30,6 +30,8 @@ public:
     const SgPointSet* pointSet() const;
     SgPointSet* pointSet();
 
+    virtual void notifyUpdate();
+        
     Affine3& offsetPosition();
     const Affine3& offsetPosition() const;
 
@@ -47,8 +49,8 @@ public:
     void clearAttentionPoint();
     void setAttentionPoint(const Vector3& p);
 
-    virtual void notifyUpdate();
-        
+    void removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes);
+
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
