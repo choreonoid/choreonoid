@@ -34,6 +34,8 @@ set(sources
   JointGraphView.cpp
   LinkGraphView.cpp
   HrpsysFileIO.cpp
+  CollisionSeqItem.cpp
+  CollisionSeqEngine.cpp
   )
 
 set(headers
@@ -54,6 +56,8 @@ set(headers
   EditableSceneBody.h
   exportdecl.h
   gettext.h
+  CollisionSeqItem.h
+  CollisionSeqEngine.h
   )
 
 set(target CnoidBodyPlugin)

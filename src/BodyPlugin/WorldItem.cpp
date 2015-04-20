@@ -166,7 +166,7 @@ const ItemList<BodyItem>& WorldItem::collisionBodyItems() const
 }
 
 
-const std::vector<CollisionLinkPairPtr>& WorldItem::collisions() const
+std::vector<CollisionLinkPairPtr>& WorldItem::collisions() const
 {
     return *impl->collisions;
 }
