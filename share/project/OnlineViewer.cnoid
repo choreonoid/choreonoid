@@ -14,67 +14,21 @@ items:
 views: 
   - 
     id: 0
-    plugin: BalanceStateMonitor
-    class: BalanceStateMonitorView
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: true
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      floorGrid: true
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      camera: 
-        current: Perspective
-        eye: [ 4, 2, 1.5 ]
-        direction: [ -0.888888889, -0.444444444, -0.111111111 ]
-        up: [ -0.0993807989, -0.0496903995, 0.99380799 ]
-        fieldOfView: 0.6978
-        near: 0.01
-        far: 100
-        orthoHeight: 20
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-  - 
-    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 2
+    id: 1
     plugin: Base
     class: ItemTreeView
     mounted: true
   - 
-    id: 3
+    id: 2
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 4
+    id: 3
     plugin: Base
     class: SceneView
     mounted: true
@@ -122,23 +76,14 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 5
-    name: "Task"
-    plugin: Base
-    class: TaskView
-    state: 
-      layoutMode: horizontal
-      isAutoMode: false
-      currentTask: Valve 1
-  - 
-    id: 6
+    id: 4
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 7
+    id: 5
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -151,63 +96,17 @@ views:
       slider: true
       labelOnLeft: true
   - 
-    id: 8
+    id: 6
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
   - 
-    id: 9
+    id: 7
     plugin: Python
     class: PythonConsoleView
     mounted: true
-  - 
-    id: 10
-    plugin: RemoteControlTerminal
-    class: RemoteControlTerminalView
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      floorGrid: true
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      camera: 
-        current: Perspective
-        eye: [ 4, 2, 1.5 ]
-        direction: [ -0.888888889, -0.444444444, -0.111111111 ]
-        up: [ -0.0993807989, -0.0496903995, 0.99380799 ]
-        fieldOfView: 0.6978
-        near: 0.01
-        far: 100
-        orthoHeight: 20
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
 toolbars: 
   "TimeBar": 
     minTime: 0
@@ -278,58 +177,4 @@ Media:
     keepStreamConnection: false
 OpenRTM: 
   "deleteUnmanagedRTCsOnStartingSimulation": false
-viewAreas: 
-  - 
-    type: embedded
-    tabs: true
-    contents: 
-      type: splitter
-      orientation: horizontal
-      sizes: [ 249, 1060 ]
-      children: 
-        - 
-          type: splitter
-          orientation: vertical
-          sizes: [ 414, 414 ]
-          children: 
-            - 
-              type: pane
-              views: [ 2 ]
-              current: 2
-            - 
-              type: pane
-              views: [ 1, 8 ]
-              current: 1
-        - 
-          type: splitter
-          orientation: vertical
-          sizes: [ 591, 237 ]
-          children: 
-            - 
-              type: splitter
-              orientation: horizontal
-              sizes: [ 494, 560 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 6, 7 ]
-                  current: 6
-                - 
-                  type: pane
-                  views: [ 4 ]
-                  current: 4
-            - 
-              type: pane
-              views: [ 3, 9 ]
-              current: 3
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 1 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1051, priority: 2 }
-    - 
-      - { name: "SimulationBar", x: 2, priority: 0 }
-      - { name: "BodyBar", x: 203, priority: 1 }
-      - { name: "KinematicsBar", x: 473, priority: 2 }
+
