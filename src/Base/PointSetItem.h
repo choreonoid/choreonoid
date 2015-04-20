@@ -43,6 +43,9 @@ public:
     bool isEditable() const;
 
     boost::optional<Vector3> attentionPoint() const;
+    SignalProxy<void()> sigAttentionPointChanged();
+    void clearAttentionPoint();
+    void setAttentionPoint(const Vector3& p);
 
     virtual void notifyUpdate();
         

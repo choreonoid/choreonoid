@@ -151,6 +151,7 @@ public:
         return sigDragFinished_;
     }
 
+    bool isDragging() const;
     Affine3 draggedPosition() const;
 
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);

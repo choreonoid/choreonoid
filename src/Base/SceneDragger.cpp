@@ -639,6 +639,14 @@ void PositionDragger::showDragMarkers(bool on)
 }    
 
 
+bool PositionDragger::isDragging() const
+{
+    return (translationDragger_->isDragging() ||
+            rotationDragger_->isDragging() ||
+            dragProjector.isDragging());
+}
+
+
 Affine3 PositionDragger::draggedPosition() const
 {
     if(rotationDragger_->isDragging()){
