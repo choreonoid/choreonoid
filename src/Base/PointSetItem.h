@@ -49,7 +49,31 @@ public:
     void clearAttentionPoint();
     void setAttentionPoint(const Vector3& p);
 
-    void removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes);
+    enum EditType {
+        CUSTOM,
+        REMOVAL
+    };
+
+    class CNOID_EXPORT Region {
+      public:
+        Region();
+        Region(int numSurroundingPlanes);
+        Region(const PointSetItem::Region& org);
+        Region& operator=(const PointSetItem::Region& org);
+        int numSurroundingPlanes() const;
+        void setNumSurroundingPlanes(int n);
+        void addSurroundingPlane(const Vector3& normal, const Vector3& point);
+        Vector3& normal(int index);
+        const Vector3& normal(int index) const;
+        Vector3& point(int index);
+        const Vector3& point(int index) const;
+      private:
+        void* impl;
+    };
+
+    SignalProxy<bool(int editType, const PointSetItem::Region& region), LogicalProduct> sigRegionFixed();
+
+    void removePoints(const PointSetItem::Region& region);
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

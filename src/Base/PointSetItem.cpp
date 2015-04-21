@@ -27,37 +27,17 @@ namespace {
 
 class ScenePointSet;
 
-class RectLineOverlay : public SgOverlay
+typedef Signal<bool(int editType, const PointSetItem::Region& region), LogicalProduct> SigRegionFixed;
+typedef SignalProxy<bool(int editType, const PointSetItem::Region& region), LogicalProduct> SigRegionFixedProxy;
+
+struct RegionImpl
 {
-public:
-    int left, right, top, bottom;
-    SgVertexArrayPtr vertices;
-    RectLineOverlay();
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
-    void setRect(int x0, int y0, int x1, int y1);
+    RegionImpl() { }
+    RegionImpl(int n) : normals(n), points(n) { }
+    vector<Vector3> normals;
+    vector<Vector3> points;
 };
-
-typedef ref_ptr<RectLineOverlay> RectLineOverlayPtr;
-
-
-class PointSetEraser : public SceneWidgetEditable, public Referenced
-{
-public:
-    weak_ref_ptr<PointSetItem> weakPointSetItem;
-    SceneWidget* sceneWidget;
-    RectLineOverlayPtr rect;
-    int x0, y0;
-
-    PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
-    ~PointSetEraser();
-    void showRectangle(bool on);
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-};
-
+    
 
 enum RenderingMode {
     POINT_MODE, VOXEL_MODE, N_RENDERING_MODES
@@ -79,6 +59,7 @@ public:
     boost::optional<Vector3> attentionPoint;
     Signal<void()> sigAttentionPointChanged;
     CrossMarkerPtr attentionPointMarker;
+    SigRegionFixed sigRegionFixed;
 
     ScenePointSet(PointSetItemImpl* pointSetItem);
 
@@ -103,11 +84,45 @@ public:
 
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
 
+
+class RectLineOverlay : public SgOverlay
+{
+public:
+    int left, right, top, bottom;
+    SgVertexArrayPtr vertices;
+    RectLineOverlay();
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
+    void setRect(int x0, int y0, int x1, int y1);
+};
+
+typedef ref_ptr<RectLineOverlay> RectLineOverlayPtr;
+
+
+class PointSetEraser : public SceneWidgetEditable, public Referenced
+{
+public:
+    ScenePointSet* scenePointSet;
+    weak_ref_ptr<PointSetItem> weakPointSetItem;
+    SceneWidget* sceneWidget;
+    RectLineOverlayPtr rect;
+    int x0, y0;
+
+    PointSetEraser(ScenePointSet* scenePointSet, weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
+    ~PointSetEraser();
+    void showRectangle(bool on);
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
+    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+};
+
+
 }
 
 
 namespace cnoid {
-        
+
 class PointSetItemImpl
 {
 public:
@@ -119,7 +134,7 @@ public:
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
     bool onEditableChanged(bool on);
-    void removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes);
+    void removePoints(const PointSetItem::Region& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
 };
@@ -339,28 +354,118 @@ void PointSetItem::setAttentionPoint(const Vector3& p)
 }
 
 
-void PointSetItem::removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes)
+PointSetItem::Region::Region()
 {
-    impl->removePointsSurroundedByPlanes(n, p, numPlanes);
+    impl = new RegionImpl;
 }
 
 
-void PointSetItemImpl::removePointsSurroundedByPlanes(const Vector3 n[], const Vector3 p[], size_t numPlanes)
+PointSetItem::Region::Region(int numSurroundingPlanes)
+{
+    impl = new RegionImpl(numSurroundingPlanes);
+}
+    
+
+PointSetItem::Region::Region(const PointSetItem::Region& org)
+{
+    RegionImpl* p = new RegionImpl;
+    RegionImpl* orgImpl = (RegionImpl*)(org.impl);
+    p->normals = orgImpl->normals;
+    p->points = orgImpl->points;
+    impl = p;
+}
+
+
+PointSetItem::Region& PointSetItem::Region::operator=(const PointSetItem::Region& org)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    RegionImpl* orgImpl = (RegionImpl*)(org.impl);
+    p->normals = orgImpl->normals;
+    p->points = orgImpl->points;
+    return *this;
+}
+
+
+void PointSetItem::Region::setNumSurroundingPlanes(int n)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    p->normals.resize(n);
+    p->points.resize(n);
+}
+
+
+int PointSetItem::Region::numSurroundingPlanes() const
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->normals.size();
+}
+
+    
+void PointSetItem::Region::addSurroundingPlane(const Vector3& normal, const Vector3& point)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    p->normals.push_back(normal);
+    p->points.push_back(point);
+}
+
+
+Vector3& PointSetItem::Region::normal(int index)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->normals[index];
+}
+
+
+const Vector3& PointSetItem::Region::normal(int index) const
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->normals[index];
+}
+
+
+Vector3& PointSetItem::Region::point(int index)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->points[index];
+}
+
+
+const Vector3& PointSetItem::Region::point(int index) const
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->points[index];
+}
+
+
+SigRegionFixedProxy PointSetItem::sigRegionFixed()
+{
+    return impl->scenePointSet->sigRegionFixed;
+}
+
+
+void PointSetItem::removePoints(const PointSetItem::Region& region)
+{
+    impl->removePoints(region);
+}
+
+
+void PointSetItemImpl::removePoints(const PointSetItem::Region& region)
 {
     vector<int> indicesToRemove;
     const Affine3 T = scenePointSet->T();
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
+    const int numPlanes = region.numSurroundingPlanes();
     vector<double> d(numPlanes);
     for(int i=0; i < numPlanes; ++i){
-        d[i] = n[i].dot(p[i]);
+        d[i] = region.normal(i).dot(region.point(i));
     }
 
     for(int i=0; i < numOrgPoints; ++i){
         const Vector3 point = T * orgPoints[i].cast<Vector3::Scalar>();
         for(int j=0; j < numPlanes; ++j){
-            const double distance = point.dot(n[j]) - d[j];
+            const double distance = point.dot(region.normal(j)) - d[j];
             if(distance < 0.0){
                 goto notInRegion;
             }
@@ -754,14 +859,15 @@ void ScenePointSet::onSceneModeChanged(const SceneWidgetEvent& event)
 void ScenePointSet::startEraserMode(SceneWidget* sceneWidget)
 {
     if(!weakPointSetItem.expired()){
-        sceneWidget->installEventFilter(new PointSetEraser(weakPointSetItem, sceneWidget));
+        sceneWidget->installEventFilter(new PointSetEraser(this, weakPointSetItem, sceneWidget));
     }
 }
 
 
-PointSetEraser::PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
-  : weakPointSetItem(weakPointSetItem),
-    sceneWidget(sceneWidget)
+PointSetEraser::PointSetEraser(ScenePointSet* scenePointSet, weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
+    : scenePointSet(scenePointSet),
+      weakPointSetItem(weakPointSetItem),
+      sceneWidget(sceneWidget)
 {
     rect = new RectLineOverlay;
     onSceneModeChanged(sceneWidget->latestEvent());
@@ -814,25 +920,28 @@ bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
     PointSetItemPtr pointSetItem = weakPointSetItem.lock();
     if(pointSetItem){
         if(rect->left < rect->right && rect->bottom < rect->top){
-            Vector3 p[4];
-            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p[0]);
-            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
-            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
-            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
+            PointSetItem::Region r(4);
+            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, r.point(0));
+            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, r.point(1));
+            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, r.point(2));
+            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, r.point(3));
             const Vector3 c = event.currentCameraPosition().translation();
         	SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
-            Vector3 n[4];
         	if(dynamic_cast<SgPerspectiveCamera*>(camera)){
                 for(int i=0; i < 4; ++i){
-                    n[i] = (p[(i + 1) % 4] - c).cross(p[i] - c).normalized();
+                    r.normal(i) = (r.point((i + 1) % 4) - c).cross(r.point(i) - c).normalized();
                 }
             } else if(dynamic_cast<SgOrthographicCamera*>(camera)){
-                const Vector3 n0 = (p[3] - p[0]).cross(p[1] - p[0]).normalized();
+                const Vector3 n0 = (r.point(3) - r.point(0)).cross(r.point(1) - r.point(0)).normalized();
                 for(int i=0; i< 4; ++i){
-                    n[i] = (p[(i + 1) % 4] - p[i]).cross(n0).normalized();
+                    r.normal(i) = (r.point((i + 1) % 4) - r.point(i)).cross(n0).normalized();
                 }
             }
-            pointSetItem->removePointsSurroundedByPlanes(n, p, 4);
+
+            SigRegionFixed& signal = scenePointSet->sigRegionFixed;
+            if(signal.empty() || signal(PointSetItem::REMOVAL, r)){
+                pointSetItem->removePoints(r);
+            }
         }
     }
     showRectangle(false);
