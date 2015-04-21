@@ -402,7 +402,6 @@ private:
     SignalType* signal;
 };
 
-
 } // namespace cnoid;
 
 #endif

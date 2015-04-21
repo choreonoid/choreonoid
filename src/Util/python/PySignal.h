@@ -99,10 +99,10 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
 
 
 template<int Arity, typename Signature, typename Combiner>
-class py_signal_proxy_impl;
+class py_signal_impl;
 
 template<typename Signature, typename Combiner>
-class py_signal_proxy_impl<0, Signature, Combiner>
+class py_signal_impl<0, Signature, Combiner>
 {
     typedef boost::function_traits<Signature> traits;
 public:
@@ -110,7 +110,7 @@ public:
 };
 
 template<typename Signature, typename Combiner>
-class py_signal_proxy_impl<1, Signature, Combiner>
+class py_signal_impl<1, Signature, Combiner>
 {
     typedef boost::function_traits<Signature> traits;
 public:
@@ -119,7 +119,7 @@ public:
 };
 
 template<typename Signature, typename Combiner>
-class py_signal_proxy_impl<2, Signature, Combiner>
+class py_signal_impl<2, Signature, Combiner>
 {
     typedef boost::function_traits<Signature> traits;
 public:
@@ -134,10 +134,10 @@ template<
     typename Signature, 
     typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
     >
-class PySignalProxy : public signal_private::py_signal_proxy_impl<
+class PySignalProxy : public signal_private::py_signal_impl<
     (boost::function_traits<Signature>::arity), Signature, Combiner>
 {
-    typedef signal_private::py_signal_proxy_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
+    typedef signal_private::py_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
     
     static Connection connect(SignalProxy<Signature, Combiner>& self, boost::python::object func){
         return self.connect(typename base_type::caller(func));
@@ -146,6 +146,33 @@ public:
     PySignalProxy(const char* name) {
         boost::python::class_< SignalProxy<Signature, Combiner> >(name)
             .def("connect", &PySignalProxy::connect);
+    }
+};
+
+
+template<
+    typename Signature, 
+    typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
+    >
+class PySignal : public signal_private::py_signal_impl<
+    (boost::function_traits<Signature>::arity), Signature, Combiner>
+{
+    typedef signal_private::py_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
+    
+    static Connection connect(Signal<Signature, Combiner>& self, boost::python::object func){
+        return self.connect(typename base_type::caller(func));
+    }
+    static Connection connectProxy(SignalProxy<Signature, Combiner>& self, boost::python::object func){
+        return self.connect(typename base_type::caller(func));
+    }
+public:
+    PySignal(const char* name) {
+
+        boost::python::class_< Signal<Signature, Combiner>, boost::noncopyable >(name)
+            .def("connect", &PySignal::connect);
+
+        boost::python::class_< SignalProxy<Signature, Combiner> >((std::string(name) + "Proxy").c_str())
+            .def("connect", &PySignal::connectProxy);
     }
 };
 
