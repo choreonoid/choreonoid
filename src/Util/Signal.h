@@ -343,6 +343,36 @@ struct signal_traits< boost::signal<Signature, Combiner, Group, GroupCompare, Sl
 */
 
 
+class LogicalProduct
+{
+public:
+    typedef bool result_type;
+    template<typename InputIterator>
+    bool operator()(InputIterator first, InputIterator last) const {
+        bool result = true;
+        while(first != last){
+            result &= *first++;
+        }
+        return result;
+    }
+};
+
+
+class LogicalSum
+{
+public:
+    typedef bool result_type;
+    template<typename InputIterator>
+    bool operator()(InputIterator first, InputIterator last) const {
+        bool result = false;
+        while(first != last){
+            result |= *first++;
+        }
+        return result;
+    }
+};
+
+
 template<
     typename Signature,
     typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
