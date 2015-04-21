@@ -115,7 +115,7 @@ ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self)
     scriptItem = 0;
     isScriptItemBackgroundMode = false;
     forceMainThreadExecution = false;
-    doPutScriptTextToInterpret = true;
+    doPutScriptTextToInterpret = false;
 }
 
 
