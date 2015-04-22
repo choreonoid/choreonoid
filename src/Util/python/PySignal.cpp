@@ -30,8 +30,8 @@ namespace cnoid {
 void exportPySignalTypes()
 {
     PySignal<void()>("VoidSignal");
-    PySignal<void()>("VoidSignal");
     PySignal<void(bool)>("BoolSignal");
+    PySignal<void(int)>("IntSignal");
     PySignal<void(double)>("DoubleSignal");
     PySignal<void(const std::string& str)>("StringSignal");
 
