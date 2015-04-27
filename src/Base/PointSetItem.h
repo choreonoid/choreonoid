@@ -44,10 +44,16 @@ public:
     void setEditable(bool on);
     bool isEditable() const;
 
-    boost::optional<Vector3> attentionPoint() const;
-    SignalProxy<void()> sigAttentionPointChanged();
-    void clearAttentionPoint();
-    void setAttentionPoint(const Vector3& p);
+    int numAttentionPoints() const;
+    Vector3 attentionPoint(int index) const;
+    void clearAttentionPoints();
+    void addAttentionPoint(const Vector3& p);
+    SignalProxy<void()> sigAttentionPointsChanged();
+    
+    boost::optional<Vector3> attentionPoint() const; // deprecated
+    SignalProxy<void()> sigAttentionPointChanged();  // deprecated
+    void clearAttentionPoint();  // deprecated
+    void setAttentionPoint(const Vector3& p);  // deprecated
 
     enum EditType {
         CUSTOM,
