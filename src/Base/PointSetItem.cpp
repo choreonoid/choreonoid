@@ -70,9 +70,10 @@ public:
     int numAttentionPoints() const;
     Vector3 attentionPoint(int index) const;
     void clearAttentionPoints(bool doNotify);
-    void addAttentionPoint(const Vector3& point);
-    void setAttentionPoint(const Vector3& p);
-    bool removeAttentionPoint(const Vector3& point, double distanceThresh);
+    void addAttentionPoint(const Vector3& point, bool doNotify);
+    void setAttentionPoint(const Vector3& p, bool doNotify);
+    bool removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify);
+    void notifyAttentionPointChange();
     void updateVisualization(bool updateContents);
     void updateVisiblePointSet();
     void updateVoxels();
@@ -349,13 +350,13 @@ Vector3 PointSetItem::attentionPoint(int index) const
     
 void PointSetItem::clearAttentionPoints()
 {
-    impl->scenePointSet->clearAttentionPoints(true);
+    impl->scenePointSet->clearAttentionPoints(false);
 }
 
 
 void PointSetItem::addAttentionPoint(const Vector3& p)
 {
-    impl->scenePointSet->addAttentionPoint(p);
+    impl->scenePointSet->addAttentionPoint(p, false);
 }
 
 
@@ -376,19 +377,25 @@ boost::optional<Vector3> PointSetItem::attentionPoint() const
 
 void PointSetItem::clearAttentionPoint()
 {
-    impl->scenePointSet->clearAttentionPoints(true);
+    impl->scenePointSet->clearAttentionPoints(false);
 }
 
 
 void PointSetItem::setAttentionPoint(const Vector3& p)
 {
-    impl->scenePointSet->setAttentionPoint(p);
+    impl->scenePointSet->setAttentionPoint(p, false);
 }
 
 
 SignalProxy<void()> PointSetItem::sigAttentionPointChanged()
 {
     return impl->scenePointSet->sigAttentionPointsChanged;
+}
+
+
+void PointSetItem::notifyAttentionPointChange()
+{
+    impl->scenePointSet->notifyAttentionPointChange();
 }
 
 
@@ -720,14 +727,14 @@ void ScenePointSet::clearAttentionPoints(bool doNotify)
         if(!attentionPointMarkerGroup->empty()){
             attentionPointMarkerGroup->clearChildren();
             if(doNotify){
-                sigAttentionPointsChanged();
+                notifyAttentionPointChange();
             }
         }
     }
 }
 
 
-void ScenePointSet::addAttentionPoint(const Vector3& point)
+void ScenePointSet::addAttentionPoint(const Vector3& point, bool doNotify)
 {
     if(!attentionPointMarkerGroup){
         attentionPointMarkerGroup = new SgGroup;
@@ -737,19 +744,22 @@ void ScenePointSet::addAttentionPoint(const Vector3& point)
     Vector3f color(1.0f, 1.0f, 0.0f);
     CrossMarker* marker = new CrossMarker(0.02, color);
     marker->setTranslation(T().inverse() * point);
-    attentionPointMarkerGroup->addChild(marker, true);
-    sigAttentionPointsChanged();
+    attentionPointMarkerGroup->addChild(marker);
+
+    if(doNotify){
+        notifyAttentionPointChange();
+    }
 }
 
 
-void ScenePointSet::setAttentionPoint(const Vector3& p)
+void ScenePointSet::setAttentionPoint(const Vector3& p, bool doNotify)
 {
     clearAttentionPoints(false);
-    addAttentionPoint(p);
+    addAttentionPoint(p, doNotify);
 }
 
 
-bool ScenePointSet::removeAttentionPoint(const Vector3& point, double distanceThresh)
+bool ScenePointSet::removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify)
 {
     bool removed = false;
     if(attentionPointMarkerGroup){
@@ -764,11 +774,19 @@ bool ScenePointSet::removeAttentionPoint(const Vector3& point, double distanceTh
             }
         }
         if(removed){
-            notifyUpdate();
-            sigAttentionPointsChanged();
+            if(doNotify){
+                notifyAttentionPointChange();
+            }
         }
     }
     return removed;
+}
+
+
+void ScenePointSet::notifyAttentionPointChange()
+{
+    attentionPointMarkerGroup->notifyUpdate();
+    sigAttentionPointsChanged();
 }
 
 
@@ -905,11 +923,11 @@ bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
     
     if(event.button() == Qt::LeftButton){
         if(event.modifiers() & Qt::ControlModifier){
-            if(!removeAttentionPoint(event.point(), 0.01)){
-                addAttentionPoint(event.point());
+            if(!removeAttentionPoint(event.point(), 0.01, true)){
+                addAttentionPoint(event.point(), true);
             }
         } else {
-            setAttentionPoint(event.point());
+            setAttentionPoint(event.point(), true);
         }
         processed = true;
     }

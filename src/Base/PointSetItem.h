@@ -49,6 +49,7 @@ public:
     void clearAttentionPoints();
     void addAttentionPoint(const Vector3& p);
     SignalProxy<void()> sigAttentionPointsChanged();
+    void notifyAttentionPointChange();
     
     boost::optional<Vector3> attentionPoint() const; // deprecated
     SignalProxy<void()> sigAttentionPointChanged();  // deprecated
