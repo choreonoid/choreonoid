@@ -785,7 +785,9 @@ bool ScenePointSet::removeAttentionPoint(const Vector3& point, double distanceTh
 
 void ScenePointSet::notifyAttentionPointChange()
 {
-    attentionPointMarkerGroup->notifyUpdate();
+    if(attentionPointMarkerGroup){
+        attentionPointMarkerGroup->notifyUpdate();
+    }
     sigAttentionPointsChanged();
 }
 
