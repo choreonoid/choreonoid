@@ -92,8 +92,8 @@ void exportPyToolBars()
             .def("setFillLevelSync", &TimeBar::setFillLevelSync)
             ;
 
-        PySignalProxy<bool(double time), TimeBar::LogicalProduct>("SigPlaybackInitialized");
-        PySignalProxy<bool(double time), TimeBar::LogicalSum>("SigTimeChanged");
+        PySignal<bool(double time), LogicalProduct>("SigPlaybackInitialized");
+        PySignal<bool(double time), LogicalSum>("SigTimeChanged");
     }
 }
 

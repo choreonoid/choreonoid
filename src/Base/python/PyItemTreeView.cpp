@@ -56,8 +56,8 @@ namespace cnoid {
 
 void exportPyItemTreeView()
 {
-    PySignalProxy<void(const ItemList<>&)>("ItemListSignal");
-    PySignalProxy<void(Item* item, bool isChecked)>("ItemBoolSignal");
+    PySignal<void(const ItemList<>&)>("ItemListSignal");
+    PySignal<void(Item* item, bool isChecked)>("ItemBoolSignal");
     
     class_<ItemTreeView, ItemTreeView*, bases<View>, boost::noncopyable>("ItemTreeView", no_init)
         .def("instance", &ItemTreeView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")

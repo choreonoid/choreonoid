@@ -120,6 +120,9 @@ private:
     SlotHolderPtr firstSlot;
     SlotHolderType* lastSlot;
 
+    CNOID_SIGNAL_SIGNAL(const CNOID_SIGNAL_SIGNAL& org);
+    CNOID_SIGNAL_SIGNAL& operator=(const CNOID_SIGNAL_SIGNAL& rhs);
+
 public:
     CNOID_SIGNAL_SIGNAL() : lastSlot(0) { }
 

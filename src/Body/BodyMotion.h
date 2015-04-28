@@ -136,7 +136,7 @@ typedef boost::shared_ptr<BodyMotion> BodyMotionPtr;
 class Body;
 
 CNOID_EXPORT BodyMotion::Frame& operator<<(const BodyMotion::Frame& frame, const Body& body);
-CNOID_EXPORT BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, const Body& body);
+CNOID_EXPORT BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, Body& body);
 }
 
 #endif

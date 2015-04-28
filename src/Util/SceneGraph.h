@@ -159,10 +159,10 @@ public:
 class CNOID_EXPORT SgGroup : public SgNode
 {
     typedef std::vector<SgNodePtr> Container;
-    typedef Container::iterator iterator;
-    typedef Container::reverse_iterator reverse_iterator;
         
 public:
+    typedef Container::iterator iterator;
+    typedef Container::reverse_iterator reverse_iterator;
     typedef Container::const_iterator const_iterator;
     typedef Container::const_reverse_iterator const_reverse_iterator;
 
@@ -186,11 +186,17 @@ public:
         
     void invalidateBoundingBox() { isBboxCacheValid = false; }
 
+    iterator begin() { return children.begin(); }
+    iterator end() { return children.end(); }
+    reverse_iterator rbegin() { return children.rbegin(); }
+    reverse_iterator rend() { return children.rend(); }
+
     const_iterator begin() const { return children.begin(); }
     const_iterator end() const { return children.end(); }
-
     const_reverse_iterator rbegin() const { return children.rbegin(); }
     const_reverse_iterator rend() const { return children.rend(); }
+
+    iterator erase(iterator pos) { return children.erase(pos); }
 
     bool contains(SgNode* node) const;
 

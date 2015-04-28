@@ -226,9 +226,9 @@ public:
     double fillLevel;
     bool isFillLevelActive;
 
-    Signal<bool(double time), TimeBar::LogicalProduct> sigPlaybackInitialized;
+    Signal<bool(double time), LogicalProduct> sigPlaybackInitialized;
     Signal<void(double time)> sigPlaybackStarted;
-    Signal<bool(double time), TimeBar::LogicalSum> sigTimeChanged;
+    Signal<bool(double time), LogicalSum> sigTimeChanged;
     Signal<void(double time, bool isStoppedManually)> sigPlaybackStopped;
 };
 }
@@ -351,7 +351,7 @@ TimeBarImpl::~TimeBarImpl()
 }
 
 
-SignalProxy<bool(double time), TimeBar::LogicalProduct> TimeBar::sigPlaybackInitialized()
+SignalProxy<bool(double time), LogicalProduct> TimeBar::sigPlaybackInitialized()
 {
     return impl->sigPlaybackInitialized;
 }
@@ -370,7 +370,7 @@ SignalProxy<void(double time)> TimeBar::sigPlaybackStarted()
    and return false if the time is not valid. The example of the latter case is that
    the time is over the length of the data processed in the function.
 */
-SignalProxy<bool(double time), TimeBar::LogicalSum> TimeBar::sigTimeChanged()
+SignalProxy<bool(double time), LogicalSum> TimeBar::sigTimeChanged()
 {
     return impl->sigTimeChanged;
 }

@@ -11,6 +11,18 @@ using namespace std;
 using namespace cnoid;
 
 
+BodyState::BodyState()
+{
+
+}
+
+
+BodyState::BodyState(const Body& body)
+{
+    storePositions(body);
+}
+
+
 void BodyState::setRootLinkPosition(const Position& T)
 {
     Data& p = data(LINK_POSITIONS);

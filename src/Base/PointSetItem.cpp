@@ -27,42 +27,17 @@ namespace {
 
 class ScenePointSet;
 
-class RectLineOverlay : public SgOverlay
+typedef Signal<bool(int editType, const PointSetItem::Region& region), LogicalProduct> SigRegionFixed;
+typedef SignalProxy<bool(int editType, const PointSetItem::Region& region), LogicalProduct> SigRegionFixedProxy;
+
+struct RegionImpl
 {
-public:
-    int left, right, top, bottom;
-    SgVertexArrayPtr vertices;
-    RectLineOverlay();
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
-    void setRect(int x0, int y0, int x1, int y1);
+    RegionImpl() { }
+    RegionImpl(int n) : normals(n), points(n) { }
+    vector<Vector3> normals;
+    vector<Vector3> points;
 };
-
-typedef ref_ptr<RectLineOverlay> RectLineOverlayPtr;
-
-
-class PointSetEraser : public SceneWidgetEditable, public Referenced
-{
-public:
-    weak_ref_ptr<PointSetItem> weakPointSetItem;
-    SceneWidget* sceneWidget;
-    RectLineOverlayPtr rect;
-    int x0, y0;
-
-    PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
-    ~PointSetEraser();
-
-    void showRectangle(bool on);
-    void removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const bool isPerspectiveCamera, const Vector3 r[]);
-    template<class ElementContainer>
-    void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
-
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-};
-
+    
 
 enum RenderingMode {
     POINT_MODE, VOXEL_MODE, N_RENDERING_MODES
@@ -81,17 +56,24 @@ public:
     SgInvariantGroupPtr invariant;
     Selection renderingMode;
     bool isEditable_;
-    boost::optional<Vector3> attentionPoint;
-    Signal<void()> sigAttentionPointChanged;
-    CrossMarkerPtr attentionPointMarker;
+
+    Signal<void()> sigAttentionPointsChanged;
+    SgGroupPtr attentionPointMarkerGroup;
+    
+    SigRegionFixed sigRegionFixed;
 
     ScenePointSet(PointSetItemImpl* pointSetItem);
 
     bool setRenderingMode(int mode);
     void setPointSize(double size);
     void setVoxelSize(double size);
-    void clearAttentionPoint();
-    void setAttentionPoint(const Vector3& point);
+    int numAttentionPoints() const;
+    Vector3 attentionPoint(int index) const;
+    void clearAttentionPoints(bool doNotify);
+    void addAttentionPoint(const Vector3& point, bool doNotify);
+    void setAttentionPoint(const Vector3& p, bool doNotify);
+    bool removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify);
+    void notifyAttentionPointChange();
     void updateVisualization(bool updateContents);
     void updateVisiblePointSet();
     void updateVoxels();
@@ -108,11 +90,45 @@ public:
 
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
 
+
+class RectLineOverlay : public SgOverlay
+{
+public:
+    int left, right, top, bottom;
+    SgVertexArrayPtr vertices;
+    RectLineOverlay();
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
+    void setRect(int x0, int y0, int x1, int y1);
+};
+
+typedef ref_ptr<RectLineOverlay> RectLineOverlayPtr;
+
+
+class PointSetEraser : public SceneWidgetEditable, public Referenced
+{
+public:
+    ScenePointSet* scenePointSet;
+    weak_ref_ptr<PointSetItem> weakPointSetItem;
+    SceneWidget* sceneWidget;
+    RectLineOverlayPtr rect;
+    int x0, y0;
+
+    PointSetEraser(ScenePointSet* scenePointSet, weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
+    ~PointSetEraser();
+    void showRectangle(bool on);
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
+    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+};
+
+
 }
 
 
 namespace cnoid {
-        
+
 class PointSetItemImpl
 {
 public:
@@ -124,6 +140,9 @@ public:
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
     bool onEditableChanged(bool on);
+    void removePoints(const PointSetItem::Region& region);
+    template<class ElementContainer>
+    void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
 };
 
 }
@@ -223,6 +242,12 @@ PointSetItem::~PointSetItem()
 }
 
 
+ItemPtr PointSetItem::doDuplicate() const
+{
+    return new PointSetItem(*this);
+}
+
+
 void PointSetItem::setName(const std::string& name)
 {
     impl->scenePointSet->setName(name);
@@ -234,6 +259,13 @@ void PointSetItem::setName(const std::string& name)
 SgNode* PointSetItem::getScene()
 {
     return impl->scenePointSet;
+}
+
+
+void PointSetItem::notifyUpdate()
+{
+    impl->scenePointSet->updateVisualization(true);
+    Item::notifyUpdate();
 }
 
 
@@ -304,40 +336,267 @@ bool PointSetItemImpl::onEditableChanged(bool on)
 }
 
 
-boost::optional<Vector3> PointSetItem::attentionPoint() const
+int PointSetItem::numAttentionPoints() const
 {
-    return impl->scenePointSet->attentionPoint;
+    return impl->scenePointSet->numAttentionPoints();
 }
 
 
-SignalProxy<void()> PointSetItem::sigAttentionPointChanged()
+Vector3 PointSetItem::attentionPoint(int index) const
 {
-    return impl->scenePointSet->sigAttentionPointChanged;
+    return impl->scenePointSet->attentionPoint(index);
+}
+        
+    
+void PointSetItem::clearAttentionPoints()
+{
+    impl->scenePointSet->clearAttentionPoints(false);
+}
+
+
+void PointSetItem::addAttentionPoint(const Vector3& p)
+{
+    impl->scenePointSet->addAttentionPoint(p, false);
+}
+
+
+SignalProxy<void()> PointSetItem::sigAttentionPointsChanged()
+{
+    return impl->scenePointSet->sigAttentionPointsChanged;
+}
+
+
+boost::optional<Vector3> PointSetItem::attentionPoint() const
+{
+    if(numAttentionPoints() == 1){
+        return attentionPoint(0);
+    }
+    return boost::none;
 }
 
 
 void PointSetItem::clearAttentionPoint()
 {
-    impl->scenePointSet->clearAttentionPoint();
+    impl->scenePointSet->clearAttentionPoints(false);
 }
 
 
 void PointSetItem::setAttentionPoint(const Vector3& p)
 {
-    impl->scenePointSet->setAttentionPoint(p);
+    impl->scenePointSet->setAttentionPoint(p, false);
 }
 
 
-void PointSetItem::notifyUpdate()
+SignalProxy<void()> PointSetItem::sigAttentionPointChanged()
 {
-    impl->scenePointSet->updateVisualization(true);
-    Item::notifyUpdate();
+    return impl->scenePointSet->sigAttentionPointsChanged;
 }
 
 
-ItemPtr PointSetItem::doDuplicate() const
+void PointSetItem::notifyAttentionPointChange()
 {
-    return new PointSetItem(*this);
+    impl->scenePointSet->notifyAttentionPointChange();
+}
+
+
+PointSetItem::Region::Region()
+{
+    impl = new RegionImpl;
+}
+
+
+PointSetItem::Region::Region(int numSurroundingPlanes)
+{
+    impl = new RegionImpl(numSurroundingPlanes);
+}
+    
+
+PointSetItem::Region::Region(const PointSetItem::Region& org)
+{
+    RegionImpl* p = new RegionImpl;
+    RegionImpl* orgImpl = (RegionImpl*)(org.impl);
+    p->normals = orgImpl->normals;
+    p->points = orgImpl->points;
+    impl = p;
+}
+
+
+PointSetItem::Region& PointSetItem::Region::operator=(const PointSetItem::Region& org)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    RegionImpl* orgImpl = (RegionImpl*)(org.impl);
+    p->normals = orgImpl->normals;
+    p->points = orgImpl->points;
+    return *this;
+}
+
+
+void PointSetItem::Region::setNumSurroundingPlanes(int n)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    p->normals.resize(n);
+    p->points.resize(n);
+}
+
+
+int PointSetItem::Region::numSurroundingPlanes() const
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->normals.size();
+}
+
+    
+void PointSetItem::Region::addSurroundingPlane(const Vector3& normal, const Vector3& point)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    p->normals.push_back(normal);
+    p->points.push_back(point);
+}
+
+
+Vector3& PointSetItem::Region::normal(int index)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->normals[index];
+}
+
+
+const Vector3& PointSetItem::Region::normal(int index) const
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->normals[index];
+}
+
+
+Vector3& PointSetItem::Region::point(int index)
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->points[index];
+}
+
+
+const Vector3& PointSetItem::Region::point(int index) const
+{
+    RegionImpl* p = (RegionImpl*)impl;
+    return p->points[index];
+}
+
+
+SigRegionFixedProxy PointSetItem::sigRegionFixed()
+{
+    return impl->scenePointSet->sigRegionFixed;
+}
+
+
+void PointSetItem::removePoints(const PointSetItem::Region& region)
+{
+    impl->removePoints(region);
+}
+
+
+void PointSetItemImpl::removePoints(const PointSetItem::Region& region)
+{
+    vector<int> indicesToRemove;
+    const Affine3 T = scenePointSet->T();
+    SgVertexArray orgPoints(*pointSet->vertices());
+    const int numOrgPoints = orgPoints.size();
+
+    const int numPlanes = region.numSurroundingPlanes();
+    vector<double> d(numPlanes);
+    for(int i=0; i < numPlanes; ++i){
+        d[i] = region.normal(i).dot(region.point(i));
+    }
+
+    for(int i=0; i < numOrgPoints; ++i){
+        const Vector3 point = T * orgPoints[i].cast<Vector3::Scalar>();
+        for(int j=0; j < numPlanes; ++j){
+            const double distance = point.dot(region.normal(j)) - d[j];
+            if(distance < 0.0){
+                goto notInRegion;
+            }
+        }
+        indicesToRemove.push_back(i);
+      notInRegion:
+        ;
+    }
+
+    if(!indicesToRemove.empty()){
+        SgVertexArray& points = *pointSet->vertices();
+        points.clear();
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgPoints; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                points.push_back(orgPoints[i]);
+                
+            }
+        }
+        if(pointSet->hasNormals()){
+            removeSubElements(*pointSet->normals(), pointSet->normalIndices(), indicesToRemove);
+        }
+        if(pointSet->hasColors()){
+            removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
+        }
+
+        pointSet->notifyUpdate();
+    }
+}    
+
+
+template<class ElementContainer>
+void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
+{
+    const ElementContainer orgElements(elements);
+    const int numOrgElements = orgElements.size();
+    elements.clear();
+    
+    if(indices.empty()){
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgElements; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                elements.push_back(orgElements[i]);
+            }
+        }
+    } else {
+        const SgIndexArray orgIndices(indices);
+        const int numOrgIndices = orgIndices.size();
+        indices.clear();
+        dynamic_bitset<> elementValidness(numOrgElements);
+        int j = 0;
+        int nextIndexToRemove = indicesToRemove[j++];
+        for(int i=0; i < numOrgIndices; ++i){
+            if(i == nextIndexToRemove){
+                if(j < indicesToRemove.size()){
+                    nextIndexToRemove = indicesToRemove[j++];
+                }
+            } else {
+                int index = orgIndices[i];
+                elementValidness.set(index);
+                indices.push_back(index);
+            }
+        }
+        vector<int> indexMap(numOrgElements);
+        int newIndex = 0;
+        for(int i=0; i < numOrgElements; ++i){
+            if(elementValidness.test(i)){
+                elements.push_back(orgElements[i]);
+                ++newIndex;
+            }
+            indexMap[i] = newIndex;
+        }
+        for(size_t i=0; i < indices.size(); ++i){
+            indices[i] = indexMap[i];
+        }
+    }
 }
 
 
@@ -444,30 +703,90 @@ void ScenePointSet::setVoxelSize(double size)
 }
 
 
-void ScenePointSet::clearAttentionPoint()
+int ScenePointSet::numAttentionPoints() const
 {
-    if(attentionPoint){
-        attentionPoint = boost::none;
-        if(attentionPointMarker){
-            removeChild(attentionPointMarker);
-            notifyUpdate();
+    return attentionPointMarkerGroup ? attentionPointMarkerGroup->numChildren() : 0;
+}
+
+
+Vector3 ScenePointSet::attentionPoint(int index) const
+{
+    if(index < numAttentionPoints()){
+        CrossMarker* marker = dynamic_cast<CrossMarker*>(attentionPointMarkerGroup->child(index));
+        if(marker){
+            return T() * marker->translation();
         }
-        sigAttentionPointChanged();
+    }
+    return Vector3::Zero();
+}
+
+
+void ScenePointSet::clearAttentionPoints(bool doNotify)
+{
+    if(attentionPointMarkerGroup){
+        if(!attentionPointMarkerGroup->empty()){
+            attentionPointMarkerGroup->clearChildren();
+            if(doNotify){
+                notifyAttentionPointChange();
+            }
+        }
     }
 }
 
 
-void ScenePointSet::setAttentionPoint(const Vector3& point)
+void ScenePointSet::addAttentionPoint(const Vector3& point, bool doNotify)
 {
-    if(!attentionPointMarker){
-        Vector3f color(1.0f, 1.0f, 0.0f);
-        attentionPointMarker = new CrossMarker(0.01, color);
+    if(!attentionPointMarkerGroup){
+        attentionPointMarkerGroup = new SgGroup;
+        addChild(attentionPointMarkerGroup);
     }
-    attentionPoint = point;
-    attentionPointMarker->setTranslation(T().inverse() * *attentionPoint);
-    addChildOnce(attentionPointMarker);
-    attentionPointMarker->notifyUpdate();
-    sigAttentionPointChanged();
+    
+    Vector3f color(1.0f, 1.0f, 0.0f);
+    CrossMarker* marker = new CrossMarker(0.02, color);
+    marker->setTranslation(T().inverse() * point);
+    attentionPointMarkerGroup->addChild(marker);
+
+    if(doNotify){
+        notifyAttentionPointChange();
+    }
+}
+
+
+void ScenePointSet::setAttentionPoint(const Vector3& p, bool doNotify)
+{
+    clearAttentionPoints(false);
+    addAttentionPoint(p, doNotify);
+}
+
+
+bool ScenePointSet::removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify)
+{
+    bool removed = false;
+    if(attentionPointMarkerGroup){
+        SgGroup::iterator iter = attentionPointMarkerGroup->begin();
+        while(iter != attentionPointMarkerGroup->end()){
+            CrossMarker* marker = dynamic_cast<CrossMarker*>(iter->get());
+            if(point.isApprox(marker->translation(), distanceThresh)){
+                iter = attentionPointMarkerGroup->erase(iter);
+                removed = true;
+            } else {
+                ++iter;
+            }
+        }
+        if(removed){
+            if(doNotify){
+                notifyAttentionPointChange();
+            }
+        }
+    }
+    return removed;
+}
+
+
+void ScenePointSet::notifyAttentionPointChange()
+{
+    attentionPointMarkerGroup->notifyUpdate();
+    sigAttentionPointsChanged();
 }
 
 
@@ -492,10 +811,8 @@ void ScenePointSet::updateVisualization(bool updateContents)
         invariant->addChild(voxels);
     }
     addChild(invariant, true);
-        
-    if(attentionPointMarker){
-        removeChild(attentionPointMarker);
-    }
+
+    clearAttentionPoints(true);
 }
 
 
@@ -605,10 +922,12 @@ bool ScenePointSet::onButtonPressEvent(const SceneWidgetEvent& event)
     bool processed = false;
     
     if(event.button() == Qt::LeftButton){
-        if(attentionPoint && event.point().isApprox(*attentionPoint, 1.0e-3)){
-            clearAttentionPoint();
+        if(event.modifiers() & Qt::ControlModifier){
+            if(!removeAttentionPoint(event.point(), 0.01, true)){
+                addAttentionPoint(event.point(), true);
+            }
         } else {
-            setAttentionPoint(event.point());
+            setAttentionPoint(event.point(), true);
         }
         processed = true;
     }
@@ -625,8 +944,8 @@ bool ScenePointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-    menuManager.addItem(_("PointSet: Clear Attention Point"))->sigTriggered().connect(
-        boost::bind(&ScenePointSet::clearAttentionPoint, this));
+    menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
+        boost::bind(&ScenePointSet::clearAttentionPoints, this, true));
 
     PointSetEraser* eraser = dynamic_cast<PointSetEraser*>(event.sceneWidget()->activeEventFilter());
     if(!eraser || eraser->weakPointSetItem.lock() != this->weakPointSetItem.lock()){
@@ -645,14 +964,15 @@ void ScenePointSet::onSceneModeChanged(const SceneWidgetEvent& event)
 void ScenePointSet::startEraserMode(SceneWidget* sceneWidget)
 {
     if(!weakPointSetItem.expired()){
-        sceneWidget->installEventFilter(new PointSetEraser(weakPointSetItem, sceneWidget));
+        sceneWidget->installEventFilter(new PointSetEraser(this, weakPointSetItem, sceneWidget));
     }
 }
 
 
-PointSetEraser::PointSetEraser(weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
-  : weakPointSetItem(weakPointSetItem),
-    sceneWidget(sceneWidget)
+PointSetEraser::PointSetEraser(ScenePointSet* scenePointSet, weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
+    : scenePointSet(scenePointSet),
+      weakPointSetItem(weakPointSetItem),
+      sceneWidget(sceneWidget)
 {
     rect = new RectLineOverlay;
     onSceneModeChanged(sceneWidget->latestEvent());
@@ -674,124 +994,6 @@ void PointSetEraser::showRectangle(bool on)
     } else {
         if(rect->hasParents()){
             sceneWidget->sceneRoot()->removeChild(rect, true);
-        }
-    }
-}
-
-
-void PointSetEraser::removePointSetInRectangle(PointSetItem* pointSetItem, const Vector3& c, const bool isPerspectiveCamera, const Vector3 r[])
-{
-    Vector3 n[4];
-    double d[4];
-
-    if(isPerspectiveCamera){
-    	for(int i=0; i < 4; ++i){
-    		n[i] = (r[(i+1)%4] - c).cross(r[i] - c).normalized();
-    		d[i] = n[i].dot(c);
-    	}
-    }else{		// orthogonal camera
-    	Vector3 c0;
-    	c0 = (r[3]-r[0]).cross(r[1]-r[0]).normalized();
-    	for(int i=0; i<4; i++){
-    		n[i] = (r[(i+1)%4] - r[i]).cross(c0).normalized();
-    		d[i] = n[i].dot(r[i]);
-    	}
-    }
-
-    vector<int> indicesToRemove;
-    SgPointSet* pointSet = pointSetItem->pointSet();
-    const Affine3 T = pointSetItem->offsetPosition();
-    SgVertexArray orgPoints(*pointSet->vertices());
-    const int numOrgPoints = orgPoints.size();
-
-    for(int i=0; i < numOrgPoints; ++i){
-        const Vector3 p = T * orgPoints[i].cast<Vector3::Scalar>();
-        for(int j=0; j < 4; ++j){
-            const double distance = p.dot(n[j]) - d[j];
-            if(distance < 0.0){
-                goto notInRegion;
-            }
-        }
-        indicesToRemove.push_back(i);
-notInRegion:
-        ;
-    }
-
-    if(!indicesToRemove.empty()){
-        SgVertexArray& points = *pointSet->vertices();
-        points.clear();
-        int j = 0;
-        int nextIndexToRemove = indicesToRemove[j++];
-        for(int i=0; i < numOrgPoints; ++i){
-            if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
-                    nextIndexToRemove = indicesToRemove[j++];
-                }
-            } else {
-                points.push_back(orgPoints[i]);
-                
-            }
-        }
-        if(pointSet->hasNormals()){
-            removeSubElements(*pointSet->normals(), pointSet->normalIndices(), indicesToRemove);
-        }
-        if(pointSet->hasColors()){
-            removeSubElements(*pointSet->colors(), pointSet->colorIndices(), indicesToRemove);
-        }
-
-        pointSet->notifyUpdate();
-    }
-}
-
-
-template<class ElementContainer>
-void PointSetEraser::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
-{
-    const ElementContainer orgElements(elements);
-    const int numOrgElements = orgElements.size();
-    elements.clear();
-    
-    if(indices.empty()){
-        int j = 0;
-        int nextIndexToRemove = indicesToRemove[j++];
-        for(int i=0; i < numOrgElements; ++i){
-            if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
-                    nextIndexToRemove = indicesToRemove[j++];
-                }
-            } else {
-                elements.push_back(orgElements[i]);
-            }
-        }
-    } else {
-        const SgIndexArray orgIndices(indices);
-        const int numOrgIndices = orgIndices.size();
-        indices.clear();
-        dynamic_bitset<> elementValidness(numOrgElements);
-        int j = 0;
-        int nextIndexToRemove = indicesToRemove[j++];
-        for(int i=0; i < numOrgIndices; ++i){
-            if(i == nextIndexToRemove){
-                if(j < indicesToRemove.size()){
-                    nextIndexToRemove = indicesToRemove[j++];
-                }
-            } else {
-                int index = orgIndices[i];
-                elementValidness.set(index);
-                indices.push_back(index);
-            }
-        }
-        vector<int> indexMap(numOrgElements);
-        int newIndex = 0;
-        for(int i=0; i < numOrgElements; ++i){
-            if(elementValidness.test(i)){
-                elements.push_back(orgElements[i]);
-                ++newIndex;
-            }
-            indexMap[i] = newIndex;
-        }
-        for(size_t i=0; i < indices.size(); ++i){
-            indices[i] = indexMap[i];
         }
     }
 }
@@ -823,17 +1025,28 @@ bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
     PointSetItemPtr pointSetItem = weakPointSetItem.lock();
     if(pointSetItem){
         if(rect->left < rect->right && rect->bottom < rect->top){
-            Vector3 p[4];
-            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, p[0]);
-            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, p[1]);
-            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, p[2]);
-            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, p[3]);
-        	bool isPerspectiveCamera = false;
+            PointSetItem::Region r(4);
+            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, r.point(0));
+            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, r.point(1));
+            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, r.point(2));
+            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, r.point(3));
+            const Vector3 c = event.currentCameraPosition().translation();
         	SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
-        	if(dynamic_cast<SgPerspectiveCamera*>(camera))
-        		isPerspectiveCamera = true;
-        	removePointSetInRectangle(
-                pointSetItem, event.currentCameraPosition().translation(), isPerspectiveCamera, p);
+        	if(dynamic_cast<SgPerspectiveCamera*>(camera)){
+                for(int i=0; i < 4; ++i){
+                    r.normal(i) = (r.point((i + 1) % 4) - c).cross(r.point(i) - c).normalized();
+                }
+            } else if(dynamic_cast<SgOrthographicCamera*>(camera)){
+                const Vector3 n0 = (r.point(3) - r.point(0)).cross(r.point(1) - r.point(0)).normalized();
+                for(int i=0; i< 4; ++i){
+                    r.normal(i) = (r.point((i + 1) % 4) - r.point(i)).cross(n0).normalized();
+                }
+            }
+
+            SigRegionFixed& signal = scenePointSet->sigRegionFixed;
+            if(signal.empty() || signal(PointSetItem::REMOVAL, r)){
+                pointSetItem->removePoints(r);
+            }
         }
     }
     showRectangle(false);

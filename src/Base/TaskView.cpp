@@ -201,7 +201,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     defaultCommandButton.setText(_("V"));
     defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
-    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, -1));
+    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, -1));
 
     autoModeToggle.setText(_("Auto"));
     autoModeToggle.setToolTip(_("Automatic mode"));

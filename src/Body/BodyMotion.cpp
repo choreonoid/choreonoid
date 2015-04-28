@@ -319,7 +319,7 @@ BodyMotion::Frame& operator<<(const BodyMotion::Frame& frame, const Body& body)
     return const_cast<BodyMotion::Frame&>(frame);
 }
 
-BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, const Body& body)
+BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, Body& body)
 {
     const BodyMotion& motion = frame.motion();
     int numJoints = std::min(body.numJoints(), motion.numJoints());
@@ -334,6 +334,11 @@ BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, const Body& body)
         link->p() = p[i].translation();
         link->R() = p[i].rotation().toRotationMatrix();
     }
+    /*
+    if(numLinks <= 1){
+        body.calcForwardKinematics();
+    }
+    */
     return const_cast<BodyMotion::Frame&>(frame);
 }
 }

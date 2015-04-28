@@ -30,6 +30,8 @@ public:
     const SgPointSet* pointSet() const;
     SgPointSet* pointSet();
 
+    virtual void notifyUpdate();
+        
     Affine3& offsetPosition();
     const Affine3& offsetPosition() const;
 
@@ -42,13 +44,44 @@ public:
     void setEditable(bool on);
     bool isEditable() const;
 
-    boost::optional<Vector3> attentionPoint() const;
-    SignalProxy<void()> sigAttentionPointChanged();
-    void clearAttentionPoint();
-    void setAttentionPoint(const Vector3& p);
+    int numAttentionPoints() const;
+    Vector3 attentionPoint(int index) const;
+    void clearAttentionPoints();
+    void addAttentionPoint(const Vector3& p);
+    SignalProxy<void()> sigAttentionPointsChanged();
+    void notifyAttentionPointChange();
+    
+    boost::optional<Vector3> attentionPoint() const; // deprecated
+    SignalProxy<void()> sigAttentionPointChanged();  // deprecated
+    void clearAttentionPoint();  // deprecated
+    void setAttentionPoint(const Vector3& p);  // deprecated
 
-    virtual void notifyUpdate();
-        
+    enum EditType {
+        CUSTOM,
+        REMOVAL
+    };
+
+    class CNOID_EXPORT Region {
+      public:
+        Region();
+        Region(int numSurroundingPlanes);
+        Region(const PointSetItem::Region& org);
+        Region& operator=(const PointSetItem::Region& org);
+        int numSurroundingPlanes() const;
+        void setNumSurroundingPlanes(int n);
+        void addSurroundingPlane(const Vector3& normal, const Vector3& point);
+        Vector3& normal(int index);
+        const Vector3& normal(int index) const;
+        Vector3& point(int index);
+        const Vector3& point(int index) const;
+      private:
+        void* impl;
+    };
+
+    SignalProxy<bool(int editType, const PointSetItem::Region& region), LogicalProduct> sigRegionFixed();
+
+    void removePoints(const PointSetItem::Region& region);
+
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
