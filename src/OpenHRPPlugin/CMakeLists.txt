@@ -74,6 +74,7 @@ foreach(version ${versions})
     DynamicsSimulator_impl.cpp
     OpenHRPControllerItem.cpp
     OnlineViewerServer.cpp
+    OpenHRPOnlineViewerItem.cpp
     )
 
   if(version EQUAL 3.1)
