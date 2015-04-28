@@ -50,7 +50,6 @@ set(sources
   BodyLoader.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
-  CollisionSeq.cpp
   )
 
 set(headers
@@ -101,7 +100,6 @@ set(headers
   exportdecl.h
   gettext.h
   CollisionLinkPair.h
-  CollisionSeq.h
   )
 
 

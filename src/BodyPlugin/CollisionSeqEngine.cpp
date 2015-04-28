@@ -3,9 +3,11 @@
    \author Shizuko Hattori
 */
 
+#include "CollisionSeq.h"
 #include "CollisionSeqEngine.h"
+#include "WorldItem.h"
 #include "CollisionSeqItem.h"
-#include <cnoid/CollisionSeq>
+#include <cnoid/ExtensionManager>
 #include <cnoid/SceneCollision>
 
 using namespace std;
@@ -80,6 +82,12 @@ CollisionSeqEngine::CollisionSeqEngine(WorldItem* worldItem, CollisionSeqItem* c
 CollisionSeqEngine::~CollisionSeqEngine()
 {
     delete impl;
+}
+
+
+CollisionSeqItem* CollisionSeqEngine::collisionSeqItem()
+{
+    return impl->collisionSeqItem.get();
 }
 
 

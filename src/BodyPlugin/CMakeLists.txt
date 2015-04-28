@@ -34,6 +34,7 @@ set(sources
   JointGraphView.cpp
   LinkGraphView.cpp
   HrpsysFileIO.cpp
+  CollisionSeq.cpp
   CollisionSeqItem.cpp
   CollisionSeqEngine.cpp
   )
@@ -56,6 +57,7 @@ set(headers
   EditableSceneBody.h
   exportdecl.h
   gettext.h
+  CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h
   )

@@ -7,12 +7,12 @@
 #define CNOID_BODYPLUGIN_COLLISION_SEQ_ENGINE_H
 
 #include <cnoid/TimeSyncItemEngine>
-#include <cnoid/WorldItem>
-#include <cnoid/ExtensionManager>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class WorldItem;
+class ExtensionManager;
 class CollisionSeqEngineImpl;
 class CollisionSeqItem;
 
@@ -23,6 +23,8 @@ public:
 
     CollisionSeqEngine(WorldItem* worldItem, CollisionSeqItem* collisionSeqItem);
     ~CollisionSeqEngine();
+
+    CollisionSeqItem* collisionSeqItem();
 
     virtual bool onTimeChanged(double time);
 

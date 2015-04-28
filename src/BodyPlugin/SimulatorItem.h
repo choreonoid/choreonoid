@@ -6,6 +6,7 @@
 #ifndef CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 #define CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 
+#include "CollisionSeq.h"
 #include <cnoid/Item>
 #include "exportdecl.h"
 
@@ -150,6 +151,11 @@ protected:
        \note This function is called from the main thread.
     */
     virtual void finalizeSimulation();
+
+    virtual CollisionLinkPairListPtr getCollisions()
+    {
+        return boost::make_shared<CollisionLinkPairList>();
+    }
 
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);

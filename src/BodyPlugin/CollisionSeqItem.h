@@ -6,8 +6,8 @@
 #ifndef CNOID_BODY_PLUGIN_COLLISION_SEQ_ITEM_H
 #define CNOID_BODY_PLUGIN_COLLISION_SEQ_ITEM_H
 
+#include "CollisionSeq.h"
 #include <cnoid/MultiValueSeqItem>
-#include <cnoid/CollisionSeq>
 #include "exportdecl.h"
 
 namespace cnoid {

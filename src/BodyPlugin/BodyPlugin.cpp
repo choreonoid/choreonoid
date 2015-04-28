@@ -27,6 +27,7 @@
 #include "EditableSceneBody.h"
 #include "HrpsysFileIO.h"
 #include "CollisionSeqEngine.h"
+#include "CollisionSeqItem.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
@@ -79,6 +80,8 @@ public:
         BodyStateView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
+
+        CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
 

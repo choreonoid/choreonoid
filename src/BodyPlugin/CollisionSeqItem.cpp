@@ -5,6 +5,8 @@
 
 #include "CollisionSeqItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/Archive>
+#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -30,6 +32,27 @@ public:
 }
 
 
+static bool fileIoSub(CollisionSeqItem* item, std::ostream& os, bool loaded, bool isLoading)
+{
+    if(!loaded){
+        os << item->collisionSeq()->seqMessage();
+    }
+    return loaded;
+}
+
+
+static bool loadStandardYamlFormat(CollisionSeqItem* item, const std::string& filename, std::ostream& os)
+{
+    return fileIoSub(item, os, item->collisionSeq()->loadStandardYAMLformat(filename), true);
+}
+
+
+static bool saveAsStandardYamlFormat(CollisionSeqItem* item, const std::string& filename, std::ostream& os)
+{
+    return fileIoSub(item, os, item->collisionSeq()->saveAsStandardYAMLformat(filename), false);
+}
+
+
 void CollisionSeqItem::initislizeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
@@ -41,21 +64,16 @@ void CollisionSeqItem::initislizeClass(ExtensionManager* ext)
     ItemManager& im = ext->itemManager();
 
     im.registerClass<CollisionSeqItem>(N_("CollisionSeqItem"));
-/*
-    im.addCreationPanel<BodyMotionItem>(new MultiSeqItemCreationPanel(_("Number of joints")));
-    im.addCreationPanelPreFilter<BodyMotionItem>(bodyMotionItemPreFilter);
-    //im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
-
-    im.addLoaderAndSaver<BodyMotionItem>(
-        _("Body Motion"), "BODY-MOTION-YAML", "yaml",
+    im.addLoaderAndSaver<CollisionSeqItem>(
+        _("Collision Data"), "COLLISION-DATA-YAML", "yaml",
         boost::bind(loadStandardYamlFormat, _1, _2, _3),  boost::bind(saveAsStandardYamlFormat, _1, _2, _3));
-*/
+
     initialized = true;
 }
 
 
 CollisionSeqItem::CollisionSeqItem()
-    : collisionSeq_(new CollisionSeq())
+    : collisionSeq_(new CollisionSeq(this))
 {
     impl = new CollisionSeqItemImpl(this);
 }
@@ -63,7 +81,7 @@ CollisionSeqItem::CollisionSeqItem()
 
 CollisionSeqItem::CollisionSeqItem(const CollisionSeqItem& org)
     : AbstractMultiSeqItem(org),
-      collisionSeq_(new CollisionSeq(*org.collisionSeq_))
+      collisionSeq_(new CollisionSeq(this))
 {
     impl = new CollisionSeqItemImpl(this);
 }
@@ -108,13 +126,24 @@ ItemPtr CollisionSeqItem::doDuplicate() const
 
 bool CollisionSeqItem::store(Archive& archive)
 {
-    return true;
+    if(overwrite() || !filePath().empty()){
+        archive.writeRelocatablePath("filename", filePath());
+        archive.write("format", fileFormat());
+        return true;
+    }
+    return false;
 }
 
 
 bool CollisionSeqItem::restore(const Archive& archive)
 {
-    return true;
+    std::string filename, format;
+    if(archive.readRelocatablePath("filename", filename) && archive.read("format", format)){
+        if(load(filename, format)){
+            return true;
+        }
+    }
+    return false;
 }
 
 
