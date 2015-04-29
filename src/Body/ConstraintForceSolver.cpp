@@ -376,6 +376,8 @@ public:
     void debugPutVector(const TVector& M, const char *name) {
         if(CFS_DEBUG_VERBOSE) putVector(M, name);
     }
+
+    CollisionLinkPairListPtr getCollisions();
 };
 /*
   #ifdef _MSC_VER
@@ -767,6 +769,33 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
     if(!pLinkPair->constraintPoints.empty()){
         constrainedLinkPairs.push_back(pLinkPair);
     }
+}
+
+
+CollisionLinkPairListPtr CFSImpl::getCollisions()
+{
+    CollisionLinkPairListPtr collisionPairs = boost::make_shared<CollisionLinkPairList>();
+    for(int i=0; i<constrainedLinkPairs.size(); i++){
+        LinkPair& source = *constrainedLinkPairs[i];
+        CollisionLinkPairPtr dest = boost::make_shared<CollisionLinkPair>();
+        int numConstraintsInPair = source.constraintPoints.size();
+
+        for(int j=0; j < numConstraintsInPair; ++j){
+            ConstraintPoint& constraint = source.constraintPoints[j];
+            dest->collisions.push_back(Collision());
+            Collision& col = dest->collisions.back();
+            col.point = constraint.point;
+            col.normal = constraint.normalTowardInside[1];
+            col.depth = constraint.depth;
+        }
+        for(int j=0; j<2; j++){
+            dest->body[j] = source.bodyData[j]->body;
+            dest->link[j] = source.link[j];
+        }
+        collisionPairs->push_back(dest);
+    }
+
+    return collisionPairs;
 }
 
 
@@ -2289,3 +2318,10 @@ void ConstraintForceSolver::clearExternalForces()
 {
     impl->clearExternalForces();
 }
+
+
+CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
+{
+    return impl->getCollisions();
+}
+

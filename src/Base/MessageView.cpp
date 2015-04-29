@@ -113,6 +113,8 @@ public:
     std::stack<StdioInfo> stdios;
     bool exitEventLoopRequested;
 
+    Signal<void(const std::string& text)> sigMessage;
+
     MessageViewImpl(MessageView* self);
 
     void put(const QString& message, bool doLF, bool doNotify, bool doFlush);
@@ -253,23 +255,27 @@ std::ostream& MessageView::cout(bool doFlush)
 
 void MessageView::beginStdioRedirect()
 {
+    /*
     StdioInfo info;
     info.cout = std::cout.rdbuf();
     info.cerr = std::cerr.rdbuf();
     impl->stdios.push(info);
     std::cout.rdbuf(impl->os.rdbuf());
     std::cerr.rdbuf(impl->os.rdbuf());
+    */
 }
 
 
 void MessageView::endStdioRedirect()
 {
+    /*
     if(!impl->stdios.empty()){
         StdioInfo& info = impl->stdios.top();
         std::cout.rdbuf(info.cout);
         std::cerr.rdbuf(info.cerr);
         impl->stdios.pop();
     }
+    */
 }
 
 
@@ -464,6 +470,14 @@ void MessageViewImpl::doPut(const QString& message, bool doLF, bool doNotify, bo
             cout << endl;
         }
     }
+
+    if(!sigMessage.empty()){
+        std::string text(message.toStdString());
+        if(doLF){
+            text += "\n";
+        }
+        sigMessage(boost::ref(text));
+    }
     
     if(doNotify){
         InfoBar::instance()->notify(message);
@@ -532,6 +546,12 @@ void MessageViewImpl::flush()
             sigFlushFinished_();
         }
     }
+}
+
+
+SignalProxy<void(const std::string& text)> MessageView::sigMessage()
+{
+    return impl->sigMessage;
 }
 
 

@@ -26,6 +26,8 @@
 #include "BodyMotionEngine.h"
 #include "EditableSceneBody.h"
 #include "HrpsysFileIO.h"
+#include "CollisionSeqEngine.h"
+#include "CollisionSeqItem.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
@@ -56,6 +58,7 @@ public:
         GLVisionSimulatorItem::initializeClass(this);
 
         BodyMotionEngine::initialize(this);
+        CollisionSeqEngine::initialize(this);
         //initializeFilterDialogs(*this);
         KinematicFaultChecker::initialize(this);
 
@@ -77,6 +80,8 @@ public:
         BodyStateView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
+
+        CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
 

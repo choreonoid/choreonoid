@@ -4,6 +4,7 @@
 
 #include "OpenHRPControllerItem.h"
 #include "OnlineViewerServer.h"
+#include "OpenHRPOnlineViewerItem.h"
 
 #ifdef OPENHRP_3_1
 #include "OpenHRPInterpreterServiceItem.h"
@@ -42,8 +43,9 @@ public:
         OpenHRPInterpreterServiceItem::initializeClass(this);
 #endif
 
-        OnlineViewerServer* onlineViewer = new OnlineViewerServer();
-        getDefaultNamingContextHelper()->bindObject(onlineViewer->_this(), "OnlineViewer");
+//        OnlineViewerServer* onlineViewer = new OnlineViewerServer();
+//        getDefaultNamingContextHelper()->bindObject(onlineViewer->_this(), "OnlineViewer");
+        OpenHRPOnlineViewerItem::initializeClass(this);
 
         return true;
     }

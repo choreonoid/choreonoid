@@ -515,6 +515,13 @@ void AISTSimulatorItem::finalizeSimulation()
 }
 
 
+
+CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
+{
+    return impl->world.constraintForceSolver.getCollisions();
+}
+
+
 void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     SimulatorItem::doPutProperties(putProperty);

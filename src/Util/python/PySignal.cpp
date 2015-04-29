@@ -29,10 +29,11 @@ namespace cnoid {
 
 void exportPySignalTypes()
 {
-    PySignalProxy<void()>("VoidSignal");
-    PySignalProxy<void(bool)>("BoolSignal");
-    PySignalProxy<void(double)>("DoubleSignal");
-    PySignalProxy<void(const std::string& str)>("StringSignal");
+    PySignal<void()>("VoidSignal");
+    PySignal<void(bool)>("BoolSignal");
+    PySignal<void(int)>("IntSignal");
+    PySignal<void(double)>("DoubleSignal");
+    PySignal<void(const std::string& str)>("StringSignal");
 
     class_<Connection>("Connection")
         .def("disconnect", &Connection::disconnect)

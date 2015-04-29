@@ -39,8 +39,10 @@ void SceneCollision::accept(SceneVisitor& visitor)
             const vector<Collision>& cols = pair.collisions;
 
             // flip the line direction so that the line is always from the staic object to the dynamic one
-            const double direction =
-                (pair.body[1]->isStaticModel() && !pair.body[0]->isStaticModel()) ? -1.0 : 1.0;
+            double direction = 1.0;
+            if(pair.body[1] && pair.body[0]){
+                direction = (pair.body[1]->isStaticModel() && !pair.body[0]->isStaticModel()) ? -1.0 : 1.0;
+            }
 
             for(size_t j=0; j < cols.size(); ++j){
                 const Collision& c = cols[j];

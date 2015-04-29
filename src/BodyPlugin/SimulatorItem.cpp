@@ -10,6 +10,9 @@
 #include "SimulationScriptItem.h"
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
+#include "CollisionSeq.h"
+#include "CollisionSeqItem.h"
+#include "CollisionSeqEngine.h"
 #include <cnoid/AppUtil>
 #include <cnoid/ExtensionManager>
 #include <cnoid/TimeBar>
@@ -158,6 +161,7 @@ public:
     bool isRealtimeSyncMode;
     bool needToUpdateSimBodyLists;
     bool hasActiveFreeBodies;
+    bool recordCollisionData;
 
     Selection timeRangeMode;
     double specifiedTimeLength;
@@ -177,12 +181,16 @@ public:
     Signal<void()> sigSimulationFinished_;
 
     vector<BodyMotionEnginePtr> bodyMotionEngines;
+    CollisionSeqEnginePtr collisionSeqEngine;
 
     Connection aboutToQuitConnection;
 
     SgCloneMap sgCloneMap;
         
     ItemTreeView* itemTreeView;
+
+    CollisionSeqPtr collisionSeq;
+    deque<CollisionLinkPairListPtr> collisionPairsBuf;
 
     double currentTime() const;
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
@@ -206,6 +214,7 @@ public:
     void restoreBodyMotionEngines(const Archive& archive);
     void addBodyMotionEngine(BodyMotionItem* motionItem);
     bool setPlaybackTime(double time);
+    void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
 };
 
 
@@ -804,6 +813,7 @@ SimulatorItem::SimulatorItem(const SimulatorItem& org)
     impl->timeRangeMode = org.impl->timeRangeMode;
     impl->isActiveControlPeriodOnlyMode = org.impl->isActiveControlPeriodOnlyMode;
     impl->useControllerThreadsProperty = org.impl->useControllerThreadsProperty;
+    impl->recordCollisionData = org.impl->recordCollisionData;
 }
 
 
@@ -837,6 +847,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     useControllerThreadsProperty = true;
     isAllLinkPositionOutputMode = false;
     isDeviceStateOutputEnabled = true;
+    recordCollisionData = false;
 }
 
 
@@ -1053,6 +1064,26 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         }
     }
     
+    if(isRecordingEnabled && recordCollisionData){
+        collisionPairsBuf.clear();
+        string collisionSeqName = self->name() + "-collisions";
+        CollisionSeqItem* collisionSeqItem = worldItem->findItem<CollisionSeqItem>(collisionSeqName);
+        if(!collisionSeqItem){
+            collisionSeqItem = new CollisionSeqItem();
+            collisionSeqItem->setTemporal();
+            collisionSeqItem->setName(collisionSeqName);
+            worldItem->addChildItem(collisionSeqItem);
+
+            addCollisionSeqEngine(collisionSeqItem);
+        }
+        collisionSeq = collisionSeqItem->collisionSeq();
+        collisionSeq->setFrameRate(worldFrameRate);
+        collisionSeq->setNumParts(1);
+        collisionSeq->setNumFrames(1);
+        CollisionSeq::Frame frame0 = collisionSeq->frame(0);
+        frame0[0]  = boost::make_shared<CollisionLinkPairList>();
+    }
+
     bool result = self->initializeSimulation(simBodiesWithBody);
 
     if(result){
@@ -1368,6 +1399,11 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
     self->stepSimulation(activeSimBodies);
 
+    CollisionLinkPairListPtr collisionPairs;
+    if(isRecordingEnabled && recordCollisionData){
+        collisionPairs = self->getCollisions();
+    }
+
     if(useControllerThreads){
         {
             boost::unique_lock<boost::mutex> lock(controlMutex);
@@ -1389,6 +1425,7 @@ bool SimulatorItemImpl::stepSimulationMain()
         for(size_t i=0; i < activeSimBodies.size(); ++i){
             activeSimBodies[i]->storeResult();
         }
+        collisionPairsBuf.push_back(collisionPairs);
         frameAtLastBufferWriting = currentFrame;
 
         mutex.unlock();
@@ -1459,6 +1496,16 @@ void SimulatorItemImpl::flushResult()
             simBodyImplsToNotifyResult.push_back(simBody->impl);
         }
     }
+    if(isRecordingEnabled && recordCollisionData){
+        for(int i=0 ; i<collisionPairsBuf.size(); i++ ){
+            if(collisionSeq->numFrames() >= ringBufferSize){
+                collisionSeq->popFrontFrame();
+            }
+            CollisionSeq::Frame collisionSeq0 = collisionSeq->appendFrame();
+            collisionSeq0[0] = collisionPairsBuf[i];
+        }
+    }
+    collisionPairsBuf.clear();
 
     int frame = frameAtLastBufferWriting;
     
@@ -1633,6 +1680,8 @@ void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
                 changeProperty(impl->isDeviceStateOutputEnabled));
     putProperty(_("Controller Threads"), impl->useControllerThreadsProperty,
                 changeProperty(impl->useControllerThreadsProperty));
+    putProperty(_("Record collision data"), impl->recordCollisionData,
+                changeProperty(impl->recordCollisionData));
 }
 
 
@@ -1652,6 +1701,7 @@ bool SimulatorItemImpl::store(Archive& archive)
     archive.write("allLinkPositionOutputMode", isAllLinkPositionOutputMode);
     archive.write("deviceStateOutput", isDeviceStateOutputEnabled);
     archive.write("controllerThreads", useControllerThreadsProperty);
+    archive.write("recordCollisionData", recordCollisionData);
 
     ListingPtr idseq = new Listing();
     idseq->setFlowStyle(true);
@@ -1666,6 +1716,13 @@ bool SimulatorItemImpl::store(Archive& archive)
         archive.insert("motionItems", idseq);
     }
 
+    if(collisionSeqEngine)
+    {
+        ValueNodePtr id = archive.getItemId(collisionSeqEngine->collisionSeqItem());
+        if(id){
+            archive.insert("collisionSeqItem", id);
+        }
+    }
     return true;
 }
 
@@ -1701,6 +1758,7 @@ bool SimulatorItemImpl::restore(const Archive& archive)
     self->setAllLinkPositionOutputMode(archive.get("allLinkPositionOutputMode", isAllLinkPositionOutputMode));
     archive.read("deviceStateOutput", isDeviceStateOutputEnabled);
     archive.read("controllerThreads", useControllerThreadsProperty);
+    archive.read("recordCollisionData", recordCollisionData);
 
     archive.addPostProcess(
         boost::bind(&SimulatorItemImpl::restoreBodyMotionEngines, this, boost::ref(archive)));
@@ -1725,6 +1783,16 @@ void SimulatorItemImpl::restoreBodyMotionEngines(const Archive& archive)
             }
         }
     }
+
+    collisionSeqEngine = 0;
+    ValueNode* id;
+    id = archive.find("collisionSeqItem");
+    if(id->isValid()){
+        CollisionSeqItem* collisionSeqItem = dynamic_cast<CollisionSeqItem*>(archive.findItem(id));
+        if(collisionSeqItem){
+            addCollisionSeqEngine(collisionSeqItem);
+        }
+    }
 }
 
 
@@ -1737,12 +1805,23 @@ void SimulatorItemImpl::addBodyMotionEngine(BodyMotionItem* motionItem)
 }
 
 
+void SimulatorItemImpl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem)
+{
+    WorldItem* worldItem = collisionSeqItem->findOwnerItem<WorldItem>();
+    if(worldItem){
+        collisionSeqEngine = new CollisionSeqEngine(worldItem, collisionSeqItem);
+    }
+}
+
+
 bool SimulatorItemImpl::setPlaybackTime(double time)
 {
     bool processed = false;
     for(size_t i=0; i < bodyMotionEngines.size(); ++i){
         processed |= bodyMotionEngines[i]->onTimeChanged(time);
     }
+    if(collisionSeqEngine)
+        processed |= collisionSeqEngine->onTimeChanged(time);
     return processed;
 }
 

@@ -8,6 +8,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 using namespace cnoid;
@@ -81,11 +82,10 @@ void ImageWidget::setImage(const Image& image)
 
 void ImageWidget::zoom(double scale)
 {
-	if(pixmap_.isNull()){
-		return;
-	}
+    if(pixmap_.isNull())
+        return;
 
-	QSize r = rect().size();
+    QSize r = rect().size();
 	QTransform invT = transform_.inverted();
 	double x,y;
 	invT.map(r.width()/2,r.height()/2,&x,&y);
@@ -100,9 +100,8 @@ void ImageWidget::zoom(double scale)
 
 void ImageWidget::translate(QPoint pos)
 {
-	if(pixmap_.isNull()){
-		return;
-	}
+    if(pixmap_.isNull())
+        return;
 
 	QTransform T(transform_.m11(), transform_.m12(),transform_.m21(), transform_.m22(), 0,0);
 	QTransform invT = T.inverted();
@@ -114,19 +113,15 @@ void ImageWidget::translate(QPoint pos)
 }
 
 
-void ImageWidget::rotate(double rotation)
+void ImageWidget::rotate(double angle)
 {
-	if(pixmap_.isNull()){
-		return;
-	}
-
 	QSize r = rect().size();
 	QTransform invT = transform_.inverted();
 	double x,y;
 	invT.map(r.width()/2,r.height()/2,&x,&y);
 
 	transform_.translate(x,y);
-	transform_.rotate(rotation);
+	transform_.rotate(angle);
 	transform_.translate(-x,-y);
 
 	update();
@@ -182,6 +177,7 @@ void ImageWidget::fitCenter()
     oldScale = scale;
     oldSize = r;
     fitted = true;
+
 }
 
 
@@ -206,30 +202,11 @@ void ImageWidget::resizeEvent(QResizeEvent *event)
 
 void ImageWidget::resize(const QSize& size)
 {
-    if(isScalingEnabled_){
+    if(isScalingEnabled_ ){
         if(size.width() <= 0 || size.height() <= 0){
             return;
         }
-        /*
-        double wscale = (double)size.width() / (double)oldSize.width();
-        double hscale = (double)size.height() / (double)oldSize.height();
 
-        QRect rect(0, 0, pixmap_.width(), pixmap_.height());
-        QRect trect = transform_.mapRect(rect);
-        if(trect.width() < size.width() && wscale < 1.0)
-            wscale = 1.0;
-        if(trect.height() < size.height() && hscale < 1.0)
-            hscale = 1.0;
-
-        QSize difSize = size - oldSize;
-        double scale = 1;
-        if(!difSize.width())
-            scale = hscale;
-        else if(!difSize.height())
-            scale = wscale;
-        else
-            scale = wscale < hscale ? wscale : hscale;
-        */
         QSize s = pixmap_.size();
         s.scale(size, Qt::KeepAspectRatio);
         double newScale = (double)s.width() / (double)pixmap_.size().width();
@@ -264,10 +241,13 @@ void ImageWidget::setTransform(const QTransform& transform)
 }
 
 
-const QTransform& ImageWidget::transform()
+bool ImageWidget::getTransform(QTransform& transform)
 {
+    if(pixmap_.isNull())
+        return false;
+
     notScaledTransform_ = transform_;
-    if(isScalingEnabled_){
+    if(isScalingEnabled_ && !pixmap_.isNull()){
         QSize size = pixmap_.size();
         double scale = 1.0 / oldScale;
 
@@ -287,6 +267,27 @@ const QTransform& ImageWidget::transform()
         invT.map(dx, dy,&x,&y);
         notScaledTransform_.translate(x, y);
     }
-    return notScaledTransform_;
+    transform = notScaledTransform_;
+    return true;
 }
 
+double ImageWidget::getAngle(){
+    double scale;
+    if(pixmap_.isNull())
+        scale = 1.0;
+    else
+        scale = oldScale;
+
+    notScaledTransform_ = transform_;
+    notScaledTransform_ *= scale;
+
+    return atan2(notScaledTransform_.m12(), notScaledTransform_.m11());
+
+}
+
+
+void ImageWidget::setAngle(double angle)
+{
+    transform_.reset();
+    rotate(angle);
+}

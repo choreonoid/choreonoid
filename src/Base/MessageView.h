@@ -80,6 +80,8 @@ public:
     void beginStdioRedirect();
     void endStdioRedirect();
 
+    SignalProxy<void(const std::string& text)> sigMessage();
+
     static bool isFlushing();
     static SignalProxy<void()> sigFlushFinished();
 

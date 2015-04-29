@@ -24,7 +24,7 @@ namespace cnoid {
 
 void exportPyViews()
 {
-    PySignalProxy<void(View*)>("ViewSignal");
+    PySignal<void(View*)>("ViewSignal");
 
     {
         scope viewScope = 

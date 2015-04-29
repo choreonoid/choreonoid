@@ -25,6 +25,12 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
+namespace {
+
+const bool TRACE_FUNCTIONS = false;
+
+}
+
 namespace cnoid {
 
 class TaskViewImpl : public TaskProc, public TaskMenu
@@ -195,7 +201,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     defaultCommandButton.setText(_("V"));
     defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
-    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, -1));
+    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, -1));
 
     autoModeToggle.setText(_("Auto"));
     autoModeToggle.setToolTip(_("Automatic mode"));
@@ -397,7 +403,9 @@ int TaskView::currentTaskIndex() const
 
 bool TaskView::setCurrentTask(int taskIndex)
 {
-    cout << "TaskView::setCurrentTask(" << taskIndex << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskView::setCurrentTask(" << taskIndex << ")" << endl;
+    }
     return impl->setCurrentTask(taskIndex, false);
 }
 
@@ -416,7 +424,9 @@ int TaskView::currentPhaseIndex() const
 
 void TaskView::setCurrentPhase(int phaseIndex)
 {
-    cout << "TaskView::setCurrentPhase(" << phaseIndex << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskView::setCurrentPhase(" << phaseIndex << ")" << endl;
+    }
     impl->setPhaseIndex(phaseIndex, false);
 }
 
@@ -471,7 +481,9 @@ bool TaskView::isAutoMode() const
 
 void TaskView::setAutoMode(bool on)
 {
-    cout << "TaskView::setAutoMode(" << on << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskView::setAutoMode(" << on << ")" << endl;
+    }
     impl->autoModeToggle.setChecked(on);
 }
 
@@ -496,7 +508,9 @@ bool TaskView::isNoExecutionMode() const
 
 void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 {
-    cout << "TaskView::setCurrentCommand(" << commandIndex << ", " << doExecution << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskView::setCurrentCommand(" << commandIndex << ", " << doExecution << ")" << endl;
+    }
     
     if(impl->currentPhase){
         if(commandIndex < impl->currentPhase->numCommands()){
@@ -604,9 +618,14 @@ void TaskView::setBusyState(bool on)
 
 void TaskViewImpl::setBusyState(bool on)
 {
-    cout << "TaskViewImpl::setBusyState(" << on << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::setBusyState(" << on << ")" << endl;
+    }
+    
     if(on != isBusy){
-        cout << "on != isBusy" << endl;
+        if(TRACE_FUNCTIONS){
+            cout << "on != isBusy" << endl;
+        }
         isBusy = on;
 
         for(size_t i=0; i < commandButtons.size(); ++i){
@@ -617,9 +636,8 @@ void TaskViewImpl::setBusyState(bool on)
             commandButtons[currentCommandIndex]->setDown(true);
         }
         cancelButton.setEnabled(isBusy);
-
         MessageView::instance()->flush();
-    
+        
         sigBusyStateChanged();
     }
 }
@@ -692,7 +710,9 @@ int TaskViewImpl::getLoopBackPhaseIndex(int phaseIndex)
 
 void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
 {
-    cout << "TaskViewImpl::setPhaseIndex(" << index << ", " << isSuccessivelyCalled << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::setPhaseIndex(" << index << ", " << isSuccessivelyCalled << ")" << endl;
+    }
     
     cancelWaiting(false);
     
@@ -791,12 +811,20 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
 
 void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 {
-    cout << "TaskViewImpl::executeCommandSuccessively(" << commandIndex << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::executeCommandSuccessively(" << commandIndex << ")" << endl;
+    }
+    
     cancelWaiting(false);
 
     nextCommandIndex = boost::none;
+
+    setBusyState(true);
     
-    if(currentTask && currentPhase){
+    if(!currentTask || !currentPhase){
+        setBusyState(false);
+        
+    } else {
         nextPhaseIndex = currentPhaseIndex_;
         TaskFunc commandFunc;
         if(commandIndex < 0){
@@ -839,7 +867,6 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
         }
 
         if(commandFunc){
-            setBusyState(true);
             commandFunc(this);
         }
 
@@ -850,7 +877,9 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
 
 void TaskViewImpl::setTransitionToNextCommand()
 {
-    cout << "TaskViewImpl::setTransitionToNextCommand()" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::setTransitionToNextCommand()" << endl;
+    }
 
     bool isNextDispatched = false;
 
@@ -908,9 +937,12 @@ void TaskViewImpl::retry()
 
 void TaskViewImpl::onCommandButtonClicked(int commandIndex)
 {
-    cout << "TaskViewImpl::onCommandButtonClicked(" << commandIndex << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::onCommandButtonClicked(" << commandIndex << ")" << endl;
+    }
     
     if(isNoExecutionMode){
+        setBusyState(true);
         setCurrentCommandIndex(commandIndex);
         sigCurrentCommandChanged();
     } else {
@@ -921,7 +953,9 @@ void TaskViewImpl::onCommandButtonClicked(int commandIndex)
 
 void TaskViewImpl::onNextOrPrevButtonClicked(int direction)
 {
-    cout << "TaskViewImpl::onNextOrPrevButtonClicked(" << direction << ")" << endl;
+    if(TRACE_FUNCTIONS){
+        cout << "TaskViewImpl::onNextOrPrevButtonClicked(" << direction << ")" << endl;
+    }
     
     int index = currentPhaseIndex_ + direction;
     if(currentPhase && index == currentTask->numPhases()){
@@ -987,7 +1021,7 @@ bool TaskViewImpl::wait(double sec)
     if(!eventLoop.isRunning()){
         waitTimer.start(sec * 1000.0);
         isPendingCommandCompleted = false;
-        eventLoop.exec();
+        eventLoop.exec(QEventLoop::AllEvents);
         completed = isPendingCommandCompleted;
     }
     if(!completed){
@@ -1007,7 +1041,7 @@ bool TaskViewImpl::waitForCommandToFinish(double timeout)
         } else {
             commandTimer.stop();
         }
-        eventLoop.exec();
+        eventLoop.exec(QEventLoop::AllEvents);
         completed = isPendingCommandCompleted;
     }
     if(!completed){
@@ -1045,6 +1079,7 @@ void TaskViewImpl::cancelWaiting(bool doBreak)
 {
     if(isNoExecutionMode){
         if(doBreak){
+            setBusyState(false);
             sigCurrentCommandCanceled();
         }
     } else {

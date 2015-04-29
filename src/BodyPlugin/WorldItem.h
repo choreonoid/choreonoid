@@ -35,7 +35,7 @@ public:
     void updateCollisionDetectorLater();
     void updateCollisionDetector();
     void updateCollisions();
-    const std::vector<CollisionLinkPairPtr>& collisions() const;
+    std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy<void()> sigCollisionsUpdated();
 
     virtual SgNode* getScene();

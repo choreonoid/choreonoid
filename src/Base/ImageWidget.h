@@ -30,8 +30,10 @@ public:
     void zoom(double scale);
     void translate(QPoint pos);
 
-    const QTransform& transform();
+    bool getTransform(QTransform& transform);
+    double getAngle();
     void setTransform(const QTransform& transform);
+    void setAngle(double angle);
     void rotate(double angle);
 
   protected:
