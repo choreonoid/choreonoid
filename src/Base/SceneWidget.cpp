@@ -2229,6 +2229,7 @@ void SceneWidget::setUseBufferForPicking(bool on)
 void SceneWidget::setBackgroundColor(const Vector3& color)
 {
     impl->renderer.setBackgroundColor(color.cast<float>());
+    impl->update();
 }
 
 
