@@ -11,20 +11,10 @@ using namespace cnoid;
 
 namespace {
 
-typedef void (VRMLWriter::*VRMLWriterNodeMethod)(VRMLNodePtr node);
 typedef std::map<std::string, VRMLWriterNodeMethod> TNodeMethodMap;
 typedef std::pair<std::string, VRMLWriterNodeMethod> TNodeMethodPair;
 
 TNodeMethodMap nodeMethodMap;
-
-inline void registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method) {
-    nodeMethodMap.insert(TNodeMethodPair(t.name(), method)); 
-}
-
-VRMLWriterNodeMethod getNodeMethod(VRMLNodePtr node) {
-    TNodeMethodMap::iterator p = nodeMethodMap.find(typeid(*node).name()); 
-    return (p != nodeMethodMap.end()) ? p->second : 0; 
-}
 
 inline std::ostream& operator<<(std::ostream& out, VRMLWriter::TIndent& indent)
 {
@@ -118,6 +108,18 @@ VRMLWriter::VRMLWriter(std::ostream& out) : out(out), ofname()
     }
 }
 
+
+void VRMLWriter::registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method) {
+    nodeMethodMap.insert(TNodeMethodPair(t.name(), method)); 
+}
+
+
+VRMLWriterNodeMethod VRMLWriter::getNodeMethod(VRMLNodePtr node) {
+    TNodeMethodMap::iterator p = nodeMethodMap.find(typeid(*node).name()); 
+    return (p != nodeMethodMap.end()) ? p->second : 0; 
+}
+
+
 void VRMLWriter::registerNodeMethodMap() 
 {
     registerNodeMethod(typeid(VRMLGroup),          &VRMLWriter::writeGroupNode);
@@ -129,9 +131,6 @@ void VRMLWriter::registerNodeMethodMap()
     registerNodeMethod(typeid(VRMLCone),           &VRMLWriter::writeConeNode);
     registerNodeMethod(typeid(VRMLCylinder),       &VRMLWriter::writeCylinderNode);
     registerNodeMethod(typeid(VRMLSphere),         &VRMLWriter::writeSphereNode);
-    registerNodeMethod(typeid(VRMLHumanoid),       &VRMLWriter::writeHumanoidNode);
-    registerNodeMethod(typeid(VRMLJoint),          &VRMLWriter::writeJointNode);
-    registerNodeMethod(typeid(VRMLSegment),        &VRMLWriter::writeSegmentNode);
 }
 
 void VRMLWriter::writeHeader()
@@ -425,95 +424,3 @@ void VRMLWriter::writeCoordinateNode(VRMLCoordinatePtr coord)
     endNode();
 }
 
-
-void VRMLWriter::writeHumanoidNode(VRMLNodePtr node)
-{
-    VRMLHumanoidPtr humanoid = static_pointer_cast<VRMLHumanoid>(node);
-
-    beginNode("Humanoid", humanoid);
-    if(!humanoid->humanoidBody.empty()){
-        out << indent << "humanoidBody [\n";
-        ++indent;
-        for(size_t i=0; i < humanoid->humanoidBody.size(); i++){
-            writeNodeIter(humanoid->humanoidBody[i]);
-        }
-        out << --indent << "]\n";
-    }
-    if(!humanoid->joints.empty()){
-        out << indent << "joints [\n";
-        ++indent;
-        for(size_t i=0; i < humanoid->joints.size(); i++){
-            out << indent << "USE " << humanoid->joints[i]->defName;
-            if (i == humanoid->joints.size() - 1) {
-                out << "\n";
-            } else {
-                out << ",\n";
-            }
-        }
-        out << --indent << "]\n";
-    }
-    if(!humanoid->segments.empty()){
-        out << indent << "segments [\n";
-        ++indent;
-        for(size_t i=0; i < humanoid->segments.size(); i++){
-            out << indent << "USE " << humanoid->segments[i]->defName;
-            if (i == humanoid->segments.size() - 1) {
-                out << "\n";
-            } else {
-                out << ",\n";
-            }
-        }
-        out << --indent << "]\n";
-    }
-    endNode();
-}
-
-
-void VRMLWriter::writeJointNode(VRMLNodePtr node)
-{
-    VRMLJointPtr joint = static_pointer_cast<VRMLJoint>(node);
-
-    beginNode("Joint", joint);
-
-    if (joint->jointId >= 0) {
-        out << indent << "jointId " << joint->jointId << "\n";
-    }
-    out << indent << "jointType \"" << joint->jointType << "\"\n";
-    if (joint->jointType != "free" && joint->jointType != "fixed") {
-        out << indent << "jointAxis " << joint->jointAxis << "\n";
-        out << indent << "llimit\n";
-        writeMFValues(joint->llimit, 1);
-        out << indent << "lvlimit\n";
-        writeMFValues(joint->lvlimit, 1);
-        out << indent << "ulimit\n";
-        writeMFValues(joint->ulimit, 1);
-        out << indent << "uvlimit\n";
-        writeMFValues(joint->uvlimit, 1);
-    }
-    out << indent << "center " << joint->center << "\n";
-    out << indent << "rotation " << joint->rotation << "\n";
-    out << indent << "scale " << joint->scale << "\n";
-    out << indent << "scaleOrientation " << joint->scaleOrientation << "\n";
-    out << indent << "translation " << joint->translation << "\n";
-
-    writeGroupFields(joint);
-
-    endNode();
-}
-
-
-void VRMLWriter::writeSegmentNode(VRMLNodePtr node)
-{
-    VRMLSegmentPtr segment = static_pointer_cast<VRMLSegment>(node);
-
-    beginNode("Segment", segment);
-
-    out << indent << "mass " << segment->mass << "\n";
-    out << indent << "centerOfMass " << segment->centerOfMass << "\n";
-    out << indent << "momentsOfInertia\n";
-    writeMFValues(segment->momentsOfInertia, 3);
-
-    writeGroupFields(segment);
-
-    endNode();
-}

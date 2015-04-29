@@ -17,6 +17,8 @@ namespace cnoid {
 
 class VRMLWriter;
 
+typedef void (VRMLWriter::*VRMLWriterNodeMethod)(VRMLNodePtr node);
+
 class CNOID_EXPORT VRMLWriter
 {
 public:
@@ -40,13 +42,16 @@ public:
         int n;
     };
 
-private:
+protected:
     std::ostream& out;
     std::string ofname;
 
     TIndent indent;
 
     void registerNodeMethodMap();
+    void registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method);
+    VRMLWriterNodeMethod getNodeMethod(VRMLNodePtr node);
+
     template <class MFValues> void writeMFValues(MFValues values, int numColumn);
     void writeMFInt32SeparatedByMinusValue(MFInt32& values);
     void writeNodeIter(VRMLNodePtr node);
@@ -55,6 +60,8 @@ private:
     void writeGroupNode(VRMLNodePtr node);
     void writeGroupFields(VRMLGroupPtr group);
     void writeTransformNode(VRMLNodePtr node);
+
+private:
     std::string abstorel(std::string& fname);
     void writeInlineNode(VRMLNodePtr node);
     void writeShapeNode(VRMLNodePtr node);
@@ -66,9 +73,6 @@ private:
     void writeSphereNode(VRMLNodePtr node);
     void writeIndexedFaceSetNode(VRMLNodePtr node);
     void writeCoordinateNode(VRMLCoordinatePtr coord);
-    void writeHumanoidNode(VRMLNodePtr node);
-    void writeJointNode(VRMLNodePtr node);
-    void writeSegmentNode(VRMLNodePtr node);
 
 };
 
