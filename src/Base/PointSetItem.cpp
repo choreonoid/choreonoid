@@ -7,6 +7,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/MenuManager>
 #include <cnoid/Archive>
+#include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/PointSetUtil>
@@ -143,6 +144,8 @@ public:
     void removePoints(const PointSetItem::Region& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
+    bool onTranslationPropertyChanged(const std::string& value);
+    bool onRotationPropertyChanged(const std::string& value);
 };
 
 }
@@ -613,6 +616,36 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Editable"), isEditable(), boost::bind(&PointSetItemImpl::onEditableChanged, impl, _1));
     const SgVertexArray* points = impl->pointSet->vertices();
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
+    putProperty(_("Translation"), str(Vector3(offsetPosition().translation())),
+                boost::bind(&PointSetItemImpl::onTranslationPropertyChanged, impl, _1));
+    Vector3 rpy(rpyFromRot(offsetPosition().linear()));
+    putProperty("RPY", str(TO_DEGREE * rpy), boost::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
+    
+}
+
+
+bool PointSetItemImpl::onTranslationPropertyChanged(const std::string& value)
+{
+    Vector3 p;
+    if(toVector3(value, p)){
+        self->offsetPosition().translation() = p;
+        self->notifyUpdate();
+        return true;
+    }
+    return false;
+}
+
+
+bool PointSetItemImpl::onRotationPropertyChanged(const std::string& value)
+{
+    Vector3 rpy;
+    if(toVector3(value, rpy)){
+        self->offsetPosition().linear() = rotFromRpy(TO_RADIAN * rpy);
+        self->notifyUpdate();
+        return true;
+    }
+    
+    return false;
 }
 
 
