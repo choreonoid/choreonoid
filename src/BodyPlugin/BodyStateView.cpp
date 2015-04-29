@@ -19,7 +19,17 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
+
+struct SensorTypeOrder
+{
+    bool operator()(const Sensor* lhs, const Sensor* rhs) const {
+        return (strcmp(typeid(*lhs).name(), typeid(*rhs).name()) <= 0);
+    }
+};
+
+
 }
 
 namespace cnoid {
@@ -168,7 +178,8 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 
     if(currentBody){
         devices = currentBody->devices();
-
+        std::stable_sort(devices.begin(), devices.end(), SensorTypeOrder());
+            
         for(int i=0; i < devices.size(); ++i){
             Device* device = devices.get(i);
             StateItem* deviceItem = new StateItem();
