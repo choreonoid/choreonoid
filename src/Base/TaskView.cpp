@@ -60,7 +60,13 @@ public:
     MenuManager menuManager;
     bool isNoExecutionMode;
 
-    std::vector<TaskPtr> tasks;
+    struct TaskInfo {
+        TaskPtr task;
+        MappingPtr state;
+        TaskInfo(Task* task) : task(task) { }
+    };
+    std::vector<TaskInfo> tasks;
+    
     TaskPtr currentTask;
     int currentTaskIndex;
     Signal<void()> sigCurrentTaskChanged;
@@ -329,7 +335,7 @@ void TaskViewImpl::addTask(Task* task)
     if(tasks.empty()){
         taskCombo.clear();
     }
-    tasks.push_back(task);
+    tasks.push_back(TaskInfo(task));
 
     taskCombo.addItem(task->name().c_str());
     
@@ -355,28 +361,26 @@ bool TaskViewImpl::updateTask(Task* task)
     
     int index = taskCombo.findText(task->name().c_str());
 
-    if(index >= 0 && index < tasks.size()){
+    if(index < 0 || index >= tasks.size()){
+        addTask(task);
+    } else {
         if(isWaiting()){
             mv->putln(MessageView::WARNING,
                       format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
                       % task->name());
         } else {
-            MappingPtr state;
+            TaskInfo& info = tasks[index];
+            TaskPtr oldTask = info.task;
+            info.task = task;
+
             if(index == currentTaskIndex){
-                TaskPtr oldTask = tasks[index];
-                state = new Mapping();
-                oldTask->storeState(self, *state);
-            }
-            tasks[index] = task;
-            if(state){
+                info.state = new Mapping();
+                oldTask->storeState(self, *info.state);
                 setCurrentTask(index, true);
-                task->restoreState(self, *state);
             }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
         }
-    } else {
-        addTask(task);
     }
 
     return updated;
@@ -391,7 +395,7 @@ int TaskView::numTasks() const
 
 Task* TaskView::task(int index)
 {
-    return impl->tasks[index];
+    return impl->tasks[index].task;
 }
 
 
@@ -529,7 +533,8 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         return false;
     }
 
-    if(index == currentTaskIndex && !forceUpdate){
+    bool changed = index != currentTaskIndex;
+    if(!changed && !forceUpdate){
         return false;
     }
 
@@ -539,17 +544,26 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         taskCombo.blockSignals(false);
     }
 
-    bool doEmit = index != currentTaskIndex;
-    
-    currentTaskIndex = index;
-    currentTask = tasks[index];
-
-    if(doEmit){
-        sigCurrentTaskChanged();
+    TaskInfo& info = tasks[index];
+    TaskInfo& old = tasks[currentTaskIndex];
+    if(changed){
+        old.state = new Mapping();
+        old.task->storeState(self, *old.state);
     }
+    currentTaskIndex = index;
+    currentTask = info.task;
 
     currentPhaseIndex_ = -1;
     setPhaseIndex(0, false);
+
+    if(info.state){
+        currentPhaseIndex_ = -1;
+        info.task->restoreState(self, *info.state);
+    }
+
+    if(changed){
+        sigCurrentTaskChanged();
+    }
 
     return true;
 }
@@ -561,7 +575,7 @@ void TaskViewImpl::setCurrentTaskByName(const std::string& name)
         return;
     }
     for(size_t i=0; i < tasks.size(); ++i){
-        Task* task = tasks[i];
+        Task* task = tasks[i].task;
         if(task->name() == name){
             setCurrentTask(i, false);
             break;
