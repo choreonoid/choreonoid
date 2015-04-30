@@ -32,8 +32,10 @@ public:
 
     virtual void notifyUpdate();
         
-    Affine3& offsetPosition();
     const Affine3& offsetPosition() const;
+    void setOffsetPosition(const Affine3& T);
+    SignalProxy<void(const Affine3& T)> sigOffsetPositionChanged();
+    void notifyOffsetPositionChange();
 
     void setPointSize(double size);
     double pointSize() const;

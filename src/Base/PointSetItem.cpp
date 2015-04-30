@@ -58,6 +58,8 @@ public:
     Selection renderingMode;
     bool isEditable_;
 
+    Signal<void(const Affine3& T)> sigOffsetPositionChanged;
+    
     Signal<void()> sigAttentionPointsChanged;
     SgGroupPtr attentionPointMarkerGroup;
     
@@ -284,15 +286,29 @@ SgPointSet* PointSetItem::pointSet()
 }
 
 
-Affine3& PointSetItem::offsetPosition()
+const Affine3& PointSetItem::offsetPosition() const
 {
     return impl->scenePointSet->T();
 }
 
 
-const Affine3& PointSetItem::offsetPosition() const
+void PointSetItem::setOffsetPosition(const Affine3& T)
 {
-    return impl->scenePointSet->T();
+    impl->scenePointSet->setPosition(T);
+}
+
+
+SignalProxy<void(const Affine3& T)> PointSetItem::sigOffsetPositionChanged()
+{
+    return impl->scenePointSet->sigOffsetPositionChanged;
+}
+
+
+void PointSetItem::notifyOffsetPositionChange()
+{
+    impl->scenePointSet->sigOffsetPositionChanged(impl->scenePointSet->T());
+    impl->scenePointSet->notifyUpdate();
+    Item::notifyUpdate();
 }
 
 
@@ -628,8 +644,8 @@ bool PointSetItemImpl::onTranslationPropertyChanged(const std::string& value)
 {
     Vector3 p;
     if(toVector3(value, p)){
-        self->offsetPosition().translation() = p;
-        self->notifyUpdate();
+        scenePointSet->setTranslation(p);
+        self->notifyOffsetPositionChange();
         return true;
     }
     return false;
@@ -640,8 +656,8 @@ bool PointSetItemImpl::onRotationPropertyChanged(const std::string& value)
 {
     Vector3 rpy;
     if(toVector3(value, rpy)){
-        self->offsetPosition().linear() = rotFromRpy(TO_RADIAN * rpy);
-        self->notifyUpdate();
+        scenePointSet->setRotation(rotFromRpy(TO_RADIAN * rpy));
+        self->notifyOffsetPositionChange();
         return true;
     }
     
