@@ -12,6 +12,7 @@
 #include "../MultiAffine3SeqItem.h"
 #include "../MultiSE3SeqItem.h"
 #include "../Vector3SeqItem.h"
+#include "../PointSetItem.h"
 #include <cnoid/PyUtil>
 
 namespace python = boost::python;
@@ -62,6 +63,16 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_save, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
 
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
+
+
+Affine3 PointSetItem_offsetPosition(const PointSetItem& self){
+    return self.offsetPosition();
+}
+
+Vector3 PointSetItem_attentionPoint(PointSetItem& self, int index){
+    return self.attentionPoint(index);
+}
+
 
 } // namespace
 
@@ -201,6 +212,23 @@ void exportPyItems()
     
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
+
+    class_ < PointSetItem, PointSetItemPtr, bases<Item, SceneProvider> >("PointSetItem")
+        .def("offsetPosition", PointSetItem_offsetPosition)
+        .def("setOffsetPosition", &PointSetItem::setOffsetPosition)
+        .def("sigOffsetPositionChanged", &PointSetItem::sigOffsetPositionChanged)
+        .def("notifyOffsetPositionChange", &PointSetItem::notifyOffsetPositionChange)
+        .def("numAttentionPoints", &PointSetItem::numAttentionPoints)
+        .def("attentionPoint", PointSetItem_attentionPoint)
+        .def("clearAttentionPoints", &PointSetItem::clearAttentionPoints)
+        .def("addAttentionPoint", &PointSetItem::addAttentionPoint)
+        .def("sigAttentionPointsChanged", &PointSetItem::sigAttentionPointsChanged)
+        .def("notifyAttentionPointChange", &PointSetItem::notifyAttentionPointChange)
+        ;
+
+    implicitly_convertible<PointSetItemPtr, ItemPtr>();
+    PyItemList<PointSetItem>("PointSetItemList");
+    
 }
 
 } // namespace cnoid
