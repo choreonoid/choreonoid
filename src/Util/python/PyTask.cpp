@@ -357,6 +357,7 @@ void exportPyTaskTypes()
 {
     class_<TaskProc, TaskProc*, boost::noncopyable>("TaskProc", no_init)
         .def("currentPhaseIndex", &TaskProc::currentPhaseIndex)
+        .def("isAutoMode", &TaskProc::isAutoMode)
         .def("breakSequence", &TaskProc::breakSequence)
         .def("setNextCommand", &TaskProc::setNextCommand)
         .def("setNextPhase", &TaskProc::setNextPhase)

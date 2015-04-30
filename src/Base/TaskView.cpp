@@ -112,6 +112,7 @@ public:
     void onNextOrPrevButtonClicked(int direction);
 
     virtual int currentPhaseIndex() const;
+    virtual bool isAutoMode() const;    
     virtual void breakSequence();
     virtual void setNextCommand(int commandIndex);
     virtual void setNextPhase(int phaseIndex);
@@ -480,6 +481,12 @@ SignalProxy<void()> TaskView::sigCurrentCommandCanceled()
 bool TaskView::isAutoMode() const
 {
     return impl->autoModeToggle.isChecked();
+}
+
+
+bool TaskViewImpl::isAutoMode() const
+{
+    return autoModeToggle.isChecked();
 }
 
 

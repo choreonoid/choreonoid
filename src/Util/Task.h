@@ -23,6 +23,7 @@ class CNOID_EXPORT TaskProc
 public:
     virtual ~TaskProc();
     virtual int currentPhaseIndex() const = 0;
+    virtual bool isAutoMode() const = 0;
     virtual void breakSequence() = 0;
     virtual void setNextCommand(int commandIndex) = 0;
     virtual void setNextPhase(int phaseIndex) = 0;
