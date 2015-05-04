@@ -113,7 +113,7 @@ void replaceDirectoryVariable(ArchiveSharedData* shared, QString& io_pathString,
 Archive* Archive::invalidArchive()
 {
     static ArchivePtr invalidArchive_ = new Archive();
-    invalidArchive_->type_ = ValueNode::INVALID_NODE;
+    invalidArchive_->typeBits = ValueNode::INVALID_NODE;
     return invalidArchive_;
 }
 

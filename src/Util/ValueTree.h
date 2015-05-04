@@ -41,21 +41,21 @@ class CNOID_EXPORT ValueNode : public Referenced
 public:
 
 #ifndef CNOID_BACKWARD_COMPATIBILITY
-    enum Type { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 3, LF_NODE = 4 };
+    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, INSERT_LF = 8, APPEND_LF = 16 };
 #else 
-    enum Type { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 3, SEQUENCE = 3, LF_NODE = 4};
+    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, SEQUENCE = 4, INSERT_LF = 8, APPEND_LF = 16 };
 #endif
 
-    bool isValid() const { return type_ != INVALID_NODE; }
-
-    Type type() const { return type_; }
+    bool isValid() const { return typeBits; }
+    TypeBit LFType() const { return (TypeBit)(typeBits & (INSERT_LF | APPEND_LF)); }
+    TypeBit nodeType() const { return (TypeBit)(typeBits & 7); }
 
     int toInt() const;
     double toDouble() const;
     bool toBool() const;
 
-    bool isScalar() const { return type_ == SCALAR; }
-    bool isString() const { return type_ == SCALAR; }
+    bool isScalar() const { return typeBits & SCALAR; }
+    bool isString() const { return typeBits & SCALAR; }
 
 #ifdef _WIN32
     const std::string toString() const;
@@ -73,18 +73,19 @@ public:
     }
 #endif
 
-    template<typename T> T to() const { return ""; }
+    //template<typename T> T to() const { return ""; }
+    template<typename T> T to() const;
 
-    bool isMapping() const { return type_ == MAPPING; }
+    bool isMapping() const { return typeBits & MAPPING; }
     const Mapping* toMapping() const;
     Mapping* toMapping();
 
-    bool isListing() const { return type_ == LISTING; }
+    bool isListing() const { return typeBits & LISTING; }
     const Listing* toListing() const;
     Listing* toListing();
         
 #ifdef CNOID_BACKWARD_COMPATIBILITY
-    bool isSequence() const { return type_ == LISTING; }
+    bool isSequence() const { return typeBits & LISTING; }
     const Listing* toSequence() const { return toListing(); }
     Listing* toSequence() { return toListing(); }
 #endif
@@ -154,11 +155,14 @@ private:
 
     class FileException : public Exception {
     };
+
+    class UnknownNodeTypeException : public Exception {
+    };
         
 protected:
 
     ValueNode() { }
-    ValueNode(Type type) : type_(type), line_(-1), column_(-1) { }
+    ValueNode(TypeBit type) : typeBits(type), line_(-1), column_(-1) { }
 
     virtual ~ValueNode() { }
 
@@ -166,7 +170,7 @@ protected:
     void throwNotMappingException() const;
     void throwNotListingException() const;
 
-    Type type_;
+    int typeBits;
 
 private:
 
@@ -538,6 +542,7 @@ private:
     Container values;
     const char* doubleFormat_;
     bool isFlowStyle_;
+    bool doInsertLFBeforeNextElement;
 
     friend class Mapping;
     friend class YAMLReaderImpl;

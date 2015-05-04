@@ -21,7 +21,19 @@ using namespace cnoid;
 namespace {
 
 const bool debugTrace = false;
-const char* typeNames[] = { "unknown node", "mapping", "sequence", "scalar" };
+
+const char* getTypeName(int typeBits){
+    if(typeBits & ValueNode::SCALAR){
+        return "scalar";
+    } else if(typeBits & ValueNode::MAPPING){
+        return "mapping";
+    } else if(typeBits & ValueNode::LISTING){
+        return "listing";
+    } else {
+        return "unknown type node";
+    }
+}
+
 map<string, bool> booleanSymbols;
 
 const char* defaultDoubleFormat = "%.6g";
@@ -38,9 +50,9 @@ ValueNode::Initializer::Initializer()
 {
     invalidNode = new ValueNode(INVALID_NODE);
     invalidMapping = new Mapping();
-    invalidMapping->type_ = INVALID_NODE;
+    invalidMapping->typeBits = INVALID_NODE;
     invalidListing = new Listing();
-    invalidListing->type_ = INVALID_NODE;
+    invalidListing->typeBits = INVALID_NODE;
     
     booleanSymbols["true"] = true;
     booleanSymbols["yes"] = true;
@@ -81,10 +93,10 @@ ValueNode& ValueNode::operator=(const ValueNode&)
   invalidNode = new ValueNode(INVALID_NODE);
 
   invalidMapping = new Mapping();
-  invalidMapping->type_ = INVALID_NODE;
+  invalidMapping->typeBits = INVALID_NODE;
 
   invalidListing = new Listing();
-  invalidListing->type_ = INVALID_NODE;
+  invalidListing->typeBits = INVALID_NODE;
         
   booleanSymbols["true"] = true;
   booleanSymbols["yes"] = true;
@@ -101,7 +113,7 @@ ValueNode& ValueNode::operator=(const ValueNode&)
 
 bool ValueNode::read(int &out_value) const
 {
-    if(type_ == SCALAR){
+    if(isScalar()){
         const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue[0]);
         char* endptr;
         out_value = strtol(nptr, &endptr, 10);
@@ -115,7 +127,7 @@ bool ValueNode::read(int &out_value) const
 
 int ValueNode::toInt() const
 {
-    if(type_ != SCALAR){
+    if(!isScalar()){
         throwNotScalrException();
     }
 
@@ -139,7 +151,7 @@ int ValueNode::toInt() const
 
 bool ValueNode::read(double& out_value) const
 {
-    if(type_ == SCALAR){
+    if(isScalar()){
         const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue[0]);
         char* endptr;
         out_value = strtod(nptr, &endptr);
@@ -153,7 +165,7 @@ bool ValueNode::read(double& out_value) const
 
 double ValueNode::toDouble() const
 {
-    if(type_ != SCALAR){
+    if(!isScalar()){
         throwNotScalrException();
     }
 
@@ -177,7 +189,7 @@ double ValueNode::toDouble() const
 
 bool ValueNode::read(bool& out_value) const
 {
-    if(type_ == SCALAR){
+    if(isScalar()){
         const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
         map<string, bool>::iterator p = booleanSymbols.find(scalar->stringValue);
         if(p != booleanSymbols.end()){
@@ -191,7 +203,7 @@ bool ValueNode::read(bool& out_value) const
 
 bool ValueNode::toBool() const
 {
-    if(type_ != SCALAR){
+    if(!isScalar()){
         throwNotScalrException();
     }
 
@@ -213,7 +225,7 @@ bool ValueNode::toBool() const
 
 bool ValueNode::read(std::string& out_value) const
 {
-    if(type_ == SCALAR){
+    if(isScalar()){
         out_value = fromUTF8(static_cast<const ScalarNode* const>(this)->stringValue);
         return !out_value.empty();
     }
@@ -223,7 +235,7 @@ bool ValueNode::read(std::string& out_value) const
 
 const std::string ValueNode::toString() const
 {
-    if(type_ != SCALAR){
+    if(!isScalar()){
         throwNotScalrException();
     }
     return fromUTF8(static_cast<const ScalarNode* const>(this)->stringValue);
@@ -232,7 +244,7 @@ const std::string ValueNode::toString() const
 
 const std::string ValueNode::toUTF8String() const
 {
-    if(type_ != SCALAR){
+    if(!isScalar()){
         throwNotScalrException();
     }
     return static_cast<const ScalarNode* const>(this)->stringValue;
@@ -242,7 +254,7 @@ const std::string ValueNode::toUTF8String() const
 
 bool ValueNode::read(std::string& out_value) const
 {
-    if(type_ == SCALAR){
+    if(isScalar()){
         out_value = static_cast<const ScalarNode* const>(this)->stringValue;
         return !out_value.empty();
     }
@@ -252,7 +264,7 @@ bool ValueNode::read(std::string& out_value) const
 
 const std::string& ValueNode::toString() const
 {
-    if(type_ != SCALAR){
+    if(!isScalar()){
         throwNotScalrException();
     }
     return static_cast<const ScalarNode* const>(this)->stringValue;
@@ -268,7 +280,7 @@ const std::string& ValueNode::toUTF8String() const
 
 bool ValueNode::readUTF8String(std::string& out_value) const
 {
-    if(type_ == SCALAR){
+    if(isScalar()){
         out_value = static_cast<const ScalarNode* const>(this)->stringValue;
         return !out_value.empty();
     }
@@ -280,7 +292,7 @@ ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
     : stringValue(value),
       stringStyle(stringStyle)
 {
-    type_ = SCALAR;
+    typeBits = SCALAR;
     line_ = -1;
     column_ = -1;
 }
@@ -289,7 +301,7 @@ ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
 ScalarNode::ScalarNode(const char* text, size_t length)
     : stringValue(text, length)
 {
-    type_ = SCALAR;
+    typeBits = SCALAR;
     stringStyle = PLAIN_STRING;
 }
 
@@ -298,7 +310,7 @@ ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
     : stringValue(text, length),
       stringStyle(stringStyle)
 {
-    type_ = SCALAR;
+    typeBits = SCALAR;
     line_ = -1;
     column_ = -1;
 }
@@ -307,7 +319,7 @@ ScalarNode::ScalarNode(const char* text, size_t length, StringStyle stringStyle)
 ScalarNode::ScalarNode(int value)
     : stringValue(lexical_cast<string>(value))
 {
-    type_ = SCALAR;
+    typeBits = SCALAR;
     line_ = -1;
     column_ = -1;
     stringStyle = PLAIN_STRING;
@@ -316,7 +328,7 @@ ScalarNode::ScalarNode(int value)
 
 const Mapping* ValueNode::toMapping() const
 {
-    if(type_ != MAPPING){
+    if(!isMapping()){
         throwNotMappingException();
     }
     return static_cast<const Mapping*>(this);
@@ -325,7 +337,7 @@ const Mapping* ValueNode::toMapping() const
 
 Mapping* ValueNode::toMapping()
 {
-    if(type_ != MAPPING){
+    if(!isMapping()){
         throwNotMappingException();
     }
     return static_cast<Mapping*>(this);
@@ -334,7 +346,7 @@ Mapping* ValueNode::toMapping()
 
 const Listing* ValueNode::toListing() const
 {
-    if(type_ != LISTING){
+    if(!isListing()){
         throwNotListingException();
     }
     return static_cast<const Listing*>(this);
@@ -343,7 +355,7 @@ const Listing* ValueNode::toListing() const
 
 Listing* ValueNode::toListing()
 {
-    if(type_ != LISTING){
+    if(!isListing()){
         throwNotListingException();
     }
     return static_cast<Listing*>(this);
@@ -370,7 +382,7 @@ void ValueNode::throwNotScalrException() const
     NotScalarException ex;
     if(hasLineInfo()){
         ex.setMessage(str(format("The %1% at line %2%, column %3% should be a scalar value.")
-                          % typeNames[type_] % line() % column()));
+                          % getTypeName(typeBits) % line() % column()));
     } else {
         ex.setMessage("Scalar value cannot be obtained from a non-scalar type yaml node.");
     }
@@ -397,7 +409,7 @@ void ValueNode::throwNotListingException() const
 
 Mapping::Mapping()
 {
-    type_ = MAPPING;
+    typeBits = MAPPING;
     line_ = -1;
     column_ = -1;
     mode = READ_MODE;
@@ -410,7 +422,7 @@ Mapping::Mapping()
 
 Mapping::Mapping(int line, int column)
 {
-    type_ = MAPPING;
+    typeBits = MAPPING;
     line_ = line;
     column_ = column;
     mode = READ_MODE;
@@ -467,7 +479,7 @@ Mapping* Mapping::findMapping(const std::string& key) const
     const_iterator p = values.find(toUTF8(key));
     if(p != values.end()){
         ValueNode* node = p->second.get();
-        if(node->type() == MAPPING){
+        if(node->isMapping()){
             return static_cast<Mapping*>(node);
         }
     }
@@ -483,7 +495,7 @@ Listing* Mapping::findListing(const std::string& key) const
     const_iterator p = values.find(toUTF8(key));
     if(p != values.end()){
         ValueNode* node = p->second.get();
-        if(node->type() == LISTING){
+        if(node->isListing()){
             return static_cast<Listing*>(node);
         }
     }
@@ -548,7 +560,7 @@ Mapping* Mapping::openMapping(const std::string& key, bool doOverwrite)
     iterator p = values.find(uKey);
     if(p != values.end()){
         ValueNode* node = p->second.get();
-        if(node->type() != MAPPING){
+        if(!node->isMapping()){
             values.erase(p);
         } else {
             mapping = static_cast<Mapping*>(node);
@@ -588,7 +600,7 @@ Listing* Mapping::openListing(const std::string& key, bool doOverwrite)
     iterator p = values.find(uKey);
     if(p != values.end()){
         ValueNode* node = p->second.get();
-        if(node->type() != LISTING){
+        if(!node->isListing()){
             values.erase(p);
         } else {
             sequence = static_cast<Listing*>(node);
@@ -681,7 +693,7 @@ void Mapping::writeUTF8(const std::string &key, const std::string& value, String
         insertSub(uKey, new ScalarNode(value, stringStyle));
     } else {
         ValueNode* node = p->second.get();
-        if(node->type() == SCALAR){
+        if(node->isScalar()){
             ScalarNode* scalar = static_cast<ScalarNode*>(node);
             scalar->stringValue = value;
             scalar->stringStyle = stringStyle;
@@ -704,7 +716,7 @@ void Mapping::writeSub(const std::string &key, const char* text, size_t length, 
         insertSub(uKey, new ScalarNode(text, length, stringStyle));
     } else {
         ValueNode* node = p->second.get();
-        if(node->type() == SCALAR){
+        if(node->isScalar()){
             ScalarNode* scalar = static_cast<ScalarNode*>(node);
             scalar->stringValue = string(text, length);
             scalar->stringStyle = stringStyle;
@@ -756,42 +768,48 @@ bool Mapping::compareIters(const Mapping::const_iterator& it1, const Mapping::co
 
 Listing::Listing()
 {
-    type_ = LISTING;
+    typeBits = LISTING;
     line_ = -1;
     column_ = -1;
-    isFlowStyle_ = false;
     doubleFormat_ = defaultDoubleFormat;
+    isFlowStyle_ = false;
+    doInsertLFBeforeNextElement = false;
 }
 
 
 Listing::Listing(int size)
     : values(size)
 {
-    type_ = LISTING;
+    typeBits = LISTING;
     line_ = -1;
     column_ = -1;
-    isFlowStyle_ = false;
     doubleFormat_ = defaultDoubleFormat;
+    isFlowStyle_ = false;
+    doInsertLFBeforeNextElement = false;
 }
 
 
 Listing::Listing(int line, int column)
 {
-    type_ = LISTING;
+    typeBits = LISTING;
     line_ = line;
     column_ = column;
-    isFlowStyle_ = false;
     doubleFormat_ = defaultDoubleFormat;
+    isFlowStyle_ = false;
+    doInsertLFBeforeNextElement = false;
 }
 
 
 Listing::Listing(int line, int column, int reservedSize)
     : values(reservedSize)
 {
-    type_ = LISTING;
+    typeBits = LISTING;
     line_ = line;
     column_ = column;
     values.resize(0);
+    doubleFormat_ = defaultDoubleFormat;
+    isFlowStyle_ = false;
+    doInsertLFBeforeNextElement = false;
 }
 
 
@@ -823,10 +841,20 @@ void Listing::insertLF(int maxColumns, int numValues)
 {
     if(values.empty()){
         if(numValues > 0 && numValues > maxColumns){
-            appendLF();
+            doInsertLFBeforeNextElement = true;
         }
     } else if((values.size() % maxColumns) == 0){
-        appendLF();
+        values.back()->typeBits |= (TypeBit)APPEND_LF;
+    }
+}
+
+
+void Listing::appendLF()
+{
+    if(values.empty()){
+        doInsertLFBeforeNextElement = true;
+    } else {
+        values.back()->typeBits |= APPEND_LF;
     }
 }
 
@@ -844,7 +872,12 @@ void Listing::append(int value)
 {
     char buf[32];
     int n = snprintf(buf, 32, "%d", value);
-    values.push_back(new ScalarNode(buf, n, PLAIN_STRING));
+    ScalarNode* node = new ScalarNode(buf, n, PLAIN_STRING);
+    if(doInsertLFBeforeNextElement){
+        node->typeBits |= INSERT_LF;
+        doInsertLFBeforeNextElement = false;
+    }
+    values.push_back(node);
 }
 
 
@@ -870,23 +903,27 @@ void Listing::append(double value)
 {
     char buf[32];
     int n = snprintf(buf, 32, doubleFormat_, value);
-    values.push_back(new ScalarNode(buf, n, PLAIN_STRING));
+    ScalarNode* node = new ScalarNode(buf, n, PLAIN_STRING);
+    if(doInsertLFBeforeNextElement){
+        node->typeBits |= INSERT_LF;
+        doInsertLFBeforeNextElement = false;
+    }
+    values.push_back(node);
 }
 
 
 void Listing::append(const std::string& value, StringStyle stringStyle)
 {
-    values.push_back(new ScalarNode(toUTF8(value), stringStyle));
+    ScalarNode* node = new ScalarNode(toUTF8(value), stringStyle);
+    if(doInsertLFBeforeNextElement){
+        node->typeBits |= INSERT_LF;
+        doInsertLFBeforeNextElement = false;
+    }
+    values.push_back(node);
 }
 
 
 void Listing::write(int i, const std::string& value, StringStyle stringStyle)
 {
     values[i] = new ScalarNode(toUTF8(value), stringStyle);
-}
-
-
-void Listing::appendLF()
-{
-    values.push_back(new ValueNode(LF_NODE));
 }

@@ -239,7 +239,7 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem)
                 
                 ValueNodePtr dataNode = archive.find("data");
                 if(dataNode->isValid()){
-                    if(dataNode->type() != ValueNode::MAPPING){
+                    if(!dataNode->isMapping()){
                         mv->putln(MessageView::ERROR, _("The 'data' key does not have mapping-type data"));
                         item = 0;
                     } else {
