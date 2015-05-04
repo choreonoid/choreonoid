@@ -376,7 +376,7 @@ bool TaskViewImpl::updateTask(Task* task)
 
             if(index == currentTaskIndex){
                 info.state = new Mapping();
-                oldTask->storeState(self, *info.state);
+                oldTask->storeStatus(self, *info.state);
                 setCurrentTask(index, true);
             }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
@@ -555,7 +555,7 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
     TaskInfo& old = tasks[currentTaskIndex];
     if(changed){
         old.state = new Mapping();
-        old.task->storeState(self, *old.state);
+        old.task->storeStatus(self, *old.state);
     }
     currentTaskIndex = index;
     currentTask = info.task;
@@ -565,7 +565,7 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
 
     if(info.state){
         currentPhaseIndex_ = -1;
-        info.task->restoreState(self, *info.state);
+        info.task->restoreStatus(self, *info.state);
     }
 
     if(changed){

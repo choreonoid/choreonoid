@@ -158,9 +158,11 @@ public:
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 
     virtual void onMenuRequest(TaskMenu& menu);
-    virtual bool storeState(AbstractTaskSequencer* sequencer, Mapping& archive);
-    virtual bool restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive);
-
+    virtual void onReset(AbstractTaskSequencer* sequencer);
+    virtual void onExit(AbstractTaskSequencer* sequencer);
+    virtual void storeStatus(AbstractTaskSequencer* sequencer, Mapping& archive);
+    virtual void restoreStatus(AbstractTaskSequencer* sequencer, const Mapping& archive);
+    
 private:
     std::string name_;
     std::string caption_;
