@@ -514,6 +514,14 @@ void MessageViewImpl::handleMessageViewEvent(MessageViewEvent* event)
 }
 
 
+int MessageView::currentColumn()
+{
+    QTextCursor cursor = impl->textEdit.textCursor();
+    cursor.movePosition(QTextCursor::End);
+    return cursor.columnNumber();
+}
+
+
 /**
    @note Don't call this function from an expose event handler
    because it may cause a hangup of rendering.
