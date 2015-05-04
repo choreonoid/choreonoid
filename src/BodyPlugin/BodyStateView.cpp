@@ -13,6 +13,9 @@
 #include <QBoxLayout>
 #include <QHeaderView>
 #include <boost/bind.hpp>
+
+#include <iostream>
+
 #include "gettext.h"
 
 using namespace std;
@@ -25,15 +28,14 @@ const bool TRACE_FUNCTIONS = false;
 struct SensorTypeOrder
 {
     bool operator()(const Sensor* lhs, const Sensor* rhs) const {
-        return (strcmp(typeid(*lhs).name(), typeid(*rhs).name()) <= 0);
+        int result = strcmp(typeid(*lhs).name(), typeid(*rhs).name());
+        return (result == 0) ? (lhs->id() <= rhs->id()) : (result <= 0);
     }
 };
-
 
 }
 
 namespace cnoid {
-
 
 class StateItem : public QTreeWidgetItem
 {
