@@ -6,7 +6,7 @@ add_cnoid_python_module(PyUtil
   PySignal.cpp
   PyValueTree.cpp
   PyEigenTypes.cpp
-  #PyEigenTypes.old.cpp
+  PyEigenArchive.cpp
   PySeqTypes.cpp
   PySceneGraph.cpp
   PyTask.cpp

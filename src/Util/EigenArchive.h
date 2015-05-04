@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_EIGEN_ARCHIVE_H_INCLUDED
-#define CNOID_UTIL_EIGEN_ARCHIVE_H_INCLUDED
+#ifndef CNOID_UTIL_EIGEN_ARCHIVE_H
+#define CNOID_UTIL_EIGEN_ARCHIVE_H
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
@@ -34,6 +34,7 @@ bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Deri
     }
     return false;
 }
+
 
 template<typename Derived>
 void readEx(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
@@ -98,6 +99,7 @@ inline bool read(const Mapping& mapping, const std::string& key, boost::function
     }
     return false;
 }
+
 }
 
 #endif
