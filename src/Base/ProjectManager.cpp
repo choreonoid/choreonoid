@@ -364,6 +364,8 @@ void ProjectManagerImpl::saveProject(const string& filename)
     messageView->notify(str(fmt(_("Saving a project to \"%1%\" ...\n")) % filename));
     messageView->flush();
     
+    itemTreeArchiver.reset();
+    
     ArchivePtr archive = new Archive();
     archive->initSharedInfo(filename, homeRelativeCheck->isChecked());
 
