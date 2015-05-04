@@ -7,6 +7,7 @@
 #include "AbstractTaskSequencer.h"
 #include "ValueTree.h"
 
+using namespace std;
 using namespace cnoid;
 
 
@@ -272,25 +273,25 @@ void Task::onMenuRequest(TaskMenu& menu)
 }
 
 
-void Task::onReset(AbstractTaskSequencer* sequencer)
-{
-    
-}
-
-
-void Task::onExit(AbstractTaskSequencer* sequencer)
+void Task::onActivated(AbstractTaskSequencer* sequencer)
 {
 
 }
 
 
-void Task::storeStatus(AbstractTaskSequencer* sequencer, Mapping& archive)
+void Task::onDeactivated(AbstractTaskSequencer* sequencer)
+{
+
+}
+
+
+void Task::storeState(AbstractTaskSequencer* sequencer, Mapping& archive)
 {
     archive.write("phaseIndex", sequencer->currentPhaseIndex());
 }
 
 
-void Task::restoreStatus(AbstractTaskSequencer* sequencer, const Mapping& archive)
+void Task::restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive)
 {
     sequencer->setCurrentPhase(archive.get("phaseIndex", 0));
 }

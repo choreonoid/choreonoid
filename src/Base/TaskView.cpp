@@ -164,7 +164,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     self->setDefaultLayoutArea(View::CENTER);
 
-    currentTaskIndex = 0;
+    currentTaskIndex = -1;
     currentPhaseIndex_ = 0;
     currentCommandIndex = NO_CURRENT_COMMAND;
     forceCommandLinkAutomatic = false;
@@ -376,8 +376,9 @@ bool TaskViewImpl::updateTask(Task* task)
 
             if(index == currentTaskIndex){
                 info.state = new Mapping();
-                oldTask->storeStatus(self, *info.state);
+                oldTask->storeState(self, *info.state);
                 setCurrentTask(index, true);
+                task->restoreState(self, *info.state);
             }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
@@ -551,24 +552,22 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         taskCombo.blockSignals(false);
     }
 
-    TaskInfo& info = tasks[index];
-    TaskInfo& old = tasks[currentTaskIndex];
-    if(changed){
+    if(changed && currentTaskIndex >= 0){
+        TaskInfo& old = tasks[currentTaskIndex];
         old.state = new Mapping();
-        old.task->storeStatus(self, *old.state);
+        old.task->storeState(self, *old.state);
+        old.task->onDeactivated(self);
     }
-    currentTaskIndex = index;
+
+    TaskInfo& info = tasks[index];
     currentTask = info.task;
+    currentTaskIndex = index;
 
     currentPhaseIndex_ = -1;
     setPhaseIndex(0, false);
 
-    if(info.state){
-        currentPhaseIndex_ = -1;
-        info.task->restoreStatus(self, *info.state);
-    }
-
     if(changed){
+        info.task->onActivated(self);
         sigCurrentTaskChanged();
     }
 
