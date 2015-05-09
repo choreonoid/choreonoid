@@ -37,6 +37,13 @@ public:
     SignalProxy<void(const Affine3& T)> sigOffsetPositionChanged();
     void notifyOffsetPositionChange();
 
+    enum RenderingMode {
+        POINT, VOXEL, N_RENDERING_MODES
+    };
+
+    void setRenderingMode(int mode);
+    int renderingMode() const;
+
     void setPointSize(double size);
     double pointSize() const;
 

@@ -40,10 +40,6 @@ struct RegionImpl
 };
     
 
-enum RenderingMode {
-    POINT_MODE, VOXEL_MODE, N_RENDERING_MODES
-};
-
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
 public:
@@ -67,7 +63,6 @@ public:
 
     ScenePointSet(PointSetItemImpl* pointSetItem);
 
-    bool setRenderingMode(int mode);
     void setPointSize(double size);
     void setVoxelSize(double size);
     int numAttentionPoints() const;
@@ -142,10 +137,12 @@ public:
 
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
+    void setRenderingMode(int mode);
     bool onEditableChanged(bool on);
     void removePoints(const PointSetItem::Region& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
+    bool onRenderingModePropertyChanged(int mode);
     bool onTranslationPropertyChanged(const std::string& value);
     bool onRotationPropertyChanged(const std::string& value);
 };
@@ -309,6 +306,25 @@ void PointSetItem::notifyOffsetPositionChange()
     impl->scenePointSet->sigOffsetPositionChanged(impl->scenePointSet->T());
     impl->scenePointSet->notifyUpdate();
     Item::notifyUpdate();
+}
+
+
+void PointSetItem::setRenderingMode(int mode)
+{
+    impl->setRenderingMode(mode);
+}
+
+
+void PointSetItemImpl::setRenderingMode(int mode)
+{
+    scenePointSet->renderingMode.select(mode);
+}
+
+
+
+int PointSetItem::renderingMode() const
+{
+    return impl->scenePointSet->renderingMode.which();
 }
 
 
@@ -624,7 +640,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     ScenePointSet* scene = impl->scenePointSet;
     putProperty(_("File"), getFilename(filePath()));
     putProperty(_("Rendering mode"), scene->renderingMode,
-                boost::bind(&ScenePointSet::setRenderingMode, scene, _1));
+                boost::bind(&PointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
                                      boost::bind(&ScenePointSet::setPointSize, scene, _1), true);
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
@@ -637,6 +653,18 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     Vector3 rpy(rpyFromRot(offsetPosition().linear()));
     putProperty("RPY", str(TO_DEGREE * rpy), boost::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
     
+}
+
+
+bool PointSetItemImpl::onRenderingModePropertyChanged(int mode)
+{
+    if(mode != scenePointSet->renderingMode.which()){
+        if(scenePointSet->renderingMode.select(mode)){
+            setRenderingMode(mode);
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -685,7 +713,7 @@ bool PointSetItem::restore(const Archive& archive)
     ScenePointSet* scene = impl->scenePointSet;
     string symbol;
     if(archive.read("renderingMode", symbol)){
-        scene->setRenderingMode(scene->renderingMode.index(symbol));
+        impl->setRenderingMode(scene->renderingMode.index(symbol));
     }
     scene->setPointSize(archive.get("pointSize", pointSize()));
     scene->setVoxelSize(archive.get("voxelSize", voxelSize()));
@@ -702,7 +730,7 @@ bool PointSetItem::restore(const Archive& archive)
 ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     : weakPointSetItem(pointSetItemImpl->self),
       orgPointSet(pointSetItemImpl->pointSet),
-      renderingMode(N_RENDERING_MODES)
+      renderingMode(PointSetItem::N_RENDERING_MODES)
 {
     visiblePointSet = new SgPointSet;
 
@@ -710,24 +738,11 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     voxels->getOrCreateMaterial();
     voxelSize = 0.01f;
 
-    renderingMode.setSymbol(POINT_MODE, N_("Point"));
-    renderingMode.setSymbol(VOXEL_MODE, N_("Voxel"));
-    renderingMode.select(POINT_MODE);
+    renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
+    renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
+    renderingMode.select(PointSetItem::POINT);
 
     isEditable_ = false;
-}
-
-
-bool ScenePointSet::setRenderingMode(int mode)
-{
-    bool result = true;
-    if(mode != renderingMode.which()){
-        result = renderingMode.select(mode);
-        if(invariant){
-            updateVisualization(true);
-        }
-    }
-    return result;
 }
 
 
@@ -735,7 +750,7 @@ void ScenePointSet::setPointSize(double size)
 {
     if(size != visiblePointSet->pointSize()){
         visiblePointSet->setPointSize(size);
-        if(renderingMode.is(POINT_MODE) && invariant){
+        if(renderingMode.is(PointSetItem::POINT) && invariant){
             updateVisualization(false);
         }
     }
@@ -745,7 +760,7 @@ void ScenePointSet::setVoxelSize(double size)
 {
     if(size != voxelSize){
         voxelSize = size;
-        if(renderingMode.is(VOXEL_MODE) && invariant){
+        if(renderingMode.is(PointSetItem::VOXEL) && invariant){
             updateVisualization(true);
         }
     }
@@ -850,7 +865,7 @@ void ScenePointSet::updateVisualization(bool updateContents)
     }
     invariant = new SgInvariantGroup;
     
-    if(renderingMode.is(POINT_MODE)){
+    if(renderingMode.is(PointSetItem::POINT)){
         if(updateContents){
             updateVisiblePointSet();
         }

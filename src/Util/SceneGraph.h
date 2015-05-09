@@ -35,10 +35,10 @@ public:
     typedef std::vector<SgObject*> Path;
         
     SgUpdate() : action_(MODIFIED) { path_.reserve(16); }
-    SgUpdate(Action action) : action_(action) { path_.reserve(16); }
+    SgUpdate(int action) : action_(action) { path_.reserve(16); }
     virtual ~SgUpdate();
-    Action action() const { return action_; }
-    void setAction(Action act) { action_ = act; }
+    int action() const { return action_; }
+    void setAction(int act) { action_ = act; }
     const Path& path() const { return path_; }
     void push(SgObject* node) { path_.push_back(node); }
     void pop() { path_.pop_back(); }
@@ -46,7 +46,7 @@ public:
 
 private:
     Path path_;
-    Action action_;
+    int action_;
 };
 
 
@@ -99,7 +99,7 @@ public:
         transferUpdate(update);
     }
 
-    void notifyUpdate(SgUpdate::Action action = SgUpdate::MODIFIED) {
+    void notifyUpdate(int action = SgUpdate::MODIFIED) {
         SgUpdate update(action);
         transferUpdate(update);
     }

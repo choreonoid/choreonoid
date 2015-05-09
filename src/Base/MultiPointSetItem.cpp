@@ -4,6 +4,7 @@
 */
 
 #include "MultiPointSetItem.h"
+#include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <boost/bind.hpp>
@@ -13,13 +14,6 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-namespace {
-
-enum RenderingMode {
-    POINT_MODE, VOXEL_MODE, N_RENDERING_MODES
-};
-
-}
 
 namespace cnoid {
         
@@ -27,15 +21,24 @@ class MultiPointSetItemImpl
 {
 public:
     MultiPointSetItem* self;
+    ItemList<PointSetItem> pointSetItems;
+    SgGroupPtr scene;
     Selection renderingMode;
     double pointSize;
     double voxelSize;
     string directory;
+    ScopedConnection itemSelectionChangedConnection;
+    ScopedConnection subTreeChangedConnection;
 
     MultiPointSetItemImpl(MultiPointSetItem* self);
     MultiPointSetItemImpl(MultiPointSetItem* self, const MultiPointSetItemImpl& org);
     void initialize();
-    bool setRenderingMode(int mode);
+    void onItemSelectionChanged(ItemList<PointSetItem> items);
+    void onSubTreeChanged();
+    void setRenderingMode(int mode);
+    void setPointSize(double size);
+    void setVoxelSize(double size);
+    bool onRenderingModePropertyChanged(int mode);
 };
 
 }
@@ -63,7 +66,7 @@ MultiPointSetItemImpl::MultiPointSetItemImpl(MultiPointSetItem* self)
     : self(self)
 {
     initialize();
-    renderingMode.select(POINT_MODE);
+    renderingMode.select(PointSetItem::POINT);
 
 }
 
@@ -85,8 +88,15 @@ MultiPointSetItemImpl::MultiPointSetItemImpl(MultiPointSetItem* self, const Mult
 
 void MultiPointSetItemImpl::initialize()
 {
-    renderingMode.setSymbol(POINT_MODE, N_("Point"));
-    renderingMode.setSymbol(VOXEL_MODE, N_("Voxel"));
+    itemSelectionChangedConnection.reset(
+        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+            boost::bind(&MultiPointSetItemImpl::onItemSelectionChanged, this, _1)));
+    subTreeChangedConnection.reset(
+        self->sigSubTreeChanged().connect(
+            boost::bind(&MultiPointSetItemImpl::onSubTreeChanged, this)));
+
+    renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
+    renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
 }    
 
 
@@ -98,17 +108,66 @@ MultiPointSetItem::~MultiPointSetItem()
 
 SgNode* MultiPointSetItem::getScene()
 {
-    return 0;
+    return impl->scene;
 }
 
 
-bool MultiPointSetItemImpl::setRenderingMode(int mode)
+void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
 {
-    bool result = true;
-    if(mode != renderingMode.which()){
-        result = renderingMode.select(mode);
+    bool changed = false;
+    
+    if(items.empty()){
+        ItemList<PointSetItem>::iterator p = pointSetItems.begin();
+        while(p != pointSetItems.end()){
+            if((*p)->isOwnedBy(self)){
+                ++p;
+            } else {
+                p = pointSetItems.erase(p);
+                changed = true;
+            }
+        }
+    } else {
+        if(items != pointSetItems){
+            pointSetItems = items;
+            changed = true;
+        }
     }
-    return result;
+
+    if(changed){
+        scene->clearChildren();
+        for(size_t i=0; i < pointSetItems.size(); ++i){
+            scene->addChild(pointSetItems[i]->getScene());
+        }
+        scene->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
+    }
+}
+
+
+void MultiPointSetItemImpl::onSubTreeChanged()
+{
+
+
+}
+
+
+void MultiPointSetItem::setRenderingMode(int mode)
+{
+    impl->setRenderingMode(mode);
+}
+
+
+void MultiPointSetItemImpl::setRenderingMode(int mode)
+{
+    renderingMode.select(mode);
+    for(size_t i=0; i < pointSetItems.size(); ++i){
+        pointSetItems[i]->setRenderingMode(mode);
+    }
+}
+
+
+int MultiPointSetItem::renderingMode() const
+{
+    return impl->renderingMode.which();
 }
 
 
@@ -120,7 +179,15 @@ double MultiPointSetItem::pointSize() const
 
 void MultiPointSetItem::setPointSize(double size)
 {
-    
+    impl->setPointSize(size);
+}
+
+
+void MultiPointSetItemImpl::setPointSize(double size)
+{
+    for(size_t i=0; i < pointSetItems.size(); ++i){
+        pointSetItems[i]->setPointSize(size);
+    }
 }
 
 
@@ -132,7 +199,15 @@ double MultiPointSetItem::voxelSize() const
 
 void MultiPointSetItem::setVoxelSize(double size)
 {
+    impl->setVoxelSize(size);
+}
 
+
+void MultiPointSetItemImpl::setVoxelSize(double size)
+{
+    for(size_t i=0; i < pointSetItems.size(); ++i){
+        pointSetItems[i]->setVoxelSize(size);
+    }
 }
 
 
@@ -147,11 +222,23 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Auto save"), false);
     putProperty(_("Directory"), "");
     putProperty(_("Rendering mode"), impl->renderingMode,
-                boost::bind(&MultiPointSetItemImpl::setRenderingMode, impl, _1));
+                boost::bind(&MultiPointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
                                      boost::bind(&MultiPointSetItem::setPointSize, this, _1), true);
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
                             boost::bind(&MultiPointSetItem::setVoxelSize, this, _1), true);
+}
+
+
+bool MultiPointSetItemImpl::onRenderingModePropertyChanged(int mode)
+{
+    if(mode != renderingMode.which()){
+        if(renderingMode.select(mode)){
+            setRenderingMode(mode);
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -177,7 +264,7 @@ bool MultiPointSetItem::restore(const Archive& archive)
     }
     string symbol;
     if(archive.read("renderingMode", symbol)){
-        impl->setRenderingMode(impl->renderingMode.index(symbol));
+        impl->onRenderingModePropertyChanged(impl->renderingMode.index(symbol));
     }
     setPointSize(archive.get("pointSize", pointSize()));
     setVoxelSize(archive.get("voxelSize", voxelSize()));

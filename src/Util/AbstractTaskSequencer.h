@@ -23,7 +23,6 @@ public:
     virtual int currentTaskIndex() const = 0;
     virtual bool setCurrentTask(int taskIndex) = 0;
     virtual SignalProxy<void()> sigCurrentTaskChanged() = 0;
-
     virtual int currentPhaseIndex() const = 0;
     virtual void setCurrentPhase(int phaseIndex) = 0;
     virtual SignalProxy<void()> sigCurrentPhaseChanged() = 0;

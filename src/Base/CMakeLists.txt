@@ -90,6 +90,7 @@ set(sources
   SceneView.cpp
   SceneItem.cpp
   PointSetItem.cpp
+  MultiPointSetItem.cpp
   MovieGenerator.cpp
   TextEditView.cpp
   ImageView.cpp
@@ -176,6 +177,7 @@ set(headers
   SceneView.h
   SceneItem.h
   PointSetItem.h
+  MultiPointSetItem.h
   TextEditView.h
   ImageView.h
   JoystickCapture.h

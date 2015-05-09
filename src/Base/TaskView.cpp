@@ -397,7 +397,10 @@ int TaskView::numTasks() const
 
 Task* TaskView::task(int index)
 {
-    return impl->tasks[index].task;
+    if(index >=0 && index < impl->tasks.size()){
+        return impl->tasks[index].task;
+    }
+    return 0;
 }
 
 

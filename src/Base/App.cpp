@@ -18,6 +18,7 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
+#include "MultiPointSetItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -213,6 +214,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     Vector3SeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
+    MultiPointSetItem::initializeClass(ext);
 
     initializeMovieGenerator(ext);
 
