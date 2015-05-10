@@ -32,7 +32,11 @@ public:
 
     int numPointSetItems() const;
     PointSetItem* pointSetItem(int index);
-    bool isPointSetItemSelected(int index);
+
+    void selectSinglePointSetItem(int index);
+
+    SignalProxy<void(int index)> sigPointSetItemAdded();
+    SignalProxy<void(int index)> sigPointSetUpdated();
     
     virtual SgNode* getScene();
     

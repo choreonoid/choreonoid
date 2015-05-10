@@ -21,7 +21,20 @@ class MultiPointSetItemImpl
 {
 public:
     MultiPointSetItem* self;
+
+    struct PointSetItemInfo : public Referenced {
+        int index;
+        ScopedConnection pointSetUpdateConnection;
+            
+    };
+    typedef ref_ptr<PointSetItemInfo> PointSetItemInfoPtr;
+
+    typedef map<PointSetItem*, PointSetItemInfoPtr> ItemInfoMap;
+    ItemInfoMap itemInfoMap;
+
     ItemList<PointSetItem> pointSetItems;
+    ItemList<PointSetItem> selectedPointSetItems;
+    ItemList<PointSetItem> visiblePointSetItems;
     SgGroupPtr scene;
     Selection renderingMode;
     double pointSize;
@@ -29,15 +42,19 @@ public:
     string directory;
     ScopedConnection itemSelectionChangedConnection;
     ScopedConnection subTreeChangedConnection;
+    Signal<void(int index)> sigPointSetItemAdded;
+    Signal<void(int index)> sigPointSetItemUpdated;
 
     MultiPointSetItemImpl(MultiPointSetItem* self);
     MultiPointSetItemImpl(MultiPointSetItem* self, const MultiPointSetItemImpl& org);
     void initialize();
     void onItemSelectionChanged(ItemList<PointSetItem> items);
     void onSubTreeChanged();
+    void onPointSetUpdated(PointSetItem* item);
     void setRenderingMode(int mode);
     void setPointSize(double size);
     void setVoxelSize(double size);
+    void selectSinglePointSetItem(int index);
     bool onRenderingModePropertyChanged(int mode);
 };
 
@@ -88,15 +105,17 @@ MultiPointSetItemImpl::MultiPointSetItemImpl(MultiPointSetItem* self, const Mult
 
 void MultiPointSetItemImpl::initialize()
 {
+    scene = new SgGroup;
+    
+    renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
+    renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
+
     itemSelectionChangedConnection.reset(
-        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+        ItemTreeView::instance()->sigSelectionChanged().connect(
             boost::bind(&MultiPointSetItemImpl::onItemSelectionChanged, this, _1)));
     subTreeChangedConnection.reset(
         self->sigSubTreeChanged().connect(
             boost::bind(&MultiPointSetItemImpl::onSubTreeChanged, this)));
-
-    renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
-    renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
 }    
 
 
@@ -115,28 +134,36 @@ SgNode* MultiPointSetItem::getScene()
 void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
 {
     bool changed = false;
+
+    selectedPointSetItems.clear();
+    for(size_t i=0; i < items.size(); ++i){
+        PointSetItem* item = items[i];
+        if(item->isOwnedBy(self)){
+            selectedPointSetItems.push_back(item);
+        }
+    }
     
-    if(items.empty()){
-        ItemList<PointSetItem>::iterator p = pointSetItems.begin();
-        while(p != pointSetItems.end()){
+    if(!selectedPointSetItems.empty()){
+        if(selectedPointSetItems != visiblePointSetItems){
+            visiblePointSetItems = selectedPointSetItems;
+            changed = true;
+        }
+    } else {
+        ItemList<PointSetItem>::iterator p = visiblePointSetItems.begin();
+        while(p != visiblePointSetItems.end()){
             if((*p)->isOwnedBy(self)){
                 ++p;
             } else {
-                p = pointSetItems.erase(p);
+                p = visiblePointSetItems.erase(p);
                 changed = true;
             }
-        }
-    } else {
-        if(items != pointSetItems){
-            pointSetItems = items;
-            changed = true;
         }
     }
 
     if(changed){
         scene->clearChildren();
-        for(size_t i=0; i < pointSetItems.size(); ++i){
-            scene->addChild(pointSetItems[i]->getScene());
+        for(size_t i=0; i < visiblePointSetItems.size(); ++i){
+            scene->addChild(visiblePointSetItems[i]->getScene());
         }
         scene->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
     }
@@ -145,8 +172,42 @@ void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
 
 void MultiPointSetItemImpl::onSubTreeChanged()
 {
+    pointSetItems.extractChildItems(self);
+
+    ItemInfoMap prevMap(itemInfoMap);
+    itemInfoMap.clear();
+
+    for(size_t i=0; i < pointSetItems.size(); ++i){
+        PointSetItem* item = pointSetItems[i];
+        ItemInfoMap::iterator p = prevMap.find(item);
+        if(p != prevMap.end()){
+            p->second->index = i;
+            itemInfoMap.insert(*p);
+        } else {
+            item->setPointSize(pointSize);
+            item->setVoxelSize(voxelSize);
+            item->setRenderingMode(renderingMode.which());
+            
+            PointSetItemInfo* info = new PointSetItemInfo;
+            info->index = i;
+            info->pointSetUpdateConnection.reset(
+                item->pointSet()->sigUpdated().connect(
+                    boost::bind(&MultiPointSetItemImpl::onPointSetUpdated, this, item)));
+            itemInfoMap.insert(ItemInfoMap::value_type(item, info));
+
+            sigPointSetItemAdded(i);
+        }
+    }
+}
 
 
+void MultiPointSetItemImpl::onPointSetUpdated(PointSetItem* item)
+{
+    ItemInfoMap::iterator p = itemInfoMap.find(item);
+    if(p != itemInfoMap.end()){
+        int index = p->second->index;
+        sigPointSetItemUpdated(index);
+    }
 }
 
 
@@ -185,6 +246,7 @@ void MultiPointSetItem::setPointSize(double size)
 
 void MultiPointSetItemImpl::setPointSize(double size)
 {
+    pointSize = size;
     for(size_t i=0; i < pointSetItems.size(); ++i){
         pointSetItems[i]->setPointSize(size);
     }
@@ -205,11 +267,51 @@ void MultiPointSetItem::setVoxelSize(double size)
 
 void MultiPointSetItemImpl::setVoxelSize(double size)
 {
+    voxelSize = size;
     for(size_t i=0; i < pointSetItems.size(); ++i){
         pointSetItems[i]->setVoxelSize(size);
     }
 }
 
+
+int MultiPointSetItem::numPointSetItems() const
+{
+    return impl->pointSetItems.size();
+}
+
+
+PointSetItem* MultiPointSetItem::pointSetItem(int index)
+{
+    return impl->pointSetItems[index];
+}
+
+
+void MultiPointSetItem::selectSinglePointSetItem(int index)
+{
+    impl->selectSinglePointSetItem(index);
+}
+
+
+void MultiPointSetItemImpl::selectSinglePointSetItem(int index)
+{
+    if(index < 0 || index >= pointSetItems.size()){
+        return;
+    }
+    
+    itemSelectionChangedConnection.block();
+    ItemTreeView* view = ItemTreeView::instance();
+    for(size_t i=0; i < selectedPointSetItems.size(); ++i){
+        view->unselectItem(selectedPointSetItems[i]);
+    }
+    PointSetItem* item = pointSetItems[index];
+    view->selectItem(item);
+    itemSelectionChangedConnection.unblock();
+
+    ItemList<PointSetItem> items;
+    items.push_back(item);
+    onItemSelectionChanged(items);
+}
+    
 
 ItemPtr MultiPointSetItem::doDuplicate() const
 {
