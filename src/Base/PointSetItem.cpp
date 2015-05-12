@@ -312,13 +312,15 @@ void PointSetItem::notifyOffsetTransformChange()
 SgPointSetPtr PointSetItem::getTransformedPointSet() const
 {
     SgPointSetPtr transformed = new SgPointSet();
-    SgVertexArray& orgPoints = *impl->pointSet->vertices();
     SgVertexArray& points = *transformed->getOrCreateVertices();
-    const int n = orgPoints.size();
-    points.resize(n);
-    const Affine3f T = offsetTransform().cast<Affine3f::Scalar>();
-    for(int i=0; i < n; ++i){
-        points[i] = T * orgPoints[i];
+    SgVertexArray* orgPoints = impl->pointSet->vertices();
+    if(orgPoints){
+        const int n = orgPoints->size();
+        points.resize(n);
+        const Affine3f T = offsetTransform().cast<Affine3f::Scalar>();
+        for(int i=0; i < n; ++i){
+            points[i] = T * (*orgPoints)[i];
+        }
     }
     return transformed;
 }
