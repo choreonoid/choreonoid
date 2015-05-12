@@ -311,6 +311,18 @@ void MultiPointSetItemImpl::selectSinglePointSetItem(int index)
     items.push_back(item);
     onItemSelectionChanged(items);
 }
+
+
+SignalProxy<void(int index)> MultiPointSetItem::sigPointSetItemAdded()
+{
+    return impl->sigPointSetItemAdded;
+}
+
+
+SignalProxy<void(int index)> MultiPointSetItem::sigPointSetUpdated()
+{
+    return impl->sigPointSetItemUpdated;
+}
     
 
 ItemPtr MultiPointSetItem::doDuplicate() const
