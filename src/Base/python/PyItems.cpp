@@ -65,8 +65,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
 
-Affine3 PointSetItem_offsetPosition(const PointSetItem& self){
-    return self.offsetPosition();
+Affine3 PointSetItem_offsetTransform(const PointSetItem& self){
+    return self.offsetTransform();
 }
 
 Vector3 PointSetItem_attentionPoint(PointSetItem& self, int index){
@@ -214,10 +214,10 @@ void exportPyItems()
     PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
 
     class_ < PointSetItem, PointSetItemPtr, bases<Item, SceneProvider> >("PointSetItem")
-        .def("offsetPosition", PointSetItem_offsetPosition)
-        .def("setOffsetPosition", &PointSetItem::setOffsetPosition)
-        .def("sigOffsetPositionChanged", &PointSetItem::sigOffsetPositionChanged)
-        .def("notifyOffsetPositionChange", &PointSetItem::notifyOffsetPositionChange)
+        .def("offsetTransform", PointSetItem_offsetTransform)
+        .def("setOffsetTransform", &PointSetItem::setOffsetTransform)
+        .def("sigOffsetTransformChanged", &PointSetItem::sigOffsetTransformChanged)
+        .def("notifyOffsetTransformChange", &PointSetItem::notifyOffsetTransformChange)
         .def("numAttentionPoints", &PointSetItem::numAttentionPoints)
         .def("attentionPoint", PointSetItem_attentionPoint)
         .def("clearAttentionPoints", &PointSetItem::clearAttentionPoints)

@@ -32,10 +32,12 @@ public:
 
     virtual void notifyUpdate();
         
-    const Affine3& offsetPosition() const;
-    void setOffsetPosition(const Affine3& T);
-    SignalProxy<void(const Affine3& T)> sigOffsetPositionChanged();
-    void notifyOffsetPositionChange();
+    const Affine3& offsetTransform() const;
+    void setOffsetTransform(const Affine3& T);
+    SignalProxy<void(const Affine3& T)> sigOffsetTransformChanged();
+    void notifyOffsetTransformChange();
+
+    SgPointSetPtr getTransformedPointSet() const;
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES
