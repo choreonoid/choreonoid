@@ -65,6 +65,28 @@ private:
     void postCallEvent();
 };
 
+
+class QueuedCallerImpl;
+
+class CNOID_EXPORT QueuedCaller
+{
+    QueuedCallerImpl* impl;
+
+    QueuedCaller(const QueuedCaller& org);
+    
+  public:
+    /**
+       All the queued functions that have not been executed are canceled in the destructor.
+    */
+    QueuedCaller();
+    virtual ~QueuedCaller();
+    
+    void callLater(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+
+    void cancel();
+};
+
+    
 //! deprecated
 enum { IDLE_PRIORITY_HIGH = LazyCaller::PRIORITY_HIGH,
        IDLE_PRIORITY_NORMAL = LazyCaller::PRIORITY_NORMAL,
