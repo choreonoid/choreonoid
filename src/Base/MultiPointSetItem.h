@@ -48,7 +48,7 @@ public:
     SignalProxy<void()> sigAttentionPointsChanged();
     void notifyAttentionPointChange();
 
-    SignalProxy<void(const SceneWidgetRectangle::Region& region)> sigActivePointSetRegionRemoved();
+    SignalProxy<void(const RectRegionMarker::Region& region)> sigActivePointSetRegionRemoved();
 
     virtual SgNode* getScene();
     

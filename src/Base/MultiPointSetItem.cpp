@@ -7,7 +7,6 @@
 #include "SceneWidgetEditable.h"
 #include "SceneWidget.h"
 #include "MenuManager.h"
-#include "SceneWidgetRectangle.h"
 #include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -32,9 +31,9 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     SgGroupPtr attentionPointMarkerGroup;
     Signal<void(const Affine3& T)> sigOffsetTransformChanged;
     Signal<void()> sigAttentionPointsChanged;
-    Signal<void(const SceneWidgetRectangle::Region& region)> sigActivePointSetRegionRemoved;
+    Signal<void(const RectRegionMarker::Region& region)> sigActivePointSetRegionRemoved;
     
-    SceneWidgetRectanglePtr rectOverlay;
+    RectRegionMarkerPtr rectOverlay;
     ScopedConnection eraserModeMenuItemConnection;
 
     SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem);
@@ -52,7 +51,7 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
 
     void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
-    void onRegionFixed(const SceneWidgetRectangle::Region& region);    
+    void onRegionFixed(const RectRegionMarker::Region& region);    
 };
 
 typedef ref_ptr<SceneMultiPointSet> SceneMultiPointSetPtr;
@@ -417,7 +416,7 @@ void MultiPointSetItem::notifyAttentionPointChange()
 }
 
 
-SignalProxy<void(const SceneWidgetRectangle::Region& region)> MultiPointSetItem::sigActivePointSetRegionRemoved()
+SignalProxy<void(const RectRegionMarker::Region& region)> MultiPointSetItem::sigActivePointSetRegionRemoved()
 {
     return impl->scene->sigActivePointSetRegionRemoved;
 }
@@ -494,7 +493,7 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem)
     attentionPointMarkerGroup = new SgGroup;
     addChild(attentionPointMarkerGroup);
 
-    rectOverlay = new SceneWidgetRectangle;
+    rectOverlay = new RectRegionMarker;
     rectOverlay->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
     rectOverlay->sigRegionFixed().connect(
         boost::bind(&SceneMultiPointSet::onRegionFixed, this, _1));
@@ -618,7 +617,7 @@ void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
     if(!rectOverlay->isEditing()){
         eraserModeMenuItemConnection.reset(
             menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-                boost::bind(&SceneWidgetRectangle::startEditing, rectOverlay.get(), event.sceneWidget())));
+                boost::bind(&RectRegionMarker::startEditing, rectOverlay.get(), event.sceneWidget())));
     }
 }
 
@@ -627,11 +626,11 @@ void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
-            boost::bind(&SceneWidgetRectangle::finishEditing, rectOverlay.get())));
+            boost::bind(&RectRegionMarker::finishEditing, rectOverlay.get())));
 }
 
 
-void SceneMultiPointSet::onRegionFixed(const SceneWidgetRectangle::Region& region)
+void SceneMultiPointSet::onRegionFixed(const RectRegionMarker::Region& region)
 {
     MultiPointSetItem* item = weakMultiPointSetItem.lock();
     if(item){

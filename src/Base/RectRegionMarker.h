@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_WIDGET_RECTANGLE_H
-#define CNOID_BASE_SCENE_WIDGET_RECTANGLE_H
+#ifndef CNOID_BASE_RECT_REGION_MARKER_H
+#define CNOID_BASE_RECT_REGION_MARKER_H
 
 #include "SceneWidgetEditable.h"
 #include <QCursor>
@@ -11,13 +11,13 @@
 
 namespace cnoid {
 
-class SceneWidgetRectangleImpl;
+class RectRegionMarkerImpl;
 
-class CNOID_EXPORT SceneWidgetRectangle : public SgOverlay, public SceneWidgetEditable
+class CNOID_EXPORT RectRegionMarker : public SgOverlay, public SceneWidgetEditable
 {
 public:
-    SceneWidgetRectangle();
-    ~SceneWidgetRectangle();
+    RectRegionMarker();
+    ~RectRegionMarker();
 
     void setRect(int x0, int y0, int x1, int y1);
     
@@ -45,7 +45,7 @@ public:
     };
 
     const Region& region() const;
-    SignalProxy<void(const SceneWidgetRectangle::Region& region)> sigRegionFixed();
+    SignalProxy<void(const RectRegionMarker::Region& region)> sigRegionFixed();
 
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
@@ -57,10 +57,10 @@ public:
     SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
 
 private:
-    SceneWidgetRectangleImpl* impl;
+    RectRegionMarkerImpl* impl;
 };
 
-typedef ref_ptr<SceneWidgetRectangle> SceneWidgetRectanglePtr;
+typedef ref_ptr<RectRegionMarker> RectRegionMarkerPtr;
 
 }
 

@@ -28,8 +28,8 @@ namespace {
 
 class ScenePointSet;
 
-typedef Signal<bool(int editType, const SceneWidgetRectangle::Region& region), LogicalProduct> SigRegionFixed;
-typedef SignalProxy<bool(int editType, const SceneWidgetRectangle::Region& region), LogicalProduct> SigRegionFixedProxy;
+typedef Signal<bool(int editType, const RectRegionMarker::Region& region), LogicalProduct> SigRegionFixed;
+typedef SignalProxy<bool(int editType, const RectRegionMarker::Region& region), LogicalProduct> SigRegionFixedProxy;
 
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
@@ -128,7 +128,7 @@ public:
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
     void setRenderingMode(int mode);
     bool onEditableChanged(bool on);
-    void removePoints(const SceneWidgetRectangle::Region& region);
+    void removePoints(const RectRegionMarker::Region& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
     bool onRenderingModePropertyChanged(int mode);
@@ -446,13 +446,13 @@ SigRegionFixedProxy PointSetItem::sigRegionFixed()
 }
 
 
-void PointSetItem::removePoints(const SceneWidgetRectangle::Region& region)
+void PointSetItem::removePoints(const RectRegionMarker::Region& region)
 {
     impl->removePoints(region);
 }
 
 
-void PointSetItemImpl::removePoints(const SceneWidgetRectangle::Region& region)
+void PointSetItemImpl::removePoints(const RectRegionMarker::Region& region)
 {
     vector<int> indicesToRemove;
     const Affine3 T = scenePointSet->T();
@@ -1016,7 +1016,7 @@ bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
     PointSetItemPtr pointSetItem = weakPointSetItem.lock();
     if(pointSetItem){
         if(rect->left < rect->right && rect->bottom < rect->top){
-            SceneWidgetRectangle::Region r(4);
+            RectRegionMarker::Region r(4);
             event.sceneWidget()->unproject(rect->left, rect->top, 0.0, r.point(0));
             event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, r.point(1));
             event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, r.point(2));

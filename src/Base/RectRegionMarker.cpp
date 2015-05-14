@@ -3,7 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "SceneWidgetRectangle.h"
+#include "RectRegionMarker.h"
 #include "SceneWidget.h"
 #include <cnoid/SceneShape>
 #include <cnoid/SceneCamera>
@@ -26,22 +26,22 @@ struct RegionImpl
 
 namespace cnoid {
 
-class SceneWidgetRectangleImpl
+class RectRegionMarkerImpl
 {
 public:
-    SceneWidgetRectangle* self;
+    RectRegionMarker* self;
     SceneWidget* sceneWidget;
     SgLineSetPtr lineSet;
     int left, right, top, bottom;
     SgVertexArrayPtr vertices;
     QCursor editModeCursor;
     int x0, y0;
-    SceneWidgetRectangle::Region region;
-    Signal<void(const SceneWidgetRectangle::Region& region)> sigRegionFixed;
+    RectRegionMarker::Region region;
+    Signal<void(const RectRegionMarker::Region& region)> sigRegionFixed;
     Signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
     
-    SceneWidgetRectangleImpl(SceneWidgetRectangle* self);
-    ~SceneWidgetRectangleImpl();
+    RectRegionMarkerImpl(RectRegionMarker* self);
+    ~RectRegionMarkerImpl();
     void setRect(int x0, int y0, int x1, int y1);
     void showRectangle(bool on);
     void onSceneModeChanged(const SceneWidgetEvent& event);
@@ -53,13 +53,13 @@ public:
 }
 
 
-SceneWidgetRectangle::SceneWidgetRectangle()
+RectRegionMarker::RectRegionMarker()
 {
-    impl = new SceneWidgetRectangleImpl(this);
+    impl = new RectRegionMarkerImpl(this);
 }
 
 
-SceneWidgetRectangleImpl::SceneWidgetRectangleImpl(SceneWidgetRectangle* self)
+RectRegionMarkerImpl::RectRegionMarkerImpl(RectRegionMarker* self)
     : self(self)
 {
     sceneWidget = 0;
@@ -81,20 +81,20 @@ SceneWidgetRectangleImpl::SceneWidgetRectangleImpl(SceneWidgetRectangle* self)
 }
 
 
-SceneWidgetRectangle::~SceneWidgetRectangle()
+RectRegionMarker::~RectRegionMarker()
 {
     delete impl;
 }
 
 
-SceneWidgetRectangleImpl::~SceneWidgetRectangleImpl()
+RectRegionMarkerImpl::~RectRegionMarkerImpl()
 {
     self->finishEditing();
     showRectangle(false);
 }
 
 
-void SceneWidgetRectangle::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
+void RectRegionMarker::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
 {
     io_volume.left = 0;
     io_volume.right = viewportWidth;
@@ -103,13 +103,13 @@ void SceneWidgetRectangle::calcViewVolume(double viewportWidth, double viewportH
 }
 
 
-void SceneWidgetRectangle::setRect(int x0, int y0, int x1, int y1)
+void RectRegionMarker::setRect(int x0, int y0, int x1, int y1)
 {
     impl->setRect(x0, y0, x1, y1);
 }
 
 
-void SceneWidgetRectangleImpl::setRect(int x0, int y0, int x1, int y1)
+void RectRegionMarkerImpl::setRect(int x0, int y0, int x1, int y1)
 {
     if(x0 <= x1){
         left = x0;
@@ -135,13 +135,13 @@ void SceneWidgetRectangleImpl::setRect(int x0, int y0, int x1, int y1)
 }
 
 
-void SceneWidgetRectangle::setEditModeCursor(QCursor cursor)
+void RectRegionMarker::setEditModeCursor(QCursor cursor)
 {
     impl->editModeCursor = cursor;
 }
 
 
-void SceneWidgetRectangle::startEditing(SceneWidget* sceneWidget)
+void RectRegionMarker::startEditing(SceneWidget* sceneWidget)
 {
     impl->sceneWidget = sceneWidget;
     onSceneModeChanged(sceneWidget->latestEvent());
@@ -150,7 +150,7 @@ void SceneWidgetRectangle::startEditing(SceneWidget* sceneWidget)
 }
 
 
-bool SceneWidgetRectangle::isEditing() const
+bool RectRegionMarker::isEditing() const
 {
     if(impl->sceneWidget){
         if(impl->sceneWidget->activeEventFilter() == this){
@@ -161,7 +161,7 @@ bool SceneWidgetRectangle::isEditing() const
 }
 
 
-void SceneWidgetRectangle::finishEditing()
+void RectRegionMarker::finishEditing()
 {
     if(impl->sceneWidget){
         impl->sceneWidget->removeEventFilter(this);
@@ -171,19 +171,19 @@ void SceneWidgetRectangle::finishEditing()
 }
 
 
-const SceneWidgetRectangle::Region& SceneWidgetRectangle::region() const
+const RectRegionMarker::Region& RectRegionMarker::region() const
 {
     return impl->region;
 }
 
 
-SignalProxy<void(const SceneWidgetRectangle::Region& region)> SceneWidgetRectangle::sigRegionFixed()
+SignalProxy<void(const RectRegionMarker::Region& region)> RectRegionMarker::sigRegionFixed()
 {
     return impl->sigRegionFixed;
 }
 
 
-void SceneWidgetRectangleImpl::showRectangle(bool on)
+void RectRegionMarkerImpl::showRectangle(bool on)
 {
     if(on){
         self->addChildOnce(lineSet, true);
@@ -193,13 +193,13 @@ void SceneWidgetRectangleImpl::showRectangle(bool on)
 }
 
 
-void SceneWidgetRectangle::onSceneModeChanged(const SceneWidgetEvent& event)
+void RectRegionMarker::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     impl->onSceneModeChanged(event);
 }
 
 
-void SceneWidgetRectangleImpl::onSceneModeChanged(const SceneWidgetEvent& event)
+void RectRegionMarkerImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     if(event.sceneWidget()->isEditMode()){
         event.sceneWidget()->setCursor(editModeCursor);
@@ -209,13 +209,13 @@ void SceneWidgetRectangleImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 }
 
 
-bool SceneWidgetRectangle::onButtonPressEvent(const SceneWidgetEvent& event)
+bool RectRegionMarker::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool SceneWidgetRectangleImpl::onButtonPressEvent(const SceneWidgetEvent& event)
+bool RectRegionMarkerImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     x0 = event.x();
     y0 = event.y();
@@ -225,16 +225,16 @@ bool SceneWidgetRectangleImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 }
 
 
-bool SceneWidgetRectangle::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool RectRegionMarker::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
     return impl->onButtonReleaseEvent(event);
 }
 
 
-bool SceneWidgetRectangleImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
+bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
     if(left < right && bottom < top){
-        SceneWidgetRectangle::Region& r = region;
+        RectRegionMarker::Region& r = region;
         r.setNumSurroundingPlanes(4);
         event.sceneWidget()->unproject(left, top, 0.0, r.point(0));
         event.sceneWidget()->unproject(left, bottom, 0.0, r.point(1));
@@ -260,44 +260,44 @@ bool SceneWidgetRectangleImpl::onButtonReleaseEvent(const SceneWidgetEvent& even
 }
 
 
-bool SceneWidgetRectangle::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool RectRegionMarker::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     return impl->onPointerMoveEvent(event);
 }
 
 
-bool SceneWidgetRectangleImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
+bool RectRegionMarkerImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
     setRect(x0, y0, event.x(), event.y());
     return true;
 }
 
 
-void SceneWidgetRectangle::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+void RectRegionMarker::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
     impl->sigContextMenuRequest(event, menuManager);
 }
 
 
-SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> SceneWidgetRectangle::sigContextMenuRequest()
+SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> RectRegionMarker::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;
 }
 
 
-SceneWidgetRectangle::Region::Region()
+RectRegionMarker::Region::Region()
 {
     impl = new RegionImpl;
 }
 
 
-SceneWidgetRectangle::Region::Region(int numSurroundingPlanes)
+RectRegionMarker::Region::Region(int numSurroundingPlanes)
 {
     impl = new RegionImpl(numSurroundingPlanes);
 }
     
 
-SceneWidgetRectangle::Region::Region(const SceneWidgetRectangle::Region& org)
+RectRegionMarker::Region::Region(const RectRegionMarker::Region& org)
 {
     RegionImpl* p = new RegionImpl;
     RegionImpl* orgImpl = (RegionImpl*)(org.impl);
@@ -307,7 +307,7 @@ SceneWidgetRectangle::Region::Region(const SceneWidgetRectangle::Region& org)
 }
 
 
-SceneWidgetRectangle::Region& SceneWidgetRectangle::Region::operator=(const SceneWidgetRectangle::Region& org)
+RectRegionMarker::Region& RectRegionMarker::Region::operator=(const RectRegionMarker::Region& org)
 {
     RegionImpl* p = (RegionImpl*)impl;
     RegionImpl* orgImpl = (RegionImpl*)(org.impl);
@@ -317,7 +317,7 @@ SceneWidgetRectangle::Region& SceneWidgetRectangle::Region::operator=(const Scen
 }
 
 
-void SceneWidgetRectangle::Region::setNumSurroundingPlanes(int n)
+void RectRegionMarker::Region::setNumSurroundingPlanes(int n)
 {
     RegionImpl* p = (RegionImpl*)impl;
     p->normals.resize(n);
@@ -325,14 +325,14 @@ void SceneWidgetRectangle::Region::setNumSurroundingPlanes(int n)
 }
 
 
-int SceneWidgetRectangle::Region::numSurroundingPlanes() const
+int RectRegionMarker::Region::numSurroundingPlanes() const
 {
     RegionImpl* p = (RegionImpl*)impl;
     return p->normals.size();
 }
 
     
-void SceneWidgetRectangle::Region::addSurroundingPlane(const Vector3& normal, const Vector3& point)
+void RectRegionMarker::Region::addSurroundingPlane(const Vector3& normal, const Vector3& point)
 {
     RegionImpl* p = (RegionImpl*)impl;
     p->normals.push_back(normal);
@@ -340,28 +340,28 @@ void SceneWidgetRectangle::Region::addSurroundingPlane(const Vector3& normal, co
 }
 
 
-Vector3& SceneWidgetRectangle::Region::normal(int index)
+Vector3& RectRegionMarker::Region::normal(int index)
 {
     RegionImpl* p = (RegionImpl*)impl;
     return p->normals[index];
 }
 
 
-const Vector3& SceneWidgetRectangle::Region::normal(int index) const
+const Vector3& RectRegionMarker::Region::normal(int index) const
 {
     RegionImpl* p = (RegionImpl*)impl;
     return p->normals[index];
 }
 
 
-Vector3& SceneWidgetRectangle::Region::point(int index)
+Vector3& RectRegionMarker::Region::point(int index)
 {
     RegionImpl* p = (RegionImpl*)impl;
     return p->points[index];
 }
 
 
-const Vector3& SceneWidgetRectangle::Region::point(int index) const
+const Vector3& RectRegionMarker::Region::point(int index) const
 {
     RegionImpl* p = (RegionImpl*)impl;
     return p->points[index];
