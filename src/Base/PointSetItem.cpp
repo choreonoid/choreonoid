@@ -89,7 +89,7 @@ class PointSetItemImpl
 public:
     PointSetItem* self;
     SgPointSetPtr pointSet;
-    ScenePointSetPtr scenePointSet;
+    ScenePointSetPtr scene;
     ScopedConnection pointSetUpdateConnection;
 
     PointSetItemImpl(PointSetItem* self);
@@ -166,7 +166,7 @@ PointSetItemImpl::PointSetItemImpl(PointSetItem* self)
     : self(self)
 {
     pointSet = new SgPointSet;
-    scenePointSet = new ScenePointSet(this);
+    scene = new ScenePointSet(this);
 }
 
 
@@ -182,8 +182,8 @@ PointSetItemImpl::PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& o
     : self(self)
 {
     pointSet = new SgPointSet(*org.pointSet);
-    scenePointSet = new ScenePointSet(this);
-    scenePointSet->T() = org.scenePointSet->T();
+    scene = new ScenePointSet(this);
+    scene->T() = org.scene->T();
 }
 
 
@@ -209,7 +209,7 @@ ItemPtr PointSetItem::doDuplicate() const
 
 void PointSetItem::setName(const std::string& name)
 {
-    impl->scenePointSet->setName(name);
+    impl->scene->setName(name);
     impl->pointSet->setName(name);
     Item::setName(name);
 }
@@ -217,13 +217,13 @@ void PointSetItem::setName(const std::string& name)
 
 SgNode* PointSetItem::getScene()
 {
-    return impl->scenePointSet;
+    return impl->scene;
 }
 
 
 void PointSetItem::notifyUpdate()
 {
-    impl->scenePointSet->updateVisualization(true);
+    impl->scene->updateVisualization(true);
     Item::notifyUpdate();
 }
 
@@ -242,26 +242,26 @@ SgPointSet* PointSetItem::pointSet()
 
 const Affine3& PointSetItem::offsetTransform() const
 {
-    return impl->scenePointSet->T();
+    return impl->scene->T();
 }
 
 
 void PointSetItem::setOffsetTransform(const Affine3& T)
 {
-    impl->scenePointSet->setPosition(T);
+    impl->scene->setPosition(T);
 }
 
 
 SignalProxy<void(const Affine3& T)> PointSetItem::sigOffsetTransformChanged()
 {
-    return impl->scenePointSet->sigOffsetTransformChanged;
+    return impl->scene->sigOffsetTransformChanged;
 }
 
 
 void PointSetItem::notifyOffsetTransformChange()
 {
-    impl->scenePointSet->sigOffsetTransformChanged(impl->scenePointSet->T());
-    impl->scenePointSet->notifyUpdate();
+    impl->scene->sigOffsetTransformChanged(impl->scene->T());
+    impl->scene->notifyUpdate();
     Item::notifyUpdate();
 }
 
@@ -291,87 +291,87 @@ void PointSetItem::setRenderingMode(int mode)
 
 void PointSetItemImpl::setRenderingMode(int mode)
 {
-    scenePointSet->renderingMode.select(mode);
+    scene->renderingMode.select(mode);
 }
 
 
 
 int PointSetItem::renderingMode() const
 {
-    return impl->scenePointSet->renderingMode.which();
+    return impl->scene->renderingMode.which();
 }
 
 
 double PointSetItem::pointSize() const
 {
-    return impl->scenePointSet->visiblePointSet->pointSize();
+    return impl->scene->visiblePointSet->pointSize();
 }
     
 
 void PointSetItem::setPointSize(double size)
 {
-    impl->scenePointSet->setPointSize(size);
+    impl->scene->setPointSize(size);
 }
 
 
 double PointSetItem::voxelSize() const
 {
-    return impl->scenePointSet->voxelSize;
+    return impl->scene->voxelSize;
 }
     
 
 void PointSetItem::setVoxelSize(double size)
 {
-    impl->scenePointSet->setVoxelSize(size);
+    impl->scene->setVoxelSize(size);
 }
 
 
 void PointSetItem::setEditable(bool on)
 {
-    impl->scenePointSet->setEditable(on);
+    impl->scene->setEditable(on);
 }
 
 
 bool PointSetItem::isEditable() const
 {
-    return impl->scenePointSet->isEditable();
+    return impl->scene->isEditable();
 }
 
 
 bool PointSetItemImpl::onEditableChanged(bool on)
 {
-    scenePointSet->setEditable(on);
+    scene->setEditable(on);
     return true;
 }
 
 
 int PointSetItem::numAttentionPoints() const
 {
-    return impl->scenePointSet->numAttentionPoints();
+    return impl->scene->numAttentionPoints();
 }
 
 
 Vector3 PointSetItem::attentionPoint(int index) const
 {
-    return impl->scenePointSet->attentionPoint(index);
+    return impl->scene->attentionPoint(index);
 }
         
     
 void PointSetItem::clearAttentionPoints()
 {
-    impl->scenePointSet->clearAttentionPoints(false);
+    impl->scene->clearAttentionPoints(false);
 }
 
 
 void PointSetItem::addAttentionPoint(const Vector3& p)
 {
-    impl->scenePointSet->addAttentionPoint(p, false);
+    impl->scene->addAttentionPoint(p, false);
 }
 
 
 SignalProxy<void()> PointSetItem::sigAttentionPointsChanged()
 {
-    return impl->scenePointSet->sigAttentionPointsChanged;
+    return impl->scene->sigAttentionPointsChanged;
 }
 
 
@@ -386,31 +386,31 @@ boost::optional<Vector3> PointSetItem::attentionPoint() const
 
 void PointSetItem::clearAttentionPoint()
 {
-    impl->scenePointSet->clearAttentionPoints(false);
+    impl->scene->clearAttentionPoints(false);
 }
 
 
 void PointSetItem::setAttentionPoint(const Vector3& p)
 {
-    impl->scenePointSet->setAttentionPoint(p, false);
+    impl->scene->setAttentionPoint(p, false);
 }
 
 
 SignalProxy<void()> PointSetItem::sigAttentionPointChanged()
 {
-    return impl->scenePointSet->sigAttentionPointsChanged;
+    return impl->scene->sigAttentionPointsChanged;
 }
 
 
 void PointSetItem::notifyAttentionPointChange()
 {
-    impl->scenePointSet->notifyAttentionPointChange();
+    impl->scene->notifyAttentionPointChange();
 }
 
 
 SigRegionFixedProxy PointSetItem::sigRegionFixed()
 {
-    return impl->scenePointSet->sigRegionFixed;
+    return impl->scene->sigRegionFixed;
 }
 
 
@@ -423,7 +423,7 @@ void PointSetItem::removePoints(const RectRegionMarker::Region& region)
 void PointSetItemImpl::removePoints(const RectRegionMarker::Region& region)
 {
     vector<int> indicesToRemove;
-    const Affine3 T = scenePointSet->T();
+    const Affine3 T = scene->T();
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
@@ -528,7 +528,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
 
 void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    ScenePointSet* scene = impl->scenePointSet;
+    ScenePointSet* scene = impl->scene;
     putProperty(_("File"), getFilename(filePath()));
     putProperty(_("Rendering mode"), scene->renderingMode,
                 boost::bind(&PointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
@@ -543,14 +543,13 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                 boost::bind(&PointSetItemImpl::onTranslationPropertyChanged, impl, _1));
     Vector3 rpy(rpyFromRot(offsetTransform().linear()));
     putProperty("RPY", str(TO_DEGREE * rpy), boost::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
-    
 }
 
 
 bool PointSetItemImpl::onRenderingModePropertyChanged(int mode)
 {
-    if(mode != scenePointSet->renderingMode.which()){
-        if(scenePointSet->renderingMode.select(mode)){
+    if(mode != scene->renderingMode.which()){
+        if(scene->renderingMode.select(mode)){
             setRenderingMode(mode);
             return true;
         }
@@ -563,7 +562,7 @@ bool PointSetItemImpl::onTranslationPropertyChanged(const std::string& value)
 {
     Vector3 p;
     if(toVector3(value, p)){
-        scenePointSet->setTranslation(p);
+        scene->setTranslation(p);
         self->notifyOffsetTransformChange();
         return true;
     }
@@ -575,18 +574,17 @@ bool PointSetItemImpl::onRotationPropertyChanged(const std::string& value)
 {
     Vector3 rpy;
     if(toVector3(value, rpy)){
-        scenePointSet->setRotation(rotFromRpy(TO_RADIAN * rpy));
+        scene->setRotation(rotFromRpy(TO_RADIAN * rpy));
         self->notifyOffsetTransformChange();
         return true;
     }
-    
     return false;
 }
 
 
 bool PointSetItem::store(Archive& archive)
 {
-    ScenePointSet* scene = impl->scenePointSet;
+    ScenePointSet* scene = impl->scene;
     if(!filePath().empty()){
         archive.writeRelocatablePath("file", filePath());
         archive.write("format", fileFormat());
@@ -601,7 +599,7 @@ bool PointSetItem::store(Archive& archive)
 
 bool PointSetItem::restore(const Archive& archive)
 {
-    ScenePointSet* scene = impl->scenePointSet;
+    ScenePointSet* scene = impl->scene;
     string symbol;
     if(archive.read("renderingMode", symbol)){
         impl->setRenderingMode(scene->renderingMode.index(symbol));

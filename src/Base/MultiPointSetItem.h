@@ -32,6 +32,7 @@ public:
 
     int numPointSetItems() const;
     PointSetItem* pointSetItem(int index);
+    const PointSetItem* pointSetItem(int index) const;
 
     int numActivePointSetItems() const;
     PointSetItem* activePointSetItem(int index);
@@ -41,6 +42,14 @@ public:
     SignalProxy<void(int index)> sigPointSetItemAdded();
     SignalProxy<void(int index)> sigPointSetUpdated();
 
+    const Affine3& topOffsetTransform() const;
+    void setTopOffsetTransform(const Affine3& T);
+    SignalProxy<void(const Affine3& T)> sigTopOffsetTransformChanged();
+    void notifyTopOffsetTransformChange();
+
+    Affine3 offsetTransform(int index) const;
+    SgPointSetPtr getTransformedPointSet(int index) const;
+    
     int numAttentionPoints() const;
     Vector3 attentionPoint(int index) const;
     void clearAttentionPoints();

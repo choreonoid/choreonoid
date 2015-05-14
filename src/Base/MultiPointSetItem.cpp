@@ -10,6 +10,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
+#include <cnoid/EigenArchive>
 #include <cnoid/SceneMarker>
 #include <boost/bind.hpp>
 #include "gettext.h"
@@ -99,6 +100,8 @@ public:
     void setVoxelSize(double size);
     void selectSinglePointSetItem(int index);
     bool onRenderingModePropertyChanged(int mode);
+    bool onTopTranslationPropertyChanged(const std::string& value);
+    bool onTopRotationPropertyChanged(const std::string& value);
 };
 
 }
@@ -329,6 +332,12 @@ PointSetItem* MultiPointSetItem::pointSetItem(int index)
 }
 
 
+const PointSetItem* MultiPointSetItem::pointSetItem(int index) const
+{
+    return impl->pointSetItems[index];
+}
+
+
 int MultiPointSetItem::numActivePointSetItems() const
 {
     return impl->activePointSetItems.size();
@@ -379,6 +388,55 @@ SignalProxy<void(int index)> MultiPointSetItem::sigPointSetUpdated()
     return impl->sigPointSetItemUpdated;
 }
 
+
+const Affine3& MultiPointSetItem::topOffsetTransform() const
+{
+    return impl->scene->T();
+}
+
+
+void MultiPointSetItem::setTopOffsetTransform(const Affine3& T)
+{
+    impl->scene->setPosition(T);
+}
+
+
+SignalProxy<void(const Affine3& T)> MultiPointSetItem::sigTopOffsetTransformChanged()
+{
+    return impl->scene->sigOffsetTransformChanged;
+}
+
+
+void MultiPointSetItem::notifyTopOffsetTransformChange()
+{
+    impl->scene->sigOffsetTransformChanged(impl->scene->T());
+    impl->scene->notifyUpdate();
+    Item::notifyUpdate();
+}
+
+
+Affine3 MultiPointSetItem::offsetTransform(int index) const
+{
+    return topOffsetTransform() * pointSetItem(index)->offsetTransform();
+}
+
+
+SgPointSetPtr MultiPointSetItem::getTransformedPointSet(int index) const
+{
+    SgPointSetPtr transformed = new SgPointSet();
+    SgVertexArray& points = *transformed->getOrCreateVertices();
+    const SgVertexArray* orgPoints = pointSetItem(index)->pointSet()->vertices();
+    if(orgPoints){
+        const int n = orgPoints->size();
+        points.resize(n);
+        const Affine3f T = offsetTransform(index).cast<Affine3f::Scalar>();
+        for(int i=0; i < n; ++i){
+            points[i] = T * (*orgPoints)[i];
+        }
+    }
+    return transformed;
+}
+    
 
 int MultiPointSetItem::numAttentionPoints() const
 {
@@ -432,12 +490,18 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Auto save"), false);
     putProperty(_("Directory"), "");
+    putProperty(_("Num point sets"), numPointSetItems());
     putProperty(_("Rendering mode"), impl->renderingMode,
                 boost::bind(&MultiPointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
                                      boost::bind(&MultiPointSetItem::setPointSize, this, _1), true);
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
                             boost::bind(&MultiPointSetItem::setVoxelSize, this, _1), true);
+    putProperty(_("Top translation"), str(Vector3(topOffsetTransform().translation())),
+                boost::bind(&MultiPointSetItemImpl::onTopTranslationPropertyChanged, impl, _1));
+    Vector3 rpy(rpyFromRot(topOffsetTransform().linear()));
+    putProperty("Top RPY", str(TO_DEGREE * rpy), boost::bind(&MultiPointSetItemImpl::onTopRotationPropertyChanged, impl, _1));
+    
 }
 
 
@@ -448,6 +512,30 @@ bool MultiPointSetItemImpl::onRenderingModePropertyChanged(int mode)
             setRenderingMode(mode);
             return true;
         }
+    }
+    return false;
+}
+
+
+bool MultiPointSetItemImpl::onTopTranslationPropertyChanged(const std::string& value)
+{
+    Vector3 p;
+    if(toVector3(value, p)){
+        scene->setTranslation(p);
+        self->notifyTopOffsetTransformChange();
+        return true;
+    }
+    return false;
+}
+
+
+bool MultiPointSetItemImpl::onTopRotationPropertyChanged(const std::string& value)
+{
+    Vector3 rpy;
+    if(toVector3(value, rpy)){
+        scene->setRotation(rotFromRpy(TO_RADIAN * rpy));
+        self->notifyTopOffsetTransformChange();
+        return true;
     }
     return false;
 }
