@@ -13,13 +13,19 @@ namespace cnoid {
 
 class SceneWidgetRectangleImpl;
 
-class CNOID_EXPORT SceneWidgetRectangle : public SceneWidgetEditable
+class CNOID_EXPORT SceneWidgetRectangle : public SgOverlay, public SceneWidgetEditable
 {
 public:
-    SceneWidgetRectangle(SceneWidget* sceneWidget);
+    SceneWidgetRectangle();
     ~SceneWidgetRectangle();
 
+    void setRect(int x0, int y0, int x1, int y1);
+    
     void setEditModeCursor(QCursor cursor);
+
+    void startEditing(SceneWidget* sceneWidget);
+    bool isEditing() const;
+    void finishEditing();
 
     class CNOID_EXPORT Region {
       public:
@@ -41,14 +47,20 @@ public:
     const Region& region() const;
     SignalProxy<void(const SceneWidgetRectangle::Region& region)> sigRegionFixed();
 
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+
+    SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest();
 
 private:
     SceneWidgetRectangleImpl* impl;
 };
+
+typedef ref_ptr<SceneWidgetRectangle> SceneWidgetRectanglePtr;
 
 }
 

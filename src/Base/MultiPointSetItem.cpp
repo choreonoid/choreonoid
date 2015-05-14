@@ -5,7 +5,9 @@
 
 #include "MultiPointSetItem.h"
 #include "SceneWidgetEditable.h"
+#include "SceneWidget.h"
 #include "MenuManager.h"
+#include "SceneWidgetRectangle.h"
 #include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -30,6 +32,10 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     SgGroupPtr attentionPointMarkerGroup;
     Signal<void(const Affine3& T)> sigOffsetTransformChanged;
     Signal<void()> sigAttentionPointsChanged;
+    Signal<void(const SceneWidgetRectangle::Region& region)> sigActivePointSetRegionRemoved;
+    
+    SceneWidgetRectanglePtr rectOverlay;
+    ScopedConnection eraserModeMenuItemConnection;
 
     SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem);
 
@@ -44,9 +50,9 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
 
-    //void startEraserMode(SceneWidget* sceneWidget);
+    void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
+    void onRegionFixed(const SceneWidgetRectangle::Region& region);    
 };
 
 typedef ref_ptr<SceneMultiPointSet> SceneMultiPointSetPtr;
@@ -72,7 +78,7 @@ public:
 
     ItemList<PointSetItem> pointSetItems;
     ItemList<PointSetItem> selectedPointSetItems;
-    ItemList<PointSetItem> visiblePointSetItems;
+    ItemList<PointSetItem> activePointSetItems;
     SceneMultiPointSetPtr scene;
     Selection renderingMode;
     double pointSize;
@@ -182,17 +188,17 @@ void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
     }
     
     if(!selectedPointSetItems.empty()){
-        if(selectedPointSetItems != visiblePointSetItems){
-            visiblePointSetItems = selectedPointSetItems;
+        if(selectedPointSetItems != activePointSetItems){
+            activePointSetItems = selectedPointSetItems;
             changed = true;
         }
     } else {
-        ItemList<PointSetItem>::iterator p = visiblePointSetItems.begin();
-        while(p != visiblePointSetItems.end()){
+        ItemList<PointSetItem>::iterator p = activePointSetItems.begin();
+        while(p != activePointSetItems.end()){
             if((*p)->isOwnedBy(self)){
                 ++p;
             } else {
-                p = visiblePointSetItems.erase(p);
+                p = activePointSetItems.erase(p);
                 changed = true;
             }
         }
@@ -200,8 +206,8 @@ void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
 
     if(changed){
         scene->pointSetGroup->clearChildren();
-        for(size_t i=0; i < visiblePointSetItems.size(); ++i){
-            scene->pointSetGroup->addChild(visiblePointSetItems[i]->getScene());
+        for(size_t i=0; i < activePointSetItems.size(); ++i){
+            scene->pointSetGroup->addChild(activePointSetItems[i]->getScene());
         }
         scene->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
     }
@@ -324,6 +330,18 @@ PointSetItem* MultiPointSetItem::pointSetItem(int index)
 }
 
 
+int MultiPointSetItem::numActivePointSetItems() const
+{
+    return impl->activePointSetItems.size();
+}
+
+
+PointSetItem* MultiPointSetItem::activePointSetItem(int index)
+{
+    return impl->activePointSetItems[index];
+}
+
+
 void MultiPointSetItem::selectSinglePointSetItem(int index)
 {
     impl->selectSinglePointSetItem(index);
@@ -397,6 +415,12 @@ void MultiPointSetItem::notifyAttentionPointChange()
 {
     impl->scene->notifyAttentionPointChange();
 }
+
+
+SignalProxy<void(const SceneWidgetRectangle::Region& region)> MultiPointSetItem::sigActivePointSetRegionRemoved()
+{
+    return impl->scene->sigActivePointSetRegionRemoved;
+}
     
 
 ItemPtr MultiPointSetItem::doDuplicate() const
@@ -469,7 +493,13 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem)
 
     attentionPointMarkerGroup = new SgGroup;
     addChild(attentionPointMarkerGroup);
-    
+
+    rectOverlay = new SceneWidgetRectangle;
+    rectOverlay->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
+    rectOverlay->sigRegionFixed().connect(
+        boost::bind(&SceneMultiPointSet::onRegionFixed, this, _1));
+    rectOverlay->sigContextMenuRequest().connect(
+        boost::bind(&SceneMultiPointSet::onContextMenuRequestInEraserMode, this, _1, _2));
     isEditable = true;
 }
 
@@ -571,7 +601,6 @@ bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
     }
     
     return processed;
-
 }
 
 
@@ -586,17 +615,30 @@ void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
     menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
         boost::bind(&SceneMultiPointSet::clearAttentionPoints, this, true));
 
-    /*
-    PointSetEraser* eraser = dynamic_cast<PointSetEraser*>(event.sceneWidget()->activeEventFilter());
-    if(!eraser || eraser->weakPointSetItem.lock() != this->weakPointSetItem.lock()){
-        menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-            boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
+    if(!rectOverlay->isEditing()){
+        eraserModeMenuItemConnection.reset(
+            menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+                boost::bind(&SceneWidgetRectangle::startEditing, rectOverlay.get(), event.sceneWidget())));
     }
-    */
 }
 
 
-void SceneMultiPointSet::onSceneModeChanged(const SceneWidgetEvent& event)
+void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
+    eraserModeMenuItemConnection.reset(
+        menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
+            boost::bind(&SceneWidgetRectangle::finishEditing, rectOverlay.get())));
+}
 
+
+void SceneMultiPointSet::onRegionFixed(const SceneWidgetRectangle::Region& region)
+{
+    MultiPointSetItem* item = weakMultiPointSetItem.lock();
+    if(item){
+        int n = item->numActivePointSetItems();
+        for(int i=0; i < n; ++i){
+            item->activePointSetItem(i)->removePoints(region);
+        }
+        sigActivePointSetRegionRemoved(region);
+    }
 }

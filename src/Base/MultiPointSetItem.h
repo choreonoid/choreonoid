@@ -33,6 +33,9 @@ public:
     int numPointSetItems() const;
     PointSetItem* pointSetItem(int index);
 
+    int numActivePointSetItems() const;
+    PointSetItem* activePointSetItem(int index);
+
     void selectSinglePointSetItem(int index);
 
     SignalProxy<void(int index)> sigPointSetItemAdded();
@@ -44,7 +47,9 @@ public:
     void addAttentionPoint(const Vector3& p);
     SignalProxy<void()> sigAttentionPointsChanged();
     void notifyAttentionPointChange();
-    
+
+    SignalProxy<void(const SceneWidgetRectangle::Region& region)> sigActivePointSetRegionRemoved();
+
     virtual SgNode* getScene();
     
     virtual bool store(Archive& archive);
