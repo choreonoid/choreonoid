@@ -43,6 +43,8 @@ public:
     float voxelSize;
     SgInvariantGroupPtr invariant;
     Selection renderingMode;
+    RectRegionMarkerPtr regionMarker;
+    ScopedConnection eraserModeMenuItemConnection;
     bool isEditable_;
 
     Signal<void(const Affine3& T)> sigOffsetTransformChanged;
@@ -72,45 +74,11 @@ public:
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
-
-    void startEraserMode(SceneWidget* sceneWidget);
+    void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
+    void onRegionFixed(const RectRegionMarker::Region& region);
 };
 
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
-
-
-class RectLineOverlay : public SgOverlay
-{
-public:
-    int left, right, top, bottom;
-    SgVertexArrayPtr vertices;
-    RectLineOverlay();
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
-    void setRect(int x0, int y0, int x1, int y1);
-};
-
-typedef ref_ptr<RectLineOverlay> RectLineOverlayPtr;
-
-
-class PointSetEraser : public SceneWidgetEditable, public Referenced
-{
-public:
-    ScenePointSet* scenePointSet;
-    weak_ref_ptr<PointSetItem> weakPointSetItem;
-    SceneWidget* sceneWidget;
-    RectLineOverlayPtr rect;
-    int x0, y0;
-
-    PointSetEraser(ScenePointSet* scenePointSet, weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget);
-    ~PointSetEraser();
-    void showRectangle(bool on);
-    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
-    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
-    virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
-    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
-    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
-};
 
 }
 
@@ -665,6 +633,13 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
     renderingMode.select(PointSetItem::POINT);
 
+    regionMarker = new RectRegionMarker;
+    regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
+    regionMarker->sigRegionFixed().connect(
+        boost::bind(&ScenePointSet::onRegionFixed, this, _1));
+    regionMarker->sigContextMenuRequest().connect(
+        boost::bind(&ScenePointSet::onContextMenuRequestInEraserMode, this, _1, _2));
+
     isEditable_ = false;
 }
 
@@ -936,177 +911,28 @@ void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuMana
     if(isEditable_){
         menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
             boost::bind(&ScenePointSet::clearAttentionPoints, this, true));
-        
-        PointSetEraser* eraser = dynamic_cast<PointSetEraser*>(event.sceneWidget()->activeEventFilter());
-        if(!eraser || eraser->weakPointSetItem.lock() != this->weakPointSetItem.lock()){
-            menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-                boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
+
+        if(!regionMarker->isEditing()){
+            eraserModeMenuItemConnection.reset(
+                menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+                    boost::bind(&RectRegionMarker::startEditing, regionMarker.get(), event.sceneWidget())));
         }
     }
 }
 
 
-void ScenePointSet::onSceneModeChanged(const SceneWidgetEvent& event)
+void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-
+    eraserModeMenuItemConnection.reset(
+        menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
+            boost::bind(&RectRegionMarker::finishEditing, regionMarker.get())));
 }
 
 
-void ScenePointSet::startEraserMode(SceneWidget* sceneWidget)
+void ScenePointSet::onRegionFixed(const RectRegionMarker::Region& region)
 {
-    if(!weakPointSetItem.expired()){
-        sceneWidget->installEventFilter(new PointSetEraser(this, weakPointSetItem, sceneWidget));
+    PointSetItem* item = weakPointSetItem.lock();
+    if(sigRegionFixed.empty() || sigRegionFixed(PointSetItem::REMOVAL, region)){
+        item->removePoints(region);
     }
-}
-
-
-PointSetEraser::PointSetEraser(ScenePointSet* scenePointSet, weak_ref_ptr<PointSetItem>& weakPointSetItem, SceneWidget* sceneWidget)
-    : scenePointSet(scenePointSet),
-      weakPointSetItem(weakPointSetItem),
-      sceneWidget(sceneWidget)
-{
-    rect = new RectLineOverlay;
-    onSceneModeChanged(sceneWidget->latestEvent());
-}
-
-
-PointSetEraser::~PointSetEraser()
-{
-    showRectangle(false);
-}
-
-
-void PointSetEraser::showRectangle(bool on)
-{
-    if(on){
-        if(!rect->hasParents()){
-            sceneWidget->sceneRoot()->addChild(rect, true);
-        }
-    } else {
-        if(rect->hasParents()){
-            sceneWidget->sceneRoot()->removeChild(rect, true);
-        }
-    }
-}
-
-
-void PointSetEraser::onSceneModeChanged(const SceneWidgetEvent& event)
-{
-    if(event.sceneWidget()->isEditMode()){
-        event.sceneWidget()->setCursor(
-            QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
-    } else {
-        showRectangle(false);
-    }
-}
-
-
-bool PointSetEraser::onButtonPressEvent(const SceneWidgetEvent& event)
-{
-    x0 = event.x();
-    y0 = event.y();
-    rect->setRect(x0, y0, x0, y0);
-    showRectangle(true);
-    return true;
-}
-
-
-bool PointSetEraser::onButtonReleaseEvent(const SceneWidgetEvent& event)
-{
-    PointSetItemPtr pointSetItem = weakPointSetItem.lock();
-    if(pointSetItem){
-        if(rect->left < rect->right && rect->bottom < rect->top){
-            RectRegionMarker::Region r(4);
-            event.sceneWidget()->unproject(rect->left, rect->top, 0.0, r.point(0));
-            event.sceneWidget()->unproject(rect->left, rect->bottom, 0.0, r.point(1));
-            event.sceneWidget()->unproject(rect->right, rect->bottom, 0.0, r.point(2));
-            event.sceneWidget()->unproject(rect->right, rect->top, 0.0, r.point(3));
-            const Vector3 c = event.currentCameraPosition().translation();
-        	SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
-        	if(dynamic_cast<SgPerspectiveCamera*>(camera)){
-                for(int i=0; i < 4; ++i){
-                    r.normal(i) = (r.point((i + 1) % 4) - c).cross(r.point(i) - c).normalized();
-                }
-            } else if(dynamic_cast<SgOrthographicCamera*>(camera)){
-                const Vector3 n0 = (r.point(3) - r.point(0)).cross(r.point(1) - r.point(0)).normalized();
-                for(int i=0; i< 4; ++i){
-                    r.normal(i) = (r.point((i + 1) % 4) - r.point(i)).cross(n0).normalized();
-                }
-            }
-
-            SigRegionFixed& signal = scenePointSet->sigRegionFixed;
-            if(signal.empty() || signal(PointSetItem::REMOVAL, r)){
-                pointSetItem->removePoints(r);
-            }
-        }
-    }
-    showRectangle(false);
-    return true;
-}
-
-
-bool PointSetEraser::onPointerMoveEvent(const SceneWidgetEvent& event)
-{
-    rect->setRect(x0, y0, event.x(), event.y());
-    return true;
-}
-
-
-void PointSetEraser::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
-{
-    menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
-        boost::bind(&SceneWidget::removeEventFilter, event.sceneWidget(), this));
-}
-        
-
-RectLineOverlay::RectLineOverlay()
-{
-    SgLineSet* lineSet = new SgLineSet;
-    vertices = lineSet->getOrCreateVertices();
-    vertices->resize(4);
-    lineSet->getOrCreateColors()->push_back(Vector3f(1.0f, 0.0f, 0.0f));
-    lineSet->reserveNumLines(4);
-    SgIndexArray& colorIndices = lineSet->colorIndices();
-    colorIndices.reserve(8);
-    for(int i=0; i < 4; ++i){
-        lineSet->addLine(i, (i + 1) % 4);
-        colorIndices.push_back(0);
-        colorIndices.push_back(0);
-    }
-    addChild(lineSet);
-}
-
-
-void RectLineOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
-{
-    io_volume.left = 0;
-    io_volume.right = viewportWidth;
-    io_volume.bottom = 0;
-    io_volume.top = viewportHeight;
-}
-
-
-void RectLineOverlay::setRect(int x0, int y0, int x1, int y1)
-{
-    if(x0 <= x1){
-        left = x0;
-        right = x1;
-    } else {
-        left = x1;
-        right = x0;
-    }
-    if(y0 >= y1){
-        top = y0;
-        bottom = y1;
-    } else {
-        top = y1;
-        bottom = y0;
-    }
-
-    vertices->at(0) << left,  top,    0.0f;
-    vertices->at(1) << left,  bottom, 0.0f;
-    vertices->at(2) << right, bottom, 0.0f;
-    vertices->at(3) << right, top,    0.0f;
-
-    vertices->notifyUpdate();
 }

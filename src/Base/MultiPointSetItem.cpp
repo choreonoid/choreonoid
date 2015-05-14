@@ -33,7 +33,7 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     Signal<void()> sigAttentionPointsChanged;
     Signal<void(const RectRegionMarker::Region& region)> sigActivePointSetRegionRemoved;
     
-    RectRegionMarkerPtr rectOverlay;
+    RectRegionMarkerPtr regionMarker;
     ScopedConnection eraserModeMenuItemConnection;
 
     SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem);
@@ -493,11 +493,11 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem)
     attentionPointMarkerGroup = new SgGroup;
     addChild(attentionPointMarkerGroup);
 
-    rectOverlay = new RectRegionMarker;
-    rectOverlay->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
-    rectOverlay->sigRegionFixed().connect(
+    regionMarker = new RectRegionMarker;
+    regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
+    regionMarker->sigRegionFixed().connect(
         boost::bind(&SceneMultiPointSet::onRegionFixed, this, _1));
-    rectOverlay->sigContextMenuRequest().connect(
+    regionMarker->sigContextMenuRequest().connect(
         boost::bind(&SceneMultiPointSet::onContextMenuRequestInEraserMode, this, _1, _2));
     isEditable = true;
 }
@@ -614,10 +614,10 @@ void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, Men
     menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
         boost::bind(&SceneMultiPointSet::clearAttentionPoints, this, true));
 
-    if(!rectOverlay->isEditing()){
+    if(!regionMarker->isEditing()){
         eraserModeMenuItemConnection.reset(
             menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-                boost::bind(&RectRegionMarker::startEditing, rectOverlay.get(), event.sceneWidget())));
+                boost::bind(&RectRegionMarker::startEditing, regionMarker.get(), event.sceneWidget())));
     }
 }
 
@@ -626,7 +626,7 @@ void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
-            boost::bind(&RectRegionMarker::finishEditing, rectOverlay.get())));
+            boost::bind(&RectRegionMarker::finishEditing, regionMarker.get())));
 }
 
 
