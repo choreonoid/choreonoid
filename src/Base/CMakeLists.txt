@@ -83,6 +83,7 @@ set(sources
   SceneWidget.cpp
   SceneBar.cpp
   SceneWidgetEditable.cpp
+  SceneWidgetRectangle.cpp
   SceneProjector.cpp
   SceneDragProjector.cpp
   SceneDragger.cpp
@@ -173,6 +174,7 @@ set(headers
   SceneDragger.h
   SceneBar.h
   SceneWidgetEditable.h
+  SceneWidgetRectangle.h
   GLSceneRenderer.h
   SceneView.h
   SceneItem.h
