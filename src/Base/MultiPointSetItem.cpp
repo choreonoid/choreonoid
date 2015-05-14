@@ -4,9 +4,12 @@
 */
 
 #include "MultiPointSetItem.h"
+#include "SceneWidgetEditable.h"
+#include "MenuManager.h"
 #include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
+#include <cnoid/SceneMarker>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
@@ -14,6 +17,41 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
+namespace {
+
+class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
+{
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+    weak_ref_ptr<MultiPointSetItem> weakMultiPointSetItem;
+    bool isEditable;
+    SgGroupPtr pointSetGroup;
+    SgGroupPtr attentionPointMarkerGroup;
+    Signal<void(const Affine3& T)> sigOffsetTransformChanged;
+    Signal<void()> sigAttentionPointsChanged;
+
+    SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem);
+
+    int numAttentionPoints() const;
+    Vector3 attentionPoint(int index) const;
+    void clearAttentionPoints(bool doNotify);
+    void addAttentionPoint(const Vector3& point, bool doNotify);
+    void setAttentionPoint(const Vector3& p, bool doNotify);
+    bool removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify);
+    void notifyAttentionPointChange();
+
+    virtual bool onButtonPressEvent(const SceneWidgetEvent& event);
+    virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
+    virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
+    virtual void onSceneModeChanged(const SceneWidgetEvent& event);
+
+    //void startEraserMode(SceneWidget* sceneWidget);
+};
+
+typedef ref_ptr<SceneMultiPointSet> SceneMultiPointSetPtr;
+
+}
 
 namespace cnoid {
         
@@ -35,7 +73,7 @@ public:
     ItemList<PointSetItem> pointSetItems;
     ItemList<PointSetItem> selectedPointSetItems;
     ItemList<PointSetItem> visiblePointSetItems;
-    SgGroupPtr scene;
+    SceneMultiPointSetPtr scene;
     Selection renderingMode;
     double pointSize;
     double voxelSize;
@@ -105,7 +143,7 @@ MultiPointSetItemImpl::MultiPointSetItemImpl(MultiPointSetItem* self, const Mult
 
 void MultiPointSetItemImpl::initialize()
 {
-    scene = new SgGroup;
+    scene = new SceneMultiPointSet(this);
     
     renderingMode.setSymbol(PointSetItem::POINT, N_("Point"));
     renderingMode.setSymbol(PointSetItem::VOXEL, N_("Voxel"));
@@ -161,9 +199,9 @@ void MultiPointSetItemImpl::onItemSelectionChanged(ItemList<PointSetItem> items)
     }
 
     if(changed){
-        scene->clearChildren();
+        scene->pointSetGroup->clearChildren();
         for(size_t i=0; i < visiblePointSetItems.size(); ++i){
-            scene->addChild(visiblePointSetItems[i]->getScene());
+            scene->pointSetGroup->addChild(visiblePointSetItems[i]->getScene());
         }
         scene->notifyUpdate(SgUpdate::ADDED | SgUpdate::REMOVED);
     }
@@ -323,6 +361,42 @@ SignalProxy<void(int index)> MultiPointSetItem::sigPointSetUpdated()
 {
     return impl->sigPointSetItemUpdated;
 }
+
+
+int MultiPointSetItem::numAttentionPoints() const
+{
+    return impl->scene->numAttentionPoints();
+}
+        
+
+Vector3 MultiPointSetItem::attentionPoint(int index) const
+{
+    return impl->scene->attentionPoint(index);
+}
+
+
+void MultiPointSetItem::clearAttentionPoints()
+{
+    return impl->scene->clearAttentionPoints(false);
+}
+
+
+void MultiPointSetItem::addAttentionPoint(const Vector3& p)
+{
+    impl->scene->addAttentionPoint(p, false);
+}
+
+
+SignalProxy<void()> MultiPointSetItem::sigAttentionPointsChanged()
+{
+    return impl->scene->sigAttentionPointsChanged;
+}
+
+
+void MultiPointSetItem::notifyAttentionPointChange()
+{
+    impl->scene->notifyAttentionPointChange();
+}
     
 
 ItemPtr MultiPointSetItem::doDuplicate() const
@@ -384,4 +458,145 @@ bool MultiPointSetItem::restore(const Archive& archive)
     setVoxelSize(archive.get("voxelSize", voxelSize()));
     
     return true;
+}
+
+
+SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItemImpl* multiPointSetItem)
+    : weakMultiPointSetItem(multiPointSetItem->self)
+{
+    pointSetGroup = new SgGroup;
+    addChild(pointSetGroup);
+
+    attentionPointMarkerGroup = new SgGroup;
+    addChild(attentionPointMarkerGroup);
+    
+    isEditable = true;
+}
+
+
+int SceneMultiPointSet::numAttentionPoints() const
+{
+    return attentionPointMarkerGroup->numChildren();
+}
+
+
+Vector3 SceneMultiPointSet::attentionPoint(int index) const
+{
+    if(index < numAttentionPoints()){
+        CrossMarker* marker = dynamic_cast<CrossMarker*>(attentionPointMarkerGroup->child(index));
+        if(marker){
+            return T() * marker->translation();
+        }
+    }
+    return Vector3::Zero();
+}
+
+
+void SceneMultiPointSet::clearAttentionPoints(bool doNotify)
+{
+    if(!attentionPointMarkerGroup->empty()){
+        attentionPointMarkerGroup->clearChildren();
+        if(doNotify){
+            notifyAttentionPointChange();
+        }
+    }
+}
+
+
+void SceneMultiPointSet::addAttentionPoint(const Vector3& point, bool doNotify)
+{
+    Vector3f color(1.0f, 1.0f, 0.0f);
+    CrossMarker* marker = new CrossMarker(0.02, color);
+    marker->setTranslation(T().inverse() * point);
+    attentionPointMarkerGroup->addChild(marker);
+
+    if(doNotify){
+        notifyAttentionPointChange();
+    }
+}
+
+
+void SceneMultiPointSet::setAttentionPoint(const Vector3& p, bool doNotify)
+{
+    clearAttentionPoints(false);
+    addAttentionPoint(p, doNotify);
+}
+
+
+bool SceneMultiPointSet::removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify)
+{
+    bool removed = false;
+
+    SgGroup::iterator iter = attentionPointMarkerGroup->begin();
+    while(iter != attentionPointMarkerGroup->end()){
+        CrossMarker* marker = dynamic_cast<CrossMarker*>(iter->get());
+        if(point.isApprox(marker->translation(), distanceThresh)){
+            iter = attentionPointMarkerGroup->erase(iter);
+            removed = true;
+        } else {
+            ++iter;
+        }
+    }
+    if(removed && doNotify){
+        notifyAttentionPointChange();
+    }
+    return removed;
+}
+
+
+void SceneMultiPointSet::notifyAttentionPointChange()
+{
+    attentionPointMarkerGroup->notifyUpdate();
+    sigAttentionPointsChanged();
+}
+
+    
+bool SceneMultiPointSet::onButtonPressEvent(const SceneWidgetEvent& event)
+{
+	if(!isEditable){
+        return false;
+    }
+    
+    bool processed = false;
+    
+    if(event.button() == Qt::LeftButton){
+        if(event.modifiers() & Qt::ControlModifier){
+            if(!removeAttentionPoint(event.point(), 0.01, true)){
+                addAttentionPoint(event.point(), true);
+            }
+        } else {
+            setAttentionPoint(event.point(), true);
+        }
+        processed = true;
+    }
+    
+    return processed;
+
+}
+
+
+bool SceneMultiPointSet::onPointerMoveEvent(const SceneWidgetEvent& event)
+{
+    return false;
+}
+
+
+void SceneMultiPointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
+{
+    menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
+        boost::bind(&SceneMultiPointSet::clearAttentionPoints, this, true));
+
+    /*
+    PointSetEraser* eraser = dynamic_cast<PointSetEraser*>(event.sceneWidget()->activeEventFilter());
+    if(!eraser || eraser->weakPointSetItem.lock() != this->weakPointSetItem.lock()){
+        menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+            boost::bind(&ScenePointSet::startEraserMode, this, event.sceneWidget()));
+    }
+    */
+}
+
+
+void SceneMultiPointSet::onSceneModeChanged(const SceneWidgetEvent& event)
+{
+
 }

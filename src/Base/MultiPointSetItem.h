@@ -37,6 +37,13 @@ public:
 
     SignalProxy<void(int index)> sigPointSetItemAdded();
     SignalProxy<void(int index)> sigPointSetUpdated();
+
+    int numAttentionPoints() const;
+    Vector3 attentionPoint(int index) const;
+    void clearAttentionPoints();
+    void addAttentionPoint(const Vector3& p);
+    SignalProxy<void()> sigAttentionPointsChanged();
+    void notifyAttentionPointChange();
     
     virtual SgNode* getScene();
     
