@@ -32,7 +32,6 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     SgGroupPtr attentionPointMarkerGroup;
     Signal<void(const Affine3& T)> sigOffsetTransformChanged;
     Signal<void()> sigAttentionPointsChanged;
-    Signal<void(const RectRegionMarker::Region& region)> sigActivePointSetRegionRemoved;
     
     RectRegionMarkerPtr regionMarker;
     ScopedConnection eraserModeMenuItemConnection;
@@ -474,12 +473,6 @@ void MultiPointSetItem::notifyAttentionPointChange()
 }
 
 
-SignalProxy<void(const RectRegionMarker::Region& region)> MultiPointSetItem::sigActivePointSetRegionRemoved()
-{
-    return impl->scene->sigActivePointSetRegionRemoved;
-}
-    
-
 ItemPtr MultiPointSetItem::doDuplicate() const
 {
     return new MultiPointSetItem(*this);
@@ -726,6 +719,5 @@ void SceneMultiPointSet::onRegionFixed(const RectRegionMarker::Region& region)
         for(int i=0; i < n; ++i){
             item->activePointSetItem(i)->removePoints(region);
         }
-        sigActivePointSetRegionRemoved(region);
     }
 }

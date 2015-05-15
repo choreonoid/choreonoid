@@ -68,14 +68,9 @@ public:
     void clearAttentionPoint();  // deprecated
     void setAttentionPoint(const Vector3& p);  // deprecated
 
-    enum EditType {
-        CUSTOM,
-        REMOVAL
-    };
-
-    SignalProxy<bool(int editType, const RectRegionMarker::Region& region), LogicalProduct> sigRegionFixed();
-
     void removePoints(const RectRegionMarker::Region& region);
+
+    SignalProxy<void(const RectRegionMarker::Region& region)> sigPointsInRegionRemoved();
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

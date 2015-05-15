@@ -28,9 +28,6 @@ namespace {
 
 class ScenePointSet;
 
-typedef Signal<bool(int editType, const RectRegionMarker::Region& region), LogicalProduct> SigRegionFixed;
-typedef SignalProxy<bool(int editType, const RectRegionMarker::Region& region), LogicalProduct> SigRegionFixedProxy;
-
 class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
 {
 public:
@@ -52,8 +49,6 @@ public:
     Signal<void()> sigAttentionPointsChanged;
     SgGroupPtr attentionPointMarkerGroup;
     
-    SigRegionFixed sigRegionFixed;
-
     ScenePointSet(PointSetItemImpl* pointSetItem);
 
     void setPointSize(double size);
@@ -91,6 +86,7 @@ public:
     SgPointSetPtr pointSet;
     ScenePointSetPtr scene;
     ScopedConnection pointSetUpdateConnection;
+    Signal<void(const RectRegionMarker::Region& region)> sigPointsInRegionRemoved;
 
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
@@ -408,9 +404,9 @@ void PointSetItem::notifyAttentionPointChange()
 }
 
 
-SigRegionFixedProxy PointSetItem::sigRegionFixed()
+SignalProxy<void(const RectRegionMarker::Region& region)> PointSetItem::sigPointsInRegionRemoved()
 {
-    return impl->scene->sigRegionFixed;
+    return impl->sigPointsInRegionRemoved;
 }
 
 
@@ -470,7 +466,9 @@ void PointSetItemImpl::removePoints(const RectRegionMarker::Region& region)
 
         pointSet->notifyUpdate();
     }
-}    
+
+    sigPointsInRegionRemoved(region);
+}
 
 
 template<class ElementContainer>
@@ -930,7 +928,7 @@ void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& eve
 void ScenePointSet::onRegionFixed(const RectRegionMarker::Region& region)
 {
     PointSetItem* item = weakPointSetItem.lock();
-    if(sigRegionFixed.empty() || sigRegionFixed(PointSetItem::REMOVAL, region)){
+    if(item){
         item->removePoints(region);
     }
 }
