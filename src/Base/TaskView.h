@@ -23,6 +23,9 @@ public:
     TaskView();
     ~TaskView();
 
+    virtual void activate(bool on);
+    virtual bool isActive();
+    
     virtual void addTask(Task* task);
     virtual bool updateTask(Task* task);
     virtual int numTasks() const;
