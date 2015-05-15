@@ -16,7 +16,7 @@ class CNOID_EXPORT AbstractTaskSequencer
 public:
     virtual ~AbstractTaskSequencer();
 
-    virtual void activate(bool on) = 0;
+    virtual void activate(bool on = true) = 0;
     virtual bool isActive() = 0;
     
     virtual void addTask(Task* task) = 0;
