@@ -344,6 +344,7 @@ void TaskView::activate(bool on)
 void TaskViewImpl::activate(bool on, bool forceUpdate)
 {
     if(on != isActive || forceUpdate){
+
         isActive = on;
 
         cancelButton.setEnabled(on);
@@ -351,6 +352,12 @@ void TaskViewImpl::activate(bool on, bool forceUpdate)
         autoModeToggle.setEnabled(on);
         phaseLabel.setEnabled(on);
         commandButtonBox.setEnabled(on);
+
+        if(on){
+            mv->notify(QString(_("Task sequencer '%1' has been activated.")).arg(self->windowTitle()));
+        } else {
+            mv->notify(QString(_("Task sequencer '%1' has been deactivated.")).arg(self->windowTitle()));
+        }
 
         if(currentTask && !isNoExecutionMode){
             if(on){
