@@ -239,7 +239,7 @@ void exportPyItems()
     implicitly_convertible<PointSetItemPtr, ItemPtr>();
     PyItemList<PointSetItem>("PointSetItemList");
 
-    class_ < MultiPointSetItem, bases<PointSetItem, SceneProvider> >("MultiPointSetItem")
+    class_ < MultiPointSetItem, MultiPointSetItemPtr, bases<PointSetItem, SceneProvider> >("MultiPointSetItem")
         .def("numPointSetItems", &MultiPointSetItem::numPointSetItems)
         .def("pointSetItem", MultiPointSetItem_pointSetItem)
         .def("numActivePointSetItems", &MultiPointSetItem::numActivePointSetItems)
