@@ -3,13 +3,14 @@
   @author Shin'ichiro Nakaoka
  */
 
-#include <iostream>
 #include "../Task.h"
 #include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
 #include "PyUtil.h"
 #include <cnoid/PythonUtil>
 #include <boost/python/raw_function.hpp>
+#include <set>
+#include <map>
 
 using namespace std;
 using namespace boost::python;
@@ -241,9 +242,11 @@ void TaskMenu_addMenuSeparator(TaskMenu& self){
 class TaskWrap : public Task, public python::wrapper<Task>
 {
 public :
-    TaskWrap(){};
-    TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) {};
-    TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) {};
+    TaskWrap() { };
+
+    TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) { };
+    
+    TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) { };
 
     virtual void onMenuRequest(TaskMenu& menu){
         bool called = false;
@@ -360,6 +363,7 @@ public :
 
 typedef ref_ptr<TaskWrap> TaskWrapPtr;
 
+
 TaskPhasePtr Task_phase(Task& self, int index){
     return self.phase(index);
 }
@@ -395,11 +399,60 @@ TaskCommandPtr Task_addCommandEx(python::tuple args_, python::dict kw){
 }
 
 
+typedef std::set<AbstractTaskSequencer*> TaskSequencerSet;
+TaskSequencerSet taskSequencers;
+
+typedef std::map<TaskPtr, object> PyTaskMap;
+PyTaskMap pyTasks;
+
+
+void onTaskRemoved(Task* task)
+{
+    PyTaskMap::iterator p  = pyTasks.find(task);
+    if(p != pyTasks.end()){
+        PyGILock lock;
+        pyTasks.erase(p);
+    }
+}
+
+
+TaskPtr registerTask(AbstractTaskSequencer* sequencer, object& pyTask)
+{
+    PyGILock lock;
+    TaskPtr task = extract<TaskPtr>(pyTask);
+    if(task){
+        if(taskSequencers.find(sequencer) == taskSequencers.end()){
+            sequencer->sigTaskRemoved().connect(onTaskRemoved);
+            taskSequencers.insert(sequencer);
+        }
+        pyTasks[task] = pyTask;
+        return task;
+    }
+    return TaskPtr();
+}
+    
+
+void AbstractTaskSequencer_addTask(AbstractTaskSequencer& self, object pyTask)
+{
+    if(TaskPtr task = registerTask(&self, pyTask)){
+        self.addTask(task);
+    }
+}
+
+
+bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, object pyTask)
+{
+    if(TaskPtr task = registerTask(&self, pyTask)){
+        return self.updateTask(task);
+    }
+    return false;
+}
+
+
 TaskPtr AbstractTaskSequencer_task(AbstractTaskSequencer& self, int index)
 {
     return self.task(index);
 }
-
 
 }
 
@@ -483,7 +536,7 @@ void exportPyTaskTypes()
         .def("addMenuSeparator", TaskMenu_addMenuSeparator)
         ;
     
-    class_<TaskWrap, TaskWrapPtr, bases<Referenced>, boost::noncopyable >("Task")
+    class_<TaskWrap, TaskWrapPtr, bases<Referenced>, boost::noncopyable >("Task", init<>())
         .def(init<const std::string&, const std::string&>())
         .def(init<const Task&, bool>())
         .def(init<const Task&>())
@@ -509,12 +562,19 @@ void exportPyTaskTypes()
         .def("storeState", &Task::storeState, &TaskWrap::default_storeState)
         .def("restoreState", &Task::restoreState, &TaskWrap::default_restoreState)
         ;
-    
-    implicitly_convertible<TaskWrapPtr, ReferencedPtr>();
+
+    implicitly_convertible<TaskPtr, ReferencedPtr>();
+    implicitly_convertible<TaskWrapPtr, TaskPtr>();
 
     class_<AbstractTaskSequencer, AbstractTaskSequencer*, boost::noncopyable>("AbstractTaskSequencer", no_init)
-        .def("addTask", &AbstractTaskSequencer::addTask)
-        .def("updateTask", &AbstractTaskSequencer::updateTask)
+        .def("activate", &AbstractTaskSequencer::activate)
+        .def("isActive", &AbstractTaskSequencer::isActive)
+        .def("addTask", AbstractTaskSequencer_addTask)
+        .def("updateTask", AbstractTaskSequencer_updateTask)
+        .def("removeTask", &AbstractTaskSequencer::removeTask)
+        .def("sigTaskAdded", &AbstractTaskSequencer::sigTaskAdded)
+        .def("sigTaskRemoved", &AbstractTaskSequencer::sigTaskRemoved)
+        .def("clearTasks", &AbstractTaskSequencer::clearTasks)
         .def("numTasks", &AbstractTaskSequencer::numTasks)
         .def("task", AbstractTaskSequencer_task)
         .def("currentTaskIndex", &AbstractTaskSequencer::currentTaskIndex)
@@ -524,6 +584,7 @@ void exportPyTaskTypes()
         .def("setCurrentPhase", &AbstractTaskSequencer::setCurrentPhase)
         .def("sigCurrentPhaseChanged", &AbstractTaskSequencer::sigCurrentPhaseChanged)
         .def("currentCommandIndex", &AbstractTaskSequencer::currentCommandIndex)
+        .def("executeCommand", &AbstractTaskSequencer::executeCommand)
         .def("sigCurrentCommandChanged", &AbstractTaskSequencer::sigCurrentCommandChanged)
         .def("isBusy", &AbstractTaskSequencer::isBusy)
         .def("sigBusyStateChanged", &AbstractTaskSequencer::sigBusyStateChanged)

@@ -12,6 +12,7 @@
 #include <cnoid/SpinBox>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
+#include <cnoid/AppUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QEventLoop>
@@ -72,6 +73,9 @@ public:
         TaskInfo(Task* task) : task(task) { }
     };
     std::vector<TaskInfo> tasks;
+
+    Signal<void(Task* task)> sigTaskAdded;
+    Signal<void(Task* task)> sigTaskRemoved;
     
     TaskPtr currentTask;
     int currentTaskIndex;
@@ -103,6 +107,7 @@ public:
     void activate(bool on, bool forceUpdate);
     void addTask(Task* task);
     bool updateTask(Task* task);
+    void clearTasks();
     bool setCurrentTask(int index, bool forceUpdate);
     void setCurrentTaskByName(const std::string& name);
     PushButton* getOrCreateCommandButton(int index);
@@ -143,10 +148,19 @@ public:
 
 }
 
+
+static void onAboutToQuit()
+{
+    TaskView::instance()->clearTasks();
+}
+
+
 void TaskView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<TaskView>(
         "TaskView", N_("Task"), ViewManager::SINGLE_OPTIONAL);
+
+    cnoid::sigAboutToQuit().connect(boost::bind(onAboutToQuit));
 }
 
 
@@ -252,7 +266,9 @@ TaskView::~TaskView()
 
 TaskViewImpl::~TaskViewImpl()
 {
-
+    for(size_t i=0; i < tasks.size(); ++i){
+        sigTaskRemoved(tasks[i].task);
+    }
 }
 
 
@@ -395,6 +411,8 @@ void TaskViewImpl::addTask(Task* task)
     
     taskCombo.blockSignals(false);
 
+    sigTaskAdded(task);
+
     if(tasks.size() == 1){
         setCurrentTask(0, true);
     }
@@ -427,6 +445,11 @@ bool TaskViewImpl::updateTask(Task* task)
             TaskPtr oldTask = info.task;
             info.task = task;
 
+            if(task != oldTask){
+                sigTaskRemoved(oldTask);
+                sigTaskAdded(task);
+            }
+
             if(index == currentTaskIndex){
                 info.state = new Mapping();
 
@@ -446,6 +469,42 @@ bool TaskViewImpl::updateTask(Task* task)
     }
 
     return updated;
+}
+
+
+/**
+   \note This function is not implemented yet
+*/
+bool TaskView::removeTask(Task* task)
+{
+    return false;
+}
+
+
+SignalProxy<void(Task* task)> TaskView::sigTaskAdded()
+{
+    return impl->sigTaskAdded;
+}
+
+
+void TaskView::clearTasks()
+{
+    impl->clearTasks();
+}
+
+
+void TaskViewImpl::clearTasks()
+{
+    while(!tasks.empty()){
+        sigTaskRemoved(tasks.back().task);
+        tasks.pop_back();
+    }
+}
+            
+
+SignalProxy<void(Task* task)> TaskView::sigTaskRemoved()
+{
+    return impl->sigTaskRemoved;
 }
 
 
@@ -578,6 +637,12 @@ void TaskView::setNoExecutionMode(bool on)
 bool TaskView::isNoExecutionMode() const
 {
     return impl->isNoExecutionMode;
+}
+
+
+void TaskView::executeCommand(int commandIndex)
+{
+    setCurrentCommand(commandIndex, true);
 }
 
 

@@ -8,6 +8,7 @@
 #set_source_files_properties(GLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(SceneItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(MessageView.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(TaskView.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
   App.cpp

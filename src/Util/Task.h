@@ -52,6 +52,7 @@ class CNOID_EXPORT TaskCommand : public Referenced
 {
 public:
     TaskCommand(const std::string& caption);
+    ~TaskCommand();
     
     const std::string& caption() const { return caption_; }
     TaskFunc function() const { return function_; }
@@ -92,6 +93,7 @@ class CNOID_EXPORT TaskPhase : public Referenced
 public:
     TaskPhase(const std::string& caption);
     TaskPhase(const TaskPhase& org, bool doDeepCopy = true);
+    ~TaskPhase();
 
     virtual TaskPhase* clone(bool doDeepCopy = true);
 
@@ -136,6 +138,7 @@ public:
     Task();
     Task(const std::string& name, const std::string& caption);
     Task(const Task& org, bool doDeepCopy = true);
+    ~Task();
 
     const std::string& name() const { return name_; }
     void setName(const std::string& str);

@@ -21,6 +21,10 @@ public:
     
     virtual void addTask(Task* task) = 0;
     virtual bool updateTask(Task* task) = 0;
+    virtual bool removeTask(Task* task) = 0;
+    virtual void clearTasks() = 0;
+    virtual SignalProxy<void(Task* task)> sigTaskAdded() = 0;
+    virtual SignalProxy<void(Task* task)> sigTaskRemoved() = 0;
     virtual int numTasks() const = 0;
     virtual Task* task(int index) = 0;
     virtual int currentTaskIndex() const = 0;
@@ -34,7 +38,7 @@ public:
       @return The -1 value is returned when the current command is an implicit pre-processing command.
     */
     virtual int currentCommandIndex() const = 0;
-
+    virtual void executeCommand(int commandIndex) = 0;
     virtual SignalProxy<void()> sigCurrentCommandChanged() = 0;
     virtual bool isBusy() const = 0;
     virtual SignalProxy<void()> sigBusyStateChanged() = 0;
