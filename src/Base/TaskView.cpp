@@ -59,7 +59,6 @@ public:
     QWidget commandButtonBox;
     QBoxLayout* commandButtonBoxLayout;
     vector<PushButton*> commandButtons;
-    MenuManager menuManager;
 
     bool isNoExecutionMode;
     bool isActive;
@@ -101,6 +100,15 @@ public:
     Timer waitTimer;
     Signal<void()> sigBusyStateChanged;
 
+    MenuManager menuManager;
+    struct MenuItem {
+        boost::function<void()> func;
+        boost::function<void(bool on)> checkFunc;
+    };
+    vector<MenuItem> menuItems;
+    Signal<void(int index)> sigMenuItemTriggered;
+    Signal<void(int index, bool on)> sigMenuItemToggled;
+
     TaskViewImpl(TaskView* self);
     ~TaskViewImpl();
     void doLayout(bool on);
@@ -140,10 +148,13 @@ public:
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
-    void onMenuButtonClicked();
+    void updateMenuItems(bool doPopup);
     virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
     virtual void addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func);
     virtual void addMenuSeparator();
+    void onMenuItemTriggered(int index);
+    void onMenuItemToggled(int index, bool on);
+    void applyMenuItem(int index, bool on);
 };
 
 }
@@ -208,7 +219,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
 
     menuButton.setText("*");
     menuButton.setToolTip(_("Option Menu"));
-    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
+    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::updateMenuItems, this, true));
 
     prevButton.setText("<");
     prevButton.setToolTip(_("Go back to the previous phase"));
@@ -1282,8 +1293,10 @@ void TaskViewImpl::onWaitTimeout()
 }
 
 
-void TaskViewImpl::onMenuButtonClicked()
+void TaskViewImpl::updateMenuItems(bool doPopup)
 {
+    menuItems.clear();
+    
     menuManager.setNewPopupMenu(self);
     if(currentTask){
         currentTask->onMenuRequest(*this);
@@ -1291,30 +1304,41 @@ void TaskViewImpl::onMenuButtonClicked()
     if(menuManager.numItems() > 0){
         menuManager.addSeparator();
     }
-    menuManager.addItem(_("Retry"))->sigTriggered().connect(bind(&TaskViewImpl::retry, this));
+
+    addMenuItem(_("Retry"), boost::bind(&TaskViewImpl::retry, this));
+    
     Action* verticalCheck = menuManager.addCheckItem(_("Vertical Layout"));
     verticalCheck->setChecked(isVerticalLayout);
     verticalCheck->sigToggled().connect(boost::bind(&TaskViewImpl::doLayout, this, _1));
-    
-    menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
+
+    if(doPopup){
+        menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
+    }
 }
 
 
 void TaskViewImpl::addMenuItem(const std::string& caption, boost::function<void()> func)
 {
+    int index = menuItems.size();
+    menuItems.push_back(MenuItem());
     Action* action = menuManager.addItem(caption.c_str());
+    action->sigTriggered().connect(
+        boost::bind(&TaskViewImpl::onMenuItemTriggered, this, index));
     if(func){
-        action->sigTriggered().connect(func);
+        menuItems.back().func = func;
     }
 }
 
 
 void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func)
 {
+    int index = menuItems.size();
+    menuItems.push_back(MenuItem());
     Action* action = menuManager.addCheckItem(caption.c_str());
-    action->setChecked(isChecked);
+    action->sigToggled().connect(
+        boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1));
     if(func){
-        action->sigToggled().connect(func);
+        menuItems.back().checkFunc = func;
     }
 }
 
@@ -1322,6 +1346,74 @@ void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, 
 void TaskViewImpl::addMenuSeparator()
 {
     menuManager.addSeparator();
+}
+
+
+void TaskViewImpl::onMenuItemTriggered(int index)
+{
+    MenuItem& item = menuItems[index];
+    if(isExecutionEnabled()){
+        if(item.func){
+            item.func();
+        }
+    }
+    if(isNoExecutionMode){
+        sigMenuItemTriggered(index);
+    }
+}
+
+
+void TaskViewImpl::onMenuItemToggled(int index, bool on)
+{
+    MenuItem& item = menuItems[index];
+    if(isExecutionEnabled()){
+        if(item.checkFunc){
+            item.checkFunc(on);
+        }
+    }
+    if(isNoExecutionMode){
+        sigMenuItemToggled(index, on);
+    }
+}
+
+
+void TaskView::executeMenuItem(int index)
+{
+    impl->applyMenuItem(index, true);
+}
+
+
+void TaskView::checkMenuItem(int index, bool on)
+{
+    impl->applyMenuItem(index, on);
+}
+
+
+void TaskViewImpl::applyMenuItem(int index, bool on)
+{
+    if(isExecutionEnabled()){
+        updateMenuItems(false);
+        if(index >= 0 && index < menuItems.size()){
+            MenuItem& item = menuItems[index];
+            if(item.func){
+                item.func();
+            } else if(item.checkFunc){
+                item.checkFunc(on);
+            }
+        }
+    }
+}
+                
+
+SignalProxy<void(int index)> TaskView::sigMenuItemTriggered()
+{
+    return impl->sigMenuItemTriggered;
+}
+
+
+SignalProxy<void(int index, bool on)> TaskView::sigMenuItemToggled()
+{
+    return impl->sigMenuItemToggled;
 }
 
 

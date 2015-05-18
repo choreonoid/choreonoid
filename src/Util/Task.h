@@ -122,6 +122,9 @@ private:
 typedef ref_ptr<TaskPhase> TaskPhasePtr;
 
 
+/**
+   \todo The menu API should be moved to the actual implementation class of AbstractTaskSequencer
+*/
 class CNOID_EXPORT TaskMenu
 {
 public:
@@ -160,11 +163,13 @@ public:
 
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 
-    virtual void onMenuRequest(TaskMenu& menu);
     virtual void onActivated(AbstractTaskSequencer* sequencer);
     virtual void onDeactivated(AbstractTaskSequencer* sequencer);
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive);
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive);
+    
+    //! \todo The menu API should be moved to the actual implementation class of AbstractTaskSequencer
+    virtual void onMenuRequest(TaskMenu& menu);
     
 private:
     std::string name_;

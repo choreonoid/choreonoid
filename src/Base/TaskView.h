@@ -55,6 +55,11 @@ public:
     void setCurrentCommand(int commandIndex, bool doExecution);
     void setBusyState(bool on);
 
+    void executeMenuItem(int index);
+    void checkMenuItem(int index, bool on);
+    SignalProxy<void(int index)> sigMenuItemTriggered();
+    SignalProxy<void(int index, bool on)> sigMenuItemToggled();
+
 protected:
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
