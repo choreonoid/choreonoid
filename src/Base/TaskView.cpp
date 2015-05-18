@@ -445,19 +445,28 @@ bool TaskViewImpl::updateTask(Task* task)
             TaskPtr oldTask = info.task;
             info.task = task;
 
-            if(task != oldTask){
-                sigTaskRemoved(oldTask);
-                sigTaskAdded(task);
-            }
+            bool doEmitSignals = task != oldTask;
 
-            if(index == currentTaskIndex){
+            if(index != currentTaskIndex){
+                if(doEmitSignals){
+                    sigTaskRemoved(oldTask);
+                    sigTaskAdded(task);
+                }
+            } else {
                 info.state = new Mapping();
 
                 if(isExecutionEnabled()){
                     oldTask->storeState(self, *info.state);
                 }
+                if(doEmitSignals){
+                    sigTaskRemoved(oldTask);
+                }
                 
                 setCurrentTask(index, true);
+
+                if(doEmitSignals){
+                    sigTaskAdded(task);
+                }
 
                 if(isExecutionEnabled()){
                     task->restoreState(self, *info.state);
