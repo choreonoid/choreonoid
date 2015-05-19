@@ -128,6 +128,8 @@ private:
 template<class T> class ref_ptr
 {
 public:
+    typedef T element_type;
+    
     ref_ptr() : px(0) { }
 
     ref_ptr(T* p) : px(p){
@@ -302,6 +304,8 @@ template<class T> class weak_ref_ptr
     }
             
 public:
+    typedef T element_type;
+    
     weak_ref_ptr() : px(0), counter(0) { }
 
     template<class Y>

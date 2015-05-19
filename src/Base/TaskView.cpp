@@ -12,6 +12,7 @@
 #include <cnoid/SpinBox>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
+#include <cnoid/AppUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QEventLoop>
@@ -58,7 +59,6 @@ public:
     QWidget commandButtonBox;
     QBoxLayout* commandButtonBoxLayout;
     vector<PushButton*> commandButtons;
-    MenuManager menuManager;
 
     bool isNoExecutionMode;
     bool isActive;
@@ -72,6 +72,9 @@ public:
         TaskInfo(Task* task) : task(task) { }
     };
     std::vector<TaskInfo> tasks;
+
+    Signal<void(Task* task)> sigTaskAdded;
+    Signal<void(Task* task)> sigTaskRemoved;
     
     TaskPtr currentTask;
     int currentTaskIndex;
@@ -97,12 +100,22 @@ public:
     Timer waitTimer;
     Signal<void()> sigBusyStateChanged;
 
+    MenuManager menuManager;
+    struct MenuItem {
+        boost::function<void()> func;
+        boost::function<void(bool on)> checkFunc;
+    };
+    vector<MenuItem> menuItems;
+    Signal<void(int index)> sigMenuItemTriggered;
+    Signal<void(int index, bool on)> sigMenuItemToggled;
+
     TaskViewImpl(TaskView* self);
     ~TaskViewImpl();
     void doLayout(bool on);
     void activate(bool on, bool forceUpdate);
     void addTask(Task* task);
     bool updateTask(Task* task);
+    void clearTasks();
     bool setCurrentTask(int index, bool forceUpdate);
     void setCurrentTaskByName(const std::string& name);
     PushButton* getOrCreateCommandButton(int index);
@@ -135,18 +148,30 @@ public:
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
-    void onMenuButtonClicked();
+    void updateMenuItems(bool doPopup);
     virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
     virtual void addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func);
     virtual void addMenuSeparator();
+    void onMenuItemTriggered(int index);
+    void onMenuItemToggled(int index, bool on);
+    void applyMenuItem(int index, bool on);
 };
 
 }
+
+
+static void onAboutToQuit()
+{
+    TaskView::instance()->clearTasks();
+}
+
 
 void TaskView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<TaskView>(
         "TaskView", N_("Task"), ViewManager::SINGLE_OPTIONAL);
+
+    cnoid::sigAboutToQuit().connect(boost::bind(onAboutToQuit));
 }
 
 
@@ -194,7 +219,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
 
     menuButton.setText("*");
     menuButton.setToolTip(_("Option Menu"));
-    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
+    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::updateMenuItems, this, true));
 
     prevButton.setText("<");
     prevButton.setToolTip(_("Go back to the previous phase"));
@@ -252,7 +277,9 @@ TaskView::~TaskView()
 
 TaskViewImpl::~TaskViewImpl()
 {
-
+    for(size_t i=0; i < tasks.size(); ++i){
+        sigTaskRemoved(tasks[i].task);
+    }
 }
 
 
@@ -395,6 +422,8 @@ void TaskViewImpl::addTask(Task* task)
     
     taskCombo.blockSignals(false);
 
+    sigTaskAdded(task);
+
     if(tasks.size() == 1){
         setCurrentTask(0, true);
     }
@@ -427,14 +456,28 @@ bool TaskViewImpl::updateTask(Task* task)
             TaskPtr oldTask = info.task;
             info.task = task;
 
-            if(index == currentTaskIndex){
+            bool doEmitSignals = task != oldTask;
+
+            if(index != currentTaskIndex){
+                if(doEmitSignals){
+                    sigTaskRemoved(oldTask);
+                    sigTaskAdded(task);
+                }
+            } else {
                 info.state = new Mapping();
 
                 if(isExecutionEnabled()){
                     oldTask->storeState(self, *info.state);
                 }
+                if(doEmitSignals){
+                    sigTaskRemoved(oldTask);
+                }
                 
                 setCurrentTask(index, true);
+
+                if(doEmitSignals){
+                    sigTaskAdded(task);
+                }
 
                 if(isExecutionEnabled()){
                     task->restoreState(self, *info.state);
@@ -446,6 +489,42 @@ bool TaskViewImpl::updateTask(Task* task)
     }
 
     return updated;
+}
+
+
+/**
+   \note This function is not implemented yet
+*/
+bool TaskView::removeTask(Task* task)
+{
+    return false;
+}
+
+
+SignalProxy<void(Task* task)> TaskView::sigTaskAdded()
+{
+    return impl->sigTaskAdded;
+}
+
+
+void TaskView::clearTasks()
+{
+    impl->clearTasks();
+}
+
+
+void TaskViewImpl::clearTasks()
+{
+    while(!tasks.empty()){
+        sigTaskRemoved(tasks.back().task);
+        tasks.pop_back();
+    }
+}
+            
+
+SignalProxy<void(Task* task)> TaskView::sigTaskRemoved()
+{
+    return impl->sigTaskRemoved;
 }
 
 
@@ -578,6 +657,12 @@ void TaskView::setNoExecutionMode(bool on)
 bool TaskView::isNoExecutionMode() const
 {
     return impl->isNoExecutionMode;
+}
+
+
+void TaskView::executeCommand(int commandIndex)
+{
+    setCurrentCommand(commandIndex, true);
 }
 
 
@@ -1208,8 +1293,10 @@ void TaskViewImpl::onWaitTimeout()
 }
 
 
-void TaskViewImpl::onMenuButtonClicked()
+void TaskViewImpl::updateMenuItems(bool doPopup)
 {
+    menuItems.clear();
+    
     menuManager.setNewPopupMenu(self);
     if(currentTask){
         currentTask->onMenuRequest(*this);
@@ -1217,30 +1304,41 @@ void TaskViewImpl::onMenuButtonClicked()
     if(menuManager.numItems() > 0){
         menuManager.addSeparator();
     }
-    menuManager.addItem(_("Retry"))->sigTriggered().connect(bind(&TaskViewImpl::retry, this));
+
+    addMenuItem(_("Retry"), boost::bind(&TaskViewImpl::retry, this));
+    
     Action* verticalCheck = menuManager.addCheckItem(_("Vertical Layout"));
     verticalCheck->setChecked(isVerticalLayout);
     verticalCheck->sigToggled().connect(boost::bind(&TaskViewImpl::doLayout, this, _1));
-    
-    menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
+
+    if(doPopup){
+        menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
+    }
 }
 
 
 void TaskViewImpl::addMenuItem(const std::string& caption, boost::function<void()> func)
 {
+    int index = menuItems.size();
+    menuItems.push_back(MenuItem());
     Action* action = menuManager.addItem(caption.c_str());
+    action->sigTriggered().connect(
+        boost::bind(&TaskViewImpl::onMenuItemTriggered, this, index));
     if(func){
-        action->sigTriggered().connect(func);
+        menuItems.back().func = func;
     }
 }
 
 
 void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func)
 {
+    int index = menuItems.size();
+    menuItems.push_back(MenuItem());
     Action* action = menuManager.addCheckItem(caption.c_str());
-    action->setChecked(isChecked);
+    action->sigToggled().connect(
+        boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1));
     if(func){
-        action->sigToggled().connect(func);
+        menuItems.back().checkFunc = func;
     }
 }
 
@@ -1248,6 +1346,74 @@ void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, 
 void TaskViewImpl::addMenuSeparator()
 {
     menuManager.addSeparator();
+}
+
+
+void TaskViewImpl::onMenuItemTriggered(int index)
+{
+    MenuItem& item = menuItems[index];
+    if(isExecutionEnabled()){
+        if(item.func){
+            item.func();
+        }
+    }
+    if(isNoExecutionMode){
+        sigMenuItemTriggered(index);
+    }
+}
+
+
+void TaskViewImpl::onMenuItemToggled(int index, bool on)
+{
+    MenuItem& item = menuItems[index];
+    if(isExecutionEnabled()){
+        if(item.checkFunc){
+            item.checkFunc(on);
+        }
+    }
+    if(isNoExecutionMode){
+        sigMenuItemToggled(index, on);
+    }
+}
+
+
+void TaskView::executeMenuItem(int index)
+{
+    impl->applyMenuItem(index, true);
+}
+
+
+void TaskView::checkMenuItem(int index, bool on)
+{
+    impl->applyMenuItem(index, on);
+}
+
+
+void TaskViewImpl::applyMenuItem(int index, bool on)
+{
+    if(isExecutionEnabled()){
+        updateMenuItems(false);
+        if(index >= 0 && index < menuItems.size()){
+            MenuItem& item = menuItems[index];
+            if(item.func){
+                item.func();
+            } else if(item.checkFunc){
+                item.checkFunc(on);
+            }
+        }
+    }
+}
+                
+
+SignalProxy<void(int index)> TaskView::sigMenuItemTriggered()
+{
+    return impl->sigMenuItemTriggered;
+}
+
+
+SignalProxy<void(int index, bool on)> TaskView::sigMenuItemToggled()
+{
+    return impl->sigMenuItemToggled;
 }
 
 

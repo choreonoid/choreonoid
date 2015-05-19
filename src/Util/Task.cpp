@@ -28,6 +28,12 @@ TaskCommand::TaskCommand(const std::string& caption)
 }
 
 
+TaskCommand::~TaskCommand()
+{
+
+}
+
+
 int TaskCommand::nextPhaseIndex(int currentPhaseIndex) const
 {
     return isNextPhaseRelative_ ? (currentPhaseIndex + nextPhaseIndex_) : nextPhaseIndex_;
@@ -90,6 +96,12 @@ TaskPhase::TaskPhase(const TaskPhase& org, bool doDeepCopy)
             commands[i] = new TaskCommand(*commands[i]);
         }
     }
+}
+
+
+TaskPhase::~TaskPhase()
+{
+
 }
 
 
@@ -161,6 +173,12 @@ Task::Task(const Task& org, bool doDeepCopy)
             phases_[i] = new TaskPhase(*phases_[i], true);
         }
     }
+}
+
+
+Task::~Task()
+{
+
 }
 
 

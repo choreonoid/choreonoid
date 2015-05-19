@@ -100,7 +100,7 @@ class AppImpl
     std::string vendorName;
     DescriptionDialog* descriptionDialog;
     bool doQuit;
-        
+    
     AppImpl(App* self, int& argc, char**& argv);
     ~AppImpl();
     void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);

@@ -52,6 +52,7 @@ class CNOID_EXPORT TaskCommand : public Referenced
 {
 public:
     TaskCommand(const std::string& caption);
+    ~TaskCommand();
     
     const std::string& caption() const { return caption_; }
     TaskFunc function() const { return function_; }
@@ -92,6 +93,7 @@ class CNOID_EXPORT TaskPhase : public Referenced
 public:
     TaskPhase(const std::string& caption);
     TaskPhase(const TaskPhase& org, bool doDeepCopy = true);
+    ~TaskPhase();
 
     virtual TaskPhase* clone(bool doDeepCopy = true);
 
@@ -120,6 +122,9 @@ private:
 typedef ref_ptr<TaskPhase> TaskPhasePtr;
 
 
+/**
+   \todo The menu API should be moved to the actual implementation class of AbstractTaskSequencer
+*/
 class CNOID_EXPORT TaskMenu
 {
 public:
@@ -136,6 +141,7 @@ public:
     Task();
     Task(const std::string& name, const std::string& caption);
     Task(const Task& org, bool doDeepCopy = true);
+    ~Task();
 
     const std::string& name() const { return name_; }
     void setName(const std::string& str);
@@ -157,11 +163,13 @@ public:
 
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 
-    virtual void onMenuRequest(TaskMenu& menu);
     virtual void onActivated(AbstractTaskSequencer* sequencer);
     virtual void onDeactivated(AbstractTaskSequencer* sequencer);
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive);
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive);
+    
+    //! \todo The menu API should be moved to the actual implementation class of AbstractTaskSequencer
+    virtual void onMenuRequest(TaskMenu& menu);
     
 private:
     std::string name_;

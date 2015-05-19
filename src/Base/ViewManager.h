@@ -52,7 +52,7 @@ public:
         return static_cast<ViewType*>(
             registerClassSub(typeid(ViewType), className, defaultInstanceName, itype, new Factory<ViewType>()));
     }
-
+    
     static ViewClass* viewClass(const std::type_info& view_type_info);
 
     // get or create the primal instance of the specified view type
