@@ -21,6 +21,14 @@ python::object readVector3(MappingPtr mapping, const std::string& key){
     return python::object();
 }
 
+python::object readVector4(MappingPtr mapping, const std::string& key){
+    Vector4 v;
+    if(cnoid::read(*mapping, key, v)){
+        return python::object(v);
+    }
+    return python::object();
+}
+
 python::object readMatrix4(MappingPtr mapping, const std::string& key){
     Matrix4 T;
     if(cnoid::read(*mapping, key, T)){
@@ -47,6 +55,10 @@ ListingPtr writeVector3(MappingPtr mapping, const std::string& key, const Vector
     return &cnoid::write(*mapping, key, v);
 }
 
+ListingPtr writeVector4(MappingPtr mapping, const std::string& key, const Vector4& v){
+    return &cnoid::write(*mapping, key, v);
+}
+
 ListingPtr writeAffine3(MappingPtr mapping, const std::string& key, const Affine3& T){
     return &cnoid::write(*mapping, key, T.matrix());
 }
@@ -58,10 +70,12 @@ namespace cnoid {
 void exportPyEigenArchive()
 {
     python::def("readVector3", readVector3);
+    python::def("readVector4", readVector4);
     python::def("readMatrix4", readMatrix4);
     python::def("readAffine3", readAffine3);
-    python::def("write", writeVector3);
-    python::def("write", writeAffine3);
+    python::def("writeVector3", writeVector3);
+    python::def("writeVector4", writeVector4);
+    python::def("writeAffine3", writeAffine3);
 }
 
 }
