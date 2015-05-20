@@ -63,6 +63,9 @@ public:
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
+    bool startAutomaticSave(const std::string& filename);
+    void stopAutomaticSave();
+
 protected:
     virtual ItemPtr doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);

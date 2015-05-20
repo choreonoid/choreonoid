@@ -277,7 +277,7 @@ bool BodyMotion::saveAsStandardYAMLformat(const std::string& filename)
     YAMLWriter writer(filename);
     writer.setDoubleFormat("%.9g");
 
-    writer.putComment("Body motion data set format version 1.0 defined by cnoid-Robotics\n");
+    writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
 
     writer.startMapping();
 

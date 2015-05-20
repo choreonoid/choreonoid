@@ -11,7 +11,9 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
+#include <cnoid/YAMLWriter>
 #include <cnoid/SceneMarker>
+#include <cnoid/FileUtil>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
@@ -88,6 +90,11 @@ public:
     Signal<void(int index)> sigPointSetItemAdded;
     Signal<void(int index)> sigPointSetItemUpdated;
 
+    MappingPtr outputArchive;
+    ListingPtr outputFileListing;
+    bool isAutoSaveMode;
+    filesystem::path autoSaveFilePath;
+
     MultiPointSetItemImpl(MultiPointSetItem* self);
     MultiPointSetItemImpl(MultiPointSetItem* self, const MultiPointSetItemImpl& org);
     void initialize();
@@ -101,6 +108,12 @@ public:
     bool onRenderingModePropertyChanged(int mode);
     bool onTopTranslationPropertyChanged(const std::string& value);
     bool onTopRotationPropertyChanged(const std::string& value);
+
+    bool saveAllPointSetItems(const std::string& filename);
+    bool outputPointSetItem(int index);
+    bool writeOutputArchive(const std::string& filename);
+    bool startAutomaticSave(const std::string& filename);
+    void saveAdditionalPointSet(int index);
 };
 
 }
@@ -161,6 +174,8 @@ void MultiPointSetItemImpl::initialize()
     subTreeChangedConnection.reset(
         self->sigSubTreeChanged().connect(
             boost::bind(&MultiPointSetItemImpl::onSubTreeChanged, this)));
+
+    isAutoSaveMode = false;
 }    
 
 
@@ -241,6 +256,10 @@ void MultiPointSetItemImpl::onSubTreeChanged()
             itemInfoMap.insert(ItemInfoMap::value_type(item, info));
 
             sigPointSetItemAdded(i);
+
+            if(isAutoSaveMode){
+                saveAdditionalPointSet(i);
+            }
         }
     }
 }
@@ -720,4 +739,105 @@ void SceneMultiPointSet::onRegionFixed(const RectRegionMarker::Region& region)
             item->activePointSetItem(i)->removePoints(region);
         }
     }
+}
+
+
+bool MultiPointSetItemImpl::saveAllPointSetItems(const std::string& filename)
+{
+    outputArchive = new Mapping();
+    outputArchive->setDoubleFormat("%.9g");
+
+    outputArchive->write("type", "MultiPointSet");
+    outputArchive->write("fileFormat", "PCD");
+
+    outputFileListing = outputArchive->createListing("files");
+    const int n = self->numPointSetItems();
+    for(int i=0; i < n; ++i){
+        outputPointSetItem(i);
+    }
+
+    return writeOutputArchive(filename);
+}
+
+
+bool MultiPointSetItemImpl::outputPointSetItem(int index)
+{
+    PointSetItem* item = self->pointSetItem(index);
+    if(outputFileListing && !item->name().empty()){
+        string filename = item->name() + ".pcd";
+        string filepath = getPathString(autoSaveFilePath.parent_path() / filesystem::path(filename));
+        if(item->save(filepath, "PCD-FILE")){
+            MappingPtr info = new Mapping();
+            info->write("file", filename);
+            write(*info, "offsetTransform", item->offsetTransform());
+            outputFileListing->insert(index, info);
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool MultiPointSetItemImpl::writeOutputArchive(const std::string& filename)
+{
+    if(outputArchive && !outputFileListing->empty()){
+        YAMLWriter writer(filename);
+        writer.setKeyOrderPreservationMode(true);
+        writer.putComment("Multi point set data format version 1.0 defined by Choreonoid\n");
+        writer.putNode(outputArchive);
+        return true;
+    }
+    return false;
+}
+
+
+bool MultiPointSetItem::startAutomaticSave(const std::string& filename)
+{
+    return impl->startAutomaticSave(filename);
+}
+
+
+bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
+{
+    isAutoSaveMode = false;
+
+    autoSaveFilePath = cnoid::getAbsolutePath(filesystem::path(filename));
+
+    if(!autoSaveFilePath.filename().empty()){
+        if(self->numPointSetItems() == 0){
+            isAutoSaveMode = true;
+        } else {
+            if(filesystem::create_directories(autoSaveFilePath.parent_path())){
+                if(saveAllPointSetItems(getPathString(autoSaveFilePath))){
+                    isAutoSaveMode = true;
+                }
+            }
+        }
+    }
+
+    return isAutoSaveMode;
+}
+
+
+void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
+{
+    bool result = false;
+
+    if(!outputArchive){
+        if(filesystem::create_directories(autoSaveFilePath.parent_path())){
+            saveAllPointSetItems(getPathString(autoSaveFilePath));
+        }
+    } else {
+        if(outputPointSetItem(index)){
+            writeOutputArchive(getPathString(autoSaveFilePath));
+        }
+    }
+}
+
+
+void MultiPointSetItem::stopAutomaticSave()
+{
+    impl->outputArchive.reset();
+    impl->outputFileListing.reset();
+    impl->isAutoSaveMode = false;
 }

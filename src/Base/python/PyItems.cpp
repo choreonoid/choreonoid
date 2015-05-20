@@ -258,6 +258,8 @@ void exportPyItems()
         .def("addAttentionPoint", &MultiPointSetItem::addAttentionPoint)
         .def("sigAttentionPointsChanged", &MultiPointSetItem::sigAttentionPointsChanged)
         .def("notifyAttentionPointChange", &MultiPointSetItem::notifyAttentionPointChange)
+        .def("startAutomaticSave", &MultiPointSetItem::startAutomaticSave)
+        .def("stopAutomaticSave", &MultiPointSetItem::stopAutomaticSave);
         ;
 
     implicitly_convertible<MultiPointSetItemPtr, ItemPtr>();
