@@ -471,6 +471,8 @@ public:
     void append(ValueNode* node) {
         values.push_back(node);
     }
+
+    void insert(int index, ValueNode* node);
         
     void append(int value);
 

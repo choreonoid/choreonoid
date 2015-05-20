@@ -7,6 +7,7 @@
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
+//#include "YAMLWriter.h"
 #include <boost/function.hpp>
 
 namespace cnoid {
@@ -65,6 +66,43 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::MatrixBase
     }
     return s;
 }
+
+
+template<typename Scalar, int Dim, int Mode>
+Listing& write(Mapping& mapping, const std::string& key, const Eigen::Transform<Scalar, Dim, Mode>& T)
+{
+    return write(mapping, key, T.matrix());
+}
+
+
+/**
+   This should be defined in another file
+*/
+/*
+template<typename Derived>
+void write(YAMLWriter& writer, const std::string& key, const Eigen::MatrixBase<Derived>& x)
+{
+    writer.putKey(key);
+    writer.startFlowStyleMapping();
+    
+    const int nr = x.rows();
+    const int nc = x.cols();
+    if(nc == 1){
+        for(int i=0; i < nr; ++i){
+            writer.putScalar(x(i));
+        }
+    } else {
+        for(int i=0; i < nr; ++i){
+            //writer.putLF();
+            for(int j=0; j < nc; ++j){
+                writer.putScalar(x(i, j));
+            }
+        }
+    }
+    writer.endListing();
+}
+*/
+
 
 template<typename Scalar>
 bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxis<Scalar>& r)

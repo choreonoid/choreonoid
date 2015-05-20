@@ -923,6 +923,17 @@ void Listing::append(const std::string& value, StringStyle stringStyle)
 }
 
 
+void Listing::insert(int index, ValueNode* node)
+{
+    if(index >= 0){
+        if(index > values.size()){
+            index = values.size();
+        }
+        values.insert(values.begin() + index, node);
+    }
+}
+
+
 void Listing::write(int i, const std::string& value, StringStyle stringStyle)
 {
     values[i] = new ScalarNode(toUTF8(value), stringStyle);
