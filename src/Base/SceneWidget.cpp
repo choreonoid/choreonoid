@@ -5,6 +5,7 @@
 #include "SceneWidget.h"
 #include "GLSceneRenderer.h"
 #include "SceneWidgetEditable.h"
+#include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
 #include "ToolBar.h"
 #include "Dialog.h"
@@ -190,12 +191,14 @@ public:
     SgUpdate added;
     SgUpdate removed;
 
-    SgPosTransformPtr builtinCameraTransform;
+    InteractiveCameraTransformPtr builtinCameraTransform;
     SgPerspectiveCameraPtr builtinPersCamera;
     SgOrthographicCameraPtr builtinOrthoCamera;
     int numBuiltinCameras;
     bool isBuiltinCameraCurrent;
-        
+
+    InteractiveCameraTransformPtr interactiveCameraTransform;
+
     SgDirectionalLightPtr worldLight;
 
     Signal<void()> sigStateChanged;
@@ -487,10 +490,11 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     SgGroup* root = renderer.sceneRoot();
 
-    builtinCameraTransform = new SgPosTransform();
+    builtinCameraTransform = new InteractiveCameraTransform();
     builtinCameraTransform->setTransform(
         SgCamera::positionLookingAt(
             Vector3(4.0, 2.0, 1.5), Vector3(0.0, 0.0, 1.0), Vector3::UnitZ()));
+    interactiveCameraTransform = builtinCameraTransform;
 
     builtinPersCamera = new SgPerspectiveCamera();
     builtinPersCamera->setName("Perspective");
@@ -744,7 +748,7 @@ void SceneWidgetImpl::renderCoordinateAxes(GLSceneRenderer& renderer)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    Affine3 transform(builtinCameraTransform->rotation());
+    Affine3 transform(renderer.currentCameraPosition());
     Affine3 inv = transform.inverse();
     glMultMatrixd(inv.data());
 
@@ -929,6 +933,10 @@ void SceneWidget::viewAll()
 
 void SceneWidgetImpl::viewAll()
 {
+    if(!interactiveCameraTransform){
+        return;
+    }
+    
     const BoundingBox& bbox = renderer.sceneRoot()->boundingBox();
     if(bbox.empty()){
         return;
@@ -938,19 +946,24 @@ void SceneWidgetImpl::viewAll()
     double left, right, bottom, top;
     renderer.getViewFrustum(*builtinPersCamera, left, right, bottom, top);
     
-    Affine3& T = builtinCameraTransform->T();
+    Affine3& T = interactiveCameraTransform->T();
     T.translation() +=
         (bbox.center() - T.translation())
         + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearDistance() / (right - left));
 
-    const double a = renderer.aspectRatio();
-    if(a >= 1.0){
-        builtinOrthoCamera->setHeight(radius * 2.0);
-    } else {
-        builtinOrthoCamera->setHeight(radius * 2.0 / a);
+
+    if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer.currentCamera())){
+        const double a = renderer.aspectRatio();
+        if(a >= 1.0){
+            ortho->setHeight(radius * 2.0);
+        } else {
+            ortho->setHeight(radius * 2.0 / a);
+        }
+        ortho->notifyUpdate(modified);
     }
 
-    builtinOrthoCamera->notifyUpdate(modified);
+    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1428,7 +1441,7 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
         }
     }    
 
-    if(isBuiltinCameraCurrent){
+    if(interactiveCameraTransform){
         if(!handled || !isEditMode){
             if(event->orientation() == Qt::Vertical){
                 zoomView(0.25 * s);
@@ -1495,7 +1508,7 @@ SignalProxy<void()> SceneWidget::sigAboutToBeDestroyed()
 
 void SceneWidgetImpl::startViewChange()
 {
-    if(isBuiltinCameraCurrent){
+    if(interactiveCameraTransform){
 
         switch(latestEvent.button()){
                 
@@ -1523,10 +1536,15 @@ void SceneWidgetImpl::startViewRotation()
     if(TRACE_FUNCTIONS){
         os << "SceneWidgetImpl::startViewRotation()" << endl;
     }
+
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
     
     orgMouseX = latestEvent.x();
     orgMouseY = latestEvent.y();
-    orgCameraPosition = builtinCameraTransform->T();
+    orgCameraPosition = interactiveCameraTransform->T();
 
     if(isFirstPersionMode()){
         orgPointedPos = orgCameraPosition.translation();
@@ -1545,12 +1563,17 @@ void SceneWidgetImpl::dragViewRotation()
     if(TRACE_FUNCTIONS){
         os << "SceneWidgetImpl::dragViewRotation()" << endl;
     }
+
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
     
     const double dx = latestEvent.x() - orgMouseX;
     const double dy = latestEvent.y() - orgMouseY;
     const Vector3 right = SgCamera::right(orgCameraPosition);
 
-    builtinCameraTransform->setTransform(
+    interactiveCameraTransform->setTransform(
         normalizedCameraTransform(
             Translation3(orgPointedPos) *
             AngleAxis(-dx * dragAngleRatio, Vector3::UnitZ()) *
@@ -1559,7 +1582,7 @@ void SceneWidgetImpl::dragViewRotation()
             orgCameraPosition));
 
     if(latestEvent.modifiers() & Qt::ShiftModifier){
-        Affine3& T = builtinCameraTransform->T();
+        Affine3& T = interactiveCameraTransform->T();
         Vector3 rpy = rpyFromRot(T.linear());
         for(int i=0; i < 3; ++i){
             double& a = rpy[i];
@@ -1576,7 +1599,8 @@ void SceneWidgetImpl::dragViewRotation()
         T.linear() = S;
     }
     
-    builtinCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1586,7 +1610,12 @@ void SceneWidgetImpl::startViewTranslation()
         os << "SceneWidgetImpl::startViewTranslation()" << endl;
     }
 
-    const Affine3& C = builtinCameraTransform->T();
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
+    const Affine3& C = interactiveCameraTransform->T();
 
     if(isFirstPersionMode()){
         viewTranslationRatioX = -0.005;
@@ -1598,14 +1627,14 @@ void SceneWidgetImpl::startViewTranslation()
         const double aspect = (double)width / height;
         double r, cw, ch;
         SgCamera* camera = renderer.currentCamera();
-        if(camera == builtinPersCamera){
-            const double fovy = builtinPersCamera->fovy(aspect);
+        if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+            const double fovy = pers->fovy(aspect);
             r = (lastClickedPoint - C.translation()).dot(SgCamera::direction(C));
             ch = tanf(fovy / 2.0) * 2.0;
             cw = aspect * ch;
-        } else if(camera == builtinOrthoCamera) {
+        } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
             r = 1.0;
-            ch = builtinOrthoCamera->height();
+            ch = ortho->height();
             cw = aspect * ch;
         }
         viewTranslationRatioX = r * cw / width;
@@ -1625,15 +1654,22 @@ void SceneWidgetImpl::dragViewTranslation()
         os << "SceneWidgetImpl::dragViewTranslation()" << endl;
     }
     
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
     const double dx = viewTranslationRatioX * (latestEvent.x() - orgMouseX);
     const double dy = viewTranslationRatioY * (latestEvent.y() - orgMouseY);
 
-    builtinCameraTransform->setTransform(
+    interactiveCameraTransform->setTransform(
         normalizedCameraTransform(
             Translation3(-dy * SgCamera::up(orgCameraPosition)) *
             Translation3(-dx * SgCamera::right(orgCameraPosition)) *
             orgCameraPosition));
-    builtinCameraTransform->notifyUpdate(modified);
+    
+    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1643,9 +1679,18 @@ void SceneWidgetImpl::startViewZoom()
         os << "SceneWidgetImpl::startViewZoom()" << endl;
     }
 
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
     orgMouseY = latestEvent.y();
-    orgCameraPosition = builtinCameraTransform->T();
-    orgOrthoCameraHeight = builtinOrthoCamera->height();
+    orgCameraPosition = interactiveCameraTransform->T();
+
+    if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer.currentCamera())){
+        orgOrthoCameraHeight = ortho->height();
+    }
+    
     dragMode = VIEW_ZOOM;
 }
 
@@ -1661,52 +1706,59 @@ void SceneWidgetImpl::dragViewZoom()
     const double dy = latestEvent.y() - orgMouseY;
     const double ratio = expf(dy * 0.01);
 
-    if(camera == builtinPersCamera){
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         const Affine3& C = orgCameraPosition;
         const Vector3 v = SgCamera::direction(C);
 
         if(isFirstPersionMode()){
             double speed = 0.02;
-            builtinCameraTransform->setTranslation(C.translation() + speed * dy * v);
+            interactiveCameraTransform->setTranslation(C.translation() + speed * dy * v);
             
         } else {
             const double l0 = (lastClickedPoint - C.translation()).dot(v);
-            builtinCameraTransform->setTranslation(C.translation() + v * (l0 * (-ratio + 1.0)));
+            interactiveCameraTransform->setTranslation(C.translation() + v * (l0 * (-ratio + 1.0)));
         }
-        builtinCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->onPositionUpdatedInteractively();
 
-    } else if(camera == builtinOrthoCamera){
-        builtinOrthoCamera->setHeight(orgOrthoCameraHeight * ratio);
-        builtinOrthoCamera->notifyUpdate(modified);
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        ortho->setHeight(orgOrthoCameraHeight * ratio);
+        ortho->notifyUpdate(modified);
     }
 }
 
 
 void SceneWidgetImpl::zoomView(double ratio)
 {
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
     SgCamera* camera = renderer.currentCamera();
-    if(camera == builtinPersCamera){
-        const Affine3& C = builtinCameraTransform->T();
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+        const Affine3& C = interactiveCameraTransform->T();
         const Vector3 v = SgCamera::direction(C);
         
         if(isFirstPersionMode()){
             if(latestEvent.modifiers() & Qt::ShiftModifier){
                 ratio *= 5.0;
             }
-            builtinCameraTransform->translation() += ratio * v;
+            interactiveCameraTransform->translation() += ratio * v;
 
         } else {
             if(latestEvent.modifiers() & Qt::ShiftModifier){
                 ratio *= 0.2;
             }
             const double dz = ratio * (lastClickedPoint - C.translation()).dot(v);
-            builtinCameraTransform->translation() -= dz * v;
+            interactiveCameraTransform->translation() -= dz * v;
         }
-        builtinCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->onPositionUpdatedInteractively();
 
-    } else if(camera == builtinOrthoCamera){
-        builtinOrthoCamera->setHeight(builtinOrthoCamera->height() * expf(ratio));
-        builtinOrthoCamera->notifyUpdate(modified);
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        ortho->setHeight(ortho->height() * expf(ratio));
+        ortho->notifyUpdate(modified);
     }
 }
 
@@ -1951,8 +2003,20 @@ void SceneWidgetImpl::onCamerasChanged()
 
 void SceneWidgetImpl::onCurrentCameraChanged()
 {
+    interactiveCameraTransform.reset();
+    isBuiltinCameraCurrent = false;
+    
     SgCamera* current = renderer.currentCamera();
-    isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
+    if(current){
+        int index = renderer.currentCameraIndex();
+        const SgNodePath& path = renderer.cameraPath(index);
+        for(int i = path.size() - 2; i >= 0; --i){
+            if(interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+                isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
+                break;
+            }
+        }
+    }
 }
 
 

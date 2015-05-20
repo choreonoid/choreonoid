@@ -84,6 +84,7 @@ set(sources
   GLSceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEditable.cpp
+  InteractiveCameraTransform.cpp
   SceneProjector.cpp
   SceneDragProjector.cpp
   SceneDragger.cpp
@@ -175,6 +176,7 @@ set(headers
   SceneDragger.h
   SceneBar.h
   SceneWidgetEditable.h
+  InteractiveCameraTransform.h
   RectRegionMarker.h
   GLSceneRenderer.h
   SceneView.h

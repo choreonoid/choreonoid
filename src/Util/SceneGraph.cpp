@@ -105,12 +105,12 @@ SgObject* SgObject::childObject(int index)
 }
 
 
-void SgObject::transferUpdate(SgUpdate& update)
+void SgObject::onUpdated(SgUpdate& update)
 {
     update.push(this);
     sigUpdated_(update);
     for(const_parentIter p = parents.begin(); p != parents.end(); ++p){
-        (*p)->transferUpdate(update);
+        (*p)->onUpdated(update);
     }
     update.pop();
 }
@@ -122,7 +122,7 @@ void SgObject::addParent(SgObject* parent, bool doNotify)
     if(doNotify){
         SgUpdate update(SgUpdate::ADDED);
         update.push(this);
-        parent->transferUpdate(update);
+        parent->onUpdated(update);
     }
     if(parents.size() == 1){
         sigGraphConnection_(true);
@@ -250,11 +250,11 @@ void SgGroup::accept(SceneVisitor& visitor)
 }
 
 
-void SgGroup::transferUpdate(SgUpdate& update)
+void SgGroup::onUpdated(SgUpdate& update)
 {
     //if(update.action() & SgUpdate::BBOX_UPDATED){
     invalidateBoundingBox();
-    SgNode::transferUpdate(update);
+    SgNode::onUpdated(update);
     //}
 }
 
@@ -320,7 +320,7 @@ SgGroup::iterator SgGroup::removeChild(iterator childIter, bool doNotify)
         next = children.erase(childIter);
         SgUpdate update(SgUpdate::REMOVED);
         update.push(child);
-        transferUpdate(update);
+        onUpdated(update);
     }
     return next;
 }

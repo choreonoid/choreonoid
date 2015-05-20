@@ -38,6 +38,7 @@ public:
     SgUpdate(int action) : action_(action) { path_.reserve(16); }
     virtual ~SgUpdate();
     int action() const { return action_; }
+    bool isModified() const { return (action_ & MODIFIED); }
     void setAction(int act) { action_ = act; }
     const Path& path() const { return path_; }
     void push(SgObject* node) { path_.push_back(node); }
@@ -96,12 +97,12 @@ public:
         
     void notifyUpdate(SgUpdate& update) {
         update.clear();
-        transferUpdate(update);
+        onUpdated(update);
     }
 
     void notifyUpdate(int action = SgUpdate::MODIFIED) {
         SgUpdate update(action);
-        transferUpdate(update);
+        onUpdated(update);
     }
 
     void addParent(SgObject* parent, bool doNotify = false);
@@ -124,7 +125,7 @@ public:
 protected:
     SgObject();
     SgObject(const SgObject& org);
-    virtual void transferUpdate(SgUpdate& update);
+    virtual void onUpdated(SgUpdate& update);
             
 private:
     std::string name_;
@@ -180,7 +181,7 @@ public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
     virtual void accept(SceneVisitor& visitor);
-    virtual void transferUpdate(SgUpdate& update);
+    virtual void onUpdated(SgUpdate& update);
     virtual const BoundingBox& boundingBox() const;
     virtual bool isGroup() const;
         
