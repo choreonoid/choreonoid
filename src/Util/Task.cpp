@@ -17,8 +17,20 @@ TaskProc::~TaskProc()
 }
 
 
+TaskCommand::TaskCommand()
+{
+    initialize();
+}
+
+
 TaskCommand::TaskCommand(const std::string& caption)
     : caption_(caption)
+{
+    initialize();
+}
+
+
+void TaskCommand::initialize()
 {
     nextPhaseIndex_ = 0;
     nextCommandIndex_ = 0;
@@ -125,6 +137,14 @@ void TaskPhase::setPreCommand(TaskFunc func)
 }
 
 
+TaskCommand* TaskPhase::addCommand()
+{
+    TaskCommand* command = new TaskCommand();
+    commands.push_back(command);
+    return command;
+}
+
+
 TaskCommand* TaskPhase::addCommand(const std::string& caption)
 {
     TaskCommand* command = new TaskCommand(caption);
@@ -163,6 +183,14 @@ int TaskPhaseProxy::setCommandLevel(int level)
     commandLevel = level;
 }
     
+
+TaskCommand* TaskPhaseProxy::addCommand()
+{
+    TaskCommand* command = phase->addCommand();
+    command->setLevel(commandLevel);
+    return command;
+}
+
 
 TaskCommand* TaskPhaseProxy::addCommand(const std::string& caption)
 {
@@ -266,6 +294,16 @@ void Task::setPreCommand(TaskFunc func)
     if(last){
         last->setPreCommand(func);
     }
+}
+
+
+TaskCommand* Task::addCommand()
+{
+    TaskPhase* last = lastPhase();
+    if(last){
+        return last->addCommand();
+    }
+    return 0;
 }
 
 

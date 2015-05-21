@@ -782,6 +782,7 @@ void TaskViewImpl::layoutCommandButtons()
         PushButton* button = getOrCreateCommandButton(0);
         button->setText("-");
         button->setEnabled(false);
+        button->setToolTip(QString());
         commandButtonBoxLayouts[0]->addWidget(button);
         button->show();
         numVisibleButtons = 1;
@@ -793,6 +794,7 @@ void TaskViewImpl::layoutCommandButtons()
             PushButton* button = getOrCreateCommandButton(i);
             TaskCommand* command = currentPhase->command(i);
             button->setText(command->caption().c_str());
+            button->setToolTip(command->description().c_str());
             button->setEnabled(!isBusy);
             button->setDown(false);
 

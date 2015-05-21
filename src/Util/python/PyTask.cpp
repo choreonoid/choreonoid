@@ -139,6 +139,14 @@ struct PyCheckMenuItemFunc
 };
     
 
+TaskCommandPtr TaskCommand_setCaption(TaskCommand& self, const std::string& caption){
+    return self.setCaption(caption);
+}
+
+TaskCommandPtr TaskCommand_setDescription(TaskCommand& self, const std::string& description){
+    return self.setDescription(description);
+}
+
 TaskCommandPtr TaskCommand_setFunction(TaskCommand& self, python::object func){
     return self.setFunction(PyTaskFunc(func));
 }
@@ -199,7 +207,11 @@ void TaskPhase_setPreCommand(TaskPhase& self, python::object func){
     return self.setPreCommand(PyTaskFunc(func));
 }
 
-TaskCommandPtr TaskPhase_addCommand(TaskPhase& self, const std::string& caption) {
+TaskCommandPtr TaskPhase_addCommand1(TaskPhase& self) {
+    return self.addCommand();
+}
+
+TaskCommandPtr TaskPhase_addCommand2(TaskPhase& self, const std::string& caption) {
     return self.addCommand(caption);
 }
 
@@ -240,7 +252,11 @@ TaskCommandPtr TaskPhase_lastCommand(TaskPhase& self) {
 }
 
 
-TaskCommandPtr TaskPhaseProxy_addCommand(TaskPhaseProxy& self, const std::string& caption) {
+TaskCommandPtr TaskPhaseProxy_addCommand1(TaskPhaseProxy& self) {
+    return self.addCommand();
+}
+
+TaskCommandPtr TaskPhaseProxy_addCommand2(TaskPhaseProxy& self, const std::string& caption) {
     return self.addCommand(caption);
 }
 
@@ -402,7 +418,11 @@ void Task_setPreCommand(Task& self, python::object func){
     return self.setPreCommand(PyTaskFunc(func));
 }
 
-TaskCommandPtr Task_addCommand(Task& self, const std::string& caption){
+TaskCommandPtr Task_addCommand1(Task& self){
+    return self.addCommand();
+}
+
+TaskCommandPtr Task_addCommand2(Task& self, const std::string& caption){
     return self.addCommand(caption);
 }
 
@@ -504,6 +524,9 @@ void exportPyTaskTypes()
     class_<TaskCommand, TaskCommandPtr, bases<Referenced> >
         ("TaskCommand", init<const std::string&>())
         .def("caption", &TaskCommand::caption, return_value_policy<copy_const_reference>())
+        .def("setCaption", TaskCommand_setCaption)
+        .def("description", &TaskCommand::description, return_value_policy<copy_const_reference>())
+        .def("setDescription", TaskCommand_setDescription)
         .def("function", &TaskCommand::function)
         .def("setFunction", TaskCommand_setFunction)
         .def("setDefault", TaskCommand_setDefault1)
@@ -539,7 +562,8 @@ void exportPyTaskTypes()
         .def("setPreCommand", TaskPhase_setPreCommand)
         .def("setPreCommand", &TaskPhase::setPreCommand)
         .def("preCommand", &TaskPhase::preCommand)
-        .def("addCommand", TaskPhase_addCommand)
+        .def("addCommand", TaskPhase_addCommand1)
+        .def("addCommand", TaskPhase_addCommand2)
         .def("addCommandEx", python::raw_function(TaskPhase_addCommandEx, 2))
         .def("numCommands", &TaskPhase::numCommands)
         .def("command", TaskPhase_command)
@@ -552,7 +576,8 @@ void exportPyTaskTypes()
 
     class_<TaskPhaseProxy, TaskPhaseProxyPtr, bases<Referenced>, boost::noncopyable >("TaskPhaseProxy", no_init)
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
-        .def("addCommand", TaskPhaseProxy_addCommand)
+        .def("addCommand", TaskPhaseProxy_addCommand1)
+        .def("addCommand", TaskPhaseProxy_addCommand2)
         ;
     
     implicitly_convertible<TaskPhaseProxyPtr, ReferencedPtr>();
@@ -578,7 +603,8 @@ void exportPyTaskTypes()
         .def("lastPhase", Task_lastPhase)
         .def("setPreCommand", Task_setPreCommand)
         .def("setPreCommand", &Task::setPreCommand)
-        .def("addCommand", Task_addCommand)
+        .def("addCommand", Task_addCommand1)
+        .def("addCommand", Task_addCommand2)
         .def("addCommandEx", python::raw_function(Task_addCommandEx, 2))
         .def("lastCommand", Task_lastCommand)
         .def("lastCommandIndex", &Task::lastCommandIndex)

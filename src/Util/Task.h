@@ -51,10 +51,19 @@ typedef boost::function<void(TaskProc* proc)> TaskFunc;
 class CNOID_EXPORT TaskCommand : public Referenced
 {
 public:
+    TaskCommand();
     TaskCommand(const std::string& caption);
     ~TaskCommand();
     
     const std::string& caption() const { return caption_; }
+    TaskCommand* setCaption(const std::string& caption){
+        caption_ = caption;
+    }
+
+    const std::string& description() const { return description_; }
+    TaskCommand* setDescription(const std::string& description) {
+        description_ = description; return this; }
+    
     TaskFunc function() const { return function_; }
     TaskCommand* setFunction(TaskFunc func) { function_ = func; return this; }
 
@@ -78,6 +87,7 @@ public:
 
 private:
     std::string caption_;
+    std::string description_;
     TaskFunc function_;
     int nextPhaseIndex_;
     int nextCommandIndex_;
@@ -86,6 +96,8 @@ private:
     bool isNextCommandRelative_;
     bool isCommandLinkAutomatic_;
     bool isDefault_;
+
+    void initialize();
 };
 
 typedef ref_ptr<TaskCommand> TaskCommandPtr;
@@ -113,6 +125,7 @@ public:
     void setPreCommand(TaskFunc func);
     TaskFunc preCommand() const { return preCommand_; }
 
+    TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
     int numCommands() const { return commands.size(); }
     TaskCommand* command(int index) const;
@@ -137,6 +150,7 @@ public:
     TaskPhaseProxy(TaskPhase* phase);
         
     int setCommandLevel(int level);
+    TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
 
 private:
@@ -180,6 +194,7 @@ public:
 
     // The following functions do operations to the last added phase
     void setPreCommand(TaskFunc func);
+    TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
     TaskCommand* lastCommand();
     int lastCommandIndex();
