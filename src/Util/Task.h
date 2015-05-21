@@ -72,21 +72,28 @@ public:
     TaskCommand* linkToNextCommand() { setCommandLinkStep(1); return this; }
     bool isCommandLinkAutomatic() const { return isCommandLinkAutomatic_; }
     TaskCommand* setCommandLinkAutomatic(bool on = true) { isCommandLinkAutomatic_ = on; return this; }
-    
+
+    TaskCommand* setLevel(int level) { level_ = level; return this; }
+    int level() const { return level_; }
+
 private:
     std::string caption_;
     TaskFunc function_;
     int nextPhaseIndex_;
     int nextCommandIndex_;
+    int level_;
     bool isNextPhaseRelative_;
     bool isNextCommandRelative_;
     bool isCommandLinkAutomatic_;
     bool isDefault_;
-    
 };
 
 typedef ref_ptr<TaskCommand> TaskCommandPtr;
-    
+
+
+class TaskPhaseProxy;
+typedef ref_ptr<TaskPhaseProxy> TaskPhaseProxyPtr;
+
 
 class CNOID_EXPORT TaskPhase : public Referenced
 {
@@ -112,6 +119,8 @@ public:
     int lastCommandIndex() const { return commands.size() - 1; }
     TaskCommand* lastCommand() const { return command(commands.size() - 1); }
 
+    TaskPhaseProxyPtr commandLevel(int level);
+
 private:
     std::string caption_;
     TaskFunc preCommand_;
@@ -120,6 +129,20 @@ private:
 };
 
 typedef ref_ptr<TaskPhase> TaskPhasePtr;
+
+
+class CNOID_EXPORT TaskPhaseProxy : public Referenced
+{
+public:
+    TaskPhaseProxy(TaskPhase* phase);
+        
+    int setCommandLevel(int level);
+    TaskCommand* addCommand(const std::string& caption);
+
+private:
+    TaskPhasePtr phase;
+    int commandLevel;
+};
 
 
 /**
@@ -160,6 +183,7 @@ public:
     TaskCommand* addCommand(const std::string& caption);
     TaskCommand* lastCommand();
     int lastCommandIndex();
+    TaskPhaseProxyPtr commandLevel(int level);
 
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 

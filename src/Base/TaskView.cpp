@@ -57,7 +57,8 @@ public:
     PushButton nextButton;
     QLabel phaseLabel;
     QWidget commandButtonBox;
-    QBoxLayout* commandButtonBoxLayout;
+    QBoxLayout* commandButtonBoxBaseLayout;
+    vector<QBoxLayout*> commandButtonBoxLayouts;
     vector<PushButton*> commandButtons;
 
     bool isNoExecutionMode;
@@ -119,6 +120,7 @@ public:
     bool setCurrentTask(int index, bool forceUpdate);
     void setCurrentTaskByName(const std::string& name);
     PushButton* getOrCreateCommandButton(int index);
+    void layoutCommandButtons();
     bool setCurrentCommandIndex(int index);
     void setBusyState(bool on);
     void setFocusToCommandButton(int commandIndex);
@@ -259,7 +261,8 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     topVBox.addStretch();
     self->setLayout(&topVBox);
 
-    commandButtonBoxLayout = 0;
+    commandButtonBoxBaseLayout = 0;
+    commandButtonBoxLayouts.resize(3, 0);
     isVerticalLayout = true;
     doLayout(false);
     
@@ -304,8 +307,8 @@ void TaskViewImpl::doLayout(bool isVertical)
     removeWidgetsInLayout(&hbox3);
     removeWidgetsInLayout(&vspace);
     
-    if(commandButtonBoxLayout){
-        delete commandButtonBoxLayout;
+    if(commandButtonBoxBaseLayout){
+        delete commandButtonBoxBaseLayout;
     }
 
     if(isVertical){
@@ -322,12 +325,18 @@ void TaskViewImpl::doLayout(bool isVertical)
 
         vspace.addSpacing(4);
 
-        commandButtonBoxLayout = new QVBoxLayout;
-        QMargins m = commandButtonBoxLayout->contentsMargins();
-        m.setTop(m.top() + 8);
-        m.setBottom(m.bottom() + 8);
-        commandButtonBoxLayout->setContentsMargins(m);
-        commandButtonBoxLayout->setSpacing(16);
+        commandButtonBoxBaseLayout = new QHBoxLayout();
+        commandButtonBoxBaseLayout->setContentsMargins(0, 0, 0, 0);
+
+        for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+            commandButtonBoxLayouts[i] = new QVBoxLayout();
+            QMargins m = commandButtonBoxLayouts[i]->contentsMargins();
+            m.setTop(m.top() + 8);
+            m.setBottom(m.bottom() + 8);
+            commandButtonBoxLayouts[i]->setContentsMargins(m);
+            commandButtonBoxLayouts[i]->setSpacing(16);
+            commandButtonBoxBaseLayout->addLayout(commandButtonBoxLayouts[i]);
+        }
         
     } else {
         hbox1.addWidget(&taskCombo, 1);
@@ -340,25 +349,19 @@ void TaskViewImpl::doLayout(bool isVertical)
         hbox2.addWidget(&autoModeToggle);
         hbox2.addWidget(&nextButton);
         
-        commandButtonBoxLayout = new QHBoxLayout;
-        commandButtonBoxLayout->setContentsMargins(0, 0, 0, 0);
-    }
+        commandButtonBoxBaseLayout = new QVBoxLayout();
+        commandButtonBoxBaseLayout->setContentsMargins(0, 0, 0, 0);
 
-    if(isVertical){
-        for(size_t i=0; i < commandButtons.size(); ++i){
-            PushButton* button = commandButtons[i];
-            button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
-        }
-    } else {
-        for(size_t i=0; i < commandButtons.size(); ++i){
-            PushButton* button = commandButtons[i];
-            button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button);
+        for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+            commandButtonBoxLayouts[i] = new QHBoxLayout();
+            commandButtonBoxLayouts[i]->setContentsMargins(0, 0, 0, 0);
+            commandButtonBoxBaseLayout->addLayout(commandButtonBoxLayouts[i]);
         }
     }
 
-    commandButtonBox.setLayout(commandButtonBoxLayout);
+    commandButtonBox.setLayout(commandButtonBoxBaseLayout);
+
+    layoutCommandButtons();
 }
 
 
@@ -714,6 +717,7 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
     currentTaskIndex = index;
 
     currentPhaseIndex_ = -1;
+    currentPhase.reset();
     setPhaseIndex(0, false);
 
     if(isExecutionEnabled()){
@@ -749,15 +753,8 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
     if(commandIndex < commandButtons.size()){
         button = commandButtons[commandIndex];
     } else {
-        button = new PushButton;
+        button = new PushButton(&commandButtonBox);
         button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
-        if(isVerticalLayout){
-            button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
-        } else {
-            button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button);
-        }
         if(commandButtons.empty()){
             QWidget::setTabOrder(&menuButton, button);
         } else {
@@ -766,6 +763,60 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
         commandButtons.push_back(button);
     }
     return button;
+}
+
+
+void TaskViewImpl::layoutCommandButtons()
+{
+    int numVisibleButtons = 0;
+
+    for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+        QBoxLayout* layout = commandButtonBoxLayouts[i];
+        QLayoutItem* child;
+        while((child = layout->takeAt(0)) != 0) {
+            delete child;
+        }
+    }
+
+    if(!currentPhase){
+        PushButton* button = getOrCreateCommandButton(0);
+        button->setText("-");
+        button->setEnabled(false);
+        commandButtonBoxLayouts[0]->addWidget(button);
+        button->show();
+        numVisibleButtons = 1;
+
+    } else {
+        numVisibleButtons = currentPhase->numCommands();
+
+        for(int i=0; i < numVisibleButtons; ++i){
+            PushButton* button = getOrCreateCommandButton(i);
+            TaskCommand* command = currentPhase->command(i);
+            button->setText(command->caption().c_str());
+            button->setEnabled(!isBusy);
+            button->setDown(false);
+
+            if(isVerticalLayout){
+                button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+                commandButtonBoxLayouts[0]->addWidget(button, 0, Qt::AlignHCenter);
+            } else {
+                int level = std::min(command->level(), (int)commandButtonBoxLayouts.size() - 1);
+                QBoxLayout* layout = commandButtonBoxLayouts[level];
+                button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+                layout->addWidget(button);
+            }
+            button->show();
+        }
+    }
+
+    for(int i=1; i < commandButtonBoxLayouts.size(); ++i){
+        commandButtonBoxLayouts[i]->insertStretch(0);
+        commandButtonBoxLayouts[i]->addStretch();
+    }
+
+    for(size_t i = numVisibleButtons; i < commandButtons.size(); ++i){
+        commandButtons[i]->hide();
+    }
 }
 
 
@@ -921,37 +972,21 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         (currentPhaseIndex_ < numPhases - 1) ||
         (getLoopBackPhaseIndex(currentPhaseIndex_) < numPhases - 1));
 
-    int numVisibleButtons = 0;
-    if(!numPhases){
-        phaseLabel.setText("No phase");
-        PushButton* button = getOrCreateCommandButton(0);
-        button->setText("-");
-        button->setEnabled(false);
-        button->show();
+    if(numPhases == 0){
         currentPhase = 0;
-        numVisibleButtons = 1;
+        phaseLabel.setText("No phase");
     } else {
         currentPhase = currentTask->phase(currentPhaseIndex_);
         phaseLabel.setText(currentPhase->caption().c_str());
-        numVisibleButtons = currentPhase->numCommands();
-        for(int i=0; i < numVisibleButtons; ++i){
-            PushButton* button = getOrCreateCommandButton(i);
-            button->setText(currentPhase->command(i)->caption().c_str());
-            button->setEnabled(!isBusy);
-            button->setDown(false);
-            button->show();
-        }
     }
-
-    for(size_t i=numVisibleButtons; i < commandButtons.size(); ++i){
-        commandButtons[i]->hide();
-    }
-
+    
     phaseIndexSpinConnection.block();
     phaseIndexSpin.setRange(0, numPhases);
     phaseIndexSpin.setValue(currentPhaseIndex_);
     phaseIndexSpinConnection.unblock();
     phaseIndexSpin.setSuffix(QString(" / %1").arg(numPhases - 1));
+
+    layoutCommandButtons();
 
     if(currentPhaseIndex_ != prevPhaseIndex){
         sigCurrentPhaseChanged();

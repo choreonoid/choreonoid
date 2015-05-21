@@ -16,11 +16,13 @@ TaskProc::~TaskProc()
 
 }
 
+
 TaskCommand::TaskCommand(const std::string& caption)
     : caption_(caption)
 {
     nextPhaseIndex_ = 0;
     nextCommandIndex_ = 0;
+    level_ = 0;
     isNextPhaseRelative_ = true;
     isNextCommandRelative_ = true;
     isCommandLinkAutomatic_ = false;
@@ -75,7 +77,7 @@ TaskCommand* TaskCommand::setCommandLinkStep(int commandIndexStep)
     nextCommandIndex_ = commandIndexStep;
     isNextCommandRelative_ = true;
     return this;
-}    
+}
 
 
 TaskPhase::TaskPhase(const std::string& caption)
@@ -137,6 +139,35 @@ TaskCommand* TaskPhase::command(int index) const
     if(index >= 0 && index < commands.size()){
         command = commands[index];
     }
+    return command;
+}
+
+
+TaskPhaseProxyPtr TaskPhase::commandLevel(int level)
+{
+    TaskPhaseProxyPtr proxy = new TaskPhaseProxy(this);
+    proxy->setCommandLevel(level);
+    return proxy;
+}
+
+
+TaskPhaseProxy::TaskPhaseProxy(TaskPhase* phase)
+    : phase(phase)
+{
+    commandLevel = 0;
+}
+        
+
+int TaskPhaseProxy::setCommandLevel(int level)
+{
+    commandLevel = level;
+}
+    
+
+TaskCommand* TaskPhaseProxy::addCommand(const std::string& caption)
+{
+    TaskCommand* command = phase->addCommand(caption);
+    command->setLevel(commandLevel);
     return command;
 }
 
@@ -265,6 +296,16 @@ int Task::lastCommandIndex()
         return last->lastCommandIndex();
     }
     return -1;
+}
+
+
+TaskPhaseProxyPtr Task::commandLevel(int level)
+{
+    TaskPhase* last = lastPhase();
+    if(last){
+        return last->commandLevel(level);
+    }
+    return 0;
 }
 
 

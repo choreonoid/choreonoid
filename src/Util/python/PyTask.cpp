@@ -183,6 +183,10 @@ TaskCommandPtr TaskCommand_setCommandLinkAutomatic2(TaskCommand& self, bool on) 
     return self.setCommandLinkAutomatic(on);
 }
 
+TaskCommandPtr TaskCommand_setLevel(TaskCommand& self, int level){
+    return self.setLevel(level);
+}
+
 TaskPhasePtr TaskPhase_clone1(TaskPhase& self){
     return self.clone();
 }
@@ -234,6 +238,12 @@ TaskCommandPtr TaskPhase_command(TaskPhase& self, int index) {
 TaskCommandPtr TaskPhase_lastCommand(TaskPhase& self) {
     return self.lastCommand();
 }
+
+
+TaskCommandPtr TaskPhaseProxy_addCommand(TaskPhaseProxy& self, const std::string& caption) {
+    return self.addCommand(caption);
+}
+
 
 void TaskMenu_addMenuItem1(TaskMenu& self, const std::string& caption, python::object func){
     self.addMenuItem(caption, PyMenuItemFunc(func));
@@ -510,6 +520,8 @@ void exportPyTaskTypes()
         .def("isCommandLinkAutomatic", &TaskCommand::isCommandLinkAutomatic)
         .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic1)
         .def("setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic2)
+        .def("setLevel", TaskCommand_setLevel)
+        .def("level", &TaskCommand::level)
         ;
     
     implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
@@ -533,9 +545,17 @@ void exportPyTaskTypes()
         .def("command", TaskPhase_command)
         .def("lastCommandIndex", &TaskPhase::lastCommandIndex)
         .def("lastCommand", TaskPhase_lastCommand)
+        .def("commandLevel", &TaskPhase::commandLevel)
+        ;
+
+    implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
+
+    class_<TaskPhaseProxy, TaskPhaseProxyPtr, bases<Referenced>, boost::noncopyable >("TaskPhaseProxy", no_init)
+        .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
+        .def("addCommand", TaskPhaseProxy_addCommand)
         ;
     
-    implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
+    implicitly_convertible<TaskPhaseProxyPtr, ReferencedPtr>();
     
     class_<TaskMenu, boost::noncopyable >("TaskMenu", no_init)
         .def("addMenuItem", TaskMenu_addMenuItem1)
@@ -568,6 +588,7 @@ void exportPyTaskTypes()
         .def("onDeactivated", &Task::onDeactivated, &TaskWrap::default_onDeactivated)
         .def("storeState", &Task::storeState, &TaskWrap::default_storeState)
         .def("restoreState", &Task::restoreState, &TaskWrap::default_restoreState)
+        .def("commandLevel", &Task::commandLevel)
         ;
 
     implicitly_convertible<TaskPtr, ReferencedPtr>();
