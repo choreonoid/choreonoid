@@ -37,6 +37,13 @@ bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Deri
 }
 
 
+template<typename Scalar, int Dim, int Mode>
+bool read(const Mapping& mapping, const std::string& key, Eigen::Transform<Scalar, Dim, Mode>& T)
+{
+    return read(mapping, key, T.matrix());
+}
+
+
 template<typename Derived>
 void readEx(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
 {

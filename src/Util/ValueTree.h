@@ -230,7 +230,7 @@ public:
     Mapping(int line, int column);
     virtual ~Mapping();
     bool empty() const { return values.empty(); }
-    size_t size() const { return values.size(); }
+    int size() const { return values.size(); }
     void clear();
 
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }

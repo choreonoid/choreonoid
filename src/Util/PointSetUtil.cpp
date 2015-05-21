@@ -7,6 +7,7 @@
 #include <cnoid/EasyScanner>
 #include <cnoid/Exception>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 using namespace boost;
@@ -14,7 +15,18 @@ using namespace cnoid;
 
 namespace {
 
-enum Element { E_X, E_Y, E_Z, E_NORMAL_X,E_NORMAL_Y, E_NORMAL_Z };
+enum Element { E_X, E_Y, E_Z, E_NORMAL_X,E_NORMAL_Y, E_NORMAL_Z, E_RGB };
+
+typedef union {
+    struct {
+        unsigned char blue;
+        unsigned char green;
+        unsigned char red;
+        unsigned char alpha;
+    };
+    float float_value;
+} RGBValue;
+
 
 void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vector<Element>& elements, int numPoints)
 {
@@ -25,16 +37,24 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
 
     SgNormalArrayPtr normals;
     bool hasNormals = false;
+    SgColorArrayPtr colors;
+    bool hasColors = false;
     for(int i=0; i < numElements; ++i){
-        if(elements[i] >= E_NORMAL_X){
+        Element element = elements[i];
+        if(element >= E_NORMAL_X && element <= E_NORMAL_Z){
             hasNormals = true;
             normals = new SgNormalArray();
             normals->reserve(numPoints);
+        } else if(element == E_RGB){
+            hasColors = true;
+            colors = new SgColorArray();
         }
     }
 
     Vector3f vertex = Vector3f::Zero();
     Vector3f normal = Vector3f::Zero();
+    Vector3f color = Vector3f::Zero();
+    RGBValue rgb;
 
     while(!scanner.isEOF()){
         scanner.skipBlankLines();
@@ -58,6 +78,12 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
                 case E_NORMAL_X: normal.x() = value; break;
                 case E_NORMAL_Y: normal.y() = value; break;
                 case E_NORMAL_Z: normal.z() = value; break;
+                case E_RGB:
+                    rgb.float_value = value;
+                    color[0] = rgb.red / 255.0;
+                    color[1] = rgb.green / 255.0;
+                    color[2] = rgb.blue / 255.0;
+                    break;
                 }
             }
         }
@@ -65,6 +91,9 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
             vertices->push_back(vertex);
             if(hasNormals){
                 normals->push_back(normal);
+            }
+            if(hasColors){
+                colors->push_back(color);
             }
         }
         scanner.readLFEOF();
@@ -76,10 +105,11 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
         out_pointSet->setVertices(vertices);
         out_pointSet->setNormals(normals);
         out_pointSet->normalIndices().clear();
-        out_pointSet->setColors(0);
+        out_pointSet->setColors(colors);
         out_pointSet->colorIndices().clear();
     }
 }
+
 }
 
 
@@ -111,6 +141,8 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
                         elements.push_back(E_NORMAL_Y);
                     } else if(scanner.stringValue == "normal_z"){
                         elements.push_back(E_NORMAL_Z);
+                    } else if(scanner.stringValue == "rgb"){
+                        elements.push_back(E_RGB);
                     }
                 }
             } else if(scanner.stringValue == "POINTS"){
@@ -144,16 +176,25 @@ void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Aff
         throw empty_data_error() << error_info_message("Empty pointset");
     }
 
+    bool hasColors = pointSet->hasColors() && pointSet->colorIndices().empty();
+
     ofstream ofs;
     ofs.open(filename.c_str());
+    ofs << scientific << setprecision(9);
 
-    ofs <<
-        "# .PCD v.7 - Point Cloud Data file format\n"
-        "VERSION .7\n"
-        "FIELDS x y z\n"
-        "SIZE 4 4 4\n"
-        "TYPE F F F\n"
-        "COUNT 1 1 1\n";
+    ofs << "# .PCD v.7 - Point Cloud Data file format\n";
+    ofs << "VERSION .7\n";
+    if(hasColors){
+        ofs << "FIELDS x y z rgb\n";
+        ofs << "SIZE 4 4 4 4\n";
+        ofs << "TYPE F F F U\n";
+        ofs << "COUNT 1 1 1 1\n";
+    } else {
+        ofs << "FIELDS x y z\n";
+        ofs << "SIZE 4 4 4\n";
+        ofs << "TYPE F F F\n";
+        ofs << "COUNT 1 1 1\n";
+    }
 
     const SgVertexArray& points = *pointSet->vertices();
     const int numPoints = points.size();
@@ -170,9 +211,23 @@ void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Aff
     
     ofs << "DATA ascii\n";
 
-    for(int i=0; i < numPoints; ++i){
-        const Vector3f& p = points[i];
-        ofs << p.x() << " " << p.y() << " " << p.z() << "\n";
+    if(hasColors){
+        RGBValue rgb;
+        rgb.alpha = 0.0;
+        const SgColorArray& colors = *pointSet->colors();
+        for(int i=0; i < numPoints; ++i){
+            const Vector3f& p = points[i];
+            const Vector3f& c = colors[i];
+            rgb.red = (unsigned char)(255.0 * c[0]);
+            rgb.green = (unsigned char)(255.0 * c[1]);
+            rgb.blue = (unsigned char)(255.0 * c[2]);
+            ofs << p.x() << " " << p.y() << " " << p.z() << " " << rgb.float_value << "\n";
+        }
+    } else {
+        for(int i=0; i < numPoints; ++i){
+            const Vector3f& p = points[i];
+            ofs << p.x() << " " << p.y() << " " << p.z() << "\n";
+        }
     }
 
     ofs.close();

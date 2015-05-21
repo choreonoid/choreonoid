@@ -11,6 +11,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
+#include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/SceneMarker>
 #include <cnoid/FileUtil>
@@ -109,7 +110,10 @@ public:
     bool onTopTranslationPropertyChanged(const std::string& value);
     bool onTopRotationPropertyChanged(const std::string& value);
 
-    bool saveAllPointSetItems(const std::string& filename);
+    static bool loadItem(MultiPointSetItem* item, const std::string& filename);
+    bool load(const std::string& filename);
+    static bool saveItem(MultiPointSetItem* item, const std::string& filename);
+    bool save(const std::string& filename);
     bool outputPointSetItem(int index);
     bool writeOutputArchive(const std::string& filename);
     bool startAutomaticSave(const std::string& filename);
@@ -118,7 +122,6 @@ public:
 
 }
 
-
 void MultiPointSetItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
@@ -126,6 +129,11 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<MultiPointSetItem>(N_("MultiPointSetItem"));
         im.addCreationPanel<MultiPointSetItem>();
+        im.addLoaderAndSaver<MultiPointSetItem>(
+            _("Multi Point Cloud"), "MULTI-PCD-SET", "yaml",
+            boost::bind(&MultiPointSetItemImpl::loadItem, _1, _2),
+            boost::bind(&MultiPointSetItemImpl::saveItem, _1, _2),
+            ItemManager::PRIORITY_DEFAULT);
         initialized = true;
     }
 }
@@ -742,7 +750,50 @@ void SceneMultiPointSet::onRegionFixed(const RectRegionMarker::Region& region)
 }
 
 
-bool MultiPointSetItemImpl::saveAllPointSetItems(const std::string& filename)
+bool MultiPointSetItemImpl::loadItem(MultiPointSetItem* item, const std::string& filename)
+{
+    return item->impl->load(filename);
+}
+
+
+bool MultiPointSetItemImpl::load(const std::string& filename)
+{
+    YAMLReader reader;
+    if(reader.load(filename)){
+        const Mapping& archive = *reader.document()->toMapping();
+        const Listing& files = *archive.findListing("files");
+        if(files.isValid()){
+            filesystem::path directory = filesystem::path(filename).parent_path();
+            for(int i=0; i < files.size(); ++i){
+                const Mapping& info = *files[i].toMapping();
+                string filename;
+                if(info.read("file", filename)){
+                    filesystem::path filePath(filename);
+                    PointSetItemPtr childItem = new PointSetItem();
+                    if(childItem->load(getPathString(directory / filePath), "PCD-FILE")){
+                        childItem->setName(getBasename(filename));
+                        Affine3 T;
+                        if(read(info, "offsetTransform", T)){
+                            childItem->setOffsetTransform(T);
+                        }
+                        self->addSubItem(childItem);
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+
+bool MultiPointSetItemImpl::saveItem(MultiPointSetItem* item, const std::string& filename)
+{
+    return item->impl->save(filename);
+}
+
+
+bool MultiPointSetItemImpl::save(const std::string& filename)
 {
     outputArchive = new Mapping();
     outputArchive->setDoubleFormat("%.9g");
@@ -808,7 +859,7 @@ bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
             isAutoSaveMode = true;
         } else {
             if(filesystem::create_directories(autoSaveFilePath.parent_path())){
-                if(saveAllPointSetItems(getPathString(autoSaveFilePath))){
+                if(save(getPathString(autoSaveFilePath))){
                     isAutoSaveMode = true;
                 }
             }
@@ -825,7 +876,7 @@ void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
 
     if(!outputArchive){
         if(filesystem::create_directories(autoSaveFilePath.parent_path())){
-            saveAllPointSetItems(getPathString(autoSaveFilePath));
+            save(getPathString(autoSaveFilePath));
         }
     } else {
         if(outputPointSetItem(index)){

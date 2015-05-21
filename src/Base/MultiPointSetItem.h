@@ -71,6 +71,7 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:
+    friend class MultiPointSetItemImpl;
     MultiPointSetItemImpl* impl;
     void initialize();
 };
