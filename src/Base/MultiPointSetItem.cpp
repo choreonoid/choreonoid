@@ -130,7 +130,7 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
         im.registerClass<MultiPointSetItem>(N_("MultiPointSetItem"));
         im.addCreationPanel<MultiPointSetItem>();
         im.addLoaderAndSaver<MultiPointSetItem>(
-            _("Multi Point Cloud"), "MULTI-PCD-SET", "yaml",
+            _("Multi Point Sets"), "MULTI-PCD-SET", "yaml",
             boost::bind(&MultiPointSetItemImpl::loadItem, _1, _2),
             boost::bind(&MultiPointSetItemImpl::saveItem, _1, _2),
             ItemManager::PRIORITY_DEFAULT);
