@@ -302,14 +302,16 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             if(loaded){
                 mainWindow->setProjectTitle(getBasename(filename));
                 lastAccessedProjectFile = filename;
+
+                messageView->flush();
                 
+                archive->callPostProcesses();
+
                 if(numRestoredItems == numArchivedItems){
                     messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
                 } else {
                     messageView->notify(str(fmt(_("Project \"%1%\" has been loaded.")) % filename));
                 }
-
-                archive->callPostProcesses();
             }
         }
     } catch (const ValueNode::Exception& ex){
