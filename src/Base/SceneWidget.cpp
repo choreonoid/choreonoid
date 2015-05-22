@@ -207,7 +207,7 @@ public:
     bool isEditMode;
 
     Selection viewpointControlMode;
-    bool isFirstPersionMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
+    bool isFirstPersonMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
         
     enum DragMode { NO_DRAGGING, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
 
@@ -288,7 +288,7 @@ public:
     void showDefaultColorDialog();
 
     void updateCurrentCamera();
-    void setCurrentCameraPath(std::vector<std::string>& simplifiedPathStrings);
+    void setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
     void onCamerasChanged();
     void onCurrentCameraChanged();
 
@@ -360,7 +360,11 @@ public:
     void setScreenSize(int width, int height);
     void updateIndicator(const std::string& text);
     bool storeState(Archive& archive);
+    void writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex);
+    Mapping* storeCameraState(int cameraIndex, SgPosTransform* cameraTransform);
     bool restoreState(const Archive& archive);
+    void restoreCameraStates(const Listing& cameraListing);
+    int readCameraPath(const Mapping& archive, const char* key);
     void restoreCurrentCamera(const Mapping& cameraData);
 };
 
@@ -1546,7 +1550,7 @@ void SceneWidgetImpl::startViewRotation()
     orgMouseY = latestEvent.y();
     orgCameraPosition = interactiveCameraTransform->T();
 
-    if(isFirstPersionMode()){
+    if(isFirstPersonMode()){
         orgPointedPos = orgCameraPosition.translation();
         dragAngleRatio = 0.01f;
     } else {
@@ -1617,7 +1621,7 @@ void SceneWidgetImpl::startViewTranslation()
 
     const Affine3& C = interactiveCameraTransform->T();
 
-    if(isFirstPersionMode()){
+    if(isFirstPersonMode()){
         viewTranslationRatioX = -0.005;
         viewTranslationRatioY = -0.005;
 
@@ -1710,7 +1714,7 @@ void SceneWidgetImpl::dragViewZoom()
         const Affine3& C = orgCameraPosition;
         const Vector3 v = SgCamera::direction(C);
 
-        if(isFirstPersionMode()){
+        if(isFirstPersonMode()){
             double speed = 0.02;
             interactiveCameraTransform->setTranslation(C.translation() + speed * dy * v);
             
@@ -1740,7 +1744,7 @@ void SceneWidgetImpl::zoomView(double ratio)
         const Affine3& C = interactiveCameraTransform->T();
         const Vector3 v = SgCamera::direction(C);
         
-        if(isFirstPersionMode()){
+        if(isFirstPersonMode()){
             if(latestEvent.modifiers() & Qt::ShiftModifier){
                 ratio *= 5.0;
             }
@@ -1988,10 +1992,22 @@ bool SceneWidget::isBuiltinCameraCurrent() const
 }
 
 
-void SceneWidgetImpl::setCurrentCameraPath(std::vector<std::string>& simplifiedPathStrings)
+void SceneWidgetImpl::setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings)
 {
-    renderer.setCurrentCamera(simplifiedPathStrings);
+    renderer.setCurrentCameraPath(simplifiedPathStrings);
     updateCurrentCamera();
+}
+
+
+InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int cameraIndex)
+{
+    const SgNodePath& path = impl->renderer.cameraPath(cameraIndex);
+    for(size_t i=0; i < path.size() - 1; ++i){
+        if(InteractiveCameraTransform* transform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+            return transform;
+        }
+    }
+    return 0;
 }
 
 
@@ -2409,29 +2425,20 @@ bool SceneWidgetImpl::storeState(Archive& archive)
 
     setup->storeState(archive);
 
-    Mapping& cameraData = *archive.createMapping("camera");
-
-    vector<string> cameraStrings;
-    if(renderer.getSimplifiedCameraPathStrings(renderer.currentCameraIndex(), cameraStrings)){
-        if(cameraStrings.size() == 1){
-            cameraData.write("current", cameraStrings.front());
-        } else {
-            Listing& pathNode = *cameraData.createListing("current");
-            pathNode.setFlowStyle(true);
-            for(size_t i=0; i < cameraStrings.size(); ++i){
-                pathNode.append(cameraStrings[i]);
+    ListingPtr cameraListing = new Listing();
+    set<SgPosTransform*> storedTransforms;
+    int numCameras = renderer.numCameras();
+    for(int i=0; i < numCameras; ++i){
+        if(InteractiveCameraTransform* transform = self->findOwnerInteractiveCameraTransform(i)){
+            if(!storedTransforms.insert(transform).second){
+                transform = 0; // already stored
             }
+            cameraListing->append(storeCameraState(i, transform));
         }
     }
-    const Affine3& C = builtinCameraTransform->T();
-    write(cameraData, "eye", C.translation());
-    write(cameraData, "direction", SgCamera::direction(C));
-    write(cameraData, "up", SgCamera::up(C));
-
-    cameraData.write("fieldOfView", builtinPersCamera->fieldOfView());
-    cameraData.write("near", setup->zNearSpin.value());
-    cameraData.write("far", setup->zFarSpin.value());
-    cameraData.write("orthoHeight", builtinOrthoCamera->height());
+    if(!cameraListing->empty()){
+        archive.insert("cameras", cameraListing);
+    }
 
     write(archive, "backgroundColor", renderer.backgroundColor());
     write(archive, "gridColor", gridColor[FLOOR]);
@@ -2439,6 +2446,52 @@ bool SceneWidgetImpl::storeState(Archive& archive)
     write(archive, "yzgridColor", gridColor[YZ]);
     
     return true;
+}
+
+
+void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex)
+{
+   vector<string> cameraStrings;
+    if(renderer.getSimplifiedCameraPathStrings(cameraIndex, cameraStrings)){
+        if(cameraStrings.size() == 1){
+            archive.write(key, cameraStrings.front());
+        } else {
+            Listing& pathNode = *archive.createListing(key);
+            pathNode.setFlowStyle(true);
+            for(size_t i=0; i < cameraStrings.size(); ++i){
+                pathNode.append(cameraStrings[i]);
+            }
+        }
+    }
+}
+
+
+Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, SgPosTransform* cameraTransform)
+{
+    Mapping* state = new Mapping();
+    writeCameraPath(*state, "camera", cameraIndex);
+
+    if(cameraIndex == renderer.currentCameraIndex()){
+        state->write("isCurrent", true);
+    }
+
+    SgCamera* camera = renderer.camera(cameraIndex);
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+        state->write("fieldOfView", pers->fieldOfView());
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        state->write("orthoHeight", ortho->height());
+    }
+    state->write("near", camera->nearDistance());
+    state->write("far", camera->farDistance());
+
+    if(cameraTransform){
+        const Affine3& T = cameraTransform->T();
+        write(*state, "eye", T.translation());
+        write(*state, "direction", SgCamera::direction(T));
+        write(*state, "up", SgCamera::up(T));
+    }
+
+    return state;
 }
 
 
@@ -2465,30 +2518,40 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
     setCollisionLinesVisible(archive.get("collisionLines", collisionLinesVisible));
     
     setup->restoreState(archive);
-    
-    const Mapping& cameraData = *archive.findMapping("camera");
-    if(cameraData.isValid()){
-        Vector3 eye, direction, up;
-        if(read(cameraData, "eye", eye) &&
-           read(cameraData, "direction", direction) &&
-           read(cameraData, "up", up)){
-            builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
-            doUpdate = true;
+
+    const Listing& cameraListing = *archive.findListing("cameras");
+    if(cameraListing.isValid()){
+        for(int i=0; i < cameraListing.size(); ++i){
+            const Mapping& cameraData = *cameraListing[i].toMapping();
+            archive.addPostProcess(
+                boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)));
         }
-        double fov;
-        if(cameraData.read("fieldOfView", fov)){
-            builtinPersCamera->setFieldOfView(fov);
-            doUpdate = true;
-        }
-        double height;
-        if(cameraData.read("orthoHeight", height)){
-            builtinOrthoCamera->setHeight(height);
-            doUpdate = true;
-        }
-        setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
-        setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
+    } else {
+        // for the compatibility to the older versions
+        const Mapping& cameraData = *archive.findMapping("camera");
+        if(cameraData.isValid()){
+            Vector3 eye, direction, up;
+            if(read(cameraData, "eye", eye) &&
+               read(cameraData, "direction", direction) &&
+               read(cameraData, "up", up)){
+                builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+                doUpdate = true;
+            }
+            double fov;
+            if(cameraData.read("fieldOfView", fov)){
+                builtinPersCamera->setFieldOfView(fov);
+                doUpdate = true;
+            }
+            double height;
+            if(cameraData.read("orthoHeight", height)){
+                builtinOrthoCamera->setHeight(height);
+                doUpdate = true;
+            }
+            setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
+            setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
         
-        archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
+            archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
+        }
     }
 
     Vector3f bgColor;
@@ -2513,24 +2576,96 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 }
 
 
-void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
+void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
 {
-    // get a path strings of the current camera
-    vector<string> cameraStrings;
-    const ValueNode& current = *cameraData.find("current");
-    if(current.isString()){
-        cameraStrings.push_back(current.toString());
-    } else if(current.isListing()){
-        const Listing& pathNode = *current.toListing();
-        for(int i=0; i < pathNode.size(); ++i){
-            cameraStrings.push_back(pathNode[i].toString());
+    bool doUpdate = false;
+    
+    for(int i=0; i < cameraListing.size(); ++i){
+        const Mapping& state = *cameraListing[i].toMapping();
+        int cameraIndex = readCameraPath(state, "camera");
+        if(cameraIndex >= 0){
+
+            Vector3 eye, direction, up;
+            if(read(state, "eye", eye) &&
+               read(state, "direction", direction) &&
+               read(state, "up", up)){
+                const SgNodePath& cameraPath = renderer.cameraPath(cameraIndex);
+                for(size_t j=0; j < cameraPath.size() - 1; ++j){
+                    SgPosTransform* transform = dynamic_cast<SgPosTransform*>(cameraPath[j]);
+                    if(transform){
+                        transform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+                        transform->notifyUpdate();
+                    }
+                }
+            }
+
+            SgCamera* camera = renderer.camera(cameraIndex);
+            if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+                double fov;
+                if(state.read("fieldOfView", fov)){
+                    pers->setFieldOfView(fov);
+                    doUpdate = true;
+                }
+            }
+            if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+                double height;
+                if(state.read("orthoHeight", height)){
+                    ortho->setHeight(height);
+                    doUpdate = true;
+                }
+            }
+            double near, far;
+            if(state.read("near", near)){
+                camera->setNearDistance(near);
+                doUpdate = true;
+            }
+            if(state.read("far", far)){
+                camera->setFarDistance(far);
+                doUpdate = true;
+            }
+            if(state.get("isCurrent", false)){
+                renderer.setCurrentCamera(cameraIndex);
+            }
         }
     }
-    if(!cameraStrings.empty()){
+
+    if(doUpdate){
+        update();
+    }
+}
+
+
+int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
+{
+    int index = -1;
+
+    std::vector<std::string> pathStrings;
+    const ValueNode& value = *archive.find(key);
+    if(value.isString()){
+        pathStrings.push_back(value.toString());
+    } else if(value.isListing()){
+        const Listing& pathNode = *value.toListing();
+        for(int i=0; i < pathNode.size(); ++i){
+            pathStrings.push_back(pathNode[i].toString());
+        }
+    }
+    if(!pathStrings.empty()){
         if(renderer.numCameras() == 0){
             renderer.initializeRendering();
         }
-        setCurrentCameraPath(cameraStrings);
+        index = renderer.findCameraPath(pathStrings);
+    }
+
+    return index;
+}    
+
+
+// for the compatibility to the older versions
+void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
+{
+    int index = readCameraPath(cameraData, "current");
+    if(index >= 0){
+        renderer.setCurrentCamera(index);
     }
 }
 

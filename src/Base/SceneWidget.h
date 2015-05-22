@@ -21,6 +21,7 @@ class SceneWidgetEvent;
 class SceneWidgetEditable;
 class SceneWidgetRoot;
 class Menu;
+class InteractiveCameraTransform;
 
 class CNOID_EXPORT SceneWidget : public QWidget
 {
@@ -51,6 +52,7 @@ public:
     SgPerspectiveCamera* builtinPerspectiveCamera() const;
     SgOrthographicCamera* builtinOrthographicCamera() const;
     bool isBuiltinCameraCurrent() const;
+    InteractiveCameraTransform* findOwnerInteractiveCameraTransform(int cameraIndex);
 
     void startBuiltinCameraViewChange(const Vector3& center);
     void rotateBuiltinCameraView(double dPitch, double dYaw);

@@ -31,6 +31,7 @@ set(sources
   BoundingBox.cpp
   SceneGraph.cpp
   SceneVisitor.cpp
+  SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp

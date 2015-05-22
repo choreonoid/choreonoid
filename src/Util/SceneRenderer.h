@@ -8,26 +8,30 @@
 
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneVisitor>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class SceneRenderer : public SceneVisitor
+class CNOID_EXPORT SceneRenderer : public SceneVisitor
 {
 public:
     virtual SgGroup* sceneRoot() = 0;
     virtual void clearScene() = 0;
 
     virtual int numCameras() const = 0;
+    virtual SgCamera* camera(int index) = 0;
     virtual const SgNodePath& cameraPath(int index) const = 0;
-    virtual bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const = 0;
-    virtual SignalProxy<void()> sigCamerasChanged() const = 0; 
-        
+    virtual SignalProxy<void()> sigCamerasChanged() const = 0;
+
     virtual SgCamera* currentCamera() const = 0;
     virtual int currentCameraIndex() const = 0;
     virtual void setCurrentCamera(int index) = 0;
     virtual bool setCurrentCamera(SgCamera* camera) = 0;
-    virtual bool setCurrentCamera(std::vector<std::string>& simplifiedPathStrings) = 0;
     virtual SignalProxy<void()> sigCurrentCameraChanged() = 0;
+
+    bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& out_pathStrings);
+    int findCameraPath(const std::vector<std::string>& simplifiedPathStrings);
+    bool setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
 
     virtual void setViewport(int x, int y, int width, int height) = 0;
     virtual Array4i viewport() const = 0;

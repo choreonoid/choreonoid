@@ -447,10 +447,8 @@ public:
     void removeEntity(SgNode* node);
     void onSceneGraphUpdated(const SgUpdate& update);
     void updateCameraPaths();
-    bool getSimplifiedCameraPathStrings(int index, vector<string>& out_pathStrings);
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
-    bool setCurrentCamera(std::vector<std::string>& strings, bool doRenderingRequest);
     bool initializeGL();
     void setViewport(int x, int y, int width, int height);
     void beginRendering(bool doRenderingCommands);
@@ -646,6 +644,12 @@ int GLSceneRenderer::numCameras() const
 }
 
 
+SgCamera* GLSceneRenderer::camera(int index)
+{
+    return dynamic_cast<SgCamera*>(cameraPath(index).back());
+}
+
+
 const std::vector<SgNode*>& GLSceneRenderer::cameraPath(int index) const
 {
     if(impl->cameraPaths.empty()){
@@ -660,6 +664,7 @@ void GLSceneRendererImpl::updateCameraPaths()
     vector<SgNode*> tmpPath;
     const int n = cameras->size();
     cameraPaths.resize(n);
+    
     for(int i=0; i < n; ++i){
         CameraInfo& info = (*cameras)[i];
         tmpPath.clear();
@@ -675,37 +680,6 @@ void GLSceneRendererImpl::updateCameraPaths()
             std::copy(tmpPath.rbegin(), tmpPath.rend(), path.begin());
         }
     }
-}
-
-
-bool GLSceneRenderer::getSimplifiedCameraPathStrings(int index, vector<string>& out_pathStrings) const
-{
-    return impl->getSimplifiedCameraPathStrings(index, out_pathStrings);
-}
-
-
-bool GLSceneRendererImpl::getSimplifiedCameraPathStrings(int index, vector<string>& out_pathStrings)
-{
-    if(cameraPaths.empty()){
-        updateCameraPaths();
-    }
-    out_pathStrings.clear();
-    if(index < cameraPaths.size()){
-        const vector<SgNode*>& cameraPath = cameraPaths[index];
-        const string& name = cameraPath.back()->name();
-        if(!name.empty()){
-            size_t n = cameraPath.size() - 1;
-            for(size_t i=0; i < n; ++i){
-                const string& element = cameraPath[i]->name();
-                if(!element.empty()){
-                    out_pathStrings.push_back(element);
-                    break;
-                }
-            }
-            out_pathStrings.push_back(name);
-        }
-    }
-    return !out_pathStrings.empty();
 }
 
 
@@ -749,49 +723,6 @@ bool GLSceneRendererImpl::setCurrentCamera(SgCamera* camera)
         }
     }
     return false;
-}
-
-
-bool GLSceneRenderer::setCurrentCamera(std::vector<std::string>& simplifiedPathStrings)
-{
-    return impl->setCurrentCamera(simplifiedPathStrings, true);
-}
-
-
-bool GLSceneRendererImpl::setCurrentCamera(std::vector<std::string>& strings, bool doRenderingRequest)
-{
-    bool found = false;
-    
-    if(cameraPaths.empty()){
-        updateCameraPaths();
-    }
-
-    if(!strings.empty()){
-        vector<int> candidates;
-        const string& name = (strings.size() == 1) ? strings.front() : strings.back();
-        for(size_t i=0; i < cameraPaths.size(); ++i){
-            const vector<SgNode*> cameraPath = cameraPaths[i];
-            if(cameraPath.back()->name() == name){
-                candidates.push_back(i);
-            }
-        }
-        if(candidates.size() == 1){
-            setCurrentCamera(candidates.front(), doRenderingRequest);
-            found = true;
-        } else if(candidates.size() >= 2){
-            if(strings.size() == 2){
-                const string& owner = strings.front();
-                for(size_t i=0; i < candidates.size(); ++i){
-                    const vector<SgNode*> cameraPath = cameraPaths[i];
-                    if(cameraPath.front()->name() == owner){
-                        setCurrentCamera(i, doRenderingRequest);
-                        found = true;
-                    }
-                }
-            }
-        }
-    }
-    return found;
 }
 
 
