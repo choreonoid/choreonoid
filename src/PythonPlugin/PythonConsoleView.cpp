@@ -56,6 +56,7 @@ public:
     QString prompt;
     std::list<QString>::iterator histIter;
     std::list<QString> history;
+    Signal<void(const std::string& output)> sigOutput;
 
     python::object consoleOut;
     python::object consoleIn;
@@ -95,6 +96,7 @@ void PythonConsoleOut::setConsole(PythonConsoleViewImpl* console)
 void PythonConsoleOut::write(std::string const& text)
 {
     console->put(QString(text.c_str()));
+    console->sigOutput(text);
 }
 
 
@@ -194,23 +196,11 @@ void PythonConsoleViewImpl::setPrompt(const char* newPrompt)
 }
 
 
-void PythonConsoleView::put(const std::string& message)
-{
-    impl->put(message.c_str());
-}
-
-
 void PythonConsoleViewImpl::put(const QString& message)
 {
     moveCursor(QTextCursor::End);
     insertPlainText(message);
     moveCursor(QTextCursor::End);
-}
-
-
-void PythonConsoleView::putln(const std::string& message)
-{
-    impl->putln(message.c_str());
 }
 
 
@@ -221,21 +211,23 @@ void PythonConsoleViewImpl::putln(const QString& message)
 }
 
 
-void PythonConsoleView::flush()
+void PythonConsoleView::inputCommand(const std::string& command)
 {
-    MessageView::instance()->flush();
+    impl->put(command.c_str());
+    impl->execCommand();
 }
 
 
-void PythonConsoleView::clear()
+SignalProxy<void(const std::string& output)> PythonConsoleView::sigOutput()
 {
-    impl->clear();
+    return impl->sigOutput;
 }
 
 
 void PythonConsoleViewImpl::putPrompt()
 {
     put(prompt);
+    sigOutput(prompt.toStdString());
     inputColumnOffset = textCursor().columnNumber();
 }
 

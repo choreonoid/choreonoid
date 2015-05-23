@@ -20,10 +20,8 @@ public:
     PythonConsoleView();
     virtual ~PythonConsoleView();
         
-    void put(const std::string& message);
-    void putln(const std::string& message);
-    void flush();
-    void clear();
+    void inputCommand(const std::string& command);
+    SignalProxy<void(const std::string& output)> sigOutput();
     
 private:
     PythonConsoleViewImpl* impl;
