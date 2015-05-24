@@ -182,6 +182,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 connections.add(
                     forceSensors[i]->sigStateChanged().connect(
                         boost::bind(&SensorVisualizerItemImpl::updateForceSensorState, this, i)));
+                updateForceSensorState(i);
             }
         }
     }
