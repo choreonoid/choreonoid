@@ -236,11 +236,13 @@ bool SensorVisualizerItemImpl::onLengthRatioPropertyChanged(double ratio)
 
 bool SensorVisualizerItem::store(Archive& archive)
 {
+    archive.write("lengthRatio", impl->lengthRatio);
     return true;
 }
 
 
 bool SensorVisualizerItem::restore(const Archive& archive)
 {
+    archive.read("lengthRatio", impl->lengthRatio);
     return true;
 }
