@@ -1372,6 +1372,7 @@ void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, 
     int index = menuItems.size();
     menuItems.push_back(MenuItem());
     Action* action = menuManager.addCheckItem(caption.c_str());
+    action->setChecked(isChecked);
     action->sigToggled().connect(
         boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1));
     if(func){
@@ -1389,13 +1390,12 @@ void TaskViewImpl::addMenuSeparator()
 void TaskViewImpl::onMenuItemTriggered(int index)
 {
     MenuItem& item = menuItems[index];
-    if(isExecutionEnabled()){
+    if(isNoExecutionMode){
+        sigMenuItemTriggered(index);
+    } else {
         if(item.func){
             item.func();
         }
-    }
-    if(isNoExecutionMode){
-        sigMenuItemTriggered(index);
     }
 }
 
@@ -1403,13 +1403,12 @@ void TaskViewImpl::onMenuItemTriggered(int index)
 void TaskViewImpl::onMenuItemToggled(int index, bool on)
 {
     MenuItem& item = menuItems[index];
-    if(isExecutionEnabled()){
+    if(isNoExecutionMode){
+        sigMenuItemToggled(index, on);
+    } else {
         if(item.checkFunc){
             item.checkFunc(on);
         }
-    }
-    if(isNoExecutionMode){
-        sigMenuItemToggled(index, on);
     }
 }
 
