@@ -23,6 +23,11 @@ public:
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
+    enum Axis { TX = 1, TY = 2, TZ = 4 };
+
+    void setDraggableAxisSet(int axisSet);
+    int draggableAxisSet() const { return draggableAxisSet_; }
+
     void addCustomAxis(int axis, SgNode* node);
     void clearCustomAxes();
 
@@ -52,6 +57,7 @@ public:
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
         
 private:
+    int draggableAxisSet_;
     SgScaleTransformPtr defaultAxesScale;
     SgGroupPtr customAxes;
     SgMaterialPtr axisMaterials[3];
@@ -76,6 +82,11 @@ public:
     RotationDragger(const RotationDragger& org, SgCloneMap& cloneMap);
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
+
+    enum Axis { RX = 1, RY = 2, RZ = 4 };
+
+    void setDraggableAxisSet(int axisSet);
+    int draggableAxisSet() const { return draggableAxisSet_; }
 
     void setRadius(double r);
     void setContainerMode(bool on);
@@ -104,6 +115,7 @@ public:
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
         
 private:
+    int draggableAxisSet_;
     SgScaleTransformPtr scale;
     SceneDragProjector dragProjector;
     bool isContainerMode_;
@@ -114,6 +126,12 @@ private:
     
 typedef ref_ptr<RotationDragger> RotationDraggerPtr;
 
+
+/**
+   \todo Since the draggable axis set can be specified for PositoinDragger now,
+   the TranslationDragger class and the RotationDragger class should be removed
+   and their implementations should be integrated into the PositionDragger class.
+*/
 class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEditable
 {
 public:
@@ -124,6 +142,16 @@ public:
     PositionDragger(const PositionDragger& org, SgCloneMap& cloneMap);
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
+
+    enum Axis { TX = 1 << 0, TY = 1 << 1, TZ = 1 << 2,
+                TRANSLATION_AXES = (TX | TY | TZ),
+                RX = 1 << 3, RY = 1 << 4, RZ = 1 << 5,
+                ROTATION_AXES = (RX | RY | RZ),
+                ALL_AXES = (TX | TY | TZ | RX | RY | RZ)
+    };
+
+    void setDraggableAxisSet(int axisSet);
+    int draggableAxisSet() const { return draggableAxisSet_; }
 
     void setRadius(double r, double translationAxisRatio = 2.0f);
     void adjustSize();
@@ -164,6 +192,7 @@ private:
     TranslationDraggerPtr translationDragger_;
     RotationDraggerPtr rotationDragger_;
     SceneDragProjector dragProjector;
+    int draggableAxisSet_;
     bool isContainerMode_;
     bool isContentsDragEnabled_;
     bool isDraggerAlwaysShown_;
