@@ -357,6 +357,26 @@ private:
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;
 
 
+class CNOID_EXPORT SgSwitch : public SgGroup
+{
+public:
+    SgSwitch();
+    SgSwitch(const SgSwitch& org);
+    SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap);
+    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual void accept(SceneVisitor& visitor);
+
+    void turnOn() { isTurnedOn_ = true; }
+    void turnOff() { isTurnedOn_ = false; }
+    void setTurnedOn(bool on) { isTurnedOn_ = on; }
+    bool isTurnedOn() const { return isTurnedOn_; }
+
+  private:
+    bool isTurnedOn_;
+};
+typedef ref_ptr<SgSwitch> SgSwitchPtr;
+
+
 class CNOID_EXPORT SgUnpickableGroup : public SgGroup
 {
 public:

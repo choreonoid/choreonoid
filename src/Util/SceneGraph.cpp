@@ -569,6 +569,38 @@ void SgScaleTransform::getTransform(Affine3& out_T) const
 }
 
 
+SgSwitch::SgSwitch()
+{
+    isTurnedOn_ = true;
+}
+
+
+SgSwitch::SgSwitch(const SgSwitch& org)
+    : SgGroup(org)
+{
+    isTurnedOn_ = org.isTurnedOn_;
+}
+
+
+SgSwitch::SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap)
+    : SgGroup(org, cloneMap)
+{
+    isTurnedOn_ = org.isTurnedOn_;
+}
+
+
+SgObject* SgSwitch::clone(SgCloneMap& cloneMap) const
+{
+    return new SgSwitch(*this, cloneMap);
+}
+
+
+void SgSwitch::accept(SceneVisitor& visitor)
+{
+    visitor.visitSwitch(this);
+}
+
+
 SgUnpickableGroup::SgUnpickableGroup()
 {
 
