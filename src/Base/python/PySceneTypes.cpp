@@ -21,8 +21,8 @@ void exportPySceneTypes()
 {
     object positionDraggerClass =
         class_<PositionDragger, PositionDraggerPtr, bases<SgPosTransform>, boost::noncopyable>("PositionDragger")
-        .def("setDraggableAxisSet", &PositionDragger::setDraggableAxisSet)
-        .def("draggableAxisSet", &PositionDragger::draggableAxisSet)
+        .def("setDraggableAxes", &PositionDragger::setDraggableAxes)
+        .def("draggableAxes", &PositionDragger::draggableAxes)
         ;
 
     positionDraggerClass.attr("TX") = (int)PositionDragger::TX;

@@ -82,7 +82,7 @@ public:
 
 TranslationDragger::TranslationDragger(bool setDefaultAxes)
 {
-    draggableAxisSet_ = TX | TY | TZ;
+    draggableAxes_ = TX | TY | TZ;
     
     axisCylinderNormalizedRadius = 0.04;
 
@@ -131,7 +131,7 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
 
 TranslationDragger::TranslationDragger(const TranslationDragger& org)
 {
-    draggableAxisSet_ = org.draggableAxisSet_;
+    draggableAxes_ = org.draggableAxes_;
     defaultAxesScale = new SgScaleTransform;
     defaultAxesScale->setScale(org.defaultAxesScale->scale());
     org.defaultAxesScale->copyChildren(defaultAxesScale);
@@ -145,7 +145,7 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org)
 TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap& cloneMap)
     : SgPosTransform(org, cloneMap)
 {
-    draggableAxisSet_ = org.draggableAxisSet_;
+    draggableAxes_ = org.draggableAxes_;
     defaultAxesScale = getChild<SgScaleTransform>(0);
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
     isContainerMode_ = org.isContainerMode_;
@@ -158,16 +158,16 @@ SgObject* TranslationDragger::clone(SgCloneMap& cloneMap) const
 }
 
 
-void TranslationDragger::setDraggableAxisSet(int axisSet)
+void TranslationDragger::setDraggableAxes(int axisSet)
 {
-    if(axisSet != draggableAxisSet_){
+    if(axisSet != draggableAxes_){
         for(int i=0; i < 3; ++i){
             SgSwitch* axis = dynamic_cast<SgSwitch*>(defaultAxesScale->child(i));
             if(axis){
                 axis->setTurnedOn(axisSet & (1 << i));
             }
         }
-        draggableAxisSet_ = axisSet;
+        draggableAxes_ = axisSet;
         defaultAxesScale->notifyUpdate();
     }
 }
@@ -315,7 +315,7 @@ void TranslationDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 
 RotationDragger::RotationDragger()
 {
-    draggableAxisSet_ = RX | RY | RZ;
+    draggableAxes_ = RX | RY | RZ;
 
     MeshGenerator meshGenerator;
     meshGenerator.setDivisionNumber(36);
@@ -388,7 +388,7 @@ RotationDragger::RotationDragger()
 
 RotationDragger::RotationDragger(const RotationDragger& org)
 {
-    draggableAxisSet_ = org.draggableAxisSet_;
+    draggableAxes_ = org.draggableAxes_;
     scale = new SgScaleTransform;
     scale->setScale(org.scale->scale());
     org.scale->copyChildren(scale);
@@ -400,7 +400,7 @@ RotationDragger::RotationDragger(const RotationDragger& org)
 RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap& cloneMap)
     : SgPosTransform(org, cloneMap)
 {
-    draggableAxisSet_ = org.draggableAxisSet_;
+    draggableAxes_ = org.draggableAxes_;
     scale = getChild<SgScaleTransform>(0);
     isContainerMode_ = org.isContainerMode_;
 }
@@ -412,16 +412,16 @@ SgObject* RotationDragger::clone(SgCloneMap& cloneMap) const
 }
 
 
-void RotationDragger::setDraggableAxisSet(int axisSet)
+void RotationDragger::setDraggableAxes(int axisSet)
 {
-    if(axisSet != draggableAxisSet_){
+    if(axisSet != draggableAxes_){
         for(int i=0; i < 3; ++i){
             SgSwitch* axis = dynamic_cast<SgSwitch*>(scale->child(i));
             if(axis){
                 axis->setTurnedOn(axisSet & (1 << i));
             }
         }
-        draggableAxisSet_ = axisSet;
+        draggableAxes_ = axisSet;
         scale->notifyUpdate();
     }
 }
@@ -518,7 +518,7 @@ PositionDragger::PositionDragger()
 {
     translationDragger_ = new TranslationDragger;
     rotationDragger_ = new RotationDragger;
-    draggableAxisSet_ = TX | TY | TZ | RX | RY | RZ;
+    draggableAxes_ = TX | TY | TZ | RX | RY | RZ;
 
     initalizeDraggers();
     
@@ -533,7 +533,7 @@ PositionDragger::PositionDragger(const PositionDragger& org)
 {
     translationDragger_ = new TranslationDragger(*org.translationDragger_);
     rotationDragger_ = new RotationDragger(*org.rotationDragger_);
-    draggableAxisSet_ = org.draggableAxisSet_;
+    draggableAxes_ = org.draggableAxes_;
 
     initalizeDraggers();
 
@@ -548,7 +548,7 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
 {
     translationDragger_ = new TranslationDragger(*org.translationDragger_, cloneMap);
     rotationDragger_ = new RotationDragger(*org.rotationDragger_, cloneMap);
-    draggableAxisSet_ = org.draggableAxisSet_;
+    draggableAxes_ = org.draggableAxes_;
 
     initalizeDraggers();
 
@@ -573,14 +573,14 @@ void PositionDragger::initalizeDraggers()
 }
 
 
-void PositionDragger::setDraggableAxisSet(int axisSet)
+void PositionDragger::setDraggableAxes(int axisSet)
 {
-    if(axisSet != draggableAxisSet_){
-        int translationAxisSet = axisSet & (TX | TY | TZ);
-        translationDragger_->setDraggableAxisSet(translationAxisSet);
-        int rotationAxisSet = (axisSet & (RX | RY | RZ)) >> 3;
-        rotationDragger_->setDraggableAxisSet(rotationAxisSet);
-        draggableAxisSet_ = axisSet;
+    if(axisSet != draggableAxes_){
+        int translationAxes = axisSet & (TX | TY | TZ);
+        translationDragger_->setDraggableAxes(translationAxes);
+        int rotationAxes = (axisSet & (RX | RY | RZ)) >> 3;
+        rotationDragger_->setDraggableAxes(rotationAxes);
+        draggableAxes_ = axisSet;
     }
 }
 
