@@ -30,6 +30,18 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+/**
+   This CombBox does not accept the wheel event to change the selection
+   so that the current task is not changed by incorrect operations
+*/
+class TaskComboBox : public ComboBox
+{
+public:
+    virtual void wheelEvent(QWheelEvent* e){
+
+    }
+};
+
 }
 
 namespace cnoid {
@@ -46,7 +58,7 @@ public:
     QHBoxLayout hbox2;
     QHBoxLayout hbox3;
     QVBoxLayout vspace;
-    ComboBox taskCombo;
+    TaskComboBox taskCombo;
     PushButton menuButton;
     PushButton prevButton;
     PushButton cancelButton;
