@@ -111,7 +111,7 @@ boost::optional<double> cnoid::alignPointCloud
     if(!target->hasVertices() || !source->hasVertices()){
         return boost::none;
     }
-    
+
     const SgVertexArray& targetPoints = *target->vertices();
     PointCloud::Ptr targetCloud(new PointCloud(targetPoints.size(), 1));
     targetCloud->is_dense = false;
