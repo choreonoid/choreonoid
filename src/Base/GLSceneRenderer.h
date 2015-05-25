@@ -21,10 +21,11 @@ class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
 public:
     GLSceneRenderer();
-    GLSceneRenderer(SgGroup* sceneRoot);
+    GLSceneRenderer(SgGroup* root);
     virtual ~GLSceneRenderer();
 
     virtual SgGroup* sceneRoot();
+    virtual SgGroup* scene();
     virtual void clearScene();
 
     virtual int numCameras() const;

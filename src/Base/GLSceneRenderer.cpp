@@ -267,15 +267,15 @@ class GLSceneRendererImpl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root);
+    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
     ~GLSceneRendererImpl();
 
     GLSceneRenderer* self;
 
     Signal<void()> sigRenderingRequest;
 
-    SgGroupPtr root;
     SgGroupPtr sceneRoot;
+    SgGroupPtr scene;
 
     SgNodePath indexedEntities;
 
@@ -507,9 +507,9 @@ public:
 
 GLSceneRenderer::GLSceneRenderer()
 {
-    SgGroup* root = new SgGroup;
-    root->setName("Root");
-    impl = new GLSceneRendererImpl(this, root);
+    SgGroup* sceneRoot = new SgGroup;
+    sceneRoot->setName("Root");
+    impl = new GLSceneRendererImpl(this, sceneRoot);
 }
 
 
@@ -519,11 +519,11 @@ GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
 }
 
 
-GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root)
+GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot)
     : self(self),
-      root(root)
+      sceneRoot(sceneRoot)
 {
-    root->sigUpdated().connect(boost::bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
+    sceneRoot->sigUpdated().connect(boost::bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
 
     Vstack.reserve(16);
     
@@ -558,8 +558,8 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root)
     isHeadLightLightingFromBackEnabled = false;
     additionalLightsEnabled = true;
 
-    sceneRoot = new SgGroup();
-    root->addChild(sceneRoot);
+    scene = new SgGroup();
+    sceneRoot->addChild(scene);
 
     polygonMode = GLSceneRenderer::FILL_MODE;
     defaultLighting = true;
@@ -598,13 +598,19 @@ GLSceneRendererImpl::~GLSceneRendererImpl()
 
 SgGroup* GLSceneRenderer::sceneRoot()
 {
-    return impl->sceneRoot.get();
+    return impl->sceneRoot;
+}
+
+
+SgGroup* GLSceneRenderer::scene()
+{
+    return impl->scene;
 }
 
 
 void GLSceneRenderer::clearScene()
 {
-    impl->sceneRoot->clearChildren(true);
+    impl->scene->clearChildren(true);
 }
 
 
@@ -883,7 +889,7 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
 
     if(doPreprocessedNodeTreeExtraction){
         PreproTreeExtractor extractor;
-        preproTree.reset(extractor.apply(root.get()));
+        preproTree.reset(extractor.apply(sceneRoot));
         doPreprocessedNodeTreeExtraction = false;
     }
 
@@ -1181,7 +1187,7 @@ void GLSceneRendererImpl::endRendering()
     }
 
     if(isNewDisplayListDoubleRenderingEnabled && isNewDisplayListCreated){
-        sceneRoot->notifyUpdate();
+        scene->notifyUpdate();
     }
 }
 
@@ -1196,7 +1202,7 @@ void GLSceneRendererImpl::render()
 {
     beginRendering(true);
 
-    root->accept(*self);
+    sceneRoot->accept(*self);
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();

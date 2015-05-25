@@ -16,6 +16,7 @@ class CNOID_EXPORT SceneRenderer : public SceneVisitor
 {
 public:
     virtual SgGroup* sceneRoot() = 0;
+    virtual SgGroup* scene() = 0;
     virtual void clearScene() = 0;
 
     virtual int numCameras() const = 0;

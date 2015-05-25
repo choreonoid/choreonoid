@@ -34,6 +34,7 @@ public:
     static void forEachInstance(SgNode* node, boost::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
 
     SceneWidgetRoot* sceneRoot();
+    SgGroup* scene();
 
     SceneRenderer& renderer();
 

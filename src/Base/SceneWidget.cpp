@@ -184,6 +184,7 @@ public:
     ostream& os;
 
     SceneWidgetRootPtr sceneRoot;
+    SgGroup* scene;
     GLSceneRenderer renderer;
     QGLPixelBuffer* buffer;
     LazyCaller initializeRenderingLater;
@@ -453,6 +454,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     sceneRoot->sigUpdated().connect(boost::bind(&SceneWidgetImpl::onSceneGraphUpdated, this, _1));
 
+    scene = renderer.scene();
+
     buffer = 0;
 
     initializeRenderingLater.setFunction(boost::bind(&GLSceneRenderer::initializeRendering, &renderer));
@@ -492,8 +495,6 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     font.setFixedPitch(true);
     indicatorLabel->setFont(font);
 
-    SgGroup* root = renderer.sceneRoot();
-
     builtinCameraTransform = new InteractiveCameraTransform();
     builtinCameraTransform->setTransform(
         SgCamera::positionLookingAt(
@@ -512,21 +513,21 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
-    root->addChild(builtinCameraTransform);
+    sceneRoot->addChild(builtinCameraTransform);
 
     setup = new SetupDialog(this);
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
-    root->addChild(worldLight);
+    sceneRoot->addChild(worldLight);
     renderer.setAsDefaultLight(worldLight);
 
     updateDefaultLights();
 
     systemNodeGroup = new SgGroup();
     systemNodeGroup->setName("SystemGroup");
-    root->addChild(systemNodeGroup);
+    sceneRoot->addChild(systemNodeGroup);
 
     polygonMode.resize(3);
     polygonMode.setSymbol(SceneWidget::FILL_MODE, "fill");
@@ -573,6 +574,12 @@ SceneWidgetImpl::~SceneWidgetImpl()
 SceneWidgetRoot* SceneWidget::sceneRoot()
 {
     return impl->sceneRoot;
+}
+
+
+SgGroup* SceneWidget::scene()
+{
+    return impl->scene;
 }
 
 
@@ -941,7 +948,7 @@ void SceneWidgetImpl::viewAll()
         return;
     }
     
-    const BoundingBox& bbox = renderer.sceneRoot()->boundingBox();
+    const BoundingBox& bbox = renderer.scene()->boundingBox();
     if(bbox.empty()){
         return;
     }

@@ -17,7 +17,9 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const double PI = 3.14159265358979323846;
+
 }
 
 
@@ -269,6 +271,7 @@ const BoundingBox& SgGroup::boundingBox() const
         bboxCache.expandBy((*p)->boundingBox());
     }
     isBboxCacheValid = true;
+
     return bboxCache;
 }
 

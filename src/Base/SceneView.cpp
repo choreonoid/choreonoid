@@ -28,7 +28,8 @@ class SceneViewImpl
 public:
     SceneView* self;
     SceneWidget* sceneWidget;
-    SceneWidgetRoot* sceneRoot;
+    //SceneWidgetRoot* sceneRoot;
+    SgGroup* scene;
 
     struct SceneInfo {
         Item* item;
@@ -107,7 +108,7 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     self->setDefaultLayoutArea(View::RIGHT);
     
     sceneWidget = new SceneWidget;
-    sceneRoot = sceneWidget->sceneRoot();
+    scene = sceneWidget->scene();
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(sceneWidget);
@@ -178,9 +179,9 @@ SceneWidget* SceneView::sceneWidget()
 }
     
 
-SceneWidgetRoot* SceneView::sceneRoot()
+SgGroup* SceneView::scene()
 {
-    return impl->sceneRoot;
+    return impl->scene;
 }
 
 
@@ -228,7 +229,7 @@ void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
 {
     if(infoIter->isShown && !show){
         if(infoIter->scene){
-            sceneRoot->removeChild(infoIter->scene, true);
+            scene->removeChild(infoIter->scene, true);
         }
         infoIter->isShown = false;
         
@@ -237,7 +238,7 @@ void SceneViewImpl::showScene(list<SceneInfo>::iterator infoIter, bool show)
             infoIter->scene = infoIter->provider->getScene();
         }
         if(infoIter->scene){
-            sceneRoot->addChild(infoIter->scene, true);
+            scene->addChild(infoIter->scene, true);
             infoIter->isShown = true;
         }
     }
