@@ -10,11 +10,13 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
+#include <cnoid/PointSetUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/SceneMarker>
 #include <cnoid/FileUtil>
+#include <cnoid/Exception>
 #include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
@@ -814,19 +816,32 @@ bool MultiPointSetItemImpl::save(const std::string& filename)
 
 bool MultiPointSetItemImpl::outputPointSetItem(int index)
 {
+    bool result = false;
+    
     PointSetItem* item = self->pointSetItem(index);
     if(outputFileListing && !item->name().empty()){
         string filename = item->name() + ".pcd";
         string filepath = getPathString(autoSaveFilePath.parent_path() / filesystem::path(filename));
-        if(item->save(filepath, "PCD-FILE")){
+
+        // result = item->save(filepath, "PCD-FILE");
+
+        try {
+            cnoid::savePCD(item->pointSet(), filename, item->offsetTransform());
+
             MappingPtr info = new Mapping();
             info->write("file", filename);
             write(*info, "offsetTransform", item->offsetTransform());
             outputFileListing->insert(index, info);
-            return true;
+            result = true;
+
+        } catch (boost::exception& ex) {
+            if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
+                mvout() << *message << endl;
+            }
         }
     }
-    return false;
+
+    return result;
 }
 
 
