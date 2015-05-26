@@ -110,7 +110,7 @@ const Affine3& SceneDragProjector::initialPosition() const
 
 void SceneDragProjector::setRotationAxis(const Vector3& axis)
 {
-    impl->rotationAxis = axis;
+    impl->rotationAxis = axis.normalized();
 }
 
 
@@ -171,6 +171,7 @@ bool SceneDragProjectorImpl::dragRotation(const SceneWidgetEvent& event)
             rotationAngleAxis = AngleAxis(rotationAngle, rotationAxis);
             rotationMatrix = rotationAngleAxis;
             position.linear() = rotationMatrix * initialPosition.linear();
+            normalizeRotation(position);
             return true;
         }
     }
