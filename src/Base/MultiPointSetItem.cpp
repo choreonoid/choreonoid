@@ -16,6 +16,7 @@
 #include <cnoid/SceneMarker>
 #include <cnoid/FileUtil>
 #include <boost/bind.hpp>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -858,10 +859,15 @@ bool MultiPointSetItemImpl::startAutomaticSave(const std::string& filename)
         if(self->numPointSetItems() == 0){
             isAutoSaveMode = true;
         } else {
-            if(filesystem::create_directories(autoSaveFilePath.parent_path())){
-                if(save(getPathString(autoSaveFilePath))){
-                    isAutoSaveMode = true;
+            try {
+                if(filesystem::create_directories(autoSaveFilePath.parent_path())){
+                    if(save(getPathString(autoSaveFilePath))){
+                        isAutoSaveMode = true;
+                    }
                 }
+            }
+            catch(const boost::filesystem::filesystem_error& ex){
+                mvout() << ex.what() << endl;
             }
         }
     }
@@ -875,8 +881,13 @@ void MultiPointSetItemImpl::saveAdditionalPointSet(int index)
     bool result = false;
 
     if(!outputArchive){
-        if(filesystem::create_directories(autoSaveFilePath.parent_path())){
-            save(getPathString(autoSaveFilePath));
+        try {
+            if(filesystem::create_directories(autoSaveFilePath.parent_path())){
+                save(getPathString(autoSaveFilePath));
+            }
+        }
+        catch(const boost::filesystem::filesystem_error& ex){
+            mvout() << ex.what() << endl;
         }
     } else {
         if(outputPointSetItem(index)){
