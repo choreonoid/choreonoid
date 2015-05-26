@@ -956,15 +956,17 @@ void SceneWidgetImpl::viewAll()
 
     double left, right, bottom, top;
     renderer.getViewFrustum(*builtinPersCamera, left, right, bottom, top);
+
+    const double a = renderer.aspectRatio();
+    double length = (a >= 1.0) ? (top - bottom) : (right - left);
     
     Affine3& T = interactiveCameraTransform->T();
     T.translation() +=
         (bbox.center() - T.translation())
-        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearDistance() / (right - left));
+        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearDistance() / length);
 
 
     if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer.currentCamera())){
-        const double a = renderer.aspectRatio();
         if(a >= 1.0){
             ortho->setHeight(radius * 2.0);
         } else {
