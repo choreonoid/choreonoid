@@ -581,6 +581,7 @@ void PositionDragger::setDraggableAxes(int axisSet)
         int rotationAxes = (axisSet & (RX | RY | RZ)) >> 3;
         rotationDragger_->setDraggableAxes(rotationAxes);
         draggableAxes_ = axisSet;
+        sigDraggableAxesChanged_(axisSet);
     }
 }
 

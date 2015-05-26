@@ -153,6 +153,10 @@ public:
     void setDraggableAxes(int axisSet);
     int draggableAxes() const { return draggableAxes_; }
 
+    SignalProxy<void(int axisSet)> sigDraggableAxesChanged(){
+        return sigDraggableAxesChanged_;
+    }
+
     void setRadius(double r, double translationAxisRatio = 2.0f);
     void adjustSize();
     void adjustSize(const BoundingBox& bb);
@@ -198,6 +202,7 @@ private:
     bool isDraggerAlwaysShown_;
     bool isDraggerAlwaysHidden_;
     bool isDraggerShown;
+    Signal<void(int axisSet)> sigDraggableAxesChanged_;
     Signal<void()> sigDragStarted_;
     Signal<void()> sigPositionDragged_;
     Signal<void()> sigDragFinished_;
