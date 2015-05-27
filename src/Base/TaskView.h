@@ -8,6 +8,7 @@
 
 #include <cnoid/View>
 #include <cnoid/AbstractTaskSequencer>
+#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -57,6 +58,11 @@ public:
 
     void executeMenuItem(int index);
     void checkMenuItem(int index, bool on);
+    boost::dynamic_bitset<> menuItemCheckStates() const;
+
+    // valid for the no execution mode
+    SignalProxy<void()> sigMenuRequest();
+    void showMenu(boost::dynamic_bitset<> checkStates);
     SignalProxy<void(int index)> sigMenuItemTriggered();
     SignalProxy<void(int index, bool on)> sigMenuItemToggled();
 

@@ -13,6 +13,7 @@
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
 #include <cnoid/AppUtil>
+#include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QEventLoop>
@@ -113,12 +114,16 @@ public:
     Timer waitTimer;
     Signal<void()> sigBusyStateChanged;
 
+    ScopedConnectionSet menuConnections;
     MenuManager menuManager;
     struct MenuItem {
         boost::function<void()> func;
         boost::function<void(bool on)> checkFunc;
+        Action* action;
+        MenuItem() { action = 0; }
     };
     vector<MenuItem> menuItems;
+    Signal<void()> sigMenuRequest;
     Signal<void(int index)> sigMenuItemTriggered;
     Signal<void(int index, bool on)> sigMenuItemToggled;
 
@@ -162,6 +167,7 @@ public:
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
+    void onMenuButtonClicked();
     void updateMenuItems(bool doPopup);
     virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
     virtual void addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func);
@@ -233,7 +239,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
 
     menuButton.setText("*");
     menuButton.setToolTip(_("Option Menu"));
-    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::updateMenuItems, this, true));
+    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
 
     prevButton.setText("<");
     prevButton.setToolTip(_("Go back to the previous phase"));
@@ -1342,9 +1348,20 @@ void TaskViewImpl::onWaitTimeout()
 }
 
 
+void TaskViewImpl::onMenuButtonClicked()
+{
+    if(isNoExecutionMode){
+        sigMenuRequest();
+    } else {
+        updateMenuItems(true);
+    }
+}
+
+
 void TaskViewImpl::updateMenuItems(bool doPopup)
 {
     menuItems.clear();
+    menuConnections.disconnect();
     
     menuManager.setNewPopupMenu(self);
     if(currentTask){
@@ -1369,27 +1386,31 @@ void TaskViewImpl::updateMenuItems(bool doPopup)
 void TaskViewImpl::addMenuItem(const std::string& caption, boost::function<void()> func)
 {
     int index = menuItems.size();
-    menuItems.push_back(MenuItem());
-    Action* action = menuManager.addItem(caption.c_str());
-    action->sigTriggered().connect(
-        boost::bind(&TaskViewImpl::onMenuItemTriggered, this, index));
+    MenuItem menuItem;
+    menuItem.action = menuManager.addItem(caption.c_str());
+    menuConnections.add(
+        menuItem.action->sigTriggered().connect(
+            boost::bind(&TaskViewImpl::onMenuItemTriggered, this, index)));
     if(func){
-        menuItems.back().func = func;
+        menuItem.func = func;
     }
+    menuItems.push_back(menuItem);
 }
 
 
 void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func)
 {
     int index = menuItems.size();
-    menuItems.push_back(MenuItem());
-    Action* action = menuManager.addCheckItem(caption.c_str());
-    action->setChecked(isChecked);
-    action->sigToggled().connect(
-        boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1));
+    MenuItem menuItem;
+    menuItem.action = menuManager.addCheckItem(caption.c_str());
+    menuItem.action->setChecked(isChecked);
+    menuConnections.add(
+        menuItem.action->sigToggled().connect(
+            boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1)));
     if(func){
-        menuItems.back().checkFunc = func;
+        menuItem.checkFunc = func;
     }
+    menuItems.push_back(menuItem);
 }
 
 
@@ -1452,6 +1473,44 @@ void TaskViewImpl::applyMenuItem(int index, bool on)
     }
 }
                 
+
+boost::dynamic_bitset<> TaskView::menuItemCheckStates() const
+{
+    boost::dynamic_bitset<> states;
+    impl->updateMenuItems(false);
+    int n = impl->menuItems.size();
+    states.resize(n);
+    for(int i=0; i < n; ++i){
+        Action* action = impl->menuItems[i].action;
+        if(action){
+            states[i] = action->isChecked();
+        }
+    }
+    return states;
+}
+
+
+SignalProxy<void()> TaskView::sigMenuRequest()
+{
+    return impl->sigMenuRequest;
+}
+
+
+void TaskView::showMenu(boost::dynamic_bitset<> checkStates)
+{
+    impl->updateMenuItems(true);
+
+    impl->menuConnections.block();
+    int n = impl->menuItems.size();
+    for(int i=0; i < n; ++i){
+        Action* action = impl->menuItems[i].action;
+        if(action && action->isCheckable()){
+            action->setChecked(checkStates[i]);
+        }
+    }
+    impl->menuConnections.unblock();
+}
+
 
 SignalProxy<void(int index)> TaskView::sigMenuItemTriggered()
 {
