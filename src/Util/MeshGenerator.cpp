@@ -342,6 +342,47 @@ SgMesh* MeshGenerator::generateArrow(double length, double width, double coneLen
 }
 
 
+SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
+{
+    int divisionNumber2 = divisionNumber_ / 4;
+
+    SgMesh* mesh = new SgMesh();
+    SgVertexArray& vertices = *mesh->getOrCreateVertices();
+    vertices.reserve(divisionNumber_ * divisionNumber2);
+
+    for(int i=0; i < divisionNumber_; ++i){
+        double phi = i * 2.0 * PI / divisionNumber_;
+        for(int j=0; j < divisionNumber2; ++j){
+            double theta = j * 2.0 * PI / divisionNumber2;
+            Vector3f v;
+            double r = crossSectionRadius * cos(theta) + radius;
+            v.x() = cos(phi) * r;
+            v.y() = crossSectionRadius * sin(theta);
+            v.z() = sin(phi) * r;
+            vertices.push_back(v);
+        }
+    }
+
+    mesh->reserveNumTriangles(2 * divisionNumber_ * divisionNumber2);
+
+    for(int i=0; i < divisionNumber_; ++i){
+        int current = i * divisionNumber2;
+        int next = ((i + 1) % divisionNumber_) * divisionNumber2;
+        for(int j=0; j < divisionNumber2; ++j){
+            int j_next = (j + 1) % divisionNumber2;
+            mesh->addTriangle(current + j, next + j_next, next + j);
+            mesh->addTriangle(current + j, current + j_next, next + j_next);
+        }
+    }
+
+    mesh->updateBoundingBox();
+
+    generateNormals(mesh, PI);
+
+    return mesh;
+}
+
+
 SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
 {
     const int numSpines = extrusion.spine.size();
