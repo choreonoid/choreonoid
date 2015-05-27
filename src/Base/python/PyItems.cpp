@@ -12,6 +12,7 @@
 #include "../MultiAffine3SeqItem.h"
 #include "../MultiSE3SeqItem.h"
 #include "../Vector3SeqItem.h"
+#include "../SceneItem.h"
 #include "../PointSetItem.h"
 #include "../MultiPointSetItem.h"
 #include <cnoid/PyUtil>
@@ -65,6 +66,10 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
 
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
+
+SgPosTransformPtr SceneItem_topNode(SceneItem& self){
+    return self.topNode();
+}
 
 Affine3 PointSetItem_offsetTransform(const PointSetItem& self){
     return self.offsetTransform();
@@ -223,7 +228,14 @@ void exportPyItems()
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
 
-    class_ < PointSetItem, PointSetItemPtr, bases<Item, SceneProvider> >("PointSetItem")
+    class_< SceneItem, SceneItemPtr, bases<Item, SceneProvider> >("SceneItem")
+        .def("topNode", SceneItem_topNode)
+        ;
+
+    implicitly_convertible<SceneItemPtr, ItemPtr>();
+    implicitly_convertible<SceneItemPtr, SceneProvider*>();
+
+    class_< PointSetItem, PointSetItemPtr, bases<Item, SceneProvider> >("PointSetItem")
         .def("offsetTransform", PointSetItem_offsetTransform)
         .def("setOffsetTransform", &PointSetItem::setOffsetTransform)
         .def("sigOffsetTransformChanged", &PointSetItem::sigOffsetTransformChanged)
@@ -237,9 +249,10 @@ void exportPyItems()
         ;
 
     implicitly_convertible<PointSetItemPtr, ItemPtr>();
+    implicitly_convertible<PointSetItemPtr, SceneProvider*>();
     PyItemList<PointSetItem>("PointSetItemList");
 
-    class_ < MultiPointSetItem, MultiPointSetItemPtr, bases<PointSetItem, SceneProvider> >("MultiPointSetItem")
+    class_< MultiPointSetItem, MultiPointSetItemPtr, bases<PointSetItem, SceneProvider> >("MultiPointSetItem")
         .def("numPointSetItems", &MultiPointSetItem::numPointSetItems)
         .def("pointSetItem", MultiPointSetItem_pointSetItem)
         .def("numActivePointSetItems", &MultiPointSetItem::numActivePointSetItems)
@@ -263,6 +276,7 @@ void exportPyItems()
         ;
 
     implicitly_convertible<MultiPointSetItemPtr, ItemPtr>();
+    implicitly_convertible<MultiPointSetItemPtr, SceneProvider*>();
     PyItemList<MultiPointSetItem>("MultiPointSetItemList");
 }
 
