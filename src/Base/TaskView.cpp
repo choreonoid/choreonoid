@@ -274,7 +274,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     self->setLayout(&topVBox);
 
     commandButtonBoxBaseLayout = 0;
-    commandButtonBoxLayouts.resize(3, 0);
+    commandButtonBoxLayouts.resize(5, 0);
     isVerticalLayout = true;
     doLayout(false);
     
