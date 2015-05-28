@@ -31,6 +31,9 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+typedef PushButton CommandButton;
+//typedef ToolButton CommandButton;
+
 /**
    This CombBox does not accept the wheel event to change the selection
    so that the current task is not changed by incorrect operations
@@ -72,7 +75,7 @@ public:
     QWidget commandButtonBox;
     QBoxLayout* commandButtonBoxBaseLayout;
     vector<QBoxLayout*> commandButtonBoxLayouts;
-    vector<PushButton*> commandButtons;
+    vector<CommandButton*> commandButtons;
 
     bool isNoExecutionMode;
     bool isActive;
@@ -136,7 +139,7 @@ public:
     void clearTasks();
     bool setCurrentTask(int index, bool forceUpdate);
     void setCurrentTaskByName(const std::string& name);
-    PushButton* getOrCreateCommandButton(int index);
+    CommandButton* getOrCreateCommandButton(int index);
     void layoutCommandButtons();
     bool setCurrentCommandIndex(int index);
     void setBusyState(bool on);
@@ -213,7 +216,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
       mv(MessageView::instance()),
       os(mv->cout())
 {
-    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     self->setDefaultLayoutArea(View::CENTER);
 
     currentTaskIndex = -1;
@@ -765,13 +768,15 @@ void TaskViewImpl::setCurrentTaskByName(const std::string& name)
 }
 
 
-PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
+CommandButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
 {
-    PushButton* button;
+    CommandButton* button;
     if(commandIndex < commandButtons.size()){
         button = commandButtons[commandIndex];
     } else {
-        button = new PushButton(&commandButtonBox);
+        button = new CommandButton(&commandButtonBox);
+        //button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+        //button->setMinimumWidth(5);
         button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
         if(commandButtons.empty()){
             QWidget::setTabOrder(&menuButton, button);
@@ -797,7 +802,7 @@ void TaskViewImpl::layoutCommandButtons()
     }
 
     if(!currentPhase){
-        PushButton* button = getOrCreateCommandButton(0);
+        CommandButton* button = getOrCreateCommandButton(0);
         button->setText("-");
         button->setEnabled(false);
         button->setToolTip(QString());
@@ -809,7 +814,7 @@ void TaskViewImpl::layoutCommandButtons()
         numVisibleButtons = currentPhase->numCommands();
 
         for(int i=0; i < numVisibleButtons; ++i){
-            PushButton* button = getOrCreateCommandButton(i);
+            CommandButton* button = getOrCreateCommandButton(i);
             TaskCommand* command = currentPhase->command(i);
             button->setText(command->caption().c_str());
             button->setToolTip(command->description().c_str());
