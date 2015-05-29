@@ -48,6 +48,22 @@ public:
 typedef boost::function<void(TaskProc* proc)> TaskFunc;
 
 
+class CNOID_EXPORT TaskToggleState : public Referenced
+{
+public:
+    bool isChecked() const { return isChecked_; }
+    void setChecked(bool on);
+
+    SignalProxy<void(bool on)> sigToggled() { return sigToggled_; }
+
+private:
+    bool isChecked_;
+    Signal<void(bool on)> sigToggled_;
+};
+
+typedef ref_ptr<TaskToggleState> TaskToggleStatePtr;
+
+
 class CNOID_EXPORT TaskCommand : public Referenced
 {
 public:
@@ -69,6 +85,12 @@ public:
 
     TaskCommand* setDefault(bool on = true) { isDefault_ = on; return this; }
     bool isDefault() const { return isDefault_; }
+
+    TaskCommand* setCheckable(bool on = true);
+    TaskCommand* setToggleState(TaskToggleState* state);
+    TaskToggleState* toggleState();
+    TaskCommand* setChecked(bool on);
+    bool isChecked() const;
     
     int nextPhaseIndex(int currentPhaseIndex) const;
     TaskCommand* setPhaseLink(int phaseIndex);
@@ -92,6 +114,7 @@ private:
     int nextPhaseIndex_;
     int nextCommandIndex_;
     int level_;
+    TaskToggleStatePtr toggleState_;
     bool isNextPhaseRelative_;
     bool isNextCommandRelative_;
     bool isCommandLinkAutomatic_;
@@ -127,6 +150,8 @@ public:
 
     TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
+    TaskCommand* addToggleCommand();
+    TaskCommand* addToggleCommand(const std::string& caption);
     int numCommands() const { return commands.size(); }
     TaskCommand* command(int index) const;
     int lastCommandIndex() const { return commands.size() - 1; }
@@ -152,6 +177,8 @@ public:
     int setCommandLevel(int level);
     TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
+    TaskCommand* addToggleCommand();
+    TaskCommand* addToggleCommand(const std::string& caption);
 
 private:
     TaskPhasePtr phase;
@@ -196,6 +223,8 @@ public:
     void setPreCommand(TaskFunc func);
     TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
+    TaskCommand* addToggleCommand();
+    TaskCommand* addToggleCommand(const std::string& caption);
     TaskCommand* lastCommand();
     int lastCommandIndex();
     TaskPhaseProxyPtr commandLevel(int level);

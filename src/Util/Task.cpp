@@ -17,6 +17,15 @@ TaskProc::~TaskProc()
 }
 
 
+void TaskToggleState::setChecked(bool on)
+{
+    if(on != isChecked_){
+        isChecked_ = on;
+        sigToggled_(on);
+    }
+}
+
+
 TaskCommand::TaskCommand()
 {
     initialize();
@@ -45,6 +54,45 @@ void TaskCommand::initialize()
 TaskCommand::~TaskCommand()
 {
 
+}
+
+
+TaskCommand* TaskCommand::setCheckable(bool on)
+{
+    toggleState();
+    return this;
+}
+
+
+TaskCommand* TaskCommand::setToggleState(TaskToggleState* state)
+{
+    toggleState_ = state;
+    return this;
+}
+
+
+TaskToggleState* TaskCommand::toggleState()
+{
+    if(!toggleState_){
+        toggleState_ = new TaskToggleState();
+    }
+    return toggleState_;
+}
+
+
+TaskCommand* TaskCommand::setChecked(bool on)
+{
+    toggleState()->setChecked(on);
+    return this;
+}
+
+
+bool TaskCommand::isChecked() const
+{
+    if(toggleState_){
+        return toggleState_->isChecked();
+    }
+    return false;
 }
 
 
@@ -153,6 +201,18 @@ TaskCommand* TaskPhase::addCommand(const std::string& caption)
 }
 
 
+TaskCommand* TaskPhase::addToggleCommand()
+{
+    return addCommand()->setCheckable();
+}
+
+
+TaskCommand* TaskPhase::addToggleCommand(const std::string& caption)
+{
+    return addCommand(caption)->setCheckable();
+}
+
+
 TaskCommand* TaskPhase::command(int index) const
 {
     TaskCommand* command = 0;
@@ -197,6 +257,18 @@ TaskCommand* TaskPhaseProxy::addCommand(const std::string& caption)
     TaskCommand* command = phase->addCommand(caption);
     command->setLevel(commandLevel);
     return command;
+}
+
+
+TaskCommand* TaskPhaseProxy::addToggleCommand()
+{
+    return addCommand()->setCheckable();
+}
+
+
+TaskCommand* TaskPhaseProxy::addToggleCommand(const std::string& caption)
+{
+    return addCommand(caption)->setCheckable();
 }
 
 
@@ -290,8 +362,7 @@ TaskPhase* Task::lastPhase()
 
 void Task::setPreCommand(TaskFunc func)
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         last->setPreCommand(func);
     }
 }
@@ -299,8 +370,7 @@ void Task::setPreCommand(TaskFunc func)
 
 TaskCommand* Task::addCommand()
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->addCommand();
     }
     return 0;
@@ -309,9 +379,26 @@ TaskCommand* Task::addCommand()
 
 TaskCommand* Task::addCommand(const std::string& caption)
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->addCommand(caption);
+    }
+    return 0;
+}
+
+
+TaskCommand* Task::addToggleCommand()
+{
+    if(TaskCommand* command = addCommand()){
+        return command->setCheckable();
+    }
+    return 0;
+}
+
+
+TaskCommand* Task::addToggleCommand(const std::string& caption)
+{
+    if(TaskCommand* command = addCommand(caption)){
+        return command->setCheckable();
     }
     return 0;
 }

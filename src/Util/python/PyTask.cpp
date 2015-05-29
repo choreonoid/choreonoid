@@ -159,6 +159,26 @@ TaskCommandPtr TaskCommand_setDefault2(TaskCommand& self, bool on) {
     return self.setDefault(on);
 }
 
+TaskCommandPtr TaskCommand_setCheckable1(TaskCommand& self){
+    return self.setCheckable();
+}
+
+TaskCommandPtr TaskCommand_setCheckable2(TaskCommand& self, bool on) {
+    return self.setCheckable(on);
+}
+
+TaskCommandPtr TaskCommand_setToggleState(TaskCommand& self, TaskToggleState* state){
+    return self.setToggleState(state);
+}
+
+TaskToggleStatePtr TaskCommand_toggleState(TaskCommand& self){
+    return self.toggleState();
+}
+
+TaskCommandPtr TaskCommand_setChecked(TaskCommand& self, bool on){
+    return self.setChecked(on);
+}
+
 TaskCommandPtr TaskCommand_setPhaseLink(TaskCommand& self, int phaseIndex) {
     return self.setPhaseLink(phaseIndex);
 }
@@ -215,6 +235,14 @@ TaskCommandPtr TaskPhase_addCommand2(TaskPhase& self, const std::string& caption
     return self.addCommand(caption);
 }
 
+TaskCommandPtr TaskPhase_addToggleCommand1(TaskPhase& self) {
+    return self.addToggleCommand();
+}
+
+TaskCommandPtr TaskPhase_addToggleCommand2(TaskPhase& self, const std::string& caption) {
+    return self.addToggleCommand(caption);
+}
+
 TaskCommandPtr TaskPhase_addCommandExMain(TaskPhase* self, const std::string& caption, python::dict kw) {
 
     TaskCommandPtr command = self->addCommand(caption);
@@ -260,6 +288,13 @@ TaskCommandPtr TaskPhaseProxy_addCommand2(TaskPhaseProxy& self, const std::strin
     return self.addCommand(caption);
 }
 
+TaskCommandPtr TaskPhaseProxy_addToggleCommand1(TaskPhaseProxy& self) {
+    return self.addToggleCommand();
+}
+
+TaskCommandPtr TaskPhaseProxy_addToggleCommand2(TaskPhaseProxy& self, const std::string& caption) {
+    return self.addToggleCommand(caption);
+}
 
 void TaskMenu_addMenuItem1(TaskMenu& self, const std::string& caption, python::object func){
     self.addMenuItem(caption, PyMenuItemFunc(func));
@@ -426,6 +461,14 @@ TaskCommandPtr Task_addCommand2(Task& self, const std::string& caption){
     return self.addCommand(caption);
 }
 
+TaskCommandPtr Task_addToggleCommand1(Task& self){
+    return self.addToggleCommand();
+}
+
+TaskCommandPtr Task_addToggleCommand2(Task& self, const std::string& caption){
+    return self.addToggleCommand(caption);
+}
+
 TaskCommandPtr Task_lastCommand(Task& self){
     return self.lastCommand();
 }
@@ -521,8 +564,15 @@ void exportPyTaskTypes()
         .def("__call__", &TaskFunc::operator())
         ;
 
-    class_<TaskCommand, TaskCommandPtr, bases<Referenced> >
-        ("TaskCommand", init<const std::string&>())
+    class_<TaskToggleState, TaskToggleStatePtr, bases<Referenced>, boost::noncopyable >("TaskToggleState")
+        .def("isChecked", &TaskToggleState::isChecked)
+        .def("setChecked", &TaskToggleState::setChecked)
+        .def("sigToggled", &TaskToggleState::sigToggled)
+        ;
+
+    implicitly_convertible<TaskToggleStatePtr, ReferencedPtr>();
+
+    class_<TaskCommand, TaskCommandPtr, bases<Referenced> >("TaskCommand", init<const std::string&>())
         .def("caption", &TaskCommand::caption, return_value_policy<copy_const_reference>())
         .def("setCaption", TaskCommand_setCaption)
         .def("description", &TaskCommand::description, return_value_policy<copy_const_reference>())
@@ -532,6 +582,12 @@ void exportPyTaskTypes()
         .def("setDefault", TaskCommand_setDefault1)
         .def("setDefault", TaskCommand_setDefault2)
         .def("isDefault", &TaskCommand::isDefault)
+        .def("setCheckable", TaskCommand_setCheckable1)
+        .def("setCheckable", TaskCommand_setCheckable2)
+        .def("setToggleState", TaskCommand_setToggleState)
+        .def("toggleState", TaskCommand_toggleState)
+        .def("setChecked", TaskCommand_setChecked)
+        .def("isChecked", &TaskCommand::isChecked)
         .def("nextPhaseIndex", &TaskCommand::nextPhaseIndex)
         .def("setPhaseLink", TaskCommand_setPhaseLink)
         .def("setPhaseLinkStep", TaskCommand_setPhaseLinkStep)
@@ -564,6 +620,8 @@ void exportPyTaskTypes()
         .def("preCommand", &TaskPhase::preCommand)
         .def("addCommand", TaskPhase_addCommand1)
         .def("addCommand", TaskPhase_addCommand2)
+        .def("addToggleCommand", TaskPhase_addToggleCommand1)
+        .def("addToggleCommand", TaskPhase_addToggleCommand2)
         .def("addCommandEx", python::raw_function(TaskPhase_addCommandEx, 2))
         .def("numCommands", &TaskPhase::numCommands)
         .def("command", TaskPhase_command)
@@ -578,6 +636,8 @@ void exportPyTaskTypes()
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
         .def("addCommand", TaskPhaseProxy_addCommand1)
         .def("addCommand", TaskPhaseProxy_addCommand2)
+        .def("addToggleCommand", TaskPhaseProxy_addToggleCommand1)
+        .def("addToggleCommand", TaskPhaseProxy_addToggleCommand2)
         ;
     
     implicitly_convertible<TaskPhaseProxyPtr, ReferencedPtr>();
@@ -605,6 +665,8 @@ void exportPyTaskTypes()
         .def("setPreCommand", &Task::setPreCommand)
         .def("addCommand", Task_addCommand1)
         .def("addCommand", Task_addCommand2)
+        .def("addToggleCommand", Task_addToggleCommand1)
+        .def("addToggleCommand", Task_addToggleCommand2)
         .def("addCommandEx", python::raw_function(Task_addCommandEx, 2))
         .def("lastCommand", Task_lastCommand)
         .def("lastCommandIndex", &Task::lastCommandIndex)
