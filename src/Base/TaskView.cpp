@@ -64,6 +64,8 @@ public:
     QVBoxLayout vspace;
     TaskComboBox taskCombo;
     PushButton menuButton;
+    ToolButton usualPhaseButton;
+    ToolButton configPhaseButton;
     PushButton prevButton;
     PushButton cancelButton;
     SpinBox phaseIndexSpin;
@@ -98,6 +100,8 @@ public:
     Signal<void()> sigCurrentTaskChanged;
     TaskPhasePtr currentPhase;
     int currentPhaseIndex_;
+    int lastUsualPhaseIndex;
+    int configPhaseIndex;
     Signal<void()> sigCurrentPhaseChanged;
     boost::optional<int> nextPhaseIndex;
     enum { NO_CURRENT_COMMAND = -2, PRE_COMMAND = -1 };
@@ -170,6 +174,9 @@ public:
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
+    void onUsualPhaseButtonClicked();
+    void onConfigPhaseButtonClicked();
+    
     void onMenuButtonClicked();
     void updateMenuItems(bool doPopup);
     virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
@@ -221,6 +228,8 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
 
     currentTaskIndex = -1;
     currentPhaseIndex_ = 0;
+    lastUsualPhaseIndex = 0;
+    configPhaseIndex = 0;
     currentCommandIndex = NO_CURRENT_COMMAND;
     forceCommandLinkAutomatic = false;
     isBusy = false;
@@ -244,6 +253,16 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     menuButton.setToolTip(_("Option Menu"));
     menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
 
+    usualPhaseButton.setText("   {   ");
+    usualPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    usualPhaseButton.setToolTip(_("Return to usual phases"));
+    usualPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onUsualPhaseButtonClicked, this));
+
+    configPhaseButton.setText("   }   ");
+    configPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    configPhaseButton.setToolTip(_("Go to config phases"));
+    configPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onConfigPhaseButtonClicked, this));
+    
     prevButton.setText("<");
     prevButton.setToolTip(_("Go back to the previous phase"));
     prevButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, -1));
@@ -338,6 +357,8 @@ void TaskViewImpl::doLayout(bool isVertical)
         hbox2.addWidget(&cancelButton);
         hbox2.addWidget(&autoModeToggle);
         hbox2.addWidget(&menuButton);
+        hbox2.addWidget(&usualPhaseButton);
+        hbox2.addWidget(&configPhaseButton);
 
         hbox3.addWidget(&prevButton);
         hbox3.addWidget(&phaseIndexSpin);
@@ -362,6 +383,8 @@ void TaskViewImpl::doLayout(bool isVertical)
     } else {
         hbox1.addWidget(&taskCombo, 1);
         hbox1.addWidget(&menuButton);
+        hbox1.addWidget(&usualPhaseButton);
+        hbox1.addWidget(&configPhaseButton);
 
         hbox2.addWidget(&prevButton);
         hbox2.addWidget(&cancelButton);
@@ -741,6 +764,9 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
     currentPhase.reset();
     setPhaseIndex(0, false);
 
+    lastUsualPhaseIndex = currentPhaseIndex_;
+    configPhaseIndex = std::max(0, currentTask->numPhases() - 1);
+
     if(isExecutionEnabled()){
         info.task->onActivated(self);
     }
@@ -1000,9 +1026,17 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
     if(numPhases == 0){
         currentPhase = 0;
         phaseLabel.setText("No phase");
+        phaseLabel.show();
     } else {
         currentPhase = currentTask->phase(currentPhaseIndex_);
-        phaseLabel.setText(currentPhase->caption().c_str());
+
+        if(currentPhase->caption().empty()){
+            phaseLabel.setText("");
+            phaseLabel.hide();
+        } else {
+            phaseLabel.setText(currentPhase->caption().c_str());
+            phaseLabel.show();
+        }
     }
     
     phaseIndexSpinConnection.block();
@@ -1350,6 +1384,21 @@ void TaskViewImpl::onWaitTimeout()
         isPendingCommandCompleted = true;
         eventLoop.quit();
     }
+}
+
+
+void TaskViewImpl::onUsualPhaseButtonClicked()
+{
+    setPhaseIndex(lastUsualPhaseIndex, false);
+}
+
+
+void TaskViewImpl::onConfigPhaseButtonClicked()
+{
+    if(currentPhaseIndex_ < configPhaseIndex){
+        lastUsualPhaseIndex = currentPhaseIndex_;
+    }
+    setPhaseIndex(configPhaseIndex, false);
 }
 
 
