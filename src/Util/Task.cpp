@@ -231,23 +231,33 @@ TaskPhaseProxyPtr TaskPhase::commandLevel(int level)
 }
 
 
+int TaskPhase::maxCommandLevel() const
+{
+    int maxLevel = -1;
+    for(size_t i=0; i < commands.size(); ++i){
+        maxLevel = std::max(maxLevel, commands[i]->level());
+    }
+    return maxLevel;
+}
+
+
 TaskPhaseProxy::TaskPhaseProxy(TaskPhase* phase)
     : phase(phase)
 {
-    commandLevel = 0;
+    commandLevel_ = 0;
 }
         
 
-int TaskPhaseProxy::setCommandLevel(int level)
+void TaskPhaseProxy::setCommandLevel(int level)
 {
-    commandLevel = level;
+    commandLevel_ = level;
 }
     
 
 TaskCommand* TaskPhaseProxy::addCommand()
 {
     TaskCommand* command = phase->addCommand();
-    command->setLevel(commandLevel);
+    command->setLevel(commandLevel_);
     return command;
 }
 
@@ -255,7 +265,7 @@ TaskCommand* TaskPhaseProxy::addCommand()
 TaskCommand* TaskPhaseProxy::addCommand(const std::string& caption)
 {
     TaskCommand* command = phase->addCommand(caption);
-    command->setLevel(commandLevel);
+    command->setLevel(commandLevel_);
     return command;
 }
 
@@ -406,8 +416,7 @@ TaskCommand* Task::addToggleCommand(const std::string& caption)
 
 TaskCommand* Task::lastCommand()
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->lastCommand();
     }
     return 0;
@@ -416,8 +425,7 @@ TaskCommand* Task::lastCommand()
 
 int Task::lastCommandIndex()
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->lastCommandIndex();
     }
     return -1;
@@ -426,11 +434,19 @@ int Task::lastCommandIndex()
 
 TaskPhaseProxyPtr Task::commandLevel(int level)
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->commandLevel(level);
     }
     return 0;
+}
+
+
+int Task::maxCommandLevel() const
+{
+    if(!phases_.empty()){
+        return phases_.back()->maxCommandLevel();
+    }
+    return -1;
 }
 
 

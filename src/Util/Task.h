@@ -158,6 +158,7 @@ public:
     TaskCommand* lastCommand() const { return command(commands.size() - 1); }
 
     TaskPhaseProxyPtr commandLevel(int level);
+    int maxCommandLevel() const;
 
 private:
     std::string caption_;
@@ -174,7 +175,9 @@ class CNOID_EXPORT TaskPhaseProxy : public Referenced
 public:
     TaskPhaseProxy(TaskPhase* phase);
         
-    int setCommandLevel(int level);
+    void setCommandLevel(int level);
+    int commandLevel() const { return commandLevel_; }
+    
     TaskCommand* addCommand();
     TaskCommand* addCommand(const std::string& caption);
     TaskCommand* addToggleCommand();
@@ -182,7 +185,7 @@ public:
 
 private:
     TaskPhasePtr phase;
-    int commandLevel;
+    int commandLevel_;
 };
 
 
@@ -228,6 +231,7 @@ public:
     TaskCommand* lastCommand();
     int lastCommandIndex();
     TaskPhaseProxyPtr commandLevel(int level);
+    int maxCommandLevel() const;
 
     TaskFunc funcToSetCommandLink(int commandIndex) const;
 

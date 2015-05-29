@@ -628,12 +628,14 @@ void exportPyTaskTypes()
         .def("lastCommandIndex", &TaskPhase::lastCommandIndex)
         .def("lastCommand", TaskPhase_lastCommand)
         .def("commandLevel", &TaskPhase::commandLevel)
+        .def("maxCommandLevel", &TaskPhase::maxCommandLevel)
         ;
 
     implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
 
     class_<TaskPhaseProxy, TaskPhaseProxyPtr, bases<Referenced>, boost::noncopyable >("TaskPhaseProxy", no_init)
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
+        .def("commandLevel", &TaskPhaseProxy::commandLevel)
         .def("addCommand", TaskPhaseProxy_addCommand1)
         .def("addCommand", TaskPhaseProxy_addCommand2)
         .def("addToggleCommand", TaskPhaseProxy_addToggleCommand1)
@@ -677,6 +679,7 @@ void exportPyTaskTypes()
         .def("storeState", &Task::storeState, &TaskWrap::default_storeState)
         .def("restoreState", &Task::restoreState, &TaskWrap::default_restoreState)
         .def("commandLevel", &Task::commandLevel)
+        .def("maxCommandLevel", &Task::maxCommandLevel)
         ;
 
     implicitly_convertible<TaskPtr, ReferencedPtr>();
