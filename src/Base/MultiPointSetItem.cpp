@@ -826,7 +826,7 @@ bool MultiPointSetItemImpl::outputPointSetItem(int index)
         // result = item->save(filepath, "PCD-FILE");
 
         try {
-            cnoid::savePCD(item->pointSet(), filename, item->offsetTransform());
+            cnoid::savePCD(item->pointSet(), filepath, item->offsetTransform());
 
             MappingPtr info = new Mapping();
             info->write("file", filename);
