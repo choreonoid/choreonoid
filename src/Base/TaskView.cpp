@@ -255,12 +255,12 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
 
     usualPhaseButton.setText("   {   ");
     usualPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-    usualPhaseButton.setToolTip(_("Return to usual phases"));
+    usualPhaseButton.setToolTip(_("Return to the current phase"));
     usualPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onUsualPhaseButtonClicked, this));
 
     configPhaseButton.setText("   }   ");
     configPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-    configPhaseButton.setToolTip(_("Go to config phases"));
+    configPhaseButton.setToolTip(_("Go to the config phase"));
     configPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onConfigPhaseButtonClicked, this));
     
     prevButton.setText("<");
