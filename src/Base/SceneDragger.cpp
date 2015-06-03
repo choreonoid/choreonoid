@@ -526,6 +526,7 @@ PositionDragger::PositionDragger()
     isDraggerAlwaysHidden_ = false;
     isContainerMode_ = false;
     isContentsDragEnabled_ = true;
+    isUndoEnabled_ = false;    
 }
 
 
@@ -541,6 +542,7 @@ PositionDragger::PositionDragger(const PositionDragger& org)
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
     isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
     isContentsDragEnabled_ = org.isContentsDragEnabled_;
+    isUndoEnabled_ = org.isUndoEnabled_;
 }
 
 
@@ -556,17 +558,20 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
     isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
     isContentsDragEnabled_ = org.isContentsDragEnabled_;
+    isUndoEnabled_ = org.isUndoEnabled_;
 }
 
 
 void PositionDragger::initalizeDraggers()
 {
-    translationDragger_->sigTranslationStarted().connect(boost::ref(sigDragStarted_));
+    translationDragger_->sigTranslationStarted().connect(
+        boost::bind(&PositionDragger::onSubDraggerDragStarted, this));
     translationDragger_->sigTranslationDragged().connect(
         boost::bind(&PositionDragger::onSubDraggerDragged, this));
     translationDragger_->sigTranslationFinished().connect(boost::ref(sigDragFinished_));
     
-    rotationDragger_->sigRotationStarted().connect(boost::ref(sigDragStarted_));
+    rotationDragger_->sigRotationStarted().connect(
+        boost::bind(&PositionDragger::onSubDraggerDragStarted, this));
     rotationDragger_->sigRotationDragged().connect(
         boost::bind(&PositionDragger::onSubDraggerDragged, this));
     rotationDragger_->sigRotationFinished().connect(boost::ref(sigDragFinished_));
@@ -726,6 +731,13 @@ Affine3 PositionDragger::draggedPosition() const
 }
 
 
+void PositionDragger::onSubDraggerDragStarted()
+{
+    storeCurrentPositionToHistory();
+    sigDragStarted_();
+}
+
+
 void PositionDragger::onSubDraggerDragged()
 {
     if(isContainerMode_){
@@ -748,7 +760,11 @@ bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
         }
         dragProjector.setInitialPosition(T());
         dragProjector.setTranslationAlongViewPlane();
-        return dragProjector.startTranslation(event);
+        if(dragProjector.startTranslation(event)){
+            storeCurrentPositionToHistory();
+            sigDragStarted_();
+            return true;
+        }
     }
     return false;
 }
@@ -758,6 +774,7 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
     if(isContainerMode_ && isContentsDragEnabled_){
         if(dragProjector.isDragging()){
+            sigDragFinished_();
             dragProjector.resetDragMode();
             return true;
         }
@@ -801,4 +818,44 @@ void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
     if(!event.sceneWidget()->isEditMode()){
         showDragMarkers(false);
     }
+}
+
+
+void PositionDragger::storeCurrentPositionToHistory()
+{
+    if(isUndoEnabled_){
+        history.push_back(position());
+        if(history.size() > 10){
+            history.pop_front();
+        }
+    }
+}
+
+
+void PositionDragger::setUndoEnabled(bool on)
+{
+    isUndoEnabled_ = on;
+}
+
+
+bool PositionDragger::isUndoEnabled() const
+{
+    return isUndoEnabled_;
+}
+
+
+bool PositionDragger::onUndoRequest()
+{
+    if(!history.empty()){
+        const Affine3& T = history.back();
+        setPosition(T);
+        history.pop_back();
+        notifyUpdate();
+    }
+}
+
+
+bool PositionDragger::onRedoRequest()
+{
+
 }

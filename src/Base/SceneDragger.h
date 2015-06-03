@@ -8,6 +8,7 @@
 #include "SceneWidgetEditable.h"
 #include "SceneDragProjector.h"
 #include <cnoid/SceneShape>
+#include <deque>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -168,6 +169,10 @@ public:
     bool isDraggerAlwaysShown() const;
     void setDraggerAlwaysHidden(bool on);
     bool isDraggerAlwaysHidden() const;
+    void setUndoEnabled(bool on);
+    bool isUndoEnabled() const;
+
+    void storeCurrentPositionToHistory();
 
     TranslationDragger* translationDragger() { return translationDragger_; }
     RotationDragger* rotationDragger() { return rotationDragger_; }
@@ -191,6 +196,8 @@ public:
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on);
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
+    virtual bool onUndoRequest();
+    virtual bool onRedoRequest();
         
 private:
     TranslationDraggerPtr translationDragger_;
@@ -202,12 +209,15 @@ private:
     bool isDraggerAlwaysShown_;
     bool isDraggerAlwaysHidden_;
     bool isDraggerShown;
+    bool isUndoEnabled_;
+    std::deque<Affine3> history;
     Signal<void(int axisSet)> sigDraggableAxesChanged_;
     Signal<void()> sigDragStarted_;
     Signal<void()> sigPositionDragged_;
     Signal<void()> sigDragFinished_;
 
     void initalizeDraggers();
+    void onSubDraggerDragStarted();
     void onSubDraggerDragged();
     void showDragMarkers(bool on);
 };
