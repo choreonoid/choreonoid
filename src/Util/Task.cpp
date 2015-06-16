@@ -4,7 +4,10 @@
 */
 
 #include "Task.h"
+#include "AbstractTaskSequencer.h"
+#include "ValueTree.h"
 
+using namespace std;
 using namespace cnoid;
 
 
@@ -13,15 +16,83 @@ TaskProc::~TaskProc()
 
 }
 
+
+void TaskToggleState::setChecked(bool on)
+{
+    if(on != isChecked_){
+        isChecked_ = on;
+        sigToggled_(on);
+    }
+}
+
+
+TaskCommand::TaskCommand()
+{
+    initialize();
+}
+
+
 TaskCommand::TaskCommand(const std::string& caption)
     : caption_(caption)
 {
+    initialize();
+}
+
+
+void TaskCommand::initialize()
+{
     nextPhaseIndex_ = 0;
     nextCommandIndex_ = 0;
+    level_ = 0;
     isNextPhaseRelative_ = true;
     isNextCommandRelative_ = true;
     isCommandLinkAutomatic_ = false;
     isDefault_ = false;
+}
+
+
+TaskCommand::~TaskCommand()
+{
+
+}
+
+
+TaskCommand* TaskCommand::setCheckable(bool on)
+{
+    toggleState();
+    return this;
+}
+
+
+TaskCommand* TaskCommand::setToggleState(TaskToggleState* state)
+{
+    toggleState_ = state;
+    return this;
+}
+
+
+TaskToggleState* TaskCommand::toggleState()
+{
+    if(!toggleState_){
+        toggleState_ = new TaskToggleState();
+    }
+    return toggleState_;
+}
+
+
+TaskCommand* TaskCommand::setChecked(bool on)
+{
+    toggleState()->setChecked(on);
+    return this;
+}
+
+
+bool TaskCommand::isChecked() const
+{
+    if(toggleState_){
+        return toggleState_->isChecked();
+    }
+    return false;
 }
 
 
@@ -66,7 +137,7 @@ TaskCommand* TaskCommand::setCommandLinkStep(int commandIndexStep)
     nextCommandIndex_ = commandIndexStep;
     isNextCommandRelative_ = true;
     return this;
-}    
+}
 
 
 TaskPhase::TaskPhase(const std::string& caption)
@@ -90,6 +161,12 @@ TaskPhase::TaskPhase(const TaskPhase& org, bool doDeepCopy)
 }
 
 
+TaskPhase::~TaskPhase()
+{
+
+}
+
+
 TaskPhase* TaskPhase::clone(bool doDeepCopy)
 {
     return new TaskPhase(*this, doDeepCopy);
@@ -108,11 +185,31 @@ void TaskPhase::setPreCommand(TaskFunc func)
 }
 
 
+TaskCommand* TaskPhase::addCommand()
+{
+    TaskCommand* command = new TaskCommand();
+    commands.push_back(command);
+    return command;
+}
+
+
 TaskCommand* TaskPhase::addCommand(const std::string& caption)
 {
     TaskCommand* command = new TaskCommand(caption);
     commands.push_back(command);
     return command;
+}
+
+
+TaskCommand* TaskPhase::addToggleCommand()
+{
+    return addCommand()->setCheckable();
+}
+
+
+TaskCommand* TaskPhase::addToggleCommand(const std::string& caption)
+{
+    return addCommand(caption)->setCheckable();
 }
 
 
@@ -123,6 +220,65 @@ TaskCommand* TaskPhase::command(int index) const
         command = commands[index];
     }
     return command;
+}
+
+
+TaskPhaseProxyPtr TaskPhase::commandLevel(int level)
+{
+    TaskPhaseProxyPtr proxy = new TaskPhaseProxy(this);
+    proxy->setCommandLevel(level);
+    return proxy;
+}
+
+
+int TaskPhase::maxCommandLevel() const
+{
+    int maxLevel = -1;
+    for(size_t i=0; i < commands.size(); ++i){
+        maxLevel = std::max(maxLevel, commands[i]->level());
+    }
+    return maxLevel;
+}
+
+
+TaskPhaseProxy::TaskPhaseProxy(TaskPhase* phase)
+    : phase(phase)
+{
+    commandLevel_ = 0;
+}
+        
+
+void TaskPhaseProxy::setCommandLevel(int level)
+{
+    commandLevel_ = level;
+}
+    
+
+TaskCommand* TaskPhaseProxy::addCommand()
+{
+    TaskCommand* command = phase->addCommand();
+    command->setLevel(commandLevel_);
+    return command;
+}
+
+
+TaskCommand* TaskPhaseProxy::addCommand(const std::string& caption)
+{
+    TaskCommand* command = phase->addCommand(caption);
+    command->setLevel(commandLevel_);
+    return command;
+}
+
+
+TaskCommand* TaskPhaseProxy::addToggleCommand()
+{
+    return addCommand()->setCheckable();
+}
+
+
+TaskCommand* TaskPhaseProxy::addToggleCommand(const std::string& caption)
+{
+    return addCommand(caption)->setCheckable();
 }
 
 
@@ -158,6 +314,12 @@ Task::Task(const Task& org, bool doDeepCopy)
             phases_[i] = new TaskPhase(*phases_[i], true);
         }
     }
+}
+
+
+Task::~Task()
+{
+
 }
 
 
@@ -210,18 +372,43 @@ TaskPhase* Task::lastPhase()
 
 void Task::setPreCommand(TaskFunc func)
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         last->setPreCommand(func);
     }
 }
 
 
+TaskCommand* Task::addCommand()
+{
+    if(TaskPhase* last = lastPhase()){
+        return last->addCommand();
+    }
+    return 0;
+}
+
+
 TaskCommand* Task::addCommand(const std::string& caption)
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->addCommand(caption);
+    }
+    return 0;
+}
+
+
+TaskCommand* Task::addToggleCommand()
+{
+    if(TaskCommand* command = addCommand()){
+        return command->setCheckable();
+    }
+    return 0;
+}
+
+
+TaskCommand* Task::addToggleCommand(const std::string& caption)
+{
+    if(TaskCommand* command = addCommand(caption)){
+        return command->setCheckable();
     }
     return 0;
 }
@@ -229,8 +416,7 @@ TaskCommand* Task::addCommand(const std::string& caption)
 
 TaskCommand* Task::lastCommand()
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->lastCommand();
     }
     return 0;
@@ -239,9 +425,26 @@ TaskCommand* Task::lastCommand()
 
 int Task::lastCommandIndex()
 {
-    TaskPhase* last = lastPhase();
-    if(last){
+    if(TaskPhase* last = lastPhase()){
         return last->lastCommandIndex();
+    }
+    return -1;
+}
+
+
+TaskPhaseProxyPtr Task::commandLevel(int level)
+{
+    if(TaskPhase* last = lastPhase()){
+        return last->commandLevel(level);
+    }
+    return 0;
+}
+
+
+int Task::maxCommandLevel() const
+{
+    if(!phases_.empty()){
+        return phases_.back()->maxCommandLevel();
     }
     return -1;
 }
@@ -270,13 +473,25 @@ void Task::onMenuRequest(TaskMenu& menu)
 }
 
 
-bool Task::storeState(AbstractTaskSequencer* sequencer, Mapping& archive)
+void Task::onActivated(AbstractTaskSequencer* sequencer)
 {
-    return true;
+
 }
 
 
-bool Task::restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive)
+void Task::onDeactivated(AbstractTaskSequencer* sequencer)
 {
-    return true;
+
+}
+
+
+void Task::storeState(AbstractTaskSequencer* sequencer, Mapping& archive)
+{
+    archive.write("phaseIndex", sequencer->currentPhaseIndex());
+}
+
+
+void Task::restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive)
+{
+    sequencer->setCurrentPhase(archive.get("phaseIndex", 0));
 }

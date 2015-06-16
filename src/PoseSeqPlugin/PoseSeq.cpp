@@ -129,13 +129,13 @@ bool PoseSeq::restore(const Mapping& archive, const BodyPtr body)
         
         const ValueNode& referred = ref["refer"];
 
-        if(referred.type() == ValueNode::SCALAR){
+        if(referred.isScalar()){
             const string& name = referred;
             if(!name.empty()){
                 current = insert(current, time, name);
                 isInserted = true;
             }
-        } else if(referred.type() == ValueNode::MAPPING){
+        } else if(referred.isMapping()){
             const Mapping& mReferred = *referred.toMapping();
             const string& type = mReferred["type"];
             PoseUnitPtr poseUnit;

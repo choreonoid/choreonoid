@@ -14,6 +14,7 @@ namespace cnoid {
 void exportPySignalTypes();
 void exportPyValueTree();
 void exportPyEigenTypes();
+void exportPyEigenArchive();
 void exportPySeqTypes();
 void exportPySceneGraph();
 void exportPyTaskTypes();
@@ -27,6 +28,7 @@ BOOST_PYTHON_MODULE(Util)
     exportPySignalTypes();
     exportPyValueTree();
     exportPyEigenTypes();
+    exportPyEigenArchive();
     exportPySeqTypes();
     exportPySceneGraph();
     exportPyTaskTypes();

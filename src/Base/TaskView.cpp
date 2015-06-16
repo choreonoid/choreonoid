@@ -12,6 +12,8 @@
 #include <cnoid/SpinBox>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
+#include <cnoid/AppUtil>
+#include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QEventLoop>
@@ -29,6 +31,21 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+typedef PushButton CommandButton;
+//typedef ToolButton CommandButton;
+
+/**
+   This CombBox does not accept the wheel event to change the selection
+   so that the current task is not changed by incorrect operations
+*/
+class TaskComboBox : public ComboBox
+{
+public:
+    virtual void wheelEvent(QWheelEvent* e){
+
+    }
+};
+
 }
 
 namespace cnoid {
@@ -45,8 +62,10 @@ public:
     QHBoxLayout hbox2;
     QHBoxLayout hbox3;
     QVBoxLayout vspace;
-    ComboBox taskCombo;
+    TaskComboBox taskCombo;
     PushButton menuButton;
+    ToolButton usualPhaseButton;
+    ToolButton configPhaseButton;
     PushButton prevButton;
     PushButton cancelButton;
     SpinBox phaseIndexSpin;
@@ -55,17 +74,34 @@ public:
     ToggleButton autoModeToggle;
     PushButton nextButton;
     QLabel phaseLabel;
-    QBoxLayout* commandButtonBoxLayout;
-    vector<PushButton*> commandButtons;
-    MenuManager menuManager;
-    bool isNoExecutionMode;
+    QWidget commandButtonBox;
+    QBoxLayout* commandButtonBoxBaseLayout;
+    vector<QBoxLayout*> commandButtonBoxLayouts;
+    vector<CommandButton*> commandButtons;
 
-    std::vector<TaskPtr> tasks;
+    bool isNoExecutionMode;
+    bool isActive;
+
+    bool isExecutionEnabled() const { return !isNoExecutionMode && isActive; }
+    bool isExecutionDisabled() const { return !isExecutionEnabled(); }
+
+    struct TaskInfo {
+        TaskPtr task;
+        MappingPtr state;
+        TaskInfo(Task* task) : task(task) { }
+    };
+    std::vector<TaskInfo> tasks;
+
+    Signal<void(Task* task)> sigTaskAdded;
+    Signal<void(Task* task)> sigTaskRemoved;
+    
     TaskPtr currentTask;
     int currentTaskIndex;
     Signal<void()> sigCurrentTaskChanged;
     TaskPhasePtr currentPhase;
     int currentPhaseIndex_;
+    int lastUsualPhaseIndex;
+    int configPhaseIndex;
     Signal<void()> sigCurrentPhaseChanged;
     boost::optional<int> nextPhaseIndex;
     enum { NO_CURRENT_COMMAND = -2, PRE_COMMAND = -1 };
@@ -85,14 +121,30 @@ public:
     Timer waitTimer;
     Signal<void()> sigBusyStateChanged;
 
+    ScopedConnectionSet menuConnections;
+    MenuManager menuManager;
+    struct MenuItem {
+        boost::function<void()> func;
+        boost::function<void(bool on)> checkFunc;
+        Action* action;
+        MenuItem() { action = 0; }
+    };
+    vector<MenuItem> menuItems;
+    Signal<void()> sigMenuRequest;
+    Signal<void(int index)> sigMenuItemTriggered;
+    Signal<void(int index, bool on)> sigMenuItemToggled;
+
     TaskViewImpl(TaskView* self);
     ~TaskViewImpl();
     void doLayout(bool on);
+    void activate(bool on, bool forceUpdate);
     void addTask(Task* task);
     bool updateTask(Task* task);
+    void clearTasks();
     bool setCurrentTask(int index, bool forceUpdate);
     void setCurrentTaskByName(const std::string& name);
-    PushButton* getOrCreateCommandButton(int index);
+    CommandButton* getOrCreateCommandButton(int index);
+    void layoutCommandButtons();
     bool setCurrentCommandIndex(int index);
     void setBusyState(bool on);
     void setFocusToCommandButton(int commandIndex);
@@ -106,6 +158,7 @@ public:
     void onNextOrPrevButtonClicked(int direction);
 
     virtual int currentPhaseIndex() const;
+    virtual bool isAutoMode() const;    
     virtual void breakSequence();
     virtual void setNextCommand(int commandIndex);
     virtual void setNextPhase(int phaseIndex);
@@ -121,18 +174,34 @@ public:
     bool stopWaiting(bool isCompleted);
     void onWaitTimeout();
 
+    void onUsualPhaseButtonClicked();
+    void onConfigPhaseButtonClicked();
+    
     void onMenuButtonClicked();
+    void updateMenuItems(bool doPopup);
     virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
     virtual void addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func);
     virtual void addMenuSeparator();
+    void onMenuItemTriggered(int index);
+    void onMenuItemToggled(int index, bool on);
+    void applyMenuItem(int index, bool on);
 };
 
 }
+
+
+static void onAboutToQuit()
+{
+    TaskView::instance()->clearTasks();
+}
+
 
 void TaskView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<TaskView>(
         "TaskView", N_("Task"), ViewManager::SINGLE_OPTIONAL);
+
+    cnoid::sigAboutToQuit().connect(boost::bind(onAboutToQuit));
 }
 
 
@@ -154,15 +223,18 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
       mv(MessageView::instance()),
       os(mv->cout())
 {
-    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     self->setDefaultLayoutArea(View::CENTER);
 
-    currentTaskIndex = 0;
+    currentTaskIndex = -1;
     currentPhaseIndex_ = 0;
+    lastUsualPhaseIndex = 0;
+    configPhaseIndex = 0;
     currentCommandIndex = NO_CURRENT_COMMAND;
     forceCommandLinkAutomatic = false;
     isBusy = false;
     isNoExecutionMode = false;
+    isActive = false;
 
     goToNextCommandLater.setPriority(LazyCaller::PRIORITY_NORMAL);
     
@@ -181,6 +253,16 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     menuButton.setToolTip(_("Option Menu"));
     menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
 
+    usualPhaseButton.setText("   {   ");
+    usualPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    usualPhaseButton.setToolTip(_("Return to the current phase"));
+    usualPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onUsualPhaseButtonClicked, this));
+
+    configPhaseButton.setText("   }   ");
+    configPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    configPhaseButton.setToolTip(_("Go to the config phase"));
+    configPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onConfigPhaseButtonClicked, this));
+    
     prevButton.setText("<");
     prevButton.setToolTip(_("Go back to the previous phase"));
     prevButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, -1));
@@ -215,14 +297,18 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     topVBox.addLayout(&hbox3);
     topVBox.addLayout(&vspace);
     topVBox.addWidget(&phaseLabel, 0, Qt::AlignHCenter);
+    topVBox.addWidget(&commandButtonBox);
     topVBox.addStretch();
     self->setLayout(&topVBox);
 
-    commandButtonBoxLayout = 0;
+    commandButtonBoxBaseLayout = 0;
+    commandButtonBoxLayouts.resize(5, 0);
     isVerticalLayout = true;
     doLayout(false);
     
     setPhaseIndex(0, false);
+
+    activate(false, true);
 }
 
 
@@ -234,7 +320,9 @@ TaskView::~TaskView()
 
 TaskViewImpl::~TaskViewImpl()
 {
-
+    for(size_t i=0; i < tasks.size(); ++i){
+        sigTaskRemoved(tasks[i].task);
+    }
 }
 
 
@@ -259,8 +347,8 @@ void TaskViewImpl::doLayout(bool isVertical)
     removeWidgetsInLayout(&hbox3);
     removeWidgetsInLayout(&vspace);
     
-    if(commandButtonBoxLayout){
-        delete commandButtonBoxLayout;
+    if(commandButtonBoxBaseLayout){
+        delete commandButtonBoxBaseLayout;
     }
 
     if(isVertical){
@@ -269,6 +357,8 @@ void TaskViewImpl::doLayout(bool isVertical)
         hbox2.addWidget(&cancelButton);
         hbox2.addWidget(&autoModeToggle);
         hbox2.addWidget(&menuButton);
+        hbox2.addWidget(&usualPhaseButton);
+        hbox2.addWidget(&configPhaseButton);
 
         hbox3.addWidget(&prevButton);
         hbox3.addWidget(&phaseIndexSpin);
@@ -277,16 +367,24 @@ void TaskViewImpl::doLayout(bool isVertical)
 
         vspace.addSpacing(4);
 
-        commandButtonBoxLayout = new QVBoxLayout;
-        QMargins m = commandButtonBoxLayout->contentsMargins();
-        m.setTop(m.top() + 8);
-        m.setBottom(m.bottom() + 8);
-        commandButtonBoxLayout->setContentsMargins(m);
-        commandButtonBoxLayout->setSpacing(16);
+        commandButtonBoxBaseLayout = new QHBoxLayout();
+        commandButtonBoxBaseLayout->setContentsMargins(0, 0, 0, 0);
+
+        for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+            commandButtonBoxLayouts[i] = new QVBoxLayout();
+            QMargins m = commandButtonBoxLayouts[i]->contentsMargins();
+            m.setTop(m.top() + 8);
+            m.setBottom(m.bottom() + 8);
+            commandButtonBoxLayouts[i]->setContentsMargins(m);
+            commandButtonBoxLayouts[i]->setSpacing(16);
+            commandButtonBoxBaseLayout->addLayout(commandButtonBoxLayouts[i]);
+        }
         
     } else {
         hbox1.addWidget(&taskCombo, 1);
         hbox1.addWidget(&menuButton);
+        hbox1.addWidget(&usualPhaseButton);
+        hbox1.addWidget(&configPhaseButton);
 
         hbox2.addWidget(&prevButton);
         hbox2.addWidget(&cancelButton);
@@ -295,24 +393,60 @@ void TaskViewImpl::doLayout(bool isVertical)
         hbox2.addWidget(&autoModeToggle);
         hbox2.addWidget(&nextButton);
         
-        commandButtonBoxLayout = new QHBoxLayout;
-    }
+        commandButtonBoxBaseLayout = new QVBoxLayout();
+        commandButtonBoxBaseLayout->setContentsMargins(0, 0, 0, 0);
 
-    topVBox.insertLayout(5, commandButtonBoxLayout);
-
-    if(isVertical){
-        for(size_t i=0; i < commandButtons.size(); ++i){
-            PushButton* button = commandButtons[i];
-            button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
-        }
-    } else {
-        for(size_t i=0; i < commandButtons.size(); ++i){
-            PushButton* button = commandButtons[i];
-            button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button);
+        for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+            commandButtonBoxLayouts[i] = new QHBoxLayout();
+            commandButtonBoxLayouts[i]->setContentsMargins(0, 0, 0, 0);
+            commandButtonBoxBaseLayout->addLayout(commandButtonBoxLayouts[i]);
         }
     }
+
+    commandButtonBox.setLayout(commandButtonBoxBaseLayout);
+
+    layoutCommandButtons();
+}
+
+
+void TaskView::activate(bool on)
+{
+    impl->activate(on, false);
+}
+
+
+void TaskViewImpl::activate(bool on, bool forceUpdate)
+{
+    if(on != isActive || forceUpdate){
+
+        isActive = on;
+
+        cancelButton.setEnabled(on);
+        defaultCommandButton.setEnabled(on);
+        autoModeToggle.setEnabled(on);
+        phaseLabel.setEnabled(on);
+        commandButtonBox.setEnabled(on);
+
+        if(on){
+            mv->notify(QString(_("Task sequencer '%1' has been activated.")).arg(self->windowTitle()));
+        } else {
+            mv->notify(QString(_("Task sequencer '%1' has been deactivated.")).arg(self->windowTitle()));
+        }
+
+        if(currentTask && !isNoExecutionMode){
+            if(on){
+                currentTask->onActivated(self);
+            } else {
+                currentTask->onDeactivated(self);
+            }
+        } 
+    }
+}
+
+
+bool TaskView::isActive()
+{
+    return impl->isActive;
 }
 
 
@@ -329,11 +463,13 @@ void TaskViewImpl::addTask(Task* task)
     if(tasks.empty()){
         taskCombo.clear();
     }
-    tasks.push_back(task);
+    tasks.push_back(TaskInfo(task));
 
     taskCombo.addItem(task->name().c_str());
     
     taskCombo.blockSignals(false);
+
+    sigTaskAdded(task);
 
     if(tasks.size() == 1){
         setCurrentTask(0, true);
@@ -355,31 +491,87 @@ bool TaskViewImpl::updateTask(Task* task)
     
     int index = taskCombo.findText(task->name().c_str());
 
-    if(index >= 0 && index < tasks.size()){
+    if(index < 0 || index >= tasks.size()){
+        addTask(task);
+    } else {
         if(isWaiting()){
             mv->putln(MessageView::WARNING,
                       format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
                       % task->name());
         } else {
-            MappingPtr state;
-            if(index == currentTaskIndex){
-                TaskPtr oldTask = tasks[index];
-                state = new Mapping();
-                oldTask->storeState(self, *state);
-            }
-            tasks[index] = task;
-            if(state){
+            TaskInfo& info = tasks[index];
+            TaskPtr oldTask = info.task;
+            info.task = task;
+
+            bool doEmitSignals = task != oldTask;
+
+            if(index != currentTaskIndex){
+                if(doEmitSignals){
+                    sigTaskRemoved(oldTask);
+                    sigTaskAdded(task);
+                }
+            } else {
+                info.state = new Mapping();
+
+                if(isExecutionEnabled()){
+                    oldTask->storeState(self, *info.state);
+                }
+                if(doEmitSignals){
+                    sigTaskRemoved(oldTask);
+                }
+                
                 setCurrentTask(index, true);
-                task->restoreState(self, *state);
+
+                if(doEmitSignals){
+                    sigTaskAdded(task);
+                }
+
+                if(isExecutionEnabled()){
+                    task->restoreState(self, *info.state);
+                }
             }
             os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
         }
-    } else {
-        addTask(task);
     }
 
     return updated;
+}
+
+
+/**
+   \note This function is not implemented yet
+*/
+bool TaskView::removeTask(Task* task)
+{
+    return false;
+}
+
+
+SignalProxy<void(Task* task)> TaskView::sigTaskAdded()
+{
+    return impl->sigTaskAdded;
+}
+
+
+void TaskView::clearTasks()
+{
+    impl->clearTasks();
+}
+
+
+void TaskViewImpl::clearTasks()
+{
+    while(!tasks.empty()){
+        sigTaskRemoved(tasks.back().task);
+        tasks.pop_back();
+    }
+}
+            
+
+SignalProxy<void(Task* task)> TaskView::sigTaskRemoved()
+{
+    return impl->sigTaskRemoved;
 }
 
 
@@ -391,7 +583,10 @@ int TaskView::numTasks() const
 
 Task* TaskView::task(int index)
 {
-    return impl->tasks[index];
+    if(index >=0 && index < impl->tasks.size()){
+        return impl->tasks[index].task;
+    }
+    return 0;
 }
 
 
@@ -479,6 +674,12 @@ bool TaskView::isAutoMode() const
 }
 
 
+bool TaskViewImpl::isAutoMode() const
+{
+    return autoModeToggle.isChecked();
+}
+
+
 void TaskView::setAutoMode(bool on)
 {
     if(TRACE_FUNCTIONS){
@@ -506,6 +707,12 @@ bool TaskView::isNoExecutionMode() const
 }
 
 
+void TaskView::executeCommand(int commandIndex)
+{
+    setCurrentCommand(commandIndex, true);
+}
+
+
 void TaskView::setCurrentCommand(int commandIndex, bool doExecution)
 {
     if(TRACE_FUNCTIONS){
@@ -529,7 +736,8 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         return false;
     }
 
-    if(index == currentTaskIndex && !forceUpdate){
+    bool changed = index != currentTaskIndex;
+    if(!changed && !forceUpdate){
         return false;
     }
 
@@ -539,17 +747,33 @@ bool TaskViewImpl::setCurrentTask(int index, bool forceUpdate)
         taskCombo.blockSignals(false);
     }
 
-    bool doEmit = index != currentTaskIndex;
-    
-    currentTaskIndex = index;
-    currentTask = tasks[index];
-
-    if(doEmit){
-        sigCurrentTaskChanged();
+    if(changed && currentTaskIndex >= 0){
+        TaskInfo& old = tasks[currentTaskIndex];
+        old.state = new Mapping();
+        if(isExecutionEnabled()){
+            old.task->storeState(self, *old.state);
+            old.task->onDeactivated(self);
+        }
     }
 
+    TaskInfo& info = tasks[index];
+    currentTask = info.task;
+    currentTaskIndex = index;
+
     currentPhaseIndex_ = -1;
+    currentPhase.reset();
     setPhaseIndex(0, false);
+
+    lastUsualPhaseIndex = currentPhaseIndex_;
+    configPhaseIndex = std::max(0, currentTask->numPhases() - 1);
+
+    if(isExecutionEnabled()){
+        info.task->onActivated(self);
+    }
+    
+    if(changed){
+        sigCurrentTaskChanged();
+    }
 
     return true;
 }
@@ -561,7 +785,7 @@ void TaskViewImpl::setCurrentTaskByName(const std::string& name)
         return;
     }
     for(size_t i=0; i < tasks.size(); ++i){
-        Task* task = tasks[i];
+        Task* task = tasks[i].task;
         if(task->name() == name){
             setCurrentTask(i, false);
             break;
@@ -570,21 +794,16 @@ void TaskViewImpl::setCurrentTaskByName(const std::string& name)
 }
 
 
-PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
+CommandButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
 {
-    PushButton* button;
+    CommandButton* button;
     if(commandIndex < commandButtons.size()){
         button = commandButtons[commandIndex];
     } else {
-        button = new PushButton;
+        button = new CommandButton(&commandButtonBox);
+        //button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+        //button->setMinimumWidth(5);
         button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
-        if(isVerticalLayout){
-            button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button, 0, Qt::AlignHCenter);
-        } else {
-            button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-            commandButtonBoxLayout->addWidget(button);
-        }
         if(commandButtons.empty()){
             QWidget::setTabOrder(&menuButton, button);
         } else {
@@ -593,6 +812,62 @@ PushButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
         commandButtons.push_back(button);
     }
     return button;
+}
+
+
+void TaskViewImpl::layoutCommandButtons()
+{
+    int numVisibleButtons = 0;
+
+    for(int i=0; i < commandButtonBoxLayouts.size(); ++i){
+        QBoxLayout* layout = commandButtonBoxLayouts[i];
+        QLayoutItem* child;
+        while((child = layout->takeAt(0)) != 0) {
+            delete child;
+        }
+    }
+
+    if(!currentPhase){
+        CommandButton* button = getOrCreateCommandButton(0);
+        button->setText("-");
+        button->setEnabled(false);
+        button->setToolTip(QString());
+        commandButtonBoxLayouts[0]->addWidget(button);
+        button->show();
+        numVisibleButtons = 1;
+
+    } else {
+        numVisibleButtons = currentPhase->numCommands();
+
+        for(int i=0; i < numVisibleButtons; ++i){
+            CommandButton* button = getOrCreateCommandButton(i);
+            TaskCommand* command = currentPhase->command(i);
+            button->setText(command->caption().c_str());
+            button->setToolTip(command->description().c_str());
+            button->setEnabled(!isBusy);
+            button->setDown(false);
+
+            if(isVerticalLayout){
+                button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+                commandButtonBoxLayouts[0]->addWidget(button, 0, Qt::AlignHCenter);
+            } else {
+                int level = std::min(command->level(), (int)commandButtonBoxLayouts.size() - 1);
+                QBoxLayout* layout = commandButtonBoxLayouts[level];
+                button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+                layout->addWidget(button);
+            }
+            button->show();
+        }
+    }
+
+    for(int i=1; i < commandButtonBoxLayouts.size(); ++i){
+        commandButtonBoxLayouts[i]->insertStretch(0);
+        commandButtonBoxLayouts[i]->addStretch();
+    }
+
+    for(size_t i = numVisibleButtons; i < commandButtons.size(); ++i){
+        commandButtons[i]->hide();
+    }
 }
 
 
@@ -748,43 +1023,35 @@ void TaskViewImpl::setPhaseIndex(int index, bool isSuccessivelyCalled)
         (currentPhaseIndex_ < numPhases - 1) ||
         (getLoopBackPhaseIndex(currentPhaseIndex_) < numPhases - 1));
 
-    int numVisibleButtons = 0;
-    if(!numPhases){
-        phaseLabel.setText("No phase");
-        PushButton* button = getOrCreateCommandButton(0);
-        button->setText("-");
-        button->setEnabled(false);
-        button->show();
+    if(numPhases == 0){
         currentPhase = 0;
-        numVisibleButtons = 1;
+        phaseLabel.setText("No phase");
+        phaseLabel.show();
     } else {
         currentPhase = currentTask->phase(currentPhaseIndex_);
-        phaseLabel.setText(currentPhase->caption().c_str());
-        numVisibleButtons = currentPhase->numCommands();
-        for(int i=0; i < numVisibleButtons; ++i){
-            PushButton* button = getOrCreateCommandButton(i);
-            button->setText(currentPhase->command(i)->caption().c_str());
-            button->setEnabled(!isBusy);
-            button->setDown(false);
-            button->show();
+
+        if(currentPhase->caption().empty()){
+            phaseLabel.setText("");
+            phaseLabel.hide();
+        } else {
+            phaseLabel.setText(currentPhase->caption().c_str());
+            phaseLabel.show();
         }
     }
-
-    for(size_t i=numVisibleButtons; i < commandButtons.size(); ++i){
-        commandButtons[i]->hide();
-    }
-
+    
     phaseIndexSpinConnection.block();
     phaseIndexSpin.setRange(0, numPhases);
     phaseIndexSpin.setValue(currentPhaseIndex_);
     phaseIndexSpinConnection.unblock();
     phaseIndexSpin.setSuffix(QString(" / %1").arg(numPhases - 1));
 
+    layoutCommandButtons();
+
     if(currentPhaseIndex_ != prevPhaseIndex){
         sigCurrentPhaseChanged();
     }
 
-    if(isNoExecutionMode){
+    if(isExecutionDisabled()){
         return;
     }
         
@@ -940,13 +1207,13 @@ void TaskViewImpl::onCommandButtonClicked(int commandIndex)
     if(TRACE_FUNCTIONS){
         cout << "TaskViewImpl::onCommandButtonClicked(" << commandIndex << ")" << endl;
     }
-    
-    if(isNoExecutionMode){
+
+    if(isExecutionEnabled()){
+        executeCommandSuccessively(commandIndex);
+    } else {    
         setBusyState(true);
         setCurrentCommandIndex(commandIndex);
         sigCurrentCommandChanged();
-    } else {
-        executeCommandSuccessively(commandIndex);
     }
 }
 
@@ -1077,7 +1344,7 @@ bool TaskViewImpl::isWaiting() const
 
 void TaskViewImpl::cancelWaiting(bool doBreak)
 {
-    if(isNoExecutionMode){
+    if(isExecutionDisabled()){
         if(doBreak){
             setBusyState(false);
             sigCurrentCommandCanceled();
@@ -1120,8 +1387,36 @@ void TaskViewImpl::onWaitTimeout()
 }
 
 
+void TaskViewImpl::onUsualPhaseButtonClicked()
+{
+    setPhaseIndex(lastUsualPhaseIndex, false);
+}
+
+
+void TaskViewImpl::onConfigPhaseButtonClicked()
+{
+    if(currentPhaseIndex_ < configPhaseIndex){
+        lastUsualPhaseIndex = currentPhaseIndex_;
+    }
+    setPhaseIndex(configPhaseIndex, false);
+}
+
+
 void TaskViewImpl::onMenuButtonClicked()
 {
+    if(isNoExecutionMode){
+        sigMenuRequest();
+    } else {
+        updateMenuItems(true);
+    }
+}
+
+
+void TaskViewImpl::updateMenuItems(bool doPopup)
+{
+    menuItems.clear();
+    menuConnections.disconnect();
+    
     menuManager.setNewPopupMenu(self);
     if(currentTask){
         currentTask->onMenuRequest(*this);
@@ -1129,37 +1424,157 @@ void TaskViewImpl::onMenuButtonClicked()
     if(menuManager.numItems() > 0){
         menuManager.addSeparator();
     }
-    menuManager.addItem(_("Retry"))->sigTriggered().connect(bind(&TaskViewImpl::retry, this));
+
+    addMenuItem(_("Retry"), boost::bind(&TaskViewImpl::retry, this));
+    
     Action* verticalCheck = menuManager.addCheckItem(_("Vertical Layout"));
     verticalCheck->setChecked(isVerticalLayout);
     verticalCheck->sigToggled().connect(boost::bind(&TaskViewImpl::doLayout, this, _1));
-    
-    menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
+
+    if(doPopup){
+        menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
+    }
 }
 
 
 void TaskViewImpl::addMenuItem(const std::string& caption, boost::function<void()> func)
 {
-    Action* action = menuManager.addItem(caption.c_str());
+    int index = menuItems.size();
+    MenuItem menuItem;
+    menuItem.action = menuManager.addItem(caption.c_str());
+    menuConnections.add(
+        menuItem.action->sigTriggered().connect(
+            boost::bind(&TaskViewImpl::onMenuItemTriggered, this, index)));
     if(func){
-        action->sigTriggered().connect(func);
+        menuItem.func = func;
     }
+    menuItems.push_back(menuItem);
 }
 
 
 void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func)
 {
-    Action* action = menuManager.addCheckItem(caption.c_str());
-    action->setChecked(isChecked);
+    int index = menuItems.size();
+    MenuItem menuItem;
+    menuItem.action = menuManager.addCheckItem(caption.c_str());
+    menuItem.action->setChecked(isChecked);
+    menuConnections.add(
+        menuItem.action->sigToggled().connect(
+            boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1)));
     if(func){
-        action->sigToggled().connect(func);
+        menuItem.checkFunc = func;
     }
+    menuItems.push_back(menuItem);
 }
 
 
 void TaskViewImpl::addMenuSeparator()
 {
     menuManager.addSeparator();
+}
+
+
+void TaskViewImpl::onMenuItemTriggered(int index)
+{
+    MenuItem& item = menuItems[index];
+    if(isNoExecutionMode){
+        sigMenuItemTriggered(index);
+    } else {
+        if(item.func){
+            item.func();
+        }
+    }
+}
+
+
+void TaskViewImpl::onMenuItemToggled(int index, bool on)
+{
+    MenuItem& item = menuItems[index];
+    if(isNoExecutionMode){
+        sigMenuItemToggled(index, on);
+    } else {
+        if(item.checkFunc){
+            item.checkFunc(on);
+        }
+    }
+}
+
+
+void TaskView::executeMenuItem(int index)
+{
+    impl->applyMenuItem(index, true);
+}
+
+
+void TaskView::checkMenuItem(int index, bool on)
+{
+    impl->applyMenuItem(index, on);
+}
+
+
+void TaskViewImpl::applyMenuItem(int index, bool on)
+{
+    if(isExecutionEnabled()){
+        updateMenuItems(false);
+        if(index >= 0 && index < menuItems.size()){
+            MenuItem& item = menuItems[index];
+            if(item.func){
+                item.func();
+            } else if(item.checkFunc){
+                item.checkFunc(on);
+            }
+        }
+    }
+}
+                
+
+boost::dynamic_bitset<> TaskView::menuItemCheckStates() const
+{
+    boost::dynamic_bitset<> states;
+    impl->updateMenuItems(false);
+    int n = impl->menuItems.size();
+    states.resize(n);
+    for(int i=0; i < n; ++i){
+        Action* action = impl->menuItems[i].action;
+        if(action){
+            states[i] = action->isChecked();
+        }
+    }
+    return states;
+}
+
+
+SignalProxy<void()> TaskView::sigMenuRequest()
+{
+    return impl->sigMenuRequest;
+}
+
+
+void TaskView::showMenu(boost::dynamic_bitset<> checkStates)
+{
+    impl->updateMenuItems(true);
+
+    impl->menuConnections.block();
+    int n = impl->menuItems.size();
+    for(int i=0; i < n; ++i){
+        Action* action = impl->menuItems[i].action;
+        if(action && action->isCheckable()){
+            action->setChecked(checkStates[i]);
+        }
+    }
+    impl->menuConnections.unblock();
+}
+
+
+SignalProxy<void(int index)> TaskView::sigMenuItemTriggered()
+{
+    return impl->sigMenuItemTriggered;
+}
+
+
+SignalProxy<void(int index, bool on)> TaskView::sigMenuItemToggled()
+{
+    return impl->sigMenuItemToggled;
 }
 
 

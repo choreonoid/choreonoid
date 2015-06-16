@@ -778,9 +778,9 @@ void ItemTreeViewImpl::onSelectionChanged()
 }
 
 
-bool ItemTreeView::isItemSelected(ItemPtr item)
+bool ItemTreeView::isItemSelected(Item* item)
 {
-    return impl->isItemSelected(item.get());
+    return impl->isItemSelected(item);
 }
 
 
@@ -794,9 +794,15 @@ bool ItemTreeViewImpl::isItemSelected(Item* item)
 }
 
 
-bool ItemTreeView::selectItem(ItemPtr item, bool select)
+bool ItemTreeView::selectItem(Item* item, bool select)
 {
-    return impl->selectItem(item.get(), select);
+    return impl->selectItem(item, select);
+}
+
+
+void ItemTreeView::unselectItem(Item* item)
+{
+    impl->selectItem(item, false);
 }
 
 

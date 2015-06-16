@@ -19,10 +19,10 @@ class CNOID_EXPORT YAMLWriter
 {
 public:
     YAMLWriter(const std::string filename);
+    YAMLWriter(std::ostream& os);
     ~YAMLWriter();
 
-    void putNode(ValueNode& node);
-    void putNode(const ValueNodePtr& node);
+    void putNode(const ValueNode* node);
 
     void setIndentWidth(int n);
     void setKeyOrderPreservationMode(bool on);
@@ -75,6 +75,7 @@ public:
 private:
 
     std::ofstream ofs;
+    std::ostream& os;
 
     int indentWidth;
     bool isCurrentNewLine;
@@ -112,6 +113,8 @@ private:
     void putKey_(const std::string& key, StringStyle style);
     void startMappingSub(bool isFlowStyle);
     void startListingSub(bool isFlowStyle);
+    void putNodeMain(const ValueNode* node, bool doCheckLF);
+    void putScalarNode(const ScalarNode* scalar);
     void putMappingNode(const Mapping* mapping);
     void putListingNode(const Listing* listing);
 };

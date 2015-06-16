@@ -64,6 +64,14 @@ void SceneVisitor::visitInvariantGroup(SgInvariantGroup* group)
 }
 
 
+void SceneVisitor::visitSwitch(SgSwitch* switchNode)
+{
+    if(switchNode->isTurnedOn()){
+        visitGroup(switchNode);
+    }
+}
+
+
 void SceneVisitor::visitUnpickableGroup(SgUnpickableGroup* group)
 {
     visitGroup(group);

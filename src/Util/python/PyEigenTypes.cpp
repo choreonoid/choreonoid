@@ -3,6 +3,7 @@
 */
 
 #include "PyUtil.h"
+#include "PySignal.h"
 #include "../EigenTypes.h"
 #include "../EigenUtil.h"
 
@@ -324,6 +325,8 @@ void exportPyEigenTypes()
     python::def("unitX", getUnitX);
     python::def("unitY", getUnitY);
     python::def("unitZ", getUnitZ);
+
+    PySignal<void(const Affine3&)>("Affine3Signal");   
 }
 
 }

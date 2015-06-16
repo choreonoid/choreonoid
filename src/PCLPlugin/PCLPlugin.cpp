@@ -3,7 +3,6 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "MultiPointSetItem.h"
 #include <cnoid/Plugin>
 
 using namespace cnoid;
@@ -16,8 +15,6 @@ public:
     
     virtual bool initialize(){
 
-        MultiPointSetItem::initializeClass(this);
-        
         return true;
     }
 };

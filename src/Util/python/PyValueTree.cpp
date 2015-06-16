@@ -174,6 +174,9 @@ void Mapping_write(Mapping& self, const std::string &key, python::object value){
         self.write(key, python::extract<int>(value));
     } else if(PyFloat_Check(value.ptr())){
         self.write(key, python::extract<double>(value));
+    } else {
+        PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
+        python::throw_error_already_set();
     }
 }
 
@@ -239,37 +242,26 @@ void exportPyValueTree()
         .value("LITERAL_STRING", LITERAL_STRING)
         .value("FOLDED_STRING", FOLDED_STRING);
 
-    {
-        scope valueNodeScope =
-            class_<ValueNode, ValueNodePtr, bases<Referenced>, boost::noncopyable>("ValueNode", no_init)
-            .def("isValid", &ValueNode::isValid)
-            .def("type", &ValueNode::type)
-            .def("toInt", &ValueNode::toInt)
-            .def("toFloat", &ValueNode::toDouble)
-            .def("toBool", &ValueNode::toBool)
-            .def("isScalar", &ValueNode::isScalar)
-            .def("isString", &ValueNode::isString)
-            .def("toString", &ValueNode::toString, return_value_policy<return_by_value>())
-            .def("isMapping", &ValueNode::isMapping)
-            .def("toMapping", ValueNode_toMapping)
-            .def("isListing", &ValueNode::isListing)
-            .def("toListing", ValueNode_toListing)
-            .def("readInt", ValueNode_readInt)
-            .def("readFloat", ValueNode_readFloat)
-            .def("readBool", ValueNode_readBool)
-            .def("readString", ValueNode_readString)
-            .def("hasLineInfo", &ValueNode::hasLineInfo)
-            .def("line", &ValueNode::line)
-            .def("column", &ValueNode::column)
-            ;
-
-        enum_<ValueNode::Type>("Type")
-            .value("INVALID_NODE", ValueNode::INVALID_NODE)
-            .value("SCALAR", ValueNode::SCALAR)
-            .value("MAPPING", ValueNode::MAPPING)
-            .value("LISTING", ValueNode::LISTING)
-            .value("LF_NODE", ValueNode::LF_NODE);
-    }
+    class_<ValueNode, ValueNodePtr, bases<Referenced>, boost::noncopyable>("ValueNode", no_init)
+        .def("isValid", &ValueNode::isValid)
+        .def("toInt", &ValueNode::toInt)
+        .def("toFloat", &ValueNode::toDouble)
+        .def("toBool", &ValueNode::toBool)
+        .def("isScalar", &ValueNode::isScalar)
+        .def("isString", &ValueNode::isString)
+        .def("toString", &ValueNode::toString, return_value_policy<return_by_value>())
+        .def("isMapping", &ValueNode::isMapping)
+        .def("toMapping", ValueNode_toMapping)
+        .def("isListing", &ValueNode::isListing)
+        .def("toListing", ValueNode_toListing)
+        .def("readInt", ValueNode_readInt)
+        .def("readFloat", ValueNode_readFloat)
+        .def("readBool", ValueNode_readBool)
+        .def("readString", ValueNode_readString)
+        .def("hasLineInfo", &ValueNode::hasLineInfo)
+        .def("line", &ValueNode::line)
+        .def("column", &ValueNode::column)
+        ;
 
     implicitly_convertible<ValueNodePtr, ReferencedPtr>();
 

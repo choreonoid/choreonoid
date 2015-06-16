@@ -478,11 +478,9 @@ Item* Item::findSubItem(const std::string& path) const
 RootItem* Item::findRootItem() const
 {
     Item* current = const_cast<Item*>(this);
-    
     while(current->parent_){
         current = current->parent_;
     }
-
     return dynamic_cast<RootItem*>(current);
 }
 
@@ -503,6 +501,18 @@ Item* Item::headItem() const
         }
     }
     return head;
+}
+
+
+bool Item::isOwnedBy(Item* item) const
+{
+    Item* current = const_cast<Item*>(this);
+    while(current = current->parent_){
+        if(current == item){
+            return true;
+        }
+    }
+    return false;
 }
 
 

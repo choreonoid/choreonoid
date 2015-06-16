@@ -17,7 +17,7 @@ namespace {
 void (MessageView::*MessageView_put)(const std::string& message) = &MessageView::put;
 void (MessageView::*MessageView_putln)(const std::string& message) = &MessageView::putln;
 void (MessageView::*MessageView_notify)(const std::string& message) = &MessageView::notify;
- 
+
 }
 
 namespace cnoid {
@@ -106,8 +106,6 @@ void exportPyViews()
     class_<TaskView, TaskView*, bases<View, AbstractTaskSequencer>, boost::noncopyable>("TaskView", no_init)
         .def("instance", &TaskView::instance,
                 return_value_policy<reference_existing_object>()).staticmethod("instance")
-        .def("addTask", &TaskView::addTask)
-        .def("updateTask", &TaskView::updateTask)
         ;
 }
 

@@ -50,16 +50,15 @@ bool LinkGroup::load(const Body& body, const Listing& linkGroupList)
     for(int i=0; i < linkGroupList.size(); ++i){
 
         const ValueNode& node = linkGroupList[i];
-        ValueNode::Type type = node.type();
 
-        if(type == ValueNode::SCALAR){
+        if(node.isScalar()){
             Link* link = body.link(node.toString());
             if(!link){
                 return false;
             }
             elements.push_back(link->index());
 
-        } else if(type == ValueNode::MAPPING){
+        } else if(node.isMapping()){
             const Mapping& group = *node.toMapping();
             LinkGroupPtr linkGroup = boost::make_shared<LinkGroup>(private_tag());
             linkGroup->setName(group["name"]);

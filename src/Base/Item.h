@@ -109,6 +109,8 @@ public:
         return 0;
     }
 
+    bool isOwnedBy(Item* item) const;
+
     void traverse(boost::function<void(Item*)> function);
 
     ItemPtr duplicate() const;
