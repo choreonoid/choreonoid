@@ -126,6 +126,7 @@ public:
     virtual void visitPreprocessed(SgPreprocessed* preprocessed);
     virtual void visitLight(SgLight* light);
     virtual void visitOverlay(SgOverlay* overlay);
+    virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
 
