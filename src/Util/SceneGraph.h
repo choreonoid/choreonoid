@@ -438,15 +438,6 @@ protected:
 };
 
 
-class CNOID_EXPORT SgOutlineGroup : public SgGroup
-{
-public:
-    SgOutlineGroup();
-
-    virtual void accept(SceneVisitor& visitor);
-};
-typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
-
 class SgMaterial;
 class SgShape;
 class SgPlot;
@@ -460,6 +451,7 @@ class SgCamera;
 class SgPerspectiveCamera;
 class SgOrthographicCamera;
 class SgOverlay;
+class SgOutlineGroup;
 
 }
 

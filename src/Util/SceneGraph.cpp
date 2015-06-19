@@ -1677,7 +1677,8 @@ void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, View
 
 SgOutlineGroup::SgOutlineGroup()
 {
-
+    lineWidth_ = 3.0;
+    color_ << 1.0, 0.0, 0.0;
 }
 
 
@@ -1685,4 +1686,3 @@ void SgOutlineGroup::accept(SceneVisitor& visitor)
 {
     visitor.visitOutlineGroup(this);
 }
-

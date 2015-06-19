@@ -2757,7 +2757,6 @@ void GLSceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
 
 void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
 {
-
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
 
@@ -2767,18 +2766,24 @@ void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
-            (*p)->accept(*self);
+        (*p)->accept(*self);
     }
 
     glStencilFunc(GL_NOTEQUAL, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-    glLineWidth(3);
+    glPushAttrib(GL_POLYGON_BIT);
+    glLineWidth(outlineGroup->lineWidth());
     glPolygonMode(GL_FRONT, GL_LINE);
-
+    setColor(outlineGroup->color());
+    enableColorMaterial(true);
     for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
         (*p)->accept(*self);
     }
+    enableColorMaterial(false);
+    setLineWidth(lineWidth);
+    glPopAttrib();
 
-    self->visitGroup(outlineGroup);
+    glDisable(GL_STENCIL_TEST);
+
 }
