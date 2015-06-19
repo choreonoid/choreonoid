@@ -212,7 +212,8 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
             archive->initSharedInfo(filename);
 
-            ViewManager::ViewStateInfo viewStateInfo = ViewManager::restoreViews(archive, "views");
+            ViewManager::ViewStateInfo viewStateInfo;
+            ViewManager::restoreViews(archive, "views", viewStateInfo);
 
             MainWindow* mainWindow = MainWindow::instance();
             if(isInvokingApplication){

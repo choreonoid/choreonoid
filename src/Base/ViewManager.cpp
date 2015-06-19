@@ -705,20 +705,19 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 }
 
 
-ViewManager::ViewStateInfo ViewManager::restoreViews(ArchivePtr archive, const std::string& key)
+void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo)
 {
     MessageView* mv = MessageView::instance();
 
     typedef map<ViewInfo*, vector<View*> > ViewsMap;
     ViewsMap remainingViewsMap;
         
-    ViewStateInfo info;
     Listing* viewList = archive->findListing(key);
     
     if(viewList->isValid() && !viewList->empty()){
 
         vector<ViewState>* viewsToRestoreState = new vector<ViewState>();        
-        info.data = viewsToRestoreState;
+        out_viewStateInfo.data = viewsToRestoreState;
         int id;
         string moduleName;
         string className;
@@ -792,8 +791,6 @@ ViewManager::ViewStateInfo ViewManager::restoreViews(ArchivePtr archive, const s
             }
         }
     }
-
-    return info;
 }
 
 

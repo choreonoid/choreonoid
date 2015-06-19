@@ -97,8 +97,8 @@ public:
         void* data;
         friend class ViewManager;
     };
-        
-    static ViewStateInfo restoreViews(ArchivePtr archive, const std::string& key);
+
+    static void restoreViews(ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo);
     static bool restoreViewStates(ViewStateInfo& info);
 
 private:
