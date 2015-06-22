@@ -13,7 +13,8 @@ public:
     
     PCLPlugin() : Plugin("PCL") { }
     
-    virtual bool initialize() {
+    virtual bool initialize(){
+
         return true;
     }
 };

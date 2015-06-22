@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_LAZY_CALLER_H_INCLUDED
-#define CNOID_BASE_LAZY_CALLER_H_INCLUDED
+#ifndef CNOID_BASE_LAZY_CALLER_H
+#define CNOID_BASE_LAZY_CALLER_H
 
 #include <boost/function.hpp>
 #include "exportdecl.h"
@@ -12,6 +12,11 @@ namespace cnoid {
     
 class LazyCallerImpl;
 
+
+/**
+   \note This is not thread safe
+   \todo Make this thread safe so that the function can be called non-main threads
+*/
 class CNOID_EXPORT LazyCaller
 {
     friend class LazyCallerImpl;
@@ -54,10 +59,34 @@ public:
         }
     }
 
+    void cancel();
+
 private:
     void postCallEvent();
 };
 
+
+class QueuedCallerImpl;
+
+class CNOID_EXPORT QueuedCaller
+{
+    QueuedCallerImpl* impl;
+
+    QueuedCaller(const QueuedCaller& org);
+    
+  public:
+    /**
+       All the queued functions that have not been executed are canceled in the destructor.
+    */
+    QueuedCaller();
+    virtual ~QueuedCaller();
+    
+    void callLater(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+
+    void cancel();
+};
+
+    
 //! deprecated
 enum { IDLE_PRIORITY_HIGH = LazyCaller::PRIORITY_HIGH,
        IDLE_PRIORITY_NORMAL = LazyCaller::PRIORITY_NORMAL,
@@ -67,6 +96,7 @@ CNOID_EXPORT void callLater(const boost::function<void()>& function, int priorit
 CNOID_EXPORT bool callSynchronously(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
 
 CNOID_EXPORT bool isRunningInMainThread();
+
 }
         
 #endif

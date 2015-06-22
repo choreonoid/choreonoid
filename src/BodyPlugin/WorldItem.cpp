@@ -51,7 +51,8 @@ public:
     WorldItem* self;
     ostream& os;
 
-    ItemList<BodyItem> bodyItems;
+    ItemList<BodyItem> collisionBodyItems;
+    boost::dynamic_bitset<> collisionBodyItemsSelfCollisionFlags;
 
     Connection sigItemTreeChangedConnection;
     ConnectionSet sigKinematicStateChangedConnections;
@@ -76,6 +77,7 @@ public:
     void enableCollisionDetection(bool on);
     void clearCollisionDetector();
     void updateCollisionDetector(bool forceUpdate);
+    void updateCollisionBodyItems();
     void onBodyKinematicStateChanged(BodyItem* bodyItem);
     void updateCollisions(bool forceUpdate);
     void extractCollisions(const CollisionPair& collisionPair);
@@ -158,13 +160,13 @@ WorldItemImpl::~WorldItemImpl()
 }
 
 
-const ItemList<BodyItem>& WorldItem::bodyItems() const
+const ItemList<BodyItem>& WorldItem::collisionBodyItems() const
 {
-    return impl->bodyItems;
+    return impl->collisionBodyItems;
 }
 
 
-const std::vector<CollisionLinkPairPtr>& WorldItem::collisions() const
+std::vector<CollisionLinkPairPtr>& WorldItem::collisions() const
 {
     return *impl->collisions;
 }
@@ -195,7 +197,9 @@ bool WorldItemImpl::selectCollisionDetector(int index)
 
 CollisionDetectorPtr WorldItem::collisionDetector()
 {
-    impl->updateCollisionDetectorLater.flush();
+    if(impl->isCollisionDetectionEnabled){
+        impl->updateCollisionDetectorLater.flush();
+    }
     return impl->collisionDetector;
 }
 
@@ -254,8 +258,8 @@ void WorldItemImpl::clearCollisionDetector()
     sigKinematicStateChangedConnections.disconnect();
     bodyItemInfoMap.clear();
 
-    for(size_t i=0; i < bodyItems.size(); ++i){
-        bodyItems[i]->clearCollisions();
+    for(size_t i=0; i < collisionBodyItems.size(); ++i){
+        collisionBodyItems[i]->clearCollisions();
     }
 }
 
@@ -281,42 +285,61 @@ void WorldItemImpl::updateCollisionDetector(bool forceUpdate)
         os << "WorldItemImpl::updateCollisionDetector()" << endl;
     }
 
+    if(!isCollisionDetectionEnabled){
+        return;
+    }
+
     if(!forceUpdate){
-        ItemList<BodyItem> prevBodyItems = bodyItems;
-        bodyItems.extractChildItems(self);
-        if(bodyItems == prevBodyItems){
+        ItemList<BodyItem> prevBodyItems = collisionBodyItems;
+        boost::dynamic_bitset<> prevSelfCollisionFlags = collisionBodyItemsSelfCollisionFlags;
+        updateCollisionBodyItems();
+        if(collisionBodyItems == prevBodyItems &&
+            collisionBodyItemsSelfCollisionFlags == prevSelfCollisionFlags){
             return;
         }
     } else {
-        bodyItems.extractChildItems(self);
+        updateCollisionBodyItems();
     }
 
     clearCollisionDetector();
 
-    for(size_t i=0; i < bodyItems.size(); ++i){
-        BodyItem* bodyItem = bodyItems.get(i);
-        if(bodyItem->isCollisionDetectionEnabled()){
-            const BodyPtr& body = bodyItem->body();
-            const int numLinks = body->numLinks();
+    for(size_t i=0; i < collisionBodyItems.size(); ++i){
+        BodyItem* bodyItem = collisionBodyItems.get(i);
+        const BodyPtr& body = bodyItem->body();
+        const int numLinks = body->numLinks();
             
-            pair<BodyItemInfoMap::iterator, bool> inserted =
-                bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
-            BodyItemInfo& info = inserted.first->second;
+        pair<BodyItemInfoMap::iterator, bool> inserted =
+            bodyItemInfoMap.insert(make_pair(bodyItem, BodyItemInfo()));
+        BodyItemInfo& info = inserted.first->second;
             
-            info.geometryId = addBodyToCollisionDetector(
-                *body, *collisionDetector, bodyItem->isSelfCollisionDetectionEnabled());
-            geometryIdToBodyInfoMap.resize(collisionDetector->numGeometries(), inserted.first);
-            
-            sigKinematicStateChangedConnections.add(
-                bodyItem->sigKinematicStateChanged().connect(
-                    boost::bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
-        }
+        info.geometryId = addBodyToCollisionDetector(
+            *body, *collisionDetector, bodyItem->isSelfCollisionDetectionEnabled());
+        geometryIdToBodyInfoMap.resize(collisionDetector->numGeometries(), inserted.first);
+        
+        sigKinematicStateChangedConnections.add(
+            bodyItem->sigKinematicStateChanged().connect(
+                boost::bind(&WorldItemImpl::onBodyKinematicStateChanged, this, bodyItem)));
     }
 
     collisionDetector->makeReady();
+    updateCollisions(true);
+}
 
-    if(isCollisionDetectionEnabled){
-        updateCollisions(true);
+
+void WorldItemImpl::updateCollisionBodyItems()
+{
+    collisionBodyItemsSelfCollisionFlags.clear();
+    collisionBodyItems.extractChildItems(self);
+    ItemList<BodyItem>::iterator p = collisionBodyItems.begin();
+    while(p != collisionBodyItems.end()){
+        BodyItemPtr& bodyItem = *p;
+        if(bodyItem->isCollisionDetectionEnabled()){
+            collisionBodyItemsSelfCollisionFlags.push_back(
+                bodyItem->isSelfCollisionDetectionEnabled());
+            ++p;
+        } else {
+            p = collisionBodyItems.erase(p);
+        }
     }
 }
 

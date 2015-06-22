@@ -1,12 +1,16 @@
 
 # @author Shin'ichiro Nakaoka
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_OPENHRP_SAMPLES "Building OpenHRP samples" OFF)
 
 if(NOT BUILD_OPENHRP_SAMPLES)
   return()
-elseif(NOT BUILD_OPENHRP_PLUGIN)
-  message(FATAL_ERROR "OpenHRP samples need to build OpenHRPPlugin.")
+elseif(NOT BUILD_OPENHRP_PLUGIN OR NOT BUILD_SIMPLE_CONTROLLER_PLUGIN)
+  message(FATAL_ERROR "OpenHRP samples need to enable BUILD_OPENHRP_PLUGIN and BUILD_SIMPLE_CONTROLLER_PLUGIN.")
 endif()
 
 if(BUILD_OPENHRP_PLUGIN_FOR_3_0)

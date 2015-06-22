@@ -12,12 +12,13 @@ void exportPyMainWindow();
 void exportPyToolBars();
 void exportPyViews();
 void exportPyItemTreeView();
+void exportPySceneTypes();
+void exportLazyCaller();
 
 BOOST_PYTHON_MODULE(Base)
 {
     //! \todo check if this module is imported from the Choreonoid process with PythonPlugin
 
-    
     boost::python::import("cnoid.Util");
     boost::python::import("cnoid.QtGui");
     
@@ -27,6 +28,8 @@ BOOST_PYTHON_MODULE(Base)
     exportPyToolBars();
     exportPyViews();
     exportPyItemTreeView();
+    exportPySceneTypes();
+    exportLazyCaller();
 }
 
 }

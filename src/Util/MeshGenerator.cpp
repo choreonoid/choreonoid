@@ -5,6 +5,7 @@
 
 #include "MeshGenerator.h"
 #include "MeshNormalGenerator.h"
+#include "MeshExtractor.h"
 #include "Triangulator.h"
 
 using namespace std;
@@ -308,6 +309,75 @@ SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
     }
 
     mesh->updateBoundingBox();
+
+    return mesh;
+}
+
+
+SgMesh* MeshGenerator::generateArrow(double length, double width, double coneLengthRatio, double coneWidthRatio)
+{
+    double r = width / 2.0;
+    double h = length * coneLengthRatio;
+    SgShapePtr cone = new SgShape;
+    //setDivisionNumber(20);
+    cone->setMesh(generateCone(r * coneWidthRatio, h));
+    SgPosTransform* conePos = new SgPosTransform;
+    conePos->setTranslation(Vector3(0.0, length / 2.0 + h / 2.0, 0.0));
+    conePos->addChild(cone);
+
+    SgShapePtr cylinder = new SgShape;
+    //setDivisionNumber(12);
+    cylinder->setMesh(generateCylinder(r, length, true, false));
+    //cylinder->setMesh(generateCylinder(r, length - h, true, false));
+    //SgPosTransform* cylinderPos = new SgPosTransform;
+    //cylinderPos->setTranslation(Vector3(0.0, -h, 0.0));
+    //cylinderPos->addChild(cylinder);
+        
+    MeshExtractor meshExtractor;
+    SgGroupPtr group = new SgGroup;
+    group->addChild(conePos);
+    //group->addChild(cylinderPos);
+    group->addChild(cylinder);
+    return meshExtractor.integrate(group);
+}
+
+
+SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
+{
+    int divisionNumber2 = divisionNumber_ / 4;
+
+    SgMesh* mesh = new SgMesh();
+    SgVertexArray& vertices = *mesh->getOrCreateVertices();
+    vertices.reserve(divisionNumber_ * divisionNumber2);
+
+    for(int i=0; i < divisionNumber_; ++i){
+        double phi = i * 2.0 * PI / divisionNumber_;
+        for(int j=0; j < divisionNumber2; ++j){
+            double theta = j * 2.0 * PI / divisionNumber2;
+            Vector3f v;
+            double r = crossSectionRadius * cos(theta) + radius;
+            v.x() = cos(phi) * r;
+            v.y() = crossSectionRadius * sin(theta);
+            v.z() = sin(phi) * r;
+            vertices.push_back(v);
+        }
+    }
+
+    mesh->reserveNumTriangles(2 * divisionNumber_ * divisionNumber2);
+
+    for(int i=0; i < divisionNumber_; ++i){
+        int current = i * divisionNumber2;
+        int next = ((i + 1) % divisionNumber_) * divisionNumber2;
+        for(int j=0; j < divisionNumber2; ++j){
+            int j_next = (j + 1) % divisionNumber2;
+            mesh->addTriangle(current + j, next + j_next, next + j);
+            mesh->addTriangle(current + j, current + j_next, next + j_next);
+        }
+    }
+
+    mesh->updateBoundingBox();
+
+    generateNormals(mesh, PI);
 
     return mesh;
 }

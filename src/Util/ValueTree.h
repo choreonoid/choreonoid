@@ -5,25 +5,17 @@
 #ifndef CNOID_UTIL_VALUE_TREE_H
 #define CNOID_UTIL_VALUE_TREE_H
 
+#include "Referenced.h"
 #include "UTF8.h"
 #include <map>
 #include <vector>
-#include <cstring>
-#include <iosfwd>
-#include <boost/intrusive_ptr.hpp>
-#include <boost/function.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class YAMLReaderImpl;
 class YAMLWriter;
-
 class ValueNode;
-
-void intrusive_ptr_add_ref(cnoid::ValueNode* obj);
-void intrusive_ptr_release(cnoid::ValueNode* obj);
-
 class ScalarNode;
 class Mapping;
 class Listing;
@@ -39,7 +31,7 @@ enum StringStyle { PLAIN_STRING, YAML_PLAIN_STRING = PLAIN_STRING,
 };
 #endif
 
-class CNOID_EXPORT ValueNode
+class CNOID_EXPORT ValueNode : public Referenced
 {
     struct Initializer {
         Initializer();
@@ -49,21 +41,21 @@ class CNOID_EXPORT ValueNode
 public:
 
 #ifndef CNOID_BACKWARD_COMPATIBILITY
-    enum Type { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 3, LF_NODE = 4 };
+    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, INSERT_LF = 8, APPEND_LF = 16 };
 #else 
-    enum Type { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 3, SEQUENCE = 3, LF_NODE = 4};
+    enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, SEQUENCE = 4, INSERT_LF = 8, APPEND_LF = 16 };
 #endif
 
-    bool isValid() const { return type_ != INVALID_NODE; }
-
-    Type type() const { return type_; }
+    bool isValid() const { return typeBits; }
+    TypeBit LFType() const { return (TypeBit)(typeBits & (INSERT_LF | APPEND_LF)); }
+    TypeBit nodeType() const { return (TypeBit)(typeBits & 7); }
 
     int toInt() const;
     double toDouble() const;
     bool toBool() const;
 
-    bool isScalar() const { return type_ == SCALAR; }
-    bool isString() const { return type_ == SCALAR; }
+    bool isScalar() const { return typeBits & SCALAR; }
+    bool isString() const { return typeBits & SCALAR; }
 
 #ifdef _WIN32
     const std::string toString() const;
@@ -81,18 +73,19 @@ public:
     }
 #endif
 
-    template<typename T> T to() const { return ""; }
+    //template<typename T> T to() const { return ""; }
+    template<typename T> T to() const;
 
-    bool isMapping() const { return type_ == MAPPING; }
+    bool isMapping() const { return typeBits & MAPPING; }
     const Mapping* toMapping() const;
     Mapping* toMapping();
 
-    bool isListing() const { return type_ == LISTING; }
+    bool isListing() const { return typeBits & LISTING; }
     const Listing* toListing() const;
     Listing* toListing();
         
 #ifdef CNOID_BACKWARD_COMPATIBILITY
-    bool isSequence() const { return type_ == LISTING; }
+    bool isSequence() const { return typeBits & LISTING; }
     const Listing* toSequence() const { return toListing(); }
     Listing* toSequence() { return toListing(); }
 #endif
@@ -162,15 +155,14 @@ private:
 
     class FileException : public Exception {
     };
-        
-private:
-        
-    int refCounter;
+
+    class UnknownNodeTypeException : public Exception {
+    };
         
 protected:
 
-    ValueNode() : refCounter(0) { }
-    ValueNode(Type type) : refCounter(0), type_(type), line_(-1), column_(-1) { }
+    ValueNode() { }
+    ValueNode(TypeBit type) : typeBits(type), line_(-1), column_(-1) { }
 
     virtual ~ValueNode() { }
 
@@ -178,7 +170,7 @@ protected:
     void throwNotMappingException() const;
     void throwNotListingException() const;
 
-    Type type_;
+    int typeBits;
 
 private:
 
@@ -195,16 +187,13 @@ private:
     friend class ScalarNode;
     friend class Mapping;
     friend class Listing;
-
-    friend void cnoid::intrusive_ptr_add_ref(ValueNode* obj);
-    friend void cnoid::intrusive_ptr_release(ValueNode* obj);
 };
 
 template<> inline double ValueNode::to<double>() const { return toDouble(); }
 template<> inline int ValueNode::to<int>() const { return toInt(); }
 template<> inline std::string ValueNode::to<std::string>() const { return toString(); }
     
-typedef boost::intrusive_ptr<ValueNode> ValueNodePtr;
+typedef ref_ptr<ValueNode> ValueNodePtr;
 
     
 class CNOID_EXPORT ScalarNode : public ValueNode
@@ -241,7 +230,7 @@ public:
     Mapping(int line, int column);
     virtual ~Mapping();
     bool empty() const { return values.empty(); }
-    size_t size() const { return values.size(); }
+    int size() const { return values.size(); }
     void clear();
 
     void setFlowStyle(bool isFlowStyle = true) { isFlowStyle_ = isFlowStyle; }
@@ -262,7 +251,7 @@ public:
         return get(key);
     }
 
-    void insert(const std::string& key, ValueNodePtr node);
+    void insert(const std::string& key, ValueNode* node);
 
     Mapping* openMapping(const std::string& key) {
         return openMapping(key, false);
@@ -304,9 +293,6 @@ public:
     bool read(const std::string &key, int &out_value) const;
     bool read(const std::string &key, double &out_value) const;
 
-    bool read(const std::string &key, boost::function<void(double)> setterFunc) const;
-
-        
     template <class T>
         T read(const std::string& key) const {
         T value;
@@ -416,7 +402,7 @@ private:
     friend class YAMLWriter;
 };
 
-typedef boost::intrusive_ptr<Mapping> MappingPtr;
+typedef ref_ptr<Mapping> MappingPtr;
 
 
 /**
@@ -470,10 +456,6 @@ public:
     void write(int i, int value);
     void write(int i, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
 
-    bool read(int i, bool &out_value) const;
-    bool read(int i, int &out_value) const;
-    bool read(int i, double &out_value) const;
-
     /**
        \todo This operator should return ValueNode*.
     */
@@ -486,9 +468,11 @@ public:
 
     Mapping* newMapping();
 
-    void append(ValueNodePtr node) {
+    void append(ValueNode* node) {
         values.push_back(node);
     }
+
+    void insert(int index, ValueNode* node);
         
     void append(int value);
 
@@ -560,24 +544,14 @@ private:
     Container values;
     const char* doubleFormat_;
     bool isFlowStyle_;
+    bool doInsertLFBeforeNextElement;
 
     friend class Mapping;
     friend class YAMLReaderImpl;
     friend class YAMLWriter;
 };
 
-typedef boost::intrusive_ptr<Listing> ListingPtr;
-
-inline void intrusive_ptr_add_ref(cnoid::ValueNode* obj){
-    obj->refCounter++;
-}
-
-inline void intrusive_ptr_release(cnoid::ValueNode* obj){
-    obj->refCounter--;
-    if(obj->refCounter == 0){
-        delete obj;
-    }
-}
+typedef ref_ptr<Listing> ListingPtr;
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
 typedef ValueNode YamlNode;

@@ -53,13 +53,13 @@ public:
     QLabel jointTypeLabel;
     QLabel jointAxisLabel;
 
-    QGroupBox qGroup;
+    QGroupBox qBox;
     DoubleSpinBox qSpin;
     QLabel qMinLabel;
     QLabel qMaxLabel;
     Slider qSlider;
 
-    QGroupBox dqGroup;
+    QGroupBox dqBox;
     QLabel dqLabel;
     DoubleSpinBox dqMinSpin;
     DoubleSpinBox dqMaxSpin;
@@ -70,6 +70,7 @@ public:
     QWidget attMatrixBox;
     QLabel attLabels[3][3];
 
+    QGroupBox zmpBox;
     DoubleSpinBox zmpXyzSpin[3];
 
     QString selfCollisionString;
@@ -93,6 +94,8 @@ public:
     void activateCurrentBodyItem(bool on);
     void update();
     void updateLink();
+    void updateRotationalJointState();
+    void updateSlideJointState();
     void updateKinematicState(bool blockSignals);
     void updateCollisions();
     void addSelfCollision(const CollisionLinkPair& collisionPair, QString& collisionString);
@@ -214,73 +217,12 @@ void BodyLinkViewImpl::setupWidgets()
 
     topVBox->addSpacing(4);
 
-    qGroup.setAlignment(Qt::AlignHCenter);
-    topVBox->addWidget(&qGroup);
-    
+    QGroupBox* linkBox = new QGroupBox();
+    linkBox->setTitle(_("Link Position [m],[deg]"));
+    linkBox->setAlignment(Qt::AlignCenter);
     vbox = new QVBoxLayout();
-    //vbox->setContentsMargins(4);
-    qGroup.setLayout(vbox);
-    hbox = new QHBoxLayout();
-    vbox->addLayout(hbox);
-    hbox->addStretch();
-    hbox->addWidget(&qMinLabel);
-    qSpin.setAlignment(Qt::AlignCenter);
-    hbox->addWidget(&qSpin);
-    hbox->addWidget(&qMaxLabel);
-    hbox->addStretch();
+    linkBox->setLayout(vbox);
 
-    qSlider.setOrientation(Qt::Horizontal);
-    vbox->addWidget(&qSlider);
-
-    stateWidgetConnections.add(
-        qSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_qSpinChanged, this, _1)));
-    
-    stateWidgetConnections.add(
-        qSlider.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_qSliderChanged, this, _1)));
-
-    topVBox->addSpacing(4);
-    
-    dqGroup.setAlignment(Qt::AlignHCenter);
-    topVBox->addWidget(&dqGroup);
-    hbox = new QHBoxLayout();
-    //hbox->setContentsMargins(4);
-
-    // min velocity spin
-    hbox->addStretch();
-    hbox->addWidget(new QLabel(_("min")));
-    dqMaxSpin.setAlignment(Qt::AlignCenter);
-    hbox->addWidget(&dqMinSpin);
-
-    // velocity label
-    hbox->addWidget(&dqLabel);
-
-    // max velocity spin
-    dqMinSpin.setAlignment(Qt::AlignCenter);
-    hbox->addWidget(&dqMaxSpin);
-    hbox->addWidget(new QLabel(_("max")));
-    hbox->addStretch();
-    dqGroup.setLayout(hbox);
-    
-    propertyWidgetConnections.add(
-        dqMinSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, true)));
-    propertyWidgetConnections.add(
-        dqMaxSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, false)));
-    
-    topVBox->addSpacing(4);
-
-    frame = new QFrame();
-    vbox = new QVBoxLayout();
-    //vbox->setContentsMargins(4);
-    vbox->setSpacing(4);
-    frame->setLayout(vbox);
-    topVBox->addWidget(frame);
-    
-    vbox->addWidget(new QLabel(_("Link Position [m],[deg]")));
-    
     grid = new QGridLayout();
     //grid->setContentsMargins(4);
     grid->setVerticalSpacing(4);
@@ -331,35 +273,120 @@ void BodyLinkViewImpl::setupWidgets()
 
     hbox = new QHBoxLayout();
     attMatrixBox.setLayout(hbox);
-    vbox->addWidget(&attMatrixBox);
-
     hbox->addStretch();
     hbox->addWidget(new QLabel("R = "));
     hbox->addWidget(new VSeparator());
     hbox->addLayout(grid);
     hbox->addWidget(new VSeparator());
     hbox->addStretch();
-    
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
             grid->addWidget(&attLabels[i][j], i, j);
             attLabels[i][j].setText("0.0");
         }
     }
+    vbox->addWidget(&attMatrixBox);
+    attMatrixBox.hide();
 
+    topVBox->addWidget(linkBox);
     topVBox->addSpacing(4);
 
-    QGroupBox* group = new QGroupBox();
-    group->setTitle(_("ZMP [m]"));
-    group->setAlignment(Qt::AlignCenter);
+    qBox.setAlignment(Qt::AlignHCenter);
+    topVBox->addWidget(&qBox);
+    
+    vbox = new QVBoxLayout();
+    //vbox->setContentsMargins(4);
+    qBox.setLayout(vbox);
+    hbox = new QHBoxLayout();
+    vbox->addLayout(hbox);
+    hbox->addStretch();
+    hbox->addWidget(&qMinLabel);
+    qSpin.setAlignment(Qt::AlignCenter);
+    hbox->addWidget(&qSpin);
+    hbox->addWidget(&qMaxLabel);
+    hbox->addStretch();
+
+    qSlider.setOrientation(Qt::Horizontal);
+    vbox->addWidget(&qSlider);
+
+    stateWidgetConnections.add(
+        qSpin.sigValueChanged().connect(
+            boost::bind(&BodyLinkViewImpl::on_qSpinChanged, this, _1)));
+    
+    stateWidgetConnections.add(
+        qSlider.sigValueChanged().connect(
+            boost::bind(&BodyLinkViewImpl::on_qSliderChanged, this, _1)));
+
+    topVBox->addSpacing(4);
+    
+    dqBox.setAlignment(Qt::AlignHCenter);
+    topVBox->addWidget(&dqBox);
+    hbox = new QHBoxLayout();
+    //hbox->setContentsMargins(4);
+
+    // min velocity spin
+    hbox->addStretch();
+    hbox->addWidget(new QLabel(_("min")));
+    dqMaxSpin.setAlignment(Qt::AlignCenter);
+    hbox->addWidget(&dqMinSpin);
+
+    // velocity label
+    hbox->addWidget(&dqLabel);
+
+    // max velocity spin
+    dqMinSpin.setAlignment(Qt::AlignCenter);
+    hbox->addWidget(&dqMaxSpin);
+    hbox->addWidget(new QLabel(_("max")));
+    hbox->addStretch();
+    dqBox.setLayout(hbox);
+    
+    propertyWidgetConnections.add(
+        dqMinSpin.sigValueChanged().connect(
+            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, true)));
+    propertyWidgetConnections.add(
+        dqMaxSpin.sigValueChanged().connect(
+            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, false)));
+    
+    topVBox->addSpacing(4);
+
+    QGroupBox* collisionBox = new QGroupBox();
+    collisionBox->setTitle(_("Collisions"));
+    collisionBox->setAlignment(Qt::AlignCenter);
+    collisionBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    vbox = new QVBoxLayout();
+    collisionBox->setLayout(vbox);
+    //vbox->setContentsMargins(4);
+    vbox->setSpacing(4);
+
+    worldCollisionsLabel.setAlignment(Qt::AlignCenter);
+    worldCollisionsLabel.setWordWrap(true);
+    vbox->addWidget(&worldCollisionsLabel);
+
+    hbox = new QHBoxLayout();
+    hbox->setSpacing(4);
+    hbox->addWidget(new HSeparator(), 1);
+    hbox->addWidget(new QLabel(_("Self-Collisions")), 0);
+    hbox->addWidget(new HSeparator(), 1);
+    vbox->addLayout(hbox);
+    
+    selfCollisionsLabel.setAlignment(Qt::AlignCenter);
+    selfCollisionsLabel.setWordWrap(true);
+    vbox->addWidget(&selfCollisionsLabel);
+
+    topVBox->addWidget(collisionBox);
+    topVBox->addSpacing(4);
+    
+    zmpBox.setTitle(_("ZMP [m]"));
+    zmpBox.setAlignment(Qt::AlignCenter);
     
     grid = new QGridLayout();
     //grid->setContentsMargins(4);
     grid->setVerticalSpacing(2);
-    group->setLayout(grid);
+    zmpBox.setLayout(grid);
    
     for(int i=0; i < 3; ++i){
-        grid->addWidget(new QLabel(xyzLabels[i], group), 0, i, Qt::AlignCenter);
+        grid->addWidget(new QLabel(xyzLabels[i]), 0, i, Qt::AlignCenter);
         grid->addWidget(&zmpXyzSpin[i], 1, i);
 
         //zmpXyzSpin[i].set_width_chars(7);
@@ -373,38 +400,8 @@ void BodyLinkViewImpl::setupWidgets()
                 boost::bind(&BodyLinkViewImpl::onZmpXyzChanged, this)));
     }
 
-    topVBox->addWidget(group);
-    topVBox->addSpacing(4);
-
-    group = new QGroupBox();
-    group->setTitle(_("Collisions"));
-    group->setAlignment(Qt::AlignCenter);
-
-    vbox = new QVBoxLayout();
-    //vbox->setContentsMargins(4);
-    vbox->setSpacing(4);
-
-    worldCollisionsLabel.setAlignment(Qt::AlignCenter);
-    worldCollisionsLabel.setWordWrap(true);
-    vbox->addWidget(&worldCollisionsLabel);
-
-    hbox = new QHBoxLayout();
-    hbox->setSpacing(4);
-    hbox->addWidget(new HSeparator());
-    hbox->addWidget(new QLabel(_("Self-Collisions")));
-    hbox->addWidget(new HSeparator());
-    vbox->addLayout(hbox);
-    
-    selfCollisionsLabel.setAlignment(Qt::AlignCenter);
-    selfCollisionsLabel.setWordWrap(true);
-    vbox->addWidget(&selfCollisionsLabel);
-
-    topVBox->addSpacing(4);
-
-    group->setLayout(vbox);
-    topVBox->addWidget(group);
-
-    attMatrixBox.hide();
+    topVBox->addWidget(&zmpBox);
+    zmpBox.hide();
 }
 
 
@@ -489,6 +486,12 @@ void BodyLinkViewImpl::update()
         nameLabel.setText(body->name().c_str());
     }
 
+    if(currentBodyItem->isLeggedBody()){
+        zmpBox.show();
+    } else {
+        zmpBox.hide();
+    }
+
     updateKinematicState(false);
             
     updateCollisions();
@@ -508,79 +511,108 @@ void BodyLinkViewImpl::updateLink()
     Vector3 a(currentLink->Rs().transpose() * currentLink->a());
     jointAxisLabel.setText(QString("(%1 %2 %3)").arg(a[0], 0, 'f', 4).arg(a[1], 0, 'f', 4).arg(a[2], 0, 'f', 4));
 
-    if(currentLink->isFreeJoint()){
-        jointTypeLabel.setText(_("Free"));
-        
-    } else if(currentLink->isFixedJoint()){
-        jointTypeLabel.setText(_("Fixed"));
-
-    } else if(currentLink->jointType() == Link::CRAWLER_JOINT){
-        jointTypeLabel.setText(_("Crawler"));
-
-    } else if(currentLink->isRotationalJoint()){
-
-        jointTypeLabel.setText(_("Rotation"));
-
-        qGroup.setTitle(_("Joint Angle [deg]"));
-
-        double qmin = degree(currentLink->q_lower());
-        double qmax = degree(currentLink->q_upper());
-    
-        qSpin.setDecimals(1);
-        //qSpin.setRange(qmin, qmax);
-        qSpin.setRange(-360.0, 360.0); // Limit over values should be shown
-        qSpin.setSingleStep(0.1);
-        qMinLabel.setText(QString::number(qmin, 'f', 1));
-        qMaxLabel.setText(QString::number(qmax, 'f', 1));
-
-        qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
-        qSlider.setSingleStep(0.1 * sliderResolution);
-
-        dqGroup.setTitle(_("Joint Velocity [deg/s]"));
-
-        dqMinSpin.setDecimals(1);
-        dqMinSpin.setRange(-9999.9, 0.0);
-        dqMinSpin.setSingleStep(0.1);
-        dqMinSpin.setValue(degree(currentLink->dq_lower()));
-
-        dqMaxSpin.setDecimals(1);
-        dqMaxSpin.setRange(0.0, 9999.9);
-        dqMaxSpin.setSingleStep(0.1);
-        dqMaxSpin.setValue(degree(currentLink->dq_upper()));
-            
+    if(currentLink->isRotationalJoint()){
+        updateRotationalJointState();
     } else if(currentLink->isSlideJoint()){
-            
-        jointTypeLabel.setText(_("Slide"));
-
-        qGroup.setTitle(_("Joint Translation [m]:"));
-        
-        double qmin = currentLink->q_lower();
-        double qmax = currentLink->q_upper();
-        
-        qSpin.setDecimals(4);
-        qSpin.setRange(-999.9999, 999.9999);
-        qSpin.setSingleStep(0.0001);
-        qMinLabel.setText(QString::number(qmin, 'f', 3));
-        qMaxLabel.setText(QString::number(qmax, 'f', 3));
-            
-        qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
-        qSlider.setSingleStep(0.001 * sliderResolution);
-        
-        dqGroup.setTitle(_("Joint Velocity [m/s]"));
-
-        dqMinSpin.setDecimals(3);
-        dqMinSpin.setRange(-999.999, 0.0);
-        dqMinSpin.setSingleStep(0.001);
-        dqMinSpin.setValue(currentLink->dq_lower());
-
-        dqMaxSpin.setDecimals(3);
-        dqMaxSpin.setRange(0.0, 999.999);
-        dqMaxSpin.setSingleStep(0.001);
-        dqMaxSpin.setValue(currentLink->dq_upper());
+        updateSlideJointState();
+    } else {
+        qBox.hide();
+        dqBox.hide();
+        if(currentLink->isFreeJoint()){
+            jointTypeLabel.setText(_("Free"));
+        } else if(currentLink->isFixedJoint()){
+            jointTypeLabel.setText(_("Fixed"));
+        } else if(currentLink->jointType() == Link::CRAWLER_JOINT){
+            jointTypeLabel.setText(_("Crawler"));
+        }
     }
 }
 
 
+void BodyLinkViewImpl::updateRotationalJointState()
+{
+    jointTypeLabel.setText(_("Rotation"));
+
+    qBox.show();
+    qBox.setTitle(_("Joint Angle [deg]"));
+
+    double qmin = degree(currentLink->q_lower());
+    double qmax = degree(currentLink->q_upper());
+
+    qMinLabel.setText(QString::number(qmin, 'f', 1));
+    qMaxLabel.setText(QString::number(qmax, 'f', 1));
+    
+    qSpin.setDecimals(1);
+    qSpin.setRange(-9999.9, 9999.9); // Limit over values should be shown
+    qSpin.setSingleStep(0.1);
+
+    if(qmin <= -std::numeric_limits<double>::max()){
+        qmin = -1080.0;
+    }
+    if(qmax >= std::numeric_limits<double>::max()){
+        qmax = 1080.0;
+    }
+    
+    qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
+    qSlider.setSingleStep(0.1 * sliderResolution);
+    
+    dqBox.show();
+    dqBox.setTitle(_("Joint Velocity [deg/s]"));
+    
+    dqMinSpin.setDecimals(1);
+    dqMinSpin.setRange(-9999.9, 0.0);
+    dqMinSpin.setSingleStep(0.1);
+    dqMinSpin.setValue(degree(currentLink->dq_lower()));
+    
+    dqMaxSpin.setDecimals(1);
+    dqMaxSpin.setRange(0.0, 9999.9);
+    dqMaxSpin.setSingleStep(0.1);
+    dqMaxSpin.setValue(degree(currentLink->dq_upper()));
+}        
+
+
+void BodyLinkViewImpl::updateSlideJointState()
+{
+    jointTypeLabel.setText(_("Slide"));
+    
+    qBox.show();
+    qBox.setTitle(_("Joint Translation [m]:"));
+    
+    double qmin = currentLink->q_lower();
+    double qmax = currentLink->q_upper();
+    
+    qSpin.setDecimals(4);
+    qSpin.setRange(-999.9999, 999.9999);
+    qSpin.setSingleStep(0.0001);
+
+    if(qmin <= -std::numeric_limits<double>::max()){
+        qmin = -999.9999;
+    }
+    if(qmax >= std::numeric_limits<double>::max()){
+        qmax = 999.9999;
+    }
+    
+    qMinLabel.setText(QString::number(qmin, 'f', 3));
+    qMaxLabel.setText(QString::number(qmax, 'f', 3));
+
+    qSlider.setRange(qmin * sliderResolution, qmax * sliderResolution);
+    qSlider.setSingleStep(0.001 * sliderResolution);
+
+    dqBox.show();
+    dqBox.setTitle(_("Joint Velocity [m/s]"));
+    
+    dqMinSpin.setDecimals(3);
+    dqMinSpin.setRange(-999.999, 0.0);
+    dqMinSpin.setSingleStep(0.001);
+    dqMinSpin.setValue(currentLink->dq_lower());
+    
+    dqMaxSpin.setDecimals(3);
+    dqMaxSpin.setRange(0.0, 999.999);
+    dqMaxSpin.setSingleStep(0.001);
+    dqMaxSpin.setValue(currentLink->dq_upper());
+}
+
+    
 void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
 {
     if(currentBodyItem){
@@ -618,9 +650,11 @@ void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
             }
         }
 
-        const Vector3& zmp = currentBodyItem->zmp();
-        for(int i=0; i < 3; ++i){
-            zmpXyzSpin[i].setValue(zmp[i]);
+        if(currentBodyItem->isLeggedBody()){
+            const Vector3& zmp = currentBodyItem->zmp();
+            for(int i=0; i < 3; ++i){
+                zmpXyzSpin[i].setValue(zmp[i]);
+            }
         }
         
         if(blockSignals){

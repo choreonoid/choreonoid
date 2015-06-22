@@ -12,9 +12,12 @@ using namespace cnoid;
 namespace cnoid {
 
 void exportPySignalTypes();
+void exportPyValueTree();
 void exportPyEigenTypes();
+void exportPyEigenArchive();
 void exportPySeqTypes();
 void exportPySceneGraph();
+void exportPyTaskTypes();
 
 }
 
@@ -23,9 +26,12 @@ BOOST_PYTHON_MODULE(Util)
     class_<Referenced, ReferencedPtr, boost::noncopyable>("Referenced", no_init);
 
     exportPySignalTypes();
+    exportPyValueTree();
     exportPyEigenTypes();
+    exportPyEigenArchive();
     exportPySeqTypes();
     exportPySceneGraph();
+    exportPyTaskTypes();
 
     def("shareDirectory", &cnoid::shareDirectory, return_value_policy<copy_const_reference>());
     def("executablePath", &cnoid::executablePath, return_value_policy<copy_const_reference>());

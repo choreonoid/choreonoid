@@ -30,11 +30,6 @@ add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${idl_cpp_fil
 target_link_libraries(${target} CnoidUtil CnoidCorba CnoidBase)
 apply_common_setting_for_plugin(${target} "${headers}")
 
-set(target cnoid-nameserver)
-idl_compile_cpp(idl_cpp_files idl_h_files corba Naming)
-add_cnoid_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
-target_link_libraries(${target} CnoidUtil ${OMNIORB_LIBRARIES} ${Boost_THREAD_LIBRARY})
-
 if(QT5)
   qt5_use_modules(${target} OpenGL Network)
 endif()

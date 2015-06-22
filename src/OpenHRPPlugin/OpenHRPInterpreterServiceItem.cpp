@@ -58,6 +58,7 @@ public:
     ScriptItem* scriptItem;
     bool isScriptItemBackgroundMode;
     bool forceMainThreadExecution;
+    bool doPutScriptTextToInterpret;
     ostream& os;
 
     OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self);
@@ -114,6 +115,7 @@ ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self)
     scriptItem = 0;
     isScriptItemBackgroundMode = false;
     forceMainThreadExecution = false;
+    doPutScriptTextToInterpret = false;
 }
 
 
@@ -131,7 +133,8 @@ ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self,
 {
     rtc = 0;
     scriptItem = 0;
-    isScriptItemBackgroundMode = false;
+    isScriptItemBackgroundMode = org.isScriptItemBackgroundMode;
+    doPutScriptTextToInterpret = org.doPutScriptTextToInterpret;
 }
     
 
@@ -248,6 +251,8 @@ void OpenHRPInterpreterServiceItem::doPutProperties(PutPropertyFunction& putProp
                 boost::bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
     putProperty(_("Force main thread execution"), impl->forceMainThreadExecution,
                 changeProperty(impl->forceMainThreadExecution));
+    putProperty(_("Put script text to interpret"), impl->doPutScriptTextToInterpret,
+                changeProperty(impl->doPutScriptTextToInterpret));
 }
 
 
@@ -255,6 +260,7 @@ bool OpenHRPInterpreterServiceItem::store(Archive& archive)
 {
     archive.write("rtcInstance", impl->rtcInstanceName);
     archive.write("forceMainThreadExecution", impl->forceMainThreadExecution);
+    archive.write("putScriptText", impl->doPutScriptTextToInterpret);
     return true;
 }
 
@@ -263,6 +269,7 @@ bool OpenHRPInterpreterServiceItem::restore(const Archive& archive)
 {
     impl->setRTCinstanceName(archive.get("rtcInstance", impl->rtcInstanceName));
     archive.read("forceMainThreadExecution", impl->forceMainThreadExecution);
+    archive.read("putScriptText", impl->doPutScriptTextToInterpret);
     return true;
 }
 
@@ -291,6 +298,11 @@ RTC::ReturnCode_t InterpreterRTC::onInitialize()
 
 char* InterpreterService_impl::interpret(const char* expr)
 {
+    static int counter = 0;
+
+    ostream& os = MessageView::instance()->cout();
+    int no = counter++;
+    
     result.clear();
 
     if(!itemImpl->isScriptItemBackgroundMode || itemImpl->forceMainThreadExecution){
@@ -309,7 +321,10 @@ void InterpreterService_impl::interpretMain(const char* expr)
     ostream& os = MessageView::instance()->cout();
 
     Item* item = itemImpl->self;
-    os << (format(_("%1%: interpret(\"%2%\")")) % item->name() % expr) << endl;
+
+    if(itemImpl->doPutScriptTextToInterpret){
+        os << (format(_("%1%: interpret(\"%2%\")")) % item->name() % expr) << endl;
+    }
 
     ScriptItem* scriptItem = item->findOwnerItem<ScriptItem>();
     if(!scriptItem){
@@ -327,10 +342,12 @@ void InterpreterService_impl::interpretMain(const char* expr)
                     os << (format(_("The script does not return.")) % item->name()) << endl;
                 } else {
                     result = scriptItem->resultString();
-                    if(!result.empty()){
-                        os << (format(_("%1%: interpret() returns %2%.")) % item->name() % result) << endl;
-                    } else {
-                        os << (format(_("%1%: interpret() finished.")) % item->name()) << endl;
+                    if(itemImpl->doPutScriptTextToInterpret){
+                        if(!result.empty()){
+                            os << (format(_("%1%: interpret() returns %2%.")) % item->name() % result) << endl;
+                        } else {
+                            os << (format(_("%1%: interpret() finished.")) % item->name()) << endl;
+                        }
                     }
                 }
             }

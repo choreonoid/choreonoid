@@ -21,7 +21,7 @@ using boost::format;
 
 namespace {
 
-typedef boost::function<AbstractSeqItemPtr(AbstractSeqPtr seq)> ExtraSeqItemFactory;
+typedef boost::function<AbstractSeqItem*(AbstractSeqPtr seq)> ExtraSeqItemFactory;
 typedef map<string, ExtraSeqItemFactory> ExtraSeqItemFactoryMap;
 ExtraSeqItemFactoryMap extraSeqItemFactories;
 
@@ -156,7 +156,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
 
 void BodyMotionItem::addExtraSeqItemFactory
-(const std::string& key, boost::function<AbstractSeqItemPtr(AbstractSeqPtr seq)> factory)
+(const std::string& key, boost::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory)
 {
     extraSeqItemFactories[key] = factory;
 }

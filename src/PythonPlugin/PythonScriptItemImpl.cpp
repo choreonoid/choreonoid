@@ -28,7 +28,7 @@ PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem, const PythonS
       mv(MessageView::instance()),
       executor(org.executor)
 {
-
+    
 }
 
 
@@ -167,15 +167,17 @@ void PythonScriptItemImpl::onScriptFinished()
     sigFinishedConnection.disconnect();
     
     const string iname = scriptItem()->identityName();
-    
-    if(!executor.hasException()){
+
+    if(executor.isTerminated()){
+        mv->putln(format(_("The execution of Python script \"%1%\" has been terminated.")) % iname);
+    } else if(executor.hasException()){
+        mv->putln(format(_("The execution of Python script \"%1%\" failed.\n%2%"))
+                  % iname % executor.exceptionText());
+    } else {
         if(!executor.resultObject().is_none()){
             mv->putln(executor.resultString());
         }
         mv->putln(format(_("The execution of Python script \"%1%\" has been finished.")) % iname);
-    } else {
-        mv->putln(format(_("The execution of Python script \"%1%\" failed.\n%2%"))
-                  % iname % executor.exceptionText());
     }
     
     sigScriptFinished_();

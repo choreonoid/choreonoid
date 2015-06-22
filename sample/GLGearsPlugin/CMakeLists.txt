@@ -1,4 +1,8 @@
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_GL_GEARS_SAMPLE "Building a GL Gears sample plugin" OFF)
 set(sources GLGearsPlugin.cpp GLGearsView.cpp GLGearsView.h)
 

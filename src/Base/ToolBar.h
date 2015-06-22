@@ -54,6 +54,8 @@ public:
 
     void setStretchable(bool on);
     bool isStretchable() const { return isStretchable_; }
+    virtual int stretchableDefaultWidth() const;
+            
 
     ToolBarArea* toolBarArea() { return toolBarArea_; }
 

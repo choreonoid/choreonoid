@@ -16,7 +16,7 @@ using namespace cnoid;
 
 namespace {
 
-AbstractSeqItemPtr createMultiDeviceStateSeqItem(AbstractSeqPtr seq)
+AbstractSeqItem* createMultiDeviceStateSeqItem(AbstractSeqPtr seq)
 {
     MultiDeviceStateSeqPtr dseq = dynamic_pointer_cast<MultiDeviceStateSeq>(seq);
     return dseq ? new MultiDeviceStateSeqItem(dseq) : 0;
@@ -31,7 +31,7 @@ class MultiDeviceStateSeqEngine : public TimeSyncItemEngine
 
 public:
         
-    MultiDeviceStateSeqEngine(MultiDeviceStateSeqItemPtr seqItem, BodyItemPtr bodyItem)
+    MultiDeviceStateSeqEngine(MultiDeviceStateSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->seq()), body(bodyItem->body()) {
         seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
     }
@@ -60,12 +60,12 @@ public:
 };
 
 
-TimeSyncItemEnginePtr createMultiDeviceStateSeqEngine(BodyItemPtr bodyItem, AbstractSeqItemPtr seqItem)
+TimeSyncItemEngine* createMultiDeviceStateSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqItem)
 {
-    if(MultiDeviceStateSeqItemPtr item = dynamic_pointer_cast<MultiDeviceStateSeqItem>(seqItem)){
-        return boost::make_shared<MultiDeviceStateSeqEngine>(item, bodyItem);
+    if(MultiDeviceStateSeqItem* item = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
+        return new MultiDeviceStateSeqEngine(item, bodyItem);
     }
-    return TimeSyncItemEnginePtr();
+    return 0;
 }
 
 }

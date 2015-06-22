@@ -21,6 +21,7 @@ class SceneWidgetEvent;
 class SceneWidgetEditable;
 class SceneWidgetRoot;
 class Menu;
+class InteractiveCameraTransform;
 
 class CNOID_EXPORT SceneWidget : public QWidget
 {
@@ -33,24 +34,26 @@ public:
     static void forEachInstance(SgNode* node, boost::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
 
     SceneWidgetRoot* sceneRoot();
+    SgGroup* scene();
 
     SceneRenderer& renderer();
 
+    SignalProxy<void()> sigStateChanged() const;
+
     void setEditMode(bool on);
     bool isEditMode() const;
-    SignalProxy<void(bool)> sigEditModeToggled() const;
 
     const SceneWidgetEvent& latestEvent() const;
 
     enum ViewpointControlMode { THIRD_PERSON_MODE, FIRST_PERSON_MODE  };
     void setViewpointControlMode(ViewpointControlMode mode);
     ViewpointControlMode viewpointControlMode() const;
-    SignalProxy<void(int mode)> sigViewpointControlModeChanged() const;
 
     SgPosTransform* builtinCameraTransform(void);
     SgPerspectiveCamera* builtinPerspectiveCamera() const;
     SgOrthographicCamera* builtinOrthographicCamera() const;
     bool isBuiltinCameraCurrent() const;
+    InteractiveCameraTransform* findOwnerInteractiveCameraTransform(int cameraIndex);
 
     void startBuiltinCameraViewChange(const Vector3& center);
     void rotateBuiltinCameraView(double dPitch, double dYaw);

@@ -1,30 +1,38 @@
 
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(SceneGraph.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(BoundingBox.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
 set(sources
+  ConnectionSet.cpp
+  Selection.cpp
+  DataMap.cpp
   EigenUtil.cpp
   ValueTree.cpp
+  YAMLReader.cpp
+  YAMLWriter.cpp
+  UTF8.cpp
+  EasyScanner.cpp
+  NullOut.cpp
+  FileUtil.cpp
+  ExecutablePath.cpp
   AbstractSeq.cpp
   Vector3Seq.cpp
   MultiSE3Seq.cpp
   MultiAffine3Seq.cpp
   MultiValueSeq.cpp
   MultiVector3Seq.cpp
+  PlainSeqFormatLoader.cpp
+  Task.cpp
+  AbstractTaskSequencer.cpp
   CollisionDetector.cpp
   RangeLimiter.cpp
-  EasyScanner.cpp
-  NullOut.cpp
-  FileUtil.cpp
-  ExecutablePath.cpp
-  UTF8.cpp
-  YAMLReader.cpp
-  YAMLWriter.cpp
   BoundingBox.cpp
   SceneGraph.cpp
   SceneVisitor.cpp
+  SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp
@@ -42,12 +50,8 @@ set(sources
   VRMLToSGConverter.cpp
   DaeParser.cpp
   STLSceneLoader.cpp
-  ConnectionSet.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
-  Selection.cpp
-  DataMap.cpp
-  PlainSeqFormatLoader.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
 
@@ -130,7 +134,10 @@ set(headers
   Selection.h
   DataMap.h
   Joystick.h
+  Task.h
+  AbstractTaskSequencer.h
   exportdecl.h
+  Config.h
   )
 
 include_directories(${IRRXML_INCLUDE_DIRS})

@@ -32,6 +32,9 @@ public:
     SgMesh* generateCylinder(double radius, double height, bool bottom = true, bool top = true, bool side = true);
     SgMesh* generateCone(double radius, double height, bool bottom = true, bool side = true);
     SgMesh* generateDisc(double radius, double innerRadius);
+    SgMesh* generateArrow(double length, double width, double coneLengthRatio = 0.1, double coneWidthRatio = 2.5);
+    //SgMesh* generateArrow(double length, double width, double conePosRatio = 0.5, double coneLengthRatio = 0.1, double coneWidthRatio = 2.5);
+    SgMesh* generateTorus(double radius, double crossSectionRadius);
 
     typedef std::vector<Vector2, Eigen::aligned_allocator<Vector2> > Vector2Array;
     typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3> > Vector3Array;
@@ -63,6 +66,7 @@ private:
 
     void generateNormals(SgMesh* mesh, double creaseAngle);
 };
+
 }
 
 #endif

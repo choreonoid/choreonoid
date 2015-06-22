@@ -3,10 +3,11 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_BOUNDING_BOX_H_INCLUDED
-#define CNOID_UTIL_BOUNDING_BOX_H_INCLUDED
+#ifndef CNOID_UTIL_BOUNDING_BOX_H
+#define CNOID_UTIL_BOUNDING_BOX_H
 
 #include "EigenTypes.h"
+#include <iosfwd>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -28,6 +29,7 @@ public:
     const Vector3& min() const { return min_; }
     const Vector3& max() const { return max_; }
     Vector3 center() const;
+    Vector3 size() const;
     double boundingSphereRadius() const;
         
     void expandBy(const BoundingBox& bbox);
@@ -41,6 +43,8 @@ private:
     Vector3 max_;
     bool empty_;
 };
+
+CNOID_EXPORT std::ostream& operator<<(std::ostream& os, const BoundingBox& bb);
 
 /**
    float type version of the BoundingBox class
@@ -73,6 +77,9 @@ private:
     Vector3f min_;
     Vector3f max_;
 };
+
+CNOID_EXPORT std::ostream& operator<<(std::ostream& os, const BoundingBoxf& bb);
+
 }    
 
 #endif

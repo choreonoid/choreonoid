@@ -149,6 +149,7 @@ public:
         if(slot){
             slot->changeOrder(order);
         }
+        return *this;
     }
 };
 
@@ -160,14 +161,14 @@ public:
     ~ScopedConnection() { Connection::disconnect(); }
     void reset(const Connection& c) { Connection::disconnect(); Connection::operator=(c); }
     void disconnect() { Connection::disconnect(); }
-    bool connected() { Connection::connected(); }
+    bool connected() { return Connection::connected(); }
     void block() { Connection::block(); }
     void unblock() { Connection::unblock(); }
-    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); }
+    ScopedConnection& changeOrder(Order order) { Connection::changeOrder(order); return *this; }
 
 private:
-    ScopedConnection(const ScopedConnection& org) { }
-    ScopedConnection& operator=(const ScopedConnection& rhs) { }
+    ScopedConnection(const ScopedConnection& org);
+    ScopedConnection& operator=(const ScopedConnection& rhs);
 };
 
 }
@@ -342,7 +343,40 @@ struct signal_traits< boost::signal<Signature, Combiner, Group, GroupCompare, Sl
 */
 
 
-template<typename Signature, typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type> >
+class LogicalProduct
+{
+public:
+    typedef bool result_type;
+    template<typename InputIterator>
+    bool operator()(InputIterator first, InputIterator last) const {
+        bool result = true;
+        while(first != last){
+            result &= *first++;
+        }
+        return result;
+    }
+};
+
+
+class LogicalSum
+{
+public:
+    typedef bool result_type;
+    template<typename InputIterator>
+    bool operator()(InputIterator first, InputIterator last) const {
+        bool result = false;
+        while(first != last){
+            result |= *first++;
+        }
+        return result;
+    }
+};
+
+
+template<
+    typename Signature,
+    typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
+    >
 class SignalProxy
 {
 public:
@@ -367,7 +401,6 @@ public:
 private:
     SignalType* signal;
 };
-
 
 } // namespace cnoid;
 

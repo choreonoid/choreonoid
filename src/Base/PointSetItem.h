@@ -6,6 +6,7 @@
 #define CNOID_BASE_POINT_SET_ITEM_H
 
 #include <cnoid/Item>
+#include <cnoid/RectRegionMarker>
 #include <cnoid/SceneShape>
 #include <cnoid/SceneProvider>
 #include <boost/optional.hpp>
@@ -30,19 +31,47 @@ public:
     const SgPointSet* pointSet() const;
     SgPointSet* pointSet();
 
-    Affine3& offsetPosition();
-    const Affine3& offsetPosition() const;
+    virtual void notifyUpdate();
+        
+    const Affine3& offsetTransform() const;
+    void setOffsetTransform(const Affine3& T);
+    SignalProxy<void(const Affine3& T)> sigOffsetTransformChanged();
+    void notifyOffsetTransformChange();
+
+    SgPointSetPtr getTransformedPointSet() const;
+
+    enum RenderingMode {
+        POINT, VOXEL, N_RENDERING_MODES
+    };
+
+    void setRenderingMode(int mode);
+    int renderingMode() const;
 
     void setPointSize(double size);
     double pointSize() const;
 
+    double voxelSize() const;
+    void setVoxelSize(double size);
+    
     void setEditable(bool on);
     bool isEditable() const;
 
-    boost::optional<Vector3> attentionPoint() const;
+    int numAttentionPoints() const;
+    Vector3 attentionPoint(int index) const;
+    void clearAttentionPoints();
+    void addAttentionPoint(const Vector3& p);
+    SignalProxy<void()> sigAttentionPointsChanged();
+    void notifyAttentionPointChange();
+    
+    boost::optional<Vector3> attentionPoint() const; // deprecated
+    SignalProxy<void()> sigAttentionPointChanged();  // deprecated
+    void clearAttentionPoint();  // deprecated
+    void setAttentionPoint(const Vector3& p);  // deprecated
 
-    virtual void notifyUpdate();
-        
+    void removePoints(const RectRegionMarker::Region& region);
+
+    SignalProxy<void(const RectRegionMarker::Region& region)> sigPointsInRegionRemoved();
+
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 

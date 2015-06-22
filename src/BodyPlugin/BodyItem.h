@@ -117,6 +117,7 @@ public:
 
     const Vector3& centerOfMass();
 
+    bool isLeggedBody() const;
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor = false);
 
     const Vector3& zmp() const;
@@ -149,6 +150,7 @@ private:
     std::vector< std::vector<CollisionLinkPairPtr> > collisionsOfLink_;
     Signal<void()> sigCollisionsUpdated_;
 };
+
 }
 
 #endif

@@ -5,7 +5,9 @@
 #include "../MessageView.h"
 #include "../SceneWidget.h"
 #include "../SceneView.h"
+#include "../TaskView.h"
 #include <cnoid/PySignal>
+#include <QWidget>
 
 using namespace boost::python;
 using namespace cnoid;
@@ -15,18 +17,18 @@ namespace {
 void (MessageView::*MessageView_put)(const std::string& message) = &MessageView::put;
 void (MessageView::*MessageView_putln)(const std::string& message) = &MessageView::putln;
 void (MessageView::*MessageView_notify)(const std::string& message) = &MessageView::notify;
- 
+
 }
 
 namespace cnoid {
 
 void exportPyViews()
 {
-    PySignalProxy<void(View*)>("ViewSignal");
+    PySignal<void(View*)>("ViewSignal");
 
     {
         scope viewScope = 
-            class_<View, View*, boost::noncopyable>("View", no_init)
+            class_<View, View*, bases<QWidget>, boost::noncopyable>("View", no_init)
             .def("setName", &View::setName)
             .def("name", &View::name)
             .def("isActive", &View::isActive)
@@ -65,12 +67,10 @@ void exportPyViews()
         ;
 
     class_<SceneWidget, SceneWidget*, boost::noncopyable >("SceneWidget")
+        .def("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
-        .def("sigEditModeToggled", &SceneWidget::sigEditModeToggled)
-        
         .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)
         .def("collisionLinesVisible", &SceneWidget::collisionLinesVisible, return_value_policy<return_by_value>())
-
         .def("setHeadLightIntensity", &SceneWidget::setHeadLightIntensity)
         .def("setWorldLightIntensity", &SceneWidget::setWorldLightIntensity)
         .def("setWorldLightAmbient", &SceneWidget::setWorldLightAmbient)
@@ -79,7 +79,6 @@ void exportPyViews()
         .def("setLineWidth", &SceneWidget::setLineWidth)
         .def("setPointSize", &SceneWidget::setPointSize)
         .def("setNormalLength", &SceneWidget::setNormalLength)
-
         .def("setHeadLightEnabled", &SceneWidget::setHeadLightEnabled)
         .def("setHeadLightLightingFromBack", &SceneWidget::setHeadLightLightingFromBack)
         .def("setWorldLight", &SceneWidget::setWorldLight)
@@ -90,10 +89,8 @@ void exportPyViews()
         .def("setShowFPS", &SceneWidget::setShowFPS)
         .def("setNewDisplayListDoubleRenderingEnabled", &SceneWidget::setNewDisplayListDoubleRenderingEnabled)
         .def("setUseBufferForPicking", &SceneWidget::setUseBufferForPicking)
-
         .def("setBackgroundColor", &SceneWidget::setBackgroundColor)
         .def("setColor", &SceneWidget::setBackgroundColor)
-        
         .def("setCameraPosition", &SceneWidget::setCameraPosition)
         .def("setFieldOfView", &SceneWidget::setFieldOfView)
         .def("setHeight", &SceneWidget::setHeight)
@@ -104,6 +101,11 @@ void exportPyViews()
     class_<SceneView, SceneView*, bases<View>, boost::noncopyable>("SceneView", no_init)
         .def("instance", &SceneView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
         .def("sceneWidget", &SceneView::sceneWidget, return_value_policy<reference_existing_object>())
+        ;
+
+    class_<TaskView, TaskView*, bases<View, AbstractTaskSequencer>, boost::noncopyable>("TaskView", no_init)
+        .def("instance", &TaskView::instance,
+                return_value_policy<reference_existing_object>()).staticmethod("instance")
         ;
 }
 

@@ -177,10 +177,10 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
     : item(item),
       itemTreeViewImpl(itemTreeViewImpl)
 {
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsDropEnabled);
 
     if(!item->isSubItem()){
-        setFlags(flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled);
+        setFlags(flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
     }
 
     setToolTip(0, QString());
@@ -699,7 +699,9 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     connectionsFromRootItem.block();
 
     QTreeWidgetItem* parentTwItem = itemFromIndex(parent);
-    if(!parentTwItem){
+    if(parentTwItem){
+        parentTwItem->setExpanded(true);
+    } else {
         parentTwItem = invisibleRootItem();
     }
 
@@ -776,9 +778,9 @@ void ItemTreeViewImpl::onSelectionChanged()
 }
 
 
-bool ItemTreeView::isItemSelected(ItemPtr item)
+bool ItemTreeView::isItemSelected(Item* item)
 {
-    return impl->isItemSelected(item.get());
+    return impl->isItemSelected(item);
 }
 
 
@@ -792,9 +794,15 @@ bool ItemTreeViewImpl::isItemSelected(Item* item)
 }
 
 
-bool ItemTreeView::selectItem(ItemPtr item, bool select)
+bool ItemTreeView::selectItem(Item* item, bool select)
 {
-    return impl->selectItem(item.get(), select);
+    return impl->selectItem(item, select);
+}
+
+
+void ItemTreeView::unselectItem(Item* item)
+{
+    impl->selectItem(item, false);
 }
 
 

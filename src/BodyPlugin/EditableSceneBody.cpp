@@ -40,6 +40,7 @@ void EditableSceneLink::showBoundingBox(bool on)
     if(!shape()){
         return;
     }
+#if 0
     if(on){
         if(!bbLineSet){
             createBoundingBoxLineSet();
@@ -50,6 +51,20 @@ void EditableSceneLink::showBoundingBox(bool on)
     } else if(bbLineSet){
         removeChild(bbLineSet, true);
     }
+#else
+    if(on){
+        if(!outlineGroup){
+            outlineGroup = new SgOutlineGroup();
+        }
+        if(!contains(outlineGroup)){
+            moveChildren(outlineGroup, false);
+            addChild(outlineGroup, true);
+        }
+    }else if(outlineGroup){
+        outlineGroup->moveChildren(this, false);
+        removeChild(outlineGroup, true);
+    }
+#endif
 }
 
 
@@ -580,7 +595,9 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         }
     }
 
-    if(show && targetLink && (kinematicsBar->mode() == KinematicsBar::IK_MODE) && kinematicsBar->isAttitudeMode()){
+    if(show && targetLink &&
+       (kinematicsBar->mode() == KinematicsBar::IK_MODE) &&
+       kinematicsBar->isPositionDraggerEnabled()){
         attachPositionDragger(targetLink);
     }
 
@@ -591,8 +608,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
 void EditableSceneBodyImpl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
-    double r = sceneLink->untransformedBoundingBox().boundingSphereRadius();
-    positionDragger->setRadius(r);
+    positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
     sceneLink->addChild(positionDragger);
 }
 
@@ -711,14 +727,12 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             case KinematicsBar::AUTO_MODE:
                 ik = bodyItem->getDefaultIK(targetLink);
                 if(ik){
-                    attachPositionDragger(targetLink);
                     startIK(event);
-                } else {
-                    startFK(event);
+                    break;
                 }
-                break;
             case KinematicsBar::FK_MODE:
                 if(targetLink == bodyItem->currentBaseLink()){
+                    // Translation of the base link
                     startIK(event);
                 } else {
                     startFK(event);
@@ -929,8 +943,9 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
             boost::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
 
         menuManager.addSeparator();
+
         
-        menuManager.setPath(N_("/Markers"));
+        menuManager.setPath(_("Markers"));
         
         Action* item = menuManager.addCheckItem(_("Center of Mass"));
         item->setChecked(isCmVisible);
@@ -1035,7 +1050,7 @@ bool EditableSceneBodyImpl::initializeIK()
     if(!ik){
         pinDragIK = bodyItem->pinDragIK();
         pinDragIK->setBaseLink(baseLink);
-        pinDragIK->setTargetLink(targetLink, kinematicsBar->isAttitudeMode());
+        pinDragIK->setTargetLink(targetLink, kinematicsBar->isPositionDraggerEnabled());
         if(pinDragIK->initialize()){
             ik = pinDragIK;
         }
@@ -1051,6 +1066,9 @@ void EditableSceneBodyImpl::startIK(const SceneWidgetEvent& event)
     Link* baseLink = bodyItem->currentBaseLink();
 
     if(initializeIK()){
+        if(kinematicsBar->isPositionDraggerEnabled()){
+            attachPositionDragger(targetLink);
+        }
         dragProjector.setInitialPosition(targetLink->position());
         dragProjector.setTranslationAlongViewPlane();
         if(dragProjector.startTranslation(event)){

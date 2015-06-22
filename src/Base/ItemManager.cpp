@@ -781,11 +781,14 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 
 bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId)
 {
+    filesystem::path filepath = cnoid::getAbsolutePath(filename);
+    string pathString = cnoid::getPathString(filepath);
+    
     const string& typeId = typeid(*item).name();
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p == typeIdToClassInfoMap.end()){
         messageView->putln(fmt(_("\"%1%\" cannot be loaded because item type \"%2%\" is not registered."))
-                           % filename % typeId);
+                           % pathString % typeId);
         return false;
     }
     
@@ -803,7 +806,7 @@ bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parent
             }
         }
     } else {
-        string extension = filesystem::extension(filesystem::path(filename));
+        string extension = filesystem::extension(filepath);
         if(extension.size() >= 2){
             string ext = extension.substr(1); // remove dot
             for(list<LoaderPtr>::iterator p = loaders.begin(); p != loaders.end(); ++p){
@@ -822,14 +825,14 @@ bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parent
         string message;
         if(formatId.empty()){
             message = str(fmt(_("\"%1%\" cannot be loaded because the file format is unknown."))
-                          % filename);
+                          % pathString);
         } else {
             message = str(fmt(_("\"%1%\" cannot be loaded because file format \"%2%\" is unknown."))
-                          % filename % formatId);
+                          % pathString % formatId);
         }
         messageView->putln(message);
     } else {
-        if(load(targetLoader, item, filename, parentItem)){
+        if(load(targetLoader, item, pathString, parentItem)){
             loaded = true;
         }
     }
@@ -861,7 +864,11 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const std::string& file
             loaded = true;
         }
 
-        messageView->put(loaded ? _(" -> ok!\n") : _(" -> failed.\n"));
+        if(loaded){
+            messageView->put(_(" -> ok!\n"));
+        } else {
+            messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
+        }
         messageView->flush();
     }
 
@@ -1270,8 +1277,7 @@ void ItemManager::reloadItems(const ItemList<>& items)
                         child = nextChild;
                     }
                     reloaded->assign(item);
-                    messageView->putln(format(_("\"%1%\" has been reloaded.")) % reloaded->name());
-                    
+
                     item->detachFromParentItem();
                 }
             }

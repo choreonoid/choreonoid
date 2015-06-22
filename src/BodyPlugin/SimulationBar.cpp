@@ -131,7 +131,7 @@ void SimulationBar::onRestoreInitialClicked()
 }
 
 
-void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback)
+void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback, bool doSelect)
 {
     MessageView* mv = MessageView::instance();
     /*
@@ -149,7 +149,9 @@ void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulat
             simulators.clear();
             mv->notify(_("Please select a simulator item to simulate."));
         } else {
-            ItemTreeView::mainInstance()->selectItem(simulators.front());
+            if(doSelect){
+                ItemTreeView::instance()->selectItem(simulators.front());
+            }
         }
     }
 
@@ -193,20 +195,20 @@ void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulat
 
 void SimulationBar::startSimulation(bool doRest)
 {
-    forEachSimulator(boost::bind(&SimulationBar::startSimulation, this, _1, doRest));
+    forEachSimulator(boost::bind(&SimulationBar::startSimulation, this, _1, doRest), true);
 }
 
 
 void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 {
-	if(simulator->isRunning()){
+    if(simulator->isRunning()){
     	if(pauseToggle->isChecked() && !doReset){
-    		simulator->restartSimulation();
-    		pauseToggle->setChecked(false);
+            simulator->restartSimulation();
+            pauseToggle->setChecked(false);
     	}
         //simulator->selectMotionItems();
         TimeBar::instance()->startPlaybackFromFillLevel();
-
+        
     } else {
         sigSimulationAboutToStart_(simulator);
         simulator->startSimulation(doReset);
@@ -235,23 +237,22 @@ void SimulationBar::stopSimulation(SimulatorItem* simulator)
 
 void SimulationBar::onPauseSimulationClicked()
 {
-	forEachSimulator(boost::bind(&SimulationBar::pauseSimulation, this, _1));
+    forEachSimulator(boost::bind(&SimulationBar::pauseSimulation, this, _1));
 }
 
 
 void SimulationBar::pauseSimulation(SimulatorItem* simulator)
 {
-	if(pauseToggle->isChecked()){
-		if(simulator->isRunning())
-			simulator->pauseSimulation();
-		TimeBar* timeBar = TimeBar::instance();
-		if(timeBar->isDoingPlayback()){
-			timeBar->stopPlayback();
-		}
-	}else{
-		if(simulator->isRunning())
-			simulator->restartSimulation();
-		TimeBar::instance()->startPlaybackFromFillLevel();
-	}
+    if(pauseToggle->isChecked()){
+        if(simulator->isRunning())
+            simulator->pauseSimulation();
+        TimeBar* timeBar = TimeBar::instance();
+        if(timeBar->isDoingPlayback()){
+            timeBar->stopPlayback();
+        }
+    } else {
+        if(simulator->isRunning())
+            simulator->restartSimulation();
+        TimeBar::instance()->startPlaybackFromFillLevel();
+    }
 }
-

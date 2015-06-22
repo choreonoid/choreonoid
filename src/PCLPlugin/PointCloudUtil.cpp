@@ -104,14 +104,14 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
 
 
 boost::optional<double> cnoid::alignPointCloud
-(SgPointSet* target, SgPointSet* source, Affine3& io_T, double maxCorrespondenceDistance, int maxIterations)
+(SgPointSet* target, SgPointSet* source, Affine3& io_T, double maxCorrespondenceDistance, int maxIterations, double epsilon)
 {
     typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;    
 
     if(!target->hasVertices() || !source->hasVertices()){
         return boost::none;
     }
-    
+
     const SgVertexArray& targetPoints = *target->vertices();
     PointCloud::Ptr targetCloud(new PointCloud(targetPoints.size(), 1));
     targetCloud->is_dense = false;
@@ -138,6 +138,7 @@ boost::optional<double> cnoid::alignPointCloud
     icp.setInputSource(sourceCloud);
     icp.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
     icp.setMaximumIterations(maxIterations);
+    icp.setTransformationEpsilon(epsilon);
     pcl::PointCloud<pcl::PointXYZ> Final;
     const ICP::Matrix4 guess(io_T.matrix().cast<ICP::Matrix4::Scalar>());
     icp.align(Final, guess);

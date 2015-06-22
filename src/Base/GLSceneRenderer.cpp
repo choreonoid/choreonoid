@@ -267,15 +267,15 @@ class GLSceneRendererImpl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root);
+    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
     ~GLSceneRendererImpl();
 
     GLSceneRenderer* self;
 
     Signal<void()> sigRenderingRequest;
 
-    SgGroupPtr root;
     SgGroupPtr sceneRoot;
+    SgGroupPtr scene;
 
     SgNodePath indexedEntities;
 
@@ -447,10 +447,8 @@ public:
     void removeEntity(SgNode* node);
     void onSceneGraphUpdated(const SgUpdate& update);
     void updateCameraPaths();
-    bool getSimplifiedCameraPathStrings(int index, vector<string>& out_pathStrings);
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
-    bool setCurrentCamera(std::vector<std::string>& strings, bool doRenderingRequest);
     bool initializeGL();
     void setViewport(int x, int y, int width, int height);
     void beginRendering(bool doRenderingCommands);
@@ -478,6 +476,7 @@ public:
     void renderMesh(SgMesh* mesh, bool hasTexture);
     void renderTransparentShapes();
     void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
+    void visitOutlineGroup(SgOutlineGroup* outline);
 
     void clearGLState();
     void setColor(const Vector4f& color);
@@ -509,9 +508,9 @@ public:
 
 GLSceneRenderer::GLSceneRenderer()
 {
-    SgGroup* root = new SgGroup;
-    root->setName("Root");
-    impl = new GLSceneRendererImpl(this, root);
+    SgGroup* sceneRoot = new SgGroup;
+    sceneRoot->setName("Root");
+    impl = new GLSceneRendererImpl(this, sceneRoot);
 }
 
 
@@ -521,11 +520,11 @@ GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
 }
 
 
-GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root)
+GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot)
     : self(self),
-      root(root)
+      sceneRoot(sceneRoot)
 {
-    root->sigUpdated().connect(boost::bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
+    sceneRoot->sigUpdated().connect(boost::bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
 
     Vstack.reserve(16);
     
@@ -560,8 +559,8 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* root)
     isHeadLightLightingFromBackEnabled = false;
     additionalLightsEnabled = true;
 
-    sceneRoot = new SgGroup();
-    root->addChild(sceneRoot);
+    scene = new SgGroup();
+    sceneRoot->addChild(scene);
 
     polygonMode = GLSceneRenderer::FILL_MODE;
     defaultLighting = true;
@@ -600,13 +599,19 @@ GLSceneRendererImpl::~GLSceneRendererImpl()
 
 SgGroup* GLSceneRenderer::sceneRoot()
 {
-    return impl->sceneRoot.get();
+    return impl->sceneRoot;
+}
+
+
+SgGroup* GLSceneRenderer::scene()
+{
+    return impl->scene;
 }
 
 
 void GLSceneRenderer::clearScene()
 {
-    impl->sceneRoot->clearChildren(true);
+    impl->scene->clearChildren(true);
 }
 
 
@@ -646,6 +651,12 @@ int GLSceneRenderer::numCameras() const
 }
 
 
+SgCamera* GLSceneRenderer::camera(int index)
+{
+    return dynamic_cast<SgCamera*>(cameraPath(index).back());
+}
+
+
 const std::vector<SgNode*>& GLSceneRenderer::cameraPath(int index) const
 {
     if(impl->cameraPaths.empty()){
@@ -660,6 +671,7 @@ void GLSceneRendererImpl::updateCameraPaths()
     vector<SgNode*> tmpPath;
     const int n = cameras->size();
     cameraPaths.resize(n);
+    
     for(int i=0; i < n; ++i){
         CameraInfo& info = (*cameras)[i];
         tmpPath.clear();
@@ -675,37 +687,6 @@ void GLSceneRendererImpl::updateCameraPaths()
             std::copy(tmpPath.rbegin(), tmpPath.rend(), path.begin());
         }
     }
-}
-
-
-bool GLSceneRenderer::getSimplifiedCameraPathStrings(int index, vector<string>& out_pathStrings) const
-{
-    return impl->getSimplifiedCameraPathStrings(index, out_pathStrings);
-}
-
-
-bool GLSceneRendererImpl::getSimplifiedCameraPathStrings(int index, vector<string>& out_pathStrings)
-{
-    if(cameraPaths.empty()){
-        updateCameraPaths();
-    }
-    out_pathStrings.clear();
-    if(index < cameraPaths.size()){
-        const vector<SgNode*>& cameraPath = cameraPaths[index];
-        const string& name = cameraPath.back()->name();
-        if(!name.empty()){
-            size_t n = cameraPath.size() - 1;
-            for(size_t i=0; i < n; ++i){
-                const string& element = cameraPath[i]->name();
-                if(!element.empty()){
-                    out_pathStrings.push_back(element);
-                    break;
-                }
-            }
-            out_pathStrings.push_back(name);
-        }
-    }
-    return !out_pathStrings.empty();
 }
 
 
@@ -749,49 +730,6 @@ bool GLSceneRendererImpl::setCurrentCamera(SgCamera* camera)
         }
     }
     return false;
-}
-
-
-bool GLSceneRenderer::setCurrentCamera(std::vector<std::string>& simplifiedPathStrings)
-{
-    return impl->setCurrentCamera(simplifiedPathStrings, true);
-}
-
-
-bool GLSceneRendererImpl::setCurrentCamera(std::vector<std::string>& strings, bool doRenderingRequest)
-{
-    bool found = false;
-    
-    if(cameraPaths.empty()){
-        updateCameraPaths();
-    }
-
-    if(!strings.empty()){
-        vector<int> candidates;
-        const string& name = (strings.size() == 1) ? strings.front() : strings.back();
-        for(size_t i=0; i < cameraPaths.size(); ++i){
-            const vector<SgNode*> cameraPath = cameraPaths[i];
-            if(cameraPath.back()->name() == name){
-                candidates.push_back(i);
-            }
-        }
-        if(candidates.size() == 1){
-            setCurrentCamera(candidates.front(), doRenderingRequest);
-            found = true;
-        } else if(candidates.size() >= 2){
-            if(strings.size() == 2){
-                const string& owner = strings.front();
-                for(size_t i=0; i < candidates.size(); ++i){
-                    const vector<SgNode*> cameraPath = cameraPaths[i];
-                    if(cameraPath.front()->name() == owner){
-                        setCurrentCamera(i, doRenderingRequest);
-                        found = true;
-                    }
-                }
-            }
-        }
-    }
-    return found;
 }
 
 
@@ -952,7 +890,7 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
 
     if(doPreprocessedNodeTreeExtraction){
         PreproTreeExtractor extractor;
-        preproTree.reset(extractor.apply(root.get()));
+        preproTree.reset(extractor.apply(sceneRoot));
         doPreprocessedNodeTreeExtraction = false;
     }
 
@@ -1250,7 +1188,7 @@ void GLSceneRendererImpl::endRendering()
     }
 
     if(isNewDisplayListDoubleRenderingEnabled && isNewDisplayListCreated){
-        sceneRoot->notifyUpdate();
+        scene->notifyUpdate();
     }
 }
 
@@ -1265,7 +1203,7 @@ void GLSceneRendererImpl::render()
 {
     beginRendering(true);
 
-    root->accept(*self);
+    sceneRoot->accept(*self);
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();
@@ -2808,4 +2746,44 @@ void GLSceneRenderer::getViewVolume
     out_right = right;
     out_bottom = bottom;
     out_top = top;
+}
+
+
+void GLSceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
+{
+    impl->visitOutlineGroup(outline);
+}
+
+
+void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
+{
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_STENCIL_TEST);
+
+    glStencilFunc(GL_ALWAYS, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
+        (*p)->accept(*self);
+    }
+
+    glStencilFunc(GL_NOTEQUAL, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glPushAttrib(GL_POLYGON_BIT);
+    glLineWidth(outlineGroup->lineWidth()*2+1);
+    glPolygonMode(GL_FRONT, GL_LINE);
+    setColor(outlineGroup->color());
+    enableColorMaterial(true);
+    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
+        (*p)->accept(*self);
+    }
+    enableColorMaterial(false);
+    setLineWidth(lineWidth);
+    glPopAttrib();
+
+    glDisable(GL_STENCIL_TEST);
+
 }

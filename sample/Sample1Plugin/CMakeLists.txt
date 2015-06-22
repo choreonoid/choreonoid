@@ -1,4 +1,8 @@
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_SAMPLE1_SAMPLE "Building a sample plugin \"Sample1Plugin\"" OFF)
 
 if(BUILD_SAMPLE1_SAMPLE)

@@ -13,17 +13,29 @@
 #include <QBoxLayout>
 #include <QHeaderView>
 #include <boost/bind.hpp>
+
+#include <iostream>
+
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
+
+struct SensorTypeOrder
+{
+    bool operator()(const Sensor* lhs, const Sensor* rhs) const {
+        int result = strcmp(typeid(*lhs).name(), typeid(*rhs).name());
+        return (result == 0) ? (lhs->id() <= rhs->id()) : (result <= 0);
+    }
+};
+
 }
 
 namespace cnoid {
-
 
 class StateItem : public QTreeWidgetItem
 {
@@ -168,7 +180,8 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 
     if(currentBody){
         devices = currentBody->devices();
-
+        std::stable_sort(devices.begin(), devices.end(), SensorTypeOrder());
+            
         for(int i=0; i < devices.size(); ++i){
             Device* device = devices.get(i);
             StateItem* deviceItem = new StateItem();

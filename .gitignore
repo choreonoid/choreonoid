@@ -27,6 +27,8 @@ qrc_*.cxx
 /share/locale
 /Doxyfile
 gettext.h
+messages.pot
+
 
 
 

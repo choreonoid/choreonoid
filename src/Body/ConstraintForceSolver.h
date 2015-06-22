@@ -5,6 +5,7 @@
 #ifndef CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 #define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 
+#include <cnoid/CollisionSeq>
 #include "exportdecl.h"
 
 namespace cnoid
@@ -56,6 +57,8 @@ public:
     void initialize(void);
     void solve();
     void clearExternalForces();
+
+    CollisionLinkPairListPtr getCollisions();
 };
 
 };

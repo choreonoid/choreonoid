@@ -84,4 +84,3 @@ std::string ScriptItem::resultString() const
 {
     return string();
 }
-

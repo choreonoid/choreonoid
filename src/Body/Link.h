@@ -41,6 +41,11 @@ public:
     Position& position() { return T_; }
     const Position& position() const { return T_; }
 
+    template<class Scalar, int Mode, int Options>
+        void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Position::Scalar>();
+    }
+
     template<typename Derived1, typename Derived2>
         void setPosition(const Eigen::MatrixBase<Derived1>& rotation, const Eigen::MatrixBase<Derived2>& translation) {
         T_.linear() = rotation;
@@ -52,11 +57,26 @@ public:
     Position::TranslationPart translation() { return T_.translation(); }
     Position::ConstTranslationPart translation() const { return T_.translation(); }
 
+    template<typename Derived>
+    void setTranslation(const Eigen::MatrixBase<Derived>& p) {
+        T_.translation() = p.template cast<Affine3::Scalar>();
+    }
+
     Position::LinearPart R() { return T_.linear(); }
     Position::ConstLinearPart R() const { return T_.linear(); }
     Position::LinearPart rotation() { return T_.linear(); }
     Position::ConstLinearPart rotation() const { return T_.linear(); }
 
+    template<typename Derived>
+    void setRotation(const Eigen::MatrixBase<Derived>& R) {
+        T_.linear() = R.template cast<Affine3::Scalar>();
+    }
+
+    template<typename T>
+    void setRotation(const Eigen::AngleAxis<T>& a) {
+        T_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+    }
+    
     // To, Ro?
     Position& Tb() { return Tb_; }
     const Position& Tb() const { return Tb_; }

@@ -146,12 +146,12 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
     if (v.count("python")) {
         vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
         for(unsigned int i = 0; i < pythonScriptFileNames.size(); i++){
-            MessageView::instance()->putln((format(_("Executing python script file \"%1%\" ...")) % pythonScriptFileNames[i]).str());
+            MessageView::instance()->putln((format(_("Executing python script \"%1%\" ...")) % pythonScriptFileNames[i]).str());
             executor().execFile(pythonScriptFileNames[i]);
             if(!executor().hasException()){
                 MessageView::instance()->putln(_("The script finished."));
             } else {
-                MessageView::instance()->putln(_("Failed to run the python script file."));
+                MessageView::instance()->putln(_("Failed to run the python script."));
                 PyGILock lock;
                 MessageView::instance()->put(executor().exceptionText());
             }
@@ -240,7 +240,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
                 if(!isExisting){
                     syspath.insert(0, getNativePathString(filesystem::path(newPath)));
                     additionalSearchPathList.push_back(newPath);
-                    mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the python module search path list."))
+                    mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the Python module search path list."))
                               % newPath);
                 }
             }

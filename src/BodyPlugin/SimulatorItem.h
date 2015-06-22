@@ -6,6 +6,7 @@
 #ifndef CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 #define CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 
+#include "CollisionSeq.h"
 #include <cnoid/Item>
 #include "exportdecl.h"
 
@@ -21,6 +22,7 @@ class BodyMotionItem;
 class ControllerItem;
 class SimulationBodyImpl;
 class SimulatorItemImpl;
+class SimulatedMotionEngineManager;
 class SgCloneMap;
 
 class CNOID_EXPORT SimulationBody : public Referenced
@@ -94,8 +96,6 @@ public:
     bool isAllLinkPositionOutputMode();
     virtual void setAllLinkPositionOutputMode(bool on);
         
-    virtual void selectMotionItems();
-
     /**
        For sub simulators
     */
@@ -152,6 +152,11 @@ protected:
     */
     virtual void finalizeSimulation();
 
+    virtual CollisionLinkPairListPtr getCollisions()
+    {
+        return boost::make_shared<CollisionLinkPairList>();
+    }
+
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -160,6 +165,7 @@ private:
             
     SimulatorItemImpl* impl;
     friend class SimulatorItemImpl;
+    friend class SimulatedMotionEngineManager;
 };
         
 typedef ref_ptr<SimulatorItem> SimulatorItemPtr;

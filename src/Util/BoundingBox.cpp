@@ -58,6 +58,12 @@ Vector3 BoundingBox::center() const
 }
 
 
+Vector3 BoundingBox::size() const
+{
+    return (max_ - min_);
+}
+
+
 double BoundingBox::boundingSphereRadius() const
 {
     return (max_ - center()).norm();
@@ -133,6 +139,13 @@ void BoundingBox::transform(const Affine3& T)
         expandBy(T * Vector3(p2.x(), p1.y(), p2.z()));
         expandBy(T * Vector3(p2.x(), p2.y(), p2.z()));
     }
+}
+
+
+std::ostream& cnoid::operator<<(std::ostream& os, const BoundingBox& bb)
+{
+    os << "(" << bb.min().x() << ", " << bb.min().y() << ", " << bb.min().z() << ") - (";
+    os << bb.max().x() << ", " << bb.max().y() << ", " << bb.max().z() << ")";
 }
 
 
@@ -261,4 +274,11 @@ void BoundingBoxf::transform(const Affine3f& T)
         expandBy(T * Vector3f(p2.x(), p1.y(), p2.z()));
         expandBy(T * Vector3f(p2.x(), p2.y(), p2.z()));
     }
+}
+
+
+std::ostream& cnoid::operator<<(std::ostream& os, const BoundingBoxf& bb)
+{
+    os << "(" << bb.min().x() << ", " << bb.min().y() << ", " << bb.min().z() << ") - (";
+    os << bb.max().x() << ", " << bb.max().y() << ", " << bb.max().z() << ")";
 }

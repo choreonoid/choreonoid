@@ -21,22 +21,22 @@ class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
 public:
     GLSceneRenderer();
-    GLSceneRenderer(SgGroup* sceneRoot);
+    GLSceneRenderer(SgGroup* root);
     virtual ~GLSceneRenderer();
 
     virtual SgGroup* sceneRoot();
+    virtual SgGroup* scene();
     virtual void clearScene();
 
     virtual int numCameras() const;
+    virtual SgCamera* camera(int index);
     virtual const SgNodePath& cameraPath(int index) const;
-    virtual bool getSimplifiedCameraPathStrings(int index, std::vector<std::string>& pathStrings) const;
     virtual SignalProxy<void()> sigCamerasChanged() const; 
         
     virtual SgCamera* currentCamera() const;
     virtual int currentCameraIndex() const;
     virtual void setCurrentCamera(int index);
     virtual bool setCurrentCamera(SgCamera* camera);
-    virtual bool setCurrentCamera(std::vector<std::string>& simplifiedPathStrings);
     virtual SignalProxy<void()> sigCurrentCameraChanged();
 
     virtual void setViewport(int x, int y, int width, int height);
@@ -126,6 +126,7 @@ public:
     virtual void visitPreprocessed(SgPreprocessed* preprocessed);
     virtual void visitLight(SgLight* light);
     virtual void visitOverlay(SgOverlay* overlay);
+    virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
 

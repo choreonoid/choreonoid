@@ -2,11 +2,12 @@
 modelFile: SR1.wrl
 
 standardPose: [ 
-  0, -30, 0, 60, -30, 0,
-   20, -10, 0, -40, 0, 0, 0,
-  0, -30, 0, 60, -30, 0,
-   20,  10, 0, -40, 0, 0, 0,
-  0, 0, 0 ]
+   0, -30, 0,  60, -30, 0,
+  20, -10, 0, -40,   0, 0, 0,
+   0, -30, 0,  60, -30, 0,
+  20,  10, 0, -40,   0, 0, 0,
+   0,   0, 0 
+]
 
 linkGroup:
   - name: UPPER-BODY
@@ -30,20 +31,20 @@ linkGroup:
       - name: L-LEG
         links: [ LLEG_HIP_R, LLEG_HIP_P, LLEG_HIP_Y, LLEG_KNEE, LLEG_ANKLE_P, LLEG_ANKLE_R ]
 
-possibleIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
-defaultIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
-possileSupportLinks: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
+footLinks:
+  - link: RLEG_ANKLE_R
+    soleCenter: [ 0.05, 0.0, -0.055 ]
+  - link: LLEG_ANKLE_R
+    soleCenter: [ 0.05, 0.0, -0.055 ]
 
 defaultIKsetup:
   WAIST: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
   RLEG_ANKLE_R: [ WAIST ]
   LLEG_ANKLE_R: [ WAIST ]
 
-footLinks:
-  - link: RLEG_ANKLE_R
-    soleCenter: [ 0.05, 0.0, -0.055 ]
-  - link: LLEG_ANKLE_R
-    soleCenter: [ 0.05, 0.0, -0.055 ]
+possibleIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
+defaultIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
+possileSupportLinks: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
 
 collisionDetection:
   excludeTreeDepth: 3

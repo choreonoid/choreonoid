@@ -597,7 +597,7 @@ void ToolBarAreaImpl::setNewToolBar(ToolBar* toolBar, vector<int>& numStrechable
                 if(width <= lastSpace){
                     toolBar->desiredX = lastX + 1;
                     if(toolBar->isStretchable()){
-                        width = std::min(toolBar->sizeHint().width(), lastSpace);
+                        width = std::min(toolBar->stretchableDefaultWidth(), lastSpace);
                     }
                     toolBarRow = existingRow;
                     rowIndex = i;

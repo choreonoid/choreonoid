@@ -17,10 +17,15 @@ void exportPyQtExTypes()
 {
     class_<ToolButton, ToolButton*, bases<QToolButton>, boost::noncopyable>("ToolButton")
         .def("sigClicked", &ToolButton::sigClicked)
-        .def("sigToggled", &ToolButton::sigClicked);
+        .add_property("clicked", &ToolButton::sigClicked)
+        .def("sigToggled", &ToolButton::sigToggled)
+        .add_property("toggled", &ToolButton::sigToggled)
+        ;
 
     class_<Timer, Timer*, bases<QTimer>, boost::noncopyable>("Timer")
-        .def("sigTimeout", &Timer::sigTimeout);
+        .def("sigTimeout", &Timer::sigTimeout)
+        .add_property("timeout", &Timer::sigTimeout)
+        ;
 }
 
 }

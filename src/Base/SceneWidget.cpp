@@ -5,6 +5,7 @@
 #include "SceneWidget.h"
 #include "GLSceneRenderer.h"
 #include "SceneWidgetEditable.h"
+#include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
 #include "ToolBar.h"
 #include "Dialog.h"
@@ -183,6 +184,7 @@ public:
     ostream& os;
 
     SceneWidgetRootPtr sceneRoot;
+    SgGroup* scene;
     GLSceneRenderer renderer;
     QGLPixelBuffer* buffer;
     LazyCaller initializeRenderingLater;
@@ -190,20 +192,23 @@ public:
     SgUpdate added;
     SgUpdate removed;
 
-    SgPosTransformPtr builtinCameraTransform;
+    InteractiveCameraTransformPtr builtinCameraTransform;
     SgPerspectiveCameraPtr builtinPersCamera;
     SgOrthographicCameraPtr builtinOrthoCamera;
     int numBuiltinCameras;
     bool isBuiltinCameraCurrent;
-        
+
+    InteractiveCameraTransformPtr interactiveCameraTransform;
+
     SgDirectionalLightPtr worldLight;
 
+    Signal<void()> sigStateChanged;
+    LazyCaller emitSigStateChangedLater;
+    
     bool isEditMode;
-    Signal<void(bool)> sigEditModeToggled;
 
     Selection viewpointControlMode;
-    Signal<void(int mode)> sigViewpointControlModeChanged;
-    bool isFirstPersionMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
+    bool isFirstPersonMode() const { return (viewpointControlMode.which() != SceneWidget::THIRD_PERSON_MODE); }
         
     enum DragMode { NO_DRAGGING, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
 
@@ -284,7 +289,7 @@ public:
     void showDefaultColorDialog();
 
     void updateCurrentCamera();
-    void setCurrentCameraPath(std::vector<std::string>& simplifiedPathStrings);
+    void setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
     void onCamerasChanged();
     void onCurrentCameraChanged();
 
@@ -356,10 +361,14 @@ public:
     void setScreenSize(int width, int height);
     void updateIndicator(const std::string& text);
     bool storeState(Archive& archive);
+    void writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex);
+    Mapping* storeCameraState(int cameraIndex, SgPosTransform* cameraTransform);
     bool restoreState(const Archive& archive);
+    void restoreCameraStates(const Listing& cameraListing);
+    int readCameraPath(const Mapping& archive, const char* key);
     void restoreCurrentCamera(const Mapping& cameraData);
-
 };
+
 }
 
 
@@ -370,8 +379,7 @@ SceneWidgetRoot::SceneWidgetRoot(SceneWidget* sceneWidget)
 }
 
 
-namespace {
-void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vector<SgNodePath>& paths)
+static void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vector<SgNodePath>& paths)
 {
     reversedPath.push_back(node);
     if(!node->hasParents()){
@@ -391,8 +399,7 @@ void extractPathsFromSceneWidgetRoot(SgNode* node, SgNodePath& reversedPath, vec
     }
     reversedPath.pop_back();
 }
-}
-    
+
 
 void SceneWidget::forEachInstance(SgNode* node, boost::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function)
 {
@@ -425,7 +432,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
       self(self),
       os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
-      renderer(sceneRoot)
+      renderer(sceneRoot),
+      emitSigStateChangedLater(boost::ref(sigStateChanged))
 {
     if(false){ // test
         cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
@@ -445,6 +453,8 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     renderer.sigCurrentCameraChanged().connect(boost::bind(&SceneWidgetImpl::onCurrentCameraChanged, this));
 
     sceneRoot->sigUpdated().connect(boost::bind(&SceneWidgetImpl::onSceneGraphUpdated, this, _1));
+
+    scene = renderer.scene();
 
     buffer = 0;
 
@@ -485,12 +495,11 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     font.setFixedPitch(true);
     indicatorLabel->setFont(font);
 
-    SgGroup* root = renderer.sceneRoot();
-
-    builtinCameraTransform = new SgPosTransform();
+    builtinCameraTransform = new InteractiveCameraTransform();
     builtinCameraTransform->setTransform(
         SgCamera::positionLookingAt(
             Vector3(4.0, 2.0, 1.5), Vector3(0.0, 0.0, 1.0), Vector3::UnitZ()));
+    interactiveCameraTransform = builtinCameraTransform;
 
     builtinPersCamera = new SgPerspectiveCamera();
     builtinPersCamera->setName("Perspective");
@@ -504,21 +513,21 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
-    root->addChild(builtinCameraTransform);
+    sceneRoot->addChild(builtinCameraTransform);
 
     setup = new SetupDialog(this);
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
-    root->addChild(worldLight);
+    sceneRoot->addChild(worldLight);
     renderer.setAsDefaultLight(worldLight);
 
     updateDefaultLights();
 
     systemNodeGroup = new SgGroup();
     systemNodeGroup->setName("SystemGroup");
-    root->addChild(systemNodeGroup);
+    sceneRoot->addChild(systemNodeGroup);
 
     polygonMode.resize(3);
     polygonMode.setSymbol(SceneWidget::FILL_MODE, "fill");
@@ -565,6 +574,12 @@ SceneWidgetImpl::~SceneWidgetImpl()
 SceneWidgetRoot* SceneWidget::sceneRoot()
 {
     return impl->sceneRoot;
+}
+
+
+SgGroup* SceneWidget::scene()
+{
+    return impl->scene;
 }
 
 
@@ -744,7 +759,7 @@ void SceneWidgetImpl::renderCoordinateAxes(GLSceneRenderer& renderer)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    Affine3 transform(builtinCameraTransform->rotation());
+    Affine3 transform(renderer.currentCameraPosition());
     Affine3 inv = transform.inverse();
     glMultMatrixd(inv.data());
 
@@ -848,6 +863,12 @@ void SceneWidgetImpl::resetCursor()
 }
 
 
+SignalProxy<void()> SceneWidget::sigStateChanged() const
+{
+    return impl->sigStateChanged;
+}
+
+
 void SceneWidget::setEditMode(bool on)
 {
     impl->setEditMode(on);
@@ -860,18 +881,11 @@ bool SceneWidget::isEditMode() const
 }
 
 
-SignalProxy<void(bool)> SceneWidget::sigEditModeToggled() const
-{
-    return impl->sigEditModeToggled;
-}
-
-
 void SceneWidgetImpl::setEditMode(bool on)
 {
     if(on != isEditMode){
         isEditMode = on;
         resetCursor();
-        sigEditModeToggled(on);
 
         if(!isEditMode){
             for(size_t i=0; i < focusedEditablePath.size(); ++i){
@@ -891,6 +905,8 @@ void SceneWidgetImpl::setEditMode(bool on)
                 focusedEditablePath[i]->onFocusChanged(latestEvent, true);
             }
         }
+
+        emitSigStateChangedLater();
     }
 }
 
@@ -910,19 +926,13 @@ const SceneWidgetEvent& SceneWidget::latestEvent() const
 void SceneWidget::setViewpointControlMode(ViewpointControlMode mode)
 {
     impl->viewpointControlMode.select(mode);
-    impl->sigViewpointControlModeChanged(mode);
+    impl->emitSigStateChangedLater();
 }
 
 
 SceneWidget::ViewpointControlMode SceneWidget::viewpointControlMode() const
 {
     return static_cast<SceneWidget::ViewpointControlMode>(impl->viewpointControlMode.which());
-}
-
-
-SignalProxy<void(int mode)> SceneWidget::sigViewpointControlModeChanged() const
-{
-    return impl->sigViewpointControlModeChanged;
 }
 
 
@@ -934,7 +944,11 @@ void SceneWidget::viewAll()
 
 void SceneWidgetImpl::viewAll()
 {
-    const BoundingBox& bbox = renderer.sceneRoot()->boundingBox();
+    if(!interactiveCameraTransform){
+        return;
+    }
+    
+    const BoundingBox& bbox = renderer.scene()->boundingBox();
     if(bbox.empty()){
         return;
     }
@@ -942,20 +956,27 @@ void SceneWidgetImpl::viewAll()
 
     double left, right, bottom, top;
     renderer.getViewFrustum(*builtinPersCamera, left, right, bottom, top);
-    
-    Affine3& T = builtinCameraTransform->T();
-    T.translation() +=
-        (bbox.center() - T.translation())
-        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearDistance() / (right - left));
 
     const double a = renderer.aspectRatio();
-    if(a >= 1.0){
-        builtinOrthoCamera->setHeight(radius * 2.0);
-    } else {
-        builtinOrthoCamera->setHeight(radius * 2.0 / a);
+    double length = (a >= 1.0) ? (top - bottom) : (right - left);
+    
+    Affine3& T = interactiveCameraTransform->T();
+    T.translation() +=
+        (bbox.center() - T.translation())
+        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearDistance() / length);
+
+
+    if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer.currentCamera())){
+        if(a >= 1.0){
+            ortho->setHeight(radius * 2.0);
+        } else {
+            ortho->setHeight(radius * 2.0 / a);
+        }
+        ortho->notifyUpdate(modified);
     }
 
-    builtinOrthoCamera->notifyUpdate(modified);
+    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1348,7 +1369,9 @@ void SceneWidgetImpl::mouseMoveEvent(QMouseEvent* event)
             handled = eventFilter->onPointerMoveEvent(latestEvent);
         }
         if(!handled){
-            handled = focusedEditable->onPointerMoveEvent(latestEvent);
+            if(focusedEditable){
+                handled = focusedEditable->onPointerMoveEvent(latestEvent);
+            }
         }
         break;
 
@@ -1431,7 +1454,7 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
         }
     }    
 
-    if(isBuiltinCameraCurrent){
+    if(interactiveCameraTransform){
         if(!handled || !isEditMode){
             if(event->orientation() == Qt::Vertical){
                 zoomView(0.25 * s);
@@ -1498,7 +1521,7 @@ SignalProxy<void()> SceneWidget::sigAboutToBeDestroyed()
 
 void SceneWidgetImpl::startViewChange()
 {
-    if(isBuiltinCameraCurrent){
+    if(interactiveCameraTransform){
 
         switch(latestEvent.button()){
                 
@@ -1526,12 +1549,17 @@ void SceneWidgetImpl::startViewRotation()
     if(TRACE_FUNCTIONS){
         os << "SceneWidgetImpl::startViewRotation()" << endl;
     }
+
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
     
     orgMouseX = latestEvent.x();
     orgMouseY = latestEvent.y();
-    orgCameraPosition = builtinCameraTransform->T();
+    orgCameraPosition = interactiveCameraTransform->T();
 
-    if(isFirstPersionMode()){
+    if(isFirstPersonMode()){
         orgPointedPos = orgCameraPosition.translation();
         dragAngleRatio = 0.01f;
     } else {
@@ -1548,12 +1576,17 @@ void SceneWidgetImpl::dragViewRotation()
     if(TRACE_FUNCTIONS){
         os << "SceneWidgetImpl::dragViewRotation()" << endl;
     }
+
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
     
     const double dx = latestEvent.x() - orgMouseX;
     const double dy = latestEvent.y() - orgMouseY;
     const Vector3 right = SgCamera::right(orgCameraPosition);
 
-    builtinCameraTransform->setTransform(
+    interactiveCameraTransform->setTransform(
         normalizedCameraTransform(
             Translation3(orgPointedPos) *
             AngleAxis(-dx * dragAngleRatio, Vector3::UnitZ()) *
@@ -1562,7 +1595,7 @@ void SceneWidgetImpl::dragViewRotation()
             orgCameraPosition));
 
     if(latestEvent.modifiers() & Qt::ShiftModifier){
-        Affine3& T = builtinCameraTransform->T();
+        Affine3& T = interactiveCameraTransform->T();
         Vector3 rpy = rpyFromRot(T.linear());
         for(int i=0; i < 3; ++i){
             double& a = rpy[i];
@@ -1579,7 +1612,8 @@ void SceneWidgetImpl::dragViewRotation()
         T.linear() = S;
     }
     
-    builtinCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1589,9 +1623,14 @@ void SceneWidgetImpl::startViewTranslation()
         os << "SceneWidgetImpl::startViewTranslation()" << endl;
     }
 
-    const Affine3& C = builtinCameraTransform->T();
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
 
-    if(isFirstPersionMode()){
+    const Affine3& C = interactiveCameraTransform->T();
+
+    if(isFirstPersonMode()){
         viewTranslationRatioX = -0.005;
         viewTranslationRatioY = -0.005;
 
@@ -1601,14 +1640,14 @@ void SceneWidgetImpl::startViewTranslation()
         const double aspect = (double)width / height;
         double r, cw, ch;
         SgCamera* camera = renderer.currentCamera();
-        if(camera == builtinPersCamera){
-            const double fovy = builtinPersCamera->fovy(aspect);
+        if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+            const double fovy = pers->fovy(aspect);
             r = (lastClickedPoint - C.translation()).dot(SgCamera::direction(C));
             ch = tanf(fovy / 2.0) * 2.0;
             cw = aspect * ch;
-        } else if(camera == builtinOrthoCamera) {
+        } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
             r = 1.0;
-            ch = builtinOrthoCamera->height();
+            ch = ortho->height();
             cw = aspect * ch;
         }
         viewTranslationRatioX = r * cw / width;
@@ -1628,15 +1667,22 @@ void SceneWidgetImpl::dragViewTranslation()
         os << "SceneWidgetImpl::dragViewTranslation()" << endl;
     }
     
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
     const double dx = viewTranslationRatioX * (latestEvent.x() - orgMouseX);
     const double dy = viewTranslationRatioY * (latestEvent.y() - orgMouseY);
 
-    builtinCameraTransform->setTransform(
+    interactiveCameraTransform->setTransform(
         normalizedCameraTransform(
             Translation3(-dy * SgCamera::up(orgCameraPosition)) *
             Translation3(-dx * SgCamera::right(orgCameraPosition)) *
             orgCameraPosition));
-    builtinCameraTransform->notifyUpdate(modified);
+    
+    interactiveCameraTransform->notifyUpdate(modified);
+    interactiveCameraTransform->onPositionUpdatedInteractively();
 }
 
 
@@ -1646,9 +1692,18 @@ void SceneWidgetImpl::startViewZoom()
         os << "SceneWidgetImpl::startViewZoom()" << endl;
     }
 
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
     orgMouseY = latestEvent.y();
-    orgCameraPosition = builtinCameraTransform->T();
-    orgOrthoCameraHeight = builtinOrthoCamera->height();
+    orgCameraPosition = interactiveCameraTransform->T();
+
+    if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer.currentCamera())){
+        orgOrthoCameraHeight = ortho->height();
+    }
+    
     dragMode = VIEW_ZOOM;
 }
 
@@ -1664,52 +1719,59 @@ void SceneWidgetImpl::dragViewZoom()
     const double dy = latestEvent.y() - orgMouseY;
     const double ratio = expf(dy * 0.01);
 
-    if(camera == builtinPersCamera){
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         const Affine3& C = orgCameraPosition;
         const Vector3 v = SgCamera::direction(C);
 
-        if(isFirstPersionMode()){
+        if(isFirstPersonMode()){
             double speed = 0.02;
-            builtinCameraTransform->setTranslation(C.translation() + speed * dy * v);
+            interactiveCameraTransform->setTranslation(C.translation() + speed * dy * v);
             
         } else {
             const double l0 = (lastClickedPoint - C.translation()).dot(v);
-            builtinCameraTransform->setTranslation(C.translation() + v * (l0 * (-ratio + 1.0)));
+            interactiveCameraTransform->setTranslation(C.translation() + v * (l0 * (-ratio + 1.0)));
         }
-        builtinCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->onPositionUpdatedInteractively();
 
-    } else if(camera == builtinOrthoCamera){
-        builtinOrthoCamera->setHeight(orgOrthoCameraHeight * ratio);
-        builtinOrthoCamera->notifyUpdate(modified);
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        ortho->setHeight(orgOrthoCameraHeight * ratio);
+        ortho->notifyUpdate(modified);
     }
 }
 
 
 void SceneWidgetImpl::zoomView(double ratio)
 {
+    if(!interactiveCameraTransform){
+        dragMode = NO_DRAGGING;
+        return;
+    }
+
     SgCamera* camera = renderer.currentCamera();
-    if(camera == builtinPersCamera){
-        const Affine3& C = builtinCameraTransform->T();
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+        const Affine3& C = interactiveCameraTransform->T();
         const Vector3 v = SgCamera::direction(C);
         
-        if(isFirstPersionMode()){
+        if(isFirstPersonMode()){
             if(latestEvent.modifiers() & Qt::ShiftModifier){
                 ratio *= 5.0;
             }
-            builtinCameraTransform->translation() += ratio * v;
+            interactiveCameraTransform->translation() += ratio * v;
 
         } else {
             if(latestEvent.modifiers() & Qt::ShiftModifier){
                 ratio *= 0.2;
             }
             const double dz = ratio * (lastClickedPoint - C.translation()).dot(v);
-            builtinCameraTransform->translation() -= dz * v;
+            interactiveCameraTransform->translation() -= dz * v;
         }
-        builtinCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->notifyUpdate(modified);
+        interactiveCameraTransform->onPositionUpdatedInteractively();
 
-    } else if(camera == builtinOrthoCamera){
-        builtinOrthoCamera->setHeight(builtinOrthoCamera->height() * expf(ratio));
-        builtinOrthoCamera->notifyUpdate(modified);
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        ortho->setHeight(ortho->height() * expf(ratio));
+        ortho->notifyUpdate(modified);
     }
 }
 
@@ -1939,10 +2001,22 @@ bool SceneWidget::isBuiltinCameraCurrent() const
 }
 
 
-void SceneWidgetImpl::setCurrentCameraPath(std::vector<std::string>& simplifiedPathStrings)
+void SceneWidgetImpl::setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings)
 {
-    renderer.setCurrentCamera(simplifiedPathStrings);
+    renderer.setCurrentCameraPath(simplifiedPathStrings);
     updateCurrentCamera();
+}
+
+
+InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int cameraIndex)
+{
+    const SgNodePath& path = impl->renderer.cameraPath(cameraIndex);
+    for(size_t i=0; i < path.size() - 1; ++i){
+        if(InteractiveCameraTransform* transform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+            return transform;
+        }
+    }
+    return 0;
 }
 
 
@@ -1954,8 +2028,20 @@ void SceneWidgetImpl::onCamerasChanged()
 
 void SceneWidgetImpl::onCurrentCameraChanged()
 {
+    interactiveCameraTransform.reset();
+    isBuiltinCameraCurrent = false;
+    
     SgCamera* current = renderer.currentCamera();
-    isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
+    if(current){
+        int index = renderer.currentCameraIndex();
+        const SgNodePath& path = renderer.cameraPath(index);
+        for(int i = path.size() - 2; i >= 0; --i){
+            if(interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+                isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
+                break;
+            }
+        }
+    }
 }
 
 
@@ -2054,6 +2140,7 @@ void SceneWidgetImpl::setCollisionLinesVisible(bool on)
         collisionLinesVisible = on;
         renderer.property()->write("collision", on);
         update();
+        emitSigStateChangedLater();
     }
 }
 
@@ -2231,6 +2318,7 @@ void SceneWidget::setUseBufferForPicking(bool on)
 void SceneWidget::setBackgroundColor(const Vector3& color)
 {
     impl->renderer.setBackgroundColor(color.cast<float>());
+    impl->update();
 }
 
 
@@ -2339,35 +2427,27 @@ bool SceneWidget::storeState(Archive& archive)
 
 bool SceneWidgetImpl::storeState(Archive& archive)
 {
+    archive.write("editMode", isEditMode);
     archive.write("viewpointControlMode", viewpointControlMode.selectedSymbol());
     archive.write("collisionLines", collisionLinesVisible);
     archive.write("polygonMode", polygonMode.selectedSymbol());
 
     setup->storeState(archive);
 
-    Mapping& cameraData = *archive.createMapping("camera");
-
-    vector<string> cameraStrings;
-    if(renderer.getSimplifiedCameraPathStrings(renderer.currentCameraIndex(), cameraStrings)){
-        if(cameraStrings.size() == 1){
-            cameraData.write("current", cameraStrings.front());
-        } else {
-            Listing& pathNode = *cameraData.createListing("current");
-            pathNode.setFlowStyle(true);
-            for(size_t i=0; i < cameraStrings.size(); ++i){
-                pathNode.append(cameraStrings[i]);
+    ListingPtr cameraListing = new Listing();
+    set<SgPosTransform*> storedTransforms;
+    int numCameras = renderer.numCameras();
+    for(int i=0; i < numCameras; ++i){
+        if(InteractiveCameraTransform* transform = self->findOwnerInteractiveCameraTransform(i)){
+            if(!storedTransforms.insert(transform).second){
+                transform = 0; // already stored
             }
+            cameraListing->append(storeCameraState(i, transform));
         }
     }
-    const Affine3& C = builtinCameraTransform->T();
-    write(cameraData, "eye", C.translation());
-    write(cameraData, "direction", SgCamera::direction(C));
-    write(cameraData, "up", SgCamera::up(C));
-
-    cameraData.write("fieldOfView", builtinPersCamera->fieldOfView());
-    cameraData.write("near", setup->zNearSpin.value());
-    cameraData.write("far", setup->zFarSpin.value());
-    cameraData.write("orthoHeight", builtinOrthoCamera->height());
+    if(!cameraListing->empty()){
+        archive.insert("cameras", cameraListing);
+    }
 
     write(archive, "backgroundColor", renderer.backgroundColor());
     write(archive, "gridColor", gridColor[FLOOR]);
@@ -2375,6 +2455,52 @@ bool SceneWidgetImpl::storeState(Archive& archive)
     write(archive, "yzgridColor", gridColor[YZ]);
     
     return true;
+}
+
+
+void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex)
+{
+   vector<string> cameraStrings;
+    if(renderer.getSimplifiedCameraPathStrings(cameraIndex, cameraStrings)){
+        if(cameraStrings.size() == 1){
+            archive.write(key, cameraStrings.front());
+        } else {
+            Listing& pathNode = *archive.createListing(key);
+            pathNode.setFlowStyle(true);
+            for(size_t i=0; i < cameraStrings.size(); ++i){
+                pathNode.append(cameraStrings[i]);
+            }
+        }
+    }
+}
+
+
+Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, SgPosTransform* cameraTransform)
+{
+    Mapping* state = new Mapping();
+    writeCameraPath(*state, "camera", cameraIndex);
+
+    if(cameraIndex == renderer.currentCameraIndex()){
+        state->write("isCurrent", true);
+    }
+
+    SgCamera* camera = renderer.camera(cameraIndex);
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+        state->write("fieldOfView", pers->fieldOfView());
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+        state->write("orthoHeight", ortho->height());
+    }
+    state->write("near", camera->nearDistance());
+    state->write("far", camera->farDistance());
+
+    if(cameraTransform){
+        const Affine3& T = cameraTransform->T();
+        write(*state, "eye", T.translation());
+        write(*state, "direction", SgCamera::direction(T));
+        write(*state, "up", SgCamera::up(T));
+    }
+
+    return state;
 }
 
 
@@ -2388,13 +2514,11 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 {
     bool doUpdate = false;
 
-    int oldViewpointControlMode = viewpointControlMode.which();
+    setEditMode(archive.get("editMode", isEditMode));
+    
     string symbol;
     if(archive.read("viewpointControlMode", symbol)){
-        viewpointControlMode.select(symbol);
-        if(viewpointControlMode.which() != oldViewpointControlMode){
-            sigViewpointControlModeChanged(viewpointControlMode.which());
-        }
+        self->setViewpointControlMode((SceneWidget::ViewpointControlMode(viewpointControlMode.index(symbol))));
     }
     if(archive.read("polygonMode", symbol)){
         setPolygonMode(polygonMode.index(symbol));
@@ -2403,30 +2527,40 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
     setCollisionLinesVisible(archive.get("collisionLines", collisionLinesVisible));
     
     setup->restoreState(archive);
-    
-    const Mapping& cameraData = *archive.findMapping("camera");
-    if(cameraData.isValid()){
-        Vector3 eye, direction, up;
-        if(read(cameraData, "eye", eye) &&
-           read(cameraData, "direction", direction) &&
-           read(cameraData, "up", up)){
-            builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
-            doUpdate = true;
+
+    const Listing& cameraListing = *archive.findListing("cameras");
+    if(cameraListing.isValid()){
+        for(int i=0; i < cameraListing.size(); ++i){
+            const Mapping& cameraData = *cameraListing[i].toMapping();
+            archive.addPostProcess(
+                boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)));
         }
-        double fov;
-        if(cameraData.read("fieldOfView", fov)){
-            builtinPersCamera->setFieldOfView(fov);
-            doUpdate = true;
-        }
-        double height;
-        if(cameraData.read("orthoHeight", height)){
-            builtinOrthoCamera->setHeight(height);
-            doUpdate = true;
-        }
-        setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
-        setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
+    } else {
+        // for the compatibility to the older versions
+        const Mapping& cameraData = *archive.findMapping("camera");
+        if(cameraData.isValid()){
+            Vector3 eye, direction, up;
+            if(read(cameraData, "eye", eye) &&
+               read(cameraData, "direction", direction) &&
+               read(cameraData, "up", up)){
+                builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+                doUpdate = true;
+            }
+            double fov;
+            if(cameraData.read("fieldOfView", fov)){
+                builtinPersCamera->setFieldOfView(fov);
+                doUpdate = true;
+            }
+            double height;
+            if(cameraData.read("orthoHeight", height)){
+                builtinOrthoCamera->setHeight(height);
+                doUpdate = true;
+            }
+            setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
+            setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
         
-        archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
+            archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
+        }
     }
 
     Vector3f bgColor;
@@ -2446,28 +2580,101 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
     if(doUpdate){
         update();
     }
+
     return true;
 }
 
 
-void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
+void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
 {
-    // get a path strings of the current camera
-    vector<string> cameraStrings;
-    const ValueNode& current = *cameraData.find("current");
-    if(current.isString()){
-        cameraStrings.push_back(current.toString());
-    } else if(current.isListing()){
-        const Listing& pathNode = *current.toListing();
-        for(int i=0; i < pathNode.size(); ++i){
-            cameraStrings.push_back(pathNode[i].toString());
+    bool doUpdate = false;
+    
+    for(int i=0; i < cameraListing.size(); ++i){
+        const Mapping& state = *cameraListing[i].toMapping();
+        int cameraIndex = readCameraPath(state, "camera");
+        if(cameraIndex >= 0){
+
+            Vector3 eye, direction, up;
+            if(read(state, "eye", eye) &&
+               read(state, "direction", direction) &&
+               read(state, "up", up)){
+                const SgNodePath& cameraPath = renderer.cameraPath(cameraIndex);
+                for(size_t j=0; j < cameraPath.size() - 1; ++j){
+                    SgPosTransform* transform = dynamic_cast<SgPosTransform*>(cameraPath[j]);
+                    if(transform){
+                        transform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+                        transform->notifyUpdate();
+                    }
+                }
+            }
+
+            SgCamera* camera = renderer.camera(cameraIndex);
+            if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+                double fov;
+                if(state.read("fieldOfView", fov)){
+                    pers->setFieldOfView(fov);
+                    doUpdate = true;
+                }
+            }
+            if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+                double height;
+                if(state.read("orthoHeight", height)){
+                    ortho->setHeight(height);
+                    doUpdate = true;
+                }
+            }
+            double near, far;
+            if(state.read("near", near)){
+                camera->setNearDistance(near);
+                doUpdate = true;
+            }
+            if(state.read("far", far)){
+                camera->setFarDistance(far);
+                doUpdate = true;
+            }
+            if(state.get("isCurrent", false)){
+                renderer.setCurrentCamera(cameraIndex);
+            }
         }
     }
-    if(!cameraStrings.empty()){
+
+    if(doUpdate){
+        update();
+    }
+}
+
+
+int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
+{
+    int index = -1;
+
+    std::vector<std::string> pathStrings;
+    const ValueNode& value = *archive.find(key);
+    if(value.isString()){
+        pathStrings.push_back(value.toString());
+    } else if(value.isListing()){
+        const Listing& pathNode = *value.toListing();
+        for(int i=0; i < pathNode.size(); ++i){
+            pathStrings.push_back(pathNode[i].toString());
+        }
+    }
+    if(!pathStrings.empty()){
         if(renderer.numCameras() == 0){
             renderer.initializeRendering();
         }
-        setCurrentCameraPath(cameraStrings);
+        index = renderer.findCameraPath(pathStrings);
+    }
+
+    return index;
+}    
+
+
+// for the compatibility to the older versions
+void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
+{
+    int index = readCameraPath(cameraData, "current");
+    if(index >= 0){
+        renderer.setCurrentCamera(index);
     }
 }
 

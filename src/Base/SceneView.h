@@ -27,7 +27,7 @@ public:
     ~SceneView();
         
     SceneWidget* sceneWidget();
-    SceneWidgetRoot* sceneRoot();
+    SgGroup* scene();
         
 protected:
     virtual void onActivated();

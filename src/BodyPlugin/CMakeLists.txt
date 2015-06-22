@@ -17,11 +17,13 @@ set(sources
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
+  SensorVisualizerItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   #FilterDialogs.cpp
   EditableSceneBody.cpp
   BodyBar.cpp
+  LeggedBodyBar.cpp
   KinematicsBar.cpp
   SimulationBar.cpp
   LinkTreeWidget.cpp
@@ -33,6 +35,9 @@ set(sources
   JointGraphView.cpp
   LinkGraphView.cpp
   HrpsysFileIO.cpp
+  CollisionSeq.cpp
+  CollisionSeqItem.cpp
+  CollisionSeqEngine.cpp
   )
 
 set(headers
@@ -44,6 +49,7 @@ set(headers
   SubSimulatorItem.h
   ControllerItem.h
   SimulationScriptItem.h
+  SensorVisualizerItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h
@@ -53,6 +59,9 @@ set(headers
   EditableSceneBody.h
   exportdecl.h
   gettext.h
+  CollisionSeq.h
+  CollisionSeqItem.h
+  CollisionSeqEngine.h
   )
 
 set(target CnoidBodyPlugin)

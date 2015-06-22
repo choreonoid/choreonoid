@@ -19,20 +19,6 @@ public:
     static void initialize(ExtensionManager* ext);
     static TimeBar* instance();
 
-    class LogicalProduct
-    {
-    public:
-        typedef bool result_type;
-        template<typename InputIterator>
-        bool operator()(InputIterator first, InputIterator last) const {
-            bool result = true;
-            while(first != last){
-                result &= *first++;
-            }
-            return result;
-        }
-    };
-        
     /**
        \note If any connected slot returns false, the playback is canceled.
        
@@ -40,20 +26,6 @@ public:
     SignalProxy<bool(double time), LogicalProduct> sigPlaybackInitialized();
         
     SignalProxy<void(double time)> sigPlaybackStarted();
-
-    class LogicalSum
-    {
-    public:
-        typedef bool result_type;
-        template<typename InputIterator>
-        bool operator()(InputIterator first, InputIterator last) const {
-            bool result = false;
-            while(first != last){
-                result |= *first++;
-            }
-            return result;
-        }
-    };
 
     SignalProxy<bool(double time), LogicalSum> sigTimeChanged();
     
@@ -101,8 +73,7 @@ public:
     void stopFillLevelUpdate(int id);
     void setFillLevelSync(bool on);
 
-    virtual QSize minimumSizeHint () const;
-    virtual QSize sizeHint () const;
+    virtual int stretchableDefaultWidth() const;
 
 protected:
 
@@ -124,6 +95,7 @@ private:
 
     friend class TimeBarImpl;
 };
+
 }
 
 #endif

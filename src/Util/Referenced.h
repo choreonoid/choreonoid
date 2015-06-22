@@ -19,7 +19,6 @@
 #include <cassert>
 #include <iosfwd>
 
-
 namespace cnoid {
 
 class Referenced;
@@ -129,6 +128,8 @@ private:
 template<class T> class ref_ptr
 {
 public:
+    typedef T element_type;
+    
     ref_ptr() : px(0) { }
 
     ref_ptr(T* p) : px(p){
@@ -210,18 +211,6 @@ public:
     T* operator->() const {
         assert(px != 0);
         return px;
-    }
-
-    /*
-      typedef T * ref_ptr::*unspecified_bool_type;
-
-      operator unspecified_bool_type() const
-      {
-      return px == 0 ? 0: &ref_ptr::px;
-      }
-    */
-    operator bool() const {
-        return (px != 0);
     }
 
     void swap(ref_ptr& rhs){
@@ -315,6 +304,8 @@ template<class T> class weak_ref_ptr
     }
             
 public:
+    typedef T element_type;
+    
     weak_ref_ptr() : px(0), counter(0) { }
 
     template<class Y>
@@ -412,6 +403,7 @@ template<class T> void swap(weak_ref_ptr<T> & a, weak_ref_ptr<T> & b)
 {
     a.swap(b);
 }
+
 }
 
 #endif

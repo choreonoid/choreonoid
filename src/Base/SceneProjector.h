@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_PROJECT_H_INCLUDED
-#define CNOID_BASE_SCENE_PROJECT_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_PROJECT_H
+#define CNOID_BASE_SCENE_PROJECT_H
 
 #include "SceneWidgetEditable.h"
 #include "exportdecl.h"
@@ -64,6 +64,7 @@ protected:
     bool calcCylinderLineIntersection(
         const Vector3d& lineStart, const Vector3& lineEnd, Vector3& out_isectFront, Vector3& out_isectBack) const;
 };
+
 }
 
 #endif

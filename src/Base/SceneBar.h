@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_BAR_H_INCLUDED
-#define CNOID_BASE_SCENE_BAR_H_INCLUDED
+#ifndef CNOID_BASE_SCENE_BAR_H
+#define CNOID_BASE_SCENE_BAR_H
 
 #include <cnoid/ToolBar>
 #include "exportdecl.h"
@@ -27,6 +27,7 @@ protected:
 private:
     SceneBarImpl* impl;
 };
+
 }
 
 #endif

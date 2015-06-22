@@ -18,6 +18,7 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
+#include "MultiPointSetItem.h"
 #include "ViewManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
@@ -29,6 +30,7 @@
 #include "SceneBar.h"
 #include "CaptureBar.h"
 #include "ImageView.h"
+#include "TaskView.h"
 #include "GraphBar.h"
 #include "MultiValueSeqGraphView.h"
 #include "MultiSE3SeqGraphView.h"
@@ -98,7 +100,7 @@ class AppImpl
     std::string vendorName;
     DescriptionDialog* descriptionDialog;
     bool doQuit;
-        
+    
     AppImpl(App* self, int& argc, char**& argv);
     ~AppImpl();
     void initialize(const char* appName, const char* vendorName, const QIcon& icon, const char* pluginPathList);
@@ -194,15 +196,14 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     ItemTreeView::initializeClass(ext);
     ItemPropertyView::initializeClass(ext);
     TextEditView::initializeClass(ext);
-
     SceneBar::initialize(ext);
     SceneView::initializeClass(ext);
-
     ImageView::initializeClass(ext);
-
     GraphBar::initialize(ext);
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
+    TaskView::initializeClass(ext);
+
     TimeSyncItemEngineManager::initialize();
     
     FolderItem::initializeClass(ext);
@@ -213,6 +214,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     Vector3SeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
+    MultiPointSetItem::initializeClass(ext);
 
     initializeMovieGenerator(ext);
 

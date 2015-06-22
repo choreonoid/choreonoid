@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_EIGEN_UTIL_H_INCLUDED
-#define CNOID_UTIL_EIGEN_UTIL_H_INCLUDED
+#ifndef CNOID_UTIL_EIGEN_UTIL_H
+#define CNOID_UTIL_EIGEN_UTIL_H
 
 #include "EigenTypes.h"
 #include <boost/make_shared.hpp>
@@ -62,6 +62,7 @@ CNOID_EXPORT bool toVector3(const std::string& s, Vector3& out_v);
 
 CNOID_EXPORT void normalizeRotation(Matrix3& R);
 CNOID_EXPORT void normalizeRotation(Position& T);
+CNOID_EXPORT void normalizeRotation(Affine3& T);
 
 template<class T>
 boost::shared_ptr<T> make_shared_aligned() {
@@ -83,6 +84,7 @@ template<class T, class P1, class P2, class P3, class P4>
 boost::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3, const P4& p4) {
     return boost::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3, p4);
 }
+
 }
 
 #endif

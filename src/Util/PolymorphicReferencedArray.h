@@ -31,6 +31,7 @@ class PolymorphicReferencedArray : public PolymorphicReferencedArrayBase<BaseRef
 
 public:
     typedef PolymorphicReferencedArrayBase<BaseReferencedType> ArrayBase;
+    typedef typename Container::value_type value_type;
     typedef typename Container::iterator iterator;
     typedef typename Container::const_iterator const_iterator;
 

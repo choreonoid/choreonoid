@@ -71,8 +71,10 @@ public:
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);
     }
         
-    bool isItemSelected(ItemPtr item);
-    bool selectItem(ItemPtr item, bool select = true);
+    bool isItemSelected(Item* item);
+    bool selectItem(Item* item, bool select = true);
+    void unselectItem(Item* item);
+    
     void selectAllItems();
     void clearSelection();
 

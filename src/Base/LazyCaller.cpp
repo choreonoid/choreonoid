@@ -91,6 +91,15 @@ public:
     LazyCallerImpl(LazyCaller* self, const boost::function<void(void)>& function, int priority);
     virtual bool event(QEvent* e);
 };
+
+class QueuedCallerImpl : public QObject
+{
+public:
+    QueuedCaller* self;
+    ~QueuedCallerImpl();
+    virtual bool event(QEvent* e);
+};
+
 }
 
 
@@ -178,10 +187,7 @@ LazyCaller::LazyCaller(const LazyCaller& org)
 
 LazyCaller::~LazyCaller()
 {
-    if(isPending_){
-        QCoreApplication::removePostedEvents(impl);
-        isPending_ = false;
-    }
+    cancel();
     delete impl;
 }
 
@@ -201,6 +207,15 @@ void LazyCaller::setPriority(int priority)
 void LazyCaller::setConservative(bool on)
 {
     impl->isConservative = on;
+}
+
+
+void LazyCaller::cancel()
+{
+    if(isPending_){
+        QCoreApplication::removePostedEvents(impl);
+        isPending_ = false;
+    }
 }
 
 
@@ -235,4 +250,47 @@ bool LazyCallerImpl::event(QEvent* e)
         return true;
     }
     return false;
+}
+
+
+QueuedCaller::QueuedCaller()
+{
+    impl = new QueuedCallerImpl();
+}
+
+
+QueuedCaller::~QueuedCaller()
+{
+    cancel();
+    delete impl;
+}
+
+
+QueuedCallerImpl::~QueuedCallerImpl()
+{
+    
+}
+
+
+void QueuedCaller::callLater(const boost::function<void()>& function, int priority)
+{
+    CallEvent* event = new CallEvent(function);
+    QCoreApplication::postEvent(impl, event, toQtPriority(priority));
+}
+
+
+bool QueuedCallerImpl::event(QEvent* e)
+{
+    CallEvent* callEvent = dynamic_cast<CallEvent*>(e);
+    if(callEvent){
+        callEvent->function();
+        return true;
+    }
+    return false;
+}
+
+
+void QueuedCaller::cancel()
+{
+    QCoreApplication::removePostedEvents(impl);
 }

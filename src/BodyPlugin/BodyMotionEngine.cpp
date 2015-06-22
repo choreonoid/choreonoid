@@ -20,7 +20,7 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-typedef boost::function<TimeSyncItemEnginePtr(BodyItemPtr bodyItem, AbstractSeqItemPtr seqItem)> ExtraSeqEngineFactory;
+typedef boost::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> ExtraSeqEngineFactory;
 typedef map<string, ExtraSeqEngineFactory> ExtraSeqEngineFactoryMap;
 ExtraSeqEngineFactoryMap extraSeqEngineFactories;
 
@@ -53,7 +53,7 @@ public:
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ConnectionSet connections;
         
-    BodyMotionEngineImpl(BodyMotionEngine* self, BodyItemPtr& bodyItem, BodyMotionItemPtr& motionItem){
+    BodyMotionEngineImpl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem){
 
         this->bodyItem = bodyItem;
         body = bodyItem->body();
@@ -95,7 +95,6 @@ public:
         connections.disconnect();
     }
         
-
     virtual bool onTimeChanged(double time){
 
         bool isActive = false;
@@ -158,21 +157,22 @@ public:
 };
 
 
-TimeSyncItemEnginePtr createBodyMotionEngine(Item* sourceItem)
+TimeSyncItemEngine* createBodyMotionEngine(Item* sourceItem)
 {
     BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(sourceItem);
     if(motionItem){
         BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
         if(bodyItem){
-            return boost::make_shared<BodyMotionEngine>(bodyItem, motionItem);
+            return new BodyMotionEngine(bodyItem, motionItem);
         }
     }
-    return TimeSyncItemEnginePtr();
+    return 0;
 }
+
 }
 
 
-BodyMotionEngine::BodyMotionEngine(BodyItemPtr bodyItem, BodyMotionItemPtr motionItem)
+BodyMotionEngine::BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionItem)
 {
     impl = new BodyMotionEngineImpl(this, bodyItem, motionItem);
 }
@@ -215,7 +215,7 @@ void BodyMotionEngine::initialize(ExtensionManager* ext)
 
 
 void BodyMotionEngine::addExtraSeqEngineFactory
-(const std::string& key, boost::function<TimeSyncItemEnginePtr(BodyItemPtr bodyItem, AbstractSeqItemPtr seqItem)> factory)
+(const std::string& key, boost::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
 {
     extraSeqEngineFactories[key] = factory;
 }

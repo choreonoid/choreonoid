@@ -1,6 +1,10 @@
 
 # @author Shizuko Hattori
 
+if(NOT ENABLE_GUI)
+  return()
+endif()
+
 option(BUILD_OPENRTM_SAMPLES "Building OpenRTM samples" OFF)
 
 if(NOT BUILD_OPENRTM_SAMPLES)

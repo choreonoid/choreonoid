@@ -3,10 +3,6 @@
 
 #set(CMAKE_BUILD_TYPE Debug)
 
-#set_source_files_properties(ToolBarArea.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(ToolBar.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(GLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(SceneItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(SceneWidget.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
@@ -80,20 +76,24 @@ set(sources
   LazyCaller.cpp
   LazySignal.cpp
   Licenses.cpp
+  GLSceneRenderer.cpp
   SceneWidget.cpp
-  SceneBar.cpp
   SceneWidgetEditable.cpp
+  InteractiveCameraTransform.cpp
   SceneProjector.cpp
   SceneDragProjector.cpp
   SceneDragger.cpp
-  GLSceneRenderer.cpp
+  RectRegionMarker.cpp
   SceneView.cpp
+  SceneBar.cpp
   SceneItem.cpp
   PointSetItem.cpp
+  MultiPointSetItem.cpp
   MovieGenerator.cpp
   TextEditView.cpp
   ImageView.cpp
   TextEdit.cpp
+  TaskView.cpp
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -171,16 +171,20 @@ set(headers
   SceneDragger.h
   SceneBar.h
   SceneWidgetEditable.h
+  InteractiveCameraTransform.h
+  RectRegionMarker.h
   GLSceneRenderer.h
   SceneView.h
   SceneItem.h
   PointSetItem.h
+  MultiPointSetItem.h
   TextEditView.h
   ImageView.h
   JoystickCapture.h
   exportdecl.h
   gettext.h
   TextEdit.h
+  TaskView.h
   )
 
 set(target CnoidBase)

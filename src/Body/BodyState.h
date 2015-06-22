@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_BODY_STATE_H_INCLUDED
-#define CNOID_BODY_BODY_STATE_H_INCLUDED
+#ifndef CNOID_BODY_BODY_STATE_H
+#define CNOID_BODY_BODY_STATE_H
 
 #include <cnoid/EigenTypes>
 #include <cnoid/DataMap>
@@ -26,6 +26,9 @@ public:
         JOINT_FORCE_OR_TORQUE,
         ZMP
     };
+
+    BodyState();
+    BodyState(const Body& body);
 
     void storePositions(const Body& body);
     bool restorePositions(Body& io_body) const;
@@ -50,6 +53,7 @@ protected:
     virtual int nextDynamicId();
         
 };
+
 };
 
 #endif

@@ -268,7 +268,7 @@ JointSliderViewImpl::JointSliderViewImpl(JointSliderView* self) :
     showAllToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     showAllToggle.setText(_("All"));
     showAllToggle.setToolTip(_("Show all the joints including unselected ones"));
-    showAllToggle.setChecked(false);
+    showAllToggle.setChecked(true);
     showAllToggle.sigToggled().connect(bind(&JointSliderViewImpl::updateSliderGrid, this));
     hbox->addWidget(&showAllToggle);
 

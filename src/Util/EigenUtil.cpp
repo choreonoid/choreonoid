@@ -134,6 +134,18 @@ void normalizeRotation(Position& T)
     z = x.cross(y).normalized();
     y = z.cross(x);
 }
-    
+
+void normalizeRotation(Affine3& T)
+{
+    typedef Affine3::LinearPart::ColXpr ColXpr;
+    Affine3::LinearPart R = T.linear();
+    ColXpr x = R.col(0);
+    ColXpr y = R.col(1);
+    ColXpr z = R.col(2);
+    x.normalize();
+    z = x.cross(y).normalized();
+    y = z.cross(x);
+}
+
 }
 

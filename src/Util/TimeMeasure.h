@@ -1,7 +1,6 @@
 
-#ifndef CNOID_UTIL_TIME_MEASURE_H_INCLUDED
-#define CNOID_UTIL_TIME_MEASURE_H_INCLUDED
-
+#ifndef CNOID_UTIL_TIME_MEASURE_H
+#define CNOID_UTIL_TIME_MEASURE_H
 
 #ifndef _WIN32
 
@@ -33,6 +32,11 @@ public:
         time_ = endTime - beginTime;
         totalTime_ += time_;
         numCalls++;
+    }
+
+    inline double measure() {
+        end();
+        return time_;
     }
 
     inline double time() { return time_; }
@@ -81,10 +85,15 @@ public:
         totalTime_ += time_;
         numCalls++;
     }
+    inline double measure() {
+        end();
+        return time_;
+    }
     inline double time() { return time_; }
     inline double totalTime() { return totalTime_; }
     inline double avarageTime() { return totalTime_ / numCalls; }
 };
+
 }
 
 #endif

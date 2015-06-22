@@ -5,12 +5,16 @@
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "WorldItem.h"
+#include "SensorVisualizerItem.h"
 #include "SimulatorItem.h"
+#include "AISTSimulatorItem.h"
+#include "GLVisionSimulatorItem.h"
 #include "ZMPSeqItem.h"
 #include "MultiDeviceStateSeqItem.h"
 //#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
 #include "BodyBar.h"
+#include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
 #include "BodyLinkView.h"
 #include "JointSliderView.h"
@@ -20,11 +24,11 @@
 #include "LinkGraphView.h"
 #include "KinematicsBar.h"
 #include "SimulationBar.h"
-#include "AISTSimulatorItem.h"
-#include "GLVisionSimulatorItem.h"
 #include "BodyMotionEngine.h"
 #include "EditableSceneBody.h"
 #include "HrpsysFileIO.h"
+#include "CollisionSeqEngine.h"
+#include "CollisionSeqItem.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
@@ -50,11 +54,13 @@ public:
         BodyItem::initializeClass(this);
         BodyMotionItem::initializeClass(this);
         WorldItem::initializeClass(this);
+        SensorVisualizerItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
 
         BodyMotionEngine::initialize(this);
+        CollisionSeqEngine::initialize(this);
         //initializeFilterDialogs(*this);
         KinematicFaultChecker::initialize(this);
 
@@ -66,6 +72,7 @@ public:
 
         SimulationBar::initialize(this);
         addToolBar(BodyBar::instance());
+        addToolBar(LeggedBodyBar::instance());
         addToolBar(KinematicsBar::instance());
 
         LinkSelectionView::initializeClass(this);
@@ -75,6 +82,8 @@ public:
         BodyStateView::initializeClass(this);
         JointGraphView::initializeClass(this);
         LinkGraphView::initializeClass(this);
+
+        CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
 
