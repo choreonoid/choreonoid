@@ -437,6 +437,7 @@ protected:
     SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap);
 };
 
+
 class SgMaterial;
 class SgShape;
 class SgPlot;
@@ -450,6 +451,7 @@ class SgCamera;
 class SgPerspectiveCamera;
 class SgOrthographicCamera;
 class SgOverlay;
+class SgOutlineGroup;
 
 }
 

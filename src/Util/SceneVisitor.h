@@ -33,6 +33,7 @@ public:
     virtual void visitLight(SgLight* light);
     virtual void visitCamera(SgCamera* camera);
     virtual void visitOverlay(SgOverlay* overlay);
+    virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     Mapping* property() { return property_.get(); }
 

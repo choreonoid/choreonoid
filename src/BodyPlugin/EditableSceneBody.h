@@ -32,6 +32,7 @@ public:
 
 private:
     SgLineSetPtr bbLineSet;
+    SgOutlineGroupPtr outlineGroup;
     BoundingBoxMarkerPtr bbMarker;
     bool isPointed_;
     bool isColliding_;

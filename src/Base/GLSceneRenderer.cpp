@@ -476,6 +476,7 @@ public:
     void renderMesh(SgMesh* mesh, bool hasTexture);
     void renderTransparentShapes();
     void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
+    void visitOutlineGroup(SgOutlineGroup* outline);
 
     void clearGLState();
     void setColor(const Vector4f& color);
@@ -2745,4 +2746,44 @@ void GLSceneRenderer::getViewVolume
     out_right = right;
     out_bottom = bottom;
     out_top = top;
+}
+
+
+void GLSceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
+{
+    impl->visitOutlineGroup(outline);
+}
+
+
+void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
+{
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_STENCIL_TEST);
+
+    glStencilFunc(GL_ALWAYS, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
+        (*p)->accept(*self);
+    }
+
+    glStencilFunc(GL_NOTEQUAL, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glPushAttrib(GL_POLYGON_BIT);
+    glLineWidth(outlineGroup->lineWidth()*2+1);
+    glPolygonMode(GL_FRONT, GL_LINE);
+    setColor(outlineGroup->color());
+    enableColorMaterial(true);
+    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
+        (*p)->accept(*self);
+    }
+    enableColorMaterial(false);
+    setLineWidth(lineWidth);
+    glPopAttrib();
+
+    glDisable(GL_STENCIL_TEST);
+
 }
