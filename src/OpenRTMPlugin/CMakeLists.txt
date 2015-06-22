@@ -161,6 +161,9 @@ set(plugin_sources
   ChoreonoidPeriodicExecutionContext.cpp
   RTSNameServerView.cpp
   RTSPropertiesView.cpp
+  RTSItem.cpp
+  RTSDiagramView.cpp
+  RTSCommonUtil.cpp
   )
 
 set(plugin_headers
@@ -174,7 +177,8 @@ endif()
 
 if(NOT QT5)
 QT4_WRAP_CPP(
-  RTSNameServerView.cpp
+  plugin_sources
+  RTSDiagramView.h
   OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 endif()
@@ -186,7 +190,7 @@ endif()
 make_gettext_mofiles(${plugin} mofiles)
 
 if(OPENRTM_VERSION STREQUAL "1.1.0")
-  add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+  add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles}  ${RC_SRCS})
 else()
   add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
   if(ENABLE_GCC_FVISIBILITY_HIDDEN)

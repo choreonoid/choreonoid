@@ -11,6 +11,7 @@
 #include "OpenRTMUtil.h"
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
+#include "RTSDiagramView.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -171,6 +172,7 @@ public:
 
         RTSNameServerView::initializeClass(this);
         RTSPropertiesView::initializeClass(this);
+        RTSDiagramView::initializeClass(this);
 
         return true;
     }

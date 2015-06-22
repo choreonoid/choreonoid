@@ -30,6 +30,12 @@ public:
 
     SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)>
     	sigSelectionChanged();
+    SignalProxy<void(std::string, int)> sigLocationChanged();
+
+    const std::string getHost();
+    int getPort();
+    std::list<NamingContextHelper::ObjectInfo> getSelection();
+    void setSelection(std::string RTCname);
 
 //    virtual void onActivated();
 //    TreeWidget* getTreeWidget();

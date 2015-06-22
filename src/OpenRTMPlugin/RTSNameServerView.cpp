@@ -3,7 +3,7 @@
    @author Hisashi Ikari
 */
 #include "RTSNameServerView.h"
-#include "RTSPropertiesView.h"
+//#include "RTSPropertiesView.h"
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
 #include <cnoid/Button>
@@ -11,6 +11,8 @@
 #include <cnoid/LineEdit>
 #include <QBoxLayout>
 #include <QIcon>
+#include <QMimeData>
+#include <QDrag>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 //#include "RTSDiagramView.h"
@@ -28,38 +30,55 @@ namespace cnoid {
 class RTSVItem : public QTreeWidgetItem
 {
 public :
-	RTSVItem(const NamingContextHelper::ObjectInfo& info){
-		info_ = info;
+    RTSVItem(const NamingContextHelper::ObjectInfo& info){
+        info_ = info;
         QString name = info_.id.c_str();
         setText(0, name);
         setIcon(0, info_.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
-        		QIcon(":/Corba/icons/NSZombi.png"));
-	}
-	NamingContextHelper::ObjectInfo info_;
+                QIcon(":/Corba/icons/NSZombi.png"));
+    }
+    NamingContextHelper::ObjectInfo info_;
+};
+
+class RTSNameTreeWidget : public TreeWidget
+{
+private :
+    void mouseMoveEvent(QMouseEvent *event)
+    {
+        QByteArray itemData;
+        QMimeData *mimeData = new QMimeData;
+        mimeData->setData("application/RTSNameServerItem", itemData);
+        QDrag *drag = new QDrag(this);
+        drag->setPixmap(QPixmap(":/Corba/icons/NSRTC.png"));
+        drag->setMimeData(mimeData);
+        drag->start(Qt::MoveAction);
+    }
 };
 
 class RTSNameServerViewImpl
 {
 public:
-	RTSNameServerViewImpl(RTSNameServerView* self);
-	~RTSNameServerViewImpl();
-	void updateObjectList();
-	void updateObjectList(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent);
-	void setConnection();
-	void onSelectionChanged();
-	//void selectedItem();
+    RTSNameServerViewImpl(RTSNameServerView* self);
+    ~RTSNameServerViewImpl();
+    void updateObjectList();
+    void updateObjectList(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent);
+    void setConnection();
+    void onSelectionChanged();
+    //void selectedItem();
 #ifdef _HOST_CXT_VERSION
-	void extendDiagram(const NamingContextHelper::ObjectInfo& info, QTreeWidgetItem* parent);
+    void extendDiagram(const NamingContextHelper::ObjectInfo& info, QTreeWidgetItem* parent);
 #endif
-	void clearDiagram();
+    void clearDiagram();
+    void setSelection(string RTCName);
 
-	Signal<void(const list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
-	TreeWidget treeWidget;
-	LineEdit hostAddressBox;
-	SpinBox portNumberSpin;
+    Signal<void(const list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
+    Signal<void(string, int)> sigLocationChanged;
+    RTSNameTreeWidget treeWidget;
+    LineEdit hostAddressBox;
+    SpinBox portNumberSpin;
 
-	NamingContextHelper ncHelper;
-	list<NamingContextHelper::ObjectInfo> selectedItemList;
+    NamingContextHelper ncHelper;
+    list<NamingContextHelper::ObjectInfo> selectedItemList;
 };
 
 }
@@ -68,7 +87,7 @@ public:
 void RTSNameServerView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<RTSNameServerView>(
-        "RTSNameServerView", N_("RTC List"), ViewManager::SINGLE_OPTIONAL);
+        "RTSNameServerView", N_("RTC List"), ViewManager::SINGLE_DEFAULT);
 }
 
 
@@ -104,10 +123,21 @@ RTSNameServerView::RTSNameServerView()
 }
 
 
-SignalProxy<void(const list<NamingContextHelper::ObjectInfo>&)>
-	RTSNameServerView::sigSelectionChanged()
+SignalProxy<void(const list<NamingContextHelper::ObjectInfo>&)> RTSNameServerView::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
+}
+
+
+SignalProxy<void(string, int)> RTSNameServerView::sigLocationChanged()
+{
+    return impl->sigLocationChanged;
+}
+
+
+list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection()
+{
+    return impl->selectedItemList;
 }
 
 
@@ -146,11 +176,17 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     vbox->addWidget(&treeWidget);
     self->setLayout(vbox);
 
+    /*
     RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
     if(propertiesView){
-    	propertiesView->setSelectionChangedConnection();
+        Connection connection = sigSelectionChanged.connect(
+                boost::bind(&RTSPropertiesView::onItemSelectionChanged, propertiesView, _1));
+        propertiesView->setSelectionChangedConnection(connection);
+        connection = sigLocationChanged.connect(
+                boost::bind(&RTSPropertiesView::onLocationChanged, propertiesView, _1, _2));
+        propertiesView->setLocationChangedConnection(connection);
     }
-
+    */
 }
 
 #if 0
@@ -226,11 +262,24 @@ RTSNameServerView::~RTSNameServerView()
 
 
 RTSNameServerViewImpl::~RTSNameServerViewImpl()
+{/*
+    RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
+    if(propertiesView){
+        propertiesView->clearSelectionChangedConnection();
+        propertiesView->clearLocationChangedConnection();
+    }*/
+}
+
+
+const string RTSNameServerView::getHost()
 {
-	RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
-	if(propertiesView){
-		propertiesView->clearSelectionChangedConnection();
-	}
+    return impl->hostAddressBox.string();
+}
+
+
+int RTSNameServerView::getPort()
+{
+    return impl->portNumberSpin.value();
 }
 
 
@@ -243,7 +292,7 @@ void RTSNameServerViewImpl::updateObjectList()
         ncHelper.setLocation(hostAddressBox.string(), portNumberSpin.value());
 
         // Connection information updates to all views.
-        //setConnection();
+        sigLocationChanged(hostAddressBox.string(), portNumberSpin.value());
 
         // Clear information update to all views.
         //clearDiagram();
@@ -272,12 +321,12 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
             #else
             } else if (iequals(info.kind, "rtc")){
             #endif
-            	RTSVItem* item = new RTSVItem(info);
+                RTSVItem* item = new RTSVItem(info);
                 //QTreeWidgetItem* item = new QTreeWidgetItem();
                 //QString name = info.id.c_str();
                 //item->setText(0, name);
                 //item->setIcon(0, info.isAlive ? QIcon(":/Corba/icons/NSRTC.png") :
-                //		QIcon(":/Corba/icons/NSZombi.png"));
+                //        QIcon(":/Corba/icons/NSZombi.png"));
                 if (parent == NULL) treeWidget.addTopLevelItem(item);
                 else parent->addChild(item);
             }
@@ -288,17 +337,37 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
 
 void RTSNameServerViewImpl::onSelectionChanged()
 {
-	selectedItemList.clear();
+    selectedItemList.clear();
 
-	QList<QTreeWidgetItem*> selected = treeWidget.selectedItems();
-	for(int i=0; i < selected.size(); ++i){
-		RTSVItem* item = dynamic_cast<RTSVItem*>(selected[i]);
-		if(item){
-			selectedItemList.push_back(item->info_);
-		}
-	}
+    QList<QTreeWidgetItem*> selected = treeWidget.selectedItems();
+    for(int i=0; i < selected.size(); ++i){
+        RTSVItem* item = dynamic_cast<RTSVItem*>(selected[i]);
+        if(item){
+            selectedItemList.push_back(item->info_);
+        }
+    }
 
-	sigSelectionChanged(selectedItemList);
+    sigSelectionChanged(selectedItemList);
+}
+
+
+void RTSNameServerView::setSelection(string RTCName)
+{
+    impl->setSelection(RTCName);
+}
+
+
+void RTSNameServerViewImpl::setSelection(string RTCName)
+{
+    if(RTCName.empty()){
+        treeWidget.clearSelection();
+        return;
+    }
+
+    QList<QTreeWidgetItem*> items = treeWidget.findItems(QString(RTCName.c_str()), Qt::MatchFixedString);
+    if(!items.empty())
+        treeWidget.setCurrentItem(items[0]);
+
 }
 
 
