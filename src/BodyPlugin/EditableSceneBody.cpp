@@ -40,6 +40,7 @@ void EditableSceneLink::showBoundingBox(bool on)
     if(!shape()){
         return;
     }
+#if 0
     if(on){
         if(!bbLineSet){
             createBoundingBoxLineSet();
@@ -50,6 +51,20 @@ void EditableSceneLink::showBoundingBox(bool on)
     } else if(bbLineSet){
         removeChild(bbLineSet, true);
     }
+#else
+    if(on){
+        if(!outlineGroup){
+            outlineGroup = new SgOutlineGroup();
+        }
+        if(!contains(outlineGroup)){
+            moveChildren(outlineGroup, false);
+            addChild(outlineGroup, true);
+        }
+    }else if(outlineGroup){
+        outlineGroup->moveChildren(this, false);
+        removeChild(outlineGroup, true);
+    }
+#endif
 }
 
 

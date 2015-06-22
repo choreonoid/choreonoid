@@ -2773,7 +2773,7 @@ void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     glPushAttrib(GL_POLYGON_BIT);
-    glLineWidth(outlineGroup->lineWidth());
+    glLineWidth(outlineGroup->lineWidth()*2+1);
     glPolygonMode(GL_FRONT, GL_LINE);
     setColor(outlineGroup->color());
     enableColorMaterial(true);
