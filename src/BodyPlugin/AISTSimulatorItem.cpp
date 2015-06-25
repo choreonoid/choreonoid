@@ -21,6 +21,7 @@
 #include <fstream>
 #include <iomanip>
 #include "gettext.h"
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -367,6 +368,7 @@ ControllerItem* AISTSimulatorItem::createBodyMotionController(BodyItem* bodyItem
 
 bool AISTSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
+    simulationTime = 0;
     return impl->initializeSimulation(simBodies);
 }
 
@@ -460,7 +462,9 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
     impl->world.constraintForceSolver.clearExternalForces();
 
     if(!impl->dynamicsMode.is(KINEMATICS)){
+        timer.start();
         impl->world.calcNextState();
+        simulationTime += timer.nsecsElapsed();
         return true;
     }
 
@@ -512,6 +516,7 @@ void AISTSimulatorItem::finalizeSimulation()
     if(ENABLE_DEBUG_OUTPUT){
         impl->os.close();
     }
+    cout << "AIST simulationTime= " << simulationTime *1.0e-9 << "[s]"<< endl;
 }
 
 
