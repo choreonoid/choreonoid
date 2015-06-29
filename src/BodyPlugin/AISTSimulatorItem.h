@@ -10,8 +10,6 @@
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
-#include <QElapsedTimer>
-
 namespace cnoid {
 
 class AISTSimulatorItemImpl;
@@ -59,9 +57,6 @@ protected:
 private:
     AISTSimulatorItemImpl* impl;
     friend class AISTSimulatorItemImpl;
-
-    double simulationTime;
-    QElapsedTimer timer;
 };
 
 typedef ref_ptr<AISTSimulatorItem> AISTSimulatorItemPtr;
