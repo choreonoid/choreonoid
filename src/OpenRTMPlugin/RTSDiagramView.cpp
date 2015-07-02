@@ -6,6 +6,7 @@
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
 #include "RTSCommonUtil.h"
+#include "RTSItem.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MessageView>
 #include <cnoid/MenuManager>
@@ -13,6 +14,8 @@
 #include <cnoid/Dialog>
 #include <cnoid/ComboBox>
 #include <cnoid/Timer>
+#include <cnoid/ItemList>
+#include <cnoid/ItemTreeView>
 #include <QGraphicsView>
 #include <QVBoxLayout>
 #include <QDropEvent>
@@ -278,11 +281,13 @@ public:
     //DroppableGraphicsView* view;
     NamingContextHelper ncHelper;
     Connection locationChangedConnection;
-    Connection selectionChangedConnection;
+    Connection nsViewSelectionChangedConnection;
+    Connection itemViewSelectionChangeConnection;
+    Connection connectionOfRTSystemItemDetachedFromRoot;
     map<string, RTSCompPtr> rtsComps;
     map<string, RTSConnectionPtr> rtsConnections;
     map<string, RTSConnectionPtr> deletedRtsConnections;
-    list<NamingContextHelper::ObjectInfo> selectionItems;
+    list<NamingContextHelper::ObjectInfo> nsViewSelections;
     list<RTSComp*> selectionRTCs;
     list<RTSConnection*> selectionRTSConnections;
     MenuManager menuManager;
@@ -290,8 +295,10 @@ public:
     Timer timer;
 
     RTSPort* sourcePort;
-    QGraphicsLineItem dragPortLine;
+    QGraphicsLineItem* dragPortLine;
     RTSConnectionMarkerItem* targetMarker;
+
+    RTSystemItem* currentRTSItem;
 
     void onLocationChanged(std::string host, int port);
     void addRTSComp(string name, const QPointF& pos);
@@ -306,7 +313,7 @@ public:
     void mousePressEvent  (QMouseEvent*     event);
     void mouseReleaseEvent(QMouseEvent*     event);
     void keyPressEvent    (QKeyEvent*       event);
-    void onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
+    void onnsViewItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
     RTSPort* findTargetRTSPort(QPointF& pos);
     RTSConnectionMarkerItem* findConnectionMarker(QGraphicsItem* gItem);
     void createConnectionGItem(RTSConnection* rtsConnection);
@@ -318,6 +325,9 @@ public:
     void onRTSCompPositionChanged(const RTSComp*);
     void onTime();
     void onActivated(bool on);
+    void onItemviewSelectionChanged(const ItemList<RTSystemItem>& items);
+    void onRTSystemItemDetachedFromRoot();
+    void updateView();
 };
 
 }
@@ -935,8 +945,8 @@ void RTSDiagramViewImpl::dragLeaveEvent(QDragLeaveEvent *event)
 
 void RTSDiagramViewImpl::dropEvent(QDropEvent *event)
 {
-    for(list<NamingContextHelper::ObjectInfo>::iterator it = selectionItems.begin();
-            it != selectionItems.end(); it++){
+    for(list<NamingContextHelper::ObjectInfo>::iterator it = nsViewSelections.begin();
+            it != nsViewSelections.end(); it++){
         NamingContextHelper::ObjectInfo& info = *it;
         if(!info.isAlive)
             MessageView::instance()->putln((boost::format(_("%1% is not alive")) % info.id).str());
@@ -947,9 +957,9 @@ void RTSDiagramViewImpl::dropEvent(QDropEvent *event)
 }
 
 
-void RTSDiagramViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
+void RTSDiagramViewImpl::onnsViewItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
-    selectionItems = items;
+    nsViewSelections = items;
 }
 
 
@@ -990,7 +1000,7 @@ void RTSDiagramViewImpl::mouseMoveEvent(QMouseEvent* event)
 
     if(sourcePort){
         QPointF sp = sourcePort->pos;
-        dragPortLine.setLine(sp.x(), sp.y(), pos.x(), pos.y());
+        dragPortLine->setLine(sp.x(), sp.y(), pos.x(), pos.y());
         RTSPort* port = findTargetRTSPort(pos);
         if(port && !sourcePort->checkConnectablePort(port))
             setCursor(Qt::ForbiddenCursor);
@@ -1031,8 +1041,8 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
         QPointF pos = mapToScene(event->pos());
         sourcePort = findTargetRTSPort(pos);
         if(sourcePort){
-            dragPortLine.setLine(pos.x(), pos.y(), pos.x(), pos.y());
-            dragPortLine.setVisible(true);
+            dragPortLine->setLine(pos.x(), pos.y(), pos.x(), pos.y());
+            dragPortLine->setVisible(true);
             return;
         }
 
@@ -1064,7 +1074,7 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event)
     QPointF pos = mapToScene(event->pos());
 
     if(sourcePort){
-        dragPortLine.setVisible(false);
+        dragPortLine->setVisible(false);
         RTSPort* targetPort = findTargetRTSPort(pos);
         if(targetPort && sourcePort->checkConnectablePort(targetPort)){
             if(sourcePort->connectedWith(targetPort)){
@@ -1143,15 +1153,16 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     setScene(&scene);
     vbox->addWidget(this);
     self->setLayout(vbox);
-    setAcceptDrops(true);
+    setAcceptDrops(false);
+    setBackgroundBrush(QBrush(Qt::gray));
     connect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
 
     RTSNameServerView* nsView = RTSNameServerView::instance();
     if(nsView){
-        selectionItems = nsView->getSelection();
-        if(!selectionChangedConnection.connected()){
-            selectionChangedConnection = nsView->sigSelectionChanged().connect(
-                    boost::bind(&RTSDiagramViewImpl::onItemSelectionChanged, this, _1));
+        nsViewSelections = nsView->getSelection();
+        if(!nsViewSelectionChangedConnection.connected()){
+            nsViewSelectionChangedConnection = nsView->sigSelectionChanged().connect(
+                    boost::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1));
         }
         if(!locationChangedConnection.connected()){
             locationChangedConnection = nsView->sigLocationChanged().connect(
@@ -1166,12 +1177,28 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     self->sigActivated().connect(boost::bind(&RTSDiagramViewImpl::onActivated, this, true));
     self->sigDeactivated().connect(boost::bind(&RTSDiagramViewImpl::onActivated, this ,false));
 
+    itemViewSelectionChangeConnection =
+            ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+                    boost::bind(&RTSDiagramViewImpl::onItemviewSelectionChanged, this, _1));
+
+    ItemList<RTSystemItem> items = ItemTreeView::mainInstance()->selectedItems<RTSystemItem>();
+    if(items.empty()){
+        currentRTSItem = 0;
+    }else{
+        currentRTSItem = items.get(0);
+        connectionOfRTSystemItemDetachedFromRoot.disconnect();
+        connectionOfRTSystemItemDetachedFromRoot = currentRTSItem->sigDetachedFromRoot().connect(
+                boost::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
+        updateView();
+    }
+
     QPen pen(Qt::DashDotLine);
     pen.setWidth(2);
-    dragPortLine.setPen(pen);
-    dragPortLine.setZValue(100);
-    dragPortLine.setVisible(false);
-    scene.addItem(&dragPortLine);
+    dragPortLine = new QGraphicsLineItem();
+    dragPortLine->setPen(pen);
+    dragPortLine->setZValue(100);
+    dragPortLine->setVisible(false);
+    scene.addItem(dragPortLine);
 }
 
 
@@ -1183,7 +1210,7 @@ RTSDiagramView::~RTSDiagramView()
 
 RTSDiagramViewImpl::~RTSDiagramViewImpl()
 {
-    selectionChangedConnection.disconnect();
+    nsViewSelectionChangedConnection.disconnect();
     locationChangedConnection.disconnect();
     connections.disconnect();
     disconnect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
@@ -1440,6 +1467,42 @@ void RTSDiagramViewImpl::onActivated(bool on)
         timer.start(STATE_CHECK_TIME);
     else
         timer.stop();
+}
+
+
+void RTSDiagramViewImpl::onItemviewSelectionChanged(const ItemList<RTSystemItem>& items)
+{
+    RTSystemItemPtr item = items.toSingle();
+
+    if(item && currentRTSItem != item){
+        currentRTSItem = item;
+        connectionOfRTSystemItemDetachedFromRoot.disconnect();
+        connectionOfRTSystemItemDetachedFromRoot = currentRTSItem->sigDetachedFromRoot().connect(
+                    boost::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
+        updateView();
+    }
+}
+
+
+void RTSDiagramViewImpl::updateView()
+{
+    if(currentRTSItem){
+        setBackgroundBrush(QBrush(Qt::white));
+
+        setAcceptDrops(true);
+    }else{
+        scene.clear();
+        setBackgroundBrush(QBrush(Qt::gray));
+        setAcceptDrops(false);
+    }
+}
+
+
+void RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot()
+{
+    connectionOfRTSystemItemDetachedFromRoot.disconnect();
+    currentRTSItem = 0;
+    updateView();
 }
 
 

@@ -12,6 +12,7 @@
 #include "RTSNameServerView.h"
 #include "RTSPropertiesView.h"
 #include "RTSDiagramView.h"
+#include "RTSItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -170,6 +171,7 @@ public:
             boost::bind(&OpenRTMPlugin::store, this, _1),
             boost::bind(&OpenRTMPlugin::restore, this, _1));
 
+        RTSystemItem::initialize(this);
         RTSNameServerView::initializeClass(this);
         RTSPropertiesView::initializeClass(this);
         RTSDiagramView::initializeClass(this);
