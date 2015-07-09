@@ -50,7 +50,8 @@ protected:
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-        
+    virtual void finalizeSimulation();
+
     virtual ItemPtr doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);

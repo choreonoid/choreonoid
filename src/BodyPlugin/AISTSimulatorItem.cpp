@@ -34,7 +34,7 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
-const bool MEASURE_PHYSICS_CALCULATION_TIME = false;
+const bool MEASURE_PHYSICS_CALCULATION_TIME = true;
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 
@@ -530,6 +530,8 @@ void AISTSimulatorItem::finalizeSimulation()
     }
     if(MEASURE_PHYSICS_CALCULATION_TIME){
         cout << "AIST physicsTime= " << impl->physicsTime *1.0e-9 << "[s]"<< endl;
+        double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
+        cout << "AIST collisionTime= " << collisionTime *1.0e-9 << "[s]"<< endl;
     }
 }
 

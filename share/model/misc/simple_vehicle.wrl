@@ -1,0 +1,1243 @@
+#VRML V2.0 utf8
+#--------------------------------------------------------------
+# OpenHRP Sample Model
+#
+# author    Ichitaro Kohara (YNL, Univ. of Tokyo)
+# version   1.0 (2000.11.08)
+# modified  Hirohisa Hirukawa (ETL)
+# version   1.1 (2000.11.24)
+# modified  Natsuki Miyata (MEL)
+# version   1.1 (2000.12.7)
+#--------------------------------------------------------------
+
+PROTO Joint [
+  exposedField     SFVec3f      center              0 0 0
+  exposedField     MFNode       children            []
+  exposedField     MFFloat      llimit              []
+  exposedField     MFFloat      lvlimit             []
+  exposedField     SFRotation   limitOrientation    0 0 1 0
+  exposedField     SFString     name                ""
+  exposedField     SFRotation   rotation            0 0 1 0
+  exposedField     SFVec3f      scale               1 1 1
+  exposedField     SFRotation   scaleOrientation    0 0 1 0
+  exposedField     MFFloat      stiffness           [ 0 0 0 ]
+  exposedField     SFVec3f      translation         0 0 0
+  exposedField     MFFloat      ulimit              []
+  exposedField     MFFloat      uvlimit             []
+  exposedField     SFString     jointType           ""
+  exposedField     SFInt32      jointId             -1
+  exposedField     SFVec3f      jointAxis           0 0 1
+
+  exposedField     SFFloat      gearRatio           1
+  exposedField     SFFloat      rotorInertia        0
+  exposedField     SFFloat      rotorResistor       0
+  exposedField     SFFloat      torqueConst         1
+  exposedField     SFFloat      encoderPulse        1
+]
+{
+  Transform {
+    center           IS center
+    children         IS children
+    rotation         IS rotation
+    scale            IS scale
+    scaleOrientation IS scaleOrientation
+    translation      IS translation
+  }
+}
+
+PROTO Segment [
+  field           SFVec3f     bboxCenter        0 0 0
+  field           SFVec3f     bboxSize          -1 -1 -1
+  exposedField    SFVec3f     centerOfMass      0 0 0
+  exposedField    MFNode      children          [ ]
+  exposedField    SFNode      coord             NULL
+  exposedField    MFNode      displacers        [ ]
+  exposedField    SFFloat     mass              0 
+  exposedField    MFFloat     momentsOfInertia  [ 0 0 0 0 0 0 0 0 0 ]
+  exposedField    SFString    name              ""
+  eventIn         MFNode      addChildren
+  eventIn         MFNode      removeChildren
+]
+{
+  Group {
+    addChildren    IS addChildren
+    bboxCenter     IS bboxCenter
+    bboxSize       IS bboxSize
+    children       IS children
+    removeChildren IS removeChildren
+  }
+}
+
+PROTO Humanoid [
+  field           SFVec3f    bboxCenter            0 0 0
+  field           SFVec3f    bboxSize              -1 -1 -1
+  exposedField    SFVec3f    center                0 0 0
+  exposedField    MFNode     humanoidBody          [ ]
+  exposedField    MFString   info                  [ ]
+  exposedField    MFNode     joints                [ ]
+  exposedField    SFString   name                  ""
+  exposedField    SFRotation rotation              0 0 1 0
+  exposedField    SFVec3f    scale                 1 1 1
+  exposedField    SFRotation scaleOrientation      0 0 1 0
+  exposedField    MFNode     segments              [ ]
+  exposedField    MFNode     sites                 [ ]
+  exposedField    SFVec3f    translation           0 0 0
+  exposedField    SFString   version               "1.1"
+  exposedField    MFNode     viewpoints            [ ]
+]
+{
+  Transform {
+    bboxCenter       IS bboxCenter
+    bboxSize         IS bboxSize
+    center           IS center
+    rotation         IS rotation
+    scale            IS scale
+    scaleOrientation IS scaleOrientation
+    translation      IS translation
+    children [
+      Group {
+        children IS viewpoints
+      }
+      Group {
+        children IS humanoidBody 
+      }
+    ]
+  }
+}
+
+PROTO VisionSensor [
+  exposedField SFVec3f    translation       0 0 0
+  exposedField SFRotation rotation          0 0 1 0
+  exposedField MFNode     children          [ ]
+  exposedField SFFloat    fieldOfView       0.785398
+  exposedField SFString   name              ""
+  exposedField SFFloat    frontClipDistance 0.01
+  exposedField SFFloat    backClipDistance  10.0
+  exposedField SFString   type              "NONE"
+  exposedField SFInt32    sensorId          -1
+  exposedField SFInt32    width             320
+  exposedField SFInt32    height            240
+]
+{
+  Transform {
+    rotation         IS rotation
+    translation      IS translation
+    children         IS children
+  }
+}
+
+
+PROTO ForceSensor [  
+  exposedField SFVec3f    maxForce    -1 -1 -1
+  exposedField SFVec3f    maxTorque   -1 -1 -1
+  exposedField SFVec3f    translation 0 0 0
+  exposedField SFRotation rotation    0 0 1 0
+  exposedField SFInt32    sensorId    -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO Gyro [
+  exposedField SFVec3f    maxAngularVelocity -1 -1 -1
+  exposedField SFVec3f    translation        0 0 0
+  exposedField SFRotation rotation           0 0 1 0
+  exposedField SFInt32    sensorId           -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO AccelerationSensor [
+  exposedField SFVec3f    maxAcceleration -1 -1 -1
+  exposedField SFVec3f    translation     0 0 0
+  exposedField SFRotation rotation        0 0 1 0
+  exposedField SFInt32    sensorId        -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO PressureSensor [
+  exposedField SFFloat    maxPressure -1
+  exposedField SFVec3f    translation 0 0 0
+  exposedField SFRotation rotation    0 0 1 0
+  exposedField SFInt32    sensorId    -1
+]
+{
+  Transform {
+    translation IS translation
+    rotation    IS rotation
+  }
+}
+
+PROTO PhotoInterrupter [
+  exposedField SFVec3f transmitter 0 0 0
+  exposedField SFVec3f receiver    0 0 0
+  exposedField SFInt32 sensorId    -1
+]
+{
+  Transform{
+    children [
+      Transform{
+        translation IS transmitter
+      }
+      Transform{
+        translation IS receiver
+      }
+    ]
+  }
+}
+
+PROTO CylinderSensorZ [
+    exposedField    SFFloat    maxAngle       -1
+    exposedField    SFFloat    minAngle        0
+    exposedField    MFNode     children        [ ]
+]
+{
+  Transform{
+    rotation 1 0 0 1.5708
+    children [
+      DEF SensorY CylinderSensor{
+        maxAngle IS maxAngle
+        minAngle IS minAngle
+      }
+      DEF AxisY Transform{
+        children [
+          Transform{
+            rotation 1 0 0 -1.5708
+            children IS children
+          }
+        ]
+      }
+    ]
+  }
+  ROUTE SensorY.rotation_changed TO AxisY.set_rotation
+}
+
+PROTO CylinderSensorY [
+    exposedField    SFFloat    maxAngle       -1
+    exposedField    SFFloat    minAngle        0
+    exposedField    MFNode     children        [ ]
+]
+{
+  Transform{
+    rotation 0 1 0 1.5708
+    children [
+      DEF SensorX CylinderSensor{
+        maxAngle IS maxAngle
+        minAngle IS minAngle
+      }
+      DEF AxisX Transform{
+        children [
+          Transform{
+            rotation 0 1 0 -1.5708
+            children IS children
+          }
+        ]
+      }
+    ]
+  }
+  ROUTE SensorX.rotation_changed TO AxisX.set_rotation
+}
+
+PROTO CylinderSensorX [
+    exposedField    SFFloat    maxAngle       -1
+    exposedField    SFFloat    minAngle        0
+    exposedField    MFNode     children        [ ]
+]
+{
+  Transform{
+    rotation 0 0 1 -1.5708
+    children [
+      DEF SensorZ CylinderSensor{
+        maxAngle IS maxAngle
+        minAngle IS minAngle
+      }
+      DEF AxisZ Transform{
+        children [
+          Transform{
+            rotation 0 0 1 1.5708
+            children IS children
+          }
+        ]
+      }
+    ]
+  }
+  ROUTE SensorZ.rotation_changed TO AxisZ.set_rotation
+}
+
+NavigationInfo {
+  avatarSize    0.5
+  headlight     TRUE
+  type  ["EXAMINE", "ANY"]
+}
+
+Background {
+  skyColor 0.4 0.6 0.4
+}
+
+Viewpoint {
+  position    3 0 0.835
+  orientation 0.5770 0.5775 0.5775 2.0935
+}
+
+DEF SimpleVehicle Humanoid {
+  name "vehicle"
+  version "1.1"
+  info [
+    "This is a sample model of OpenHRP."
+    "You can modify and use this model freely."
+    "Author  : Ichitaro Kohara, YNL, Univ. of Tokyo"
+    "Date    : 2000.11.08"
+    "Modifying Author  : Natsuki Miyata, MEL"
+    "Date    : 2000.12.08"
+    "Version : 1.1"
+  ]
+
+  humanoidBody [
+
+    DEF BODY Joint {
+      jointType "free"
+      translation 0 0 0.1
+      children [
+        DEF BODY_LINK Segment {
+          centerOfMass  0 0 0
+          mass    10.0
+          momentsOfInertia [ 0.1 0 0 0 0.1 0 0 0 0.5 ]
+
+          children [
+           Transform {
+            translation 0 0 0
+            rotation 1 0 0 1.5708
+            children Shape {
+              appearance Appearance {
+                material DEF green Material {
+                  diffuseColor 0.0 0.6 0.0
+                  ambientIntensity 0.3
+                  specularColor 0.7 0.7 0.7
+                  emissiveColor 0 0 0
+                  shininess 0.25
+                  transparency 0
+                }
+              }
+              geometry IndexedFaceSet {
+                coord Coordinate {
+                  point [    # 8 vertices
+                    -0.15 -0.05 -0.25,
+                    -0.15 -0.05 0.25,
+                    -0.15 0.05 -0.25,
+                    -0.15 0.05 0.25,
+                    0.15 -0.05 -0.25,
+                    0.15 -0.05 0.25,
+                    0.15 0.05 -0.25,
+                    0.15 0.05 0.25
+                  ]
+                }
+                # 6 polygons
+                coordIndex [
+                  1, 5, 7, 3, -1,
+                  5, 4, 6, 7, -1,
+                  0, 1, 3, 2, -1,
+                  4, 0, 2, 6, -1,
+                  3, 7, 6, 2, -1,
+                  5, 1, 0, 4, -1
+                ]
+                solid           TRUE
+                creaseAngle    0
+                texCoord TextureCoordinate {
+                  point [      # 4 texture coords
+                     0 0,
+                     0 1,
+                     1 0,
+                     1 1
+                  ]
+                }
+                texCoordIndex [
+                  0, 2, 3, 1, -1,
+                  0, 2, 3, 1, -1,
+                  0, 2, 3, 1, -1,
+                  0, 2, 3, 1, -1,
+                  0, 2, 3, 1, -1,
+                  0, 2, 3, 1, -1
+                ]
+              }  # End of IndexedFaceSet
+            }  # End of Shape node
+           }
+          ]
+        }  # End BODY_LINK
+
+# add muranaga 2008.02.19
+#      DEF VISION_SENSOR1 VisionSensor {
+#          translation   0.15 0.05 0.15
+#          translation   0.0 -0.3 0.1    # change
+#          rotation      0.4472 -0.4472 -0.7746 1.8235
+#          rotation      1 0 0 1
+#          rotation      0 1 1 3.1415
+#          fieldOfView   0.7 
+#          name          "Camera"
+#          type          "DEPTH"
+#          sensorId      0
+#          width         400             # add
+#          height        300             # add
+#          children [
+#           DEF CAMERA_SHAPE Transform {
+#              rotation  1 0 0 1.5708
+#              children [
+#                Shape {
+#                  geometry Cylinder {
+#                    radius      0.02
+#                    height      0.025
+#                  }
+#                  appearance Appearance {
+#                    material Material {
+#                      diffuseColor      1 0 0
+#                    }
+#                  }
+#                }
+#              ]
+#            }
+#          ]
+#        }
+# add end
+
+        DEF STEERING Joint {
+          translation 0 -0.2 0
+          jointType "rotate"
+          jointAxis 0 0 1
+          jointId  0
+	  rotorInertia 0.1
+          children [
+            DEF STEERING_LINK Segment {
+              centerOfMass  0 0 0
+              mass    0.5
+              momentsOfInertia [ 0.01 0 0 0 0.01 0 0 0 0.01 ]
+            }
+
+            DEF FRONT_WHEEL Joint {
+              jointType "rotate"
+              jointAxis 1 0 0
+              jointId  1
+              children [
+                DEF FRONT_WHEEL_LINK Segment {
+                  centerOfMass  0 0 0 
+                  mass    0.5
+                  momentsOfInertia [ 0.01 0 0 0 0.01 0 0 0 0.01 ]
+
+                  children [
+                  Transform {
+                    translation -0.02 0 0
+                    children Shape {
+                      appearance Appearance {
+                        material DEF black Material {
+                          diffuseColor 0.01 0.01 0.01
+                          ambientIntensity 0.01
+                          specularColor 0.3 0.3 0.3
+                          emissiveColor 0 0 0
+                          shininess 0.01
+                          transparency 0
+                        }
+                      }
+                      geometry IndexedFaceSet {
+                        coord Coordinate {
+                          point [    # 50 vertices
+                          0 -0.1 0,
+                          0 -0.0965926 0.0258819,
+                          0 -0.0965926 -0.0258819,
+                          0 -0.0866026 0.05,
+                          0 -0.0866025 -0.05,
+                          0 -0.0707107 0.0707107,
+                          0 -0.0707107 -0.0707107,
+                          0 -0.05 -0.0866025,
+                          0 -0.05 0.0866025,
+                          0 -0.0258819 -0.0965926,
+                          0 -0.0258819 0.0965926,
+                          0 0 0.1,
+                          0 0 0,
+                          0 0 -0.1,
+                          0 0.0258819 0.0965926,
+                          0 0.0258819 -0.0965926,
+                          0 0.05 0.0866025,
+                          0 0.05 -0.0866025,
+                          0 0.0707107 0.0707107,
+                          0 0.0707107 -0.0707107,
+                          0 0.0866025 0.05,
+                          0 0.0866025 -0.05,
+                          0 0.0965926 0.0258819,
+                          0 0.0965926 -0.0258819,
+                          0 0.1 0,
+                          0.04 -0.1 0,
+                          0.04 -0.0965926 0.0258819,
+                          0.04 -0.0965926 -0.0258819,
+                          0.04 -0.0866026 0.05,
+                          0.04 -0.0866025 -0.05,
+                          0.04 -0.0707107 0.0707107,
+                          0.04 -0.0707107 -0.0707107,
+                          0.04 -0.05 -0.0866025,
+                          0.04 -0.05 0.0866025,
+                          0.04 -0.0258819 -0.0965926,
+                          0.04 -0.0258819 0.0965926,
+                          0.04 0 0.1,
+                          0.04 0 0,
+                          0.04 0 -0.1,
+                          0.04 0.0258819 0.0965926,
+                          0.04 0.0258819 -0.0965926,
+                          0.04 0.05 0.0866025,
+                          0.04 0.05 -0.0866025,
+                          0.04 0.0707107 0.0707107,
+                          0.04 0.0707107 -0.0707107,
+                          0.04 0.0866025 0.05,
+                          0.04 0.0866025 -0.05,
+                          0.04 0.0965926 0.0258819,
+                          0.04 0.0965926 -0.0258819,
+                          0.04 0.1 0
+                          ]
+                        }
+                        # 72 polygons
+                        coordIndex [
+                       2, 27, 25, 0, -1,
+                       2, 0, 12, -1,
+                       25, 27, 37, -1,
+                       4, 29, 27, 2, -1,
+                       4, 2, 12, -1,
+                       27, 29, 37, -1,
+                       6, 31, 29, 4, -1,
+                       6, 4, 12, -1,
+                       29, 31, 37, -1,
+                       7, 32, 31, 6, -1,
+                       7, 6, 12, -1,
+                       31, 32, 37, -1,
+                       9, 34, 32, 7, -1,
+                       9, 7, 12, -1,
+                       32, 34, 37, -1,
+                       13, 38, 34, 9, -1,
+                       13, 9, 12, -1,
+                       34, 38, 37, -1,
+                       15, 40, 38, 13, -1,
+                       15, 13, 12, -1,
+                       38, 40, 37, -1,
+                       17, 42, 40, 15, -1,
+                       17, 15, 12, -1,
+                       40, 42, 37, -1,
+                       19, 44, 42, 17, -1,
+                       19, 17, 12, -1,
+                       42, 44, 37, -1,
+                       21, 46, 44, 19, -1,
+                       21, 19, 12, -1,
+                       44, 46, 37, -1,
+                       23, 48, 46, 21, -1,
+                       23, 21, 12, -1,
+                       46, 48, 37, -1,
+                       24, 49, 48, 23, -1,
+                       24, 23, 12, -1,
+                       48, 49, 37, -1,
+                       22, 47, 49, 24, -1,
+                       22, 24, 12, -1,
+                       49, 47, 37, -1,
+                       20, 45, 47, 22, -1,
+                       20, 22, 12, -1,
+                       47, 45, 37, -1,
+                       18, 43, 45, 20, -1,
+                       18, 20, 12, -1,
+                       45, 43, 37, -1,
+                       16, 41, 43, 18, -1,
+                       16, 18, 12, -1,
+                       43, 41, 37, -1,
+                       14, 39, 41, 16, -1,
+                       14, 16, 12, -1,
+                       41, 39, 37, -1,
+                       11, 36, 39, 14, -1,
+                       11, 14, 12, -1,
+                       39, 36, 37, -1,
+                       10, 35, 36, 11, -1,
+                       10, 11, 12, -1,
+                       36, 35, 37, -1,
+                       8, 33, 35, 10, -1,
+                       8, 10, 12, -1,
+                       35, 33, 37, -1,
+                       5, 30, 33, 8, -1,
+                       5, 8, 12, -1,
+                       33, 30, 37, -1,
+                       3, 28, 30, 5, -1,
+                       3, 5, 12, -1,
+                       30, 28, 37, -1,
+                       1, 26, 28, 3, -1,
+                       1, 3, 12, -1,
+                       28, 26, 37, -1,
+                       0, 25, 26, 1, -1,
+                       0, 1, 12, -1,
+                       26, 25, 37, -1
+                        ]
+                        normal Normal {
+                          vector [      # 26 normals
+                          -1 0 0,
+                          0 -1 0,
+                          0 -0.965926 0.258819,
+                          0 -0.965926 -0.258819,
+                          0 -0.866026 0.5,
+                          0 -0.866025 -0.5,
+                          0 -0.707107 0.707107,
+                          0 -0.707107 -0.707107,
+                          0 -0.5 -0.866025,
+                          0 -0.5 0.866025,
+                          0 -0.258819 -0.965926,
+                          0 -0.258819 0.965926,
+                          0 0 1,
+                          0 0 -1,
+                          0 0.258819 0.965926,
+                          0 0.258819 -0.965926,
+                          0 0.5 0.866025,
+                          0 0.5 -0.866025,
+                          0 0.707107 0.707107,
+                          0 0.707107 -0.707107,
+                          0 0.866025 0.5,
+                          0 0.866025 -0.5,
+                          0 0.965926 0.258819,
+                          0 0.965926 -0.258819,
+                          0 1 0,
+                          1 0 0
+                          ]
+                        }
+                        normalIndex [
+                       3, 3, 1, 1, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       5, 5, 3, 3, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       7, 7, 5, 5, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       8, 8, 7, 7, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       10, 10, 8, 8, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       13, 13, 10, 10, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       15, 15, 13, 13, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       17, 17, 15, 15, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       19, 19, 17, 17, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       21, 21, 19, 19, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       23, 23, 21, 21, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       24, 24, 23, 23, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       22, 22, 24, 24, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       20, 20, 22, 22, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       18, 18, 20, 20, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       16, 16, 18, 18, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       14, 14, 16, 16, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       12, 12, 14, 14, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       11, 11, 12, 12, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       9, 9, 11, 11, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       6, 6, 9, 9, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       4, 4, 6, 6, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       2, 2, 4, 4, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1,
+                       1, 1, 2, 2, -1,
+                       0, 0, 0, -1,
+                       25, 25, 25, -1
+                        ]
+                        normalPerVertex TRUE
+                        solid           TRUE
+                      }  # End of IndexedFaceSet
+                    }  # End of Shape node
+                  }
+                  ]
+                } # segment FRONT_WHEEL_LINK
+              ]
+            }  # joint FRONT_WHEEL
+          ]
+        }  # joint STEERING
+
+        DEF REAR_WHEEL_L Joint {
+          translation 0.15 0.2 0
+          jointType "rotate"           
+          jointAxis 1 0 0
+          jointId 2
+          children [
+            DEF REAR_WHEEL_L_LINK Segment {
+              centerOfMass 0 0 0
+              mass 1
+              momentsOfInertia [ 0.02 0 0 0 0.02 0 0 0 0.02 ]
+
+              children [
+               Transform {
+                translation 0 0 0
+                children Shape {
+                  appearance Appearance {
+                    material USE black
+                  }
+                  geometry IndexedFaceSet {
+                    coord Coordinate {
+                      point [    # 50 vertices
+                         0 -0.1 0,
+                         0 -0.0965926 0.0258819,
+                         0 -0.0965926 -0.0258819,
+                         0 -0.0866026 0.05,
+                         0 -0.0866025 -0.05,
+                         0 -0.0707107 0.0707107,
+                         0 -0.0707107 -0.0707107,
+                         0 -0.05 -0.0866025,
+                         0 -0.05 0.0866025,
+                         0 -0.0258819 -0.0965926,
+                         0 -0.0258819 0.0965926,
+                         0 0 0.1,
+                         0 0 0,
+                         0 0 -0.1,
+                         0 0.0258819 0.0965926,
+                         0 0.0258819 -0.0965926,
+                         0 0.05 0.0866025,
+                         0 0.05 -0.0866025,
+                         0 0.0707107 0.0707107,
+                         0 0.0707107 -0.0707107,
+                         0 0.0866025 0.05,
+                         0 0.0866025 -0.05,
+                         0 0.0965926 0.0258819,
+                         0 0.0965926 -0.0258819,
+                         0 0.1 0,
+                         0.04 -0.1 0,
+                         0.04 -0.0965926 0.0258819,
+                         0.04 -0.0965926 -0.0258819,
+                         0.04 -0.0866026 0.05,
+                         0.04 -0.0866025 -0.05,
+                         0.04 -0.0707107 0.0707107,
+                         0.04 -0.0707107 -0.0707107,
+                         0.04 -0.05 -0.0866025,
+                         0.04 -0.05 0.0866025,
+                         0.04 -0.0258819 -0.0965926,
+                         0.04 -0.0258819 0.0965926,
+                         0.04 0 0.1,
+                         0.04 0 0,
+                         0.04 0 -0.1,
+                         0.04 0.0258819 0.0965926,
+                         0.04 0.0258819 -0.0965926,
+                         0.04 0.05 0.0866025,
+                         0.04 0.05 -0.0866025,
+                         0.04 0.0707107 0.0707107,
+                         0.04 0.0707107 -0.0707107,
+                         0.04 0.0866025 0.05,
+                         0.04 0.0866025 -0.05,
+                         0.04 0.0965926 0.0258819,
+                         0.04 0.0965926 -0.0258819,
+                         0.04 0.1 0
+                      ]
+                    }
+                    # 72 polygons
+                    coordIndex [
+                      2, 27, 25, 0, -1,
+                      2, 0, 12, -1,
+                      25, 27, 37, -1,
+                      4, 29, 27, 2, -1,
+                      4, 2, 12, -1,
+                      27, 29, 37, -1,
+                      6, 31, 29, 4, -1,
+                      6, 4, 12, -1,
+                      29, 31, 37, -1,
+                      7, 32, 31, 6, -1,
+                      7, 6, 12, -1,
+                      31, 32, 37, -1,
+                      9, 34, 32, 7, -1,
+                      9, 7, 12, -1,
+                      32, 34, 37, -1,
+                      13, 38, 34, 9, -1,
+                      13, 9, 12, -1,
+                      34, 38, 37, -1,
+                      15, 40, 38, 13, -1,
+                      15, 13, 12, -1,
+                      38, 40, 37, -1,
+                      17, 42, 40, 15, -1,
+                      17, 15, 12, -1,
+                      40, 42, 37, -1,
+                      19, 44, 42, 17, -1,
+                      19, 17, 12, -1,
+                      42, 44, 37, -1,
+                      21, 46, 44, 19, -1,
+                      21, 19, 12, -1,
+                      44, 46, 37, -1,
+                      23, 48, 46, 21, -1,
+                      23, 21, 12, -1,
+                      46, 48, 37, -1,
+                      24, 49, 48, 23, -1,
+                      24, 23, 12, -1,
+                      48, 49, 37, -1,
+                      22, 47, 49, 24, -1,
+                      22, 24, 12, -1,
+                      49, 47, 37, -1,
+                      20, 45, 47, 22, -1,
+                      20, 22, 12, -1,
+                      47, 45, 37, -1,
+                      18, 43, 45, 20, -1,
+                      18, 20, 12, -1,
+                      45, 43, 37, -1,
+                      16, 41, 43, 18, -1,
+                      16, 18, 12, -1,
+                      43, 41, 37, -1,
+                      14, 39, 41, 16, -1,
+                      14, 16, 12, -1,
+                      41, 39, 37, -1,
+                      11, 36, 39, 14, -1,
+                      11, 14, 12, -1,
+                      39, 36, 37, -1,
+                      10, 35, 36, 11, -1,
+                      10, 11, 12, -1,
+                      36, 35, 37, -1,
+                      8, 33, 35, 10, -1,
+                      8, 10, 12, -1,
+                      35, 33, 37, -1,
+                      5, 30, 33, 8, -1,
+                      5, 8, 12, -1,
+                      33, 30, 37, -1,
+                      3, 28, 30, 5, -1,
+                      3, 5, 12, -1,
+                      30, 28, 37, -1,
+                      1, 26, 28, 3, -1,
+                      1, 3, 12, -1,
+                      28, 26, 37, -1,
+                      0, 25, 26, 1, -1,
+                      0, 1, 12, -1,
+                      26, 25, 37, -1
+                    ]
+                    normal Normal {
+                      vector [      # 26 normals
+                         -1 0 0,
+                         0 -1 0,
+                         0 -0.965926 0.258819,
+                         0 -0.965926 -0.258819,
+                         0 -0.866026 0.5,
+                         0 -0.866025 -0.5,
+                         0 -0.707107 0.707107,
+                         0 -0.707107 -0.707107,
+                         0 -0.5 -0.866025,
+                         0 -0.5 0.866025,
+                         0 -0.258819 -0.965926,
+                         0 -0.258819 0.965926,
+                         0 0 1,
+                         0 0 -1,
+                         0 0.258819 0.965926,
+                         0 0.258819 -0.965926,
+                         0 0.5 0.866025,
+                         0 0.5 -0.866025,
+                         0 0.707107 0.707107,
+                         0 0.707107 -0.707107,
+                         0 0.866025 0.5,
+                         0 0.866025 -0.5,
+                         0 0.965926 0.258819,
+                         0 0.965926 -0.258819,
+                         0 1 0,
+                         1 0 0
+                      ]
+                    }
+                    normalIndex [
+                      3, 3, 1, 1, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      5, 5, 3, 3, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      7, 7, 5, 5, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      8, 8, 7, 7, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      10, 10, 8, 8, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      13, 13, 10, 10, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      15, 15, 13, 13, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      17, 17, 15, 15, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      19, 19, 17, 17, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      21, 21, 19, 19, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      23, 23, 21, 21, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      24, 24, 23, 23, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      22, 22, 24, 24, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      20, 20, 22, 22, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      18, 18, 20, 20, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      16, 16, 18, 18, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      14, 14, 16, 16, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      12, 12, 14, 14, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      11, 11, 12, 12, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      9, 9, 11, 11, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      6, 6, 9, 9, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      4, 4, 6, 6, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      2, 2, 4, 4, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1,
+                      1, 1, 2, 2, -1,
+                      0, 0, 0, -1,
+                      25, 25, 25, -1
+                    ]
+                    normalPerVertex TRUE
+                    solid           TRUE
+                  }  # End of IndexedFaceSet
+                }  # End of Shape node
+               }
+              ]
+            } # End of REAR_WHEEL_L_LINK
+          ]
+        } # End of REAR_WHEEL_L
+
+        DEF REAR_WHEEL_R Joint {
+          translation -0.15 0.2 0
+          jointType "rotate"
+          jointAxis 1 0 0
+          jointId 3
+
+          children [
+            DEF REAR_WHEEL_R_LINK Segment {
+              centerOfMass          0 0 0
+              mass                  1
+              momentsOfInertia      [ 0.02 0 0 0 0.02 0 0 0 0.02 ]
+
+              children [
+               Transform {
+                translation -0.04 0 0
+                children Shape {
+                appearance Appearance {
+                  material USE black
+                }
+                geometry IndexedFaceSet {
+                  coord Coordinate {
+                    point [    # 50 vertices
+                      0 -0.1 0,
+                      0 -0.0965926 0.0258819,
+                      0 -0.0965926 -0.0258819,
+                      0 -0.0866026 0.05,
+                      0 -0.0866025 -0.05,
+                      0 -0.0707107 0.0707107,
+                      0 -0.0707107 -0.0707107,
+                      0 -0.05 -0.0866025,
+                      0 -0.05 0.0866025,
+                      0 -0.0258819 -0.0965926,
+                      0 -0.0258819 0.0965926,
+                      0 0 0.1,
+                      0 0 0,
+                      0 0 -0.1,
+                      0 0.0258819 0.0965926,
+                      0 0.0258819 -0.0965926,
+                      0 0.05 0.0866025,
+                      0 0.05 -0.0866025,
+                      0 0.0707107 0.0707107,
+                      0 0.0707107 -0.0707107,
+                      0 0.0866025 0.05,
+                      0 0.0866025 -0.05,
+                      0 0.0965926 0.0258819,
+                      0 0.0965926 -0.0258819,
+                      0 0.1 0,
+                      0.04 -0.1 0,
+                      0.04 -0.0965926 0.0258819,
+                      0.04 -0.0965926 -0.0258819,
+                      0.04 -0.0866026 0.05,
+                      0.04 -0.0866025 -0.05,
+                      0.04 -0.0707107 0.0707107,
+                      0.04 -0.0707107 -0.0707107,
+                      0.04 -0.05 -0.0866025,
+                      0.04 -0.05 0.0866025,
+                      0.04 -0.0258819 -0.0965926,
+                      0.04 -0.0258819 0.0965926,
+                      0.04 0 0.1,
+                      0.04 0 0,
+                      0.04 0 -0.1,
+                      0.04 0.0258819 0.0965926,
+                      0.04 0.0258819 -0.0965926,
+                      0.04 0.05 0.0866025,
+                      0.04 0.05 -0.0866025,
+                      0.04 0.0707107 0.0707107,
+                      0.04 0.0707107 -0.0707107,
+                      0.04 0.0866025 0.05,
+                      0.04 0.0866025 -0.05,
+                      0.04 0.0965926 0.0258819,
+                      0.04 0.0965926 -0.0258819,
+                      0.04 0.1 0
+                    ]
+                  }
+                  # 72 polygons
+                  coordIndex [
+                    2, 27, 25, 0, -1,
+                    2, 0, 12, -1,
+                    25, 27, 37, -1,
+                    4, 29, 27, 2, -1,
+                    4, 2, 12, -1,
+                    27, 29, 37, -1,
+                    6, 31, 29, 4, -1,
+                    6, 4, 12, -1,
+                    29, 31, 37, -1,
+                    7, 32, 31, 6, -1,
+                    7, 6, 12, -1,
+                    31, 32, 37, -1,
+                    9, 34, 32, 7, -1,
+                    9, 7, 12, -1,
+                    32, 34, 37, -1,
+                    13, 38, 34, 9, -1,
+                    13, 9, 12, -1,
+                    34, 38, 37, -1,
+                    15, 40, 38, 13, -1,
+                    15, 13, 12, -1,
+                    38, 40, 37, -1,
+                    17, 42, 40, 15, -1,
+                    17, 15, 12, -1,
+                    40, 42, 37, -1,
+                    19, 44, 42, 17, -1,
+                    19, 17, 12, -1,
+                    42, 44, 37, -1,
+                    21, 46, 44, 19, -1,
+                    21, 19, 12, -1,
+                    44, 46, 37, -1,
+                    23, 48, 46, 21, -1,
+                    23, 21, 12, -1,
+                    46, 48, 37, -1,
+                    24, 49, 48, 23, -1,
+                    24, 23, 12, -1,
+                    48, 49, 37, -1,
+                    22, 47, 49, 24, -1,
+                    22, 24, 12, -1,
+                    49, 47, 37, -1,
+                    20, 45, 47, 22, -1,
+                    20, 22, 12, -1,
+                    47, 45, 37, -1,
+                    18, 43, 45, 20, -1,
+                    18, 20, 12, -1,
+                    45, 43, 37, -1,
+                    16, 41, 43, 18, -1,
+                    16, 18, 12, -1,
+                    43, 41, 37, -1,
+                    14, 39, 41, 16, -1,
+                    14, 16, 12, -1,
+                    41, 39, 37, -1,
+                    11, 36, 39, 14, -1,
+                    11, 14, 12, -1,
+                    39, 36, 37, -1,
+                    10, 35, 36, 11, -1,
+                    10, 11, 12, -1,
+                    36, 35, 37, -1,
+                    8, 33, 35, 10, -1,
+                    8, 10, 12, -1,
+                    35, 33, 37, -1,
+                    5, 30, 33, 8, -1,
+                    5, 8, 12, -1,
+                    33, 30, 37, -1,
+                    3, 28, 30, 5, -1,
+                    3, 5, 12, -1,
+                    30, 28, 37, -1,
+                    1, 26, 28, 3, -1,
+                    1, 3, 12, -1,
+                    28, 26, 37, -1,
+                    0, 25, 26, 1, -1,
+                    0, 1, 12, -1,
+                    26, 25, 37, -1
+                  ]
+                  normal Normal {
+                    vector [      # 26 normals
+                       -1 0 0,
+                       0 -1 0,
+                       0 -0.965926 0.258819,
+                       0 -0.965926 -0.258819,
+                       0 -0.866026 0.5,
+                       0 -0.866025 -0.5,
+                       0 -0.707107 0.707107,
+                       0 -0.707107 -0.707107,
+                       0 -0.5 -0.866025,
+                       0 -0.5 0.866025,
+                       0 -0.258819 -0.965926,
+                       0 -0.258819 0.965926,
+                       0 0 1,
+                       0 0 -1,
+                       0 0.258819 0.965926,
+                       0 0.258819 -0.965926,
+                       0 0.5 0.866025,
+                       0 0.5 -0.866025,
+                       0 0.707107 0.707107,
+                       0 0.707107 -0.707107,
+                       0 0.866025 0.5,
+                       0 0.866025 -0.5,
+                       0 0.965926 0.258819,
+                       0 0.965926 -0.258819,
+                       0 1 0,
+                       1 0 0
+                    ]
+                  }
+                  normalIndex [
+                    3, 3, 1, 1, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    5, 5, 3, 3, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    7, 7, 5, 5, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    8, 8, 7, 7, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    10, 10, 8, 8, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    13, 13, 10, 10, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    15, 15, 13, 13, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    17, 17, 15, 15, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    19, 19, 17, 17, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    21, 21, 19, 19, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    23, 23, 21, 21, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    24, 24, 23, 23, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    22, 22, 24, 24, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    20, 20, 22, 22, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    18, 18, 20, 20, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    16, 16, 18, 18, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    14, 14, 16, 16, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    12, 12, 14, 14, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    11, 11, 12, 12, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    9, 9, 11, 11, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    6, 6, 9, 9, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    4, 4, 6, 6, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    2, 2, 4, 4, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1,
+                    1, 1, 2, 2, -1,
+                    0, 0, 0, -1,
+                    25, 25, 25, -1
+                  ]
+                  normalPerVertex TRUE
+                  solid           TRUE
+                }  # End of IndexedFaceSet
+              }  # End of Shape 
+             }
+            ]
+          }  # End of REAR_WHEEL_R_LINK
+        ]
+      }  # End of REAR_WHEEL_R
+     ]
+    }
+  ]
+
+
+  # List up all the joints' name you use
+  joints [
+    USE BODY,
+    USE STEERING,
+    USE FRONT_WHEEL,
+    USE REAR_WHEEL_L,
+    USE REAR_WHEEL_R
+  ]
+
+  # List up all the segments' name you use
+  segments [
+    USE BODY_LINK,
+    USE STEERING_LINK,
+    USE FRONT_WHEEL_LINK,
+    USE REAR_WHEEL_L_LINK,
+    USE REAR_WHEEL_R_LINK
+  ]
+}
+

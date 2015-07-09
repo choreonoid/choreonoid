@@ -59,6 +59,7 @@ public:
     void clearExternalForces();
 
     CollisionLinkPairListPtr getCollisions();
+    double getCollisionTime();
 };
 
 };

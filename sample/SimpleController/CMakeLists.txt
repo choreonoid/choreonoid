@@ -42,3 +42,5 @@ configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
 configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+add_cnoid_simple_controller(SampleSVController SampleSV.cpp)

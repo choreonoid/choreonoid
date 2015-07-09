@@ -17,6 +17,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <boost/bind.hpp>
+#include <QElapsedTimer>
 #include "gettext.h"
 
 #ifdef GAZEBO_ODE
@@ -36,6 +37,8 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool USE_AMOTOR = false;
+
+const bool MEASURE_PHYSICS_CALCULATION_TIME = true;
 
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
@@ -155,6 +158,11 @@ public:
     CollisionDetectorPtr collisionDetector;
     bool velocityMode;
 
+    double physicsTime;
+    QElapsedTimer physicsTimer;
+    double collisionTime;
+    QElapsedTimer collisionTimer;
+
     ODESimulatorItemImpl(ODESimulatorItem* self);
     ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimulatorItemImpl& org);
     void initialize();
@@ -207,10 +215,20 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     dMass mass;
     dMassSetZero(&mass);
     const Matrix3& I = link->I();
+#if 1
+    Vector3 axis = link->a();
+    Matrix3 I0 = I + axis * axis.transpose() * link->Jm2();
+    dMassSetParameters(&mass, link->m(),
+            0.0, 0.0, 0.0,
+            I0(0,0), I0(1,1), I0(2,2),
+            I0(0,1), I0(0,2), I0(1,2));
+#else
     dMassSetParameters(&mass, link->m(),
                        0.0, 0.0, 0.0,
                        I(0,0), I(1,1), I(2,2),
                        I(0,1), I(0,2), I(1,2));
+#endif
+
     dBodySetMass(bodyID, &mass);
 
     Vector3 c;
@@ -1095,6 +1113,11 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     if(useWorldCollision)
         collisionDetector->makeReady();
 
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        physicsTime = 0;
+        collisionTime = 0;
+    }
+
     return true;
 }
 
@@ -1223,6 +1246,10 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         	odeBody->setTorqueToODE();
     }
 
+	if(MEASURE_PHYSICS_CALCULATION_TIME){
+	    physicsTimer.start();
+	}
+
     dJointGroupEmpty(contactJointGroupID);
     if(useWorldCollision){
         for(size_t i=0; i < activeSimBodies.size(); ++i){
@@ -1234,13 +1261,23 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         }
         collisionDetector->detectCollisions(boost::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
     }else{
+        if(MEASURE_PHYSICS_CALCULATION_TIME){
+            collisionTimer.start();
+        }
         dSpaceCollide(spaceID, (void*)this, &nearCallback);
+        if(MEASURE_PHYSICS_CALCULATION_TIME){
+            collisionTime += collisionTimer.nsecsElapsed();
+        }
     }
 
     if(stepMode.is(ODESimulatorItem::STEP_ITERATIVE)){
         dWorldQuickStep(worldID, timeStep);
     } else {
         dWorldStep(worldID, timeStep);
+    }
+
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        physicsTime += physicsTimer.nsecsElapsed();
     }
 
     //! \todo Bodies with sensors should be managed by the specialized container to increase the efficiency
@@ -1326,6 +1363,15 @@ void ODESimulatorItemImpl::collisionCallback(const CollisionPair& collisionPair)
         }
         dJointID jointID = dJointCreateContact(worldID, contactJointGroupID, &contact);
         dJointAttach(jointID, body1ID, body2ID);
+    }
+}
+
+
+void ODESimulatorItem::finalizeSimulation()
+{
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        cout << "ODE physicsTime= " << impl->physicsTime *1.0e-9 << "[s]"<< endl;
+        cout << "ODE collisionTime= " << impl->collisionTime *1.0e-9 << "[s]"<< endl;
     }
 }
 
