@@ -122,7 +122,7 @@ bool AppConfig::load(const std::string& filename)
     if(filesystem::exists(filesystem::path(filename))){
         try {
             if(pyaml->load(filename)){
-                if(pyaml->numDocuments() != 1 || pyaml->document()->type() != ValueNode::MAPPING){
+                if(pyaml->numDocuments() != 1 || !pyaml->document()->isMapping()){
                     pyaml->clearDocuments();
                 }
             }

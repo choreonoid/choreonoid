@@ -12,6 +12,9 @@
 #include "../MultiAffine3SeqItem.h"
 #include "../MultiSE3SeqItem.h"
 #include "../Vector3SeqItem.h"
+#include "../SceneItem.h"
+#include "../PointSetItem.h"
+#include "../MultiPointSetItem.h"
 #include <cnoid/PyUtil>
 
 namespace python = boost::python;
@@ -62,6 +65,29 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_save, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
 
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
+
+
+SgPosTransformPtr SceneItem_topNode(SceneItem& self){
+    return self.topNode();
+}
+
+Affine3 PointSetItem_offsetTransform(const PointSetItem& self){
+    return self.offsetTransform();
+}
+
+Vector3 PointSetItem_attentionPoint(PointSetItem& self, int index){
+    return self.attentionPoint(index);
+}
+
+PointSetItemPtr MultiPointSetItem_pointSetItem(MultiPointSetItem& self, int index)
+{
+    return self.pointSetItem(index);
+}
+
+PointSetItemPtr MultiPointSetItem_activePointSetItem(MultiPointSetItem& self, int index)
+{
+    return self.activePointSetItem(index);
+}
 
 } // namespace
 
@@ -201,6 +227,57 @@ void exportPyItems()
     
     implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiSE3SeqItem>("MultiSE3SeqItemList");
+
+    class_< SceneItem, SceneItemPtr, bases<Item, SceneProvider> >("SceneItem")
+        .def("topNode", SceneItem_topNode)
+        ;
+
+    implicitly_convertible<SceneItemPtr, ItemPtr>();
+    implicitly_convertible<SceneItemPtr, SceneProvider*>();
+
+    class_< PointSetItem, PointSetItemPtr, bases<Item, SceneProvider> >("PointSetItem")
+        .def("offsetTransform", PointSetItem_offsetTransform)
+        .def("setOffsetTransform", &PointSetItem::setOffsetTransform)
+        .def("sigOffsetTransformChanged", &PointSetItem::sigOffsetTransformChanged)
+        .def("notifyOffsetTransformChange", &PointSetItem::notifyOffsetTransformChange)
+        .def("numAttentionPoints", &PointSetItem::numAttentionPoints)
+        .def("attentionPoint", PointSetItem_attentionPoint)
+        .def("clearAttentionPoints", &PointSetItem::clearAttentionPoints)
+        .def("addAttentionPoint", &PointSetItem::addAttentionPoint)
+        .def("sigAttentionPointsChanged", &PointSetItem::sigAttentionPointsChanged)
+        .def("notifyAttentionPointChange", &PointSetItem::notifyAttentionPointChange)
+        ;
+
+    implicitly_convertible<PointSetItemPtr, ItemPtr>();
+    implicitly_convertible<PointSetItemPtr, SceneProvider*>();
+    PyItemList<PointSetItem>("PointSetItemList");
+
+    class_< MultiPointSetItem, MultiPointSetItemPtr, bases<PointSetItem, SceneProvider> >("MultiPointSetItem")
+        .def("numPointSetItems", &MultiPointSetItem::numPointSetItems)
+        .def("pointSetItem", MultiPointSetItem_pointSetItem)
+        .def("numActivePointSetItems", &MultiPointSetItem::numActivePointSetItems)
+        .def("activePointSetItem", MultiPointSetItem_activePointSetItem)
+        .def("sigPointSetItemAdded", &MultiPointSetItem::sigPointSetItemAdded)
+        .def("sigPointSetUpdated", &MultiPointSetItem::sigPointSetUpdated)
+        .def("topOffsetTransform", &MultiPointSetItem::topOffsetTransform, return_value_policy<copy_const_reference>())
+        .def("setTopOffsetTransform", &MultiPointSetItem::setTopOffsetTransform)
+        .def("sigTopOffsetTransformChanged", &MultiPointSetItem::sigTopOffsetTransformChanged)
+        .def("notifyTopOffsetTransformChange", &MultiPointSetItem::notifyTopOffsetTransformChange)
+        .def("offsetTransform", &MultiPointSetItem::offsetTransform)
+        .def("getTransformedPointSet", &MultiPointSetItem::getTransformedPointSet)
+        .def("numAttentionPoints", &MultiPointSetItem::numAttentionPoints)
+        .def("attentionPoint", &MultiPointSetItem::attentionPoint)
+        .def("clearAttentionPoints", &MultiPointSetItem::clearAttentionPoints)
+        .def("addAttentionPoint", &MultiPointSetItem::addAttentionPoint)
+        .def("sigAttentionPointsChanged", &MultiPointSetItem::sigAttentionPointsChanged)
+        .def("notifyAttentionPointChange", &MultiPointSetItem::notifyAttentionPointChange)
+        .def("startAutomaticSave", &MultiPointSetItem::startAutomaticSave)
+        .def("stopAutomaticSave", &MultiPointSetItem::stopAutomaticSave);
+        ;
+
+    implicitly_convertible<MultiPointSetItemPtr, ItemPtr>();
+    implicitly_convertible<MultiPointSetItemPtr, SceneProvider*>();
+    PyItemList<MultiPointSetItem>("MultiPointSetItemList");
 }
 
 } // namespace cnoid

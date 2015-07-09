@@ -5,7 +5,10 @@
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "WorldItem.h"
+#include "SensorVisualizerItem.h"
 #include "SimulatorItem.h"
+#include "AISTSimulatorItem.h"
+#include "GLVisionSimulatorItem.h"
 #include "ZMPSeqItem.h"
 #include "MultiDeviceStateSeqItem.h"
 //#include "FilterDialogs.h"
@@ -21,8 +24,6 @@
 #include "LinkGraphView.h"
 #include "KinematicsBar.h"
 #include "SimulationBar.h"
-#include "AISTSimulatorItem.h"
-#include "GLVisionSimulatorItem.h"
 #include "BodyMotionEngine.h"
 #include "EditableSceneBody.h"
 #include "HrpsysFileIO.h"
@@ -53,6 +54,7 @@ public:
         BodyItem::initializeClass(this);
         BodyMotionItem::initializeClass(this);
         WorldItem::initializeClass(this);
+        SensorVisualizerItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);

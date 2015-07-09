@@ -35,10 +35,11 @@ public:
     typedef std::vector<SgObject*> Path;
         
     SgUpdate() : action_(MODIFIED) { path_.reserve(16); }
-    SgUpdate(Action action) : action_(action) { path_.reserve(16); }
+    SgUpdate(int action) : action_(action) { path_.reserve(16); }
     virtual ~SgUpdate();
-    Action action() const { return action_; }
-    void setAction(Action act) { action_ = act; }
+    int action() const { return action_; }
+    bool isModified() const { return (action_ & MODIFIED); }
+    void setAction(int act) { action_ = act; }
     const Path& path() const { return path_; }
     void push(SgObject* node) { path_.push_back(node); }
     void pop() { path_.pop_back(); }
@@ -46,7 +47,7 @@ public:
 
 private:
     Path path_;
-    Action action_;
+    int action_;
 };
 
 
@@ -96,12 +97,12 @@ public:
         
     void notifyUpdate(SgUpdate& update) {
         update.clear();
-        transferUpdate(update);
+        onUpdated(update);
     }
 
-    void notifyUpdate(SgUpdate::Action action = SgUpdate::MODIFIED) {
+    void notifyUpdate(int action = SgUpdate::MODIFIED) {
         SgUpdate update(action);
-        transferUpdate(update);
+        onUpdated(update);
     }
 
     void addParent(SgObject* parent, bool doNotify = false);
@@ -124,7 +125,7 @@ public:
 protected:
     SgObject();
     SgObject(const SgObject& org);
-    virtual void transferUpdate(SgUpdate& update);
+    virtual void onUpdated(SgUpdate& update);
             
 private:
     std::string name_;
@@ -180,7 +181,7 @@ public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
     virtual void accept(SceneVisitor& visitor);
-    virtual void transferUpdate(SgUpdate& update);
+    virtual void onUpdated(SgUpdate& update);
     virtual const BoundingBox& boundingBox() const;
     virtual bool isGroup() const;
         
@@ -356,6 +357,26 @@ private:
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;
 
 
+class CNOID_EXPORT SgSwitch : public SgGroup
+{
+public:
+    SgSwitch();
+    SgSwitch(const SgSwitch& org);
+    SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap);
+    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual void accept(SceneVisitor& visitor);
+
+    void turnOn() { isTurnedOn_ = true; }
+    void turnOff() { isTurnedOn_ = false; }
+    void setTurnedOn(bool on) { isTurnedOn_ = on; }
+    bool isTurnedOn() const { return isTurnedOn_; }
+
+  private:
+    bool isTurnedOn_;
+};
+typedef ref_ptr<SgSwitch> SgSwitchPtr;
+
+
 class CNOID_EXPORT SgUnpickableGroup : public SgGroup
 {
 public:
@@ -416,6 +437,7 @@ protected:
     SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap);
 };
 
+
 class SgMaterial;
 class SgShape;
 class SgPlot;
@@ -429,6 +451,7 @@ class SgCamera;
 class SgPerspectiveCamera;
 class SgOrthographicCamera;
 class SgOverlay;
+class SgOutlineGroup;
 
 }
 

@@ -17,6 +17,7 @@ set(sources
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
+  SensorVisualizerItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   #FilterDialogs.cpp
@@ -48,6 +49,7 @@ set(headers
   SubSimulatorItem.h
   ControllerItem.h
   SimulationScriptItem.h
+  SensorVisualizerItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h

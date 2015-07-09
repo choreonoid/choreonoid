@@ -64,6 +64,14 @@ void SceneVisitor::visitInvariantGroup(SgInvariantGroup* group)
 }
 
 
+void SceneVisitor::visitSwitch(SgSwitch* switchNode)
+{
+    if(switchNode->isTurnedOn()){
+        visitGroup(switchNode);
+    }
+}
+
+
 void SceneVisitor::visitUnpickableGroup(SgUnpickableGroup* group)
 {
     visitGroup(group);
@@ -113,6 +121,12 @@ void SceneVisitor::visitCamera(SgCamera* camera)
 
 
 void SceneVisitor::visitOverlay(SgOverlay* overlay)
+{
+
+}
+
+
+void SceneVisitor::visitOutlineGroup(SgOutlineGroup* outline)
 {
 
 }

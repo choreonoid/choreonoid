@@ -1,5 +1,5 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_BASE_VIEW_MANAGER_H
@@ -52,7 +52,7 @@ public:
         return static_cast<ViewType*>(
             registerClassSub(typeid(ViewType), className, defaultInstanceName, itype, new Factory<ViewType>()));
     }
-
+    
     static ViewClass* viewClass(const std::type_info& view_type_info);
 
     // get or create the primal instance of the specified view type
@@ -97,8 +97,8 @@ public:
         void* data;
         friend class ViewManager;
     };
-        
-    static ViewStateInfo restoreViews(ArchivePtr archive, const std::string& key);
+
+    static void restoreViews(ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo);
     static bool restoreViewStates(ViewStateInfo& info);
 
 private:

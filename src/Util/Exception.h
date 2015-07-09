@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_EXCEPTION_H_INCLUDED
-#define CNOID_UTIL_EXCEPTION_H_INCLUDED
+#ifndef CNOID_UTIL_EXCEPTION_H
+#define CNOID_UTIL_EXCEPTION_H
 
 #include <boost/exception/all.hpp>
 #include <exception>

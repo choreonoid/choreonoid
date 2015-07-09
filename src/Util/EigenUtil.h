@@ -62,6 +62,7 @@ CNOID_EXPORT bool toVector3(const std::string& s, Vector3& out_v);
 
 CNOID_EXPORT void normalizeRotation(Matrix3& R);
 CNOID_EXPORT void normalizeRotation(Position& T);
+CNOID_EXPORT void normalizeRotation(Affine3& T);
 
 template<class T>
 boost::shared_ptr<T> make_shared_aligned() {

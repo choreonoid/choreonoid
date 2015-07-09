@@ -82,6 +82,8 @@ public:
 
 TranslationDragger::TranslationDragger(bool setDefaultAxes)
 {
+    draggableAxes_ = TX | TY | TZ;
+    
     axisCylinderNormalizedRadius = 0.04;
 
     defaultAxesScale = new SgScaleTransform;
@@ -116,7 +118,9 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
             SgInvariantGroup* invariant = new SgInvariantGroup;
             invariant->setName(axisNames[i]);
             invariant->addChild(arrow);
-            defaultAxesScale->addChild(invariant);
+            SgSwitch* axis = new SgSwitch;
+            axis->addChild(invariant);
+            defaultAxesScale->addChild(axis);
         }
         addChild(defaultAxesScale);
     }
@@ -127,6 +131,7 @@ TranslationDragger::TranslationDragger(bool setDefaultAxes)
 
 TranslationDragger::TranslationDragger(const TranslationDragger& org)
 {
+    draggableAxes_ = org.draggableAxes_;
     defaultAxesScale = new SgScaleTransform;
     defaultAxesScale->setScale(org.defaultAxesScale->scale());
     org.defaultAxesScale->copyChildren(defaultAxesScale);
@@ -140,6 +145,7 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org)
 TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap& cloneMap)
     : SgPosTransform(org, cloneMap)
 {
+    draggableAxes_ = org.draggableAxes_;
     defaultAxesScale = getChild<SgScaleTransform>(0);
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
     isContainerMode_ = org.isContainerMode_;
@@ -149,6 +155,21 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org, SgCloneMap
 SgObject* TranslationDragger::clone(SgCloneMap& cloneMap) const
 {
     return new TranslationDragger(*this, cloneMap);
+}
+
+
+void TranslationDragger::setDraggableAxes(int axisSet)
+{
+    if(axisSet != draggableAxes_){
+        for(int i=0; i < 3; ++i){
+            SgSwitch* axis = dynamic_cast<SgSwitch*>(defaultAxesScale->child(i));
+            if(axis){
+                axis->setTurnedOn(axisSet & (1 << i));
+            }
+        }
+        draggableAxes_ = axisSet;
+        defaultAxesScale->notifyUpdate();
+    }
 }
 
 
@@ -294,6 +315,8 @@ void TranslationDragger::onPointerLeaveEvent(const SceneWidgetEvent& event)
 
 RotationDragger::RotationDragger()
 {
+    draggableAxes_ = RX | RY | RZ;
+
     MeshGenerator meshGenerator;
     meshGenerator.setDivisionNumber(36);
     SgMeshPtr beltMesh1 = meshGenerator.generateDisc(1.0, 1.0 - 0.2);
@@ -351,7 +374,10 @@ RotationDragger::RotationDragger()
         belt2->addChild(transform2);
         selector->addChild(belt2);
 
-        scale->addChild(selector);
+        SgSwitch* axis = new SgSwitch;
+        axis->addChild(selector);
+
+        scale->addChild(axis);
     }
 
     addChild(scale);
@@ -362,6 +388,7 @@ RotationDragger::RotationDragger()
 
 RotationDragger::RotationDragger(const RotationDragger& org)
 {
+    draggableAxes_ = org.draggableAxes_;
     scale = new SgScaleTransform;
     scale->setScale(org.scale->scale());
     org.scale->copyChildren(scale);
@@ -373,6 +400,7 @@ RotationDragger::RotationDragger(const RotationDragger& org)
 RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap& cloneMap)
     : SgPosTransform(org, cloneMap)
 {
+    draggableAxes_ = org.draggableAxes_;
     scale = getChild<SgScaleTransform>(0);
     isContainerMode_ = org.isContainerMode_;
 }
@@ -381,6 +409,21 @@ RotationDragger::RotationDragger(const RotationDragger& org, SgCloneMap& cloneMa
 SgObject* RotationDragger::clone(SgCloneMap& cloneMap) const
 {
     return new RotationDragger(*this, cloneMap);
+}
+
+
+void RotationDragger::setDraggableAxes(int axisSet)
+{
+    if(axisSet != draggableAxes_){
+        for(int i=0; i < 3; ++i){
+            SgSwitch* axis = dynamic_cast<SgSwitch*>(scale->child(i));
+            if(axis){
+                axis->setTurnedOn(axisSet & (1 << i));
+            }
+        }
+        draggableAxes_ = axisSet;
+        scale->notifyUpdate();
+    }
 }
 
 
@@ -475,11 +518,15 @@ PositionDragger::PositionDragger()
 {
     translationDragger_ = new TranslationDragger;
     rotationDragger_ = new RotationDragger;
+    draggableAxes_ = TX | TY | TZ | RX | RY | RZ;
+
     initalizeDraggers();
+    
     isDraggerAlwaysShown_ = false;
     isDraggerAlwaysHidden_ = false;
     isContainerMode_ = false;
     isContentsDragEnabled_ = true;
+    isUndoEnabled_ = false;    
 }
 
 
@@ -487,11 +534,15 @@ PositionDragger::PositionDragger(const PositionDragger& org)
 {
     translationDragger_ = new TranslationDragger(*org.translationDragger_);
     rotationDragger_ = new RotationDragger(*org.rotationDragger_);
+    draggableAxes_ = org.draggableAxes_;
+
     initalizeDraggers();
+
     isContainerMode_ = org.isContainerMode_;
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
     isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
     isContentsDragEnabled_ = org.isContentsDragEnabled_;
+    isUndoEnabled_ = org.isUndoEnabled_;
 }
 
 
@@ -499,25 +550,44 @@ PositionDragger::PositionDragger(const PositionDragger& org, SgCloneMap& cloneMa
 {
     translationDragger_ = new TranslationDragger(*org.translationDragger_, cloneMap);
     rotationDragger_ = new RotationDragger(*org.rotationDragger_, cloneMap);
+    draggableAxes_ = org.draggableAxes_;
+
     initalizeDraggers();
+
     isContainerMode_ = org.isContainerMode_;
     isDraggerAlwaysShown_ = org.isDraggerAlwaysShown_;
     isDraggerAlwaysHidden_ = org.isDraggerAlwaysHidden_;
     isContentsDragEnabled_ = org.isContentsDragEnabled_;
+    isUndoEnabled_ = org.isUndoEnabled_;
 }
 
 
 void PositionDragger::initalizeDraggers()
 {
-    translationDragger_->sigTranslationStarted().connect(boost::ref(sigDragStarted_));
+    translationDragger_->sigTranslationStarted().connect(
+        boost::bind(&PositionDragger::onSubDraggerDragStarted, this));
     translationDragger_->sigTranslationDragged().connect(
         boost::bind(&PositionDragger::onSubDraggerDragged, this));
     translationDragger_->sigTranslationFinished().connect(boost::ref(sigDragFinished_));
     
-    rotationDragger_->sigRotationStarted().connect(boost::ref(sigDragStarted_));
+    rotationDragger_->sigRotationStarted().connect(
+        boost::bind(&PositionDragger::onSubDraggerDragStarted, this));
     rotationDragger_->sigRotationDragged().connect(
         boost::bind(&PositionDragger::onSubDraggerDragged, this));
     rotationDragger_->sigRotationFinished().connect(boost::ref(sigDragFinished_));
+}
+
+
+void PositionDragger::setDraggableAxes(int axisSet)
+{
+    if(axisSet != draggableAxes_){
+        int translationAxes = axisSet & (TX | TY | TZ);
+        translationDragger_->setDraggableAxes(translationAxes);
+        int rotationAxes = (axisSet & (RX | RY | RZ)) >> 3;
+        rotationDragger_->setDraggableAxes(rotationAxes);
+        draggableAxes_ = axisSet;
+        sigDraggableAxesChanged_(axisSet);
+    }
 }
 
 
@@ -661,6 +731,13 @@ Affine3 PositionDragger::draggedPosition() const
 }
 
 
+void PositionDragger::onSubDraggerDragStarted()
+{
+    storeCurrentPositionToHistory();
+    sigDragStarted_();
+}
+
+
 void PositionDragger::onSubDraggerDragged()
 {
     if(isContainerMode_){
@@ -683,7 +760,11 @@ bool PositionDragger::onButtonPressEvent(const SceneWidgetEvent& event)
         }
         dragProjector.setInitialPosition(T());
         dragProjector.setTranslationAlongViewPlane();
-        return dragProjector.startTranslation(event);
+        if(dragProjector.startTranslation(event)){
+            storeCurrentPositionToHistory();
+            sigDragStarted_();
+            return true;
+        }
     }
     return false;
 }
@@ -693,6 +774,7 @@ bool PositionDragger::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
     if(isContainerMode_ && isContentsDragEnabled_){
         if(dragProjector.isDragging()){
+            sigDragFinished_();
             dragProjector.resetDragMode();
             return true;
         }
@@ -736,4 +818,44 @@ void PositionDragger::onSceneModeChanged(const SceneWidgetEvent& event)
     if(!event.sceneWidget()->isEditMode()){
         showDragMarkers(false);
     }
+}
+
+
+void PositionDragger::storeCurrentPositionToHistory()
+{
+    if(isUndoEnabled_){
+        history.push_back(position());
+        if(history.size() > 10){
+            history.pop_front();
+        }
+    }
+}
+
+
+void PositionDragger::setUndoEnabled(bool on)
+{
+    isUndoEnabled_ = on;
+}
+
+
+bool PositionDragger::isUndoEnabled() const
+{
+    return isUndoEnabled_;
+}
+
+
+bool PositionDragger::onUndoRequest()
+{
+    if(!history.empty()){
+        const Affine3& T = history.back();
+        setPosition(T);
+        history.pop_back();
+        notifyUpdate();
+    }
+}
+
+
+bool PositionDragger::onRedoRequest()
+{
+
 }

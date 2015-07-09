@@ -1,6 +1,7 @@
 
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(JoystickLinux.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(SceneGraph.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(BoundingBox.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
@@ -31,6 +32,7 @@ set(sources
   BoundingBox.cpp
   SceneGraph.cpp
   SceneVisitor.cpp
+  SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
   MeshGenerator.cpp

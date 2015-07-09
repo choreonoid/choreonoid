@@ -71,6 +71,8 @@ public:
       void finish(int id, const boost::format& message);
       void finish(int id, const QString& message);
     */
+
+    int currentColumn();
         
     void flush();
     void clear();

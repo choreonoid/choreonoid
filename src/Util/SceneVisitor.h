@@ -23,6 +23,7 @@ public:
     virtual void visitTransform(SgTransform* transform);
     virtual void visitPosTransform(SgPosTransform* transform);
     virtual void visitScaleTransform(SgScaleTransform* transform);
+    virtual void visitSwitch(SgSwitch* switchNode);
     virtual void visitUnpickableGroup(SgUnpickableGroup* group);
     virtual void visitShape(SgShape* shape);
     virtual void visitPlot(SgPlot* plot);
@@ -32,6 +33,7 @@ public:
     virtual void visitLight(SgLight* light);
     virtual void visitCamera(SgCamera* camera);
     virtual void visitOverlay(SgOverlay* overlay);
+    virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     Mapping* property() { return property_.get(); }
 

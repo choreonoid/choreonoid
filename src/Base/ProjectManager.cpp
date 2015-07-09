@@ -212,7 +212,8 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
             archive->initSharedInfo(filename);
 
-            ViewManager::ViewStateInfo viewStateInfo = ViewManager::restoreViews(archive, "views");
+            ViewManager::ViewStateInfo viewStateInfo;
+            ViewManager::restoreViews(archive, "views", viewStateInfo);
 
             MainWindow* mainWindow = MainWindow::instance();
             if(isInvokingApplication){
@@ -302,14 +303,16 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             if(loaded){
                 mainWindow->setProjectTitle(getBasename(filename));
                 lastAccessedProjectFile = filename;
+
+                messageView->flush();
                 
+                archive->callPostProcesses();
+
                 if(numRestoredItems == numArchivedItems){
                     messageView->notify(str(fmt(_("Project \"%1%\" has successfully been loaded.")) % filename));
                 } else {
                     messageView->notify(str(fmt(_("Project \"%1%\" has been loaded.")) % filename));
                 }
-
-                archive->callPostProcesses();
             }
         }
     } catch (const ValueNode::Exception& ex){
@@ -363,6 +366,8 @@ void ProjectManagerImpl::saveProject(const string& filename)
     messageView->putln();
     messageView->notify(str(fmt(_("Saving a project to \"%1%\" ...\n")) % filename));
     messageView->flush();
+    
+    itemTreeArchiver.reset();
     
     ArchivePtr archive = new Archive();
     archive->initSharedInfo(filename, homeRelativeCheck->isChecked());

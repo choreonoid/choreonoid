@@ -150,6 +150,7 @@ private:
     std::vector< std::vector<CollisionLinkPairPtr> > collisionsOfLink_;
     Signal<void()> sigCollisionsUpdated_;
 };
+
 }
 
 #endif

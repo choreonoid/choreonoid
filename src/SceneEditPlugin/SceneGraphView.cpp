@@ -134,8 +134,7 @@ SceneGraphView::SceneGraphView()
 {
     setDefaultLayoutArea(View::LEFT);
     
-    SgNode* sceneRoot = SceneView::instance()->sceneRoot();
-    impl = new SceneGraphViewImpl(this, sceneRoot);
+    impl = new SceneGraphViewImpl(this, SceneView::instance()->scene());
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(impl);

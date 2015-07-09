@@ -297,12 +297,11 @@ void YAMLReaderImpl::addNode(ValueNode* node)
 {
     NodeInfo& info = nodeStack.top();
     ValueNode* parent = info.node.get();
-    ValueNode::Type type = parent->type();
-    if(type == ValueNode::MAPPING){
+    if(parent->isMapping()){
         Mapping* mapping = static_cast<Mapping*>(parent);
         mapping->insert(info.key, node);
         info.key.clear();
-    } else if(type == ValueNode::LISTING){
+    } else if(parent->isListing()){
         Listing* listing = static_cast<Listing*>(parent);
         listing->append(node);
     }
@@ -411,9 +410,8 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
 
     NodeInfo& info = nodeStack.top();
     ValueNodePtr& parent = info.node;
-    ValueNode::Type type = parent->type();
      
-    if(type == ValueNode::MAPPING){
+    if(parent->isMapping()){
         if(info.key.empty()){
             info.key = string((char*)value, length);
             if(info.key.empty()){
@@ -427,7 +425,7 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
             ScalarNode* scalar = createScalar(event);
             addNode(scalar);
         }
-    } else if(type == ValueNode::LISTING){
+    } else if(parent->isListing()){
         ScalarNode* scalar = createScalar(event);
         addNode(scalar);
     }

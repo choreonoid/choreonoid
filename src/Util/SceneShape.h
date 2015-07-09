@@ -579,6 +579,24 @@ private:
     double lineWidth_;
 };
 typedef ref_ptr<SgLineSet> SgLineSetPtr;
+
+
+class CNOID_EXPORT SgOutlineGroup : public SgGroup
+{
+public:
+    SgOutlineGroup();
+
+    virtual void accept(SceneVisitor& visitor);
+    const Vector4f& color() const { return color_; }
+    void setColor(const Vector4f& color) { color_ = color; }
+    void setLineWidth(double width) { lineWidth_ = width; }
+    double lineWidth() const { return lineWidth_; }
+
+private:
+    Vector4f color_;
+    double lineWidth_;
+};
+typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
 }
 
 #endif
