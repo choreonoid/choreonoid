@@ -104,13 +104,13 @@ public:
 
 };
 
-class RTSConnectionGItem : public QGraphicsItemGroup
+class RTSConnectionGItem : public QGraphicsItemGroup, public Referenced
 {
 public :
     enum lineType { THREEPARTS_TYPE, FIVEPARTS_TYPE };
     static const qreal xxoffset = 5;
 
-    RTSConnectionGItem(bool sIsLeft, QPointF s, bool tIsLeft, QPointF t);
+    RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLeft, QPointF s, bool tIsLeft, QPointF t);
     ~RTSConnectionGItem();
 
     void paint (QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
@@ -150,6 +150,8 @@ public :
     bool changePortPos(bool isSource, QPointF s);
     lineType getType(qreal sx, qreal tx);
 
+    RTSConnection* rtsConnection;
+
 private:
     bool _sIsLeft;
     bool _tIsLeft;
@@ -159,104 +161,45 @@ private:
     ConnectionSet signalConnections;
 
 };
+typedef ref_ptr<RTSConnectionGItem> RTSConnectionGItemPtr;
 
-class RTSComp;
-
-class RTSCompGItem : public QGraphicsItemGroup
+class RTSPortGItem : public QGraphicsItemGroup, public Referenced
 {
 public :
-    RTSCompGItem(RTSComp* rtsComp) : rtsComp(rtsComp){ };
-    QVariant itemChange ( GraphicsItemChange change, const QVariant & value );
+    enum portType { INPORT, OUTPORT, SERVICEPORT };
+    RTSPortGItem(RTSPort* rtsPort);
 
-    RTSComp* rtsComp;
-};
-
-class RTSPort : public Referenced
-{
-public :
-    RTSPort(const string& name, PortService_var port, RTSComp* parent);
-    RTSComp* rtsComp;
-    string name;
-    PortService_var port;
-    bool isServicePort;
-    bool isInPort;
-
-    QGraphicsItemGroup* gItem;
+    RTSPort* rtsPort;
     QGraphicsPolygonItem* polygon;
     QPointF pos;
 
-    bool connected();
+    void create(int rectX, const QPointF& pos, int i, portType type);
     void stateCheck();
-    bool checkConnectablePort(RTSPort* target);
-    bool connectedWith(RTSPort* target);
-};
-typedef ref_ptr<RTSPort> RTSPortPtr;
 
-class RTSConnection : public Referenced
+};
+typedef ref_ptr<RTSPortGItem> RTSPortGItemPtr;
+
+class RTSCompGItem : public QGraphicsItemGroup, public Referenced
 {
 public :
-    RTSConnection(const string& id, const string& name, const string& sourceRtcName,
-            const string& sourcePortName, const string& targetRtcName, const string& targetPortName);
-    ~RTSConnection();
-    string id;
-    string name;
-    string sourceRtcName;
-    string sourcePortName;
-    string targetRtcName;
-    string targetPortName;
-    string dataflow;
-    string sinterface;
-    string subscription;
-    float  pushRate;
-    string pushPolicy;
-
-    RTSComp* srcRTC;
-    RTSPort* sourcePort;
-    RTSComp* targetRTC;
-    RTSPort* targetPort;
-
-
-    RTSConnectionGItem* gItem;
-
-    bool connect();
-    bool disConnect();
-    void createGItem(bool sIsLeft, QPointF s, bool tIsLeft, QPointF t);
-};
-typedef ref_ptr<RTSConnection> RTSConnectionPtr;
-
-
-class RTSComp : public Referenced
-{
-public :
-    RTSComp(RTC::RTObject_ptr, RTSDiagramViewImpl* impl);
-    ~RTSComp();
+    RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos);
+    ~RTSCompGItem();
+    QVariant itemChange ( GraphicsItemChange change, const QVariant & value );
+    void create(const QPointF& pos);
+    void stateCheck();
 
     RTSDiagramViewImpl* impl;
-    RTObject_ptr rtc_;
-    string name;
-    ExecutionContextList_var ownedExeContList;
-    ExecutionContextList_var participatingExeContList;
-    map<string, RTSPortPtr> inPorts;
-    map<string, RTSPortPtr> outPorts;
-
-    RTSCompGItem* gItem;
+    RTSComp* rtsComp;
+    map<string, RTSPortGItemPtr> inPorts;
+    map<string, RTSPortGItemPtr> outPorts;
     QGraphicsRectItem* rect;
 
-    void createGItem(const QPointF& pos);
-    bool isActive();
-    void stateCheck();
-    void connectionCheckSub(RTSPort* rtsPort);
-    void connectionCheck();
-
-    RTSPort* nameToRTSPort(const string& name);
-
-    Signal<void(const RTSComp*)> sigPositionChanged;
+    Signal<void(const RTSCompGItem*)> sigPositionChanged;
     Connection positionChangeConnection;
-
 private :
     int correctTextY();
 };
-typedef ref_ptr<RTSComp> RTSCompPtr;
+typedef ref_ptr<RTSCompGItem> RTSCompGItemPtr;
 
 class CreateConnectionDialog : public Dialog
 {
@@ -279,31 +222,31 @@ public:
     RTSDiagramView* self;
     QGraphicsScene  scene;
     //DroppableGraphicsView* view;
-    NamingContextHelper ncHelper;
-    Connection locationChangedConnection;
+    ///NamingContextHelper ncHelper;
+    //Connection locationChangedConnection;
     Connection nsViewSelectionChangedConnection;
     Connection itemViewSelectionChangeConnection;
     Connection connectionOfRTSystemItemDetachedFromRoot;
-    map<string, RTSCompPtr> rtsComps;
-    map<string, RTSConnectionPtr> rtsConnections;
-    map<string, RTSConnectionPtr> deletedRtsConnections;
+    Connection timeOutConnection;
+    map<string, RTSCompGItemPtr> rtsComps;
+    map<string, RTSConnectionGItemPtr> rtsConnections;
+    map<RTSPort*, RTSPortGItem*> rtsPortMap;
     list<NamingContextHelper::ObjectInfo> nsViewSelections;
-    list<RTSComp*> selectionRTCs;
-    list<RTSConnection*> selectionRTSConnections;
+    list<RTSCompGItem*> selectionRTCs;
+    list<RTSConnectionGItem*> selectionRTSConnections;
     MenuManager menuManager;
-    ConnectionSet connections;
     Timer timer;
 
-    RTSPort* sourcePort;
+    RTSPortGItem* sourcePort;
     QGraphicsLineItem* dragPortLine;
     RTSConnectionMarkerItem* targetMarker;
 
     RTSystemItem* currentRTSItem;
 
-    void onLocationChanged(std::string host, int port);
+    ///void onLocationChanged(std::string host, int port);
     void addRTSComp(string name, const QPointF& pos);
-    void deleteRTSComp(RTSComp* rtsComp);
-    void deleteRTSConnections(RTSConnection* rtsConnection);
+    void deleteRTSComp(RTSCompGItem* rtsComp);
+    void deleteRTSConnection(RTSConnectionGItem* rtsConnection);
     void deleteSelectedRTSItem();
     void dragEnterEvent   (QDragEnterEvent* event);
     void dragMoveEvent    (QDragMoveEvent*  event);
@@ -314,15 +257,13 @@ public:
     void mouseReleaseEvent(QMouseEvent*     event);
     void keyPressEvent    (QKeyEvent*       event);
     void onnsViewItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
-    RTSPort* findTargetRTSPort(QPointF& pos);
+    RTSPortGItem* findTargetRTSPort(QPointF& pos);
     RTSConnectionMarkerItem* findConnectionMarker(QGraphicsItem* gItem);
-    void createConnectionGItem(RTSConnection* rtsConnection);
-    RTSComp* nameToRTSComp(const string& name);
-    RTSComp* gItemToRTSComp(RTSCompGItem* gitem);
-    RTSConnection* gItemToRTSConnection(QGraphicsItem* gItem);
-    void RTSCompToConnectionList(const RTSComp* rtsComp, list<RTSConnection*>& rtsConnectionList, int mode=0);
+    void createConnectionGItem(RTSConnection* rtsConnection, RTSPortGItem* sourcePort, RTSPortGItem* targetPort);
+    //RTSComp* gItemToRTSComp(RTSCompGItem* gitem);
+    //RTSConnection* gItemToRTSConnection(QGraphicsItem* gItem);
     void onRTSCompSelectionChange();
-    void onRTSCompPositionChanged(const RTSComp*);
+    void onRTSCompPositionChanged(const RTSCompGItem*);
     void onTime();
     void onActivated(bool on);
     void onItemviewSelectionChanged(const ItemList<RTSystemItem>& items);
@@ -333,8 +274,9 @@ public:
 }
 
 
-RTSConnectionGItem::RTSConnectionGItem(bool sIsLeft, QPointF s, bool tIsLeft, QPointF t) :
-        _sIsLeft(sIsLeft), _tIsLeft(tIsLeft)
+RTSConnectionGItem::RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLeft, QPointF s,
+        bool tIsLeft, QPointF t) :
+        rtsConnection(rtsConnection), _sIsLeft(sIsLeft), _tIsLeft(tIsLeft)
 {
     qreal sx,tx;
     sx = firstLineX(s.x());
@@ -397,6 +339,7 @@ RTSConnectionGItem::~RTSConnectionGItem()
             delete marker[i];
         }
     }
+    scene()->removeItem(this);
 }
 
 
@@ -537,225 +480,113 @@ void RTSConnectionGItem::showMarker(bool on)
 }
 
 
-RTSPort::RTSPort(const string& name_, PortService_var port_, RTSComp* parent)
-    : rtsComp(parent)
+RTSPortGItem::RTSPortGItem(RTSPort* rtsPort)
+    : rtsPort(rtsPort)
 {
-    isInPort = true;
-    name = name_;
-    port = port_;
-    gItem = new QGraphicsItemGroup;
+
 }
 
 
-bool RTSPort::connected()
+void RTSPortGItem::create(int rectX, const QPointF& pos, int i, portType type)
 {
-    ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
-    return connectorProfiles->length()!=0;
-}
-
-
-bool RTSPort::connectedWith(RTSPort* target)
-{
-    ConnectorProfileList_var connectorProfiles = port->get_connector_profiles();
-    for(CORBA::ULong i=0; i < connectorProfiles->length(); ++i){
-        ConnectorProfile& connectorProfile = connectorProfiles[i];
-        PortServiceList& connectedPorts = connectorProfile.ports;
-
-        for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
-            PortService_ptr connectedPortRef = connectedPorts[j];
-            if(connectedPortRef->_is_equivalent(target->port)){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
-void RTSPort::stateCheck()
-{
-    this->polygon->setBrush(QBrush(QColor(connected() ? "lightgreen" : (isServicePort ? "lightblue" : "blue"))));
-}
-
-
-bool RTSPort::checkConnectablePort(RTSPort* target)
-{
-    if(rtsComp == target->rtsComp)
-        return false;
-    if((isInPort && target->isInPort) ||
-       (isInPort && target->isServicePort) ||
-       (!isInPort && !isServicePort && !target->isInPort) ||
-       (isServicePort && !target->isServicePort))
-        return false;
-
-    return true;
-}
-
-
-RTSConnection::RTSConnection(const string& id, const string& name,
-        const string& sourceRtcName,const string& sourcePortName,
-        const string& targetRtcName, const string& targetPortName)
-    : id(id), name(name), sourceRtcName(sourceRtcName), sourcePortName(sourcePortName),
-      targetRtcName(targetRtcName), targetPortName(targetPortName)
-{
-    pushPolicy = "all";
-    pushRate = 1000.0;
-    sinterface = "corba_cdr";
-    gItem = 0;
-}
-
-
-RTSConnection::~RTSConnection()
-{
-    if(gItem){
-        gItem->scene()->removeItem(gItem);
-        delete gItem;
+    int r = 7*i;
+    switch(type){
+    case INPORT:
+        this->pos = QPointF( rectX +  5 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y());
+        polygon = new QGraphicsPolygonItem(QPolygonF(QVector<QPointF>()
+                << QPointF( rectX +  0 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 10 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 10 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX +  0 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX +  5 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX +  0 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())));
+        polygon->setPen(QPen(QColor("red")));
+        stateCheck();
+        addToGroup(polygon);
+        break;
+    case OUTPORT:
+        polygon = new QGraphicsPolygonItem(QPolygonF(QVector<QPointF>()
+                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 60 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 65 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 60 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 53 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())));
+        this->pos = QPointF( rectX + 65 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y());
+        polygon->setPen(QPen(QColor("red")));
+        stateCheck();
+        addToGroup(polygon);
+        break;
+    case SERVICEPORT:
+        polygon = new QGraphicsPolygonItem(QPolygonF(QVector<QPointF>()
+                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 63 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 63 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 63 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 53 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
+                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())));
+        this->pos = QPointF( rectX + 63 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y());
+        polygon->setPen(QPen(QColor("red")));
+        stateCheck();
+        addToGroup(polygon);
+        break;
     }
 }
 
 
-void RTSConnection::createGItem(bool sIsLeft, QPointF s, bool tIsLeft, QPointF t)
+void RTSPortGItem::stateCheck()
 {
-    gItem = new RTSConnectionGItem(sIsLeft, s, tIsLeft, t);
-}
-
-
-bool RTSConnection::connect()
-{
-    ConnectorProfile cprof;
-    cprof.connector_id = CORBA::string_dup(id.c_str());
-    cprof.name = CORBA::string_dup(name.c_str());
-    cprof.ports.length(2);
-    cprof.ports[0] = PortService::_duplicate(sourcePort->port);
-    cprof.ports[1] = PortService::_duplicate(targetPort->port);
-
-    CORBA_SeqUtil::push_back(cprof.properties,
-            NVUtil::newNV("dataport.dataflow_type",
-                    dataflow.c_str()));
-    CORBA_SeqUtil::push_back(cprof.properties,
-            NVUtil::newNV("dataport.interface_type",
-                    sinterface.c_str()));
-    CORBA_SeqUtil::push_back(cprof.properties,
-            NVUtil::newNV("dataport.subscription_type",
-                    subscription.c_str()));
-
-    RTC::ReturnCode_t result = sourcePort->port->connect(cprof);
-    if(result == RTC::RTC_OK){
-        PortProfile_var portprofile = sourcePort->port->get_port_profile();
-        ConnectorProfileList connections = portprofile->connector_profiles;
-        for(CORBA::ULong i = 0; i < connections.length(); i++){
-            ConnectorProfile& connector = connections[i];
-            PortServiceList& connectedPorts = connector.ports;
-            for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
-                PortService_ptr connectedPortRef = connectedPorts[j];
-                PortProfile_var connectedPortProfile = connectedPortRef->get_port_profile();
-                string portName = string(connectedPortProfile->name);
-                if(portName == targetPortName){
-                    id = string(connector.connector_id);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }else{
-        return false;
-    }
-}
-
-
-bool RTSConnection::disConnect()
-{
-    ReturnCode_t result = sourcePort->port->disconnect(id.c_str());
-    if(result == RTC_OK)
-        return true;
-    else
-        return false;
+    polygon->setBrush(QBrush(QColor(rtsPort->connected() ? "lightgreen" : (rtsPort->isServicePort ? "lightblue" : "blue"))));
 }
 
 
 QVariant RTSCompGItem::itemChange ( GraphicsItemChange change, const QVariant & value )
 {
     if (change == ItemPositionChange){
-        for(map<string, RTSPortPtr>::iterator it = rtsComp->inPorts.begin();
-                it != rtsComp->inPorts.end(); it++){
+        for(map<string, RTSPortGItemPtr>::iterator it = inPorts.begin();
+                it != inPorts.end(); it++){
             it->second->pos += value.value<QPointF>()-pos();
         }
-        for(map<string, RTSPortPtr>::iterator it = rtsComp->outPorts.begin();
-                it != rtsComp->outPorts.end(); it++){
+        for(map<string, RTSPortGItemPtr>::iterator it = outPorts.begin();
+                it != outPorts.end(); it++){
             it->second->pos += value.value<QPointF>()-pos();
         }
-        rtsComp->sigPositionChanged(rtsComp);
+        sigPositionChanged(this);
     }
     return QGraphicsItem::itemChange(change, value);
 }
 
 
-RTSComp::RTSComp(RTC::RTObject_ptr rtc, RTSDiagramViewImpl* impl) :
-        impl(impl)
+RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos) :
+        impl(impl), rtsComp(rtsComp)
 {
-    rtc_ = rtc;
-    ComponentProfile_var cprofile = rtc->get_component_profile();
-    name = cprofile->instance_name;
-
-    ownedExeContList = rtc_->get_owned_contexts();
-    participatingExeContList = rtc_->get_participating_contexts();
-
-    PortServiceList_var portlist = rtc->get_ports();
-    for (CORBA::ULong i = 0; i < portlist->length(); i++) {
-        PortProfile_var portprofile = portlist[i]->get_port_profile();
-        coil::Properties pproperties = NVUtil::toProperties(portprofile->properties);
-        string portType = pproperties["port.port_type"];
-        RTSPortPtr rtsPort = new RTSPort(string(portprofile->name), portlist[i], this);
-        if (boost::iequals(portType, "CorbaPort")){
-            rtsPort->isServicePort = true;
-            rtsPort->isInPort = false;
-            outPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
-        }else{
-            rtsPort->isServicePort = false;
-            if(boost::iequals(portType, "DataInPort"))
-                inPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
-            else{
-                rtsPort->isInPort = false;
-                outPorts.insert(pair<string, RTSPortPtr>(rtsPort->name, rtsPort));
-            }
-        }
-    }
-
-    connectionCheck();
-
-    gItem = new RTSCompGItem(this);
-
+    create(pos);
     positionChangeConnection = sigPositionChanged.connect(
             boost::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
 }
 
 
-RTSComp::~RTSComp()
+RTSCompGItem::~RTSCompGItem()
 {
-    gItem->scene()->removeItem(gItem);
-    delete gItem;
     positionChangeConnection.disconnect();
+    for(map<string, RTSPortGItemPtr>::iterator it = inPorts.begin();
+                it != inPorts.end(); it++){
+        impl->rtsPortMap.erase(it->second->rtsPort);
+        removeFromGroup(it->second.get());
+    }
+    for(map<string, RTSPortGItemPtr>::iterator it = outPorts.begin();
+            it != outPorts.end(); it++){
+        impl->rtsPortMap.erase(it->second->rtsPort);
+        removeFromGroup(it->second.get());
+    }
+    scene()->removeItem(this);
 }
 
 
-bool RTSComp::isActive()
+int RTSCompGItem::correctTextY()
 {
-    for(CORBA::ULong i=0; i<ownedExeContList->length(); i++){
-        if(ownedExeContList[i]->get_component_state(rtc_) == RTC::ACTIVE_STATE)
-            return true;
-    }
-    for(CORBA::ULong i=0; i<participatingExeContList->length(); i++){
-        if(participatingExeContList[i]->get_component_state(rtc_) == RTC::ACTIVE_STATE)
-            return true;
-    }
-    return false;
-}
-
-
-int RTSComp::correctTextY()
-{
-    int numIn = inPorts.size();
-    int numOut = outPorts.size();
+    int numIn = rtsComp->inPorts.size();
+    int numOut = rtsComp->outPorts.size();
     int numMax = (numIn < numOut ? numOut : numIn);
     if(!numMax)
         numMax = 1;
@@ -763,49 +594,42 @@ int RTSComp::correctTextY()
 }
 
 
-void RTSComp::createGItem(const QPointF& pos)
+void RTSCompGItem::create(const QPointF& pos)
 {
-    QGraphicsTextItem * text = new QGraphicsTextItem(QString(name.c_str()));
+    QGraphicsTextItem * text = new QGraphicsTextItem(QString(rtsComp->name.c_str()));
     int height = correctTextY();
     text->setPos(0 + pos.x(), height + 5 + pos.y());
-    gItem->addToGroup(text);
+    addToGroup(text);
 
     rect = new QGraphicsRectItem(7, 7, 50, height);
     int rectX = (text->boundingRect().width() / 2 - 50 / 2) - 5;
     rect->setPos(rectX+pos.x(), pos.y());
     rect->setPen(QPen(QColor("darkgray")));
-    gItem->addToGroup(rect);
-    gItem->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemSendsScenePositionChanges);
+    addToGroup(rect);
+    setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemSendsScenePositionChanges);
 
     int i=0;
-    for(map<string, RTSPortPtr>::iterator it = inPorts.begin();
-            it != inPorts.end(); it++, i++){
+    for(map<string, RTSPortPtr>::iterator it = rtsComp->inPorts.begin();
+            it != rtsComp->inPorts.end(); it++, i++){
         RTSPort* inPort = it->second.get();
         string portName = string(inPort->name);
         RTCCommonUtil::splitPortName(portName);
         text = new QGraphicsTextItem(QString(portName.c_str()));
-        int r = 7*i;
         int x = rectX+pos.x() - text->boundingRect().width();
         int y = 25* i - 7*i - 3 + pos.y();
         text->setPos(x, y);
-        gItem->addToGroup(text);
-        inPort->pos = QPointF( rectX +  5 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y());
-        inPort->polygon = new QGraphicsPolygonItem(QPolygonF(QVector<QPointF>()
-                << QPointF( rectX +  0 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 10 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 10 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX +  0 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX +  5 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX +  0 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())));
-        inPort->polygon->setPen(QPen(QColor("red")));
-        inPort->stateCheck();
-        inPort->gItem->addToGroup(inPort->polygon);
-        gItem->addToGroup(inPort->gItem);
+        addToGroup(text);
+
+        RTSPortGItemPtr inPortGItem = new RTSPortGItem(inPort);
+        inPortGItem->create(rectX, pos, i, RTSPortGItem::INPORT);
+        addToGroup(inPortGItem);
+        inPorts.insert(pair<string, RTSPortGItemPtr>(inPort->name, inPortGItem));
+        impl->rtsPortMap.insert(pair<RTSPort*, RTSPortGItem*>(inPort, inPortGItem.get()));
     }
 
     i = 0;
-    for(map<string, RTSPortPtr>::iterator it = outPorts.begin();
-                it != outPorts.end(); it++, i++){
+    for(map<string, RTSPortPtr>::iterator it = rtsComp->outPorts.begin();
+                it != rtsComp->outPorts.end(); it++, i++){
         RTSPort* outPort = it->second.get();
         string portName = string(outPort->name);
         RTCCommonUtil::splitPortName(portName);
@@ -814,110 +638,34 @@ void RTSComp::createGItem(const QPointF& pos)
         int x = rectX+66+pos.x();
         int y = 25*i-r-3+pos.y();
         text->setPos(x, y);
-        gItem->addToGroup(text);
+        addToGroup(text);
 
+        RTSPortGItemPtr outPortGItem = new RTSPortGItem(outPort);
         if(outPort->isServicePort){
-            outPort->polygon = new QGraphicsPolygonItem(QPolygonF(QVector<QPointF>()
-                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 63 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 63 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 63 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 53 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())));
-            outPort->pos = QPointF( rectX + 63 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y());
+            outPortGItem->create(rectX, pos, i, RTSPortGItem::SERVICEPORT);
         }else{
-            outPort->polygon = new QGraphicsPolygonItem(QPolygonF(QVector<QPointF>()
-                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 60 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 65 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 60 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 53 + pos.x(), 10 + 7 + 7 + (25 * i) - r + pos.y())
-                << QPointF( rectX + 53 + pos.x(),  0 + 7 + 7 + (25 * i) - r + pos.y())));
-            outPort->pos = QPointF( rectX + 65 + pos.x(),  5 + 7 + 7 + (25 * i) - r + pos.y());
+            outPortGItem->create(rectX, pos, i, RTSPortGItem::OUTPORT);
         }
-        outPort->stateCheck();
-        outPort->polygon->setPen(QPen(QColor("red")));
-        outPort->gItem->addToGroup(outPort->polygon);
-        gItem->addToGroup(outPort->gItem);
+        addToGroup(outPortGItem);
+        outPorts.insert(pair<string, RTSPortGItemPtr>(outPort->name, outPortGItem));
+        impl->rtsPortMap.insert(pair<RTSPort*, RTSPortGItem*>(outPort, outPortGItem.get()));
     }
 
     stateCheck();
 }
 
 
-void RTSComp::stateCheck()
+void RTSCompGItem::stateCheck()
 {
-    rect->setBrush(QBrush(QColor(isActive() ? "lightgreen" : "blue")));
+    rect->setBrush(QBrush(QColor(rtsComp->isActive() ? "lightgreen" : "blue")));
 
-    for(map<string, RTSPortPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++){
+    for(map<string, RTSPortGItemPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++){
         it->second->stateCheck();
     }
 
-    for(map<string, RTSPortPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++){
+    for(map<string, RTSPortGItemPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++){
             it->second->stateCheck();
     }
-}
-
-
-void RTSComp::connectionCheckSub(RTSPort* rtsPort)
-{
-    PortProfile_var portprofile = rtsPort->port->get_port_profile();
-    ConnectorProfileList connectorProfiles = portprofile->connector_profiles;
-    for(CORBA::ULong i = 0; i < connectorProfiles.length(); i++){
-        ConnectorProfile& connectorProfile = connectorProfiles[i];
-        string id = string(connectorProfile.connector_id);
-        map<string, RTSConnectionPtr>::iterator itr = impl->rtsConnections.find(id);
-        if(itr!=impl->rtsConnections.end()){
-            impl->deletedRtsConnections.erase(id);
-            continue;
-        }
-        PortServiceList& connectedPorts = connectorProfile.ports;
-        for(CORBA::ULong j=0; j < connectedPorts.length(); ++j){
-            PortService_ptr connectedPortRef = connectedPorts[j];
-            PortProfile_var connectedPortProfile = connectedPortRef->get_port_profile();
-            string portName = string(connectedPortProfile->name);
-            vector<string> target;
-            RTCCommonUtil::splitPortName(portName, target);
-            if(target[0] != name){
-                RTSComp* targetRTC = impl->nameToRTSComp(target[0]);
-                if(targetRTC){
-                    RTSConnectionPtr rtsConnection = new RTSConnection(
-                            id, string(connectorProfile.name),
-                            name, string(portprofile->name),
-                            target[0], portName);
-                    coil::Properties properties = NVUtil::toProperties(connectorProfile.properties);
-                    rtsConnection->dataflow = properties["dataport.dataflow_type"];
-                    rtsConnection->subscription = properties["dataport.subscription_type"];
-                    rtsConnection->srcRTC = this;
-                    rtsConnection->sourcePort = nameToRTSPort(rtsConnection->sourcePortName);
-                    rtsConnection->targetRTC = targetRTC;
-                    rtsConnection->targetPort = targetRTC->nameToRTSPort(rtsConnection->targetPortName);
-                    impl->rtsConnections.insert(pair<string, RTSConnectionPtr>(id, rtsConnection));
-                }
-            }
-        }
-    }
-}
-
-
-void RTSComp::connectionCheck()
-{
-    for(map<string, RTSPortPtr>::iterator it = inPorts.begin(); it != inPorts.end(); it++)
-        connectionCheckSub(it->second.get());
-    for(map<string, RTSPortPtr>::iterator it = outPorts.begin(); it != outPorts.end(); it++)
-        connectionCheckSub(it->second.get());
-}
-
-
-RTSPort* RTSComp::nameToRTSPort(const string& name)
-{
-    map<string, RTSPortPtr>::iterator it = inPorts.find(name);
-    if(it!=inPorts.end())
-        return it->second.get();
-    it = outPorts.find(name);
-    if(it!=outPorts.end())
-        return it->second.get();
-    return 0;
 }
 
 
@@ -963,20 +711,20 @@ void RTSDiagramViewImpl::onnsViewItemSelectionChanged(const list<NamingContextHe
 }
 
 
-RTSPort* RTSDiagramViewImpl::findTargetRTSPort(QPointF& pos)
+RTSPortGItem* RTSDiagramViewImpl::findTargetRTSPort(QPointF& pos)
 {
-    for(map<string, RTSCompPtr>::iterator it = rtsComps.begin();
+    for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
             it != rtsComps.end(); it++){
-        map<string, RTSPortPtr>& inPorts = it->second->inPorts;
-        for(map<string, RTSPortPtr>::iterator itr = inPorts.begin();
+        map<string, RTSPortGItemPtr>& inPorts = it->second->inPorts;
+        for(map<string, RTSPortGItemPtr>::iterator itr = inPorts.begin();
                 itr != inPorts.end(); itr++)
-            if(itr->second->gItem->sceneBoundingRect().contains(pos))
+            if(itr->second->sceneBoundingRect().contains(pos))
                 return itr->second.get();
-        map<string, RTSPortPtr>& outPorts = it->second->outPorts;
-        for(map<string, RTSPortPtr>::iterator itr = outPorts.begin();
+        map<string, RTSPortGItemPtr>& outPorts = it->second->outPorts;
+        for(map<string, RTSPortGItemPtr>::iterator itr = outPorts.begin();
                 itr != outPorts.end(); itr++)
-            if(itr->second->gItem->sceneBoundingRect().contains(pos))
-                return itr->second;
+            if(itr->second->sceneBoundingRect().contains(pos))
+                return itr->second.get();
     }
     return 0;
 }
@@ -984,9 +732,9 @@ RTSPort* RTSDiagramViewImpl::findTargetRTSPort(QPointF& pos)
 
 RTSConnectionMarkerItem* RTSDiagramViewImpl::findConnectionMarker(QGraphicsItem* gItem)
 {
-    for(list<RTSConnection*>::iterator it = selectionRTSConnections.begin();
+    for(list<RTSConnectionGItem*>::iterator it = selectionRTSConnections.begin();
                 it != selectionRTSConnections.end(); it++){
-        RTSConnectionMarkerItem* marker = (*it)->gItem->findMarker(gItem);
+        RTSConnectionMarkerItem* marker = (*it)->findMarker(gItem);
         if(marker)
             return marker;
     }
@@ -1001,15 +749,15 @@ void RTSDiagramViewImpl::mouseMoveEvent(QMouseEvent* event)
     if(sourcePort){
         QPointF sp = sourcePort->pos;
         dragPortLine->setLine(sp.x(), sp.y(), pos.x(), pos.y());
-        RTSPort* port = findTargetRTSPort(pos);
-        if(port && !sourcePort->checkConnectablePort(port))
+        RTSPortGItem* port = findTargetRTSPort(pos);
+        if(port && !sourcePort->rtsPort->checkConnectablePort(port->rtsPort))
             setCursor(Qt::ForbiddenCursor);
         else
             setCursor(Qt::PointingHandCursor);
     }else if(targetMarker){
         targetMarker->move(pos.x(), pos.y());
     }else {
-        RTSPort* port = findTargetRTSPort(pos);
+        RTSPortGItem* port = findTargetRTSPort(pos);
         if(port){
             setCursor(Qt::PointingHandCursor);
         }else{
@@ -1075,13 +823,13 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event)
 
     if(sourcePort){
         dragPortLine->setVisible(false);
-        RTSPort* targetPort = findTargetRTSPort(pos);
-        if(targetPort && sourcePort->checkConnectablePort(targetPort)){
-            if(sourcePort->connectedWith(targetPort)){
+        RTSPortGItem* targetPort = findTargetRTSPort(pos);
+        if(targetPort && sourcePort->rtsPort->checkConnectablePort(targetPort->rtsPort)){
+            if(sourcePort->rtsPort->connectedWith(targetPort->rtsPort)){
                 MessageView::instance()->putln(_("These are already connected."));
             }else{
                 CreateConnectionDialog createDialog;
-                createDialog.nameLineEdit->setText(QString((sourcePort->name+"_"+targetPort->name).c_str()));
+                createDialog.nameLineEdit->setText(QString((sourcePort->rtsPort->name+"_"+targetPort->rtsPort->name).c_str()));
                 bool create = false;
                 int result = createDialog.exec();
                 if( result == QDialog::Accepted )
@@ -1093,20 +841,15 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event)
                     string name = createDialog.nameLineEdit->text().toStdString();
                     string dataflow = createDialog.dataflowCombo->currentText().toStdString();
                     string subscription = createDialog.subscriptionCombo->currentText().toStdString();
-                    RTSConnectionPtr rtsConnection = new RTSConnection(
-                            id, name,
-                            sourcePort->rtsComp->name, sourcePort->name,
-                            targetPort->rtsComp->name, targetPort->name);
+                    timeOutConnection.block();
+                    RTSConnection* rtsConnection = currentRTSItem->addRTSConnection(id, name,
+                            sourcePort->rtsPort, targetPort->rtsPort);
                     rtsConnection->dataflow = dataflow;
                     rtsConnection->subscription = subscription;
-                    rtsConnection->srcRTC = sourcePort->rtsComp;
-                    rtsConnection->sourcePort = sourcePort;
-                    rtsConnection->targetRTC = targetPort->rtsComp;
-                    rtsConnection->targetPort = targetPort;
                     if(rtsConnection->connect()){
-                        createConnectionGItem(rtsConnection);
-                        rtsConnections.insert(pair<string, RTSConnectionPtr>(rtsConnection->id, rtsConnection));
+                        createConnectionGItem(rtsConnection, sourcePort, targetPort);
                     }
+                    timeOutConnection.unblock();
                 }
             }
         }
@@ -1164,16 +907,19 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
             nsViewSelectionChangedConnection = nsView->sigSelectionChanged().connect(
                     boost::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1));
         }
+        /*
         if(!locationChangedConnection.connected()){
             locationChangedConnection = nsView->sigLocationChanged().connect(
                     boost::bind(&RTSDiagramViewImpl::onLocationChanged, this, _1, _2));
             ncHelper.setLocation(nsView->getHost(), nsView->getPort());
         }
+        */
     }
 
-    timer.setSingleShot(true);
-    connections.add(timer.sigTimeout().connect(
-            boost::bind(&RTSDiagramViewImpl::onTime, this)));
+    timer.setSingleShot(false);
+    timer.setInterval(STATE_CHECK_TIME);
+    timeOutConnection = timer.sigTimeout().connect(
+            boost::bind(&RTSDiagramViewImpl::onTime, this));
     self->sigActivated().connect(boost::bind(&RTSDiagramViewImpl::onActivated, this, true));
     self->sigDeactivated().connect(boost::bind(&RTSDiagramViewImpl::onActivated, this ,false));
 
@@ -1211,66 +957,79 @@ RTSDiagramView::~RTSDiagramView()
 RTSDiagramViewImpl::~RTSDiagramViewImpl()
 {
     nsViewSelectionChangedConnection.disconnect();
-    locationChangedConnection.disconnect();
-    connections.disconnect();
+    ///locationChangedConnection.disconnect();
+    timeOutConnection.disconnect();
     disconnect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
 
 }
 
 
-void RTSDiagramViewImpl::onLocationChanged(string host, int port)
-{
-    ncHelper.setLocation(host, port);
-}
-
-
 void RTSDiagramViewImpl::addRTSComp(string name, const QPointF& pos)
 {
-    if(!nameToRTSComp(name)){
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(name, "rtc");
-        RTSCompPtr rtsComp = new RTSComp(rtc, this);
-        rtsComps.insert(pair<string, RTSCompPtr>(name, rtsComp));
+    timeOutConnection.block();
+    RTSComp* rtsComp = currentRTSItem->addRTSComp(name);
+    if(rtsComp){
+        RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
+        rtsComps.insert(pair<string, RTSCompGItemPtr>(name, rtsCompGItem));
+        scene.addItem(rtsCompGItem);
 
-        rtsComp->createGItem(pos);
-        scene.addItem(rtsComp->gItem);
-
-        for(map<string, RTSConnectionPtr>::iterator itr = rtsConnections.begin();
-                itr != rtsConnections.end(); itr++){
-            if(!itr->second->gItem)
-                createConnectionGItem(itr->second.get());
+        map<string, RTSConnectionPtr>& connections = currentRTSItem->rtsConnections();
+        for(map<string, RTSConnectionPtr>::iterator itr = connections.begin();
+                itr != connections.end(); itr++){
+            if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
+                RTSConnection* rtsConnection = itr->second.get();
+                RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
+                RTSPortGItem* target = rtsPortMap.find(rtsConnection->sourcePort)->second;
+                createConnectionGItem(rtsConnection, source, target);
+            }
         }
     }
+    timeOutConnection.unblock();
 }
 
 
-void RTSDiagramViewImpl::deleteRTSComp(RTSComp* rtsComp)
+void RTSDiagramViewImpl::deleteRTSComp(RTSCompGItem* rtsCompGItem)
 {
+    timeOutConnection.block();
+
     list<RTSConnection*> rtsConnectionList;
-    RTSCompToConnectionList(rtsComp, rtsConnectionList);
+    currentRTSItem->RTSCompToConnectionList(rtsCompGItem->rtsComp, rtsConnectionList);
+
     for(list<RTSConnection*>::iterator itr = rtsConnectionList.begin();
             itr != rtsConnectionList.end(); itr++){
-        rtsConnections.erase((*itr)->id);
+        map<string, RTSConnectionGItemPtr>::iterator it = rtsConnections.find((*itr)->id);
+        if(it!=rtsConnections.end())
+            deleteRTSConnection(it->second);
     }
-    rtsComps.erase(rtsComp->name);
+
+    currentRTSItem->deleteRTSComp(rtsCompGItem->rtsComp->name);
+    rtsComps.erase(rtsCompGItem->rtsComp->name);
+
+    timeOutConnection.unblock();
 }
 
 
-void RTSDiagramViewImpl::deleteRTSConnections(RTSConnection* rtsConnection)
+void RTSDiagramViewImpl::deleteRTSConnection(RTSConnectionGItem* rtsConnectionGItem)
 {
-    rtsConnection->disConnect();
-    rtsConnections.erase(rtsConnection->id);
+    timeOutConnection.block();
+
+    rtsConnectionGItem->rtsConnection->disConnect();
+    currentRTSItem->deleteRtsConnection(rtsConnectionGItem->rtsConnection->id);
+    rtsConnections.erase(rtsConnectionGItem->rtsConnection->id);
+
+    timeOutConnection.unblock();
 }
 
 
 void RTSDiagramViewImpl::deleteSelectedRTSItem()
 {
     disconnect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
-    for(list<RTSConnection*>::iterator it = selectionRTSConnections.begin();
+    for(list<RTSConnectionGItem*>::iterator it = selectionRTSConnections.begin();
             it != selectionRTSConnections.end(); it++){
-        deleteRTSConnections(*it);
+        deleteRTSConnection(*it);
     }
     selectionRTSConnections.clear();
-    for(list<RTSComp*>::iterator it= selectionRTCs.begin();
+    for(list<RTSCompGItem*>::iterator it= selectionRTCs.begin();
             it != selectionRTCs.end(); it++){
         deleteRTSComp(*it);
     }
@@ -1279,39 +1038,32 @@ void RTSDiagramViewImpl::deleteSelectedRTSItem()
 }
 
 
-void RTSDiagramViewImpl::createConnectionGItem(RTSConnection* rtsConnection)
+void RTSDiagramViewImpl::createConnectionGItem(RTSConnection* rtsConnection,
+        RTSPortGItem* sourcePort, RTSPortGItem* targetPort)
 {
-    rtsConnection->createGItem(rtsConnection->sourcePort->isInPort,
-            rtsConnection->sourcePort->pos,
+    RTSConnectionGItemPtr gItem = new RTSConnectionGItem(rtsConnection,
+            rtsConnection->sourcePort->isInPort,
+            sourcePort->pos,
             rtsConnection->targetPort->isInPort,
-            rtsConnection->targetPort->pos);
+            targetPort->pos);
 
-    scene.addItem(rtsConnection->gItem);
-    //rtsConnection->gItem->addToScene(&scene);
+    scene.addItem(gItem);
+    rtsConnections.insert(pair<string, RTSConnectionGItemPtr>(rtsConnection->id, gItem));
 }
 
 
-RTSComp* RTSDiagramViewImpl::nameToRTSComp(const string& name)
+/*
+RTSCompGItem* RTSDiagramViewImpl::gItemToRTSComp(RTSCompGItem* gItem)
 {
-    map<string, RTSCompPtr>::iterator it = rtsComps.find(name);
-    if(it==rtsComps.end())
-        return 0;
-    else
-        return it->second.get();
-}
-
-
-RTSComp* RTSDiagramViewImpl::gItemToRTSComp(RTSCompGItem* gItem)
-{
-    for(map<string, RTSCompPtr>::iterator it = rtsComps.begin();
+    for(map<string, RTSCompGItem*>::iterator it = rtsComps.begin();
             it != rtsComps.end(); it++){
-        if(it->second->gItem == gItem)
-            return it->second.get();
+        if(it->second == gItem)
+            return it->second;
     }
     return 0;
 }
-
-
+*/
+/*
 RTSConnection* RTSDiagramViewImpl::gItemToRTSConnection(QGraphicsItem* gItem)
 {
     for(map<string, RTSConnectionPtr>::iterator it = rtsConnections.begin();
@@ -1322,35 +1074,35 @@ RTSConnection* RTSDiagramViewImpl::gItemToRTSConnection(QGraphicsItem* gItem)
     }
     return 0;
 }
-
+*/
 
 void RTSDiagramViewImpl::onRTSCompSelectionChange()
 {
-    RTSComp* singleSelectedRTC = 0;
+    RTSCompGItem* singleSelectedRTC = 0;
     if(selectionRTCs.size()==1)
         singleSelectedRTC = selectionRTCs.front();
 
-    RTSConnection* singleSelectedConnection = 0;
+    RTSConnectionGItem* singleSelectedConnection = 0;
     if(selectionRTSConnections.size()==1)
         singleSelectedConnection = selectionRTSConnections.front();
 
-    for(list<RTSConnection*>::iterator it = selectionRTSConnections.begin();
+    for(list<RTSConnectionGItem*>::iterator it = selectionRTSConnections.begin();
             it != selectionRTSConnections.end(); it++){
-            (*it)->gItem->showMarker(false);
+            (*it)->showMarker(false);
     }
     selectionRTCs.clear();
     selectionRTSConnections.clear();
 
     QList<QGraphicsItem *> items = scene.selectedItems();
     for(QList<QGraphicsItem*>::iterator it = items.begin(); it != items.end(); it++){
-        RTSComp* rtsComp = gItemToRTSComp(dynamic_cast<RTSCompGItem*>(*it));
+        RTSCompGItem* rtsComp = dynamic_cast<RTSCompGItem*>(*it);//gItemToRTSComp(dynamic_cast<RTSCompGItem*>(*it));
         if(rtsComp){
             selectionRTCs.push_back(rtsComp);
         }else{
-            RTSConnection* rtsConnection = gItemToRTSConnection(*it);
+            RTSConnectionGItem* rtsConnection = dynamic_cast<RTSConnectionGItem*>(*it);//gItemToRTSConnection(*it);
             if(rtsConnection){
                 selectionRTSConnections.push_back(rtsConnection);
-                rtsConnection->gItem->showMarker(true);
+                rtsConnection->showMarker(true);
             }
         }
     }
@@ -1358,7 +1110,7 @@ void RTSDiagramViewImpl::onRTSCompSelectionChange()
     if(selectionRTCs.size()==1 && singleSelectedRTC != selectionRTCs.front()){
         RTSNameServerView* nsView = RTSNameServerView::instance();
         if(nsView){
-            nsView->setSelection(selectionRTCs.front()->name);
+            nsView->setSelection(selectionRTCs.front()->rtsComp->name);
         }
     }
 
@@ -1369,61 +1121,45 @@ void RTSDiagramViewImpl::onRTSCompSelectionChange()
         }
         RTSPropertiesView* propView = RTSPropertiesView::instance();
         if(propView){
-            RTSConnection* rtsConnection = selectionRTSConnections.front();
+            RTSConnection* rtsConnection = selectionRTSConnections.front()->rtsConnection;
             propView->showConnectionProperties(rtsConnection->sourcePort->port, rtsConnection->id);
         }
     }
 }
 
 
-void RTSDiagramViewImpl::RTSCompToConnectionList(const RTSComp* rtsComp,
-        list<RTSConnection*>& rtsConnectionList, int mode)
-{
-    for(map<string, RTSConnectionPtr>::iterator it = rtsConnections.begin();
-            it != rtsConnections.end(); it++){
-        switch (mode){
-        case 0:
-        default :
-            if(it->second->sourceRtcName == rtsComp->name || it->second->targetRtcName == rtsComp->name)
-                rtsConnectionList.push_back(it->second);
-            break;
-        case 1:
-            if(it->second->sourceRtcName == rtsComp->name)
-                rtsConnectionList.push_back(it->second);
-            break;
-        case 2:
-            if(it->second->targetRtcName == rtsComp->name)
-                rtsConnectionList.push_back(it->second);
-            break;
-        }
-    }
-}
-
-
-void RTSDiagramViewImpl::onRTSCompPositionChanged(const RTSComp* rtsComp)
+void RTSDiagramViewImpl::onRTSCompPositionChanged(const RTSCompGItem* rtsCompGItem)
 {
     list<RTSConnection*> rtsConnectionList;
+    currentRTSItem->RTSCompToConnectionList(rtsCompGItem->rtsComp, rtsConnectionList, 1);
 
-    RTSCompToConnectionList(rtsComp, rtsConnectionList, 1);
     for(list<RTSConnection*>::iterator it = rtsConnectionList.begin();
                 it != rtsConnectionList.end(); it++){
-        RTSConnectionGItem* gItem = (*it)->gItem;
-        if(!gItem->changePortPos( true, (*it)->sourcePort->pos)){
-            scene.removeItem(gItem);
+        RTSConnection* rtsConnection = *it;
+        RTSConnectionGItem* gItem = rtsConnections.find(rtsConnection->id)->second.get();
+        RTSPortGItem* sourcePort = rtsPortMap.find(rtsConnection->sourcePort)->second;
+        if(!gItem->changePortPos( true, sourcePort->pos)){
+            //scene.removeItem(gItem);
+            rtsConnections.erase(rtsConnection->id);
             delete gItem;
-            createConnectionGItem((*it));
+            RTSPortGItem* targetPort = rtsPortMap.find(rtsConnection->targetPort)->second;
+            createConnectionGItem(rtsConnection, sourcePort, targetPort);
         }
     }
 
     rtsConnectionList.clear();
-    RTSCompToConnectionList(rtsComp, rtsConnectionList, 2);
+    currentRTSItem->RTSCompToConnectionList(rtsCompGItem->rtsComp, rtsConnectionList, 2);
     for(list<RTSConnection*>::iterator it = rtsConnectionList.begin();
             it != rtsConnectionList.end(); it++){
-        RTSConnectionGItem* gItem = (*it)->gItem;
-        if(!gItem->changePortPos( false, (*it)->targetPort->pos)){
-            scene.removeItem(gItem);
+        RTSConnection* rtsConnection = *it;
+        RTSConnectionGItem* gItem = rtsConnections.find(rtsConnection->id)->second.get();
+        RTSPortGItem* targetPort = rtsPortMap.find(rtsConnection->targetPort)->second;
+        if(!gItem->changePortPos( false, targetPort->pos)){
+            //scene.removeItem(gItem);
+            rtsConnections.erase(rtsConnection->id);
             delete gItem;
-            createConnectionGItem((*it));
+            RTSPortGItem* sourcePort = rtsPortMap.find(rtsConnection->sourcePort)->second;
+            createConnectionGItem(rtsConnection, sourcePort, targetPort);
         }
     }
 }
@@ -1431,40 +1167,50 @@ void RTSDiagramViewImpl::onRTSCompPositionChanged(const RTSComp* rtsComp)
 
 void RTSDiagramViewImpl::onTime()
 {
-    for(map<string, RTSCompPtr>::iterator it = rtsComps.begin();
+    if(!currentRTSItem)
+        return;
+
+    for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
             it != rtsComps.end(); it++){
-        if(!ncHelper.isObjectAlive(it->second->rtc_)){
-            deleteRTSComp(it->second);
+        if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
+            deleteRTSComp(it->second.get());
         }
     }
 
-    deletedRtsConnections = rtsConnections;
-    for(map<string, RTSCompPtr>::iterator it = rtsComps.begin();
+    for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
                 it != rtsComps.end(); it++){
         it->second->stateCheck();
-        it->second->connectionCheck();
     }
 
-    for(map<string, RTSConnectionPtr>::iterator itr = deletedRtsConnections.begin();
-                itr != deletedRtsConnections.end(); itr++){
-        rtsConnections.erase(itr->first);
-    }
-    deletedRtsConnections.clear();
-
-    for(map<string, RTSConnectionPtr>::iterator itr = rtsConnections.begin();
-            itr != rtsConnections.end(); itr++){
-        if(!itr->second->gItem)
-            createConnectionGItem(itr->second.get());
+    currentRTSItem->connectionCheck();
+    map<string, RTSConnectionPtr>& deletedConnections = currentRTSItem->deletedRtsConnections();
+    for(map<string, RTSConnectionPtr>::iterator itr = deletedConnections.begin();
+                itr != deletedConnections.end(); itr++){
+        map<string, RTSConnectionGItemPtr>::iterator it = rtsConnections.find(itr->first);
+        if(it!=rtsConnections.end())
+            deleteRTSConnection(it->second.get());
     }
 
-    timer.start(STATE_CHECK_TIME);
+    map<string, RTSConnectionPtr>& connections = currentRTSItem->rtsConnections();
+    for(map<string, RTSConnectionPtr>::iterator itr = connections.begin();
+            itr != connections.end(); itr++){
+        map<string, RTSConnectionGItemPtr>::iterator it = rtsConnections.find(itr->first);
+        if(it==rtsConnections.end()){
+            RTSConnection* rtsConnection = itr->second.get();
+            RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
+            RTSPortGItem* target = rtsPortMap.find(rtsConnection->sourcePort)->second;
+            createConnectionGItem(rtsConnection, source, target);
+        }
+    }
+
+    timer.start();
 }
 
 
 void RTSDiagramViewImpl::onActivated(bool on)
 {
     if(on)
-        timer.start(STATE_CHECK_TIME);
+        timer.start();
     else
         timer.stop();
 }
