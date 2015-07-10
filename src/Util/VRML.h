@@ -770,7 +770,6 @@ public:
 
 typedef boost::intrusive_ptr<VRMLSpotLight> VRMLSpotLightPtr;
 
-
 typedef boost::variant<SFBool,
                        SFInt32, SFFloat, SFVec2f, SFVec3f, SFRotation, SFColor, SFTime, SFString, SFNode, SFImage,
                        MFInt32, MFFloat, MFVec2f, MFVec3f, MFRotation, MFColor, MFTime, MFString, MFNode> VRMLVariantField;

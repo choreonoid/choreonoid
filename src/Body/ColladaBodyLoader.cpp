@@ -70,8 +70,6 @@ public:
     Link*     createLink  (Body& body, string name, bool* duplicate);
     DevicePtr createSensor(DaeSensor* sensor);    
 
-    VRMLNodePtr retriveOriginalNode(Link* link);
-
 protected:
     void throwException(const string& message);
 public:
@@ -83,9 +81,6 @@ protected:
 
     LoaderLinks  links;
     LoaderJoints joints;
-
-    typedef map<Link*, VRMLNode*> LinkOriginalMap;
-    LinkOriginalMap linkOriginalMap;
 };
 
 
@@ -181,13 +176,6 @@ void ColladaBodyLoaderImpl::convertToBody(Body& body)
             link->setInertia(Matrix3::Identity());
             body.setRootLink(link);
             body.setModelName(getBasename(fileName));
-            VRMLProtoInstance* proto = new VRMLProtoInstance(new VRMLProto(""));
-            VRMLInlinePtr inl = new VRMLInline();
-            inl->urls.push_back(fileName);
-            MFNode* children = new MFNode();
-            children->push_back(inl);
-            proto->fields["children"] = *children;
-            linkOriginalMap[link] = proto;
         }
         return;
     }
@@ -213,22 +201,6 @@ void ColladaBodyLoaderImpl::convertToBody(Body& body)
     buildLinks(extNode, extNode, link, body, jointId);
 
     body.updateLinkTree();
-}
-
-VRMLNodePtr ColladaBodyLoader::retriveOriginalNode(Link* link)
-{
-    return impl->retriveOriginalNode(link);
-}
-
-
-VRMLNodePtr ColladaBodyLoaderImpl::retriveOriginalNode(Link* link)
-{
-    LinkOriginalMap::iterator it;
-    it = linkOriginalMap.find(link);
-    if (it == linkOriginalMap.end()) {
-        return NULL;
-    }
-    return it->second;
 }
 
 

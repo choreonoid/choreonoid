@@ -34,7 +34,7 @@ ostream& operator<<(std::ostream& out, const SFVec2f& v)
 {
     return out << v[0] << " " << v[1];
 }
-    
+
 ostream& operator<<(std::ostream& out, const SFVec3f& v)
 {
     return out << v[0] << " " << v[1] << " " << v[2];
@@ -44,7 +44,7 @@ ostream& operator<<(std::ostream& out, const SFColor& v)
 {
     return out << v[0] << " " << v[1] << " " << v[2];
 }
-    
+
 ostream& operator<<(std::ostream& out, const SFRotation& v)
 {
     const SFRotation::Vector3& a = v.axis();
@@ -110,17 +110,17 @@ VRMLWriter::VRMLWriter(std::ostream& out) : out(out), ofname()
 
 
 void VRMLWriter::registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method) {
-    nodeMethodMap.insert(TNodeMethodPair(t.name(), method)); 
+    nodeMethodMap.insert(TNodeMethodPair(t.name(), method));
 }
 
 
 VRMLWriterNodeMethod VRMLWriter::getNodeMethod(VRMLNodePtr node) {
-    TNodeMethodMap::iterator p = nodeMethodMap.find(typeid(*node).name()); 
-    return (p != nodeMethodMap.end()) ? p->second : 0; 
+    TNodeMethodMap::iterator p = nodeMethodMap.find(typeid(*node).name());
+    return (p != nodeMethodMap.end()) ? p->second : 0;
 }
 
 
-void VRMLWriter::registerNodeMethodMap() 
+void VRMLWriter::registerNodeMethodMap()
 {
     registerNodeMethod(typeid(VRMLGroup),          &VRMLWriter::writeGroupNode);
     registerNodeMethod(typeid(VRMLTransform),      &VRMLWriter::writeTransformNode);
@@ -154,7 +154,7 @@ void VRMLWriter::writeNodeIter(VRMLNodePtr node)
     if(method){
         (this->*method)(node);
     } else {
-        cout << "cannot find writer for " << typeid(*node).name() << " node." << endl; 
+        cout << "cannot find writer for " << typeid(*node).name() << " node." << endl;
     }
 }
 

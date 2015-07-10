@@ -25,7 +25,7 @@ public:
     virtual void enableShapeLoading(bool on);
     virtual void setDefaultDivisionNumber(int n);
     virtual bool load(BodyPtr body, const std::string& filename);
-    virtual VRMLNodePtr retriveOriginalNode(Link* link);
+    VRMLNodePtr getOriginalNode(Link* link);
 
 private:
     VRMLBodyLoaderImpl* impl;

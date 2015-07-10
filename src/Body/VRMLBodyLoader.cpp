@@ -74,8 +74,8 @@ public:
     typedef map<string, DeviceFactory> DeviceFactoryMap;
     static DeviceFactoryMap deviceFactories;
 
-    typedef map<Link*, VRMLNode*> LinkOriginalMap;
-    static LinkOriginalMap linkOriginalMap;
+    typedef map<Link*, VRMLNodePtr> LinkOriginalMap;
+    LinkOriginalMap linkOriginalMap;
 
     ostream& os() { return *os_; }
 
@@ -114,14 +114,12 @@ public:
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
     static SpotLightPtr createSpotLight(VRMLProtoInstance* node);
     void setExtraJoints();
-    VRMLNodePtr retriveOriginalNode(Link* link);
+    VRMLNodePtr getOriginalNode(Link* link);
 };
 }
 
 
 VRMLBodyLoaderImpl::DeviceFactoryMap VRMLBodyLoaderImpl::deviceFactories;
-
-VRMLBodyLoaderImpl::LinkOriginalMap VRMLBodyLoaderImpl::linkOriginalMap;
 
 
 namespace {
@@ -835,6 +833,7 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                 switch(id){
                 case PROTO_SEGMENT:
                     readSegmentNode(iLink, protoInstance, T);
+                    linkOriginalMap[iLink.link] = childNodes[i];
                     break;
                 case PROTO_JOINT:
                     if(!T.matrix().isApprox(Affine3::MatrixType::Identity())){
@@ -913,17 +912,15 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     ProtoIdSet acceptableProtoIds;
     acceptableProtoIds.set(PROTO_DEVICE);
     readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
-
-    linkOriginalMap[iLink.link] = segmentNode;
 }
-    
 
-VRMLNodePtr VRMLBodyLoader::retriveOriginalNode(Link* link)
+
+VRMLNodePtr VRMLBodyLoader::getOriginalNode(Link* link)
 {
-    return impl->retriveOriginalNode(link);
+    return impl->getOriginalNode(link);
 }
 
-VRMLNodePtr VRMLBodyLoaderImpl::retriveOriginalNode(Link* link)
+VRMLNodePtr VRMLBodyLoaderImpl::getOriginalNode(Link* link)
 {
     LinkOriginalMap::iterator it;
     it = linkOriginalMap.find(link);

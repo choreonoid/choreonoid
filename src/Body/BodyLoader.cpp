@@ -218,7 +218,6 @@ bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
             ext = getExtension(mpath);
         }
 
-        AbstractBodyLoaderPtr loader;
         LoaderMap::iterator p = loaderMap.find(ext);
         if(p != loaderMap.end()){
             loader = p->second;
