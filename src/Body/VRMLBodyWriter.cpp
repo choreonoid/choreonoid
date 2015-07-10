@@ -8,49 +8,10 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-namespace {
-
-inline std::ostream& operator<<(std::ostream& out, VRMLWriter::TIndent& indent)
-{
-    return out << indent.spaces;
-}
-
-
-inline const char* boolstr(bool v)
-{
-    if(v){
-        return "TRUE";
-    } else {
-        return "FALSE";
-    }
-}
-
-ostream& operator<<(std::ostream& out, const SFVec2f& v)
-{
-    return out << v[0] << " " << v[1];
-}
-
-ostream& operator<<(std::ostream& out, const SFVec3f& v)
-{
-    return out << v[0] << " " << v[1] << " " << v[2];
-}
-
-ostream& operator<<(std::ostream& out, const SFColor& v)
-{
-    return out << v[0] << " " << v[1] << " " << v[2];
-}
-
-ostream& operator<<(std::ostream& out, const SFRotation& v)
-{
-    const SFRotation::Vector3& a = v.axis();
-    return out << a[0] << " " << a[1] << " " << a[2] << " " << v.angle();
-}
-
-}
-
 
 VRMLBodyWriter::VRMLBodyWriter(std::ostream& out) : VRMLWriter(out)
 {
+    registerNodeMethodMap();
 }
 
 

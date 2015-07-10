@@ -17,6 +17,53 @@ namespace cnoid {
 
 class VRMLWriter;
 
+struct TIndent {
+    void clear() { n = 0; spaces.resize(n); }
+    inline TIndent& operator++() { n += 2; spaces.resize(n, ' '); return *this; }
+    inline TIndent& operator--() {
+        n -= 2;
+        if(n < 0) { n = 0; }
+        spaces.resize(n, ' '); return *this;
+    }
+    std::string spaces;
+    int n;
+};
+
+inline std::ostream& operator<<(std::ostream& out, TIndent& indent)
+{
+    return out << indent.spaces;
+}
+
+inline const char* boolstr(bool v)
+{
+    if(v){
+        return "TRUE";
+    } else {
+        return "FALSE";
+    }
+}
+
+std::ostream& operator<<(std::ostream& out, const SFVec2f& v)
+{
+    return out << v[0] << " " << v[1];
+}
+
+std::ostream& operator<<(std::ostream& out, const SFVec3f& v)
+{
+    return out << v[0] << " " << v[1] << " " << v[2];
+}
+
+std::ostream& operator<<(std::ostream& out, const SFColor& v)
+{
+    return out << v[0] << " " << v[1] << " " << v[2];
+}
+
+std::ostream& operator<<(std::ostream& out, const SFRotation& v)
+{
+    const SFRotation::Vector3& a = v.axis();
+    return out << a[0] << " " << a[1] << " " << a[2] << " " << v.angle();
+}
+
 typedef void (VRMLWriter::*VRMLWriterNodeMethod)(VRMLNodePtr node);
 
 class CNOID_EXPORT VRMLWriter
@@ -30,18 +77,6 @@ public:
     void writeHeader();
     bool writeNode(VRMLNodePtr node);
 
-    struct TIndent {
-        void clear() { n = 0; spaces.resize(n); }
-        inline TIndent& operator++() { n += 2; spaces.resize(n, ' '); return *this; }
-        inline TIndent& operator--() { 
-            n -= 2;
-            if(n < 0) { n = 0; }
-            spaces.resize(n, ' '); return *this; 
-        }
-        std::string spaces;
-        int n;
-    };
-
 protected:
     std::ostream& out;
     std::string ofname;
@@ -52,7 +87,26 @@ protected:
     void registerNodeMethod(const std::type_info& t, VRMLWriterNodeMethod method);
     VRMLWriterNodeMethod getNodeMethod(VRMLNodePtr node);
 
-    template <class MFValues> void writeMFValues(MFValues values, int numColumn);
+    template <class MFValues> void writeMFValues(MFValues values, int numColumn) {
+        out << ++indent << "[\n";
+        ++indent;
+        out << indent;
+        int col = 0;
+        int n = values.size();
+        for(int i=0; i < n; i++){
+            out << values[i] << " ";
+            col++;
+            if(col == numColumn){
+                col = 0;
+                out << "\n";
+                if(i < n-1){
+                    out << indent;
+                }
+            }
+        }
+        out << --indent << "]\n";
+        --indent;
+    };
     void writeMFInt32SeparatedByMinusValue(MFInt32& values);
     void writeNodeIter(VRMLNodePtr node);
     void beginNode(const char* nodename, VRMLNodePtr node);

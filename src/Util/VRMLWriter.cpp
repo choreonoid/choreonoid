@@ -16,66 +16,6 @@ typedef std::pair<std::string, VRMLWriterNodeMethod> TNodeMethodPair;
 
 TNodeMethodMap nodeMethodMap;
 
-inline std::ostream& operator<<(std::ostream& out, VRMLWriter::TIndent& indent)
-{
-    return out << indent.spaces;
-}
-
-inline const char* boolstr(bool v)
-{
-    if(v){
-        return "TRUE";
-    } else {
-        return "FALSE";
-    }
-}
-
-ostream& operator<<(std::ostream& out, const SFVec2f& v)
-{
-    return out << v[0] << " " << v[1];
-}
-
-ostream& operator<<(std::ostream& out, const SFVec3f& v)
-{
-    return out << v[0] << " " << v[1] << " " << v[2];
-}
-
-ostream& operator<<(std::ostream& out, const SFColor& v)
-{
-    return out << v[0] << " " << v[1] << " " << v[2];
-}
-
-ostream& operator<<(std::ostream& out, const SFRotation& v)
-{
-    const SFRotation::Vector3& a = v.axis();
-    return out << a[0] << " " << a[1] << " " << a[2] << " " << v.angle();
-}
-
-}
-
-
-template <class MFValues> void VRMLWriter::writeMFValues(MFValues values, int numColumn)
-{
-    out << ++indent << "[\n";
-    ++indent;
-
-    out << indent;
-    int col = 0;
-    int n = values.size();
-    for(int i=0; i < n; i++){
-        out << values[i] << " ";
-        col++;
-        if(col == numColumn){
-            col = 0;
-            out << "\n";
-            if(i < n-1){
-                out << indent;
-            }
-        }
-    }
-
-    out << --indent << "]\n";
-    --indent;
 }
 
 
