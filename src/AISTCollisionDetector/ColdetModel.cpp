@@ -38,7 +38,11 @@ public :
     }
 };
 
-typedef std::map<Edge, int> EdgeToTriangleMap;
+struct trianglePair {
+    int t[2];
+};
+
+typedef std::map< Edge, trianglePair > EdgeToTriangleMap;
 }
 
 
@@ -398,7 +402,7 @@ bool ColdetModel::checkCollisionWithPointCloud(const std::vector<Vector3> &i_clo
 
 namespace {
 
-inline void extractNeighborTriangle
+inline bool extractNeighborTriangle
 (ColdetModelInternalModel::NeighborTriangleSetArray& neighbors, EdgeToTriangleMap& triangleMap,
  int triangle, int vertex1, int vertex2)
 {
@@ -406,11 +410,25 @@ inline void extractNeighborTriangle
         
     EdgeToTriangleMap::iterator p = triangleMap.find(edge);
     if(p == triangleMap.end()){
-        triangleMap[edge] = triangle;
+        triangleMap[edge].t[0] = triangle;
+        triangleMap[edge].t[1] = -1;
+        return true;
     } else {
-        int triangle2 = p->second;
-        neighbors[triangle].addNeighbor(triangle2);
-        neighbors[triangle2].addNeighbor(triangle);
+        trianglePair& triangles = p->second;
+        if( triangles.t[1] != -1 ){
+            neighbors[triangles.t[0]].deleteNeighbor(triangles.t[1]);
+            neighbors[triangles.t[1]].deleteNeighbor(triangles.t[0]);
+            //cout << "neighbors[" << triangles.t[0] << "] " << neighbors[triangles.t[0]][0] << " " << neighbors[triangles.t[0]][1] << " " << neighbors[triangles.t[0]][2] << endl;
+            //cout << "neighbors[" << triangles.t[1] << "] " << neighbors[triangles.t[1]][0] << " " << neighbors[triangles.t[1]][1] << " " << neighbors[triangles.t[1]][2] << endl;
+            return false;
+        }else{
+            neighbors[triangle].addNeighbor(triangles.t[0]);
+            neighbors[triangles.t[0]].addNeighbor(triangle);
+            triangles.t[1] = triangle;
+            //cout << "neighbors[" << triangle << "] " << neighbors[triangle][0] << " " << neighbors[triangle][1] << " " << neighbors[triangle][2] << endl;
+            //cout << "neighbors[" << triangles.t[0] << "] " << neighbors[triangles.t[0]][0] << " " << neighbors[triangles.t[0]][1] << " " << neighbors[triangles.t[0]][2] << endl;
+            return true;
+        }
     }
 }
 }
@@ -423,12 +441,15 @@ void ColdetModelInternalModel::extractNeghiborTriangles()
 
     EdgeToTriangleMap edgeToExistingTriangleMap;
 
+    bool ret = true;
     for(int i=0; i < numTriangles; ++i){
         udword* triangle = triangles[i].mVRef;
-        extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[0], triangle[1]);
-        extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[1], triangle[2]);
-        extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[2], triangle[0]);
+        ret &= extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[0], triangle[1]);
+        ret &= extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[1], triangle[2]);
+        ret &= extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[2], triangle[0]);
     }
+    if(!ret)
+        cout << "Warning : Three or more triangles is defined for a edge." << endl;
 }
 
 
