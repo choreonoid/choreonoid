@@ -8,6 +8,7 @@ set(target CnoidBody)
 
 set(sources
   Body.cpp
+  VRMLBody.cpp
   LinkTraverse.cpp
   Link.cpp
   LinkPath.cpp
@@ -48,17 +49,20 @@ set(sources
   VRMLBodyLoader.cpp
   ColladaBodyLoader.cpp
   BodyLoader.cpp
+  VRMLBodyWriter.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   )
 
 set(headers
   Body.h
+  VRMLBody.h
   BodyCustomizerInterface.h
   AbstractBodyLoader.h
   VRMLBodyLoader.h
   ColladaBodyLoader.h
   BodyLoader.h
+  VRMLBodyWriter.h
   ZMPSeq.h
   Link.h
   LinkTraverse.h
