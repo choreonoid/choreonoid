@@ -142,10 +142,28 @@ void StdCollisionPairInserter::get_triangles_in_convex_neighbor
         triangleIndexToPoint(model, nei, tri_nei); 
 
         if(is_convex_neighbor( &tri_nei, &tri_convex_neighbor[k])){
+            if(k!=0){
+                Vector3 p1 = tri_nei.p1 - tri_convex_neighbor[0].p1;
+                if(p1.dot(tri_convex_neighbor[0].n) > 0)
+                    continue;
+                Vector3 p2 = tri_nei.p2 - tri_convex_neighbor[0].p1;
+                if(p2.dot(tri_convex_neighbor[0].n) > 0)
+                    continue;
+                Vector3 p3 = tri_nei.p3 - tri_convex_neighbor[0].p1;
+                if(p3.dot(tri_convex_neighbor[0].n) > 0)
+                    continue;
+            }
             foundTriangles.push_back(nei);
             tri_convex_neighbor[count].status = 0;
             copy_tri(&tri_convex_neighbor[count++], &tri_nei);
         }
+    }
+
+    if(COLLIDE_DEBUG) {
+        cout << "id= " << id;
+        for(int i=0; i<foundTriangles.size(); i++ )
+            cout << " " << foundTriangles[i];
+        cout << endl;
     }
 }
 
@@ -162,7 +180,7 @@ int StdCollisionPairInserter::get_triangles_in_convex_neighbor
     int end = 1;
 
     int j=0;
-    while(count < min_num && j<3){
+    while(count < min_num && j<2){
         for(int i=start; i< end; i++)
             get_triangles_in_convex_neighbor(model, foundTriangles[i], tri_convex_neighbor, foundTriangles, count);
         start = end;
@@ -195,6 +213,12 @@ void StdCollisionPairInserter::check_separability(int id1, int id2, int ctype)
     for(int i=0; i < max; ++i){
         signed_distance[i] = signed_distance1[i] - signed_distance2[i];
         if(COLLIDE_DEBUG) printf("signed distance %d = %f\n", i, signed_distance[i]);
+    }
+
+    if(COLLIDE_DEBUG){
+        printf("origin normal = %f %f %f\n", cdContact[contactIndex].n_vector[0],
+                cdContact[contactIndex].n_vector[1], cdContact[contactIndex].n_vector[2]);
+        cout << "origin depth = " << cdContact[contactIndex].depth << endl;
     }
 
     switch(ctype){
@@ -282,6 +306,10 @@ void StdCollisionPairInserter::find_signed_distance(
     cdContact[nth].n_vector.normalize();
         
     double dis0 = cdContact[nth].n_vector.dot(vec);
+    if(COLLIDE_DEBUG){
+        cout << "vec = " << vec[0] << " " << vec[1] << " " << vec[2] << endl;
+        cout << "n_vec = " << cdContact[nth].n_vector[0] << " " << cdContact[nth].n_vector[1] << " " << cdContact[nth].n_vector[2] << endl;
+     }
         
 #if 0
     switch(ctype){
@@ -306,10 +334,16 @@ void StdCollisionPairInserter::find_signed_distance(
     switch(ctype){
     case FV:
         dis1 =   cdContact[nth].m.dot(vec);
+        if(COLLIDE_DEBUG){
+            cout << "m = " << cdContact[nth].m[0] << " " << cdContact[nth].m[1] << " " << cdContact[nth].m[2] << endl;
+        }
         if(COLLIDE_DEBUG) printf("dis1 = %f\n", dis1);
         break;
     case VF:
         dis1 = - cdContact[nth].n.dot(vec);
+        if(COLLIDE_DEBUG){
+            cout << "n = " << cdContact[nth].n[0] << " " << cdContact[nth].n[1] << " " << cdContact[nth].n[2] << endl;
+        }
         if(COLLIDE_DEBUG) printf("dis1 = %f\n", dis1);
         break;
     case EE:
