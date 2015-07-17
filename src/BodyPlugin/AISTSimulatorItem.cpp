@@ -16,6 +16,7 @@
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
+#include <QElapsedTimer>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
@@ -33,6 +34,7 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
+const bool MEASURE_PHYSICS_CALCULATION_TIME = true;
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 
@@ -165,6 +167,9 @@ public:
 
     // for debug
     ofstream os;
+
+    double physicsTime;
+    QElapsedTimer physicsTimer;
 };
 
 }
@@ -367,6 +372,10 @@ ControllerItem* AISTSimulatorItem::createBodyMotionController(BodyItem* bodyItem
 
 bool AISTSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        impl->physicsTime = 0;
+    }
+    
     return impl->initializeSimulation(simBodies);
 }
 
@@ -460,7 +469,14 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
     impl->world.constraintForceSolver.clearExternalForces();
 
     if(!impl->dynamicsMode.is(KINEMATICS)){
+        if(MEASURE_PHYSICS_CALCULATION_TIME){
+            impl->physicsTimer.start();
+        }
         impl->world.calcNextState();
+
+        if(MEASURE_PHYSICS_CALCULATION_TIME){
+            impl->physicsTime += impl->physicsTimer.nsecsElapsed();
+        }
         return true;
     }
 
@@ -512,7 +528,13 @@ void AISTSimulatorItem::finalizeSimulation()
     if(ENABLE_DEBUG_OUTPUT){
         impl->os.close();
     }
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        cout << "AIST physicsTime= " << impl->physicsTime *1.0e-9 << "[s]"<< endl;
+        double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
+        cout << "AIST collisionTime= " << collisionTime *1.0e-9 << "[s]"<< endl;
+    }
 }
+
 
 
 CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
