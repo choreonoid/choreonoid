@@ -83,23 +83,26 @@ public:
 
     virtual bool control() {
 
-        if(currentFrame < qseq->numFrames()){
-
-            MultiValueSeq::Frame frame = qseq->frame(currentFrame++);
-
-            for(int i=0; i < body->numJoints(); ++i){
-                Link* joint = body->joint(i);
-                double q_ref = frame[i];
-                double q = joint->q();
-                double dq_ref = (q_ref - oldFrame[i]) / timeStep_;
-                double dq = (q - q0[i]) / timeStep_;
-                joint->u() = (q_ref - q) * pgain[i] + (dq_ref - dq) * dgain[i];
-                q0[i] = q;
-            }
-            oldFrame = frame;
-            return true;
+        bool isActive = currentFrame < qseq->numFrames();
+        MultiValueSeq::Frame frame;
+        if(isActive){
+            frame = qseq->frame(currentFrame++);
+        } else {
+            frame = oldFrame;
         }
-        return false;
+
+        for(int i=0; i < body->numJoints(); ++i){
+            Link* joint = body->joint(i);
+            double q_ref = frame[i];
+            double q = joint->q();
+            double dq_ref = (q_ref - oldFrame[i]) / timeStep_;
+            double dq = (q - q0[i]) / timeStep_;
+            joint->u() = (q_ref - q) * pgain[i] + (dq_ref - dq) * dgain[i];
+            q0[i] = q;
+        }
+        oldFrame = frame;
+
+        return isActive;
     }
         
 };
