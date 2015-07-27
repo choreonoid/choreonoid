@@ -21,6 +21,7 @@ public:
     Link* link() { return link_; }
     const Link* link() const { return link_; }
     const SgNode* shape() const { return shape_; }
+    SgNode* shape() { return shape_; }
     const SgNode* orgShape() const { return orgShape_; }
     void cloneShape(SgCloneMap& cloneMap);
     void addSceneDevice(SceneDevice* sdev);

@@ -74,6 +74,9 @@ public:
     typedef map<string, DeviceFactory> DeviceFactoryMap;
     static DeviceFactoryMap deviceFactories;
 
+    typedef map<Link*, VRMLNodePtr> LinkOriginalMap;
+    LinkOriginalMap linkOriginalMap;
+
     ostream& os() { return *os_; }
 
     void putVerboseMessage(const std::string& message){
@@ -111,6 +114,7 @@ public:
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
     static SpotLightPtr createSpotLight(VRMLProtoInstance* node);
     void setExtraJoints();
+    VRMLNodePtr getOriginalNode(Link* link);
 };
 }
 
@@ -829,6 +833,7 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                 switch(id){
                 case PROTO_SEGMENT:
                     readSegmentNode(iLink, protoInstance, T);
+                    linkOriginalMap[iLink.link] = childNodes[i];
                     break;
                 case PROTO_JOINT:
                     if(!T.matrix().isApprox(Affine3::MatrixType::Identity())){
@@ -908,7 +913,23 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     acceptableProtoIds.set(PROTO_DEVICE);
     readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
 }
-    
+
+
+VRMLNodePtr VRMLBodyLoader::getOriginalNode(Link* link)
+{
+    return impl->getOriginalNode(link);
+}
+
+VRMLNodePtr VRMLBodyLoaderImpl::getOriginalNode(Link* link)
+{
+    LinkOriginalMap::iterator it;
+    it = linkOriginalMap.find(link);
+    if (it == linkOriginalMap.end()) {
+        return NULL;
+    }
+    return it->second;
+}
+
 
 void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* deviceNode, const Affine3& T)
 {

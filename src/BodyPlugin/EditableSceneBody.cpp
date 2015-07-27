@@ -57,12 +57,15 @@ void EditableSceneLink::showBoundingBox(bool on)
             outlineGroup = new SgOutlineGroup();
         }
         if(!contains(outlineGroup)){
-            moveChildren(outlineGroup, false);
-            addChild(outlineGroup, true);
+            removeChild(shape());
+            outlineGroup->addChildOnce(shape());
+            addChild(outlineGroup);
+            notifyUpdate();
         }
-    }else if(outlineGroup){
-        outlineGroup->moveChildren(this, false);
-        removeChild(outlineGroup, true);
+    } else if(outlineGroup && contains(outlineGroup)){
+        removeChild(outlineGroup);
+        addChildOnce(shape());
+        notifyUpdate();
     }
 #endif
 }

@@ -45,12 +45,10 @@ public:
     void useWorldCollisionDetector(bool on);
 
 protected:
-        
     virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-        
     virtual ItemPtr doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);

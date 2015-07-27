@@ -27,6 +27,17 @@ public:
                 }
             }
         }
+        void deleteNeighbor(int neighbor){
+            for(int i=0; i<3; i++){
+                if(neighbors[i]==neighbor){
+                    for(int j=i+1; j<3; j++){
+                        neighbors[j-1] = neighbors[j];
+                    }
+                    neighbors[2] = -1;
+                }
+                break;
+            }
+        }
         int operator[](int index) const { return neighbors[index]; }
     };
 

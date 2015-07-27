@@ -27,6 +27,7 @@
 #endif
 #include <cnoid/DaeParser>
 #include <cnoid/DaeNode>
+#include <cnoid/FileUtil>
 #include "ColladaBodyLoader.h"
 
 #include "gettext.h"
@@ -163,12 +164,23 @@ void ColladaBodyLoaderImpl::throwException(const string& message)
 
 void ColladaBodyLoaderImpl::convertToBody(Body& body)
 {
-    if (!parser->findRootLink()) {
-        throwException((format(_("root link not found"))).str());
+    DaeNode* extNode = parser->findRootLink();
+
+    if (!extNode) {
+        SgGroup* scene = parser->createScene(fileName);
+        if(scene){
+            Link* link = body.createLink();
+            link->setName("Root");
+            link->setShape(scene);
+            link->setMass(1.0);
+            link->setInertia(Matrix3::Identity());
+            body.setRootLink(link);
+            body.setModelName(getBasename(fileName));
+        }
+        return;
     }
 
     int jointId = 0;
-    DaeNode* extNode = parser->findRootLink();
     links.clear();
     joints.clear();
 

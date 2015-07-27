@@ -4,8 +4,10 @@
 */
 
 #include "VRML.h"
+#include <boost/assign/std/vector.hpp>
 
 using namespace cnoid;
+using namespace boost::assign;
 
 const char* cnoid::labelOfVRMLfieldTypeId(const std::type_info& fieldType)
 {

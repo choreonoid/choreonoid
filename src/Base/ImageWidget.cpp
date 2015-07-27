@@ -291,3 +291,32 @@ void ImageWidget::setAngle(double angle)
     transform_.reset();
     rotate(angle);
 }
+
+
+Image& ImageWidget::getImage()
+{
+    if(pixmap_.isNull()){
+        transformedImage.setSize(0,0,0);
+        return transformedImage;
+    }
+
+    QImage image(rect().size(), QImage::Format_RGB888);
+    image.fill(QColor(0,0,0));
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+    painter.setWorldTransform(transform_);
+    painter.drawPixmap(0, 0, pixmap_);
+
+    transformedImage.setSize(image.width(), image.height(), 3);
+    unsigned char* p = transformedImage.pixels();
+    for(int i=0; i<image.height(); i++){
+        for(int j=0; j<image.width(); j++){
+            QRgb rgb = image.pixel(j, i);
+            *p++ = qRed(rgb);
+            *p++ = qGreen(rgb);
+            *p++ = qBlue(rgb);
+        }
+    }
+
+    return transformedImage;
+}

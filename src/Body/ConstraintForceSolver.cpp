@@ -31,7 +31,6 @@
 using namespace std;
 using namespace cnoid;
 
-
 // Is LCP solved by Iterative or Pivoting method ?
 // #define USE_PIVOTING_LCP
 #ifdef USE_PIVOTING_LCP
@@ -2324,4 +2323,3 @@ CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
 {
     return impl->getCollisions();
 }
-

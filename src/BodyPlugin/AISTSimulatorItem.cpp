@@ -18,7 +18,7 @@
 #include <cnoid/EigenUtil>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
-#include <fstream>
+#include <iostream>
 #include <iomanip>
 #include "gettext.h"
 
@@ -513,7 +513,6 @@ void AISTSimulatorItem::finalizeSimulation()
         impl->os.close();
     }
 }
-
 
 
 CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()

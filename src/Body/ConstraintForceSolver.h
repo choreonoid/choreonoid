@@ -53,7 +53,6 @@ public:
     void set2Dmode(bool on);
     void enableConstraintForceOutput(bool on);
 
-
     void initialize(void);
     void solve();
     void clearExternalForces();

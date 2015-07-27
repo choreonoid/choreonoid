@@ -36,7 +36,6 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool USE_AMOTOR = false;
-
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
@@ -207,10 +206,20 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     dMass mass;
     dMassSetZero(&mass);
     const Matrix3& I = link->I();
+#if 1
+    Vector3 axis = link->a();
+    Matrix3 I0 = I + axis * axis.transpose() * link->Jm2();
+    dMassSetParameters(&mass, link->m(),
+            0.0, 0.0, 0.0,
+            I0(0,0), I0(1,1), I0(2,2),
+            I0(0,1), I0(0,2), I0(1,2));
+#else
     dMassSetParameters(&mass, link->m(),
                        0.0, 0.0, 0.0,
                        I(0,0), I(1,1), I(2,2),
                        I(0,1), I(0,2), I(1,2));
+#endif
+
     dBodySetMass(bodyID, &mass);
 
     Vector3 c;
@@ -1214,13 +1223,13 @@ bool ODESimulatorItem::stepSimulation(const std::vector<SimulationBody*>& active
 
 bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-	for(size_t i=0; i < activeSimBodies.size(); ++i){
+    for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
         if(velocityMode)
-        	odeBody->setVelocityToODE();
+            odeBody->setVelocityToODE();
         else
-        	odeBody->setTorqueToODE();
+            odeBody->setTorqueToODE();
     }
 
     dJointGroupEmpty(contactJointGroupID);
