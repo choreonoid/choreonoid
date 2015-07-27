@@ -7,6 +7,8 @@
 
 #include <QWidget>
 #include <cnoid/Image>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -37,6 +39,7 @@ public:
     void setAngle(double angle);
     void rotate(double angle);
     Image& getImage();
+    boost::mutex mtx;
 
   protected:
     virtual void paintEvent(QPaintEvent* event);
