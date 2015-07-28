@@ -2,55 +2,54 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H_INCLUDED
-#define CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H_INCLUDED
+#ifndef CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H
+#define CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H
 
 #include <cnoid/Body>
-#include <cnoid/NullOut>
+#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SimpleController
+class SimpleControllerImpl;
+
+class CNOID_EXPORT SimpleController
 {
 public:
     typedef SimpleController* (*Factory)();
 
-    SimpleController() {
-        timeStep_ = 1.0;
-        isImmediateMode_ = false;
-        os_ = &nullout();
-    }
-
-    virtual ~SimpleController() { }
+    virtual ~SimpleController();
 
     virtual bool initialize() = 0;
+
     /*
       @return false to request stopping
     */
     virtual bool control() = 0;
 
     // called from the simulator
-    void setIoBody(const BodyPtr& body) { ioBody_ = body; }
-    void setTimeStep(double timeStep) { timeStep_ = timeStep; }
-    void setImmediateMode(bool on) { isImmediateMode_ = on; }
-    void setOutputStream(std::ostream& os) { os_ = &os; }
+    void setIoBody(Body* body);
+    void setTimeStep(double timeStep);
+    void setImmediateMode(bool on);
+    void setOutputStream(std::ostream& os);
 
+    void setJointOutput(bool on);
+    void setJointOutput(int jointId, bool on);
+    const boost::dynamic_bitset<>& jointOutputFlags() const;
+    
 protected:
-    const BodyPtr& ioBody() const { return ioBody_; }
-    double timeStep() const { return timeStep_; }
-    bool isImmediateMode() const { return isImmediateMode_; }
-    std::ostream& os() const { return *os_; }
+    SimpleController();
+    SimpleController(const SimpleController& org);
+    Body* ioBody();
+    double timeStep() const;
+    bool isImmediateMode() const;
+    std::ostream& os() const;
 
 private:
-    mutable BodyPtr ioBody_;
-    double timeStep_;
-    bool isImmediateMode_;
-    mutable std::ostream* os_;
+    SimpleControllerImpl* impl;
 };
 
 }
-
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define CNOID_SIMPLE_CONTROLLER_EXPORT __declspec(dllexport)

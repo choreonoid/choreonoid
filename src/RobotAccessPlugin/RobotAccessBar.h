@@ -21,6 +21,7 @@ public:
 private:
     RobotAccessBarImpl* impl;
 };
+
 }
 
 #endif
