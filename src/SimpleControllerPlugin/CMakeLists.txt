@@ -21,7 +21,8 @@ set(headers
   exportdecl.h
   gettext.h
 )
-#make_gettext_mofiles(${plugin} mofiles)
+
+make_gettext_mofiles(${plugin} mofiles)
 add_cnoid_plugin(${plugin} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${plugin} CnoidBodyPlugin CnoidSimpleController)
 apply_common_setting_for_plugin(${plugin} "${headers}")
