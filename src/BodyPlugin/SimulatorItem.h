@@ -115,7 +115,7 @@ public:
     SgCloneMap& sgCloneMap();
 
     /**
-       emitted from the simulation thread
+       \note This signal is emitted in the simulation thread
     */
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();

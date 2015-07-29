@@ -177,7 +177,7 @@ public:
 
     bool doReset;
     bool isWaitingForSimulationToStop;
-    Signal<void()> sigSimulationFinished_;
+    Signal<void()> sigSimulationFinished;
 
     vector<BodyMotionEnginePtr> bodyMotionEngines;
     CollisionSeqEnginePtr collisionSeqEngine;
@@ -1254,7 +1254,7 @@ void SimulatorItemImpl::run()
     timer.start();
 
     int frame = 0;
-    bool onPause = false;
+    bool isOnPause = false;
 
     if(isRealtimeSyncMode){
         const double dt = worldTimeStep;
@@ -1262,60 +1262,63 @@ void SimulatorItemImpl::run()
         const double dtms = dt * 1000.0;
         double compensatedSimulationTime = 0.0;
         while(true){
-        	if(!pauseRequested){
-        		if(onPause){
-        			timer.start();
-        			onPause = false;
-        		}
-				if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
-					break;
-				}
-				double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
-				if(diff >= 1.0){
-					QThread::msleep(diff);
-				} else if(diff < 0.0){
-					const double compensationTime = -diff * compensationRatio;
-					compensatedSimulationTime += compensationTime;
-					diff += compensationTime;
-					const double delayOverThresh = -diff - 100.0;
-					if(delayOverThresh > 0.0){
-						compensatedSimulationTime += delayOverThresh;
-					}
-				}
-				compensatedSimulationTime += dtms;
-				++frame;
-        	}else{
-        		if(stopRequested)
-        			break;
-        		if(!onPause){
-        			elapsedTime += timer.elapsed();
-        			onPause = true;
-        		}
-        	}
+            if(pauseRequested){
+                if(stopRequested){
+                    break;
+                }
+                if(!isOnPause){
+                    elapsedTime += timer.elapsed();
+                    isOnPause = true;
+                }
+            } else {
+                if(isOnPause){
+                    timer.start();
+                    isOnPause = false;
+                }
+                if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
+                    break;
+                }
+                double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
+                if(diff >= 1.0){
+                    QThread::msleep(diff);
+                } else if(diff < 0.0){
+                    const double compensationTime = -diff * compensationRatio;
+                    compensatedSimulationTime += compensationTime;
+                    diff += compensationTime;
+                    const double delayOverThresh = -diff - 100.0;
+                    if(delayOverThresh > 0.0){
+                        compensatedSimulationTime += delayOverThresh;
+                    }
+                }
+                compensatedSimulationTime += dtms;
+                ++frame;
+            }
         }
     } else {
         while(true){
-        	if(!pauseRequested){
-        		if(onPause){
-        			timer.start();
-        			onPause = false;
-        		}
-				if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
-					break;
-				}
-        	}else{
-        		if(stopRequested)
-        			break;
-        		if(!onPause){
-        			elapsedTime += timer.elapsed();
-        			onPause = true;
-        		}
-        	}
+            if(pauseRequested){
+                if(stopRequested){
+                    break;
+                }
+                if(!isOnPause){
+                    elapsedTime += timer.elapsed();
+                    isOnPause = true;
+                }
+            } else {
+                if(isOnPause){
+                    timer.start();
+                    isOnPause = false;
+                }
+                if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
+                    break;
+                }
+            }
         }
     }
 
-    if(!onPause)
+    if(!isOnPause){
     	elapsedTime += timer.elapsed();
+    }
     actualSimulationTime = (elapsedTime / 1000.0);
     finishTime = frame / worldFrameRate;
 
@@ -1606,7 +1609,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         timeBar->stopFillLevelUpdate(fillLevelId);
     }
 
-    sigSimulationFinished_();
+    sigSimulationFinished();
 
     allSimBodies.clear();
     activeSimBodies.clear();
@@ -1647,7 +1650,7 @@ double SimulatorItemImpl::currentTime() const
 
 SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 {
-    return impl->sigSimulationFinished_;
+    return impl->sigSimulationFinished;
 }
 
 
