@@ -35,7 +35,7 @@ public:
     Body* body() const;
 
     int numControllers() const;
-    ControllerItem* controller(int index) const;
+    ControllerItem* controller(int index = 0) const;
 
     /**
        Call this in the initilization when the shapes are accessed after the initialization
