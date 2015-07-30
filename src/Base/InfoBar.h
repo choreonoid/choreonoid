@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_INFO_BAR_H_INCLUDED
-#define CNOID_GUIBASE_INFO_BAR_H_INCLUDED
+#ifndef CNOID_BASE_INFO_BAR_H
+#define CNOID_BASE_INFO_BAR_H
 
 #include <string>
 #include <QStatusBar>
@@ -16,8 +16,9 @@ class InfoBarImpl;
 
 class CNOID_EXPORT InfoBar : public QStatusBar
 {
-    Q_OBJECT
-        public:
+Q_OBJECT
+
+public:
     static InfoBar* instance();
         
     void notify(const char* message);
@@ -39,6 +40,7 @@ private Q_SLOTS:
     void onFocusChanged(QWidget* old, QWidget* now);
     void onIndicatorDestroyed(QObject* obj);
 };
+
 }
 
 #endif
