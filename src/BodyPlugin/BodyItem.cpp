@@ -164,11 +164,14 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     static bool initialized = false;
 
     if(!initialized){
-        ext->itemManager().registerClass<BodyItem>(N_("BodyItem"));
-        ext->itemManager().addLoader<BodyItem>(
+        ItemManager& im = ext->itemManager();
+        im.registerClass<BodyItem>(N_("BodyItem"));
+        im.addLoader<BodyItem>(
             _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", boost::bind(loadBodyItem, _1, _2));
-        ext->optionManager().addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
-        ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
+
+        OptionManager& om = ext->optionManager();
+        om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
+        om.sigOptionsParsed().connect(onSigOptionsParsed);
 
         linkVisibilityCheck = ext->menuManager().setPath("/Options/Scene View").addCheckItem(_("Show selected links only"));
 

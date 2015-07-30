@@ -33,7 +33,9 @@ public:
 
     BodyItem* bodyItem() const;
     Body* body() const;
-    ControllerItem* controller() const;
+
+    int numControllers() const;
+    ControllerItem* controller(int index) const;
 
     /**
        Call this in the initilization when the shapes are accessed after the initialization
@@ -113,7 +115,7 @@ public:
     SgCloneMap& sgCloneMap();
 
     /**
-       emitted from the simulation thread
+       \note This signal is emitted in the simulation thread
     */
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();

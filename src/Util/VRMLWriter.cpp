@@ -4,6 +4,9 @@
 */
 
 #include "VRMLWriter.h"
+#include <boost/filesystem.hpp>
+#include <map>
+#include <iostream>
 
 using namespace std;
 using namespace boost;

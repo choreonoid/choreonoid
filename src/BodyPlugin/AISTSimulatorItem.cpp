@@ -431,7 +431,7 @@ void AISTSimulatorItemImpl::addBody(SimulationBody* simBody)
     rootLink->dvo().setZero();
 
     bool isHighGainMode = dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS);
-    if(dynamic_cast<HighGainControllerItem*>(simBody->controller())){
+    if(dynamic_cast<HighGainControllerItem*>(simBody->controller(0))){
         isHighGainMode = true;
     }
 

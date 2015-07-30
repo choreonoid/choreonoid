@@ -3,7 +3,7 @@
 */
 
 #include "SimpleControllerItem.h"
-#include "SimpleController.h"
+#include <cnoid/SimpleController>
 #include <cnoid/Link>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
@@ -235,8 +235,12 @@ void SimpleControllerItem::onOutputDeviceStateChanged(int deviceIndex)
 
 void SimpleControllerItem::output()
 {
-    for(int i=0; i < simulationBody->numJoints(); ++i){
-        simulationBody->joint(i)->u() = ioBody->joint(i)->u();
+    const boost::dynamic_bitset<>& flags = controller->jointOutputFlags();
+    const int n = std::min(simulationBody->numJoints(), (int)flags.size());
+    for(int i=0; i < n; ++i){
+        if(flags[i]){
+            simulationBody->joint(i)->u() = ioBody->joint(i)->u();
+        }
     }
 
     if(outputDeviceStateChangeFlag.any()){

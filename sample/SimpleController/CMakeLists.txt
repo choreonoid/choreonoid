@@ -36,6 +36,8 @@ configure_file(SampleCrawlerJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COP
 
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
 configure_file(TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+add_cnoid_simple_controller(TankLightController TankLightController.cpp)
+configure_file(TankJoystickLight.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
 configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
