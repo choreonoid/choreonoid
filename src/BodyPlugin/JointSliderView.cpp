@@ -117,6 +117,7 @@ public:
 
         idLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         nameLabel.setAlignment(Qt::AlignCenter);
+        nameLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
         lowerLimitLabel.setAlignment(Qt::AlignCenter);
         upperLimitLabel.setAlignment(Qt::AlignCenter);
             

@@ -296,6 +296,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     topVBox.addLayout(&hbox2);
     topVBox.addLayout(&hbox3);
     topVBox.addLayout(&vspace);
+    phaseLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     topVBox.addWidget(&phaseLabel, 0, Qt::AlignHCenter);
     topVBox.addWidget(&commandButtonBox);
     topVBox.addStretch();

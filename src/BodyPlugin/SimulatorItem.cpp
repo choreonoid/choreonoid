@@ -70,7 +70,7 @@ class SimulationBodyImpl
 public:
     BodyPtr body;
     BodyItemPtr bodyItem;
-    ControllerItemPtr controller;
+    vector<ControllerItemPtr> controllers;
     ControllerTarget controllerTarget;
     double frameRate;
     SimulatorItemImpl* simImpl;
@@ -94,11 +94,10 @@ public:
     MultiDeviceStateSeqPtr deviceStateResult;
 
     SimulationBodyImpl(const BodyPtr& body);
-    bool findControllerItem(Item* item, Item*& foundItem);
+    void findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems = false);
     bool initialize(SimulatorItemImpl* simImpl, BodyItem* bodyItem);
     bool initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem);
     void cloneShapesOnce();
-    void setupController(SimulatorItemImpl* simImpl, ControllerItem* controllerItem);
     void setupResultMotion(
         SimulatorItemImpl* simImpl, Item* ownerItem, const string& simulatedMotionName);
     void setupDeviceStateRecording();
@@ -178,7 +177,7 @@ public:
 
     bool doReset;
     bool isWaitingForSimulationToStop;
-    Signal<void()> sigSimulationFinished_;
+    Signal<void()> sigSimulationFinished;
 
     vector<BodyMotionEnginePtr> bodyMotionEngines;
     CollisionSeqEnginePtr collisionSeqEngine;
@@ -386,50 +385,55 @@ SimulationBody::~SimulationBody()
 
 BodyItem* SimulationBody::bodyItem() const
 {
-    return impl->bodyItem.get();
+    return impl->bodyItem;
 }
 
 
 Body* SimulationBody::body() const
 {
-    return impl->body.get();
+    return impl->body;
 }
 
 
-ControllerItem* SimulationBody::controller() const
+int SimulationBody::numControllers() const
 {
-    return impl->controller.get();
+    return impl->controllers.size();
 }
 
 
-bool SimulationBodyImpl::findControllerItem(Item* item, Item*& foundItem)
+ControllerItem* SimulationBody::controller(int index) const
 {
-    Item* typeMatchItem = 0;
-    
+    if(index < impl->controllers.size()){
+        return impl->controllers[index];
+    }
+    return 0;
+}
+
+
+void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems)
+{
     while(item){
+        Item* srcItem = 0;
         if(dynamic_cast<ControllerItem*>(item)){
-            typeMatchItem = item;
+            srcItem = item;
         } else if(dynamic_cast<BodyMotionItem*>(item)){
-            typeMatchItem = item;
+            srcItem = item;
         }
-        if(typeMatchItem){
-            if(ItemTreeView::instance()->isItemChecked(typeMatchItem)){
-                foundItem = typeMatchItem;
-                return true;
-            }
-            if(!foundItem){
-                foundItem = typeMatchItem;
+        if(srcItem){
+            bool isChecked = ItemTreeView::instance()->isItemChecked(srcItem);
+            if(!doPickCheckedItems || isChecked){
+                if(!doPickCheckedItems && isChecked){
+                    io_items.clear();
+                    doPickCheckedItems = true;
+                }
+                io_items.push_back(srcItem);
             }
         }
         if(item->childItem()){
-            if(findControllerItem(item->childItem(), foundItem)){
-                return true;
-            }
+            findControlSrcItems(item->childItem(), io_items, doPickCheckedItems);
         }
         item = item->nextItem();
     }
-
-    return false;
 }
 
 
@@ -437,50 +441,69 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
 {
     this->simImpl = simImpl;
     this->bodyItem = bodyItem;
-
+    frameRate = simImpl->worldFrameRate;
     controllerTarget.setSimBodyImpl(this);
-
-    // needed ?
-    //body->clearExternalForces();
-    //body->calcForwardKinematics(true, true);
-
     deviceStateConnections.disconnect();
+    controllers.clear();
 
     if(body->isStaticModel()){
         return true;
     }
-    doStoreResult = true;
-
-    Item* targetItem = 0;
-    findControllerItem(bodyItem->childItem(), targetItem);
-    ControllerItem* controllerItem = 0;
-
-    string simulatedMotionName = simImpl->self->name() + "-" + bodyItem->name();
     
-    if(targetItem){
-        controllerItem = dynamic_cast<ControllerItem*>(targetItem);
-        if(controllerItem){
-            setupController(simImpl, controllerItem);
-            setupResultMotion(simImpl, controllerItem, simulatedMotionName);
+    doStoreResult = true;
+    string simulatedMotionName = simImpl->self->name() + "-" + bodyItem->name();
 
+    vector<Item*> controlSrcItems;
+    findControlSrcItems(bodyItem->childItem(), controlSrcItems);
+    vector<Item*>::iterator iter = controlSrcItems.begin();
+    while(iter != controlSrcItems.end()){
+        Item* srcItem = *iter;
+        ControllerItem* controllerItem = 0;
+        if(controllerItem = dynamic_cast<ControllerItem*>(srcItem)){
+            controllers.push_back(controllerItem);
         } else {
-            BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(targetItem);
-            const string& name = motionItem->name();
+            BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(srcItem);
             if(motionItem && motionItem->name() != simulatedMotionName){
                 controllerItem = simImpl->createBodyMotionController(bodyItem, motionItem);
                 if(controllerItem){
                     if(simImpl->doReset){
                         setInitialStateOfBodyMotion(motionItem->motion());
                     }
-                    setupController(simImpl, controllerItem);
-                    setupResultMotion(simImpl, motionItem, simulatedMotionName);
+                    controllers.push_back(controllerItem);
                 }
             }
         }
+        if(controllerItem){
+            ++iter;
+        } else {
+            iter = controlSrcItems.erase(iter);
+        }
     }
-    if(!controllerItem){
-        frameRate = simImpl->worldFrameRate;
+    
+    if(controlSrcItems.empty()){
         setupResultMotion(simImpl, bodyItem, simulatedMotionName);
+
+    } else if(controlSrcItems.size() == 1){
+        setupResultMotion(simImpl, controlSrcItems.front(), simulatedMotionName);
+
+    } else {
+        // find the top owenr of all the controllers
+        Item* topOwner = 0;
+        int minDepth = std::numeric_limits<int>::max();
+        for(size_t i=0; i < controlSrcItems.size(); ++i){
+            Item* owner = controlSrcItems[i]->parentItem();
+            int depth = 0;
+            Item* item = owner;
+            while(item && item != bodyItem){
+                ++depth;
+                item = item->parentItem();
+            }
+            if(depth < minDepth){
+                topOwner = owner;
+                minDepth = depth;
+            }
+        }
+        setupResultMotion(simImpl, topOwner, simulatedMotionName);
     }
     
     return true;
@@ -499,13 +522,6 @@ void SimulationBody::cloneShapesOnce()
 }
 
 
-void SimulationBodyImpl::setupController(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
-{
-    frameRate = simImpl->worldFrameRate;
-    controller = controllerItem;
-}
-    
-
 void SimulationBodyImpl::setupResultMotion
 (SimulatorItemImpl* simImpl, Item* ownerItem, const string& simulatedMotionName)
 {
@@ -522,27 +538,13 @@ void SimulationBodyImpl::setupResultMotion
     if(!simImpl->isRecordingEnabled){
         return;
     }
-    
-    BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(ownerItem);
-    if(motionItem){
-        BodyMotionItem* resultMotionItem = motionItem->findItem<BodyMotionItem>(simulatedMotionName);
-        if(resultMotionItem){
-            motionItem = resultMotionItem;
-        } else {
-            resultMotionItem = new BodyMotionItem();
-            resultMotionItem->setTemporal();
-            resultMotionItem->setName(simulatedMotionName);
-            motionItem->addChildItem(resultMotionItem);
-            motionItem = resultMotionItem;
-        }
-    } else {
-        motionItem = ownerItem->findItem<BodyMotionItem>(simulatedMotionName);
-        if(!motionItem){
-            motionItem = new BodyMotionItem();
-            motionItem->setTemporal();
-            motionItem->setName(simulatedMotionName);
-            ownerItem->addChildItem(motionItem);
-        }
+
+    BodyMotionItem* motionItem = ownerItem->findItem<BodyMotionItem>(simulatedMotionName);
+    if(!motionItem){
+        motionItem = new BodyMotionItem();
+        motionItem->setTemporal();
+        motionItem->setName(simulatedMotionName);
+        ownerItem->addChildItem(motionItem);
     }
 
     simImpl->addBodyMotionEngine(motionItem);
@@ -638,7 +640,7 @@ void SimulationBodyImpl::setInitialStateOfBodyMotion(const BodyMotionPtr& bodyMo
 bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
 {
     this->simImpl = simImpl;
-    this->controller = controllerItem;
+    this->controllers.push_back(controllerItem);
     frameRate = simImpl->worldFrameRate;
     linkPosBuf.resizeColumn(0);
     return true;
@@ -1138,9 +1140,11 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         for(size_t i=0; i < allSimBodies.size(); ++i){
             SimulationBodyImpl* simBodyImpl = allSimBodies[i]->impl;
-            ControllerItemPtr controller = simBodyImpl->controller;
-            if(controller){
-                const BodyPtr& body = simBodyImpl->body;
+            Body* body = simBodyImpl->body;
+            vector<ControllerItemPtr>& controllers = simBodyImpl->controllers;
+            vector<ControllerItemPtr>::iterator iter = controllers.begin();
+            while(iter != controllers.end()){
+                ControllerItem* controller = *iter;
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
@@ -1156,13 +1160,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                                % controller->name()) << endl;
                     }
                 }
-                if(!ready){
+                if(ready){
+                    ++iter;
+                } else {
                     controller->setSimulatorItem(0);
                     string message = controller->getMessage();
                     if(!message.empty()){
                         os << message << endl;
                     }
-                    simBodyImpl->controller = 0;
+                    iter = controllers.erase(iter);
                 }
             }
         }
@@ -1248,7 +1254,7 @@ void SimulatorItemImpl::run()
     timer.start();
 
     int frame = 0;
-    bool onPause = false;
+    bool isOnPause = false;
 
     if(isRealtimeSyncMode){
         const double dt = worldTimeStep;
@@ -1256,60 +1262,63 @@ void SimulatorItemImpl::run()
         const double dtms = dt * 1000.0;
         double compensatedSimulationTime = 0.0;
         while(true){
-        	if(!pauseRequested){
-        		if(onPause){
-        			timer.start();
-        			onPause = false;
-        		}
-				if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
-					break;
-				}
-				double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
-				if(diff >= 1.0){
-					QThread::msleep(diff);
-				} else if(diff < 0.0){
-					const double compensationTime = -diff * compensationRatio;
-					compensatedSimulationTime += compensationTime;
-					diff += compensationTime;
-					const double delayOverThresh = -diff - 100.0;
-					if(delayOverThresh > 0.0){
-						compensatedSimulationTime += delayOverThresh;
-					}
-				}
-				compensatedSimulationTime += dtms;
-				++frame;
-        	}else{
-        		if(stopRequested)
-        			break;
-        		if(!onPause){
-        			elapsedTime += timer.elapsed();
-        			onPause = true;
-        		}
-        	}
+            if(pauseRequested){
+                if(stopRequested){
+                    break;
+                }
+                if(!isOnPause){
+                    elapsedTime += timer.elapsed();
+                    isOnPause = true;
+                }
+            } else {
+                if(isOnPause){
+                    timer.start();
+                    isOnPause = false;
+                }
+                if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
+                    break;
+                }
+                double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
+                if(diff >= 1.0){
+                    QThread::msleep(diff);
+                } else if(diff < 0.0){
+                    const double compensationTime = -diff * compensationRatio;
+                    compensatedSimulationTime += compensationTime;
+                    diff += compensationTime;
+                    const double delayOverThresh = -diff - 100.0;
+                    if(delayOverThresh > 0.0){
+                        compensatedSimulationTime += delayOverThresh;
+                    }
+                }
+                compensatedSimulationTime += dtms;
+                ++frame;
+            }
         }
     } else {
         while(true){
-        	if(!pauseRequested){
-        		if(onPause){
-        			timer.start();
-        			onPause = false;
-        		}
-				if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
-					break;
-				}
-        	}else{
-        		if(stopRequested)
-        			break;
-        		if(!onPause){
-        			elapsedTime += timer.elapsed();
-        			onPause = true;
-        		}
-        	}
+            if(pauseRequested){
+                if(stopRequested){
+                    break;
+                }
+                if(!isOnPause){
+                    elapsedTime += timer.elapsed();
+                    isOnPause = true;
+                }
+            } else {
+                if(isOnPause){
+                    timer.start();
+                    isOnPause = false;
+                }
+                if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
+                    break;
+                }
+            }
         }
     }
 
-    if(!onPause)
+    if(!isOnPause){
     	elapsedTime += timer.elapsed();
+    }
     actualSimulationTime = (elapsedTime / 1000.0);
     finishTime = frame / worldFrameRate;
 
@@ -1339,15 +1348,15 @@ void SimulatorItemImpl::updateSimBodyLists()
     for(size_t i=0; i < allSimBodies.size(); ++i){
         SimulationBody* simBody = allSimBodies[i];
         SimulationBodyImpl* simBodyImpl = simBody->impl;
-        ControllerItem* controller = simBodyImpl->controller.get();
-        if(controller){
-            activeControllers.push_back(controller);
-            if(simBodyImpl->body && !simBodyImpl->body->isStaticModel()){
-                activeSimBodies.push_back(simBody);
-            }
-        } else if(simBodyImpl->body && !simBodyImpl->body->isStaticModel()){
+        vector<ControllerItemPtr>& controllers = simBodyImpl->controllers;
+        if(simBodyImpl->body && !simBodyImpl->body->isStaticModel()){
             activeSimBodies.push_back(simBody);
-            hasActiveFreeBodies = true;
+            if(controllers.empty()){
+                hasActiveFreeBodies = true;
+            }
+        }
+        for(size_t j=0; j < controllers.size(); ++j){
+            activeControllers.push_back(controllers[j]);
         }
     }
 
@@ -1374,8 +1383,7 @@ bool SimulatorItemImpl::stepSimulationMain()
             isControlFinished = true;
         } else {
             for(size_t i=0; i < activeControllers.size(); ++i){
-                ControllerItem* controller = activeControllers[i];
-                controller->input();
+                activeControllers[i]->input();
             }
             {
                 boost::unique_lock<boost::mutex> lock(controlMutex);                
@@ -1582,8 +1590,9 @@ void SimulatorItemImpl::onSimulationLoopStopped()
     flushTimer.stop();
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
-        ControllerItem* controller = allSimBodies[i]->impl->controller.get();
-        if(controller){
+        vector<ControllerItemPtr>& controllers = allSimBodies[i]->impl->controllers;
+        for(size_t j=0; j < controllers.size(); ++j){
+            ControllerItem* controller = controllers[j];
             controller->stop();
             controller->setSimulatorItem(0);
         }
@@ -1600,7 +1609,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
         timeBar->stopFillLevelUpdate(fillLevelId);
     }
 
-    sigSimulationFinished_();
+    sigSimulationFinished();
 
     allSimBodies.clear();
     activeSimBodies.clear();
@@ -1641,7 +1650,7 @@ double SimulatorItemImpl::currentTime() const
 
 SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 {
-    return impl->sigSimulationFinished_;
+    return impl->sigSimulationFinished;
 }
 
 
