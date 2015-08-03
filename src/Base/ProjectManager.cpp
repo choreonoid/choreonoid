@@ -431,6 +431,7 @@ void ProjectManagerImpl::saveProject(const string& filename)
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
         messageView->notify(_("Saving a project file has been finished.\n"));
+        mainWindow->setProjectTitle(getBasename(filename));
         lastAccessedProjectFile = filename;
     } else {
         messageView->notify(_("Saving a project file failed.\n"));
