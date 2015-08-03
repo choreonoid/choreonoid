@@ -115,13 +115,14 @@ public:
     bool compIsAlive(RTSComp* rtsComp);
     RTSComp* nameToRTSComp(const string& name);
     RTSConnection* addRTSConnection(const string& id, const string& name,
-            RTSPort* sourcePort, RTSPort* targetPort);
+            RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription);
     void connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp,
             list<RTSConnection*>& rtsConnectionList, int mode=0);
     map<string, RTSConnectionPtr>& rtsConnections();
     map<string, RTSConnectionPtr>& deletedRtsConnections();
     void deleteRtsConnection(const string& id);
+    map<string, RTSCompPtr>& rtsComps();
 
 private:
     RTSystemItemImpl* impl;

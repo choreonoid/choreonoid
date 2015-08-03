@@ -46,7 +46,7 @@ public:
     RTSComp* nameToRTSComp(const string& name);
     bool compIsAlive(RTSComp* rtsComp);
     RTSConnection* addRTSConnection(const string& id, const string& name,
-            RTSPort* sourcePort, RTSPort* targetPort);
+            RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription);
     void deleteRTSConnection(const string& id);
     void connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp,
@@ -461,14 +461,14 @@ bool RTSystemItemImpl::compIsAlive(RTSComp* rtsComp)
 }
 
 RTSConnection* RTSystemItem::addRTSConnection(const string& id, const string& name,
-            RTSPort* sourcePort, RTSPort* targetPort)
+            RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription)
 {
-    return impl->addRTSConnection(id, name, sourcePort, targetPort);
+    return impl->addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription);
 }
 
 
 RTSConnection* RTSystemItemImpl::addRTSConnection(const string& id, const string& name,
-            RTSPort* sourcePort, RTSPort* targetPort)
+            RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription)
 {
     RTSConnectionPtr rtsConnection = new RTSConnection(
             id, name,
@@ -478,8 +478,13 @@ RTSConnection* RTSystemItemImpl::addRTSConnection(const string& id, const string
     rtsConnection->sourcePort = sourcePort;
     rtsConnection->targetRTC = targetPort->rtsComp;
     rtsConnection->targetPort = targetPort;
-    rtsConnections.insert(pair<string, RTSConnectionPtr>(rtsConnection->id, rtsConnection));
-    return rtsConnection;
+    rtsConnection->dataflow = dataflow;
+    rtsConnection->subscription = subscription;
+    if(rtsConnection->connect()){
+        rtsConnections.insert(pair<string, RTSConnectionPtr>(rtsConnection->id, rtsConnection));
+        return rtsConnection;
+    }else
+        return 0;
 }
 
 
@@ -528,6 +533,13 @@ void RTSystemItemImpl::RTSCompToConnectionList(const RTSComp* rtsComp,
         }
     }
 }
+
+
+map<string, RTSCompPtr>& RTSystemItem::rtsComps()
+{
+    return impl->rtsComps;
+}
+
 
 map<string, RTSConnectionPtr>& RTSystemItem::rtsConnections()
 {
