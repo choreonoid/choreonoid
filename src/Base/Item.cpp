@@ -516,21 +516,26 @@ bool Item::isOwnedBy(Item* item) const
 }
 
 
-void Item::traverse(boost::function<void(Item*)> function)
+bool Item::traverse(boost::function<bool(Item*)> function)
 {
-    traverse(this, function);
+    return traverse(this, function);
 }
 
 
-void Item::traverse(Item* item, const boost::function<void(Item*)>& function)
+bool Item::traverse(Item* item, const boost::function<bool(Item*)>& function)
 {
-    function(item);
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        traverse(child, function);
+    if(function(item)){
+        return true;
     }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        if(traverse(child, function)){
+            return true;
+        }
+    }
+    return false;
 }
 
-    
+
 /**
    @todo added the 'notifyUpdateLater()' method ?
 */

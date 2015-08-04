@@ -148,7 +148,7 @@ public:
     bool selectItem(Item* item, bool select);
     bool isItemChecked(Item* item, int id);
     bool checkItem(Item* item, bool checked, int id);
-    void extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items);
+    bool extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items);
     ItemList<>& checkedItems(int id);
     void extractCheckedItems(QTreeWidgetItem* twItem, int column, ItemList<>& checkdItems);
     void forEachTopItems(const ItemList<>& orgItemList, boost::function<void(Item*)> callback);
@@ -905,12 +905,13 @@ void ItemTreeView::extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& io
 }
 
 
-void ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items)
+bool ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items)
 {
     ItvItem* itvItem = getItvItem(item);
     if(itvItem && itvItem->isSelected()){
         io_items->push_back(item);
     }
+    return false;
 }
 
 

@@ -37,6 +37,19 @@ class Archive;
 */
 class CNOID_EXPORT Item : public Referenced
 {
+    template<class ItemType>
+    class ItemCallback
+    {
+        boost::function<bool(ItemType* item)> function;
+    public:
+        ItemCallback(boost::function<bool(ItemType* item)> f) : function(f) { }
+        bool operator()(Item* item) {
+            if(ItemType* casted = dynamic_cast<ItemType*>(item)){
+                return function(casted);
+        }
+        }
+    };
+
 protected:
     Item();
     Item(const Item& item);
@@ -111,7 +124,12 @@ public:
 
     bool isOwnedBy(Item* item) const;
 
-    void traverse(boost::function<void(Item*)> function);
+    bool traverse(boost::function<bool(Item*)> function);
+
+    template<class ItemType>
+    bool traverse(boost::function<bool(ItemType* item)> function){
+        return Item::traverse(ItemCallback<ItemType>(function));
+    }
 
     ItemPtr duplicate() const;
     ItemPtr duplicateAll() const;
@@ -248,7 +266,7 @@ private:
     void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);
-    void traverse(Item* item, const boost::function<void(Item*)>& function);
+    bool traverse(Item* item, const boost::function<bool(Item*)>& function);
     ItemPtr duplicateAllSub(ItemPtr duplicated) const;
         
     void updateFileInformation(const std::string& filename, const std::string& format);
