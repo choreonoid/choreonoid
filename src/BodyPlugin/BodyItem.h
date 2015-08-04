@@ -98,6 +98,9 @@ public:
 
     SignalProxy<void()> sigKinematicStateEdited();
 
+    SignalProxy<void(Link* link, const Vector3& point, const Vector3& direction)> sigInteractiveForceRequested();
+    void requestInteractiveForce(Link* link, const Vector3& point, const Vector3& direction);
+
     void enableCollisionDetection(bool on);
     bool isCollisionDetectionEnabled() const;
     
@@ -133,6 +136,8 @@ public:
     virtual SgNode* getScene();
     EditableSceneBody* sceneBody();
     EditableSceneBody* existingSceneBody();
+
+    bool isBeingSimulated() const;
 
 protected:
     virtual ItemPtr doDuplicate() const;
