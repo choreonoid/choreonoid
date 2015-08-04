@@ -173,6 +173,7 @@ public:
     CrossMarkerPtr ppcomMarker;
     bool isCmVisible;
     bool isPpcomVisible;
+    SgLineSetPtr pointConstraintForceRequestLine;
     SphereMarkerPtr zmpMarker;
     bool isZmpVisible;
     Vector3 orgZmpPos;
@@ -194,12 +195,16 @@ public:
     enum DragMode {
         DRAG_NONE,
         LINK_IK_TRANSLATION,
-        LINK_FK_ROTATION, LINK_FK_TRANSLATION,
+        LINK_FK_ROTATION,
+        LINK_FK_TRANSLATION,
+        LINK_POINT_CONSTRAINT_FORCE_REQUEST,
         ZMP_TRANSLATION
     };
     DragMode dragMode;
     SceneDragProjector dragProjector;
     bool isDragging;
+
+    Vector3 constraintLinkPoint; // link local
 
     EditableSceneLink* editableSceneLink(int index){
         return static_cast<EditableSceneLink*>(self->sceneLink(index));
@@ -249,6 +254,9 @@ public:
     void startFK(const SceneWidgetEvent& event);
     void dragFKRotation(const SceneWidgetEvent& event);
     void dragFKTranslation(const SceneWidgetEvent& event);
+    void startPointConstraintForceRequest(const SceneWidgetEvent& event);
+    void dragPointConstraintForceRequest(const SceneWidgetEvent& event);
+    void finishPointConstraintForceRequest();
     void startZmpTranslation(const SceneWidgetEvent& event);
     void dragZmpTranslation(const SceneWidgetEvent& event);
 
@@ -315,6 +323,10 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     ppcomMarker->setName("ProjectionPointCoM");
     ppcomMarker->setSize(radius);
     isPpcomVisible = false;
+
+    pointConstraintForceRequestLine = new SgLineSet;
+    pointConstraintForceRequestLine->getOrCreateVertices()->resize(2);
+    pointConstraintForceRequestLine->addLine(0, 1);
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(self->body());
     if(legged->isValid() && legged->numFeet() > 0){
@@ -726,26 +738,30 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             updateMarkersAndManipulators();
             ik.reset();
 
-            switch(kinematicsBar->mode()){
-            case KinematicsBar::AUTO_MODE:
-                ik = bodyItem->getDefaultIK(targetLink);
-                if(ik){
+            if(bodyItem->isBeingSimulated()){
+                startPointConstraintForceRequest(event);
+                
+            } else {
+                switch(kinematicsBar->mode()){
+                case KinematicsBar::AUTO_MODE:
+                    ik = bodyItem->getDefaultIK(targetLink);
+                    if(ik){
+                        startIK(event);
+                        break;
+                    }
+                case KinematicsBar::FK_MODE:
+                    if(targetLink == bodyItem->currentBaseLink()){
+                        // Translation of the base link
+                        startIK(event);
+                    } else {
+                        startFK(event);
+                    }
+                    break;
+                case KinematicsBar::IK_MODE:
                     startIK(event);
                     break;
                 }
-            case KinematicsBar::FK_MODE:
-                if(targetLink == bodyItem->currentBaseLink()){
-                    // Translation of the base link
-                    startIK(event);
-                } else {
-                    startFK(event);
-                }
-                break;
-            case KinematicsBar::IK_MODE:
-                startIK(event);
-                break;
             }
-            
         } else if(event.button() == Qt::MiddleButton){
             togglePin(pointedSceneLink, true, true);
             
@@ -781,17 +797,22 @@ bool EditableSceneBodyImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
         return false;
     }
     isDragging = false;
-    
-    if(dragMode != DRAG_NONE){
+
+    if(dragMode == LINK_POINT_CONSTRAINT_FORCE_REQUEST){
+        finishPointConstraintForceRequest();
+
+    } else if(dragMode != DRAG_NONE){
         bodyItem->acceptKinematicStateEdit();
-        dragMode = DRAG_NONE;
-        if(outlinedLink){
-            outlinedLink->showBoundingBox(true);
-            self->notifyUpdate(modified);
-        }
-        return true;
+    } else {
+        return false;
     }
-    return false;
+
+    dragMode = DRAG_NONE;
+    if(outlinedLink){
+        outlinedLink->showBoundingBox(true);
+        self->notifyUpdate(modified);
+    }
+    return true;
 }
 
 
@@ -865,6 +886,10 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 
         case LINK_FK_TRANSLATION:
             dragFKTranslation(event);
+            break;
+
+        case LINK_POINT_CONSTRAINT_FORCE_REQUEST:
+            dragPointConstraintForceRequest(event);
             break;
             
         case ZMP_TRANSLATION:
@@ -1091,7 +1116,8 @@ void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
 {
     if(dragMode == LINK_IK_TRANSLATION){
         if(dragProjector.dragTranslation(event)){
-            Position T = dragProjector.initialPosition();
+            //Position T = dragProjector.initialPosition();
+            Position T;
             T.translation() = dragProjector.position().translation();
             T.linear() = targetLink->R();
             if(penetrationBlocker){
@@ -1150,6 +1176,45 @@ void EditableSceneBodyImpl::dragFKTranslation(const SceneWidgetEvent& event)
         targetLink->q() = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
         bodyItem->notifyKinematicStateChange(true);
     }
+}
+
+
+void EditableSceneBodyImpl::startPointConstraintForceRequest(const SceneWidgetEvent& event)
+{
+    const Vector3& point = event.point();
+    dragProjector.setInitialTranslation(point);
+    dragProjector.setTranslationAlongViewPlane();
+    if(dragProjector.startTranslation(event)){
+        constraintLinkPoint = targetLink->T().inverse() * point;
+        SgVertexArray& points = *pointConstraintForceRequestLine->vertices();
+        points[0] = points[1] = point.cast<Vector3f::Scalar>();
+        markerGroup->addChildOnce(pointConstraintForceRequestLine, true);
+        dragMode = LINK_POINT_CONSTRAINT_FORCE_REQUEST;
+    }
+}
+
+
+void EditableSceneBodyImpl::dragPointConstraintForceRequest(const SceneWidgetEvent& event)
+{
+    if(dragMode == LINK_POINT_CONSTRAINT_FORCE_REQUEST){
+        if(dragProjector.dragTranslation(event)){
+            BodyItem::PointConstraint c;
+            c.point = targetLink->T() * constraintLinkPoint;
+            c.goal = dragProjector.position().translation();
+            SgVertexArray& points = *pointConstraintForceRequestLine->vertices();
+            points[0] = c.point.cast<Vector3f::Scalar>();
+            points[1] = c.goal.cast<Vector3f::Scalar>();
+            pointConstraintForceRequestLine->notifyUpdate();
+            std::vector<BodyItem::PointConstraint> constraints(1, c);
+            bodyItem->requestPointConstraintForce(targetLink, constraints);
+        }
+    }
+}
+
+
+void EditableSceneBodyImpl::finishPointConstraintForceRequest()
+{
+    markerGroup->removeChild(pointConstraintForceRequestLine, true);
 }
 
 

@@ -95,7 +95,7 @@ public:
     LazySignal< Signal<void()> > sigKinematicStateChanged;
     LazySignal< Signal<void()> > sigKinematicStateEdited;
 
-    Signal<void(Link* link, const Vector3& point, const Vector3& direction)> sigInteractiveForceRequested;
+    Signal<void(Link* link, const std::vector<BodyItem::PointConstraint>& constraints)> sigPointConstraintForceRequested;
 
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
@@ -313,15 +313,16 @@ SignalProxy<void()> BodyItem::sigKinematicStateEdited()
 }
 
 
-SignalProxy<void(Link* link, const Vector3& point, const Vector3& direction)> BodyItem::sigInteractiveForceRequested()
+SignalProxy<void(Link* link, const std::vector<BodyItem::PointConstraint>& constraints)>
+BodyItem::sigPointConstraintForceRequested()
 {
-    return impl->sigInteractiveForceRequested;
+    return impl->sigPointConstraintForceRequested;
 }
 
 
-void BodyItem::requestInteractiveForce(Link* link, const Vector3& point, const Vector3& direction)
+void BodyItem::requestPointConstraintForce(Link* link, const std::vector<PointConstraint>& constraints)
 {
-    impl->sigInteractiveForceRequested(link, point, direction);
+    impl->sigPointConstraintForceRequested(link, constraints);
 }
 
 

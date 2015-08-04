@@ -98,8 +98,12 @@ public:
 
     SignalProxy<void()> sigKinematicStateEdited();
 
-    SignalProxy<void(Link* link, const Vector3& point, const Vector3& direction)> sigInteractiveForceRequested();
-    void requestInteractiveForce(Link* link, const Vector3& point, const Vector3& direction);
+    struct PointConstraint {
+        Vector3 point;  // link local
+        Vector3 goal; // global
+    };
+    SignalProxy<void(Link* link, const std::vector<PointConstraint>& constraints)> sigPointConstraintForceRequested();
+    void requestPointConstraintForce(Link* link, const std::vector<PointConstraint>& constraints);
 
     void enableCollisionDetection(bool on);
     bool isCollisionDetectionEnabled() const;

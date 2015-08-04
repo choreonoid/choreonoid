@@ -46,7 +46,8 @@ class CNOID_EXPORT Item : public Referenced
         bool operator()(Item* item) {
             if(ItemType* casted = dynamic_cast<ItemType*>(item)){
                 return function(casted);
-        }
+            }
+            return false;
         }
     };
 
