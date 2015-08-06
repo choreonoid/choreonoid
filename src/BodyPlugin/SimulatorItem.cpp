@@ -31,6 +31,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/bind.hpp>
 
+#include <sched.h>
+
+
 #if QT_VERSION >= 0x040700
 #include <QElapsedTimer>
 #else
@@ -122,7 +125,8 @@ public:
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
 
-    boost::mutex simulationLoopMutex;
+    //boost::mutex simulationLoopMutex;
+    QMutex simulationLoopMutex;
     
     ControllerTarget controllerTarget;
     vector<ControllerItem*> activeControllers;
@@ -171,7 +175,7 @@ public:
 
     TimeBar* timeBar;
     int fillLevelId;
-    QMutex mutex;
+    QMutex resultBufMutex;
     double actualSimulationTime;
     double finishTime;
     MessageView* mv;
@@ -1215,22 +1219,28 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
 void SimulatorItem::addPreDynamicsFunction(boost::function<void()> func)
 {
-    boost::unique_lock<boost::mutex> lock(impl->simulationLoopMutex);                
+    //boost::unique_lock<boost::mutex> lock(impl->simulationLoopMutex);
+    impl->simulationLoopMutex.lock();
     impl->preDynamicsFunctions.push_back(func);
+    impl->simulationLoopMutex.unlock();
 }
 
 
 void SimulatorItem::addMidDynamicsFunction(boost::function<void()> func)
 {
-    boost::unique_lock<boost::mutex> lock(impl->simulationLoopMutex);                
+    //boost::unique_lock<boost::mutex> lock(impl->simulationLoopMutex);
+    impl->simulationLoopMutex.lock();
     impl->midDynamicsFunctions.push_back(func);
+    impl->simulationLoopMutex.unlock();
 }
 
 
 void SimulatorItem::addPostDynamicsFunction(boost::function<void()> func)
 {
-    boost::unique_lock<boost::mutex> lock(impl->simulationLoopMutex);                
+    //boost::unique_lock<boost::mutex> lock(impl->simulationLoopMutex);
+    impl->simulationLoopMutex.lock();
     impl->postDynamicsFunctions.push_back(func);
+    impl->simulationLoopMutex.unlock();
 }
 
 
@@ -1380,7 +1390,8 @@ void SimulatorItemImpl::updateSimBodyLists()
 
 bool SimulatorItemImpl::stepSimulationMain()
 {
-    boost::unique_lock<boost::mutex> lock(simulationLoopMutex);                
+    //boost::unique_lock<boost::mutex> lock(simulationLoopMutex);
+    simulationLoopMutex.lock();
     
     currentFrame++;
 
@@ -1444,7 +1455,7 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
 
     {
-        mutex.lock();
+        resultBufMutex.lock();
         
         for(size_t i=0; i < activeSimBodies.size(); ++i){
             activeSimBodies[i]->storeResult();
@@ -1452,7 +1463,7 @@ bool SimulatorItemImpl::stepSimulationMain()
         collisionPairsBuf.push_back(collisionPairs);
         frameAtLastBufferWriting = currentFrame;
 
-        mutex.unlock();
+        resultBufMutex.unlock();
     }
 
     if(useControllerThreads){
@@ -1467,6 +1478,11 @@ bool SimulatorItemImpl::stepSimulationMain()
             }
         }
     }
+
+    simulationLoopMutex.unlock();
+
+    //QThread::usleep(1);
+    sched_yield();
 
     return doContinue;
 }
@@ -1512,7 +1528,7 @@ void SimulatorItemImpl::flushResult()
 {
     simBodyImplsToNotifyResult.clear();
 
-    mutex.lock();
+    resultBufMutex.lock();
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
         SimulationBody* simBody = allSimBodies[i];
@@ -1521,7 +1537,7 @@ void SimulatorItemImpl::flushResult()
         }
     }
     if(isRecordingEnabled && recordCollisionData){
-        for(int i=0 ; i<collisionPairsBuf.size(); i++ ){
+        for(int i=0 ; i < collisionPairsBuf.size(); ++i){
             if(collisionSeq->numFrames() >= ringBufferSize){
                 collisionSeq->popFrontFrame();
             }
@@ -1533,7 +1549,7 @@ void SimulatorItemImpl::flushResult()
 
     int frame = frameAtLastBufferWriting;
     
-    mutex.unlock();
+    resultBufMutex.unlock();
 
     if(isRecordingEnabled){
         double fillLevel = frame / worldFrameRate;

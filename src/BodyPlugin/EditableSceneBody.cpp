@@ -392,9 +392,11 @@ void EditableSceneBodyImpl::onKinematicStateChanged()
         zmpMarker->setTranslation(bodyItem->zmp());
     }
 
-    if(pointConstraintForceRequestLine->hasParents()){
-        pointConstraintForceRequestLine->vertices()->at(0)
-            = (targetLink->T() * constraintLinkPoint).cast<Vector3f::Scalar>();
+    if(dragMode == LINK_POINT_CONSTRAINT_FORCE_REQUEST){
+        if(pointConstraintForceRequestLine->hasParents()){
+            pointConstraintForceRequestLine->vertices()->at(0)
+                = (targetLink->T() * constraintLinkPoint).cast<Vector3f::Scalar>();
+        }
     }
 
     self->updateLinkPositions(modified);
@@ -1191,10 +1193,9 @@ void EditableSceneBodyImpl::startPointConstraintForceRequest(const SceneWidgetEv
     dragProjector.setTranslationAlongViewPlane();
     if(dragProjector.startTranslation(event)){
         constraintLinkPoint = targetLink->T().inverse() * point;
-        SgVertexArray& points = *pointConstraintForceRequestLine->vertices();
-        points[0] = points[1] = point.cast<Vector3f::Scalar>();
-        markerGroup->addChildOnce(pointConstraintForceRequestLine, true);
         dragMode = LINK_POINT_CONSTRAINT_FORCE_REQUEST;
+        dragPointConstraintForceRequest(event);
+        markerGroup->addChildOnce(pointConstraintForceRequestLine, true);
     }
 }
 
