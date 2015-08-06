@@ -4,6 +4,7 @@
 */
 
 #include "AISTSimulatorItem.h"
+#include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
@@ -18,6 +19,7 @@
 #include <cnoid/EigenUtil>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/thread.hpp>
 #include <iostream>
 #include <iomanip>
 #include "gettext.h"
@@ -106,11 +108,20 @@ public:
 };
 
 
-class KinematicWalkBody : public SimulationBody
+class AISTSimBody : public SimulationBody
+{
+public:
+    ScopedConnection pointConstraintForceRequestedConnection;
+
+    AISTSimBody(DyBody* body) : SimulationBody(body) { }
+};
+    
+
+class KinematicWalkBody : public AISTSimBody
 {
 public:
     KinematicWalkBody(DyBody* body, LeggedBodyHelper* legged)
-        : SimulationBody(body),
+        : AISTSimBody(body),
           legged(legged) {
         supportFootIndex = 0;
         for(int i=1; i < legged->numFeet(); ++i){
@@ -155,10 +166,26 @@ public:
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
+    bool isPointConstraintForceRequestFunctionHooked;
+    boost::mutex pointConstraintForceRequestMutex;
+    bool isPointConstraintForceRequestActive;
+    struct PointConstraint {
+        Link* link;
+        double kp;
+        double kd;
+        double f_max;
+        std::vector<BodyItem::PointConstraint> constraints;
+    };
+    std::vector<PointConstraint> pointConstraintForceRequest;
+
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    void addBody(SimulationBody* simBody);
+    void addBody(AISTSimBody* simBody);
+    void clearExternalForces();
+    void onPointConstraintForceRequested(
+        AISTSimBody* simBody, Link* orgLink, const std::vector<BodyItem::PointConstraint>& constraints);
+    void updatePointConstraintForce();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -352,7 +379,7 @@ SimulationBodyPtr AISTSimulatorItem::createSimulationBody(BodyPtr orgBody)
         }
     }
     if(!simBody){
-        simBody = new SimulationBody(body);
+        simBody = new AISTSimBody(body);
     }
 
     return simBody;
@@ -396,11 +423,16 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactDepthCorrection(
         contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
 
+    self->addPreDynamicsFunction(boost::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
+
     world.clearBodies();
     bodyIndexMap.clear();
     for(size_t i=0; i < simBodies.size(); ++i){
-        addBody(simBodies[i]);
+        addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
+
+    isPointConstraintForceRequestFunctionHooked = false;
+    isPointConstraintForceRequestActive = false;
 
     cfs.setFriction(staticFriction, slipFriction);
     cfs.setContactCullingDistance(contactCullingDistance.value());
@@ -418,7 +450,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 }
 
 
-void AISTSimulatorItemImpl::addBody(SimulationBody* simBody)
+void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
 {
     DyBody* body = static_cast<DyBody*>(simBody->body());
 
@@ -452,13 +484,21 @@ void AISTSimulatorItemImpl::addBody(SimulationBody* simBody)
     } else {
         bodyIndexMap[body] = world.addBody(body);
     }
+
+    simBody->pointConstraintForceRequestedConnection.reset(
+        simBody->bodyItem()->sigPointConstraintForceRequested().connect(
+            boost::bind(&AISTSimulatorItemImpl::onPointConstraintForceRequested, this, simBody, _1, _2)));
+}
+
+
+void AISTSimulatorItemImpl::clearExternalForces()
+{
+    world.constraintForceSolver.clearExternalForces();
 }
 
 
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    impl->world.constraintForceSolver.clearExternalForces();
-
     if(!impl->dynamicsMode.is(KINEMATICS)){
         impl->world.calcNextState();
         return true;
@@ -504,6 +544,57 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
         }
     }
     return true;
+}
+
+
+void AISTSimulatorItemImpl::onPointConstraintForceRequested
+(AISTSimBody* simBody, Link* orgLink, const std::vector<BodyItem::PointConstraint>& constraints)
+{
+    boost::unique_lock<boost::mutex> lock(pointConstraintForceRequestMutex);
+    pointConstraintForceRequest.clear();
+    Body* body = simBody->body();
+    Link* link = body->link(orgLink->index());
+    if(link){
+        if(!isPointConstraintForceRequestFunctionHooked){
+            self->addPreDynamicsFunction(
+                boost::bind(&AISTSimulatorItemImpl::updatePointConstraintForce, this));
+            isPointConstraintForceRequestFunctionHooked = true;
+        }
+        PointConstraint pc;
+        pc.link = link;
+        double m = body->mass();
+        pc.kp = 3.0 * m;
+        pc.kd = 0.1 * pc.kp;
+        pc.f_max = pc.kp;
+        pc.constraints = constraints;
+        pointConstraintForceRequest.push_back(pc);
+    }
+
+    isPointConstraintForceRequestActive = !pointConstraintForceRequest.empty();
+}
+
+
+void AISTSimulatorItemImpl::updatePointConstraintForce()
+{
+    if(isPointConstraintForceRequestActive){
+        boost::unique_lock<boost::mutex> lock(pointConstraintForceRequestMutex);
+        for(size_t i=0; i < pointConstraintForceRequest.size(); ++i){
+            const PointConstraint& pc = pointConstraintForceRequest[i];
+            Link* link = pc.link;
+            for(size_t j=0; j < pc.constraints.size(); ++j){
+                const BodyItem::PointConstraint& c = pc.constraints[j];
+                Vector3 a = link->R() * c.point;
+                Vector3 p = link->p() + a;
+                Vector3 v = link->v() + link->w().cross(a);
+                Vector3 f = pc.kp * (c.goal - p) + pc.kd * (-v);
+                if(f.norm() > pc.f_max){
+                    f = pc.f_max * f.normalized();
+                }
+                link->f_ext() += f;
+                link->tau_ext() += p.cross(f);
+            }
+        }
+    }
 }
 
 

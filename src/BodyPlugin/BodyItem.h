@@ -99,8 +99,8 @@ public:
     SignalProxy<void()> sigKinematicStateEdited();
 
     struct PointConstraint {
-        Vector3 point;  // link local
-        Vector3 goal; // global
+        Vector3 point; // link local
+        Vector3 goal;  // global
     };
     SignalProxy<void(Link* link, const std::vector<PointConstraint>& constraints)> sigPointConstraintForceRequested();
     void requestPointConstraintForce(Link* link, const std::vector<PointConstraint>& constraints);
