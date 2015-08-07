@@ -738,17 +738,21 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     bool handled = false;
     isDragging = false;
 
-    if(pointedType == PT_SCENE_LINK){
-
-        if(event.button() == Qt::LeftButton){
+    if(bodyItem->isBeingSimulated()){
+        if(pointedType == PT_SCENE_LINK){
             targetLink = pointedSceneLink->link();
-            updateMarkersAndManipulators();
-            ik.reset();
-
-            if(bodyItem->isBeingSimulated()){
+            if(event.button() == Qt::LeftButton){
                 startPointConstraintForceRequest(event);
+            }
+            handled = true;
+        }
+    } else {
+        if(pointedType == PT_SCENE_LINK){
+            if(event.button() == Qt::LeftButton){
+                targetLink = pointedSceneLink->link();
+                updateMarkersAndManipulators();
+                ik.reset();
                 
-            } else {
                 switch(kinematicsBar->mode()){
                 case KinematicsBar::AUTO_MODE:
                     ik = bodyItem->getDefaultIK(targetLink);
@@ -768,19 +772,19 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
                     startIK(event);
                     break;
                 }
+            } else if(event.button() == Qt::MiddleButton){
+                togglePin(pointedSceneLink, true, true);
+                
+            } else if(event.button() == Qt::RightButton){
+                
             }
-        } else if(event.button() == Qt::MiddleButton){
-            togglePin(pointedSceneLink, true, true);
             
-        } else if(event.button() == Qt::RightButton){
+            handled = true;
 
+        } else if(pointedType == PT_ZMP){
+            startZmpTranslation(event);
+            handled = true;
         }
-
-        handled = true;
-
-    } else if(pointedType == PT_ZMP){
-        startZmpTranslation(event);
-        handled = true;
     }
 
     if(dragMode != DRAG_NONE && outlinedLink){
