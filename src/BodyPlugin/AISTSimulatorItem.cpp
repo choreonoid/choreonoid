@@ -166,7 +166,7 @@ public:
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
-    bool isPointConstraintForceRequestFunctionHooked;
+    boost::optional<int> pointConstraintForceFunctionId;
     boost::mutex pointConstraintForceRequestMutex;
     bool isPointConstraintForceRequestActive;
     struct PointConstraint {
@@ -431,8 +431,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
 
-    isPointConstraintForceRequestFunctionHooked = false;
-    isPointConstraintForceRequestActive = false;
+    pointConstraintForceFunctionId = boost::none;
 
     cfs.setFriction(staticFriction, slipFriction);
     cfs.setContactCullingDistance(contactCullingDistance.value());
@@ -554,11 +553,16 @@ void AISTSimulatorItemImpl::onPointConstraintForceRequested
     pointConstraintForceRequest.clear();
     Body* body = simBody->body();
     Link* link = body->link(orgLink->index());
-    if(link){
-        if(!isPointConstraintForceRequestFunctionHooked){
-            self->addPreDynamicsFunction(
-                boost::bind(&AISTSimulatorItemImpl::updatePointConstraintForce, this));
-            isPointConstraintForceRequestFunctionHooked = true;
+    if(!link || constraints.empty()){
+        if(pointConstraintForceFunctionId){
+            self->removePreDynamicsFunction(*pointConstraintForceFunctionId);
+            pointConstraintForceFunctionId = boost::none;
+        }
+    } else if(link){
+        if(!pointConstraintForceFunctionId){
+            pointConstraintForceFunctionId =
+                self->addPreDynamicsFunction(
+                    boost::bind(&AISTSimulatorItemImpl::updatePointConstraintForce, this));
         }
         PointConstraint pc;
         pc.link = link;
@@ -569,30 +573,26 @@ void AISTSimulatorItemImpl::onPointConstraintForceRequested
         pc.constraints = constraints;
         pointConstraintForceRequest.push_back(pc);
     }
-
-    isPointConstraintForceRequestActive = !pointConstraintForceRequest.empty();
 }
 
 
 void AISTSimulatorItemImpl::updatePointConstraintForce()
 {
-    if(isPointConstraintForceRequestActive){
-        boost::unique_lock<boost::mutex> lock(pointConstraintForceRequestMutex);
-        for(size_t i=0; i < pointConstraintForceRequest.size(); ++i){
-            const PointConstraint& pc = pointConstraintForceRequest[i];
-            Link* link = pc.link;
-            for(size_t j=0; j < pc.constraints.size(); ++j){
-                const BodyItem::PointConstraint& c = pc.constraints[j];
-                Vector3 a = link->R() * c.point;
-                Vector3 p = link->p() + a;
-                Vector3 v = link->v() + link->w().cross(a);
-                Vector3 f = pc.kp * (c.goal - p) + pc.kd * (-v);
-                if(f.norm() > pc.f_max){
-                    f = pc.f_max * f.normalized();
-                }
-                link->f_ext() += f;
-                link->tau_ext() += p.cross(f);
+    boost::unique_lock<boost::mutex> lock(pointConstraintForceRequestMutex);
+    for(size_t i=0; i < pointConstraintForceRequest.size(); ++i){
+        const PointConstraint& pc = pointConstraintForceRequest[i];
+        Link* link = pc.link;
+        for(size_t j=0; j < pc.constraints.size(); ++j){
+            const BodyItem::PointConstraint& c = pc.constraints[j];
+            Vector3 a = link->R() * c.point;
+            Vector3 p = link->p() + a;
+            Vector3 v = link->v() + link->w().cross(a);
+            Vector3 f = pc.kp * (c.goal - p) + pc.kd * (-v);
+            if(f.norm() > pc.f_max){
+                f = pc.f_max * f.normalized();
             }
+            link->f_ext() += f;
+            link->tau_ext() += p.cross(f);
         }
     }
 }

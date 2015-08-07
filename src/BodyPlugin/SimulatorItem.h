@@ -104,11 +104,15 @@ public:
     const std::vector<SimulationBody*>& simulationBodies();
 
     /**
-       The following functions can be called from the initializeSimulation function of SubSimulatorItem.
+       \return The registration id of the function. The id can be used for removing the function.
     */
-    void addPreDynamicsFunction(boost::function<void()> func);
-    void addMidDynamicsFunction(boost::function<void()> func);
-    void addPostDynamicsFunction(boost::function<void()> func);
+    int addPreDynamicsFunction(boost::function<void()> func);
+    int addMidDynamicsFunction(boost::function<void()> func);
+    int addPostDynamicsFunction(boost::function<void()> func);
+
+    void removePreDynamicsFunction(int id);
+    void removeMidDynamicsFunction(int id);
+    void removePostDynamicsFunction(int id);
         
     //void addRecordFunction(boost::function<void()> func);
 
