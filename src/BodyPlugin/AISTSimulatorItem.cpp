@@ -569,6 +569,10 @@ void AISTSimulatorItemImpl::onPointConstraintForceRequested
         double m = body->mass();
         pc.kp = 3.0 * m;
         pc.kd = 0.1 * pc.kp;
+
+        //pc.kp = 20.0 * m;
+        //pc.kd = 0.01 * pc.kp;
+        
         pc.f_max = pc.kp;
         pc.constraints = constraints;
         pointConstraintForceRequest.push_back(pc);
