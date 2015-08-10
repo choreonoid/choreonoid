@@ -98,13 +98,6 @@ public:
 
     SignalProxy<void()> sigKinematicStateEdited();
 
-    struct PointConstraint {
-        Vector3 point; // link local
-        Vector3 goal;  // global
-    };
-    SignalProxy<void(Link* link, const std::vector<PointConstraint>& constraints)> sigPointConstraintForceRequested();
-    void requestPointConstraintForce(Link* link, const std::vector<PointConstraint>& constraints);
-
     void enableCollisionDetection(bool on);
     bool isCollisionDetectionEnabled() const;
     
@@ -140,8 +133,6 @@ public:
     virtual SgNode* getScene();
     EditableSceneBody* sceneBody();
     EditableSceneBody* existingSceneBody();
-
-    bool isBeingSimulated() const;
 
 protected:
     virtual ItemPtr doDuplicate() const;

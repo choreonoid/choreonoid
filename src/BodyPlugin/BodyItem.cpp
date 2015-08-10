@@ -5,7 +5,6 @@
 
 #include "BodyItem.h"
 #include "WorldItem.h"
-#include "SimulatorItem.h"
 #include "KinematicsBar.h"
 #include "EditableSceneBody.h"
 #include "LinkSelectionView.h"
@@ -95,8 +94,6 @@ public:
     LazySignal< Signal<void()> > sigKinematicStateChanged;
     LazySignal< Signal<void()> > sigKinematicStateEdited;
 
-    Signal<void(Link* link, const std::vector<BodyItem::PointConstraint>& constraints)> sigPointConstraintForceRequested;
-
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
     bool isFkRequested;
@@ -140,7 +137,6 @@ public:
     void updateCollisionDetectorLater();
     void appendKinematicStateToHistory();
     bool onStaticModelPropertyChanged(bool on);
-    bool checkBeingSimulated(SimulatorItem* item, bool& result);
     void onLinkVisibilityCheckToggled();
     void onLinkSelectionChanged();
     void onPositionChanged();
@@ -310,19 +306,6 @@ SignalProxy<void()> BodyItem::sigKinematicStateChanged()
 SignalProxy<void()> BodyItem::sigKinematicStateEdited()
 {
     return impl->sigKinematicStateEdited.signal();
-}
-
-
-SignalProxy<void(Link* link, const std::vector<BodyItem::PointConstraint>& constraints)>
-BodyItem::sigPointConstraintForceRequested()
-{
-    return impl->sigPointConstraintForceRequested;
-}
-
-
-void BodyItem::requestPointConstraintForce(Link* link, const std::vector<PointConstraint>& constraints)
-{
-    impl->sigPointConstraintForceRequested(link, constraints);
 }
 
 
@@ -1089,29 +1072,6 @@ SgNode* BodyItem::getScene()
 EditableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
-}
-
-
-bool BodyItemImpl::checkBeingSimulated(SimulatorItem* item, bool& result)
-{
-    if(item->isRunning()){
-        result = true;
-        return true;
-    }
-    return false;
-}
-        
-
-bool BodyItem::isBeingSimulated() const
-{
-    bool result = false;
-    BodyItem* self = const_cast<BodyItem*>(this);
-    WorldItem* worldItem = self->findOwnerItem<WorldItem>();
-    if(worldItem){
-        worldItem->traverse<SimulatorItem>(
-            boost::bind(&BodyItemImpl::checkBeingSimulated, impl, _1, boost::ref(result)));
-    }
-    return result;
 }
 
 

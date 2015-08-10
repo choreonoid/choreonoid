@@ -165,6 +165,9 @@ public:
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
 
+    typedef map<weak_ref_ptr<BodyItem>, SimulationBodyPtr> BodyItemToSimBodyMap;
+    BodyItemToSimBodyMap simBodyMap;
+
     int currentFrame;
     double worldFrameRate;
     double worldTimeStep;
@@ -235,6 +238,18 @@ public:
     CollisionSeqPtr collisionSeq;
     deque<CollisionLinkPairListPtr> collisionPairsBuf;
 
+    boost::optional<int> pullingForceFunctionId;
+    boost::mutex pullingForceRequestMutex;
+    struct PullingForceRequest {
+        Link* link;
+        double kp;
+        double kd;
+        double f_max;
+        Vector3 point;
+        Vector3 goal;
+    };
+    PullingForceRequest pullingForceRequest;
+
     double currentTime() const;
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
@@ -250,6 +265,10 @@ public:
     void pauseSimulation();
     void restartSimulation();
     void onSimulationLoopStopped();
+    void setPullingForceRequest(
+        BodyItem* bodyItem, Link* orgLink, const Vector3& point, const Vector3& goal);
+    void updatePullingForce();
+    void setLinkPositionRequest(BodyItem* bodyItem, const Position& T);
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
     bool setSpecifiedRecordingTimeLength(double length);
@@ -373,6 +392,30 @@ public:
 void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->manage(new SimulatedMotionEngineManager());
+}
+
+
+static bool checkActive(SimulatorItem* item, SimulatorItem*& activeItem)
+{
+    if(item->isRunning()){
+        activeItem = item;
+        return true;
+    }
+    return false;
+}
+
+
+SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
+{
+    bool result = false;
+    SimulatorItem* activeSimulatorItem = 0;
+    if(item){
+        WorldItem* worldItem = item->findOwnerItem<WorldItem>();
+        if(worldItem){
+            worldItem->traverse<SimulatorItem>(boost::bind(checkActive, _1, boost::ref(activeSimulatorItem)));
+        }
+    }
+    return activeSimulatorItem;
 }
 
 
@@ -1205,6 +1248,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(simBody->impl->initialize(this, bodyItem)){
                     allSimBodies.push_back(simBody);
                     simBodiesWithBody.push_back(simBody);
+                    simBodyMap[bodyItem] = simBody;
                 }
             }
         } else if(ControllerItem* controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
@@ -1240,6 +1284,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         CollisionSeq::Frame frame0 = collisionSeq->frame(0);
         frame0[0]  = boost::make_shared<CollisionLinkPairList>();
     }
+
+    pullingForceFunctionId = boost::none;
 
     bool result = self->initializeSimulation(simBodiesWithBody);
 
@@ -1776,6 +1822,74 @@ double SimulatorItemImpl::currentTime() const
 SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 {
     return impl->sigSimulationFinished;
+}
+
+
+void SimulatorItem::setPullingForceRequest
+(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& goal)
+{
+    impl->setPullingForceRequest(bodyItem, link, point, goal);
+}
+
+
+void SimulatorItemImpl::setPullingForceRequest
+(BodyItem* bodyItem, Link* orgLink, const Vector3& point, const Vector3& goal)
+{
+    bool isValid = false;
+    boost::unique_lock<boost::mutex> lock(pullingForceRequestMutex);
+
+    if(bodyItem && orgLink){
+        BodyItemToSimBodyMap::iterator p = simBodyMap.find(bodyItem);
+        if(p != simBodyMap.end()){
+            SimulationBodyPtr simBody = p->second;
+            Body* body = simBody->body();
+            Link* link = body->link(orgLink->index());
+            if(!pullingForceFunctionId){
+                pullingForceFunctionId =
+                    self->addPreDynamicsFunction(
+                        boost::bind(&SimulatorItemImpl::updatePullingForce, this));
+            }
+            PullingForceRequest& r = pullingForceRequest;
+            r.link = link;
+            double m = body->mass();
+            r.kp = 3.0 * m;
+            r.kd = 0.1 * r.kp;
+            r.f_max = r.kp;
+            r.point = point;
+            r.goal = goal;
+
+            isValid = true;
+        }
+    }
+    if(!isValid){
+        if(pullingForceFunctionId){
+            self->removePreDynamicsFunction(*pullingForceFunctionId);
+            pullingForceFunctionId = boost::none;
+        }
+    }
+}
+
+
+void SimulatorItemImpl::updatePullingForce()
+{
+    boost::unique_lock<boost::mutex> lock(pullingForceRequestMutex);
+    const PullingForceRequest& r = pullingForceRequest;
+    Link* link = r.link;
+    Vector3 a = link->R() * r.point;
+    Vector3 p = link->p() + a;
+    Vector3 v = link->v() + link->w().cross(a);
+    Vector3 f = r.kp * (r.goal - p) + r.kd * (-v);
+    if(f.norm() > r.f_max){
+        f = r.f_max * f.normalized();
+    }
+    link->f_ext() += f;
+    link->tau_ext() += p.cross(f);
+}
+
+
+void SimulatorItem::setLinkPositionRequest(BodyItem* bodyItem, const Position& T)
+{
+
 }
 
 

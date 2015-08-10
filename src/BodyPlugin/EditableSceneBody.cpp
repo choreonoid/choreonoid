@@ -4,6 +4,7 @@
 
 #include "EditableSceneBody.h"
 #include "BodyItem.h"
+#include "SimulatorItem.h"
 #include "KinematicsBar.h"
 #include "BodyBar.h"
 #include "LinkSelectionView.h"
@@ -176,7 +177,7 @@ public:
     CrossMarkerPtr ppcomMarker;
     bool isCmVisible;
     bool isPpcomVisible;
-    SgLineSetPtr pointConstraintForceRequestLine;
+    SgLineSetPtr pullingForceRequestLine;
     SphereMarkerPtr zmpMarker;
     bool isZmpVisible;
     Vector3 orgZmpPos;
@@ -200,14 +201,15 @@ public:
         LINK_IK_TRANSLATION,
         LINK_FK_ROTATION,
         LINK_FK_TRANSLATION,
-        LINK_POINT_CONSTRAINT_FORCE_REQUEST,
+        LINK_PULLING_FORCE_REQUEST,
         ZMP_TRANSLATION
     };
     DragMode dragMode;
     SceneDragProjector dragProjector;
     bool isDragging;
 
-    Vector3 constraintLinkPoint; // link local
+    weak_ref_ptr<SimulatorItem> activeSimulatorItem;
+    Vector3 pointedLinkLocalPoint;
     bool isSimulatedRootLinkPositionMoveMode;
 
     EditableSceneLink* editableSceneLink(int index){
@@ -259,9 +261,9 @@ public:
     void dragFKRotation(const SceneWidgetEvent& event);
     void dragFKTranslation(const SceneWidgetEvent& event);
     void setSimulatedRootLinkPositionMoveMode(bool on);
-    void startPointConstraintForceRequest(const SceneWidgetEvent& event);
-    void dragPointConstraintForceRequest(const SceneWidgetEvent& event);
-    void finishPointConstraintForceRequest();
+    void startPullingForceRequest(const SceneWidgetEvent& event);
+    void dragPullingForceRequest(const SceneWidgetEvent& event);
+    void finishPullingForceRequest();
     void startFrameConstraintForceRequest();
     void dragFrameConstraintForceRequest();
     void startZmpTranslation(const SceneWidgetEvent& event);
@@ -333,9 +335,9 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     isPpcomVisible = false;
 
     isSimulatedRootLinkPositionMoveMode = false;
-    pointConstraintForceRequestLine = new SgLineSet;
-    pointConstraintForceRequestLine->getOrCreateVertices()->resize(2);
-    pointConstraintForceRequestLine->addLine(0, 1);
+    pullingForceRequestLine = new SgLineSet;
+    pullingForceRequestLine->getOrCreateVertices()->resize(2);
+    pullingForceRequestLine->addLine(0, 1);
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(self->body());
     if(legged->isValid() && legged->numFeet() > 0){
@@ -401,10 +403,10 @@ void EditableSceneBodyImpl::onKinematicStateChanged()
         zmpMarker->setTranslation(bodyItem->zmp());
     }
 
-    if(dragMode == LINK_POINT_CONSTRAINT_FORCE_REQUEST){
-        if(pointConstraintForceRequestLine->hasParents()){
-            pointConstraintForceRequestLine->vertices()->at(0)
-                = (targetLink->T() * constraintLinkPoint).cast<Vector3f::Scalar>();
+    if(dragMode == LINK_PULLING_FORCE_REQUEST){
+        if(pullingForceRequestLine->hasParents()){
+            pullingForceRequestLine->vertices()->at(0)
+                = (targetLink->T() * pointedLinkLocalPoint).cast<Vector3f::Scalar>();
         }
     }
 
@@ -630,7 +632,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators(bool isDraggerGlobalCoo
     }
 
     bool showDragger = show && targetLink;
-    if(!bodyItem->isBeingSimulated()){
+    if(!activeSimulatorItem){
         showDragger = showDragger && 
             kinematicsBar->mode() == KinematicsBar::IK_MODE &&
             kinematicsBar->isPositionDraggerEnabled();
@@ -759,14 +761,15 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     bool handled = false;
     isDragging = false;
 
-    if(bodyItem->isBeingSimulated()){
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(activeSimulatorItem){
         if(pointedType == PT_SCENE_LINK){
             targetLink = pointedSceneLink->link();
             if(event.button() == Qt::LeftButton){
                 if(targetLink->isRoot() && isSimulatedRootLinkPositionMoveMode){
                     updateMarkersAndManipulators(true);
                 } else {
-                    startPointConstraintForceRequest(event);
+                    startPullingForceRequest(event);
                 }
             }
             handled = true;
@@ -834,8 +837,8 @@ bool EditableSceneBodyImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
     }
     isDragging = false;
 
-    if(dragMode == LINK_POINT_CONSTRAINT_FORCE_REQUEST){
-        finishPointConstraintForceRequest();
+    if(dragMode == LINK_PULLING_FORCE_REQUEST){
+        finishPullingForceRequest();
 
     } else if(dragMode != DRAG_NONE){
         bodyItem->acceptKinematicStateEdit();
@@ -924,8 +927,8 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
             dragFKTranslation(event);
             break;
 
-        case LINK_POINT_CONSTRAINT_FORCE_REQUEST:
-            dragPointConstraintForceRequest(event);
+        case LINK_PULLING_FORCE_REQUEST:
+            dragPullingForceRequest(event);
             break;
             
         case ZMP_TRANSLATION:
@@ -990,7 +993,8 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
 
     if(bodyItem && pointedType == PT_SCENE_LINK){
 
-        if(bodyItem->isBeingSimulated()){
+        activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+        if(activeSimulatorItem){
             if(pointedSceneLink->link()->isRoot()){
                 Action* item1 = menuManager.addCheckItem(_("Apply Force"));
                 item1->setChecked(!isSimulatedRootLinkPositionMoveMode);
@@ -1101,7 +1105,8 @@ bool EditableSceneBodyImpl::onRedoRequest()
 
 void EditableSceneBodyImpl::onDraggerDragStarted()
 {
-    if(bodyItem->isBeingSimulated()){
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(activeSimulatorItem){
         startFrameConstraintForceRequest();
     } else {
         initializeIK();
@@ -1111,7 +1116,8 @@ void EditableSceneBodyImpl::onDraggerDragStarted()
 
 void EditableSceneBodyImpl::onDraggerDragged()
 {
-    if(bodyItem->isBeingSimulated()){
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(activeSimulatorItem){
         dragFrameConstraintForceRequest();
     } else {
         doIK(positionDragger->draggedPosition());
@@ -1244,45 +1250,46 @@ void EditableSceneBodyImpl::setSimulatedRootLinkPositionMoveMode(bool on)
 }
 
 
-void EditableSceneBodyImpl::startPointConstraintForceRequest(const SceneWidgetEvent& event)
+void EditableSceneBodyImpl::startPullingForceRequest(const SceneWidgetEvent& event)
 {
     const Vector3& point = event.point();
     dragProjector.setInitialTranslation(point);
     dragProjector.setTranslationAlongViewPlane();
     if(dragProjector.startTranslation(event)){
-        constraintLinkPoint = targetLink->T().inverse() * point;
-        dragMode = LINK_POINT_CONSTRAINT_FORCE_REQUEST;
-        dragPointConstraintForceRequest(event);
-        markerGroup->addChildOnce(pointConstraintForceRequestLine, true);
+        pointedLinkLocalPoint = targetLink->T().inverse() * point;
+        dragMode = LINK_PULLING_FORCE_REQUEST;
+        dragPullingForceRequest(event);
+        markerGroup->addChildOnce(pullingForceRequestLine, true);
     }
 }
 
 
-void EditableSceneBodyImpl::dragPointConstraintForceRequest(const SceneWidgetEvent& event)
+void EditableSceneBodyImpl::dragPullingForceRequest(const SceneWidgetEvent& event)
 {
-    if(dragMode == LINK_POINT_CONSTRAINT_FORCE_REQUEST){
-        if(dragProjector.dragTranslation(event)){
-            BodyItem::PointConstraint c;
-            c.point = constraintLinkPoint;
-            Vector3 p = targetLink->T() * c.point;
+    if(dragMode == LINK_PULLING_FORCE_REQUEST){
+        SimulatorItem* simulatorItem = activeSimulatorItem.lock();
+        if(simulatorItem && dragProjector.dragTranslation(event)){
+            Vector3 p = targetLink->T() * pointedLinkLocalPoint;
             Vector3 d = dragProjector.position().translation() - p;
-            c.goal = p + 2.0 * self->boundingBox().boundingSphereRadius() * d;
-            SgVertexArray& points = *pointConstraintForceRequestLine->vertices();
+            Vector3 goal = p + 2.0 * self->boundingBox().boundingSphereRadius() * d;
+            SgVertexArray& points = *pullingForceRequestLine->vertices();
             points[0] = p.cast<Vector3f::Scalar>();
             points[1] = (p + d).cast<Vector3f::Scalar>();
-            pointConstraintForceRequestLine->notifyUpdate();
-            std::vector<BodyItem::PointConstraint> constraints(1, c);
-            bodyItem->requestPointConstraintForce(targetLink, constraints);
+            pullingForceRequestLine->notifyUpdate();
+            simulatorItem->setPullingForceRequest(bodyItem, targetLink, pointedLinkLocalPoint, goal);
         }
     }
 }
 
 
-void EditableSceneBodyImpl::finishPointConstraintForceRequest()
+void EditableSceneBodyImpl::finishPullingForceRequest()
 {
-    std::vector<BodyItem::PointConstraint> constraints;
-    bodyItem->requestPointConstraintForce(targetLink, constraints);
-    markerGroup->removeChild(pointConstraintForceRequestLine, true);
+    SimulatorItem* simulatorItem = activeSimulatorItem.lock();
+    if(simulatorItem){
+        Vector3 v;
+        simulatorItem->setPullingForceRequest(0, 0, v, v);
+    }
+    markerGroup->removeChild(pullingForceRequestLine, true);
 }
 
 
@@ -1294,6 +1301,7 @@ void EditableSceneBodyImpl::startFrameConstraintForceRequest()
 
 void EditableSceneBodyImpl::dragFrameConstraintForceRequest()
 {
+    /*
     const Affine3 T = positionDragger->draggedPosition();
     std::vector<BodyItem::PointConstraint> constraints;
     for(int i=0; i < 3; ++i){
@@ -1304,8 +1312,8 @@ void EditableSceneBodyImpl::dragFrameConstraintForceRequest()
         c.goal = T * c.point;
         constraints.push_back(c);
     }
-    bodyItem->requestPointConstraintForce(targetLink, constraints);
     positionDragger->setPosition(T);
+    */
 }
 
 

@@ -111,8 +111,6 @@ public:
 class AISTSimBody : public SimulationBody
 {
 public:
-    ScopedConnection pointConstraintForceRequestedConnection;
-
     AISTSimBody(DyBody* body) : SimulationBody(body) { }
 };
     
@@ -166,26 +164,11 @@ public:
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
-    boost::optional<int> pointConstraintForceFunctionId;
-    boost::mutex pointConstraintForceRequestMutex;
-    bool isPointConstraintForceRequestActive;
-    struct PointConstraint {
-        Link* link;
-        double kp;
-        double kd;
-        double f_max;
-        std::vector<BodyItem::PointConstraint> constraints;
-    };
-    std::vector<PointConstraint> pointConstraintForceRequest;
-
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
-    void onPointConstraintForceRequested(
-        AISTSimBody* simBody, Link* orgLink, const std::vector<BodyItem::PointConstraint>& constraints);
-    void updatePointConstraintForce();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -431,8 +414,6 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
 
-    pointConstraintForceFunctionId = boost::none;
-
     cfs.setFriction(staticFriction, slipFriction);
     cfs.setContactCullingDistance(contactCullingDistance.value());
     cfs.setContactCullingDepth(contactCullingDepth.value());
@@ -483,10 +464,6 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     } else {
         bodyIndexMap[body] = world.addBody(body);
     }
-
-    simBody->pointConstraintForceRequestedConnection.reset(
-        simBody->bodyItem()->sigPointConstraintForceRequested().connect(
-            boost::bind(&AISTSimulatorItemImpl::onPointConstraintForceRequested, this, simBody, _1, _2)));
 }
 
 
@@ -543,62 +520,6 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
         }
     }
     return true;
-}
-
-
-void AISTSimulatorItemImpl::onPointConstraintForceRequested
-(AISTSimBody* simBody, Link* orgLink, const std::vector<BodyItem::PointConstraint>& constraints)
-{
-    boost::unique_lock<boost::mutex> lock(pointConstraintForceRequestMutex);
-    pointConstraintForceRequest.clear();
-    Body* body = simBody->body();
-    Link* link = body->link(orgLink->index());
-    if(!link || constraints.empty()){
-        if(pointConstraintForceFunctionId){
-            self->removePreDynamicsFunction(*pointConstraintForceFunctionId);
-            pointConstraintForceFunctionId = boost::none;
-        }
-    } else if(link){
-        if(!pointConstraintForceFunctionId){
-            pointConstraintForceFunctionId =
-                self->addPreDynamicsFunction(
-                    boost::bind(&AISTSimulatorItemImpl::updatePointConstraintForce, this));
-        }
-        PointConstraint pc;
-        pc.link = link;
-        double m = body->mass();
-        pc.kp = 3.0 * m;
-        pc.kd = 0.1 * pc.kp;
-
-        //pc.kp = 20.0 * m;
-        //pc.kd = 0.01 * pc.kp;
-        
-        pc.f_max = pc.kp;
-        pc.constraints = constraints;
-        pointConstraintForceRequest.push_back(pc);
-    }
-}
-
-
-void AISTSimulatorItemImpl::updatePointConstraintForce()
-{
-    boost::unique_lock<boost::mutex> lock(pointConstraintForceRequestMutex);
-    for(size_t i=0; i < pointConstraintForceRequest.size(); ++i){
-        const PointConstraint& pc = pointConstraintForceRequest[i];
-        Link* link = pc.link;
-        for(size_t j=0; j < pc.constraints.size(); ++j){
-            const BodyItem::PointConstraint& c = pc.constraints[j];
-            Vector3 a = link->R() * c.point;
-            Vector3 p = link->p() + a;
-            Vector3 v = link->v() + link->w().cross(a);
-            Vector3 f = pc.kp * (c.goal - p) + pc.kd * (-v);
-            if(f.norm() > pc.f_max){
-                f = pc.f_max * f.normalized();
-            }
-            link->f_ext() += f;
-            link->tau_ext() += p.cross(f);
-        }
-    }
 }
 
 

@@ -67,6 +67,8 @@ class CNOID_EXPORT SimulatorItem : public Item
 public:
     static void initializeClass(ExtensionManager* ext);
 
+    static SimulatorItem* findActiveSimulatorItemFor(Item* item);
+
     SimulatorItem();
     virtual ~SimulatorItem();
 
@@ -123,6 +125,15 @@ public:
     */
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
+
+    /**
+       @param point link local position to apply the force
+       @param goal global goal position for calculating the force
+    */
+    virtual void setPullingForceRequest(
+        BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& goal);
+
+    virtual void setLinkPositionRequest(BodyItem* bodyItem, const Position& T);
 
 protected:
     SimulatorItem(const SimulatorItem& org);
