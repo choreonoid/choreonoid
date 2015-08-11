@@ -128,6 +128,9 @@ public:
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
 
+    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
+    virtual void clearExternalForces();
+    
     /**
        @param attachmentPoint link local position
        @param goal global goal position

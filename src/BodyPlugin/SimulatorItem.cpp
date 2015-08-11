@@ -239,6 +239,14 @@ public:
     CollisionSeqPtr collisionSeq;
     deque<CollisionLinkPairListPtr> collisionPairsBuf;
 
+    boost::optional<int> extForceFunctionId;
+    boost::mutex extForceMutex;
+    struct ExtForceInfo {
+        Link* link;
+        Vector6 f;
+    };
+    ExtForceInfo extForceInfo;
+
     boost::optional<int> virtualElasticStringFunctionId;
     boost::mutex virtualElasticStringMutex;
     struct VirtualElasticString {
@@ -266,8 +274,10 @@ public:
     void pauseSimulation();
     void restartSimulation();
     void onSimulationLoopStopped();
+    void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
+    void doSetExternalForce();
     void setVirtualElasticString(
-        BodyItem* bodyItem, Link* orgLink, const Vector3& attachmentPoint, const Vector3& endPoint);
+        BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
     void setVirtualElasticStringForce();
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
@@ -1284,6 +1294,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         frame0[0]  = boost::make_shared<CollisionLinkPairList>();
     }
 
+    extForceFunctionId = boost::none;
     virtualElasticStringFunctionId = boost::none;
 
     bool result = self->initializeSimulation(simBodiesWithBody);
@@ -1838,6 +1849,49 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
+void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f)
+{
+    impl->setExternalForce(bodyItem, link, f);
+}
+
+
+void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f)
+{
+    if(bodyItem && link){
+        SimulationBody* simBody = self->findSimulationBody(bodyItem);
+        if(simBody){
+            {
+                boost::unique_lock<boost::mutex> lock(extForceMutex);
+                extForceInfo.link = simBody->body()->link(link->index());
+                extForceInfo.f = f;
+            }
+            if(!extForceFunctionId){
+                extForceFunctionId =
+                    self->addPreDynamicsFunction(
+                        boost::bind(&SimulatorItemImpl::doSetExternalForce, this));
+            }
+        }
+    }
+}
+
+
+void SimulatorItem::clearExternalForces()
+{
+    if(impl->extForceFunctionId){
+        removePreDynamicsFunction(*impl->extForceFunctionId);
+        impl->extForceFunctionId = boost::none;
+    }
+}    
+
+
+void SimulatorItemImpl::doSetExternalForce()
+{
+    boost::unique_lock<boost::mutex> lock(extForceMutex);
+    const VirtualElasticString& s = virtualElasticString;
+    extForceInfo.link->F_ext() += extForceInfo.f;
+}
+
+
 void SimulatorItem::setVirtualElasticString
 (BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint)
 {
@@ -1846,17 +1900,16 @@ void SimulatorItem::setVirtualElasticString
 
 
 void SimulatorItemImpl::setVirtualElasticString
-(BodyItem* bodyItem, Link* orgLink, const Vector3& attachmentPoint, const Vector3& endPoint)
+(BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint)
 {
-    if(bodyItem && orgLink){
+    if(bodyItem && link){
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
         if(simBody){
             {
                 boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
                 Body* body = simBody->body();
-                Link* link = body->link(orgLink->index());
                 VirtualElasticString& s = virtualElasticString;
-                s.link = link;
+                s.link = body->link(link->index());
                 double m = body->mass();
                 s.kp = 3.0 * m;
                 s.kd = 0.1 * s.kp;
