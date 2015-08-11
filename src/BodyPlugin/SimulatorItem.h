@@ -105,6 +105,8 @@ public:
     */
     const std::vector<SimulationBody*>& simulationBodies();
 
+    SimulationBody* findSimulationBody(BodyItem* bodyItem);
+
     /**
        \return The registration id of the function. The id can be used for removing the function.
     */
@@ -133,7 +135,7 @@ public:
     virtual void setPullingForceRequest(
         BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& goal);
 
-    virtual void setLinkPositionRequest(BodyItem* bodyItem, const Position& T);
+    virtual void overwriteBodyPosition(BodyItem* bodyItem, const Position& T);
 
 protected:
     SimulatorItem(const SimulatorItem& org);

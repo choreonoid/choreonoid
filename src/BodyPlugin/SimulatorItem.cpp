@@ -48,6 +48,8 @@ namespace {
 
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
 
+typedef map<weak_ref_ptr<BodyItem>, SimulationBodyPtr> BodyItemToSimBodyMap;
+
 class ControllerTarget : public ControllerItem::Target
 {
     SimulatorItemImpl* simImpl;
@@ -165,7 +167,6 @@ public:
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
 
-    typedef map<weak_ref_ptr<BodyItem>, SimulationBodyPtr> BodyItemToSimBodyMap;
     BodyItemToSimBodyMap simBodyMap;
 
     int currentFrame;
@@ -268,7 +269,6 @@ public:
     void setPullingForceRequest(
         BodyItem* bodyItem, Link* orgLink, const Vector3& point, const Vector3& goal);
     void updatePullingForce();
-    void setLinkPositionRequest(BodyItem* bodyItem, const Position& T);
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
     bool setSpecifiedRecordingTimeLength(double length);
@@ -339,6 +339,7 @@ class ScriptControllerItem : public ControllerItem
     double delay;
     SimulationScriptItemPtr scriptItem;
     LazyCaller executeLater;
+
 public:
     ScriptControllerItem(SimulationScriptItem* scriptItem){
         this->scriptItem = scriptItem;
@@ -383,8 +384,6 @@ public:
         }
     }
 };
-
-
 
 }
 
@@ -1423,6 +1422,20 @@ const std::vector<SimulationBody*>& SimulatorItem::simulationBodies()
 {
     return impl->simBodiesWithBody;
 }
+
+
+/**
+   \todo make thread safe
+*/
+SimulationBody* SimulatorItem::findSimulationBody(BodyItem* bodyItem)
+{
+    SimulationBody* simBody = 0;
+    BodyItemToSimBodyMap::iterator p = impl->simBodyMap.find(bodyItem);
+    if(p != impl->simBodyMap.end()){
+        simBody = p->second;
+    }
+    return simBody;
+}
     
 
 // Simulation loop
@@ -1887,7 +1900,7 @@ void SimulatorItemImpl::updatePullingForce()
 }
 
 
-void SimulatorItem::setLinkPositionRequest(BodyItem* bodyItem, const Position& T)
+void SimulatorItem::overwriteBodyPosition(BodyItem* bodyItem, const Position& T)
 {
 
 }
