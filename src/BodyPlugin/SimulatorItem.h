@@ -136,7 +136,8 @@ public:
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
     virtual void clearVirtualElasticStrings();
 
-    virtual void overwriteBodyPosition(BodyItem* bodyItem, const Position& T);
+    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
+    virtual void clearForcedBodyPositions();
 
 protected:
     SimulatorItem(const SimulatorItem& org);

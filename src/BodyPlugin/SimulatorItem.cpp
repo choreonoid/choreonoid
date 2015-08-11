@@ -1851,22 +1851,24 @@ void SimulatorItemImpl::setVirtualElasticString
     if(bodyItem && orgLink){
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
         if(simBody){
-            boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
-            Body* body = simBody->body();
-            Link* link = body->link(orgLink->index());
+            {
+                boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
+                Body* body = simBody->body();
+                Link* link = body->link(orgLink->index());
+                VirtualElasticString& s = virtualElasticString;
+                s.link = link;
+                double m = body->mass();
+                s.kp = 3.0 * m;
+                s.kd = 0.1 * s.kp;
+                s.f_max = s.kp;
+                s.point = attachmentPoint;
+                s.goal = endPoint;
+            }
             if(!virtualElasticStringFunctionId){
                 virtualElasticStringFunctionId =
                     self->addPreDynamicsFunction(
                         boost::bind(&SimulatorItemImpl::setVirtualElasticStringForce, this));
             }
-            VirtualElasticString& s = virtualElasticString;
-            s.link = link;
-            double m = body->mass();
-            s.kp = 3.0 * m;
-            s.kd = 0.1 * s.kp;
-            s.f_max = s.kp;
-            s.point = attachmentPoint;
-            s.goal = endPoint;
         }
     }
 }
@@ -1898,7 +1900,13 @@ void SimulatorItemImpl::setVirtualElasticStringForce()
 }
 
 
-void SimulatorItem::overwriteBodyPosition(BodyItem* bodyItem, const Position& T)
+void SimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+{
+
+}
+
+
+void SimulatorItem::clearForcedBodyPositions()
 {
 
 }

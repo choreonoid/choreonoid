@@ -164,18 +164,18 @@ public:
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
-    boost::optional<int> bodyPositionOverwriteFunctionId;
-    boost::mutex bodyPositionOverwriteMutex;
-    DyBody* bodyToOverwritePosition;
-    Position overwritingBodyPosition;
+    boost::optional<int> forcedBodyPositionFunctionId;
+    boost::mutex forcedBodyPositionMutex;
+    DyBody* forcedPositionBody;
+    Position forcedBodyPosition;
 
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
-    void setBodyPositionOverwriteRequest(BodyItem* bodyItem, const Position& T);
-    void doOverwriteBodyPosition();
+    void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
+    void doSetForcedBodyPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -544,43 +544,46 @@ CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 }
 
 
-void AISTSimulatorItem::overwriteBodyPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
 {
-    impl->setBodyPositionOverwriteRequest(bodyItem, T);
+    impl->setForcedBodyPosition(bodyItem, T);
 }
 
 
-void AISTSimulatorItemImpl::setBodyPositionOverwriteRequest(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
 {
-    SimulationBody* simBody = self->findSimulationBody(bodyItem);
-    if(simBody){
+    if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {
-            boost::unique_lock<boost::mutex> lock(bodyPositionOverwriteMutex);
-            bodyToOverwritePosition = static_cast<DyBody*>(simBody->body());
-            overwritingBodyPosition = T;
+            boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+            forcedPositionBody = static_cast<DyBody*>(simBody->body());
+            forcedBodyPosition = T;
         }
-        if(!bodyPositionOverwriteFunctionId){
-            bodyPositionOverwriteFunctionId =
+        if(!forcedBodyPositionFunctionId){
+            forcedBodyPositionFunctionId =
                 self->addPostDynamicsFunction(
-                    boost::bind(&AISTSimulatorItemImpl::doOverwriteBodyPosition, this));
+                    boost::bind(&AISTSimulatorItemImpl::doSetForcedBodyPosition, this));
         }
 
-    } else if(bodyPositionOverwriteFunctionId){
-        self->removePostDynamicsFunction(*bodyPositionOverwriteFunctionId);
-        bodyPositionOverwriteFunctionId = boost::none;
     }
 }
 
 
-void AISTSimulatorItemImpl::doOverwriteBodyPosition()
+void AISTSimulatorItem::clearForcedBodyPositions()
 {
-    boost::unique_lock<boost::mutex> lock(bodyPositionOverwriteMutex);
-    DyLink* rootLink = bodyToOverwritePosition->rootLink();
-    rootLink->setPosition(overwritingBodyPosition);
+    removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
+    impl->forcedBodyPositionFunctionId = boost::none;
+}
+    
+
+void AISTSimulatorItemImpl::doSetForcedBodyPosition()
+{
+    boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+    DyLink* rootLink = forcedPositionBody->rootLink();
+    rootLink->setPosition(forcedBodyPosition);
     rootLink->v().setZero();
     rootLink->w().setZero();
     rootLink->vo().setZero();
-    bodyToOverwritePosition->calcSpatialForwardKinematics();
+    forcedPositionBody->calcSpatialForwardKinematics();
 }
 
 

@@ -642,10 +642,8 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators(bool isDraggerGlobalCoo
             kinematicsBar->mode() == KinematicsBar::IK_MODE &&
             kinematicsBar->isPositionDraggerEnabled();
     } else {
-        SimulatorItem* simulatorItem = activeSimulatorItem.lock();
-        if(simulatorItem){
-            Position T;
-            simulatorItem->overwriteBodyPosition(0, T);
+        if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
+            simulatorItem->clearForcedBodyPositions();
         }
     }
         
@@ -1307,8 +1305,7 @@ void EditableSceneBodyImpl::dragVirtualElasticString(const SceneWidgetEvent& eve
 
 void EditableSceneBodyImpl::finishVirtualElasticString()
 {
-    SimulatorItem* simulatorItem = activeSimulatorItem.lock();
-    if(simulatorItem){
+    if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
         simulatorItem->clearVirtualElasticStrings();
     }
     markerGroup->removeChild(virtualElasticStringLine, true);
@@ -1323,10 +1320,9 @@ void EditableSceneBodyImpl::startFrameConstraintForceRequest()
 
 void EditableSceneBodyImpl::dragFrameConstraintForceRequest()
 {
-    SimulatorItem* simulatorItem = activeSimulatorItem.lock();
-    if(simulatorItem){
+    if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
         const Affine3 T = positionDragger->draggedPosition();
-        simulatorItem->overwriteBodyPosition(bodyItem, T);
+        simulatorItem->setForcedBodyPosition(bodyItem, T);
         positionDragger->setPosition(T);
     }        
 }
