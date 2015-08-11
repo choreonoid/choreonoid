@@ -129,11 +129,12 @@ public:
         sigSimulationBodyListUpdated();
 
     /**
-       @param point link local position to apply the force
-       @param goal global goal position for calculating the force
+       @param attachmentPoint link local position
+       @param goal global goal position
     */
-    virtual void setPullingForceRequest(
-        BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& goal);
+    virtual void setVirtualElasticString(
+        BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
+    virtual void clearVirtualElasticStrings();
 
     virtual void overwriteBodyPosition(BodyItem* bodyItem, const Position& T);
 

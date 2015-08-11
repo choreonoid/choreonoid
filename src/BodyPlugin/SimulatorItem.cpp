@@ -239,9 +239,9 @@ public:
     CollisionSeqPtr collisionSeq;
     deque<CollisionLinkPairListPtr> collisionPairsBuf;
 
-    boost::optional<int> pullingForceFunctionId;
-    boost::mutex pullingForceRequestMutex;
-    struct PullingForceRequest {
+    boost::optional<int> virtualElasticStringFunctionId;
+    boost::mutex virtualElasticStringMutex;
+    struct VirtualElasticString {
         Link* link;
         double kp;
         double kd;
@@ -249,7 +249,7 @@ public:
         Vector3 point;
         Vector3 goal;
     };
-    PullingForceRequest pullingForceRequest;
+    VirtualElasticString virtualElasticString;
 
     double currentTime() const;
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
@@ -266,9 +266,9 @@ public:
     void pauseSimulation();
     void restartSimulation();
     void onSimulationLoopStopped();
-    void setPullingForceRequest(
-        BodyItem* bodyItem, Link* orgLink, const Vector3& point, const Vector3& goal);
-    void updatePullingForce();
+    void setVirtualElasticString(
+        BodyItem* bodyItem, Link* orgLink, const Vector3& attachmentPoint, const Vector3& endPoint);
+    void setVirtualElasticStringForce();
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
     bool setSpecifiedRecordingTimeLength(double length);
@@ -1284,7 +1284,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         frame0[0]  = boost::make_shared<CollisionLinkPairList>();
     }
 
-    pullingForceFunctionId = boost::none;
+    virtualElasticStringFunctionId = boost::none;
 
     bool result = self->initializeSimulation(simBodiesWithBody);
 
@@ -1838,62 +1838,60 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
-void SimulatorItem::setPullingForceRequest
-(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& goal)
+void SimulatorItem::setVirtualElasticString
+(BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint)
 {
-    impl->setPullingForceRequest(bodyItem, link, point, goal);
+    impl->setVirtualElasticString(bodyItem, link, attachmentPoint, endPoint);
 }
 
 
-void SimulatorItemImpl::setPullingForceRequest
-(BodyItem* bodyItem, Link* orgLink, const Vector3& point, const Vector3& goal)
+void SimulatorItemImpl::setVirtualElasticString
+(BodyItem* bodyItem, Link* orgLink, const Vector3& attachmentPoint, const Vector3& endPoint)
 {
-    bool isValid = false;
-    boost::unique_lock<boost::mutex> lock(pullingForceRequestMutex);
-
     if(bodyItem && orgLink){
-        BodyItemToSimBodyMap::iterator p = simBodyMap.find(bodyItem);
-        if(p != simBodyMap.end()){
-            SimulationBodyPtr simBody = p->second;
+        SimulationBody* simBody = self->findSimulationBody(bodyItem);
+        if(simBody){
+            boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
             Body* body = simBody->body();
             Link* link = body->link(orgLink->index());
-            if(!pullingForceFunctionId){
-                pullingForceFunctionId =
+            if(!virtualElasticStringFunctionId){
+                virtualElasticStringFunctionId =
                     self->addPreDynamicsFunction(
-                        boost::bind(&SimulatorItemImpl::updatePullingForce, this));
+                        boost::bind(&SimulatorItemImpl::setVirtualElasticStringForce, this));
             }
-            PullingForceRequest& r = pullingForceRequest;
-            r.link = link;
+            VirtualElasticString& s = virtualElasticString;
+            s.link = link;
             double m = body->mass();
-            r.kp = 3.0 * m;
-            r.kd = 0.1 * r.kp;
-            r.f_max = r.kp;
-            r.point = point;
-            r.goal = goal;
-
-            isValid = true;
-        }
-    }
-    if(!isValid){
-        if(pullingForceFunctionId){
-            self->removePreDynamicsFunction(*pullingForceFunctionId);
-            pullingForceFunctionId = boost::none;
+            s.kp = 3.0 * m;
+            s.kd = 0.1 * s.kp;
+            s.f_max = s.kp;
+            s.point = attachmentPoint;
+            s.goal = endPoint;
         }
     }
 }
 
 
-void SimulatorItemImpl::updatePullingForce()
+void SimulatorItem::clearVirtualElasticStrings()
 {
-    boost::unique_lock<boost::mutex> lock(pullingForceRequestMutex);
-    const PullingForceRequest& r = pullingForceRequest;
-    Link* link = r.link;
-    Vector3 a = link->R() * r.point;
+    if(impl->virtualElasticStringFunctionId){
+        removePreDynamicsFunction(*impl->virtualElasticStringFunctionId);
+        impl->virtualElasticStringFunctionId = boost::none;
+    }
+}
+
+
+void SimulatorItemImpl::setVirtualElasticStringForce()
+{
+    boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
+    const VirtualElasticString& s = virtualElasticString;
+    Link* link = s.link;
+    Vector3 a = link->R() * s.point;
     Vector3 p = link->p() + a;
     Vector3 v = link->v() + link->w().cross(a);
-    Vector3 f = r.kp * (r.goal - p) + r.kd * (-v);
-    if(f.norm() > r.f_max){
-        f = r.f_max * f.normalized();
+    Vector3 f = s.kp * (s.goal - p) + s.kd * (-v);
+    if(f.norm() > s.f_max){
+        f = s.f_max * f.normalized();
     }
     link->f_ext() += f;
     link->tau_ext() += p.cross(f);

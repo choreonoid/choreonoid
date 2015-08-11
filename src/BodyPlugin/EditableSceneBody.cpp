@@ -174,7 +174,7 @@ public:
     CrossMarkerPtr ppcomMarker;
     bool isCmVisible;
     bool isPpcomVisible;
-    SgLineSetPtr pullingForceRequestLine;
+    SgLineSetPtr virtualElasticStringLine;
     SphereMarkerPtr zmpMarker;
     bool isZmpVisible;
     Vector3 orgZmpPos;
@@ -198,7 +198,7 @@ public:
         LINK_IK_TRANSLATION,
         LINK_FK_ROTATION,
         LINK_FK_TRANSLATION,
-        LINK_PULLING_FORCE_REQUEST,
+        LINK_VIRTUAL_ELASTIC_STRING,
         LINK_POSITIN_REQUEST,
         ZMP_TRANSLATION
     };
@@ -260,9 +260,9 @@ public:
     void dragFKRotation(const SceneWidgetEvent& event);
     void dragFKTranslation(const SceneWidgetEvent& event);
     void setSimulatedRootLinkPositionMoveMode(bool on);
-    void startPullingForceRequest(const SceneWidgetEvent& event);
-    void dragPullingForceRequest(const SceneWidgetEvent& event);
-    void finishPullingForceRequest();
+    void startVirtualElasticString(const SceneWidgetEvent& event);
+    void dragVirtualElasticString(const SceneWidgetEvent& event);
+    void finishVirtualElasticString();
     void startFrameConstraintForceRequest();
     void dragFrameConstraintForceRequest();
     void finishFrameConstraintForceRequest();
@@ -336,9 +336,9 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     isPpcomVisible = false;
 
     isSimulatedRootLinkPositionMoveMode = false;
-    pullingForceRequestLine = new SgLineSet;
-    pullingForceRequestLine->getOrCreateVertices()->resize(2);
-    pullingForceRequestLine->addLine(0, 1);
+    virtualElasticStringLine = new SgLineSet;
+    virtualElasticStringLine->getOrCreateVertices()->resize(2);
+    virtualElasticStringLine->addLine(0, 1);
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(self->body());
     if(legged->isValid() && legged->numFeet() > 0){
@@ -405,9 +405,9 @@ void EditableSceneBodyImpl::onKinematicStateChanged()
     }
 
     if(activeSimulatorItem){
-        if(dragMode == LINK_PULLING_FORCE_REQUEST){
-            if(pullingForceRequestLine->hasParents()){
-                pullingForceRequestLine->vertices()->at(0)
+        if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
+            if(virtualElasticStringLine->hasParents()){
+                virtualElasticStringLine->vertices()->at(0)
                     = (targetLink->T() * pointedLinkLocalPoint).cast<Vector3f::Scalar>();
             }
         }
@@ -781,7 +781,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
                 if(targetLink->isRoot() && isSimulatedRootLinkPositionMoveMode){
                     updateMarkersAndManipulators(true);
                 } else {
-                    startPullingForceRequest(event);
+                    startVirtualElasticString(event);
                 }
             }
             handled = true;
@@ -849,8 +849,8 @@ bool EditableSceneBodyImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
     }
     isDragging = false;
 
-    if(dragMode == LINK_PULLING_FORCE_REQUEST){
-        finishPullingForceRequest();
+    if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
+        finishVirtualElasticString();
 
     } else if(dragMode != DRAG_NONE){
         bodyItem->acceptKinematicStateEdit();
@@ -939,8 +939,8 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
             dragFKTranslation(event);
             break;
 
-        case LINK_PULLING_FORCE_REQUEST:
-            dragPullingForceRequest(event);
+        case LINK_VIRTUAL_ELASTIC_STRING:
+            dragVirtualElasticString(event);
             break;
             
         case ZMP_TRANSLATION:
@@ -1273,46 +1273,45 @@ void EditableSceneBodyImpl::setSimulatedRootLinkPositionMoveMode(bool on)
 }
 
 
-void EditableSceneBodyImpl::startPullingForceRequest(const SceneWidgetEvent& event)
+void EditableSceneBodyImpl::startVirtualElasticString(const SceneWidgetEvent& event)
 {
     const Vector3& point = event.point();
     dragProjector.setInitialTranslation(point);
     dragProjector.setTranslationAlongViewPlane();
     if(dragProjector.startTranslation(event)){
         pointedLinkLocalPoint = targetLink->T().inverse() * point;
-        dragMode = LINK_PULLING_FORCE_REQUEST;
-        dragPullingForceRequest(event);
-        markerGroup->addChildOnce(pullingForceRequestLine, true);
+        dragMode = LINK_VIRTUAL_ELASTIC_STRING;
+        dragVirtualElasticString(event);
+        markerGroup->addChildOnce(virtualElasticStringLine, true);
     }
 }
 
 
-void EditableSceneBodyImpl::dragPullingForceRequest(const SceneWidgetEvent& event)
+void EditableSceneBodyImpl::dragVirtualElasticString(const SceneWidgetEvent& event)
 {
-    if(dragMode == LINK_PULLING_FORCE_REQUEST){
+    if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
         SimulatorItem* simulatorItem = activeSimulatorItem.lock();
         if(simulatorItem && dragProjector.dragTranslation(event)){
             Vector3 p = targetLink->T() * pointedLinkLocalPoint;
             Vector3 d = dragProjector.position().translation() - p;
-            Vector3 goal = p + 2.0 * self->boundingBox().boundingSphereRadius() * d;
-            SgVertexArray& points = *pullingForceRequestLine->vertices();
+            Vector3 end = p + 2.0 * self->boundingBox().boundingSphereRadius() * d;
+            SgVertexArray& points = *virtualElasticStringLine->vertices();
             points[0] = p.cast<Vector3f::Scalar>();
             points[1] = (p + d).cast<Vector3f::Scalar>();
-            pullingForceRequestLine->notifyUpdate();
-            simulatorItem->setPullingForceRequest(bodyItem, targetLink, pointedLinkLocalPoint, goal);
+            virtualElasticStringLine->notifyUpdate();
+            simulatorItem->setVirtualElasticString(bodyItem, targetLink, pointedLinkLocalPoint, end);
         }
     }
 }
 
 
-void EditableSceneBodyImpl::finishPullingForceRequest()
+void EditableSceneBodyImpl::finishVirtualElasticString()
 {
     SimulatorItem* simulatorItem = activeSimulatorItem.lock();
     if(simulatorItem){
-        Vector3 v;
-        simulatorItem->setPullingForceRequest(0, 0, v, v);
+        simulatorItem->clearVirtualElasticStrings();
     }
-    markerGroup->removeChild(pullingForceRequestLine, true);
+    markerGroup->removeChild(virtualElasticStringLine, true);
 }
 
 
