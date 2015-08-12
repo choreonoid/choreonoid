@@ -425,7 +425,7 @@ void Item::onPositionChanged()
 }
 
 
-static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+static Item* findChildItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
 {
     if(it == end){
         return current;
@@ -433,7 +433,7 @@ static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterato
     Item* item = 0;
     for(Item* child = current->childItem(); child; child = child->nextItem()){
         if(child->name() == *it){
-            item = findItemSub(child, ++it, end);
+            item = findChildItemSub(child, ++it, end);
             if(item){
                 break;
             }
@@ -443,10 +443,10 @@ static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterato
 }
 
 
-Item* Item::findItem(const std::string& path) const
+Item* Item::findChildItem(const std::string& path) const
 {
     ItemPath ipath(path);
-    return findItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+    return findChildItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
 }
 
 
@@ -583,7 +583,7 @@ ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
         for(ItemPtr child = childItem(); child; child = child->nextItem()){
             ItemPtr duplicatedChildItem;
             if(child->isSubItem()){
-                duplicatedChildItem = duplicated->findItem(child->name());
+                duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
                     child->duplicateAllSub(duplicatedChildItem);
                 }

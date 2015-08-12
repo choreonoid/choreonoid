@@ -90,15 +90,31 @@ public:
     void setTemporal(bool on = true);
 
     RootItem* findRootItem() const;
-    Item* findItem(const std::string& path) const;
 
+    /**
+       Find an item that has the corresponding path to it in the sub tree
+    */
+    /*
+    Item* findItem(const std::string& path) const;
     template<class ItemType>
         inline ItemType* findItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findItem(path));
     }
+    */
 
+    /**
+       Find an item that has the corresponding path from a child item to it
+    */
+    Item* findChildItem(const std::string& path) const;
+    template<class ItemType>
+        inline ItemType* findChildItem(const std::string& path) const {
+        return dynamic_cast<ItemType*>(findChildItem(path));
+    }
+
+    /**
+       Find a sub item that has the corresponding path from a direct sub item to it
+    */
     Item* findSubItem(const std::string& path) const;
-
     template<class ItemType>
         inline ItemType* findSubItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findSubItem(path));

@@ -637,7 +637,7 @@ void SimulationBodyImpl::setupResultMotion
         return;
     }
 
-    BodyMotionItem* motionItem = ownerItem->findItem<BodyMotionItem>(simulatedMotionName);
+    BodyMotionItem* motionItem = ownerItem->findChildItem<BodyMotionItem>(simulatedMotionName);
     if(!motionItem){
         motionItem = new BodyMotionItem();
         motionItem->setTemporal();
@@ -1278,7 +1278,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     if(isRecordingEnabled && recordCollisionData){
         collisionPairsBuf.clear();
         string collisionSeqName = self->name() + "-collisions";
-        CollisionSeqItem* collisionSeqItem = worldItem->findItem<CollisionSeqItem>(collisionSeqName);
+        CollisionSeqItem* collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
         if(!collisionSeqItem){
             collisionSeqItem = new CollisionSeqItem();
             collisionSeqItem->setTemporal();

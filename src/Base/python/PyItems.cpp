@@ -39,7 +39,7 @@ ItemPtr Item_prevItem(Item& self) { return self.prevItem(); }
 ItemPtr Item_nextItem(Item& self) { return self.nextItem(); }
 ItemPtr Item_parentItem(Item& self) { return self.parentItem(); }
 RootItemPtr Item_findRootItem(Item& self) { return self.findRootItem(); }
-ItemPtr Item_findItem(Item& self, const std::string& path) { return self.findItem(path); }
+ItemPtr Item_findChildItem(Item& self, const std::string& path) { return self.findChildItem(path); }
 ItemPtr Item_findSubItem(Item& self, const std::string& path) { return self.findSubItem(path); }
 ItemPtr Item_headItem(Item& self) { return self.headItem(); }
 
@@ -129,7 +129,7 @@ void exportPyItems()
         .def("isTemporal", &Item::isTemporal)
         .def("setTemporal", &Item::setTemporal, Item_setTemporal())
         .def("findRootItem", Item_findRootItem)
-        .def("findItem", Item_findItem)
+        .def("findChildItem", Item_findChildItem)
         .def("findSubItem", Item_findSubItem)
         .def("headItem", Item_headItem)
         .def("getDescendantItems", Item_getDescendantItems1)

@@ -175,7 +175,7 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
             string body1name = linkPair["body1"].toString();
             string link0name = linkPair["link0"].toString();
             string link1name = linkPair["link1"].toString();
-            BodyItem* body0Item = worldItem->findItem<BodyItem>(body0name);
+            BodyItem* body0Item = worldItem->findChildItem<BodyItem>(body0name);
             Body* body0=0;
             Body* body1=0;
             Link* link0=0;
@@ -184,7 +184,7 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
                 body0 = body0Item->body();
                 link0 = body0->link(link0name);
             }
-            BodyItem* body1Item = worldItem->findItem<BodyItem>(body1name);
+            BodyItem* body1Item = worldItem->findChildItem<BodyItem>(body1name);
             if(body1Item){
                 body1 = body1Item->body();
                 link1 = body1->link(link1name);

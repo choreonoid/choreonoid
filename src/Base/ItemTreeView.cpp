@@ -1035,7 +1035,7 @@ void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set
         if(p != items.end()){
             ItemPtr duplicatedChild;
             if(childItem->isSubItem()){
-                duplicatedChild = duplicated->findItem(childItem->name());
+                duplicatedChild = duplicated->findChildItem(childItem->name());
             } else {
                 duplicatedChild = childItem->duplicate();
                 if(duplicatedChild){

@@ -282,7 +282,7 @@ void OnlineViewerServerImpl::updateLog
 {
     BodyMotionItem* motionItem = info->logItem.get();
     if(!motionItem){
-        motionItem = info->bodyItem->findItem<BodyMotionItem>(info->logName);
+        motionItem = info->bodyItem->findChildItem<BodyMotionItem>(info->logName);
         if(!motionItem){
             motionItem = new BodyMotionItem();
             motionItem->setName(info->logName);
