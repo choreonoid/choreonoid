@@ -94,20 +94,24 @@ public:
     /**
        Find an item that has the corresponding path to it in the sub tree
     */
-    /*
     Item* findItem(const std::string& path) const;
     template<class ItemType>
-        inline ItemType* findItem(const std::string& path) const {
+        ItemType* findItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findItem(path));
     }
-    */
 
+    static Item* find(const std::string& path);
+    template<class ItemType>
+    ItemType* find(const std::string& path) {
+        return dynamic_cast<ItemType*>(find(path));
+    }
+    
     /**
        Find an item that has the corresponding path from a child item to it
     */
     Item* findChildItem(const std::string& path) const;
     template<class ItemType>
-        inline ItemType* findChildItem(const std::string& path) const {
+    ItemType* findChildItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findChildItem(path));
     }
 
@@ -116,7 +120,7 @@ public:
     */
     Item* findSubItem(const std::string& path) const;
     template<class ItemType>
-        inline ItemType* findSubItem(const std::string& path) const {
+   ItemType* findSubItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findSubItem(path));
     }
     
@@ -238,7 +242,7 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
     void setAttribute(Attribute attribute) { attributes.set(attribute); }
-    inline void unsetAttribute(Attribute attribute) { attributes.reset(attribute); }
+    void unsetAttribute(Attribute attribute) { attributes.reset(attribute); }
 
 private:
 

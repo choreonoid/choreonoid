@@ -425,6 +425,45 @@ void Item::onPositionChanged()
 }
 
 
+static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+{
+    if(it == end){
+        return current;
+    }
+    Item* item = 0;
+    for(Item* child = current->childItem(); child; child = child->nextItem()){
+        if(child->name() == *it){
+            item = findItemSub(child, ++it, end);
+            if(item){
+                break;
+            }
+        }
+    }
+    if(!item){
+        for(Item* child = current->childItem(); child; child = child->nextItem()){
+            item = findItemSub(child, it, end);
+            if(item){
+                break;
+            }
+        }
+    }
+    return item;
+}
+
+
+Item* Item::find(const std::string& path)
+{
+    return RootItem::instance()->findItem(path);
+}
+
+
+Item* Item::findItem(const std::string& path) const
+{
+    ItemPath ipath(path);
+    return findItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+}
+
+
 static Item* findChildItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
 {
     if(it == end){
