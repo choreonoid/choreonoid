@@ -11,7 +11,7 @@ set(BULLET_DIR ${BULLET_DIR} CACHE PATH "set the top directory of the Bullet Phy
 set(BULLET_CFLAGS -DBT_USE_DOUBLE_PRECISION)
 if(UNIX)
   if(NOT BULLET_DIR)
-    FIND_PACKAGE(Bullet REQUIRED NO_MODULE)
+    FIND_PACKAGE(Bullet REQUIRED)
   else()
     set(BULLET_INCLUDE_DIRS ${BULLET_DIR}/include/bullet)
     set(BULLET_LIBRARY_DIRS ${BULLET_DIR}/lib/)
