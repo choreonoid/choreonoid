@@ -1,8 +1,14 @@
 
-from cnoid.Base import *
-from cnoid.BodyPlugin import *
+import cnoid.Base
+import cnoid.BodyPlugin
 
-robotItem = RootItem.instance().findChildItem("World/SR1")
-simulatorItem = SimulatorItem.findActiveSimulatorItemFor(robotItem)
-waistLink = robotItem.body().link("WAIST")
-simulatorItem.setExternalForce(robotItem, waistLink, [0, 0, 0], [200, 0.0, 0.0])
+def pushWaist():
+    robotItem = cnoid.Base.Item.find("World/SR1")
+    simulatorItem = cnoid.BodyPlugin.SimulatorItem.findActiveSimulatorItemFor(robotItem)
+    waistLink = robotItem.body().link("WAIST")
+    simulatorItem.setExternalForce(robotItem, waistLink, [0, 0, 0], [200, 0.0, 0.0])
+
+pushWaist()
+
+# Use 'callLater' to execute the above function in the background execution mode
+# coid.Base.callLater(pushWaist)
