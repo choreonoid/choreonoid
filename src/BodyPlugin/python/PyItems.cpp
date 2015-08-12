@@ -44,6 +44,7 @@ SimulatorItemPtr SimulatorItem_findActiveSimulatorItemFor(Item* item)
 }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_startSimulation_overloads, startSimulation, 0, 1)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_setExternalForce_overloads, setExternalForce, 4, 5)
 
 }
 
@@ -163,7 +164,7 @@ void exportItems()
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
-        .def("setExternalForce", &SimulatorItem::setExternalForce)
+        .def("setExternalForce", &SimulatorItem::setExternalForce, SimulatorItem_setExternalForce_overloads())
         .def("clearExternalForces", &SimulatorItem::clearExternalForces)
         ;
     {

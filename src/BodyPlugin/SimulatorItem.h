@@ -136,7 +136,7 @@ public:
        @param point link local position to apply the force
        @param f linear force to apply in global coordinate
     */
-    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f);
+    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time = 0.0);
     virtual void clearExternalForces();
     
     /**
