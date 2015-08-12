@@ -243,7 +243,8 @@ public:
     boost::mutex extForceMutex;
     struct ExtForceInfo {
         Link* link;
-        Vector6 f;
+        Vector3 point;
+        Vector3 f;
     };
     ExtForceInfo extForceInfo;
 
@@ -274,7 +275,7 @@ public:
     void pauseSimulation();
     void restartSimulation();
     void onSimulationLoopStopped();
-    void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
+    void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f);
     void doSetExternalForce();
     void setVirtualElasticString(
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
@@ -1849,13 +1850,13 @@ SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 }
 
 
-void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f)
+void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f)
 {
-    impl->setExternalForce(bodyItem, link, f);
+    impl->setExternalForce(bodyItem, link, point, f);
 }
 
 
-void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f)
+void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f)
 {
     if(bodyItem && link){
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
@@ -1863,6 +1864,7 @@ void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const V
             {
                 boost::unique_lock<boost::mutex> lock(extForceMutex);
                 extForceInfo.link = simBody->body()->link(link->index());
+                extForceInfo.point = point;
                 extForceInfo.f = f;
             }
             if(!extForceFunctionId){
@@ -1887,8 +1889,10 @@ void SimulatorItem::clearExternalForces()
 void SimulatorItemImpl::doSetExternalForce()
 {
     boost::unique_lock<boost::mutex> lock(extForceMutex);
-    const VirtualElasticString& s = virtualElasticString;
-    extForceInfo.link->F_ext() += extForceInfo.f;
+    Link* link = extForceInfo.link;
+    link->f_ext() += extForceInfo.f;
+    const Vector3 p = link->T() * extForceInfo.point;
+    link->tau_ext() += p.cross(extForceInfo.f);
 }
 
 
