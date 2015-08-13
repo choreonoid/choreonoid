@@ -13,6 +13,7 @@
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <rtm/CORBA_SeqUtil.h>
+#include <QPoint>
 #include "exportdecl.h"
 
 using namespace std;
@@ -73,7 +74,7 @@ class RTSystemItemImpl;
 class RTSComp : public Referenced
 {
 public :
-    RTSComp(RTC::RTObject_ptr rtc, RTSystemItemImpl* impl);
+    RTSComp(RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
 
     RTSystemItemImpl* impl;
     RTObject_ptr rtc_;
@@ -82,6 +83,7 @@ public :
     ExecutionContextList_var participatingExeContList;
     map<string, RTSPortPtr> inPorts;
     map<string, RTSPortPtr> outPorts;
+    QPointF pos;
 
     bool isActive();
     //void stateCheck();
@@ -106,11 +108,7 @@ public:
     virtual ~RTSystemItem();
     static void initialize(ExtensionManager* ext);
 
-    virtual ItemPtr doDuplicate() const;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    //virtual bool store(Archive& archive);
-    //virtual bool restore(const Archive& archive);
-    RTSComp* addRTSComp(const string& name);
+    RTSComp* addRTSComp(const string& name, const QPointF& pos);
     void deleteRTSComp(const string& name);
     bool compIsAlive(RTSComp* rtsComp);
     RTSComp* nameToRTSComp(const string& name);
@@ -123,6 +121,12 @@ public:
     map<string, RTSConnectionPtr>& deletedRtsConnections();
     void deleteRtsConnection(const string& id);
     map<string, RTSCompPtr>& rtsComps();
+
+protected :
+    virtual ItemPtr doDuplicate() const;
+    virtual void doPutProperties(PutPropertyFunction& putProperty);
+    virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
 
 private:
     RTSystemItemImpl* impl;

@@ -549,6 +549,7 @@ void RTSPortGItem::stateCheck()
 QVariant RTSCompGItem::itemChange ( GraphicsItemChange change, const QVariant & value )
 {
     if (change == ItemPositionChange){
+        rtsComp->pos += value.value<QPointF>()-pos();
         for(map<string, RTSPortGItemPtr>::iterator it = inPorts.begin();
                 it != inPorts.end(); it++){
             it->second->pos += value.value<QPointF>()-pos();
@@ -973,7 +974,7 @@ RTSDiagramViewImpl::~RTSDiagramViewImpl()
 void RTSDiagramViewImpl::addRTSComp(string name, const QPointF& pos)
 {
     timeOutConnection.block();
-    RTSComp* rtsComp = currentRTSItem->addRTSComp(name);
+    RTSComp* rtsComp = currentRTSItem->addRTSComp(name, pos);
     if(rtsComp){
         RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
         rtsComps.insert(pair<string, RTSCompGItemPtr>(name, rtsCompGItem));
@@ -996,13 +997,9 @@ void RTSDiagramViewImpl::addRTSComp(string name, const QPointF& pos)
 
 void RTSDiagramViewImpl::addRTSComp(RTSComp* rtsComp)
 {
-    timeOutConnection.block();
-    QPoint pos(0,0);
-    //TODO posをウィンドウに合わせて修正
-    RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, pos);
+    RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos);
     rtsComps.insert(pair<string, RTSCompGItemPtr>(rtsComp->name, rtsCompGItem));
     scene.addItem(rtsCompGItem);
-    timeOutConnection.unblock();
 }
 
 
@@ -1250,6 +1247,7 @@ void RTSDiagramViewImpl::onItemviewSelectionChanged(const ItemList<RTSystemItem>
 
 void RTSDiagramViewImpl::updateView()
 {
+    timeOutConnection.block();
     if(currentRTSItem){
         setBackgroundBrush(QBrush(Qt::white));
         map<string, RTSCompPtr>& comps = currentRTSItem->rtsComps();
@@ -1257,7 +1255,6 @@ void RTSDiagramViewImpl::updateView()
             addRTSComp(itr->second.get());
         }
         map<string, RTSConnectionPtr>& connections = currentRTSItem->rtsConnections();
-        timeOutConnection.block();
         for(map<string, RTSConnectionPtr>::iterator itr = connections.begin();
                 itr != connections.end(); itr++){
             if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
@@ -1267,7 +1264,6 @@ void RTSDiagramViewImpl::updateView()
                 createConnectionGItem(rtsConnection, source, target);
             }
         }
-        timeOutConnection.unblock();
         setAcceptDrops(true);
     }else{
         rtsComps.clear();
@@ -1276,6 +1272,7 @@ void RTSDiagramViewImpl::updateView()
         setBackgroundBrush(QBrush(Qt::gray));
         setAcceptDrops(false);
     }
+    timeOutConnection.unblock();
 }
 
 
