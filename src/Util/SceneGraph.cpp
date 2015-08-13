@@ -302,11 +302,13 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
 }
 
 
-void SgGroup::addChildOnce(SgNode* node, bool doNotify)
+bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 {
     if(!contains(node)){
         addChild(node, doNotify);
+        return true;
     }
+    return false;
 }
 
 

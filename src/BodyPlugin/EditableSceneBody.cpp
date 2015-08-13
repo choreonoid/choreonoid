@@ -38,7 +38,7 @@ EditableSceneLink::EditableSceneLink(Link* link)
 
 void EditableSceneLink::showBoundingBox(bool on)
 {
-    if(!shape()){
+    if(!visualShape()){
         return;
     }
 #if 0
@@ -57,16 +57,9 @@ void EditableSceneLink::showBoundingBox(bool on)
         if(!outlineGroup){
             outlineGroup = new SgOutlineGroup();
         }
-        if(!contains(outlineGroup)){
-            removeChild(shape());
-            outlineGroup->addChildOnce(shape());
-            addChild(outlineGroup);
-            notifyUpdate();
-        }
-    } else if(outlineGroup && contains(outlineGroup)){
-        removeChild(outlineGroup);
-        addChildOnce(shape());
-        notifyUpdate();
+        setShapeGroup(outlineGroup);
+    } else if(outlineGroup){
+        resetShapeGroup();
     }
 #endif
 }
@@ -79,7 +72,7 @@ void EditableSceneLink::createBoundingBoxLineSet()
 
     SgVertexArray& vertices = *bbLineSet->setVertices(new SgVertexArray);
     vertices.resize(8);
-    const BoundingBoxf bb(shape()->boundingBox());
+    const BoundingBoxf bb(visualShape()->boundingBox());
     const Vector3f& min = bb.min();
     const Vector3f& max = bb.max();
     vertices[0] << min.x(), min.y(), min.z();
@@ -116,7 +109,7 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
     if(bbMarker){
         removeChild(bbMarker);
     }
-    bbMarker = new BoundingBoxMarker(shape()->boundingBox(), color, transparency);
+    bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
     addChild(bbMarker, true);
 }
 
@@ -358,7 +351,7 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 
 double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 {
-    const BoundingBox& bb = sceneLink->shape()->boundingBox();
+    const BoundingBox& bb = sceneLink->visualShape()->boundingBox();
     double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
     return pow(V, 1.0 / 3.0) * 0.6;
 }
