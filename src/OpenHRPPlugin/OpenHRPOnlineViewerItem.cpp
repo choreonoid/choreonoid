@@ -493,7 +493,7 @@ void OpenHRPOnlineViewerItemImpl::updatesub(const WorldState& state)
     }
 
     if(!collisionSeqItem){
-        collisionSeqItem = worldItem->findItem<CollisionSeqItem>(collisionLogName);
+        collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionLogName);
         if(!collisionSeqItem){
             collisionSeqItem = new CollisionSeqItem();
             collisionSeqItem->setTemporal();
@@ -530,7 +530,7 @@ void OpenHRPOnlineViewerItemImpl::updateLog
 {
     BodyMotionItem* motionItem = info->logItem.get();
     if(!motionItem){
-        motionItem = info->bodyItem->findItem<BodyMotionItem>(info->logName);
+        motionItem = info->bodyItem->findChildItem<BodyMotionItem>(info->logName);
         if(!motionItem){
             motionItem = new BodyMotionItem();
             motionItem->setTemporal();

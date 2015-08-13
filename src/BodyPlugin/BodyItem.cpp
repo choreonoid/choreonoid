@@ -1075,7 +1075,6 @@ EditableSceneBody* BodyItem::existingSceneBody()
 }
 
 
-
 void BodyItemImpl::onLinkVisibilityCheckToggled()
 {
     LinkSelectionView* selectionView = LinkSelectionView::mainInstance();

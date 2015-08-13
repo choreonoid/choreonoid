@@ -41,6 +41,9 @@ public:
     void set2Dmode(bool on);
     void setKinematicWalkingEnabled(bool on); 
 
+    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
+    virtual void clearForcedBodyPositions();
+    
 protected:
     virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
     virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);

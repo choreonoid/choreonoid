@@ -439,7 +439,21 @@ static Item* findItemSub(Item* current, ItemPath::iterator it, ItemPath::iterato
             }
         }
     }
+    if(!item){
+        for(Item* child = current->childItem(); child; child = child->nextItem()){
+            item = findItemSub(child, it, end);
+            if(item){
+                break;
+            }
+        }
+    }
     return item;
+}
+
+
+Item* Item::find(const std::string& path)
+{
+    return RootItem::instance()->findItem(path);
 }
 
 
@@ -447,6 +461,31 @@ Item* Item::findItem(const std::string& path) const
 {
     ItemPath ipath(path);
     return findItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
+}
+
+
+static Item* findChildItemSub(Item* current, ItemPath::iterator it, ItemPath::iterator end)
+{
+    if(it == end){
+        return current;
+    }
+    Item* item = 0;
+    for(Item* child = current->childItem(); child; child = child->nextItem()){
+        if(child->name() == *it){
+            item = findChildItemSub(child, ++it, end);
+            if(item){
+                break;
+            }
+        }
+    }
+    return item;
+}
+
+
+Item* Item::findChildItem(const std::string& path) const
+{
+    ItemPath ipath(path);
+    return findChildItemSub(const_cast<Item*>(this), ipath.begin(), ipath.end());
 }
 
 
@@ -516,21 +555,26 @@ bool Item::isOwnedBy(Item* item) const
 }
 
 
-void Item::traverse(boost::function<void(Item*)> function)
+bool Item::traverse(boost::function<bool(Item*)> function)
 {
-    traverse(this, function);
+    return traverse(this, function);
 }
 
 
-void Item::traverse(Item* item, const boost::function<void(Item*)>& function)
+bool Item::traverse(Item* item, const boost::function<bool(Item*)>& function)
 {
-    function(item);
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        traverse(child, function);
+    if(function(item)){
+        return true;
     }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        if(traverse(child, function)){
+            return true;
+        }
+    }
+    return false;
 }
 
-    
+
 /**
    @todo added the 'notifyUpdateLater()' method ?
 */
@@ -578,7 +622,7 @@ ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
         for(ItemPtr child = childItem(); child; child = child->nextItem()){
             ItemPtr duplicatedChildItem;
             if(child->isSubItem()){
-                duplicatedChildItem = duplicated->findItem(child->name());
+                duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
                     child->duplicateAllSub(duplicatedChildItem);
                 }

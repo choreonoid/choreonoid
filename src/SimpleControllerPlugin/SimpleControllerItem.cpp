@@ -133,7 +133,7 @@ bool SimpleControllerItem::start(Target* target)
 
     if(controller){
         timeStep_ = target->worldTimeStep();
-        BodyPtr body = target->body();
+        Body* body = target->body();
         ioBody = body->clone();
 
         inputDeviceStateConnections.disconnect();
@@ -165,7 +165,7 @@ bool SimpleControllerItem::start(Target* target)
                 stop();
             }
         } else {
-            simulationBody = body.get();
+            simulationBody = body;
         }
     }
 

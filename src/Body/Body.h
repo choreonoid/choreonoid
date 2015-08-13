@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_BODY_H_INCLUDED
-#define CNOID_BODY_BODY_H_INCLUDED
+#ifndef CNOID_BODY_BODY_H
+#define CNOID_BODY_BODY_H
 
 #include "LinkTraverse.h"
 #include "Link.h"

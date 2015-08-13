@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_DYBODY_H_INCLUDED
-#define CNOID_BODY_DYBODY_H_INCLUDED
+#ifndef CNOID_BODY_DYBODY_H
+#define CNOID_BODY_DYBODY_H
 
 #include "Body.h"
 #include "Link.h"
@@ -132,9 +132,12 @@ public:
     DyLink* rootLink() const {
         return static_cast<DyLink*>(Body::rootLink());
     }
+
+    void calcSpatialForwardKinematics();
 };
 
 typedef ref_ptr<DyBody> DyBodyPtr;
+
 };
 
 #endif

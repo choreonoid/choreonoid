@@ -48,6 +48,8 @@ namespace {
 
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
 
+typedef map<weak_ref_ptr<BodyItem>, SimulationBodyPtr> BodyItemToSimBodyMap;
+
 class ControllerTarget : public ControllerItem::Target
 {
     SimulatorItemImpl* simImpl;
@@ -59,6 +61,49 @@ public:
     virtual Body* body();
     virtual double worldTimeStep() const;
     virtual double currentTime() const;
+};
+
+
+struct FunctionSet
+{
+    struct FunctionInfo {
+        int id;
+        boost::function<void()> function;
+    };
+    vector<FunctionInfo> functions;
+    boost::mutex mutex;
+    SimulatorItemImpl* simImpl;
+    int idCounter;
+    bool needToUpdate;
+    vector<FunctionInfo> functionsToAdd;
+    set<int> registerdIds;
+    vector<int> idsToRemove;
+        
+    FunctionSet(SimulatorItemImpl* simImpl) : simImpl(simImpl) {
+        clear();
+    }
+    void clear() {
+        idCounter = 0;
+        needToUpdate = false;
+        functions.clear();
+        functionsToAdd.clear();
+        registerdIds.clear();
+        idsToRemove.clear();
+    }
+
+    void call(){
+        if(needToUpdate){
+            updateFunctions();
+        }
+        const size_t n = functions.size();
+        for(size_t i=0; i < n; ++i){
+            functions[i].function();
+        }
+    }
+
+    int add(boost::function<void()>& func);
+    void remove(int id);
+    void updateFunctions();
 };
 
 }
@@ -109,7 +154,7 @@ public:
 };
 
 
-class SimulatorItemImpl : QThread
+class SimulatorItemImpl : public QThread
 {
 public:
     SimulatorItemImpl(SimulatorItem* self);
@@ -122,6 +167,21 @@ public:
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
 
+    BodyItemToSimBodyMap simBodyMap;
+
+    int currentFrame;
+    double worldFrameRate;
+    double worldTimeStep;
+    int frameAtLastBufferWriting;
+    Timer flushTimer;
+
+    FunctionSet preDynamicsFunctions;
+    FunctionSet midDynamicsFunctions;
+    FunctionSet postDynamicsFunctions;
+    
+    vector<SimulationBodyImpl*> simBodyImplsToNotifyResult;
+    ItemList<SubSimulatorItem> subSimulatorItems;
+
     ControllerTarget controllerTarget;
     vector<ControllerItem*> activeControllers;
     boost::thread controlThread;
@@ -132,20 +192,8 @@ public:
     bool isControlFinished;
     bool isControlToBeContinued;
         
-    vector<SimulationBodyImpl*> simBodyImplsToNotifyResult;
-    ItemList<SubSimulatorItem> subSimulatorItems;
-    vector< boost::function<void()> > preDynamicsFunctions;
-    vector< boost::function<void()> > midDynamicsFunctions;
-    vector< boost::function<void()> > postDynamicsFunctions;
-        
     CollisionDetectorPtr collisionDetector;
         
-    int currentFrame;
-    double worldFrameRate;
-    double worldTimeStep;
-    int frameAtLastBufferWriting;
-    Timer flushTimer;
-
     Selection recordingMode;
     bool isRecordingEnabled;
     bool isRingBufferMode;
@@ -169,7 +217,7 @@ public:
 
     TimeBar* timeBar;
     int fillLevelId;
-    QMutex mutex;
+    QMutex resultBufMutex;
     double actualSimulationTime;
     double finishTime;
     MessageView* mv;
@@ -191,9 +239,32 @@ public:
     CollisionSeqPtr collisionSeq;
     deque<CollisionLinkPairListPtr> collisionPairsBuf;
 
+    boost::optional<int> extForceFunctionId;
+    boost::mutex extForceMutex;
+    struct ExtForceInfo {
+        Link* link;
+        Vector3 point;
+        Vector3 f;
+        double time;
+    };
+    ExtForceInfo extForceInfo;
+
+    boost::optional<int> virtualElasticStringFunctionId;
+    boost::mutex virtualElasticStringMutex;
+    struct VirtualElasticString {
+        Link* link;
+        double kp;
+        double kd;
+        double f_max;
+        Vector3 point;
+        Vector3 goal;
+    };
+    VirtualElasticString virtualElasticString;
+
     double currentTime() const;
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
+    void clearSimulation();
     bool startSimulation(bool doReset);
     virtual void run();
     void onSimulationLoopStarted();
@@ -205,6 +276,11 @@ public:
     void pauseSimulation();
     void restartSimulation();
     void onSimulationLoopStopped();
+    void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time);
+    void doSetExternalForce();
+    void setVirtualElasticString(
+        BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
+    void setVirtualElasticStringForce();
     bool onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
     bool setSpecifiedRecordingTimeLength(double length);
@@ -275,6 +351,7 @@ class ScriptControllerItem : public ControllerItem
     double delay;
     SimulationScriptItemPtr scriptItem;
     LazyCaller executeLater;
+
 public:
     ScriptControllerItem(SimulationScriptItem* scriptItem){
         this->scriptItem = scriptItem;
@@ -320,14 +397,36 @@ public:
     }
 };
 
-
-
 }
 
 
 void SimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->manage(new SimulatedMotionEngineManager());
+}
+
+
+static bool checkActive(SimulatorItem* item, SimulatorItem*& activeItem)
+{
+    if(item->isRunning()){
+        activeItem = item;
+        return true;
+    }
+    return false;
+}
+
+
+SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
+{
+    bool result = false;
+    SimulatorItem* activeSimulatorItem = 0;
+    if(item){
+        WorldItem* worldItem = item->findOwnerItem<WorldItem>();
+        if(worldItem){
+            worldItem->traverse<SimulatorItem>(boost::bind(checkActive, _1, boost::ref(activeSimulatorItem)));
+        }
+    }
+    return activeSimulatorItem;
 }
 
 
@@ -539,7 +638,7 @@ void SimulationBodyImpl::setupResultMotion
         return;
     }
 
-    BodyMotionItem* motionItem = ownerItem->findItem<BodyMotionItem>(simulatedMotionName);
+    BodyMotionItem* motionItem = ownerItem->findChildItem<BodyMotionItem>(simulatedMotionName);
     if(!motionItem){
         motionItem = new BodyMotionItem();
         motionItem->setTemporal();
@@ -823,6 +922,9 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     : self(self),
       mv(MessageView::mainInstance()),
       os(mv->cout()),
+      preDynamicsFunctions(this),
+      midDynamicsFunctions(this),
+      postDynamicsFunctions(this),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       itemTreeView(ItemTreeView::instance())
@@ -996,6 +1098,117 @@ void SimulatorItemImpl::findTargetItems
 }
 
 
+int SimulatorItem::addPreDynamicsFunction(boost::function<void()> func)
+{
+    return impl->preDynamicsFunctions.add(func);
+}
+
+
+void SimulatorItem::removePreDynamicsFunction(int id)
+{
+    impl->preDynamicsFunctions.remove(id);
+}
+
+
+int SimulatorItem::addMidDynamicsFunction(boost::function<void()> func)
+{
+    return impl->midDynamicsFunctions.add(func);
+}
+
+
+void SimulatorItem::removeMidDynamicsFunction(int id)
+{
+    impl->midDynamicsFunctions.remove(id);
+}
+
+
+int SimulatorItem::addPostDynamicsFunction(boost::function<void()> func)
+{
+    return impl->postDynamicsFunctions.add(func);
+}
+
+
+void SimulatorItem::removePostDynamicsFunction(int id)
+{
+    impl->postDynamicsFunctions.remove(id);
+}
+
+
+int FunctionSet::add(boost::function<void()>& func)
+{
+    boost::unique_lock<boost::mutex> lock(mutex);
+    
+    FunctionInfo info;
+    info.function = func;
+    while(true){
+        if(registerdIds.insert(idCounter).second){
+            break;
+        }
+        ++idCounter;
+    }
+    info.id = idCounter++;
+    
+    if(!simImpl->isRunning()){
+        functions.push_back(info);
+    } else {
+        functionsToAdd.push_back(info);
+        needToUpdate = true;
+    }
+
+    return info.id;
+}
+
+
+void FunctionSet::remove(int id)
+{
+    boost::unique_lock<boost::mutex> lock(mutex);
+    idsToRemove.push_back(id);
+    needToUpdate = true;
+}
+
+
+void FunctionSet::updateFunctions()
+{
+    boost::unique_lock<boost::mutex> lock(mutex);
+
+    for(size_t i=0; i < functionsToAdd.size(); ++i){
+        functions.push_back(functionsToAdd[i]);
+    }
+    functionsToAdd.clear();
+
+    for(size_t i=0; i < idsToRemove.size(); ++i){
+
+        const int idToRemove = idsToRemove[i];
+        vector<FunctionInfo>::iterator p = functions.end();
+        while(p != functions.begin()){
+            --p;
+            FunctionInfo& info = *p;
+            if(info.id == idToRemove){
+                functions.erase(p);
+                break;
+            }
+        }
+    }
+    needToUpdate = false;
+}        
+    
+    
+void SimulatorItemImpl::clearSimulation()
+{
+    allSimBodies.clear();
+    simBodiesWithBody.clear();;
+    activeSimBodies.clear();
+    bodyMotionEngines.clear();
+    needToUpdateSimBodyLists = true;
+
+    preDynamicsFunctions.clear();
+    midDynamicsFunctions.clear();
+    postDynamicsFunctions.clear();
+
+    subSimulatorItems.clear();
+}
+
+
 bool SimulatorItem::startSimulation(bool doReset)
 {
     return impl->startSimulation(doReset);
@@ -1033,11 +1246,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         isRingBufferMode = recordingMode.is(SimulatorItem::RECORD_TAIL);
     }
 
-    allSimBodies.clear();
-    simBodiesWithBody.clear();;
-    activeSimBodies.clear();
-    bodyMotionEngines.clear();
-    needToUpdateSimBodyLists = true;
+    clearSimulation();
 
     for(size_t i=0; i < targetItems.size(); ++i){
 
@@ -1050,6 +1259,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 if(simBody->impl->initialize(this, bodyItem)){
                     allSimBodies.push_back(simBody);
                     simBodiesWithBody.push_back(simBody);
+                    simBodyMap[bodyItem] = simBody;
                 }
             }
         } else if(ControllerItem* controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
@@ -1069,7 +1279,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     if(isRecordingEnabled && recordCollisionData){
         collisionPairsBuf.clear();
         string collisionSeqName = self->name() + "-collisions";
-        CollisionSeqItem* collisionSeqItem = worldItem->findItem<CollisionSeqItem>(collisionSeqName);
+        CollisionSeqItem* collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
         if(!collisionSeqItem){
             collisionSeqItem = new CollisionSeqItem();
             collisionSeqItem->setTemporal();
@@ -1085,6 +1295,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         CollisionSeq::Frame frame0 = collisionSeq->frame(0);
         frame0[0]  = boost::make_shared<CollisionLinkPairList>();
     }
+
+    extForceFunctionId = boost::none;
+    virtualElasticStringFunctionId = boost::none;
 
     bool result = self->initializeSimulation(simBodiesWithBody);
 
@@ -1110,8 +1323,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             maxFrame = std::numeric_limits<int>::max();
         }
 
-        preDynamicsFunctions.clear();
-        postDynamicsFunctions.clear();
         subSimulatorItems.extractChildItems(self);
         ItemList<SubSimulatorItem>::iterator p = subSimulatorItems.begin();
         while(p != subSimulatorItems.end()){
@@ -1202,24 +1413,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 }
 
 
-void SimulatorItem::addPreDynamicsFunction(boost::function<void()> func)
-{
-    impl->preDynamicsFunctions.push_back(func);
-}
-
-
-void SimulatorItem::addMidDynamicsFunction(boost::function<void()> func)
-{
-    impl->midDynamicsFunctions.push_back(func);
-}
-
-
-void SimulatorItem::addPostDynamicsFunction(boost::function<void()> func)
-{
-    impl->postDynamicsFunctions.push_back(func);
-}
-
-
 SgCloneMap& SimulatorItem::sgCloneMap()
 {
     return impl->sgCloneMap;
@@ -1241,6 +1434,20 @@ void SimulatorItem::initializeSimulationThread()
 const std::vector<SimulationBody*>& SimulatorItem::simulationBodies()
 {
     return impl->simBodiesWithBody;
+}
+
+
+/**
+   \todo make thread safe
+*/
+SimulationBody* SimulatorItem::findSimulationBody(BodyItem* bodyItem)
+{
+    SimulationBody* simBody = 0;
+    BodyItemToSimBodyMap::iterator p = impl->simBodyMap.find(bodyItem);
+    if(p != impl->simBodyMap.end()){
+        simBody = p->second;
+    }
+    return simBody;
 }
     
 
@@ -1357,7 +1564,7 @@ void SimulatorItemImpl::updateSimBodyLists()
         }
         for(size_t j=0; j < controllers.size(); ++j){
             activeControllers.push_back(controllers[j]);
-        }
+       }
     }
 
     needToUpdateSimBodyLists = false;
@@ -1374,9 +1581,7 @@ bool SimulatorItemImpl::stepSimulationMain()
     
     bool doContinue = hasActiveFreeBodies || !isActiveControlPeriodOnlyMode;
 
-    for(size_t i=0; i < preDynamicsFunctions.size(); ++i){
-        preDynamicsFunctions[i]();
-    }
+    preDynamicsFunctions.call();
 
     if(useControllerThreads){
         if(activeControllers.empty()){
@@ -1402,9 +1607,8 @@ bool SimulatorItemImpl::stepSimulationMain()
         }
     }
 
-    for(size_t i=0; i < midDynamicsFunctions.size(); ++i){
-        midDynamicsFunctions[i]();
-    }
+    midDynamicsFunctions.call();
+
     self->stepSimulation(activeSimBodies);
 
     CollisionLinkPairListPtr collisionPairs;
@@ -1423,12 +1627,10 @@ bool SimulatorItemImpl::stepSimulationMain()
         doContinue |= isControlToBeContinued;
     }
 
-    for(size_t i=0; i < postDynamicsFunctions.size(); ++i){
-        postDynamicsFunctions[i]();
-    }
+    postDynamicsFunctions.call();
 
     {
-        mutex.lock();
+        resultBufMutex.lock();
         
         for(size_t i=0; i < activeSimBodies.size(); ++i){
             activeSimBodies[i]->storeResult();
@@ -1436,7 +1638,7 @@ bool SimulatorItemImpl::stepSimulationMain()
         collisionPairsBuf.push_back(collisionPairs);
         frameAtLastBufferWriting = currentFrame;
 
-        mutex.unlock();
+        resultBufMutex.unlock();
     }
 
     if(useControllerThreads){
@@ -1496,7 +1698,7 @@ void SimulatorItemImpl::flushResult()
 {
     simBodyImplsToNotifyResult.clear();
 
-    mutex.lock();
+    resultBufMutex.lock();
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
         SimulationBody* simBody = allSimBodies[i];
@@ -1505,7 +1707,7 @@ void SimulatorItemImpl::flushResult()
         }
     }
     if(isRecordingEnabled && recordCollisionData){
-        for(int i=0 ; i<collisionPairsBuf.size(); i++ ){
+        for(int i=0 ; i < collisionPairsBuf.size(); ++i){
             if(collisionSeq->numFrames() >= ringBufferSize){
                 collisionSeq->popFrontFrame();
             }
@@ -1517,7 +1719,7 @@ void SimulatorItemImpl::flushResult()
 
     int frame = frameAtLastBufferWriting;
     
-    mutex.unlock();
+    resultBufMutex.unlock();
 
     if(isRecordingEnabled){
         double fillLevel = frame / worldFrameRate;
@@ -1611,12 +1813,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
 
     sigSimulationFinished();
 
-    allSimBodies.clear();
-    activeSimBodies.clear();
-    preDynamicsFunctions.clear();
-    midDynamicsFunctions.clear();
-    postDynamicsFunctions.clear();
-    subSimulatorItems.clear();
+    clearSimulation();
     
     mv->notify(format(_("Simulation by %1% has finished at %2% [s].")) % self->name() % finishTime);
     mv->putln(format(_("Computation time is %1% [s], computation time / simulation time = %2%."))
@@ -1651,6 +1848,132 @@ double SimulatorItemImpl::currentTime() const
 SignalProxy<void()> SimulatorItem::sigSimulationFinished()
 {
     return impl->sigSimulationFinished;
+}
+
+
+void SimulatorItem::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time)
+{
+    impl->setExternalForce(bodyItem, link, point, f, time);
+}
+
+
+void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time)
+{
+    if(bodyItem && link){
+        SimulationBody* simBody = self->findSimulationBody(bodyItem);
+        if(simBody){
+            {
+                boost::unique_lock<boost::mutex> lock(extForceMutex);
+                extForceInfo.link = simBody->body()->link(link->index());
+                extForceInfo.point = point;
+                extForceInfo.f = f;
+                extForceInfo.time = time;
+            }
+            if(!extForceFunctionId){
+                extForceFunctionId =
+                    self->addPreDynamicsFunction(
+                        boost::bind(&SimulatorItemImpl::doSetExternalForce, this));
+            }
+        }
+    }
+}
+
+
+void SimulatorItem::clearExternalForces()
+{
+    if(impl->extForceFunctionId){
+        removePreDynamicsFunction(*impl->extForceFunctionId);
+        impl->extForceFunctionId = boost::none;
+    }
+}    
+
+
+void SimulatorItemImpl::doSetExternalForce()
+{
+    boost::unique_lock<boost::mutex> lock(extForceMutex);
+    Link* link = extForceInfo.link;
+    link->f_ext() += extForceInfo.f;
+    const Vector3 p = link->T() * extForceInfo.point;
+    link->tau_ext() += p.cross(extForceInfo.f);
+    if(extForceInfo.time > 0.0){
+        extForceInfo.time -= worldTimeStep;
+        if(extForceInfo.time <= 0.0){
+            self->clearExternalForces();
+        }
+    }
+}
+
+
+void SimulatorItem::setVirtualElasticString
+(BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint)
+{
+    impl->setVirtualElasticString(bodyItem, link, attachmentPoint, endPoint);
+}
+
+
+void SimulatorItemImpl::setVirtualElasticString
+(BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint)
+{
+    if(bodyItem && link){
+        SimulationBody* simBody = self->findSimulationBody(bodyItem);
+        if(simBody){
+            {
+                boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
+                Body* body = simBody->body();
+                VirtualElasticString& s = virtualElasticString;
+                s.link = body->link(link->index());
+                double m = body->mass();
+                s.kp = 3.0 * m;
+                s.kd = 0.1 * s.kp;
+                s.f_max = s.kp;
+                s.point = attachmentPoint;
+                s.goal = endPoint;
+            }
+            if(!virtualElasticStringFunctionId){
+                virtualElasticStringFunctionId =
+                    self->addPreDynamicsFunction(
+                        boost::bind(&SimulatorItemImpl::setVirtualElasticStringForce, this));
+            }
+        }
+    }
+}
+
+
+void SimulatorItem::clearVirtualElasticStrings()
+{
+    if(impl->virtualElasticStringFunctionId){
+        removePreDynamicsFunction(*impl->virtualElasticStringFunctionId);
+        impl->virtualElasticStringFunctionId = boost::none;
+    }
+}
+
+
+void SimulatorItemImpl::setVirtualElasticStringForce()
+{
+    boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
+    const VirtualElasticString& s = virtualElasticString;
+    Link* link = s.link;
+    Vector3 a = link->R() * s.point;
+    Vector3 p = link->p() + a;
+    Vector3 v = link->v() + link->w().cross(a);
+    Vector3 f = s.kp * (s.goal - p) + s.kd * (-v);
+    if(f.norm() > s.f_max){
+        f = s.f_max * f.normalized();
+    }
+    link->f_ext() += f;
+    link->tau_ext() += p.cross(f);
+}
+
+
+void SimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+{
+
+}
+
+
+void SimulatorItem::clearForcedBodyPositions()
+{
+
 }
 
 

@@ -37,6 +37,20 @@ class Archive;
 */
 class CNOID_EXPORT Item : public Referenced
 {
+    template<class ItemType>
+    class ItemCallback
+    {
+        boost::function<bool(ItemType* item)> function;
+    public:
+        ItemCallback(boost::function<bool(ItemType* item)> f) : function(f) { }
+        bool operator()(Item* item) {
+            if(ItemType* casted = dynamic_cast<ItemType*>(item)){
+                return function(casted);
+            }
+            return false;
+        }
+    };
+
 protected:
     Item();
     Item(const Item& item);
@@ -76,17 +90,37 @@ public:
     void setTemporal(bool on = true);
 
     RootItem* findRootItem() const;
-    Item* findItem(const std::string& path) const;
 
+    /**
+       Find an item that has the corresponding path to it in the sub tree
+    */
+    Item* findItem(const std::string& path) const;
     template<class ItemType>
-        inline ItemType* findItem(const std::string& path) const {
+        ItemType* findItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findItem(path));
     }
 
-    Item* findSubItem(const std::string& path) const;
-
+    static Item* find(const std::string& path);
     template<class ItemType>
-        inline ItemType* findSubItem(const std::string& path) const {
+    ItemType* find(const std::string& path) {
+        return dynamic_cast<ItemType*>(find(path));
+    }
+    
+    /**
+       Find an item that has the corresponding path from a child item to it
+    */
+    Item* findChildItem(const std::string& path) const;
+    template<class ItemType>
+    ItemType* findChildItem(const std::string& path) const {
+        return dynamic_cast<ItemType*>(findChildItem(path));
+    }
+
+    /**
+       Find a sub item that has the corresponding path from a direct sub item to it
+    */
+    Item* findSubItem(const std::string& path) const;
+    template<class ItemType>
+   ItemType* findSubItem(const std::string& path) const {
         return dynamic_cast<ItemType*>(findSubItem(path));
     }
     
@@ -111,7 +145,12 @@ public:
 
     bool isOwnedBy(Item* item) const;
 
-    void traverse(boost::function<void(Item*)> function);
+    bool traverse(boost::function<bool(Item*)> function);
+
+    template<class ItemType>
+    bool traverse(boost::function<bool(ItemType* item)> function){
+        return Item::traverse(ItemCallback<ItemType>(function));
+    }
 
     ItemPtr duplicate() const;
     ItemPtr duplicateAll() const;
@@ -203,7 +242,7 @@ protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
     void setAttribute(Attribute attribute) { attributes.set(attribute); }
-    inline void unsetAttribute(Attribute attribute) { attributes.reset(attribute); }
+    void unsetAttribute(Attribute attribute) { attributes.reset(attribute); }
 
 private:
 
@@ -248,7 +287,7 @@ private:
     void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);
-    void traverse(Item* item, const boost::function<void(Item*)>& function);
+    bool traverse(Item* item, const boost::function<bool(Item*)>& function);
     ItemPtr duplicateAllSub(ItemPtr duplicated) const;
         
     void updateFileInformation(const std::string& filename, const std::string& format);

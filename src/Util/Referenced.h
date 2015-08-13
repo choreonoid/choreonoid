@@ -294,6 +294,10 @@ typedef ref_ptr<Referenced> ReferencedPtr;
 
 template<class T> class weak_ref_ptr
 {
+    typedef void (weak_ref_ptr<T>::*bool_type)() const;
+
+    void bool_type_func() const { }
+    
     void setCounter(){
         if(px){
             counter = px->weakCounter();
@@ -356,6 +360,8 @@ public:
         setCounter();
         return *this;
     }
+
+    operator bool_type() const { return px ? &weak_ref_ptr<T>::bool_type_func : 0; }
 
     ref_ptr<T> lock() const {
         if(counter->isObjectAlive()){

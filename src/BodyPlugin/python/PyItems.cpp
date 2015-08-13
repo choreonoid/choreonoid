@@ -38,7 +38,13 @@ AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) 
 BodyItemPtr SimulationBody_bodyItem(SimulationBody& self) { return self.bodyItem(); }
 BodyPtr SimulationBody_body(SimulationBody& self) { return self.body(); }
 
+SimulatorItemPtr SimulatorItem_findActiveSimulatorItemFor(Item* item)
+{
+    return SimulatorItem::findActiveSimulatorItemFor(item);
+}
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_startSimulation_overloads, startSimulation, 0, 1)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_setExternalForce_overloads, setExternalForce, 4, 5)
 
 }
 
@@ -138,6 +144,7 @@ void exportItems()
         simulatorItemClass("SimulatorItem", no_init);
 
     simulatorItemClass
+        .def("findActiveSimulatorItemFor", SimulatorItem_findActiveSimulatorItemFor).staticmethod("findActiveSimulatorItemFor")
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
         .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
         .def("stopSimulation", &SimulatorItem::stopSimulation)
@@ -157,6 +164,8 @@ void exportItems()
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
+        .def("setExternalForce", &SimulatorItem::setExternalForce, SimulatorItem_setExternalForce_overloads())
+        .def("clearExternalForces", &SimulatorItem::clearExternalForces)
         ;
     {
         scope simulatorItemScope = simulatorItemClass;
