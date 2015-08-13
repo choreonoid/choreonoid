@@ -35,7 +35,7 @@ public:
         PROTO_HUMANOID,
         PROTO_JOINT,
         PROTO_SEGMENT,
-        PROTO_SEGMENT_SHAPE,
+        PROTO_SURFACE,
         PROTO_DEVICE,
         PROTO_EXTRAJOINT,
         NUM_PROTOS
@@ -58,7 +58,7 @@ public:
         vector<SegmentInfo> segments;
         SgGroupPtr visualShape;
         SgGroupPtr collisionShape;
-        bool isSegmentShapeNodeUsed;
+        bool isSurfaceNodeUsed;
     };
         
     VRMLParser vrmlParser;
@@ -95,7 +95,7 @@ public:
     void checkHumanoidProto(VRMLProto* proto);
     void checkJointProto(VRMLProto* proto);
     void checkSegmentProto(VRMLProto* proto);
-    void checkSegmentShapeProto(VRMLProto* proto);
+    void checkSurfaceProto(VRMLProto* proto);
     void checkSensorProtoCommon(VRMLProto* proto);
     void checkDeviceProtoCommon(VRMLProto* proto);
     void checkVisionSensorProto(VRMLProto* proto);
@@ -107,7 +107,7 @@ public:
     Link* createLink(VRMLProtoInstance* jointNode, const Matrix3& parentRs);
     void readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, const ProtoIdSet& acceptableProtoIds, const Affine3& T);
     void readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* segmentNode, const Affine3& T);
-    void readSegmentShapeNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T);
+    void readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T);
     void readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* deviceNode, const Affine3& T);
     static void readDeviceCommonParameters(Device& device, VRMLProtoInstance* node);
     static ForceSensorPtr createForceSensor(VRMLProtoInstance* node);
@@ -119,6 +119,7 @@ public:
     static SpotLightPtr createSpotLight(VRMLProtoInstance* node);
     void setExtraJoints();
 };
+
 }
 
 
@@ -273,6 +274,7 @@ void readVRMLfield(VRMLVariantField& field, Matrix3& out_R)
         }
     }
 }
+
 }
 
 
@@ -293,7 +295,7 @@ VRMLBodyLoaderImpl::VRMLBodyLoaderImpl()
         protoInfoMap["Humanoid"] = ProtoInfo(PROTO_HUMANOID, &VRMLBodyLoaderImpl::checkHumanoidProto);
         protoInfoMap["Joint"] = ProtoInfo(PROTO_JOINT, &VRMLBodyLoaderImpl::checkJointProto);
         protoInfoMap["Segment"] = ProtoInfo(PROTO_SEGMENT, &VRMLBodyLoaderImpl::checkSegmentProto);
-        protoInfoMap["SegmentShape"] = ProtoInfo(PROTO_SEGMENT_SHAPE, &VRMLBodyLoaderImpl::checkSegmentShapeProto);
+        protoInfoMap["Surface"] = ProtoInfo(PROTO_SURFACE, &VRMLBodyLoaderImpl::checkSurfaceProto);
         protoInfoMap["ForceSensor"] = ProtoInfo(PROTO_DEVICE, &VRMLBodyLoaderImpl::checkSensorProtoCommon);
         protoInfoMap["Gyro"] = ProtoInfo(PROTO_DEVICE, &VRMLBodyLoaderImpl::checkSensorProtoCommon);
         protoInfoMap["AccelerationSensor"] = ProtoInfo(PROTO_DEVICE, &VRMLBodyLoaderImpl::checkSensorProtoCommon);
@@ -554,7 +556,7 @@ void VRMLBodyLoaderImpl::checkSegmentProto(VRMLProto* proto)
 }
 
 
-void VRMLBodyLoaderImpl::checkSegmentShapeProto(VRMLProto* proto)
+void VRMLBodyLoaderImpl::checkSurfaceProto(VRMLProto* proto)
 {
     requireField<MFNode>(proto, "visual");
     requireField<MFNode>(proto, "collision");
@@ -716,7 +718,7 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
 
     iLink.visualShape = new SgGroup;
     iLink.collisionShape = new SgGroup;
-    iLink.isSegmentShapeNodeUsed = false;
+    iLink.isSurfaceNodeUsed = false;
 
     MFNode& childNodes = get<MFNode>(jointNode->fields["children"]);
     Affine3 T(Affine3::Identity());
@@ -751,7 +753,7 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
 
     setShape(link, iLink.visualShape, true);
 
-    if(iLink.isSegmentShapeNodeUsed){
+    if(iLink.isSurfaceNodeUsed){
         setShape(link, iLink.collisionShape, false);
     } else {
         link->setCollisionShape(link->visualShape());
@@ -898,8 +900,8 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                     readSegmentNode(iLink, protoInstance, T);
                     linkOriginalMap[iLink.link] = childNodes[i];
                     break;
-                case PROTO_SEGMENT_SHAPE:
-                    readSegmentShapeNode(iLink, protoInstance, T);
+                case PROTO_SURFACE:
+                    readSurfaceNode(iLink, protoInstance, T);
                     break;
                 case PROTO_DEVICE:
                     readDeviceNode(iLink, protoInstance, T);
@@ -953,7 +955,7 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
 
     MFNode& childNodes = get<MFNode>(segmentNode->fields["children"]);
     ProtoIdSet acceptableProtoIds;
-    acceptableProtoIds.set(PROTO_SEGMENT_SHAPE);
+    acceptableProtoIds.set(PROTO_SURFACE);
     acceptableProtoIds.set(PROTO_DEVICE);
     readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
 
@@ -970,14 +972,14 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
 }
 
 
-void VRMLBodyLoaderImpl::readSegmentShapeNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T)
+void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T)
 {
     const string& typeName = segmentShapeNode->proto->protoName;
-    if(isVerbose) putMessage(string("SegmentShape node ") + segmentShapeNode->defName);
+    if(isVerbose) putMessage(string("Surface node ") + segmentShapeNode->defName);
     
-    iLink.isSegmentShapeNodeUsed = true;
+    iLink.isSurfaceNodeUsed = true;
 
-    // check if another SegmentShape node does not appear in the subtree
+    // check if another Surface node does not appear in the subtree
     MFNode& visualNodes = get<MFNode>(segmentShapeNode->fields["visual"]);
     ProtoIdSet acceptableProtoIds;
     readJointSubNodes(iLink, visualNodes, acceptableProtoIds, T);

@@ -57,7 +57,7 @@ PROTO Segment [
   }
 }
 
-PROTO SegmentShape [
+PROTO Surface [
  field   SFVec3f bboxCenter 0 0 0
  field   SFVec3f bboxSize   -1 -1 -1
  field   MFNode  visual     [ ]
@@ -335,7 +335,7 @@ DEF GR001 Humanoid{
 				  -1.4311400561157794e-08 1.1932351766822529e-05 -4.1556885057173572e-07 
 				  -1.2500454265702693e-08 -4.1556885057173572e-07 1.5962207274521142e-05 ]
 				 children[
-				   SegmentShape {
+				   Surface {
 				     visual [ Inline { url "parts/R_ANKLE_R.wrl" } ]
 				     collision [
 				      Transform {
@@ -496,7 +496,7 @@ DEF GR001 Humanoid{
 				  -1.4311400561157794e-08 1.1932351766822529e-05 -4.1556885057173572e-07 
 				  -1.2500454265702693e-08 -4.1556885057173572e-07 1.5962207274521142e-05 ]
 				 children[
-				   SegmentShape {
+				   Surface {
 				     visual [ Inline { url "parts/L_ANKLE_R.wrl" } ]
 				     collision [
 				      Transform {
