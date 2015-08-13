@@ -360,7 +360,7 @@ void SgGroup::clearChildren(bool doNotify)
 }
 
 
-void SgGroup::copyChildren(SgGroup* group, bool doNotify)
+void SgGroup::copyChildrenTo(SgGroup* group, bool doNotify)
 {
     for(int i=0; i < children.size(); ++i){
         group->addChild(child(i), doNotify);
@@ -368,7 +368,7 @@ void SgGroup::copyChildren(SgGroup* group, bool doNotify)
 }
 
 
-void SgGroup::moveChildren(SgGroup* group, bool doNotify)
+void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 {
     const int destTop = group->children.size();
     
@@ -388,6 +388,20 @@ void SgGroup::moveChildren(SgGroup* group, bool doNotify)
 void SgGroup::throwTypeMismatchError()
 {
     throw type_mismatch_error();
+}
+
+
+bool operator==(const SgGroup& lhs, const SgGroup& rhs)
+{
+    if(lhs.numChildren() == rhs.numChildren()){
+        return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    }
+    return false;
+}
+
+bool operator!=(const SgGroup& lhs, const SgGroup& rhs)
+{
+    return !operator==(lhs, rhs);
 }
 
 
