@@ -978,9 +978,9 @@ void VRMLBodyLoaderImpl::readSegmentShapeNode(LinkInfo& iLink, VRMLProtoInstance
     iLink.isSegmentShapeNodeUsed = true;
 
     // check if another SegmentShape node does not appear in the subtree
-    MFNode& childNodes = get<MFNode>(segmentShapeNode->fields["children"]);
+    MFNode& visualNodes = get<MFNode>(segmentShapeNode->fields["visual"]);
     ProtoIdSet acceptableProtoIds;
-    readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
+    readJointSubNodes(iLink, visualNodes, acceptableProtoIds, T);
     MFNode& collisionNodes = get<MFNode>(segmentShapeNode->fields["collision"]);
     readJointSubNodes(iLink, collisionNodes, acceptableProtoIds, T);
 

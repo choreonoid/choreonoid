@@ -46,6 +46,18 @@ void SceneLink::cloneShape(SgCloneMap& cloneMap)
 }
 
 
+void SceneLink::showVisualShape(bool on)
+{
+
+}
+
+
+void SceneLink::showCollisionShape(bool on)
+{
+
+}
+
+
 void SceneLink::addSceneDevice(SceneDevice* sdev)
 {
     if(!deviceGroup){
@@ -176,6 +188,22 @@ void SceneBody::cloneShapes(SgCloneMap& cloneMap)
 {
     for(size_t i=0; i < sceneLinks_.size(); ++i){
         sceneLinks_[i]->cloneShape(cloneMap);
+    }
+}
+
+
+void SceneBody::showVisualShapes(bool on)
+{
+    for(size_t i=0; i < sceneLinks_.size(); ++i){
+        sceneLinks_[i]->showVisualShape(on);
+    }
+}
+
+
+void SceneBody::showCollisionShapes(bool on)
+{
+    for(size_t i=0; i < sceneLinks_.size(); ++i){
+        sceneLinks_[i]->showCollisionShape(on);
     }
 }
 

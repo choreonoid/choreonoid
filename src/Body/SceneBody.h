@@ -24,6 +24,8 @@ public:
     SgNode* shape() { return shape_; }
     const SgNode* orgShape() const { return orgShape_; }
     void cloneShape(SgCloneMap& cloneMap);
+    void showVisualShape(bool on);
+    void showCollisionShape(bool on);
     void addSceneDevice(SceneDevice* sdev);
     SceneDevice* getSceneDevice(Device* device);
     bool isVisible() const;
@@ -55,6 +57,9 @@ public:
     const Body* body() const { return body_; }
 
     void cloneShapes(SgCloneMap& cloneMap);
+
+    void showVisualShapes(bool on);
+    void showCollisionShapes(bool on);
 
     int numSceneLinks() const { return sceneLinks_.size(); }
     SceneLink* sceneLink(int index) { return sceneLinks_[index]; }
