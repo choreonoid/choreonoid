@@ -107,6 +107,7 @@ public:
     Link* createLink(VRMLProtoInstance* jointNode, const Matrix3& parentRs);
     void readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, const ProtoIdSet& acceptableProtoIds, const Affine3& T);
     void readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* segmentNode, const Affine3& T);
+    void readSegmentShapeNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T);
     void readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* deviceNode, const Affine3& T);
     static void readDeviceCommonParameters(Device& device, VRMLProtoInstance* node);
     static ForceSensorPtr createForceSensor(VRMLProtoInstance* node);
@@ -546,17 +547,17 @@ void VRMLBodyLoaderImpl::checkJointProto(VRMLProto* proto)
 
 void VRMLBodyLoaderImpl::checkSegmentProto(VRMLProto* proto)
 {
-    requireField<MFNode>(proto, "visual");
-    requireField<MFNode>(proto, "collision");
+    requireField<SFVec3f>(proto, "centerOfMass");
+    requireField<SFFloat>(proto, "mass");
+    requireField<MFFloat>(proto, "momentsOfInertia");
+    addField<SFString>(proto, "name");
 }
 
 
 void VRMLBodyLoaderImpl::checkSegmentShapeProto(VRMLProto* proto)
 {
-    requireField<SFVec3f>(proto, "centerOfMass");
-    requireField<SFFloat>(proto, "mass");
-    requireField<MFFloat>(proto, "momentsOfInertia");
-    addField<SFString>(proto, "name");
+    requireField<MFNode>(proto, "visual");
+    requireField<MFNode>(proto, "collision");
 }
 
 
@@ -673,6 +674,33 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
 }
 
 
+static void setShape(Link* link, SgGroup* shape, bool isVisual)
+{
+    SgNodePtr node;
+    if(shape->empty()){
+        node = new SgNode;
+    } else {
+        SgInvariantGroup* invariant = new SgInvariantGroup;
+        if(link->Rs().isApprox(Matrix3::Identity())){
+            shape->copyChildrenTo(invariant);
+        } else {
+            SgPosTransform* transformRs = new SgPosTransform;
+            transformRs->setRotation(link->Rs());
+            shape->copyChildrenTo(transformRs);
+            invariant->addChild(transformRs);
+        }
+        node = invariant;
+    }
+    if(node){
+        if(isVisual){
+            link->setVisualShape(node);
+        } else {
+            link->setCollisionShape(node);
+        }
+    }
+}
+
+
 Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matrix3& parentRs)
 {
     if(isVerbose) putMessage(string("Joint node") + jointNode->defName);
@@ -688,7 +716,7 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
 
     iLink.visualShape = new SgGroup;
     iLink.collisionShape = new SgGroup;
-    isSegmentShapeNodeUsed = false;
+    iLink.isSegmentShapeNodeUsed = false;
 
     MFNode& childNodes = get<MFNode>(jointNode->fields["children"]);
     Affine3 T(Affine3::Identity());
@@ -721,37 +749,12 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
     link->setCenterOfMass(link->Rs() * iLink.c);
     link->setInertia(link->Rs() * iLink.I * link->Rs().transpose());
 
-    const bool isSame = (*iLink.collisionShape == *iLink.visualShape);
-    
-    if(iLink.visualShape->empty()){
-        link->setVisualShape(new SgNode());
+    setShape(link, iLink.visualShape, true);
+
+    if(iLink.isSegmentShapeNodeUsed){
+        setShape(link, iLink.collisionShape, false);
     } else {
-        SgInvariantGroupPtr visualTop = new SgInvariantGroup();
-        if(link->Rs().isApprox(Matrix3::Identity())){
-            iLink.visualShape->moveChildrenTo(visualTop);
-        } else {
-            SgPosTransformPtr transformRs = new SgPosTransform;
-            transformRs->setRotation(link->Rs());
-            visualTop->addChild(transformRs);
-            iLink.visualShape->moveChildrenTo(transformRs);
-        }
-        link->setVisualShape(visualTop);
-    }
-    if(iLink.collisionShape->empty()){
-        link->setCollisionShape(new SgNode());
-    } else if(isSame){
-        link->setCollisionShape(link->visualShape());
-    } else {
-        SgInvariantGroupPtr collisionTop = new SgInvariantGroup();
-        if(link->Rs().isApprox(Matrix3::Identity())){
-            iLink.collisionShape->moveChildrenTo(collisionTop);
-        } else {
-            SgPosTransformPtr transformRs = new SgPosTransform;
-            transformRs->setRotation(link->Rs());
-            collisionTop->addChild(transformRs);
-            iLink.collisionShape->moveChildrenTo(transformRs);
-        }
-        link->setCollisionShape(collisionTop);
+        link->setShape(link->visualShape());
     }
         
     return link;
@@ -872,16 +875,17 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
             int id = PROTO_UNDEFINED;
             const string& protoName = protoInstance->proto->protoName;
             ProtoInfoMap::iterator p = protoInfoMap.find(protoName);
-            if(p != protoInfoMap.end()){
+            if(p == protoInfoMap.end()){
+                doTraverse = true;
+                childNode = protoInstance->actualNode.get();
+            } else {
                 id = p->second.id;
                 if(!acceptableProtoIds.test(id)){
                     throw invalid_argument(str(format(_("%1% node is not in a correct place.")) % protoName));
                 }
-
                 if(isVerbose){
                     messageIndent += 2;
                 }
-
                 switch(id){
                 case PROTO_JOINT:
                     if(!T.matrix().isApprox(Affine3::MatrixType::Identity())){
@@ -904,14 +908,9 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                     doTraverse = true;
                     break;
                 }
-
                 if(isVerbose){
                     messageIndent -= 2;
                 }
-
-            } else {
-                doTraverse = true;
-                childNode = protoInstance->actualNode.get();
             }
         }
         if(doTraverse && childNode->isCategoryOf(GROUPING_NODE)){
@@ -961,25 +960,11 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     SgNodePtr node = sgConverter.convert(segmentNode);
     if(node){
         if(T.isApprox(Affine3::Identity())){
-            iLink.shape->addChild(node);
+            iLink.visualShape->addChild(node);
         } else {
             SgPosTransform* transform = new SgPosTransform(T);
             transform->addChild(node);
-            iLink.shape->addChild(transform);
-        }
-    }
-}
-
-
-static void addNodeWithTransform(SgGroup* group, SgNode* node, const Affine3& T)
-{
-    if(node){
-        if(T.isApprox(Affine3::Identity())){
-            group->addChild(node);
-        } else {
-            SgPosTransform* transform = new SgPosTransform(T);
-            transform->addChild(node);
-            group->addChild(transform);
+            iLink.visualShape->addChild(transform);
         }
     }
 }
@@ -987,18 +972,34 @@ static void addNodeWithTransform(SgGroup* group, SgNode* node, const Affine3& T)
 
 void VRMLBodyLoaderImpl::readSegmentShapeNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T)
 {
-    const string& typeName = deviceNode->proto->protoName;
+    const string& typeName = segmentShapeNode->proto->protoName;
     if(isVerbose) putMessage(string("SegmentShape node ") + segmentShapeNode->defName);
     
     iLink.isSegmentShapeNodeUsed = true;
+
+    // check if another SegmentShape node does not appear in the subtree
+    MFNode& childNodes = get<MFNode>(segmentShapeNode->fields["children"]);
+    ProtoIdSet acceptableProtoIds;
+    readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
     MFNode& collisionNodes = get<MFNode>(segmentShapeNode->fields["collision"]);
-    const int n = collisionNodes.size();
-    if(n == 1){
-        addNodeWithTransform(iLink->collisionShape, sgConverter.convert(collisionNodes), T);
-    } else if(n > 1){
-        VRMLGroupPtr group = new VRMLGroup;
-        group.children = collisionNodes;
-        addNodeWithTtransform(iLink.collisionShape, sgConverter.convert(group), T);
+    readJointSubNodes(iLink, collisionNodes, acceptableProtoIds, T);
+
+    SgGroup* group;
+    SgPosTransform* transform = 0;
+    if(T.isApprox(Affine3::Identity())){
+        group = iLink.collisionShape;
+    } else {
+        transform = new SgPosTransform(T);
+        group = transform;
+    }
+    for(size_t i=0; i < collisionNodes.size(); ++i){
+        SgNodePtr node = sgConverter.convert(collisionNodes[i]);
+        if(node){
+            group->addChild(node);
+        }
+    }
+    if(transform && !transform->empty()){
+        iLink.collisionShape->addChild(transform);
     }
 }
 

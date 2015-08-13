@@ -134,7 +134,7 @@ TranslationDragger::TranslationDragger(const TranslationDragger& org)
     draggableAxes_ = org.draggableAxes_;
     defaultAxesScale = new SgScaleTransform;
     defaultAxesScale->setScale(org.defaultAxesScale->scale());
-    org.defaultAxesScale->copyChildren(defaultAxesScale);
+    org.defaultAxesScale->copyChildrenTo(defaultAxesScale);
     addChild(defaultAxesScale);
 
     axisCylinderNormalizedRadius = org.axisCylinderNormalizedRadius;
@@ -391,7 +391,7 @@ RotationDragger::RotationDragger(const RotationDragger& org)
     draggableAxes_ = org.draggableAxes_;
     scale = new SgScaleTransform;
     scale->setScale(org.scale->scale());
-    org.scale->copyChildren(scale);
+    org.scale->copyChildrenTo(scale);
     addChild(scale);
     isContainerMode_ = org.isContainerMode_;
 }

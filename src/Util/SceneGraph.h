@@ -455,8 +455,4 @@ class SgOutlineGroup;
 
 }
 
-CNOID_EXPORT bool operator==(const cnoid::SgGroup& lhs, const cnoid::SgGroup& rhs);
-CNOID_EXPORT bool operator!=(const cnoid::SgGroup& lhs, const cnoid::SgGroup& rhs);
-
-
 #endif

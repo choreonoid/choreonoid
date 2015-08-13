@@ -391,20 +391,6 @@ void SgGroup::throwTypeMismatchError()
 }
 
 
-bool operator==(const SgGroup& lhs, const SgGroup& rhs)
-{
-    if(lhs.numChildren() == rhs.numChildren()){
-        return std::equal(lhs.begin(), lhs.end(), rhs.begin());
-    }
-    return false;
-}
-
-bool operator!=(const SgGroup& lhs, const SgGroup& rhs)
-{
-    return !operator==(lhs, rhs);
-}
-
-
 SgInvariantGroup::SgInvariantGroup()
 {
 
