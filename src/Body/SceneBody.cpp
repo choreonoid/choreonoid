@@ -18,7 +18,7 @@ SceneLink::SceneLink(Link* link)
     : link_(link)
 {
     setName(link->name());
-    orgShape_ = link->shape();
+    orgShape_ = link->visualShape();
     if(orgShape_){
         shape_ = orgShape_;
         addChild(shape_);

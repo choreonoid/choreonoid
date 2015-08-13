@@ -754,7 +754,7 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
     if(iLink.isSegmentShapeNodeUsed){
         setShape(link, iLink.collisionShape, false);
     } else {
-        link->setShape(link->visualShape());
+        link->setCollisionShape(link->visualShape());
     }
         
     return link;

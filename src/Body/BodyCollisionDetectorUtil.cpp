@@ -58,7 +58,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
         if(exclusions[i]){
             detector.addGeometry(0);
         } else {
-            int id = detector.addGeometry(body.link(i)->shape());
+            int id = detector.addGeometry(body.link(i)->collisionShape());
             if(staticFlags[i]){
                 detector.setGeometryStatic(id);
             }
