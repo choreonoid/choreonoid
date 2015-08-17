@@ -15,9 +15,8 @@ if(UNIX)
     set(bullet_INCLUDE_DIRS ${BULLET_DIR}/include/bullet)
     set(bullet_LIBRARY_DIRS ${BULLET_DIR}/lib/)
   endif()
-  # BulletConfig.cmake of version 2.82-r2704 provides a wrong name for BulletCollision,
-  # so BULLET_LIBRARIES must be overwritten even if the variable is obtained from BulletConfig.cmake
-  set(bullet_LIBRARIES BulletDynamics BulletCollision LinearMath HACD)
+  # HACD is not included in bullet.pc, we thus have to add it ourselves.
+  LIST(APPEND ${bullet_LIBRARIES} HACD)
 
 elseif(MSVC)
   if(NOT BULLET_DIR)
