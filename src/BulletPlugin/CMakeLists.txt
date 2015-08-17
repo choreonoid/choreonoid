@@ -11,12 +11,13 @@ set(BULLET_DIR ${BULLET_DIR} CACHE PATH "set the top directory of the Bullet Phy
 if(UNIX)
   if(NOT BULLET_DIR)
     PKG_CHECK_MODULES(bullet REQUIRED bullet)
+    # HACD is not included in bullet.pc, we thus have to add it ourselves.
+    LIST(APPEND ${bullet_LIBRARIES} HACD)
   else()
     set(bullet_INCLUDE_DIRS ${BULLET_DIR}/include/bullet)
     set(bullet_LIBRARY_DIRS ${BULLET_DIR}/lib/)
+    set(bullet_LIBRARIES BulletDynamics BulletCollision LinearMath HACD)
   endif()
-  # HACD is not included in bullet.pc, we thus have to add it ourselves.
-  LIST(APPEND ${bullet_LIBRARIES} HACD)
 
 elseif(MSVC)
   if(NOT BULLET_DIR)
