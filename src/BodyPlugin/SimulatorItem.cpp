@@ -844,7 +844,7 @@ void SimulationBodyImpl::flushResult()
             deviceStateBuf.pop_front(deviceStateBuf.rowSize() - 1);
         }
     } else {
-        const Body* orgBody = bodyItem->body();
+        Body* orgBody = bodyItem->body();
         if(!linkPosBuf.empty()){
             MultiSE3Deque::Row last = linkPosBuf.last();
             const int n = last.size();

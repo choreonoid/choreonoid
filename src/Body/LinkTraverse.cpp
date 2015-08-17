@@ -36,6 +36,12 @@ LinkTraverse::~LinkTraverse()
 }
 
 
+void LinkTraverse::clear()
+{
+    links.clear();
+    numUpwardConnections = 0;
+}
+
 void LinkTraverse::find(Link* root, bool doUpward, bool doDownward)
 {
     numUpwardConnections = 0;
