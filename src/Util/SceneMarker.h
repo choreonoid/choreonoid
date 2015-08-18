@@ -28,6 +28,9 @@ class CNOID_EXPORT SphereMarker : public SgPosTransform
 {
 public:
     SphereMarker(double radius, const Vector3f& color, float transparency = 0.0);
+    void setRadius(double r);
+private:
+    SgScaleTransformPtr scale;
 };
 typedef ref_ptr<SphereMarker> SphereMarkerPtr;
 

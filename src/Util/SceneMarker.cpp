@@ -55,12 +55,22 @@ SphereMarker::SphereMarker(double radius, const Vector3f& color, float transpare
 {
     SgShapePtr shape = new SgShape;
     MeshGenerator meshGenerator;
-    shape->setMesh(meshGenerator.generateSphere(radius));
+    shape->setMesh(meshGenerator.generateSphere(1.0));
     SgMaterial* material = shape->setMaterial(new SgMaterial);
     material->setDiffuseColor(color);
     material->setEmissiveColor(color);
     material->setTransparency(transparency);
-    addChild(shape);
+    scale = new SgScaleTransform;
+    scale->addChild(shape);
+    scale->setScale(radius);
+    addChild(scale);
+}
+
+
+void SphereMarker::setRadius(double r)
+{
+    scale->setScale(r);
+    scale->notifyUpdate();
 }
 
 
