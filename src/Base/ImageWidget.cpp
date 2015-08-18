@@ -245,6 +245,7 @@ void ImageWidget::setTransform(const QTransform& transform)
 {
     transform_ = transform;
     settedT = true;
+    initialTransform_ = transform_;
 }
 
 
@@ -297,6 +298,19 @@ void ImageWidget::setAngle(double angle)
 {
     transform_.reset();
     rotate(angle);
+    initialTransform_ = transform_;
+}
+
+
+void ImageWidget::reset()
+{
+    boost::lock_guard<boost::mutex> lock(mtx);
+    transform_ = initialTransform_;
+    fitted = false;
+    settedT = true;
+
+    fitCenter();
+    update();
 }
 
 
