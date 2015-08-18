@@ -37,7 +37,6 @@
 #include <QTime>
 typedef QTime QElapsedTimer;
 #endif
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -1198,7 +1197,6 @@ void SimulatorItemImpl::clearSimulation()
     allSimBodies.clear();
     simBodiesWithBody.clear();;
     activeSimBodies.clear();
-    bodyMotionEngines.clear();
     needToUpdateSimBodyLists = true;
 
     preDynamicsFunctions.clear();
@@ -1247,6 +1245,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
     }
 
     clearSimulation();
+    bodyMotionEngines.clear();
 
     for(size_t i=0; i < targetItems.size(); ++i){
 
@@ -2152,8 +2151,9 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
     for(size_t i=0; i < bodyMotionEngines.size(); ++i){
         processed |= bodyMotionEngines[i]->onTimeChanged(time);
     }
-    if(collisionSeqEngine)
+    if(collisionSeqEngine){
         processed |= collisionSeqEngine->onTimeChanged(time);
+    }
     return processed;
 }
 
