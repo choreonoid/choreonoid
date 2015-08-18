@@ -38,6 +38,7 @@ public:
     void setTransform(const QTransform& transform);
     void setAngle(double angle);
     void rotate(double angle);
+    void reset();
     Image& getImage();
     boost::mutex mtx;
 
@@ -51,6 +52,7 @@ private:
     bool isScalingEnabled_;
     QTransform transform_;
     QTransform notScaledTransform_;
+    QTransform initialTransform_;
     Image transformedImage;
 
     void fitCenter();
