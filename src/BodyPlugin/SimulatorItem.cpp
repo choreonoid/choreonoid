@@ -296,26 +296,19 @@ class SimulatedMotionEngineManager
 {
 public:
     ItemList<SimulatorItem> simulatorItems;
-    double currentTime;
-
     ScopedConnection selectionOrTreeChangedConnection;
     ScopedConnection timeChangeConnection;
 
     SimulatedMotionEngineManager(){
-
         selectionOrTreeChangedConnection.reset(
             ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(
                 boost::bind(&SimulatedMotionEngineManager::onItemSelectionOrTreeChanged, this, _1)));
-
-        TimeBar* timeBar = TimeBar::instance();
-        currentTime = timeBar->time();
-        timeChangeConnection.reset(
-            timeBar->sigTimeChanged().connect(
-                boost::bind(&SimulatedMotionEngineManager::setTime, this, _1)));
     }
 
     void onItemSelectionOrTreeChanged(const ItemList<SimulatorItem>& selected){
 
+        bool changed = false;
+        
         if(selected.empty()){
             vector<SimulatorItemPtr>::iterator p = simulatorItems.begin();
             while(p != simulatorItems.end()){
@@ -323,11 +316,25 @@ public:
                     ++p;
                 } else {
                     p = simulatorItems.erase(p);
+                    changed = true;
                 }
             }
         } else {
-            simulatorItems = selected;
-            setTime(currentTime);
+            if(simulatorItems != selected){
+                simulatorItems = selected;
+                changed = true;
+            }
+        }
+        if(changed){
+            if(simulatorItems.empty()){
+                timeChangeConnection.disconnect();
+            } else {
+                TimeBar* timeBar = TimeBar::instance();
+                timeChangeConnection.reset(
+                    timeBar->sigTimeChanged().connect(
+                        boost::bind(&SimulatedMotionEngineManager::setTime, this, _1)));
+                setTime(timeBar->time());
+            }
         }
     }
 
@@ -2161,9 +2168,8 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
 bool SimulatedMotionEngineManager::setTime(double time)
 {
     bool isActive = false;
-    currentTime = time;
     for(size_t i=0; i < simulatorItems.size(); ++i){
-        isActive |= simulatorItems[i]->impl->setPlaybackTime(currentTime);
+        isActive |= simulatorItems[i]->impl->setPlaybackTime(time);
     }
     return isActive;
 }
