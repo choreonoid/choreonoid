@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_SCENE_DEVICE_H_INCLUDED
-#define CNOID_BODY_SCENE_DEVICE_H_INCLUDED
+#ifndef CNOID_BODY_SCENE_DEVICE_H
+#define CNOID_BODY_SCENE_DEVICE_H
 
 #include <cnoid/SceneGraph>
 #include <boost/function.hpp>
@@ -22,6 +22,14 @@ class CNOID_EXPORT SceneDevice : public SgPosTransform
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
+    // for integrating new device types
+    typedef boost::function<SgNode*(SceneDevice* sdev)> DeviceNodeFactory;
+
+    template<class DeviceType>
+    static void registerDeviceNodeFactory(const DeviceNodeFactory& factory) {
+        registerDeviceNodeFactory_(&typeid(DeviceType), factory);
+    }
+
     SceneDevice(Device* device);
 
     template <class DeviceType> DeviceType* device() {
@@ -36,14 +44,6 @@ public:
     void setSceneUpdateFunction(boost::function<void()> function);
     void updateScene() { if(sceneUpdateFunction) sceneUpdateFunction(); }
     void setSceneUpdateConnection(bool on);
-
-    // for integrating new device types
-    typedef boost::function<SgNode*(SceneDevice* sdev)> DeviceNodeFactory;
-
-    template<class DeviceType>
-        static void registerDeviceNodeFactory(const DeviceNodeFactory& factory) {
-        registerDeviceNodeFactory_(&typeid(factory), factory);
-    }
 
 protected:
     ~SceneDevice();
@@ -60,6 +60,7 @@ private:
 };
     
 typedef ref_ptr<SceneDevice> SceneDevicePtr;
+
 }
     
 #endif
