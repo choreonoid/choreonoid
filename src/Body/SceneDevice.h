@@ -23,15 +23,6 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
     // for integrating new device types
-
-    /*
-    typedef boost::function<SgNode*(SceneDevice* sdev)> DeviceNodeFactory;
-    template<class DeviceType>
-    static void registerDeviceNodeFactory(const DeviceNodeFactory& factory) {
-        registerDeviceNodeFactory_(&typeid(DeviceType), factory);
-    }
-    */
-
     typedef boost::function<SceneDevice*(Device* device)> SceneDeviceFactory;
     template<class DeviceType>
     static void registerSceneDeviceFactory(const SceneDeviceFactory& factory) {

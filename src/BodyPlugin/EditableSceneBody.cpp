@@ -398,7 +398,7 @@ void EditableSceneBodyImpl::updateModel()
     isDragging = false;
     dragMode = DRAG_NONE;
     
-    self->updateModel();
+    self->SceneBody::updateModel();
 }
 
 
@@ -928,10 +928,12 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
                 }
             }
         }
-        
-        static boost::format f(_("%1% / %2%"));
         if(pointedSceneLink){
-            event.updateIndicator(str(f % bodyItem->name() % pointedSceneLink->link()->name()));
+            const Vector3 p = pointedSceneLink->T().inverse() * event.point();
+            event.updateIndicator(
+                (str(boost::format("%1% / %2% : (%3$ .3f, %4$ .3f, %5$ .3f)")
+                     % bodyItem->name() % pointedSceneLink->link()->name()
+                     % p.x() % p.y() % p.z())));
         } else {
             event.updateIndicator("");
         }
