@@ -185,6 +185,9 @@ public:
         return sigNameChanged_;
     }
 
+    /**
+       \todo Remove this signal and define 'sigPropertyChanged' instead of it
+    */
     SignalProxy<void()> sigUpdated() {
         return sigUpdated_;
     }

@@ -209,6 +209,7 @@ public:
 
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void onSceneGraphConnection(bool on);
+    void updateModel();
     void onBodyItemUpdated();
     void onKinematicStateChanged();
 
@@ -373,7 +374,31 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
         connections.add(kinematicsBar->sigCollisionVisualizationChanged().connect(
                             boost::bind(&EditableSceneBodyImpl::onCollisionLinkHighlightModeChanged, this)));
         onCollisionLinkHighlightModeChanged();
+
+        connections.add(bodyItem->sigModelUpdated().connect(
+                            boost::bind(&EditableSceneBodyImpl::updateModel, this)));
     }
+}
+
+
+void EditableSceneBody::updateModel()
+{
+    impl->updateModel();
+}
+
+
+void EditableSceneBodyImpl::updateModel()
+{
+    pointedSceneLink = 0;
+    targetLink = 0;
+    if(outlinedLink){
+        outlinedLink->showBoundingBox(false);
+        outlinedLink = 0;
+    }
+    isDragging = false;
+    dragMode = DRAG_NONE;
+    
+    self->updateModel();
 }
 
 

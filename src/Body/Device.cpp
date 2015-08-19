@@ -64,7 +64,7 @@ void Device::forEachActualType(boost::function<bool(const std::type_info& type)>
 void ActiveDevice::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(ActiveDevice))){
-        ActiveDevice::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
