@@ -206,7 +206,7 @@ void SceneLink::addSceneDevice(SceneDevice* sdev)
 SceneDevice* SceneLink::getSceneDevice(Device* device)
 {
     for(size_t i=0; i < sceneDevices_.size(); ++i){
-        SceneDevice* sdev = sceneDevices_[i].get();
+        SceneDevice* sdev = sceneDevices_[i];
         if(sdev->device() == device){
             return sdev;
         }
@@ -278,10 +278,12 @@ void SceneBody::updateModel()
 
     const DeviceList<Device>& devices = body_->devices();
     for(size_t i=0; i < devices.size(); ++i){
-        Device* device = devices.get(i);
-        SceneDevice* sceneDevice = new SceneDevice(device);
-        sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
-        sceneDevices.push_back(sceneDevice);
+        Device* device = devices[i];
+        SceneDevice* sceneDevice = SceneDevice::create(device);
+        if(sceneDevice){
+            sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
+            sceneDevices.push_back(sceneDevice);
+        }
     }
 
     updateLinkPositions();
