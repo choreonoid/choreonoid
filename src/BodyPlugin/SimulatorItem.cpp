@@ -1455,7 +1455,7 @@ SimulationBody* SimulatorItem::findSimulationBody(BodyItem* bodyItem)
     }
     return simBody;
 }
-    
+
 
 // Simulation loop
 void SimulatorItemImpl::run()

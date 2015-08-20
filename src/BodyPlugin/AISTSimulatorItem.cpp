@@ -570,8 +570,10 @@ void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Posi
 
 void AISTSimulatorItem::clearForcedBodyPositions()
 {
-    removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
-    impl->forcedBodyPositionFunctionId = boost::none;
+    if(impl->forcedBodyPositionFunctionId){
+        removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
+        impl->forcedBodyPositionFunctionId = boost::none;
+    }
 }
     
 
