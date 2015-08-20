@@ -192,7 +192,7 @@ public:
         LINK_FK_ROTATION,
         LINK_FK_TRANSLATION,
         LINK_VIRTUAL_ELASTIC_STRING,
-        LINK_POSITIN_REQUEST,
+        LINK_FORCED_POSITION,
         ZMP_TRANSLATION
     };
     DragMode dragMode;
@@ -227,8 +227,8 @@ public:
     void makeLinkAttitudeLevel();
         
     EditableSceneBodyImpl::PointedType findPointedObject(const vector<SgNode*>& path);
-    void updateMarkersAndManipulators(bool isDraggerGlobalCoordinate);
-    void attachPositionDragger(Link* link, bool isGlobalCoordinate = false);
+    void updateMarkersAndManipulators();
+    void attachPositionDragger(Link* link);
 
     bool onKeyPressEvent(const SceneWidgetEvent& event);
     bool onKeyReleaseEvent(const SceneWidgetEvent& event);
@@ -257,9 +257,10 @@ public:
     void startVirtualElasticString(const SceneWidgetEvent& event);
     void dragVirtualElasticString(const SceneWidgetEvent& event);
     void finishVirtualElasticString();
-    void startFrameConstraintForceRequest();
-    void dragFrameConstraintForceRequest();
-    void finishFrameConstraintForceRequest();
+    void startForcedPosition(const SceneWidgetEvent& event);
+    void setForcedPosition(const Position& position);
+    void dragForcedPosition(const SceneWidgetEvent& event);
+    void finishForcedPosition();
     void startZmpTranslation(const SceneWidgetEvent& event);
     void dragZmpTranslation(const SceneWidgetEvent& event);
 
@@ -404,7 +405,7 @@ void EditableSceneBodyImpl::updateModel()
 
 void EditableSceneBodyImpl::onBodyItemUpdated()
 {
-    updateMarkersAndManipulators(false);
+    updateMarkersAndManipulators();
 }
 
 
@@ -428,10 +429,6 @@ void EditableSceneBodyImpl::onKinematicStateChanged()
                 virtualElasticStringLine->vertices()->at(0)
                     = (targetLink->T() * pointedLinkLocalPoint).cast<Vector3f::Scalar>();
             }
-        }
-        if(!positionDragger->isDragging() && targetLink){
-            positionDragger->setPosition(targetLink->position());
-            positionDragger->notifyUpdate();
         }
     }
 
@@ -628,7 +625,7 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
 }
 
 
-void EditableSceneBodyImpl::updateMarkersAndManipulators(bool isDraggerGlobalCoordinate)
+void EditableSceneBodyImpl::updateMarkersAndManipulators()
 {
     bool show = (isEditMode && !self->body()->isStaticModel());
     
@@ -666,23 +663,18 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators(bool isDraggerGlobalCoo
     }
         
     if(showDragger){
-        attachPositionDragger(targetLink, isDraggerGlobalCoordinate);
+        attachPositionDragger(targetLink);
     }
 
     self->notifyUpdate(modified);
 }
 
 
-void EditableSceneBodyImpl::attachPositionDragger(Link* link, bool isGlobalCoordinate)
+void EditableSceneBodyImpl::attachPositionDragger(Link* link)
 {
     SceneLink* sceneLink = self->sceneLink(link->index());
     positionDragger->adjustSize(sceneLink->untransformedBoundingBox());
-    if(isGlobalCoordinate){
-        positionDragger->setPosition(link->position());
-        markerGroup->addChild(positionDragger);
-    } else {
-        sceneLink->addChild(positionDragger);
-    }
+    sceneLink->addChild(positionDragger);
 }
 
 
@@ -795,7 +787,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
             targetLink = pointedSceneLink->link();
             if(event.button() == Qt::LeftButton){
                 if(targetLink->isRoot() && isSimulatedRootLinkPositionMoveMode){
-                    updateMarkersAndManipulators(true);
+                    startForcedPosition(event);
                 } else {
                     startVirtualElasticString(event);
                 }
@@ -806,7 +798,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
         if(pointedType == PT_SCENE_LINK){
             if(event.button() == Qt::LeftButton){
                 targetLink = pointedSceneLink->link();
-                updateMarkersAndManipulators(false);
+                updateMarkersAndManipulators();
                 ik.reset();
                 
                 switch(kinematicsBar->mode()){
@@ -960,6 +952,10 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
         case LINK_VIRTUAL_ELASTIC_STRING:
             dragVirtualElasticString(event);
             break;
+
+        case LINK_FORCED_POSITION:
+            dragForcedPosition(event);
+            break;
             
         case ZMP_TRANSLATION:
             dragZmpTranslation(event);
@@ -1099,7 +1095,7 @@ void EditableSceneBodyImpl::onSceneModeChanged(const SceneWidgetEvent& event)
             outlinedLink = 0;
         }
     }
-    updateMarkersAndManipulators(activeSimulatorItem != 0);
+    updateMarkersAndManipulators();
 }
 
 
@@ -1136,9 +1132,7 @@ bool EditableSceneBodyImpl::onRedoRequest()
 void EditableSceneBodyImpl::onDraggerDragStarted()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
-    if(activeSimulatorItem){
-        startFrameConstraintForceRequest();
-    } else {
+    if(!activeSimulatorItem){
         initializeIK();
     }
 }
@@ -1148,7 +1142,7 @@ void EditableSceneBodyImpl::onDraggerDragged()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
-        dragFrameConstraintForceRequest();
+        setForcedPosition(positionDragger->draggedPosition());
     } else {
         doIK(positionDragger->draggedPosition());
     }
@@ -1159,7 +1153,7 @@ void EditableSceneBodyImpl::onDraggerDragFinished()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
-        finishFrameConstraintForceRequest();
+        finishForcedPosition();
     } else {
         doIK(positionDragger->draggedPosition());
     }
@@ -1220,17 +1214,15 @@ void EditableSceneBodyImpl::startIK(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
 {
-    if(dragMode == LINK_IK_TRANSLATION){
-        if(dragProjector.dragTranslation(event)){
-            //Position T = dragProjector.initialPosition();
-            Position T;
-            T.translation() = dragProjector.position().translation();
-            T.linear() = targetLink->R();
-            if(penetrationBlocker){
-                penetrationBlocker->adjust(T, T.translation() - targetLink->p());
-            }
-            doIK(T);
+    if(dragProjector.dragTranslation(event)){
+        //Position T = dragProjector.initialPosition();
+        Position T;
+        T.translation() = dragProjector.position().translation();
+        T.linear() = targetLink->R();
+        if(penetrationBlocker){
+            penetrationBlocker->adjust(T, T.translation() - targetLink->p());
         }
+        doIK(T);
     }
 }
 
@@ -1332,23 +1324,38 @@ void EditableSceneBodyImpl::finishVirtualElasticString()
 }
 
 
-void EditableSceneBodyImpl::startFrameConstraintForceRequest()
+void EditableSceneBodyImpl::startForcedPosition(const SceneWidgetEvent& event)
 {
+    updateMarkersAndManipulators();
 
+    dragProjector.setInitialPosition(targetLink->position());
+    dragProjector.setTranslationAlongViewPlane();
+    if(dragProjector.startTranslation(event)){
+        dragMode = LINK_FORCED_POSITION;
+    }
 }
 
 
-void EditableSceneBodyImpl::dragFrameConstraintForceRequest()
+void EditableSceneBodyImpl::setForcedPosition(const Position& position)
 {
     if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
-        const Affine3 T = positionDragger->draggedPosition();
-        simulatorItem->setForcedBodyPosition(bodyItem, T);
-        positionDragger->setPosition(T);
-    }        
+        simulatorItem->setForcedBodyPosition(bodyItem, position);
+    }
+}
+    
+    
+void EditableSceneBodyImpl::dragForcedPosition(const SceneWidgetEvent& event)
+{
+    if(dragProjector.dragTranslation(event)){
+        Position T;
+        T.translation() = dragProjector.position().translation();
+        T.linear() = targetLink->R();
+        setForcedPosition(T);
+    }
 }
 
 
-void EditableSceneBodyImpl::finishFrameConstraintForceRequest()
+void EditableSceneBodyImpl::finishForcedPosition()
 {
 
 }
