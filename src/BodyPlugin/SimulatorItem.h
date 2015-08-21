@@ -43,16 +43,27 @@ public:
     void cloneShapesOnce();
 
     /**
+       Called from the simulation loop thread
+    */
+    bool isActive() const;
+    void setActive(bool on);
+
+    /**
        Use this instead of Device::notiryStateChange when the state part which
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
 
+    const std::string& resultItemPrefix() const;
+    
+    virtual void initializeResultBuffers();
+    virtual void initializeResultItems(Item* parentItem);
+
     /**
        Called from the simulation loop thread.
     */
-    virtual void storeResult();
-    virtual bool flushResult();
+    virtual void bufferResults();
+    virtual bool flushResults();
 
 private:
     SimulationBodyImpl* impl;
