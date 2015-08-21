@@ -86,14 +86,19 @@ public:
     void makeTransparent(float transparency);
     void makeTransparent(float transparency, SgCloneMap& cloneMap);
 
+    virtual void updateModel();
+
 protected:
     BodyPtr body_;
+    SgGroupPtr sceneLinkGroup;
     std::vector<SceneLinkPtr> sceneLinks_;
     std::vector<SceneDevicePtr> sceneDevices;
 
     virtual ~SceneBody();
 
 private:
+    boost::function<SceneLink*(Link*)> sceneLinkFactory;
+
     SceneBody(const SceneBody& org);
     void initialize(BodyPtr& body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory);
 };

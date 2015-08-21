@@ -106,7 +106,7 @@ private:
 };
 
 typedef ref_ptr<SpotLight> SpotLightPtr;
-};
 
+}
 
 #endif

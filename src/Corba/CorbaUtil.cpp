@@ -121,12 +121,12 @@ bool NamingContextHelper::checkOrUpdateNamingContext()
 
     try {
 #ifdef WIN32
-        omniORB::setClientCallTimeout(200);
+        omniORB::setClientCallTimeout(250);
 #endif
         CORBA::Object_var obj = getORB()->string_to_object(namingContextLocation.c_str());
         namingContext = CosNaming::NamingContext::_narrow(obj);
 #ifndef WIN32
-        omniORB::setClientCallTimeout(namingContext, 200);
+        omniORB::setClientCallTimeout(namingContext, 250);
 #endif
         if(CORBA::is_nil(namingContext)){
             errorMessage_ = str(format("The object at %1% is not a NamingContext object.") % namingContextLocation);
@@ -157,7 +157,7 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(const std::string& name, co
             obj = namingContext->resolve(ncName);
 
         } catch(const CosNaming::NamingContext::NotFound &ex) {
-            errorMessage_ = name + " is not found: ";
+            errorMessage_ = str(format("\"%1%\" is not found: ") % name);
             switch(ex.why) {
             case CosNaming::NamingContext::missing_node:
                 errorMessage_ += "Missing Node";
@@ -174,10 +174,13 @@ CORBA::Object_ptr NamingContextHelper::findObjectSub(const std::string& name, co
             }
         
         } catch(CosNaming::NamingContext::CannotProceed &exc) {
-            errorMessage_ = str(format("Resolve %1% CannotProceed") % name);
+            errorMessage_ = str(format("Resolving \"%1%\" cannot be proceeded.") % name);
 
         } catch(CosNaming::NamingContext::AlreadyBound &exc) {
-            errorMessage_ = str(format("Resolve %1% InvalidName") % name);
+            errorMessage_ = str(format("\"%1%\" has already been bound.") % name);
+
+        } catch(const CORBA::TRANSIENT &){
+            errorMessage_ = str(format("Resolving \"%1% \" failed with the TRANSIENT exception.") % name);
         }
     }
 
@@ -229,7 +232,7 @@ bool NamingContextHelper::isObjectAlive(CORBA::Object_ptr obj)
     bool isAlive = false;
     
     if(obj && !CORBA::is_nil(obj)){
-        omniORB::setClientCallTimeout(obj, 100);
+        omniORB::setClientCallTimeout(obj, 250);
         try {
             if(!obj->_non_existent()){
                 isAlive = true;

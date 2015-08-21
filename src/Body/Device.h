@@ -126,7 +126,7 @@ public:
 typedef ref_ptr<Device> DevicePtr;
 
 
-class ActiveDevice : public Device
+class CNOID_EXPORT ActiveDevice : public Device
 {
 public:
 protected:

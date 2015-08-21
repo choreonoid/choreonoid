@@ -206,7 +206,7 @@ void SceneLink::addSceneDevice(SceneDevice* sdev)
 SceneDevice* SceneLink::getSceneDevice(Device* device)
 {
     for(size_t i=0; i < sceneDevices_.size(); ++i){
-        SceneDevice* sdev = sceneDevices_[i].get();
+        SceneDevice* sdev = sceneDevices_[i];
         if(sdev->device() == device){
             return sdev;
         }
@@ -237,24 +237,11 @@ SceneBody::SceneBody(BodyPtr body, boost::function<SceneLink*(Link*)> sceneLinkF
 
 void SceneBody::initialize(BodyPtr& body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory)
 {
+    this->sceneLinkFactory = sceneLinkFactory;
     body_ = body;
-    setName(body->name());
-    
-    const int n = body->numLinks();
-    for(int i=0; i < n; ++i){
-        Link* link = body->link(i);
-        SceneLink* sLink = sceneLinkFactory(link);
-        addChild(sLink);
-        sceneLinks_.push_back(sLink);
-    }
-
-    const DeviceList<Device>& devices = body->devices();
-    for(size_t i=0; i < devices.size(); ++i){
-        Device* device = devices.get(i);
-        SceneDevice* sceneDevice = new SceneDevice(device);
-        sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
-        sceneDevices.push_back(sceneDevice);
-    }
+    sceneLinkGroup = new SgGroup;
+    addChild(sceneLinkGroup);
+    updateModel();
 }
 
 
@@ -268,6 +255,40 @@ SceneBody::SceneBody(const SceneBody& org)
 SceneBody::~SceneBody()
 {
 
+}
+
+
+void SceneBody::updateModel()
+{
+    setName(body_->name());
+
+    if(sceneLinks_.empty()){
+        sceneLinkGroup->clearChildren();
+        sceneLinks_.clear();
+    }
+    sceneDevices.clear();
+        
+    const int n = body_->numLinks();
+    for(int i=0; i < n; ++i){
+        Link* link = body_->link(i);
+        SceneLink* sLink = sceneLinkFactory(link);
+        sceneLinkGroup->addChild(sLink);
+        sceneLinks_.push_back(sLink);
+    }
+
+    const DeviceList<Device>& devices = body_->devices();
+    for(size_t i=0; i < devices.size(); ++i){
+        Device* device = devices[i];
+        SceneDevice* sceneDevice = SceneDevice::create(device);
+        if(sceneDevice){
+            sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
+            sceneDevices.push_back(sceneDevice);
+        }
+    }
+
+    updateLinkPositions();
+    updateSceneDevices();
+    notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED | SgUpdate::MODIFIED);
 }
 
 

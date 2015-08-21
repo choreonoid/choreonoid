@@ -80,6 +80,9 @@ public:
     InverseKinematicsPtr getDefaultIK(Link* targetLink);
     PenetrationBlockerPtr createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);
 
+    SignalProxy<void()> sigModelUpdated();
+    void notifyModelUpdate();
+        
     /**
        @if jp
        ロボットの関節角、関節角速度、root位置・姿勢などの「運動学的」状態に変更が生じたときに

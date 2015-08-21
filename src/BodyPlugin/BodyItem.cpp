@@ -125,6 +125,8 @@ public:
     ScopedConnection connectionToSigLinkSelectionChanged;
     ScopedConnectionSet optionCheckConnections;
 
+    Signal<void()> sigModelUpdated;
+
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
     ~BodyItemImpl();
@@ -360,6 +362,18 @@ void BodyItem::setName(const std::string& name)
         impl->body->setName(name);
     }
     Item::setName(name);
+}
+
+
+SignalProxy<void()> BodyItem::sigModelUpdated()
+{
+    return impl->sigModelUpdated;
+}
+
+
+void BodyItem::notifyModelUpdate()
+{
+    impl->sigModelUpdated();
 }
 
 
