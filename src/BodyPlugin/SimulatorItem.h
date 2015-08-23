@@ -57,13 +57,13 @@ public:
     const std::string& resultItemPrefix() const;
     
     virtual void initializeResultBuffers();
-    virtual void initializeResultItems(Item* parentItem);
+    virtual void initializeResultItems();
 
     /**
        Called from the simulation loop thread.
     */
     virtual void bufferResults();
-    virtual bool flushResults();
+    virtual void flushResults();
 
 private:
     SimulationBodyImpl* impl;

@@ -126,17 +126,17 @@ public:
 
     Deque2D<double> jointPosBuf;
     MultiSE3Deque linkPosBuf;
+    vector<Device*> devicesToNotifyResults;
+    ScopedConnectionSet deviceStateConnections;
+    boost::dynamic_bitset<> deviceStateChangeFlag;
+    Deque2D<DeviceStatePtr> deviceStateBuf;
 
+    ItemPtr parentOfResultItems;
     string resultItemPrefix;
     BodyMotionPtr motion;
     MultiValueSeqPtr jointPosResults;
     MultiSE3SeqPtr linkPosResults;
     MultiSE3SeqItemPtr linkPosResultItem;
-
-    vector<Device*> devicesToNotifyResults;
-    ScopedConnectionSet deviceStateConnections;
-    boost::dynamic_bitset<> deviceStateChangeFlag;
-    Deque2D<DeviceStatePtr> deviceStateBuf;
     vector<DeviceStatePtr> prevFlushedDeviceStateInDirectMode;
     MultiDeviceStateSeqPtr deviceStateResults;
 
@@ -144,10 +144,11 @@ public:
     void findControlSrcItems(Item* item, vector<Item*>& io_items, bool doPickCheckedItems = false);
     bool initialize(SimulatorItemImpl* simImpl, BodyItem* bodyItem);
     bool initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem);
+    void extractAssociatedItems(bool doReset);
     void cloneShapesOnce();
-    void initializeResultData(Item* ownerItem);
+    void initializeResultData();
     void initializeResultBuffers();
-    void initializeResultItems(Item* parentItem);
+    void initializeResultItems();
     void setInitialStateOfBodyMotion(const BodyMotionPtr& bodyMotion);
     void setActive(bool on);
     void onDeviceStateChanged(int deviceIndex);
@@ -558,6 +559,9 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     controllers.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
 
+    bool doReset = simImpl->doReset && !body->isStaticModel();
+    extractAssociatedItems(doReset);
+    
     if(body->isStaticModel()){
         return true;
     }
@@ -565,6 +569,16 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     isActive = true;
     isResultOutputEnabled = true;
 
+    initializeResultData();
+
+    self->bufferResults(); // put the intial status
+    
+    return true;
+}
+
+
+void SimulationBodyImpl::extractAssociatedItems(bool doReset)
+{
     vector<Item*> controlSrcItems;
     findControlSrcItems(bodyItem->childItem(), controlSrcItems);
     vector<Item*>::iterator iter = controlSrcItems.begin();
@@ -578,7 +592,7 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
                motionItem->name().compare(0, resultItemPrefix.size(), resultItemPrefix) != 0){
                 controllerItem = simImpl->createBodyMotionController(bodyItem, motionItem);
                 if(controllerItem){
-                    if(simImpl->doReset){
+                    if(doReset){
                         setInitialStateOfBodyMotion(motionItem->motion());
                     }
                     controllers.push_back(controllerItem);
@@ -591,16 +605,15 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
             iter = controlSrcItems.erase(iter);
         }
     }
-    
+
     if(controlSrcItems.empty()){
-        initializeResultData(bodyItem);
+        parentOfResultItems = bodyItem;
 
     } else if(controlSrcItems.size() == 1){
-        initializeResultData(controlSrcItems.front());
+        parentOfResultItems = controlSrcItems.front();
 
     } else {
-        // find the top owenr of all the controllers
-        Item* topOwner = 0;
+        // find the common owner of all the controllers
         int minDepth = std::numeric_limits<int>::max();
         for(size_t i=0; i < controlSrcItems.size(); ++i){
             Item* owner = controlSrcItems[i]->parentItem();
@@ -611,16 +624,11 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
                 item = item->parentItem();
             }
             if(depth < minDepth){
-                topOwner = owner;
+                parentOfResultItems = owner;
                 minDepth = depth;
             }
         }
-        initializeResultData(topOwner);
     }
-
-    self->bufferResults(); // put the intial status
-    
-    return true;
 }
 
 
@@ -642,7 +650,7 @@ const std::string& SimulationBody::resultItemPrefix() const
 }
 
 
-void SimulationBodyImpl::initializeResultData(Item* ownerItem)
+void SimulationBodyImpl::initializeResultData()
 {
     if(!isResultOutputEnabled){
         return;
@@ -654,7 +662,7 @@ void SimulationBodyImpl::initializeResultData(Item* ownerItem)
         return;
     }
 
-    self->initializeResultItems(ownerItem);
+    self->initializeResultItems();
 }
 
 
@@ -693,20 +701,24 @@ void SimulationBodyImpl::initializeResultBuffers()
 }
 
 
-void SimulationBody::initializeResultItems(Item* parentItem)
+void SimulationBody::initializeResultItems()
 {
-    impl->initializeResultItems(parentItem);
+    impl->initializeResultItems();
 }
 
 
-void SimulationBodyImpl::initializeResultItems(Item* parentItem)
+void SimulationBodyImpl::initializeResultItems()
 {
-    BodyMotionItem* motionItem = parentItem->findChildItem<BodyMotionItem>(resultItemPrefix);
+    if(!parentOfResultItems){
+        return;
+    }
+    
+    BodyMotionItem* motionItem = parentOfResultItems->findChildItem<BodyMotionItem>(resultItemPrefix);
     if(!motionItem){
         motionItem = new BodyMotionItem();
         motionItem->setTemporal();
         motionItem->setName(resultItemPrefix);
-        parentItem->addChildItem(motionItem);
+        parentOfResultItems->addChildItem(motionItem);
     }
 
     simImpl->addBodyMotionEngine(motionItem);
@@ -786,6 +798,7 @@ void SimulationBodyImpl::setActive(bool on)
                 if(!isResultOutputEnabled){
                     simImpl->resultBufMutex.lock();
                     self->initializeResultBuffers();
+                    self->bufferResults();
                     isResultOutputEnabled = true;
                     simImpl->resultBufMutex.unlock();
                 }
@@ -855,19 +868,19 @@ void SimulationBodyImpl::bufferResults()
 }
 
 
-bool SimulationBody::flushResults()
+void SimulationBody::flushResults()
 {
-    if(!impl->isResultOutputEnabled){
-        return false;
-    }
     impl->flushResults();
-    return true;
 }
 
 
 void SimulationBodyImpl::flushResults()
 {
     if(simImpl->isRecordingEnabled){
+
+        if(!linkPosResults){
+            initializeResultItems();
+        }
 
         const int ringBufferSize = simImpl->ringBufferSize;
         const int numBufFrames = linkPosBuf.rowSize();
@@ -893,7 +906,7 @@ void SimulationBodyImpl::flushResults()
         }
         if(deviceStateBuf.colSize() > 0){
             // This loop begins with the second element to skip the first element to keep the unchanged states
-            for(int i=1; i < numBufFrames; ++i){ 
+            for(int i=1; i < deviceStateBuf.rowSize(); ++i){ 
                 Deque2D<DeviceStatePtr>::Row buf = deviceStateBuf.row(i);
                 if(deviceStateResults->numFrames() >= ringBufferSize){
                     deviceStateResults->popFrontFrame();
