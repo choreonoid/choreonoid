@@ -121,7 +121,6 @@ public:
     SimulatorItemImpl* simImpl;
 
     bool isActive;
-    bool isResultOutputEnabled;
     bool areShapesCloned;
 
     Deque2D<double> jointPosBuf;
@@ -485,7 +484,6 @@ SimulationBodyImpl::SimulationBodyImpl(SimulationBody* self, const BodyPtr& body
     simImpl = 0;
     areShapesCloned = false;
     isActive = false;
-    isResultOutputEnabled = false;
 }
 
 
@@ -567,7 +565,6 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     }
 
     isActive = true;
-    isResultOutputEnabled = true;
 
     initializeResultData();
 
@@ -652,10 +649,6 @@ const std::string& SimulationBody::resultItemPrefix() const
 
 void SimulationBodyImpl::initializeResultData()
 {
-    if(!isResultOutputEnabled){
-        return;
-    }
-
     self->initializeResultBuffers();
     
     if(!simImpl->isRecordingEnabled){
@@ -795,13 +788,10 @@ void SimulationBodyImpl::setActive(bool on)
     if(body){
         if(on){
             if(!isActive){
-                if(!isResultOutputEnabled){
-                    simImpl->resultBufMutex.lock();
-                    self->initializeResultBuffers();
-                    self->bufferResults();
-                    isResultOutputEnabled = true;
-                    simImpl->resultBufMutex.unlock();
-                }
+                simImpl->resultBufMutex.lock();
+                self->initializeResultBuffers();
+                self->bufferResults();
+                simImpl->resultBufMutex.unlock();
                 isActive = true;
                 simImpl->needToUpdateSimBodyLists = true;
             }
@@ -831,9 +821,7 @@ void SimulationBodyImpl::onDeviceStateChanged(int deviceIndex)
 
 void SimulationBody::bufferResults()
 {
-    if(impl->isResultOutputEnabled){
-        impl->bufferResults();
-    }
+    impl->bufferResults();
 }
 
 
@@ -1309,6 +1297,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
     sgCloneMap.clear();
 
+    currentFrame = 0;
     worldTimeStep = self->worldTimeStep();
     worldFrameRate = 1.0 / worldTimeStep;
 
@@ -1378,7 +1367,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
     if(result){
 
-        currentFrame = 0;
         frameAtLastBufferWriting = 0;
         isDoingSimulationLoop = true;
         isWaitingForSimulationToStop = false;
