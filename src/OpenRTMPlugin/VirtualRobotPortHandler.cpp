@@ -392,14 +392,14 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
 
     if(camera){
         double fovy2 = camera->fieldOfView() / 2.0;
-        double near = camera->nearDistance();
         double width = camera->resolutionX();
         double height = camera->resolutionY();
-        double aspect = width / height;
-        double fv = 1.0 / tan(fovy2);
-        double fu = fv / aspect;
-        double v0 = near * tan(fovy2);
-        double u0 = v0 * aspect;
+        double minlength = std::min(width, height);
+        double fu, fv;
+        fv = fu = minlength / tan(fovy2) / 2.0;
+        double u0 = (width - 1)/2.0;
+        double v0 = (height - 1)/2.0;
+
         value.data.intrinsic.matrix_element[0] = fu;
         value.data.intrinsic.matrix_element[1] = 0.0;
         value.data.intrinsic.matrix_element[2] = u0;
