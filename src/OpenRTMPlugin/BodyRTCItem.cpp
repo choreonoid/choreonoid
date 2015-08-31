@@ -447,8 +447,8 @@ bool BodyRTCItem::store(Archive& archive)
     if(!ControllerItem::store(archive)){
         return false;
     }
-    archive.writeRelocatablePath("moduleName", moduleName);
-    archive.writeRelocatablePath("confFileName", confFileName);
+    archive.write("moduleName", moduleName, DOUBLE_QUOTED);
+    archive.write("confFileName", confFileName, DOUBLE_QUOTED);
     archive.write("configurationMode", configMode.selectedSymbol());
     archive.write("AutoConnect", autoConnect);
     archive.write("InstanceName", instanceName);
