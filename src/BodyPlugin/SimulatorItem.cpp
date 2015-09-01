@@ -418,7 +418,7 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
 
 static bool checkActive(SimulatorItem* item, SimulatorItem*& activeItem)
 {
-    if(item->isRunning()){
+    if(item->isActive()){
         activeItem = item;
         return true;
     }
@@ -1553,6 +1553,7 @@ void SimulatorItemImpl::run()
                     elapsedTime += timer.elapsed();
                     isOnPause = true;
                 }
+                QThread::msleep(50);
             } else {
                 if(isOnPause){
                     timer.start();
@@ -1587,6 +1588,7 @@ void SimulatorItemImpl::run()
                     elapsedTime += timer.elapsed();
                     isOnPause = true;
                 }
+                QThread::msleep(50);
             } else {
                 if(isOnPause){
                     timer.start();
@@ -1895,6 +1897,18 @@ void SimulatorItemImpl::onSimulationLoopStopped()
 bool SimulatorItem::isRunning() const
 {
     return impl->isDoingSimulationLoop;
+}
+
+
+bool SimulatorItem::isPausing() const
+{
+    return impl->pauseRequested;
+}
+
+
+bool SimulatorItem::isActive() const
+{
+    return impl->isDoingSimulationLoop && !impl->pauseRequested;
 }
 
 

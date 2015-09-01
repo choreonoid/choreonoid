@@ -90,6 +90,8 @@ public:
     void pauseSimulation();
     void restartSimulation();
     bool isRunning() const;
+    bool isPausing() const;
+    bool isActive() const; ///< isRunning() && !isPausing()
     int currentFrame() const;
     double currentTime() const;
 
