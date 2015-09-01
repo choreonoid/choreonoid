@@ -1322,7 +1322,14 @@ void EditableSceneBodyImpl::dragVirtualElasticString(const SceneWidgetEvent& eve
         if(simulatorItem && dragProjector.dragTranslation(event)){
             Vector3 p = targetLink->T() * pointedLinkLocalPoint;
             Vector3 d = dragProjector.position().translation() - p;
-            Vector3 end = p + 2.0 * self->boundingBox().boundingSphereRadius() * d;
+            double k = 2.0;
+            if(event.modifiers() & Qt::ShiftModifier){
+                k *= 10.0;
+                if(event.modifiers() & Qt::ControlModifier){
+                    k *= 10.0;
+                }
+            }
+            Vector3 end = p + k * self->boundingBox().boundingSphereRadius() * d;
             SgVertexArray& points = *virtualElasticStringLine->vertices();
             points[0] = p.cast<Vector3f::Scalar>();
             points[1] = (p + d).cast<Vector3f::Scalar>();
