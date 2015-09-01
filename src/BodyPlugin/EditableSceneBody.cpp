@@ -640,7 +640,8 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         sceneLink->hideMarker();
         sceneLink->removeChild(positionDragger);
         markerGroup->removeChild(positionDragger);
-        if(show){
+
+        if(show && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
                 sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
@@ -654,8 +655,12 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
     }
 
     bool showDragger = show && targetLink && kinematicsBar->isPositionDraggerEnabled();
-    if(!activeSimulatorItem){
-        showDragger = showDragger && (kinematicsBar->mode() == KinematicsBar::IK_MODE);
+    if(showDragger){
+        if(activeSimulatorItem){
+            showDragger = forcedPositionMode != NO_FORCED_POSITION;
+                } else {
+            showDragger = (kinematicsBar->mode() == KinematicsBar::IK_MODE);
+        }
     }
         
     if(showDragger){
@@ -1296,6 +1301,7 @@ void EditableSceneBodyImpl::setForcedPositionMode(int mode, bool on)
         forcedPositionMode = mode;
     } else {
         forcedPositionMode = NO_FORCED_POSITION;
+        updateMarkersAndManipulators();
     }
     finishForcedPosition();
 }
