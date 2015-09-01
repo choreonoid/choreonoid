@@ -117,6 +117,7 @@ public:
     const std::vector<SimulationBody*>& simulationBodies();
 
     SimulationBody* findSimulationBody(BodyItem* bodyItem);
+    SimulationBody* findSimulationBody(const std::string& name);
 
     /**
        \return The registration id of the function. The id can be used for removing the function.

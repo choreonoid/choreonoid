@@ -1511,6 +1511,22 @@ SimulationBody* SimulatorItem::findSimulationBody(BodyItem* bodyItem)
 }
 
 
+/**
+   \todo make thread safe
+*/
+SimulationBody* SimulatorItem::findSimulationBody(const std::string& name)
+{
+    const int n = impl->allSimBodies.size();
+    for(int i=0; i < n; ++i){
+        SimulationBody* simBody = impl->allSimBodies[i];
+        if(simBody->body()->name() == name){
+            return simBody;
+        }
+    }
+    return 0;
+}
+
+
 // Simulation loop
 void SimulatorItemImpl::run()
 {
