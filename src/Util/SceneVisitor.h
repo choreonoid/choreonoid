@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_VISITOR_H_INCLUDED
-#define CNOID_UTIL_SCENE_VISITOR_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_VISITOR_H
+#define CNOID_UTIL_SCENE_VISITOR_H
 
 #include "SceneGraph.h"
 #include "ValueTree.h"
@@ -40,6 +40,7 @@ public:
 private:
     MappingPtr property_;
 };
+
 }
 
 #endif

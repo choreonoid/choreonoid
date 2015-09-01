@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_COMPOSITE_IK_H_INCLUDED
-#define CNOID_BODY_COMPOSITE_IK_H_INCLUDED
+#ifndef CNOID_BODY_COMPOSITE_IK_H
+#define CNOID_BODY_COMPOSITE_IK_H
 
 #include "Body.h"
 #include "InverseKinematics.h"

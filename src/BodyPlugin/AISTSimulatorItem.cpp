@@ -563,7 +563,6 @@ void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Posi
                 self->addPostDynamicsFunction(
                     boost::bind(&AISTSimulatorItemImpl::doSetForcedBodyPosition, this));
         }
-
     }
 }
 
