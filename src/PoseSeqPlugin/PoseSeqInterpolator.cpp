@@ -313,7 +313,7 @@ public:
 
     Signal<void()> sigUpdated;
 
-    void setBody(const BodyPtr& body0);
+    void setBody(Body* body0);
     void setLinearInterpolationJoint(int jointId);
     void addFootLink(int linkIndex, const Vector3& soleCenter);
     void clearLipSyncShapes();
@@ -789,13 +789,13 @@ PSIImpl::PSIImpl(PoseSeqInterpolator* self)
 }
 
 
-void PoseSeqInterpolator::setBody(const BodyPtr& body)
+void PoseSeqInterpolator::setBody(Body* body)
 {
     impl->setBody(body);
 }
 
 
-void PSIImpl::setBody(const BodyPtr& body0)
+void PSIImpl::setBody(Body* body0)
 {
     if(!body0){
         body.reset();

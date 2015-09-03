@@ -1,10 +1,10 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_CHOREOGRAPHY_BODY_POSE_SEQ_ITEM_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_BODY_POSE_SEQ_ITEM_H_INCLUDED
+#ifndef CNOID_POSESEQ_PLUGIN_POSE_SEQ_ITEM_H
+#define CNOID_POSESEQ_PLUGIN_POSE_SEQ_ITEM_H
 
 #include "PoseSeq.h"
 #include "PoseSeqInterpolator.h"
@@ -63,6 +63,7 @@ public:
 protected:
 
     virtual ItemPtr doDuplicate() const;
+    virtual void onPositionChanged();
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -131,7 +132,6 @@ protected:
     void onModifying(PoseSeq::iterator p);
     void onModified(PoseSeq::iterator p);
     PoseSeq::iterator removeSameElement(PoseSeq::iterator current, PoseSeq::iterator p);
-    void onPositionChanged();
 };
 
 typedef ref_ptr<PoseSeqItem> PoseSeqItemPtr;
