@@ -184,6 +184,7 @@ public:
     ostream& os;
 
     SceneWidgetRootPtr sceneRoot;
+    SgGroupPtr systemGroup;
     SgGroup* scene;
     GLSceneRenderer renderer;
     QGLPixelBuffer* buffer;
@@ -239,8 +240,6 @@ public:
 
     SceneWidgetEditable* eventFilter;
     ReferencedPtr eventFilterRef;
-
-    SgGroupPtr systemNodeGroup;
 
     Selection polygonMode;
     bool collisionLinesVisible;
@@ -375,7 +374,9 @@ public:
 SceneWidgetRoot::SceneWidgetRoot(SceneWidget* sceneWidget)
     : sceneWidget_(sceneWidget)
 {
-
+    systemGroup = new SgGroup;
+    systemGroup->setName("System");
+    addChild(systemGroup);
 }
 
 
@@ -432,6 +433,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
       self(self),
       os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
+      systemGroup(sceneRoot->systemGroup),
       renderer(sceneRoot),
       emitSigStateChangedLater(boost::ref(sigStateChanged))
 {
@@ -514,21 +516,17 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
-    sceneRoot->addChild(builtinCameraTransform);
+    systemGroup->addChild(builtinCameraTransform);
 
     setup = new SetupDialog(this);
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
-    sceneRoot->addChild(worldLight);
+    systemGroup->addChild(worldLight);
     renderer.setAsDefaultLight(worldLight);
 
     updateDefaultLights();
-
-    systemNodeGroup = new SgGroup();
-    systemNodeGroup->setName("SystemGroup");
-    sceneRoot->addChild(systemNodeGroup);
 
     polygonMode.resize(3);
     polygonMode.setSymbol(SceneWidget::FILL_MODE, "fill");
@@ -2739,9 +2737,9 @@ void SceneWidgetImpl::setupCoordinateAxes()
 void SceneWidgetImpl::activateSystemNode(SgNodePtr node, bool on)
 {
     if(on){
-        systemNodeGroup->addChild(node, true);
+        systemGroup->addChild(node, true);
     } else {
-        systemNodeGroup->removeChild(node, true);
+        systemGroup->removeChild(node, true);
     }
 }
 

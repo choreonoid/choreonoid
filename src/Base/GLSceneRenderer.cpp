@@ -699,10 +699,10 @@ void GLSceneRenderer::setCurrentCamera(int index)
 void GLSceneRendererImpl::setCurrentCamera(int index, bool doRenderingRequest)
 {
     SgCamera* newCamera = 0;
-    if(index < cameras->size()){
+    if(index >= 0 && index < cameras->size()){
         newCamera = (*cameras)[index].camera;
     }
-    if(newCamera != currentCamera){
+    if(newCamera && newCamera != currentCamera){
         currentCameraIndex = index;
         currentCamera = newCamera;
         sigCurrentCameraChanged();
