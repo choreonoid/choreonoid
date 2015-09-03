@@ -24,11 +24,13 @@ sceneWidget.setCameraPosition(
     [  0.412288, -0.847325, -0.334751 ],
     [  0.146464, -0.301009,  0.942307 ])
 
-laboItem = loadBodyItem(shareDirectory() + "/model/Labo1/Labo1.wrl")
+laboItem = BodyItem()
+laboItem.load(shareDirectory() + "/model/Labo1/Labo1.wrl")
 worldItem.addChildItem(laboItem)
 ItemTreeView.instance().checkItem(laboItem)
 
-tankItem = loadBodyItem(shareDirectory() + "/model/misc/tank.wrl")
+tankItem = BodyItem()
+tankItem.load(shareDirectory() + "/model/misc/tank.wrl")
 tank = tankItem.body()
 tank.rootLink().setTranslation([-0.8, 2.4, 0.1])
 tank.rootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))
