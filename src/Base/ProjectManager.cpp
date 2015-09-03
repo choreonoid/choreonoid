@@ -239,21 +239,27 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
               }
             */
 
-            itemTreeArchiver.reset();
-            Archive* items = archive->findSubArchive("items");
-            if(items->isValid()){
-                items->inheritSharedInfoFrom(*archive);
-                itemTreeArchiver.restore(items, RootItem::mainInstance());
-                numArchivedItems = itemTreeArchiver.numArchivedItems();
-                numRestoredItems = itemTreeArchiver.numRestoredItems();
-                messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
-                if(numRestoredItems < numArchivedItems){
-                    messageView->putln(MessageView::WARNING,
-                                       format(_("%1% item(s) are not correctly loaded."))
-                                       % (numArchivedItems - numRestoredItems));
-                }
-                if(numRestoredItems > 0){
-                    loaded = true;
+            ArchiverMapMap::iterator p;
+            for(p = archivers.begin(); p != archivers.end(); ++p){
+                const string& moduleName = p->first;
+                Archive* moduleArchive = archive->findSubArchive(moduleName);
+                if(moduleArchive->isValid()){
+                    ArchiverMap::iterator q;
+                    for(q = p->second.begin(); q != p->second.end(); ++q){
+                        const string& objectName = q->first;
+                        Archive* objArchive;
+                        if(objectName.empty()){
+                            objArchive = moduleArchive;
+                        } else {
+                            objArchive = moduleArchive->findSubArchive(objectName);
+                        }
+                        if(objArchive->isValid()){
+                            ArchiverInfo& info = q->second;
+                            objArchive->inheritSharedInfoFrom(*archive);
+                            info.restoreFunction(*objArchive);
+                            loaded = true;
+                        }
+                    }
                 }
             }
 
@@ -276,27 +282,21 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                 }
             }
 
-            ArchiverMapMap::iterator p;
-            for(p = archivers.begin(); p != archivers.end(); ++p){
-                const string& moduleName = p->first;
-                Archive* moduleArchive = archive->findSubArchive(moduleName);
-                if(moduleArchive->isValid()){
-                    ArchiverMap::iterator q;
-                    for(q = p->second.begin(); q != p->second.end(); ++q){
-                        const string& objectName = q->first;
-                        Archive* objArchive;
-                        if(objectName.empty()){
-                            objArchive = moduleArchive;
-                        } else {
-                            objArchive = moduleArchive->findSubArchive(objectName);
-                        }
-                        if(objArchive->isValid()){
-                            ArchiverInfo& info = q->second;
-                            objArchive->inheritSharedInfoFrom(*archive);
-                            info.restoreFunction(*objArchive);
-                            loaded = true;
-                        }
-                    }
+            itemTreeArchiver.reset();
+            Archive* items = archive->findSubArchive("items");
+            if(items->isValid()){
+                items->inheritSharedInfoFrom(*archive);
+                itemTreeArchiver.restore(items, RootItem::mainInstance());
+                numArchivedItems = itemTreeArchiver.numArchivedItems();
+                numRestoredItems = itemTreeArchiver.numRestoredItems();
+                messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
+                if(numRestoredItems < numArchivedItems){
+                    messageView->putln(MessageView::WARNING,
+                                       format(_("%1% item(s) are not correctly loaded."))
+                                       % (numArchivedItems - numRestoredItems));
+                }
+                if(numRestoredItems > 0){
+                    loaded = true;
                 }
             }
 

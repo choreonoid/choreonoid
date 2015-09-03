@@ -1199,7 +1199,8 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
 bool LinkTreeWidget::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
+    archive.addPostProcess(boost::bind(&LinkTreeWidgetImpl::restoreState, impl, boost::ref(archive)));
+    return true;
 }
 
 

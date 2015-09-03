@@ -1154,7 +1154,8 @@ void ItemTreeViewImpl::storeItemIds(Archive& archive, const char* key, const Ite
 
 bool ItemTreeView::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
+    archive.addPostProcess(boost::bind(&ItemTreeViewImpl::restoreState, impl, boost::ref(archive)));
+    return true;
 }
 
 

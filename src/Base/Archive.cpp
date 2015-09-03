@@ -10,6 +10,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/FileUtil>
 #include <map>
+#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
@@ -22,16 +23,18 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-
 namespace {
+
 QRegExp regexVar("^\\$\\{(\\w+)\\}");
 
 typedef map<Item*, int> ItemToIdMap;
 typedef map<int, Item*> IdToItemMap;
 typedef map<View*, int> ViewToIdMap;
 typedef map<int, View*> IdToViewMap;
-}
 
+typedef list< boost::function<void()> > PostProcessList;
+
+}
 
 namespace cnoid {
     
@@ -55,7 +58,7 @@ public:
         
     Item* currentParentItem;
 
-    Signal<void()> postProcesses;
+    PostProcessList postProcesses;
 };
 
 
@@ -175,11 +178,15 @@ void Archive::inheritSharedInfoFrom(Archive& archive)
 }
 
 
-// This cannot be signal because the shared instance may not exist
-void Archive::addPostProcess(const boost::function<void()>& func) const
+void Archive::addPostProcess(const boost::function<void()>& func, int priority) const
 {
     if(shared){
-        shared->postProcesses.connect(func);
+        if(priority <= 0){
+            shared->postProcesses.push_back(func);
+        } else {
+            shared->postProcesses.push_back(
+                boost::bind(&Archive::addPostProcess, this, func, priority - 1));
+        }
     }
 }
 
@@ -187,7 +194,11 @@ void Archive::addPostProcess(const boost::function<void()>& func) const
 void Archive::callPostProcesses()
 {
     if(shared){
-        shared->postProcesses();
+        PostProcessList::iterator p = shared->postProcesses.begin();
+        while(p != shared->postProcesses.end()){
+            (*p)(); // call a post-process function
+            ++p;
+        }
     }
 }
 

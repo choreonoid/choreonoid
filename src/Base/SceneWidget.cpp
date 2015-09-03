@@ -2532,7 +2532,8 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
         for(int i=0; i < cameraListing.size(); ++i){
             const Mapping& cameraData = *cameraListing[i].toMapping();
             archive.addPostProcess(
-                boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)));
+                boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)),
+                1);
         }
     } else {
         // for the compatibility to the older versions
@@ -2558,7 +2559,9 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
             setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
             setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
         
-            archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
+            archive.addPostProcess(
+                boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)),
+                1);
         }
     }
 

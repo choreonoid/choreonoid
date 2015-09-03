@@ -267,6 +267,7 @@ public:
     bool finishEditing();
     
     static bool storeProperties(Archive& archive);
+    static void restorePropertiesLater(const Archive& archive);
     static void restoreProperties(const Archive& archive);
 };
 
@@ -1449,6 +1450,12 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
 }
     
     
+void EditableSceneBodyImpl::restorePropertiesLater(const Archive& archive)
+{
+    archive.addPostProcess(boost::bind(&EditableSceneBodyImpl::restoreProperties, boost::ref(archive)), 1);
+}
+
+
 void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
 {
     Listing& states = *archive["editableSceneBodies"].toListing();
@@ -1470,5 +1477,5 @@ void EditableSceneBody::initializeClass(ExtensionManager* ext)
     ext->setProjectArchiver(
         "EditableSceneBody",
         EditableSceneBodyImpl::storeProperties,
-        EditableSceneBodyImpl::restoreProperties);
+        EditableSceneBodyImpl::restorePropertiesLater);
 }

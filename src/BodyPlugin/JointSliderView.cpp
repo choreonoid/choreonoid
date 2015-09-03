@@ -86,6 +86,7 @@ public:
     void enableConnectionToSigKinematicStateChanged(bool on);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
+    void restoreCurrentBodyItem(const Archive& archive);
 };
 
 }
@@ -638,6 +639,15 @@ bool JointSliderViewImpl::restoreState(const Archive& archive)
     putSpinEntryCheck.setChecked(archive.get("spinBox", true));
     putSliderCheck.setChecked(archive.get("slider", true));
     labelOnLeftToggle.setChecked(archive.get("labelOnLeft", true));
-    onCurrentBodyItemChanged(archive.findItem<BodyItem>("currentBodyItem"));
+
+    archive.addPostProcess(
+        boost::bind(&JointSliderViewImpl::restoreCurrentBodyItem, this, boost::ref(archive)));
+
     return true;
+}
+
+
+void JointSliderViewImpl::restoreCurrentBodyItem(const Archive& archive)
+{
+    onCurrentBodyItemChanged(archive.findItem<BodyItem>("currentBodyItem"));
 }

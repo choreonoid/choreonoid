@@ -28,7 +28,7 @@ public:
     void initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories = false);
     void inheritSharedInfoFrom(Archive& archive);
 
-    void addPostProcess(const boost::function<void()>& func) const;
+    void addPostProcess(const boost::function<void()>& func, int priority = 0) const;
 
     Archive* findSubArchive(const std::string& name);
     const Archive* findSubArchive(const std::string& name) const;

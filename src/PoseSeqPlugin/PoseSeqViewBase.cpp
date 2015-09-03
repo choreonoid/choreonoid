@@ -1901,20 +1901,27 @@ bool PoseSeqViewBase::storeState(Archive& archive)
 
 bool PoseSeqViewBase::restoreState(const Archive& archive)
 {
-    if(linkTreeWidget->restoreState(archive)){
+    transitionTimeSpin.setValue(archive.get("defaultTransitionTime", transitionTimeSpin.value()));
+    updateAllToggle.setChecked(archive.get("updateAll", updateAllToggle.isChecked()));
+    autoUpdateModeCheck.setChecked(archive.get("autoUpdate", autoUpdateModeCheck.isChecked()));
+    timeSyncCheck.setChecked(archive.get("timeSync", timeSyncCheck.isChecked()));
+    
+    linkPositionAdjustmentDialog->restoreState(archive);
+    
+    archive.addPostProcess(
+        boost::bind(&PoseSeqViewBase::restoreCurrentPoseSeqItem, this, boost::ref(archive)));
 
-        transitionTimeSpin.setValue(archive.get("defaultTransitionTime", transitionTimeSpin.value()));
-        updateAllToggle.setChecked(archive.get("updateAll", updateAllToggle.isChecked()));
-        autoUpdateModeCheck.setChecked(archive.get("autoUpdate", autoUpdateModeCheck.isChecked()));
-        timeSyncCheck.setChecked(archive.get("timeSync", timeSyncCheck.isChecked()));
-
-        linkPositionAdjustmentDialog->restoreState(archive);
+    linkTreeWidget->restoreState(archive);
         
-        PoseSeqItem* item = archive.findItem<PoseSeqItem>("currentPoseSeqItem");
-        if(item){
-            setCurrentPoseSeqItem(item);
-        }
-        return true;
-    }
-    return false;
+    return true;
 }
+
+
+void PoseSeqViewBase::restoreCurrentPoseSeqItem(const Archive& archive)
+{
+    PoseSeqItem* item = archive.findItem<PoseSeqItem>("currentPoseSeqItem");
+    if(item){
+        setCurrentPoseSeqItem(item);
+    }
+}
+  
