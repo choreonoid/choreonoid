@@ -34,8 +34,10 @@ class ShakeBodies:
 
     def onTimeout(self):
         for bodyItem in self.bodyItems:
-            bodyItem.body().rootLink().p += self.dp
-            bodyItem.notifyKinematicStateChange(True)
+            body = bodyItem.body()
+            body.rootLink().p += self.dp
+            body.calcForwardKinematics()
+            bodyItem.notifyKinematicStateChange()
         self.dp = -self.dp
 
 shakeBodies = ShakeBodies()
