@@ -563,15 +563,16 @@ void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Posi
                 self->addPostDynamicsFunction(
                     boost::bind(&AISTSimulatorItemImpl::doSetForcedBodyPosition, this));
         }
-
     }
 }
 
 
 void AISTSimulatorItem::clearForcedBodyPositions()
 {
-    removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
-    impl->forcedBodyPositionFunctionId = boost::none;
+    if(impl->forcedBodyPositionFunctionId){
+        removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
+        impl->forcedBodyPositionFunctionId = boost::none;
+    }
 }
     
 

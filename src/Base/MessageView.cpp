@@ -156,6 +156,14 @@ std::streamsize TextSink::write(const char* s, std::streamsize n)
 
 void TextEditEx::keyPressEvent(QKeyEvent* event)
 {
+    if ((event->modifiers().testFlag(Qt::ControlModifier))){
+        switch(event->key()){
+        case Qt::Key_C:
+        case Qt::Key_A:
+            TextEdit::keyPressEvent(event);
+            break;
+        }
+    }
     switch(event->key()){
     case Qt::Key_Return:
         moveCursor(QTextCursor::End);

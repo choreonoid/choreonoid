@@ -152,9 +152,17 @@ void Body::cloneShapes(SgCloneMap& cloneMap)
     const int n = linkTraverse_.numLinks();
     for(int i=0; i < n; ++i){
         Link* link = linkTraverse_[i];
-        SgNode* shape = link->shape();
-        if(shape){
-            link->setShape(shape->cloneNode(cloneMap));
+        SgNode* visualShape = link->visualShape();
+        if(visualShape){
+            link->setVisualShape(visualShape->cloneNode(cloneMap));
+        }
+        SgNode* collisionShape = link->collisionShape();
+        if(collisionShape){
+            if(collisionShape == visualShape){
+                link->setCollisionShape(link->visualShape());
+            } else {
+                link->setCollisionShape(collisionShape->cloneNode(cloneMap));
+            }
         }
     }
 }

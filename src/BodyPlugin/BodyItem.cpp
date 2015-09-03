@@ -13,6 +13,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
+#include <cnoid/ConnectionSet>
 #include <cnoid/LazySignal>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
@@ -46,6 +47,8 @@ const bool TRACE_FUNCTIONS = false;
 BodyLoader bodyLoader;
 
 Action* linkVisibilityCheck;
+Action* showVisualShapeCheck;
+Action* showCollisionShapeCheck;
 BodyState kinematicStateCopy;
 
 /// \todo move this to hrpUtil ?
@@ -119,8 +122,10 @@ public:
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
 
-    Connection connectionToSigLinkSelectionChanged;
-    Connection connectionToSigLinkVisibilityToggled;
+    ScopedConnection connectionToSigLinkSelectionChanged;
+    ScopedConnectionSet optionCheckConnections;
+
+    Signal<void()> sigModelUpdated;
 
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
@@ -137,7 +142,9 @@ public:
     void updateCollisionDetectorLater();
     void appendKinematicStateToHistory();
     bool onStaticModelPropertyChanged(bool on);
+    void createSceneBody();
     void onLinkVisibilityCheckToggled();
+    void onVisibleShapeTypesChanged();
     void onLinkSelectionChanged();
     void onPositionChanged();
     bool undoKinematicState();
@@ -173,7 +180,11 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
         om.sigOptionsParsed().connect(onSigOptionsParsed);
 
-        linkVisibilityCheck = ext->menuManager().setPath("/Options/Scene View").addCheckItem(_("Show selected links only"));
+        MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
+        linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
+        showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
+        showVisualShapeCheck->setChecked(true);
+        showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
 
         initialized = true;
     }
@@ -272,7 +283,6 @@ BodyItem::~BodyItem()
 BodyItemImpl::~BodyItemImpl()
 {
     connectionToSigLinkSelectionChanged.disconnect();
-    connectionToSigLinkVisibilityToggled.disconnect();
 }
 
 
@@ -352,6 +362,18 @@ void BodyItem::setName(const std::string& name)
         impl->body->setName(name);
     }
     Item::setName(name);
+}
+
+
+SignalProxy<void()> BodyItem::sigModelUpdated()
+{
+    return impl->sigModelUpdated;
+}
+
+
+void BodyItem::notifyModelUpdate()
+{
+    impl->sigModelUpdated();
 }
 
 
@@ -1051,15 +1073,33 @@ bool BodyItemImpl::onStaticModelPropertyChanged(bool on)
 EditableSceneBody* BodyItem::sceneBody()
 {
     if(!impl->sceneBody){
-        impl->sceneBody = new EditableSceneBody(this);
-        impl->sceneBody->setSceneDeviceUpdateConnection(true);
-        impl->connectionToSigLinkVisibilityToggled =
-            linkVisibilityCheck->sigToggled().connect(
-                boost::bind(&BodyItemImpl::onLinkVisibilityCheckToggled, impl));
-        impl->onLinkVisibilityCheckToggled();
+        impl->createSceneBody();
     }
-
     return impl->sceneBody;
+}
+
+
+void BodyItemImpl::createSceneBody()
+{
+    sceneBody = new EditableSceneBody(self);
+    sceneBody->setSceneDeviceUpdateConnection(true);
+
+    optionCheckConnections.add(
+        linkVisibilityCheck->sigToggled().connect(
+            boost::bind(&BodyItemImpl::onLinkVisibilityCheckToggled, this)));
+    onLinkVisibilityCheckToggled();
+
+    optionCheckConnections.add(
+        showVisualShapeCheck->sigToggled().connect(
+            boost::bind(&BodyItemImpl::onVisibleShapeTypesChanged, this)));
+
+    optionCheckConnections.add(
+        showCollisionShapeCheck->sigToggled().connect(
+            boost::bind(&BodyItemImpl::onVisibleShapeTypesChanged, this)));
+    
+    if(!showVisualShapeCheck->isChecked() || showCollisionShapeCheck->isChecked()){
+        onVisibleShapeTypesChanged();
+    }
 }
 
 
@@ -1085,15 +1125,25 @@ void BodyItemImpl::onLinkVisibilityCheckToggled()
         if(sceneBody){
             sceneBody->setLinkVisibilities(selectionView->getLinkSelection(self));
         }
-        connectionToSigLinkSelectionChanged =
+        connectionToSigLinkSelectionChanged.reset(
             selectionView->sigSelectionChanged(self).connect(
-                boost::bind(&BodyItemImpl::onLinkSelectionChanged, this));
+                boost::bind(&BodyItemImpl::onLinkSelectionChanged, this)));
     } else {
         if(sceneBody){
             boost::dynamic_bitset<> visibilities;
             visibilities.resize(body->numLinks(), true);
             sceneBody->setLinkVisibilities(visibilities);
         }
+    }
+}
+
+
+void BodyItemImpl::onVisibleShapeTypesChanged()
+{
+    if(sceneBody){
+        sceneBody->setVisibleShapeTypes(
+            showVisualShapeCheck->isChecked(),
+            showCollisionShapeCheck->isChecked());
     }
 }
 

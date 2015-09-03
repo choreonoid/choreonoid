@@ -114,7 +114,7 @@ public:
     const LinkTraverse& linkTraverse() const {
         return linkTraverse_;
     }
-
+    
     /**
        This function returns a link object whose name of Joint node matches a given name.
        Null is returned when the body has no joint of the given name.
@@ -132,8 +132,7 @@ public:
         return devices_.size();
     }
 
-    Device* device(int index) { return devices_[index]; }
-    const Device* device(int index) const { return devices_[index]; }
+    Device* device(int index) const { return devices_[index]; }
 
     /**
        Example:

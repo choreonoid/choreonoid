@@ -84,9 +84,8 @@ Link::Link(const Link& org)
     dq_lower_ = org.dq_lower_;
 
     //! \todo add the mode for doing deep copy of the shape object
-    if(org.shape_){
-        shape_ = org.shape_;
-    }
+    visualShape_ = org.visualShape_;
+    collisionShape_ = org.collisionShape_;
 }
 
 
@@ -172,5 +171,17 @@ void Link::setName(const std::string& name)
 
 void Link::setShape(SgNodePtr shape)
 {
-    shape_ = shape;
+    visualShape_ = shape;
+    collisionShape_ = shape;
+}
+
+void Link::setVisualShape(SgNodePtr shape)
+{
+    visualShape_ = shape;
+}
+
+
+void Link::setCollisionShape(SgNodePtr shape)
+{
+    collisionShape_ = shape;
 }

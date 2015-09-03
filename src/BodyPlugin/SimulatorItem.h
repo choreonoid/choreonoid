@@ -43,16 +43,27 @@ public:
     void cloneShapesOnce();
 
     /**
+       Called from the simulation loop thread
+    */
+    bool isActive() const;
+    void setActive(bool on);
+
+    /**
        Use this instead of Device::notiryStateChange when the state part which
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
 
+    const std::string& resultItemPrefix() const;
+    
+    virtual void initializeResultBuffers();
+    virtual void initializeResultItems();
+
     /**
        Called from the simulation loop thread.
     */
-    virtual void storeResult();
-    virtual bool flushResult();
+    virtual void bufferResults();
+    virtual void flushResults();
 
 private:
     SimulationBodyImpl* impl;
@@ -79,6 +90,8 @@ public:
     void pauseSimulation();
     void restartSimulation();
     bool isRunning() const;
+    bool isPausing() const;
+    bool isActive() const; ///< isRunning() && !isPausing()
     int currentFrame() const;
     double currentTime() const;
 
@@ -106,6 +119,7 @@ public:
     const std::vector<SimulationBody*>& simulationBodies();
 
     SimulationBody* findSimulationBody(BodyItem* bodyItem);
+    SimulationBody* findSimulationBody(const std::string& name);
 
     /**
        \return The registration id of the function. The id can be used for removing the function.

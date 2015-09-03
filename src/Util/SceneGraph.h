@@ -214,11 +214,11 @@ public:
 
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
-    void addChildOnce(SgNode* node, bool doNotify = false);
+    bool addChildOnce(SgNode* node, bool doNotify = false);
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
-    void copyChildren(SgGroup* group, bool doNotify = false);
-    void moveChildren(SgGroup* group, bool doNotify = false);
+    void copyChildrenTo(SgGroup* group, bool doNotify = false);
+    void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
     template<class NodeType> NodeType* findNodeOfType() {
         for(size_t i=0; i < numChildren(); ++i){

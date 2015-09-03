@@ -575,9 +575,6 @@ bool Item::traverse(Item* item, const boost::function<bool(Item*)>& function)
 }
 
 
-/**
-   @todo added the 'notifyUpdateLater()' method ?
-*/
 void Item::notifyUpdate()
 {
     sigUpdated_();

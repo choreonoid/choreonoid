@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_SCENE_DEVICE_H_INCLUDED
-#define CNOID_BODY_SCENE_DEVICE_H_INCLUDED
+#ifndef CNOID_BODY_SCENE_DEVICE_H
+#define CNOID_BODY_SCENE_DEVICE_H
 
 #include <cnoid/SceneGraph>
 #include <boost/function.hpp>
@@ -22,8 +22,18 @@ class CNOID_EXPORT SceneDevice : public SgPosTransform
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
-    SceneDevice(Device* device);
+    // for integrating new device types
+    typedef boost::function<SceneDevice*(Device* device)> SceneDeviceFactory;
+    template<class DeviceType>
+    static void registerSceneDeviceFactory(const SceneDeviceFactory& factory) {
+        registerSceneDeviceFactory_(&typeid(DeviceType), factory);
+    }
 
+    static SceneDevice* create(Device* device);
+
+    SceneDevice(Device* device);
+    SceneDevice(Device* device, SgNode* sceneNode, boost::function<void()> sceneUpdateFunction);
+    
     template <class DeviceType> DeviceType* device() {
         return static_cast<DeviceType*>(device_);
     }
@@ -37,14 +47,6 @@ public:
     void updateScene() { if(sceneUpdateFunction) sceneUpdateFunction(); }
     void setSceneUpdateConnection(bool on);
 
-    // for integrating new device types
-    typedef boost::function<SgNode*(SceneDevice* sdev)> DeviceNodeFactory;
-
-    template<class DeviceType>
-        static void registerDeviceNodeFactory(const DeviceNodeFactory& factory) {
-        registerDeviceNodeFactory_(&typeid(factory), factory);
-    }
-
 protected:
     ~SceneDevice();
 
@@ -54,12 +56,11 @@ private:
     boost::function<void()> sceneUpdateFunction;
     Connection connection;
 
-    bool setDeviceNode(const std::type_info& type);
-
-    static void registerDeviceNodeFactory_(const std::type_info* pTypeInfo, const DeviceNodeFactory& factory);
+    static void registerSceneDeviceFactory_(const std::type_info* pTypeInfo, const SceneDeviceFactory& factory);
 };
     
 typedef ref_ptr<SceneDevice> SceneDevicePtr;
+
 }
     
 #endif

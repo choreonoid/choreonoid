@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_MARKER_H_INCLUDED
-#define CNOID_UTIL_SCENE_MARKER_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_MARKER_H
+#define CNOID_UTIL_SCENE_MARKER_H
 
 #include "SceneShape.h"
 #include "exportdecl.h"
@@ -27,7 +27,14 @@ typedef ref_ptr<CrossMarker> CrossMarkerPtr;
 class CNOID_EXPORT SphereMarker : public SgPosTransform
 {
 public:
+    SphereMarker();
     SphereMarker(double radius, const Vector3f& color, float transparency = 0.0);
+    void setRadius(double r);
+    void setColor(const Vector3f& c);
+private:
+    void initialize(double radius, const Vector3f& color, float transparency);
+    SgScaleTransformPtr scale;
+    SgMaterialPtr material;
 };
 typedef ref_ptr<SphereMarker> SphereMarkerPtr;
 
@@ -43,6 +50,7 @@ private:
     void addMarker(SgShape* shape, double x, double y, double z);
 };
 typedef ref_ptr<BoundingBoxMarker> BoundingBoxMarkerPtr;
+
 }
 
 #endif

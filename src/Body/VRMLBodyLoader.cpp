@@ -35,6 +35,7 @@ public:
         PROTO_HUMANOID,
         PROTO_JOINT,
         PROTO_SEGMENT,
+        PROTO_SURFACE,
         PROTO_DEVICE,
         PROTO_EXTRAJOINT,
         NUM_PROTOS
@@ -54,8 +55,10 @@ public:
         double m;
         Vector3 c;
         Matrix3 I;
-        SgGroup* shape;
         vector<SegmentInfo> segments;
+        SgGroupPtr visualShape;
+        SgGroupPtr collisionShape;
+        bool isSurfaceNodeUsed;
     };
         
     VRMLParser vrmlParser;
@@ -79,20 +82,20 @@ public:
 
     ostream& os() { return *os_; }
 
-    void putVerboseMessage(const std::string& message){
-        if(isVerbose){
-            os() << string(messageIndent, ' ') + message + "\n";
-        }
+    void putMessage(const std::string& message){
+        os() << string(messageIndent, ' ') + message + "\n";
     }
         
     VRMLBodyLoaderImpl();
     ~VRMLBodyLoaderImpl();
+    VRMLNodePtr getOriginalNode(Link* link);
     bool load(Body* body, const std::string& filename);
     BodyPtr load(const std::string& filename);        
     void readTopNodes();
     void checkHumanoidProto(VRMLProto* proto);
     void checkJointProto(VRMLProto* proto);
     void checkSegmentProto(VRMLProto* proto);
+    void checkSurfaceProto(VRMLProto* proto);
     void checkSensorProtoCommon(VRMLProto* proto);
     void checkDeviceProtoCommon(VRMLProto* proto);
     void checkVisionSensorProto(VRMLProto* proto);
@@ -104,6 +107,7 @@ public:
     Link* createLink(VRMLProtoInstance* jointNode, const Matrix3& parentRs);
     void readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, const ProtoIdSet& acceptableProtoIds, const Affine3& T);
     void readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* segmentNode, const Affine3& T);
+    void readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T);
     void readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* deviceNode, const Affine3& T);
     static void readDeviceCommonParameters(Device& device, VRMLProtoInstance* node);
     static ForceSensorPtr createForceSensor(VRMLProtoInstance* node);
@@ -114,8 +118,8 @@ public:
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
     static SpotLightPtr createSpotLight(VRMLProtoInstance* node);
     void setExtraJoints();
-    VRMLNodePtr getOriginalNode(Link* link);
 };
+
 }
 
 
@@ -270,6 +274,7 @@ void readVRMLfield(VRMLVariantField& field, Matrix3& out_R)
         }
     }
 }
+
 }
 
 
@@ -290,6 +295,7 @@ VRMLBodyLoaderImpl::VRMLBodyLoaderImpl()
         protoInfoMap["Humanoid"] = ProtoInfo(PROTO_HUMANOID, &VRMLBodyLoaderImpl::checkHumanoidProto);
         protoInfoMap["Joint"] = ProtoInfo(PROTO_JOINT, &VRMLBodyLoaderImpl::checkJointProto);
         protoInfoMap["Segment"] = ProtoInfo(PROTO_SEGMENT, &VRMLBodyLoaderImpl::checkSegmentProto);
+        protoInfoMap["Surface"] = ProtoInfo(PROTO_SURFACE, &VRMLBodyLoaderImpl::checkSurfaceProto);
         protoInfoMap["ForceSensor"] = ProtoInfo(PROTO_DEVICE, &VRMLBodyLoaderImpl::checkSensorProtoCommon);
         protoInfoMap["Gyro"] = ProtoInfo(PROTO_DEVICE, &VRMLBodyLoaderImpl::checkSensorProtoCommon);
         protoInfoMap["AccelerationSensor"] = ProtoInfo(PROTO_DEVICE, &VRMLBodyLoaderImpl::checkSensorProtoCommon);
@@ -359,6 +365,23 @@ void VRMLBodyLoader::enableShapeLoading(bool on)
 void VRMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->divisionNumber = n;
+}
+
+
+VRMLNodePtr VRMLBodyLoader::getOriginalNode(Link* link)
+{
+    return impl->getOriginalNode(link);
+}
+
+
+VRMLNodePtr VRMLBodyLoaderImpl::getOriginalNode(Link* link)
+{
+    LinkOriginalMap::iterator it;
+    it = linkOriginalMap.find(link);
+    if (it == linkOriginalMap.end()) {
+        return NULL;
+    }
+    return it->second;
 }
 
 
@@ -533,6 +556,13 @@ void VRMLBodyLoaderImpl::checkSegmentProto(VRMLProto* proto)
 }
 
 
+void VRMLBodyLoaderImpl::checkSurfaceProto(VRMLProto* proto)
+{
+    requireField<MFNode>(proto, "visual");
+    requireField<MFNode>(proto, "collision");
+}
+
+
 void VRMLBodyLoaderImpl::checkSensorProtoCommon(VRMLProto* proto)
 {
     requireField<SFInt32>(proto, "sensorId");
@@ -601,7 +631,8 @@ void VRMLBodyLoaderImpl::checkExtraJointProto(VRMLProto* proto)
         
 void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
 {
-    putVerboseMessage("Humanoid node");
+    if(isVerbose) putMessage("Humanoid node");
+    
     body->setModelName(humanoidNode->defName);
 
     MFNode& nodes = get<MFNode>(humanoidNode->fields["humanoidBody"]);
@@ -645,26 +676,49 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
 }
 
 
+static void setShape(Link* link, SgGroup* shape, bool isVisual)
+{
+    SgNodePtr node;
+    if(shape->empty()){
+        node = new SgNode;
+    } else {
+        SgInvariantGroup* invariant = new SgInvariantGroup;
+        if(link->Rs().isApprox(Matrix3::Identity())){
+            shape->copyChildrenTo(invariant);
+        } else {
+            SgPosTransform* transformRs = new SgPosTransform;
+            transformRs->setRotation(link->Rs());
+            shape->copyChildrenTo(transformRs);
+            invariant->addChild(transformRs);
+        }
+        node = invariant;
+    }
+    if(node){
+        if(isVisual){
+            link->setVisualShape(node);
+        } else {
+            link->setCollisionShape(node);
+        }
+    }
+}
+
+
 Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matrix3& parentRs)
 {
-    putVerboseMessage(string("Joint node") + jointNode->defName);
+    if(isVerbose) putMessage(string("Joint node") + jointNode->defName);
 
     Link* link = createLink(jointNode, parentRs);
 
     LinkInfo iLink;
     iLink.link = link;
-    SgInvariantGroupPtr shapeTop = new SgInvariantGroup();
-    if(link->Rs().isApprox(Matrix3::Identity())){
-        iLink.shape = shapeTop.get();
-    } else {
-        SgPosTransform* transformRs = new SgPosTransform;
-        transformRs->setRotation(link->Rs());
-        shapeTop->addChild(transformRs);
-        iLink.shape = transformRs;
-    }
+
     iLink.m = 0.0;
     iLink.c = Vector3::Zero();
     iLink.I = Matrix3::Zero();
+
+    iLink.visualShape = new SgGroup;
+    iLink.collisionShape = new SgGroup;
+    iLink.isSurfaceNodeUsed = false;
 
     MFNode& childNodes = get<MFNode>(jointNode->fields["children"]);
     Affine3 T(Affine3::Identity());
@@ -696,12 +750,15 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode, const Matr
     link->setMass(iLink.m);
     link->setCenterOfMass(link->Rs() * iLink.c);
     link->setInertia(link->Rs() * iLink.I * link->Rs().transpose());
-    if(iLink.shape->empty()){
-        link->setShape(new SgNode()); // set empty node
-    } else {
-        link->setShape(shapeTop);
-    }
 
+    setShape(link, iLink.visualShape, true);
+
+    if(iLink.isSurfaceNodeUsed){
+        setShape(link, iLink.collisionShape, false);
+    } else {
+        link->setCollisionShape(link->visualShape());
+    }
+        
     return link;
 }
 
@@ -820,27 +877,31 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
             int id = PROTO_UNDEFINED;
             const string& protoName = protoInstance->proto->protoName;
             ProtoInfoMap::iterator p = protoInfoMap.find(protoName);
-            if(p != protoInfoMap.end()){
+            if(p == protoInfoMap.end()){
+                doTraverse = true;
+                childNode = protoInstance->actualNode.get();
+            } else {
                 id = p->second.id;
                 if(!acceptableProtoIds.test(id)){
                     throw invalid_argument(str(format(_("%1% node is not in a correct place.")) % protoName));
                 }
-
                 if(isVerbose){
                     messageIndent += 2;
                 }
-
                 switch(id){
-                case PROTO_SEGMENT:
-                    readSegmentNode(iLink, protoInstance, T);
-                    linkOriginalMap[iLink.link] = childNodes[i];
-                    break;
                 case PROTO_JOINT:
                     if(!T.matrix().isApprox(Affine3::MatrixType::Identity())){
                         throw invalid_argument(
                             str(format(_("Joint node \"%1%\" is not in a correct place.")) % protoInstance->defName));
                     }
                     iLink.link->appendChild(readJointNode(protoInstance, iLink.link->Rs()));
+                    break;
+                case PROTO_SEGMENT:
+                    readSegmentNode(iLink, protoInstance, T);
+                    linkOriginalMap[iLink.link] = childNodes[i];
+                    break;
+                case PROTO_SURFACE:
+                    readSurfaceNode(iLink, protoInstance, T);
                     break;
                 case PROTO_DEVICE:
                     readDeviceNode(iLink, protoInstance, T);
@@ -849,14 +910,9 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
                     doTraverse = true;
                     break;
                 }
-
                 if(isVerbose){
                     messageIndent -= 2;
                 }
-
-            } else {
-                doTraverse = true;
-                childNode = protoInstance->actualNode.get();
             }
         }
         if(doTraverse && childNode->isCategoryOf(GROUPING_NODE)){
@@ -873,7 +929,7 @@ void VRMLBodyLoaderImpl::readJointSubNodes(LinkInfo& iLink, MFNode& childNodes, 
 
 void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* segmentNode, const Affine3& T)
 {
-    putVerboseMessage(string("Segment node ") + segmentNode->defName);
+    if(isVerbose) putMessage(string("Segment node ") + segmentNode->defName);
     
     /*
       Mass = Sigma mass 
@@ -897,44 +953,63 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     readVRMLfield(sf["momentsOfInertia"], I);
     iLink.I.noalias() += T.linear() * I * T.linear().transpose();
 
+    MFNode& childNodes = get<MFNode>(segmentNode->fields["children"]);
+    ProtoIdSet acceptableProtoIds;
+    acceptableProtoIds.set(PROTO_SURFACE);
+    acceptableProtoIds.set(PROTO_DEVICE);
+    readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
+
     SgNodePtr node = sgConverter.convert(segmentNode);
     if(node){
         if(T.isApprox(Affine3::Identity())){
-            iLink.shape->addChild(node);
+            iLink.visualShape->addChild(node);
         } else {
             SgPosTransform* transform = new SgPosTransform(T);
             transform->addChild(node);
-            iLink.shape->addChild(transform);
+            iLink.visualShape->addChild(transform);
         }
     }
+}
 
-    MFNode& childNodes = get<MFNode>(segmentNode->fields["children"]);
+
+void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* segmentShapeNode, const Affine3& T)
+{
+    const string& typeName = segmentShapeNode->proto->protoName;
+    if(isVerbose) putMessage(string("Surface node ") + segmentShapeNode->defName);
+    
+    iLink.isSurfaceNodeUsed = true;
+
+    // check if another Surface node does not appear in the subtree
+    MFNode& visualNodes = get<MFNode>(segmentShapeNode->fields["visual"]);
     ProtoIdSet acceptableProtoIds;
-    acceptableProtoIds.set(PROTO_DEVICE);
-    readJointSubNodes(iLink, childNodes, acceptableProtoIds, T);
-}
+    readJointSubNodes(iLink, visualNodes, acceptableProtoIds, T);
+    MFNode& collisionNodes = get<MFNode>(segmentShapeNode->fields["collision"]);
+    readJointSubNodes(iLink, collisionNodes, acceptableProtoIds, T);
 
-
-VRMLNodePtr VRMLBodyLoader::getOriginalNode(Link* link)
-{
-    return impl->getOriginalNode(link);
-}
-
-VRMLNodePtr VRMLBodyLoaderImpl::getOriginalNode(Link* link)
-{
-    LinkOriginalMap::iterator it;
-    it = linkOriginalMap.find(link);
-    if (it == linkOriginalMap.end()) {
-        return NULL;
+    SgGroup* group;
+    SgPosTransform* transform = 0;
+    if(T.isApprox(Affine3::Identity())){
+        group = iLink.collisionShape;
+    } else {
+        transform = new SgPosTransform(T);
+        group = transform;
     }
-    return it->second;
+    for(size_t i=0; i < collisionNodes.size(); ++i){
+        SgNodePtr node = sgConverter.convert(collisionNodes[i]);
+        if(node){
+            group->addChild(node);
+        }
+    }
+    if(transform && !transform->empty()){
+        iLink.collisionShape->addChild(transform);
+    }
 }
 
 
 void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* deviceNode, const Affine3& T)
 {
     const string& typeName = deviceNode->proto->protoName;
-    putVerboseMessage(typeName + " node " + deviceNode->defName);
+    if(isVerbose) putMessage(typeName + " node " + deviceNode->defName);
     
     DeviceFactoryMap::iterator p = deviceFactories.find(typeName);
     if(p == deviceFactories.end()){

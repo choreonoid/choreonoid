@@ -51,6 +51,15 @@ public:
         return !ArrayBase::empty();
     }
 
+    ItemType* find(const std::string& name){
+        for(size_t i=0; i < ArrayBase::size(); ++i){
+            if((*this)[i]->name() == name){
+                return (*this)[i];
+            }
+        }
+        return 0;
+    }
+
 private:
     void extractChildItemsSub(Item* item){
         if(item){

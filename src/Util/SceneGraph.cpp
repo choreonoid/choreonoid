@@ -302,11 +302,13 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
 }
 
 
-void SgGroup::addChildOnce(SgNode* node, bool doNotify)
+bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 {
     if(!contains(node)){
         addChild(node, doNotify);
+        return true;
     }
+    return false;
 }
 
 
@@ -360,7 +362,7 @@ void SgGroup::clearChildren(bool doNotify)
 }
 
 
-void SgGroup::copyChildren(SgGroup* group, bool doNotify)
+void SgGroup::copyChildrenTo(SgGroup* group, bool doNotify)
 {
     for(int i=0; i < children.size(); ++i){
         group->addChild(child(i), doNotify);
@@ -368,7 +370,7 @@ void SgGroup::copyChildren(SgGroup* group, bool doNotify)
 }
 
 
-void SgGroup::moveChildren(SgGroup* group, bool doNotify)
+void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 {
     const int destTop = group->children.size();
     

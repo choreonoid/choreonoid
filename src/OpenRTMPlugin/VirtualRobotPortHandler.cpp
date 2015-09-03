@@ -391,6 +391,25 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
     }
 
     if(camera){
+        double fovy2 = camera->fieldOfView() / 2.0;
+        double near = camera->nearDistance();
+        double width = camera->resolutionX();
+        double height = camera->resolutionY();
+        double aspect = width / height;
+        double fv = 1.0 / tan(fovy2);
+        double fu = fv / aspect;
+        double v0 = near * tan(fovy2);
+        double u0 = v0 * aspect;
+        value.data.intrinsic.matrix_element[0] = fu;
+        value.data.intrinsic.matrix_element[1] = 0.0;
+        value.data.intrinsic.matrix_element[2] = u0;
+        value.data.intrinsic.matrix_element[3] = fv;
+        value.data.intrinsic.matrix_element[4] = v0;
+        value.data.intrinsic.distortion_coefficient.length(0);
+        for(int i=0; i<4; i++)
+            for(int j=0; j<4; j++)
+                value.data.extrinsic[i][j] = i==j? 1.0: 0.0;
+
         camera->sigStateChanged().connect(boost::bind(&CameraImageOutPortHandler::onCameraStateChanged, this));
     }
 }
