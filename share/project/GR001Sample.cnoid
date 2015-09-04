@@ -263,7 +263,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0001
     lazyCollisionDetectionMode: true
-  "BodyMotionGenerationBar": 
+  "BodyMotionGenerationBar":
+    autoGenerationForNewBody: true
     balancer: true
     autoGeneration: true
     timeScaleRatio: 1

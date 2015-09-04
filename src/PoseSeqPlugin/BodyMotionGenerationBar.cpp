@@ -318,7 +318,7 @@ void BodyMotionGenerationBar::initializeInstance(ExtensionManager* ext)
         bar->autoInterpolationUpdateCheck->setChecked(true);
 
         bar->autoGenerationForNewBodyCheck = mm.addCheckItem(_("Automatic Generation for a New Body"));
-        bar->autoGenerationForNewBodyCheck->setChecked(false);
+        bar->autoGenerationForNewBodyCheck->setChecked(true);
 
         mm.addSeparator();
     
