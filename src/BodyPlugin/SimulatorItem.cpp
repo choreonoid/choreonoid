@@ -1523,7 +1523,8 @@ SimulationBody* SimulatorItem::findSimulationBody(const std::string& name)
     const int n = impl->allSimBodies.size();
     for(int i=0; i < n; ++i){
         SimulationBody* simBody = impl->allSimBodies[i];
-        if(simBody->body()->name() == name){
+        Body* body = simBody->body();
+        if(body && body->name() == name){
             return simBody;
         }
     }
