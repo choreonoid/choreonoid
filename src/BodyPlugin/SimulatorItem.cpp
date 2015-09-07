@@ -1015,6 +1015,10 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     isAllLinkPositionOutputMode = false;
     isDeviceStateOutputEnabled = true;
     recordCollisionData = false;
+
+    currentFrame = 0;
+    frameAtLastBufferWriting = 0;
+    worldFrameRate = 1.0;
 }
 
 
@@ -1928,6 +1932,20 @@ double SimulatorItemImpl::currentTime() const
 {
     return currentFrame / worldFrameRate;
 }
+
+
+int SimulatorItem::simulationFrame() const
+{
+    QMutexLocker locker(&impl->resultBufMutex);
+    return impl->frameAtLastBufferWriting;
+}
+
+
+int SimulatorItem::simulationTime() const
+{
+    QMutexLocker locker(&impl->resultBufMutex);
+    return impl->frameAtLastBufferWriting / impl->worldFrameRate;
+}    
 
 
 SignalProxy<void()> SimulatorItem::sigSimulationFinished()

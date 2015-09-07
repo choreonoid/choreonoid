@@ -92,9 +92,19 @@ public:
     bool isRunning() const;
     bool isPausing() const;
     bool isActive() const; ///< isRunning() && !isPausing()
+
+    //! This can only be called from the simulation thread
     int currentFrame() const;
+    
+    //! This can only be called from the simulation thread
     double currentTime() const;
 
+    //! This can be called from non simulation threads
+    int simulationFrame() const;
+
+    //! This can be called from non simulation threads
+    int simulationTime() const;
+    
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };
