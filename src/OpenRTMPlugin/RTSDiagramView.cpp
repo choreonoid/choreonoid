@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QStyleOptionGraphicsItem>
+#include <QGraphicsEffect>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
@@ -195,6 +196,7 @@ public :
     map<string, RTSPortGItemPtr> outPorts;
     QGraphicsRectItem* rect;
 
+    QGraphicsOpacityEffect* effect;
     Signal<void(const RTSCompGItem*)> sigPositionChanged;
     Connection positionChangeConnection;
 private :
@@ -567,6 +569,11 @@ QVariant RTSCompGItem::itemChange ( GraphicsItemChange change, const QVariant & 
 RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPointF& pos) :
         impl(impl), rtsComp(rtsComp)
 {
+    effect = new QGraphicsOpacityEffect;
+    effect->setOpacity(0.3);
+    setGraphicsEffect(effect);
+    effect->setEnabled(false);
+
     create(pos);
     positionChangeConnection = sigPositionChanged.connect(
             boost::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
@@ -1186,7 +1193,9 @@ void RTSDiagramViewImpl::onTime()
             it != rtsComps.end(); it++){
         if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
             deleteRTSComp(it->second.get());
-        }
+            //it->second->effect->setEnabled(true);
+        }//else
+            //it->second->effect->setEnabled(false);
     }
 
     for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();

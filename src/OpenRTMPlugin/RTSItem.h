@@ -74,7 +74,7 @@ class RTSystemItemImpl;
 class RTSComp : public Referenced
 {
 public :
-    RTSComp(RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
+    RTSComp(const string& name, RTC::RTObject_ptr rtc, RTSystemItemImpl* impl, const QPointF& pos);
 
     RTSystemItemImpl* impl;
     RTObject_ptr rtc_;
@@ -130,6 +130,7 @@ protected :
 
 private:
     RTSystemItemImpl* impl;
+    bool autoConnection;
 };
 
 typedef ref_ptr<RTSystemItem> RTSystemItemPtr;
