@@ -34,21 +34,50 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
 
 SgNode* STLSceneLoader::load(const std::string& fileName)
 {
-    std::ifstream ifs(fileName.c_str(), std::ios::in);
+    std::ifstream ifs(fileName.c_str(), std::ios::in | std::ios::binary);
 
     SgVertexArrayPtr vertices = new SgVertexArray;
     SgNormalArrayPtr normals = new SgNormalArray;
 
-    std::string line;
-    while(!ifs.eof() && getline(ifs, line)){
-        trim(line);
-        if(boost::istarts_with(line, "vertex")){
-            readVector3(line.substr(6), vertices);
-        } else if(boost::istarts_with(line, "facet normal")){
-            readVector3(line.substr(12), normals);
+    uint8_t header[80];
+    ifs.read((char *)header, 80);
+    if(strncmp((char *)header, "solid", 5) != 0){
+        // stl file is in binary format
+        uint32_t ntriangle;
+        ifs.read((char *)&ntriangle, 4);
+        for(size_t i = 0; i < ntriangle; i++){
+            Vector3f value;
+            for(size_t j = 0; j < 3; j++){
+                float v;
+                ifs.read((char *)&v, 4);
+                value[j] = v;
+            }
+            normals->push_back(value);
+            for(size_t k = 0; k < 3; k++){
+                Vector3f value;
+                for(size_t j = 0; j < 3; j++){
+                    float v;
+                    ifs.read((char *)&v, 4);
+                    value[j] = v;
+                }
+                vertices->push_back(value);
+            }
+            uint16_t attrib;
+            ifs.read((char *)&attrib, 2);
+        }
+    } else {
+        // stl file is in text format
+        std::ifstream ifs(fileName.c_str(), std::ios::in);
+        std::string line;
+        while(!ifs.eof() && getline(ifs, line)){
+            trim(line);
+            if(boost::istarts_with(line, "vertex")){
+                readVector3(line.substr(6), vertices);
+            } else if(boost::istarts_with(line, "facet normal")){
+                readVector3(line.substr(12), normals);
+            }
         }
     }
-
     SgShape* shape = 0;
     
     if(!vertices->empty()){
