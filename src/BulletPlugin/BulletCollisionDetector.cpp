@@ -586,8 +586,13 @@ void BulletCollisionDetectorImpl::detectCollisions(boost::function<void(const Co
 void BulletCollisionDetectorImpl::detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair)
 {
     vector<Collision>& collisions = collisionPair.collisions;
+    #ifdef BT_VER_GT_282
     btCollisionObjectWrapper objectWrapper1(0, object1->getCollisionShape(), object1, object1->getWorldTransform(), -1, -1);
     btCollisionObjectWrapper objectWrapper2(0, object2->getCollisionShape(), object2, object2->getWorldTransform(), -1, -1);
+    #else
+    btCollisionObjectWrapper objectWrapper1(0, object1->getCollisionShape(), object1, object1->getWorldTransform());
+    btCollisionObjectWrapper objectWrapper2(0, object2->getCollisionShape(), object2, object2->getWorldTransform());
+    #endif
 
     btCollisionAlgorithm* algo = collisionWorld->getDispatcher()->findAlgorithm(&objectWrapper1, &objectWrapper2);
     if (algo){

@@ -8,38 +8,42 @@ endif()
 #set(CMAKE_BUILD_TYPE Debug)
 
 set(BULLET_DIR ${BULLET_DIR} CACHE PATH "set the top directory of the Bullet Physics library")
-set(BULLET_CFLAGS -DBT_USE_DOUBLE_PRECISION)
 if(UNIX)
   if(NOT BULLET_DIR)
-    FIND_PACKAGE(Bullet REQUIRED NO_MODULE)
+    PKG_CHECK_MODULES(bullet REQUIRED bullet)
+    # HACD is not included in bullet.pc, we thus have to add it ourselves.
+    LIST(APPEND ${bullet_LIBRARIES} HACD)
   else()
-    set(BULLET_INCLUDE_DIRS ${BULLET_DIR}/include/bullet)
-    set(BULLET_LIBRARY_DIRS ${BULLET_DIR}/lib/)
+    set(bullet_INCLUDE_DIRS ${BULLET_DIR}/include/bullet)
+    set(bullet_LIBRARY_DIRS ${BULLET_DIR}/lib/)
+    set(bullet_LIBRARIES BulletDynamics BulletCollision LinearMath HACD)
   endif()
-  # BulletConfig.cmake of version 2.82-r2704 provides a wrong name for BulletCollision,
-  # so BULLET_LIBRARIES must be overwritten even if the variable is obtained from BulletConfig.cmake
-  set(BULLET_LIBRARIES BulletDynamics BulletCollision LinearMath HACD)
 
 elseif(MSVC)
   if(NOT BULLET_DIR)
     message(FATAL_ERROR "Please specify the directory of the Bullet Physics library to BULLET_DIR.")
   endif()
   if(BULLET_DIR)
-    set(BULLET_LIBRARIES optimized BulletCollision optimized BulletDynamics optimized LinearMath optimized HACD
+    set(bullet_LIBRARIES optimized BulletCollision optimized BulletDynamics optimized LinearMath optimized HACD
                          debug BulletCollision_Debug debug BulletDynamics_Debug debug LinearMath_Debug debug HACD_Debug)
-    set(BULLET_INCLUDE_DIRS ${BULLET_DIR}/include/bullet ${BULLET_DIR}/src ${BULLET_DIR}/Extras)
-    set(BULLET_LIBRARY_DIRS ${BULLET_DIR}/lib/)
+    set(bullet_INCLUDE_DIRS ${BULLET_DIR}/include/bullet ${BULLET_DIR}/src ${BULLET_DIR}/Extras)
+    set(bullet_LIBRARY_DIRS ${BULLET_DIR}/lib/)
   endif()
 endif()
 
-add_definitions(${BULLET_CFLAGS})
-include_directories(${BULLET_INCLUDE_DIRS})
-link_directories(${BULLET_LIBRARY_DIRS})
+add_definitions(${bullet_CFLAGS})
+
+if(${bullet_VERSION} VERSION_GREATER 2.82)
+  add_definitions(-DBT_VER_GT_282)
+endif()
+
+include_directories(${bullet_INCLUDE_DIRS})
+link_directories(${bullet_LIBRARY_DIRS})
 
 set(target CnoidBulletPlugin)
 
 if(MSVC)
-  link_directories(${BULLET_LIBRARY_DIRS}/Release)
+  link_directories(${bullet_LIBRARY_DIRS}/Release)
 endif()
 
 set(sources
@@ -56,9 +60,9 @@ QT4_WRAP_CPP(sources
 
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
-target_link_libraries(${target} CnoidBodyPlugin ${BULLET_LIBRARIES})
+target_link_libraries(${target} CnoidBodyPlugin ${bullet_LIBRARIES})
 apply_common_setting_for_plugin(${target} "${headers}")
-install_external_libraries(${BULLET_DIR}/bin ${BULLET_DIR}/lib ${BULLET_LIBRARIES})
+install_external_libraries(${BULLET_DIR}/bin ${BULLET_DIR}/lib ${bullet_LIBRARIES})
 
 if(ENABLE_PYTHON)
   add_subdirectory(python)
