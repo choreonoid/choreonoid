@@ -10,8 +10,14 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <boost/bind.hpp>
+#include <boost/version.hpp>
 #include <map>
 #include <iostream>
+
+// Boost 1.58
+#if BOOST_VERSION / 100 % 1000 == 58
+#include <fstream>
+#endif
 
 using namespace std;
 using namespace boost;
@@ -224,7 +230,17 @@ static boost::python::object execPythonCodeSub(const std::string& code)
 
 static boost::python::object execPythonFileSub(const std::string& filename)
 {
+// Boost 1.58
+#if BOOST_VERSION / 100 % 1000 == 58
+    // Avoid a segv with exec_file
+    // See: https://github.com/boostorg/python/pull/15
+    std::ifstream t(filename.c_str());
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return execPythonCodeSub(buffer.str().c_str());
+#else // default implementation
     return python::exec_file(filename.c_str(), cnoid::pythonMainNamespace());
+#endif
 }
 
 
