@@ -1,7 +1,7 @@
 
 set(target CnoidSimpleController)
 set(sources SimpleController.cpp)
-set(headers SimpleController.h)
+set(headers SimpleController.h exportdecl.h)
 add_cnoid_library(${target} SHARED ${sources} ${headers})
 target_link_libraries(${target} CnoidBody)
 apply_common_setting_for_library(${target} "${headers}")
