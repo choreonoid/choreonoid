@@ -18,6 +18,8 @@ using namespace cnoid;
 
 namespace {
 
+const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
+
 const double PI = 3.14159265358979323846;
 
 }
@@ -1021,6 +1023,27 @@ SgObject* SgMesh::clone(SgCloneMap& cloneMap) const
 }
 
 
+void SgMesh::updateBoundingBox()
+{
+    if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
+        SgMeshBase::updateBoundingBox();
+
+    } else {
+        if(!hasVertices()){
+            bbox.clear();
+        } else {
+            BoundingBoxf bboxf;
+            const SgVertexArray& v = *vertices();
+            for(SgIndexArray::const_iterator iter = triangleVertices_.begin(); iter != triangleVertices_.end(); ++iter){
+                const Vector3f& p = v[*iter];
+                bboxf.expandBy(p);
+            }
+            bbox = bboxf;
+        }
+    }
+}
+
+
 SgPolygonMesh::SgPolygonMesh()
 {
 
@@ -1038,6 +1061,30 @@ SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap& cloneMap)
 SgObject* SgPolygonMesh::clone(SgCloneMap& cloneMap) const
 {
     return new SgPolygonMesh(*this, cloneMap);
+}
+
+
+void SgPolygonMesh::updateBoundingBox()
+{
+    if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
+        SgMeshBase::updateBoundingBox();
+
+    } else {
+        if(!hasVertices()){
+            bbox.clear();
+        } else {
+            BoundingBoxf bboxf;
+            const SgVertexArray& v = *vertices();
+            for(SgIndexArray::const_iterator iter = polygonVertices_.begin(); iter != polygonVertices_.end(); ++iter){
+                const int index = *iter;
+                if(index >= 0){
+                    const Vector3f& p = v[index];
+                    bboxf.expandBy(p);
+                }
+            }
+            bbox = bboxf;
+        }
+    }
 }
 
 

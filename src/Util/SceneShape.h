@@ -232,7 +232,7 @@ public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
     virtual const BoundingBox& boundingBox() const;
-    void updateBoundingBox();
+    virtual void updateBoundingBox();
 
     bool hasVertices() const { return (vertices_ && !vertices_->empty()); }
     SgVertexArray* vertices() { return vertices_; }
@@ -272,8 +272,10 @@ public:
     bool isSolid() const { return isSolid_; }
     void setSolid(bool on) { isSolid_ = on; }
 
-private:
+  protected:
     BoundingBox bbox;
+    
+private:
     SgVertexArrayPtr vertices_;
     SgNormalArrayPtr normals_;
     SgIndexArray normalIndices_;
@@ -291,6 +293,8 @@ class CNOID_EXPORT SgMesh : public SgMeshBase
 public:
     SgMesh();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
+
+    virtual void updateBoundingBox();
 
     /**
        Triangle indices (triangles variable) should be CCW.
@@ -391,6 +395,8 @@ public:
     SgPolygonMesh();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
+    virtual void updateBoundingBox();
+    
     /**
        The array of vertex indices corresponding to polygons.
        Indices are delimited by index value '-1'.

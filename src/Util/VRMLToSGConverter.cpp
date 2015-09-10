@@ -22,6 +22,7 @@ using namespace cnoid;
 using boost::format;
 
 namespace {
+
 const double PI = 3.14159265358979323846;
 }
 
@@ -114,6 +115,7 @@ public:
     SgDirectionalLight* createDirectionalLight(VRMLDirectionalLight* vlight);
     SgNode* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
 };
+
 }
 
 
