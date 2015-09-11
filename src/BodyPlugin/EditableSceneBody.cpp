@@ -1499,12 +1499,11 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
     }
     if(!states->empty()){
         archive.insert("editableSceneBodies", states);
-        return true;
     }
 
     archive.write("staticModelEditing", enableStaticModelEditCheck->isChecked());
     
-    return false;
+    return true;
 }
     
     
