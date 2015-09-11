@@ -328,6 +328,8 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
                 if(isTriangulationEnabled){
                     SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
+                    if(!polygonMesh.get())
+                        return converted;
                     mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
                     const string& errorMessage = polygonMeshTriangulator.errorMessage();
                     if(!errorMessage.empty()){
@@ -649,7 +651,17 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
 
 SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
-    if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
+    //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
+    if(!vface->coord){
+        putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
+        return  SgPolygonMeshPtr(); // null
+    }
+    if(vface->coord->point.empty()){
+        putMessage("VRMLIndexedFaceSet: The point field is empty." );
+        return  SgPolygonMeshPtr(); // null
+    }
+    if(vface->coordIndex.empty()){
+        putMessage("VRMLIndexedFaceSet: The coordIndex field is empty." );
         return SgPolygonMeshPtr(); // null
     }
     
