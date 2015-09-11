@@ -204,6 +204,10 @@ public:
     enum { NO_FORCED_POSITION, MOVE_FORCED_POSITION, KEEP_FORCED_POSITION };
     int forcedPositionMode;
 
+    bool isEditable() {
+        return bodyItem->isEditable() && !bodyItem->body()->isStaticModel();
+    }
+
     EditableSceneLink* editableSceneLink(int index){
         return static_cast<EditableSceneLink*>(self->sceneLink(index));
     }
@@ -706,7 +710,7 @@ bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onKeyPressEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
         
@@ -759,7 +763,7 @@ bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     
@@ -889,7 +893,7 @@ bool EditableSceneBody::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     if(dragMode == DRAG_NONE){
@@ -961,7 +965,7 @@ void EditableSceneBody::onPointerLeaveEvent(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return;
     }
     if(outlinedLink){
@@ -991,7 +995,7 @@ void EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, Menu
 
 void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return;
     }
     
@@ -1062,7 +1066,7 @@ void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         isEditMode = false;
         return;
     }
@@ -1087,7 +1091,7 @@ bool EditableSceneBodyImpl::finishEditing()
 {
     bool finished = false;
     
-    if(bodyItem->isEditable()){
+    if(isEditable()){
 
         isDragging = false;
         finished = true;
@@ -1117,7 +1121,7 @@ bool EditableSceneBody::onUndoRequest()
 
 bool EditableSceneBodyImpl::onUndoRequest()
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     return bodyItem->undoKinematicState();
@@ -1132,7 +1136,7 @@ bool EditableSceneBody::onRedoRequest()
 
 bool EditableSceneBodyImpl::onRedoRequest()
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     return bodyItem->redoKinematicState();
