@@ -285,8 +285,8 @@ public:
     bool finishEditing();
     
     static bool storeProperties(Archive& archive);
-    static void restorePropertiesLater(const Archive& archive);
     static void restoreProperties(const Archive& archive);
+    static void restoreSceneBodyProperties(const Archive& archive);
 };
 
 }
@@ -1508,13 +1508,14 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
 }
     
     
-void EditableSceneBodyImpl::restorePropertiesLater(const Archive& archive)
+void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
 {
-    archive.addPostProcess(boost::bind(&EditableSceneBodyImpl::restoreProperties, boost::ref(archive)), 1);
+    enableStaticModelEditCheck->setChecked(archive.get("staticModelEditing", false));
+    archive.addPostProcess(boost::bind(&EditableSceneBodyImpl::restoreSceneBodyProperties, boost::ref(archive)), 1);
 }
 
 
-void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
+void EditableSceneBodyImpl::restoreSceneBodyProperties(const Archive& archive)
 {
     Listing& states = *archive["editableSceneBodies"].toListing();
     for(int i=0; i < states.size(); ++i){
@@ -1527,8 +1528,6 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
             impl->showZmp(state->get("showZmp", impl->isZmpVisible));
         }
     }
-
-    enableStaticModelEditCheck->setChecked(archive.get("staticModelEditing", false));
 }
 
 
@@ -1545,5 +1544,5 @@ void EditableSceneBody::initializeClass(ExtensionManager* ext)
     ext->setProjectArchiver(
         "EditableSceneBody",
         EditableSceneBodyImpl::storeProperties,
-        EditableSceneBodyImpl::restorePropertiesLater);
+        EditableSceneBodyImpl::restoreProperties);
 }
