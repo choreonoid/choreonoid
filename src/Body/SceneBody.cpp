@@ -242,6 +242,8 @@ void SceneBody::initialize(BodyPtr& body, const boost::function<SceneLink*(Link*
     sceneLinkGroup = new SgGroup;
     addChild(sceneLinkGroup);
     updateModel();
+    isVisualShapeVisible = true;
+    isCollisionShapeVisible = false;
 }
 
 
@@ -302,8 +304,12 @@ void SceneBody::cloneShapes(SgCloneMap& cloneMap)
 
 void SceneBody::setVisibleShapeTypes(bool visual, bool collision)
 {
-    for(size_t i=0; i < sceneLinks_.size(); ++i){
-        sceneLinks_[i]->setVisibleShapeTypes(visual, collision);
+    if(visual != isVisualShapeVisible || collision != isCollisionShapeVisible){
+        for(size_t i=0; i < sceneLinks_.size(); ++i){
+            sceneLinks_[i]->setVisibleShapeTypes(visual, collision);
+        }
+        isVisualShapeVisible = visual;
+        isCollisionShapeVisible = collision;
     }
 }
 

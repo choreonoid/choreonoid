@@ -27,6 +27,14 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+Action* linkVisibilityCheck;
+Action* showVisualShapeCheck;
+Action* showCollisionShapeCheck;
+
+}
+
 
 EditableSceneLink::EditableSceneLink(Link* link)
     : SceneLink(link)
@@ -157,6 +165,7 @@ public:
     ConnectionSet connections;
     Connection connectionToSigCollisionsUpdated;
     boost::dynamic_bitset<> collisionLinkBitSet;
+    ScopedConnection connectionToSigLinkSelectionChanged;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
     EditableSceneLink* pointedSceneLink;
@@ -221,6 +230,9 @@ public:
     void onCollisionsUpdated();
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
+    void onLinkVisibilityCheckToggled();
+    void onVisibleShapeTypesChanged();
+    void onLinkSelectionChanged();
 
     void showCenterOfMass(bool on);
     void showPpcom(bool on);
@@ -369,6 +381,7 @@ double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
 {
     connections.disconnect();
+    connectionToSigLinkSelectionChanged.disconnect();
 
     if(on){
         connections.add(bodyItem->sigUpdated().connect(
@@ -385,6 +398,19 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
 
         connections.add(bodyItem->sigModelUpdated().connect(
                             boost::bind(&EditableSceneBodyImpl::updateModel, this)));
+
+        connections.add(
+            linkVisibilityCheck->sigToggled().connect(
+                boost::bind(&EditableSceneBodyImpl::onLinkVisibilityCheckToggled, this)));
+        onLinkVisibilityCheckToggled();
+
+        connections.add(
+            showVisualShapeCheck->sigToggled().connect(
+                boost::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
+        connections.add(
+            showCollisionShapeCheck->sigToggled().connect(
+                boost::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
+        onVisibleShapeTypesChanged();
     }
 }
 
@@ -515,6 +541,38 @@ void EditableSceneBody::setLinkVisibilities(const boost::dynamic_bitset<>& visib
     notifyUpdate(impl->modified);
 }
 
+
+void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
+{
+    LinkSelectionView* selectionView = LinkSelectionView::mainInstance();
+
+    if(linkVisibilityCheck->isChecked()){
+        connectionToSigLinkSelectionChanged.reset(
+            selectionView->sigSelectionChanged(bodyItem).connect(
+                boost::bind(&EditableSceneBodyImpl::onLinkSelectionChanged, this)));
+        onLinkSelectionChanged();
+    } else {
+        connectionToSigLinkSelectionChanged.disconnect();
+        boost::dynamic_bitset<> visibilities;
+        visibilities.resize(self->numSceneLinks(), true);
+        self->setLinkVisibilities(visibilities);
+    }
+}
+
+
+void EditableSceneBodyImpl::onLinkSelectionChanged()
+{
+    if(linkVisibilityCheck->isChecked()){
+        self->setLinkVisibilities(LinkSelectionView::mainInstance()->getLinkSelection(bodyItem));
+    }
+}
+
+
+void EditableSceneBodyImpl::onVisibleShapeTypesChanged()
+{
+    self->setVisibleShapeTypes(
+        showVisualShapeCheck->isChecked(), showCollisionShapeCheck->isChecked());
+}
 
 
 void EditableSceneBodyImpl::showCenterOfMass(bool on)
@@ -1473,4 +1531,11 @@ void EditableSceneBody::initializeClass(ExtensionManager* ext)
         "EditableSceneBody",
         EditableSceneBodyImpl::storeProperties,
         EditableSceneBodyImpl::restorePropertiesLater);
+
+    MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
+    linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
+    showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
+    showVisualShapeCheck->setChecked(true);
+    showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
+    
 }

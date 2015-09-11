@@ -45,10 +45,6 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 
 BodyLoader bodyLoader;
-
-Action* linkVisibilityCheck;
-Action* showVisualShapeCheck;
-Action* showCollisionShapeCheck;
 BodyState kinematicStateCopy;
 
 /// \todo move this to hrpUtil ?
@@ -123,9 +119,6 @@ public:
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
 
-    ScopedConnection connectionToSigLinkSelectionChanged;
-    ScopedConnectionSet optionCheckConnections;
-
     Signal<void()> sigModelUpdated;
 
     BodyItemImpl(BodyItem* self);
@@ -144,9 +137,6 @@ public:
     void appendKinematicStateToHistory();
     bool onStaticModelPropertyChanged(bool on);
     void createSceneBody();
-    void onLinkVisibilityCheckToggled();
-    void onVisibleShapeTypesChanged();
-    void onLinkSelectionChanged();
     void onPositionChanged();
     bool undoKinematicState();
     bool redoKinematicState();
@@ -180,12 +170,6 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
         om.sigOptionsParsed().connect(onSigOptionsParsed);
-
-        MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
-        linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
-        showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
-        showVisualShapeCheck->setChecked(true);
-        showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
 
         initialized = true;
     }
@@ -283,7 +267,7 @@ BodyItem::~BodyItem()
 
 BodyItemImpl::~BodyItemImpl()
 {
-    connectionToSigLinkSelectionChanged.disconnect();
+
 }
 
 
@@ -1084,23 +1068,6 @@ void BodyItemImpl::createSceneBody()
 {
     sceneBody = new EditableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
-
-    optionCheckConnections.add(
-        linkVisibilityCheck->sigToggled().connect(
-            boost::bind(&BodyItemImpl::onLinkVisibilityCheckToggled, this)));
-    onLinkVisibilityCheckToggled();
-
-    optionCheckConnections.add(
-        showVisualShapeCheck->sigToggled().connect(
-            boost::bind(&BodyItemImpl::onVisibleShapeTypesChanged, this)));
-
-    optionCheckConnections.add(
-        showCollisionShapeCheck->sigToggled().connect(
-            boost::bind(&BodyItemImpl::onVisibleShapeTypesChanged, this)));
-    
-    if(!showVisualShapeCheck->isChecked() || showCollisionShapeCheck->isChecked()){
-        onVisibleShapeTypesChanged();
-    }
 }
 
 
@@ -1113,47 +1080,6 @@ SgNode* BodyItem::getScene()
 EditableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
-}
-
-
-void BodyItemImpl::onLinkVisibilityCheckToggled()
-{
-    LinkSelectionView* selectionView = LinkSelectionView::mainInstance();
-
-    connectionToSigLinkSelectionChanged.disconnect();
-    
-    if(linkVisibilityCheck->isChecked()){
-        if(sceneBody){
-            sceneBody->setLinkVisibilities(selectionView->getLinkSelection(self));
-        }
-        connectionToSigLinkSelectionChanged.reset(
-            selectionView->sigSelectionChanged(self).connect(
-                boost::bind(&BodyItemImpl::onLinkSelectionChanged, this)));
-    } else {
-        if(sceneBody){
-            boost::dynamic_bitset<> visibilities;
-            visibilities.resize(body->numLinks(), true);
-            sceneBody->setLinkVisibilities(visibilities);
-        }
-    }
-}
-
-
-void BodyItemImpl::onVisibleShapeTypesChanged()
-{
-    if(sceneBody){
-        sceneBody->setVisibleShapeTypes(
-            showVisualShapeCheck->isChecked(),
-            showCollisionShapeCheck->isChecked());
-    }
-}
-
-
-void BodyItemImpl::onLinkSelectionChanged()
-{
-    if(sceneBody && linkVisibilityCheck->isChecked()){
-        sceneBody->setLinkVisibilities(LinkSelectionView::mainInstance()->getLinkSelection(self));
-    }
 }
 
 

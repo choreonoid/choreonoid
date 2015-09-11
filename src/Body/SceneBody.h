@@ -98,6 +98,8 @@ protected:
 
 private:
     boost::function<SceneLink*(Link*)> sceneLinkFactory;
+    bool isVisualShapeVisible;
+    bool isCollisionShapeVisible;
 
     SceneBody(const SceneBody& org);
     void initialize(BodyPtr& body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory);
