@@ -32,6 +32,7 @@ namespace {
 Action* linkVisibilityCheck;
 Action* showVisualShapeCheck;
 Action* showCollisionShapeCheck;
+Action* enableStaticModelEditCheck;
 
 }
 
@@ -214,7 +215,8 @@ public:
     int forcedPositionMode;
 
     bool isEditable() {
-        return bodyItem->isEditable() && !bodyItem->body()->isStaticModel();
+        return bodyItem->isEditable() &&
+            (!bodyItem->body()->isStaticModel() || enableStaticModelEditCheck->isChecked());
     }
 
     EditableSceneLink* editableSceneLink(int index){
@@ -1499,6 +1501,9 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
         archive.insert("editableSceneBodies", states);
         return true;
     }
+
+    archive.write("staticModelEditing", enableStaticModelEditCheck->isChecked());
+    
     return false;
 }
     
@@ -1522,20 +1527,23 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
             impl->showZmp(state->get("showZmp", impl->isZmpVisible));
         }
     }
+
+    enableStaticModelEditCheck->setChecked(archive.get("staticModelEditing", false));
 }
 
 
 void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
-    ext->setProjectArchiver(
-        "EditableSceneBody",
-        EditableSceneBodyImpl::storeProperties,
-        EditableSceneBodyImpl::restorePropertiesLater);
-
     MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
     linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
     showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
     showVisualShapeCheck->setChecked(true);
     showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
-    
+    enableStaticModelEditCheck = mm.addCheckItem(_("Enable editing static models"));
+    enableStaticModelEditCheck->setChecked(true);
+
+    ext->setProjectArchiver(
+        "EditableSceneBody",
+        EditableSceneBodyImpl::storeProperties,
+        EditableSceneBodyImpl::restorePropertiesLater);
 }
