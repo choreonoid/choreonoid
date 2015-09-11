@@ -630,8 +630,6 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
 
 void EditableSceneBodyImpl::updateMarkersAndManipulators()
 {
-    bool show = (isEditMode && !self->body()->isStaticModel());
-    
     Link* baseLink = bodyItem->currentBaseLink();
     PinDragIKptr pin = bodyItem->pinDragIK();
 
@@ -642,7 +640,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         sceneLink->removeChild(positionDragger);
         markerGroup->removeChild(positionDragger);
 
-        if(show && !activeSimulatorItem){
+        if(isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
                 sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
@@ -655,7 +653,7 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         }
     }
 
-    bool showDragger = show && targetLink && kinematicsBar->isPositionDraggerEnabled();
+    bool showDragger = isEditMode && targetLink && kinematicsBar->isPositionDraggerEnabled();
     if(showDragger){
         if(activeSimulatorItem){
             showDragger = forcedPositionMode != NO_FORCED_POSITION;
@@ -712,7 +710,7 @@ bool EditableSceneBodyImpl::onKeyPressEvent(const SceneWidgetEvent& event)
         return false;
     }
         
-    if(!outlinedLink || self->body()->isStaticModel()){
+    if(!outlinedLink){
         return false;
     }
 
@@ -762,9 +760,6 @@ bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
 bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
     if(!bodyItem->isEditable()){
-        return false;
-    }
-    if(self->body()->isStaticModel()){
         return false;
     }
     
@@ -904,10 +899,8 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
                 if(outlinedLink){
                     outlinedLink->showBoundingBox(false);
                 }
-                if(!self->body()->isStaticModel()){
-                    pointedSceneLink->showBoundingBox(true);
-                    outlinedLink = pointedSceneLink;
-                }
+                pointedSceneLink->showBoundingBox(true);
+                outlinedLink = pointedSceneLink;
             }
         }
         if(pointedSceneLink){
@@ -1001,9 +994,6 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
     if(!bodyItem->isEditable()){
         return;
     }
-    if(self->body()->isStaticModel()){
-        return;
-    }
     
     PointedType pointedType = findPointedObject(event.nodePath());
 
@@ -1073,6 +1063,7 @@ void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 void EditableSceneBodyImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
     if(!bodyItem->isEditable()){
+        isEditMode = false;
         return;
     }
     isEditMode = event.sceneWidget()->isEditMode();

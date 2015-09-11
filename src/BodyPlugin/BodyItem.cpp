@@ -60,6 +60,7 @@ bool loadBodyItem(BodyItem* item, const std::string& filename)
         if(item->name().empty()){
             item->setName(item->body()->modelName());
         }
+        item->setEditable(!item->body()->isStaticModel());
         return true;
     }
     return false;
