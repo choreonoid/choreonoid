@@ -326,23 +326,23 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             mesh = p->second;
         } else {
             if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
-                if(isTriangulationEnabled){
-                    SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
-                    if(!polygonMesh.get())
-                        return converted;
-                    mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
-                    const string& errorMessage = polygonMeshTriangulator.errorMessage();
-                    if(!errorMessage.empty()){
-                        string message;
-                        if(faceSet->defName.empty()){
-                            message = "Error of an IndexedFaceSet node: \n";
-                        } else {
-                            message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
-                        }
-                        putMessage(message + errorMessage);
-                    }
-                } else {
+                if(!isTriangulationEnabled){
                     mesh = createMeshFromIndexedFaceSet(faceSet);
+                } else {
+                    SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
+                    if(polygonMesh){
+                        mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
+                        const string& errorMessage = polygonMeshTriangulator.errorMessage();
+                        if(!errorMessage.empty()){
+                            string message;
+                            if(faceSet->defName.empty()){
+                                message = "Error of an IndexedFaceSet node: \n";
+                            } else {
+                                message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
+                            }
+                            putMessage(message + errorMessage);
+                        }
+                    }
                 }
                 if(mesh && isNormalGenerationEnabled){
                     normalGenerator.generateNormals(mesh, faceSet->creaseAngle);
