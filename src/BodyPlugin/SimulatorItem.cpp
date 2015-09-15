@@ -2277,3 +2277,9 @@ bool SubSimulatorItem::isEnabled()
 {
     return true;
 }
+
+
+void SubSimulatorItem::finalizeSimulation()
+{
+
+}
