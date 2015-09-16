@@ -10,9 +10,8 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Body>
+#include <cnoid/Joystick>
 #include <boost/bind.hpp>
-
-#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -21,6 +20,9 @@ using boost::format;
 namespace {
 
 std::vector<Vector3, Eigen::aligned_allocator<Vector3> > resistancePoints;
+std::vector<Vector3, Eigen::aligned_allocator<Vector3> > thrustPoints;
+
+Joystick* joystick = 0;
 
 }
 
@@ -31,14 +33,17 @@ void SubmersibleSimulatorItem::initializeClass(ExtensionManager* ext)
     im.registerClass<SubmersibleSimulatorItem>("SubmersibleSimulatorItem");
     im.addCreationPanel<SubmersibleSimulatorItem>();
 
-    resistancePoints.push_back(Vector3( 0.8,  0.5,  0.4));
-    resistancePoints.push_back(Vector3( 0.8, -0.5,  0.4));
-    resistancePoints.push_back(Vector3( 0.8, -0.5, -0.4));
-    resistancePoints.push_back(Vector3( 0.8,  0.5, -0.4));
-    resistancePoints.push_back(Vector3(-0.8,  0.5,  0.4));
-    resistancePoints.push_back(Vector3(-0.8, -0.5,  0.4));
-    resistancePoints.push_back(Vector3(-0.8, -0.5, -0.4));
-    resistancePoints.push_back(Vector3(-0.8,  0.5, -0.4));
+    resistancePoints.push_back(Vector3( 0.3,  0.2,  0.15));
+    resistancePoints.push_back(Vector3( 0.3, -0.2,  0.15));
+    resistancePoints.push_back(Vector3( 0.3, -0.2, -0.15));
+    resistancePoints.push_back(Vector3( 0.3,  0.2, -0.15));
+    resistancePoints.push_back(Vector3(-0.3,  0.2,  0.15));
+    resistancePoints.push_back(Vector3(-0.3, -0.2,  0.15));
+    resistancePoints.push_back(Vector3(-0.3, -0.2, -0.15));
+    resistancePoints.push_back(Vector3(-0.3,  0.2, -0.15));
+
+    thrustPoints.push_back(Vector3(-0.3, -0.18, 0.0));
+    thrustPoints.push_back(Vector3(-0.3,  0.18, 0.0));
 }
 
 
@@ -82,6 +87,13 @@ ItemPtr SubmersibleSimulatorItem::doDuplicate() const
 }
 
 
+void SubmersibleSimulatorItem::onConnectedToRoot()
+{
+    if(!joystick){
+        joystick = new Joystick();
+    }
+}
+
 
 bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 {
@@ -94,6 +106,7 @@ bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem
         MessageView::instance()->putln("A submersible model has been detected.");
         simulatorItem->addPostDynamicsFunction(
             boost::bind(&SubmersibleSimulatorItem::applyResistanceForce, this));
+        joystickIntervalCounter = 0;
     }
     
     return true;
@@ -115,6 +128,21 @@ void SubmersibleSimulatorItem::applyResistanceForce()
         }
         root->f_ext() += f;
         const Vector3 p = a + root->p();
+        root->tau_ext() += p.cross(f);
+    }
+
+    if(joystickIntervalCounter++ > 40){
+        joystickIntervalCounter = 0;
+        joystick->readCurrentState();
+    }
+
+    double thrust[2];
+    thrust[0]  = -joystick->getPosition(4); // right
+    thrust[1]  = -joystick->getPosition(1); // left
+    for(int i=0; i < 2; ++i){
+        const Vector3 f = root->R() * Vector3(15.0 * thrust[i], 0.0, 0.0);
+        const Vector3 p = root->T() * thrustPoints[i];
+        root->f_ext() += f;
         root->tau_ext() += p.cross(f);
     }
 }

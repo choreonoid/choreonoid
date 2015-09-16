@@ -25,6 +25,7 @@ public:
 
 protected:
     virtual ItemPtr doDuplicate() const;
+    virtual void onConnectedToRoot();
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -33,6 +34,7 @@ private:
     SimulatorItem* simulatorItem;
     Body* submersible;
     bool isEnabled_;
+    int joystickIntervalCounter;
 
     void initialize();
     void applyResistanceForce();

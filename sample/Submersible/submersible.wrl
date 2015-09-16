@@ -210,29 +210,35 @@ DEF Submersible Humanoid {
 
         DEF CHASSIS_LINK Segment {
           centerOfMass  0 0 0
-          mass    20.0
+          mass    10.0
           momentsOfInertia [ 
-	   5.0 0   0 
-	   0   5.0 0 
-	   0   0   5.0 ]
+	   3.0 0   0 
+	   0   3.0 0 
+	   0   0   3.0 ]
 
           children [
 
-	    DEF Camera VisionSensor {
-	      translation 0 0 0.13
-	      rotation 0.540716 -0.540716 -0.6444 1.99673
-	      type "COLOR_DEPTH"
-	      width 320
-	      height 240
-	      sensorId 0
-	      frameRate 30
+	    Transform {
+	      translation 0.3 0.0 0.1
+	      children [
+		DEF Camera VisionSensor {
+		  translation 0 0 0.13
+		  rotation 0.540716 -0.540716 -0.6444 1.99673
+		  type "COLOR_DEPTH"
+		  width 320
+		  height 240
+		  sensorId 0
+		  frameRate 30
+		}
+		DEF MainLight SpotLightDevice {
+		  direction 1 0 0
+		  cutOffAngle 0.6
+		  attenuation 1 0 0.01
+		  translation 0 0 0.2
+		}
+	      ]
 	    }
-	    DEF MainLight SpotLightDevice {
-	      direction 1 0 0
-	      cutOffAngle 0.6
-	      attenuation 1 0 0.01
-	      translation 0 0 0.2
-	    }
+	    
 	    Transform {
 	      translation 0 0 0
 	      rotation 1 0 0 0
@@ -248,7 +254,7 @@ DEF Submersible Humanoid {
 		  }
 		}
 		geometry Box {
-		  size 1.6 1.0 0.8
+		  size 0.6 0.4 0.3
 		}
 	      }
 	    }
