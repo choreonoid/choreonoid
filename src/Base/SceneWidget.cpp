@@ -361,7 +361,7 @@ public:
     void updateIndicator(const std::string& text);
     bool storeState(Archive& archive);
     void writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex);
-    Mapping* storeCameraState(int cameraIndex, SgPosTransform* cameraTransform);
+    Mapping* storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform);
     bool restoreState(const Archive& archive);
     void restoreCameraStates(const Listing& cameraListing);
     int readCameraPath(const Mapping& archive, const char* key);
@@ -2437,11 +2437,19 @@ bool SceneWidgetImpl::storeState(Archive& archive)
     set<SgPosTransform*> storedTransforms;
     int numCameras = renderer.numCameras();
     for(int i=0; i < numCameras; ++i){
+        Mapping* cameraState = 0;
         if(InteractiveCameraTransform* transform = self->findOwnerInteractiveCameraTransform(i)){
             if(!storedTransforms.insert(transform).second){
                 transform = 0; // already stored
             }
-            cameraListing->append(storeCameraState(i, transform));
+            cameraState = storeCameraState(i, true, transform);
+        } else {
+            if(i == renderer.currentCameraIndex()){
+                cameraState = storeCameraState(i, false, 0);
+            }
+        }
+        if(cameraState){
+            cameraListing->append(cameraState);
         }
     }
     if(!cameraListing->empty()){
@@ -2474,7 +2482,7 @@ void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, 
 }
 
 
-Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, SgPosTransform* cameraTransform)
+Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform)
 {
     Mapping* state = new Mapping();
     writeCameraPath(*state, "camera", cameraIndex);
@@ -2483,20 +2491,22 @@ Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, SgPosTransform* came
         state->write("isCurrent", true);
     }
 
-    SgCamera* camera = renderer.camera(cameraIndex);
-    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
-        state->write("fieldOfView", pers->fieldOfView());
-    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
-        state->write("orthoHeight", ortho->height());
-    }
-    state->write("near", camera->nearDistance());
-    state->write("far", camera->farDistance());
+    if(isInteractiveCamera){
+        SgCamera* camera = renderer.camera(cameraIndex);
+        if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+            state->write("fieldOfView", pers->fieldOfView());
+        } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+            state->write("orthoHeight", ortho->height());
+        }
+        state->write("near", camera->nearDistance());
+        state->write("far", camera->farDistance());
 
-    if(cameraTransform){
-        const Affine3& T = cameraTransform->T();
-        write(*state, "eye", T.translation());
-        write(*state, "direction", SgCamera::direction(T));
-        write(*state, "up", SgCamera::up(T));
+        if(cameraTransform){
+            const Affine3& T = cameraTransform->T();
+            write(*state, "eye", T.translation());
+            write(*state, "direction", SgCamera::direction(T));
+            write(*state, "up", SgCamera::up(T));
+        }
     }
 
     return state;
@@ -2529,12 +2539,9 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 
     const Listing& cameraListing = *archive.findListing("cameras");
     if(cameraListing.isValid()){
-        for(int i=0; i < cameraListing.size(); ++i){
-            const Mapping& cameraData = *cameraListing[i].toMapping();
-            archive.addPostProcess(
-                boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)),
-                1);
-        }
+        archive.addPostProcess(
+            boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)),
+            1);
     } else {
         // for the compatibility to the older versions
         const Mapping& cameraData = *archive.findMapping("camera");
@@ -2590,12 +2597,13 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
 {
     bool doUpdate = false;
+
+    renderer.initializeRendering();
     
     for(int i=0; i < cameraListing.size(); ++i){
         const Mapping& state = *cameraListing[i].toMapping();
         int cameraIndex = readCameraPath(state, "camera");
         if(cameraIndex >= 0){
-
             Vector3 eye, direction, up;
             if(read(state, "eye", eye) &&
                read(state, "direction", direction) &&
@@ -2661,9 +2669,6 @@ int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
         }
     }
     if(!pathStrings.empty()){
-        if(renderer.numCameras() == 0){
-            renderer.initializeRendering();
-        }
         index = renderer.findCameraPath(pathStrings);
     }
 
@@ -2674,6 +2679,7 @@ int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
 // for the compatibility to the older versions
 void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 {
+    renderer.initializeRendering();
     int index = readCameraPath(cameraData, "current");
     if(index >= 0){
         renderer.setCurrentCamera(index);
