@@ -211,7 +211,10 @@ DEF Submersible Humanoid {
         DEF CHASSIS_LINK Segment {
           centerOfMass  0 0 0
           mass    20.0
-          momentsOfInertia [ 1.0 0 0 0 1.0 0 0 0 1.0 ]
+          momentsOfInertia [ 
+	   5.0 0   0 
+	   0   5.0 0 
+	   0   0   5.0 ]
 
           children [
 
@@ -245,7 +248,7 @@ DEF Submersible Humanoid {
 		  }
 		}
 		geometry Box {
-		  size 1.5 1.0 0.8
+		  size 1.6 1.0 0.8
 		}
 	      }
 	    }

@@ -27,7 +27,7 @@ items:
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0 ]
+            initialRootPosition: [ 0, 0, 1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -43,7 +43,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recording: tail
             timeRangeMode: Unlimited
             onlyActiveControlPeriod: true
@@ -54,7 +54,7 @@ items:
             recordCollisionData: false
             dynamicsMode: Forward dynamics
             integrationMode: Runge Kutta
-            gravity: [ 0, 0, -9.80665 ]
+            gravity: [ 0, 0, 0 ]
             staticFriction: 1
             slipFriction: 1
             cullingThresh: 0.005
@@ -198,7 +198,7 @@ toolbars:
   "TimeBar": 
     minTime: 0
     maxTime: 30
-    frameRate: 100
+    frameRate: 1000
     playbackFrameRate: 50
     idleLoopDrivenMode: false
     currentTime: 0
@@ -279,12 +279,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 730, 3104 ]
+      sizes: [ 304, 1290 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1005, 1005 ]
+          sizes: [ 379, 379 ]
           children: 
             - 
               type: pane
@@ -297,12 +297,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1436, 574 ]
+          sizes: [ 542, 216 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1451, 1647 ]
+              sizes: [ 601, 683 ]
               children: 
                 - 
                   type: pane
