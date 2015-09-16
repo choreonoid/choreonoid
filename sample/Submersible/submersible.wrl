@@ -209,7 +209,7 @@ DEF Submersible Humanoid {
       children [
 
         DEF CHASSIS_LINK Segment {
-          centerOfMass  0 0 0
+          centerOfMass  0 0 -0.05
           mass    10.0
           momentsOfInertia [ 
 	   3.0 0   0 
@@ -229,6 +229,8 @@ DEF Submersible Humanoid {
 		  height 240
 		  sensorId 0
 		  frameRate 30
+		  frontClipDistance 0.01
+		  backClipDistance  50.0
 		}
 		DEF MainLight SpotLightDevice {
 		  direction 1 0 0
@@ -245,7 +247,7 @@ DEF Submersible Humanoid {
 	      children Shape {
 		appearance Appearance {
 		  material DEF green Material {
-		    diffuseColor 0.0 0.6 0.0
+		    diffuseColor 0.3 0.6 1.0
 		    ambientIntensity 0.3
 		    specularColor 0.7 0.7 0.7
 		    emissiveColor 0 0 0

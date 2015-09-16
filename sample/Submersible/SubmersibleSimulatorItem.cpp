@@ -104,7 +104,7 @@ bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem
     if(simSubmersible){
         submersible = simSubmersible->body();
         MessageView::instance()->putln("A submersible model has been detected.");
-        simulatorItem->addPostDynamicsFunction(
+        simulatorItem->addPreDynamicsFunction(
             boost::bind(&SubmersibleSimulatorItem::applyResistanceForce, this));
         joystickIntervalCounter = 0;
     }
@@ -117,17 +117,22 @@ void SubmersibleSimulatorItem::applyResistanceForce()
 {
     Link* root = submersible->rootLink();
 
-    root->F_ext().setZero();
+    // buoyancy
+    Vector3 b(0, 0, submersible->mass() * 9.80665);
+    root->f_ext() += b;
+    Vector3 cb = root->T() * Vector3(0.0, 0.0, 0.05);
+    root->tau_ext() += cb.cross(b);
+
     for(size_t i=0; i < resistancePoints.size(); ++i){
-        const Vector3 a = root->R() * resistancePoints[i];
-        const Vector3 v = root->v() + root->w().cross(a);
+        Vector3 a = root->R() * resistancePoints[i];
+        Vector3 v = root->v() + root->w().cross(a);
         Vector3 f = -2.0 * v;
         double l = f.norm();
         if(l > 100.0){
             f /= l;
         }
         root->f_ext() += f;
-        const Vector3 p = a + root->p();
+        Vector3 p = a + root->p();
         root->tau_ext() += p.cross(f);
     }
 
@@ -140,11 +145,16 @@ void SubmersibleSimulatorItem::applyResistanceForce()
     thrust[0]  = -joystick->getPosition(4); // right
     thrust[1]  = -joystick->getPosition(1); // left
     for(int i=0; i < 2; ++i){
-        const Vector3 f = root->R() * Vector3(15.0 * thrust[i], 0.0, 0.0);
-        const Vector3 p = root->T() * thrustPoints[i];
+        Vector3 f = root->R() * Vector3(15.0 * thrust[i], 0.0, 0.0);
+        Vector3 p = root->T() * thrustPoints[i];
         root->f_ext() += f;
         root->tau_ext() += p.cross(f);
     }
+
+    Vector3 fz(0.0, 0.0, -5.0 * joystick->getPosition(7));
+    root->f_ext() += fz;
+    Vector3 cz = root->T() * Vector3(0.0, 0.0, -1.5);
+    root->tau_ext() += cz.cross(fz);
 }
         
 
