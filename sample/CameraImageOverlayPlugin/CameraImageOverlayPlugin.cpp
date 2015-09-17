@@ -4,6 +4,7 @@
 
 #include <cnoid/Plugin>
 #include <cnoid/SceneView>
+#include <cnoid/SceneShape>
 #include <cnoid/Timer>
 #include <cv.h>
 #include <highgui.h>
@@ -27,7 +28,7 @@ public:
         
         SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray);
         vertices.resize(4);
-        static const SgFloat z = 1.0f - std::numeric_limits<float>::epsilon();
+        static const float z = 1.0f - std::numeric_limits<float>::epsilon();
         vertices[0] <<  1.0,  1.0, z;
         vertices[1] <<  1.0, -1.0, z;
         vertices[2] << -1.0, -1.0, z;
@@ -50,19 +51,20 @@ public:
         addChild(shape);
     }
 
-    virtual void calcViewVolume(SgFloat viewportWidth, SgFloat viewportHeight, ViewVolume& io_volume) {
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) {
 
-        const SgFloat tw = texture->width();
-        const SgFloat th = texture->height();
+        SgImage* image = texture->getOrCreateImage();
+        double tw = image->width();
+        double th = image->height();
         if(tw > 0 && th > 0){
             if(tw >= th){
-                const SgFloat r = (viewportHeight / viewportWidth) * (tw / th);
+                const double r = (viewportHeight / viewportWidth) * (tw / th);
                 io_volume.left = -1.0;
                 io_volume.right = 1.0;
                 io_volume.bottom = -r;
                 io_volume.top = r;
             } else {
-                const SgFloat r = (viewportWidth / viewportHeight) * (th / tw);
+                const double r = (viewportWidth / viewportHeight) * (th / tw);
                 io_volume.left = -r;
                 io_volume.right = r;
                 io_volume.bottom = -1.0;
@@ -97,7 +99,7 @@ public:
         
         overlay = new TextureOverlay;
         
-        SceneView::instance()->addEntity(overlay);
+        SceneView::instance()->scene()->addChild(overlay, true);
         
         timer.sigTimeout().connect(bind(&CameraImageOverlayPlugin::updateCameraImage, this));
         timer.start(33.3333);
@@ -111,9 +113,10 @@ public:
 
         const int width = frame->width;
         const int height = frame->height;
-        overlay->texture->setSize(width, height, frame->nChannels);
+        SgImage* image = overlay->texture->getOrCreateImage();
+        image->setSize(width, height, frame->nChannels);
         
-        unsigned char* dest = overlay->texture->pixels();
+        unsigned char* dest = image->pixels();
         for(int i=0; i < height; ++i){
             const int y = i * width * 3;
             for(int j=0; j < width; ++j){
@@ -124,12 +127,12 @@ public:
             }
         }
         
-        overlay->texture->notifyUpdate();
+        overlay->texture->image()->notifyUpdate();
     }
 
     virtual bool finalize() {
 
-        SceneView::instance()->removeEntity(overlay);
+        SceneView::instance()->scene()->removeChild(overlay, true);
 
         timer.stop();
         
