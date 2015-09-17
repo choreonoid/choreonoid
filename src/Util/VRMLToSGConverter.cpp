@@ -113,6 +113,7 @@ public:
     SgNode* createPointLight(VRMLPointLight* vlight);
     SgSpotLight* createSpotLight(VRMLSpotLight* vlight);
     SgDirectionalLight* createDirectionalLight(VRMLDirectionalLight* vlight);
+    SgNode* convertFogNode(VRMLFog* vfog);
     SgNode* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
 };
 
@@ -238,6 +239,8 @@ SgNode* VRMLToSGConverterImpl::convertNode(VRMLNode* vnode)
                 node = convertShapeNode(shape);
             } else if(VRMLLight* light = dynamic_cast<VRMLLight*>(vnode)){
                 node = convertLightNode(light);
+            } else if(VRMLFog* fog = dynamic_cast<VRMLFog*>(vnode)){
+                node = convertFogNode(fog);
             } else if(VRMLAnotherFormatFile* anotherFormat = dynamic_cast<VRMLAnotherFormatFile*>(vnode)){
                 node = readAnotherFormatFile(anotherFormat);
             }
@@ -1797,6 +1800,15 @@ SgDirectionalLight* VRMLToSGConverterImpl::createDirectionalLight(VRMLDirectiona
     light->setDirection(vlight->direction);
     setLightCommonProperties(light, vlight);
     return light;
+}
+
+
+SgNode* VRMLToSGConverterImpl::convertFogNode(VRMLFog* vfog)
+{
+    SgFog* fog = new SgFog;
+    fog->setColor(vfog->color);
+    fog->setVisibilityRange(vfog->visibilityRange);
+    return fog;
 }
 
 

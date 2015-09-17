@@ -111,6 +111,7 @@ public:
     DoubleSpinBox worldLightIntensitySpin;
     DoubleSpinBox worldLightAmbientSpin;
     CheckBox additionalLightsCheck;
+    CheckBox fogCheck;
     CheckBox gridCheck[3];
     DoubleSpinBox gridSpanSpin[3];
     DoubleSpinBox gridIntervalSpin[3];
@@ -2197,6 +2198,8 @@ void SceneWidgetImpl::updateDefaultLights()
 
     renderer.enableAdditionalLights(setup->additionalLightsCheck.isChecked());
 
+    renderer.enableFog(setup->fogCheck.isChecked());
+
     worldLight->notifyUpdate(modified);
 }
 
@@ -2859,6 +2862,14 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     hbox->addWidget(&additionalLightsCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    fogCheck.setText(_("Fog"));
+    fogCheck.setChecked(true);
+    fogCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
+    hbox->addWidget(&fogCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
     hbox = new QHBoxLayout();
@@ -3021,6 +3032,7 @@ void SetupDialog::storeState(Archive& archive)
     archive.write("worldLightIntensity", worldLightIntensitySpin.value());
     archive.write("worldLightAmbient", worldLightAmbientSpin.value());
     archive.write("additionalLights", additionalLightsCheck.isChecked());
+    archive.write("fog", fogCheck.isChecked());
     archive.write("floorGrid", gridCheck[FLOOR].isChecked());
     archive.write("floorGridSpan", gridSpanSpin[FLOOR].value());
     archive.write("floorGridInterval", gridIntervalSpin[FLOOR].value());
@@ -3051,6 +3063,7 @@ void SetupDialog::restoreState(const Archive& archive)
     worldLightIntensitySpin.setValue(archive.get("worldLightIntensity", worldLightIntensitySpin.value()));
     worldLightAmbientSpin.setValue(archive.get("worldLightAmbient", worldLightAmbientSpin.value()));
     additionalLightsCheck.setChecked(archive.get("additionalLights", additionalLightsCheck.isChecked()));
+    fogCheck.setChecked(archive.get("fog", fogCheck.isChecked()));
     gridCheck[FLOOR].setChecked(archive.get("floorGrid", gridCheck[FLOOR].isChecked()));
     gridSpanSpin[FLOOR].setValue(archive.get("floorGridSpan", gridSpanSpin[FLOOR].value()));
     gridIntervalSpin[FLOOR].setValue(archive.get("floorGridInterval", gridIntervalSpin[FLOOR].value()));

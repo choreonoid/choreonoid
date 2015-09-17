@@ -1664,14 +1664,16 @@ void SgOrthographicCamera::accept(SceneVisitor& visitor)
 
 SgFog::SgFog()
 {
-
+    color_.setOnes();
+    visibilityRange_ = 0.0f;
 }
 
 
 SgFog::SgFog(const SgFog& org)
     : SgPreprocessed(org)
 {
-
+    color_ = org.color_;
+    visibilityRange_ = org.visibilityRange_;
 }
 
 
@@ -1683,7 +1685,7 @@ SgObject* SgFog::clone(SgCloneMap& cloneMap) const
 
 void SgFog::accept(SceneVisitor& visitor)
 {
-    
+    visitor.visitFog(this);
 }
 
 
