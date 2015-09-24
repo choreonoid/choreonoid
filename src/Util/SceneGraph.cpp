@@ -314,6 +314,18 @@ bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 }
 
 
+void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
+{
+    if(node){
+        if(index > children.size()){
+            index = children.size();
+        }
+        children.insert(children.begin() + index, node);
+        node->addParent(this, doNotify);
+    }
+}
+
+
 SgGroup::iterator SgGroup::removeChild(iterator childIter, bool doNotify)
 {
     iterator next;
