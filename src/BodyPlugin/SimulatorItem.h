@@ -105,6 +105,7 @@ public:
     //! This can be called from non simulation threads
     int simulationTime() const;
     
+    SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };

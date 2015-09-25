@@ -228,6 +228,7 @@ public:
 
     bool doReset;
     bool isWaitingForSimulationToStop;
+    Signal<void()> sigSimulationStarted;
     Signal<void()> sigSimulationFinished;
 
     vector<BodyMotionEnginePtr> bodyMotionEngines;
@@ -1471,6 +1472,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         flushTimer.start(1000.0 / timeBar->playbackFrameRate());
 
         mv->notify(format(_("Simulation by %1% has started.")) % self->name());
+
+        sigSimulationStarted();
     }
 
     return result;
@@ -1947,6 +1950,12 @@ int SimulatorItem::simulationTime() const
     QMutexLocker locker(&impl->resultBufMutex);
     return impl->frameAtLastBufferWriting / impl->worldFrameRate;
 }    
+
+
+SignalProxy<void()> SimulatorItem::sigSimulationStarted()
+{
+    return impl->sigSimulationStarted;
+}
 
 
 SignalProxy<void()> SimulatorItem::sigSimulationFinished()
