@@ -93,6 +93,7 @@ enum { IDLE_PRIORITY_HIGH = LazyCaller::PRIORITY_HIGH,
        IDLE_PRIORITY_LOW = LazyCaller::PRIORITY_LOW };
 
 CNOID_EXPORT void callLater(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+CNOID_EXPORT void callFromMainThread(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
 CNOID_EXPORT bool callSynchronously(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
 
 CNOID_EXPORT bool isRunningInMainThread();
