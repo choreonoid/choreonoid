@@ -36,7 +36,7 @@ public:
     bool isBaseDirInHome;
     string errorMessage;
 
-    ParametricPathProcessorImpl(Mapping* variables);
+    ParametricPathProcessorImpl();
     bool findSubDirectoryOfDirectoryVariable(
         const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath);
     bool replaceDirectoryVariable(QString& io_pathString, const string& varname, int pos, int len);
@@ -45,14 +45,20 @@ public:
 }
 
 
-ParametricPathProcessor::ParametricPathProcessor(Mapping* variables)
+ParametricPathProcessor* ParametricPathProcessor::instance()
 {
-    impl = new ParametricPathProcessorImpl(variables);
+    static ParametricPathProcessor* instance_ = new ParametricPathProcessor();
+    return instance_;
 }
 
 
-ParametricPathProcessorImpl::ParametricPathProcessorImpl(Mapping* variables)
-    : variables(variables)
+ParametricPathProcessor::ParametricPathProcessor()
+{
+    impl = new ParametricPathProcessorImpl();
+}
+
+
+ParametricPathProcessorImpl::ParametricPathProcessorImpl()
 {
     isBaseDirInHome = false;
     
@@ -75,6 +81,12 @@ ParametricPathProcessorImpl::ParametricPathProcessorImpl(Mapping* variables)
 ParametricPathProcessor::~ParametricPathProcessor()
 {
     delete impl;
+}
+
+
+void ParametricPathProcessor::setVariables(Mapping* variables)
+{
+    impl->variables = variables;
 }
 
 

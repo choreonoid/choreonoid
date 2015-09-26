@@ -10,6 +10,7 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include "ParametricPathProcessor.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
 #include <QLayout>
@@ -63,7 +64,7 @@ public:
     
     struct Loader;
     typedef boost::shared_ptr<Loader> LoaderPtr;
-    
+
     struct ClassInfo
     {
         ClassInfo() { creationPanelBase = 0; }
@@ -114,7 +115,7 @@ public:
     CreationPanelFilterSet registeredCreationPanelFilters;
     set<LoaderPtr> registeredLoaders;
     set<SaverPtr> registeredSavers;
-
+    
     QSignalMapper* mapperForNewItemActivated;
     QSignalMapper* mapperForLoadSpecificTypeItemActivated;
 
@@ -781,7 +782,15 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 
 bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId)
 {
-    filesystem::path filepath = cnoid::getAbsolutePath(filename);
+    ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
+    optional<string> expanded = pathProcessor->expand(filename);
+    if(!expanded){
+        messageView->putln(pathProcessor->errorMessage());
+        return false;
+    }
+        
+    filesystem::path filepath = cnoid::getAbsolutePath(*expanded);
+            
     string pathString = cnoid::getPathString(filepath);
     
     const string& typeId = typeid(*item).name();

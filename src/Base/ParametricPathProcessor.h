@@ -18,9 +18,12 @@ class ParametricPathProcessorImpl;
 class CNOID_EXPORT ParametricPathProcessor
 {
 public:
-    ParametricPathProcessor(Mapping* variables);
+    static ParametricPathProcessor* instance();
+    
+    ParametricPathProcessor();
     ~ParametricPathProcessor();
 
+    void setVariables(Mapping* variables);
     void setBaseDirectory(const std::string& directory);
     std::string parameterize(const std::string& path) const;
     boost::optional<std::string> expand(const std::string& path) const;
