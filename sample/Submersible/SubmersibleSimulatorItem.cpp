@@ -57,7 +57,6 @@ SubmersibleSimulatorItem::SubmersibleSimulatorItem(const SubmersibleSimulatorIte
     : SubSimulatorItem(org)
 {
     initialize();
-    isEnabled_ = org.isEnabled_;
 }
 
 
@@ -65,19 +64,12 @@ void SubmersibleSimulatorItem::initialize()
 {
     simulatorItem = 0;
     submersible = 0;
-    isEnabled_ = true;
 }
 
 
 SubmersibleSimulatorItem::~SubmersibleSimulatorItem()
 {
 
-}
-
-
-bool SubmersibleSimulatorItem::isEnabled()
-{
-    return isEnabled_;
 }
 
 
@@ -160,7 +152,7 @@ void SubmersibleSimulatorItem::applyResistanceForce()
 
 void SubmersibleSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty("Enabled", isEnabled_, changeProperty(isEnabled_));
+    SubSimulatorItem::doPutProperties(putProperty);
 }
 
 

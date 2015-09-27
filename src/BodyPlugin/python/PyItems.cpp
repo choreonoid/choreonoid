@@ -7,6 +7,8 @@
 #include "../WorldItem.h"
 #include "../SimulatorItem.h"
 #include "../AISTSimulatorItem.h"
+#include "../SubSimulatorItem.h"
+#include "../GLVisionSimulatorItem.h"
 #include <cnoid/BodyState>
 #include <cnoid/PyBase>
 
@@ -219,4 +221,29 @@ void exportItems()
 
     implicitly_convertible<AISTSimulatorItemPtr, SimulatorItemPtr>();
     PyItemList<AISTSimulatorItem>("AISTSimulatorItemList");
+
+    class_< SubSimulatorItem, SubSimulatorItemPtr, bases<Item>, boost::noncopyable>("SubSimulatorItem", no_init)
+        .def("isEnabled", &SubSimulatorItem::isEnabled)
+        .def("setEnabled", &SubSimulatorItem::setEnabled);
+
+    implicitly_convertible<SubSimulatorItemPtr, ItemPtr>();
+    PyItemList<SubSimulatorItem>("SubSimulatorItemList");
+
+    class_< GLVisionSimulatorItem, GLVisionSimulatorItemPtr, bases<SubSimulatorItem> >("GLVisionSimulatorItem")
+        .def("setTargetBodies", &GLVisionSimulatorItem::setTargetBodies)
+        .def("setTargetSensors", &GLVisionSimulatorItem::setTargetSensors)
+        .def("setMaxFrameRate", &GLVisionSimulatorItem::setMaxFrameRate)
+        .def("setMaxLatency", &GLVisionSimulatorItem::setMaxLatency)
+        .def("setVisionDataRecordingEnabled", &GLVisionSimulatorItem::setVisionDataRecordingEnabled)
+        .def("setThreadEnabled", &GLVisionSimulatorItem::setThreadEnabled)
+        .def("setDedicatedSensorThreadsEnabled", &GLVisionSimulatorItem::setDedicatedSensorThreadsEnabled)
+        .def("setBestEffortMode", &GLVisionSimulatorItem::setBestEffortMode)
+        .def("setRangeSensorPrecisionRatio", &GLVisionSimulatorItem::setRangeSensorPrecisionRatio)
+        .def("setAllSceneObjectsEnabled", &GLVisionSimulatorItem::setAllSceneObjectsEnabled)
+        .def("setHeadLightEnabled", &GLVisionSimulatorItem::setHeadLightEnabled)
+        .def("setAdditionalLightsEnabled", &GLVisionSimulatorItem::setAdditionalLightsEnabled)
+        ;
+
+    implicitly_convertible<GLVisionSimulatorItemPtr, SubSimulatorItemPtr>();
+    PyItemList<GLVisionSimulatorItem>("GLVisionSimulatorItemList");
 }

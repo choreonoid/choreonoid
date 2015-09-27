@@ -13,6 +13,7 @@ set(sources
   ZMPSeqItem.cpp
   MultiDeviceStateSeqItem.cpp
   SimulatorItem.cpp
+  SubSimulatorItem.cpp
   ControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp

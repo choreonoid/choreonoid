@@ -2280,15 +2280,3 @@ bool SimulatedMotionEngineManager::setTime(double time)
     }
     return isActive;
 }
-
-
-bool SubSimulatorItem::isEnabled()
-{
-    return true;
-}
-
-
-void SubSimulatorItem::finalizeSimulation()
-{
-
-}
