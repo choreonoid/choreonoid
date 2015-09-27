@@ -3,13 +3,16 @@
 */
 
 #include "../PythonSimScriptItem.h"
-#include <cnoid/PyUtil>
+#include <cnoid/PyBase>
 
 using namespace boost::python;
 using namespace cnoid;
 
 BOOST_PYTHON_MODULE(PythonSimScriptPlugin)
 {
-    class_< PythonSimScriptItem, PythonSimScriptItemPtr, bases<Item> >("PythonSimScriptItem");
-};
+    class_< PythonSimScriptItem, PythonSimScriptItemPtr, bases<SimulationScriptItem> >("PythonSimScriptItem")
+        .def("setScriptFilename", &PythonSimScriptItem::setScriptFilename);
 
+    implicitly_convertible<PythonSimScriptItemPtr, SimulationScriptItemPtr>();
+    PyItemList<PythonSimScriptItem>("PythonSimScriptItemList");
+};

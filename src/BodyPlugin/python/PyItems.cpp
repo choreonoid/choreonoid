@@ -9,6 +9,7 @@
 #include "../AISTSimulatorItem.h"
 #include "../SubSimulatorItem.h"
 #include "../GLVisionSimulatorItem.h"
+#include "../SimulationScriptItem.h"
 #include <cnoid/BodyState>
 #include <cnoid/PyBase>
 
@@ -246,4 +247,25 @@ void exportItems()
 
     implicitly_convertible<GLVisionSimulatorItemPtr, SubSimulatorItemPtr>();
     PyItemList<GLVisionSimulatorItem>("GLVisionSimulatorItemList");
+
+    {
+        scope simulationScriptItemScope = 
+            class_< SimulationScriptItem, SimulationScriptItemPtr, bases<ScriptItem>, boost::noncopyable >
+            ("SimulationScriptItem", no_init)
+            .def("executionTiming", &SimulationScriptItem::executionTiming)
+            .def("setExecutionTiming", &SimulationScriptItem::setExecutionTiming)
+            .def("executionDelay", &SimulationScriptItem::executionDelay)
+            .def("setExecutionDelay", &SimulationScriptItem::setExecutionDelay);
+
+        enum_<SimulationScriptItem::ExecutionTiming>("ExecutionTiming")
+            .value("BEFORE_INITIALIZATION", SimulationScriptItem::BEFORE_INITIALIZATION)
+            .value("DURING_INITIALIZATION", SimulationScriptItem::DURING_INITIALIZATION)
+            .value("AFTER_INITIALIZATION", SimulationScriptItem::AFTER_INITIALIZATION)
+            .value("DURING_FINALIZATION", SimulationScriptItem::DURING_FINALIZATION)
+            .value("AFTER_FINALIZATION", SimulationScriptItem::AFTER_FINALIZATION)
+            .value("NUM_TIMINGS", SimulationScriptItem::NUM_TIMINGS);
+    }
+
+    implicitly_convertible<SimulationScriptItemPtr, ScriptItemPtr>();
+    //PyItemList<SimulationScriptItem>("SimulationScriptItemList");
 }

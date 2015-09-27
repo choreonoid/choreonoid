@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_EXT_COMMAND_ITEM_H_INCLUDED
-#define CNOID_BASE_EXT_COMMAND_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_EXT_COMMAND_ITEM_H
+#define CNOID_BASE_EXT_COMMAND_ITEM_H
 
 #include "Item.h"
 #include "Process.h"
@@ -43,6 +43,7 @@ private:
 };
     
 typedef ref_ptr<ExtCommandItem> ExtCommandItemPtr;
+
 }
 
 #endif

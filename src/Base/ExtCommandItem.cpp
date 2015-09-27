@@ -74,6 +74,9 @@ void ExtCommandItem::setCommand(const std::string& command)
 {
     terminate();
     command_ = command;
+    if(name().empty()){
+        setName(command);
+    }
 }
 
 

@@ -370,12 +370,12 @@ public:
     }
     virtual bool start(Target* target) {
         timeStep_ = target->worldTimeStep();
-        if(scriptItem->execTiming() == SimulationScriptItem::DURING_INITIALIZATION){
+        if(scriptItem->executionTiming() == SimulationScriptItem::DURING_INITIALIZATION){
             scriptItem->executeAsSimulationScript();
-        } else if(scriptItem->execTiming() == SimulationScriptItem::AFTER_INITIALIZATION){
+        } else if(scriptItem->executionTiming() == SimulationScriptItem::AFTER_INITIALIZATION){
             doExecAfterInit = true;
             time = 0.0;
-            delay = scriptItem->execDelay();
+            delay = scriptItem->executionDelay();
             executeLater.setFunction(boost::bind(&ScriptControllerItem::execute, this));
         }
         return true;
@@ -402,7 +402,7 @@ public:
     virtual void output() {
     }
     virtual void stop() {
-        if(scriptItem->execTiming() == SimulationScriptItem::DURING_FINALIZATION){
+        if(scriptItem->executionTiming() == SimulationScriptItem::DURING_FINALIZATION){
             scriptItem->executeAsSimulationScript();
         }
     }
@@ -1150,7 +1150,7 @@ void SimulatorItemImpl::findTargetItems
 
     } else if(SimulationScriptItem* scriptItem = dynamic_cast<SimulationScriptItem*>(item)){
         if(itemTreeView->isItemChecked(scriptItem)){
-            if(scriptItem->execTiming() == SimulationScriptItem::BEFORE_INITIALIZATION){
+            if(scriptItem->executionTiming() == SimulationScriptItem::BEFORE_INITIALIZATION){
                 scriptItem->executeAsSimulationScript();
             } else {
                 out_targetItems.push_back(item);

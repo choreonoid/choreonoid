@@ -6,6 +6,7 @@
 #include "../Item.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
+#include "../AbstractTextItem.h"
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
 #include "../MultiValueSeqItem.h"
@@ -65,6 +66,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_load1_overloads, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_load2_overloads, load, 2, 3)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_save, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ScriptItem_waitToFinish, waitToFinish, 0, 1)
 
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
@@ -179,6 +182,30 @@ void exportPyItems()
 
     implicitly_convertible<FolderItemPtr, ItemPtr>();
     PyItemList<FolderItem>("FolderItemList");
+
+    class_< AbstractTextItem, AbstractTextItemPtr, bases<Item>, boost::noncopyable >
+        ("AbstractTextItem", no_init)
+        .def("textFilename", &AbstractTextItem::textFilename, return_value_policy<copy_const_reference>());
+            
+    implicitly_convertible<AbstractTextItemPtr, ItemPtr>();
+    //PyItemList<AbstractTextItem>("AbstractTextItemList");
+    
+    class_< ScriptItem, ScriptItemPtr, bases<AbstractTextItem>, boost::noncopyable >
+        ("ScriptItem", no_init)
+        .def("scriptFilename", &ScriptItem::scriptFilename, return_value_policy<copy_const_reference>())
+        .def("identityName", &ScriptItem::identityName)
+        .def("setBackgroundMode", &ScriptItem::setBackgroundMode)
+        .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
+        .def("isRunning", &ScriptItem::isRunning)
+        .def("execute", &ScriptItem::execute)
+        .def("waitToFinish", &ScriptItem::waitToFinish, ScriptItem_waitToFinish())
+        .def("resultString", &ScriptItem::resultString)
+        .def("sigScriptFinished", &ScriptItem::sigScriptFinished)
+        .def("terminate", &ScriptItem::terminate)
+        ;
+
+    implicitly_convertible<ScriptItemPtr, AbstractTextItemPtr>();
+    //PyItemList<ScriptItem>("ScriptItemList");
 
     class_< ExtCommandItem, ExtCommandItemPtr, bases<Item> >("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
