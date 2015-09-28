@@ -22,6 +22,8 @@ public:
         
     void setCommand(const std::string& command);
     const std::string& command() const { return command_; }
+    double waitingTimeAfterStarted() const { return waitingTimeAfterStarted_; }
+    void setWaitingTimeAfterStarted(double time);
     bool execute();
     bool terminate();
         
@@ -37,6 +39,7 @@ private:
         
     std::string command_;
     Process process;
+    double waitingTimeAfterStarted_;
     bool signalReadyStandardOutputConnected;
     bool doCheckExistingProcess;
     bool doExecuteOnLoading;

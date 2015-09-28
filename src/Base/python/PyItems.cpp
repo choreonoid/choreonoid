@@ -210,6 +210,8 @@ void exportPyItems()
     class_< ExtCommandItem, ExtCommandItemPtr, bases<Item> >("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
         .def("command", &ExtCommandItem::command, return_value_policy<copy_const_reference>())
+        .def("waitingTimeAfterStarted", &ExtCommandItem::waitingTimeAfterStarted)
+        .def("setWaitingTimeAfterStarted", &ExtCommandItem::setWaitingTimeAfterStarted)
         .def("execute", &ExtCommandItem::execute)
         .def("terminate", &ExtCommandItem::terminate);
     
