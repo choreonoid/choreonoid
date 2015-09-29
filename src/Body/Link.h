@@ -169,7 +169,10 @@ public:
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
     const std::string& name() const { return name_; }
-    SgNode* shape() const { return shape_; }
+
+    SgNode* shape() const { return visualShape_; }
+    SgNode* visualShape() const { return visualShape_; }
+    SgNode* collisionShape() const { return collisionShape_; }
 
     // functions for constructing a link
     void setIndex(int index) { index_ = index; }
@@ -208,7 +211,10 @@ public:
     void setEquivalentRotorInertia(double Jm2) { Jm2_ = Jm2; }
         
     void setName(const std::string& name);
+
     void setShape(SgNodePtr shape);
+    void setVisualShape(SgNodePtr shape);
+    void setCollisionShape(SgNodePtr shape);
 
     // The following two methods should be deprecated after introducing Tb
     Matrix3 attitude() const { return R() * Rs_; }
@@ -257,7 +263,8 @@ private:
     double dq_upper_;
     double dq_lower_;
     std::string name_;
-    SgNodePtr shape_;
+    SgNodePtr visualShape_;
+    SgNodePtr collisionShape_;
 };
 
 }

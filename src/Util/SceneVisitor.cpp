@@ -114,6 +114,12 @@ void SceneVisitor::visitLight(SgLight* light)
 }
 
 
+void SceneVisitor::visitFog(SgFog* fog)
+{
+    visitPreprocessed(fog);
+}
+
+
 void SceneVisitor::visitCamera(SgCamera* camera)
 {
     visitPreprocessed(camera);

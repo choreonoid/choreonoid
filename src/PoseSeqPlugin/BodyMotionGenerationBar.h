@@ -51,6 +51,7 @@ public:
     bool isAutoInterpolationUpdateMode() const;
     bool isBalancerEnabled() const;
     bool isAutoGenerationMode() const;
+    bool isAutoGenerationForNewBodyEnabled() const;
             
     double timeScaleRatio() const;
     double preInitialDuration() const;
@@ -93,6 +94,7 @@ private:
     BodyMotionGenerationSetupDialog* setup;
             
     Action* autoInterpolationUpdateCheck;
+    Action* autoGenerationForNewBodyCheck;
     ToolButton* balancerToggle;
     ToolButton* autoGenerationToggle;
 

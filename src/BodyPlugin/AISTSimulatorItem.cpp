@@ -4,6 +4,7 @@
 */
 
 #include "AISTSimulatorItem.h"
+#include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
@@ -19,6 +20,7 @@
 #include <QElapsedTimer>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/thread.hpp>
 #include <iostream>
 #include <iomanip>
 #include "gettext.h"
@@ -108,11 +110,18 @@ public:
 };
 
 
-class KinematicWalkBody : public SimulationBody
+class AISTSimBody : public SimulationBody
+{
+public:
+    AISTSimBody(DyBody* body) : SimulationBody(body) { }
+};
+    
+
+class KinematicWalkBody : public AISTSimBody
 {
 public:
     KinematicWalkBody(DyBody* body, LeggedBodyHelper* legged)
-        : SimulationBody(body),
+        : AISTSimBody(body),
           legged(legged) {
         supportFootIndex = 0;
         for(int i=1; i < legged->numFeet(); ++i){
@@ -157,10 +166,18 @@ public:
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
+    boost::optional<int> forcedBodyPositionFunctionId;
+    boost::mutex forcedBodyPositionMutex;
+    DyBody* forcedPositionBody;
+    Position forcedBodyPosition;
+
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
-    void addBody(SimulationBody* simBody);
+    void addBody(AISTSimBody* simBody);
+    void clearExternalForces();
+    void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
+    void doSetForcedBodyPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -357,7 +374,7 @@ SimulationBodyPtr AISTSimulatorItem::createSimulationBody(BodyPtr orgBody)
         }
     }
     if(!simBody){
-        simBody = new SimulationBody(body);
+        simBody = new AISTSimBody(body);
     }
 
     return simBody;
@@ -405,10 +422,12 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactDepthCorrection(
         contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
 
+    self->addPreDynamicsFunction(boost::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
+
     world.clearBodies();
     bodyIndexMap.clear();
     for(size_t i=0; i < simBodies.size(); ++i){
-        addBody(simBodies[i]);
+        addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
 
     cfs.setFriction(staticFriction, slipFriction);
@@ -427,7 +446,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 }
 
 
-void AISTSimulatorItemImpl::addBody(SimulationBody* simBody)
+void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
 {
     DyBody* body = static_cast<DyBody*>(simBody->body());
 
@@ -440,7 +459,7 @@ void AISTSimulatorItemImpl::addBody(SimulationBody* simBody)
     rootLink->dvo().setZero();
 
     bool isHighGainMode = dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS);
-    if(dynamic_cast<HighGainControllerItem*>(simBody->controller())){
+    if(dynamic_cast<HighGainControllerItem*>(simBody->controller(0))){
         isHighGainMode = true;
     }
 
@@ -464,10 +483,14 @@ void AISTSimulatorItemImpl::addBody(SimulationBody* simBody)
 }
 
 
+void AISTSimulatorItemImpl::clearExternalForces()
+{
+    world.constraintForceSolver.clearExternalForces();
+}
+
+
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    impl->world.constraintForceSolver.clearExternalForces();
-
     if(!impl->dynamicsMode.is(KINEMATICS)){
         if(MEASURE_PHYSICS_CALCULATION_TIME){
             impl->physicsTimer.start();
@@ -540,6 +563,50 @@ void AISTSimulatorItem::finalizeSimulation()
 CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 {
     return impl->world.constraintForceSolver.getCollisions();
+}
+
+
+void AISTSimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+{
+    impl->setForcedBodyPosition(bodyItem, T);
+}
+
+
+void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+{
+    if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
+        {
+            boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+            forcedPositionBody = static_cast<DyBody*>(simBody->body());
+            forcedBodyPosition = T;
+        }
+        if(!forcedBodyPositionFunctionId){
+            forcedBodyPositionFunctionId =
+                self->addPostDynamicsFunction(
+                    boost::bind(&AISTSimulatorItemImpl::doSetForcedBodyPosition, this));
+        }
+    }
+}
+
+
+void AISTSimulatorItem::clearForcedBodyPositions()
+{
+    if(impl->forcedBodyPositionFunctionId){
+        removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
+        impl->forcedBodyPositionFunctionId = boost::none;
+    }
+}
+    
+
+void AISTSimulatorItemImpl::doSetForcedBodyPosition()
+{
+    boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+    DyLink* rootLink = forcedPositionBody->rootLink();
+    rootLink->setPosition(forcedBodyPosition);
+    rootLink->v().setZero();
+    rootLink->w().setZero();
+    rootLink->vo().setZero();
+    forcedPositionBody->calcSpatialForwardKinematics();
 }
 
 

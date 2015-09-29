@@ -7,6 +7,9 @@
 #include "../WorldItem.h"
 #include "../SimulatorItem.h"
 #include "../AISTSimulatorItem.h"
+#include "../SubSimulatorItem.h"
+#include "../GLVisionSimulatorItem.h"
+#include "../SimulationScriptItem.h"
 #include <cnoid/BodyState>
 #include <cnoid/PyBase>
 
@@ -38,7 +41,13 @@ AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) 
 BodyItemPtr SimulationBody_bodyItem(SimulationBody& self) { return self.bodyItem(); }
 BodyPtr SimulationBody_body(SimulationBody& self) { return self.body(); }
 
+SimulatorItemPtr SimulatorItem_findActiveSimulatorItemFor(Item* item)
+{
+    return SimulatorItem::findActiveSimulatorItemFor(item);
+}
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_startSimulation_overloads, startSimulation, 0, 1)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_setExternalForce_overloads, setExternalForce, 4, 5)
 
 }
 
@@ -138,6 +147,7 @@ void exportItems()
         simulatorItemClass("SimulatorItem", no_init);
 
     simulatorItemClass
+        .def("findActiveSimulatorItemFor", SimulatorItem_findActiveSimulatorItemFor).staticmethod("findActiveSimulatorItemFor")
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
         .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
         .def("stopSimulation", &SimulatorItem::stopSimulation)
@@ -157,6 +167,8 @@ void exportItems()
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
+        .def("setExternalForce", &SimulatorItem::setExternalForce, SimulatorItem_setExternalForce_overloads())
+        .def("clearExternalForces", &SimulatorItem::clearExternalForces)
         ;
     {
         scope simulatorItemScope = simulatorItemClass;
@@ -210,4 +222,50 @@ void exportItems()
 
     implicitly_convertible<AISTSimulatorItemPtr, SimulatorItemPtr>();
     PyItemList<AISTSimulatorItem>("AISTSimulatorItemList");
+
+    class_< SubSimulatorItem, SubSimulatorItemPtr, bases<Item>, boost::noncopyable>("SubSimulatorItem", no_init)
+        .def("isEnabled", &SubSimulatorItem::isEnabled)
+        .def("setEnabled", &SubSimulatorItem::setEnabled);
+
+    implicitly_convertible<SubSimulatorItemPtr, ItemPtr>();
+    PyItemList<SubSimulatorItem>("SubSimulatorItemList");
+
+    class_< GLVisionSimulatorItem, GLVisionSimulatorItemPtr, bases<SubSimulatorItem> >("GLVisionSimulatorItem")
+        .def("setTargetBodies", &GLVisionSimulatorItem::setTargetBodies)
+        .def("setTargetSensors", &GLVisionSimulatorItem::setTargetSensors)
+        .def("setMaxFrameRate", &GLVisionSimulatorItem::setMaxFrameRate)
+        .def("setMaxLatency", &GLVisionSimulatorItem::setMaxLatency)
+        .def("setVisionDataRecordingEnabled", &GLVisionSimulatorItem::setVisionDataRecordingEnabled)
+        .def("setThreadEnabled", &GLVisionSimulatorItem::setThreadEnabled)
+        .def("setDedicatedSensorThreadsEnabled", &GLVisionSimulatorItem::setDedicatedSensorThreadsEnabled)
+        .def("setBestEffortMode", &GLVisionSimulatorItem::setBestEffortMode)
+        .def("setRangeSensorPrecisionRatio", &GLVisionSimulatorItem::setRangeSensorPrecisionRatio)
+        .def("setAllSceneObjectsEnabled", &GLVisionSimulatorItem::setAllSceneObjectsEnabled)
+        .def("setHeadLightEnabled", &GLVisionSimulatorItem::setHeadLightEnabled)
+        .def("setAdditionalLightsEnabled", &GLVisionSimulatorItem::setAdditionalLightsEnabled)
+        ;
+
+    implicitly_convertible<GLVisionSimulatorItemPtr, SubSimulatorItemPtr>();
+    PyItemList<GLVisionSimulatorItem>("GLVisionSimulatorItemList");
+
+    {
+        scope simulationScriptItemScope = 
+            class_< SimulationScriptItem, SimulationScriptItemPtr, bases<ScriptItem>, boost::noncopyable >
+            ("SimulationScriptItem", no_init)
+            .def("executionTiming", &SimulationScriptItem::executionTiming)
+            .def("setExecutionTiming", &SimulationScriptItem::setExecutionTiming)
+            .def("executionDelay", &SimulationScriptItem::executionDelay)
+            .def("setExecutionDelay", &SimulationScriptItem::setExecutionDelay);
+
+        enum_<SimulationScriptItem::ExecutionTiming>("ExecutionTiming")
+            .value("BEFORE_INITIALIZATION", SimulationScriptItem::BEFORE_INITIALIZATION)
+            .value("DURING_INITIALIZATION", SimulationScriptItem::DURING_INITIALIZATION)
+            .value("AFTER_INITIALIZATION", SimulationScriptItem::AFTER_INITIALIZATION)
+            .value("DURING_FINALIZATION", SimulationScriptItem::DURING_FINALIZATION)
+            .value("AFTER_FINALIZATION", SimulationScriptItem::AFTER_FINALIZATION)
+            .value("NUM_TIMINGS", SimulationScriptItem::NUM_TIMINGS);
+    }
+
+    implicitly_convertible<SimulationScriptItemPtr, ScriptItemPtr>();
+    //PyItemList<SimulationScriptItem>("SimulationScriptItemList");
 }

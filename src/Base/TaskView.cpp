@@ -296,6 +296,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     topVBox.addLayout(&hbox2);
     topVBox.addLayout(&hbox3);
     topVBox.addLayout(&vspace);
+    phaseLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     topVBox.addWidget(&phaseLabel, 0, Qt::AlignHCenter);
     topVBox.addWidget(&commandButtonBox);
     topVBox.addStretch();
@@ -1602,7 +1603,7 @@ bool TaskView::restoreState(const Archive& archive)
     impl->autoModeToggle.setChecked(archive.get("isAutoMode", false));
     string name;
     if(archive.read("currentTask", name)){
-        archive.addPostProcess(boost::bind(&TaskViewImpl::setCurrentTaskByName, impl, name));
+        archive.addPostProcess(boost::bind(&TaskViewImpl::setCurrentTaskByName, impl, name), 1);
     }
     return true;
 }

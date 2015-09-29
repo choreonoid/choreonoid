@@ -132,8 +132,8 @@ struct PreproNode
         if(child) delete child;
         if(next) delete next;
     }
-    enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, CAMERA };
-    boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgCamera*> node;
+    enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
+    boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
     SgNode* base;
     PreproNode* parent;
     PreproNode* child;
@@ -158,6 +158,7 @@ public:
     virtual void visitLineSet(SgLineSet* lineSet);        
     virtual void visitPreprocessed(SgPreprocessed* preprocessed);
     virtual void visitLight(SgLight* light);
+    virtual void visitFog(SgFog* fog);
     virtual void visitCamera(SgCamera* camera);
 };
 }
@@ -251,6 +252,14 @@ void PreproTreeExtractor::visitLight(SgLight* light)
     found = true;
 }
 
+
+void PreproTreeExtractor::visitFog(SgFog* fog)
+{
+    node = new PreproNode();
+    node->setNode(fog);
+    found = true;
+}
+    
 
 void PreproTreeExtractor::visitCamera(SgCamera* camera)
 {
@@ -369,6 +378,12 @@ public:
     int numSystemLights;
     int prevNumLights;
 
+    bool isFogEnabled;
+    bool isCurrentFogUpdated;
+    SgFogPtr prevFog;
+    SgFogPtr currentFog;
+    ScopedConnection currentFogConnection;
+
     Vector3f bgColor;
 
     SgLightPtr headLight;
@@ -459,6 +474,8 @@ public:
         GLfloat& out_left, GLfloat& out_right, GLfloat& out_bottom, GLfloat& out_top) const;
     void renderLights();
     void renderLight(const SgLight* light, GLint id, const Affine3& T);
+    void renderFog();
+    void onCurrentFogNodeUdpated();
     void endRendering();
     void render();
     bool pick(int x, int y);
@@ -570,6 +587,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     isTextureEnabled = true;
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
+    isFogEnabled = true;
     
     doNormalVisualization = false;
     normalLength = 0.0;
@@ -699,10 +717,10 @@ void GLSceneRenderer::setCurrentCamera(int index)
 void GLSceneRendererImpl::setCurrentCamera(int index, bool doRenderingRequest)
 {
     SgCamera* newCamera = 0;
-    if(index < cameras->size()){
+    if(index >= 0 && index < cameras->size()){
         newCamera = (*cameras)[index].camera;
     }
-    if(newCamera != currentCamera){
+    if(newCamera && newCamera != currentCamera){
         currentCameraIndex = index;
         currentCamera = newCamera;
         sigCurrentCameraChanged();
@@ -798,6 +816,9 @@ bool GLSceneRendererImpl::initializeGL()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
     setFrontCCW(true);
+
+    glDisable(GL_FOG);
+    isCurrentFogUpdated = false;
 
     glGenTextures(1, &defaultTextureName);
 
@@ -900,6 +921,7 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
     currentCameraRemoved = true;
     
     lights.clear();
+    currentFog = 0;
 
     if(preproTree){
         extractPreproNodes(preproTree.get(), Affine3::Identity());
@@ -924,6 +946,7 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
         renderCamera();
         if(!isPicking){
             renderLights();
+            renderFog();
         }
         if(isPicking){
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -993,6 +1016,13 @@ void GLSceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
         if(additionalLightsEnabled || defaultLights.find(light) != defaultLights.end()){
             lights.push_back(LightInfo(light, T));
         }
+        break;
+    }
+
+    case PreproNode::FOG:
+    {
+        SgFog* fog = boost::get<SgFog*>(node->node);
+        currentFog = fog;
         break;
     }
 
@@ -1171,6 +1201,51 @@ void GLSceneRendererImpl::renderLight(const SgLight* light, GLint id, const Affi
         
         glEnable(id);
     }
+}
+
+
+void GLSceneRendererImpl::renderFog()
+{
+    if(!isFogEnabled){
+        currentFog = 0;
+    }
+    if(currentFog != prevFog){
+        isCurrentFogUpdated = true;
+        if(!currentFog){
+            currentFogConnection.disconnect();
+        } else {
+            currentFogConnection.reset(
+                currentFog->sigUpdated().connect(
+                    boost::bind(&GLSceneRendererImpl::onCurrentFogNodeUdpated, this)));
+        }
+    }
+
+    if(isCurrentFogUpdated){
+        if(!currentFog){
+            glDisable(GL_FOG);
+        } else {
+            glEnable(GL_FOG);
+            GLfloat color[4];
+            const Vector3f& c = currentFog->color();
+            color[0] = c[0];
+            color[1] = c[1];
+            color[2] = c[2];
+            color[3] = 1.0f;
+            glFogfv(GL_FOG_COLOR, color);
+            glFogi(GL_FOG_MODE, GL_LINEAR);
+            glFogi(GL_FOG_HINT, GL_FASTEST);
+            glFogf(GL_FOG_START, 0.0f);
+            glFogf(GL_FOG_END, currentFog->visibilityRange());
+        }
+    }
+    isCurrentFogUpdated = false;
+    prevFog = currentFog;
+}
+
+
+void GLSceneRendererImpl::onCurrentFogNodeUdpated()
+{
+    isCurrentFogUpdated = true;
 }
 
 
@@ -2676,6 +2751,16 @@ void GLSceneRenderer::setDefaultLineWidth(double width)
 {
     if(width != impl->defaultLineWidth){
         impl->defaultLineWidth = width;
+        requestToClearCache();
+    }
+}
+
+
+void GLSceneRenderer::enableFog(bool on)
+{
+    if(on != impl->isFogEnabled){
+        impl->isFogEnabled = on;
+        impl->isCurrentFogUpdated = true;
         requestToClearCache();
     }
 }

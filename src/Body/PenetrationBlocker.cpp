@@ -53,7 +53,7 @@ PenetrationBlockerImpl::PenetrationBlockerImpl(CollisionDetectorPtr& collisionDe
       targetLink(targetLink)
 {
     collisionDetector->clearGeometries();
-    collisionDetector->addGeometry(targetLink->shape());
+    collisionDetector->addGeometry(targetLink->collisionShape());
     isCollisionDetectorReady = false;
     
     pPrevGiven = targetLink->p();
@@ -70,7 +70,7 @@ void PenetrationBlocker::addOpponentLink(Link* link)
 
 void PenetrationBlockerImpl::addOpponentLink(Link* link)
 {
-    collisionDetector->addGeometry(link->shape());
+    collisionDetector->addGeometry(link->collisionShape());
     opponentLinks.push_back(link);
     isCollisionDetectorReady = false;
 }

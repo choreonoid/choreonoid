@@ -23,7 +23,7 @@ public:
 
     PoseSeqInterpolator();
 
-    void setBody(const BodyPtr& body);
+    void setBody(Body* body);
     Body* body() const;
 
     void setLinearInterpolationJoint(int jointId);

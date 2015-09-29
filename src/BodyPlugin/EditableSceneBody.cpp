@@ -4,6 +4,7 @@
 
 #include "EditableSceneBody.h"
 #include "BodyItem.h"
+#include "SimulatorItem.h"
 #include "KinematicsBar.h"
 #include "BodyBar.h"
 #include "LinkSelectionView.h"
@@ -26,6 +27,15 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+Action* linkVisibilityCheck;
+Action* showVisualShapeCheck;
+Action* showCollisionShapeCheck;
+Action* enableStaticModelEditCheck;
+
+}
+
 
 EditableSceneLink::EditableSceneLink(Link* link)
     : SceneLink(link)
@@ -37,7 +47,7 @@ EditableSceneLink::EditableSceneLink(Link* link)
 
 void EditableSceneLink::showBoundingBox(bool on)
 {
-    if(!shape()){
+    if(!visualShape()){
         return;
     }
 #if 0
@@ -45,9 +55,7 @@ void EditableSceneLink::showBoundingBox(bool on)
         if(!bbLineSet){
             createBoundingBoxLineSet();
         }
-        if(!contains(bbLineSet)){
-            addChild(bbLineSet, true);
-        }
+        addChildOnce(bbLineSet, true);
     } else if(bbLineSet){
         removeChild(bbLineSet, true);
     }
@@ -56,16 +64,9 @@ void EditableSceneLink::showBoundingBox(bool on)
         if(!outlineGroup){
             outlineGroup = new SgOutlineGroup();
         }
-        if(!contains(outlineGroup)){
-            removeChild(shape());
-            outlineGroup->addChildOnce(shape());
-            addChild(outlineGroup);
-            notifyUpdate();
-        }
-    } else if(outlineGroup && contains(outlineGroup)){
-        removeChild(outlineGroup);
-        addChildOnce(shape());
-        notifyUpdate();
+        setShapeGroup(outlineGroup);
+    } else if(outlineGroup){
+        resetShapeGroup();
     }
 #endif
 }
@@ -78,7 +79,7 @@ void EditableSceneLink::createBoundingBoxLineSet()
 
     SgVertexArray& vertices = *bbLineSet->setVertices(new SgVertexArray);
     vertices.resize(8);
-    const BoundingBoxf bb(shape()->boundingBox());
+    const BoundingBoxf bb(visualShape()->boundingBox());
     const Vector3f& min = bb.min();
     const Vector3f& max = bb.max();
     vertices[0] << min.x(), min.y(), min.z();
@@ -115,8 +116,8 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
     if(bbMarker){
         removeChild(bbMarker);
     }
-    bbMarker = new BoundingBoxMarker(shape()->boundingBox(), color, transparency);
-    addChild(bbMarker, true);
+    bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
+    addChildOnce(bbMarker, true);
 }
 
 
@@ -163,6 +164,7 @@ public:
     ConnectionSet connections;
     Connection connectionToSigCollisionsUpdated;
     boost::dynamic_bitset<> collisionLinkBitSet;
+    ScopedConnection connectionToSigLinkSelectionChanged;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
     EditableSceneLink* pointedSceneLink;
@@ -173,6 +175,7 @@ public:
     CrossMarkerPtr ppcomMarker;
     bool isCmVisible;
     bool isPpcomVisible;
+    SgLineSetPtr virtualElasticStringLine;
     SphereMarkerPtr zmpMarker;
     bool isZmpVisible;
     Vector3 orgZmpPos;
@@ -194,12 +197,25 @@ public:
     enum DragMode {
         DRAG_NONE,
         LINK_IK_TRANSLATION,
-        LINK_FK_ROTATION, LINK_FK_TRANSLATION,
+        LINK_FK_ROTATION,
+        LINK_FK_TRANSLATION,
+        LINK_VIRTUAL_ELASTIC_STRING,
+        LINK_FORCED_POSITION,
         ZMP_TRANSLATION
     };
     DragMode dragMode;
     SceneDragProjector dragProjector;
     bool isDragging;
+
+    weak_ref_ptr<SimulatorItem> activeSimulatorItem;
+    Vector3 pointedLinkLocalPoint;
+    enum { NO_FORCED_POSITION, MOVE_FORCED_POSITION, KEEP_FORCED_POSITION };
+    int forcedPositionMode;
+
+    bool isEditable() {
+        return bodyItem->isEditable() &&
+            (!bodyItem->body()->isStaticModel() || enableStaticModelEditCheck->isChecked());
+    }
 
     EditableSceneLink* editableSceneLink(int index){
         return static_cast<EditableSceneLink*>(self->sceneLink(index));
@@ -207,12 +223,16 @@ public:
 
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void onSceneGraphConnection(bool on);
+    void updateModel();
     void onBodyItemUpdated();
     void onKinematicStateChanged();
 
     void onCollisionsUpdated();
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
+    void onLinkVisibilityCheckToggled();
+    void onVisibleShapeTypesChanged();
+    void onLinkSelectionChanged();
 
     void showCenterOfMass(bool on);
     void showPpcom(bool on);
@@ -239,9 +259,10 @@ public:
     void onSceneModeChanged(const SceneWidgetEvent& event);
     bool onUndoRequest();
     bool onRedoRequest();
-    void onDraggerIKstarted();
-    void onDraggerIKdragged();
-    
+    void onDraggerDragStarted();
+    void onDraggerDragged();
+    void onDraggerDragFinished();
+
     bool initializeIK();
     void startIK(const SceneWidgetEvent& event);
     void dragIK(const SceneWidgetEvent& event);
@@ -249,12 +270,23 @@ public:
     void startFK(const SceneWidgetEvent& event);
     void dragFKRotation(const SceneWidgetEvent& event);
     void dragFKTranslation(const SceneWidgetEvent& event);
+    void setForcedPositionMode(int mode, bool on);
+    void startVirtualElasticString(const SceneWidgetEvent& event);
+    void dragVirtualElasticString(const SceneWidgetEvent& event);
+    void finishVirtualElasticString();
+    void startForcedPosition(const SceneWidgetEvent& event);
+    void setForcedPosition(const Position& position);
+    void dragForcedPosition(const SceneWidgetEvent& event);
+    void finishForcedPosition();
     void startZmpTranslation(const SceneWidgetEvent& event);
     void dragZmpTranslation(const SceneWidgetEvent& event);
-
+    bool finishEditing();
+    
     static bool storeProperties(Archive& archive);
     static void restoreProperties(const Archive& archive);
+    static void restoreSceneBodyProperties(const Archive& archive);
 };
+
 }
 
 
@@ -286,8 +318,9 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 
     positionDragger = new PositionDragger;
     positionDragger->setDraggerAlwaysShown(true);
-    positionDragger->sigDragStarted().connect(boost::bind(&EditableSceneBodyImpl::onDraggerIKstarted, this));
-    positionDragger->sigPositionDragged().connect(boost::bind(&EditableSceneBodyImpl::onDraggerIKdragged, this));
+    positionDragger->sigDragStarted().connect(boost::bind(&EditableSceneBodyImpl::onDraggerDragStarted, this));
+    positionDragger->sigPositionDragged().connect(boost::bind(&EditableSceneBodyImpl::onDraggerDragged, this));
+    positionDragger->sigDragFinished().connect(boost::bind(&EditableSceneBodyImpl::onDraggerDragFinished, this));
     
     dragMode = DRAG_NONE;
     isDragging = false;
@@ -297,24 +330,27 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     markerGroup->setName("Marker");
     self->addChild(markerGroup);
 
-    double radius = 0;
+    double radius = 0.0;
     const int n = self->numSceneLinks();
     for(int i=0; i < n; ++i){
         SceneLink* sLink = self->sceneLink(i);
         BoundingBox bb = sLink->boundingBox();
-        double radius0 = (bb.max() - bb.center()).norm();
+        double radius0 = bb.size().norm() / 2.0;
         if(radius0 > radius){
             radius = radius0;
         }
     }
-    cmMarker = new CrossMarker(0.25, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
+    cmMarker = new CrossMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
     cmMarker->setName("centerOfMass");
-    cmMarker->setSize(radius);
     isCmVisible = false;
-    ppcomMarker = new CrossMarker(0.25, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
+    ppcomMarker = new CrossMarker(radius, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
     ppcomMarker->setName("ProjectionPointCoM");
-    ppcomMarker->setSize(radius);
     isPpcomVisible = false;
+
+    forcedPositionMode = NO_FORCED_POSITION;
+    virtualElasticStringLine = new SgLineSet;
+    virtualElasticStringLine->getOrCreateVertices()->resize(2);
+    virtualElasticStringLine->addLine(0, 1);
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(self->body());
     if(legged->isValid() && legged->numFeet() > 0){
@@ -334,7 +370,7 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 
 double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 {
-    const BoundingBox& bb = sceneLink->shape()->boundingBox();
+    const BoundingBox& bb = sceneLink->visualShape()->boundingBox();
     double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
     return pow(V, 1.0 / 3.0) * 0.6;
 }
@@ -343,6 +379,7 @@ double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
 {
     connections.disconnect();
+    connectionToSigLinkSelectionChanged.disconnect();
 
     if(on){
         connections.add(bodyItem->sigUpdated().connect(
@@ -356,7 +393,44 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
         connections.add(kinematicsBar->sigCollisionVisualizationChanged().connect(
                             boost::bind(&EditableSceneBodyImpl::onCollisionLinkHighlightModeChanged, this)));
         onCollisionLinkHighlightModeChanged();
+
+        connections.add(bodyItem->sigModelUpdated().connect(
+                            boost::bind(&EditableSceneBodyImpl::updateModel, this)));
+
+        connections.add(
+            linkVisibilityCheck->sigToggled().connect(
+                boost::bind(&EditableSceneBodyImpl::onLinkVisibilityCheckToggled, this)));
+        onLinkVisibilityCheckToggled();
+
+        connections.add(
+            showVisualShapeCheck->sigToggled().connect(
+                boost::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
+        connections.add(
+            showCollisionShapeCheck->sigToggled().connect(
+                boost::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
+        onVisibleShapeTypesChanged();
     }
+}
+
+
+void EditableSceneBody::updateModel()
+{
+    impl->updateModel();
+}
+
+
+void EditableSceneBodyImpl::updateModel()
+{
+    pointedSceneLink = 0;
+    targetLink = 0;
+    if(outlinedLink){
+        outlinedLink->showBoundingBox(false);
+        outlinedLink = 0;
+    }
+    isDragging = false;
+    dragMode = DRAG_NONE;
+    
+    self->SceneBody::updateModel();
 }
 
 
@@ -378,6 +452,15 @@ void EditableSceneBodyImpl::onKinematicStateChanged()
     }
     if(isZmpVisible){
         zmpMarker->setTranslation(bodyItem->zmp());
+    }
+
+    if(activeSimulatorItem){
+        if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
+            if(virtualElasticStringLine->hasParents()){
+                virtualElasticStringLine->vertices()->at(0)
+                    = (targetLink->T() * pointedLinkLocalPoint).cast<Vector3f::Scalar>();
+            }
+        }
     }
 
     self->updateLinkPositions(modified);
@@ -457,13 +540,45 @@ void EditableSceneBody::setLinkVisibilities(const boost::dynamic_bitset<>& visib
 }
 
 
+void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
+{
+    LinkSelectionView* selectionView = LinkSelectionView::mainInstance();
+
+    if(linkVisibilityCheck->isChecked()){
+        connectionToSigLinkSelectionChanged.reset(
+            selectionView->sigSelectionChanged(bodyItem).connect(
+                boost::bind(&EditableSceneBodyImpl::onLinkSelectionChanged, this)));
+        onLinkSelectionChanged();
+    } else {
+        connectionToSigLinkSelectionChanged.disconnect();
+        boost::dynamic_bitset<> visibilities;
+        visibilities.resize(self->numSceneLinks(), true);
+        self->setLinkVisibilities(visibilities);
+    }
+}
+
+
+void EditableSceneBodyImpl::onLinkSelectionChanged()
+{
+    if(linkVisibilityCheck->isChecked()){
+        self->setLinkVisibilities(LinkSelectionView::mainInstance()->getLinkSelection(bodyItem));
+    }
+}
+
+
+void EditableSceneBodyImpl::onVisibleShapeTypesChanged()
+{
+    self->setVisibleShapeTypes(
+        showVisualShapeCheck->isChecked(), showCollisionShapeCheck->isChecked());
+}
+
 
 void EditableSceneBodyImpl::showCenterOfMass(bool on)
 {
     isCmVisible = on;
     if(on){
-        markerGroup->addChild(cmMarker, true);
         cmMarker->setTranslation(bodyItem->centerOfMass());
+        markerGroup->addChildOnce(cmMarker, true);
     } else {
         markerGroup->removeChild(cmMarker, true);
     }
@@ -474,10 +589,10 @@ void EditableSceneBodyImpl::showPpcom(bool on)
 {
     isPpcomVisible = on;
     if(on){
-        markerGroup->addChild(ppcomMarker, true);
         Vector3 com = bodyItem->centerOfMass();
         com(2) = 0.0;
         ppcomMarker->setTranslation(com);
+        markerGroup->addChildOnce(ppcomMarker, true);
     } else {
         markerGroup->removeChild(ppcomMarker, true);
     }
@@ -488,8 +603,8 @@ void EditableSceneBodyImpl::showZmp(bool on)
 {
     isZmpVisible = on;
     if(on){
-        markerGroup->addChild(zmpMarker, true);
         zmpMarker->setTranslation(bodyItem->zmp());
+        markerGroup->addChildOnce(zmpMarker, true);
     } else {
         markerGroup->removeChild(zmpMarker, true);
     }
@@ -575,8 +690,6 @@ void EditableSceneBodyImpl::makeLinkAttitudeLevel()
 
 void EditableSceneBodyImpl::updateMarkersAndManipulators()
 {
-    bool show = (isEditMode && !self->body()->isStaticModel());
-    
     Link* baseLink = bodyItem->currentBaseLink();
     PinDragIKptr pin = bodyItem->pinDragIK();
 
@@ -585,7 +698,9 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         EditableSceneLink* sceneLink = editableSceneLink(i);
         sceneLink->hideMarker();
         sceneLink->removeChild(positionDragger);
-        if(show){
+        markerGroup->removeChild(positionDragger);
+
+        if(isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
                 sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
@@ -598,9 +713,16 @@ void EditableSceneBodyImpl::updateMarkersAndManipulators()
         }
     }
 
-    if(show && targetLink &&
-       (kinematicsBar->mode() == KinematicsBar::IK_MODE) &&
-       kinematicsBar->isPositionDraggerEnabled()){
+    bool showDragger = isEditMode && targetLink && kinematicsBar->isPositionDraggerEnabled();
+    if(showDragger){
+        if(activeSimulatorItem){
+            showDragger = forcedPositionMode != NO_FORCED_POSITION;
+                } else {
+            showDragger = (kinematicsBar->mode() == KinematicsBar::IK_MODE);
+        }
+    }
+        
+    if(showDragger){
         attachPositionDragger(targetLink);
     }
 
@@ -644,11 +766,11 @@ bool EditableSceneBody::onKeyPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onKeyPressEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
         
-    if(!outlinedLink || self->body()->isStaticModel()){
+    if(!outlinedLink){
         return false;
     }
 
@@ -697,10 +819,7 @@ bool EditableSceneBody::onButtonPressEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
-        return false;
-    }
-    if(self->body()->isStaticModel()){
+    if(!isEditable()){
         return false;
     }
     
@@ -719,45 +838,58 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     bool handled = false;
     isDragging = false;
 
-    if(pointedType == PT_SCENE_LINK){
-
-        if(event.button() == Qt::LeftButton){
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(activeSimulatorItem){
+        if(pointedType == PT_SCENE_LINK){
             targetLink = pointedSceneLink->link();
-            updateMarkersAndManipulators();
-            ik.reset();
-
-            switch(kinematicsBar->mode()){
-            case KinematicsBar::AUTO_MODE:
-                ik = bodyItem->getDefaultIK(targetLink);
-                if(ik){
+            if(event.button() == Qt::LeftButton){
+                if(targetLink->isRoot() && (forcedPositionMode != NO_FORCED_POSITION)){
+                    startForcedPosition(event);
+                } else {
+                    startVirtualElasticString(event);
+                }
+            }
+            handled = true;
+        }
+    } else {
+        if(pointedType == PT_SCENE_LINK){
+            if(event.button() == Qt::LeftButton){
+                targetLink = pointedSceneLink->link();
+                updateMarkersAndManipulators();
+                ik.reset();
+                
+                switch(kinematicsBar->mode()){
+                case KinematicsBar::AUTO_MODE:
+                    ik = bodyItem->getDefaultIK(targetLink);
+                    if(ik){
+                        startIK(event);
+                        break;
+                    }
+                case KinematicsBar::FK_MODE:
+                    if(targetLink == bodyItem->currentBaseLink()){
+                        // Translation of the base link
+                        startIK(event);
+                    } else {
+                        startFK(event);
+                    }
+                    break;
+                case KinematicsBar::IK_MODE:
                     startIK(event);
                     break;
                 }
-            case KinematicsBar::FK_MODE:
-                if(targetLink == bodyItem->currentBaseLink()){
-                    // Translation of the base link
-                    startIK(event);
-                } else {
-                    startFK(event);
-                }
-                break;
-            case KinematicsBar::IK_MODE:
-                startIK(event);
-                break;
+            } else if(event.button() == Qt::MiddleButton){
+                togglePin(pointedSceneLink, true, true);
+                
+            } else if(event.button() == Qt::RightButton){
+                
             }
             
-        } else if(event.button() == Qt::MiddleButton){
-            togglePin(pointedSceneLink, true, true);
-            
-        } else if(event.button() == Qt::RightButton){
+            handled = true;
 
+        } else if(pointedType == PT_ZMP){
+            startZmpTranslation(event);
+            handled = true;
         }
-
-        handled = true;
-
-    } else if(pointedType == PT_ZMP){
-        startZmpTranslation(event);
-        handled = true;
     }
 
     if(dragMode != DRAG_NONE && outlinedLink){
@@ -777,21 +909,14 @@ bool EditableSceneBody::onButtonReleaseEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
-        return false;
+    bool handled = finishEditing();
+
+    if(outlinedLink){
+        outlinedLink->showBoundingBox(true);
+        self->notifyUpdate(modified);
     }
-    isDragging = false;
-    
-    if(dragMode != DRAG_NONE){
-        bodyItem->acceptKinematicStateEdit();
-        dragMode = DRAG_NONE;
-        if(outlinedLink){
-            outlinedLink->showBoundingBox(true);
-            self->notifyUpdate(modified);
-        }
-        return true;
-    }
-    return false;
+
+    return handled;
 }
 
 
@@ -824,7 +949,7 @@ bool EditableSceneBody::onPointerMoveEvent(const SceneWidgetEvent& event)
 
 bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     if(dragMode == DRAG_NONE){
@@ -834,16 +959,16 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
                 if(outlinedLink){
                     outlinedLink->showBoundingBox(false);
                 }
-                if(!self->body()->isStaticModel()){
-                    pointedSceneLink->showBoundingBox(true);
-                    outlinedLink = pointedSceneLink;
-                }
+                pointedSceneLink->showBoundingBox(true);
+                outlinedLink = pointedSceneLink;
             }
         }
-        
-        static boost::format f(_("%1% / %2%"));
         if(pointedSceneLink){
-            event.updateIndicator(str(f % bodyItem->name() % pointedSceneLink->link()->name()));
+            const Vector3 p = pointedSceneLink->T().inverse() * event.point();
+            event.updateIndicator(
+                (str(boost::format("%1% / %2% : (%3$ .3f, %4$ .3f, %5$ .3f)")
+                     % bodyItem->name() % pointedSceneLink->link()->name()
+                     % p.x() % p.y() % p.z())));
         } else {
             event.updateIndicator("");
         }
@@ -865,6 +990,14 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
 
         case LINK_FK_TRANSLATION:
             dragFKTranslation(event);
+            break;
+
+        case LINK_VIRTUAL_ELASTIC_STRING:
+            dragVirtualElasticString(event);
+            break;
+
+        case LINK_FORCED_POSITION:
+            dragForcedPosition(event);
             break;
             
         case ZMP_TRANSLATION:
@@ -888,7 +1021,7 @@ void EditableSceneBody::onPointerLeaveEvent(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::onPointerLeaveEvent(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return;
     }
     if(outlinedLink){
@@ -918,10 +1051,7 @@ void EditableSceneBody::onContextMenuRequest(const SceneWidgetEvent& event, Menu
 
 void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager)
 {
-    if(!bodyItem->isEditable()){
-        return;
-    }
-    if(self->body()->isStaticModel()){
+    if(!isEditable()){
         return;
     }
     
@@ -929,24 +1059,40 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
 
     if(bodyItem && pointedType == PT_SCENE_LINK){
 
-        menuManager.addItem(_("Set Free"))->sigTriggered().connect(
-            boost::bind(&EditableSceneBodyImpl::makeLinkFree, this, pointedSceneLink));
-        menuManager.addItem(_("Set Base"))->sigTriggered().connect(
-            boost::bind(&EditableSceneBodyImpl::setBaseLink, this, pointedSceneLink));
-        menuManager.addItem(_("Set Translation Pin"))->sigTriggered().connect(
-            boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, false));
-        menuManager.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
-            boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, false, true));
-        menuManager.addItem(_("Set Both Pins"))->sigTriggered().connect(
-            boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, true));
+        activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+        if(activeSimulatorItem){
+            if(pointedSceneLink->link()->isRoot()){
+                Action* item1 = menuManager.addCheckItem(_("Move Position"));
+                item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
+                item1->sigToggled().connect(
+                    boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, MOVE_FORCED_POSITION, _1));
 
-        menuManager.addSeparator();
+                Action* item2 = menuManager.addCheckItem(_("Keep Position"));
+                item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
+                item2->sigToggled().connect(
+                    boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, KEEP_FORCED_POSITION, _1));
+                
+                menuManager.addSeparator();
+            }
+        } else {
+            menuManager.addItem(_("Set Free"))->sigTriggered().connect(
+                boost::bind(&EditableSceneBodyImpl::makeLinkFree, this, pointedSceneLink));
+            menuManager.addItem(_("Set Base"))->sigTriggered().connect(
+                boost::bind(&EditableSceneBodyImpl::setBaseLink, this, pointedSceneLink));
+            menuManager.addItem(_("Set Translation Pin"))->sigTriggered().connect(
+                boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, false));
+            menuManager.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
+                boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, false, true));
+            menuManager.addItem(_("Set Both Pins"))->sigTriggered().connect(
+                boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, true));
 
-        menuManager.addItem(_("Level Attitude"))->sigTriggered().connect(
-            boost::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
+            menuManager.addSeparator();
 
-        menuManager.addSeparator();
+            menuManager.addItem(_("Level Attitude"))->sigTriggered().connect(
+                boost::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
 
+            menuManager.addSeparator();
+        }
         
         menuManager.setPath(_("Markers"));
         
@@ -976,20 +1122,50 @@ void EditableSceneBody::onSceneModeChanged(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
+        isEditMode = false;
         return;
     }
     isEditMode = event.sceneWidget()->isEditMode();
 
-    if(outlinedLink){
-        if(isEditMode){
+    if(isEditMode){
+        if(outlinedLink){
             outlinedLink->showBoundingBox(true);
-        } else {
+        }
+    } else {
+        finishEditing();
+        if(outlinedLink){
             outlinedLink->showBoundingBox(false);
             outlinedLink = 0;
         }
+        updateMarkersAndManipulators();
     }
-    updateMarkersAndManipulators();
+}
+
+
+bool EditableSceneBodyImpl::finishEditing()
+{
+    bool finished = false;
+    
+    if(isEditable()){
+
+        isDragging = false;
+        finished = true;
+
+        if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
+            finishVirtualElasticString();
+        } else if(dragMode == LINK_FORCED_POSITION){
+            finishForcedPosition();
+        } else if(dragMode != DRAG_NONE){
+            bodyItem->acceptKinematicStateEdit();
+        } else {
+            finished = false;
+        }
+
+        dragMode = DRAG_NONE;
+    }
+
+    return finished;
 }
 
 
@@ -1001,7 +1177,7 @@ bool EditableSceneBody::onUndoRequest()
 
 bool EditableSceneBodyImpl::onUndoRequest()
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     return bodyItem->undoKinematicState();
@@ -1016,22 +1192,41 @@ bool EditableSceneBody::onRedoRequest()
 
 bool EditableSceneBodyImpl::onRedoRequest()
 {
-    if(!bodyItem->isEditable()){
+    if(!isEditable()){
         return false;
     }
     return bodyItem->redoKinematicState();
 }
 
 
-void EditableSceneBodyImpl::onDraggerIKstarted()
+void EditableSceneBodyImpl::onDraggerDragStarted()
 {
-    initializeIK();
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(!activeSimulatorItem){
+        initializeIK();
+    }
 }
 
 
-void EditableSceneBodyImpl::onDraggerIKdragged()
+void EditableSceneBodyImpl::onDraggerDragged()
 {
-    doIK(positionDragger->draggedPosition());
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(activeSimulatorItem){
+        setForcedPosition(positionDragger->draggedPosition());
+    } else {
+        doIK(positionDragger->draggedPosition());
+    }
+}
+
+
+void EditableSceneBodyImpl::onDraggerDragFinished()
+{
+    activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
+    if(activeSimulatorItem){
+        finishForcedPosition();
+    } else {
+        doIK(positionDragger->draggedPosition());
+    }
 }
 
 
@@ -1089,16 +1284,15 @@ void EditableSceneBodyImpl::startIK(const SceneWidgetEvent& event)
 
 void EditableSceneBodyImpl::dragIK(const SceneWidgetEvent& event)
 {
-    if(dragMode == LINK_IK_TRANSLATION){
-        if(dragProjector.dragTranslation(event)){
-            Position T = dragProjector.initialPosition();
-            T.translation() = dragProjector.position().translation();
-            T.linear() = targetLink->R();
-            if(penetrationBlocker){
-                penetrationBlocker->adjust(T, T.translation() - targetLink->p());
-            }
-            doIK(T);
+    if(dragProjector.dragTranslation(event)){
+        //Position T = dragProjector.initialPosition();
+        Position T;
+        T.translation() = dragProjector.position().translation();
+        T.linear() = targetLink->R();
+        if(penetrationBlocker){
+            penetrationBlocker->adjust(T, T.translation() - targetLink->p());
         }
+        doIK(T);
     }
 }
 
@@ -1153,6 +1347,108 @@ void EditableSceneBodyImpl::dragFKTranslation(const SceneWidgetEvent& event)
 }
 
 
+void EditableSceneBodyImpl::setForcedPositionMode(int mode, bool on)
+{
+    if(on){
+        forcedPositionMode = mode;
+    } else {
+        forcedPositionMode = NO_FORCED_POSITION;
+        updateMarkersAndManipulators();
+    }
+    finishForcedPosition();
+}
+
+
+void EditableSceneBodyImpl::startVirtualElasticString(const SceneWidgetEvent& event)
+{
+    const Vector3& point = event.point();
+    dragProjector.setInitialTranslation(point);
+    dragProjector.setTranslationAlongViewPlane();
+    if(dragProjector.startTranslation(event)){
+        pointedLinkLocalPoint = targetLink->T().inverse() * point;
+        dragMode = LINK_VIRTUAL_ELASTIC_STRING;
+        dragVirtualElasticString(event);
+        markerGroup->addChildOnce(virtualElasticStringLine, true);
+    }
+}
+
+
+void EditableSceneBodyImpl::dragVirtualElasticString(const SceneWidgetEvent& event)
+{
+    if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
+        SimulatorItem* simulatorItem = activeSimulatorItem.lock();
+        if(simulatorItem && dragProjector.dragTranslation(event)){
+            Vector3 p = targetLink->T() * pointedLinkLocalPoint;
+            Vector3 d = dragProjector.position().translation() - p;
+            double k = 2.0;
+            if(event.modifiers() & Qt::ShiftModifier){
+                k *= 10.0;
+                if(event.modifiers() & Qt::ControlModifier){
+                    k *= 10.0;
+                }
+            }
+            Vector3 end = p + k * self->boundingBox().boundingSphereRadius() * d;
+            SgVertexArray& points = *virtualElasticStringLine->vertices();
+            points[0] = p.cast<Vector3f::Scalar>();
+            points[1] = (p + d).cast<Vector3f::Scalar>();
+            virtualElasticStringLine->notifyUpdate();
+            simulatorItem->setVirtualElasticString(bodyItem, targetLink, pointedLinkLocalPoint, end);
+        }
+    }
+}
+
+
+void EditableSceneBodyImpl::finishVirtualElasticString()
+{
+    if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
+        simulatorItem->clearVirtualElasticStrings();
+    }
+    markerGroup->removeChild(virtualElasticStringLine, true);
+}
+
+
+void EditableSceneBodyImpl::startForcedPosition(const SceneWidgetEvent& event)
+{
+    finishForcedPosition();
+    updateMarkersAndManipulators();
+
+    dragProjector.setInitialPosition(targetLink->position());
+    dragProjector.setTranslationAlongViewPlane();
+    if(dragProjector.startTranslation(event)){
+        dragMode = LINK_FORCED_POSITION;
+    }
+}
+
+
+void EditableSceneBodyImpl::setForcedPosition(const Position& position)
+{
+    if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
+        simulatorItem->setForcedBodyPosition(bodyItem, position);
+    }
+}
+    
+    
+void EditableSceneBodyImpl::dragForcedPosition(const SceneWidgetEvent& event)
+{
+    if(dragProjector.dragTranslation(event)){
+        Position T;
+        T.translation() = dragProjector.position().translation();
+        T.linear() = targetLink->R();
+        setForcedPosition(T);
+    }
+}
+
+
+void EditableSceneBodyImpl::finishForcedPosition()
+{
+    if(forcedPositionMode != KEEP_FORCED_POSITION){
+        if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
+            simulatorItem->clearForcedBodyPositions();
+        }
+    }
+}
+
+
 void EditableSceneBodyImpl::startZmpTranslation(const SceneWidgetEvent& event)
 {
     dragProjector.setInitialTranslation(bodyItem->zmp());
@@ -1199,13 +1495,22 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
     }
     if(!states->empty()){
         archive.insert("editableSceneBodies", states);
-        return true;
     }
-    return false;
+
+    archive.write("staticModelEditing", enableStaticModelEditCheck->isChecked());
+    
+    return true;
 }
     
     
 void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
+{
+    enableStaticModelEditCheck->setChecked(archive.get("staticModelEditing", false));
+    archive.addPostProcess(boost::bind(&EditableSceneBodyImpl::restoreSceneBodyProperties, boost::ref(archive)), 1);
+}
+
+
+void EditableSceneBodyImpl::restoreSceneBodyProperties(const Archive& archive)
 {
     Listing& states = *archive["editableSceneBodies"].toListing();
     for(int i=0; i < states.size(); ++i){
@@ -1223,6 +1528,14 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
 
 void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
+    MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
+    linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
+    showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
+    showVisualShapeCheck->setChecked(true);
+    showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
+    enableStaticModelEditCheck = mm.addCheckItem(_("Enable editing static models"));
+    enableStaticModelEditCheck->setChecked(true);
+
     ext->setProjectArchiver(
         "EditableSceneBody",
         EditableSceneBodyImpl::storeProperties,

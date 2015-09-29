@@ -111,6 +111,7 @@ public:
     DoubleSpinBox worldLightIntensitySpin;
     DoubleSpinBox worldLightAmbientSpin;
     CheckBox additionalLightsCheck;
+    CheckBox fogCheck;
     CheckBox gridCheck[3];
     DoubleSpinBox gridSpanSpin[3];
     DoubleSpinBox gridIntervalSpin[3];
@@ -184,6 +185,7 @@ public:
     ostream& os;
 
     SceneWidgetRootPtr sceneRoot;
+    SgGroupPtr systemGroup;
     SgGroup* scene;
     GLSceneRenderer renderer;
     QGLPixelBuffer* buffer;
@@ -239,8 +241,6 @@ public:
 
     SceneWidgetEditable* eventFilter;
     ReferencedPtr eventFilterRef;
-
-    SgGroupPtr systemNodeGroup;
 
     Selection polygonMode;
     bool collisionLinesVisible;
@@ -362,7 +362,7 @@ public:
     void updateIndicator(const std::string& text);
     bool storeState(Archive& archive);
     void writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex);
-    Mapping* storeCameraState(int cameraIndex, SgPosTransform* cameraTransform);
+    Mapping* storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform);
     bool restoreState(const Archive& archive);
     void restoreCameraStates(const Listing& cameraListing);
     int readCameraPath(const Mapping& archive, const char* key);
@@ -375,7 +375,9 @@ public:
 SceneWidgetRoot::SceneWidgetRoot(SceneWidget* sceneWidget)
     : sceneWidget_(sceneWidget)
 {
-
+    systemGroup = new SgGroup;
+    systemGroup->setName("System");
+    addChild(systemGroup);
 }
 
 
@@ -432,6 +434,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
       self(self),
       os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
+      systemGroup(sceneRoot->systemGroup),
       renderer(sceneRoot),
       emitSigStateChangedLater(boost::ref(sigStateChanged))
 {
@@ -490,6 +493,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     eventFilter = 0;
     
     indicatorLabel = new QLabel();
+    indicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     indicatorLabel->setAlignment(Qt::AlignLeft);
     QFont font = indicatorLabel->font();
     font.setFixedPitch(true);
@@ -513,21 +517,17 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
-    sceneRoot->addChild(builtinCameraTransform);
+    systemGroup->addChild(builtinCameraTransform);
 
     setup = new SetupDialog(this);
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
-    sceneRoot->addChild(worldLight);
+    systemGroup->addChild(worldLight);
     renderer.setAsDefaultLight(worldLight);
 
     updateDefaultLights();
-
-    systemNodeGroup = new SgGroup();
-    systemNodeGroup->setName("SystemGroup");
-    sceneRoot->addChild(systemNodeGroup);
 
     polygonMode.resize(3);
     polygonMode.setSymbol(SceneWidget::FILL_MODE, "fill");
@@ -1403,7 +1403,7 @@ void SceneWidgetImpl::updatePointerPosition()
     updateLatestEventPath();
     
     if(!isEditMode){
-        static boost::format f(_("Position = (%.3f %.3f %.3f)"));
+        static boost::format f(_("Glocal Position = (%.3f %.3f %.3f)"));
         const Vector3& p = latestEvent.point();
         updateIndicator(str(f % p.x() % p.y() % p.z()));
     } else {
@@ -2198,6 +2198,8 @@ void SceneWidgetImpl::updateDefaultLights()
 
     renderer.enableAdditionalLights(setup->additionalLightsCheck.isChecked());
 
+    renderer.enableFog(setup->fogCheck.isChecked());
+
     worldLight->notifyUpdate(modified);
 }
 
@@ -2438,11 +2440,19 @@ bool SceneWidgetImpl::storeState(Archive& archive)
     set<SgPosTransform*> storedTransforms;
     int numCameras = renderer.numCameras();
     for(int i=0; i < numCameras; ++i){
+        Mapping* cameraState = 0;
         if(InteractiveCameraTransform* transform = self->findOwnerInteractiveCameraTransform(i)){
             if(!storedTransforms.insert(transform).second){
                 transform = 0; // already stored
             }
-            cameraListing->append(storeCameraState(i, transform));
+            cameraState = storeCameraState(i, true, transform);
+        } else {
+            if(i == renderer.currentCameraIndex()){
+                cameraState = storeCameraState(i, false, 0);
+            }
+        }
+        if(cameraState){
+            cameraListing->append(cameraState);
         }
     }
     if(!cameraListing->empty()){
@@ -2475,7 +2485,7 @@ void SceneWidgetImpl::writeCameraPath(Mapping& archive, const std::string& key, 
 }
 
 
-Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, SgPosTransform* cameraTransform)
+Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform)
 {
     Mapping* state = new Mapping();
     writeCameraPath(*state, "camera", cameraIndex);
@@ -2484,20 +2494,22 @@ Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, SgPosTransform* came
         state->write("isCurrent", true);
     }
 
-    SgCamera* camera = renderer.camera(cameraIndex);
-    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
-        state->write("fieldOfView", pers->fieldOfView());
-    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
-        state->write("orthoHeight", ortho->height());
-    }
-    state->write("near", camera->nearDistance());
-    state->write("far", camera->farDistance());
+    if(isInteractiveCamera){
+        SgCamera* camera = renderer.camera(cameraIndex);
+        if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+            state->write("fieldOfView", pers->fieldOfView());
+        } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+            state->write("orthoHeight", ortho->height());
+        }
+        state->write("near", camera->nearDistance());
+        state->write("far", camera->farDistance());
 
-    if(cameraTransform){
-        const Affine3& T = cameraTransform->T();
-        write(*state, "eye", T.translation());
-        write(*state, "direction", SgCamera::direction(T));
-        write(*state, "up", SgCamera::up(T));
+        if(cameraTransform){
+            const Affine3& T = cameraTransform->T();
+            write(*state, "eye", T.translation());
+            write(*state, "direction", SgCamera::direction(T));
+            write(*state, "up", SgCamera::up(T));
+        }
     }
 
     return state;
@@ -2530,11 +2542,9 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 
     const Listing& cameraListing = *archive.findListing("cameras");
     if(cameraListing.isValid()){
-        for(int i=0; i < cameraListing.size(); ++i){
-            const Mapping& cameraData = *cameraListing[i].toMapping();
-            archive.addPostProcess(
-                boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)));
-        }
+        archive.addPostProcess(
+            boost::bind(&SceneWidgetImpl::restoreCameraStates, this, boost::ref(cameraListing)),
+            1);
     } else {
         // for the compatibility to the older versions
         const Mapping& cameraData = *archive.findMapping("camera");
@@ -2559,7 +2569,9 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
             setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
             setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
         
-            archive.addPostProcess(boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)));
+            archive.addPostProcess(
+                boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)),
+                1);
         }
     }
 
@@ -2588,12 +2600,13 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
 {
     bool doUpdate = false;
+
+    renderer.initializeRendering();
     
     for(int i=0; i < cameraListing.size(); ++i){
         const Mapping& state = *cameraListing[i].toMapping();
         int cameraIndex = readCameraPath(state, "camera");
         if(cameraIndex >= 0){
-
             Vector3 eye, direction, up;
             if(read(state, "eye", eye) &&
                read(state, "direction", direction) &&
@@ -2659,9 +2672,6 @@ int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
         }
     }
     if(!pathStrings.empty()){
-        if(renderer.numCameras() == 0){
-            renderer.initializeRendering();
-        }
         index = renderer.findCameraPath(pathStrings);
     }
 
@@ -2672,6 +2682,7 @@ int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
 // for the compatibility to the older versions
 void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 {
+    renderer.initializeRendering();
     int index = readCameraPath(cameraData, "current");
     if(index >= 0){
         renderer.setCurrentCamera(index);
@@ -2738,9 +2749,9 @@ void SceneWidgetImpl::setupCoordinateAxes()
 void SceneWidgetImpl::activateSystemNode(SgNodePtr node, bool on)
 {
     if(on){
-        systemNodeGroup->addChild(node, true);
+        systemGroup->addChild(node, true);
     } else {
-        systemNodeGroup->removeChild(node, true);
+        systemGroup->removeChild(node, true);
     }
 }
 
@@ -2849,6 +2860,14 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
     additionalLightsCheck.setChecked(true);
     additionalLightsCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&additionalLightsCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    fogCheck.setText(_("Fog"));
+    fogCheck.setChecked(true);
+    fogCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
+    hbox->addWidget(&fogCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -3013,6 +3032,7 @@ void SetupDialog::storeState(Archive& archive)
     archive.write("worldLightIntensity", worldLightIntensitySpin.value());
     archive.write("worldLightAmbient", worldLightAmbientSpin.value());
     archive.write("additionalLights", additionalLightsCheck.isChecked());
+    archive.write("fog", fogCheck.isChecked());
     archive.write("floorGrid", gridCheck[FLOOR].isChecked());
     archive.write("floorGridSpan", gridSpanSpin[FLOOR].value());
     archive.write("floorGridInterval", gridIntervalSpin[FLOOR].value());
@@ -3043,6 +3063,7 @@ void SetupDialog::restoreState(const Archive& archive)
     worldLightIntensitySpin.setValue(archive.get("worldLightIntensity", worldLightIntensitySpin.value()));
     worldLightAmbientSpin.setValue(archive.get("worldLightAmbient", worldLightAmbientSpin.value()));
     additionalLightsCheck.setChecked(archive.get("additionalLights", additionalLightsCheck.isChecked()));
+    fogCheck.setChecked(archive.get("fog", fogCheck.isChecked()));
     gridCheck[FLOOR].setChecked(archive.get("floorGrid", gridCheck[FLOOR].isChecked()));
     gridSpanSpin[FLOOR].setValue(archive.get("floorGridSpan", gridSpanSpin[FLOOR].value()));
     gridIntervalSpin[FLOOR].setValue(archive.get("floorGridInterval", gridIntervalSpin[FLOOR].value()));

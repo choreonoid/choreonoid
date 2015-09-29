@@ -232,7 +232,7 @@ public:
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
     virtual const BoundingBox& boundingBox() const;
-    void updateBoundingBox();
+    virtual void updateBoundingBox();
 
     bool hasVertices() const { return (vertices_ && !vertices_->empty()); }
     SgVertexArray* vertices() { return vertices_; }
@@ -272,8 +272,10 @@ public:
     bool isSolid() const { return isSolid_; }
     void setSolid(bool on) { isSolid_ = on; }
 
-private:
+  protected:
     BoundingBox bbox;
+    
+private:
     SgVertexArrayPtr vertices_;
     SgNormalArrayPtr normals_;
     SgIndexArray normalIndices_;
@@ -291,6 +293,8 @@ class CNOID_EXPORT SgMesh : public SgMeshBase
 public:
     SgMesh();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
+
+    virtual void updateBoundingBox();
 
     /**
        Triangle indices (triangles variable) should be CCW.
@@ -391,6 +395,8 @@ public:
     SgPolygonMesh();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
+    virtual void updateBoundingBox();
+    
     /**
        The array of vertex indices corresponding to polygons.
        Indices are delimited by index value '-1'.
@@ -564,19 +570,19 @@ public:
         lineVertices_.push_back(v1);
     }
 
-    void setLineWidth(double width) { lineWidth_ = width; }
+    void setLineWidth(float width) { lineWidth_ = width; }
 
     /**
        The default value of this is zero and the current system value is used then.
     */
-    double lineWidth() const { return lineWidth_; }
+    float lineWidth() const { return lineWidth_; }
 
 protected:
     SgLineSet(const SgLineSet& org, SgCloneMap& cloneMap);
 
 private:
     SgIndexArray lineVertices_;
-    double lineWidth_;
+    float lineWidth_;
 };
 typedef ref_ptr<SgLineSet> SgLineSetPtr;
 
@@ -589,12 +595,12 @@ public:
     virtual void accept(SceneVisitor& visitor);
     const Vector4f& color() const { return color_; }
     void setColor(const Vector4f& color) { color_ = color; }
-    void setLineWidth(double width) { lineWidth_ = width; }
-    double lineWidth() const { return lineWidth_; }
+    void setLineWidth(float width) { lineWidth_ = width; }
+    float lineWidth() const { return lineWidth_; }
 
 private:
     Vector4f color_;
-    double lineWidth_;
+    float lineWidth_;
 };
 typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
 }

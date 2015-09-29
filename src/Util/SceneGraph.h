@@ -214,11 +214,12 @@ public:
 
     void clearChildren(bool doNotify = false);
     void addChild(SgNode* node, bool doNotify = false);
-    void addChildOnce(SgNode* node, bool doNotify = false);
+    bool addChildOnce(SgNode* node, bool doNotify = false);
+    void insertChild(SgNode* node, int index = 0, bool doNotify = false);
     bool removeChild(SgNode* node, bool doNotify = false);
     void removeChildAt(int index, bool doNotify = false);
-    void copyChildren(SgGroup* group, bool doNotify = false);
-    void moveChildren(SgGroup* group, bool doNotify = false);
+    void copyChildrenTo(SgGroup* group, bool doNotify = false);
+    void moveChildrenTo(SgGroup* group, bool doNotify = false);
 
     template<class NodeType> NodeType* findNodeOfType() {
         for(size_t i=0; i < numChildren(); ++i){
@@ -409,6 +410,17 @@ public:
     SgFog(const SgFog& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual void accept(SceneVisitor& visitor);
+
+    const Vector3f& color() const { return color_; }
+    template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
+        color_ = c.template cast<Vector3f::Scalar>(); }
+    void setVisibilityRange(float r) { visibilityRange_ = r; }
+    float visibilityRange() const { return visibilityRange_; }
+    
+private:
+    Vector3f color_;
+    float  visibilityRange_;
+    //int fogType;
 };
 typedef ref_ptr<SgFog> SgFogPtr;
 

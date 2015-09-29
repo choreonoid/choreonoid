@@ -614,9 +614,7 @@ inline void CFSImpl::clearExternalForces()
 {
     for(size_t i=0; i < bodiesData.size(); ++i){
         BodyData& bodyData = bodiesData[i];
-        if(bodyData.hasConstrainedLinks){
-            bodyData.body->clearExternalForces();
-        }
+        bodyData.body->clearExternalForces();
     }
 }
 

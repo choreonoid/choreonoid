@@ -148,7 +148,7 @@ public:
     bool selectItem(Item* item, bool select);
     bool isItemChecked(Item* item, int id);
     bool checkItem(Item* item, bool checked, int id);
-    void extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items);
+    bool extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items);
     ItemList<>& checkedItems(int id);
     void extractCheckedItems(QTreeWidgetItem* twItem, int column, ItemList<>& checkdItems);
     void forEachTopItems(const ItemList<>& orgItemList, boost::function<void(Item*)> callback);
@@ -905,12 +905,13 @@ void ItemTreeView::extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& io
 }
 
 
-void ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items)
+bool ItemTreeViewImpl::extractSelectedItemsOfSubTreeTraverse(Item* item, ItemList<>* io_items)
 {
     ItvItem* itvItem = getItvItem(item);
     if(itvItem && itvItem->isSelected()){
         io_items->push_back(item);
     }
+    return false;
 }
 
 
@@ -1034,7 +1035,7 @@ void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set
         if(p != items.end()){
             ItemPtr duplicatedChild;
             if(childItem->isSubItem()){
-                duplicatedChild = duplicated->findItem(childItem->name());
+                duplicatedChild = duplicated->findChildItem(childItem->name());
             } else {
                 duplicatedChild = childItem->duplicate();
                 if(duplicatedChild){
@@ -1153,7 +1154,8 @@ void ItemTreeViewImpl::storeItemIds(Archive& archive, const char* key, const Ite
 
 bool ItemTreeView::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
+    archive.addPostProcess(boost::bind(&ItemTreeViewImpl::restoreState, impl, boost::ref(archive)));
+    return true;
 }
 
 

@@ -102,6 +102,7 @@ public:
     void enableTexture(bool on);
     void setDefaultPointSize(double size);
     void setDefaultLineWidth(double width);
+    void enableFog(bool on);
 
     void setNewDisplayListDoubleRenderingEnabled(bool on);
 

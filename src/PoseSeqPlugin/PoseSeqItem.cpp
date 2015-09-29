@@ -129,8 +129,6 @@ void PoseSeqItem::init()
 
     clearEditHistory();
 
-    sigPositionChanged().connect(boost::bind(&PoseSeqItem::onPositionChanged, this));
-
     generationBar = BodyMotionGenerationBar::instance();
 
     isSelectedPoseMoving = false;
@@ -156,25 +154,27 @@ void PoseSeqItem::onPositionChanged()
 {
     if(!sigInterpolationParametersChangedConnection.connected()){
         sigInterpolationParametersChangedConnection =
-            BodyMotionGenerationBar::instance()->sigInterpolationParametersChanged().connect(
+            generationBar->sigInterpolationParametersChanged().connect(
                 boost::bind(&PoseSeqItem::updateInterpolationParameters, this));
         updateInterpolationParameters();
     }
 
-    BodyItem* prevOwnerBodyItem = ownerBodyItem;
-    
+    BodyItemPtr prevBodyItem = ownerBodyItem;
     ownerBodyItem = findOwnerItem<BodyItem>();
-
+    if(ownerBodyItem == prevBodyItem){
+        return;
+    }
+        
     if(!ownerBodyItem){
-        interpolator_->setBody(BodyPtr());
+        interpolator_->setBody(0);
 
     } else {
-        BodyPtr body = ownerBodyItem->body();
+        Body* body = ownerBodyItem->body();
 
         if(seq->targetBodyName().empty()){
             seq->setTargetBodyName(body->name());
-        } else if(prevOwnerBodyItem && (seq->targetBodyName() != body->name())){
-            convert(prevOwnerBodyItem->body());
+        } else if(prevBodyItem && (seq->targetBodyName() != body->name())){
+            convert(prevBodyItem->body());
         }
 
         interpolator_->setBody(body);
@@ -199,7 +199,12 @@ void PoseSeqItem::onPositionChanged()
 
         interpolator_->setLipSyncShapes(*ownerBodyItem->body()->info()->findMapping("lipSyncShapes"));
         bodyMotionItem_->motion()->setNumParts(interpolator_->body()->numJoints());
-        bodyMotionItem_->notifyUpdate();
+
+        if(generationBar->isAutoGenerationForNewBodyEnabled()){
+            updateTrajectory(true);
+        } else {
+            bodyMotionItem_->notifyUpdate();
+        }
     }
 }
 

@@ -18,6 +18,8 @@ using namespace cnoid;
 
 namespace {
 
+const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
+
 const double PI = 3.14159265358979323846;
 
 }
@@ -302,10 +304,24 @@ void SgGroup::addChild(SgNode* node, bool doNotify)
 }
 
 
-void SgGroup::addChildOnce(SgNode* node, bool doNotify)
+bool SgGroup::addChildOnce(SgNode* node, bool doNotify)
 {
     if(!contains(node)){
         addChild(node, doNotify);
+        return true;
+    }
+    return false;
+}
+
+
+void SgGroup::insertChild(SgNode* node, int index, bool doNotify)
+{
+    if(node){
+        if(index > children.size()){
+            index = children.size();
+        }
+        children.insert(children.begin() + index, node);
+        node->addParent(this, doNotify);
     }
 }
 
@@ -360,7 +376,7 @@ void SgGroup::clearChildren(bool doNotify)
 }
 
 
-void SgGroup::copyChildren(SgGroup* group, bool doNotify)
+void SgGroup::copyChildrenTo(SgGroup* group, bool doNotify)
 {
     for(int i=0; i < children.size(); ++i){
         group->addChild(child(i), doNotify);
@@ -368,7 +384,7 @@ void SgGroup::copyChildren(SgGroup* group, bool doNotify)
 }
 
 
-void SgGroup::moveChildren(SgGroup* group, bool doNotify)
+void SgGroup::moveChildrenTo(SgGroup* group, bool doNotify)
 {
     const int destTop = group->children.size();
     
@@ -1019,6 +1035,27 @@ SgObject* SgMesh::clone(SgCloneMap& cloneMap) const
 }
 
 
+void SgMesh::updateBoundingBox()
+{
+    if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
+        SgMeshBase::updateBoundingBox();
+
+    } else {
+        if(!hasVertices()){
+            bbox.clear();
+        } else {
+            BoundingBoxf bboxf;
+            const SgVertexArray& v = *vertices();
+            for(SgIndexArray::const_iterator iter = triangleVertices_.begin(); iter != triangleVertices_.end(); ++iter){
+                const Vector3f& p = v[*iter];
+                bboxf.expandBy(p);
+            }
+            bbox = bboxf;
+        }
+    }
+}
+
+
 SgPolygonMesh::SgPolygonMesh()
 {
 
@@ -1036,6 +1073,30 @@ SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap& cloneMap)
 SgObject* SgPolygonMesh::clone(SgCloneMap& cloneMap) const
 {
     return new SgPolygonMesh(*this, cloneMap);
+}
+
+
+void SgPolygonMesh::updateBoundingBox()
+{
+    if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
+        SgMeshBase::updateBoundingBox();
+
+    } else {
+        if(!hasVertices()){
+            bbox.clear();
+        } else {
+            BoundingBoxf bboxf;
+            const SgVertexArray& v = *vertices();
+            for(SgIndexArray::const_iterator iter = polygonVertices_.begin(); iter != polygonVertices_.end(); ++iter){
+                const int index = *iter;
+                if(index >= 0){
+                    const Vector3f& p = v[index];
+                    bboxf.expandBy(p);
+                }
+            }
+            bbox = bboxf;
+        }
+    }
 }
 
 
@@ -1615,14 +1676,16 @@ void SgOrthographicCamera::accept(SceneVisitor& visitor)
 
 SgFog::SgFog()
 {
-
+    color_.setOnes();
+    visibilityRange_ = 0.0f;
 }
 
 
 SgFog::SgFog(const SgFog& org)
     : SgPreprocessed(org)
 {
-
+    color_ = org.color_;
+    visibilityRange_ = org.visibilityRange_;
 }
 
 
@@ -1634,7 +1697,7 @@ SgObject* SgFog::clone(SgCloneMap& cloneMap) const
 
 void SgFog::accept(SceneVisitor& visitor)
 {
-    
+    visitor.visitFog(this);
 }
 
 

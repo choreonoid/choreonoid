@@ -18,8 +18,8 @@ class SimulationScriptItemImpl
 public:
     SimulationScriptItem* self;
 
-    Selection execTiming;
-    double execDelay;
+    Selection executionTiming;
+    double executionDelay;
     bool isOnlyExecutedAsSimulationScript;
     
     SimulationScriptItemImpl(SimulationScriptItem* self);
@@ -36,17 +36,17 @@ SimulationScriptItem::SimulationScriptItem()
 
 SimulationScriptItemImpl::SimulationScriptItemImpl(SimulationScriptItem* self)
     : self(self),
-      execTiming(SimulationScriptItem::NUM_TIMINGS, CNOID_GETTEXT_DOMAIN_NAME)
+      executionTiming(SimulationScriptItem::NUM_TIMINGS, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    execTiming.setSymbol(SimulationScriptItem::BEFORE_INITIALIZATION, N_("Before init."));
-    execTiming.setSymbol(SimulationScriptItem::DURING_INITIALIZATION, N_("During init."));
-    execTiming.setSymbol(SimulationScriptItem::AFTER_INITIALIZATION, N_("After init."));
-    execTiming.setSymbol(SimulationScriptItem::DURING_FINALIZATION, N_("During final."));
-    execTiming.setSymbol(SimulationScriptItem::AFTER_FINALIZATION, N_("After final."));
+    executionTiming.setSymbol(SimulationScriptItem::BEFORE_INITIALIZATION, N_("Before init."));
+    executionTiming.setSymbol(SimulationScriptItem::DURING_INITIALIZATION, N_("During init."));
+    executionTiming.setSymbol(SimulationScriptItem::AFTER_INITIALIZATION, N_("After init."));
+    executionTiming.setSymbol(SimulationScriptItem::DURING_FINALIZATION, N_("During final."));
+    executionTiming.setSymbol(SimulationScriptItem::AFTER_FINALIZATION, N_("After final."));
 
-    execTiming.select(SimulationScriptItem::AFTER_INITIALIZATION);
+    executionTiming.select(SimulationScriptItem::AFTER_INITIALIZATION);
     
-    execDelay = 0.0;
+    executionDelay = 0.0;
     isOnlyExecutedAsSimulationScript = true;
 }
 
@@ -60,9 +60,9 @@ SimulationScriptItem::SimulationScriptItem(const SimulationScriptItem& org)
 
 SimulationScriptItemImpl::SimulationScriptItemImpl(SimulationScriptItem* self, const SimulationScriptItemImpl& org)
     : self(self),
-      execTiming(org.execTiming)
+      executionTiming(org.executionTiming)
 {
-    execDelay = org.execDelay;
+    executionDelay = org.executionDelay;
     isOnlyExecutedAsSimulationScript = org.isOnlyExecutedAsSimulationScript;
 }
 
@@ -73,15 +73,27 @@ SimulationScriptItem::~SimulationScriptItem()
 }
 
 
-SimulationScriptItem::ExecTiming SimulationScriptItem::execTiming() const
+SimulationScriptItem::ExecutionTiming SimulationScriptItem::executionTiming() const
 {
-    return static_cast<SimulationScriptItem::ExecTiming>(impl->execTiming.selectedIndex());
+    return static_cast<SimulationScriptItem::ExecutionTiming>(impl->executionTiming.selectedIndex());
 }
 
 
-double SimulationScriptItem::execDelay() const
+void SimulationScriptItem::setExecutionTiming(SimulationScriptItem::ExecutionTiming timing)
 {
-    return impl->execDelay;
+    impl->executionTiming.select(timing);
+}
+
+
+double SimulationScriptItem::executionDelay() const
+{
+    return impl->executionDelay;
+}
+
+
+void SimulationScriptItem::setExecutionDelay(double t)
+{
+    impl->executionDelay = t;
 }
 
 
@@ -99,9 +111,9 @@ void SimulationScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     ScriptItem::doPutProperties(putProperty);
     
-    putProperty(_("Timing"), impl->execTiming,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->execTiming, _1));
-    putProperty(_("Delay"), impl->execDelay, changeProperty(impl->execDelay));
+    putProperty(_("Timing"), impl->executionTiming,
+                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->executionTiming, _1));
+    putProperty(_("Delay"), impl->executionDelay, changeProperty(impl->executionDelay));
     putProperty(_("Simulation only"), impl->isOnlyExecutedAsSimulationScript,
                 changeProperty(impl->isOnlyExecutedAsSimulationScript));
 }
@@ -110,8 +122,8 @@ void SimulationScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 bool SimulationScriptItem::store(Archive& archive)
 {
     if(ScriptItem::store(archive)){
-        archive.write("timing", impl->execTiming.selectedSymbol());
-        archive.write("delay", impl->execDelay);
+        archive.write("timing", impl->executionTiming.selectedSymbol());
+        archive.write("delay", impl->executionDelay);
         archive.write("simulationOnly", impl->isOnlyExecutedAsSimulationScript);
         return true;
     }
@@ -124,9 +136,9 @@ bool SimulationScriptItem::restore(const Archive& archive)
     if(ScriptItem::restore(archive)){
         string symbol;
         if(archive.read("timing", symbol)){
-            impl->execTiming.select(symbol);
+            impl->executionTiming.select(symbol);
         }
-        archive.read("delay", impl->execDelay);
+        archive.read("delay", impl->executionDelay);
         archive.read("simulationOnly", impl->isOnlyExecutedAsSimulationScript);
         return true;
     }

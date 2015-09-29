@@ -3,7 +3,7 @@
 */
 
 #include "SimpleControllerItem.h"
-#include "SimpleController.h"
+#include <cnoid/SimpleController>
 #include <cnoid/Link>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
@@ -133,7 +133,7 @@ bool SimpleControllerItem::start(Target* target)
 
     if(controller){
         timeStep_ = target->worldTimeStep();
-        BodyPtr body = target->body();
+        Body* body = target->body();
         ioBody = body->clone();
 
         inputDeviceStateConnections.disconnect();
@@ -165,7 +165,7 @@ bool SimpleControllerItem::start(Target* target)
                 stop();
             }
         } else {
-            simulationBody = body.get();
+            simulationBody = body;
         }
     }
 
@@ -235,8 +235,12 @@ void SimpleControllerItem::onOutputDeviceStateChanged(int deviceIndex)
 
 void SimpleControllerItem::output()
 {
-    for(int i=0; i < simulationBody->numJoints(); ++i){
-        simulationBody->joint(i)->u() = ioBody->joint(i)->u();
+    const boost::dynamic_bitset<>& flags = controller->jointOutputFlags();
+    const int n = std::min(simulationBody->numJoints(), (int)flags.size());
+    for(int i=0; i < n; ++i){
+        if(flags[i]){
+            simulationBody->joint(i)->u() = ioBody->joint(i)->u();
+        }
     }
 
     if(outputDeviceStateChangeFlag.any()){

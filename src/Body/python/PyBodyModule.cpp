@@ -47,7 +47,8 @@ Vector3 Link_get_f_ext(Link& self) { return self.f_ext(); }
 void Link_set_f_ext(Link& self, const Vector3& f) { self.f_ext() = f; }
 Vector3 Link_get_tau_ext(Link& self) { return self.tau_ext(); }
 void Link_set_tau_ext(Link& self, const Vector3& tau) { self.tau_ext() = tau; }
-SgNodePtr Link_shape(const Link& self) { return self.shape(); }
+SgNodePtr Link_visualShape(const Link& self) { return self.visualShape(); }
+SgNodePtr Link_collisionShape(const Link& self) { return self.collisionShape(); }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Body_calcForwardKinematics_overloads, calcForwardKinematics, 0, 2)
 
@@ -135,7 +136,8 @@ BOOST_PYTHON_MODULE(Body)
             .add_property("f_ext", Link_get_f_ext, Link_set_f_ext)
             .add_property("tau_ext", Link_get_tau_ext, Link_set_tau_ext)
             .def("name", &Link::name, return_value_policy<copy_const_reference>())
-            .def("shape", Link_shape)
+            .def("visualShape", Link_visualShape)
+            .def("collisionShape", Link_collisionShape)
             .def("setIndex", &Link::setIndex)
             .def("prependChild", &Link::prependChild)
             .def("appendChild", &Link::appendChild)
@@ -150,7 +152,8 @@ BOOST_PYTHON_MODULE(Body)
             .def("setCenterOfMass", &Link::setCenterOfMass)
             .def("setEquivalentRotorInertia", &Link::setEquivalentRotorInertia)
             .def("setName", &Link::setName)
-            .def("setShape", &Link::setShape)
+            .def("setVisualShape", &Link::setVisualShape)
+            .def("setCollisionShape", &Link::setCollisionShape)
             .def("attitude", &Link::attitude)
             .def("setAttitude", &Link::setAttitude)
             .def("calcRfromAttitude", &Link::calcRfromAttitude)

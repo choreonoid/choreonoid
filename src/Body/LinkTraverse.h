@@ -4,8 +4,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LINK_TRAVERSE_H_INCLUDED
-#define CNOID_BODY_LINK_TRAVERSE_H_INCLUDED
+#ifndef CNOID_BODY_LINK_TRAVERSE_H
+#define CNOID_BODY_LINK_TRAVERSE_H
 
 #include <vector>
 #include "exportdecl.h"
@@ -22,6 +22,8 @@ public:
     LinkTraverse(Link* root, bool doUpward = false, bool doDownward = true);
 
     virtual ~LinkTraverse();
+
+    void clear();
 
     virtual void find(Link* root, bool doUpward = false, bool doDownward = true);
 
@@ -48,7 +50,7 @@ public:
     Link* operator[] (int index) const {
         return links[index];
     }
-
+    
     std::vector<Link*>::const_iterator begin() const {
         return links.begin();
     }

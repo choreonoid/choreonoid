@@ -6,6 +6,7 @@
 #include "../Item.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
+#include "../AbstractTextItem.h"
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
 #include "../MultiValueSeqItem.h"
@@ -38,8 +39,10 @@ ItemPtr Item_childItem(Item& self) { return self.childItem(); }
 ItemPtr Item_prevItem(Item& self) { return self.prevItem(); }
 ItemPtr Item_nextItem(Item& self) { return self.nextItem(); }
 ItemPtr Item_parentItem(Item& self) { return self.parentItem(); }
+ItemPtr Item_find(const std::string& path) { return Item::find(path); }
 RootItemPtr Item_findRootItem(Item& self) { return self.findRootItem(); }
-ItemPtr Item_findItem(Item& self, const std::string& path) { return self.findItem(path); }
+ItemPtr Item_findItem(Item& self, const std::string& path) { return self.findItem(path); };
+ItemPtr Item_findChildItem(Item& self, const std::string& path) { return self.findChildItem(path); }
 ItemPtr Item_findSubItem(Item& self, const std::string& path) { return self.findSubItem(path); }
 ItemPtr Item_headItem(Item& self) { return self.headItem(); }
 
@@ -63,6 +66,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_load1_overloads, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_load2_overloads, load, 2, 3)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_save, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ScriptItem_waitToFinish, waitToFinish, 0, 1)
 
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
@@ -112,6 +117,7 @@ void exportPyItems()
     class_<Item, ItemPtr, boost::noncopyable> itemClass("Item", no_init);
     
     itemClass
+        .def("find", Item_find).staticmethod("find")
         .def("name", &Item::name, return_value_policy<copy_const_reference>())
         .def("setName", &Item::setName)
         .def("hasAttribute", &Item::hasAttribute)
@@ -130,6 +136,7 @@ void exportPyItems()
         .def("setTemporal", &Item::setTemporal, Item_setTemporal())
         .def("findRootItem", Item_findRootItem)
         .def("findItem", Item_findItem)
+        .def("findChildItem", Item_findChildItem)
         .def("findSubItem", Item_findSubItem)
         .def("headItem", Item_headItem)
         .def("getDescendantItems", Item_getDescendantItems1)
@@ -176,9 +183,35 @@ void exportPyItems()
     implicitly_convertible<FolderItemPtr, ItemPtr>();
     PyItemList<FolderItem>("FolderItemList");
 
+    class_< AbstractTextItem, AbstractTextItemPtr, bases<Item>, boost::noncopyable >
+        ("AbstractTextItem", no_init)
+        .def("textFilename", &AbstractTextItem::textFilename, return_value_policy<copy_const_reference>());
+            
+    implicitly_convertible<AbstractTextItemPtr, ItemPtr>();
+    //PyItemList<AbstractTextItem>("AbstractTextItemList");
+    
+    class_< ScriptItem, ScriptItemPtr, bases<AbstractTextItem>, boost::noncopyable >
+        ("ScriptItem", no_init)
+        .def("scriptFilename", &ScriptItem::scriptFilename, return_value_policy<copy_const_reference>())
+        .def("identityName", &ScriptItem::identityName)
+        .def("setBackgroundMode", &ScriptItem::setBackgroundMode)
+        .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
+        .def("isRunning", &ScriptItem::isRunning)
+        .def("execute", &ScriptItem::execute)
+        .def("waitToFinish", &ScriptItem::waitToFinish, ScriptItem_waitToFinish())
+        .def("resultString", &ScriptItem::resultString)
+        .def("sigScriptFinished", &ScriptItem::sigScriptFinished)
+        .def("terminate", &ScriptItem::terminate)
+        ;
+
+    implicitly_convertible<ScriptItemPtr, AbstractTextItemPtr>();
+    //PyItemList<ScriptItem>("ScriptItemList");
+
     class_< ExtCommandItem, ExtCommandItemPtr, bases<Item> >("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
         .def("command", &ExtCommandItem::command, return_value_policy<copy_const_reference>())
+        .def("waitingTimeAfterStarted", &ExtCommandItem::waitingTimeAfterStarted)
+        .def("setWaitingTimeAfterStarted", &ExtCommandItem::setWaitingTimeAfterStarted)
         .def("execute", &ExtCommandItem::execute)
         .def("terminate", &ExtCommandItem::terminate);
     

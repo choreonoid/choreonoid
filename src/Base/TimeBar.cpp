@@ -452,6 +452,9 @@ void TimeBarImpl::onTimeSpinChanged(double value)
     if(TRACE_FUNCTIONS){
         cout << "TimeBarImpl::onTimeSpinChanged()" << endl;
     }
+    if(isDoingPlayback){
+        stopPlayback(true);
+    }
     setTime(value, false, timeSpin);
 }
 
@@ -460,6 +463,9 @@ bool TimeBarImpl::onTimeSliderChangeValue(double value)
 {
     if(TRACE_FUNCTIONS){
         cout << "TimeBarImpl::onTimeSliderChanged(): value = " << value << endl;
+    }
+    if(isDoingPlayback){
+        stopPlayback(true);
     }
     setTime(value / pow(10.0, decimals), false, timeSlider);
     return true;

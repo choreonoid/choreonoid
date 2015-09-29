@@ -6,6 +6,9 @@
 #define CNOID_BASE_IMAGE_WIDGET_H
 
 #include <QWidget>
+#include <cnoid/Image>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -35,6 +38,9 @@ public:
     void setTransform(const QTransform& transform);
     void setAngle(double angle);
     void rotate(double angle);
+    void reset();
+    Image& getImage();
+    boost::mutex mtx;
 
   protected:
     virtual void paintEvent(QPaintEvent* event);
@@ -46,6 +52,8 @@ private:
     bool isScalingEnabled_;
     QTransform transform_;
     QTransform notScaledTransform_;
+    QTransform initialTransform_;
+    Image transformedImage;
 
     void fitCenter();
     void resize(const QSize& size);

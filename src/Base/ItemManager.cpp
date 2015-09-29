@@ -10,6 +10,7 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include "ParametricPathProcessor.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
 #include <QLayout>
@@ -63,7 +64,7 @@ public:
     
     struct Loader;
     typedef boost::shared_ptr<Loader> LoaderPtr;
-    
+
     struct ClassInfo
     {
         ClassInfo() { creationPanelBase = 0; }
@@ -114,7 +115,7 @@ public:
     CreationPanelFilterSet registeredCreationPanelFilters;
     set<LoaderPtr> registeredLoaders;
     set<SaverPtr> registeredSavers;
-
+    
     QSignalMapper* mapperForNewItemActivated;
     QSignalMapper* mapperForLoadSpecificTypeItemActivated;
 
@@ -781,7 +782,15 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 
 bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId)
 {
-    filesystem::path filepath = cnoid::getAbsolutePath(filename);
+    ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
+    optional<string> expanded = pathProcessor->expand(filename);
+    if(!expanded){
+        messageView->putln(pathProcessor->errorMessage());
+        return false;
+    }
+        
+    filesystem::path filepath = cnoid::getAbsolutePath(*expanded);
+            
     string pathString = cnoid::getPathString(filepath);
     
     const string& typeId = typeid(*item).name();
@@ -883,13 +892,22 @@ void ItemManagerImpl::onLoadItemActivated()
 
 void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
 {
+    ItemPtr item;
+    ClassInfoPtr classInfo = loader->classInfo.lock();
+    if(classInfo->isSingleton){
+        item = classInfo->singletonInstance;
+        if(item->parentItem()){
+            showWarningDialog(format(_("The singleton instance of %1% is already loaded."))
+                              % classInfo->className);
+            return;
+        }
+    }
+    
     QFileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(str(fmt(_("Load %1%")) % loader->caption).c_str());
-    dialog.setFileMode(QFileDialog::ExistingFiles);
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-    
     dialog.setDirectory(AppConfig::archive()->get
                         ("currentFileDialogDirectory", shareDirectory()).c_str());
 
@@ -908,6 +926,12 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     }
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
+
+    if(classInfo->isSingleton){
+        dialog.setFileMode(QFileDialog::ExistingFile);
+    } else {
+        dialog.setFileMode(QFileDialog::ExistingFiles);
+    }
     
     if(dialog.exec()){
         AppConfig::archive()->writePath(
@@ -921,9 +945,10 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
             parentItem = RootItem::mainInstance();
         }
 
-        ClassInfoPtr classInfo = loader->classInfo.lock();
         for(int i=0; i < filenames.size(); ++i){
-            ItemPtr item = classInfo->factory();
+            if(!classInfo->isSingleton){
+                item = classInfo->factory();
+            }
             string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
             if(load(loader, item.get(), filename, parentItem)){
                 parentItem->addChildItem(item, true);

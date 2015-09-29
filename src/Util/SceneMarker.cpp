@@ -51,16 +51,45 @@ void CrossMarker::setSize(double size)
 };
 
 
+SphereMarker::SphereMarker()
+{
+    initialize(1.0, Vector3f(0.8, 0.8, 0.8), 0.0);
+}
+
 SphereMarker::SphereMarker(double radius, const Vector3f& color, float transparency)
+{
+    initialize(radius, color, transparency);
+}
+
+
+void SphereMarker::initialize(double radius, const Vector3f& color, float transparency)
 {
     SgShapePtr shape = new SgShape;
     MeshGenerator meshGenerator;
-    shape->setMesh(meshGenerator.generateSphere(radius));
-    SgMaterial* material = shape->setMaterial(new SgMaterial);
+    shape->setMesh(meshGenerator.generateSphere(1.0));
+    material = shape->setMaterial(new SgMaterial);
     material->setDiffuseColor(color);
     material->setEmissiveColor(color);
     material->setTransparency(transparency);
-    addChild(shape);
+    scale = new SgScaleTransform;
+    scale->addChild(shape);
+    scale->setScale(radius);
+    addChild(scale);
+}
+
+
+void SphereMarker::setRadius(double r)
+{
+    scale->setScale(r);
+    scale->notifyUpdate();
+}
+
+
+void SphereMarker::setColor(const Vector3f& c)
+{
+    material->setDiffuseColor(c);
+    material->setEmissiveColor(c);
+    material->notifyUpdate();
 }
 
 

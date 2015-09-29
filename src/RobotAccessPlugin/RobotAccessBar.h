@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_BAR_H_INCLUDED
-#define CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_BAR_H_INCLUDED
+#ifndef CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_BAR_H
+#define CNOID_ROBOT_ACCESS_PLUGIN_ROBOT_ACCESS_BAR_H
 
 #include <cnoid/ToolBar>
 
@@ -21,6 +21,7 @@ public:
 private:
     RobotAccessBarImpl* impl;
 };
+
 }
 
 #endif

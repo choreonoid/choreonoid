@@ -197,7 +197,7 @@ public:
         return editor;
     }
 
-    virtual QString	displayText(const QVariant& value, const QLocale& locale) const {
+    virtual QString displayText(const QVariant& value, const QLocale& locale) const {
         if(value.type() == QVariant::Double){
             return QString::number(value.toDouble(), 'f', decimals);
         }

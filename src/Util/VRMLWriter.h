@@ -3,14 +3,12 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VRML_WRITER_INCLUDED
-#define CNOID_UTIL_VRML_WRITER_INCLUDED
+#ifndef CNOID_UTIL_VRML_WRITER_H
+#define CNOID_UTIL_VRML_WRITER_H
 
 #include "VRML.h"
-#include <map>
 #include <string>
-#include <iostream>
-#include <boost/filesystem.hpp>
+#include <ostream>
 #include "exportdecl.h"
 
 namespace cnoid {

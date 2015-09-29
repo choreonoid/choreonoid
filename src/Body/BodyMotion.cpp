@@ -313,7 +313,7 @@ BodyMotion::Frame& operator<<(const BodyMotion::Frame& frame, const Body& body)
     int numLinks =  std::min(body.numLinks(), motion.numLinks());
     MultiSE3Seq::Frame p = motion.linkPosSeq()->frame(frame.frame());
     for(int i=0; i < numLinks; ++i){
-        Link* link = body.link(i);
+        const Link* link = body.link(i);
         p[i].set(link->p(), link->R());
     }
     return const_cast<BodyMotion::Frame&>(frame);

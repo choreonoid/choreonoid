@@ -22,6 +22,7 @@ using namespace cnoid;
 using boost::format;
 
 namespace {
+
 const double PI = 3.14159265358979323846;
 }
 
@@ -112,8 +113,10 @@ public:
     SgNode* createPointLight(VRMLPointLight* vlight);
     SgSpotLight* createSpotLight(VRMLSpotLight* vlight);
     SgDirectionalLight* createDirectionalLight(VRMLDirectionalLight* vlight);
+    SgNode* convertFogNode(VRMLFog* vfog);
     SgNode* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
 };
+
 }
 
 
@@ -236,6 +239,8 @@ SgNode* VRMLToSGConverterImpl::convertNode(VRMLNode* vnode)
                 node = convertShapeNode(shape);
             } else if(VRMLLight* light = dynamic_cast<VRMLLight*>(vnode)){
                 node = convertLightNode(light);
+            } else if(VRMLFog* fog = dynamic_cast<VRMLFog*>(vnode)){
+                node = convertFogNode(fog);
             } else if(VRMLAnotherFormatFile* anotherFormat = dynamic_cast<VRMLAnotherFormatFile*>(vnode)){
                 node = readAnotherFormatFile(anotherFormat);
             }
@@ -324,21 +329,23 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             mesh = p->second;
         } else {
             if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
-                if(isTriangulationEnabled){
-                    SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
-                    mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
-                    const string& errorMessage = polygonMeshTriangulator.errorMessage();
-                    if(!errorMessage.empty()){
-                        string message;
-                        if(faceSet->defName.empty()){
-                            message = "Error of an IndexedFaceSet node: \n";
-                        } else {
-                            message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
-                        }
-                        putMessage(message + errorMessage);
-                    }
-                } else {
+                if(!isTriangulationEnabled){
                     mesh = createMeshFromIndexedFaceSet(faceSet);
+                } else {
+                    SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
+                    if(polygonMesh){
+                        mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
+                        const string& errorMessage = polygonMeshTriangulator.errorMessage();
+                        if(!errorMessage.empty()){
+                            string message;
+                            if(faceSet->defName.empty()){
+                                message = "Error of an IndexedFaceSet node: \n";
+                            } else {
+                                message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
+                            }
+                            putMessage(message + errorMessage);
+                        }
+                    }
                 }
                 if(mesh && isNormalGenerationEnabled){
                     normalGenerator.generateNormals(mesh, faceSet->creaseAngle);
@@ -647,7 +654,17 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
 
 SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
-    if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
+    //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
+    if(!vface->coord){
+        putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
+        return  SgPolygonMeshPtr(); // null
+    }
+    if(vface->coord->point.empty()){
+        putMessage("VRMLIndexedFaceSet: The point field is empty." );
+        return  SgPolygonMeshPtr(); // null
+    }
+    if(vface->coordIndex.empty()){
+        putMessage("VRMLIndexedFaceSet: The coordIndex field is empty." );
         return SgPolygonMeshPtr(); // null
     }
     
@@ -1783,6 +1800,15 @@ SgDirectionalLight* VRMLToSGConverterImpl::createDirectionalLight(VRMLDirectiona
     light->setDirection(vlight->direction);
     setLightCommonProperties(light, vlight);
     return light;
+}
+
+
+SgNode* VRMLToSGConverterImpl::convertFogNode(VRMLFog* vfog)
+{
+    SgFog* fog = new SgFog;
+    fog->setColor(vfog->color);
+    fog->setVisibilityRange(vfog->visibilityRange);
+    return fog;
 }
 
 

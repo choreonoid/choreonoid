@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_VISITOR_H_INCLUDED
-#define CNOID_UTIL_SCENE_VISITOR_H_INCLUDED
+#ifndef CNOID_UTIL_SCENE_VISITOR_H
+#define CNOID_UTIL_SCENE_VISITOR_H
 
 #include "SceneGraph.h"
 #include "ValueTree.h"
@@ -31,6 +31,7 @@ public:
     virtual void visitLineSet(SgLineSet* lineSet);        
     virtual void visitPreprocessed(SgPreprocessed* preprocessed);
     virtual void visitLight(SgLight* light);
+    virtual void visitFog(SgFog* fog);
     virtual void visitCamera(SgCamera* camera);
     virtual void visitOverlay(SgOverlay* overlay);
     virtual void visitOutlineGroup(SgOutlineGroup* outline);
@@ -40,6 +41,7 @@ public:
 private:
     MappingPtr property_;
 };
+
 }
 
 #endif

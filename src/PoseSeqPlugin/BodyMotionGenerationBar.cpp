@@ -299,6 +299,7 @@ public:
         lipSyncMixCheck.setChecked(archive.get("lipSyncMix", lipSyncMixCheck.isChecked()));
     }
 };
+
 }
     
 
@@ -315,6 +316,9 @@ void BodyMotionGenerationBar::initializeInstance(ExtensionManager* ext)
 
         bar->autoInterpolationUpdateCheck = mm.addCheckItem(_("Automatic Interpolation Update"));
         bar->autoInterpolationUpdateCheck->setChecked(true);
+
+        bar->autoGenerationForNewBodyCheck = mm.addCheckItem(_("Automatic Generation for a New Body"));
+        bar->autoGenerationForNewBodyCheck->setChecked(true);
 
         mm.addSeparator();
     
@@ -534,6 +538,7 @@ bool BodyMotionGenerationBar::shapeBodyMotionWithSimpleInterpolation
 
 bool BodyMotionGenerationBar::storeState(Archive& archive)
 {
+    archive.write("autoGenerationForNewBody", autoGenerationForNewBodyCheck->isChecked());
     archive.write("balancer", balancerToggle->isChecked());
     archive.write("autoGeneration", autoGenerationToggle->isChecked());
     setup->storeState(archive);
@@ -546,6 +551,7 @@ bool BodyMotionGenerationBar::storeState(Archive& archive)
 
 bool BodyMotionGenerationBar::restoreState(const Archive& archive)
 {
+    autoGenerationForNewBodyCheck->setChecked(archive.get("autoGenerationForNewBody", autoGenerationForNewBodyCheck->isChecked()));
     balancerToggle->setChecked(archive.get("balancer", balancerToggle->isChecked()));
     autoGenerationToggle->setChecked(archive.get("autoGeneration", autoGenerationToggle->isChecked()));
     setup->restoreState(archive);
@@ -571,6 +577,12 @@ bool BodyMotionGenerationBar::isBalancerEnabled() const
 bool BodyMotionGenerationBar::isAutoGenerationMode() const
 {
     return autoGenerationToggle->isChecked();
+}
+
+
+bool BodyMotionGenerationBar::isAutoGenerationForNewBodyEnabled() const
+{
+    return autoGenerationForNewBodyCheck->isChecked();
 }
 
 

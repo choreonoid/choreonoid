@@ -194,6 +194,7 @@ void BodyLinkViewImpl::setupWidgets()
     self->setLayout(baseLayout);
 
     //nameLabel.setAlignment(Qt::AlignCenter);
+    nameLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     topVBox->addWidget(&nameLabel, 0, Qt::AlignCenter);
     topVBox->addSpacing(4);
 
@@ -210,8 +211,10 @@ void BodyLinkViewImpl::setupWidgets()
     grid->addWidget(new QLabel(_("Joint ID:")), 0, 2);
     grid->addWidget(&jointIdLabel, 0, 3);
     grid->addWidget(new QLabel(_("Joint Type:")), 1, 0);
+    jointTypeLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid->addWidget(&jointTypeLabel, 1, 1, 1, 3);
     grid->addWidget(new QLabel(_("Joint Axis:")), 2, 0);
+    jointAxisLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid->addWidget(&jointAxisLabel, 2, 1, 1, 3);
     frame->setLayout(grid);
 
@@ -359,6 +362,7 @@ void BodyLinkViewImpl::setupWidgets()
     //vbox->setContentsMargins(4);
     vbox->setSpacing(4);
 
+    worldCollisionsLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     worldCollisionsLabel.setAlignment(Qt::AlignCenter);
     worldCollisionsLabel.setWordWrap(true);
     vbox->addWidget(&worldCollisionsLabel);
@@ -369,7 +373,8 @@ void BodyLinkViewImpl::setupWidgets()
     hbox->addWidget(new QLabel(_("Self-Collisions")), 0);
     hbox->addWidget(new HSeparator(), 1);
     vbox->addLayout(hbox);
-    
+
+    selfCollisionsLabel.setTextInteractionFlags(Qt::TextSelectableByMouse);
     selfCollisionsLabel.setAlignment(Qt::AlignCenter);
     selfCollisionsLabel.setWordWrap(true);
     vbox->addWidget(&selfCollisionsLabel);

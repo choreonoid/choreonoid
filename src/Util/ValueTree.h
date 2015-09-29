@@ -435,15 +435,15 @@ public:
     const char* doubleFormat() { return doubleFormat_; }
 
     ValueNode* front() const {
-        return values.front().get();
+        return values.front();
     }
 
     ValueNode* back() const {
-        return values.back().get();
+        return values.back();
     }
 
     ValueNode* at(int i) const {
-        return values[i].get();
+        return values[i];
     }
 
     /**

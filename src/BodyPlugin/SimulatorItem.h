@@ -33,7 +33,9 @@ public:
 
     BodyItem* bodyItem() const;
     Body* body() const;
-    ControllerItem* controller() const;
+
+    int numControllers() const;
+    ControllerItem* controller(int index = 0) const;
 
     /**
        Call this in the initilization when the shapes are accessed after the initialization
@@ -41,16 +43,27 @@ public:
     void cloneShapesOnce();
 
     /**
+       Called from the simulation loop thread
+    */
+    bool isActive() const;
+    void setActive(bool on);
+
+    /**
        Use this instead of Device::notiryStateChange when the state part which
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
 
+    const std::string& resultItemPrefix() const;
+    
+    virtual void initializeResultBuffers();
+    virtual void initializeResultItems();
+
     /**
        Called from the simulation loop thread.
     */
-    virtual void storeResult();
-    virtual bool flushResult();
+    virtual void bufferResults();
+    virtual void flushResults();
 
 private:
     SimulationBodyImpl* impl;
@@ -65,6 +78,8 @@ class CNOID_EXPORT SimulatorItem : public Item
 public:
     static void initializeClass(ExtensionManager* ext);
 
+    static SimulatorItem* findActiveSimulatorItemFor(Item* item);
+
     SimulatorItem();
     virtual ~SimulatorItem();
 
@@ -75,9 +90,22 @@ public:
     void pauseSimulation();
     void restartSimulation();
     bool isRunning() const;
+    bool isPausing() const;
+    bool isActive() const; ///< isRunning() && !isPausing()
+
+    //! This can only be called from the simulation thread
     int currentFrame() const;
+    
+    //! This can only be called from the simulation thread
     double currentTime() const;
 
+    //! This can be called from non simulation threads
+    int simulationFrame() const;
+
+    //! This can be called from non simulation threads
+    int simulationTime() const;
+    
+    SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };
@@ -101,22 +129,51 @@ public:
     */
     const std::vector<SimulationBody*>& simulationBodies();
 
+    SimulationBody* findSimulationBody(BodyItem* bodyItem);
+    SimulationBody* findSimulationBody(const std::string& name);
+
     /**
-       The following functions can be called from the initializeSimulation function of SubSimulatorItem.
+       \return The registration id of the function. The id can be used for removing the function.
     */
-    void addPreDynamicsFunction(boost::function<void()> func);
-    void addMidDynamicsFunction(boost::function<void()> func);
-    void addPostDynamicsFunction(boost::function<void()> func);
+    int addPreDynamicsFunction(boost::function<void()> func);
+    int addMidDynamicsFunction(boost::function<void()> func);
+    int addPostDynamicsFunction(boost::function<void()> func);
+
+    void removePreDynamicsFunction(int id);
+    void removeMidDynamicsFunction(int id);
+    void removePostDynamicsFunction(int id);
         
     //void addRecordFunction(boost::function<void()> func);
 
     SgCloneMap& sgCloneMap();
 
     /**
-       emitted from the simulation thread
+       \note This signal is emitted in the simulation thread
     */
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
+
+    /*
+    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
+    */
+
+    /**
+       @param point link local position to apply the force
+       @param f linear force to apply in global coordinate
+    */
+    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time = 0.0);
+    virtual void clearExternalForces();
+    
+    /**
+       @param attachmentPoint link local position
+       @param goal global goal position
+    */
+    virtual void setVirtualElasticString(
+        BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
+    virtual void clearVirtualElasticStrings();
+
+    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
+    virtual void clearForcedBodyPositions();
 
 protected:
     SimulatorItem(const SimulatorItem& org);

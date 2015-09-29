@@ -45,6 +45,7 @@ bool ImageWidget::isScalingEnabled() const
 
 void ImageWidget::setPixmap(const QPixmap& pixmap)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
     pixmap_ = pixmap;
     fitCenter();
     update();
@@ -53,6 +54,7 @@ void ImageWidget::setPixmap(const QPixmap& pixmap)
 
 void ImageWidget::setImage(const QImage& image)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
     pixmap_ = QPixmap::fromImage(image);
     fitCenter();
     update();
@@ -61,6 +63,7 @@ void ImageWidget::setImage(const QImage& image)
 
 void ImageWidget::setImage(const Image& image)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
     static QImage::Format componentSizeToFormat[] = {
         QImage::Format_Invalid,
         QImage::Format_Invalid, //! \todo convert a gray scale image to RGB888
@@ -82,6 +85,7 @@ void ImageWidget::setImage(const Image& image)
 
 void ImageWidget::zoom(double scale)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
     if(pixmap_.isNull())
         return;
 
@@ -100,6 +104,7 @@ void ImageWidget::zoom(double scale)
 
 void ImageWidget::translate(QPoint pos)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
     if(pixmap_.isNull())
         return;
 
@@ -115,6 +120,7 @@ void ImageWidget::translate(QPoint pos)
 
 void ImageWidget::rotate(double angle)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
 	QSize r = rect().size();
 	QTransform invT = transform_.inverted();
 	double x,y;
@@ -193,6 +199,7 @@ QSize ImageWidget::sizeHint() const
 
 void ImageWidget::resizeEvent(QResizeEvent *event)
 {
+    boost::lock_guard<boost::mutex> lock(mtx);
     if(pixmap_.isNull())
             return;
 
@@ -238,6 +245,7 @@ void ImageWidget::setTransform(const QTransform& transform)
 {
     transform_ = transform;
     settedT = true;
+    initialTransform_ = transform_;
 }
 
 
@@ -290,4 +298,48 @@ void ImageWidget::setAngle(double angle)
 {
     transform_.reset();
     rotate(angle);
+    initialTransform_ = transform_;
+}
+
+
+void ImageWidget::reset()
+{
+    boost::lock_guard<boost::mutex> lock(mtx);
+    transform_ = initialTransform_;
+    fitted = false;
+    settedT = true;
+
+    fitCenter();
+    update();
+}
+
+
+Image& ImageWidget::getImage()
+{
+    boost::lock_guard<boost::mutex> lock(mtx);
+
+    if(pixmap_.isNull()){
+        transformedImage.setSize(0,0,1);
+        return transformedImage;
+    }
+
+    QImage image(rect().size(), QImage::Format_RGB888);
+    image.fill(QColor(0,0,0));
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+    painter.setWorldTransform(transform_);
+    painter.drawPixmap(0, 0, pixmap_);
+
+    transformedImage.setSize(image.width(), image.height(), 3);
+    unsigned char* p = transformedImage.pixels();
+    for(int i=0; i<image.height(); i++){
+        for(int j=0; j<image.width(); j++){
+            QRgb rgb = image.pixel(j, i);
+            *p++ = qRed(rgb);
+            *p++ = qGreen(rgb);
+            *p++ = qBlue(rgb);
+        }
+    }
+
+    return transformedImage;
 }

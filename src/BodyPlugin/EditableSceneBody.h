@@ -57,6 +57,8 @@ public:
     const boost::dynamic_bitset<>& linkVisibilities() const;
     void setLinkVisibilities(const boost::dynamic_bitset<>& visibilities);
 
+    virtual void updateModel();
+
     virtual bool onKeyPressEvent(const SceneWidgetEvent& event);
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event);
     virtual bool onButtonPressEvent(const SceneWidgetEvent& event);

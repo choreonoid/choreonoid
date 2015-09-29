@@ -28,7 +28,6 @@ class SceneViewImpl
 public:
     SceneView* self;
     SceneWidget* sceneWidget;
-    //SceneWidgetRoot* sceneRoot;
     SgGroup* scene;
 
     struct SceneInfo {
@@ -62,6 +61,7 @@ public:
     void onDedicatedCheckToggled(bool on);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
+    void restoreDedicatedItemChecks(const Archive& archive);
 };
 }
 
@@ -306,11 +306,16 @@ bool SceneView::restoreState(const Archive& archive)
 
 bool SceneViewImpl::restoreState(const Archive& archive)
 {
-    bool result = true;
-    result &= sceneWidget->restoreState(archive);
+    bool result = sceneWidget->restoreState(archive);
+
     dedicatedCheckCheck.setChecked(archive.get("dedicatedItemTreeViewChecks", dedicatedCheckCheck.isChecked()));
-    if(dedicatedCheckCheck.isChecked()){
-        result &= itemTreeView->restoreCheckColumnState(dedicatedCheckId, archive);
-    }
+    archive.addPostProcess(boost::bind(&SceneViewImpl::restoreDedicatedItemChecks, this, boost::ref(archive)));
+    
     return result;
+}
+
+
+void SceneViewImpl::restoreDedicatedItemChecks(const Archive& archive)
+{
+    itemTreeView->restoreCheckColumnState(dedicatedCheckId, archive);
 }

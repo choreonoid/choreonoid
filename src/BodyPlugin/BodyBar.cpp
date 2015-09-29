@@ -293,7 +293,8 @@ bool BodyBar::storeState(Archive& archive)
 
 bool BodyBar::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
+    archive.addPostProcess(boost::bind(&BodyBarImpl::restoreState, impl, boost::ref(archive)));
+    return true;
 }
 
 

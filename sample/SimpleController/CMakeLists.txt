@@ -18,6 +18,8 @@ endif()
 
 add_cnoid_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
 configure_file(SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(SR1WalkPush.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(SR1WalkPush.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 configure_file(SR1Walk2D.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
@@ -36,6 +38,8 @@ configure_file(SampleCrawlerJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COP
 
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
 configure_file(TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+add_cnoid_simple_controller(TankLightController TankLightController.cpp)
+configure_file(TankJoystickLight.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1WalkGraspController SR1WalkGraspController.cpp)
 configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

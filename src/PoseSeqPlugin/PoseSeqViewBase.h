@@ -192,6 +192,9 @@ public:
     bool setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected);
     bool setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* linkInfo);
     ChildrenState updateLinkTreeModelSub(LinkTreeItem* item,  const BodyPtr& body, const Pose& pose);
+
+private:
+    void restoreCurrentPoseSeqItem(const Archive& archive);
 };
 
 }

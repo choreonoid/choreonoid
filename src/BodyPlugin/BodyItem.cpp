@@ -13,6 +13,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
+#include <cnoid/ConnectionSet>
 #include <cnoid/LazySignal>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
@@ -44,8 +45,6 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 
 BodyLoader bodyLoader;
-
-Action* linkVisibilityCheck;
 BodyState kinematicStateCopy;
 
 /// \todo move this to hrpUtil ?
@@ -57,6 +56,7 @@ bool loadBodyItem(BodyItem* item, const std::string& filename)
         if(item->name().empty()){
             item->setName(item->body()->modelName());
         }
+        item->setEditable(!item->body()->isStaticModel());
         return true;
     }
     return false;
@@ -119,8 +119,7 @@ public:
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
 
-    Connection connectionToSigLinkSelectionChanged;
-    Connection connectionToSigLinkVisibilityToggled;
+    Signal<void()> sigModelUpdated;
 
     BodyItemImpl(BodyItem* self);
     BodyItemImpl(BodyItem* self, const BodyItemImpl& org);
@@ -137,8 +136,7 @@ public:
     void updateCollisionDetectorLater();
     void appendKinematicStateToHistory();
     bool onStaticModelPropertyChanged(bool on);
-    void onLinkVisibilityCheckToggled();
-    void onLinkSelectionChanged();
+    void createSceneBody();
     void onPositionChanged();
     bool undoKinematicState();
     bool redoKinematicState();
@@ -164,13 +162,14 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     static bool initialized = false;
 
     if(!initialized){
-        ext->itemManager().registerClass<BodyItem>(N_("BodyItem"));
-        ext->itemManager().addLoader<BodyItem>(
+        ItemManager& im = ext->itemManager();
+        im.registerClass<BodyItem>(N_("BodyItem"));
+        im.addLoader<BodyItem>(
             _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", boost::bind(loadBodyItem, _1, _2));
-        ext->optionManager().addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
-        ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
 
-        linkVisibilityCheck = ext->menuManager().setPath("/Options/Scene View").addCheckItem(_("Show selected links only"));
+        OptionManager& om = ext->optionManager();
+        om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
+        om.sigOptionsParsed().connect(onSigOptionsParsed);
 
         initialized = true;
     }
@@ -268,8 +267,7 @@ BodyItem::~BodyItem()
 
 BodyItemImpl::~BodyItemImpl()
 {
-    connectionToSigLinkSelectionChanged.disconnect();
-    connectionToSigLinkVisibilityToggled.disconnect();
+
 }
 
 
@@ -349,6 +347,18 @@ void BodyItem::setName(const std::string& name)
         impl->body->setName(name);
     }
     Item::setName(name);
+}
+
+
+SignalProxy<void()> BodyItem::sigModelUpdated()
+{
+    return impl->sigModelUpdated;
+}
+
+
+void BodyItem::notifyModelUpdate()
+{
+    impl->sigModelUpdated();
 }
 
 
@@ -1048,15 +1058,16 @@ bool BodyItemImpl::onStaticModelPropertyChanged(bool on)
 EditableSceneBody* BodyItem::sceneBody()
 {
     if(!impl->sceneBody){
-        impl->sceneBody = new EditableSceneBody(this);
-        impl->sceneBody->setSceneDeviceUpdateConnection(true);
-        impl->connectionToSigLinkVisibilityToggled =
-            linkVisibilityCheck->sigToggled().connect(
-                boost::bind(&BodyItemImpl::onLinkVisibilityCheckToggled, impl));
-        impl->onLinkVisibilityCheckToggled();
+        impl->createSceneBody();
     }
-
     return impl->sceneBody;
+}
+
+
+void BodyItemImpl::createSceneBody()
+{
+    sceneBody = new EditableSceneBody(self);
+    sceneBody->setSceneDeviceUpdateConnection(true);
 }
 
 
@@ -1069,38 +1080,6 @@ SgNode* BodyItem::getScene()
 EditableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
-}
-
-
-
-void BodyItemImpl::onLinkVisibilityCheckToggled()
-{
-    LinkSelectionView* selectionView = LinkSelectionView::mainInstance();
-
-    connectionToSigLinkSelectionChanged.disconnect();
-    
-    if(linkVisibilityCheck->isChecked()){
-        if(sceneBody){
-            sceneBody->setLinkVisibilities(selectionView->getLinkSelection(self));
-        }
-        connectionToSigLinkSelectionChanged =
-            selectionView->sigSelectionChanged(self).connect(
-                boost::bind(&BodyItemImpl::onLinkSelectionChanged, this));
-    } else {
-        if(sceneBody){
-            boost::dynamic_bitset<> visibilities;
-            visibilities.resize(body->numLinks(), true);
-            sceneBody->setLinkVisibilities(visibilities);
-        }
-    }
-}
-
-
-void BodyItemImpl::onLinkSelectionChanged()
-{
-    if(sceneBody && linkVisibilityCheck->isChecked()){
-        sceneBody->setLinkVisibilities(LinkSelectionView::mainInstance()->getLinkSelection(self));
-    }
 }
 
 
