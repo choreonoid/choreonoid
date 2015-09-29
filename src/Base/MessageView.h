@@ -99,6 +99,11 @@ private:
 CNOID_EXPORT std::ostream& mvout(bool doFlush = false);
 #endif
 
+CNOID_EXPORT void showMessageBox(const std::string& message);
+CNOID_EXPORT void showMessageBox(const boost::format& message);
+CNOID_EXPORT void showMessageBox(const char* message);
+CNOID_EXPORT void showMessageBox(const QString& message);
+
 CNOID_EXPORT void showWarningDialog(const std::string& message);
 CNOID_EXPORT void showWarningDialog(const boost::format& message);
 CNOID_EXPORT void showWarningDialog(const char* message);
