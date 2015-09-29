@@ -103,7 +103,7 @@ public:
     int simulationFrame() const;
 
     //! This can be called from non simulation threads
-    int simulationTime() const;
+    double simulationTime() const;
     
     SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationFinished();

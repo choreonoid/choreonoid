@@ -470,7 +470,7 @@ void ProjectManagerImpl::onSigOptionsParsed(boost::program_options::variables_ma
 void ProjectManagerImpl::openDialogToLoadProject()
 {
     QFileDialog dialog(MainWindow::instance());
-    dialog.setWindowTitle(_("Open a choreonoid project file"));
+    dialog.setWindowTitle(_("Open a Choreonoid project file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));

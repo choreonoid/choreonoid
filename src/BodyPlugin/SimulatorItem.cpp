@@ -1945,7 +1945,7 @@ int SimulatorItem::simulationFrame() const
 }
 
 
-int SimulatorItem::simulationTime() const
+double SimulatorItem::simulationTime() const
 {
     QMutexLocker locker(&impl->resultBufMutex);
     return impl->frameAtLastBufferWriting / impl->worldFrameRate;
