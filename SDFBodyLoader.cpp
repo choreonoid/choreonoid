@@ -480,7 +480,6 @@ SgNode* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pos
         el = el->GetNextElement()) {
         if(el->GetName() == "mesh") {
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
-            SgInvariantGroup* invariant = new SgInvariantGroup;
             SgPosTransform* transform = new SgPosTransform;
             Vector3 trans;
             trans(0) = pose.pos.x;
@@ -501,8 +500,7 @@ SgNode* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pos
                 STLSceneLoader loader;
                 transform->addChild(loader.load(url));
             }
-            invariant->addChild(transform);
-            converted = invariant;
+            converted = transform;
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
             sdf::Vector3 size = el->Get<sdf::Vector3>("size");
