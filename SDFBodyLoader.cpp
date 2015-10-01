@@ -340,10 +340,10 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 jointdata->pose = joint->Get<sdf::Pose>("pose");
                 if(joint->HasElement("axis")){
                     sdf::ElementPtr axis = joint->GetElement("axis");
-                    Vector3 xyz;
-                    std::string xyzstr = axis->Get<std::string>("xyz");
-                    std::stringstream xyzstream(xyzstr);
-                    xyzstream >> jointdata->axis[0] >> jointdata->axis[1] >> jointdata->axis[2];
+                    sdf::Vector3 xyz = axis->Get<sdf::Vector3>("xyz");
+                    jointdata->axis[0] = xyz.x;
+                    jointdata->axis[1] = xyz.y;
+                    jointdata->axis[2] = xyz.z;
                     if(axis->HasElement("limit")){
                         sdf::ElementPtr limit = axis->GetElement("limit");
                         jointdata->lower = limit->Get<double>("lower");
@@ -505,11 +505,8 @@ SgNode* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pos
             converted = invariant;
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
-            std::string sizestr = el->Get<std::string>("size");
-            std::stringstream sizestream(sizestr);
-            Vector3 size;
-            sizestream >> size[0] >> size[1] >> size[2];
-            shape->setMesh(meshGenerator.generateBox(size));
+            sdf::Vector3 size = el->Get<sdf::Vector3>("size");
+            shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
             converted = shape;
         } else if(el->GetName() == "sphere"){
             SgShapePtr shape = new SgShape;
