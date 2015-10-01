@@ -502,17 +502,17 @@ SgNode* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pos
             }
             converted = transform;
         } else if(el->GetName() == "box"){
-            SgShapePtr shape = new SgShape;
+            SgShape* shape = new SgShape;
             sdf::Vector3 size = el->Get<sdf::Vector3>("size");
             shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
             converted = shape;
         } else if(el->GetName() == "sphere"){
-            SgShapePtr shape = new SgShape;
+            SgShape* shape = new SgShape;
             double radius = el->Get<double>("radius");
             shape->setMesh(meshGenerator.generateSphere(radius));
             converted = shape;
         } else if(el->GetName() == "cylinder"){
-            SgShapePtr shape = new SgShape;
+            SgShape* shape = new SgShape;
             double radius = el->Get<double>("radius");
             double length = el->Get<double>("length");
             shape->setMesh(meshGenerator.generateCylinder(radius, length));
