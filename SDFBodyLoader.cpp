@@ -123,7 +123,7 @@ public:
     ~SDFBodyLoaderImpl();
     bool load(Body* body, const std::string& filename);
     BodyPtr load(const std::string& filename);        
-    SgNode* readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose);
+    SgNodePtr readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose);
     std::vector<JointInfoPtr> findRootJoints();
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
@@ -472,15 +472,15 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
     }
 }
 
-SgNode* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose)
+SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose)
 {
-    SgNode* converted = 0;
+    SgNodePtr converted = 0;
 
     for(sdf::ElementPtr el = geometry->GetFirstElement(); el;
         el = el->GetNextElement()) {
         if(el->GetName() == "mesh") {
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
-            SgPosTransform* transform = new SgPosTransform;
+            SgPosTransformPtr transform = new SgPosTransform;
             Vector3 trans;
             trans(0) = pose.pos.x;
             trans(1) = pose.pos.y;
@@ -502,17 +502,17 @@ SgNode* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pos
             }
             converted = transform;
         } else if(el->GetName() == "box"){
-            SgShape* shape = new SgShape;
+            SgShapePtr shape = new SgShape;
             sdf::Vector3 size = el->Get<sdf::Vector3>("size");
             shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
             converted = shape;
         } else if(el->GetName() == "sphere"){
-            SgShape* shape = new SgShape;
+            SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
             shape->setMesh(meshGenerator.generateSphere(radius));
             converted = shape;
         } else if(el->GetName() == "cylinder"){
-            SgShape* shape = new SgShape;
+            SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
             double length = el->Get<double>("length");
             shape->setMesh(meshGenerator.generateCylinder(radius, length));
