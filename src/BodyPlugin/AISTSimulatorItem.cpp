@@ -17,6 +17,7 @@
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
+#include <cnoid/MessageView>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
@@ -26,6 +27,7 @@
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 // for Windows
 #undef min
@@ -35,6 +37,10 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
+const bool ENABLE_SIMULATION_PROFILING = false;
+#ifdef ENABLE_SIMULATION_PROFILING
+    ENABLE_SIMULATION_PROFILING = true;
+#endif
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 
@@ -483,7 +489,7 @@ void AISTSimulatorItemImpl::clearExternalForces()
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     if(!impl->dynamicsMode.is(KINEMATICS)){
-        impl->world.calcNextState();
+         impl->world.calcNextState();
         return true;
     }
 
@@ -534,6 +540,14 @@ void AISTSimulatorItem::finalizeSimulation()
 {
     if(ENABLE_DEBUG_OUTPUT){
         impl->os.close();
+    }
+    if(ENABLE_SIMULATION_PROFILING){
+        MessageView* mv= MessageView::mainInstance();
+        double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
+        mv->putln(format("%1% : Collision detection Tim e= %2% [s]") % name() % collisionTime);
+        mv->putln(format("%1% : Constraint force calculation time = %2% [s]") % name() % (impl->world.forceSolveTime - collisionTime));
+        mv->putln(format("%1% : Forward dynamics calculation time = %2% [s]") % name() % impl->world.forwardDynamicsTime);
+        mv->putln(format("%1% : Customizer calculation time = %2% [s]") % name() % impl->world.customizerTime);
     }
 }
 

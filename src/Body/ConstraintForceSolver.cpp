@@ -17,6 +17,7 @@
 #include <cnoid/IdPair>
 #include <cnoid/EigenUtil>
 #include <cnoid/AISTCollisionDetector>
+#include <cnoid/TimeMeasure>
 #include <boost/format.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/random.hpp>
@@ -30,6 +31,11 @@
 
 using namespace std;
 using namespace cnoid;
+
+const bool ENABLE_SIMULATION_PROFILING = false;
+#ifdef ENABLE_SIMULATION_PROFILING
+    ENABLE_SIMULATION_PROFILING = true;
+#endif
 
 // Is LCP solved by Iterative or Pivoting method ?
 // #define USE_PIVOTING_LCP
@@ -377,6 +383,9 @@ public:
     }
 
     CollisionLinkPairListPtr getCollisions();
+
+    double collisionTime;
+    TimeMeasure timer;
 };
 /*
   #ifdef _MSC_VER
@@ -597,6 +606,10 @@ void CFSImpl::initialize(void)
     numUnconverged = 0;
 
     randomAngle.engine().seed();
+
+    if(ENABLE_SIMULATION_PROFILING){
+            collisionTime = 0;
+    }
 }
 
 
@@ -709,7 +722,15 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
+    if(ENABLE_SIMULATION_PROFILING){
+        timer.begin();
+    }
+
     collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
+
+    if(ENABLE_SIMULATION_PROFILING){
+        collisionTime += timer.measure();
+    }
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
 
@@ -2320,4 +2341,9 @@ void ConstraintForceSolver::clearExternalForces()
 CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
 {
     return impl->getCollisions();
+}
+
+double ConstraintForceSolver::getCollisionTime()
+{
+    return impl->collisionTime;
 }

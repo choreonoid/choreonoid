@@ -43,6 +43,11 @@ using namespace std;
 using namespace cnoid;
 using boost::format;
 
+const bool ENABLE_SIMULATION_PROFILING = false;
+#ifdef ENABLE_SIMULATION_PROFILING
+    ENABLE_SIMULATION_PROFILING = true;
+#endif
+
 namespace {
 
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
@@ -264,6 +269,9 @@ public:
         Vector3 goal;
     };
     VirtualElasticString virtualElasticString;
+
+    double controllerTime;
+    QElapsedTimer timer;
 
     double currentTime() const;
     ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
@@ -1476,6 +1484,9 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         sigSimulationStarted();
     }
 
+    if(ENABLE_SIMULATION_PROFILING)
+        controllerTime = 0;
+
     return result;
 }
 
@@ -1673,9 +1684,11 @@ bool SimulatorItemImpl::stepSimulationMain()
         if(activeControllers.empty()){
             isControlFinished = true;
         } else {
+            if(ENABLE_SIMULATION_PROFILING) timer.start();
             for(size_t i=0; i < activeControllers.size(); ++i){
                 activeControllers[i]->input();
             }
+            if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
             {
                 boost::unique_lock<boost::mutex> lock(controlMutex);                
                 isControlRequested = true;
@@ -1683,6 +1696,7 @@ bool SimulatorItemImpl::stepSimulationMain()
             controlCondition.notify_all();
         }
     } else {
+        if(ENABLE_SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
             controller->input();
@@ -1691,6 +1705,7 @@ bool SimulatorItemImpl::stepSimulationMain()
                 controller->output();
             }
         }
+        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
     }
 
     midDynamicsFunctions.call();
@@ -1728,16 +1743,20 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
 
     if(useControllerThreads){
+        if(ENABLE_SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             activeControllers[i]->output();
         }
+        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
     } else {
+        if(ENABLE_SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
             if(!controller->isImmediateMode()){
                 controller->output(); 
             }
         }
+        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
     }
 
     return doContinue;
@@ -1763,9 +1782,11 @@ void SimulatorItemImpl::concurrentControlLoop()
         }
 
         bool doContinue = false;
+        if(ENABLE_SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             doContinue |= activeControllers[i]->control();
         }
+        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
         
         {
             boost::unique_lock<boost::mutex> lock(controlMutex);
@@ -1896,9 +1917,14 @@ void SimulatorItemImpl::onSimulationLoopStopped()
 
     clearSimulation();
     
+    if(ENABLE_SIMULATION_PROFILING){
+        mv->putln(format("%1% : Controller calculation time = %2% [s]") % self->name() % (controllerTime*1.0e-9));
+    }
+
     mv->notify(format(_("Simulation by %1% has finished at %2% [s].")) % self->name() % finishTime);
     mv->putln(format(_("Computation time is %1% [s], computation time / simulation time = %2%."))
               % actualSimulationTime % (actualSimulationTime / finishTime));
+
 }
 
 

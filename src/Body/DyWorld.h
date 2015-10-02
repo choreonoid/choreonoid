@@ -7,6 +7,7 @@
 #define CNOID_BODY_DYWORLD_H_INCLUDED
 
 #include "ForwardDynamics.h"
+#include <cnoid/TimeMeasure>
 #include <map>
 #include "exportdecl.h"
 
@@ -15,6 +16,11 @@ namespace cnoid {
 class DyLink;
 class DyBody;
 typedef ref_ptr<DyBody> DyBodyPtr;
+
+const bool ENABLE_SIMULATION_PROFILING = false;
+#ifdef ENABLE_SIMULATION_PROFILING
+    ENABLE_SIMULATION_PROFILING = true;
+#endif
 
 class CNOID_EXPORT WorldBase
 {
@@ -198,17 +204,37 @@ template <class TConstraintForceSolver> class World : public WorldBase
 public:
     TConstraintForceSolver constraintForceSolver;
 
+    double forceSolveTime;
+    double forwardDynamicsTime;
+    double customizerTime;
+    TimeMeasure timer;
+
     World() : constraintForceSolver(*this) { }
 
     virtual void initialize() {
         WorldBase::initialize();
         constraintForceSolver.initialize();
+        if(ENABLE_SIMULATION_PROFILING){
+            forceSolveTime = 0;
+            forwardDynamicsTime = 0;
+            customizerTime = 0;
+        }
     }
 
     virtual void calcNextState(){
+        if(ENABLE_SIMULATION_PROFILING)
+            timer.begin();
         WorldBase::setVirtualJointForces();
+        if(ENABLE_SIMULATION_PROFILING)
+            customizerTime += timer.measure();
+
         constraintForceSolver.solve();
+        if(ENABLE_SIMULATION_PROFILING)
+            forceSolveTime += timer.measure();
+
         WorldBase::calcNextState();
+        if(ENABLE_SIMULATION_PROFILING)
+            forwardDynamicsTime += timer.measure();
     }
 };
 
