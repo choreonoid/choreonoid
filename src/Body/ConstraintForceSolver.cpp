@@ -17,12 +17,12 @@
 #include <cnoid/IdPair>
 #include <cnoid/EigenUtil>
 #include <cnoid/AISTCollisionDetector>
+#include <cnoid/TimeMeasure>
 #include <boost/format.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/random.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
-#include <QElapsedTimer>
 #include <limits>
 
 #include <fstream>
@@ -32,7 +32,10 @@
 using namespace std;
 using namespace cnoid;
 
-const bool MEASURE_DETECT_COLLISIONS_TIME = true;
+const bool ENABLE_SIMULATION_PROFILING = false;
+#ifdef ENABLE_SIMULATION_PROFILING
+    ENABLE_SIMULATION_PROFILING = true;
+#endif
 
 // Is LCP solved by Iterative or Pivoting method ?
 // #define USE_PIVOTING_LCP
@@ -382,7 +385,7 @@ public:
     CollisionLinkPairListPtr getCollisions();
 
     double collisionTime;
-    QElapsedTimer collisionTimer;
+    TimeMeasure timer;
 };
 /*
   #ifdef _MSC_VER
@@ -604,7 +607,7 @@ void CFSImpl::initialize(void)
 
     randomAngle.engine().seed();
 
-    if(MEASURE_DETECT_COLLISIONS_TIME){
+    if(ENABLE_SIMULATION_PROFILING){
             collisionTime = 0;
     }
 }
@@ -719,14 +722,14 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
-    if(MEASURE_DETECT_COLLISIONS_TIME){
-        collisionTimer.start();
+    if(ENABLE_SIMULATION_PROFILING){
+        timer.begin();
     }
 
     collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
 
-    if(MEASURE_DETECT_COLLISIONS_TIME){
-        collisionTime += collisionTimer.nsecsElapsed();
+    if(ENABLE_SIMULATION_PROFILING){
+        collisionTime += timer.measure();
     }
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
