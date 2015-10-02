@@ -17,9 +17,10 @@ class DyLink;
 class DyBody;
 typedef ref_ptr<DyBody> DyBodyPtr;
 
-const bool ENABLE_SIMULATION_PROFILING = false;
 #ifdef ENABLE_SIMULATION_PROFILING
-    ENABLE_SIMULATION_PROFILING = true;
+const bool BODY_SIMULATION_PROFILING = true;
+#else
+const bool BODY_SIMULATION_PROFILING = false;
 #endif
 
 class CNOID_EXPORT WorldBase
@@ -214,7 +215,7 @@ public:
     virtual void initialize() {
         WorldBase::initialize();
         constraintForceSolver.initialize();
-        if(ENABLE_SIMULATION_PROFILING){
+        if(BODY_SIMULATION_PROFILING){
             forceSolveTime = 0;
             forwardDynamicsTime = 0;
             customizerTime = 0;
@@ -222,18 +223,18 @@ public:
     }
 
     virtual void calcNextState(){
-        if(ENABLE_SIMULATION_PROFILING)
+        if(BODY_SIMULATION_PROFILING)
             timer.begin();
         WorldBase::setVirtualJointForces();
-        if(ENABLE_SIMULATION_PROFILING)
+        if(BODY_SIMULATION_PROFILING)
             customizerTime += timer.measure();
 
         constraintForceSolver.solve();
-        if(ENABLE_SIMULATION_PROFILING)
+        if(BODY_SIMULATION_PROFILING)
             forceSolveTime += timer.measure();
 
         WorldBase::calcNextState();
-        if(ENABLE_SIMULATION_PROFILING)
+        if(BODY_SIMULATION_PROFILING)
             forwardDynamicsTime += timer.measure();
     }
 };

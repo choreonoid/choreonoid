@@ -12,6 +12,12 @@
 
 namespace cnoid {
 
+#ifdef ENABLE_SIMULATION_PROFILING
+const bool SIMULATION_PROFILING = true;
+#else
+const bool SIMULATION_PROFILING = false;
+#endif
+
 class Body;
 typedef ref_ptr<Body> BodyPtr;
 class Device;

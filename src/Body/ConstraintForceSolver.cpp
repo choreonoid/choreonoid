@@ -32,11 +32,6 @@
 using namespace std;
 using namespace cnoid;
 
-const bool ENABLE_SIMULATION_PROFILING = false;
-#ifdef ENABLE_SIMULATION_PROFILING
-    ENABLE_SIMULATION_PROFILING = true;
-#endif
-
 // Is LCP solved by Iterative or Pivoting method ?
 // #define USE_PIVOTING_LCP
 #ifdef USE_PIVOTING_LCP
@@ -607,7 +602,7 @@ void CFSImpl::initialize(void)
 
     randomAngle.engine().seed();
 
-    if(ENABLE_SIMULATION_PROFILING){
+    if(BODY_SIMULATION_PROFILING){
             collisionTime = 0;
     }
 }
@@ -722,13 +717,13 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
-    if(ENABLE_SIMULATION_PROFILING){
+    if(BODY_SIMULATION_PROFILING){
         timer.begin();
     }
 
     collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
 
-    if(ENABLE_SIMULATION_PROFILING){
+    if(BODY_SIMULATION_PROFILING){
         collisionTime += timer.measure();
     }
 

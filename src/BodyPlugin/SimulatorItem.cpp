@@ -43,10 +43,6 @@ using namespace std;
 using namespace cnoid;
 using boost::format;
 
-const bool ENABLE_SIMULATION_PROFILING = false;
-#ifdef ENABLE_SIMULATION_PROFILING
-    ENABLE_SIMULATION_PROFILING = true;
-#endif
 
 namespace {
 
@@ -1484,7 +1480,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         sigSimulationStarted();
     }
 
-    if(ENABLE_SIMULATION_PROFILING)
+    if(SIMULATION_PROFILING)
         controllerTime = 0;
 
     return result;
@@ -1684,11 +1680,11 @@ bool SimulatorItemImpl::stepSimulationMain()
         if(activeControllers.empty()){
             isControlFinished = true;
         } else {
-            if(ENABLE_SIMULATION_PROFILING) timer.start();
+            if(SIMULATION_PROFILING) timer.start();
             for(size_t i=0; i < activeControllers.size(); ++i){
                 activeControllers[i]->input();
             }
-            if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
+            if(SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
             {
                 boost::unique_lock<boost::mutex> lock(controlMutex);                
                 isControlRequested = true;
@@ -1696,7 +1692,7 @@ bool SimulatorItemImpl::stepSimulationMain()
             controlCondition.notify_all();
         }
     } else {
-        if(ENABLE_SIMULATION_PROFILING) timer.start();
+        if(SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
             controller->input();
@@ -1705,7 +1701,7 @@ bool SimulatorItemImpl::stepSimulationMain()
                 controller->output();
             }
         }
-        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
+        if(SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
     }
 
     midDynamicsFunctions.call();
@@ -1743,20 +1739,20 @@ bool SimulatorItemImpl::stepSimulationMain()
     }
 
     if(useControllerThreads){
-        if(ENABLE_SIMULATION_PROFILING) timer.start();
+        if(SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             activeControllers[i]->output();
         }
-        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
+        if(SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
     } else {
-        if(ENABLE_SIMULATION_PROFILING) timer.start();
+        if(SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             ControllerItem* controller = activeControllers[i];
             if(!controller->isImmediateMode()){
                 controller->output(); 
             }
         }
-        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
+        if(SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
     }
 
     return doContinue;
@@ -1782,11 +1778,11 @@ void SimulatorItemImpl::concurrentControlLoop()
         }
 
         bool doContinue = false;
-        if(ENABLE_SIMULATION_PROFILING) timer.start();
+        if(SIMULATION_PROFILING) timer.start();
         for(size_t i=0; i < activeControllers.size(); ++i){
             doContinue |= activeControllers[i]->control();
         }
-        if(ENABLE_SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
+        if(SIMULATION_PROFILING) controllerTime += timer.nsecsElapsed();
         
         {
             boost::unique_lock<boost::mutex> lock(controlMutex);
@@ -1917,7 +1913,7 @@ void SimulatorItemImpl::onSimulationLoopStopped()
 
     clearSimulation();
     
-    if(ENABLE_SIMULATION_PROFILING){
+    if(SIMULATION_PROFILING){
         mv->putln(format("%1% : Controller calculation time = %2% [s]") % self->name() % (controllerTime*1.0e-9));
     }
 

@@ -37,10 +37,6 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
-const bool ENABLE_SIMULATION_PROFILING = false;
-#ifdef ENABLE_SIMULATION_PROFILING
-    ENABLE_SIMULATION_PROFILING = true;
-#endif
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 
@@ -541,7 +537,7 @@ void AISTSimulatorItem::finalizeSimulation()
     if(ENABLE_DEBUG_OUTPUT){
         impl->os.close();
     }
-    if(ENABLE_SIMULATION_PROFILING){
+    if(SIMULATION_PROFILING){
         MessageView* mv= MessageView::mainInstance();
         double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
         mv->putln(format("%1% : Collision detection Tim e= %2% [s]") % name() % collisionTime);
