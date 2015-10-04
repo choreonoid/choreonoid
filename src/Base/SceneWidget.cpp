@@ -1403,7 +1403,7 @@ void SceneWidgetImpl::updatePointerPosition()
     updateLatestEventPath();
     
     if(!isEditMode){
-        static boost::format f(_("Glocal Position = (%.3f %.3f %.3f)"));
+        static boost::format f(_("Global Position = (%.3f %.3f %.3f)"));
         const Vector3& p = latestEvent.point();
         updateIndicator(str(f % p.x() % p.y() % p.z()));
     } else {
