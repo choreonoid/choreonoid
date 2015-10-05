@@ -19,6 +19,7 @@ set(sources
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
   SensorVisualizerItem.cpp
+  BodyTrackingCameraItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   #FilterDialogs.cpp
@@ -51,6 +52,7 @@ set(headers
   ControllerItem.h
   SimulationScriptItem.h
   SensorVisualizerItem.h
+  BodyTrackingCameraItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h
