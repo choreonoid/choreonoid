@@ -440,17 +440,28 @@ int KinematicFaultCheckerImpl::checkFaults
         if(checkCollision){
 
             Link* link = body->link(0);
-            const SE3& p = pseq->at(frame, 0);
-            link->p() = p.translation();
-            link->R() = p.rotation().toRotationMatrix();
-            
+            if(!pseq->empty())
+            {
+                const SE3& p = pseq->at(frame, 0);
+                link->p() = p.translation();
+                link->R() = p.rotation().toRotationMatrix();
+            }
+            else
+            {
+                link->p() = Vector3d(0., 0., 0.);
+                link->R() = Matrix3d::Identity();
+            }
+
             body->calcForwardKinematics();
 
             for(int i=1; i < numLinks; ++i){
                 link = body->link(i);
-                const SE3& p = pseq->at(frame, i);
-                link->p() = p.translation();
-                link->R() = p.rotation().toRotationMatrix();
+                if(!pseq->empty())
+                {
+                    const SE3& p = pseq->at(frame, i);
+                    link->p() = p.translation();
+                    link->R() = p.rotation().toRotationMatrix();
+                }
             }
 
             for(int i=0; i < numLinks; ++i){
