@@ -93,6 +93,47 @@ bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename)
 }
 
 
+bool MultiSE3Seq::loadPlainRpyFormat(const std::string& filename)
+{
+    clearSeqMessage();
+    PlainSeqFileLoader loader;
+
+    if(!loader.load(filename)){
+        addSeqMessage(loader.errorMessage());
+        return false;
+    }
+
+    int n = loader.numParts();
+    if(n != 3){
+        addSeqMessage(filename +
+                      "does not have a multiple of 3 elements (R,P,Y)");
+        return false;
+    }
+
+    setDimension(loader.numFrames(), 1);
+    setTimeStep(loader.timeStep());
+
+    int f = 0;
+    Part base = part(0);
+    for(PlainSeqFileLoader::iterator it = loader.begin(); it != loader.end(); ++it){
+        vector<double>& data = *it;
+        Frame frame = MultiSE3Seq::frame(f++);
+        SE3& x = frame[0];
+        x.translation() << 0, 0, 0;
+        double r, p, y;
+        //First element is time
+        r = data[1];
+        p = data[2];
+        y = data[3];
+        Matrix3 R = rotFromRpy(r, p, y);
+        x.rotation() = R;
+    }
+
+    return true;
+}
+
+
+
 bool MultiSE3Seq::saveTopPartAsPlainMatrixFormat(const std::string& filename)
 {
     clearSeqMessage();

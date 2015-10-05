@@ -33,6 +33,7 @@ public:
     //virtual bool loadPlainFormat(const std::string& filename);
 
     bool loadPlainMatrixFormat(const std::string& filename);
+    bool loadPlainRpyFormat(const std::string& filename);
     bool saveTopPartAsPlainMatrixFormat(const std::string& filename);
 
 protected:
