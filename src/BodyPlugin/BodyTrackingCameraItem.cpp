@@ -128,6 +128,7 @@ BodyTrackingCameraItem::BodyTrackingCameraItem(const BodyTrackingCameraItem& org
     : Item(org)
 {
     impl = new BodyTrackingCameraItemImpl();
+    setName(org.name());
 }
 
 
@@ -148,8 +149,12 @@ BodyTrackingCameraItemImpl::BodyTrackingCameraItemImpl()
 void BodyTrackingCameraItem::setName(const std::string& name)
 {
     Item::setName(name);
+    
+    SgUpdate update;
     impl->persCamera->setName(name + " (Perspective)");
+    impl->persCamera->notifyUpdate(update);
     impl->orthoCamera->setName(name + " (Orthographic)");
+    impl->orthoCamera->notifyUpdate(update);
 }
 
 
