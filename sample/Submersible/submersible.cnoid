@@ -43,6 +43,8 @@ items:
               name: "BodyTrackingCamera"
               plugin: Body
               class: BodyTrackingCameraItem
+              data: 
+                keepRelativeAttitude: true
         - 
           id: 4
           name: "Labo1"
@@ -330,28 +332,6 @@ toolbars:
     current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -386,12 +366,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 696, 2952 ]
+      sizes: [ 303, 1291 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 918, 918 ]
+          sizes: [ 379, 379 ]
           children: 
             - 
               type: pane
@@ -404,16 +384,16 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1313, 523 ]
+          sizes: [ 541, 217 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 1379, 1567 ]
+              sizes: [ 602, 683 ]
               children: 
                 - 
                   type: pane
-                  views: [ 7, 8, 5 ]
+                  views: [ 5, 7, 8 ]
                   current: 5
                 - 
                   type: pane
@@ -426,12 +406,8 @@ viewAreas:
 layoutOfToolBars: 
   rows: 
     - 
+      - { name: "CaptureBar", x: 0, priority: 1 }
       - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 2612, priority: 0 }
-      - { name: "GraphBar", x: 2878, priority: 0 }
-      - { name: "SimulationBar", x: 2988, priority: 0 }
-      - { name: "BodyBar", x: 3191, priority: 0 }
-      - { name: "KinematicsBar", x: 3459, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 3700, priority: 0 }
+      - { name: "SimulationBar", x: 95, priority: 3 }
+      - { name: "TimeBar", x: 95, priority: 2 }
+      - { name: "SceneBar", x: 1335, priority: 4 }
