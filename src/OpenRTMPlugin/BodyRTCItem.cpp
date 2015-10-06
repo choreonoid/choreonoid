@@ -506,7 +506,12 @@ void BodyRTCItem::detectRtcs()
         string rtcName = it->first;
         if( rtcName != "") {
             string rtcNamingName = rtcName + ".rtc";
-            CORBA::Object_var objRef = naming->resolve(rtcNamingName.c_str());
+            CORBA::Object_var objRef;
+            try {
+                objRef = naming->resolve(rtcNamingName.c_str());
+            } catch(const CosNaming::NamingContext::NotFound &ex) {
+
+            }
             if(CORBA::is_nil(objRef)) {
                 mv->putln(fmt(_("%1% is not found.")) % rtcName);
             } else {
@@ -549,7 +554,12 @@ void BodyRTCItem::detectRtcs()
             if(it == rtcInfoMap.end()){
                 if(!rtcRef){
                     string rtcNamingName = rtcName + ".rtc";
-                    CORBA::Object_var objRef = naming->resolve(rtcNamingName.c_str());
+                    CORBA::Object_var objRef;
+                    try {
+                        objRef = naming->resolve(rtcNamingName.c_str());
+                    } catch(const CosNaming::NamingContext::NotFound &ex) {
+
+                    }
                     if(CORBA::is_nil(objRef)){
                         mv->putln(fmt(_("%1% is not found.")) % rtcName);
                     } else {
@@ -811,7 +821,12 @@ void BodyRTCItem::setupRtcConnections()
             for(CORBA::ULong i = 0; i < len; ++i){
                 string name(naming->toString(bl[i].binding_name));
                 if(name != instanceName+".rtc" && name.find(".rtc") != string::npos){
-                    RTC::RTObject_var rtcRef = RTC::RTObject::_narrow(naming->resolve(bl[i].binding_name));
+                    RTC::RTObject_var rtcRef;
+                    try {
+                        rtcRef = RTC::RTObject::_narrow(naming->resolve(bl[i].binding_name));
+                    } catch(const CosNaming::NamingContext::NotFound &ex) {
+                        
+                    }
                     rtcRefs.push_back(rtcRef);
                 }
             }
