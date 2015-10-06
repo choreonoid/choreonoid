@@ -537,14 +537,6 @@ void AISTSimulatorItem::finalizeSimulation()
     if(ENABLE_DEBUG_OUTPUT){
         impl->os.close();
     }
-    if(SIMULATION_PROFILING){
-        MessageView* mv= MessageView::mainInstance();
-        double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
-        mv->putln(format("%1% : Collision detection Tim e= %2% [s]") % name() % collisionTime);
-        mv->putln(format("%1% : Constraint force calculation time = %2% [s]") % name() % (impl->world.forceSolveTime - collisionTime));
-        mv->putln(format("%1% : Forward dynamics calculation time = %2% [s]") % name() % impl->world.forwardDynamicsTime);
-        mv->putln(format("%1% : Customizer calculation time = %2% [s]") % name() % impl->world.customizerTime);
-    }
 }
 
 
@@ -687,3 +679,23 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     archive.read("2Dmode", is2Dmode);
     return true;
 }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+void AISTSimulatorItem::getProfilingNames(vector<string>& profilingNames)
+{
+    profilingNames.push_back("Collision detection time");
+    profilingNames.push_back("Constraint force calculation time");
+    profilingNames.push_back("Forward dynamics calculation time");
+    profilingNames.push_back("Customizer calculation time");
+}
+
+
+void AISTSimulatorItem::getProfilingTimes(vector<double>& profilingToimes)
+{
+    double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
+    profilingToimes.push_back(collisionTime);
+    profilingToimes.push_back(impl->world.forceSolveTime - collisionTime);
+    profilingToimes.push_back(impl->world.forwardDynamicsTime);
+    profilingToimes.push_back(impl->world.customizerTime);
+}
+#endif

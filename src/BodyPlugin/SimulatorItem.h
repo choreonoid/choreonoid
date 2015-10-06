@@ -223,6 +223,11 @@ protected:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
             
 private:
             

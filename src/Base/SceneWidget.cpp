@@ -673,6 +673,15 @@ void SceneWidgetImpl::paintGL()
     if(fpsTimer.isActive()){
         renderFPS();
     }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    renderer.setColor(Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+    for(int i=0; i<self->profilingNames.size(); i++){
+        if(i<self->profilingTimes.size())
+            renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 %").arg(self->profilingTimes[i],5,'f',1));
+    }
+#endif
+
 }
 
 
@@ -3083,3 +3092,4 @@ void SetupDialog::restoreState(const Archive& archive)
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
 }
+

@@ -205,37 +205,38 @@ template <class TConstraintForceSolver> class World : public WorldBase
 public:
     TConstraintForceSolver constraintForceSolver;
 
+#ifdef ENABLE_SIMULATION_PROFILING
     double forceSolveTime;
     double forwardDynamicsTime;
     double customizerTime;
     TimeMeasure timer;
+#endif
 
     World() : constraintForceSolver(*this) { }
 
     virtual void initialize() {
         WorldBase::initialize();
         constraintForceSolver.initialize();
-        if(BODY_SIMULATION_PROFILING){
-            forceSolveTime = 0;
-            forwardDynamicsTime = 0;
-            customizerTime = 0;
-        }
     }
 
     virtual void calcNextState(){
-        if(BODY_SIMULATION_PROFILING)
+#ifdef ENABLE_SIMULATION_PROFILING
             timer.begin();
+#endif
         WorldBase::setVirtualJointForces();
-        if(BODY_SIMULATION_PROFILING)
-            customizerTime += timer.measure();
-
+#ifdef ENABLE_SIMULATION_PROFILING
+        customizerTime = timer.measure();
+        timer.begin();
+#endif
         constraintForceSolver.solve();
-        if(BODY_SIMULATION_PROFILING)
-            forceSolveTime += timer.measure();
-
+#ifdef ENABLE_SIMULATION_PROFILING
+        forceSolveTime = timer.measure();
+        timer.begin();
+#endif
         WorldBase::calcNextState();
-        if(BODY_SIMULATION_PROFILING)
-            forwardDynamicsTime += timer.measure();
+#ifdef ENABLE_SIMULATION_PROFILING
+        forwardDynamicsTime = timer.measure();
+#endif
     }
 };
 
