@@ -26,12 +26,14 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     
     BodyItem* bodyItem;
     ScopedConnection connection;
-    Vector3 relativePositionFromBody;
+    Vector3 relativeTranslationFromBody;
+    Affine3 relativePositionFromBody;
     bool isSigUpdatedEmittedBySelf;
     bool isConstantRelativeAttitudeMode_;
 
     BodyTrackingCameraTransform() {
         bodyItem = 0;
+        relativeTranslationFromBody.setZero();
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
         isConstantRelativeAttitudeMode_ = false;
@@ -39,6 +41,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     
     BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org) {
         bodyItem = 0;
+        relativeTranslationFromBody.setZero();
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
         isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
@@ -47,6 +50,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, SgCloneMap& cloneMap)
         : InteractiveCameraTransform(org, cloneMap) {
         bodyItem = 0;
+        relativeTranslationFromBody.setZero();
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
         isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
@@ -89,14 +93,19 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     void updateRelativePosition(){
         if(bodyItem){
             Link* rootLink = bodyItem->body()->rootLink();
-            relativePositionFromBody = translation() - rootLink->translation();
+            relativeTranslationFromBody = translation() - rootLink->translation();
+            relativePositionFromBody = rootLink->position().inverse() * position();
         }
     }
 
     void onBodyMoved(){
         if(bodyItem){
             Link* rootLink = bodyItem->body()->rootLink();
-            setTranslation(rootLink->translation() + relativePositionFromBody);
+            if(isConstantRelativeAttitudeMode_){
+                setPosition(rootLink->position() * relativePositionFromBody);
+            } else {
+                setTranslation(rootLink->translation() + relativeTranslationFromBody);
+            }
             isSigUpdatedEmittedBySelf = true;
             notifyUpdate();
         }
