@@ -379,8 +379,11 @@ public:
 
     CollisionLinkPairListPtr getCollisions();
 
+#ifdef ENABLE_SIMULATION_PROFILING
     double collisionTime;
     TimeMeasure timer;
+#endif
+
 };
 /*
   #ifdef _MSC_VER
@@ -602,9 +605,6 @@ void CFSImpl::initialize(void)
 
     randomAngle.engine().seed();
 
-    if(BODY_SIMULATION_PROFILING){
-            collisionTime = 0;
-    }
 }
 
 
@@ -717,15 +717,15 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
-    if(BODY_SIMULATION_PROFILING){
-        timer.begin();
-    }
+#ifdef ENABLE_SIMULATION_PROFILING
+    timer.begin();
+#endif
 
     collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
 
-    if(BODY_SIMULATION_PROFILING){
-        collisionTime += timer.measure();
-    }
+#ifdef ENABLE_SIMULATION_PROFILING
+        collisionTime = timer.measure();
+#endif
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
 
@@ -2338,7 +2338,9 @@ CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
     return impl->getCollisions();
 }
 
+#ifdef ENABLE_SIMULATION_PROFILING
 double ConstraintForceSolver::getCollisionTime()
 {
     return impl->collisionTime;
 }
+#endif

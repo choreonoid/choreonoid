@@ -59,7 +59,10 @@ public:
     void clearExternalForces();
 
     CollisionLinkPairListPtr getCollisions();
+
+#ifdef ENABLE_SIMULATION_PROFILING
     double getCollisionTime();
+#endif
 };
 
 };
