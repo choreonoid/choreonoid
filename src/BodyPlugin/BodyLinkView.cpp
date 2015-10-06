@@ -284,8 +284,10 @@ void BodyLinkViewImpl::setupWidgets()
     hbox->addStretch();
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
-            grid->addWidget(&attLabels[i][j], i, j);
-            attLabels[i][j].setText("0.0");
+            QLabel* label = &attLabels[i][j];
+            label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            label->setText("0.0");
+            grid->addWidget(label, i, j);
         }
     }
     vbox->addWidget(&attMatrixBox);
