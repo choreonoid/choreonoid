@@ -28,17 +28,20 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
     ScopedConnection connection;
     Vector3 relativePositionFromBody;
     bool isSigUpdatedEmittedBySelf;
+    bool isConstantRelativeAttitudeMode_;
 
     BodyTrackingCameraTransform() {
         bodyItem = 0;
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
+        isConstantRelativeAttitudeMode_ = false;
     }
     
     BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org) {
         bodyItem = 0;
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
+        isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
     }
     
     BodyTrackingCameraTransform(const BodyTrackingCameraTransform& org, SgCloneMap& cloneMap)
@@ -46,10 +49,19 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
         bodyItem = 0;
         relativePositionFromBody.setIdentity();
         isSigUpdatedEmittedBySelf = false;
+        isConstantRelativeAttitudeMode_ = org.isConstantRelativeAttitudeMode_;
     }
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const {
         return new BodyTrackingCameraTransform(*this, cloneMap);
+    }
+
+    bool isConstantRelativeAttitudeMode() const {
+        return isConstantRelativeAttitudeMode_;
+    }
+
+    void setConstantRelativeAttitudeMode(bool on){
+        isConstantRelativeAttitudeMode_ = on;
     }
             
     void setBodyItem(BodyItem* bodyItem) {
@@ -105,6 +117,7 @@ public:
     SgPerspectiveCameraPtr persCamera;
     SgOrthographicCameraPtr orthoCamera;
     BodyTrackingCameraItemImpl();
+    bool onKeepRelativeAttitudeChanged(bool on);    
 };
 
 }
@@ -178,17 +191,28 @@ void BodyTrackingCameraItem::onPositionChanged()
 
 void BodyTrackingCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    putProperty("Keep relative attitude", impl->cameraTransform->isConstantRelativeAttitudeMode(),
+                boost::bind(&BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged, impl, _1));
+}
 
+
+bool BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged(bool on)
+{
+    cameraTransform->setConstantRelativeAttitudeMode(on);
+    return true;
 }
 
 
 bool BodyTrackingCameraItem::store(Archive& archive)
 {
+    archive.write("keepRelativeAttitude", impl->cameraTransform->isConstantRelativeAttitudeMode());    
     return true;
 }
 
 
 bool BodyTrackingCameraItem::restore(const Archive& archive)
 {
+    impl->cameraTransform->setConstantRelativeAttitudeMode(
+        archive.get("keepRelativeAttitude", false));
     return true;
 }
