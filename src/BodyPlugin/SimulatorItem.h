@@ -55,7 +55,7 @@ public:
     void setActive(bool on);
 
     /**
-       Use this instead of Device::notiryStateChange when the state part which
+       Use this instead of Device::notifyStateChange when the state part which
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
