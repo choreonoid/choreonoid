@@ -10,6 +10,7 @@
 #include "SimulationScriptItem.h"
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
+#include "WorldLogFileItem.h"
 #include "CollisionSeq.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
@@ -154,6 +155,9 @@ public:
     void onDeviceStateChanged(int deviceIndex);
     void bufferResults();
     void flushResults();
+    void flushResultsToBodyMotionItems();
+    void flushResultsToBody();
+    void flushResultsToWorldLogFile();
     void notifyResults();
 };
 
@@ -197,6 +201,8 @@ public:
     bool isControlToBeContinued;
         
     CollisionDetectorPtr collisionDetector;
+
+    WorldLogFileItemPtr worldLogFileItem;
         
     Selection recordingMode;
     bool isRecordingEnabled;
@@ -870,87 +876,104 @@ void SimulationBody::flushResults()
 void SimulationBodyImpl::flushResults()
 {
     if(simImpl->isRecordingEnabled){
-
-        if(!linkPosResults){
-            initializeResultItems();
-        }
-
-        const int ringBufferSize = simImpl->ringBufferSize;
-        const int numBufFrames = linkPosBuf.rowSize();
-
-        for(int i=0; i < numBufFrames; ++i){
-            MultiSE3Deque::Row buf = linkPosBuf.row(i);
-            if(linkPosResults->numFrames() >= ringBufferSize){
-                linkPosResults->popFrontFrame();
-            }
-            std::copy(buf.begin(), buf.end(), linkPosResults->appendFrame().begin());
-        }
-        linkPosBuf.resizeRow(0);
-            
-        if(jointPosBuf.colSize() > 0){
-            for(int i=0; i < numBufFrames; ++i){
-                Deque2D<double>::Row buf = jointPosBuf.row(i);
-                if(jointPosResults->numFrames() >= ringBufferSize){
-                    jointPosResults->popFrontFrame();
-                }
-                std::copy(buf.begin(), buf.end(), jointPosResults->appendFrame().begin());
-            }
-            jointPosBuf.resizeRow(0);
-        }
-        if(deviceStateBuf.colSize() > 0){
-            // This loop begins with the second element to skip the first element to keep the unchanged states
-            for(int i=1; i < deviceStateBuf.rowSize(); ++i){ 
-                Deque2D<DeviceStatePtr>::Row buf = deviceStateBuf.row(i);
-                if(deviceStateResults->numFrames() >= ringBufferSize){
-                    deviceStateResults->popFrontFrame();
-                }
-                std::copy(buf.begin(), buf.end(), deviceStateResults->appendFrame().begin());
-            }
-            // keep the last state so that unchanged states can be shared
-            const int numPops = (deviceStateBuf.rowSize() >= 2) ? (deviceStateBuf.rowSize() - 1) : 0;
-            deviceStateBuf.pop_front(numPops);
-        }
+        flushResultsToBodyMotionItems();
     } else {
-        Body* orgBody = bodyItem->body();
-        if(!linkPosBuf.empty()){
-            MultiSE3Deque::Row last = linkPosBuf.last();
-            const int n = last.size();
-            for(int i=0; i < n; ++i){
-                SE3& pos = last[i];
-                Link* link = orgBody->link(i);
-                link->p() = pos.translation();
-                link->R() = pos.rotation().toRotationMatrix();
-            }
-            linkPosBuf.resizeRow(0);
+        flushResultsToBody();
+    }
+    if(simImpl->worldLogFileItem){
+        flushResultsToWorldLogFile();
+    }
+
+    // clear buffers
+    linkPosBuf.resizeRow(0);
+    jointPosBuf.resizeRow(0);
+
+    // keep the last state so that unchanged states can be shared
+    const int numPops = (deviceStateBuf.rowSize() >= 2) ? (deviceStateBuf.rowSize() - 1) : 0;
+    deviceStateBuf.pop_front(numPops);
+}
+
+
+void SimulationBodyImpl::flushResultsToBodyMotionItems()
+{
+    if(!linkPosResults){
+        initializeResultItems();
+    }
+
+    const int ringBufferSize = simImpl->ringBufferSize;
+    const int numBufFrames = linkPosBuf.rowSize();
+
+    for(int i=0; i < numBufFrames; ++i){
+        MultiSE3Deque::Row buf = linkPosBuf.row(i);
+        if(linkPosResults->numFrames() >= ringBufferSize){
+            linkPosResults->popFrontFrame();
         }
-        if(!jointPosBuf.empty()){
-            Deque2D<double>::Row last = jointPosBuf.last();
-            const int n = body->numJoints();
-            for(int i=0; i < n; ++i){
-                orgBody->joint(i)->q() = last[i];
+        std::copy(buf.begin(), buf.end(), linkPosResults->appendFrame().begin());
+    }
+            
+    if(jointPosBuf.colSize() > 0){
+        for(int i=0; i < numBufFrames; ++i){
+            Deque2D<double>::Row buf = jointPosBuf.row(i);
+            if(jointPosResults->numFrames() >= ringBufferSize){
+                jointPosResults->popFrontFrame();
             }
-            jointPosBuf.resizeRow(0);
-        }
-        if(!deviceStateBuf.empty()){
-            devicesToNotifyResults.clear();
-            const DeviceList<>& devices = orgBody->devices();
-            Deque2D<DeviceStatePtr>::Row ds = deviceStateBuf.last();
-            const int ndevices = devices.size();
-            for(size_t i=0; i < ndevices; ++i){
-                const DeviceStatePtr& s = ds[i];
-                if(s != prevFlushedDeviceStateInDirectMode[i]){
-                    Device* device = devices.get(i);
-                    device->copyStateFrom(*s);
-                    prevFlushedDeviceStateInDirectMode[i] = s;
-                    devicesToNotifyResults.push_back(device);
-                }
-            }
-            // keep the last state so that unchanged states can be shared
-            const int numPops = (deviceStateBuf.rowSize() >= 2) ? (deviceStateBuf.rowSize() - 1) : 0;
-            deviceStateBuf.pop_front(numPops);
+            std::copy(buf.begin(), buf.end(), jointPosResults->appendFrame().begin());
         }
     }
-    jointPosBuf.resizeRow(0);
+    if(deviceStateBuf.colSize() > 0){
+        // This loop begins with the second element to skip the first element to keep the unchanged states
+        for(int i=1; i < deviceStateBuf.rowSize(); ++i){ 
+            Deque2D<DeviceStatePtr>::Row buf = deviceStateBuf.row(i);
+            if(deviceStateResults->numFrames() >= ringBufferSize){
+                deviceStateResults->popFrontFrame();
+            }
+            std::copy(buf.begin(), buf.end(), deviceStateResults->appendFrame().begin());
+        }
+    }
+}
+
+
+void SimulationBodyImpl::flushResultsToBody()
+{
+    Body* orgBody = bodyItem->body();
+    if(!linkPosBuf.empty()){
+        MultiSE3Deque::Row last = linkPosBuf.last();
+        const int n = last.size();
+        for(int i=0; i < n; ++i){
+            SE3& pos = last[i];
+            Link* link = orgBody->link(i);
+            link->p() = pos.translation();
+            link->R() = pos.rotation().toRotationMatrix();
+        }
+    }
+    if(!jointPosBuf.empty()){
+        Deque2D<double>::Row last = jointPosBuf.last();
+        const int n = body->numJoints();
+        for(int i=0; i < n; ++i){
+            orgBody->joint(i)->q() = last[i];
+        }
+    }
+    if(!deviceStateBuf.empty()){
+        devicesToNotifyResults.clear();
+        const DeviceList<>& devices = orgBody->devices();
+        Deque2D<DeviceStatePtr>::Row ds = deviceStateBuf.last();
+        const int ndevices = devices.size();
+        for(size_t i=0; i < ndevices; ++i){
+            const DeviceStatePtr& s = ds[i];
+            if(s != prevFlushedDeviceStateInDirectMode[i]){
+                Device* device = devices.get(i);
+                device->copyStateFrom(*s);
+                prevFlushedDeviceStateInDirectMode[i] = s;
+                devicesToNotifyResults.push_back(device);
+            }
+        }
+    }
+}
+
+
+void SimulationBodyImpl::flushResultsToWorldLogFile()
+{
+
 }
 
 
@@ -1462,6 +1485,18 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         aboutToQuitConnection.disconnect();
         aboutToQuitConnection = cnoid::sigAboutToQuit().connect(boost::bind(&SimulatorItemImpl::stopSimulation, this, true));
+
+        worldLogFileItem = 0;
+        ItemList<WorldLogFileItem> worldLogFileItems;
+        worldLogFileItems.extractChildItems(self);
+        worldLogFileItem = worldLogFileItems.toSingle(true);
+        if(worldLogFileItem->logFileName().empty()){
+            worldLogFileItem = 0;
+        }
+        if(worldLogFileItem){
+            os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
+                   % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
+        }
 
         if(isRecordingEnabled){
             fillLevelId = timeBar->startFillLevelUpdate();

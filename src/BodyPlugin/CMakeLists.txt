@@ -12,6 +12,7 @@ set(sources
   BodyMotionItem.cpp
   ZMPSeqItem.cpp
   MultiDeviceStateSeqItem.cpp
+  WorldLogFileItem.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
   ControllerItem.cpp
@@ -46,7 +47,8 @@ set(headers
   BodyItem.h
   WorldItem.h
   BodyMotionItem.h
-  MultiDeviceStateSeqItem.cpp
+  MultiDeviceStateSeqItem.h
+  WorldLogFileItem.h
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h
