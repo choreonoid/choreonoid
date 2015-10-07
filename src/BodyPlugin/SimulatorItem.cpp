@@ -980,6 +980,8 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
 
         Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
         log->outputJointValues(jointbuf.begin(), jointbuf.size());
+
+        log->endBodyStatusOutput();
     }
 }
 
@@ -1484,6 +1486,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             }
         }
 
+        updateSimBodyLists();
+
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
             controlThread = boost::thread(boost::bind(&SimulatorItemImpl::concurrentControlLoop, this));
@@ -1505,6 +1509,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             } else {
                 os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
                        % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
+
+                worldLogFileItem->clear();
+                worldLogFileItem->beginHeaderOutput();
+                for(size_t i=0; i < activeSimBodies.size(); ++i){
+                    worldLogFileItem->outputBodyHeader(activeSimBodies[i]->impl->body->name());
+                }
+                worldLogFileItem->endHeaderOutput();
             }
         }
 
@@ -2342,8 +2353,12 @@ void SimulatorItemImpl::addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem
 bool SimulatorItemImpl::setPlaybackTime(double time)
 {
     bool processed = false;
-    for(size_t i=0; i < bodyMotionEngines.size(); ++i){
-        processed |= bodyMotionEngines[i]->onTimeChanged(time);
+    if(!bodyMotionEngines.empty()){
+        for(size_t i=0; i < bodyMotionEngines.size(); ++i){
+            processed |= bodyMotionEngines[i]->onTimeChanged(time);
+        }
+    } else if(worldLogFileItem){
+        processed |= worldLogFileItem->recallStatusAtTime(time);
     }
     if(collisionSeqEngine){
         processed |= collisionSeqEngine->onTimeChanged(time);

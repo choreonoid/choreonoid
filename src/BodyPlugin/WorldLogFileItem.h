@@ -12,7 +12,6 @@
 namespace cnoid {
 
 class SE3;
-class Body;
 class WorldLogFileItemImpl;
 
 
@@ -29,24 +28,26 @@ public:
     const std::string& logFileName() const;
 
     void clear();
-    void addBodyToRecord(Body* body);
-
-    int numBodies() const;
-    const std::string& modelName(int bodyIndex) const;
-    const std::string& bodyName(int bodyIndex) const;
-
+    void beginHeaderOutput();
+    int outputBodyHeader(const std::string& name);
+    void endHeaderOutput();
     void beginFrameOutput(double time);
     void beginBodyStatusOutput();
     void outputLinkPositions(SE3* positions, int size);
     void outputJointValues(double* values, int size);
+    void endBodyStatusOutput();
     void endFrameOutput();
 
-    bool readFrame(double time);
+    int numBodies() const;
+    const std::string& bodyName(int bodyIndex) const;
+
+    bool recallStatusAtTime(double time);
 
     virtual void notifyUpdate();
 
 protected:
     virtual ItemPtr doDuplicate() const;
+    virtual void onPositionChanged();
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
