@@ -11,7 +11,10 @@
 
 namespace cnoid {
 
+class SE3;
+class Body;
 class WorldLogFileItemImpl;
+
 
 class CNOID_EXPORT WorldLogFileItem : public Item
 {
@@ -24,6 +27,21 @@ public:
 
     bool setLogFileName(const std::string& filename);
     const std::string& logFileName() const;
+
+    void clear();
+    void addBodyToRecord(Body* body);
+
+    int numBodies() const;
+    const std::string& modelName(int bodyIndex) const;
+    const std::string& bodyName(int bodyIndex) const;
+
+    void beginFrameOutput(double time);
+    void beginBodyStatusOutput();
+    void outputLinkPositions(SE3* positions, int size);
+    void outputJointValues(double* values, int size);
+    void endFrameOutput();
+
+    bool readFrame(double time);
 
     virtual void notifyUpdate();
 

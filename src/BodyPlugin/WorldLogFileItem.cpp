@@ -8,6 +8,7 @@
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <boost/bind.hpp>
+#include <fstream>
 #include "gettext.h"
 
 using namespace std;
@@ -25,11 +26,14 @@ class WorldLogFileItemImpl
 public:
     WorldLogFileItem* self;
     string filename;
+
+    fstream file;
         
     WorldLogFileItemImpl(WorldLogFileItem* self);
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
     ~WorldLogFileItemImpl();
     bool setLogFileName(const std::string& name);
+    void clear();
 };
 
 }
@@ -46,8 +50,8 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
 WorldLogFileItem::WorldLogFileItem()
 {
     impl = new WorldLogFileItemImpl(this);
-}
 
+}
 
 WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self)
     : self(self)
@@ -109,7 +113,83 @@ bool WorldLogFileItem::setLogFileName(const std::string& filename)
 bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 {
     filename = name;
+    clear();
     return true;
+}
+
+
+void WorldLogFileItem::clear()
+{
+    impl->clear();
+}
+
+
+void WorldLogFileItemImpl::clear()
+{
+    if(file.is_open()){
+        file.close();
+    }
+    file.open(filename.c_str(), ios::in | ios::out | ios::binary | ios::trunc);
+}
+
+
+void WorldLogFileItem::addBodyToRecord(Body* body)
+{
+
+}
+
+
+int WorldLogFileItem::numBodies() const
+{
+    
+}
+
+
+const std::string& WorldLogFileItem::modelName(int bodyIndex) const
+{
+
+}
+
+
+const std::string& WorldLogFileItem::bodyName(int bodyIndex) const
+{
+
+}
+
+
+void WorldLogFileItem::beginFrameOutput(double time)
+{
+
+}
+
+
+void WorldLogFileItem::beginBodyStatusOutput()
+{
+
+}
+
+
+void WorldLogFileItem::outputLinkPositions(SE3* positions, int size)
+{
+
+}
+
+
+void WorldLogFileItem::outputJointValues(double* values, int size)
+{
+
+}
+
+
+void WorldLogFileItem::endFrameOutput()
+{
+
+}
+
+
+bool WorldLogFileItem::readFrame(double time)
+{
+
 }
 
 

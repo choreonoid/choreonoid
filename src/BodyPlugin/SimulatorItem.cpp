@@ -157,7 +157,7 @@ public:
     void flushResults();
     void flushResultsToBodyMotionItems();
     void flushResultsToBody();
-    void flushResultsToWorldLogFile();
+    void flushResultsToWorldLogFile(int bufferFrame);
     void notifyResults();
 };
 
@@ -181,6 +181,7 @@ public:
     double worldFrameRate;
     double worldTimeStep;
     int frameAtLastBufferWriting;
+    int numBufferedFrames;
     Timer flushTimer;
 
     FunctionSet preDynamicsFunctions;
@@ -880,9 +881,6 @@ void SimulationBodyImpl::flushResults()
     } else {
         flushResultsToBody();
     }
-    if(simImpl->worldLogFileItem){
-        flushResultsToWorldLogFile();
-    }
 
     // clear buffers
     linkPosBuf.resizeRow(0);
@@ -971,9 +969,18 @@ void SimulationBodyImpl::flushResultsToBody()
 }
 
 
-void SimulationBodyImpl::flushResultsToWorldLogFile()
+void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
 {
+    if(bufferFrame < linkPosBuf.rowSize()){
+        WorldLogFileItem* log = simImpl->worldLogFileItem;
+        log->beginBodyStatusOutput();
 
+        MultiSE3Deque::Row posbuf = linkPosBuf.row(bufferFrame);
+        log->outputLinkPositions(posbuf.begin(), posbuf.size());
+
+        Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
+        log->outputJointValues(jointbuf.begin(), jointbuf.size());
+    }
 }
 
 
@@ -1371,6 +1378,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             }
         }
     }
+
+    numBufferedFrames = 1;
     
     if(isRecordingEnabled && recordCollisionData){
         collisionPairsBuf.clear();
@@ -1490,12 +1499,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         ItemList<WorldLogFileItem> worldLogFileItems;
         worldLogFileItems.extractChildItems(self);
         worldLogFileItem = worldLogFileItems.toSingle(true);
-        if(worldLogFileItem->logFileName().empty()){
-            worldLogFileItem = 0;
-        }
         if(worldLogFileItem){
-            os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
-                   % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
+            if(worldLogFileItem->logFileName().empty()){
+                worldLogFileItem = 0;
+            } else {
+                os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
+                       % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
+            }
         }
 
         if(isRecordingEnabled){
@@ -1763,7 +1773,8 @@ bool SimulatorItemImpl::stepSimulationMain()
 
     {
         resultBufMutex.lock();
-        
+
+        ++numBufferedFrames;
         for(size_t i=0; i < activeSimBodies.size(); ++i){
             activeSimBodies[i]->bufferResults();
         }
@@ -1835,6 +1846,16 @@ exitConcurrentControlLoop:
 void SimulatorItemImpl::flushResults()
 {
     resultBufMutex.lock();
+
+    if(worldLogFileItem){
+        for(int i=0; i < numBufferedFrames; ++i){
+            worldLogFileItem->beginFrameOutput(currentFrame * worldTimeStep);
+            for(size_t i=0; i < activeSimBodies.size(); ++i){
+                activeSimBodies[i]->impl->flushResultsToWorldLogFile(i);
+            }
+            worldLogFileItem->endFrameOutput();
+        }
+    }
     
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         activeSimBodies[i]->flushResults();
@@ -1851,6 +1872,8 @@ void SimulatorItemImpl::flushResults()
     collisionPairsBuf.clear();
 
     int frame = frameAtLastBufferWriting;
+    
+    numBufferedFrames = 0;
     
     resultBufMutex.unlock();
 
