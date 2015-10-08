@@ -56,7 +56,12 @@ public:
             int len = size - left;
             data.resize(data.size() + len);
             file.read(&data[pos], len);
-            return (file.gcount() == len);
+            if(!file.fail()){
+                return true;
+            } else {
+                file.clear();
+                return false;
+            }
         }
         return true;
     }
@@ -326,6 +331,7 @@ public:
     int prevReadFrameOffset;
     double currentReadFrameTime;
     bool isCurrentFrameDataLoaded;
+    bool isOverRange;
         
     WorldLogFileItemImpl(WorldLogFileItem* self);
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
@@ -540,6 +546,8 @@ bool WorldLogFileItemImpl::readFrameHeader(int pos)
         
 bool WorldLogFileItemImpl::seek(double time)
 {
+    isOverRange = false;
+    
     if(currentReadFrameTime == time){
         return true;
     }
@@ -548,6 +556,7 @@ bool WorldLogFileItemImpl::seek(double time)
         while(true){
             int pos = currentReadFramePos;
             if(!readFrameHeader(currentReadFramePos + frameHeaderSize + currentReadFrameDataSize)){
+                isOverRange = true;
                 return (currentReadFrameTime >= 0.0);
             }
             if(currentReadFrameTime == time){
@@ -561,6 +570,7 @@ bool WorldLogFileItemImpl::seek(double time)
     // currentReadFrameTime > time
     while(true){
         if(prevReadFrameOffset <= 0){
+            isOverRange = true;
             return (currentReadFrameTime >= 0.0);
         }
         if(!readFrameHeader(currentReadFramePos - prevReadFrameOffset)){
@@ -581,10 +591,13 @@ bool WorldLogFileItemImpl::loadCurrentFrameData()
     return isCurrentFrameDataLoaded;
 }
 
-    
+
+/**
+   @return True if the time is within the data range and the frame is correctly recalled.
+   False if the time is outside the data range or the frame cannot be recalled.
+*/
 bool WorldLogFileItem::recallStatusAtTime(double time)
 {
-    //cout << "WorldLogFileItem::recallStatusAtTime(" << time << ")" << endl;
     return impl->recallStatusAtTime(time);
 }
 
@@ -592,7 +605,6 @@ bool WorldLogFileItem::recallStatusAtTime(double time)
 bool WorldLogFileItemImpl::recallStatusAtTime(double time)
 {
     if(!seek(time)){
-        //cout << "seek returs false" << endl;
         return false;
     }
 
@@ -602,8 +614,6 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
         }
     }
     readBuf.seek(0);
-
-    //cout << "currentReadFrameTime: " << currentReadFrameTime << endl;
 
     int bodyIndex = 0;
     while(!readBuf.isEnd()){
@@ -628,8 +638,8 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
             readBuf.seekToNextBlock();
         }
     }
-    
-    return true;
+
+    return !isOverRange;
 }
 
 
