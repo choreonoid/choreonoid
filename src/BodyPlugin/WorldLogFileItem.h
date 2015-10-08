@@ -34,7 +34,7 @@ public:
     void beginFrameOutput(double time);
     void beginBodyStatusOutput();
     void outputLinkPositions(SE3* positions, int size);
-    void outputJointValues(double* values, int size);
+    void outputJointPositions(double* values, int size);
     void endBodyStatusOutput();
     void endFrameOutput();
 

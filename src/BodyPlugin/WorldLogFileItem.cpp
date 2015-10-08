@@ -23,10 +23,13 @@ using namespace cnoid;
 
 namespace {
 
-enum HeaderID {
+static const int frameHeaderSize = sizeof(int) * 2 + sizeof(float);
+
+
+enum DataTypeID {
     BODY_STATUS,
     LINK_POSITIONS,
-    JOINT_VALUES
+    JOINT_POSITIONS
 };
 
 struct NotEnoughDataException { };
@@ -86,6 +89,11 @@ public:
     }
 
     void seek(int pos = 0) { this->pos = pos; }
+
+    char readID(){
+        ensureSize(1);
+        return data[pos++];
+    }
 
     bool readBool(){
         ensureSize(1);
@@ -171,7 +179,7 @@ public:
         return data.size();
     }
 
-    void writeID(HeaderID id){
+    void writeID(DataTypeID id){
         writeOctet((char)id);
     }
 
@@ -232,6 +240,17 @@ public:
     }
 };
 
+
+ItemList<BodyItem>::iterator findItemOfName(ItemList<BodyItem>& items, const std::string& name)
+{
+    for(ItemList<BodyItem>::iterator p = items.begin(); p != items.end(); ++p){
+        if((*p)->name() == name){
+            return p;
+        }
+    }
+    return items.end();
+}
+
 }
 
 
@@ -245,22 +264,39 @@ public:
     vector<string> bodyNames;
     ItemList<BodyItem> bodyItems;
     fstream file;
-    ReadBuf readBuf;
+    
     WriteBuf writeBuf;
-
+    int lastOutputFramePos;
     stack<int> sizeHeaderStack;
+
+    ReadBuf readBuf;
+    int currentReadFramePos;
+    int currentReadFrameDataSize;
+    int prevReadFrameOffset;
+    int nextReadFraemPos;
+    double currentReadFrameTime;
+    bool isCurrentFrameDataLoaded;
         
     WorldLogFileItemImpl(WorldLogFileItem* self);
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
     ~WorldLogFileItemImpl();
     bool setLogFileName(const std::string& name);
-    void readHeaders();
     void updateBodyItems();
+    void readHeaders();
+    bool readFrameHeader(int pos);
+    bool seek(double time);
+    bool recallStatusAtTime(double time);
+    bool loadCurrentFrameData();
+    void readBodyStatuses();
+    void readBodyStatus(BodyItem* bodyItem);
+    bool readLinkPositions(Body* body);
+    bool readJointPositions(Body* body);
     void clear();
     void reserveSizeHeader();
     void fixSizeHeader();
     void flushWriteBuf();
     void endHeaderOutput();
+    void beginFrameOutput(double time);
 };
 
 }
@@ -321,6 +357,13 @@ ItemPtr WorldLogFileItem::doDuplicate() const
 }
 
 
+void WorldLogFileItem::notifyUpdate()
+{
+    impl->updateBodyItems();
+    Item::notifyUpdate();
+}
+
+
 const std::string& WorldLogFileItem::logFileName() const
 {
     return impl->filename;
@@ -341,9 +384,54 @@ bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 }
 
 
+void WorldLogFileItemImpl::updateBodyItems()
+{
+    bodyItems.clear();
+    if(!bodyNames.empty()){
+        WorldItem* worldItem = self->findOwnerItem<WorldItem>();
+        if(worldItem){
+            ItemList<BodyItem> items;
+            if(items.extractChildItems(worldItem)){
+                for(size_t i=0; i < bodyNames.size(); ++i){
+                    ItemList<BodyItem>::iterator p = findItemOfName(items, bodyNames[i]);
+                    if(p != items.end()){
+                        bodyItems.push_back(*p);
+                        items.erase(p);
+                    } else {
+                        bodyItems.push_back(0);
+                    }
+                }
+            }
+        }
+    }
+
+    // for debug
+    /*
+    cout << "Detected:\n";
+    for(size_t i=0; i < bodyItems.size(); ++i){
+        cout << " " << bodyItems[i]->name() << "\n";
+    }
+    cout.flush();
+    */
+}
+
+
+void WorldLogFileItem::onPositionChanged()
+{
+    impl->updateBodyItems();
+}
+
+
 void WorldLogFileItemImpl::readHeaders()
 {
     bodyNames.clear();
+
+    currentReadFramePos = 0;
+    currentReadFrameDataSize = 0;
+    prevReadFrameOffset = 0;
+    nextReadFraemPos = 0;
+    currentReadFrameTime = -1.0;
+    
     
     if(!file.is_open()){
         if(filesystem::exists(filename)){
@@ -358,8 +446,8 @@ void WorldLogFileItemImpl::readHeaders()
             if(readBuf.checkSize(headerSize)){
                 while(!readBuf.isEnd()){
                     bodyNames.push_back(readBuf.readString());
-                    //cout << bodyNames.back() << endl;
                 }
+                readFrameHeader(readBuf.pos);
             }
         } catch(NotEnoughDataException& ex){
             bodyNames.clear();
@@ -370,21 +458,195 @@ void WorldLogFileItemImpl::readHeaders()
 }
 
 
-void WorldLogFileItemImpl::updateBodyItems()
+bool WorldLogFileItemImpl::readFrameHeader(int pos)
 {
-    bodyItems.clear();
-    WorldItem* worldItem = self->findOwnerItem<WorldItem>();
-    if(worldItem){
-        if(bodyItems.extractChildItems(worldItem)){
+    isCurrentFrameDataLoaded = false;
+    
+    if(!file.is_open()){
+        return false;
+    }
 
+    file.seekg(pos);
+
+    if(!file.eof()){
+        return false;
+    }
+
+    readBuf.clear();
+    if(!readBuf.checkSize(sizeof(int) * 2 + sizeof(float))){
+        return false;
+    }
+    
+    currentReadFramePos = pos;
+    prevReadFrameOffset = readBuf.readInt();
+    currentReadFrameTime = readBuf.readFloat();
+    currentReadFrameDataSize = readBuf.readInt();
+}
+        
+        
+bool WorldLogFileItemImpl::seek(double time)
+{
+    if(time == currentReadFrameTime){
+        return true;
+    }
+
+    if(time > currentReadFrameTime){
+        while(true){
+            if(prevReadFrameOffset <= 0){
+                return (currentReadFrameTime >= 0.0);
+            }
+            int pos = currentReadFramePos;
+            readFrameHeader(currentReadFramePos - prevReadFrameOffset);
+            if(currentReadFramePos == time){
+                return true;
+            } else if(time < currentReadFrameTime){
+                readFrameHeader(pos);
+                return true;
+            }
+        }
+    }
+
+    if(currentReadFrameDataSize <= 0){
+        return false;
+    }
+
+    while(true){
+        if(!readFrameHeader(currentReadFramePos + frameHeaderSize + currentReadFrameDataSize)){
+            return (currentReadFrameTime >= 0.0);
+        }
+        if(time >= currentReadFrameTime){
+            return true;
         }
     }
 }
 
 
-void WorldLogFileItem::onPositionChanged()
+bool WorldLogFileItemImpl::loadCurrentFrameData()
 {
-    impl->updateBodyItems();
+    file.seekg(currentReadFramePos + frameHeaderSize);
+    readBuf.clear();
+    isCurrentFrameDataLoaded = readBuf.checkSize(currentReadFrameDataSize);
+    return isCurrentFrameDataLoaded;
+}
+
+    
+bool WorldLogFileItem::recallStatusAtTime(double time)
+{
+    return impl->recallStatusAtTime(time);
+}
+
+
+bool WorldLogFileItemImpl::recallStatusAtTime(double time)
+{
+    if(!seek(time)){
+        return false;
+    }
+
+    if(!isCurrentFrameDataLoaded){
+        if(!loadCurrentFrameData()){
+            return false;
+        }
+    }
+    readBuf.seek(0);
+
+    int bodyIndex = 0;
+    while(!readBuf.isEnd()){
+        int dataTypeID = readBuf.readID();
+        switch(dataTypeID){
+        case BODY_STATUS:
+        {
+            BodyItem* bodyItem = 0;
+            if(bodyIndex < bodyItems.size()){
+                bodyItem = bodyItems[bodyIndex];
+            }
+            if(bodyItem){
+                readBodyStatus(bodyItem);
+            } else {
+                int size = readBuf.readInt();
+                readBuf.seek(readBuf.pos + size);
+            }
+            ++bodyIndex;
+            break;
+        }
+
+        default:
+            int size = readBuf.readInt();
+            readBuf.seek(readBuf.pos + size);
+        }
+    }
+    
+    return true;
+}
+
+
+void WorldLogFileItemImpl::readBodyStatus(BodyItem* bodyItem)
+{
+    int size = readBuf.readInt();
+    int endPos = readBuf.pos + size;
+    Body* body = bodyItem->body();
+    bool updated = false;
+    
+    while(readBuf.pos < endPos){
+        int dataType = readBuf.readID();
+        switch(dataType){
+        case LINK_POSITIONS:
+            if(readLinkPositions(body)){
+                updated = true;
+            }
+            break;
+        case JOINT_POSITIONS:
+            if(readJointPositions(body)){
+                updated = true;
+            }
+            break;
+        default:
+            int size = readBuf.readInt();
+            readBuf.seek(readBuf.pos + size);
+            break;
+        }
+    }
+    if(updated){
+        bodyItem->notifyKinematicStateChange();
+    }
+}
+
+
+bool WorldLogFileItemImpl::readLinkPositions(Body* body)
+{
+    int size = readBuf.readInt();
+    int endPos = readBuf.pos + size;
+    int numLinks = readBuf.readShort();
+    int n = std::min(numLinks, body->numLinks());
+    bool result = false;
+    if(n > 0){
+        for(int i=0; i < n; ++i){
+            SE3 position = readBuf.readSE3();
+            Link* link = body->link(i);
+            link->p() = position.translation();
+            link->R() = position.rotation().toRotationMatrix();
+        }
+        result = true;
+    }
+    readBuf.seek(endPos);
+    return result;
+}
+
+
+bool WorldLogFileItemImpl::readJointPositions(Body* body)
+{
+    int size = readBuf.readInt();
+    int endPos = readBuf.pos + size;
+    int numJoints = readBuf.readShort();
+    int n = std::min(numJoints, body->numJoints());
+    bool result = false;
+    if(n > 0){
+        for(int i=0; i < n; ++i){
+            body->joint(i)->q() = readBuf.readFloat();
+        }
+        result = true;
+    }
+    readBuf.seek(endPos);
+    return result;
 }
 
 
@@ -402,6 +664,7 @@ void WorldLogFileItemImpl::clear()
     }
     file.open(filename.c_str(), ios::in | ios::out | ios::binary | ios::trunc);
     writeBuf.clear();
+    lastOutputFramePos = 0;
 }
 
 
@@ -472,8 +735,21 @@ const std::string& WorldLogFileItem::bodyName(int bodyIndex) const
 
 void WorldLogFileItem::beginFrameOutput(double time)
 {
-    impl->reserveSizeHeader();
-    impl->writeBuf.writeFloat(time);
+    impl->beginFrameOutput(time);
+}
+
+
+void WorldLogFileItemImpl::beginFrameOutput(double time)
+{
+    int pos = file.tellp();
+    if(lastOutputFramePos){
+        writeBuf.writeInt(pos - lastOutputFramePos);
+    } else {
+        writeBuf.writeInt(0);
+    }
+    lastOutputFramePos = pos;
+    reserveSizeHeader(); // area for the frame size
+    writeBuf.writeFloat(time);
 }
 
 
@@ -497,9 +773,9 @@ void WorldLogFileItem::outputLinkPositions(SE3* positions, int size)
 }
 
 
-void WorldLogFileItem::outputJointValues(double* values, int size)
+void WorldLogFileItem::outputJointPositions(double* values, int size)
 {
-    impl->writeBuf.writeID(JOINT_VALUES);
+    impl->writeBuf.writeID(JOINT_POSITIONS);
     impl->reserveSizeHeader();
     impl->writeBuf.writeShort(size);
     for(int i=0; i < size; ++i){
@@ -519,18 +795,6 @@ void WorldLogFileItem::endFrameOutput()
 {
     impl->fixSizeHeader();
     impl->flushWriteBuf();
-}
-
-
-void WorldLogFileItem::notifyUpdate()
-{
-    Item::notifyUpdate();
-}
-
-
-bool WorldLogFileItem::recallStatusAtTime(double time)
-{
-    return false;
 }
 
 

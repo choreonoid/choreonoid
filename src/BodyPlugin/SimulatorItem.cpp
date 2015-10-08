@@ -979,7 +979,7 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
         log->outputLinkPositions(posbuf.begin(), posbuf.size());
 
         Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
-        log->outputJointValues(jointbuf.begin(), jointbuf.size());
+        log->outputJointPositions(jointbuf.begin(), jointbuf.size());
 
         log->endBodyStatusOutput();
     }
@@ -1516,6 +1516,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                     worldLogFileItem->outputBodyHeader(activeSimBodies[i]->impl->body->name());
                 }
                 worldLogFileItem->endHeaderOutput();
+                worldLogFileItem->notifyUpdate();
             }
         }
 
