@@ -7,6 +7,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
+#include <cnoid/TimeSyncItemEngine>
 #include <cnoid/FileUtil>
 #include <cnoid/Archive>
 #include <boost/bind.hpp>
@@ -23,8 +24,11 @@ using namespace cnoid;
 
 namespace {
 
-static const int frameHeaderSize = sizeof(int) * 2 + sizeof(float);
-
+static const int frameHeaderSize =
+      sizeof(int)   // offset to the prev frame
+    + sizeof(float) // time
+    + sizeof(int)   // data size
+    ;
 
 enum DataTypeID {
     BODY_STATUS,
@@ -63,6 +67,16 @@ public:
         }
     }
 
+    void seekToNextBlock(){
+        int size = readSeekOffset();
+        seek(pos + size);
+    }
+
+    int readNextBlockPos(){
+        int size = readSeekOffset();
+        return pos + size;
+    }
+
     char* buf() {
         return &data.front();
     }
@@ -85,7 +99,7 @@ public:
     }
 
     bool isEnd() {
-        return (pos == data.size());
+        return (pos >= data.size());
     }
 
     void seek(int pos = 0) { this->pos = pos; }
@@ -121,6 +135,10 @@ public:
         unsigned char d3 = data[pos++];
         int value = d0 + (d1 << 8) + (d2 << 16) + (d3 << 24);
         return value;
+    }
+
+    int readSeekOffset(){
+        return readInt();
     }
 
     float readFloat(){
@@ -209,6 +227,18 @@ public:
         data[pos++] = (value >> 16) & 0xff;
         data[pos++] = (value >> 24) & 0xff;
     }
+
+    void writeSeekPos(int pos){
+        writeInt(pos);
+    }
+
+    void writeSeekOffset(int offset){
+        writeInt(offset);
+    }
+
+    void writeSeekOffset(int pos, int offset){
+        writeInt(pos, offset);
+    }
     
     void writeFloat(float value){
         char* p = (char*)&value;
@@ -251,8 +281,29 @@ ItemList<BodyItem>::iterator findItemOfName(ItemList<BodyItem>& items, const std
     return items.end();
 }
 
+
+class WorldLogFileEngine : public TimeSyncItemEngine
+{
+public:
+    WorldLogFileItemPtr logItem;
+    WorldLogFileEngine(WorldLogFileItem* item){
+        logItem = item;
+    }
+    virtual bool onTimeChanged(double time) {
+        return logItem->recallStatusAtTime(time);
+    }
+};
+
+
+TimeSyncItemEngine* createWorldLogFileEngine(Item* sourceItem)
+{
+    if(WorldLogFileItem* logItem = dynamic_cast<WorldLogFileItem*>(sourceItem)){
+        return new WorldLogFileEngine(logItem);
+    }
+    return 0;
 }
 
+}
 
 namespace cnoid {
 
@@ -273,7 +324,6 @@ public:
     int currentReadFramePos;
     int currentReadFrameDataSize;
     int prevReadFrameOffset;
-    int nextReadFraemPos;
     double currentReadFrameTime;
     bool isCurrentFrameDataLoaded;
         
@@ -282,15 +332,15 @@ public:
     ~WorldLogFileItemImpl();
     bool setLogFileName(const std::string& name);
     void updateBodyItems();
-    void readHeaders();
+    void readTopHeader();
     bool readFrameHeader(int pos);
     bool seek(double time);
     bool recallStatusAtTime(double time);
     bool loadCurrentFrameData();
     void readBodyStatuses();
     void readBodyStatus(BodyItem* bodyItem);
-    bool readLinkPositions(Body* body);
-    bool readJointPositions(Body* body);
+    int readLinkPositions(Body* body);
+    int readJointPositions(Body* body);
     void clear();
     void reserveSizeHeader();
     void fixSizeHeader();
@@ -307,6 +357,8 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     ItemManager& im = ext->itemManager();
     im.registerClass<WorldLogFileItem>(N_("WorldLogFileItem"));
     im.addCreationPanel<WorldLogFileItem>();
+
+    ext->timeSyncItemEngineManger().addEngineFactory(createWorldLogFileEngine);    
 }
 
 
@@ -379,7 +431,7 @@ bool WorldLogFileItem::setLogFileName(const std::string& filename)
 bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 {
     filename = name;
-    readHeaders();
+    readTopHeader();
     return true;
 }
 
@@ -422,16 +474,14 @@ void WorldLogFileItem::onPositionChanged()
 }
 
 
-void WorldLogFileItemImpl::readHeaders()
+void WorldLogFileItemImpl::readTopHeader()
 {
     bodyNames.clear();
 
     currentReadFramePos = 0;
     currentReadFrameDataSize = 0;
     prevReadFrameOffset = 0;
-    nextReadFraemPos = 0;
     currentReadFrameTime = -1.0;
-    
     
     if(!file.is_open()){
         if(filesystem::exists(filename)){
@@ -442,7 +492,7 @@ void WorldLogFileItemImpl::readHeaders()
         file.seekg(0);
         readBuf.clear();
         try {
-            int headerSize = readBuf.readInt();
+            int headerSize = readBuf.readSeekOffset();
             if(readBuf.checkSize(headerSize)){
                 while(!readBuf.isEnd()){
                     bodyNames.push_back(readBuf.readString());
@@ -468,53 +518,55 @@ bool WorldLogFileItemImpl::readFrameHeader(int pos)
 
     file.seekg(pos);
 
-    if(!file.eof()){
+    if(file.eof()){
+        file.seekg(currentReadFramePos);
         return false;
     }
 
     readBuf.clear();
-    if(!readBuf.checkSize(sizeof(int) * 2 + sizeof(float))){
+    if(!readBuf.checkSize(frameHeaderSize)){
+        file.seekg(currentReadFramePos);
         return false;
     }
     
     currentReadFramePos = pos;
-    prevReadFrameOffset = readBuf.readInt();
+    prevReadFrameOffset = readBuf.readSeekOffset();
     currentReadFrameTime = readBuf.readFloat();
-    currentReadFrameDataSize = readBuf.readInt();
+    currentReadFrameDataSize = readBuf.readSeekOffset();
+
+    return true;
 }
         
         
 bool WorldLogFileItemImpl::seek(double time)
 {
-    if(time == currentReadFrameTime){
+    if(currentReadFrameTime == time){
         return true;
     }
 
-    if(time > currentReadFrameTime){
+    if(currentReadFrameTime < time){
         while(true){
-            if(prevReadFrameOffset <= 0){
+            int pos = currentReadFramePos;
+            if(!readFrameHeader(currentReadFramePos + frameHeaderSize + currentReadFrameDataSize)){
                 return (currentReadFrameTime >= 0.0);
             }
-            int pos = currentReadFramePos;
-            readFrameHeader(currentReadFramePos - prevReadFrameOffset);
-            if(currentReadFramePos == time){
+            if(currentReadFrameTime == time){
                 return true;
-            } else if(time < currentReadFrameTime){
-                readFrameHeader(pos);
-                return true;
+            } else if(currentReadFrameTime > time){
+                return readFrameHeader(pos);
             }
         }
     }
 
-    if(currentReadFrameDataSize <= 0){
-        return false;
-    }
-
+    // currentReadFrameTime > time
     while(true){
-        if(!readFrameHeader(currentReadFramePos + frameHeaderSize + currentReadFrameDataSize)){
+        if(prevReadFrameOffset <= 0){
             return (currentReadFrameTime >= 0.0);
         }
-        if(time >= currentReadFrameTime){
+        if(!readFrameHeader(currentReadFramePos - prevReadFrameOffset)){
+            return false;
+        }
+        if(currentReadFrameTime <= time){
             return true;
         }
     }
@@ -532,6 +584,7 @@ bool WorldLogFileItemImpl::loadCurrentFrameData()
     
 bool WorldLogFileItem::recallStatusAtTime(double time)
 {
+    //cout << "WorldLogFileItem::recallStatusAtTime(" << time << ")" << endl;
     return impl->recallStatusAtTime(time);
 }
 
@@ -539,6 +592,7 @@ bool WorldLogFileItem::recallStatusAtTime(double time)
 bool WorldLogFileItemImpl::recallStatusAtTime(double time)
 {
     if(!seek(time)){
+        //cout << "seek returs false" << endl;
         return false;
     }
 
@@ -548,6 +602,8 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
         }
     }
     readBuf.seek(0);
+
+    //cout << "currentReadFrameTime: " << currentReadFrameTime << endl;
 
     int bodyIndex = 0;
     while(!readBuf.isEnd()){
@@ -562,16 +618,14 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
             if(bodyItem){
                 readBodyStatus(bodyItem);
             } else {
-                int size = readBuf.readInt();
-                readBuf.seek(readBuf.pos + size);
+                readBuf.seekToNextBlock();
             }
             ++bodyIndex;
             break;
         }
 
         default:
-            int size = readBuf.readInt();
-            readBuf.seek(readBuf.pos + size);
+            readBuf.seekToNextBlock();
         }
     }
     
@@ -581,17 +635,22 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
 
 void WorldLogFileItemImpl::readBodyStatus(BodyItem* bodyItem)
 {
-    int size = readBuf.readInt();
-    int endPos = readBuf.pos + size;
+    int endPos = readBuf.readNextBlockPos();
     Body* body = bodyItem->body();
     bool updated = false;
+    bool doForwardKinematics = true;
+    int numLinks;
     
     while(readBuf.pos < endPos){
         int dataType = readBuf.readID();
         switch(dataType){
         case LINK_POSITIONS:
-            if(readLinkPositions(body)){
+            numLinks = readLinkPositions(body);
+            if(numLinks > 0){
                 updated = true;
+                if(numLinks > 1){
+                    doForwardKinematics = false;
+                }
             }
             break;
         case JOINT_POSITIONS:
@@ -600,53 +659,42 @@ void WorldLogFileItemImpl::readBodyStatus(BodyItem* bodyItem)
             }
             break;
         default:
-            int size = readBuf.readInt();
-            readBuf.seek(readBuf.pos + size);
+            readBuf.seekToNextBlock();
             break;
         }
     }
     if(updated){
-        bodyItem->notifyKinematicStateChange();
+        bodyItem->notifyKinematicStateChange(doForwardKinematics);
     }
 }
 
 
-bool WorldLogFileItemImpl::readLinkPositions(Body* body)
+int WorldLogFileItemImpl::readLinkPositions(Body* body)
 {
-    int size = readBuf.readInt();
-    int endPos = readBuf.pos + size;
-    int numLinks = readBuf.readShort();
-    int n = std::min(numLinks, body->numLinks());
-    bool result = false;
-    if(n > 0){
-        for(int i=0; i < n; ++i){
-            SE3 position = readBuf.readSE3();
-            Link* link = body->link(i);
-            link->p() = position.translation();
-            link->R() = position.rotation().toRotationMatrix();
-        }
-        result = true;
+    int endPos = readBuf.readNextBlockPos();
+    int size = readBuf.readShort();
+    int n = std::min(size, body->numLinks());
+    for(int i=0; i < n; ++i){
+        SE3 position = readBuf.readSE3();
+        Link* link = body->link(i);
+        link->p() = position.translation();
+        link->R() = position.rotation().toRotationMatrix();
     }
     readBuf.seek(endPos);
-    return result;
+    return n;
 }
 
 
-bool WorldLogFileItemImpl::readJointPositions(Body* body)
+int WorldLogFileItemImpl::readJointPositions(Body* body)
 {
-    int size = readBuf.readInt();
-    int endPos = readBuf.pos + size;
-    int numJoints = readBuf.readShort();
-    int n = std::min(numJoints, body->numJoints());
-    bool result = false;
-    if(n > 0){
-        for(int i=0; i < n; ++i){
-            body->joint(i)->q() = readBuf.readFloat();
-        }
-        result = true;
+    int endPos = readBuf.readNextBlockPos();
+    int size = readBuf.readShort();
+    int n = std::min(size, body->numAllJoints());
+    for(int i=0; i < n; ++i){
+        body->joint(i)->q() = readBuf.readFloat();
     }
     readBuf.seek(endPos);
-    return result;
+    return n;
 }
 
 
@@ -671,14 +719,14 @@ void WorldLogFileItemImpl::clear()
 void WorldLogFileItemImpl::reserveSizeHeader()
 {
     sizeHeaderStack.push(writeBuf.size());
-    writeBuf.writeInt(0);
+    writeBuf.writeSeekOffset(0);
 }
 
 
 void WorldLogFileItemImpl::fixSizeHeader()
 {
     if(!sizeHeaderStack.empty()){
-        writeBuf.writeInt(sizeHeaderStack.top(), writeBuf.size() - (sizeHeaderStack.top() + sizeof(int)));
+        writeBuf.writeSeekOffset(sizeHeaderStack.top(), writeBuf.size() - (sizeHeaderStack.top() + sizeof(int)));
         sizeHeaderStack.pop();
     }
 }
@@ -743,13 +791,13 @@ void WorldLogFileItemImpl::beginFrameOutput(double time)
 {
     int pos = file.tellp();
     if(lastOutputFramePos){
-        writeBuf.writeInt(pos - lastOutputFramePos);
+        writeBuf.writeSeekOffset(pos - lastOutputFramePos);
     } else {
-        writeBuf.writeInt(0);
+        writeBuf.writeSeekOffset(0);
     }
     lastOutputFramePos = pos;
-    reserveSizeHeader(); // area for the frame size
     writeBuf.writeFloat(time);
+    reserveSizeHeader(); // area for the frame data size
 }
 
 
@@ -757,7 +805,6 @@ void WorldLogFileItem::beginBodyStatusOutput()
 {
     impl->writeBuf.writeID(BODY_STATUS);
     impl->reserveSizeHeader();
-    impl->writeBuf.writeShort(numBodies());
 }
 
 

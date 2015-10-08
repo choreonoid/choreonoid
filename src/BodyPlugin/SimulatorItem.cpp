@@ -1860,12 +1860,15 @@ void SimulatorItemImpl::flushResults()
     resultBufMutex.lock();
 
     if(worldLogFileItem){
-        for(int i=0; i < numBufferedFrames; ++i){
-            worldLogFileItem->beginFrameOutput(currentFrame * worldTimeStep);
-            for(size_t i=0; i < activeSimBodies.size(); ++i){
-                activeSimBodies[i]->impl->flushResultsToWorldLogFile(i);
+        if(numBufferedFrames > 0){
+            int firstFrame = frameAtLastBufferWriting - (numBufferedFrames - 1);
+            for(int bufFrame = 0; bufFrame < numBufferedFrames; ++bufFrame){
+                worldLogFileItem->beginFrameOutput((firstFrame + bufFrame) * worldTimeStep);
+                for(size_t i=0; i < activeSimBodies.size(); ++i){
+                    activeSimBodies[i]->impl->flushResultsToWorldLogFile(bufFrame);
+                }
+                worldLogFileItem->endFrameOutput();
             }
-            worldLogFileItem->endFrameOutput();
         }
     }
     
