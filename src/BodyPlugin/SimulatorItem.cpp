@@ -32,6 +32,7 @@
 #include <boost/bind.hpp>
 
 #ifdef ENABLE_SIMULATION_PROFILING
+#include <cnoid/ViewManager>
 #include <cnoid/SceneView>
 #include <cnoid/SceneWidget>
 #endif
@@ -276,6 +277,7 @@ public:
     QElapsedTimer timer;
     Deque2D<double> simProfilingBuf;
     MultiValueSeq simProfilingSeq;
+    SceneWidget* sw;
 #endif
 
     double currentTime() const;
@@ -1485,7 +1487,10 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         self->getProfilingNames(profilingNames);
         profilingNames.push_back("Controller calculation time");
         int n = profilingNames.size();
-        SceneWidget* sw = SceneView::instance()->sceneWidget();
+        SceneView* view = ViewManager::findView<SceneView>("Simulation Scene");
+        if(!view)
+            view = SceneView::instance();
+        sw = view->sceneWidget();
         sw->profilingNames.resize(n);
         copy(profilingNames.begin(), profilingNames.end(), sw->profilingNames.begin());
         simProfilingBuf.resizeColumn(n);
@@ -2380,7 +2385,6 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
         const int frame = simProfilingSeq.frameOfTime(time);
         const int clampedFrame = simProfilingSeq.clampFrameIndex(frame);
         const MultiValueSeq::Frame profilingTimes = simProfilingSeq.frame(clampedFrame);
-        SceneWidget* sw = SceneView::instance()->sceneWidget();
         sw->profilingTimes.clear();
         for(int i=0; i<profilingTimes.size(); i++)
             sw->profilingTimes.push_back(profilingTimes[i]);
