@@ -203,8 +203,6 @@ public:
         
     CollisionDetectorPtr collisionDetector;
 
-    WorldLogFileItemPtr worldLogFileItem;
-        
     Selection recordingMode;
     bool isRecordingEnabled;
     bool isRingBufferMode;
@@ -221,6 +219,11 @@ public:
     bool hasActiveFreeBodies;
     bool recordCollisionData;
 
+    WorldLogFileItemPtr worldLogFileItem;
+    int nextLogFrame;
+    double nextLogTime;
+    double logTimeStep;
+    
     Selection timeRangeMode;
     double specifiedTimeLength;
     int maxFrame;
@@ -1517,6 +1520,13 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 }
                 worldLogFileItem->endHeaderOutput();
                 worldLogFileItem->notifyUpdate();
+                nextLogFrame = 0;
+                nextLogTime = 0.0;
+                double r = worldLogFileItem->recordingFrameRate();
+                if(r == 0.0){
+                    r = worldFrameRate;
+                }
+                logTimeStep = 1.0 / r;
             }
         }
 
@@ -1863,11 +1873,15 @@ void SimulatorItemImpl::flushResults()
         if(numBufferedFrames > 0){
             int firstFrame = frameAtLastBufferWriting - (numBufferedFrames - 1);
             for(int bufFrame = 0; bufFrame < numBufferedFrames; ++bufFrame){
-                worldLogFileItem->beginFrameOutput((firstFrame + bufFrame) * worldTimeStep);
-                for(size_t i=0; i < activeSimBodies.size(); ++i){
-                    activeSimBodies[i]->impl->flushResultsToWorldLogFile(bufFrame);
+                double time = (firstFrame + bufFrame) * worldTimeStep;
+                while(time >= nextLogTime){
+                    worldLogFileItem->beginFrameOutput(time);
+                    for(size_t i=0; i < activeSimBodies.size(); ++i){
+                        activeSimBodies[i]->impl->flushResultsToWorldLogFile(bufFrame);
+                    }
+                    worldLogFileItem->endFrameOutput();
+                    nextLogTime = ++nextLogFrame * logTimeStep;
                 }
-                worldLogFileItem->endFrameOutput();
             }
         }
     }

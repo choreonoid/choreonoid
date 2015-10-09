@@ -27,6 +27,8 @@ public:
     bool setLogFileName(const std::string& filename);
     const std::string& logFileName() const;
 
+    double recordingFrameRate() const;
+
     void clear();
     void beginHeaderOutput();
     int outputBodyHeader(const std::string& name);

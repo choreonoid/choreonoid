@@ -314,7 +314,6 @@ bool loadWorldLogFile(WorldLogFileItem* item, const std::string& filename, std::
     return item->setLogFileName(filename);
 }
 
-
 }
 
 namespace cnoid {
@@ -324,6 +323,7 @@ class WorldLogFileItemImpl
 public:
     WorldLogFileItem* self;
     string filename;
+    bool isTimeStampSuffixEnabled;
     vector<string> bodyNames;
     ItemList<BodyItem> bodyItems;
     
@@ -331,6 +331,7 @@ public:
     WriteBuf writeBuf;
     int lastOutputFramePos;
     stack<int> sizeHeaderStack;
+    double recordingFrameRate;
 
     ifstream ifs;
     ReadBuf readBuf;
@@ -381,14 +382,15 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
 WorldLogFileItem::WorldLogFileItem()
 {
     impl = new WorldLogFileItemImpl(this);
-
 }
+
 
 WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self)
     : self(self),
       readBuf(ifs)
 {
-
+    isTimeStampSuffixEnabled = false;
+    recordingFrameRate = 0.0;
 }
 
 
@@ -404,6 +406,8 @@ WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileI
       readBuf(ifs)
 {
     filename = org.filename;
+    isTimeStampSuffixEnabled = org.isTimeStampSuffixEnabled;
+    recordingFrameRate = org.recordingFrameRate;
 }
 
 
@@ -451,6 +455,12 @@ bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
         return readTopHeader();
     }
     return true;
+}
+
+
+double WorldLogFileItem::recordingFrameRate() const
+{
+    return impl->recordingFrameRate;
 }
 
 
@@ -872,12 +882,18 @@ void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Log file"), impl->filename,
                 boost::bind(&WorldLogFileItemImpl::setLogFileName, impl, _1));
+    putProperty(_("Time-stamp suffix"), impl->isTimeStampSuffixEnabled,
+                changeProperty(impl->isTimeStampSuffixEnabled));
+    putProperty(_("Recording frame rate"), impl->recordingFrameRate,
+                changeProperty(impl->recordingFrameRate));
 }
 
 
 bool WorldLogFileItem::store(Archive& archive)
 {
     archive.writeRelocatablePath("filename", impl->filename);
+    archive.write("timeStampSuffix", impl->isTimeStampSuffixEnabled);
+    archive.write("recordingFrameRate", impl->recordingFrameRate);
     return true;
 }
 
@@ -885,6 +901,8 @@ bool WorldLogFileItem::store(Archive& archive)
 bool WorldLogFileItem::restore(const Archive& archive)
 {
     string filename;
+    archive.read("timeStampSuffix", impl->isTimeStampSuffixEnabled);
+    archive.read("recordingFrameRate", impl->recordingFrameRate);
     if(archive.read("filename", filename)){
         impl->setLogFileName(archive.expandPathVariables(filename));
     }
