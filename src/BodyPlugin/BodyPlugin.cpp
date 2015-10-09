@@ -5,6 +5,7 @@
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "WorldItem.h"
+#include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
 #include "SimulatorItem.h"
@@ -55,6 +56,7 @@ public:
         BodyItem::initializeClass(this);
         BodyMotionItem::initializeClass(this);
         WorldItem::initializeClass(this);
+        WorldLogFileItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
