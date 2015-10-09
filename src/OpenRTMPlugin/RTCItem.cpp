@@ -165,7 +165,7 @@ bool RTCItem::store(Archive& archive)
     if(!Item::store(archive)){
         return false;
     }
-    archive.writeRelocatablePath("moduleName", moduleName);
+    archive.writePath("moduleName", moduleName);
     archive.write("periodicType", periodicType.selectedSymbol());
     archive.write("periodicRate", periodicRate);
     return true;
