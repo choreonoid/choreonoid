@@ -455,7 +455,7 @@ bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 {
     if(name != filename){
         filename = name;
-        return readTopHeader();
+        readTopHeader();
     }
     return true;
 }
@@ -919,7 +919,7 @@ void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool WorldLogFileItem::store(Archive& archive)
 {
-    archive.writeRelocatablePath("filename", impl->filename);
+    archive.write("filename", impl->filename);
     archive.write("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.write("recordingFrameRate", impl->recordingFrameRate);
     return true;
