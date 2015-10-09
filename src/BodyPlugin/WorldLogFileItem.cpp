@@ -42,11 +42,11 @@ class ReadBuf
 {
 public:
     vector<char> data;
-    fstream& file;
+    ifstream& ifs;
     int pos;
 
-    ReadBuf(fstream& file)
-        : file(file) {
+    ReadBuf(ifstream& ifs)
+        : ifs(ifs) {
         pos = 0;
     }
 
@@ -55,11 +55,11 @@ public:
         if(left < size){
             int len = size - left;
             data.resize(data.size() + len);
-            file.read(&data[pos], len);
-            if(!file.fail()){
+            ifs.read(&data[pos], len);
+            if(!ifs.fail()){
                 return true;
             } else {
-                file.clear();
+                ifs.clear();
                 return false;
             }
         }
@@ -319,12 +319,13 @@ public:
     string filename;
     vector<string> bodyNames;
     ItemList<BodyItem> bodyItems;
-    fstream file;
     
+    ofstream ofs;
     WriteBuf writeBuf;
     int lastOutputFramePos;
     stack<int> sizeHeaderStack;
 
+    ifstream ifs;
     ReadBuf readBuf;
     int currentReadFramePos;
     int currentReadFrameDataSize;
@@ -376,7 +377,7 @@ WorldLogFileItem::WorldLogFileItem()
 
 WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self)
     : self(self),
-      readBuf(file)
+      readBuf(ifs)
 {
 
 }
@@ -391,7 +392,7 @@ WorldLogFileItem::WorldLogFileItem(const WorldLogFileItem& org)
 
 WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org)
     : self(self),
-      readBuf(file)
+      readBuf(ifs)
 {
     filename = org.filename;
 }
@@ -436,8 +437,10 @@ bool WorldLogFileItem::setLogFileName(const std::string& filename)
 
 bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 {
-    filename = name;
-    readTopHeader();
+    if(name != filename){
+        filename = name;
+        readTopHeader();
+    }
     return true;
 }
 
@@ -462,15 +465,6 @@ void WorldLogFileItemImpl::updateBodyItems()
             }
         }
     }
-
-    // for debug
-    /*
-    cout << "Detected:\n";
-    for(size_t i=0; i < bodyItems.size(); ++i){
-        cout << " " << bodyItems[i]->name() << "\n";
-    }
-    cout.flush();
-    */
 }
 
 
@@ -489,24 +483,26 @@ void WorldLogFileItemImpl::readTopHeader()
     prevReadFrameOffset = 0;
     currentReadFrameTime = -1.0;
     
-    if(!file.is_open()){
-        if(filesystem::exists(filename)){
-            file.open(filename.c_str(), ios::in | ios::out | ios::binary);
-        }
+    if(ifs.is_open()){
+        ifs.close();
     }
-    if(file.is_open()){
-        file.seekg(0);
-        readBuf.clear();
-        try {
-            int headerSize = readBuf.readSeekOffset();
-            if(readBuf.checkSize(headerSize)){
-                while(!readBuf.isEnd()){
-                    bodyNames.push_back(readBuf.readString());
+    if(filesystem::exists(filename)){
+        ifs.open(filename.c_str(), ios::in | ios::binary);
+        if(ifs.is_open()){
+            readBuf.clear();
+            try {
+                int headerSize = readBuf.readSeekOffset();
+                if(readBuf.checkSize(headerSize)){
+                    while(!readBuf.isEnd()){
+                        bodyNames.push_back(readBuf.readString());
+                        cout << bodyNames.back() << endl;
+                    }
+                    currentReadFramePos = readBuf.pos;
+                    readFrameHeader(readBuf.pos);
                 }
-                readFrameHeader(readBuf.pos);
+            } catch(NotEnoughDataException& ex){
+                bodyNames.clear();
             }
-        } catch(NotEnoughDataException& ex){
-            bodyNames.clear();
         }
     }
 
@@ -518,20 +514,20 @@ bool WorldLogFileItemImpl::readFrameHeader(int pos)
 {
     isCurrentFrameDataLoaded = false;
     
-    if(!file.is_open()){
+    if(!ifs.is_open()){
         return false;
     }
 
-    file.seekg(pos);
+    ifs.seekg(pos);
 
-    if(file.eof()){
-        file.seekg(currentReadFramePos);
+    if(ifs.eof()){
+        ifs.seekg(currentReadFramePos);
         return false;
     }
 
     readBuf.clear();
     if(!readBuf.checkSize(frameHeaderSize)){
-        file.seekg(currentReadFramePos);
+        ifs.seekg(currentReadFramePos);
         return false;
     }
     
@@ -547,6 +543,10 @@ bool WorldLogFileItemImpl::readFrameHeader(int pos)
 bool WorldLogFileItemImpl::seek(double time)
 {
     isOverRange = false;
+
+    if(!readFrameHeader(currentReadFramePos)){
+        readTopHeader();
+    }
     
     if(currentReadFrameTime == time){
         return true;
@@ -585,7 +585,7 @@ bool WorldLogFileItemImpl::seek(double time)
 
 bool WorldLogFileItemImpl::loadCurrentFrameData()
 {
-    file.seekg(currentReadFramePos + frameHeaderSize);
+    ifs.seekg(currentReadFramePos + frameHeaderSize);
     readBuf.clear();
     isCurrentFrameDataLoaded = readBuf.checkSize(currentReadFrameDataSize);
     return isCurrentFrameDataLoaded;
@@ -717,10 +717,10 @@ void WorldLogFileItem::clear()
 void WorldLogFileItemImpl::clear()
 {
     bodyNames.clear();
-    if(file.is_open()){
-        file.close();
+    if(ofs.is_open()){
+        ofs.close();
     }
-    file.open(filename.c_str(), ios::in | ios::out | ios::binary | ios::trunc);
+    ofs.open(filename.c_str(), ios::in | ios::out | ios::binary | ios::trunc);
     writeBuf.clear();
     lastOutputFramePos = 0;
 }
@@ -744,8 +744,8 @@ void WorldLogFileItemImpl::fixSizeHeader()
 
 void WorldLogFileItemImpl::flushWriteBuf()
 {
-    file.write(writeBuf.buf(), writeBuf.size());
-    file.flush();
+    ofs.write(writeBuf.buf(), writeBuf.size());
+    ofs.flush();
     writeBuf.clear();
 }
 
@@ -799,7 +799,7 @@ void WorldLogFileItem::beginFrameOutput(double time)
 
 void WorldLogFileItemImpl::beginFrameOutput(double time)
 {
-    int pos = file.tellp();
+    int pos = ofs.tellp();
     if(lastOutputFramePos){
         writeBuf.writeSeekOffset(pos - lastOutputFramePos);
     } else {
