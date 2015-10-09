@@ -308,6 +308,13 @@ TimeSyncItemEngine* createWorldLogFileEngine(Item* sourceItem)
     return 0;
 }
 
+
+bool loadWorldLogFile(WorldLogFileItem* item, const std::string& filename, std::ostream& os)
+{
+    return item->setLogFileName(filename);
+}
+
+
 }
 
 namespace cnoid {
@@ -339,7 +346,7 @@ public:
     ~WorldLogFileItemImpl();
     bool setLogFileName(const std::string& name);
     void updateBodyItems();
-    void readTopHeader();
+    bool readTopHeader();
     bool readFrameHeader(int pos);
     bool seek(double time);
     bool recallStatusAtTime(double time);
@@ -364,6 +371,8 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     ItemManager& im = ext->itemManager();
     im.registerClass<WorldLogFileItem>(N_("WorldLogFileItem"));
     im.addCreationPanel<WorldLogFileItem>();
+    im.addLoader<WorldLogFileItem>(
+        _("World Log"), "CNOID-WORLD-LOG", "log", boost::bind(loadWorldLogFile, _1, _2, _3));
 
     ext->timeSyncItemEngineManger().addEngineFactory(createWorldLogFileEngine);    
 }
@@ -439,7 +448,7 @@ bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 {
     if(name != filename){
         filename = name;
-        readTopHeader();
+        return readTopHeader();
     }
     return true;
 }
@@ -474,8 +483,10 @@ void WorldLogFileItem::onPositionChanged()
 }
 
 
-void WorldLogFileItemImpl::readTopHeader()
+bool WorldLogFileItemImpl::readTopHeader()
 {
+    bool result = false;
+    
     bodyNames.clear();
 
     currentReadFramePos = 0;
@@ -498,7 +509,7 @@ void WorldLogFileItemImpl::readTopHeader()
                         cout << bodyNames.back() << endl;
                     }
                     currentReadFramePos = readBuf.pos;
-                    readFrameHeader(readBuf.pos);
+                    result = readFrameHeader(readBuf.pos);
                 }
             } catch(NotEnoughDataException& ex){
                 bodyNames.clear();
@@ -507,6 +518,8 @@ void WorldLogFileItemImpl::readTopHeader()
     }
 
     updateBodyItems();
+
+    return result;
 }
 
 
