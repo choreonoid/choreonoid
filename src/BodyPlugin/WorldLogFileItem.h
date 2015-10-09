@@ -29,7 +29,7 @@ public:
 
     double recordingFrameRate() const;
 
-    void clear();
+    void clearOutput();
     void beginHeaderOutput();
     int outputBodyHeader(const std::string& name);
     void endHeaderOutput();

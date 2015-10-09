@@ -10,6 +10,7 @@
 #include <cnoid/TimeSyncItemEngine>
 #include <cnoid/FileUtil>
 #include <cnoid/Archive>
+#include <QDateTime>
 #include <boost/bind.hpp>
 #include <fstream>
 #include <stack>
@@ -323,6 +324,7 @@ class WorldLogFileItemImpl
 public:
     WorldLogFileItem* self;
     string filename;
+    QDateTime recordingStartTime;
     bool isTimeStampSuffixEnabled;
     vector<string> bodyNames;
     ItemList<BodyItem> bodyItems;
@@ -346,6 +348,7 @@ public:
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
     ~WorldLogFileItemImpl();
     bool setLogFileName(const std::string& name);
+    string getActualFilename();
     void updateBodyItems();
     bool readTopHeader();
     bool readFrameHeader(int pos);
@@ -356,7 +359,7 @@ public:
     void readBodyStatus(BodyItem* bodyItem);
     int readLinkPositions(Body* body);
     int readJointPositions(Body* body);
-    void clear();
+    void clearOutput();
     void reserveSizeHeader();
     void fixSizeHeader();
     void flushWriteBuf();
@@ -458,6 +461,23 @@ bool WorldLogFileItemImpl::setLogFileName(const std::string& name)
 }
 
 
+string WorldLogFileItemImpl::getActualFilename()
+{
+    if(isTimeStampSuffixEnabled && recordingStartTime.isValid()){
+        filesystem::path filepath(filename);
+        string suffix = recordingStartTime.toString("-yyyy-MM-dd-hh-mm-ss").toStdString();
+        string fname = getBasename(filepath) + suffix;
+        string ext = getExtension(filepath);
+        if(!ext.empty()){
+            fname = fname + "." + ext;
+        }
+        return getPathString(filepath.parent_path() / filesystem::path(fname));
+    } else {
+        return filename;
+    }
+}
+
+
 double WorldLogFileItem::recordingFrameRate() const
 {
     return impl->recordingFrameRate;
@@ -507,8 +527,9 @@ bool WorldLogFileItemImpl::readTopHeader()
     if(ifs.is_open()){
         ifs.close();
     }
-    if(filesystem::exists(filename)){
-        ifs.open(filename.c_str(), ios::in | ios::binary);
+    string fname = getActualFilename();
+    if(filesystem::exists(fname)){
+        ifs.open(fname.c_str(), ios::in | ios::binary);
         if(ifs.is_open()){
             readBuf.clear();
             try {
@@ -731,19 +752,25 @@ int WorldLogFileItemImpl::readJointPositions(Body* body)
 }
 
 
-void WorldLogFileItem::clear()
+void WorldLogFileItem::clearOutput()
 {
-    impl->clear();
+    impl->clearOutput();
 }
 
 
-void WorldLogFileItemImpl::clear()
+void WorldLogFileItemImpl::clearOutput()
 {
     bodyNames.clear();
+
+    if(ifs.is_open()){
+        ifs.close();
+    }
     if(ofs.is_open()){
         ofs.close();
     }
-    ofs.open(filename.c_str(), ios::in | ios::out | ios::binary | ios::trunc);
+    recordingStartTime = QDateTime::currentDateTime();
+    
+    ofs.open(getActualFilename().c_str(), ios::out | ios::binary | ios::trunc);
     writeBuf.clear();
     lastOutputFramePos = 0;
 }
@@ -880,8 +907,9 @@ void WorldLogFileItem::endFrameOutput()
 
 void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Log file"), impl->filename,
+    putProperty(_("Log file name"), impl->filename,
                 boost::bind(&WorldLogFileItemImpl::setLogFileName, impl, _1));
+    putProperty(_("Actual log file"), impl->getActualFilename());
     putProperty(_("Time-stamp suffix"), impl->isTimeStampSuffixEnabled,
                 changeProperty(impl->isTimeStampSuffixEnabled));
     putProperty(_("Recording frame rate"), impl->recordingFrameRate,

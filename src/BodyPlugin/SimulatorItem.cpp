@@ -1513,7 +1513,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 os << (fmt(_("WorldLogFileItem \"%1%\" has been detected. A simulation result is recoreded to \"%2%\"."))
                        % worldLogFileItem->name() % worldLogFileItem->logFileName()) << endl;
 
-                worldLogFileItem->clear();
+                worldLogFileItem->clearOutput();
                 worldLogFileItem->beginHeaderOutput();
                 for(size_t i=0; i < activeSimBodies.size(); ++i){
                     worldLogFileItem->outputBodyHeader(activeSimBodies[i]->impl->body->name());
