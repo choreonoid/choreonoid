@@ -21,6 +21,8 @@ public:
     void copyStateFrom(const VisionSensor& other);
 
     virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+
+    enum { StateSize = 1 };
     virtual const double* readState(const double* buf);
     virtual double* writeState(double* out_buf) const;
 

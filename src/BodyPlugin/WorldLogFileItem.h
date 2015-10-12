@@ -12,6 +12,7 @@
 namespace cnoid {
 
 class SE3;
+class DeviceState;
 class WorldLogFileItemImpl;
 
 
@@ -37,6 +38,9 @@ public:
     void beginBodyStatusOutput();
     void outputLinkPositions(SE3* positions, int size);
     void outputJointPositions(double* values, int size);
+    void beginDeviceStatusOutput();
+    void outputDeviceStatus(DeviceState* status);
+    void endDeviceStatusOutput();
     void endBodyStatusOutput();
     void endFrameOutput();
 

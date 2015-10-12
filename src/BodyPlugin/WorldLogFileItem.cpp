@@ -34,7 +34,8 @@ static const int frameHeaderSize =
 enum DataTypeID {
     BODY_STATUS,
     LINK_POSITIONS,
-    JOINT_POSITIONS
+    JOINT_POSITIONS,
+    DEVICE_STATUSES
 };
 
 struct NotEnoughDataException { };
@@ -157,7 +158,7 @@ public:
         }
         return value;
     }
-    
+
     SE3 readSE3(){
         SE3 position;
         Vector3& p = position.translation();
@@ -332,6 +333,8 @@ public:
     ofstream ofs;
     WriteBuf writeBuf;
     int lastOutputFramePos;
+    vector<double> doubleReadBuf;
+    vector<double> doubleWriteBuf;
     stack<int> sizeHeaderStack;
     double recordingFrameRate;
 
@@ -359,6 +362,7 @@ public:
     void readBodyStatus(BodyItem* bodyItem);
     int readLinkPositions(Body* body);
     int readJointPositions(Body* body);
+    void readDeviceStatuses(Body* body);
     void clearOutput();
     void reserveSizeHeader();
     void fixSizeHeader();
@@ -712,6 +716,13 @@ void WorldLogFileItemImpl::readBodyStatus(BodyItem* bodyItem)
                 updated = true;
             }
             break;
+        case DEVICE_STATUSES:
+            if(updated){
+                bodyItem->notifyKinematicStateChange(doForwardKinematics);
+                updated = false;
+            }
+            readDeviceStatuses(body);
+            break;
         default:
             readBuf.seekToNextBlock();
             break;
@@ -749,6 +760,32 @@ int WorldLogFileItemImpl::readJointPositions(Body* body)
     }
     readBuf.seek(endPos);
     return n;
+}
+
+
+void WorldLogFileItemImpl::readDeviceStatuses(Body* body)
+{
+    const int endPos = readBuf.readNextBlockPos();
+    DeviceList<> devices = body->devices();
+    const int numDevices = devices.size();
+    int deviceIndex = 0;
+    while(readBuf.pos < endPos && deviceIndex < numDevices){
+        const int numFloatElements = readBuf.readOctet();
+        const int nextPos = readBuf.pos + sizeof(float) * numFloatElements;
+        Device* device = devices[deviceIndex];
+        const int stateSize = device->stateSize();
+        if(stateSize <= numFloatElements){
+            doubleReadBuf.resize(stateSize);
+            for(int i=0; i < stateSize; ++i){
+                doubleReadBuf[i] = readBuf.readFloat();
+            }
+            device->readState(&doubleReadBuf.front());
+            device->notifyStateChange();
+        }
+        readBuf.seek(nextPos);
+        ++deviceIndex;
+    }
+    readBuf.seek(endPos);
 }
 
 
@@ -888,6 +925,37 @@ void WorldLogFileItem::outputJointPositions(double* values, int size)
     for(int i=0; i < size; ++i){
         impl->writeBuf.writeFloat(values[i]);
     }
+    impl->fixSizeHeader();
+}
+
+
+void WorldLogFileItem::beginDeviceStatusOutput()
+{
+    impl->writeBuf.writeID(DEVICE_STATUSES);
+    impl->reserveSizeHeader();
+}
+
+
+void WorldLogFileItem::outputDeviceStatus(DeviceState* status)
+{
+    WriteBuf& writeBuf = impl->writeBuf;
+
+    if(!status){
+        writeBuf.writeOctet(0);
+    } else {
+        int size = status->stateSize();
+        writeBuf.writeOctet(size);
+        impl->doubleWriteBuf.resize(size);
+        status->writeState(&impl->doubleWriteBuf.front());
+        for(size_t i=0; i < size; ++i){
+            writeBuf.writeFloat(impl->doubleWriteBuf[i]);
+        }
+    }
+}
+
+
+void WorldLogFileItem::endDeviceStatusOutput()
+{
     impl->fixSizeHeader();
 }
 

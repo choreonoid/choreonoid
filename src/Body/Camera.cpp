@@ -121,7 +121,7 @@ void Camera::clearState()
 
 int Camera::stateSize() const
 {
-    return 7;
+    return 7 + VisionSensor::StateSize;
 }
 
 

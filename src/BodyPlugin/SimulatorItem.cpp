@@ -992,8 +992,20 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
         MultiSE3Deque::Row posbuf = linkPosBuf.row(bufferFrame);
         log->outputLinkPositions(posbuf.begin(), posbuf.size());
 
-        Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
-        log->outputJointPositions(jointbuf.begin(), jointbuf.size());
+        if(jointPosBuf.colSize() > 0){
+            Deque2D<double>::Row jointbuf = jointPosBuf.row(bufferFrame);
+            log->outputJointPositions(jointbuf.begin(), jointbuf.size());
+        }
+
+        if(deviceStateBuf.colSize() > 0){
+            // Skip the first element because it is used for sharing an unchanged status
+            Deque2D<DeviceStatePtr>::Row statuses = deviceStateBuf.row(bufferFrame + 1);
+            log->beginDeviceStatusOutput();
+            for(size_t i=0; i < statuses.size(); ++i){
+                log->outputDeviceStatus(statuses[i]);
+            }
+            log->endDeviceStatusOutput();
+        }
 
         log->endBodyStatusOutput();
     }

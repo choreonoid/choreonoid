@@ -215,7 +215,7 @@ void RangeSensor::clearState()
 
 int RangeSensor::stateSize() const
 {
-    return 8;
+    return 8 + VisionSensor::StateSize;
 }
 
 
