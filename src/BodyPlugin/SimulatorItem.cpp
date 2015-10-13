@@ -1565,6 +1565,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         vector<string> profilingNames;
         self->getProfilingNames(profilingNames);
         profilingNames.push_back("Controller calculation time");
+        profilingNames.push_back("Computation time/Simulation time");
         int n = profilingNames.size();
         SceneView* view = ViewManager::findView<SceneView>("Simulation Scene");
         if(!view)
@@ -1695,10 +1696,12 @@ void SimulatorItemImpl::run()
                 vector<double> profilingTimes;
                 self->getProfilingTimes(profilingTimes);
                 Deque2D<double>::Row buf = simProfilingBuf.append();
-                for(int i=0; i<profilingTimes.size(); i++){
+                int i=0;
+                for(; i<profilingTimes.size(); i++){
                     buf[i] = profilingTimes[i] * 1.0e9 / oneStepTime * 100;
                 }
-                buf[buf.size()-1] = controllerTime / oneStepTime * 100;
+                buf[i++] = controllerTime / oneStepTime * 100;
+                buf[i] = oneStepTime / worldTimeStep * 1.0e-7;
 #endif
                 double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
                 if(diff >= 1.0){
@@ -1743,10 +1746,12 @@ void SimulatorItemImpl::run()
                 vector<double> profilingTimes;
                 self->getProfilingTimes(profilingTimes);
                 Deque2D<double>::Row buf = simProfilingBuf.append();
-                for(int i=0; i<profilingTimes.size(); i++){
+                int i=0;
+                for(; i<profilingTimes.size(); i++){
                     buf[i] = profilingTimes[i] * 1.0e9 / oneStepTime * 100;
                 }
-                buf[buf.size()-1] = controllerTime / oneStepTime * 100;
+                buf[i++] = controllerTime / oneStepTime * 100;
+                buf[i] = oneStepTime / worldTimeStep * 1.0e-7;
 #endif
             }
         }
