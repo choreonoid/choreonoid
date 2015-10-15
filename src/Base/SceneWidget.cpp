@@ -268,6 +268,10 @@ public:
     Signal<void(bool isFocused)> sigWidgetFocusChanged;
     Signal<void()> sigAboutToBeDestroyed;
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    int profiling_mode;
+#endif
+
     virtual void initializeGL();
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
@@ -550,6 +554,10 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     fpsTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
     fpsRenderingTimer.setSingleShot(true);
     fpsRenderingTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSRenderingRequest, this));
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    profiling_mode = 1;
+#endif
 }
 
 
@@ -676,9 +684,31 @@ void SceneWidgetImpl::paintGL()
 
 #ifdef ENABLE_SIMULATION_PROFILING
     renderer.setColor(Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
-    for(int i=0; i<self->profilingNames.size(); i++){
-        if(i<self->profilingTimes.size())
-            renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 %").arg(self->profilingTimes[i],5,'f',1));
+    int n = self->profilingNames.size();
+    if(self->profilingTimes.size() == n){
+        QFont font("monospace");
+        font.setStyleHint(QFont::Monospace);
+        for(int i=0; i<n; i++){
+            switch(profiling_mode){
+            case 0:{
+                double percentage;
+                if(i!=n-1)
+                    percentage = self->profilingTimes[i] / self->profilingTimes[n-1] * 100;
+                else
+                    percentage = self->profilingTimes[i] / self->worldTimeStep * 100;
+                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 %").arg(percentage,7,'f',1), font);
+                }
+                break;
+            case 1:{
+                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 ns").arg(self->profilingTimes[i],9,'f',0), font);
+                }
+                break;
+            case 2:{
+                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 micros").arg(self->profilingTimes[i]*1.0e-3,6,'f',0), font);
+                }
+                break;
+            }
+        }
     }
 #endif
 
@@ -1235,7 +1265,12 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
             handled = true;
             break;
         }
-        
+#ifdef ENABLE_SIMULATION_PROFILING
+        case Qt::Key_P:
+            profiling_mode++;
+            profiling_mode %= 3;
+            break;
+#endif
         default:
             break;
         }
