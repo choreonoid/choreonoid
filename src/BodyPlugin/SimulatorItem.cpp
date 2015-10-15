@@ -1565,7 +1565,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         vector<string> profilingNames;
         self->getProfilingNames(profilingNames);
         profilingNames.push_back("Controller calculation time");
-        profilingNames.push_back("Computation time/Simulation time");
+        profilingNames.push_back("Total computation time");
         int n = profilingNames.size();
         SceneView* view = ViewManager::findView<SceneView>("Simulation Scene");
         if(!view)
@@ -1698,10 +1698,10 @@ void SimulatorItemImpl::run()
                 Deque2D<double>::Row buf = simProfilingBuf.append();
                 int i=0;
                 for(; i<profilingTimes.size(); i++){
-                    buf[i] = profilingTimes[i] * 1.0e9 / oneStepTime * 100;
+                    buf[i] = profilingTimes[i] * 1.0e9;// / oneStepTime * 100;
                 }
-                buf[i++] = controllerTime / oneStepTime * 100;
-                buf[i] = oneStepTime / worldTimeStep * 1.0e-7;
+                buf[i++] = controllerTime;// / oneStepTime * 100;
+                buf[i] = oneStepTime; // / worldTimeStep * 1.0e-7;
 #endif
                 double diff = (double)compensatedSimulationTime - (elapsedTime + timer.elapsed());
                 if(diff >= 1.0){
@@ -1748,10 +1748,10 @@ void SimulatorItemImpl::run()
                 Deque2D<double>::Row buf = simProfilingBuf.append();
                 int i=0;
                 for(; i<profilingTimes.size(); i++){
-                    buf[i] = profilingTimes[i] * 1.0e9 / oneStepTime * 100;
+                    buf[i] = profilingTimes[i] * 1.0e9;// / oneStepTime * 100;
                 }
-                buf[i++] = controllerTime / oneStepTime * 100;
-                buf[i] = oneStepTime / worldTimeStep * 1.0e-7;
+                buf[i++] = controllerTime;// / oneStepTime * 100;
+                buf[i] = oneStepTime;// / worldTimeStep * 1.0e-7;
 #endif
             }
         }
@@ -2496,6 +2496,7 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
         sw->profilingTimes.clear();
         for(int i=0; i<profilingTimes.size(); i++)
             sw->profilingTimes.push_back(profilingTimes[i]);
+        sw->worldTimeStep = worldTimeStep * 1.0e9;
     }
 #endif
 

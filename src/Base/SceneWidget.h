@@ -136,6 +136,7 @@ public:
 #ifdef ENABLE_SIMULATION_PROFILING
     std::vector<std::string> profilingNames;
     std::vector<double> profilingTimes;
+    double worldTimeStep;
 #endif
 
 private:
