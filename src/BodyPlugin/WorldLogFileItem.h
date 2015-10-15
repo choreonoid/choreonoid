@@ -48,6 +48,7 @@ public:
     const std::string& bodyName(int bodyIndex) const;
 
     bool recallStatusAtTime(double time);
+    void invalidateLastStatusConsistency();
 
     virtual void notifyUpdate();
 
