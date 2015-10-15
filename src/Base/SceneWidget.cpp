@@ -701,7 +701,12 @@ void SceneWidgetImpl::paintGL()
                 break;
             case 1:{
                 renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 ns").arg(self->profilingTimes[i],9,'f',0), font);
-            }
+                }
+                break;
+            case 2:{
+                renderText(20, 20+20*i, QString::fromStdString(self->profilingNames[i]) + QString(": %1 micros").arg(self->profilingTimes[i]*1.0e-3,6,'f',0), font);
+                }
+                break;
             }
         }
     }
@@ -1263,7 +1268,7 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
 #ifdef ENABLE_SIMULATION_PROFILING
         case Qt::Key_P:
             profiling_mode++;
-            profiling_mode %= 2;
+            profiling_mode %= 3;
             break;
 #endif
         default:
