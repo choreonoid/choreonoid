@@ -323,6 +323,10 @@ bool BodyRTCItem::control()
     // tick the execution context of the connected RTCs
     virtualRobotRTC->writeDataToOutPorts(controlTime_, timeStep_);
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    timer.begin();
+#endif
+
     if(!CORBA::is_nil(virtualRobotEC)){
         executionCycleCounter += timeStep_;
         if(executionCycleCounter + timeStep_ / 2.0 > executionCycle){
@@ -330,6 +334,12 @@ bool BodyRTCItem::control()
             executionCycleCounter -= executionCycle;
         }
     }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    bodyRTCTime = timer.measure();
+    timer.begin();
+#endif
+
 
     for(RtcInfoVector::iterator p = rtcInfoVector.begin(); p != rtcInfoVector.end(); ++p){
         RtcInfoPtr& rtcInfo = *p;
@@ -341,6 +351,10 @@ bool BodyRTCItem::control()
             }
         }
     }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    controllerTime = timer.measure();
+#endif
 
     virtualRobotRTC->readDataFromInPorts();
 
@@ -1018,3 +1032,18 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
         cout << "End of BodyRTCItem::deleteModule()" << endl;
     }
 }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+void BodyRTCItem::getProfilingNames(vector<string>& profilingNames)
+{
+    profilingNames.push_back("    BodyRTC calculation time");
+    profilingNames.push_back("    Controller calculation time");
+}
+
+
+void BodyRTCItem::getProfilingTimes(vector<double>& profilingToimes)
+{
+    profilingToimes.push_back(bodyRTCTime);
+    profilingToimes.push_back(controllerTime);
+}
+#endif

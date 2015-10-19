@@ -72,6 +72,11 @@ public:
     SignalProxy<void(const std::string& message)> sigMessage();
     std::string getMessage();
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
+
 protected:
     void putMessage(const std::string& message);
 

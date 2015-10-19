@@ -85,3 +85,16 @@ bool ControllerItem::restore(const Archive& archive)
     archive.read("isImmediateMode", isImmediateMode_);
     return true;
 }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+void ControllerItem::getProfilingNames(vector<string>& profilingNames)
+{
+
+}
+
+
+void ControllerItem::getProfilingTimes(vector<double>& profilingToimes)
+{
+
+}
+#endif

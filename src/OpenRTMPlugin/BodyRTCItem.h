@@ -11,6 +11,9 @@
 #include <cnoid/ControllerItem>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/Body>
+#ifdef ENABLE_SIMULATION_PROFILING
+#include <cnoid/TimeMeasure>
+#endif
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -51,6 +54,11 @@ public:
     void setConfigMode(int mode);
     void setPeriodicRate(double freq);
     void setAutoConnectionMode(bool on); 
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
 
 protected:
     virtual void onPositionChanged();
@@ -122,6 +130,12 @@ private:
 
     void setInstanceName(const std::string& name);
     void deleteModule(bool waitToBeDeleted);
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    double bodyRTCTime;
+    double controllerTime;
+    TimeMeasure timer;
+#endif
 
 };
         

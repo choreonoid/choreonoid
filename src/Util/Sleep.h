@@ -1,6 +1,6 @@
 
-#ifndef CNOID_UTIL_TIME_MEASURE_H
-#define CNOID_UTIL_TIME_MEASURE_H
+#ifndef CNOID_UTIL_SLEEP_H
+#define CNOID_UTIL_SLEEP_H
 
 #ifdef WIN32
 #include <windows.h>
