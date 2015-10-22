@@ -299,6 +299,10 @@ bool BodyRTCItem::start(Target* target)
         activateComponents();
     }
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    bodyRTCTime = 0.0;
+#endif
+
     return isReady;
 }
 
@@ -323,23 +327,27 @@ bool BodyRTCItem::control()
     // tick the execution context of the connected RTCs
     virtualRobotRTC->writeDataToOutPorts(controlTime_, timeStep_);
 
+    if(!CORBA::is_nil(virtualRobotEC)){
+        executionCycleCounter += timeStep_;
+        if(executionCycleCounter + timeStep_ / 2.0 > executionCycle){
+
 #ifdef ENABLE_SIMULATION_PROFILING
     timer.begin();
 #endif
 
-    if(!CORBA::is_nil(virtualRobotEC)){
-        executionCycleCounter += timeStep_;
-        if(executionCycleCounter + timeStep_ / 2.0 > executionCycle){
             virtualRobotEC->tick();
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    bodyRTCTime = timer.measure();
+#endif
+
             executionCycleCounter -= executionCycle;
         }
     }
 
 #ifdef ENABLE_SIMULATION_PROFILING
-    bodyRTCTime = timer.measure();
     timer.begin();
 #endif
-
 
     for(RtcInfoVector::iterator p = rtcInfoVector.begin(); p != rtcInfoVector.end(); ++p){
         RtcInfoPtr& rtcInfo = *p;
