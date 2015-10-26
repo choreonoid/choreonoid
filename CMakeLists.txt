@@ -402,39 +402,41 @@ if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
 endif()
 
 
-# qt
-if(ENABLE_GUI)
-  if(NOT MSVC OR MSVC_VERSION LESS 1700)
-    find_package(Qt4 4.7.0 REQUIRED)
-    set(QT_USE_QTOPENGL TRUE)
-    set(QT_USE_QTNETWORK TRUE)
-    #set(QT_USE_QTTEST TRUE)
-    include(${QT_USE_FILE})
-    add_definitions(-DQT_NO_KEYWORDS)
-    set(QT5 FALSE)
-    
+###############
+#  Setup Qt4  #
+###############
+macro(setup_qt4)
+  find_package(Qt4 4.7.0 REQUIRED)
+  set(QT_USE_QTOPENGL TRUE)
+  set(QT_USE_QTNETWORK TRUE)
+  #set(QT_USE_QTTEST TRUE)
+  include(${QT_USE_FILE})
+  add_definitions(-DQT_NO_KEYWORDS)
+  set(QT5 FALSE)
+
+  if(MSVC)
     install_external_libraries(${QT_BINARY_DIR} ${QT_LIBRARY_DIR} ${QT_LIBRARIES})
-    if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
+    if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
-  	  ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} ${QT_QTNETWORK_INCLUDE_DIR})
-	install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+          ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} ${QT_QTNETWORK_INCLUDE_DIR})
+        install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
       endforeach()
     endif()
-  else()
-    if(MSVC)
-      if(CMAKE_CL_64)
-	set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x64")
-      else()
-	set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x86")
-      endif()
-    endif()
-    find_package(Qt5Core)
-    set(QT5 TRUE)
-    
-    add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    
+  endif()
+endmacro()
+
+###############
+#  Setup Qt5  #
+###############
+macro(setup_qt5)
+  find_package(Qt5Core)
+  set(QT5 TRUE)
+
+  add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+  if(MSVC)
     list(APPEND QT_INST_LIBRARIES 
       optimized Qt5Core debug Qt5Cored
       optimized Qt5Gui debug Qt5Guid
@@ -448,14 +450,38 @@ if(ENABLE_GUI)
       optimized icudt51 debug icudt51d
       # for the Qt 5.3 binary package
       general icuin52 general icuuc52 general icudt52)
-    
+
     install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
-    if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
+
+    if(CMAKE_CL_64)
+      set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x64")
+    else()
+      set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x86")
+    endif()
+
+    if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
-  	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
-	install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+          ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+        install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
       endforeach()
     endif()
+  endif()
+endmacro()
+
+# qt
+if(ENABLE_GUI)
+  if(NOT MSVC OR MSVC_VERSION LESS 1700)
+    set(DEFAULT_USE_QT5 FALSE)
+  else()
+    set(DEFAULT_USE_QT5 TRUE)
+  endif()
+
+  option(USE_QT5 "Use Qt5" ${DEFAULT_USE_QT5})
+
+  if(USE_QT5)
+    setup_qt5()
+  else()
+    setup_qt4()
   endif()
 endif()
 
