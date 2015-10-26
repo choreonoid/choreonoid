@@ -17,9 +17,17 @@ target_link_libraries(PyQtCore
   ${Boost_PYTHON_LIBRARY}
   )
 
+if(QT5)
+  qt5_use_modules(PyQtCore Core)
+endif()
+
 add_cnoid_python_module(PyQtGui
   PyQtGui.cpp
   )
+
+if(QT5)
+  qt5_use_modules(PyQtGui Widgets)
+endif()
 
 target_link_libraries(PyQtGui
   ${QT_LIBRARIES}

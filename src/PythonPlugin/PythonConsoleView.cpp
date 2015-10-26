@@ -11,6 +11,7 @@
 #include <QBoxLayout>
 #include <QTextBlock>
 #include <QEventLoop>
+#include <QMimeData>
 #include <list>
 #include "gettext.h"
 
