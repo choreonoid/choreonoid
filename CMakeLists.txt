@@ -25,7 +25,7 @@ if(build_catkin OR "${CATKIN_BUILD_BINARY_PACKAGE}")
     LIBRARIES 
     ${target}
     CATKIN_DEPENDS
-    libsdformat2
+    sdformat
   )
 endif()
 

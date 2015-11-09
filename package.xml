@@ -18,9 +18,9 @@
   <build_depend>choreonoid_ros</build_depend>
 	<build_depend>boost</build_depend>
 	<build_depend>eigen</build_depend>
-  <build_depend>libsdformat2-dev</build_depend>
+  <build_depend>sdformat</build_depend>
 
   <run_depend>choreonoid_ros</run_depend>
-  <run_depend>libsdformat2</run_depend>
+  <run_depend>sdformat</run_depend>
 
 </package>
