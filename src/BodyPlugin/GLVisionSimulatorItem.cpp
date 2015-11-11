@@ -178,7 +178,6 @@ public:
     string bodyNameListString;
     vector<string> sensorNames;
     string sensorNameListString;
-    bool isEnabled;
     bool useThreadProperty;
     bool useThreadsForSensorsProperty;
     bool isBestEffortModeProperty;
@@ -204,6 +203,13 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+
+    template<typename Type> void setProperty(Type& variable, const Type& value){
+        if(value != variable){
+            variable = value;
+            self->notifyUpdate();
+        }
+    }
 };
 
 }
@@ -218,6 +224,7 @@ void GLVisionSimulatorItem::initializeClass(ExtensionManager* ext)
 
 GLVisionSimulatorItem::GLVisionSimulatorItem()
 {
+    setName("GLVisionSimulator");
     impl = new GLVisionSimulatorItemImpl(this);
 }
 
@@ -227,7 +234,6 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
       os(MessageView::instance()->cout())
 {
     simulatorItem = 0;
-    isEnabled = true;
     maxFrameRate = 1000.0;
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
@@ -262,7 +268,6 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     depthError = org.depthError;
     bodyNameListString = getNameListString(bodyNames);
     sensorNameListString = getNameListString(sensorNames);
-    isEnabled = org.isEnabled;
     useThreadProperty = org.useThreadProperty;
     useThreadsForSensorsProperty = org.useThreadsForSensorsProperty;
     isBestEffortModeProperty = org.isBestEffortModeProperty;
@@ -271,12 +276,6 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     areAdditionalLightsEnabled = org.areAdditionalLightsEnabled;
     maxFrameRate = org.maxFrameRate;
     maxLatency = org.maxLatency;
-}
-
-
-bool GLVisionSimulatorItem::isEnabled()
-{
-    return impl->isEnabled;
 }
 
 
@@ -296,7 +295,81 @@ GLVisionSimulatorItemImpl::~GLVisionSimulatorItemImpl()
 {
 
 }
-        
+
+
+void GLVisionSimulatorItem::setTargetBodies(const std::string& names)
+{
+    updateNames(names, impl->bodyNameListString, impl->bodyNames);
+    notifyUpdate();
+}
+
+
+void GLVisionSimulatorItem::setTargetSensors(const std::string& names)
+{
+    updateNames(names, impl->sensorNameListString, impl->sensorNames);
+    notifyUpdate();
+}
+
+
+void GLVisionSimulatorItem::setMaxFrameRate(double rate)
+{
+    impl->setProperty(impl->maxFrameRate, rate);
+}
+
+
+void GLVisionSimulatorItem::setMaxLatency(double latency)
+{
+    impl->setProperty(impl->maxLatency, latency);
+}
+
+
+void GLVisionSimulatorItem::setVisionDataRecordingEnabled(bool on)
+{
+    impl->setProperty(impl->isVisionDataRecordingEnabled, on);
+}
+
+
+void GLVisionSimulatorItem::setThreadEnabled(bool on)
+{
+    impl->setProperty(impl->useThreadProperty, on);
+}
+
+
+void GLVisionSimulatorItem::setDedicatedSensorThreadsEnabled(bool on)
+{
+    impl->setProperty(impl->useThreadsForSensorsProperty, on);
+}
+
+
+void GLVisionSimulatorItem::setBestEffortMode(bool on)
+{
+    impl->setProperty(impl->isBestEffortModeProperty, on);
+}
+
+
+void GLVisionSimulatorItem::setRangeSensorPrecisionRatio(double r)
+{
+    impl->setProperty(impl->rangeSensorPrecisionRatio, r);
+}
+
+
+void GLVisionSimulatorItem::setAllSceneObjectsEnabled(bool on)
+{
+    impl->setProperty(impl->shootAllSceneObjects, on);
+}
+
+
+void GLVisionSimulatorItem::setHeadLightEnabled(bool on)
+{
+    impl->setProperty(impl->isHeadLightEnabled, on);
+}
+
+
+void GLVisionSimulatorItem::setAdditionalLightsEnabled(bool on)
+{
+    impl->setProperty(impl->areAdditionalLightsEnabled, on);
+}
+
 
 bool GLVisionSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 {
@@ -1116,13 +1189,13 @@ VisionRenderer::~VisionRenderer()
 
 void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    SubSimulatorItem::doPutProperties(putProperty);
     impl->doPutProperties(putProperty);
 }
 
 
 void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Enabled"), isEnabled, changeProperty(isEnabled));
     putProperty(_("Target bodies"), bodyNameListString, boost::bind(updateNames, _1, boost::ref(bodyNameListString), boost::ref(bodyNames)));
     putProperty(_("Target sensors"), sensorNameListString, boost::bind(updateNames, _1, boost::ref(sensorNameListString), boost::ref(sensorNames)));
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
@@ -1149,7 +1222,6 @@ bool GLVisionSimulatorItem::store(Archive& archive)
 
 bool GLVisionSimulatorItemImpl::store(Archive& archive)
 {
-    archive.write("enabled", isEnabled);
     writeElements(archive, "targetBodies", bodyNames, true);
     writeElements(archive, "targetSensors", sensorNames, true);
     archive.write("maxFrameRate", maxFrameRate);
@@ -1176,8 +1248,6 @@ bool GLVisionSimulatorItem::restore(const Archive& archive)
 
 bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
 {
-    archive.read("enabled", isEnabled);
-
     readElements(archive, "targetBodies", bodyNames);
     bodyNameListString = getNameListString(bodyNames);
     readElements(archive, "targetSensors", sensorNames);

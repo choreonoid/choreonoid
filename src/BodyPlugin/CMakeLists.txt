@@ -4,6 +4,7 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 #set_source_files_properties(SimulatorItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(WorldLogFileItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
   BodyPlugin.cpp
@@ -12,12 +13,15 @@ set(sources
   BodyMotionItem.cpp
   ZMPSeqItem.cpp
   MultiDeviceStateSeqItem.cpp
+  WorldLogFileItem.cpp
   SimulatorItem.cpp
+  SubSimulatorItem.cpp
   ControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
   SensorVisualizerItem.cpp
+  BodyTrackingCameraItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   #FilterDialogs.cpp
@@ -44,12 +48,14 @@ set(headers
   BodyItem.h
   WorldItem.h
   BodyMotionItem.h
-  MultiDeviceStateSeqItem.cpp
+  MultiDeviceStateSeqItem.h
+  WorldLogFileItem.h
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h
   SimulationScriptItem.h
   SensorVisualizerItem.h
+  BodyTrackingCameraItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h

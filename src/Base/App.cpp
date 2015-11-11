@@ -5,6 +5,7 @@
 #include "App.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
+#include "ParametricPathProcessor.h"
 #include "ExtensionManager.h"
 #include "OptionManager.h"
 #include "PluginManager.h"
@@ -172,9 +173,12 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     qapplication->setOrganizationName(vendorName);
     qapplication->setWindowIcon(icon);
 
-    ext = new ExtensionManager("Base", false);
-
     AppConfig::initialize(appName, vendorName);
+
+    ParametricPathProcessor::instance()->setVariables(
+        AppConfig::archive()->openMapping("pathVariables"));
+
+    ext = new ExtensionManager("Base", false);
 
     // OpenGL settings
     Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");

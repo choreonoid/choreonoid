@@ -224,8 +224,10 @@ void Body::updateLinkTree()
             if(id >= jointIdToLinkArray.size()){
                 jointIdToLinkArray.resize(id + 1, 0);
             }
-            jointIdToLinkArray[id] = link;
-            ++numActualJoints;
+            if(!jointIdToLinkArray[id]){
+                jointIdToLinkArray[id] = link;
+                ++numActualJoints;
+            }
         }
         if(link->jointType() != Link::FIXED_JOINT){
             isStaticModel_ = false;

@@ -722,6 +722,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
 link_directories(${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
 
+#Simulation profiling
+option(ENABLE_SIMULATION_PROFILING "Enable simulation plofiling" OFF)
+if(ENABLE_SIMULATION_PROFILING)
+    add_definitions(-DENABLE_SIMULATION_PROFILING)
+endif()
 
 # Document installaiton
 install(FILES NEWS DESTINATION ${CNOID_DOC_SUBDIR})

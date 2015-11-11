@@ -55,9 +55,7 @@ void EditableSceneLink::showBoundingBox(bool on)
         if(!bbLineSet){
             createBoundingBoxLineSet();
         }
-        if(!contains(bbLineSet)){
-            addChild(bbLineSet, true);
-        }
+        addChildOnce(bbLineSet, true);
     } else if(bbLineSet){
         removeChild(bbLineSet, true);
     }
@@ -119,7 +117,7 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
         removeChild(bbMarker);
     }
     bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
-    addChild(bbMarker, true);
+    addChildOnce(bbMarker, true);
 }
 
 
@@ -332,23 +330,21 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     markerGroup->setName("Marker");
     self->addChild(markerGroup);
 
-    double radius = 0;
+    double radius = 0.0;
     const int n = self->numSceneLinks();
     for(int i=0; i < n; ++i){
         SceneLink* sLink = self->sceneLink(i);
         BoundingBox bb = sLink->boundingBox();
-        double radius0 = (bb.max() - bb.center()).norm();
+        double radius0 = bb.size().norm() / 2.0;
         if(radius0 > radius){
             radius = radius0;
         }
     }
-    cmMarker = new CrossMarker(0.25, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
+    cmMarker = new CrossMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
     cmMarker->setName("centerOfMass");
-    cmMarker->setSize(radius);
     isCmVisible = false;
-    ppcomMarker = new CrossMarker(0.25, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
+    ppcomMarker = new CrossMarker(radius, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
     ppcomMarker->setName("ProjectionPointCoM");
-    ppcomMarker->setSize(radius);
     isPpcomVisible = false;
 
     forcedPositionMode = NO_FORCED_POSITION;
@@ -581,8 +577,8 @@ void EditableSceneBodyImpl::showCenterOfMass(bool on)
 {
     isCmVisible = on;
     if(on){
-        markerGroup->addChild(cmMarker, true);
         cmMarker->setTranslation(bodyItem->centerOfMass());
+        markerGroup->addChildOnce(cmMarker, true);
     } else {
         markerGroup->removeChild(cmMarker, true);
     }
@@ -593,10 +589,10 @@ void EditableSceneBodyImpl::showPpcom(bool on)
 {
     isPpcomVisible = on;
     if(on){
-        markerGroup->addChild(ppcomMarker, true);
         Vector3 com = bodyItem->centerOfMass();
         com(2) = 0.0;
         ppcomMarker->setTranslation(com);
+        markerGroup->addChildOnce(ppcomMarker, true);
     } else {
         markerGroup->removeChild(ppcomMarker, true);
     }
@@ -607,8 +603,8 @@ void EditableSceneBodyImpl::showZmp(bool on)
 {
     isZmpVisible = on;
     if(on){
-        markerGroup->addChild(zmpMarker, true);
         zmpMarker->setTranslation(bodyItem->zmp());
+        markerGroup->addChildOnce(zmpMarker, true);
     } else {
         markerGroup->removeChild(zmpMarker, true);
     }

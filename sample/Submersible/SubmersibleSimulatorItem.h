@@ -20,7 +20,6 @@ public:
     SubmersibleSimulatorItem(const SubmersibleSimulatorItem& org);
     ~SubmersibleSimulatorItem();
 
-    virtual bool isEnabled();
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
 
 protected:
@@ -33,7 +32,6 @@ protected:
 private:
     SimulatorItem* simulatorItem;
     Body* submersible;
-    bool isEnabled_;
     int joystickIntervalCounter;
 
     void initialize();

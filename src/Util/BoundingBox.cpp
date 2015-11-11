@@ -60,13 +60,21 @@ Vector3 BoundingBox::center() const
 
 Vector3 BoundingBox::size() const
 {
-    return (max_ - min_);
+    if(empty_){
+        return Vector3::Zero();
+    } else {
+        return (max_ - min_);
+    }
 }
 
 
 double BoundingBox::boundingSphereRadius() const
 {
-    return (max_ - center()).norm();
+    if(empty_){
+        return 0.0;
+    } else {
+        return (max_ - center()).norm();
+    }
 }
 
 

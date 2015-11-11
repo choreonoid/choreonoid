@@ -116,6 +116,17 @@ void cnoid::callLater(const boost::function<void(void)>& function, int priority)
 }
 
 
+void cnoid::callFromMainThread(const boost::function<void(void)>& function, int priority)
+{
+    if(QThread::currentThreadId() == callEventHandler.mainThreadId){
+        function();
+    } else {
+        CallEvent* event = new CallEvent(function);
+        QCoreApplication::postEvent(&callEventHandler, event, toQtPriority(priority));
+    }
+}
+
+
 bool cnoid::callSynchronously(const boost::function<void(void)>& function, int priority)
 {
     if(QThread::currentThreadId() == callEventHandler.mainThreadId){

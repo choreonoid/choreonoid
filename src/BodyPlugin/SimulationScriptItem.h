@@ -19,7 +19,7 @@ public:
     SimulationScriptItem();
     SimulationScriptItem(const SimulationScriptItem& org);
 
-    enum ExecTiming {
+    enum ExecutionTiming {
         BEFORE_INITIALIZATION,
         DURING_INITIALIZATION,
         AFTER_INITIALIZATION,
@@ -28,8 +28,10 @@ public:
         NUM_TIMINGS,
     };
 
-    ExecTiming execTiming() const;
-    double execDelay() const;
+    ExecutionTiming executionTiming() const;
+    void setExecutionTiming(ExecutionTiming timing);
+    double executionDelay() const;
+    void setExecutionDelay(double t);
 
     virtual bool execute();
     virtual bool executeAsSimulationScript() = 0;

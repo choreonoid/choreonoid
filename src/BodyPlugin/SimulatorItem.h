@@ -12,6 +12,12 @@
 
 namespace cnoid {
 
+#ifdef ENABLE_SIMULATION_PROFILING
+const bool SIMULATION_PROFILING = true;
+#else
+const bool SIMULATION_PROFILING = false;
+#endif
+
 class Body;
 typedef ref_ptr<Body> BodyPtr;
 class Device;
@@ -49,7 +55,7 @@ public:
     void setActive(bool on);
 
     /**
-       Use this instead of Device::notiryStateChange when the state part which
+       Use this instead of Device::notifyStateChange when the state part which
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
@@ -103,8 +109,9 @@ public:
     int simulationFrame() const;
 
     //! This can be called from non simulation threads
-    int simulationTime() const;
+    double simulationTime() const;
     
+    SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };
@@ -216,6 +223,11 @@ protected:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
             
 private:
             

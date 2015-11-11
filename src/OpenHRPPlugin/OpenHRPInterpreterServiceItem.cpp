@@ -103,6 +103,7 @@ void OpenHRPInterpreterServiceItem::initializeClass(ExtensionManager* ext)
 
 OpenHRPInterpreterServiceItem::OpenHRPInterpreterServiceItem()
 {
+    setName("OpenHRPInterpreterService");
     impl = new ItemImpl(this);
 }
 
@@ -155,6 +156,12 @@ ItemPtr OpenHRPInterpreterServiceItem::doDuplicate() const
     return new OpenHRPInterpreterServiceItem(*this);
 }
 
+
+void OpenHRPInterpreterServiceItem::setRTCInstanceName(const std::string& name)
+{
+    impl->setRTCinstanceName(name);
+}
+    
 
 void ItemImpl::setRTCinstanceName(const std::string& name)
 {

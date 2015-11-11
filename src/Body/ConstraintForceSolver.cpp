@@ -17,6 +17,7 @@
 #include <cnoid/IdPair>
 #include <cnoid/EigenUtil>
 #include <cnoid/AISTCollisionDetector>
+#include <cnoid/TimeMeasure>
 #include <boost/format.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/random.hpp>
@@ -377,6 +378,12 @@ public:
     }
 
     CollisionLinkPairListPtr getCollisions();
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    double collisionTime;
+    TimeMeasure timer;
+#endif
+
 };
 /*
   #ifdef _MSC_VER
@@ -597,6 +604,7 @@ void CFSImpl::initialize(void)
     numUnconverged = 0;
 
     randomAngle.engine().seed();
+
 }
 
 
@@ -709,7 +717,15 @@ void CFSImpl::solve()
 
 void CFSImpl::setConstraintPoints()
 {
+#ifdef ENABLE_SIMULATION_PROFILING
+    timer.begin();
+#endif
+
     collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
+
+#ifdef ENABLE_SIMULATION_PROFILING
+        collisionTime = timer.measure();
+#endif
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
 
@@ -2321,3 +2337,10 @@ CollisionLinkPairListPtr ConstraintForceSolver::getCollisions()
 {
     return impl->getCollisions();
 }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+double ConstraintForceSolver::getCollisionTime()
+{
+    return impl->collisionTime;
+}
+#endif

@@ -17,6 +17,7 @@
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
+#include <cnoid/MessageView>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
@@ -26,6 +27,7 @@
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 // for Windows
 #undef min
@@ -483,7 +485,7 @@ void AISTSimulatorItemImpl::clearExternalForces()
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     if(!impl->dynamicsMode.is(KINEMATICS)){
-        impl->world.calcNextState();
+         impl->world.calcNextState();
         return true;
     }
 
@@ -677,3 +679,23 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     archive.read("2Dmode", is2Dmode);
     return true;
 }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+void AISTSimulatorItem::getProfilingNames(vector<string>& profilingNames)
+{
+    profilingNames.push_back("Collision detection time");
+    profilingNames.push_back("Constraint force calculation time");
+    profilingNames.push_back("Forward dynamics calculation time");
+    profilingNames.push_back("Customizer calculation time");
+}
+
+
+void AISTSimulatorItem::getProfilingTimes(vector<double>& profilingToimes)
+{
+    double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
+    profilingToimes.push_back(collisionTime);
+    profilingToimes.push_back(impl->world.forceSolveTime - collisionTime);
+    profilingToimes.push_back(impl->world.forwardDynamicsTime);
+    profilingToimes.push_back(impl->world.customizerTime);
+}
+#endif

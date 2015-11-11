@@ -37,8 +37,16 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "BodyTrackingCamera"
+              plugin: Body
+              class: BodyTrackingCameraItem
+              data: 
+                keepRelativeAttitude: true
         - 
-          id: 3
+          id: 4
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -61,7 +69,7 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 4
+          id: 5
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -90,10 +98,12 @@ items:
             2Dmode: false
           children: 
             - 
-              id: 5
+              id: 6
               name: "SubmersibleSimulator"
               plugin: SubmersibleSample
               class: SubmersibleSimulatorItem
+              data: 
+                enabled: true
 views: 
   - 
     id: 0
@@ -111,9 +121,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 4 ]
-      checked: [ 2, 3 ]
-      expanded: [ 1, 4 ]
+      selected: [ 3 ]
+      checked: [ 2, 3, 4 ]
+      expanded: [ 1, 2, 5 ]
   - 
     id: 3
     plugin: Base
@@ -136,6 +146,7 @@ views:
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
+      fog: true
       floorGrid: false
       floorGridSpan: 10
       floorGridInterval: 0.5
@@ -168,6 +179,19 @@ views:
           orthoHeight: 20
           near: 0.01
           far: 100
+        - 
+          camera: BodyTrackingCamera (Perspective)
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -0.999327867, 4.93834463, 1.34142138 ]
+          direction: [ -0.00975881164, -0.975848656, -0.218229618 ]
+          up: [ -0.00218225976, -0.218218707, 0.97589745 ]
+        - 
+          camera: BodyTrackingCamera (Orthographic)
+          orthoHeight: 2
+          near: 0.01
+          far: 100
       backgroundColor: [ 0.41568628, 0.447058827, 0.996078432 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -191,6 +215,7 @@ views:
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
+      fog: true
       floorGrid: false
       floorGridSpan: 10
       floorGridInterval: 0.5
@@ -223,8 +248,19 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: [ Submersible, Camera ]
+          camera: BodyTrackingCamera (Perspective)
           isCurrent: true
+          fieldOfView: 0.785398
+          near: 0.01
+          far: 100
+          eye: [ -0.999327867, 4.93834463, 1.34142138 ]
+          direction: [ -0.00975881164, -0.975848656, -0.218229618 ]
+          up: [ -0.00218225976, -0.218218707, 0.97589745 ]
+        - 
+          camera: BodyTrackingCamera (Orthographic)
+          orthoHeight: 2
+          near: 0.01
+          far: 100
       backgroundColor: [ 0.41568628, 0.447058827, 1 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -296,39 +332,6 @@ toolbars:
     current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -340,7 +343,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 3
+        bodyItem: 4
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -363,7 +366,7 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 304, 1290 ]
+      sizes: [ 303, 1291 ]
       children: 
         - 
           type: splitter
@@ -381,16 +384,16 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 542, 216 ]
+          sizes: [ 541, 217 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 601, 683 ]
+              sizes: [ 602, 683 ]
               children: 
                 - 
                   type: pane
-                  views: [ 7, 8, 5 ]
+                  views: [ 5, 7, 8 ]
                   current: 5
                 - 
                   type: pane
@@ -403,12 +406,8 @@ viewAreas:
 layoutOfToolBars: 
   rows: 
     - 
+      - { name: "CaptureBar", x: 0, priority: 1 }
       - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 2612, priority: 0 }
-      - { name: "GraphBar", x: 2878, priority: 0 }
-      - { name: "SimulationBar", x: 2988, priority: 0 }
-      - { name: "BodyBar", x: 3191, priority: 0 }
-      - { name: "KinematicsBar", x: 3459, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 3700, priority: 0 }
+      - { name: "SimulationBar", x: 95, priority: 3 }
+      - { name: "TimeBar", x: 95, priority: 2 }
+      - { name: "SceneBar", x: 1335, priority: 4 }

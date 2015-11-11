@@ -73,4 +73,3 @@ void Device::clearState()
 {
 
 }
-

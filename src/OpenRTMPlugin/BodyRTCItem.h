@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_BODY_RTC_ITEM_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_BODY_RTC_ITEM_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_BODY_RTC_ITEM_H
+#define CNOID_OPENRTM_PLUGIN_BODY_RTC_ITEM_H
 
 #include "VirtualRobotRTC.h"
 #include "RTCItem.h"
@@ -41,14 +41,15 @@ public:
     double controlTime() const { return controlTime_; }
        
     enum ConfigMode {
-        FILE_MODE = 0,
-        ALL_MODE,
+        CONF_FILE_MODE = 0,
+        CONF_ALL_MODE,
         N_CONFIG_MODES
     };
 
-    void setModuleName(const std::string& name);
-    void setConfFileName(const std::string& name);
+    void setControllerModule(const std::string& name);
+    void setConfigFile(const std::string& filename);
     void setConfigMode(int mode);
+    void setPeriodicRate(double freq);
     void setAutoConnectionMode(bool on); 
 
 protected:
@@ -67,9 +68,9 @@ private:
     double timeStep_;
 
     // The world time step is used if the following values are 0
-    double bodyPeriodicRateProperty;
-    double bodyPeriodicRate;
-    double bodyPeriodicCounter;
+    double executionCycleProperty;
+    double executionCycle;
+    double executionCycleCounter;
         
     const Target* controllerTarget;
     double controlTime_;
@@ -125,6 +126,7 @@ private:
 };
         
 typedef ref_ptr<BodyRTCItem> BodyRTCItemPtr;
+
 }
 
 #endif

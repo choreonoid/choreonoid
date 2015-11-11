@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_FILE_UTIL_H_INCLUDED
-#define CNOID_UTIL_FILE_UTIL_H_INCLUDED
+#ifndef CNOID_UTIL_FILE_UTIL_H
+#define CNOID_UTIL_FILE_UTIL_H
 
 #include <boost/filesystem.hpp>
 #include <string>
@@ -52,7 +52,7 @@ CNOID_EXPORT std::string getPathString(const boost::filesystem::path& path);
 #endif
 
 CNOID_EXPORT std::string toActualPathName(const std::string& pathName);
+
 }
     
-
 #endif
