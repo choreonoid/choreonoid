@@ -3112,14 +3112,14 @@ void DaeParserImpl::setColors(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, Sg
 void DaeParserImpl::setVIndexes(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, SgMeshBase* sgMesh, bool polygon)
 {
     unsigned int t = 0, v = 0, vcount = 0;
-    double* value = NULL;
+    vector<double> value;
 
     if (extMesh->verticesIndexes) {
         DaeVectorXArrayPtr vIndexes = extMesh->verticesIndexes;
         for (unsigned int i = 0; i < vIndexes->size(); i++) {
             if (t == 0) {
                 vcount = (polygon ? extMesh->vcount->at(v) : 3);
-                if (value == NULL) value = new double[vcount];
+                value.resize(vcount);
             }
             value[t++] = lexical_cast<double>(vIndexes->at(i));
 
@@ -3135,17 +3135,8 @@ void DaeParserImpl::setVIndexes(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
                         static_cast<SgMesh*>(sgMesh)->triangleVertices().push_back(value[j]);
                     }
                 }
-                if (value) {
-                    delete value;
-                    value = NULL;
-                }
             }
         }
-        if (value) {
-            delete value;
-            value = NULL;
-        }
-
     } else {
         throwException(line(), (format("[%1%]invalid v-index") % line()).str());
     }
@@ -3156,7 +3147,7 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
                                 DaeVectorXArrayPtr extArray, SgIndexArray& sgArray, bool polygon)
 {
     unsigned int t = 0, v = 0, vcount = 0;
-    double* value = NULL;
+    vector<double> value;
 
     if (extArray) {
         DaeStrides::iterator iter = strides.find(id);
@@ -3174,7 +3165,7 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
         for (unsigned int i = 0; i < indexes->size(); i++) {
             if (t == 0) {
                 vcount = (polygon ? extMesh->vcount->at(v) : 3);
-                if (value == NULL) value = new double[vcount];
+                value.resize(vcount);
             }
             value[t++] = lexical_cast<double>(indexes->at(i));       
             if (t == vcount) {
@@ -3185,17 +3176,8 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
                 if (polygon) {
                     sgArray.push_back(-1);
                 }
-                if (value) {
-                    delete value;
-                    value = NULL;
-                }
             }
         }
-        if (value) {
-            delete value;    
-            value = NULL;   
-        }
-
     } else {
         throwException(line(), (format("[%1%]invalid %2%") % line() % text).str());
     }

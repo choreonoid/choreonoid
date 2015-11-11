@@ -15,3 +15,10 @@ add_cnoid_python_module(PyUtil
   )
 
 target_link_libraries(PyUtil CnoidUtil CnoidPython)
+
+set(headers
+  PyUtil.h
+  PySignal.h
+  )
+
+apply_common_setting_for_library(PyUtil "${headers}")
