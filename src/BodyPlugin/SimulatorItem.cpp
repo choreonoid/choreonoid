@@ -1061,7 +1061,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     
     timeBar = TimeBar::instance();
     isDoingSimulationLoop = false;
-    isRealtimeSyncMode = false;
+    isRealtimeSyncMode = true;
 
     recordingMode.setSymbol(SimulatorItem::RECORD_FULL, N_("full"));
     recordingMode.setSymbol(SimulatorItem::RECORD_TAIL, N_("tail"));
