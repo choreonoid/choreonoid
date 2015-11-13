@@ -78,7 +78,7 @@ public:
     cnoid::Matrix3 I;
     cnoid::SgGroupPtr visualShape;
     cnoid::SgGroupPtr collisionShape;
-    sdf::Pose pose;
+    cnoid::Affine3 pose;
     LinkInfo() {
         visualShape = new SgGroup;
         collisionShape = new SgGroup;
@@ -95,11 +95,11 @@ public:
     std::string childName;
     LinkInfoPtr child;
     std::string jointType;
-    Vector3 axis;
+    cnoid::Vector3 axis;
     double upper;
     double lower;
     double velocity;
-    sdf::Pose pose;
+    cnoid::Affine3 pose;
     JointInfo() {
     }
 };
@@ -121,6 +121,7 @@ public:
 
     SDFBodyLoaderImpl();
     ~SDFBodyLoaderImpl();
+    cnoid::Affine3 pose2affine(const sdf::Pose& pose);
     bool load(Body* body, const std::string& filename);
     BodyPtr load(const std::string& filename);        
     SgNodePtr readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose);
@@ -241,6 +242,22 @@ bool SDFBodyLoader::load(BodyPtr body, const std::string& filename)
     return impl->load(body.get(), filename);
 }
 
+cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
+{
+    cnoid::Affine3 ret;
+    cnoid::Vector3 trans;
+    trans(0) = pose.pos.x;
+    trans(1) = pose.pos.y;
+    trans(2) = pose.pos.z;
+    cnoid::Quat R;
+    R.x() = pose.rot.x;
+    R.y() = pose.rot.y;
+    R.z() = pose.rot.z;
+    R.w() = pose.rot.w;
+    ret.translation() = trans;
+    ret.linear() = R.matrix();
+    return ret;
+}
 
 bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
@@ -252,7 +269,6 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
     validJointIdSet.clear();
     numValidJointIds = 0;
     os_ = &std::cout;
-    isVerbose = true;
     
     try {
         sdf::SDFPtr robot(new sdf::SDF());
@@ -280,7 +296,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 linkdata->linkName = link->Get<std::string>("name");
                 os() << " link name " << linkdata->linkName << std::endl;
                 if(link->HasElement("pose")){
-                    linkdata->pose = link->Get<sdf::Pose>("pose");
+                    linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
                 }
                 if(link->HasElement("inertial")){
                     sdf::ElementPtr inertial = link->GetElement("inertial");
@@ -337,7 +353,8 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 jointdata->childName = joint->Get<std::string>("child");
                 jointdata->parent = linkdataMap[jointdata->parentName];
                 jointdata->child = linkdataMap[jointdata->childName];
-                jointdata->pose = joint->Get<sdf::Pose>("pose");
+                jointdata->pose = pose2affine(joint->Get<sdf::Pose>("pose"));
+                jointdata->pose = jointdata->child->pose * jointdata->pose;
                 if(joint->HasElement("axis")){
                     sdf::ElementPtr axis = joint->GetElement("axis");
                     sdf::Vector3 xyz = axis->Get<sdf::Vector3>("xyz");
@@ -374,17 +391,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             if((*it)->parentName == "world"){
                 link->setJointType(Link::FIXED_JOINT);
                 root = *it;
-                Vector3 pos;
-                pos(0) = root->pose.pos.x;
-                pos(1) = root->pose.pos.y;
-                pos(2) = root->pose.pos.z;
-                Quat R;
-                R.x() = root->pose.rot.x;
-                R.y() = root->pose.rot.y;
-                R.z() = root->pose.rot.z;
-                R.w() = root->pose.rot.w;
-                link->setOffsetTranslation(pos);
-                link->setOffsetRotation(R.matrix());
+                link->Tb() = root->pose;
             }else{
                 link->setJointType(Link::FREE_JOINT);
                 root.reset(new JointInfo());
@@ -423,28 +430,9 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         link->setCenterOfMass(Vector3((*it)->child->c.pos.x, (*it)->child->c.pos.y, (*it)->child->c.pos.z));
         link->setInertia((*it)->child->I);
 
-        // convert to relative position (ref to gazebo/math/Pose.hh)
-        sdf::Quaternion tmp;
-        tmp.x = (*it)->child->pose.pos.x - (*it)->parent->pose.pos.x;
-        tmp.y = (*it)->child->pose.pos.y - (*it)->parent->pose.pos.y;
-        tmp.z = (*it)->child->pose.pos.z - (*it)->parent->pose.pos.z;
-        tmp.w = 0;
-        tmp = (*it)->parent->pose.rot.GetInverse() * (tmp * (*it)->child->pose.rot);
-        sdf::Quaternion tmp2;
-        //tmp2 = (*it)->parent->pose.rot.GetInverse() * (*it)->child->pose.rot;
-        tmp2 = (*it)->child->pose.rot;
-    
-        Vector3 trans;
-        trans(0) = tmp.x;
-        trans(1) = tmp.y;
-        trans(2) = tmp.z;
-        Quat R;
-        R.x() = tmp2.x;
-        R.y() = tmp2.y;
-        R.z() = tmp2.z;
-        R.w() = tmp2.w;
-        link->setOffsetTranslation(trans);
-        link->setOffsetRotation(R.matrix());
+        // convert to relative position
+        cnoid::Affine3 m = parent->pose.inverse() * (*it)->child->pose;
+        link->Tb() = m;
         setShape(link, (*it)->child->visualShape, true);
         setShape(link, (*it)->child->collisionShape, false);
         
@@ -494,6 +482,7 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
             transform->setRotation(R.matrix());
             os() << "  read mesh " << url << std::endl;
             if (boost::algorithm::iends_with(url, "dae")) {
+                // TODO: might be better to use assimp here instead of cnoid::DaeParser
                 DaeParser parser(&os());
                 transform->addChild(parser.createScene(url));
             } else if (boost::algorithm::iends_with(url, "stl")) {
