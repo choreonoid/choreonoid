@@ -238,7 +238,7 @@ toolbars:
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
     autoExpansion: true
   "KinematicsBar": 
     mode: FK

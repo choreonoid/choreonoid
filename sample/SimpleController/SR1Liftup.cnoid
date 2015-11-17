@@ -105,7 +105,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recording: true
             timeRangeMode: TimeBar range
             onlyActiveControlPeriod: true
@@ -130,7 +130,7 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recording: true
             timeRangeMode: TimeBar range
             onlyActiveControlPeriod: true
@@ -155,7 +155,7 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recording: true
             timeRangeMode: TimeBar range
             onlyActiveControlPeriod: true
@@ -174,7 +174,7 @@ items:
           plugin: PhysX
           class: PhysXSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recording: true
             timeRangeMode: TimeBar range
             onlyActiveControlPeriod: true
@@ -340,7 +340,7 @@ toolbars:
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
     autoExpansion: true
   "BodyMotionGenerationBar": 
     balancer: false

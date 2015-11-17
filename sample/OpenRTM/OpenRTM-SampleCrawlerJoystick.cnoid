@@ -290,7 +290,7 @@ toolbars:
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
   "BodyBar": 
     current: 2
     stanceWidth: 0.15
