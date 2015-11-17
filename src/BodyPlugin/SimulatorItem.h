@@ -114,15 +114,14 @@ public:
     SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationFinished();
 
-    enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };
-    enum TimeRangeMode { TIMEBAR_RANGE, SPECIFIED_PERIOD, UNLIMITED, N_TIME_RANGE_MODES };
-
+    enum RecordingMode { REC_FULL, REC_TAIL, REC_NONE, N_RECORDING_MODES };
+    enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIC, TR_TIMEBAR, N_TIME_RANGE_MODES };
+    
     void setRecordingMode(int selection);
     Selection recordingMode() const;
     void setTimeRangeMode(int selection);
     void setRealtimeSyncMode(bool on);
     void setDeviceStateOutputEnabled(bool on);
-    void setActiveControlPeriodOnlyMode(bool on);
 
     bool isRecordingEnabled() const;
     bool isDeviceStateOutputEnabled() const;
