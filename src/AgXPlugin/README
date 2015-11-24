@@ -1,0 +1,15 @@
+Agxインストール
+
+ファイルをダウンロード
+
+sudo dpkg -i agx-setup-2.13.2.2-x64-Ubuntu-double.deb でインストール
+
+/opt/Algoryx/AgX-2.13.2.2に入るので、ここにライセンスファイルをコピー
+
+.bashrcに source /opt/Algoryx/AgX-2.13.2.2/setup_env.bashを記述して、　source ~/.bashrc で有効にする。
+
+デモの実行
+
+cd /opt/Algoryx/AgX-2.13.2.2/data/luaDemos
+agxViewer robot.agxLua
+
