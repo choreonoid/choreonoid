@@ -42,3 +42,9 @@ add_cnoid_python_module(PyBase
 
 target_link_libraries(PyBase CnoidPyBase)
 
+set(headers
+  PyBase.h
+  exportdecl.h
+  )
+
+apply_common_setting_for_library(PyBase "${headers}")

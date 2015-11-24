@@ -162,7 +162,6 @@ void exportItems()
         .def("setTimeRangeMode", &SimulatorItem::setTimeRangeMode)
         .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
         .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
-        .def("setActiveControlPeriodOnlyMode", &SimulatorItem::setActiveControlPeriodOnlyMode)
         .def("isRecordingEnabled", &SimulatorItem::isRecordingEnabled)
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
@@ -174,15 +173,16 @@ void exportItems()
         scope simulatorItemScope = simulatorItemClass;
 
         enum_<SimulatorItem::RecordingMode>("RecordingMode")
-            .value("RECORD_FULL", SimulatorItem::RECORD_FULL) 
-            .value("RECORD_TAIL", SimulatorItem::RECORD_TAIL)
-            .value("RECORD_NONE", SimulatorItem::RECORD_NONE)
+            .value("REC_FULL", SimulatorItem::REC_FULL) 
+            .value("REC_TAIL", SimulatorItem::REC_TAIL)
+            .value("REC_NONE", SimulatorItem::REC_NONE)
             .value("N_RECORDING_MODES", SimulatorItem::N_RECORDING_MODES);
         
         enum_<SimulatorItem::TimeRangeMode>("TimeRangeMode")
-            .value("TIMEBAR_RANGE", SimulatorItem::TIMEBAR_RANGE) 
-            .value("SPECIFIED_PERIOD", SimulatorItem::SPECIFIED_PERIOD)
-            .value("UNLIMITED", SimulatorItem::UNLIMITED)
+            .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED)
+            .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL)
+            .value("TR_SPECIFIC", SimulatorItem::TR_SPECIFIC)
+            .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR) 
             .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES);
     }
 

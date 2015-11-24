@@ -287,7 +287,7 @@ Viewpoint {
   orientation 0.5770 0.5775 0.5775 2.0935
 }
 
-DEF SampleRobot Humanoid {
+DEF SR1 Humanoid {
   name "SR1"
 
   humanoidBody [
