@@ -146,6 +146,22 @@ public:
 
     DeviceType* get(int index) const { return ArrayBase::operator[](index).get(); }
 
+    template<class DeviceType2>
+    bool extract(DeviceList<DeviceType2>& io_extracted) {
+        bool result = false;
+        typename ArrayBase::iterator p = ArrayBase::begin();
+        while(p != ArrayBase::end()){
+            if(DeviceType2* device = dynamic_cast<DeviceType2*>(p->get())){
+                io_extracted.push_back(device);
+                p = ArrayBase::erase(p);
+                result = true;
+            } else{
+                ++p;
+            }
+        }
+        return result;
+    }
+
     DeviceList getSortedById() const {
         DeviceList sorted;
         for(size_t i=0; i < ArrayBase::size(); ++i){

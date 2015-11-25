@@ -83,6 +83,8 @@ private:
     double fieldOfView_;
     double frameRate_;
     boost::shared_ptr<Image> image_;
+
+    void copyCameraStateFrom(const Camera& other);    
 };
 
 typedef ref_ptr<Camera> CameraPtr;
@@ -126,6 +128,8 @@ public:
 private:
     boost::shared_ptr< std::vector<Vector3f> > points_;
     bool isOrganized_;
+
+    void copyRangeCameraStateFrom(const RangeCamera& other);    
 };
 
 typedef ref_ptr<RangeCamera> RangeCameraPtr;

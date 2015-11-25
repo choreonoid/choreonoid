@@ -37,7 +37,12 @@ RangeSensor::RangeSensor()
 void RangeSensor::copyStateFrom(const RangeSensor& other)
 {
     VisionSensor::copyStateFrom(other);
-    
+    copyRangeSensorStateFrom(other);
+}
+
+
+void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
+{
     on_ = other.on_;
     yawResolution_ = other.yawResolution_;
     pitchResolution_ = other.pitchResolution_;
@@ -47,7 +52,7 @@ void RangeSensor::copyStateFrom(const RangeSensor& other)
     maxDistance_ = other.maxDistance_;
     frameRate_ = other.frameRate_;
 
-    if(other.isRangeDataSetAsState_){
+    if(isRangeDataSetAsState_ || other.isRangeDataSetAsState_){
         rangeData_ = other.rangeData_;
     } else {
         rangeData_ = boost::make_shared<RangeData>();
@@ -68,7 +73,7 @@ RangeSensor::RangeSensor(const RangeSensor& org, bool copyAll)
     : VisionSensor(org, copyAll)
 {
     isRangeDataSetAsState_ = org.isRangeDataSetAsState_;
-    copyStateFrom(org);
+    copyRangeSensorStateFrom(org);
 }
 
         

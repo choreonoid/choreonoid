@@ -33,7 +33,12 @@ const char* Camera::typeName()
 void Camera::copyStateFrom(const Camera& other)
 {
     VisionSensor::copyStateFrom(other);
-    
+    copyCameraStateFrom(other);
+}
+
+
+void Camera::copyCameraStateFrom(const Camera& other)
+{
     on_ = other.on_;
     imageType_ = other.imageType_;
     resolutionX_ = other.resolutionX_;
@@ -43,7 +48,7 @@ void Camera::copyStateFrom(const Camera& other)
     farDistance_ = other.farDistance_;
     frameRate_ = other.frameRate_;
 
-    if(other.isShotDataSetAsState_){
+    if(isShotDataSetAsState_ || other.isShotDataSetAsState_){
         image_ = other.image_;
     } else {
         image_ = boost::make_shared<Image>();
@@ -64,7 +69,7 @@ Camera::Camera(const Camera& org, bool copyAll)
     : VisionSensor(org, copyAll)
 {
     isShotDataSetAsState_ = org.isShotDataSetAsState_;
-    copyStateFrom(org);
+    copyCameraStateFrom(org);
 }
 
         
@@ -176,8 +181,13 @@ const char* RangeCamera::typeName()
 void RangeCamera::copyStateFrom(const RangeCamera& other)
 {
     Camera::copyStateFrom(other);
+    copyRangeCameraStateFrom(other);
+}
 
-    if(other.isShotDataSetAsState()){
+
+void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
+{
+    if(isShotDataSetAsState() || other.isShotDataSetAsState()){
         points_ = other.points_;
     } else {
         points_ = boost::make_shared<PointData>();
@@ -198,12 +208,7 @@ void RangeCamera::copyStateFrom(const DeviceState& other)
 RangeCamera::RangeCamera(const RangeCamera& org, bool copyAll)
     : Camera(org, copyAll)
 {
-    if(org.isShotDataSetAsState()){
-        points_ = org.points_;
-    } else {
-        points_ = boost::make_shared<PointData>();
-    }
-    isOrganized_ = org.isOrganized_;
+    copyRangeCameraStateFrom(org);
 }
 
         

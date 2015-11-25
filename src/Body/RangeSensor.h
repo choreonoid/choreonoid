@@ -85,6 +85,8 @@ private:
     double maxDistance_;
     double frameRate_;
     boost::shared_ptr<RangeData> rangeData_;
+
+    void copyRangeSensorStateFrom(const RangeSensor& other);    
 };
 
 typedef ref_ptr<RangeSensor> RangeSensorPtr;

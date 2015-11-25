@@ -153,6 +153,10 @@ public:
     void pop_back(){
         elements.pop_back();
     }
+
+    iterator erase(iterator pos){
+        return elements.erase(pos);
+    }
 };
 
 }
