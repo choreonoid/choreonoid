@@ -3,11 +3,11 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H_INCLUDED
-#define CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H_INCLUDED
+#ifndef CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H
+#define CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H
 
 #include "Body.h"
-#include "Sensor.h"
+#include "BasicSensors.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -41,7 +41,7 @@ private:
 
     friend class BasicSensorSimulationHelperImpl;
 };
+
 }
 
 #endif
-

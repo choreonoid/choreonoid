@@ -7,7 +7,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/InteractiveCameraTransform>
-#include <cnoid/SceneCamera>
+#include <cnoid/SceneCameras>
 #include <cnoid/SceneView>
 #include <cnoid/BodyItem>
 #include <boost/bind.hpp>

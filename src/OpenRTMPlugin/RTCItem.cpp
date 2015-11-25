@@ -8,7 +8,7 @@
 #include "OpenRTMUtil.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>

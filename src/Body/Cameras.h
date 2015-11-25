@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_CAMERA_H
-#define CNOID_BODY_CAMERA_H
+#ifndef CNOID_BODY_CAMERAS_H
+#define CNOID_BODY_CAMERAS_H
 
 #include "VisionSensor.h"
 #include <cnoid/Image>
@@ -19,7 +19,8 @@ public:
     Camera();
     Camera(const Camera& org, bool copyAll = true);
 
-    void copyStateFrom(const Camera& other); 
+    virtual const char* typeName();
+    void copyStateFrom(const Camera& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
@@ -93,6 +94,7 @@ public:
     RangeCamera();
     RangeCamera(const RangeCamera& org, bool copyAll = true);
 
+    virtual const char* typeName();
     void copyStateFrom(const RangeCamera& other); 
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;

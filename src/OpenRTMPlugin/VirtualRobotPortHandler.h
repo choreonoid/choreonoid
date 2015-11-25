@@ -8,9 +8,9 @@
 
 #include <boost/shared_ptr.hpp>
 #include <cnoid/Body>
-#include <cnoid/Sensor>
-#include <cnoid/Light>
-#include <cnoid/Camera>
+#include <cnoid/BasicSensors>
+#include <cnoid/Lights>
+#include <cnoid/Cameras>
 #include <cnoid/RangeSensor>
 #include <cnoid/corba/CameraImage.hh>
 #include <cnoid/corba/PointCloud.hh>

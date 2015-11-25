@@ -5,7 +5,7 @@
 
 #include "SensorVisualizerItem.h"
 #include "BodyItem.h"
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/SceneShape>

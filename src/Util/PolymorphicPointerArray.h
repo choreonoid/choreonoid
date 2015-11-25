@@ -27,6 +27,8 @@ public:
     typedef PolymorphicPointerArrayBase Base;
     typedef typename Container::iterator iterator;
     typedef typename Container::const_iterator const_iterator;
+    typedef typename Container::reference reference;
+    typedef typename Container::const_reference const_reference;
 
     PolymorphicPointerArray() { }
 

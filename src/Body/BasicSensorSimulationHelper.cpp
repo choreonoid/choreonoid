@@ -70,22 +70,20 @@ BasicSensorSimulationHelper::~BasicSensorSimulationHelper()
 void BasicSensorSimulationHelper::initialize
 (BodyPtr body, double timeStep, const Vector3& gravityAcceleration)
 {
+    isActive_ = false;
+
     const DeviceList<>& devices = body->devices();
-    DeviceList<Sensor> sensors;
-    sensors.reserve(devices.size());
-    sensors = devices;
+    if(!devices.empty()){
+        forceSensors_ = devices;
+        gyroSensors_ = devices;
+        accelSensors_ = devices;
 
-    if(sensors.empty()){
-        isActive_ = false;
-
-    } else {
-        forceSensors_ = sensors;
-        gyroSensors_ = sensors;
-        accelSensors_ = sensors;
-        
-        impl->initialize(body, timeStep, gravityAcceleration);
-
-        isActive_ = true;
+        if(!forceSensors_.empty() ||
+           !gyroSensors_.empty() ||
+           !accelSensors_.empty()){
+            impl->initialize(body, timeStep, gravityAcceleration);    
+            isActive_ = true;
+        }
     }
 }
 

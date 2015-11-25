@@ -3,7 +3,7 @@
 */
 
 #include "VRMLToSGConverter.h"
-#include "SceneLight.h"
+#include "SceneLights.h"
 #include "Triangulator.h"
 #include "PolygonMeshTriangulator.h"
 #include "MeshNormalGenerator.h"

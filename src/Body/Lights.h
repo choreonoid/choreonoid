@@ -3,15 +3,15 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LIGHT_H
-#define CNOID_BODY_LIGHT_H
+#ifndef CNOID_BODY_LIGHTS_H
+#define CNOID_BODY_LIGHTS_H
 
 #include "Device.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT Light : public ActiveDevice
+class CNOID_EXPORT Light : public Device
 {
 protected:
     Light();
@@ -19,7 +19,6 @@ protected:
 
 public:
     void copyStateFrom(const Light& other);
-
     virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
     virtual const double* readState(const double* buf);
     virtual double* writeState(double* out_buf) const;
@@ -48,6 +47,7 @@ public:
     PointLight();
     PointLight(const PointLight& org, bool copyState = true);
 
+    virtual const char* typeName();
     void copyStateFrom(const PointLight& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
@@ -81,6 +81,7 @@ public:
     SpotLight();
     SpotLight(const SpotLight& org, bool copyState = true);
 
+    virtual const char* typeName();
     void copyStateFrom(const SpotLight& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;

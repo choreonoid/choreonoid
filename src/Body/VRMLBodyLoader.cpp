@@ -4,10 +4,10 @@
 */
 
 #include "VRMLBodyLoader.h"
-#include "Sensor.h"
-#include "Camera.h"
+#include "BasicSensors.h"
+#include "Cameras.h"
 #include "RangeSensor.h"
-#include "Light.h"
+#include "Lights.h"
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/EasyScanner>

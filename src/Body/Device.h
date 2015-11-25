@@ -25,6 +25,9 @@ protected:
         
 public:
     virtual ~DeviceState() { }
+
+    virtual const char* typeName() = 0;
+    
     virtual void copyStateFrom(const DeviceState& other) = 0;
     virtual DeviceState* cloneState() const = 0;
 
@@ -75,7 +78,7 @@ public:
     void setId(int id) { ns->id = id; }
     void setName(const std::string& name) { ns->name = name; }
     void setLink(Link* link) { ns->link = link; }
-        
+
     virtual Device* clone() const = 0;
     virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
     virtual void clearState();
@@ -126,19 +129,6 @@ public:
 typedef ref_ptr<Device> DevicePtr;
 
 
-class CNOID_EXPORT ActiveDevice : public Device
-{
-public:
-protected:
-    ActiveDevice() { }
-    ActiveDevice(const Device& org, bool copyAll = true) : Device(org, copyAll) { }
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
-    void copyStateFrom(const ActiveDevice& other) { Device::copyStateFrom(other); }
-};
-
-typedef ref_ptr<ActiveDevice> ActiveDevicePtr;
-
-
 template <class DeviceType = Device, class PointerType = ref_ptr<DeviceType> >
 class DeviceList : public PolymorphicReferencedArray<DeviceType, Device, PointerType>
 {
@@ -156,19 +146,19 @@ public:
 
     DeviceType* get(int index) const { return ArrayBase::operator[](index).get(); }
 
-    template<class TargetType> void makeIdMap(DeviceList<TargetType>& out_map) const {
-        out_map.clear();
+    DeviceList getSortedById() const {
+        DeviceList sorted;
         for(size_t i=0; i < ArrayBase::size(); ++i){
-            if(TargetType* device = dynamic_cast<TargetType*>(get(i))){
-                const int id = device->id();
-                if(id >= 0){
-                    if(out_map.size() <= id){
-                        out_map.resize(id + 1);
-                    }
-                    out_map[id] = device;
+            DeviceType* device = get(i);
+            const int id = device->id();
+            if(id >= 0){
+                if(sorted.size() <= id){
+                    sorted.resize(id + 1);
                 }
+                sorted[id] = device;
             }
         }
+        return sorted;
     }
 };
 

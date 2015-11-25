@@ -38,7 +38,7 @@ set(sources
   MeshGenerator.cpp
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
-  SceneMarker.cpp
+  SceneMarkers.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
@@ -94,15 +94,15 @@ set(headers
   BoundingBox.h
   SceneGraph.h
   SceneShape.h
-  SceneCamera.h
-  SceneLight.h
+  SceneCameras.h
+  SceneLights.h
   SceneVisitor.h
   SceneRenderer.h
   SceneUtil.h
   MeshGenerator.h
   MeshNormalGenerator.h
   MeshExtractor.h
-  SceneMarker.h
+  SceneMarkers.h
   SceneProvider.h
   CollisionDetector.h
   Triangulator.h

@@ -149,7 +149,11 @@ public:
     template<class DeviceType> DeviceType* findDevice(const std::string& name) const {
         return dynamic_cast<DeviceType*>(findDeviceSub(name));
     }
-        
+
+    Device* findDevice(const std::string& name) const {
+        return findDeviceSub(name);
+    }
+    
     void addDevice(Device* device);
     void initializeDeviceStates();
     void clearDevices();

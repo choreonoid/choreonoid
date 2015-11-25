@@ -72,6 +72,12 @@ RangeSensor::RangeSensor(const RangeSensor& org, bool copyAll)
 }
 
         
+const char* RangeSensor::typeName()
+{
+    return "RangeSensor";
+}
+
+
 DeviceState* RangeSensor::cloneState() const
 {
     return new RangeSensor(*this, false);

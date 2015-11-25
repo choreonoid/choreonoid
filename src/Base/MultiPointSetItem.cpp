@@ -14,7 +14,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
-#include <cnoid/SceneMarker>
+#include <cnoid/SceneMarkers>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <boost/bind.hpp>

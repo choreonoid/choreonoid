@@ -5,8 +5,8 @@
 
 #include "SceneGraph.h"
 #include "SceneShape.h"
-#include "SceneLight.h"
-#include "SceneCamera.h"
+#include "SceneLights.h"
+#include "SceneCameras.h"
 #include "SceneVisitor.h"
 #include "Exception.h"
 #include "MeshNormalGenerator.h"

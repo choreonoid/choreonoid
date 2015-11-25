@@ -260,12 +260,12 @@ void SensorDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
     const BodyPtr& body = bodyRTC->body();
     if(!sensorNames.empty()){
-        if(Sensor* sensor = body->findDevice<Sensor>(sensorNames[0])){
+        if(Device* sensor = body->findDevice(sensorNames[0])){
             const int dataSize = sensor->stateSize();
             value.data.length(dataSize);
             if(dataSize > 0){
                 for(size_t i=0; i < sensorNames.size(); ++i){
-                    if(Sensor* sensor = body->findDevice<Sensor>(sensorNames[i])){
+                    if(Device* sensor = body->findDevice(sensorNames[i])){
                         sensor->writeState(&value.data[i * dataSize]);
                     }
                 }

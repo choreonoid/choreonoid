@@ -3,12 +3,12 @@
 */
 
 #include "SceneDevice.h"
-#include "Sensor.h"
-#include "Camera.h"
+#include "BasicSensors.h"
+#include "Cameras.h"
 #include "RangeSensor.h"
-#include "Light.h"
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include "Lights.h"
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <boost/bind.hpp>
 #include <map>
 

@@ -19,8 +19,8 @@
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneShape>
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <QGLWidget>
 #include <QGLPixelBuffer>

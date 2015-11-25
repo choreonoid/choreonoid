@@ -15,7 +15,7 @@
 #include <cnoid/OpenRTMUtil>
 #include <cnoid/Timer>
 #include <cnoid/BodyItem>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ExtraBodyStateAccessor>
 #include <QMessageBox>
 #include <rtm/idl/RTC.hh>
@@ -531,13 +531,12 @@ void Hrpsys31ItemImpl::onReadRequest()
                 }
                 jointStateChanged = true;
             }
-                
-            DeviceList<Sensor> sensors = body->devices();
-            DeviceList<ForceSensor> forceSensors = sensors;
+
+            DeviceList<ForceSensor> forceSensors = body->devices<ForceSensor>();
             copySensorState(forceSensors, state->force);
-            DeviceList<RateGyroSensor> gyroSensors = sensors;
-            copySensorState(gyroSensors, state->rateGyro);
-            DeviceList<AccelSensor> accelSensors = sensors;
+            DeviceList<RateGyroSensor> gyros = body->devices<RateGyroSensor>();
+            copySensorState(gyros, state->rateGyro);
+            DeviceList<AccelSensor> accelSensors = body->devices<AccelSensor>();
             copySensorState(accelSensors, state->accel);
 
             for(int i=0; i < 2; ++i){

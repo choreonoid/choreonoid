@@ -11,11 +11,11 @@
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/PointSetUtil>
-#include <cnoid/SceneMarker>
+#include <cnoid/SceneMarkers>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <cnoid/GLSceneRenderer>
-#include <cnoid/SceneCamera>
+#include <cnoid/SceneCameras>
 #include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"

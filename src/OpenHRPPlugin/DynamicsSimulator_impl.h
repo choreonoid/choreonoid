@@ -9,7 +9,7 @@
 #endif
 
 #include <cnoid/Body>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 
 namespace OpenHRP {
 

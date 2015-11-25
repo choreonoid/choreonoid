@@ -4,7 +4,7 @@
 */
 
 #include <cnoid/SimpleController>
-#include <cnoid/Light>
+#include <cnoid/Lights>
 
 using namespace std;
 using namespace cnoid;

@@ -16,8 +16,8 @@
 
 #include <cnoid/Body>
 #include <cnoid/Link>
-#include <cnoid/Sensor>
-#include <cnoid/Camera>
+#include <cnoid/BasicSensors>
+#include <cnoid/Cameras>
 #include <cnoid/Exception>
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>

@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_POLYMORPHIC_REFERENCED_ARRAY_H_INCLUDED
-#define CNOID_UTIL_POLYMORPHIC_REFERENCED_ARRAY_H_INCLUDED
+#ifndef CNOID_UTIL_POLYMORPHIC_REFERENCED_ARRAY_H
+#define CNOID_UTIL_POLYMORPHIC_REFERENCED_ARRAY_H
 
 #include "Referenced.h"
 #include <vector>
@@ -34,6 +34,8 @@ public:
     typedef typename Container::value_type value_type;
     typedef typename Container::iterator iterator;
     typedef typename Container::const_iterator const_iterator;
+    typedef typename Container::reference reference;
+    typedef typename Container::const_reference const_reference;
 
     PolymorphicReferencedArray() { }
 
@@ -152,6 +154,7 @@ public:
         elements.pop_back();
     }
 };
+
 }
 
 #endif

@@ -7,7 +7,7 @@
 
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/SceneBody>
-#include <cnoid/SceneMarker>
+#include <cnoid/SceneMarkers>
 #include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 

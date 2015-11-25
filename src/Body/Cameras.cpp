@@ -3,7 +3,7 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "Camera.h"
+#include "Cameras.h"
 #include <boost/make_shared.hpp>
 
 using namespace cnoid;
@@ -21,6 +21,12 @@ Camera::Camera()
     farDistance_ = 100.0;
     frameRate_ = 30.0;
     image_ = boost::make_shared<Image>();
+}
+
+
+const char* Camera::typeName()
+{
+    return "Camera";
 }
 
 
@@ -158,6 +164,12 @@ RangeCamera::RangeCamera()
     setImageType(NO_IMAGE);
     points_ = boost::make_shared<PointData>();
     isOrganized_ = false;
+}
+
+
+const char* RangeCamera::typeName()
+{
+    return "RangeCamera";
 }
 
 

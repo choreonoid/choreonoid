@@ -15,12 +15,12 @@ set(sources
   JointPath.cpp
   Jacobian.cpp
   Device.cpp
-  Sensor.cpp
+  BasicSensors.cpp
   BasicSensorSimulationHelper.cpp
   VisionSensor.cpp
-  Camera.cpp
+  Cameras.cpp
   RangeSensor.cpp
-  Light.cpp
+  Lights.cpp
   MultiDeviceStateSeq.cpp
   ExtraBodyStateAccessor.cpp
   SceneBody.cpp
@@ -72,12 +72,12 @@ set(headers
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h
-  Sensor.h
+  BasicSensors.h
   BasicSensorSimulationHelper.h
   VisionSensor.h
-  Camera.h
+  Cameras.h
   RangeSensor.h
-  Light.h
+  Lights.h
   SceneBody.h
   SceneDevice.h
   SceneCollision.h

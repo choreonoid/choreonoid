@@ -6,8 +6,8 @@
 #include "SceneVisitor.h"
 #include "SceneGraph.h"
 #include "SceneShape.h"
-#include "SceneCamera.h"
-#include "SceneLight.h"
+#include "SceneCameras.h"
+#include "SceneLights.h"
 
 using namespace cnoid;
 

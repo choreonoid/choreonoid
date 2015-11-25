@@ -3,12 +3,14 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "Light.h"
+#include "Lights.h"
 
 using namespace cnoid;
 
 namespace {
+
 const int LightStateSize = 5;
+
 }
 
 
@@ -29,7 +31,7 @@ void Light::copyStateFrom(const Light& other)
 
 
 Light::Light(const Light& org, bool copyAll)
-    : ActiveDevice(org, copyAll)
+    : Device(org, copyAll)
 {
     copyStateFrom(org);
 }
@@ -38,7 +40,7 @@ Light::Light(const Light& org, bool copyAll)
 void Light::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(Light))){
-        ActiveDevice::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
@@ -68,6 +70,12 @@ PointLight::PointLight()
     constantAttenuation_ = 1.0f;
     linearAttenuation_ = 0.0f;
     quadraticAttenuation_ = 0.0f;
+}
+
+
+const char* PointLight::typeName()
+{
+    return "PointLight";
 }
 
 
@@ -148,6 +156,12 @@ SpotLight::SpotLight()
     direction_ << 0.0f, 0.0f, -1.0f;
     beamWidth_ = 1.570796f;
     cutOffAngle_ = 0.785398f;
+}
+
+
+const char* SpotLight::typeName()
+{
+    return "SpotLight";
 }
 
 

@@ -7,7 +7,7 @@
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExtraBodyStateAccessor>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
@@ -27,7 +27,7 @@ const bool TRACE_FUNCTIONS = false;
 
 struct SensorTypeOrder
 {
-    bool operator()(const Sensor* lhs, const Sensor* rhs) const {
+    bool operator()(const Device* lhs, const Device* rhs) const {
         int result = strcmp(typeid(*lhs).name(), typeid(*rhs).name());
         return (result == 0) ? (lhs->id() <= rhs->id()) : (result <= 0);
     }
@@ -172,14 +172,21 @@ void BodyStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
 void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 {
     stateConnections.disconnect();
-    DeviceList<Sensor> devices;
 
     extraStateItemMap.clear();
     stateTreeWidget.clear();
     int maxNumStateElements = 0;
 
     if(currentBody){
-        devices = currentBody->devices();
+
+        DeviceList<ForceSensor> forceSensors = currentBody->devices<ForceSensor>();
+        DeviceList<RateGyroSensor> gyroSensors = currentBody->devices<RateGyroSensor>();
+        DeviceList<AccelSensor> accelSensors = currentBody->devices<AccelSensor>();
+
+        DeviceList<> devices;
+        std::copy(forceSensors.begin(), forceSensors.end(), std::back_inserter(devices));
+        std::copy(gyroSensors.begin(), gyroSensors.end(), std::back_inserter(devices));
+        std::copy(accelSensors.begin(), accelSensors.end(), std::back_inserter(devices));
         std::stable_sort(devices.begin(), devices.end(), SensorTypeOrder());
             
         for(int i=0; i < devices.size(); ++i){

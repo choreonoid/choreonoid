@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_SENSORS_H
-#define CNOID_BODY_SENSORS_H
+#ifndef CNOID_BODY_BASIC_SENSOR_H
+#define CNOID_BODY_BASIC_SENSOR_H
 
 #include "Device.h"
 #include <boost/scoped_ptr.hpp>
@@ -12,19 +12,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT Sensor : public Device
-{
-protected:
-    Sensor() { }
-    Sensor(const Sensor& org, bool copyAll = true) : Device(org, copyAll) { }
-public:
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
-};
-
-typedef ref_ptr<Sensor> SensorPtr;
-
-
-class CNOID_EXPORT ForceSensor : public Sensor
+class CNOID_EXPORT ForceSensor : public Device
 {
     Vector6 F_; // f (linear force) + tau (torque)
         
@@ -40,6 +28,7 @@ public:
     ForceSensor();
     ForceSensor(const ForceSensor& org, bool copyAll = true);
 
+    virtual const char* typeName();
     void copyStateFrom(const ForceSensor& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
@@ -66,7 +55,7 @@ public:
 typedef ref_ptr<ForceSensor> ForceSensorPtr;
     
 
-class CNOID_EXPORT RateGyroSensor : public Sensor
+class CNOID_EXPORT RateGyroSensor : public Device
 {
     Vector3 w_; // w = omega = angular velocity
         
@@ -79,6 +68,7 @@ public:
     RateGyroSensor();
     RateGyroSensor(const RateGyroSensor& org, bool copyAll = true);
         
+    virtual const char* typeName();
     void copyStateFrom(const RateGyroSensor& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
@@ -98,8 +88,8 @@ public:
 
 typedef ref_ptr<RateGyroSensor> RateGyroSensorPtr;
 
-    
-class CNOID_EXPORT AccelSensor : public Sensor
+   
+class CNOID_EXPORT AccelSensor : public Device
 {
     Vector3 dv_;
 
@@ -112,6 +102,7 @@ public:
     AccelSensor();
     AccelSensor(const AccelSensor& org, bool copyAll = true);
 
+    virtual const char* typeName();
     void copyStateFrom(const AccelSensor& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;

@@ -12,12 +12,12 @@
 #include <cnoid/ValueTreeUtil>
 #include <cnoid/GLSceneRenderer>
 #include <cnoid/Body>
-#include <cnoid/Camera>
+#include <cnoid/Cameras>
 #include <cnoid/RangeSensor>
 #include <cnoid/SceneBody>
 #include <cnoid/SceneDevice>
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
 #include <QGLPixelBuffer>
 #include <boost/thread.hpp>

@@ -7,7 +7,7 @@
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
 #include "Link.h"
-#include "Sensor.h"
+#include "BasicSensors.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/Vector3Seq>
 #include <cnoid/GaussianFilter>

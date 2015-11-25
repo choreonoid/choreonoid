@@ -3,17 +3,9 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "Sensor.h"
+#include "BasicSensors.h"
 
 using namespace cnoid;
-
-
-void Sensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
-{
-    if(!func(typeid(Sensor))){
-        Device::forEachActualType(func);
-    }
-}
 
 
 ForceSensor::ForceSensor()
@@ -21,6 +13,12 @@ ForceSensor::ForceSensor()
 {
     spec->F_max.setConstant(std::numeric_limits<double>::max());
     ForceSensor::clearState();
+}
+
+
+const char* ForceSensor::typeName()
+{
+    return "ForceSensor";
 }
 
 
@@ -40,7 +38,7 @@ void ForceSensor::copyStateFrom(const DeviceState& other)
 
 
 ForceSensor::ForceSensor(const ForceSensor& org, bool copyAll)
-    : Sensor(org, copyAll)
+    : Device(org, copyAll)
 {
     copyStateFrom(org);
 
@@ -70,7 +68,7 @@ Device* ForceSensor::clone() const
 void ForceSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(ForceSensor))){
-        Sensor::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
@@ -109,6 +107,12 @@ RateGyroSensor::RateGyroSensor()
 }
 
 
+const char* RateGyroSensor::typeName()
+{
+    return "RateGyroSensor";
+}
+
+
 void RateGyroSensor::copyStateFrom(const RateGyroSensor& other)
 {
     w_ = other.w_;
@@ -125,7 +129,7 @@ void RateGyroSensor::copyStateFrom(const DeviceState& other)
 
 
 RateGyroSensor::RateGyroSensor(const RateGyroSensor& org, bool copyAll)
-    : Sensor(org, copyAll)
+    : Device(org, copyAll)
 {
     copyStateFrom(org);
 
@@ -155,7 +159,7 @@ Device* RateGyroSensor::clone() const
 void RateGyroSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(RateGyroSensor))){
-        Sensor::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
@@ -194,6 +198,12 @@ AccelSensor::AccelSensor()
 }
 
 
+const char* AccelSensor::typeName()
+{
+    return "AccelSensor";
+}
+
+
 void AccelSensor::copyStateFrom(const AccelSensor& other)
 {
     dv_ = other.dv_;
@@ -210,7 +220,7 @@ void AccelSensor::copyStateFrom(const DeviceState& other)
 
 
 AccelSensor::AccelSensor(const AccelSensor& org, bool copyAll)
-    : Sensor(org, copyAll)
+    : Device(org, copyAll)
 {
     copyStateFrom(org);
 
@@ -240,7 +250,7 @@ Device* AccelSensor::clone() const
 void AccelSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(AccelSensor))){
-        Sensor::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
