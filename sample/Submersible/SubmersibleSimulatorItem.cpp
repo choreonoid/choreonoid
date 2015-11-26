@@ -22,7 +22,7 @@ namespace {
 std::vector<Vector3, Eigen::aligned_allocator<Vector3> > resistancePoints;
 std::vector<Vector3, Eigen::aligned_allocator<Vector3> > thrustPoints;
 
-Joystick* joystick = 0;
+boost::shared_ptr<Joystick> joystick;
 
 }
 
@@ -79,14 +79,6 @@ ItemPtr SubmersibleSimulatorItem::doDuplicate() const
 }
 
 
-void SubmersibleSimulatorItem::onConnectedToRoot()
-{
-    if(!joystick){
-        joystick = new Joystick();
-    }
-}
-
-
 bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 {
     this->simulatorItem = simulatorItem;
@@ -98,6 +90,7 @@ bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem
         MessageView::instance()->putln("A submersible model has been detected.");
         simulatorItem->addPreDynamicsFunction(
             boost::bind(&SubmersibleSimulatorItem::applyResistanceForce, this));
+        joystick.reset(new Joystick());
         joystickIntervalCounter = 0;
     }
     
