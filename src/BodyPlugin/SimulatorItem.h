@@ -203,6 +203,8 @@ protected:
 
     virtual void initializeSimulationThread();
 
+    virtual void finalizeSimulationThread();
+
     /**
        This function is called from the simulation loop thread.
        @param activeSimBodies SimulatorBody objects which are non-static ones.

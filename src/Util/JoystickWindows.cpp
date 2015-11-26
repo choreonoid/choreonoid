@@ -24,10 +24,13 @@ public:
     vector<double> axes;
     vector<bool> buttons;
     string errorMessage;
+    Signal<void(int id, bool isPressed)> sigButton;
+    Signal<void(int id, double position)> sigAxis;
 
     JoystickImpl();
     bool readCurrentState();
 };
+
 }
 
 
@@ -123,18 +126,6 @@ int Joystick::numButtons() const
 }
 
 
-void Joystick::onJoystickButtonEvent(int id, bool isPressed)
-{
-
-}
-
-
-void Joystick::onJoystickAxisEvent(int id, double position)
-{
-
-}
-
-
 bool Joystick::readCurrentState()
 {
     return impl->readCurrentState();
@@ -210,3 +201,16 @@ bool Joystick::isActive() const
     }
     return false;
 }
+
+
+SignalProxy<void(int id, bool isPressed)> Joystick::sigButton()
+{
+    return impl->sigButton;
+}
+
+
+SignalProxy<void(int id, double position)> Joystick::sigAxis()
+{
+    return impl->sigAxis;
+}
+

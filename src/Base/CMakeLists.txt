@@ -95,6 +95,7 @@ set(sources
   ImageView.cpp
   TextEdit.cpp
   TaskView.cpp
+  VirtualJoystickView.cpp
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)

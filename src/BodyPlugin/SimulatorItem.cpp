@@ -1609,6 +1609,12 @@ void SimulatorItem::initializeSimulationThread()
 }
 
 
+void SimulatorItem::finalizeSimulationThread()
+{
+
+}
+
+
 const std::vector<SimulationBody*>& SimulatorItem::simulationBodies()
 {
     return impl->simBodiesWithBody;
@@ -1788,6 +1794,8 @@ void SimulatorItemImpl::run()
     if(!isWaitingForSimulationToStop){
         callLater(boost::bind(&SimulatorItemImpl::onSimulationLoopStopped, this));
     }
+
+    self->finalizeSimulationThread();
 }
 
 

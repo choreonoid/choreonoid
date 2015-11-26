@@ -9,30 +9,13 @@
 
 using namespace cnoid;
 
-namespace {
-
-class JoystickEx : public Joystick
-{
-    JoystickCaptureImpl* capture;
-public:
-    JoystickEx(JoystickCaptureImpl* capture, const char* device)
-        : Joystick(device), capture(capture) { }
-    virtual void onJoystickButtonEvent(int id, bool isPressed);
-    virtual void onJoystickAxisEvent(int id, double position);
-};
-
-}
-
 namespace cnoid {
 
 class JoystickCaptureImpl
 {
 public:
-    JoystickEx* joystick;
+    Joystick* joystick;
     SocketNotifier* notifier;
-    
-    Signal<void(int id, bool isPressed)> sigButton;
-    Signal<void(int id, double position)> sigAxis;
     
     JoystickCaptureImpl();
     ~JoystickCaptureImpl();
@@ -85,7 +68,7 @@ bool JoystickCaptureImpl::setDevice(const char* device)
         joystick = 0;
     }
     if(device){
-        joystick = new JoystickEx(this, device);
+        joystick = new Joystick(device);
         if(joystick->isReady()){
             notifier = new SocketNotifier(joystick->fileDescriptor(), QSocketNotifier::Read);
             notifier->sigActivated().connect(boost::bind(&JoystickCaptureImpl::onNotifierActivated, this));
@@ -102,15 +85,15 @@ void JoystickCapture::releaseDevice()
 }
 
 
-Signal<void(int id, bool isPressed)>& JoystickCapture::sigButton()
+SignalProxy<void(int id, bool isPressed)> JoystickCapture::sigButton()
 {
-    return impl->sigButton;
+    return impl->joystick->sigButton();
 }
 
 
-Signal<void(int id, double position)>& JoystickCapture::sigAxis()
+SignalProxy<void(int id, double position)> JoystickCapture::sigAxis()
 {
-    return impl->sigAxis;
+    return impl->joystick->sigAxis();
 }
 
 
@@ -125,18 +108,6 @@ void JoystickCaptureImpl::onNotifierActivated()
     notifier->setEnabled(false);
     joystick->readCurrentState();
     notifier->setEnabled(true);
-}
-
-
-void JoystickEx::onJoystickButtonEvent(int id, bool isPressed)
-{
-    capture->sigButton(id, isPressed);
-}
-
-
-void JoystickEx::onJoystickAxisEvent(int id, double position)
-{
-    capture->sigAxis(id, position);
 }
 
 

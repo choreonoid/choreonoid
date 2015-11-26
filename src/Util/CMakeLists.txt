@@ -53,6 +53,7 @@ set(sources
   GettextWrapper.cpp
   GettextUtil.cpp
   CnoidUtil.cpp # This file must be placed at the last position
+  ExtJoystick.cpp
   )
 
 
@@ -134,6 +135,7 @@ set(headers
   Selection.h
   DataMap.h
   Joystick.h
+  ExtJoystick.h
   Task.h
   AbstractTaskSequencer.h
   exportdecl.h

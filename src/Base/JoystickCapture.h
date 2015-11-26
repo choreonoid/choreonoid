@@ -23,8 +23,8 @@ public:
     bool isReady() const;
     void releaseDevice();
 
-    Signal<void(int id, bool isPressed)>& sigButton();
-    Signal<void(int id, double position)>& sigAxis();
+    SignalProxy<void(int id, bool isPressed)> sigButton();
+    SignalProxy<void(int id, double position)> sigAxis();
 
     int numAxes() const;
     void setAxisEnabled(int axis, bool on);
