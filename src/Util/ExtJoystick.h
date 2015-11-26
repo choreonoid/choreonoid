@@ -3,22 +3,25 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VIRTUAL_JOYSTICK_H
-#define CNOID_UTIL_VIRTUAL_JOYSTICK_H
+#ifndef CNOID_UTIL_EXT_JOYSTICK_H
+#define CNOID_UTIL_EXT_JOYSTICK_H
 
 #include "Signal.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT VirtualJoystick
+class CNOID_EXPORT ExtJoystick
 {
+    Signal<void()> sigDestroyed_;
+    
 public:
-    static void registerJoystick(const char* name, VirtualJoystick* joystick);
-    static VirtualJoystick* findJoystick(const char* name);
+    static void registerJoystick(const std::string& name, ExtJoystick* joystick);
+    static ExtJoystick* findJoystick(const std::string& name);
 
-    virtual ~VirtualJoystick() = 0;
-    virtual bool isReady() const = 0;
+    SignalProxy<void()> sigDestroyed() { return sigDestroyed_; }
+
+    virtual ~ExtJoystick();
     virtual int numAxes() const = 0;
     virtual int numButtons() const = 0;
     virtual bool readCurrentState() = 0;
