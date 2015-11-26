@@ -44,6 +44,7 @@ void setShape(Link* link, SgGroup* shape, bool isVisual)
     if(shape->empty()){
         node = new SgNode;
     } else {
+        // TODO: have to apply transform here when joint pose != link pose
         SgInvariantGroup* invariant = new SgInvariantGroup;
         if(link->Rs().isApprox(Matrix3::Identity())){
             shape->copyChildrenTo(invariant);
@@ -146,6 +147,7 @@ std::vector<JointInfoPtr> SDFBodyLoaderImpl::findRootJoints()
                  << ", child:" << (*it)->childName << ")" << std::endl;
         }
         usedlinks[(*it)->parentName] = *it;
+        usedlinks[(*it)->childName] = *it;
         it++;
     }
     it = joints.begin();
@@ -244,7 +246,7 @@ bool SDFBodyLoader::load(BodyPtr body, const std::string& filename)
 
 cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
 {
-    cnoid::Affine3 ret;
+    cnoid::Affine3 ret = cnoid::Affine3::Identity();
     cnoid::Vector3 trans;
     trans(0) = pose.pos.x;
     trans(1) = pose.pos.y;
@@ -289,6 +291,12 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         std::string modelName = model->Get<std::string>("name");
         os() << "model name " << modelName << std::endl;
         body->setModelName(modelName);
+        
+        LinkInfoPtr worldlink(new LinkInfo());
+        worldlink->linkName = "world";
+        worldlink->pose = Affine3::Identity();
+        linkdataMap[worldlink->linkName] = worldlink;
+        
         if(model->HasElement("link")){
             sdf::ElementPtr link = model->GetElement("link");
             while(link){
@@ -297,6 +305,8 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 os() << " link name " << linkdata->linkName << std::endl;
                 if(link->HasElement("pose")){
                     linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
+                } else {
+                    linkdata->pose = Affine3::Identity();
                 }
                 if(link->HasElement("inertial")){
                     sdf::ElementPtr inertial = link->GetElement("inertial");
@@ -353,14 +363,37 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 jointdata->childName = joint->Get<std::string>("child");
                 jointdata->parent = linkdataMap[jointdata->parentName];
                 jointdata->child = linkdataMap[jointdata->childName];
-                jointdata->pose = pose2affine(joint->Get<sdf::Pose>("pose"));
-                jointdata->pose = jointdata->child->pose * jointdata->pose;
+                if(joint->HasElement("pose")){
+                    jointdata->pose = pose2affine(joint->Get<sdf::Pose>("pose"));
+                    jointdata->pose = jointdata->child->pose * jointdata->pose;
+                } else {
+                    jointdata->pose = jointdata->child->pose;
+                }
+                if(isVerbose){
+                    os() << jointdata->pose.matrix() << std::endl;
+                }
                 if(joint->HasElement("axis")){
                     sdf::ElementPtr axis = joint->GetElement("axis");
                     sdf::Vector3 xyz = axis->Get<sdf::Vector3>("xyz");
                     jointdata->axis[0] = xyz.x;
                     jointdata->axis[1] = xyz.y;
                     jointdata->axis[2] = xyz.z;
+                    
+                    // convert axis relative to child or parent frame
+                    // https://github.com/yosuke/simtrans/blob/master/simtrans/sdf.py#L198
+                    bool useparent = axis->Get<bool>("use_parent_model_frame");
+                    cnoid::Affine3 work = cnoid::Affine3::Identity();
+                    cnoid::Affine3 work2 = cnoid::Affine3::Identity();
+                    work.translation() = jointdata->axis;
+                    if(useparent){
+                        work2.linear() = jointdata->parent->pose.linear();
+                    } else {
+                        work2.linear() = jointdata->child->pose.linear();
+                    }
+                    work = work2.inverse() * work;
+                    jointdata->axis = work.translation();
+                    jointdata->axis.normalize();
+                    
                     if(axis->HasElement("limit")){
                         sdf::ElementPtr limit = axis->GetElement("limit");
                         jointdata->lower = limit->Get<double>("lower");
@@ -374,6 +407,8 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 joint = joint->GetNextElement("joint");
             }
         }
+
+        // create at least one joint if no joint is specified in the file
         if(joints.size() == 0 && linkdataMap.size() > 0){
             JointInfoPtr j(new JointInfo());
             j->parent = linkdataMap.begin()->second;
@@ -381,6 +416,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             joints.push_back(j);
         }
 
+        // construct tree structure of joints and links
         vector<JointInfoPtr> roots = findRootJoints();
         std::vector<JointInfoPtr>::iterator it = roots.begin();
         while(it != roots.end()){
@@ -395,7 +431,8 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             }else{
                 link->setJointType(Link::FREE_JOINT);
                 root.reset(new JointInfo());
-                root->jointName = modelName;
+                root->jointName = (*it)->jointName;
+                root->pose = Affine3::Identity();
                 root->childName = (*it)->parentName;
                 root->child = (*it)->parent;
             }
@@ -418,11 +455,17 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
 void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
 {
     vector<JointInfoPtr> children = findChildJoints(parent->childName);
-    std::vector<JointInfoPtr>::iterator it = children.begin();
+    vector<JointInfoPtr>::iterator it = children.begin();
     while(it != children.end()){
         if((*it)->child == 0){
             it++;
             continue;
+        }
+        if(isVerbose){
+            os() << "convert children from: " << parent->childName << std::endl;
+            os() << "                 to: " << (*it)->childName << std::endl;
+            os() << parent->pose.matrix() << std::endl;
+            os() << (*it)->child->pose.matrix() << std::endl;
         }
         Link* link = body->createLink();
         link->setName((*it)->jointName);
