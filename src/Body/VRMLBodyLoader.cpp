@@ -1094,7 +1094,10 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
     RangeCamera* range = 0;
     
     const SFString& type = get<SFString>(node->fields["type"]);
-    if(type == "DEPTH"){
+    if(type == "COLOR"){
+        camera = new Camera;
+        camera->setImageType(Camera::COLOR_IMAGE);
+    } else if(type == "DEPTH"){
         range = new RangeCamera;
         range->setOrganized(true);
         range->setImageType(Camera::NO_IMAGE);
@@ -1110,11 +1113,12 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
         range = new RangeCamera;
         range->setOrganized(false);
         range->setImageType(Camera::COLOR_IMAGE);
-    } else {
-        camera = new Camera;
     }
+
     if(range){
         camera = range;
+    } else {
+        camera = new Camera;
     }
         
     readDeviceCommonParameters(*camera, node);
