@@ -104,3 +104,10 @@ void Image::load(const std::string& filename)
     ImageIO iio;
     iio.load(*this, filename);
 }
+
+
+void Image::save(const std::string& filename) const
+{
+    ImageIO iio;
+    iio.save(*this, filename);
+}

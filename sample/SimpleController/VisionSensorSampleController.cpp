@@ -4,7 +4,6 @@
 
 #include <cnoid/SimpleController>
 #include <cnoid/Camera>
-#include <cnoid/RangeSensor>
 
 using namespace std;
 using namespace cnoid;
@@ -12,8 +11,6 @@ using namespace cnoid;
 class VisionSensorSampleController : public SimpleController
 {
     DeviceList<Camera> cameras;
-    DeviceList<RangeCamera> rangeCameras;
-    DeviceList<RangeSensor> rangeSensors;
     double timeCounter;
     
 public:
@@ -21,14 +18,17 @@ public:
     virtual bool initialize()
     {
         DeviceList<VisionSensor> sensors(ioBody()->devices());
-        putSensorInformation(sensors);
 
+        for(size_t i=0; i < sensors.size(); ++i){
+            Device* sensor = sensors[i];
+            os() << "Sensor type: " << sensor->typeName()
+                 << ", name: " << sensor->name()
+                 << ", id: " << sensor->id() << endl;
+        }
+        
         cameras << sensors;
-        rangeCameras << sensors;
-        rangeSensors << sensors;
-
-        for(size_t i=0; i < rangeCameras.size(); ++i){
-            rangeCameras[i]->setShotDataAsState(true);
+        for(size_t i=0; i < cameras.size(); ++i){
+            cameras[i]->setShotDataAsState(true);
         }
 
         setJointOutput(false);
@@ -38,30 +38,19 @@ public:
         return true;
     }
 
-    void putSensorInformation(DeviceList<> sensors)
-    {
-        if(!sensors.empty()){
-            os() << "Sensor Type: " << sensors.front()->typeName() << "\n";
-            for(size_t i=0; i < sensors.size(); ++i){
-                Device* sensor = sensors[i];
-                os() << " name: " << sensor->name() << ", id: " << sensor->id() << "\n";
-            }
-            os().flush();
-        }
-    }
-
     virtual bool control()
     {
         timeCounter += timeStep();
         if(timeCounter >= 1.0){
-            for(size_t i=0; i < rangeCameras.size(); ++i){
-                Camera* camera = rangeCameras[i];
-                const Image& image = camera->constImage();
-                os() << camera->name() << "'s image.empty(): " << image.empty() << endl;
+            for(size_t i=0; i < cameras.size(); ++i){
+                Camera* camera = cameras[i];
+                string filename = camera->name() + ".png";
+                camera->constImage().save(filename);
+                os() << "The image of " << camera->name() << " has been saved to \"" << filename << "\"." << endl;
             }
             timeCounter = 0.0;
         }
-        return true;
+        return false;
     }
 };
 
