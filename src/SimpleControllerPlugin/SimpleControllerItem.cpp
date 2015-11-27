@@ -203,7 +203,7 @@ void SimpleControllerItem::input()
         const DeviceList<>& ioDevices = ioBody->devices();
         boost::dynamic_bitset<>::size_type i = inputDeviceStateChangeFlag.find_first();
         while(i != inputDeviceStateChangeFlag.npos){
-            Device* ioDevice = ioDevices.get(i);
+            Device* ioDevice = ioDevices[i];
             ioDevice->copyStateFrom(*devices[i]);
             outputDeviceStateConnections.block(i);
             ioDevice->notifyStateChange();
@@ -248,7 +248,7 @@ void SimpleControllerItem::output()
         const DeviceList<>& ioDevices = ioBody->devices();
         boost::dynamic_bitset<>::size_type i = outputDeviceStateChangeFlag.find_first();
         while(i != outputDeviceStateChangeFlag.npos){
-            Device* device = devices.get(i);
+            Device* device = devices[i];
             device->copyStateFrom(*ioDevices[i]);
             inputDeviceStateConnections.block(i);
             device->notifyStateChange();

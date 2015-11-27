@@ -50,7 +50,7 @@ public:
             qprev[i] = q;
         }
 
-        DeviceList<Light> lights = io->devices();
+        DeviceList<Light> lights(io->devices());
         if(!lights.empty()){
             light = lights.front();
         }

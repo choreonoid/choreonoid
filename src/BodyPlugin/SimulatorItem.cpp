@@ -972,7 +972,7 @@ void SimulationBodyImpl::flushResultsToBody()
         for(size_t i=0; i < ndevices; ++i){
             const DeviceStatePtr& s = ds[i];
             if(s != prevFlushedDeviceStateInDirectMode[i]){
-                Device* device = devices.get(i);
+                Device* device = devices[i];
                 device->copyStateFrom(*s);
                 prevFlushedDeviceStateInDirectMode[i] = s;
                 devicesToNotifyResults.push_back(device);

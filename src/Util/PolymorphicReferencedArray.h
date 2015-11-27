@@ -40,8 +40,9 @@ public:
     PolymorphicReferencedArray() { }
 
     template <class RhsReferencedType, class RhsPointerType>
-    PolymorphicReferencedArray(const PolymorphicReferencedArray<RhsReferencedType, BaseReferencedType, RhsPointerType>& rhs){
-        (*this) = rhs;
+    PolymorphicReferencedArray(
+        const PolymorphicReferencedArray<RhsReferencedType, BaseReferencedType, RhsPointerType>& rhs){
+        (*this) << rhs;
     }
         
     virtual ~PolymorphicReferencedArray() { }
@@ -54,22 +55,55 @@ public:
         return false;
     }
 
-    template <class RhsReferencedType, class RhsPointerType>
-    PolymorphicReferencedArray& operator=(const PolymorphicReferencedArray<RhsReferencedType, BaseReferencedType, RhsPointerType>& rhs){
+    bool operator==(const PolymorphicReferencedArray& rhs) const {
+        if(size() == rhs.size()){
+            return std::equal(begin(), end(), rhs.begin());
+        }
+        return false;
+    }
+
+    bool operator!=(const PolymorphicReferencedArray& rhs) const {
+        return !operator==(rhs);
+    }
+
+    template <class RetReferencedType, class RetPointerType>
+    PolymorphicReferencedArray& operator<<(const PolymorphicReferencedArray<RetReferencedType, BaseReferencedType, RetPointerType>& rhs) {
         for(std::size_t i=0; i < rhs.size(); ++i){
             try_push_back(rhs[i]);
         }
         return *this;
     }
-
-    bool operator==(const PolymorphicReferencedArray& rhs) const {
-        return elements == rhs.elements;
+    
+    template <class RetReferencedType, class RetPointerType>
+    bool extractFrom(PolymorphicReferencedArray<RetReferencedType, BaseReferencedType, RetPointerType>& another) {
+        size_t orgSize = size();
+        typedef PolymorphicReferencedArray<RetReferencedType, BaseReferencedType, RetPointerType> ArgType;
+        typename ArgType::iterator p = another.begin();
+        while(p != another.end()){
+            if(ReferencedType* element = dynamic_cast<ReferencedType*>(p->get())){
+                push_back(element);
+                p = another.erase(p);
+            } else{
+                ++p;
+            }
+        }
+        return (size() > orgSize);
     }
 
-    bool operator!=(const PolymorphicReferencedArray& rhs) const {
-        return elements != rhs.elements;
+    template <class RetReferencedType> PolymorphicReferencedArray extract() {
+        PolymorphicReferencedArray extracted;
+        iterator p = begin();
+        while(p != end()){
+            if(RetReferencedType* element = dynamic_cast<RetReferencedType*>(p->get())){
+                extracted.push_back(element);
+                p = erase(p);
+            } else{
+                ++p;
+            }
+        }
+        return extracted;
     }
-        
+    
     bool empty() const {
         return elements.empty();
     }

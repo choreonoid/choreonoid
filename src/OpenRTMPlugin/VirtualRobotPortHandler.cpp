@@ -385,7 +385,7 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
     if(!cameraName.empty()){
         camera = simBody->findDevice<Camera>(cameraName);
     }else{
-        DeviceList<Camera> cameras = simBody->devices();
+        DeviceList<Camera> cameras(simBody->devices());
         if(!cameras.empty())
             camera = cameras[0];
     }

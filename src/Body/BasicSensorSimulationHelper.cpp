@@ -72,11 +72,11 @@ void BasicSensorSimulationHelper::initialize
 {
     isActive_ = false;
 
-    const DeviceList<>& devices = body->devices();
+    DeviceList<> devices = body->devices();
     if(!devices.empty()){
-        forceSensors_ = devices;
-        gyroSensors_ = devices;
-        accelSensors_ = devices;
+        forceSensors_.extractFrom(devices);
+        gyroSensors_.extractFrom(devices);
+        accelSensors_.extractFrom(devices);
 
         if(!forceSensors_.empty() ||
            !gyroSensors_.empty() ||
@@ -140,7 +140,7 @@ void Impl::initialize(BodyPtr body, double timeStep, const Vector3& gravityAccel
     // initialize kalman filtering
     kfStates.resize(accelSensors.size());
     for(int i=0; i < accelSensors.size(); ++i){
-        const AccelSensor* sensor = accelSensors.get(i);
+        const AccelSensor* sensor = accelSensors[i];
         const Link* link = sensor->link();
         const Vector3 o_Vgsens = link->R() * (link->R().transpose() * link->w()).cross(sensor->localTranslation()) + link->v();
         KFState& s = kfStates[i];
@@ -155,7 +155,7 @@ void Impl::initialize(BodyPtr body, double timeStep, const Vector3& gravityAccel
 void BasicSensorSimulationHelper::updateGyroAndAccelSensors()
 {
     for(size_t i=0; i < gyroSensors_.size(); ++i){
-        RateGyroSensor* gyro = gyroSensors_.get(i);
+        RateGyroSensor* gyro = gyroSensors_[i];
         const Link* link = gyro->link();
         gyro->w() = gyro->R_local().transpose() * link->R().transpose() * link->w();
         gyro->notifyStateChange();
@@ -169,7 +169,7 @@ void BasicSensorSimulationHelper::updateGyroAndAccelSensors()
 
         for(size_t i=0; i < accelSensors_.size(); ++i){
 
-            AccelSensor* sensor = accelSensors_.get(i);
+            AccelSensor* sensor = accelSensors_[i];
             const Link* link = sensor->link();
             
             // kalman filtering

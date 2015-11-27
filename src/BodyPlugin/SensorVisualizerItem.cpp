@@ -174,7 +174,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
 
             scene->clearChildren();
             forceSensorArrows.clear();
-            forceSensors = body->devices();
+            forceSensors << body->devices();
             for(size_t i=0; i < forceSensors.size(); ++i){
                 ArrowPtr arrow = new Arrow(cylinder, cone);
                 forceSensorArrows.push_back(arrow);

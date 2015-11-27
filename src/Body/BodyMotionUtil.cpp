@@ -67,9 +67,9 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const s
     const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
 
     AccelSensor* gsens = 0;
-    DeviceList<AccelSensor> accelSensors = body->devices();
+    DeviceList<AccelSensor> accelSensors(body->devices());
     if(!accelSensors.empty()){
-        gsens = accelSensors.get(0);
+        gsens = accelSensors[0];
     }
     if(!gsens || !gsens->link() || gsens->link()->index() >= linkPosSeq->numParts()){
         return false;

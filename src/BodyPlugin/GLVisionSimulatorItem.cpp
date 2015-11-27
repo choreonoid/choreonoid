@@ -433,7 +433,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         SimulationBody* simBody = simBodies[i];
         Body* body = simBody->body();
         if(bodyNameSet.empty() || bodyNameSet.find(body->name()) != bodyNameSet.end()){
-            DeviceList<VisionSensor> sensors = body->devices<VisionSensor>();
+            DeviceList<VisionSensor> sensors(body->devices());
             for(size_t j=0; j < sensors.size(); ++j){
                 VisionSensor* sensor = sensors[j];
                 if(sensorNameSet.empty() || sensorNameSet.find(sensor->name()) != sensorNameSet.end()){

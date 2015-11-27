@@ -34,13 +34,13 @@ public:
 
     template <class RhsObjectType, class RhsPointerType>
     PolymorphicPointerArray(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
-        (*this) = rhs;
+        (*this) << rhs;
     }
         
     virtual ~PolymorphicPointerArray() { }
 
     template <class RhsObjectType, class RhsPointerType>
-    PolymorphicPointerArray& operator=(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
+    PolymorphicPointerArray& operator<<(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
         for(std::size_t i=0; i < rhs.size(); ++i){
             PointerType p = dynamic_pointer_cast<ObjectType>(rhs[i]);
             if(p){

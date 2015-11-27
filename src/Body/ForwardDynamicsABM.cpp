@@ -464,7 +464,7 @@ void ForwardDynamicsABM::updateForceSensors()
 {
     const DeviceList<ForceSensor>& sensors = sensorHelper.forceSensors();
     for(size_t i=0; i < sensors.size(); ++i){
-        ForceSensor* sensor = sensors.get(i);
+        ForceSensor* sensor = sensors[i];
         const DyLink* link = static_cast<DyLink*>(sensor->link());
 
         //    | f   | = | Ivv  trans(Iwv) | * | dvo | + | pf   |

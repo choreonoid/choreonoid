@@ -603,7 +603,7 @@ void Hrpsys31ItemImpl::copySensorState(DeviceList<SensorType>& sensors, Sequence
     if(seq.length() > 0){
         const int n = std::min((int)sensors.size(), (int)seq.length());
         for(int i=0; i < n; ++i){
-            SensorType* sensor = sensors.get(i);
+            SensorType* sensor = sensors[i];
             sensor->readState(&seq[i][0]);
             sensor->notifyStateChange();
         }

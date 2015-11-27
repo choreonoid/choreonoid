@@ -25,7 +25,7 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-struct SensorTypeOrder
+struct DeviceTypeOrder
 {
     bool operator()(const Device* lhs, const Device* rhs) const {
         int result = strcmp(typeid(*lhs).name(), typeid(*rhs).name());
@@ -179,18 +179,15 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 
     if(currentBody){
 
-        DeviceList<ForceSensor> forceSensors = currentBody->devices<ForceSensor>();
-        DeviceList<RateGyroSensor> gyroSensors = currentBody->devices<RateGyroSensor>();
-        DeviceList<AccelSensor> accelSensors = currentBody->devices<AccelSensor>();
-
-        DeviceList<> devices;
-        std::copy(forceSensors.begin(), forceSensors.end(), std::back_inserter(devices));
-        std::copy(gyroSensors.begin(), gyroSensors.end(), std::back_inserter(devices));
-        std::copy(accelSensors.begin(), accelSensors.end(), std::back_inserter(devices));
-        std::stable_sort(devices.begin(), devices.end(), SensorTypeOrder());
+        DeviceList<> devices(currentBody->devices());
+        DeviceList<> targetDevices;
+        targetDevices << devices.extract<ForceSensor>();
+        targetDevices << devices.extract<RateGyroSensor>();
+        targetDevices << devices.extract<AccelSensor>();
+        std::stable_sort(targetDevices.begin(), targetDevices.end(), DeviceTypeOrder());
             
-        for(int i=0; i < devices.size(); ++i){
-            Device* device = devices.get(i);
+        for(int i=0; i < targetDevices.size(); ++i){
+            Device* device = targetDevices[i];
             StateItem* deviceItem = new StateItem();
         
             deviceItem->setText(0, QString(" %1 ").arg(device->name().c_str()));

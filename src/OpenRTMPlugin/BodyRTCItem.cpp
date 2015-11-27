@@ -186,7 +186,7 @@ void BodyRTCItem::setdefaultPort(BodyPtr body)
     outPortInfoMap.insert(make_pair(portInfo.portName, portInfo));
 
     for(size_t i=0; i < forceSensors_.size(); ++i){
-        if(Device* sensor = forceSensors_.get(i)){
+        if(Device* sensor = forceSensors_[i]){
             portInfo.dataTypeId = FORCE_SENSOR;
             portInfo.dataOwnerNames.clear();
             portInfo.dataOwnerNames.push_back(sensor->name());
@@ -196,7 +196,7 @@ void BodyRTCItem::setdefaultPort(BodyPtr body)
         }
     }
     for(size_t i=0; i < gyroSensors_.size(); ++i){
-        if(Device* sensor = gyroSensors_.get(i)){
+        if(Device* sensor = gyroSensors_[i]){
             portInfo.dataTypeId = RATE_GYRO_SENSOR;
             portInfo.dataOwnerNames.clear();
             portInfo.dataOwnerNames.push_back(sensor->name());
@@ -206,7 +206,7 @@ void BodyRTCItem::setdefaultPort(BodyPtr body)
         }
     }
     for(size_t i=0; i < accelSensors_.size(); ++i){
-        if(Device* sensor = accelSensors_.get(i)){
+        if(Device* sensor = accelSensors_[i]){
             portInfo.dataTypeId = ACCELERATION_SENSOR;
             portInfo.dataOwnerNames.clear();
             portInfo.dataOwnerNames.push_back(sensor->name());

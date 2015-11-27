@@ -136,7 +136,9 @@ public:
 
     /**
        Example:
-       DeviceList<ForceSensor> forceSensors = body->devices();
+       DeviceList<ForceSensor> forceSensors(body->devices());
+        or
+       forceSensors << body->devices();
     */
     const DeviceList<>& devices() const {
         return devices_;

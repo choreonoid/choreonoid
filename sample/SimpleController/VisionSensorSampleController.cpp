@@ -6,6 +6,7 @@
 #include <cnoid/Camera>
 #include <cnoid/RangeSensor>
 
+using namespace std;
 using namespace cnoid;
 
 class VisionSensorSampleController : public SimpleController
@@ -13,22 +14,26 @@ class VisionSensorSampleController : public SimpleController
     DeviceList<Camera> cameras;
     DeviceList<RangeCamera> rangeCameras;
     DeviceList<RangeSensor> rangeSensors;
-
+    double timeCounter;
+    
 public:
 
     virtual bool initialize()
     {
-        DeviceList<> devices = ioBody()->devices();
-        
-        devices.extract<RangeCamera>(rangeCameras);
-        devices.extract<Camera>(cameras);
-        devices.extract<RangeSensor>(rangeSensors);
+        DeviceList<VisionSensor> sensors(ioBody()->devices());
+        putSensorInformation(sensors);
 
-        putSensorInformation(cameras);
-        putSensorInformation(rangeCameras);
-        putSensorInformation(rangeSensors);
+        cameras << sensors;
+        rangeCameras << sensors;
+        rangeSensors << sensors;
+
+        for(size_t i=0; i < rangeCameras.size(); ++i){
+            rangeCameras[i]->setShotDataAsState(true);
+        }
 
         setJointOutput(false);
+
+        timeCounter = 0.0;
         
         return true;
     }
@@ -47,6 +52,15 @@ public:
 
     virtual bool control()
     {
+        timeCounter += timeStep();
+        if(timeCounter >= 1.0){
+            for(size_t i=0; i < rangeCameras.size(); ++i){
+                Camera* camera = rangeCameras[i];
+                const Image& image = camera->constImage();
+                os() << camera->name() << "'s image.empty(): " << image.empty() << endl;
+            }
+            timeCounter = 0.0;
+        }
         return true;
     }
 };
