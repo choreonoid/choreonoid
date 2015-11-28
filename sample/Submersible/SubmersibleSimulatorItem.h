@@ -11,6 +11,8 @@
 
 namespace cnoid {
 
+class Light;
+
 class CNOID_EXPORT SubmersibleSimulatorItem : public SubSimulatorItem
 {
 public:
@@ -31,6 +33,8 @@ protected:
 private:
     SimulatorItem* simulatorItem;
     Body* submersible;
+    Light* light;
+    bool prevLightButtonState;
     int joystickIntervalCounter;
 
     void initialize();

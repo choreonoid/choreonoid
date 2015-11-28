@@ -10,6 +10,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Body>
+#include <cnoid/Lights>
 #include <cnoid/Joystick>
 #include <boost/bind.hpp>
 
@@ -87,6 +88,8 @@ bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem
     SimulationBody* simSubmersible = simulatorItem->findSimulationBody("Submersible");
     if(simSubmersible){
         submersible = simSubmersible->body();
+        light = submersible->findDevice<Light>("MainLight");
+        prevLightButtonState = false;
         MessageView::instance()->putln("A submersible model has been detected.");
         simulatorItem->addPreDynamicsFunction(
             boost::bind(&SubmersibleSimulatorItem::applyResistanceForce, this));
@@ -140,6 +143,17 @@ void SubmersibleSimulatorItem::applyResistanceForce()
     root->f_ext() += fz;
     Vector3 cz = root->T() * Vector3(0.0, 0.0, -1.5);
     root->tau_ext() += cz.cross(fz);
+
+    if(light){
+        bool lightButtonState = joystick->getButtonState(0);
+        if(lightButtonState){
+            if(!prevLightButtonState){
+                light->on(!light->on());
+                light->notifyStateChange();
+            }
+        }
+        prevLightButtonState = lightButtonState;
+    }
 }
         
 
