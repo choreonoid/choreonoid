@@ -556,6 +556,8 @@ public:
     vector<double> axes;
     vector<bool> buttons;
     string errorMessage;
+    Signal<void(int id, bool isPressed)> sigButton;
+    Signal<void(int id, double position)> sigAxis;
 
     JoystickImpl(const char* device);
     bool readCurrentState();
@@ -682,4 +684,16 @@ bool Joystick::getButtonState(int button) const
         return impl->buttons[button];
     }
     return false;
+}
+
+
+SignalProxy<void(int id, bool isPressed)> Joystick::sigButton()
+{
+    return impl->sigButton;
+}
+
+
+SignalProxy<void(int id, double position)> Joystick::sigAxis()
+{
+    return impl->sigAxis;
 }

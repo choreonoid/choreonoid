@@ -44,6 +44,7 @@
 #include "MovieGenerator.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
+#include "VirtualJoystickView.h"
 #include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -207,6 +208,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
     TaskView::initializeClass(ext);
+    VirtualJoystickView::initializeClass(ext);
 
     TimeSyncItemEngineManager::initialize();
     
