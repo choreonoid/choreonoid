@@ -35,20 +35,20 @@ public:
     int outputBodyHeader(const std::string& name);
     void endHeaderOutput();
     void beginFrameOutput(double time);
-    void beginBodyStatusOutput();
+    void beginBodyStateOutput();
     void outputLinkPositions(SE3* positions, int size);
     void outputJointPositions(double* values, int size);
-    void beginDeviceStatusOutput();
-    void outputDeviceStatus(DeviceState* status);
-    void endDeviceStatusOutput();
-    void endBodyStatusOutput();
+    void beginDeviceStateOutput();
+    void outputDeviceState(DeviceState* state);
+    void endDeviceStateOutput();
+    void endBodyStateOutput();
     void endFrameOutput();
 
     int numBodies() const;
     const std::string& bodyName(int bodyIndex) const;
 
-    bool recallStatusAtTime(double time);
-    void invalidateLastStatusConsistency();
+    bool recallStateAtTime(double time);
+    void invalidateLastStateConsistency();
 
     virtual void notifyUpdate();
 
