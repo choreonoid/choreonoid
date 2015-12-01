@@ -5,7 +5,7 @@
 
 #include "RectRegionMarker.h"
 #include "SceneWidget.h"
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneRenderer>
 

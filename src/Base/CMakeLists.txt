@@ -45,8 +45,9 @@ set(sources
   FloatingNumberBox.cpp
   Slider.cpp
   ScrollBar.cpp
-  Button.cpp
+  Buttons.cpp
   ButtonGroup.cpp
+  CheckBox.cpp
   LineEdit.cpp
   ComboBox.cpp
   Dialog.cpp
@@ -84,6 +85,9 @@ set(sources
   SceneProjector.cpp
   SceneDragProjector.cpp
   SceneDragger.cpp
+  TranslationDragger.cpp
+  RotationDragger.cpp
+  PositionDragger.cpp
   RectRegionMarker.cpp
   SceneView.cpp
   SceneBar.cpp
@@ -116,8 +120,9 @@ set(headers
   FloatingNumberBox.h
   Slider.h
   ScrollBar.h
-  Button.h
+  Buttons.h
   ButtonGroup.h
+  CheckBox.h
   LineEdit.h
   ComboBox.h
   Dialog.h
@@ -172,6 +177,9 @@ set(headers
   SceneProjector.h
   SceneDragProjector.h
   SceneDragger.h
+  TranslationDragger.h
+  RotationDragger.h
+  PositionDragger.h
   SceneBar.h
   SceneWidgetEditable.h
   InteractiveCameraTransform.h
@@ -210,8 +218,9 @@ QT4_WRAP_CPP(sources
   FloatingNumberBox.h
   Slider.h
   ScrollBar.h
-  Button.h
+  Buttons.h
   ButtonGroup.h
+  CheckBox.h
   ComboBox.h
   LineEdit.h
   Dialog.h

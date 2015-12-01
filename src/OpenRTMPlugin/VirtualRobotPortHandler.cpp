@@ -7,6 +7,7 @@
 #include "BodyRTCItem.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/DyBody>
+#include <cnoid/Light>
 #include <boost/bind.hpp>
 
 using namespace std;
@@ -71,21 +72,21 @@ void SensorStateOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
     break;
     case RATE_GYRO_SENSOR:
     {
-        const DeviceList<RateGyroSensor>& gyroSensors = bodyRTC->gyroSensors();
-        const int n = gyroSensors.size();
+        const DeviceList<RateGyroSensor>& rateGyroSensors = bodyRTC->rateGyroSensors();
+        const int n = rateGyroSensors.size();
         values.data.length(3 * n);
         for(int i=0; i < n; i++){
-            Eigen::Map<Vector3>(&values.data[i*3]) = gyroSensors[i]->w();
+            Eigen::Map<Vector3>(&values.data[i*3]) = rateGyroSensors[i]->w();
         }
     }
     break;
     case ACCELERATION_SENSOR:
     {
-        const DeviceList<AccelSensor>& accelSensors = bodyRTC->accelSensors();
-        const int n = accelSensors.size();
+        const DeviceList<AccelerationSensor>& accelerationSensors = bodyRTC->accelerationSensors();
+        const int n = accelerationSensors.size();
         values.data.length(3 * n);
         for(int i=0; i < n; i++){
-            Eigen::Map<Vector3>(&values.data[i*3]) = accelSensors[i]->dv();
+            Eigen::Map<Vector3>(&values.data[i*3]) = accelerationSensors[i]->dv();
         }
     }
     break;
@@ -321,7 +322,7 @@ AccelerationSensorOutPortHandler::AccelerationSensorOutPortHandler(PortInfo& inf
 void AccelerationSensorOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
     if(!sensorNames.empty()){
-        if(AccelSensor* accelSensor = bodyRTC->body()->findDevice<AccelSensor>(sensorNames[0])){
+        if(AccelerationSensor* accelSensor = bodyRTC->body()->findDevice<AccelerationSensor>(sensorNames[0])){
             value.data.ax = accelSensor->dv().x();
             value.data.ay = accelSensor->dv().y();
             value.data.az = accelSensor->dv().z();

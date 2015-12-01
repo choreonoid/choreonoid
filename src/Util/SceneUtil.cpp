@@ -3,7 +3,7 @@
 */
 
 #include "SceneUtil.h"
-#include "SceneShape.h"
+#include "SceneDrawables.h"
 #include "SceneVisitor.h"
 
 using namespace std;

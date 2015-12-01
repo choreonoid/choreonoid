@@ -5,7 +5,7 @@
 
 #include "VirtualJoystickView.h"
 #include <cnoid/ViewManager>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/ExtJoystick>
 #include <QBoxLayout>
 #include <QGridLayout>

@@ -11,7 +11,7 @@
 #include <cnoid/ComboBox>
 #include <cnoid/ItemTreeView>
 #include <cnoid/ConnectionSet>
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>

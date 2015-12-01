@@ -6,7 +6,7 @@
 #include <cnoid/CorbaUtil>
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
 #include <QBoxLayout>

@@ -38,8 +38,8 @@ public:
 
     const BodyPtr& body() const { return simulationBody; };
     const DeviceList<ForceSensor>& forceSensors() const { return forceSensors_; }
-    const DeviceList<RateGyroSensor>& gyroSensors() const { return gyroSensors_; }
-    const DeviceList<AccelSensor>& accelSensors() const { return accelSensors_; }
+    const DeviceList<RateGyroSensor>& rateGyroSensors() const { return gyroSensors_; }
+    const DeviceList<AccelerationSensor>& accelerationSensors() const { return accelSensors_; }
 
     double controlTime() const { return controlTime_; }
        
@@ -72,7 +72,7 @@ private:
     BodyPtr simulationBody;
     DeviceList<ForceSensor> forceSensors_;
     DeviceList<RateGyroSensor> gyroSensors_;
-    DeviceList<AccelSensor> accelSensors_;
+    DeviceList<AccelerationSensor> accelSensors_;
     double timeStep_;
 
     // The world time step is used if the following values are 0

@@ -10,7 +10,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Body>
-#include <cnoid/Lights>
+#include <cnoid/Light>
 #include <cnoid/Joystick>
 #include <boost/bind.hpp>
 

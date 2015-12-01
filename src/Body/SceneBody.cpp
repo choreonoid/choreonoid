@@ -4,7 +4,7 @@
 
 #include "SceneBody.h"
 #include "SceneDevice.h"
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
 #include <boost/bind.hpp>
 #include "gettext.h"

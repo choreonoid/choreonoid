@@ -6,6 +6,7 @@
 #define CNOID_BASE_RECT_REGION_MARKER_H
 
 #include "SceneWidgetEditable.h"
+#include <cnoid/SceneDrawables>
 #include <QCursor>
 #include "exportdecl.h"
 

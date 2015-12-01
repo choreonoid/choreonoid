@@ -12,7 +12,8 @@
 #include <cnoid/ValueTreeUtil>
 #include <cnoid/GLSceneRenderer>
 #include <cnoid/Body>
-#include <cnoid/Cameras>
+#include <cnoid/Camera>
+#include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/SceneBody>
 #include <cnoid/SceneDevice>

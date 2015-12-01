@@ -84,7 +84,7 @@ void ForwardDynamicsABM::calcNextState()
     calcABMFirstHalf();
 
     if(sensorsEnabled){
-        sensorHelper.updateGyroAndAccelSensors();
+        sensorHelper.updateGyroAndAccelerationSensors();
     }
 }
 

@@ -6,6 +6,7 @@
 #include "GraphWidget.h"
 #include "MainWindow.h"
 #include "ExtensionManager.h"
+#include "CheckBox.h"
 #include "SpinBox.h"
 #include "ComboBox.h"
 #include "Dialog.h"

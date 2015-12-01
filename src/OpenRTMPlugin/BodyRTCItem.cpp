@@ -235,7 +235,7 @@ void BodyRTCItem::onPositionChanged()
         if(bodyName != body->name()){
             forceSensors_ = body->devices<ForceSensor>().getSortedById();
             gyroSensors_ = body->devices<RateGyroSensor>().getSortedById();
-            accelSensors_ = body->devices<AccelSensor>().getSortedById();
+            accelSensors_ = body->devices<AccelerationSensor>().getSortedById();
             bodyName = body->name();
             deleteModule(true);
             createRTC(body);
@@ -270,7 +270,7 @@ bool BodyRTCItem::start(Target* target)
 
     forceSensors_ = simulationBody->devices<ForceSensor>().getSortedById();
     gyroSensors_ = simulationBody->devices<RateGyroSensor>().getSortedById();
-    accelSensors_ = simulationBody->devices<AccelSensor>().getSortedById();
+    accelSensors_ = simulationBody->devices<AccelerationSensor>().getSortedById();
 
     executionCycle = (executionCycleProperty > 0.0) ? executionCycleProperty : timeStep_;
     executionCycleCounter = executionCycle;

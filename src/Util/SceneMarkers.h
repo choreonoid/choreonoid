@@ -6,7 +6,7 @@
 #ifndef CNOID_UTIL_SCENE_MARKERS_H
 #define CNOID_UTIL_SCENE_MARKERS_H
 
-#include "SceneShape.h"
+#include "SceneDrawables.h"
 #include "exportdecl.h"
 
 namespace cnoid {

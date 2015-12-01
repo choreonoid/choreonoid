@@ -11,6 +11,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
 #include <cnoid/BodyMotionGenerationBar>
+#include <cnoid/CheckBox>
 #include <cnoid/Separator>
 #include <QSpinBox>
 #include <QComboBox>

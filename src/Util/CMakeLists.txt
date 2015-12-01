@@ -31,6 +31,10 @@ set(sources
   RangeLimiter.cpp
   BoundingBox.cpp
   SceneGraph.cpp
+  SceneDrawables.cpp
+  SceneCameras.cpp
+  SceneLights.cpp
+  SceneEffects.cpp
   SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp
@@ -94,9 +98,10 @@ set(headers
   UTF8.h
   BoundingBox.h
   SceneGraph.h
-  SceneShape.h
+  SceneDrawables.h
   SceneCameras.h
   SceneLights.h
+  SceneEffects.h
   SceneVisitor.h
   SceneRenderer.h
   SceneUtil.h

@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_SCENE_COLLISION_H_INCLUDED
-#define CNOID_BODY_SCENE_COLLISION_H_INCLUDED
+#ifndef CNOID_BODY_SCENE_COLLISION_H
+#define CNOID_BODY_SCENE_COLLISION_H
 
 #include "CollisionLinkPair.h"
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -29,6 +29,7 @@ private:
 };
     
 typedef ref_ptr<SceneCollision> SceneCollisionPtr;
+
 }
 
 #endif

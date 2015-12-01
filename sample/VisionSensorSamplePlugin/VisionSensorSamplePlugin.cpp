@@ -11,6 +11,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/PointSetItem>
 #include <cnoid/Camera>
+#include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <boost/bind.hpp>
 #include <iostream>

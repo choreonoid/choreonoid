@@ -3,14 +3,14 @@
    \author shizuko hattori
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H
+#define CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H
 
 #include <boost/shared_ptr.hpp>
 #include <cnoid/Body>
 #include <cnoid/BasicSensors>
-#include <cnoid/Lights>
-#include <cnoid/Cameras>
+#include <cnoid/Camera>
+#include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/corba/CameraImage.hh>
 #include <cnoid/corba/PointCloud.hh>

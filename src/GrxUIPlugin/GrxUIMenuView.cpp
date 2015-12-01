@@ -8,7 +8,8 @@
 #include <cnoid/MainWindow>
 #include <cnoid/MessageView>
 #include <cnoid/Dialog>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/LineEdit>
 #include <cnoid/PyUtil>
 #include <cnoid/PythonExecutor>

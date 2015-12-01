@@ -17,7 +17,8 @@
 #include <cnoid/MainWindow>
 #include <cnoid/SpinBox>
 #include <cnoid/Separator>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <QDialogButtonBox>
 #include <boost/bind.hpp>

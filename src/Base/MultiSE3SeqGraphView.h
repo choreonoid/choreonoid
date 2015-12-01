@@ -7,7 +7,7 @@
 
 #include "GraphViewBase.h"
 #include "MultiSE3SeqItem.h"
-#include "Button.h"
+#include "Buttons.h"
 #include <cnoid/ConnectionSet>
 
 namespace cnoid {

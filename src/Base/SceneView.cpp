@@ -7,7 +7,8 @@
 #include "ItemTreeView.h"
 #include "Separator.h"
 #include "RootItem.h"
-#include "Button.h"
+#include "Buttons.h"
+#include "CheckBox.h"
 #include <cnoid/SceneProvider>
 #include <boost/bind.hpp>
 #include <list>

@@ -403,58 +403,17 @@ public:
 };
 
 
-class CNOID_EXPORT SgFog : public SgPreprocessed
-{
-public:
-    SgFog();
-    SgFog(const SgFog& org);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
-
-    const Vector3f& color() const { return color_; }
-    template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
-        color_ = c.template cast<Vector3f::Scalar>(); }
-    void setVisibilityRange(float r) { visibilityRange_ = r; }
-    float visibilityRange() const { return visibilityRange_; }
-    
-private:
-    Vector3f color_;
-    float  visibilityRange_;
-    //int fogType;
-};
-typedef ref_ptr<SgFog> SgFogPtr;
-
-
-class CNOID_EXPORT SgOverlay : public SgGroup
-{
-public:
-    SgOverlay();
-    ~SgOverlay();
-
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
-
-    struct ViewVolume {
-        double left;
-        double right;
-        double bottom;
-        double top;
-        double zNear;
-        double zFar;
-    };
-
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
-
-protected:
-    SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap);
-};
-
-
 class SgMaterial;
+class SgImage;
+class SgTextureTransform;
+class SgTexture;
+class SgMesh;
+class SgPolygonMesh;
 class SgShape;
 class SgPlot;
 class SgPointSet;
 class SgLineSet;
+class SgOverlay;
 class SgLight;
 class SgDirectionalLight;
 class SgPointLight;
@@ -462,7 +421,7 @@ class SgSpotLight;
 class SgCamera;
 class SgPerspectiveCamera;
 class SgOrthographicCamera;
-class SgOverlay;
+class SgFog;
 class SgOutlineGroup;
 
 }

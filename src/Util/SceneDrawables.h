@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_SHAPE_H
-#define CNOID_UTIL_SCENE_SHAPE_H
+#ifndef CNOID_UTIL_SCENE_DRAWABLES_H
+#define CNOID_UTIL_SCENE_DRAWABLES_H
 
 #include "SceneGraph.h"
 #include "Image.h"
@@ -587,22 +587,30 @@ private:
 typedef ref_ptr<SgLineSet> SgLineSetPtr;
 
 
-class CNOID_EXPORT SgOutlineGroup : public SgGroup
+class CNOID_EXPORT SgOverlay : public SgGroup
 {
 public:
-    SgOutlineGroup();
+    SgOverlay();
+    ~SgOverlay();
 
+    virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual void accept(SceneVisitor& visitor);
-    const Vector4f& color() const { return color_; }
-    void setColor(const Vector4f& color) { color_ = color; }
-    void setLineWidth(float width) { lineWidth_ = width; }
-    float lineWidth() const { return lineWidth_; }
 
-private:
-    Vector4f color_;
-    float lineWidth_;
+    struct ViewVolume {
+        double left;
+        double right;
+        double bottom;
+        double top;
+        double zNear;
+        double zFar;
+    };
+
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
+
+protected:
+    SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap);
 };
-typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
+
 }
 
 #endif

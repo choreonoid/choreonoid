@@ -8,7 +8,7 @@
 #include <cnoid/BasicSensors>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ConnectionSet>
 #include <boost/bind.hpp>

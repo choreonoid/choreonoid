@@ -7,13 +7,13 @@
 
 #include <cnoid/Item>
 #include <cnoid/RectRegionMarker>
-#include <cnoid/SceneShape>
 #include <cnoid/SceneProvider>
 #include <boost/optional.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class SgPointSet;
 class PointSetItemImpl;
 
 class CNOID_EXPORT PointSetItem : public Item, public SceneProvider
@@ -38,7 +38,7 @@ public:
     SignalProxy<void(const Affine3& T)> sigOffsetTransformChanged();
     void notifyOffsetTransformChange();
 
-    SgPointSetPtr getTransformedPointSet() const;
+    SgPointSet* getTransformedPointSet() const;
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES

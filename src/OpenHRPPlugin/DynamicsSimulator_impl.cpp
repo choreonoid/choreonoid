@@ -16,7 +16,7 @@ DynamicsSimulator_impl::DynamicsSimulator_impl(const BodyPtr& body)
     this->body = body;
     forceSensorIdMap = body->devices<ForceSensor>().getSortedById();
     gyroIdMap = body->devices<RateGyroSensor>().getSortedById();
-    accelSensorIdMap = body->devices<AccelSensor>().getSortedById();
+    accelSensorIdMap = body->devices<AccelerationSensor>().getSortedById();
 }
 
 

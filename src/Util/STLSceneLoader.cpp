@@ -1,6 +1,6 @@
 
 #include "STLSceneLoader.h"
-#include "SceneShape.h"
+#include "SceneDrawables.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fstream>

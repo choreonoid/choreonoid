@@ -183,7 +183,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
         DeviceList<> targetDevices;
         targetDevices << devices.extract<ForceSensor>();
         targetDevices << devices.extract<RateGyroSensor>();
-        targetDevices << devices.extract<AccelSensor>();
+        targetDevices << devices.extract<AccelerationSensor>();
         std::stable_sort(targetDevices.begin(), targetDevices.end(), DeviceTypeOrder());
             
         for(int i=0; i < targetDevices.size(); ++i){

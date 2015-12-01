@@ -4,7 +4,7 @@
 */
 
 #include <cnoid/SimpleController>
-#include <cnoid/Lights>
+#include <cnoid/Light>
 #include <cnoid/Joystick>
 
 using namespace std;

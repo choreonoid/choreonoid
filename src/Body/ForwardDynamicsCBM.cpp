@@ -177,7 +177,7 @@ void ForwardDynamicsCBM::calcNextState()
 		
     if(sensorHelper.isActive()){
         updateForceSensors();
-        sensorHelper.updateGyroAndAccelSensors();
+        sensorHelper.updateGyroAndAccelerationSensors();
     }
 	
     ddqGivenCopied = false;

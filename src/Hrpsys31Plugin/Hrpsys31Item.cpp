@@ -536,7 +536,7 @@ void Hrpsys31ItemImpl::onReadRequest()
             copySensorState(forceSensors, state->force);
             DeviceList<RateGyroSensor> gyros = body->devices<RateGyroSensor>();
             copySensorState(gyros, state->rateGyro);
-            DeviceList<AccelSensor> accelSensors = body->devices<AccelSensor>();
+            DeviceList<AccelerationSensor> accelSensors = body->devices<AccelerationSensor>();
             copySensorState(accelSensors, state->accel);
 
             for(int i=0; i < 2; ++i){

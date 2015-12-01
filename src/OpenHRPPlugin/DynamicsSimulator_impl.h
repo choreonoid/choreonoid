@@ -62,7 +62,7 @@ private:
 
     cnoid::DeviceList<cnoid::ForceSensor> forceSensorIdMap;
     cnoid::DeviceList<cnoid::RateGyroSensor> gyroIdMap;
-    cnoid::DeviceList<cnoid::AccelSensor> accelSensorIdMap;
+    cnoid::DeviceList<cnoid::AccelerationSensor> accelSensorIdMap;
 };
 }
 

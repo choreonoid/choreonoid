@@ -7,6 +7,7 @@
 #include "PoseSeqViewBase.h"
 #include "PronunSymbol.h"
 #include <cnoid/ScrollBar>
+#include <cnoid/CheckBox>
 #include <cnoid/Separator>
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
