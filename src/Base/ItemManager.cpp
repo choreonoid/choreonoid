@@ -10,7 +10,7 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
-#include "Button.h"
+#include "CheckBox.h"
 #include "ParametricPathProcessor.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
