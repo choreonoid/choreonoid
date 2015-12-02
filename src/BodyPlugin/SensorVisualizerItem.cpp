@@ -140,7 +140,7 @@ SensorVisualizerItem::~SensorVisualizerItem()
 }
 
 
-ItemPtr SensorVisualizerItem::doDuplicate() const
+Item* SensorVisualizerItem::doDuplicate() const
 {
     return new SensorVisualizerItem(*this);
 }

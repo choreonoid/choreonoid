@@ -280,7 +280,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 }
 
 
-ItemPtr GLVisionSimulatorItem::doDuplicate() const
+Item* GLVisionSimulatorItem::doDuplicate() const
 {
     return new GLVisionSimulatorItem(*this);
 }

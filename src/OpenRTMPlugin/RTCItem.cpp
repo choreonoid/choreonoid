@@ -101,7 +101,7 @@ void RTCItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr RTCItem::doDuplicate() const
+Item* RTCItem::doDuplicate() const
 {
     return new RTCItem(*this);
 }

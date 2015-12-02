@@ -122,7 +122,7 @@ bool PythonScriptItem::terminate()
 }
 
 
-ItemPtr PythonScriptItem::doDuplicate() const
+Item* PythonScriptItem::doDuplicate() const
 {
     return new PythonScriptItem(*this);
 }

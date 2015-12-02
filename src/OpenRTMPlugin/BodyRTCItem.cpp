@@ -255,7 +255,7 @@ void BodyRTCItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr BodyRTCItem::doDuplicate() const
+Item* BodyRTCItem::doDuplicate() const
 {
     return new BodyRTCItem(*this);
 }

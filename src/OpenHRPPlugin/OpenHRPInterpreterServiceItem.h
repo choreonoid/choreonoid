@@ -24,7 +24,7 @@ public:
     void setRTCInstanceName(const std::string& name);
     
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void onConnectedToRoot();
     virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();

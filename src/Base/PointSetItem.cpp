@@ -198,7 +198,7 @@ PointSetItem::~PointSetItem()
 }
 
 
-ItemPtr PointSetItem::doDuplicate() const
+Item* PointSetItem::doDuplicate() const
 {
     return new PointSetItem(*this);
 }

@@ -986,7 +986,7 @@ void BodyItem::clearCollisions()
 }
 
 
-ItemPtr BodyItem::doDuplicate() const
+Item* BodyItem::doDuplicate() const
 {
     return new BodyItem(*this);
 }

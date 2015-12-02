@@ -66,7 +66,7 @@ AudioItem::AudioItem(const AudioItem& org)
 }
 
 
-ItemPtr AudioItem::doDuplicate() const
+Item* AudioItem::doDuplicate() const
 {
     return new AudioItem(*this);
 }

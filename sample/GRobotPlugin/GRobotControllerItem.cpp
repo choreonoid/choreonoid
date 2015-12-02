@@ -42,7 +42,7 @@ GRobotControllerItem::~GRobotControllerItem()
 }
 
 
-ItemPtr GRobotControllerItem::doDuplicate() const
+Item* GRobotControllerItem::doDuplicate() const
 {
     return new GRobotControllerItem(*this);
 }

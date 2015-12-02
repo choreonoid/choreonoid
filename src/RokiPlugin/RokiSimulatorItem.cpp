@@ -873,7 +873,7 @@ RokiSimulatorItemImpl::~RokiSimulatorItemImpl()
 }
 
 
-ItemPtr RokiSimulatorItem::doDuplicate() const
+Item* RokiSimulatorItem::doDuplicate() const
 {
     return new RokiSimulatorItem(*this);
 }

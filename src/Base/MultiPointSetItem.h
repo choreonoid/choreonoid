@@ -67,7 +67,7 @@ public:
     void stopAutomaticSave();
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:

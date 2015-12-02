@@ -120,7 +120,7 @@ bool ZMPSeqItem::makeRootRelative(bool on)
 }
 
 
-ItemPtr ZMPSeqItem::doDuplicate() const
+Item* ZMPSeqItem::doDuplicate() const
 {
     return new ZMPSeqItem(*this);
 }

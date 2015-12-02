@@ -1182,7 +1182,7 @@ AgXSimulatorItemImpl::~AgXSimulatorItemImpl()
 }
 
 
-ItemPtr AgXSimulatorItem::doDuplicate() const
+Item* AgXSimulatorItem::doDuplicate() const
 {
     return new AgXSimulatorItem(*this);
 }

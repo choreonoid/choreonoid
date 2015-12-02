@@ -320,7 +320,7 @@ bool PoseSeqItem::convertSub(BodyPtr orgBody, const Mapping& convInfo)
 }
 
 
-ItemPtr PoseSeqItem::doDuplicate() const
+Item* PoseSeqItem::doDuplicate() const
 {
     return new PoseSeqItem(*this);
 }

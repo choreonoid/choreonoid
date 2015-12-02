@@ -180,7 +180,7 @@ void BodyTrackingCameraItem::setName(const std::string& name)
 }
 
 
-ItemPtr BodyTrackingCameraItem::doDuplicate() const
+Item* BodyTrackingCameraItem::doDuplicate() const
 {
     return new BodyTrackingCameraItem(*this);
 }

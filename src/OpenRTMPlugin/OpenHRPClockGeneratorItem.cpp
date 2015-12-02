@@ -145,7 +145,7 @@ OpenHRPClockGeneratorItem::OpenHRPClockGeneratorItem(const OpenHRPClockGenerator
 }
 
 
-ItemPtr OpenHRPClockGeneratorItem::doDuplicate() const
+Item* OpenHRPClockGeneratorItem::doDuplicate() const
 {
     return new OpenHRPClockGeneratorItem(*this);
 }

@@ -623,7 +623,7 @@ bool Hrpsys31Item::setPlaybackSyncEnabled(bool on)
 }
 
 
-ItemPtr Hrpsys31Item::doDuplicate() const
+Item* Hrpsys31Item::doDuplicate() const
 {
     return new Hrpsys31Item(*this);
 }

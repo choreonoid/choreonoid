@@ -74,7 +74,7 @@ SubmersibleSimulatorItem::~SubmersibleSimulatorItem()
 }
 
 
-ItemPtr SubmersibleSimulatorItem::doDuplicate() const
+Item* SubmersibleSimulatorItem::doDuplicate() const
 {
     return new SubmersibleSimulatorItem(*this);
 }

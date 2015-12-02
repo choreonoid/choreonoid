@@ -29,7 +29,7 @@ public:
 
 protected:
     virtual ~ZMPSeqItem();
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:

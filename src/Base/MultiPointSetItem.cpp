@@ -503,7 +503,7 @@ void MultiPointSetItem::notifyAttentionPointChange()
 }
 
 
-ItemPtr MultiPointSetItem::doDuplicate() const
+Item* MultiPointSetItem::doDuplicate() const
 {
     return new MultiPointSetItem(*this);
 }

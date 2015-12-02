@@ -69,7 +69,7 @@ void SimpleControllerItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr SimpleControllerItem::doDuplicate() const
+Item* SimpleControllerItem::doDuplicate() const
 {
     return new SimpleControllerItem(*this);
 }

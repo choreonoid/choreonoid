@@ -24,7 +24,7 @@ public:
     ~GRobotControllerItem();
             
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void onConnectedToRoot();
     virtual void onDisconnectedFromRoot();
     virtual void onPositionChanged();

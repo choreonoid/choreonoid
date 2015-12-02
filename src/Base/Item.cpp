@@ -588,10 +588,11 @@ void Item::notifyUpdate()
    false のときはコピーされない。   
    @endif
 */
-ItemPtr Item::duplicate() const
+Item* Item::duplicate() const
 {
-    ItemPtr duplicated = doDuplicate();
+    Item* duplicated = doDuplicate();
     if(duplicated && (typeid(*duplicated) != typeid(*this))){
+        delete duplicated;
         duplicated = 0;
     }
     return duplicated;
@@ -603,21 +604,21 @@ ItemPtr Item::duplicate() const
    小アイテム（サブツリー）も含めたアイテムのコピーを生成する。   
    @endif
 */
-ItemPtr Item::duplicateAll() const
+Item* Item::duplicateAll() const
 {
     return duplicateAllSub(0);
 }
 
 
-ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
+Item* Item::duplicateAllSub(Item* duplicated) const
 {
     if(!duplicated){
         duplicated = this->duplicate();
     }
     
     if(duplicated){
-        for(ItemPtr child = childItem(); child; child = child->nextItem()){
-            ItemPtr duplicatedChildItem;
+        for(Item* child = childItem(); child; child = child->nextItem()){
+            Item* duplicatedChildItem;
             if(child->isSubItem()){
                 duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
@@ -639,7 +640,7 @@ ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
 /**
    Override this function to allow duplication of an instance.
 */
-ItemPtr Item::doDuplicate() const
+Item* Item::doDuplicate() const
 {
     return 0;
 }

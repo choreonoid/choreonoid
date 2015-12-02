@@ -946,7 +946,7 @@ void PhysXSimulatorItemImpl::clear()
 }    
 
 
-ItemPtr PhysXSimulatorItem::doDuplicate() const
+Item* PhysXSimulatorItem::doDuplicate() const
 {
     return new PhysXSimulatorItem(*this);
 }

@@ -5,10 +5,11 @@
 #include "SceneGraphView.h"
 #include <cassert>
 #include <list>
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
+#include <cnoid/SceneEffects>
 #include <cnoid/SceneVisitor>
-#include <cnoid/SceneMarker>
+#include <cnoid/SceneMarkers>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
 #include <cnoid/GLSceneRenderer>

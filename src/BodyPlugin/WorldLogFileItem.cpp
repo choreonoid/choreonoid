@@ -513,7 +513,7 @@ WorldLogFileItemImpl::~WorldLogFileItemImpl()
 }
 
 
-ItemPtr WorldLogFileItem::doDuplicate() const
+Item* WorldLogFileItem::doDuplicate() const
 {
     return new WorldLogFileItem(*this);
 }

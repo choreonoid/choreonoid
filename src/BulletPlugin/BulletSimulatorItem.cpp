@@ -1090,7 +1090,7 @@ void BulletSimulatorItem::setAllLinkPositionOutputMode(bool on)
 }
 
 
-ItemPtr BulletSimulatorItem::doDuplicate() const
+Item* BulletSimulatorItem::doDuplicate() const
 {
     return new BulletSimulatorItem(*this);
 }

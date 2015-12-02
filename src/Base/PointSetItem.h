@@ -76,7 +76,7 @@ public:
     virtual bool restore(const Archive& archive);
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:

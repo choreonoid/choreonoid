@@ -58,6 +58,9 @@ python::object Item_getDescendantItems2(Item& self, python::object itemClass){
     return getPyNarrowedItemList(items, itemClass);
 }
 
+ItemPtr Item_duplicate(Item& self) { return self.duplicate(); }
+ItemPtr Item_duplicateAll(Item& self) { return self.duplicateAll(); }
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_addChildItem_overloads, addChildItem, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_insertChildItem, insertChildItem, 2, 3)
@@ -141,8 +144,8 @@ void exportPyItems()
         .def("headItem", Item_headItem)
         .def("getDescendantItems", Item_getDescendantItems1)
         .def("getDescendantItems", Item_getDescendantItems2)
-        .def("duplicate", &Item::duplicate)
-        .def("duplicateAll", &Item::duplicateAll)
+        .def("duplicate", Item_duplicate)
+        .def("duplicateAll", Item_duplicateAll)
         .def("assign", &Item::assign)
         .def("load", Item_load1, Item_load1_overloads())
         .def("load", Item_load2, Item_load2_overloads())
