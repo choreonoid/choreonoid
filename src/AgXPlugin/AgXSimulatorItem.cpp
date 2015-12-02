@@ -529,6 +529,18 @@ AgXLink::AgXLink
     origin = parentOrigin + link->b();
     agxRigidBody = 0;
 
+    if(!link->m() && link->jointType()==Link::FIXED_JOINT){  //for Hose & Cabinet Box
+        Link* palink = link->parent();
+        for( ; palink; palink = palink->parent())
+            if(palink->jointType()!=Link::FIXED_JOINT)
+                break;
+        if(!palink){
+            link->setMass(1.0);
+            link->setInertia(Matrix3::Identity());
+            link->setCenterOfMass(Vector3(0,0,0));
+        }
+    }
+
     if(link->m()){
         createLinkBody(agxBody->isStatic);
        // createGeometry(agxBody);
