@@ -22,13 +22,14 @@ public:
         for(size_t i=0; i < sensors.size(); ++i){
             Device* sensor = sensors[i];
             os() << "Sensor type: " << sensor->typeName()
-                 << ", name: " << sensor->name()
-                 << ", id: " << sensor->id() << endl;
+                 << ", id: " << sensor->id()
+                 << ", name: " << sensor->name() << endl;
         }
         
         cameras << sensors;
+
         for(size_t i=0; i < cameras.size(); ++i){
-            cameras[i]->setShotDataAsState(true);
+            cameras[i]->setImageTransmittable(true);
         }
 
         setJointOutput(false);

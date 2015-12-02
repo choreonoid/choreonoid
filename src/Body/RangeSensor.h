@@ -53,9 +53,9 @@ public:
     void setFrameRate(double r);
 
     typedef std::vector<double> RangeData;
-        
-    void setRangeDataAsState(bool on) { isRangeDataSetAsState_ = on; }
-    bool isRangeDataSetAsState() const { return isRangeDataSetAsState_; }
+
+    void setRangeDataTransmittable(bool on) { isRangeDataTransmittable_ = on; }
+    bool isRangeDataTransmittalbe() const { return isRangeDataTransmittable_; }
 
     /**
        \note You must check if the range data is not empty before accessing the data
@@ -76,7 +76,7 @@ public:
 
 private:
     bool on_;
-    bool isRangeDataSetAsState_;
+    bool isRangeDataTransmittable_;
     int yawResolution_;
     int pitchResolution_;
     double yawRange_;

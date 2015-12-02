@@ -30,8 +30,8 @@ public:
     virtual const double* readState(const double* buf);
     virtual double* writeState(double* out_buf) const;
 
-    void setShotDataAsState(bool on) { isShotDataSetAsState_ = on; }
-    bool isShotDataSetAsState() const { return isShotDataSetAsState_; }
+    void setImageTransmittable(bool on) { isImageTransmittable_ = on; }
+    bool isImageTransmittable() const { return isImageTransmittable_; }
 
     enum ImageType { NO_IMAGE, COLOR_IMAGE, GRAYSCALE_IMAGE };
     ImageType imageType() const { return imageType_; }
@@ -74,7 +74,7 @@ public:
 
 private:
     bool on_;
-    bool isShotDataSetAsState_;
+    bool isImageTransmittable_;
     ImageType imageType_;
     int resolutionX_;
     int resolutionY_;

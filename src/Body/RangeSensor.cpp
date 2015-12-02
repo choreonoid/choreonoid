@@ -17,7 +17,7 @@ const double PI = 3.14159265358979323846;
 RangeSensor::RangeSensor()
 {
     on_ = true;
-    isRangeDataSetAsState_ = false;
+    isRangeDataTransmittable_ = false;
 
     yawRange_ = PI / 2.0;
     yawResolution_ = 100;
@@ -52,7 +52,7 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
     maxDistance_ = other.maxDistance_;
     frameRate_ = other.frameRate_;
 
-    if(isRangeDataSetAsState_ || other.isRangeDataSetAsState_){
+    if(isRangeDataTransmittable_ || other.isRangeDataTransmittable_){
         rangeData_ = other.rangeData_;
     } else {
         rangeData_ = boost::make_shared<RangeData>();
@@ -72,7 +72,7 @@ void RangeSensor::copyStateFrom(const DeviceState& other)
 RangeSensor::RangeSensor(const RangeSensor& org, bool copyAll)
     : VisionSensor(org, copyAll)
 {
-    isRangeDataSetAsState_ = org.isRangeDataSetAsState_;
+    isRangeDataTransmittable_ = org.isRangeDataTransmittable_;
     copyRangeSensorStateFrom(org);
 }
 

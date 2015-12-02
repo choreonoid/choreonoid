@@ -13,7 +13,7 @@ Camera::Camera()
 {
     on_ = true;
     imageType_ = COLOR_IMAGE;
-    isShotDataSetAsState_ = false;
+    isImageTransmittable_ = false;
     resolutionX_ = 640;
     resolutionY_ = 480;
     fieldOfView_ = 0.785398;
@@ -48,7 +48,7 @@ void Camera::copyCameraStateFrom(const Camera& other)
     farDistance_ = other.farDistance_;
     frameRate_ = other.frameRate_;
 
-    if(isShotDataSetAsState_ || other.isShotDataSetAsState_){
+    if(isImageTransmittable_ || other.isImageTransmittable_){
         image_ = other.image_;
     } else {
         image_ = boost::make_shared<Image>();
@@ -68,7 +68,7 @@ void Camera::copyStateFrom(const DeviceState& other)
 Camera::Camera(const Camera& org, bool copyAll)
     : VisionSensor(org, copyAll)
 {
-    isShotDataSetAsState_ = org.isShotDataSetAsState_;
+    isImageTransmittable_ = org.isImageTransmittable_;
     copyCameraStateFrom(org);
 }
 

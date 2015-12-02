@@ -32,7 +32,7 @@ void RangeCamera::copyStateFrom(const RangeCamera& other)
 
 void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
 {
-    if(isShotDataSetAsState() || other.isShotDataSetAsState()){
+    if(isImageTransmittable() || other.isImageTransmittable()){
         points_ = other.points_;
     } else {
         points_ = boost::make_shared<PointData>();
