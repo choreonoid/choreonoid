@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-16 15:27+0900\n"
+"POT-Creation-Date: 2015-12-02 12:59+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -198,87 +198,87 @@ msgstr "自己干渉検出"
 msgid "Editable"
 msgstr "編集可能"
 
-#: BodyLinkView.cpp:129
+#: BodyLinkView.cpp:130
 msgid "Body / Link"
 msgstr "ボディ／リンク"
 
-#: BodyLinkView.cpp:209
+#: BodyLinkView.cpp:210
 msgid "Index:"
 msgstr "インデックス"
 
-#: BodyLinkView.cpp:211
+#: BodyLinkView.cpp:212
 msgid "Joint ID:"
 msgstr "関節ID"
 
-#: BodyLinkView.cpp:213
+#: BodyLinkView.cpp:214
 msgid "Joint Type:"
 msgstr "関節タイプ"
 
-#: BodyLinkView.cpp:216
+#: BodyLinkView.cpp:217
 msgid "Joint Axis:"
 msgstr "関節軸"
 
-#: BodyLinkView.cpp:224
+#: BodyLinkView.cpp:225
 msgid "Link Position [m],[deg]"
 msgstr "リンク位置 [m],[deg]"
 
-#: BodyLinkView.cpp:267
+#: BodyLinkView.cpp:268
 msgid "Matrix"
 msgstr "行列"
 
-#: BodyLinkView.cpp:334
+#: BodyLinkView.cpp:335
 msgid "min"
 msgstr "最小"
 
-#: BodyLinkView.cpp:344
+#: BodyLinkView.cpp:345
 msgid "max"
 msgstr "最大"
 
-#: BodyLinkView.cpp:358
+#: BodyLinkView.cpp:359
 msgid "Collisions"
 msgstr "干渉"
 
-#: BodyLinkView.cpp:375
+#: BodyLinkView.cpp:376
 msgid "Self-Collisions"
 msgstr "自己干渉"
 
-#: BodyLinkView.cpp:387
+#: BodyLinkView.cpp:388
 msgid "ZMP [m]"
 msgstr "ZMP [m]"
 
-#: BodyLinkView.cpp:529
+#: BodyLinkView.cpp:530
 msgid "Free"
 msgstr "非拘束"
 
-#: BodyLinkView.cpp:531
+#: BodyLinkView.cpp:532
 msgid "Fixed"
 msgstr "固定"
 
-#: BodyLinkView.cpp:533
+#: BodyLinkView.cpp:534
 msgid "Crawler"
 msgstr "クローラ"
 
-#: BodyLinkView.cpp:541
+#: BodyLinkView.cpp:542
 msgid "Rotation"
 msgstr "回転"
 
-#: BodyLinkView.cpp:544
+#: BodyLinkView.cpp:545
 msgid "Joint Angle [deg]"
 msgstr "関節角 [deg]"
 
-#: BodyLinkView.cpp:567
+#: BodyLinkView.cpp:568
 msgid "Joint Velocity [deg/s]"
 msgstr "関節角速度 [deg/s]"
 
-#: BodyLinkView.cpp:583
+#: BodyLinkView.cpp:584
 msgid "Slide"
 msgstr "直動"
 
-#: BodyLinkView.cpp:586
+#: BodyLinkView.cpp:587
 msgid "Joint Translation [m]:"
 msgstr "関節並進位置 [m]"
 
-#: BodyLinkView.cpp:609
+#: BodyLinkView.cpp:610
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
@@ -336,11 +336,11 @@ msgstr ""
 msgid "Body State"
 msgstr "ボディ状態"
 
-#: BodyStateView.cpp:282 JointStateView.cpp:361
+#: BodyStateView.cpp:286 JointStateView.cpp:361
 msgid "ON"
 msgstr ""
 
-#: BodyStateView.cpp:282 JointStateView.cpp:361
+#: BodyStateView.cpp:286 JointStateView.cpp:361
 msgid "OFF"
 msgstr ""
 
@@ -360,67 +360,67 @@ msgstr "干渉データ"
 msgid "Immediate mode"
 msgstr "即時モード"
 
-#: EditableSceneBody.cpp:1065
+#: EditableSceneBody.cpp:1099
 msgid "Move Position"
 msgstr "強制移動"
 
-#: EditableSceneBody.cpp:1070
+#: EditableSceneBody.cpp:1104
 msgid "Keep Position"
 msgstr "強制固定"
 
-#: EditableSceneBody.cpp:1078
+#: EditableSceneBody.cpp:1112
 msgid "Set Free"
 msgstr "フリーに"
 
-#: EditableSceneBody.cpp:1080
+#: EditableSceneBody.cpp:1114
 msgid "Set Base"
 msgstr "ベースに"
 
-#: EditableSceneBody.cpp:1082
+#: EditableSceneBody.cpp:1116
 msgid "Set Translation Pin"
 msgstr "並進ピンをセット"
 
-#: EditableSceneBody.cpp:1084
+#: EditableSceneBody.cpp:1118
 msgid "Set Rotation Pin"
 msgstr "回転ピンをセット"
 
-#: EditableSceneBody.cpp:1086
+#: EditableSceneBody.cpp:1120
 msgid "Set Both Pins"
 msgstr "両方のピンをセット"
 
-#: EditableSceneBody.cpp:1091
+#: EditableSceneBody.cpp:1125
 msgid "Level Attitude"
 msgstr "水平姿勢に"
 
-#: EditableSceneBody.cpp:1097
+#: EditableSceneBody.cpp:1131
 msgid "Markers"
 msgstr "マーカー"
 
-#: EditableSceneBody.cpp:1099
+#: EditableSceneBody.cpp:1133
 msgid "Center of Mass"
 msgstr "重心"
 
-#: EditableSceneBody.cpp:1103
+#: EditableSceneBody.cpp:1137
 msgid "Projection Point of CoM"
 msgstr "重心投影点"
 
-#: EditableSceneBody.cpp:1107
+#: EditableSceneBody.cpp:1141
 msgid "ZMP"
 msgstr "ZMP"
 
-#: EditableSceneBody.cpp:1532
+#: EditableSceneBody.cpp:1566
 msgid "Show selected links only"
 msgstr "選択リンクのみ表示"
 
-#: EditableSceneBody.cpp:1533
+#: EditableSceneBody.cpp:1567
 msgid "Show visual shapes"
 msgstr "視覚形状の表示"
 
-#: EditableSceneBody.cpp:1535
+#: EditableSceneBody.cpp:1569
 msgid "Show collision shapes"
 msgstr "干渉形状の表示"
 
-#: EditableSceneBody.cpp:1536
+#: EditableSceneBody.cpp:1570
 msgid "Enable editing static models"
 msgstr "静的モデルの編集を許可"
 
@@ -468,11 +468,11 @@ msgstr "マージン"
 msgid "Merge selected MultiValueSeqItems (Temporary version)"
 msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
 
-#: GLVisionSimulatorItem.cpp:220
+#: GLVisionSimulatorItem.cpp:221
 msgid "GLVisionSimulatorItem"
-msgstr "GL視覚センサシミュレータアイテム"
+msgstr "GL視覚シミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:383
+#: GLVisionSimulatorItem.cpp:384
 msgid ""
 "The vision sensor simulation by %1% cannot be performed because the OpenGL "
 "pbuffer is not available."
@@ -480,67 +480,67 @@ msgstr ""
 "OpenGLのpbufferが利用できないため、%1%による視覚センサのシミュレーションは利"
 "用できません。"
 
-#: GLVisionSimulatorItem.cpp:447
+#: GLVisionSimulatorItem.cpp:448
 msgid "%1% has no target sensors"
 msgstr "%1%は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:472
+#: GLVisionSimulatorItem.cpp:473
 msgid "%1%: Target sensor \"%2%\" cannot be initialized."
 msgstr "%2%用の%1%の初期化に失敗しました。"
 
-#: GLVisionSimulatorItem.cpp:500
+#: GLVisionSimulatorItem.cpp:501
 msgid "%1% detected vision sensor \"%2%\" of %3% as a target."
 msgstr "%1%は%3%の\"%2%\"を対象視覚センサとして検出しました。"
 
-#: GLVisionSimulatorItem.cpp:1199
+#: GLVisionSimulatorItem.cpp:1200
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:1200
+#: GLVisionSimulatorItem.cpp:1201
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:1201
+#: GLVisionSimulatorItem.cpp:1202
 msgid "Max frame rate"
 msgstr "最大フレームレート"
 
-#: GLVisionSimulatorItem.cpp:1202
+#: GLVisionSimulatorItem.cpp:1203
 msgid "Max latency [s]"
 msgstr "最大遅延時間 [秒]"
 
-#: GLVisionSimulatorItem.cpp:1203
+#: GLVisionSimulatorItem.cpp:1204
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:1204
+#: GLVisionSimulatorItem.cpp:1205
 msgid "Use thread"
 msgstr "スレッドを利用"
 
-#: GLVisionSimulatorItem.cpp:1205
+#: GLVisionSimulatorItem.cpp:1206
 msgid "Threads for sensors"
 msgstr "センサ個別スレッド"
 
-#: GLVisionSimulatorItem.cpp:1206
+#: GLVisionSimulatorItem.cpp:1207
 msgid "Best effort"
 msgstr "ベストエフォート"
 
-#: GLVisionSimulatorItem.cpp:1207
+#: GLVisionSimulatorItem.cpp:1208
 msgid "All scene objects"
 msgstr "全てのシーンオブジェクト"
 
-#: GLVisionSimulatorItem.cpp:1208
+#: GLVisionSimulatorItem.cpp:1209
 msgid "Precision ratio of range sensors"
 msgstr "レンジセンサ精度係数"
 
-#: GLVisionSimulatorItem.cpp:1210
+#: GLVisionSimulatorItem.cpp:1211
 msgid "Depth error"
 msgstr "深度エラー"
 
-#: GLVisionSimulatorItem.cpp:1211
+#: GLVisionSimulatorItem.cpp:1212
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: GLVisionSimulatorItem.cpp:1212
+#: GLVisionSimulatorItem.cpp:1213
 msgid "Additional lights"
 msgstr "追加のライト"
 
@@ -675,84 +675,84 @@ msgstr "角度"
 msgid "Torque"
 msgstr "トルク"
 
-#: KinematicFaultChecker.cpp:106 KinematicFaultChecker.cpp:139
+#: KinematicFaultChecker.cpp:107 KinematicFaultChecker.cpp:140
 msgid "Kinematic Fault Checker"
 msgstr "運動学障害チェッカ"
 
-#: KinematicFaultChecker.cpp:146
+#: KinematicFaultChecker.cpp:147
 msgid "Joint position check"
 msgstr "関節位置チェック"
 
-#: KinematicFaultChecker.cpp:151
+#: KinematicFaultChecker.cpp:152
 msgid "Angle margin"
 msgstr "角度マージン"
 
-#: KinematicFaultChecker.cpp:159
+#: KinematicFaultChecker.cpp:160
 msgid "Translation margin"
 msgstr "並進量マージン"
 
-#: KinematicFaultChecker.cpp:170
+#: KinematicFaultChecker.cpp:171
 msgid "Joint velocity check"
 msgstr "関節速度チェック"
 
-#: KinematicFaultChecker.cpp:175
+#: KinematicFaultChecker.cpp:176
 msgid "Limit ratio"
 msgstr "仕様制約値に対する割合"
 
-#: KinematicFaultChecker.cpp:190
+#: KinematicFaultChecker.cpp:191
 msgid "All joints"
 msgstr "全関節"
 
-#: KinematicFaultChecker.cpp:194
+#: KinematicFaultChecker.cpp:195
 msgid "Selected joints"
 msgstr "選択関節"
 
-#: KinematicFaultChecker.cpp:197
+#: KinematicFaultChecker.cpp:198
 msgid "Non-selected joints"
 msgstr "非選択関節"
 
-#: KinematicFaultChecker.cpp:205
+#: KinematicFaultChecker.cpp:206
 msgid "Self-collision check"
 msgstr "自己干渉チェック"
 
-#: KinematicFaultChecker.cpp:215
+#: KinematicFaultChecker.cpp:216
 msgid "Time bar's range only"
 msgstr "タイムバーの範囲内に適用"
 
-#: KinematicFaultChecker.cpp:223
+#: KinematicFaultChecker.cpp:224
 msgid "&Apply"
 msgstr "適用(&A)"
 
-#: KinematicFaultChecker.cpp:277
+#: KinematicFaultChecker.cpp:278
 msgid "No BodyMotionItems are selected."
 msgstr "BodyMotionアイテムが選択されていません。"
 
-#: KinematicFaultChecker.cpp:283
+#: KinematicFaultChecker.cpp:284
 msgid "%1% is not owned by any BodyItem. Check skiped."
 msgstr "%1% はボディアイテムの所有ではありませんので、チェックをしません。"
 
-#: KinematicFaultChecker.cpp:286
+#: KinematicFaultChecker.cpp:287
 msgid "Applying the Kinematic Fault Checker to %1% ..."
 msgstr "%1%に対して運動学的障害チェッカを適用中…"
 
-#: KinematicFaultChecker.cpp:317
+#: KinematicFaultChecker.cpp:318
 msgid "A fault has been detected."
 msgstr "障害が検出されました。"
 
-#: KinematicFaultChecker.cpp:319
+#: KinematicFaultChecker.cpp:320
 msgid "%1% faults have been detected."
 msgstr "%1%の障害が検出されました。"
 
-#: KinematicFaultChecker.cpp:322
+#: KinematicFaultChecker.cpp:323
 msgid "No faults have been detected."
 msgstr "障害は検出されませんでした。"
 
-#: KinematicFaultChecker.cpp:378
+#: KinematicFaultChecker.cpp:379
 msgid ""
 "A collision detector is not found. Collisions cannot be detected this time."
 msgstr "干渉検出器が見つかりませんので、干渉は検出できません。"
 
-#: KinematicFaultChecker.cpp:475
+#: KinematicFaultChecker.cpp:476
 msgid ""
 "%1$7.3f [s]: Position limit over of %2% (%3% is beyond the range (%4% , %5%) "
 "with margin %6%.)"
@@ -760,7 +760,7 @@ msgstr ""
 "%1$7.3f [秒]: %2%の関節位置制約オーバー (%3% は範囲(%4% , %5%)のマージン%6%を"
 "超えています。"
 
-#: KinematicFaultChecker.cpp:476
+#: KinematicFaultChecker.cpp:477
 msgid ""
 "%1$7.3f [s]: Position limit over of %2% (%3% is beyond the range (%4% , "
 "%5%).)"
@@ -768,7 +768,7 @@ msgstr ""
 "%1$7.3f [秒]: %2%の関節位置制約オーバー (%3% は範囲(%4% , %5%)を超えていま"
 "す。"
 
-#: KinematicFaultChecker.cpp:506
+#: KinematicFaultChecker.cpp:507
 msgid ""
 "%1$7.3f [s]: Velocity limit over of %2% (%3% is %4$.0f %% of the range "
 "(%5% , %6%).)"
@@ -776,71 +776,71 @@ msgstr ""
 "%1$7.3f [秒]: %2%の関節速度オーバー (%3% は範囲(%5% , %6%)の%4$.0f %%を超えて"
 "います。"
 
-#: KinematicFaultChecker.cpp:533
+#: KinematicFaultChecker.cpp:534
 msgid "%1$7.3f [s]: Collision between %2% and %3%"
 msgstr "%1$7.3f [秒]: %2% と %3% の干渉を検出"
 
-#: KinematicsBar.cpp:78
+#: KinematicsBar.cpp:79
 msgid "KinematicsBar"
 msgstr "運動学バー"
 
-#: KinematicsBar.cpp:90
+#: KinematicsBar.cpp:91
 msgid "Forward kinematics mode"
 msgstr "順運動学モード"
 
-#: KinematicsBar.cpp:91
+#: KinematicsBar.cpp:92
 msgid "Preset kinematics mode"
 msgstr "プリセット運動学モード"
 
-#: KinematicsBar.cpp:92
+#: KinematicsBar.cpp:93
 msgid "Inverse kinematics mode"
 msgstr "逆運動学モード"
 
-#: KinematicsBar.cpp:96
+#: KinematicsBar.cpp:97
 msgid "Enable link orientation editing"
 msgstr "リンク姿勢編集の許可"
 
-#: KinematicsBar.cpp:109
+#: KinematicsBar.cpp:110
 msgid "Penetration block mode"
 msgstr "貫通ブロックモード"
 
-#: KinematicsBar.cpp:112
+#: KinematicsBar.cpp:113
 msgid "Highlight colliding links"
 msgstr "干渉リンクのハイライト表示"
 
-#: KinematicsBar.cpp:265
+#: KinematicsBar.cpp:266
 msgid "Kinematics Operation Setup"
 msgstr "運動学操作の設定"
 
-#: KinematicsBar.cpp:271
+#: KinematicsBar.cpp:272
 msgid "Snap thresholds:"
 msgstr "スナップ閾値"
 
-#: KinematicsBar.cpp:274
+#: KinematicsBar.cpp:275
 msgid "distance"
 msgstr "足幅"
 
-#: KinematicsBar.cpp:281 KinematicsBar.cpp:300
+#: KinematicsBar.cpp:282 KinematicsBar.cpp:301
 msgid "[m]"
 msgstr ""
 
-#: KinematicsBar.cpp:284
+#: KinematicsBar.cpp:285
 msgid "angle"
 msgstr "角度"
 
-#: KinematicsBar.cpp:289
+#: KinematicsBar.cpp:290
 msgid "[deg]"
 msgstr ""
 
-#: KinematicsBar.cpp:293
+#: KinematicsBar.cpp:294
 msgid "Penetration block depth"
 msgstr "貫通防止における許容深度"
 
-#: KinematicsBar.cpp:304
+#: KinematicsBar.cpp:305
 msgid "Lazy collision detection mode"
 msgstr "遅延干渉検出モード"
 
-#: KinematicsBar.cpp:310
+#: KinematicsBar.cpp:311
 msgid "OK"
 msgstr "了解"
 
@@ -1078,43 +1078,43 @@ msgstr ""
 msgid "Simulation by %1% has started."
 msgstr "%1%によるシミュレーションを開始しました。"
 
-#: SimulatorItem.cpp:2123
+#: SimulatorItem.cpp:2131
 msgid "Simulation by %1% has finished at %2% [s]."
 msgstr "%1%によるシミュレーションが%2%秒時点で終了しました。"
 
-#: SimulatorItem.cpp:2124
+#: SimulatorItem.cpp:2132
 msgid "Computation time is %1% [s], computation time / simulation time = %2%."
 msgstr "計算時間: %1% [s], 計算時間 / シミュレーション時間 = %2%"
 
-#: SimulatorItem.cpp:2337
+#: SimulatorItem.cpp:2345
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2339
+#: SimulatorItem.cpp:2347
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2341
+#: SimulatorItem.cpp:2349
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2343
+#: SimulatorItem.cpp:2351
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2345
+#: SimulatorItem.cpp:2353
 msgid "All link positions"
 msgstr "全リンク位置姿勢出力"
 
-#: SimulatorItem.cpp:2347
+#: SimulatorItem.cpp:2355
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2349
+#: SimulatorItem.cpp:2357
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
-#: SimulatorItem.cpp:2351
+#: SimulatorItem.cpp:2359
 msgid "Record collision data"
 msgstr "干渉データの記録"
 

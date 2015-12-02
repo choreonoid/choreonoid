@@ -225,8 +225,8 @@ void GLVisionSimulatorItem::initializeClass(ExtensionManager* ext)
 
 GLVisionSimulatorItem::GLVisionSimulatorItem()
 {
-    setName("GLVisionSimulator");
     impl = new GLVisionSimulatorItemImpl(this);
+    setName("GLVisionSimulator");
 }
 
 
