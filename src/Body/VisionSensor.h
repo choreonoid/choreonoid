@@ -15,7 +15,7 @@ class CNOID_EXPORT VisionSensor : public Device
 {
 protected:
     VisionSensor();
-    VisionSensor(const VisionSensor& org, bool copyAll = true);
+    VisionSensor(const VisionSensor& org, bool copyStateOnly = false);
     
 public:
     void copyStateFrom(const VisionSensor& other);

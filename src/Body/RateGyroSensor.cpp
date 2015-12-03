@@ -37,12 +37,12 @@ void RateGyroSensor::copyStateFrom(const DeviceState& other)
 }
 
 
-RateGyroSensor::RateGyroSensor(const RateGyroSensor& org, bool copyAll)
-    : Device(org, copyAll)
+RateGyroSensor::RateGyroSensor(const RateGyroSensor& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
 {
     copyStateFrom(org);
 
-    if(copyAll){
+    if(!copyStateOnly){
         spec.reset(new Spec);
         if(org.spec){
             spec->w_max = org.spec->w_max;
@@ -55,7 +55,7 @@ RateGyroSensor::RateGyroSensor(const RateGyroSensor& org, bool copyAll)
 
 DeviceState* RateGyroSensor::cloneState() const
 {
-    return new RateGyroSensor(*this, false);
+    return new RateGyroSensor(*this, true);
 }
 
 

@@ -26,7 +26,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     ForceSensor();
-    ForceSensor(const ForceSensor& org, bool copyAll = true);
+    ForceSensor(const ForceSensor& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const ForceSensor& other);

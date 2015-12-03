@@ -15,7 +15,7 @@ class CNOID_EXPORT Light : public Device
 {
 protected:
     Light();
-    Light(const Light& org, bool copyState = true);
+    Light(const Light& org, bool copyStateOnly = false);
 
 public:
     void copyStateFrom(const Light& other);

@@ -13,8 +13,8 @@ VisionSensor::VisionSensor()
 }
 
 
-VisionSensor::VisionSensor(const VisionSensor& org, bool copyAll)
-    : Device(org, copyAll)
+VisionSensor::VisionSensor(const VisionSensor& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
 {
     copyStateFrom(org);
 }

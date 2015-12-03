@@ -9,11 +9,17 @@
 using namespace cnoid;
 
 
+const char* Camera::typeName()
+{
+    return "Camera";
+}
+
+
 Camera::Camera()
 {
     on_ = true;
     imageType_ = COLOR_IMAGE;
-    isImageTransmittable_ = false;
+    isImageStateClonable_ = false;
     resolutionX_ = 640;
     resolutionY_ = 480;
     fieldOfView_ = 0.785398;
@@ -21,38 +27,6 @@ Camera::Camera()
     farDistance_ = 100.0;
     frameRate_ = 30.0;
     image_ = boost::make_shared<Image>();
-}
-
-
-const char* Camera::typeName()
-{
-    return "Camera";
-}
-
-
-void Camera::copyStateFrom(const Camera& other)
-{
-    VisionSensor::copyStateFrom(other);
-    copyCameraStateFrom(other);
-}
-
-
-void Camera::copyCameraStateFrom(const Camera& other)
-{
-    on_ = other.on_;
-    imageType_ = other.imageType_;
-    resolutionX_ = other.resolutionX_;
-    resolutionY_ = other.resolutionY_;
-    fieldOfView_ = other.fieldOfView_;
-    nearDistance_ = other.nearDistance_;
-    farDistance_ = other.farDistance_;
-    frameRate_ = other.frameRate_;
-
-    if(isImageTransmittable_ || other.isImageTransmittable_){
-        image_ = other.image_;
-    } else {
-        image_ = boost::make_shared<Image>();
-    }
 }
 
 
@@ -65,23 +39,61 @@ void Camera::copyStateFrom(const DeviceState& other)
 }
 
 
-Camera::Camera(const Camera& org, bool copyAll)
-    : VisionSensor(org, copyAll)
+void Camera::copyStateFrom(const Camera& other)
 {
-    isImageTransmittable_ = org.isImageTransmittable_;
-    copyCameraStateFrom(org);
+    VisionSensor::copyStateFrom(other);
+    copyCameraStateFrom(other);
+    image_ = other.image_;
 }
 
-        
-DeviceState* Camera::cloneState() const
+
+void Camera::copyCameraStateFrom(const Camera& other)
 {
-    return new Camera(*this, false);
+    on_ = other.on_;
+    isImageStateClonable_ = other.isImageStateClonable_;
+    imageType_ = other.imageType_;
+    resolutionX_ = other.resolutionX_;
+    resolutionY_ = other.resolutionY_;
+    fieldOfView_ = other.fieldOfView_;
+    nearDistance_ = other.nearDistance_;
+    farDistance_ = other.farDistance_;
+    frameRate_ = other.frameRate_;
+}
+
+
+Camera::Camera(const Camera& org, bool copyStateOnly)
+    : VisionSensor(org, copyStateOnly),
+      image_(org.image_)
+{
+    copyCameraStateFrom(org);
 }
 
 
 Device* Camera::clone() const
 {
-    return new Camera(*this);
+    return new Camera(*this, false);
+}
+
+
+/**
+   Used for cloneState()
+*/
+Camera::Camera(const Camera& org, int x /* dummy */)
+    : VisionSensor(org, true)
+{
+    copyCameraStateFrom(org);
+    
+    if(org.isImageStateClonable_){
+        image_ = org.image_;
+    } else {
+        image_ = boost::make_shared<Image>();
+    }
+}
+
+        
+DeviceState* Camera::cloneState() const
+{
+    return new Camera(*this, 0);
 }
 
 

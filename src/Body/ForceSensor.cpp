@@ -37,12 +37,12 @@ void ForceSensor::copyStateFrom(const DeviceState& other)
 }
 
 
-ForceSensor::ForceSensor(const ForceSensor& org, bool copyAll)
-    : Device(org, copyAll)
+ForceSensor::ForceSensor(const ForceSensor& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
 {
     copyStateFrom(org);
 
-    if(copyAll){
+    if(!copyStateOnly){
         spec.reset(new Spec);
         if(org.spec){
             spec->F_max = org.spec->F_max;
@@ -55,7 +55,7 @@ ForceSensor::ForceSensor(const ForceSensor& org, bool copyAll)
 
 DeviceState* ForceSensor::cloneState() const
 {
-    return new ForceSensor(*this, false);
+    return new ForceSensor(*this, true);
 }
 
 

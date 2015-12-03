@@ -23,7 +23,7 @@ class CNOID_EXPORT AccelerationSensor : public Device
 
 public:
     AccelerationSensor();
-    AccelerationSensor(const AccelerationSensor& org, bool copyAll = true);
+    AccelerationSensor(const AccelerationSensor& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const AccelerationSensor& other);

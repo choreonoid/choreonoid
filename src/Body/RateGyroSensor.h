@@ -23,7 +23,7 @@ class CNOID_EXPORT RateGyroSensor : public Device
         
 public:
     RateGyroSensor();
-    RateGyroSensor(const RateGyroSensor& org, bool copyAll = true);
+    RateGyroSensor(const RateGyroSensor& org, bool copyStateOnly = false);
         
     virtual const char* typeName();
     void copyStateFrom(const RateGyroSensor& other);

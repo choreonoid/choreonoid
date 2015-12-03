@@ -630,7 +630,7 @@ SgCamera* VisionRenderer::initializeCamera()
             double frameRate = std::max(0.1, std::min(camera->frameRate(), simImpl->maxFrameRate));
             cycleTime = 1.0 / frameRate;
             if(simImpl->isVisionDataRecordingEnabled){
-                camera->setImageTransmittable(true);
+                camera->setImageStateClonable(true);
             }
         }
     } else if(rangeSensor){
@@ -674,7 +674,7 @@ SgCamera* VisionRenderer::initializeCamera()
                 double frameRate = std::max(0.1, std::min(rangeSensor->frameRate(), simImpl->maxFrameRate));
                 cycleTime = 1.0 / frameRate;
                 if(simImpl->isVisionDataRecordingEnabled){
-                    rangeSensor->setRangeDataTransmittable(true);
+                    rangeSensor->setRangeDataStateClonable(true);
                 }
 
                 depthError = simImpl->depthError;

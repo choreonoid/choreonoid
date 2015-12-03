@@ -69,7 +69,7 @@ class CNOID_EXPORT Device : public DeviceState
 
 protected:
     Device(); 
-    Device(const Device& org, bool copyAll = true);
+    Device(const Device& org, bool copyStateOnly = false);
 
 public:
     virtual ~Device();

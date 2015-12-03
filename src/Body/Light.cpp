@@ -24,8 +24,8 @@ void Light::copyStateFrom(const Light& other)
 }
 
 
-Light::Light(const Light& org, bool copyAll)
-    : Device(org, copyAll)
+Light::Light(const Light& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
 {
     copyStateFrom(org);
 }

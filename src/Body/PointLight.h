@@ -15,7 +15,7 @@ class CNOID_EXPORT PointLight : public Light
 {
 public:
     PointLight();
-    PointLight(const PointLight& org, bool copyState = true);
+    PointLight(const PointLight& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const PointLight& other);

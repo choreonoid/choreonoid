@@ -20,9 +20,9 @@ Device::Device()
 }
 
 
-Device::Device(const Device& org, bool copyAll)
+Device::Device(const Device& org, bool copyStateOnly)
 {
-    if(!copyAll){
+    if(copyStateOnly){
         ns = 0;
     } else {
         ns = new NonState;

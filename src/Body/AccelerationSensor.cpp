@@ -37,12 +37,12 @@ void AccelerationSensor::copyStateFrom(const DeviceState& other)
 }
 
 
-AccelerationSensor::AccelerationSensor(const AccelerationSensor& org, bool copyAll)
-    : Device(org, copyAll)
+AccelerationSensor::AccelerationSensor(const AccelerationSensor& org, bool copyStateOnly)
+    : Device(org, copyStateOnly)
 {
     copyStateFrom(org);
 
-    if(copyAll){
+    if(!copyStateOnly){
         spec.reset(new Spec);
         if(org.spec){
             spec->dv_max = org.spec->dv_max;
@@ -55,7 +55,7 @@ AccelerationSensor::AccelerationSensor(const AccelerationSensor& org, bool copyA
 
 DeviceState* AccelerationSensor::cloneState() const
 {
-    return new AccelerationSensor(*this, false);
+    return new AccelerationSensor(*this, true);
 }
 
 

@@ -16,7 +16,7 @@ class CNOID_EXPORT RangeSensor : public VisionSensor
 {
 public:
     RangeSensor();
-    RangeSensor(const RangeSensor& org, bool copyAll = true);
+    RangeSensor(const RangeSensor& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const RangeSensor& other); 
@@ -54,8 +54,8 @@ public:
 
     typedef std::vector<double> RangeData;
 
-    void setRangeDataTransmittable(bool on) { isRangeDataTransmittable_ = on; }
-    bool isRangeDataTransmittalbe() const { return isRangeDataTransmittable_; }
+    void setRangeDataStateClonable(bool on) { isRangeDataStateClonable_ = on; }
+    bool isRangeDataStateClonable() const { return isRangeDataStateClonable_; }
 
     /**
        \note You must check if the range data is not empty before accessing the data
@@ -76,7 +76,7 @@ public:
 
 private:
     bool on_;
-    bool isRangeDataTransmittable_;
+    bool isRangeDataStateClonable_;
     int yawResolution_;
     int pitchResolution_;
     double yawRange_;
@@ -86,10 +86,12 @@ private:
     double frameRate_;
     boost::shared_ptr<RangeData> rangeData_;
 
+    RangeSensor(const RangeSensor& org, int x /* dummy */);
     void copyRangeSensorStateFrom(const RangeSensor& other);    
 };
 
 typedef ref_ptr<RangeSensor> RangeSensorPtr;
+
 };
 
 #endif

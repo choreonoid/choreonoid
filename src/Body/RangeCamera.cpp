@@ -23,24 +23,6 @@ const char* RangeCamera::typeName()
 }
 
 
-void RangeCamera::copyStateFrom(const RangeCamera& other)
-{
-    Camera::copyStateFrom(other);
-    copyRangeCameraStateFrom(other);
-}
-
-
-void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
-{
-    if(isImageTransmittable() || other.isImageTransmittable()){
-        points_ = other.points_;
-    } else {
-        points_ = boost::make_shared<PointData>();
-    }
-    isOrganized_ = other.isOrganized_;
-}
-
-
 void RangeCamera::copyStateFrom(const DeviceState& other)
 {
     if(typeid(other) != typeid(RangeCamera)){
@@ -50,22 +32,53 @@ void RangeCamera::copyStateFrom(const DeviceState& other)
 }
 
 
-RangeCamera::RangeCamera(const RangeCamera& org, bool copyAll)
-    : Camera(org, copyAll)
+void RangeCamera::copyStateFrom(const RangeCamera& other)
+{
+    Camera::copyStateFrom(other);
+    copyRangeCameraStateFrom(other);
+    points_ = other.points_;
+}
+
+
+void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other)
+{
+    isOrganized_ = other.isOrganized_;
+}
+
+
+RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
+    : Camera(org, copyStateOnly),
+      points_(org.points_)
 {
     copyRangeCameraStateFrom(org);
+}
+
+        
+Device* RangeCamera::clone() const
+{
+    return new RangeCamera(*this);
+}
+
+
+/**
+   Used for cloneState()
+*/
+RangeCamera::RangeCamera(const RangeCamera& org, int x /* dummy */)
+    : Camera(org, true)
+{
+    copyRangeCameraStateFrom(org);
+    
+    if(org.isImageStateClonable()){
+        points_ = org.points_;
+    } else {
+        points_ = boost::make_shared<PointData>();
+    }
 }
 
         
 DeviceState* RangeCamera::cloneState() const
 {
     return new RangeCamera(*this, false);
-}
-
-
-Device* RangeCamera::clone() const
-{
-    return new RangeCamera(*this);
 }
 
 

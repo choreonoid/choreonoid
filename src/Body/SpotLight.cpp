@@ -46,8 +46,8 @@ void SpotLight::copyStateFrom(const DeviceState& other)
 }
 
 
-SpotLight::SpotLight(const SpotLight& org, bool copyAll)
-    : PointLight(org, copyAll)
+SpotLight::SpotLight(const SpotLight& org, bool copyStateOnly)
+    : PointLight(org, copyStateOnly)
 {
     copyStateFrom(org);
 }
@@ -55,7 +55,7 @@ SpotLight::SpotLight(const SpotLight& org, bool copyAll)
 
 DeviceState* SpotLight::cloneState() const
 {
-    return new SpotLight(*this, false);
+    return new SpotLight(*this, true);
 }
 
 

@@ -15,7 +15,7 @@ class CNOID_EXPORT SpotLight : public PointLight
 {
 public:
     SpotLight();
-    SpotLight(const SpotLight& org, bool copyState = true);
+    SpotLight(const SpotLight& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const SpotLight& other);

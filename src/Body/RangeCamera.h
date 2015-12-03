@@ -15,7 +15,7 @@ class CNOID_EXPORT RangeCamera : public Camera
 {
 public:
     RangeCamera();
-    RangeCamera(const RangeCamera& org, bool copyAll = true);
+    RangeCamera(const RangeCamera& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const RangeCamera& other); 
@@ -50,6 +50,7 @@ private:
     boost::shared_ptr< std::vector<Vector3f> > points_;
     bool isOrganized_;
 
+    RangeCamera(const RangeCamera& org, int x);
     void copyRangeCameraStateFrom(const RangeCamera& other);    
 };
 

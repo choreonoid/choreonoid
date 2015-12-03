@@ -14,10 +14,16 @@ const double PI = 3.14159265358979323846;
 }
 
 
+const char* RangeSensor::typeName()
+{
+    return "RangeSensor";
+}
+
+
 RangeSensor::RangeSensor()
 {
     on_ = true;
-    isRangeDataTransmittable_ = false;
+    isRangeDataStateClonable_ = false;
 
     yawRange_ = PI / 2.0;
     yawResolution_ = 100;
@@ -34,32 +40,6 @@ RangeSensor::RangeSensor()
 }
 
 
-void RangeSensor::copyStateFrom(const RangeSensor& other)
-{
-    VisionSensor::copyStateFrom(other);
-    copyRangeSensorStateFrom(other);
-}
-
-
-void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
-{
-    on_ = other.on_;
-    yawResolution_ = other.yawResolution_;
-    pitchResolution_ = other.pitchResolution_;
-    yawRange_ = other.yawRange_;
-    pitchRange_ = other.pitchRange_;
-    minDistance_ = other.minDistance_;
-    maxDistance_ = other.maxDistance_;
-    frameRate_ = other.frameRate_;
-
-    if(isRangeDataTransmittable_ || other.isRangeDataTransmittable_){
-        rangeData_ = other.rangeData_;
-    } else {
-        rangeData_ = boost::make_shared<RangeData>();
-    }
-}
-
-
 void RangeSensor::copyStateFrom(const DeviceState& other)
 {
     if(typeid(other) != typeid(RangeSensor)){
@@ -69,29 +49,61 @@ void RangeSensor::copyStateFrom(const DeviceState& other)
 }
 
 
-RangeSensor::RangeSensor(const RangeSensor& org, bool copyAll)
-    : VisionSensor(org, copyAll)
+void RangeSensor::copyStateFrom(const RangeSensor& other)
 {
-    isRangeDataTransmittable_ = org.isRangeDataTransmittable_;
+    VisionSensor::copyStateFrom(other);
+    copyRangeSensorStateFrom(other);
+    rangeData_ = other.rangeData_;
+}
+
+
+void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
+{
+    on_ = other.on_;
+    isRangeDataStateClonable_ = other.isRangeDataStateClonable_;
+    yawResolution_ = other.yawResolution_;
+    pitchResolution_ = other.pitchResolution_;
+    yawRange_ = other.yawRange_;
+    pitchRange_ = other.pitchRange_;
+    minDistance_ = other.minDistance_;
+    maxDistance_ = other.maxDistance_;
+    frameRate_ = other.frameRate_;
+}
+
+
+RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
+    : VisionSensor(org, copyStateOnly),
+      rangeData_(org.rangeData_)
+{
     copyRangeSensorStateFrom(org);
 }
 
         
-const char* RangeSensor::typeName()
-{
-    return "RangeSensor";
-}
-
-
-DeviceState* RangeSensor::cloneState() const
-{
-    return new RangeSensor(*this, false);
-}
-
-
 Device* RangeSensor::clone() const
 {
     return new RangeSensor(*this);
+}
+
+
+/**
+   Used for cloneState()
+*/
+RangeSensor::RangeSensor(const RangeSensor& org, int x /* dummy */)
+    : VisionSensor(org, true)
+{
+    copyRangeSensorStateFrom(org);
+
+    if(org.isRangeDataStateClonable_){
+        rangeData_ = org.rangeData_;
+    } else {
+        rangeData_ = boost::make_shared<RangeData>();
+    }
+}
+
+        
+DeviceState* RangeSensor::cloneState() const
+{
+    return new RangeSensor(*this, false);
 }
 
 

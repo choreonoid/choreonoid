@@ -17,7 +17,7 @@ class CNOID_EXPORT Camera : public VisionSensor
 {
 public:
     Camera();
-    Camera(const Camera& org, bool copyAll = true);
+    Camera(const Camera& org, bool copyStateOnly = false);
 
     virtual const char* typeName();
     void copyStateFrom(const Camera& other);
@@ -30,8 +30,8 @@ public:
     virtual const double* readState(const double* buf);
     virtual double* writeState(double* out_buf) const;
 
-    void setImageTransmittable(bool on) { isImageTransmittable_ = on; }
-    bool isImageTransmittable() const { return isImageTransmittable_; }
+    void setImageStateClonable(bool on) { isImageStateClonable_ = on; }
+    bool isImageStateClonable() const { return isImageStateClonable_; }
 
     enum ImageType { NO_IMAGE, COLOR_IMAGE, GRAYSCALE_IMAGE };
     ImageType imageType() const { return imageType_; }
@@ -58,7 +58,7 @@ public:
     void setFrameRate(double r) { frameRate_ = r; }
     double frameRate() const { return frameRate_; }
 
-    const Image& image() const { return *image_; }
+    const Image& image() const;
     const Image& constImage() const { return *image_; }
     Image& image();
     Image& newImage();
@@ -74,7 +74,7 @@ public:
 
 private:
     bool on_;
-    bool isImageTransmittable_;
+    bool isImageStateClonable_;
     ImageType imageType_;
     int resolutionX_;
     int resolutionY_;
@@ -84,7 +84,8 @@ private:
     double frameRate_;
     boost::shared_ptr<Image> image_;
 
-    void copyCameraStateFrom(const Camera& other);    
+    Camera(const Camera& org, int x);
+    void copyCameraStateFrom(const Camera& other);
 };
 
 typedef ref_ptr<Camera> CameraPtr;
