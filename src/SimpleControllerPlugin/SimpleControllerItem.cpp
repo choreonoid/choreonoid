@@ -4,50 +4,117 @@
 
 #include "SimpleControllerItem.h"
 #include <cnoid/SimpleController>
+#include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/ConnectionSet>
+#include <QLibrary>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
 
+namespace cnoid {
+
+class SimpleControllerItemImpl
+{
+public:
+    SimpleControllerItem* self;
+
+    SimpleController* controller;
+    Body* simulationBody;
+    BodyPtr ioBody;
+    bool doInputLinkPositions;
+
+    ConnectionSet inputDeviceStateConnections;
+    boost::dynamic_bitset<> inputDeviceStateChangeFlag;
+        
+    ConnectionSet outputDeviceStateConnections;
+    boost::dynamic_bitset<> outputDeviceStateChangeFlag;
+        
+    double timeStep;
+    MessageView* mv;
+
+    std::string controllerDllName;
+    std::string controllerDllFileName;
+    QLibrary controllerDll;
+    bool doReloading;
+
+    SimpleControllerItemImpl(SimpleControllerItem* self);
+    SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
+    ~SimpleControllerItemImpl();
+    void unloadControllers();
+    bool start(ControllerItem::Target* target);
+    void input();
+    void onInputDeviceStateChanged(int deviceIndex);
+    void onOutputDeviceStateChanged(int deviceIndex);
+    void output();
+    bool onReloadingChanged(bool on);
+    void doPutProperties(PutPropertyFunction& putProperty);
+    bool store(Archive& archive);
+    bool restore(const Archive& archive);
+};
+
+}
+
 
 SimpleControllerItem::SimpleControllerItem()
 {
     setName("SimpleController");
+    impl = new SimpleControllerItemImpl(this);
+}
+
+
+SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
+    : self(self)
+{
     controller = 0;
-    doReloading = true;
     doInputLinkPositions = false;
     mv = MessageView::instance();
+    doReloading = true;
 }
 
 
 SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
     : ControllerItem(org)
 {
+    impl = new SimpleControllerItemImpl(this, *org.impl);
+}
+
+
+SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
+    : self(self)
+{
+    controller = 0;
+    mv = MessageView::instance();
     controllerDllName = org.controllerDllName;
     doReloading = org.doReloading;
-    controller = 0;
     doInputLinkPositions = org.doInputLinkPositions;
-    mv = MessageView::instance();
 }
 
 
 SimpleControllerItem::~SimpleControllerItem()
 {
-    unloadController();
+    delete impl;
+}
+
+
+SimpleControllerItemImpl::~SimpleControllerItemImpl()
+{
+    unloadControllers();
     inputDeviceStateConnections.disconnect();
     outputDeviceStateConnections.disconnect();
 }
 
 
-void SimpleControllerItem::unloadController()
+void SimpleControllerItemImpl::unloadControllers()
 {
     if(controller){
         delete controller;
@@ -56,7 +123,7 @@ void SimpleControllerItem::unloadController()
 
     if(controllerDll.unload()){
         mv->putln(fmt(_("The DLL of %1% \"%2%\" has been unloaded."))
-                  % name() % controllerDllFileName);
+                  % self->name() % controllerDllFileName);
     }
 }
 
@@ -64,7 +131,7 @@ void SimpleControllerItem::unloadController()
 void SimpleControllerItem::onDisconnectedFromRoot()
 {
     if(!isActive()){
-        unloadController();
+        impl->unloadControllers();
     }
 }
 
@@ -75,15 +142,21 @@ Item* SimpleControllerItem::doDuplicate() const
 }
 
 
-void SimpleControllerItem::setControllerDllName(const std::string& name)
+void SimpleControllerItem::setController(const std::string& name)
 {
-    unloadController();
-    controllerDllName = name;
-    controllerDllFileName.clear();
+    impl->unloadControllers();
+    impl->controllerDllName = name;
+    impl->controllerDllFileName.clear();
 }
 
 
 bool SimpleControllerItem::start(Target* target)
+{
+    return impl->start(target);
+}
+
+
+bool SimpleControllerItemImpl::start(ControllerItem::Target* target)
 {
     bool result = false;
 
@@ -99,14 +172,14 @@ bool SimpleControllerItem::start(Target* target)
         controllerDll.setFileName(controllerDllFileName.c_str());
         
         if(controllerDll.isLoaded()){
-            mv->putln(fmt(_("The DLL of %1% has already been loaded.")) % name());
+            mv->putln(fmt(_("The DLL of %1% has already been loaded.")) % self->name());
             
             // This should be called to make the reference to the DLL.
             // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
             controllerDll.load();
             
         } else {
-            mv->put(fmt(_("Loading the DLL of %1%: \"%2%\" ... ")) % name() % controllerDllFileName);
+            mv->put(fmt(_("Loading the DLL of %1%: \"%2%\" ... ")) % self->name() % controllerDllFileName);
             if(!controllerDll.load()){
                 mv->put(_("Failed.\n"));
                 mv->putln(controllerDll.errorString());
@@ -132,7 +205,7 @@ bool SimpleControllerItem::start(Target* target)
     }
 
     if(controller){
-        timeStep_ = target->worldTimeStep();
+        timeStep = target->worldTimeStep();
         Body* body = target->body();
         ioBody = body->clone();
 
@@ -147,22 +220,22 @@ bool SimpleControllerItem::start(Target* target)
         for(size_t i=0; i < devices.size(); ++i){
             inputDeviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    boost::bind(&SimpleControllerItem::onInputDeviceStateChanged, this, i)));
+                    boost::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
             outputDeviceStateConnections.add(
                 ioDevices[i]->sigStateChanged().connect(
-                    boost::bind(&SimpleControllerItem::onOutputDeviceStateChanged, this, i)));
+                    boost::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
         }
                 
         controller->setIoBody(ioBody);
-        controller->setTimeStep(timeStep_);
-        controller->setImmediateMode(isImmediateMode());
+        controller->setTimeStep(timeStep);
+        controller->setImmediateMode(self->isImmediateMode());
         controller->setOutputStream(mv->cout());
 
         result = controller->initialize();
         if(!result){
-            mv->putln(fmt(_("%1%'s initialize method failed.")) % name());
+            mv->putln(fmt(_("%1%'s initialize method failed.")) % self->name());
             if(doReloading){
-                stop();
+                self->stop();
             }
         } else {
             simulationBody = body;
@@ -175,11 +248,17 @@ bool SimpleControllerItem::start(Target* target)
 
 double SimpleControllerItem::timeStep() const
 {
-    return timeStep_;
+    return impl->timeStep;
 }
 
 
 void SimpleControllerItem::input()
+{
+    impl->input();
+}
+
+
+void SimpleControllerItemImpl::input()
 {
     const int nj = simulationBody->numJoints();
     for(int i=0; i < nj; ++i){
@@ -215,7 +294,7 @@ void SimpleControllerItem::input()
 }
 
 
-void SimpleControllerItem::onInputDeviceStateChanged(int deviceIndex)
+void SimpleControllerItemImpl::onInputDeviceStateChanged(int deviceIndex)
 {
     inputDeviceStateChangeFlag.set(deviceIndex);
 }
@@ -223,17 +302,23 @@ void SimpleControllerItem::onInputDeviceStateChanged(int deviceIndex)
 
 bool SimpleControllerItem::control()
 {
-    return controller->control();
+    return impl->controller->control();
 }
 
 
-void SimpleControllerItem::onOutputDeviceStateChanged(int deviceIndex)
+void SimpleControllerItemImpl::onOutputDeviceStateChanged(int deviceIndex)
 {
     outputDeviceStateChangeFlag.set(deviceIndex);
 }
 
 
 void SimpleControllerItem::output()
+{
+    impl->output();
+}
+
+
+void SimpleControllerItemImpl::output()
 {
     const boost::dynamic_bitset<>& flags = controller->jointOutputFlags();
     const int n = std::min(simulationBody->numJoints(), (int)flags.size());
@@ -262,13 +347,13 @@ void SimpleControllerItem::output()
 
 void SimpleControllerItem::stop()
 {
-    if(doReloading || !findRootItem()){
-        unloadController();
+    if(impl->doReloading || !findRootItem()){
+        impl->unloadControllers();
     }
 }
 
 
-bool SimpleControllerItem::onReloadingChanged(bool on)
+bool SimpleControllerItemImpl::onReloadingChanged(bool on)
 {
     doReloading = on;
     return true;
@@ -278,11 +363,16 @@ bool SimpleControllerItem::onReloadingChanged(bool on)
 void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     ControllerItem::doPutProperties(putProperty);
-    
-    putProperty(_("Controller DLL"), controllerDllName,
-                boost::bind(&SimpleControllerItem::setControllerDllName, this, _1), true);
+    impl->doPutProperties(putProperty);
+}
+
+
+void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Controller"), controllerDllName,
+                boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
-                boost::bind(&SimpleControllerItem::onReloadingChanged, this, _1));
+                boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
     putProperty(_("Input link positions"), doInputLinkPositions, changeProperty(doInputLinkPositions));
 }
 
@@ -292,6 +382,12 @@ bool SimpleControllerItem::store(Archive& archive)
     if(!ControllerItem::store(archive)){
         return false;
     }
+    return impl->store(archive);
+}
+
+
+bool SimpleControllerItemImpl::store(Archive& archive)
+{
     archive.writeRelocatablePath("controller", controllerDllName);
     archive.write("reloading", doReloading);
     archive.write("inputLinkPositions", doInputLinkPositions);
@@ -304,6 +400,12 @@ bool SimpleControllerItem::restore(const Archive& archive)
     if(!ControllerItem::restore(archive)){
         return false;
     }
+    return impl->restore(archive);
+}
+
+
+bool SimpleControllerItemImpl::restore(const Archive& archive)
+{
     string value;
     if(archive.read("controller", value)){
         controllerDllName = archive.expandPathVariables(value);
