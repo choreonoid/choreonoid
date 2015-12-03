@@ -6,14 +6,14 @@
 #ifndef CNOID_BODY_CAMERA_H
 #define CNOID_BODY_CAMERA_H
 
-#include "VisionSensor.h"
+#include "Device.h"
 #include <cnoid/Image>
 #include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT Camera : public VisionSensor
+class CNOID_EXPORT Camera : public Device
 {
 public:
     Camera();
@@ -72,6 +72,12 @@ public:
     */
     void setImage(boost::shared_ptr<Image>& image);
 
+    /**
+       Time [s] consumed in shooting the current image
+    */
+    double delay() const { return delay_; }
+    void setDelay(double time) { delay_ = time; }
+
 private:
     bool on_;
     bool isImageStateClonable_;
@@ -82,6 +88,7 @@ private:
     double farDistance_;
     double fieldOfView_;
     double frameRate_;
+    double delay_;
     boost::shared_ptr<Image> image_;
 
     Camera(const Camera& org, int x);

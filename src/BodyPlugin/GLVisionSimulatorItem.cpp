@@ -101,12 +101,12 @@ public:
     bool isTerminationRequested;
     bool hasUpdatedData;
 
-    VisionSensorPtr sensor;
+    DevicePtr device;
     CameraPtr camera;
     RangeCameraPtr rangeCamera;
     RangeSensorPtr rangeSensor;
 
-    VisionSensorPtr sensorForRendering;
+    DevicePtr deviceForRendering;
     CameraPtr cameraForRendering;
     RangeCameraPtr rangeCameraForRendering;
     RangeSensorPtr rangeSensorForRendering;
@@ -125,7 +125,7 @@ public:
     SimulationBody* simBody;
     int bodyIndex;
 
-    VisionRenderer(GLVisionSimulatorItemImpl* simImpl, VisionSensor* sensor, SimulationBody* simBody, int bodyIndex);
+    VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
     bool initialize(const vector<SimulationBody*>& simBodies);
     void initializeScene(const vector<SimulationBody*>& simBodies);
     SgCamera* initializeCamera();
@@ -194,7 +194,7 @@ public:
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
     ~GLVisionSimulatorItemImpl();
     bool initializeSimulation(SimulatorItem* simulatorItem);
-    void addTargetSensor(SimulationBody* simBody, int bodyIndex, VisionSensor* sensor);
+    void addTargetSensor(SimulationBody* simBody, int bodyIndex, Device* sensor);
     void onPreDynamics();
     void queueRenderingLoop();
     void onPostDynamics();
@@ -434,11 +434,12 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         SimulationBody* simBody = simBodies[i];
         Body* body = simBody->body();
         if(bodyNameSet.empty() || bodyNameSet.find(body->name()) != bodyNameSet.end()){
-            DeviceList<VisionSensor> sensors(body->devices());
-            for(size_t j=0; j < sensors.size(); ++j){
-                VisionSensor* sensor = sensors[j];
-                if(sensorNameSet.empty() || sensorNameSet.find(sensor->name()) != sensorNameSet.end()){
-                    addTargetSensor(simBody, i, sensor);
+            for(size_t j=0; j < body->numDevices(); ++j){
+                Device* device = body->device(j);
+                if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
+                    if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){
+                        addTargetSensor(simBody, i, device);
+                    }
                 }
             }
         }
@@ -471,7 +472,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
             ++p;
         } else {
             os << (format(_("%1%: Target sensor \"%2%\" cannot be initialized."))
-                   % self->name() % renderer->sensor->name()) << endl;
+                   % self->name() % renderer->device->name()) << endl;
             p = visionRenderers.erase(p);
         }
     }
@@ -496,31 +497,31 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 }
 
 
-void GLVisionSimulatorItemImpl::addTargetSensor(SimulationBody* simBody, int bodyIndex, VisionSensor* sensor)
+void GLVisionSimulatorItemImpl::addTargetSensor(SimulationBody* simBody, int bodyIndex, Device* device)
 {
     os << (format(_("%1% detected vision sensor \"%2%\" of %3% as a target."))
-           % self->name() % sensor->name() % simBody->body()->name()) << endl;
+           % self->name() % device->name() % simBody->body()->name()) << endl;
     
-    visionRenderers.push_back(new VisionRenderer(this, sensor, simBody, bodyIndex));
+    visionRenderers.push_back(new VisionRenderer(this, device, simBody, bodyIndex));
 }
 
 
-VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, VisionSensor* sensor, SimulationBody* simBody, int bodyIndex)
+VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, SimulationBody* simBody, int bodyIndex)
     : simImpl(simImpl),
-      sensor(sensor),
+      device(device),
       simBody(simBody),
       bodyIndex(bodyIndex)
 {
-    sensorForRendering = static_cast<VisionSensor*>(sensor->clone());
+    deviceForRendering = device->clone();
     
-    camera = dynamic_cast<Camera*>(sensor);
+    camera = dynamic_cast<Camera*>(device);
     rangeCamera = dynamic_pointer_cast<RangeCamera>(camera);
-    rangeSensor = dynamic_cast<RangeSensor*>(sensor);
+    rangeSensor = dynamic_cast<RangeSensor*>(device);
 
     if(simImpl->useThread){
-        cameraForRendering = dynamic_pointer_cast<Camera>(sensorForRendering);
-        rangeCameraForRendering = dynamic_pointer_cast<RangeCamera>(sensorForRendering);
-        rangeSensorForRendering = dynamic_pointer_cast<RangeSensor>(sensorForRendering);
+        cameraForRendering = dynamic_pointer_cast<Camera>(deviceForRendering);
+        rangeCameraForRendering = dynamic_pointer_cast<RangeCamera>(deviceForRendering);
+        rangeSensorForRendering = dynamic_pointer_cast<RangeSensor>(deviceForRendering);
     } else {
         cameraForRendering = camera;
         rangeCameraForRendering = rangeCamera;
@@ -622,7 +623,7 @@ SgCamera* VisionRenderer::initializeCamera()
     SceneBody* sceneBody = sceneBodies[bodyIndex];
 
     if(camera){
-        SceneDevice* sceneDevice = sceneBody->getSceneDevice(sensor);
+        SceneDevice* sceneDevice = sceneBody->getSceneDevice(device);
         if(sceneDevice){
             sceneCamera = sceneDevice->findNodeOfType<SgCamera>();
             pixelWidth = camera->resolutionX();
@@ -766,7 +767,7 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
         sceneBody->updateSceneDevices();
     }
     if(updateSensorForRenderingThread){
-        sensorForRendering->copyStateFrom(*sensor);
+        deviceForRendering->copyStateFrom(*device);
     }
 }
 
@@ -950,6 +951,7 @@ bool VisionRenderer::waitForRenderingToFinish(boost::unique_lock<boost::mutex>& 
 void VisionRenderer::copyVisionData()
 {
     if(hasUpdatedData){
+        double delay = simImpl->currentTime - onsetTime;
         if(camera){
             if(!tmpImage->empty()){
                 camera->setImage(tmpImage);
@@ -957,14 +959,15 @@ void VisionRenderer::copyVisionData()
             if(rangeCamera){
                 rangeCamera->setPoints(tmpPoints);
             }
+            camera->setDelay(delay);
         } else if(rangeSensor){
             rangeSensor->setRangeData(tmpRangeData);
+            rangeSensor->setDelay(delay);
         }
-        sensor->setDelay(simImpl->currentTime - onsetTime);
         if(simImpl->isVisionDataRecordingEnabled){
-            sensor->notifyStateChange();
+            device->notifyStateChange();
         } else {
-            simBody->notifyUnrecordedDeviceStateChange(sensor);
+            simBody->notifyUnrecordedDeviceStateChange(device);
         }
         hasUpdatedData = false;
     }
@@ -981,17 +984,22 @@ void VisionRenderer::updateVisionData()
         } else {
             updated = getCameraImage(camera->newImage());
         }
+        if(updated){
+            camera->setDelay(simImpl->currentTime - onsetTime);
+        }
     } else if(rangeSensor){
         updated = getRangeSensorData(rangeSensor->newRangeData());
+        if(updated){
+            rangeSensor->setDelay(simImpl->currentTime - onsetTime);
+        }
     }
     pixelBuffer->doneCurrent();
     
     if(updated){
-        sensor->setDelay(simImpl->currentTime - onsetTime);
         if(simImpl->isVisionDataRecordingEnabled){
-            sensor->notifyStateChange();
+            device->notifyStateChange();
         } else {
-            simBody->notifyUnrecordedDeviceStateChange(sensor);
+            simBody->notifyUnrecordedDeviceStateChange(device);
         }
     }
 }

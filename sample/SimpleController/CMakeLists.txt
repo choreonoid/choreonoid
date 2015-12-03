@@ -51,4 +51,4 @@ configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SampleSVController SampleSV.cpp)
 
-add_cnoid_simple_controller(VisionSensorSampleController VisionSensorSampleController.cpp)
+add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)

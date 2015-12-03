@@ -6,13 +6,13 @@
 #ifndef CNOID_BODY_RANGE_SENSOR_H
 #define CNOID_BODY_RANGE_SENSOR_H
 
-#include "VisionSensor.h"
+#include "Device.h"
 #include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT RangeSensor : public VisionSensor
+class CNOID_EXPORT RangeSensor : public Device
 {
 public:
     RangeSensor();
@@ -74,6 +74,12 @@ public:
     */
     void setRangeData(boost::shared_ptr<RangeData>& rangeData);
 
+    /**
+       Time [s] consumed in the measurement
+    */
+    double delay() const { return delay_; }
+    void setDelay(double time) { delay_ = time; }
+
 private:
     bool on_;
     bool isRangeDataStateClonable_;
@@ -84,6 +90,7 @@ private:
     double minDistance_;
     double maxDistance_;
     double frameRate_;
+    double delay_;
     boost::shared_ptr<RangeData> rangeData_;
 
     RangeSensor(const RangeSensor& org, int x /* dummy */);

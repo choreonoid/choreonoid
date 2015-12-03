@@ -56,10 +56,10 @@ public:
         
         if(BodyItem* bodyItem = dynamic_cast<BodyItem*>(item)){
             Body* body = bodyItem->body();
-            DeviceList<VisionSensor> sensors = body->devices();
-            for(size_t i=0; i < sensors.size(); ++i){
+            for(size_t i=0; i < body->numDevices(); ++i){
+                Device* device = body->device(i);
                 if(!camera){
-                    camera = dynamic_pointer_cast<Camera>(sensors[i]);
+                    camera = dynamic_pointer_cast<Camera>(device);
                     if(camera){
                         mv->putln(format("CameraImageView: Detected Camera \"%1%\" of %2%.")
                                   % camera->name() % body->name());
@@ -69,7 +69,7 @@ public:
                     }
                 }
                 if(!rangeSensor){
-                    rangeSensor = dynamic_pointer_cast<RangeSensor>(sensors[i]);
+                    rangeSensor = dynamic_pointer_cast<RangeSensor>(device);
                     if(rangeSensor){
                         mv->putln(format("CameraImageView: Detected RangeSensor \"%1%\" of %2%.")
                                   % rangeSensor->name() % body->name());

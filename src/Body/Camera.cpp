@@ -26,6 +26,7 @@ Camera::Camera()
     nearDistance_ = 0.01;
     farDistance_ = 100.0;
     frameRate_ = 30.0;
+    delay_ = 0.0;
     image_ = boost::make_shared<Image>();
 }
 
@@ -41,7 +42,6 @@ void Camera::copyStateFrom(const DeviceState& other)
 
 void Camera::copyStateFrom(const Camera& other)
 {
-    VisionSensor::copyStateFrom(other);
     copyCameraStateFrom(other);
     image_ = other.image_;
 }
@@ -58,11 +58,12 @@ void Camera::copyCameraStateFrom(const Camera& other)
     nearDistance_ = other.nearDistance_;
     farDistance_ = other.farDistance_;
     frameRate_ = other.frameRate_;
+    delay_ = other.delay_;
 }
 
 
 Camera::Camera(const Camera& org, bool copyStateOnly)
-    : VisionSensor(org, copyStateOnly),
+    : Device(org, copyStateOnly),
       image_(org.image_)
 {
     copyCameraStateFrom(org);
@@ -79,7 +80,7 @@ Device* Camera::clone() const
    Used for cloneState()
 */
 Camera::Camera(const Camera& org, int x /* dummy */)
-    : VisionSensor(org, true)
+    : Device(org, true)
 {
     copyCameraStateFrom(org);
     
@@ -100,7 +101,7 @@ DeviceState* Camera::cloneState() const
 void Camera::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(Camera))){
-        VisionSensor::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
@@ -144,13 +145,12 @@ void Camera::clearState()
 
 int Camera::stateSize() const
 {
-    return 7 + VisionSensor::StateSize;
+    return 8;
 }
 
 
 const double* Camera::readState(const double* buf)
 {
-    buf = VisionSensor::readState(buf);
     on_ = buf[0];
     resolutionX_ = buf[1];
     resolutionY_ = buf[2];
@@ -158,13 +158,13 @@ const double* Camera::readState(const double* buf)
     farDistance_ = buf[4];
     fieldOfView_ = buf[5];
     frameRate_ = buf[6];
-    return buf + 7;
+    delay_ = buf[7];
+    return buf + 8;
 }
 
 
 double* Camera::writeState(double* out_buf) const
 {
-    out_buf = VisionSensor::writeState(out_buf);
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = resolutionX_;
     out_buf[2] = resolutionY_;
@@ -172,5 +172,6 @@ double* Camera::writeState(double* out_buf) const
     out_buf[4] = farDistance_;
     out_buf[5] = fieldOfView_;
     out_buf[6] = frameRate_;
-    return out_buf + 7;
+    out_buf[7] = delay_;
+    return out_buf + 8;
 }

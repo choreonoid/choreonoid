@@ -8,7 +8,7 @@
 using namespace std;
 using namespace cnoid;
 
-class VisionSensorSampleController : public SimpleController
+class CameraSampleController : public SimpleController
 {
     DeviceList<Camera> cameras;
     double timeCounter;
@@ -17,21 +17,15 @@ public:
 
     virtual bool initialize()
     {
-        DeviceList<VisionSensor> sensors(ioBody()->devices());
-
-        for(size_t i=0; i < sensors.size(); ++i){
-            Device* sensor = sensors[i];
-            os() << "Sensor type: " << sensor->typeName()
-                 << ", id: " << sensor->id()
-                 << ", name: " << sensor->name() << endl;
-        }
-        
-        cameras << sensors;
+        DeviceList<Camera> cameras(ioBody()->devices());
 
         for(size_t i=0; i < cameras.size(); ++i){
-            cameras[i]->setImageTransmittable(true);
+            Device* camera = cameras[i];
+            os() << "Device type: " << camera->typeName()
+                 << ", id: " << camera->id()
+                 << ", name: " << camera->name() << endl;
         }
-
+        
         setJointOutput(false);
 
         timeCounter = 0.0;
@@ -55,4 +49,4 @@ public:
     }
 };
 
-CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(VisionSensorSampleController)
+CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(CameraSampleController)
