@@ -57,9 +57,9 @@ public:
     double timeStep;
     MessageView* mv;
 
-    std::string controllerDllName;
-    std::string controllerDllFileName;
-    QLibrary controllerDll;
+    std::string controllerModuleName;
+    std::string controllerModuleFileName;
+    QLibrary controllerModule;
     bool doReloading;
 
     SimpleControllerItemImpl(SimpleControllerItem* self);
@@ -110,7 +110,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
 {
     controller = 0;
     mv = MessageView::instance();
-    controllerDllName = org.controllerDllName;
+    controllerModuleName = org.controllerModuleName;
     doReloading = org.doReloading;
     doInputLinkPositions = org.doInputLinkPositions;
 }
@@ -137,9 +137,9 @@ void SimpleControllerItemImpl::unloadController()
         controller = 0;
     }
 
-    if(controllerDll.unload()){
-        mv->putln(fmt(_("The DLL of %1% \"%2%\" has been unloaded."))
-                  % self->name() % controllerDllFileName);
+    if(controllerModule.unload()){
+        mv->putln(fmt(_("The controller module \"%2%\" of %1% has been unloaded."))
+                  % self->name() % controllerModuleFileName);
     }
 }
 
@@ -162,8 +162,8 @@ Item* SimpleControllerItem::doDuplicate() const
 void SimpleControllerItem::setController(const std::string& name)
 {
     impl->unloadController();
-    impl->controllerDllName = name;
-    impl->controllerDllFileName.clear();
+    impl->controllerModuleName = name;
+    impl->controllerModuleFileName.clear();
 }
 
 
@@ -211,37 +211,38 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
 
     if(!controller){
 
-        filesystem::path dllPath(controllerDllName);
+        filesystem::path dllPath(controllerModuleName);
         if(!checkAbsolute(dllPath)){
             dllPath =
                 filesystem::path(executableTopDirectory()) /
                 CNOID_PLUGIN_SUBDIR / "simplecontroller" / dllPath;
         }
-        controllerDllFileName = getNativePathString(dllPath);
-        controllerDll.setFileName(controllerDllFileName.c_str());
+        controllerModuleFileName = getNativePathString(dllPath);
+        controllerModule.setFileName(controllerModuleFileName.c_str());
         
-        if(controllerDll.isLoaded()){
-            mv->putln(fmt(_("The DLL of %1% has already been loaded.")) % self->name());
+        if(controllerModule.isLoaded()){
+            mv->putln(fmt(_("The controller module of %1% has already been loaded.")) % self->name());
             
             // This should be called to make the reference to the DLL.
             // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
-            controllerDll.load();
+            controllerModule.load();
             
         } else {
-            mv->put(fmt(_("Loading the DLL of %1%: \"%2%\" ... ")) % self->name() % controllerDllFileName);
-            if(!controllerDll.load()){
+            mv->put(fmt(_("Loading the controller module \"%2%\" of %1% ... "))
+                    % self->name() % controllerModuleFileName);
+            if(!controllerModule.load()){
                 mv->put(_("Failed.\n"));
-                mv->putln(controllerDll.errorString());
+                mv->putln(controllerModule.errorString());
             } else {                
                 mv->putln(_("OK!"));
             }
         }
         
-        if(controllerDll.isLoaded()){
+        if(controllerModule.isLoaded()){
             SimpleController::Factory factory =
-                (SimpleController::Factory)controllerDll.resolve("createSimpleController");
+                (SimpleController::Factory)controllerModule.resolve("createSimpleController");
             if(!factory){
-                mv->putln(_("The factory function \"createSimpleController()\" is not found in the controller DLL."));
+                mv->putln(_("The factory function \"createSimpleController()\" is not found in the controller module."));
             } else {
                 controller = factory();
                 if(!controller){
@@ -429,7 +430,7 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Controller"), controllerDllName,
+    putProperty(_("Controller module"), controllerModuleName,
                 boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
@@ -448,7 +449,7 @@ bool SimpleControllerItem::store(Archive& archive)
 
 bool SimpleControllerItemImpl::store(Archive& archive)
 {
-    archive.writeRelocatablePath("controller", controllerDllName);
+    archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
     archive.write("inputLinkPositions", doInputLinkPositions);
     return true;
@@ -468,7 +469,7 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
 {
     string value;
     if(archive.read("controller", value)){
-        controllerDllName = archive.expandPathVariables(value);
+        controllerModuleName = archive.expandPathVariables(value);
     }
     archive.read("reloading", doReloading);
     archive.read("inputLinkPositions", doInputLinkPositions);
