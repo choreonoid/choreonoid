@@ -33,6 +33,21 @@ public:
     BodyPtr ioBody;
     bool doInputLinkPositions;
 
+    struct ControllerInfo {
+        SimpleControllerItemPtr item;
+        SimpleController* controller;
+        ControllerInfo(SimpleControllerItem* item, SimpleController* controller)
+            : item(item), controller(controller) {
+        }
+        bool control() {
+            return controller->control();
+        }
+        void stop(){
+            item->stop();
+        }
+    };
+    vector<ControllerInfo> childControllerInfos;
+
     ConnectionSet inputDeviceStateConnections;
     boost::dynamic_bitset<> inputDeviceStateChangeFlag;
         
@@ -50,8 +65,9 @@ public:
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
-    void unloadControllers();
-    bool start(ControllerItem::Target* target);
+    void unloadController();
+    void initializeIoBody(Body* body);
+    bool start(ControllerItem::Target* target, Body* sharedIoBody);
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
     void onOutputDeviceStateChanged(int deviceIndex);
@@ -108,13 +124,13 @@ SimpleControllerItem::~SimpleControllerItem()
 
 SimpleControllerItemImpl::~SimpleControllerItemImpl()
 {
-    unloadControllers();
+    unloadController();
     inputDeviceStateConnections.disconnect();
     outputDeviceStateConnections.disconnect();
 }
 
 
-void SimpleControllerItemImpl::unloadControllers()
+void SimpleControllerItemImpl::unloadController()
 {
     if(controller){
         delete controller;
@@ -131,8 +147,9 @@ void SimpleControllerItemImpl::unloadControllers()
 void SimpleControllerItem::onDisconnectedFromRoot()
 {
     if(!isActive()){
-        impl->unloadControllers();
+        impl->unloadController();
     }
+    impl->childControllerInfos.clear();
 }
 
 
@@ -144,19 +161,51 @@ Item* SimpleControllerItem::doDuplicate() const
 
 void SimpleControllerItem::setController(const std::string& name)
 {
-    impl->unloadControllers();
+    impl->unloadController();
     impl->controllerDllName = name;
     impl->controllerDllFileName.clear();
 }
 
 
-bool SimpleControllerItem::start(Target* target)
+void SimpleControllerItemImpl::initializeIoBody(Body* body)
 {
-    return impl->start(target);
+    ioBody = body->clone();
+
+    inputDeviceStateConnections.disconnect();
+    outputDeviceStateConnections.disconnect();
+    const DeviceList<>& devices = body->devices();
+    const DeviceList<>& ioDevices = ioBody->devices();
+    inputDeviceStateChangeFlag.resize(devices.size());
+    inputDeviceStateChangeFlag.reset();
+    outputDeviceStateChangeFlag.resize(ioDevices.size());
+    outputDeviceStateChangeFlag.reset();
+    for(size_t i=0; i < devices.size(); ++i){
+        inputDeviceStateConnections.add(
+            devices[i]->sigStateChanged().connect(
+                boost::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
+        outputDeviceStateConnections.add(
+            ioDevices[i]->sigStateChanged().connect(
+                boost::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
+    }
 }
 
 
-bool SimpleControllerItemImpl::start(ControllerItem::Target* target)
+bool SimpleControllerItem::start(Target* target)
+{
+    return impl->start(target, 0);
+}
+
+
+SimpleController* SimpleControllerItem::start(Target* target, Body* sharedIoBody)
+{
+    if(impl->start(target, sharedIoBody)){
+        return impl->controller;
+    }
+    return 0;
+}
+
+
+bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* sharedIoBody)
 {
     bool result = false;
 
@@ -204,29 +253,16 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target)
         }
     }
 
-    if(controller){
-        timeStep = target->worldTimeStep();
-        Body* body = target->body();
-        ioBody = body->clone();
+    childControllerInfos.clear();
 
-        inputDeviceStateConnections.disconnect();
-        outputDeviceStateConnections.disconnect();
-        const DeviceList<>& devices = body->devices();
-        const DeviceList<>& ioDevices = ioBody->devices();
-        inputDeviceStateChangeFlag.resize(devices.size());
-        inputDeviceStateChangeFlag.reset();
-        outputDeviceStateChangeFlag.resize(ioDevices.size());
-        outputDeviceStateChangeFlag.reset();
-        for(size_t i=0; i < devices.size(); ++i){
-            inputDeviceStateConnections.add(
-                devices[i]->sigStateChanged().connect(
-                    boost::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
-            outputDeviceStateConnections.add(
-                ioDevices[i]->sigStateChanged().connect(
-                    boost::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
+    if(controller){
+        ioBody = sharedIoBody;
+        if(!ioBody){
+            initializeIoBody(target->body());
         }
-                
+        
         controller->setIoBody(ioBody);
+        timeStep = target->worldTimeStep();
         controller->setTimeStep(timeStep);
         controller->setImmediateMode(self->isImmediateMode());
         controller->setOutputStream(mv->cout());
@@ -238,7 +274,18 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target)
                 self->stop();
             }
         } else {
-            simulationBody = body;
+            simulationBody = target->body();
+
+            for(Item* child = self->childItem(); child; child = child->nextItem()){
+                SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
+                if(childControllerItem){
+                    SimpleController* childController = childControllerItem->start(target, ioBody);
+                    if(childController){
+                        childControllerInfos.push_back(
+                            ControllerInfo(childControllerItem, childController));
+                    }
+                }
+            }
         }
     }
 
@@ -302,7 +349,15 @@ void SimpleControllerItemImpl::onInputDeviceStateChanged(int deviceIndex)
 
 bool SimpleControllerItem::control()
 {
-    return impl->controller->control();
+    bool result = impl->controller->control();
+
+    for(size_t i=0; i < impl->childControllerInfos.size(); ++i){
+        if(impl->childControllerInfos[i].control()){
+            result = true;
+        }
+    }
+        
+    return result;
 }
 
 
@@ -348,8 +403,13 @@ void SimpleControllerItemImpl::output()
 void SimpleControllerItem::stop()
 {
     if(impl->doReloading || !findRootItem()){
-        impl->unloadControllers();
+        impl->unloadController();
     }
+
+    for(size_t i=0; i < impl->childControllerInfos.size(); ++i){
+        impl->childControllerInfos[i].stop();
+    }
+    impl->childControllerInfos.clear();
 }
 
 

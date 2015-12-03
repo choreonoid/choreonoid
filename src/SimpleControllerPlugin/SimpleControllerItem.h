@@ -29,7 +29,9 @@ public:
     virtual bool control();
     virtual void output();
     virtual void stop();
-        
+
+    SimpleController* start(Target* target, Body* sharedIoBody);
+
 protected:
     virtual void onDisconnectedFromRoot();
     virtual Item* doDuplicate() const;

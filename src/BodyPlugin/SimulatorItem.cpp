@@ -563,8 +563,7 @@ void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items
                 }
                 io_items.push_back(srcItem);
             }
-        }
-        if(item->childItem()){
+        } else if(item->childItem()){
             findControlSrcItems(item->childItem(), io_items, doPickCheckedItems);
         }
         item = item->nextItem();

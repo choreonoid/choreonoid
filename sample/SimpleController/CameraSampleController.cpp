@@ -17,7 +17,7 @@ public:
 
     virtual bool initialize()
     {
-        DeviceList<Camera> cameras(ioBody()->devices());
+        cameras << ioBody()->devices();
 
         for(size_t i=0; i < cameras.size(); ++i){
             Device* camera = cameras[i];
@@ -26,8 +26,6 @@ public:
                  << ", name: " << camera->name() << endl;
         }
         
-        setJointOutput(false);
-
         timeCounter = 0.0;
         
         return true;
