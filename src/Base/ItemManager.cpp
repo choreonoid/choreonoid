@@ -10,6 +10,7 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include "Button.h"
 #include "ParametricPathProcessor.h"
 #include <cnoid/FileUtil>
 #include <cnoid/ExecutablePath>
@@ -76,8 +77,8 @@ public:
         CreationPanelBase* creationPanelBase;
         list<LoaderPtr> loaders;
         list<SaverPtr> savers;
-        bool isSingleton;
         ItemPtr singletonInstance;
+        bool isSingleton;
     };
     typedef boost::shared_ptr<ClassInfo> ClassInfoPtr;
     
@@ -904,12 +905,33 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     }
     
     QFileDialog dialog(MainWindow::instance());
+    //dialog.setOption(QFileDialog::DontUseNativeDialog);
     dialog.setWindowTitle(str(fmt(_("Load %1%")) % loader->caption).c_str());
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
     dialog.setDirectory(AppConfig::archive()->get
                         ("currentFileDialogDirectory", shareDirectory()).c_str());
+
+    static const char* checkConfigKey = "defaultChecked";
+
+    bool isCheckedByDefault = false;
+    CheckBox checkCheckBox(_("Check the item(s) in ItemTreeView"));
+    QGridLayout* layout = dynamic_cast<QGridLayout*>(dialog.layout());
+
+    if(layout){
+        Mapping* conf = AppConfig::archive()->findMapping("ItemTreeView");
+        if(conf->isValid()){
+            conf = conf->findMapping(checkConfigKey);
+            if(conf->isValid()){
+                conf = conf->findMapping(classInfo->moduleName);
+                if(conf->isValid() && conf->read(classInfo->className, isCheckedByDefault)){
+                    checkCheckBox.setChecked(isCheckedByDefault);
+                }
+            }
+        }
+        layout->addWidget(&checkCheckBox, 4, 0, 1, 3);
+    }
 
     QStringList filters;
     if(!loader->extensions.empty()){
@@ -934,15 +956,27 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
     }
     
     if(dialog.exec()){
-        AppConfig::archive()->writePath(
+        Mapping* config = AppConfig::archive();
+
+        config->writePath(
             "currentFileDialogDirectory",
             dialog.directory().absolutePath().toStdString());
 
+        if(checkCheckBox.isChecked() != isCheckedByDefault){
+            Mapping* checkConfig = config
+                ->openMapping("ItemTreeView")
+                ->openMapping(checkConfigKey)
+                ->openMapping(classInfo->moduleName);
+            checkConfig->write(classInfo->className, checkCheckBox.isChecked());
+            AppConfig::flush();
+        }
+                  
         QStringList filenames = dialog.selectedFiles();
 
-        Item* parentItem = ItemTreeView::mainInstance()->selectedItem<Item>();
+        ItemTreeView* itemTreeView = ItemTreeView::instance();
+        Item* parentItem = itemTreeView->selectedItem<Item>();
         if(!parentItem){
-            parentItem = RootItem::mainInstance();
+            parentItem = RootItem::instance();
         }
 
         for(int i=0; i < filenames.size(); ++i){
@@ -952,6 +986,10 @@ void ItemManagerImpl::onLoadSpecificTypeItemActivated(LoaderPtr loader)
             string filename = getNativePathString(filesystem::path(filenames[i].toStdString()));
             if(load(loader, item.get(), filename, parentItem)){
                 parentItem->addChildItem(item, true);
+
+                if(checkCheckBox.isChecked()){
+                    itemTreeView->checkItem(item);
+                }
             }
         }
     }
