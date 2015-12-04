@@ -428,8 +428,6 @@ DEF SR1 Humanoid {
                       rotation      0.4472 -0.4472 -0.7746 1.8235
                       name          "LeftCamera"
                       type          "COLOR_DEPTH"
-		      frontClipDistance 0.01
-		      backClipDistance  10.0
                       sensorId      0
                       children [
                         DEF CAMERA_SHAPE Transform {
