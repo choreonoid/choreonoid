@@ -169,19 +169,19 @@ void Link::setName(const std::string& name)
 }
 
 
-void Link::setShape(SgNodePtr shape)
+void Link::setShape(SgNode* shape)
 {
     visualShape_ = shape;
     collisionShape_ = shape;
 }
 
-void Link::setVisualShape(SgNodePtr shape)
+void Link::setVisualShape(SgNode* shape)
 {
     visualShape_ = shape;
 }
 
 
-void Link::setCollisionShape(SgNodePtr shape)
+void Link::setCollisionShape(SgNode* shape)
 {
     collisionShape_ = shape;
 }

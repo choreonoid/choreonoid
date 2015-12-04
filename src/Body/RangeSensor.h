@@ -8,6 +8,7 @@
 
 #include "Device.h"
 #include <boost/shared_ptr.hpp>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {

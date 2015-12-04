@@ -6,11 +6,9 @@
 #ifndef CNOID_BODY_DEVICE_H
 #define CNOID_BODY_DEVICE_H
 
-#include <cnoid/PolymorphicReferencedArray>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
-#include <typeinfo>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -127,35 +125,6 @@ public:
 };
 
 typedef ref_ptr<Device> DevicePtr;
-
-
-template <class DeviceType = Device, class PointerType = ref_ptr<DeviceType> >
-class DeviceList : public PolymorphicReferencedArray<DeviceType, Device, PointerType>
-{
-    typedef PolymorphicReferencedArray<DeviceType, Device, PointerType> ArrayBase;
-
-public:
-    DeviceList() { }
-
-    template <class RhsDeviceType>
-    DeviceList(const DeviceList<RhsDeviceType>& rhs)
-        : ArrayBase(rhs) { }
-
-    DeviceList getSortedById() const {
-        DeviceList sorted;
-        for(size_t i=0; i < ArrayBase::size(); ++i){
-            DeviceType* device = (*this)[i];
-            const int id = device->id();
-            if(id >= 0){
-                if(sorted.size() <= id){
-                    sorted.resize(id + 1);
-                }
-                sorted[id] = device;
-            }
-        }
-        return sorted;
-    }
-};
 
 };
 

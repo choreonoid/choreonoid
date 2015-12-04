@@ -76,6 +76,7 @@ set(headers
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h
+  DeviceList.h
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h

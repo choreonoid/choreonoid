@@ -8,7 +8,7 @@
 
 #include "LinkTraverse.h"
 #include "Link.h"
-#include "Device.h"
+#include "DeviceList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
