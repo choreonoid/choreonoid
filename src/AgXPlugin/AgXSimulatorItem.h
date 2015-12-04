@@ -20,6 +20,8 @@ public:
     AgXSimulatorItem(const AgXSimulatorItem& org);
     virtual ~AgXSimulatorItem();
 
+    enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, N_DYNAMICS_MODES };
+
 protected:
 
     virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
@@ -29,6 +31,7 @@ protected:
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     virtual void finalizeSimulation();
     virtual CollisionLinkPairListPtr getCollisions();
+    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
 
     virtual ItemPtr doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);

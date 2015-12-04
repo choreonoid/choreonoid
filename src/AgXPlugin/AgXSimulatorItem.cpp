@@ -31,6 +31,8 @@
 #include <cnoid/Sensor>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
+#include <cnoid/ControllerItem>
+#include <cnoid/BodyMotionItem>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
@@ -41,6 +43,75 @@ using namespace cnoid;
 namespace {
 
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
+
+class HighGainControllerItem : public ControllerItem
+{
+    BodyPtr body;
+    MultiValueSeqPtr qseqRef;
+    int currentFrame;
+    int lastFrame;
+    int numJoints;
+
+public:
+    HighGainControllerItem(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem) {
+        qseqRef = bodyMotionItem->jointPosSeq();
+        setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
+    }
+
+    virtual bool start(Target* target) {
+        body = target->body();
+        currentFrame = 0;
+        lastFrame = std::max(0, qseqRef->numFrames() - 1);
+        numJoints = std::min(body->numJoints(), qseqRef->numParts());
+        if(qseqRef->numFrames() == 0){
+            putMessage(_("Reference motion is empty()."));
+            return false;
+        }
+        if(fabs(qseqRef->frameRate() - (1.0 / target->worldTimeStep())) > 1.0e-6){
+            putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
+            return false;
+        }
+        control();
+        return true;
+    }
+
+    virtual double timeStep() const {
+        return qseqRef->getTimeStep();
+    }
+
+    virtual void input() { }
+
+    virtual bool control() {
+
+        if(++currentFrame > lastFrame){
+            currentFrame = lastFrame;
+            return false;
+        }
+        return true;
+    }
+
+    virtual void output() {
+
+        int prevFrame = std::max(currentFrame - 1, 0);
+        int nextFrame = std::min(currentFrame + 1, lastFrame);
+
+        MultiValueSeq::Frame q0 = qseqRef->frame(prevFrame);
+        MultiValueSeq::Frame q1 = qseqRef->frame(currentFrame);
+        MultiValueSeq::Frame q2 = qseqRef->frame(nextFrame);
+
+        double dt = qseqRef->getTimeStep();
+        double dt2 = dt * dt;
+
+        for(int i=0; i < numJoints; ++i){
+            Link* joint = body->joint(i);
+            joint->q() = q1[i];
+            joint->dq() = (q2[i] - q1[i]) / dt;
+            joint->ddq() = (q2[i] - 2.0 * q1[i] + q0[i]) / dt2;
+        }
+    }
+
+    virtual void stop() { }
+};
 
 class AgXBody;
 
@@ -474,6 +545,7 @@ class AgXSimulatorItemImpl
 {
 public:
     AgXSimulatorItem* self;
+    Selection dynamicsMode;
     Vector3 gravity;
     double restitution;
     double friction;
@@ -652,7 +724,7 @@ void AgXLink::createJoint()
         simImpl->agxSimulation->add( hinge );
         joint = hinge;
 
-        if(!link->Jm2()){
+        if(!link->Jm2() || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS) ){
             hinge->getMotor1D()->setEnable(true);
         }else{
             agxPowerLine::RotationalActuatorRef rotationalActuator = new agxPowerLine::RotationalActuator(hinge);
@@ -674,7 +746,7 @@ void AgXLink::createJoint()
         simImpl->agxSimulation->add( prismatic );
         joint = prismatic;
 
-        if(!link->Jm2()){
+        if(!link->Jm2() || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS) ){
             prismatic->getMotor1D()->setEnable(true);
         }else{
             agxPowerLine::TranslationalActuatorRef translationalActuator = new agxPowerLine::TranslationalActuator(prismatic);
@@ -917,9 +989,14 @@ void AgXLink::setTorqueToAgX()
     }
     agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(joint);
     if(joint1DOF){
-        joint1DOF->getMotor1D()->setSpeed( link->u()<0? -1.0e12 : 1.0e12);
-        joint1DOF->getMotor1D()->setForceRange( agx::RangeReal( link->u() ) );
-        return;
+        if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
+            joint1DOF->getMotor1D()->setSpeed( link->dq() );
+            joint1DOF->getMotor1D()->setForceRange( -std::numeric_limits<agx::Real>::max(), std::numeric_limits<agx::Real>::max());
+        }else{
+            joint1DOF->getMotor1D()->setSpeed( link->u()<0? -1.0e12 : 1.0e12);
+            joint1DOF->getMotor1D()->setForceRange( agx::RangeReal( link->u() ) );
+            return;
+        }
     }
     CustomConstraint* jointCustom = dynamic_cast<CustomConstraint*>(joint);
     if(jointCustom){
@@ -1110,9 +1187,13 @@ AgXSimulatorItemImpl::AgXSimulatorItemImpl(AgXSimulatorItem* self)
     : self(self),
       frictionModelType(3, CNOID_GETTEXT_DOMAIN_NAME),
       frictionSolveType(4, CNOID_GETTEXT_DOMAIN_NAME),
-      contactReductionMode(3, CNOID_GETTEXT_DOMAIN_NAME)
+      contactReductionMode(3, CNOID_GETTEXT_DOMAIN_NAME),
+      dynamicsMode(AgXSimulatorItem::N_DYNAMICS_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     initialize();
+
+    dynamicsMode.setSymbol(AgXSimulatorItem::FORWARD_DYNAMICS,  N_("Forward dynamics"));
+    dynamicsMode.setSymbol(AgXSimulatorItem::HG_DYNAMICS,       N_("High-gain dynamics"));
 
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
     friction = 0.5;
@@ -1148,7 +1229,8 @@ AgXSimulatorItem::AgXSimulatorItem(const AgXSimulatorItem& org)
 
 
 AgXSimulatorItemImpl::AgXSimulatorItemImpl(AgXSimulatorItem* self, const AgXSimulatorItemImpl& org)
-    : self(self)
+    : self(self),
+      dynamicsMode(org.dynamicsMode)
 {
     initialize();
 
@@ -1385,6 +1467,8 @@ void AgXSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void AgXSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
+    putProperty(_("Dynamics mode"), dynamicsMode,
+            boost::bind(&Selection::selectIndex, &dynamicsMode, _1));
     putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
     putProperty.decimals(2).min(0.0)
             (_("Friction"), friction, changeProperty(friction));
@@ -1417,6 +1501,7 @@ bool AgXSimulatorItem::store(Archive& archive)
 
 void AgXSimulatorItemImpl::store(Archive& archive)
 {
+    archive.write("dynamicsMode", dynamicsMode.selectedSymbol());
     write(archive, "gravity", gravity);
     archive.write("friction", friction);
     archive.write("restitution", restitution);
@@ -1440,6 +1525,9 @@ bool AgXSimulatorItem::restore(const Archive& archive)
 void AgXSimulatorItemImpl::restore(const Archive& archive)
 {
     string symbol;
+    if(archive.read("dynamicsMode", symbol)){
+        dynamicsMode.select(symbol);
+    }
     read(archive, "gravity", gravity);
     archive.read("friction", friction);
     archive.read("restitution", restitution);
@@ -1457,3 +1545,8 @@ void AgXSimulatorItemImpl::restore(const Archive& archive)
     archive.read("contactReductionThreshold", contactReductionThreshold);
 }
 
+
+ControllerItem* AgXSimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
+{
+    return new HighGainControllerItem(bodyItem, bodyMotionItem);
+}
