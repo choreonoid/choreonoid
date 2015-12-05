@@ -1096,12 +1096,12 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
         activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
         if(activeSimulatorItem){
             if(pointedSceneLink->link()->isRoot()){
-                Action* item1 = menuManager.addCheckItem(_("Move Position"));
+                Action* item1 = menuManager.addCheckItem(_("Move Forcibly"));
                 item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
                 item1->sigToggled().connect(
                     boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, MOVE_FORCED_POSITION, _1));
 
-                Action* item2 = menuManager.addCheckItem(_("Keep Position"));
+                Action* item2 = menuManager.addCheckItem(_("Hold Forcibly"));
                 item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
                 item2->sigToggled().connect(
                     boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, KEEP_FORCED_POSITION, _1));

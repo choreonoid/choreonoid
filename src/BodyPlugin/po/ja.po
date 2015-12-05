@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-04 13:57+0900\n"
+"POT-Creation-Date: 2015-12-05 09:57+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -361,12 +361,12 @@ msgid "Immediate mode"
 msgstr "即時モード"
 
 #: EditableSceneBody.cpp:1099
-msgid "Move Position"
+msgid "Move Forcibly"
 msgstr "強制移動"
 
 #: EditableSceneBody.cpp:1104
-msgid "Keep Position"
-msgstr "強制固定"
+msgid "Hold Forcibly"
+msgstr "強制保持"
 
 #: EditableSceneBody.cpp:1112
 msgid "Set Free"
@@ -1181,6 +1181,12 @@ msgstr ""
 #: ZMPSeqItem.cpp:132
 msgid "Root relative"
 msgstr "ルート相対"
+
+#~ msgid "Move Position"
+#~ msgstr "強制移動"
+
+#~ msgid "Keep Position"
+#~ msgstr "強制固定"
 
 #~ msgid "Time bar"
 #~ msgstr "タイムバー"
