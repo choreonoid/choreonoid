@@ -36,8 +36,8 @@ public:
     void setJointOutput(bool on);
     void setJointOutput(int jointId, bool on);
     const boost::dynamic_bitset<>& jointOutputFlags() const;
-    
-protected:
+
+  protected:
     SimpleController();
     SimpleController(const SimpleController& org);
     Body* ioBody();

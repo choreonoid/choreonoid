@@ -9,9 +9,10 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/AppConfig>
 #include <cnoid/ViewManager>
-#include <cnoid/SceneShape>
-#include <cnoid/SceneLight>
-#include <cnoid/SceneCamera>
+#include <cnoid/SceneDrawables>
+#include <cnoid/SceneLights>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneEffects>
 #include <QBoxLayout>
 #include <QTableWidget>
 #include <QHeaderView>

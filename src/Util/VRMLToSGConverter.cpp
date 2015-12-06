@@ -3,7 +3,9 @@
 */
 
 #include "VRMLToSGConverter.h"
-#include "SceneLight.h"
+#include "SceneDrawables.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
 #include "Triangulator.h"
 #include "PolygonMeshTriangulator.h"
 #include "MeshNormalGenerator.h"
@@ -334,7 +336,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                 } else {
                     SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
                     if(polygonMesh){
-                        mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
+                        mesh = polygonMeshTriangulator.triangulate(polygonMesh);
                         const string& errorMessage = polygonMeshTriangulator.errorMessage();
                         if(!errorMessage.empty()){
                             string message;

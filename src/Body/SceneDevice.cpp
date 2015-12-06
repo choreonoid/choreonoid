@@ -3,12 +3,16 @@
 */
 
 #include "SceneDevice.h"
-#include "Sensor.h"
+#include "ForceSensor.h"
+#include "RateGyroSensor.h"
+#include "AccelerationSensor.h"
 #include "Camera.h"
+#include "RangeCamera.h"
 #include "RangeSensor.h"
-#include "Light.h"
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include "PointLight.h"
+#include "SpotLight.h"
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <boost/bind.hpp>
 #include <map>
 
@@ -89,7 +93,7 @@ struct SceneDeviceFactoryMapInitializer
     SceneDeviceFactoryMapInitializer() {
         sceneDeviceFactories[&typeid(ForceSensor)]  = createNullSceneDevice;
         sceneDeviceFactories[&typeid(RateGyroSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(AccelSensor)]  = createNullSceneDevice;
+        sceneDeviceFactories[&typeid(AccelerationSensor)]  = createNullSceneDevice;
         sceneDeviceFactories[&typeid(Camera)] = createScenePerspectiveCamera;
         sceneDeviceFactories[&typeid(RangeCamera)] = createNullSceneDevice;
         sceneDeviceFactories[&typeid(RangeSensor)]  = createNullSceneDevice;

@@ -11,6 +11,8 @@
 
 namespace cnoid {
 
+class Light;
+
 class CNOID_EXPORT SubmersibleSimulatorItem : public SubSimulatorItem
 {
 public:
@@ -23,7 +25,7 @@ public:
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -31,6 +33,8 @@ protected:
 private:
     SimulatorItem* simulatorItem;
     Body* submersible;
+    Light* light;
+    bool prevLightButtonState;
     int joystickIntervalCounter;
 
     void initialize();

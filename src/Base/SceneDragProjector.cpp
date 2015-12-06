@@ -5,7 +5,7 @@
 
 #include "SceneDragProjector.h"
 #include "SceneProjector.h"
-#include <cnoid/SceneCamera>
+#include <cnoid/SceneCameras>
 #include <cnoid/EigenUtil>
 #include <boost/shared_ptr.hpp>
 

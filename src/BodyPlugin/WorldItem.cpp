@@ -436,7 +436,7 @@ SgNode* WorldItem::getScene()
 }
 
 
-ItemPtr WorldItem::doDuplicate() const
+Item* WorldItem::doDuplicate() const
 {
     return new WorldItem(*this);
 }

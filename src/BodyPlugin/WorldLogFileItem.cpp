@@ -32,10 +32,10 @@ static const int frameHeaderSize =
     ;
 
 enum DataTypeID {
-    BODY_STATUS,
+    BODY_STATE,
     LINK_POSITIONS,
     JOINT_POSITIONS,
-    DEVICE_STATUSES
+    DEVICE_STATES
 };
 
 struct NotEnoughDataException { };
@@ -302,11 +302,11 @@ public:
 
 class DeviceInfo {
 public:
-    size_t lastStatusSeekPos;
-    vector<double> lastStatus;
+    size_t lastStateSeekPos;
+    vector<double> lastState;
     bool isConsistent;
     DeviceInfo() {
-        lastStatusSeekPos = 0;
+        lastStateSeekPos = 0;
         isConsistent = false;
     }
 };
@@ -358,7 +358,7 @@ public:
         logItem = item;
     }
     virtual bool onTimeChanged(double time) {
-        return logItem->recallStatusAtTime(time);
+        return logItem->recallStateAtTime(time);
     }
 };
 
@@ -396,19 +396,19 @@ public:
     double recordingFrameRate;
     stack<int> sizeHeaderStack;
 
-    // for device status recording and playback
-    struct DeviceStatusCache : public Referenced {
-        DeviceStatePtr status;
+    // for device state recording and playback
+    struct DeviceStateCache : public Referenced {
+        DeviceStatePtr state;
         int seekPos;
     };
-    typedef ref_ptr<DeviceStatusCache> DeviceStatusCachePtr;
+    typedef ref_ptr<DeviceStateCache> DeviceStateCachePtr;
     
-    vector<DeviceStatusCachePtr> deviceStatusCacheArrays[2];
-    vector<DeviceStatusCachePtr>* pLastDeviceStatusCacheArray;
-    vector<DeviceStatusCachePtr>* pCurrentDeviceStatusCacheArray;
+    vector<DeviceStateCachePtr> deviceStateCacheArrays[2];
+    vector<DeviceStateCachePtr>* pLastDeviceStateCacheArray;
+    vector<DeviceStateCachePtr>* pCurrentDeviceStateCacheArray;
     int deviceIndex;
-    int numDeviceStatusCaches;
-    int currentDeviceStatusCacheArrayIndex;
+    int numDeviceStateCaches;
+    int currentDeviceStateCacheArrayIndex;
     vector<double> doubleWriteBuf;
 
     ifstream ifs;
@@ -432,22 +432,22 @@ public:
     bool readTopHeader();
     bool readFrameHeader(int pos);
     bool seek(double time);
-    bool recallStatusAtTime(double time);
+    bool recallStateAtTime(double time);
     bool loadCurrentFrameData();
-    void readBodyStatuses();
-    void readBodyStatus(BodyInfo* bodyInfo);
+    void readBodyStatees();
+    void readBodyState(BodyInfo* bodyInfo);
     int readLinkPositions(Body* body);
     int readJointPositions(Body* body);
-    void readDeviceStatuses(BodyInfo* bodyInfo);
-    void readDeviceStatus(DeviceInfo& devInfo, Device* device, ReadBuf& buf, int size);
-    void readLastDeviceStatus(DeviceInfo& devInfo, Device* device);
+    void readDeviceStates(BodyInfo* bodyInfo);
+    void readDeviceState(DeviceInfo& devInfo, Device* device, ReadBuf& buf, int size);
+    void readLastDeviceState(DeviceInfo& devInfo, Device* device);
     void clearOutput();
     void reserveSizeHeader();
     void fixSizeHeader();
     void endHeaderOutput();
     void beginFrameOutput(double time);
-    void outputDeviceStatus(DeviceState* status);
-    void exchangeDeviceStatusCacheArrays();
+    void outputDeviceState(DeviceState* state);
+    void exchangeDeviceStateCacheArrays();
 };
 
 }
@@ -513,7 +513,7 @@ WorldLogFileItemImpl::~WorldLogFileItemImpl()
 }
 
 
-ItemPtr WorldLogFileItem::doDuplicate() const
+Item* WorldLogFileItem::doDuplicate() const
 {
     return new WorldLogFileItem(*this);
 }
@@ -728,13 +728,13 @@ bool WorldLogFileItemImpl::loadCurrentFrameData()
    @return True if the time is within the data range and the frame is correctly recalled.
    False if the time is outside the data range or the frame cannot be recalled.
 */
-bool WorldLogFileItem::recallStatusAtTime(double time)
+bool WorldLogFileItem::recallStateAtTime(double time)
 {
-    return impl->recallStatusAtTime(time);
+    return impl->recallStateAtTime(time);
 }
 
 
-bool WorldLogFileItemImpl::recallStatusAtTime(double time)
+bool WorldLogFileItemImpl::recallStateAtTime(double time)
 {
     if(!seek(time)){
         return false;
@@ -751,14 +751,14 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
     while(!readBuf.isEnd()){
         int dataTypeID = readBuf.readID();
         switch(dataTypeID){
-        case BODY_STATUS:
+        case BODY_STATE:
         {
             BodyInfo* bodyInfo = 0;
             if(bodyIndex < bodyInfos.size()){
                 bodyInfo = bodyInfos[bodyIndex];
             }
             if(bodyInfo){
-                readBodyStatus(bodyInfo);
+                readBodyState(bodyInfo);
             } else {
                 readBuf.seekToNextBlock();
             }
@@ -775,7 +775,7 @@ bool WorldLogFileItemImpl::recallStatusAtTime(double time)
 }
 
 
-void WorldLogFileItemImpl::readBodyStatus(BodyInfo* bodyInfo)
+void WorldLogFileItemImpl::readBodyState(BodyInfo* bodyInfo)
 {
     int endPos = readBuf.readNextBlockPos();
     bool updated = false;
@@ -799,12 +799,12 @@ void WorldLogFileItemImpl::readBodyStatus(BodyInfo* bodyInfo)
                 updated = true;
             }
             break;
-        case DEVICE_STATUSES:
+        case DEVICE_STATES:
             if(updated){
                 bodyInfo->bodyItem->notifyKinematicStateChange(doForwardKinematics);
                 updated = false;
             }
-            readDeviceStatuses(bodyInfo);
+            readDeviceStates(bodyInfo);
             break;
         default:
             readBuf.seekToNextBlock();
@@ -846,7 +846,7 @@ int WorldLogFileItemImpl::readJointPositions(Body* body)
 }
 
 
-void WorldLogFileItemImpl::readDeviceStatuses(BodyInfo* bodyInfo)
+void WorldLogFileItemImpl::readDeviceStates(BodyInfo* bodyInfo)
 {
     const int endPos = readBuf.readNextBlockPos();
     Body* body = bodyInfo->body;
@@ -857,11 +857,11 @@ void WorldLogFileItemImpl::readDeviceStatuses(BodyInfo* bodyInfo)
         Device* device = bodyInfo->body->device(deviceIndex);
         const int header = readBuf.readOctet();
         if(header < 0){
-            readLastDeviceStatus(devInfo, device);
+            readLastDeviceState(devInfo, device);
         } else {
             const int size = header;
             int nextPos = readBuf.pos + sizeof(float) * size;
-            readDeviceStatus(devInfo, device, readBuf, size);
+            readDeviceState(devInfo, device, readBuf, size);
             readBuf.seek(nextPos);
         }
         ++deviceIndex;
@@ -870,44 +870,44 @@ void WorldLogFileItemImpl::readDeviceStatuses(BodyInfo* bodyInfo)
 }
 
 
-void WorldLogFileItemImpl::readDeviceStatus(DeviceInfo& devInfo, Device* device, ReadBuf& buf, int size)
+void WorldLogFileItemImpl::readDeviceState(DeviceInfo& devInfo, Device* device, ReadBuf& buf, int size)
 {
     const int stateSize = device->stateSize();
     if(stateSize <= size){
-        vector<double>& status = devInfo.lastStatus;
-        status.resize(stateSize);
+        vector<double>& state = devInfo.lastState;
+        state.resize(stateSize);
         for(int i=0; i < stateSize; ++i){
-            status[i] = buf.readFloat();
+            state[i] = buf.readFloat();
         }
-        device->readState(&status.front());
+        device->readState(&state.front());
         device->notifyStateChange();
         devInfo.isConsistent = true;
     }
 }
 
 
-void WorldLogFileItemImpl::readLastDeviceStatus(DeviceInfo& devInfo, Device* device)
+void WorldLogFileItemImpl::readLastDeviceState(DeviceInfo& devInfo, Device* device)
 {
     size_t pos = readBuf.readSeekOffset();
-    if(pos == devInfo.lastStatusSeekPos){
+    if(pos == devInfo.lastStateSeekPos){
         if(!devInfo.isConsistent){
-            device->readState(&devInfo.lastStatus.front());
+            device->readState(&devInfo.lastState.front());
             device->notifyStateChange();
             devInfo.isConsistent = true;
         }
     } else {
         ifs.seekg(pos);
-        devInfo.lastStatusSeekPos = pos;
+        devInfo.lastStateSeekPos = pos;
         readBuf2.clear();
         int size = readBuf2.readOctet();
         if(size > 0){
-            readDeviceStatus(devInfo, device, readBuf2, size);
+            readDeviceState(devInfo, device, readBuf2, size);
         }
     }
 }
 
 
-void WorldLogFileItem::invalidateLastStatusConsistency()
+void WorldLogFileItem::invalidateLastStateConsistency()
 {
     vector<BodyInfoPtr>& bodyInfos = impl->bodyInfos;
     for(size_t i=0; i < bodyInfos.size(); ++i){
@@ -941,8 +941,8 @@ void WorldLogFileItemImpl::clearOutput()
     writeBuf.clear();
     lastOutputFramePos = 0;
 
-    currentDeviceStatusCacheArrayIndex = 0;
-    exchangeDeviceStatusCacheArrays();
+    currentDeviceStateCacheArrayIndex = 0;
+    exchangeDeviceStateCacheArrays();
 }
 
 
@@ -1026,9 +1026,9 @@ void WorldLogFileItemImpl::beginFrameOutput(double time)
 }
 
 
-void WorldLogFileItem::beginBodyStatusOutput()
+void WorldLogFileItem::beginBodyStateOutput()
 {
-    impl->writeBuf.writeID(BODY_STATUS);
+    impl->writeBuf.writeID(BODY_STATE);
     impl->reserveSizeHeader();
 }
 
@@ -1057,60 +1057,60 @@ void WorldLogFileItem::outputJointPositions(double* values, int size)
 }
 
 
-void WorldLogFileItem::beginDeviceStatusOutput()
+void WorldLogFileItem::beginDeviceStateOutput()
 {
-    impl->writeBuf.writeID(DEVICE_STATUSES);
+    impl->writeBuf.writeID(DEVICE_STATES);
     impl->reserveSizeHeader();
 }
 
 
-void WorldLogFileItem::outputDeviceStatus(DeviceState* status)
+void WorldLogFileItem::outputDeviceState(DeviceState* state)
 {
-    impl->outputDeviceStatus(status);
+    impl->outputDeviceState(state);
 }
 
 
-void WorldLogFileItemImpl::outputDeviceStatus(DeviceState* status)
+void WorldLogFileItemImpl::outputDeviceState(DeviceState* state)
 {
-    DeviceStatusCache* cache = 0;
+    DeviceStateCache* cache = 0;
         
-    if(deviceIndex >= numDeviceStatusCaches){
-        cache = new DeviceStatusCache;
+    if(deviceIndex >= numDeviceStateCaches){
+        cache = new DeviceStateCache;
     } else {
-        cache = (*pLastDeviceStatusCacheArray)[deviceIndex];
-        if(status == cache->status){
+        cache = (*pLastDeviceStateCacheArray)[deviceIndex];
+        if(state == cache->state){
             writeBuf.writeOctet(-1);
             writeBuf.writeSeekOffset(cache->seekPos);
-            goto endOutputDeviceStatus;
+            goto endOutputDeviceState;
         }
     }
-    cache->status = status;
+    cache->state = state;
     cache->seekPos = writeBuf.seekPos();
-    if(!status){
+    if(!state){
         writeBuf.writeOctet(0);
     } else {
-        int size = status->stateSize();
+        int size = state->stateSize();
         writeBuf.writeOctet(size);
         doubleWriteBuf.resize(size);
-        status->writeState(&doubleWriteBuf.front());
+        state->writeState(&doubleWriteBuf.front());
         for(size_t i=0; i < size; ++i){
             writeBuf.writeFloat(doubleWriteBuf[i]);
         }
     }
-endOutputDeviceStatus:
+endOutputDeviceState:
 
-    pCurrentDeviceStatusCacheArray->push_back(cache);
+    pCurrentDeviceStateCacheArray->push_back(cache);
     ++deviceIndex;
 }
 
 
-void WorldLogFileItem::endDeviceStatusOutput()
+void WorldLogFileItem::endDeviceStateOutput()
 {
     impl->fixSizeHeader();
 }
 
 
-void WorldLogFileItem::endBodyStatusOutput()
+void WorldLogFileItem::endBodyStateOutput()
 {
     impl->fixSizeHeader();
 }
@@ -1120,17 +1120,17 @@ void WorldLogFileItem::endFrameOutput()
 {
     impl->fixSizeHeader();
     impl->writeBuf.flush();
-    impl->exchangeDeviceStatusCacheArrays();
+    impl->exchangeDeviceStateCacheArrays();
 }
 
 
-void WorldLogFileItemImpl::exchangeDeviceStatusCacheArrays()
+void WorldLogFileItemImpl::exchangeDeviceStateCacheArrays()
 {
-    int i = 1 - currentDeviceStatusCacheArrayIndex;
-    pCurrentDeviceStatusCacheArray = &deviceStatusCacheArrays[i];
-    pLastDeviceStatusCacheArray = &deviceStatusCacheArrays[1-i];
-    numDeviceStatusCaches = pLastDeviceStatusCacheArray->size();
-    currentDeviceStatusCacheArrayIndex = i;
+    int i = 1 - currentDeviceStateCacheArrayIndex;
+    pCurrentDeviceStateCacheArray = &deviceStateCacheArrays[i];
+    pLastDeviceStateCacheArray = &deviceStateCacheArrays[1-i];
+    numDeviceStateCaches = pLastDeviceStateCacheArray->size();
+    currentDeviceStateCacheArrayIndex = i;
 }
     
 

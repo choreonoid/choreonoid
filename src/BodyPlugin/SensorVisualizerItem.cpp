@@ -5,10 +5,10 @@
 
 #include "SensorVisualizerItem.h"
 #include "BodyItem.h"
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ConnectionSet>
 #include <boost/bind.hpp>
@@ -140,7 +140,7 @@ SensorVisualizerItem::~SensorVisualizerItem()
 }
 
 
-ItemPtr SensorVisualizerItem::doDuplicate() const
+Item* SensorVisualizerItem::doDuplicate() const
 {
     return new SensorVisualizerItem(*this);
 }
@@ -174,7 +174,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
 
             scene->clearChildren();
             forceSensorArrows.clear();
-            forceSensors = body->devices();
+            forceSensors << body->devices();
             for(size_t i=0; i < forceSensors.size(); ++i){
                 ArrowPtr arrow = new Arrow(cylinder, cone);
                 forceSensorArrows.push_back(arrow);

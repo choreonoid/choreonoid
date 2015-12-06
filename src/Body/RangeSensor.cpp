@@ -14,44 +14,25 @@ const double PI = 3.14159265358979323846;
 }
 
 
-RangeSensor::RangeSensor()
+const char* RangeSensor::typeName()
 {
-    on_ = true;
-    isRangeDataSetAsState_ = false;
-
-    yawRange_ = PI / 2.0;
-    yawResolution_ = 100;
-    
-    pitchRange_ = 0.0;
-    pitchResolution_ = 1;
-    
-    minDistance_ = 0.01;
-    maxDistance_ = 10.0;
-
-    frameRate_ = 10.0;
-
-    rangeData_ = boost::make_shared<RangeData>();
+    return "RangeSensor";
 }
 
 
-void RangeSensor::copyStateFrom(const RangeSensor& other)
+RangeSensor::RangeSensor()
 {
-    VisionSensor::copyStateFrom(other);
-    
-    on_ = other.on_;
-    yawResolution_ = other.yawResolution_;
-    pitchResolution_ = other.pitchResolution_;
-    yawRange_ = other.yawRange_;
-    pitchRange_ = other.pitchRange_;
-    minDistance_ = other.minDistance_;
-    maxDistance_ = other.maxDistance_;
-    frameRate_ = other.frameRate_;
-
-    if(other.isRangeDataSetAsState_){
-        rangeData_ = other.rangeData_;
-    } else {
-        rangeData_ = boost::make_shared<RangeData>();
-    }
+    on_ = true;
+    isRangeDataStateClonable_ = false;
+    yawRange_ = PI / 2.0;
+    yawResolution_ = 100;
+    pitchRange_ = 0.0;
+    pitchResolution_ = 1;
+    minDistance_ = 0.01;
+    maxDistance_ = 10.0;
+    frameRate_ = 10.0;
+    delay_ = 0.0;
+    rangeData_ = boost::make_shared<RangeData>();
 }
 
 
@@ -64,11 +45,55 @@ void RangeSensor::copyStateFrom(const DeviceState& other)
 }
 
 
-RangeSensor::RangeSensor(const RangeSensor& org, bool copyAll)
-    : VisionSensor(org, copyAll)
+void RangeSensor::copyStateFrom(const RangeSensor& other)
 {
-    isRangeDataSetAsState_ = org.isRangeDataSetAsState_;
-    copyStateFrom(org);
+    copyRangeSensorStateFrom(other);
+    rangeData_ = other.rangeData_;
+}
+
+
+void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
+{
+    on_ = other.on_;
+    isRangeDataStateClonable_ = other.isRangeDataStateClonable_;
+    yawResolution_ = other.yawResolution_;
+    pitchResolution_ = other.pitchResolution_;
+    yawRange_ = other.yawRange_;
+    pitchRange_ = other.pitchRange_;
+    minDistance_ = other.minDistance_;
+    maxDistance_ = other.maxDistance_;
+    frameRate_ = other.frameRate_;
+    delay_ = other.delay_;
+}
+
+
+RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
+    : Device(org, copyStateOnly),
+      rangeData_(org.rangeData_)
+{
+    copyRangeSensorStateFrom(org);
+}
+
+        
+Device* RangeSensor::clone() const
+{
+    return new RangeSensor(*this);
+}
+
+
+/**
+   Used for cloneState()
+*/
+RangeSensor::RangeSensor(const RangeSensor& org, int x /* dummy */)
+    : Device(org, true)
+{
+    copyRangeSensorStateFrom(org);
+
+    if(org.isRangeDataStateClonable_){
+        rangeData_ = org.rangeData_;
+    } else {
+        rangeData_ = boost::make_shared<RangeData>();
+    }
 }
 
         
@@ -78,16 +103,10 @@ DeviceState* RangeSensor::cloneState() const
 }
 
 
-Device* RangeSensor::clone() const
-{
-    return new RangeSensor(*this);
-}
-
-
 void RangeSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(RangeSensor))){
-        VisionSensor::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
@@ -215,13 +234,12 @@ void RangeSensor::clearState()
 
 int RangeSensor::stateSize() const
 {
-    return 8 + VisionSensor::StateSize;
+    return 9;
 }
 
 
 const double* RangeSensor::readState(const double* buf)
 {
-    buf = VisionSensor::readState(buf);
     on_ = buf[0];
     yawRange_ = buf[1];
     yawResolution_ = buf[2];
@@ -230,13 +248,13 @@ const double* RangeSensor::readState(const double* buf)
     minDistance_ = buf[5];
     maxDistance_ = buf[6];
     frameRate_ = buf[7];
-    return buf + 8;
+    delay_ = buf[8];
+    return buf + 9;
 }
 
 
 double* RangeSensor::writeState(double* out_buf) const
 {
-    out_buf = VisionSensor::writeState(out_buf);
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = yawRange_;
     out_buf[2] = yawResolution_;
@@ -245,5 +263,6 @@ double* RangeSensor::writeState(double* out_buf) const
     out_buf[5] = minDistance_;
     out_buf[6] = maxDistance_;
     out_buf[7] = frameRate_;
-    return out_buf + 8;
+    out_buf[8] = delay_;
+    return out_buf + 9;
 }

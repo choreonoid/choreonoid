@@ -152,8 +152,8 @@ public:
         return Item::traverse(ItemCallback<ItemType>(function));
     }
 
-    ItemPtr duplicate() const;
-    ItemPtr duplicateAll() const;
+    Item* duplicate() const;
+    Item* duplicateAll() const;
 
     void assign(Item* srcItem);
 
@@ -240,7 +240,7 @@ protected:
     virtual void onPositionChanged();
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
         
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doAssign(Item* srcItem);
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
@@ -291,7 +291,7 @@ private:
 
     void detachFromParentItemSub(bool isMoving);
     bool traverse(Item* item, const boost::function<bool(Item*)>& function);
-    ItemPtr duplicateAllSub(ItemPtr duplicated) const;
+    Item* duplicateAllSub(Item* duplicated) const;
         
     void updateFileInformation(const std::string& filename, const std::string& format);
         

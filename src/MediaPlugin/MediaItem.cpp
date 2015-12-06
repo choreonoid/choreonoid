@@ -115,7 +115,7 @@ void MediaItem::setOffsetTime(double offset)
 }
 
 
-ItemPtr MediaItem::doDuplicate() const
+Item* MediaItem::doDuplicate() const
 {
     return new MediaItem(*this);
 }

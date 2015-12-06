@@ -51,7 +51,7 @@ void OpenHRPControllerItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr OpenHRPControllerItem::doDuplicate() const
+Item* OpenHRPControllerItem::doDuplicate() const
 {
     return new OpenHRPControllerItem(*this);
 }

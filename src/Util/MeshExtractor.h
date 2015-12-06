@@ -6,7 +6,6 @@
 #ifndef CNOID_UTIL_MESH_EXTRACTOR_H
 #define CNOID_UTIL_MESH_EXTRACTOR_H
 
-#include "SceneShape.h"
 #include "SceneVisitor.h"
 #include "exportdecl.h"
 

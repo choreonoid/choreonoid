@@ -4,10 +4,14 @@
 */
 
 #include "VRMLBodyLoader.h"
-#include "Sensor.h"
+#include "ForceSensor.h"
+#include "RateGyroSensor.h"
+#include "AccelerationSensor.h"
 #include "Camera.h"
+#include "RangeCamera.h"
 #include "RangeSensor.h"
-#include "Light.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/EasyScanner>
@@ -112,7 +116,7 @@ public:
     static void readDeviceCommonParameters(Device& device, VRMLProtoInstance* node);
     static ForceSensorPtr createForceSensor(VRMLProtoInstance* node);
     static RateGyroSensorPtr createRateGyroSensor(VRMLProtoInstance* node);
-    static AccelSensorPtr createAccelSensor(VRMLProtoInstance* node);
+    static AccelerationSensorPtr createAccelerationSensor(VRMLProtoInstance* node);
     static CameraPtr createCamera(VRMLProtoInstance* node);
     static RangeSensorPtr createRangeSensor(VRMLProtoInstance* node);
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
@@ -310,7 +314,7 @@ VRMLBodyLoaderImpl::VRMLBodyLoaderImpl()
     if(deviceFactories.empty()){
         deviceFactories["ForceSensor"]        = &VRMLBodyLoaderImpl::createForceSensor;
         deviceFactories["Gyro"]               = &VRMLBodyLoaderImpl::createRateGyroSensor;
-        deviceFactories["AccelerationSensor"] = &VRMLBodyLoaderImpl::createAccelSensor;
+        deviceFactories["AccelerationSensor"] = &VRMLBodyLoaderImpl::createAccelerationSensor;
         //sensorTypeMap["PressureSensor"]     = Sensor::PRESSURE;
         //sensorTypeMap["PhotoInterrupter"]   = Sensor::PHOTO_INTERRUPTER;
         //sensorTypeMap["TorqueSensor"]       = Sensor::TORQUE;
@@ -1075,9 +1079,9 @@ RateGyroSensorPtr VRMLBodyLoaderImpl::createRateGyroSensor(VRMLProtoInstance* no
 }
 
 
-AccelSensorPtr VRMLBodyLoaderImpl::createAccelSensor(VRMLProtoInstance* node)
+AccelerationSensorPtr VRMLBodyLoaderImpl::createAccelerationSensor(VRMLProtoInstance* node)
 {
-    AccelSensorPtr sensor = new AccelSensor();
+    AccelerationSensorPtr sensor = new AccelerationSensor();
     readDeviceCommonParameters(*sensor, node);
 
     SFVec3f dv_max;
@@ -1094,7 +1098,10 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
     RangeCamera* range = 0;
     
     const SFString& type = get<SFString>(node->fields["type"]);
-    if(type == "DEPTH"){
+    if(type == "COLOR"){
+        camera = new Camera;
+        camera->setImageType(Camera::COLOR_IMAGE);
+    } else if(type == "DEPTH"){
         range = new RangeCamera;
         range->setOrganized(true);
         range->setImageType(Camera::NO_IMAGE);
@@ -1110,11 +1117,12 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
         range = new RangeCamera;
         range->setOrganized(false);
         range->setImageType(Camera::COLOR_IMAGE);
-    } else {
-        camera = new Camera;
     }
+
     if(range){
         camera = range;
+    } else {
+        camera = new Camera;
     }
         
     readDeviceCommonParameters(*camera, node);

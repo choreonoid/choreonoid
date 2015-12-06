@@ -389,7 +389,7 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
 }
 
 
-ItemPtr BodyMotionItem::doDuplicate() const
+Item* BodyMotionItem::doDuplicate() const
 {
     return new BodyMotionItem(*this);
 }

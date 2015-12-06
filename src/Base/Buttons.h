@@ -1,12 +1,11 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_BUTTON_H
-#define CNOID_BASE_BUTTON_H
+#ifndef CNOID_BASE_BUTTONS_H
+#define CNOID_BASE_BUTTONS_H
 
 #include <cnoid/Signal>
-#include <QCheckBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QButtonGroup>
@@ -14,32 +13,6 @@
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class CNOID_EXPORT CheckBox : public QCheckBox
-{
-    Q_OBJECT
-
-public:
-    CheckBox(QWidget* parent = 0);
-    CheckBox(const QString& text, QWidget* parent = 0);
-                               
-    SignalProxy<void(int)> sigStateChanged() {
-        return sigStateChanged_;
-    }
-    SignalProxy<void(bool)> sigToggled() {
-        return sigToggled_;
-    }
-
-private Q_SLOTS:
-    void onStateChanged(int state);
-    void onToggled(bool checked);
-
-private:
-    Signal<void(int)> sigStateChanged_;
-    Signal<void(bool)> sigToggled_;
-
-    void initialize();
-};
 
 class CNOID_EXPORT PushButton : public QPushButton
 {

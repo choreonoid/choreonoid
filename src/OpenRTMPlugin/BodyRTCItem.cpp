@@ -8,7 +8,7 @@
 #include "OpenRTMUtil.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
@@ -186,7 +186,7 @@ void BodyRTCItem::setdefaultPort(BodyPtr body)
     outPortInfoMap.insert(make_pair(portInfo.portName, portInfo));
 
     for(size_t i=0; i < forceSensors_.size(); ++i){
-        if(Sensor* sensor = forceSensors_.get(i)){
+        if(Device* sensor = forceSensors_[i]){
             portInfo.dataTypeId = FORCE_SENSOR;
             portInfo.dataOwnerNames.clear();
             portInfo.dataOwnerNames.push_back(sensor->name());
@@ -196,7 +196,7 @@ void BodyRTCItem::setdefaultPort(BodyPtr body)
         }
     }
     for(size_t i=0; i < gyroSensors_.size(); ++i){
-        if(Sensor* sensor = gyroSensors_.get(i)){
+        if(Device* sensor = gyroSensors_[i]){
             portInfo.dataTypeId = RATE_GYRO_SENSOR;
             portInfo.dataOwnerNames.clear();
             portInfo.dataOwnerNames.push_back(sensor->name());
@@ -206,7 +206,7 @@ void BodyRTCItem::setdefaultPort(BodyPtr body)
         }
     }
     for(size_t i=0; i < accelSensors_.size(); ++i){
-        if(Sensor* sensor = accelSensors_.get(i)){
+        if(Device* sensor = accelSensors_[i]){
             portInfo.dataTypeId = ACCELERATION_SENSOR;
             portInfo.dataOwnerNames.clear();
             portInfo.dataOwnerNames.push_back(sensor->name());
@@ -231,12 +231,11 @@ void BodyRTCItem::onPositionChanged()
 
     BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
     if(ownerBodyItem){
-        BodyPtr body = ownerBodyItem->body();
+        Body* body = ownerBodyItem->body();
         if(bodyName != body->name()){
-            const DeviceList<Sensor> sensors(body->devices());
-            sensors.makeIdMap(forceSensors_);
-            sensors.makeIdMap(gyroSensors_);
-            sensors.makeIdMap(accelSensors_);
+            forceSensors_ = body->devices<ForceSensor>().getSortedById();
+            gyroSensors_ = body->devices<RateGyroSensor>().getSortedById();
+            accelSensors_ = body->devices<AccelerationSensor>().getSortedById();
             bodyName = body->name();
             deleteModule(true);
             createRTC(body);
@@ -256,7 +255,7 @@ void BodyRTCItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr BodyRTCItem::doDuplicate() const
+Item* BodyRTCItem::doDuplicate() const
 {
     return new BodyRTCItem(*this);
 }
@@ -269,10 +268,9 @@ bool BodyRTCItem::start(Target* target)
     timeStep_ = target->worldTimeStep();
     controlTime_ = target->currentTime();
 
-    const DeviceList<Sensor> sensors(simulationBody->devices());
-    sensors.makeIdMap(forceSensors_);
-    sensors.makeIdMap(gyroSensors_);
-    sensors.makeIdMap(accelSensors_);
+    forceSensors_ = simulationBody->devices<ForceSensor>().getSortedById();
+    gyroSensors_ = simulationBody->devices<RateGyroSensor>().getSortedById();
+    accelSensors_ = simulationBody->devices<AccelerationSensor>().getSortedById();
 
     executionCycle = (executionCycleProperty > 0.0) ? executionCycleProperty : timeStep_;
     executionCycleCounter = executionCycle;

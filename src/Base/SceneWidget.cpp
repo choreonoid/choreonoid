@@ -7,6 +7,8 @@
 #include "SceneWidgetEditable.h"
 #include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
+#include "Buttons.h"
+#include "CheckBox.h"
 #include "ToolBar.h"
 #include "Dialog.h"
 #include "SpinBox.h"
@@ -18,9 +20,9 @@
 #include "LazyCaller.h"
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
-#include <cnoid/SceneShape>
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include <cnoid/SceneDrawables>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <QGLWidget>
 #include <QGLPixelBuffer>

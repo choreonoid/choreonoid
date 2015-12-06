@@ -10,12 +10,13 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEditable>
+#include <cnoid/GLSceneRenderer>
+#include <cnoid/SceneDrawables>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneMarkers>
 #include <cnoid/PointSetUtil>
-#include <cnoid/SceneMarker>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
-#include <cnoid/GLSceneRenderer>
-#include <cnoid/SceneCamera>
 #include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
@@ -197,7 +198,7 @@ PointSetItem::~PointSetItem()
 }
 
 
-ItemPtr PointSetItem::doDuplicate() const
+Item* PointSetItem::doDuplicate() const
 {
     return new PointSetItem(*this);
 }
@@ -262,9 +263,9 @@ void PointSetItem::notifyOffsetTransformChange()
 }
 
 
-SgPointSetPtr PointSetItem::getTransformedPointSet() const
+SgPointSet* PointSetItem::getTransformedPointSet() const
 {
-    SgPointSetPtr transformed = new SgPointSet();
+    SgPointSet* transformed = new SgPointSet();
     SgVertexArray& points = *transformed->getOrCreateVertices();
     SgVertexArray* orgPoints = impl->pointSet->vertices();
     if(orgPoints){

@@ -3,14 +3,16 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_POLYGON_MESH_TRIANGULATOR_H_INCLUDED
-#define CNOID_UTIL_POLYGON_MESH_TRIANGULATOR_H_INCLUDED
+#ifndef CNOID_UTIL_POLYGON_MESH_TRIANGULATOR_H
+#define CNOID_UTIL_POLYGON_MESH_TRIANGULATOR_H
 
-#include "SceneShape.h"
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class SgMesh;
+class SgPolygonMesh;
 class PolygonMeshTriangulatorImpl;
 
 class CNOID_EXPORT PolygonMeshTriangulator
@@ -22,13 +24,14 @@ public:
 
     void setDeepCopyEnabled(bool on);
 
-    SgMeshPtr triangulate(SgPolygonMesh& polygonMesh);
+    SgMesh* triangulate(SgPolygonMesh* polygonMesh);
 
     const std::string& errorMessage() const;
 
 private:
     PolygonMeshTriangulatorImpl * impl;
 };
+
 }
 
 #endif

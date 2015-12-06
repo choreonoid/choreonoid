@@ -19,7 +19,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "submersible.wrl"
+            modelFile: "${SHARE}/model/misc/submersible.wrl"
             currentBaseLink: "CHASSIS"
             rootPosition: [ -1.01277568, 3.21535077, 0.683205539 ]
             rootAttitude: [ 
@@ -76,8 +76,7 @@ items:
           data: 
             realtimeSync: true
             recording: tail
-            timeRangeMode: Unlimited
-            onlyActiveControlPeriod: true
+            timeRangeMode: Active control period
             timeLength: 180
             allLinkPositionOutputMode: false
             deviceStateOutput: true
@@ -274,16 +273,21 @@ views:
     state: 
       layoutMode: horizontal
       isAutoMode: false
-      currentTask: Wall
   - 
     id: 7
+    name: "Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+    mounted: true
+  - 
+    id: 8
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 8
+    id: 9
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -297,7 +301,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 9
+    id: 10
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -305,7 +309,7 @@ views:
       listingMode: "Link List"
       currentBodyItem: 2
   - 
-    id: 10
+    id: 11
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -357,8 +361,6 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -371,7 +373,7 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 379, 379 ]
+          sizes: [ 381, 381 ]
           children: 
             - 
               type: pane
@@ -379,12 +381,12 @@ viewAreas:
               current: 2
             - 
               type: pane
-              views: [ 1, 9 ]
+              views: [ 1, 10 ]
               current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 541, 217 ]
+          sizes: [ 544, 218 ]
           children: 
             - 
               type: splitter
@@ -393,16 +395,25 @@ viewAreas:
               children: 
                 - 
                   type: pane
-                  views: [ 5, 7, 8 ]
+                  views: [ 5, 8, 9 ]
                   current: 5
                 - 
                   type: pane
                   views: [ 4 ]
                   current: 4
             - 
-              type: pane
-              views: [ 3, 10 ]
-              current: 3
+              type: splitter
+              orientation: horizontal
+              sizes: [ 869, 416 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 3, 11 ]
+                  current: 3
+                - 
+                  type: pane
+                  views: [ 7 ]
+                  current: 7
 layoutOfToolBars: 
   rows: 
     - 

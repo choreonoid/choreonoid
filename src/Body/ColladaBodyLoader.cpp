@@ -16,7 +16,7 @@
 
 #include <cnoid/Body>
 #include <cnoid/Link>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/Camera>
 #include <cnoid/Exception>
 #include <cnoid/SceneGraph>
@@ -394,7 +394,7 @@ DevicePtr ColladaBodyLoaderImpl::createSensor(DaeSensor* sensor)
             device = new ForceSensor;
         } else
             if (iequals(sensor->type, "base_imu")) {
-                device = new AccelSensor;
+                device = new AccelerationSensor;
             } else 
                 if (iequals(sensor->type, "base_pinhole_camera")) {
                     device = new Camera;

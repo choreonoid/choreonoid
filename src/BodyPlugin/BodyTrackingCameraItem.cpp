@@ -7,7 +7,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/InteractiveCameraTransform>
-#include <cnoid/SceneCamera>
+#include <cnoid/SceneCameras>
 #include <cnoid/SceneView>
 #include <cnoid/BodyItem>
 #include <boost/bind.hpp>
@@ -180,7 +180,7 @@ void BodyTrackingCameraItem::setName(const std::string& name)
 }
 
 
-ItemPtr BodyTrackingCameraItem::doDuplicate() const
+Item* BodyTrackingCameraItem::doDuplicate() const
 {
     return new BodyTrackingCameraItem(*this);
 }

@@ -4,6 +4,7 @@
 
 #include "../Body.h"
 #include "../BodyLoader.h"
+#include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
 
 using namespace boost;

@@ -5,6 +5,7 @@
 
 #include "Body.h"
 #include "BodyCustomizerInterface.h"
+#include <cnoid/SceneGraph>
 #include <cnoid/EigenUtil>
 #include <cnoid/ValueTree>
 

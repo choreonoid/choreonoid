@@ -11,8 +11,11 @@
 #include <cnoid/JointPath>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/MenuManager>
-#include <cnoid/SceneDragger>
 #include <cnoid/SceneWidget>
+#include <cnoid/SceneEffects>
+#include <cnoid/SceneMarkers>
+#include <cnoid/SceneDragProjector>
+#include <cnoid/PositionDragger>
 #include <cnoid/SceneDevice>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/PinDragIK>
@@ -36,12 +39,43 @@ Action* enableStaticModelEditCheck;
 
 }
 
+namespace cnoid {
+
+class EditableSceneLinkImpl
+{
+public:
+    EditableSceneLink* self;
+    SgLineSetPtr bbLineSet;
+    SgOutlineGroupPtr outlineGroup;
+    BoundingBoxMarkerPtr bbMarker;
+    bool isPointed;
+    bool isColliding;
+
+    EditableSceneLinkImpl(EditableSceneLink* self);
+    void createBoundingBoxLineSet();
+};
+
+}
+
 
 EditableSceneLink::EditableSceneLink(Link* link)
     : SceneLink(link)
 {
-    isPointed_ = false;
-    isColliding_ = false;
+    impl = new EditableSceneLinkImpl(this);
+}
+
+
+EditableSceneLinkImpl::EditableSceneLinkImpl(EditableSceneLink* self)
+    : self(self)
+{
+    isPointed = false;
+    isColliding = false;
+}
+
+
+EditableSceneLink::~EditableSceneLink()
+{
+    delete impl;
 }
 
 
@@ -52,34 +86,34 @@ void EditableSceneLink::showBoundingBox(bool on)
     }
 #if 0
     if(on){
-        if(!bbLineSet){
-            createBoundingBoxLineSet();
+        if(!impl->bbLineSet){
+            impl->createBoundingBoxLineSet();
         }
-        addChildOnce(bbLineSet, true);
-    } else if(bbLineSet){
-        removeChild(bbLineSet, true);
+        addChildOnce(impl->bbLineSet, true);
+    } else if(impl->bbLineSet){
+        removeChild(impl->bbLineSet, true);
     }
 #else
     if(on){
-        if(!outlineGroup){
-            outlineGroup = new SgOutlineGroup();
+        if(!impl->outlineGroup){
+            impl->outlineGroup = new SgOutlineGroup();
         }
-        setShapeGroup(outlineGroup);
-    } else if(outlineGroup){
+        setShapeGroup(impl->outlineGroup);
+    } else if(impl->outlineGroup){
         resetShapeGroup();
     }
 #endif
 }
 
 
-void EditableSceneLink::createBoundingBoxLineSet()
+void EditableSceneLinkImpl::createBoundingBoxLineSet()
 {
     bbLineSet = new SgLineSet;
     bbLineSet->setName("BoundingBox");
 
     SgVertexArray& vertices = *bbLineSet->setVertices(new SgVertexArray);
     vertices.resize(8);
-    const BoundingBoxf bb(visualShape()->boundingBox());
+    const BoundingBoxf bb(self->visualShape()->boundingBox());
     const Vector3f& min = bb.min();
     const Vector3f& max = bb.max();
     vertices[0] << min.x(), min.y(), min.z();
@@ -113,35 +147,35 @@ void EditableSceneLink::createBoundingBoxLineSet()
 
 void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
 {
-    if(bbMarker){
-        removeChild(bbMarker);
+    if(impl->bbMarker){
+        removeChild(impl->bbMarker);
     }
-    bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
-    addChildOnce(bbMarker, true);
+    impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
+    addChildOnce(impl->bbMarker, true);
 }
 
 
 void EditableSceneLink::hideMarker()
 {
-    if(bbMarker){
-        removeChild(bbMarker, true);
-        bbMarker = 0;
+    if(impl->bbMarker){
+        removeChild(impl->bbMarker, true);
+        impl->bbMarker = 0;
     }
 }
 
 
 void EditableSceneLink::setColliding(bool on)
 {
-    if(!isColliding_ && on){
-        if(!isPointed_){
+    if(!impl->isColliding && on){
+        if(!impl->isPointed){
             
         }
-        isColliding_ = true;
-    } else if(isColliding_ && !on){
-        if(!isPointed_){
+        impl->isColliding = true;
+    } else if(impl->isColliding && !on){
+        if(!impl->isPointed){
             
         }
-        isColliding_ = false;
+        impl->isColliding = false;
     }
 }
 
@@ -1062,12 +1096,12 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
         activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
         if(activeSimulatorItem){
             if(pointedSceneLink->link()->isRoot()){
-                Action* item1 = menuManager.addCheckItem(_("Move Position"));
+                Action* item1 = menuManager.addCheckItem(_("Move Forcibly"));
                 item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
                 item1->sigToggled().connect(
                     boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, MOVE_FORCED_POSITION, _1));
 
-                Action* item2 = menuManager.addCheckItem(_("Keep Position"));
+                Action* item2 = menuManager.addCheckItem(_("Hold Forcibly"));
                 item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
                 item2->sigToggled().connect(
                     boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, KEEP_FORCED_POSITION, _1));

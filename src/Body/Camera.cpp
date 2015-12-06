@@ -9,39 +9,25 @@
 using namespace cnoid;
 
 
+const char* Camera::typeName()
+{
+    return "Camera";
+}
+
+
 Camera::Camera()
 {
     on_ = true;
     imageType_ = COLOR_IMAGE;
-    isShotDataSetAsState_ = false;
+    isImageStateClonable_ = false;
     resolutionX_ = 640;
     resolutionY_ = 480;
     fieldOfView_ = 0.785398;
     nearDistance_ = 0.01;
     farDistance_ = 100.0;
     frameRate_ = 30.0;
+    delay_ = 0.0;
     image_ = boost::make_shared<Image>();
-}
-
-
-void Camera::copyStateFrom(const Camera& other)
-{
-    VisionSensor::copyStateFrom(other);
-    
-    on_ = other.on_;
-    imageType_ = other.imageType_;
-    resolutionX_ = other.resolutionX_;
-    resolutionY_ = other.resolutionY_;
-    fieldOfView_ = other.fieldOfView_;
-    nearDistance_ = other.nearDistance_;
-    farDistance_ = other.farDistance_;
-    frameRate_ = other.frameRate_;
-
-    if(other.isShotDataSetAsState_){
-        image_ = other.image_;
-    } else {
-        image_ = boost::make_shared<Image>();
-    }
 }
 
 
@@ -54,30 +40,68 @@ void Camera::copyStateFrom(const DeviceState& other)
 }
 
 
-Camera::Camera(const Camera& org, bool copyAll)
-    : VisionSensor(org, copyAll)
+void Camera::copyStateFrom(const Camera& other)
 {
-    isShotDataSetAsState_ = org.isShotDataSetAsState_;
-    copyStateFrom(org);
+    copyCameraStateFrom(other);
+    image_ = other.image_;
 }
 
-        
-DeviceState* Camera::cloneState() const
+
+void Camera::copyCameraStateFrom(const Camera& other)
 {
-    return new Camera(*this, false);
+    on_ = other.on_;
+    isImageStateClonable_ = other.isImageStateClonable_;
+    imageType_ = other.imageType_;
+    resolutionX_ = other.resolutionX_;
+    resolutionY_ = other.resolutionY_;
+    fieldOfView_ = other.fieldOfView_;
+    nearDistance_ = other.nearDistance_;
+    farDistance_ = other.farDistance_;
+    frameRate_ = other.frameRate_;
+    delay_ = other.delay_;
+}
+
+
+Camera::Camera(const Camera& org, bool copyStateOnly)
+    : Device(org, copyStateOnly),
+      image_(org.image_)
+{
+    copyCameraStateFrom(org);
 }
 
 
 Device* Camera::clone() const
 {
-    return new Camera(*this);
+    return new Camera(*this, false);
+}
+
+
+/**
+   Used for cloneState()
+*/
+Camera::Camera(const Camera& org, int x /* dummy */)
+    : Device(org, true)
+{
+    copyCameraStateFrom(org);
+    
+    if(org.isImageStateClonable_){
+        image_ = org.image_;
+    } else {
+        image_ = boost::make_shared<Image>();
+    }
+}
+
+        
+DeviceState* Camera::cloneState() const
+{
+    return new Camera(*this, 0);
 }
 
 
 void Camera::forEachActualType(boost::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(Camera))){
-        VisionSensor::forEachActualType(func);
+        Device::forEachActualType(func);
     }
 }
 
@@ -121,13 +145,12 @@ void Camera::clearState()
 
 int Camera::stateSize() const
 {
-    return 7 + VisionSensor::StateSize;
+    return 8;
 }
 
 
 const double* Camera::readState(const double* buf)
 {
-    buf = VisionSensor::readState(buf);
     on_ = buf[0];
     resolutionX_ = buf[1];
     resolutionY_ = buf[2];
@@ -135,13 +158,13 @@ const double* Camera::readState(const double* buf)
     farDistance_ = buf[4];
     fieldOfView_ = buf[5];
     frameRate_ = buf[6];
-    return buf + 7;
+    delay_ = buf[7];
+    return buf + 8;
 }
 
 
 double* Camera::writeState(double* out_buf) const
 {
-    out_buf = VisionSensor::writeState(out_buf);
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = resolutionX_;
     out_buf[2] = resolutionY_;
@@ -149,115 +172,6 @@ double* Camera::writeState(double* out_buf) const
     out_buf[4] = farDistance_;
     out_buf[5] = fieldOfView_;
     out_buf[6] = frameRate_;
-    return out_buf + 7;
-}
-
-
-RangeCamera::RangeCamera()
-{
-    setImageType(NO_IMAGE);
-    points_ = boost::make_shared<PointData>();
-    isOrganized_ = false;
-}
-
-
-void RangeCamera::copyStateFrom(const RangeCamera& other)
-{
-    Camera::copyStateFrom(other);
-
-    if(other.isShotDataSetAsState()){
-        points_ = other.points_;
-    } else {
-        points_ = boost::make_shared<PointData>();
-    }
-    isOrganized_ = other.isOrganized_;
-}
-
-
-void RangeCamera::copyStateFrom(const DeviceState& other)
-{
-    if(typeid(other) != typeid(RangeCamera)){
-        throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
-    }
-    copyStateFrom(static_cast<const RangeCamera&>(other));
-}
-
-
-RangeCamera::RangeCamera(const RangeCamera& org, bool copyAll)
-    : Camera(org, copyAll)
-{
-    if(org.isShotDataSetAsState()){
-        points_ = org.points_;
-    } else {
-        points_ = boost::make_shared<PointData>();
-    }
-    isOrganized_ = org.isOrganized_;
-}
-
-        
-DeviceState* RangeCamera::cloneState() const
-{
-    return new RangeCamera(*this, false);
-}
-
-
-Device* RangeCamera::clone() const
-{
-    return new RangeCamera(*this);
-}
-
-
-void RangeCamera::forEachActualType(boost::function<bool(const std::type_info& type)> func)
-{
-    if(!func(typeid(RangeCamera))){
-        Camera::forEachActualType(func);
-    }
-}
-
-
-RangeCamera::PointData& RangeCamera::points()
-{
-    if(points_.use_count() > 1){
-        points_ = boost::make_shared<PointData>(*points_);
-    }
-    return *points_;
-}
-
-
-RangeCamera::PointData& RangeCamera::newPoints()
-{
-    points_ = boost::make_shared<PointData>();
-    return *points_;
-}
-
-
-void RangeCamera::setPoints(boost::shared_ptr<PointData>& points)
-{
-    if(points.use_count() == 1){
-        points_ = points;
-    } else {
-        points_ = boost::make_shared<PointData>(*points);
-    }
-    points.reset();
-}
-
-
-void RangeCamera::clearState()
-{
-    Camera::clearState();
-
-    if(points_.use_count() == 1){
-        points_->clear();
-    } else {
-        points_ = boost::make_shared<PointData>();
-    }
-}
-
-
-void RangeCamera::setOrganized(bool on)
-{
-    if(on != isOrganized_){
-        clearState();
-    }
-    isOrganized_ = on;
+    out_buf[7] = delay_;
+    return out_buf + 8;
 }

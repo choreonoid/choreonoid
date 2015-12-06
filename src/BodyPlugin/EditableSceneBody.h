@@ -7,7 +7,6 @@
 
 #include <cnoid/SceneWidgetEditable>
 #include <cnoid/SceneBody>
-#include <cnoid/SceneMarker>
 #include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
@@ -18,12 +17,15 @@ class ExtensionManager;
 class BodyItem;
 typedef ref_ptr<BodyItem> BodyItemPtr;
 
+class EditableSceneLinkImpl;
+
 class CNOID_EXPORT EditableSceneLink : public SceneLink
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     EditableSceneLink(Link* link);
+    ~EditableSceneLink();
 
     void showBoundingBox(bool on);
     void showMarker(const Vector3f& color, float transparency);
@@ -31,13 +33,8 @@ public:
     void setColliding(bool on);
 
 private:
-    SgLineSetPtr bbLineSet;
-    SgOutlineGroupPtr outlineGroup;
-    BoundingBoxMarkerPtr bbMarker;
-    bool isPointed_;
-    bool isColliding_;
-
-    void createBoundingBoxLineSet();
+    EditableSceneLinkImpl* impl;
+    
 };
 typedef ref_ptr<EditableSceneLink> EditableSceneLinkPtr;
 

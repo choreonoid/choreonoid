@@ -3,24 +3,29 @@
 */
 
 #include "../SceneDragger.h"
+#include "../PositionDragger.h"
 #include <cnoid/PyUtil>
 
 using namespace boost;
 using namespace boost::python;
 using namespace cnoid;
 
-namespace {
-
-int PositionDragger_TX() { return PositionDragger::TX; }
-
-}
-
 namespace cnoid {
 
 void exportPySceneTypes()
 {
+    object sceneDraggerClass =
+        class_<SceneDragger, SceneDraggerPtr, bases<SgPosTransform>, boost::noncopyable>("SceneDragger", no_init)
+        .def("isContainerMode", &SceneDragger::isContainerMode)
+        .def("setContainerMode", &SceneDragger::setContainerMode)
+        .def("isDragging", &SceneDragger::isDragging)
+        .def("draggedPosition", &SceneDragger::draggedPosition)
+        ;
+
+    implicitly_convertible<SceneDraggerPtr, SgPosTransformPtr>();
+    
     object positionDraggerClass =
-        class_<PositionDragger, PositionDraggerPtr, bases<SgPosTransform>, boost::noncopyable>("PositionDragger")
+        class_<PositionDragger, PositionDraggerPtr, bases<SceneDragger>, boost::noncopyable>("PositionDragger")
         .def("setDraggableAxes", &PositionDragger::setDraggableAxes)
         .def("draggableAxes", &PositionDragger::draggableAxes)
         ;
@@ -35,7 +40,7 @@ void exportPySceneTypes()
     positionDraggerClass.attr("ROTATION_AXES") = (int)PositionDragger::ROTATION_AXES;
     positionDraggerClass.attr("ALL_AXES") = (int)PositionDragger::ALL_AXES;
     
-    implicitly_convertible<PositionDraggerPtr, SgPosTransformPtr>();
+    implicitly_convertible<PositionDraggerPtr, SceneDraggerPtr>();
 }
 
 }

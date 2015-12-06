@@ -3,7 +3,7 @@
 */
 
 #include <cnoid/PySignal>
-#include "../Button.h"
+#include "../Buttons.h"
 #include "../Action.h"
 #include "../Timer.h"
 

@@ -5,9 +5,10 @@
 
 #include "SceneVisitor.h"
 #include "SceneGraph.h"
-#include "SceneShape.h"
-#include "SceneCamera.h"
-#include "SceneLight.h"
+#include "SceneDrawables.h"
+#include "SceneCameras.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
 
 using namespace cnoid;
 

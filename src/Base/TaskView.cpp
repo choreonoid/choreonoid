@@ -7,7 +7,7 @@
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/ComboBox>
 #include <cnoid/SpinBox>
 #include <cnoid/Timer>

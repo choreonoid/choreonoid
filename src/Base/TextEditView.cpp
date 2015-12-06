@@ -8,7 +8,7 @@
 #include "ViewManager.h"
 #include "ItemTreeView.h"
 #include "AbstractTextItem.h"
-#include "Button.h"
+#include "Buttons.h"
 #include "Timer.h"
 #include <cnoid/ConnectionSet>
 #include <QAction>

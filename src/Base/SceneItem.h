@@ -28,7 +28,7 @@ public:
     const SgPosTransform* topNode() const { return topNode_; }
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
     virtual void doPutProperties(PutPropertyFunction& putProperty);

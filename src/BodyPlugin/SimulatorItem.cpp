@@ -563,8 +563,7 @@ void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items
                 }
                 io_items.push_back(srcItem);
             }
-        }
-        if(item->childItem()){
+        } else if(item->childItem()){
             findControlSrcItems(item->childItem(), io_items, doPickCheckedItems);
         }
         item = item->nextItem();
@@ -593,7 +592,7 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
 
     initializeResultData();
 
-    self->bufferResults(); // put the intial status
+    self->bufferResults(); // put the intial state
     
     return true;
 }
@@ -700,7 +699,7 @@ void SimulationBodyImpl::initializeResultBuffers()
     const int numDevices = devices.size();
     deviceStateConnections.disconnect();
     deviceStateChangeFlag.reset();
-    deviceStateChangeFlag.resize(numDevices, true); // set all the bits to store the initial status
+    deviceStateChangeFlag.resize(numDevices, true); // set all the bits to store the initial states
     devicesToNotifyResults.clear();
     
     if(devices.empty() || !simImpl->isDeviceStateOutputEnabled){
@@ -972,7 +971,7 @@ void SimulationBodyImpl::flushResultsToBody()
         for(size_t i=0; i < ndevices; ++i){
             const DeviceStatePtr& s = ds[i];
             if(s != prevFlushedDeviceStateInDirectMode[i]){
-                Device* device = devices.get(i);
+                Device* device = devices[i];
                 device->copyStateFrom(*s);
                 prevFlushedDeviceStateInDirectMode[i] = s;
                 devicesToNotifyResults.push_back(device);
@@ -986,7 +985,7 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
 {
     if(bufferFrame < linkPosBuf.rowSize()){
         WorldLogFileItem* log = simImpl->worldLogFileItem;
-        log->beginBodyStatusOutput();
+        log->beginBodyStateOutput();
 
         MultiSE3Deque::Row posbuf = linkPosBuf.row(bufferFrame);
         log->outputLinkPositions(posbuf.begin(), posbuf.size());
@@ -997,16 +996,16 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
         }
 
         if(deviceStateBuf.colSize() > 0){
-            // Skip the first element because it is used for sharing an unchanged status
-            Deque2D<DeviceStatePtr>::Row statuses = deviceStateBuf.row(bufferFrame + 1);
-            log->beginDeviceStatusOutput();
-            for(size_t i=0; i < statuses.size(); ++i){
-                log->outputDeviceStatus(statuses[i]);
+            // Skip the first element because it is used for sharing an unchanged state
+            Deque2D<DeviceStatePtr>::Row states = deviceStateBuf.row(bufferFrame + 1);
+            log->beginDeviceStateOutput();
+            for(size_t i=0; i < states.size(); ++i){
+                log->outputDeviceState(states[i]);
             }
-            log->endDeviceStatusOutput();
+            log->endDeviceStateOutput();
         }
 
-        log->endBodyStatusOutput();
+        log->endBodyStateOutput();
     }
 }
 
@@ -2505,7 +2504,7 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
             processed |= bodyMotionEngines[i]->onTimeChanged(time);
         }
     } else if(worldLogFileItem){
-        processed |= worldLogFileItem->recallStatusAtTime(time);
+        processed |= worldLogFileItem->recallStateAtTime(time);
     }
     if(collisionSeqEngine){
         processed |= collisionSeqEngine->onTimeChanged(time);

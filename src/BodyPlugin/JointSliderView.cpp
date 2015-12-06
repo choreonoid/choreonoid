@@ -10,7 +10,7 @@
 #include <cnoid/Link>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/Slider>
 #include <cnoid/Separator>

@@ -205,7 +205,7 @@ OpenHRPOnlineViewerItemImpl::~OpenHRPOnlineViewerItemImpl()
 }
 
 
-ItemPtr OpenHRPOnlineViewerItem::doDuplicate() const
+Item* OpenHRPOnlineViewerItem::doDuplicate() const
 {
     return new OpenHRPOnlineViewerItem(*this);
 }

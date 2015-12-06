@@ -44,7 +44,7 @@ protected:
 
     void resetSeq(typename MultiSeqType::Ptr seq) { seq_ = seq; }
         
-    virtual ItemPtr doDuplicate() const {
+    virtual Item* doDuplicate() const {
         return new MultiSeqItem<MultiSeqType>(*this);
     }
 

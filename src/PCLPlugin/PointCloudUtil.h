@@ -6,7 +6,7 @@
 #ifndef CNOID_PCL_PLUGIN_POINT_CLOUD_UTIL_H
 #define CNOID_PCL_PLUGIN_POINT_CLOUD_UTIL_H
 
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <boost/optional.hpp>
 #include "exportdecl.h"
 

@@ -17,6 +17,7 @@ SubSimulatorItem::SubSimulatorItem()
 
 
 SubSimulatorItem::SubSimulatorItem(const SubSimulatorItem& org)
+    : Item(org)
 {
     isEnabled_ = org.isEnabled_;
 }

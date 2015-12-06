@@ -4,9 +4,10 @@
 */
 
 #include "GLSceneRenderer.h"
-#include <cnoid/SceneShape>
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include <cnoid/SceneDrawables>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
+#include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <Eigen/StdVector>
 #ifdef _WIN32

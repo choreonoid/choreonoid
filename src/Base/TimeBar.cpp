@@ -11,7 +11,8 @@
 #include "LazyCaller.h"
 #include "SpinBox.h"
 #include "Slider.h"
-#include "Button.h"
+#include "Buttons.h"
+#include "CheckBox.h"
 #include "Dialog.h"
 #include <QTime>
 #include <QCheckBox>

@@ -1,1 +1,2 @@
-#include "src/Body/Sensor.h"
+// This header is obsolete.
+#include "BasicSensors"

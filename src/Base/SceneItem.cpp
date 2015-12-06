@@ -131,7 +131,7 @@ SgNode* SceneItem::getScene()
 }
 
 
-ItemPtr SceneItem::doDuplicate() const
+Item* SceneItem::doDuplicate() const
 {
     return new SceneItem(*this);
 }

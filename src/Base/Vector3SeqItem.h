@@ -36,7 +36,7 @@ protected:
         
     virtual ~Vector3SeqItem();
 
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
             
     Vector3SeqPtr seq_;
 };
