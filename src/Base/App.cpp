@@ -42,6 +42,7 @@
 #include "PathVariableEditor.h"
 #include "Licenses.h"
 #include "MovieGenerator.h"
+#include "MovieRecorder.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
 #include "VirtualJoystickView.h"
@@ -223,6 +224,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MultiPointSetItem::initializeClass(ext);
 
     initializeMovieGenerator(ext);
+    MovieRecorder::initialize(ext);
 
     CaptureBar::initialize(ext);
     

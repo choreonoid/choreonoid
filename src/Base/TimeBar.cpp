@@ -14,9 +14,8 @@
 #include "Buttons.h"
 #include "CheckBox.h"
 #include "Dialog.h"
+#include <QDialogButtonBox>
 #include <QTime>
-#include <QCheckBox>
-#include <QLayout>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cmath>
@@ -157,7 +156,9 @@ public:
 
         PushButton* okButton = new PushButton(_("&OK"));
         okButton->setDefault(true);
-        connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+        QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
+        buttonBox->addButton(okButton, QDialogButtonBox::AcceptRole);
+        connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
         vbox->addWidget(okButton);
     }
 };
