@@ -6,10 +6,14 @@
 #ifndef CNOID_BODY_LINK_H
 #define CNOID_BODY_LINK_H
 
-#include <cnoid/SceneGraph>
+#include <cnoid/Referenced>
+#include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
+
+class SgNode;
+typedef ref_ptr<SgNode> SgNodePtr;
 
 class CNOID_EXPORT Link
 {
@@ -212,9 +216,9 @@ public:
         
     void setName(const std::string& name);
 
-    void setShape(SgNodePtr shape);
-    void setVisualShape(SgNodePtr shape);
-    void setCollisionShape(SgNodePtr shape);
+    void setShape(SgNode* shape);
+    void setVisualShape(SgNode* shape);
+    void setCollisionShape(SgNode* shape);
 
     // The following two methods should be deprecated after introducing Tb
     Matrix3 attitude() const { return R() * Rs_; }

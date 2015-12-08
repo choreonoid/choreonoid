@@ -3,10 +3,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_SCENE_MARKER_H
-#define CNOID_UTIL_SCENE_MARKER_H
+#ifndef CNOID_UTIL_SCENE_MARKERS_H
+#define CNOID_UTIL_SCENE_MARKERS_H
 
-#include "SceneShape.h"
+#include "SceneDrawables.h"
 #include "exportdecl.h"
 
 namespace cnoid {

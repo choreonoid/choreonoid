@@ -15,7 +15,8 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/SpinBox>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <cnoid/Separator>
 #include <cnoid/EigenUtil>

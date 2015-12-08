@@ -40,7 +40,7 @@ worldItem.addChildItem(tankItem)
 ItemTreeView.instance().checkItem(tankItem)
 
 controllerItem = SimpleControllerItem()
-controllerItem.setControllerDllName("TankJoystickController")
+controllerItem.setController("TankJoystickController")
 tankItem.addChildItem(controllerItem)
 
 simulatorItem = AISTSimulatorItem()

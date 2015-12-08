@@ -33,7 +33,7 @@ robot.calcForwardKinematics()
 robotItem.storeInitialState()
 
 controllerItem = SimpleControllerItem()
-controllerItem.setControllerDllName("SR1WalkPatternController")
+controllerItem.setController("SR1WalkPatternController")
 robotItem.addChildItem(controllerItem)
 
 worldItem.addChildItem(robotItem)

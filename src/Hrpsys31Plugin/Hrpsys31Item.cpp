@@ -15,7 +15,7 @@
 #include <cnoid/OpenRTMUtil>
 #include <cnoid/Timer>
 #include <cnoid/BodyItem>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ExtraBodyStateAccessor>
 #include <QMessageBox>
 #include <rtm/idl/RTC.hh>
@@ -531,13 +531,12 @@ void Hrpsys31ItemImpl::onReadRequest()
                 }
                 jointStateChanged = true;
             }
-                
-            DeviceList<Sensor> sensors = body->devices();
-            DeviceList<ForceSensor> forceSensors = sensors;
+
+            DeviceList<ForceSensor> forceSensors = body->devices<ForceSensor>();
             copySensorState(forceSensors, state->force);
-            DeviceList<RateGyroSensor> gyroSensors = sensors;
-            copySensorState(gyroSensors, state->rateGyro);
-            DeviceList<AccelSensor> accelSensors = sensors;
+            DeviceList<RateGyroSensor> gyros = body->devices<RateGyroSensor>();
+            copySensorState(gyros, state->rateGyro);
+            DeviceList<AccelerationSensor> accelSensors = body->devices<AccelerationSensor>();
             copySensorState(accelSensors, state->accel);
 
             for(int i=0; i < 2; ++i){
@@ -604,7 +603,7 @@ void Hrpsys31ItemImpl::copySensorState(DeviceList<SensorType>& sensors, Sequence
     if(seq.length() > 0){
         const int n = std::min((int)sensors.size(), (int)seq.length());
         for(int i=0; i < n; ++i){
-            SensorType* sensor = sensors.get(i);
+            SensorType* sensor = sensors[i];
             sensor->readState(&seq[i][0]);
             sensor->notifyStateChange();
         }
@@ -624,7 +623,7 @@ bool Hrpsys31Item::setPlaybackSyncEnabled(bool on)
 }
 
 
-ItemPtr Hrpsys31Item::doDuplicate() const
+Item* Hrpsys31Item::doDuplicate() const
 {
     return new Hrpsys31Item(*this);
 }

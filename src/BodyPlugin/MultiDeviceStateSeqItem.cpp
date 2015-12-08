@@ -121,7 +121,7 @@ AbstractMultiSeqPtr MultiDeviceStateSeqItem::abstractMultiSeq()
 }
 
 
-ItemPtr MultiDeviceStateSeqItem::doDuplicate() const
+Item* MultiDeviceStateSeqItem::doDuplicate() const
 {
     return new MultiDeviceStateSeqItem(*this);
 }

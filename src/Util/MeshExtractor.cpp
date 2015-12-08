@@ -4,6 +4,7 @@
 */
 
 #include "MeshExtractor.h"
+#include "SceneDrawables.h"
 #include <boost/bind.hpp>
 
 using namespace cnoid;

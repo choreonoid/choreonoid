@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_TOOL_BAR_H
 #define CNOID_BASE_TOOL_BAR_H
 
-#include "Button.h"
+#include "Buttons.h"
 #include "Action.h"
 #include <QLabel>
 #include <QWidget>

@@ -31,7 +31,7 @@
 
 #include <irrXML.h>
 
-#include "SceneGraph.h"
+#include "SceneDrawables.h"
 #include "PolygonMeshTriangulator.h"
 #include "Exception.h"
 #include "DaeParser.h"
@@ -2889,8 +2889,11 @@ void DaeParserImpl::setGeometry(DaeGeometryPtr extGeometry, DaeNodePtr extNode, 
         SgMeshBasePtr sgMesh  = (polygon ? static_cast<SgMeshBase*>(new SgPolygonMesh) 
                                  : static_cast<SgMeshBase*>(new SgMesh));
         setMesh(extGeometry, *iterm, sgMesh, polygon);
-        sgShape->setMesh(polygon ? triangulator.triangulate(*(static_pointer_cast<SgPolygonMesh>(sgMesh)))
-                         : static_pointer_cast<SgMesh>(sgMesh));
+        if(polygon){
+            sgShape->setMesh(triangulator.triangulate(static_pointer_cast<SgPolygonMesh>(sgMesh)));
+        } else {
+            sgShape->setMesh(static_pointer_cast<SgMesh>(sgMesh));
+        }
         // create a normals
         if (!sgMesh->hasNormals()) {
             MeshNormalGenerator generator;

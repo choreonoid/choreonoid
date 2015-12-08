@@ -353,7 +353,7 @@ void AISTSimulatorItem::setKinematicWalkingEnabled(bool on)
 }
 
 
-ItemPtr AISTSimulatorItem::doDuplicate() const
+Item* AISTSimulatorItem::doDuplicate() const
 {
     return new AISTSimulatorItem(*this);
 }

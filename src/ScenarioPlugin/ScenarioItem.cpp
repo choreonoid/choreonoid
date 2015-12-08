@@ -44,7 +44,7 @@ ScenarioItem::~ScenarioItem()
 }
 
 
-ItemPtr ScenarioItem::doDuplicate() const
+Item* ScenarioItem::doDuplicate() const
 {
     return new ScenarioItem(*this);
 }

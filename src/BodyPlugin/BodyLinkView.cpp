@@ -17,7 +17,8 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
 #include <cnoid/SpinBox>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/Slider>
 #include <cnoid/Separator>
 #include <cnoid/LazyCaller>

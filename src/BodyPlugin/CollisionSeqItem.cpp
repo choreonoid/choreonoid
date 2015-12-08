@@ -118,7 +118,7 @@ AbstractMultiSeqPtr CollisionSeqItem::abstractMultiSeq()
 }
 
 
-ItemPtr CollisionSeqItem::doDuplicate() const
+Item* CollisionSeqItem::doDuplicate() const
 {
     return new CollisionSeqItem(*this);
 }

@@ -27,18 +27,20 @@ public:
     typedef PolymorphicPointerArrayBase Base;
     typedef typename Container::iterator iterator;
     typedef typename Container::const_iterator const_iterator;
+    typedef typename Container::reference reference;
+    typedef typename Container::const_reference const_reference;
 
     PolymorphicPointerArray() { }
 
     template <class RhsObjectType, class RhsPointerType>
     PolymorphicPointerArray(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
-        (*this) = rhs;
+        (*this) << rhs;
     }
         
     virtual ~PolymorphicPointerArray() { }
 
     template <class RhsObjectType, class RhsPointerType>
-    PolymorphicPointerArray& operator=(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
+    PolymorphicPointerArray& operator<<(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
         for(std::size_t i=0; i < rhs.size(); ++i){
             PointerType p = dynamic_pointer_cast<ObjectType>(rhs[i]);
             if(p){

@@ -7,7 +7,9 @@
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
 #include "Link.h"
-#include "Sensor.h"
+#include "ForceSensor.h"
+#include "RateGyroSensor.h"
+#include "AccelerationSensor.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/Vector3Seq>
 #include <cnoid/GaussianFilter>
@@ -66,10 +68,10 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const s
     format f("%1$.4f %2$g %3$g %4$g\n");
     const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
 
-    AccelSensor* gsens = 0;
-    DeviceList<AccelSensor> accelSensors = body->devices();
+    AccelerationSensor* gsens = 0;
+    DeviceList<AccelerationSensor> accelSensors(body->devices());
     if(!accelSensors.empty()){
-        gsens = accelSensors.get(0);
+        gsens = accelSensors[0];
     }
     if(!gsens || !gsens->link() || gsens->link()->index() >= linkPosSeq->numParts()){
         return false;
@@ -111,7 +113,7 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const s
    \todo The localRotaion of gsens should be considered.
 */
 void cnoid::calcLinkAccSeq
-(MultiSE3Seq& linkPosSeq, AccelSensor* gsens, int frameBegin, int numFrames, Vector3Seq& out_accSeq)
+(MultiSE3Seq& linkPosSeq, AccelerationSensor* gsens, int frameBegin, int numFrames, Vector3Seq& out_accSeq)
 {
     const double r = linkPosSeq.frameRate();
     const double dt = 1.0 / r;

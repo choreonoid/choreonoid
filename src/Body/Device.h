@@ -6,11 +6,9 @@
 #ifndef CNOID_BODY_DEVICE_H
 #define CNOID_BODY_DEVICE_H
 
-#include <cnoid/PolymorphicReferencedArray>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
-#include <typeinfo>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,6 +23,9 @@ protected:
         
 public:
     virtual ~DeviceState() { }
+
+    virtual const char* typeName() = 0;
+    
     virtual void copyStateFrom(const DeviceState& other) = 0;
     virtual DeviceState* cloneState() const = 0;
 
@@ -66,7 +67,7 @@ class CNOID_EXPORT Device : public DeviceState
 
 protected:
     Device(); 
-    Device(const Device& org, bool copyAll = true);
+    Device(const Device& org, bool copyStateOnly = false);
 
 public:
     virtual ~Device();
@@ -75,7 +76,7 @@ public:
     void setId(int id) { ns->id = id; }
     void setName(const std::string& name) { ns->name = name; }
     void setLink(Link* link) { ns->link = link; }
-        
+
     virtual Device* clone() const = 0;
     virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
     virtual void clearState();
@@ -124,53 +125,6 @@ public:
 };
 
 typedef ref_ptr<Device> DevicePtr;
-
-
-class CNOID_EXPORT ActiveDevice : public Device
-{
-public:
-protected:
-    ActiveDevice() { }
-    ActiveDevice(const Device& org, bool copyAll = true) : Device(org, copyAll) { }
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
-    void copyStateFrom(const ActiveDevice& other) { Device::copyStateFrom(other); }
-};
-
-typedef ref_ptr<ActiveDevice> ActiveDevicePtr;
-
-
-template <class DeviceType = Device, class PointerType = ref_ptr<DeviceType> >
-class DeviceList : public PolymorphicReferencedArray<DeviceType, Device, PointerType>
-{
-    typedef PolymorphicReferencedArray<DeviceType, Device, PointerType> ArrayBase;
-
-public:
-    DeviceList() { }
-
-    template <class RhsDeviceType>
-    DeviceList(const DeviceList<RhsDeviceType>& rhs)
-        : ArrayBase(rhs) { }
-
-    template <class SubType>
-    SubType* get(int index) const { return dynamic_cast<SubType*>(ArrayBase::operator[](index).get()); }
-
-    DeviceType* get(int index) const { return ArrayBase::operator[](index).get(); }
-
-    template<class TargetType> void makeIdMap(DeviceList<TargetType>& out_map) const {
-        out_map.clear();
-        for(size_t i=0; i < ArrayBase::size(); ++i){
-            if(TargetType* device = dynamic_cast<TargetType*>(get(i))){
-                const int id = device->id();
-                if(id >= 0){
-                    if(out_map.size() <= id){
-                        out_map.resize(id + 1);
-                    }
-                    out_map[id] = device;
-                }
-            }
-        }
-    }
-};
 
 };
 

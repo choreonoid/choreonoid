@@ -7,7 +7,7 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MenuManager.h"
-#include "Button.h"
+#include "Buttons.h"
 #include <cnoid/FileUtil>
 #include <QBoxLayout>
 #include <QLabel>

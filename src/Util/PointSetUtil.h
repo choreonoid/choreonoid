@@ -6,7 +6,7 @@
 #ifndef CNOID_UTIL_POINT_SET_UTIL_H
 #define CNOID_UTIL_POINT_SET_UTIL_H
 
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include "exportdecl.h"
 
 namespace cnoid {

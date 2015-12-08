@@ -13,7 +13,8 @@
 #include <cnoid/Archive>
 #include <cnoid/MainWindow>
 #include <cnoid/SpinBox>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/LineEdit>
 #include <cnoid/MessageView>
 #include <cnoid/Dialog>

@@ -67,7 +67,7 @@ void ExtCommandItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr ExtCommandItem::doDuplicate() const
+Item* ExtCommandItem::doDuplicate() const
 {
     return new ExtCommandItem(*this);
 }

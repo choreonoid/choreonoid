@@ -13,7 +13,8 @@
 #include <cnoid/Archive>
 #include <cnoid/MenuManager>
 #include <cnoid/Link>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/ButtonGroup>
 #include <cnoid/SpinBox>
 #include <cnoid/BodyItem>

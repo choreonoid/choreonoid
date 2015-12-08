@@ -1056,7 +1056,7 @@ void ODESimulatorItemImpl::clear()
 }    
 
 
-ItemPtr ODESimulatorItem::doDuplicate() const
+Item* ODESimulatorItem::doDuplicate() const
 {
     return new ODESimulatorItem(*this);
 }

@@ -115,7 +115,7 @@ bool PythonSimScriptItem::terminate()
 }
 
 
-ItemPtr PythonSimScriptItem::doDuplicate() const
+Item* PythonSimScriptItem::doDuplicate() const
 {
     return new PythonSimScriptItem(*this);
 }

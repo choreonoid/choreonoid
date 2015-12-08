@@ -6,6 +6,7 @@
 #include "AISTCollisionDetector.h"
 #include "ColdetModelPair.h"
 #include <cnoid/IdPair>
+#include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>

@@ -21,7 +21,7 @@ public:
         BodyPtr io = ioBody();
         setJointOutput(false);
         blinkCounter = 0;
-        DeviceList<Light> lights = io->devices();
+        DeviceList<Light> lights(io->devices());
         if(!lights.empty()){
             light = lights.front();
         }

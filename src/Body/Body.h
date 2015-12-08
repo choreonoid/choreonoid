@@ -8,7 +8,7 @@
 
 #include "LinkTraverse.h"
 #include "Link.h"
-#include "Device.h"
+#include "DeviceList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -136,7 +136,9 @@ public:
 
     /**
        Example:
-       DeviceList<ForceSensor> forceSensors = body->devices();
+       DeviceList<ForceSensor> forceSensors(body->devices());
+        or
+       forceSensors << body->devices();
     */
     const DeviceList<>& devices() const {
         return devices_;
@@ -149,7 +151,11 @@ public:
     template<class DeviceType> DeviceType* findDevice(const std::string& name) const {
         return dynamic_cast<DeviceType*>(findDeviceSub(name));
     }
-        
+
+    Device* findDevice(const std::string& name) const {
+        return findDeviceSub(name);
+    }
+    
     void addDevice(Device* device);
     void initializeDeviceStates();
     void clearDevices();

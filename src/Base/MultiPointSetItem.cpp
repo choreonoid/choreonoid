@@ -14,7 +14,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
-#include <cnoid/SceneMarker>
+#include <cnoid/SceneMarkers>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <boost/bind.hpp>
@@ -503,7 +503,7 @@ void MultiPointSetItem::notifyAttentionPointChange()
 }
 
 
-ItemPtr MultiPointSetItem::doDuplicate() const
+Item* MultiPointSetItem::doDuplicate() const
 {
     return new MultiPointSetItem(*this);
 }

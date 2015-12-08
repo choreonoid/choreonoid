@@ -7,7 +7,8 @@
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/SpinBox>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <cnoid/LazyCaller>
 #include <QBoxLayout>

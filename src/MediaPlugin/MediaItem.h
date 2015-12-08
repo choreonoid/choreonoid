@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_MEDIAPLUGIN_MEDIA_ITEM_H_INCLUDED
-#define CNOID_MEDIAPLUGIN_MEDIA_ITEM_H_INCLUDED
+#ifndef CNOID_MEDIAPLUGIN_MEDIA_ITEM_H
+#define CNOID_MEDIAPLUGIN_MEDIA_ITEM_H
 
 #include <cnoid/Item>
 #include "exportdecl.h"
@@ -33,7 +33,7 @@ public:
 protected:
     virtual ~MediaItem();
             
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

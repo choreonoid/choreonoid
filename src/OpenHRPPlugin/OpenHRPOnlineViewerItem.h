@@ -22,7 +22,7 @@ public:
     virtual ~OpenHRPOnlineViewerItem();
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void onConnectedToRoot();
     //virtual void onPositionChanged(){};
     virtual void onDisconnectedFromRoot();

@@ -296,8 +296,8 @@ DEF SR1 Humanoid {
       jointType "free"
       translation 0 0 0.7135
       children [
-        DEF gsensor AccelerationSensor { sensorId 0 }
-        DEF gyrometer Gyro { sensorId 0 }
+        DEF WaistAccelSensor AccelerationSensor { sensorId 0 }
+        DEF WaistGyro Gyro { sensorId 0 }
         DEF WAIST_LINK0 Segment {
           centerOfMass  0 0 0.0375
           mass    27.0
@@ -423,13 +423,11 @@ DEF SR1 Humanoid {
                       ]
                     } # segment WAIST_LINK3
                     
-                    DEF VISION_SENSOR1 VisionSensor {
+                    DEF LeftCamera VisionSensor {
                       translation   0.15 0.05 0.15
                       rotation      0.4472 -0.4472 -0.7746 1.8235
                       name          "LeftCamera"
-                      type          "DEPTH"
-		      frontClipDistance 0.01
-		      backClipDistance  10.0
+                      type          "COLOR_DEPTH"
                       sensorId      0
                       children [
                         DEF CAMERA_SHAPE Transform {
@@ -450,11 +448,11 @@ DEF SR1 Humanoid {
                         }
                       ]
                     }
-                    DEF VISION_SENSOR2 VisionSensor {
+                    DEF RightCamera VisionSensor {
                       translation   0.15 -0.05 0.15
                       rotation      0.4472 -0.4472 -0.7746 1.8235
                       name          "RightCamera"
-                      type          "DEPTH"
+                      type          "COLOR_DEPTH"
                       sensorId      1
                       children [
                         USE CAMERA_SHAPE

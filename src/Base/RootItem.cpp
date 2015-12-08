@@ -279,7 +279,7 @@ void RootItem::emitSigItemAssinged(Item* assigned, Item* srcItem)
 }
 
 
-ItemPtr RootItem::doDuplicate() const
+Item* RootItem::doDuplicate() const
 {
     return new RootItem(*this);
 }

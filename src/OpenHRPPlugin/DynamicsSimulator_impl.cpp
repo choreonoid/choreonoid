@@ -14,11 +14,9 @@ using namespace OpenHRP;
 DynamicsSimulator_impl::DynamicsSimulator_impl(const BodyPtr& body)
 {
     this->body = body;
-
-    DeviceList<Sensor> sensors(body->devices());
-    sensors.makeIdMap(forceSensorIdMap);
-    sensors.makeIdMap(gyroIdMap);
-    sensors.makeIdMap(accelSensorIdMap);
+    forceSensorIdMap = body->devices<ForceSensor>().getSortedById();
+    gyroIdMap = body->devices<RateGyroSensor>().getSortedById();
+    accelSensorIdMap = body->devices<AccelerationSensor>().getSortedById();
 }
 
 
@@ -98,7 +96,7 @@ void DynamicsSimulator_impl::getCharacterSensorValues
 (const char* character, const char* sensorName, DblSequence_out out_values)
 {
     DblSequence_var values = new DblSequence;
-    if(Sensor* sensor = body->findDevice<Sensor>(sensorName)){
+    if(Device* sensor = body->findDevice(sensorName)){
         values->length(sensor->stateSize());
         sensor->writeState(&values[0]);
     }

@@ -5,6 +5,7 @@
 
 #include "PolygonMeshTriangulator.h"
 #include "Triangulator.h"
+#include "SceneDrawables.h"
 #include <boost/format.hpp>
 
 using namespace std;
@@ -37,7 +38,7 @@ public:
     }
 
     PolygonMeshTriangulatorImpl();
-    SgMeshPtr triangulate(SgPolygonMesh& polygonMesh);
+    SgMesh* triangulate(SgPolygonMesh* polygonMesh);
     bool setIndices(
         SgIndexArray& indices, int numElements,
         const SgIndexArray& orgIndices, const SgIndexArray& orgPolygonVertices, int elementTypeId);
@@ -81,27 +82,27 @@ const std::string& PolygonMeshTriangulator::errorMessage() const
 }
 
 
-SgMeshPtr PolygonMeshTriangulator::triangulate(SgPolygonMesh& polygonMesh)
+SgMesh* PolygonMeshTriangulator::triangulate(SgPolygonMesh* polygonMesh)
 {
     return impl->triangulate(polygonMesh);
 }
 
 
-SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
+SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
 {
     errorMessage.clear();
     
-    const SgIndexArray& polygonVertices = orgMesh.polygonVertices();
+    const SgIndexArray& polygonVertices = orgMesh->polygonVertices();
 
-    if(!orgMesh.vertices() || polygonVertices.empty()){
+    if(!orgMesh->vertices() || polygonVertices.empty()){
         return SgMeshPtr();
     }
         
-    SgMeshPtr mesh = new SgMesh();
+    SgMesh* mesh = new SgMesh();
     if(isDeepCopyEnabled){
-        mesh->setVertices(new SgVertexArray(*orgMesh.vertices()));
+        mesh->setVertices(new SgVertexArray(*orgMesh->vertices()));
     } else {
-        mesh->setVertices(orgMesh.vertices());
+        mesh->setVertices(orgMesh->vertices());
     }
     const SgVertexArray& vertices = *mesh->vertices();
     const int numVertices = vertices.size();
@@ -155,12 +156,13 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
     }
     if(mesh->numTriangles() == 0){
         addErrorMessage("There is no valid polygons to triangulete.");
-        return SgMeshPtr(); // null
+        delete mesh;
+        return 0;
     }
 
-    SgNormalArray* normals = orgMesh.normals();
+    SgNormalArray* normals = orgMesh->normals();
     if(normals && !normals->empty()){
-        if(setIndices(mesh->normalIndices(), normals->size(), orgMesh.normalIndices(), polygonVertices, 0)){
+        if(setIndices(mesh->normalIndices(), normals->size(), orgMesh->normalIndices(), polygonVertices, 0)){
             if(isDeepCopyEnabled){
                 mesh->setNormals(new SgNormalArray(*normals));
             } else {
@@ -169,9 +171,9 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
         }
     }
 
-    SgColorArray* colors = orgMesh.colors();
+    SgColorArray* colors = orgMesh->colors();
     if(colors && !colors->empty()){
-        if(setIndices(mesh->colorIndices(), colors->size(), orgMesh.colorIndices(), polygonVertices, 1)){
+        if(setIndices(mesh->colorIndices(), colors->size(), orgMesh->colorIndices(), polygonVertices, 1)){
             if(isDeepCopyEnabled){
                 mesh->setColors(new SgColorArray(*colors));
             } else {
@@ -180,9 +182,9 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
         }
     }
 
-    SgTexCoordArray* texCoords = orgMesh.texCoords();
+    SgTexCoordArray* texCoords = orgMesh->texCoords();
     if(texCoords && !texCoords->empty()){
-        if(setIndices(mesh->texCoordIndices(), texCoords->size(), orgMesh.texCoordIndices(), polygonVertices, 2)){
+        if(setIndices(mesh->texCoordIndices(), texCoords->size(), orgMesh->texCoordIndices(), polygonVertices, 2)){
             if(isDeepCopyEnabled){
                 mesh->setTexCoords(new SgTexCoordArray(*texCoords));
             } else {
@@ -191,7 +193,7 @@ SgMeshPtr PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh& orgMesh)
         }
     }
 
-    mesh->setSolid(orgMesh.isSolid());
+    mesh->setSolid(orgMesh->isSolid());
     mesh->updateBoundingBox();
 
     return mesh;

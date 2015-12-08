@@ -151,7 +151,7 @@ ItemImpl::~ItemImpl()
 }
 
 
-ItemPtr OpenHRPInterpreterServiceItem::doDuplicate() const
+Item* OpenHRPInterpreterServiceItem::doDuplicate() const
 {
     return new OpenHRPInterpreterServiceItem(*this);
 }
