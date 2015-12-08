@@ -11,6 +11,8 @@
 #include <cnoid/STLSceneLoader>
 #include <map>
 #include <list>
+#include <cnoid/SceneGraph>
+#include <cnoid/SceneShape>
 #include <cnoid/DaeParser>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
