@@ -21,6 +21,8 @@
 #include <agxDriveTrain/Gear.h>
 #include <agxDriveTrain/Shaft.h>
 #include <agxPowerLine/TranslationalUnit.h>
+#include <agxUtil/Convert/Convert.h>
+#include <agx/PrismaticUniversalJoint.h>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
@@ -130,6 +132,7 @@ public :
     vector<AgXLink*> constraintLinks;
     int customConstraintIndex;
     agxPowerLine::Unit* unit;
+    bool isHRP2;
 
     AgXLink(AgXSimulatorItemImpl* simImpl, AgXBody* agxXBody, AgXLink* parent,
                   const Vector3& parentOrigin, Link* link);
@@ -458,6 +461,7 @@ public:
                 controller->setEnable(true);
             controllers.push_back(controller);
         }
+
         angles.reserve(agxLinks.size());
         for(size_t i=0; i<rotateJoints.size(); i++)
             angles[rotateJoints[i]] = i;
@@ -596,6 +600,11 @@ AgXLink::AgXLink
     parent(parent),
     unit(0)
 {
+    if(agxBody->body()->name().find("HRP2",0) == string::npos)
+        isHRP2 = false;
+    else
+        isHRP2 = true;
+
     agxBody->agxLinks.push_back(this);
 
     origin = parentOrigin + link->b();
@@ -656,6 +665,8 @@ void AgXLink::createLinkBody(bool isStatic)
     for(  ; parent && !parent->agxRigidBody; parent = parent->parent ){
         constraintLinks.push_back(parent);
     }
+    if(constraintLinks.size())
+        constraintLinks.push_back(this);
 
     agxRigidBody = new agx::RigidBody();
     agx::ref_ptr<AgXLinkContainer> agxLinkC = new AgXLinkContainer(this);
@@ -666,10 +677,9 @@ void AgXLink::createLinkBody(bool isStatic)
         agxRigidBody->setMotionControl(agx::RigidBody::DYNAMICS);
         agxRigidBody->getMassProperties()->setAutoGenerateMask(0);
         agxRigidBody->getMassProperties()->setMass(link->m(), false);
-#if 1
+#if 0
         Matrix3 I = link->I();
         if(constraintLinks.size()){
-            constraintLinks.push_back(this);
             for(size_t i=0; i<constraintLinks.size(); i++){
                 Link* link_ = constraintLinks[i]->link;
                 if(link_->jointType()==Link::ROTATIONAL_JOINT){
@@ -698,15 +708,49 @@ void AgXLink::createLinkBody(bool isStatic)
     if(!constraintLinks.size())
         createJoint();
     else{
-        for(size_t i=1; i<constraintLinks.size(); i++){
-            Vector3 v = constraintLinks[i-1]->origin - constraintLinks[i]->origin;
-            if(!v.isZero()) return;
-        }
-        agx::ref_ptr< CustomConstraint > customConstraint = new CustomConstraint( parent, constraintLinks );
-        simImpl->agxSimulation->add( customConstraint );
-        for(size_t i=0; i<constraintLinks.size(); i++){
-            constraintLinks[i]->customConstraintIndex = i;
-            constraintLinks[i]->joint = customConstraint;
+        if(isHRP2){
+            agx::FrameRef attFrame0 = new agx::Frame();
+            agx::FrameRef attFrame1 = new agx::Frame();
+            const Vector3& a = constraintLinks[1]->link->b();
+            attFrame1->setTranslate( a(0), a(1), a(2) );
+            agx::PrismaticUniversalJointRef prismaticUniversal = new agx::PrismaticUniversalJoint(
+                    agxRigidBody, attFrame0, parent->agxRigidBody, attFrame1 );
+            agx::Real complianceZ = agxUtil::convert::convertSpringConstantToCompliance( 3.0e5 );
+            agx::Real complianceX = agxUtil::convert::convertSpringConstantToCompliance( 620 );
+            agx::Real complianceY = agxUtil::convert::convertSpringConstantToCompliance( 620 );
+            agx::Real spookDampingZ = agxUtil::convert::convertDampingCoefficientToSpookDamping( 200, 3.0e5 );
+            agx::Real spookDampingX = agxUtil::convert::convertDampingCoefficientToSpookDamping( 25, 620 );
+            agx::Real spookDampingY = agxUtil::convert::convertDampingCoefficientToSpookDamping( 25, 620 );
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setPosition(0.0);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setCompliance(complianceZ);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setDamping(spookDampingZ);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setEnable(true);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_1)->setPosition(0.0);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_1)->setCompliance(complianceX);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_1)->setDamping(spookDampingX);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_1)->setEnable(true);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_2)->setPosition(0.0);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_2)->setCompliance(complianceY);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_2)->setDamping(spookDampingY);
+            prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_2)->setEnable(true);
+            simImpl->agxSimulation->add( prismaticUniversal );
+            for(size_t i=0; i<constraintLinks.size(); i++){
+                constraintLinks[i]->joint = prismaticUniversal;
+            }
+            constraintLinks[0]->customConstraintIndex = agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_1;
+            constraintLinks[1]->customConstraintIndex = agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1;
+            constraintLinks[2]->customConstraintIndex = agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_2;
+        }else{
+            for(size_t i=1; i<constraintLinks.size(); i++){
+                Vector3 v = constraintLinks[i-1]->origin - constraintLinks[i]->origin;
+                if(!v.isZero()) return;
+            }
+            agx::ref_ptr< CustomConstraint > customConstraint = new CustomConstraint( parent, constraintLinks );
+            simImpl->agxSimulation->add( customConstraint );
+            for(size_t i=0; i<constraintLinks.size(); i++){
+                constraintLinks[i]->customConstraintIndex = i;
+                constraintLinks[i]->joint = customConstraint;
+            }
         }
     }
 }
@@ -948,6 +992,12 @@ void AgXLink::getKinematicStateFromAgX()
                 double oldq = link->q();
                 link->q() = jointCustom->getAngle(customConstraintIndex);
                 link->dq() = ( link->q() - oldq ) / simImpl->timeStep;
+                break;
+            }
+            agx::PrismaticUniversalJoint* pujoint = dynamic_cast<agx::PrismaticUniversalJoint*>(joint);
+            if(pujoint){
+                link->q() = pujoint->getAngle(customConstraintIndex);
+                link->dq() = pujoint->getCurrentSpeed(customConstraintIndex);
                 break;
             }
         }
@@ -1506,7 +1556,7 @@ void AgXSimulatorItemImpl::store(Archive& archive)
     archive.write("friction", friction);
     archive.write("restitution", restitution);
     archive.write("frictionModelType", frictionModelType.selectedSymbol());
-    archive.write("frictionModelType", frictionSolveType.selectedSymbol());
+    archive.write("frictionSolveType", frictionSolveType.selectedSymbol());
     archive.write("numThreads", numThreads);
     archive.write("contactReductionMode", contactReductionMode.selectedSymbol());
     archive.write("contactReductionBinResolution", contactReductionBinResolution);
