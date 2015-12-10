@@ -16,6 +16,7 @@ class Archive;
 class MenuManager;
 class ViewArea;
 class ViewAreaImpl;
+class ViewManagerImpl;
 
 class CNOID_EXPORT ViewClass
 {
@@ -48,6 +49,10 @@ public:
         return sigDeactivated_;
     }
 
+    SignalProxy<void()> sigRemoved() {
+        return sigRemoved_;
+    }
+    
     enum LayoutArea { LEFT = 0,
                       LEFT_TOP = 0,
                       LEFT_BOTTOM = 1,
@@ -92,6 +97,7 @@ private:
 
     Signal<void()> sigActivated_;
     Signal<void()> sigDeactivated_;
+    Signal<void()> sigRemoved_;
 
     LayoutArea defaultLayoutArea_;
     bool isFontSizeZoomKeysEnabled;
@@ -100,6 +106,7 @@ private:
     void zoomFontSizeSub(int zoom, const QList<QWidget*>& widgets);
 
     friend class ViewAreaImpl;
+    friend class ViewManagerImpl;
 };
 
 }
