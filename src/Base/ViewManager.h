@@ -65,7 +65,6 @@ public:
     // for loading the view layout format of the version 1.4 or earlier
     static View* getOrCreateViewOfDefaultName(const std::string& defaultName);
 
-    // for the compatibility to the version 1.4 or earlier
     static std::vector<View*> allViews();
         
     template <class ViewType> static ViewType* getOrCreateView(bool doMountCreatedView = false) {
