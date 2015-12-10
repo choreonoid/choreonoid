@@ -28,6 +28,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Sensor>
@@ -1430,8 +1431,8 @@ bool AgXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         if(!agxBody->sensorHelper.forceSensors().empty()){
             agxBody->updateForceSensors();
         }
-        if(agxBody->sensorHelper.hasGyroOrAccelSensors()){
-            agxBody->sensorHelper.updateGyroAndAccelSensors();
+        if(agxBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            agxBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
 

@@ -9,6 +9,7 @@
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/BasicSensorSimulationHelper>
@@ -796,7 +797,7 @@ void PhysXBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(size_t i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         const PxJoint* joint = physXLinks[link->index()]->pxJoint;
         PxVec3 force, torque;
@@ -1115,8 +1116,8 @@ bool PhysXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& 
             physXBody->updateForceSensors();
         }
 
-        if(physXBody->sensorHelper.hasGyroOrAccelSensors()){
-            physXBody->sensorHelper.updateGyroAndAccelSensors();
+        if(physXBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            physXBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
 

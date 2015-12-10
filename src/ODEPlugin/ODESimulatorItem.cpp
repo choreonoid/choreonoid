@@ -9,6 +9,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -810,7 +811,7 @@ void ODEBody::updateForceSensors(bool flipYZ)
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(int i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         const dJointFeedback& fb = forceSensorFeedbacks[i];
         Vector3 f, tau;
@@ -1293,8 +1294,8 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
             odeBody->updateForceSensors(flipYZ);
         }
         odeBody->getKinematicStateFromODE(flipYZ);
-        if(odeBody->sensorHelper.hasGyroOrAccelSensors()){
-            odeBody->sensorHelper.updateGyroAndAccelSensors();
+        if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            odeBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
 
