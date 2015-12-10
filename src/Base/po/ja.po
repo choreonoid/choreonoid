@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-30 15:35+0900\n"
+"POT-Creation-Date: 2015-12-06 22:52+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -41,11 +41,11 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: App.cpp:231 App.cpp:385
+#: App.cpp:233 App.cpp:387
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:235
+#: App.cpp:237
 msgid "Vertical Sync"
 msgstr "垂直同期"
 
@@ -93,7 +93,7 @@ msgstr "キャプチャバー"
 msgid "Capture the image of a view or toolbar"
 msgstr "ビューやツールバーの画像をキャプチャします"
 
-#: DescriptionDialog.cpp:28 SceneWidget.cpp:3059
+#: DescriptionDialog.cpp:28 MovieRecorder.cpp:229 SceneWidget.cpp:3061
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -137,87 +137,87 @@ msgstr "プロジェクトを保存"
 msgid "FolderItem"
 msgstr "フォルダアイテム"
 
-#: GraphBar.cpp:106
+#: GraphBar.cpp:107
 msgid "GraphBar"
 msgstr "グラフバー"
 
-#: GraphBar.cpp:121
+#: GraphBar.cpp:122
 msgid "Plot trajectories of the target data on the graph view"
 msgstr "対象データの軌道をグラフビューにプロット"
 
-#: GraphBar.cpp:128
+#: GraphBar.cpp:129
 msgid "Plot velocity trajectories"
 msgstr "速度軌道のプロット"
 
-#: GraphBar.cpp:134
+#: GraphBar.cpp:135
 msgid "Plot acceleration trajectories"
 msgstr "加速度軌道のプロット"
 
-#: GraphBar.cpp:142 TimeBar.cpp:328
-msgid "Open the setup dialog"
-msgstr "設定ダイアログを開きます"
+#: GraphBar.cpp:143 MovieRecorder.cpp:148 SceneBar.cpp:147 TimeBar.cpp:330
+msgid "Show the config dialog"
+msgstr "設定ダイアログの表示"
 
-#: GraphBar.cpp:157
-msgid "Graph Setup"
+#: GraphBar.cpp:158
+msgid "Graph Config"
 msgstr "グラフ設定"
 
-#: GraphBar.cpp:163
+#: GraphBar.cpp:164
 msgid "Line width"
 msgstr "線幅"
 
-#: GraphBar.cpp:175
+#: GraphBar.cpp:176
 msgid "y-range, 10^"
 msgstr "y軸範囲"
 
-#: GraphBar.cpp:186
+#: GraphBar.cpp:187
 msgid "Show limit values"
 msgstr "リミット値の表示"
 
-#: GraphBar.cpp:195
+#: GraphBar.cpp:196
 msgid "Show grid"
 msgstr "グリッドの表示"
 
-#: GraphBar.cpp:210
+#: GraphBar.cpp:211
 msgid "Show rulers"
 msgstr "定規の表示"
 
-#: GraphBar.cpp:220
+#: GraphBar.cpp:221
 msgid "Edit mode"
 msgstr "編集モード"
 
-#: GraphBar.cpp:229
+#: GraphBar.cpp:230
 msgid "Free line"
 msgstr "フリーライン編集モード"
 
-#: GraphBar.cpp:236
+#: GraphBar.cpp:237
 msgid "Line edit"
 msgstr "ライン編集モード"
 
-#: GraphBar.cpp:245
+#: GraphBar.cpp:246
 msgid "Control points"
 msgstr "制御点の表示"
 
-#: GraphBar.cpp:251
+#: GraphBar.cpp:252
 msgid "Step"
 msgstr "ステップ"
 
-#: GraphBar.cpp:259
+#: GraphBar.cpp:260
 msgid "Offset"
 msgstr "オフセット"
 
-#: GraphBar.cpp:270
+#: GraphBar.cpp:271
 msgid "Time bar sync"
 msgstr "タイムバーと同期"
 
-#: GraphBar.cpp:277
+#: GraphBar.cpp:278
 msgid "off"
 msgstr "オフ"
 
-#: GraphBar.cpp:278
+#: GraphBar.cpp:279
 msgid "cont."
 msgstr "連続"
 
-#: GraphBar.cpp:279
+#: GraphBar.cpp:280
 msgid "page"
 msgstr "ページ"
 
@@ -230,31 +230,31 @@ msgstr "グラフ位置 = (%1$.5f, %2$.5f)"
 msgid "Image"
 msgstr "画像"
 
-#: Item.cpp:794 MultiSeqItemCreationPanel.cpp:27
+#: Item.cpp:795 MultiSeqItemCreationPanel.cpp:27
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:798
+#: Item.cpp:799
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:803 MainWindow.cpp:167 PointSetItem.cpp:530 SceneItem.cpp:142
+#: Item.cpp:804 MainWindow.cpp:167 PointSetItem.cpp:531 SceneItem.cpp:142
 msgid "File"
 msgstr "ファイル"
 
-#: Item.cpp:806
+#: Item.cpp:807
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:807
+#: Item.cpp:808
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:808
+#: Item.cpp:809
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:809
+#: Item.cpp:810
 msgid "Refs"
 msgstr "参照数"
 
@@ -572,69 +572,98 @@ msgstr "メッセージ"
 msgid "Warning"
 msgstr "警告"
 
-#: MovieGenerator.cpp:98 MovieGenerator.cpp:106
+#: MovieGenerator.cpp:99 MovieGenerator.cpp:107
 msgid "Movie Generator"
 msgstr "動画用連番ファイルの作成"
 
-#: MovieGenerator.cpp:118
+#: MovieGenerator.cpp:119 MovieRecorder.cpp:162
 msgid "Target view:"
 msgstr "対象ビュー"
 
-#: MovieGenerator.cpp:119 MovieGenerator.cpp:276
+#: MovieGenerator.cpp:120 MovieGenerator.cpp:277 MovieRecorder.cpp:163
+#: MovieRecorder.cpp:269
 msgid "Not specified"
 msgstr "未設定"
 
-#: MovieGenerator.cpp:125 MultiPointSetItem.cpp:515
+#: MovieGenerator.cpp:126 MovieRecorder.cpp:169 MultiPointSetItem.cpp:515
 msgid "Directory"
 msgstr "ディレクトリ"
 
-#: MovieGenerator.cpp:130
+#: MovieGenerator.cpp:131 MovieRecorder.cpp:174
 msgid "Select"
 msgstr "選択"
 
-#: MovieGenerator.cpp:137
+#: MovieGenerator.cpp:138 MovieRecorder.cpp:181
 msgid "Basename"
 msgstr "ベースファイル名"
 
-#: MovieGenerator.cpp:144
-msgid "Begin"
+#: MovieGenerator.cpp:145
+msgid "Start Time"
 msgstr "開始時刻"
 
-#: MovieGenerator.cpp:150
-msgid "End"
+#: MovieGenerator.cpp:151
+msgid "Finish Time"
 msgstr "終了時刻"
 
-#: MovieGenerator.cpp:168
+#: MovieGenerator.cpp:169 MovieRecorder.cpp:212
 msgid "Image size"
 msgstr "画像サイズ"
 
-#: MovieGenerator.cpp:186
+#: MovieGenerator.cpp:187
 msgid "&Generate"
 msgstr "生成(&G)"
 
-#: MovieGenerator.cpp:192
+#: MovieGenerator.cpp:193
 msgid "&Capture"
 msgstr "キャプチャー"
 
-#: MovieGenerator.cpp:197
+#: MovieGenerator.cpp:198
 msgid "&Stop"
 msgstr "停止(&S)"
 
-#: MovieGenerator.cpp:287
+#: MovieGenerator.cpp:288 MovieRecorder.cpp:281
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
 
-#: MovieGenerator.cpp:324
+#: MovieGenerator.cpp:325
 msgid "Please set a directory to output image files."
 msgstr "画像ファイルを出力するディレクトリを指定してください。"
 
-#: MovieGenerator.cpp:330
+#: MovieGenerator.cpp:331
 msgid "%1% is not a directory."
 msgstr "%1% はディレクトリではありません。"
 
-#: MovieGenerator.cpp:401
+#: MovieGenerator.cpp:402
 msgid "Saving an image to \"%1%\" failed."
 msgstr "画像を\"%1%\"に保存"
+
+#: MovieRecorder.cpp:115
+msgid "Movie Recorder"
+msgstr "動画レコーダ"
+
+#: MovieRecorder.cpp:142
+msgid "MovieRecorderBar"
+msgstr "動画レコーダバー"
+
+#: MovieRecorder.cpp:145
+msgid "Start Playback & Recording"
+msgstr "再生と録画を開始"
+
+#: MovieRecorder.cpp:146
+msgid "Start Recording"
+msgstr "録画開始"
+
+#: MovieRecorder.cpp:156
+msgid "Movie Recorder Config"
+msgstr "動画レコーダの設定"
+
+#: MovieRecorder.cpp:188
+msgid "Begin"
+msgstr "開始時刻"
+
+#: MovieRecorder.cpp:194
+msgid "End"
+msgstr "終了時刻"
 
 #: MultiAffine3SeqItem.cpp:15
 msgid "MultiAffine3SeqItem"
@@ -652,11 +681,11 @@ msgstr "複数点群アイテム"
 msgid "Multi Point Sets"
 msgstr "複数点群"
 
-#: MultiPointSetItem.cpp:179 PointSetItem.cpp:628
+#: MultiPointSetItem.cpp:179 PointSetItem.cpp:629
 msgid "Point"
 msgstr "点"
 
-#: MultiPointSetItem.cpp:180 PointSetItem.cpp:629
+#: MultiPointSetItem.cpp:180 PointSetItem.cpp:630
 msgid "Voxel"
 msgstr "ボクセル"
 
@@ -668,15 +697,15 @@ msgstr "自動保存"
 msgid "Num point sets"
 msgstr "点群数"
 
-#: MultiPointSetItem.cpp:517 PointSetItem.cpp:531
+#: MultiPointSetItem.cpp:517 PointSetItem.cpp:532
 msgid "Rendering mode"
 msgstr "描画モード"
 
-#: MultiPointSetItem.cpp:519 PointSetItem.cpp:533
+#: MultiPointSetItem.cpp:519 PointSetItem.cpp:534
 msgid "Point size"
 msgstr "デフォルト点サイズ"
 
-#: MultiPointSetItem.cpp:521 PointSetItem.cpp:535
+#: MultiPointSetItem.cpp:521 PointSetItem.cpp:536
 msgid "Voxel size"
 msgstr "ボクセルサイズ"
 
@@ -684,15 +713,15 @@ msgstr "ボクセルサイズ"
 msgid "Top translation"
 msgstr "最上位並進"
 
-#: MultiPointSetItem.cpp:725 PointSetItem.cpp:908
+#: MultiPointSetItem.cpp:725 PointSetItem.cpp:909
 msgid "PointSet: Clear Attention Points"
 msgstr "PointSet: 注視点のクリア"
 
-#: MultiPointSetItem.cpp:730 PointSetItem.cpp:913
+#: MultiPointSetItem.cpp:730 PointSetItem.cpp:914
 msgid "PointSet: Start Eraser Mode"
 msgstr "PointSet: 消去モード開始"
 
-#: MultiPointSetItem.cpp:739 PointSetItem.cpp:923
+#: MultiPointSetItem.cpp:739 PointSetItem.cpp:924
 msgid "PointSet: Exit Eraser Mode"
 msgstr "PointSet: 消去モード終了"
 
@@ -827,23 +856,23 @@ msgstr "プラグイン %1% を終了できません。"
 msgid "Plugin dll %1% has been unloaded."
 msgstr "プラグイン %1% のDLLが解放されました。"
 
-#: PointSetItem.cpp:141
+#: PointSetItem.cpp:142
 msgid "PointSetItem"
 msgstr "ポイントセットアイテム"
 
-#: PointSetItem.cpp:144
+#: PointSetItem.cpp:145
 msgid "Point Cloud (PCD)"
 msgstr "ポイントクラウド(PCD)"
 
-#: PointSetItem.cpp:537
+#: PointSetItem.cpp:538
 msgid "Editable"
 msgstr "編集可能"
 
-#: PointSetItem.cpp:539
+#: PointSetItem.cpp:540
 msgid "Num points"
 msgstr "ポイント数"
 
-#: PointSetItem.cpp:540 SceneItem.cpp:143
+#: PointSetItem.cpp:541 SceneItem.cpp:143
 msgid "Translation"
 msgstr "並進"
 
@@ -955,10 +984,6 @@ msgstr "干渉線の表示"
 msgid "Toggle the wireframe mode"
 msgstr "ワイヤフレーム表示"
 
-#: SceneBar.cpp:147
-msgid "Open the dialog to setup scene rendering"
-msgstr "シーンビューの設定ダイアログを開く"
-
 #: SceneBar.cpp:295
 msgid "Camera %1%"
 msgstr "カメラ %1%"
@@ -1007,184 +1032,184 @@ msgstr "STLファイルは読み込めませんでした。"
 msgid "SceneItem"
 msgstr "シーンアイテム"
 
-#: SceneView.cpp:82
+#: SceneView.cpp:83
 msgid "Scene"
 msgstr "シーン"
 
-#: SceneView.cpp:120
+#: SceneView.cpp:121
 msgid "Use dedicated item tree view checks to select the target items"
 msgstr "対象アイテム選択用の専用のチェックをアイテムツリービューに追加"
 
-#: SceneWidget.cpp:886
+#: SceneWidget.cpp:888
 msgid "FPS Test Result"
 msgstr "フレームレートテスト結果"
 
-#: SceneWidget.cpp:887
+#: SceneWidget.cpp:889
 msgid "FPS: %1 frames / %2 [s] = %3"
 msgstr "フレームレート: %1 フレーム / %2 [秒] = %3 [fps]"
 
-#: SceneWidget.cpp:1450
+#: SceneWidget.cpp:1452
 #, c-format
 msgid "Global Position = (%.3f %.3f %.3f)"
 msgstr "グローバル座標位置 = (%.3f %.3f %.3f)"
 
-#: SceneWidget.cpp:1874
+#: SceneWidget.cpp:1876
 msgid "Edit Mode"
 msgstr "編集モード"
 
-#: SceneWidget.cpp:1916
+#: SceneWidget.cpp:1918
 msgid "View Mode"
 msgstr "閲覧モード"
 
-#: SceneWidget.cpp:1976
+#: SceneWidget.cpp:1978
 msgid "Background Color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:1989
+#: SceneWidget.cpp:1991
 msgid "Floor Grid Color"
 msgstr "床グリッド色"
 
-#: SceneWidget.cpp:2002
+#: SceneWidget.cpp:2004
 msgid "Default Color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:2805
-msgid "SceneWidget Setup"
-msgstr "シーンビューの設定"
+#: SceneWidget.cpp:2807
+msgid "Scene Config"
+msgstr "シーン設定"
 
-#: SceneWidget.cpp:2811
+#: SceneWidget.cpp:2813
 msgid "Default Camera"
 msgstr "デフォルトカメラ"
 
-#: SceneWidget.cpp:2813
+#: SceneWidget.cpp:2815
 msgid "Field of view"
 msgstr "視野角"
 
-#: SceneWidget.cpp:2823
+#: SceneWidget.cpp:2825
 msgid "Clipping depth"
 msgstr "クリッピング深度"
 
-#: SceneWidget.cpp:2825
+#: SceneWidget.cpp:2827
 msgid "Near"
 msgstr "近隣"
 
-#: SceneWidget.cpp:2832
+#: SceneWidget.cpp:2834
 msgid "Far"
 msgstr "遠方"
 
-#: SceneWidget.cpp:2844
+#: SceneWidget.cpp:2846
 msgid "Light"
 msgstr "ライト"
 
-#: SceneWidget.cpp:2846
+#: SceneWidget.cpp:2848
 msgid "Lighiting"
 msgstr "照明"
 
-#: SceneWidget.cpp:2851
+#: SceneWidget.cpp:2853
 msgid "Smooth shading"
 msgstr "スムーズシェーディング"
 
-#: SceneWidget.cpp:2859
+#: SceneWidget.cpp:2861
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: SceneWidget.cpp:2864 SceneWidget.cpp:2884
+#: SceneWidget.cpp:2866 SceneWidget.cpp:2886
 msgid "Intensity"
 msgstr "照度"
 
-#: SceneWidget.cpp:2872
+#: SceneWidget.cpp:2874
 msgid "Back lighting"
 msgstr "裏面照射"
 
-#: SceneWidget.cpp:2879
+#: SceneWidget.cpp:2881
 msgid "World light"
 msgstr "ワールドライト"
 
-#: SceneWidget.cpp:2892
+#: SceneWidget.cpp:2894
 msgid "Ambient"
 msgstr "環境光"
 
-#: SceneWidget.cpp:2903
+#: SceneWidget.cpp:2905
 msgid "Additional lights"
 msgstr "追加のライト"
 
-#: SceneWidget.cpp:2911
+#: SceneWidget.cpp:2913
 msgid "Fog"
 msgstr "フォグ"
 
-#: SceneWidget.cpp:2918
+#: SceneWidget.cpp:2920
 msgid "Background"
 msgstr "背景"
 
-#: SceneWidget.cpp:2920
+#: SceneWidget.cpp:2922
 msgid "Background color"
 msgstr "背景色"
 
-#: SceneWidget.cpp:2933
+#: SceneWidget.cpp:2935
 msgid "Span"
 msgstr "長さ"
 
-#: SceneWidget.cpp:2943
+#: SceneWidget.cpp:2945
 msgid "Interval"
 msgstr "間隔"
 
-#: SceneWidget.cpp:2952
+#: SceneWidget.cpp:2954
 msgid "Color"
 msgstr "色"
 
-#: SceneWidget.cpp:2958
+#: SceneWidget.cpp:2960
 msgid "Show the floor grid"
 msgstr "床グリッド線の表示"
 
-#: SceneWidget.cpp:2959
+#: SceneWidget.cpp:2961
 msgid "Show the xz plane grid"
 msgstr "xz平面グリッド線の表示"
 
-#: SceneWidget.cpp:2960
+#: SceneWidget.cpp:2962
 msgid "Show the yz plane grid"
 msgstr "ｙｚ平面グリッド線の表示"
 
-#: SceneWidget.cpp:2967
+#: SceneWidget.cpp:2969
 msgid "Texture"
 msgstr "テクスチャ"
 
-#: SceneWidget.cpp:2975
+#: SceneWidget.cpp:2977
 msgid "Default color"
 msgstr "デフォルト色"
 
-#: SceneWidget.cpp:2979
+#: SceneWidget.cpp:2981
 msgid "Default line width"
 msgstr "デフォルトの線幅"
 
-#: SceneWidget.cpp:2987
+#: SceneWidget.cpp:2989
 msgid "Default point size"
 msgstr "デフォルト点サイズ"
 
-#: SceneWidget.cpp:2998
+#: SceneWidget.cpp:3000
 msgid "Do point rendering in the wireframe mode"
 msgstr "ワイヤフレームモードでポイントレンダリングを行う"
 
-#: SceneWidget.cpp:3007
+#: SceneWidget.cpp:3009
 msgid "Normal Visualization"
 msgstr "法線の表示"
 
-#: SceneWidget.cpp:3024
+#: SceneWidget.cpp:3026
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-#: SceneWidget.cpp:3030
+#: SceneWidget.cpp:3032
 msgid "Show FPS"
 msgstr "フレームレートの表示"
 
-#: SceneWidget.cpp:3035
+#: SceneWidget.cpp:3037
 msgid "Test"
 msgstr "テスト"
 
-#: SceneWidget.cpp:3042
+#: SceneWidget.cpp:3044
 msgid "Do double rendering when a new display list is created."
 msgstr "新規ディスプレイリスト生成時に二重にレンダリングを行う"
 
-#: SceneWidget.cpp:3049
+#: SceneWidget.cpp:3051
 msgid "Use an OpenGL pixel buffer for picking"
 msgstr "ピッキングにOpenGLピクセルバッファを使う"
 
@@ -1302,7 +1327,7 @@ msgstr ""
 "ファイルを読み込み直しますか？"
 
 #: TimeBar.cpp:64
-msgid "Time Bar Setup"
+msgid "Time Bar Config"
 msgstr "タイムバーの設定"
 
 #: TimeBar.cpp:70
@@ -1333,23 +1358,23 @@ msgstr "時間範囲の自動拡張"
 msgid "&OK"
 msgstr "&OK"
 
-#: TimeBar.cpp:268
+#: TimeBar.cpp:270
 msgid "TimeBar"
 msgstr "タイムバー"
 
-#: TimeBar.cpp:294
+#: TimeBar.cpp:296
 msgid "Start animation"
 msgstr "アニメーションの開始"
 
-#: TimeBar.cpp:297 TimeBar.cpp:672
+#: TimeBar.cpp:299 TimeBar.cpp:674
 msgid "Resume animation"
 msgstr "アニメーションの再生・停止"
 
-#: TimeBar.cpp:301
+#: TimeBar.cpp:303
 msgid "Refresh state at the current time"
 msgstr "現在時刻で状態を更新"
 
-#: TimeBar.cpp:644
+#: TimeBar.cpp:646
 msgid "Stop animation"
 msgstr "アニメーションの停止"
 
