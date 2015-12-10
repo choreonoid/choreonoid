@@ -117,8 +117,8 @@ public:
     SceneWidgetEditable* activeEventFilter();
     void removeEventFilter(SceneWidgetEditable* filter);
 
-    void showSetupDialog();
-    QVBoxLayout* setupDialogVBox();
+    void showConfigDialog();
+    QVBoxLayout* configDialogVBox();
 
     bool saveImage(const std::string& filename);
     QImage getImage();

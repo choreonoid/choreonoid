@@ -21,7 +21,7 @@ using namespace cnoid;
 
 namespace {
 
-class SetupDialog : public Dialog
+class ConfigDialog : public Dialog
 {
 public:
     ConnectionSet& connections;
@@ -43,7 +43,7 @@ public:
     CheckBox timeBarSyncToggle;
     ComboBox autoScrollModeCombo;
 
-    SetupDialog(GraphBarImpl* barImpl);
+    ConfigDialog(GraphBarImpl* barImpl);
     void focus(GraphWidget* graph);
         
     void onVerticalValueRangeChanged(double value);
@@ -79,7 +79,7 @@ public:
     ConnectionSet connections;
     GraphWidget* focusedGraphWidget;
 
-    SetupDialog setup;
+    ConfigDialog config;
         
     void focus(GraphWidget* graphWidget, bool forceUpdate);
     void onRenderingTypesToggled();
@@ -112,7 +112,7 @@ GraphBar::GraphBar() : ToolBar(N_("GraphBar"))
 
 GraphBarImpl::GraphBarImpl(GraphBar* self)
     : self(self),
-      setup(this)
+      config(this)
 {
     using boost::bind;
 
@@ -140,8 +140,8 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
         accRenderingToggle->sigToggled().connect(
             bind(&GraphBarImpl::onRenderingTypesToggled, this)));
 
-    self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the setup dialog"))
-        ->sigClicked().connect(bind(&QDialog::show, &setup));
+    self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+        ->sigClicked().connect(bind(&QDialog::show, &config));
 
     self->setEnabled(false);
     
@@ -149,13 +149,13 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
 }
 
 
-SetupDialog::SetupDialog(GraphBarImpl* barImpl)
+ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     : connections(barImpl->connections),
       focusedGraphWidget(barImpl->focusedGraphWidget)
 {
     using boost::bind;
     
-    setWindowTitle(_("Graph Setup"));
+    setWindowTitle(_("Graph Config"));
 
     QVBoxLayout* vbox = new QVBoxLayout();
     setLayout(vbox);
@@ -167,7 +167,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     lineWidthSpin.setValue(1);
     connections.add(
         lineWidthSpin.sigValueChanged().connect(
-            bind(&SetupDialog::onLineWidthChanged, this, _1)));
+            bind(&ConfigDialog::onLineWidthChanged, this, _1)));
     hbox->addWidget(&lineWidthSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -181,14 +181,14 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     verticalValueRangeSpin.setValue(1.0);
     connections.add(
         verticalValueRangeSpin.sigValueChanged().connect(
-            bind(&SetupDialog::onVerticalValueRangeChanged, this, _1)));
+            bind(&ConfigDialog::onVerticalValueRangeChanged, this, _1)));
     hbox->addWidget(&verticalValueRangeSpin);
 
     showLimitCheck.setText(_("Show limit values"));
     showLimitCheck.setChecked(true);
     connections.add(
         showLimitCheck.sigToggled().connect(
-            bind(&SetupDialog::onShowLimitToggled, this, _1)));
+            bind(&ConfigDialog::onShowLimitToggled, this, _1)));
     hbox->addWidget(&showLimitCheck);
     vbox->addLayout(hbox);
 
@@ -196,7 +196,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     gridCheck.setText(_("Show grid"));
     connections.add(
         gridCheck.sigToggled().connect(
-            bind(&SetupDialog::onGridToggled, this, _1)));
+            bind(&ConfigDialog::onGridToggled, this, _1)));
     hbox->addWidget(&gridCheck);
     
     gridSizeSpin.setDecimals(3);
@@ -205,14 +205,14 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     gridSizeSpin.setValue(0.2);
     connections.add(
         gridSizeSpin.sigValueChanged().connect(
-            bind(&SetupDialog::onGridSizeChanged, this, _1)));
+            bind(&ConfigDialog::onGridSizeChanged, this, _1)));
     hbox->addWidget(&gridSizeSpin);
     
     rulerCheck.setText(_("Show rulers"));
     rulerCheck.setEnabled(false);
     connections.add(
         rulerCheck.sigToggled().connect(
-            bind(&SetupDialog::onRulerToggled, this, _1)));
+            bind(&ConfigDialog::onRulerToggled, this, _1)));
     hbox->addWidget(&rulerCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -221,7 +221,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     editModeCheck.setText(_("Edit mode"));
     connections.add(
         editModeCheck.sigToggled().connect(
-            bind(&SetupDialog::onEditModeToggled, this, _1)));
+            bind(&ConfigDialog::onEditModeToggled, this, _1)));
     hbox->addWidget(&editModeCheck);
 
     radioGroup.addButton(&freeLineModeRadio);
@@ -231,13 +231,13 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     freeLineModeRadio.setChecked(true);
     connections.add(
         freeLineModeRadio.sigToggled().connect(
-            bind(&SetupDialog::onFreeLineModeToggled, this, _1)));
+            bind(&ConfigDialog::onFreeLineModeToggled, this, _1)));
     hbox->addWidget(&freeLineModeRadio);
     
     lineModeRadio.setText(_("Line edit"));
     connections.add(
         lineModeRadio.sigToggled().connect(
-            bind(&SetupDialog::onLineModeToggled, this, _1)));
+            bind(&ConfigDialog::onLineModeToggled, this, _1)));
     hbox->addWidget(&lineModeRadio);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -246,7 +246,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     highlightingControlPointCheck.setText(_("Control points"));
     connections.add(
         highlightingControlPointCheck.sigToggled().connect(
-            bind(&SetupDialog::onHighlightingControlPointToggled, this, _1)));
+            bind(&ConfigDialog::onHighlightingControlPointToggled, this, _1)));
     hbox->addWidget(&highlightingControlPointCheck);
     
     hbox->addWidget(new QLabel(_("Step")));
@@ -254,7 +254,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     controlPointStepSpin.setValue(1);
     connections.add(
         controlPointStepSpin.sigValueChanged().connect(
-            bind(&SetupDialog::onControlPointStepOrOffsetChanged, this)));
+            bind(&ConfigDialog::onControlPointStepOrOffsetChanged, this)));
     hbox->addWidget(&controlPointStepSpin);
     
     hbox->addWidget(new QLabel(_("Offset")));
@@ -262,7 +262,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     controlPointOffsetSpin.setValue(0);
     connections.add(
         controlPointOffsetSpin.sigValueChanged().connect(
-            bind(&SetupDialog::onControlPointStepOrOffsetChanged, this)));
+            bind(&ConfigDialog::onControlPointStepOrOffsetChanged, this)));
     hbox->addWidget(&controlPointOffsetSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -272,7 +272,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     timeBarSyncToggle.setChecked(true);
     connections.add(
         timeBarSyncToggle.sigToggled().connect(
-            bind(&SetupDialog::onTimeBarSyncToggled, this, _1)));
+            bind(&ConfigDialog::onTimeBarSyncToggled, this, _1)));
     hbox->addWidget(&timeBarSyncToggle);
 
     autoScrollModeCombo.addItem(_("off"));
@@ -281,7 +281,7 @@ SetupDialog::SetupDialog(GraphBarImpl* barImpl)
     autoScrollModeCombo.setCurrentIndex(1);
     connections.add(
         autoScrollModeCombo.sigCurrentIndexChanged().connect(
-            bind(&SetupDialog::onAutoScrollModeChanged, this, _1)));
+            bind(&ConfigDialog::onAutoScrollModeChanged, this, _1)));
     hbox->addWidget(&autoScrollModeCombo);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -321,14 +321,14 @@ void GraphBarImpl::focus(GraphWidget* graph, bool forceUpdate)
         velRenderingToggle->setChecked(vel);
         accRenderingToggle->setChecked(acc);
 
-        setup.focus(graph);
+        config.focus(graph);
 
         connections.unblock();
     }
 }
 
 
-void SetupDialog::focus(GraphWidget* graph)
+void ConfigDialog::focus(GraphWidget* graph)
 {
     editModeCheck.setChecked(graph->mode() == GraphWidget::EDIT_MODE);
 
@@ -379,7 +379,7 @@ void GraphBarImpl::onRenderingTypesToggled()
 }
 
 
-void SetupDialog::onVerticalValueRangeChanged(double value)
+void ConfigDialog::onVerticalValueRangeChanged(double value)
 {
     double upper = pow(10.0, value);
     double lower = -upper;
@@ -387,56 +387,56 @@ void SetupDialog::onVerticalValueRangeChanged(double value)
 }
 
 
-void SetupDialog::onLineWidthChanged(int value)
+void ConfigDialog::onLineWidthChanged(int value)
 {
     focusedGraphWidget->setLineWidth(value);
 }
         
 
-void SetupDialog::onShowLimitToggled(bool on)
+void ConfigDialog::onShowLimitToggled(bool on)
 {
     focusedGraphWidget->showLimits(on);
 }
 
 
-void SetupDialog::onGridToggled(bool on)
+void ConfigDialog::onGridToggled(bool on)
 {
     focusedGraphWidget->showGrid(on);
 }
 
 
-void SetupDialog::onGridSizeChanged(double size)
+void ConfigDialog::onGridSizeChanged(double size)
 {
     focusedGraphWidget->setGridSize(size, size);
 }
 
 
-void SetupDialog::onRulerToggled(bool on)
+void ConfigDialog::onRulerToggled(bool on)
 {
     focusedGraphWidget->showRulers(on);
 }
 
 
-void SetupDialog::onTimeBarSyncToggled(bool on)
+void ConfigDialog::onTimeBarSyncToggled(bool on)
 {
     focusedGraphWidget->setTimeBarSyncMode(on);
 }
 
 
-void SetupDialog::onAutoScrollModeChanged(int index)
+void ConfigDialog::onAutoScrollModeChanged(int index)
 {
     focusedGraphWidget->setAutoScrollMode((GraphWidget::ScrollMode)index);
 }
 
 
-void SetupDialog::onEditModeToggled(bool on)
+void ConfigDialog::onEditModeToggled(bool on)
 {
     GraphWidget::Mode mode = on ? GraphWidget::EDIT_MODE : GraphWidget::VIEW_MODE;
     focusedGraphWidget->changeMode(mode);
 }
 
 
-void SetupDialog::onFreeLineModeToggled(bool on)
+void ConfigDialog::onFreeLineModeToggled(bool on)
 {
     if(on){
         focusedGraphWidget->changeEditMode(GraphWidget::FREE_LINE_MODE);
@@ -444,7 +444,7 @@ void SetupDialog::onFreeLineModeToggled(bool on)
 }
 
 
-void SetupDialog::onLineModeToggled(bool on)
+void ConfigDialog::onLineModeToggled(bool on)
 {
     if(on){
         focusedGraphWidget->changeEditMode(GraphWidget::LINE_MODE);
@@ -452,14 +452,14 @@ void SetupDialog::onLineModeToggled(bool on)
 }
 
 
-void SetupDialog::onControlPointStepOrOffsetChanged()
+void ConfigDialog::onControlPointStepOrOffsetChanged()
 {
     focusedGraphWidget->setControlPointStep(
         controlPointStepSpin.value(), controlPointOffsetSpin.value());
 }
 
 
-void SetupDialog::onHighlightingControlPointToggled(bool on)
+void ConfigDialog::onHighlightingControlPointToggled(bool on)
 {
     focusedGraphWidget->highlightControlPoints(on);
 }

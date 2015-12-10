@@ -97,7 +97,7 @@ public:
 
 enum Plane { FLOOR = 0, XZ, YZ };
 
-class SetupDialog : public Dialog
+class ConfigDialog : public Dialog
 {
 public:
     QVBoxLayout* vbox;
@@ -135,7 +135,7 @@ public:
 
     LazyCaller updateDefaultLightsLater;
 
-    SetupDialog(SceneWidgetImpl* impl);
+    ConfigDialog(SceneWidgetImpl* impl);
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
 };
@@ -261,7 +261,7 @@ public:
     Timer fpsRenderingTimer;
     bool fpsRendered;
 
-    SetupDialog* setup;
+    ConfigDialog* config;
     QLabel* indicatorLabel;
 
     MenuManager menuManager;
@@ -525,7 +525,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
     numBuiltinCameras = 2;
     systemGroup->addChild(builtinCameraTransform);
 
-    setup = new SetupDialog(this);
+    config = new ConfigDialog(this);
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
@@ -547,7 +547,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     for(int i=0; i<3; i++){
     	grid[i] = new SgCustomGLNode(boost::bind(&SceneWidgetImpl::renderGrid, this, _1, static_cast<Plane>(i)));
-    	activateSystemNode(grid[i], setup->gridCheck[i].isChecked());
+    	activateSystemNode(grid[i], config->gridCheck[i].isChecked());
     }
     grid[FLOOR]->setName("FloorGrid");
     grid[XZ]->setName("XZplaneGrid");
@@ -577,7 +577,7 @@ SceneWidgetImpl::~SceneWidgetImpl()
         delete buffer;
     }
     delete indicatorLabel;
-    delete setup;
+    delete config;
 }
 
 
@@ -719,7 +719,7 @@ void SceneWidgetImpl::paintGL()
 
 void SceneWidgetImpl::renderGrid(GLSceneRenderer& renderer, Plane p)
 {
-    if(!setup->gridCheck[p].isChecked()){
+    if(!config->gridCheck[p].isChecked()){
         return;
     }
 
@@ -728,8 +728,8 @@ void SceneWidgetImpl::renderGrid(GLSceneRenderer& renderer, Plane p)
 
     renderer.setColor(gridColor[p]);
 
-    float half = setup->gridSpanSpin[p].value() / 2.0f;
-    float interval = setup->gridIntervalSpin[p].value();
+    float half = config->gridSpanSpin[p].value() / 2.0f;
+    float interval = config->gridIntervalSpin[p].value();
     float i = 0.0f;
     float x = 0.0f;
 
@@ -885,7 +885,7 @@ void SceneWidgetImpl::doFPSTest()
     fps = 360.0 / time;
     fpsCounter = 0;
 
-    QMessageBox::information(setup, _("FPS Test Result"),
+    QMessageBox::information(config, _("FPS Test Result"),
                              QString(_("FPS: %1 frames / %2 [s] = %3")).arg(360).arg(time).arg(fps));
 
     update();
@@ -1063,7 +1063,7 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    if(setup->bufferForPickingCheck.isChecked()){
+    if(config->bufferForPickingCheck.isChecked()){
         const QSize s = size();
         if(buffer && (buffer->size() != s)){
             buffer->makeCurrent();
@@ -2127,11 +2127,11 @@ void SceneWidgetImpl::setPolygonMode(int mode)
     int oldMode = polygonMode.which();
 
     if(mode == SceneWidget::POINT_MODE){
-        setup->pointRenderingModeCheckConnection.block();
-        setup->pointRenderingModeCheck.setChecked(true);
-        setup->pointRenderingModeCheckConnection.unblock();
+        config->pointRenderingModeCheckConnection.block();
+        config->pointRenderingModeCheck.setChecked(true);
+        config->pointRenderingModeCheckConnection.unblock();
     }
-    if(mode == SceneWidget::LINE_MODE && setup->pointRenderingModeCheck.isChecked()){
+    if(mode == SceneWidget::LINE_MODE && config->pointRenderingModeCheck.isChecked()){
         polygonMode.select(SceneWidget::POINT_MODE);
     } else {
         polygonMode.select(mode);
@@ -2199,15 +2199,15 @@ bool SceneWidget::collisionLinesVisible() const
 
 void SceneWidgetImpl::onFieldOfViewChanged()
 {
-    builtinPersCamera->setFieldOfView(PI * setup->fieldOfViewSpin.value() / 180.0);
+    builtinPersCamera->setFieldOfView(PI * config->fieldOfViewSpin.value() / 180.0);
     builtinPersCamera->notifyUpdate(modified);
 }
 
 
 void SceneWidgetImpl::onClippingDepthChanged()
 {
-    double zNear = setup->zNearSpin.value();
-    double zFar = setup->zFarSpin.value();
+    double zNear = config->zNearSpin.value();
+    double zFar = config->zFarSpin.value();
     builtinPersCamera->setNearDistance(zNear);
     builtinPersCamera->setFarDistance(zFar);
     builtinOrthoCamera->setNearDistance(zNear);
@@ -2234,17 +2234,17 @@ void SceneWidgetImpl::onSmoothShadingToggled(bool on)
 void SceneWidgetImpl::updateDefaultLights()
 {
     SgLight* headLight = renderer.headLight();
-    headLight->on(setup->headLightCheck.isChecked());
-    headLight->setIntensity(setup->headLightIntensitySpin.value());
-    renderer.setHeadLightLightingFromBackEnabled(setup->headLightFromBackCheck.isChecked());
+    headLight->on(config->headLightCheck.isChecked());
+    headLight->setIntensity(config->headLightIntensitySpin.value());
+    renderer.setHeadLightLightingFromBackEnabled(config->headLightFromBackCheck.isChecked());
 
-    worldLight->on(setup->worldLightCheck.isChecked());
-    worldLight->setIntensity(setup->worldLightIntensitySpin.value());
-    worldLight->setAmbientIntensity(setup->worldLightAmbientSpin.value());
+    worldLight->on(config->worldLightCheck.isChecked());
+    worldLight->setIntensity(config->worldLightIntensitySpin.value());
+    worldLight->setAmbientIntensity(config->worldLightAmbientSpin.value());
 
-    renderer.enableAdditionalLights(setup->additionalLightsCheck.isChecked());
+    renderer.enableAdditionalLights(config->additionalLightsCheck.isChecked());
 
-    renderer.enableFog(setup->fogCheck.isChecked());
+    renderer.enableFog(config->fogCheck.isChecked());
 
     worldLight->notifyUpdate(modified);
 }
@@ -2252,8 +2252,8 @@ void SceneWidgetImpl::updateDefaultLights()
 
 void SceneWidgetImpl::onNormalVisualizationChanged()
 {
-    if(setup->normalVisualizationCheck.isChecked()){
-        renderer.showNormalVectors(setup->normalLengthSpin.value());
+    if(config->normalVisualizationCheck.isChecked()){
+        renderer.showNormalVectors(config->normalLengthSpin.value());
     } else {
         renderer.showNormalVectors(0.0);
     }
@@ -2263,103 +2263,103 @@ void SceneWidgetImpl::onNormalVisualizationChanged()
 
 void SceneWidget::setHeadLightIntensity(double value)
 {
-    impl->setup->headLightIntensitySpin.setValue(value);
+    impl->config->headLightIntensitySpin.setValue(value);
 }
 
 
 void SceneWidget::setWorldLightIntensity(double value)
 {
-    impl->setup->worldLightIntensitySpin.setValue(value);
+    impl->config->worldLightIntensitySpin.setValue(value);
 }
 
 
 void SceneWidget::setWorldLightAmbient(double value)
 {
-    impl->setup->worldLightAmbientSpin.setValue(value);
+    impl->config->worldLightAmbientSpin.setValue(value);
 }
 
 
 void SceneWidget::setFloorGridSpan(double value)
 {
-    impl->setup->gridSpanSpin[FLOOR].setValue(value);
+    impl->config->gridSpanSpin[FLOOR].setValue(value);
 }
 
 
 void SceneWidget::setFloorGridInterval(double value)
 {
-    impl->setup->gridIntervalSpin[FLOOR].setValue(value);
+    impl->config->gridIntervalSpin[FLOOR].setValue(value);
 }
 
 
 void SceneWidget::setLineWidth(double value)
 {
-    impl->setup->lineWidthSpin.setValue(value);
+    impl->config->lineWidthSpin.setValue(value);
 }
 
 
 void SceneWidget::setPointSize(double value)
 {
-    impl->setup->pointSizeSpin.setValue(value);
+    impl->config->pointSizeSpin.setValue(value);
 }
 
 
 void SceneWidget::setNormalLength(double value)
 {
-    impl->setup->normalLengthSpin.setValue(value);
+    impl->config->normalLengthSpin.setValue(value);
 }
 
 
 void SceneWidget::setHeadLightEnabled(bool on)
 {
-    impl->setup->headLightCheck.setChecked(on);
+    impl->config->headLightCheck.setChecked(on);
 }
 
 
 void SceneWidget::setHeadLightLightingFromBack(bool on)
 {
-    impl->setup->headLightFromBackCheck.setChecked(on);
+    impl->config->headLightFromBackCheck.setChecked(on);
 }
 
 
 void SceneWidget::setWorldLight(bool on)
 {
-    impl->setup->worldLightCheck.setChecked(on);
+    impl->config->worldLightCheck.setChecked(on);
 }
 
 
 void SceneWidget::setAdditionalLights(bool on)
 {
-    impl->setup->additionalLightsCheck.setChecked(on);
+    impl->config->additionalLightsCheck.setChecked(on);
 }
 
 
 void SceneWidget::setFloorGrid(bool on)
 {
-    impl->setup->gridCheck[FLOOR].setChecked(on);
+    impl->config->gridCheck[FLOOR].setChecked(on);
 }
 
 
 void SceneWidget::setNormalVisualization(bool on)
 {
-    impl->setup->normalVisualizationCheck.setChecked(on);
+    impl->config->normalVisualizationCheck.setChecked(on);
 }
 
 
 void SceneWidget::setCoordinateAxes(bool on)
 {
-    impl->setup->coordinateAxesCheck.setChecked(on);
+    impl->config->coordinateAxesCheck.setChecked(on);
 }
 
 
 void SceneWidget::setNewDisplayListDoubleRenderingEnabled(bool on)
 {
-    impl->setup->newDisplayListDoubleRenderingCheck.setChecked(on);
+    impl->config->newDisplayListDoubleRenderingCheck.setChecked(on);
 }
 
 
 void SceneWidget::setUseBufferForPicking(bool on)
 {
-    impl->setup->bufferForPickingCheck.setChecked(on);
+    impl->config->bufferForPickingCheck.setChecked(on);
 }
 
 
@@ -2402,25 +2402,25 @@ void SceneWidget::setHeight(double value)
 
 void SceneWidget::setNear(double value)
 {
-    impl->setup->zNearSpin.setValue(value);
+    impl->config->zNearSpin.setValue(value);
 }
 
 
 void SceneWidget::setFar(double value)
 {
-    impl->setup->zFarSpin.setValue(value);
+    impl->config->zFarSpin.setValue(value);
 }
 
 
-void SceneWidget::showSetupDialog()
+void SceneWidget::showConfigDialog()
 {
-    impl->setup->show();
+    impl->config->show();
 }
 
 
-QVBoxLayout* SceneWidget::setupDialogVBox()
+QVBoxLayout* SceneWidget::configDialogVBox()
 {
-    return impl->setup->vbox;
+    return impl->config->vbox;
 }
 
 
@@ -2480,7 +2480,7 @@ bool SceneWidgetImpl::storeState(Archive& archive)
     archive.write("collisionLines", collisionLinesVisible);
     archive.write("polygonMode", polygonMode.selectedSymbol());
 
-    setup->storeState(archive);
+    config->storeState(archive);
 
     ListingPtr cameraListing = new Listing();
     set<SgPosTransform*> storedTransforms;
@@ -2584,7 +2584,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 
     setCollisionLinesVisible(archive.get("collisionLines", collisionLinesVisible));
     
-    setup->restoreState(archive);
+    config->restoreState(archive);
 
     const Listing& cameraListing = *archive.findListing("cameras");
     if(cameraListing.isValid()){
@@ -2612,8 +2612,8 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
                 builtinOrthoCamera->setHeight(height);
                 doUpdate = true;
             }
-            setup->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
-            setup->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
+            config->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
+            config->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
         
             archive.addPostProcess(
                 boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)),
@@ -2788,7 +2788,7 @@ void SceneWidgetImpl::setupCoordinateAxes()
     zAxis->addChild(zCylinderShape);
     zAxis->addChild(ztransform);
 
-    activateSystemNode(coordinateAxes, setup->coordinateAxesCheck.isChecked());
+    activateSystemNode(coordinateAxes, config->coordinateAxesCheck.isChecked());
 }
 
 
@@ -2802,9 +2802,9 @@ void SceneWidgetImpl::activateSystemNode(SgNodePtr node, bool on)
 }
 
 
-SetupDialog::SetupDialog(SceneWidgetImpl* impl)
+ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
 {
-    setWindowTitle(_("SceneWidget Setup"));
+    setWindowTitle(_("Scene Config"));
 
     QVBoxLayout* topVBox = new QVBoxLayout();
     vbox = new QVBoxLayout();
@@ -3069,7 +3069,7 @@ SetupDialog::SetupDialog(SceneWidgetImpl* impl)
 }
 
 
-void SetupDialog::storeState(Archive& archive)
+void ConfigDialog::storeState(Archive& archive)
 {
     archive.write("defaultHeadLight", headLightCheck.isChecked());
     archive.write("defaultHeadLightIntensity", headLightIntensitySpin.value());
@@ -3100,7 +3100,7 @@ void SetupDialog::storeState(Archive& archive)
 }
 
 
-void SetupDialog::restoreState(const Archive& archive)
+void ConfigDialog::restoreState(const Archive& archive)
 {
     headLightCheck.setChecked(archive.get("defaultHeadLight", headLightCheck.isChecked()));
     headLightIntensitySpin.setValue(archive.get("defaultHeadLightIntensity", headLightIntensitySpin.value()));

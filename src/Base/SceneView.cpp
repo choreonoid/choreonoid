@@ -115,7 +115,7 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     vbox->addWidget(sceneWidget);
     self->setLayout(vbox);
 
-    vbox = sceneWidget->setupDialogVBox();
+    vbox = sceneWidget->configDialogVBox();
     vbox->addWidget(new HSeparator);
     QHBoxLayout* hbox = new QHBoxLayout;
     dedicatedCheckCheck.setText(_("Use dedicated item tree view checks to select the target items"));
