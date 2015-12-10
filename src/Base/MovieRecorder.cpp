@@ -4,8 +4,13 @@
 
 #include "MovieRecorder.h"
 #include "ExtensionManager.h"
+#include "ViewManager.h"
+#include "MenuManager.h"
+#include "ViewArea.h"
 #include "MessageView.h"
+#include "AppConfig.h"
 #include "MainWindow.h"
+#include "SceneView.h"
 #include "ToolBar.h"
 #include "TimeBar.h"
 #include "Archive.h"
@@ -13,9 +18,11 @@
 #include "Buttons.h"
 #include "LineEdit.h"
 #include "CheckBox.h"
+#include "ComboBox.h"
 #include "Dialog.h"
 #include "Separator.h"
 #include <cnoid/ConnectionSet>
+#include <QPainter>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <boost/filesystem.hpp>
@@ -24,6 +31,8 @@
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 
@@ -36,30 +45,51 @@ public:
     MovieRecorderBar(MovieRecorderImpl* recorder);
 };
 
-class SetupDialog : public Dialog
+class ConfigDialog : public Dialog
 {
 public:
     MovieRecorderImpl* recorder;
-    Connection focusViewChangedConnection;
-
-    QLabel targetViewLabel;
+    vector<View*> allViews;
+    ComboBox targetViewCombo;
     LineEdit directoryEntry;
     PushButton directoryButton;
     LineEdit basenameEntry;
-    DoubleSpinBox beginningTimeSpin;
-    CheckBox endingTimeCheck;
-    DoubleSpinBox endingTimeSpin;
+    DoubleSpinBox startTimeSpin;
+    CheckBox finishTimeCheck;
+    DoubleSpinBox finishTimeSpin;
     DoubleSpinBox fpsSpin;
     CheckBox imageSizeCheck;
     SpinBox imageWidthSpin;
     SpinBox imageHeightSpin;
 
-    SetupDialog(MovieRecorderImpl* recorder);
-    ~SetupDialog();
+    double startTime() const {
+        return startTimeSpin.value();
+    }
+    double finishTime() const {
+        return finishTimeCheck.isChecked() ? finishTimeSpin.value() : std::numeric_limits<double>::max();
+    }
+    double timeStep() const {
+        return 1.0 / fpsSpin.value();
+    }
+
+    ConfigDialog(MovieRecorderImpl* recorder);
     virtual void showEvent(QShowEvent* event);
     virtual void hideEvent(QHideEvent* event);
-    void onFocusViewChanged(View* view);    
+    void updateViewCombo();
+    void onTargetViewIndexChanged(int index);    
     void showDirectorySelectionDialog();
+    bool store(Mapping& archive);
+    void restore(const Mapping& archive);
+};
+
+
+class HighlightMarker : public QWidget
+{
+public:
+    MovieRecorderImpl* recorder;
+    HighlightMarker(MovieRecorderImpl* recorder);
+    void setTargetView(View* view);
+    virtual void paintEvent(QPaintEvent* event);
 };
 
 }
@@ -69,37 +99,39 @@ namespace cnoid {
 class MovieRecorderImpl
 {
 public:
+    ConfigDialog* config;
     MovieRecorderBar* toolBar;
+    HighlightMarker* highlightMarker;
     TimeBar* timeBar;
+    string targetViewName;
     View* targetView;
+    ScopedConnection targetViewConnection;
     bool isRecording;
     bool isBeforeFirstFrameCapture;
-    bool requestStopRecording;
     int frame;
     double nextFrameTime;
     double timeStep;
-    double endingTime;
+    double startTime;
+    double finishTime;
     boost::format filenameFormat;
     ConnectionSet timeBarConnections;
-    SetupDialog* setup;
 
     MovieRecorderImpl(ExtensionManager* ext);
-
-    bool store(Mapping& archive);
-    void restore(const Mapping& archive);
-    void onFocusViewChanged(View* view);
-    void showDirectorySelectionDialog();
-    void generate();
-    void onStopRequest();
-    bool setupViewAndFilenameFormat();
-    bool doRecordingLoop();
-    bool saveViewImage();
-    void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
+    ~MovieRecorderImpl();
+    void setTargetView(View* view);
+    void onTargetViewRemoved(View* view);
+    void onTargetViewHighlightingToggled(bool on);
+    void onRecordingButtonToggled(bool on);
     void capture();
+    bool setupViewAndFilenameFormat();
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
+    bool saveViewImage();
+    void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
     void onPlaybackStopped();
     void stopRecording();
+    bool store(Mapping& archive);
+    void restore(const Mapping& archive);
 };
 
 }
@@ -108,7 +140,14 @@ public:
 void MovieRecorder::initialize(ExtensionManager* ext)
 {
     if(!movieRecorder){
-        movieRecorder = new MovieRecorder(ext);
+        movieRecorder = ext->manage(new MovieRecorder(ext));
+
+        /*
+        MenuManager& mm = ext->menuManager();
+        mm.setPath("/Tools");
+        mm.addItem(_("Movie Recorder"))
+            ->sigTriggered().connect(boost::bind(&QDialog::show, movieRecorder->impl->config));
+        */
     }
 }
 
@@ -127,33 +166,40 @@ MovieRecorder::MovieRecorder(ExtensionManager* ext)
 
 MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 {
-    setup = new SetupDialog(this);
+    config = new ConfigDialog(this);
     toolBar = new MovieRecorderBar(this);
     ext->addToolBar(toolBar);
+    highlightMarker = 0;
+    timeBar = TimeBar::instance();
+
+    targetView = 0;
+    
+    isRecording = false;
+    isBeforeFirstFrameCapture = false;
+
+    Mapping& config = *AppConfig::archive()->findMapping("MovieRecorder");
+    if(config.isValid()){
+        restore(config);
+    }
 }
 
 
-MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
-    : ToolBar(N_("MovieRecorderBar")),
-      recorder(recorder)
+ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
+    : recorder(recorder)
 {
-    addButton("P", _("Start Playback & Recording"));
-    addButton("R", _("Start Recording"));
-
-    addButton(QIcon(":/Base/icons/setup.png"), _("Open the setup dialog"))
-        ->sigClicked().connect(boost::bind(&QDialog::show, recorder->setup));
-}
-
-
-SetupDialog::SetupDialog(MovieRecorderImpl* recorder)
-{
+    setWindowTitle(_("Movie Recorder Config"));
+    
     QVBoxLayout* vbox = new QVBoxLayout();
     setLayout(vbox);
 
     QHBoxLayout* hbox = new QHBoxLayout();
     hbox->addWidget(new QLabel(_("Target view:")));
-    targetViewLabel.setText(_("Not specified"));
-    hbox->addWidget(&targetViewLabel);
+
+    targetViewCombo.setToolTip(_("Select the view to capture"));
+    targetViewCombo.sigCurrentIndexChanged().connect(
+        boost::bind(&ConfigDialog::onTargetViewIndexChanged, this, _1));
+    hbox->addWidget(&targetViewCombo);
+    
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -167,7 +213,8 @@ SetupDialog::SetupDialog(MovieRecorderImpl* recorder)
     } else {
         directoryButton.setIcon(folderIcon);
     }
-    directoryButton.sigClicked().connect(boost::bind(&SetupDialog::showDirectorySelectionDialog, this));
+    directoryButton.sigClicked().connect(
+        boost::bind(&ConfigDialog::showDirectorySelectionDialog, this));
     hbox->addWidget(&directoryButton);
 
     hbox->addWidget(new QLabel(_("Basename")));
@@ -177,19 +224,19 @@ SetupDialog::SetupDialog(MovieRecorderImpl* recorder)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
-    hbox->addWidget(new QLabel(_("Begin")));
-    beginningTimeSpin.setDecimals(2);
-    beginningTimeSpin.setRange(0.00, 9999.99);
-    beginningTimeSpin.setSingleStep(0.1);
-    hbox->addWidget(&beginningTimeSpin);
+    hbox->addWidget(new QLabel(_("Start Time")));
+    startTimeSpin.setDecimals(2);
+    startTimeSpin.setRange(0.00, 9999.99);
+    startTimeSpin.setSingleStep(0.1);
+    hbox->addWidget(&startTimeSpin);
 
-    endingTimeCheck.setText(_("End"));
-    hbox->addWidget(&endingTimeCheck);
+    finishTimeCheck.setText(_("Finish Time"));
+    hbox->addWidget(&finishTimeCheck);
     
-    endingTimeSpin.setDecimals(2);
-    endingTimeSpin.setRange(0.00, 9999.99);
-    endingTimeSpin.setSingleStep(0.1);
-    hbox->addWidget(&endingTimeSpin);
+    finishTimeSpin.setDecimals(2);
+    finishTimeSpin.setRange(0.00, 9999.99);
+    finishTimeSpin.setSingleStep(0.1);
+    hbox->addWidget(&finishTimeSpin);
 
     hbox->addWidget(new QLabel("FPS"));
     fpsSpin.setDecimals(1);
@@ -227,45 +274,125 @@ SetupDialog::SetupDialog(MovieRecorderImpl* recorder)
 }
 
 
-SetupDialog::~SetupDialog()
+MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
+    : ToolBar(N_("MovieRecorderBar")),
+      recorder(recorder)
 {
+    addToggleButton("R", _("Toggle Recording"))
+        ->sigToggled().connect(
+            boost::bind(&MovieRecorderImpl::onRecordingButtonToggled, recorder, _1));
 
+    addToggleButton("[ ]", _("Toggle Target View Highlighting"))
+        ->sigToggled().connect(
+            boost::bind(&MovieRecorderImpl::onTargetViewHighlightingToggled, recorder, _1));
+    
+    addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+        ->sigClicked().connect(boost::bind(&QDialog::show, recorder->config));
 }
 
 
-void SetupDialog::showEvent(QShowEvent* event)
+MovieRecorder::~MovieRecorder()
 {
-    if(!focusViewChangedConnection.connected()){
-        focusViewChangedConnection =
-            View::sigFocusChanged().connect(
-                boost::bind(&SetupDialog::onFocusViewChanged, this, _1));
+    delete impl;
+}
+
+
+MovieRecorderImpl::~MovieRecorderImpl()
+{
+    timeBarConnections.disconnect();
+    store(*AppConfig::archive()->openMapping("MovieRecorder"));
+    delete config;
+
+    if(highlightMarker){
+        delete highlightMarker;
     }
-    if(!recorder->isRecording){
-        recorder->targetView = View::lastFocusView();
-    }
 }
 
 
-void SetupDialog::hideEvent(QHideEvent* event)
+void ConfigDialog::showEvent(QShowEvent* event)
 {
-    focusViewChangedConnection.disconnect();
+    updateViewCombo();
 }
 
 
-void SetupDialog::onFocusViewChanged(View* view)
+void ConfigDialog::hideEvent(QHideEvent* event)
 {
-    if(!recorder->isRecording){
-        if(view){
-            targetViewLabel.setText(view->windowTitle());
-        } else {
-            targetViewLabel.setText(_("Not specified"));
+
+}
+
+
+void ConfigDialog::updateViewCombo()
+{
+    allViews = ViewManager::allViews();
+
+    targetViewCombo.blockSignals(true);
+    targetViewCombo.clear();
+    targetViewCombo.addItem("None");
+
+    bool selected = false;
+    for(size_t i=0; i < allViews.size(); ++i){
+        View* view = allViews[i];
+        targetViewCombo.addItem(view->name().c_str());
+        if(!selected){
+            if((recorder->targetView && (view == recorder->targetView)) ||
+               view->name() == recorder->targetViewName){
+                targetViewCombo.setCurrentIndex(i + 1);
+                selected = true;
+            }
         }
-        recorder->targetView = view;
+    }
+
+    targetViewCombo.blockSignals(false);
+}
+
+
+void ConfigDialog::onTargetViewIndexChanged(int index)
+{
+    if(index == 0){
+        recorder->setTargetView(0);
+    } else {
+        int viewIndex = index - 1;
+        if(viewIndex < allViews.size()){
+            recorder->setTargetView(allViews[viewIndex]);
+        }
     }
 }
 
 
-void SetupDialog::showDirectorySelectionDialog()
+void MovieRecorderImpl::setTargetView(View* view)
+{
+    if(view != targetView){
+        targetViewConnection.disconnect();
+        targetViewName.clear();
+        targetView = view;
+
+        config->updateViewCombo();
+    
+        if(!targetView){
+            stopRecording();
+        } else {
+            targetViewName = targetView->name();
+            targetViewConnection.reset(
+                targetView->sigRemoved().connect(
+                    boost::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
+            if(isRecording){
+                capture();
+            }
+        }
+    }
+}
+
+
+void MovieRecorderImpl::onTargetViewRemoved(View* view)
+{
+    if(targetView == view){
+        setTargetView(0);
+    }
+}
+
+
+
+void ConfigDialog::showDirectorySelectionDialog()
 {
     QString directory =
         QFileDialog::getExistingDirectory(
@@ -276,4 +403,267 @@ void SetupDialog::showDirectorySelectionDialog()
     if(!directory.isNull()){
         directoryEntry.setText(directory);
     }
+}
+
+
+void MovieRecorderImpl::onRecordingButtonToggled(bool on)
+{
+    if(on){
+        capture();
+    } else {
+        stopRecording();
+    }
+}
+
+
+void MovieRecorderImpl::capture()
+{
+    if(!isRecording){
+        timeBarConnections.disconnect();
+        if(setupViewAndFilenameFormat()){
+            isBeforeFirstFrameCapture = true;
+            frame = 0;
+            startTime = config->startTime();
+            finishTime = config->finishTime();
+            timeStep = config->timeStep();
+            
+            const bool isDoingPlayback = timeBar->isDoingPlayback();
+            if(isDoingPlayback){
+                isRecording = true;
+            } else {
+                timeBarConnections.add(
+                    timeBar->sigPlaybackStarted().connect(
+                        boost::bind(&MovieRecorderImpl::onPlaybackStarted, this, _1)));
+            }
+
+            timeBarConnections.add(
+                timeBar->sigTimeChanged().connect(
+                    boost::bind(&MovieRecorderImpl::onTimeChanged, this, _1)));
+            timeBarConnections.add(
+                timeBar->sigPlaybackStopped().connect(
+                    boost::bind(&MovieRecorderImpl::onPlaybackStopped, this)));
+        }
+    }
+}
+
+
+bool MovieRecorderImpl::setupViewAndFilenameFormat()
+{
+    if(!targetView){
+        return false;
+    }
+
+    filesystem::path directory(config->directoryEntry.string());
+    filesystem::path basename(config->basenameEntry.string() + "%08u.png");
+
+    if(directory.empty()){
+        showWarningDialog(_("Please set a directory to output image files."));
+        return false;
+
+    } else {
+        if(filesystem::exists(directory)){
+            if(!filesystem::is_directory(directory)){
+                showWarningDialog(fmt(_("%1% is not a directory.")) % directory);
+                return false;
+            }
+        } else {
+            filesystem::create_directories(directory);
+        }
+    }
+
+    filenameFormat = format((directory / basename).string());
+
+    targetView->resize(config->imageWidthSpin.value(), config->imageHeightSpin.value());
+
+    return true;
+}
+
+
+void MovieRecorderImpl::onPlaybackStarted(double time)
+{
+    isRecording = true;
+}
+
+
+bool MovieRecorderImpl::onTimeChanged(double time)
+{
+    if(isRecording){
+        if(isBeforeFirstFrameCapture){
+            if(time > startTime){
+                nextFrameTime = time;
+            } else {
+                nextFrameTime = startTime;
+            }
+        }
+        if(time > finishTime){
+            stopRecording();
+        } else {
+            while(time >= nextFrameTime){
+                saveViewImage();
+                ++frame;
+                nextFrameTime += timeStep;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool MovieRecorderImpl::saveViewImage()
+{
+    bool result = false;
+    string filename = str(filenameFormat % frame);
+    
+    if(SceneView* sceneView = dynamic_cast<SceneView*>(targetView)){
+        result = sceneView->sceneWidget()->saveImage(filename);
+    } else {
+        QPixmap pixmap(targetView->size());
+        targetView->render(&pixmap);
+        captureSceneWidgets(targetView, pixmap);
+        result = pixmap.save(filename.c_str());
+    }
+    if(!result){
+        showWarningDialog(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
+    }
+
+    return result;
+}
+
+
+void MovieRecorderImpl::captureSceneWidgets(QWidget* widget, QPixmap& pixmap)
+{
+    const QObjectList objs = widget->children();
+    for(int i=0; i < objs.size(); ++i){
+        if(QWidget* widget = dynamic_cast<QWidget*>(objs[i])){
+            if(SceneWidget* sceneWidget = dynamic_cast<SceneWidget*>(widget)){
+                QPainter painter(&pixmap);
+                QImage image = sceneWidget->getImage();
+                QPoint pos = sceneWidget->mapTo(targetView, QPoint(0, 0));
+                painter.drawImage(pos, image);
+            }
+            captureSceneWidgets(widget, pixmap);
+        }
+    }
+}
+
+
+void MovieRecorderImpl::onPlaybackStopped()
+{
+    stopRecording();
+}
+
+
+void MovieRecorderImpl::stopRecording()
+{
+    isRecording = false;
+    timeBarConnections.disconnect();
+}
+
+
+void MovieRecorderImpl::onTargetViewHighlightingToggled(bool on)
+{
+    if(on){
+        if(targetView){
+            if(!highlightMarker){
+                highlightMarker = new HighlightMarker(this);
+            }
+            highlightMarker->setTargetView(targetView);
+            highlightMarker->show();
+        }
+    } else {
+        if(highlightMarker){
+            highlightMarker->hide();
+        }
+    }
+}
+
+
+HighlightMarker::HighlightMarker(MovieRecorderImpl* recorder)
+    : recorder(recorder)
+{
+    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_NoSystemBackground, true);
+    setAttribute(Qt::WA_TranslucentBackground, true);
+    setAttribute(Qt::WA_PaintOnScreen);
+}
+
+
+void HighlightMarker::setTargetView(View* view)
+{
+    ViewArea* viewArea = view->viewArea();
+    setParent(viewArea);
+    QPoint p(0, 0);
+    QWidget* widget = view;
+    while(widget && widget != viewArea){
+        QWidget* parent = widget->parentWidget();
+        if(parent){
+            p = widget->mapTo(parent, p);
+            widget = parent;
+        } else {
+            break;
+        }
+    }
+    setGeometry(p.x(), p.y(), view->width(), view->height());
+}
+
+
+void HighlightMarker::paintEvent(QPaintEvent* event)
+{
+    QPainter painter(this);
+    QPen pen;
+    pen.setStyle(Qt::SolidLine);
+    pen.setWidthF(8.0);
+    painter.setPen(pen);
+    painter.drawRect(0, 0, width(), height());
+}
+
+
+bool MovieRecorderImpl::store(Mapping& archive)
+{
+    if(targetView){
+        archive.write("target", targetView->name());
+    }
+    return config->store(archive);
+}
+
+
+bool ConfigDialog::store(Mapping& archive)
+{
+    archive.write("directory", directoryEntry.string());
+    archive.write("basename", basenameEntry.string());
+    archive.write("startTime", startTimeSpin.value());
+    if(finishTimeCheck.isChecked()){
+        archive.write("finishTime", finishTimeSpin.value());
+    }
+    archive.write("fps", fpsSpin.value());
+    archive.write("setSize", imageSizeCheck.isChecked());
+    archive.write("width", imageWidthSpin.value());
+    archive.write("height", imageHeightSpin.value());
+    return true;
+}
+
+
+void MovieRecorderImpl::restore(const Mapping& archive)
+{
+    archive.read("target", targetViewName);
+    config->restore(archive);
+}
+
+
+void ConfigDialog::restore(const Mapping& archive)
+{
+    directoryEntry.setText(archive.get("directory", directoryEntry.string()));
+    basenameEntry.setText(archive.get("basename", basenameEntry.string()));
+    startTimeSpin.setValue(archive.get("startTime", startTimeSpin.value()));
+    double finishTime;
+    if(archive.read("finishTime", finishTime)){
+        finishTimeSpin.setValue(finishTime);
+        finishTimeCheck.setChecked(true);
+    } else {
+        finishTimeCheck.setChecked(false);
+    }
+    fpsSpin.setValue(archive.get("fps", fpsSpin.value()));
+    imageSizeCheck.setChecked(archive.get("setSize", imageSizeCheck.isChecked()));
+    imageWidthSpin.setValue(archive.get("width", imageWidthSpin.value()));
+    imageHeightSpin.setValue(archive.get("height", imageHeightSpin.value()));
 }

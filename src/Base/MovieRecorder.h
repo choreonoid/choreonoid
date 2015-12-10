@@ -17,6 +17,7 @@ class CNOID_EXPORT MovieRecorder
   public:
     static void initialize(ExtensionManager* ext);
     static MovieRecorder* instance();
+    ~MovieRecorder();
 
   private:
     MovieRecorder(ExtensionManager* ext);
