@@ -87,6 +87,7 @@ class HighlightMarker : public QWidget
 {
 public:
     MovieRecorderImpl* recorder;
+    QPen pen;
     HighlightMarker(MovieRecorderImpl* recorder);
     void setTargetView(View* view);
     virtual void paintEvent(QPaintEvent* event);
@@ -119,6 +120,7 @@ public:
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
     void setTargetView(View* view);
+    void setTargetView(const std::string& name);
     void onTargetViewRemoved(View* view);
     void onTargetViewHighlightingToggled(bool on);
     void onRecordingButtonToggled(bool on);
@@ -383,6 +385,24 @@ void MovieRecorderImpl::setTargetView(View* view)
 }
 
 
+void MovieRecorderImpl::setTargetView(const std::string& name)
+{
+    if(name != targetViewName){
+        targetViewName = name;
+        if(!isRecording){
+            vector<View*> allViews = ViewManager::allViews();
+            for(size_t i=0; i < allViews.size(); ++i){
+                View* view = allViews[i];
+                if(view->name() == name){
+                    setTargetView(view);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
 void MovieRecorderImpl::onTargetViewRemoved(View* view)
 {
     if(targetView == view){
@@ -563,6 +583,11 @@ void MovieRecorderImpl::stopRecording()
 void MovieRecorderImpl::onTargetViewHighlightingToggled(bool on)
 {
     if(on){
+        if(!targetView){
+            if(!targetViewName.empty()){
+                setTargetView(targetViewName);
+            }
+        }
         if(targetView){
             if(!highlightMarker){
                 highlightMarker = new HighlightMarker(this);
@@ -582,9 +607,13 @@ HighlightMarker::HighlightMarker(MovieRecorderImpl* recorder)
     : recorder(recorder)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
-    setAttribute(Qt::WA_NoSystemBackground, true);
-    setAttribute(Qt::WA_TranslucentBackground, true);
+    setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_PaintOnScreen);
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+
+    pen.setStyle(Qt::SolidLine);
+    pen.setColor(QColor(Qt::red));
+    pen.setWidthF(8.0);
 }
 
 
@@ -604,16 +633,17 @@ void HighlightMarker::setTargetView(View* view)
         }
     }
     setGeometry(p.x(), p.y(), view->width(), view->height());
+
+    QRegion rect(view->rect());
+    setMask(rect.xored(QRegion(4, 4, view->width() - 8, view->height() - 8)));
 }
 
 
 void HighlightMarker::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
-    QPen pen;
-    pen.setStyle(Qt::SolidLine);
-    pen.setWidthF(8.0);
     painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
     painter.drawRect(0, 0, width(), height());
 }
 
@@ -645,7 +675,10 @@ bool ConfigDialog::store(Mapping& archive)
 
 void MovieRecorderImpl::restore(const Mapping& archive)
 {
-    archive.read("target", targetViewName);
+    string name;
+    if(archive.read("target", name)){
+        setTargetView(name);
+    }
     config->restore(archive);
 }
 
