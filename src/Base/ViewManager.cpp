@@ -567,6 +567,22 @@ std::vector<View*> ViewManager::allViews()
 }
 
 
+std::vector<View*> ViewManager::activeViews()
+{
+    std::vector<View*> views;
+    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
+        InstanceInfoList& instances = p->second->instances;
+        for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
+            View* view = (*p)->view;
+            if(view->isActive()){
+                views.push_back(view);
+            }
+        }
+    }
+    return views;
+}
+
+
 View* ViewManager::getOrCreateSpecificTypeView
 (const std::type_info& view_type_info, const std::string& instanceName, bool doMountCreatedView)
 {

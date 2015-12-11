@@ -21,6 +21,7 @@
 #include "ComboBox.h"
 #include "Dialog.h"
 #include "Separator.h"
+#include "Timer.h"
 #include <cnoid/ConnectionSet>
 #include <QPainter>
 #include <QDialogButtonBox>
@@ -49,7 +50,7 @@ class ConfigDialog : public Dialog
 {
 public:
     MovieRecorderImpl* recorder;
-    vector<View*> allViews;
+    vector<View*> activeViews;
     ComboBox targetViewCombo;
     LineEdit directoryEntry;
     PushButton directoryButton;
@@ -76,7 +77,7 @@ public:
     virtual void showEvent(QShowEvent* event);
     virtual void hideEvent(QHideEvent* event);
     void updateViewCombo();
-    void onTargetViewIndexChanged(int index);    
+    void onTargetViewIndexChanged(int index);
     void showDirectorySelectionDialog();
     bool store(Mapping& archive);
     void restore(const Mapping& archive);
@@ -102,7 +103,6 @@ class MovieRecorderImpl
 public:
     ConfigDialog* config;
     MovieRecorderBar* toolBar;
-    HighlightMarker* highlightMarker;
     TimeBar* timeBar;
     string targetViewName;
     View* targetView;
@@ -117,12 +117,17 @@ public:
     boost::format filenameFormat;
     ConnectionSet timeBarConnections;
 
+    HighlightMarker* highlightMarker;
+    Timer highlightBlinkTimer;
+    bool isHighlightMarkerActive;
+
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
     void setTargetView(View* view);
     void setTargetView(const std::string& name);
     void onTargetViewRemoved(View* view);
     void onTargetViewHighlightingToggled(bool on);
+    void onHighlightBlinkTimeout();
     void onRecordingButtonToggled(bool on);
     void capture();
     bool setupViewAndFilenameFormat();
@@ -171,13 +176,18 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     config = new ConfigDialog(this);
     toolBar = new MovieRecorderBar(this);
     ext->addToolBar(toolBar);
-    highlightMarker = 0;
     timeBar = TimeBar::instance();
 
     targetView = 0;
     
     isRecording = false;
     isBeforeFirstFrameCapture = false;
+
+    highlightMarker = 0;
+    isHighlightMarkerActive = false;
+    highlightBlinkTimer.setInterval(750);
+    highlightBlinkTimer.sigTimeout().connect(
+        boost::bind(&MovieRecorderImpl::onHighlightBlinkTimeout, this));
 
     Mapping& config = *AppConfig::archive()->findMapping("MovieRecorder");
     if(config.isValid()){
@@ -325,15 +335,15 @@ void ConfigDialog::hideEvent(QHideEvent* event)
 
 void ConfigDialog::updateViewCombo()
 {
-    allViews = ViewManager::allViews();
+    activeViews = ViewManager::activeViews();
 
     targetViewCombo.blockSignals(true);
     targetViewCombo.clear();
     targetViewCombo.addItem("None");
 
     bool selected = false;
-    for(size_t i=0; i < allViews.size(); ++i){
-        View* view = allViews[i];
+    for(size_t i=0; i < activeViews.size(); ++i){
+        View* view = activeViews[i];
         targetViewCombo.addItem(view->name().c_str());
         if(!selected){
             if((recorder->targetView && (view == recorder->targetView)) ||
@@ -354,8 +364,8 @@ void ConfigDialog::onTargetViewIndexChanged(int index)
         recorder->setTargetView(0);
     } else {
         int viewIndex = index - 1;
-        if(viewIndex < allViews.size()){
-            recorder->setTargetView(allViews[viewIndex]);
+        if(viewIndex < activeViews.size()){
+            recorder->setTargetView(activeViews[viewIndex]);
         }
     }
 }
@@ -390,9 +400,9 @@ void MovieRecorderImpl::setTargetView(const std::string& name)
     if(name != targetViewName){
         targetViewName = name;
         if(!isRecording){
-            vector<View*> allViews = ViewManager::allViews();
-            for(size_t i=0; i < allViews.size(); ++i){
-                View* view = allViews[i];
+            vector<View*> views = ViewManager::allViews();
+            for(size_t i=0; i <views.size(); ++i){
+                View* view = views[i];
                 if(view->name() == name){
                     setTargetView(view);
                     break;
@@ -450,6 +460,9 @@ void MovieRecorderImpl::capture()
             const bool isDoingPlayback = timeBar->isDoingPlayback();
             if(isDoingPlayback){
                 isRecording = true;
+                if(isHighlightMarkerActive){
+                    highlightBlinkTimer.start();
+                }
             } else {
                 timeBarConnections.add(
                     timeBar->sigPlaybackStarted().connect(
@@ -493,7 +506,14 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
 
     filenameFormat = format((directory / basename).string());
 
-    targetView->resize(config->imageWidthSpin.value(), config->imageHeightSpin.value());
+    if(config->imageSizeCheck.isChecked()){
+        int width = config->imageWidthSpin.value();
+        int height = config->imageHeightSpin.value();
+        QSize s = targetView->size();
+        int x = (s.width() - width) / 2;
+        int y = (s.height() - height) / 2;
+        targetView->setGeometry(x, y, width, height);
+    }
 
     return true;
 }
@@ -502,6 +522,9 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
 void MovieRecorderImpl::onPlaybackStarted(double time)
 {
     isRecording = true;
+    if(isHighlightMarkerActive){
+        highlightBlinkTimer.start();
+    }
 }
 
 
@@ -577,11 +600,15 @@ void MovieRecorderImpl::stopRecording()
 {
     isRecording = false;
     timeBarConnections.disconnect();
+    highlightBlinkTimer.stop();
 }
 
 
 void MovieRecorderImpl::onTargetViewHighlightingToggled(bool on)
 {
+    isHighlightMarkerActive = false;
+    highlightBlinkTimer.stop();
+    
     if(on){
         if(!targetView){
             if(!targetViewName.empty()){
@@ -594,10 +621,26 @@ void MovieRecorderImpl::onTargetViewHighlightingToggled(bool on)
             }
             highlightMarker->setTargetView(targetView);
             highlightMarker->show();
+            isHighlightMarkerActive = true;
+            if(isRecording){
+                highlightBlinkTimer.start();
+            }
         }
     } else {
         if(highlightMarker){
             highlightMarker->hide();
+        }
+    }
+}
+
+
+void MovieRecorderImpl::onHighlightBlinkTimeout()
+{
+    if(highlightMarker){
+        if(highlightMarker->isVisible()){
+            highlightMarker->hide();
+        } else {
+            highlightMarker->show();
         }
     }
 }

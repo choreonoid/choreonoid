@@ -66,6 +66,7 @@ public:
     static View* getOrCreateViewOfDefaultName(const std::string& defaultName);
 
     static std::vector<View*> allViews();
+    static std::vector<View*> activeViews();
         
     template <class ViewType> static ViewType* getOrCreateView(bool doMountCreatedView = false) {
         return static_cast<ViewType*>(getOrCreateSpecificTypeView(typeid(ViewType), std::string(), doMountCreatedView));
