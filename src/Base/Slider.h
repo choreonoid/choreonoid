@@ -1,5 +1,5 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_BASE_SLIDER_H

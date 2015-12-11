@@ -137,6 +137,23 @@ void View::setLayout(QLayout* layout)
 }
 
 
+QPoint View::viewAreaPos() const
+{
+    QPoint p(0, 0);
+    const QWidget* widget = this;
+    while(widget && widget != viewArea_){
+        QWidget* parent = widget->parentWidget();
+        if(parent){
+            p = widget->mapTo(parent, p);
+            widget = parent;
+        } else {
+            break;
+        }
+    }
+    return p;
+}
+
+
 QWidget* View::indicatorOnInfoBar()
 {
     return 0;

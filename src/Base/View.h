@@ -66,6 +66,8 @@ public:
 
     void setLayout(QLayout* layout);
 
+    QPoint viewAreaPos() const;
+
     virtual QWidget* indicatorOnInfoBar();
 
     void enableFontSizeZoomKeys(bool on);

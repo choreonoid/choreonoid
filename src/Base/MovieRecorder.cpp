@@ -621,17 +621,8 @@ void HighlightMarker::setTargetView(View* view)
 {
     ViewArea* viewArea = view->viewArea();
     setParent(viewArea);
-    QPoint p(0, 0);
-    QWidget* widget = view;
-    while(widget && widget != viewArea){
-        QWidget* parent = widget->parentWidget();
-        if(parent){
-            p = widget->mapTo(parent, p);
-            widget = parent;
-        } else {
-            break;
-        }
-    }
+
+    QPoint p = view->viewAreaPos();
     setGeometry(p.x(), p.y(), view->width(), view->height());
 
     QRegion rect(view->rect());
