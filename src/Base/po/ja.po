@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-06 22:52+0900\n"
+"POT-Creation-Date: 2015-12-13 11:39+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -93,7 +93,7 @@ msgstr "キャプチャバー"
 msgid "Capture the image of a view or toolbar"
 msgstr "ビューやツールバーの画像をキャプチャします"
 
-#: DescriptionDialog.cpp:28 MovieRecorder.cpp:229 SceneWidget.cpp:3061
+#: DescriptionDialog.cpp:28 SceneWidget.cpp:3061
 msgid "&Ok"
 msgstr "了解(&O)"
 
@@ -153,7 +153,7 @@ msgstr "速度軌道のプロット"
 msgid "Plot acceleration trajectories"
 msgstr "加速度軌道のプロット"
 
-#: GraphBar.cpp:143 MovieRecorder.cpp:148 SceneBar.cpp:147 TimeBar.cpp:330
+#: GraphBar.cpp:143 MovieRecorder.cpp:349 SceneBar.cpp:147 TimeBar.cpp:330
 msgid "Show the config dialog"
 msgstr "設定ダイアログの表示"
 
@@ -258,7 +258,7 @@ msgstr "一時的"
 msgid "Refs"
 msgstr "参照数"
 
-#: ItemManager.cpp:174 ViewManager.cpp:236
+#: ItemManager.cpp:174 ViewManager.cpp:240
 msgid "Name:"
 msgstr "名前"
 
@@ -306,11 +306,11 @@ msgstr "アイテム$"
 msgid "Create New %1"
 msgstr "新しい%1の生成"
 
-#: ItemManager.cpp:597 ViewManager.cpp:242
+#: ItemManager.cpp:597 ViewManager.cpp:246
 msgid "&Create"
 msgstr "生成(&C)"
 
-#: ItemManager.cpp:600 PathVariableEditor.cpp:105 ViewManager.cpp:247
+#: ItemManager.cpp:600 PathVariableEditor.cpp:105 ViewManager.cpp:251
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
@@ -576,24 +576,23 @@ msgstr "警告"
 msgid "Movie Generator"
 msgstr "動画用連番ファイルの作成"
 
-#: MovieGenerator.cpp:119 MovieRecorder.cpp:162
+#: MovieGenerator.cpp:119 MovieRecorder.cpp:215
 msgid "Target view:"
 msgstr "対象ビュー"
 
-#: MovieGenerator.cpp:120 MovieGenerator.cpp:277 MovieRecorder.cpp:163
-#: MovieRecorder.cpp:269
+#: MovieGenerator.cpp:120 MovieGenerator.cpp:277
 msgid "Not specified"
 msgstr "未設定"
 
-#: MovieGenerator.cpp:126 MovieRecorder.cpp:169 MultiPointSetItem.cpp:515
+#: MovieGenerator.cpp:126 MovieRecorder.cpp:246 MultiPointSetItem.cpp:515
 msgid "Directory"
 msgstr "ディレクトリ"
 
-#: MovieGenerator.cpp:131 MovieRecorder.cpp:174
+#: MovieGenerator.cpp:131 MovieRecorder.cpp:251
 msgid "Select"
 msgstr "選択"
 
-#: MovieGenerator.cpp:138 MovieRecorder.cpp:181
+#: MovieGenerator.cpp:138 MovieRecorder.cpp:261
 msgid "Basename"
 msgstr "ベースファイル名"
 
@@ -605,7 +604,7 @@ msgstr "開始時刻"
 msgid "Finish Time"
 msgstr "終了時刻"
 
-#: MovieGenerator.cpp:169 MovieRecorder.cpp:212
+#: MovieGenerator.cpp:169 MovieRecorder.cpp:299
 msgid "Image size"
 msgstr "画像サイズ"
 
@@ -615,55 +614,79 @@ msgstr "生成(&G)"
 
 #: MovieGenerator.cpp:193
 msgid "&Capture"
-msgstr "キャプチャー"
+msgstr "キャプチャー(&C)"
 
-#: MovieGenerator.cpp:198
+#: MovieGenerator.cpp:198 MovieRecorder.cpp:322
 msgid "&Stop"
 msgstr "停止(&S)"
 
-#: MovieGenerator.cpp:288 MovieRecorder.cpp:281
+#: MovieGenerator.cpp:288 MovieRecorder.cpp:478
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
 
-#: MovieGenerator.cpp:325
+#: MovieGenerator.cpp:325 MovieRecorder.cpp:553
 msgid "Please set a directory to output image files."
 msgstr "画像ファイルを出力するディレクトリを指定してください。"
 
-#: MovieGenerator.cpp:331
+#: MovieGenerator.cpp:331 MovieRecorder.cpp:559
 msgid "%1% is not a directory."
 msgstr "%1% はディレクトリではありません。"
 
-#: MovieGenerator.cpp:402
+#: MovieGenerator.cpp:402 MovieRecorder.cpp:629
 msgid "Saving an image to \"%1%\" failed."
 msgstr "画像を\"%1%\"に保存"
 
-#: MovieRecorder.cpp:115
-msgid "Movie Recorder"
-msgstr "動画レコーダ"
+#: MovieRecorder.cpp:209
+msgid "Config and Execution of the Movie Recorder"
+msgstr "動画レコーダの設定と実行"
 
-#: MovieRecorder.cpp:142
+#: MovieRecorder.cpp:221
+msgid "Show the marker"
+msgstr "マーカ表示"
+
+#: MovieRecorder.cpp:230
+msgid "Recording mode: "
+msgstr "録画モード"
+
+#: MovieRecorder.cpp:232
+msgid "Initiative"
+msgstr "主導"
+
+#: MovieRecorder.cpp:236
+msgid "Passive"
+msgstr "受動"
+
+#: MovieRecorder.cpp:239
+msgid "Direct"
+msgstr "直接"
+
+#: MovieRecorder.cpp:279
+msgid "Start time"
+msgstr "開始時刻"
+
+#: MovieRecorder.cpp:288
+msgid "Finish time"
+msgstr "終了時刻"
+
+#: MovieRecorder.cpp:316
+msgid "&Record"
+msgstr "録画(&R)"
+
+#: MovieRecorder.cpp:328
+msgid "&Close"
+msgstr "完了(&C)"
+
+#: MovieRecorder.cpp:338
 msgid "MovieRecorderBar"
 msgstr "動画レコーダバー"
 
-#: MovieRecorder.cpp:145
-msgid "Start Playback & Recording"
-msgstr "再生と録画を開始"
+#: MovieRecorder.cpp:341
+msgid "Toggle Recording"
+msgstr "録画"
 
-#: MovieRecorder.cpp:146
-msgid "Start Recording"
-msgstr "録画開始"
-
-#: MovieRecorder.cpp:156
-msgid "Movie Recorder Config"
-msgstr "動画レコーダの設定"
-
-#: MovieRecorder.cpp:188
-msgid "Begin"
-msgstr "開始時刻"
-
-#: MovieRecorder.cpp:194
-msgid "End"
-msgstr "終了時刻"
+#: MovieRecorder.cpp:345
+msgid "Toggle Target View Marker"
+msgstr "対象ビューのマーカを表示"
 
 #: MultiAffine3SeqItem.cpp:15
 msgid "MultiAffine3SeqItem"
@@ -1382,23 +1405,23 @@ msgstr "アニメーションの停止"
 msgid "Vector3SeqItem"
 msgstr "３次元ベクタ列アイテム"
 
-#: ViewArea.cpp:1226
+#: ViewArea.cpp:1411
 msgid "Separate the view"
 msgstr "ビューの分離"
 
-#: ViewManager.cpp:254
+#: ViewManager.cpp:258
 msgid "Create %1"
 msgstr "%1の生成"
 
-#: ViewManager.cpp:290
+#: ViewManager.cpp:294
 msgid "Please specify the name of the new view."
 msgstr "作成するビューの名前を指定してください。"
 
-#: ViewManager.cpp:328
+#: ViewManager.cpp:332
 msgid "Delete All Invisible Views"
 msgstr "全ての非表示ビューを消去"
 
-#: ViewManager.cpp:771
+#: ViewManager.cpp:788
 msgid ""
 "A singleton view \"%1%\" of the %2% type cannot be created because its "
 "singleton instance has already been created."
@@ -1408,4 +1431,4 @@ msgstr ""
 
 #: VirtualJoystickView.cpp:106
 msgid "Joystick"
-msgstr ""
+msgstr "ジョイスティック"

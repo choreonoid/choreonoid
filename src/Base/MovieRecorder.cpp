@@ -16,6 +16,7 @@
 #include "Archive.h"
 #include "SpinBox.h"
 #include "Buttons.h"
+#include "ButtonGroup.h"
 #include "LineEdit.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
@@ -52,9 +53,11 @@ public:
     MovieRecorderImpl* recorder;
     vector<View*> activeViews;
     ComboBox targetViewCombo;
+    CheckBox viewMarkerCheck;
     LineEdit directoryEntry;
     PushButton directoryButton;
     LineEdit basenameEntry;
+    CheckBox startTimeCheck;
     DoubleSpinBox startTimeSpin;
     CheckBox finishTimeCheck;
     DoubleSpinBox finishTimeSpin;
@@ -62,6 +65,9 @@ public:
     CheckBox imageSizeCheck;
     SpinBox imageWidthSpin;
     SpinBox imageHeightSpin;
+    RadioButton initiativeModeRadio;
+    RadioButton passiveModeRadio;
+    RadioButton directModeRadio;
 
     double startTime() const {
         return startTimeSpin.value();
@@ -84,12 +90,12 @@ public:
 };
 
 
-class HighlightMarker : public QWidget
+class ViewMarker : public QWidget
 {
 public:
     MovieRecorderImpl* recorder;
     QPen pen;
-    HighlightMarker(MovieRecorderImpl* recorder);
+    ViewMarker(MovieRecorderImpl* recorder);
     void setTargetView(View* view);
     virtual void paintEvent(QPaintEvent* event);
 };
@@ -117,18 +123,19 @@ public:
     boost::format filenameFormat;
     ConnectionSet timeBarConnections;
 
-    HighlightMarker* highlightMarker;
-    Timer highlightBlinkTimer;
-    bool isHighlightMarkerActive;
+    ViewMarker* viewMarker;
+    Timer viewMarkerBlinkTimer;
+    bool isViewMarkerActive;
 
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
     void setTargetView(View* view);
     void setTargetView(const std::string& name);
     void onTargetViewRemoved(View* view);
-    void onTargetViewHighlightingToggled(bool on);
-    void onHighlightBlinkTimeout();
+    void onViewMarkerToggled(bool on);
+    void onViewMarkerBlinkTimeout();
     void onRecordingButtonToggled(bool on);
+    void requestRecording();
     void capture();
     bool setupViewAndFilenameFormat();
     void onPlaybackStarted(double time);
@@ -183,11 +190,11 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     isRecording = false;
     isBeforeFirstFrameCapture = false;
 
-    highlightMarker = 0;
-    isHighlightMarkerActive = false;
-    highlightBlinkTimer.setInterval(750);
-    highlightBlinkTimer.sigTimeout().connect(
-        boost::bind(&MovieRecorderImpl::onHighlightBlinkTimeout, this));
+    viewMarker = 0;
+    isViewMarkerActive = false;
+    viewMarkerBlinkTimer.setInterval(750);
+    viewMarkerBlinkTimer.sigTimeout().connect(
+        boost::bind(&MovieRecorderImpl::onViewMarkerBlinkTimeout, this));
 
     Mapping& config = *AppConfig::archive()->findMapping("MovieRecorder");
     if(config.isValid()){
@@ -199,7 +206,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     : recorder(recorder)
 {
-    setWindowTitle(_("Movie Recorder Config"));
+    setWindowTitle(_("Config and Execution of the Movie Recorder"));
     
     QVBoxLayout* vbox = new QVBoxLayout();
     setLayout(vbox);
@@ -207,11 +214,31 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     QHBoxLayout* hbox = new QHBoxLayout();
     hbox->addWidget(new QLabel(_("Target view:")));
 
-    targetViewCombo.setToolTip(_("Select the view to capture"));
     targetViewCombo.sigCurrentIndexChanged().connect(
         boost::bind(&ConfigDialog::onTargetViewIndexChanged, this, _1));
     hbox->addWidget(&targetViewCombo);
+
+    viewMarkerCheck.setText(_("Show the marker"));
+    viewMarkerCheck.sigToggled().connect(
+        boost::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, _1));
+    hbox->addWidget(&viewMarkerCheck);
     
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    hbox->addWidget(new QLabel(_("Recording mode: ")));
+    ButtonGroup* modeGroup = new ButtonGroup();
+    initiativeModeRadio.setText(_("Initiative"));
+    initiativeModeRadio.setChecked(true);
+    modeGroup->addButton(&initiativeModeRadio);
+    hbox->addWidget(&initiativeModeRadio);
+    passiveModeRadio.setText(_("Passive"));
+    modeGroup->addButton(&passiveModeRadio);
+    hbox->addWidget(&passiveModeRadio);
+    directModeRadio.setText(_("Direct"));
+    modeGroup->addButton(&directModeRadio);
+    hbox->addWidget(&directModeRadio);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -228,34 +255,43 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     directoryButton.sigClicked().connect(
         boost::bind(&ConfigDialog::showDirectorySelectionDialog, this));
     hbox->addWidget(&directoryButton);
-
-    hbox->addWidget(new QLabel(_("Basename")));
-    basenameEntry.setText("scene");
-    hbox->addWidget(&basenameEntry);
-    vbox->addStretch();
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
-    hbox->addWidget(new QLabel(_("Start Time")));
-    startTimeSpin.setDecimals(2);
-    startTimeSpin.setRange(0.00, 9999.99);
-    startTimeSpin.setSingleStep(0.1);
-    hbox->addWidget(&startTimeSpin);
+    hbox->addWidget(new QLabel(_("Basename")));
+    basenameEntry.setText("scene");
+    hbox->addWidget(&basenameEntry);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
 
-    finishTimeCheck.setText(_("Finish Time"));
-    hbox->addWidget(&finishTimeCheck);
-    
-    finishTimeSpin.setDecimals(2);
-    finishTimeSpin.setRange(0.00, 9999.99);
-    finishTimeSpin.setSingleStep(0.1);
-    hbox->addWidget(&finishTimeSpin);
-
-    hbox->addWidget(new QLabel("FPS"));
+    hbox = new QHBoxLayout();
+    hbox->addWidget(new QLabel("Frame rate"));
     fpsSpin.setDecimals(1);
     fpsSpin.setRange(1.0, 9999.9);
     fpsSpin.setValue(30.0);
     fpsSpin.setSingleStep(0.1);
     hbox->addWidget(&fpsSpin);
+    hbox->addWidget(new QLabel("[fps]"));
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    startTimeCheck.setText(_("Start time"));
+    hbox->addWidget(&startTimeCheck);
+    startTimeSpin.setDecimals(2);
+    startTimeSpin.setRange(0.00, 9999.99);
+    startTimeSpin.setSingleStep(0.1);
+    hbox->addWidget(&startTimeSpin);
+    hbox->addWidget(new QLabel("[s]"));
+    hbox->addSpacing(4);
+
+    finishTimeCheck.setText(_("Finish time"));
+    hbox->addWidget(&finishTimeCheck);
+    finishTimeSpin.setDecimals(2);
+    finishTimeSpin.setRange(0.00, 9999.99);
+    finishTimeSpin.setSingleStep(0.1);
+    hbox->addWidget(&finishTimeSpin);
+    hbox->addWidget(new QLabel("[s]"));
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -274,14 +310,24 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    vbox->addStretch();
-
     vbox->addWidget(new HSeparator());
-    QPushButton* okButton = new QPushButton(_("&Ok"));
-    okButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
-    buttonBox->addButton(okButton, QDialogButtonBox::AcceptRole);
+
+    PushButton* recordButton = new PushButton(_("&Record"));
+    recordButton->setDefault(true);
+    buttonBox->addButton(recordButton, QDialogButtonBox::ActionRole);
+    recordButton->sigClicked().connect(boost::bind(&MovieRecorderImpl::requestRecording, recorder));
+
+    PushButton* stopButton = new PushButton(_("&Stop"));
+    stopButton->setDefault(true);
+    buttonBox->addButton(stopButton, QDialogButtonBox::ActionRole);
+    stopButton->sigClicked().connect(boost::bind(&MovieRecorderImpl::stopRecording, recorder));
+    
+    QPushButton* closeButton = new QPushButton(_("&Close"));
+    closeButton->setDefault(true);
+    buttonBox->addButton(closeButton, QDialogButtonBox::AcceptRole);
     connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
+
     vbox->addWidget(buttonBox);
 }
 
@@ -294,9 +340,9 @@ MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
         ->sigToggled().connect(
             boost::bind(&MovieRecorderImpl::onRecordingButtonToggled, recorder, _1));
 
-    addToggleButton("[ ]", _("Toggle Target View Highlighting"))
+    addToggleButton("[ ]", _("Toggle Target View Marker"))
         ->sigToggled().connect(
-            boost::bind(&MovieRecorderImpl::onTargetViewHighlightingToggled, recorder, _1));
+            boost::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, _1));
     
     addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
         ->sigClicked().connect(boost::bind(&QDialog::show, recorder->config));
@@ -315,8 +361,8 @@ MovieRecorderImpl::~MovieRecorderImpl()
     store(*AppConfig::archive()->openMapping("MovieRecorder"));
     delete config;
 
-    if(highlightMarker){
-        delete highlightMarker;
+    if(viewMarker){
+        delete viewMarker;
     }
 }
 
@@ -388,7 +434,7 @@ void MovieRecorderImpl::setTargetView(View* view)
                 targetView->sigRemoved().connect(
                     boost::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
             if(isRecording){
-                capture();
+                requestRecording();
             }
         }
     }
@@ -439,9 +485,21 @@ void ConfigDialog::showDirectorySelectionDialog()
 void MovieRecorderImpl::onRecordingButtonToggled(bool on)
 {
     if(on){
-        capture();
+        requestRecording();
     } else {
         stopRecording();
+    }
+}
+
+
+void MovieRecorderImpl::requestRecording()
+{
+    if(config->initiativeModeRadio.isChecked()){
+        capture();
+    } else if(config->passiveModeRadio.isChecked()){
+
+    } else if(config->directModeRadio.isChecked()){
+
     }
 }
 
@@ -460,8 +518,8 @@ void MovieRecorderImpl::capture()
             const bool isDoingPlayback = timeBar->isDoingPlayback();
             if(isDoingPlayback){
                 isRecording = true;
-                if(isHighlightMarkerActive){
-                    highlightBlinkTimer.start();
+                if(isViewMarkerActive){
+                    viewMarkerBlinkTimer.start();
                 }
             } else {
                 timeBarConnections.add(
@@ -522,8 +580,8 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
 void MovieRecorderImpl::onPlaybackStarted(double time)
 {
     isRecording = true;
-    if(isHighlightMarkerActive){
-        highlightBlinkTimer.start();
+    if(isViewMarkerActive){
+        viewMarkerBlinkTimer.start();
     }
 }
 
@@ -600,14 +658,14 @@ void MovieRecorderImpl::stopRecording()
 {
     isRecording = false;
     timeBarConnections.disconnect();
-    highlightBlinkTimer.stop();
+    viewMarkerBlinkTimer.stop();
 }
 
 
-void MovieRecorderImpl::onTargetViewHighlightingToggled(bool on)
+void MovieRecorderImpl::onViewMarkerToggled(bool on)
 {
-    isHighlightMarkerActive = false;
-    highlightBlinkTimer.stop();
+    isViewMarkerActive = false;
+    viewMarkerBlinkTimer.stop();
     
     if(on){
         if(!targetView){
@@ -616,37 +674,37 @@ void MovieRecorderImpl::onTargetViewHighlightingToggled(bool on)
             }
         }
         if(targetView){
-            if(!highlightMarker){
-                highlightMarker = new HighlightMarker(this);
+            if(!viewMarker){
+                viewMarker = new ViewMarker(this);
             }
-            highlightMarker->setTargetView(targetView);
-            highlightMarker->show();
-            isHighlightMarkerActive = true;
+            viewMarker->setTargetView(targetView);
+            viewMarker->show();
+            isViewMarkerActive = true;
             if(isRecording){
-                highlightBlinkTimer.start();
+                viewMarkerBlinkTimer.start();
             }
         }
     } else {
-        if(highlightMarker){
-            highlightMarker->hide();
+        if(viewMarker){
+            viewMarker->hide();
         }
     }
 }
 
 
-void MovieRecorderImpl::onHighlightBlinkTimeout()
+void MovieRecorderImpl::onViewMarkerBlinkTimeout()
 {
-    if(highlightMarker){
-        if(highlightMarker->isVisible()){
-            highlightMarker->hide();
+    if(viewMarker){
+        if(viewMarker->isVisible()){
+            viewMarker->hide();
         } else {
-            highlightMarker->show();
+            viewMarker->show();
         }
     }
 }
 
 
-HighlightMarker::HighlightMarker(MovieRecorderImpl* recorder)
+ViewMarker::ViewMarker(MovieRecorderImpl* recorder)
     : recorder(recorder)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
@@ -660,7 +718,7 @@ HighlightMarker::HighlightMarker(MovieRecorderImpl* recorder)
 }
 
 
-void HighlightMarker::setTargetView(View* view)
+void ViewMarker::setTargetView(View* view)
 {
     ViewArea* viewArea = view->viewArea();
     setParent(viewArea);
@@ -673,7 +731,7 @@ void HighlightMarker::setTargetView(View* view)
 }
 
 
-void HighlightMarker::paintEvent(QPaintEvent* event)
+void ViewMarker::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
     painter.setPen(pen);
