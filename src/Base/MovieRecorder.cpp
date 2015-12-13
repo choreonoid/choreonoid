@@ -44,7 +44,22 @@ class MovieRecorderBar : public ToolBar
 {
 public:
     MovieRecorderImpl* recorder;
+    ToolButton* recordingToggle;
+    ToolButton* viewMarkerToggle;
+    
     MovieRecorderBar(MovieRecorderImpl* recorder);
+    void onRecordingButtonToggled(bool on);
+
+    void changeRecordingToggleState(bool on){
+        recordingToggle->blockSignals(true);
+        recordingToggle->setChecked(on);
+        recordingToggle->blockSignals(false);
+    }
+    void changeViewMarkerToggleState(bool on){
+        viewMarkerToggle->blockSignals(true);
+        viewMarkerToggle->setChecked(on);
+        viewMarkerToggle->blockSignals(false);
+    }
 };
 
 class ConfigDialog : public Dialog
@@ -70,13 +85,18 @@ public:
     RadioButton directModeRadio;
 
     double startTime() const {
-        return startTimeSpin.value();
+        return startTimeCheck.isChecked() ? startTimeSpin.value() : 0.0;
     }
     double finishTime() const {
         return finishTimeCheck.isChecked() ? finishTimeSpin.value() : std::numeric_limits<double>::max();
     }
     double timeStep() const {
         return 1.0 / fpsSpin.value();
+    }
+    void changeViewMarkerCheckState(bool on){
+        viewMarkerCheck.blockSignals(true);
+        viewMarkerCheck.setChecked(on);
+        viewMarkerCheck.blockSignals(false);
     }
 
     ConfigDialog(MovieRecorderImpl* recorder);
@@ -115,6 +135,7 @@ public:
     ScopedConnection targetViewConnection;
     bool isRecording;
     bool isBeforeFirstFrameCapture;
+    bool requestStopRecording;
     int frame;
     double nextFrameTime;
     double timeStep;
@@ -133,17 +154,20 @@ public:
     void setTargetView(const std::string& name);
     void onTargetViewRemoved(View* view);
     void onViewMarkerToggled(bool on);
+    void startViewMarkerBlinking();
+    void stopViewMarkerBlinking();
     void onViewMarkerBlinkTimeout();
-    void onRecordingButtonToggled(bool on);
-    void requestRecording();
-    void capture();
-    bool setupViewAndFilenameFormat();
+    void requestRecording(bool isFromConfigDialog);
+    void stopRecording();
+    bool doInitiativeModeRecording();
+    void setupPassiveModeRecording();
     void onPlaybackStarted(double time);
+    void startPassiveModeRecording();
+    bool setupViewAndFilenameFormat();
     bool onTimeChanged(double time);
     bool saveViewImage();
     void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
     void onPlaybackStopped();
-    void stopRecording();
     bool store(Mapping& archive);
     void restore(const Mapping& archive);
 };
@@ -156,12 +180,10 @@ void MovieRecorder::initialize(ExtensionManager* ext)
     if(!movieRecorder){
         movieRecorder = ext->manage(new MovieRecorder(ext));
 
-        /*
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(_("Movie Recorder"))
             ->sigTriggered().connect(boost::bind(&QDialog::show, movieRecorder->impl->config));
-        */
     }
 }
 
@@ -189,10 +211,11 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     
     isRecording = false;
     isBeforeFirstFrameCapture = false;
+    requestStopRecording = false;
 
     viewMarker = 0;
     isViewMarkerActive = false;
-    viewMarkerBlinkTimer.setInterval(750);
+    viewMarkerBlinkTimer.setInterval(500);
     viewMarkerBlinkTimer.sigTimeout().connect(
         boost::bind(&MovieRecorderImpl::onViewMarkerBlinkTimeout, this));
 
@@ -237,6 +260,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     modeGroup->addButton(&passiveModeRadio);
     hbox->addWidget(&passiveModeRadio);
     directModeRadio.setText(_("Direct"));
+    directModeRadio.setEnabled(false);
     modeGroup->addButton(&directModeRadio);
     hbox->addWidget(&directModeRadio);
     hbox->addStretch();
@@ -316,7 +340,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     PushButton* recordButton = new PushButton(_("&Record"));
     recordButton->setDefault(true);
     buttonBox->addButton(recordButton, QDialogButtonBox::ActionRole);
-    recordButton->sigClicked().connect(boost::bind(&MovieRecorderImpl::requestRecording, recorder));
+    recordButton->sigClicked().connect(boost::bind(&MovieRecorderImpl::requestRecording, recorder, true));
 
     PushButton* stopButton = new PushButton(_("&Stop"));
     stopButton->setDefault(true);
@@ -336,12 +360,12 @@ MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
     : ToolBar(N_("MovieRecorderBar")),
       recorder(recorder)
 {
-    addToggleButton("R", _("Toggle Recording"))
-        ->sigToggled().connect(
-            boost::bind(&MovieRecorderImpl::onRecordingButtonToggled, recorder, _1));
+    recordingToggle = addToggleButton("R", _("Toggle Recording"));
+    recordingToggle->sigToggled().connect(
+            boost::bind(&MovieRecorderBar::onRecordingButtonToggled, this, _1));
 
-    addToggleButton("[ ]", _("Toggle Target View Marker"))
-        ->sigToggled().connect(
+    viewMarkerToggle = addToggleButton("[ ]", _("Toggle Target View Marker"));
+    viewMarkerToggle->sigToggled().connect(
             boost::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, _1));
     
     addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
@@ -420,22 +444,20 @@ void ConfigDialog::onTargetViewIndexChanged(int index)
 void MovieRecorderImpl::setTargetView(View* view)
 {
     if(view != targetView){
+        if(isRecording){
+            stopRecording();
+        }
         targetViewConnection.disconnect();
         targetViewName.clear();
         targetView = view;
 
         config->updateViewCombo();
     
-        if(!targetView){
-            stopRecording();
-        } else {
+        if(targetView){
             targetViewName = targetView->name();
             targetViewConnection.reset(
                 targetView->sigRemoved().connect(
                     boost::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
-            if(isRecording){
-                requestRecording();
-            }
         }
     }
 }
@@ -482,32 +504,98 @@ void ConfigDialog::showDirectorySelectionDialog()
 }
 
 
-void MovieRecorderImpl::onRecordingButtonToggled(bool on)
+void MovieRecorderBar::onRecordingButtonToggled(bool on)
 {
     if(on){
-        requestRecording();
+        recorder->requestRecording(false);
     } else {
-        stopRecording();
+        recorder->stopRecording();
     }
 }
 
 
-void MovieRecorderImpl::requestRecording()
+void MovieRecorderImpl::requestRecording(bool isFromConfigDialog)
 {
+    toolBar->changeRecordingToggleState(true);
+    
     if(config->initiativeModeRadio.isChecked()){
-        capture();
+        if(doInitiativeModeRecording()){
+            if(isFromConfigDialog){
+                config->hide();
+            }
+        }
     } else if(config->passiveModeRadio.isChecked()){
-
+        setupPassiveModeRecording();
     } else if(config->directModeRadio.isChecked()){
 
     }
 }
 
 
-void MovieRecorderImpl::capture()
+void MovieRecorderImpl::stopRecording()
+{
+    if(isRecording){
+        isRecording = false;
+        requestStopRecording = true;
+    }
+    timeBarConnections.disconnect();
+    stopViewMarkerBlinking();
+
+    toolBar->changeRecordingToggleState(false);
+}
+
+
+bool MovieRecorderImpl::doInitiativeModeRecording()
+{
+    if(!setupViewAndFilenameFormat()){
+        return false;
+    }
+    
+    isRecording = true;
+    requestStopRecording = false;
+    frame = 0;
+    timeStep = config->timeStep();
+
+    double time = config->startTime();
+    double finishTime = config->finishTime();
+    bool doContinue = true;
+
+    startViewMarkerBlinking();
+    
+    while(time <= finishTime && doContinue){
+
+        doContinue = timeBar->setTime(time);
+
+        MessageView::instance()->flush();
+
+        if(requestStopRecording){
+            break;
+        }
+
+        if(!saveViewImage()){
+            requestStopRecording = true;
+            break;
+        }
+
+        time += timeStep;
+        frame++;
+    }
+
+    startViewMarkerBlinking();
+    stopRecording();
+    bool result = !requestStopRecording;
+    requestStopRecording = false;
+
+    return result;
+}
+
+
+void MovieRecorderImpl::setupPassiveModeRecording()
 {
     if(!isRecording){
+
         timeBarConnections.disconnect();
+        
         if(setupViewAndFilenameFormat()){
             isBeforeFirstFrameCapture = true;
             frame = 0;
@@ -515,26 +603,38 @@ void MovieRecorderImpl::capture()
             finishTime = config->finishTime();
             timeStep = config->timeStep();
             
-            const bool isDoingPlayback = timeBar->isDoingPlayback();
-            if(isDoingPlayback){
-                isRecording = true;
-                if(isViewMarkerActive){
-                    viewMarkerBlinkTimer.start();
-                }
+            if(timeBar->isDoingPlayback()){
+                startPassiveModeRecording();
             } else {
                 timeBarConnections.add(
                     timeBar->sigPlaybackStarted().connect(
                         boost::bind(&MovieRecorderImpl::onPlaybackStarted, this, _1)));
             }
-
-            timeBarConnections.add(
-                timeBar->sigTimeChanged().connect(
-                    boost::bind(&MovieRecorderImpl::onTimeChanged, this, _1)));
-            timeBarConnections.add(
-                timeBar->sigPlaybackStopped().connect(
-                    boost::bind(&MovieRecorderImpl::onPlaybackStopped, this)));
         }
     }
+}
+
+
+void MovieRecorderImpl::onPlaybackStarted(double time)
+{
+    startPassiveModeRecording();
+}
+
+
+void MovieRecorderImpl::startPassiveModeRecording()
+{
+    timeBarConnections.disconnect();
+    
+    timeBarConnections.add(
+        timeBar->sigTimeChanged().connect(
+            boost::bind(&MovieRecorderImpl::onTimeChanged, this, _1)));
+
+    timeBarConnections.add(
+        timeBar->sigPlaybackStopped().connect(
+            boost::bind(&MovieRecorderImpl::onPlaybackStopped, this)));
+
+    isRecording = true;
+    startViewMarkerBlinking();
 }
 
 
@@ -574,15 +674,6 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
     }
 
     return true;
-}
-
-
-void MovieRecorderImpl::onPlaybackStarted(double time)
-{
-    isRecording = true;
-    if(isViewMarkerActive){
-        viewMarkerBlinkTimer.start();
-    }
 }
 
 
@@ -654,18 +745,13 @@ void MovieRecorderImpl::onPlaybackStopped()
 }
 
 
-void MovieRecorderImpl::stopRecording()
-{
-    isRecording = false;
-    timeBarConnections.disconnect();
-    viewMarkerBlinkTimer.stop();
-}
-
-
 void MovieRecorderImpl::onViewMarkerToggled(bool on)
 {
+    toolBar->changeViewMarkerToggleState(on);
+    config->changeViewMarkerCheckState(on);
+    
     isViewMarkerActive = false;
-    viewMarkerBlinkTimer.stop();
+    stopViewMarkerBlinking();
     
     if(on){
         if(!targetView){
@@ -681,7 +767,7 @@ void MovieRecorderImpl::onViewMarkerToggled(bool on)
             viewMarker->show();
             isViewMarkerActive = true;
             if(isRecording){
-                viewMarkerBlinkTimer.start();
+                startViewMarkerBlinking();
             }
         }
     } else {
@@ -692,6 +778,20 @@ void MovieRecorderImpl::onViewMarkerToggled(bool on)
 }
 
 
+void MovieRecorderImpl::startViewMarkerBlinking()
+{
+    if(isViewMarkerActive && isRecording){
+        viewMarkerBlinkTimer.start();
+    }
+}
+
+
+void MovieRecorderImpl::stopViewMarkerBlinking()
+{
+    viewMarkerBlinkTimer.stop();
+}
+
+    
 void MovieRecorderImpl::onViewMarkerBlinkTimeout()
 {
     if(viewMarker){
