@@ -229,7 +229,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     : recorder(recorder)
 {
-    setWindowTitle(_("Config and Execution of the Movie Recorder"));
+    setWindowTitle(_("Movie Recorder"));
     
     QVBoxLayout* vbox = new QVBoxLayout();
     setLayout(vbox);
