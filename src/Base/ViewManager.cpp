@@ -171,19 +171,6 @@ typedef boost::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
 typedef map<string, ClassNameToViewInfoMapPtr> ModuleNameToClassNameToViewInfoMap;
 ModuleNameToClassNameToViewInfoMap moduleNameToClassNameToViewInfoMap;
 
-
-void InstanceInfo::remove()
-{
-    if(view){
-        delete view;
-        view = 0;
-    }
-    viewInfo->instances.erase(iterInViewInfo);
-    iterInViewInfo = viewInfo->instances.end();
-    viewInfo->instancesInViewManager.erase(iterInViewManager);
-    iterInViewManager = viewInfo->instancesInViewManager.end();
-}
-
 }
 
 
@@ -200,6 +187,9 @@ public:
 
     ViewManagerImpl(ExtensionManager* ext);
     ~ViewManagerImpl();
+    static void notifySigRemoved(View* view){
+        view->sigRemoved_();
+    }
 };
 
 }
@@ -223,45 +213,59 @@ ViewInfo::ViewInfo
 
 namespace {
 
+void InstanceInfo::remove()
+{
+    if(view){
+        ViewManagerImpl::notifySigRemoved(view);
+        delete view;
+        view = 0;
+    }
+    viewInfo->instances.erase(iterInViewInfo);
+    iterInViewInfo = viewInfo->instances.end();
+    viewInfo->instancesInViewManager.erase(iterInViewManager);
+    iterInViewManager = viewInfo->instancesInViewManager.end();
+}
+
+
 class ViewCreationDialog : public Dialog
 {
 public:
     QLineEdit nameEdit;
         
-    ViewCreationDialog(ViewInfoPtr viewInfo)
-        {
-            QVBoxLayout* vbox = new QVBoxLayout();
+    ViewCreationDialog(ViewInfoPtr viewInfo) {
+
+        QVBoxLayout* vbox = new QVBoxLayout();
             
-            QHBoxLayout* hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Name:")));
-            hbox->addWidget(&nameEdit);
-            vbox->addLayout(hbox);
-
-            QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
-
-            QPushButton* createButton = new QPushButton(_("&Create"));
-            createButton->setDefault(true);
-            buttonBox->addButton(createButton, QDialogButtonBox::AcceptRole);
-            connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
-
-            QPushButton* cancelButton = new QPushButton(_("&Cancel"));
-            buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
-            connect(buttonBox,SIGNAL(rejected()), this, SLOT(reject()));
-
-            vbox->addWidget(buttonBox);
-            setLayout(vbox);
-            
-            setWindowTitle(QString(_("Create %1")).arg(viewInfo->translatedClassName.c_str()));
-
-            if(viewInfo->instances.empty()){
-                nameEdit.setText(viewInfo->translatedDefaultInstanceName.c_str());
-            } else {
-                nameEdit.setText(
-                    QString("%1 %2")
-                    .arg(viewInfo->translatedDefaultInstanceName.c_str())
-                    .arg(viewInfo->instances.size() + 1));
-            }
+        QHBoxLayout* hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Name:")));
+        hbox->addWidget(&nameEdit);
+        vbox->addLayout(hbox);
+        
+        QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
+        
+        QPushButton* createButton = new QPushButton(_("&Create"));
+        createButton->setDefault(true);
+        buttonBox->addButton(createButton, QDialogButtonBox::AcceptRole);
+        connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
+        
+        QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+        buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
+        connect(buttonBox,SIGNAL(rejected()), this, SLOT(reject()));
+        
+        vbox->addWidget(buttonBox);
+        setLayout(vbox);
+        
+        setWindowTitle(QString(_("Create %1")).arg(viewInfo->translatedClassName.c_str()));
+        
+        if(viewInfo->instances.empty()){
+            nameEdit.setText(viewInfo->translatedDefaultInstanceName.c_str());
+        } else {
+            nameEdit.setText(
+                QString("%1 %2")
+                .arg(viewInfo->translatedDefaultInstanceName.c_str())
+                .arg(viewInfo->instances.size() + 1));
         }
+    }
 };
     
 
@@ -550,9 +554,6 @@ View* ViewManager::getOrCreateViewOfDefaultName(const std::string& defaultName)
 }
 
 
-/**
-   This is implemented for the compatibility to version 1.4 or earlier.
-*/
 std::vector<View*> ViewManager::allViews()
 {
     std::vector<View*> views;
@@ -560,6 +561,22 @@ std::vector<View*> ViewManager::allViews()
         InstanceInfoList& instances = p->second->instances;
         for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
             views.push_back((*p)->view);
+        }
+    }
+    return views;
+}
+
+
+std::vector<View*> ViewManager::activeViews()
+{
+    std::vector<View*> views;
+    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
+        InstanceInfoList& instances = p->second->instances;
+        for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
+            View* view = (*p)->view;
+            if(view->isActive()){
+                views.push_back(view);
+            }
         }
     }
     return views;

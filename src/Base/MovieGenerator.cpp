@@ -96,7 +96,7 @@ void cnoid::initializeMovieGenerator(ExtensionManager* ext)
 
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
-        mm.addItem(N_("Movie Generator"))
+        mm.addItem(_("Movie Generator"))
             ->sigTriggered().connect(boost::bind(&MovieGenerator::show, movieGenerator));
     }
 }
@@ -142,13 +142,13 @@ MovieGenerator::MovieGenerator()
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
-    hbox->addWidget(new QLabel(_("Begin")));
+    hbox->addWidget(new QLabel(_("Start Time")));
     beginningTimeSpin.setDecimals(2);
     beginningTimeSpin.setRange(0.00, 9999.99);
     beginningTimeSpin.setSingleStep(0.1);
     hbox->addWidget(&beginningTimeSpin);
 
-    endingTimeCheck.setText(_("End"));
+    endingTimeCheck.setText(_("Finish Time"));
     hbox->addWidget(&endingTimeCheck);
     
     endingTimeSpin.setDecimals(2);
@@ -225,7 +225,7 @@ bool MovieGenerator::store(Mapping& archive)
     archive.write("fps", fpsSpin.value());
     archive.write("setSize", imageSizeCheck.isChecked());
     archive.write("width", imageWidthSpin.value());
-    archive.write("heiht", imageHeightSpin.value());
+    archive.write("height", imageHeightSpin.value());
     return true;
 }
 

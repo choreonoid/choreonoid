@@ -41,7 +41,8 @@
 #include "Vector3SeqItem.h"
 #include "PathVariableEditor.h"
 #include "Licenses.h"
-#include "MovieGenerator.h"
+//#include "MovieGenerator.h"
+#include "MovieRecorder.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
 #include "VirtualJoystickView.h"
@@ -222,7 +223,8 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PointSetItem::initializeClass(ext);
     MultiPointSetItem::initializeClass(ext);
 
-    initializeMovieGenerator(ext);
+    //initializeMovieGenerator(ext);
+    MovieRecorder::initialize(ext);
 
     CaptureBar::initialize(ext);
     

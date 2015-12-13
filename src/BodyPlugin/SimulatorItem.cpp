@@ -1063,7 +1063,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     recordingMode.setSymbol(SimulatorItem::REC_FULL, N_("full"));
     recordingMode.setSymbol(SimulatorItem::REC_TAIL, N_("tail"));
     recordingMode.setSymbol(SimulatorItem::REC_NONE, N_("off"));
-    recordingMode.select(SimulatorItem::REC_TAIL);
+    recordingMode.select(SimulatorItem::REC_FULL);
     
     timeRangeMode.setSymbol(SimulatorItem::TR_UNLIMITED, N_("Unlimited"));
     timeRangeMode.setSymbol(SimulatorItem::TR_ACTIVE_CONTROL, N_("Active control period"));

@@ -43,8 +43,9 @@ set(sources
   ActionGroup.cpp
   SpinBox.cpp
   FloatingNumberBox.cpp
-  Slider.cpp
   ScrollBar.cpp
+  Slider.cpp
+  Splitter.cpp
   Buttons.cpp
   ButtonGroup.cpp
   CheckBox.cpp
@@ -95,6 +96,7 @@ set(sources
   PointSetItem.cpp
   MultiPointSetItem.cpp
   MovieGenerator.cpp
+  MovieRecorder.cpp
   TextEditView.cpp
   ImageView.cpp
   TextEdit.cpp
@@ -118,8 +120,9 @@ set(headers
   ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
-  Slider.h
   ScrollBar.h
+  Slider.h
+  Splitter.h
   Buttons.h
   ButtonGroup.h
   CheckBox.h
@@ -216,8 +219,9 @@ QT4_WRAP_CPP(sources
   ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
-  Slider.h
   ScrollBar.h
+  Slider.h
+  Splitter.h
   Buttons.h
   ButtonGroup.h
   CheckBox.h

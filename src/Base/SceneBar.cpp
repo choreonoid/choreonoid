@@ -125,7 +125,7 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
 
     cameraCombo = new ComboBox();
     cameraCombo->setToolTip(_("Select a camera"));
-    cameraCombo->setMinimumContentsLength(1);
+    cameraCombo->setMinimumContentsLength(6);
     cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     cameraCombo->sigCurrentIndexChanged().connect(
         boost::bind(&SceneBarImpl::onCameraComboCurrentIndexChanged, this, _1));
@@ -144,8 +144,8 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
     wireframeToggle->sigToggled().connect(
         boost::bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
 
-    self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the dialog to setup scene rendering"))
-        ->sigClicked().connect(boost::bind(&SceneWidget::showSetupDialog, boost::ref(targetSceneWidget)));
+    self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+        ->sigClicked().connect(boost::bind(&SceneWidget::showConfigDialog, boost::ref(targetSceneWidget)));
 
     SceneWidget::sigSceneWidgetCreated().connect(boost::bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
 }
@@ -296,7 +296,7 @@ void SceneBarImpl::onSceneRendererCamerasChanged()
         } else if(pathStrings.size() == 1){
             label = pathStrings.front();
         } else {
-            label = pathStrings.front() + " - " + pathStrings.back();
+            label = pathStrings.back() + " - " + pathStrings.front();
         }
         cameraCombo->addItem(label.c_str());
     }
