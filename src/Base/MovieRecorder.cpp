@@ -786,7 +786,7 @@ void MovieRecorderImpl::outputImages()
             while(isRecording && capturedImages.empty()){
                 imageQueueCondition.wait(lock);
             }
-            if(!isRecording){
+            if(capturedImages.empty() && !isRecording){
                 break;
             }
             captured = capturedImages.front();
