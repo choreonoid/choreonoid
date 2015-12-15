@@ -188,7 +188,7 @@ public:
     ViewManagerImpl(ExtensionManager* ext);
     ~ViewManagerImpl();
     static void notifySigRemoved(View* view){
-        view->sigRemoved_();
+        view->notifySigRemoved();
     }
 };
 

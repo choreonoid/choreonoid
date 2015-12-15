@@ -17,6 +17,7 @@ class MenuManager;
 class ViewArea;
 class ViewAreaImpl;
 class ViewManagerImpl;
+class ViewImpl;
 
 class CNOID_EXPORT ViewClass
 {
@@ -30,28 +31,21 @@ public:
     View();
     virtual ~View();
 
+    ViewClass* viewClass() const;
+
     void setName(const std::string& name);
     std::string name() const { return objectName().toStdString(); }
 
-    ViewClass* viewClass() const;
-
-    ViewArea* viewArea() const { return viewArea_; }
+    ViewArea* viewArea() const;
         
     bool isActive() const;
 
     void bringToFront();
 
-    SignalProxy<void()> sigActivated() {
-        return sigActivated_;
-    }
-
-    SignalProxy<void()> sigDeactivated() {
-        return sigDeactivated_;
-    }
-
-    SignalProxy<void()> sigRemoved() {
-        return sigRemoved_;
-    }
+    SignalProxy<void()> sigActivated();
+    SignalProxy<void()> sigDeactivated();
+    SignalProxy<void()> sigResized();
+    SignalProxy<void()> sigRemoved();
     
     enum LayoutArea { LEFT = 0,
                       LEFT_TOP = 0,
@@ -85,27 +79,18 @@ protected:
     virtual void onActivated();
     virtual void onDeactivated();
     virtual void onAttachedMenuRequest(MenuManager& menuManager);
-
     virtual void keyPressEvent(QKeyEvent* event);
+    virtual void resizeEvent(QResizeEvent* event);
         
 private:
-
     // Qt events (make hidden)
     virtual void showEvent(QShowEvent* event);
     virtual void hideEvent(QHideEvent* event);
 
-    bool isActive_;
-    mutable ViewArea* viewArea_;
+    ViewImpl* impl;
 
-    Signal<void()> sigActivated_;
-    Signal<void()> sigDeactivated_;
-    Signal<void()> sigRemoved_;
-
-    LayoutArea defaultLayoutArea_;
-    bool isFontSizeZoomKeysEnabled;
-    int fontZoom;
-
-    void zoomFontSizeSub(int zoom, const QList<QWidget*>& widgets);
+    void setViewArea(ViewArea* area);
+    void notifySigRemoved();
 
     friend class ViewAreaImpl;
     friend class ViewManagerImpl;

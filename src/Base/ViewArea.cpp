@@ -761,7 +761,7 @@ void ViewAreaImpl::addView(ViewPane* pane, View* view, bool makeCurrent)
     if(makeCurrent){
         pane->setCurrentIndex(index);
     }
-    view->viewArea_ = self;
+    view->setViewArea(self);
 
     ++numViews;
 
@@ -828,7 +828,7 @@ bool ViewAreaImpl::removeView(ViewPane* pane, View* view, bool isMovingInViewAre
                 }
             }
         }
-        view->viewArea_ = 0;
+        view->setViewArea(0);
     }
     return removed;
 }
@@ -1083,7 +1083,7 @@ void ViewAreaImpl::clearAllPanesSub(QSplitter* splitter)
                         pane->removeView(view);
                         view->hide();
                         view->setParent(0);
-                        view->viewArea_ = 0;
+                        view->setViewArea(0);
                     }
                 }
             }
