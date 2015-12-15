@@ -23,6 +23,7 @@
 #include "Dialog.h"
 #include "Separator.h"
 #include "Timer.h"
+#include "LazyCaller.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Selection>
 #include <QPainter>
@@ -51,14 +52,26 @@ public:
     MovieRecorderImpl* recorder;
     ToolButton* recordingToggle;
     ToolButton* viewMarkerToggle;
+    bool isFlashed;
     
     MovieRecorderBar(MovieRecorderImpl* recorder);
+
+    void flashRecordingToggle(bool setNormal){
+        if(isFlashed || setNormal){
+            recordingToggle->setText(_("O"));
+            isFlashed = false;
+        } else {
+            recordingToggle->setText(_("*"));
+            isFlashed = true;
+        }
+    }
 
     void setRecordingToggle(bool on){
         recordingToggle->blockSignals(true);
         recordingToggle->setChecked(on);
         recordingToggle->blockSignals(false);
     }
+    
     void changeViewMarkerToggleState(bool on){
         viewMarkerToggle->blockSignals(true);
         viewMarkerToggle->setChecked(on);
@@ -169,10 +182,10 @@ public:
 
     Timer directModeTimer;
 
-    
     ViewMarker* viewMarker;
-    Timer viewMarkerBlinkTimer;
     bool isViewMarkerEnabled;
+    
+    Timer flashTimer;
 
     typedef boost::variant<QPixmap, QImage> ImageVariant;
 
@@ -210,11 +223,13 @@ public:
     void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
     void startImageOutput();
     void outputImages();
+    void onImageOutputFailed(std::string message);
     void stopRecording(bool isFinished);
     void onViewMarkerToggled(bool on);
     bool showViewMarker();
-    void stopViewMarkerBlinking();
-    void onViewMarkerBlinkTimeout();
+    void startFlash();
+    void onFlashTimeout();
+    void stopFlash();
     bool store(Mapping& archive);
     void restore(const Mapping& archive);
 };
@@ -274,9 +289,9 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 
     viewMarker = 0;
     isViewMarkerEnabled = false;
-    viewMarkerBlinkTimer.setInterval(500);
-    viewMarkerBlinkTimer.sigTimeout().connect(
-        boost::bind(&MovieRecorderImpl::onViewMarkerBlinkTimeout, this));
+    flashTimer.setInterval(500);
+    flashTimer.sigTimeout().connect(
+        boost::bind(&MovieRecorderImpl::onFlashTimeout, this));
 
     Mapping& config = *AppConfig::archive()->findMapping("MovieRecorder");
     if(config.isValid()){
@@ -413,7 +428,8 @@ MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
     : ToolBar(N_("MovieRecorderBar")),
       recorder(recorder)
 {
-    recordingToggle = addToggleButton("R", _("Toggle Recording"));
+    
+    recordingToggle = addToggleButton("O", _("Toggle Recording"));
     recordingToggle->sigToggled().connect(
         boost::bind(&MovieRecorderImpl::activateRecording, recorder, _1, false));
 
@@ -588,14 +604,10 @@ void MovieRecorderImpl::activateRecording(bool on, bool isActivatedByDialog)
     } else {
 
         if(isRecording){
-            // show a warning dialog
-            // stopRecording();
             return;
         }
 
-        if(!setupViewAndFilenameFormat()){
-            // show a warning dialog
-        } else {
+        if(setupViewAndFilenameFormat()){
             frame = 0;
             requestStopRecording = false;
             timeStep = dialog->timeStep();
@@ -632,6 +644,7 @@ void MovieRecorderImpl::activateRecording(bool on, bool isActivatedByDialog)
 bool MovieRecorderImpl::setupViewAndFilenameFormat()
 {
     if(!targetView){
+        showWarningDialog(_("Target view is not specified."));
         return false;
     }
 
@@ -678,7 +691,7 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
 
     isRecording = true;
 
-    showViewMarker();
+    startFlash();
     startImageOutput();
 
     mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
@@ -694,13 +707,6 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
         }
 
         captureViewImage();
-
-        /*
-        if(isSaveFailed){
-            requestStopRecording = true;
-            break;
-        }
-        */
 
         time += timeStep;
         frame++;
@@ -751,7 +757,7 @@ void MovieRecorderImpl::startPassiveModeRecording()
             boost::bind(&MovieRecorderImpl::onPlaybackStopped, this, _2)));
 
     isRecording = true;
-    showViewMarker();
+    startFlash();
     startImageOutput();
 
     mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
@@ -791,7 +797,7 @@ void MovieRecorderImpl::onPlaybackStopped(bool isStoppedManually)
 void MovieRecorderImpl::startDirectModeRecording()
 {
     isRecording = true;
-    showViewMarker();
+    startFlash();
     startImageOutput();
     directModeTimer.setInterval(1000 / dialog->frameRate());
     directModeTimer.start();
@@ -881,12 +887,24 @@ void MovieRecorderImpl::outputImages()
             QImage& image = boost::get<QImage>(captured->image);
             saved = image.save(filename.c_str());
         }
-        /*
+
         if(!saved){
-            showWarningDialog(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
+            string message = str(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
+            callLater(boost::bind(&MovieRecorderImpl::onImageOutputFailed, this, message));
+            {
+                boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+                capturedImages.clear();
+            }
+            break;
         }
-        */
     }
+}
+
+
+void MovieRecorderImpl::onImageOutputFailed(std::string message)
+{
+    showWarningDialog(message);
+    stopRecording(false);
 }
 
 
@@ -896,7 +914,7 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
     
     if(isRecording){
 
-        stopViewMarkerBlinking();
+        stopFlash();
         
         int numRemainingImages = 0;
         {
@@ -952,8 +970,6 @@ void MovieRecorderImpl::onViewMarkerToggled(bool on)
     toolBar->changeViewMarkerToggleState(on);
     dialog->setViewMarkerCheck(on);
     
-    stopViewMarkerBlinking();
-    
     isViewMarkerEnabled = on;
 
     if(on){
@@ -979,29 +995,39 @@ bool MovieRecorderImpl::showViewMarker()
         }
         viewMarker->setTargetView(targetView);
         viewMarker->show();
-        if(isRecording){
-            viewMarkerBlinkTimer.start();
-        }
         return true;
     }
     return false;
 }
 
 
-void MovieRecorderImpl::stopViewMarkerBlinking()
+void MovieRecorderImpl::startFlash()
 {
-    viewMarkerBlinkTimer.stop();
+    showViewMarker();
+    flashTimer.start();
 }
 
-    
-void MovieRecorderImpl::onViewMarkerBlinkTimeout()
+
+void MovieRecorderImpl::onFlashTimeout()
 {
-    if(viewMarker){
+    toolBar->flashRecordingToggle(false);
+    
+    if(isViewMarkerEnabled && viewMarker){
         if(viewMarker->isVisible()){
             viewMarker->hide();
         } else {
             viewMarker->show();
         }
+    }
+}
+
+
+void MovieRecorderImpl::stopFlash()
+{
+    flashTimer.stop();
+    toolBar->flashRecordingToggle(true);
+    if(isViewMarkerEnabled && viewMarker){
+        viewMarker->show();
     }
 }
 
