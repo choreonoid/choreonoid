@@ -95,7 +95,6 @@ set(sources
   SceneItem.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
-  MovieGenerator.cpp
   MovieRecorder.cpp
   TextEditView.cpp
   ImageView.cpp
