@@ -27,14 +27,15 @@
 #include <QPainter>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/bind.hpp>
+#include <deque>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
-using boost::format;
 
 namespace {
 
@@ -101,7 +102,6 @@ public:
 
     ConfigDialog(MovieRecorderImpl* recorder);
     virtual void showEvent(QShowEvent* event);
-    virtual void hideEvent(QHideEvent* event);
     void updateViewCombo();
     void onTargetViewIndexChanged(int index);
     void showDirectorySelectionDialog();
@@ -148,6 +148,20 @@ public:
     Timer viewMarkerBlinkTimer;
     bool isViewMarkerActive;
 
+    typedef boost::variant<QPixmap, QImage> ImageVariant;
+
+    class CapturedImage : public Referenced {
+    public:
+        ImageVariant image;
+        int frame;
+    };
+    typedef ref_ptr<CapturedImage> CapturedImagePtr;
+
+    deque<CapturedImagePtr> capturedImages;
+    boost::thread imageOutputThread;
+    boost::mutex imageQueueMutex;
+    boost::condition_variable imageQueueCondition;
+
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
     void setTargetView(View* view);
@@ -165,8 +179,10 @@ public:
     void startPassiveModeRecording();
     bool setupViewAndFilenameFormat();
     bool onTimeChanged(double time);
-    bool saveViewImage();
+    void captureViewImage();
     void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
+    void startImageOutput();
+    void outputImages();
     void onPlaybackStopped();
     bool store(Mapping& archive);
     void restore(const Mapping& archive);
@@ -394,12 +410,7 @@ MovieRecorderImpl::~MovieRecorderImpl()
 void ConfigDialog::showEvent(QShowEvent* event)
 {
     updateViewCombo();
-}
-
-
-void ConfigDialog::hideEvent(QHideEvent* event)
-{
-
+    Dialog::showEvent(event);
 }
 
 
@@ -489,7 +500,6 @@ void MovieRecorderImpl::onTargetViewRemoved(View* view)
 }
 
 
-
 void ConfigDialog::showDirectorySelectionDialog()
 {
     QString directory =
@@ -516,6 +526,11 @@ void MovieRecorderBar::onRecordingButtonToggled(bool on)
 
 void MovieRecorderImpl::requestRecording(bool isFromConfigDialog)
 {
+    if(isRecording){
+        // show a warning dialog
+        // stopRecording();
+    }
+    
     toolBar->changeRecordingToggleState(true);
     
     if(config->initiativeModeRadio.isChecked()){
@@ -537,6 +552,9 @@ void MovieRecorderImpl::stopRecording()
     if(isRecording){
         isRecording = false;
         requestStopRecording = true;
+        imageQueueCondition.notify_all();
+        imageOutputThread.join();
+        capturedImages.clear();
     }
     timeBarConnections.disconnect();
     stopViewMarkerBlinking();
@@ -561,6 +579,8 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
     bool doContinue = true;
 
     startViewMarkerBlinking();
+
+    startImageOutput();
     
     while(time <= finishTime && doContinue){
 
@@ -572,10 +592,14 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
             break;
         }
 
-        if(!saveViewImage()){
+        captureViewImage();
+
+        /*
+        if(isSaveFailed){
             requestStopRecording = true;
             break;
         }
+        */
 
         time += timeStep;
         frame++;
@@ -635,6 +659,7 @@ void MovieRecorderImpl::startPassiveModeRecording()
 
     isRecording = true;
     startViewMarkerBlinking();
+    startImageOutput();
 }
 
 
@@ -662,7 +687,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         }
     }
 
-    filenameFormat = format((directory / basename).string());
+    filenameFormat = boost::format((directory / basename).string());
 
     if(config->imageSizeCheck.isChecked()){
         int width = config->imageWidthSpin.value();
@@ -673,6 +698,9 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         targetView->setGeometry(x, y, width, height);
     }
 
+    boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+    capturedImages.clear();
+    
     return true;
 }
 
@@ -691,7 +719,7 @@ bool MovieRecorderImpl::onTimeChanged(double time)
             stopRecording();
         } else {
             while(time >= nextFrameTime){
-                saveViewImage();
+                captureViewImage();
                 ++frame;
                 nextFrameTime += timeStep;
             }
@@ -701,24 +729,25 @@ bool MovieRecorderImpl::onTimeChanged(double time)
 }
 
 
-bool MovieRecorderImpl::saveViewImage()
+void MovieRecorderImpl::captureViewImage()
 {
-    bool result = false;
-    string filename = str(filenameFormat % frame);
+    CapturedImagePtr captured = new CapturedImage();
+    captured->frame = frame;
     
     if(SceneView* sceneView = dynamic_cast<SceneView*>(targetView)){
-        result = sceneView->sceneWidget()->saveImage(filename);
+        captured->image = sceneView->sceneWidget()->getImage();
     } else {
-        QPixmap pixmap(targetView->size());
-        targetView->render(&pixmap);
+        captured->image = QPixmap();
+        QPixmap& pixmap = boost::get<QPixmap>(captured->image);
+        pixmap.grabWidget(targetView);
         captureSceneWidgets(targetView, pixmap);
-        result = pixmap.save(filename.c_str());
-    }
-    if(!result){
-        showWarningDialog(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
     }
 
-    return result;
+    {
+        boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+        capturedImages.push_back(captured);
+    }
+    imageQueueCondition.notify_all();
 }
 
 
@@ -735,6 +764,50 @@ void MovieRecorderImpl::captureSceneWidgets(QWidget* widget, QPixmap& pixmap)
             }
             captureSceneWidgets(widget, pixmap);
         }
+    }
+}
+
+
+void MovieRecorderImpl::startImageOutput()
+{
+    if(!imageOutputThread.joinable()){
+        imageOutputThread = boost::thread(
+            boost::bind(&MovieRecorderImpl::outputImages, this));
+    }
+}
+
+
+void MovieRecorderImpl::outputImages()
+{
+    while(true){
+        CapturedImagePtr captured;
+        {
+            boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+            while(isRecording && capturedImages.empty()){
+                imageQueueCondition.wait(lock);
+            }
+            if(!isRecording){
+                break;
+            }
+            captured = capturedImages.front();
+            capturedImages.pop_front();
+        }
+        bool saved = false;
+
+        string filename = str(filenameFormat % captured->frame);
+        
+        if(captured->image.which() == 0){
+            QPixmap& pixmap = boost::get<QPixmap>(captured->image);
+            saved = pixmap.save(filename.c_str());
+        } else {
+            QImage& image = boost::get<QImage>(captured->image);
+            saved = image.save(filename.c_str());
+        }
+        /*
+        if(!saved){
+            showWarningDialog(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
+        }
+        */
     }
 }
 
