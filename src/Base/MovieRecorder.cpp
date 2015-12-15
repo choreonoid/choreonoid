@@ -156,7 +156,7 @@ public:
 
     string targetViewName;
     View* targetView;
-    ScopedConnection targetViewConnection;
+    ScopedConnectionSet targetViewConnections;
 
     MessageView* mv;
     char* startMessage;
@@ -193,6 +193,7 @@ public:
     ~MovieRecorderImpl();
     void setTargetView(View* view);
     void setTargetView(const std::string& name);
+    void onTargetViewResized(View* view);
     void onTargetViewRemoved(View* view);
     void setRecordingMode(const std::string& symbol);
     void activateRecording(bool on, bool isActivatedByDialog);
@@ -494,7 +495,7 @@ void MovieRecorderImpl::setTargetView(View* view)
         if(isRecording){
             stopRecording(false);
         }
-        targetViewConnection.disconnect();
+        targetViewConnections.disconnect();
         targetViewName.clear();
         targetView = view;
 
@@ -502,7 +503,10 @@ void MovieRecorderImpl::setTargetView(View* view)
     
         if(targetView){
             targetViewName = targetView->name();
-            targetViewConnection.reset(
+            targetViewConnections.add(
+                targetView->sigResized().connect(
+                    boost::bind(&MovieRecorderImpl::onTargetViewResized, this, targetView)));
+            targetViewConnections.add(
                 targetView->sigRemoved().connect(
                     boost::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
         }
@@ -524,6 +528,14 @@ void MovieRecorderImpl::setTargetView(const std::string& name)
                 }
             }
         }
+    }
+}
+
+
+void MovieRecorderImpl::onTargetViewResized(View* view)
+{
+    if(targetView == view){
+        showViewMarker();
     }
 }
 
