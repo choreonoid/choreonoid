@@ -172,7 +172,7 @@ public:
     
     ViewMarker* viewMarker;
     Timer viewMarkerBlinkTimer;
-    bool isViewMarkerActive;
+    bool isViewMarkerEnabled;
 
     typedef boost::variant<QPixmap, QImage> ImageVariant;
 
@@ -211,7 +211,7 @@ public:
     void outputImages();
     void stopRecording(bool isFinished);
     void onViewMarkerToggled(bool on);
-    void startViewMarkerBlinking();
+    bool showViewMarker();
     void stopViewMarkerBlinking();
     void onViewMarkerBlinkTimeout();
     bool store(Mapping& archive);
@@ -272,7 +272,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     startMessage = _("Recording of %1% has been started with the %2% mode.");
 
     viewMarker = 0;
-    isViewMarkerActive = false;
+    isViewMarkerEnabled = false;
     viewMarkerBlinkTimer.setInterval(500);
     viewMarkerBlinkTimer.sigTimeout().connect(
         boost::bind(&MovieRecorderImpl::onViewMarkerBlinkTimeout, this));
@@ -666,7 +666,7 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
 
     isRecording = true;
 
-    startViewMarkerBlinking();
+    showViewMarker();
     startImageOutput();
 
     mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
@@ -739,7 +739,7 @@ void MovieRecorderImpl::startPassiveModeRecording()
             boost::bind(&MovieRecorderImpl::onPlaybackStopped, this, _2)));
 
     isRecording = true;
-    startViewMarkerBlinking();
+    showViewMarker();
     startImageOutput();
 
     mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
@@ -779,7 +779,7 @@ void MovieRecorderImpl::onPlaybackStopped(bool isStoppedManually)
 void MovieRecorderImpl::startDirectModeRecording()
 {
     isRecording = true;
-    startViewMarkerBlinking();
+    showViewMarker();
     startImageOutput();
     directModeTimer.setInterval(1000 / dialog->frameRate());
     directModeTimer.start();
@@ -884,6 +884,8 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
     
     if(isRecording){
 
+        stopViewMarkerBlinking();
+        
         int numRemainingImages = 0;
         {
             boost::unique_lock<boost::mutex> lock(imageQueueMutex);
@@ -927,7 +929,6 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
     }
     
     timeBarConnections.disconnect();
-    stopViewMarkerBlinking();
 
     toolBar->setRecordingToggle(false);
     dialog->setRecordingToggle(false);
@@ -939,26 +940,17 @@ void MovieRecorderImpl::onViewMarkerToggled(bool on)
     toolBar->changeViewMarkerToggleState(on);
     dialog->setViewMarkerCheck(on);
     
-    isViewMarkerActive = false;
     stopViewMarkerBlinking();
     
+    isViewMarkerEnabled = on;
+
     if(on){
         if(!targetView){
             if(!targetViewName.empty()){
                 setTargetView(targetViewName);
             }
         }
-        if(targetView && targetView->isActive()){
-            if(!viewMarker){
-                viewMarker = new ViewMarker(this);
-            }
-            viewMarker->setTargetView(targetView);
-            viewMarker->show();
-            isViewMarkerActive = true;
-            if(isRecording){
-                startViewMarkerBlinking();
-            }
-        }
+        showViewMarker();
     } else {
         if(viewMarker){
             viewMarker->hide();
@@ -967,11 +959,20 @@ void MovieRecorderImpl::onViewMarkerToggled(bool on)
 }
 
 
-void MovieRecorderImpl::startViewMarkerBlinking()
+bool MovieRecorderImpl::showViewMarker()
 {
-    if(isViewMarkerActive && isRecording){
-        viewMarkerBlinkTimer.start();
+    if(isViewMarkerEnabled && targetView && targetView->isActive()){
+        if(!viewMarker){
+            viewMarker = new ViewMarker(this);
+        }
+        viewMarker->setTargetView(targetView);
+        viewMarker->show();
+        if(isRecording){
+            viewMarkerBlinkTimer.start();
+        }
+        return true;
     }
+    return false;
 }
 
 
