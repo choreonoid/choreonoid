@@ -265,6 +265,7 @@ elseif(UNIX)
     ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARIES}
     icuuc
     GLEW
+    Xfixes
     )
 
 elseif(MSVC)

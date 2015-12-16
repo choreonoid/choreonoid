@@ -34,6 +34,15 @@
 #include <boost/filesystem.hpp>
 #include <boost/bind.hpp>
 #include <deque>
+
+#ifdef Q_OS_LINUX
+#include <QX11Info>
+#include <X11/extensions/Xfixes.h>
+const bool ENABLE_MOUSE_CURSOR_CAPTURE = true;
+#else
+const bool ENABLE_MOUSE_CURSOR_CAPTURE = false;
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -42,7 +51,7 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 
-enum RecordinMode { INITIATIVE_MODE, PASSIVE_MODE, DIRECT_MODE, N_RECORDING_MODES };
+enum RecordinMode { OFFLINE_MODE, ONLINE_MODE, DIRECT_MODE, N_RECORDING_MODES };
 
 MovieRecorder* movieRecorder = 0;
 
@@ -98,6 +107,7 @@ public:
     CheckBox imageSizeCheck;
     SpinBox imageWidthSpin;
     SpinBox imageHeightSpin;
+    CheckBox mouseCursorCheck;
     ToggleButton recordingToggle;
 
     double startTime() const {
@@ -197,6 +207,7 @@ public:
     typedef ref_ptr<CapturedImage> CapturedImagePtr;
 
     deque<CapturedImagePtr> capturedImages;
+    vector<quint32> tmpImageBuf;
     boost::thread imageOutputThread;
     boost::mutex imageQueueMutex;
     boost::condition_variable imageQueueCondition;
@@ -211,15 +222,16 @@ public:
     void setRecordingMode(const std::string& symbol);
     void activateRecording(bool on, bool isActivatedByDialog);
     bool setupViewAndFilenameFormat();
-    bool doInitiativeModeRecording();
-    void setupPassiveModeRecording();
+    bool doOfflineModeRecording();
+    void setupOnlineModeRecording();
     void onPlaybackStarted(double time);
-    void startPassiveModeRecording();
+    void startOnlineModeRecording();
     bool onTimeChanged(double time);
     void onPlaybackStopped(bool isStoppedManually);
     void startDirectModeRecording();
     void onDirectModeTimerTimeout();
-    void captureViewImage();
+    void captureViewImage(bool waitForPrevOutput);
+    void drawMouseCursorImage(QPainter& painter);
     void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
     void startImageOutput();
     void outputImages();
@@ -267,8 +279,8 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
       mv(MessageView::instance())
 
 {
-    recordingMode.setSymbol(INITIATIVE_MODE, N_("Initiative"));
-    recordingMode.setSymbol(PASSIVE_MODE, N_("Passive"));
+    recordingMode.setSymbol(OFFLINE_MODE, N_("Offline"));
+    recordingMode.setSymbol(ONLINE_MODE, N_("Online"));
     recordingMode.setSymbol(DIRECT_MODE, N_("Direct"));
     
     dialog = new ConfigDialog(this);
@@ -361,13 +373,13 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
-    hbox->addWidget(new QLabel("Frame rate"));
+    hbox->addWidget(new QLabel(_("Frame rate")));
     fpsSpin.setDecimals(1);
     fpsSpin.setRange(1.0, 9999.9);
     fpsSpin.setValue(30.0);
     fpsSpin.setSingleStep(0.1);
     hbox->addWidget(&fpsSpin);
-    hbox->addWidget(new QLabel("[fps]"));
+    hbox->addWidget(new QLabel(_("[fps]")));
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -378,7 +390,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     startTimeSpin.setRange(0.00, 9999.99);
     startTimeSpin.setSingleStep(0.1);
     hbox->addWidget(&startTimeSpin);
-    hbox->addWidget(new QLabel("[s]"));
+    hbox->addWidget(new QLabel(_("[s]")));
     hbox->addSpacing(4);
 
     finishTimeCheck.setText(_("Finish time"));
@@ -387,7 +399,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     finishTimeSpin.setRange(0.00, 9999.99);
     finishTimeSpin.setSingleStep(0.1);
     hbox->addWidget(&finishTimeSpin);
-    hbox->addWidget(new QLabel("[s]"));
+    hbox->addWidget(new QLabel(_("[s]")));
     hbox->addStretch();
     vbox->addLayout(hbox);
     
@@ -406,6 +418,14 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    if(ENABLE_MOUSE_CURSOR_CAPTURE){
+        hbox = new QHBoxLayout();
+        mouseCursorCheck.setText(_("Capture the mouse cursor"));
+        hbox->addWidget(&mouseCursorCheck);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
+    }
+
     vbox->addWidget(new HSeparator());
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
 
@@ -414,11 +434,6 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     recordingToggle.sigToggled().connect(
         boost::bind(&MovieRecorderImpl::activateRecording, recorder, _1, true));
     buttonBox->addButton(&recordingToggle, QDialogButtonBox::ActionRole);
-
-    QPushButton* closeButton = new QPushButton(_("&Close"));
-    closeButton->setDefault(true);
-    buttonBox->addButton(closeButton, QDialogButtonBox::AcceptRole);
-    connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
 
     vbox->addWidget(buttonBox);
 }
@@ -616,16 +631,16 @@ void MovieRecorderImpl::activateRecording(bool on, bool isActivatedByDialog)
             
             switch(recordingMode.which()){
                 
-            case INITIATIVE_MODE:
-                if(doInitiativeModeRecording()){
+            case OFFLINE_MODE:
+                if(doOfflineModeRecording()){
                     if(isActivatedByDialog){
                         dialog->hide();
                     }
                 }
                 break;
                 
-            case PASSIVE_MODE:
-                setupPassiveModeRecording();
+            case ONLINE_MODE:
+                setupOnlineModeRecording();
                 break;
                 
             case DIRECT_MODE:
@@ -684,7 +699,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
 }
 
 
-bool MovieRecorderImpl::doInitiativeModeRecording()
+bool MovieRecorderImpl::doOfflineModeRecording()
 {
     double time = startTime;
     bool doContinue = true;
@@ -706,7 +721,7 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
             break;
         }
 
-        captureViewImage();
+        captureViewImage(true);
 
         time += timeStep;
         frame++;
@@ -720,31 +735,31 @@ bool MovieRecorderImpl::doInitiativeModeRecording()
 }
 
 
-void MovieRecorderImpl::setupPassiveModeRecording()
+void MovieRecorderImpl::setupOnlineModeRecording()
 {
     timeBarConnections.disconnect();
         
     isBeforeFirstFrameCapture = true;
             
     if(timeBar->isDoingPlayback()){
-        startPassiveModeRecording();
+        startOnlineModeRecording();
     } else {
         timeBarConnections.add(
             timeBar->sigPlaybackStarted().connect(
                 boost::bind(&MovieRecorderImpl::onPlaybackStarted, this, _1)));
         
-        mv->putln(boost::format(_("The passive mode recording for %1% is ready.")) % targetView->name());
+        mv->putln(boost::format(_("The online mode recording for %1% is ready.")) % targetView->name());
     }
 }
 
 
 void MovieRecorderImpl::onPlaybackStarted(double time)
 {
-    startPassiveModeRecording();
+    startOnlineModeRecording();
 }
 
 
-void MovieRecorderImpl::startPassiveModeRecording()
+void MovieRecorderImpl::startOnlineModeRecording()
 {
     timeBarConnections.disconnect();
     
@@ -778,7 +793,7 @@ bool MovieRecorderImpl::onTimeChanged(double time)
             stopRecording(true);
         } else {
             while(time >= nextFrameTime){
-                captureViewImage();
+                captureViewImage(false);
                 ++frame;
                 nextFrameTime += timeStep;
             }
@@ -808,30 +823,75 @@ void MovieRecorderImpl::startDirectModeRecording()
 
 void MovieRecorderImpl::onDirectModeTimerTimeout()
 {
-    captureViewImage();
+    captureViewImage(false);
     ++frame;
 }
 
 
-void MovieRecorderImpl::captureViewImage()
+void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
 {
     CapturedImagePtr captured = new CapturedImage();
     captured->frame = frame;
     
     if(SceneView* sceneView = dynamic_cast<SceneView*>(targetView)){
         captured->image = sceneView->sceneWidget()->getImage();
+        if(dialog->mouseCursorCheck.isChecked()){
+            QPainter painter(&boost::get<QImage>(captured->image));
+            drawMouseCursorImage(painter);
+        }
     } else {
         captured->image = QPixmap();
         QPixmap& pixmap = boost::get<QPixmap>(captured->image);
         pixmap.grabWidget(targetView);
+
         captureSceneWidgets(targetView, pixmap);
+
+        if(dialog->mouseCursorCheck.isChecked()){
+            QPainter painter(&pixmap);
+            drawMouseCursorImage(painter);
+        }
     }
 
     {
         boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+        if(waitForPrevOutput){
+            while(!capturedImages.empty()){
+                imageQueueCondition.wait(lock);
+            }
+        }
         capturedImages.push_back(captured);
     }
     imageQueueCondition.notify_all();
+}
+
+
+void MovieRecorderImpl::drawMouseCursorImage(QPainter& painter)
+{
+#ifdef Q_OS_LINUX
+    XFixesCursorImage* cursor = XFixesGetCursorImage(QX11Info::display());
+    if(cursor){
+        if(cursor->pixels){
+            QImage cursorImage;
+            if(sizeof(long) == 4){
+                cursorImage = QImage((uchar*)cursor->pixels,
+                                     cursor->width, cursor->height,
+                                     QImage::Format_ARGB32);
+            } else {
+                tmpImageBuf.resize(cursor->width * cursor->height);
+                for(int i = 0; i < tmpImageBuf.size(); ++i){
+                    tmpImageBuf[i] = (quint32)cursor->pixels[i];
+                }
+                cursorImage = QImage((uchar*)(&tmpImageBuf.front()),
+                                     cursor->width, cursor->height,
+                                     QImage::Format_ARGB32);
+            }
+            QPoint mousePos = QCursor::pos() - targetView->mapToGlobal(QPoint(0, 0));
+            mousePos -= QPoint(cursor->xhot, cursor->yhot);
+            painter.drawImage(mousePos, cursorImage);
+        }
+        XFree(cursor);
+    }
+#endif
 }
 
 
@@ -876,6 +936,8 @@ void MovieRecorderImpl::outputImages()
             captured = capturedImages.front();
             capturedImages.pop_front();
         }
+        imageQueueCondition.notify_all();
+        
         bool saved = false;
 
         string filename = str(filenameFormat % captured->frame);
@@ -895,6 +957,7 @@ void MovieRecorderImpl::outputImages()
                 boost::unique_lock<boost::mutex> lock(imageQueueMutex);
                 capturedImages.clear();
             }
+            imageQueueCondition.notify_all();
             break;
         }
     }
@@ -1091,6 +1154,7 @@ bool ConfigDialog::store(Mapping& archive)
     archive.write("setSize", imageSizeCheck.isChecked());
     archive.write("width", imageWidthSpin.value());
     archive.write("height", imageHeightSpin.value());
+    archive.write("mouseCursor", mouseCursorCheck.isChecked());
     return true;
 }
 
@@ -1121,4 +1185,5 @@ void ConfigDialog::restore(const Mapping& archive)
     imageSizeCheck.setChecked(archive.get("setSize", imageSizeCheck.isChecked()));
     imageWidthSpin.setValue(archive.get("width", imageWidthSpin.value()));
     imageHeightSpin.setValue(archive.get("height", imageHeightSpin.value()));
+    mouseCursorCheck.setChecked(archive.get("mouseCursor", mouseCursorCheck.isChecked()));
 }
