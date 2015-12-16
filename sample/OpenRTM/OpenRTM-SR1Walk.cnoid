@@ -84,8 +84,8 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Specific time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -107,8 +107,8 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Specific time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -128,10 +128,10 @@ items:
           name: "BulletSimulator"
           plugin: Bullet
           class: BulletSimulatorItem
-          data: 
+          data:
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Specific time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true

@@ -77,9 +77,8 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recording: true
-            timeRangeMode: TimeBar range
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
             timeLength: 25
             allLinkPositionOutputMode: false
             deviceStateOutput: true

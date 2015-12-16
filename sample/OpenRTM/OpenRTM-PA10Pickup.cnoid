@@ -119,8 +119,8 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Specific time"
             timeLength: 8
             allLinkPositionOutputMode: false
             deviceStateRecording: false
@@ -142,8 +142,8 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Specific time"
             timeLength: 8
             allLinkPositionOutputMode: true
             deviceStateRecording: false
@@ -165,8 +165,8 @@ items:
           class: BulletSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Specific time"
             timeLength: 8
             allLinkPositionOutputMode: true
             deviceStateRecording: false
