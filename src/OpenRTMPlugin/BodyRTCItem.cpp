@@ -476,9 +476,9 @@ bool BodyRTCItem::store(Archive& archive)
     }
     archive.write("moduleName", moduleName, DOUBLE_QUOTED);
     archive.write("confFileName", confFileName, DOUBLE_QUOTED);
-    archive.write("configurationMode", configMode.selectedSymbol());
+    archive.write("configurationMode", configMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("AutoConnect", autoConnect);
-    archive.write("InstanceName", instanceName);
+    archive.write("InstanceName", instanceName, DOUBLE_QUOTED);
     archive.write("bodyPeriodicRate", executionCycleProperty);
     return true;
 }

@@ -2369,8 +2369,8 @@ bool SimulatorItem::store(Archive& archive)
 bool SimulatorItemImpl::store(Archive& archive)
 {
     archive.write("realtimeSync", isRealtimeSyncMode);
-    archive.write("recording", recordingMode.selectedSymbol());
-    archive.write("timeRangeMode", timeRangeMode.selectedSymbol());
+    archive.write("recording", recordingMode.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("timeRangeMode", timeRangeMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("timeLength", specifiedTimeLength);
     archive.write("allLinkPositionOutputMode", isAllLinkPositionOutputMode);
     archive.write("deviceStateOutput", isDeviceStateOutputEnabled);

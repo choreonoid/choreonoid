@@ -633,8 +633,8 @@ bool AISTSimulatorItem::store(Archive& archive)
 
 bool AISTSimulatorItemImpl::store(Archive& archive)
 {
-    archive.write("dynamicsMode", dynamicsMode.selectedSymbol());
-    archive.write("integrationMode", integrationMode.selectedSymbol());
+    archive.write("dynamicsMode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("integrationMode", integrationMode.selectedSymbol(), DOUBLE_QUOTED);
     write(archive, "gravity", gravity);
     archive.write("staticFriction", staticFriction);
     archive.write("slipFriction", slipFriction);
