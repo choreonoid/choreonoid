@@ -121,8 +121,6 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
     self->setDefaultLayoutArea(View::BOTTOM);
     self->setFocusPolicy(Qt::WheelFocus);
     
-    QVBoxLayout* vbox = new QVBoxLayout;
-
     for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
         ButtonInfo& info = buttonInfo[i];
         buttons[i].setText(info.label);
@@ -139,7 +137,14 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
         }
     }
 
-    vbox->addLayout(&grid);
+    QHBoxLayout* hbox = new QHBoxLayout;
+    hbox->addStretch();
+    hbox->addLayout(&grid);
+    hbox->addStretch();
+    QVBoxLayout* vbox = new QVBoxLayout;
+    vbox->addStretch();
+    vbox->addLayout(hbox);
+    vbox->addStretch();
     self->setLayout(vbox);
 
     ExtJoystick::registerJoystick("VirtualJoystickView", this);
