@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-16 11:09+0900\n"
+"POT-Creation-Date: 2015-12-17 16:55+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -154,7 +154,7 @@ msgstr "速度軌道のプロット"
 msgid "Plot acceleration trajectories"
 msgstr "加速度軌道のプロット"
 
-#: GraphBar.cpp:143 MovieRecorder.cpp:460 SceneBar.cpp:147 TimeBar.cpp:330
+#: GraphBar.cpp:143 MovieRecorder.cpp:455 SceneBar.cpp:147 TimeBar.cpp:330
 msgid "Show the config dialog"
 msgstr "設定ダイアログの表示"
 
@@ -653,63 +653,59 @@ msgstr "マウスカーソルもキャプチャする"
 msgid "&Record"
 msgstr "録画(&R)"
 
-#: MovieRecorder.cpp:438
-msgid "&Close"
-msgstr "完了(&C)"
-
-#: MovieRecorder.cpp:448
+#: MovieRecorder.cpp:443
 msgid "MovieRecorderBar"
 msgstr "動画レコーダバー"
 
-#: MovieRecorder.cpp:452
+#: MovieRecorder.cpp:447
 msgid "Toggle Recording"
 msgstr "録画"
 
-#: MovieRecorder.cpp:456
+#: MovieRecorder.cpp:451
 msgid "Toggle Target View Marker"
 msgstr "対象ビューのマーカを表示"
 
-#: MovieRecorder.cpp:605
+#: MovieRecorder.cpp:600
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
 
-#: MovieRecorder.cpp:667
+#: MovieRecorder.cpp:662
 msgid "Target view is not specified."
 msgstr ""
 
-#: MovieRecorder.cpp:675
+#: MovieRecorder.cpp:670
 msgid "Please set a directory to output image files."
 msgstr "画像ファイルを出力するディレクトリを指定してください。"
 
-#: MovieRecorder.cpp:681
+#: MovieRecorder.cpp:676
 msgid "%1% is not a directory."
 msgstr "%1% はディレクトリではありません。"
 
-#: MovieRecorder.cpp:756
+#: MovieRecorder.cpp:751
 msgid "The online mode recording for %1% is ready."
 msgstr "オンラインモードによる%1%の録画を待機しています。"
 
-#: MovieRecorder.cpp:952
+#: MovieRecorder.cpp:954
 msgid "Saving an image to \"%1%\" failed."
 msgstr "画像を\"%1%\"に保存"
 
-#: MovieRecorder.cpp:985
+#: MovieRecorder.cpp:988
 msgid "Outputting sequential image files..."
 msgstr "連番画像ファイルを出力中…"
 
-#: MovieRecorder.cpp:985
+#: MovieRecorder.cpp:988
 msgid "Abort Output"
 msgstr "出力中止"
 
-#: MovieRecorder.cpp:986
+#: MovieRecorder.cpp:989
 msgid "Movie Recorder's Output Status"
 msgstr "動画レコーダの出力状況"
 
-#: MovieRecorder.cpp:1015
+#: MovieRecorder.cpp:1018
 msgid "Recording of %1% has been finished."
 msgstr "%1%の録画が終了しました。"
 
-#: MovieRecorder.cpp:1017
+#: MovieRecorder.cpp:1020
 msgid "Recording of %1% has been stopped."
 msgstr "%1%の録画を停止しました。"
 
@@ -1455,32 +1451,6 @@ msgstr ""
 "生成されています。"
 
 #: VirtualJoystickView.cpp:106
-msgid "Joystick"
-msgstr "ジョイスティック"
+msgid "Virtual Joystick"
+msgstr "仮想ジョイスティック"
 
-#~ msgid "Initiative"
-#~ msgstr "主導"
-
-#~ msgid "Passive"
-#~ msgstr "受動"
-
-#~ msgid "Movie Generator"
-#~ msgstr "動画用連番ファイルの作成"
-
-#~ msgid "Not specified"
-#~ msgstr "未設定"
-
-#~ msgid "Start Time"
-#~ msgstr "開始時刻"
-
-#~ msgid "Finish Time"
-#~ msgstr "終了時刻"
-
-#~ msgid "&Generate"
-#~ msgstr "生成(&G)"
-
-#~ msgid "&Capture"
-#~ msgstr "キャプチャー(&C)"
-
-#~ msgid "&Stop"
-#~ msgstr "停止(&S)"
