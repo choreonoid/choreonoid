@@ -24,6 +24,7 @@ namespace {
 class Arrow : public SgPosTransform
 {
 public:
+    SgUpdate update;
     SgPosTransformPtr cylinderPosition;
     SgScaleTransformPtr cylinderScale;
     SgShapePtr cylinder;
@@ -54,6 +55,8 @@ public:
         Vector3 axis = (Vector3::UnitY().cross(v)).normalized();
         double angle = acos(Vector3::UnitY().dot(v) / len);
         setRotation(AngleAxis(angle, axis));
+
+        notifyUpdate(update);
     }
 };
 
@@ -73,7 +76,7 @@ public:
     SgShapePtr cone;
     DeviceList<ForceSensor> forceSensors;
     vector<ArrowPtr> forceSensorArrows;
-    double lengthRatio;
+    double visualRatio;
     ScopedConnectionSet connections;
 
     SensorVisualizerItemImpl(SensorVisualizerItem* self);
@@ -123,7 +126,7 @@ SensorVisualizerItemImpl::SensorVisualizerItemImpl(SensorVisualizerItem* self)
     cylinder->setMesh(meshGenerator.generateCylinder(0.01, 1.0));
     cylinder->setMaterial(material);
 
-    lengthRatio = 0.002;
+    visualRatio = 0.002;
 }
 
 
@@ -211,14 +214,15 @@ void SensorVisualizerItemImpl::updateForceSensorState(int index)
 {
     if(index < forceSensors.size()){
         ForceSensor* sensor = forceSensors[index];
-        forceSensorArrows[index]->setVector(sensor->f() * lengthRatio);
+        forceSensorArrows[index]->setVector(sensor->f() * visualRatio);
     }
 }
 
 
 void SensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty("Length ratio", impl->lengthRatio,
+    putProperty.decimals(4);
+    putProperty(_("Visual ratio"), impl->visualRatio,
                 boost::bind(&SensorVisualizerItemImpl::onLengthRatioPropertyChanged, impl, _1));
 }
 
@@ -226,7 +230,7 @@ void SensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
 bool SensorVisualizerItemImpl::onLengthRatioPropertyChanged(double ratio)
 {
     if(ratio > 0.0){
-        lengthRatio = ratio;
+        visualRatio = ratio;
         updateSensorState();
         return true;
     }
@@ -236,13 +240,13 @@ bool SensorVisualizerItemImpl::onLengthRatioPropertyChanged(double ratio)
 
 bool SensorVisualizerItem::store(Archive& archive)
 {
-    archive.write("lengthRatio", impl->lengthRatio);
+    archive.write("visualRatio", impl->visualRatio);
     return true;
 }
 
 
 bool SensorVisualizerItem::restore(const Archive& archive)
 {
-    archive.read("lengthRatio", impl->lengthRatio);
+    archive.read("visualRatio", impl->visualRatio);
     return true;
 }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-05 09:57+0900\n"
+"POT-Creation-Date: 2015-12-18 14:11+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -336,17 +336,17 @@ msgstr ""
 msgid "Body State"
 msgstr "ボディ状態"
 
-#: BodyStateView.cpp:286 JointStateView.cpp:361
+#: BodyStateView.cpp:289 JointStateView.cpp:361
 msgid "ON"
 msgstr ""
 
-#: BodyStateView.cpp:286 JointStateView.cpp:361
+#: BodyStateView.cpp:289 JointStateView.cpp:361
 msgid "OFF"
 msgstr ""
 
 #: BodyTrackingCameraItem.cpp:138
 msgid "BodyTrackingCameraItem"
-msgstr ""
+msgstr "ボディ追尾カメラ"
 
 #: CollisionSeqItem.cpp:66
 msgid "CollisionSeqItem"
@@ -927,9 +927,13 @@ msgstr "関節"
 msgid "MultiDeviceStateSeqItem"
 msgstr ""
 
-#: SensorVisualizerItem.cpp:94
+#: SensorVisualizerItem.cpp:97
 msgid "SensorVisualizer"
-msgstr ""
+msgstr "センサ可視化"
+
+#: SensorVisualizerItem.cpp:225
+msgid "Visual ratio"
+msgstr "表示比率"
 
 #: SimulationBar.cpp:52
 msgid "SimulationBar"
