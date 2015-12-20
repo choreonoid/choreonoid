@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-17 16:55+0900\n"
+"POT-Creation-Date: 2015-12-20 12:15+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -259,7 +259,7 @@ msgstr "一時的"
 msgid "Refs"
 msgstr "参照数"
 
-#: ItemManager.cpp:174 ViewManager.cpp:240
+#: ItemManager.cpp:174 ViewManager.cpp:245
 msgid "Name:"
 msgstr "名前"
 
@@ -307,11 +307,11 @@ msgstr "アイテム$"
 msgid "Create New %1"
 msgstr "新しい%1の生成"
 
-#: ItemManager.cpp:597 ViewManager.cpp:246
+#: ItemManager.cpp:597 ViewManager.cpp:251
 msgid "&Create"
 msgstr "生成(&C)"
 
-#: ItemManager.cpp:600 PathVariableEditor.cpp:105 ViewManager.cpp:251
+#: ItemManager.cpp:600 PathVariableEditor.cpp:105 ViewManager.cpp:256
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
@@ -719,11 +719,11 @@ msgstr "各フレームあたりのAffine3行列の数"
 
 #: MultiPointSetItem.cpp:133
 msgid "MultiPointSetItem"
-msgstr "複数点群アイテム"
+msgstr "マルチポイントセットアイテム"
 
 #: MultiPointSetItem.cpp:136
 msgid "Multi Point Sets"
-msgstr "複数点群"
+msgstr "マルチポイントセット"
 
 #: MultiPointSetItem.cpp:179 PointSetItem.cpp:629
 msgid "Point"
@@ -1430,19 +1430,19 @@ msgstr "３次元ベクタ列アイテム"
 msgid "Separate the view"
 msgstr "ビューの分離"
 
-#: ViewManager.cpp:258
+#: ViewManager.cpp:263
 msgid "Create %1"
 msgstr "%1の生成"
 
-#: ViewManager.cpp:294
+#: ViewManager.cpp:299
 msgid "Please specify the name of the new view."
 msgstr "作成するビューの名前を指定してください。"
 
-#: ViewManager.cpp:332
+#: ViewManager.cpp:337
 msgid "Delete All Invisible Views"
 msgstr "全ての非表示ビューを消去"
 
-#: ViewManager.cpp:788
+#: ViewManager.cpp:793
 msgid ""
 "A singleton view \"%1%\" of the %2% type cannot be created because its "
 "singleton instance has already been created."
@@ -1453,4 +1453,3 @@ msgstr ""
 #: VirtualJoystickView.cpp:106
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
-

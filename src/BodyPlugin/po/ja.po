@@ -470,7 +470,7 @@ msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージ�
 
 #: GLVisionSimulatorItem.cpp:221
 msgid "GLVisionSimulatorItem"
-msgstr "GL視覚シミュレータアイテム"
+msgstr "GLビジョンシミュレータアイテム"
 
 #: GLVisionSimulatorItem.cpp:384
 msgid ""
