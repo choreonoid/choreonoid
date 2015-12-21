@@ -11,12 +11,15 @@
 #include <QBoxLayout>
 #include <QTextBlock>
 #include <QEventLoop>
+#include <boost/algorithm/string.hpp>
+#include <boost/assign.hpp>
 #include <list>
 #include "gettext.h"
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
+using namespace boost::assign;
 
 namespace {
 const unsigned int HISTORY_SIZE = 100;
@@ -56,6 +59,7 @@ public:
     QString prompt;
     std::list<QString>::iterator histIter;
     std::list<QString> history;
+    std::vector<string> splitStringVec;
     Signal<void(const std::string& output)> sigOutput;
 
     python::object consoleOut;
@@ -71,6 +75,10 @@ public:
     void putln(const QString& message);
     void putPrompt();
     void execCommand();
+    python::object getMemberObject(std::vector<string>& moduleNames);
+    python::object getMemberObject(std::vector<string>& moduleNames, python::object& parentObject);
+    std::vector<string> getMemberNames(python::object& moduleObject);
+    void tabComplete();
     QString getInputString();
     void setInputString(const QString& command);
     void addToHistory(const QString& command);
@@ -131,6 +139,8 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 {
     isConsoleInMode = false;
     inputColumnOffset = 0;
+
+    splitStringVec += " ","{","}", "(", ")","[","]","<",">",":",";","^","@","\"",",","\\","!","#","'","=","|","*","?";
     
     self->setDefaultLayoutArea(View::BOTTOM);
 
@@ -267,6 +277,141 @@ void PythonConsoleViewImpl::execCommand()
     putPrompt();
 }
 
+python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames)
+{
+    python::object parentObject = pythonMainModule();
+    return getMemberObject(moduleNames,parentObject);
+}
+
+python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames, python::object& parentObject)
+{
+    if(moduleNames.size() == 0){
+        return parentObject;
+    }else{
+        string moduleName = moduleNames.front();
+        moduleNames.erase(moduleNames.begin());
+        std::vector<string> memberNames = getMemberNames(parentObject);
+        if(std::find(memberNames.begin(),memberNames.end(),moduleName) == memberNames.end()){
+            return python::object();
+        }else{
+            python::object childObject = parentObject.attr(moduleName.c_str());
+            return getMemberObject(moduleNames,childObject);
+        }
+    }
+}
+
+std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& moduleObject)
+{
+    PyObject* pPyObject = moduleObject.ptr();
+    if(pPyObject == NULL){
+        return std::vector<string>();
+    }
+    python::handle<> h( PyObject_Dir(pPyObject) );
+    python::list memberNames = python::extract<python::list>(python::object(h));
+    std::vector<string> retNames;
+    for(int i=0; i < python::len(memberNames); ++i){
+        if(!strstr(string(python::extract<string>(memberNames[i])).c_str(), "__" )) retNames.push_back(string(python::extract<string>(memberNames[i])));
+    }
+    return retNames;
+}
+
+void PythonConsoleViewImpl::tabComplete()
+{
+    PyGILock lock;
+    orgStdout = sys.attr("stdout");
+    orgStderr = sys.attr("stderr");
+    orgStdin = sys.attr("stdin");
+    
+    sys.attr("stdout") = consoleOut;
+    sys.attr("stderr") = consoleOut;
+    sys.attr("stdin") = consoleIn;
+    
+    QTextCursor cursor = textCursor();
+    string beforeCursorString = getInputString().toStdString();
+    beforeCursorString = beforeCursorString.substr(0,cursor.columnNumber()-inputColumnOffset);
+    QString afterCursorString = getInputString();
+    afterCursorString.remove(0, cursor.columnNumber()-inputColumnOffset);
+    int maxSplitIdx = 0;
+    for(std::vector<string>::iterator it = splitStringVec.begin(); it != splitStringVec.end();  ++it){
+        int splitIdx = beforeCursorString.find_last_of(*it);
+        maxSplitIdx = std::max(splitIdx == string::npos ? 0 : splitIdx+1,maxSplitIdx);
+    }
+    string lastWord = beforeCursorString.substr(maxSplitIdx);
+    beforeCursorString = beforeCursorString.substr(0,maxSplitIdx);
+
+    std::vector<string> dottedStrings;
+    boost::split(dottedStrings,lastWord,boost::is_any_of("."));
+    string lastDottedString = dottedStrings.back();// word after last dot
+
+    std::vector<string> moduleNames = dottedStrings;// words before last dot
+    moduleNames.pop_back();
+
+    python::object targetMemberObject = getMemberObject(moduleNames);//member object before last dot
+    std::vector<string> memberNames = getMemberNames(targetMemberObject);
+
+    std::vector<string> completions;
+    unsigned long int maxLength = std::numeric_limits<long>::max();
+    for(int i=0; i < memberNames.size(); ++i){
+        if(memberNames[i].substr(0,lastDottedString.size()) == lastDottedString){
+            completions.push_back(memberNames[i]);
+            maxLength = std::min(memberNames[i].size(),maxLength);
+        }
+    }
+
+    if(PyErr_Occurred()){
+        PyErr_Print();
+    }
+    
+    sys.attr("stdout") = orgStdout;
+    sys.attr("stderr") = orgStderr;
+    sys.attr("stdin") = orgStdin;
+
+    if(completions.size() != 0){
+        // max common string among completions
+        std::string maxCommonStr = lastDottedString;
+        for(int i=maxCommonStr.size(); i < maxLength; ++i){
+            bool commomFlg = true;
+            for(int j=1; j < completions.size(); ++j){
+                if(completions[0].at(i) != completions[j].at(i)){
+                    commomFlg = false;
+                    break;
+                }
+            }
+            if( commomFlg ){
+                maxCommonStr.push_back(completions[0].at(i));
+            }else{
+                break;
+            }
+        }
+
+        string beforeLastDotStr = "";
+        for(std::vector<string>::iterator it = dottedStrings.begin(); it != dottedStrings.end()-1; ++it){
+            beforeLastDotStr.append(*it);
+            beforeLastDotStr.append(".");
+        }
+
+        if(lastDottedString == maxCommonStr){
+            put("\n"); // This must be done after getInputString().
+
+            string str = "";
+            for(int i=0; i < completions.size(); ++i){
+                str.append(beforeLastDotStr);
+                str.append(completions[i]);
+                str.append("     ");
+            }
+            putln(QString(str.c_str()));
+            putPrompt();
+        }
+
+        string str = "";
+        str.append(beforeCursorString);
+        str.append(beforeLastDotStr);
+        str.append(maxCommonStr);
+        str.append(afterCursorString.toStdString());
+        setInputString(QString(str.c_str()));
+        for(int i=0; i < afterCursorString.toStdString().size(); ++i) moveCursor(QTextCursor::Left);
+    }
+}
 
 QString PythonConsoleViewImpl::getInputString()
 {
@@ -405,6 +550,18 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         done = true;
         break;
         
+    case Qt::Key_Tab:
+        {
+            QString inputString = getInputString();
+            if(inputString.toStdString().empty() || *(inputString.toStdString().end()-1) == '\t'){
+                done = false;
+            }else{
+                tabComplete();
+                done = true;
+            }
+        }
+        break;
+
     default:
         break;
     }
