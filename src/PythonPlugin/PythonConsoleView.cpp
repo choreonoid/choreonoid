@@ -140,7 +140,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     isConsoleInMode = false;
     inputColumnOffset = 0;
 
-    splitStringVec += " ","{","}", "(", ")","[","]","<",">",":",";","^","@","\"",",","\\","!","#","'","=","|","*","?";
+    splitStringVec += " ","{","}", "(", ")","[","]","<",">",":",";","^","@","\"",",","\\","!","#","'","=","|","*","?","\t";
     
     self->setDefaultLayoutArea(View::BOTTOM);
 
