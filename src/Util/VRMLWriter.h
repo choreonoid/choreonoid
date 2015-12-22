@@ -41,22 +41,22 @@ inline const char* boolstr(bool v)
     }
 }
 
-std::ostream& operator<<(std::ostream& out, const SFVec2f& v)
+inline std::ostream& operator<<(std::ostream& out, const SFVec2f& v)
 {
     return out << v[0] << " " << v[1];
 }
 
-std::ostream& operator<<(std::ostream& out, const SFVec3f& v)
+inline std::ostream& operator<<(std::ostream& out, const SFVec3f& v)
 {
     return out << v[0] << " " << v[1] << " " << v[2];
 }
 
-std::ostream& operator<<(std::ostream& out, const SFColor& v)
+inline std::ostream& operator<<(std::ostream& out, const SFColor& v)
 {
     return out << v[0] << " " << v[1] << " " << v[2];
 }
 
-std::ostream& operator<<(std::ostream& out, const SFRotation& v)
+inline std::ostream& operator<<(std::ostream& out, const SFRotation& v)
 {
     const SFRotation::Vector3& a = v.axis();
     return out << a[0] << " " << a[1] << " " << a[2] << " " << v.angle();
