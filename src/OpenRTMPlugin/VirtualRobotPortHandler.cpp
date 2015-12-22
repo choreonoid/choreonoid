@@ -406,7 +406,9 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
         value.data.intrinsic.matrix_element[2] = u0;
         value.data.intrinsic.matrix_element[3] = fv;
         value.data.intrinsic.matrix_element[4] = v0;
-        value.data.intrinsic.distortion_coefficient.length(0);
+        value.data.intrinsic.distortion_coefficient.length(5);
+        for (int i=0; i<4; i++)
+          value.data.intrinsic.distortion_coefficient[i] = 0.0; // zero distortion is natural in simulator
         for(int i=0; i<4; i++)
             for(int j=0; j<4; j++)
                 value.data.extrinsic[i][j] = i==j? 1.0: 0.0;
