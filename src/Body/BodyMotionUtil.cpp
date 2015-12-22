@@ -168,6 +168,21 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
         }
     }
 
+    MultiSE3SeqPtr rootLinkAttSeq;
+    filesystem::path hipFile = filesystem::change_extension(orgpath, ".hip");
+    if(filesystem::exists(hipFile) && !filesystem::is_directory(hipFile)){
+        string hipFileString = getNativePathString(hipFile);
+        rootLinkAttSeq = motion.linkPosSeq();
+        if(!rootLinkAttSeq->loadPlainRpyFormat(hipFileString)){
+            os << rootLinkAttSeq->seqMessage();
+            rootLinkAttSeq.reset();
+        } else {
+            if(hipFileString == filename){
+                loaded = true;
+            }
+        }
+    }
+
     MultiSE3SeqPtr linkPosSeq;
     filesystem::path waistFile = filesystem::change_extension(orgpath, ".waist");
     if(filesystem::exists(waistFile) && !filesystem::is_directory(waistFile)){
@@ -233,7 +248,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
     if(!loaded){
         motion.setNumFrames(0);
     }
-        
+
     return loaded;
 }
 
