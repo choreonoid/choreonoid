@@ -217,18 +217,27 @@ void savePNG(const Image& image, const std::string& filename, bool isUpsideDown)
 
     png_write_info(png_ptr, info_ptr);
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    png_bytep* row_pointers;
+    row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
+#else
     png_bytep row_pointers[height];
+#endif
 
     for(int i=0; i < height; ++i){
         row_pointers[i] = const_cast<unsigned char*>(image.pixels()) + width * image.numComponents() * i;
     }
-    
+
     png_write_image(png_ptr, row_pointers);
-    
+
     png_write_end(png_ptr, info_ptr);
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
 
     fclose(fp);
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    free(row_pointers);
+#endif
 }
 
     

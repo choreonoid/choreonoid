@@ -6,6 +6,11 @@
 #define CNOID_UTIL_EIGEN_UTIL_H
 
 #include "EigenTypes.h"
+
+#if (BOOST_VERSION >= 105900) && defined(WIN32)
+#define BOOST_NO_CXX11_ALLOCATOR
+#endif
+
 #include <boost/make_shared.hpp>
 #include "exportdecl.h"
 

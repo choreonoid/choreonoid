@@ -8,6 +8,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
+#include <cnoid/SceneGraph>
 #include "exportdecl.h"
 
 namespace cnoid {

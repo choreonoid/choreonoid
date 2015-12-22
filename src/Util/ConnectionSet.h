@@ -70,7 +70,7 @@ public:
 
 private:
     ScopedConnectionSet(const ScopedConnection& org) { }
-    ScopedConnectionSet& operator=(const ScopedConnection& rhs) { }
+    ScopedConnectionSet& operator=(const ScopedConnection& rhs) { return *this; }
 };
 
 }
