@@ -24,7 +24,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -239,10 +238,10 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     goToNextCommandLater.setPriority(LazyCaller::PRIORITY_NORMAL);
     
     commandTimer.setSingleShot(true);
-    commandTimer.sigTimeout().connect(bind(&TaskViewImpl::cancelWaiting, this, true));
+    commandTimer.sigTimeout().connect(boost::bind(&TaskViewImpl::cancelWaiting, this, true));
 
     waitTimer.setSingleShot(true);
-    waitTimer.sigTimeout().connect(bind(&TaskViewImpl::onWaitTimeout, this));
+    waitTimer.sigTimeout().connect(boost::bind(&TaskViewImpl::onWaitTimeout, this));
 
     taskCombo.setToolTip(_("Select a task type"));
     taskCombo.addItem("  ----------  ");
@@ -476,7 +475,7 @@ void TaskViewImpl::addTask(Task* task)
         setCurrentTask(0, true);
     }
 
-    os << format(_("Task \"%1%\" has been added.")) % task->name() << endl;
+    os << boost::format(_("Task \"%1%\" has been added.")) % task->name() << endl;
 }
 
 
@@ -497,7 +496,7 @@ bool TaskViewImpl::updateTask(Task* task)
     } else {
         if(isWaiting()){
             mv->putln(MessageView::WARNING,
-                      format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
+                      boost::format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
                       % task->name());
         } else {
             TaskInfo& info = tasks[index];
@@ -531,7 +530,7 @@ bool TaskViewImpl::updateTask(Task* task)
                     task->restoreState(self, *info.state);
                 }
             }
-            os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
+            os << boost::format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
         }
     }

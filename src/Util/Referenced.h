@@ -341,6 +341,7 @@ public:
         weak_ref_ptr(static_cast<weak_ref_ptr&&>(rhs)).swap(*this);
         rhs.px = 0;
         rhs.counter = 0;
+        return rhs;
     }
 
 #endif

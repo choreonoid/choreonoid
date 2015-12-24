@@ -23,6 +23,7 @@
 #include <agxPowerLine/TranslationalUnit.h>
 #include <agxUtil/Convert/Convert.h>
 #include <agx/PrismaticUniversalJoint.h>
+#include <agxPowerLine/Actuator1DOF.h>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>

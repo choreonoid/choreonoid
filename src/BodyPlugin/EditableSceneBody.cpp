@@ -1288,7 +1288,7 @@ bool EditableSceneBodyImpl::initializeIK()
         }
     }
 
-    return ik;
+    return ik? true: false;
 }
 
 

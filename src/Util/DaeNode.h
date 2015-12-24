@@ -244,6 +244,8 @@ protected:
 class DaeShape : public DaeNode
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
     DaeShape() { format(); }
 
     // If the graphic primitive, if specified in the rigid body, I will use that figure.

@@ -74,6 +74,7 @@ public:
     const std::string& caption() const { return caption_; }
     TaskCommand* setCaption(const std::string& caption){
         caption_ = caption;
+        return this;
     }
 
     const std::string& description() const { return description_; }
