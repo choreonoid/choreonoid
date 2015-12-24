@@ -789,7 +789,7 @@ void PluginManagerImpl::unloadPluginsActually()
     for(size_t i=0; i < pluginsToUnload.size(); ++i){
         PluginInfoPtr& info = pluginsToUnload[i];
         if(info->dll.unload()){
-            info->status == PluginManager::NOT_LOADED;
+            info->status = PluginManager::NOT_LOADED;
             mv->putln(fmt(_("Plugin dll %1% has been unloaded.")) % info->pathString);
             mv->flush();
         }

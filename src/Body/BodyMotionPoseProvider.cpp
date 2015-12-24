@@ -11,7 +11,7 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1800
 namespace {
 inline long lround(double x) {
     return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));

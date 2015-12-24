@@ -36,6 +36,8 @@ typedef ref_ptr<SgFog> SgFogPtr;
 class CNOID_EXPORT SgOutlineGroup : public SgGroup
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
     SgOutlineGroup();
 
     virtual void accept(SceneVisitor& visitor);

@@ -27,6 +27,10 @@ public:
     MessageView();
     ~MessageView();
 
+#if defined(_WIN32) && defined(ERROR)
+#undef ERROR
+#endif
+
     enum MessageType { NORMAL, ERROR, WARNING, HIGHLIGHT };
 
     void put(const char* message);

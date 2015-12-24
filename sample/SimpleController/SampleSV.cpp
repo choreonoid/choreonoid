@@ -41,6 +41,8 @@ public:
         const BodyPtr& io = ioBody();
         for(int i=0; i<DOF; i++)
             io->joint(2)->u() = 0.0;
+
+        return true;
     }
     
     virtual bool control() {

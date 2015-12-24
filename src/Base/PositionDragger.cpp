@@ -443,10 +443,11 @@ bool PositionDragger::onUndoRequest()
         impl->history.pop_back();
         notifyUpdate();
     }
+    return true;
 }
 
 
 bool PositionDragger::onRedoRequest()
 {
-
+    return true;
 }

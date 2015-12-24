@@ -225,6 +225,7 @@ bool VirtualJoystickViewImpl::readCurrentState()
             }
         }
     }
+    return true;
 }
 
 

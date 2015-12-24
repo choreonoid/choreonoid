@@ -344,7 +344,8 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
   ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
-  ${Boost_DATE_TIME_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_CHRONO_LIBRARY} ${Boost_PYTHON_LIBRARY})
+  ${Boost_DATE_TIME_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_CHRONO_LIBRARY} ${Boost_PYTHON_LIBRARY} 
+  ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
 
 
 if(INSTALL_SDK_WITH_EXTLIBS)
@@ -1040,9 +1041,9 @@ if(ENABLE_GUI)
       link_directories(${GLEW_LIBRARY_DIRS})
     endif()
   else()
-    add_subdirectory(thirdparty/glew-1.9.0)
     include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/glew-1.9.0/include)
     set(GLEW_LIBRARIES glew32)
+    add_subdirectory(thirdparty/glew-1.9.0)
   endif()
 endif()
   
@@ -1055,14 +1056,14 @@ if(UNIX)
   include_directories(${JPEG_INCLUDE_DIR})
   
 elseif(MSVC)
-  add_subdirectory(thirdparty/lpng1232)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
-  add_subdirectory(thirdparty/Jpeg-6b)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
-  add_subdirectory(thirdparty/zlib123)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
   set(PNG_LIBRARY libpng)
   set(JPEG_LIBRARY jpeg)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
+  add_subdirectory(thirdparty/lpng1232)
+  add_subdirectory(thirdparty/Jpeg-6b)
+  add_subdirectory(thirdparty/zlib123)
 endif()
 
 add_subdirectory(src)
