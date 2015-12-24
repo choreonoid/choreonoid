@@ -8,17 +8,17 @@
 #include <cnoid/CollisionSeq>
 #include "exportdecl.h"
 
-namespace cnoid
-{
+namespace cnoid {
+
 class Link;
-class CFSImpl;
+class ConstraintForceSolverImpl;
 class WorldBase;
 class CollisionDetector;
 typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 	
 class CNOID_EXPORT ConstraintForceSolver
 {
-    CFSImpl* impl;
+    ConstraintForceSolverImpl* impl;
 		
 public:
     ConstraintForceSolver(WorldBase& world);
@@ -30,6 +30,8 @@ public:
     void setFriction(double staticFriction, double slipFliction);
     double staticFriction() const;
     double slipFriction() const;
+
+    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
 
     void setContactCullingDistance(double thresh);
     double contactCullingDistance() const;

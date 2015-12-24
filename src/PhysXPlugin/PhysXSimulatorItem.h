@@ -25,7 +25,7 @@ public:
 
 protected:
         
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);

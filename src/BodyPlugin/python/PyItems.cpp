@@ -49,6 +49,17 @@ SimulatorItemPtr SimulatorItem_findActiveSimulatorItemFor(Item* item)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_startSimulation_overloads, startSimulation, 0, 1)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SimulatorItem_setExternalForce_overloads, setExternalForce, 4, 5)
 
+void AISTSimulatorItem_setFriction1(AISTSimulatorItem& self, double staticFriction, double slipFriction)
+{
+    self.setFriction(staticFriction, slipFriction);
+}
+
+void AISTSimulatorItem_setFriction2(AISTSimulatorItem& self, Link* link1, Link* link2, double staticFriction, double slipFriction)
+{
+    self.setFriction(link1, link2, staticFriction, slipFriction);
+}
+
+
 }
 
 void exportItems()
@@ -195,8 +206,8 @@ void exportItems()
             .def("setDynamicsMode", &AISTSimulatorItem::setDynamicsMode)
             .def("setIntegrationMode", &AISTSimulatorItem::setIntegrationMode)
             .def("setGravity", &AISTSimulatorItem::setGravity)
-            .def("setStaticFriction", &AISTSimulatorItem::setStaticFriction)
-            .def("setSlipFriction", &AISTSimulatorItem::setSlipFriction)
+            .def("setFriction", AISTSimulatorItem_setFriction1)
+            .def("setFriction", AISTSimulatorItem_setFriction2)
             .def("setContactCullingDistance", &AISTSimulatorItem::setContactCullingDistance)
             .def("setContactCullingDepth", &AISTSimulatorItem::setContactCullingDepth)
             .def("setErrorCriterion", &AISTSimulatorItem::setErrorCriterion)

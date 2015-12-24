@@ -23,14 +23,16 @@ public:
     AISTSimulatorItem(const AISTSimulatorItem& org);
     virtual ~AISTSimulatorItem();
 
+    virtual bool startSimulation(bool doReset = true);
+
     enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, KINEMATICS, N_DYNAMICS_MODES };
     enum IntegrationMode { EULER_INTEGRATION = 0, RUNGE_KUTTA_INTEGRATION, N_INTEGRATION_MODES };
 
     void setDynamicsMode(int mode);
     void setIntegrationMode(int mode);
     void setGravity(const Vector3& gravity);
-    void setStaticFriction(double value);
-    void setSlipFriction(double value);
+    void setFriction(double staticFriction, double slipFriction);
+    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
     void setContactCullingDistance(double value);        
     void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);        
@@ -45,7 +47,7 @@ public:
     virtual void clearForcedBodyPositions();
     
 protected:
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);

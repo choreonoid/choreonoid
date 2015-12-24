@@ -114,12 +114,13 @@ static const Vector3 local2dConstraintPoints[3] = {
 
 namespace cnoid
 {
-class CFSImpl
+
+class ConstraintForceSolverImpl
 {
 public:
 
-    CFSImpl(WorldBase& world);
-    ~CFSImpl();
+    ConstraintForceSolverImpl(WorldBase& world);
+    ~ConstraintForceSolverImpl();
 
     void initialize(void);
     void solve();
@@ -183,6 +184,19 @@ public:
 
     std::vector<BodyData> bodiesData;
 
+    class ContactAttribute
+    {
+    public:
+        double muStatic;
+        double muDynamic;
+        double contactCullingDistance;
+        double contactCullingDepth;
+        double epsilon;
+    };
+    
+    typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
+    ContactAttributeMap contactAttributeMap;
+
     class LinkPair
     {
     public:
@@ -194,17 +208,11 @@ public:
         LinkData* linkData[2];
         ConstraintPointArray constraintPoints;
         bool isNonContactConstraint;
-        double muStatic;
-        double muDynamic;
-        double contactCullingDistance;
-        double contactCullingDepth;
-        double epsilon;
+        ContactAttribute attr;
     };
-    typedef boost::shared_ptr<LinkPair> LinkPairPtr;
 
     CollisionDetectorPtr collisionDetector;
     vector<int> geometryIdToBodyIndexMap;
-    //typedef std::map<IdPair<>, LinkPairPtr> GeometryPairToLinkPairMap;
     typedef std::map<IdPair<>, LinkPair> GeometryPairToLinkPairMap;
     GeometryPairToLinkPairMap geometryPairToLinkPairMap;
         
@@ -385,17 +393,22 @@ public:
 #endif
 
 };
+
 /*
   #ifdef _MSC_VER
   const double CFSImpl::PI   = 3.14159265358979323846;
   const double CFSImpl::PI_2 = 1.57079632679489661923;
   #endif
 */
-};
+}
 
 
+namespace {
+typedef ConstraintForceSolverImpl CFSImpl;
+}
 
-CFSImpl::CFSImpl(WorldBase& world) :
+
+CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     world(world),
     randomAngle(boost::mt19937(), boost::uniform_real<>(0.0, 2.0 * PI))
 {
@@ -416,7 +429,7 @@ CFSImpl::CFSImpl(WorldBase& world) :
 }
 
 
-CFSImpl::~CFSImpl()
+CFSImpl::~ConstraintForceSolverImpl()
 {
     if(CFS_DEBUG){
         os.close();
@@ -564,6 +577,8 @@ void CFSImpl::initialize(void)
     }
     geometryIdToBodyIndexMap.clear();
     geometryPairToLinkPairMap.clear();
+
+    contactAttributeMap.clear();
 
     extraJointLinkPairs.clear();
     constrain2dLinkPairs.clear();
@@ -750,6 +765,7 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
         pLinkPair = &p->second;
         pLinkPair->constraintPoints.clear();
     } else {
+        
         LinkPair& linkPair = geometryPairToLinkPairMap.insert(make_pair(idPair, LinkPair())).first->second;
         
         for(int i=0; i < 2; ++i){
@@ -764,11 +780,17 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
         }
         linkPair.isSameBodyPair = (linkPair.bodyIndex[0] == linkPair.bodyIndex[1]);
         linkPair.isNonContactConstraint = false;
-        linkPair.muStatic = defaultStaticFriction;
-        linkPair.muDynamic = defaultSlipFriction;
-        linkPair.contactCullingDistance = defaultContactCullingDistance;
-        linkPair.contactCullingDepth = defaultContactCullingDepth;
-        linkPair.epsilon = defaultCoefficientOfRestitution;
+
+        ContactAttributeMap::iterator q = contactAttributeMap.find(IdPair<Link*>(linkPair.link[0], linkPair.link[1]));
+        if(q != contactAttributeMap.end()){
+            linkPair.attr = q->second;
+        } else {
+            linkPair.attr.muStatic = defaultStaticFriction;
+            linkPair.attr.muDynamic = defaultSlipFriction;
+            linkPair.attr.contactCullingDistance = defaultContactCullingDistance;
+            linkPair.attr.contactCullingDepth = defaultContactCullingDepth;
+            linkPair.attr.epsilon = defaultCoefficientOfRestitution;
+        }
         pLinkPair = &linkPair;
     }
     pLinkPair->bodyData[0]->hasConstrainedLinks = true;
@@ -818,7 +840,7 @@ CollisionLinkPairListPtr CFSImpl::getCollisions()
 bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& collision)
 {
     // skip the contact which has too much depth
-    if(collision.depth > linkPair.contactCullingDepth){
+    if(collision.depth > linkPair.attr.contactCullingDepth){
         return false;
     }
     
@@ -831,7 +853,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
     // dense contact points are eliminated
     int nPrevPoints = constraintPoints.size() - 1;
     for(int i=0; i < nPrevPoints; ++i){
-        if((constraintPoints[i].point - contact.point).norm() < linkPair.contactCullingDistance){
+        if((constraintPoints[i].point - contact.point).norm() < linkPair.attr.contactCullingDistance){
             constraintPoints.pop_back();
             return false;
         }
@@ -883,7 +905,7 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
     double vt_square = v_tangent.squaredNorm();
     static const double vsqrthresh = VEL_THRESH_OF_DYNAMIC_FRICTION * VEL_THRESH_OF_DYNAMIC_FRICTION;
     bool isSlipping = (vt_square > vsqrthresh);
-    contact.mu = isSlipping ? linkPair.muDynamic : linkPair.muStatic;
+    contact.mu = isSlipping ? linkPair.attr.muDynamic : linkPair.attr.muStatic;
     
     if( !ONLY_STATIC_FRICTION_FORMULATION && isSlipping){
         contact.numFrictionVectors = 1;
@@ -1045,7 +1067,7 @@ void CFSImpl::putContactPoints()
             os << "<-->";
             os << " " << linkPair->link[1]->name() << " of " << linkPair->bodyData[1]->body->modelName();
             os << "\n";
-            os << " culling thresh: " << linkPair->contactCullingDistance << "\n";
+            os << " culling thresh: " << linkPair->attr.contactCullingDistance << "\n";
 
             ConstraintPointArray& constraintPoints = linkPair->constraintPoints;
             for(size_t j=0; j < constraintPoints.size(); ++j){
@@ -2223,6 +2245,21 @@ double ConstraintForceSolver::slipFriction() const
     return impl->defaultSlipFriction;
 }
 
+
+void ConstraintForceSolver::setFriction(Link* link1, Link* link2, double staticFriction, double slipFliction)
+{
+    std::pair<CFSImpl::ContactAttributeMap::iterator, bool> inserted
+        = impl->contactAttributeMap.insert(make_pair(IdPair<Link*>(link1, link2), CFSImpl::ContactAttribute()));
+    CFSImpl::ContactAttribute& attr = inserted.first->second;
+    if(inserted.second){
+        attr.contactCullingDistance = impl->defaultContactCullingDistance;
+        attr.contactCullingDepth = impl->defaultContactCullingDepth;
+        attr.epsilon = impl->defaultCoefficientOfRestitution;
+    }
+    attr.muStatic = staticFriction;
+    attr.muDynamic = slipFliction;
+}
+    
 
 void ConstraintForceSolver::setContactCullingDistance(double distance)
 {
