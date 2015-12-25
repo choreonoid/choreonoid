@@ -745,7 +745,17 @@ void AgXLink::createLinkBody(bool isStatic)
         }else{
             for(size_t i=1; i<constraintLinks.size(); i++){
                 Vector3 v = constraintLinks[i-1]->origin - constraintLinks[i]->origin;
-                if(!v.isZero()) return;
+                if(!v.isZero()) {
+                    cout << "Create Joint Error" << endl;
+                    for(size_t j=0; j<constraintLinks.size(); j++){
+                        Vector3 o = constraintLinks[j]->origin;
+                        Link::JointType type = constraintLinks[j]->link->jointType();
+                        cout << "Link " << constraintLinks[j]->link->name() << " : " << "mass=" << constraintLinks[j]->link->mass()
+                        << " jointType=" << (type==Link::ROTATIONAL_JOINT? "Rotational" : type==Link::SLIDE_JOINT? "Slide" : type==Link::FREE_JOINT? "Free" : type==Link::FIXED_JOINT? "Fixed" : type==Link::CRAWLER_JOINT? "Crawler" : "Unknown")
+                        << " origin=" << o(0) << " " << o(1) <<" " << o(2) << endl;
+                    }
+                    return;
+                }
             }
             agx::ref_ptr< CustomConstraint > customConstraint = new CustomConstraint( parent, constraintLinks );
             simImpl->agxSimulation->add( customConstraint );
