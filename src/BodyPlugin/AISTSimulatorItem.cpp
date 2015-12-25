@@ -18,6 +18,7 @@
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
 #include <cnoid/MessageView>
+#include <cnoid/IdPair>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
@@ -168,6 +169,18 @@ public:
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
+    typedef std::map<Link*, Link*> LinkMap;
+    LinkMap orgLinkToInternalLinkMap;
+
+    struct ContactAttribute
+    {
+        double staticFriction;
+        double slipFriction;
+    };
+
+    typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
+    ContactAttributeMap contactAttributeMap;
+
     boost::optional<int> forcedBodyPositionFunctionId;
     boost::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
@@ -175,6 +188,7 @@ public:
 
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
+    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
@@ -289,15 +303,24 @@ void AISTSimulatorItem::setGravity(const Vector3& gravity)
 }
 
 
-void AISTSimulatorItem::setStaticFriction(double value)
+void AISTSimulatorItem::setFriction(double staticFriction, double slipFriction)
 {
-    impl->staticFriction = value; 
+    impl->staticFriction = staticFriction;
+    impl->slipFriction = slipFriction;
 }
 
 
-void AISTSimulatorItem::setSlipFriction(double value)
+void AISTSimulatorItemImpl::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
 {
-    impl->slipFriction = value;
+    ContactAttribute& attr = contactAttributeMap[IdPair<Link*>(link1, link2)];
+    attr.staticFriction = staticFriction;
+    attr.slipFriction = slipFriction;
+}
+
+
+void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
+{
+    impl->setFriction(link1, link2, staticFriction, slipFriction);
 }
 
 
@@ -361,10 +384,22 @@ Item* AISTSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBodyPtr AISTSimulatorItem::createSimulationBody(BodyPtr orgBody)
+bool AISTSimulatorItem::startSimulation(bool doReset)
+{
+    impl->orgLinkToInternalLinkMap.clear();
+    return SimulatorItem::startSimulation(doReset);
+}
+
+
+SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
 {
     SimulationBody* simBody = 0;
     DyBody* body = new DyBody(*orgBody);
+
+    const int n = orgBody->numLinks();
+    for(size_t i=0; i < n; ++i){
+        impl->orgLinkToInternalLinkMap[orgBody->link(i)] = body->link(i);
+    }
     
     if(impl->dynamicsMode.is(KINEMATICS) && impl->isKinematicWalkingEnabled){
         LeggedBodyHelper* legged = getLeggedBodyHelper(body);
@@ -421,6 +456,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     world.clearBodies();
     bodyIndexMap.clear();
+
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
@@ -430,13 +466,30 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
-    
+
     if(is2Dmode){
         cfs.set2Dmode(true);
     }
 
     world.initialize();
 
+    ContactAttributeMap::iterator p = contactAttributeMap.begin();
+    while(p != contactAttributeMap.end()){
+        const IdPair<Link*>& linkPair = p->first;
+        const ContactAttribute& attr = p->second;
+        LinkMap::iterator p0 = orgLinkToInternalLinkMap.find(linkPair(0));
+        if(p0 != orgLinkToInternalLinkMap.end()){
+            LinkMap::iterator p1 = orgLinkToInternalLinkMap.find(linkPair(1));
+            if(p1 != orgLinkToInternalLinkMap.end()){
+                Link* iLink0 = p0->second;
+                Link* iLink1 = p1->second;
+                world.constraintForceSolver.setFriction(
+                    iLink0, iLink1, attr.staticFriction, attr.slipFriction);
+            }
+        }
+        ++p;
+    }
+    
     return true;
 }
 

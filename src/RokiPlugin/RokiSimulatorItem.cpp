@@ -879,7 +879,7 @@ Item* RokiSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBodyPtr RokiSimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* RokiSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new RokiBody(*orgBody);
 }

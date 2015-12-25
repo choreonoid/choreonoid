@@ -1096,7 +1096,7 @@ Item* BulletSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBodyPtr BulletSimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* BulletSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new BulletBody(*orgBody);
 }

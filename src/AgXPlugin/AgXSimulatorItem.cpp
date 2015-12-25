@@ -1332,7 +1332,7 @@ Item* AgXSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBodyPtr AgXSimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* AgXSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new AgXBody(*orgBody);
 }

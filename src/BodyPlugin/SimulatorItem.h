@@ -90,11 +90,11 @@ public:
     virtual ~SimulatorItem();
 
     virtual double worldTimeStep();
-            
-    bool startSimulation(bool doReset = true);
-    void stopSimulation();
-    void pauseSimulation();
-    void restartSimulation();
+
+    virtual bool startSimulation(bool doReset = true);
+    virtual void stopSimulation();
+    virtual void pauseSimulation();
+    virtual void restartSimulation();
     bool isRunning() const;
     bool isPausing() const;
     bool isActive() const; ///< isRunning() && !isPausing()
@@ -189,7 +189,7 @@ protected:
        @note orgBody should not owned by the SimulationBody instance.
        Instead of it, a clone instance which may be a sub Body class should be created and owned.
     */
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody) = 0;
+    virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
 
     virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
 

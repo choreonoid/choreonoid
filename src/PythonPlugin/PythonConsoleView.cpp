@@ -354,7 +354,7 @@ void PythonConsoleViewImpl::tabComplete()
     for(int i=0; i < memberNames.size(); ++i){
         if(memberNames[i].substr(0,lastDottedString.size()) == lastDottedString){
             completions.push_back(memberNames[i]);
-            maxLength = std::min(memberNames[i].size(),maxLength);
+            maxLength = std::min((unsigned long int)memberNames[i].size(),maxLength);
         }
     }
 

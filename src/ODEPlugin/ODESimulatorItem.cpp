@@ -1063,7 +1063,7 @@ Item* ODESimulatorItem::doDuplicate() const
 }
 
 
-SimulationBodyPtr ODESimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* ODESimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new ODEBody(*orgBody);
 }

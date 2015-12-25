@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_ID_PAIR_H_INCLUDED
-#define CNOID_UTIL_ID_PAIR_H_INCLUDED
+#ifndef CNOID_UTIL_ID_PAIR_H
+#define CNOID_UTIL_ID_PAIR_H
 
 namespace cnoid {
 
@@ -46,6 +46,7 @@ public:
         }
     }
 };
+
 }
     
 #endif
