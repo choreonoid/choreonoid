@@ -293,6 +293,12 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         std::string modelName = model->Get<std::string>("name");
         os() << "model name " << modelName << std::endl;
         body->setModelName(modelName);
+
+        /*
+        if(link->HasElement("static")){
+            body->setStaticModel(link->Get<bool>("static"));
+        }
+        */
         
         LinkInfoPtr worldlink(new LinkInfo());
         worldlink->linkName = "world";
@@ -383,7 +389,10 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                     
                     // convert axis relative to child or parent frame
                     // https://github.com/yosuke/simtrans/blob/master/simtrans/sdf.py#L198
-                    bool useparent = axis->Get<bool>("use_parent_model_frame");
+                    bool useparent = false;
+                    if(axis->HasElement("use_parent_model_frame")){
+                        useparent = axis->Get<bool>("use_parent_model_frame");
+                    }
                     cnoid::Affine3 work = cnoid::Affine3::Identity();
                     cnoid::Affine3 work2 = cnoid::Affine3::Identity();
                     work.translation() = jointdata->axis;
@@ -438,6 +447,9 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 root->childName = (*it)->parentName;
                 root->child = (*it)->parent;
             }
+            link->setMass(root->child->m);
+            link->setCenterOfMass(Vector3(root->child->c.pos.x, root->child->c.pos.y, root->child->c.pos.z));
+            link->setInertia(root->child->I);
             setShape(link, root->child->visualShape, true);
             setShape(link, root->child->collisionShape, false);
             link->setJointAxis(Vector3::Zero());
