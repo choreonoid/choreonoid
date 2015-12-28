@@ -131,6 +131,20 @@ public:
         slider.sigValueChanged().connect(boost::bind(&SliderUnit::onSliderValueChanged, this, _1));
     }
 
+
+    void setRangeLabelValues(double lower, double upper, int precision){
+        if(fabs(lower) > 10000.0){
+            lowerLimitLabel.setText(QString::number(lower, 'g', precision));
+        } else {
+            lowerLimitLabel.setText(QString::number(lower, 'f', precision));
+        }
+        if(fabs(upper) > 10000.0){
+            upperLimitLabel.setText(QString::number(upper, 'g', precision));
+        } else {
+            upperLimitLabel.setText(QString::number(upper, 'f', precision));
+        }
+    }
+
     void initialize(Link* joint){
 
         if(viewImpl->putSpinEntryCheck.isChecked()){
@@ -182,14 +196,12 @@ public:
             spin.setDecimals(1);
             spin.setRange(-999.9, 999.9);
             spin.setSingleStep(0.1);
-            lowerLimitLabel.setText(QString::number(lower, 'f', 1));
-            upperLimitLabel.setText(QString::number(upper, 'f', 1));
+            setRangeLabelValues(lower, upper, 1);
         } else { // radian or meter
             spin.setDecimals(4);
             spin.setRange(-9.99, 9.99);
             spin.setSingleStep(0.0001);
-            lowerLimitLabel.setText(QString::number(lower, 'f', 3));
-            upperLimitLabel.setText(QString::number(upper, 'f', 3));
+            setRangeLabelValues(lower, upper, 3);
         }
 
         spin.blockSignals(false);
