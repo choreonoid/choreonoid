@@ -45,6 +45,7 @@
 #include "LazyCaller.h"
 #include "TextEditView.h"
 #include "VirtualJoystickView.h"
+#include "GLSLTestView.h"
 #include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -209,6 +210,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MultiSE3SeqGraphView::initializeClass(ext);
     TaskView::initializeClass(ext);
     VirtualJoystickView::initializeClass(ext);
+    GLSLTestView::initializeClass(ext);
 
     TimeSyncItemEngineManager::initialize();
     

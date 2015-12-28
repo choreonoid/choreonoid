@@ -101,6 +101,8 @@ set(sources
   TextEdit.cpp
   TaskView.cpp
   VirtualJoystickView.cpp
+  GLSLTestView.cpp
+  gl_core_3_3.c
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
