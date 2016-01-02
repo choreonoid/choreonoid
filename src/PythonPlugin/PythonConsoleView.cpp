@@ -540,6 +540,17 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         }
         break;
         
+    case Qt::Key_H:
+        if(event->modifiers() == Qt::ControlModifier){
+            if(textCursor().columnNumber() > inputColumnOffset){
+                QTextCursor cursor = textCursor();
+                cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
+                cursor.removeSelectedText();
+             }
+            done = true;
+        }
+        break;
+        
     case Qt::Key_Left:
     case Qt::Key_Backspace:
         if(textCursor().columnNumber() <= inputColumnOffset){
