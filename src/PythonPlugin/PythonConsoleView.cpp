@@ -60,6 +60,7 @@ public:
     std::list<QString>::iterator histIter;
     std::list<QString> history;
     std::vector<string> splitStringVec;
+    std::vector<string> keywords;
     Signal<void(const std::string& output)> sigOutput;
 
     python::object consoleOut;
@@ -177,6 +178,10 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     consoleIn_.setConsole(this);
     
     sys = pythonSysModule();
+
+    python::object keyword = python::import("keyword");
+    python::list kwlist = python::extract<python::list>(keyword.attr("kwlist"));
+    for(int i = 0; i < python::len(kwlist); ++i) keywords.push_back(python::extract<string>(kwlist[i]));
 
     histIter = history.end();
 
@@ -348,6 +353,14 @@ void PythonConsoleViewImpl::tabComplete()
 
     python::object targetMemberObject = getMemberObject(moduleNames);//member object before last dot
     std::vector<string> memberNames = getMemberNames(targetMemberObject);
+
+    // builtin function and syntax completions
+    if(dottedStrings.size() == 1){
+        python::object builtinsObject =  pythonMainModule().attr("__builtins__");
+        std::vector<string> builtinMethods = getMemberNames(builtinsObject);
+        memberNames.insert(memberNames.end(), builtinMethods.begin(), builtinMethods.end());
+        memberNames.insert(memberNames.end(), keywords.begin(), keywords.end());
+    }
 
     std::vector<string> completions;
     unsigned long int maxLength = std::numeric_limits<long>::max();
