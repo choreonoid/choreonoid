@@ -288,8 +288,15 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 sdf::addURIPath("model://", p);
             }
         }
-        sdf::readFile(filename, robot);  // this can read both SDF and URDF
+        if (sdf::readFile(filename, robot) == false) {  // this can read both SDF and URDF
+            throw std::invalid_argument("load failed");
+        } else if (robot->root == NULL) {
+            throw std::out_of_range("root element is NULL");
+        }
         sdf::ElementPtr model = robot->root->GetElement("model");
+        if (model == NULL) {
+            throw std::out_of_range("model element is NULL");
+        }
         std::string modelName = model->Get<std::string>("name");
         os() << "model name " << modelName << std::endl;
         body->setModelName(modelName);
@@ -447,11 +454,13 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 root->childName = (*it)->parentName;
                 root->child = (*it)->parent;
             }
-            link->setMass(root->child->m);
-            link->setCenterOfMass(Vector3(root->child->c.pos.x, root->child->c.pos.y, root->child->c.pos.z));
-            link->setInertia(root->child->I);
-            setShape(link, root->child->visualShape, true);
-            setShape(link, root->child->collisionShape, false);
+            if (root->child != NULL) {
+                link->setMass(root->child->m);
+                link->setCenterOfMass(Vector3(root->child->c.pos.x, root->child->c.pos.y, root->child->c.pos.z));
+                link->setInertia(root->child->I);
+                setShape(link, root->child->visualShape, true);
+                setShape(link, root->child->collisionShape, false);
+            }
             link->setJointAxis(Vector3::Zero());
             convertChildren(link, root);
             body->setRootLink(link);
