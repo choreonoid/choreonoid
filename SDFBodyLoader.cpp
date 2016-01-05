@@ -131,6 +131,9 @@ public:
     std::vector<JointInfoPtr> findRootJoints();
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
+
+private:
+    void processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
 };
 
 }
@@ -342,26 +345,10 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                     }
                 }
                 if(link->HasElement("visual")) {
-                    sdf::ElementPtr visual = link->GetElement("visual");
-                    sdf::Pose pose;
-                    if(visual->HasElement("pose")){
-                        pose = visual->Get<sdf::Pose>("pose");
-                    }
-                    if(visual->HasElement("geometry")){
-                        sdf::ElementPtr geometry = visual->GetElement("geometry");
-                        linkdata->visualShape->addChild(readGeometry(geometry, pose));
-                    }
+                    processMeshes(linkdata, link, true);
                 }
                 if(link->HasElement("collision")){
-                    sdf::ElementPtr collision = link->GetElement("collision");
-                    sdf::Pose pose;
-                    if(collision->HasElement("pose")){
-                        pose = collision->Get<sdf::Pose>("pose");
-                    }
-                    if(collision->HasElement("geometry")){
-                        sdf::ElementPtr geometry = collision->GetElement("geometry");
-                        linkdata->collisionShape->addChild(readGeometry(geometry, pose));
-                    }
+                    processMeshes(linkdata, link, false);
                 }
                 linkdataMap[linkdata->linkName] = linkdata;
                 link = link->GetNextElement("link");
@@ -580,4 +567,55 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
     return converted;
 }
 
+/**
+ */
+void SDFBodyLoaderImpl::processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual)
+{
+    cnoid::SgGroupPtr shape;
+    std::string       type;
+    sdf::Pose         pose;
+    sdf::ElementPtr   geometry;
+    sdf::ElementPtr   p;
 
+    if (linkdata == NULL || link == NULL) {
+        return;
+    }
+
+    if (isVisual) {
+        shape = linkdata->visualShape;
+        type = "visual";
+    } else {
+        shape = linkdata->collisionShape;
+        type = "collision";
+    }
+
+    if (link->HasElement(type) == false) {
+        return;
+    }
+
+    p = link->GetElement(type);
+
+    while (p) {
+        if (isVerbose) {
+            os() << "  " << type << " name: " << p->Get<std::string>("name") << std::endl;
+        }
+
+        if (p->HasElement("pose")) {
+            pose = p->Get<sdf::Pose>("pose");
+        } else {
+            pose.pos.x = pose.pos.y = pose.pos.z = pose.rot.w = pose.rot.x = pose.rot.y = pose.rot.z = 0.0;
+        }
+
+        if (p->HasElement("geometry")) {
+            geometry = p->GetElement("geometry");
+            shape->addChild(readGeometry(geometry, pose));
+        } else {
+            // corrupted? (geometry must be set)
+            os() << "Warning: '" << p->Get<std::string>("name") << "' geometry not found" << std::endl;
+        }
+
+        p = p->GetNextElement(type);
+    }
+
+    return;
+}
