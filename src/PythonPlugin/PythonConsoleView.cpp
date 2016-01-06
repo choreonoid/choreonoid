@@ -60,6 +60,7 @@ public:
     std::list<QString>::iterator histIter;
     std::list<QString> history;
     std::vector<string> splitStringVec;
+    std::vector<string> keywords;
     Signal<void(const std::string& output)> sigOutput;
 
     python::object consoleOut;
@@ -177,6 +178,10 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     consoleIn_.setConsole(this);
     
     sys = pythonSysModule();
+
+    python::object keyword = python::import("keyword");
+    python::list kwlist = python::extract<python::list>(keyword.attr("kwlist"));
+    for(int i = 0; i < python::len(kwlist); ++i) keywords.push_back(python::extract<string>(kwlist[i]));
 
     histIter = history.end();
 
@@ -348,6 +353,14 @@ void PythonConsoleViewImpl::tabComplete()
 
     python::object targetMemberObject = getMemberObject(moduleNames);//member object before last dot
     std::vector<string> memberNames = getMemberNames(targetMemberObject);
+
+    // builtin function and syntax completions
+    if(dottedStrings.size() == 1){
+        python::object builtinsObject =  pythonMainModule().attr("__builtins__");
+        std::vector<string> builtinMethods = getMemberNames(builtinsObject);
+        memberNames.insert(memberNames.end(), builtinMethods.begin(), builtinMethods.end());
+        memberNames.insert(memberNames.end(), keywords.begin(), keywords.end());
+    }
 
     std::vector<string> completions;
     unsigned long int maxLength = std::numeric_limits<long>::max();
@@ -524,6 +537,33 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 
     switch(event->key()){
 
+    case Qt::Key_F:
+        if(event->modifiers() == Qt::ControlModifier){
+            moveCursor(QTextCursor::Right);
+            done = true;
+        }
+        break;
+        
+    case Qt::Key_B:
+        if(event->modifiers() == Qt::ControlModifier){
+            if(textCursor().columnNumber() > inputColumnOffset){
+                moveCursor(QTextCursor::Left);
+            }
+            done = true;
+        }
+        break;
+        
+    case Qt::Key_H:
+        if(event->modifiers() == Qt::ControlModifier){
+            if(textCursor().columnNumber() > inputColumnOffset){
+                QTextCursor cursor = textCursor();
+                cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
+                cursor.removeSelectedText();
+             }
+            done = true;
+        }
+        break;
+        
     case Qt::Key_Left:
     case Qt::Key_Backspace:
         if(textCursor().columnNumber() <= inputColumnOffset){
@@ -531,14 +571,36 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         }
         break;
         
+    case Qt::Key_P:
+        if(event->modifiers() != Qt::ControlModifier){
+            break;
+        }
     case Qt::Key_Up:
         setInputString(getPrevHistoryEntry());
         done = true;
         break;
         
+    case Qt::Key_N:
+        if(event->modifiers() != Qt::ControlModifier){
+            break;
+        }
     case Qt::Key_Down:
         setInputString(getNextHistoryEntry());
         done = true;
+        break;
+        
+    case Qt::Key_A:
+        if(event->modifiers() == Qt::ControlModifier){
+            moveCursor(QTextCursor::StartOfLine);
+            for(int i=0; i < inputColumnOffset; ++i) moveCursor(QTextCursor::Right);
+            done = true;
+        }
+        break;
+        
+    case Qt::Key_E:
+        if( event->modifiers() == Qt::ControlModifier ){
+            moveCursor(QTextCursor::End);
+        }
         break;
         
     case Qt::Key_Return:

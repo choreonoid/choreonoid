@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-20 12:15+0900\n"
+"POT-Creation-Date: 2015-12-28 13:08+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -65,7 +65,7 @@ msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:912 ItemManager.cpp:1131
 #: PluginManager.cpp:653 ProjectManager.cpp:477 ProjectManager.cpp:502
-#: TaskView.cpp:270
+#: TaskView.cpp:269
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -1265,86 +1265,86 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#: TaskView.cpp:202
+#: TaskView.cpp:201
 msgid "Task"
 msgstr "タスク"
 
-#: TaskView.cpp:247
+#: TaskView.cpp:246
 msgid "Select a task type"
 msgstr "タスクの選択"
 
-#: TaskView.cpp:253
+#: TaskView.cpp:252
 msgid "Option Menu"
 msgstr "オプションメニュー"
 
-#: TaskView.cpp:258
+#: TaskView.cpp:257
 msgid "Return to the current phase"
 msgstr "元のフェーズに復帰"
 
-#: TaskView.cpp:263
+#: TaskView.cpp:262
 msgid "Go to the config phase"
 msgstr "設定フェーズに移動"
 
-#: TaskView.cpp:267
+#: TaskView.cpp:266
 msgid "Go back to the previous phase"
 msgstr "前のフェーズに戻る"
 
-#: TaskView.cpp:271
+#: TaskView.cpp:270
 msgid "Cancel waiting for the command to finish"
 msgstr "コマンド完了待ちのキャンセル"
 
-#: TaskView.cpp:275
+#: TaskView.cpp:274
 msgid "Phase index"
 msgstr "フェーズインデックス"
 
-#: TaskView.cpp:283
+#: TaskView.cpp:282
 msgid "V"
 msgstr "↓"
 
-#: TaskView.cpp:285
+#: TaskView.cpp:284
 msgid "Execute the default command of the current phase"
 msgstr "本フェーズのデフォルトコマンドを実行"
 
-#: TaskView.cpp:288
+#: TaskView.cpp:287
 msgid "Auto"
 msgstr "自動"
 
-#: TaskView.cpp:289
+#: TaskView.cpp:288
 msgid "Automatic mode"
 msgstr "自動モード"
 
-#: TaskView.cpp:292
+#: TaskView.cpp:291
 msgid "Skip to the next phase"
 msgstr "次のフェーズに移動"
 
-#: TaskView.cpp:432
+#: TaskView.cpp:431
 msgid "Task sequencer '%1' has been activated."
-msgstr "タスクシーケンサ '%1%' が活性化されました。"
+msgstr "タスクシーケンサ '%1' が活性化されました。"
 
-#: TaskView.cpp:434
+#: TaskView.cpp:433
 msgid "Task sequencer '%1' has been deactivated."
-msgstr "タスクシーケンサ '%1%' が非活性化されました。"
+msgstr "タスクシーケンサ '%1' が非活性化されました。"
 
-#: TaskView.cpp:479
+#: TaskView.cpp:478
 msgid "Task \"%1%\" has been added."
 msgstr "タスク \"%1%\" が追加されました。"
 
-#: TaskView.cpp:500
+#: TaskView.cpp:499
 msgid ""
 "Task \"%1%\" cannot be updated now because it is wating for a command to "
 "finish."
 msgstr ""
 "タスク \"%1%\" は現在コマンドの終了待ちを行っているため更新できません。"
 
-#: TaskView.cpp:534
+#: TaskView.cpp:533
 msgid "Task \"%1%\" has been updated with the new one."
 msgstr "タスク \"%1%\" が更新されました。"
 
-#: TaskView.cpp:1429
+#: TaskView.cpp:1428
 msgid "Retry"
 msgstr "リトライ"
 
-#: TaskView.cpp:1431
+#: TaskView.cpp:1430
 msgid "Vertical Layout"
 msgstr "縦配置"
 

@@ -24,6 +24,7 @@
 #include <agxUtil/Convert/Convert.h>
 #include <agx/PrismaticUniversalJoint.h>
 #include <agxPowerLine/Actuator1DOF.h>
+#include <agx/version.h>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
@@ -135,6 +136,9 @@ public :
     int customConstraintIndex;
     agxPowerLine::Unit* unit;
     bool isHRP2;
+    AgXSimulatorItem::ControlMode controlMode;
+    enum InputMode { NON, VEL, TOR };
+    InputMode inputMode;
 
     AgXLink(AgXSimulatorItemImpl* simImpl, AgXBody* agxXBody, AgXLink* parent,
                   const Vector3& parentOrigin, Link* link);
@@ -169,7 +173,7 @@ public :
     vector<AgXLinkPtr> agxLinks;
     BasicSensorSimulationHelper sensorHelper;
 
-    AgXBody(const Body& orgBody);
+    AgXBody(Body& orgBody);
     ~AgXBody();
 
     void createBody(AgXSimulatorItemImpl* simImpl);
@@ -214,7 +218,11 @@ public :
         axis.set( a(0), a(1), a(2) );
      }
 
+#if defined(AGX_MAJOR_VERSION) && AGX_MAJOR_VERSION < 14
     virtual agx::Vec3f calculateSurfaceVelocity( const agxCollide::LocalContactPoint& point ) const
+#else
+    virtual agx::Vec3f calculateSurfaceVelocity( const agxCollide::LocalContactPoint& point , size_t index ) const
+#endif
     {
         agx::Vec3 axis0 = agxBody->getFrame()->transformVectorToWorld( axis );
         agx::Vec3 n(point.normal());
@@ -459,7 +467,7 @@ public:
             const string& name = agxLinks[i]->link->name();
             agx::TargetSpeedController* controller =
                     dynamic_cast<agx::TargetSpeedController*>( getSecondaryConstraint( name ) );
-            if(controller)
+            if(controller && agxLinks[i]->inputMode!=AgXLink::NON)
                 controller->setEnable(true);
             controllers.push_back(controller);
         }
@@ -547,6 +555,7 @@ protected:
 }
 
 namespace cnoid {
+
 class AgXSimulatorItemImpl
 {
 public:
@@ -577,6 +586,8 @@ public:
     double timeStep;
     agxSDK::SimulationRef agxSimulation;
     agxPowerLine::PowerLineRef powerLine;
+    typedef std::map<Link*, AgXSimulatorItem::ControlMode> ControlModeMap;
+    ControlModeMap controlModeMap;
 
     AgXSimulatorItemImpl(AgXSimulatorItem* self);
     AgXSimulatorItemImpl(AgXSimulatorItem* self, const AgXSimulatorItemImpl& org);
@@ -590,6 +601,7 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     void store(Archive& archive);
     void restore(const Archive& archive);
+    void setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type);
 };
 }
 
@@ -602,6 +614,12 @@ AgXLink::AgXLink
     parent(parent),
     unit(0)
 {
+    AgXSimulatorItemImpl::ControlModeMap::iterator it = simImpl->controlModeMap.find(link);
+    if(it!=simImpl->controlModeMap.end())
+        controlMode = it->second;
+    else
+        controlMode = AgXSimulatorItem::DEFAULT;
+
     if(agxBody->body()->name().find("HRP2",0) == string::npos)
         isHRP2 = false;
     else
@@ -743,9 +761,41 @@ void AgXLink::createLinkBody(bool isStatic)
             constraintLinks[1]->customConstraintIndex = agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1;
             constraintLinks[2]->customConstraintIndex = agx::PrismaticUniversalJoint::ROTATIONAL_CONTROLLER_2;
         }else{
-            for(size_t i=1; i<constraintLinks.size(); i++){
-                Vector3 v = constraintLinks[i-1]->origin - constraintLinks[i]->origin;
-                if(!v.isZero()) return;
+            for(size_t i=0; i<constraintLinks.size(); i++){
+                Link::JointType type = constraintLinks[i]->link->jointType();
+                Vector3 v(0,0,0);
+                if(i!=0)
+                    v = constraintLinks[i-1]->origin - constraintLinks[i]->origin;
+                if(!v.isZero() || (type!=Link::ROTATIONAL_JOINT && type!=Link::SLIDE_JOINT)) {
+                    cout << "Create Joint Error" << endl;
+                    for(size_t j=0; j<constraintLinks.size(); j++){
+                        Vector3 o = constraintLinks[j]->origin;
+                        Link::JointType type = constraintLinks[j]->link->jointType();
+                        cout << "Link " << constraintLinks[j]->link->name() << " : " << "mass=" << constraintLinks[j]->link->mass()
+                        << " jointType=" << (type==Link::ROTATIONAL_JOINT? "Rotational" : type==Link::SLIDE_JOINT? "Slide" : type==Link::FREE_JOINT? "Free" : type==Link::FIXED_JOINT? "Fixed" : type==Link::CRAWLER_JOINT? "Crawler" : "Unknown")
+                        << " origin=" << o(0) << " " << o(1) <<" " << o(2) << endl;
+                    }
+                    return;
+                }
+                switch(constraintLinks[i]->controlMode){
+                case AgXSimulatorItem::HIGH_GAIN :
+                    constraintLinks[i]->inputMode = VEL;
+                    break;
+                case AgXSimulatorItem::TORQUE :
+                    constraintLinks[i]->inputMode = TOR;
+                    break;
+                case AgXSimulatorItem::FREE :
+                    constraintLinks[i]->inputMode = NON;
+                    break;
+                case AgXSimulatorItem::DEFAULT :
+                    if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS))
+                        constraintLinks[i]->inputMode = VEL;
+                    else
+                        constraintLinks[i]->inputMode = TOR;
+                    break;
+                default:
+                    break;
+                }
             }
             agx::ref_ptr< CustomConstraint > customConstraint = new CustomConstraint( parent, constraintLinks );
             simImpl->agxSimulation->add( customConstraint );
@@ -760,48 +810,88 @@ void AgXLink::createLinkBody(bool isStatic)
 
 void AgXLink::createJoint()
 {
+    enum { MOTOR, SHAFT, NON };
+
     switch(link->jointType()){
-    case Link::ROTATIONAL_JOINT:{
-        const Vector3& a = link->a();
-        agx::HingeFrame hingeFrame;
-        hingeFrame.setAxis( agx::Vec3( a(0), a(1), a(2)) );
-        hingeFrame.setCenter( agx::Vec3( origin(0), origin(1), origin(2)) );
-        agx::HingeRef hinge = new agx::Hinge( hingeFrame, agxRigidBody, parent->agxRigidBody );
-        simImpl->agxSimulation->add( hinge );
-        joint = hinge;
-
-        if(!link->Jm2() || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS) ){
-            hinge->getMotor1D()->setEnable(true);
-        }else{
-            agxPowerLine::RotationalActuatorRef rotationalActuator = new agxPowerLine::RotationalActuator(hinge);
-            agxDriveTrain::GearRef gear = new agxDriveTrain::Gear();
-            agxDriveTrain::ShaftRef shaft = new agxDriveTrain::Shaft();
-            shaft->connect(rotationalActuator, gear);
-            shaft->setInertia( link->Jm2() );
-            simImpl->powerLine->add(shaft);
-            unit = shaft;
+    case Link::ROTATIONAL_JOINT:
+    case Link::SLIDE_JOINT:
+    {
+        int part = MOTOR;
+        switch(controlMode){
+        case AgXSimulatorItem::HIGH_GAIN :
+            part = MOTOR;
+            inputMode = VEL;
+            break;
+        case AgXSimulatorItem::TORQUE :
+            if(link->Jm2()){
+                part = SHAFT;
+                inputMode = TOR;
+            }else{
+                part = MOTOR;
+                inputMode = TOR;
+            }
+            break;
+        case AgXSimulatorItem::FREE :
+            part = NON;
+            inputMode = InputMode::NON;
+            break;
+        case AgXSimulatorItem::DEFAULT :
+            if(!link->Jm2() || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
+                part = MOTOR;
+                if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS))
+                    inputMode = VEL;
+                else
+                    inputMode = TOR;
+            }else{
+                part = SHAFT;
+                inputMode = TOR;
+            }
+            break;
+        default:
+            break;
         }
-        break;
-    }
-    case Link::SLIDE_JOINT:{
-        const Vector3& d = link->d();
-        agx::PrismaticFrame prismaticFrame;
-        prismaticFrame.setAxis( agx::Vec3( d(0), d(1), d(2) ));
-        prismaticFrame.setPoint( agx::Vec3(  origin(0), origin(1), origin(2)) );
-        agx::PrismaticRef prismatic = new agx::Prismatic( prismaticFrame, agxRigidBody, parent->agxRigidBody );
-        simImpl->agxSimulation->add( prismatic );
-        joint = prismatic;
+        if(link->jointType()==Link::ROTATIONAL_JOINT){
+            const Vector3& a = link->a();
+            agx::HingeFrame hingeFrame;
+            hingeFrame.setAxis( agx::Vec3( a(0), a(1), a(2)) );
+            hingeFrame.setCenter( agx::Vec3( origin(0), origin(1), origin(2)) );
+            agx::HingeRef hinge = new agx::Hinge( hingeFrame, agxRigidBody, parent->agxRigidBody );
+            simImpl->agxSimulation->add( hinge );
+            joint = hinge;
 
-        if(!link->Jm2() || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS) ){
-            prismatic->getMotor1D()->setEnable(true);
+            if(part==MOTOR){
+                hinge->getMotor1D()->setEnable(true);
+            }else if(part==SHAFT){
+                agxPowerLine::RotationalActuatorRef rotationalActuator = new agxPowerLine::RotationalActuator(hinge);
+                agxDriveTrain::GearRef gear = new agxDriveTrain::Gear();
+                agxDriveTrain::ShaftRef shaft = new agxDriveTrain::Shaft();
+                shaft->connect(rotationalActuator, gear);
+                shaft->setInertia( link->Jm2() );
+                simImpl->powerLine->add(shaft);
+                unit = shaft;
+            }else if(part==NON)
+                ;
         }else{
-            agxPowerLine::TranslationalActuatorRef translationalActuator = new agxPowerLine::TranslationalActuator(prismatic);
-            agxPowerLine::TranslationalConnectorRef connector = new agxPowerLine::TranslationalConnector();
-            agxPowerLine::TranslationalUnitRef translationalUnit = new agxPowerLine::TranslationalUnit();
-            translationalUnit->connect(translationalActuator, connector);
-            translationalUnit->setMass( link->Jm2() );
-            simImpl->powerLine->add(translationalUnit);
-            unit = translationalUnit;
+            const Vector3& d = link->d();
+            agx::PrismaticFrame prismaticFrame;
+            prismaticFrame.setAxis( agx::Vec3( d(0), d(1), d(2) ));
+            prismaticFrame.setPoint( agx::Vec3(  origin(0), origin(1), origin(2)) );
+            agx::PrismaticRef prismatic = new agx::Prismatic( prismaticFrame, agxRigidBody, parent->agxRigidBody );
+            simImpl->agxSimulation->add( prismatic );
+            joint = prismatic;
+
+            if(part==MOTOR){
+                prismatic->getMotor1D()->setEnable(true);
+            }else if(part==SHAFT){
+                agxPowerLine::TranslationalActuatorRef translationalActuator = new agxPowerLine::TranslationalActuator(prismatic);
+                agxPowerLine::TranslationalConnectorRef connector = new agxPowerLine::TranslationalConnector();
+                agxPowerLine::TranslationalUnitRef translationalUnit = new agxPowerLine::TranslationalUnit();
+                translationalUnit->connect(translationalActuator, connector);
+                translationalUnit->setMass( link->Jm2() );
+                simImpl->powerLine->add(translationalUnit);
+                unit = translationalUnit;
+            }else if(part==NON)
+                ;
         }
         break;
     }
@@ -1041,10 +1131,11 @@ void AgXLink::setTorqueToAgX()
     }
     agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(joint);
     if(joint1DOF){
-        if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
+        if(inputMode==VEL){
             joint1DOF->getMotor1D()->setSpeed( link->dq() );
             joint1DOF->getMotor1D()->setForceRange( -std::numeric_limits<agx::Real>::max(), std::numeric_limits<agx::Real>::max());
-        }else{
+            return;
+        }else if(inputMode==TOR){
             joint1DOF->getMotor1D()->setSpeed( link->u()<0? -1.0e12 : 1.0e12);
             joint1DOF->getMotor1D()->setForceRange( agx::RangeReal( link->u() ) );
             return;
@@ -1052,9 +1143,16 @@ void AgXLink::setTorqueToAgX()
     }
     CustomConstraint* jointCustom = dynamic_cast<CustomConstraint*>(joint);
     if(jointCustom){
-        jointCustom->setSpeed( customConstraintIndex, link->u()<0? -1.0e12 : 1.0e12 );
-        jointCustom->setForceRange( customConstraintIndex, agx::RangeReal(link->u()) );
-        return;
+        if(inputMode==VEL){
+            jointCustom->setSpeed( customConstraintIndex, link->dq() );
+            jointCustom->setForceRange( customConstraintIndex, agx::RangeReal(-std::numeric_limits<agx::Real>::max(),
+                    std::numeric_limits<agx::Real>::max()));
+            return;
+        }else if(inputMode==TOR){
+            jointCustom->setSpeed( customConstraintIndex, link->u()<0? -1.0e12 : 1.0e12 );
+            jointCustom->setForceRange( customConstraintIndex, agx::RangeReal(link->u()) );
+            return;
+        }
     }
 }
 
@@ -1090,8 +1188,8 @@ void AgXForceField::updateForce(agx::DynamicsSystem* system)
 }
 
 
-AgXBody::AgXBody(const Body& orgBody)
-    : SimulationBody(new Body(orgBody))
+AgXBody::AgXBody(Body& orgBody)
+    : SimulationBody(&orgBody)
 {
 
 }
@@ -1507,6 +1605,17 @@ CollisionLinkPairListPtr AgXSimulatorItem::getCollisions()
         collisionPairs->push_back(dest);
     }
     return collisionPairs;
+}
+
+
+void AgXSimulatorItem::setJointControlMode(Link* joint, ControlMode type){
+    impl->setJointControlMode(joint, type);
+}
+
+
+void AgXSimulatorItemImpl::setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type){
+
+    controlModeMap[joint] = type;
 }
 
 

@@ -46,4 +46,6 @@ endif()
 set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -std=c++11 -msse3")
 apply_common_setting_for_plugin(${target} "${headers}")
 
-
+if(ENABLE_PYTHON)
+  add_subdirectory(python)
+endif()

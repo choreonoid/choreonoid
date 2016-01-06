@@ -33,6 +33,11 @@ public:
     MFFloat lvlimit;
     MFFloat ulimit;
     MFFloat uvlimit;
+    SFFloat gearRatio;
+    SFFloat rotorInertia;
+    SFFloat rotorResistor;
+    SFFloat torqueConst;
+    SFFloat encoderPulse;
 };
 
 typedef boost::intrusive_ptr<VRMLJoint> VRMLJointPtr;
@@ -50,6 +55,17 @@ public:
 typedef boost::intrusive_ptr<VRMLSegment> VRMLSegmentPtr;
 
 
+class CNOID_EXPORT VRMLSurface : public VRMLNode
+{
+public:
+    VRMLSurface();
+    MFNode visual;
+    MFNode collision;
+};
+
+typedef boost::intrusive_ptr<VRMLSurface> VRMLSurfacePtr;
+
+
 class CNOID_EXPORT VRMLVisionSensor : public VRMLTransform
 {
 public:
@@ -58,6 +74,7 @@ public:
     SFString    type;
     SFInt32     width;
     SFInt32     height;
+    SFFloat     frameRate;
     SFFloat     fieldOfView;
     SFFloat     frontClipDistance;
     SFFloat     backClipDistance;
@@ -76,6 +93,28 @@ public:
 };
 
 typedef boost::intrusive_ptr<VRMLForceSensor> VRMLForceSensorPtr;
+
+
+class CNOID_EXPORT VRMLGyro : public VRMLTransform
+{
+public:
+    VRMLGyro();
+    SFInt32     sensorId;
+    SFVec3f     maxAngularVelocity;
+};
+
+typedef boost::intrusive_ptr<VRMLGyro> VRMLGyroPtr;
+
+
+class CNOID_EXPORT VRMLAccelerationSensor : public VRMLTransform
+{
+public:
+    VRMLAccelerationSensor();
+    SFInt32     sensorId;
+    SFVec3f     maxAcceleration;
+};
+
+typedef boost::intrusive_ptr<VRMLAccelerationSensor> VRMLAccelerationSensorPtr;
 
 };
 

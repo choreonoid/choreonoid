@@ -966,10 +966,12 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     SgNodePtr node = sgConverter.convert(segmentNode);
     if(node){
         if(T.isApprox(Affine3::Identity())){
+            node->setName(segmentNode->defName);
             iLink.visualShape->addChild(node);
         } else {
             SgPosTransform* transform = new SgPosTransform(T);
             transform->addChild(node);
+            transform->setName(segmentNode->defName);
             iLink.visualShape->addChild(transform);
         }
     }
@@ -1005,6 +1007,7 @@ void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* seg
         }
     }
     if(transform && !transform->empty()){
+        transform->setName(segmentShapeNode->defName);
         iLink.collisionShape->addChild(transform);
     }
 }
