@@ -524,6 +524,33 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 
     switch(event->key()){
 
+    case Qt::Key_F:
+        if(event->modifiers() == Qt::ControlModifier){
+            moveCursor(QTextCursor::Right);
+            done = true;
+        }
+        break;
+        
+    case Qt::Key_B:
+        if(event->modifiers() == Qt::ControlModifier){
+            if(textCursor().columnNumber() > inputColumnOffset){
+                moveCursor(QTextCursor::Left);
+            }
+            done = true;
+        }
+        break;
+        
+    case Qt::Key_H:
+        if(event->modifiers() == Qt::ControlModifier){
+            if(textCursor().columnNumber() > inputColumnOffset){
+                QTextCursor cursor = textCursor();
+                cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
+                cursor.removeSelectedText();
+             }
+            done = true;
+        }
+        break;
+        
     case Qt::Key_Left:
     case Qt::Key_Backspace:
         if(textCursor().columnNumber() <= inputColumnOffset){
@@ -531,14 +558,36 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         }
         break;
         
+    case Qt::Key_P:
+        if(event->modifiers() != Qt::ControlModifier){
+            break;
+        }
     case Qt::Key_Up:
         setInputString(getPrevHistoryEntry());
         done = true;
         break;
         
+    case Qt::Key_N:
+        if(event->modifiers() != Qt::ControlModifier){
+            break;
+        }
     case Qt::Key_Down:
         setInputString(getNextHistoryEntry());
         done = true;
+        break;
+        
+    case Qt::Key_A:
+        if(event->modifiers() == Qt::ControlModifier){
+            moveCursor(QTextCursor::StartOfLine);
+            for(int i=0; i < inputColumnOffset; ++i) moveCursor(QTextCursor::Right);
+            done = true;
+        }
+        break;
+        
+    case Qt::Key_E:
+        if( event->modifiers() == Qt::ControlModifier ){
+            moveCursor(QTextCursor::End);
+        }
         break;
         
     case Qt::Key_Return:
