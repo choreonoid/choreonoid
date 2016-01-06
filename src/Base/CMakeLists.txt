@@ -80,6 +80,7 @@ set(sources
   LazySignal.cpp
   Licenses.cpp
   GLSceneRenderer.cpp
+  GL1SceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
@@ -189,6 +190,7 @@ set(headers
   InteractiveCameraTransform.h
   RectRegionMarker.h
   GLSceneRenderer.h
+  GL1SceneRenderer.h
   SceneView.h
   SceneItem.h
   PointSetItem.h

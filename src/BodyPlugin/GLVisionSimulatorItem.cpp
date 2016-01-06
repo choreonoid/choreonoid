@@ -10,7 +10,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/ValueTreeUtil>
-#include <cnoid/GLSceneRenderer>
+#include <cnoid/GL1SceneRenderer>
 #include <cnoid/Body>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
@@ -116,7 +116,7 @@ public:
     vector<SceneBodyPtr> sceneBodies;
 
     QGLPixelBuffer* pixelBuffer;
-    GLSceneRenderer renderer;
+    GL1SceneRenderer renderer;
     int pixelWidth;
     int pixelHeight;
     boost::shared_ptr<Image> tmpImage;

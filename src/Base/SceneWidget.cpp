@@ -3,7 +3,7 @@
 */
 
 #include "SceneWidget.h"
-#include "GLSceneRenderer.h"
+#include "GL1SceneRenderer.h"
 #include "SceneWidgetEditable.h"
 #include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
@@ -189,7 +189,7 @@ public:
     SceneWidgetRootPtr sceneRoot;
     SgGroupPtr systemGroup;
     SgGroup* scene;
-    GLSceneRenderer renderer;
+    GL1SceneRenderer renderer;
     QGLPixelBuffer* buffer;
     LazyCaller initializeRenderingLater;
     SgUpdate modified;
@@ -278,9 +278,9 @@ public:
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
 
-    void renderGrid(GLSceneRenderer& renderer, Plane p);
+    void renderGrid(GL1SceneRenderer& renderer, Plane p);
     void setupCoordinateAxes();
-    void renderCoordinateAxes(GLSceneRenderer& renderer);
+    void renderCoordinateAxes(GL1SceneRenderer& renderer);
 
     void onSceneGraphUpdated(const SgUpdate& update);
 
@@ -467,7 +467,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     buffer = 0;
 
-    initializeRenderingLater.setFunction(boost::bind(&GLSceneRenderer::initializeRendering, &renderer));
+    initializeRenderingLater.setFunction(boost::bind(&SceneRenderer::initializeRendering, &renderer));
 
     modified.setAction(SgUpdate::MODIFIED);
     added.setAction(SgUpdate::ADDED);
@@ -717,7 +717,7 @@ void SceneWidgetImpl::paintGL()
 }
 
 
-void SceneWidgetImpl::renderGrid(GLSceneRenderer& renderer, Plane p)
+void SceneWidgetImpl::renderGrid(GL1SceneRenderer& renderer, Plane p)
 {
     if(!config->gridCheck[p].isChecked()){
         return;
@@ -784,7 +784,7 @@ void SceneWidgetImpl::renderGrid(GLSceneRenderer& renderer, Plane p)
 }
 
 
-void SceneWidgetImpl::renderCoordinateAxes(GLSceneRenderer& renderer)
+void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
 {
     glPushAttrib(GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
@@ -2140,13 +2140,13 @@ void SceneWidgetImpl::setPolygonMode(int mode)
     if(polygonMode.which() != oldMode){
         switch(polygonMode.which()){
         case SceneWidget::FILL_MODE:
-            renderer.setPolygonMode(GLSceneRenderer::FILL_MODE);
+            renderer.setPolygonMode(GL1SceneRenderer::FILL_MODE);
             break;
         case SceneWidget::LINE_MODE:
-            renderer.setPolygonMode(GLSceneRenderer::LINE_MODE);
+            renderer.setPolygonMode(GL1SceneRenderer::LINE_MODE);
             break;
         case SceneWidget::POINT_MODE:
-            renderer.setPolygonMode(GLSceneRenderer::POINT_MODE);
+            renderer.setPolygonMode(GL1SceneRenderer::POINT_MODE);
             break;
         default:
             break;
