@@ -18,9 +18,22 @@ VRMLBodyWriter::VRMLBodyWriter(std::ostream& out) : VRMLWriter(out)
 void VRMLBodyWriter::registerNodeMethodMap()
 {
     VRMLWriter::registerNodeMethodMap();
-    registerNodeMethod(typeid(VRMLHumanoid), (VRMLWriterNodeMethod)&VRMLBodyWriter::writeHumanoidNode);
-    registerNodeMethod(typeid(VRMLJoint),    (VRMLWriterNodeMethod)&VRMLBodyWriter::writeJointNode);
-    registerNodeMethod(typeid(VRMLSegment),  (VRMLWriterNodeMethod)&VRMLBodyWriter::writeSegmentNode);
+    registerNodeMethod(typeid(VRMLHumanoid),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeHumanoidNode);
+    registerNodeMethod(typeid(VRMLJoint),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeJointNode);
+    registerNodeMethod(typeid(VRMLSegment),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeSegmentNode);
+    registerNodeMethod(typeid(VRMLSurface),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeSurfaceNode);
+    registerNodeMethod(typeid(VRMLVisionSensor),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeVisionSensorNode);
+    registerNodeMethod(typeid(VRMLForceSensor),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeForceSensorNode);
+    registerNodeMethod(typeid(VRMLGyro),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeGyroNode);
+    registerNodeMethod(typeid(VRMLAccelerationSensor),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeAccelerationSensorNode);
 }
 
 
@@ -88,6 +101,11 @@ void VRMLBodyWriter::writeJointNode(VRMLNodePtr node)
         out << indent << "uvlimit\n";
         writeMFValues(joint->uvlimit, 1);
     }
+    out << indent << "gearRatio " << joint->gearRatio << "\n";
+    out << indent << "rotorInertia " << joint->rotorInertia << "\n";
+    out << indent << "rotorResistor " << joint->rotorResistor << "\n";
+    out << indent << "torqueConst " << joint->torqueConst << "\n";
+    out << indent << "encoderPulse " << joint->encoderPulse << "\n";
     out << indent << "center " << joint->center << "\n";
     out << indent << "rotation " << joint->rotation << "\n";
     out << indent << "scale " << joint->scale << "\n";
@@ -112,6 +130,113 @@ void VRMLBodyWriter::writeSegmentNode(VRMLNodePtr node)
     writeMFValues(segment->momentsOfInertia, 3);
 
     writeGroupFields(segment);
+
+    endNode();
+}
+
+
+void VRMLBodyWriter::writeSurfaceNode(VRMLNodePtr node)
+{
+    VRMLSurfacePtr surface = static_pointer_cast<VRMLSurface>(node);
+
+    beginNode("Surface", surface);
+
+    if(!surface->visual.empty()){
+        out << indent << "visual [\n";
+        ++indent;
+        for(size_t i=0; i < surface->visual.size(); i++){
+            writeNodeIter(surface->visual[i]);
+        }
+        out << --indent << "]\n";
+    }
+
+    if(!surface->collision.empty()){
+        out << indent << "collision [\n";
+        ++indent;
+        for(size_t i=0; i < surface->collision.size(); i++){
+            writeNodeIter(surface->collision[i]);
+        }
+        out << --indent << "]\n";
+    }
+
+    endNode();
+}
+
+
+void VRMLBodyWriter::writeVisionSensorNode(VRMLNodePtr node)
+{
+    VRMLVisionSensorPtr sensor = static_pointer_cast<VRMLVisionSensor>(node);
+
+    beginNode("VisionSensor", sensor);
+
+    out << indent << "rotation " << sensor->rotation << "\n";
+    out << indent << "translation " << sensor->translation << "\n";
+    if(sensor->sensorId >= 0){
+        out << indent << "sensorId " << sensor->sensorId << "\n";
+    }
+    out << indent << "type \"" << sensor->type << "\"\n";
+    out << indent << "width " << sensor->width << "\n";
+    out << indent << "height " << sensor->height << "\n";
+    out << indent << "frameRate " << sensor->frameRate << "\n";
+    out << indent << "fieldOfView " << sensor->fieldOfView << "\n";
+    out << indent << "frontClipDistance " << sensor->frontClipDistance << "\n";
+    out << indent << "backClipDistance " << sensor->backClipDistance << "\n";
+
+    endNode();
+}
+
+
+void VRMLBodyWriter::writeForceSensorNode(VRMLNodePtr node)
+{
+    VRMLForceSensorPtr sensor = static_pointer_cast<VRMLForceSensor>(node);
+
+    beginNode("ForceSensor", sensor);
+
+    out << indent << "rotation " << sensor->rotation << "\n";
+    out << indent << "translation " << sensor->translation << "\n";
+    if(sensor->sensorId >= 0){
+        out << indent << "sensorId " << sensor->sensorId << "\n";
+    }
+    out << indent << "maxForce\n";
+    writeMFValues(sensor->maxForce, 3);
+    out << indent << "maxTorque\n";
+    writeMFValues(sensor->maxTorque, 3);
+
+    endNode();
+}
+
+
+void VRMLBodyWriter::writeGyroNode(VRMLNodePtr node)
+{
+    VRMLGyroPtr sensor = static_pointer_cast<VRMLGyro>(node);
+
+    beginNode("Gyro", sensor);
+
+    out << indent << "rotation " << sensor->rotation << "\n";
+    out << indent << "translation " << sensor->translation << "\n";
+    if(sensor->sensorId >= 0){
+        out << indent << "sensorId " << sensor->sensorId << "\n";
+    }
+    out << indent << "maxAngularVelocity\n";
+    writeMFValues(sensor->maxAngularVelocity, 3);
+
+    endNode();
+}
+
+
+void VRMLBodyWriter::writeAccelerationSensorNode(VRMLNodePtr node)
+{
+    VRMLAccelerationSensorPtr sensor = static_pointer_cast<VRMLAccelerationSensor>(node);
+
+    beginNode("AccelerationSensor", sensor);
+
+    out << indent << "rotation " << sensor->rotation << "\n";
+    out << indent << "translation " << sensor->translation << "\n";
+    if(sensor->sensorId >= 0){
+        out << indent << "sensorId " << sensor->sensorId << "\n";
+    }
+    out << indent << "maxAcceleration\n";
+    writeMFValues(sensor->maxAcceleration, 3);
 
     endNode();
 }
