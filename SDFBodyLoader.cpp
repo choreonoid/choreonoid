@@ -256,7 +256,7 @@ cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
     trans(0) = pose.pos.x;
     trans(1) = pose.pos.y;
     trans(2) = pose.pos.z;
-    cnoid::Quat R;
+    cnoid::Quaternion R;
     R.x() = pose.rot.x;
     R.y() = pose.rot.y;
     R.z() = pose.rot.z;
@@ -427,7 +427,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         while(it != roots.end()){
             os() << "found root link " << (*it)->parentName << std::endl;
             Link* link = body->createLink();
-            link->setName(modelName);
+            link->setName((*it)->parentName);
             JointInfoPtr root;
             if((*it)->parentName == "world"){
                 link->setJointType(Link::FIXED_JOINT);
