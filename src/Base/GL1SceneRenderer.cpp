@@ -23,13 +23,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <iostream>
 
-//#define DO_DEPTH_BUFFER_TYPE_TEST
-
-#ifdef DO_DEPTH_BUFFER_TYPE_TEST
-#include <QElapsedTimer>
-QElapsedTimer timer;
-#endif
-
 using namespace std;
 using namespace cnoid;
 
@@ -126,149 +119,14 @@ public:
 typedef ref_ptr<TextureCache> TextureCachePtr;
 
 
-struct PreproNode
-{
-    PreproNode() : parent(0), child(0), next(0) { }
-    ~PreproNode() {
-        if(child) delete child;
-        if(next) delete next;
-    }
-    enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
-    boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
-    SgNode* base;
-    PreproNode* parent;
-    PreproNode* child;
-    PreproNode* next;
-    template<class T> void setNode(T* n){
-        node = n;
-        base = n;
+struct SgObjectPtrHash {
+    std::size_t operator()(const SgObjectPtr& p) const {
+        return boost::hash_value<SgObject*>(p.get());
     }
 };
-    
-    
-class PreproTreeExtractor : public SceneVisitor
-{
-    PreproNode* node;
-    bool found;
-public:
-    PreproNode* apply(SgNode* node);
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitTransform(SgTransform* transform);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed);
-    virtual void visitLight(SgLight* light);
-    virtual void visitFog(SgFog* fog);
-    virtual void visitCamera(SgCamera* camera);
-};
-}
-
-
-PreproNode* PreproTreeExtractor::apply(SgNode* snode)
-{
-    node = 0;
-    found = false;
-    snode->accept(*this);
-    return node;
-}
-
-
-void PreproTreeExtractor::visitGroup(SgGroup* group)
-{
-    bool foundInSubTree = false;
-
-    PreproNode* self = new PreproNode();
-    self->setNode(group);
-
-    for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
-
-        node = 0;
-        found = false;
-        
-        (*p)->accept(*this);
-        
-        if(node){
-            if(found){
-                node->parent = self;
-                node->next = self->child;
-                self->child = node;
-                foundInSubTree = true;
-            } else {
-                delete node;
-            }
-        }
-    }
-            
-    found = foundInSubTree;
-
-    if(found){
-        node = self;
-    } else {
-        delete self;
-        node = 0;
-    }
-}
-
-
-void PreproTreeExtractor::visitTransform(SgTransform* transform)
-{
-    visitGroup(transform);
-    if(node){
-        node->setNode(transform);
-    }
-}
-
-
-void PreproTreeExtractor::visitShape(SgShape* shape)
-{
+typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
 
 }
-
-
-void PreproTreeExtractor::visitPointSet(SgPointSet* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitLineSet(SgLineSet* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitPreprocessed(SgPreprocessed* preprocessed)
-{
-    node = new PreproNode();
-    node->setNode(preprocessed);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitLight(SgLight* light)
-{
-    node = new PreproNode();
-    node->setNode(light);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitFog(SgFog* fog)
-{
-    node = new PreproNode();
-    node->setNode(fog);
-    found = true;
-}
-    
-
-void PreproTreeExtractor::visitCamera(SgCamera* camera)
-{
-    node = new PreproNode();
-    node->setNode(camera);
-    found = true;
-}
-
 
 namespace cnoid {
 
@@ -277,15 +135,10 @@ class GL1SceneRendererImpl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    GL1SceneRendererImpl(GL1SceneRenderer* self, SgGroup* sceneRoot);
+    GL1SceneRendererImpl(GL1SceneRenderer* self);
     ~GL1SceneRendererImpl();
 
     GL1SceneRenderer* self;
-
-    Signal<void()> sigRenderingRequest;
-
-    SgGroupPtr sceneRoot;
-    SgGroupPtr scene;
 
     SgNodePath indexedEntities;
 
@@ -303,12 +156,6 @@ public:
     };
     boost::scoped_ptr<Buf> buf;
         
-    struct SgObjectPtrHash {
-        std::size_t operator()(const SgObjectPtr& p) const {
-            return boost::hash_value<SgObject*>(p.get());
-        }
-    };
-    typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
     CacheMap cacheMaps[2];
     bool doUnusedCacheCheck;
     bool isCheckingUnusedCaches;
@@ -321,76 +168,20 @@ public:
 
     int currentShapeCacheTopViewMatrixIndex;
 
-    bool doPreprocessedNodeTreeExtraction;
-    boost::scoped_ptr<PreproNode> preproTree;
-
-    Array4i viewport;
-
-    struct CameraInfo
-    {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        CameraInfo() : camera(0), M(Affine3::Identity()), node(0) { }
-        CameraInfo(SgCamera* camera, const Affine3& M, PreproNode* node)
-            : camera(camera), M(M), node(node) { }
-        SgCamera* camera;
-
-        // I want to use 'T' here, but that causes a compile error (c2327) for VC++2010.
-        // 'T' is also used as a template parameter in a template code of Eigen,
-        // and it seems that the name of a template parameter and this member conflicts.
-        // So I changed the name to 'M'.
-        // This behavior of VC++ seems stupid!!!
-        Affine3 M;
-        PreproNode* node;
-    };
-
-    typedef vector<CameraInfo, Eigen::aligned_allocator<CameraInfo> > CameraInfoArray;
-    CameraInfoArray cameras1;
-    CameraInfoArray cameras2;
-    CameraInfoArray* cameras;
-    CameraInfoArray* prevCameras;
-
-    bool camerasChanged;
-    bool currentCameraRemoved;
-    int currentCameraIndex;
-    SgCamera* currentCamera;
-    vector<SgNodePath> cameraPaths;
-    Signal<void()> sigCamerasChanged;
-    Signal<void()> sigCurrentCameraChanged;
-        
-    GLfloat aspectRatio; // width / height;
-
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
-    Affine3 tmpCurrentCameraPosition;
-    Affine3 tmpCurrentModelTransform;
-
-    struct LightInfo
-    {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        LightInfo() : light(0) { }
-        LightInfo(SgLight* light, const Affine3& M) : light(light), M(M) { } 
-        SgLight* light;
-        Affine3 M;
-    };
-    vector<LightInfo, Eigen::aligned_allocator<LightInfo> > lights;
+    Affine3 currentModelTransform;
 
     int numSystemLights;
     int prevNumLights;
+    bool isHeadLightLightingFromBackEnabled;
 
     bool isFogEnabled;
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
-    SgFogPtr currentFog;
     ScopedConnection currentFogConnection;
 
     Vector3f bgColor;
-
-    SgLightPtr headLight;
-    bool isHeadLightLightingFromBackEnabled;
-    std::set<SgLightPtr> defaultLights;
-    bool additionalLightsEnabled;
 
     GL1SceneRenderer::PolygonMode polygonMode;
     bool defaultLighting;
@@ -459,20 +250,10 @@ public:
     float pointSize;
     float lineWidth;
 
-    void addEntity(SgNode* node);
-    void removeEntity(SgNode* node);
-    void onSceneGraphUpdated(const SgUpdate& update);
-    void updateCameraPaths();
-    void setCurrentCamera(int index, bool doRenderingRequest);
-    bool setCurrentCamera(SgCamera* camera);
     bool initializeGL();
-    void setViewport(int x, int y, int width, int height);
     void beginRendering(bool doRenderingCommands);
-    void extractPreproNodes(PreproNode* node, const Affine3& T);
-    void renderCamera();
-    void getViewVolume(
-        const SgOrthographicCamera& camera,
-        GLfloat& out_left, GLfloat& out_right, GLfloat& out_bottom, GLfloat& out_top) const;
+    void beginActualRendering(SgCamera* camera);
+    void renderCamera(SgCamera* camera);
     void renderLights();
     void renderLight(const SgLight* light, GLint id, const Affine3& T);
     void renderFog();
@@ -521,29 +302,26 @@ public:
         return c4;
     }
 };
+
 }
 
 
 GL1SceneRenderer::GL1SceneRenderer()
 {
-    SgGroup* sceneRoot = new SgGroup;
-    sceneRoot->setName("Root");
-    impl = new GL1SceneRendererImpl(this, sceneRoot);
+    impl = new GL1SceneRendererImpl(this);
 }
 
 
 GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
+    : GLSceneRenderer(sceneRoot)
 {
-    impl = new GL1SceneRendererImpl(this, sceneRoot);
+    impl = new GL1SceneRendererImpl(this);
 }
 
 
-GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self, SgGroup* sceneRoot)
-    : self(self),
-      sceneRoot(sceneRoot)
+GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
+    : self(self)
 {
-    sceneRoot->sigUpdated().connect(boost::bind(&GL1SceneRendererImpl::onSceneGraphUpdated, this, _1));
-
     Vstack.reserve(16);
     
     buf.reset(new Buf);
@@ -555,30 +333,16 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self, SgGroup* scen
     currentCacheMap = &cacheMaps[0];
     nextCacheMap = &cacheMaps[1];
 
-    doPreprocessedNodeTreeExtraction = true;
-
     bgColor << 0.1f, 0.1f, 0.3f; // dark blue
-
-    aspectRatio = 1.0f;
-
-    cameras = &cameras1;
-    prevCameras = &cameras2;
-    currentCameraIndex = -1;
-    currentCamera = 0;
 
     lastViewMatrix.setIdentity();
     lastProjectionMatrix.setIdentity();
 
     numSystemLights = 2;
     prevNumLights = 0;
-
-    headLight = new SgDirectionalLight();
-    headLight->setAmbientIntensity(0.0f);
     isHeadLightLightingFromBackEnabled = false;
-    additionalLightsEnabled = true;
 
-    scene = new SgGroup();
-    sceneRoot->addChild(scene);
+    prevFog = 0;
 
     polygonMode = GL1SceneRenderer::FILL_MODE;
     defaultLighting = true;
@@ -613,160 +377,6 @@ GL1SceneRenderer::~GL1SceneRenderer()
 GL1SceneRendererImpl::~GL1SceneRendererImpl()
 {
 
-}
-
-
-SgGroup* GL1SceneRenderer::sceneRoot()
-{
-    return impl->sceneRoot;
-}
-
-
-SgGroup* GL1SceneRenderer::scene()
-{
-    return impl->scene;
-}
-
-
-void GL1SceneRenderer::clearScene()
-{
-    impl->scene->clearChildren(true);
-}
-
-
-void GL1SceneRendererImpl::onSceneGraphUpdated(const SgUpdate& update)
-{
-    if(update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED)){
-        doPreprocessedNodeTreeExtraction = true;
-    }
-    if(SgImage* image = dynamic_cast<SgImage*>(update.path().front())){
-        CacheMap* cacheMap = hasValidNextCacheMap ? nextCacheMap : currentCacheMap;
-        CacheMap::iterator p = cacheMap->find(image);
-        if(p != cacheMap->end()){
-            TextureCache* cache = static_cast<TextureCache*>(p->second.get());
-            cache->isImageUpdateNeeded = true;
-        }
-    }
-                
-    sigRenderingRequest();
-}
-
-
-SignalProxy<void()> GL1SceneRenderer::sigRenderingRequest()
-{
-    return impl->sigRenderingRequest;
-}
-
-
-SignalProxy<void()> GL1SceneRenderer::sigCamerasChanged() const
-{
-    return impl->sigCamerasChanged;
-}
-
-
-int GL1SceneRenderer::numCameras() const
-{
-    return impl->cameras->size();
-}
-
-
-SgCamera* GL1SceneRenderer::camera(int index)
-{
-    return dynamic_cast<SgCamera*>(cameraPath(index).back());
-}
-
-
-const std::vector<SgNode*>& GL1SceneRenderer::cameraPath(int index) const
-{
-    if(impl->cameraPaths.empty()){
-        impl->updateCameraPaths();
-    }
-    return impl->cameraPaths[index];
-}
-
-
-void GL1SceneRendererImpl::updateCameraPaths()
-{
-    vector<SgNode*> tmpPath;
-    const int n = cameras->size();
-    cameraPaths.resize(n);
-    
-    for(int i=0; i < n; ++i){
-        CameraInfo& info = (*cameras)[i];
-        tmpPath.clear();
-        PreproNode* node = info.node;
-        while(node){
-            tmpPath.push_back(node->base);
-            node = node->parent;
-        }
-        if(!tmpPath.empty()){
-            tmpPath.pop_back(); // remove the root node
-            vector<SgNode*>& path = cameraPaths[i];
-            path.resize(tmpPath.size());
-            std::copy(tmpPath.rbegin(), tmpPath.rend(), path.begin());
-        }
-    }
-}
-
-
-void GL1SceneRenderer::setCurrentCamera(int index)
-{
-    impl->setCurrentCamera(index, true);
-}
-
-
-void GL1SceneRendererImpl::setCurrentCamera(int index, bool doRenderingRequest)
-{
-    SgCamera* newCamera = 0;
-    if(index >= 0 && index < cameras->size()){
-        newCamera = (*cameras)[index].camera;
-    }
-    if(newCamera && newCamera != currentCamera){
-        currentCameraIndex = index;
-        currentCamera = newCamera;
-        sigCurrentCameraChanged();
-        if(doRenderingRequest){
-            sigRenderingRequest();
-        }
-    }
-}
-
-
-bool GL1SceneRenderer::setCurrentCamera(SgCamera* camera)
-{
-    return impl->setCurrentCamera(camera);
-}
-
-
-bool GL1SceneRendererImpl::setCurrentCamera(SgCamera* camera)
-{
-    if(camera != currentCamera){
-        for(size_t i=0; i < cameras->size(); ++i){
-            if((*cameras)[i].camera == camera){
-                setCurrentCamera(i, true);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
-SgCamera* GL1SceneRenderer::currentCamera() const
-{
-    return impl->currentCamera;
-}
-
-
-int GL1SceneRenderer::currentCameraIndex() const
-{
-    return impl->currentCameraIndex;
-}
-
-
-SignalProxy<void()> GL1SceneRenderer::sigCurrentCameraChanged()
-{
-    return impl->sigCurrentCameraChanged;
 }
 
 
@@ -827,41 +437,6 @@ bool GL1SceneRendererImpl::initializeGL()
 }
 
 
-void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
-{
-    impl->setViewport(x, y, width, height);
-}
-
-
-void GL1SceneRendererImpl::setViewport(int x, int y, int width, int height)
-{
-    aspectRatio = (double)width / height;
-    viewport << x, y, width, height;
-    glViewport(x, y, width, height);
-}
-
-
-Array4i GL1SceneRenderer::viewport() const
-{
-    return impl->viewport;
-}
-
-
-void GL1SceneRenderer::getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const
-{
-    out_x = impl->viewport[0];
-    out_y = impl->viewport[1];
-    out_width = impl->viewport[2];
-    out_height = impl->viewport[3];
-}    
-
-
-double GL1SceneRenderer::aspectRatio() const
-{
-    return impl->aspectRatio;
-}
-
-
 void GL1SceneRenderer::requestToClearCache()
 {
     impl->isCacheClearRequested = true;
@@ -910,162 +485,79 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if(doPreprocessedNodeTreeExtraction){
-        PreproTreeExtractor extractor;
-        preproTree.reset(extractor.apply(sceneRoot));
-        doPreprocessedNodeTreeExtraction = false;
-    }
+    self->extractPreproNodes();
 
-    std::swap(cameras, prevCameras);
-    cameras->clear();
-    camerasChanged = false;
-    currentCameraRemoved = true;
-    
-    lights.clear();
-    currentFog = 0;
-
-    if(preproTree){
-        extractPreproNodes(preproTree.get(), Affine3::Identity());
-    }
-
-    if(!camerasChanged){
-        if(cameras->size() != prevCameras->size()){
-            camerasChanged = true;
+    if(doRenderingCommands){
+        SgCamera* camera = self->currentCamera();
+        if(camera){
+            beginActualRendering(camera);
         }
-    }
-    if(camerasChanged){
-        if(currentCameraRemoved){
-            currentCameraIndex = 0;
-        }
-        cameraPaths.clear();
-        sigCamerasChanged();
-    }
-
-    setCurrentCamera(currentCameraIndex, false);
-
-    if(doRenderingCommands && currentCamera){
-        renderCamera();
-        if(!isPicking){
-            renderLights();
-            renderFog();
-        }
-        if(isPicking){
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        } else {
-            switch(polygonMode){
-            case GL1SceneRenderer::FILL_MODE:
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                break;
-            case GL1SceneRenderer::LINE_MODE:
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                break;
-            case GL1SceneRenderer::POINT_MODE:
-                glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-                break;
-            }
-        }
-        if(defaultSmoothShading){
-            glShadeModel(GL_SMOOTH);
-        } else {
-            glShadeModel(GL_FLAT);
-        }
-
-        isNewDisplayListCreated = false;
-            
-        clearGLState();
-        
-        setColor(defaultColor);
-        setPointSize(defaultPointSize);
-        //glEnable(GL_POINT_SMOOTH);
-        setLineWidth(defaultLineWidth);
-        //glEnable(GL_LINE_SMOOTH);
-
-        transparentShapeInfos.clear();
     }
 }
 
 
-void GL1SceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
+void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
 {
-    switch(node->node.which()){
+    renderCamera(camera);
 
-    case PreproNode::GROUP:
-        for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
-            extractPreproNodes(childNode, T);
-        }
-        break;
-        
-    case PreproNode::TRANSFORM:
-    {
-        SgTransform* transform = boost::get<SgTransform*>(node->node);
-        Affine3 T1;
-        transform->getTransform(T1);
-        const Affine3 T2 = T * T1;
-        for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
-            extractPreproNodes(childNode, T2);
-        }
-    }
-    break;
-        
-    case PreproNode::PREPROCESSED:
-        // call additional functions
-        break;
-
-    case PreproNode::LIGHT:
-    {
-        SgLight* light = boost::get<SgLight*>(node->node);
-        if(additionalLightsEnabled || defaultLights.find(light) != defaultLights.end()){
-            lights.push_back(LightInfo(light, T));
-        }
-        break;
+    if(!isPicking){
+        renderLights();
+        renderFog();
     }
 
-    case PreproNode::FOG:
-    {
-        SgFog* fog = boost::get<SgFog*>(node->node);
-        currentFog = fog;
-        break;
+    if(isPicking){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+        switch(polygonMode){
+        case GL1SceneRenderer::FILL_MODE:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            break;
+        case GL1SceneRenderer::LINE_MODE:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            break;
+        case GL1SceneRenderer::POINT_MODE:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+            break;
+        }
     }
 
-    case PreproNode::CAMERA:
-    {
-        SgCamera* camera = boost::get<SgCamera*>(node->node);
-        size_t index = cameras->size();
-        if(!camerasChanged){
-            if(index >= prevCameras->size() || camera != (*prevCameras)[index].camera){
-                camerasChanged = true;
-            }
-        }
-        if(camera == currentCamera){
-            currentCameraRemoved = false;
-            currentCameraIndex = cameras->size();
-        }
-        cameras->push_back(CameraInfo(camera, T, node));
+    if(defaultSmoothShading){
+        glShadeModel(GL_SMOOTH);
+    } else {
+        glShadeModel(GL_FLAT);
     }
-    break;
 
-    default:
-        break;
-    }
+    isNewDisplayListCreated = false;
+            
+    clearGLState();
+    
+    setColor(defaultColor);
+    setPointSize(defaultPointSize);
+    //glEnable(GL_POINT_SMOOTH);
+    setLineWidth(defaultLineWidth);
+    //glEnable(GL_LINE_SMOOTH);
+    
+    transparentShapeInfos.clear();
 }
 
 
-void GL1SceneRendererImpl::renderCamera()
+void GL1SceneRendererImpl::renderCamera(SgCamera* camera)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     // set projection
-    if(SgPerspectiveCamera* camera = dynamic_cast<SgPerspectiveCamera*>(currentCamera)){
-        gluPerspective(degree(camera->fovy(aspectRatio)), aspectRatio, camera->nearDistance(), camera->farDistance());
+    if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+        double aspectRatio = self->aspectRatio();
+        gluPerspective(degree(pers->fovy(aspectRatio)), aspectRatio, pers->nearDistance(), pers->farDistance());
         
-    } else if(SgOrthographicCamera* camera = dynamic_cast<SgOrthographicCamera*>(currentCamera)){
+    } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         GLfloat left, right, bottom, top;
-        getViewVolume(*camera, left, right, bottom, top);
-        glOrtho(left, right, bottom, top, camera->nearDistance(), camera->farDistance());
+        self->getViewVolume(ortho, left, right, bottom, top);
+        glOrtho(left, right, bottom, top, ortho->nearDistance(), ortho->farDistance());
         
     } else {
-        gluPerspective(40.0f, aspectRatio, 0.01, 1.0e4);
+        gluPerspective(40.0f, self->aspectRatio(), 0.01, 1.0e4);
     }
 
     GLdouble P[16];
@@ -1076,45 +568,33 @@ void GL1SceneRendererImpl::renderCamera()
     glLoadIdentity();
     
     // Render headlight
-    if(!isPicking && defaultLighting){
+    if(isPicking || !defaultLighting){
+        glDisable(GL_LIGHTING);
+    } else {
         glEnable(GL_LIGHTING);
-
+        SgLight* headLight = self->headLight();
         if(!headLight->on()){
             glDisable(GL_LIGHT0);
             glDisable(GL_LIGHT1);
         } else {
             static const Affine3 I = Affine3::Identity();
-            renderLight(headLight.get(), GL_LIGHT0, I);
-
+            renderLight(headLight, GL_LIGHT0, I);
             if(isHeadLightLightingFromBackEnabled){
-                if(SgDirectionalLight* directionalHeadLight = dynamic_cast<SgDirectionalLight*>(headLight.get())){
+                if(SgDirectionalLight* directionalHeadLight = dynamic_cast<SgDirectionalLight*>(headLight)){
                     SgDirectionalLight lightFromBack(*directionalHeadLight);
                     lightFromBack.setDirection(-directionalHeadLight->direction());
                     renderLight(&lightFromBack, GL_LIGHT1, I);
                 }
             }
         }
-    } else {
-        glDisable(GL_LIGHTING);
     }
 
     Vstack.clear();
-    Vstack.push_back((*cameras)[currentCameraIndex].M.inverse(Eigen::Isometry));
+    Affine3 M = self->currentCameraPosition();
+    Vstack.push_back(M.inverse(Eigen::Isometry));
     const Affine3& V = Vstack.back();
     lastViewMatrix = V;
     glLoadMatrixd(V.data());
-}
-
-
-void GL1SceneRendererImpl::getViewVolume
-(const SgOrthographicCamera& camera, GLfloat& out_left, GLfloat& out_right, GLfloat& out_bottom, GLfloat& out_top) const
-{
-    GLfloat h = camera.height();
-    out_top = h / 2.0f;
-    out_bottom = -h / 2.0f;
-    GLfloat w = h * aspectRatio;
-    out_left = -w / 2.0f;
-    out_right = w / 2.0f;
 }
 
 
@@ -1123,23 +603,23 @@ void GL1SceneRendererImpl::renderLights()
     GLint maxLights;
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     maxLights -= numSystemLights;
-    
-    if(lights.size() > maxLights){
-        lights.resize(maxLights);
-    }
-        
-    for(size_t i=0; i < lights.size(); ++i){
-        const LightInfo& info = lights[i];
+
+    const int numLights = std::min(self->numLights(), (int)maxLights);
+
+    SgLight* light;
+    Affine3 T;
+    for(size_t i=0; i < numLights; ++i){
+        self->getLightInfo(i, light, T);
         const GLint id = GL_LIGHT0 + numSystemLights + i;
-        renderLight(info.light, id, info.M);
+        renderLight(light, id, T);
     }
 
-    for(size_t i = lights.size(); i < prevNumLights; ++i){
+    for(size_t i = numLights; i < prevNumLights; ++i){
         const GLint lightID = GL_LIGHT0 + numSystemLights + i;
         glDisable(lightID);
     }
 
-    prevNumLights = lights.size();
+    prevNumLights = numLights;
 }
 
 
@@ -1207,27 +687,31 @@ void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Aff
 
 void GL1SceneRendererImpl::renderFog()
 {
-    if(!isFogEnabled){
-        currentFog = 0;
+    SgFog* fog = 0;
+    if(isFogEnabled){
+        int n = self->numFogs();
+        if(n > 0){
+            fog = self->fog(n - 1); // use the last fog
+        }
     }
-    if(currentFog != prevFog){
+    if(fog != prevFog){
         isCurrentFogUpdated = true;
-        if(!currentFog){
+        if(!fog){
             currentFogConnection.disconnect();
         } else {
             currentFogConnection.reset(
-                currentFog->sigUpdated().connect(
+                fog->sigUpdated().connect(
                     boost::bind(&GL1SceneRendererImpl::onCurrentFogNodeUdpated, this)));
         }
     }
 
     if(isCurrentFogUpdated){
-        if(!currentFog){
+        if(!fog){
             glDisable(GL_FOG);
         } else {
             glEnable(GL_FOG);
             GLfloat color[4];
-            const Vector3f& c = currentFog->color();
+            const Vector3f& c = fog->color();
             color[0] = c[0];
             color[1] = c[1];
             color[2] = c[2];
@@ -1236,11 +720,11 @@ void GL1SceneRendererImpl::renderFog()
             glFogi(GL_FOG_MODE, GL_LINEAR);
             glFogi(GL_FOG_HINT, GL_FASTEST);
             glFogf(GL_FOG_START, 0.0f);
-            glFogf(GL_FOG_END, currentFog->visibilityRange());
+            glFogf(GL_FOG_END, fog->visibilityRange());
         }
     }
     isCurrentFogUpdated = false;
-    prevFog = currentFog;
+    prevFog = fog;
 }
 
 
@@ -1264,7 +748,7 @@ void GL1SceneRendererImpl::endRendering()
     }
 
     if(isNewDisplayListDoubleRenderingEnabled && isNewDisplayListCreated){
-        scene->notifyUpdate();
+        self->scene()->notifyUpdate();
     }
 }
 
@@ -1279,19 +763,13 @@ void GL1SceneRendererImpl::render()
 {
     beginRendering(true);
 
-    sceneRoot->accept(*self);
+    self->sceneRoot()->accept(*self);
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();
     }
 
     endRendering();
-}
-
-
-void GL1SceneRenderer::flush()
-{
-    glFlush();
 }
 
 
@@ -1349,7 +827,7 @@ bool GL1SceneRendererImpl::pick(int x, int y)
         gluUnProject(x, y, depth,
                      lastViewMatrix.matrix().data(),
                      lastProjectionMatrix.data(),
-                     viewport.data(),
+                     self->viewport().data(),
                      &ox, &oy, &oz);
         pickedPoint << ox, oy, oz;
     }
@@ -1736,6 +1214,17 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     }
 
     return true;
+}
+
+
+void GL1SceneRenderer::onImageUpdated(SgImage* image)
+{
+    CacheMap* cacheMap = impl->hasValidNextCacheMap ? impl->nextCacheMap : impl->currentCacheMap;
+    CacheMap::iterator p = cacheMap->find(image);
+    if(p != cacheMap->end()){
+        TextureCache* cache = static_cast<TextureCache*>(p->second.get());
+        cache->isImageUpdateNeeded = true;
+    }
 }
 
 
@@ -2280,7 +1769,8 @@ void GL1SceneRenderer::visitOverlay(SgOverlay* overlay)
     v.zNear = 1.0;
     v.zFar = -1.0;
 
-    overlay->calcViewVolume(impl->viewport[2], impl->viewport[3], v);
+    const Array4i vp = viewport();
+    overlay->calcViewVolume(vp[2], vp[3], v);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -2532,6 +2022,12 @@ void GL1SceneRenderer::setLightModelTwoSide(bool on)
 }
 
 
+void GL1SceneRenderer::setHeadLightLightingFromBackEnabled(bool on)
+{
+    impl->isHeadLightLightingFromBackEnabled = on;
+}
+
+
 void GL1SceneRendererImpl::enableBlend(bool on)
 {
     if(isPicking){
@@ -2661,42 +2157,6 @@ void GL1SceneRenderer::setBackgroundColor(const Vector3f& color)
 }
 
 
-SgLight* GL1SceneRenderer::headLight()
-{
-    return impl->headLight.get();
-}
-
-
-void GL1SceneRenderer::setHeadLight(SgLight* light)
-{
-    impl->headLight = light;
-}
-
-
-void GL1SceneRenderer::setHeadLightLightingFromBackEnabled(bool on)
-{
-    impl->isHeadLightLightingFromBackEnabled = on;
-}
-
-
-void GL1SceneRenderer::setAsDefaultLight(SgLight* light)
-{
-    impl->defaultLights.insert(light);
-}
-
-
-void GL1SceneRenderer::unsetDefaultLight(SgLight* light)
-{
-    impl->defaultLights.erase(light);
-}
-
-
-void GL1SceneRenderer::enableAdditionalLights(bool on)
-{
-    impl->additionalLightsEnabled = on;
-}
-
-
 void GL1SceneRenderer::setPolygonMode(PolygonMode mode)
 {
     impl->polygonMode = mode;
@@ -2720,7 +2180,7 @@ void GL1SceneRenderer::setDefaultSmoothShading(bool on)
 
 SgMaterial* GL1SceneRenderer::defaultMaterial()
 {
-    return impl->defaultMaterial.get();
+    return impl->defaultMaterial;
 }
 
 
@@ -2795,43 +2255,14 @@ void GL1SceneRenderer::enableUnusedCacheCheck(bool on)
 
 const Affine3& GL1SceneRenderer::currentModelTransform() const
 {
-    impl->tmpCurrentModelTransform = impl->lastViewMatrix.inverse() * impl->Vstack.back();
-    return impl->tmpCurrentModelTransform;
-}
-
-
-const Affine3& GL1SceneRenderer::currentCameraPosition() const
-{
-    impl->tmpCurrentCameraPosition = impl->lastViewMatrix.inverse();
-    return impl->tmpCurrentCameraPosition;
+    impl->currentModelTransform = impl->lastViewMatrix.inverse() * impl->Vstack.back();
+    return impl->currentModelTransform;
 }
 
 
 const Matrix4& GL1SceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
-}
-
-
-void GL1SceneRenderer::getViewFrustum
-(const SgPerspectiveCamera& camera, double& left, double& right, double& bottom, double& top) const
-{
-    top = camera.nearDistance() * tan(camera.fovy(impl->aspectRatio) / 2.0);
-    bottom = -top;
-    right = top * impl->aspectRatio;
-    left = -right;
-}
-
-
-void GL1SceneRenderer::getViewVolume
-(const SgOrthographicCamera& camera, double& out_left, double& out_right, double& out_bottom, double& out_top) const
-{
-    GLfloat left, right, bottom, top;
-    impl->getViewVolume(camera, left, right, bottom, top);
-    out_left = left;
-    out_right = right;
-    out_bottom = bottom;
-    out_top = top;
 }
 
 
@@ -2871,5 +2302,4 @@ void GL1SceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
     glPopAttrib();
 
     glDisable(GL_STENCIL_TEST);
-
 }

@@ -996,7 +996,7 @@ void SceneWidgetImpl::viewAll()
     const double radius = bbox.boundingSphereRadius();
 
     double left, right, bottom, top;
-    renderer.getViewFrustum(*builtinPersCamera, left, right, bottom, top);
+    renderer.getViewFrustum(builtinPersCamera, left, right, bottom, top);
 
     const double a = renderer.aspectRatio();
     double length = (a >= 1.0) ? (top - bottom) : (right - left);

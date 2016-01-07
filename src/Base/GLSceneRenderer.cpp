@@ -172,9 +172,6 @@ class GLSceneRendererImpl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
-    ~GLSceneRendererImpl();
-
     GLSceneRenderer* self;
 
     Signal<void()> sigRenderingRequest;
@@ -233,17 +230,17 @@ public:
     vector<LightInfo, Eigen::aligned_allocator<LightInfo> > lights;
 
     SgLightPtr headLight;
-    bool isHeadLightLightingFromBackEnabled;
     std::set<SgLightPtr> defaultLights;
     bool additionalLightsEnabled;
 
-    SgFogPtr currentFog;
+    vector<SgFogPtr> fogs;
 
+    GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
+    ~GLSceneRendererImpl();
     void onSceneGraphUpdated(const SgUpdate& update);
     void updateCameraPaths();
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
-    void setViewport(int x, int y, int width, int height);
     void extractPreproNodes();
     void extractPreproNodeIter(PreproNode* node, const Affine3& T);
 };
@@ -282,7 +279,6 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
 
     headLight = new SgDirectionalLight();
     headLight->setAmbientIntensity(0.0f);
-    isHeadLightLightingFromBackEnabled = false;
     additionalLightsEnabled = true;
 
     scene = new SgGroup();
@@ -452,14 +448,8 @@ SignalProxy<void()> GLSceneRenderer::sigCurrentCameraChanged()
 
 void GLSceneRenderer::setViewport(int x, int y, int width, int height)
 {
-    impl->setViewport(x, y, width, height);
-}
-
-
-void GLSceneRendererImpl::setViewport(int x, int y, int width, int height)
-{
-    aspectRatio = (double)width / height;
-    viewport << x, y, width, height;
+    impl->aspectRatio = (double)width / height;
+    impl->viewport << x, y, width, height;
     glViewport(x, y, width, height);
 }
 
@@ -505,7 +495,7 @@ void GLSceneRendererImpl::extractPreproNodes()
     currentCameraRemoved = true;
     
     lights.clear();
-    currentFog = 0;
+    fogs.clear();
 
     if(preproTree){
         extractPreproNodeIter(preproTree.get(), Affine3::Identity());
@@ -566,7 +556,7 @@ void GLSceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3&
     case PreproNode::FOG:
     {
         SgFog* fog = boost::get<SgFog*>(node->node);
-        currentFog = fog;
+        fogs.push_back(fog);
         break;
     }
 
@@ -592,27 +582,59 @@ void GLSceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3&
     }
 }
 
+
+const Affine3& GLSceneRenderer::currentCameraPosition() const
+{
+    if(impl->currentCameraIndex >= 0){
+        return (*(impl->cameras))[impl->currentCameraIndex].M;
+    } else {
+        static Affine3 I = Affine3::Identity();
+        return I;
+    }
+}
+
+
+int GLSceneRenderer::numLights() const
+{
+    return impl->lights.size();
+}
+
+
+void GLSceneRenderer::getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const
+{
+    const GLSceneRendererImpl::LightInfo& info = impl->lights[index];
+    out_light = info.light;
+    out_position = info.M;
+}
+
+
+int GLSceneRenderer::numFogs() const
+{
+    return impl->fogs.size();
+}
+
+
+SgFog* GLSceneRenderer::fog(int index) const
+{
+    return impl->fogs[index];
+}
+
+
+SgLight* GLSceneRenderer::headLight()
+{
+    return impl->headLight;
+}
+
+
 void GLSceneRenderer::flush()
 {
     glFlush();
 }
 
 
-SgLight* GLSceneRenderer::headLight()
-{
-    return impl->headLight.get();
-}
-
-
 void GLSceneRenderer::setHeadLight(SgLight* light)
 {
     impl->headLight = light;
-}
-
-
-void GLSceneRenderer::setHeadLightLightingFromBackEnabled(bool on)
-{
-    impl->isHeadLightLightingFromBackEnabled = on;
 }
 
 
@@ -635,9 +657,9 @@ void GLSceneRenderer::enableAdditionalLights(bool on)
 
 
 void GLSceneRenderer::getViewFrustum
-(const SgPerspectiveCamera& camera, double& left, double& right, double& bottom, double& top) const
+(const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const
 {
-    top = camera.nearDistance() * tan(camera.fovy(impl->aspectRatio) / 2.0);
+    top = camera->nearDistance() * tan(camera->fovy(impl->aspectRatio) / 2.0);
     bottom = -top;
     right = top * impl->aspectRatio;
     left = -right;
@@ -645,9 +667,9 @@ void GLSceneRenderer::getViewFrustum
 
 
 void GLSceneRenderer::getViewVolume
-(const SgOrthographicCamera& camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const
+(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const
 {
-    float h = camera.height();
+    float h = camera->height();
     out_top = h / 2.0f;
     out_bottom = -h / 2.0f;
     float w = h * impl->aspectRatio;

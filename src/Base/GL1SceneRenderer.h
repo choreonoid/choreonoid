@@ -6,8 +6,7 @@
 #ifndef CNOID_BASE_GL1_SCENE_RENDERER_H
 #define CNOID_BASE_GL1_SCENE_RENDERER_H
 
-#include <cnoid/SceneGraph>
-#include <cnoid/SceneRenderer>
+#include <cnoid/GLSceneRenderer>
 #include <boost/function.hpp>
 #include "exportdecl.h"
 
@@ -17,42 +16,16 @@ class GL1SceneRendererImpl;
 class SgCustomGLNode;
 class Mapping;
     
-class CNOID_EXPORT GL1SceneRenderer : public SceneRenderer
+class CNOID_EXPORT GL1SceneRenderer : public GLSceneRenderer
 {
 public:
     GL1SceneRenderer();
     GL1SceneRenderer(SgGroup* root);
     virtual ~GL1SceneRenderer();
 
-    virtual SgGroup* sceneRoot();
-    virtual SgGroup* scene();
-    virtual void clearScene();
-
-    virtual int numCameras() const;
-    virtual SgCamera* camera(int index);
-    virtual const SgNodePath& cameraPath(int index) const;
-    virtual SignalProxy<void()> sigCamerasChanged() const; 
-        
-    virtual SgCamera* currentCamera() const;
-    virtual int currentCameraIndex() const;
-    virtual void setCurrentCamera(int index);
-    virtual bool setCurrentCamera(SgCamera* camera);
-    virtual SignalProxy<void()> sigCurrentCameraChanged();
-
-    virtual void setViewport(int x, int y, int width, int height);
-    virtual Array4i viewport() const;
-    void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
-    virtual double aspectRatio() const; // width / height;
-
     virtual const Affine3& currentModelTransform() const;
-    virtual const Affine3& currentCameraPosition() const;
     virtual const Matrix4& projectionMatrix() const;
         
-    void getViewFrustum(const SgPerspectiveCamera& camera,
-                        double& left, double& right, double& bottom, double& top) const;
-    void getViewVolume(const SgOrthographicCamera& camera,
-                       double& left, double& right, double& bottom, double& top) const;
-
     bool initializeGL();
 
     // The following functions cannot be called bofore calling the initializeGL() function.
@@ -69,12 +42,9 @@ public:
     */
     virtual void initializeRendering();
         
-    virtual SignalProxy<void()> sigRenderingRequest();
-        
     virtual void beginRendering();
     virtual void endRendering();
     virtual void render();
-    virtual void flush();
 
     bool pick(int x, int y);
     const Vector3& pickedPoint() const;
@@ -83,19 +53,11 @@ public:
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
 
-    virtual SgLight* headLight();
-    virtual void setHeadLight(SgLight* light);
-    void setHeadLightLightingFromBackEnabled(bool on);
-
-    void setAsDefaultLight(SgLight* light);
-    void unsetDefaultLight(SgLight* light);
-        
-    void enableAdditionalLights(bool on);
-        
     enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
     void setPolygonMode(PolygonMode mode);
 
     void setDefaultLighting(bool on);
+    void setHeadLightLightingFromBackEnabled(bool on);
     void setDefaultSmoothShading(bool on);
     SgMaterial* defaultMaterial();
     void setDefaultColor(const Vector4f& color);
@@ -146,12 +108,15 @@ public:
     void enableDepthMask(bool on);
     void setPointSize(float size);
     void setLineWidth(float width);
+
+  protected:
+    virtual void onImageUpdated(SgImage* image);    
         
 private:
     GL1SceneRendererImpl* impl;
+    friend class GL1SceneRendererImpl;
     friend class SgCustomGLNode;
 };
-
 
 class CNOID_EXPORT SgCustomGLNode : public SgGroup
 {
@@ -172,6 +137,7 @@ private:
     RenderingFunction renderingFunction;
 };
 typedef ref_ptr<SgCustomGLNode> SgCustomGLNodePtr;
+
 }
 
 #endif
