@@ -133,6 +133,7 @@ public:
     void convertChildren(Link* plink, JointInfoPtr parent);
 
 private:
+    void addModelSearchPath(const char *envname);
     void processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
 };
 
@@ -280,17 +281,11 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
     try {
         sdf::SDFPtr robot(new sdf::SDF());
         sdf::init(robot);
-        char* homePath = getenv("HOME");
-        std::string home = homePath;
-        sdf::addURIPath("model://", home + "/.gazebo/models");
-        char* rosPackagePath = getenv("ROS_PACKAGE_PATH");
-        if(rosPackagePath != NULL){
-            std::list<std::string> rospkgs;
-            boost::split(rospkgs, rosPackagePath, boost::is_any_of(":"));
-            BOOST_FOREACH(std::string p, rospkgs){
-                sdf::addURIPath("model://", p);
-            }
-        }
+
+        addModelSearchPath("HOME");
+        addModelSearchPath("ROS_PACKAGE_PATH");
+        addModelSearchPath("GAZEBO_MODEL_PATH");
+
         if (sdf::readFile(filename, robot) == false) {  // this can read both SDF and URDF
             throw std::invalid_argument("load failed");
         } else if (robot->root == NULL) {
@@ -580,6 +575,31 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
     }
 
     return converted;
+}
+    
+/**
+ */
+void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
+{
+    std::list<std::string> paths;
+    std::string path;
+    char *p;
+
+    if (envname != NULL && (p = getenv(envname)) != NULL) {
+        if (envname != "HOME") {
+            boost::split(paths, p, boost::is_any_of(":"));
+            BOOST_FOREACH(path, paths) {
+                if (path != "") {
+                    sdf::addURIPath("model://", path);
+                }
+            }
+        } else {
+            path = p;
+            sdf::addURIPath("model://", path + "/.gazebo/models");
+        }
+    }
+
+    return;
 }
 
 /**
