@@ -507,6 +507,21 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
             link->setJointVelocityRange(getLimitValue(-(*it)->velocity, -maxlimit),
                                         getLimitValue((*it)->velocity, +maxlimit));
         }
+        // jointid setting
+        if (link->jointId() < 0) {
+            link->setJointId(numValidJointIds);
+
+            if (link->jointId() >= validJointIdSet.size()) {
+                validJointIdSet.resize(link->jointId() + 1);
+            }
+            if (! validJointIdSet[ link->jointId() ]) {
+                ++numValidJointIds;
+                validJointIdSet.set(link->jointId());
+            } else {
+                os() << str(format("Warning: Joint ID %1% is duplicated.") % link->jointId()) << std::endl;
+            }
+        }
+
         plink->appendChild(link);
         convertChildren(link, *it);
         it++;
