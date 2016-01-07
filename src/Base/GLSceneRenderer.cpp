@@ -184,6 +184,8 @@ public:
 
     Array4i viewport;
 
+    Vector3f backgroundColor;
+
     struct CameraInfo
     {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -233,7 +235,12 @@ public:
     std::set<SgLightPtr> defaultLights;
     bool additionalLightsEnabled;
 
+    Vector4f defaultColor;
+
     vector<SgFogPtr> fogs;
+    bool isFogEnabled;
+
+    GLSceneRenderer::PolygonMode polygonMode;
 
     GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
     ~GLSceneRendererImpl();
@@ -268,9 +275,15 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
 {
     sceneRoot->sigUpdated().connect(boost::bind(&GLSceneRendererImpl::onSceneGraphUpdated, this, _1));
 
+    scene = new SgGroup();
+    sceneRoot->addChild(scene);
+
     doPreprocessedNodeTreeExtraction = true;
 
     aspectRatio = 1.0f;
+
+    backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
+    defaultColor << 1.0f, 1.0f, 1.0f, 1.0f;
 
     cameras = &cameras1;
     prevCameras = &cameras2;
@@ -281,8 +294,9 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     headLight->setAmbientIntensity(0.0f);
     additionalLightsEnabled = true;
 
-    scene = new SgGroup();
-    sceneRoot->addChild(scene);
+    isFogEnabled = true;
+
+    polygonMode = GLSceneRenderer::FILL_MODE;
 }
 
 
@@ -331,6 +345,42 @@ void GLSceneRendererImpl::onSceneGraphUpdated(const SgUpdate& update)
 SignalProxy<void()> GLSceneRenderer::sigRenderingRequest()
 {
     return impl->sigRenderingRequest;
+}
+
+
+const Vector3f& GLSceneRenderer::backgroundColor() const
+{
+    return impl->backgroundColor;
+}
+
+
+void GLSceneRenderer::setBackgroundColor(const Vector3f& color)
+{
+    impl->backgroundColor = color;
+}
+
+
+const Vector4f& GLSceneRenderer::defaultColor() const
+{
+    return impl->defaultColor;
+}
+
+
+void GLSceneRenderer::setDefaultColor(const Vector4f& color)
+{
+    impl->defaultColor = color;
+}
+
+
+void GLSceneRenderer::setPolygonMode(PolygonMode mode)
+{
+    impl->polygonMode = mode;
+}
+
+
+GLSceneRenderer::PolygonMode GLSceneRenderer::polygonMode() const
+{
+    return impl->polygonMode;
 }
 
 
@@ -605,6 +655,18 @@ void GLSceneRenderer::getLightInfo(int index, SgLight*& out_light, Affine3& out_
     const GLSceneRendererImpl::LightInfo& info = impl->lights[index];
     out_light = info.light;
     out_position = info.M;
+}
+
+
+void GLSceneRenderer::enableFog(bool on)
+{
+    impl->isFogEnabled = on;
+}
+
+
+bool GLSceneRenderer::isFogEnabled() const
+{
+    return impl->isFogEnabled;
 }
 
 

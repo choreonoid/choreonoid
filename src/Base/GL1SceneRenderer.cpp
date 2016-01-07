@@ -174,21 +174,17 @@ public:
 
     int numSystemLights;
     int prevNumLights;
+    bool defaultLighting;
     bool isHeadLightLightingFromBackEnabled;
 
-    bool isFogEnabled;
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
 
-    Vector3f bgColor;
-
-    GL1SceneRenderer::PolygonMode polygonMode;
-    bool defaultLighting;
+    GLint maxLights;
     bool defaultSmoothShading;
     bool isTextureEnabled;
     SgMaterialPtr defaultMaterial;
-    Vector4f defaultColor;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
     GLuint defaultTextureName;
@@ -253,8 +249,8 @@ public:
     bool initializeGL();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
-    void renderCamera(SgCamera* camera);
-    void renderLights();
+    void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
+    void renderLights(const Affine3& cameraPosition);
     void renderLight(const SgLight* light, GLint id, const Affine3& T);
     void renderFog();
     void onCurrentFogNodeUdpated();
@@ -333,26 +329,22 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     currentCacheMap = &cacheMaps[0];
     nextCacheMap = &cacheMaps[1];
 
-    bgColor << 0.1f, 0.1f, 0.3f; // dark blue
-
     lastViewMatrix.setIdentity();
     lastProjectionMatrix.setIdentity();
 
     numSystemLights = 2;
+    maxLights = numSystemLights;
     prevNumLights = 0;
     isHeadLightLightingFromBackEnabled = false;
 
     prevFog = 0;
 
-    polygonMode = GL1SceneRenderer::FILL_MODE;
     defaultLighting = true;
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
-    defaultColor << 1.0f, 1.0f, 1.0f, 1.0f;
     isTextureEnabled = true;
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
-    isFogEnabled = true;
     
     doNormalVisualization = false;
     normalLength = 0.0;
@@ -428,6 +420,8 @@ bool GL1SceneRendererImpl::initializeGL()
     glEnable(GL_NORMALIZE);
     setFrontCCW(true);
 
+    glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
+    
     glDisable(GL_FOG);
     isCurrentFogUpdated = false;
 
@@ -480,7 +474,8 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
             pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            glClearColor(bgColor[0], bgColor[1], bgColor[2], 1.0f);
+            const Vector3f& c = self->backgroundColor();
+            glClearColor(c[0], c[1], c[2], 1.0f);
         }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -498,24 +493,26 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
 
 void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
 {
-    renderCamera(camera);
+    const Affine3& cameraPosition = self->currentCameraPosition();
+    
+    renderCamera(camera, cameraPosition);
 
     if(!isPicking){
-        renderLights();
+        renderLights(cameraPosition);
         renderFog();
     }
 
     if(isPicking){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     } else {
-        switch(polygonMode){
-        case GL1SceneRenderer::FILL_MODE:
+        switch(self->polygonMode()){
+        case GLSceneRenderer::FILL_MODE:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             break;
-        case GL1SceneRenderer::LINE_MODE:
+        case GLSceneRenderer::LINE_MODE:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             break;
-        case GL1SceneRenderer::POINT_MODE:
+        case GLSceneRenderer::POINT_MODE:
             glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
             break;
         }
@@ -531,7 +528,7 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
             
     clearGLState();
     
-    setColor(defaultColor);
+    setColor(self->defaultColor());
     setPointSize(defaultPointSize);
     //glEnable(GL_POINT_SMOOTH);
     setLineWidth(defaultLineWidth);
@@ -541,7 +538,7 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
 }
 
 
-void GL1SceneRendererImpl::renderCamera(SgCamera* camera)
+void GL1SceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -567,48 +564,43 @@ void GL1SceneRendererImpl::renderCamera(SgCamera* camera)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     
-    // Render headlight
-    if(isPicking || !defaultLighting){
-        glDisable(GL_LIGHTING);
-    } else {
-        glEnable(GL_LIGHTING);
-        SgLight* headLight = self->headLight();
-        if(!headLight->on()){
-            glDisable(GL_LIGHT0);
-            glDisable(GL_LIGHT1);
-        } else {
-            static const Affine3 I = Affine3::Identity();
-            renderLight(headLight, GL_LIGHT0, I);
-            if(isHeadLightLightingFromBackEnabled){
-                if(SgDirectionalLight* directionalHeadLight = dynamic_cast<SgDirectionalLight*>(headLight)){
-                    SgDirectionalLight lightFromBack(*directionalHeadLight);
-                    lightFromBack.setDirection(-directionalHeadLight->direction());
-                    renderLight(&lightFromBack, GL_LIGHT1, I);
-                }
-            }
-        }
-    }
-
     Vstack.clear();
-    Affine3 M = self->currentCameraPosition();
-    Vstack.push_back(M.inverse(Eigen::Isometry));
+    Vstack.push_back(cameraPosition.inverse(Eigen::Isometry));
     const Affine3& V = Vstack.back();
     lastViewMatrix = V;
     glLoadMatrixd(V.data());
 }
 
 
-void GL1SceneRendererImpl::renderLights()
+void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
-    GLint maxLights;
-    glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
-    maxLights -= numSystemLights;
+    if(isPicking || !defaultLighting){
+        glDisable(GL_LIGHTING);
+        return;
+    }
 
-    const int numLights = std::min(self->numLights(), (int)maxLights);
+    glEnable(GL_LIGHTING);
 
-    SgLight* light;
-    Affine3 T;
+    SgLight* headLight = self->headLight();
+    if(!headLight->on()){
+        glDisable(GL_LIGHT0);
+        glDisable(GL_LIGHT1);
+    } else {
+        renderLight(headLight, GL_LIGHT0, cameraPosition);
+        if(isHeadLightLightingFromBackEnabled){
+            if(SgDirectionalLight* directionalHeadLight = dynamic_cast<SgDirectionalLight*>(headLight)){
+                SgDirectionalLight lightFromBack(*directionalHeadLight);
+                lightFromBack.setDirection(-directionalHeadLight->direction());
+                renderLight(&lightFromBack, GL_LIGHT1, cameraPosition);
+            }
+        }
+    }
+    
+    const int numLights = std::min(self->numLights(), (int)(maxLights - numSystemLights));
+
     for(size_t i=0; i < numLights; ++i){
+        SgLight* light;
+        Affine3 T;
         self->getLightInfo(i, light, T);
         const GLint id = GL_LIGHT0 + numSystemLights + i;
         renderLight(light, id, T);
@@ -688,7 +680,7 @@ void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Aff
 void GL1SceneRendererImpl::renderFog()
 {
     SgFog* fog = 0;
-    if(isFogEnabled){
+    if(self->isFogEnabled()){
         int n = self->numFogs();
         if(n > 0){
             fog = self->fog(n - 1); // use the last fog
@@ -2144,25 +2136,6 @@ void SgCustomGLNode::setRenderingFunction(RenderingFunction f)
 }
 
 
-
-const Vector3f& GL1SceneRenderer::backgroundColor() const
-{
-    return impl->bgColor;
-}
-
-
-void GL1SceneRenderer::setBackgroundColor(const Vector3f& color)
-{
-    impl->bgColor = color;
-}
-
-
-void GL1SceneRenderer::setPolygonMode(PolygonMode mode)
-{
-    impl->polygonMode = mode;
-}
-
-
 void GL1SceneRenderer::setDefaultLighting(bool on)
 {
     if(on != impl->defaultLighting){
@@ -2181,12 +2154,6 @@ void GL1SceneRenderer::setDefaultSmoothShading(bool on)
 SgMaterial* GL1SceneRenderer::defaultMaterial()
 {
     return impl->defaultMaterial;
-}
-
-
-void GL1SceneRenderer::setDefaultColor(const Vector4f& color)
-{
-    impl->defaultColor = color;
 }
 
 
@@ -2212,16 +2179,6 @@ void GL1SceneRenderer::setDefaultLineWidth(double width)
 {
     if(width != impl->defaultLineWidth){
         impl->defaultLineWidth = width;
-        requestToClearCache();
-    }
-}
-
-
-void GL1SceneRenderer::enableFog(bool on)
-{
-    if(on != impl->isFogEnabled){
-        impl->isFogEnabled = on;
-        impl->isCurrentFogUpdated = true;
         requestToClearCache();
     }
 }

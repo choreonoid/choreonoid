@@ -28,6 +28,7 @@ public:
     virtual bool initializeGL() = 0;
     virtual void initializeRendering() = 0;
     virtual void render() = 0;
+    virtual void flush();
 
     SignalProxy<void()> sigRenderingRequest();
 
@@ -54,22 +55,30 @@ public:
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
 
+    const Vector4f& defaultColor() const;
+    void setDefaultColor(const Vector4f& color);
+
+    virtual SgMaterial* defaultMaterial() = 0;
+    
     virtual SgLight* headLight();
     virtual void setHeadLight(SgLight* light);
-
+    int numLights() const;
+    void getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const;
     void setAsDefaultLight(SgLight* light);
     void unsetDefaultLight(SgLight* light);
-        
     void enableAdditionalLights(bool on);
 
-    virtual void flush();
+    enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
+    void setPolygonMode(PolygonMode mode);
+    PolygonMode polygonMode() const;
+
+    void enableFog(bool on);
+    bool isFogEnabled() const;
+    int numFogs() const;
+    SgFog* fog(int index) const;
 
   protected:
     void extractPreproNodes();
-    int numLights() const;
-    void getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const;
-    int numFogs() const;
-    SgFog* fog(int index) const;
     
     virtual void onImageUpdated(SgImage* image) = 0;
 

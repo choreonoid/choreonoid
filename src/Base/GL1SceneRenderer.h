@@ -50,21 +50,13 @@ public:
     const Vector3& pickedPoint() const;
     const SgNodePath& pickedNodePath() const;
 
-    const Vector3f& backgroundColor() const;
-    void setBackgroundColor(const Vector3f& color);
-
-    enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
-    void setPolygonMode(PolygonMode mode);
-
     void setDefaultLighting(bool on);
     void setHeadLightLightingFromBackEnabled(bool on);
     void setDefaultSmoothShading(bool on);
-    SgMaterial* defaultMaterial();
-    void setDefaultColor(const Vector4f& color);
+    virtual SgMaterial* defaultMaterial();
     void enableTexture(bool on);
     void setDefaultPointSize(double size);
     void setDefaultLineWidth(double width);
-    void enableFog(bool on);
 
     void setNewDisplayListDoubleRenderingEnabled(bool on);
 
