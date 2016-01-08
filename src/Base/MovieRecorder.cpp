@@ -216,9 +216,10 @@ public:
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
     void setTargetView(View* view);
-    void setTargetView(const std::string& name);
     void onTargetViewResized(View* view);
     void onTargetViewRemoved(View* view);
+    void setTargetView(const std::string& name);
+    void onViewCreated(View* view);
     void setRecordingMode(const std::string& symbol);
     void activateRecording(bool on, bool isActivatedByDialog);
     bool setupViewAndFilenameFormat();
@@ -545,6 +546,22 @@ void MovieRecorderImpl::setTargetView(View* view)
 }
 
 
+void MovieRecorderImpl::onTargetViewResized(View* view)
+{
+    if(targetView == view){
+        showViewMarker();
+    }
+}
+
+
+void MovieRecorderImpl::onTargetViewRemoved(View* view)
+{
+    if(targetView == view){
+        setTargetView(0);
+    }
+}
+
+
 void MovieRecorderImpl::setTargetView(const std::string& name)
 {
     if(name != targetViewName){
@@ -558,23 +575,20 @@ void MovieRecorderImpl::setTargetView(const std::string& name)
                     break;
                 }
             }
+            if(!targetView){
+                targetViewConnections.add(
+                    ViewManager::sigViewCreated().connect(
+                        boost::bind(&MovieRecorderImpl::onViewCreated, this, _1)));
+            }
         }
     }
 }
 
 
-void MovieRecorderImpl::onTargetViewResized(View* view)
+void MovieRecorderImpl::onViewCreated(View* view)
 {
-    if(targetView == view){
-        showViewMarker();
-    }
-}
-
-
-void MovieRecorderImpl::onTargetViewRemoved(View* view)
-{
-    if(targetView == view){
-        setTargetView(0);
+    if(view->name() == targetViewName){
+        setTargetView(view);
     }
 }
 
@@ -740,6 +754,7 @@ void MovieRecorderImpl::setupOnlineModeRecording()
     timeBarConnections.disconnect();
         
     isBeforeFirstFrameCapture = true;
+    nextFrameTime = startTime;
             
     if(timeBar->isDoingPlayback()){
         startOnlineModeRecording();
@@ -772,7 +787,6 @@ void MovieRecorderImpl::startOnlineModeRecording()
             boost::bind(&MovieRecorderImpl::onPlaybackStopped, this, _2)));
 
     isRecording = true;
-    startFlash();
     startImageOutput();
 
     mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
@@ -783,10 +797,9 @@ bool MovieRecorderImpl::onTimeChanged(double time)
 {
     if(isRecording){
         if(isBeforeFirstFrameCapture){
-            if(time > startTime){
-                nextFrameTime = time;
-            } else {
-                nextFrameTime = startTime;
+            if(time >= startTime){
+                isBeforeFirstFrameCapture = false;
+                startFlash();
             }
         }
         if(time > finishTime){
