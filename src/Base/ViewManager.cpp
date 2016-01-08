@@ -30,6 +30,8 @@ Menu* showViewMenu = 0;
 Menu* createViewMenu = 0;
 Menu* deleteViewMenu = 0;
 
+Signal<void(View* view)> sigViewCreated_;
+
 class ViewInfo;
 typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
 
@@ -97,6 +99,7 @@ public:
         return !instances.empty() && (instances.front()->view == view);
     }
 
+private:
     View* createView() {
         View* view = factory->create();
         InstanceInfoPtr instance = boost::make_shared<InstanceInfo>(this, view);
@@ -112,11 +115,13 @@ public:
         return view;
     }
 
+public:
     View* getOrCreateView(bool doMountCreatedView = false){
         if(instances.empty()){
             View* view = createView();
             view->setName(defaultInstanceName);
             view->setWindowTitle(translatedDefaultInstanceName.c_str());
+            sigViewCreated_(view);
             if(doMountCreatedView){
                 mainWindow->viewArea()->addView(view);
             }
@@ -133,6 +138,7 @@ public:
         if(setTranslatedNameToWindowTitle){
             view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
         }
+        sigViewCreated_(view);
         return view;
     }
 
@@ -153,6 +159,7 @@ public:
         View* view = findView(name);
         if(!view){
             view = createView(name);
+            sigViewCreated_(view);
             if(doMountCreatedView){
                 mainWindow->viewArea()->addView(view);
             }
@@ -827,4 +834,10 @@ bool ViewManager::restoreViewStates(ViewStateInfo& info)
         return true;
     }
     return false;
+}
+
+
+SignalProxy<void(View* view)> ViewManager::sigViewCreated()
+{
+    return sigViewCreated_;
 }
