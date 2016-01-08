@@ -135,9 +135,6 @@ class GL1SceneRendererImpl
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
-    GL1SceneRendererImpl(GL1SceneRenderer* self);
-    ~GL1SceneRendererImpl();
-
     GL1SceneRenderer* self;
 
     SgNodePath indexedEntities;
@@ -246,6 +243,8 @@ public:
     float pointSize;
     float lineWidth;
 
+    GL1SceneRendererImpl(GL1SceneRenderer* self);
+    ~GL1SceneRendererImpl();
     bool initializeGL();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
@@ -372,26 +371,9 @@ GL1SceneRendererImpl::~GL1SceneRendererImpl()
 }
 
 
-bool GL1SceneRenderer::setSwapInterval(int interval)
-{
-#ifdef _WIN32
-    return wglSwapIntervalEXT(interval);
-#endif
-    return false;
-}
-
-
-int GL1SceneRenderer::getSwapInterval() const
-{
-#ifdef _WIN32
-    return wglGetSwapIntervalEXT();
-#endif
-    return -1;
-}
-
-
 bool GL1SceneRenderer::initializeGL()
 {
+    GLSceneRenderer::initializeGL();
     return impl->initializeGL();
 }
 

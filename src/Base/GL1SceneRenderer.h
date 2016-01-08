@@ -14,7 +14,6 @@ namespace cnoid {
 
 class GL1SceneRendererImpl;
 class SgCustomGLNode;
-class Mapping;
     
 class CNOID_EXPORT GL1SceneRenderer : public GLSceneRenderer
 {
@@ -26,11 +25,7 @@ public:
     virtual const Affine3& currentModelTransform() const;
     virtual const Matrix4& projectionMatrix() const;
         
-    bool initializeGL();
-
-    // The following functions cannot be called bofore calling the initializeGL() function.
-    bool setSwapInterval(int interval);
-    int getSwapInterval() const;
+    virtual bool initializeGL();
 
     /**
        This function does the same things as beginRendering() except that
@@ -46,21 +41,21 @@ public:
     virtual void endRendering();
     virtual void render();
 
-    bool pick(int x, int y);
-    const Vector3& pickedPoint() const;
-    const SgNodePath& pickedNodePath() const;
+    virtual bool pick(int x, int y);
+    virtual const Vector3& pickedPoint() const;
+    virtual const SgNodePath& pickedNodePath() const;
 
-    void setDefaultLighting(bool on);
+    virtual void setDefaultLighting(bool on);
     void setHeadLightLightingFromBackEnabled(bool on);
-    void setDefaultSmoothShading(bool on);
+    virtual void setDefaultSmoothShading(bool on);
     virtual SgMaterial* defaultMaterial();
-    void enableTexture(bool on);
-    void setDefaultPointSize(double size);
-    void setDefaultLineWidth(double width);
+    virtual void enableTexture(bool on);
+    virtual void setDefaultPointSize(double size);
+    virtual void setDefaultLineWidth(double width);
 
     void setNewDisplayListDoubleRenderingEnabled(bool on);
 
-    void showNormalVectors(double length);
+    virtual void showNormalVectors(double length);
 
     void requestToClearCache();
 
@@ -69,7 +64,7 @@ public:
        are checked if they are still used or not, and the unused resources are released
        when finalizeRendering() is called. The default value is true.
     */
-    virtual void enableUnusedCacheCheck(bool on);
+    void enableUnusedCacheCheck(bool on);
 
     virtual void visitGroup(SgGroup* group);
     virtual void visitInvariantGroup(SgInvariantGroup* group);
@@ -84,7 +79,6 @@ public:
     virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
-
     void setColor(const Vector4f& color);
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);
@@ -104,7 +98,7 @@ public:
   protected:
     virtual void onImageUpdated(SgImage* image);    
         
-private:
+  private:
     GL1SceneRendererImpl* impl;
     friend class GL1SceneRendererImpl;
     friend class SgCustomGLNode;
@@ -112,7 +106,7 @@ private:
 
 class CNOID_EXPORT SgCustomGLNode : public SgGroup
 {
-public:
+  public:
     typedef boost::function<void(GL1SceneRenderer& renderer)> RenderingFunction;
 
     SgCustomGLNode() { }
@@ -122,10 +116,10 @@ public:
     virtual void render(GL1SceneRenderer& renderer);
     void setRenderingFunction(RenderingFunction f);
 
-protected:
+  protected:
     SgCustomGLNode(const SgCustomGLNode& org, SgCloneMap& cloneMap) : SgGroup(org, cloneMap) { }
 
-private:
+  private:
     RenderingFunction renderingFunction;
 };
 typedef ref_ptr<SgCustomGLNode> SgCustomGLNodePtr;

@@ -25,12 +25,14 @@ public:
     virtual SgGroup* scene();
     virtual void clearScene();
 
-    virtual bool initializeGL() = 0;
-    virtual void initializeRendering() = 0;
-    virtual void render() = 0;
+    virtual bool initializeGL();
     virtual void flush();
 
-    SignalProxy<void()> sigRenderingRequest();
+    // The following functions cannot be called bofore calling the initializeGL() function.
+    bool setSwapInterval(int interval);
+    int getSwapInterval() const;
+
+    virtual SignalProxy<void()> sigRenderingRequest();
 
     virtual int numCameras() const;
     virtual SgCamera* camera(int index);
@@ -58,8 +60,7 @@ public:
     const Vector4f& defaultColor() const;
     void setDefaultColor(const Vector4f& color);
 
-    virtual SgMaterial* defaultMaterial() = 0;
-    
+    virtual void setDefaultLighting(bool on) = 0;
     virtual SgLight* headLight();
     virtual void setHeadLight(SgLight* light);
     int numLights() const;
@@ -67,6 +68,12 @@ public:
     void setAsDefaultLight(SgLight* light);
     void unsetDefaultLight(SgLight* light);
     void enableAdditionalLights(bool on);
+
+    virtual void setDefaultSmoothShading(bool on) = 0;
+    virtual SgMaterial* defaultMaterial() = 0;
+    virtual void enableTexture(bool on) = 0;
+    virtual void setDefaultPointSize(double size) = 0;
+    virtual void setDefaultLineWidth(double width) = 0;
 
     enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
     void setPolygonMode(PolygonMode mode);
@@ -76,6 +83,12 @@ public:
     bool isFogEnabled() const;
     int numFogs() const;
     SgFog* fog(int index) const;
+
+    virtual void showNormalVectors(double length) = 0;    
+    
+    virtual bool pick(int x, int y) = 0;
+    virtual const Vector3& pickedPoint() const = 0;
+    virtual const SgNodePath& pickedNodePath() const = 0;
 
   protected:
     void extractPreproNodes();

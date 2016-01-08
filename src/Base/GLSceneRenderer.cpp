@@ -4,6 +4,7 @@
 */
 
 #include "GLSceneRenderer.h"
+#include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
@@ -17,6 +18,7 @@
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -688,9 +690,42 @@ SgLight* GLSceneRenderer::headLight()
 }
 
 
+bool GLSceneRenderer::initializeGL()
+{
+    MessageView* mv = MessageView::instance();
+    
+    GLint major, minor;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    mv->putln(format("OpenGL version is %1%.%2%.") % major % minor);
+
+    if(major >= 2){
+        mv->putln(format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION));
+    }
+}
+
+
 void GLSceneRenderer::flush()
 {
     glFlush();
+}
+
+
+bool GLSceneRenderer::setSwapInterval(int interval)
+{
+#ifdef _WIN32
+    return wglSwapIntervalEXT(interval);
+#endif
+    return false;
+}
+
+
+int GLSceneRenderer::getSwapInterval() const
+{
+#ifdef _WIN32
+    return wglGetSwapIntervalEXT();
+#endif
+    return -1;
 }
 
 
