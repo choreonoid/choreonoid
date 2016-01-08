@@ -542,6 +542,8 @@ void MovieRecorderImpl::setTargetView(View* view)
                 targetView->sigRemoved().connect(
                     boost::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
         }
+
+        showViewMarker();
     }
 }
 
