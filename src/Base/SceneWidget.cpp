@@ -456,6 +456,7 @@ SceneWidgetImpl::SceneWidgetImpl(SceneWidget* self)
 
     setAutoBufferSwap(true);
 
+    renderer.setOutputStream(os);
     renderer.enableUnusedCacheCheck(true);
     renderer.sigRenderingRequest().connect(boost::bind(&SceneWidgetImpl::update, this));
     renderer.sigCamerasChanged().connect(boost::bind(&SceneWidgetImpl::onCamerasChanged, this));

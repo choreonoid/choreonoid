@@ -21,6 +21,8 @@ public:
     GLSceneRenderer(SgGroup* root);
     virtual ~GLSceneRenderer();
 
+    virtual void setOutputStream(std::ostream& os) = 0;
+
     virtual SgGroup* sceneRoot();
     virtual SgGroup* scene();
     virtual void clearScene();
@@ -84,7 +86,9 @@ public:
     int numFogs() const;
     SgFog* fog(int index) const;
 
-    virtual void showNormalVectors(double length) = 0;    
+    virtual void showNormalVectors(double length) = 0;
+
+    virtual void requestToClearCache() = 0;
     
     virtual bool pick(int x, int y) = 0;
     virtual const Vector3& pickedPoint() const = 0;

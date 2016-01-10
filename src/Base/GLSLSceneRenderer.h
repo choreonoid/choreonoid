@@ -3,31 +3,33 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_GL1_SCENE_RENDERER_H
-#define CNOID_BASE_GL1_SCENE_RENDERER_H
+#ifndef CNOID_BASE_GLSL_SCENE_RENDERER_H
+#define CNOID_BASE_GLSL_SCENE_RENDERER_H
 
 #include <cnoid/GLSceneRenderer>
-#include <boost/function.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class GL1SceneRendererImpl;
-class SgCustomGLNode;
+class GLSLSceneRendererImpl;
     
-class CNOID_EXPORT GL1SceneRenderer : public GLSceneRenderer
+class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 {
-public:
-    GL1SceneRenderer();
-    GL1SceneRenderer(SgGroup* root);
-    virtual ~GL1SceneRenderer();
+  public:
+    GLSLSceneRenderer();
+    GLSLSceneRenderer(SgGroup* root);
+    virtual ~GLSLSceneRenderer();
 
     virtual void setOutputStream(std::ostream& os);
-    
+
     virtual const Affine3& currentModelTransform() const;
     virtual const Matrix4& projectionMatrix() const;
         
     virtual bool initializeGL();
+
+    // The following functions cannot be called bofore calling the initializeGL() function.
+    bool setSwapInterval(int interval);
+    int getSwapInterval() const;
 
     /**
        This function does the same things as beginRendering() except that
@@ -55,18 +57,9 @@ public:
     virtual void setDefaultPointSize(double size);
     virtual void setDefaultLineWidth(double width);
 
-    void setNewDisplayListDoubleRenderingEnabled(bool on);
-
     virtual void showNormalVectors(double length);
 
     virtual void requestToClearCache();
-
-    /**
-       If this is enabled, OpenGL resources such as display lists, vertex buffer objects
-       are checked if they are still used or not, and the unused resources are released
-       when finalizeRendering() is called. The default value is true.
-    */
-    void enableUnusedCacheCheck(bool on);
 
     virtual void visitGroup(SgGroup* group);
     virtual void visitInvariantGroup(SgInvariantGroup* group);
@@ -101,30 +94,9 @@ public:
     virtual void onImageUpdated(SgImage* image);    
         
   private:
-    GL1SceneRendererImpl* impl;
-    friend class GL1SceneRendererImpl;
-    friend class SgCustomGLNode;
+    GLSLSceneRendererImpl* impl;
+    friend class GLSLSceneRendererImpl;
 };
-
-class CNOID_EXPORT SgCustomGLNode : public SgGroup
-{
-  public:
-    typedef boost::function<void(GL1SceneRenderer& renderer)> RenderingFunction;
-
-    SgCustomGLNode() { }
-    SgCustomGLNode(RenderingFunction f) : renderingFunction(f) { }
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
-    virtual void render(GL1SceneRenderer& renderer);
-    void setRenderingFunction(RenderingFunction f);
-
-  protected:
-    SgCustomGLNode(const SgCustomGLNode& org, SgCloneMap& cloneMap) : SgGroup(org, cloneMap) { }
-
-  private:
-    RenderingFunction renderingFunction;
-};
-typedef ref_ptr<SgCustomGLNode> SgCustomGLNodePtr;
 
 }
 

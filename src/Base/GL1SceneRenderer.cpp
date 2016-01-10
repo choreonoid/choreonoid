@@ -9,6 +9,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
+#include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #ifdef _WIN32
 #include <Windows.h>
@@ -137,8 +138,6 @@ public:
         
     GL1SceneRenderer* self;
 
-    SgNodePath indexedEntities;
-
     Affine3Array Vstack; // stack of the model/view matrices
 
     typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f> > ColorArray;
@@ -242,6 +241,9 @@ public:
     bool isDepthMaskEnabled;
     float pointSize;
     float lineWidth;
+
+    ostream* os_;
+    ostream& os() { return *os_; }
 
     GL1SceneRendererImpl(GL1SceneRenderer* self);
     ~GL1SceneRendererImpl();
@@ -356,6 +358,8 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
+
+    os_ = &nullout();
 }
 
 
@@ -368,6 +372,12 @@ GL1SceneRenderer::~GL1SceneRenderer()
 GL1SceneRendererImpl::~GL1SceneRendererImpl()
 {
 
+}
+
+
+void GL1SceneRenderer::setOutputStream(std::ostream& os)
+{
+    impl->os_ = &os;
 }
 
 

@@ -81,6 +81,8 @@ set(sources
   Licenses.cpp
   GLSceneRenderer.cpp
   GL1SceneRenderer.cpp
+  GLSLProgram.cpp
+  GLSLSceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
