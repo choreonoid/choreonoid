@@ -452,7 +452,10 @@ void GLSLSceneRendererImpl::setUniformMatrixVariables()
 {
     const Affine3f& MV = modelViewStack.back().cast<float>();
     glUniformMatrix4fv(ModelViewMatrixLocation, 1, GL_FALSE, MV.data());
-    glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, MV.linear().data());
+
+    Matrix3f N = MV.linear();
+    glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, N.data());
+    
     Matrix4f MVP = projectionMatrix.cast<float>() * MV.matrix();
     glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
 }
