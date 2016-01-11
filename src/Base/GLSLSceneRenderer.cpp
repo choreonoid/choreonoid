@@ -256,6 +256,9 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     defaultLighting = true;
     defaultMaterial = new SgMaterial;
 
+    stateFlag.resize(NUM_STATE_FLAGS, false);
+    clearGLState();
+
     os_ = &nullout();
 }
 
@@ -287,7 +290,7 @@ void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 
 bool GLSLSceneRenderer::initializeGL()
 {
-    GLSLSceneRenderer::initializeGL();
+    GLSceneRenderer::initializeGL();
     return impl->initializeGL();
 }
 
@@ -1233,6 +1236,15 @@ void GLSLSceneRenderer::showNormalVectors(double length)
         impl->normalLength = length;
     }
     */
+}
+
+
+void GLSLSceneRenderer::enableUnusedCacheCheck(bool on)
+{
+    if(!on){
+        impl->nextHandleSetMap->clear();
+    }
+    impl->doUnusedHandleSetCheck = on;
 }
 
 

@@ -60,6 +60,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void showNormalVectors(double length);
 
     virtual void requestToClearCache();
+    virtual void enableUnusedCacheCheck(bool on);
 
     virtual void visitGroup(SgGroup* group);
     virtual void visitInvariantGroup(SgInvariantGroup* group);
@@ -74,7 +75,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
-    void setColor(const Vector4f& color);
+    virtual void setColor(const Vector4f& color);
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);
     void setAmbientColor(const Vector4f& color);

@@ -241,7 +241,7 @@ bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
         event.sceneWidget()->unproject(right, bottom, 0.0, r.point(2));
         event.sceneWidget()->unproject(right, top, 0.0, r.point(3));
         const Vector3 c = event.currentCameraPosition().translation();
-        SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
+        SgCamera* camera = event.sceneWidget()->renderer()->currentCamera();
         if(dynamic_cast<SgPerspectiveCamera*>(camera)){
             for(int i=0; i < 4; ++i){
                 r.normal(i) = (r.point((i + 1) % 4) - c).cross(r.point(i) - c).normalized();

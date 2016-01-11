@@ -206,7 +206,7 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
         self->setEnabled(false);
 
     } else {
-        targetRenderer = &sceneWidget->renderer();
+        targetRenderer = sceneWidget->renderer();
 
         onSceneWidgetStateChanged();
 

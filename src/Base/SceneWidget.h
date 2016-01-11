@@ -36,7 +36,7 @@ public:
     SceneWidgetRoot* sceneRoot();
     SgGroup* scene();
 
-    SceneRenderer& renderer();
+    SceneRenderer* renderer();
 
     SignalProxy<void()> sigStateChanged() const;
 
