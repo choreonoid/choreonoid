@@ -19,7 +19,7 @@ vec3 ads( )
     if(LightPosition.w == 0.0){
         s = normalize(vec3(LightPosition));
     } else {
-        s = normalize(vec3(LightPosition - Position));
+        s = normalize(vec3(LightPosition) - Position);
     }
     
     vec3 v = normalize(vec3(-Position));

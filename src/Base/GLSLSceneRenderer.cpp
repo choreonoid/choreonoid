@@ -767,22 +767,21 @@ void GLSLSceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         nextHandleSetMap->insert(*p);
     }
 
+    setUniformMatrixVariables();    
+
     glBindVertexArray(handleSet->vao);
 
     if(isNewMesh){
         GLuint normalBufferHandle;
         int elementAttribIndex;
         if(hasNormals){
-            handleSet->genBuffers(3);
-            normalBufferHandle = handleSet->vbo(1);
-            elementAttribIndex = 2;
-        } else {
             handleSet->genBuffers(2);
+            normalBufferHandle = handleSet->vbo(1);
+        } else {
+            handleSet->genBuffers(1);
             normalBufferHandle = 0;
-            elementAttribIndex = 1;
         }
         GLuint positionBufferHandle = handleSet->vbo(0);
-        GLuint elementBufferHandle = handleSet->vbo(elementAttribIndex);
         
         glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
@@ -795,9 +794,6 @@ void GLSLSceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
             glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
             glEnableVertexAttribArray(1);
         }
-        
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferHandle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleVertices.size(), &triangleVertices.front(), GL_STATIC_DRAW);
     }
 
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());

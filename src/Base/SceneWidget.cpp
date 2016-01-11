@@ -54,7 +54,7 @@ using namespace cnoid;
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
-const bool USE_GLSL_SCENE_RENDERER = false;
+const bool USE_GLSL_SCENE_RENDERER = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 class EditableExtractor : public SceneVisitor
