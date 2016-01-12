@@ -1083,23 +1083,24 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    bool useBufferForPicking = false;
+    const bool usePixelBufferForPicking =
+        dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked();
 
-    if(dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked()){
-        const QSize s = size();
-        if(pixelBufferForPicking && (pixelBufferForPicking->size() != s)){
+    if(pixelBufferForPicking){
+        if(!usePixelBufferForPicking || pixelBufferForPicking->size() != size()){
             pixelBufferForPicking->makeCurrent();
             delete pixelBufferForPicking;
             pixelBufferForPicking = 0;
         }
-        if(!pixelBufferForPicking){
-            if(QGLPixelBuffer::hasOpenGLPbuffers()){
-                QGLFormat f = format();
-                f.setDoubleBuffer(false);
-                pixelBufferForPicking = new QGLPixelBuffer(s, f, this);
-                pixelBufferForPicking->makeCurrent();
-                glEnable(GL_DEPTH_TEST);
-            }
+    }
+
+    if(usePixelBufferForPicking && !pixelBufferForPicking){
+        if(QGLPixelBuffer::hasOpenGLPbuffers()){
+            QGLFormat f = format();
+            f.setDoubleBuffer(false);
+            pixelBufferForPicking = new QGLPixelBuffer(size(), f, this);
+            pixelBufferForPicking->makeCurrent();
+            glEnable(GL_DEPTH_TEST);
         }
     }
 

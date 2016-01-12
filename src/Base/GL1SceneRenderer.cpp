@@ -489,7 +489,9 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
     
     renderCamera(camera, cameraPosition);
 
-    if(!isPicking){
+    if(isPicking || !defaultLighting){
+        glDisable(GL_LIGHTING);
+    } else {
         renderLights(cameraPosition);
         renderFog();
     }
@@ -566,11 +568,6 @@ void GL1SceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraP
 
 void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
-    if(isPicking || !defaultLighting){
-        glDisable(GL_LIGHTING);
-        return;
-    }
-
     glEnable(GL_LIGHTING);
 
     SgLight* headLight = self->headLight();
@@ -769,14 +766,11 @@ bool GL1SceneRenderer::pick(int x, int y)
   http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
   http://www.codeproject.com/Articles/35139/Interactive-Techniques-in-Three-dimensional-Scenes#_OpenGL_Picking_by
   http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
-
-  Use a Framebuffer object?
 */
 bool GL1SceneRendererImpl::pick(int x, int y)
 {
     glPushAttrib(GL_ENABLE_BIT);
 
-    //glDisable(GL_LIGHTING); // disable this later in 'renderCamera()'
     glDisable(GL_BLEND);
     glDisable(GL_MULTISAMPLE);
     glDisable(GL_TEXTURE_2D);
@@ -804,16 +798,12 @@ bool GL1SceneRendererImpl::pick(int x, int y)
     pickedNodePath.clear();
 
     if(0 < id && id < pickingNodePathList.size()){
-        pickedNodePath = *pickingNodePathList[id];
         GLfloat depth;
         glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        GLdouble ox, oy, oz;
-        gluUnProject(x, y, depth,
-                     lastViewMatrix.matrix().data(),
-                     lastProjectionMatrix.data(),
-                     self->viewport().data(),
-                     &ox, &oy, &oz);
-        pickedPoint << ox, oy, oz;
+        Vector3 projected;
+        if(self->unproject(x, y, depth, pickedPoint)){
+            pickedNodePath = *pickingNodePathList[id];
+        }
     }
 
     return !pickedNodePath.empty();

@@ -476,10 +476,6 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 
 void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
-    if(isPicking){
-        return;
-    }
-
     SgLight* headLight = self->headLight();
     if(headLight->on()){
         renderLight(headLight, 0, cameraPosition);
@@ -568,8 +564,10 @@ bool GLSLSceneRenderer::pick(int x, int y)
 
 bool GLSLSceneRendererImpl::pick(int x, int y)
 {
-    glScissor(x, y, 1, 1);
-    glEnable(GL_SCISSOR_TEST);
+    if(!SHOW_IMAGE_FOR_PICKING){
+        glScissor(x, y, 1, 1);
+        glEnable(GL_SCISSOR_TEST);
+    }
 
     isPicking = true;
     render();
@@ -589,7 +587,6 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
     if(0 < id && id < pickingNodePathList.size()){
         GLfloat depth;
         glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        GLdouble ox, oy, oz;
         Vector3 projected;
         if(self->unproject(x, y, depth, pickedPoint)){
             pickedNodePath = *pickingNodePathList[id];
