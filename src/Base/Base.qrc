@@ -34,6 +34,8 @@
   <file>shader/basic_uniformblock.frag</file>
   <file>shader/perfrag.vert</file>
   <file>shader/perfrag.frag</file>
+  <file>shader/picking.vert</file>
+  <file>shader/picking.frag</file>
 
   <file alias="LICENSE">../../LICENSE</file>
 

@@ -54,7 +54,9 @@ public:
     virtual double aspectRatio() const; // width / height;
 
     void getViewFrustum(const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const;
-    void getViewVolume(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const;    
+    void getViewVolume(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const;
+    
+    bool unproject(double x, double y, double z, Vector3& out_projected) const;    
 
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);

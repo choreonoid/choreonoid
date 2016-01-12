@@ -33,6 +33,7 @@ class HandleSet : public Referenced
 public:
     GLuint vao;
     GLuint vbos[3];
+    GLsizei numVertices;
 
     HandleSet() {
         clear();
@@ -44,6 +45,7 @@ public:
         for(int i=0; i < 3; ++i){
             vbos[i] = 0;
         }
+        numVertices = 0;
     }
 
     void genBuffers(int n){
@@ -88,8 +90,20 @@ public:
         
     GLSLSceneRenderer* self;
 
-    GLSLProgram program;
+    GLSLProgram renderingProgram;
 
+    GLuint ModelViewMatrixLocation;
+    GLuint NormalMatrixLocation;
+    GLuint MVPLocation;
+
+    GLuint LightIntensityLocation;
+    GLuint LightPositionLocation;
+
+    GLSLProgram pickingProgram;
+
+    GLuint PickingMVPLocation;
+    GLuint PickingIDLocation;
+    
     bool isPicking;
 
     HandleSetMap handleSetMaps[2];
@@ -108,12 +122,6 @@ public:
     Matrix4 projectionMatrix;
     Affine3 currentModelTransform;
 
-    GLuint ModelViewMatrixLocation;
-    GLuint NormalMatrixLocation;
-    GLuint MVPLocation;
-
-    GLuint LightIntensityLocation;
-    GLuint LightPositionLocation;
 
     bool defaultLighting;
     Vector4f currentColor;
@@ -131,6 +139,8 @@ public:
 
     SgMaterialPtr defaultMaterial;
 
+    GLdouble pickX;
+    GLdouble pickY;
     typedef boost::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     vector<SgNodePathPtr> pickingNodePathList;
@@ -182,16 +192,17 @@ public:
     void setOrthographicProjection(
         double left,  double right,  double bottom,  double top,  double nearVal,  double farVal);
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
-    void setUniformMatrixVariables();
     void renderLights(const Affine3& cameraPosition);
     void renderLight(const SgLight* light, int index, const Affine3& T);
     void endRendering();
     void render();
     bool pick(int x, int y);
     inline void setPickColor(unsigned int id);
-    inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
-    void popPickName();
+    inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
+    void popPickID();
     void visitInvariantGroup(SgInvariantGroup* group);
+    void setRenderingUniformMatrixVariables();
+    void setPickingUniformMatrixVariables();
     void visitShape(SgShape* shape);
     void visitPointSet(SgPointSet* pointSet);
     void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
@@ -199,6 +210,7 @@ public:
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void renderMesh(SgMesh* mesh, bool hasTexture);
+    void createMeshVertexArray(SgMesh* mesh, HandleSet* handleSet);
     void visitOutlineGroup(SgOutlineGroup* outline);
 
     void clearGLState();
@@ -240,6 +252,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
     isPicking = false;
+    pickedPoint.setZero();
 
     doUnusedHandleSetCheck = true;
     currentHandleSetMapIndex = 0;
@@ -302,29 +315,38 @@ bool GLSLSceneRendererImpl::initializeGL()
     }
 
     try {
-        program.loadVertexShader(":/Base/shader/perfrag.vert");
-        program.loadFragmentShader(":/Base/shader/perfrag.frag");
-        program.link();
-        program.use();
+        renderingProgram.loadVertexShader(":/Base/shader/perfrag.vert");
+        renderingProgram.loadFragmentShader(":/Base/shader/perfrag.frag");
+        renderingProgram.link();
+
+        pickingProgram.loadVertexShader(":/Base/shader/picking.vert");
+        pickingProgram.loadFragmentShader(":/Base/shader/picking.frag");
+        pickingProgram.link();
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
         return false;
     }
 
-    ModelViewMatrixLocation = program.getUniformLocation("ModelViewMatrix");
-    NormalMatrixLocation = program.getUniformLocation("NormalMatrix");
-    MVPLocation = program.getUniformLocation("MVP");
+    ModelViewMatrixLocation = renderingProgram.getUniformLocation("ModelViewMatrix");
+    NormalMatrixLocation = renderingProgram.getUniformLocation("NormalMatrix");
+    MVPLocation = renderingProgram.getUniformLocation("MVP");
+    
+    LightIntensityLocation = renderingProgram.getUniformLocation("LightIntensity");
+    LightPositionLocation = renderingProgram.getUniformLocation("LightPosition");
+    
+    KdLocation = renderingProgram.getUniformLocation("Kd");
+    KaLocation = renderingProgram.getUniformLocation("Ka");
+    KsLocation = renderingProgram.getUniformLocation("Ks");
+    ShininessLocation = renderingProgram.getUniformLocation("Shininess");
 
-    LightIntensityLocation = program.getUniformLocation("LightIntensity");
-    LightPositionLocation = program.getUniformLocation("LightPosition");
-
-    KdLocation = program.getUniformLocation("Kd");
-    KaLocation = program.getUniformLocation("Ka");
-    KsLocation = program.getUniformLocation("Ks");
-    ShininessLocation = program.getUniformLocation("Shininess");
+    PickingMVPLocation = pickingProgram.getUniformLocation("MVP");
+    PickingIDLocation = pickingProgram.getUniformLocation("PickingID");
 
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+
+    isHandleSetClearRequested = true;
 
     return true;
 }
@@ -369,8 +391,12 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
     
     if(doRenderingCommands){
         if(isPicking){
+            pickingProgram.use();
+            currentNodePath.clear();
+            pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
+            renderingProgram.use();
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
@@ -445,19 +471,6 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
     viewMatrix = cameraPosition.inverse(Eigen::Isometry);
     modelViewStack.clear();
     modelViewStack.push_back(viewMatrix);
-}
-
-
-void GLSLSceneRendererImpl::setUniformMatrixVariables()
-{
-    const Affine3f& MV = modelViewStack.back().cast<float>();
-    glUniformMatrix4fv(ModelViewMatrixLocation, 1, GL_FALSE, MV.data());
-
-    Matrix3f N = MV.linear();
-    glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, N.data());
-    
-    Matrix4f MVP = projectionMatrix.cast<float>() * MV.matrix();
-    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
 }
 
 
@@ -555,7 +568,35 @@ bool GLSLSceneRenderer::pick(int x, int y)
 
 bool GLSLSceneRendererImpl::pick(int x, int y)
 {
-    return false;
+    glScissor(x, y, 1, 1);
+    glEnable(GL_SCISSOR_TEST);
+
+    isPicking = true;
+    render();
+    isPicking = false;
+
+    glDisable(GL_SCISSOR_TEST);
+    
+    GLfloat color[4];
+    glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
+    if(SHOW_IMAGE_FOR_PICKING){
+        color[2] = 0.0f;
+    }
+    unsigned int id = (color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
+
+    pickedNodePath.clear();
+
+    if(0 < id && id < pickingNodePathList.size()){
+        GLfloat depth;
+        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        GLdouble ox, oy, oz;
+        Vector3 projected;
+        if(self->unproject(x, y, depth, pickedPoint)){
+            pickedNodePath = *pickingNodePathList[id];
+        }
+    }
+
+    return !pickedNodePath.empty();
 }
 
 
@@ -580,15 +621,14 @@ inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)
     if(SHOW_IMAGE_FOR_PICKING){
         b = 1.0f;
     }
-    //glColor4f(r, g, b, 1.0f);
-    //currentColor << r, g, b, 1.0f;
+    glUniform3f(PickingIDLocation, r, g, b);
 }
         
 
 /**
    @return id of the current object
 */
-inline unsigned int GLSLSceneRendererImpl::pushPickName(SgNode* node, bool doSetColor)
+inline unsigned int GLSLSceneRendererImpl::pushPickID(SgNode* node, bool doSetColor)
 {
     unsigned int id = 0;
     
@@ -605,7 +645,7 @@ inline unsigned int GLSLSceneRendererImpl::pushPickName(SgNode* node, bool doSet
 }
 
 
-inline void GLSLSceneRendererImpl::popPickName()
+inline void GLSLSceneRendererImpl::popPickID()
 {
     if(isPicking){
         currentNodePath.pop_back();
@@ -615,9 +655,9 @@ inline void GLSLSceneRendererImpl::popPickName()
 
 void GLSLSceneRenderer::visitGroup(SgGroup* group)
 {
-    impl->pushPickName(group);
+    impl->pushPickID(group);
     SceneVisitor::visitGroup(group);
-    impl->popPickName();
+    impl->popPickID();
 }
 
 
@@ -647,18 +687,38 @@ void GLSLSceneRenderer::visitTransform(SgTransform* transform)
 }
 
 
+void GLSLSceneRendererImpl::setRenderingUniformMatrixVariables()
+{
+    const Affine3f MV = modelViewStack.back().cast<float>();
+    glUniformMatrix4fv(ModelViewMatrixLocation, 1, GL_FALSE, MV.data());
+
+    const Matrix3f N = MV.linear();
+    glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, N.data());
+    
+    const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
+    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
+}
+
+
+void GLSLSceneRendererImpl::setPickingUniformMatrixVariables()
+{
+    const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
+    glUniformMatrix4fv(PickingMVPLocation, 1, GL_FALSE, MVP.data());
+}
+
+
 void GLSLSceneRendererImpl::visitShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh){
         if(mesh->hasVertices()){
             SgMaterial* material = shape->material();
-            pushPickName(shape);
+            pushPickID(shape);
             if(!isPicking){
                 renderMaterial(material);
             }
             renderMesh(mesh, false);
-            popPickName();
+            popPickID();
         }
     }
 }
@@ -718,18 +778,46 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 
 void GLSLSceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
 {
-    const bool hasNormals = mesh->hasNormals() && !isPicking;
-    if(!hasNormals){
-        return;
+    bool isNewMesh = false;
+    HandleSet* handleSet;
+    HandleSetMap::iterator p = currentHandleSetMap->find(mesh);
+    if(p == currentHandleSetMap->end()){
+        p = currentHandleSetMap->insert(HandleSetMap::value_type(mesh, new HandleSet)).first;
+        isNewMesh = true;
+    }
+    handleSet = p->second;
+
+    if(isCheckingUnusedHandleSets){
+        nextHandleSetMap->insert(*p);
     }
 
+    if(!isPicking){
+        setRenderingUniformMatrixVariables();
+    } else {
+        setPickingUniformMatrixVariables();
+    }
+
+    glBindVertexArray(handleSet->vao);
+
+    if(isNewMesh){
+        createMeshVertexArray(mesh, handleSet);
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+}
+
+
+void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, HandleSet* handleSet)
+{
     SgIndexArray& triangleVertices = mesh->triangleVertices();
     const size_t totalNumVertices = triangleVertices.size();
     
     const SgVertexArray& orgVertices = *mesh->vertices();
     SgVertexArray vertices;
     vertices.reserve(totalNumVertices);
+    handleSet->numVertices = totalNumVertices;
 
+    const bool hasNormals = mesh->hasNormals();
     const SgNormalArray& orgNormals = *mesh->normals();
     const SgIndexArray& normalIndices = mesh->normalIndices();
     SgNormalArray normals;
@@ -757,49 +845,27 @@ void GLSLSceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
         }
     }
 
-    bool isNewMesh = false;
-    HandleSet* handleSet;
-    HandleSetMap::iterator p = currentHandleSetMap->find(mesh);
-    if(p == currentHandleSetMap->end()){
-        p = currentHandleSetMap->insert(HandleSetMap::value_type(mesh, new HandleSet)).first;
-        isNewMesh = true;
+    GLuint normalBufferHandle;
+    if(hasNormals){
+        handleSet->genBuffers(2);
+        normalBufferHandle = handleSet->vbo(1);
+    } else {
+        handleSet->genBuffers(1);
+        normalBufferHandle = 0;
     }
-    handleSet = p->second;
-
-    if(isCheckingUnusedHandleSets){
-        nextHandleSetMap->insert(*p);
-    }
-
-    setUniformMatrixVariables();    
-
-    glBindVertexArray(handleSet->vao);
-
-    if(isNewMesh){
-        GLuint normalBufferHandle;
-        int elementAttribIndex;
-        if(hasNormals){
-            handleSet->genBuffers(2);
-            normalBufferHandle = handleSet->vbo(1);
-        } else {
-            handleSet->genBuffers(1);
-            normalBufferHandle = 0;
-        }
-        GLuint positionBufferHandle = handleSet->vbo(0);
+    GLuint positionBufferHandle = handleSet->vbo(0);
         
-        glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
-        glEnableVertexAttribArray(0);
-        
-        if(hasNormals){
-            glBindBuffer(GL_ARRAY_BUFFER, normalBufferHandle);
-            glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
-            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
-            glEnableVertexAttribArray(1);
-        }
+    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+    glEnableVertexAttribArray(0);
+    
+    if(hasNormals){
+        glBindBuffer(GL_ARRAY_BUFFER, normalBufferHandle);
+        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+        glEnableVertexAttribArray(1);
     }
-
-    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 }
 
 

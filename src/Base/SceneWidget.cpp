@@ -189,7 +189,7 @@ public:
     SgGroupPtr systemGroup;
     SgGroup* scene;
     GLSceneRenderer* renderer;
-    QGLPixelBuffer* buffer;
+    QGLPixelBuffer* pixelBufferForPicking;
     LazyCaller initializeRenderingLater;
     SgUpdate modified;
     SgUpdate added;
@@ -480,7 +480,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, SceneWidget* self)
 
     scene = renderer->scene();
 
-    buffer = 0;
+    pixelBufferForPicking = 0;
 
     initializeRenderingLater.setFunction(boost::bind(&SceneRenderer::initializeRendering, renderer));
 
@@ -587,9 +587,9 @@ SceneWidget::~SceneWidget()
 
 SceneWidgetImpl::~SceneWidgetImpl()
 {
-    if(buffer){
-        buffer->makeCurrent();
-        delete buffer;
+    if(pixelBufferForPicking){
+        pixelBufferForPicking->makeCurrent();
+        delete pixelBufferForPicking;
     }
     
     delete renderer;
@@ -1050,10 +1050,10 @@ void SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled(bool on)
 void SceneWidgetImpl::onBufferForPickingToggled(bool on)
 {
     if(!on){
-        if(buffer){
-            buffer->makeCurrent();
-            delete buffer;
-            buffer = 0;
+        if(pixelBufferForPicking){
+            pixelBufferForPicking->makeCurrent();
+            delete pixelBufferForPicking;
+            pixelBufferForPicking = 0;
         }
     }
 }
@@ -1083,34 +1083,36 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    if(config->bufferForPickingCheck.isChecked()){
+    bool useBufferForPicking = false;
+
+    if(dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked()){
         const QSize s = size();
-        if(buffer && (buffer->size() != s)){
-            buffer->makeCurrent();
-            delete buffer;
-            buffer = 0;
+        if(pixelBufferForPicking && (pixelBufferForPicking->size() != s)){
+            pixelBufferForPicking->makeCurrent();
+            delete pixelBufferForPicking;
+            pixelBufferForPicking = 0;
         }
-        if(!buffer){
+        if(!pixelBufferForPicking){
             if(QGLPixelBuffer::hasOpenGLPbuffers()){
                 QGLFormat f = format();
                 f.setDoubleBuffer(false);
-                buffer = new QGLPixelBuffer(s, f, this);
-                buffer->makeCurrent();
+                pixelBufferForPicking = new QGLPixelBuffer(s, f, this);
+                pixelBufferForPicking->makeCurrent();
                 glEnable(GL_DEPTH_TEST);
             }
         }
     }
 
-    if(buffer){
-        buffer->makeCurrent();
+    if(pixelBufferForPicking){
+        pixelBufferForPicking->makeCurrent();
     } else {
         QGLWidget::makeCurrent();
     }
 
     bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
 
-    if(buffer){
-        buffer->doneCurrent();
+    if(pixelBufferForPicking){
+        pixelBufferForPicking->doneCurrent();
     } else if(SHOW_IMAGE_FOR_PICKING){
         swapBuffers();
     }

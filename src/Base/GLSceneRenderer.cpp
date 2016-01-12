@@ -773,3 +773,28 @@ void GLSceneRenderer::getViewVolume
     out_left = -w / 2.0f;
     out_right = w / 2.0f;
 }
+
+
+bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_projected) const
+{
+    const Array4i& vp = impl->viewport;
+
+    Vector4 p;
+    p[0] = 2.0 * (x - vp[0]) / vp[2] - 1.0;
+    p[1] = 2.0 * (y - vp[1]) / vp[3] - 1.0;
+    p[2] = 2.0 * z - 1.0;
+    p[3] = 1.0;
+
+    const Matrix4 V = currentCameraPosition().inverse().matrix();
+    const Vector4 projected = (projectionMatrix() * V).inverse() * p;
+
+    if(projected[3] == 0.0){
+        return false;
+    }
+
+    out_projected.x() = projected.x() / projected[3];
+    out_projected.y() = projected.y() / projected[3];
+    out_projected.z() = projected.z() / projected[3];
+
+    return true;
+}
