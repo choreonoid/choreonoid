@@ -31,6 +31,8 @@ Menu* createViewMenu = 0;
 Menu* deleteViewMenu = 0;
 
 Signal<void(View* view)> sigViewCreated_;
+Signal<void(View* view)> sigViewActivated_;
+Signal<void(View* view)> sigViewDeactivated_;
 
 class ViewInfo;
 typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
@@ -111,6 +113,9 @@ private:
         instancesInViewManager.push_back(instance);
         instance->iterInViewManager = instancesInViewManager.end();
         --instance->iterInViewManager;
+
+        view->sigActivated().connect(boost::bind(boost::ref(sigViewActivated_), view));
+        view->sigDeactivated().connect(boost::bind(boost::ref(sigViewDeactivated_), view));
 
         return view;
     }
@@ -840,4 +845,15 @@ bool ViewManager::restoreViewStates(ViewStateInfo& info)
 SignalProxy<void(View* view)> ViewManager::sigViewCreated()
 {
     return sigViewCreated_;
+}
+
+
+SignalProxy<void(View* view)> ViewManager::sigViewActivated()
+{
+    return sigViewActivated_;
+}
+
+SignalProxy<void(View* view)> ViewManager::sigViewDeactivated()
+{
+    return sigViewDeactivated_;
 }

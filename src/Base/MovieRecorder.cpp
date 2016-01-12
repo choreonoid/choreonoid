@@ -92,6 +92,8 @@ class ConfigDialog : public Dialog
 {
 public:
     MovieRecorderImpl* recorder;
+    ScopedConnectionSet viewManagerConnections;
+    LazyCaller updateViewComboLater;
     vector<View*> activeViews;
     ComboBox targetViewCombo;
     CheckBox viewMarkerCheck;
@@ -141,6 +143,7 @@ public:
 
     ConfigDialog(MovieRecorderImpl* recorder);
     virtual void showEvent(QShowEvent* event);
+    virtual void hideEvent(QHideEvent* event);
     void updateViewCombo();
     void onTargetViewIndexChanged(int index);
     void onRecordingModeRadioClicked(int mode);
@@ -314,7 +317,8 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 
 
 ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
-    : recorder(recorder)
+    : recorder(recorder),
+      updateViewComboLater(boost::bind(&ConfigDialog::updateViewCombo, this))
 {
     setWindowTitle(_("Movie Recorder"));
     
@@ -479,7 +483,23 @@ MovieRecorderImpl::~MovieRecorderImpl()
 void ConfigDialog::showEvent(QShowEvent* event)
 {
     updateViewCombo();
+    viewManagerConnections.disconnect();
+    viewManagerConnections.add(
+        ViewManager::sigViewActivated().connect(
+            boost::bind(boost::ref(updateViewComboLater))));
+    viewManagerConnections.add(
+        ViewManager::sigViewDeactivated().connect(
+            boost::bind(boost::ref(updateViewComboLater))));
+    
     Dialog::showEvent(event);
+}
+
+
+void ConfigDialog::hideEvent(QHideEvent* event)
+{
+    viewManagerConnections.disconnect();
+    updateViewComboLater.cancel();
+    Dialog::hideEvent(event);
 }
 
 
