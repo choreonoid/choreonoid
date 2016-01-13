@@ -103,6 +103,8 @@ public:
     static bool restoreViewStates(ViewStateInfo& info);
 
     static SignalProxy<void(View* view)> sigViewCreated();
+    static SignalProxy<void(View* view)> sigViewActivated();
+    static SignalProxy<void(View* view)> sigViewDeactivated();
 
 private:
     View* registerClassSub(
