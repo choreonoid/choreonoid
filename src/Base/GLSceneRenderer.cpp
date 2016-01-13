@@ -753,6 +753,32 @@ void GLSceneRenderer::enableAdditionalLights(bool on)
 }
 
 
+void GLSceneRenderer::getPerspectiveProjectionMatrix
+(double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix)
+{
+    const double f = 1.0 / tan(fovy / 2.0);
+    out_matrix <<
+        (f / aspect), 0.0, 0.0, 0.0,
+        0.0, f, 0.0, 0.0,
+        0.0, 0.0, ((zFar + zNear) / (zNear - zFar)), ((2.0 * zFar * zNear) / (zNear - zFar)),
+        0.0, 0.0, -1.0, 0.0;
+}
+
+
+void GLSceneRenderer::getOrthographicProjectionMatrix
+(double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix)
+{
+    const double tx = -(right + left) / (right - left);
+    const double ty = -(top + bottom) / (top - bottom);
+    const double tz = -(farVal + nearVal) / (farVal - nearVal);
+    out_matrix <<
+        (2.0 / (right - left)), 0.0 ,0.0, tx,
+        0.0, (2.0 / (top - bottom)), 0.0, ty,
+        0.0, 0.0, (-2.0 / (farVal - nearVal)), tz,
+        0.0, 0.0, 0.0, 1.0;
+}
+
+
 void GLSceneRenderer::getViewFrustum
 (const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const
 {

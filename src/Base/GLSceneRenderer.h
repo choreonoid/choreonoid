@@ -53,6 +53,11 @@ public:
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
     virtual double aspectRatio() const; // width / height;
 
+    void getPerspectiveProjectionMatrix(
+        double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
+    void getOrthographicProjectionMatrix(
+        double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix);
+    
     void getViewFrustum(const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const;
     void getViewVolume(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const;
     

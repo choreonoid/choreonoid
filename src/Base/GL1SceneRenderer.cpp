@@ -534,27 +534,30 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
 
 void GL1SceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
     // set projection
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
-        gluPerspective(degree(pers->fovy(aspectRatio)), aspectRatio, pers->nearDistance(), pers->farDistance());
+        self->getPerspectiveProjectionMatrix(
+            pers->fovy(aspectRatio), aspectRatio, pers->nearDistance(), pers->farDistance(),
+            lastProjectionMatrix);
         
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         GLfloat left, right, bottom, top;
         self->getViewVolume(ortho, left, right, bottom, top);
-        glOrtho(left, right, bottom, top, ortho->nearDistance(), ortho->farDistance());
+        self->getOrthographicProjectionMatrix(
+            left, right, bottom, top, ortho->nearDistance(), ortho->farDistance(),
+            lastProjectionMatrix);
         
     } else {
-        gluPerspective(40.0f, self->aspectRatio(), 0.01, 1.0e4);
+        self->getPerspectiveProjectionMatrix(
+            radian(40.0), self->aspectRatio(), 0.01, 1.0e4,
+            lastProjectionMatrix);
     }
 
-    GLdouble P[16];
-    glGetDoublev(GL_PROJECTION_MATRIX, P);
-    lastProjectionMatrix = Eigen::Map<Eigen::Matrix<GLdouble, 4, 4> >(P);
-    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMultMatrixd(lastProjectionMatrix.data());
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     

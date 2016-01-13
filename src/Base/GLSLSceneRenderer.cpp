@@ -188,9 +188,6 @@ public:
     bool initializeGL();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
-    void setPerspectiveProjection(double fovy, double aspect, double zNear, double zFar);
-    void setOrthographicProjection(
-        double left,  double right,  double bottom,  double top,  double nearVal,  double farVal);
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(const Affine3& cameraPosition);
     void renderLight(const SgLight* light, int index, const Affine3& T);
@@ -428,44 +425,25 @@ void GLSLSceneRendererImpl::beginActualRendering(SgCamera* camera)
 }
 
 
-void GLSLSceneRendererImpl::setPerspectiveProjection(double fovy, double aspect, double zNear, double zFar)
-{
-    const double f = 1.0 / tan(fovy / 2.0);
-    projectionMatrix <<
-        (f / aspect), 0.0, 0.0, 0.0,
-        0.0, f, 0.0, 0.0,
-        0.0, 0.0, ((zFar + zNear) / (zNear - zFar)), ((2.0 * zFar * zNear) / (zNear - zFar)),
-        0.0, 0.0, -1.0, 0.0;
-}
-
-
-void GLSLSceneRendererImpl::setOrthographicProjection
-(double left,  double right,  double bottom,  double top,  double nearVal,  double farVal)
-{
-    const double tx = -(right + left) / (right - left);
-    const double ty = -(top + bottom) / (top - bottom);
-    const double tz = -(farVal + nearVal) / (farVal - nearVal);
-    projectionMatrix <<
-        (2.0 / (right - left)), 0.0 ,0.0, tx,
-        0.0, (2.0 / (top - bottom)), 0.0, ty,
-        0.0, 0.0, (-2.0 / (farVal - nearVal)), tz,
-        0.0, 0.0, 0.0, 1.0;
-}
-
-
 void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
 {
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
-        setPerspectiveProjection(pers->fovy(aspectRatio), aspectRatio, pers->nearDistance(), pers->farDistance());
+        self->getPerspectiveProjectionMatrix(
+            pers->fovy(aspectRatio), aspectRatio, pers->nearDistance(), pers->farDistance(),
+            projectionMatrix);
         
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         GLfloat left, right, bottom, top;
         self->getViewVolume(ortho, left, right, bottom, top);
-        setOrthographicProjection(left, right, bottom, top, ortho->nearDistance(), ortho->farDistance());
+        self->getOrthographicProjectionMatrix(
+            left, right, bottom, top, ortho->nearDistance(), ortho->farDistance(),
+            projectionMatrix);
         
     } else {
-        setPerspectiveProjection(radian(40.0), self->aspectRatio(), 0.01, 1.0e4);
+        self->getPerspectiveProjectionMatrix(
+            radian(40.0), self->aspectRatio(), 0.01, 1.0e4,
+            projectionMatrix);
     }
 
     viewMatrix = cameraPosition.inverse(Eigen::Isometry);
