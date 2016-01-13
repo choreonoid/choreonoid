@@ -1118,7 +1118,17 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     cache->numComponents = image.numComponents();
     cache->isImageUpdateNeeded = false;
     
-    const bool useMipmap = isCompiling;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, withMaterial ? GL_MODULATE : GL_REPLACE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if(isCompiling){
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    }
 
     if(doLoadTexImage){
         GLint internalFormat = GL_RGB;
@@ -1147,31 +1157,13 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
             glPixelStorei(GL_UNPACK_ALIGNMENT, image.numComponents());
         }
 
-        if(useMipmap){
-            gluBuild2DMipmaps(
-                GL_TEXTURE_2D, internalFormat, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
+        if(!isCompiling && doReloadTexImage){
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
         } else {
-            if(doReloadTexImage){
-                glTexSubImage2D(
-                    GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
-            } else {
-                // gluScaleImage(...);
-                glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0,
-                             format, GL_UNSIGNED_BYTE, image.pixels());
-            }
-        }
+            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());            
+        } 
     }
 
-    if(useMipmap){
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    } else {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, withMaterial ? GL_MODULATE : GL_REPLACE);
-    
     if(SgTextureTransform* tt = texture->textureTransform()){
         glMatrixMode(GL_TEXTURE);
         glLoadIdentity();
