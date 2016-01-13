@@ -1309,5 +1309,7 @@ void GLSLSceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
 
 void GLSLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
 {
-
+    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
+        (*p)->accept(*self);
+    }
 }
