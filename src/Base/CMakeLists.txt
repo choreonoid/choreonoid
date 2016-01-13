@@ -106,6 +106,7 @@ set(sources
   VirtualJoystickView.cpp
   GLSLTestView.cpp
   gl_core_3_3.c
+  gl_1_5.c
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -260,7 +261,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES}
+    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES}
     intl
     )
 
@@ -268,9 +269,8 @@ elseif(UNIX)
 
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARIES}
+    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
     icuuc
-    GLEW
     X11
     Xfixes
     )
@@ -281,7 +281,6 @@ elseif(MSVC)
     ${QT_LIBRARIES}
     general glu32
     CnoidUtil
-    ${GLEW_LIBRARIES}
     )
 endif()
 
