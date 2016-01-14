@@ -103,7 +103,7 @@ public:
 
     void flush(){
         glBindBuffer(GL_UNIFORM_BUFFER, uboHandle);
-        glBufferData(GL_UNIFORM_BUFFER, localBuffer.size(), &localBuffer[0], GL_DYNAMIC_DRAW);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, localBuffer.size(), &localBuffer[0]);
     }
 
 private:

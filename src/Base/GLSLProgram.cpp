@@ -203,6 +203,8 @@ void GLSLUniformBlockBuffer::initialize(GLSLProgram& program, const std::string&
     localBuffer.resize(blockSize);
 
     glGenBuffers(1, &uboHandle);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboHandle);
+    glBufferData(GL_UNIFORM_BUFFER, localBuffer.size(), NULL, GL_DYNAMIC_DRAW);
 }
 
 
