@@ -297,8 +297,11 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             throw std::out_of_range("model element is NULL");
         }
         std::string modelName = model->Get<std::string>("name");
-        os() << "model name " << modelName << std::endl;
         body->setModelName(modelName);
+
+        if (isVerbose) {
+            os() << "model name " << modelName << std::endl;
+        }
 
         /*
         if(link->HasElement("static")){
@@ -316,7 +319,11 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             while(link){
                 LinkInfoPtr linkdata(new LinkInfo());
                 linkdata->linkName = link->Get<std::string>("name");
-                os() << " link name " << linkdata->linkName << std::endl;
+
+                if (isVerbose) {
+                    os() << " link name " << linkdata->linkName << std::endl;
+                }
+
                 if(link->HasElement("pose")){
                     linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
                 } else {
@@ -355,12 +362,16 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             while(joint){
                 JointInfoPtr jointdata(new JointInfo());
                 jointdata->jointName = joint->Get<std::string>("name");
-                os() << " joint name " << jointdata->jointName << std::endl;
                 jointdata->jointType = joint->Get<std::string>("type");
                 jointdata->parentName = joint->Get<std::string>("parent");
                 jointdata->childName = joint->Get<std::string>("child");
                 jointdata->parent = linkdataMap[jointdata->parentName];
                 jointdata->child = linkdataMap[jointdata->childName];
+
+                if (isVerbose) {
+                    os() << " joint name " << jointdata->jointName << std::endl;
+                }
+
                 if(joint->HasElement("pose")){
                     jointdata->pose = pose2affine(joint->Get<sdf::Pose>("pose"));
                     jointdata->pose = jointdata->child->pose * jointdata->pose;
@@ -402,6 +413,11 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                         if(limit->HasElement("velocity")){
                             jointdata->velocity = limit->Get<double>("velocity");
                         }
+                    } else {
+                        // corrupted? (axis element must be have limit element)
+                        jointdata->lower = 0.0;
+                        jointdata->upper = 0.0;
+                        os() << "Warning: '" << jointdata->jointName << "' limit not found" << std::endl;
                     }
                 }
                 joints.push_back(jointdata);
@@ -421,7 +437,10 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         vector<JointInfoPtr> roots = findRootJoints();
         std::vector<JointInfoPtr>::iterator it = roots.begin();
         while(it != roots.end()){
-            os() << "found root link " << (*it)->parentName << std::endl;
+            if (isVerbose) {
+                os() << "found root link " << (*it)->parentName << std::endl;
+            }
+
             Link* link = body->createLink();
             link->setName((*it)->parentName);
             JointInfoPtr root;
@@ -452,7 +471,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         result = true;
         os().flush();
     } catch(const std::exception& ex){
-        os() << ex.what() << endl;
+        os() << "Error: " << ex.what() << endl;
     }
     
     return result;
@@ -462,6 +481,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
 {
     vector<JointInfoPtr> children = findChildJoints(parent->childName);
     vector<JointInfoPtr>::iterator it = children.begin();
+
     while(it != children.end()){
         if((*it)->child == 0){
             it++;
@@ -469,10 +489,11 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         }
         if(isVerbose){
             os() << "convert children from: " << parent->childName << std::endl;
-            os() << "                 to: " << (*it)->childName << std::endl;
+            os() << "                   to: " << (*it)->childName << std::endl;
             os() << parent->pose.matrix() << std::endl;
             os() << (*it)->child->pose.matrix() << std::endl;
         }
+
         Link* link = body->createLink();
         link->setName((*it)->jointName);
         link->setMass((*it)->child->m);
@@ -490,7 +511,8 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         if(it2 != jointTypeMap.end()){
             link->setJointType(it2->second);
         } else {
-            os() << " unable to handle joint type " << (*it)->jointType << " of joint " << (*it)->jointName << " assume as fixed joint." << std::endl;
+            os() << "Warning: unable to handle joint type " << (*it)->jointType << " of joint "
+                 << (*it)->jointName << " assume as fixed joint." << std::endl;
             link->setJointType(Link::FIXED_JOINT);
         }
         if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
@@ -498,8 +520,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         } else {
             link->setJointAxis(link->Rs() * (*it)->axis);
             double maxlimit = numeric_limits<double>::max();
-            link->setJointRange(getLimitValue((*it)->lower, -maxlimit),
-                                getLimitValue((*it)->upper, +maxlimit));
+            link->setJointRange((*it)->lower, (*it)->upper);
             link->setJointVelocityRange(getLimitValue(-(*it)->velocity, -maxlimit),
                                         getLimitValue((*it)->velocity, +maxlimit));
         }
