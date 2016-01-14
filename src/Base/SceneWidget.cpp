@@ -54,7 +54,6 @@ using namespace cnoid;
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
-const bool USE_GLSL_SCENE_RENDERER = false;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
@@ -274,7 +273,7 @@ public:
     int profiling_mode;
 #endif
 
-    SceneWidgetImpl(QGLFormat& format, SceneWidget* self);
+    SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* self);
     ~SceneWidgetImpl();
 
     virtual void initializeGL();
@@ -428,14 +427,15 @@ void SceneWidget::forEachInstance(SgNode* node, boost::function<void(SceneWidget
 
 SceneWidget::SceneWidget()
 {
-    QGLFormat format;
+    bool useGLSL = (getenv("CNOID_USE_GLSL") != 0);
 
-    if(USE_GLSL_SCENE_RENDERER){
+    QGLFormat format;
+    if(useGLSL){
         format.setVersion(3, 3);
         format.setProfile(QGLFormat::CoreProfile);
     }
     
-    impl = new SceneWidgetImpl(format, this);
+    impl = new SceneWidgetImpl(format, useGLSL, this);
 
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->setContentsMargins(0, 0, 0, 0);
@@ -446,7 +446,7 @@ SceneWidget::SceneWidget()
 }
 
 
-SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, SceneWidget* self)
+SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* self)
     : QGLWidget(format, self),
       self(self),
       os(MessageView::mainInstance()->cout()),
@@ -467,7 +467,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, SceneWidget* self)
 
     setAutoBufferSwap(true);
 
-    if(USE_GLSL_SCENE_RENDERER){
+    if(useGLSL){
         renderer = new GLSLSceneRenderer(sceneRoot);
     } else {
         renderer = new GL1SceneRenderer(sceneRoot);
