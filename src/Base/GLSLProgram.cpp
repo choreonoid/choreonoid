@@ -175,3 +175,42 @@ void GLSLProgram::use() throw(GLSLProgram::Exception)
     }
     glUseProgram(programHandle);
 }
+
+
+GLSLUniformBlockBuffer::GLSLUniformBlockBuffer()
+{
+    uboHandle = 0;
+    lastProgramHandle = 0;
+}
+
+
+GLSLUniformBlockBuffer::~GLSLUniformBlockBuffer()
+{
+
+}
+
+
+void GLSLUniformBlockBuffer::initialize(GLSLProgram& program, const std::string& blockName)
+{
+    this->blockName = blockName;
+    
+    lastProgramHandle = program.handle();
+    
+    GLuint blockIndex = glGetUniformBlockIndex(program.handle(), blockName.c_str());
+    
+    GLint blockSize;
+    glGetActiveUniformBlockiv(program.handle(), blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+    localBuffer.resize(blockSize);
+
+    glGenBuffers(1, &uboHandle);
+}
+
+
+GLint GLSLUniformBlockBuffer::getOffset(const char* name)
+{
+    GLuint index;
+    glGetUniformIndices(lastProgramHandle, 1, &name, &index);
+    GLint offset;
+    glGetActiveUniformsiv(lastProgramHandle, 1, &index, GL_UNIFORM_OFFSET, &offset);
+    return offset;
+}

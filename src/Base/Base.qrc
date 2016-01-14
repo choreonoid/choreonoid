@@ -28,8 +28,10 @@
 
   <file>icons/eraser-cursor.png</file>
 
-  <file>shader/perfrag.vert</file>
-  <file>shader/perfrag.frag</file>
+  <file>shader/phong.vert</file>
+  <file>shader/phong.frag</file>
+  <file>shader/line.vert</file>
+  <file>shader/line.frag</file>
   <file>shader/picking.vert</file>
   <file>shader/picking.frag</file>
 

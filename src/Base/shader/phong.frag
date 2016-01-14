@@ -3,16 +3,15 @@
 in vec3 Position;
 in vec3 Normal;
 
-uniform mat4 ModelViewMatrix;
-uniform mat3 NormalMatrix;
+//uniform MaterialBlock {
+    uniform vec3 DiffuseColor;
+    uniform vec3 AmbientColor;
+    uniform vec3 SpecularColor;
+    uniform float Shininess;
+//};
 
 uniform vec4 LightPosition;
 uniform vec3 LightIntensity;
-
-uniform vec3 Kd;            // Diffuse reflectivity
-uniform vec3 Ka;            // Ambient reflectivity
-uniform vec3 Ks;            // Specular reflectivity
-uniform float Shininess;    // Specular shininess factor
 
 layout(location = 0) out vec4 FragColor;
 
@@ -26,13 +25,13 @@ vec3 ads( )
     }
     
     vec3 v = normalize(vec3(-Position));
-    vec3 r = reflect( -s, Normal);
+    vec3 r = reflect(-s, Normal);
 
     return
         LightIntensity *
-        (Ka +
-         Kd * max(dot(s, Normal), 0.0) +
-         Ks * pow(max(dot(r,v), 0.0), Shininess));
+        (AmbientColor +
+         DiffuseColor * max(dot(s, Normal), 0.0) +
+         SpecularColor * pow(max(dot(r, v), 0.0), Shininess));
 }
 
 void main() {

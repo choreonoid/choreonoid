@@ -11,7 +11,11 @@
 */
 #include "gl_core_3_3.h"
 
+#include <cnoid/EigenTypes>
+#include <vector>
+#include <string>
 #include <stdexcept>
+#include <cstring>
 
 namespace cnoid {
 
@@ -47,6 +51,66 @@ private:
 
     GLSLProgram(const GLSLProgram& other) { }
     GLSLProgram& operator=(const GLSLProgram& other) { return *this; }
+};
+
+
+class GLSLUniformBlockBuffer
+{
+public:
+    GLSLUniformBlockBuffer();
+    ~GLSLUniformBlockBuffer();
+    
+    void initialize(GLSLProgram& program, const std::string& blockName);
+
+    GLint getOffset(const char* name);    
+
+    void bind(GLSLProgram& program, GLuint bindingPoint) {
+        GLuint blockIndex = glGetUniformBlockIndex(program.handle(), blockName.c_str());
+        glUniformBlockBinding(program.handle(), blockIndex, bindingPoint);
+    }
+
+    void bindBufferBase(GLuint bindingPoint) {
+        glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, uboHandle);
+    }
+
+    void write(GLint offset, float v){
+        std::memcpy(&localBuffer[offset], &v, sizeof(v));
+    }
+
+    void write(GLint offset, const Vector3f& v){
+        std::memcpy(&localBuffer[offset], v.data(), sizeof(v));
+    }
+
+    void write(GLint offset, const Vector4f& v){
+        std::memcpy(&localBuffer[offset], v.data(), sizeof(v));
+    }
+
+    void write(GLint offset, const Matrix3f& M){
+        const int s3 = 3 * sizeof(Matrix3f::Scalar);
+        const int s4 = 4 * sizeof(Matrix3f::Scalar);
+        std::memcpy(&localBuffer[offset       ], &M(0, 0), s3);
+        std::memcpy(&localBuffer[offset + s4  ], &M(0, 1), s3);
+        std::memcpy(&localBuffer[offset + s4*2], &M(0, 2), s3);
+    }
+
+    void write(GLint offset, const Matrix4f& M){
+        std::memcpy(&localBuffer[offset], M.data(), sizeof(M));
+    }
+    
+    void write(GLint offset, const Affine3f& T){
+        std::memcpy(&localBuffer[offset], T.matrix().data(), sizeof(T));
+    }
+
+    void flush(){
+        glBindBuffer(GL_UNIFORM_BUFFER, uboHandle);
+        glBufferData(GL_UNIFORM_BUFFER, localBuffer.size(), &localBuffer[0], GL_DYNAMIC_DRAW);
+    }
+
+private:
+    GLuint uboHandle;
+    GLuint lastProgramHandle;
+    std::vector<GLubyte> localBuffer;
+    std::string blockName;
 };
 
 }

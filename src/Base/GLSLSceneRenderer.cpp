@@ -90,11 +90,12 @@ public:
         
     GLSLSceneRenderer* self;
 
-    GLSLProgram renderingProgram;
+    GLSLProgram phongProgram;
 
-    GLuint ModelViewMatrixLocation;
-    GLuint NormalMatrixLocation;
-    GLuint MVPLocation;
+    GLSLUniformBlockBuffer matrixBlockBuffer;
+    GLint modelViewMatrixOffset;
+    GLint normalMatrixOffset;
+    GLint MVPOffset;
 
     GLuint LightIntensityLocation;
     GLuint LightPositionLocation;
@@ -132,9 +133,9 @@ public:
     float shininess;
     float lastAlpha;
 
-    GLuint KdLocation;
-    GLuint KaLocation;
-    GLuint KsLocation;
+    GLuint DiffuseColorLocation;
+    GLuint AmbientColorLocation;
+    GLuint SpecularColorLocation;
     GLuint ShininessLocation;
 
     SgMaterialPtr defaultMaterial;
@@ -312,9 +313,9 @@ bool GLSLSceneRendererImpl::initializeGL()
     }
 
     try {
-        renderingProgram.loadVertexShader(":/Base/shader/perfrag.vert");
-        renderingProgram.loadFragmentShader(":/Base/shader/perfrag.frag");
-        renderingProgram.link();
+        phongProgram.loadVertexShader(":/Base/shader/phong.vert");
+        phongProgram.loadFragmentShader(":/Base/shader/phong.frag");
+        phongProgram.link();
 
         pickingProgram.loadVertexShader(":/Base/shader/picking.vert");
         pickingProgram.loadFragmentShader(":/Base/shader/picking.frag");
@@ -322,20 +323,24 @@ bool GLSLSceneRendererImpl::initializeGL()
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
+        cout << ex.what() << endl;
         return false;
     }
 
-    ModelViewMatrixLocation = renderingProgram.getUniformLocation("ModelViewMatrix");
-    NormalMatrixLocation = renderingProgram.getUniformLocation("NormalMatrix");
-    MVPLocation = renderingProgram.getUniformLocation("MVP");
+    matrixBlockBuffer.initialize(phongProgram, "MatrixBlock");
+    modelViewMatrixOffset = matrixBlockBuffer.getOffset("modelViewMatrix");
+    normalMatrixOffset = matrixBlockBuffer.getOffset("normalMatrix");
+    MVPOffset = matrixBlockBuffer.getOffset("MVP");
+    matrixBlockBuffer.bind(phongProgram, 1);
+    matrixBlockBuffer.bindBufferBase(1);
+
+    LightIntensityLocation = phongProgram.getUniformLocation("LightIntensity");
+    LightPositionLocation = phongProgram.getUniformLocation("LightPosition");
     
-    LightIntensityLocation = renderingProgram.getUniformLocation("LightIntensity");
-    LightPositionLocation = renderingProgram.getUniformLocation("LightPosition");
-    
-    KdLocation = renderingProgram.getUniformLocation("Kd");
-    KaLocation = renderingProgram.getUniformLocation("Ka");
-    KsLocation = renderingProgram.getUniformLocation("Ks");
-    ShininessLocation = renderingProgram.getUniformLocation("Shininess");
+    DiffuseColorLocation = phongProgram.getUniformLocation("DiffuseColor");
+    AmbientColorLocation = phongProgram.getUniformLocation("AmbientColor");
+    SpecularColorLocation = phongProgram.getUniformLocation("SpecularColor");
+    ShininessLocation = phongProgram.getUniformLocation("Shininess");
 
     PickingMVPLocation = pickingProgram.getUniformLocation("MVP");
     PickingIDLocation = pickingProgram.getUniformLocation("PickingID");
@@ -393,7 +398,7 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
             pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            renderingProgram.use();
+            phongProgram.use();
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
@@ -665,13 +670,13 @@ void GLSLSceneRenderer::visitTransform(SgTransform* transform)
 void GLSLSceneRendererImpl::setRenderingUniformMatrixVariables()
 {
     const Affine3f MV = modelViewStack.back().cast<float>();
-    glUniformMatrix4fv(ModelViewMatrixLocation, 1, GL_FALSE, MV.data());
-
     const Matrix3f N = MV.linear();
-    glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, N.data());
-    
     const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
-    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
+
+    matrixBlockBuffer.write(modelViewMatrixOffset, MV);
+    matrixBlockBuffer.write(normalMatrixOffset, N);
+    matrixBlockBuffer.write(MVPOffset, MVP);
+    matrixBlockBuffer.flush();
 }
 
 
@@ -991,7 +996,7 @@ void GLSLSceneRenderer::enableColorMaterial(bool on)
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        glUniform3fv(KdLocation, 1, color.data());
+        glUniform3fv(DiffuseColorLocation, 1, color.data());
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
@@ -1007,7 +1012,7 @@ void GLSLSceneRenderer::setDiffuseColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setAmbientColor(const Vector4f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        glUniform3fv(KaLocation, 1, color.data());
+        glUniform3fv(AmbientColorLocation, 1, color.data());
         ambientColor = color;
         stateFlag.set(AMBIENT_COLOR);
     }
@@ -1039,7 +1044,7 @@ void GLSLSceneRenderer::setEmissionColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setSpecularColor(const Vector4f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        glUniform3fv(KsLocation, 1, color.data());
+        glUniform3fv(SpecularColorLocation, 1, color.data());
         specularColor = color;
         stateFlag.set(SPECULAR_COLOR);
     }
