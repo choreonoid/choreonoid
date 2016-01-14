@@ -135,6 +135,7 @@ public:
 private:
     void addModelSearchPath(const char *envname);
     void processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
+    SgPosTransformPtr createSgPosTransform(const sdf::Pose &pose, bool isRotation = false);
 };
 
 }
@@ -531,19 +532,12 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
         el = el->GetNextElement()) {
         if(el->GetName() == "mesh") {
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
-            SgPosTransformPtr transform = new SgPosTransform;
-            Vector3 trans;
-            trans(0) = pose.pos.x;
-            trans(1) = pose.pos.y;
-            trans(2) = pose.pos.z;
-            Quat R;
-            R.x() = pose.rot.x;
-            R.y() = pose.rot.y;
-            R.z() = pose.rot.z;
-            R.w() = pose.rot.w;
-            transform->setTranslation(trans);
-            transform->setRotation(R.matrix());
-            os() << "  read mesh " << url << std::endl;
+            SgPosTransformPtr transform = createSgPosTransform(pose);
+
+            if (isVerbose) {
+                os() << "     read mesh " << url << std::endl;
+            }
+
             if (boost::algorithm::iends_with(url, "dae")) {
                 // TODO: might be better to use assimp here instead of cnoid::DaeParser
                 DaeParser parser(&os());
@@ -556,28 +550,78 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
             sdf::Vector3 size = el->Get<sdf::Vector3>("size");
+            SgPosTransformPtr transform = createSgPosTransform(pose, true);
+
+            if (isVerbose) {
+                os() << "     generate " << el->GetName() << " shape (x=" << size.x << " y=" << size.y
+                     << " z=" << size.z << ")" << std::endl;
+            }
+
             shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
-            converted = shape;
+            transform->addChild(shape);
+            converted = transform;
         } else if(el->GetName() == "sphere"){
             SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
+            SgPosTransformPtr transform = createSgPosTransform(pose, true);
+
+            if (isVerbose) {
+                os() << "     generate " << el->GetName() << " shape (radius=" << radius << ")" << std::endl;
+            }
+
             shape->setMesh(meshGenerator.generateSphere(radius));
-            converted = shape;
+            transform->addChild(shape);
+            converted = transform;
         } else if(el->GetName() == "cylinder"){
             SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
             double length = el->Get<double>("length");
+            SgPosTransformPtr transform = createSgPosTransform(pose, true);
+
+            if (isVerbose) {
+                os() << "     generate " << el->GetName() << " shape (radius=" << radius << " length="
+                     << length << ")" << std::endl;
+            }
+
             shape->setMesh(meshGenerator.generateCylinder(radius, length));
-            converted = shape;
+            transform->addChild(shape);
+            converted = transform;
         } else {
-            os() << "unsupported SDF node type " << el->GetName() << std::endl;
+            os() << "Warning: unsupported SDF node type " << el->GetName() << std::endl;
         }
     }
 
     return converted;
 }
-    
+
 /**
+ * @brief Create instance of SgPosTransform.
+ * @param[in] pose Shape's pose.
+ * @param[in] isRotation Set true, 90 degree rotation of X axes. (default false)
+ *            Choreonoid MeshGenerator/VRML     URDF/SDF
+ *                       Y                          Z
+ *                       |                          |
+ *                       +- X                       +- Y
+ *                      /                          /
+ *                     Z                          X
+ * @return Instance of SgPosTransform.
+ */
+SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose, bool isRotation)
+{
+    cnoid::SgPosTransformPtr ret = new SgPosTransform(pose2affine(pose));
+
+    if (isRotation) {
+        cnoid::AngleAxis aaX(0.5 * M_PI, cnoid::Vector3::UnitX());
+        ret->setRotation(aaX);
+    }
+
+    return ret;
+}
+
+/**
+ * @brief Add model search path from environment variable.
+ * @param[in] envname Environment variable name.
+ * special process by set 'HOME'. (add ${HOME}/.gazebo/models)
  */
 void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
 {
@@ -603,6 +647,10 @@ void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
 }
 
 /**
+ * @brief Process meshes.
+ * @param[in] linkdata Created links.
+ * @param[in] link Target link.
+ * @param[in] isVisual Set true is visual, false is collision.
  */
 void SDFBodyLoaderImpl::processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual)
 {
