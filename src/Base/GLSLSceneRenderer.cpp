@@ -102,12 +102,12 @@ public:
     GLint normalMatrixIndex;
     GLint MVPIndex;
 
-    GLint ModelViewMatrixLocation;
-    GLint NormalMatrixLocation;
+    GLint modelViewMatrixLocation;
+    GLint normalMatrixLocation;
     GLint MVPLocation;
 
-    GLint LightIntensityLocation;
-    GLint LightPositionLocation;
+    GLint lightIntensityLocation;
+    GLint lightPositionLocation;
 
     GLSLProgram nolightingProgram;
     GLint nolightingMVPLocation;
@@ -139,10 +139,11 @@ public:
     float shininess;
     float lastAlpha;
 
-    GLint DiffuseColorLocation;
-    GLint AmbientColorLocation;
-    GLint SpecularColorLocation;
-    GLint ShininessLocation;
+    GLint diffuseColorLocation;
+    GLint ambientColorLocation;
+    GLint specularColorLocation;
+    GLint emissionColorLocation;
+    GLint shininessLocation;
 
     SgMaterialPtr defaultMaterial;
     GLfloat defaultLineWidth;
@@ -346,18 +347,19 @@ bool GLSLSceneRendererImpl::initializeGL()
         transformBlockBuffer.bind(phongProgram, 1);
         transformBlockBuffer.bindBufferBase(1);
     } else {
-        ModelViewMatrixLocation = phongProgram.getUniformLocation("modelViewMatrix");
-        NormalMatrixLocation = phongProgram.getUniformLocation("normalMatrix");
+        modelViewMatrixLocation = phongProgram.getUniformLocation("modelViewMatrix");
+        normalMatrixLocation = phongProgram.getUniformLocation("normalMatrix");
         MVPLocation = phongProgram.getUniformLocation("MVP");
     }
 
-    LightIntensityLocation = phongProgram.getUniformLocation("lightIntensity");
-    LightPositionLocation = phongProgram.getUniformLocation("lightPosition");
+    lightIntensityLocation = phongProgram.getUniformLocation("lightIntensity");
+    lightPositionLocation = phongProgram.getUniformLocation("lightPosition");
     
-    DiffuseColorLocation = phongProgram.getUniformLocation("diffuseColor");
-    AmbientColorLocation = phongProgram.getUniformLocation("ambientColor");
-    SpecularColorLocation = phongProgram.getUniformLocation("specularColor");
-    ShininessLocation = phongProgram.getUniformLocation("shininess");
+    diffuseColorLocation = phongProgram.getUniformLocation("diffuseColor");
+    ambientColorLocation = phongProgram.getUniformLocation("ambientColor");
+    specularColorLocation = phongProgram.getUniformLocation("specularColor");
+    emissionColorLocation = phongProgram.getUniformLocation("emissionColor");
+    shininessLocation = phongProgram.getUniformLocation("shininess");
 
     nolightingMVPLocation = nolightingProgram.getUniformLocation("MVP");
     nolightingColorLocation = nolightingProgram.getUniformLocation("color");
@@ -508,7 +510,7 @@ void GLSLSceneRendererImpl::renderLight(const SgLight* light, int index, const A
             isValid = true;
             Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
             Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-            glUniform4fv(LightPositionLocation, 1, pos.data());
+            glUniform4fv(lightPositionLocation, 1, pos.data());
             
         } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
             if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
@@ -521,7 +523,7 @@ void GLSLSceneRendererImpl::renderLight(const SgLight* light, int index, const A
         
     if(isValid){
         Vector3f intensity(light->intensity() * light->color());
-        glUniform3fv(LightIntensityLocation, 1, intensity.data());
+        glUniform3fv(lightIntensityLocation, 1, intensity.data());
     }
 }
 
@@ -708,8 +710,8 @@ void GLSLSceneRendererImpl::setLightingTransformMatrices()
         transformBlockBuffer.write(MVPIndex, MVP);
         transformBlockBuffer.flush();
     } else {
-        glUniformMatrix4fv(ModelViewMatrixLocation, 1, GL_FALSE, MV.data());
-        glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, N.data());
+        glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
+        glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, N.data());
         glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
     }
 }
@@ -1041,7 +1043,7 @@ void GLSLSceneRenderer::enableColorMaterial(bool on)
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        glUniform3fv(DiffuseColorLocation, 1, color.data());
+        glUniform3fv(diffuseColorLocation, 1, color.data());
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
@@ -1057,7 +1059,7 @@ void GLSLSceneRenderer::setDiffuseColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setAmbientColor(const Vector4f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        glUniform3fv(AmbientColorLocation, 1, color.data());
+        glUniform3fv(ambientColorLocation, 1, color.data());
         ambientColor = color;
         stateFlag.set(AMBIENT_COLOR);
     }
@@ -1073,7 +1075,7 @@ void GLSLSceneRenderer::setAmbientColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setEmissionColor(const Vector4f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
-        //glUniform3fv(EmissionLocation, 1, color.data());
+        glUniform3fv(emissionColorLocation, 1, color.data());
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
@@ -1089,7 +1091,7 @@ void GLSLSceneRenderer::setEmissionColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setSpecularColor(const Vector4f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        glUniform3fv(SpecularColorLocation, 1, color.data());
+        glUniform3fv(specularColorLocation, 1, color.data());
         specularColor = color;
         stateFlag.set(SPECULAR_COLOR);
     }
@@ -1105,7 +1107,7 @@ void GLSLSceneRenderer::setSpecularColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
-        glUniform1f(ShininessLocation, s);
+        glUniform1f(shininessLocation, s);
         shininess = s;
         stateFlag.set(SHININESS);
     }

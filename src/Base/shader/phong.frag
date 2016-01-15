@@ -15,6 +15,7 @@ uniform MaterialBlock {
 uniform vec3 diffuseColor;
 uniform vec3 ambientColor;
 uniform vec3 specularColor;
+uniform vec3 emissionColor;
 uniform float shininess;
 
 uniform vec4 lightPosition;
@@ -38,7 +39,8 @@ vec3 ads( )
         lightIntensity *
         (ambientColor +
          diffuseColor * max(dot(s, normal), 0.0) +
-         specularColor * pow(max(dot(r, v), 0.0), shininess));
+         specularColor * pow(max(dot(r, v), 0.0), shininess))
+        + emissionColor;
 }
 
 void main() {
