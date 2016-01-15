@@ -12,7 +12,7 @@ out vec3 normal;
   variables are enabled instead of it, GLSLSceneRenderer uses the latter one
   to pass the matrix values. For the Intel GPUs, this results in better performace.
 */
-layout(shared) uniform TransformBlock {
+layout(std140) uniform TransformBlock {
     mat4 modelViewMatrix;
     mat4 MVP;
     mat3 normalMatrix;
