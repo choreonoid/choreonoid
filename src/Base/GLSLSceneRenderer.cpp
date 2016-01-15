@@ -90,9 +90,12 @@ public:
         
     GLSLSceneRenderer* self;
 
+    GLSLProgram* currentProgram;
+    
     GLSLProgram phongProgram;
 
     bool useUniformBlockToPassTransformationMatrices;
+    bool isPicking;
     
     GLSLUniformBlockBuffer transformBlockBuffer;
     GLint modelViewMatrixIndex;
@@ -106,12 +109,9 @@ public:
     GLint LightIntensityLocation;
     GLint LightPositionLocation;
 
-    GLSLProgram pickingProgram;
-
-    GLint PickingMVPLocation;
-    GLint PickingIDLocation;
-    
-    bool isPicking;
+    GLSLProgram nolightingProgram;
+    GLint nolightingMVPLocation;
+    GLint nolightingColorLocation;
 
     HandleSetMap handleSetMaps[2];
     bool doUnusedHandleSetCheck;
@@ -131,7 +131,7 @@ public:
 
 
     bool defaultLighting;
-    Vector4f currentColor;
+    Vector4f currentNolightingColor;
     Vector4f diffuseColor;
     Vector4f ambientColor;
     Vector4f specularColor;
@@ -145,6 +145,7 @@ public:
     GLint ShininessLocation;
 
     SgMaterialPtr defaultMaterial;
+    GLfloat defaultLineWidth;
 
     GLdouble pickX;
     GLdouble pickY;
@@ -159,7 +160,7 @@ public:
 
     // OpenGL states
     enum StateFlag {
-        CURRENT_COLOR,
+        CURRENT_NOLIGHTING_COLOR,
         COLOR_MATERIAL,
         DIFFUSE_COLOR,
         AMBIENT_COLOR,
@@ -205,20 +206,18 @@ public:
     inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
     void popPickID();
     void visitInvariantGroup(SgInvariantGroup* group);
-    void setRenderingUniformMatrixVariables();
-    void setPickingUniformMatrixVariables();
+    void setLightingTransformMatrices();
+    void flushNolightingTransformMatrices();
+    HandleSet* getOrCreateHandleSet(SgObject* obj);
     void visitShape(SgShape* shape);
-    void visitPointSet(SgPointSet* pointSet);
-    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
-    void visitLineSet(SgLineSet* lineSet);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
-    void renderMesh(SgMesh* mesh, bool hasTexture);
     void createMeshVertexArray(SgMesh* mesh, HandleSet* handleSet);
+    void visitPointSet(SgPointSet* pointSet);
+    void visitLineSet(SgLineSet* lineSet);
     void visitOutlineGroup(SgOutlineGroup* outline);
-
     void clearGLState();
-    void setColor(const Vector4f& color);
+    void setNolightingColor(const Vector4f& color);
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);
     void setAmbientColor(const Vector4f& color);
@@ -255,6 +254,8 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
 GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
+    currentProgram = 0;
+    
     isPicking = false;
     pickedPoint.setZero();
 
@@ -272,6 +273,8 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
 
     defaultLighting = true;
     defaultMaterial = new SgMaterial;
+    defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
+    defaultLineWidth = 1.0f;
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
@@ -323,9 +326,9 @@ bool GLSLSceneRendererImpl::initializeGL()
         phongProgram.loadFragmentShader(":/Base/shader/phong.frag");
         phongProgram.link();
 
-        pickingProgram.loadVertexShader(":/Base/shader/picking.vert");
-        pickingProgram.loadFragmentShader(":/Base/shader/picking.frag");
-        pickingProgram.link();
+        nolightingProgram.loadVertexShader(":/Base/shader/nolighting.vert");
+        nolightingProgram.loadFragmentShader(":/Base/shader/nolighting.frag");
+        nolightingProgram.link();
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
@@ -356,8 +359,8 @@ bool GLSLSceneRendererImpl::initializeGL()
     SpecularColorLocation = phongProgram.getUniformLocation("specularColor");
     ShininessLocation = phongProgram.getUniformLocation("shininess");
 
-    PickingMVPLocation = pickingProgram.getUniformLocation("MVP");
-    PickingIDLocation = pickingProgram.getUniformLocation("pickingID");
+    nolightingMVPLocation = nolightingProgram.getUniformLocation("MVP");
+    nolightingColorLocation = nolightingProgram.getUniformLocation("color");
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
@@ -407,16 +410,17 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
     
     if(doRenderingCommands){
         if(isPicking){
-            pickingProgram.use();
+            currentProgram = &nolightingProgram;
             currentNodePath.clear();
             pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            phongProgram.use();
+            currentProgram = &phongProgram;
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        currentProgram->use();
     }
 
     self->extractPreproNodes();
@@ -609,13 +613,16 @@ const Vector3& GLSLSceneRenderer::pickedPoint() const
 
 inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)
 {
-    float r = (id & 0xff) / 255.0;
-    float g = ((id >> 8) & 0xff) / 255.0;
-    float b = ((id >> 16) & 0xff) / 255.0;
+    Vector4f color;
+    color[0] = (id & 0xff) / 255.0;
+    color[1] = ((id >> 8) & 0xff) / 255.0;
+    color[2] = ((id >> 16) & 0xff) / 255.0;
+    color[3] = 1.0f;
     if(SHOW_IMAGE_FOR_PICKING){
-        b = 1.0f;
+        color[2] = 1.0f;
     }
-    glUniform3f(PickingIDLocation, r, g, b);
+    //glUniform3f(nolightingColorLocation, r, g, b);
+    setNolightingColor(color);
 }
         
 
@@ -655,6 +662,14 @@ void GLSLSceneRenderer::visitGroup(SgGroup* group)
 }
 
 
+void GLSLSceneRenderer::visitUnpickableGroup(SgUnpickableGroup* group)
+{
+    if(!impl->isPicking){
+        visitGroup(group);
+    }
+}
+
+
 void GLSLSceneRenderer::visitInvariantGroup(SgInvariantGroup* group)
 {
     impl->visitInvariantGroup(group);
@@ -681,7 +696,7 @@ void GLSLSceneRenderer::visitTransform(SgTransform* transform)
 }
 
 
-void GLSLSceneRendererImpl::setRenderingUniformMatrixVariables()
+void GLSLSceneRendererImpl::setLightingTransformMatrices()
 {
     const Affine3f MV = modelViewStack.back().cast<float>();
     const Matrix3f N = MV.linear();
@@ -700,41 +715,59 @@ void GLSLSceneRendererImpl::setRenderingUniformMatrixVariables()
 }
 
 
-void GLSLSceneRendererImpl::setPickingUniformMatrixVariables()
+void GLSLSceneRendererImpl::flushNolightingTransformMatrices()
 {
     const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
-    glUniformMatrix4fv(PickingMVPLocation, 1, GL_FALSE, MVP.data());
+    glUniformMatrix4fv(nolightingMVPLocation, 1, GL_FALSE, MVP.data());
 }
 
 
-void GLSLSceneRendererImpl::visitShape(SgShape* shape)
+HandleSet* GLSLSceneRendererImpl::getOrCreateHandleSet(SgObject* obj)
 {
-    SgMesh* mesh = shape->mesh();
-    if(mesh){
-        if(mesh->hasVertices()){
-            SgMaterial* material = shape->material();
-            pushPickID(shape);
-            if(!isPicking){
-                renderMaterial(material);
-            }
-            renderMesh(mesh, false);
-            popPickID();
-        }
+    HandleSet* handleSet;
+    HandleSetMap::iterator p = currentHandleSetMap->find(obj);
+    if(p == currentHandleSetMap->end()){
+        p = currentHandleSetMap->insert(HandleSetMap::value_type(obj, new HandleSet)).first;
     }
-}
+    handleSet = p->second;
 
-
-void GLSLSceneRenderer::visitUnpickableGroup(SgUnpickableGroup* group)
-{
-    if(!impl->isPicking){
-        visitGroup(group);
+    if(isCheckingUnusedHandleSets){
+        nextHandleSetMap->insert(*p);
     }
+
+    if(currentProgram == &phongProgram){
+        setLightingTransformMatrices();
+    } else {
+        flushNolightingTransformMatrices();
+    }
+
+    glBindVertexArray(handleSet->vao);
+
+    return handleSet;
 }
 
 
 void GLSLSceneRenderer::visitShape(SgShape* shape)
 {
     impl->visitShape(shape);
+}
+
+
+void GLSLSceneRendererImpl::visitShape(SgShape* shape)
+{
+    SgMesh* mesh = shape->mesh();
+    if(mesh && mesh->hasVertices()){
+        if(!isPicking){
+            renderMaterial(shape->material());
+        }
+        HandleSet* handleSet = getOrCreateHandleSet(mesh);
+        if(!handleSet->numVertices){
+            createMeshVertexArray(mesh, handleSet);
+        }
+        pushPickID(shape);
+        glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+        popPickID();
+    }
 }
 
 
@@ -748,19 +781,25 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
 
     Vector4f color;
     color << material->diffuseColor(), alpha;
-    setDiffuseColor(color);
-        
-    color.head<3>() *= material->ambientIntensity();
-    setAmbientColor(color);
 
-    color << material->emissiveColor(), alpha;
-    setEmissionColor(color);
-    
-    color << material->specularColor(), alpha;
-    setSpecularColor(color);
-    
-    float shininess = (127.0 * material->shininess()) + 1.0;
-    setShininess(shininess);
+    if(currentProgram == &nolightingProgram){
+        setNolightingColor(color);
+    } else {
+
+        setDiffuseColor(color);
+        
+        color.head<3>() *= material->ambientIntensity();
+        setAmbientColor(color);
+        
+        color << material->emissiveColor(), alpha;
+        setEmissionColor(color);
+        
+        color << material->specularColor(), alpha;
+        setSpecularColor(color);
+        
+        float shininess = (127.0 * material->shininess()) + 1.0;
+        setShininess(shininess);
+    }
 }
 
 
@@ -773,37 +812,6 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
 void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 {
 
-}
-
-
-void GLSLSceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
-{
-    bool isNewMesh = false;
-    HandleSet* handleSet;
-    HandleSetMap::iterator p = currentHandleSetMap->find(mesh);
-    if(p == currentHandleSetMap->end()){
-        p = currentHandleSetMap->insert(HandleSetMap::value_type(mesh, new HandleSet)).first;
-        isNewMesh = true;
-    }
-    handleSet = p->second;
-
-    if(isCheckingUnusedHandleSets){
-        nextHandleSetMap->insert(*p);
-    }
-
-    if(!isPicking){
-        setRenderingUniformMatrixVariables();
-    } else {
-        setPickingUniformMatrixVariables();
-    }
-
-    glBindVertexArray(handleSet->vao);
-
-    if(isNewMesh){
-        createMeshVertexArray(mesh, handleSet);
-    }
-
-    glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
 }
 
 
@@ -884,16 +892,10 @@ void GLSLSceneRendererImpl::visitPointSet(SgPointSet* pointSet)
     if(s > 0.0){
         setPointSize(s);
     }
-    renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
+    //renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
     if(s > 0.0){
         setPointSize(s);
     }
-}
-
-
-void GLSLSceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode)
-{
-    
 }
 
 
@@ -906,30 +908,51 @@ void GLSLSceneRenderer::visitLineSet(SgLineSet* lineSet)
 void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 {
     const int n = lineSet->numLines();
-    if(!lineSet->hasVertices() || (n <= 0)){
-        return;
-    }
 
-    /*
-    const SgVertexArray& orgVertices = *lineSet->vertices();
-    SgVertexArray& vertices = buf->vertices;
-    vertices.clear();
-    vertices.reserve(n * 2);
-    for(int i=0; i < n; ++i){
-        SgLineSet::LineRef line = lineSet->line(i);
-        vertices.push_back(orgVertices[line[0]]);
-        vertices.push_back(orgVertices[line[1]]);
-    }
+    if(lineSet->hasVertices() && n > 0){
 
-    const double w = lineSet->lineWidth();
-    if(w > 0.0){
-        setLineWidth(w);
+        if(isPicking){
+            pushPickID(lineSet);
+        } else {
+            currentProgram = &nolightingProgram;
+            currentProgram->use();
+            renderMaterial(lineSet->material());
+        }
+
+        HandleSet* handleSet = getOrCreateHandleSet(lineSet);
+        if(!handleSet->numVertices){
+            const SgVertexArray& orgVertices = *lineSet->vertices();
+            SgVertexArray vertices;
+            handleSet->numVertices = n * 2;
+            vertices.reserve(handleSet->numVertices);
+            for(int i=0; i < n; ++i){
+                SgLineSet::LineRef line = lineSet->line(i);
+                vertices.push_back(orgVertices[line[0]]);
+                vertices.push_back(orgVertices[line[1]]);
+            }
+            handleSet->genBuffers(1);
+            glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(0));
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+            glEnableVertexAttribArray(0);
+        }
+        
+        const double w = lineSet->lineWidth();
+        if(w > 0.0){
+            setLineWidth(w);
+        } else {
+            setLineWidth(defaultLineWidth);
+        }
+        
+        glDrawArrays(GL_LINES, 0, handleSet->numVertices);
+
+        if(isPicking){
+            popPickID();
+        } else {
+            currentProgram = &phongProgram;
+            currentProgram->use();
+        }
     }
-    renderPlot(lineSet, vertices, GL_LINES);
-    if(w > 0.0){
-        setLineWidth(defaultLineWidth);
-    }
-    */
 }
 
 
@@ -969,24 +992,26 @@ void GLSLSceneRendererImpl::clearGLState()
     emissionColor << 0.0f, 0.0f, 0.0f, 0.0f;
     specularColor << 0.0f, 0.0f, 0.0f, 0.0f;
     shininess = 0.0f;
+
+    lineWidth = defaultLineWidth;
 }
 
 
-void GLSLSceneRendererImpl::setColor(const Vector4f& color)
+void GLSLSceneRendererImpl::setNolightingColor(const Vector4f& color)
 {
-    if(!isPicking){
-        if(!stateFlag[CURRENT_COLOR] || color != currentColor){
-            //glColor4f(color[0], color[1], color[2], color[3]);
-            currentColor = color;
-            stateFlag.set(CURRENT_COLOR);
+    //if(!isPicking){
+        if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
+            glUniform4fv(nolightingColorLocation, 1, color.data());
+            currentNolightingColor = color;
+            stateFlag.set(CURRENT_NOLIGHTING_COLOR);
         }
-    }
+//}
 }
 
 
 void GLSLSceneRenderer::setColor(const Vector4f& color)
 {
-    impl->setColor(color);
+    impl->setNolightingColor(color);
 }
 
 
@@ -1284,11 +1309,9 @@ void GLSLSceneRenderer::setDefaultPointSize(double size)
 
 void GLSLSceneRenderer::setDefaultLineWidth(double width)
 {
-    /*
     if(width != impl->defaultLineWidth){
         impl->defaultLineWidth = width;
     }
-    */
 }
 
 

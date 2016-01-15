@@ -30,10 +30,8 @@
 
   <file>shader/phong.vert</file>
   <file>shader/phong.frag</file>
-  <file>shader/line.vert</file>
-  <file>shader/line.frag</file>
-  <file>shader/picking.vert</file>
-  <file>shader/picking.frag</file>
+  <file>shader/nolighting.vert</file>
+  <file>shader/nolighting.frag</file>
 
   <file alias="LICENSE">../../LICENSE</file>
 
