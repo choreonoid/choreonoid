@@ -60,10 +60,15 @@ public:
     GLSLUniformBlockBuffer();
     ~GLSLUniformBlockBuffer();
     
-    void initialize(GLSLProgram& program, const std::string& blockName);
+    bool initialize(GLSLProgram& program, const std::string& blockName);
 
-    GLint getOffset(const char* name);    
+    /**
+       @return uniform index
+    */
+    GLuint checkUniform(const char* name);    
 
+    GLuint checkUniformMatrix(const char* name);    
+    
     void bind(GLSLProgram& program, GLuint bindingPoint) {
         GLuint blockIndex = glGetUniformBlockIndex(program.handle(), blockName.c_str());
         glUniformBlockBinding(program.handle(), blockIndex, bindingPoint);
@@ -73,32 +78,32 @@ public:
         glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, uboHandle);
     }
 
-    void write(GLint offset, float v){
-        std::memcpy(&localBuffer[offset], &v, sizeof(v));
+    void write(GLuint index, float v){
+        std::memcpy(&localBuffer[infos[index].offset], &v, sizeof(v));
     }
 
-    void write(GLint offset, const Vector3f& v){
-        std::memcpy(&localBuffer[offset], v.data(), sizeof(v));
+    void write(GLuint index, const Vector3f& v){
+        std::memcpy(&localBuffer[infos[index].offset], v.data(), sizeof(v));
     }
 
-    void write(GLint offset, const Vector4f& v){
-        std::memcpy(&localBuffer[offset], v.data(), sizeof(v));
+    void write(GLuint index, const Vector4f& v){
+        std::memcpy(&localBuffer[infos[index].offset], v.data(), sizeof(v));
     }
 
-    void write(GLint offset, const Matrix3f& M){
-        const int s3 = 3 * sizeof(Matrix3f::Scalar);
-        const int s4 = 4 * sizeof(Matrix3f::Scalar);
-        std::memcpy(&localBuffer[offset       ], &M(0, 0), s3);
-        std::memcpy(&localBuffer[offset + s4  ], &M(0, 1), s3);
-        std::memcpy(&localBuffer[offset + s4*2], &M(0, 2), s3);
+    void write(GLuint index, const Matrix3f& M){
+        const UniformInfo& info = infos[index];
+        const int size = 3 * sizeof(Matrix3f::Scalar);
+        std::memcpy(&localBuffer[info.offset], &M(0, 0), size);
+        std::memcpy(&localBuffer[info.offset + info.matrixStrides], &M(0, 1), size);
+        std::memcpy(&localBuffer[info.offset + info.matrixStrides * 2], &M(0, 2), size);
     }
 
-    void write(GLint offset, const Matrix4f& M){
-        std::memcpy(&localBuffer[offset], M.data(), sizeof(M));
+    void write(GLuint index, const Matrix4f& M){
+        std::memcpy(&localBuffer[infos[index].offset], M.data(), sizeof(M));
     }
     
-    void write(GLint offset, const Affine3f& T){
-        std::memcpy(&localBuffer[offset], T.matrix().data(), sizeof(T));
+    void write(GLuint index, const Affine3f& T){
+        std::memcpy(&localBuffer[infos[index].offset], T.matrix().data(), sizeof(T));
     }
 
     void flush(){
@@ -108,8 +113,13 @@ public:
 
 private:
     GLuint uboHandle;
-    GLuint lastProgramHandle;
     std::vector<GLubyte> localBuffer;
+    struct UniformInfo {
+        GLint offset;
+        GLint matrixStrides;
+    };
+    std::vector<UniformInfo> infos;
+    GLuint lastProgramHandle;
     std::string blockName;
 };
 

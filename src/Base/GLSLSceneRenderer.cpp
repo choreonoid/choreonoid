@@ -92,18 +92,24 @@ public:
 
     GLSLProgram phongProgram;
 
-    GLSLUniformBlockBuffer matrixBlockBuffer;
-    GLint modelViewMatrixOffset;
-    GLint normalMatrixOffset;
-    GLint MVPOffset;
+    bool useUniformBlockToPassTransformationMatrices;
+    
+    GLSLUniformBlockBuffer transformBlockBuffer;
+    GLint modelViewMatrixIndex;
+    GLint normalMatrixIndex;
+    GLint MVPIndex;
 
-    GLuint LightIntensityLocation;
-    GLuint LightPositionLocation;
+    GLint ModelViewMatrixLocation;
+    GLint NormalMatrixLocation;
+    GLint MVPLocation;
+
+    GLint LightIntensityLocation;
+    GLint LightPositionLocation;
 
     GLSLProgram pickingProgram;
 
-    GLuint PickingMVPLocation;
-    GLuint PickingIDLocation;
+    GLint PickingMVPLocation;
+    GLint PickingIDLocation;
     
     bool isPicking;
 
@@ -133,10 +139,10 @@ public:
     float shininess;
     float lastAlpha;
 
-    GLuint DiffuseColorLocation;
-    GLuint AmbientColorLocation;
-    GLuint SpecularColorLocation;
-    GLuint ShininessLocation;
+    GLint DiffuseColorLocation;
+    GLint AmbientColorLocation;
+    GLint SpecularColorLocation;
+    GLint ShininessLocation;
 
     SgMaterialPtr defaultMaterial;
 
@@ -327,23 +333,31 @@ bool GLSLSceneRendererImpl::initializeGL()
         return false;
     }
 
-    matrixBlockBuffer.initialize(phongProgram, "MatrixBlock");
-    modelViewMatrixOffset = matrixBlockBuffer.getOffset("modelViewMatrix");
-    normalMatrixOffset = matrixBlockBuffer.getOffset("normalMatrix");
-    MVPOffset = matrixBlockBuffer.getOffset("MVP");
-    matrixBlockBuffer.bind(phongProgram, 1);
-    matrixBlockBuffer.bindBufferBase(1);
+    useUniformBlockToPassTransformationMatrices = 
+        transformBlockBuffer.initialize(phongProgram, "TransformBlock");
 
-    LightIntensityLocation = phongProgram.getUniformLocation("LightIntensity");
-    LightPositionLocation = phongProgram.getUniformLocation("LightPosition");
+    if(useUniformBlockToPassTransformationMatrices){
+        modelViewMatrixIndex = transformBlockBuffer.checkUniformMatrix("modelViewMatrix");
+        normalMatrixIndex = transformBlockBuffer.checkUniformMatrix("normalMatrix");
+        MVPIndex = transformBlockBuffer.checkUniformMatrix("MVP");
+        transformBlockBuffer.bind(phongProgram, 1);
+        transformBlockBuffer.bindBufferBase(1);
+    } else {
+        ModelViewMatrixLocation = phongProgram.getUniformLocation("modelViewMatrix");
+        NormalMatrixLocation = phongProgram.getUniformLocation("normalMatrix");
+        MVPLocation = phongProgram.getUniformLocation("MVP");
+    }
+
+    LightIntensityLocation = phongProgram.getUniformLocation("lightIntensity");
+    LightPositionLocation = phongProgram.getUniformLocation("lightPosition");
     
-    DiffuseColorLocation = phongProgram.getUniformLocation("DiffuseColor");
-    AmbientColorLocation = phongProgram.getUniformLocation("AmbientColor");
-    SpecularColorLocation = phongProgram.getUniformLocation("SpecularColor");
-    ShininessLocation = phongProgram.getUniformLocation("Shininess");
+    DiffuseColorLocation = phongProgram.getUniformLocation("diffuseColor");
+    AmbientColorLocation = phongProgram.getUniformLocation("ambientColor");
+    SpecularColorLocation = phongProgram.getUniformLocation("specularColor");
+    ShininessLocation = phongProgram.getUniformLocation("shininess");
 
     PickingMVPLocation = pickingProgram.getUniformLocation("MVP");
-    PickingIDLocation = pickingProgram.getUniformLocation("PickingID");
+    PickingIDLocation = pickingProgram.getUniformLocation("pickingID");
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
@@ -673,10 +687,16 @@ void GLSLSceneRendererImpl::setRenderingUniformMatrixVariables()
     const Matrix3f N = MV.linear();
     const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
 
-    matrixBlockBuffer.write(modelViewMatrixOffset, MV);
-    matrixBlockBuffer.write(normalMatrixOffset, N);
-    matrixBlockBuffer.write(MVPOffset, MVP);
-    matrixBlockBuffer.flush();
+    if(useUniformBlockToPassTransformationMatrices){
+        transformBlockBuffer.write(modelViewMatrixIndex, MV);
+        transformBlockBuffer.write(normalMatrixIndex, N);
+        transformBlockBuffer.write(MVPIndex, MVP);
+        transformBlockBuffer.flush();
+    } else {
+        glUniformMatrix4fv(ModelViewMatrixLocation, 1, GL_FALSE, MV.data());
+        glUniformMatrix3fv(NormalMatrixLocation, 1, GL_FALSE, N.data());
+        glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
+    }
 }
 
 

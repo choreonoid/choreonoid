@@ -1,9 +1,9 @@
 #version 330
 
-uniform vec3 PickingID;
+uniform vec3 pickingID;
 
-layout(location = 0) out vec4 FragColor;
+layout(location = 0) out vec4 color;
 
 void main() {
-    FragColor = vec4(PickingID, 1.0);
+    color = vec4(pickingID, 1.0);
 }

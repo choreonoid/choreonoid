@@ -190,13 +190,16 @@ GLSLUniformBlockBuffer::~GLSLUniformBlockBuffer()
 }
 
 
-void GLSLUniformBlockBuffer::initialize(GLSLProgram& program, const std::string& blockName)
+bool GLSLUniformBlockBuffer::initialize(GLSLProgram& program, const std::string& blockName)
 {
     this->blockName = blockName;
     
     lastProgramHandle = program.handle();
     
     GLuint blockIndex = glGetUniformBlockIndex(program.handle(), blockName.c_str());
+    if(blockIndex == GL_INVALID_INDEX){
+        return false;
+    }
     
     GLint blockSize;
     glGetActiveUniformBlockiv(program.handle(), blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
@@ -205,14 +208,30 @@ void GLSLUniformBlockBuffer::initialize(GLSLProgram& program, const std::string&
     glGenBuffers(1, &uboHandle);
     glBindBuffer(GL_UNIFORM_BUFFER, uboHandle);
     glBufferData(GL_UNIFORM_BUFFER, localBuffer.size(), NULL, GL_DYNAMIC_DRAW);
+
+    return true;
 }
 
 
-GLint GLSLUniformBlockBuffer::getOffset(const char* name)
+GLuint GLSLUniformBlockBuffer::checkUniform(const char* name)
 {
     GLuint index;
     glGetUniformIndices(lastProgramHandle, 1, &name, &index);
-    GLint offset;
-    glGetActiveUniformsiv(lastProgramHandle, 1, &index, GL_UNIFORM_OFFSET, &offset);
-    return offset;
+
+    if(index >= infos.size()){
+        infos.resize(index + 1);
+    }
+    
+    glGetActiveUniformsiv(lastProgramHandle, 1, &index, GL_UNIFORM_OFFSET, &(infos[index].offset));
+
+    return index;
+}
+
+
+GLuint GLSLUniformBlockBuffer::checkUniformMatrix(const char* name)
+{
+    GLuint index = checkUniform(name);
+    glGetActiveUniformsiv(lastProgramHandle, 1, &index, GL_UNIFORM_MATRIX_STRIDE, &(infos[index].matrixStrides));
+
+    return index;
 }
