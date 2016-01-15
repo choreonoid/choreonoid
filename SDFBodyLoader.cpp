@@ -414,9 +414,12 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                             jointdata->velocity = limit->Get<double>("velocity");
                         }
                     } else {
-                        // corrupted? (axis element must be have limit element)
-                        jointdata->lower = 0.0;
-                        jointdata->upper = 0.0;
+                        /*
+                         * corrupted? (axis element must be have limit element)
+                         * set values use cnoid::Link constructor's value.
+                         */
+                        jointdata->lower = -std::numeric_limits<double>::max();
+                        jointdata->upper = std::numeric_limits<double>::max();
                         os() << "Warning: '" << jointdata->jointName << "' limit not found" << std::endl;
                     }
                 }
