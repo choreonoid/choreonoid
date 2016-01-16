@@ -499,13 +499,16 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
 
         Link* link = body->createLink();
         link->setName((*it)->jointName);
-        link->setMass((*it)->child->m);
-        link->setCenterOfMass(Vector3((*it)->child->c.pos.x, (*it)->child->c.pos.y, (*it)->child->c.pos.z));
-        link->setInertia((*it)->child->I);
 
         // convert to relative position
-        cnoid::Affine3 m = parent->pose.inverse() * (*it)->child->pose;
-        link->Tb() = m;
+        link->setOffsetTranslation((*it)->child->pose.translation()
+                                   - parent->pose.translation());
+        link->setAccumlatedSegmentRotation((*it)->child->pose.linear());
+
+        link->setMass((*it)->child->m);
+        link->setCenterOfMass(link->Rs()*Vector3((*it)->child->c.pos.x, (*it)->child->c.pos.y, (*it)->child->c.pos.z));
+        link->setInertia(link->Rs()*(*it)->child->I*link->Rs().transpose());
+
         setShape(link, (*it)->child->visualShape, true);
         setShape(link, (*it)->child->collisionShape, false);
         
