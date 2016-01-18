@@ -509,7 +509,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         // convert to relative position
         link->setOffsetTranslation((*it)->child->pose.translation()
                                    - parent->pose.translation());
-        link->setAccumlatedSegmentRotation((*it)->child->pose.linear());
+        link->setAccumulatedSegmentRotation((*it)->child->pose.linear());
 
         link->setMass((*it)->child->m);
         link->setCenterOfMass(link->Rs()*Vector3((*it)->child->c.pos.x, (*it)->child->c.pos.y, (*it)->child->c.pos.z));
