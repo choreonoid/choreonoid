@@ -11,8 +11,10 @@
 #include <QBoxLayout>
 #include <QTextBlock>
 #include <QEventLoop>
+#include <QMimeData>
 #include <boost/algorithm/string.hpp>
 #include <boost/assign.hpp>
+#include <QMimeData>
 #include <list>
 #include "gettext.h"
 

@@ -953,7 +953,7 @@ Item* PhysXSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBody* PhysXSimulatorItem::createSimulationBody(const Body* orgBody)
+SimulationBody* PhysXSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new PhysXBody(*orgBody);
 }
