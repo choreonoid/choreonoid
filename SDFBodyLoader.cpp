@@ -133,6 +133,7 @@ public:
     void convertChildren(Link* plink, JointInfoPtr parent);
 
 private:
+    void decideJointType(Link *link, const std::string name, const std::string type);
     void addModelSearchPath(const char *envname);
     void processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
     SgPosTransformPtr createSgPosTransform(const sdf::Pose &pose, bool isRotation = false);
@@ -448,7 +449,12 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             link->setName((*it)->parentName);
             JointInfoPtr root;
             if((*it)->parentName == "world"){
-                link->setJointType(Link::FIXED_JOINT);
+                decideJointType(link, (*it)->jointName, (*it)->jointType);
+
+                if (link->jointType() != Link::FIXED_JOINT) {
+                    link->setJointType(Link::FREE_JOINT);
+                }
+
                 root = *it;
                 link->Tb() = root->pose;
             }else{
@@ -511,16 +517,10 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
 
         setShape(link, (*it)->child->visualShape, true);
         setShape(link, (*it)->child->collisionShape, false);
-        
-        std::map<std::string, Link::JointType>::iterator it2;
-        it2 = jointTypeMap.find((*it)->jointType);
-        if(it2 != jointTypeMap.end()){
-            link->setJointType(it2->second);
-        } else {
-            os() << "Warning: unable to handle joint type " << (*it)->jointType << " of joint "
-                 << (*it)->jointName << " assume as fixed joint." << std::endl;
-            link->setJointType(Link::FIXED_JOINT);
-        }
+
+        // joint setting
+        decideJointType(link, (*it)->jointName, (*it)->jointType);
+
         if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
             link->setJointAxis(Vector3::Zero());
         } else {
@@ -530,6 +530,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
             link->setJointVelocityRange(getLimitValue(-(*it)->velocity, -maxlimit),
                                         getLimitValue((*it)->velocity, +maxlimit));
         }
+
         // jointid setting
         if (link->jointId() < 0) {
             link->setJointId(numValidJointIds);
@@ -619,6 +620,31 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
     }
 
     return converted;
+}
+
+/**
+ * @brief Decide joint type.
+ * @param[in/out] link Instance of Link.
+ * @param[in] name Joint name.
+ * @param[in] type Joint type of SDF.
+ */
+void SDFBodyLoaderImpl::decideJointType(Link *link, const std::string name, const std::string type)
+{
+    std::map<std::string, Link::JointType>::iterator it;
+
+    if (link != NULL) {
+        it = jointTypeMap.find(type);
+
+        if (it != jointTypeMap.end()) {
+            link->setJointType(it->second);
+        } else {
+            os() << "Warning: unable to handle joint type " << type << " of joint "
+                 << name << " assume as fixed joint." << std::endl;
+            link->setJointType(Link::FIXED_JOINT);
+        }
+    }
+
+    return;
 }
 
 /**
