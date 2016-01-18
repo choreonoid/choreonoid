@@ -7,6 +7,7 @@
 #include <cnoid/Plugin>
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 #include <fcl/collision.h>

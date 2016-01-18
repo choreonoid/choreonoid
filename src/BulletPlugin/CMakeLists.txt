@@ -33,8 +33,8 @@ endif()
 
 add_definitions(${bullet_CFLAGS})
 
-if(${bullet_VERSION} VERSION_GREATER 2.82)
-  add_definitions(-DBT_VER_GT_282)
+if(${bullet_VERSION} VERSION_GREATER 2.81)
+  add_definitions(-DBT_VER_GT_281)
 endif()
 
 include_directories(${bullet_INCLUDE_DIRS})

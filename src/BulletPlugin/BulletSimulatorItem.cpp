@@ -16,6 +16,7 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <btBulletDynamicsCommon.h>
@@ -969,7 +970,7 @@ void BulletBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(size_t i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         btTypedConstraint* joint = bulletLinks[link->index()]->joint;
         btJointFeedback* fb = joint->getJointFeedback();
@@ -1229,8 +1230,8 @@ bool BulletSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>&
             bulletBody->updateForceSensors();
         }
         bulletBody->getKinematicStateFromBullet();
-        if(bulletBody->sensorHelper.hasGyroOrAccelSensors()){
-            bulletBody->sensorHelper.updateGyroAndAccelSensors();
+        if(bulletBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            bulletBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
     return true;
