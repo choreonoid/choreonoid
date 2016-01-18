@@ -116,6 +116,21 @@ public:
 
 typedef boost::intrusive_ptr<VRMLAccelerationSensor> VRMLAccelerationSensorPtr;
 
+ 
+class CNOID_EXPORT VRMLRangeSensor : public VRMLTransform
+{
+public:
+    VRMLRangeSensor();
+    SFInt32     sensorId;
+    SFFloat     scanAngle;
+    SFFloat     scanStep;
+    SFFloat     scanRate;
+    SFFloat     minDistance;
+    SFFloat     maxDistance;
+};
+
+typedef boost::intrusive_ptr<VRMLRangeSensor> VRMLRangeSensorPtr;
+
 };
 
 #endif

@@ -34,6 +34,7 @@ private:
     void writeForceSensorNode(VRMLNodePtr node);
     void writeGyroNode(VRMLNodePtr node);
     void writeAccelerationSensorNode(VRMLNodePtr node);
+    void writeRangeSensorNode(VRMLNodePtr node);
 };
 
 };
