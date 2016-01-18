@@ -431,6 +431,9 @@ endmacro()
 ###############
 macro(setup_qt5)
   find_package(Qt5Core)
+  find_package(Qt5Widgets)
+  find_package(Qt5OpenGL)
+  find_package(Qt5Network)
   set(QT5 TRUE)
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)

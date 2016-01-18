@@ -6,6 +6,7 @@
 #include "BulletCollisionDetector.h"
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
