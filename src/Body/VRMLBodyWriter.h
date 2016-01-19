@@ -29,6 +29,11 @@ private:
     void writeHumanoidNode(VRMLNodePtr node);
     void writeJointNode(VRMLNodePtr node);
     void writeSegmentNode(VRMLNodePtr node);
+    void writeSurfaceNode(VRMLNodePtr node);
+    void writeVisionSensorNode(VRMLNodePtr node);
+    void writeForceSensorNode(VRMLNodePtr node);
+    void writeGyroNode(VRMLNodePtr node);
+    void writeAccelerationSensorNode(VRMLNodePtr node);
 };
 
 };

@@ -4,6 +4,7 @@
 # This model originates from an OpenHRP sample robot model.
 # The original model was written by Ichitaro Kohara (YNL, Univ. of Tokyo),
 # Hirohisa Hirukawa (ETL) and Natsuki Miyata (MEL).
+# The model was modified by the Choreonoid development team.
 
 PROTO Joint [
   exposedField     SFVec3f      center              0 0 0
@@ -163,130 +164,6 @@ PROTO AccelerationSensor [
   }
 }
 
-PROTO PressureSensor [
-  exposedField SFFloat    maxPressure -1
-  exposedField SFVec3f    translation 0 0 0
-  exposedField SFRotation rotation    0 0 1 0
-  exposedField SFInt32    sensorId    -1
-]
-{
-  Transform {
-    translation IS translation
-    rotation    IS rotation
-  }
-}
-
-PROTO PhotoInterrupter [
-  exposedField SFVec3f transmitter 0 0 0
-  exposedField SFVec3f receiver    0 0 0
-  exposedField SFInt32 sensorId    -1
-]
-{
-  Transform{
-    children [
-      Transform{
-        translation IS transmitter
-      }
-      Transform{
-        translation IS receiver
-      }
-    ]
-  }
-}
-
-PROTO CylinderSensorZ [
-    exposedField    SFFloat    maxAngle       -1
-    exposedField    SFFloat    minAngle        0
-    exposedField    MFNode     children        [ ]
-]
-{
-  Transform{
-    rotation 1 0 0 1.5708
-    children [
-      DEF SensorY CylinderSensor{
-        maxAngle IS maxAngle
-        minAngle IS minAngle
-      }
-      DEF AxisY Transform{
-        children [
-          Transform{
-            rotation 1 0 0 -1.5708
-            children IS children
-          }
-        ]
-      }
-    ]
-  }
-  ROUTE SensorY.rotation_changed TO AxisY.set_rotation
-}
-
-PROTO CylinderSensorY [
-    exposedField    SFFloat    maxAngle       -1
-    exposedField    SFFloat    minAngle        0
-    exposedField    MFNode     children        [ ]
-]
-{
-  Transform{
-    rotation 0 1 0 1.5708
-    children [
-      DEF SensorX CylinderSensor{
-        maxAngle IS maxAngle
-        minAngle IS minAngle
-      }
-      DEF AxisX Transform{
-        children [
-          Transform{
-            rotation 0 1 0 -1.5708
-            children IS children
-          }
-        ]
-      }
-    ]
-  }
-  ROUTE SensorX.rotation_changed TO AxisX.set_rotation
-}
-
-PROTO CylinderSensorX [
-    exposedField    SFFloat    maxAngle       -1
-    exposedField    SFFloat    minAngle        0
-    exposedField    MFNode     children        [ ]
-]
-{
-  Transform{
-    rotation 0 0 1 -1.5708
-    children [
-      DEF SensorZ CylinderSensor{
-        maxAngle IS maxAngle
-        minAngle IS minAngle
-      }
-      DEF AxisZ Transform{
-        children [
-          Transform{
-            rotation 0 0 1 1.5708
-            children IS children
-          }
-        ]
-      }
-    ]
-  }
-  ROUTE SensorZ.rotation_changed TO AxisZ.set_rotation
-}
-
-NavigationInfo {
-  avatarSize    0.5
-  headlight     TRUE
-  type  ["EXAMINE", "ANY"]
-}
-
-Background {
-  skyColor 0.4 0.6 0.4
-}
-
-Viewpoint {
-  position    3 0 0.835
-  orientation 0.5770 0.5775 0.5775 2.0935
-}
-
 DEF SR1 Humanoid {
   name "SR1"
 
@@ -369,7 +246,7 @@ DEF SR1 Humanoid {
                         appearance USE WAIST_LINK2_APP
                         geometry Box { size 0.05 0.05 0.275 }
                       }
-                    } # Transform
+                    }
                   ]
                 } # segment WAIST_LINK2
 
@@ -418,8 +295,8 @@ DEF SR1 Humanoid {
                               }
                             }
                             geometry Box { size 0.31 0.16 0.16 }
-                          } # shape
-                        } # transform
+                          }
+                        }
                       ]
                     } # segment WAIST_LINK3
                     
@@ -637,7 +514,7 @@ DEF SR1 Humanoid {
                                                           appearance USE ARM_APP7
                                                           geometry Box { size 0.05 0.05 0.175 }
                                                         }
-                                                      }# Transform
+                                                      }
                                                     ]
                                                   }
                                                 } # Segment LARM_LINK7
@@ -905,29 +782,36 @@ DEF SR1 Humanoid {
                                      centerOfMass          0.28 0 -0.2
                                      mass                  1.9
                                      momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
-                                     children DEF LEG_SHAPE6 Transform {
-                                       children [
-                                         Transform {
-					   translation 0.1 0 0
-                                           rotation 0 0 1 1.5708
-                                           children Shape {
-                                             appearance DEF LEG_APP6 Appearance {
-                                               material      Material {
-                                                 diffuseColor 0.0 0.5 0.0
-                                               }
-                                             }
-                                             geometry Cylinder { radius 0.05 height 0.1 }
-                                           }
-                                         }
-                                         Transform {
-                                           translation       0.055 0 -0.05
-                                           children  Shape {
-                                             appearance USE LEG_APP6
-                                             geometry Box { size 0.25 0.14 0.01 }
-                                           } # Shape
-                                         }#Transform
-                                       ]
-                                     }
+                                     children [
+				       DEF LeftAnkleForceSensor ForceSensor {
+					 translation 0 0 0
+					 rotation 1 0 0 0
+					 sensorId 0
+				       }
+				       DEF LEG_SHAPE6 Transform {
+					 children [
+					   Transform {
+					     translation 0.1 0 0
+					     rotation 0 0 1 1.5708
+					     children Shape {
+					       appearance DEF LEG_APP6 Appearance {
+						 material      Material {
+						   diffuseColor 0.0 0.5 0.0
+						 }
+					       }
+					       geometry Cylinder { radius 0.05 height 0.1 }
+					     }
+					   }
+					   Transform {
+					     translation       0.055 0 -0.05
+					     children  Shape {
+					       appearance USE LEG_APP6
+					       geometry Box { size 0.25 0.14 0.01 }
+					     }
+					   }
+					 ]
+				       }
+				     ]
                                    } # Segment LLEG_LINK6
                                  ]
                                } # Joint LLEG_ANKLE_R
@@ -1019,6 +903,11 @@ DEF SR1 Humanoid {
                                   mass                  1.9
                                   momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                   children [
+				    DEF RightAnkleForceSensor ForceSensor {
+				      translation 0 0 0
+				      rotation 1 0 0 0
+				      sensorId 1
+				    }
                                     USE LEG_SHAPE6
                                   ]
                                 } # Segment RLEG_LINK6
@@ -1115,4 +1004,3 @@ DEF SR1 Humanoid {
     USE RLEG_LINK6
   ]
 }
-

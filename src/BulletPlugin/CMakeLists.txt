@@ -33,8 +33,8 @@ endif()
 
 add_definitions(${bullet_CFLAGS})
 
-if(${bullet_VERSION} VERSION_GREATER 2.82)
-  add_definitions(-DBT_VER_GT_282)
+if(${bullet_VERSION} VERSION_GREATER 2.81)
+  add_definitions(-DBT_VER_GT_281)
 endif()
 
 include_directories(${bullet_INCLUDE_DIRS})
@@ -55,8 +55,11 @@ set(sources
 set(headers
   )
 
-QT4_WRAP_CPP(sources
-  )
+
+if(NOT QT5)
+  QT4_WRAP_CPP(sources
+    )
+endif()
 
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})

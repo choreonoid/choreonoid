@@ -18,6 +18,11 @@ VRMLJoint::VRMLJoint() : VRMLTransform()
     jointId = -1;
     jointType = "";
     jointAxis << 0.0, 0.0, 1.0;
+    gearRatio = 1;
+    rotorInertia = 0;
+    rotorResistor = 0;
+    torqueConst = 1;
+    encoderPulse = 1;
 }
 
 
@@ -29,12 +34,18 @@ VRMLSegment::VRMLSegment() : VRMLGroup()
 }
 
 
+VRMLSurface::VRMLSurface()
+{
+}
+
+
 VRMLVisionSensor::VRMLVisionSensor() : VRMLTransform()
 {
     sensorId = -1;
     type = "NONE";
     width = 320;
     height = 240;
+    frameRate = 30;
     fieldOfView = 0.785398;
     frontClipDistance = 0.01;
     backClipDistance = 10.0;
@@ -48,3 +59,16 @@ VRMLForceSensor::VRMLForceSensor() : VRMLTransform()
     maxTorque << -1, -1, -1;
 }
 
+
+VRMLGyro::VRMLGyro() : VRMLTransform()
+{
+    sensorId = -1;
+    maxAngularVelocity << -1, -1, -1;
+}
+
+
+VRMLAccelerationSensor::VRMLAccelerationSensor() : VRMLTransform()
+{
+    sensorId = -1;
+    maxAcceleration << -1, -1, -1;
+}

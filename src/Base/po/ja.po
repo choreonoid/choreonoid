@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-13 23:36+0900\n"
+"POT-Creation-Date: 2015-12-28 13:08+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,9 +17,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: AbstractSeqItem.cpp:59 MultiSeqItemCreationPanel.cpp:46
+#: AbstractSeqItem.cpp:59 MovieRecorder.cpp:376
+#: MultiSeqItemCreationPanel.cpp:46
 msgid "Frame rate"
-msgstr "フレームレート:"
+msgstr "フレームレート"
 
 #: AbstractSeqItem.cpp:60
 msgid "Offset time"
@@ -41,11 +42,11 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-#: App.cpp:233 App.cpp:387
+#: App.cpp:231 App.cpp:385
 msgid "About Choreonoid"
 msgstr "Choreonoid について"
 
-#: App.cpp:237
+#: App.cpp:235
 msgid "Vertical Sync"
 msgstr "垂直同期"
 
@@ -64,7 +65,7 @@ msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:912 ItemManager.cpp:1131
 #: PluginManager.cpp:653 ProjectManager.cpp:477 ProjectManager.cpp:502
-#: TaskView.cpp:270
+#: TaskView.cpp:269
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -153,7 +154,7 @@ msgstr "速度軌道のプロット"
 msgid "Plot acceleration trajectories"
 msgstr "加速度軌道のプロット"
 
-#: GraphBar.cpp:143 MovieRecorder.cpp:371 SceneBar.cpp:147 TimeBar.cpp:330
+#: GraphBar.cpp:143 MovieRecorder.cpp:455 SceneBar.cpp:147 TimeBar.cpp:330
 msgid "Show the config dialog"
 msgstr "設定ダイアログの表示"
 
@@ -258,7 +259,7 @@ msgstr "一時的"
 msgid "Refs"
 msgstr "参照数"
 
-#: ItemManager.cpp:174 ViewManager.cpp:240
+#: ItemManager.cpp:174 ViewManager.cpp:245
 msgid "Name:"
 msgstr "名前"
 
@@ -306,11 +307,11 @@ msgstr "アイテム$"
 msgid "Create New %1"
 msgstr "新しい%1の生成"
 
-#: ItemManager.cpp:597 ViewManager.cpp:246
+#: ItemManager.cpp:597 ViewManager.cpp:251
 msgid "&Create"
 msgstr "生成(&C)"
 
-#: ItemManager.cpp:600 PathVariableEditor.cpp:105 ViewManager.cpp:251
+#: ItemManager.cpp:600 PathVariableEditor.cpp:105 ViewManager.cpp:256
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
 
@@ -572,121 +573,141 @@ msgstr "メッセージ"
 msgid "Warning"
 msgstr "警告"
 
-#: MovieGenerator.cpp:99 MovieGenerator.cpp:107
-msgid "Movie Generator"
-msgstr "動画用連番ファイルの作成"
+#: MovieRecorder.cpp:70
+msgid "O"
+msgstr ""
 
-#: MovieGenerator.cpp:119 MovieRecorder.cpp:238
-msgid "Target view:"
-msgstr "対象ビュー"
+#: MovieRecorder.cpp:73
+msgid "*"
+msgstr ""
 
-#: MovieGenerator.cpp:120 MovieGenerator.cpp:277
-msgid "Not specified"
-msgstr "未設定"
-
-#: MovieGenerator.cpp:126 MovieRecorder.cpp:270 MultiPointSetItem.cpp:515
-msgid "Directory"
-msgstr "ディレクトリ"
-
-#: MovieGenerator.cpp:131 MovieRecorder.cpp:275
-msgid "Select"
-msgstr "選択"
-
-#: MovieGenerator.cpp:138 MovieRecorder.cpp:285
-msgid "Basename"
-msgstr "ベースファイル名"
-
-#: MovieGenerator.cpp:145
-msgid "Start Time"
-msgstr "開始時刻"
-
-#: MovieGenerator.cpp:151
-msgid "Finish Time"
-msgstr "終了時刻"
-
-#: MovieGenerator.cpp:169 MovieRecorder.cpp:323
-msgid "Image size"
-msgstr "画像サイズ"
-
-#: MovieGenerator.cpp:187
-msgid "&Generate"
-msgstr "生成(&G)"
-
-#: MovieGenerator.cpp:193
-msgid "&Capture"
-msgstr "キャプチャー(&C)"
-
-#: MovieGenerator.cpp:198 MovieRecorder.cpp:345
-msgid "&Stop"
-msgstr "停止(&S)"
-
-#: MovieGenerator.cpp:288 MovieRecorder.cpp:498
-msgid "Select Directory"
-msgstr "ディレクトリの選択"
-
-#: MovieGenerator.cpp:325 MovieRecorder.cpp:651
-msgid "Please set a directory to output image files."
-msgstr "画像ファイルを出力するディレクトリを指定してください。"
-
-#: MovieGenerator.cpp:331 MovieRecorder.cpp:657
-msgid "%1% is not a directory."
-msgstr "%1% はディレクトリではありません。"
-
-#: MovieGenerator.cpp:402 MovieRecorder.cpp:718
-msgid "Saving an image to \"%1%\" failed."
-msgstr "画像を\"%1%\"に保存"
-
-#: MovieRecorder.cpp:185 MovieRecorder.cpp:232
+#: MovieRecorder.cpp:259 MovieRecorder.cpp:318
 msgid "Movie Recorder"
 msgstr "動画レコーダ"
 
-#: MovieRecorder.cpp:244
+#: MovieRecorder.cpp:282
+msgid "Offline"
+msgstr "オフライン"
+
+#: MovieRecorder.cpp:283
+msgid "Online"
+msgstr "オンライン"
+
+#: MovieRecorder.cpp:284
+msgid "Direct"
+msgstr "ダイレクト"
+
+#: MovieRecorder.cpp:300
+msgid "Recording of %1% has been started with the %2% mode."
+msgstr "%2%モードによる%1%の録画を開始しました。"
+
+#: MovieRecorder.cpp:324
+msgid "Target view:"
+msgstr "対象ビュー"
+
+#: MovieRecorder.cpp:330
 msgid "Show the marker"
 msgstr "マーカ表示"
 
-#: MovieRecorder.cpp:253
+#: MovieRecorder.cpp:339
 msgid "Recording mode: "
 msgstr "録画モード"
 
-#: MovieRecorder.cpp:255
-msgid "Initiative"
-msgstr "主導"
+#: MovieRecorder.cpp:354 MultiPointSetItem.cpp:515
+msgid "Directory"
+msgstr "ディレクトリ"
 
-#: MovieRecorder.cpp:259
-msgid "Passive"
-msgstr "受動"
+#: MovieRecorder.cpp:359
+msgid "Select"
+msgstr "選択"
 
-#: MovieRecorder.cpp:262
-msgid "Direct"
-msgstr "直接"
+#: MovieRecorder.cpp:369
+msgid "Basename"
+msgstr "ベースファイル名"
 
-#: MovieRecorder.cpp:303
+#: MovieRecorder.cpp:382
+msgid "[fps]"
+msgstr ""
+
+#: MovieRecorder.cpp:387
 msgid "Start time"
 msgstr "開始時刻"
 
-#: MovieRecorder.cpp:312
+#: MovieRecorder.cpp:393 MovieRecorder.cpp:402
+msgid "[s]"
+msgstr "[秒]"
+
+#: MovieRecorder.cpp:396
 msgid "Finish time"
 msgstr "終了時刻"
 
-#: MovieRecorder.cpp:340
+#: MovieRecorder.cpp:407
+msgid "Image size"
+msgstr "画像サイズ"
+
+#: MovieRecorder.cpp:423
+msgid "Capture the mouse cursor"
+msgstr "マウスカーソルもキャプチャする"
+
+#: MovieRecorder.cpp:432
 msgid "&Record"
 msgstr "録画(&R)"
 
-#: MovieRecorder.cpp:350
-msgid "&Close"
-msgstr "完了(&C)"
-
-#: MovieRecorder.cpp:360
+#: MovieRecorder.cpp:443
 msgid "MovieRecorderBar"
 msgstr "動画レコーダバー"
 
-#: MovieRecorder.cpp:363
+#: MovieRecorder.cpp:447
 msgid "Toggle Recording"
 msgstr "録画"
 
-#: MovieRecorder.cpp:367
+#: MovieRecorder.cpp:451
 msgid "Toggle Target View Marker"
 msgstr "対象ビューのマーカを表示"
+
+#: MovieRecorder.cpp:600
+msgid "Select Directory"
+msgstr "ディレクトリの選択"
+
+#: MovieRecorder.cpp:662
+msgid "Target view is not specified."
+msgstr ""
+
+#: MovieRecorder.cpp:670
+msgid "Please set a directory to output image files."
+msgstr "画像ファイルを出力するディレクトリを指定してください。"
+
+#: MovieRecorder.cpp:676
+msgid "%1% is not a directory."
+msgstr "%1% はディレクトリではありません。"
+
+#: MovieRecorder.cpp:751
+msgid "The online mode recording for %1% is ready."
+msgstr "オンラインモードによる%1%の録画を待機しています。"
+
+#: MovieRecorder.cpp:954
+msgid "Saving an image to \"%1%\" failed."
+msgstr "画像を\"%1%\"に保存"
+
+#: MovieRecorder.cpp:988
+msgid "Outputting sequential image files..."
+msgstr "連番画像ファイルを出力中…"
+
+#: MovieRecorder.cpp:988
+msgid "Abort Output"
+msgstr "出力中止"
+
+#: MovieRecorder.cpp:989
+msgid "Movie Recorder's Output Status"
+msgstr "動画レコーダの出力状況"
+
+#: MovieRecorder.cpp:1018
+msgid "Recording of %1% has been finished."
+msgstr "%1%の録画が終了しました。"
+
+#: MovieRecorder.cpp:1020
+msgid "Recording of %1% has been stopped."
+msgstr "%1%の録画を停止しました。"
 
 #: MultiAffine3SeqItem.cpp:15
 msgid "MultiAffine3SeqItem"
@@ -698,11 +719,11 @@ msgstr "各フレームあたりのAffine3行列の数"
 
 #: MultiPointSetItem.cpp:133
 msgid "MultiPointSetItem"
-msgstr "複数点群アイテム"
+msgstr "マルチポイントセットアイテム"
 
 #: MultiPointSetItem.cpp:136
 msgid "Multi Point Sets"
-msgstr "複数点群"
+msgstr "マルチポイントセット"
 
 #: MultiPointSetItem.cpp:179 PointSetItem.cpp:629
 msgid "Point"
@@ -1244,86 +1265,86 @@ msgstr "スクリプトバー"
 msgid "Execute scripts"
 msgstr "スクリプトの実行"
 
-#: TaskView.cpp:202
+#: TaskView.cpp:201
 msgid "Task"
 msgstr "タスク"
 
-#: TaskView.cpp:247
+#: TaskView.cpp:246
 msgid "Select a task type"
 msgstr "タスクの選択"
 
-#: TaskView.cpp:253
+#: TaskView.cpp:252
 msgid "Option Menu"
 msgstr "オプションメニュー"
 
-#: TaskView.cpp:258
+#: TaskView.cpp:257
 msgid "Return to the current phase"
 msgstr "元のフェーズに復帰"
 
-#: TaskView.cpp:263
+#: TaskView.cpp:262
 msgid "Go to the config phase"
 msgstr "設定フェーズに移動"
 
-#: TaskView.cpp:267
+#: TaskView.cpp:266
 msgid "Go back to the previous phase"
 msgstr "前のフェーズに戻る"
 
-#: TaskView.cpp:271
+#: TaskView.cpp:270
 msgid "Cancel waiting for the command to finish"
 msgstr "コマンド完了待ちのキャンセル"
 
-#: TaskView.cpp:275
+#: TaskView.cpp:274
 msgid "Phase index"
 msgstr "フェーズインデックス"
 
-#: TaskView.cpp:283
+#: TaskView.cpp:282
 msgid "V"
 msgstr "↓"
 
-#: TaskView.cpp:285
+#: TaskView.cpp:284
 msgid "Execute the default command of the current phase"
 msgstr "本フェーズのデフォルトコマンドを実行"
 
-#: TaskView.cpp:288
+#: TaskView.cpp:287
 msgid "Auto"
 msgstr "自動"
 
-#: TaskView.cpp:289
+#: TaskView.cpp:288
 msgid "Automatic mode"
 msgstr "自動モード"
 
-#: TaskView.cpp:292
+#: TaskView.cpp:291
 msgid "Skip to the next phase"
 msgstr "次のフェーズに移動"
 
-#: TaskView.cpp:432
+#: TaskView.cpp:431
 msgid "Task sequencer '%1' has been activated."
-msgstr "タスクシーケンサ '%1%' が活性化されました。"
+msgstr "タスクシーケンサ '%1' が活性化されました。"
 
-#: TaskView.cpp:434
+#: TaskView.cpp:433
 msgid "Task sequencer '%1' has been deactivated."
-msgstr "タスクシーケンサ '%1%' が非活性化されました。"
+msgstr "タスクシーケンサ '%1' が非活性化されました。"
 
-#: TaskView.cpp:479
+#: TaskView.cpp:478
 msgid "Task \"%1%\" has been added."
 msgstr "タスク \"%1%\" が追加されました。"
 
-#: TaskView.cpp:500
+#: TaskView.cpp:499
 msgid ""
 "Task \"%1%\" cannot be updated now because it is wating for a command to "
 "finish."
 msgstr ""
 "タスク \"%1%\" は現在コマンドの終了待ちを行っているため更新できません。"
 
-#: TaskView.cpp:534
+#: TaskView.cpp:533
 msgid "Task \"%1%\" has been updated with the new one."
 msgstr "タスク \"%1%\" が更新されました。"
 
-#: TaskView.cpp:1429
+#: TaskView.cpp:1428
 msgid "Retry"
 msgstr "リトライ"
 
-#: TaskView.cpp:1431
+#: TaskView.cpp:1430
 msgid "Vertical Layout"
 msgstr "縦配置"
 
@@ -1409,19 +1430,19 @@ msgstr "３次元ベクタ列アイテム"
 msgid "Separate the view"
 msgstr "ビューの分離"
 
-#: ViewManager.cpp:258
+#: ViewManager.cpp:263
 msgid "Create %1"
 msgstr "%1の生成"
 
-#: ViewManager.cpp:294
+#: ViewManager.cpp:299
 msgid "Please specify the name of the new view."
 msgstr "作成するビューの名前を指定してください。"
 
-#: ViewManager.cpp:332
+#: ViewManager.cpp:337
 msgid "Delete All Invisible Views"
 msgstr "全ての非表示ビューを消去"
 
-#: ViewManager.cpp:788
+#: ViewManager.cpp:793
 msgid ""
 "A singleton view \"%1%\" of the %2% type cannot be created because its "
 "singleton instance has already been created."
@@ -1430,6 +1451,5 @@ msgstr ""
 "生成されています。"
 
 #: VirtualJoystickView.cpp:106
-msgid "Joystick"
-msgstr "ジョイスティック"
-
+msgid "Virtual Joystick"
+msgstr "仮想ジョイスティック"

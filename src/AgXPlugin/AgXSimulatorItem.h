@@ -6,12 +6,13 @@
 #define CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H_INCLUDED
 
 #include <cnoid/SimulatorItem>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class AgXSimulatorItemImpl;
 
-class AgXSimulatorItem : public SimulatorItem
+class CNOID_EXPORT AgXSimulatorItem : public SimulatorItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -21,10 +22,12 @@ public:
     virtual ~AgXSimulatorItem();
 
     enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, N_DYNAMICS_MODES };
+    enum ControlMode { DEFAULT=0, HIGH_GAIN, TORQUE, FREE };
+    void setJointControlMode(Link* joint, ControlMode type);
 
 protected:
 
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
     virtual void finalizeSimulationThread();
@@ -43,7 +46,7 @@ private:
     friend class AgXSimulatorItemImpl;
 };
 
-typedef ref_ptr<AgXSimulatorItem> AgxSimulatorItemPtr;
+typedef ref_ptr<AgXSimulatorItem> AgXSimulatorItemPtr;
 }
 
 #endif

@@ -30,6 +30,10 @@ Menu* showViewMenu = 0;
 Menu* createViewMenu = 0;
 Menu* deleteViewMenu = 0;
 
+Signal<void(View* view)> sigViewCreated_;
+Signal<void(View* view)> sigViewActivated_;
+Signal<void(View* view)> sigViewDeactivated_;
+
 class ViewInfo;
 typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
 
@@ -61,6 +65,7 @@ class ViewInfo : public ViewClass
 public:
     const std::type_info& view_type_info;
     string className_;
+    string textDomain;
     string translatedClassName;
     string defaultInstanceName;
     string translatedDefaultInstanceName; // temporary.
@@ -96,6 +101,7 @@ public:
         return !instances.empty() && (instances.front()->view == view);
     }
 
+private:
     View* createView() {
         View* view = factory->create();
         InstanceInfoPtr instance = boost::make_shared<InstanceInfo>(this, view);
@@ -108,14 +114,19 @@ public:
         instance->iterInViewManager = instancesInViewManager.end();
         --instance->iterInViewManager;
 
+        view->sigActivated().connect(boost::bind(boost::ref(sigViewActivated_), view));
+        view->sigDeactivated().connect(boost::bind(boost::ref(sigViewDeactivated_), view));
+
         return view;
     }
 
+public:
     View* getOrCreateView(bool doMountCreatedView = false){
         if(instances.empty()){
             View* view = createView();
             view->setName(defaultInstanceName);
             view->setWindowTitle(translatedDefaultInstanceName.c_str());
+            sigViewCreated_(view);
             if(doMountCreatedView){
                 mainWindow->viewArea()->addView(view);
             }
@@ -123,12 +134,16 @@ public:
         return instances.front()->view;
     }
         
-    View* createView(const string& name){
+    View* createView(const string& name, bool setTranslatedNameToWindowTitle = false){
         if(name.empty()){
             return 0;
         }
         View* view = createView();
         view->setName(name);
+        if(setTranslatedNameToWindowTitle){
+            view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
+        }
+        sigViewCreated_(view);
         return view;
     }
 
@@ -149,6 +164,7 @@ public:
         View* view = findView(name);
         if(!view){
             view = createView(name);
+            sigViewCreated_(view);
             if(doMountCreatedView){
                 mainWindow->viewArea()->addView(view);
             }
@@ -188,7 +204,7 @@ public:
     ViewManagerImpl(ExtensionManager* ext);
     ~ViewManagerImpl();
     static void notifySigRemoved(View* view){
-        view->sigRemoved_();
+        view->notifySigRemoved();
     }
 };
 
@@ -201,6 +217,7 @@ ViewInfo::ViewInfo
  const string& textDomain, ViewManager::InstantiationType itype, ViewManager::FactoryBase* factory)
     : view_type_info(view_type_info),
       className_(className),
+      textDomain(textDomain),
       defaultInstanceName(defaultInstanceName),
       itype(itype),
       factory(factory),
@@ -782,7 +799,7 @@ void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                             }
                             if(!view){
                                 if(!info->isSingleton() || info->instances.empty()){
-                                    view = info->createView(instanceName);
+                                    view = info->createView(instanceName, true);
                                 } else {
                                     mv->putln(MessageView::ERROR,
                                               boost::format(_("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
@@ -822,4 +839,21 @@ bool ViewManager::restoreViewStates(ViewStateInfo& info)
         return true;
     }
     return false;
+}
+
+
+SignalProxy<void(View* view)> ViewManager::sigViewCreated()
+{
+    return sigViewCreated_;
+}
+
+
+SignalProxy<void(View* view)> ViewManager::sigViewActivated()
+{
+    return sigViewActivated_;
+}
+
+SignalProxy<void(View* view)> ViewManager::sigViewDeactivated()
+{
+    return sigViewDeactivated_;
 }

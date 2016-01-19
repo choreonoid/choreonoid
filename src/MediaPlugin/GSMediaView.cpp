@@ -295,7 +295,10 @@ bool GSMediaView::event(QEvent* event)
 void GSMediaViewImpl::onWindowIdChanged()
 {
     windowId = self->winId();
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QApplication::syncX();
+#endif
 
     if(TRACE_FUNCTIONS){
         cout << "GSMediaView::onWindowIdChanged(" << windowId << ")" << endl;

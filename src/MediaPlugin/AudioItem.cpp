@@ -30,7 +30,7 @@ void AudioItem::initialize(ExtensionManager* ext)
     static bool initialized = false;
     if(!initialized){
         emptySamplingData = boost::make_shared< std::vector<float> >();
-        ext->itemManager().registerClass<AudioItem>("AudioItem");
+        ext->itemManager().registerClass<AudioItem>(N_("AudioItem"));
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
         ext->itemManager().addLoader<AudioItem>(_("Audio File"), "AUDIO-GENERIC", "wav;ogg",

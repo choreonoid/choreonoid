@@ -85,7 +85,7 @@ public:
 
     VirtualJoystickViewImpl(VirtualJoystickView* self);
     ~VirtualJoystickViewImpl();
-    void onKeyStateChanged(int key, bool on);
+    bool onKeyStateChanged(int key, bool on);
 
     virtual int numAxes() const;
     virtual int numButtons() const;
@@ -103,7 +103,7 @@ public:
 void VirtualJoystickView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<VirtualJoystickView>(
-        "VirtualJoystickView", N_("Joystick"), ViewManager::SINGLE_OPTIONAL);
+        "VirtualJoystickView", N_("Virtual Joystick"), ViewManager::SINGLE_OPTIONAL);
 }
 
 
@@ -121,8 +121,6 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
     self->setDefaultLayoutArea(View::BOTTOM);
     self->setFocusPolicy(Qt::WheelFocus);
     
-    QVBoxLayout* vbox = new QVBoxLayout;
-
     for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
         ButtonInfo& info = buttonInfo[i];
         buttons[i].setText(info.label);
@@ -139,7 +137,14 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
         }
     }
 
-    vbox->addLayout(&grid);
+    QHBoxLayout* hbox = new QHBoxLayout;
+    hbox->addStretch();
+    hbox->addLayout(&grid);
+    hbox->addStretch();
+    QVBoxLayout* vbox = new QVBoxLayout;
+    vbox->addStretch();
+    vbox->addLayout(hbox);
+    vbox->addStretch();
     self->setLayout(vbox);
 
     ExtJoystick::registerJoystick("VirtualJoystickView", this);
@@ -160,20 +165,26 @@ VirtualJoystickViewImpl::~VirtualJoystickViewImpl()
 
 void VirtualJoystickView::keyPressEvent(QKeyEvent* event)
 {
-    impl->onKeyStateChanged(event->key(), true);
+    if(!impl->onKeyStateChanged(event->key(), true)){
+        View::keyPressEvent(event);
+    }
 }
 
 
 void VirtualJoystickView::keyReleaseEvent(QKeyEvent* event)
 {
-    impl->onKeyStateChanged(event->key(), false);
+    if(!impl->onKeyStateChanged(event->key(), false)){
+        View::keyPressEvent(event);
+    }
 }
 
 
-void VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
+bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
 {
     KeyToButtonMap::iterator p = keyToButtonMap.find(key);
-    if(p != keyToButtonMap.end()){
+    if(p == keyToButtonMap.end()){
+        return false;
+    } else {
         int index = p->second;
         ToolButton& button = buttons[index];
         ButtonInfo& info = buttonInfo[p->second];
@@ -183,6 +194,7 @@ void VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
             keyValues[index] = on ? info.activeValue : 0.0;
         }
     }
+    return true;
 }
 
 

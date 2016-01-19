@@ -67,8 +67,8 @@ set(headers
 make_headers_public(${headers})
 
 if(NOT QT5)
-QT4_WRAP_CPP(sources
-  )
+  QT4_WRAP_CPP(sources
+    )
 endif()
 
 set(target CnoidMediaPlugin)

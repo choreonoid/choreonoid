@@ -105,8 +105,8 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: TimeBar range
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
             timeLength: 10
             allLinkPositionOutputMode: false
             deviceStateRecording: true
@@ -128,8 +128,8 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: TimeBar range
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
             timeLength: 10
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -151,8 +151,8 @@ items:
           class: BulletSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: TimeBar range
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
             timeLength: 60
             allLinkPositionOutputMode: true
             deviceStateRecording: true

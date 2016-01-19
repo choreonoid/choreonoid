@@ -172,8 +172,6 @@ void BodyStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
 void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 {
     stateConnections.disconnect();
-
-    extraStateItemMap.clear();
     stateTreeWidget.clear();
     int maxNumStateElements = 0;
 
@@ -199,8 +197,10 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
             stateConnections.add(
                 device->sigStateChanged().connect(
                     boost::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
+            updateDeviceStates(device, i);
         }
 
+        extraStateItemMap.clear();
         vector<string> names;
         currentBody->getCaches(accessors, names);
         for(int i=0; i < accessors.size(); ++i){
@@ -223,6 +223,9 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
                         boost::bind(&BodyStateViewImpl::updateExtraStates, this)));
             }
             extraStateItemMap.push_back(itemMap);
+        }
+        if(!extraStateItemMap.empty()){
+            updateExtraStates();
         }
     }
     

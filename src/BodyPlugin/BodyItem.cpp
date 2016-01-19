@@ -40,6 +40,8 @@
 using namespace std;
 using namespace cnoid;
 
+using boost::format;
+
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
@@ -1198,7 +1200,14 @@ bool BodyItemImpl::restore(const Archive& archive)
         }
         Listing* qs = archive.findListing("jointPositions");
         if(qs->isValid()){
-            for(int i=0; i < qs->size(); ++i){
+            int nj = body->numJoints();
+            if(qs->size() != nj){
+                MessageView::instance()->putln(
+                    MessageView::WARNING,
+                    format("Mismatched size of the stored joint positions for %1%") % self->name());
+                nj = std::min(qs->size(), nj);
+            }
+            for(int i=0; i < nj; ++i){
                 body->joint(i)->q() = (*qs)[i].toDouble();
             }
         }
@@ -1212,8 +1221,15 @@ bool BodyItemImpl::restore(const Archive& archive)
         qs = archive.findListing("initialJointPositions");
         if(qs->isValid()){
             BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
-            q.resize(qs->size());
-            for(int i=0; i < qs->size(); ++i){
+            int nj = body->numJoints();
+            if(qs->size() != nj){
+                MessageView::instance()->putln(
+                    MessageView::WARNING,
+                    format("Mismatched size of the stored initial joint positions for %1%") % self->name());
+                nj = std::min(qs->size(), nj);
+            }
+            q.resize(nj);
+            for(int i=0; i < nj; ++i){
                 q[i] = (*qs)[i].toDouble();
             }
         }

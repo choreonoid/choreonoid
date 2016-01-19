@@ -6,11 +6,12 @@
 #include "RokiSimulatorItem.h"
 #include <roki/rk_fd.h>
 #include <roki/rk_link.h>
+#include <roki/rk_joint.h>
+#include <roki/rk_motor.h>
 #include <zeo/zeo.h>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
-#include <cnoid/Body>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Sensor>
@@ -20,6 +21,7 @@
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <cnoid/FileUtil>
 #include <boost/bind.hpp>
 #include "gettext.h"
@@ -133,6 +135,23 @@ struct Triangle {
     int indices[3];
 };
 
+struct JointInfo {
+    double motorconstant;
+    double admitance;
+    double minvoltage;
+    double maxvoltage;
+    double inertia;
+    double gearinertia;
+    double ration;
+    double compk;
+    double compl_;
+    double stiff;
+    double viscos;
+    double coulomb;
+    double staticfriction;
+};
+typedef map<Link*, JointInfo> JointInfoMap;
+
 class RokiBody;
 class RokiLink : public Referenced
 {
@@ -172,6 +191,7 @@ public:
     rkChain* chain;
     BasicSensorSimulationHelper sensorHelper;
     int geometryId;
+    JointInfoMap jointInfoMap;
 
     RokiBody(const Body& orgBody);
     ~RokiBody();
@@ -350,16 +370,49 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     zMat3DSetElem(att, 2, 1, lFrame(2,1));
     zMat3DSetElem(att, 2, 2, lFrame(2,2));
 
+    JointInfo* jointInfo = 0;
+    JointInfoMap::iterator it = body->jointInfoMap.find(link);
+    if(it!=body->jointInfoMap.end())
+        jointInfo = &(it->second);
+
     rkMotor* rkMotor;
     rkJoint* joint = rkLinkJoint(rklink);
     switch(link->jointType()){
     case Link::ROTATIONAL_JOINT:
         rkJointCreate( joint, RK_JOINT_REVOL );
         rkJointGetMotor( joint, &rkMotor );
-        if(link->Jm2() != 0.0){
+        if(!jointInfo && link->Jm2() != 0.0){
             rkMotorInit( rkMotor );
             rkMotorCreateJm2(rkMotor);
             ((rkMotorPrpJm2 *)rkMotor->prp)->Jm2 = link->Jm2();
+        }else if(jointInfo){
+            rkMotorCreate ( rkMotor, RK_MOTOR_DC );
+            if(jointInfo->motorconstant!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->k = jointInfo->motorconstant;
+            if(jointInfo->admitance!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->admit = jointInfo->admitance;
+            if(jointInfo->minvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->minvol = jointInfo->minvoltage;
+            if(jointInfo->maxvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->maxvol = jointInfo->maxvoltage;
+            if(jointInfo->ration!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ration;
+            if(jointInfo->inertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia = jointInfo->inertia;
+            if(jointInfo->gearinertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia_gear = jointInfo->gearinertia;
+            if(jointInfo->compk!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_k = jointInfo->compk;
+            if(jointInfo->compl_!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_l = jointInfo->compl_;
+            if(jointInfo->stiff!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->stiff = jointInfo->stiff;
+            if(jointInfo->viscos!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->viscos = jointInfo->viscos;
+            if(jointInfo->coulomb!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->coulomb = jointInfo->coulomb;
+            if(jointInfo->staticfriction!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->sf = jointInfo->staticfriction;
         }else{
             rkMotorCreate ( rkMotor, RK_MOTOR_TRQ );
             ((rkMotorPrpTRQ *)rkMotor->prp)->max = std::numeric_limits<double>::max();
@@ -369,10 +422,38 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     case Link::SLIDE_JOINT:
         rkJointCreate( joint, RK_JOINT_PRISM );
         rkJointGetMotor( joint, &rkMotor );
-        if(link->Jm2() != 0.0){
+        if(!jointInfo && link->Jm2() != 0.0){
             rkMotorInit( rkMotor );
             rkMotorCreateJm2(rkMotor);
             ((rkMotorPrpJm2 *)rkMotor->prp)->Jm2 = link->Jm2();
+        }else if(jointInfo){
+            rkMotorCreate ( rkMotor, RK_MOTOR_DC );
+            if(jointInfo->motorconstant!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->k = jointInfo->motorconstant;
+            if(jointInfo->admitance!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->admit = jointInfo->admitance;
+            if(jointInfo->minvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->minvol = jointInfo->minvoltage;
+            if(jointInfo->maxvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->maxvol = jointInfo->maxvoltage;
+            if(jointInfo->ration!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ration;
+            if(jointInfo->inertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia = jointInfo->inertia;
+            if(jointInfo->gearinertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia_gear = jointInfo->gearinertia;
+            if(jointInfo->compk!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_k = jointInfo->compk;
+            if(jointInfo->compl_!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_l = jointInfo->compl_;
+            if(jointInfo->stiff!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->stiff = jointInfo->stiff;
+            if(jointInfo->viscos!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->viscos = jointInfo->viscos;
+            if(jointInfo->coulomb!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->coulomb = jointInfo->coulomb;
+            if(jointInfo->staticfriction!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->sf = jointInfo->staticfriction;
         }else{
             rkMotorCreate ( rkMotor, RK_MOTOR_TRQ );
             ((rkMotorPrpTRQ *)rkMotor->prp)->max = std::numeric_limits<double>::max();
@@ -576,11 +657,6 @@ RokiLink::~RokiLink()
 {
     for(size_t i=0; i<shapes.size(); i++)
         zShape3DDestroy(shapes[i]);
-    rkMotor* rkMotor;
-    rkJoint* joint = rkLinkJoint(rklink);
-    rkJointGetMotor( joint, &rkMotor );
-    if(rkMotor)
-        rkMotorDestroy( rkMotor );
 }
 
 
@@ -654,7 +730,51 @@ void RokiLink::setTorqueToRoki()
 RokiBody::RokiBody(const Body& orgBody)
     : SimulationBody(new Body(orgBody))
 {
+    Body* body = this->body();
 
+    const Listing& jointParams = *body->info()->findListing("RokiJointParameters");
+
+    if(jointParams.isValid()){
+        for(int i=0; i < jointParams.size(); ++i){
+            JointInfo jointInfo;
+            const Mapping& jointParam = *jointParams[i].toMapping();
+            Link* link = body->link(jointParam["name"].toString());
+            if(link){
+                double w;
+                jointInfo.motorconstant = jointInfo.admitance = jointInfo.minvoltage = jointInfo.maxvoltage
+                        = jointInfo.inertia = jointInfo.gearinertia = jointInfo.ration = jointInfo.compk
+                        = jointInfo.compl_ = jointInfo.stiff = jointInfo.viscos = jointInfo.coulomb
+                        = jointInfo.staticfriction = std::numeric_limits<double>::max();
+                if(jointParam.read("motorconstant", w))
+                    jointInfo.motorconstant = w;
+                if(jointParam.read("admitance", w))
+                    jointInfo.admitance = w;
+                if(jointParam.read("minvoltage", w))
+                    jointInfo.minvoltage = w;
+                if(jointParam.read("maxvoltage", w))
+                    jointInfo.maxvoltage = w;
+                if(jointParam.read("inertia", w))
+                    jointInfo.inertia = w;
+                if(jointParam.read("gearinertia", w))
+                    jointInfo.gearinertia = w;
+                if(jointParam.read("ration", w))
+                    jointInfo.ration = w;
+                if(jointParam.read("compk", w))
+                    jointInfo.compk = w;
+                if(jointParam.read("compl", w))
+                    jointInfo.compl_ = w;
+                if(jointParam.read("stiff", w))
+                    jointInfo.stiff = w;
+                if(jointParam.read("viscos", w))
+                    jointInfo.viscos = w;
+                if(jointParam.read("coulomb", w))
+                    jointInfo.coulomb = w;
+                if(jointParam.read("staticfriction", w))
+                    jointInfo.staticfriction = w;
+                jointInfoMap[link] = jointInfo;
+            }
+        }
+    }
 }
 
 
@@ -768,7 +888,7 @@ void RokiBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(int i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         const RokiLink* rokiLink = rokiLinks[link->index()];
         zVec6D* wrnch = rkLinkWrench(rokiLink->rklink);
@@ -879,7 +999,7 @@ Item* RokiSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBodyPtr RokiSimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* RokiSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new RokiBody(*orgBody);
 }
@@ -1055,8 +1175,8 @@ bool RokiSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& a
         if(!rokiBody->sensorHelper.forceSensors().empty()){
             rokiBody->updateForceSensors();
         }
-        if(rokiBody->sensorHelper.hasGyroOrAccelSensors()){
-            rokiBody->sensorHelper.updateGyroAndAccelSensors();
+        if(rokiBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            rokiBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
 

@@ -95,7 +95,6 @@ set(sources
   SceneItem.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
-  MovieGenerator.cpp
   MovieRecorder.cpp
   TextEditView.cpp
   ImageView.cpp
@@ -249,6 +248,9 @@ add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
 
 if(QT5)
   qt5_use_modules(${target} Gui OpenGL Network Widgets)
+  if(UNIX)
+    qt5_use_modules(${target} X11Extras)
+  endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -266,6 +268,7 @@ elseif(UNIX)
     ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARIES}
     icuuc
     GLEW
+    Xfixes
     )
 
 elseif(MSVC)
