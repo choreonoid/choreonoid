@@ -109,6 +109,9 @@ public:
 
     void updateCameraImage() {
 
+        if(!capture)
+            return;
+
         IplImage* frame = cvQueryFrame(capture);
 
         const int width = frame->width;
