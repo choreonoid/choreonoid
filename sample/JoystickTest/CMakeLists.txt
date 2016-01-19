@@ -1,5 +1,5 @@
 
-if(NOT ENABLE_GUI)
+if(NOT ENABLE_GUI OR WIN32 OR APPLE)
   return()
 endif()
 

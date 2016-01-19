@@ -6,6 +6,10 @@ if(APPLE)
   #return()
 endif()
 
+if(WIN32)
+  return()
+endif()
+
 option(BUILD_MEDIA_PLUGIN "Building MediaPlugin" OFF)
 
 if(NOT BUILD_MEDIA_PLUGIN)
@@ -62,8 +66,10 @@ set(headers
 
 make_headers_public(${headers})
 
+if(NOT QT5)
 QT4_WRAP_CPP(sources
   )
+endif()
 
 set(target CnoidMediaPlugin)
 make_gettext_mofiles(${target} mofiles)

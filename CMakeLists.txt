@@ -992,7 +992,11 @@ function(make_gettext_mofiles target out_mofiles)
 endfunction()
 
 if(MSVC)
-  add_subdirectory(thirdparty/windows)
+  if(CMAKE_CL_64)
+    add_subdirectory(thirdparty/windows64)
+  else()
+    add_subdirectory(thirdparty/windows)
+  endif()
 endif()
 
 # libyaml
