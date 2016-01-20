@@ -34,6 +34,8 @@ void VRMLBodyWriter::registerNodeMethodMap()
                        (VRMLWriterNodeMethod)&VRMLBodyWriter::writeGyroNode);
     registerNodeMethod(typeid(VRMLAccelerationSensor),
                        (VRMLWriterNodeMethod)&VRMLBodyWriter::writeAccelerationSensorNode);
+    registerNodeMethod(typeid(VRMLRangeSensor),
+                       (VRMLWriterNodeMethod)&VRMLBodyWriter::writeRangeSensorNode);
 }
 
 
@@ -237,6 +239,27 @@ void VRMLBodyWriter::writeAccelerationSensorNode(VRMLNodePtr node)
     }
     out << indent << "maxAcceleration\n";
     writeMFValues(sensor->maxAcceleration, 3);
+
+    endNode();
+}
+
+
+void VRMLBodyWriter::writeRangeSensorNode(VRMLNodePtr node)
+{
+    VRMLRangeSensorPtr sensor = static_pointer_cast<VRMLRangeSensor>(node);
+
+    beginNode("RangeSensor", sensor);
+
+    out << indent << "rotation " << sensor->rotation << "\n";
+    out << indent << "translation " << sensor->translation << "\n";
+    if(sensor->sensorId >= 0){
+        out << indent << "sensorId " << sensor->sensorId << "\n";
+    }
+    out << indent << "scanAngle " << sensor->scanAngle << "\n";
+    out << indent << "scanStep " << sensor->scanStep << "\n";
+    out << indent << "scanRate " << sensor->scanRate << "\n";
+    out << indent << "minDistance " << sensor->minDistance << "\n";
+    out << indent << "maxDistance " << sensor->maxDistance << "\n";
 
     endNode();
 }

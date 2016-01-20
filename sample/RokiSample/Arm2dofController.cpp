@@ -7,7 +7,7 @@ using namespace std;
 using namespace cnoid;
 using namespace boost;
 
-
+#define ROKISAMPLE
 #define DOF (2)
 #define K 12000
 #define C 120
@@ -24,7 +24,9 @@ public:
         const BodyPtr& io = ioBody();
         for(int i=0; i<DOF; i++)
             io->joint(i)->u() = 0.0;
-        
+#ifdef ROKISAMPLE
+        qref.resize(DOF);
+#else
         time = 0.0;
         qref.resize(DOF);
         interpolator.clear();
@@ -40,12 +42,17 @@ public:
         qf[1] = radian(-60);
         interpolator.appendSample(7.0, qf);
         interpolator.update();
+#endif
         return true;
     }
     
     virtual bool control() {
 
+#ifdef ROKISAMPLE
+        qref[0] = qref[1] = radian(90);
+#else
         qref = interpolator.interpolate(time);
+#endif
 
         const BodyPtr& io = ioBody();
         for(int i=0; i<DOF; i++){
@@ -54,8 +61,10 @@ public:
             io->joint(i)->u() = -K*(q-qref[i]) - C*dq;
         }
 
+#ifndef ROKISAMPLE
         double dt = timeStep();
         time += dt;
+#endif
         
         return true;
     }

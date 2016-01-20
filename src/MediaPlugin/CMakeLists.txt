@@ -62,8 +62,10 @@ set(headers
 
 make_headers_public(${headers})
 
-QT4_WRAP_CPP(sources
-  )
+if(NOT QT5)
+  QT4_WRAP_CPP(sources
+    )
+endif()
 
 set(target CnoidMediaPlugin)
 make_gettext_mofiles(${target} mofiles)

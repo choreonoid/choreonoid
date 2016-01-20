@@ -210,7 +210,7 @@ void ExtensionManager::addToolBar(ToolBar* toolBar)
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->objectName().toAscii()));
 #else
-    toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->objectName().toLatin1()));
+    toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->objectName().toUtf8()));
 #endif
 
     manage(toolBar);

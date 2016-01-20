@@ -15,6 +15,8 @@
 
 namespace cnoid {
 
+class Body;
+
 class CNOID_EXPORT BodyMotion : public AbstractMultiSeq
 {
 public:
@@ -63,20 +65,29 @@ public:
     }
 
     class Frame {
-        const BodyMotion& motion_;
-        int frame_;
-        Frame(const BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
+        BodyMotion& motion_;
+        const int frame_;
+        Frame(BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
     public:
         Frame(const Frame& org) : motion_(org.motion_), frame_(org.frame_) { }
-        inline BodyMotion& motion() { return const_cast<BodyMotion&>(motion_); }
-        inline const BodyMotion& motion() const { return motion_; }
-        inline int frame() const { return frame_; }
-
+        BodyMotion& motion() { return motion_; }
+        int frame() const { return frame_; }
         friend class BodyMotion;
     };
-            
+
+    class ConstFrame {
+        const BodyMotion& motion_;
+        const int frame_;
+        ConstFrame(const BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
+    public:
+        ConstFrame(const Frame& org) : motion_(org.motion_), frame_(org.frame_) { }
+        const BodyMotion& motion() const { return motion_; }
+        int frame() const { return frame_; }
+        friend class BodyMotion;
+    };
+    
     Frame frame(int frame) { return Frame(*this, frame); }
-    const Frame frame(int frame) const { return Frame(*this, frame); }
+    ConstFrame frame(int frame) const { return ConstFrame(*this, frame); }
 
     virtual bool read(const Mapping& archive);
     virtual bool write(YAMLWriter& writer);
@@ -135,8 +146,13 @@ typedef boost::shared_ptr<BodyMotion> BodyMotionPtr;
 
 class Body;
 
-CNOID_EXPORT BodyMotion::Frame& operator<<(const BodyMotion::Frame& frame, const Body& body);
-CNOID_EXPORT BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, Body& body);
+CNOID_EXPORT BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body);
+CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, Body& body);
+CNOID_EXPORT BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body);
+CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::Frame frame);
+CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::ConstFrame frame);
+CNOID_EXPORT const Body& operator>>(const Body& body, BodyMotion::Frame frame);
+
 }
 
 #endif

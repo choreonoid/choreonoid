@@ -792,7 +792,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setOffsetTranslation(parentRs * b);
         Matrix3 R;
         readVRMLfield(jf["rotation"], R);
-        link->setAccumlatedSegmentRotation(parentRs * R);
+        link->setAccumulatedSegmentRotation(parentRs * R);
     }
 
     string jointType;
