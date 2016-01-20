@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_MULTI_AFFINE3_SEQ_H_INCLUDED
-#define CNOID_UTIL_MULTI_AFFINE3_SEQ_H_INCLUDED
+#ifndef CNOID_UTIL_MULTI_AFFINE3_SEQ_H
+#define CNOID_UTIL_MULTI_AFFINE3_SEQ_H
 
 #include "MultiSeq.h"
 #include "EigenTypes.h"
@@ -21,6 +21,7 @@ class CNOID_EXPORT MultiAffine3Seq : public MultiSeq<Affine3, Eigen::aligned_all
 
 public:
     typedef boost::shared_ptr<MultiAffine3Seq> Ptr;
+    typedef boost::shared_ptr<const MultiAffine3Seq> ConstPtr;
 
     MultiAffine3Seq();
     MultiAffine3Seq(int numFrames, int numParts = 1);
@@ -39,7 +40,9 @@ protected:
     virtual bool doReadSeq(const Mapping& archive);
 };
 
-typedef MultiAffine3Seq::Ptr MultiAffine3SeqPtr;        
+typedef MultiAffine3Seq::Ptr MultiAffine3SeqPtr;
+typedef MultiAffine3Seq::ConstPtr ConstMultiAffine3SeqPtr;
+
 }
 
 #endif

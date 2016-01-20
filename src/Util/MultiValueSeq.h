@@ -17,6 +17,7 @@ class CNOID_EXPORT MultiValueSeq : public MultiSeq<double>
             
 public:
     typedef boost::shared_ptr<MultiValueSeq> Ptr;
+    typedef boost::shared_ptr<const MultiValueSeq> ConstPtr;
 
     MultiValueSeq();
     MultiValueSeq(int numFrames, int numParts = 1);
@@ -34,6 +35,8 @@ protected:
 };
 
 typedef MultiValueSeq::Ptr MultiValueSeqPtr;        
+typedef MultiValueSeq::ConstPtr ConstMultiValueSeqPtr;
+
 }
 
 #endif

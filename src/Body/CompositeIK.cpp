@@ -12,7 +12,6 @@ using namespace boost;
 using namespace cnoid;
 
 
-
 CompositeIK::CompositeIK()
 {
     targetLink_ = 0;
@@ -20,7 +19,7 @@ CompositeIK::CompositeIK()
 }
 
 
-CompositeIK::CompositeIK(const BodyPtr& body, Link* targetLink)
+CompositeIK::CompositeIK(Body* body, Link* targetLink)
 {
     reset(body, targetLink);
 }
@@ -32,7 +31,7 @@ CompositeIK::~CompositeIK()
 }
 
 
-void CompositeIK::reset(const BodyPtr& body, Link* targetLink)
+void CompositeIK::reset(Body* body, Link* targetLink)
 {
     body_ = body;
     targetLink_ = targetLink;
@@ -40,7 +39,6 @@ void CompositeIK::reset(const BodyPtr& body, Link* targetLink)
     pathList.clear();
 }
    
-
 
 bool CompositeIK::addBaseLink(Link* baseLink)
 {
@@ -72,14 +70,13 @@ bool CompositeIK::hasAnalyticalIK() const
     return isAnalytical_;
 }
 
-
 bool CompositeIK::calcInverseKinematics(const Vector3& p, const Matrix3& R)
 {
     const int n = body_->numJoints();
 
     Vector3 p0 = targetLink_->p();
     Matrix3 R0 = targetLink_->R();
-    std::vector<double> q0(n);
+    q0.resize(n);
     for(int i=0; i < n; ++i){
         q0[i] = body_->joint(i)->q();
     }

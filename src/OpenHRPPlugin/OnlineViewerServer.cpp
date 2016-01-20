@@ -280,7 +280,7 @@ void OnlineViewerServerImpl::update(const WorldState& state)
 void OnlineViewerServerImpl::updateLog
 (BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)
 {
-    BodyMotionItem* motionItem = info->logItem.get();
+    BodyMotionItem* motionItem = info->logItem;
     if(!motionItem){
         motionItem = info->bodyItem->findChildItem<BodyMotionItem>(info->logName);
         if(!motionItem){
@@ -296,14 +296,14 @@ void OnlineViewerServerImpl::updateLog
         info->needToSelectLogItem = false;
     }
 
-    MultiSE3SeqPtr& seq = motionItem->motion()->linkPosSeq();
-    int frame = seq->frameOfTime(time);
-    int lastFrame = std::max(0, std::min(frame, seq->numFrames()));
-    seq->setNumFrames(frame + 1);
+    MultiSE3Seq& seq = *motionItem->motion()->linkPosSeq();
+    int frame = seq.frameOfTime(time);
+    int lastFrame = std::max(0, std::min(frame, seq.numFrames()));
+    seq.setNumFrames(frame + 1);
 
-    const BodyPtr& body = info->bodyItem->body();
+    Body* body = info->bodyItem->body();
     for(int i=lastFrame; i <= frame; ++i){
-        MultiSE3Seq::Frame positions = seq->frame(i);
+        MultiSE3Seq::Frame positions = seq.frame(i);
         for(int j=0; j < numLinks; ++j){
             SE3& se3 = positions[j];
             se3.translation() = Eigen::Map<Vector3>(const_cast<double*>(links[j].p));

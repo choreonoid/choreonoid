@@ -51,7 +51,7 @@ class HighGainControllerItem : public ControllerItem
 
 public:
     HighGainControllerItem(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem) {
-        qseqRef = bodyMotionItem->jointPosSeq();
+        qseqRef = bodyMotionItem->motion()->jointPosSeq();
         setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
     }
 

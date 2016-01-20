@@ -96,10 +96,11 @@ static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
         bodyItem = parentItem->findOwnerItem<BodyItem>();
     }
     if(bodyItem){
-        int prevNumJoints = protoItem->jointPosSeq()->numParts();
+        MultiValueSeqPtr jointPosSeq = protoItem->motion()->jointPosSeq();
+        int prevNumJoints = jointPosSeq->numParts();
         int numJoints = bodyItem->body()->numJoints();
         if(numJoints != prevNumJoints){
-            protoItem->jointPosSeq()->setNumParts(numJoints, true);
+            jointPosSeq->setNumParts(numJoints, true);
         }
     }
     return true;

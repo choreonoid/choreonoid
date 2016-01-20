@@ -48,19 +48,19 @@ public:
     virtual int getNumFrames() const;
     virtual void setNumFrames(int n, bool clearNewArea = false);
 
-    MultiValueSeqPtr& jointPosSeq() {
+    MultiValueSeqPtr jointPosSeq() {
         return jointPosSeq_;
     }
 
-    const MultiValueSeqPtr& jointPosSeq() const {
+    ConstMultiValueSeqPtr jointPosSeq() const {
         return jointPosSeq_;
     }
 
-    MultiSE3SeqPtr& linkPosSeq() {
+    MultiSE3SeqPtr linkPosSeq() {
         return linkPosSeq_;
     }
 
-    const MultiSE3SeqPtr& linkPosSeq() const {
+    ConstMultiSE3SeqPtr linkPosSeq() const {
         return linkPosSeq_;
     }
 
@@ -143,6 +143,7 @@ private:
 };
 
 typedef boost::shared_ptr<BodyMotion> BodyMotionPtr;
+typedef boost::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
 
 class Body;
 

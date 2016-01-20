@@ -4,6 +4,7 @@
 
 #include "../Body.h"
 #include "../BodyLoader.h"
+#include "../BodyMotion.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
 
@@ -71,6 +72,9 @@ PyObject* Body_calcTotalMomentum(Body& self) {
 }
 
 BodyPtr (BodyLoader::*BodyLoader_load2)(const std::string&) = &BodyLoader::load;
+
+MultiValueSeq& BodyMotion_jointPosSeq(BodyMotion& self){ return *self.jointPosSeq(); }
+MultiSE3Seq& BodyMotion_linkPosSeq(BodyMotion& self){ return *self.linkPosSeq(); }
     
 } // namespace
 
@@ -233,6 +237,10 @@ BOOST_PYTHON_MODULE(Body)
         .def("load", BodyLoader_load2)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
+
+    class_<BodyMotion, bases<AbstractMultiSeq> >("BodyMotion")
+        .def("jointPosSeq", BodyMotion_jointPosSeq, return_value_policy<reference_existing_object>())
+        .def("linkPosSeq", BodyMotion_linkPosSeq, return_value_policy<reference_existing_object>());
 }
 
 }; // namespace cnoid

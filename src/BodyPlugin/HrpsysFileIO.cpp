@@ -147,7 +147,7 @@ public:
         motion->setDimension(numFrames, numComponents[JOINT_POS], 0);
         motion->setFrameRate(200);
 
-        MultiValueSeqPtr qseq = item->jointPosSeq();
+        MultiValueSeqPtr qseq = item->motion()->jointPosSeq();
         //MultiValueSeqPtr dqseq;
         //MultiValueSeqPtr useq;
         ZMPSeqPtr zmpseq = getOrCreateZMPSeq(*item->motion());

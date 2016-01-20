@@ -37,6 +37,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(BodyItem_notifyKinematicStateChange2_over
 MultiValueSeqItemPtr BodyMotionItem_jointPosSeqItem(BodyMotionItem& self) { return self.jointPosSeqItem(); }
 MultiSE3SeqItemPtr BodyMotionItem_linkPosSeqItem(BodyMotionItem& self) { return self.linkPosSeqItem(); }
 AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) { return self.extraSeqItem(index); }
+BodyMotion& BodyMotionItem_motion(BodyMotionItem& self) { return *self.motion(); }
+
 
 BodyItemPtr SimulationBody_bodyItem(SimulationBody& self) { return self.bodyItem(); }
 BodyPtr SimulationBody_body(SimulationBody& self) { return self.body(); }
@@ -134,11 +136,9 @@ void exportItems()
     PyItemList<WorldItem>("WorldItemList");
     
     class_< BodyMotionItem, BodyMotionItemPtr, bases<AbstractMultiSeqItem> >("BodyMotionItem")
-        .def("motion", &BodyMotionItem::motion, return_value_policy<copy_const_reference>())
+        .def("motion", BodyMotionItem_motion, return_value_policy<reference_existing_object>())
         .def("jointPosSeqItem", BodyMotionItem_jointPosSeqItem)
-        .def("jointPosSeq", &BodyMotionItem::jointPosSeq, return_value_policy<copy_const_reference>())
         .def("linkPosSeqItem", BodyMotionItem_linkPosSeqItem)
-        .def("linkPosSeq", &BodyMotionItem::linkPosSeq, return_value_policy<copy_const_reference>())
         .def("numExtraSeqItems", &BodyMotionItem::numExtraSeqItems, return_value_policy<return_by_value>())
         .def("extraSeqKey", &BodyMotionItem::extraSeqKey, return_value_policy<copy_const_reference>())
         .def("extraSeqItem", BodyMotionItem_extraSeqItem)
