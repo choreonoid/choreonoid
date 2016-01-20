@@ -183,7 +183,7 @@ void savePNG(const Image& image, const std::string& filename, bool isUpsideDown)
         throwSaveException(filename, strerror(errno));
     }
     
-    if(setjmp(png_ptr->jmpbuf)){
+    if(setjmp(png_jmpbuf(png_ptr))){
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
         fclose(fp);
         throwSaveException(filename, "Internal error.");
