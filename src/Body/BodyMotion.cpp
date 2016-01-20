@@ -300,51 +300,6 @@ void BodyMotion::clearExtraSeq(const std::string& contentName)
 }
 
 
-#if 0
-BodyMotion::Frame& BodyMotion::Frame::operator<<(const Body& body)
-{
-    int numJoints = std::min(body.numJoints(), motion_.numJoints());
-    MultiValueSeq::Frame q = motion_.jointPosSeq()->frame(frame_);
-    for(int i=0; i < numJoints; ++i){
-        q[i] = body.joint(i)->q();
-    }
-    int numLinks =  std::min(body.numLinks(), motion_.numLinks());
-    MultiSE3Seq::Frame p = motion_.linkPosSeq()->frame(frame_);
-    for(int i=0; i < numLinks; ++i){
-        const Link* link = body.link(i);
-        p[i].set(link->p(), link->R());
-    }
-    return *this;
-}
-
-BodyMotion::Frame& BodyMotion::Frame::operator>>(Body& body)
-{
-    int numJoints = std::min(body.numJoints(), motion_.numJoints());
-    const MultiValueSeq::Frame q = motion_.jointPosSeq()->frame(frame_);
-    for(int i=0; i < numJoints; ++i){
-        body.joint(i)->q() = q[i];
-    }
-    int numLinks =  std::min(body.numLinks(), motion_.numLinks());
-    const MultiSE3Seq::Frame p = motion_.linkPosSeq()->frame(frame_);
-    for(int i=0; i < numLinks; ++i){
-        Link* link = body.link(i);
-        link->p() = p[i].translation();
-        link->R() = p[i].rotation().toRotationMatrix();
-    }
-    /*
-    if(numLinks <= 1){
-        body.calcForwardKinematics();
-    }
-    */
-    //return const_cast<BodyMotion::Frame&>(frame);
-
-    //return frame;
-
-    return *this;
-}
-#endif
-
-
 static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 {
     BodyMotion& motion = frame.motion();
