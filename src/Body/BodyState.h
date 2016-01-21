@@ -51,9 +51,14 @@ protected:
     virtual std::map<std::string, int>& nameToIdMap();
     virtual std::map<int, std::string>& idToNameMap();
     virtual int nextDynamicId();
-        
 };
 
-};
+
+CNOID_EXPORT BodyState& operator<<(BodyState& state, const Body& body);
+CNOID_EXPORT const BodyState& operator>>(const BodyState& state, Body& body);
+CNOID_EXPORT Body& operator<<(Body& body, const BodyState& state);
+CNOID_EXPORT const Body& operator>>(const Body& body, BodyState& state);
+
+}
 
 #endif

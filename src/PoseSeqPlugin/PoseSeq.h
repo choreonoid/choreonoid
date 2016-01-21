@@ -1,6 +1,6 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_H

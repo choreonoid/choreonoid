@@ -30,6 +30,14 @@ LinkTraverse::LinkTraverse(Link* root, bool doUpward, bool doDownward)
 }
 
 
+LinkTraverse::LinkTraverse(const LinkTraverse& org)
+    : links(links),
+      numUpwardConnections(numUpwardConnections)
+{
+
+}
+
+
 LinkTraverse::~LinkTraverse()
 {
 
@@ -66,6 +74,15 @@ void LinkTraverse::traverse(Link* link, bool doUpward, bool doDownward, bool isU
                 traverse(child, false, true, false, 0);
             }
         }
+    }
+}
+
+
+void LinkTraverse::append(Link* link, bool isDownward)
+{
+    links.push_back(link);
+    if(!isDownward){
+        ++numUpwardConnections;
     }
 }
 
