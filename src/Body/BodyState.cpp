@@ -23,6 +23,13 @@ BodyState::BodyState(const Body& body)
 }
 
 
+BodyState::BodyState(const BodyState& state)
+    : DataMap<double>(state)
+{
+
+}
+    
+
 void BodyState::setRootLinkPosition(const Position& T)
 {
     Data& p = data(LINK_POSITIONS);

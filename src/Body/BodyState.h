@@ -19,6 +19,7 @@ class Body;
 */
 class CNOID_EXPORT BodyState : public DataMap<double>
 {
+    typedef DataMap<double> BaseType;
 public:
     enum DataType {
         JOINT_POSITIONS,
@@ -29,7 +30,11 @@ public:
 
     BodyState();
     BodyState(const Body& body);
-
+    BodyState(const BodyState& state);
+    BodyState& operator=(const BodyState& rhs) {
+        DataMap<double>::operator=(rhs);
+        return *this;
+    }
     void storePositions(const Body& body);
     bool restorePositions(Body& io_body) const;
 
