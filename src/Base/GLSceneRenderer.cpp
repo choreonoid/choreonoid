@@ -835,7 +835,7 @@ void GLSceneRenderer::setViewport(int x, int y, int width, int height)
 
 void GLSceneRendererImpl::setViewport(int x, int y, int width, int height)
 {
-    aspectRatio = (double)width / height;
+    if (height > 0) aspectRatio = (double)width / height;
     viewport << x, y, width, height;
     glViewport(x, y, width, height);
 }
