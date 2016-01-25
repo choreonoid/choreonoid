@@ -142,7 +142,7 @@ struct JointInfo {
     double maxvoltage;
     double inertia;
     double gearinertia;
-    double ration;
+    double ratio;
     double compk;
     double compl_;
     double stiff;
@@ -395,8 +395,8 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
                 ((rkMotorPrpDC *)rkMotor->prp)->minvol = jointInfo->minvoltage;
             if(jointInfo->maxvoltage!=std::numeric_limits<double>::max())
                 ((rkMotorPrpDC *)rkMotor->prp)->maxvol = jointInfo->maxvoltage;
-            if(jointInfo->ration!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ration;
+            if(jointInfo->ratio!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ratio;
             if(jointInfo->inertia!=std::numeric_limits<double>::max())
                 ((rkMotorPrpDC *)rkMotor->prp)->inertia = jointInfo->inertia;
             if(jointInfo->gearinertia!=std::numeric_limits<double>::max())
@@ -436,8 +436,8 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
                 ((rkMotorPrpDC *)rkMotor->prp)->minvol = jointInfo->minvoltage;
             if(jointInfo->maxvoltage!=std::numeric_limits<double>::max())
                 ((rkMotorPrpDC *)rkMotor->prp)->maxvol = jointInfo->maxvoltage;
-            if(jointInfo->ration!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ration;
+            if(jointInfo->ratio!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ratio;
             if(jointInfo->inertia!=std::numeric_limits<double>::max())
                 ((rkMotorPrpDC *)rkMotor->prp)->inertia = jointInfo->inertia;
             if(jointInfo->gearinertia!=std::numeric_limits<double>::max())
@@ -742,7 +742,7 @@ RokiBody::RokiBody(const Body& orgBody)
             if(link){
                 double w;
                 jointInfo.motorconstant = jointInfo.admitance = jointInfo.minvoltage = jointInfo.maxvoltage
-                        = jointInfo.inertia = jointInfo.gearinertia = jointInfo.ration = jointInfo.compk
+                        = jointInfo.inertia = jointInfo.gearinertia = jointInfo.ratio = jointInfo.compk
                         = jointInfo.compl_ = jointInfo.stiff = jointInfo.viscos = jointInfo.coulomb
                         = jointInfo.staticfriction = std::numeric_limits<double>::max();
                 if(jointParam.read("motorconstant", w))
@@ -757,8 +757,8 @@ RokiBody::RokiBody(const Body& orgBody)
                     jointInfo.inertia = w;
                 if(jointParam.read("gearinertia", w))
                     jointInfo.gearinertia = w;
-                if(jointParam.read("ration", w))
-                    jointInfo.ration = w;
+                if(jointParam.read("ratio", w))
+                    jointInfo.ratio = w;
                 if(jointParam.read("compk", w))
                     jointInfo.compk = w;
                 if(jointParam.read("compl", w))
