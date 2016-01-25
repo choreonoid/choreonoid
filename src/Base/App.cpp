@@ -168,7 +168,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForLocale());
 #else
-
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 #endif
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
