@@ -664,7 +664,7 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
     ret = NULL;
     cinfo = NULL;
 
-    if (material != NULL) {
+    if (material != sdf::ElementPtr()) {
         if (material->HasElement("script")) {
             p = material->GetElement("script");
 
@@ -869,7 +869,7 @@ void SDFBodyLoaderImpl::processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link
         }
 
         transparency = (isVisual && p->HasElement("transparency")) ? p->Get<float>("transparency") : -1.0;
-        material = (isVisual && p->HasElement("material")) ? p->GetElement("material") : NULL;
+        material = (isVisual && p->HasElement("material")) ? p->GetElement("material") : sdf::ElementPtr();
 
         if (p->HasElement("geometry")) {
             geometry = p->GetElement("geometry");
