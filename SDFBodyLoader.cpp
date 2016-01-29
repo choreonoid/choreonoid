@@ -4,6 +4,7 @@
 */
 
 #include "SDFBodyLoader.h"
+#include "SDFLoaderPseudoGazeboColor.h"
 #include <cnoid/Sensor>
 #include <cnoid/Camera>
 #include <cnoid/RangeSensor>
@@ -13,13 +14,14 @@
 #include <list>
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/DaeParser>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
+#include <cnoid/MessageView>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
 #include <boost/function.hpp>
-#include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -127,12 +129,16 @@ public:
     cnoid::Affine3 pose2affine(const sdf::Pose& pose);
     bool load(Body* body, const std::string& filename);
     BodyPtr load(const std::string& filename);        
-    SgNodePtr readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose);
+    SgNodePtr readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const sdf::Pose &pose);
     std::vector<JointInfoPtr> findRootJoints();
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
 
 private:
+    SDFLoaderPseudoGazeboColor *gazeboColor;
+
+    SgMaterial* createSgMaterial(sdf::ElementPtr material, float transparency);
+    void loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material);
     void decideJointType(Link *link, const std::string name, const std::string type);
     void addModelSearchPath(const char *envname);
     void processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
@@ -212,6 +218,7 @@ SDFBodyLoaderImpl::SDFBodyLoaderImpl()
     //jointTypeMap[] = Link::FREE_JOINT;
     jointTypeMap["fixed"] = Link::FIXED_JOINT;
     //jointTypeMap[] = Link::CRAWLER_JOINT;
+    gazeboColor = new SDFLoaderPseudoGazeboColor;
 }
 
 
@@ -249,6 +256,7 @@ bool SDFBodyLoader::load(BodyPtr body, const std::string& filename)
 {
     body->clearDevices();
     body->clearExtraJoints();
+
     return impl->load(body.get(), filename);
 }
 
@@ -552,12 +560,11 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
     }
 }
 
-SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose)
+SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const sdf::Pose &pose)
 {
     SgNodePtr converted = 0;
 
-    for(sdf::ElementPtr el = geometry->GetFirstElement(); el;
-        el = el->GetNextElement()) {
+    for(sdf::ElementPtr el = geometry->GetFirstElement(); el; el = el->GetNextElement()) {
         if(el->GetName() == "mesh") {
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
             SgPosTransformPtr transform = createSgPosTransform(pose);
@@ -568,11 +575,18 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
 
             if (boost::algorithm::iends_with(url, "dae")) {
                 // TODO: might be better to use assimp here instead of cnoid::DaeParser
-                DaeParser parser(&os());
-                transform->addChild(parser.createScene(url));
+                loadDae(url, transform, material);
             } else if (boost::algorithm::iends_with(url, "stl")) {
                 STLSceneLoader loader;
-                transform->addChild(loader.load(url));
+                SgShapePtr shape = dynamic_cast<SgShape*>(loader.load(url));
+
+                if (shape != NULL) {
+                    if (material != NULL) {
+                        shape->setMaterial(material);
+                    }
+
+                    transform->addChild(shape);
+                }
             }
             converted = transform;
         } else if(el->GetName() == "box"){
@@ -586,6 +600,11 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
             }
 
             shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
+
+            if (material != NULL) {
+                shape->setMaterial(material);
+            }
+
             transform->addChild(shape);
             converted = transform;
         } else if(el->GetName() == "sphere"){
@@ -598,6 +617,11 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
             }
 
             shape->setMesh(meshGenerator.generateSphere(radius));
+
+            if (material != NULL) {
+                shape->setMaterial(material);
+            }
+
             transform->addChild(shape);
             converted = transform;
         } else if(el->GetName() == "cylinder"){
@@ -612,6 +636,11 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
             }
 
             shape->setMesh(meshGenerator.generateCylinder(radius, length));
+
+            if (material != NULL) {
+                shape->setMaterial(material);
+            }
+
             transform->addChild(shape);
             converted = transform;
         } else {
@@ -620,6 +649,100 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
     }
 
     return converted;
+}
+
+/*!
+ */
+SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float transparency)
+{
+    SgMaterial* ret;
+    SDFLoaderPseudoGazeboColorInfo* cinfo;
+    sdf::ElementPtr p;
+    sdf::Color color;
+    Vector3f v;
+
+    ret = NULL;
+    cinfo = NULL;
+
+    if (material != NULL) {
+        if (material->HasElement("script")) {
+            p = material->GetElement("script");
+
+            /* script element must be have name element */
+            if (p->HasElement("name")) {
+                cinfo = gazeboColor->get(p->Get<std::string>("name"));
+
+                if (cinfo != NULL) {
+                    ret = cinfo->material;
+                }
+            }
+        }
+
+        if (cinfo == NULL) {
+            cinfo = new SDFLoaderPseudoGazeboColorInfo;
+            ret = cinfo->material;
+        }
+
+        if (material->HasElement("ambient") && cinfo->isSettingAmbient == false) {
+            color = material->Get<sdf::Color>("ambient");
+            ret->setAmbientIntensity((color.r + color.g + color.b) / 3.0f);
+        }
+
+        if (material->HasElement("diffuse") && cinfo->isSettingDiffuse == false) {
+            color = material->Get<sdf::Color>("diffuse");
+            v << color.r, color.g, color.b;
+            ret->setDiffuseColor(v);
+        }
+
+        if (material->HasElement("specular") && cinfo->isSettingSpecular == false) {
+            color = material->Get<sdf::Color>("specular");
+            v << color.r, color.g, color.b;
+            ret->setSpecularColor(v);
+        }
+
+        if (material->HasElement("emissive") && cinfo->isSettingEmissive == false) {
+            color = material->Get<sdf::Color>("emissive");
+            v << color.r, color.g, color.b;
+            ret->setEmissiveColor(v);
+        }
+
+        if (transparency >= 0.0) {
+            ret->setTransparency(transparency);
+        }
+    }
+
+    return ret;
+}
+
+/*!
+ */
+void SDFBodyLoaderImpl::loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material)
+{
+    SgGroupPtr p;
+    SgGroup::iterator it;
+    SgShapePtr shape;
+
+    if (transform == NULL) {
+        return;
+    }
+
+    DaeParser parser(&os());
+
+    if ((p = parser.createScene(url)) != NULL) {
+        if (material != NULL) {
+            for (it = p->begin(); it != p->end(); it++) {
+                shape = dynamic_cast<SgShape*>((*it).get());
+
+                if (shape != NULL) {
+                    shape->setMaterial(material);
+                }
+            }
+        }
+
+        transform->addChild(p);
+    }
+
+    return;
 }
 
 /**
@@ -711,6 +834,9 @@ void SDFBodyLoaderImpl::processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link
     std::string       type;
     sdf::Pose         pose;
     sdf::ElementPtr   geometry;
+    sdf::ElementPtr   material;
+    float             transparency;
+    SgMaterial*       sgmaterial;
     sdf::ElementPtr   p;
 
     if (linkdata == NULL || link == NULL) {
@@ -742,9 +868,13 @@ void SDFBodyLoaderImpl::processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link
             pose.pos.x = pose.pos.y = pose.pos.z = pose.rot.w = pose.rot.x = pose.rot.y = pose.rot.z = 0.0;
         }
 
+        transparency = (isVisual && p->HasElement("transparency")) ? p->Get<float>("transparency") : -1.0;
+        material = (isVisual && p->HasElement("material")) ? p->GetElement("material") : NULL;
+
         if (p->HasElement("geometry")) {
             geometry = p->GetElement("geometry");
-            shape->addChild(readGeometry(geometry, pose));
+            sgmaterial = createSgMaterial(material, transparency);
+            shape->addChild(readGeometry(geometry, sgmaterial, pose));
         } else {
             // corrupted? (geometry must be set)
             os() << "Warning: '" << p->Get<std::string>("name") << "' geometry not found" << std::endl;
