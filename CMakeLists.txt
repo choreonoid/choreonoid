@@ -36,10 +36,12 @@ endif()
 set(sources
   SDFLoaderPlugin.cpp
   SDFBodyLoader.cpp
+  SDFLoaderPseudoGazeboColor.cpp
   )
 
 set(headers
   SDFBodyLoader.h
+  SDFLoaderPseudoGazeboColor.h
   )
 
 include (FindPkgConfig)
