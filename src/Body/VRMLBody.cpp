@@ -72,3 +72,14 @@ VRMLAccelerationSensor::VRMLAccelerationSensor() : VRMLTransform()
     sensorId = -1;
     maxAcceleration << -1, -1, -1;
 }
+
+
+VRMLRangeSensor::VRMLRangeSensor() : VRMLTransform()
+{
+    sensorId = -1;
+    scanAngle = 3.14159;
+    scanStep = 0.1;
+    scanRate = 10;
+    minDistance = 0.01;
+    maxDistance = 10;
+}

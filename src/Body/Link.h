@@ -199,7 +199,7 @@ public:
         Tb_.linear() = offset;
     }
     template<typename Derived>
-        void setAccumlatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
+        void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
         Rs_ = Rs;
     }
         
