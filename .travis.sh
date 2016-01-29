@@ -9,9 +9,6 @@ sudo add-apt-repository -y ppa:hrg/daily
 sudo apt-get update -qq
 sudo apt-get install -qq -y libcnoid-dev libsdformat-dev
 
-source /opt/ros/hydro/setup.bash
-source /usr/share/drcsim/setup.sh
-
 cmake -DBUILD_SDFLOADER_PLUGIN=ON .
 make
 
