@@ -483,9 +483,6 @@ ODELink::~ODELink()
     if(triMeshDataID){
         dGeomTriMeshDataDestroy(triMeshDataID);
     }
-    if(bodyID){
-        dBodyDestroy(bodyID);
-    }
 }
 
 

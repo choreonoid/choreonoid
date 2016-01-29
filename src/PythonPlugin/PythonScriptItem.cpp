@@ -56,7 +56,7 @@ bool PythonScriptItem::setScriptFilename(const std::string& filename)
 {
     bool result = impl->setScriptFilename(filename);
     if(result && doExecutionOnLoading){
-        callLater(bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
+        callLater(boost::bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
     }
     return result;
 }
