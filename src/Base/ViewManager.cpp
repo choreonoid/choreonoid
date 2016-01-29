@@ -240,7 +240,7 @@ void InstanceInfo::remove()
     viewInfo->instances.erase(iterInViewInfo);
     iterInViewInfo = viewInfo->instances.end();
     viewInfo->instancesInViewManager.erase(iterInViewManager);
-    iterInViewManager = viewInfo->instancesInViewManager.end();
+    //iterInViewManager = viewInfo->instancesInViewManager.end();
 }
 
 

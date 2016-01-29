@@ -9,7 +9,7 @@ RokiJointParameters:
     maxvoltage: 24.0
     inertia: 1.65e-6
     gearinertia: 5.38e-6
-    ration: 120.0
+    ratio: 120.0
     stiff: 0.0000000000
     viscos: 2.2
     coulomb: 4.32
@@ -21,7 +21,7 @@ RokiJointParameters:
     maxvoltage: 24.0
     inertia: 1.65e-6
     gearinertia: 5.38e-6
-    ration: 120.0
+    ratio: 120.0
     stiff: 0.0000000000
     viscos: 2.2
     coulomb: 4.32

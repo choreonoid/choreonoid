@@ -29,7 +29,6 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace Eigen;
 using namespace cnoid;
 
@@ -54,7 +53,7 @@ struct GRobotCustomizer
     BodyHandle bodyHandle;
     int modelType;
     JointPathValSet jointPathValSets[NUM_IK_TYPES];
-    typedef function<bool(const Vector3& p, const Matrix3& R)> IkFunc;    
+    typedef boost::function<bool(const Vector3& p, const Matrix3& R)> IkFunc;    
     IkFunc ikFuncs[NUM_IK_TYPES];
 
     double l0;

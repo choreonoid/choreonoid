@@ -28,13 +28,16 @@ elseif(MSVC)
                          debug BulletCollision_Debug debug BulletDynamics_Debug debug LinearMath_Debug debug HACD_Debug)
     set(bullet_INCLUDE_DIRS ${BULLET_DIR}/include/bullet ${BULLET_DIR}/src ${BULLET_DIR}/Extras)
     set(bullet_LIBRARY_DIRS ${BULLET_DIR}/lib/)
+    add_definitions(-DBT_VER_GT_281)
   endif()
 endif()
 
 add_definitions(${bullet_CFLAGS})
 
-if(${bullet_VERSION} VERSION_GREATER 2.81)
-  add_definitions(-DBT_VER_GT_281)
+if(UNIX)
+  if(${bullet_VERSION} VERSION_GREATER 2.81)
+    add_definitions(-DBT_VER_GT_281)
+  endif()
 endif()
 
 include_directories(${bullet_INCLUDE_DIRS})
