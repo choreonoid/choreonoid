@@ -18,8 +18,8 @@ SDFLoaderPseudoGazeboColorInfo::SDFLoaderPseudoGazeboColorInfo()
     material = new SgMaterial;
 
     /*
-     * setting the Ogre3D's default value
-     * see http://www.ogre3d.org/docs/manual/manual_16.html
+       setting the Ogre3D's default value
+       see http://www.ogre3d.org/docs/manual/manual_16.html
      */
     v << 1.0, 1.0, 1.0;
     material->setDiffuseColor(v);

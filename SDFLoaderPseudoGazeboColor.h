@@ -12,16 +12,16 @@
 
 namespace cnoid {
 
-/*!
+/**
  */
 class CNOID_EXPORT SDFLoaderPseudoGazeboColorInfo
 {
 public:
-    /*!
+    /**
      */
     SDFLoaderPseudoGazeboColorInfo();
 
-    /*!
+    /**
      */
     ~SDFLoaderPseudoGazeboColorInfo();
 
@@ -32,20 +32,20 @@ public:
     SgMaterialPtr material;
 };
 
-/*!
+/**
  */
 class CNOID_EXPORT SDFLoaderPseudoGazeboColor
 {
 public:
-    /*!
+    /**
      */
     SDFLoaderPseudoGazeboColor();
 
-    /*!
+    /**
      */
     ~SDFLoaderPseudoGazeboColor();
 
-    /*!
+    /**
      */
     SDFLoaderPseudoGazeboColorInfo* get(std::string name);
 
