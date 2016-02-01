@@ -141,7 +141,7 @@ private:
     void loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material);
     void decideJointType(Link *link, const std::string name, const std::string type);
     void addModelSearchPath(const char *envname);
-    void processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
+    void processShapes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
     SgPosTransformPtr createSgPosTransform(const sdf::Pose &pose, bool isRotation = false);
 };
 
@@ -213,11 +213,15 @@ SDFBodyLoaderImpl::SDFBodyLoaderImpl()
     isVerbose = false;
     body = 0;
     os_ = &nullout();
+
     jointTypeMap["revolute"] = Link::ROTATIONAL_JOINT;
     jointTypeMap["prismatic"] = Link::SLIDE_JOINT;
-    //jointTypeMap[] = Link::FREE_JOINT;
     jointTypeMap["fixed"] = Link::FIXED_JOINT;
-    //jointTypeMap[] = Link::CRAWLER_JOINT;
+#if 0    /* Unused */
+    jointTypeMap[] = Link::FREE_JOINT;
+    jointTypeMap[] = Link::CRAWLER_JOINT;
+#endif   /* Unused */
+
     gazeboColor = new SDFLoaderPseudoGazeboColor;
 }
 
@@ -254,9 +258,6 @@ void SDFBodyLoader::setVerbose(bool on)
 
 bool SDFBodyLoader::load(BodyPtr body, const std::string& filename)
 {
-    body->clearDevices();
-    body->clearExtraJoints();
-
     return impl->load(body.get(), filename);
 }
 
@@ -274,6 +275,7 @@ cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
     R.w() = pose.rot.w;
     ret.translation() = trans;
     ret.linear() = R.matrix();
+
     return ret;
 }
 
@@ -357,10 +359,10 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                     }
                 }
                 if(link->HasElement("visual")) {
-                    processMeshes(linkdata, link, true);
+                    processShapes(linkdata, link, true);
                 }
                 if(link->HasElement("collision")){
-                    processMeshes(linkdata, link, false);
+                    processShapes(linkdata, link, false);
                 }
                 linkdataMap[linkdata->linkName] = linkdata;
                 link = link->GetNextElement("link");
@@ -459,7 +461,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             if((*it)->parentName == "world"){
                 decideJointType(link, (*it)->jointName, (*it)->jointType);
 
-                if (link->jointType() != Link::FIXED_JOINT) {
+                if (link->isFixedJoint() == false) {
                     link->setJointType(Link::FREE_JOINT);
                 }
 
@@ -529,7 +531,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         // joint setting
         decideJointType(link, (*it)->jointName, (*it)->jointType);
 
-        if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
+        if (link->isFreeJoint() == true || link->isFixedJoint() == true) {
             link->setJointAxis(Vector3::Zero());
         } else {
             link->setJointAxis(link->Rs() * (*it)->axis);
@@ -569,25 +571,33 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
             SgPosTransformPtr transform = createSgPosTransform(pose);
 
-            if (isVerbose) {
-                os() << "     read mesh " << url << std::endl;
-            }
-
-            if (boost::algorithm::iends_with(url, "dae")) {
-                // TODO: might be better to use assimp here instead of cnoid::DaeParser
-                loadDae(url, transform, material);
-            } else if (boost::algorithm::iends_with(url, "stl")) {
-                STLSceneLoader loader;
-                SgShapePtr shape = dynamic_cast<SgShape*>(loader.load(url));
-
-                if (shape != NULL) {
-                    if (material != NULL) {
-                        shape->setMaterial(material);
-                    }
-
-                    transform->addChild(shape);
+            if (! url.empty()) {
+                if (isVerbose) {
+                    os() << "     read mesh " << url << std::endl;
                 }
+
+                if (boost::algorithm::iends_with(url, "dae")) {
+                    // TODO: might be better to use assimp here instead of cnoid::DaeParser
+                    loadDae(url, transform, material);
+                } else if (boost::algorithm::iends_with(url, "stl")) {
+                    STLSceneLoader loader;
+                    SgShapePtr shape = dynamic_cast<SgShape*>(loader.load(url));
+
+                    if (shape != NULL) {
+                        if (material != NULL) {
+                            shape->setMaterial(material);
+                        }
+
+                        transform->addChild(shape);
+                    }
+                }
+            } else {
+                MessageView::instance()->putln(
+                    MessageView::WARNING,
+                    boost::format("%1% not found") % el->Get<std::string>("uri")
+                    );
             }
+
             converted = transform;
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
@@ -651,7 +661,7 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
     return converted;
 }
 
-/*!
+/**
  */
 SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float transparency)
 {
@@ -664,7 +674,7 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
     ret = NULL;
     cinfo = NULL;
 
-    if (material != sdf::ElementPtr()) {
+    if (material != NULL) {
         if (material->HasElement("script")) {
             p = material->GetElement("script");
 
@@ -714,7 +724,7 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
     return ret;
 }
 
-/*!
+/**
  */
 void SDFBodyLoaderImpl::loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material)
 {
@@ -746,10 +756,10 @@ void SDFBodyLoaderImpl::loadDae(std::string url, SgPosTransformPtr transform, Sg
 }
 
 /**
- * @brief Decide joint type.
- * @param[in/out] link Instance of Link.
- * @param[in] name Joint name.
- * @param[in] type Joint type of SDF.
+   @brief Decide joint type.
+   @param[in/out] link Instance of Link.
+   @param[in] name Joint name.
+   @param[in] type Joint type of SDF.
  */
 void SDFBodyLoaderImpl::decideJointType(Link *link, const std::string name, const std::string type)
 {
@@ -771,16 +781,16 @@ void SDFBodyLoaderImpl::decideJointType(Link *link, const std::string name, cons
 }
 
 /**
- * @brief Create instance of SgPosTransform.
- * @param[in] pose Shape's pose.
- * @param[in] isRotation Set true, 90 degree rotation of X axes. (default false)
- *            Choreonoid MeshGenerator/VRML     URDF/SDF
- *                       Y                          Z
- *                       |                          |
- *                       +- X                       +- Y
- *                      /                          /
- *                     Z                          X
- * @return Instance of SgPosTransform.
+   @brief Create instance of SgPosTransform.
+   @param[in] pose Shape's pose.
+   @param[in] isRotation Set true, 90 degree rotation of X axes. (default false)
+              Choreonoid MeshGenerator/VRML     URDF/SDF
+                         Y                          Z
+                         |                          |
+                         +- X                       +- Y
+                        /                          /
+                       Z                          X
+   @return Instance of SgPosTransform.
  */
 SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose, bool isRotation)
 {
@@ -795,9 +805,9 @@ SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose,
 }
 
 /**
- * @brief Add model search path from environment variable.
- * @param[in] envname Environment variable name.
- * special process by set 'HOME'. (add ${HOME}/.gazebo/models)
+   @brief Add model search path from environment variable.
+   @param[in] envname Environment variable name.
+   special process by set 'HOME'. (add ${HOME}/.gazebo/models)
  */
 void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
 {
@@ -823,12 +833,12 @@ void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
 }
 
 /**
- * @brief Process meshes.
- * @param[in] linkdata Created links.
- * @param[in] link Target link.
- * @param[in] isVisual Set true is visual, false is collision.
+   @brief Process shapes.
+   @param[in] linkdata Created links.
+   @param[in] link Target link.
+   @param[in] isVisual Set true is visual, false is collision.
  */
-void SDFBodyLoaderImpl::processMeshes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual)
+void SDFBodyLoaderImpl::processShapes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual)
 {
     cnoid::SgGroupPtr shape;
     std::string       type;
