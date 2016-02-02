@@ -550,8 +550,14 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     renderer.initializeGL();
     renderer.setViewport(0, 0, pixelWidth, pixelHeight);
     renderer.initializeRendering();
-    renderer.headLight()->on(simImpl->isHeadLightEnabled);
-    renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
+
+    if(rangeSensor){
+        renderer.setDefaultLighting(false);
+    } else {
+        renderer.headLight()->on(simImpl->isHeadLightEnabled);
+        renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
+    }
+    
     renderer.setCurrentCamera(sceneCamera);
     pixelBuffer->doneCurrent();
 

@@ -491,8 +491,13 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
     renderCamera(camera, cameraPosition);
 
     if(isPicking || !defaultLighting){
-        glDisable(GL_LIGHTING);
+        enableLighting(false);
     } else {
+        if(defaultSmoothShading){
+            glShadeModel(GL_SMOOTH);
+        } else {
+            glShadeModel(GL_FLAT);
+        }
         renderLights(cameraPosition);
         renderFog();
     }
@@ -511,12 +516,6 @@ void GL1SceneRendererImpl::beginActualRendering(SgCamera* camera)
             glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
             break;
         }
-    }
-
-    if(defaultSmoothShading){
-        glShadeModel(GL_SMOOTH);
-    } else {
-        glShadeModel(GL_FLAT);
     }
 
     isNewDisplayListCreated = false;
@@ -572,7 +571,7 @@ void GL1SceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraP
 
 void GL1SceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
-    glEnable(GL_LIGHTING);
+    enableLighting(true);
 
     SgLight* headLight = self->headLight();
     if(!headLight->on()){
@@ -1005,34 +1004,40 @@ void GL1SceneRendererImpl::visitShape(SgShape* shape)
     SgMesh* mesh = shape->mesh();
     if(mesh){
         if(mesh->hasVertices()){
-            SgMaterial* material = shape->material();
-            SgTexture* texture = isTextureEnabled ? shape->texture() : 0;
-
-            if((material && material->transparency() > 0.0)
-               /* || (texture && texture->constImage().hasAlphaComponent()) */){
-                // A transparent shape is rendered later
-                TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
-                info->shape = shape;
-                if(isCompiling){
-                    info->V = Vstack[currentShapeCacheTopViewMatrixIndex].inverse() * Vstack.back();
-                    currentShapeCache->transparentShapes.push_back(info);
-                } else {
-                    info->V = Vstack.back();
-                    info->pickId = pushPickName(shape, false);
-                    popPickName();
-                    transparentShapeInfos.push_back(info);
-                }
-            } else {
+            if(!defaultLighting){
                 pushPickName(shape);
-                bool hasTexture = false;
-                if(!isPicking){
-                    renderMaterial(material);
-                    if(texture && mesh->hasTexCoords()){
-                        hasTexture = renderTexture(texture, material);
-                    }
-                }
-                renderMesh(mesh, hasTexture);
+                renderMesh(mesh, false);
                 popPickName();
+            } else {
+                SgMaterial* material = shape->material();
+                SgTexture* texture = isTextureEnabled ? shape->texture() : 0;
+                
+                if((material && material->transparency() > 0.0)
+                   /* || (texture && texture->constImage().hasAlphaComponent()) */){
+                    // A transparent shape is rendered later
+                    TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
+                    info->shape = shape;
+                    if(isCompiling){
+                        info->V = Vstack[currentShapeCacheTopViewMatrixIndex].inverse() * Vstack.back();
+                        currentShapeCache->transparentShapes.push_back(info);
+                    } else {
+                        info->V = Vstack.back();
+                        info->pickId = pushPickName(shape, false);
+                        popPickName();
+                        transparentShapeInfos.push_back(info);
+                    }
+                } else {
+                    pushPickName(shape);
+                    bool hasTexture = false;
+                    if(!isPicking){
+                        renderMaterial(material);
+                        if(texture && mesh->hasTexCoords()){
+                            hasTexture = renderTexture(texture, material);
+                        }
+                    }
+                    renderMesh(mesh, hasTexture);
+                    popPickName();
+                }
             }
         }
     }
@@ -1377,8 +1382,9 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
     SgIndexArray& orgTriangleVertices = mesh->triangleVertices();
     const size_t numTriangles = mesh->numTriangles();
     const size_t totalNumVertices = orgTriangleVertices.size();
-    const bool hasNormals = mesh->hasNormals() && !isPicking;
-    const bool hasColors = mesh->hasColors() && !isPicking;
+    const bool doLighting = !isPicking && defaultLighting;
+    const bool hasNormals = mesh->hasNormals() && doLighting;
+    const bool hasColors = mesh->hasColors() && doLighting;
     SgVertexArray* vertices = 0;
     SgNormalArray* normals = 0;
     SgIndexArray* triangleVertices = 0;
@@ -1959,7 +1965,7 @@ void GL1SceneRenderer::setFrontCCW(bool on)
 void GL1SceneRendererImpl::enableLighting(bool on)
 {
     if(isPicking || !defaultLighting){
-        return;
+        on = false;
     }
     if(!stateFlag[LIGHTING] || isLightingEnabled != on){
         if(on){
