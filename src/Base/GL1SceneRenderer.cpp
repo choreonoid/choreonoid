@@ -23,6 +23,7 @@
 */
 #include "gl_1_5.h"
 
+#include <GL/glu.h>
 
 using namespace std;
 using namespace cnoid;
@@ -149,6 +150,7 @@ public:
         SgNormalArray normals;
         ColorArray colors;
         SgTexCoordArray texCoords;
+        vector<char> scaledImageBuf;
     };
     boost::scoped_ptr<Buf> buf;
         
@@ -1133,24 +1135,13 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
     }
 
     if(doLoadTexImage){
-        GLint internalFormat = GL_RGB;
         GLenum format = GL_RGB;
-        
         switch(image.numComponents()){
-        case 1 : internalFormat = GL_LUMINANCE;
-            format = GL_LUMINANCE;
-            break;
-        case 2 : internalFormat = GL_LUMINANCE_ALPHA;
-            format = GL_LUMINANCE_ALPHA;
-            break;
-        case 3 : internalFormat = GL_RGB;
-            format = GL_RGB;
-            break;
-        case 4 : internalFormat = GL_RGBA;
-            format = GL_RGBA;
-            break;
-        default :
-            return false;
+        case 1 : format = GL_LUMINANCE; break;
+        case 2 : format = GL_LUMINANCE_ALPHA; break;
+        case 3 : format = GL_RGB; break;
+        case 4 : format = GL_RGBA; break;
+        default : return false;
         }
         
         if(image.numComponents() == 3){
@@ -1161,8 +1152,22 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
 
         if(!isCompiling && doReloadTexImage){
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
+
         } else {
-            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());            
+            double w2 = log2(width);
+            double h2 = log2(height);
+            double pw = ceil(w2);
+            double ph = ceil(h2);
+            if((pw - w2 == 0.0) && (ph - h2 == 0.0)){
+                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
+            } else{
+                GLsizei potWidth = pow(2.0, pw);
+                GLsizei potHeight = pow(2.0, ph);
+                buf->scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
+                gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
+                              potWidth, potHeight, GL_UNSIGNED_BYTE, &buf->scaledImageBuf.front());
+                glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0, format, GL_UNSIGNED_BYTE, &buf->scaledImageBuf.front());
+            }
         } 
     }
 
