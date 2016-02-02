@@ -81,7 +81,7 @@ void exportPySceneGraph()
 
     implicitly_convertible<SgTransformPtr, SgGroupPtr>();
 
-    class_< SgPosTransform, SgPosTransformPtr, bases<SgTransform> >("SgPosTransform")
+    class_< SgPosTransform, SgPosTransformPtr, bases<SgTransform>, boost::noncopyable >("SgPosTransform")
         .def("position", SgPosTransform_get_position)
         .def("setPosition", SgPosTransform_set_position)
         .add_property("T", SgPosTransform_get_position, SgPosTransform_set_position)

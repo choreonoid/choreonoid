@@ -4,6 +4,9 @@
 
 #include "../RTCItem.h"
 #include "../BodyRTCItem.h"
+#ifdef _WIN32
+#undef HAVE_UNISTD_H
+#endif
 #include <cnoid/PyUtil>
 
 using namespace boost::python;

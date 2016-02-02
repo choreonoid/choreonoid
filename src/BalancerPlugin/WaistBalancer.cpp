@@ -20,7 +20,7 @@ namespace {
 
     const bool DoVerticalAccCompensation = true;
     
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1800
     inline long lround(double x) {
         return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
     }

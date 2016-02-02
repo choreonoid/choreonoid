@@ -26,13 +26,13 @@ class VisionSensorSamplePlugin : public Plugin
     ImageView* imageView;
     Connection sigItemAddedConnection;
     CameraPtr camera;
-    shared_ptr<const Image> prevImage;
+    boost::shared_ptr<const Image> prevImage;
     RangeCameraPtr rangeCamera;
     SgPointSetPtr pointSetFromRangeCamera;
-    shared_ptr<const std::vector<Vector3f> > prevPoints;
+    boost::shared_ptr<const std::vector<Vector3f> > prevPoints;
     RangeSensorPtr rangeSensor;
     SgPointSetPtr pointSetFromRangeSensor;
-    shared_ptr<const RangeSensor::RangeData> prevRangeData;
+    boost::shared_ptr<const RangeSensor::RangeData> prevRangeData;
     
 public:
     
