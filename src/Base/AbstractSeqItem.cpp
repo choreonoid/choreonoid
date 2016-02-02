@@ -31,6 +31,12 @@ AbstractSeqItem::~AbstractSeqItem()
 }
 
 
+static bool setOffsetTime(AbstractSeqItem* item, double offset)
+{
+    return item->abstractSeq()->setOffsetTime(offset);
+}
+
+
 static bool setPropertyNumFrames(AbstractSeqItem* item, int numFrames)
 {
     if(numFrames >= 0){
@@ -57,7 +63,7 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqPtr seq = abstractSeq();
     putProperty(_("Frame rate"), seq->getFrameRate());
-    putProperty(_("Offset time"), seq->getOffsetTime());
+    putProperty(_("Offset time"), seq->getOffsetTime(), boost::bind(setOffsetTime, this, _1));
     putProperty(_("Number of frames"), seq->getNumFrames(), boost::bind(setPropertyNumFrames, this, _1));
     putProperty(_("Time length"), seq->getTimeLength(), boost::bind(setPropertyTimeLength, this, _1));
     putProperty.decimals(3)(_("Time step"), seq->getTimeStep());
@@ -69,14 +75,18 @@ bool AbstractSeqItem::store(Archive& archive)
     if(overwrite()){
         archive.writeRelocatablePath("filename", filePath());
         archive.write("format", fileFormat());
-        return true;
     }
-    return false;
+    archive.write("offsetTime", abstractSeq()->getOffsetTime());
+    return true;
 }
 
 
 bool AbstractSeqItem::restore(const Archive& archive)
 {
+    double offsetTime;
+    if(archive.read("offsetTime", offsetTime)){
+        abstractSeq()->setOffsetTime(offsetTime);
+    }
     std::string filename, formatId;
     if(archive.readRelocatablePath("filename", filename) && archive.read("format", formatId)){
         if(load(filename, formatId)){

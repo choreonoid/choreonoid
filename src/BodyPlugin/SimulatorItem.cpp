@@ -742,6 +742,7 @@ void SimulationBodyImpl::initializeResultItems()
     motion = motionItem->motion();
     motion->setFrameRate(frameRate);
     motion->setDimension(0, jointPosBuf.colSize(), linkPosBuf.colSize());
+    motion->setOffsetTime(0.0);
     jointPosResults = motion->jointPosSeq();
     linkPosResultItem = motionItem->linkPosSeqItem();
     linkPosResults = motion->linkPosSeq();
