@@ -975,9 +975,9 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
             iLink.visualShape->addChild(transform);
         }
     } else {
-      node = new SgInvariantGroup;
-      node->setName(segmentNode->defName);
-      iLink.visualShape->addChild(node);
+        node = new SgNode;
+        node->setName(segmentNode->defName);
+        iLink.visualShape->addChild(node);
     }
 }
 
