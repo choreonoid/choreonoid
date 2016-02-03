@@ -233,6 +233,7 @@ public:
     Mapping* info() { return info_; }
 
     template<typename T> T info(const std::string& key) const;
+    template<typename T> T info(const std::string& key, const T& defaultValue) const;
     template<typename T> void setInfo(const std::string& key, const T& value);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
@@ -282,6 +283,7 @@ private:
 };
 
 template<> CNOID_EXPORT double Link::info(const std::string& key) const;
+template<> CNOID_EXPORT double Link::info(const std::string& key, const double& defaultValue) const;
 template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const double& value);
 
 }
