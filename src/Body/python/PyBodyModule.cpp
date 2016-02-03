@@ -5,6 +5,7 @@
 #include "../Body.h"
 #include "../BodyLoader.h"
 #include "../BodyMotion.h"
+#include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
 
@@ -51,6 +52,19 @@ Vector3 Link_get_tau_ext(Link& self) { return self.tau_ext(); }
 void Link_set_tau_ext(Link& self, const Vector3& tau) { self.tau_ext() = tau; }
 SgNodePtr Link_visualShape(const Link& self) { return self.visualShape(); }
 SgNodePtr Link_collisionShape(const Link& self) { return self.collisionShape(); }
+MappingPtr Link_info(Link& self) { return self.info(); }
+python::object Link_info2(Link& self, const std::string& key, python::object defaultValue)
+{
+    if(PyFloat_Check(defaultValue.ptr())){
+        double v = python::extract<double>(defaultValue);
+        return python::object(self.info(key, v));
+    } else {
+        PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
+        python::throw_error_already_set();
+    }
+}
+double Link_floatInfo(Link& self, const std::string& key) { return self.info<double>(key); }
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Body_calcForwardKinematics_overloads, calcForwardKinematics, 0, 2)
 
@@ -162,6 +176,9 @@ BOOST_PYTHON_MODULE(Body)
             .def("attitude", &Link::attitude)
             .def("setAttitude", &Link::setAttitude)
             .def("calcRfromAttitude", &Link::calcRfromAttitude)
+            .def("info", Link_info)
+            .def("info", Link_info2)
+            .def("floatInfo", Link_floatInfo)
             ;
 
         enum_<Link::JointType>("JointType")

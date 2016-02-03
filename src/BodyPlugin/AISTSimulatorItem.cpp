@@ -303,6 +303,12 @@ void AISTSimulatorItem::setGravity(const Vector3& gravity)
 }
 
 
+const Vector3& AISTSimulatorItem::gravity() const
+{
+    return impl->gravity;
+}
+
+
 void AISTSimulatorItem::setFriction(double staticFriction, double slipFriction)
 {
     impl->staticFriction = staticFriction;

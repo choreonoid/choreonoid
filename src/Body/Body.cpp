@@ -55,6 +55,7 @@ public:
 
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 };
+
 }
 
 
