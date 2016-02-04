@@ -57,7 +57,7 @@ class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
 
     void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
-    void onRegionFixed(const RectRegionMarker::Region& region);    
+    void onRegionFixed(const PolyhedralRegion& region);    
 };
 
 typedef ref_ptr<SceneMultiPointSet> SceneMultiPointSetPtr;
@@ -741,7 +741,7 @@ void SceneMultiPointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent
 }
 
 
-void SceneMultiPointSet::onRegionFixed(const RectRegionMarker::Region& region)
+void SceneMultiPointSet::onRegionFixed(const PolyhedralRegion& region)
 {
     MultiPointSetItem* item = weakMultiPointSetItem.lock();
     if(item){

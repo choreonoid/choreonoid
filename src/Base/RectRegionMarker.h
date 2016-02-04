@@ -12,6 +12,7 @@
 
 namespace cnoid {
 
+class PolyhedralRegion;
 class RectRegionMarkerImpl;
 
 class CNOID_EXPORT RectRegionMarker : public SgOverlay, public SceneWidgetEditable
@@ -28,25 +29,8 @@ public:
     bool isEditing() const;
     void finishEditing();
 
-    class CNOID_EXPORT Region {
-      public:
-        Region();
-        Region(int numSurroundingPlanes);
-        Region(const Region& org);
-        Region& operator=(const Region& org);
-        int numSurroundingPlanes() const;
-        void setNumSurroundingPlanes(int n);
-        void addSurroundingPlane(const Vector3& normal, const Vector3& point);
-        Vector3& normal(int index);
-        const Vector3& normal(int index) const;
-        Vector3& point(int index);
-        const Vector3& point(int index) const;
-      private:
-        void* impl;
-    };
-
-    const Region& region() const;
-    SignalProxy<void(const RectRegionMarker::Region& region)> sigRegionFixed();
+    const PolyhedralRegion& region() const;
+    SignalProxy<void(const PolyhedralRegion& region)> sigRegionFixed();
 
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
