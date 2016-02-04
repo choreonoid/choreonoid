@@ -17,6 +17,7 @@
 #include <cnoid/PointSetUtil>
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
+#include <cnoid/PolyhedralRegion>
 #include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
@@ -71,7 +72,7 @@ public:
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menuManager);
     void onContextMenuRequestInEraserMode(const SceneWidgetEvent& event, MenuManager& menuManager);
-    void onRegionFixed(const RectRegionMarker::Region& region);
+    void onRegionFixed(const PolyhedralRegion& region);
 };
 
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
@@ -87,13 +88,13 @@ public:
     SgPointSetPtr pointSet;
     ScenePointSetPtr scene;
     ScopedConnection pointSetUpdateConnection;
-    Signal<void(const RectRegionMarker::Region& region)> sigPointsInRegionRemoved;
+    Signal<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved;
 
     PointSetItemImpl(PointSetItem* self);
     PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
     void setRenderingMode(int mode);
     bool onEditableChanged(bool on);
-    void removePoints(const RectRegionMarker::Region& region);
+    void removePoints(const PolyhedralRegion& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
     bool onRenderingModePropertyChanged(int mode);
@@ -405,42 +406,29 @@ void PointSetItem::notifyAttentionPointChange()
 }
 
 
-SignalProxy<void(const RectRegionMarker::Region& region)> PointSetItem::sigPointsInRegionRemoved()
+SignalProxy<void(const PolyhedralRegion& region)> PointSetItem::sigPointsInRegionRemoved()
 {
     return impl->sigPointsInRegionRemoved;
 }
 
 
-void PointSetItem::removePoints(const RectRegionMarker::Region& region)
+void PointSetItem::removePoints(const PolyhedralRegion& region)
 {
     impl->removePoints(region);
 }
 
 
-void PointSetItemImpl::removePoints(const RectRegionMarker::Region& region)
+void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
 {
     vector<int> indicesToRemove;
     const Affine3 T = scene->T();
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
-    const int numPlanes = region.numSurroundingPlanes();
-    vector<double> d(numPlanes);
-    for(int i=0; i < numPlanes; ++i){
-        d[i] = region.normal(i).dot(region.point(i));
-    }
-
     for(int i=0; i < numOrgPoints; ++i){
-        const Vector3 point = T * orgPoints[i].cast<Vector3::Scalar>();
-        for(int j=0; j < numPlanes; ++j){
-            const double distance = point.dot(region.normal(j)) - d[j];
-            if(distance < 0.0){
-                goto notInRegion;
-            }
+        if(region.checkInside(T * orgPoints[i].cast<Vector3::Scalar>())){
+            indicesToRemove.push_back(i);
         }
-        indicesToRemove.push_back(i);
-      notInRegion:
-        ;
     }
 
     if(!indicesToRemove.empty()){
@@ -926,7 +914,7 @@ void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& eve
 }
 
 
-void ScenePointSet::onRegionFixed(const RectRegionMarker::Region& region)
+void ScenePointSet::onRegionFixed(const PolyhedralRegion& region)
 {
     PointSetItem* item = weakPointSetItem.lock();
     if(item){

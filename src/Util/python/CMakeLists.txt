@@ -11,6 +11,7 @@ add_cnoid_python_module(PyUtil
   PyEigenArchive.cpp
   PySeqTypes.cpp
   PySceneGraph.cpp
+  PyGeometryTypes.cpp
   PyTask.cpp
   )
 
