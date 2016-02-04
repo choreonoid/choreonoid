@@ -853,7 +853,13 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setEquivalentRotorInertia(get<SFFloat>(*field));
     } else {
         link->setEquivalentRotorInertia(gearRatio * gearRatio * Ir);
-    }    
+    }
+
+    link->setInfo("rotorInertia", Ir);
+    link->setInfo("gearRatio", gearRatio);
+    link->setInfo("torqueConst", torqueConst);
+    link->setInfo("encoderPulse", encoderPulse);
+    link->setInfo("rotorResistor", rotorResistor);
 
     double maxlimit = numeric_limits<double>::max();
 

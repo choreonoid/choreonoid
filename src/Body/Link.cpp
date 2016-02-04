@@ -5,6 +5,7 @@
 
 #include "Link.h"
 #include <cnoid/SceneGraph>
+#include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
@@ -40,6 +41,7 @@ Link::Link()
     q_lower_ = -std::numeric_limits<double>::max();
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
+    info_ = new Mapping;
 }
 
 
@@ -83,9 +85,10 @@ Link::Link(const Link& org)
     dq_upper_ = org.dq_upper_;
     dq_lower_ = org.dq_lower_;
 
-    //! \todo add the mode for doing deep copy of the shape object
+    //! \todo add the mode for doing deep copy of the following objects
     visualShape_ = org.visualShape_;
     collisionShape_ = org.collisionShape_;
+    info_ = org.info_;
 }
 
 
@@ -184,4 +187,26 @@ void Link::setVisualShape(SgNode* shape)
 void Link::setCollisionShape(SgNode* shape)
 {
     collisionShape_ = shape;
+}
+
+
+template<> double Link::info(const std::string& key) const
+{
+    return info_->get(key).toDouble();
+}
+
+
+template<> double Link::info(const std::string& key, const double& defaultValue) const
+{
+    double value;
+    if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> void Link::setInfo(const std::string& key, const double& value)
+{
+    info_->write(key, value);
 }

@@ -8,13 +8,16 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
-#include <cnoid/SceneGraph>
+//#include <cnoid/SceneGraph>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
+
+class Mapping;
+typedef ref_ptr<Mapping> MappingPtr;
 
 class CNOID_EXPORT Link
 {
@@ -226,6 +229,12 @@ public:
     void setAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra * Rs_.transpose(); }
 
+    const Mapping* info() const { return info_; }
+    Mapping* info() { return info_; }
+
+    template<typename T> T info(const std::string& key) const;
+    template<typename T> T info(const std::string& key, const T& defaultValue) const;
+    template<typename T> void setInfo(const std::string& key, const T& value);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     // fext, tauext
@@ -253,10 +262,10 @@ private:
     double dq_;
     double ddq_;
     double u_;
-    Vector3	v_;
-    Vector3	w_;
-    Vector3	dv_;
-    Vector3	dw_;
+    Vector3 v_;
+    Vector3 w_;
+    Vector3 dv_;
+    Vector3 dw_;
     Vector3 c_;
     Vector3 wc_;
     double m_;
@@ -270,7 +279,12 @@ private:
     std::string name_;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
+    MappingPtr info_;
 };
+
+template<> CNOID_EXPORT double Link::info(const std::string& key) const;
+template<> CNOID_EXPORT double Link::info(const std::string& key, const double& defaultValue) const;
+template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const double& value);
 
 }
 	

@@ -31,6 +31,7 @@ public:
     void setDynamicsMode(int mode);
     void setIntegrationMode(int mode);
     void setGravity(const Vector3& gravity);
+    const Vector3& gravity() const;
     void setFriction(double staticFriction, double slipFriction);
     void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
     void setContactCullingDistance(double value);        
