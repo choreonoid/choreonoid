@@ -78,9 +78,10 @@ SDFLoaderPseudoGazeboColorInfo* SDFLoaderPseudoGazeboColor::get(std::string name
     SDFLoaderPseudoGazeboColorInfo* p;
 
     ret = new SDFLoaderPseudoGazeboColorInfo;
-    p = colorInfoMap_[name];
 
-    if (p != NULL) {
+    if (colorInfoMap_.find(name) != colorInfoMap_.end()) {
+        p = colorInfoMap_[name];
+
         ret->isSettingAmbient = p->isSettingAmbient;
         ret->isSettingDiffuse = p->isSettingDiffuse;
         ret->isSettingSpecular = p->isSettingSpecular;
