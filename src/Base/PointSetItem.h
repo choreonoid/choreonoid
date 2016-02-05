@@ -68,9 +68,9 @@ public:
     void clearAttentionPoint();  // deprecated
     void setAttentionPoint(const Vector3& p);  // deprecated
 
-    void removePoints(const RectRegionMarker::Region& region);
+    void removePoints(const PolyhedralRegion& region);
 
-    SignalProxy<void(const RectRegionMarker::Region& region)> sigPointsInRegionRemoved();
+    SignalProxy<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved();
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

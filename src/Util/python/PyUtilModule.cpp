@@ -17,6 +17,7 @@ void exportPyEigenTypes();
 void exportPyEigenArchive();
 void exportPySeqTypes();
 void exportPySceneGraph();
+void exportPyGeometryTypes();
 void exportPyTaskTypes();
 
 }
@@ -31,6 +32,7 @@ BOOST_PYTHON_MODULE(Util)
     exportPyEigenArchive();
     exportPySeqTypes();
     exportPySceneGraph();
+    exportPyGeometryTypes();
     exportPyTaskTypes();
 
     def("shareDirectory", &cnoid::shareDirectory, return_value_policy<copy_const_reference>());

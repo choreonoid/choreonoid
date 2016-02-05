@@ -113,6 +113,7 @@ set(headers
   CollisionDetector.h
   Triangulator.h
   PolygonMeshTriangulator.h
+  PolyhedralRegion.h
   Image.h
   ImageIO.h
   ImageConverter.h
