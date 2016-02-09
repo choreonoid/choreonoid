@@ -8,7 +8,10 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
-//#include <cnoid/SceneGraph>
+#ifdef WIN32
+#include <cnoid/SceneGraph>
+#include <cnoid/ValueTree>
+#endif
 #include "exportdecl.h"
 
 namespace cnoid {
