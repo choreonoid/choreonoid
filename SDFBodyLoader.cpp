@@ -5,6 +5,7 @@
 
 #include "SDFBodyLoader.h"
 #include "SDFLoaderPseudoGazeboColor.h"
+#include "SDFSensorConverter.h"
 #include <cnoid/Sensor>
 #include <cnoid/Camera>
 #include <cnoid/RangeSensor>
@@ -135,7 +136,8 @@ public:
     void convertChildren(Link* plink, JointInfoPtr parent);
 
 private:
-    SDFLoaderPseudoGazeboColor *gazeboColor;
+    SDFLoaderPseudoGazeboColor* gazeboColor;
+    SDFSensorConverter* sensorConverter;
 
     SgMaterial* createSgMaterial(sdf::ElementPtr material, float transparency);
     void loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material);
@@ -223,6 +225,7 @@ SDFBodyLoaderImpl::SDFBodyLoaderImpl()
 #endif   /* Unused */
 
     gazeboColor = new SDFLoaderPseudoGazeboColor;
+    sensorConverter = new SDFSensorConverter;
 }
 
 
@@ -364,6 +367,9 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 if(link->HasElement("collision")){
                     processShapes(linkdata, link, false);
                 }
+
+                sensorConverter->convert(linkdata->linkName, link);
+
                 linkdataMap[linkdata->linkName] = linkdata;
                 link = link->GetNextElement("link");
             }
@@ -434,6 +440,9 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                         os() << "Warning: '" << jointdata->jointName << "' limit not found" << std::endl;
                     }
                 }
+
+                sensorConverter->convert(jointdata->jointName, joint);
+
                 joints.push_back(jointdata);
                 joint = joint->GetNextElement("joint");
             }
@@ -457,6 +466,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
 
             Link* link = body->createLink();
             link->setName((*it)->parentName);
+            sensorConverter->setRootLinkName(link->name());
             JointInfoPtr root;
             if((*it)->parentName == "world"){
                 decideJointType(link, (*it)->jointName, (*it)->jointType);
@@ -487,6 +497,13 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             body->setRootLink(link);
             it++;
         }
+
+        // attach sensors
+#if (DEBUG_SDF_SENSOR_CONVERTER > 0) /* (DEBUG_SDF_SENSOR_CONVERTER > 0) */
+        sensorConverter->dumpDeviceMap();
+#endif                               /* (DEBUG_SDF_SENSOR_CONVERTER > 0) */
+        sensorConverter->attachDevices(body);
+
         result = true;
         os().flush();
     } catch(const std::exception& ex){
@@ -515,6 +532,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
 
         Link* link = body->createLink();
         link->setName((*it)->jointName);
+        sensorConverter->mergeInfo((*it)->childName, (*it)->jointName);
 
         // convert to relative position
         link->setOffsetTranslation((*it)->child->pose.translation()
