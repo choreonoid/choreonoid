@@ -37,11 +37,13 @@ set(sources
   SDFLoaderPlugin.cpp
   SDFBodyLoader.cpp
   SDFLoaderPseudoGazeboColor.cpp
+  SDFSensorConverter.cpp
   )
 
 set(headers
   SDFBodyLoader.h
   SDFLoaderPseudoGazeboColor.h
+  SDFSensorConverter.h
   )
 
 include (FindPkgConfig)
