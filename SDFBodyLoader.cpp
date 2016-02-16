@@ -620,7 +620,7 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
             sdf::Vector3 size = el->Get<sdf::Vector3>("size");
-            SgPosTransformPtr transform = createSgPosTransform(pose, true);
+            SgPosTransformPtr transform = createSgPosTransform(pose);
 
             if (isVerbose) {
                 os() << "     generate " << el->GetName() << " shape (x=" << size.x << " y=" << size.y
@@ -638,7 +638,7 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
         } else if(el->GetName() == "sphere"){
             SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
-            SgPosTransformPtr transform = createSgPosTransform(pose, true);
+            SgPosTransformPtr transform = createSgPosTransform(pose);
 
             if (isVerbose) {
                 os() << "     generate " << el->GetName() << " shape (radius=" << radius << ")" << std::endl;
@@ -802,12 +802,12 @@ void SDFBodyLoaderImpl::decideJointType(Link *link, const std::string name, cons
    @brief Create instance of SgPosTransform.
    @param[in] pose Shape's pose.
    @param[in] isRotation Set true, 90 degree rotation of X axes. (default false)
-              Choreonoid MeshGenerator/VRML     URDF/SDF
-                         Y                          Z
-                         |                          |
-                         +- X                       +- Y
-                        /                          /
-                       Z                          X
+              Choreonoid MeshGenerator(cylinder)/VRML     URDF/SDF
+                         Y                                    Z
+                         |                                    |
+                         +- X                                 +- Y
+                        /                                    /
+                       Z                                    X
    @return Instance of SgPosTransform.
  */
 SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose, bool isRotation)
@@ -816,7 +816,7 @@ SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose,
 
     if (isRotation) {
         cnoid::AngleAxis aaX(0.5 * M_PI, cnoid::Vector3::UnitX());
-        ret->setRotation(aaX);
+        ret->rotation() = ret->rotation() * aaX.template cast<Affine3::Scalar>().toRotationMatrix();
     }
 
     return ret;
