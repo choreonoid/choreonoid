@@ -235,6 +235,7 @@ BOOST_PYTHON_MODULE(Body)
             .value("EJ_BALL", Body::EJ_BALL);
     }
 
+	register_ptr_to_python<BodyPtr>();
     implicitly_convertible<BodyPtr, ReferencedPtr>();
 
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
