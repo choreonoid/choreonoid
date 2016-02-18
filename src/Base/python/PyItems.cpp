@@ -172,12 +172,14 @@ void exportPyItems()
             .value("NUM_ATTRIBUTES", Item::NUM_ATTRIBUTES);
     }
 
+	register_ptr_to_python<ItemPtr>();
     implicitly_convertible<ItemPtr, ReferencedPtr>();
     PyItemList<Item>("ItemList");
 
     class_< RootItem, RootItemPtr, bases<Item> >("RootItem")
         .def("instance", RootItem_Instance).staticmethod("instance");
 
+	register_ptr_to_python<RootItemPtr>();
     implicitly_convertible<RootItemPtr, ItemPtr>();
     PyItemList<RootItem>("RootItemList");
 
