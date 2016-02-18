@@ -520,6 +520,9 @@ public:
     typedef std::map<Link*, AgXSimulatorItem::ControlMode> ControlModeMap;
     ControlModeMap controlModeMap;
 
+    double springConstant[3];
+    double dampingCoefficient[3];
+
     AgXSimulatorItemImpl(AgXSimulatorItem* self);
     AgXSimulatorItemImpl(AgXSimulatorItem* self, const AgXSimulatorItemImpl& org);
     void initialize();
@@ -752,12 +755,12 @@ void AgXLink::createLinkBody(bool isStatic)
             attFrame1->setTranslate( a(0), a(1), a(2) );
             agx::PrismaticUniversalJointRef prismaticUniversal = new agx::PrismaticUniversalJoint(
                     agxRigidBody, attFrame0, parent->agxRigidBody, attFrame1 );
-            agx::Real complianceZ = agxUtil::convert::convertSpringConstantToCompliance( 3.0e5 );
-            agx::Real complianceX = agxUtil::convert::convertSpringConstantToCompliance( 620 );
-            agx::Real complianceY = agxUtil::convert::convertSpringConstantToCompliance( 620 );
-            agx::Real spookDampingZ = agxUtil::convert::convertDampingCoefficientToSpookDamping( 200, 3.0e5 );
-            agx::Real spookDampingX = agxUtil::convert::convertDampingCoefficientToSpookDamping( 25, 620 );
-            agx::Real spookDampingY = agxUtil::convert::convertDampingCoefficientToSpookDamping( 25, 620 );
+            agx::Real complianceZ = agxUtil::convert::convertSpringConstantToCompliance( simImpl->springConstant[2] );
+            agx::Real complianceX = agxUtil::convert::convertSpringConstantToCompliance( simImpl->springConstant[0] );
+            agx::Real complianceY = agxUtil::convert::convertSpringConstantToCompliance( simImpl->springConstant[1] );
+            agx::Real spookDampingZ = agxUtil::convert::convertDampingCoefficientToSpookDamping( simImpl->dampingCoefficient[2], simImpl->springConstant[2] );
+            agx::Real spookDampingX = agxUtil::convert::convertDampingCoefficientToSpookDamping( simImpl->dampingCoefficient[0], simImpl->springConstant[0] );
+            agx::Real spookDampingY = agxUtil::convert::convertDampingCoefficientToSpookDamping( simImpl->dampingCoefficient[1], simImpl->springConstant[1] );
             prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setPosition(0.0);
             prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setCompliance(complianceZ);
             prismaticUniversal->getLock1D(agx::PrismaticUniversalJoint::TRANSLATIONAL_CONTROLLER_1)->setDamping(spookDampingZ);
