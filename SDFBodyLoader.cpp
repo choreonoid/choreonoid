@@ -816,7 +816,7 @@ SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose,
 
     if (isRotation) {
         cnoid::AngleAxis aaX(0.5 * M_PI, cnoid::Vector3::UnitX());
-        ret->rotation() = ret->rotation() * aaX.template cast<cnoid::Affine3::Scalar>().toRotationMatrix();
+        ret->rotation() = ret->rotation() * aaX.toRotationMatrix();
     }
 
     return ret;
