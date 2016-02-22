@@ -235,7 +235,6 @@ BOOST_PYTHON_MODULE(Body)
             .value("EJ_BALL", Body::EJ_BALL);
     }
 
-	register_ptr_to_python<BodyPtr>();
     implicitly_convertible<BodyPtr, ReferencedPtr>();
 
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
@@ -251,6 +250,11 @@ BOOST_PYTHON_MODULE(Body)
         .def("load", BodyLoader_load2)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
+
+#ifdef _MSC_VER    
+	register_ptr_to_python<BodyPtr>();
+#endif
+    
 }
 
 }; // namespace cnoid
