@@ -33,6 +33,7 @@ Menu* deleteViewMenu = 0;
 Signal<void(View* view)> sigViewCreated_;
 Signal<void(View* view)> sigViewActivated_;
 Signal<void(View* view)> sigViewDeactivated_;
+Signal<void(View* view)> sigViewRemoved_;
 
 class ViewInfo;
 typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
@@ -234,6 +235,7 @@ void InstanceInfo::remove()
 {
     if(view){
         ViewManagerImpl::notifySigRemoved(view);
+        sigViewRemoved_(view);
         delete view;
         view = 0;
     }
@@ -847,7 +849,6 @@ SignalProxy<void(View* view)> ViewManager::sigViewCreated()
     return sigViewCreated_;
 }
 
-
 SignalProxy<void(View* view)> ViewManager::sigViewActivated()
 {
     return sigViewActivated_;
@@ -856,4 +857,9 @@ SignalProxy<void(View* view)> ViewManager::sigViewActivated()
 SignalProxy<void(View* view)> ViewManager::sigViewDeactivated()
 {
     return sigViewDeactivated_;
+}
+
+SignalProxy<void(View* view)> ViewManager::sigViewRemoved()
+{
+    return sigViewRemoved_;
 }
