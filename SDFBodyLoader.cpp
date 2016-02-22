@@ -85,9 +85,18 @@ public:
     cnoid::SgGroupPtr visualShape;
     cnoid::SgGroupPtr collisionShape;
     cnoid::Affine3 pose;
+
     LinkInfo() {
+        /*
+          initialize value by Choreonoid's constructor value.
+          see Choreonoid src/Body/Link.cpp Link::Link().
+         */
+        m = 0.0;
+        c = sdf::Pose();
+        I.setZero();
         visualShape = new SgGroup;
         collisionShape = new SgGroup;
+        pose = cnoid::Affine3::Identity();
     }
 };
 typedef boost::shared_ptr<LinkInfo> LinkInfoPtr;
@@ -106,7 +115,19 @@ public:
     double lower;
     double velocity;
     cnoid::Affine3 pose;
+
     JointInfo() {
+        /*
+          initialize value by Choreonoid's constructor value.
+          see Choreonoid src/Body/Link.cpp Link::Link().
+         */
+        parent = LinkInfoPtr();
+        child = LinkInfoPtr();
+        axis = Vector3::UnitZ();
+        upper = std::numeric_limits<double>::max();
+        lower = -std::numeric_limits<double>::max();
+        velocity = 0.0;
+        pose = cnoid::Affine3::Identity();
     }
 };
 typedef boost::shared_ptr<JointInfo> JointInfoPtr;
@@ -325,7 +346,6 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         
         LinkInfoPtr worldlink(new LinkInfo());
         worldlink->linkName = "world";
-        worldlink->pose = Affine3::Identity();
         linkdataMap[worldlink->linkName] = worldlink;
         
         if(model->HasElement("link")){
@@ -340,8 +360,6 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
 
                 if(link->HasElement("pose")){
                     linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
-                } else {
-                    linkdata->pose = Affine3::Identity();
                 }
                 if(link->HasElement("inertial")){
                     sdf::ElementPtr inertial = link->GetElement("inertial");
@@ -431,12 +449,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                             jointdata->velocity = limit->Get<double>("velocity");
                         }
                     } else {
-                        /*
-                         * corrupted? (axis element must be have limit element)
-                         * set values use cnoid::Link constructor's value.
-                         */
-                        jointdata->lower = -std::numeric_limits<double>::max();
-                        jointdata->upper = std::numeric_limits<double>::max();
+                        // corrupted? (axis element must be have limit element)
                         os() << "Warning: '" << jointdata->jointName << "' limit not found" << std::endl;
                     }
                 }
@@ -481,7 +494,6 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 link->setJointType(Link::FREE_JOINT);
                 root.reset(new JointInfo());
                 root->jointName = (*it)->jointName;
-                root->pose = Affine3::Identity();
                 root->childName = (*it)->parentName;
                 root->child = (*it)->parent;
             }
