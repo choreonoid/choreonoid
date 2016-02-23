@@ -250,6 +250,11 @@ BOOST_PYTHON_MODULE(Body)
         .def("load", BodyLoader_load2)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
+
+#ifdef _MSC_VER    
+	register_ptr_to_python<BodyPtr>();
+#endif
+    
 }
 
 }; // namespace cnoid
