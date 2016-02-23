@@ -24,6 +24,7 @@ public:
     enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, N_DYNAMICS_MODES };
     enum ControlMode { DEFAULT=0, HIGH_GAIN, TORQUE, FREE };
     void setJointControlMode(Link* joint, ControlMode type);
+    void setJointCompliance(Link* joint, double spring, double damping);
 
 protected:
 
