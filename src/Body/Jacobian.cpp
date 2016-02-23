@@ -159,7 +159,8 @@ void calcAngularMomentumJacobian(const BodyPtr& body, Link* base, Eigen::MatrixX
 
     MatrixXd M;
     calcCMJacobian( body, base, M );
-    M = M.block(0,0, 3,nj) * body->mass();
+    M.conservativeResize(3, nj);
+    M *= body->mass();
 
     JointPath path;
     if(!base){
