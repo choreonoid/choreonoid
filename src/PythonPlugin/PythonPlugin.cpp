@@ -177,10 +177,10 @@ bool PythonPlugin::initializeInterpreter()
 	 using the Python variable, and it invalidates the updated PATH value if the value is
 	 set using C functions.
 	*/	
-	if (WIN32){
-		python::object env = python::import("os").attr("environ");
-		env["PATH"] = python::str(executableDirectory() + ";") + env["PATH"];
-	}
+#ifdef WIN32
+    python::object env = python::import("os").attr("environ");
+    env["PATH"] = python::str(executableDirectory() + ";") + env["PATH"];
+#endif
 
     sysModule = python::import("sys");
     
