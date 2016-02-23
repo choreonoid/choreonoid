@@ -55,4 +55,4 @@ set(headers
   exportdecl.h
   )
 
-apply_common_setting_for_library(PyBase "${headers}")
+apply_common_setting_for_python_module(PyBase "${headers}")

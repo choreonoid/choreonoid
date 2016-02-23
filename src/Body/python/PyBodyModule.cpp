@@ -258,6 +258,11 @@ BOOST_PYTHON_MODULE(Body)
     class_<BodyMotion, bases<AbstractMultiSeq> >("BodyMotion")
         .def("jointPosSeq", BodyMotion_jointPosSeq, return_value_policy<reference_existing_object>())
         .def("linkPosSeq", BodyMotion_linkPosSeq, return_value_policy<reference_existing_object>());
+
+#ifdef _MSC_VER    
+	register_ptr_to_python<BodyPtr>();
+#endif
+    
 }
 
 }; // namespace cnoid

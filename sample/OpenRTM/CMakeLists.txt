@@ -50,7 +50,16 @@ configure_file(OpenRTM-SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 set(target SR1LiftupControllerRTC)
 add_cnoid_sample_rtc(${target} SR1LiftupControllerRTC.cpp)
 configure_file(OpenRTM-SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
- 
+
+# SR1 lifting up AgX high-gain
+if(BUILD_AGX_PLUGIN)
+  set(target SR1LiftupHGControllerRTC)
+  add_cnoid_sample_rtc(${target} SR1LiftupHGControllerRTC.cpp)
+  configure_file(OpenRTM-SR1LiftupHG.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+  configure_file(SR1LiftupHG.conf ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/SR1LiftupHG.conf COPYONLY)
+  install(FILES SR1LiftupHG.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
+endif()
+
 # PA10 Pickup
 set(target PA10PickupControllerRTC)
 add_cnoid_sample_rtc(${target} PA10PickupControllerRTC.cpp)

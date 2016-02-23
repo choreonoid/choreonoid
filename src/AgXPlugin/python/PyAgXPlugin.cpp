@@ -14,6 +14,7 @@ BOOST_PYTHON_MODULE(AgXPlugin)
         scope agxSimulatorItemScope =
                 class_< AgXSimulatorItem, AgXSimulatorItemPtr, bases<SimulatorItem> >("AgXSimulatorItem")
                 .def("setJointControlMode", &AgXSimulatorItem::setJointControlMode)
+                .def("setJointCompliance", &AgXSimulatorItem::setJointCompliance)
                 ;
 
         enum_<AgXSimulatorItem::ControlMode>("ControlMode")
