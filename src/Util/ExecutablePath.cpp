@@ -31,6 +31,7 @@ using namespace boost;
 
 namespace {
 string executablePath_;
+string executableDirectory_;
 string executableTopDirectory_;
 string shareDirectory_;
 string executableBasename_;
@@ -88,6 +89,8 @@ void findExecutablePath()
     filesystem::path path(executablePath_);
 #endif
 
+    executableDirectory_ = path.parent_path().string();
+    
     filesystem::path topPath = path.parent_path().parent_path();
     executableTopDirectory_ = topPath.string();
         
@@ -122,6 +125,14 @@ const std::string& executablePath()
         findExecutablePath();
     }
     return executablePath_;
+}
+
+const std::string& executableDirectory()
+{
+    if(executablePath_.empty()){
+        findExecutablePath();
+    }
+    return executableDirectory_;
 }
 
 const std::string& executableTopDirectory()
