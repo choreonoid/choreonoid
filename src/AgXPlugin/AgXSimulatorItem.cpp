@@ -536,6 +536,7 @@ public:
     void store(Archive& archive);
     void restore(const Archive& archive);
     void setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type);
+    void setJointCompliance(Link* joint, double spring, double damping);
 };
 
 class HighGainControllerItem : public ControllerItem
@@ -615,7 +616,7 @@ public:
             if(!controlEnable[i])
                 continue;
             Link* joint = body->joint(i);
-            joint->q() = q1[i];
+            //joint->q() = q1[i];
             joint->dq() = (q2[i] - q1[i]) / dt;
             joint->ddq() = (q2[i] - 2.0 * q1[i] + q0[i]) / dt2;
         }
@@ -1097,6 +1098,10 @@ void AgXLink::getKinematicStateFromAgX()
             if(joint1DOF){
                 link->q() = joint1DOF->getAngle();
                 link->dq() = joint1DOF->getCurrentSpeed();
+                if(inputMode==VEL){
+                	link->u() = joint1DOF->getMotor1D()->getCurrentForce();
+                	//cout << link->name() << " " << link->u() << endl;
+                }
                 break;
             }
             CustomConstraint* jointCustom = dynamic_cast<CustomConstraint*>(joint);
@@ -1509,6 +1514,10 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     //agx::InteractionRef forceField = new AgXForceField;
     //agxSimulation->getDynamicsSystem()->add( forceField );
 
+    //  debug file output
+    //agxSimulation->getSerializer()->setEnable(true);
+    //agxSimulation->getSerializer()->setInterval(0.1); // 10hz
+    //agxSimulation->getSerializer()->setFilename("aist.agx");
 
     return true;
 }
@@ -1636,6 +1645,26 @@ void AgXSimulatorItem::setJointControlMode(Link* joint, ControlMode type){
 void AgXSimulatorItemImpl::setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type){
 
     controlModeMap[joint] = type;
+}
+
+
+void AgXSimulatorItem::setJointCompliance(Link* joint, double spring, double damping){
+    impl->setJointCompliance(joint, spring, damping);
+}
+
+
+void AgXSimulatorItemImpl::setJointCompliance(Link* joint, double spring, double damping){
+
+	if( joint->name()=="RLEG_BUSH_ROLL" || joint->name()=="LLEG_BUSH_ROLL"){
+		springConstant[0] = spring;
+		dampingCoefficient[0] = damping;
+	}else if( joint->name()=="RLEG_BUSH_PITCH" || joint->name()=="LLEG_BUSH_PITCH"){
+		springConstant[1] = spring;
+		dampingCoefficient[1] = damping;
+	}else if( joint->name()=="RLEG_BUSH_Z" || joint->name()=="LLEG_BUSH_Z"){
+		springConstant[2] = spring;
+		dampingCoefficient[2] = damping;
+	}
 }
 
 
