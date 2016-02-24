@@ -214,7 +214,8 @@ void SensorVisualizerItemImpl::updateForceSensorState(int index)
 {
     if(index < forceSensors.size()){
         ForceSensor* sensor = forceSensors[index];
-        forceSensorArrows[index]->setVector(sensor->f() * visualRatio);
+	Vector3 v = sensor->link()->T() * sensor->T_local() * sensor->f();
+        forceSensorArrows[index]->setVector(v * visualRatio);
     }
 }
 
