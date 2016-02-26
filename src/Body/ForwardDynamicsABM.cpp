@@ -52,7 +52,7 @@ void ForwardDynamicsABM::initialize()
 
 inline void ForwardDynamicsABM::calcABMFirstHalf()
 {
-    calcABMPhase1();
+    calcABMPhase1(true);
     calcABMPhase2Part1();
 }
 
@@ -180,17 +180,17 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
     }
 
     integrateRungeKuttaOneStep(1.0 / 6.0, timeStep / 2.0);
-    calcABMPhase1();
+    calcABMPhase1(false);
     calcABMPhase2();
     calcABMPhase3();
 
     integrateRungeKuttaOneStep(2.0 / 6.0, timeStep / 2.0);
-    calcABMPhase1();
+    calcABMPhase1(false);
     calcABMPhase2();
     calcABMPhase3();
 
     integrateRungeKuttaOneStep(2.0 / 6.0, timeStep);
-    calcABMPhase1();
+    calcABMPhase1(false);
     calcABMPhase2();
     calcABMPhase3();
 
@@ -216,7 +216,7 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
    \note v, dv, dw are not used in the forward dynamics, but are calculated
    for forward dynamics users.
 */
-void ForwardDynamicsABM::calcABMPhase1()
+void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
 {
     const LinkTraverse& traverse = body->linkTraverse();
     const int n = traverse.numLinks();
@@ -226,21 +226,25 @@ void ForwardDynamicsABM::calcABMPhase1()
         const DyLink* parent = link->parent();
 
         if(parent){
-            const Vector3 arm = parent->R() * link->b();
             
             switch(link->jointType()){
                 
             case Link::ROTATIONAL_JOINT:
+            {
+                const Vector3 arm = parent->R() * link->b();
                 link->R().noalias() = parent->R() * AngleAxisd(link->q(), link->a());
                 link->p().noalias() = arm + parent->p();
                 link->sw().noalias() = parent->R() * link->a();
                 link->sv().noalias() = link->p().cross(link->sw());
                 link->w().noalias() = link->dq() * link->sw() + parent->w();
-                link->dw().noalias() =
-                    parent->dw() + link->dq() * parent->w().cross(link->sw()) + (link->ddq() * link->sw());
-                link->dv().noalias() =
-                    parent->dv() + parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm);
+                if(updateNonSpatialVariables){
+                    link->dw().noalias() =
+                        parent->dw() + link->dq() * parent->w().cross(link->sw()) + (link->ddq() * link->sw());
+                    link->dv().noalias() =
+                        parent->dv() + parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm);
+                }
                 break;
+            }
                 
             case Link::SLIDE_JOINT:
                 link->p().noalias() = parent->R() * (link->b() + link->q() * link->d()) + parent->p();
@@ -248,10 +252,13 @@ void ForwardDynamicsABM::calcABMPhase1()
                 link->sw().setZero();
                 link->sv().noalias() = parent->R() * link->d();
                 link->w() = parent->w();
-                link->dw() = parent->dw();
-                link->dv().noalias() =
-                    parent->dv() + parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm)
-                    + 2.0 * link->dq() * parent->w().cross(link->sv()) + link->ddq() * link->sv();
+                if(updateNonSpatialVariables){
+                    link->dw() = parent->dw();
+                    const Vector3 arm = parent->R() * link->b();
+                    link->dv().noalias() =
+                        parent->dv() + parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm)
+                        + 2.0 * link->dq() * parent->w().cross(link->sv()) + link->ddq() * link->sv();
+                }
                 break;
                 
             case Link::FIXED_JOINT:
@@ -264,9 +271,12 @@ void ForwardDynamicsABM::calcABMPhase1()
                 link->sv().setZero();
                 link->cv().setZero();
                 link->cw().setZero();
-                link->dw() = parent->dw();
-                link->dv().noalias() = parent->dv() +
-                    parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm);
+                if(updateNonSpatialVariables){
+                    link->dw() = parent->dw();
+                    const Vector3 arm = parent->R() * link->b();
+                    link->dv().noalias() = parent->dv() +
+                        parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm);
+                }
                 
                 goto COMMON_CALCS_FOR_ALL_JOINT_TYPES;
             }
@@ -281,7 +291,9 @@ void ForwardDynamicsABM::calcABMPhase1()
         
 COMMON_CALCS_FOR_ALL_JOINT_TYPES:
 
-        link->v().noalias() = link->vo() + link->w().cross(link->p());
+        if(updateNonSpatialVariables){
+            link->v().noalias() = link->vo() + link->w().cross(link->p());
+        }
         link->wc().noalias() = link->R() * link->c() + link->p();
         
         // compute I^s (Eq.(6.24) of Kajita's textbook))
