@@ -100,6 +100,9 @@ void ForwardDynamicsABM::calcMotionWithEulerMethod()
     DyLink* root = body->rootLink();
 
     if(!root->isFixedJoint()){
+        root->dv() =
+            root->dvo() - root->p().cross(root->dw())
+            + root->w().cross(root->vo() + root->w().cross(root->p()));
         Position T;
         SE3exp(T, root->T(), root->w(), root->vo(), timeStep);
         root->T() = T;
@@ -192,9 +195,13 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
     calcABMPhase3();
 
     if(!root->isFixedJoint()){
+        root->dvo() = dvo + root->dvo() / 6.0;
+        root->dw() = dw  + root->dw()  / 6.0;
+        root->dv() =
+            root->dvo() - T0.translation().cross(root->dw()) + w0.cross(vo0 + w0.cross(T0.translation()));
+        root->vo() = vo0 + root->dvo() * timeStep;
+        root->w()  = w0  + root->dw() * timeStep;
         SE3exp(root->T(), T0, w0, vo0, timeStep);
-        root->vo() = vo0 + (dvo + root->dvo() / 6.0) * timeStep;
-        root->w()  = w0  + (dw  + root->dw()  / 6.0) * timeStep;
     }
 
     for(int i=1; i < n; ++i){
@@ -205,6 +212,10 @@ void ForwardDynamicsABM::calcMotionWithRungeKuttaMethod()
 }
 
 
+/**
+   \note v, dv, dw are not used in the forward dynamics, but are calculated
+   for forward dynamics users.
+*/
 void ForwardDynamicsABM::calcABMPhase1()
 {
     const LinkTraverse& traverse = body->linkTraverse();
@@ -215,14 +226,20 @@ void ForwardDynamicsABM::calcABMPhase1()
         const DyLink* parent = link->parent();
 
         if(parent){
+            const Vector3 arm = parent->R() * link->b();
+            
             switch(link->jointType()){
                 
             case Link::ROTATIONAL_JOINT:
                 link->R().noalias() = parent->R() * AngleAxisd(link->q(), link->a());
-                link->p().noalias() = parent->R() * link->b() + parent->p();
+                link->p().noalias() = arm + parent->p();
                 link->sw().noalias() = parent->R() * link->a();
                 link->sv().noalias() = link->p().cross(link->sw());
                 link->w().noalias() = link->dq() * link->sw() + parent->w();
+                link->dw().noalias() =
+                    parent->dw() + link->dq() * parent->w().cross(link->sw()) + (link->ddq() * link->sw());
+                link->dv().noalias() =
+                    parent->dv() + parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm);
                 break;
                 
             case Link::SLIDE_JOINT:
@@ -231,6 +248,10 @@ void ForwardDynamicsABM::calcABMPhase1()
                 link->sw().setZero();
                 link->sv().noalias() = parent->R() * link->d();
                 link->w() = parent->w();
+                link->dw() = parent->dw();
+                link->dv().noalias() =
+                    parent->dv() + parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm)
+                    + 2.0 * link->dq() * parent->w().cross(link->sv()) + link->ddq() * link->sv();
                 break;
                 
             case Link::FIXED_JOINT:
@@ -243,6 +264,10 @@ void ForwardDynamicsABM::calcABMPhase1()
                 link->sv().setZero();
                 link->cv().setZero();
                 link->cw().setZero();
+                link->dw() = parent->dw();
+                link->dv().noalias() = parent->dv() +
+                    parent->w().cross(parent->w().cross(arm)) + parent->dw().cross(arm);
+                
                 goto COMMON_CALCS_FOR_ALL_JOINT_TYPES;
             }
             
