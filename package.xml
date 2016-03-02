@@ -19,8 +19,10 @@
 	<build_depend>boost</build_depend>
 	<build_depend>eigen</build_depend>
   <build_depend>sdformat</build_depend>
+  <build_depend>assimp</build_depend>
 
   <run_depend>choreonoid_ros</run_depend>
   <run_depend>sdformat</run_depend>
+  <run_depend>assimp</run_depend>
 
 </package>

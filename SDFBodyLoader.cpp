@@ -16,6 +16,8 @@
 #include <cnoid/DaeParser>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
+#include <cnoid/ImageIO>
+#include <cnoid/Exception>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
 #include <boost/function.hpp>
@@ -23,6 +25,11 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 using namespace std;
 using namespace boost;
@@ -119,6 +126,8 @@ public:
     std::vector<JointInfoPtr> joints;
     std::map<std::string, LinkInfoPtr> linkdataMap;
     std::map<std::string, Link::JointType> jointTypeMap;
+    typedef std::map<std::string, SgImagePtr> ImagePathToSgImageMap;
+    ImagePathToSgImageMap imagePathToSgImageMap;
 
     ostream& os() { return *os_; }
 
@@ -131,6 +140,10 @@ public:
     std::vector<JointInfoPtr> findRootJoints();
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
+    void buildMesh(const aiScene* scene, const aiNode* node, SgMesh* mesh,
+                   std::vector<SgMaterial*>& material_table);
+    void loadMaterials(const std::string& resource_path,
+                       const aiScene* scene, std::vector<SgMaterial*>& material_table);
 };
 
 }
@@ -517,6 +530,156 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
     }
 }
 
+void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node,
+                                  SgMesh* mesh, std::vector<SgMaterial*>& material_table)
+{
+    if(!node){
+        return;
+    }
+
+    // get absolute transformation to this node
+    aiMatrix4x4 transform = node->mTransformation;
+    aiNode *pnode = node->mParent;
+    while(pnode){
+        transform = pnode->mTransformation * transform;
+        pnode = pnode->mParent;
+    }
+    
+    for(uint32_t i = 0; i < node->mNumMeshes; i++){
+        aiMesh* input_mesh = scene->mMeshes[node->mMeshes[i]];
+
+        SgShapePtr shape = new SgShape();
+        SgMeshPtr mesh = shape->setMesh(new SgMesh());
+        SgVertexArrayPtr vertices = mesh->setVertices(new SgVertexArray());
+        
+        // set vertices
+        for(uint32_t j = 0; j < input_mesh->mNumVertices; j++){
+            aiVector3D p = input_mesh->mVertices[j];
+            p *= transform;
+            Vector3f v(p.x, p.y, p.z);
+            vertices->push_back(v);
+        }
+
+        // set normals
+        if(input_mesh->HasNormals()){
+            SgNormalArrayPtr normals = mesh->setNormals(new SgNormalArray());
+            for(uint32_t j = 0; j < input_mesh->mNumVertices; j++){
+                //aiVector3D n = inverse_transpose_rotation * input_mesh->mNormals[j];
+                aiVector3D n = input_mesh->mNormals[j];
+                n.Normalize();
+                Vector3f nv(n.x, n.y, n.z);
+                normals->push_back(nv);
+            }
+        }
+
+        // set uvmaps
+        if(input_mesh->HasTextureCoords(0)){
+            SgTexCoordArrayPtr texcoord = mesh->setTexCoords(new SgTexCoordArray());
+            for(uint32_t j = 0; j < input_mesh->mNumVertices; j++){
+                Vector2f t(input_mesh->mTextureCoords[0][j].x, input_mesh->mTextureCoords[0][j].y);
+                texcoord->push_back(t);
+            }
+        }
+        
+        // set vertex index
+        SgIndexArray& triangleVertices = mesh->triangleVertices();
+        triangleVertices.reserve(input_mesh->mNumFaces);
+        for(uint32_t j = 0; j < input_mesh->mNumFaces; j++){
+            aiFace& face = input_mesh->mFaces[j];
+            if (face.mNumIndices == 3) { // only support triangulated face
+                triangleVertices.push_back(face.mIndices[0]);
+                triangleVertices.push_back(face.mIndices[1]);
+                triangleVertices.push_back(face.mIndices[2]);
+            }
+        }
+        
+        shape->setMaterial(material_table[input_mesh->mMaterialIndex]);
+    }
+    
+    for(uint32_t i=0; i < node->mNumChildren; ++i){
+        // recursive call to construct scenegraph
+        buildMesh(scene, node->mChildren[i], mesh, material_table);
+    }
+}
+
+void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
+                                      const aiScene* scene,
+                                      std::vector<SgMaterial*>& material_table)
+{
+    ImageIO imageIO;
+    for (uint32_t i = 0; i < scene->mNumMaterials; i++) {
+        aiMaterial* amat = scene->mMaterials[i];
+        SgMaterial* material = new SgMaterial;
+        SgTexture* texture = new SgTexture;
+        
+        for (uint32_t j=0; j < amat->mNumProperties; j++) {
+            aiMaterialProperty* prop = amat->mProperties[j];
+            std::string propKey = prop->mKey.data;
+            
+            if (propKey == "$tex.file") {
+                aiString texName;
+                aiTextureMapping mapping;
+                uint32_t uvIndex;
+                amat->GetTexture(aiTextureType_DIFFUSE, 0, &texName, &mapping, &uvIndex);
+                
+                // Assume textures are in paths relative to the mesh
+                std::string texture_path = boost::filesystem::path(resource_path).parent_path().string()
+                    + "/" + texName.data;
+
+                SgImagePtr image;
+                SgImagePtr imageForLoading;
+
+                ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(texture_path);
+                if(p != imagePathToSgImageMap.end()){
+                    image = p->second;
+                    break;
+                } else {
+                    try {
+                        if(!imageForLoading){
+                            imageForLoading = new SgImage;
+                        }
+                        imageIO.load(imageForLoading->image(), texture_path);
+                        image = imageForLoading;
+                        imagePathToSgImageMap[texture_path] = image;
+                        break;
+                    } catch(const exception_base& ex){
+                        os() << *boost::get_error_info<error_info_message>(ex) << endl;
+                    }
+                }
+                if(image){
+                    texture = new SgTexture;
+                    texture->setImage(image);
+                }
+            } else if (propKey == "$clr.diffuse") {
+                aiColor3D clr;
+                amat->Get(AI_MATKEY_COLOR_DIFFUSE, clr);
+                material->setDiffuseColor(Vector3f(clr.r, clr.g, clr.b));
+            } else if (propKey == "$clr.ambient") {
+                aiColor3D clr;
+                amat->Get(AI_MATKEY_COLOR_AMBIENT, clr);
+                //material->setAmbientIntensity(Vector3f(clr.r, clr.g, clr.b));
+            } else if (propKey == "$clr.specular") {
+                aiColor3D clr;
+                amat->Get(AI_MATKEY_COLOR_SPECULAR, clr);
+                material->setSpecularColor(Vector3f(clr.r, clr.g, clr.b));
+            } else if (propKey == "$clr.emissive") {
+                aiColor3D clr;
+                amat->Get(AI_MATKEY_COLOR_EMISSIVE, clr);
+                material->setEmissiveColor(Vector3f(clr.r, clr.g, clr.b));
+            } else if (propKey == "$clr.opacity") {
+                float o;
+                amat->Get(AI_MATKEY_OPACITY, o);
+                material->setTransparency(o);
+            } else if (propKey == "$mat.shininess") {
+                float s;
+                amat->Get(AI_MATKEY_SHININESS, s);
+                material->setShininess(s);
+            }
+        }
+        material_table.push_back(material);
+    }
+}
+
 SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::Pose &pose)
 {
     SgNodePtr converted = 0;
@@ -539,9 +702,14 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, const sdf::P
             transform->setRotation(R.matrix());
             os() << "  read mesh " << url << std::endl;
             if (boost::algorithm::iends_with(url, "dae")) {
-                // TODO: might be better to use assimp here instead of cnoid::DaeParser
-                DaeParser parser(&os());
-                transform->addChild(parser.createScene(url));
+                Assimp::Importer importer;
+                const aiScene* scene = importer.ReadFile(url, aiProcess_SortByPType|aiProcess_GenNormals|aiProcess_Triangulate|aiProcess_GenUVCoords|aiProcess_FlipUVs);
+                std::vector<SgMaterial*> material_table;
+                SgMesh* mesh = new SgMesh;
+                buildMesh(scene, scene->mRootNode, mesh, material_table);
+                SgShape* shape = new SgShape;
+                shape->setMesh(mesh);
+                //shape->setTexture();
             } else if (boost::algorithm::iends_with(url, "stl")) {
                 STLSceneLoader loader;
                 transform->addChild(loader.load(url));

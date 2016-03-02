@@ -26,6 +26,7 @@ if(build_catkin OR "${CATKIN_BUILD_BINARY_PACKAGE}")
     ${target}
     CATKIN_DEPENDS
     sdformat
+    assimp
   )
 endif()
 
@@ -70,15 +71,34 @@ if(NOT SDFORMAT_FOUND)
   set(SDFORMAT_LIBRARY_DIRS ${SDFORMAT_DIR}/lib)
 endif()
 
+set(ASSIMP_DIR ${ASSIMP_DIR} CACHE PATH "set the top directory of the ASSIMP ")
+if(UNIX)
+  if(NOT ASSIMP_DIR)
+    pkg_check_modules(ASSIMP REQUIRED assimp)
+  endif()
+elseif(MSVC)
+  if(NOT ASSIMP_DIR)
+    message(FATAL_ERROR "Please specify the directory of the ASSIMP to ASSIMP_DIR.")
+  endif()
+endif()
+
+if(NOT ASSIMP_FOUND)
+  set(ASSIMP_LIBRARIES assimp)
+  set(ASSIMP_INCLUDE_DIRS ${ASSIMP_DIR}/include)
+  set(ASSIMP_LIBRARY_DIRS ${ASSIMP_DIR}/lib)
+endif()
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CNOID_INCLUDE_DIRS}
   ${SDFORMAT_INCLUDE_DIRS}
+  ${ASSIMP_INCLUDE_DIRS}
 )
 
 link_directories(
   ${CNOID_LIBRARY_DIRS}
   ${SDFORMAT_LIBRARY_DIRS}
+  ${ASSIMP_LIBRARY_DIRS}
 )
 
 function(add_cnoid_plugin)
