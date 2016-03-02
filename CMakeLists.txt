@@ -17,7 +17,7 @@ if(build_catkin OR "${CATKIN_BUILD_BINARY_PACKAGE}")
   set(ENABLE_INSTALL_RPATH ON CACHE BOOL "Enable RPATH setting for installed binary files" FORCE)
   set(ENV{PKG_CONFIG_PATH} $ENV{PKG_CONFIG_PATH}:${CATKIN_DEVEL_PREFIX}/lib/pkgconfig)
 
-	find_package(catkin REQUIRED COMPONENTS 
+  find_package(catkin REQUIRED COMPONENTS
     choreonoid_ros
   )
 
@@ -37,10 +37,14 @@ endif()
 set(sources
   SDFLoaderPlugin.cpp
   SDFBodyLoader.cpp
+  SDFLoaderPseudoGazeboColor.cpp
+  SDFSensorConverter.cpp
   )
 
 set(headers
   SDFBodyLoader.h
+  SDFLoaderPseudoGazeboColor.h
+  SDFSensorConverter.h
   )
 
 include (FindPkgConfig)
