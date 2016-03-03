@@ -164,10 +164,12 @@ public:
     std::vector<JointInfoPtr> findRootJoints();
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
-    void buildMesh(const aiScene* scene, const aiNode* node, SgMesh* mesh,
-                   std::vector<SgMaterial*>& material_table);
-    void loadMaterials(const std::string& resource_path,
-                       const aiScene* scene, std::vector<SgMaterial*>& material_table);
+    void buildMesh(const aiScene* scene, const aiNode* node, SgPosTransform* sgnode,
+                   std::vector<SgMaterial*>& material_table,
+                   std::vector<SgTexture*>& texture_table);
+    void loadMaterials(const std::string& resource_path, const aiScene* scene,
+                       std::vector<SgMaterial*>& material_table,
+                       std::vector<SgTexture*>& texture_table);
 
 private:
     SDFLoaderPseudoGazeboColor* gazeboColor;
@@ -605,8 +607,9 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
     }
 }
 
-void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node,
-                                  SgMesh* mesh, std::vector<SgMaterial*>& material_table)
+void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgPosTransform* sgnode,
+                                  std::vector<SgMaterial*>& material_table,
+                                  std::vector<SgTexture*>& texture_table)
 {
     if(!node){
         return;
@@ -619,7 +622,7 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node,
         transform = pnode->mTransformation * transform;
         pnode = pnode->mParent;
     }
-    
+
     for(uint32_t i = 0; i < node->mNumMeshes; i++){
         aiMesh* input_mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -669,23 +672,29 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node,
         }
         
         shape->setMaterial(material_table[input_mesh->mMaterialIndex]);
+        SgTexture* texture = texture_table[input_mesh->mMaterialIndex];
+        if (texture) {
+            shape->setTexture(texture);
+        }
+        sgnode->addChild(shape);
     }
     
     for(uint32_t i=0; i < node->mNumChildren; ++i){
         // recursive call to construct scenegraph
-        buildMesh(scene, node->mChildren[i], mesh, material_table);
+        buildMesh(scene, node->mChildren[i], sgnode, material_table, texture_table);
     }
 }
 
 void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                                       const aiScene* scene,
-                                      std::vector<SgMaterial*>& material_table)
+                                      std::vector<SgMaterial*>& material_table,
+                                      std::vector<SgTexture*>& texture_table)
 {
     ImageIO imageIO;
     for (uint32_t i = 0; i < scene->mNumMaterials; i++) {
         aiMaterial* amat = scene->mMaterials[i];
         SgMaterial* material = new SgMaterial;
-        SgTexture* texture = new SgTexture;
+        SgTexture* texture = NULL;
         
         for (uint32_t j=0; j < amat->mNumProperties; j++) {
             aiMaterialProperty* prop = amat->mProperties[j];
@@ -752,6 +761,7 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
             }
         }
         material_table.push_back(material);
+        texture_table.push_back(texture);
     }
 }
 
@@ -770,16 +780,12 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
                 }
 
                 if (boost::algorithm::iends_with(url, "dae")) {
-                    // TODO: might be better to use assimp here instead of cnoid::DaeParser
-                    // loadDae(url, transform, material);
                     Assimp::Importer importer;
                     const aiScene* scene = importer.ReadFile(url, aiProcess_SortByPType|aiProcess_GenNormals|aiProcess_Triangulate|aiProcess_GenUVCoords|aiProcess_FlipUVs);
                     std::vector<SgMaterial*> material_table;
-                    SgMesh* mesh = new SgMesh;
-                    buildMesh(scene, scene->mRootNode, mesh, material_table);
-                    SgShape* shape = new SgShape;
-                    shape->setMesh(mesh);
-                    //shape->setTexture();
+                    std::vector<SgTexture*> texture_table;
+                    loadMaterials(url, scene, material_table, texture_table);
+                    buildMesh(scene, scene->mRootNode, transform, material_table, texture_table);
                 } else if (boost::algorithm::iends_with(url, "stl")) {
                     STLSceneLoader loader;
                     SgShapePtr shape = dynamic_cast<SgShape*>(loader.load(url));

@@ -142,7 +142,7 @@ endfunction()
 
 add_cnoid_plugin(${target} SHARED ${sources} ${headers})
 
-target_link_libraries(${target} CnoidBase CnoidBody ${SDFORMAT_LIBRARIES})
+target_link_libraries(${target} CnoidBase CnoidBody ${SDFORMAT_LIBRARIES} ${ASSIMP_LIBRARIES})
 
 install(TARGETS 
   ${target}
