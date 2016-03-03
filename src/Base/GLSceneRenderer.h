@@ -103,6 +103,7 @@ public:
     void setDefaultPointSize(double size);
     void setDefaultLineWidth(double width);
     void enableFog(bool on);
+    SgFog* currentFog();
 
     void setNewDisplayListDoubleRenderingEnabled(bool on);
 

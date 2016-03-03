@@ -144,6 +144,7 @@ set(headers
   ExtJoystick.h
   Task.h
   AbstractTaskSequencer.h
+  Exception.h
   exportdecl.h
   Config.h
   )
