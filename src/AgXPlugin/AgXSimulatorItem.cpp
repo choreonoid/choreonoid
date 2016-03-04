@@ -553,7 +553,7 @@ public:
     HighGainControllerItem(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem, AgXSimulatorItemImpl* simulator)
     : simulator(simulator)
     {
-        qseqRef = bodyMotionItem->jointPosSeq();
+        qseqRef = bodyMotionItem->motion()->jointPosSeq();
         setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
     }
 

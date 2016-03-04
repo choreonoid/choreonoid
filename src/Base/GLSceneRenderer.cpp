@@ -2767,6 +2767,12 @@ void GLSceneRenderer::enableFog(bool on)
 }
 
 
+SgFog* GLSceneRenderer::currentFog()
+{
+    return impl->currentFog;
+}
+
+
 void GLSceneRenderer::showNormalVectors(double length)
 {
     bool doNormalVisualization = (length > 0.0);
