@@ -34,7 +34,7 @@ private:
     /**
        compute position/orientation/velocity
     */
-    void calcABMPhase1();
+    void calcABMPhase1(bool updateNonSpatialVariables);
 
     /**
        compute articulated inertia

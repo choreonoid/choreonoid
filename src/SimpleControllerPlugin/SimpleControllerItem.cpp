@@ -60,6 +60,7 @@ public:
     std::string controllerModuleName;
     std::string controllerModuleFileName;
     QLibrary controllerModule;
+    std::string optionString;
     bool doReloading;
 
     SimpleControllerItemImpl(SimpleControllerItem* self);
@@ -257,12 +258,14 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
     childControllerInfos.clear();
 
     if(controller){
+        controller->setOptions(optionString);
+        
         ioBody = sharedIoBody;
         if(!ioBody){
             initializeIoBody(target->body());
         }
-        
         controller->setIoBody(ioBody);
+        
         timeStep = target->worldTimeStep();
         controller->setTimeStep(timeStep);
         controller->setImmediateMode(self->isImmediateMode());
@@ -435,6 +438,7 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
     putProperty(_("Input link positions"), doInputLinkPositions, changeProperty(doInputLinkPositions));
+    putProperty(_("Options"), optionString, changeProperty(optionString));
 }
 
 
@@ -452,6 +456,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
     archive.write("inputLinkPositions", doInputLinkPositions);
+    archive.write("options", optionString);
     return true;
 }
 
@@ -473,5 +478,6 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
     }
     archive.read("reloading", doReloading);
     archive.read("inputLinkPositions", doInputLinkPositions);
+    archive.read("options", optionString);
     return true;
 }

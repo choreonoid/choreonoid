@@ -22,4 +22,4 @@ set(headers
   PySignal.h
   )
 
-apply_common_setting_for_library(PyUtil "${headers}")
+apply_common_setting_for_python_module(PyUtil "${headers}")
