@@ -41,6 +41,7 @@ class SR1LiftupController : public cnoid::SimpleController
     Link* rightWrist;
     Link* leftWrist;
     double throwTime;
+    bool isVelocityControlMode;
 
 public:
 
@@ -52,6 +53,14 @@ public:
     }
     
     virtual bool initialize() {
+
+        if(!options().empty() && options().front() == "velocity"){
+            isVelocityControlMode = true;
+            os() << "SR1LiftupController: velocity control mode." << endl;
+        } else {
+            isVelocityControlMode = false;
+            os() << "SR1LiftupController: torque control mode." << endl;
+        }
 
         time = 0.0;
         throwTime = std::numeric_limits<double>::max();
@@ -194,7 +203,11 @@ public:
             double q = joint->q();
             double dq = (q - qold[i]) / dt;
             double dq_ref = (qref[i] - qref_old[i]) / dt;
-            joint->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
+            if(isVelocityControlMode){
+                joint->dq() = (qref[i] - qold[i]) / dt;
+            } else {
+                joint->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
+            }
             qold[i] = q;
         }
 
