@@ -28,6 +28,7 @@ public:
 
 protected:
 
+    virtual bool startSimulation(bool doReset = true);
     virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
