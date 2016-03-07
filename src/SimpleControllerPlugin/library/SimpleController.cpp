@@ -15,12 +15,14 @@ namespace cnoid {
 class SimpleControllerImpl
 {
 public:
+    /*
     mutable BodyPtr ioBody;
     double timeStep;
     boost::dynamic_bitset<> jointOutputFlags;
     bool isImmediateMode;
     mutable std::ostream* os;
     std::vector<std::string> options;
+    */
 };
 
 }
@@ -28,13 +30,17 @@ public:
 
 SimpleController::SimpleController()
 {
+    /*
     impl = new SimpleControllerImpl;
     impl->timeStep = 1.0;
     impl->isImmediateMode = false;
     impl->os = &nullout();
+    */
+
+    io = 0;
 }
 
-
+/*
 SimpleController::SimpleController(const SimpleController& org)
 {
     impl = new SimpleControllerImpl;
@@ -43,6 +49,7 @@ SimpleController::SimpleController(const SimpleController& org)
     impl->os = org.impl->os;
     impl->options = org.impl->options;
 }
+*/
 
 
 SimpleController::~SimpleController()
@@ -51,92 +58,75 @@ SimpleController::~SimpleController()
 }
 
 
-void SimpleController::setOptions(const std::string& optionString)
+bool SimpleController::initialize(SimpleControllerIO* io)
 {
-    impl->options.clear();
-    typedef boost::escaped_list_separator<char> separator;
-    separator sep('\\', ' ');
-    boost::tokenizer<separator> tok(optionString, sep);
-    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
-        const string& token = *p;
-        if(!token.empty()){
-            impl->options.push_back(token);
-        }
-    }
-}
-    
-
-void SimpleController::setIoBody(Body* body)
-{
-    impl->ioBody = body;
-    impl->jointOutputFlags.resize(body->numJoints(), true);
+    return false;
 }
 
 
-void SimpleController::setTimeStep(double timeStep)
+bool SimpleController::initialize()
 {
-    impl->timeStep = timeStep;
+    return false;
 }
 
 
-void SimpleController::setImmediateMode(bool on)
+bool SimpleController::control(SimpleControllerIO* io)
 {
-    impl->isImmediateMode = on;
+    return false;
 }
 
 
-void SimpleController::setOutputStream(std::ostream& os)
+bool SimpleController::control()
 {
-    impl->os = &os;
+    return false;
 }
+
+
+void SimpleController::setIO(SimpleControllerIO* io)
+{
+    this->io = io;
+}
+
 
 void SimpleController::setJointOutput(bool on)
 {
     if(on){
-        impl->jointOutputFlags.set();
+        io->setJointOutput(JOINT_TORQUE);
     } else {
-        impl->jointOutputFlags.reset();
+        io->setJointOutput(0);
     }
 }
     
 
 void SimpleController::setJointOutput(int jointId, bool on)
 {
-    impl->jointOutputFlags.set(jointId, on);
-}
-
-        
-const boost::dynamic_bitset<>& SimpleController::jointOutputFlags() const
-{
-    return impl->jointOutputFlags;
-}
-
-
-const std::vector<std::string>& SimpleController::options() const
-{
-    return impl->options;
+    if(on){
+        io->setLinkOutput(io->body()->joint(jointId), JOINT_TORQUE);
+    } else {
+        io->setLinkOutput(io->body()->joint(jointId), 0);
+    }
 }
 
 
 Body* SimpleController::ioBody()
 {
-    return impl->ioBody;
+    return io->body();
 }
 
 
 double SimpleController::timeStep() const
 {
-    return impl->timeStep;
+    return io->timeStep();
 }
 
 
 bool SimpleController::isImmediateMode() const
 {
-    return impl->isImmediateMode;
+    return io->isImmediateMode();
 }
 
 
 std::ostream& SimpleController::os() const
 {
-    return *impl->os;
+    return io->os();
 }
