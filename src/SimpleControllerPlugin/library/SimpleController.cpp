@@ -4,6 +4,7 @@
 
 #include "SimpleController.h"
 #include <cnoid/NullOut>
+#include <boost/tokenizer.hpp>
 
 using namespace std;
 using namespace boost;
@@ -19,6 +20,7 @@ public:
     boost::dynamic_bitset<> jointOutputFlags;
     bool isImmediateMode;
     mutable std::ostream* os;
+    std::vector<std::string> options;
 };
 
 }
@@ -39,6 +41,7 @@ SimpleController::SimpleController(const SimpleController& org)
     impl->timeStep = org.impl->timeStep;
     impl->isImmediateMode = org.impl->isImmediateMode;
     impl->os = org.impl->os;
+    impl->options = org.impl->options;
 }
 
 
@@ -47,6 +50,21 @@ SimpleController::~SimpleController()
 
 }
 
+
+void SimpleController::setOptions(const std::string& optionString)
+{
+    impl->options.clear();
+    typedef boost::escaped_list_separator<char> separator;
+    separator sep('\\', ' ');
+    boost::tokenizer<separator> tok(optionString, sep);
+    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
+        const string& token = *p;
+        if(!token.empty()){
+            impl->options.push_back(token);
+        }
+    }
+}
+    
 
 void SimpleController::setIoBody(Body* body)
 {
@@ -91,6 +109,12 @@ void SimpleController::setJointOutput(int jointId, bool on)
 const boost::dynamic_bitset<>& SimpleController::jointOutputFlags() const
 {
     return impl->jointOutputFlags;
+}
+
+
+const std::vector<std::string>& SimpleController::options() const
+{
+    return impl->options;
 }
 
 

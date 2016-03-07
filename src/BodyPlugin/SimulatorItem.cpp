@@ -738,10 +738,10 @@ void SimulationBodyImpl::initializeResultItems()
         parentOfResultItems->addChildItem(motionItem);
     }
 
-    simImpl->addBodyMotionEngine(motionItem);
     motion = motionItem->motion();
     motion->setFrameRate(frameRate);
     motion->setDimension(0, jointPosBuf.colSize(), linkPosBuf.colSize());
+    simImpl->addBodyMotionEngine(motionItem);
     jointPosResults = motion->jointPosSeq();
     linkPosResultItem = motionItem->linkPosSeqItem();
     linkPosResults = motion->linkPosSeq();

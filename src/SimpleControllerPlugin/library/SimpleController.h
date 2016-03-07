@@ -27,7 +27,8 @@ public:
     */
     virtual bool control() = 0;
 
-    // called from the simulator
+    // called from SimpleControllerItem
+    void setOptions(const std::string& optionString);
     void setIoBody(Body* body);
     void setTimeStep(double timeStep);
     void setImmediateMode(bool on);
@@ -40,6 +41,7 @@ public:
   protected:
     SimpleController();
     SimpleController(const SimpleController& org);
+    const std::vector<std::string>& options() const;
     Body* ioBody();
     double timeStep() const;
     bool isImmediateMode() const;
