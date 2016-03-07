@@ -39,7 +39,7 @@ class SR1LiftupController : public cnoid::SimpleController
     Link* rightWrist;
     Link* leftWrist;
     double throwTime;
-    bool isVelocityControlMode;
+    enum { TORQUE_MODE, VELOCITY_MODE } mode;
 
 public:
 
@@ -52,16 +52,16 @@ public:
     
     virtual bool initialize(SimpleControllerIO* io) {
 
-        if(io->optionString() == "velocity"){
-            isVelocityControlMode = true;
-            io->setJointOutput(JOINT_VELOCITY);
-            io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
-            io->os() << "SR1LiftupController: velocity control mode." << endl;
-        } else {
-            isVelocityControlMode = false;
+        if(io->optionString() != "velocity"){
+            mode = TORQUE_MODE;
             io->setJointOutput(JOINT_TORQUE);
             io->setJointInput(JOINT_ANGLE);
             io->os() << "SR1LiftupController: torque control mode." << endl;
+        } else {
+            mode = VELOCITY_MODE;
+            io->setJointOutput(JOINT_VELOCITY);
+            io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
+            io->os() << "SR1LiftupController: velocity control mode." << endl;
         }
 
         time = 0.0;
@@ -201,32 +201,48 @@ public:
 
         const double dt = io->timeStep();
 
-        for(int i=0; i < ioBody->numJoints(); ++i){
-            Link* joint = ioBody->joint(i);
-            if(isVelocityControlMode){
-                joint->dq() = (qref[i] - qold[i]) / dt;
-                qold[i] = qref[i];
-            } else {
+        switch(mode){
+
+        case TORQUE_MODE:
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                Link* joint = ioBody->joint(i);
                 double q = joint->q();
                 double dq = (q - qold[i]) / dt;
                 double dq_ref = (qref[i] - qref_old[i]) / dt;
                 joint->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
                 qold[i] = q;
             }
+            break;
+
+        case VELOCITY_MODE:
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                ioBody->joint(i)->dq() = (qref[i] - qold[i]) / dt;
+                qold[i] = qref[i];
+            }
+            break;
+
+        default:
+            break;
         }
 
         if(phase == 3){
             if(time > throwTime){
-                if(time < interpolator.domainUpper() + 0.1){
-                    if(isVelocityControlMode){
-                        rightWrist->dq() = 0.0;
-                        leftWrist->dq() = 0.0;
-                    } else {
+                if(time >= interpolator.domainUpper() + 0.1){
+                    phase = 4;
+
+                } else {
+                    switch(mode){
+                    case TORQUE_MODE:
                         rightWrist->u() = 0.0;
                         leftWrist->u() = 0.0;
+                        break;
+                    case VELOCITY_MODE:
+                        rightWrist->dq() = 0.0;
+                        leftWrist->dq() = 0.0;
+                        break;
+                    default:
+                        break;
                     }
-                } else {
-                    phase = 4;
                 }
             }
         }

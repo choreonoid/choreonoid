@@ -30,82 +30,118 @@ static double dgain[] = {
 
 class SR1WalkPatternController : public cnoid::SimpleController
 {
-    BodyPtr body;
+    Body* ioBody;
+    int currentFrameIndex;
+    int lastFrameIndex;
     MultiValueSeqPtr qseq;
+    MultiValueSeq::Frame qref0;
+    MultiValueSeq::Frame qref1;
+    MultiValueSeq::Frame qref2;
     vector<double> q0;
-    MultiValueSeq::Frame oldFrame;
-    int currentFrame;
-    double timeStep_;
+    double dt;
+    double dt2;
+    enum { TORQUE_MODE, HIGHGAIN_MODE } mode;
     
 public:
 
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io) {
 
-        if(!qseq){
-            string filename = getNativePathString(
-                boost::filesystem::path(shareDirectory())
-                / "motion" / "SR1" / "SR1WalkPattern.yaml");
-
-            BodyMotion motion;
-            if(!motion.loadStandardYAMLformat(filename)){
-                os() << motion.seqMessage() << endl;
-                return false;
-            }
-            qseq = motion.jointPosSeq();
-            if(qseq->numFrames() == 0){
-                os() << "Empty motion data." << endl;
-                return false;
-            }
-            q0.resize(qseq->numParts());
-            timeStep_ = qseq->getTimeStep();
+        string patternFile;
+        
+        if(io->optionString() != "highgain"){
+            mode = TORQUE_MODE;
+            patternFile = "SR1WalkPattern.yaml";
+            io->setJointOutput(JOINT_TORQUE);
+            io->setJointInput(JOINT_ANGLE);
+            io->os() << "SR1WalkPatternController: torque mode." << endl;
+        } else {
+            mode = HIGHGAIN_MODE;
+            patternFile = "SR1WalkPattern2.yaml";
+            io->setJointOutput(JOINT_ANGLE | JOINT_VELOCITY | JOINT_ACCELERATION);
+            io->os() << "SR1WalkPatternController: high gain mode." << endl;
         }
 
-        if(fabs(timeStep() - timeStep_) > 1.0e-6){
-            os() << "Time step must be " << timeStep_ << "." << endl;;
+        string filename = getNativePathString(
+            boost::filesystem::path(shareDirectory()) / "motion" / "SR1" / patternFile);
+        
+        BodyMotion motion;
+        if(!motion.loadStandardYAMLformat(filename)){
+            io->os() << motion.seqMessage() << endl;
+            return false;
+        }
+        qseq = motion.jointPosSeq();
+        if(qseq->numFrames() == 0){
+            io->os() << "Empty motion data." << endl;
             return false;
         }
 
-        body = ioBody();
-        
-        if(body->numJoints() != qseq->numParts()){
-            os() << "The number of joints must be " << qseq->numParts() << endl;
+        ioBody = io->body();
+        if(ioBody->numJoints() != qseq->numParts()){
+            io->os() << "The number of joints must be " << qseq->numParts() << endl;
             return false;
         }
-        
-        for(int i=0; i < body->numJoints(); ++i){
-            q0[i] = body->joint(i)->q();
+
+        dt = io->timeStep();
+        dt2 = dt * dt;
+        if(fabs(dt - qseq->timeStep()) > 1.0e-6){
+            io->os() << "Warning: the simulation time step is different from that of the motion data " << endl;
         }
-        oldFrame = qseq->frame(0);
-        currentFrame = 0;
         
+        currentFrameIndex = 0;
+        lastFrameIndex = std::max(0, qseq->numFrames() - 1);
+        qref1 = qseq->frame(0);
+        qref2 = qseq->frame(std::min(1, lastFrameIndex));
+
+        q0.resize(qseq->numParts());
+        for(int i=0; i < ioBody->numJoints(); ++i){
+            q0[i] = ioBody->joint(i)->q();
+        }
+
         return true;
     }
 
-    virtual bool control() {
+    virtual bool control(SimpleControllerIO* io) {
 
-        bool isActive = currentFrame < qseq->numFrames();
-        MultiValueSeq::Frame frame;
-        if(isActive){
-            frame = qseq->frame(currentFrame++);
+        switch(mode){
+
+        case TORQUE_MODE:
+            qref0 = qref1;
+            qref1 = qseq->frame(currentFrameIndex);
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                Link* joint = ioBody->joint(i);
+                double q_ref = qref1[i];
+                double q = joint->q();
+                double dq_ref = (q_ref - qref0[i]) / dt;
+                double dq = (q - q0[i]) / dt;
+                joint->u() = (q_ref - q) * pgain[i] + (dq_ref - dq) * dgain[i];
+                q0[i] = q;
+            }
+            break;
+
+        case HIGHGAIN_MODE:
+            qref0 = qref1;
+            qref1 = qref2;
+            qref2 = qseq->frame(std::min(currentFrameIndex + 1, lastFrameIndex));
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                Link* joint = ioBody->joint(i);
+                joint->q() = qref1[i];
+                joint->dq() = (qref2[i] - qref1[i]) / dt;
+                joint->ddq() = (qref2[i] - 2.0 * qref1[i] + qref0[i]) / dt2;
+            }
+            break;
+
+        default:
+            break;
+        }
+
+        if(currentFrameIndex < qseq->numFrames()){
+            ++currentFrameIndex;
+            return true;
         } else {
-            frame = oldFrame;
+            return false;
         }
-
-        for(int i=0; i < body->numJoints(); ++i){
-            Link* joint = body->joint(i);
-            double q_ref = frame[i];
-            double q = joint->q();
-            double dq_ref = (q_ref - oldFrame[i]) / timeStep_;
-            double dq = (q - q0[i]) / timeStep_;
-            joint->u() = (q_ref - q) * pgain[i] + (dq_ref - dq) * dgain[i];
-            q0[i] = q;
-        }
-        oldFrame = frame;
-
-        return isActive;
     }
         
 };
-
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(SR1WalkPatternController)
