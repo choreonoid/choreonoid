@@ -29,7 +29,6 @@ const double dgain[] = {
     100.0, 100.0, 100.0 };
 }
 
-
 class SR1LiftupController : public cnoid::SimpleController
 {
     Interpolator<VectorXd> interpolator;
@@ -126,8 +125,6 @@ public:
         } else if(phase == 1){
             // holding phase
             qref = qref_old;
-
-            io->os() << "fabs(rightWrist->u()): " << fabs(rightWrist->u()) << "fabs(leftWrist->u())" << fabs(leftWrist->u()) << endl;
             if(fabs(rightWrist->u()) < 50.0 || fabs(leftWrist->u()) < 50.0){ // not holded ?
                 dq_wrist = std::min(dq_wrist + 0.001, 0.1);
                 qref[rightWrist->jointId()] += radian(dq_wrist);
