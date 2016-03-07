@@ -4,6 +4,8 @@
 
 #include "../Body.h"
 #include "../BodyLoader.h"
+#include "../InverseKinematics.h"
+#include "../JointPath.h"
 #include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
@@ -14,6 +16,9 @@ using namespace cnoid;
 
 namespace
 {
+
+bool (JointPath::*JointPath_calcInverseKinematics)(const Vector3& , const Matrix3&) = &JointPath::calcInverseKinematics;
+bool (JointPath::*JointPath_calcInverseKinematics2)(const Vector3&, const Matrix3&, const Vector3&, const Matrix3&) = &JointPath::calcInverseKinematics;
 
 Position Link_get_position(Link& self) { return self.position(); }
 void Link_set_position(Link& self, const Position& T) { self.position() = T; }
@@ -94,6 +99,24 @@ namespace cnoid
 BOOST_PYTHON_MODULE(Body)
 {
     boost::python::import("cnoid.Util");
+
+    def("getCustomJointPath", getCustomJointPath);
+
+    {
+        scope jointPathScope =
+            class_< JointPath, JointPathPtr, boost::noncopyable >("JointPath", init<>())
+            .def("numJoints", &JointPath::numJoints)
+            .def("joint", &JointPath::joint, return_value_policy<reference_existing_object>())
+            .def("baseLink", &JointPath::baseLink, return_value_policy<reference_existing_object>())
+            .def("endLink", &JointPath::endLink, return_value_policy<reference_existing_object>())
+            .def("indexOf", &JointPath::indexOf)
+            .def("customizeTarget", &JointPath::customizeTarget)
+            .def("numIterations", &JointPath::numIterations)
+            .def("calcJacobian", &JointPath::calcJacobian)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics2)
+            ;
+    }
 
     {
         scope linkScope = 
