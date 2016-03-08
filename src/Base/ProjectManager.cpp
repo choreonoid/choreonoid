@@ -212,6 +212,14 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
             archive->initSharedInfo(filename);
 
+            std::set<string> optionalPlugins;
+            Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
+            if(optionalPluginsNode.isValid()){
+                for(int i=0; i < optionalPluginsNode.size(); ++i){
+                    optionalPlugins.insert(optionalPluginsNode[i].toString());
+                }
+            }
+
             ViewManager::ViewStateInfo viewStateInfo;
             ViewManager::restoreViews(archive, "views", viewStateInfo);
 
@@ -228,16 +236,6 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                     mainWindow->restoreLayout(archive);
                 }
             }
-
-            // Restoring the file dialog directory from the project file.
-            // This should be disabled.
-            /*
-              string currentFileDialogDirectory;
-              if(archive->readRelocatablePath("currentFileDialogDirectory", currentFileDialogDirectory)){
-              AppConfig::archive()->writePath(
-              "currentFileDialogDirectory", currentFileDialogDirectory);
-              }
-            */
 
             ArchiverMapMap::iterator p;
             for(p = archivers.begin(); p != archivers.end(); ++p){
@@ -286,7 +284,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
-                itemTreeArchiver.restore(items, RootItem::mainInstance());
+                itemTreeArchiver.restore(items, RootItem::mainInstance(), optionalPlugins);
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
                 messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);

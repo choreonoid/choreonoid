@@ -517,9 +517,10 @@ public:
     double timeStep;
     agxSDK::SimulationRef agxSimulation;
     agxPowerLine::PowerLineRef powerLine;
-    typedef std::map<Link*, AgXSimulatorItem::ControlMode> ControlModeMap;
-    ControlModeMap controlModeMap;
 
+    typedef std::map<Link*, AgXSimulatorItem::ControlMode> ControlModeMap;
+    ControlModeMap controlModeOrgLinkMap;
+    ControlModeMap controlModeMap;
     double springConstant[3];
     double dampingCoefficient[3];
 
@@ -1214,7 +1215,7 @@ void AgXForceField::updateForce(agx::DynamicsSystem* system)
 
 
 AgXBody::AgXBody(Body& orgBody)
-    : SimulationBody(&orgBody)
+    : SimulationBody(new Body(orgBody))
 {
 
 }
@@ -1445,9 +1446,27 @@ Item* AgXSimulatorItem::doDuplicate() const
 }
 
 
+bool AgXSimulatorItem::startSimulation(bool doReset)
+{
+    impl->controlModeMap.clear();
+    impl->controlModeOrgLinkMap.clear();
+    return SimulatorItem::startSimulation(doReset);
+}
+
+
 SimulationBody* AgXSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return new AgXBody(*orgBody);
+    AgXBody* agXBody  = new AgXBody(*orgBody);
+
+    const int n = orgBody->numLinks();
+    for(size_t i=0; i < n; ++i){
+    	AgXSimulatorItemImpl::ControlModeMap::iterator it = impl->controlModeOrgLinkMap.find(orgBody->link(i));
+    	if(it != impl->controlModeOrgLinkMap.end())
+    		impl->controlModeMap[agXBody->body()->link(i)] = it->second;
+    }
+
+    return agXBody;
+
 }
 
 
@@ -1638,18 +1657,18 @@ CollisionLinkPairListPtr AgXSimulatorItem::getCollisions()
 
 
 void AgXSimulatorItem::setJointControlMode(Link* joint, ControlMode type){
-    impl->setJointControlMode(joint, type);
+	impl->setJointControlMode(joint, type);
 }
 
 
 void AgXSimulatorItemImpl::setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type){
 
-    controlModeMap[joint] = type;
+    controlModeOrgLinkMap[joint] = type;
 }
 
 
 void AgXSimulatorItem::setJointCompliance(Link* joint, double spring, double damping){
-    impl->setJointCompliance(joint, spring, damping);
+	impl->setJointCompliance(joint, spring, damping);
 }
 
 

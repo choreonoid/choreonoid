@@ -67,7 +67,7 @@ public:
     /**
        The number of the joints without joint ids.
        For example, a joint for simulating a spring is usually handled as such a joint.
-       You can get the joints by ginving the index after the last joint id to the joint() function.
+       You can get the joints by giving the index after the last joint id to the joint() function.
     */
     int numVirtualJoints() const {
         return jointIdToLinkArray.size() - numActualJoints;
