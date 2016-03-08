@@ -40,7 +40,8 @@ class SR1LiftupController : public cnoid::SimpleController
     Link* leftWrist;
     double throwTime;
     enum { TORQUE_MODE, VELOCITY_MODE } mode;
-
+    bool isTorqueSensorEnabled;
+    
 public:
 
     VectorXd& convertToRadian(VectorXd& q){
@@ -52,16 +53,33 @@ public:
     
     virtual bool initialize(SimpleControllerIO* io) {
 
-        if(io->optionString() != "velocity"){
-            mode = TORQUE_MODE;
+        mode = TORQUE_MODE;
+        isTorqueSensorEnabled = false;
+        vector<string> options = io->options();
+        for(vector<string>::iterator p = options.begin(); p != options.end(); ++p){
+            if(*p == "velocity"){
+                mode = VELOCITY_MODE;
+            } else if(*p == "torque_sensor"){
+                isTorqueSensorEnabled = true;
+            }
+        }
+
+        ostream& os = io->os();
+
+        if(mode == TORQUE_MODE){
+            os << "SR1LiftupController: torque control mode." << endl;
             io->setJointOutput(JOINT_TORQUE);
             io->setJointInput(JOINT_ANGLE);
-            io->os() << "SR1LiftupController: torque control mode." << endl;
-        } else {
-            mode = VELOCITY_MODE;
+        } else if(mode == VELOCITY_MODE){
+            os << "SR1LiftupController: velocity control mode";
             io->setJointOutput(JOINT_VELOCITY);
-            io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
-            io->os() << "SR1LiftupController: velocity control mode." << endl;
+            if(isTorqueSensorEnabled){
+                io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
+                os << ", torque sensors";
+            } else {
+                io->setJointInput(JOINT_ANGLE);
+            }
+            os << "." << endl;
         }
 
         time = 0.0;
@@ -125,7 +143,18 @@ public:
         } else if(phase == 1){
             // holding phase
             qref = qref_old;
-            if(fabs(rightWrist->u()) < 50.0 || fabs(leftWrist->u()) < 50.0){ // not holded ?
+
+            bool isHolding = false;
+            if(mode == VELOCITY_MODE && !isTorqueSensorEnabled){
+                if(fabs(rightWrist->q() - qref[rightWrist->jointId()]) > 0.1 &&
+                   fabs(leftWrist->q() - qref[leftWrist->jointId()]) > 0.1){
+                    isHolding = true;
+                }
+            } else if(fabs(rightWrist->u()) > 50.0 && fabs(leftWrist->u()) > 50.0){
+                isHolding = true;
+            }
+
+            if(!isHolding){
                 dq_wrist = std::min(dq_wrist + 0.001, 0.1);
                 qref[rightWrist->jointId()] += radian(dq_wrist);
                 qref[leftWrist->jointId()]  -= radian(dq_wrist);
@@ -201,9 +230,7 @@ public:
 
         const double dt = io->timeStep();
 
-        switch(mode){
-
-        case TORQUE_MODE:
+        if(mode == TORQUE_MODE || !isTorqueSensorEnabled){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
                 double q = joint->q();
@@ -212,17 +239,12 @@ public:
                 joint->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
                 qold[i] = q;
             }
-            break;
-
-        case VELOCITY_MODE:
+        }
+        if(mode == VELOCITY_MODE){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 ioBody->joint(i)->dq() = (qref[i] - qold[i]) / dt;
                 qold[i] = qref[i];
             }
-            break;
-
-        default:
-            break;
         }
 
         if(phase == 3){
@@ -231,17 +253,12 @@ public:
                     phase = 4;
 
                 } else {
-                    switch(mode){
-                    case TORQUE_MODE:
+                    if(mode == TORQUE_MODE){
                         rightWrist->u() = 0.0;
                         leftWrist->u() = 0.0;
-                        break;
-                    case VELOCITY_MODE:
+                    } else {
                         rightWrist->dq() = 0.0;
                         leftWrist->dq() = 0.0;
-                        break;
-                    default:
-                        break;
                     }
                 }
             }
