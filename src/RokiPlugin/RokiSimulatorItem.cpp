@@ -312,16 +312,12 @@ RokiLink::RokiLink
 }
 
 
-void RokiLink::calcFrame(){
-
-    if(!parent){
-        wAtt = Matrix3::Identity();
-        return;
-    }
-    if(link->jointType()==Link::FIXED_JOINT || link->jointType()==Link::FREE_JOINT){
-        wAtt = parent->wAtt;
-        return;
-    }
+void RokiLink::calcFrame()
+{
+	if(link->jointType()==Link::FIXED_JOINT || link->jointType()==Link::FREE_JOINT){
+		wAtt = Matrix3::Identity();
+		return;
+	}
 
     Vector3 z(0,0,1);
     Vector3 nx = z.cross(link->a());
@@ -373,8 +369,8 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     zMat3DSetElem(m, 2, 2, I(2,2));
 
     zFrame3D* f = rkLinkOrgFrame(rklink);
-    if(link->isRoot() && link->jointType()==Link::FIXED_JOINT){
-        wFrame = link->T();
+    if(link->jointType()==Link::FIXED_JOINT || (!link->isRoot() && link->jointType()==Link::FREE_JOINT)){
+    	wFrame = link->T();
     }else{
         wFrame.linear() = wAtt;
         wFrame.translation() = origin;
