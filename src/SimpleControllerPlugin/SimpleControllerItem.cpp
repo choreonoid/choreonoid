@@ -15,6 +15,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/tokenizer.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class SimpleControllerItemImpl
+class SimpleControllerItemImpl : public SimpleControllerIO
 {
 public:
     SimpleControllerItem* self;
@@ -31,22 +32,11 @@ public:
     SimpleController* controller;
     Body* simulationBody;
     BodyPtr ioBody;
-    bool doInputLinkPositions;
+    vector<int> outputLinkStateTypes;
+    vector<int> inputLinkStateTypes;
+    bool useOldAPI;
 
-    struct ControllerInfo {
-        SimpleControllerItemPtr item;
-        SimpleController* controller;
-        ControllerInfo(SimpleControllerItem* item, SimpleController* controller)
-            : item(item), controller(controller) {
-        }
-        bool control() {
-            return controller->control();
-        }
-        void stop(){
-            item->stop();
-        }
-    };
-    vector<ControllerInfo> childControllerInfos;
+    vector<SimpleControllerItemPtr> childControllerItems;
 
     ConnectionSet inputDeviceStateConnections;
     boost::dynamic_bitset<> inputDeviceStateChangeFlag;
@@ -54,13 +44,13 @@ public:
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
         
-    double timeStep;
+    double timeStep_;
     MessageView* mv;
 
     std::string controllerModuleName;
     std::string controllerModuleFileName;
     QLibrary controllerModule;
-    std::string optionString;
+    std::string optionString_;
     bool doReloading;
 
     SimpleControllerItemImpl(SimpleControllerItem* self);
@@ -71,12 +61,25 @@ public:
     bool start(ControllerItem::Target* target, Body* sharedIoBody);
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
+    bool control();
     void onOutputDeviceStateChanged(int deviceIndex);
     void output();
     bool onReloadingChanged(bool on);
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+
+    // virtual functions of SimpleControllerIO
+    virtual const std::string& optionString() const;
+    virtual std::vector<std::string> options() const;
+    virtual Body* body();
+    virtual double timeStep() const;
+    virtual bool isImmediateMode() const;
+    virtual std::ostream& os() const;
+    virtual void setJointOutput(int stateTypes);
+    virtual void setLinkOutput(Link* link, int stateTypes);
+    virtual void setJointInput(int stateTypes);
+    virtual void setLinkInput(Link* link, int stateTypes);
 };
 
 }
@@ -93,7 +96,6 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     : self(self)
 {
     controller = 0;
-    doInputLinkPositions = false;
     mv = MessageView::instance();
     doReloading = true;
 }
@@ -113,7 +115,6 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
     mv = MessageView::instance();
     controllerModuleName = org.controllerModuleName;
     doReloading = org.doReloading;
-    doInputLinkPositions = org.doInputLinkPositions;
 }
 
 
@@ -150,7 +151,7 @@ void SimpleControllerItem::onDisconnectedFromRoot()
     if(!isActive()){
         impl->unloadController();
     }
-    impl->childControllerInfos.clear();
+    impl->childControllerItems.clear();
 }
 
 
@@ -255,23 +256,33 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
         }
     }
 
-    childControllerInfos.clear();
+    childControllerItems.clear();
 
     if(controller){
-        controller->setOptions(optionString);
-        
         ioBody = sharedIoBody;
         if(!ioBody){
             initializeIoBody(target->body());
         }
-        controller->setIoBody(ioBody);
         
-        timeStep = target->worldTimeStep();
-        controller->setTimeStep(timeStep);
-        controller->setImmediateMode(self->isImmediateMode());
-        controller->setOutputStream(mv->cout());
+        timeStep_ = target->worldTimeStep();
 
-        result = controller->initialize();
+        controller->setIO(this);
+
+        useOldAPI = false;
+        setJointOutput(0);
+        setJointInput(0);
+        result = controller->initialize(this);
+
+        // try the old API
+        if(!result){
+            setJointOutput(SimpleControllerIO::JOINT_TORQUE);
+            setJointInput(SimpleControllerIO::JOINT_DISPLACEMENT);
+            if(controller->initialize()){
+                useOldAPI = true;
+                result = true;
+            }
+        }
+        
         if(!result){
             mv->putln(fmt(_("%1%'s initialize method failed.")) % self->name());
             if(doReloading){
@@ -285,8 +296,7 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
                 if(childControllerItem){
                     SimpleController* childController = childControllerItem->start(target, ioBody);
                     if(childController){
-                        childControllerInfos.push_back(
-                            ControllerInfo(childControllerItem, childController));
+                        childControllerItems.push_back(childControllerItem);
                     }
                 }
             }
@@ -299,7 +309,99 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
 
 double SimpleControllerItem::timeStep() const
 {
-    return impl->timeStep;
+    return impl->timeStep_;
+}
+
+
+const std::string& SimpleControllerItemImpl::optionString() const
+{
+    return optionString_;
+}
+
+
+std::vector<std::string> SimpleControllerItemImpl::options() const
+{
+    std::vector<std::string> options_;
+    typedef boost::escaped_list_separator<char> separator;
+    separator sep('\\', ' ');
+    boost::tokenizer<separator> tok(optionString_, sep);
+    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
+        const string& token = *p;
+        if(!token.empty()){
+            options_.push_back(token);
+        }
+    }
+    return options_;
+}
+
+
+Body* SimpleControllerItemImpl::body()
+{
+    return ioBody;
+}
+
+
+double SimpleControllerItemImpl::timeStep() const
+{
+    return timeStep_;
+}
+
+
+bool SimpleControllerItemImpl::isImmediateMode() const
+{
+    return self->isImmediateMode();
+}
+
+
+std::ostream& SimpleControllerItemImpl::os() const
+{
+    return mv->cout();
+}
+
+
+void SimpleControllerItemImpl::setJointOutput(int stateTypes)
+{
+    if(!stateTypes){
+        outputLinkStateTypes.clear();
+    } else {
+        outputLinkStateTypes.resize(ioBody->numLinks(), 0);
+        const int nj = ioBody->numJoints();
+        for(int i=0; i < nj; ++i){
+            outputLinkStateTypes[ioBody->joint(i)->index()] = stateTypes;
+        }
+    }
+}
+
+
+void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+{
+    if(link->index() >= outputLinkStateTypes.size()){
+        outputLinkStateTypes.resize(link->index() + 1, 0);
+    }
+    outputLinkStateTypes[link->index()] = stateTypes;
+}
+
+
+void SimpleControllerItemImpl::setJointInput(int stateTypes)
+{
+    if(!stateTypes){
+        inputLinkStateTypes.clear();
+    } else {
+        inputLinkStateTypes.resize(ioBody->numLinks(), 0);
+        const int nj = ioBody->numJoints();
+        for(int i=0; i < nj; ++i){
+            inputLinkStateTypes[ioBody->joint(i)->index()] = stateTypes;
+        }
+    }
+}
+
+
+void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
+{
+    if(link->index() >= inputLinkStateTypes.size()){
+        inputLinkStateTypes.resize(link->index() + 1, 0);
+    }
+    inputLinkStateTypes[link->index()] = stateTypes;
 }
 
 
@@ -311,23 +413,26 @@ void SimpleControllerItem::input()
 
 void SimpleControllerItemImpl::input()
 {
-    const int nj = simulationBody->numJoints();
-    for(int i=0; i < nj; ++i){
-        Link* joint0 = simulationBody->joint(i);
-        Link* joint1 = ioBody->joint(i);
-        joint1->q() = joint0->q();
-        joint1->dq() = joint0->dq();
-    }
-
-    if(doInputLinkPositions){
-        const int nl = simulationBody->numLinks();
-        for(int i=0; i < nl; ++i){
-            Link* link0 = simulationBody->link(i);
-            Link* link1 = ioBody->link(i);
-            link1->T() = link0->T();
+    for(size_t i=0; i < inputLinkStateTypes.size(); ++i){
+        const int types = inputLinkStateTypes[i];
+        if(types){
+            Link* simLink = simulationBody->link(i);
+            Link* ioLink = ioBody->link(i);
+            if(types & SimpleControllerIO::JOINT_DISPLACEMENT){
+                ioLink->q() = simLink->q();
+            }
+            if(types & SimpleControllerIO::JOINT_VELOCITY){
+                ioLink->dq() = simLink->dq();
+            }
+            if(types & SimpleControllerIO::JOINT_TORQUE){
+                ioLink->u() = simLink->u();
+            }
+            if(types & SimpleControllerIO::LINK_POSITION){
+                ioLink->T() = simLink->T();
+            }
         }
     }
-
+    
     if(inputDeviceStateChangeFlag.any()){
         const DeviceList<>& devices = simulationBody->devices();
         const DeviceList<>& ioDevices = ioBody->devices();
@@ -351,12 +456,22 @@ void SimpleControllerItemImpl::onInputDeviceStateChanged(int deviceIndex)
 }
 
 
+bool SimpleControllerItemImpl::control()
+{
+    if(!useOldAPI){
+        return controller->control(this);
+    } else {
+        return controller->control();
+    }
+}
+
+
 bool SimpleControllerItem::control()
 {
-    bool result = impl->controller->control();
+    bool result = impl->control();
 
-    for(size_t i=0; i < impl->childControllerInfos.size(); ++i){
-        if(impl->childControllerInfos[i].control()){
+    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+        if(impl->childControllerItems[i]->impl->control()){
             result = true;
         }
     }
@@ -379,11 +494,26 @@ void SimpleControllerItem::output()
 
 void SimpleControllerItemImpl::output()
 {
-    const boost::dynamic_bitset<>& flags = controller->jointOutputFlags();
-    const int n = std::min(simulationBody->numJoints(), (int)flags.size());
-    for(int i=0; i < n; ++i){
-        if(flags[i]){
-            simulationBody->joint(i)->u() = ioBody->joint(i)->u();
+    for(size_t i=0; i < outputLinkStateTypes.size(); ++i){
+        const int types = outputLinkStateTypes[i];
+        if(types){
+            Link* simLink = simulationBody->link(i);
+            Link* ioLink = ioBody->link(i);
+            if(types & SimpleControllerIO::JOINT_TORQUE){
+                simLink->u() = ioLink->u();
+            }
+            if(types & SimpleControllerIO::JOINT_DISPLACEMENT){
+                simLink->q() = ioLink->q();
+            }
+            if(types & SimpleControllerIO::JOINT_VELOCITY){
+                simLink->dq() = ioLink->dq();
+            }
+            if(types & SimpleControllerIO::JOINT_ACCELERATION){
+                simLink->ddq() = ioLink->ddq();
+            }
+            if(types & SimpleControllerIO::LINK_POSITION){
+                simLink->T() = ioLink->T();
+            }
         }
     }
 
@@ -410,10 +540,10 @@ void SimpleControllerItem::stop()
         impl->unloadController();
     }
 
-    for(size_t i=0; i < impl->childControllerInfos.size(); ++i){
-        impl->childControllerInfos[i].stop();
+    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+        impl->childControllerItems[i]->stop();
     }
-    impl->childControllerInfos.clear();
+    impl->childControllerItems.clear();
 }
 
 
@@ -437,8 +567,7 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
-    putProperty(_("Input link positions"), doInputLinkPositions, changeProperty(doInputLinkPositions));
-    putProperty(_("Options"), optionString, changeProperty(optionString));
+    putProperty(_("Controller options"), optionString_, changeProperty(optionString_));
 }
 
 
@@ -455,8 +584,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
-    archive.write("inputLinkPositions", doInputLinkPositions);
-    archive.write("options", optionString);
+    archive.write("controllerOptions", optionString_);
     return true;
 }
 
@@ -477,7 +605,6 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         controllerModuleName = archive.expandPathVariables(value);
     }
     archive.read("reloading", doReloading);
-    archive.read("inputLinkPositions", doInputLinkPositions);
-    archive.read("options", optionString);
+    archive.read("controllerOptions", optionString_);
     return true;
 }

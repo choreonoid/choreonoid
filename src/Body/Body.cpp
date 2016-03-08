@@ -210,7 +210,7 @@ void Body::updateLinkTree()
 
     const int numLinks = linkTraverse_.numLinks();
     jointIdToLinkArray.clear();
-    jointIdToLinkArray.reserve(numLinks);
+    jointIdToLinkArray.reserve(numLinks - 1);
     numActualJoints = 0;
     Link** virtualJoints = (Link**)alloca(numLinks * sizeof(Link*));
     int numVirtualJoints = 0;
@@ -233,7 +233,7 @@ void Body::updateLinkTree()
         }
         if(link->jointType() != Link::FIXED_JOINT){
             isStaticModel_ = false;
-            if(id < 0){
+            if(i > 0 && id < 0){
                 virtualJoints[numVirtualJoints++] = link;
             }
         }

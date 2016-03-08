@@ -106,6 +106,8 @@ public:
 
     virtual bool control() {
 
+        bool isActive = true;
+
         VectorXd p(6);
         const BodyPtr& io = ioBody();
 
@@ -178,6 +180,9 @@ public:
             }
         } else if(phase == 4){
             qref = jointInterpolator.interpolate(time);
+            if(time > jointInterpolator.domainUpper()){
+                isActive = false;
+            }
         }
 
         double dt = timeStep();
@@ -193,7 +198,7 @@ public:
         qref_old = qref;
         time += dt;
 
-        return true;
+        return isActive;
     }
 };
 

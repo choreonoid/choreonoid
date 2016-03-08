@@ -206,6 +206,7 @@ public:
     bool isControlRequested;
     bool isControlFinished;
     bool isControlToBeContinued;
+    bool doCheckContinue;
         
     CollisionDetectorPtr collisionDetector;
 
@@ -1505,6 +1506,8 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         updateSimBodyLists();
 
+        doCheckContinue = timeRangeMode.is(SimulatorItem::TR_ACTIVE_CONTROL) && !activeControllers.empty();
+            
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
             controlThread = boost::thread(boost::bind(&SimulatorItemImpl::concurrentControlLoop, this));
@@ -1831,7 +1834,7 @@ bool SimulatorItemImpl::stepSimulationMain()
         updateSimBodyLists();
     }
     
-    bool doContinue = hasActiveFreeBodies || !timeRangeMode.is(SimulatorItem::TR_ACTIVE_CONTROL);
+    bool doContinue = !doCheckContinue;
 
     preDynamicsFunctions.call();
 

@@ -40,6 +40,8 @@ public:
     virtual double getFrameRate() const;
     virtual void setFrameRate(double frameRate);
 
+    double timeStep() const { return jointPosSeq_->timeStep(); }
+
     virtual int getOffsetTimeFrame() const;
 
     int numFrames() const {
