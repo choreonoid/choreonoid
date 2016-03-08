@@ -27,7 +27,7 @@ public:
     int numJoints;
 
     BodyMotionControllerItemImpl(BodyMotionControllerItem* self);
-    bool start(ControllerItem::Target* target);
+    bool initialize(ControllerItem::Target* target);
     void output();
 };
 
@@ -67,13 +67,13 @@ BodyMotionControllerItem::~BodyMotionControllerItem()
 }
 
 
-bool BodyMotionControllerItem::start(Target* target)
+bool BodyMotionControllerItem::initialize(Target* target)
 {
-    return impl->start(target);
+    return impl->initialize(target);
 }
 
 
-bool BodyMotionControllerItemImpl::start(ControllerItem::Target* target)
+bool BodyMotionControllerItemImpl::initialize(ControllerItem::Target* target)
 {
     ItemList<BodyMotionItem> motionItems;
     if(!motionItems.extractChildItems(self)){
@@ -107,13 +107,27 @@ bool BodyMotionControllerItemImpl::start(ControllerItem::Target* target)
         return false;
     }
 
+    MultiSE3SeqPtr lseq = motionItem->linkPosSeq();
+    if(lseq->numParts() > 0 && lseq->numFrames() > 0){
+        SE3& p = lseq->at(0, 0);
+        Link* rootLink = body->rootLink();
+        rootLink->p() = p.translation();
+        rootLink->R() = p.rotation().toRotationMatrix();
+    }
     self->output();
-    self->control();
+    body->calcForwardKinematics();
     
     return true;
 }
 
 
+bool BodyMotionControllerItem::start(ControllerItem::Target* target)
+{
+    control();
+    return true;
+}
+    
+    
 double BodyMotionControllerItem::timeStep() const
 {
     return impl->qseqRef->timeStep();

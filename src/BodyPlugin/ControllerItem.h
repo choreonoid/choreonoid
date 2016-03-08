@@ -34,15 +34,22 @@ public:
     bool isActive() const;
     bool isImmediateMode() const { return isImmediateMode_; }
 
+    
     /**
-       Override this function to control a body
+       This function is called before the simulation world is initialized.
 
        @note If the body() of the target returns a null pointer, a controller is not associated with a particular body.
        This is for a controller which does some general operations.
            
        @note This function is called from the main thread.
     */
-    virtual bool start(Target* target) = 0;
+    virtual bool initialize(Target* target);
+    
+    /**
+       This function is similar to the initialize function,
+       but is called after the simulation world is initialized.
+    */
+    virtual bool start(Target* target);
 
     virtual double timeStep() const = 0;
 

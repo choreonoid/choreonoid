@@ -37,6 +37,18 @@ bool ControllerItem::isActive() const
 }
 
 
+bool ControllerItem::initialize(Target* target)
+{
+    return true;
+}
+
+
+bool ControllerItem::start(Target* target)
+{
+    return true;
+}
+
+
 void ControllerItem::stop()
 {
 

@@ -291,7 +291,6 @@ public:
 #endif
 
     double currentTime() const;
-    ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     void clearSimulation();
     bool startSimulation(bool doReset);
@@ -552,8 +551,6 @@ void SimulationBodyImpl::findControlSrcItems(Item* item, vector<Item*>& io_items
         Item* srcItem = 0;
         if(dynamic_cast<ControllerItem*>(item)){
             srcItem = item;
-        } else if(dynamic_cast<BodyMotionItem*>(item)){
-            srcItem = item;
         }
         if(srcItem){
             bool isChecked = ItemTreeView::instance()->isItemChecked(srcItem);
@@ -608,17 +605,10 @@ void SimulationBodyImpl::extractAssociatedItems(bool doReset)
         Item* srcItem = *iter;
         ControllerItem* controllerItem = 0;
         if(controllerItem = dynamic_cast<ControllerItem*>(srcItem)){
-            controllers.push_back(controllerItem);
-        } else if(BodyMotionItem* motionItem = dynamic_cast<BodyMotionItem*>(srcItem)){
-            if(motionItem &&
-               motionItem->name().compare(0, resultItemPrefix.size(), resultItemPrefix) != 0){
-                controllerItem = simImpl->createBodyMotionController(bodyItem, motionItem);
-                if(controllerItem){
-                    if(doReset){
-                        setInitialStateOfBodyMotion(motionItem->motion());
-                    }
-                    controllers.push_back(controllerItem);
-                }
+            if(controllerItem->initialize(&controllerTarget)){
+                controllers.push_back(controllerItem);
+            } else {
+                controllerItem = 0;
             }
         }
         if(controllerItem){
@@ -1182,12 +1172,6 @@ CollisionDetectorPtr SimulatorItem::collisionDetector()
 }
 
 
-ControllerItem* SimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
-{
-    return 0;
-}
-
-
 /*
   Extract body items, controller items which are not associated with (not under) a body item,
   and simulation script items which are not under another simulator item
@@ -1596,12 +1580,6 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 SgCloneMap& SimulatorItem::sgCloneMap()
 {
     return impl->sgCloneMap;
-}
-
-
-ControllerItem* SimulatorItemImpl::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
-{
-    return self->createBodyMotionController(bodyItem, bodyMotionItem);
 }
 
 

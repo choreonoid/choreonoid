@@ -24,7 +24,6 @@ class Device;
 class CollisionDetector;
 typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 class BodyItem;
-class BodyMotionItem;
 class ControllerItem;
 class SimulationBodyImpl;
 class SimulatorItemImpl;
@@ -190,8 +189,6 @@ protected:
        Instead of it, a clone instance which may be a sub Body class should be created and owned.
     */
     virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
-
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
 
     CollisionDetectorPtr collisionDetector();
 
