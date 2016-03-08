@@ -3,53 +3,15 @@
 */
 
 #include "SimpleController.h"
-#include <cnoid/NullOut>
-#include <boost/tokenizer.hpp>
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-namespace cnoid {
-
-class SimpleControllerImpl
-{
-public:
-    /*
-    mutable BodyPtr ioBody;
-    double timeStep;
-    boost::dynamic_bitset<> jointOutputFlags;
-    bool isImmediateMode;
-    mutable std::ostream* os;
-    std::vector<std::string> options;
-    */
-};
-
-}
-    
-
 SimpleController::SimpleController()
 {
-    /*
-    impl = new SimpleControllerImpl;
-    impl->timeStep = 1.0;
-    impl->isImmediateMode = false;
-    impl->os = &nullout();
-    */
-
     io = 0;
 }
-
-/*
-SimpleController::SimpleController(const SimpleController& org)
-{
-    impl = new SimpleControllerImpl;
-    impl->timeStep = org.impl->timeStep;
-    impl->isImmediateMode = org.impl->isImmediateMode;
-    impl->os = org.impl->os;
-    impl->options = org.impl->options;
-}
-*/
 
 
 SimpleController::~SimpleController()

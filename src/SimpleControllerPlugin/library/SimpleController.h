@@ -6,17 +6,15 @@
 #define CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H
 
 #include <cnoid/Body>
-#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class SimpleControllerImpl;
 
 class SimpleControllerIO
 {
 public:
     virtual const std::string& optionString() const = 0;
+    virtual std::vector<std::string> options() const = 0;
     virtual Body* body() = 0;
     virtual double timeStep() const = 0;
     virtual bool isImmediateMode() const = 0;
@@ -60,21 +58,10 @@ public:
     virtual bool control();
 
     /*
-      The following functions are defined for the deprecated functions.
-      These are called from SimpleControllerItem
-    */
-    /*
-    void setOptions(const std::string& optionString);
-    void setIoBody(Body* body);
-    void setTimeStep(double timeStep);
-    void setImmediateMode(bool on);
-    void setOutputStream(std::ostream& os);
+      The following function is defined for the deprecated functions,
+      and is called from SimpleControllerItem.
     */
     void setIO(SimpleControllerIO* io);
-
-    void setJointOutput(bool on);
-    void setJointOutput(int jointId, bool on);
-    //const boost::dynamic_bitset<>& jointOutputFlags() const;
 
     enum StateType {
         JOINT_ANGLE = SimpleControllerIO::JOINT_ANGLE,
@@ -89,22 +76,18 @@ public:
   protected:
     SimpleController();
 
-    //! \note deprecated.
-    Body* ioBody();
-    //! \note deprecated.
-    double timeStep() const;
-    //! \note deprecated.
-    bool isImmediateMode() const;
-    //! \note deprecated.
-    std::ostream& os() const;
+    Body* ioBody(); ///< \note deprecated.
+    double timeStep() const; ///< \note deprecated.
+    bool isImmediateMode() const; ///< \note deprecated.
+    std::ostream& os() const; ///< \note deprecated.
+    void setJointOutput(bool on); ///< \note deprecated.
+    void setJointOutput(int jointId, bool on); ///< \note deprecated.
 
 private:
     SimpleController(const SimpleController& org) { }
     
-    //SimpleControllerImpl* impl;
-
     /**
-       This variable will be removed from this class when the deprecated functions are removed.
+       This variable will be removed when the deprecated functions are removed.
     */
     SimpleControllerIO* io;
 };
@@ -126,6 +109,5 @@ extern "C" CNOID_SIMPLE_CONTROLLER_EXPORT cnoid::SimpleController* createSimpleC
     {                                                                   \
         return new ControllerClassName();                               \
     }
-
 
 #endif

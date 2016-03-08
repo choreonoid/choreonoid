@@ -15,6 +15,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/tokenizer.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -70,6 +71,7 @@ public:
 
     // virtual functions of SimpleControllerIO
     virtual const std::string& optionString() const;
+    virtual std::vector<std::string> options() const;
     virtual Body* body();
     virtual double timeStep() const;
     virtual bool isImmediateMode() const;
@@ -317,6 +319,22 @@ const std::string& SimpleControllerItemImpl::optionString() const
 }
 
 
+std::vector<std::string> SimpleControllerItemImpl::options() const
+{
+    std::vector<std::string> options_;
+    typedef boost::escaped_list_separator<char> separator;
+    separator sep('\\', ' ');
+    boost::tokenizer<separator> tok(optionString_, sep);
+    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
+        const string& token = *p;
+        if(!token.empty()){
+            options_.push_back(token);
+        }
+    }
+    return options_;
+}
+
+
 Body* SimpleControllerItemImpl::body()
 {
     return ioBody;
@@ -549,7 +567,7 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
-    putProperty(_("Options"), optionString_, changeProperty(optionString_));
+    putProperty(_("Controller options"), optionString_, changeProperty(optionString_));
 }
 
 
@@ -566,7 +584,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
-    archive.write("options", optionString_);
+    archive.write("controllerOptions", optionString_);
     return true;
 }
 
@@ -587,23 +605,6 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         controllerModuleName = archive.expandPathVariables(value);
     }
     archive.read("reloading", doReloading);
-    archive.read("options", optionString_);
+    archive.read("controllerOptions", optionString_);
     return true;
 }
-
-
-/*
-void parseOptions(const std::string& optionString)
-{
-    options.clear();
-    typedef boost::escaped_list_separator<char> separator;
-    separator sep('\\', ' ');
-    boost::tokenizer<separator> tok(optionString, sep);
-    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
-        const string& token = *p;
-        if(!token.empty()){
-            options.push_back(token);
-        }
-    }
-}
-*/
