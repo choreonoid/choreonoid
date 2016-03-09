@@ -82,12 +82,6 @@ double SimpleController::timeStep() const
 }
 
 
-bool SimpleController::isImmediateMode() const
-{
-    return io->isImmediateMode();
-}
-
-
 std::ostream& SimpleController::os() const
 {
     return io->os();

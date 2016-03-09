@@ -114,9 +114,7 @@ public:
         if(phase <= 3){
             p = wristInterpolator.interpolate(time);
 
-            if(!isImmediateMode()){
-                state.storePositions(*io);
-            }
+            state.storePositions(*io);
             if(baseToWrist->calcInverseKinematics(
                    Vector3(p.head<3>()), wrist->calcRfromAttitude(rotFromRpy(Vector3(p.tail<3>()))))){
                 for(int i=0; i < baseToWrist->numJoints(); ++i){
@@ -124,10 +122,7 @@ public:
                     qref[joint->jointId()] = joint->q();
                 }
             }
-            if(!isImmediateMode()){
-                state.restorePositions(*io);
-            }
-            
+            state.restorePositions(*io);
         }
 
         if(phase == 0){

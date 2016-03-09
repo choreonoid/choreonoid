@@ -47,18 +47,24 @@ public:
     virtual bool initialize(SimpleControllerIO* io) {
 
         string patternFile;
-        
-        if(io->optionString() != "highgain"){
+
+        string opt = io->optionString();
+        if(opt == "highgain"){
+            mode = HIGHGAIN_MODE;
+            patternFile = "SR1WalkPattern2.yaml";
+            io->setJointOutput(JOINT_ANGLE | JOINT_VELOCITY | JOINT_ACCELERATION);
+            io->os() << "SR1WalkPatternController: high gain mode." << endl;
+        } else if(opt == "velocity"){
+            mode = HIGHGAIN_MODE;
+            patternFile = "SR1WalkPattern2.yaml";
+            io->setJointOutput(JOINT_VELOCITY);
+            io->os() << "SR1WalkPatternController: velocity mode." << endl;
+        } else {
             mode = TORQUE_MODE;
             patternFile = "SR1WalkPattern.yaml";
             io->setJointOutput(JOINT_TORQUE);
             io->setJointInput(JOINT_ANGLE);
             io->os() << "SR1WalkPatternController: torque mode." << endl;
-        } else {
-            mode = HIGHGAIN_MODE;
-            patternFile = "SR1WalkPattern2.yaml";
-            io->setJointOutput(JOINT_ANGLE | JOINT_VELOCITY | JOINT_ACCELERATION);
-            io->os() << "SR1WalkPatternController: high gain mode." << endl;
         }
 
         string filename = getNativePathString(

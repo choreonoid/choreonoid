@@ -159,6 +159,7 @@ public:
     virtual double worldTimeStep() const;
     virtual double currentTime() const;
     virtual void fixInitialBodyState();
+    virtual std::string optionString() const;
 };
 
 
@@ -200,10 +201,17 @@ public:
     bool isControlFinished;
     bool isControlToBeContinued;
     bool doCheckContinue;
-        
+
     CollisionDetectorPtr collisionDetector;
 
+    CollisionSeqPtr collisionSeq;
+    deque<CollisionLinkPairListPtr> collisionPairsBuf;
+
     Selection recordingMode;
+    Selection timeRangeMode;
+    double specifiedTimeLength;
+    int maxFrame;
+    int ringBufferSize;
     bool isRecordingEnabled;
     bool isRingBufferMode;
     bool useControllerThreads;
@@ -218,15 +226,7 @@ public:
     bool hasActiveFreeBodies;
     bool recordCollisionData;
 
-    WorldLogFileItemPtr worldLogFileItem;
-    int nextLogFrame;
-    double nextLogTime;
-    double logTimeStep;
-    
-    Selection timeRangeMode;
-    double specifiedTimeLength;
-    int maxFrame;
-    int ringBufferSize;
+    string controllerOptionString_;
 
     TimeBar* timeBar;
     int fillLevelId;
@@ -241,18 +241,11 @@ public:
     Signal<void()> sigSimulationStarted;
     Signal<void()> sigSimulationFinished;
 
-    vector<BodyMotionEnginePtr> bodyMotionEngines;
-    CollisionSeqEnginePtr collisionSeqEngine;
-
-    Connection aboutToQuitConnection;
-
-    SgCloneMap sgCloneMap;
-        
-    ItemTreeView* itemTreeView;
-
-    CollisionSeqPtr collisionSeq;
-    deque<CollisionLinkPairListPtr> collisionPairsBuf;
-
+    WorldLogFileItemPtr worldLogFileItem;
+    int nextLogFrame;
+    double nextLogTime;
+    double logTimeStep;
+    
     boost::optional<int> extForceFunctionId;
     boost::mutex extForceMutex;
     struct ExtForceInfo {
@@ -274,6 +267,15 @@ public:
         Vector3 goal;
     };
     VirtualElasticString virtualElasticString;
+
+    vector<BodyMotionEnginePtr> bodyMotionEngines;
+    CollisionSeqEnginePtr collisionSeqEngine;
+
+    Connection aboutToQuitConnection;
+
+    SgCloneMap sgCloneMap;
+        
+    ItemTreeView* itemTreeView;
 
 #ifdef ENABLE_SIMULATION_PROFILING
     double controllerTime;
@@ -316,6 +318,7 @@ public:
     virtual double worldTimeStep() const;
     virtual double currentTime() const;
     virtual void fixInitialBodyState();
+    virtual std::string optionString() const;
 };
 
 
@@ -1007,6 +1010,12 @@ double SimulationBodyImpl::currentTime() const
 void SimulationBodyImpl::fixInitialBodyState()
 {
     isInitialStateFixed = true;
+}
+
+
+std::string SimulationBodyImpl::optionString() const
+{
+    return simImpl->controllerOptionString_;
 }
 
 
@@ -2184,6 +2193,12 @@ void SimulatorItemImpl::fixInitialBodyState()
 }
 
 
+std::string SimulatorItemImpl::optionString() const
+{
+    return controllerOptionString_;
+}
+
+
 SignalProxy<void()> SimulatorItem::sigSimulationStarted()
 {
     return impl->sigSimulationStarted;
@@ -2357,6 +2372,8 @@ void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
                 changeProperty(impl->useControllerThreadsProperty));
     putProperty(_("Record collision data"), impl->recordCollisionData,
                 changeProperty(impl->recordCollisionData));
+    putProperty(_("Controller options"), impl->controllerOptionString_,
+                changeProperty(impl->controllerOptionString_));
 }
 
 
@@ -2376,6 +2393,7 @@ bool SimulatorItemImpl::store(Archive& archive)
     archive.write("deviceStateOutput", isDeviceStateOutputEnabled);
     archive.write("controllerThreads", useControllerThreadsProperty);
     archive.write("recordCollisionData", recordCollisionData);
+    archive.write("controllerOptions", controllerOptionString_, DOUBLE_QUOTED);
 
     ListingPtr idseq = new Listing();
     idseq->setFlowStyle(true);
@@ -2441,6 +2459,7 @@ bool SimulatorItemImpl::restore(const Archive& archive)
     archive.read("deviceStateOutput", isDeviceStateOutputEnabled);
     archive.read("recordCollisionData", recordCollisionData);
     archive.read("controllerThreads", useControllerThreadsProperty);
+    archive.read("controllerOptions", controllerOptionString_);
 
     archive.addPostProcess(
         boost::bind(&SimulatorItemImpl::restoreBodyMotionEngines, this, boost::ref(archive)));

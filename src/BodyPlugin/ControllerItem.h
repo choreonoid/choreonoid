@@ -20,6 +20,7 @@ public:
     virtual double worldTimeStep() const = 0;
     virtual double currentTime() const = 0;
     virtual void fixInitialBodyState() = 0;
+    virtual std::string optionString() const = 0;
 };
     
 class CNOID_EXPORT ControllerItem : public Item
@@ -34,6 +35,9 @@ public:
 
     bool isActive() const;
     bool isImmediateMode() const { return isImmediateMode_; }
+
+    const std::string& optionString() const { return optionString_; }
+    bool splitOptionString(const std::string& optionString, std::vector<std::string>& out_options) const;
 
     /**
        This function is called before the simulation world is initialized.
@@ -96,6 +100,7 @@ private:
     bool isImmediateMode_;
     std::string message_;
     Signal<void(const std::string& message)> sigMessage_;
+    std::string optionString_;
 
     friend class SimulatorItemImpl;
 

@@ -13,11 +13,10 @@ namespace cnoid {
 class SimpleControllerIO
 {
 public:
-    virtual const std::string& optionString() const = 0;
+    virtual std::string optionString() const = 0;
     virtual std::vector<std::string> options() const = 0;
     virtual Body* body() = 0;
     virtual double timeStep() const = 0;
-    virtual bool isImmediateMode() const = 0;
     virtual std::ostream& os() const = 0;
 
     enum StateType {
@@ -78,7 +77,6 @@ public:
 
     Body* ioBody(); ///< \note deprecated.
     double timeStep() const; ///< \note deprecated.
-    bool isImmediateMode() const; ///< \note deprecated.
     std::ostream& os() const; ///< \note deprecated.
     void setJointOutput(bool on); ///< \note deprecated.
     void setJointOutput(int jointId, bool on); ///< \note deprecated.
