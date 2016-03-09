@@ -12,20 +12,21 @@
 namespace cnoid {
 
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 
+class ControllerItemIO
+{
+public:
+    virtual Body* body() = 0;
+    virtual double worldTimeStep() const = 0;
+    virtual double currentTime() const = 0;
+    virtual void fixInitialBodyState() = 0;
+};
     
 class CNOID_EXPORT ControllerItem : public Item
 {
 public:
-
-    class Target
-    {
-    public:
-        virtual Body* body() = 0;
-        virtual double worldTimeStep() const = 0;
-        virtual double currentTime() const = 0;
-    };
+    // for the backward compatibility
+    typedef ControllerItemIO Target;
         
     ControllerItem();
     ControllerItem(const ControllerItem& org);
@@ -34,7 +35,6 @@ public:
     bool isActive() const;
     bool isImmediateMode() const { return isImmediateMode_; }
 
-    
     /**
        This function is called before the simulation world is initialized.
 
@@ -43,13 +43,13 @@ public:
            
        @note This function is called from the main thread.
     */
-    virtual bool initialize(Target* target);
+    virtual bool initialize(ControllerItemIO* io);
     
     /**
        This function is similar to the initialize function,
        but is called after the simulation world is initialized.
     */
-    virtual bool start(Target* target);
+    virtual bool start(ControllerItemIO* io);
 
     virtual double timeStep() const = 0;
 
@@ -105,6 +105,7 @@ private:
 };
         
 typedef ref_ptr<ControllerItem> ControllerItemPtr;
+
 }
 
 #endif

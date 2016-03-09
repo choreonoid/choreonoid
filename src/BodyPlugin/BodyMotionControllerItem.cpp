@@ -27,7 +27,7 @@ public:
     int numJoints;
 
     BodyMotionControllerItemImpl(BodyMotionControllerItem* self);
-    bool initialize(ControllerItem::Target* target);
+    bool initialize(ControllerItemIO* io);
     void output();
 };
 
@@ -67,13 +67,13 @@ BodyMotionControllerItem::~BodyMotionControllerItem()
 }
 
 
-bool BodyMotionControllerItem::initialize(Target* target)
+bool BodyMotionControllerItem::initialize(ControllerItemIO* io)
 {
-    return impl->initialize(target);
+    return impl->initialize(io);
 }
 
 
-bool BodyMotionControllerItemImpl::initialize(ControllerItem::Target* target)
+bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
 {
     ItemList<BodyMotionItem> motionItems;
     if(!motionItems.extractChildItems(self)){
@@ -94,7 +94,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItem::Target* target)
 
     qseqRef = motionItem->jointPosSeq();
 
-    body = target->body();
+    body = io->body();
     currentFrame = 0;
     lastFrame = std::max(0, qseqRef->numFrames() - 1);
     numJoints = std::min(body->numJoints(), qseqRef->numParts());
@@ -102,7 +102,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItem::Target* target)
         self->putMessage(_("Reference motion is empty()."));
         return false;
     }
-    if(fabs(qseqRef->frameRate() - (1.0 / target->worldTimeStep())) > 1.0e-6){
+    if(fabs(qseqRef->frameRate() - (1.0 / io->worldTimeStep())) > 1.0e-6){
         self->putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
         return false;
     }
@@ -116,12 +116,13 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItem::Target* target)
     }
     self->output();
     body->calcForwardKinematics();
+    io->fixInitialBodyState();
     
     return true;
 }
 
 
-bool BodyMotionControllerItem::start(ControllerItem::Target* target)
+bool BodyMotionControllerItem::start(ControllerItemIO* io)
 {
     control();
     return true;

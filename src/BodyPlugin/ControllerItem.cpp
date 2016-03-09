@@ -37,13 +37,13 @@ bool ControllerItem::isActive() const
 }
 
 
-bool ControllerItem::initialize(Target* target)
+bool ControllerItem::initialize(ControllerItemIO* io)
 {
     return true;
 }
 
 
-bool ControllerItem::start(Target* target)
+bool ControllerItem::start(ControllerItemIO* io)
 {
     return true;
 }

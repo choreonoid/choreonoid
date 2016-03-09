@@ -21,8 +21,8 @@ public:
     BodyMotionControllerItem(const BodyMotionControllerItem& org);
     virtual ~BodyMotionControllerItem();
         
-    virtual bool initialize(Target* target);
-    virtual bool start(ControllerItem::Target* target);
+    virtual bool initialize(ControllerItemIO* io);
+    virtual bool start(ControllerItemIO* io);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();

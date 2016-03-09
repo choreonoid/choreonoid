@@ -19,7 +19,6 @@ const bool SIMULATION_PROFILING = false;
 #endif
 
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 class Device;
 class CollisionDetector;
 typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
@@ -33,7 +32,7 @@ class SgCloneMap;
 class CNOID_EXPORT SimulationBody : public Referenced
 {
 public:
-    SimulationBody(BodyPtr body);
+    SimulationBody(Body* body);
     virtual ~SimulationBody();
 
     BodyItem* bodyItem() const;
