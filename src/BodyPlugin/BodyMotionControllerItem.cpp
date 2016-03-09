@@ -200,7 +200,7 @@ Item* BodyMotionControllerItem::doDuplicate() const
 
 void BodyMotionControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Control mode"), "High-gain");
+    putProperty(_("Control mode"), string("High-gain"));
 }
 
 
