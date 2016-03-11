@@ -5,7 +5,6 @@
 
 #include "AISTSimulatorItem.h"
 #include "BodyItem.h"
-#include "BodyMotionItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -39,77 +38,6 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
-
-
-class HighGainControllerItem : public ControllerItem
-{
-    BodyPtr body;
-    MultiValueSeqPtr qseqRef;
-    int currentFrame;
-    int lastFrame;
-    int numJoints;
-
-public:
-    HighGainControllerItem(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem) {
-        qseqRef = bodyMotionItem->jointPosSeq();
-        setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
-    }
-
-    virtual bool start(Target* target) {
-        body = target->body();
-        currentFrame = 0;
-        lastFrame = std::max(0, qseqRef->numFrames() - 1);
-        numJoints = std::min(body->numJoints(), qseqRef->numParts());
-        if(qseqRef->numFrames() == 0){
-            putMessage(_("Reference motion is empty()."));
-            return false;
-        }
-        if(fabs(qseqRef->frameRate() - (1.0 / target->worldTimeStep())) > 1.0e-6){
-            putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
-            return false;
-        }
-        control();
-        return true;
-    }
-
-    virtual double timeStep() const {
-        return qseqRef->getTimeStep();
-    }
-        
-    virtual void input() { }
-
-    virtual bool control() {
-
-        if(++currentFrame > lastFrame){
-            currentFrame = lastFrame;
-            return false;
-        }
-        return true;
-    }
-        
-    virtual void output() {
-
-        int prevFrame = std::max(currentFrame - 1, 0);
-        int nextFrame = std::min(currentFrame + 1, lastFrame);
-            
-        MultiValueSeq::Frame q0 = qseqRef->frame(prevFrame);
-        MultiValueSeq::Frame q1 = qseqRef->frame(currentFrame);
-        MultiValueSeq::Frame q2 = qseqRef->frame(nextFrame);
-
-        double dt = qseqRef->getTimeStep();
-        double dt2 = dt * dt;
-
-        for(int i=0; i < numJoints; ++i){
-            Link* joint = body->joint(i);
-            joint->q() = q1[i];
-            joint->dq() = (q2[i] - q1[i]) / dt;
-            joint->ddq() = (q2[i] - 2.0 * q1[i] + q0[i]) / dt2;
-        }
-    }
-        
-    virtual void stop() { }
-};
-
 
 class AISTSimBody : public SimulationBody
 {
@@ -421,12 +349,6 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
 }
 
 
-ControllerItem* AISTSimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
-{
-    return new HighGainControllerItem(bodyItem, bodyMotionItem);
-}
-
-
 bool AISTSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     return impl->initializeSimulation(simBodies);
@@ -512,11 +434,6 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     rootLink->vo().setZero();
     rootLink->dvo().setZero();
 
-    bool isHighGainMode = dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS);
-    if(dynamic_cast<HighGainControllerItem*>(simBody->controller(0))){
-        isHighGainMode = true;
-    }
-
     for(int i=0; i < body->numLinks(); ++i){
         Link* link = body->link(i);
         link->u() = 0.0;
@@ -527,7 +444,7 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
 
-    if(isHighGainMode){
+    if(dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS)){
         ForwardDynamicsCBMPtr cbm = make_shared_aligned<ForwardDynamicsCBM>(body);
         cbm->setHighGainModeForAllJoints();
         bodyIndexMap[body] = world.addBody(body, cbm);

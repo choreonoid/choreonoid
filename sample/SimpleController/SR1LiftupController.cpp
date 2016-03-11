@@ -31,16 +31,17 @@ const double dgain[] = {
 
 class SR1LiftupController : public cnoid::SimpleController
 {
+    enum { TORQUE_MODE, VELOCITY_MODE } mode;
+    bool isTorqueSensorEnabled;
     Interpolator<VectorXd> interpolator;
     VectorXd qref, qold, qref_old;
     double time;
     int phase;
+    Link* wrist[2];
     double dq_wrist;
-    Link* rightWrist;
-    Link* leftWrist;
     double throwTime;
-    enum { TORQUE_MODE, VELOCITY_MODE } mode;
-    bool isTorqueSensorEnabled;
+    double wristReleaseAngle[2];
+    bool isThrowing;
     
 public:
 
@@ -84,6 +85,7 @@ public:
 
         time = 0.0;
         throwTime = std::numeric_limits<double>::max();
+        isThrowing = false;
 
         Body* ioBody = io->body();
         int n = ioBody->numJoints();
@@ -124,13 +126,15 @@ public:
         phase = 0;
         dq_wrist = 0.0;
 
-        rightWrist = ioBody->link("RARM_WRIST_R");
-        leftWrist  = ioBody->link("LARM_WRIST_R");
+        wrist[0] = ioBody->link("RARM_WRIST_R");
+        wrist[1] = ioBody->link("LARM_WRIST_R");
         
         return true;
     }
 
     virtual bool control(SimpleControllerIO* io) {
+
+        bool isActive = true;
 
         Body* ioBody = io->body();
         
@@ -145,19 +149,14 @@ public:
             qref = qref_old;
 
             bool isHolding = false;
-            if(mode == VELOCITY_MODE && !isTorqueSensorEnabled){
-                if(fabs(rightWrist->q() - qref[rightWrist->jointId()]) > 0.1 &&
-                   fabs(leftWrist->q() - qref[leftWrist->jointId()]) > 0.1){
-                    isHolding = true;
-                }
-            } else if(fabs(rightWrist->u()) > 50.0 && fabs(leftWrist->u()) > 50.0){
+            if(fabs(wrist[0]->u()) > 40.0 && fabs(wrist[1]->u()) > 40.0){
                 isHolding = true;
             }
 
             if(!isHolding){
                 dq_wrist = std::min(dq_wrist + 0.001, 0.1);
-                qref[rightWrist->jointId()] += radian(dq_wrist);
-                qref[leftWrist->jointId()]  -= radian(dq_wrist);
+                qref[wrist[0]->jointId()] += radian(dq_wrist);
+                qref[wrist[1]->jointId()] -= radian(dq_wrist);
                 
             } else {
                 // transit to getting up phase
@@ -169,8 +168,9 @@ public:
                     -50.0,   0.0, 0.0, -60.0,   0.0, 0.0, 0.0,
                     0.0,   0.0, 0.0;
                 convertToRadian(q3);
-                q3[rightWrist->jointId()] = qref[rightWrist->jointId()];
-                q3[leftWrist->jointId()]  = qref[leftWrist->jointId()];
+                for(int i=0; i < 2; ++i){
+                    q3[wrist[i]->jointId()] = qref[wrist[i]->jointId()];
+                }
 
                 interpolator.clear();
                 interpolator.appendSample(time, qref);
@@ -195,8 +195,9 @@ public:
                     -50.0,   0.0, 0.0, -60.0,   0.0, 0.0, 0.0,
                     10.0,   0.0, 0.0;
                 convertToRadian(q4);
-                q4[rightWrist->jointId()] = qref[rightWrist->jointId()];
-                q4[leftWrist->jointId()]  = qref[leftWrist->jointId()];
+                for(int i=0; i < 2; ++i){
+                    q4[wrist[i]->jointId()] = qref[wrist[i]->jointId()];
+                }
 
                 VectorXd q5(ioBody->numJoints());
                 q5 <<
@@ -206,8 +207,9 @@ public:
                     -60.0,   0.0, 0.0, -50.0,   0.0, 0.0, 0.0,
                     0.0,   0.0, 0.0;
                 convertToRadian(q5);
-                q5[rightWrist->jointId()] = qref[rightWrist->jointId()];
-                q5[leftWrist->jointId()]  = qref[leftWrist->jointId()];
+                for(int i=0; i < 2; ++i){
+                    q5[wrist[i]->jointId()] = qref[wrist[i]->jointId()];
+                }
 
                 interpolator.clear();
                 interpolator.appendSample(time, qref);
@@ -222,10 +224,20 @@ public:
 
         } else if (phase == 3){
             qref = interpolator.interpolate(time);
+            if(time > throwTime){
+                if(!isThrowing){
+                    wristReleaseAngle[0] = wrist[0]->q() - 0.15;
+                    wristReleaseAngle[1] = wrist[1]->q() + 0.15;
+                    isThrowing = true;
+                }
+                for(int i=0; i < 2; ++i){
+                    qref[wrist[i]->jointId()] = wristReleaseAngle[i];
+                }
+                if(time >= interpolator.domainUpper() + 0.1){
+                    phase = 4;
+                }
+            }
 
-        } else if (phase == 4){
-            qref[rightWrist->jointId()] = 0.0; 
-            qref[leftWrist->jointId()]  = 0.0; 
         }
 
         const double dt = io->timeStep();
@@ -242,28 +254,20 @@ public:
         }
         if(mode == VELOCITY_MODE){
             for(int i=0; i < ioBody->numJoints(); ++i){
-                ioBody->joint(i)->dq() = (qref[i] - qold[i]) / dt;
-                qold[i] = qref[i];
+                Link* joint = ioBody->joint(i);
+                joint->dq() = (qref[i] - joint->q()) / dt;
             }
         }
 
         if(phase == 3){
             if(time > throwTime){
-                if(time >= interpolator.domainUpper() + 0.1){
-                    phase = 4;
-
-                } else {
-                    if(mode == TORQUE_MODE){
-                        rightWrist->u() = 0.0;
-                        leftWrist->u() = 0.0;
-                    } else {
-                        rightWrist->dq() = 0.0;
-                        leftWrist->dq() = 0.0;
-                    }
+                if(mode == TORQUE_MODE){
+                    wrist[0]->u() = 0.0;
+                    wrist[1]->u() = 0.0;
                 }
             }
         }
-        
+                
         qref_old = qref;
 
         time += dt;

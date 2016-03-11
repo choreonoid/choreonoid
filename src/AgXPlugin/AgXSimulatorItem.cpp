@@ -1773,9 +1773,3 @@ void AgXSimulatorItemImpl::restore(const Archive& archive)
     archive.read("contactReductionBinResolution", contactReductionBinResolution);
     archive.read("contactReductionThreshold", contactReductionThreshold);
 }
-
-
-ControllerItem* AgXSimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
-{
-    return new HighGainControllerItem(bodyItem, bodyMotionItem, impl);
-}

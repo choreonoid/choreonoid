@@ -23,14 +23,14 @@ public:
         
     void setController(const std::string& name);
         
-    virtual bool start(Target* target);
+    virtual bool start(ControllerItemIO* io);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
     virtual void output();
     virtual void stop();
 
-    SimpleController* start(Target* target, Body* sharedIoBody);
+    SimpleController* start(ControllerItemIO* io, Body* sharedIoBody);
 
 protected:
     virtual void onDisconnectedFromRoot();

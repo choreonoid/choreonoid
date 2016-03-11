@@ -36,7 +36,6 @@ protected:
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     virtual void finalizeSimulation();
     virtual CollisionLinkPairListPtr getCollisions();
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
 
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);

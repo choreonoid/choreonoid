@@ -15,7 +15,6 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/tokenizer.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -28,12 +27,12 @@ class SimpleControllerItemImpl : public SimpleControllerIO
 {
 public:
     SimpleControllerItem* self;
-
     SimpleController* controller;
     Body* simulationBody;
     BodyPtr ioBody;
     vector<int> outputLinkStateTypes;
     vector<int> inputLinkStateTypes;
+    ControllerItemIO* io;
     bool useOldAPI;
 
     vector<SimpleControllerItemPtr> childControllerItems;
@@ -44,13 +43,11 @@ public:
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
         
-    double timeStep_;
     MessageView* mv;
 
     std::string controllerModuleName;
     std::string controllerModuleFileName;
     QLibrary controllerModule;
-    std::string optionString_;
     bool doReloading;
 
     SimpleControllerItemImpl(SimpleControllerItem* self);
@@ -58,7 +55,7 @@ public:
     ~SimpleControllerItemImpl();
     void unloadController();
     void initializeIoBody(Body* body);
-    bool start(ControllerItem::Target* target, Body* sharedIoBody);
+    bool start(ControllerItemIO* io, Body* sharedIoBody);
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
     bool control();
@@ -70,11 +67,10 @@ public:
     bool restore(const Archive& archive);
 
     // virtual functions of SimpleControllerIO
-    virtual const std::string& optionString() const;
+    virtual std::string optionString() const;
     virtual std::vector<std::string> options() const;
     virtual Body* body();
     virtual double timeStep() const;
-    virtual bool isImmediateMode() const;
     virtual std::ostream& os() const;
     virtual void setJointOutput(int stateTypes);
     virtual void setLinkOutput(Link* link, int stateTypes);
@@ -96,6 +92,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
     : self(self)
 {
     controller = 0;
+    io = 0;
     mv = MessageView::instance();
     doReloading = true;
 }
@@ -112,6 +109,7 @@ SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, c
     : self(self)
 {
     controller = 0;
+    io = 0;
     mv = MessageView::instance();
     controllerModuleName = org.controllerModuleName;
     doReloading = org.doReloading;
@@ -192,23 +190,24 @@ void SimpleControllerItemImpl::initializeIoBody(Body* body)
 }
 
 
-bool SimpleControllerItem::start(Target* target)
+bool SimpleControllerItem::start(ControllerItemIO* io)
 {
-    return impl->start(target, 0);
+    return impl->start(io, 0);
 }
 
 
-SimpleController* SimpleControllerItem::start(Target* target, Body* sharedIoBody)
+SimpleController* SimpleControllerItem::start(ControllerItemIO* io, Body* sharedIoBody)
 {
-    if(impl->start(target, sharedIoBody)){
+    if(impl->start(io, sharedIoBody)){
         return impl->controller;
     }
     return 0;
 }
 
 
-bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* sharedIoBody)
+bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
 {
+    this->io = io;
     bool result = false;
 
     if(!controller){
@@ -261,11 +260,9 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
     if(controller){
         ioBody = sharedIoBody;
         if(!ioBody){
-            initializeIoBody(target->body());
+            initializeIoBody(io->body());
         }
         
-        timeStep_ = target->worldTimeStep();
-
         controller->setIO(this);
 
         useOldAPI = false;
@@ -289,12 +286,12 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
                 self->stop();
             }
         } else {
-            simulationBody = target->body();
+            simulationBody = io->body();
 
             for(Item* child = self->childItem(); child; child = child->nextItem()){
                 SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
                 if(childControllerItem){
-                    SimpleController* childController = childControllerItem->start(target, ioBody);
+                    SimpleController* childController = childControllerItem->start(io, ioBody);
                     if(childController){
                         childControllerItems.push_back(childControllerItem);
                     }
@@ -309,29 +306,32 @@ bool SimpleControllerItemImpl::start(ControllerItem::Target* target, Body* share
 
 double SimpleControllerItem::timeStep() const
 {
-    return impl->timeStep_;
+    return impl->io ? impl->io->worldTimeStep() : 0.0;
 }
 
 
-const std::string& SimpleControllerItemImpl::optionString() const
+std::string SimpleControllerItemImpl::optionString() const
 {
-    return optionString_;
+    if(io){
+        const std::string& opt1 = io->optionString();
+        const std::string& opt2 = self->optionString();
+        if(!opt1.empty()){
+            if(opt2.empty()){
+                return opt1;
+            } else {
+                return opt1 + " " + opt2;
+            }
+        }
+    }
+    return self->optionString();
 }
 
 
 std::vector<std::string> SimpleControllerItemImpl::options() const
 {
-    std::vector<std::string> options_;
-    typedef boost::escaped_list_separator<char> separator;
-    separator sep('\\', ' ');
-    boost::tokenizer<separator> tok(optionString_, sep);
-    for(boost::tokenizer<separator>::iterator p = tok.begin(); p != tok.end(); ++p){
-        const string& token = *p;
-        if(!token.empty()){
-            options_.push_back(token);
-        }
-    }
-    return options_;
+    vector<string> options;
+    self->splitOptionString(optionString(), options);
+    return options;
 }
 
 
@@ -343,13 +343,7 @@ Body* SimpleControllerItemImpl::body()
 
 double SimpleControllerItemImpl::timeStep() const
 {
-    return timeStep_;
-}
-
-
-bool SimpleControllerItemImpl::isImmediateMode() const
-{
-    return self->isImmediateMode();
+    return io->worldTimeStep();
 }
 
 
@@ -544,6 +538,8 @@ void SimpleControllerItem::stop()
         impl->childControllerItems[i]->stop();
     }
     impl->childControllerItems.clear();
+
+    impl->io = 0;
 }
 
 
@@ -567,7 +563,6 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
-    putProperty(_("Controller options"), optionString_, changeProperty(optionString_));
 }
 
 
@@ -584,7 +579,6 @@ bool SimpleControllerItemImpl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
-    archive.write("controllerOptions", optionString_);
     return true;
 }
 
@@ -605,6 +599,5 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         controllerModuleName = archive.expandPathVariables(value);
     }
     archive.read("reloading", doReloading);
-    archive.read("controllerOptions", optionString_);
     return true;
 }

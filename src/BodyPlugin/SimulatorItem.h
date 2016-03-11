@@ -19,12 +19,10 @@ const bool SIMULATION_PROFILING = false;
 #endif
 
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 class Device;
 class CollisionDetector;
 typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 class BodyItem;
-class BodyMotionItem;
 class ControllerItem;
 class SimulationBodyImpl;
 class SimulatorItemImpl;
@@ -34,7 +32,7 @@ class SgCloneMap;
 class CNOID_EXPORT SimulationBody : public Referenced
 {
 public:
-    SimulationBody(BodyPtr body);
+    SimulationBody(Body* body);
     virtual ~SimulationBody();
 
     BodyItem* bodyItem() const;
@@ -190,8 +188,6 @@ protected:
        Instead of it, a clone instance which may be a sub Body class should be created and owned.
     */
     virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
-
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
 
     CollisionDetectorPtr collisionDetector();
 

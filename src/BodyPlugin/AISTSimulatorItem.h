@@ -49,7 +49,6 @@ public:
     
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody);
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     virtual void finalizeSimulation();

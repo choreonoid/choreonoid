@@ -2,17 +2,18 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "WorldItem.h"
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
-#include "WorldItem.h"
+#include "MultiDeviceStateSeqItem.h"
+#include "ZMPSeqItem.h"
+#include "SimulatorItem.h"
+#include "AISTSimulatorItem.h"
+#include "BodyMotionControllerItem.h"
+#include "GLVisionSimulatorItem.h"
 #include "WorldLogFileItem.h"
 #include "SensorVisualizerItem.h"
 #include "BodyTrackingCameraItem.h"
-#include "SimulatorItem.h"
-#include "AISTSimulatorItem.h"
-#include "GLVisionSimulatorItem.h"
-#include "ZMPSeqItem.h"
-#include "MultiDeviceStateSeqItem.h"
 //#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
 #include "BodyBar.h"
@@ -53,13 +54,14 @@ public:
         Body::addCustomizerDirectory(
             executableTopDirectory() + "/" + CNOID_PLUGIN_SUBDIR + "/customizer");
 
+        WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
         BodyMotionItem::initializeClass(this);
-        WorldItem::initializeClass(this);
-        WorldLogFileItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
+        BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
+        WorldLogFileItem::initializeClass(this);
         SensorVisualizerItem::initializeClass(this);
         BodyTrackingCameraItem::initializeClass(this);
 
