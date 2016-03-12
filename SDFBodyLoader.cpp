@@ -633,7 +633,12 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTr
         transform = pnode->mTransformation * transform;
         pnode = pnode->mParent;
     }
-
+    
+    aiMatrix3x3 rotation(transform);
+	  aiMatrix3x3 inverse_transpose_rotation(rotation);
+	  inverse_transpose_rotation.Inverse();
+	  inverse_transpose_rotation.Transpose();
+    
     for(uint32_t i = 0; i < node->mNumMeshes; i++){
         aiMesh* input_mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -653,8 +658,7 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTr
         if(input_mesh->HasNormals()){
             SgNormalArrayPtr normals = mesh->setNormals(new SgNormalArray());
             for(uint32_t j = 0; j < input_mesh->mNumVertices; j++){
-                //aiVector3D n = inverse_transpose_rotation * input_mesh->mNormals[j];
-                aiVector3D n = input_mesh->mNormals[j];
+                aiVector3D n = inverse_transpose_rotation * input_mesh->mNormals[j];
                 n.Normalize();
                 Vector3f nv(n.x, n.y, n.z);
                 normals->push_back(nv);
@@ -727,7 +731,6 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                 ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(texture_path);
                 if(p != imagePathToSgImageMap.end()){
                     image = p->second;
-                    break;
                 } else {
                     try {
                         if(!imageForLoading){
@@ -736,7 +739,6 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                         imageIO.load(imageForLoading->image(), texture_path);
                         image = imageForLoading;
                         imagePathToSgImageMap[texture_path] = image;
-                        break;
                     } catch(const exception_base& ex){
                         os() << *boost::get_error_info<error_info_message>(ex) << endl;
                     }
@@ -752,7 +754,7 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
             } else if (propKey == "$clr.ambient") {
                 aiColor3D clr;
                 amat->Get(AI_MATKEY_COLOR_AMBIENT, clr);
-                //material->setAmbientIntensity(Vector3f(clr.r, clr.g, clr.b));
+                material->setAmbientIntensity((clr.r + clr.g + clr.b) / 3.0f);
             } else if (propKey == "$clr.specular") {
                 aiColor3D clr;
                 amat->Get(AI_MATKEY_COLOR_SPECULAR, clr);
