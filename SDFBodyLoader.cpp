@@ -633,7 +633,12 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTr
         transform = pnode->mTransformation * transform;
         pnode = pnode->mParent;
     }
-
+    
+    aiMatrix3x3 rotation(transform);
+	  aiMatrix3x3 inverse_transpose_rotation(rotation);
+	  inverse_transpose_rotation.Inverse();
+	  inverse_transpose_rotation.Transpose();
+    
     for(uint32_t i = 0; i < node->mNumMeshes; i++){
         aiMesh* input_mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -653,8 +658,7 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTr
         if(input_mesh->HasNormals()){
             SgNormalArrayPtr normals = mesh->setNormals(new SgNormalArray());
             for(uint32_t j = 0; j < input_mesh->mNumVertices; j++){
-                //aiVector3D n = inverse_transpose_rotation * input_mesh->mNormals[j];
-                aiVector3D n = input_mesh->mNormals[j];
+                aiVector3D n = inverse_transpose_rotation * input_mesh->mNormals[j];
                 n.Normalize();
                 Vector3f nv(n.x, n.y, n.z);
                 normals->push_back(nv);
