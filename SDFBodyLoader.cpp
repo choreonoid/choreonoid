@@ -727,7 +727,6 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                 ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(texture_path);
                 if(p != imagePathToSgImageMap.end()){
                     image = p->second;
-                    break;
                 } else {
                     try {
                         if(!imageForLoading){
@@ -736,7 +735,6 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                         imageIO.load(imageForLoading->image(), texture_path);
                         image = imageForLoading;
                         imagePathToSgImageMap[texture_path] = image;
-                        break;
                     } catch(const exception_base& ex){
                         os() << *boost::get_error_info<error_info_message>(ex) << endl;
                     }
@@ -752,7 +750,7 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
             } else if (propKey == "$clr.ambient") {
                 aiColor3D clr;
                 amat->Get(AI_MATKEY_COLOR_AMBIENT, clr);
-                //material->setAmbientIntensity(Vector3f(clr.r, clr.g, clr.b));
+                material->setAmbientIntensity((clr.r + clr.g + clr.b) / 3.0f);
             } else if (propKey == "$clr.specular") {
                 aiColor3D clr;
                 amat->Get(AI_MATKEY_COLOR_SPECULAR, clr);
