@@ -46,7 +46,7 @@ BodyRTCItem::BodyRTCItem()
 {
     setName("BodyRTC");
     
-    controllerTarget = 0;
+    io = 0;
     virtualRobotRTC = 0;
     rtcomp = 0;
     bridgeConf = 0;
@@ -70,7 +70,7 @@ BodyRTCItem::BodyRTCItem(const BodyRTCItem& org)
       os(MessageView::instance()->cout()),
       configMode(org.configMode)
 {
-    controllerTarget = 0;
+    io = 0;
     virtualRobotRTC = org.virtualRobotRTC;
     rtcomp = org.rtcomp;
     bridgeConf = org.bridgeConf;
@@ -261,12 +261,12 @@ Item* BodyRTCItem::doDuplicate() const
 }
 
 
-bool BodyRTCItem::start(Target* target)
+bool BodyRTCItem::start(ControllerItemIO* io)
 {
-    controllerTarget = target;
-    simulationBody = target->body();
-    timeStep_ = target->worldTimeStep();
-    controlTime_ = target->currentTime();
+    this->io = io;
+    simulationBody = io->body();
+    timeStep_ = io->timeStep();
+    controlTime_ = io->currentTime();
 
     forceSensors_ = simulationBody->devices<ForceSensor>().getSortedById();
     gyroSensors_ = simulationBody->devices<RateGyroSensor>().getSortedById();
@@ -313,7 +313,7 @@ double BodyRTCItem::timeStep() const
 
 void BodyRTCItem::input()
 {
-    controlTime_ = controllerTarget->currentTime();
+    controlTime_ = io->currentTime();
 
     // write the state of simulationBody to out-ports
     virtualRobotRTC->inputDataFromSimulator(this);

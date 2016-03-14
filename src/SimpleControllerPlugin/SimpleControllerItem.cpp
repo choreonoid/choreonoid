@@ -306,7 +306,7 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
 
 double SimpleControllerItem::timeStep() const
 {
-    return impl->io ? impl->io->worldTimeStep() : 0.0;
+    return impl->io ? impl->io->timeStep() : 0.0;
 }
 
 
@@ -343,7 +343,7 @@ Body* SimpleControllerItemImpl::body()
 
 double SimpleControllerItemImpl::timeStep() const
 {
-    return io->worldTimeStep();
+    return io->timeStep();
 }
 
 

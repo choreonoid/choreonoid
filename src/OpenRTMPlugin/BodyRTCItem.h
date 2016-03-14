@@ -29,7 +29,7 @@ public:
     BodyRTCItem(const BodyRTCItem& org);
     virtual ~BodyRTCItem();
         
-    virtual bool start(Target* target);
+    virtual bool start(ControllerItemIO* io);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
@@ -80,7 +80,7 @@ private:
     double executionCycle;
     double executionCycleCounter;
         
-    const Target* controllerTarget;
+    const ControllerItemIO* io;
     double controlTime_;
     std::ostream& os;
 

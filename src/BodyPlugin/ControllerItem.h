@@ -17,10 +17,12 @@ class ControllerItemIO
 {
 public:
     virtual Body* body() = 0;
-    virtual double worldTimeStep() const = 0;
+    virtual double timeStep() const = 0;
     virtual double currentTime() const = 0;
-    virtual void fixInitialBodyState() = 0;
     virtual std::string optionString() const = 0;
+
+    //! \deprecated Use timeStep().
+    virtual double worldTimeStep() const;
 };
     
 class CNOID_EXPORT ControllerItem : public Item

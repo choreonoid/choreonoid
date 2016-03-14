@@ -75,11 +75,11 @@ public:
   protected:
     SimpleController();
 
-    Body* ioBody(); ///< \note deprecated.
-    double timeStep() const; ///< \note deprecated.
-    std::ostream& os() const; ///< \note deprecated.
-    void setJointOutput(bool on); ///< \note deprecated.
-    void setJointOutput(int jointId, bool on); ///< \note deprecated.
+    Body* ioBody(); ///< \deprecated.
+    double timeStep() const; ///< \deprecated.
+    std::ostream& os() const; ///< \deprecated.
+    void setJointOutput(bool on); ///< \deprecated.
+    void setJointOutput(int jointId, bool on); ///< \deprecated.
 
 private:
     SimpleController(const SimpleController& org) { }

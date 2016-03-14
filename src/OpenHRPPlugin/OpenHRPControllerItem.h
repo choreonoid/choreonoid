@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H_INCLUDED
-#define CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H_INCLUDED
+#ifndef CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H
+#define CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H
 
 #ifdef OPENHRP_3_0
 #include <cnoid/corba/OpenHRP/3.0/Controller.hh>
@@ -35,7 +35,7 @@ public:
     void setControllerServerName(const std::string& name);
     void setControllerServerCommand(const std::string& command);
 
-    virtual bool start(Target* target);
+    virtual bool start(ControllerItemIO* io);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();

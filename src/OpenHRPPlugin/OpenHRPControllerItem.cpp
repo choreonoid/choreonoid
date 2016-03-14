@@ -69,7 +69,7 @@ void OpenHRPControllerItem::setControllerServerCommand(const std::string& comman
 }
 
 
-bool OpenHRPControllerItem::start(Target* target)
+bool OpenHRPControllerItem::start(ControllerItemIO* io)
 {
     ncHelper = getDefaultNamingContextHelper();
     
@@ -148,7 +148,7 @@ bool OpenHRPControllerItem::start(Target* target)
         return false;
     }
 
-    BodyPtr body = target->body();
+    Body* body = io->body();
 
 #ifdef OPENHRP_3_0
     controller = server->create(body->name().c_str());
@@ -164,7 +164,7 @@ bool OpenHRPControllerItem::start(Target* target)
               % controllerServerName % name());
 #endif
 
-    timeStep_ = target->worldTimeStep();
+    timeStep_ = io->timeStep();
 
     dynamicsSimulator.reset(new DynamicsSimulator_impl(body));
     
