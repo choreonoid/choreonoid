@@ -66,6 +66,12 @@ bool ControllerItem::initialize(ControllerItemIO* io)
 }
 
 
+bool ControllerItem::start()
+{
+    return true;
+}
+
+
 bool ControllerItem::start(ControllerItemIO* io)
 {
     return true;

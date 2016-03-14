@@ -4,7 +4,6 @@
 */
 
 #include <cnoid/SimpleController>
-#include <cnoid/BodyState>
 #include <cnoid/JointPath>
 #include <cnoid/EigenUtil>
 #include "Interpolator.h"
@@ -23,29 +22,23 @@ const double dgain[] = {
     220.0, 220.0, 220.0, 220.0, 220.0, 220.0, 220.0,
     220.0, 220.0 };
 
-typedef Eigen::Matrix<double, 6, 1> Vector6;
 }
-
 
 class PA10PickupController : public cnoid::SimpleController
 {
-    BodyPtr io;
-    BodyPtr body;
-    
-    int phase;
-
-    // Use this instead of Interpolator<Vector6> to avoid seg fault caused by an alignment problem
-    Interpolator<VectorXd> wristInterpolator;
-    
-    Interpolator<VectorXd> jointInterpolator;
-    Link* wrist;
-    Link* leftHandIO;
-    Link* rightHandIO;
+    Body* ioBody;
+    Link* ioLeftHand;
+    Link* ioRightHand;
+    BodyPtr ikBody;
+    Link* ikWrist;
     JointPathPtr baseToWrist;
-    BodyState state;
-    double dq_hand;
     VectorXd qref, qold, qref_old;
+    Interpolator<VectorXd> wristInterpolator;
+    Interpolator<VectorXd> jointInterpolator;
+    int phase;
     double time;
+    double timeStep;
+    double dq_hand;
 
 public:
 
@@ -53,39 +46,36 @@ public:
         return Vector3(radian(x), radian(y), radian(z));
     }
     
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io) {
 
-        time = 0.0;
+        io->setJointOutput(JOINT_TORQUE);
+        io->setJointInput(JOINT_ANGLE);
 
-        io = ioBody();
-        body = io->clone();
+        ioBody = io->body();
+        ioLeftHand  = ioBody->link("HAND_L");
+        ioRightHand = ioBody->link("HAND_R");
 
-        int n = body->numJoints();
-        qref.resize(n);
-        qref_old.resize(n);
-        qold.resize(n);
-
-        wrist = body->link("J7");
-        Link* base = body->rootLink();
-        baseToWrist = getCustomJointPath(body, base, wrist);
+        ikBody = ioBody->clone();
+        ikWrist = ikBody->link("J7");
+        Link* base = ikBody->rootLink();
+        baseToWrist = getCustomJointPath(ikBody, base, ikWrist);
         base->p().setZero();
         base->R().setIdentity();
-        
-        for(int i=0; i < n; ++i){
-            double q = io->joint(i)->q();
+
+        const int nj = ioBody->numJoints();
+        qold.resize(nj);
+        for(int i=0; i < nj; ++i){
+            double q = ioBody->joint(i)->q();
+            ikBody->joint(i)->q() = q;
             qold[i] = q;
-            body->joint(i)->q() = q;
         }
+        baseToWrist->calcForwardKinematics();
         qref = qold;
         qref_old = qold;
-        baseToWrist->calcForwardKinematics();
-
-        leftHandIO  = io->link("HAND_L");
-        rightHandIO = io->link("HAND_R");
 
         VectorXd p0(6);
-        p0.head<3>() = wrist->p();
-        p0.tail<3>() = rpyFromRot(wrist->attitude());
+        p0.head<3>() = ikWrist->p();
+        p0.tail<3>() = rpyFromRot(ikWrist->attitude());
 
         VectorXd p1(6);
         p1.head<3>() = Vector3(0.9, 0.0, 0.25);
@@ -99,6 +89,8 @@ public:
         wristInterpolator.update();
 
         phase = 0;
+        time = 0.0;
+        timeStep = io->timeStep();
         dq_hand = 0.0;
 
         return true;
@@ -109,20 +101,17 @@ public:
         bool isActive = true;
 
         VectorXd p(6);
-        const BodyPtr& io = ioBody();
 
         if(phase <= 3){
             p = wristInterpolator.interpolate(time);
 
-            state.storePositions(*io);
             if(baseToWrist->calcInverseKinematics(
-                   Vector3(p.head<3>()), wrist->calcRfromAttitude(rotFromRpy(Vector3(p.tail<3>()))))){
+                   Vector3(p.head<3>()), ikWrist->calcRfromAttitude(rotFromRpy(Vector3(p.tail<3>()))))){
                 for(int i=0; i < baseToWrist->numJoints(); ++i){
                     Link* joint = baseToWrist->joint(i);
                     qref[joint->jointId()] = joint->q();
                 }
             }
-            state.restorePositions(*io);
         }
 
         if(phase == 0){
@@ -131,10 +120,10 @@ public:
             }
 
         } else if(phase == 1){
-            if(fabs(rightHandIO->u()) < 40.0 || fabs(leftHandIO->u()) < 40.0){ // not holded ?
+            if(fabs(ioRightHand->u()) < 40.0 || fabs(ioLeftHand->u()) < 40.0){ // not holded ?
                 dq_hand = std::min(dq_hand + 0.00001, 0.0005);
-                qref[rightHandIO->jointId()] -= radian(dq_hand);
-                qref[leftHandIO->jointId()]  += radian(dq_hand);
+                qref[ioRightHand->jointId()] -= radian(dq_hand);
+                qref[ioLeftHand->jointId()]  += radian(dq_hand);
 
             } else {
                 VectorXd p2(6);
@@ -159,16 +148,16 @@ public:
                 dq_hand = 0.0;
             }
         } else if(phase == 3){
-            if(qref[rightHandIO->jointId()] < 0.028 || qref[leftHandIO->jointId()] > -0.028){
+            if(qref[ioRightHand->jointId()] < 0.028 || qref[ioLeftHand->jointId()] > -0.028){
                 dq_hand = std::min(dq_hand + 0.00001, 0.002);
-                qref[rightHandIO->jointId()] += radian(dq_hand);
-                qref[leftHandIO->jointId()]  -= radian(dq_hand);
+                qref[ioRightHand->jointId()] += radian(dq_hand);
+                qref[ioLeftHand->jointId()]  -= radian(dq_hand);
             } else {
                 jointInterpolator.clear();
                 jointInterpolator.appendSample(time, qref);
                 VectorXd qf = VectorXd::Zero(qref.size());
-                qf[rightHandIO->jointId()] = qref[rightHandIO->jointId()];
-                qf[leftHandIO->jointId()]  = qref[leftHandIO->jointId()];
+                qf[ioRightHand->jointId()] = qref[ioRightHand->jointId()];
+                qf[ioLeftHand->jointId()]  = qref[ioLeftHand->jointId()];
                 jointInterpolator.appendSample(time + 1.0, qf);
                 jointInterpolator.update();
                 phase = 4;
@@ -180,22 +169,19 @@ public:
             }
         }
 
-        double dt = timeStep();
-
-        for(int i=0; i < io->numJoints(); ++i){
-            double q = io->joint(i)->q();
-            double dq = (q - qold[i]) / dt;
-            double dq_ref = (qref[i] - qref_old[i]) / dt;
-            io->joint(i)->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
+        for(int i=0; i < ioBody->numJoints(); ++i){
+            double q = ioBody->joint(i)->q();
+            double dq = (q - qold[i]) / timeStep;
+            double dq_ref = (qref[i] - qref_old[i]) / timeStep;
+            ioBody->joint(i)->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
             qold[i] = q;
         }
 
         qref_old = qref;
-        time += dt;
+        time += timeStep;
 
         return isActive;
     }
 };
-
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(PA10PickupController)

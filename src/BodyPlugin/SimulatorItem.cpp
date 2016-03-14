@@ -1464,13 +1464,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
-                    ready = controller->start(simBodyImpl);
+                    ready = (controller->start() &&           // new API
+                             controller->start(simBodyImpl)); // old API
                     if(!ready){
                         os << (fmt(_("%1% for %2% failed to initialize."))
                                % controller->name() % simBodyImpl->bodyItem->name()) << endl;
                     }
                 } else {
-                    ready = controller->start(this);
+                    ready = (controller->start() &&    // new API
+                             controller->start(this)); // old API
                     if(!ready){
                         os << (fmt(_("%1% failed to initialize."))
                                % controller->name()) << endl;

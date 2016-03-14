@@ -52,15 +52,17 @@ public:
     virtual bool initialize(ControllerItemIO* io);
     
     /**
-       This function is similar to the initialize function,
-       but is called after the simulation world is initialized.
+       This function is called after the simulation world is initialized.
     */
+    virtual bool start();
+
+    //! \deprecated
     virtual bool start(ControllerItemIO* io);
 
     virtual double timeStep() const = 0;
 
     /**
-       @note This function is called from the simulation thread.
+       \note This function is called from the simulation thread.
     */
     virtual void input() = 0;
 
