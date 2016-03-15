@@ -16,17 +16,15 @@ class TankLightController : public cnoid::SimpleController
 
 public:
     
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io) {
 
-        BodyPtr io = ioBody();
-        setJointOutput(false);
-        blinkCounter = 0;
-        DeviceList<Light> lights(io->devices());
+        DeviceList<Light> lights(io->body()->devices());
         if(!lights.empty()){
             light = lights.front();
         }
-        blinkCounter = 0;
 
+        blinkCounter = 0;
+        
         return (light != 0);
     }
 

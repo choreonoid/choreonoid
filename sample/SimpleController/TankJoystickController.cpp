@@ -11,9 +11,11 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const int cannonAxis[] = { 3, 4 };
 const double cannonAxisRatio[] = { -1.0, 1.0 };
 const int buttonIds[] = { 0, 1, 2, 3, 4, 5 };
+
 }
 
 class TankJoystickController : public cnoid::SimpleController
@@ -29,20 +31,22 @@ class TankJoystickController : public cnoid::SimpleController
 
 public:
     
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io) {
 
-        BodyPtr io = ioBody();
-        crawlerL = io->link("CRAWLER_TRACK_L");
-        crawlerR = io->link("CRAWLER_TRACK_R");
+        ostream& os = io->os();
+        
+        Body* body = ioBody();
+        crawlerL = body->link("CRAWLER_TRACK_L");
+        crawlerR = body->link("CRAWLER_TRACK_R");
         if(!crawlerL || !crawlerR){
-            os() << "The crawlers are not found." << endl;
+            os << "The crawlers are not found." << endl;
             return false;
         }
-        cannonJoint[0] = io->link("CANNON_Y");
-        cannonJoint[1] = io->link("CANNON_P");
+        cannonJoint[0] = body->link("CANNON_Y");
+        cannonJoint[1] = body->link("CANNON_P");
         for(int i=0; i < 2; ++i){
             if(!cannonJoint[i]){
-                os() << "Cannon joint " << i << " is not found." << endl;
+                os << "Cannon joint " << i << " is not found." << endl;
                 return false;
             }
             double q = cannonJoint[i]->q();
@@ -50,20 +54,23 @@ public:
             qprev[i] = q;
         }
 
-        DeviceList<Light> lights(io->devices());
+        DeviceList<Light> lights(body->devices());
         if(!lights.empty()){
             light = lights.front();
         }
         prevLightButtonState = false;
 
+        io->setJointOutput(JOINT_TORQUE);
+        io->setJointInput(JOINT_ANGLE);
+
         if(!joystick.isReady()){
-            os() << "Joystick is not ready: " << joystick.errorMessage() << endl;
+            os << "Joystick is not ready: " << joystick.errorMessage() << endl;
         }
         if(joystick.numAxes() < 5){
-            os() << "The number of the joystick axes is not sufficient for controlling the robot." << endl;
+            os << "The number of the joystick axes is not sufficient for controlling the robot." << endl;
         }
         if(joystick.numButtons() < 1){
-            os() << "The number of the joystick buttons is not sufficient for controlling the robot." << endl;
+            os << "The number of the joystick buttons is not sufficient for controlling the robot." << endl;
         }
 
         return true;

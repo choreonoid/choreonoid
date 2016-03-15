@@ -11,11 +11,12 @@ class CameraSampleController : public SimpleController
 {
     DeviceList<Camera> cameras;
     double timeCounter;
+    double timeStep;
     
 public:
-    virtual bool initialize()
+    virtual bool initialize(SimpleControllerIO* io)
     {
-        cameras << ioBody()->devices();
+        cameras << io->body()->devices();
 
         for(size_t i=0; i < cameras.size(); ++i){
             Device* camera = cameras[i];
@@ -25,13 +26,14 @@ public:
         }
         
         timeCounter = 0.0;
+        timeStep = io->timeStep();
         
         return true;
     }
 
     virtual bool control()
     {
-        timeCounter += timeStep();
+        timeCounter += timeStep;
         if(timeCounter >= 1.0){
             for(size_t i=0; i < cameras.size(); ++i){
                 Camera* camera = cameras[i];
