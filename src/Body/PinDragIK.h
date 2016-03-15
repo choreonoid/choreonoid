@@ -3,25 +3,25 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_PIN_DRAG_IK_H_INCLUDED
-#define CNOID_BODY_PIN_DRAG_IK_H_INCLUDED
+#ifndef CNOID_BODY_PIN_DRAG_IK_H
+#define CNOID_BODY_PIN_DRAG_IK_H
 
-#include "Body.h"
 #include "InverseKinematics.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class Body;
+class Link;
 class PinDragIKImpl;
 
 class CNOID_EXPORT PinDragIK : public InverseKinematics
 {
 public:
-
-    PinDragIK(BodyPtr body);
+    PinDragIK(Body* body);
     ~PinDragIK();
 
-    BodyPtr body() const;
+    Body* body() const;
   
     void setBaseLink(Link* baseLink);
     void setFreeRootWeight(double translation, double rotation);
@@ -48,12 +48,11 @@ public:
     virtual bool calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R);
 
 private:
-
     PinDragIKImpl* impl;
-
 };
 
 typedef boost::shared_ptr<PinDragIK> PinDragIKptr;
+
 }
 
 #endif

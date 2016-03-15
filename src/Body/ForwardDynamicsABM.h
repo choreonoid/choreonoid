@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_FORWARD_DYNAMICS_ABM_H_INCLUDED
-#define CNOID_BODY_FORWARD_DYNAMICS_ABM_H_INCLUDED
+#ifndef CNOID_BODY_FORWARD_DYNAMICS_ABM_H
+#define CNOID_BODY_FORWARD_DYNAMICS_ABM_H
 
 #include "ForwardDynamics.h"
 #include "exportdecl.h"
@@ -19,7 +19,7 @@ class CNOID_EXPORT ForwardDynamicsABM : public ForwardDynamics
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
-    ForwardDynamicsABM(DyBodyPtr body);
+    ForwardDynamicsABM(DyBody* body);
     ~ForwardDynamicsABM();
         
     virtual void initialize();

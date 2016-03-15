@@ -4,8 +4,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_JOINT_PATH_H_INCLUDED
-#define CNOID_BODY_JOINT_PATH_H_INCLUDED
+#ifndef CNOID_BODY_JOINT_PATH_H
+#define CNOID_BODY_JOINT_PATH_H
 
 #include "LinkPath.h"
 #include "InverseKinematics.h"
@@ -140,14 +140,14 @@ private:
 typedef boost::shared_ptr<JointPath> JointPathPtr;
 
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 
 /**
    This function returns a joint path which may do analytical inverse kinematics
    when the body has the analytical one for a given path.
    \todo move back this function to the Body class
 */
-CNOID_EXPORT JointPathPtr getCustomJointPath(BodyPtr body, Link* baseLink, Link* targetLink);
+CNOID_EXPORT JointPathPtr getCustomJointPath(Body* body, Link* baseLink, Link* targetLink);
+
 };
 
 

@@ -6,11 +6,13 @@
 #ifndef CNOID_BODY_ABSTRACT_BODY_LOADER_H
 #define CNOID_BODY_ABSTRACT_BODY_LOADER_H
 
-#include "Body.h"
+#include <boost/shared_ptr.hpp>
 #include <iosfwd>
 #include "exportdecl.h"
 
 namespace cnoid {
+
+class Body;
 
 class CNOID_EXPORT AbstractBodyLoader
 {
@@ -29,10 +31,11 @@ public:
     virtual void setShapeLoadingEnabled(bool on);
     virtual void setDefaultDivisionNumber(int n);
     virtual void setDefaultCreaseAngle(double theta);
-    virtual bool load(BodyPtr body, const std::string& filename) = 0;
+    virtual bool load(Body* body, const std::string& filename) = 0;
 };
 
 typedef boost::shared_ptr<AbstractBodyLoader> AbstractBodyLoaderPtr;
+
 }
 
 #endif

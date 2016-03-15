@@ -90,7 +90,7 @@ PyObject* Body_calcTotalMomentum(Body& self) {
     return python::incref(ret.ptr());
 }
 
-BodyPtr (BodyLoader::*BodyLoader_load2)(const std::string&) = &BodyLoader::load;
+BodyPtr BodyLoader_load2(BodyLoader& self, const std::string& filename) { return self.load(filename); }
     
 MultiValueSeqPtr BodyMotion_get_jointPosSeq(BodyMotion& self) { return self.jointPosSeq(); }
 void BodyMotion_set_jointPosSeq(BodyMotion& self, const MultiValueSeqPtr& jointPosSeq) { self.jointPosSeq() = jointPosSeq; }

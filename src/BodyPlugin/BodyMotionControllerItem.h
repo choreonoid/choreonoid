@@ -22,7 +22,7 @@ public:
     virtual ~BodyMotionControllerItem();
         
     virtual bool initialize(ControllerItemIO* io);
-    virtual bool start(ControllerItemIO* io);
+    virtual bool start();
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();

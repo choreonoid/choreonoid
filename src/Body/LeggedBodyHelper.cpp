@@ -33,7 +33,7 @@ LeggedBodyHelper::LeggedBodyHelper()
 }
 
 
-LeggedBodyHelper::LeggedBodyHelper(BodyPtr body)
+LeggedBodyHelper::LeggedBodyHelper(Body* body)
 {
     resetBody(body);
 }
@@ -51,7 +51,7 @@ LeggedBodyHelper::~LeggedBodyHelper()
 }
 
 
-bool LeggedBodyHelper::resetBody(BodyPtr body)
+bool LeggedBodyHelper::resetBody(Body* body)
 {
     body_ = body;
 

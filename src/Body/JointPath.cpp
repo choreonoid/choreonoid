@@ -622,7 +622,7 @@ bool CustomJointPath::hasAnalyticalIK() const
 }
 
 
-JointPathPtr cnoid::getCustomJointPath(BodyPtr body, Link* baseLink, Link* targetLink)
+JointPathPtr cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
 {
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
         return boost::make_shared<CustomJointPath>(body, baseLink, targetLink);

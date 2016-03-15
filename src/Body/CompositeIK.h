@@ -19,14 +19,14 @@ class CNOID_EXPORT CompositeIK : public InverseKinematics
 {
 public:
     CompositeIK();
-    CompositeIK(const BodyPtr& body, Link* targetLink);
+    CompositeIK(Body* body, Link* targetLink);
     ~CompositeIK();
 
-    void reset(const BodyPtr& body, Link* targetLink);
+    void reset(Body* body, Link* targetLink);
     bool addBaseLink(Link* link);
     void setMaxIKerror(double e);
 
-    const BodyPtr& body() const { return body_; }
+    Body* body() const { return body_; }
     Link* targetLink() const { return targetLink_; }
     int numJointPaths() const { return pathList.size(); }
     JointPathPtr jointPath(int index) const { return pathList[index].path; }
@@ -49,6 +49,7 @@ private:
 };
 
 typedef boost::shared_ptr<CompositeIK> CompositeIKPtr;
+
 }
 
 #endif

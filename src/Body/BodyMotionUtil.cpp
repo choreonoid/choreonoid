@@ -6,7 +6,7 @@
 #include "BodyMotionUtil.h"
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
-#include "Link.h"
+#include "Body.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
 #include "AccelerationSensor.h"
@@ -59,7 +59,7 @@ static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& fi
 }
 
 
-static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const std::string& filename, std::ostream& os)
+static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, Body* body, const std::string& filename, std::ostream& os)
 {
     if(!body){
         return false;
@@ -253,7 +253,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
 }
 
 
-bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, BodyPtr body, const std::string& filename, std::ostream& os)
+bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::string& filename, std::ostream& os)
 {
     filesystem::path orgpath(filename);
     filesystem::path bpath(orgpath.branch_path() / filesystem::path(basename(orgpath)));
@@ -400,7 +400,7 @@ bool cnoid::applyVelocityLimitFilterDummy()
 
 
 static bool applyVelocityLimitFilterMain
-(MultiValueSeq& seq, BodyPtr body, double ks, bool usePollardMethod, std::ostream& os)
+(MultiValueSeq& seq, Body* body, double ks, bool usePollardMethod, std::ostream& os)
 {
     bool applied = false;
     
@@ -441,14 +441,14 @@ static bool applyVelocityLimitFilterMain
 
 
 bool cnoid::applyPollardVelocityLimitFilter
-(MultiValueSeq& seq, BodyPtr body, double ks, std::ostream& os)
+(MultiValueSeq& seq, Body* body, double ks, std::ostream& os)
 {
     return applyVelocityLimitFilterMain(seq, body, ks, true, os);
 }
 
 
 bool cnoid::applyVelocityLimitFilter
-(MultiValueSeq& seq, BodyPtr body, std::ostream& os)
+(MultiValueSeq& seq, Body* body, std::ostream& os)
 {
     return applyVelocityLimitFilterMain(seq, body, 1.0, false, os);
 }
@@ -477,7 +477,7 @@ void cnoid::applyGaussianFilter
 
 
 void cnoid::applyRangeLimitFilter
-(MultiValueSeq& seq, BodyPtr body, double limitGrad, double edgeGradRatio, double margin, std::ostream& os)
+(MultiValueSeq& seq, Body* body, double limitGrad, double edgeGradRatio, double margin, std::ostream& os)
 {
     RangeLimiter limiter;
 

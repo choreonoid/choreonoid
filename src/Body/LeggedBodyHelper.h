@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LEGGED_BODY_HELPER_H_INCLUDED
-#define CNOID_BODY_LEGGED_BODY_HELPER_H_INCLUDED
+#ifndef CNOID_BODY_LEGGED_BODY_HELPER_H
+#define CNOID_BODY_LEGGED_BODY_HELPER_H
 
 #include "Body.h"
 #include "exportdecl.h"
@@ -15,11 +15,11 @@ class CNOID_EXPORT LeggedBodyHelper : public Referenced
 {
 public:
     LeggedBodyHelper();
-    LeggedBodyHelper(BodyPtr body);
+    LeggedBodyHelper(Body* body);
     LeggedBodyHelper(const LeggedBodyHelper& org);
 
     bool isValid() const { return isValid_; }
-    virtual bool resetBody(BodyPtr body);
+    virtual bool resetBody(Body* body);
         
     virtual ~LeggedBodyHelper();
 
@@ -57,6 +57,7 @@ private:
 typedef ref_ptr<LeggedBodyHelper> LeggedBodyHelperPtr;
 
 CNOID_EXPORT LeggedBodyHelper* getLeggedBodyHelper(Body* body);
+
 }
 
 #endif

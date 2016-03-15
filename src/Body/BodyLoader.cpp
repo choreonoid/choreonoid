@@ -6,6 +6,7 @@
 #include "BodyLoader.h"
 #include "VRMLBodyLoader.h"
 #include "ColladaBodyLoader.h"
+#include "Body.h"
 #include <cnoid/STLSceneLoader>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
@@ -45,7 +46,7 @@ public:
     ~SceneLoaderAdapter() { delete loader; }
     virtual const char* format() const { return loader->format(); }
 
-    virtual bool load(BodyPtr body, const std::string& filename) {
+    virtual bool load(Body* body, const std::string& filename) {
 
         body->clearDevices();
         body->clearExtraJoints();
@@ -109,8 +110,9 @@ public:
         
     BodyLoaderImpl();
     ~BodyLoaderImpl();
-    bool load(BodyPtr& body, const std::string& filename);
+    bool load(Body* body, const std::string& filename);
 };
+
 }
 
 
@@ -178,23 +180,25 @@ void BodyLoader::setDefaultCreaseAngle(double theta)
 }
 
 
-bool BodyLoader::load(BodyPtr body, const std::string& filename)
+bool BodyLoader::load(Body* body, const std::string& filename)
 {
     return impl->load(body, filename);
 }
 
 
-BodyPtr BodyLoader::load(const std::string& filename)
+Body* BodyLoader::load(const std::string& filename)
 {
-    BodyPtr body = new Body();
+    Body* body = new Body();
     if(load(body, filename)){
         return body;
+    } else {
+        delete body;
+        return 0;
     }
-    return BodyPtr();
 }
 
 
-bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
+bool BodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     bool result = false;
 

@@ -122,7 +122,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
 }
 
 
-bool BodyMotionControllerItem::start(ControllerItemIO* io)
+bool BodyMotionControllerItem::start()
 {
     control();
     return true;

@@ -6,7 +6,7 @@
 #ifndef CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H
 #define CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H
 
-#include "Body.h"
+#include "DeviceList.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
 #include "AccelerationSensor.h"
@@ -14,7 +14,7 @@
 
 namespace cnoid {
 
-class Referenced;
+class Body;
 class BasicSensorSimulationHelperImpl;
 
 class CNOID_EXPORT BasicSensorSimulationHelper
@@ -23,7 +23,7 @@ public:
     BasicSensorSimulationHelper();
     ~BasicSensorSimulationHelper();
 
-    void initialize(BodyPtr body, double timeStep, const Vector3& gravityAcceleration);
+    void initialize(Body* body, double timeStep, const Vector3& gravityAcceleration);
 
     bool isActive() const { return isActive_; }
     bool hasGyroOrAccelerationSensors() const { return !rateGyroSensors_.empty() || !accelerationSensors_.empty(); }

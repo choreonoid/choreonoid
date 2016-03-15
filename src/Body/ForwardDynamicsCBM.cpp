@@ -44,7 +44,7 @@ static void putVector(TVector& M, char* name)
 }
 
 
-ForwardDynamicsCBM::ForwardDynamicsCBM(const DyBodyPtr& body) :
+ForwardDynamicsCBM::ForwardDynamicsCBM(DyBody* body) :
     ForwardDynamics(body)
 {
     highGainModeLinkFlag.resize(body->numLinks(), false);
