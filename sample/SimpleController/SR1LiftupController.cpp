@@ -33,6 +33,8 @@ class SR1LiftupController : public cnoid::SimpleController
 {
     enum { TORQUE_MODE, VELOCITY_MODE } mode;
     bool isTorqueSensorEnabled;
+    Body* ioBody;
+    double timeStep;
     Interpolator<VectorXd> interpolator;
     VectorXd qref, qold, qref_old;
     double time;
@@ -84,10 +86,11 @@ public:
         }
 
         time = 0.0;
+        timeStep = io->timeStep();
         throwTime = std::numeric_limits<double>::max();
         isThrowing = false;
 
-        Body* ioBody = io->body();
+        ioBody = io->body();
         int n = ioBody->numJoints();
         qref_old.resize(n);
         qold.resize(n);
@@ -132,12 +135,10 @@ public:
         return true;
     }
 
-    virtual bool control(SimpleControllerIO* io) {
+    virtual bool control() {
 
         bool isActive = true;
 
-        Body* ioBody = io->body();
-        
         if(phase == 0){
             qref = interpolator.interpolate(time);
             if(time > interpolator.domainUpper()){
@@ -240,14 +241,12 @@ public:
 
         }
 
-        const double dt = io->timeStep();
-
         if(mode == TORQUE_MODE || !isTorqueSensorEnabled){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
                 double q = joint->q();
-                double dq = (q - qold[i]) / dt;
-                double dq_ref = (qref[i] - qref_old[i]) / dt;
+                double dq = (q - qold[i]) / timeStep;
+                double dq_ref = (qref[i] - qref_old[i]) / timeStep;
                 joint->u() = (qref[i] - q) * pgain[i] + (dq_ref - dq) * dgain[i];
                 qold[i] = q;
             }
@@ -255,7 +254,7 @@ public:
         if(mode == VELOCITY_MODE){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
-                joint->dq() = (qref[i] - joint->q()) / dt;
+                joint->dq() = (qref[i] - joint->q()) / timeStep;
             }
         }
 
@@ -270,7 +269,7 @@ public:
                 
         qref_old = qref;
 
-        time += dt;
+        time += timeStep;
 
         return true;
     }

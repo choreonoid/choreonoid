@@ -116,7 +116,6 @@ public:
 
     bool isActive;
     bool areShapesCloned;
-    bool isInitialStateFixed;
 
     Deque2D<double> jointPosBuf;
     MultiSE3Deque linkPosBuf;
@@ -156,9 +155,8 @@ public:
 
     // Functions defined in the ControllerItemIO class
     virtual Body* body();
-    virtual double worldTimeStep() const;
+    virtual double timeStep() const;
     virtual double currentTime() const;
-    virtual void fixInitialBodyState();
     virtual std::string optionString() const;
 };
 
@@ -315,9 +313,8 @@ public:
 
     // Functions defined in the ControllerItemIO class
     virtual Body* body();
-    virtual double worldTimeStep() const;
+    virtual double timeStep() const;
     virtual double currentTime() const;
-    virtual void fixInitialBodyState();
     virtual std::string optionString() const;
 };
 
@@ -393,8 +390,8 @@ public:
         this->scriptItem = scriptItem;
         doExecAfterInit = false;
     }
-    virtual bool start(Target* target) {
-        timeStep_ = target->worldTimeStep();
+    virtual bool start(ControllerItemIO* io) {
+        timeStep_ = io->timeStep();
         if(scriptItem->executionTiming() == SimulationScriptItem::DURING_INITIALIZATION){
             scriptItem->executeAsSimulationScript();
         } else if(scriptItem->executionTiming() == SimulationScriptItem::AFTER_INITIALIZATION){
@@ -547,7 +544,6 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     deviceStateConnections.disconnect();
     controllers.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
-    isInitialStateFixed = false;
     
     bool doReset = simImpl->doReset && !body_->isStaticModel();
     extractAssociatedItems(doReset);
@@ -618,7 +614,6 @@ void SimulationBodyImpl::copyStateToBodyItem()
 {
     BodyState state(*body_);
     state.restorePositions(*bodyItem->body());
-    bodyItem->notifyKinematicStateChange();
 }
 
 
@@ -995,7 +990,7 @@ Body* SimulationBodyImpl::body()
 }
 
 
-double SimulationBodyImpl::worldTimeStep() const
+double SimulationBodyImpl::timeStep() const
 {
     return simImpl->worldTimeStep_;
 }
@@ -1004,12 +999,6 @@ double SimulationBodyImpl::worldTimeStep() const
 double SimulationBodyImpl::currentTime() const
 {
     return simImpl->currentTime();
-}
-
-
-void SimulationBodyImpl::fixInitialBodyState()
-{
-    isInitialStateFixed = true;
 }
 
 
@@ -1365,19 +1354,21 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         if(BodyItem* bodyItem = dynamic_cast<BodyItem*>(targetItems.get(i))){
             if(doReset){
-                bodyItem->restoreInitialState();
+                bodyItem->restoreInitialState(false);
             }
             SimulationBodyPtr simBody = self->createSimulationBody(bodyItem->body());
             if(simBody->body()){
                 if(simBody->impl->initialize(this, bodyItem)){
+
+                    // copy the body state overwritten by the controller
+                    simBody->impl->copyStateToBodyItem();
+                        
                     allSimBodies.push_back(simBody);
                     simBodiesWithBody.push_back(simBody);
                     simBodyMap[bodyItem] = simBody;
                 }
             }
-            if(simBody->impl->isInitialStateFixed){
-                simBody->impl->copyStateToBodyItem();
-            }
+            bodyItem->notifyKinematicStateChange();
             
         } else if(ControllerItem* controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
             // ControllerItem which is not associated with a body
@@ -1473,13 +1464,15 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
                 bool ready = false;
                 controller->setSimulatorItem(self);
                 if(body){
-                    ready = controller->start(simBodyImpl);
+                    ready = (controller->start() &&           // new API
+                             controller->start(simBodyImpl)); // old API
                     if(!ready){
                         os << (fmt(_("%1% for %2% failed to initialize."))
                                % controller->name() % simBodyImpl->bodyItem->name()) << endl;
                     }
                 } else {
-                    ready = controller->start(this);
+                    ready = (controller->start() &&    // new API
+                             controller->start(this)); // old API
                     if(!ready){
                         os << (fmt(_("%1% failed to initialize."))
                                % controller->name()) << endl;
@@ -2175,7 +2168,7 @@ double SimulatorItem::simulationTime() const
 }
 
 
-double SimulatorItemImpl::worldTimeStep() const
+double SimulatorItemImpl::timeStep() const
 {
     return worldTimeStep_;
 }
@@ -2184,12 +2177,6 @@ double SimulatorItemImpl::worldTimeStep() const
 Body* SimulatorItemImpl::body()
 {
     return 0;
-}
-
-
-void SimulatorItemImpl::fixInitialBodyState()
-{
-
 }
 
 

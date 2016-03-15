@@ -17,10 +17,12 @@ class ControllerItemIO
 {
 public:
     virtual Body* body() = 0;
-    virtual double worldTimeStep() const = 0;
+    virtual double timeStep() const = 0;
     virtual double currentTime() const = 0;
-    virtual void fixInitialBodyState() = 0;
     virtual std::string optionString() const = 0;
+
+    //! \deprecated Use timeStep().
+    virtual double worldTimeStep() const;
 };
     
 class CNOID_EXPORT ControllerItem : public Item
@@ -50,15 +52,17 @@ public:
     virtual bool initialize(ControllerItemIO* io);
     
     /**
-       This function is similar to the initialize function,
-       but is called after the simulation world is initialized.
+       This function is called after the simulation world is initialized.
     */
+    virtual bool start();
+
+    //! \deprecated
     virtual bool start(ControllerItemIO* io);
 
     virtual double timeStep() const = 0;
 
     /**
-       @note This function is called from the simulation thread.
+       \note This function is called from the simulation thread.
     */
     virtual void input() = 0;
 

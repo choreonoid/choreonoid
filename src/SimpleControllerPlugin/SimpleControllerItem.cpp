@@ -33,7 +33,6 @@ public:
     vector<int> outputLinkStateTypes;
     vector<int> inputLinkStateTypes;
     ControllerItemIO* io;
-    bool useOldAPI;
 
     vector<SimpleControllerItemPtr> childControllerItems;
 
@@ -55,10 +54,9 @@ public:
     ~SimpleControllerItemImpl();
     void unloadController();
     void initializeIoBody(Body* body);
-    bool start(ControllerItemIO* io, Body* sharedIoBody);
+    bool initialize(ControllerItemIO* io, Body* sharedIoBody);
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
-    bool control();
     void onOutputDeviceStateChanged(int deviceIndex);
     void output();
     bool onReloadingChanged(bool on);
@@ -190,22 +188,22 @@ void SimpleControllerItemImpl::initializeIoBody(Body* body)
 }
 
 
-bool SimpleControllerItem::start(ControllerItemIO* io)
+bool SimpleControllerItem::initialize(ControllerItemIO* io)
 {
-    return impl->start(io, 0);
+    return impl->initialize(io, 0);
 }
 
 
-SimpleController* SimpleControllerItem::start(ControllerItemIO* io, Body* sharedIoBody)
+SimpleController* SimpleControllerItem::initialize(ControllerItemIO* io, Body* sharedIoBody)
 {
-    if(impl->start(io, sharedIoBody)){
+    if(impl->initialize(io, sharedIoBody)){
         return impl->controller;
     }
     return 0;
 }
-
-
-bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
+    
+    
+bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBody)
 {
     this->io = io;
     bool result = false;
@@ -265,7 +263,6 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
         
         controller->setIO(this);
 
-        useOldAPI = false;
         setJointOutput(0);
         setJointInput(0);
         result = controller->initialize(this);
@@ -274,10 +271,7 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
         if(!result){
             setJointOutput(SimpleControllerIO::JOINT_TORQUE);
             setJointInput(SimpleControllerIO::JOINT_DISPLACEMENT);
-            if(controller->initialize()){
-                useOldAPI = true;
-                result = true;
-            }
+            result = controller->initialize();
         }
         
         if(!result){
@@ -291,7 +285,7 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
             for(Item* child = self->childItem(); child; child = child->nextItem()){
                 SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
                 if(childControllerItem){
-                    SimpleController* childController = childControllerItem->start(io, ioBody);
+                    SimpleController* childController = childControllerItem->initialize(io, ioBody);
                     if(childController){
                         childControllerItems.push_back(childControllerItem);
                     }
@@ -301,12 +295,6 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
     }
 
     return result;
-}
-
-
-double SimpleControllerItem::timeStep() const
-{
-    return impl->io ? impl->io->worldTimeStep() : 0.0;
 }
 
 
@@ -341,9 +329,15 @@ Body* SimpleControllerItemImpl::body()
 }
 
 
+double SimpleControllerItem::timeStep() const
+{
+    return impl->io ? impl->io->timeStep() : 0.0;
+}
+
+
 double SimpleControllerItemImpl::timeStep() const
 {
-    return io->worldTimeStep();
+    return io->timeStep();
 }
 
 
@@ -399,6 +393,19 @@ void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
 }
 
 
+bool SimpleControllerItem::start()
+{
+    if(impl->controller->start()){
+        for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+            if(!impl->childControllerItems[i]->start()){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 void SimpleControllerItem::input()
 {
     impl->input();
@@ -450,22 +457,12 @@ void SimpleControllerItemImpl::onInputDeviceStateChanged(int deviceIndex)
 }
 
 
-bool SimpleControllerItemImpl::control()
-{
-    if(!useOldAPI){
-        return controller->control(this);
-    } else {
-        return controller->control();
-    }
-}
-
-
 bool SimpleControllerItem::control()
 {
-    bool result = impl->control();
+    bool result = impl->controller->control();
 
     for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-        if(impl->childControllerItems[i]->impl->control()){
+        if(impl->childControllerItems[i]->impl->controller->control()){
             result = true;
         }
     }
