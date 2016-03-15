@@ -13,7 +13,6 @@
 #include <cnoid/ConnectionSet>
 #include <QLibrary>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
@@ -409,6 +408,10 @@ bool SimpleControllerItem::start()
 void SimpleControllerItem::input()
 {
     impl->input();
+    
+    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+        impl->childControllerItems[i]->impl->input();
+    }
 }
 
 
@@ -480,6 +483,10 @@ void SimpleControllerItemImpl::onOutputDeviceStateChanged(int deviceIndex)
 void SimpleControllerItem::output()
 {
     impl->output();
+    
+    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+        impl->childControllerItems[i]->impl->output();
+    }
 }
 
 
