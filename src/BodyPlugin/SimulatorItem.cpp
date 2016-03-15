@@ -2538,7 +2538,7 @@ bool SimulatorItemImpl::setPlaybackTime(double time)
         sw->profilingTimes.clear();
         for(int i=0; i<profilingTimes.size(); i++)
             sw->profilingTimes.push_back(profilingTimes[i]);
-        sw->worldTimeStep = worldTimeStep * 1.0e9;
+        sw->worldTimeStep = worldTimeStep_ * 1.0e9;
     }
 #endif
 
