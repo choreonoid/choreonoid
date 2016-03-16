@@ -21,7 +21,7 @@ public:
     virtual const char* format() const;
     virtual void setMessageSink(std::ostream& os);
     virtual void setVerbose(bool on);
-    virtual bool load(BodyPtr body, const std::string& filename);
+    virtual bool load(Body* body, const std::string& filename);
 
 private:
     SDFBodyLoaderImpl* impl;
