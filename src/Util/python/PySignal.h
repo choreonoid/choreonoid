@@ -11,6 +11,10 @@
 
 namespace cnoid {
 
+template<typename T> boost::python::object pyGetSignalArgObject(T& value){
+    return boost::python::object(value);
+}
+
 namespace signal_private {
 
 template<typename T> struct python_function_caller0 {
@@ -48,7 +52,7 @@ template<typename T, typename ARG1> struct python_function_caller1 {
         PyGILock lock;
         T result;
         try {
-            result = func(arg1);
+            result = func(pyGetSignalArgObject(arg1));
         } catch(boost::python::error_already_set const& ex) {
             handlePythonException();
         }
@@ -62,7 +66,7 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
     void operator()(ARG1 arg1) {
         PyGILock lock;
         try {
-            func(arg1);
+            func(pyGetSignalArgObject(arg1));
         } catch(boost::python::error_already_set const& ex) {
             handlePythonException();
         }
@@ -76,7 +80,7 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
         PyGILock lock;
         T result;
         try {
-            result = func(arg1, arg2);
+            result = func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
         } catch(boost::python::error_already_set const& ex) {
             handlePythonException();
         }
@@ -90,7 +94,7 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
     void operator()(ARG1 arg1, ARG2 arg2) {
         PyGILock lock;
         try {
-            func(arg1, arg2);
+            func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
         } catch(boost::python::error_already_set const& ex) {
             handlePythonException();
         }

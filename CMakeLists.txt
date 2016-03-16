@@ -138,6 +138,10 @@ if(MSVC)
   if(MSVC_ENABLE_AVX)
     set(ext_compiler_options "${ext_compiler_options} /arch:AVX")
   endif()
+  option(MSVC_ENABLE_AVX2 "Enable AVX2 instructions on VC++." OFF)
+  if(MSVC_ENABLE_AVX2)
+    set(ext_compiler_options "${ext_compiler_options} /arch:AVX2")
+  endif()
   set(ext_linker_options "")
 
   option(MSVC_ENABLE_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" ON)
@@ -252,7 +256,7 @@ if(CNOID_ENABLE_GETTEXT)
     endif()
     if(INSTALL_SDK)
       if(CMAKE_CL_64)
-        install(FILES thirdparty/windows64/lib/intl-8.lib DESTINATION lib)
+        install(FILES thirdparty/windows64/lib/intl.lib DESTINATION lib)
       else()
         install(FILES thirdparty/windows/lib/intl.lib DESTINATION lib)
       endif()
@@ -271,7 +275,6 @@ else()
 endif()
 
 if(ENABLE_PYTHON)
-
   find_package(PythonLibs 2.7 REQUIRED)
   include_directories(${PYTHON_INCLUDE_PATH})
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
@@ -279,39 +282,7 @@ if(ENABLE_PYTHON)
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
-  function(add_cnoid_python_module)
-  
-    set(target ${ARGV0})
-    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
-    set(sources ${ARGV})
-    list(REMOVE_AT sources 0)
-
-    add_library(${target} SHARED ${sources})
-    
-    if(NOT WIN32)
-      set_target_properties(${target}  PROPERTIES
-      COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
-    else()
-      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
-    endif()
-
-    set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
-      RUNTIME_OUTPUT_NAME ${module}
-      LIBRARY_OUTPUT_NAME ${module}
-      PREFIX "")
-
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
-  endfunction()
-
-
 endif()
-
 
 # boost
 
@@ -347,7 +318,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
-# set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_FILESYSTEM_VERSION=2)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
   ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
@@ -943,22 +913,15 @@ function(apply_common_setting_for_library_core target)
   set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
   apply_common_setting_for_target(${target} "${headers}")
 
-  if(INSTALL_SDK)
+  get_target_property(target_type ${target} TYPE)
+  if(target_type STREQUAL STATIC_LIBRARY)
     install(TARGETS ${target}
-      RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   else()
-    get_target_property(target_type ${target} TYPE)
-    if(target_type STREQUAL STATIC_LIBRARY)
-      install(TARGETS ${target}
-	LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-	ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    else()
-      install(TARGETS ${target}
-	RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-	LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-      endif()
+    install(TARGETS ${target}
+      RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endif()
 
 endfunction()
@@ -1003,6 +966,56 @@ function(apply_common_setting_for_plugin target)
   endif()
 
 endfunction()
+
+
+if(ENABLE_PYTHON)
+  function(add_cnoid_python_module)
+  
+    set(target ${ARGV0})
+    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
+    set(sources ${ARGV})
+    list(REMOVE_AT sources 0)
+
+    add_library(${target} SHARED ${sources})
+    
+    if(NOT WIN32)
+      set_target_properties(${target}  PROPERTIES
+      COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
+    else()
+      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
+    endif()
+
+    set_target_properties(${target}  PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_NAME ${module}
+      LIBRARY_OUTPUT_NAME ${module}
+      PREFIX "")
+
+    install(TARGETS ${target}
+      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+
+  endfunction()
+
+  function(apply_common_setting_for_python_module target)
+    set(headers ${ARGV1})
+    set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
+    apply_common_setting_for_target(${target} "${headers}")
+
+    if(INSTALL_SDK)
+      if(MSVC)
+	install(TARGETS ${target}
+	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      endif()
+      if(headers)
+	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+      endif()
+    endif()
+  endfunction()
+
+endif()
 
 
 #function(make_gettext_mofiles out_mofiles)

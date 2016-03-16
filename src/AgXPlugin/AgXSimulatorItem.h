@@ -2,8 +2,8 @@
   @file
   @author Shizuko Hattori
 */
-#ifndef CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H
+#define CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H
 
 #include <cnoid/SimulatorItem>
 #include "exportdecl.h"
@@ -24,9 +24,11 @@ public:
     enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, N_DYNAMICS_MODES };
     enum ControlMode { DEFAULT=0, HIGH_GAIN, TORQUE, FREE };
     void setJointControlMode(Link* joint, ControlMode type);
+    void setJointCompliance(Link* joint, double spring, double damping);
 
 protected:
 
+    virtual bool startSimulation(bool doReset = true);
     virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
@@ -34,7 +36,6 @@ protected:
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     virtual void finalizeSimulation();
     virtual CollisionLinkPairListPtr getCollisions();
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
 
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);

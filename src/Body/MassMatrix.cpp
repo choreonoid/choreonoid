@@ -10,7 +10,7 @@ using namespace cnoid;
 
 namespace {
 
-void setColumnOfMassMatrix(const BodyPtr& body, MatrixXd& out_M, int column)
+void setColumnOfMassMatrix(Body* body, MatrixXd& out_M, int column)
 {
     Link* rootLink = body->rootLink();
     Vector6 f = calcInverseDynamics(rootLink);
@@ -40,7 +40,7 @@ namespace cnoid {
    | out_M | * | dw   | + | b1 | = | tauext    |
    |       |   |ddq   |   |    |   | u         |
 */
-void calcMassMatrix(const BodyPtr& body, const Vector3& g, Eigen::MatrixXd& out_M)
+void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M)
 {
     const int nj = body->numJoints();
     Link* rootLink = body->rootLink();

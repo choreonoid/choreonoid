@@ -5,6 +5,8 @@
 #include "../Body.h"
 #include "../BodyLoader.h"
 #include "../BodyMotion.h"
+#include "../InverseKinematics.h"
+#include "../JointPath.h"
 #include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
@@ -15,6 +17,9 @@ using namespace cnoid;
 
 namespace
 {
+
+bool (JointPath::*JointPath_calcInverseKinematics)(const Vector3& , const Matrix3&) = &JointPath::calcInverseKinematics;
+bool (JointPath::*JointPath_calcInverseKinematics2)(const Vector3&, const Matrix3&, const Vector3&, const Matrix3&) = &JointPath::calcInverseKinematics;
 
 Position Link_get_position(Link& self) { return self.position(); }
 void Link_set_position(Link& self, const Position& T) { self.position() = T; }
@@ -85,11 +90,19 @@ PyObject* Body_calcTotalMomentum(Body& self) {
     return python::incref(ret.ptr());
 }
 
-BodyPtr (BodyLoader::*BodyLoader_load2)(const std::string&) = &BodyLoader::load;
+
+BodyPtr BodyLoader_load2(BodyLoader& self, const std::string& filename) { return self.load(filename); }
 
 MultiValueSeq& BodyMotion_jointPosSeq(BodyMotion& self){ return *self.jointPosSeq(); }
 MultiSE3Seq& BodyMotion_linkPosSeq(BodyMotion& self){ return *self.linkPosSeq(); }
-    
+
+//MultiValueSeqPtr BodyMotion_get_jointPosSeq(BodyMotion& self) { return self.jointPosSeq(); }
+//void BodyMotion_set_jointPosSeq(BodyMotion& self, const MultiValueSeqPtr& jointPosSeq) { self.jointPosSeq() = jointPosSeq; }
+//MultiSE3SeqPtr BodyMotion_get_linkPosSeq(BodyMotion& self) { return self.linkPosSeq(); }
+//void BodyMotion_set_linkPosSeq(BodyMotion& self, const MultiSE3SeqPtr& linkPosSeq) { self.linkPosSeq() = linkPosSeq; }
+
+BodyMotion::Frame (BodyMotion::*BodyMotion_frame)(int) = &BodyMotion::frame;
+
 } // namespace
 
 namespace cnoid 
@@ -98,6 +111,24 @@ namespace cnoid
 BOOST_PYTHON_MODULE(Body)
 {
     boost::python::import("cnoid.Util");
+
+    def("getCustomJointPath", getCustomJointPath);
+
+    {
+        scope jointPathScope =
+            class_< JointPath, JointPathPtr, boost::noncopyable >("JointPath", init<>())
+            .def("numJoints", &JointPath::numJoints)
+            .def("joint", &JointPath::joint, return_value_policy<reference_existing_object>())
+            .def("baseLink", &JointPath::baseLink, return_value_policy<reference_existing_object>())
+            .def("endLink", &JointPath::endLink, return_value_policy<reference_existing_object>())
+            .def("indexOf", &JointPath::indexOf)
+            .def("customizeTarget", &JointPath::customizeTarget)
+            .def("numIterations", &JointPath::numIterations)
+            .def("calcJacobian", &JointPath::calcJacobian)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics2)
+            ;
+    }
 
     {
         scope linkScope = 
@@ -232,6 +263,7 @@ BOOST_PYTHON_MODULE(Body)
             .def("hasVirtualJointForces", &Body::hasVirtualJointForces)
             .def("setVirtualJointForces", &Body::setVirtualJointForces)
             .def("addCustomizerDirectory", &Body::addCustomizerDirectory).staticmethod("addCustomizerDirectory")
+            .def(other<BodyMotion::Frame>() >> self)
             ;
 
         enum_<Body::ExtraJointType>("ExtraJointType")
@@ -255,9 +287,39 @@ BOOST_PYTHON_MODULE(Body)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
 
-    class_<BodyMotion, bases<AbstractMultiSeq> >("BodyMotion")
-        .def("jointPosSeq", BodyMotion_jointPosSeq, return_value_policy<reference_existing_object>())
-        .def("linkPosSeq", BodyMotion_linkPosSeq, return_value_policy<reference_existing_object>());
+    {
+        scope bodyMotionScope =
+            class_< BodyMotion, BodyMotionPtr, bases<AbstractMultiSeq> >("BodyMotion")
+            .def("setNumParts", &BodyMotion::setNumParts)
+            .def("getNumParts", &BodyMotion::getNumParts)
+            .def("numJoints", &BodyMotion::numJoints)
+            .def("numLings", &BodyMotion::numLinks)
+            .def("frameRate", &BodyMotion::frameRate)
+            .def("getFrameRate",&BodyMotion::getFrameRate)
+            .def("setFrameRate", &BodyMotion::setFrameRate)
+            .def("getOffsetTimeFrame", &BodyMotion::getOffsetTimeFrame)
+            .def("numFrames", &BodyMotion::numFrames)
+            .def("getNumFrames", &BodyMotion::getNumFrames)
+            .def("setNumFrames", &BodyMotion::setNumFrames)
+            .def("jointPosSeq", BodyMotion_jointPosSeq, return_value_policy<reference_existing_object>())
+            .def("linkPosSeq", BodyMotion_linkPosSeq, return_value_policy<reference_existing_object>())
+            //.add_property("jointPosSeq", BodyMotion_get_jointPosSeq, BodyMotion_set_jointPosSeq)
+            //.add_property("linkPosSeq", BodyMotion_get_linkPosSeq, BodyMotion_set_linkPosSeq)
+            .def("frame", BodyMotion_frame)
+            ;
+
+        class_< BodyMotion::Frame >("Frame", no_init)
+            .def("frame", &BodyMotion::Frame::frame)
+            .def(self << other<Body>())
+            .def(other<Body>() >> self)
+            ;
+    }
+
+    implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
+
+#ifdef _MSC_VER    
+	register_ptr_to_python<BodyPtr>();
+#endif
 }
 
 }; // namespace cnoid

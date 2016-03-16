@@ -223,19 +223,19 @@ SceneLink* createSceneLink(Link* link)
 }
 
 
-SceneBody::SceneBody(BodyPtr body)
+SceneBody::SceneBody(Body* body)
 {
     initialize(body, createSceneLink);
 }
 
 
-SceneBody::SceneBody(BodyPtr body, boost::function<SceneLink*(Link*)> sceneLinkFactory)
+SceneBody::SceneBody(Body* body, boost::function<SceneLink*(Link*)> sceneLinkFactory)
 {
     initialize(body, sceneLinkFactory);
 }
 
 
-void SceneBody::initialize(BodyPtr& body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory)
+void SceneBody::initialize(Body* body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory)
 {
     this->sceneLinkFactory = sceneLinkFactory;
     body_ = body;

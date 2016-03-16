@@ -64,7 +64,7 @@ public:
     bool restoreKinematicState(const BodyState& state);
 
     void storeInitialState();
-    void restoreInitialState();
+    void restoreInitialState(bool doNotify = true);
 
     void getInitialState(BodyState& out_state);
     void setInitialState(const BodyState& in_state);

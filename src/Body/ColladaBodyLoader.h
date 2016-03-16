@@ -3,8 +3,8 @@
  * @author Hisashi Ikari
  */
 
-#ifndef CNOID_BODY_COLLADA_BODY_LOADER_H_INCLUDED
-#define CNOID_BODY_COLLADA_BODY_LOADER_H_INCLUDED
+#ifndef CNOID_BODY_COLLADA_BODY_LOADER_H
+#define CNOID_BODY_COLLADA_BODY_LOADER_H
 
 #include "AbstractBodyLoader.h"
 #include "exportdecl.h"
@@ -23,12 +23,12 @@ public:
     virtual void setVerbose(bool on);
     virtual void enableShapeLoading(bool on);
     virtual void setDefaultDivisionNumber(int n);
-    virtual bool load(BodyPtr body, const std::string& filename);
+    virtual bool load(Body* body, const std::string& filename);
 
 private:
     ColladaBodyLoaderImpl* impl;
 };
 
-}; // end of namespace
+};
 
 #endif

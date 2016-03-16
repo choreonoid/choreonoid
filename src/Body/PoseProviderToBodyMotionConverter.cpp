@@ -4,7 +4,7 @@
 */
 
 #include "PoseProviderToBodyMotionConverter.h"
-#include "Link.h"
+#include "Body.h"
 #include "LinkPath.h"
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
@@ -41,7 +41,7 @@ void PoseProviderToBodyMotionConverter::setAllLinkPositionOutput(bool on)
 }
 
 
-bool PoseProviderToBodyMotionConverter::convert(BodyPtr body, PoseProvider* provider, BodyMotion& motion)
+bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provider, BodyMotion& motion)
 {
     const double frameRate = motion.frameRate();
     const int beginningFrame = static_cast<int>(frameRate * std::max(provider->beginningTime(), lowerTime));

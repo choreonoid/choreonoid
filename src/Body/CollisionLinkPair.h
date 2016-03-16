@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_COLLISION_LINK_PAIR_H_INCLUDED
-#define CNOID_BODY_COLLISION_LINK_PAIR_H_INCLUDED
+#ifndef CNOID_BODY_COLLISION_LINK_PAIR_H
+#define CNOID_BODY_COLLISION_LINK_PAIR_H
 
 #include "Body.h"
 #include <cnoid/CollisionDetector>
@@ -18,7 +18,7 @@ struct CollisionLinkPair
         link[1] = 0;
     }
 
-    CollisionLinkPair(BodyPtr body1, Link* link1, BodyPtr body2, Link* link2, const CollisionPair& collisionPair){
+    CollisionLinkPair(Body* body1, Link* link1, Body* body2, Link* link2, const CollisionPair& collisionPair){
         body[0] = body1;
         body[1] = body2;
         link[0] = link1;
@@ -36,6 +36,7 @@ struct CollisionLinkPair
 };
     
 typedef boost::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
+
 }
 
 #endif

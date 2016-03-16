@@ -105,8 +105,11 @@ public:
     static SignalProxy<void(View* view)> sigViewCreated();
     static SignalProxy<void(View* view)> sigViewActivated();
     static SignalProxy<void(View* view)> sigViewDeactivated();
+    static SignalProxy<void(View* view)> sigViewRemoved();
 
 private:
+    ViewManager(const ViewManager& org) { }
+    
     View* registerClassSub(
         const std::type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
         InstantiationType itype, FactoryBase* factory);

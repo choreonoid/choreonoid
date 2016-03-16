@@ -17,6 +17,7 @@ set(sources
   SimulatorItem.cpp
   SubSimulatorItem.cpp
   ControllerItem.cpp
+  BodyMotionControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp

@@ -6,12 +6,35 @@
 #define CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H
 
 #include <cnoid/Body>
-#include <boost/dynamic_bitset.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SimpleControllerImpl;
+class SimpleControllerIO
+{
+public:
+    virtual std::string optionString() const = 0;
+    virtual std::vector<std::string> options() const = 0;
+    virtual Body* body() = 0;
+    virtual double timeStep() const = 0;
+    virtual std::ostream& os() const = 0;
+
+    enum StateType {
+        JOINT_ANGLE = 1 << 0,
+        JOINT_DISPLACEMENT = 1 << 0,
+        JOINT_VELOCITY = 1 << 1,
+        JOINT_ACCELERATION = 1 << 2,
+        JOINT_TORQUE = 1 << 3,
+        JOINT_FORCE = 1 << 3,
+        LINK_POSITION = 1 << 4
+    };
+    
+    virtual void setJointInput(int stateTypes) = 0;
+    virtual void setLinkInput(Link* link, int stateTypes) = 0;
+    virtual void setJointOutput(int stateTypes) = 0;
+    virtual void setLinkOutput(Link* link, int stateTypes) = 0;
+};
+
 
 class CNOID_EXPORT SimpleController
 {
@@ -20,33 +43,47 @@ public:
 
     virtual ~SimpleController();
 
-    virtual bool initialize() = 0;
+    virtual bool initialize(SimpleControllerIO* io);
+
+    virtual bool initialize(); ///< \deprecated
+
+
+    virtual bool start();
+    virtual bool control() = 0;
+    virtual bool stop();
 
     /*
-      @return false to request stopping
+      The following function is defined for the deprecated functions,
+      and is called from SimpleControllerItem.
     */
-    virtual bool control() = 0;
+    void setIO(SimpleControllerIO* io);
 
-    // called from the simulator
-    void setIoBody(Body* body);
-    void setTimeStep(double timeStep);
-    void setImmediateMode(bool on);
-    void setOutputStream(std::ostream& os);
-
-    void setJointOutput(bool on);
-    void setJointOutput(int jointId, bool on);
-    const boost::dynamic_bitset<>& jointOutputFlags() const;
+    enum StateType {
+        JOINT_ANGLE = SimpleControllerIO::JOINT_ANGLE,
+        JOINT_DISPLACEMENT = SimpleControllerIO::JOINT_DISPLACEMENT,
+        JOINT_VELOCITY = SimpleControllerIO::JOINT_VELOCITY,
+        JOINT_ACCELERATION = SimpleControllerIO::JOINT_ACCELERATION,
+        JOINT_TORQUE = SimpleControllerIO::JOINT_TORQUE,
+        JOINT_FORCE = SimpleControllerIO::JOINT_FORCE,
+        LINK_POSITION = SimpleControllerIO::LINK_POSITION
+    };
 
   protected:
     SimpleController();
-    SimpleController(const SimpleController& org);
-    Body* ioBody();
-    double timeStep() const;
-    bool isImmediateMode() const;
-    std::ostream& os() const;
+
+    Body* ioBody(); ///< \deprecated
+    double timeStep() const; ///< \deprecated
+    std::ostream& os() const; ///< \deprecated
+    void setJointOutput(bool on); ///< \deprecated
+    void setJointOutput(int jointId, bool on); ///< \deprecated
 
 private:
-    SimpleControllerImpl* impl;
+    SimpleController(const SimpleController& org) { }
+    
+    /**
+       This variable will be removed when the deprecated functions are removed.
+    */
+    SimpleControllerIO* io;
 };
 
 }
@@ -66,6 +103,5 @@ extern "C" CNOID_SIMPLE_CONTROLLER_EXPORT cnoid::SimpleController* createSimpleC
     {                                                                   \
         return new ControllerClassName();                               \
     }
-
 
 #endif

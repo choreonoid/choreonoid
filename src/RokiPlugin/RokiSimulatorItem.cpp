@@ -149,6 +149,8 @@ struct JointInfo {
     double viscos;
     double coulomb;
     double staticfriction;
+    bool isBreakJoint;
+    Vector2 breakParam;
 };
 typedef map<Link*, JointInfo> JointInfoMap;
 
@@ -168,6 +170,7 @@ public:
     RokiLink* parent;
     bool isCrawler;
     vector<rkCDCell*> cd_cells;
+    bool breakJoint;
 
     RokiLink(RokiSimulatorItemImpl* simImpl, RokiBody* rokiBody, RokiLink* parent,
             const Vector3& parentOrigin, Link* link, bool stuffisLinkName);
@@ -182,7 +185,8 @@ public:
 };
 typedef ref_ptr<RokiLink> RokiLinkPtr;
 
-
+typedef map<Link*, RokiLink*> RokiLinkMap;
+class RokiBreakLinkTraverse;
 class RokiBody : public SimulationBody
 {
 public:
@@ -192,6 +196,8 @@ public:
     BasicSensorSimulationHelper sensorHelper;
     int geometryId;
     JointInfoMap jointInfoMap;
+    RokiLinkMap rokiLinkMap;
+    vector<RokiBreakLinkTraverse> linkTraverseList;
 
     RokiBody(const Body& orgBody);
     ~RokiBody();
@@ -201,6 +207,27 @@ public:
     void setTorqueToRoki();
     void updateForceSensors();
 
+};
+
+class RokiBreakLinkTraverse :public LinkTraverse
+{
+public:
+	RokiBreakLinkTraverse(RokiLink* root, RokiBody* body)
+		: rokiBody(body)
+	{
+		clear();
+		breakLinkTraverse(root->link);
+	}
+	void breakLinkTraverse(Link* link){
+		links.push_back(link);
+		for(Link* child = link->child(); child; child = child->sibling()){
+			if(!rokiBody->rokiLinkMap[child]->breakJoint){
+				breakLinkTraverse(child);
+			}
+		}
+	}
+private:
+	RokiBody* rokiBody;
 };
 
 
@@ -261,6 +288,7 @@ RokiLink::RokiLink
     isCrawler = false;
 
     rokiBody->rokiLinks.push_back(this);
+    rokiBody->rokiLinkMap[link] = this;
 
     this->link = link;
     this->parent = parent;
@@ -268,6 +296,8 @@ RokiLink::RokiLink
     Vector3 o = parentOrigin;
     if(!link->isRoot())
         o += link->b();
+    else if(link->jointType()==Link::FIXED_JOINT)
+    	o = link->p();
 
     rklink = rkChainLink(rokiBody->chain, link->index());
     createLink(simImpl, rokiBody, o, stuffisLinkName);
@@ -282,16 +312,12 @@ RokiLink::RokiLink
 }
 
 
-void RokiLink::calcFrame(){
-
-    if(!parent){
-        wAtt = Matrix3::Identity();
-        return;
-    }
-    if(link->jointType()==Link::FIXED_JOINT){
-        wAtt = parent->wAtt;
-        return;
-    }
+void RokiLink::calcFrame()
+{
+	if(link->jointType()==Link::FIXED_JOINT || link->jointType()==Link::FREE_JOINT){
+		wAtt = Matrix3::Identity();
+		return;
+	}
 
     Vector3 z(0,0,1);
     Vector3 nx = z.cross(link->a());
@@ -343,8 +369,8 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     zMat3DSetElem(m, 2, 2, I(2,2));
 
     zFrame3D* f = rkLinkOrgFrame(rklink);
-    if(link->isRoot() && link->jointType()==Link::FIXED_JOINT){
-        wFrame = link->T();
+    if(link->jointType()==Link::FIXED_JOINT || (!link->isRoot() && link->jointType()==Link::FREE_JOINT)){
+    	wFrame = link->T();
     }else{
         wFrame.linear() = wAtt;
         wFrame.translation() = origin;
@@ -374,6 +400,15 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     JointInfoMap::iterator it = body->jointInfoMap.find(link);
     if(it!=body->jointInfoMap.end())
         jointInfo = &(it->second);
+
+    breakJoint = false;
+    if(jointInfo && jointInfo->isBreakJoint){
+    	rkLinkBreakPrp(rklink) = zAlloc( rkBreakPrp, 1 );
+    	rkLinkBreakPrp(rklink)->is_broken = false;
+    	rkLinkBreakPrp(rklink)->ep_f = jointInfo->breakParam[0];
+    	rkLinkBreakPrp(rklink)->ep_t = jointInfo->breakParam[1];
+    	breakJoint = true;
+    }
 
     rkMotor* rkMotor;
     rkJoint* joint = rkLinkJoint(rklink);
@@ -674,7 +709,6 @@ void RokiLink::getKinematicStateFromRoki()
             link->dq() = v[0];
             break;
         case Link::FREE_JOINT:
-            link->p() = Vector3(dis[0], dis[1], dis[2]);
             Vector3 aa(dis[3], dis[4], dis[5]);
             double angle = aa.norm();
             Matrix3 R;
@@ -683,9 +717,23 @@ void RokiLink::getKinematicStateFromRoki()
             }else{
                 R = AngleAxisd(angle, aa/angle);
             }
-            link->R() = R;
-            link->v() = Vector3(v[0], v[1], v[2]);
-            link->w() = Vector3(v[3], v[4], v[5]);
+
+        	if(breakJoint){
+        		Affine3 lT,wT;
+        		wT = parent->link->T() * lFrame;
+        		if(rkLinkBreakPrp(rklink)->is_broken){
+        			lT.translation() = Vector3(dis[0], dis[1], dis[2]);
+        			lT.linear() = R;
+        			wT = wT * lT;
+        		}
+        		link->p() = wT.translation();
+        		link->R() = wT.linear();
+        	}else{
+        		link->p() = Vector3(dis[0], dis[1], dis[2]);
+        		link->R() = R;
+        		link->v() = Vector3(v[0], v[1], v[2]);
+        		link->w() = Vector3(v[3], v[4], v[5]);
+        	}
             break;
     }
 }
@@ -701,6 +749,8 @@ void RokiLink::setKinematicStateToRoki(zVec dis, int k)
             zVecElem(dis,k) = link->q();
             break;
         case Link::FREE_JOINT:{
+        	if(parent)
+        		break;
             zVecElem(dis,k) = link->p().x();
             zVecElem(dis,k+1) = link->p().y();
             zVecElem(dis,k+2) = link->p().z();
@@ -731,6 +781,8 @@ RokiBody::RokiBody(const Body& orgBody)
     : SimulationBody(new Body(orgBody))
 {
     Body* body = this->body();
+    rokiLinkMap.clear();
+    linkTraverseList.clear();
 
     const Listing& jointParams = *body->info()->findListing("RokiJointParameters");
 
@@ -745,6 +797,8 @@ RokiBody::RokiBody(const Body& orgBody)
                         = jointInfo.inertia = jointInfo.gearinertia = jointInfo.ratio = jointInfo.compk
                         = jointInfo.compl_ = jointInfo.stiff = jointInfo.viscos = jointInfo.coulomb
                         = jointInfo.staticfriction = std::numeric_limits<double>::max();
+                jointInfo.isBreakJoint = false;
+                jointInfo.breakParam[0] = jointInfo.breakParam[1] = 0;
                 if(jointParam.read("motorconstant", w))
                     jointInfo.motorconstant = w;
                 if(jointParam.read("admitance", w))
@@ -771,6 +825,9 @@ RokiBody::RokiBody(const Body& orgBody)
                     jointInfo.coulomb = w;
                 if(jointParam.read("staticfriction", w))
                     jointInfo.staticfriction = w;
+                if(read(jointParam, "break", jointInfo.breakParam)){
+                	jointInfo.isBreakJoint = true;
+                }
                 jointInfoMap[link] = jointInfo;
             }
         }
@@ -781,6 +838,8 @@ RokiBody::RokiBody(const Body& orgBody)
 RokiBody::~RokiBody()
 {
     rokiLinks.clear();
+    rokiLinkMap.clear();
+    linkTraverseList.clear();
     rkChainDestroy( chain );
 }
 
@@ -803,6 +862,13 @@ void RokiBody::createBody(RokiSimulatorItemImpl* simImpl, bool stuffisLinkName)
     zArrayAlloc( &chain->link, rkLink, body->numLinks() );
 
     RokiLink* rootLink = new RokiLink(simImpl, this, 0, Vector3::Zero(), body->rootLink(), stuffisLinkName);
+
+    for(int i=0; i<rokiLinks.size(); i++){
+    	if(rokiLinks[i]->link->isRoot() || rokiLinks[i]->breakJoint){
+    		RokiBreakLinkTraverse linkTraverse(rokiLinks[i].get(), this);
+    		linkTraverseList.push_back(linkTraverse);
+    	}
+    }
 
     rkChainSetOffset( chain ); /* offset value arrangement */
     rkChainUpdateFK( chain );
@@ -858,7 +924,10 @@ void RokiBody::getKinematicStateFromRoki()
     for(size_t i=0; i < rokiLinks.size(); ++i){
         rokiLinks[i]->getKinematicStateFromRoki();
     }
-    body()->calcForwardKinematics(true, false);
+
+    for(int i=0; i<linkTraverseList.size(); i++){
+    	linkTraverseList[i].calcForwardKinematics(true, false);
+    }
 }
 
 

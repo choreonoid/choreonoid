@@ -443,9 +443,10 @@ void BodyItem::storeInitialState()
 }
 
 
-void BodyItem::restoreInitialState()
+void BodyItem::restoreInitialState(bool doNotify)
 {
-    if(restoreKinematicState(impl->initialState)){
+    bool restored = restoreKinematicState(impl->initialState);
+    if(restored && doNotify){
         notifyKinematicStateChange(false);
     }
 }
@@ -1133,7 +1134,7 @@ bool BodyItemImpl::store(Archive& archive)
     write(archive, "rootPosition", body->rootLink()->p());
     write(archive, "rootAttitude", Matrix3(body->rootLink()->R()));
     Listing* qs = archive.createFlowStyleListing("jointPositions");
-    int n = body->numJoints();
+    int n = body->numAllJoints();
     for(int i=0; i < n; ++i){
         qs->append(body->joint(i)->q(), 10, n);
     }
@@ -1198,7 +1199,7 @@ bool BodyItemImpl::restore(const Archive& archive)
         }
         Listing* qs = archive.findListing("jointPositions");
         if(qs->isValid()){
-            int nj = body->numJoints();
+            int nj = body->numAllJoints();
             if(qs->size() != nj){
                 MessageView::instance()->putln(
                     MessageView::WARNING,
@@ -1219,7 +1220,7 @@ bool BodyItemImpl::restore(const Archive& archive)
         qs = archive.findListing("initialJointPositions");
         if(qs->isValid()){
             BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
-            int nj = body->numJoints();
+            int nj = body->numAllJoints();
             if(qs->size() != nj){
                 MessageView::instance()->putln(
                     MessageView::WARNING,

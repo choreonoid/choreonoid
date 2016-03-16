@@ -314,6 +314,12 @@ void exportPyItems()
     implicitly_convertible<MultiPointSetItemPtr, ItemPtr>();
     implicitly_convertible<MultiPointSetItemPtr, SceneProvider*>();
     PyItemList<MultiPointSetItem>("MultiPointSetItemList");
+
+#ifdef _MSC_VER
+    register_ptr_to_python<ItemPtr>();
+	register_ptr_to_python<RootItemPtr>();
+#endif
+
 }
 
 } // namespace cnoid

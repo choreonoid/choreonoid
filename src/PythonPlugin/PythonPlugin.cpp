@@ -166,6 +166,22 @@ bool PythonPlugin::initializeInterpreter()
 
     mainModule = python::import("__main__");
     mainNamespace = mainModule.attr("__dict__");
+
+	/*
+	 In Windows, the bin directory must be added to the PATH environment variable
+	 so that the DLL in the directory can be loaded in loading Python modules.
+	 Note that the corresponding Python variable must be updated instead of using C functions
+	 because the Python caches the environment variables and updates the OS variables when
+	 the cached variable is updated and the variable values updated using C functions are
+	 discarded at that time. For example, the numpy module also updates the PATH variable
+	 using the Python variable, and it invalidates the updated PATH value if the value is
+	 set using C functions.
+	*/	
+#ifdef WIN32
+    python::object env = python::import("os").attr("environ");
+    env["PATH"] = python::str(executableDirectory() + ";") + env["PATH"];
+#endif
+
     sysModule = python::import("sys");
     
     // set the choreonoid default python script path
