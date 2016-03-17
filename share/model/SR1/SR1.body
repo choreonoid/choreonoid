@@ -1,0 +1,370 @@
+bodyFormatVersion: 1.0
+
+name: SR1
+rootLink: WAIST
+
+links:
+  -
+    name: WAIST
+    jointType: free
+    translation: [ 0, 0, 0.7135 ]
+    childLinks: [ WAIST_P, LLEG_HIP_R, RLEG_HIP_R ]
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0.0375 ]
+        mass: 27.0
+        inertia: [
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: box
+              size: [ 0.08, 0.08, 0.08 ]
+      -
+        type: AccelerationSensor
+        name: WaistAccelSensor
+        id: 0
+      -
+        type: RateGyroSensor
+        name: WaistGyro
+        id: 0
+  -
+    name: WAIST_P
+    translation : [0, 0, 0.176 ]
+    jointType: hinge
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 26
+    childLinks: [ WAIST_R ]
+    rigidBody:
+      centerOfMass: [ 0, 0, -0.1 ]
+      mass: 6.0
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Shape:
+          geometry:
+            type: Cylinder
+            radius: 0.025
+            height: 0.05
+          appearance: &Appearance1
+            material:
+              diffuseColor: [ 0.6, 1.0, 0.6 ]
+  -
+    name: WAIST_R
+    jointType: hinge
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 27
+    childLinks: [ CHEST ]
+    rigidBody:
+      centerOfMass: [ 0.11, 0, 0.25 ]
+      mass: 30.0
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        -
+          type: Transform
+          rotation: [ 0, 0, 1 1.5708 ]
+          elements:
+            Shape:
+              geometry:
+                type: Cylinder
+                radius: 0.025
+                height: 0.05
+              appearance: &Appearance2
+                material:
+                  diffuseColor: [0.6, 0.8, 0.6 ]
+        -
+          type: Transform
+          translation: [ 0, 0, 0.1625 ]
+          elements:
+            Shape:
+              geometry:
+                type: Box
+                size: [ 0.05, 0.05, 0.275 ]
+              apperance: *Appearance2
+  -
+    name: CHEST
+    jointType: hinge
+    jointId: 28
+    translation: [ 0, 0, 0.35 ]
+    childLinks: [ LARM_SHOULDER_P, RARM_SHOULDER_P ]
+    rigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 13.0
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        -
+          type: Transform
+          rotation: [ 1, 0, 0 1.5708 ]
+          elements:
+            Shape:
+              geometry:
+                type: Cylinder
+                radius: 0.025
+                height: 0.1
+              appearance: &Appearance3
+                material:
+                  diffuseColor: [ 0.8, 0.8, 0.8 ]
+        -
+          type: Shape
+          geometry:
+            type: Box
+            size: [ 0.15, 0.27, 0.05 ]
+          appearance: *Appearance3
+        -
+          type: Transform
+          translation: [ 0, 0, 0.065 ]
+          elements:
+            Shape:
+              geometry:
+                type: Box
+                size: [ 0.05, 0.05, 0.03 ]
+              appearance:
+                material:
+                  diffuseColor: [ 0.5, 0.8, 0.5 ]
+        -
+          type: Transform
+          translation: [ -0.015, 0, 0.16 ]
+          elements:
+            Shape:
+              geometry:
+                type: Box
+                size: [ 0.31, 0.16, 0.16 ]
+              appearance:
+                material:
+                  diffuseColor: [ 0.5, 0.8, 0.5]
+      elements:
+        -
+          type: VisionSensor
+          name: LeftCamera
+          id: 0
+          format: COLOR_DEPTH
+          translation: [ 0.15, 0.05, 0.15 ]
+          rotation: [ 0.4472, -0.4472, -0.7746, 1.8235 ]
+          elements: &CameraShape
+            Transform:
+              rotation: [ 1, 0, 0, -1.5708 ]
+              elements:
+                Shape:
+                  geometry:
+                    type: Cylinder
+                    radius: 0.02
+                    height: 0.025
+                  appearance:
+                    material:
+                      diffuseColor: [ 1, 0, 0 ]
+        -
+          type: VisionSensor
+          name: RightCamera
+          id: 0
+          format: COLOR_DEPTH
+          translation: [ 0.15, -0.05, 0.15 ]
+          rotation: [ 0.4472, -0.4472, -0.7746, 1.8235 ]
+          elements: *CameraShape
+  -
+    name: LARM_SHOULDER_P
+    jointType: hinge
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 19
+    translation: [ 0, 0.21, 0 ]
+    childLinks: [ LARM_SHOULDER_R ]
+    rigidBody:
+      centerOfMass: [ 0.1, 0, 0 ]
+      mass: 3.0
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Transform:
+          translation: [ 0, -0.05, 0 ]
+          elements:
+            Shape:
+              geometry:
+                type: Cylinder
+                radius: 0.025
+                height: 0.05
+  -
+    name: LARM_SHOULDER_R
+    jointType: hinge
+    jointAxis: 1 0 0
+    jointId: 20
+    rigidBody:
+      centerOfMass: [ 0, 0, -0.1 ]
+      mass: 0.6
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Group: &ArmShape2
+          elements:
+            -
+              type: Transform
+              rotation: [ 0, 0, 1, 1.5708 ]
+              elements:
+                Shape:
+                  geometry:
+                    type: Cylinder
+                    radius: 0.025
+                    height: 0.05
+                  appearance:
+                    material:
+                      diffuseColor: [ 0.8, 0.9, 0.8 ]
+            -
+              type: Transform
+              translation: [ 0, 0, -0.1065 ]
+              elements:
+                 Shape:
+                   geometry:
+                     type: Box
+                     size: [ 0.05, 0.05, 0.163 ]
+                   appearance: *Appearance2
+  -
+    name: LARM_SHOULDER_Y
+    jointType: hinge
+    jointId:  21
+    translation: [ 0, 0, -0.263 ]
+    childLinks: [ LARM_ELBOW ]
+    rigidBody:
+      centerOfMass: [ 0, 0, 0 ]
+      mass: 1.0
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Transform:
+          translation: [ 0, 0, 0.05 ]
+          rotation: [ 1, 0, 0, 1.5708 ]
+          elements:
+            Shape:
+              geometry:
+                type: Cylinder
+                radius: 0.025
+                height: 0.05
+          
+  -
+    name: LARM_ELBOW
+    jointType: hinge
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 22
+    childLinks: [ LARM_WRIST_Y ]
+    rigidBody:
+      centerOfMass: [ 0, 0, -0.3 ]
+      mass: 0.6
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Group: &ArmShape4
+          elements:
+            -
+              type: Shape
+              geometry:
+                type: Cylinder
+                radius: 0.025
+                height: 0.05
+              appearance:
+                material:
+                  diffuseColor: [ 0.8, 1.0, 0.8 ]
+            -
+              type: Transform
+              translation: [ 0, 0, -0.0985 ]
+              elements:
+                Shape:
+                  geometry:
+                    type: Box
+                    size: [ 0.05, 0.05, 0.147 ]
+                  appearance: *Appearance4
+  -
+    name: LARM_WRIST_Y
+    jointType: hinge
+    jointAxis: [ 0, 0, 1 ]
+    jointId:  23
+    translation: [ 0, 0, -0.247 ]
+    childLinks: [ LARM_WRIST_P ]
+    rigidBody:
+      centerOfMass: [ 0, 0, 0.1 ]
+      mass: 0.4
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Transform:
+          translation: [ 0, 0, 0.05 ]
+          rotation: [ 1, 0, 0, 1.5708 ]
+          elements:
+            Shape:
+              geometry:
+                type: Cylinder
+                radius: 0.025
+                height: 0.05
+  -
+    name: LARM_WRIST_P
+    jointType: hinge
+    jointAxis: [ 0, 1, 0 ]
+    jointId:  24
+    childLinks: [ LARM_WRIST_R ]
+    ridigBody:
+      centerOfMass: [ -0.1, 0, 0 ]
+      mass: 0.4
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Shape:
+          geometry:
+            type: Cylinder
+            radius: 0.025
+            height: 0.05
+  -
+    name: LARM_WRIST_R
+    jointType: hinge
+    jointAxis: [ 1, 0, 0 ]
+    jointId:  25
+    rigidBody:
+      centerOfMass: [ 0, 0, -0.1 ]
+      mass: 0.4
+      inertia: [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1 ]
+      elements:
+        Group:
+          elements:
+            -
+              type: Transform
+              rotation: [ 0, 0, 1, 1.5708 ]
+              elements:
+                Shape:
+                  appearance:
+                    material:
+                      diffuseColor: [ 0.7, 0.9, 0.7 ]
+                  geometry:
+                    type: Cylinder
+                    radius: 0.025
+                    height: 0.05
+            -
+              type: Transform
+              translation: [ 0, 0, -0.1125 ]
+              elements:
+                Shape:
+                  geometry:
+                    type: Box
+                    size: [ 0.05, 0.05, 0.175 ]
+                  appearance: *Appearance7
