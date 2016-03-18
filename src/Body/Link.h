@@ -103,19 +103,20 @@ public:
 
     enum JointType {
         /// rotational joint (1 dof)
-        ROTATIONAL_JOINT,
+        REVOLUTE_JOINT = 0,
+        ROTATIONAL_JOINT = REVOLUTE_JOINT,
         /// translational joint (1 dof)
-        SLIDE_JOINT,
+        SLIDE_JOINT = 1,
         /// 6-DOF root link
-        FREE_JOINT,
+        FREE_JOINT = 2,
         /*
           Joint types below here are treated as a fixed joint
           when a code for processing a joint type is not given
         */
         /// fixed joint(0 dof)
-        FIXED_JOINT,
+        FIXED_JOINT = 3,
         /// special joint for pseudo crawler simulation
-        CRAWLER_JOINT
+        CRAWLER_JOINT = 4
     };
 
     int jointId() const { return jointId_; }
