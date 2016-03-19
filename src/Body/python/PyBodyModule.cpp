@@ -21,6 +21,9 @@ namespace
 bool (JointPath::*JointPath_calcInverseKinematics)(const Vector3& , const Matrix3&) = &JointPath::calcInverseKinematics;
 bool (JointPath::*JointPath_calcInverseKinematics2)(const Vector3&, const Matrix3&, const Vector3&, const Matrix3&) = &JointPath::calcInverseKinematics;
 
+LinkPtr Link_parent(Link& self) { return self.parent(); }
+LinkPtr Link_child(Link& self) { return self.child(); }
+LinkPtr Link_sibling(Link& self) { return self.sibling(); }
 Position Link_get_position(Link& self) { return self.position(); }
 void Link_set_position(Link& self, const Position& T) { self.position() = T; }
 Vector3 Link_get_translation(Link& self) { return self.translation(); }
@@ -108,27 +111,9 @@ BOOST_PYTHON_MODULE(Body)
 {
     boost::python::import("cnoid.Util");
 
-    def("getCustomJointPath", getCustomJointPath);
-
-    {
-        scope jointPathScope =
-            class_< JointPath, JointPathPtr, boost::noncopyable >("JointPath", init<>())
-            .def("numJoints", &JointPath::numJoints)
-            .def("joint", &JointPath::joint, return_value_policy<reference_existing_object>())
-            .def("baseLink", &JointPath::baseLink, return_value_policy<reference_existing_object>())
-            .def("endLink", &JointPath::endLink, return_value_policy<reference_existing_object>())
-            .def("indexOf", &JointPath::indexOf)
-            .def("customizeTarget", &JointPath::customizeTarget)
-            .def("numIterations", &JointPath::numIterations)
-            .def("calcJacobian", &JointPath::calcJacobian)
-            .def("calcInverseKinematics", JointPath_calcInverseKinematics)
-            .def("calcInverseKinematics", JointPath_calcInverseKinematics2)
-            ;
-    }
-
     {
         scope linkScope = 
-            class_<Link, Link*>("Link")
+            class_< Link, LinkPtr, bases<Referenced> >("Link")
             .def("index", &Link::index)
             .def("isValid", &Link::isValid)
             .def("parent", &Link::parent, return_value_policy<reference_existing_object>())
@@ -282,6 +267,24 @@ BOOST_PYTHON_MODULE(Body)
         .def("load", BodyLoader_load2)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
+
+    {
+        scope jointPathScope =
+            class_< JointPath, JointPathPtr, boost::noncopyable >("JointPath", init<>())
+            .def("numJoints", &JointPath::numJoints)
+            .def("joint", &JointPath::joint, return_value_policy<reference_existing_object>())
+            .def("baseLink", &JointPath::baseLink, return_value_policy<reference_existing_object>())
+            .def("endLink", &JointPath::endLink, return_value_policy<reference_existing_object>())
+            .def("indexOf", &JointPath::indexOf)
+            .def("customizeTarget", &JointPath::customizeTarget)
+            .def("numIterations", &JointPath::numIterations)
+            .def("calcJacobian", &JointPath::calcJacobian)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics2)
+            ;
+    }
+
+    def("getCustomJointPath", getCustomJointPath);
 
     {
         scope bodyMotionScope =

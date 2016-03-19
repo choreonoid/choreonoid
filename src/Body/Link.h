@@ -9,6 +9,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
 #ifdef WIN32
+#include "Link.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 #endif
@@ -16,13 +17,16 @@
 
 namespace cnoid {
 
+class Link;
+typedef ref_ptr<Link> LinkPtr;
+
 class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
 
 class Mapping;
 typedef ref_ptr<Mapping> MappingPtr;
 
-class CNOID_EXPORT Link
+class CNOID_EXPORT Link : public Referenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -255,8 +259,8 @@ private:
     int index_; 
     int jointId_;
     Link* parent_;
-    Link* sibling_;
-    Link* child_;
+    LinkPtr sibling_;
+    LinkPtr child_;
     Position T_;
     Position Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.
