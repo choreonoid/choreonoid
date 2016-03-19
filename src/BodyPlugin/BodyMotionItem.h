@@ -30,13 +30,13 @@ public:
 
     virtual AbstractMultiSeqPtr abstractMultiSeq();
 
-    const BodyMotionPtr& motion() { return bodyMotion_; }
+    BodyMotionPtr motion() { return bodyMotion_; }
 
     MultiValueSeqItem* jointPosSeqItem() {
         return jointPosSeqItem_.get();
     }
 
-    const MultiValueSeqPtr& jointPosSeq() {
+    MultiValueSeqPtr jointPosSeq() {
         return bodyMotion_->jointPosSeq();
     }
 
@@ -44,7 +44,7 @@ public:
         return linkPosSeqItem_.get();
     }
             
-    const MultiSE3SeqPtr& linkPosSeq() {
+    MultiSE3SeqPtr linkPosSeq() {
         return bodyMotion_->linkPosSeq();
     }
 

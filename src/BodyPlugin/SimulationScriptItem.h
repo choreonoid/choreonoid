@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H_INCLUDED
-#define CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H
+#define CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H
 
 #include <cnoid/ScriptItem>
 #include "exportdecl.h"
@@ -49,6 +49,7 @@ private:
 };
 
 typedef ref_ptr<SimulationScriptItem> SimulationScriptItemPtr;
+
 }
 
 #endif

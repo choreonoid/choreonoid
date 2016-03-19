@@ -150,5 +150,4 @@ CNOID_EXPORT JointPathPtr getCustomJointPath(Body* body, Link* baseLink, Link* t
 
 };
 
-
 #endif
