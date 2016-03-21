@@ -50,10 +50,11 @@ set(sources
   InverseDynamics.cpp
   PenetrationBlocker.cpp
   AbstractBodyLoader.cpp
-  VRMLBodyLoader.cpp
-  ColladaBodyLoader.cpp
   BodyLoader.cpp
+  YAMLBodyLoader.cpp
+  VRMLBodyLoader.cpp
   VRMLBodyWriter.cpp
+  ColladaBodyLoader.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   )
