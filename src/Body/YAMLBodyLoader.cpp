@@ -110,8 +110,8 @@ public:
     void readSceneCylinder(SgShape* shape, Mapping& node);
     void readSceneSphere(SgShape* shape, Mapping& node);
     
-    SgNode* readSceneAppearance(Mapping& node);
-    SgNode* readSceneMaterial(Mapping& node);
+    SgNode* readSceneAppearance(SgShape* shape, Mapping& node);
+    SgNode* readSceneMaterial(SgShape* shape, Mapping& node);
 };
 
 }
@@ -641,11 +641,16 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 SgNode* YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
 {
     SgShapePtr shape = new SgShape;
+
     Mapping& geometry = *node.findMapping("geometry");
     if(geometry.isValid()){
         readSceneGeometry(shape, geometry);
     }
 
+    Mapping& appearance = *node.findMapping("appearance");
+    if(appearance.isValid()){
+        readSceneAppearance(shape, appearance);
+    }
 }
 
 
@@ -692,13 +697,13 @@ void YAMLBodyLoaderImpl::readSceneSphere(SgShape* shape, Mapping& node)
 }
 
 
-SgNode* YAMLBodyLoaderImpl::readSceneAppearance(Mapping& node)
+SgNode* YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
 {
 
 }
 
 
-SgNode* YAMLBodyLoaderImpl::readSceneMaterial(Mapping& node)
+SgNode* YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 {
 
 }
