@@ -349,9 +349,9 @@ void SDFBodyLoader::setVerbose(bool on)
 }
 
 
-bool SDFBodyLoader::load(BodyPtr body, const std::string& filename)
+bool SDFBodyLoader::load(Body* body, const std::string& filename)
 {
-    return impl->load(body.get(), filename);
+    return impl->load(body, filename);
 }
 
 cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
