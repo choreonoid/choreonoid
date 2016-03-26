@@ -13,6 +13,7 @@
 #include <cnoid/STLSceneLoader>
 #include <map>
 #include <list>
+#include <cassert>
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneShape>
 #include <cnoid/SceneDrawables>
@@ -170,10 +171,17 @@ public:
     cnoid::Affine3 pose2affine(const sdf::Pose& pose);
     bool load(Body* body, const std::string& filename);
     BodyPtr load(const std::string& filename);        
-    SgNodePtr readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const sdf::Pose &pose);
-    std::vector<JointInfoPtr> findRootJoints();
+    SgNodePtr readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const cnoid::Affine3 &pose);
+    std::vector<std::string> findRootLinks();
+    bool hasOpenLink(const std::string& linkName);
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
+    std::vector<JointInfoPtr> findParentJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
+
+private:
+    SDFLoaderPseudoGazeboColor* gazeboColor;
+    SDFSensorConverter* sensorConverter;
+
     void buildMesh(const aiScene* scene, const aiNode* node, SgTransform* sgnode,
                    std::vector<SgMaterial*>& material_table,
                    std::vector<SgTexture*>& texture_table);
@@ -181,25 +189,18 @@ public:
                        std::vector<SgMaterial*>& material_table,
                        std::vector<SgTexture*>& texture_table);
     float getDaeScale(const std::string& url);
-
-private:
-    SDFLoaderPseudoGazeboColor* gazeboColor;
-    SDFSensorConverter* sensorConverter;
-
     SgMaterial* createSgMaterial(sdf::ElementPtr material, float transparency);
-    void loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material);
-    void decideJointType(Link *link, const std::string name, const std::string type);
+    void convertJointType(Link *link, JointInfoPtr info);
     void addModelSearchPath(const char *envname);
-    void processShapes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual);
-    SgPosTransformPtr createSgPosTransform(const sdf::Pose &pose, bool isRotation = false);
+    void readShapes(cnoid::SgGroup* shapes, sdf::ElementPtr link, const std::string tagname);
 };
 
 }
 
 
-std::vector<JointInfoPtr> SDFBodyLoaderImpl::findRootJoints()
+std::vector<std::string> SDFBodyLoaderImpl::findRootLinks()
 {
-    std::vector<JointInfoPtr> ret;
+    std::vector<std::string> ret;
     std::map<std::string, JointInfoPtr> usedlinks;
     std::vector<JointInfoPtr>::iterator it;
     it = joints.begin();
@@ -220,13 +221,33 @@ std::vector<JointInfoPtr> SDFBodyLoaderImpl::findRootJoints()
     }
     std::map<std::string, JointInfoPtr>::iterator it2 = usedlinks.begin();
     while(it2 != usedlinks.end()){
-        if(isVerbose){
-            os() << "found root joint (joint:" << it2->second->jointName << ")" << std::endl;
+        if(hasOpenLink(it2->first)){
+            if(isVerbose){
+                os() << "found root joint (joint:" << it2->first << ")" << std::endl;
+            }
+            ret.push_back(it2->first);
         }
-        ret.push_back(it2->second);
         it2++;
     }
     return ret;
+}
+
+bool SDFBodyLoaderImpl::hasOpenLink(const std::string& linkName)
+{
+    vector<JointInfoPtr> children = findChildJoints(linkName);
+    std::vector<JointInfoPtr>::iterator it = children.begin();
+    while(it != children.end()){
+        std::map<std::string, bool> parentnames;
+        vector<JointInfoPtr> parents = findParentJoints((*it)->childName);
+        std::vector<JointInfoPtr>::iterator it2 = parents.begin();
+        while(it2 != parents.end()){
+            parentnames[(*it2)->parentName] = true;
+            it2++;
+        }
+        if(parentnames.size() == 1) return true;
+        it++;
+    }
+    return false;
 }
 
 std::vector<JointInfoPtr> SDFBodyLoaderImpl::findChildJoints(const std::string& linkName)
@@ -243,6 +264,28 @@ std::vector<JointInfoPtr> SDFBodyLoaderImpl::findChildJoints(const std::string& 
         if((*it)->parentName == linkName){
             if(isVerbose){
                 os() << "found child joint (joint:" << (*it)->jointName << ")" << std::endl;
+            }
+            ret.push_back(*it);
+        }
+        it++;
+    }
+    return ret;
+}
+
+std::vector<JointInfoPtr> SDFBodyLoaderImpl::findParentJoints(const std::string& linkName)
+{
+    std::vector<JointInfoPtr> ret;
+    std::vector<JointInfoPtr>::iterator it = joints.begin();
+    while(it != joints.end()){
+        if(isVerbose){
+            os() << "search for child joint of " << linkName
+                 << " (joint:" << (*it)->jointName
+                 << ", parent:" << (*it)->parentName
+                 << ", child:" << (*it)->childName << ")" << std::endl;
+        }
+        if((*it)->childName == linkName){
+            if(isVerbose){
+                os() << "found parent joint (joint:" << (*it)->jointName << ")" << std::endl;
             }
             ret.push_back(*it);
         }
@@ -406,10 +449,10 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                     }
                 }
                 if(link->HasElement("visual")) {
-                    processShapes(linkdata, link, true);
+                    readShapes(linkdata->visualShape, link, "visual");
                 }
                 if(link->HasElement("collision")){
-                    processShapes(linkdata, link, false);
+                    readShapes(linkdata->collisionShape, link, "collision");
                 }
 
                 sensorConverter->convert(linkdata->linkName, link);
@@ -496,47 +539,56 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
 
         // construct tree structure of joints and links
-        vector<JointInfoPtr> roots = findRootJoints();
-        std::vector<JointInfoPtr>::iterator it = roots.begin();
-        while(it != roots.end()){
-            if (isVerbose) {
-                os() << "found root link " << (*it)->parentName << std::endl;
-            }
+        std::vector<std::string> roots = findRootLinks();
 
-            Link* link = body->createLink();
-            link->setName((*it)->parentName);
-            sensorConverter->setRootLinkName(link->name());
-            JointInfoPtr root;
-            if((*it)->parentName == "world"){
-                decideJointType(link, (*it)->jointName, (*it)->jointType);
-
-                if (link->isFixedJoint() == false) {
-                    link->setJointType(Link::FREE_JOINT);
-                }
-
-                root = *it;
-                link->Tb() = root->pose;
-            }else{
-                link->setJointType(Link::FREE_JOINT);
-                root.reset(new JointInfo());
-                root->jointName = (*it)->jointName;
-                root->childName = (*it)->parentName;
-                root->child = (*it)->parent;
-            }
-            if (root->child != NULL) {
-                link->setMass(root->child->m);
-                link->setCenterOfMass(Vector3(root->child->c.pos.x, root->child->c.pos.y, root->child->c.pos.z));
-                link->setInertia(root->child->I);
-                setShape(link, root->child->visualShape, true);
-                setShape(link, root->child->collisionShape, false);
-            }
-            link->setJointAxis(Vector3::Zero());
-            convertChildren(link, root);
-            body->setRootLink(link);
-            it++;
+        if (roots.size() != 1) {
+            os() << "Error: multiple models defined in one model file. please consider reading each separate files." << endl;
+            return NULL;
         }
+        
+        std::vector<std::string>::iterator it = roots.begin();
+        if (isVerbose) {
+            os() << "found root link " << *it << std::endl;
+        }
+        
+        Link* link = body->createLink();
+        JointInfoPtr root;
+        if (*it == "world") {
+            vector<JointInfoPtr> children = findChildJoints(*it);
+            if (children.size() != 1) {
+                os() << "Error: multiple models defined in one model file. please consider reading each separate files." << endl;
+                return NULL;
+            }
+            vector<JointInfoPtr>::iterator c = children.begin();
+            link->setName((*c)->childName);
+            link->setJointType(Link::FIXED_JOINT);
+            link->setJointAxis(Vector3::Zero());
+            link->Tb() = (*c)->pose;
+            root.reset(new JointInfo());
+            root->jointName = (*c)->jointName;
+            root->childName = (*c)->parentName;
+            root->child = (*c)->parent;
+        } else {
+            link->setName(*it);
+            link->setJointType(Link::FREE_JOINT);
+            link->setJointAxis(Vector3::Zero());
+            root.reset(new JointInfo());
+            root->jointName = *it;
+            root->childName = *it;
+            root->child = linkdataMap[*it];
+        }
+        if (root->child != NULL) {
+            link->setMass(root->child->m);
+            link->setCenterOfMass(Vector3(root->child->c.pos.x, root->child->c.pos.y, root->child->c.pos.z));
+            link->setInertia(root->child->I);
+            setShape(link, root->child->visualShape, true);
+            setShape(link, root->child->collisionShape, false);
+            convertChildren(link, root);
+        }
+        body->setRootLink(link);
 
         // attach sensors
+        sensorConverter->setRootLinkName(link->name());
 #if (DEBUG_SDF_SENSOR_CONVERTER > 0) /* (DEBUG_SDF_SENSOR_CONVERTER > 0) */
         sensorConverter->dumpDeviceMap();
 #endif                               /* (DEBUG_SDF_SENSOR_CONVERTER > 0) */
@@ -584,8 +636,8 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         setShape(link, (*it)->child->visualShape, true);
         setShape(link, (*it)->child->collisionShape, false);
 
-        // joint setting
-        decideJointType(link, (*it)->jointName, (*it)->jointType);
+        // set joint type
+        convertJointType(link, *it);
 
         if (link->isFreeJoint() == true || link->isFixedJoint() == true) {
             link->setJointAxis(Vector3::Zero());
@@ -597,7 +649,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
                                         getLimitValue((*it)->velocity, +maxlimit));
         }
 
-        // jointid setting
+        // assign joint ID
         if (link->jointId() < 0) {
             link->setJointId(numValidJointIds);
 
@@ -801,16 +853,18 @@ float SDFBodyLoaderImpl::getDaeScale(const std::string& url)
     return unit_scale;
 }
 
-SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const sdf::Pose &pose)
+SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const cnoid::Affine3 &pose)
 {
     SgNodePtr converted = 0;
+
+    assert(geometry);
 
     for(sdf::ElementPtr el = geometry->GetFirstElement(); el; el = el->GetNextElement()) {
         if(el->GetName() == "mesh") {
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
-            SgPosTransformPtr transform = createSgPosTransform(pose);
+            SgPosTransformPtr transform = new SgPosTransform(pose);
 
-            if (! url.empty()) {
+            if (!url.empty()) {
                 if (isVerbose) {
                     os() << "     read mesh " << url << std::endl;
                 }
@@ -848,10 +902,10 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
         } else if(el->GetName() == "box"){
             SgShapePtr shape = new SgShape;
             sdf::Vector3 size = el->Get<sdf::Vector3>("size");
-            SgPosTransformPtr transform = createSgPosTransform(pose);
+            SgPosTransformPtr transform = new SgPosTransform(pose);
 
             if (isVerbose) {
-                os() << "     generate " << el->GetName() << " shape (x=" << size.x << " y=" << size.y
+                os() << "     generate box shape (x=" << size.x << " y=" << size.y
                      << " z=" << size.z << ")" << std::endl;
             }
 
@@ -866,10 +920,10 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
         } else if(el->GetName() == "sphere"){
             SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
-            SgPosTransformPtr transform = createSgPosTransform(pose);
+            SgPosTransformPtr transform = new SgPosTransform(pose);
 
             if (isVerbose) {
-                os() << "     generate " << el->GetName() << " shape (radius=" << radius << ")" << std::endl;
+                os() << "     generate sphere shape (radius=" << radius << ")" << std::endl;
             }
 
             shape->setMesh(meshGenerator.generateSphere(radius));
@@ -884,10 +938,14 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
             SgShapePtr shape = new SgShape;
             double radius = el->Get<double>("radius");
             double length = el->Get<double>("length");
-            SgPosTransformPtr transform = createSgPosTransform(pose, true);
+            SgPosTransformPtr transform = new SgPosTransform(pose);
+
+            // direction of the cylinder in SDF is different from the VRML, so we rotate here
+            cnoid::AngleAxis xaxis(M_PI/2.0, cnoid::Vector3::UnitX());
+            transform->rotation() = transform->rotation() * xaxis.toRotationMatrix();
 
             if (isVerbose) {
-                os() << "     generate " << el->GetName() << " shape (radius=" << radius << " length="
+                os() << "     generate cylinder shape (radius=" << radius << " length="
                      << length << ")" << std::endl;
             }
 
@@ -917,6 +975,8 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
     sdf::Color color;
     Vector3f v;
 
+    assert(material);
+    
     ret = NULL;
     cinfo = NULL;
 
@@ -924,10 +984,9 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
         if (material->HasElement("script")) {
             p = material->GetElement("script");
 
-            /* script element must be have name element */
+            /* script element must have name element */
             if (p->HasElement("name")) {
                 cinfo = gazeboColor->get(p->Get<std::string>("name"));
-
                 if (cinfo != NULL) {
                     ret = cinfo->material;
                 }
@@ -935,6 +994,8 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
         }
 
         if (cinfo == NULL) {
+            // [note from YM] this implementation may consume extra memory
+            // (might be better to avoid dynamic allocation or use smart pointer)
             cinfo = new SDFLoaderPseudoGazeboColorInfo;
             ret = cinfo->material;
         }
@@ -971,83 +1032,28 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
 }
 
 /**
- */
-void SDFBodyLoaderImpl::loadDae(std::string url, SgPosTransformPtr transform, SgMaterialPtr material)
-{
-    SgGroupPtr p;
-    SgGroup::iterator it;
-    SgShapePtr shape;
-
-    if (transform == NULL) {
-        return;
-    }
-
-    DaeParser parser(&os());
-
-    if ((p = parser.createScene(url)) != NULL) {
-        if (material != NULL) {
-            for (it = p->begin(); it != p->end(); it++) {
-                shape = dynamic_cast<SgShape*>((*it).get());
-
-                if (shape != NULL) {
-                    shape->setMaterial(material);
-                }
-            }
-        }
-
-        transform->addChild(p);
-    }
-
-    return;
-}
-
-/**
-   @brief Decide joint type.
+   @brief Convert joint type.
    @param[in/out] link Instance of Link.
-   @param[in] name Joint name.
-   @param[in] type Joint type of SDF.
+   @param[in] info Joint info
  */
-void SDFBodyLoaderImpl::decideJointType(Link *link, const std::string name, const std::string type)
+void SDFBodyLoaderImpl::convertJointType(Link *link, JointInfoPtr info)
 {
     std::map<std::string, Link::JointType>::iterator it;
 
-    if (link != NULL) {
-        it = jointTypeMap.find(type);
-
-        if (it != jointTypeMap.end()) {
-            link->setJointType(it->second);
-        } else {
-            os() << "Warning: unable to handle joint type " << type << " of joint "
-                 << name << " assume as fixed joint." << std::endl;
-            link->setJointType(Link::FIXED_JOINT);
-        }
+    assert(link);
+    assert(info);
+    
+    it = jointTypeMap.find(info->jointType);
+    
+    if (it != jointTypeMap.end()) {
+        link->setJointType(it->second);
+    } else {
+        os() << "Warning: unable to handle joint type " << info->jointType << " of joint "
+             << info->jointName << " assume as fixed joint." << std::endl;
+        link->setJointType(Link::FIXED_JOINT);
     }
 
     return;
-}
-
-/**
-   @brief Create instance of SgPosTransform.
-   @param[in] pose Shape's pose.
-   @param[in] isRotation Set true, 90 degree rotation of X axes. (default false)
-              Choreonoid MeshGenerator(cylinder)/VRML     URDF/SDF
-                         Y                                    Z
-                         |                                    |
-                         +- X                                 +- Y
-                        /                                    /
-                       Z                                    X
-   @return Instance of SgPosTransform.
- */
-SgPosTransformPtr SDFBodyLoaderImpl::createSgPosTransform(const sdf::Pose &pose, bool isRotation)
-{
-    cnoid::SgPosTransformPtr ret = new SgPosTransform(pose2affine(pose));
-
-    if (isRotation) {
-        cnoid::AngleAxis aaX(0.5 * M_PI, cnoid::Vector3::UnitX());
-        ret->rotation() = ret->rotation() * aaX.toRotationMatrix();
-    }
-
-    return ret;
 }
 
 /**
@@ -1079,64 +1085,51 @@ void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
 }
 
 /**
-   @brief Process shapes.
-   @param[in] linkdata Created links.
-   @param[in] link Target link.
-   @param[in] isVisual Set true is visual, false is collision.
+   @brief Read shapes.
+   @param[in/out] shapes Pointer to SgGroup to store shape data.
+   @param[in] link SDF element to read from.
+   @param[in] tagname Tag name of SDF element to read from.
  */
-void SDFBodyLoaderImpl::processShapes(LinkInfoPtr linkdata, sdf::ElementPtr link, bool isVisual)
+void SDFBodyLoaderImpl::readShapes(cnoid::SgGroup* shapes, sdf::ElementPtr link, const std::string tagname)
 {
-    cnoid::SgGroupPtr shape;
-    std::string       type;
-    sdf::Pose         pose;
-    sdf::ElementPtr   geometry;
-    sdf::ElementPtr   material;
-    float             transparency;
-    SgMaterial*       sgmaterial;
-    sdf::ElementPtr   p;
+    cnoid::Affine3  pose;
+    SgMaterial*     sgmaterial;
+    sdf::ElementPtr p;
 
-    if (linkdata == NULL || link == NULL) {
-        return;
-    }
-
-    if (isVisual) {
-        shape = linkdata->visualShape;
-        type = "visual";
-    } else {
-        shape = linkdata->collisionShape;
-        type = "collision";
-    }
-
-    if (link->HasElement(type) == false) {
-        return;
-    }
-
-    p = link->GetElement(type);
+    assert(shapes);
+    assert(link);
+    
+    p = link->GetElement(tagname);
 
     while (p) {
         if (isVerbose) {
-            os() << "  " << type << " name: " << p->Get<std::string>("name") << std::endl;
+            os() << "  " << tagname << " name: " << p->Get<std::string>("name") << std::endl;
         }
 
         if (p->HasElement("pose")) {
-            pose = p->Get<sdf::Pose>("pose");
+            pose = pose2affine(p->Get<sdf::Pose>("pose"));
         } else {
-            pose.pos.x = pose.pos.y = pose.pos.z = pose.rot.w = pose.rot.x = pose.rot.y = pose.rot.z = 0.0;
+            pose = cnoid::Affine3::Identity();
         }
 
-        transparency = (isVisual && p->HasElement("transparency")) ? p->Get<float>("transparency") : -1.0;
-        material = (isVisual && p->HasElement("material")) ? p->GetElement("material") : sdf::ElementPtr();
+        float transparency = -1.0;
+        if (p->HasElement("transparency")){
+            transparency = p->Get<float>("transparency");
+        }
+        
+        sgmaterial = NULL;
+        if (p->HasElement("material")){
+            sgmaterial = createSgMaterial(p->GetElement("material"), transparency);
+        }
 
         if (p->HasElement("geometry")) {
-            geometry = p->GetElement("geometry");
-            sgmaterial = createSgMaterial(material, transparency);
-            shape->addChild(readGeometry(geometry, sgmaterial, pose));
+            shapes->addChild(readGeometry(p->GetElement("geometry"), sgmaterial, pose));
         } else {
             // corrupted? (geometry must be set)
             os() << "Warning: '" << p->Get<std::string>("name") << "' geometry not found" << std::endl;
         }
 
-        p = p->GetNextElement(type);
+        p = p->GetNextElement(tagname);
     }
 
     return;
