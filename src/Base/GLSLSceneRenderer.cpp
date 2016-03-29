@@ -111,21 +111,20 @@ public:
     GLint numLights;
     GLint maxNumLights;
     GLint numLightsLocation;
+
     struct LightInfoLocation {
         GLint position;
         GLint intensity;
+        GLint ambientIntensity;
+        GLint constantAttenuation;
+        GLint linearAttenuation;
+        GLint quadraticAttenuation;
+        GLint falloffAngle;
+        GLint falloffExponent;
+        GLint beamWidth;
+        GLint direction;
     };
     vector<LightInfoLocation> lightInfoLocations;
-
-    GLint numSpotLights;
-    GLint maxNumSpotLights;
-    GLint numSpotLightsLocation;
-    struct SpotLightInfoLocation : public LightInfoLocation {
-        GLint direction;
-        GLint exponent;
-        GLint cutoff;
-    };
-    vector<SpotLightInfoLocation> spotLightInfoLocations;
 
     GLSLProgram nolightingProgram;
     GLint nolightingMVPLocation;
@@ -274,7 +273,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
     maxNumLights = 10;
-    maxNumSpotLights = 10;
     
     currentProgram = 0;
     
@@ -381,21 +379,16 @@ bool GLSLSceneRendererImpl::initializeGL()
         string prefix = str(lightFormat % i);
         info.position = phongProgram.getUniformLocation(prefix + "position");
         info.intensity = phongProgram.getUniformLocation(prefix + "intensity");
+        info.ambientIntensity = phongProgram.getUniformLocation(prefix + "ambientIntensity");
+        info.constantAttenuation = phongProgram.getUniformLocation(prefix + "constantAttenuation");
+        info.linearAttenuation = phongProgram.getUniformLocation(prefix + "linearAttenuation");
+        info.quadraticAttenuation = phongProgram.getUniformLocation(prefix + "quadraticAttenuation");
+        info.falloffAngle = phongProgram.getUniformLocation(prefix + "falloffAngle");
+        info.falloffExponent = phongProgram.getUniformLocation(prefix + "falloffExponent");
+        info.beamWidth = phongProgram.getUniformLocation(prefix + "beamWidth");
+        info.direction = phongProgram.getUniformLocation(prefix + "direction");
     }
 
-    numSpotLightsLocation = phongProgram.getUniformLocation("numSpotLights");
-    spotLightInfoLocations.resize(maxNumSpotLights);
-    boost::format spotLightFormat("spotLights[%1%].");
-    for(int i=0; i < maxNumSpotLights; ++i){
-        SpotLightInfoLocation& info = spotLightInfoLocations[i];
-        string prefix = str(spotLightFormat % i);
-        info.position = phongProgram.getUniformLocation(prefix + "position");
-        info.intensity = phongProgram.getUniformLocation(prefix + "intensity");
-        info.direction = phongProgram.getUniformLocation(prefix + "direction");
-        info.exponent = phongProgram.getUniformLocation(prefix + "exponent");
-        info.cutoff = phongProgram.getUniformLocation(prefix + "cutoff");
-    }
-    
     diffuseColorLocation = phongProgram.getUniformLocation("diffuseColor");
     ambientColorLocation = phongProgram.getUniformLocation("ambientColor");
     specularColorLocation = phongProgram.getUniformLocation("specularColor");
@@ -521,7 +514,6 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
     numLights = 0;
-    numSpotLights = 0;
 
     SgLight* headLight = self->headLight();
     if(headLight->on()){
@@ -530,6 +522,9 @@ void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
 
     const int n = self->numLights();
     for(int i=0; i < n; ++i){
+        if(numLights == maxNumLights){
+            break;
+        }
         SgLight* light;
         Affine3 T;
         self->getLightInfo(i, light, T);
@@ -539,50 +534,46 @@ void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
     }
 
     glUniform1i(numLightsLocation, numLights);
-    glUniform1i(numSpotLightsLocation, numSpotLights);
 }
 
 
 bool GLSLSceneRendererImpl::renderLight(const SgLight* light, const Affine3& T)
 {
-    LightInfoLocation* location = 0;
+    LightInfoLocation* location = &lightInfoLocations[numLights];
 
     if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
-        if(numLights < maxNumLights){
-            location = &(lightInfoLocations[numLights++]);
-            Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
-            Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-            glUniform4fv(location->position, 1, pos.data());
-        }
+        Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
+        Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
+        glUniform4fv(location->position, 1, pos.data());
+
     } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
+        Vector3 p(viewMatrix * T.translation());
+        Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
+        glUniform4fv(location->position, 1, pos.data());
+        glUniform1f(location->constantAttenuation, pointLight->constantAttenuation());
+        glUniform1f(location->linearAttenuation, pointLight->linearAttenuation());
+        glUniform1f(location->quadraticAttenuation, pointLight->quadraticAttenuation());
+        
         if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
-            if(numSpotLights < maxNumSpotLights){
-                SpotLightInfoLocation* spotLocation = &(spotLightInfoLocations[numSpotLights++]);
-                location = spotLocation;
-                Vector3 d = viewMatrix.linear() * T.linear() * -spotLight->direction();
-                Vector4f direction(d.x(), d.y(), d.z(), 0.0f);
-                glUniform4fv(spotLocation->direction, 1, direction.data());
-                glUniform1f(spotLocation->cutoff, spotLight->cutOffAngle());
-                glUniform1f(spotLocation->exponent, 30.0f);
-            }
-        } else {
-            if(numLights < maxNumLights){
-                location = &(lightInfoLocations[numLights++]);
-            }
+            Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
+            Vector3f direction(d.cast<float>());
+            glUniform3fv(location->direction, 1, direction.data());
+            glUniform1f(location->falloffAngle, spotLight->cutOffAngle());
+            glUniform1f(location->falloffExponent, 4.0f);
+            glUniform1f(location->beamWidth, spotLight->beamWidth());
         }
-        if(location){
-            Vector3 p(viewMatrix * T.translation());
-            Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
-            glUniform4fv(location->position, 1, pos.data());
-        }
+    } else {
+        return false;
     }
         
-    if(location){
-        Vector3f intensity(light->intensity() * light->color());
-        glUniform3fv(location->intensity, 1, intensity.data());
-    }
+    Vector3f intensity(light->intensity() * light->color());
+    glUniform3fv(location->intensity, 1, intensity.data());
+    Vector3f ambientIntensity(light->ambientIntensity() * light->color());
+    glUniform3fv(location->ambientIntensity, 1, ambientIntensity.data());
 
-    return location;
+    ++numLights;
+    
+    return true;
 }
 
 

@@ -21,80 +21,76 @@ uniform float shininess;
 uniform int numLights;
 
 struct LightInfo {
+    // the fourth element is 0.0 if the light is a directional light
     vec4 position;
     vec3 intensity;
-};
-uniform LightInfo lights[10];
-
-uniform int numSpotLights;
-
-struct SpotLightInfo {
-    vec4 position;
-    vec3 intensity;
+    vec3 ambientIntensity;
+    float constantAttenuation;
+    float linearAttenuation;
+    float quadraticAttenuation;
+    // The following value is 0.0 if the light is not a spot light
+    float falloffAngle; 
+    float falloffExponent;
+    float beamWidth;
     vec3 direction;
-    float exponent;
-    float cutoff;
 };
-uniform SpotLightInfo spotLights[10];
-    
+
+uniform LightInfo lights[10];
 
 layout(location = 0) out vec4 color;
 
 vec3 ads(LightInfo light)
 {
-    vec3 s;
     if(light.position.w == 0.0){
-        s = normalize(vec3(light.position));
-    } else {
-        s = normalize(vec3(light.position) - position);
-    }
-    
-    vec3 v = normalize(vec3(-position));
-    vec3 r = reflect(-s, normal);
-
-    return
-        light.intensity *
-        (ambientColor + 
-         diffuseColor * max(dot(s, normal), 0.0) +
-         specularColor * pow(max(dot(r, v), 0.0), shininess))
-        + emissionColor;
-}
-
-vec3 adsWithSpotlight(SpotLightInfo light)
-{
-    vec3 s = normalize(vec3(light.position) - position);
-    vec3 spotDir = normalize(light.direction);
-    float angle = acos(dot(-s, spotDir));
-
-    if(angle > light.cutoff) {
-        return vec3(0.0);
-        //return ambientColor;
-    } else {
-        float spotFactor = pow(dot(-s, spotDir), light.exponent);
+        // directional light
+        vec3 s = normalize(vec3(light.position));
         vec3 v = normalize(vec3(-position));
-        vec3 h = normalize(v + s);
+        vec3 r = reflect(-s, normal);
+        return light.intensity * (
+            diffuseColor * max(dot(s, normal), 0.0) +
+            specularColor * pow(max(dot(r, v), 0.0), shininess)) +
+            light.ambientIntensity * ambientColor;
+    } else {
+        // point light
+        vec3 l = vec3(light.position) - position;
+        vec3 s = normalize(l);
+        float ki;
 
-        return
-            spotFactor * light.intensity * (
-                diffuseColor * max(dot(s, normal), 0.0) +
-                specularColor * pow(max(dot(h, normal), 0.0), shininess)
-                );
+        if(light.falloffAngle == 0.0){ 
+            ki = 1.0;
+        } else {
+            // spot light            
+            vec3 direction = normalize(light.direction);
+            float sd = dot(-s, direction);
+            float angle = acos(sd);
+            if(angle > light.falloffAngle) {
+                return vec3(0.0);
+            }
+            ki = pow(sd, light.falloffExponent);
+        }
+        
+        vec3 v = normalize(vec3(-position));
+        vec3 r = reflect(-s, normal);
+        float distance = l.length();
+        ki *= 1.0 / max(1.0,
+                        light.constantAttenuation +
+                        distance * light.linearAttenuation +
+                        distance * distance * light.quadraticAttenuation);
+        
+        return ki * light.intensity * (
+            diffuseColor * max(dot(s, normal), 0.0) +
+            specularColor * pow(max(dot(r, v), 0.0), shininess)) +
+            light.ambientIntensity * ambientColor;
     }
 }
 
-void main() {
-
+void main()
+{
     vec3 c = vec3(0.0);
-
     for(int i=0; i < numLights; ++i){
         c += ads(lights[i]);
     }
+    c += emissionColor;
 
-    /*
-    for(int i=0; i < numSpotLights; ++i){
-        c += adsWithSpotlight(spotLights[i]);
-    }
-    */
-    
     color = vec4(c, 1.0);
 }
