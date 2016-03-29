@@ -82,4 +82,3 @@ void LinkGroup::setFlatLinkList(const Body& body)
         elements.push_back(i);
     }
 }
-

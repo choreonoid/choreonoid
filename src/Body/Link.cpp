@@ -16,8 +16,6 @@ Link::Link()
     index_ = -1;
     jointId_ = -1;
     parent_ = 0;
-    sibling_ = 0;
-    child_ = 0;
     T_.setIdentity();
     Tb_.setIdentity();
     Rs_.setIdentity();
@@ -52,8 +50,6 @@ Link::Link(const Link& org)
     jointId_ = org.jointId_;
 
     parent_ = 0;
-    sibling_ = 0;
-    child_ = 0;
 
     T_ = org.T_;
     Tb_ = org.Tb_;
@@ -94,18 +90,21 @@ Link::Link(const Link& org)
 
 Link::~Link()
 {
-    Link* link = child();
+    LinkPtr link = child_;
     while(link){
-        Link* linkToDelete = link;
-        link = link->sibling();
-        delete linkToDelete;
+        link->parent_ = 0;
+        LinkPtr next = link->sibling_;
+        link->sibling_ = 0;
+        link = next;
     }
 }
 
 
 void Link::prependChild(Link* link)
 {
+    LinkPtr holder;
     if(link->parent_){
+        holder = link;
         link->parent_->removeChild(link);
     }
     link->sibling_ = child_;
@@ -116,7 +115,9 @@ void Link::prependChild(Link* link)
 
 void Link::appendChild(Link* link)
 {
+    LinkPtr holder;
     if(link->parent_){
+        holder = link;
         link->parent_->removeChild(link);
     }
     if(!child_){
@@ -136,7 +137,6 @@ void Link::appendChild(Link* link)
 
 /**
    A child link is removed from the link.
-   The detached child link is *not* deleted by this function.
    If a link given by the parameter is not a child of the link, false is returned.
 */
 bool Link::removeChild(Link* childToRemove)
@@ -147,22 +147,19 @@ bool Link::removeChild(Link* childToRemove)
     Link* prevSibling = 0;
     while(link){
         if(link == childToRemove){
+            childToRemove->parent_ = 0;
+            childToRemove->sibling_ = 0;
             if(prevSibling){
                 prevSibling->sibling_ = link->sibling_;
             } else {
                 child_ = link->sibling_;
             }
-            removed = true;
-            break;
+            return true;
         }
         prevSibling = link;
         link = link->sibling_;
     }
-    if(removed){
-        childToRemove->parent_ = 0;
-        childToRemove->sibling_ = 0;
-    }
-    return removed;
+    return false;
 }
 
 
