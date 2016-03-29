@@ -71,7 +71,8 @@ vec3 ads(LightInfo light)
         
         vec3 v = normalize(vec3(-position));
         vec3 r = reflect(-s, normal);
-        float distance = l.length();
+        //float distance = l.length();
+        float distance = sqrt(dot(l, l));
         ki *= 1.0 / max(1.0,
                         light.constantAttenuation +
                         distance * light.linearAttenuation +
