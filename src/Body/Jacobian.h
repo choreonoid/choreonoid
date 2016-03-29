@@ -1,6 +1,6 @@
 
-#ifndef CNOID_BODY_JACOBIAN_H_INCLUDED
-#define CNOID_BODY_JACOBIAN_H_INCLUDED
+#ifndef CNOID_BODY_JACOBIAN_H
+#define CNOID_BODY_JACOBIAN_H
 
 #include "Body.h"
 #include "Link.h"
@@ -9,9 +9,9 @@
 
 namespace cnoid {
 
-CNOID_EXPORT void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J);
+CNOID_EXPORT void calcCMJacobian(Body* body, Link* base, Eigen::MatrixXd& J);
 
-CNOID_EXPORT void calcAngularMomentumJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& H);
+CNOID_EXPORT void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H);
 
 template<int elementMask, int rowOffset, int colOffset, bool useTargetLinkLocalPos>
 void setJacobian(const JointPath& path, Link* targetLink, const Vector3& targetLinkLocalPos,
@@ -106,6 +106,7 @@ void setJacobian(const JointPath& path, Link* targetLink, MatrixXd& out_J) {
     setJacobian<elementMask, rowOffset, colOffset, false>(
         path, targetLink, targetLinkLocalPos, out_J);
 }
+
 }
 
 #endif

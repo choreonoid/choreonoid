@@ -4,8 +4,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_JOINT_PATH_H_INCLUDED
-#define CNOID_BODY_JOINT_PATH_H_INCLUDED
+#ifndef CNOID_BODY_JOINT_PATH_H
+#define CNOID_BODY_JOINT_PATH_H
 
 #include "LinkPath.h"
 #include "InverseKinematics.h"
@@ -35,31 +35,31 @@ public:
     //! Deprecated. Use "setPath()" instead of this.
     bool find(Link* end) { return setPath(end); }
 
-    inline bool empty() const {
+    bool empty() const {
         return joints.empty();
     }
 		
-    inline int numJoints() const {
+    int numJoints() const {
         return joints.size();
     }
 		
-    inline Link* joint(int index) const {
+    Link* joint(int index) const {
         return joints[index];
     }
 
-    inline Link* baseLink() const {
+    Link* baseLink() const {
         return linkPath.baseLink();
     }
 
-    inline Link* endLink() const {
+    Link* endLink() const {
         return linkPath.endLink();
     }
 
-    inline bool isJointDownward(int index) const {
+    bool isJointDownward(int index) const {
         return (index >= numUpwardJointConnections);
     }
 
-    inline void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const {
+    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const {
         linkPath.calcForwardKinematics(calcVelocity, calcAcceleration);
     }
 
@@ -140,15 +140,14 @@ private:
 typedef boost::shared_ptr<JointPath> JointPathPtr;
 
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 
 /**
    This function returns a joint path which may do analytical inverse kinematics
    when the body has the analytical one for a given path.
    \todo move back this function to the Body class
 */
-CNOID_EXPORT JointPathPtr getCustomJointPath(BodyPtr body, Link* baseLink, Link* targetLink);
-};
+CNOID_EXPORT JointPathPtr getCustomJointPath(Body* body, Link* baseLink, Link* targetLink);
 
+};
 
 #endif

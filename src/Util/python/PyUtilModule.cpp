@@ -5,9 +5,20 @@
 #include "PyUtil.h"
 #include "../ExecutablePath.h"
 #include "../FloatingNumberString.h"
+#include "../Deque2D.h"
 
 using namespace boost::python;
 using namespace cnoid;
+
+namespace
+{
+
+typedef Deque2D< double, std::allocator<double> > Deque2DDouble;
+void Deque2DDouble_Row_setitem(Deque2DDouble::Row& self, const int i, const double x) { self[i] = x; }
+double& (Deque2DDouble::Row::*Row_getitem)(int) = &Deque2DDouble::Row::operator[];
+const double& (Deque2DDouble::Row::*Row_getitem_const)(int) const = &Deque2DDouble::Row::operator[];
+
+}
 
 namespace cnoid {
 
@@ -45,4 +56,12 @@ BOOST_PYTHON_MODULE(Util)
         .def("setPositiveValue", &FloatingNumberString::setPositiveValue)
         .def("setNonNegativeValue", &FloatingNumberString::setNonNegativeValue)
         .def("value", &FloatingNumberString::value);
+
+    class_<Deque2DDouble::Row>("Row", init<>())
+        .def("size", &Deque2DDouble::Row::size)
+        .def("at", &Deque2DDouble::Row::at, return_value_policy<copy_non_const_reference>())
+        .def("__getitem__", Row_getitem, return_value_policy<return_by_value>())
+        .def("__getitem__", Row_getitem_const, return_value_policy<return_by_value>())
+        .def("__setitem__", Deque2DDouble_Row_setitem)
+        ;
 }

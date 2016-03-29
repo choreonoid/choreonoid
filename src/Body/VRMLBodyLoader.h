@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_VRML_BODY_LOADER_H_INCLUDED
-#define CNOID_BODY_VRML_BODY_LOADER_H_INCLUDED
+#ifndef CNOID_BODY_VRML_BODY_LOADER_H
+#define CNOID_BODY_VRML_BODY_LOADER_H
 
 #include "AbstractBodyLoader.h"
 #include <cnoid/VRML>
@@ -12,6 +12,7 @@
 
 namespace cnoid {
 
+class Link;
 class VRMLBodyLoaderImpl;
   
 class CNOID_EXPORT VRMLBodyLoader : public AbstractBodyLoader
@@ -24,12 +25,13 @@ public:
     virtual void setVerbose(bool on);
     virtual void enableShapeLoading(bool on);
     virtual void setDefaultDivisionNumber(int n);
-    virtual bool load(BodyPtr body, const std::string& filename);
+    virtual bool load(Body* body, const std::string& filename);
     VRMLNodePtr getOriginalNode(Link* link);
 
 private:
     VRMLBodyLoaderImpl* impl;
 };
+
 }
 
 #endif

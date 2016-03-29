@@ -41,6 +41,10 @@ public:
         return jointPosSeqItem_;
     }
 
+    MultiValueSeqPtr jointPosSeq() {
+        return bodyMotion_->jointPosSeq();
+    }
+
     MultiSE3SeqItem* linkPosSeqItem() {
         return linkPosSeqItem_;
     }
@@ -49,6 +53,10 @@ public:
         return linkPosSeqItem_;
     }
     
+    MultiSE3SeqPtr linkPosSeq() {
+        return bodyMotion_->linkPosSeq();
+    }
+
     int numExtraSeqItems() const;
     const std::string& extraSeqKey(int index) const;
     AbstractSeqItem* extraSeqItem(int index);

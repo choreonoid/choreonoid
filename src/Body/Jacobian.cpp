@@ -65,7 +65,7 @@ namespace cnoid {
    @param J CoM Jacobian
    @note Link::wc must be computed by calcCM() before calling
 */
-void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J)
+void calcCMJacobian(Body* body, Link* base, Eigen::MatrixXd& J)
 {
     // prepare subm, submwc
 
@@ -148,7 +148,7 @@ void calcCMJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& J)
    @param H Angular Momentum Jacobian
    @note Link::wc must be computed by calcCM() before calling
 */
-void calcAngularMomentumJacobian(const BodyPtr& body, Link* base, Eigen::MatrixXd& H)
+void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
 {
 
     // prepare subm, submwc

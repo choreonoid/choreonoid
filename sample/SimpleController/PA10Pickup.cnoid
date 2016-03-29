@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+
 items: 
   id: 0
   name: "Root"
@@ -121,12 +123,14 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recording: true
-            timeRangeMode: TimeBar range
+            recording: "full"
+            timeRangeMode: "Time bar range"
             onlyActiveControlPeriod: true
-            timeLength: 8
+            timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
             dynamicsMode: Forward dynamics
             integrationMode: Runge Kutta
             gravity: [ 0, 0, -9.80665 ]
@@ -146,12 +150,14 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recording: true
-            timeRangeMode: TimeBar range
+            recording: "full"
+            timeRangeMode: "Time bar range"
             onlyActiveControlPeriod: true
-            timeLength: 8
-            allLinkPositionOutputMode: true
+            timeLength: 60
+            allLinkPositionOutputMode: false
             deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
             stepMode: Iterative (quick step)
             gravity: [ 0, 0, -9.80665 ]
             friction: 1
@@ -171,12 +177,14 @@ items:
           class: BulletSimulatorItem
           data: 
             realtimeSync: true
-            recording: true
-            timeRangeMode: TimeBar range
+            recording: "full"
+            timeRangeMode: "Time bar range"
             onlyActiveControlPeriod: true
-            timeLength: 8
-            allLinkPositionOutputMode: true
+            timeLength: 60
+            allLinkPositionOutputMode: false
             deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
             ErrorReductionParameter: 0.2
             NumIterations: 10
             Restitution: 0
@@ -190,16 +198,44 @@ items:
           class: PhysXSimulatorItem
           data: 
             realtimeSync: true
-            recording: true
-            timeRangeMode: TimeBar range
+            recording: "full"
+            timeRangeMode: "Time bar range"
             onlyActiveControlPeriod: true
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
             staticFriction: 0.5
             dynamicFriction: 0.5
             Restitution: 0.1
             jointLimitMode: false
+        - 
+          id: 11
+          name: "AgXSimulator"
+          plugin: AgX
+          class: AgXSimulatorItem
+          data: 
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
+            onlyActiveControlPeriod: true
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            dynamicsMode: Forward dynamics
+            gravity: [ 0, 0, -9.80665 ]
+            friction: 0.5
+            restitution: 0.1
+            frictionModelType: Iterative Projected
+            frictionSolveType: Split
+            numThreads: 1
+            contactReductionMode: Geometry
+            contactReductionBinResolution: 2
+            contactReductionThreshold: 4
+
 views: 
   "Items": 
     selected: [ 7 ]

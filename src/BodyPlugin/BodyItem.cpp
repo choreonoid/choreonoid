@@ -443,9 +443,10 @@ void BodyItem::storeInitialState()
 }
 
 
-void BodyItem::restoreInitialState()
+void BodyItem::restoreInitialState(bool doNotify)
 {
-    if(restoreKinematicState(impl->initialState)){
+    bool restored = restoreKinematicState(impl->initialState);
+    if(restored && doNotify){
         notifyKinematicStateChange(false);
     }
 }

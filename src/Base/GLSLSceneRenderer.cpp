@@ -15,7 +15,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #include <iostream>
+#include <cstdio>
 
 using namespace std;
 using namespace cnoid;
@@ -106,8 +108,24 @@ public:
     GLint normalMatrixLocation;
     GLint MVPLocation;
 
-    GLint lightIntensityLocation;
-    GLint lightPositionLocation;
+    GLint numLights;
+    GLint maxNumLights;
+    GLint numLightsLocation;
+    struct LightInfoLocation {
+        GLint position;
+        GLint intensity;
+    };
+    vector<LightInfoLocation> lightInfoLocations;
+
+    GLint numSpotLights;
+    GLint maxNumSpotLights;
+    GLint numSpotLightsLocation;
+    struct SpotLightInfoLocation : public LightInfoLocation {
+        GLint direction;
+        GLint exponent;
+        GLint cutoff;
+    };
+    vector<SpotLightInfoLocation> spotLightInfoLocations;
 
     GLSLProgram nolightingProgram;
     GLint nolightingMVPLocation;
@@ -199,7 +217,7 @@ public:
     void beginActualRendering(SgCamera* camera);
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(const Affine3& cameraPosition);
-    void renderLight(const SgLight* light, int index, const Affine3& T);
+    bool renderLight(const SgLight* light, const Affine3& T);
     void endRendering();
     void render();
     bool pick(int x, int y);
@@ -255,6 +273,9 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
 GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
+    maxNumLights = 10;
+    maxNumSpotLights = 10;
+    
     currentProgram = 0;
     
     isPicking = false;
@@ -352,8 +373,28 @@ bool GLSLSceneRendererImpl::initializeGL()
         MVPLocation = phongProgram.getUniformLocation("MVP");
     }
 
-    lightIntensityLocation = phongProgram.getUniformLocation("lightIntensity");
-    lightPositionLocation = phongProgram.getUniformLocation("lightPosition");
+    numLightsLocation = phongProgram.getUniformLocation("numLights");
+    lightInfoLocations.resize(maxNumLights);
+    boost::format lightFormat("lights[%1%].");
+    for(int i=0; i < maxNumLights; ++i){
+        LightInfoLocation& info = lightInfoLocations[i];
+        string prefix = str(lightFormat % i);
+        info.position = phongProgram.getUniformLocation(prefix + "position");
+        info.intensity = phongProgram.getUniformLocation(prefix + "intensity");
+    }
+
+    numSpotLightsLocation = phongProgram.getUniformLocation("numSpotLights");
+    spotLightInfoLocations.resize(maxNumSpotLights);
+    boost::format spotLightFormat("spotLights[%1%].");
+    for(int i=0; i < maxNumSpotLights; ++i){
+        SpotLightInfoLocation& info = spotLightInfoLocations[i];
+        string prefix = str(spotLightFormat % i);
+        info.position = phongProgram.getUniformLocation(prefix + "position");
+        info.intensity = phongProgram.getUniformLocation(prefix + "intensity");
+        info.direction = phongProgram.getUniformLocation(prefix + "direction");
+        info.exponent = phongProgram.getUniformLocation(prefix + "exponent");
+        info.cutoff = phongProgram.getUniformLocation(prefix + "cutoff");
+    }
     
     diffuseColorLocation = phongProgram.getUniformLocation("diffuseColor");
     ambientColorLocation = phongProgram.getUniformLocation("ambientColor");
@@ -479,52 +520,69 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 
 void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
+    numLights = 0;
+    numSpotLights = 0;
+
     SgLight* headLight = self->headLight();
     if(headLight->on()){
-        renderLight(headLight, 0, cameraPosition);
+        renderLight(headLight, cameraPosition);
     }
 
-    //const int numLights = std::min(self->numLights(), (int)(maxLights - numSystemLights));
-    const int numLights = 0;
-
-    for(int i=0; i < numLights; ++i){
+    const int n = self->numLights();
+    for(int i=0; i < n; ++i){
         SgLight* light;
         Affine3 T;
         self->getLightInfo(i, light, T);
-        renderLight(light, i + 1, T);
+        if(light->on()){
+            renderLight(light, T);
+        }
     }
+
+    glUniform1i(numLightsLocation, numLights);
+    glUniform1i(numSpotLightsLocation, numSpotLights);
 }
 
 
-void GLSLSceneRendererImpl::renderLight(const SgLight* light, int index, const Affine3& T)
+bool GLSLSceneRendererImpl::renderLight(const SgLight* light, const Affine3& T)
 {
-    if(index != 0){
-        return;
-    }
-        
-    bool isValid = false;
+    LightInfoLocation* location = 0;
 
-    if(light->on()){
-        
-        if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
-            isValid = true;
+    if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
+        if(numLights < maxNumLights){
+            location = &(lightInfoLocations[numLights++]);
             Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
             Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-            glUniform4fv(lightPositionLocation, 1, pos.data());
-            
-        } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
-            if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
-
-            } else {
-            
+            glUniform4fv(location->position, 1, pos.data());
+        }
+    } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
+        if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
+            if(numSpotLights < maxNumSpotLights){
+                SpotLightInfoLocation* spotLocation = &(spotLightInfoLocations[numSpotLights++]);
+                location = spotLocation;
+                Vector3 d = viewMatrix.linear() * T.linear() * -spotLight->direction();
+                Vector4f direction(d.x(), d.y(), d.z(), 0.0f);
+                glUniform4fv(spotLocation->direction, 1, direction.data());
+                glUniform1f(spotLocation->cutoff, spotLight->cutOffAngle());
+                glUniform1f(spotLocation->exponent, 30.0f);
             }
+        } else {
+            if(numLights < maxNumLights){
+                location = &(lightInfoLocations[numLights++]);
+            }
+        }
+        if(location){
+            Vector3 p(viewMatrix * T.translation());
+            Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
+            glUniform4fv(location->position, 1, pos.data());
         }
     }
         
-    if(isValid){
+    if(location){
         Vector3f intensity(light->intensity() * light->color());
-        glUniform3fv(lightIntensityLocation, 1, intensity.data());
+        glUniform3fv(location->intensity, 1, intensity.data());
     }
+
+    return location;
 }
 
 

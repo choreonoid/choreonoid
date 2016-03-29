@@ -517,9 +517,10 @@ public:
     double timeStep;
     agxSDK::SimulationRef agxSimulation;
     agxPowerLine::PowerLineRef powerLine;
-    typedef std::map<Link*, AgXSimulatorItem::ControlMode> ControlModeMap;
-    ControlModeMap controlModeMap;
 
+    typedef std::map<Link*, AgXSimulatorItem::ControlMode> ControlModeMap;
+    ControlModeMap controlModeOrgLinkMap;
+    ControlModeMap controlModeMap;
     double springConstant[3];
     double dampingCoefficient[3];
 
@@ -539,91 +540,6 @@ public:
     void setJointCompliance(Link* joint, double spring, double damping);
 };
 
-class HighGainControllerItem : public ControllerItem
-{
-    AgXSimulatorItemImpl* simulator;
-    BodyPtr body;
-    MultiValueSeqPtr qseqRef;
-    int currentFrame;
-    int lastFrame;
-    int numJoints;
-    vector<bool> controlEnable;
-
-public:
-    HighGainControllerItem(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem, AgXSimulatorItemImpl* simulator)
-    : simulator(simulator)
-    {
-        qseqRef = bodyMotionItem->jointPosSeq();
-        setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
-    }
-
-    virtual bool start(Target* target) {
-        body = target->body();
-        currentFrame = 0;
-        lastFrame = std::max(0, qseqRef->numFrames() - 1);
-        numJoints = std::min(body->numJoints(), qseqRef->numParts());
-        if(qseqRef->numFrames() == 0){
-            putMessage(_("Reference motion is empty()."));
-            return false;
-        }
-        if(fabs(qseqRef->frameRate() - (1.0 / target->worldTimeStep())) > 1.0e-6){
-            putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
-            return false;
-        }
-
-        controlEnable.reserve(numJoints);
-        for(int i=0; i < numJoints; ++i){
-            Link* joint = body->joint(i);
-            AgXSimulatorItemImpl::ControlModeMap::iterator it = simulator->controlModeMap.find(joint);
-            if(it!=simulator->controlModeMap.end() && it->second!=AgXSimulatorItem::HIGH_GAIN)
-                controlEnable[i] = false;
-            else
-                controlEnable[i] = true;
-        }
-
-        control();
-        return true;
-    }
-
-    virtual double timeStep() const {
-        return qseqRef->getTimeStep();
-    }
-
-    virtual void input() { }
-
-    virtual bool control() {
-
-        if(++currentFrame > lastFrame){
-            currentFrame = lastFrame;
-            return false;
-        }
-        return true;
-    }
-
-    virtual void output() {
-
-        int prevFrame = std::max(currentFrame - 1, 0);
-        int nextFrame = std::min(currentFrame + 1, lastFrame);
-
-        MultiValueSeq::Frame q0 = qseqRef->frame(prevFrame);
-        MultiValueSeq::Frame q1 = qseqRef->frame(currentFrame);
-        MultiValueSeq::Frame q2 = qseqRef->frame(nextFrame);
-
-        double dt = qseqRef->getTimeStep();
-        double dt2 = dt * dt;
-
-        for(int i=0; i < numJoints; ++i){
-            if(!controlEnable[i])
-                continue;
-            Link* joint = body->joint(i);
-            //joint->q() = q1[i];
-            joint->dq() = (q2[i] - q1[i]) / dt;
-            joint->ddq() = (q2[i] - 2.0 * q1[i] + q0[i]) / dt2;
-        }
-    }
-
-    virtual void stop() { }
-};
 }
 
 
@@ -1214,7 +1130,7 @@ void AgXForceField::updateForce(agx::DynamicsSystem* system)
 
 
 AgXBody::AgXBody(Body& orgBody)
-    : SimulationBody(&orgBody)
+    : SimulationBody(new Body(orgBody))
 {
 
 }
@@ -1445,9 +1361,27 @@ Item* AgXSimulatorItem::doDuplicate() const
 }
 
 
+bool AgXSimulatorItem::startSimulation(bool doReset)
+{
+    impl->controlModeMap.clear();
+    impl->controlModeOrgLinkMap.clear();
+    return SimulatorItem::startSimulation(doReset);
+}
+
+
 SimulationBody* AgXSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return new AgXBody(*orgBody);
+    AgXBody* agXBody  = new AgXBody(*orgBody);
+
+    const int n = orgBody->numLinks();
+    for(size_t i=0; i < n; ++i){
+    	AgXSimulatorItemImpl::ControlModeMap::iterator it = impl->controlModeOrgLinkMap.find(orgBody->link(i));
+    	if(it != impl->controlModeOrgLinkMap.end())
+    		impl->controlModeMap[agXBody->body()->link(i)] = it->second;
+    }
+
+    return agXBody;
+
 }
 
 
@@ -1638,18 +1572,18 @@ CollisionLinkPairListPtr AgXSimulatorItem::getCollisions()
 
 
 void AgXSimulatorItem::setJointControlMode(Link* joint, ControlMode type){
-    impl->setJointControlMode(joint, type);
+	impl->setJointControlMode(joint, type);
 }
 
 
 void AgXSimulatorItemImpl::setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type){
 
-    controlModeMap[joint] = type;
+    controlModeOrgLinkMap[joint] = type;
 }
 
 
 void AgXSimulatorItem::setJointCompliance(Link* joint, double spring, double damping){
-    impl->setJointCompliance(joint, spring, damping);
+	impl->setJointCompliance(joint, spring, damping);
 }
 
 
@@ -1753,10 +1687,4 @@ void AgXSimulatorItemImpl::restore(const Archive& archive)
     }
     archive.read("contactReductionBinResolution", contactReductionBinResolution);
     archive.read("contactReductionThreshold", contactReductionThreshold);
-}
-
-
-ControllerItem* AgXSimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
-{
-    return new HighGainControllerItem(bodyItem, bodyMotionItem, impl);
 }

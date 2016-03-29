@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LINK_GROUP_H_INCLUDED
-#define CNOID_BODY_LINK_GROUP_H_INCLUDED
+#ifndef CNOID_BODY_LINK_GROUP_H
+#define CNOID_BODY_LINK_GROUP_H
 
 #include <boost/variant.hpp>
 #include <boost/shared_ptr.hpp>
@@ -51,7 +51,7 @@ private:
     bool load(const Body& body, const Listing& linkGroupList);
     void setFlatLinkList(const Body& body);
 };
-}
 
+}
 
 #endif

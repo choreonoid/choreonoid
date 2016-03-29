@@ -9,7 +9,7 @@
 using namespace cnoid;
 
 
-ForwardDynamics::ForwardDynamics(const DyBodyPtr& body)
+ForwardDynamics::ForwardDynamics(DyBody* body)
     : body(body)
 {
     g.setZero();

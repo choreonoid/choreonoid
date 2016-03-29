@@ -127,7 +127,7 @@ void SimulationBar::onStoreInitialClicked()
 
 void SimulationBar::onRestoreInitialClicked()
 {
-    forEachTargetBodyItem(boost::function<void(BodyItem*)>(boost::bind(&BodyItem::restoreInitialState, _1)));
+    forEachTargetBodyItem(boost::function<void(BodyItem*)>(boost::bind(&BodyItem::restoreInitialState, _1, true)));
 }
 
 
