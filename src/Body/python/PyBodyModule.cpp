@@ -213,7 +213,8 @@ BOOST_PYTHON_MODULE(Body)
             .value("SLIDE_JOINT", Link::SLIDE_JOINT) 
             .value("FREE_JOINT", Link::FREE_JOINT) 
             .value("FIXED_JOINT", Link::FIXED_JOINT) 
-            .value("CRAWLER_JOINT", Link::CRAWLER_JOINT);
+            .value("CRAWLER_JOINT", Link::CRAWLER_JOINT)
+            .value("AGX_CRAWLER_JOINT", Link::AGX_CRAWLER_JOINT);
     }        
     
     {

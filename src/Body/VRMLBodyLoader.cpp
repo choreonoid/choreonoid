@@ -808,6 +808,8 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::SLIDE_JOINT);
     } else if(jointType == "crawler"){
         link->setJointType(Link::CRAWLER_JOINT);
+    } else if(jointType == "agx_crawler"){
+        link->setJointType(Link::AGX_CRAWLER_JOINT);
     } else {
         link->setJointType(Link::FIXED_JOINT);
     }
