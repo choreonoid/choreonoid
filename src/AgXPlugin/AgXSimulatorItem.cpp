@@ -39,7 +39,6 @@
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerItem>
 #include <cnoid/BodyMotionItem>
-#include <cnoid/LinkGroup>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
@@ -1274,7 +1273,7 @@ AgXBody::AgXBody(Body& orgBody)
     Body* body = this->body();
 
     linkGroups.clear();
-    const Listing& linkGroupList = *body->info()->findListing("linkGroup");
+    const Listing& linkGroupList = *body->info()->findListing("linkGroups");
     if(linkGroupList.isValid()){
         for(int i=0; i < linkGroupList.size(); ++i){
             const Mapping& group = *linkGroupList[i].toMapping();

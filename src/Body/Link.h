@@ -9,6 +9,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
 #ifdef WIN32
+#include "Link.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 #endif
@@ -16,13 +17,16 @@
 
 namespace cnoid {
 
+class Link;
+typedef ref_ptr<Link> LinkPtr;
+
 class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
 
 class Mapping;
 typedef ref_ptr<Mapping> MappingPtr;
 
-class CNOID_EXPORT Link
+class CNOID_EXPORT Link : public Referenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -103,21 +107,21 @@ public:
 
     enum JointType {
         /// rotational joint (1 dof)
-        ROTATIONAL_JOINT,
+        REVOLUTE_JOINT = 0,
+        ROTATIONAL_JOINT = REVOLUTE_JOINT,
         /// translational joint (1 dof)
-        SLIDE_JOINT,
+        SLIDE_JOINT = 1,
         /// 6-DOF root link
-        FREE_JOINT,
+        FREE_JOINT = 2,
         /*
           Joint types below here are treated as a fixed joint
           when a code for processing a joint type is not given
         */
         /// fixed joint(0 dof)
-        FIXED_JOINT,
+        FIXED_JOINT = 3,
         /// special joint for pseudo crawler simulation
-        CRAWLER_JOINT,
-        ///  for Agx crawler simulation
-        AGX_CRAWLER_JOINT
+        CRAWLER_JOINT = 4,
+        AGX_CRAWLER_JOINT = 5
     };
 
     int jointId() const { return jointId_; }
@@ -256,8 +260,8 @@ private:
     int index_; 
     int jointId_;
     Link* parent_;
-    Link* sibling_;
-    Link* child_;
+    LinkPtr sibling_;
+    LinkPtr child_;
     Position T_;
     Position Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.
