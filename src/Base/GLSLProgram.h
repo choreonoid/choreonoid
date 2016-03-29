@@ -44,6 +44,9 @@ public:
     GLuint getUniformLocation(const char* name) const {
         return glGetUniformLocation(programHandle, name);
     }
+    GLuint getUniformLocation(const std::string& name) const {
+        return glGetUniformLocation(programHandle, name.c_str());
+    }
 
 private:
     GLuint programHandle;
