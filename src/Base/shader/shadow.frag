@@ -104,7 +104,7 @@ subroutine (RenderPassType) void shadeWithShadow()
     color = vec4(diffuseAndSpecular * shadow + ambientAndEmission, 1.0);
 
     // Gamma correct
-    color = pow(color, vec4(1.0 / 2.2));
+    //color = pow(color, vec4(1.0 / 2.2));
 }
 
 subroutine (RenderPassType) void recordDepth()

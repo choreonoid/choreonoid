@@ -432,7 +432,7 @@ SceneWidget::SceneWidget()
     QGLFormat format;
     if(useGLSL){
         //format.setVersion(3, 3);
-        format.setVersion(4, 0);
+        format.setVersion(4, 4);
         format.setProfile(QGLFormat::CoreProfile);
     }
     
@@ -549,7 +549,10 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
-    systemGroup->addChild(worldLight);
+    SgPosTransform* worldLightTransform = new SgPosTransform;
+    worldLightTransform->setTranslation(Vector3(0.0, 0.0, 3.0));
+    worldLightTransform->addChild(worldLight);
+    systemGroup->addChild(worldLightTransform);
     renderer->setAsDefaultLight(worldLight);
 
     updateDefaultLights();

@@ -51,7 +51,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void setDefaultLighting(bool on);
     void setHeadLightLightingFromBackEnabled(bool on);
-    virtual void enableShadowOfLight(int index);
+    virtual void enableShadowOfLight(int index, bool on);
     virtual void setDefaultSmoothShading(bool on);
     virtual SgMaterial* defaultMaterial();
     virtual void enableTexture(bool on);

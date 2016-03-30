@@ -143,17 +143,27 @@ public:
 
     bool isPicking;
 
-    Affine3Array modelViewStack; // stack of the model/view matrices
+    Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3 viewMatrix;
     Matrix4 projectionMatrix;
-    Affine3 currentModelTransform;
+    Matrix4 PV;
 
     GLint numLights;
     GLint maxNumLights;
 
+    bool isShadowEnabled;
+    bool isMakingShadowMap;
+    int shadowLightIndex;
+    //SgPerspectiveCameraPtr shadowMapCamera;
+    SgOrthographicCameraPtr shadowMapCamera;
+    Matrix4 shadowBias;
+    Affine3 BPV;
+    int shadowMapWidth;
+    int shadowMapHeight;
     GLuint shadowFBO;
     GLuint pass1Index;
     GLuint  pass2Index;
+    GLint shadowMapLocation;
     
     bool defaultLighting;
     Vector4f currentNolightingColor;
@@ -224,13 +234,15 @@ public:
     bool initializeGL();
     void initializeProgram(
         GLSLProgram& program, ProgramHandleSet& handles, const char* vertexShaderSource, const char* fragmentShaderSource);
+    void initializeShadowProgram();
     void beginRendering(bool doRenderingCommands);
-    void beginActualRendering(SgCamera* camera);
+    void beginActualRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(const Affine3& cameraPosition);
     bool renderLight(const SgLight* light, const Affine3& T);
     void endRendering();
     void render();
+    void renderWithShadows();
     bool pick(int x, int y);
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
@@ -284,11 +296,32 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
 GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
-    maxNumLights = 10;
-    
     currentProgram = 0;
     currentProgramHandleSet = 0;
-    
+
+    maxNumLights = 10;
+
+    isShadowEnabled = true;
+    isMakingShadowMap = false;
+    shadowLightIndex = 0;
+    /*
+    shadowMapCamera = new SgPerspectiveCamera();
+    shadowMapCamera->setFieldOfView(radian(50.0));
+    */
+    shadowMapCamera = new SgOrthographicCamera();
+    shadowMapCamera->setHeight(5.0);
+    shadowMapCamera->setNearDistance(1.0);
+    shadowMapCamera->setFarDistance(10.0);
+
+    shadowMapWidth = 1024;
+    shadowMapHeight = 1024;
+
+    shadowBias <<
+        0.5, 0.0, 0.0, 0.5,
+        0.0, 0.5, 0.0, 0.5,
+        0.0, 0.0, 0.5, 0.5,
+        0.0, 0.0, 0.0, 1.0;
+
     isPicking = false;
     pickedPoint.setZero();
 
@@ -299,8 +332,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     currentShapeHandleSetMap = &shapeHandleSetMaps[0];
     nextShapeHandleSetMap = &shapeHandleSetMaps[1];
 
-    modelViewStack.reserve(16);
-    
+    modelMatrixStack.reserve(16);
     viewMatrix.setIdentity();
     projectionMatrix.setIdentity();
 
@@ -361,17 +393,11 @@ bool GLSLSceneRendererImpl::initializeGL()
             ":/Base/shader/phong.frag");
 
         initializeProgram(
-            shadowProgram, shadowHandleSet,
-            ":/Base/shader/shadow.vert",
-            ":/Base/shader/shadow.frag");
-
-        pass1Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "recordDepth");
-        pass2Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "shadeWithShadow");
-
-        initializeProgram(
             nolightingProgram, nolightingHandleSet,
             ":/Base/shader/nolighting.vert",
             ":/Base/shader/nolighting.frag");
+
+        initializeShadowProgram();
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
@@ -439,6 +465,56 @@ void GLSLSceneRendererImpl::initializeProgram
     phs.colorLocation = program.getUniformLocation("color");
 }
 
+
+void GLSLSceneRendererImpl::initializeShadowProgram()
+{
+    initializeProgram(
+        shadowProgram, shadowHandleSet,
+        ":/Base/shader/shadow.vert",
+        ":/Base/shader/shadow.frag");
+
+    pass1Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "recordDepth");
+    pass2Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "shadeWithShadow");
+
+    GLfloat border[] = {1.0f, 0.0f, 0.0f, 0.0f };
+    // The depth buffer texture
+    GLuint depthTex;
+    glGenTextures(1, &depthTex);
+    glBindTexture(GL_TEXTURE_2D, depthTex);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+
+    // Assign the depth buffer texture to texture channel 0
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depthTex);
+
+    // Create and set up the FBO
+    glGenFramebuffers(1, &shadowFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0);
+
+    GLenum drawBuffers[] = { GL_NONE };
+    glDrawBuffers(1, drawBuffers);
+
+    GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(result == GL_FRAMEBUFFER_COMPLETE) {
+        os() << "Framebuffer is complete.\n"<< endl;
+    } else {
+        os() << "Framebuffer is not complete.\n" << endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    shadowMapLocation = shadowProgram.getUniformLocation("shadowMap");
+    glUniform1i(shadowMapLocation, 0);
+}
+
     
 void GLSLSceneRenderer::requestToClearCache()
 {
@@ -485,8 +561,13 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
             pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            currentProgram = &phongProgram;
-            currentProgramHandleSet = &phongHandleSet;
+            if(isShadowEnabled){
+                currentProgram = &shadowProgram;
+                currentProgramHandleSet = &shadowHandleSet;
+            } else {
+                currentProgram = &phongProgram;
+                currentProgramHandleSet = &phongHandleSet;
+            }
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
@@ -502,24 +583,46 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
     self->extractPreproNodes();
 
     if(doRenderingCommands){
-        SgCamera* camera = self->currentCamera();
-        if(camera){
-            beginActualRendering(camera);
-        }
+        beginActualRendering();
     }
 }
 
 
-void GLSLSceneRendererImpl::beginActualRendering(SgCamera* camera)
+void GLSLSceneRendererImpl::beginActualRendering()
 {
-    const Affine3& cameraPosition = self->currentCameraPosition();
-    
-    renderCamera(camera, cameraPosition);
-
-    if(!isPicking){
-        renderLights(cameraPosition);
+    if(!isMakingShadowMap){
+        SgCamera* camera = self->currentCamera();
+        if(camera){
+            const Affine3& cameraPosition = self->currentCameraPosition();
+            renderCamera(camera, cameraPosition);
+            if(!isPicking){
+                renderLights(cameraPosition);
+            }
+        }
+    } else {
+        SgLight* light;
+        Affine3 T;
+        self->getLightInfo(shadowLightIndex, light, T);
+        if(light){
+            bool hasDirection = false;
+            Vector3 direction;
+            if(SgDirectionalLight* directional = dynamic_cast<SgDirectionalLight*>(light)){
+                direction = directional->direction();
+                hasDirection = true;
+            } else if(SgSpotLight* spot = dynamic_cast<SgSpotLight*>(light)){
+                direction = spot->direction();
+                hasDirection = true;
+            }
+            if(hasDirection){
+                Quaternion rot;
+                rot.setFromTwoVectors(-Vector3::UnitZ(), direction);
+                T.linear() = rot * T.linear();
+            }
+            renderCamera(shadowMapCamera, T);
+            BPV = shadowBias * PV;
+        }
     }
-
+    
     clearGLState();
 }
 
@@ -546,8 +649,10 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
     }
 
     viewMatrix = cameraPosition.inverse(Eigen::Isometry);
-    modelViewStack.clear();
-    modelViewStack.push_back(viewMatrix);
+    PV = projectionMatrix * viewMatrix.matrix();
+
+    modelMatrixStack.clear();
+    modelMatrixStack.push_back(Affine3::Identity());
 }
 
 
@@ -634,19 +739,49 @@ void GLSLSceneRendererImpl::endRendering()
 
 void GLSLSceneRenderer::render()
 {
-    impl->render();
+    if(impl->isShadowEnabled){
+        impl->renderWithShadows();
+    } else {
+        impl->render();
+    }
 }
 
 
 void GLSLSceneRendererImpl::render()
 {
     beginRendering(true);
-
     self->sceneRoot()->accept(*self);
-
     endRendering();
 }
 
+
+void GLSLSceneRendererImpl::renderWithShadows()
+{
+    shadowProgram.use();
+
+    // Pass 1 (shadow map generation)
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    Array4i vp = self->viewport();
+    self->setViewport(0, 0, shadowMapWidth, shadowMapHeight);
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &pass1Index);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    isMakingShadowMap = true;
+    render();
+    isMakingShadowMap = false;
+
+    glFlush();
+    glFinish();
+
+    // Pass 2 (render)
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    self->setViewport(vp[0], vp[1], vp[2], vp[3]);
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &pass2Index);
+    glDisable(GL_CULL_FACE);
+    render();
+}
+    
 
 bool GLSLSceneRenderer::pick(int x, int y)
 {
@@ -778,39 +913,41 @@ void GLSLSceneRenderer::visitTransform(SgTransform* transform)
     Affine3 T;
     transform->getTransform(T);
 
-    Affine3Array& modelViewStack = impl->modelViewStack;
-    modelViewStack.push_back(modelViewStack.back() * T);
+    Affine3Array& modelMatrixStack = impl->modelMatrixStack;
+    modelMatrixStack.push_back(modelMatrixStack.back() * T);
 
     visitGroup(transform);
     
-    modelViewStack.pop_back();
+    modelMatrixStack.pop_back();
 }
 
 
 void GLSLSceneRendererImpl::setLightingTransformMatrices()
 {
-    const Affine3f MV = modelViewStack.back().cast<float>();
-    const Matrix3f N = MV.linear();
-    const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
+    const Affine3f VM = (viewMatrix * modelMatrixStack.back()).cast<float>();
+    const Matrix3f N = VM.linear();
+    const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
+    const Matrix4f BPVM = (BPV * modelMatrixStack.back().matrix()).cast<float>();
 
     ProgramHandleSet* phs = currentProgramHandleSet;
     if(phs->useUniformBlockToPassTransformationMatrices){
-        phs->transformBlockBuffer.write(phs->modelViewMatrixIndex, MV);
+        phs->transformBlockBuffer.write(phs->modelViewMatrixIndex, VM);
         phs->transformBlockBuffer.write(phs->normalMatrixIndex, N);
-        phs->transformBlockBuffer.write(phs->MVPIndex, MVP);
+        phs->transformBlockBuffer.write(phs->MVPIndex, PVM);
         phs->transformBlockBuffer.flush();
     } else {
-        glUniformMatrix4fv(phs->modelViewMatrixLocation, 1, GL_FALSE, MV.data());
+        glUniformMatrix4fv(phs->modelViewMatrixLocation, 1, GL_FALSE, VM.data());
         glUniformMatrix3fv(phs->normalMatrixLocation, 1, GL_FALSE, N.data());
-        glUniformMatrix4fv(phs->MVPLocation, 1, GL_FALSE, MVP.data());
+        glUniformMatrix4fv(phs->MVPLocation, 1, GL_FALSE, PVM.data());
+        glUniformMatrix4fv(phs->shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
     }
 }
 
 
 void GLSLSceneRendererImpl::flushNolightingTransformMatrices()
 {
-    const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
-    glUniformMatrix4fv(nolightingHandleSet.MVPLocation, 1, GL_FALSE, MVP.data());
+    const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
+    glUniformMatrix4fv(nolightingHandleSet.MVPLocation, 1, GL_FALSE, PVM.data());
 }
 
 
@@ -827,10 +964,10 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
         nextShapeHandleSetMap->insert(*p);
     }
 
-    if(currentProgram == &phongProgram){
-        setLightingTransformMatrices();
-    } else {
+    if(currentProgram == &nolightingProgram){
         flushNolightingTransformMatrices();
+    } else {
+        setLightingTransformMatrices();
     }
 
     glBindVertexArray(handleSet->vao);
@@ -876,8 +1013,8 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
 
     if(currentProgram == &nolightingProgram){
         setNolightingColor(color);
-    } else {
 
+    } else {
         setDiffuseColor(color);
         
         color.head<3>() *= material->ambientIntensity();
@@ -1003,11 +1140,13 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 
     if(lineSet->hasVertices() && n > 0){
 
+        GLSLProgram* orgProgram = currentProgram;
+
         if(isPicking){
             pushPickID(lineSet);
         } else {
+            nolightingProgram.use();
             currentProgram = &nolightingProgram;
-            currentProgram->use();
             renderMaterial(lineSet->material());
         }
 
@@ -1041,7 +1180,7 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
         if(isPicking){
             popPickID();
         } else {
-            currentProgram = &phongProgram;
+            currentProgram = orgProgram;
             currentProgram->use();
         }
     }
@@ -1277,9 +1416,10 @@ void GLSLSceneRenderer::enableLighting(bool on)
 }
 
 
-void GLSLSceneRenderer::enableShadowOfLight(int index)
+void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
-
+    impl->isShadowEnabled = on;
+    impl->shadowLightIndex = index;
 }
 
 
@@ -1436,8 +1576,7 @@ void GLSLSceneRenderer::enableUnusedCacheCheck(bool on)
 
 const Affine3& GLSLSceneRenderer::currentModelTransform() const
 {
-    impl->currentModelTransform = impl->viewMatrix.inverse() * impl->modelViewStack.back();
-    return impl->currentModelTransform;
+    return impl->modelMatrixStack.back();
 }
 
 

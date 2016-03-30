@@ -656,9 +656,13 @@ int GLSceneRenderer::numLights() const
 
 void GLSceneRenderer::getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const
 {
-    const GLSceneRendererImpl::LightInfo& info = impl->lights[index];
-    out_light = info.light;
-    out_position = info.M;
+    if(index < impl->lights.size()){
+        const GLSceneRendererImpl::LightInfo& info = impl->lights[index];
+        out_light = info.light;
+        out_position = info.M;
+    } else {
+        out_light = 0;
+    }
 }
 
 
@@ -755,7 +759,7 @@ void GLSceneRenderer::enableAdditionalLights(bool on)
 }
 
 
-void GLSceneRenderer::enableShadowOfLight(int index)
+void GLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
 
 }
