@@ -104,7 +104,8 @@ set(sources
   TextEdit.cpp
   TaskView.cpp
   VirtualJoystickView.cpp
-  gl_core_3_3.c
+  #gl_core_3_3.c
+  gl_core_4_0.c
   gl_1_5.c
   )
 

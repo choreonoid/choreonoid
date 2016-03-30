@@ -365,6 +365,9 @@ bool GLSLSceneRendererImpl::initializeGL()
             ":/Base/shader/shadow.vert",
             ":/Base/shader/shadow.frag");
 
+        pass1Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "recordDepth");
+        pass2Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "shadeWithShadow");
+
         initializeProgram(
             nolightingProgram, nolightingHandleSet,
             ":/Base/shader/nolighting.vert",
