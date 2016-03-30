@@ -77,6 +77,7 @@ public:
     void setAsDefaultLight(SgLight* light);
     void unsetDefaultLight(SgLight* light);
     void enableAdditionalLights(bool on);
+    virtual void enableShadowOfLight(int index);
 
     virtual void setDefaultSmoothShading(bool on) = 0;
     virtual SgMaterial* defaultMaterial() = 0;

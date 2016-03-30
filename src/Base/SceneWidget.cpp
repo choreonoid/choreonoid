@@ -431,7 +431,8 @@ SceneWidget::SceneWidget()
 
     QGLFormat format;
     if(useGLSL){
-        format.setVersion(3, 3);
+        //format.setVersion(3, 3);
+        format.setVersion(4, 0);
         format.setProfile(QGLFormat::CoreProfile);
     }
     

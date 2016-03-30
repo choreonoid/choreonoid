@@ -755,6 +755,12 @@ void GLSceneRenderer::enableAdditionalLights(bool on)
 }
 
 
+void GLSceneRenderer::enableShadowOfLight(int index)
+{
+
+}
+
+
 void GLSceneRenderer::getPerspectiveProjectionMatrix
 (double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix)
 {

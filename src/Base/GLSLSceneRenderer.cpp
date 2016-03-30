@@ -30,14 +30,14 @@ const float MinLineWidthForPicking = 5.0f;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
 
-class HandleSet : public Referenced
+class ShapeHandleSet : public Referenced
 {
 public:
     GLuint vao;
     GLuint vbos[3];
     GLsizei numVertices;
 
-    HandleSet() {
+    ShapeHandleSet() {
         clear();
         glGenVertexArrays(1, &vao);
     }
@@ -65,21 +65,21 @@ public:
         return vbos[index];
     }
 
-    ~HandleSet() { 
+    ~ShapeHandleSet() { 
         if(vao > 0){
             glDeleteVertexArrays(1, &vao);
         }
         glDeleteBuffers(3, vbos);
     }
 };
-typedef ref_ptr<HandleSet> HandleSetPtr;
+typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
 
 struct SgObjectPtrHash {
     std::size_t operator()(const SgObjectPtr& p) const {
         return boost::hash_value<SgObject*>(p.get());
     }
 };
-typedef boost::unordered_map<SgObjectPtr, HandleSetPtr, SgObjectPtrHash> HandleSetMap;
+typedef boost::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
 
 }
 
@@ -92,27 +92,7 @@ public:
         
     GLSLSceneRenderer* self;
 
-    GLSLProgram* currentProgram;
-    
-    GLSLProgram phongProgram;
-
-    bool useUniformBlockToPassTransformationMatrices;
-    bool isPicking;
-    
-    GLSLUniformBlockBuffer transformBlockBuffer;
-    GLint modelViewMatrixIndex;
-    GLint normalMatrixIndex;
-    GLint MVPIndex;
-
-    GLint modelViewMatrixLocation;
-    GLint normalMatrixLocation;
-    GLint MVPLocation;
-
-    GLint numLights;
-    GLint maxNumLights;
-    GLint numLightsLocation;
-
-    struct LightInfoLocation {
+    struct LightHandleSet {
         GLint position;
         GLint intensity;
         GLint ambientIntensity;
@@ -124,29 +104,57 @@ public:
         GLint beamWidth;
         GLint direction;
     };
-    vector<LightInfoLocation> lightInfoLocations;
+
+    struct ProgramHandleSet {
+
+        bool useUniformBlockToPassTransformationMatrices;
+        GLSLUniformBlockBuffer transformBlockBuffer;
+        GLint modelViewMatrixIndex;
+        GLint normalMatrixIndex;
+        GLint MVPIndex;
+
+        GLint modelViewMatrixLocation;
+        GLint normalMatrixLocation;
+        GLint MVPLocation;
+        GLint shadowMatrixLocation;
+
+        GLint diffuseColorLocation;
+        GLint ambientColorLocation;
+        GLint specularColorLocation;
+        GLint emissionColorLocation;
+        GLint shininessLocation;
+        GLint colorLocation;
+
+        GLint numLightsLocation;
+        vector<LightHandleSet> lightHandleSets;
+    };
+
+    GLSLProgram* currentProgram;
+    ProgramHandleSet* currentProgramHandleSet;
+
+    GLSLProgram phongProgram;
+    ProgramHandleSet phongHandleSet;
+
+    GLSLProgram shadowProgram;
+    ProgramHandleSet shadowHandleSet;
 
     GLSLProgram nolightingProgram;
-    GLint nolightingMVPLocation;
-    GLint nolightingColorLocation;
+    ProgramHandleSet nolightingHandleSet;
 
-    HandleSetMap handleSetMaps[2];
-    bool doUnusedHandleSetCheck;
-    bool isCheckingUnusedHandleSets;
-    bool hasValidNextHandleSetMap;
-    bool isHandleSetClearRequested;
-    int currentHandleSetMapIndex;
-    HandleSetMap* currentHandleSetMap;
-    HandleSetMap* nextHandleSetMap;
-    HandleSet* currentHandleSet;
+    bool isPicking;
 
     Affine3Array modelViewStack; // stack of the model/view matrices
-
     Affine3 viewMatrix;
     Matrix4 projectionMatrix;
     Affine3 currentModelTransform;
 
+    GLint numLights;
+    GLint maxNumLights;
 
+    GLuint shadowFBO;
+    GLuint pass1Index;
+    GLuint  pass2Index;
+    
     bool defaultLighting;
     Vector4f currentNolightingColor;
     Vector4f diffuseColor;
@@ -156,14 +164,17 @@ public:
     float shininess;
     float lastAlpha;
 
-    GLint diffuseColorLocation;
-    GLint ambientColorLocation;
-    GLint specularColorLocation;
-    GLint emissionColorLocation;
-    GLint shininessLocation;
-
     SgMaterialPtr defaultMaterial;
     GLfloat defaultLineWidth;
+    ShapeHandleSetMap shapeHandleSetMaps[2];
+    bool doUnusedShapeHandleSetCheck;
+    bool isCheckingUnusedShapeHandleSets;
+    bool hasValidNextShapeHandleSetMap;
+    bool isShapeHandleSetClearRequested;
+    int currentShapeHandleSetMapIndex;
+    ShapeHandleSetMap* currentShapeHandleSetMap;
+    ShapeHandleSetMap* nextShapeHandleSetMap;
+    ShapeHandleSet* currentShapeHandleSet;
 
     GLdouble pickX;
     GLdouble pickY;
@@ -208,10 +219,11 @@ public:
     float pointSize;
     float lineWidth;
     
-        
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
     bool initializeGL();
+    void initializeProgram(
+        GLSLProgram& program, ProgramHandleSet& handles, const char* vertexShaderSource, const char* fragmentShaderSource);
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
@@ -226,11 +238,11 @@ public:
     void visitInvariantGroup(SgInvariantGroup* group);
     void setLightingTransformMatrices();
     void flushNolightingTransformMatrices();
-    HandleSet* getOrCreateHandleSet(SgObject* obj);
+    ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj);
     void visitShape(SgShape* shape);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
-    void createMeshVertexArray(SgMesh* mesh, HandleSet* handleSet);
+    void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
     void visitPointSet(SgPointSet* pointSet);
     void visitLineSet(SgLineSet* lineSet);
     void visitOutlineGroup(SgOutlineGroup* outline);
@@ -275,16 +287,17 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     maxNumLights = 10;
     
     currentProgram = 0;
+    currentProgramHandleSet = 0;
     
     isPicking = false;
     pickedPoint.setZero();
 
-    doUnusedHandleSetCheck = true;
-    currentHandleSetMapIndex = 0;
-    hasValidNextHandleSetMap = false;
-    isHandleSetClearRequested = false;
-    currentHandleSetMap = &handleSetMaps[0];
-    nextHandleSetMap = &handleSetMaps[1];
+    doUnusedShapeHandleSetCheck = true;
+    currentShapeHandleSetMapIndex = 0;
+    hasValidNextShapeHandleSetMap = false;
+    isShapeHandleSetClearRequested = false;
+    currentShapeHandleSetMap = &shapeHandleSetMaps[0];
+    nextShapeHandleSetMap = &shapeHandleSetMaps[1];
 
     modelViewStack.reserve(16);
     
@@ -313,9 +326,9 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
 {
     // clear handles to avoid the deletion of them without the corresponding GL context
     for(int i=0; i < 2; ++i){
-        HandleSetMap& handleSetMap = handleSetMaps[i];
-        for(HandleSetMap::iterator p = handleSetMap.begin(); p != handleSetMap.end(); ++p){
-            HandleSet* handleSet = p->second;
+        ShapeHandleSetMap& handleSetMap = shapeHandleSetMaps[i];
+        for(ShapeHandleSetMap::iterator p = handleSetMap.begin(); p != handleSetMap.end(); ++p){
+            ShapeHandleSet* handleSet = p->second;
             handleSet->clear();
         }
     }
@@ -342,13 +355,20 @@ bool GLSLSceneRendererImpl::initializeGL()
     }
 
     try {
-        phongProgram.loadVertexShader(":/Base/shader/phong.vert");
-        phongProgram.loadFragmentShader(":/Base/shader/phong.frag");
-        phongProgram.link();
+        initializeProgram(
+            phongProgram, phongHandleSet,
+            ":/Base/shader/phong.vert",
+            ":/Base/shader/phong.frag");
 
-        nolightingProgram.loadVertexShader(":/Base/shader/nolighting.vert");
-        nolightingProgram.loadFragmentShader(":/Base/shader/nolighting.frag");
-        nolightingProgram.link();
+        initializeProgram(
+            shadowProgram, shadowHandleSet,
+            ":/Base/shader/shadow.vert",
+            ":/Base/shader/shadow.frag");
+
+        initializeProgram(
+            nolightingProgram, nolightingHandleSet,
+            ":/Base/shader/nolighting.vert",
+            ":/Base/shader/nolighting.frag");
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
@@ -356,60 +376,70 @@ bool GLSLSceneRendererImpl::initializeGL()
         return false;
     }
 
-    useUniformBlockToPassTransformationMatrices = 
-        transformBlockBuffer.initialize(phongProgram, "TransformBlock");
-
-    if(useUniformBlockToPassTransformationMatrices){
-        modelViewMatrixIndex = transformBlockBuffer.checkUniformMatrix("modelViewMatrix");
-        normalMatrixIndex = transformBlockBuffer.checkUniformMatrix("normalMatrix");
-        MVPIndex = transformBlockBuffer.checkUniformMatrix("MVP");
-        transformBlockBuffer.bind(phongProgram, 1);
-        transformBlockBuffer.bindBufferBase(1);
-    } else {
-        modelViewMatrixLocation = phongProgram.getUniformLocation("modelViewMatrix");
-        normalMatrixLocation = phongProgram.getUniformLocation("normalMatrix");
-        MVPLocation = phongProgram.getUniformLocation("MVP");
-    }
-
-    numLightsLocation = phongProgram.getUniformLocation("numLights");
-    lightInfoLocations.resize(maxNumLights);
-    boost::format lightFormat("lights[%1%].");
-    for(int i=0; i < maxNumLights; ++i){
-        LightInfoLocation& info = lightInfoLocations[i];
-        string prefix = str(lightFormat % i);
-        info.position = phongProgram.getUniformLocation(prefix + "position");
-        info.intensity = phongProgram.getUniformLocation(prefix + "intensity");
-        info.ambientIntensity = phongProgram.getUniformLocation(prefix + "ambientIntensity");
-        info.constantAttenuation = phongProgram.getUniformLocation(prefix + "constantAttenuation");
-        info.linearAttenuation = phongProgram.getUniformLocation(prefix + "linearAttenuation");
-        info.quadraticAttenuation = phongProgram.getUniformLocation(prefix + "quadraticAttenuation");
-        info.falloffAngle = phongProgram.getUniformLocation(prefix + "falloffAngle");
-        info.falloffExponent = phongProgram.getUniformLocation(prefix + "falloffExponent");
-        info.beamWidth = phongProgram.getUniformLocation(prefix + "beamWidth");
-        info.direction = phongProgram.getUniformLocation(prefix + "direction");
-    }
-
-    diffuseColorLocation = phongProgram.getUniformLocation("diffuseColor");
-    ambientColorLocation = phongProgram.getUniformLocation("ambientColor");
-    specularColorLocation = phongProgram.getUniformLocation("specularColor");
-    emissionColorLocation = phongProgram.getUniformLocation("emissionColor");
-    shininessLocation = phongProgram.getUniformLocation("shininess");
-
-    nolightingMVPLocation = nolightingProgram.getUniformLocation("MVP");
-    nolightingColorLocation = nolightingProgram.getUniformLocation("color");
-
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
 
-    isHandleSetClearRequested = true;
+    isShapeHandleSetClearRequested = true;
 
     return true;
 }
 
 
+void GLSLSceneRendererImpl::initializeProgram
+(GLSLProgram& program, ProgramHandleSet& phs, const char* vertexShaderSource, const char* fragmentShaderSource)
+{
+    program.loadVertexShader(vertexShaderSource);
+    program.loadFragmentShader(fragmentShaderSource);
+    program.link();
+    
+    phs.useUniformBlockToPassTransformationMatrices = 
+        phs.transformBlockBuffer.initialize(program, "TransformBlock");
+
+    if(phs.useUniformBlockToPassTransformationMatrices){
+        phs.modelViewMatrixIndex = phs.transformBlockBuffer.checkUniformMatrix("modelViewMatrix");
+        phs.normalMatrixIndex = phs.transformBlockBuffer.checkUniformMatrix("normalMatrix");
+        phs.MVPIndex = phs.transformBlockBuffer.checkUniformMatrix("MVP");
+        phs.transformBlockBuffer.bind(program, 1);
+        phs.transformBlockBuffer.bindBufferBase(1);
+    } else {
+        phs.modelViewMatrixLocation = program.getUniformLocation("modelViewMatrix");
+        phs.normalMatrixLocation = program.getUniformLocation("normalMatrix");
+        phs.MVPLocation = program.getUniformLocation("MVP");
+        phs.shadowMatrixLocation = program.getUniformLocation("shadowMatrix");
+    }
+
+    phs.numLightsLocation = program.getUniformLocation("numLights");
+    if(phs.numLightsLocation >= 0){
+        phs.lightHandleSets.resize(maxNumLights);
+        boost::format lightFormat("lights[%1%].");
+        for(int i=0; i < maxNumLights; ++i){
+            LightHandleSet& lhs = phs.lightHandleSets[i];
+            string prefix = str(lightFormat % i);
+            lhs.position = program.getUniformLocation(prefix + "position");
+            lhs.intensity = program.getUniformLocation(prefix + "intensity");
+            lhs.ambientIntensity = program.getUniformLocation(prefix + "ambientIntensity");
+            lhs.constantAttenuation = program.getUniformLocation(prefix + "constantAttenuation");
+            lhs.linearAttenuation = program.getUniformLocation(prefix + "linearAttenuation");
+            lhs.quadraticAttenuation = program.getUniformLocation(prefix + "quadraticAttenuation");
+            lhs.falloffAngle = program.getUniformLocation(prefix + "falloffAngle");
+            lhs.falloffExponent = program.getUniformLocation(prefix + "falloffExponent");
+            lhs.beamWidth = program.getUniformLocation(prefix + "beamWidth");
+            lhs.direction = program.getUniformLocation(prefix + "direction");
+        }
+    }
+
+    phs.diffuseColorLocation = program.getUniformLocation("diffuseColor");
+    phs.ambientColorLocation = program.getUniformLocation("ambientColor");
+    phs.specularColorLocation = program.getUniformLocation("specularColor");
+    phs.emissionColorLocation = program.getUniformLocation("emissionColor");
+    phs.shininessLocation = program.getUniformLocation("shininess");
+    phs.colorLocation = program.getUniformLocation("color");
+}
+
+    
 void GLSLSceneRenderer::requestToClearCache()
 {
-    impl->isHandleSetClearRequested = true;
+    impl->isShapeHandleSetClearRequested = true;
 }
 
 
@@ -427,35 +457,42 @@ void GLSLSceneRenderer::beginRendering()
 
 void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
 {
-    isCheckingUnusedHandleSets = isPicking ? false : doUnusedHandleSetCheck;
+    isCheckingUnusedShapeHandleSets = isPicking ? false : doUnusedShapeHandleSetCheck;
 
-    if(isHandleSetClearRequested){
-        handleSetMaps[0].clear();
-        handleSetMaps[1].clear();
-        hasValidNextHandleSetMap = false;
-        isCheckingUnusedHandleSets = false;
-        isHandleSetClearRequested = false;
+    if(isShapeHandleSetClearRequested){
+        shapeHandleSetMaps[0].clear();
+        shapeHandleSetMaps[1].clear();
+        hasValidNextShapeHandleSetMap = false;
+        isCheckingUnusedShapeHandleSets = false;
+        isShapeHandleSetClearRequested = false;
     }
-    if(hasValidNextHandleSetMap){
-        currentHandleSetMapIndex = 1 - currentHandleSetMapIndex;
-        currentHandleSetMap = &handleSetMaps[currentHandleSetMapIndex];
-        nextHandleSetMap = &handleSetMaps[1 - currentHandleSetMapIndex];
-        hasValidNextHandleSetMap = false;
+    if(hasValidNextShapeHandleSetMap){
+        currentShapeHandleSetMapIndex = 1 - currentShapeHandleSetMapIndex;
+        currentShapeHandleSetMap = &shapeHandleSetMaps[currentShapeHandleSetMapIndex];
+        nextShapeHandleSetMap = &shapeHandleSetMaps[1 - currentShapeHandleSetMapIndex];
+        hasValidNextShapeHandleSetMap = false;
     }
-    currentHandleSet = 0;
+    currentShapeHandleSet = 0;
     
     if(doRenderingCommands){
         if(isPicking){
             currentProgram = &nolightingProgram;
+            currentProgramHandleSet = &nolightingHandleSet;
             currentNodePath.clear();
             pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
             currentProgram = &phongProgram;
+            currentProgramHandleSet = &phongHandleSet;
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if(currentProgramHandleSet->useUniformBlockToPassTransformationMatrices){
+            currentProgramHandleSet->transformBlockBuffer.bind(*currentProgram, 1);
+            currentProgramHandleSet->transformBlockBuffer.bindBufferBase(1);
+        }
         currentProgram->use();
     }
 
@@ -533,43 +570,43 @@ void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
         }
     }
 
-    glUniform1i(numLightsLocation, numLights);
+    glUniform1i(currentProgramHandleSet->numLightsLocation, numLights);
 }
 
 
 bool GLSLSceneRendererImpl::renderLight(const SgLight* light, const Affine3& T)
 {
-    LightInfoLocation* location = &lightInfoLocations[numLights];
+    LightHandleSet* lhs = &currentProgramHandleSet->lightHandleSets[numLights];
 
     if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
         Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
         Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-        glUniform4fv(location->position, 1, pos.data());
+        glUniform4fv(lhs->position, 1, pos.data());
 
     } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
         Vector3 p(viewMatrix * T.translation());
         Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
-        glUniform4fv(location->position, 1, pos.data());
-        glUniform1f(location->constantAttenuation, pointLight->constantAttenuation());
-        glUniform1f(location->linearAttenuation, pointLight->linearAttenuation());
-        glUniform1f(location->quadraticAttenuation, pointLight->quadraticAttenuation());
+        glUniform4fv(lhs->position, 1, pos.data());
+        glUniform1f(lhs->constantAttenuation, pointLight->constantAttenuation());
+        glUniform1f(lhs->linearAttenuation, pointLight->linearAttenuation());
+        glUniform1f(lhs->quadraticAttenuation, pointLight->quadraticAttenuation());
         
         if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
             Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
             Vector3f direction(d.cast<float>());
-            glUniform3fv(location->direction, 1, direction.data());
-            glUniform1f(location->falloffAngle, spotLight->cutOffAngle());
-            glUniform1f(location->falloffExponent, 4.0f);
-            glUniform1f(location->beamWidth, spotLight->beamWidth());
+            glUniform3fv(lhs->direction, 1, direction.data());
+            glUniform1f(lhs->falloffAngle, spotLight->cutOffAngle());
+            glUniform1f(lhs->falloffExponent, 4.0f);
+            glUniform1f(lhs->beamWidth, spotLight->beamWidth());
         }
     } else {
         return false;
     }
         
     Vector3f intensity(light->intensity() * light->color());
-    glUniform3fv(location->intensity, 1, intensity.data());
+    glUniform3fv(lhs->intensity, 1, intensity.data());
     Vector3f ambientIntensity(light->ambientIntensity() * light->color());
-    glUniform3fv(location->ambientIntensity, 1, ambientIntensity.data());
+    glUniform3fv(lhs->ambientIntensity, 1, ambientIntensity.data());
 
     ++numLights;
     
@@ -585,9 +622,9 @@ void GLSLSceneRenderer::endRendering()
 
 void GLSLSceneRendererImpl::endRendering()
 {
-    if(isCheckingUnusedHandleSets){
-        currentHandleSetMap->clear();
-        hasValidNextHandleSetMap = true;
+    if(isCheckingUnusedShapeHandleSets){
+        currentShapeHandleSetMap->clear();
+        hasValidNextShapeHandleSetMap = true;
     }
 }
 
@@ -753,15 +790,16 @@ void GLSLSceneRendererImpl::setLightingTransformMatrices()
     const Matrix3f N = MV.linear();
     const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
 
-    if(useUniformBlockToPassTransformationMatrices){
-        transformBlockBuffer.write(modelViewMatrixIndex, MV);
-        transformBlockBuffer.write(normalMatrixIndex, N);
-        transformBlockBuffer.write(MVPIndex, MVP);
-        transformBlockBuffer.flush();
+    ProgramHandleSet* phs = currentProgramHandleSet;
+    if(phs->useUniformBlockToPassTransformationMatrices){
+        phs->transformBlockBuffer.write(phs->modelViewMatrixIndex, MV);
+        phs->transformBlockBuffer.write(phs->normalMatrixIndex, N);
+        phs->transformBlockBuffer.write(phs->MVPIndex, MVP);
+        phs->transformBlockBuffer.flush();
     } else {
-        glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
-        glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, N.data());
-        glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
+        glUniformMatrix4fv(phs->modelViewMatrixLocation, 1, GL_FALSE, MV.data());
+        glUniformMatrix3fv(phs->normalMatrixLocation, 1, GL_FALSE, N.data());
+        glUniformMatrix4fv(phs->MVPLocation, 1, GL_FALSE, MVP.data());
     }
 }
 
@@ -769,21 +807,21 @@ void GLSLSceneRendererImpl::setLightingTransformMatrices()
 void GLSLSceneRendererImpl::flushNolightingTransformMatrices()
 {
     const Matrix4f MVP = (projectionMatrix * modelViewStack.back().matrix()).cast<float>();
-    glUniformMatrix4fv(nolightingMVPLocation, 1, GL_FALSE, MVP.data());
+    glUniformMatrix4fv(nolightingHandleSet.MVPLocation, 1, GL_FALSE, MVP.data());
 }
 
 
-HandleSet* GLSLSceneRendererImpl::getOrCreateHandleSet(SgObject* obj)
+ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
 {
-    HandleSet* handleSet;
-    HandleSetMap::iterator p = currentHandleSetMap->find(obj);
-    if(p == currentHandleSetMap->end()){
-        p = currentHandleSetMap->insert(HandleSetMap::value_type(obj, new HandleSet)).first;
+    ShapeHandleSet* handleSet;
+    ShapeHandleSetMap::iterator p = currentShapeHandleSetMap->find(obj);
+    if(p == currentShapeHandleSetMap->end()){
+        p = currentShapeHandleSetMap->insert(ShapeHandleSetMap::value_type(obj, new ShapeHandleSet)).first;
     }
     handleSet = p->second;
 
-    if(isCheckingUnusedHandleSets){
-        nextHandleSetMap->insert(*p);
+    if(isCheckingUnusedShapeHandleSets){
+        nextShapeHandleSetMap->insert(*p);
     }
 
     if(currentProgram == &phongProgram){
@@ -811,7 +849,7 @@ void GLSLSceneRendererImpl::visitShape(SgShape* shape)
         if(!isPicking){
             renderMaterial(shape->material());
         }
-        HandleSet* handleSet = getOrCreateHandleSet(mesh);
+        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh);
         if(!handleSet->numVertices){
             createMeshVertexArray(mesh, handleSet);
         }
@@ -866,7 +904,7 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, HandleSet* handleSet)
+void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet)
 {
     SgIndexArray& triangleVertices = mesh->triangleVertices();
     const size_t totalNumVertices = triangleVertices.size();
@@ -970,7 +1008,7 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
             renderMaterial(lineSet->material());
         }
 
-        HandleSet* handleSet = getOrCreateHandleSet(lineSet);
+        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(lineSet);
         if(!handleSet->numVertices){
             const SgVertexArray& orgVertices = *lineSet->vertices();
             SgVertexArray vertices;
@@ -1052,7 +1090,7 @@ void GLSLSceneRendererImpl::setNolightingColor(const Vector4f& color)
 {
     //if(!isPicking){
         if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
-            glUniform4fv(nolightingColorLocation, 1, color.data());
+            glUniform4fv(nolightingHandleSet.colorLocation, 1, color.data());
             currentNolightingColor = color;
             stateFlag.set(CURRENT_NOLIGHTING_COLOR);
         }
@@ -1092,7 +1130,7 @@ void GLSLSceneRenderer::enableColorMaterial(bool on)
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        glUniform3fv(diffuseColorLocation, 1, color.data());
+        glUniform3fv(currentProgramHandleSet->diffuseColorLocation, 1, color.data());
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
@@ -1108,7 +1146,7 @@ void GLSLSceneRenderer::setDiffuseColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setAmbientColor(const Vector4f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        glUniform3fv(ambientColorLocation, 1, color.data());
+        glUniform3fv(currentProgramHandleSet->ambientColorLocation, 1, color.data());
         ambientColor = color;
         stateFlag.set(AMBIENT_COLOR);
     }
@@ -1124,7 +1162,7 @@ void GLSLSceneRenderer::setAmbientColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setEmissionColor(const Vector4f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
-        glUniform3fv(emissionColorLocation, 1, color.data());
+        glUniform3fv(currentProgramHandleSet->emissionColorLocation, 1, color.data());
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
@@ -1140,7 +1178,7 @@ void GLSLSceneRenderer::setEmissionColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setSpecularColor(const Vector4f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        glUniform3fv(specularColorLocation, 1, color.data());
+        glUniform3fv(currentProgramHandleSet->specularColorLocation, 1, color.data());
         specularColor = color;
         stateFlag.set(SPECULAR_COLOR);
     }
@@ -1156,7 +1194,7 @@ void GLSLSceneRenderer::setSpecularColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
-        glUniform1f(shininessLocation, s);
+        glUniform1f(currentProgramHandleSet->shininessLocation, s);
         shininess = s;
         stateFlag.set(SHININESS);
     }
@@ -1233,6 +1271,12 @@ void GLSLSceneRendererImpl::enableLighting(bool on)
 void GLSLSceneRenderer::enableLighting(bool on)
 {
     impl->enableLighting(on);
+}
+
+
+void GLSLSceneRenderer::enableShadowOfLight(int index)
+{
+
 }
 
 
@@ -1381,9 +1425,9 @@ void GLSLSceneRenderer::showNormalVectors(double length)
 void GLSLSceneRenderer::enableUnusedCacheCheck(bool on)
 {
     if(!on){
-        impl->nextHandleSetMap->clear();
+        impl->nextShapeHandleSetMap->clear();
     }
-    impl->doUnusedHandleSetCheck = on;
+    impl->doUnusedShapeHandleSetCheck = on;
 }
 
 
