@@ -114,6 +114,8 @@ public:
     DoubleSpinBox worldLightIntensitySpin;
     DoubleSpinBox worldLightAmbientSpin;
     CheckBox additionalLightsCheck;
+    CheckBox shadowCheck;
+    SpinBox shadowLightSpin;
     CheckBox fogCheck;
     CheckBox gridCheck[3];
     DoubleSpinBox gridSpanSpin[3];
@@ -2205,7 +2207,8 @@ void SceneWidgetImpl::updateDefaultLights()
     worldLight->setAmbientIntensity(config->worldLightAmbientSpin.value());
 
     renderer->enableAdditionalLights(config->additionalLightsCheck.isChecked());
-
+    
+    renderer->enableShadowOfLight(config->shadowCheck.isChecked(), config->shadowLightSpin.value());
     renderer->enableFog(config->fogCheck.isChecked());
 
     worldLight->notifyUpdate(modified);
@@ -2953,6 +2956,16 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
+    shadowCheck.setText(_("Shadow of light"));
+    shadowCheck.setChecked(false);
+    shadowCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
+    hbox->addWidget(&shadowCheck);
+    shadowLightSpin.setRange(0, 99);
+    shadowLightSpin.setValue(0);
+    shadowLightSpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
+    hbox->addWidget(&shadowLightSpin);
+
+    hbox->addSpacing(8);
     fogCheck.setText(_("Fog"));
     fogCheck.setChecked(true);
     fogCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
@@ -3120,6 +3133,8 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("worldLightIntensity", worldLightIntensitySpin.value());
     archive.write("worldLightAmbient", worldLightAmbientSpin.value());
     archive.write("additionalLights", additionalLightsCheck.isChecked());
+    archive.write("shadow", shadowCheck.isChecked());
+    archive.write("shadowLightIndex", shadowLightSpin.value());
     archive.write("fog", fogCheck.isChecked());
     archive.write("floorGrid", gridCheck[FLOOR_GRID].isChecked());
     archive.write("floorGridSpan", gridSpanSpin[FLOOR_GRID].value());
@@ -3151,6 +3166,8 @@ void ConfigDialog::restoreState(const Archive& archive)
     worldLightIntensitySpin.setValue(archive.get("worldLightIntensity", worldLightIntensitySpin.value()));
     worldLightAmbientSpin.setValue(archive.get("worldLightAmbient", worldLightAmbientSpin.value()));
     additionalLightsCheck.setChecked(archive.get("additionalLights", additionalLightsCheck.isChecked()));
+    shadowCheck.setChecked(archive.get("shadow", shadowCheck.isChecked()));
+    shadowLightSpin.setValue(archive.get("shadowLightIndex", shadowLightSpin.value()));
     fogCheck.setChecked(archive.get("fog", fogCheck.isChecked()));
     gridCheck[FLOOR_GRID].setChecked(archive.get("floorGrid", gridCheck[FLOOR_GRID].isChecked()));
     gridSpanSpin[FLOOR_GRID].setValue(archive.get("floorGridSpan", gridSpanSpin[FLOOR_GRID].value()));
