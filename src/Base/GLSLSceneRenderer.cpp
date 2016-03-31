@@ -309,14 +309,15 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     isShadowEnabled = true;
     isMakingShadowMap = false;
     shadowLightIndex = 0;
-    /*
-    shadowMapCamera = new SgPerspectiveCamera();
-    shadowMapCamera->setFieldOfView(radian(50.0));
-    */
+
+    //shadowMapCamera = new SgPerspectiveCamera();
+    //shadowMapCamera->setFieldOfView(radian(50.0));
+
     shadowMapCamera = new SgOrthographicCamera();
     shadowMapCamera->setHeight(5.0);
+
     shadowMapCamera->setNearDistance(1.0);
-    shadowMapCamera->setFarDistance(10.0);
+    shadowMapCamera->setFarDistance(20.0);
 
     shadowMapWidth = 1024;
     shadowMapHeight = 1024;
@@ -642,7 +643,7 @@ void GLSLSceneRendererImpl::beginActualRendering()
             if(hasDirection){
                 Quaternion rot;
                 rot.setFromTwoVectors(-Vector3::UnitZ(), direction);
-                T.linear() = rot * T.linear();
+                T.linear() = T.linear() * rot;
             }
             renderCamera(shadowMapCamera, T);
             BPV = shadowBias * PV;
