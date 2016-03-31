@@ -15,12 +15,12 @@ items:
       children: 
         - 
           id: 2
-          name: "Floor"
+          name: "floor"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "../model/misc/floor.wrl"
-            currentBaseLink: "BASE"
+            modelFile: "../model/misc/unevenfloor.wrl"
+            currentBaseLink: "WAIST"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -44,7 +44,7 @@ items:
           data: 
             modelFile: "../model/misc/trackedVehicle.yaml"
             currentBaseLink: "ROOT"
-            rootPosition: [ 0, 0, 0.6 ]
+            rootPosition: [ -5, 5, 0.6 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -59,7 +59,7 @@ items:
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
                0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ 0, 0, 0.6 ]
+            initialRootPosition: [ -5, 5, 0.6 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -117,25 +117,31 @@ items:
 views: 
   - 
     id: 0
+    name: "CameraImage"
     plugin: Base
-    class: ItemPropertyView
+    class: ImageView
     mounted: true
   - 
     id: 1
     plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 2
+    plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 5 ]
+      selected: [ 3 ]
       checked: [ 1, 2, 3 ]
-      expanded: [ 1, 2, 3 ]
+      expanded: [ 1, 3 ]
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
@@ -176,9 +182,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ 3.63460914, 7.07802699, 0.514359526 ]
-          direction: [ -0.403564136, -0.910656997, 0.0885427666 ]
-          up: [ 0.035873583, 0.0809500312, 0.996072376 ]
+          eye: [ 2.13603247, 21.4299594, 13.8352714 ]
+          direction: [ -0.030625062, -0.824008714, -0.565748835 ]
+          up: [ -0.0210120826, -0.565358503, 0.824577623 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -190,7 +196,7 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 4
+    id: 5
     name: "Task"
     plugin: Base
     class: TaskView
@@ -198,14 +204,14 @@ views:
       layoutMode: horizontal
       isAutoMode: false
   - 
-    id: 5
+    id: 6
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -217,15 +223,17 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
+      currentBodyItem: 3
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
+      currentBodyItem: 3
   - 
-    id: 8
+    id: 9
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -248,6 +256,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -308,5 +318,8 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+Media: 
+  "PulseAudioManager": 
+    keepStreamConnection: false
 OpenRTM: 
   "deleteUnmanagedRTCsOnStartingSimulation": false

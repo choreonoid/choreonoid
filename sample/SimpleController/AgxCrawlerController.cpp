@@ -62,8 +62,8 @@ public:
         }
 
         for(int i=0; i<4; i++){
-            wheelR[i]->dq() = -2.0 * pos[1] - pos[0];
-            wheelL[i]->dq() = -2.0 * pos[1] + pos[0];
+            wheelR[i]->dq() = -5*(2.0 * pos[1] + pos[0]);
+            wheelL[i]->dq() = -5*(2.0 * pos[1] - pos[0]);
         }
 
         return true;
