@@ -11,15 +11,17 @@
                      lua LoadGen.lua -style=pointer_c -spec=gl -version=4.0 -profile=core core_4_0.
                      lua LoadGen.lua -style=pointer_c -spec=gl -version=4.4 -profile=core core_4_4.
 */
-//#include "gl_core_3_3.h"
+#include "gl_core_3_3.h"
 //#include "gl_core_4_0.h"
-#include "gl_core_4_4.h"
+//#include "gl_core_4_4.h"
 
 #include <cnoid/EigenTypes>
 #include <vector>
 #include <string>
 #include <stdexcept>
 #include <cstring>
+
+#define CNOID_GL_CORE_3_3
 
 namespace cnoid {
 
@@ -52,7 +54,16 @@ public:
         return glGetUniformLocation(programHandle, name.c_str());
     }
     GLuint getSubroutineIndex(GLenum shaderType, const GLchar* name) const {
+#ifdef CNOID_GL_CORE_4_4
         return glGetSubroutineIndex(programHandle, shaderType, name);
+#else
+        return -1;
+#endif
+    }
+    void setUniformSubroutines(GLenum shaderType, GLsizei count, const GLuint *indices){
+#ifdef CNOID_GL_CORE_4_4
+        return glUniformSubroutinesuiv(shaderType, count, indices);
+#endif
     }
 
 private:

@@ -433,8 +433,8 @@ SceneWidget::SceneWidget()
 
     QGLFormat format;
     if(useGLSL){
-        //format.setVersion(3, 3);
-        format.setVersion(4, 4);
+        format.setVersion(3, 3);
+        //format.setVersion(4, 4);
         format.setProfile(QGLFormat::CoreProfile);
     }
     
@@ -2208,7 +2208,7 @@ void SceneWidgetImpl::updateDefaultLights()
 
     renderer->enableAdditionalLights(config->additionalLightsCheck.isChecked());
     
-    renderer->enableShadowOfLight(config->shadowCheck.isChecked(), config->shadowLightSpin.value());
+    renderer->enableShadowOfLight(config->shadowLightSpin.value(), config->shadowCheck.isChecked());
     renderer->enableFog(config->fogCheck.isChecked());
 
     worldLight->notifyUpdate(modified);

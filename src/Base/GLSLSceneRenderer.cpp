@@ -24,6 +24,8 @@ using namespace cnoid;
 
 namespace {
 
+const bool DIVIDE_SHADOW_PROGRM = true;
+
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
@@ -138,6 +140,9 @@ public:
     GLSLProgram shadowProgram;
     ProgramHandleSet shadowHandleSet;
 
+    GLSLProgram shadowmapProgram;
+    ProgramHandleSet shadowmapHandleSet;
+    
     GLSLProgram nolightingProgram;
     ProgramHandleSet nolightingHandleSet;
 
@@ -468,20 +473,36 @@ void GLSLSceneRendererImpl::initializeProgram
 
 void GLSLSceneRendererImpl::initializeShadowProgram()
 {
-    initializeProgram(
-        shadowProgram, shadowHandleSet,
-        ":/Base/shader/shadow.vert",
-        ":/Base/shader/shadow.frag");
+    if(DIVIDE_SHADOW_PROGRM){
+        initializeProgram(
+            shadowProgram, shadowHandleSet,
+            ":/Base/shader/shadow2.vert",
+            ":/Base/shader/shadow2.frag");
+        initializeProgram(
+            shadowmapProgram, shadowmapHandleSet,
+            ":/Base/shader/shadowmap.vert",
+            ":/Base/shader/shadowmap.frag");
+    } else {
+        initializeProgram(
+            shadowProgram, shadowHandleSet,
+            ":/Base/shader/shadow.vert",
+            ":/Base/shader/shadow.frag");
+        pass1Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "recordDepth");
+        pass2Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "shadeWithShadow");
+    }
 
-    pass1Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "recordDepth");
-    pass2Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "shadeWithShadow");
-
-    GLfloat border[] = {1.0f, 0.0f, 0.0f, 0.0f };
+    GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
     // The depth buffer texture
     GLuint depthTex;
     glGenTextures(1, &depthTex);
     glBindTexture(GL_TEXTURE_2D, depthTex);
+
+#ifdef CNOID_GL_CORE_4_4
     glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight);
+#else
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT,  GL_FLOAT, NULL);
+#endif
+    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -543,7 +564,7 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
         shapeHandleSetMaps[1].clear();
         hasValidNextShapeHandleSetMap = false;
         isCheckingUnusedShapeHandleSets = false;
-        isShapeHandleSetClearRequested = false;
+        isShapeHandleSetClearRequested = false; 
     }
     if(hasValidNextShapeHandleSetMap){
         currentShapeHandleSetMapIndex = 1 - currentShapeHandleSetMapIndex;
@@ -562,8 +583,13 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
             if(isShadowEnabled){
-                currentProgram = &shadowProgram;
-                currentProgramHandleSet = &shadowHandleSet;
+                if(DIVIDE_SHADOW_PROGRM && isMakingShadowMap){
+                    currentProgram = &shadowmapProgram;
+                    currentProgramHandleSet = &shadowmapHandleSet;
+                } else {
+                    currentProgram = &shadowProgram;
+                    currentProgramHandleSet = &shadowHandleSet;
+                }
             } else {
                 currentProgram = &phongProgram;
                 currentProgramHandleSet = &phongHandleSet;
@@ -757,13 +783,19 @@ void GLSLSceneRendererImpl::render()
 
 void GLSLSceneRendererImpl::renderWithShadows()
 {
-    shadowProgram.use();
+    if(!DIVIDE_SHADOW_PROGRM){
+        shadowProgram.use();
+    } else {
+        shadowmapProgram.use();
+    }
 
     // Pass 1 (shadow map generation)
     glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
     Array4i vp = self->viewport();
     self->setViewport(0, 0, shadowMapWidth, shadowMapHeight);
-    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &pass1Index);
+    if(!DIVIDE_SHADOW_PROGRM){
+        shadowProgram.setUniformSubroutines(GL_FRAGMENT_SHADER, 1, &pass1Index);
+    }
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
@@ -777,7 +809,9 @@ void GLSLSceneRendererImpl::renderWithShadows()
     // Pass 2 (render)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &pass2Index);
+    if(!DIVIDE_SHADOW_PROGRM){
+        shadowProgram.setUniformSubroutines(GL_FRAGMENT_SHADER, 1, &pass2Index);
+    }
     glDisable(GL_CULL_FACE);
     render();
 }

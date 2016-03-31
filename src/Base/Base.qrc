@@ -32,6 +32,10 @@
   <file>shader/phong.frag</file>
   <file>shader/shadow.vert</file>
   <file>shader/shadow.frag</file>
+  <file>shader/shadow2.vert</file>
+  <file>shader/shadow2.frag</file>
+  <file>shader/shadowmap.vert</file>
+  <file>shader/shadowmap.frag</file>
   <file>shader/nolighting.vert</file>
   <file>shader/nolighting.frag</file>
 
