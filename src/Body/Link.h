@@ -120,7 +120,8 @@ public:
         /// fixed joint(0 dof)
         FIXED_JOINT = 3,
         /// special joint for pseudo crawler simulation
-        CRAWLER_JOINT = 4
+        CRAWLER_JOINT = 4,
+        AGX_CRAWLER_JOINT = 5
     };
 
     int jointId() const { return jointId_; }
