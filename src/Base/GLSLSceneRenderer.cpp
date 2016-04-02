@@ -159,10 +159,9 @@ public:
     bool isShadowEnabled;
     bool isMakingShadowMap;
     int shadowLightIndex;
-    //SgPerspectiveCameraPtr shadowMapCamera;
-    SgOrthographicCameraPtr shadowMapCamera;
+    SgCameraPtr shadowMapCamera;
     Matrix4 shadowBias;
-    Affine3 BPV;
+    Matrix4 BPV;
     int shadowMapWidth;
     int shadowMapHeight;
     GLuint shadowFBO;
@@ -310,15 +309,18 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     isMakingShadowMap = false;
     shadowLightIndex = 0;
 
-    //shadowMapCamera = new SgPerspectiveCamera();
-    //shadowMapCamera->setFieldOfView(radian(50.0));
-
-    shadowMapCamera = new SgOrthographicCamera();
-    shadowMapCamera->setHeight(5.0);
-
+    if(true){
+        SgPerspectiveCamera* camera = new SgPerspectiveCamera();
+        camera->setFieldOfView(radian(50.0));
+        shadowMapCamera = camera;
+    } else {
+        SgOrthographicCamera* camera = new SgOrthographicCamera();
+        camera->setHeight(5.0);
+        shadowMapCamera = camera;
+    }
     shadowMapCamera->setNearDistance(1.0);
     shadowMapCamera->setFarDistance(20.0);
-
+    
     shadowMapWidth = 1024;
     shadowMapHeight = 1024;
 
@@ -327,7 +329,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
         0.0, 0.5, 0.0, 0.5,
         0.0, 0.0, 0.5, 0.5,
         0.0, 0.0, 0.0, 1.0;
-
+    
     isPicking = false;
     pickedPoint.setZero();
 
@@ -620,10 +622,10 @@ void GLSLSceneRendererImpl::beginActualRendering()
     if(!isMakingShadowMap){
         SgCamera* camera = self->currentCamera();
         if(camera){
-            const Affine3& cameraPosition = self->currentCameraPosition();
-            renderCamera(camera, cameraPosition);
+            const Affine3& T = self->currentCameraPosition();
+            renderCamera(camera, T);
             if(!isPicking){
-                renderLights(cameraPosition);
+                renderLights(T);
             }
         }
     } else {
