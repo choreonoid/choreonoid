@@ -530,12 +530,29 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
             }
         }
 
-        // create at least one joint if no joint is specified in the file
-        if(joints.size() == 0 && linkdataMap.size() > 0){
-            JointInfoPtr j(new JointInfo());
-            j->parent = linkdataMap.begin()->second;
-            j->jointName = j->parentName = j->parent->linkName;
-            joints.push_back(j);
+        // create fixed joint if link is not referred by joint at all
+        if(linkdataMap.size() > 0){
+            std::map<std::string, bool> usedlinks;
+            std::vector<JointInfoPtr>::iterator it = joints.begin();
+            while(it != joints.end()){
+                usedlinks[(*it)->parentName] = true;
+                usedlinks[(*it)->childName] = true;
+                it++;
+            }
+            std::map<std::string, LinkInfoPtr>::const_iterator it2 = linkdataMap.begin();
+            while(it2 != linkdataMap.end()){
+                if (it2->second->linkName != "world" && usedlinks.find(it2->second->linkName) == usedlinks.end()) {
+                    JointInfoPtr j(new JointInfo());
+                    j->parent = worldlink;
+                    j->child = it2->second;
+                    j->parentName = j->parent->linkName;
+                    j->jointName = j->childName = j->child->linkName;
+                    j->jointType = "revolute";
+                    j->upper = j->lower = 0.0;
+                    joints.push_back(j);
+                }
+                it2++;
+            }
         }
 
         // construct tree structure of joints and links
@@ -555,19 +572,25 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         JointInfoPtr root;
         if (*it == "world") {
             vector<JointInfoPtr> children = findChildJoints(*it);
-            if (children.size() != 1) {
-                os() << "Error: multiple models defined in one model file. please consider reading each separate files." << endl;
-                return NULL;
+            if (children.size() == 1) {
+                vector<JointInfoPtr>::iterator c = children.begin();
+                link->setName((*c)->childName);
+                link->setJointType(Link::FIXED_JOINT);
+                link->setJointAxis(Vector3::Zero());
+                link->Tb() = (*c)->pose;
+                root.reset(new JointInfo());
+                root->jointName = (*c)->jointName;
+                root->childName = (*c)->parentName;
+                root->child = (*c)->parent;
+            } else {
+                link->setName(*it);
+                link->setJointType(Link::FIXED_JOINT);
+                link->setJointAxis(Vector3::Zero());
+                root.reset(new JointInfo());
+                root->jointName = *it;
+                root->childName = *it;
+                root->child = linkdataMap[*it];
             }
-            vector<JointInfoPtr>::iterator c = children.begin();
-            link->setName((*c)->childName);
-            link->setJointType(Link::FIXED_JOINT);
-            link->setJointAxis(Vector3::Zero());
-            link->Tb() = (*c)->pose;
-            root.reset(new JointInfo());
-            root->jointName = (*c)->jointName;
-            root->childName = (*c)->parentName;
-            root->child = (*c)->parent;
         } else {
             link->setName(*it);
             link->setJointType(Link::FREE_JOINT);
@@ -1051,15 +1074,19 @@ void SDFBodyLoaderImpl::convertJointType(Link *link, JointInfoPtr info)
 
     assert(link);
     assert(info);
-    
-    it = jointTypeMap.find(info->jointType);
-    
-    if (it != jointTypeMap.end()) {
-        link->setJointType(it->second);
-    } else {
-        os() << "Warning: unable to handle joint type " << info->jointType << " of joint "
-             << info->jointName << " assume as fixed joint." << std::endl;
+
+    if (info->jointType == "revolute" && info->upper == info->lower) {
+        // Gazebo's way to express fixed joint
         link->setJointType(Link::FIXED_JOINT);
+    } else {
+        it = jointTypeMap.find(info->jointType);
+        if (it != jointTypeMap.end()) {
+            link->setJointType(it->second);
+        } else {
+            os() << "Warning: unable to handle joint type " << info->jointType << " of joint "
+                 << info->jointName << " assume as fixed joint." << std::endl;
+            link->setJointType(Link::FIXED_JOINT);
+        }
     }
 
     return;
