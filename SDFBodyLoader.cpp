@@ -887,6 +887,8 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
     for(sdf::ElementPtr el = geometry->GetFirstElement(); el; el = el->GetNextElement()) {
         if(el->GetName() == "mesh") {
             std::string url = sdf::findFile(el->Get<std::string>("uri"));
+            std::string urllower = url;
+            boost::algorithm::to_lower(urllower);
             SgPosTransformPtr transform = new SgPosTransform(pose);
 
             if (!url.empty()) {
@@ -894,7 +896,7 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
                     os() << "     read mesh " << url << std::endl;
                 }
 
-                if (boost::algorithm::iends_with(url, "dae")) {
+                if (boost::algorithm::iends_with(urllower, "dae")) {
                     SgScaleTransformPtr scaletrans = new SgScaleTransform;
                     Assimp::Importer importer;
                     const aiScene* scene = importer.ReadFile(url, aiProcess_SortByPType|aiProcess_GenNormals|aiProcess_Triangulate|aiProcess_GenUVCoords|aiProcess_FlipUVs);
@@ -911,7 +913,7 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
                     loadMaterials(url, scene, material_table, texture_table);
                     buildMesh(scene, scene->mRootNode, scaletrans, material_table, texture_table);
                     transform->addChild(scaletrans);
-                } else if (boost::algorithm::iends_with(url, "stl")) {
+                } else if (boost::algorithm::iends_with(urllower, "stl")) {
                     STLSceneLoader loader;
                     SgShapePtr shape = dynamic_cast<SgShape*>(loader.load(url));
 
@@ -920,7 +922,15 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
                             shape->setMaterial(material);
                         }
 
-                        transform->addChild(shape);
+                        if(el->HasElement("scale")){
+                            sdf::Vector3 scale = el->Get<sdf::Vector3>("scale");
+                            SgScaleTransformPtr scaletrans = new SgScaleTransform;
+                            scaletrans->setScale(Vector3(scale.x, scale.y, scale.z));
+                            scaletrans->addChild(shape);
+                            transform->addChild(scaletrans);
+                        } else {
+                            transform->addChild(shape);
+                        }
                     }
                 }
             } else {
