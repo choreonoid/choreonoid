@@ -48,9 +48,10 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
         // directional light
         vec3 s = normalize(vec3(light.position));
         vec3 v = normalize(vec3(-position));
-        vec3 r = reflect(-s, normal);
+        vec3 n = normalize(normal);
+        vec3 r = reflect(-s, n);
         return light.intensity * (
-            diffuseColor * max(dot(s, normal), 0.0) +
+            diffuseColor * max(dot(s, n), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess));
     } else {
         // point light
@@ -72,6 +73,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
         }
         
         vec3 v = normalize(vec3(-position));
+        vec3 n = normalize(normal);
         vec3 r = reflect(-s, normal);
         //float distance = l.length();
         float distance = sqrt(dot(l, l));
@@ -81,7 +83,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
                         distance * distance * light.quadraticAttenuation);
         
         return ki * light.intensity * (
-            diffuseColor * max(dot(s, normal), 0.0) +
+            diffuseColor * max(dot(s, n), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess));
     }
 }

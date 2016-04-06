@@ -26,7 +26,7 @@ uniform mat3 normalMatrix;
 
 void main()
 {
-    normal = normalize(normalMatrix * vertexNormal);
+    normal = normalMatrix * vertexNormal;
     position = vec3(modelViewMatrix * vec4(vertexPosition, 1.0));
 
     gl_Position = MVP * vec4(vertexPosition, 1.0);

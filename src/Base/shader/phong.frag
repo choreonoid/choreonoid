@@ -21,15 +21,13 @@ uniform float shininess;
 uniform int numLights;
 
 struct LightInfo {
-    // the fourth element is 0.0 if the light is a directional light
-    vec4 position;
+    vec4 position; // the fourth element is 0.0 if the light is a directional light
     vec3 intensity;
     vec3 ambientIntensity;
     float constantAttenuation;
     float linearAttenuation;
     float quadraticAttenuation;
-    // The following value is 0.0 if the light is not a spot light
-    float falloffAngle; 
+    float falloffAngle; // 0.0 must be set if the light is not a spot light
     float falloffExponent;
     float beamWidth;
     vec3 direction;
@@ -45,9 +43,10 @@ vec3 ads(LightInfo light)
         // directional light
         vec3 s = normalize(vec3(light.position));
         vec3 v = normalize(vec3(-position));
-        vec3 r = reflect(-s, normal);
+        vec3 n = normalize(normal);
+        vec3 r = reflect(-s, n);
         return light.intensity * (
-            diffuseColor * max(dot(s, normal), 0.0) +
+            diffuseColor * max(dot(s, n), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess)) +
             light.ambientIntensity * ambientColor;
     } else {
@@ -70,7 +69,9 @@ vec3 ads(LightInfo light)
         }
         
         vec3 v = normalize(vec3(-position));
-        vec3 r = reflect(-s, normal);
+        vec3 n = normalize(normal);
+        vec3 r = reflect(-s, n);
+        
         //float distance = l.length();
         float distance = sqrt(dot(l, l));
         ki *= 1.0 / max(1.0,
@@ -79,7 +80,7 @@ vec3 ads(LightInfo light)
                         distance * distance * light.quadraticAttenuation);
         
         return ki * light.intensity * (
-            diffuseColor * max(dot(s, normal), 0.0) +
+            diffuseColor * max(dot(s, n), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess)) +
             light.ambientIntensity * ambientColor;
     }

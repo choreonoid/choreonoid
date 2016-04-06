@@ -884,7 +884,6 @@ inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)
     if(SHOW_IMAGE_FOR_PICKING){
         color[2] = 1.0f;
     }
-    //glUniform3f(nolightingColorLocation, r, g, b);
     setNolightingColor(color);
 }
         

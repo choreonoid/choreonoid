@@ -29,7 +29,7 @@ uniform mat4 shadowMatrix;
 
 void main()
 {
-    normal = normalize(normalMatrix * vertexNormal);
+    normal = normalMatrix * vertexNormal;
     position = vec3(modelViewMatrix * vec4(vertexPosition, 1.0));
     shadowCoord = shadowMatrix * vec4(vertexPosition, 1.0);
     
