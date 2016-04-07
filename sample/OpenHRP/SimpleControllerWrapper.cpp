@@ -15,10 +15,10 @@ using namespace cnoid;
 using namespace OpenHRP;
 
 
-class SimpleControllerWrapper : public OpenHRPControllerBase
+class SimpleControllerWrapper : public SimpleControllerIO, public OpenHRPControllerBase
 {
     SimpleController* controller;
-    BodyPtr body;
+    BodyPtr ioBody;
     bool ready;
     OpenHRP::DblSequence u;
     OpenHRP::DblSequence_var q;
@@ -39,8 +39,8 @@ public:
             BodyLoader loader;
             loader.setMessageSink(cout);
             loader.setShapeLoadingEnabled(false);
-            body = loader.load(modelfile);
-            if(body){
+            ioBody = loader.load(modelfile);
+            if(ioBody){
                 ready = true;
             } else {
                 cout << modelfile << " cannot be loaded." << endl;
@@ -54,48 +54,53 @@ public:
         }
     }
     
-    void start(){
+    virtual void start(){
         if(ready){
             input();
-            controller->setIoBody(body);
-            controller->setTimeStep(timeStep);
-            controller->setImmediateMode(false);
-            controller->setOutputStream(cout);
-            ready = controller->initialize();
-            if(!ready){
+            if(!controller->initialize(this) || !controller->start()){
+                ready = false;
                 cout << "Intializing the controller failed." << endl;
             }
         }
     }
 
-    void input(){
+    virtual void input(){
         if(ready){
             dynamicsSimulator->getCharacterAllLinkData(
                 characterName.c_str(), DynamicsSimulator::JOINT_VALUE, q);
-            int n = std::min((int)q->length(), body->numJoints());
+            int n = std::min((int)q->length(), ioBody->numJoints());
             for(int i=0; i < n; ++i){
-                body->joint(i)->q() = q[i];
+                ioBody->joint(i)->q() = q[i];
             }
         }
     }
 
-    void control(){
+    virtual void control(){
         if(ready){
             controller->control();
         }
     }
 
-    void output() {
+    virtual void output() {
         if(ready){
-            u.length(body->numJoints());
-            for(int i=0; i < body->numJoints(); ++i){
-                u[i] = body->joint(i)->u();
+            u.length(ioBody->numJoints());
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                u[i] = ioBody->joint(i)->u();
             }
             dynamicsSimulator->setCharacterAllLinkData(
                 characterName.c_str(), DynamicsSimulator::JOINT_TORQUE, u);
         }
     }
 
+    virtual std::string optionString() const { return ""; }
+    virtual std::vector<std::string> options() const { return std::vector<std::string>(); }
+    virtual Body* body() { return ioBody; }
+    virtual double timeStep() const { return OpenHRPControllerBase::timeStep; }
+    virtual std::ostream& os() const { return std::cout; }
+    virtual void setJointOutput(int stateTypes) { }
+    virtual void setLinkOutput(Link* link, int stateTypes) { }
+    virtual void setJointInput(int stateTypes) { }
+    virtual void setLinkInput(Link* link, int stateTypes) { }
 };
 
 
