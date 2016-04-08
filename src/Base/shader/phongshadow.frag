@@ -38,6 +38,7 @@ struct LightInfo {
 
 uniform LightInfo lights[10];
 
+uniform bool isShadowEnabled;
 uniform sampler2DShadow shadowMap;
 
 layout(location = 0) out vec4 color;
@@ -97,8 +98,10 @@ void main()
         ambientAndEmission += lights[i].ambientIntensity * ambientColor;
     }
 
-    float shadow = textureProj(shadowMap, shadowCoord);
-
-    // If the fragment is in shadow, use ambient light only.
-    color = vec4(diffuseAndSpecular * shadow + ambientAndEmission, 1.0);
+    if(isShadowEnabled){
+        float shadow = textureProj(shadowMap, shadowCoord);
+        color = vec4(diffuseAndSpecular * shadow + ambientAndEmission, 1.0);
+    } else {
+        color = vec4(diffuseAndSpecular + ambientAndEmission, 1.0);
+    }
 }

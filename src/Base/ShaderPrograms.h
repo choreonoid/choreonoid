@@ -106,6 +106,8 @@ public:
     GLint normalMatrixLocation;
     GLint MVPLocation;
 
+    bool isShadowEnabled_;
+    GLint isShadowEnabledLocation;
     GLint shadowMatrixLocation;
     GLint shadowMapLocation;
 
@@ -131,6 +133,8 @@ public:
     virtual void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix);
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV);
+    bool isShadowEnabled() const { return isShadowEnabled_; }
+    void setShadowEnabled(bool on) { isShadowEnabled_ = on; }
 };
 
 }

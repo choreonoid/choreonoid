@@ -32,7 +32,7 @@
   <file>shader/phongshadow.frag</file>
   <file>shader/shadowmap.frag</file>
   <file>shader/nolighting.vert</file>
-  <file>shader/nolighting.frag</file>
+  <file>shader/solidcolor.frag</file>
 
   <file alias="LICENSE">../../LICENSE</file>
 

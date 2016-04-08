@@ -7,7 +7,6 @@
 #include <cnoid/SceneLights>
 #include <boost/format.hpp>
 
-
 using namespace std;
 using namespace cnoid;
 
@@ -130,6 +129,7 @@ void LightingProgram::setNumLights(int n)
 PhongShadowProgram::PhongShadowProgram()
 {
     maxNumLights_ = 10;
+    isShadowEnabled_ = false;
 }
 
 
@@ -179,7 +179,9 @@ void PhongShadowProgram::initialize()
             handles.direction = getUniformLocation(prefix + "direction");
         }
     }
-    
+
+    isShadowEnabledLocation = getUniformLocation("isShadowEnabled");
+
     shadowMapLocation = getUniformLocation("shadowMap");
     glUniform1i(shadowMapLocation, 0);
 }
@@ -187,6 +189,8 @@ void PhongShadowProgram::initialize()
 
 void PhongShadowProgram::bindGLObjects()
 {
+    glUniform1i(isShadowEnabledLocation, isShadowEnabled_);
+    
     if(useUniformBlockToPassTransformationMatrices){
         transformBlockBuffer.bind(*this, 1);
         transformBlockBuffer.bindBufferBase(1);

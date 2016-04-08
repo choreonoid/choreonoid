@@ -107,7 +107,6 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    bool isShadowEnabled;
     bool isMakingShadowMap;
     int shadowLightIndex;
     SgCameraPtr shadowMapCamera;
@@ -243,7 +242,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     currentProgram = 0;
     currentLightingProgram = 0;
 
-    isShadowEnabled = true;
     isMakingShadowMap = false;
     shadowLightIndex = 0;
 
@@ -403,10 +401,9 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        currentProgram->bindGLObjects();
         currentProgram->use();
+        currentProgram->bindGLObjects();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     self->extractPreproNodes();
@@ -532,7 +529,7 @@ void GLSLSceneRendererImpl::endRendering()
 
 void GLSLSceneRenderer::render()
 {
-    if(impl->isShadowEnabled){
+    if(impl->phongShadowProgram.isShadowEnabled()){
         impl->renderWithShadows();
     } else {
         impl->render();
@@ -550,8 +547,6 @@ void GLSLSceneRendererImpl::render()
 
 void GLSLSceneRendererImpl::renderWithShadows()
 {
-    //shadowmapProgram.use();
-    
     // Pass 1 (shadow map generation)
     Array4i vp = self->viewport();
     self->setViewport(0, 0, shadowMapProgram.width(), shadowMapProgram.height());
@@ -1177,7 +1172,7 @@ void GLSLSceneRenderer::enableLighting(bool on)
 
 void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
-    impl->isShadowEnabled = on;
+    impl->phongShadowProgram.setShadowEnabled(on);
     impl->shadowLightIndex = index;
 }
 
