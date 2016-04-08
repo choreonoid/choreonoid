@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENHRPP_CONTROLLER_BASE_H_INCLUDED
-#define CNOID_OPENHRPP_CONTROLLER_BASE_H_INCLUDED
+#ifndef CNOID_OPENHRPP_CONTROLLER_BASE_H
+#define CNOID_OPENHRPP_CONTROLLER_BASE_H
 
 #ifdef OPENHRP_3_0
 #include <cnoid/corba/OpenHRP/3.0/Controller.hh>
@@ -62,6 +62,7 @@ public:
     OpenHRP::Controller_ptr create(const char* charaName);
     void shutdown();
 };
+
 }
 
 #endif
