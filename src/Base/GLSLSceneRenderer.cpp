@@ -4,7 +4,7 @@
 */
 
 #include "GLSLSceneRenderer.h"
-#include "GLSLProgram.h"
+#include "ShaderPrograms.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
@@ -23,8 +23,6 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-
-const bool DIVIDE_SHADOW_PROGRM = true;
 
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
@@ -85,6 +83,7 @@ typedef boost::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> Sh
 
 }
 
+
 namespace cnoid {
 
 class GLSLSceneRendererImpl
@@ -94,57 +93,12 @@ public:
         
     GLSLSceneRenderer* self;
 
-    struct LightHandleSet {
-        GLint position;
-        GLint intensity;
-        GLint ambientIntensity;
-        GLint constantAttenuation;
-        GLint linearAttenuation;
-        GLint quadraticAttenuation;
-        GLint falloffAngle;
-        GLint falloffExponent;
-        GLint beamWidth;
-        GLint direction;
-    };
-
-    struct ProgramHandleSet {
-
-        bool useUniformBlockToPassTransformationMatrices;
-        GLSLUniformBlockBuffer transformBlockBuffer;
-        GLint modelViewMatrixIndex;
-        GLint normalMatrixIndex;
-        GLint MVPIndex;
-
-        GLint modelViewMatrixLocation;
-        GLint normalMatrixLocation;
-        GLint MVPLocation;
-        GLint shadowMatrixLocation;
-
-        GLint diffuseColorLocation;
-        GLint ambientColorLocation;
-        GLint specularColorLocation;
-        GLint emissionColorLocation;
-        GLint shininessLocation;
-        GLint colorLocation;
-
-        GLint numLightsLocation;
-        vector<LightHandleSet> lightHandleSets;
-    };
-
-    GLSLProgram* currentProgram;
-    ProgramHandleSet* currentProgramHandleSet;
-
-    GLSLProgram phongProgram;
-    ProgramHandleSet phongHandleSet;
-
-    GLSLProgram shadowProgram;
-    ProgramHandleSet shadowHandleSet;
-
-    GLSLProgram shadowmapProgram;
-    ProgramHandleSet shadowmapHandleSet;
+    ShaderProgram* currentProgram;
+    LightingProgram* currentLightingProgram;
     
-    GLSLProgram nolightingProgram;
-    ProgramHandleSet nolightingHandleSet;
+    SolidColorProgram solidColorProgram;
+    PhongShadowProgram phongShadowProgram;
+    ShadowMapProgram shadowMapProgram;
 
     bool isPicking;
 
@@ -153,21 +107,12 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    GLint numLights;
-    GLint maxNumLights;
-
     bool isShadowEnabled;
     bool isMakingShadowMap;
     int shadowLightIndex;
     SgCameraPtr shadowMapCamera;
     Matrix4 shadowBias;
     Matrix4 BPV;
-    int shadowMapWidth;
-    int shadowMapHeight;
-    GLuint shadowFBO;
-    GLuint pass1Index;
-    GLuint  pass2Index;
-    GLint shadowMapLocation;
     
     bool defaultLighting;
     Vector4f currentNolightingColor;
@@ -236,14 +181,10 @@ public:
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
     bool initializeGL();
-    void initializeProgram(
-        GLSLProgram& program, ProgramHandleSet& handles, const char* vertexShaderSource, const char* fragmentShaderSource);
-    void initializeShadowProgram();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights(const Affine3& cameraPosition);
-    bool renderLight(const SgLight* light, const Affine3& T);
     void endRendering();
     void render();
     void renderWithShadows();
@@ -252,7 +193,6 @@ public:
     inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
     void popPickID();
     void visitInvariantGroup(SgInvariantGroup* group);
-    void setLightingTransformMatrices();
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj);
     void visitShape(SgShape* shape);
@@ -301,9 +241,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
     currentProgram = 0;
-    currentProgramHandleSet = 0;
-
-    maxNumLights = 10;
+    currentLightingProgram = 0;
 
     isShadowEnabled = true;
     isMakingShadowMap = false;
@@ -321,9 +259,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     shadowMapCamera->setNearDistance(1.0);
     shadowMapCamera->setFarDistance(20.0);
     
-    shadowMapWidth = 1024;
-    shadowMapHeight = 1024;
-
     shadowBias <<
         0.5, 0.0, 0.0, 0.5,
         0.0, 0.5, 0.0, 0.5,
@@ -395,17 +330,9 @@ bool GLSLSceneRendererImpl::initializeGL()
     }
 
     try {
-        initializeProgram(
-            phongProgram, phongHandleSet,
-            ":/Base/shader/phong.vert",
-            ":/Base/shader/phong.frag");
-
-        initializeProgram(
-            nolightingProgram, nolightingHandleSet,
-            ":/Base/shader/nolighting.vert",
-            ":/Base/shader/nolighting.frag");
-
-        initializeShadowProgram();
+        solidColorProgram.initialize();
+        phongShadowProgram.initialize();
+        shadowMapProgram.initialize();
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
@@ -422,124 +349,6 @@ bool GLSLSceneRendererImpl::initializeGL()
 }
 
 
-void GLSLSceneRendererImpl::initializeProgram
-(GLSLProgram& program, ProgramHandleSet& phs, const char* vertexShaderSource, const char* fragmentShaderSource)
-{
-    program.loadVertexShader(vertexShaderSource);
-    program.loadFragmentShader(fragmentShaderSource);
-    program.link();
-    
-    phs.useUniformBlockToPassTransformationMatrices = 
-        phs.transformBlockBuffer.initialize(program, "TransformBlock");
-
-    if(phs.useUniformBlockToPassTransformationMatrices){
-        phs.modelViewMatrixIndex = phs.transformBlockBuffer.checkUniformMatrix("modelViewMatrix");
-        phs.normalMatrixIndex = phs.transformBlockBuffer.checkUniformMatrix("normalMatrix");
-        phs.MVPIndex = phs.transformBlockBuffer.checkUniformMatrix("MVP");
-        phs.transformBlockBuffer.bind(program, 1);
-        phs.transformBlockBuffer.bindBufferBase(1);
-    } else {
-        phs.modelViewMatrixLocation = program.getUniformLocation("modelViewMatrix");
-        phs.normalMatrixLocation = program.getUniformLocation("normalMatrix");
-        phs.MVPLocation = program.getUniformLocation("MVP");
-        phs.shadowMatrixLocation = program.getUniformLocation("shadowMatrix");
-    }
-
-    phs.numLightsLocation = program.getUniformLocation("numLights");
-    if(phs.numLightsLocation >= 0){
-        phs.lightHandleSets.resize(maxNumLights);
-        boost::format lightFormat("lights[%1%].");
-        for(int i=0; i < maxNumLights; ++i){
-            LightHandleSet& lhs = phs.lightHandleSets[i];
-            string prefix = str(lightFormat % i);
-            lhs.position = program.getUniformLocation(prefix + "position");
-            lhs.intensity = program.getUniformLocation(prefix + "intensity");
-            lhs.ambientIntensity = program.getUniformLocation(prefix + "ambientIntensity");
-            lhs.constantAttenuation = program.getUniformLocation(prefix + "constantAttenuation");
-            lhs.linearAttenuation = program.getUniformLocation(prefix + "linearAttenuation");
-            lhs.quadraticAttenuation = program.getUniformLocation(prefix + "quadraticAttenuation");
-            lhs.falloffAngle = program.getUniformLocation(prefix + "falloffAngle");
-            lhs.falloffExponent = program.getUniformLocation(prefix + "falloffExponent");
-            lhs.beamWidth = program.getUniformLocation(prefix + "beamWidth");
-            lhs.direction = program.getUniformLocation(prefix + "direction");
-        }
-    }
-
-    phs.diffuseColorLocation = program.getUniformLocation("diffuseColor");
-    phs.ambientColorLocation = program.getUniformLocation("ambientColor");
-    phs.specularColorLocation = program.getUniformLocation("specularColor");
-    phs.emissionColorLocation = program.getUniformLocation("emissionColor");
-    phs.shininessLocation = program.getUniformLocation("shininess");
-    phs.colorLocation = program.getUniformLocation("color");
-}
-
-
-void GLSLSceneRendererImpl::initializeShadowProgram()
-{
-    if(DIVIDE_SHADOW_PROGRM){
-        initializeProgram(
-            shadowProgram, shadowHandleSet,
-            ":/Base/shader/shadow2.vert",
-            ":/Base/shader/shadow2.frag");
-        initializeProgram(
-            shadowmapProgram, shadowmapHandleSet,
-            ":/Base/shader/shadowmap.vert",
-            ":/Base/shader/shadowmap.frag");
-    } else {
-        initializeProgram(
-            shadowProgram, shadowHandleSet,
-            ":/Base/shader/shadow.vert",
-            ":/Base/shader/shadow.frag");
-        pass1Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "recordDepth");
-        pass2Index = shadowProgram.getSubroutineIndex(GL_FRAGMENT_SHADER, "shadeWithShadow");
-    }
-
-    GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
-    // The depth buffer texture
-    GLuint depthTex;
-    glGenTextures(1, &depthTex);
-    glBindTexture(GL_TEXTURE_2D, depthTex);
-
-#ifdef CNOID_GL_CORE_4_4
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight);
-#else
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT,  GL_FLOAT, NULL);
-#endif
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
-
-    // Assign the depth buffer texture to texture channel 0
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depthTex);
-
-    // Create and set up the FBO
-    glGenFramebuffers(1, &shadowFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0);
-
-    GLenum drawBuffers[] = { GL_NONE };
-    glDrawBuffers(1, drawBuffers);
-
-    GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(result == GL_FRAMEBUFFER_COMPLETE) {
-        os() << "Framebuffer is complete.\n"<< endl;
-    } else {
-        os() << "Framebuffer is not complete.\n" << endl;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    shadowMapLocation = shadowProgram.getUniformLocation("shadowMap");
-    glUniform1i(shadowMapLocation, 0);
-}
-
-    
 void GLSLSceneRenderer::requestToClearCache()
 {
     impl->isShapeHandleSetClearRequested = true;
@@ -578,34 +387,25 @@ void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
     currentShapeHandleSet = 0;
     
     if(doRenderingCommands){
+        currentLightingProgram = 0;
         if(isPicking){
-            currentProgram = &nolightingProgram;
-            currentProgramHandleSet = &nolightingHandleSet;
+            currentProgram = &solidColorProgram;
             currentNodePath.clear();
             pickingNodePathList.clear();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            if(isShadowEnabled){
-                if(DIVIDE_SHADOW_PROGRM && isMakingShadowMap){
-                    currentProgram = &shadowmapProgram;
-                    currentProgramHandleSet = &shadowmapHandleSet;
-                } else {
-                    currentProgram = &shadowProgram;
-                    currentProgramHandleSet = &shadowHandleSet;
-                }
+            if(isMakingShadowMap){
+                currentProgram = &shadowMapProgram;
             } else {
-                currentProgram = &phongProgram;
-                currentProgramHandleSet = &phongHandleSet;
+                currentProgram = &phongShadowProgram;
+                currentLightingProgram = &phongShadowProgram;
             }
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
         }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if(currentProgramHandleSet->useUniformBlockToPassTransformationMatrices){
-            currentProgramHandleSet->transformBlockBuffer.bind(*currentProgram, 1);
-            currentProgramHandleSet->transformBlockBuffer.bindBufferBase(1);
-        }
+        currentProgram->bindGLObjects();
         currentProgram->use();
     }
 
@@ -624,7 +424,7 @@ void GLSLSceneRendererImpl::beginActualRendering()
         if(camera){
             const Affine3& T = self->currentCameraPosition();
             renderCamera(camera, T);
-            if(!isPicking){
+            if(currentLightingProgram){
                 renderLights(T);
             }
         }
@@ -687,67 +487,31 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 
 void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
 {
-    numLights = 0;
+    int lightIndex = 0;
 
     SgLight* headLight = self->headLight();
     if(headLight->on()){
-        renderLight(headLight, cameraPosition);
+        if(currentLightingProgram->renderLight(lightIndex, headLight, cameraPosition, viewMatrix)){
+            ++lightIndex;
+        }
     }
 
     const int n = self->numLights();
     for(int i=0; i < n; ++i){
-        if(numLights == maxNumLights){
+        if(lightIndex == currentLightingProgram->maxNumLights()){
             break;
         }
         SgLight* light;
         Affine3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
-            renderLight(light, T);
+            if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix)){
+                ++lightIndex;
+            }
         }
     }
 
-    glUniform1i(currentProgramHandleSet->numLightsLocation, numLights);
-}
-
-
-bool GLSLSceneRendererImpl::renderLight(const SgLight* light, const Affine3& T)
-{
-    LightHandleSet* lhs = &currentProgramHandleSet->lightHandleSets[numLights];
-
-    if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
-        Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
-        Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-        glUniform4fv(lhs->position, 1, pos.data());
-
-    } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
-        Vector3 p(viewMatrix * T.translation());
-        Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
-        glUniform4fv(lhs->position, 1, pos.data());
-        glUniform1f(lhs->constantAttenuation, pointLight->constantAttenuation());
-        glUniform1f(lhs->linearAttenuation, pointLight->linearAttenuation());
-        glUniform1f(lhs->quadraticAttenuation, pointLight->quadraticAttenuation());
-        
-        if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
-            Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
-            Vector3f direction(d.cast<float>());
-            glUniform3fv(lhs->direction, 1, direction.data());
-            glUniform1f(lhs->falloffAngle, spotLight->cutOffAngle());
-            glUniform1f(lhs->falloffExponent, 4.0f);
-            glUniform1f(lhs->beamWidth, spotLight->beamWidth());
-        }
-    } else {
-        return false;
-    }
-        
-    Vector3f intensity(light->intensity() * light->color());
-    glUniform3fv(lhs->intensity, 1, intensity.data());
-    Vector3f ambientIntensity(light->ambientIntensity() * light->color());
-    glUniform3fv(lhs->ambientIntensity, 1, ambientIntensity.data());
-
-    ++numLights;
-    
-    return true;
+    currentLightingProgram->setNumLights(lightIndex);
 }
 
 
@@ -786,19 +550,11 @@ void GLSLSceneRendererImpl::render()
 
 void GLSLSceneRendererImpl::renderWithShadows()
 {
-    if(!DIVIDE_SHADOW_PROGRM){
-        shadowProgram.use();
-    } else {
-        shadowmapProgram.use();
-    }
-
+    //shadowmapProgram.use();
+    
     // Pass 1 (shadow map generation)
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
     Array4i vp = self->viewport();
-    self->setViewport(0, 0, shadowMapWidth, shadowMapHeight);
-    if(!DIVIDE_SHADOW_PROGRM){
-        shadowProgram.setUniformSubroutines(GL_FRAGMENT_SHADER, 1, &pass1Index);
-    }
+    self->setViewport(0, 0, shadowMapProgram.width(), shadowMapProgram.height());
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
@@ -812,9 +568,6 @@ void GLSLSceneRendererImpl::renderWithShadows()
     // Pass 2 (render)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-    if(!DIVIDE_SHADOW_PROGRM){
-        shadowProgram.setUniformSubroutines(GL_FRAGMENT_SHADER, 1, &pass2Index);
-    }
     glDisable(GL_CULL_FACE);
     render();
 }
@@ -958,35 +711,6 @@ void GLSLSceneRenderer::visitTransform(SgTransform* transform)
 }
 
 
-void GLSLSceneRendererImpl::setLightingTransformMatrices()
-{
-    const Affine3f VM = (viewMatrix * modelMatrixStack.back()).cast<float>();
-    const Matrix3f N = VM.linear();
-    const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
-    const Matrix4f BPVM = (BPV * modelMatrixStack.back().matrix()).cast<float>();
-
-    ProgramHandleSet* phs = currentProgramHandleSet;
-    if(phs->useUniformBlockToPassTransformationMatrices){
-        phs->transformBlockBuffer.write(phs->modelViewMatrixIndex, VM);
-        phs->transformBlockBuffer.write(phs->normalMatrixIndex, N);
-        phs->transformBlockBuffer.write(phs->MVPIndex, PVM);
-        phs->transformBlockBuffer.flush();
-    } else {
-        glUniformMatrix4fv(phs->modelViewMatrixLocation, 1, GL_FALSE, VM.data());
-        glUniformMatrix3fv(phs->normalMatrixLocation, 1, GL_FALSE, N.data());
-        glUniformMatrix4fv(phs->MVPLocation, 1, GL_FALSE, PVM.data());
-        glUniformMatrix4fv(phs->shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
-    }
-}
-
-
-void GLSLSceneRendererImpl::flushNolightingTransformMatrices()
-{
-    const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
-    glUniformMatrix4fv(nolightingHandleSet.MVPLocation, 1, GL_FALSE, PVM.data());
-}
-
-
 ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
 {
     ShapeHandleSet* handleSet;
@@ -1000,10 +724,11 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
         nextShapeHandleSetMap->insert(*p);
     }
 
-    if(currentProgram == &nolightingProgram){
-        flushNolightingTransformMatrices();
+    if(currentLightingProgram){
+        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrixStack.back(), PV, BPV);
     } else {
-        setLightingTransformMatrices();
+        const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
+        static_cast<NolightingProgram*>(currentProgram)->setProjectionMatrix(PVM);
     }
 
     glBindVertexArray(handleSet->vao);
@@ -1047,7 +772,7 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
     Vector4f color;
     color << material->diffuseColor(), alpha;
 
-    if(currentProgram == &nolightingProgram){
+    if(!currentLightingProgram){
         setNolightingColor(color);
 
     } else {
@@ -1176,13 +901,13 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 
     if(lineSet->hasVertices() && n > 0){
 
-        GLSLProgram* orgProgram = currentProgram;
+        ShaderProgram* orgProgram = currentProgram;
 
         if(isPicking){
             pushPickID(lineSet);
         } else {
-            nolightingProgram.use();
-            currentProgram = &nolightingProgram;
+            solidColorProgram.use();
+            currentProgram = &solidColorProgram;
             renderMaterial(lineSet->material());
         }
 
@@ -1266,13 +991,11 @@ void GLSLSceneRendererImpl::clearGLState()
 
 void GLSLSceneRendererImpl::setNolightingColor(const Vector4f& color)
 {
-    //if(!isPicking){
-        if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
-            glUniform4fv(nolightingHandleSet.colorLocation, 1, color.data());
-            currentNolightingColor = color;
-            stateFlag.set(CURRENT_NOLIGHTING_COLOR);
-        }
-//}
+    if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
+        currentProgram->setColor(color);
+        currentNolightingColor = color;
+        stateFlag.set(CURRENT_NOLIGHTING_COLOR);
+    }
 }
 
 
@@ -1308,7 +1031,7 @@ void GLSLSceneRenderer::enableColorMaterial(bool on)
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector4f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        glUniform3fv(currentProgramHandleSet->diffuseColorLocation, 1, color.data());
+        currentLightingProgram->setDiffuseColor(color);
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
@@ -1324,7 +1047,7 @@ void GLSLSceneRenderer::setDiffuseColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setAmbientColor(const Vector4f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        glUniform3fv(currentProgramHandleSet->ambientColorLocation, 1, color.data());
+        currentLightingProgram->setAmbientColor(color);
         ambientColor = color;
         stateFlag.set(AMBIENT_COLOR);
     }
@@ -1340,7 +1063,7 @@ void GLSLSceneRenderer::setAmbientColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setEmissionColor(const Vector4f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
-        glUniform3fv(currentProgramHandleSet->emissionColorLocation, 1, color.data());
+        currentLightingProgram->setEmissionColor(color);
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
@@ -1356,7 +1079,7 @@ void GLSLSceneRenderer::setEmissionColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setSpecularColor(const Vector4f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        glUniform3fv(currentProgramHandleSet->specularColorLocation, 1, color.data());
+        currentLightingProgram->setSpecularColor(color);
         specularColor = color;
         stateFlag.set(SPECULAR_COLOR);
     }
@@ -1372,7 +1095,7 @@ void GLSLSceneRenderer::setSpecularColor(const Vector4f& color)
 void GLSLSceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
-        glUniform1f(currentProgramHandleSet->shininessLocation, s);
+        currentLightingProgram->setShininess(s);
         shininess = s;
         stateFlag.set(SHININESS);
     }

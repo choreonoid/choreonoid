@@ -82,6 +82,7 @@ set(sources
   GLSceneRenderer.cpp
   GL1SceneRenderer.cpp
   GLSLProgram.cpp
+  ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEditable.cpp
