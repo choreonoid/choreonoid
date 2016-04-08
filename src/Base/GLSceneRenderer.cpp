@@ -529,7 +529,7 @@ double GLSceneRenderer::aspectRatio() const
 }
 
 
-void GLSceneRenderer::extractPreproNodes()
+void GLSceneRenderer::extractPreprocessedNodes()
 {
     impl->extractPreproNodes();
 }

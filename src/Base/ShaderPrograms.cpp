@@ -5,6 +5,7 @@
 
 #include "ShaderPrograms.h"
 #include <cnoid/SceneLights>
+#include <cnoid/EigenUtil>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -62,61 +63,6 @@ void SolidColorProgram::initialize()
 void SolidColorProgram::setColor(const Vector4f& color)
 {
     glUniform4fv(colorLocation, 1, color.data());
-}
-
-
-ShadowMapProgram::ShadowMapProgram()
-{
-    width_ = 1024;
-    height_ = 1024;
-}
-
-
-void ShadowMapProgram::initialize()
-{
-    loadVertexShader(":/Base/shader/nolighting.vert");
-    loadFragmentShader(":/Base/shader/shadowmap.frag");
-    link();
-        
-    NolightingProgram::initialize();
-
-    GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
-    GLuint depthTexture;
-    glGenTextures(1, &depthTexture);
-    glBindTexture(GL_TEXTURE_2D, depthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width_, height_, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
-    
-    // Assign the depth buffer texture to texture channel 0
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depthTexture);
-    
-    // Create and set up the FBO
-    glGenFramebuffers(1, &shadowFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
-    
-    GLenum drawBuffers[] = { GL_NONE };
-    glDrawBuffers(1, drawBuffers);
-    
-    GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(result != GL_FRAMEBUFFER_COMPLETE) {
-        throw Exception("Framebuffer is not complete.\n");
-    }
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-void ShadowMapProgram::bindGLObjects()
-{
-   glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 }
 
 
@@ -260,4 +206,90 @@ void PhongShadowProgram::setTransformMatrices(const Affine3& viewMatrix, const A
         glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, PVM.data());
         glUniformMatrix4fv(shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
     }
+}
+
+
+ShadowMapProgram::ShadowMapProgram()
+{
+    width_ = 1024;
+    height_ = 1024;
+
+    persCamera = new SgPerspectiveCamera();
+    persCamera->setFieldOfView(radian(50.0));
+    persCamera->setNearDistance(1.0);
+    persCamera->setFarDistance(20.0);
+
+    orthoCamera = new SgOrthographicCamera();
+    orthoCamera->setHeight(5.0);
+    orthoCamera->setNearDistance(1.0);
+    orthoCamera->setFarDistance(20.0);
+}
+
+
+void ShadowMapProgram::initialize()
+{
+    loadVertexShader(":/Base/shader/nolighting.vert");
+    loadFragmentShader(":/Base/shader/shadowmap.frag");
+    link();
+        
+    NolightingProgram::initialize();
+
+    GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
+    GLuint depthTexture;
+    glGenTextures(1, &depthTexture);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width_, height_, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+    
+    // Assign the depth buffer texture to texture channel 0
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    
+    // Create and set up the FBO
+    glGenFramebuffers(1, &shadowFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    
+    GLenum drawBuffers[] = { GL_NONE };
+    glDrawBuffers(1, drawBuffers);
+    
+    GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(result != GL_FRAMEBUFFER_COMPLETE) {
+        throw Exception("Framebuffer is not complete.\n");
+    }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+
+void ShadowMapProgram::bindGLObjects()
+{
+   glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+}
+
+
+SgCamera* ShadowMapProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
+{
+    bool hasDirection = false;
+    Vector3 direction;
+    if(SgDirectionalLight* directional = dynamic_cast<SgDirectionalLight*>(light)){
+        direction = directional->direction();
+        hasDirection = true;
+    } else if(SgSpotLight* spot = dynamic_cast<SgSpotLight*>(light)){
+        direction = spot->direction();
+        hasDirection = true;
+    }
+    if(hasDirection){
+        Quaternion rot;
+        rot.setFromTwoVectors(-Vector3::UnitZ(), direction);
+        io_T.linear() = io_T.linear() * rot;
+    }
+
+    return persCamera;
 }

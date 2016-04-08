@@ -36,6 +36,8 @@ public:
 
     virtual SignalProxy<void()> sigRenderingRequest();
 
+    virtual void extractPreprocessedNodes();
+    
     virtual int numCameras() const;
     virtual SgCamera* camera(int index);
     virtual const SgNodePath& cameraPath(int index) const;
@@ -124,8 +126,6 @@ public:
     
 
   protected:
-    void extractPreproNodes();
-    
     virtual void onImageUpdated(SgImage* image) = 0;
 
 private:

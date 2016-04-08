@@ -191,7 +191,7 @@ public:
     SgGroup* scene;
     GLSceneRenderer* renderer;
     QGLPixelBuffer* pixelBufferForPicking;
-    LazyCaller initializeRenderingLater;
+    LazyCaller extractPreprocessedNodesLater;
     SgUpdate modified;
     SgUpdate added;
     SgUpdate removed;
@@ -488,7 +488,8 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
 
     pixelBufferForPicking = 0;
 
-    initializeRenderingLater.setFunction(boost::bind(&SceneRenderer::initializeRendering, renderer));
+    extractPreprocessedNodesLater.setFunction(
+        boost::bind(&SceneRenderer::extractPreprocessedNodes, renderer));
 
     modified.setAction(SgUpdate::MODIFIED);
     added.setAction(SgUpdate::ADDED);
@@ -2612,7 +2613,7 @@ void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
 {
     bool doUpdate = false;
 
-    renderer->initializeRendering();
+    renderer->extractPreprocessedNodes();
     
     for(int i=0; i < cameraListing.size(); ++i){
         const Mapping& state = *cameraListing[i].toMapping();
@@ -2693,7 +2694,7 @@ int SceneWidgetImpl::readCameraPath(const Mapping& archive, const char* key)
 // for the compatibility to the older versions
 void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 {
-    renderer->initializeRendering();
+    renderer->extractPreprocessedNodes();
     int index = readCameraPath(cameraData, "current");
     if(index >= 0){
         renderer->setCurrentCamera(index);

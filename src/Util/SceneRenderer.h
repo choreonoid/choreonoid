@@ -42,12 +42,14 @@ public:
     virtual const Affine3& currentCameraPosition() const = 0;
     virtual const Matrix4& projectionMatrix() const = 0;
 
-    virtual void initializeRendering() = 0;
-
     virtual SignalProxy<void()> sigRenderingRequest() = 0;
-        
-    virtual void beginRendering() = 0;
-    virtual void endRendering() = 0;
+
+    /**
+       This function updates the information on preprocessed nodes such as
+       cameras, lights, and fogs.
+    */
+    virtual void extractPreprocessedNodes() = 0;
+    
     virtual void render() = 0;
     virtual void flush() = 0;
 

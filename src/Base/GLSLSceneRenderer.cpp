@@ -17,7 +17,6 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <iostream>
-#include <cstdio>
 
 using namespace std;
 using namespace cnoid;
@@ -100,19 +99,18 @@ public:
     PhongShadowProgram phongShadowProgram;
     ShadowMapProgram shadowMapProgram;
 
+    bool isMakingShadowMap;
     bool isPicking;
-
+    
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3 viewMatrix;
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    bool isMakingShadowMap;
     int shadowLightIndex;
-    SgCameraPtr shadowMapCamera;
     Matrix4 shadowBias;
     Matrix4 BPV;
-    
+
     bool defaultLighting;
     Vector4f currentNolightingColor;
     Vector4f diffuseColor;
@@ -180,14 +178,13 @@ public:
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
     bool initializeGL();
-    void beginRendering(bool doRenderingCommands);
-    void beginActualRendering();
-    void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
-    void renderLights(const Affine3& cameraPosition);
-    void endRendering();
-    void render();
-    void renderWithShadows();
     bool pick(int x, int y);
+    void renderScene();
+    void renderShadowMap();
+    void beginRendering();
+    void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
+    void renderLights();
+    void endRendering();
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
     void popPickID();
@@ -245,18 +242,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     isMakingShadowMap = false;
     shadowLightIndex = 0;
 
-    if(true){
-        SgPerspectiveCamera* camera = new SgPerspectiveCamera();
-        camera->setFieldOfView(radian(50.0));
-        shadowMapCamera = camera;
-    } else {
-        SgOrthographicCamera* camera = new SgOrthographicCamera();
-        camera->setHeight(5.0);
-        shadowMapCamera = camera;
-    }
-    shadowMapCamera->setNearDistance(1.0);
-    shadowMapCamera->setFarDistance(20.0);
-    
     shadowBias <<
         0.5, 0.0, 0.0, 0.5,
         0.0, 0.5, 0.0, 0.5,
@@ -353,105 +338,102 @@ void GLSLSceneRenderer::requestToClearCache()
 }
 
 
-void GLSLSceneRenderer::initializeRendering()
+void GLSLSceneRenderer::render()
 {
-    impl->beginRendering(false);
-}
-
-
-void GLSLSceneRenderer::beginRendering()
-{
-    impl->beginRendering(true);
-}
-
-
-void GLSLSceneRendererImpl::beginRendering(bool doRenderingCommands)
-{
-    isCheckingUnusedShapeHandleSets = isPicking ? false : doUnusedShapeHandleSetCheck;
-
-    if(isShapeHandleSetClearRequested){
-        shapeHandleSetMaps[0].clear();
-        shapeHandleSetMaps[1].clear();
-        hasValidNextShapeHandleSetMap = false;
-        isCheckingUnusedShapeHandleSets = false;
-        isShapeHandleSetClearRequested = false; 
-    }
-    if(hasValidNextShapeHandleSetMap){
-        currentShapeHandleSetMapIndex = 1 - currentShapeHandleSetMapIndex;
-        currentShapeHandleSetMap = &shapeHandleSetMaps[currentShapeHandleSetMapIndex];
-        nextShapeHandleSetMap = &shapeHandleSetMaps[1 - currentShapeHandleSetMapIndex];
-        hasValidNextShapeHandleSetMap = false;
-    }
-    currentShapeHandleSet = 0;
+    extractPreprocessedNodes();
     
-    if(doRenderingCommands){
-        currentLightingProgram = 0;
-        if(isPicking){
-            currentProgram = &solidColorProgram;
-            currentNodePath.clear();
-            pickingNodePathList.clear();
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        } else {
-            if(isMakingShadowMap){
-                currentProgram = &shadowMapProgram;
-            } else {
-                currentProgram = &phongShadowProgram;
-                currentLightingProgram = &phongShadowProgram;
-            }
-            const Vector3f& c = self->backgroundColor();
-            glClearColor(c[0], c[1], c[2], 1.0f);
-        }
-        currentProgram->use();
-        currentProgram->bindGLObjects();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
+    if(!impl->phongShadowProgram.isShadowEnabled()){
+        impl->renderScene();
 
-    self->extractPreproNodes();
-
-    if(doRenderingCommands){
-        beginActualRendering();
-    }
-}
-
-
-void GLSLSceneRendererImpl::beginActualRendering()
-{
-    if(!isMakingShadowMap){
-        SgCamera* camera = self->currentCamera();
-        if(camera){
-            const Affine3& T = self->currentCameraPosition();
-            renderCamera(camera, T);
-            if(currentLightingProgram){
-                renderLights(T);
-            }
-        }
     } else {
-        SgLight* light;
-        Affine3 T;
-        self->getLightInfo(shadowLightIndex, light, T);
-        if(light){
-            bool hasDirection = false;
-            Vector3 direction;
-            if(SgDirectionalLight* directional = dynamic_cast<SgDirectionalLight*>(light)){
-                direction = directional->direction();
-                hasDirection = true;
-            } else if(SgSpotLight* spot = dynamic_cast<SgSpotLight*>(light)){
-                direction = spot->direction();
-                hasDirection = true;
-            }
-            if(hasDirection){
-                Quaternion rot;
-                rot.setFromTwoVectors(-Vector3::UnitZ(), direction);
-                T.linear() = T.linear() * rot;
-            }
-            renderCamera(shadowMapCamera, T);
-            BPV = shadowBias * PV;
-        }
+        Array4i vp = viewport();
+        setViewport(0, 0, impl->shadowMapProgram.width(), impl->shadowMapProgram.height());
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        impl->renderShadowMap();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        setViewport(vp[0], vp[1], vp[2], vp[3]);
+        glDisable(GL_CULL_FACE);
+        impl->renderScene();
     }
-    
-    clearGLState();
 }
 
+
+bool GLSLSceneRenderer::pick(int x, int y)
+{
+    return impl->pick(x, y);
+}
+
+
+bool GLSLSceneRendererImpl::pick(int x, int y)
+{
+    if(!SHOW_IMAGE_FOR_PICKING){
+        glScissor(x, y, 1, 1);
+        glEnable(GL_SCISSOR_TEST);
+    }
+
+    isPicking = true;
+    renderScene();
+    isPicking = false;
+
+    glDisable(GL_SCISSOR_TEST);
+    
+    GLfloat color[4];
+    glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
+    if(SHOW_IMAGE_FOR_PICKING){
+        color[2] = 0.0f;
+    }
+    unsigned int id = (color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
+
+    pickedNodePath.clear();
+
+    if(0 < id && id < pickingNodePathList.size()){
+        GLfloat depth;
+        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        Vector3 projected;
+        if(self->unproject(x, y, depth, pickedPoint)){
+            pickedNodePath = *pickingNodePathList[id];
+        }
+    }
+
+    return !pickedNodePath.empty();
+}
+
+
+void GLSLSceneRendererImpl::renderScene()
+{
+    SgCamera* camera = self->currentCamera();
+    if(camera){
+        renderCamera(camera, self->currentCameraPosition());
+    }
+    beginRendering();
+    self->sceneRoot()->accept(*self);
+    endRendering();
+}
+
+
+void GLSLSceneRendererImpl::renderShadowMap()
+{
+    SgLight* light;
+    Affine3 T;
+    self->getLightInfo(shadowLightIndex, light, T);
+    if(light){
+        SgCamera* shadowMapCamera = shadowMapProgram.getShadowMapCamera(light, T);
+        renderCamera(shadowMapCamera, T);
+        BPV = shadowBias * PV;
+    }
+
+    isMakingShadowMap = true;
+    beginRendering();
+    self->sceneRoot()->accept(*self);
+    endRendering();
+    isMakingShadowMap = false;
+
+    glFlush();
+    glFinish();
+}
+    
 
 void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& cameraPosition)
 {
@@ -482,13 +464,59 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 }
 
 
-void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
+void GLSLSceneRendererImpl::beginRendering()
+{
+    isCheckingUnusedShapeHandleSets = isPicking ? false : doUnusedShapeHandleSetCheck;
+
+    if(isShapeHandleSetClearRequested){
+        shapeHandleSetMaps[0].clear();
+        shapeHandleSetMaps[1].clear();
+        hasValidNextShapeHandleSetMap = false;
+        isCheckingUnusedShapeHandleSets = false;
+        isShapeHandleSetClearRequested = false; 
+    }
+    if(hasValidNextShapeHandleSetMap){
+        currentShapeHandleSetMapIndex = 1 - currentShapeHandleSetMapIndex;
+        currentShapeHandleSetMap = &shapeHandleSetMaps[currentShapeHandleSetMapIndex];
+        nextShapeHandleSetMap = &shapeHandleSetMaps[1 - currentShapeHandleSetMapIndex];
+        hasValidNextShapeHandleSetMap = false;
+    }
+    currentShapeHandleSet = 0;
+    
+    currentLightingProgram = 0;
+    if(isPicking){
+        currentProgram = &solidColorProgram;
+        currentNodePath.clear();
+        pickingNodePathList.clear();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    } else {
+        if(isMakingShadowMap){
+            currentProgram = &shadowMapProgram;
+        } else {
+            currentProgram = &phongShadowProgram;
+            currentLightingProgram = &phongShadowProgram;
+        }
+        const Vector3f& c = self->backgroundColor();
+        glClearColor(c[0], c[1], c[2], 1.0f);
+    }
+    currentProgram->use();
+    currentProgram->bindGLObjects();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    clearGLState();
+
+    if(currentLightingProgram){
+        renderLights();
+    }
+}
+
+
+void GLSLSceneRendererImpl::renderLights()
 {
     int lightIndex = 0;
 
     SgLight* headLight = self->headLight();
     if(headLight->on()){
-        if(currentLightingProgram->renderLight(lightIndex, headLight, cameraPosition, viewMatrix)){
+        if(currentLightingProgram->renderLight(lightIndex, headLight, self->currentCameraPosition(), viewMatrix)){
             ++lightIndex;
         }
     }
@@ -512,100 +540,12 @@ void GLSLSceneRendererImpl::renderLights(const Affine3& cameraPosition)
 }
 
 
-void GLSLSceneRenderer::endRendering()
-{
-    impl->endRendering();
-}
-
-
 void GLSLSceneRendererImpl::endRendering()
 {
     if(isCheckingUnusedShapeHandleSets){
         currentShapeHandleSetMap->clear();
         hasValidNextShapeHandleSetMap = true;
     }
-}
-
-
-void GLSLSceneRenderer::render()
-{
-    if(impl->phongShadowProgram.isShadowEnabled()){
-        impl->renderWithShadows();
-    } else {
-        impl->render();
-    }
-}
-
-
-void GLSLSceneRendererImpl::render()
-{
-    beginRendering(true);
-    self->sceneRoot()->accept(*self);
-    endRendering();
-}
-
-
-void GLSLSceneRendererImpl::renderWithShadows()
-{
-    // Pass 1 (shadow map generation)
-    Array4i vp = self->viewport();
-    self->setViewport(0, 0, shadowMapProgram.width(), shadowMapProgram.height());
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-
-    isMakingShadowMap = true;
-    render();
-    isMakingShadowMap = false;
-
-    glFlush();
-    glFinish();
-
-    // Pass 2 (render)
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-    glDisable(GL_CULL_FACE);
-    render();
-}
-    
-
-bool GLSLSceneRenderer::pick(int x, int y)
-{
-    return impl->pick(x, y);
-}
-
-
-bool GLSLSceneRendererImpl::pick(int x, int y)
-{
-    if(!SHOW_IMAGE_FOR_PICKING){
-        glScissor(x, y, 1, 1);
-        glEnable(GL_SCISSOR_TEST);
-    }
-
-    isPicking = true;
-    render();
-    isPicking = false;
-
-    glDisable(GL_SCISSOR_TEST);
-    
-    GLfloat color[4];
-    glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
-    if(SHOW_IMAGE_FOR_PICKING){
-        color[2] = 0.0f;
-    }
-    unsigned int id = (color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
-
-    pickedNodePath.clear();
-
-    if(0 < id && id < pickingNodePathList.size()){
-        GLfloat depth;
-        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        Vector3 projected;
-        if(self->unproject(x, y, depth, pickedPoint)){
-            pickedNodePath = *pickingNodePathList[id];
-        }
-    }
-
-    return !pickedNodePath.empty();
 }
 
 
@@ -619,7 +559,6 @@ const Vector3& GLSLSceneRenderer::pickedPoint() const
 {
     return impl->pickedPoint;
 }
-
 
 
 inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)

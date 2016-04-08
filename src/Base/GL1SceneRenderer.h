@@ -28,21 +28,7 @@ public:
     virtual const Matrix4& projectionMatrix() const;
         
     virtual bool initializeGL();
-
-    /**
-       This function does the same things as beginRendering() except that
-       actual GL commands are not executed.
-       This should only be called when you want to initialize
-       the rendering without doing any GL rendering commands.
-       For example, you can obtain cameras without rendering, and you can render the scene
-       after selecting the current camera.
-    */
-    virtual void initializeRendering();
-        
-    virtual void beginRendering();
-    virtual void endRendering();
     virtual void render();
-
     virtual bool pick(int x, int y);
     virtual const Vector3& pickedPoint() const;
     virtual const SgNodePath& pickedNodePath() const;

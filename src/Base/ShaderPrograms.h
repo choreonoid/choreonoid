@@ -6,6 +6,7 @@
 #define CNOID_BASE_SHADER_PROGRAMS_H
 
 #include "GLSLProgram.h"
+#include <cnoid/SceneCameras>
 #include <vector>
 
 namespace cnoid {
@@ -40,21 +41,6 @@ class SolidColorProgram : public NolightingProgram
 public:
     virtual void initialize();
     virtual void setColor(const Vector4f& color);
-};
-
-
-class ShadowMapProgram : public NolightingProgram
-{
-    int width_;
-    int height_;
-    GLuint shadowFBO;
-    
-public:
-    ShadowMapProgram();
-    virtual void initialize();
-    virtual void bindGLObjects();
-    int width() const { return width_; }
-    int height() const { return height_; }
 };
 
 
@@ -135,6 +121,24 @@ public:
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV);
     bool isShadowEnabled() const { return isShadowEnabled_; }
     void setShadowEnabled(bool on) { isShadowEnabled_ = on; }
+};
+
+
+class ShadowMapProgram : public NolightingProgram
+{
+    int width_;
+    int height_;
+    GLuint shadowFBO;
+    SgPerspectiveCameraPtr persCamera;  
+    SgOrthographicCameraPtr orthoCamera;
+    
+public:
+    ShadowMapProgram();
+    virtual void initialize();
+    virtual void bindGLObjects();
+    int width() const { return width_; }
+    int height() const { return height_; }
+    SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
 };
 
 }

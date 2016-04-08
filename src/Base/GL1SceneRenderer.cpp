@@ -430,18 +430,6 @@ void GL1SceneRenderer::requestToClearCache()
 }
 
 
-void GL1SceneRenderer::initializeRendering()
-{
-    impl->beginRendering(false);
-}
-
-
-void GL1SceneRenderer::beginRendering()
-{
-    impl->beginRendering(true);
-}
-
-
 void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
 {
     isCheckingUnusedCaches = isPicking ? false : doUnusedCacheCheck;
@@ -473,7 +461,7 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    self->extractPreproNodes();
+    self->extractPreprocessedNodes();
 
     if(doRenderingCommands){
         SgCamera* camera = self->currentCamera();
@@ -715,12 +703,6 @@ void GL1SceneRendererImpl::renderFog()
 void GL1SceneRendererImpl::onCurrentFogNodeUdpated()
 {
     isCurrentFogUpdated = true;
-}
-
-
-void GL1SceneRenderer::endRendering()
-{
-    impl->endRendering();
 }
 
 
