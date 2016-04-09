@@ -94,6 +94,8 @@ public:
 
     bool isShadowEnabled_;
     GLint isShadowEnabledLocation;
+    int shadowLightIndex_;
+    GLint shadowLightIndexLocation;
     GLint shadowMatrixLocation;
     GLint shadowMapLocation;
 
@@ -121,6 +123,8 @@ public:
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV);
     bool isShadowEnabled() const { return isShadowEnabled_; }
     void setShadowEnabled(bool on) { isShadowEnabled_ = on; }
+    int shadowLightIndex() const { return shadowLightIndex_; }
+    void setShadowLight(int index) { shadowLightIndex_ = index; }
 };
 
 

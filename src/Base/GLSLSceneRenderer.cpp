@@ -107,7 +107,6 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    int shadowLightIndex;
     Matrix4 shadowBias;
     Matrix4 BPV;
 
@@ -240,7 +239,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     currentLightingProgram = 0;
 
     isMakingShadowMap = false;
-    shadowLightIndex = 0;
 
     shadowBias <<
         0.5, 0.0, 0.0, 0.5,
@@ -417,7 +415,7 @@ void GLSLSceneRendererImpl::renderShadowMap()
 {
     SgLight* light;
     Affine3 T;
-    self->getLightInfo(shadowLightIndex, light, T);
+    self->getLightInfo(phongShadowProgram.shadowLightIndex(), light, T);
     if(light){
         SgCamera* shadowMapCamera = shadowMapProgram.getShadowMapCamera(light, T);
         renderCamera(shadowMapCamera, T);
@@ -514,13 +512,6 @@ void GLSLSceneRendererImpl::renderLights()
 {
     int lightIndex = 0;
 
-    SgLight* headLight = self->headLight();
-    if(headLight->on()){
-        if(currentLightingProgram->renderLight(lightIndex, headLight, self->currentCameraPosition(), viewMatrix)){
-            ++lightIndex;
-        }
-    }
-
     const int n = self->numLights();
     for(int i=0; i < n; ++i){
         if(lightIndex == currentLightingProgram->maxNumLights()){
@@ -531,6 +522,15 @@ void GLSLSceneRendererImpl::renderLights()
         self->getLightInfo(i, light, T);
         if(light->on()){
             if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix)){
+                ++lightIndex;
+            }
+        }
+    }
+
+    if(lightIndex < currentLightingProgram->maxNumLights()){
+        SgLight* headLight = self->headLight();
+        if(headLight->on()){
+            if(currentLightingProgram->renderLight(lightIndex, headLight, self->currentCameraPosition(), viewMatrix)){
                 ++lightIndex;
             }
         }
@@ -1112,7 +1112,7 @@ void GLSLSceneRenderer::enableLighting(bool on)
 void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
     impl->phongShadowProgram.setShadowEnabled(on);
-    impl->shadowLightIndex = index;
+    impl->phongShadowProgram.setShadowLight(index);
 }
 
 

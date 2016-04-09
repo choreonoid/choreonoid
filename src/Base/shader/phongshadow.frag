@@ -39,6 +39,7 @@ struct LightInfo {
 uniform LightInfo lights[10];
 
 uniform bool isShadowEnabled;
+uniform int shadowLightIndex;
 uniform sampler2DShadow shadowMap;
 
 layout(location = 0) out vec4 color;
@@ -91,17 +92,23 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
 
 void main()
 {
-    vec3 diffuseAndSpecular = vec3(0.0);
-    vec3 ambientAndEmission = emissionColor;
-    for(int i=0; i < numLights; ++i){
-        diffuseAndSpecular += calcDiffuseAndSpecularElements(lights[i]);
-        ambientAndEmission += lights[i].ambientIntensity * ambientColor;
-    }
-
-    if(isShadowEnabled){
-        float shadow = textureProj(shadowMap, shadowCoord);
-        color = vec4(diffuseAndSpecular * shadow + ambientAndEmission, 1.0);
+    vec3 c = emissionColor;
+    if(!isShadowEnabled){
+        for(int i=0; i < numLights; ++i){
+            c += calcDiffuseAndSpecularElements(lights[i]);
+            c += lights[i].ambientIntensity * ambientColor;
+        }
     } else {
-        color = vec4(diffuseAndSpecular + ambientAndEmission, 1.0);
+        float shadow = textureProj(shadowMap, shadowCoord);
+        for(int i=0; i < numLights; ++i){
+            if(i == shadowLightIndex){
+                c += shadow * calcDiffuseAndSpecularElements(lights[i]);
+            } else {
+                c += calcDiffuseAndSpecularElements(lights[i]);
+            }
+            c += lights[i].ambientIntensity * ambientColor;
+        }
+        
     }
+    color = vec4(c, 1.0);
 }

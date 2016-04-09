@@ -76,6 +76,7 @@ PhongShadowProgram::PhongShadowProgram()
 {
     maxNumLights_ = 10;
     isShadowEnabled_ = false;
+    shadowLightIndex_ = 0;
 }
 
 
@@ -127,7 +128,7 @@ void PhongShadowProgram::initialize()
     }
 
     isShadowEnabledLocation = getUniformLocation("isShadowEnabled");
-
+    shadowLightIndexLocation = getUniformLocation("shadowLightIndex");
     shadowMapLocation = getUniformLocation("shadowMap");
     glUniform1i(shadowMapLocation, 0);
 }
@@ -136,6 +137,7 @@ void PhongShadowProgram::initialize()
 void PhongShadowProgram::bindGLObjects()
 {
     glUniform1i(isShadowEnabledLocation, isShadowEnabled_);
+    glUniform1i(shadowLightIndexLocation, shadowLightIndex_);
     
     if(useUniformBlockToPassTransformationMatrices){
         transformBlockBuffer.bind(*this, 1);
