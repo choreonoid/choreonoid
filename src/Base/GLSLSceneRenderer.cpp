@@ -418,18 +418,20 @@ void GLSLSceneRendererImpl::renderShadowMap()
     self->getLightInfo(phongShadowProgram.shadowLightIndex(), light, T);
     if(light){
         SgCamera* shadowMapCamera = shadowMapProgram.getShadowMapCamera(light, T);
-        renderCamera(shadowMapCamera, T);
-        BPV = shadowBias * PV;
+        if(shadowMapCamera){
+            renderCamera(shadowMapCamera, T);
+            BPV = shadowBias * PV;
+
+            isMakingShadowMap = true;
+            beginRendering();
+            self->sceneRoot()->accept(*self);
+            endRendering();
+            isMakingShadowMap = false;
+
+            glFlush();
+            glFinish();
+        }
     }
-
-    isMakingShadowMap = true;
-    beginRendering();
-    self->sceneRoot()->accept(*self);
-    endRendering();
-    isMakingShadowMap = false;
-
-    glFlush();
-    glFinish();
 }
     
 

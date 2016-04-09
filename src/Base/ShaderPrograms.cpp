@@ -217,14 +217,9 @@ ShadowMapProgram::ShadowMapProgram()
     height_ = 1024;
 
     persCamera = new SgPerspectiveCamera();
-    persCamera->setFieldOfView(radian(50.0));
-    persCamera->setNearDistance(1.0);
-    persCamera->setFarDistance(20.0);
 
     orthoCamera = new SgOrthographicCamera();
-    orthoCamera->setHeight(5.0);
-    orthoCamera->setNearDistance(1.0);
-    orthoCamera->setFarDistance(20.0);
+    orthoCamera->setHeight(10.0);
 }
 
 
@@ -278,14 +273,18 @@ void ShadowMapProgram::bindGLObjects()
 
 SgCamera* ShadowMapProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
 {
+    SgCamera* camera = 0;
     bool hasDirection = false;
     Vector3 direction;
     if(SgDirectionalLight* directional = dynamic_cast<SgDirectionalLight*>(light)){
         direction = directional->direction();
         hasDirection = true;
+        camera = orthoCamera;
     } else if(SgSpotLight* spot = dynamic_cast<SgSpotLight*>(light)){
         direction = spot->direction();
         hasDirection = true;
+        persCamera->setFieldOfView(spot->cutOffAngle() * 2.0);
+        camera = persCamera;
     }
     if(hasDirection){
         Quaternion rot;
@@ -293,5 +292,5 @@ SgCamera* ShadowMapProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
         io_T.linear() = io_T.linear() * rot;
     }
 
-    return persCamera;
+    return camera;
 }
