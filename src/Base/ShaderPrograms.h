@@ -81,7 +81,8 @@ public:
 
 class PhongShadowProgram : public LightingProgram
 {
-public:
+    int renderingPass_;
+
     bool useUniformBlockToPassTransformationMatrices;
     GLSLUniformBlockBuffer transformBlockBuffer;
     GLint modelViewMatrixIndex;
@@ -91,13 +92,6 @@ public:
     GLint modelViewMatrixLocation;
     GLint normalMatrixLocation;
     GLint MVPLocation;
-
-    bool isShadowEnabled_;
-    GLint isShadowEnabledLocation;
-    int shadowLightIndex_;
-    GLint shadowLightIndexLocation;
-    GLint shadowMatrixLocation;
-    GLint shadowMapLocation;
 
     GLint numLightsLocation;
 
@@ -115,34 +109,42 @@ public:
     };
     std::vector<LightHandleSet> lightHandleSets;
 
+    bool isShadowEnabled_;
+    GLint isShadowEnabledLocation;
+    bool isShadowAntiAliasingEnabled_;
+    GLint isShadowAntiAliasingEnabledLocation;
+    int shadowLightIndex_;
+    GLint shadowLightIndexLocation;
+    GLint shadowMatrixLocation;
+    GLint shadowMapLocation;
+    int shadowMapWidth_;
+    int shadowMapHeight_;
+    GLuint shadowFBO;
+    SgPerspectiveCameraPtr persShadowCamera;  
+    SgOrthographicCameraPtr orthoShadowCamera;
+    NolightingProgram shadowMapProgram_;
+
+public:
     PhongShadowProgram();
     virtual void initialize();
+    void setRenderingPass(int pass) { renderingPass_ = pass; }
+    int renderingPass() const { return renderingPass_; }
+    virtual void use() throw (Exception);
     virtual void bindGLObjects();
     virtual void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix);
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV);
+
     bool isShadowEnabled() const { return isShadowEnabled_; }
-    void setShadowEnabled(bool on) { isShadowEnabled_ = on; }
+    void setShadowEnabled(bool on);
     int shadowLightIndex() const { return shadowLightIndex_; }
     void setShadowLight(int index) { shadowLightIndex_ = index; }
-};
-
-
-class ShadowMapProgram : public NolightingProgram
-{
-    int width_;
-    int height_;
-    GLuint shadowFBO;
-    SgPerspectiveCameraPtr persCamera;  
-    SgOrthographicCameraPtr orthoCamera;
-    
-public:
-    ShadowMapProgram();
-    virtual void initialize();
-    virtual void bindGLObjects();
-    int width() const { return width_; }
-    int height() const { return height_; }
+    void setShadowAntiAliasingEnabled(bool on) { isShadowAntiAliasingEnabled_ = on; }
+    bool isShadowAntiAliasingEnabled() const { return isShadowAntiAliasingEnabled_; }
+    int shadowMapWidth() const { return shadowMapWidth_; }
+    int shadowMapHeight() const { return shadowMapHeight_; }
     SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
+    NolightingProgram& shadowMapProgram() { return shadowMapProgram_; }
 };
 
 }

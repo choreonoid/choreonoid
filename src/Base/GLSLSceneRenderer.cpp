@@ -94,12 +94,11 @@ public:
 
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
+    NolightingProgram* currentNolightingProgram;
     
     SolidColorProgram solidColorProgram;
     PhongShadowProgram phongShadowProgram;
-    ShadowMapProgram shadowMapProgram;
 
-    bool isMakingShadowMap;
     bool isPicking;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
@@ -237,8 +236,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
 {
     currentProgram = 0;
     currentLightingProgram = 0;
-
-    isMakingShadowMap = false;
+    currentNolightingProgram = 0;
 
     shadowBias <<
         0.5, 0.0, 0.0, 0.5,
@@ -313,7 +311,6 @@ bool GLSLSceneRendererImpl::initializeGL()
     try {
         solidColorProgram.initialize();
         phongShadowProgram.initialize();
-        shadowMapProgram.initialize();
     }
     catch(GLSLProgram::Exception& ex){
         os() << ex.what() << endl;
@@ -339,17 +336,21 @@ void GLSLSceneRenderer::requestToClearCache()
 void GLSLSceneRenderer::render()
 {
     extractPreprocessedNodes();
+
+    PhongShadowProgram& program = impl->phongShadowProgram;
     
-    if(!impl->phongShadowProgram.isShadowEnabled()){
+    if(!program.isShadowEnabled()){
         impl->renderScene();
 
     } else {
+        program.setRenderingPass(0);
         Array4i vp = viewport();
-        setViewport(0, 0, impl->shadowMapProgram.width(), impl->shadowMapProgram.height());
+        setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
         impl->renderShadowMap();
 
+        program.setRenderingPass(1);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         setViewport(vp[0], vp[1], vp[2], vp[3]);
         glDisable(GL_CULL_FACE);
@@ -417,16 +418,14 @@ void GLSLSceneRendererImpl::renderShadowMap()
     Affine3 T;
     self->getLightInfo(phongShadowProgram.shadowLightIndex(), light, T);
     if(light){
-        SgCamera* shadowMapCamera = shadowMapProgram.getShadowMapCamera(light, T);
+        SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
             BPV = shadowBias * PV;
 
-            isMakingShadowMap = true;
             beginRendering();
             self->sceneRoot()->accept(*self);
             endRendering();
-            isMakingShadowMap = false;
 
             glFlush();
             glFinish();
@@ -484,16 +483,19 @@ void GLSLSceneRendererImpl::beginRendering()
     currentShapeHandleSet = 0;
     
     currentLightingProgram = 0;
+    currentNolightingProgram = 0;
+    
     if(isPicking){
         currentProgram = &solidColorProgram;
+        currentNolightingProgram = &solidColorProgram;
         currentNodePath.clear();
         pickingNodePathList.clear();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     } else {
-        if(isMakingShadowMap){
-            currentProgram = &shadowMapProgram;
+        currentProgram = &phongShadowProgram;
+        if(phongShadowProgram.renderingPass() == 0){
+            currentNolightingProgram = &phongShadowProgram.shadowMapProgram();
         } else {
-            currentProgram = &phongShadowProgram;
             currentLightingProgram = &phongShadowProgram;
         }
         const Vector3f& c = self->backgroundColor();
@@ -662,9 +664,9 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
 
     if(currentLightingProgram){
         currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrixStack.back(), PV, BPV);
-    } else {
+    } else if(currentNolightingProgram){
         const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
-        static_cast<NolightingProgram*>(currentProgram)->setProjectionMatrix(PVM);
+        currentNolightingProgram->setProjectionMatrix(PVM);
     }
 
     glBindVertexArray(handleSet->vao);
@@ -708,10 +710,10 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
     Vector4f color;
     color << material->diffuseColor(), alpha;
 
-    if(!currentLightingProgram){
+    if(currentNolightingProgram){
         setNolightingColor(color);
 
-    } else {
+    } else if(currentLightingProgram){
         setDiffuseColor(color);
         
         color.head<3>() *= material->ambientIntensity();

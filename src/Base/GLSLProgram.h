@@ -42,7 +42,7 @@ public:
     void loadShader(const char* filename, int shaderType) throw(Exception);
     void link() throw (Exception);
     void validate() throw(Exception);
-    void use() throw (Exception);
+    virtual void use() throw (Exception);
     
     GLint handle() const { return programHandle; }
     bool isLinked() const { return isLinked_; }

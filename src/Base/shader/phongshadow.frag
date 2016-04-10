@@ -39,6 +39,7 @@ struct LightInfo {
 uniform LightInfo lights[10];
 
 uniform bool isShadowEnabled;
+uniform bool isShadowAntiAliasingEnabled;
 uniform int shadowLightIndex;
 uniform sampler2DShadow shadowMap;
 
@@ -101,13 +102,16 @@ void main()
     } else {
         for(int i=0; i < numLights; ++i){
             if(i == shadowLightIndex){
-                //float shadow = textureProj(shadowMap, shadowCoord);
-                float shadow = 0.0;
-                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2(-1, -1));
-                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2(-1,  1));
-                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1,  1));
-                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1, -1));
-                shadow *= 0.25;
+                float shadow;
+                if(isShadowAntiAliasingEnabled){
+                    shadow  = textureProjOffset(shadowMap, shadowCoord, ivec2(-1, -1));
+                    shadow += textureProjOffset(shadowMap, shadowCoord, ivec2(-1,  1));
+                    shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1,  1));
+                    shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1, -1));
+                    shadow *= 0.25;
+                } else {
+                    shadow = textureProj(shadowMap, shadowCoord);
+                }
                 c += shadow * calcDiffuseAndSpecularElements(lights[i]);
             } else {
                 c += calcDiffuseAndSpecularElements(lights[i]);
