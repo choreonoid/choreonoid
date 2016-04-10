@@ -99,9 +99,15 @@ void main()
             c += lights[i].ambientIntensity * ambientColor;
         }
     } else {
-        float shadow = textureProj(shadowMap, shadowCoord);
         for(int i=0; i < numLights; ++i){
             if(i == shadowLightIndex){
+                //float shadow = textureProj(shadowMap, shadowCoord);
+                float shadow = 0.0;
+                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2(-1, -1));
+                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2(-1,  1));
+                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1,  1));
+                shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1, -1));
+                shadow *= 0.25;
                 c += shadow * calcDiffuseAndSpecularElements(lights[i]);
             } else {
                 c += calcDiffuseAndSpecularElements(lights[i]);
