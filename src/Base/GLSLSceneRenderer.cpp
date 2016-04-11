@@ -106,6 +106,8 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
+    int isShadowEnabled;
+    int shadowLightIndex;
     Matrix4 shadowBias;
     Matrix4 BPV;
 
@@ -238,6 +240,9 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
 
+    isShadowEnabled = false;
+    shadowLightIndex = 0;
+    
     shadowBias <<
         0.5, 0.0, 0.0, 0.5,
         0.0, 0.5, 0.0, 0.5,
@@ -339,7 +344,8 @@ void GLSLSceneRenderer::render()
 
     PhongShadowProgram& program = impl->phongShadowProgram;
     
-    if(!program.isShadowEnabled()){
+    if(!impl->isShadowEnabled){
+        program.setShadowEnabled(false);
         impl->renderScene();
 
     } else {
@@ -414,10 +420,11 @@ void GLSLSceneRendererImpl::renderScene()
 
 void GLSLSceneRendererImpl::renderShadowMap()
 {
+    bool isReady = false;
     SgLight* light;
     Affine3 T;
-    self->getLightInfo(phongShadowProgram.shadowLightIndex(), light, T);
-    if(light){
+    self->getLightInfo(shadowLightIndex, light, T);
+    if(light && light->on()){
         SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
@@ -429,8 +436,13 @@ void GLSLSceneRendererImpl::renderShadowMap()
 
             glFlush();
             glFinish();
+
+            isReady = true;
         }
     }
+
+    phongShadowProgram.setShadowEnabled(isReady);
+        
 }
     
 
@@ -525,7 +537,8 @@ void GLSLSceneRendererImpl::renderLights()
         Affine3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
-            if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix)){
+            if(currentLightingProgram->renderLight(
+                   lightIndex, light, T, viewMatrix, (i == shadowLightIndex))){
                 ++lightIndex;
             }
         }
@@ -534,7 +547,8 @@ void GLSLSceneRendererImpl::renderLights()
     if(lightIndex < currentLightingProgram->maxNumLights()){
         SgLight* headLight = self->headLight();
         if(headLight->on()){
-            if(currentLightingProgram->renderLight(lightIndex, headLight, self->currentCameraPosition(), viewMatrix)){
+            if(currentLightingProgram->renderLight(
+                   lightIndex, headLight, self->currentCameraPosition(), viewMatrix, false)){
                 ++lightIndex;
             }
         }
@@ -1115,8 +1129,8 @@ void GLSLSceneRenderer::enableLighting(bool on)
 
 void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
-    impl->phongShadowProgram.setShadowEnabled(on);
-    impl->phongShadowProgram.setShadowLight(index);
+    impl->shadowLightIndex = index;
+    impl->isShadowEnabled = on;
 }
 
 

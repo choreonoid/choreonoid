@@ -80,7 +80,6 @@ PhongShadowProgram::PhongShadowProgram()
 
     isShadowEnabled_ = false;
     isShadowAntiAliasingEnabled_ = false;
-    shadowLightIndex_ = 0;
     shadowMapWidth_ = 1024;
     shadowMapHeight_ = 1024;
     persShadowCamera = new SgPerspectiveCamera();
@@ -209,7 +208,6 @@ void PhongShadowProgram::bindGLObjects()
         glUniform1i(isShadowEnabledLocation, isShadowEnabled_);
         if(isShadowEnabled_){
             glUniform1i(isShadowAntiAliasingEnabledLocation, isShadowAntiAliasingEnabled_);
-            glUniform1i(shadowLightIndexLocation, shadowLightIndex_);
         }
 
         if(useUniformBlockToPassTransformationMatrices){
@@ -251,7 +249,7 @@ void PhongShadowProgram::setNumLights(int n)
 }
 
 
-bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix)
+bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting)
 {
     LightHandleSet& handles = lightHandleSets[index];
 
@@ -284,6 +282,10 @@ bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affi
     glUniform3fv(handles.intensity, 1, intensity.data());
     Vector3f ambientIntensity(light->ambientIntensity() * light->color());
     glUniform3fv(handles.ambientIntensity, 1, ambientIntensity.data());
+
+    if(isShadowEnabled_ && shadowCasting){
+        glUniform1i(shadowLightIndexLocation, index);
+    }
 
     return true;
 }

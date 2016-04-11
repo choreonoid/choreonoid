@@ -58,7 +58,7 @@ protected:
 public:
     int maxNumLights() const { return maxNumLights_; }
     virtual void setNumLights(int n) = 0;
-    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix) = 0;
+    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) = 0;
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV) = 0;
 
     void setDiffuseColor(const Vector4f& color){
@@ -132,13 +132,11 @@ public:
     virtual void use() throw (Exception);
     virtual void bindGLObjects();
     virtual void setNumLights(int n);
-    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix);
+    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV);
 
     bool isShadowEnabled() const { return isShadowEnabled_; }
     void setShadowEnabled(bool on);
-    int shadowLightIndex() const { return shadowLightIndex_; }
-    void setShadowLight(int index) { shadowLightIndex_ = index; }
     void setShadowAntiAliasingEnabled(bool on) { isShadowAntiAliasingEnabled_ = on; }
     bool isShadowAntiAliasingEnabled() const { return isShadowAntiAliasingEnabled_; }
     int shadowMapWidth() const { return shadowMapWidth_; }
