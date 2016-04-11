@@ -1051,14 +1051,6 @@ function(make_gettext_mofiles target out_mofiles)
 
 endfunction()
 
-if(MSVC)
-  if(CMAKE_CL_64)
-    add_subdirectory(thirdparty/windows64)
-  else()
-    add_subdirectory(thirdparty/windows)
-  endif()
-endif()
-
 # libyaml
 if(UNIX)
   set(USE_EXTERNAL_YAML_DEFAULT ON)

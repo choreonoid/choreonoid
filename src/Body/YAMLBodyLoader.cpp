@@ -651,6 +651,7 @@ SgNode* YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
     if(appearance.isValid()){
         readSceneAppearance(shape, appearance);
     }
+    return shape;
 }
 
 
@@ -699,11 +700,11 @@ void YAMLBodyLoaderImpl::readSceneSphere(SgShape* shape, Mapping& node)
 
 SgNode* YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
 {
-
+    return 0;
 }
 
 
 SgNode* YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 {
-
+    return 0;
 }
