@@ -74,22 +74,31 @@ void LightingProgram::setNumLights(int n)
 
 PhongShadowProgram::PhongShadowProgram()
 {
-    renderingPass_ = 1;
+    renderingPass = MAIN_PASS;
     
     maxNumLights_ = 10;
 
-    isShadowEnabled_ = false;
+    numShadows_ = 0;
     isShadowAntiAliasingEnabled_ = false;
     shadowMapWidth_ = 1024;
     shadowMapHeight_ = 1024;
     persShadowCamera = new SgPerspectiveCamera();
     orthoShadowCamera = new SgOrthographicCamera();
     orthoShadowCamera->setHeight(5.0);
+    currentShadowIndex = 0;
+
+    shadowBias <<
+        0.5, 0.0, 0.0, 0.5,
+        0.0, 0.5, 0.0, 0.5,
+        0.0, 0.0, 0.5, 0.5,
+        0.0, 0.0, 0.0, 1.0;
 }
 
 
 void PhongShadowProgram::initialize()
 {
+
+    
     loadVertexShader(":/Base/shader/phongshadow.vert");
     loadFragmentShader(":/Base/shader/phongshadow.frag");
     link();
@@ -111,7 +120,6 @@ void PhongShadowProgram::initialize()
         modelViewMatrixLocation = getUniformLocation("modelViewMatrix");
         normalMatrixLocation = getUniformLocation("normalMatrix");
         MVPLocation = getUniformLocation("MVP");
-        shadowMatrixLocation = getUniformLocation("shadowMatrix");
     }
     
     diffuseColorLocation = getUniformLocation("diffuseColor");
@@ -121,32 +129,49 @@ void PhongShadowProgram::initialize()
     shininessLocation = getUniformLocation("shininess");
     
     numLightsLocation = getUniformLocation("numLights");
-    if(numLightsLocation >= 0){
-        lightHandleSets.resize(maxNumLights_);
-        boost::format lightFormat("lights[%1%].");
-        for(int i=0; i < maxNumLights_; ++i){
-            LightHandleSet& handles = lightHandleSets[i];
-            string prefix = str(lightFormat % i);
-            handles.position = getUniformLocation(prefix + "position");
-            handles.intensity = getUniformLocation(prefix + "intensity");
-            handles.ambientIntensity = getUniformLocation(prefix + "ambientIntensity");
-            handles.constantAttenuation = getUniformLocation(prefix + "constantAttenuation");
-            handles.linearAttenuation = getUniformLocation(prefix + "linearAttenuation");
-            handles.quadraticAttenuation = getUniformLocation(prefix + "quadraticAttenuation");
-            handles.falloffAngle = getUniformLocation(prefix + "falloffAngle");
-            handles.falloffExponent = getUniformLocation(prefix + "falloffExponent");
-            handles.beamWidth = getUniformLocation(prefix + "beamWidth");
-            handles.direction = getUniformLocation(prefix + "direction");
-        }
+    lightInfos.resize(maxNumLights_);
+    boost::format lightFormat("lights[%1%].");
+    for(int i=0; i < maxNumLights_; ++i){
+        LightInfo& light = lightInfos[i];
+        string prefix = str(lightFormat % i);
+        light.positionLocation = getUniformLocation(prefix + "position");
+        light.intensityLocation = getUniformLocation(prefix + "intensity");
+        light.ambientIntensityLocation = getUniformLocation(prefix + "ambientIntensity");
+        light.constantAttenuationLocation = getUniformLocation(prefix + "constantAttenuation");
+        light.linearAttenuationLocation = getUniformLocation(prefix + "linearAttenuation");
+        light.quadraticAttenuationLocation = getUniformLocation(prefix + "quadraticAttenuation");
+        light.falloffAngleLocation = getUniformLocation(prefix + "falloffAngle");
+        light.falloffExponentLocation = getUniformLocation(prefix + "falloffExponent");
+        light.beamWidthLocation = getUniformLocation(prefix + "beamWidth");
+        light.directionLocation = getUniformLocation(prefix + "direction");
     }
 
-    isShadowEnabledLocation = getUniformLocation("isShadowEnabled");
-    isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
-    shadowLightIndexLocation = getUniformLocation("shadowLightIndex");
-    shadowMapLocation = getUniformLocation("shadowMap");
-    glUniform1i(shadowMapLocation, 0);
+    numShadowsLocation = getUniformLocation("numShadows");
+    shadowInfos.resize(maxNumShadows);
+    for(int i=0; i < maxNumShadows; ++i){
+        initializeShadowInfo(i);
+    }
 
-    GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
+    isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
+
+    shadowMapProgram_.initialize();
+}
+
+
+void PhongShadowProgram::initializeShadowInfo(int index)
+{
+    ShadowInfo& shadow = shadowInfos[index];
+
+    boost::format shadowMatrixFormat("shadowMatrices[%1%].");
+    shadow.shadowMatrixLocation = getUniformLocation(str(boost::format("shadowMatrices[%1%].") % index));
+    
+    boost::format shadowFormat("shadows[%1%].");
+    string prefix = str(boost::format("shadows[%1%].") % index);
+    shadow.lightIndexLocation = getUniformLocation(prefix + "lightIndex");
+    shadow.shadowMapLocation = getUniformLocation(prefix + "shadowMap");
+    glUniform1i(shadow.shadowMapLocation, index);
+
+    static const GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
     GLuint depthTexture;
     glGenTextures(1, &depthTexture);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -159,14 +184,13 @@ void PhongShadowProgram::initialize()
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
-    
-    // Assign the depth buffer texture to texture channel 0
+
     glActiveTexture(GL_TEXTURE0);
+    //glActiveTexture(GL_TEXTURE0 + index);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
     
-    // Create and set up the FBO
-    glGenFramebuffers(1, &shadowFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    glGenFramebuffers(1, &shadow.frameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
     
     GLenum drawBuffers[] = { GL_NONE };
@@ -178,14 +202,26 @@ void PhongShadowProgram::initialize()
     }
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    shadowMapProgram_.initialize();
+}
+
+
+void PhongShadowProgram::setShadowMapGenerationPass(int shadowIndex)
+{
+    renderingPass = SHADOWMAP_PASS;
+    currentShadowIndex = shadowIndex;
+}
+
+
+void PhongShadowProgram::setMainRenderingPass()
+{
+    renderingPass = MAIN_PASS;
+    currentShadowIndex = 0;
 }
 
 
 void PhongShadowProgram::use() throw (Exception)
 {
-    if(renderingPass_ == 0){
+    if(renderingPass == SHADOWMAP_PASS){
         shadowMapProgram_.use();
     } else {
         LightingProgram::use();
@@ -195,8 +231,9 @@ void PhongShadowProgram::use() throw (Exception)
 
 void PhongShadowProgram::bindGLObjects()
 {
-    if(renderingPass_ == 0){
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    if(renderingPass == SHADOWMAP_PASS){
+        ShadowInfo& shadow = shadowInfos[currentShadowIndex];
+        glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
         if(isShadowAntiAliasingEnabled_){
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -205,8 +242,8 @@ void PhongShadowProgram::bindGLObjects()
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         }
     } else {
-        glUniform1i(isShadowEnabledLocation, isShadowEnabled_);
-        if(isShadowEnabled_){
+        glUniform1i(numShadowsLocation, numShadows_);
+        if(numShadows_ > 0){
             glUniform1i(isShadowAntiAliasingEnabledLocation, isShadowAntiAliasingEnabled_);
         }
 
@@ -251,52 +288,65 @@ void PhongShadowProgram::setNumLights(int n)
 
 bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting)
 {
-    LightHandleSet& handles = lightHandleSets[index];
+    LightInfo& info = lightInfos[index];
 
     if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
         Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
         Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-        glUniform4fv(handles.position, 1, pos.data());
+        glUniform4fv(info.positionLocation, 1, pos.data());
 
     } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
         Vector3 p(viewMatrix * T.translation());
         Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
-        glUniform4fv(handles.position, 1, pos.data());
-        glUniform1f(handles.constantAttenuation, pointLight->constantAttenuation());
-        glUniform1f(handles.linearAttenuation, pointLight->linearAttenuation());
-        glUniform1f(handles.quadraticAttenuation, pointLight->quadraticAttenuation());
+        glUniform4fv(info.positionLocation, 1, pos.data());
+        glUniform1f(info.constantAttenuationLocation, pointLight->constantAttenuation());
+        glUniform1f(info.linearAttenuationLocation, pointLight->linearAttenuation());
+        glUniform1f(info.quadraticAttenuationLocation, pointLight->quadraticAttenuation());
         
         if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
             Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
             Vector3f direction(d.cast<float>());
-            glUniform3fv(handles.direction, 1, direction.data());
-            glUniform1f(handles.falloffAngle, spotLight->cutOffAngle());
-            glUniform1f(handles.falloffExponent, 4.0f);
-            glUniform1f(handles.beamWidth, spotLight->beamWidth());
+            glUniform3fv(info.directionLocation, 1, direction.data());
+            glUniform1f(info.falloffAngleLocation, spotLight->cutOffAngle());
+            glUniform1f(info.falloffExponentLocation, 4.0f);
+            glUniform1f(info.beamWidthLocation, spotLight->beamWidth());
         }
     } else {
         return false;
     }
         
     Vector3f intensity(light->intensity() * light->color());
-    glUniform3fv(handles.intensity, 1, intensity.data());
+    glUniform3fv(info.intensityLocation, 1, intensity.data());
     Vector3f ambientIntensity(light->ambientIntensity() * light->color());
-    glUniform3fv(handles.ambientIntensity, 1, ambientIntensity.data());
+    glUniform3fv(info.ambientIntensityLocation, 1, ambientIntensity.data());
 
-    if(isShadowEnabled_ && shadowCasting){
-        glUniform1i(shadowLightIndexLocation, index);
+    if(shadowCasting){
+        ShadowInfo& shadow = shadowInfos[currentShadowIndex];
+        glUniform1i(shadow.lightIndexLocation, index);
+        ++currentShadowIndex;
     }
 
     return true;
 }
 
 
-void PhongShadowProgram::setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV, const Matrix4& BPV)
+void PhongShadowProgram::setNumShadows(int n)
+{
+    numShadows_ = n;
+}
+
+
+void PhongShadowProgram::setShadowMapViewProjection(int shadowIndex, const Matrix4& PV)
+{
+    shadowInfos[shadowIndex].BPV = shadowBias * PV;
+}
+
+
+void PhongShadowProgram::setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV)
 {
     const Affine3f VM = (viewMatrix * modelMatrix).cast<float>();
     const Matrix3f N = VM.linear();
     const Matrix4f PVM = (PV * modelMatrix.matrix()).cast<float>();
-    const Matrix4f BPVM = (BPV * modelMatrix.matrix()).cast<float>();
 
     if(useUniformBlockToPassTransformationMatrices){
        transformBlockBuffer.write(modelViewMatrixIndex, VM);
@@ -307,15 +357,10 @@ void PhongShadowProgram::setTransformMatrices(const Affine3& viewMatrix, const A
         glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, VM.data());
         glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, N.data());
         glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, PVM.data());
-        glUniformMatrix4fv(shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
-    }
-}
-
-
-void PhongShadowProgram::setShadowEnabled(bool on)
-{
-    isShadowEnabled_ = on;
-    if(!on){
-        renderingPass_ = 1;
+        for(int i=0; i < numShadows_; ++i){
+            ShadowInfo& shadow = shadowInfos[i];
+            const Matrix4f BPVM = (shadow.BPV * modelMatrix.matrix()).cast<float>();
+            glUniformMatrix4fv(shadow.shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
+        }
     }
 }

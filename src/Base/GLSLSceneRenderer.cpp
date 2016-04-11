@@ -108,8 +108,6 @@ public:
 
     int isShadowEnabled;
     int shadowLightIndex;
-    Matrix4 shadowBias;
-    Matrix4 BPV;
 
     bool defaultLighting;
     Vector4f currentNolightingColor;
@@ -243,12 +241,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     isShadowEnabled = false;
     shadowLightIndex = 0;
     
-    shadowBias <<
-        0.5, 0.0, 0.0, 0.5,
-        0.0, 0.5, 0.0, 0.5,
-        0.0, 0.0, 0.5, 0.5,
-        0.0, 0.0, 0.0, 1.0;
-    
     isPicking = false;
     pickedPoint.setZero();
 
@@ -345,18 +337,18 @@ void GLSLSceneRenderer::render()
     PhongShadowProgram& program = impl->phongShadowProgram;
     
     if(!impl->isShadowEnabled){
-        program.setShadowEnabled(false);
+        program.setNumShadows(0);
         impl->renderScene();
 
     } else {
-        program.setRenderingPass(0);
+        program.setShadowMapGenerationPass(0);
         Array4i vp = viewport();
         setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
         impl->renderShadowMap();
 
-        program.setRenderingPass(1);
+        program.setMainRenderingPass();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         setViewport(vp[0], vp[1], vp[2], vp[3]);
         glDisable(GL_CULL_FACE);
@@ -420,7 +412,7 @@ void GLSLSceneRendererImpl::renderScene()
 
 void GLSLSceneRendererImpl::renderShadowMap()
 {
-    bool isReady = false;
+    int shadowIndex = 0;
     SgLight* light;
     Affine3 T;
     self->getLightInfo(shadowLightIndex, light, T);
@@ -428,21 +420,16 @@ void GLSLSceneRendererImpl::renderShadowMap()
         SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
-            BPV = shadowBias * PV;
-
+            phongShadowProgram.setShadowMapViewProjection(shadowIndex, PV);
             beginRendering();
             self->sceneRoot()->accept(*self);
             endRendering();
-
             glFlush();
             glFinish();
-
-            isReady = true;
+            ++shadowIndex;
         }
     }
-
-    phongShadowProgram.setShadowEnabled(isReady);
-        
+    phongShadowProgram.setNumShadows(shadowIndex);
 }
     
 
@@ -505,10 +492,10 @@ void GLSLSceneRendererImpl::beginRendering()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     } else {
         currentProgram = &phongShadowProgram;
-        if(phongShadowProgram.renderingPass() == 0){
-            currentNolightingProgram = &phongShadowProgram.shadowMapProgram();
-        } else {
+        if(phongShadowProgram.isMainRenderingPass()){
             currentLightingProgram = &phongShadowProgram;
+        } else {
+            currentNolightingProgram = &phongShadowProgram.shadowMapProgram();
         }
         const Vector3f& c = self->backgroundColor();
         glClearColor(c[0], c[1], c[2], 1.0f);
@@ -677,7 +664,7 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
     }
 
     if(currentLightingProgram){
-        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrixStack.back(), PV, BPV);
+        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrixStack.back(), PV);
     } else if(currentNolightingProgram){
         const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
         currentNolightingProgram->setProjectionMatrix(PVM);

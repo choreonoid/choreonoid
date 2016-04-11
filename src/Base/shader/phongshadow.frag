@@ -1,8 +1,10 @@
 #version 330
 
+#define MAX_NUM_SHADOWS 3
+
 in vec3 position;
 in vec3 normal;
-in vec4 shadowCoord;
+in vec4 shadowCoords[MAX_NUM_SHADOWS];
 
 /*
 uniform MaterialBlock {
@@ -38,10 +40,16 @@ struct LightInfo {
 
 uniform LightInfo lights[10];
 
-uniform bool isShadowEnabled;
+vec3 reflectionComponents[10];
+
+uniform int numShadows;
+
+struct ShadowInfo {
+    int lightIndex;
+    sampler2DShadow shadowMap;
+};
+uniform ShadowInfo shadows[3];
 uniform bool isShadowAntiAliasingEnabled;
-uniform int shadowLightIndex;
-uniform sampler2DShadow shadowMap;
 
 layout(location = 0) out vec4 color;
 
@@ -93,32 +101,27 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
 
 void main()
 {
+    for(int i=0; i < numLights; ++i){
+        reflectionComponents[i] = calcDiffuseAndSpecularElements(lights[i]);
+    }
+    for(int i=0; i < numShadows; ++i){
+        //sample2DShadow shadowMap = shadows[i].shadowMap;
+        float shadow;
+        if(isShadowAntiAliasingEnabled){
+            vec4 shadowCoord = shadowCoords[i];
+            shadow  = textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1, -1));
+            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1,  1));
+            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1,  1));
+            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1, -1));
+            shadow *= 0.25;
+        } else {
+            shadow = textureProj(shadows[i].shadowMap, shadowCoords[i]);
+        }
+        reflectionComponents[shadows[i].lightIndex] *= shadow;
+    }
     vec3 c = emissionColor;
-    if(!isShadowEnabled){
-        for(int i=0; i < numLights; ++i){
-            c += calcDiffuseAndSpecularElements(lights[i]);
-            c += lights[i].ambientIntensity * ambientColor;
-        }
-    } else {
-        for(int i=0; i < numLights; ++i){
-            if(i == shadowLightIndex){
-                float shadow;
-                if(isShadowAntiAliasingEnabled){
-                    shadow  = textureProjOffset(shadowMap, shadowCoord, ivec2(-1, -1));
-                    shadow += textureProjOffset(shadowMap, shadowCoord, ivec2(-1,  1));
-                    shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1,  1));
-                    shadow += textureProjOffset(shadowMap, shadowCoord, ivec2( 1, -1));
-                    shadow *= 0.25;
-                } else {
-                    shadow = textureProj(shadowMap, shadowCoord);
-                }
-                c += shadow * calcDiffuseAndSpecularElements(lights[i]);
-            } else {
-                c += calcDiffuseAndSpecularElements(lights[i]);
-            }
-            c += lights[i].ambientIntensity * ambientColor;
-        }
-        
+    for(int i=0; i < numLights; ++i){
+        c += reflectionComponents[i] + lights[i].ambientIntensity * ambientColor;
     }
     color = vec4(c, 1.0);
 }
