@@ -80,7 +80,7 @@ public:
     void unsetDefaultLight(SgLight* light);
     void enableAdditionalLights(bool on);
     virtual void enableShadowOfLight(int index, bool on = true);
-
+    virtual void enableShadowAntiAliasing(bool on);
     virtual void setDefaultSmoothShading(bool on) = 0;
     virtual SgMaterial* defaultMaterial() = 0;
     virtual void enableTexture(bool on) = 0;

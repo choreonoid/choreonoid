@@ -116,6 +116,7 @@ public:
     CheckBox additionalLightsCheck;
     CheckBox shadowCheck;
     SpinBox shadowLightSpin;
+    CheckBox shadowAntiAliasingCheck;
     CheckBox fogCheck;
     CheckBox gridCheck[3];
     DoubleSpinBox gridSpanSpin[3];
@@ -2210,6 +2211,7 @@ void SceneWidgetImpl::updateDefaultLights()
     renderer->enableAdditionalLights(config->additionalLightsCheck.isChecked());
     
     renderer->enableShadowOfLight(config->shadowLightSpin.value(), config->shadowCheck.isChecked());
+    renderer->enableShadowAntiAliasing(config->shadowAntiAliasingCheck.isChecked());
     renderer->enableFog(config->fogCheck.isChecked());
 
     worldLight->notifyUpdate(modified);
@@ -2965,8 +2967,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     shadowLightSpin.setValue(0);
     shadowLightSpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&shadowLightSpin);
+    shadowAntiAliasingCheck.setText(_("Anti-aliasing"));
+    shadowAntiAliasingCheck.setChecked(true);
+    shadowAntiAliasingCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
+    hbox->addWidget(&shadowAntiAliasingCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
 
-    hbox->addSpacing(8);
+    hbox = new QHBoxLayout();
     fogCheck.setText(_("Fog"));
     fogCheck.setChecked(true);
     fogCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));

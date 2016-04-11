@@ -765,6 +765,12 @@ void GLSceneRenderer::enableShadowOfLight(int index, bool on)
 }
 
 
+void GLSceneRenderer::enableShadowAntiAliasing(bool on)
+{
+
+}
+
+
 void GLSceneRenderer::getPerspectiveProjectionMatrix
 (double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix)
 {

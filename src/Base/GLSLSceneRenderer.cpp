@@ -1120,6 +1120,12 @@ void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 }
 
 
+void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
+{
+    impl->phongShadowProgram.setShadowAntiAliasingEnabled(on);
+}
+
+
 void GLSLSceneRendererImpl::enableBlend(bool on)
 {
     if(isPicking){
