@@ -6,7 +6,6 @@
 #ifndef CNOID_BASE_GL_SCENE_RENDERER_H
 #define CNOID_BASE_GL_SCENE_RENDERER_H
 
-#include <cnoid/SceneGraph>
 #include <cnoid/SceneRenderer>
 #include "exportdecl.h"
 
@@ -25,7 +24,6 @@ public:
 
     virtual SgGroup* sceneRoot();
     virtual SgGroup* scene();
-    virtual void clearScene();
 
     virtual bool initializeGL();
     virtual void flush();
@@ -33,22 +31,6 @@ public:
     // The following functions cannot be called bofore calling the initializeGL() function.
     bool setSwapInterval(int interval);
     int getSwapInterval() const;
-
-    virtual SignalProxy<void()> sigRenderingRequest();
-
-    virtual void extractPreprocessedNodes();
-    
-    virtual int numCameras() const;
-    virtual SgCamera* camera(int index);
-    virtual const SgNodePath& cameraPath(int index) const;
-    virtual SignalProxy<void()> sigCamerasChanged() const;
-        
-    virtual SgCamera* currentCamera() const;
-    virtual int currentCameraIndex() const;
-    virtual void setCurrentCamera(int index);
-    virtual bool setCurrentCamera(SgCamera* camera);
-    virtual SignalProxy<void()> sigCurrentCameraChanged();
-    const Affine3& currentCameraPosition() const;
 
     virtual void setViewport(int x, int y, int width, int height);
     virtual Array4i viewport() const;
@@ -72,13 +54,6 @@ public:
     void setDefaultColor(const Vector4f& color);
 
     virtual void setDefaultLighting(bool on) = 0;
-    virtual SgLight* headLight();
-    virtual void setHeadLight(SgLight* light);
-    int numLights() const;
-    void getLightInfo(int index, SgLight*& out_light, Affine3& out_position) const;
-    void setAsDefaultLight(SgLight* light);
-    void unsetDefaultLight(SgLight* light);
-    void enableAdditionalLights(bool on);
     virtual void enableShadowOfLight(int index, bool on = true);
     virtual void enableShadowAntiAliasing(bool on);
     virtual void setDefaultSmoothShading(bool on) = 0;
@@ -90,11 +65,6 @@ public:
     enum PolygonMode { FILL_MODE, LINE_MODE, POINT_MODE };
     void setPolygonMode(PolygonMode mode);
     PolygonMode polygonMode() const;
-
-    void enableFog(bool on);
-    bool isFogEnabled() const;
-    int numFogs() const;
-    SgFog* fog(int index) const;
 
     virtual void showNormalVectors(double length) = 0;
 
@@ -125,7 +95,8 @@ public:
     */
     
 
-  protected:
+protected:
+    virtual void onSceneGraphUpdated(const SgUpdate& update);
     virtual void onImageUpdated(SgImage* image) = 0;
 
 private:
