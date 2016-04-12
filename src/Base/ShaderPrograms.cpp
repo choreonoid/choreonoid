@@ -66,6 +66,17 @@ void SolidColorProgram::setColor(const Vector4f& color)
 }
 
 
+void LightingProgram::initialize()
+{
+    diffuseColorLocation = getUniformLocation("diffuseColor");
+    ambientColorLocation = getUniformLocation("ambientColor");
+    specularColorLocation = getUniformLocation("specularColor");
+    emissionColorLocation = getUniformLocation("emissionColor");
+    shininessLocation = getUniformLocation("shininess");
+}    
+    
+
+
 void LightingProgram::setNumLights(int n)
 {
 
@@ -76,8 +87,6 @@ PhongShadowProgram::PhongShadowProgram()
 {
     renderingPass = MAIN_PASS;
     
-    maxNumLights_ = 10;
-
     numShadows_ = 0;
     isShadowAntiAliasingEnabled_ = false;
     shadowMapWidth_ = 1024;
@@ -97,16 +106,11 @@ PhongShadowProgram::PhongShadowProgram()
 
 void PhongShadowProgram::initialize()
 {
-
-    
     loadVertexShader(":/Base/shader/phongshadow.vert");
     loadFragmentShader(":/Base/shader/phongshadow.frag");
     link();
 
-    shadowMapProgram_.loadVertexShader(":/Base/shader/nolighting.vert");
-    shadowMapProgram_.loadFragmentShader(":/Base/shader/shadowmap.frag");
-    shadowMapProgram_.link();
-    shadowMapProgram_.initialize();
+    LightingProgram::initialize();
 
     useUniformBlockToPassTransformationMatrices = transformBlockBuffer.initialize(*this, "TransformBlock");
 
@@ -122,16 +126,10 @@ void PhongShadowProgram::initialize()
         MVPLocation = getUniformLocation("MVP");
     }
     
-    diffuseColorLocation = getUniformLocation("diffuseColor");
-    ambientColorLocation = getUniformLocation("ambientColor");
-    specularColorLocation = getUniformLocation("specularColor");
-    emissionColorLocation = getUniformLocation("emissionColor");
-    shininessLocation = getUniformLocation("shininess");
-    
     numLightsLocation = getUniformLocation("numLights");
-    lightInfos.resize(maxNumLights_);
+    lightInfos.resize(maxNumLights());
     boost::format lightFormat("lights[%1%].");
-    for(int i=0; i < maxNumLights_; ++i){
+    for(int i=0; i < maxNumLights(); ++i){
         LightInfo& light = lightInfos[i];
         string prefix = str(lightFormat % i);
         light.positionLocation = getUniformLocation(prefix + "position");
@@ -147,13 +145,17 @@ void PhongShadowProgram::initialize()
     }
 
     numShadowsLocation = getUniformLocation("numShadows");
-    shadowInfos.resize(maxNumShadows);
-    for(int i=0; i < maxNumShadows; ++i){
+    shadowInfos.resize(maxNumShadows_);
+    for(int i=0; i < maxNumShadows_; ++i){
         initializeShadowInfo(i);
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
 
+    shadowMapProgram_.loadVertexShader(":/Base/shader/nolighting.vert");
+    shadowMapProgram_.loadFragmentShader(":/Base/shader/shadowmap.frag");
+    shadowMapProgram_.link();
     shadowMapProgram_.initialize();
 }
 
@@ -162,8 +164,8 @@ void PhongShadowProgram::initializeShadowInfo(int index)
 {
     ShadowInfo& shadow = shadowInfos[index];
 
-    boost::format shadowMatrixFormat("shadowMatrices[%1%].");
-    shadow.shadowMatrixLocation = getUniformLocation(str(boost::format("shadowMatrices[%1%].") % index));
+    boost::format shadowMatrixFormat("shadowMatrices[%1%]");
+    shadow.shadowMatrixLocation = getUniformLocation(str(boost::format("shadowMatrices[%1%]") % index));
     
     boost::format shadowFormat("shadows[%1%].");
     string prefix = str(boost::format("shadows[%1%].") % index);
@@ -200,8 +202,6 @@ void PhongShadowProgram::initializeShadowInfo(int index)
     if(result != GL_FRAMEBUFFER_COMPLETE) {
         throw Exception("Framebuffer is not complete.\n");
     }
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 
@@ -321,9 +321,11 @@ bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affi
     glUniform3fv(info.ambientIntensityLocation, 1, ambientIntensity.data());
 
     if(shadowCasting){
-        ShadowInfo& shadow = shadowInfos[currentShadowIndex];
-        glUniform1i(shadow.lightIndexLocation, index);
-        ++currentShadowIndex;
+        if(currentShadowIndex < numShadows_){
+            ShadowInfo& shadow = shadowInfos[currentShadowIndex];
+            glUniform1i(shadow.lightIndexLocation, index);
+            ++currentShadowIndex;
+        }
     }
 
     return true;

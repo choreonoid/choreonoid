@@ -40,7 +40,7 @@ struct LightInfo {
 
 uniform LightInfo lights[10];
 
-vec3 reflectionComponents[10];
+vec3 reflectionElements[10];
 
 uniform int numShadows;
 
@@ -102,10 +102,9 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
 void main()
 {
     for(int i=0; i < numLights; ++i){
-        reflectionComponents[i] = calcDiffuseAndSpecularElements(lights[i]);
+        reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i]);
     }
     for(int i=0; i < numShadows; ++i){
-        //sample2DShadow shadowMap = shadows[i].shadowMap;
         float shadow;
         if(isShadowAntiAliasingEnabled){
             vec4 shadowCoord = shadowCoords[i];
@@ -117,11 +116,11 @@ void main()
         } else {
             shadow = textureProj(shadows[i].shadowMap, shadowCoords[i]);
         }
-        reflectionComponents[shadows[i].lightIndex] *= shadow;
+        reflectionElements[shadows[i].lightIndex] *= shadow;
     }
     vec3 c = emissionColor;
     for(int i=0; i < numLights; ++i){
-        c += reflectionComponents[i] + lights[i].ambientIntensity * ambientColor;
+        c += reflectionElements[i] + lights[i].ambientIntensity * ambientColor;
     }
     color = vec4(c, 1.0);
 }

@@ -46,16 +46,18 @@ public:
 
 class LightingProgram : public ShaderProgram
 {
+    static const int maxNumLights_ = 10;
+
 protected:
+
     GLint diffuseColorLocation;
     GLint ambientColorLocation;
     GLint specularColorLocation;
     GLint emissionColorLocation;
     GLint shininessLocation;
-
-    int maxNumLights_;
     
 public:
+    virtual void initialize();
     int maxNumLights() const { return maxNumLights_; }
     virtual void setNumLights(int n) = 0;
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) = 0;
@@ -81,8 +83,6 @@ public:
 
 class PhongShadowProgram : public LightingProgram
 {
-    static const int maxNumShadows = 3;
-
     enum { SHADOWMAP_PASS, MAIN_PASS } renderingPass;
 
     bool useUniformBlockToPassTransformationMatrices;
@@ -123,6 +123,9 @@ class PhongShadowProgram : public LightingProgram
     GLint numShadowsLocation;
     GLint isShadowAntiAliasingEnabledLocation;
 
+    static const int maxNumShadows_ = 1;
+    int currentShadowIndex;
+
     struct ShadowInfo {
         int lightIndex;
         GLint shadowMatrixLocation;
@@ -133,7 +136,6 @@ class PhongShadowProgram : public LightingProgram
     };
     std::vector<ShadowInfo> shadowInfos;
 
-    int currentShadowIndex;
     Matrix4 shadowBias;
 
 public:
@@ -141,16 +143,17 @@ public:
     virtual void initialize();
     void setShadowMapGenerationPass(int shadowIndex);
     void setMainRenderingPass();
-    bool isShadowMapGenerationPass() const { renderingPass == SHADOWMAP_PASS; }
-    bool isMainRenderingPass() const { renderingPass == MAIN_PASS; }
+    bool isShadowMapGenerationPass() const { return renderingPass == SHADOWMAP_PASS; }
+    bool isMainRenderingPass() const { return renderingPass == MAIN_PASS; }
     
     virtual void use() throw (Exception);
     virtual void bindGLObjects();
     virtual void setNumLights(int n);
-    void setNumShadows(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV);
 
+    int maxNumShadows() const { return maxNumShadows_; }
+    void setNumShadows(int n);
     void setShadowAntiAliasingEnabled(bool on) { isShadowAntiAliasingEnabled_ = on; }
     bool isShadowAntiAliasingEnabled() const { return isShadowAntiAliasingEnabled_; }
     int shadowMapWidth() const { return shadowMapWidth_; }

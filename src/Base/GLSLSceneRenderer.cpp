@@ -337,6 +337,7 @@ void GLSLSceneRenderer::render()
     PhongShadowProgram& program = impl->phongShadowProgram;
     
     if(!impl->isShadowEnabled){
+        program.setMainRenderingPass();
         program.setNumShadows(0);
         impl->renderScene();
 
@@ -403,10 +404,10 @@ void GLSLSceneRendererImpl::renderScene()
     SgCamera* camera = self->currentCamera();
     if(camera){
         renderCamera(camera, self->currentCameraPosition());
+        beginRendering();
+        self->sceneRoot()->accept(*self);
+        endRendering();
     }
-    beginRendering();
-    self->sceneRoot()->accept(*self);
-    endRendering();
 }
 
 
@@ -483,6 +484,7 @@ void GLSLSceneRendererImpl::beginRendering()
     
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
+    GLbitfield clearMask = GL_DEPTH_BUFFER_BIT;
     
     if(isPicking){
         currentProgram = &solidColorProgram;
@@ -494,15 +496,17 @@ void GLSLSceneRendererImpl::beginRendering()
         currentProgram = &phongShadowProgram;
         if(phongShadowProgram.isMainRenderingPass()){
             currentLightingProgram = &phongShadowProgram;
+            clearMask |= GL_COLOR_BUFFER_BIT;
         } else {
             currentNolightingProgram = &phongShadowProgram.shadowMapProgram();
         }
         const Vector3f& c = self->backgroundColor();
         glClearColor(c[0], c[1], c[2], 1.0f);
     }
+    
     currentProgram->use();
     currentProgram->bindGLObjects();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(clearMask);
     clearGLState();
 
     if(currentLightingProgram){
