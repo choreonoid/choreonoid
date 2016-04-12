@@ -178,7 +178,7 @@ public:
     void render();
     bool pick(int x, int y);
     void renderScene();
-    void renderShadowMap(int lightIndex);
+    bool renderShadowMap(int lightIndex);
     void beginRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights();
@@ -352,8 +352,12 @@ void GLSLSceneRendererImpl::render()
         int shadowMapIndex = 0;
         set<int>::iterator iter = shadowLightIndices.begin();
         while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
-            program.activateShadowMapGenerationPass(shadowMapIndex++);
-            renderShadowMap(*iter);
+            program.activateShadowMapGenerationPass(shadowMapIndex);
+            int shadowLightIndex = *iter;
+            if(renderShadowMap(shadowLightIndex)){
+                ++shadowMapIndex;
+            }
+            ++iter;
         }
         program.setNumShadows(shadowMapIndex);
 
@@ -419,7 +423,7 @@ void GLSLSceneRendererImpl::renderScene()
 }
 
 
-void GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
+bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
 {
     SgLight* light;
     Affine3 T;
@@ -434,8 +438,11 @@ void GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
             endRendering();
             glFlush();
             glFinish();
+
+            return true;
         }
     }
+    return false;
 }
     
 

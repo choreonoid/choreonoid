@@ -149,6 +149,7 @@ void PhongShadowProgram::initialize()
     for(int i=0; i < maxNumShadows_; ++i){
         initializeShadowInfo(i);
     }
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
@@ -171,12 +172,11 @@ void PhongShadowProgram::initializeShadowInfo(int index)
     string prefix = str(boost::format("shadows[%1%].") % index);
     shadow.lightIndexLocation = getUniformLocation(prefix + "lightIndex");
     shadow.shadowMapLocation = getUniformLocation(prefix + "shadowMap");
-    glUniform1i(shadow.shadowMapLocation, index);
 
     static const GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
-    GLuint depthTexture;
-    glGenTextures(1, &depthTexture);
-    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    glGenTextures(1, &shadow.depthTexture);
+    glActiveTexture(GL_TEXTURE1 + index);
+    glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth_, shadowMapHeight_,
                  0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -187,16 +187,12 @@ void PhongShadowProgram::initializeShadowInfo(int index)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
 
-    glActiveTexture(GL_TEXTURE0);
-    //glActiveTexture(GL_TEXTURE0 + index);
-    glBindTexture(GL_TEXTURE_2D, depthTexture);
-    
     glGenFramebuffers(1, &shadow.frameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow.depthTexture, 0);
     
-    GLenum drawBuffers[] = { GL_NONE };
-    glDrawBuffers(1, drawBuffers);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
     
     GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(result != GL_FRAMEBUFFER_COMPLETE) {
@@ -238,6 +234,9 @@ void PhongShadowProgram::bindGLObjects()
     if(renderingPass == SHADOWMAP_PASS){
         ShadowInfo& shadow = shadowInfos[currentShadowIndex];
         glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
+        glActiveTexture(GL_TEXTURE1 + currentShadowIndex);
+        glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
+        
         if(isShadowAntiAliasingEnabled_){
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -327,6 +326,7 @@ bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affi
     if(shadowCasting){
         if(currentShadowIndex < numShadows_){
             ShadowInfo& shadow = shadowInfos[currentShadowIndex];
+            glUniform1i(shadow.shadowMapLocation, currentShadowIndex + 1);
             glUniform1i(shadow.lightIndexLocation, index);
             ++currentShadowIndex;
         }

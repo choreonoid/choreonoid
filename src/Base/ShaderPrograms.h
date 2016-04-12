@@ -123,7 +123,7 @@ class PhongShadowProgram : public LightingProgram
     GLint numShadowsLocation;
     GLint isShadowAntiAliasingEnabledLocation;
 
-    static const int maxNumShadows_ = 1;
+    static const int maxNumShadows_ = 2;
     int currentShadowIndex;
 
     struct ShadowInfo {
@@ -131,6 +131,7 @@ class PhongShadowProgram : public LightingProgram
         GLint shadowMatrixLocation;
         GLint lightIndexLocation;
         GLint shadowMapLocation;
+        GLuint depthTexture;
         GLuint frameBuffer;
         Matrix4 BPV;
     };
