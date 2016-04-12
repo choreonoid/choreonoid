@@ -54,6 +54,7 @@ public:
     void setDefaultColor(const Vector4f& color);
 
     virtual void setDefaultLighting(bool on) = 0;
+    virtual void clearShadows();
     virtual void enableShadowOfLight(int index, bool on = true);
     virtual void enableShadowAntiAliasing(bool on);
     virtual void setDefaultSmoothShading(bool on) = 0;

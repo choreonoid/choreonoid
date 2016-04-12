@@ -205,14 +205,18 @@ void PhongShadowProgram::initializeShadowInfo(int index)
 }
 
 
-void PhongShadowProgram::setShadowMapGenerationPass(int shadowIndex)
+void PhongShadowProgram::activateShadowMapGenerationPass(int shadowIndex)
 {
     renderingPass = SHADOWMAP_PASS;
-    currentShadowIndex = shadowIndex;
+    if(shadowIndex >= maxNumShadows_){
+        currentShadowIndex = maxNumShadows_ - 1;
+    } else {
+        currentShadowIndex = shadowIndex;
+    }
 }
 
 
-void PhongShadowProgram::setMainRenderingPass()
+void PhongShadowProgram::activateMainRenderingPass()
 {
     renderingPass = MAIN_PASS;
     currentShadowIndex = 0;
@@ -338,9 +342,9 @@ void PhongShadowProgram::setNumShadows(int n)
 }
 
 
-void PhongShadowProgram::setShadowMapViewProjection(int shadowIndex, const Matrix4& PV)
+void PhongShadowProgram::setShadowMapViewProjection(const Matrix4& PV)
 {
-    shadowInfos[shadowIndex].BPV = shadowBias * PV;
+    shadowInfos[currentShadowIndex].BPV = shadowBias * PV;
 }
 
 

@@ -207,6 +207,12 @@ int GLSceneRenderer::getSwapInterval() const
 }
 
 
+void GLSceneRenderer::clearShadows()
+{
+
+}
+
+
 void GLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
 

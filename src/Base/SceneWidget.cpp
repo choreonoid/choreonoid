@@ -56,6 +56,8 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
+const int NUM_SHADOWS = 2;
+
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
 class EditableExtractor : public SceneVisitor
@@ -114,8 +116,11 @@ public:
     DoubleSpinBox worldLightIntensitySpin;
     DoubleSpinBox worldLightAmbientSpin;
     CheckBox additionalLightsCheck;
-    CheckBox shadowCheck;
-    SpinBox shadowLightSpin;
+    struct Shadow {
+        CheckBox check;
+        SpinBox lightSpin;
+    };
+    Shadow shadows[NUM_SHADOWS];
     CheckBox shadowAntiAliasingCheck;
     CheckBox fogCheck;
     CheckBox gridCheck[3];
@@ -2209,9 +2214,16 @@ void SceneWidgetImpl::updateDefaultLights()
     worldLight->setAmbientIntensity(config->worldLightAmbientSpin.value());
 
     renderer->enableAdditionalLights(config->additionalLightsCheck.isChecked());
-    
-    renderer->enableShadowOfLight(config->shadowLightSpin.value(), config->shadowCheck.isChecked());
+
+    renderer->clearShadows();
+    for(int i=0; i < NUM_SHADOWS; ++i){
+        ConfigDialog::Shadow& s = config->shadows[i];
+        if(s.check.isChecked()){
+            renderer->enableShadowOfLight(s.lightSpin.value(), true);
+        }
+    }
     renderer->enableShadowAntiAliasing(config->shadowAntiAliasingCheck.isChecked());
+
     renderer->enableFog(config->fogCheck.isChecked());
 
     worldLight->notifyUpdate(modified);
@@ -2958,16 +2970,23 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    for(int i=0; i < NUM_SHADOWS; ++i){
+        hbox = new QHBoxLayout();
+        Shadow& shadow = shadows[i];
+        shadow.check.setText(QString(_("Shadow %1")).arg(i+1));
+        shadow.check.setChecked(false);
+        shadow.check.sigToggled().connect(boost::bind(updateDefaultLightsLater));
+        hbox->addWidget(&shadow.check);
+        hbox->addWidget(new QLabel(_("Light")));
+        shadow.lightSpin.setRange(0, 99);
+        shadow.lightSpin.setValue(0);
+        shadow.lightSpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
+        hbox->addWidget(&shadow.lightSpin);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
+    }
     hbox = new QHBoxLayout();
-    shadowCheck.setText(_("Shadow of light"));
-    shadowCheck.setChecked(false);
-    shadowCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
-    hbox->addWidget(&shadowCheck);
-    shadowLightSpin.setRange(0, 99);
-    shadowLightSpin.setValue(0);
-    shadowLightSpin.sigValueChanged().connect(boost::bind(updateDefaultLightsLater));
-    hbox->addWidget(&shadowLightSpin);
-    shadowAntiAliasingCheck.setText(_("Anti-aliasing"));
+    shadowAntiAliasingCheck.setText(_("Anti-aliasing of shadows"));
     shadowAntiAliasingCheck.setChecked(true);
     shadowAntiAliasingCheck.sigToggled().connect(boost::bind(updateDefaultLightsLater));
     hbox->addWidget(&shadowAntiAliasingCheck);
@@ -3142,8 +3161,14 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("worldLightIntensity", worldLightIntensitySpin.value());
     archive.write("worldLightAmbient", worldLightAmbientSpin.value());
     archive.write("additionalLights", additionalLightsCheck.isChecked());
-    archive.write("shadow", shadowCheck.isChecked());
-    archive.write("shadowLightIndex", shadowLightSpin.value());
+
+    Listing* shadowLights = archive.openListing("shadowLights");
+    for(int i=0; i < NUM_SHADOWS; ++i){
+        if(shadows[i].check.isChecked()){
+            shadowLights->append(shadows[i].lightSpin.value());
+        }
+    }
+    
     archive.write("fog", fogCheck.isChecked());
     archive.write("floorGrid", gridCheck[FLOOR_GRID].isChecked());
     archive.write("floorGridSpan", gridSpanSpin[FLOOR_GRID].value());
@@ -3175,8 +3200,23 @@ void ConfigDialog::restoreState(const Archive& archive)
     worldLightIntensitySpin.setValue(archive.get("worldLightIntensity", worldLightIntensitySpin.value()));
     worldLightAmbientSpin.setValue(archive.get("worldLightAmbient", worldLightAmbientSpin.value()));
     additionalLightsCheck.setChecked(archive.get("additionalLights", additionalLightsCheck.isChecked()));
-    shadowCheck.setChecked(archive.get("shadow", shadowCheck.isChecked()));
-    shadowLightSpin.setValue(archive.get("shadowLightIndex", shadowLightSpin.value()));
+
+    for(int i=0; i < NUM_SHADOWS; ++i){
+        shadows[i].check.setChecked(false);
+    }
+    Listing& shadowLights = *archive.findListing("shadowLights");
+    if(shadowLights.isValid()){
+        int shadowIndex = 0;
+        for(int i=0; i < shadowLights.size(); ++i){
+            if(shadowIndex >= NUM_SHADOWS){
+                break;
+            }
+            Shadow& shadow = shadows[shadowIndex++];
+            shadow.check.setChecked(true);
+            shadow.lightSpin.setValue(shadowLights[i].toInt());
+        }
+    }
+
     fogCheck.setChecked(archive.get("fog", fogCheck.isChecked()));
     gridCheck[FLOOR_GRID].setChecked(archive.get("floorGrid", gridCheck[FLOOR_GRID].isChecked()));
     gridSpanSpin[FLOOR_GRID].setValue(archive.get("floorGridSpan", gridSpanSpin[FLOOR_GRID].value()));

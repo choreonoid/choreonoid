@@ -106,8 +106,7 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    int isShadowEnabled;
-    int shadowLightIndex;
+    std::set<int> shadowLightIndices;
 
     bool defaultLighting;
     Vector4f currentNolightingColor;
@@ -176,9 +175,10 @@ public:
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
     bool initializeGL();
+    void render();
     bool pick(int x, int y);
     void renderScene();
-    void renderShadowMap();
+    void renderShadowMap(int lightIndex);
     void beginRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights();
@@ -238,9 +238,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
 
-    isShadowEnabled = false;
-    shadowLightIndex = 0;
-    
     isPicking = false;
     pickedPoint.setZero();
 
@@ -332,28 +329,39 @@ void GLSLSceneRenderer::requestToClearCache()
 
 void GLSLSceneRenderer::render()
 {
-    extractPreprocessedNodes();
+    impl->render();
+}
 
-    PhongShadowProgram& program = impl->phongShadowProgram;
+
+void GLSLSceneRendererImpl::render()
+{
+    self->extractPreprocessedNodes();
+
+    PhongShadowProgram& program = phongShadowProgram;
     
-    if(!impl->isShadowEnabled){
-        program.setMainRenderingPass();
+    if(shadowLightIndices.empty()){
+        program.activateMainRenderingPass();
         program.setNumShadows(0);
-        impl->renderScene();
+        renderScene();
 
     } else {
-        program.setShadowMapGenerationPass(0);
-        Array4i vp = viewport();
-        setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
+        Array4i vp = self->viewport();
+        self->setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
-        impl->renderShadowMap();
+        int shadowMapIndex = 0;
+        set<int>::iterator iter = shadowLightIndices.begin();
+        while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
+            program.activateShadowMapGenerationPass(shadowMapIndex++);
+            renderShadowMap(*iter);
+        }
+        program.setNumShadows(shadowMapIndex);
 
-        program.setMainRenderingPass();
+        program.activateMainRenderingPass();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        setViewport(vp[0], vp[1], vp[2], vp[3]);
+        self->setViewport(vp[0], vp[1], vp[2], vp[3]);
         glDisable(GL_CULL_FACE);
-        impl->renderScene();
+        renderScene();
     }
 }
 
@@ -411,26 +419,23 @@ void GLSLSceneRendererImpl::renderScene()
 }
 
 
-void GLSLSceneRendererImpl::renderShadowMap()
+void GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
 {
-    int shadowIndex = 0;
     SgLight* light;
     Affine3 T;
-    self->getLightInfo(shadowLightIndex, light, T);
+    self->getLightInfo(lightIndex, light, T);
     if(light && light->on()){
         SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
-            phongShadowProgram.setShadowMapViewProjection(shadowIndex, PV);
+            phongShadowProgram.setShadowMapViewProjection(PV);
             beginRendering();
             self->sceneRoot()->accept(*self);
             endRendering();
             glFlush();
             glFinish();
-            ++shadowIndex;
         }
     }
-    phongShadowProgram.setNumShadows(shadowIndex);
 }
     
 
@@ -528,8 +533,8 @@ void GLSLSceneRendererImpl::renderLights()
         Affine3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
-            if(currentLightingProgram->renderLight(
-                   lightIndex, light, T, viewMatrix, (i == shadowLightIndex))){
+            bool isCastingShadow = (shadowLightIndices.find(lightIndex) != shadowLightIndices.end());
+            if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
                 ++lightIndex;
             }
         }
@@ -1118,10 +1123,19 @@ void GLSLSceneRenderer::enableLighting(bool on)
 }
 
 
+void GLSLSceneRenderer::clearShadows()
+{
+    impl->shadowLightIndices.clear();
+}
+
+
 void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 {
-    impl->shadowLightIndex = index;
-    impl->isShadowEnabled = on;
+    if(on){
+        impl->shadowLightIndices.insert(index);
+    } else {
+        impl->shadowLightIndices.erase(index);
+    }
 }
 
 

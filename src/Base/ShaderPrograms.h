@@ -141,8 +141,8 @@ class PhongShadowProgram : public LightingProgram
 public:
     PhongShadowProgram();
     virtual void initialize();
-    void setShadowMapGenerationPass(int shadowIndex);
-    void setMainRenderingPass();
+    void activateShadowMapGenerationPass(int shadowIndex);
+    void activateMainRenderingPass();
     bool isShadowMapGenerationPass() const { return renderingPass == SHADOWMAP_PASS; }
     bool isMainRenderingPass() const { return renderingPass == MAIN_PASS; }
     
@@ -159,7 +159,7 @@ public:
     int shadowMapWidth() const { return shadowMapWidth_; }
     int shadowMapHeight() const { return shadowMapHeight_; }
     SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
-    void setShadowMapViewProjection(int shadowIndex, const Matrix4& PV);
+    void setShadowMapViewProjection(const Matrix4& PV);
     NolightingProgram& shadowMapProgram() { return shadowMapProgram_; }
 
 private:
