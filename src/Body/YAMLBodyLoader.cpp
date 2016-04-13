@@ -86,6 +86,7 @@ public:
     YAMLBodyLoaderImpl();
     ~YAMLBodyLoaderImpl();
     bool load(Body* body, const std::string& filename);
+    bool readTopNode(Body* body, Mapping* topNode);
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
     void readLink(Mapping& linkNode);
@@ -105,13 +106,13 @@ public:
     void readSpotLight(Mapping& node);
 
     SgNode* readSceneShape(Mapping& node);
-    void readSceneGeometry(SgShape* shape, Mapping& node);
-    void readSceneBox(SgShape* shape, Mapping& node);
-    void readSceneCylinder(SgShape* shape, Mapping& node);
-    void readSceneSphere(SgShape* shape, Mapping& node);
+    SgMesh* readSceneGeometry(Mapping& node);
+    SgMesh* readSceneBox(Mapping& node);
+    SgMesh* readSceneCylinder(Mapping& node);
+    SgMesh* readSceneSphere(Mapping& node);
     
-    SgNode* readSceneAppearance(SgShape* shape, Mapping& node);
-    SgNode* readSceneMaterial(SgShape* shape, Mapping& node);
+    void readSceneAppearance(SgShape* shape, Mapping& node);
+    void readSceneMaterial(SgShape* shape, Mapping& node);
 };
 
 }
@@ -153,9 +154,6 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl()
         nodeTypeFuncs["SpotLight"] = &YAMLBodyLoaderImpl::readSpotLight;
 
         sceneNodeFuncs["Shape"] = &YAMLBodyLoaderImpl::readSceneShape;
-
-        //sceneNodeFuncs["Appearance"] = &YAMLBodyLoaderImpl::readSceneAppearance;
-        //sceneNodeFuncs["Material"] = &YAMLBodyLoaderImpl::readSceneMaterial;
     }
 
     setDefaultDivisionNumber(20);
@@ -221,8 +219,45 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     bool result = false;
 
-    this->body = body;
+    MappingPtr data = 0;
+    
+    try {
+        YAMLReader reader;
+        data = reader.loadDocument(filename)->toMapping();
 
+    } catch(const ValueNode::Exception& ex){
+        os() << ex.message();
+    } catch(const nonexistent_key_error& error){
+        if(const std::string* message = get_error_info<error_info_message>(error)){
+            os() << *message << endl;
+        }
+    }
+
+    if(data){
+        result = readTopNode(body, data);
+        if(result){
+            if(body->modelName().empty()){
+                body->setModelName(getBasename(filename));
+            }
+        }
+    }
+        
+    os().flush();
+
+    return result;
+}
+
+
+bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
+{
+    return impl->readTopNode(body, topNode);
+}
+
+
+bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
+{
+    bool result = false;
+    this->body = body;
     body->clearDevices();
     body->clearExtraJoints();
 
@@ -230,17 +265,9 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     linkMap.clear();
     validJointIdSet.clear();
     numValidJointIds = 0;
-    
-    try {
-        YAMLReader reader;
-        Mapping* top = reader.loadDocument(filename)->toMapping();
 
-        if(readBody(top)){
-            if(body->modelName().empty()){
-                body->setModelName(getBasename(filename));
-            }
-            result = true;
-        }
+    try {
+        result = readBody(topNode);
         
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
@@ -644,7 +671,7 @@ SgNode* YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
 
     Mapping& geometry = *node.findMapping("geometry");
     if(geometry.isValid()){
-        readSceneGeometry(shape, geometry);
+        shape->setMesh(readSceneGeometry(geometry));
     }
 
     Mapping& appearance = *node.findMapping("appearance");
@@ -656,56 +683,65 @@ SgNode* YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
 }
 
 
-void YAMLBodyLoaderImpl::readSceneGeometry(SgShape* shape, Mapping& node)
+SgMesh* YAMLBodyLoaderImpl::readSceneGeometry(Mapping& node)
 {
+    SgMesh* mesh;
     ValueNode& typeNode = node["type"];
     string type = typeNode.toString();
     if(type == "Box"){
-        readSceneBox(shape, node);
+        mesh = readSceneBox(node);
     } else if(type == "Cylinder"){
-        readSceneCylinder(shape, node);
+        mesh = readSceneCylinder(node);
     } else if(type == "Sphere"){
-        readSceneSphere(shape, node);
+        mesh = readSceneSphere(node);
     } else {
         typeNode.throwException(
             str(format(_("Unknown geometry \"%1%\"")) % type));
     }
+    return mesh;
 }
 
 
-void YAMLBodyLoaderImpl::readSceneBox(SgShape* shape, Mapping& node)
+SgMesh* YAMLBodyLoaderImpl::readSceneBox(Mapping& node)
 {
     Vector3 size;
     if(!read(node, "size", size)){
         size.setOnes(1.0);
     }
-    shape->setMesh(meshGenerator.generateBox(size));
+    return meshGenerator.generateBox(size);
 }
 
 
-void YAMLBodyLoaderImpl::readSceneCylinder(SgShape* shape, Mapping& node)
+SgMesh* YAMLBodyLoaderImpl::readSceneCylinder(Mapping& node)
 {
     double radius = node.get("radius", 1.0);
     double height = node.get("height", 1.0);
     bool bottom = node.get("bottom", true);
     bool side = node.get("side", true);
-    shape->setMesh(meshGenerator.generateCylinder(radius, height, bottom, side));
+    return meshGenerator.generateCylinder(radius, height, bottom, side);
 }
 
 
-void YAMLBodyLoaderImpl::readSceneSphere(SgShape* shape, Mapping& node)
+SgMesh* YAMLBodyLoaderImpl::readSceneSphere(Mapping& node)
 {
-    shape->setMesh(meshGenerator.generateSphere(node.get("radius", 1.0)));
+    return meshGenerator.generateSphere(node.get("radius", 1.0));
 }
 
 
-SgNode* YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
+void YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
 {
-    return 0;
+    Mapping& material = *node.findMapping("material");
+    if(material.isValid()){
+        readSceneMaterial(shape, material);
+    }
 }
 
 
-SgNode* YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
+void YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 {
-    return 0;
+    SgMaterialPtr material = new SgMaterial;
+    Vector3 color;
+    if(read(node, "diffuseColor", color)) material->setDiffuseColor(color);
+
+    shape->setMaterial(material);
 }
