@@ -149,7 +149,7 @@ void PhongShadowProgram::initialize()
     for(int i=0; i < maxNumShadows_; ++i){
         initializeShadowInfo(i);
     }
-
+    glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");

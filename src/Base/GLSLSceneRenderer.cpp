@@ -508,12 +508,12 @@ void GLSLSceneRendererImpl::beginRendering()
         currentProgram = &phongShadowProgram;
         if(phongShadowProgram.isMainRenderingPass()){
             currentLightingProgram = &phongShadowProgram;
+            const Vector3f& c = self->backgroundColor();
+            glClearColor(c[0], c[1], c[2], 1.0f);
             clearMask |= GL_COLOR_BUFFER_BIT;
         } else {
             currentNolightingProgram = &phongShadowProgram.shadowMapProgram();
         }
-        const Vector3f& c = self->backgroundColor();
-        glClearColor(c[0], c[1], c[2], 1.0f);
     }
     
     currentProgram->use();
