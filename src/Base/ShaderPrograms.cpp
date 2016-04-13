@@ -234,8 +234,6 @@ void PhongShadowProgram::bindGLObjects()
     if(renderingPass == SHADOWMAP_PASS){
         ShadowInfo& shadow = shadowInfos[currentShadowIndex];
         glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
-        glActiveTexture(GL_TEXTURE1 + currentShadowIndex);
-        glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
         
         if(isShadowAntiAliasingEnabled_){
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
