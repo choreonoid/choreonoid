@@ -4,9 +4,14 @@
 
 #include "../RTCItem.h"
 #include "../BodyRTCItem.h"
+
 #ifdef _WIN32
 #undef HAVE_UNISTD_H
+#if _MSC_VER < 1800
+#undef HAVE_INTTYPES_H
 #endif
+#endif
+
 #include <cnoid/PyUtil>
 
 using namespace boost::python;
