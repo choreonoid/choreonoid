@@ -21,6 +21,7 @@
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
+#include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
@@ -41,9 +42,9 @@ public:
     {
     public:
         LinkPtr link;
-        std::string parent;
         MappingPtr node;
-        LinkInfo(Link* link) : link(link) { }
+        std::string parent;
+        LinkInfo(Link* link, Mapping* node) : link(link), node(node) { }
     };
     typedef ref_ptr<LinkInfo> LinkInfoPtr;
     
@@ -53,7 +54,8 @@ public:
     LinkMap linkMap;
 
     LinkPtr currentLink;
-    vector<Affine3> transformStack;
+    typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Vector;
+    Affine3Vector transformStack;
 
     struct RigidBody
     {
@@ -61,7 +63,8 @@ public:
         double m;
         Matrix3 I;
     };
-    vector<RigidBody> rigidBodies;
+    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
+    RigidBodyVector rigidBodies;
 
     SgGroup* currentSceneGroup;
 
@@ -90,7 +93,7 @@ public:
     bool readTopNode(Body* body, Mapping* topNode);
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
-    void readLink(Mapping& linkNode);
+    void readLink(Mapping* linkNode);
     void findElements(Mapping& node, SgGroup* sceneGroup);
     void readElements(ValueNode& elements, SgGroup* sceneGroup);
     void readNode(Mapping& node, const string& type);
@@ -107,7 +110,8 @@ public:
     void readRangeSensor(Mapping& node);
     void readSpotLight(Mapping& node);
 
-    SgNode* readSceneShape(Mapping& node);
+    SgNodePtr readSceneShape(Mapping& node);
+    
     SgMesh* readSceneGeometry(Mapping& node);
     SgMesh* readSceneBox(Mapping& node);
     SgMesh* readSceneCylinder(Mapping& node);
@@ -125,7 +129,7 @@ typedef void (YAMLBodyLoaderImpl::*NodeTypeFunction)(Mapping& node);
 typedef map<string, NodeTypeFunction> NodeTypeFunctionMap;
 NodeTypeFunctionMap nodeTypeFuncs;
 
-typedef SgNode* (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
+typedef SgNodePtr (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
 typedef map<string, SceneNodeFunction> SceneNodeFunctionMap;
 SceneNodeFunctionMap sceneNodeFuncs;
 
@@ -306,7 +310,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     transformStack.push_back(Affine3::Identity());
     Listing& linkNodes = *topNode->find("links")->toListing();
     for(int i=0; i < linkNodes.size(); ++i){
-        Mapping& linkNode = *linkNodes[i].toMapping();
+        Mapping* linkNode = linkNodes[i].toMapping();
         readLink(linkNode);
     }
 
@@ -354,12 +358,12 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
+void YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
     Link* link = body->createLink();
-    LinkInfoPtr linkInfo = new LinkInfo(link);
+    LinkInfoPtr linkInfo = new LinkInfo(link, linkNode);
 
-    ValueNode* nameNode = linkNode.find("name");
+    ValueNode* nameNode = linkNode->find("name");
     if(nameNode->isValid()){
         link->setName(nameNode->toString());
         if(!linkMap.insert(make_pair(link->name(), link)).second){
@@ -369,7 +373,7 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
     }
     
     string jointType;
-    if(linkNode.read("jointType", jointType)){
+    if(linkNode->read("jointType", jointType)){
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
         } else if(jointType == "slide"){
@@ -383,24 +387,23 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
         }
     }
     
-    if(linkNode.read("jointId", id)) link->setJointId(id);
+    if(linkNode->read("jointId", id)) link->setJointId(id);
     
     /*
       \todo A link node may contain more than one rigid bodies and
       the paremeters of them must be summed up
     */
-    if(linkNode.read("mass", value)) link->setMass(value);
-    if(read(linkNode, "centerOfMass", vec3)) link->setCenterOfMass(vec3);
+    if(linkNode->read("mass", value)) link->setMass(value);
+    if(read(*linkNode, "centerOfMass", vec3)) link->setCenterOfMass(vec3);
 
     Matrix3 I;
-    if(read(linkNode, "inertia", I)) link->setInertia(I);
+    if(read(*linkNode, "inertia", I)) link->setInertia(I);
 
     currentLink = link;
-    transformStack.resize(1);
     rigidBodies.clear();
     currentSceneGroup = 0;
     SgGroupPtr shape = new SgGroup;
-    findElements(linkNode, shape);
+    findElements(*linkNode, shape);
 
     if(!shape->empty()){
         link->setShape(shape);
@@ -478,7 +481,7 @@ void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
         SceneNodeFunctionMap::iterator q = sceneNodeFuncs.find(type);
         if(q != sceneNodeFuncs.end()){
             SceneNodeFunction readSceneNode = q->second;
-            SgNode* scene = (this->*readSceneNode)(node);
+            SgNodePtr scene = (this->*readSceneNode)(node);
             if(scene){
                 currentSceneGroup->addChild(scene);
             }
@@ -676,7 +679,7 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 }
 
 
-SgNode* YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
+SgNodePtr YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
 {
     SgShapePtr shape = new SgShape;
 
