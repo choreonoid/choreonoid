@@ -42,6 +42,7 @@ public:
     public:
         LinkPtr link;
         std::string parent;
+        MappingPtr node;
         LinkInfo(Link* link) : link(link) { }
     };
     typedef ref_ptr<LinkInfo> LinkInfoPtr;
@@ -62,7 +63,7 @@ public:
     };
     vector<RigidBody> rigidBodies;
 
-    vector<SgGroupPtr> sceneGroupStack;
+    SgGroup* currentSceneGroup;
 
     // temporary variables for reading values
     int id;
@@ -90,8 +91,9 @@ public:
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
     void readLink(Mapping& linkNode);
-    void readElements(Mapping& node, SgGroup* sceneGroup = 0);
-    bool readNodeOfType(const string& type, Mapping& node);
+    void findElements(Mapping& node, SgGroup* sceneGroup);
+    void readElements(ValueNode& elements, SgGroup* sceneGroup);
+    void readNode(Mapping& node, const string& type);
     void readGroup(Mapping& node);
     void readTransform(Mapping& node);
     void readRigidBody(Mapping& node);
@@ -282,7 +284,6 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     validJointIdSet.clear();
     transformStack.clear();
     rigidBodies.clear();
-    sceneGroupStack.clear();
         
     os().flush();
 
@@ -312,10 +313,16 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     // construct a link tree
     for(size_t i=0; i < linkInfos.size(); ++i){
         LinkInfo* info = linkInfos[i];
-        LinkMap::iterator p = linkMap.find(info->parent);
-        if(p != linkMap.end()){
-            Link* parentLink = p->second;
-            parentLink->appendChild(info->link);
+        const std::string& parent = info->parent;
+        if(!parent.empty()){
+            LinkMap::iterator p = linkMap.find(parent);
+            if(p != linkMap.end()){
+                Link* parentLink = p->second;
+                parentLink->appendChild(info->link);
+            } else {
+                info->node->throwException(
+                    str(format(_("Parent link \"%1%\" of %2% is not defined.")) % parent % info->link->name()));
+            }
         }
     }        
 
@@ -391,11 +398,13 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
     currentLink = link;
     transformStack.resize(1);
     rigidBodies.clear();
-    sceneGroupStack.clear();
+    currentSceneGroup = 0;
+    SgGroupPtr shape = new SgGroup;
+    findElements(linkNode, shape);
 
-    readElements(linkNode);
-
-    // set extracted data here
+    if(!shape->empty()){
+        link->setShape(shape);
+    }
 
     currentLink = 0;
     
@@ -403,33 +412,40 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
 }
 
 
-void YAMLBodyLoaderImpl::readElements(Mapping& node, SgGroup* sceneGroup)
+void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroup* sceneGroup)
 {
     ValueNode& elements = *node.find("elements");
     if(!elements.isValid()){
         return;
     }
 
-    if(!sceneGroup){
-        sceneGroup = new SgGroup;
+    readElements(elements, sceneGroup);
+}
+
+
+void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroup* sceneGroup)
+{
+    SgGroup* parentSceneGroup = currentSceneGroup;
+    if(parentSceneGroup){
+        parentSceneGroup->addChild(sceneGroup);
     }
-    if(!sceneGroupStack.empty()){
-        sceneGroupStack.back()->addChild(sceneGroup);
-    }
-    sceneGroupStack.push_back(sceneGroup);
+    currentSceneGroup = sceneGroup;
     
     if(elements.isListing()){
-        Listing& listing = *node.toListing();
+        Listing& listing = *elements.toListing();
         for(int i=0; i < listing.size(); ++i){
-            Mapping& element = *listing[i].toMapping();
-            const string type = element["type"].toString();
-            if(!readNodeOfType(type, element)){
-                element.throwException(
-                    str(format(_("The node type \"%1%\" is not defined.")) % type));
+            ValueNode& elementNode = listing[i];
+            if(elementNode.isListing()){
+                readElements(elementNode, new SgGroup);
+
+            } else if(elementNode.isMapping()){
+                Mapping& element = *elementNode.toMapping();
+                const string type = element["type"].toString();
+                readNode(element, type);
             }
         }
-    } else if(node.isMapping()){
-        Mapping& mapping = *node.toMapping();
+    } else if(elements.isMapping()){
+        Mapping& mapping = *elements.toMapping();
         Mapping::iterator p = mapping.begin();
         while(p != mapping.end()){
             const string& type = p->first;
@@ -443,19 +459,16 @@ void YAMLBodyLoaderImpl::readElements(Mapping& node, SgGroup* sceneGroup)
                             % type2 % type));
                 }
             }
-            if(!readNodeOfType(type, element)){
-                mapping.throwException(
-                    str(format(_("The node type \"%1%\" is not defined.")) % type));
-            }
+            readNode(element, type);
             ++p;
         }
     }
 
-    sceneGroupStack.pop_back();
+    currentSceneGroup = parentSceneGroup;
 }
 
 
-bool YAMLBodyLoaderImpl::readNodeOfType(const string& type, Mapping& node)
+void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 {
     NodeTypeFunctionMap::iterator p = nodeTypeFuncs.find(type);
     if(p != nodeTypeFuncs.end()){
@@ -467,20 +480,18 @@ bool YAMLBodyLoaderImpl::readNodeOfType(const string& type, Mapping& node)
             SceneNodeFunction readSceneNode = q->second;
             SgNode* scene = (this->*readSceneNode)(node);
             if(scene){
-                sceneGroupStack.back()->addChild(scene);
+                currentSceneGroup->addChild(scene);
             }
         } else {
-            // The type is not found.
-            return false;
+            node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
         }
     }
-    return true;
 }
         
    
 void YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
-    readElements(node);
+    findElements(node, new SgGroup);
 }
 
 
@@ -497,7 +508,7 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
 
     transformStack.push_back(transformStack.back() * T);
 
-    readElements(node, new SgPosTransform(T));
+    findElements(node, new SgPosTransform(T));
 
     transformStack.pop_back();
     
@@ -518,7 +529,7 @@ void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     }
     rigidBodies.push_back(rbody);
 
-    readElements(node);
+    findElements(node, 0);
 }
 
 
