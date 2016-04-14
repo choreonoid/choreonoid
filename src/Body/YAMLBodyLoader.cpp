@@ -106,7 +106,7 @@ public:
     void readForceSensor(Mapping& node);
     void readRateGyroSensor(Mapping& node);
     void readAccelerationSensor(Mapping& node);
-    void readCamera(Mapping& node);
+    void readCameraDevice(Mapping& node);
     void readRangeSensor(Mapping& node);
     void readSpotLight(Mapping& node);
 
@@ -155,7 +155,7 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl()
         nodeTypeFuncs["ForceSensor"] = &YAMLBodyLoaderImpl::readForceSensor;
         nodeTypeFuncs["RateGyroSensor"] = &YAMLBodyLoaderImpl::readRateGyroSensor;
         nodeTypeFuncs["AccelerationSensor"] = &YAMLBodyLoaderImpl::readAccelerationSensor;
-        nodeTypeFuncs["Camera"] = &YAMLBodyLoaderImpl::readCamera;
+        nodeTypeFuncs["CameraDevice"] = &YAMLBodyLoaderImpl::readCameraDevice;
         nodeTypeFuncs["RangeSensor"] = &YAMLBodyLoaderImpl::readRangeSensor;
         nodeTypeFuncs["SpotLight"] = &YAMLBodyLoaderImpl::readSpotLight;
 
@@ -230,7 +230,14 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     try {
         YAMLReader reader;
         data = reader.loadDocument(filename)->toMapping();
-
+        if(data){
+            result = readTopNode(body, data);
+            if(result){
+                if(body->modelName().empty()){
+                    body->setModelName(getBasename(filename));
+                }
+            }
+        }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
     } catch(const nonexistent_key_error& error){
@@ -239,15 +246,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
     }
 
-    if(data){
-        result = readTopNode(body, data);
-        if(result){
-            if(body->modelName().empty()){
-                body->setModelName(getBasename(filename));
-            }
-        }
-    }
-        
     os().flush();
 
     return result;
@@ -335,10 +333,11 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("There is no \"rootLink\" value for specifying the root link."));
     }
 
-    LinkMap::iterator p = linkMap.find(rootLinkNode->toString());
+    string rootLinkName = rootLinkNode->toString();
+    LinkMap::iterator p = linkMap.find(rootLinkName);
     if(p == linkMap.end()){
         rootLinkNode->throwException(
-            str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % p->first));
+            str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
     }
     Link* rootLink = p->second;
     body->setRootLink(rootLink);
@@ -532,7 +531,7 @@ void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     }
     rigidBodies.push_back(rbody);
 
-    findElements(node, 0);
+    findElements(node, new SgGroup);
 }
 
 
@@ -588,7 +587,7 @@ void YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
 }
 
 
-void YAMLBodyLoaderImpl::readCamera(Mapping& node)
+void YAMLBodyLoaderImpl::readCameraDevice(Mapping& node)
 {
     CameraPtr camera;
     RangeCamera* range = 0;
