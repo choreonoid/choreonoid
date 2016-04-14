@@ -32,6 +32,7 @@ public:
     bool parse();
     void popNode();
     void addNode(ValueNode* node);
+    void setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_mark_t& mark);
     void onDocumentStart(yaml_event_t& event);
     void onDocumentEnd(yaml_event_t& event);
     void onMappingStart(yaml_event_t& event);
@@ -59,6 +60,9 @@ public:
     };
 
     stack<NodeInfo> nodeStack;
+
+    typedef map<string, ValueNodePtr> AnchorMap;
+    AnchorMap anchorMap;
 
     bool isRegularMultiListingExpected;
     vector<int> expectedListingSizes;
@@ -133,6 +137,7 @@ void YAMLReaderImpl::clearDocuments()
     while(!nodeStack.empty()){
         nodeStack.pop();
     }
+    anchorMap.clear();
     documents.clear();
 }
 
@@ -308,6 +313,19 @@ void YAMLReaderImpl::addNode(ValueNode* node)
 }
 
 
+void YAMLReaderImpl::setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_mark_t& mark)
+{
+    pair<AnchorMap::iterator, bool> inserted =
+        anchorMap.insert(AnchorMap::value_type((char*)anchor, node));
+    if(!inserted.second){
+        ValueNode::Exception ex;
+        ex.setMessage(str(format("Anchor \"%1%\" is duplicated") % (char*)anchor));
+        ex.setPosition(mark.line, mark.column);
+        throw ex;
+    }
+}
+
+    
 void YAMLReaderImpl::onDocumentStart(yaml_event_t& event)
 {
     if(debugTrace){
@@ -331,11 +349,16 @@ void YAMLReaderImpl::onMappingStart(yaml_event_t& event)
     }
 
     NodeInfo info;
-    Mapping* mapping = mappingFactory->create(event.start_mark.line, event.start_mark.column);
+    const yaml_mark_t& mark = event.start_mark;
+    Mapping* mapping = mappingFactory->create(mark.line, mark.column);
     mapping->setFlowStyle(event.data.mapping_start.style == YAML_FLOW_MAPPING_STYLE);
     info.node = mapping;
-    
+
     nodeStack.push(info);
+
+    if(event.data.mapping_start.anchor){
+        setAnchor(mapping, event.data.mapping_start.anchor, mark);
+    }
 }
 
 
@@ -358,20 +381,26 @@ void YAMLReaderImpl::onListingStart(yaml_event_t& event)
     NodeInfo info;
     Listing* listing;
 
+    const yaml_mark_t& mark = event.start_mark;
+
     if(!isRegularMultiListingExpected){
-        listing = new Listing(event.start_mark.line, event.start_mark.column);
+        listing = new Listing(mark.line, mark.column);
     } else {
         size_t level = nodeStack.size();
         if(expectedListingSizes.size() <= level){
             expectedListingSizes.resize(level + 1, 0);
         }
         const int prevSize = expectedListingSizes[level];
-        listing = new Listing(event.start_mark.line, event.start_mark.column, prevSize);
+        listing = new Listing(mark.line, mark.column, prevSize);
     }
-    
+
     listing->setFlowStyle(event.data.sequence_start.style == YAML_FLOW_SEQUENCE_STYLE);
     info.node = listing;
     nodeStack.push(info);
+
+    if(event.data.sequence_start.anchor){
+        setAnchor(listing, event.data.sequence_start.anchor, mark);
+    }
 }
 
 
@@ -410,6 +439,8 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
 
     NodeInfo& info = nodeStack.top();
     ValueNodePtr& parent = info.node;
+
+    ScalarNode* scalar = 0;
      
     if(parent->isMapping()){
         if(info.key.empty()){
@@ -422,12 +453,16 @@ void YAMLReaderImpl::onScalar(yaml_event_t& event)
                 throw ex;
             }
         } else {
-            ScalarNode* scalar = createScalar(event);
-            addNode(scalar);
+            scalar = createScalar(event);
         }
     } else if(parent->isListing()){
-        ScalarNode* scalar = createScalar(event);
+        scalar = createScalar(event);
+    }
+    if(scalar){
         addNode(scalar);
+        if(event.data.scalar.anchor){
+            setAnchor(scalar, event.data.scalar.anchor, event.start_mark);
+        }
     }
 }
 
@@ -469,6 +504,18 @@ void YAMLReaderImpl::onAlias(yaml_event_t& event)
     if(debugTrace){
         cout << "YAMLReaderImpl::onAlias()" << endl;
     }
+
+    AnchorMap::iterator p = anchorMap.find((char*)event.data.alias.anchor);
+
+    if(p == anchorMap.end()){
+        ValueNode::Exception ex;
+        ex.setMessage(str(format("Anchor \"%1%\" is not defined") % (char*)event.data.alias.anchor));
+        const yaml_mark_t& mark = event.start_mark;
+        ex.setPosition(mark.line, mark.column);
+        throw ex;
+    }
+    
+    addNode(p->second);
 }
 
 

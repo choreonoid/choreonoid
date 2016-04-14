@@ -158,7 +158,7 @@ private:
 
     class UnknownNodeTypeException : public Exception {
     };
-        
+
 protected:
 
     ValueNode() { }
