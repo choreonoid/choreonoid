@@ -111,6 +111,7 @@ void exportSimulationClasses()
             .def("setEpsilon", &AISTSimulatorItem::setEpsilon)
             .def("set2Dmode", &AISTSimulatorItem::set2Dmode)
             .def("setKinematicWalkingEnabled", &AISTSimulatorItem::setKinematicWalkingEnabled)
+            .def("setConstraintForceOutputEnabled", &AISTSimulatorItem::setConstraintForceOutputEnabled)
             ;
 
         enum_<AISTSimulatorItem::DynamicsMode>("DynamicsMode")

@@ -312,6 +312,12 @@ void AISTSimulatorItem::setKinematicWalkingEnabled(bool on)
 }
 
 
+void AISTSimulatorItem::setConstraintForceOutputEnabled(bool on)
+{
+    impl->world.constraintForceSolver.enableConstraintForceOutput(on);
+}
+
+
 Item* AISTSimulatorItem::doDuplicate() const
 {
     return new AISTSimulatorItem(*this);

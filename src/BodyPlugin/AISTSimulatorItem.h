@@ -42,7 +42,8 @@ public:
     void setContactCorrectionVelocityRatio(double value);
     void setEpsilon(double epsilon);
     void set2Dmode(bool on);
-    void setKinematicWalkingEnabled(bool on); 
+    void setKinematicWalkingEnabled(bool on);
+    void setConstraintForceOutputEnabled(bool on);
 
     virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
     virtual void clearForcedBodyPositions();
