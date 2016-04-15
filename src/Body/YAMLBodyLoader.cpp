@@ -66,7 +66,7 @@ public:
     typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
     RigidBodyVector rigidBodies;
 
-    SgGroup* currentSceneGroup;
+    SgGroupPtr currentSceneGroup;
 
     // temporary variables for reading values
     int id;
@@ -94,8 +94,8 @@ public:
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
     LinkPtr readLink(Mapping* linkNode);
-    void findElements(Mapping& node, SgGroup* sceneGroup);
-    void readElements(ValueNode& elements, SgGroup* sceneGroup);
+    void findElements(Mapping& node, SgGroupPtr sceneGroup);
+    void readElements(ValueNode& elements, SgGroupPtr sceneGroup);
     void readNode(Mapping& node, const string& type);
     void readGroup(Mapping& node);
     void readTransform(Mapping& node);
@@ -469,7 +469,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 }
 
 
-void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroup* sceneGroup)
+void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroupPtr sceneGroup)
 {
     ValueNode& elements = *node.find("elements");
     if(!elements.isValid()){
@@ -480,12 +480,9 @@ void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroup* sceneGroup)
 }
 
 
-void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroup* sceneGroup)
+void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup)
 {
-    SgGroup* parentSceneGroup = currentSceneGroup;
-    if(parentSceneGroup){
-        parentSceneGroup->addChild(sceneGroup);
-    }
+    SgGroupPtr parentSceneGroup = currentSceneGroup;
     currentSceneGroup = sceneGroup;
     
     if(elements.isListing()){
@@ -521,6 +518,9 @@ void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroup* sceneGroup)
         }
     }
 
+    if(parentSceneGroup && !sceneGroup->empty()){
+        parentSceneGroup->addChild(sceneGroup);
+    }
     currentSceneGroup = parentSceneGroup;
 }
 
