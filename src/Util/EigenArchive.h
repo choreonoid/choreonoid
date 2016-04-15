@@ -14,24 +14,31 @@
 namespace cnoid {
 
 template<typename Derived>
+void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
+{
+    const int nr = x.rows();
+    const int nc = x.cols();
+    if(listing.size() != nr * nc){
+        listing.throwException(
+            str(boost::format("A %2% x %3% matrix / vector value is expected") % nr % nc));
+    }
+    int index = 0;
+    for(int i=0; i < nr; ++i){
+        for(int j=0; j < nc; ++j){
+            x(i, j) = listing[index++].toDouble();
+        }
+    }
+}
+
+
+template<typename Derived>
 bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
 {
     const Listing& s = *mapping.findListing(key);
     if(!s.isValid()){
         return false;
     }
-    const int nr = x.rows();
-    const int nc = x.cols();
-    if(s.size() != nr * nc){
-        s.throwException(
-            str(boost::format("The value of \"%1%\" must be a %2% x %3% matrix") % key % nr % nc));
-    }
-    int index = 0;
-    for(int i=0; i < nr; ++i){
-        for(int j=0; j < nc; ++j){
-            x(i, j) = s[index++].toDouble();
-        }
-    }
+    read(s, x);
     return true;
 }
 
