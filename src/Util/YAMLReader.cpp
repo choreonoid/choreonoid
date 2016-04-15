@@ -273,7 +273,7 @@ error:
     }
     if(parser.error != YAML_NO_ERROR && parser.problem != NULL){
         ValueNode::Exception ex;
-        ex.setPosition(parser.problem_mark.line, parser.problem_mark.column);
+        ex.setPosition(parser.problem_mark.line+1, parser.problem_mark.column+1);
         ex.setMessage(parser.problem);
         throw ex;
     }
