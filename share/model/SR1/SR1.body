@@ -20,7 +20,7 @@ links:
         elements:
           -
             type: Shape
-            geometry: { type: box, size: [ 0.08, 0.08, 0.08 ] }
+            geometry: { type: Box, size: [ 0.08, 0.08, 0.08 ] }
       -
         type: AccelerationSensor
         name: WaistAccelSensor
@@ -64,7 +64,7 @@ links:
     elements:
       -
         type: Transform
-        rotation: [ 0, 0, 1 1.5708 ]
+        rotation: [ 0, 0, 1, 1.5708 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
@@ -93,7 +93,7 @@ links:
     elements:
       -
         type: Transform
-        rotation: [ 1, 0, 0 1.5708 ]
+        rotation: [ 1, 0, 0, 1.5708 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.1 }
@@ -123,7 +123,7 @@ links:
               material:
                 diffuseColor: [ 0.5, 0.8, 0.5]
       -
-        type: VisionSensor
+        type: CameraDevice
         name: LeftCamera
         id: 0
         format: COLOR_DEPTH
@@ -139,7 +139,7 @@ links:
                   material:
                     diffuseColor: [ 1, 0, 0 ]
       -
-        type: VisionSensor
+        type: CameraDevice
         name: RightCamera
         id: 0
         format: COLOR_DEPTH
@@ -178,24 +178,22 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements: &ArmShape2
-      Group: 
+      -
+        type: Transform
+        rotation: [ 0, 0, 1, 1.5708 ]
         elements:
-          -
-            type: Transform
-            rotation: [ 0, 0, 1, 1.5708 ]
-            elements:
-              Shape:
-                geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
-                appearance:
-                  material:
-                    diffuseColor: [ 0.8, 0.9, 0.8 ]
-          -
-            type: Transform
-            translation: [ 0, 0, -0.1065 ]
-            elements:
-              Shape:
-                geometry: { type: Box, size: [ 0.05, 0.05, 0.163 ] }
-                appearance: *Appearance2
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance:
+              material:
+                diffuseColor: [ 0.8, 0.9, 0.8 ]
+      -
+        type: Transform
+        translation: [ 0, 0, -0.1065 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.163 ] }
+            appearance: *Appearance2
   -
     name: LARM_SHOULDER_Y
     parent: LARM_SHOULDER_R
@@ -228,21 +226,19 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements: &ArmShape4
-      Group:
+      -
+        type: Shape
+        geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+        appearance: &Appearance4
+          material:
+            diffuseColor: [ 0.8, 1.0, 0.8 ]
+      -
+        type: Transform
+        translation: [ 0, 0, -0.0985 ]
         elements:
-          -
-            type: Shape
-            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
-            appearance:
-              material:
-                diffuseColor: [ 0.8, 1.0, 0.8 ]
-          -
-            type: Transform
-            translation: [ 0, 0, -0.0985 ]
-            elements:
-              Shape:
-                geometry: { type: Box, size: [ 0.05, 0.05, 0.147 ] }
-                appearance: *Appearance4
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.147 ] }
+            appearance: *Appearance4
   -
     name: LARM_WRIST_Y
     parent: LARM_ELBOW
@@ -465,7 +461,7 @@ links:
         translation: [ 0, 0, 0.22675 ]
         elements:
           Shape:
-            geometry: { type: Box size: [ 0.1, 0.1, 0.1535 ] }
+            geometry: { type: Box, size: [ 0.1, 0.1, 0.1535 ] }
             appearance: *LegApp3
   -
     name: LLEG_KNEE
@@ -492,7 +488,7 @@ links:
         elements:
           Shape:
             geometry: { type: Box, size: [ 0.1, 0.1, 0.2 ] }
-            appearance: &LegApp4
+            appearance: *LegApp4
 
   -
     name: LLEG_ANKLE_P
@@ -528,25 +524,23 @@ links:
         name: LeftAnkleForceSensor
         id: 0
       - &LegShape6
-        type: Group
-        elements:
-          -
-            type: Transform
-            translation: [ 0.1, 0, 0 ]
-            rotation: [ 0, 0, 1, 1.5708 ]
-            elements:
-              Shape:
-                geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
-                appearance: &LegApp6
-                  material:
-                    diffuseColor: [ 0.0, 0.5, 0.0 ]
-          -
-            type: Transform
-            translation: [ 0.055, 0, -0.05 ]
-            elements:
-              Shape:
-                geometry: { type: Box, size: [ 0.25, 0.14, 0.01 ] }
-                appearance *LegApp6
+        -
+          type: Transform
+          translation: [ 0.1, 0, 0 ]
+          rotation: [ 0, 0, 1, 1.5708 ]
+          elements:
+            Shape:
+              geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+              appearance: &LegApp6
+                material:
+                  diffuseColor: [ 0.0, 0.5, 0.0 ]
+        -
+          type: Transform
+          translation: [ 0.055, 0, -0.05 ]
+          elements:
+            Shape:
+              geometry: { type: Box, size: [ 0.25, 0.14, 0.01 ] }
+              appearance: *LegApp6
   -
     name: RLEG_HIP_R
     parent: CHEST

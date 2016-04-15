@@ -9,6 +9,7 @@
 #include "EigenUtil.h"
 //#include "YAMLWriter.h"
 #include <boost/function.hpp>
+#include <boost/format.hpp>
 
 namespace cnoid {
 
@@ -16,24 +17,22 @@ template<typename Derived>
 bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
 {
     const Listing& s = *mapping.findListing(key);
-    if(s.isValid()){
-        const int nr = x.rows();
-        const int nc = x.cols();
-        const int n = s.size();
-        int index = 0;
-        if(n > 0){
-            for(int i=0; i < nr; ++i){
-                for(int j=0; j < nc; ++j){
-                    x(i, j) = s[index++].toDouble();
-                    if(index == n){
-                        break;
-                    }
-                }
-            }
-        }
-        return (index == nr * nc);
+    if(!s.isValid()){
+        return false;
     }
-    return false;
+    const int nr = x.rows();
+    const int nc = x.cols();
+    if(s.size() != nr * nc){
+        s.throwException(
+            str(boost::format("The value of \"%1%\" must be a %2% x %3% matrix") % key % nr % nc));
+    }
+    int index = 0;
+    for(int i=0; i < nr; ++i){
+        for(int j=0; j < nc; ++j){
+            x(i, j) = s[index++].toDouble();
+        }
+    }
+    return true;
 }
 
 

@@ -21,6 +21,7 @@
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
+#include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
@@ -41,8 +42,9 @@ public:
     {
     public:
         LinkPtr link;
+        MappingPtr node;
         std::string parent;
-        LinkInfo(Link* link) : link(link) { }
+        LinkInfo(Link* link, Mapping* node) : link(link), node(node) { }
     };
     typedef ref_ptr<LinkInfo> LinkInfoPtr;
     
@@ -52,7 +54,8 @@ public:
     LinkMap linkMap;
 
     LinkPtr currentLink;
-    vector<Affine3> transformStack;
+    typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Vector;
+    Affine3Vector transformStack;
 
     struct RigidBody
     {
@@ -60,9 +63,10 @@ public:
         double m;
         Matrix3 I;
     };
-    vector<RigidBody> rigidBodies;
+    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
+    RigidBodyVector rigidBodies;
 
-    vector<SgGroupPtr> sceneGroupStack;
+    SgGroup* currentSceneGroup;
 
     // temporary variables for reading values
     int id;
@@ -89,9 +93,10 @@ public:
     bool readTopNode(Body* body, Mapping* topNode);
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
-    void readLink(Mapping& linkNode);
-    void readElements(Mapping& node, SgGroup* sceneGroup = 0);
-    bool readNodeOfType(const string& type, Mapping& node);
+    void readLink(Mapping* linkNode);
+    void findElements(Mapping& node, SgGroup* sceneGroup);
+    void readElements(ValueNode& elements, SgGroup* sceneGroup);
+    void readNode(Mapping& node, const string& type);
     void readGroup(Mapping& node);
     void readTransform(Mapping& node);
     void readRigidBody(Mapping& node);
@@ -101,11 +106,12 @@ public:
     void readForceSensor(Mapping& node);
     void readRateGyroSensor(Mapping& node);
     void readAccelerationSensor(Mapping& node);
-    void readCamera(Mapping& node);
+    void readCameraDevice(Mapping& node);
     void readRangeSensor(Mapping& node);
     void readSpotLight(Mapping& node);
 
-    SgNode* readSceneShape(Mapping& node);
+    SgNodePtr readSceneShape(Mapping& node);
+    
     SgMesh* readSceneGeometry(Mapping& node);
     SgMesh* readSceneBox(Mapping& node);
     SgMesh* readSceneCylinder(Mapping& node);
@@ -123,7 +129,7 @@ typedef void (YAMLBodyLoaderImpl::*NodeTypeFunction)(Mapping& node);
 typedef map<string, NodeTypeFunction> NodeTypeFunctionMap;
 NodeTypeFunctionMap nodeTypeFuncs;
 
-typedef SgNode* (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
+typedef SgNodePtr (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
 typedef map<string, SceneNodeFunction> SceneNodeFunctionMap;
 SceneNodeFunctionMap sceneNodeFuncs;
 
@@ -149,7 +155,7 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl()
         nodeTypeFuncs["ForceSensor"] = &YAMLBodyLoaderImpl::readForceSensor;
         nodeTypeFuncs["RateGyroSensor"] = &YAMLBodyLoaderImpl::readRateGyroSensor;
         nodeTypeFuncs["AccelerationSensor"] = &YAMLBodyLoaderImpl::readAccelerationSensor;
-        nodeTypeFuncs["Camera"] = &YAMLBodyLoaderImpl::readCamera;
+        nodeTypeFuncs["CameraDevice"] = &YAMLBodyLoaderImpl::readCameraDevice;
         nodeTypeFuncs["RangeSensor"] = &YAMLBodyLoaderImpl::readRangeSensor;
         nodeTypeFuncs["SpotLight"] = &YAMLBodyLoaderImpl::readSpotLight;
 
@@ -224,7 +230,14 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     try {
         YAMLReader reader;
         data = reader.loadDocument(filename)->toMapping();
-
+        if(data){
+            result = readTopNode(body, data);
+            if(result){
+                if(body->modelName().empty()){
+                    body->setModelName(getBasename(filename));
+                }
+            }
+        }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
     } catch(const nonexistent_key_error& error){
@@ -233,15 +246,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
     }
 
-    if(data){
-        result = readTopNode(body, data);
-        if(result){
-            if(body->modelName().empty()){
-                body->setModelName(getBasename(filename));
-            }
-        }
-    }
-        
     os().flush();
 
     return result;
@@ -282,7 +286,6 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     validJointIdSet.clear();
     transformStack.clear();
     rigidBodies.clear();
-    sceneGroupStack.clear();
         
     os().flush();
 
@@ -305,17 +308,23 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     transformStack.push_back(Affine3::Identity());
     Listing& linkNodes = *topNode->find("links")->toListing();
     for(int i=0; i < linkNodes.size(); ++i){
-        Mapping& linkNode = *linkNodes[i].toMapping();
+        Mapping* linkNode = linkNodes[i].toMapping();
         readLink(linkNode);
     }
 
     // construct a link tree
     for(size_t i=0; i < linkInfos.size(); ++i){
         LinkInfo* info = linkInfos[i];
-        LinkMap::iterator p = linkMap.find(info->parent);
-        if(p != linkMap.end()){
-            Link* parentLink = p->second;
-            parentLink->appendChild(info->link);
+        const std::string& parent = info->parent;
+        if(!parent.empty()){
+            LinkMap::iterator p = linkMap.find(parent);
+            if(p != linkMap.end()){
+                Link* parentLink = p->second;
+                parentLink->appendChild(info->link);
+            } else {
+                info->node->throwException(
+                    str(format(_("Parent link \"%1%\" of %2% is not defined.")) % parent % info->link->name()));
+            }
         }
     }        
 
@@ -324,10 +333,11 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("There is no \"rootLink\" value for specifying the root link."));
     }
 
-    LinkMap::iterator p = linkMap.find(rootLinkNode->toString());
+    string rootLinkName = rootLinkNode->toString();
+    LinkMap::iterator p = linkMap.find(rootLinkName);
     if(p == linkMap.end()){
         rootLinkNode->throwException(
-            str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % p->first));
+            str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
     }
     Link* rootLink = p->second;
     body->setRootLink(rootLink);
@@ -347,12 +357,12 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
+void YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
     Link* link = body->createLink();
-    LinkInfoPtr linkInfo = new LinkInfo(link);
+    LinkInfoPtr linkInfo = new LinkInfo(link, linkNode);
 
-    ValueNode* nameNode = linkNode.find("name");
+    ValueNode* nameNode = linkNode->find("name");
     if(nameNode->isValid()){
         link->setName(nameNode->toString());
         if(!linkMap.insert(make_pair(link->name(), link)).second){
@@ -362,7 +372,7 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
     }
     
     string jointType;
-    if(linkNode.read("jointType", jointType)){
+    if(linkNode->read("jointType", jointType)){
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
         } else if(jointType == "slide"){
@@ -376,26 +386,27 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
         }
     }
     
-    if(linkNode.read("jointId", id)) link->setJointId(id);
+    if(linkNode->read("jointId", id)) link->setJointId(id);
     
     /*
       \todo A link node may contain more than one rigid bodies and
       the paremeters of them must be summed up
     */
-    if(linkNode.read("mass", value)) link->setMass(value);
-    if(read(linkNode, "centerOfMass", vec3)) link->setCenterOfMass(vec3);
+    if(linkNode->read("mass", value)) link->setMass(value);
+    if(read(*linkNode, "centerOfMass", vec3)) link->setCenterOfMass(vec3);
 
     Matrix3 I;
-    if(read(linkNode, "inertia", I)) link->setInertia(I);
+    if(read(*linkNode, "inertia", I)) link->setInertia(I);
 
     currentLink = link;
-    transformStack.resize(1);
     rigidBodies.clear();
-    sceneGroupStack.clear();
+    currentSceneGroup = 0;
+    SgGroupPtr shape = new SgGroup;
+    findElements(*linkNode, shape);
 
-    readElements(linkNode);
-
-    // set extracted data here
+    if(!shape->empty()){
+        link->setShape(shape);
+    }
 
     currentLink = 0;
     
@@ -403,33 +414,40 @@ void YAMLBodyLoaderImpl::readLink(Mapping& linkNode)
 }
 
 
-void YAMLBodyLoaderImpl::readElements(Mapping& node, SgGroup* sceneGroup)
+void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroup* sceneGroup)
 {
     ValueNode& elements = *node.find("elements");
     if(!elements.isValid()){
         return;
     }
 
-    if(!sceneGroup){
-        sceneGroup = new SgGroup;
+    readElements(elements, sceneGroup);
+}
+
+
+void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroup* sceneGroup)
+{
+    SgGroup* parentSceneGroup = currentSceneGroup;
+    if(parentSceneGroup){
+        parentSceneGroup->addChild(sceneGroup);
     }
-    if(!sceneGroupStack.empty()){
-        sceneGroupStack.back()->addChild(sceneGroup);
-    }
-    sceneGroupStack.push_back(sceneGroup);
+    currentSceneGroup = sceneGroup;
     
     if(elements.isListing()){
-        Listing& listing = *node.toListing();
+        Listing& listing = *elements.toListing();
         for(int i=0; i < listing.size(); ++i){
-            Mapping& element = *listing[i].toMapping();
-            const string type = element["type"].toString();
-            if(!readNodeOfType(type, element)){
-                element.throwException(
-                    str(format(_("The node type \"%1%\" is not defined.")) % type));
+            ValueNode& elementNode = listing[i];
+            if(elementNode.isListing()){
+                readElements(elementNode, new SgGroup);
+
+            } else if(elementNode.isMapping()){
+                Mapping& element = *elementNode.toMapping();
+                const string type = element["type"].toString();
+                readNode(element, type);
             }
         }
-    } else if(node.isMapping()){
-        Mapping& mapping = *node.toMapping();
+    } else if(elements.isMapping()){
+        Mapping& mapping = *elements.toMapping();
         Mapping::iterator p = mapping.begin();
         while(p != mapping.end()){
             const string& type = p->first;
@@ -443,19 +461,16 @@ void YAMLBodyLoaderImpl::readElements(Mapping& node, SgGroup* sceneGroup)
                             % type2 % type));
                 }
             }
-            if(!readNodeOfType(type, element)){
-                mapping.throwException(
-                    str(format(_("The node type \"%1%\" is not defined.")) % type));
-            }
+            readNode(element, type);
             ++p;
         }
     }
 
-    sceneGroupStack.pop_back();
+    currentSceneGroup = parentSceneGroup;
 }
 
 
-bool YAMLBodyLoaderImpl::readNodeOfType(const string& type, Mapping& node)
+void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 {
     NodeTypeFunctionMap::iterator p = nodeTypeFuncs.find(type);
     if(p != nodeTypeFuncs.end()){
@@ -465,22 +480,20 @@ bool YAMLBodyLoaderImpl::readNodeOfType(const string& type, Mapping& node)
         SceneNodeFunctionMap::iterator q = sceneNodeFuncs.find(type);
         if(q != sceneNodeFuncs.end()){
             SceneNodeFunction readSceneNode = q->second;
-            SgNode* scene = (this->*readSceneNode)(node);
+            SgNodePtr scene = (this->*readSceneNode)(node);
             if(scene){
-                sceneGroupStack.back()->addChild(scene);
+                currentSceneGroup->addChild(scene);
             }
         } else {
-            // The type is not found.
-            return false;
+            node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
         }
     }
-    return true;
 }
         
    
 void YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
-    readElements(node);
+    findElements(node, new SgGroup);
 }
 
 
@@ -497,7 +510,7 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
 
     transformStack.push_back(transformStack.back() * T);
 
-    readElements(node, new SgPosTransform(T));
+    findElements(node, new SgPosTransform(T));
 
     transformStack.pop_back();
     
@@ -518,7 +531,7 @@ void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     }
     rigidBodies.push_back(rbody);
 
-    readElements(node);
+    findElements(node, new SgGroup);
 }
 
 
@@ -574,7 +587,7 @@ void YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
 }
 
 
-void YAMLBodyLoaderImpl::readCamera(Mapping& node)
+void YAMLBodyLoaderImpl::readCameraDevice(Mapping& node)
 {
     CameraPtr camera;
     RangeCamera* range = 0;
@@ -665,7 +678,7 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 }
 
 
-SgNode* YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
+SgNodePtr YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
 {
     SgShapePtr shape = new SgShape;
 

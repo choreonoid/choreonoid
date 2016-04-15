@@ -32,7 +32,7 @@ Link::Link()
     c_.setZero();
     wc_.setZero();
     m_ = 0.0;
-    I_.setZero();
+    I_.setIdentity();
     Jm2_ = 0.0;
     F_ext_.setZero();
     q_upper_ = std::numeric_limits<double>::max();
