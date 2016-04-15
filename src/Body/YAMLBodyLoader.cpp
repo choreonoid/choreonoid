@@ -44,7 +44,7 @@ public:
         LinkPtr link;
         MappingPtr node;
         std::string parent;
-        LinkInfo(Link* link, Mapping* node) : link(link), node(node) { }
+        LinkInfo(LinkPtr link, Mapping* node) : link(link), node(node) { }
     };
     typedef ref_ptr<LinkInfo> LinkInfoPtr;
     
@@ -93,7 +93,7 @@ public:
     bool readTopNode(Body* body, Mapping* topNode);
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
-    void readLink(Mapping* linkNode);
+    LinkPtr readLink(Mapping* linkNode);
     void findElements(Mapping& node, SgGroup* sceneGroup);
     void readElements(ValueNode& elements, SgGroup* sceneGroup);
     void readNode(Mapping& node, const string& type);
@@ -180,7 +180,7 @@ YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
 
 const char* YAMLBodyLoader::format() const
 {
-    return "Choreonoid-Body-Ver1.0";
+    return "ChoreonoidBody";
 }
 
 
@@ -295,9 +295,21 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 
 bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 {
-    double version = topNode->get("bodyFormatVersion", 1.0);
-    if(version > 1.0){
-        topNode->throwException(_("This version of the body format is not supported."));
+    double version = 1.0;
+    
+    ValueNode* formatNode = topNode->find("format");
+    if(formatNode->isValid()){
+        if(formatNode->toString() != "ChoreonoidBody"){
+            formatNode->throwException(
+                _("The file format cannot be loaded as a Choreonoid body model"));
+        }
+        ValueNode* versionNode = topNode->find("formatVersion");
+        if(versionNode->isValid()){
+            version = versionNode->toDouble();
+        }
+    }
+    if(version >= 2.0){
+        topNode->throwException(_("This version of the Choreonoid body format is not supported."));
     }
 
     if(topNode->read("name", symbol)){
@@ -309,7 +321,9 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     Listing& linkNodes = *topNode->find("links")->toListing();
     for(int i=0; i < linkNodes.size(); ++i){
         Mapping* linkNode = linkNodes[i].toMapping();
-        readLink(linkNode);
+        LinkInfo* info = new LinkInfo(readLink(linkNode), linkNode);
+        linkNode->read("parent", info->parent);
+        linkInfos.push_back(info);
     }
 
     // construct a link tree
@@ -357,10 +371,9 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
+LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
-    Link* link = body->createLink();
-    LinkInfoPtr linkInfo = new LinkInfo(link, linkNode);
+    LinkPtr link = body->createLink();
 
     ValueNode* nameNode = linkNode->find("name");
     if(nameNode->isValid()){
@@ -369,6 +382,18 @@ void YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             nameNode->throwException(
                 str(format(_("Duplicated link name \"%1%\"")) % link->name()));
         }
+    }
+
+    if(read(*linkNode, "translation", vec3)){
+        link->setOffsetTranslation(vec3);
+    }
+    Vector4 r;
+    if(read(*linkNode, "rotation", r)){
+        link->setOffsetRotation(AngleAxis(r[3], Vector3(r[0], r[1], r[2])));
+    }
+    
+    if(linkNode->read("jointId", id)){
+        link->setJointId(id);
     }
     
     string jointType;
@@ -385,18 +410,48 @@ void YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             link->setJointType(Link::CRAWLER_JOINT);
         }
     }
-    
-    if(linkNode->read("jointId", id)) link->setJointId(id);
+
+    ValueNode* jointAxisNode = linkNode->find("jointAxis");
+    if(jointAxisNode->isValid()){
+        bool isValid = true;
+        Vector3 axis;
+        if(jointAxisNode->isListing()){
+            read(*jointAxisNode->toListing(), axis);
+        } else if(jointAxisNode->isString()){
+            string label = jointAxisNode->toString();
+            if(label == "X"){
+                axis = Vector3::UnitX();
+            } else if(label == "Y"){
+                axis = Vector3::UnitY();
+            } else if(label == "Z"){
+                axis = Vector3::UnitZ();
+            } else {
+                isValid = false;
+            }
+        } else {
+            isValid = false;
+        }
+        if(!isValid){
+            jointAxisNode->throwException("Illegal jointAxis value");
+        }
+        link->setJointAxis(axis);
+    }
     
     /*
       \todo A link node may contain more than one rigid bodies and
       the paremeters of them must be summed up
     */
-    if(linkNode->read("mass", value)) link->setMass(value);
-    if(read(*linkNode, "centerOfMass", vec3)) link->setCenterOfMass(vec3);
+    if(linkNode->read("mass", value)){
+        link->setMass(value);
+    }
+    if(read(*linkNode, "centerOfMass", vec3)){
+        link->setCenterOfMass(vec3);
+    }
 
     Matrix3 I;
-    if(read(*linkNode, "inertia", I)) link->setInertia(I);
+    if(read(*linkNode, "inertia", I)){
+        link->setInertia(I);
+    }
 
     currentLink = link;
     rigidBodies.clear();
@@ -409,8 +464,8 @@ void YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     }
 
     currentLink = 0;
-    
-    linkInfos.push_back(linkInfo);
+
+    return link;
 }
 
 
@@ -501,8 +556,9 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
 {
     Affine3 T = Affine3::Identity();
 
-    if(read(node, "translation", vec3)) T.translation() = vec3;
-
+    if(read(node, "translation", vec3)){
+        T.translation() = vec3;
+    }
     Vector4 r;
     if(read(node, "rotation", r)){
         T.linear() = Matrix3(AngleAxis(r[3], Vector3(r[0], r[1], r[2])));
@@ -513,7 +569,6 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
     findElements(node, new SgPosTransform(T));
 
     transformStack.pop_back();
-    
 }
 
 

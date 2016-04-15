@@ -210,6 +210,11 @@ public:
         void setOffsetRotation(const Eigen::MatrixBase<Derived>& offset) {
         Tb_.linear() = offset;
     }
+    template<typename T>
+    void setOffsetRotation(const Eigen::AngleAxis<T>& a) {
+        Tb_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+    }
+    
     template<typename Derived>
         void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
         Rs_ = Rs;

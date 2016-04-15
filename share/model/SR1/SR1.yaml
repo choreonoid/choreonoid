@@ -1,5 +1,6 @@
 
-modelFile: SR1.wrl
+# modelFile: SR1.wrl
+modelFile: SR1.body
 
 standardPose: [ 
    0, -30, 0,  60, -30, 0,
