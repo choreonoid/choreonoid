@@ -474,8 +474,8 @@ bool BodyRTCItem::store(Archive& archive)
     if(!ControllerItem::store(archive)){
         return false;
     }
-    archive.write("moduleName", moduleName, DOUBLE_QUOTED);
-    archive.write("confFileName", confFileName, DOUBLE_QUOTED);
+    archive.write("moduleName", getGenericPathString(moduleName), DOUBLE_QUOTED);
+    archive.write("confFileName", getGenericPathString(confFileName), DOUBLE_QUOTED);
     archive.write("configurationMode", configMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("AutoConnect", autoConnect);
     archive.write("InstanceName", instanceName, DOUBLE_QUOTED);
@@ -491,10 +491,12 @@ bool BodyRTCItem::restore(const Archive& archive)
     }
     string value;
     if(archive.read("moduleName", value)){
-        moduleName = archive.expandPathVariables(value);
+        filesystem::path path(archive.expandPathVariables(value));
+        moduleName = getNativePathString(path);
     }
     if(archive.read("confFileName", value)){
-        confFileName = archive.expandPathVariables(value);
+        filesystem::path path(archive.expandPathVariables(value));
+        confFileName = getNativePathString(path);
     }
     string symbol;
     if(archive.read("configurationMode", symbol)){
