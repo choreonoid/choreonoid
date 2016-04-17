@@ -754,10 +754,16 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTr
         triangleVertices.reserve(input_mesh->mNumFaces);
         for(uint32_t j = 0; j < input_mesh->mNumFaces; j++){
             aiFace& face = input_mesh->mFaces[j];
-            if (face.mNumIndices == 3) { // only support triangulated face
+            if (face.mNumIndices == 3) { // most of the element are the triangulated faces
                 triangleVertices.push_back(face.mIndices[0]);
                 triangleVertices.push_back(face.mIndices[1]);
                 triangleVertices.push_back(face.mIndices[2]);
+            } else if (face.mNumIndices == 2) {
+                SgLineSetPtr lineset = new SgLineSet();
+                lineset->setVertices(vertices);
+                lineset->addLine(face.mIndices[0], face.mIndices[1]);
+                lineset->setLineWidth(0.1);  // not sure about the width
+                sgnode->addChild(lineset);
             }
         }
         
