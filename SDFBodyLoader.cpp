@@ -754,10 +754,16 @@ void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTr
         triangleVertices.reserve(input_mesh->mNumFaces);
         for(uint32_t j = 0; j < input_mesh->mNumFaces; j++){
             aiFace& face = input_mesh->mFaces[j];
-            if (face.mNumIndices == 3) { // only support triangulated face
+            if (face.mNumIndices == 3) { // most of the element are the triangulated faces
                 triangleVertices.push_back(face.mIndices[0]);
                 triangleVertices.push_back(face.mIndices[1]);
                 triangleVertices.push_back(face.mIndices[2]);
+            } else if (face.mNumIndices == 2) {
+                SgLineSetPtr lineset = new SgLineSet();
+                lineset->setVertices(vertices);
+                lineset->addLine(face.mIndices[0], face.mIndices[1]);
+                lineset->setLineWidth(0.1);  // not sure about the width
+                sgnode->addChild(lineset);
             }
         }
         
@@ -838,10 +844,16 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                 aiColor3D clr;
                 amat->Get(AI_MATKEY_COLOR_EMISSIVE, clr);
                 material->setEmissiveColor(Vector3f(clr.r, clr.g, clr.b));
-            } else if (propKey == "$clr.opacity") {
+            } else if (propKey == "$clr.transparent") {
+                aiColor3D clr;
+                amat->Get(AI_MATKEY_COLOR_TRANSPARENT, clr);
+                material->setTransparency((clr.r + clr.g + clr.b) / 3.0f);
+            /*
+            } else if (propKey == "$mat.opacity") {
                 float o;
                 amat->Get(AI_MATKEY_OPACITY, o);
-                material->setTransparency(o);
+                material->setTransparency(1.0f - o);
+            */
             } else if (propKey == "$mat.shininess") {
                 float s;
                 amat->Get(AI_MATKEY_SHININESS, s);
