@@ -838,10 +838,16 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
                 aiColor3D clr;
                 amat->Get(AI_MATKEY_COLOR_EMISSIVE, clr);
                 material->setEmissiveColor(Vector3f(clr.r, clr.g, clr.b));
-            } else if (propKey == "$clr.opacity") {
+            } else if (propKey == "$clr.transparent") {
+                aiColor3D clr;
+                amat->Get(AI_MATKEY_COLOR_TRANSPARENT, clr);
+                material->setTransparency((clr.r + clr.g + clr.b) / 3.0f);
+            /*
+            } else if (propKey == "$mat.opacity") {
                 float o;
                 amat->Get(AI_MATKEY_OPACITY, o);
-                material->setTransparency(o);
+                material->setTransparency(1.0f - o);
+            */
             } else if (propKey == "$mat.shininess") {
                 float s;
                 amat->Get(AI_MATKEY_SHININESS, s);
