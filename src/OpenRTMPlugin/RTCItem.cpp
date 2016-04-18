@@ -165,7 +165,7 @@ bool RTCItem::store(Archive& archive)
     if(!Item::store(archive)){
         return false;
     }
-    archive.writePath("moduleName", moduleName);
+    archive.write("moduleName", getGenericPathString(moduleName), DOUBLE_QUOTED);
     archive.write("periodicType", periodicType.selectedSymbol());
     archive.write("periodicRate", periodicRate);
     return true;
@@ -179,7 +179,8 @@ bool RTCItem::restore(const Archive& archive)
     }
     string value;
     if(archive.read("moduleName", value)){
-        moduleName = archive.expandPathVariables(value);
+        filesystem::path path(archive.expandPathVariables(value));
+        moduleName = getNativePathString(path);
     }
     string symbol;
     if(archive.read("periodicType", symbol)){
