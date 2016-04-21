@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-18 17:28+0900\n"
+"POT-Creation-Date: 2016-04-21 15:22+0900\n"
 "PO-Revision-Date: 2012-07-17 00:22+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,119 +17,135 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: BodyRTCItem.cpp:36
+#: BodyRTCItem.cpp:37
 msgid "BodyRTCItem"
 msgstr "ボディRTCアイテム"
 
-#: BodyRTCItem.cpp:58
+#: BodyRTCItem.cpp:60
 msgid "Use Configuration File"
 msgstr "設定ファイルを使用"
 
-#: BodyRTCItem.cpp:59
+#: BodyRTCItem.cpp:61
 msgid "Create Default Port"
 msgstr "標準ポートを作成"
 
-#: BodyRTCItem.cpp:113
+#: BodyRTCItem.cpp:66 RTCItem.cpp:66
+msgid "RTC directory"
+msgstr "RTCディレクトリ"
+
+#: BodyRTCItem.cpp:67 RTCItem.cpp:67
+msgid "Project directory"
+msgstr "プロジェクトディレクトリ"
+
+#: BodyRTCItem.cpp:123 BodyRTCItem.cpp:169 RTCItem.cpp:238
+msgid "Please save the project."
+msgstr "プロジェクトを保存してください。"
+
+#: BodyRTCItem.cpp:132
 msgid "Config File \"%1%\" has been loaded."
 msgstr "設定ファイル \"%1%\" が読み込まれました。"
 
-#: BodyRTCItem.cpp:115
+#: BodyRTCItem.cpp:134
 msgid "Cannot find or open \"%1%\"."
 msgstr "\"%1%\"　は存在しないか、開けません。"
 
-#: BodyRTCItem.cpp:125
+#: BodyRTCItem.cpp:144
 msgid "Loading Module....  \"%1%\""
 msgstr "\"%1%\"を読み込み中...."
 
-#: BodyRTCItem.cpp:159
+#: BodyRTCItem.cpp:195
 msgid "RTC \"%1%\" has been created."
 msgstr "RTC \"%1%\" を生成しました。"
 
-#: BodyRTCItem.cpp:281
+#: BodyRTCItem.cpp:317
 msgid "RTC \"%1%\" is not ready."
 msgstr "RTC \"%1%\" が利用できません。"
 
-#: BodyRTCItem.cpp:288
+#: BodyRTCItem.cpp:324
 msgid "Output interval must be longer than the control interval."
 msgstr "出力間隔は、コントロールの間隔より長い必要があります。"
 
-#: BodyRTCItem.cpp:458
+#: BodyRTCItem.cpp:508
 msgid "Auto Connect"
 msgstr "自動ポート接続"
 
-#: BodyRTCItem.cpp:459
+#: BodyRTCItem.cpp:509
 msgid "RTC Instance name"
 msgstr "RTCインスタンス名"
 
-#: BodyRTCItem.cpp:461
+#: BodyRTCItem.cpp:511
 msgid "Periodic rate"
 msgstr "実行周期"
 
-#: BodyRTCItem.cpp:463
+#: BodyRTCItem.cpp:513 RTCItem.cpp:179
+msgid "Relative Path Base"
+msgstr "相対パスベース"
+
+#: BodyRTCItem.cpp:515
 msgid "Controller module name"
 msgstr "コントローラのモジュール名"
 
-#: BodyRTCItem.cpp:465
+#: BodyRTCItem.cpp:517
 msgid "Configuration mode"
 msgstr "設定モード"
 
-#: BodyRTCItem.cpp:467
+#: BodyRTCItem.cpp:519
 msgid "Configuration file name"
 msgstr "設定ファイル名"
 
-#: BodyRTCItem.cpp:536 BodyRTCItem.cpp:584
+#: BodyRTCItem.cpp:598 BodyRTCItem.cpp:646
 msgid "%1% is not found."
 msgstr "%1% が見つかりません。"
 
-#: BodyRTCItem.cpp:540 BodyRTCItem.cpp:588
+#: BodyRTCItem.cpp:602 BodyRTCItem.cpp:650
 msgid "%1% is not an RTC object."
 msgstr "%1% はRTCではありません。"
 
-#: BodyRTCItem.cpp:549
+#: BodyRTCItem.cpp:611
 msgid "setup RT components"
 msgstr "RTCの設定をしています。"
 
-#: BodyRTCItem.cpp:644
+#: BodyRTCItem.cpp:706
 msgid "periodic-rate (%1%) = %2% "
 msgstr "周期(%1%) = %2% "
 
-#: BodyRTCItem.cpp:656
+#: BodyRTCItem.cpp:718
 msgid "detected the ExtTrigExecutionContext"
 msgstr "ExtTrigExecutionContextを検出しました。"
 
-#: BodyRTCItem.cpp:768 BodyRTCItem.cpp:777
+#: BodyRTCItem.cpp:830 BodyRTCItem.cpp:839
 msgid "%1% does not have a port %2%."
 msgstr "%1% は、ポート %2% を持っていません。"
 
-#: BodyRTCItem.cpp:799
+#: BodyRTCItem.cpp:861
 msgid "The robot does not have a port named %1%."
 msgstr "ロボットはポート %1% を持っていません。"
 
-#: BodyRTCItem.cpp:810 BodyRTCItem.cpp:880
+#: BodyRTCItem.cpp:872 BodyRTCItem.cpp:942
 msgid "connect %1%:%2% --> %3%:%4%"
 msgstr "%1%:%2% --> %3%:%4% 接続しています...."
 
-#: BodyRTCItem.cpp:814 BodyRTCItem.cpp:921
+#: BodyRTCItem.cpp:876 BodyRTCItem.cpp:983
 msgid "connect %1%:%2% <-- %3%:%4%"
 msgstr "%1%:%2% <-- %3%:%4% 接続しています...."
 
-#: BodyRTCItem.cpp:820 BodyRTCItem.cpp:883 BodyRTCItem.cpp:924
+#: BodyRTCItem.cpp:882 BodyRTCItem.cpp:945 BodyRTCItem.cpp:986
 msgid "Connection was successful."
 msgstr "接続しました。"
 
-#: BodyRTCItem.cpp:822 BodyRTCItem.cpp:885 BodyRTCItem.cpp:926
+#: BodyRTCItem.cpp:884 BodyRTCItem.cpp:947 BodyRTCItem.cpp:988
 msgid "Connection failed."
 msgstr "接続できませんでした。"
 
-#: BodyRTCItem.cpp:824 BodyRTCItem.cpp:887 BodyRTCItem.cpp:928
+#: BodyRTCItem.cpp:886 BodyRTCItem.cpp:949 BodyRTCItem.cpp:990
 msgid " It has already been connected."
 msgstr "既に接続しています。"
 
-#: BodyRTCItem.cpp:996 BodyRTCItem.cpp:1012 RTCItem.cpp:363 RTCItem.cpp:370
+#: BodyRTCItem.cpp:1058 BodyRTCItem.cpp:1074 RTCItem.cpp:399 RTCItem.cpp:406
 msgid "delete %1%"
 msgstr "%1% を削除しました。"
 
-#: BodyRTCItem.cpp:1033 RTCItem.cpp:365
+#: BodyRTCItem.cpp:1095 RTCItem.cpp:401
 msgid "%1% cannot be deleted."
 msgstr "%1% を削除できませんでした。"
 
@@ -189,51 +205,51 @@ msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
 msgid "The unmanaged RT components have been deleted."
 msgstr "非管理下RTコンポーネントを削除しました。"
 
-#: RTCItem.cpp:37
+#: RTCItem.cpp:38
 msgid "RTCItem"
 msgstr "RTCアイテム"
 
-#: RTCItem.cpp:53
+#: RTCItem.cpp:55
 msgid "PeriodicExecutionContext"
 msgstr ""
 
-#: RTCItem.cpp:54
+#: RTCItem.cpp:56
 msgid "SynchExtTriggerEC"
 msgstr ""
 
-#: RTCItem.cpp:55
+#: RTCItem.cpp:57
 msgid "ExtTrigExecutionContext"
 msgstr ""
 
-#: RTCItem.cpp:56
+#: RTCItem.cpp:58
 msgid "ChoreonoidExecutionContext"
 msgstr ""
 
-#: RTCItem.cpp:153
+#: RTCItem.cpp:181
 msgid "RTC module Name"
 msgstr "RTCモジュール名"
 
-#: RTCItem.cpp:155
+#: RTCItem.cpp:183
 msgid "Periodic type"
 msgstr "実行タイプ"
 
-#: RTCItem.cpp:158
+#: RTCItem.cpp:186
 msgid "Periodic Rate"
 msgstr "実行周期"
 
-#: RTCItem.cpp:271
+#: RTCItem.cpp:307
 msgid "A file of RTC \"%1%\" does not exist."
 msgstr "RTC \"%1%\" のファイルが存在しません。"
 
-#: RTCItem.cpp:279
+#: RTCItem.cpp:315
 msgid "RTC \"%1%\" has been created from \"%2%\"."
 msgstr "RTC \"%1%\" を \"%2%\" から生成しました。"
 
-#: RTCItem.cpp:281
+#: RTCItem.cpp:317
 msgid "RTC \"%1%\" cannot be created."
 msgstr "RTC \"%1%\" を生成できませんした。"
 
-#: RTCItem.cpp:304
+#: RTCItem.cpp:340
 msgid ""
 "RTC \"%1%\" cannot be created by the RTC manager.\n"
 " RTC module file: \"%2%\"\n"
@@ -245,11 +261,11 @@ msgstr ""
 " Init関数: %3%\n"
 " オプション: %4%"
 
-#: RTCItem.cpp:346
+#: RTCItem.cpp:382
 msgid "RT Component process \"%1%\" cannot be executed."
 msgstr "RTコンポーネントのプロセス \"%1%\" は起動できませんでした。"
 
-#: RTCItem.cpp:348
+#: RTCItem.cpp:384
 msgid "RT Component process \"%1%\" has been executed."
 msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
 
