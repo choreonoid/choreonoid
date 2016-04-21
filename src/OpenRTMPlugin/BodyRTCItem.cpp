@@ -15,6 +15,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/MessageView>
 #include <cnoid/Sleep>
+#include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
@@ -42,7 +43,8 @@ void BodyRTCItem::initialize(ExtensionManager* ext)
 
 BodyRTCItem::BodyRTCItem()
     : os(MessageView::instance()->cout()),
-      configMode(N_CONFIG_MODES, CNOID_GETTEXT_DOMAIN_NAME)
+      configMode(N_CONFIG_MODES, CNOID_GETTEXT_DOMAIN_NAME),
+      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
 {
     setName("BodyRTC");
     
@@ -61,14 +63,21 @@ BodyRTCItem::BodyRTCItem()
     oldMode = CONF_ALL_MODE;
     autoConnect = false;
 
+    pathBase.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
+    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    pathBase.select(RTC_DIRECTORY);
+    oldPathBase = RTC_DIRECTORY;
+
     executionCycleProperty = 0.0;
+
 }
 
 
 BodyRTCItem::BodyRTCItem(const BodyRTCItem& org)
     : ControllerItem(org),
       os(MessageView::instance()->cout()),
-      configMode(org.configMode)
+      configMode(org.configMode),
+      pathBase(org.pathBase)
 {
     io = 0;
     virtualRobotRTC = org.virtualRobotRTC;
@@ -81,6 +90,7 @@ BodyRTCItem::BodyRTCItem(const BodyRTCItem& org)
     autoConnect = org.autoConnect;
     mv = MessageView::instance();
     executionCycleProperty = org.executionCycleProperty;
+    oldPathBase = org.oldPathBase;
 }
 
 
@@ -104,9 +114,18 @@ void BodyRTCItem::createRTC(BodyPtr body)
 
         if(!confPath.empty()){
             if(!checkAbsolute(confPath)){
-                confPath =
-                    filesystem::path(executableTopDirectory()) /
-                    CNOID_PLUGIN_SUBDIR / "rtc" / confPath;
+                if (pathBase.is(RTC_DIRECTORY))
+                    confPath = filesystem::path(executableTopDirectory()) /
+                        CNOID_PLUGIN_SUBDIR / "rtc" / confPath;
+                else {
+                    const string& projectFileName = ProjectManager::instance()->getProjectFileName();
+                    if (projectFileName.empty()){
+                        mv->putln(_("Please save the project."));
+                            return;
+                    }else{
+                        confPath = boost::filesystem::path(projectFileName).parent_path() / confPath;
+                   }
+                }
             }
             std::string confFileName0 = getNativePathString(confPath);
             if(bridgeConf->loadConfigFile(confFileName0.c_str())){
@@ -138,7 +157,24 @@ void BodyRTCItem::createRTC(BodyPtr body)
             PropertyMap prop;
             prop["exec_cxt.periodic.type"] = "ChoreonoidExecutionContext";
             prop["exec_cxt.periodic.rate"] = "1000000";
-            rtcomp = new RTComponent(moduleName, prop);
+
+            filesystem::path modulePath(moduleName);
+            if (!checkAbsolute(modulePath)){
+                if (pathBase.is(RTC_DIRECTORY))
+                    modulePath = filesystem::path(executableTopDirectory()) /
+                    CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
+                else {
+                    const string& projectFileName = ProjectManager::instance()->getProjectFileName();
+                    if (projectFileName.empty()){
+                        mv->putln(_("Please save the project."));
+                        return;
+                    }
+                    else{
+                        modulePath = boost::filesystem::path(projectFileName).parent_path() / modulePath;
+                    }
+                }
+            }
+            rtcomp = new RTComponent(modulePath, prop);
         }
     }
 
@@ -420,6 +456,7 @@ void BodyRTCItem::setConfigFile(const std::string& name)
 
 void BodyRTCItem::setConfigMode(int mode)
 {
+    configMode.select(mode);
     if(oldMode != mode){
         oldMode = mode;
         BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
@@ -428,7 +465,6 @@ void BodyRTCItem::setConfigMode(int mode)
             deleteModule(true);
             createRTC(body);
         }
-        configMode.select(mode);
     }
 }
 
@@ -452,6 +488,20 @@ void BodyRTCItem::setInstanceName(const std::string& name)
     }
 }
 
+void BodyRTCItem::setPathBase(int base)
+{
+    pathBase.select(base);
+    if (oldPathBase != base){
+        oldPathBase = base;
+        BodyItem* ownerBodyItem = findOwnerItem<BodyItem>();
+        if (ownerBodyItem){
+            BodyPtr body = ownerBodyItem->body();
+            deleteModule(true);
+            createRTC(body);
+        }
+    }
+}
+
 void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     ControllerItem::doPutProperties(putProperty);
@@ -460,12 +510,15 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
                 boost::bind(&BodyRTCItem::setInstanceName, this, _1), true);
     putProperty.decimals(3)(_("Periodic rate"), executionCycleProperty,
                             changeProperty(executionCycleProperty));
+    putProperty(_("Relative Path Base"), pathBase, 
+                boost::bind(&BodyRTCItem::setPathBase, this, _1), true);
     putProperty(_("Controller module name"), moduleName,
                 boost::bind(&BodyRTCItem::setControllerModule, this, _1), true);
     putProperty(_("Configuration mode"), configMode,
                 boost::bind(&BodyRTCItem::setConfigMode, this, _1), true);
     putProperty(_("Configuration file name"), confFileName,
                 boost::bind(&BodyRTCItem::setConfigFile, this, _1), true);
+
 }
 
 
@@ -474,12 +527,14 @@ bool BodyRTCItem::store(Archive& archive)
     if(!ControllerItem::store(archive)){
         return false;
     }
-    archive.write("moduleName", getGenericPathString(moduleName), DOUBLE_QUOTED);
-    archive.write("confFileName", getGenericPathString(confFileName), DOUBLE_QUOTED);
+    archive.writeRelocatablePath("moduleName", moduleName);
+    archive.writeRelocatablePath("confFileName", confFileName);
     archive.write("configurationMode", configMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("AutoConnect", autoConnect);
     archive.write("InstanceName", instanceName, DOUBLE_QUOTED);
     archive.write("bodyPeriodicRate", executionCycleProperty);
+    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
+
     return true;
 }
 
@@ -503,9 +558,14 @@ bool BodyRTCItem::restore(const Archive& archive)
         configMode.select(symbol);
         oldMode = configMode.selectedIndex();
     }
+    if (archive.read("RelativePathBase", symbol)){
+        pathBase.select(symbol);
+        oldPathBase = pathBase.selectedIndex();
+    }
     archive.read("AutoConnect", autoConnect);
     archive.read("InstanceName", instanceName);
     archive.read("bodyPeriodicRate", executionCycleProperty);
+
     return true;
 }
 
