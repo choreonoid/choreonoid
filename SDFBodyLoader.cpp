@@ -188,7 +188,7 @@ private:
     void loadMaterials(const std::string& resource_path, const aiScene* scene,
                        std::vector<SgMaterial*>& material_table,
                        std::vector<SgTexture*>& texture_table);
-    void getDaeScaleAndAxis(const std::string& url, float& scale, std::string& axis);
+    void getDaeScaleAndAxis(const std::string& url, float& scale, std::string& axis, bool& hasMeter);
     SgMaterial* createSgMaterial(sdf::ElementPtr material, float transparency);
     void convertJointType(Link *link, JointInfoPtr info);
     void addModelSearchPath(const char *envname);
@@ -865,21 +865,23 @@ void SDFBodyLoaderImpl::loadMaterials(const std::string& resource_path,
     }
 }
 
-void SDFBodyLoaderImpl::getDaeScaleAndAxis(const std::string& url, float& scale, std::string& axis)
+void SDFBodyLoaderImpl::getDaeScaleAndAxis(const std::string& url, float& scale, std::string& axis, bool& hasMeter)
 {
     TiXmlDocument xmlDoc;
     xmlDoc.LoadFile(url);
 
     scale = 1.0;
     axis = "Y_UP";
+    hasMeter = false;
     if(!xmlDoc.Error()) {
         TiXmlElement * colladaXml = xmlDoc.FirstChildElement("COLLADA");
         if(colladaXml) {
             TiXmlElement *assetXml = colladaXml->FirstChildElement("asset");
             if(assetXml) {
                 TiXmlElement *unitXml = assetXml->FirstChildElement("unit");
-                if (unitXml && unitXml->Attribute("meter")) {
-                    unitXml->QueryFloatAttribute("meter", &scale);
+                if (unitXml && unitXml->Attribute("meter") &&
+                    unitXml->QueryFloatAttribute("meter", &scale) == TIXML_SUCCESS) {
+                    hasMeter = true;
                 }
                 TiXmlElement *up_axisXml = assetXml->FirstChildElement("up_axis");
                 if (up_axisXml) {
@@ -914,9 +916,24 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
                     const aiScene* scene = importer.ReadFile(url, aiProcess_SortByPType|aiProcess_GenNormals|aiProcess_Triangulate|aiProcess_GenUVCoords|aiProcess_FlipUVs);
                     std::vector<SgMaterial*> material_table;
                     std::vector<SgTexture*> texture_table;
-                    float scale;
+                    float meter;
                     std::string axis;
-                    getDaeScaleAndAxis(url, scale, axis);
+                    Vector3 scale;
+                    bool hasMeter;
+
+                    getDaeScaleAndAxis(url, meter, axis, hasMeter);
+
+                    if (el->HasElement("scale")) {
+                        sdf::Vector3 v = el->Get<sdf::Vector3>("scale");
+                        scale = Vector3(v.x, v.y, v.z);
+                    } else {
+                        scale = Vector3(1.0, 1.0, 1.0);    // SDF default values.
+                    }
+
+                    if (hasMeter) {
+                        scale *= meter;
+                    }
+
                     scaletrans->setScale(scale);
                     if (axis == "Z_UP") {
                         cnoid::AngleAxis xaxis(M_PI/2.0, cnoid::Vector3::UnitX());
