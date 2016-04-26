@@ -40,6 +40,7 @@ public:
 private:
     SceneLink(const SceneLink& org);
     Link* link_;
+    SgPosTransformPtr shapeTransform;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
     SgGroup* currentShapeGroup;

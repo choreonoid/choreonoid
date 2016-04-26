@@ -19,9 +19,12 @@ SceneLink::SceneLink(Link* link)
 {
     setName(link->name());
 
+    shapeTransform = new SgPosTransform;
+    shapeTransform->setRotation(link->Rs().transpose());
+    addChild(shapeTransform);
     visualShape_ = link->visualShape();
     collisionShape_ = link->collisionShape();
-    currentShapeGroup = this;
+    currentShapeGroup = shapeTransform;
     isVisible_ = true;
     isVisualShapeVisible_ = true;
     isCollisionShapeVisible_ = false;
@@ -35,7 +38,7 @@ SceneLink::SceneLink(const SceneLink& org)
     : SgPosTransform(org)
 {
     link_ = 0;
-    currentShapeGroup = this;
+    currentShapeGroup = shapeTransform;
     isVisible_ = false;
     isVisualShapeVisible_ = false;
     isCollisionShapeVisible_ = false;
@@ -47,7 +50,7 @@ void SceneLink::setShapeGroup(SgGroup* group)
 {
     if(group != currentShapeGroup){
         if(shapeGroup){
-            removeChild(shapeGroup);
+            shapeTransform->removeChild(shapeGroup);
         }
         if(visualShape_){
             currentShapeGroup->removeChild(visualShape_);
@@ -58,9 +61,9 @@ void SceneLink::setShapeGroup(SgGroup* group)
         shapeGroup = group;
         if(shapeGroup){
             currentShapeGroup = shapeGroup;
-            addChild(shapeGroup);
+            shapeTransform->addChild(shapeGroup);
         } else {
-            currentShapeGroup = this;
+            currentShapeGroup = shapeTransform;
         }
         int action = updateVisibility(SgUpdate::ADDED|SgUpdate::REMOVED, false);
         notifyUpdate(action);
@@ -319,7 +322,8 @@ void SceneBody::updateLinkPositions()
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setPosition(sLink->link()->position());
+        sLink->setRotation(sLink->link()->attitude());
+        sLink->setTranslation(sLink->link()->translation());
     }
 }
 
@@ -329,7 +333,8 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setPosition(sLink->link()->position());
+        sLink->setRotation(sLink->link()->attitude());
+        sLink->setTranslation(sLink->link()->translation());
         sLink->notifyUpdate(update);
     }
 }
