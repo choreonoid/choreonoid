@@ -132,9 +132,9 @@ items:
           children: 
             - 
               id: 7
-              name: "ConstraintForceNotifier"
-              plugin: ConstraintForceNotifierSample
-              class: ConstraintForceNotifierItem
+              name: "ContactForceExtractor"
+              plugin: ContactForceExtractionSample
+              class: ContactForceExtractorItem
 views: 
   "Items": 
     selected: [ 7 ]

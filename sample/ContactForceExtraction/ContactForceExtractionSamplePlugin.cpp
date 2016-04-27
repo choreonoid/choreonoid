@@ -16,13 +16,13 @@ using namespace cnoid;
 
 namespace {
 
-class ConstraintForceNotifierItem : public SubSimulatorItem
+class ContactForceExtractorItem : public SubSimulatorItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
         
-    ConstraintForceNotifierItem();
-    ConstraintForceNotifierItem(const ConstraintForceNotifierItem& org);
+    ContactForceExtractorItem();
+    ContactForceExtractorItem(const ContactForceExtractorItem& org);
 
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
 
@@ -30,52 +30,52 @@ protected:
     virtual Item* doDuplicate() const;
 
 private:
-    void notifyContactPoints(SimulatorItem* simulator);
-    void notifyBodyContactPoints(DyBody* body, ostream& os);
+    void extractContactPoints(SimulatorItem* simulator);
+    void extractBodyContactPoints(DyBody* body, ostream& os);
 };
 
 
-class ConstraintForceNotifierSamplePlugin : public Plugin
+class ContactForceExtractionSamplePlugin : public Plugin
 {
 public:
-    ConstraintForceNotifierSamplePlugin() : Plugin("ConstraintForceNotifierSample") {
+    ContactForceExtractionSamplePlugin() : Plugin("ContactForceExtractionSample") {
         require("Body");
     }
 
     virtual bool initialize() {
         itemManager()
-            .registerClass<ConstraintForceNotifierItem>("ConstraintForceNotifierItem")
-            .addCreationPanel<ConstraintForceNotifierItem>();
+            .registerClass<ContactForceExtractorItem>("ContactForceExtractorItem")
+            .addCreationPanel<ContactForceExtractorItem>();
         return true;
     }
 };
 
 }
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(ConstraintForceNotifierSamplePlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(ContactForceExtractionSamplePlugin);
 
 
 
-ConstraintForceNotifierItem::ConstraintForceNotifierItem()
+ContactForceExtractorItem::ContactForceExtractorItem()
 {
 
 }
 
 
-ConstraintForceNotifierItem::ConstraintForceNotifierItem(const ConstraintForceNotifierItem& org)
+ContactForceExtractorItem::ContactForceExtractorItem(const ContactForceExtractorItem& org)
     : SubSimulatorItem(org)
 {
 
 }
 
 
-Item* ConstraintForceNotifierItem::doDuplicate() const
+Item* ContactForceExtractorItem::doDuplicate() const
 {
-    return new ConstraintForceNotifierItem(*this);
+    return new ContactForceExtractorItem(*this);
 }
 
 
-bool ConstraintForceNotifierItem::initializeSimulation(SimulatorItem* simulator)
+bool ContactForceExtractorItem::initializeSimulation(SimulatorItem* simulator)
 {
     AISTSimulatorItem* aistSimulator = dynamic_cast<AISTSimulatorItem*>(simulator);
     if(!aistSimulator){
@@ -85,13 +85,13 @@ bool ConstraintForceNotifierItem::initializeSimulation(SimulatorItem* simulator)
     aistSimulator->setConstraintForceOutputEnabled(true);
 
     simulator->addPostDynamicsFunction(
-        boost::bind(&ConstraintForceNotifierItem::notifyContactPoints, this, simulator));
+        boost::bind(&ContactForceExtractorItem::extractContactPoints, this, simulator));
 
     return true;
 }
 
 
-void ConstraintForceNotifierItem::notifyContactPoints(SimulatorItem* simulator)
+void ContactForceExtractorItem::extractContactPoints(SimulatorItem* simulator)
 {
     ostringstream oss;
 
@@ -99,7 +99,7 @@ void ConstraintForceNotifierItem::notifyContactPoints(SimulatorItem* simulator)
     for(size_t i=0; i < simBodies.size(); ++i){
         DyBody* body = dynamic_cast<DyBody*>(simBodies[i]->body());
         if(body){
-            notifyBodyContactPoints(body, oss);
+            extractBodyContactPoints(body, oss);
         }
     }
     string log = oss.str();
@@ -109,22 +109,22 @@ void ConstraintForceNotifierItem::notifyContactPoints(SimulatorItem* simulator)
 }
 
 
-void ConstraintForceNotifierItem::notifyBodyContactPoints(DyBody* body, ostream& os)
+void ContactForceExtractorItem::extractBodyContactPoints(DyBody* body, ostream& os)
 {
     bool put = false;
     for(int i=0; i < body->numLinks(); ++i){
         DyLink* link = body->link(i);
-        DyLink::ConstraintForceArray& constraintForces = link->constraintForces();
-        if(!constraintForces.empty()){
+        DyLink::ConstraintForceArray& forces = link->constraintForces();
+        if(!forces.empty()){
             if(!put){
                 os << body->name() << ":\n";
                 put = true;
             }
             os << " " << link->name() << ":\n";
-            for(size_t i=0; i < constraintForces.size(); ++i){
-                const DyLink::ConstraintForce& c = constraintForces[i];
-                const Vector3& p = c.point;
-                const Vector3& f = c.force;
+            for(size_t i=0; i < forces.size(); ++i){
+                const DyLink::ConstraintForce& force = forces[i];
+                const Vector3& p = force.point;
+                const Vector3& f = force.force;
                 os << "  point(" << p.x() << ", " << p.y() << ", " << p.z()
                    << "), force(" << f.x() << ", " << f.y() << ", " << f.z() << ")\n";
             }
