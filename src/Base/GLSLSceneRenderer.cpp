@@ -857,12 +857,16 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
     if(lineSet->hasVertices() && n > 0){
 
         ShaderProgram* orgProgram = currentProgram;
+        LightingProgram* orgLightingProgram = currentLightingProgram;
+        NolightingProgram* orgNolightingProgram = currentNolightingProgram;
 
         if(isPicking){
             pushPickID(lineSet);
         } else {
             solidColorProgram.use();
             currentProgram = &solidColorProgram;
+            currentLightingProgram = 0;
+            currentNolightingProgram = &solidColorProgram;
             renderMaterial(lineSet->material());
         }
 
@@ -897,6 +901,8 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
             popPickID();
         } else {
             currentProgram = orgProgram;
+            currentLightingProgram = orgLightingProgram;
+            currentNolightingProgram = orgNolightingProgram;
             currentProgram->use();
         }
     }
