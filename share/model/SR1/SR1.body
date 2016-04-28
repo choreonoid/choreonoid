@@ -175,6 +175,8 @@ links:
         elements: &ArmShape1
           Shape: 
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance:
+              material: { }
   -
     name: LARM_SHOULDER_R
     parent: LARM_SHOULDER_P
@@ -223,6 +225,8 @@ links:
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance:
+              material: { }
   -
     name: LARM_ELBOW
     parent: LARM_SHOULDER_Y
@@ -269,6 +273,8 @@ links:
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance:
+              material: { }
   -
     name: LARM_WRIST_P
     parent: LARM_WRIST_Y
