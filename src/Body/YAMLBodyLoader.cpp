@@ -808,8 +808,13 @@ void YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
 void YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 {
     SgMaterialPtr material = new SgMaterial;
-    Vector3 color;
+
+    if(node.read("ambientIntensity", value)) material->setAmbientIntensity(value);
     if(read(node, "diffuseColor", color)) material->setDiffuseColor(color);
+    if(read(node, "emissiveColor", color)) material->setEmissiveColor(color);
+    if(node.read("shininess", value)) material->setShininess(value);
+    if(read(node, "specularColor", color)) material->setSpecularColor(color);
+    if(node.read("transparency", value)) material->setTransparency(value);
 
     shape->setMaterial(material);
 }
