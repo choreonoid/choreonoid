@@ -382,7 +382,7 @@ links:
     parent: RARM_ELBOW
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointId:  23
+    jointId:  10
     translation: [ 0, 0, -0.247 ]
     centerOfMass: [ 0, 0, 0.1 ]
     mass: 0.4
