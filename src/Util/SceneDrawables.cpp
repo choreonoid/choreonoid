@@ -18,12 +18,12 @@ const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
 
 SgMaterial::SgMaterial()
 {
-    ambientIntensity_ = 0.2;
-    diffuseColor_ << 0.8, 0.8, 0.8;
+    ambientIntensity_ = 0.0f;
+    diffuseColor_.setZero();
     emissiveColor_.setZero();
     specularColor_.setZero();
-    shininess_ = 0.2;
-    transparency_ = 0.0;
+    shininess_ = 0.0f;
+    transparency_ = 0.0f;
 }
 
 
