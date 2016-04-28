@@ -809,10 +809,14 @@ void YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 {
     SgMaterialPtr material = new SgMaterial;
 
-    if(node.read("ambientIntensity", value)) material->setAmbientIntensity(value);
-    if(read(node, "diffuseColor", color)) material->setDiffuseColor(color);
+    material->setAmbientIntensity(node.get("ambientIntensity", 0.2));
+    if(read(node, "diffuseColor", color)){
+        material->setDiffuseColor(color);
+    } else {
+        material->setDiffuseColor(Vector3f(0.8f));
+    }
     if(read(node, "emissiveColor", color)) material->setEmissiveColor(color);
-    if(node.read("shininess", value)) material->setShininess(value);
+    material->setShininess(node.get("shininess", 0.2));
     if(read(node, "specularColor", color)) material->setSpecularColor(color);
     if(node.read("transparency", value)) material->setTransparency(value);
 
