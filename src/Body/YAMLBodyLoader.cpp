@@ -399,6 +399,19 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     
     if(linkNode->read("jointId", id)){
         link->setJointId(id);
+
+        if(id >= 0){
+            if(id >= validJointIdSet.size()){
+                validJointIdSet.resize(id + 1);
+            }
+            if(!validJointIdSet[id]){
+                ++numValidJointIds;
+                validJointIdSet.set(id);
+            } else {
+                os() << str(format("Warning: Joint ID %1% of %2% is duplicated.")
+                            % id % link->name()) << endl;
+            }
+        }
     }
     
     string jointType;
