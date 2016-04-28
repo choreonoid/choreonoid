@@ -7,6 +7,7 @@
 
 #include <cnoid/ValueTree>
 #include <boost/function.hpp>
+#include <boost/filesystem.hpp>
 #include <string>
 #include "exportdecl.h"
 
@@ -69,6 +70,8 @@ public:
 
     Item* currentParentItem() const;
 
+    boost::filesystem::path getProjectDir() const { return projectDirPath; }
+
 private:
 
     ref_ptr<ArchiveSharedData> shared;
@@ -85,6 +88,8 @@ private:
     friend class ItemTreeArchiverImpl;
     friend class ViewManager;
     friend class ProjectManagerImpl;
+
+    boost::filesystem::path projectDirPath;
 };
 
 typedef ref_ptr<Archive> ArchivePtr;

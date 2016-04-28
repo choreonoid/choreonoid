@@ -11,6 +11,27 @@
 
 namespace cnoid {
 
+typedef std::vector<std::string> FileDialogFilter;
+struct FilePath {
+    std::string fileName;
+    FileDialogFilter filters;
+    std::string directory;
+    FilePath(const std::string& name) {
+        fileName = name;
+    }
+    FilePath(const std::string& name, const FileDialogFilter& filters_, const std::string& dir="") {
+        fileName = name;
+        filters = filters_;
+        directory = dir;
+    }
+ };
+
+#ifndef WIN32
+#define DLLSFX string("(*.so)")
+#else
+#define DLLSFX string("(*.dll)")
+#endif
+
 class PutPropertyFunction
 {
 public:
@@ -58,6 +79,13 @@ public:
                             const boost::function<bool(int which)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, const Selection& selection,
                             const boost::function<void(int which)>& changeFunc, bool forceUpdate) = 0;
+
+    // FilePath
+    virtual void operator()(const std::string& name, const FilePath& filePath) = 0;
+    virtual void operator()(const std::string& name, const FilePath& filePath,
+                            const boost::function<bool(const std::string&)>& changeFunc) = 0;
+    virtual void operator()(const std::string& name, const FilePath& filePath,
+                            const boost::function<void(const std::string&)>& changeFunc, bool forceUpdate) = 0;
 };
 
 
