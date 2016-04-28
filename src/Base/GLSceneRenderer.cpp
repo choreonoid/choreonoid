@@ -2878,4 +2878,6 @@ void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
     glPopAttrib();
 
     glDisable(GL_STENCIL_TEST);
+
+    clearGLState();
 }
