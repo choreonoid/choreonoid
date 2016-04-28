@@ -813,7 +813,7 @@ void YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
     if(read(node, "diffuseColor", color)){
         material->setDiffuseColor(color);
     } else {
-        material->setDiffuseColor(Vector3f(0.8f));
+        material->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
     }
     if(read(node, "emissiveColor", color)) material->setEmissiveColor(color);
     material->setShininess(node.get("shininess", 0.2));
