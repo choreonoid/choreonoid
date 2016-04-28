@@ -412,7 +412,10 @@ void SimpleControllerItemImpl::setJointInput(int stateTypes)
         linkIndexToInputStateTypeMap.resize(ioBody->numLinks(), 0);
         const int nj = ioBody->numJoints();
         for(int i=0; i < nj; ++i){
-            linkIndexToInputStateTypeMap[ioBody->joint(i)->index()] = stateTypes;
+            int linkIndex = ioBody->joint(i)->index();
+            if(linkIndex >= 0){
+                linkIndexToInputStateTypeMap[linkIndex] = stateTypes;
+            }
         }
     }
     isInputStateTypeSetUpdated = true;
@@ -437,7 +440,10 @@ void SimpleControllerItemImpl::setJointOutput(int stateTypes)
         linkIndexToOutputStateTypeMap.resize(ioBody->numLinks(), 0);
         const int nj = ioBody->numJoints();
         for(int i=0; i < nj; ++i){
-            linkIndexToOutputStateTypeMap[ioBody->joint(i)->index()] = stateTypes;
+            int linkIndex = ioBody->joint(i)->index();
+            if(linkIndex >= 0){
+                linkIndexToOutputStateTypeMap[linkIndex] = stateTypes;
+            }
         }
     }
     isOutputStateTypeSetUpdated = true;
