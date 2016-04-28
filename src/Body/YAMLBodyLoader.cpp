@@ -59,6 +59,7 @@ public:
 
     struct RigidBody
     {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         Vector3 c;
         double m;
         Matrix3 I;
@@ -80,6 +81,8 @@ public:
     int numValidJointIds;
 
     MeshGenerator meshGenerator;
+
+    SgMaterialPtr defaultMaterial;
 
     int divisionNumber;
     ostream* os_;
@@ -119,6 +122,7 @@ public:
     
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
+    void setDefaultMaterial(SgShape* shape);
 };
 
 }
@@ -225,7 +229,7 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     bool result = false;
 
-    MappingPtr data = 0;
+    MappingPtr data;
     
     try {
         YAMLReader reader;
@@ -269,6 +273,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     linkMap.clear();
     validJointIdSet.clear();
     numValidJointIds = 0;
+    defaultMaterial = 0;
 
     try {
         result = readBody(topNode);
@@ -745,6 +750,8 @@ SgNodePtr YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
     Mapping& appearance = *node.findMapping("appearance");
     if(appearance.isValid()){
         readSceneAppearance(shape, appearance);
+    } else {
+        setDefaultMaterial(shape);
     }
 
     return shape;
@@ -801,6 +808,8 @@ void YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
     Mapping& material = *node.findMapping("material");
     if(material.isValid()){
         readSceneMaterial(shape, material);
+    } else {
+        setDefaultMaterial(shape);
     }
 }
 
@@ -822,3 +831,16 @@ void YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 
     shape->setMaterial(material);
 }
+
+
+void YAMLBodyLoaderImpl::setDefaultMaterial(SgShape* shape)
+{
+    if(!defaultMaterial){
+        defaultMaterial = new SgMaterial;
+        defaultMaterial->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
+        defaultMaterial->setAmbientIntensity(0.2f);
+        defaultMaterial->setShininess(0.2f);
+    }
+    shape->setMaterial(defaultMaterial);
+}
+
