@@ -512,11 +512,32 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
                             changeProperty(executionCycleProperty));
     putProperty(_("Relative Path Base"), pathBase, 
                 boost::bind(&BodyRTCItem::setPathBase, this, _1), true);
-    putProperty(_("Controller module name"), moduleName,
+
+    FileDialogFilter filter;
+    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
+    string dir;
+    if(!moduleName.empty() && checkAbsolute(filesystem::path(moduleName)))
+        dir = filesystem::path(moduleName).parent_path().string();
+    else{
+        if(pathBase.is(RTC_DIRECTORY))
+            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
+    }
+    putProperty(_("Controller module name"), FilePath(moduleName, filter, dir),
                 boost::bind(&BodyRTCItem::setControllerModule, this, _1), true);
+
     putProperty(_("Configuration mode"), configMode,
                 boost::bind(&BodyRTCItem::setConfigMode, this, _1), true);
-    putProperty(_("Configuration file name"), confFileName,
+
+    filter.clear();
+    filter.push_back(_(" RTC Configuration File (*.conf)") );
+    dir.clear();
+    if(!confFileName.empty() && checkAbsolute(filesystem::path(confFileName)))
+        dir = filesystem::path(confFileName).parent_path().string();
+    else{
+        if(pathBase.is(RTC_DIRECTORY))
+            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
+    }
+    putProperty(_("Configuration file name"), FilePath(confFileName, filter, dir),
                 boost::bind(&BodyRTCItem::setConfigFile, this, _1), true);
 
 }

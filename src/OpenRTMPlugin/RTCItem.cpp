@@ -178,8 +178,19 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
     Item::doPutProperties(putProperty);
     putProperty(_("Relative Path Base"), pathBase,
         boost::bind(&RTCItem::setPathBase, this, _1), true);
-    putProperty(_("RTC module Name"), moduleName,
+
+    FileDialogFilter filter;
+    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
+    string dir;
+    if(!moduleName.empty() && checkAbsolute(filesystem::path(moduleName)))
+        dir = filesystem::path(moduleName).parent_path().string();
+    else{
+        if(pathBase.is(RTC_DIRECTORY))
+            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
+    }
+    putProperty(_("RTC module Name"), FilePath(moduleName, filter, dir),
                 boost::bind(&RTCItem::setModuleName, this, _1), true);
+
     putProperty(_("Periodic type"), periodicType,
                 boost::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
