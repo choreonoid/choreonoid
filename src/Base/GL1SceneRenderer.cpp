@@ -2085,6 +2085,7 @@ void SgCustomGLNode::accept(SceneVisitor& visitor)
         renderer->impl->pushPickName(this);
         render(*renderer);
         renderer->impl->popPickName();
+        renderer->impl->clearGLState();
     } else {
         visitor.visitGroup(this);
     }
@@ -2228,4 +2229,6 @@ void GL1SceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
     glPopAttrib();
 
     glDisable(GL_STENCIL_TEST);
+
+    clearGLState();
 }

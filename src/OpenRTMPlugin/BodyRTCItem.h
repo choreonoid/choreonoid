@@ -11,6 +11,7 @@
 #include <cnoid/ControllerItem>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/Body>
+#include <boost/filesystem.hpp>
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/TimeMeasure>
 #endif
@@ -48,12 +49,18 @@ public:
         CONF_ALL_MODE,
         N_CONFIG_MODES
     };
+    enum PathBase {
+        RTC_DIRECTORY = 0,
+        PROJECT_DIRECTORY,
+        N_PATH_BASE
+    };
 
     void setControllerModule(const std::string& name);
     void setConfigFile(const std::string& filename);
     void setConfigMode(int mode);
     void setPeriodicRate(double freq);
     void setAutoConnectionMode(bool on); 
+    void setPathBase(int pathBase);
 
 #ifdef ENABLE_SIMULATION_PROFILING
     virtual void getProfilingNames(std::vector<std::string>& profilingNames);
@@ -93,6 +100,7 @@ private:
     Selection configMode;
     bool autoConnect;
     RTComponent* rtcomp;
+    Selection pathBase;
 
     typedef std::map<std::string, RTC::PortService_var> PortMap;
 
@@ -116,6 +124,7 @@ private:
     std::string confFileName;
     std::string instanceName;
     int oldMode;
+    int oldPathBase;
     MessageView* mv;
 
     void createRTC(BodyPtr body);

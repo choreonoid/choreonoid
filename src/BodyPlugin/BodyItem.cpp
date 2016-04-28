@@ -167,7 +167,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
         im.addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", boost::bind(loadBodyItem, _1, _2));
+            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", boost::bind(loadBodyItem, _1, _2));
 
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");

@@ -11,6 +11,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <cnoid/ConnectionSet>
+#include <cnoid/ProjectManager>
 #include <QLibrary>
 #include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -77,6 +78,13 @@ public:
     std::string controllerModuleFileName;
     QLibrary controllerModule;
     bool doReloading;
+    Selection pathBase;
+
+    enum PathBase {
+        CONTROLLER_DIRECTORY = 0,
+        PROJECT_DIRECTORY,
+        N_PATH_BASE
+    };
 
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
@@ -116,12 +124,16 @@ SimpleControllerItem::SimpleControllerItem()
 
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
-    : self(self)
+    : self(self),
+      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
 {
     controller = 0;
     io = 0;
     mv = MessageView::instance();
     doReloading = true;
+    pathBase.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
+    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    pathBase.select(CONTROLLER_DIRECTORY);
 }
 
 
@@ -133,7 +145,8 @@ SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
 
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
-    : self(self)
+    : self(self),
+      pathBase(org.pathBase)
 {
     controller = 0;
     io = 0;
@@ -241,9 +254,19 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
 
         filesystem::path dllPath(controllerModuleName);
         if(!checkAbsolute(dllPath)){
+            if (pathBase.is(CONTROLLER_DIRECTORY))
             dllPath =
                 filesystem::path(executableTopDirectory()) /
                 CNOID_PLUGIN_SUBDIR / "simplecontroller" / dllPath;
+            else {
+                const string& projectFileName = ProjectManager::instance()->getProjectFileName();
+                if (projectFileName.empty()){
+                    mv->putln(_("Please save the project."));
+                    return false;
+                }else{
+                    dllPath = boost::filesystem::path(projectFileName).parent_path() / dllPath;
+                }
+            }
         }
         controllerModuleFileName = getNativePathString(dllPath);
         controllerModule.setFileName(controllerModuleFileName.c_str());
@@ -676,7 +699,18 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Controller module"), controllerModuleName,
+    putProperty(_("Relative Path Base"), pathBase, changeProperty(pathBase));
+
+    FileDialogFilter filter;
+    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
+    string dir;
+    if(!controllerModuleName.empty() && checkAbsolute(filesystem::path(controllerModuleName)))
+        dir = filesystem::path(controllerModuleName).parent_path().string();
+    else{
+        if(pathBase.is(CONTROLLER_DIRECTORY))
+            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
+    }
+    putProperty(_("Controller module"), FilePath(controllerModuleName, filter, dir),
                 boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
@@ -696,6 +730,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
+    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -716,5 +751,9 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         controllerModuleName = archive.expandPathVariables(value);
     }
     archive.read("reloading", doReloading);
+    string symbol;
+    if (archive.read("RelativePathBase", symbol)){
+        pathBase.select(symbol);
+    }
     return true;
 }

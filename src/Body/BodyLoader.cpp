@@ -4,6 +4,7 @@
 */
 
 #include "BodyLoader.h"
+#include "YAMLBodyLoader.h"
 #include "VRMLBodyLoader.h"
 #include "ColladaBodyLoader.h"
 #include "Body.h"
@@ -27,6 +28,12 @@ typedef boost::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
 boost::mutex loaderFactoryMapMutex;
+
+
+AbstractBodyLoaderPtr yamlBodyLoaderFactory()
+{
+    return boost::make_shared<YAMLBodyLoader>();
+}
 
 AbstractBodyLoaderPtr vrmlBodyLoaderFactory()
 {
@@ -76,6 +83,9 @@ AbstractBodyLoaderPtr stlBodyLoaderFactory()
 struct FactoryRegistration
 {
     FactoryRegistration(){
+        BodyLoader::registerLoader("body", yamlBodyLoaderFactory);
+        BodyLoader::registerLoader("yaml", yamlBodyLoaderFactory);
+        BodyLoader::registerLoader("yml", yamlBodyLoaderFactory);
         BodyLoader::registerLoader("wrl", vrmlBodyLoaderFactory);
         BodyLoader::registerLoader("dae", colladaBodyLoaderFactory);
         BodyLoader::registerLoader("stl", stlBodyLoaderFactory);
@@ -205,21 +215,25 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
     filesystem::path orgpath(filename);
     string ext = getExtension(orgpath);
     string modelFilename;
-    MappingPtr info;
+    MappingPtr yamlDoc;
 
     try {
         if(ext != "yaml"){
             modelFilename = filename;
         } else {
             YAMLReader parser;
-            info = parser.loadDocument(filename)->toMapping();
-            filesystem::path mpath(info->get("modelFile").toString());
-            if(mpath.has_root_path()){
-                modelFilename = getNativePathString(mpath);
-            } else {
-                modelFilename = getNativePathString(orgpath.parent_path() / mpath);
+            yamlDoc = parser.loadDocument(filename)->toMapping();
+
+            ValueNode* modelFileNode = yamlDoc->find("modelFile");
+            if(modelFileNode->isValid()){
+                filesystem::path mpath(modelFileNode->toString());
+                if(mpath.has_root_path()){
+                    modelFilename = getNativePathString(mpath);
+                } else {
+                    modelFilename = getNativePathString(orgpath.parent_path() / mpath);
+                }
+                ext = getExtension(mpath);
             }
-            ext = getExtension(mpath);
         }
 
         LoaderMap::iterator p = loaderMap.find(ext);
@@ -243,31 +257,39 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
             loader->setMessageSink(*os);
             loader->setVerbose(isVerbose);
             loader->setShapeLoadingEnabled(isShapeLoadingEnabled);
-            
-            int dn = defaultDivisionNumber;
-            if(info){
-                Mapping& geometryInfo = *info->findMapping("geometry");
-                if(geometryInfo.isValid()){
-                    geometryInfo.read("divisionNumber", dn);
-                }
-            }
-            if(dn > 0){
-                loader->setDefaultDivisionNumber(dn);
+
+            YAMLBodyLoader* yamlBodyLoader = 0;
+            if(yamlDoc){
+                YAMLBodyLoader* yamlBodyLoader = dynamic_cast<YAMLBodyLoader*>(loader.get());
             }
 
-            if(defaultCreaseAngle >= 0.0){
-                loader->setDefaultCreaseAngle(defaultCreaseAngle);
-            }
-            
-            body->clearDevices();
-            body->clearExtraJoints();
-            if(info){
-                body->resetInfo(info.get());
+            if(yamlBodyLoader){
+                result = yamlBodyLoader->read(body, yamlDoc);
+
             } else {
-                body->info()->clear();
-            }
+                int dn = defaultDivisionNumber;
+                if(yamlDoc){
+                    Mapping& geometryInfo = *yamlDoc->findMapping("geometry");
+                    if(geometryInfo.isValid()){
+                        geometryInfo.read("divisionNumber", dn);
+                    }
+                }
+                if(dn > 0){
+                    loader->setDefaultDivisionNumber(dn);
+                }
 
-            result = loader->load(body, modelFilename);
+                if(defaultCreaseAngle >= 0.0){
+                    loader->setDefaultCreaseAngle(defaultCreaseAngle);
+                }
+            
+                if(yamlDoc){
+                    body->resetInfo(yamlDoc);
+                } else {
+                    body->info()->clear();
+                }
+
+                result = loader->load(body, modelFilename);
+            }
         }
         
     } catch(const ValueNode::Exception& ex){

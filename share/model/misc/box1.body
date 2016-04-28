@@ -1,4 +1,6 @@
-bodyFormatVersion: 1.0
+format: ChoreonoidBody
+formatVersion: 1.0
+
 name: box1
 rootLink: body
 links:

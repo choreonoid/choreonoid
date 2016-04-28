@@ -447,9 +447,15 @@ macro(setup_qt5)
       optimized icuuc51 debug icuuc51d
       optimized icudt51 debug icudt51d
       # for the Qt 5.3 binary package
-      general icuin52 general icuuc52 general icudt52)
+      general icuin52 general icuuc52 general icudt52
+      general icuin53 general icuuc53 general icudt53
+      general icuin54 general icuuc54 general icudt54
+      general icuin55 general icuuc55 general icudt55
+      )
 
     install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
 
     if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
