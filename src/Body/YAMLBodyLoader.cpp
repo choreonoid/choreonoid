@@ -20,6 +20,9 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
+#include <cnoid/VRMLParser>
+#include <cnoid/EasyScanner>
+#include <cnoid/VRMLToSGConverter>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
@@ -36,6 +39,8 @@ class YAMLBodyLoaderImpl
 public:
 
     YAMLReader reader;
+    filesystem::path directoryPath;
+    
     Body* body;
 
     class LinkInfo : public Referenced
@@ -87,6 +92,9 @@ public:
     int divisionNumber;
     ostream* os_;
     bool isVerbose;
+
+    VRMLParser vrmlParser;
+    VRMLToSGConverter sgConverter;
 
     ostream& os() { return *os_; }
 
@@ -216,6 +224,7 @@ void YAMLBodyLoaderImpl::setDefaultDivisionNumber(int n)
 {
     divisionNumber = n;
     meshGenerator.setDivisionNumber(divisionNumber);
+    sgConverter.setDivisionNumber(divisionNumber);
 }
 
 
@@ -227,6 +236,9 @@ bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 
 bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
+    filesystem::path filepath(filename);
+    directoryPath = filepath.parent_path();
+
     bool result = false;
 
     MappingPtr data;
@@ -244,10 +256,8 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
-    } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
-            os() << *message << endl;
-        }
+    } catch(EasyScanner::Exception & ex){
+        os() << ex.getFullMessage();
     }
 
     os().flush();
@@ -474,8 +484,26 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     currentLink = link;
     rigidBodies.clear();
     currentSceneGroup = 0;
-    SgGroupPtr shape = new SgGroup;
+    //SgGroupPtr shape = new SgGroup;
+    SgGroupPtr shape = new SgInvariantGroup;
     findElements(*linkNode, shape);
+
+    if(linkNode->read("shapeFile", symbol)){
+        filesystem::path filepath(symbol);
+        if(!checkAbsolute(filepath)){
+            filepath = directoryPath / filepath;
+            filepath.normalize();
+        }
+        vrmlParser.load(getAbsolutePathString(filepath));
+        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+            SgNodePtr node = sgConverter.convert(vrmlNode);
+            if(node){
+                shape->addChild(node);
+            }
+        }
+    }
+
+    // \todo remove redundant group nodes here
 
     if(!shape->empty()){
         link->setShape(shape);
