@@ -59,6 +59,7 @@ public:
 
     struct RigidBody
     {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         Vector3 c;
         double m;
         Matrix3 I;
@@ -66,7 +67,7 @@ public:
     typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
     RigidBodyVector rigidBodies;
 
-    SgGroup* currentSceneGroup;
+    SgGroupPtr currentSceneGroup;
 
     // temporary variables for reading values
     int id;
@@ -81,6 +82,8 @@ public:
 
     MeshGenerator meshGenerator;
 
+    SgMaterialPtr defaultMaterial;
+
     int divisionNumber;
     ostream* os_;
     bool isVerbose;
@@ -94,8 +97,8 @@ public:
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
     LinkPtr readLink(Mapping* linkNode);
-    void findElements(Mapping& node, SgGroup* sceneGroup);
-    void readElements(ValueNode& elements, SgGroup* sceneGroup);
+    void findElements(Mapping& node, SgGroupPtr sceneGroup);
+    void readElements(ValueNode& elements, SgGroupPtr sceneGroup);
     void readNode(Mapping& node, const string& type);
     void readGroup(Mapping& node);
     void readTransform(Mapping& node);
@@ -119,6 +122,7 @@ public:
     
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
+    void setDefaultMaterial(SgShape* shape);
 };
 
 }
@@ -225,7 +229,7 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     bool result = false;
 
-    MappingPtr data = 0;
+    MappingPtr data;
     
     try {
         YAMLReader reader;
@@ -269,6 +273,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     linkMap.clear();
     validJointIdSet.clear();
     numValidJointIds = 0;
+    defaultMaterial = 0;
 
     try {
         result = readBody(topNode);
@@ -394,6 +399,19 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     
     if(linkNode->read("jointId", id)){
         link->setJointId(id);
+
+        if(id >= 0){
+            if(id >= validJointIdSet.size()){
+                validJointIdSet.resize(id + 1);
+            }
+            if(!validJointIdSet[id]){
+                ++numValidJointIds;
+                validJointIdSet.set(id);
+            } else {
+                os() << str(format("Warning: Joint ID %1% of %2% is duplicated.")
+                            % id % link->name()) << endl;
+            }
+        }
     }
     
     string jointType;
@@ -469,7 +487,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 }
 
 
-void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroup* sceneGroup)
+void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroupPtr sceneGroup)
 {
     ValueNode& elements = *node.find("elements");
     if(!elements.isValid()){
@@ -480,12 +498,9 @@ void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroup* sceneGroup)
 }
 
 
-void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroup* sceneGroup)
+void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup)
 {
-    SgGroup* parentSceneGroup = currentSceneGroup;
-    if(parentSceneGroup){
-        parentSceneGroup->addChild(sceneGroup);
-    }
+    SgGroupPtr parentSceneGroup = currentSceneGroup;
     currentSceneGroup = sceneGroup;
     
     if(elements.isListing()){
@@ -521,6 +536,9 @@ void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroup* sceneGroup)
         }
     }
 
+    if(parentSceneGroup && !sceneGroup->empty()){
+        parentSceneGroup->addChild(sceneGroup);
+    }
     currentSceneGroup = parentSceneGroup;
 }
 
@@ -745,6 +763,8 @@ SgNodePtr YAMLBodyLoaderImpl::readSceneShape(Mapping& node)
     Mapping& appearance = *node.findMapping("appearance");
     if(appearance.isValid()){
         readSceneAppearance(shape, appearance);
+    } else {
+        setDefaultMaterial(shape);
     }
 
     return shape;
@@ -801,6 +821,8 @@ void YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
     Mapping& material = *node.findMapping("material");
     if(material.isValid()){
         readSceneMaterial(shape, material);
+    } else {
+        setDefaultMaterial(shape);
     }
 }
 
@@ -808,8 +830,30 @@ void YAMLBodyLoaderImpl::readSceneAppearance(SgShape* shape, Mapping& node)
 void YAMLBodyLoaderImpl::readSceneMaterial(SgShape* shape, Mapping& node)
 {
     SgMaterialPtr material = new SgMaterial;
-    Vector3 color;
-    if(read(node, "diffuseColor", color)) material->setDiffuseColor(color);
+
+    material->setAmbientIntensity(node.get("ambientIntensity", 0.2));
+    if(read(node, "diffuseColor", color)){
+        material->setDiffuseColor(color);
+    } else {
+        material->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
+    }
+    if(read(node, "emissiveColor", color)) material->setEmissiveColor(color);
+    material->setShininess(node.get("shininess", 0.2));
+    if(read(node, "specularColor", color)) material->setSpecularColor(color);
+    if(node.read("transparency", value)) material->setTransparency(value);
 
     shape->setMaterial(material);
 }
+
+
+void YAMLBodyLoaderImpl::setDefaultMaterial(SgShape* shape)
+{
+    if(!defaultMaterial){
+        defaultMaterial = new SgMaterial;
+        defaultMaterial->setDiffuseColor(Vector3f(0.8f, 0.8f, 0.8f));
+        defaultMaterial->setAmbientIntensity(0.2f);
+        defaultMaterial->setShininess(0.2f);
+    }
+    shape->setMaterial(defaultMaterial);
+}
+

@@ -15,7 +15,9 @@
 #include "LazyCaller.h"
 #include "AppConfig.h"
 #include "Archive.h"
+#include "MainWindow.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/ExecutablePath>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QBoxLayout>
@@ -24,6 +26,9 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
+#include <QPainter>
+#include <QApplication>
+#include <QFileDialog>
 #include <boost/bind.hpp>
 #include <boost/variant.hpp>
 #include <boost/lexical_cast.hpp>
@@ -69,7 +74,7 @@ struct Double {
     };
 };
 
-typedef boost::variant<bool, Int, Double, string, Selection> ValueVariant;
+typedef boost::variant<bool, Int, Double, string, Selection, FilePath> ValueVariant;
 
 typedef boost::variant<boost::function<bool(bool)>,
                        boost::function<bool(int)>,
@@ -85,7 +90,7 @@ public:
     bool operator()(ValueType value) const { func(value); return true; }
 };
 
-enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING, TYPE_SELECTION };
+enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING, TYPE_SELECTION, TYPE_FILEPATH };
 
 struct Property {
     Property(const string& name, ValueVariant value)
@@ -113,6 +118,7 @@ public:
     ValueVariant value;
     FunctionVariant func;
     bool hasValidFunction;
+    bool buttonState;   // When the value type is FilePath
 };
 
 class CustomizedTableWidget : public QTableWidget
@@ -158,6 +164,7 @@ public:
     
     virtual void mouseReleaseEvent(QMouseEvent* event){
         isResizing = false;
+        QTableWidget::mouseReleaseEvent(event);
     }
 };
 
@@ -169,8 +176,9 @@ public:
     int decimals;
         
     CustomizedItemDelegate(CustomizedTableWidget* tableWidget)
-        : tableWidget(tableWidget) { decimals = 2; }
-        
+        : tableWidget(tableWidget) {
+        decimals = 2;}
+
     virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const {
 
         QWidget* editor = QStyledItemDelegate::createEditor(parent, option, index);
@@ -207,14 +215,81 @@ public:
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
             
         PropertyItem* item = tableWidget->itemFromIndex(index);
+        if(item && item->value.which() == TYPE_FILEPATH){
+            FilePath& v = boost::get<FilePath>(item->value);
+            QString strText = QString(v.fileName.c_str());
+            QStyleOptionButton fileButton;
+            fileButton.icon = QApplication::style()->standardIcon( QStyle::SP_FileDialogStart );
+            QRect r = option.rect;
+            fileButton.iconSize = QSize(r.height(), r.height());
+            if(item->buttonState)
+                fileButton.state = QStyle::State_Sunken | QStyle::State_Enabled;
+            else
+                fileButton.state = QStyle::State_Raised | QStyle::State_Enabled;
+            fileButton.features = QStyleOptionButton::None;
+            fileButton.rect = QRect(r.left() + r.width() - r.height(), r.top(), r.height(), r.height());
+            QApplication::style()->drawControl( QStyle::CE_PushButton, &fileButton, painter);
+            QRect rect(r.left(), r.top(), r.width()-r.height(), r.height());
+            painter->drawText(rect, Qt::TextWrapAnywhere, strText );
+            return;
+        }
         if(item && item->value.which() == TYPE_DOUBLE){
             int& d = const_cast<int&>(decimals);
             d = boost::get<Double>(item->value).decimals;
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
-};
 
+    bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) {
+        PropertyItem* item = tableWidget->itemFromIndex(index);
+        if(item && item->value.which() == TYPE_FILEPATH){
+            QMouseEvent * e = (QMouseEvent *)event;
+            QRect r = option.rect;
+            QRect rect(r.left() + r.width() - r.height(), r.top(), r.height(), r.height());
+            if( rect.contains( e->x(), e->y() )){
+                if( e->type() == QEvent::MouseButtonRelease ){
+                    item->buttonState = false;
+                    tableWidget->repaint(rect);
+                    FilePath& v = boost::get<FilePath>(item->value);
+                    if( openFileDialog(v) ){
+                        item->setData( Qt::EditRole, v.fileName.c_str() );
+                    }
+                }else if( e->type() == QEvent::MouseButtonPress){
+                    item->buttonState = true;
+                    tableWidget->repaint(rect);
+                }
+                return true;
+            }
+        }
+        return QStyledItemDelegate::editorEvent(event, model, option, index);
+    }
+
+    bool openFileDialog(FilePath& v){
+        QFileDialog dialog(MainWindow::instance());
+        dialog.setWindowTitle(_("Select File"));
+        dialog.setViewMode(QFileDialog::List);
+        dialog.setFileMode(QFileDialog::ExistingFile);
+        dialog.setLabelText(QFileDialog::Accept, _("Select"));
+        dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
+        if(!v.directory.empty())
+            dialog.setDirectory(v.directory.c_str());
+        else
+            dialog.setDirectory(AppConfig::archive()->get("currentFileDialogDirectory", shareDirectory()).c_str());
+        QStringList filters;
+        for(int i=0; i<v.filters.size(); i++)
+            filters << v.filters[i].c_str();
+        filters << _("Any files (*)");
+        dialog.setNameFilters(filters);
+        if(dialog.exec()){
+            QStringList fileNames;
+            fileNames = dialog.selectedFiles();
+            v.fileName = fileNames.at(0).toStdString();
+            return true;
+        }
+        return false;
+    }
+
+};
 }
 
 
@@ -338,6 +413,17 @@ public:
         addProperty(name, new PropertyItem
                     (this, selection,  boost::function<bool(int)>(ReturnTrue<int>(func))));
     }
+    void operator()(const std::string& name, const FilePath& filePath){
+        addProperty(name, new PropertyItem(this, filePath) );
+    }
+    void operator()(const std::string& name, const FilePath& filePath,
+                    const boost::function<bool(const std::string&)>& func){
+        addProperty(name, new PropertyItem(this, filePath, func) );
+    }
+    void operator()(const std::string& name, const FilePath& filePath,
+                    const boost::function<void(const std::string&)>& func, bool forceUpdate){
+        addProperty(name, new PropertyItem(this, filePath, boost::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
+    }
 
     void clear();
     void updateProperties();
@@ -351,7 +437,8 @@ public:
 
 PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value)
     : itemPropertyViewImpl(viewImpl),
-      value(value)
+      value(value),
+      buttonState(false)
 {
     setFlags(Qt::ItemIsEnabled);
     hasValidFunction = false;
@@ -361,7 +448,8 @@ PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value)
 PropertyItem::PropertyItem(ItemPropertyViewImpl* viewImpl, ValueVariant value, FunctionVariant func)
     : itemPropertyViewImpl(viewImpl),
       value(value),
-      func(func)
+      func(func),
+      buttonState(false)
 {
     setFlags(Qt::ItemIsEnabled|Qt::ItemIsEditable);
     hasValidFunction = true;
@@ -391,7 +479,11 @@ QVariant PropertyItem::data(int role) const
                 return labels;
             }
         }
+
+        case TYPE_FILEPATH:
+            return boost::get<FilePath>(value).fileName.c_str();
         }
+
     }
     return QTableWidgetItem::data(role);
 }
@@ -521,6 +613,7 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
     if(config->read("fontZoom", storedFontPointSizeDiff)){
         zoomFontSize(storedFontPointSizeDiff);
     }
+
 }
 
 

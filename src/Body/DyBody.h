@@ -68,8 +68,10 @@ public:
         Vector3 point;
         Vector3 force;
     };
-    std::vector<ConstraintForce>& constraintForces() { return constraintForces_; }
-    const std::vector<ConstraintForce>& constraintForces() const { return constraintForces_; }
+    typedef std::vector<ConstraintForce> ConstraintForceArray;
+    
+    ConstraintForceArray& constraintForces() { return constraintForces_; }
+    const ConstraintForceArray& constraintForces() const { return constraintForces_; }
 
     virtual void prependChild(Link* link);
     virtual void appendChild(Link* link);

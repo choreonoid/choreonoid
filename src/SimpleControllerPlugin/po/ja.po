@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-03 17:32+0900\n"
+"POT-Creation-Date: 2016-04-28 15:25+0900\n"
 "PO-Revision-Date: 2012-07-17 00:29+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,58 +17,77 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: SimpleControllerItem.cpp:141
+#: SimpleControllerItem.cpp:134
+msgid "Controller directory"
+msgstr "コントローラディレクトリ"
+
+#: SimpleControllerItem.cpp:135
+msgid "Project directory"
+msgstr "プロジェクトディレクトリ"
+
+#: SimpleControllerItem.cpp:181
 msgid "The controller module \"%2%\" of %1% has been unloaded."
 msgstr "%1%のコントローラモジュール\"%2%\"をアンロードしました。"
 
-#: SimpleControllerItem.cpp:224
+#: SimpleControllerItem.cpp:264
+msgid "Please save the project."
+msgstr "プロジェクトを保存してください。"
+
+#: SimpleControllerItem.cpp:275
 msgid "The controller module of %1% has already been loaded."
 msgstr "%1%のコントローラモジュールは既にロードされています。"
 
-#: SimpleControllerItem.cpp:231
+#: SimpleControllerItem.cpp:282
 msgid "Loading the controller module \"%2%\" of %1% ... "
 msgstr "%1%のコントローラモジュール\"%2%\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:234
+#: SimpleControllerItem.cpp:285
 msgid "Failed.\n"
 msgstr "失敗。\n"
 
-#: SimpleControllerItem.cpp:237
+#: SimpleControllerItem.cpp:288
 msgid "OK!"
 msgstr "OK!"
 
-#: SimpleControllerItem.cpp:245
+#: SimpleControllerItem.cpp:296
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
 msgstr ""
-"ファクトリ関数\"createSimpleController()\"がコントローラモジュール内に見つかりません。"
+"ファクトリ関数\"createSimpleController()\"がコントローラモジュール内に見つか"
+"りません。"
 
-#: SimpleControllerItem.cpp:249
+#: SimpleControllerItem.cpp:300
 msgid "The factory failed to create a controller instance."
 msgstr "ファクトリはコントローラインスタンスの生成に失敗しました。"
 
-#: SimpleControllerItem.cpp:251
+#: SimpleControllerItem.cpp:302
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました。"
 
-#: SimpleControllerItem.cpp:273
+#: SimpleControllerItem.cpp:335
 msgid "%1%'s initialize method failed."
 msgstr "%1%のinitializeメソッドが失敗しました。"
 
-#: SimpleControllerItem.cpp:433
+#: SimpleControllerItem.cpp:702
+msgid "Relative Path Base"
+msgstr "相対パスベース"
+
+#: SimpleControllerItem.cpp:705
+msgid " Dynamic Link Library "
+msgstr " 共有ライブラリ "
+
+#: SimpleControllerItem.cpp:713
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:435
+#: SimpleControllerItem.cpp:715
 msgid "Reloading"
 msgstr "再読込"
-
-#: SimpleControllerItem.cpp:437
-msgid "Input link positions"
-msgstr "リンク位置の入力"
 
 #: SimpleControllerPlugin.cpp:23
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
+#~ msgid "Input link positions"
+#~ msgstr "リンク位置の入力"

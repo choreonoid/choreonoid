@@ -87,7 +87,7 @@ links:
         elements:
           Shape:
             geometry: { type: Box, size: [ 0.05, 0.05, 0.275 ] }
-            apperance: *Appearance2
+            appearance: *Appearance2
   -
     name: CHEST
     parent: WAIST_R
@@ -374,7 +374,7 @@ links:
     parent: RARM_ELBOW
     jointType: revolute
     jointAxis: [ 0, 0, 1 ]
-    jointId:  23
+    jointId:  10
     translation: [ 0, 0, -0.247 ]
     centerOfMass: [ 0, 0, 0.1 ]
     mass: 0.4

@@ -46,6 +46,7 @@ public:
     filesystem::path topDirPath;
     filesystem::path shareDirPath;
     filesystem::path homeDirPath;
+    QString projectDirString;
     QString topDirString;
     QString shareDirString;
     QString homeDirString;
@@ -168,7 +169,9 @@ void Archive::initSharedInfo(const std::string& projectFile, bool useHomeRelativ
     
     shared->directoryVariableMap = AppConfig::archive()->openMapping("pathVariables");
 
-    shared->projectDirPath = getAbsolutePath(filesystem::path(projectFile)).parent_path();
+    shared->projectDirPath = projectDirPath = getAbsolutePath(filesystem::path(projectFile)).parent_path();
+
+    shared->projectDirString = shared->projectDirPath.string().c_str();
 }
 
 
@@ -272,6 +275,8 @@ std::string Archive::expandPathVariables(const std::string& path) const
                 qpath.replace(pos, len, shared->topDirString);
             } else if(varname == "HOME"){
                 qpath.replace(pos, len, shared->homeDirString);
+            } else if (varname == "PROJECT_DIR"){
+                qpath.replace(pos, len, shared->projectDirString);
             } else {
                 replaceDirectoryVariable(shared, qpath, varname, pos, len);
             }
@@ -327,7 +332,7 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
         return getGenericPathString(orgPath);
 
     } else if(findSubDirectory(shared->projectDirPath, orgPath, relativePath)){
-        return getGenericPathString(relativePath);
+        return string("${PROJECT_DIR}/") + getGenericPathString(relativePath);
     
     } else if(findSubDirectoryOfDirectoryVariable(shared, orgPath, varName, relativePath)){
         return string("${") + varName + ("}/") + getGenericPathString(relativePath);
@@ -341,8 +346,6 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
     } else if(findSubDirectory(shared->homeDirPath, orgPath, relativePath)){
         return string("${HOME}/") + getGenericPathString(relativePath);
 
-    } else if(findRelativePath(shared->projectDirPath, orgPath, relativePath)){
-        return getGenericPathString(relativePath);
     }
 
     return getGenericPathString(orgPath);
