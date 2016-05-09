@@ -199,10 +199,8 @@ void VRMLBodyWriter::writeForceSensorNode(VRMLNodePtr node)
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "maxForce\n";
-    writeMFValues(sensor->maxForce, 3);
-    out << indent << "maxTorque\n";
-    writeMFValues(sensor->maxTorque, 3);
+    out << indent << "maxForce " << sensor->maxForce << "\n";
+    out << indent << "maxTorque " << sensor->maxTorque << "\n";
 
     endNode();
 }
@@ -219,8 +217,7 @@ void VRMLBodyWriter::writeGyroNode(VRMLNodePtr node)
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "maxAngularVelocity\n";
-    writeMFValues(sensor->maxAngularVelocity, 3);
+    out << indent << "maxAngularVelocity " << sensor->maxAngularVelocity << "\n";
 
     endNode();
 }
@@ -237,8 +234,7 @@ void VRMLBodyWriter::writeAccelerationSensorNode(VRMLNodePtr node)
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "maxAcceleration\n";
-    writeMFValues(sensor->maxAcceleration, 3);
+    out << indent << "maxAcceleration " << sensor->maxAcceleration << "\n";
 
     endNode();
 }

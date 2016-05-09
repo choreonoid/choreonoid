@@ -6,6 +6,10 @@ if(NOT BUILD_PCL_PLUGIN)
 endif()
 
 find_package(PCL REQUIRED common io surface features)
+if (NOT "${PCL_LIBRARIES}" STREQUAL "")
+  list(REMOVE_ITEM PCL_IO_LIBRARIES "vtkproj4")
+endif()
+
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})

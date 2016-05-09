@@ -41,7 +41,8 @@ SgNode* STLSceneLoader::load(const std::string& fileName)
 
     uint8_t header[80];
     ifs.read((char *)header, 80);
-    if(strncmp((char *)header, "solid", 5) != 0){
+    if(strncmp((char *)header, "solid", 5) != 0 ||
+       header[0] == 's' && header[1] == 'o' && header[2] == 'l' && header[3] == 'i' && header[4] == 'd'){
         // stl file is in binary format
         uint32_t ntriangle;
         ifs.read((char *)&ntriangle, 4);
