@@ -328,8 +328,9 @@ BOOST_PYTHON_MODULE(Body)
 
     implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
 
-#ifdef _MSC_VER    
-	register_ptr_to_python<BodyPtr>();
+#ifdef _MSC_VER
+    register_ptr_to_python<BodyPtr>();
+    register_ptr_to_python<LinkPtr>();
 #endif
     
 }
