@@ -4,6 +4,18 @@ formatVersion: 1.0
 name: ARM_2DOF
 rootLink: BASE
 
+actuator1: &actuator1
+  gearRatio: 120.0
+  rotorInertia: 1.65e-6
+  gearInertia: 5.38e-6
+  admittance: 0.42373
+  motorConstant: 2.58e-2
+  voltageRange: [ -24.0, 24.0 ]
+  stiffness: 0.0
+  viscosity: 2.2
+  dynamicFriction: 4.32
+  staticFriction: 4.92
+  
 links:
   -
     name: BASE
@@ -31,25 +43,13 @@ links:
     jointType: revolute
     jointAxis: [ -1, 0, 0 ]
     jointId: 0
-    
-    gearRatio: 120.0
-    rotorInertia: 1.65e-6
-    gearInertia: 5.38e-6
-    rotorResistor: 0.42373
-    admitance: 0.42373
-    motorConstant: 2.58e-2
-    voltageRange: [ -24.0, 24.0 ]
-    stiffness: 0.0
-    viscos: 2.2
-    coulomb: 4.32
-    staticFriction: 4.92
-    
     centerOfMass: [ 0, 0, 0.267 ]
     mass: 1.5
     inertia: [
       0.02229167, 0, 0,
       0, 0.02239583, 0,
       0, 0, 0.00239583 ]
+    import: *actuator1
     elements:
       - type: Transform
         translation: [ 0, 0, 0.2 ]
@@ -72,26 +72,13 @@ links:
     jointType: revolute
     jointAxis: [ -1, 0, 0 ]
     jointId: 1
-
-    gearRatio: 120.0
-    rotorInertia: 1.65e-6
-    rotorInertia: 1.65e-6
-    gearInertia: 5.38e-6
-    rotorResistor: 0.42373
-    admitance: 0.42373
-    motorConstant: 2.58e-2
-    voltageRange: [ -24.0, 24.0 ]
-    stiffness: 0.0000000000
-    viscos: 2.2
-    coulomb: 4.32
-    staticfriction: 4.92
-    
     centerOfMass:  [ 0, 0, 0.2 ]
     mass: 1.0
     inertia: [
       0.0083333, 0, 0,
       0, 0.0083333, 0,
       0, 0, 0.0016667 ]    
+    import: *actuator1
     elements:
       Transform:
         translation: [ 0, 0, 0.2 ]
