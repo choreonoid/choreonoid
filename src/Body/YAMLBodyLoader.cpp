@@ -509,6 +509,8 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         link->setShape(shape);
     }
 
+    link->resetInfo(linkNode);
+
     currentLink = 0;
 
     return link;
