@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 
-name: ARM_2DOF
+name: ARM
 rootLink: BASE
 
 actuator1: &actuator1
@@ -10,7 +10,8 @@ actuator1: &actuator1
   gearInertia: 5.38e-6
   admittance: 0.42373
   motorConstant: 2.58e-2
-  voltageRange: [ -24.0, 24.0 ]
+  minVoltage: -24.0
+  maxVoltage: 24.0
   stiffness: 0.0
   viscosity: 2.2
   dynamicFriction: 4.32
@@ -20,7 +21,6 @@ links:
   -
     name: BASE
     jointType: fixed
-    jointId: 26
     centerOfMass: [ 0, 0, 0.067 ]
     mass: 1.5
     inertia: [
@@ -65,10 +65,11 @@ links:
         elements:
           Shape:
             appearance: *JOINT1_APP
-            geometry: { type: Cylinder, radius: 0.05, height 0.1 }
+            geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
   -
     name: Joint2
     parent: Joint1
+    translation : [ 0, 0, 0.4 ]
     jointType: revolute
     jointAxis: [ -1, 0, 0 ]
     jointId: 1
@@ -82,8 +83,9 @@ links:
     elements:
       Transform:
         translation: [ 0, 0, 0.2 ]
-        Shape:
-          appearance:
-            material:
-              diffuseColor: [ 0.4, 1.0, 0.4 ]
+        elements:
+          Shape:
+            appearance:
+              material:
+                diffuseColor: [ 0.4, 1.0, 0.4 ]
             geometry: { type: Box, size: [ 0.1, 0.1, 0.3 ] }
