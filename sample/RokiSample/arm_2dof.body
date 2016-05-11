@@ -5,17 +5,17 @@ name: ARM
 rootLink: BASE
 
 actuator1: &actuator1
-  gearRatio: 120.0
   rotorInertia: 1.65e-6
+  gearRatio: 120.0
   gearInertia: 5.38e-6
-  admittance: 0.42373
+  motorAdmittance: 0.42373
   motorConstant: 2.58e-2
-  minVoltage: -24.0
-  maxVoltage: 24.0
-  stiffness: 0.0
-  viscosity: 2.2
-  dynamicFriction: 4.32
-  staticFriction: 4.92
+  motorMinVoltage: -24.0
+  motorMaxVoltage: 24.0
+  jointStiffness: 0.0
+  jointViscosity: 2.2
+  jointFriction: 4.32
+  jointStaticFriction: 4.92
   
 links:
   -
