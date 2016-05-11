@@ -250,6 +250,8 @@ public:
     template<typename T> T info(const std::string& key, const T& defaultValue) const;
     template<typename T> void setInfo(const std::string& key, const T& value);
 
+    void resetInfo(Mapping* info);
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     // fext, tauext
     const double& ulimit() const { return q_upper_; }  ///< the upper limit of joint values

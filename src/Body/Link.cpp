@@ -187,6 +187,12 @@ void Link::setCollisionShape(SgNode* shape)
 }
 
 
+void Link::resetInfo(Mapping* info)
+{
+    info_ = info;
+}
+
+
 template<> double Link::info(const std::string& key) const
 {
     return info_->get(key).toDouble();

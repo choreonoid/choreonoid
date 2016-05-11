@@ -9,6 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
+#include "gettext.h"
 
 #ifdef _WIN32
 #define snprintf _snprintf_s
@@ -63,16 +64,50 @@ ValueNode::Initializer::Initializer()
 }
 
 
+ValueNode::Exception::Exception()
+{
+    line_ = -1;
+    column_ = -1;
+}
+
+
 ValueNode::Exception::~Exception()
 {
 
 }
 
 
-// disabled
-ValueNode::ValueNode(const ValueNode&)
+std::string ValueNode::Exception::message() const
 {
-    // throw an exception here ?
+    if(!message_.empty()){
+        if(line_ >= 0){
+            return str(format(_("%1% at line %2%, column %3%.")) % message_ % line_ % column_);
+        } else {
+            return str(format(_("%1%.")) % message_);
+        }
+    } else {
+        if(line_ >= 0){
+            return str(format(_("Error at line %2%, column %3%.")) % line_ % column_);
+        } else {
+            return string();
+        }
+    }
+}
+
+
+ValueNode::ValueNode(const ValueNode& org)
+    : typeBits(org.typeBits),
+      line_(org.line_),
+      column_(org.column_),
+      indexInMapping(org.indexInMapping)
+{
+
+}
+
+
+ValueNode* ValueNode::clone() const
+{
+    return new ValueNode(*this);
 }
 
 
@@ -139,9 +174,8 @@ int ValueNode::toInt() const
 
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
-        ex.setMessage(str(format("\"%1%\" at line %2%, column %3% should be an integer value.")
-                          % scalar->stringValue % line() % column()));
         ex.setPosition(line(), column());
+        ex.setMessage(str(format(_("The value \"%1%\" must be an integer value")) % scalar->stringValue));
         throw ex;
     }
 
@@ -177,9 +211,8 @@ double ValueNode::toDouble() const
 
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
-        ex.setMessage(str(format("\"%1%\" at line %2%, column %3% should be a double value.")
-                          % scalar->stringValue % line() % column()));
         ex.setPosition(line(), column());
+        ex.setMessage(str(format(_("The value \"%1%\" must be a double value")) % scalar->stringValue));
         throw ex;
     }
 
@@ -214,9 +247,8 @@ bool ValueNode::toBool() const
     }
     
     ScalarTypeMismatchException ex;
-    ex.setMessage(str(format("\"%1%\" at line %2%, column %3% should be a bool value.")
-                      % scalar->stringValue % line() % column()));
     ex.setPosition(line(), column());
+    ex.setMessage(str(format(_("The value \"%1%\" must be a boolean value")) % scalar->stringValue));
     throw ex;
 }
 
@@ -326,6 +358,21 @@ ScalarNode::ScalarNode(int value)
 }
 
 
+ScalarNode::ScalarNode(const ScalarNode& org)
+    : ValueNode(org),
+      stringValue(org.stringValue),
+      stringStyle(org.stringStyle)
+{
+
+}
+
+
+ValueNode* ScalarNode::clone() const
+{
+    return new ScalarNode(*this);
+}
+
+
 const Mapping* ValueNode::toMapping() const
 {
     if(!isMapping()){
@@ -365,14 +412,8 @@ Listing* ValueNode::toListing()
 void ValueNode::throwException(const std::string& message) const
 {
     Exception ex;
-    
-    if(hasLineInfo()){
-        ex.setMessage(str(format("%1% (line %2%, column %3%).")
-                          % message % line() % column()));
-    } else {
-        ex.setMessage(message);
-    }
     ex.setPosition(line(), column());
+    ex.setMessage(message);
     throw ex;
 }
 
@@ -380,13 +421,8 @@ void ValueNode::throwException(const std::string& message) const
 void ValueNode::throwNotScalrException() const
 {
     NotScalarException ex;
-    if(hasLineInfo()){
-        ex.setMessage(str(format("The %1% at line %2%, column %3% should be a scalar value.")
-                          % getTypeName(typeBits) % line() % column()));
-    } else {
-        ex.setMessage("Scalar value cannot be obtained from a non-scalar type yaml node.");
-    }
     ex.setPosition(line(), column());
+    ex.setMessage(str(format(_("A %1% value must be a scalar value")) % getTypeName(typeBits)));
     throw ex;
 }
 
@@ -395,6 +431,7 @@ void ValueNode::throwNotMappingException() const
 {
     NotMappingException ex;
     ex.setPosition(line(), column());
+    ex.setMessage(_("The value is not a mapping"));
     throw ex;
 }
 
@@ -429,6 +466,24 @@ Mapping::Mapping(int line, int column)
     indexCounter = 0;
     isFlowStyle_ = false;
     doubleFormat_ = defaultDoubleFormat;
+}
+
+
+Mapping::Mapping(const Mapping& org)
+    : ValueNode(org),
+      values(org.values),
+      mode(org.mode),
+      doubleFormat_(org.doubleFormat_),
+      isFlowStyle_(org.isFlowStyle_),
+      keyQuoteStyle(org.keyQuoteStyle)
+{
+    
+}
+
+
+ValueNode* Mapping::clone() const
+{
+    return new Mapping(*this);
 }
 
 
@@ -503,6 +558,22 @@ Listing* Mapping::findListing(const std::string& key) const
 }
 
 
+ValueNodePtr Mapping::extract(const std::string& key)
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    iterator p = values.find(toUTF8(key));
+    if(p != values.end()){
+        ValueNodePtr value = p->second;
+        values.erase(p);
+        return value;
+    }
+    return 0;
+}
+
+
+
 ValueNode& Mapping::get(const std::string& key) const
 {
     if(!isValid()){
@@ -519,10 +590,9 @@ ValueNode& Mapping::get(const std::string& key) const
 void Mapping::throwKeyNotFoundException(const std::string& key) const
 {
     KeyNotFoundException ex;
-    ex.setMessage(str(format("Key \"%1%\" is not found in the mapping that begins at line %2%, column %3%.")
-                      % key % line() % column()));
     ex.setPosition(line(), column());
     ex.setKey(key);
+    ex.setMessage(str(format(_("Key \"%1%\" is not found in the mapping")) % key));
     throw ex;
 }
 
@@ -546,6 +616,15 @@ void Mapping::insert(const std::string& key, ValueNode* node)
     }
     const string uKey(toUTF8(key));
     insertSub(uKey, node);
+}
+
+
+void Mapping::insert(const Mapping* other)
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    values.insert(other->values.begin(), other->values.end());
 }
 
 
@@ -810,6 +889,23 @@ Listing::Listing(int line, int column, int reservedSize)
     doubleFormat_ = defaultDoubleFormat;
     isFlowStyle_ = false;
     doInsertLFBeforeNextElement = false;
+}
+
+
+Listing::Listing(const Listing& org)
+    : ValueNode(org),
+      values(org.values),
+      doubleFormat_(org.doubleFormat_),
+      isFlowStyle_(org.isFlowStyle_),
+      doInsertLFBeforeNextElement(org.doInsertLFBeforeNextElement)
+{
+
+}
+
+
+ValueNode* Listing::clone() const
+{
+    return new Listing(*this);
 }
 
 
