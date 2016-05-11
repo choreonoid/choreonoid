@@ -43,13 +43,11 @@ public:
     
     Body* body;
 
-    class LinkInfo : public Referenced
+    struct LinkInfo : public Referenced
     {
-    public:
         LinkPtr link;
         MappingPtr node;
         std::string parent;
-        LinkInfo(LinkPtr link, Mapping* node) : link(link), node(node) { }
     };
     typedef ref_ptr<LinkInfo> LinkInfoPtr;
     
@@ -144,6 +142,49 @@ NodeTypeFunctionMap nodeTypeFuncs;
 typedef SgNodePtr (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
 typedef map<string, SceneNodeFunction> SceneNodeFunctionMap;
 SceneNodeFunctionMap sceneNodeFuncs;
+
+
+template<typename ValueType>
+bool extract(Mapping* mapping, const char* key, ValueType& out_value)
+{
+    ValueNodePtr node = mapping->extract(key);
+    if(node){
+        out_value = node->to<ValueType>();
+        return true;
+    }
+    return false;
+}
+
+
+template<typename Derived>
+bool extractEigen(Mapping* mapping, const char* key, Eigen::MatrixBase<Derived>& x)
+{
+    ListingPtr listing = dynamic_pointer_cast<Listing>(mapping->extract(key));
+    if(listing){
+        read(*listing, x);
+        return true;
+    }
+    return false;
+}
+
+
+// for debug
+void putLinkInfoValues(Body* body, ostream& os)
+{
+    for(int i=0; i < body->numLinks(); ++i){
+        Link* link = body->link(i);
+        os << "link \"" << link->name() << "\"\n";
+        Mapping* info = link->info();
+        Mapping::iterator p = info->begin();
+        while(p != info->end()){
+            if(p->second->isScalar()){
+                os << " " << p->first << ": " << p->second->toString() << "\n";
+            }
+            ++p;
+        }
+        os.flush();
+    }
+}
 
 }
 
@@ -304,6 +345,10 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
         
     os().flush();
 
+    if(false){ // for debug
+        putLinkInfoValues(body, os());
+    }
+
     return result;
 }
 
@@ -336,8 +381,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     Listing& linkNodes = *topNode->find("links")->toListing();
     for(int i=0; i < linkNodes.size(); ++i){
         Mapping* linkNode = linkNodes[i].toMapping();
-        LinkInfo* info = new LinkInfo(readLink(linkNode), linkNode);
-        linkNode->read("parent", info->parent);
+        LinkInfo* info = new LinkInfo;
+        extract(linkNode, "parent", info->parent);
+        info->link = readLink(linkNode);
+        info->node = linkNode;
         linkInfos.push_back(info);
     }
 
@@ -388,10 +435,12 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
 LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
+    MappingPtr info = static_cast<Mapping*>(linkNode->clone());
+    
     LinkPtr link = body->createLink();
 
-    ValueNode* nameNode = linkNode->find("name");
-    if(nameNode->isValid()){
+    ValueNodePtr nameNode = info->extract("name");
+    if(nameNode){
         link->setName(nameNode->toString());
         if(!linkMap.insert(make_pair(link->name(), link)).second){
             nameNode->throwException(
@@ -399,17 +448,16 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         }
     }
 
-    if(read(*linkNode, "translation", vec3)){
+    if(extractEigen(info, "translation", vec3)){
         link->setOffsetTranslation(vec3);
     }
     Vector4 r;
-    if(read(*linkNode, "rotation", r)){
+    if(extractEigen(info, "rotation", r)){
         link->setOffsetRotation(AngleAxis(r[3], Vector3(r[0], r[1], r[2])));
     }
     
-    if(linkNode->read("jointId", id)){
+    if(extract(info, "jointId", id)){
         link->setJointId(id);
-
         if(id >= 0){
             if(id >= validJointIdSet.size()){
                 validJointIdSet.resize(id + 1);
@@ -425,7 +473,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     }
     
     string jointType;
-    if(linkNode->read("jointType", jointType)){
+    if(extract(info, "jointType", jointType)){
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
         } else if(jointType == "slide"){
@@ -439,7 +487,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         }
     }
 
-    ValueNode* jointAxisNode = linkNode->find("jointAxis");
+    ValueNodePtr jointAxisNode = info->find("jointAxis");
     if(jointAxisNode->isValid()){
         bool isValid = true;
         Vector3 axis;
@@ -469,15 +517,15 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
       \todo A link node may contain more than one rigid bodies and
       the paremeters of them must be summed up
     */
-    if(linkNode->read("mass", value)){
+    if(extract(info, "mass", value)){
         link->setMass(value);
     }
-    if(read(*linkNode, "centerOfMass", vec3)){
+    if(extractEigen(info, "centerOfMass", vec3)){
         link->setCenterOfMass(vec3);
     }
 
     Matrix3 I;
-    if(read(*linkNode, "inertia", I)){
+    if(extractEigen(info, "inertia", I)){
         link->setInertia(I);
     }
 
@@ -486,9 +534,12 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     currentSceneGroup = 0;
     //SgGroupPtr shape = new SgGroup;
     SgGroupPtr shape = new SgInvariantGroup;
-    findElements(*linkNode, shape);
-
-    if(linkNode->read("shapeFile", symbol)){
+    ValueNodePtr elements = linkNode->extract("elements");
+    if(elements){
+        readElements(*elements, shape);
+    }
+    
+    if(extract(linkNode, "shapeFile", symbol)){
         filesystem::path filepath(symbol);
         if(!checkAbsolute(filepath)){
             filepath = directoryPath / filepath;
@@ -509,7 +560,18 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         link->setShape(shape);
     }
 
-    link->resetInfo(linkNode);
+    ValueNode* import = linkNode->find("import");
+    if(import->isValid()){
+        if(import->isMapping()){
+            info->insert(import->toMapping());
+        } else if(import->isListing()){
+            Listing& importList = *import->toListing();
+            for(int i=importList.size() - 1; i >= 0; --i){
+                info->insert(importList[i].toMapping());
+            }
+        }
+    }
+    link->resetInfo(info);
 
     currentLink = 0;
 
