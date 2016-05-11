@@ -3,6 +3,7 @@
 */
 
 #include "SceneDevice.h"
+#include "Link.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
 #include "AccelerationSensor.h"
@@ -141,14 +142,14 @@ SceneDevice* SceneDevice::create(Device* device)
 SceneDevice::SceneDevice(Device* device)
     : device_(device)
 {
-    setTransform(device->T_local());
+    setTransform(device->link()->Rs().transpose() * device->T_local());
 }
 
 
 SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, boost::function<void()> sceneUpdateFunction)
     : device_(device)
 {
-    setTransform(device->T_local());
+    setTransform(device->link()->Rs().transpose() * device->T_local());
     sceneNode->setName(device->name());
     addChild(sceneNode);
     setSceneUpdateFunction(sceneUpdateFunction);
