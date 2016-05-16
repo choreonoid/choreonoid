@@ -2,8 +2,8 @@
   @file
   @author Shizuko Hattori
 */
-#ifndef CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H
+#define CNOID_AGXPLUGIN_AGX_SIMULATOR_ITEM_H
 
 #include <cnoid/SimulatorItem>
 #include "exportdecl.h"

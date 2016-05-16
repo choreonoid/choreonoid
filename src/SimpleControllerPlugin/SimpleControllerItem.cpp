@@ -11,15 +11,37 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <cnoid/ConnectionSet>
+#include <cnoid/ProjectManager>
 #include <QLibrary>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
+
+namespace {
+
+enum {
+    INPUT_JOINT_DISPLACEMENT = 0,
+    INPUT_JOINT_FORCE = 1,
+    INPUT_JOINT_VELOCITY = 2,
+    INPUT_JOINT_ACCELERATION = 3,
+    INPUT_LINK_POSITION = 4,
+    INPUT_NONE = 5
+};
+
+enum {
+    OUTPUT_JOINT_FORCE = 0,
+    OUTPUT_JOINT_DISPLACEMENT = 1,
+    OUTPUT_JOINT_VELOCITY = 2,
+    OUTPUT_JOINT_ACCELERATION = 3,
+    OUTPUT_LINK_POSITION = 4,
+    OUTPUT_NONE = 5
+};
+
+}
 
 namespace cnoid {
 
@@ -30,18 +52,25 @@ public:
     SimpleController* controller;
     Body* simulationBody;
     BodyPtr ioBody;
-    vector<int> outputLinkStateTypes;
-    vector<int> inputLinkStateTypes;
     ControllerItemIO* io;
-    bool useOldAPI;
 
-    vector<SimpleControllerItemPtr> childControllerItems;
+    bool isInputStateTypeSetUpdated;
+    bool isOutputStateTypeSetUpdated;
+    vector<unsigned short> inputLinkIndices;
+    vector<char> inputStateTypes;
+    vector<unsigned short> outputLinkIndices;
+    vector<char> outputStateTypes;
 
     ConnectionSet inputDeviceStateConnections;
     boost::dynamic_bitset<> inputDeviceStateChangeFlag;
         
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
+
+    vector<SimpleControllerItemPtr> childControllerItems;
+
+    vector<char> linkIndexToInputStateTypeMap;
+    vector<char> linkIndexToOutputStateTypeMap;
         
     MessageView* mv;
 
@@ -49,16 +78,22 @@ public:
     std::string controllerModuleFileName;
     QLibrary controllerModule;
     bool doReloading;
+    Selection pathBase;
+
+    enum PathBase {
+        CONTROLLER_DIRECTORY = 0,
+        PROJECT_DIRECTORY,
+        N_PATH_BASE
+    };
 
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
     void unloadController();
     void initializeIoBody(Body* body);
-    bool start(ControllerItemIO* io, Body* sharedIoBody);
+    bool initialize(ControllerItemIO* io, Body* sharedIoBody);
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
-    bool control();
     void onOutputDeviceStateChanged(int deviceIndex);
     void output();
     bool onReloadingChanged(bool on);
@@ -89,12 +124,16 @@ SimpleControllerItem::SimpleControllerItem()
 
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self)
-    : self(self)
+    : self(self),
+      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
 {
     controller = 0;
     io = 0;
     mv = MessageView::instance();
     doReloading = true;
+    pathBase.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
+    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    pathBase.select(CONTROLLER_DIRECTORY);
 }
 
 
@@ -106,7 +145,8 @@ SimpleControllerItem::SimpleControllerItem(const SimpleControllerItem& org)
 
 
 SimpleControllerItemImpl::SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org)
-    : self(self)
+    : self(self),
+      pathBase(org.pathBase)
 {
     controller = 0;
     io = 0;
@@ -190,22 +230,22 @@ void SimpleControllerItemImpl::initializeIoBody(Body* body)
 }
 
 
-bool SimpleControllerItem::start(ControllerItemIO* io)
+bool SimpleControllerItem::initialize(ControllerItemIO* io)
 {
-    return impl->start(io, 0);
+    return impl->initialize(io, 0);
 }
 
 
-SimpleController* SimpleControllerItem::start(ControllerItemIO* io, Body* sharedIoBody)
+SimpleController* SimpleControllerItem::initialize(ControllerItemIO* io, Body* sharedIoBody)
 {
-    if(impl->start(io, sharedIoBody)){
+    if(impl->initialize(io, sharedIoBody)){
         return impl->controller;
     }
     return 0;
 }
-
-
-bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
+    
+    
+bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBody)
 {
     this->io = io;
     bool result = false;
@@ -214,9 +254,19 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
 
         filesystem::path dllPath(controllerModuleName);
         if(!checkAbsolute(dllPath)){
+            if (pathBase.is(CONTROLLER_DIRECTORY))
             dllPath =
                 filesystem::path(executableTopDirectory()) /
                 CNOID_PLUGIN_SUBDIR / "simplecontroller" / dllPath;
+            else {
+                const string& projectFileName = ProjectManager::instance()->getProjectFileName();
+                if (projectFileName.empty()){
+                    mv->putln(_("Please save the project."));
+                    return false;
+                }else{
+                    dllPath = boost::filesystem::path(projectFileName).parent_path() / dllPath;
+                }
+            }
         }
         controllerModuleFileName = getNativePathString(dllPath);
         controllerModule.setFileName(controllerModuleFileName.c_str());
@@ -265,19 +315,20 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
         
         controller->setIO(this);
 
-        useOldAPI = false;
-        setJointOutput(0);
-        setJointInput(0);
+        isInputStateTypeSetUpdated = true;
+        isOutputStateTypeSetUpdated = true;
+        inputLinkIndices.clear();
+        inputStateTypes.clear();
+        outputLinkIndices.clear();
+        outputStateTypes.clear();
+        
         result = controller->initialize(this);
 
         // try the old API
         if(!result){
             setJointOutput(SimpleControllerIO::JOINT_TORQUE);
             setJointInput(SimpleControllerIO::JOINT_DISPLACEMENT);
-            if(controller->initialize()){
-                useOldAPI = true;
-                result = true;
-            }
+            result = controller->initialize();
         }
         
         if(!result){
@@ -291,7 +342,7 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
             for(Item* child = self->childItem(); child; child = child->nextItem()){
                 SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
                 if(childControllerItem){
-                    SimpleController* childController = childControllerItem->start(io, ioBody);
+                    SimpleController* childController = childControllerItem->initialize(io, ioBody);
                     if(childController){
                         childControllerItems.push_back(childControllerItem);
                     }
@@ -301,12 +352,6 @@ bool SimpleControllerItemImpl::start(ControllerItemIO* io, Body* sharedIoBody)
     }
 
     return result;
-}
-
-
-double SimpleControllerItem::timeStep() const
-{
-    return impl->io ? impl->io->worldTimeStep() : 0.0;
 }
 
 
@@ -341,9 +386,15 @@ Body* SimpleControllerItemImpl::body()
 }
 
 
+double SimpleControllerItem::timeStep() const
+{
+    return impl->io ? impl->io->timeStep() : 0.0;
+}
+
+
 double SimpleControllerItemImpl::timeStep() const
 {
-    return io->worldTimeStep();
+    return io->timeStep();
 }
 
 
@@ -353,80 +404,170 @@ std::ostream& SimpleControllerItemImpl::os() const
 }
 
 
-void SimpleControllerItemImpl::setJointOutput(int stateTypes)
-{
-    if(!stateTypes){
-        outputLinkStateTypes.clear();
-    } else {
-        outputLinkStateTypes.resize(ioBody->numLinks(), 0);
-        const int nj = ioBody->numJoints();
-        for(int i=0; i < nj; ++i){
-            outputLinkStateTypes[ioBody->joint(i)->index()] = stateTypes;
-        }
-    }
-}
-
-
-void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
-{
-    if(link->index() >= outputLinkStateTypes.size()){
-        outputLinkStateTypes.resize(link->index() + 1, 0);
-    }
-    outputLinkStateTypes[link->index()] = stateTypes;
-}
-
-
 void SimpleControllerItemImpl::setJointInput(int stateTypes)
 {
     if(!stateTypes){
-        inputLinkStateTypes.clear();
+        linkIndexToInputStateTypeMap.clear();
     } else {
-        inputLinkStateTypes.resize(ioBody->numLinks(), 0);
+        linkIndexToInputStateTypeMap.resize(ioBody->numLinks(), 0);
         const int nj = ioBody->numJoints();
         for(int i=0; i < nj; ++i){
-            inputLinkStateTypes[ioBody->joint(i)->index()] = stateTypes;
+            int linkIndex = ioBody->joint(i)->index();
+            if(linkIndex >= 0){
+                linkIndexToInputStateTypeMap[linkIndex] = stateTypes;
+            }
         }
     }
+    isInputStateTypeSetUpdated = true;
 }
 
 
 void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
 {
-    if(link->index() >= inputLinkStateTypes.size()){
-        inputLinkStateTypes.resize(link->index() + 1, 0);
+    if(link->index() >= linkIndexToInputStateTypeMap.size()){
+        linkIndexToInputStateTypeMap.resize(link->index() + 1, 0);
     }
-    inputLinkStateTypes[link->index()] = stateTypes;
+    linkIndexToInputStateTypeMap[link->index()] = stateTypes;
+    isInputStateTypeSetUpdated = true;
+}
+
+
+void SimpleControllerItemImpl::setJointOutput(int stateTypes)
+{
+    if(!stateTypes){
+        linkIndexToOutputStateTypeMap.clear();
+    } else {
+        linkIndexToOutputStateTypeMap.resize(ioBody->numLinks(), 0);
+        const int nj = ioBody->numJoints();
+        for(int i=0; i < nj; ++i){
+            int linkIndex = ioBody->joint(i)->index();
+            if(linkIndex >= 0){
+                linkIndexToOutputStateTypeMap[linkIndex] = stateTypes;
+            }
+        }
+    }
+    isOutputStateTypeSetUpdated = true;
+}
+
+
+void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
+{
+    if(link->index() >= linkIndexToOutputStateTypeMap.size()){
+        linkIndexToOutputStateTypeMap.resize(link->index() + 1, 0);
+    }
+    linkIndexToOutputStateTypeMap[link->index()] = stateTypes;
+    isOutputStateTypeSetUpdated = true;
+}
+
+
+static int getInputStateTypeIndex(int type){
+    switch(type){
+    case SimpleControllerIO::JOINT_DISPLACEMENT: return INPUT_JOINT_DISPLACEMENT;
+    case SimpleControllerIO::JOINT_VELOCITY:     return INPUT_JOINT_VELOCITY;
+    case SimpleControllerIO::JOINT_ACCELERATION: return INPUT_JOINT_ACCELERATION;
+    case SimpleControllerIO::JOINT_FORCE:        return INPUT_JOINT_FORCE;
+    case SimpleControllerIO::LINK_POSITION:      return INPUT_LINK_POSITION;
+    default:
+        return INPUT_NONE;
+    }
+}
+
+
+static int getOutputStateTypeIndex(int type){
+    switch(type){
+    case SimpleControllerIO::JOINT_DISPLACEMENT: return OUTPUT_JOINT_DISPLACEMENT;
+    case SimpleControllerIO::JOINT_VELOCITY:     return OUTPUT_JOINT_VELOCITY;
+    case SimpleControllerIO::JOINT_ACCELERATION: return OUTPUT_JOINT_ACCELERATION;
+    case SimpleControllerIO::JOINT_FORCE:        return OUTPUT_JOINT_FORCE;
+    case SimpleControllerIO::LINK_POSITION:      return OUTPUT_LINK_POSITION;
+    default:
+        return OUTPUT_NONE;
+    }
+}
+
+
+static void updateIOStateTypeSet
+(vector<char>& linkIndexToStateTypeMap, vector<unsigned short>& linkIndices, vector<char>& stateTypes,
+ boost::function<int(int type)> getStateTypeIndex)
+{
+    linkIndices.clear();
+    stateTypes.clear();
+
+    for(size_t i=0; i < linkIndexToStateTypeMap.size(); ++i){
+        bitset<5> types(linkIndexToStateTypeMap[i]);
+        if(types.any()){
+            const int n = types.count();
+            linkIndices.push_back(i);
+            stateTypes.push_back(n);
+            for(int j=0; j < 5; ++j){
+                if(types.test(j)){
+                    stateTypes.push_back(getStateTypeIndex(1 << j));
+                }
+            }
+        }
+    }
+}
+
+
+bool SimpleControllerItem::start()
+{
+    if(impl->controller->start()){
+        for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+            if(!impl->childControllerItems[i]->start()){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 
 void SimpleControllerItem::input()
 {
     impl->input();
+    
+    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+        impl->childControllerItems[i]->impl->input();
+    }
 }
 
 
 void SimpleControllerItemImpl::input()
 {
-    for(size_t i=0; i < inputLinkStateTypes.size(); ++i){
-        const int types = inputLinkStateTypes[i];
-        if(types){
-            Link* simLink = simulationBody->link(i);
-            Link* ioLink = ioBody->link(i);
-            if(types & SimpleControllerIO::JOINT_DISPLACEMENT){
+    if(isInputStateTypeSetUpdated){
+        updateIOStateTypeSet(linkIndexToInputStateTypeMap, inputLinkIndices, inputStateTypes, getInputStateTypeIndex);
+        isInputStateTypeSetUpdated = false;
+    }
+
+    int typeArrayIndex = 0;
+    for(size_t i=0; i < inputLinkIndices.size(); ++i){
+        const int linkIndex = inputLinkIndices[i];
+        const Link* simLink = simulationBody->link(linkIndex);
+        Link* ioLink = ioBody->link(linkIndex);
+        const int n = inputStateTypes[typeArrayIndex++];
+        for(int j=0; j < n; ++j){
+            switch(inputStateTypes[typeArrayIndex++]){
+            case INPUT_JOINT_DISPLACEMENT:
                 ioLink->q() = simLink->q();
-            }
-            if(types & SimpleControllerIO::JOINT_VELOCITY){
-                ioLink->dq() = simLink->dq();
-            }
-            if(types & SimpleControllerIO::JOINT_TORQUE){
+                break;
+            case INPUT_JOINT_FORCE:
                 ioLink->u() = simLink->u();
-            }
-            if(types & SimpleControllerIO::LINK_POSITION){
+                break;
+            case INPUT_LINK_POSITION:
                 ioLink->T() = simLink->T();
+                break;
+            case INPUT_JOINT_VELOCITY:
+                ioLink->dq() = simLink->dq();
+                break;
+            case INPUT_JOINT_ACCELERATION:
+                ioLink->ddq() = simLink->ddq();
+                break;
+            default:
+                break;
             }
         }
     }
-    
+                
     if(inputDeviceStateChangeFlag.any()){
         const DeviceList<>& devices = simulationBody->devices();
         const DeviceList<>& ioDevices = ioBody->devices();
@@ -450,22 +591,12 @@ void SimpleControllerItemImpl::onInputDeviceStateChanged(int deviceIndex)
 }
 
 
-bool SimpleControllerItemImpl::control()
-{
-    if(!useOldAPI){
-        return controller->control(this);
-    } else {
-        return controller->control();
-    }
-}
-
-
 bool SimpleControllerItem::control()
 {
-    bool result = impl->control();
+    bool result = impl->controller->control();
 
     for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-        if(impl->childControllerItems[i]->impl->control()){
+        if(impl->childControllerItems[i]->impl->controller->control()){
             result = true;
         }
     }
@@ -483,30 +614,45 @@ void SimpleControllerItemImpl::onOutputDeviceStateChanged(int deviceIndex)
 void SimpleControllerItem::output()
 {
     impl->output();
+    
+    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
+        impl->childControllerItems[i]->impl->output();
+    }
 }
 
 
 void SimpleControllerItemImpl::output()
 {
-    for(size_t i=0; i < outputLinkStateTypes.size(); ++i){
-        const int types = outputLinkStateTypes[i];
-        if(types){
-            Link* simLink = simulationBody->link(i);
-            Link* ioLink = ioBody->link(i);
-            if(types & SimpleControllerIO::JOINT_TORQUE){
+    if(isOutputStateTypeSetUpdated){
+        updateIOStateTypeSet(linkIndexToOutputStateTypeMap, outputLinkIndices, outputStateTypes, getOutputStateTypeIndex);
+        isOutputStateTypeSetUpdated = false;
+    }
+
+    int typeArrayIndex = 0;
+    for(size_t i=0; i < outputLinkIndices.size(); ++i){
+        const int linkIndex = outputLinkIndices[i];
+        Link* simLink = simulationBody->link(linkIndex);
+        const Link* ioLink = ioBody->link(linkIndex);
+        const int n = outputStateTypes[typeArrayIndex++];
+        for(int j=0; j < n; ++j){
+            switch(outputStateTypes[typeArrayIndex++]){
+            case OUTPUT_JOINT_FORCE:
                 simLink->u() = ioLink->u();
-            }
-            if(types & SimpleControllerIO::JOINT_DISPLACEMENT){
+                break;
+            case OUTPUT_JOINT_DISPLACEMENT:
                 simLink->q() = ioLink->q();
-            }
-            if(types & SimpleControllerIO::JOINT_VELOCITY){
+                break;
+            case OUTPUT_JOINT_VELOCITY:
                 simLink->dq() = ioLink->dq();
-            }
-            if(types & SimpleControllerIO::JOINT_ACCELERATION){
+                break;
+            case OUTPUT_JOINT_ACCELERATION:
                 simLink->ddq() = ioLink->ddq();
-            }
-            if(types & SimpleControllerIO::LINK_POSITION){
+                break;
+            case OUTPUT_LINK_POSITION:
                 simLink->T() = ioLink->T();
+                break;
+            default:
+                break;
             }
         }
     }
@@ -559,7 +705,18 @@ void SimpleControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Controller module"), controllerModuleName,
+    putProperty(_("Relative Path Base"), pathBase, changeProperty(pathBase));
+
+    FileDialogFilter filter;
+    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
+    string dir;
+    if(!controllerModuleName.empty() && checkAbsolute(filesystem::path(controllerModuleName)))
+        dir = filesystem::path(controllerModuleName).parent_path().string();
+    else{
+        if(pathBase.is(CONTROLLER_DIRECTORY))
+            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
+    }
+    putProperty(_("Controller module"), FilePath(controllerModuleName, filter, dir),
                 boost::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
                 boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
@@ -579,6 +736,7 @@ bool SimpleControllerItemImpl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
     archive.write("reloading", doReloading);
+    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -599,5 +757,9 @@ bool SimpleControllerItemImpl::restore(const Archive& archive)
         controllerModuleName = archive.expandPathVariables(value);
     }
     archive.read("reloading", doReloading);
+    string symbol;
+    if (archive.read("RelativePathBase", symbol)){
+        pathBase.select(symbol);
+    }
     return true;
 }

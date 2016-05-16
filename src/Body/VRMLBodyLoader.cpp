@@ -4,6 +4,7 @@
 */
 
 #include "VRMLBodyLoader.h"
+#include "Body.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
 #include "AccelerationSensor.h"
@@ -94,7 +95,6 @@ public:
     ~VRMLBodyLoaderImpl();
     VRMLNodePtr getOriginalNode(Link* link);
     bool load(Body* body, const std::string& filename);
-    BodyPtr load(const std::string& filename);        
     void readTopNodes();
     void checkHumanoidProto(VRMLProto* proto);
     void checkJointProto(VRMLProto* proto);
@@ -389,11 +389,11 @@ VRMLNodePtr VRMLBodyLoaderImpl::getOriginalNode(Link* link)
 }
 
 
-bool VRMLBodyLoader::load(BodyPtr body, const std::string& filename)
+bool VRMLBodyLoader::load(Body* body, const std::string& filename)
 {
     body->clearDevices();
     body->clearExtraJoints();
-    return impl->load(body.get(), filename);
+    return impl->load(body, filename);
 }
 
 
@@ -808,6 +808,8 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::SLIDE_JOINT);
     } else if(jointType == "crawler"){
         link->setJointType(Link::CRAWLER_JOINT);
+    } else if(jointType == "agx_crawler"){
+        link->setJointType(Link::AGX_CRAWLER_JOINT);
     } else {
         link->setJointType(Link::FIXED_JOINT);
     }

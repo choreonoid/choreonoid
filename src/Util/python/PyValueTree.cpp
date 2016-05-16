@@ -68,6 +68,14 @@ ValueNodePtr Mapping_get(Mapping& self, const std::string& key){
     return &(self.get(key));
 }
 
+void Mapping_insert1(Mapping& self, const std::string& key, ValueNodePtr node){
+    self.insert(key, node);
+}
+
+void Mapping_insert2(Mapping& self, MappingPtr other){
+    self.insert(other);
+}
+
 MappingPtr Mapping_openMapping(Mapping& self, const std::string& key){
     return self.openMapping(key);
 }
@@ -279,7 +287,8 @@ void exportPyValueTree()
         .def("findListing", Mapping_findListing)
         .def("get", Mapping_get)
         .def("__getitem__", Mapping_get)
-        .def("insert", &Mapping::insert)
+        .def("insert", Mapping_insert1)
+        .def("insert", Mapping_insert2)
         .def("openMapping", Mapping_openMapping)
         .def("openFlowStyleMapping", Mapping_openFlowStyleMapping)
         .def("createMapping", Mapping_createMapping)

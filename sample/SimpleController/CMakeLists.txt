@@ -52,3 +52,6 @@ configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 add_cnoid_simple_controller(SampleSVController SampleSV.cpp)
 
 add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)
+
+add_cnoid_simple_controller(AgxCrawlerController AgxCrawlerController.cpp)
+configure_file(AgXCrawler.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

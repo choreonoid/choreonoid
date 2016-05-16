@@ -45,24 +45,20 @@ int WorldBase::bodyIndex(const std::string& name) const
 }
 
 
-const DyBodyPtr& WorldBase::body(int index) const
+DyBody* WorldBase::body(int index) const
 {
-    static const DyBodyPtr null;
-    
     if(index < 0 || (int)bodyInfoArray.size() <= index){
-        return null;
+        return 0;
     }
     return bodyInfoArray[index].body; 
 }
 
 
-const DyBodyPtr& WorldBase::body(const std::string& name) const
+DyBody* WorldBase::body(const std::string& name) const
 {
-    static const DyBodyPtr null;
-
     int idx = bodyIndex(name);
     if(idx < 0 || (int)bodyInfoArray.size() <= idx){
-        return null;
+        return 0;
     }
     return bodyInfoArray[idx].body;
 }
@@ -99,10 +95,9 @@ void WorldBase::initialize()
     for(int i=0; i < n; ++i){
 
         BodyInfo& info = bodyInfoArray[i];
-        DyBodyPtr& body = info.body;
 
         if(!info.forwardDynamics){
-            info.forwardDynamics = make_shared_aligned<ForwardDynamicsABM>(body);
+            info.forwardDynamics = make_shared_aligned<ForwardDynamicsABM>(info.body);
         }
         
         if(isEulerMethod){
@@ -144,7 +139,7 @@ void WorldBase::calcNextState()
 }
 
 
-int WorldBase::addBody(const DyBodyPtr& body)
+int WorldBase::addBody(DyBody* body)
 {
     if(!body->name().empty()){
         nameToBodyIndexMap[body->name()] = bodyInfoArray.size();
@@ -158,7 +153,7 @@ int WorldBase::addBody(const DyBodyPtr& body)
 }
 
 
-int WorldBase::addBody(const DyBodyPtr& body, const ForwardDynamicsPtr& forwardDynamics)
+int WorldBase::addBody(DyBody* body, const ForwardDynamicsPtr& forwardDynamics)
 {
     int index = addBody(body);
     bodyInfoArray[index].forwardDynamics = forwardDynamics;

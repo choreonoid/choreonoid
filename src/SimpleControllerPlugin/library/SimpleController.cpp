@@ -32,15 +32,15 @@ bool SimpleController::initialize()
 }
 
 
-bool SimpleController::control(SimpleControllerIO* io)
+bool SimpleController::start()
 {
-    return false;
+    return true;
 }
+    
 
-
-bool SimpleController::control()
+bool SimpleController::stop()
 {
-    return false;
+    return true;
 }
 
 

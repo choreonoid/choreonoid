@@ -163,9 +163,9 @@ void OpenHRPClockGeneratorItem::onDisconnectedFromRoot()
 }
 
 
-bool OpenHRPClockGeneratorItem::start(Target* target)
+bool OpenHRPClockGeneratorItem::start(ControllerItemIO* io)
 {
-    worldTimeStep = target->worldTimeStep();
+    timeStep_ = io->timeStep();
     clockGenerator->reset();
     mv->putln(_("OpenHRP ClockGenerator is used for this simulation."));
     return true;
@@ -174,7 +174,7 @@ bool OpenHRPClockGeneratorItem::start(Target* target)
 
 double OpenHRPClockGeneratorItem::timeStep() const
 {
-    return worldTimeStep;
+    return timeStep_;
 }
 
 
@@ -186,7 +186,7 @@ void OpenHRPClockGeneratorItem::input()
 
 bool OpenHRPClockGeneratorItem::control()
 {
-    clockGenerator->step(worldTimeStep);
+    clockGenerator->step(timeStep_);
     return true;
 }
 

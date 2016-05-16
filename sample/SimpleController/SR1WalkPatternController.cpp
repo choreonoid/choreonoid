@@ -106,7 +106,7 @@ public:
         return true;
     }
 
-    virtual bool control(SimpleControllerIO* io) {
+    virtual bool control() {
 
         switch(mode){
 

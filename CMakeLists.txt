@@ -318,7 +318,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
-# set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_FILESYSTEM_VERSION=2)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
   ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
@@ -448,9 +447,15 @@ macro(setup_qt5)
       optimized icuuc51 debug icuuc51d
       optimized icudt51 debug icudt51d
       # for the Qt 5.3 binary package
-      general icuin52 general icuuc52 general icudt52)
+      general icuin52 general icuuc52 general icudt52
+      general icuin53 general icuuc53 general icudt53
+      general icuin54 general icuuc54 general icudt54
+      general icuin55 general icuuc55 general icudt55
+      )
 
     install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
 
     if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
@@ -1051,14 +1056,6 @@ function(make_gettext_mofiles target out_mofiles)
   set(${out_mofiles} ${mofiles} PARENT_SCOPE)
 
 endfunction()
-
-if(MSVC)
-  if(CMAKE_CL_64)
-    add_subdirectory(thirdparty/windows64)
-  else()
-    add_subdirectory(thirdparty/windows)
-  endif()
-endif()
 
 # libyaml
 if(UNIX)

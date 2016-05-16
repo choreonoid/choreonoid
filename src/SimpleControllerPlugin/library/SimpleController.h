@@ -29,10 +29,10 @@ public:
         LINK_POSITION = 1 << 4
     };
     
-    virtual void setJointOutput(int stateTypes) = 0;
-    virtual void setLinkOutput(Link* link, int stateTypes) = 0;
     virtual void setJointInput(int stateTypes) = 0;
     virtual void setLinkInput(Link* link, int stateTypes) = 0;
+    virtual void setJointOutput(int stateTypes) = 0;
+    virtual void setLinkOutput(Link* link, int stateTypes) = 0;
 };
 
 
@@ -45,16 +45,12 @@ public:
 
     virtual bool initialize(SimpleControllerIO* io);
 
-    //! \note deprecated
-    virtual bool initialize();
+    virtual bool initialize(); ///< \deprecated
 
-    /*
-      @return false to request stopping
-    */
-    virtual bool control(SimpleControllerIO* io);
 
-    //! \note deprecated
-    virtual bool control();
+    virtual bool start();
+    virtual bool control() = 0;
+    virtual bool stop();
 
     /*
       The following function is defined for the deprecated functions,
@@ -75,11 +71,11 @@ public:
   protected:
     SimpleController();
 
-    Body* ioBody(); ///< \note deprecated.
-    double timeStep() const; ///< \note deprecated.
-    std::ostream& os() const; ///< \note deprecated.
-    void setJointOutput(bool on); ///< \note deprecated.
-    void setJointOutput(int jointId, bool on); ///< \note deprecated.
+    Body* ioBody(); ///< \deprecated
+    double timeStep() const; ///< \deprecated
+    std::ostream& os() const; ///< \deprecated
+    void setJointOutput(bool on); ///< \deprecated
+    void setJointOutput(int jointId, bool on); ///< \deprecated
 
 private:
     SimpleController(const SimpleController& org) { }

@@ -20,7 +20,7 @@ CompositeIK::CompositeIK()
 }
 
 
-CompositeIK::CompositeIK(const BodyPtr& body, Link* targetLink)
+CompositeIK::CompositeIK(Body* body, Link* targetLink)
 {
     reset(body, targetLink);
 }
@@ -32,7 +32,7 @@ CompositeIK::~CompositeIK()
 }
 
 
-void CompositeIK::reset(const BodyPtr& body, Link* targetLink)
+void CompositeIK::reset(Body* body, Link* targetLink)
 {
     body_ = body;
     targetLink_ = targetLink;

@@ -30,6 +30,7 @@ public:
 
     const Vector3f& color() const { return color_; }
     void setColor(const Vector3f& c) { color_ = c; }
+    void setColor(const Vector3& c) { color_ = c.cast<Vector3f::Scalar>(); }
 
     float intensity() const { return intensity_; }
     void setIntensity(float intensity) { intensity_ = intensity; }

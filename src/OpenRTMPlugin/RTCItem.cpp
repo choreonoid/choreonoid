@@ -15,6 +15,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/MessageView>
 #include <cnoid/Sleep>
+#include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
@@ -43,7 +44,8 @@ void RTCItem::initialize(ExtensionManager* ext)
 
 RTCItem::RTCItem()
     : os(MessageView::instance()->cout()),
-      periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME)
+      periodicType(N_PERIODIC_TYPE, CNOID_GETTEXT_DOMAIN_NAME),
+      pathBase(N_PATH_BASE, CNOID_GETTEXT_DOMAIN_NAME)
 {
     rtcomp = 0;
     moduleName.clear();
@@ -61,13 +63,18 @@ RTCItem::RTCItem()
     stringstream ss;
     ss << periodicRate;
     properties.insert(make_pair(string("exec_cxt.periodic.rate"), ss.str()));
+    pathBase.setSymbol(RTC_DIRECTORY, N_("RTC directory"));
+    pathBase.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
+    pathBase.select(RTC_DIRECTORY);
+    oldPathBase = RTC_DIRECTORY;
 }
 
 
 RTCItem::RTCItem(const RTCItem& org)
     : os(MessageView::instance()->cout()),
       Item(org),
-      periodicType(org.periodicType)
+      periodicType(org.periodicType),
+      pathBase(org.pathBase)
 {
     rtcomp = org.rtcomp;
     moduleName = org.moduleName;
@@ -75,6 +82,7 @@ RTCItem::RTCItem(const RTCItem& org)
     periodicRate = org.periodicRate;
     oldType = org.oldType;
     properties = org.properties;
+    oldPathBase = org.oldPathBase;
 }
 
 RTCItem::~RTCItem()
@@ -86,7 +94,8 @@ RTCItem::~RTCItem()
 void RTCItem::onPositionChanged()
 {
     if(!rtcomp){
-        rtcomp = new RTComponent(moduleName, properties);
+        if(convertAbsolutePath())
+            rtcomp = new RTComponent(modulePath, properties);
     }
 }
 
@@ -114,7 +123,8 @@ void RTCItem::setModuleName(const std::string& name)
         if(rtcomp){
             delete rtcomp;
         }
-        rtcomp = new RTComponent(moduleName, properties);
+        if (convertAbsolutePath())
+            rtcomp = new RTComponent(modulePath, properties);
     }
 }
 
@@ -127,7 +137,8 @@ void RTCItem::setPeriodicType(int type)
         if(rtcomp){
             delete rtcomp;
         }
-        rtcomp = new RTComponent(moduleName, properties);
+        if (convertAbsolutePath())
+            rtcomp = new RTComponent(modulePath, properties);
     }
 }
 
@@ -142,7 +153,22 @@ void RTCItem::setPeriodicRate(int rate)
         if(rtcomp){
             delete rtcomp;
         }
-        rtcomp = new RTComponent(moduleName, properties);
+        if (convertAbsolutePath())
+            rtcomp = new RTComponent(modulePath, properties);
+    }
+}
+
+
+void RTCItem::setPathBase(int base)
+{
+    pathBase.select(base);
+    if (oldPathBase != base){
+        oldPathBase = base;
+        if (rtcomp){
+            delete rtcomp;
+        }
+        if (convertAbsolutePath())
+            rtcomp = new RTComponent(modulePath, properties);
     }
 }
 
@@ -150,8 +176,21 @@ void RTCItem::setPeriodicRate(int rate)
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     Item::doPutProperties(putProperty);
-    putProperty(_("RTC module Name"), moduleName,
+    putProperty(_("Relative Path Base"), pathBase,
+        boost::bind(&RTCItem::setPathBase, this, _1), true);
+
+    FileDialogFilter filter;
+    filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
+    string dir;
+    if(!moduleName.empty() && checkAbsolute(filesystem::path(moduleName)))
+        dir = filesystem::path(moduleName).parent_path().string();
+    else{
+        if(pathBase.is(RTC_DIRECTORY))
+            dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
+    }
+    putProperty(_("RTC module Name"), FilePath(moduleName, filter, dir),
                 boost::bind(&RTCItem::setModuleName, this, _1), true);
+
     putProperty(_("Periodic type"), periodicType,
                 boost::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
@@ -165,9 +204,10 @@ bool RTCItem::store(Archive& archive)
     if(!Item::store(archive)){
         return false;
     }
-    archive.writePath("moduleName", moduleName);
+    archive.writeRelocatablePath("moduleName", moduleName);
     archive.write("periodicType", periodicType.selectedSymbol());
     archive.write("periodicRate", periodicRate);
+    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -179,7 +219,8 @@ bool RTCItem::restore(const Archive& archive)
     }
     string value;
     if(archive.read("moduleName", value)){
-        moduleName = archive.expandPathVariables(value);
+        filesystem::path path(archive.expandPathVariables(value));
+        moduleName = getNativePathString(path);
     }
     string symbol;
     if(archive.read("periodicType", symbol)){
@@ -187,31 +228,44 @@ bool RTCItem::restore(const Archive& archive)
         oldType = periodicType.selectedIndex();
     }
     archive.read("periodicRate", periodicRate);
+    if (archive.read("RelativePathBase", symbol)){
+        pathBase.select(symbol);
+        oldPathBase = pathBase.selectedIndex();
+    }
     return true;
 }
 
 
-RTComponent::RTComponent(string moduleName_)
+bool RTCItem::convertAbsolutePath()
 {
-    rtc_ = 0;
-    rtcRef = 0;
-    if(moduleName_.empty()){
-        return;
+    modulePath = moduleName;
+    if (!checkAbsolute(modulePath)){
+        if (pathBase.is(RTC_DIRECTORY))
+            modulePath = filesystem::path(executableTopDirectory()) /
+            CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
+        else {
+            const string& projectFileName = ProjectManager::instance()->getProjectFileName();
+            if (projectFileName.empty()){
+                mv->putln(_("Please save the project."));
+                return false;
+            }
+            else{
+                modulePath = boost::filesystem::path(projectFileName).parent_path() / modulePath;
+            }
+        }
     }
-    PropertyMap prop;
-    prop.clear();
-    init(moduleName_, prop);
+    return true;
 }
 
 
-RTComponent::RTComponent(string moduleName_, PropertyMap& prop)
+RTComponent::RTComponent(const filesystem::path& modulePath, PropertyMap& prop)
 {
     rtc_ = 0;
     rtcRef = 0;
-    if(moduleName_.empty()){
+    if (modulePath.empty()){
         return;
     }
-    init(moduleName_, prop);
+    init(modulePath, prop);
 }
 
 
@@ -221,29 +275,22 @@ RTComponent::~RTComponent()
 }
 
 
-void RTComponent::init(string moduleName_, PropertyMap& prop)
+void RTComponent::init(const filesystem::path& modulePath_, PropertyMap& prop)
 {
     mv = MessageView::instance();
-    moduleName = moduleName_;
+    modulePath = modulePath_;
     createRTC(prop);
 }
 
 
 bool  RTComponent::createRTC(PropertyMap& prop)
 {   
-    filesystem::path modulePath(moduleName);
     string moduleNameLeaf = modulePath.leaf().string();
     size_t i = moduleNameLeaf.rfind('.');
     if(i != string::npos){
         componentName = moduleNameLeaf.substr(0, i);
     } else {
         componentName = moduleNameLeaf;
-    }
-
-    if(!checkAbsolute(modulePath)){
-        modulePath =
-            filesystem::path(executableTopDirectory()) /
-            CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
     }
 
     string actualFilename;

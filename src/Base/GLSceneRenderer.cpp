@@ -305,7 +305,7 @@ public:
         
     struct SgObjectPtrHash {
         std::size_t operator()(const SgObjectPtr& p) const {
-            return boost::hash_value<SgObject*>(p.get());
+            return boost::hash_value<SgObject>(p.get());
         }
     };
     typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
@@ -2628,6 +2628,7 @@ void SgCustomGLNode::accept(SceneVisitor& visitor)
         renderer->impl->pushPickName(this);
         render(*renderer);
         renderer->impl->popPickName();
+        renderer->impl->clearGLState();
     } else {
         visitor.visitGroup(this);
     }
@@ -2878,4 +2879,5 @@ void GLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
 
     glDisable(GL_STENCIL_TEST);
 
+    clearGLState();
 }

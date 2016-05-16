@@ -9,6 +9,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
 #ifdef WIN32
+#include "Link.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
 #endif
@@ -16,13 +17,16 @@
 
 namespace cnoid {
 
+class Link;
+typedef ref_ptr<Link> LinkPtr;
+
 class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
 
 class Mapping;
 typedef ref_ptr<Mapping> MappingPtr;
 
-class CNOID_EXPORT Link
+class CNOID_EXPORT Link : public Referenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -103,19 +107,21 @@ public:
 
     enum JointType {
         /// rotational joint (1 dof)
-        ROTATIONAL_JOINT,
+        REVOLUTE_JOINT = 0,
+        ROTATIONAL_JOINT = REVOLUTE_JOINT,
         /// translational joint (1 dof)
-        SLIDE_JOINT,
+        SLIDE_JOINT = 1,
         /// 6-DOF root link
-        FREE_JOINT,
+        FREE_JOINT = 2,
         /*
           Joint types below here are treated as a fixed joint
           when a code for processing a joint type is not given
         */
         /// fixed joint(0 dof)
-        FIXED_JOINT,
+        FIXED_JOINT = 3,
         /// special joint for pseudo crawler simulation
-        CRAWLER_JOINT
+        CRAWLER_JOINT = 4,
+        AGX_CRAWLER_JOINT = 5
     };
 
     int jointId() const { return jointId_; }
@@ -204,6 +210,11 @@ public:
         void setOffsetRotation(const Eigen::MatrixBase<Derived>& offset) {
         Tb_.linear() = offset;
     }
+    template<typename T>
+    void setOffsetRotation(const Eigen::AngleAxis<T>& a) {
+        Tb_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+    }
+    
     template<typename Derived>
         void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
         Rs_ = Rs;
@@ -239,6 +250,8 @@ public:
     template<typename T> T info(const std::string& key, const T& defaultValue) const;
     template<typename T> void setInfo(const std::string& key, const T& value);
 
+    void resetInfo(Mapping* info);
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     // fext, tauext
     const double& ulimit() const { return q_upper_; }  ///< the upper limit of joint values
@@ -254,8 +267,8 @@ private:
     int index_; 
     int jointId_;
     Link* parent_;
-    Link* sibling_;
-    Link* child_;
+    LinkPtr sibling_;
+    LinkPtr child_;
     Position T_;
     Position Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.

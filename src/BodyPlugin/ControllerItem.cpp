@@ -13,6 +13,12 @@ using namespace boost;
 using namespace cnoid;
 
 
+double ControllerItemIO::worldTimeStep() const
+{
+    return timeStep();
+}
+
+
 ControllerItem::ControllerItem()
 {
     isImmediateMode_ = true;
@@ -55,6 +61,12 @@ bool ControllerItem::isActive() const
 
 
 bool ControllerItem::initialize(ControllerItemIO* io)
+{
+    return true;
+}
+
+
+bool ControllerItem::start()
 {
     return true;
 }

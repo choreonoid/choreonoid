@@ -102,11 +102,12 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
         self->putMessage(_("Reference motion is empty()."));
         return false;
     }
-    if(fabs(qseqRef->frameRate() - (1.0 / io->worldTimeStep())) > 1.0e-6){
+    if(fabs(qseqRef->frameRate() - (1.0 / io->timeStep())) > 1.0e-6){
         self->putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
         return false;
     }
 
+    // Overwrite the initial position and pose
     MultiSE3SeqPtr lseq = motionItem->linkPosSeq();
     if(lseq->numParts() > 0 && lseq->numFrames() > 0){
         SE3& p = lseq->at(0, 0);
@@ -116,13 +117,12 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
     }
     self->output();
     body->calcForwardKinematics();
-    io->fixInitialBodyState();
     
     return true;
 }
 
 
-bool BodyMotionControllerItem::start(ControllerItemIO* io)
+bool BodyMotionControllerItem::start()
 {
     control();
     return true;

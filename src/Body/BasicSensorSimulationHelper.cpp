@@ -4,7 +4,7 @@
 */
 
 #include "BasicSensorSimulationHelper.h"
-#include "Link.h"
+#include "Body.h"
 #include <Eigen/StdVector>
 
 using namespace std;
@@ -38,7 +38,7 @@ public:
     KFStateArray kfStates;
 
     BasicSensorSimulationHelperImpl(BasicSensorSimulationHelper* self);
-    void initialize(BodyPtr body, double timeStep, const Vector3& gravityAcceleration);
+    void initialize(Body* body, double timeStep, const Vector3& gravityAcceleration);
 };
 }
 
@@ -67,8 +67,7 @@ BasicSensorSimulationHelper::~BasicSensorSimulationHelper()
 }
 
 
-void BasicSensorSimulationHelper::initialize
-(BodyPtr body, double timeStep, const Vector3& gravityAcceleration)
+void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
 {
     isActive_ = false;
 
@@ -88,7 +87,7 @@ void BasicSensorSimulationHelper::initialize
 }
 
 
-void Impl::initialize(BodyPtr body, double timeStep, const Vector3& gravityAcceleration)
+void Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
 {
     this->body = body;
     g = gravityAcceleration;

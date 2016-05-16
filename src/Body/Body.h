@@ -245,9 +245,9 @@ protected:
 
 private:
     LinkTraverse linkTraverse_;
-    Link* rootLink_;
+    LinkPtr rootLink_;
     bool isStaticModel_;
-    std::vector<Link*> jointIdToLinkArray;
+    std::vector<LinkPtr> jointIdToLinkArray;
     int numActualJoints;
     DeviceList<> devices_;
     std::vector<ExtraJoint> extraJoints_;
@@ -263,6 +263,6 @@ private:
     void setVirtualJointForcesSub();
 };
 
-};
+}
 
 #endif

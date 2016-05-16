@@ -217,7 +217,7 @@ void savePNG(const Image& image, const std::string& filename, bool isUpsideDown)
 
     png_write_info(png_ptr, info_ptr);
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
+#if defined(_MSC_VER) && _MSC_VER < 2000
     png_bytep* row_pointers;
     row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
 #else
@@ -235,7 +235,7 @@ void savePNG(const Image& image, const std::string& filename, bool isUpsideDown)
 
     fclose(fp);
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
+#if defined(_MSC_VER) && _MSC_VER < 2000
     free(row_pointers);
 #endif
 }

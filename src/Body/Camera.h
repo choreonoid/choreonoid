@@ -52,6 +52,9 @@ public:
     void setResolution(int x, int y) {
         resolutionX_ = x; resolutionY_ = y;
     }
+    void setResolutionX(int x) { resolutionX_ = x; }
+    void setResolutionY(int y) { resolutionY_ = y; }
+    
     int resolutionX() const { return resolutionX_; }
     int resolutionY() const { return resolutionY_; }
 

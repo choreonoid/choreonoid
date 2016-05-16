@@ -4,7 +4,8 @@
 */
 
 #include "PinDragIK.h"
-#include "Link.h"
+#include "Body.h"
+//#include "Link.h"
 #include "JointPath.h"
 #include <cnoid/EigenUtil>
 #include <map>
@@ -36,7 +37,7 @@ namespace cnoid {
 class PinDragIKImpl
 {
 public:
-    PinDragIKImpl(BodyPtr body);
+    PinDragIKImpl(Body* body);
 
     BodyPtr body_;
 
@@ -160,13 +161,13 @@ public:
 }
 
 
-PinDragIK::PinDragIK(BodyPtr body)
+PinDragIK::PinDragIK(Body* body)
 {
     impl = new PinDragIKImpl(body);
 }
 
 
-PinDragIKImpl::PinDragIKImpl(BodyPtr body)
+PinDragIKImpl::PinDragIKImpl(Body* body)
     : body_(body),
       NJ(body->numJoints()),
       q_org(NJ),
@@ -201,7 +202,7 @@ PinDragIK::~PinDragIK()
 }
 
 
-BodyPtr PinDragIK::body() const
+Body* PinDragIK::body() const
 {
     return impl->body_;
 }

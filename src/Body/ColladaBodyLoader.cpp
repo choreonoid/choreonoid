@@ -133,7 +133,7 @@ ColladaBodyLoaderImpl::~ColladaBodyLoaderImpl()
 }
 
 
-bool ColladaBodyLoader::load(BodyPtr body, const std::string& filename)
+bool ColladaBodyLoader::load(Body* body, const std::string& filename)
 {
     impl->loadBody(filename, *body); 
     return true;

@@ -26,13 +26,13 @@ BodyMotionPoseProvider::BodyMotionPoseProvider()
 }
 
 
-BodyMotionPoseProvider::BodyMotionPoseProvider(BodyPtr body_, BodyMotionPtr motion)
+BodyMotionPoseProvider::BodyMotionPoseProvider(Body* body_, BodyMotionPtr motion)
 {
     initialize(body_, motion);
 }
 
 
-void BodyMotionPoseProvider::initialize(BodyPtr body__, BodyMotionPtr motion)
+void BodyMotionPoseProvider::initialize(Body* body__, BodyMotionPtr motion)
 {
     body_ = body__->clone();
     this->motion = motion;

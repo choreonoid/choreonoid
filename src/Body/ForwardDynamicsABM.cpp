@@ -16,7 +16,7 @@ static const bool debugMode = false;
 static const bool rootAttitudeNormalizationEnabled = false;
 
 
-ForwardDynamicsABM::ForwardDynamicsABM(DyBodyPtr body) :
+ForwardDynamicsABM::ForwardDynamicsABM(DyBody* body) :
     ForwardDynamics(body),
     q0(body->numLinks()),
     dq0(body->numLinks()),

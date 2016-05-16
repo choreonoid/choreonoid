@@ -17,8 +17,10 @@
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#ifndef _WINDOWS
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
+#endif
 #include <boost/filesystem.hpp>
 #include <fstream>
 #include <list>
@@ -87,12 +89,14 @@ public:
 
         iostreams::filtering_istream is;
 
+#ifndef _WINDOWS
         string ext = filesystem::extension(filesystem::path(filename));
         if(ext == ".gz"){
             is.push(iostreams::gzip_decompressor());
         } else if(ext == ".bz2"){
             is.push(iostreams::bzip2_decompressor());
         }
+#endif
         ifstream ifs(filename.c_str());
 
         if(!ifs){

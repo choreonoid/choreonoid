@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_DYWORLD_H_INCLUDED
-#define CNOID_BODY_DYWORLD_H_INCLUDED
+#ifndef CNOID_BODY_DYWORLD_H
+#define CNOID_BODY_DYWORLD_H
 
 #include "ForwardDynamics.h"
 #include <cnoid/TimeMeasure>
@@ -40,14 +40,14 @@ public:
        @param index of the body
        @return body
     */
-    const DyBodyPtr& body(int index) const;
+    DyBody* body(int index) const;
 
     /**
        @brief get body by name
        @param name of the body
        @return body
     */
-    const DyBodyPtr& body(const std::string& name) const;
+    DyBody* body(const std::string& name) const;
 
     /**
        @brief get forward dynamics computation method for body
@@ -71,13 +71,13 @@ public:
        @return index of the body
        @note This must be called before initialize() is called.
     */
-    int addBody(const DyBodyPtr& body);
+    int addBody(DyBody* body);
 
     /**
        Use this method instead of addBody(const DyBodyPtr& body) when you want to specify
        a forward dynamics calculater.
     */
-    int addBody(const DyBodyPtr& body, const ForwardDynamicsPtr& forwardDynamics);
+    int addBody(DyBody* body, const ForwardDynamicsPtr& forwardDynamics);
         
     /**
        @brief clear bodies in this world

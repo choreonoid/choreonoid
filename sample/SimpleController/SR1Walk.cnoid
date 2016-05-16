@@ -261,7 +261,7 @@ items:
                 contactReductionThreshold: 4
 views: 
   "Items": 
-    selected: [ 5 ]
+    selected: [ 6 ]
     checked: [ 1, 2 ]
     expanded: [ 1, 2, 3, 5 ]
   "Scene": 
