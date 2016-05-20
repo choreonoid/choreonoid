@@ -12,3 +12,4 @@ configure_file(RokiFallingBoxes.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY
 configure_file(RokiBreakWall.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(breakWall.yaml ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
 configure_file(breakWall.wrl ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
+configure_file(breakWall.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
