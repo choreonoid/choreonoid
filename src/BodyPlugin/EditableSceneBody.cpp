@@ -1457,7 +1457,7 @@ void EditableSceneBodyImpl::startForcedPosition(const SceneWidgetEvent& event)
 void EditableSceneBodyImpl::setForcedPosition(const Position& position)
 {
     if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
-        simulatorItem->setForcedBodyPosition(bodyItem, position);
+        simulatorItem->setForcedPosition(bodyItem, position);
     }
 }
     
@@ -1477,7 +1477,7 @@ void EditableSceneBodyImpl::finishForcedPosition()
 {
     if(forcedPositionMode != KEEP_FORCED_POSITION){
         if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
-            simulatorItem->clearForcedBodyPositions();
+            simulatorItem->clearForcedPositions();
         }
     }
 }

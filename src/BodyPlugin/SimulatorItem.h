@@ -175,8 +175,9 @@ public:
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
     virtual void clearVirtualElasticStrings();
 
-    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
-    virtual void clearForcedBodyPositions();
+    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
+    virtual void clearForcedPositions();
 
 protected:
     SimulatorItem(const SimulatorItem& org);

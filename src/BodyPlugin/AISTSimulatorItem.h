@@ -45,8 +45,9 @@ public:
     void setKinematicWalkingEnabled(bool on);
     void setConstraintForceOutputEnabled(bool on);
 
-    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
-    virtual void clearForcedBodyPositions();
+    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
+    virtual void clearForcedPositions();
     
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody);
