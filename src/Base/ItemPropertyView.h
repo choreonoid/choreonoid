@@ -21,10 +21,11 @@ public:
 
     virtual void onAttachedMenuRequest(MenuManager& menuManager);
 
+protected:
+    void keyPressEvent(QKeyEvent* event);
+
 private:
     ItemPropertyViewImpl* impl;
-
-    void keyPressEvent(QKeyEvent* event);
 };
 
 }

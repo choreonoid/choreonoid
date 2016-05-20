@@ -479,7 +479,7 @@ void BodyLinkViewImpl::update()
     
     BodyPtr body = currentBodyItem->body();
     const vector<int>& selectedLinkIndices =
-        LinkSelectionView::mainInstance()->getSelectedLinkIndices(currentBodyItem);
+        LinkSelectionView::mainInstance()->selectedLinkIndices(currentBodyItem);
 
     if(selectedLinkIndices.empty()){
         currentLink = body->rootLink();

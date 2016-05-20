@@ -169,6 +169,20 @@ void Link::setName(const std::string& name)
 }
 
 
+std::string Link::jointTypeString() const
+{
+    switch(jointType_){
+    case REVOLUTE_JOINT:    return "revolute";
+    case SLIDE_JOINT:       return "prismatic";
+    case FREE_JOINT:        return "free";
+    case FIXED_JOINT:       return "fixed";
+    case CRAWLER_JOINT:     return "crawler";
+    case AGX_CRAWLER_JOINT: return "AgX crawler";
+    default: return "unknown";
+    }
+}
+
+
 void Link::setShape(SgNode* shape)
 {
     visualShape_ = shape;

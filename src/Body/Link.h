@@ -131,6 +131,8 @@ public:
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
     bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
+
+    std::string jointTypeString() const;
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }

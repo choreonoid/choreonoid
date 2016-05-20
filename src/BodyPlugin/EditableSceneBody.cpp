@@ -595,7 +595,7 @@ void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
 void EditableSceneBodyImpl::onLinkSelectionChanged()
 {
     if(linkVisibilityCheck->isChecked()){
-        self->setLinkVisibilities(LinkSelectionView::mainInstance()->getLinkSelection(bodyItem));
+        self->setLinkVisibilities(LinkSelectionView::mainInstance()->linkSelection(bodyItem));
     }
 }
 
