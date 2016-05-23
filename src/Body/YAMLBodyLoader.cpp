@@ -78,7 +78,8 @@ public:
     string symbol;
     bool on;
     Vector3f color;
-    Vector3 vec3;
+    Vector3 v;
+    Matrix3 M;
 
     dynamic_bitset<> validJointIdSet;
     int numValidJointIds;
@@ -103,6 +104,7 @@ public:
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
     LinkPtr readLink(Mapping* linkNode);
+    void setMassParameters(Link* link);
     void findElements(Mapping& node, SgGroupPtr sceneGroup);
     void readElements(ValueNode& elements, SgGroupPtr sceneGroup);
     void readNode(Mapping& node, const string& type);
@@ -448,8 +450,8 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         }
     }
 
-    if(extractEigen(info, "translation", vec3)){
-        link->setOffsetTranslation(vec3);
+    if(extractEigen(info, "translation", v)){
+        link->setOffsetTranslation(v);
     }
     Vector4 r;
     if(extractEigen(info, "rotation", r)){
@@ -513,22 +515,6 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         link->setJointAxis(axis);
     }
     
-    /*
-      \todo A link node may contain more than one rigid bodies and
-      the paremeters of them must be summed up
-    */
-    if(extract(info, "mass", value)){
-        link->setMass(value);
-    }
-    if(extractEigen(info, "centerOfMass", vec3)){
-        link->setCenterOfMass(vec3);
-    }
-
-    Matrix3 I;
-    if(extractEigen(info, "inertia", I)){
-        link->setInertia(I);
-    }
-
     currentLink = link;
     rigidBodies.clear();
     currentSceneGroup = 0;
@@ -538,6 +524,19 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(elements){
         readElements(*elements, shape);
     }
+
+    RigidBody rbody;
+    if(!extractEigen(info, "centerOfMass", rbody.c)){
+        rbody.c.setZero();
+    }
+    if(!extract(info, "mass", rbody.m)){
+        rbody.m = 0.0;
+    }
+    if(!extractEigen(info, "inertia", rbody.I)){
+        rbody.I.setZero();
+    }
+    rigidBodies.push_back(rbody);
+    setMassParameters(link);
     
     if(extract(linkNode, "shapeFile", symbol)){
         filesystem::path filepath(symbol);
@@ -576,6 +575,55 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     currentLink = 0;
 
     return link;
+}
+
+
+void YAMLBodyLoaderImpl::setMassParameters(Link* link)
+{
+    /*
+      Mass = Sigma mass 
+      C = (Sigma mass * T * c) / Mass 
+      I = Sigma(R * I * Rt + m * G)       
+      R = Rotation matrix part of T   
+      G = y*y+z*z, -x*y, -x*z, -y*x, z*z+x*x, -y*z, -z*x, -z*y, x*x+y*y    
+      (x, y, z ) = T * c - C
+    */
+    
+    Vector3 c = Vector3::Zero();
+    double m = 0.0;
+    Matrix3 I = Matrix3::Zero();
+
+    for(size_t i=0; i < rigidBodies.size(); ++i){
+        const RigidBody& r = rigidBodies[i];
+        m += r.m;
+        c += r.m * r.c;
+    }
+    if(m > 0.0){
+        c = c / m;
+
+        for(size_t i=0; i < rigidBodies.size(); ++i){
+            const RigidBody& r = rigidBodies[i];
+            I += r.I;
+            const Vector3 o = c - r.c;
+            const double x = o.x();
+            const double y = o.y();
+            const double z = o.z();
+            const double m = r.m;
+            I(0,0) +=  m * (y * y + z * z);
+            I(0,1) += -m * (x * y);
+            I(0,2) += -m * (x * z);
+            I(1,0) += -m * (y * x);
+            I(1,1) +=  m * (z * z + x * x);
+            I(1,2) += -m * (y * z);
+            I(2,0) += -m * (z * x);
+            I(2,1) += -m * (z * y);
+            I(2,2) +=  m * (x * x + y * y);
+        }
+    }
+
+    link->setCenterOfMass(c);
+    link->setMass(m);
+    link->setInertia(I);
 }
 
 
@@ -619,7 +667,7 @@ void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup
                 string type2 = typeNode->toString();
                 if(type2 != type){
                     element.throwException(
-                        str(format(_("Type node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
+                        str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
                             % type2 % type));
                 }
             }
@@ -666,8 +714,8 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
 {
     Affine3 T = Affine3::Identity();
 
-    if(read(node, "translation", vec3)){
-        T.translation() = vec3;
+    if(read(node, "translation", v)){
+        T.translation() = v;
     }
     Vector4 r;
     if(read(node, "rotation", r)){
@@ -685,14 +733,20 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
 void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 {
     RigidBody rbody;
-    if(!read(node, "centerOfMass", rbody.c)){
+    const Affine3& T = transformStack.back();
+
+    if(read(node, "centerOfMass", v)){
+        rbody.c = T.linear() * v + T.translation();
+    } else {
         rbody.c.setZero();
     }
     if(!node.read("mass", rbody.m)){
         rbody.m = 0.0;
     }
-    if(!read(node, "inertia", rbody.I)){
-        rbody.I.setIdentity();
+    if(read(node, "inertia", M)){
+        rbody.I = T.linear() * M * T.linear().transpose();
+    } else {
+        rbody.I.setZero();
     }
     rigidBodies.push_back(rbody);
 
@@ -715,7 +769,7 @@ void YAMLBodyLoaderImpl::readDeviceCommonParameters(Device* device, Mapping& nod
 {
     if(node.read("name", symbol)) device->setName(symbol);
     if(node.read("id", id)) device->setId(id);
-    if(read(node, "translation", vec3)) device->setLocalTranslation(vec3);
+    if(read(node, "translation", v)) device->setLocalTranslation(v);
 
     Vector4 r;
     if(read(node, "rotation", r)){
@@ -728,8 +782,8 @@ void YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
 {
     ForceSensorPtr sensor = new ForceSensor;
     readDeviceCommonParameters(sensor, node);
-    if(read(node, "maxForce",  vec3)) sensor->F_max().head<3>() = vec3;
-    if(read(node, "maxTorque", vec3)) sensor->F_max().tail<3>() = vec3;
+    if(read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
+    if(read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
     addDevice(sensor);
 }
 
@@ -738,7 +792,7 @@ void YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
     readDeviceCommonParameters(sensor, node);
-    if(read(node, "maxAngularVelocity", vec3)) sensor->w_max() = vec3;
+    if(read(node, "maxAngularVelocity", v)) sensor->w_max() = v;
     addDevice(sensor);
 }
 
@@ -747,7 +801,7 @@ void YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
 {
     AccelerationSensorPtr sensor = new AccelerationSensor();
     readDeviceCommonParameters(sensor, node);
-    if(read(node, "maxAngularVelocity", vec3)) sensor->dv_max() = vec3;
+    if(read(node, "maxAngularVelocity", v)) sensor->dv_max() = v;
     addDevice(sensor);
 }
 
@@ -830,7 +884,7 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
     if(node.read("on", on)) light->on(on);
     if(read(node, "color", color)) light->setColor(color);
     if(node.read("intensity", value)) light->setIntensity(value);
-    if(read(node, "direction", vec3)) light->setDirection(vec3);
+    if(read(node, "direction", v)) light->setDirection(v);
     if(node.read("beamWidth", value)) light->setBeamWidth(value);
     if(node.read("cutOffAngle", value)) light->setCutOffAngle(value);
     if(read(node, "attenuation", color)){
