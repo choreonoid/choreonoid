@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VRML_TO_SG_CONVERTER_H_INCLUDED
-#define CNOID_UTIL_VRML_TO_SG_CONVERTER_H_INCLUDED
+#ifndef CNOID_UTIL_VRML_TO_SG_CONVERTER_H
+#define CNOID_UTIL_VRML_TO_SG_CONVERTER_H
 
 #include "VRML.h"
 #include "SceneGraph.h"
