@@ -39,6 +39,7 @@ public:
     void addProperty(const string& name, const QString& value);
     void addProperty(const string& name, const string& value);
     void addProperty(const string& name, int value);
+    void addProperty(const string& name, double value);
     void addProperty(const string& name, const Vector3& value);
     void addProperty(const string& name, const AngleAxis& rotation);
     void addProperty(const string& name, const Matrix3& M);
@@ -153,22 +154,22 @@ void LinkPropertyViewImpl::updateProperties()
 
 void LinkPropertyViewImpl::updateLinkProperties(Link* link)
 {
-    addProperty(_("name"), link->name());
-    addProperty(_("index"), link->index());
-    addProperty(_("offset translation"), Vector3(link->offsetTranslation()));
-    addProperty(_("offset rotation"), AngleAxis(link->offsetRotation()));
+    addProperty(_("Name"), link->name());
+    addProperty(_("Index"), link->index());
+    addProperty(_("Offset translation"), Vector3(link->offsetTranslation()));
+    addProperty(_("Offset rotation"), AngleAxis(link->offsetRotation()));
     addProperty(_("Rs"), link->Rs());
-    addProperty(_("center of mass"), link->centerOfMass());
-    addProperty(_("mass"), link->mass());
-    addProperty(_("inertia"), link->I());
-    addProperty(_("joint type"), link->jointTypeString());
+    addProperty(_("Center of mass"), link->centerOfMass());
+    addProperty(_("Mass"), link->mass());
+    addProperty(_("Inertia tensor"), link->I());
+    addProperty(_("Joint type"), link->jointTypeString());
     if(link->isRotationalJoint() || link->isSlideJoint()){
-        addProperty(_("joint axis"), link->jointAxis());
-        addProperty(_("upper joint limit"), link->q_upper());
-        addProperty(_("lower joint limit"), link->q_lower());
-        addProperty(_("upper joint velocity"), link->dq_upper());
-        addProperty(_("lower joint velocity"), link->dq_lower());
-        addProperty(_("joint inertia"), link->Jm2());
+        addProperty(_("Joint axis"), link->jointAxis());
+        addProperty(_("Upper joint limit"), link->q_upper());
+        addProperty(_("Lower joint limit"), link->q_lower());
+        addProperty(_("Upper joint velocity"), link->dq_upper());
+        addProperty(_("Lower joint velocity"), link->dq_lower());
+        addProperty(_("Joint inertia"), link->Jm2());
     }
 
     /*
@@ -205,6 +206,12 @@ void LinkPropertyViewImpl::addProperty(const string& name, const string& value)
 
 
 void LinkPropertyViewImpl::addProperty(const string& name, int value)
+{
+    addProperty(name, QString::number(value));
+}
+
+
+void LinkPropertyViewImpl::addProperty(const string& name, double value)
 {
     addProperty(name, QString::number(value));
 }
