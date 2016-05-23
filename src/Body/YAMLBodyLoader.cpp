@@ -106,30 +106,25 @@ public:
     bool readBody(Mapping* topNode);
     LinkPtr readLink(Mapping* linkNode);
     void setMassParameters(Link* link);
-    void findElements(Mapping& node, SgGroupPtr sceneGroup);
+    void findElements(Mapping& node, SgGroupPtr sceneGroup = 0);
     void readElements(ValueNode& elements, SgGroupPtr sceneGroup);
     void readNode(Mapping& node, const string& type);
     void readGroup(Mapping& node);
     void readTransform(Mapping& node);
     void readRigidBody(Mapping& node);
-
-    void addDevice(Device* device);
-    void readDeviceCommonParameters(Device* device, Mapping& node);
+    void readDevice(Device* device, Mapping& node);
     void readForceSensor(Mapping& node);
     void readRateGyroSensor(Mapping& node);
     void readAccelerationSensor(Mapping& node);
     void readCamera(Mapping& node);
     void readRangeSensor(Mapping& node);
     void readSpotLight(Mapping& node);
-
     SgNodePtr readSceneShape(Mapping& node);
-    
     SgMesh* readSceneGeometry(Mapping& node);
     SgMesh* readSceneBox(Mapping& node);
     SgMesh* readSceneCylinder(Mapping& node);
     SgMesh* readSceneSphere(Mapping& node);
     SgMesh* readSceneExtrusion(Mapping& node);
-    
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
@@ -673,6 +668,9 @@ void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroupPtr sceneGroup)
         return;
     }
 
+    if(!sceneGroup){
+        sceneGroup = new SgGroup;
+    }
     readElements(elements, sceneGroup);
 }
 
@@ -745,7 +743,7 @@ void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
    
 void YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
-    findElements(node, new SgGroup);
+    findElements(node);
 }
 
 
@@ -789,59 +787,47 @@ void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     }
     rigidBodies.push_back(rbody);
 
-    findElements(node, new SgGroup);
+    findElements(node);
 }
 
 
-void YAMLBodyLoaderImpl::addDevice(Device* device)
-{
-    device->setLink(currentLink);
-    const Matrix3 RsT = currentLink->Rs();
-    const Affine3& T = transformStack.back();
-    device->setLocalTranslation(RsT * (T * device->localTranslation()));
-    device->setLocalRotation(RsT * (T.linear() * device->localRotation()));
-    body->addDevice(device);
-}
-    
-
-void YAMLBodyLoaderImpl::readDeviceCommonParameters(Device* device, Mapping& node)
+void YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
 {
     if(node.read("name", symbol)) device->setName(symbol);
     if(node.read("id", id)) device->setId(id);
-    if(read(node, "translation", v)) device->setLocalTranslation(v);
 
-    Vector4 r;
-    if(read(node, "rotation", r)){
-        device->setLocalRotation(Matrix3(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]))));
-    }
+    device->setLink(currentLink);
+    const Affine3& T = transformStack.back();
+    device->setLocalTranslation(currentLink->Rs() * T.translation());
+    device->setLocalRotation(currentLink->Rs() * T.linear());
+    body->addDevice(device);
+
+    findElements(node);
 }
 
 
 void YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
 {
     ForceSensorPtr sensor = new ForceSensor;
-    readDeviceCommonParameters(sensor, node);
     if(read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
     if(read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
-    addDevice(sensor);
+    readDevice(sensor, node);
 }
 
 
 void YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
-    readDeviceCommonParameters(sensor, node);
     if(readAngles(node, "maxAngularVelocity", v)) sensor->w_max() = v;
-    addDevice(sensor);
+    readDevice(sensor, node);
 }
 
 
 void YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
 {
     AccelerationSensorPtr sensor = new AccelerationSensor();
-    readDeviceCommonParameters(sensor, node);
     if(read(node, "maxAcceleration", v)) sensor->dv_max() = v;
-    addDevice(sensor);
+    readDevice(sensor, node);
 }
 
 
@@ -882,8 +868,6 @@ void YAMLBodyLoaderImpl::readCamera(Mapping& node)
         }
     }
         
-    readDeviceCommonParameters(camera, node);
-    
     if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
@@ -892,15 +876,13 @@ void YAMLBodyLoaderImpl::readCamera(Mapping& node)
     if(node.read("backClipDistance", value)) camera->setFarDistance(value);
     if(node.read("frameRate", value)) camera->setFrameRate(value);
     
-    addDevice(camera);
+    readDevice(camera, node);
 }
 
 
 void YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
-    
-    readDeviceCommonParameters(rangeSensor, node);
     
     if(node.read("on", on)) rangeSensor->on(on);
     if(readAngle(node, "scanAngle", value)) rangeSensor->setYawRange(value);
@@ -910,7 +892,7 @@ void YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
     if(node.read("maxDistance", value)) rangeSensor->setMaxDistance(value);
     if(node.read("scanRate", value)) rangeSensor->setFrameRate(value);
     
-    addDevice(rangeSensor);
+    readDevice(rangeSensor, node);
 }
 
 
@@ -918,8 +900,6 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 {
     SpotLightPtr light = new SpotLight();
 
-    readDeviceCommonParameters(light, node);
-    
     if(node.read("on", on)) light->on(on);
     if(read(node, "color", color)) light->setColor(color);
     if(node.read("intensity", value)) light->setIntensity(value);
@@ -932,7 +912,7 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
         light->setQuadraticAttenuation(color[2]);
     }
 
-    addDevice(light);
+    readDevice(light, node);
 }
 
 
