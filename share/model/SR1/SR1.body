@@ -1,5 +1,6 @@
 format: ChoreonoidBody
 formatVersion: 1.0
+angleUnit: radian
 
 name: SR1
 rootLink: WAIST
@@ -133,7 +134,7 @@ links:
               material:
                 diffuseColor: [ 0.5, 0.8, 0.5]
       -
-        type: CameraDevice
+        type: Camera
         name: LeftCamera
         id: 0
         format: COLOR_DEPTH
@@ -149,7 +150,7 @@ links:
                   material:
                     diffuseColor: [ 1, 0, 0 ]
       -
-        type: CameraDevice
+        type: Camera
         name: RightCamera
         id: 0
         format: COLOR_DEPTH
