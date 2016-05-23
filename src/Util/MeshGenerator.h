@@ -45,9 +45,9 @@ public:
     struct Extrusion
     {
         Vector2Array crossSection;
-        Vector2Array scale;
         Vector3Array spine;
         AngleAxisArray orientation;
+        Vector2Array scale;
         double creaseAngle;
         bool beginCap;
         bool endCap;

@@ -81,16 +81,17 @@ public:
     Vector3 v;
     Matrix3 M;
 
+    bool isDegreeMode;
+    bool isVerbose;
+    int divisionNumber;
+    ostream* os_;
+
     dynamic_bitset<> validJointIdSet;
     int numValidJointIds;
 
     MeshGenerator meshGenerator;
 
     SgMaterialPtr defaultMaterial;
-
-    int divisionNumber;
-    ostream* os_;
-    bool isVerbose;
 
     VRMLParser vrmlParser;
     VRMLToSGConverter sgConverter;
@@ -117,7 +118,7 @@ public:
     void readForceSensor(Mapping& node);
     void readRateGyroSensor(Mapping& node);
     void readAccelerationSensor(Mapping& node);
-    void readCameraDevice(Mapping& node);
+    void readCamera(Mapping& node);
     void readRangeSensor(Mapping& node);
     void readSpotLight(Mapping& node);
 
@@ -127,10 +128,35 @@ public:
     SgMesh* readSceneBox(Mapping& node);
     SgMesh* readSceneCylinder(Mapping& node);
     SgMesh* readSceneSphere(Mapping& node);
+    SgMesh* readSceneExtrusion(Mapping& node);
     
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
+
+    double toRadian(double angle){
+        return isDegreeMode ? radian(angle) : angle;
+    }
+
+    bool readAngle(Mapping& node, const char* key, double& angle){
+        if(node.read(key, angle)){
+            angle = toRadian(angle);
+            return true;
+        }
+        return false;
+    }
+
+    bool readAngles(Mapping& node, const char* key, Vector3& angles){
+        if(read(node, key, angles)){
+            if(isDegreeMode){
+                for(int i=0; i < 3; ++i){
+                    angles[i] = radian(angles[i]);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 };
 
 }
@@ -144,7 +170,6 @@ NodeTypeFunctionMap nodeTypeFuncs;
 typedef SgNodePtr (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
 typedef map<string, SceneNodeFunction> SceneNodeFunctionMap;
 SceneNodeFunctionMap sceneNodeFuncs;
-
 
 template<typename ValueType>
 bool extract(Mapping* mapping, const char* key, ValueType& out_value)
@@ -210,7 +235,8 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl()
         nodeTypeFuncs["ForceSensor"] = &YAMLBodyLoaderImpl::readForceSensor;
         nodeTypeFuncs["RateGyroSensor"] = &YAMLBodyLoaderImpl::readRateGyroSensor;
         nodeTypeFuncs["AccelerationSensor"] = &YAMLBodyLoaderImpl::readAccelerationSensor;
-        nodeTypeFuncs["CameraDevice"] = &YAMLBodyLoaderImpl::readCameraDevice;
+        nodeTypeFuncs["Camera"] = &YAMLBodyLoaderImpl::readCamera;
+        nodeTypeFuncs["CameraDevice"] = &YAMLBodyLoaderImpl::readCamera;
         nodeTypeFuncs["RangeSensor"] = &YAMLBodyLoaderImpl::readRangeSensor;
         nodeTypeFuncs["SpotLight"] = &YAMLBodyLoaderImpl::readSpotLight;
 
@@ -371,7 +397,20 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
     if(version >= 2.0){
-        topNode->throwException(_("This version of the Choreonoid body format is not supported."));
+        topNode->throwException(_("This version of the Choreonoid body format is not supported"));
+    }
+
+    isDegreeMode = false;
+    ValueNode* angleUnitNode = topNode->find("angleUnit");
+    if(angleUnitNode->isValid()){
+        string unit = angleUnitNode->toString();
+        if(unit == "radian"){
+            isDegreeMode = false;
+        } else if(unit == "degree"){
+            isDegreeMode = true;
+        } else {
+            angleUnitNode->throwException(_("The \"angleUnit\" value must be either \"radian\" or \"degree\""));
+        }
     }
 
     if(topNode->read("name", symbol)){
@@ -455,7 +494,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     }
     Vector4 r;
     if(extractEigen(info, "rotation", r)){
-        link->setOffsetRotation(AngleAxis(r[3], Vector3(r[0], r[1], r[2])));
+        link->setOffsetRotation(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
     }
     
     if(extract(info, "jointId", id)){
@@ -719,7 +758,7 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
     }
     Vector4 r;
     if(read(node, "rotation", r)){
-        T.linear() = Matrix3(AngleAxis(r[3], Vector3(r[0], r[1], r[2])));
+        T.linear() = Matrix3(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
     }
 
     transformStack.push_back(transformStack.back() * T);
@@ -773,7 +812,7 @@ void YAMLBodyLoaderImpl::readDeviceCommonParameters(Device* device, Mapping& nod
 
     Vector4 r;
     if(read(node, "rotation", r)){
-        device->setLocalRotation(Matrix3(AngleAxis(r[3], Vector3(r[0], r[1], r[2]))));
+        device->setLocalRotation(Matrix3(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]))));
     }
 }
 
@@ -792,7 +831,7 @@ void YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
     readDeviceCommonParameters(sensor, node);
-    if(read(node, "maxAngularVelocity", v)) sensor->w_max() = v;
+    if(readAngles(node, "maxAngularVelocity", v)) sensor->w_max() = v;
     addDevice(sensor);
 }
 
@@ -801,12 +840,12 @@ void YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
 {
     AccelerationSensorPtr sensor = new AccelerationSensor();
     readDeviceCommonParameters(sensor, node);
-    if(read(node, "maxAngularVelocity", v)) sensor->dv_max() = v;
+    if(read(node, "maxAcceleration", v)) sensor->dv_max() = v;
     addDevice(sensor);
 }
 
 
-void YAMLBodyLoaderImpl::readCameraDevice(Mapping& node)
+void YAMLBodyLoaderImpl::readCamera(Mapping& node)
 {
     CameraPtr camera;
     RangeCamera* range = 0;
@@ -848,7 +887,7 @@ void YAMLBodyLoaderImpl::readCameraDevice(Mapping& node)
     if(node.read("on", on)) camera->on(on);
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
-    if(node.read("fieldOfView", value)) camera->setFieldOfView(value);
+    if(readAngle(node, "fieldOfView", value)) camera->setFieldOfView(value);
     if(node.read("frontClipDistance", value)) camera->setNearDistance(value);
     if(node.read("backClipDistance", value)) camera->setFarDistance(value);
     if(node.read("frameRate", value)) camera->setFrameRate(value);
@@ -864,9 +903,9 @@ void YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
     readDeviceCommonParameters(rangeSensor, node);
     
     if(node.read("on", on)) rangeSensor->on(on);
-    if(node.read("scanAngle", value)) rangeSensor->setYawRange(value);
+    if(readAngle(node, "scanAngle", value)) rangeSensor->setYawRange(value);
     rangeSensor->setPitchRange(0.0);
-    if(node.read("scanStep", value)) rangeSensor->setYawResolution(rangeSensor->yawRange() / value);
+    if(readAngle(node, "scanStep", value)) rangeSensor->setYawResolution(rangeSensor->yawRange() / value);
     if(node.read("minDistance", value)) rangeSensor->setMinDistance(value);
     if(node.read("maxDistance", value)) rangeSensor->setMaxDistance(value);
     if(node.read("scanRate", value)) rangeSensor->setFrameRate(value);
@@ -885,8 +924,8 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
     if(read(node, "color", color)) light->setColor(color);
     if(node.read("intensity", value)) light->setIntensity(value);
     if(read(node, "direction", v)) light->setDirection(v);
-    if(node.read("beamWidth", value)) light->setBeamWidth(value);
-    if(node.read("cutOffAngle", value)) light->setCutOffAngle(value);
+    if(readAngle(node, "beamWidth", value)) light->setBeamWidth(value);
+    if(readAngle(node, "cutOffAngle", value)) light->setCutOffAngle(value);
     if(read(node, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);
@@ -928,6 +967,8 @@ SgMesh* YAMLBodyLoaderImpl::readSceneGeometry(Mapping& node)
         mesh = readSceneCylinder(node);
     } else if(type == "Sphere"){
         mesh = readSceneSphere(node);
+    } else if(type == "Extrusion"){
+        mesh = readSceneExtrusion(node);
     } else {
         typeNode.throwException(
             str(format(_("Unknown geometry \"%1%\"")) % type));
@@ -959,6 +1000,72 @@ SgMesh* YAMLBodyLoaderImpl::readSceneCylinder(Mapping& node)
 SgMesh* YAMLBodyLoaderImpl::readSceneSphere(Mapping& node)
 {
     return meshGenerator.generateSphere(node.get("radius", 1.0));
+}
+
+
+SgMesh* YAMLBodyLoaderImpl::readSceneExtrusion(Mapping& node)
+{
+    MeshGenerator::Extrusion extrusion;
+
+    Listing& crossSectionNode = *node.findListing("crossSection");
+    if(crossSectionNode.isValid()){
+        const int n = crossSectionNode.size() / 2;
+        MeshGenerator::Vector2Array& crossSection = extrusion.crossSection;
+        crossSection.resize(n);
+        for(int i=0; i < n; ++i){
+            Vector2& s = crossSection[i];
+            for(int j=0; j < 2; ++j){
+                s[j] = crossSectionNode[i*2+j].toDouble();
+            }
+        }
+    }
+
+    Listing& spineNode = *node.findListing("spine");
+    if(spineNode.isValid()){
+        const int n = spineNode.size() / 3;
+        MeshGenerator::Vector3Array& spine = extrusion.spine;
+        spine.resize(n);
+        for(int i=0; i < n; ++i){
+            Vector3& s = spine[i];
+            for(int j=0; j < 3; ++j){
+                s[j] = spineNode[i*3+j].toDouble();
+            }
+        }
+    }
+
+    Listing& orientationNode = *node.findListing("orientation");
+    if(orientationNode.isValid()){
+        const int n = orientationNode.size() / 4;
+        MeshGenerator::AngleAxisArray& orientation = extrusion.orientation;
+        orientation.resize(n);
+        for(int i=0; i < n; ++i){
+            AngleAxis& aa = orientation[i];
+            Vector3& axis = aa.axis();
+            for(int j=0; j < 4; ++j){
+                axis[j] = orientationNode[i*4+j].toDouble();
+            }
+            aa.angle() = toRadian(orientationNode[i*4+3].toDouble());
+        }
+    }
+    
+    Listing& scaleNode = *node.findListing("scale");
+    if(scaleNode.isValid()){
+        const int n = scaleNode.size() / 2;
+        MeshGenerator::Vector2Array& scale = extrusion.scale;
+        scale.resize(n);
+        for(int i=0; i < n; ++i){
+            Vector2& s = scale[i];
+            for(int j=0; j < 2; ++j){
+                s[j] = scaleNode[i*2+j].toDouble();
+            }
+        }
+    }
+
+    readAngle(node, "creaseAngle", extrusion.creaseAngle);
+    node.read("beginCap", extrusion.beginCap);
+    node.read("endCap", extrusion.endCap);
+
+    return meshGenerator.generateExtrusion(extrusion);
 }
 
 
@@ -1002,4 +1109,3 @@ void YAMLBodyLoaderImpl::setDefaultMaterial(SgShape* shape)
     }
     shape->setMaterial(defaultMaterial);
 }
-
