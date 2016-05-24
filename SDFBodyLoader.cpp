@@ -416,6 +416,16 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
         LinkInfoPtr worldlink(new LinkInfo());
         worldlink->linkName = "world";
         linkdataMap[worldlink->linkName] = worldlink;
+
+        cnoid::Affine3 rootpose;
+        if(model->HasElement("pose")){
+            if (isVerbose) {
+                os() << " this model has root pose node" << std::endl;
+            }
+            rootpose = pose2affine(model->Get<sdf::Pose>("pose"));
+        } else {
+            rootpose = cnoid::Affine3::Identity();
+        }
         
         if(model->HasElement("link")){
             sdf::ElementPtr link = model->GetElement("link");
@@ -577,7 +587,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 link->setName((*c)->childName);
                 link->setJointType(Link::FIXED_JOINT);
                 link->setJointAxis(Vector3::Zero());
-                link->Tb() = (*c)->pose;
+                link->Tb() = rootpose * (*c)->pose;
                 root.reset(new JointInfo());
                 root->jointName = (*c)->jointName;
                 root->childName = (*c)->parentName;
