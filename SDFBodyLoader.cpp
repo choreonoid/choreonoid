@@ -278,7 +278,7 @@ std::vector<JointInfoPtr> SDFBodyLoaderImpl::findParentJoints(const std::string&
     std::vector<JointInfoPtr>::iterator it = joints.begin();
     while(it != joints.end()){
         if(isVerbose){
-            os() << "search for child joint of " << linkName
+            os() << "search for parent joint of " << linkName
                  << " (joint:" << (*it)->jointName
                  << ", parent:" << (*it)->parentName
                  << ", child:" << (*it)->childName << ")" << std::endl;
