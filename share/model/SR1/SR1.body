@@ -1,6 +1,6 @@
 format: ChoreonoidBody
 formatVersion: 1.0
-angleUnit: radian
+angleUnit: degree
 
 name: SR1
 rootLink: WAIST
@@ -72,7 +72,7 @@ links:
     elements:
       -
         type: Transform
-        rotation: [ 0, 0, 1, 1.5708 ]
+        rotation: [ 0, 0, 1, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
@@ -101,7 +101,7 @@ links:
     elements:
       -
         type: Transform
-        rotation: [ 1, 0, 0, 1.5708 ]
+        rotation: [ 1, 0, 0, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.1 }
@@ -133,39 +133,35 @@ links:
       -
         type: Transform
         translation: [ 0.15, 0.05, 0.15 ]
-        rotation: [ 0, 1, 0, -1.5708 ]
+        rotation: [ 0, 1, 0, -90 ]
         elements:
-          Transform:
-            rotation: [ 0, 0, 1, -1.5708 ]
-            elements:
-              Camera:
-                name: LeftCamera
-                id: 0
-                format: COLOR_DEPTH
-                frontClipDistance: 0.1
-                elements: &CameraShape
-                  Transform:
-                    rotation: [ 1, 0, 0, 1.5708 ]
-                    elements:
-                      Shape:
-                        geometry: { type: Cylinder, radius: 0.02, height: 0.025 }
-                        appearance:
-                          material:
-                            diffuseColor: [ 1, 0, 0 ]
+          Camera:
+            name: LeftCamera
+            rotation: [ 0, 0, 1, -90 ]
+            id: 0
+            format: COLOR_DEPTH
+            frontClipDistance: 0.1
+            elements: &CameraShape
+              Transform:
+                rotation: [ 1, 0, 0, 90 ]
+                elements:
+                  Shape:
+                    geometry: { type: Cylinder, radius: 0.02, height: 0.025 }
+                    appearance:
+                      material:
+                        diffuseColor: [ 1, 0, 0 ]
       -
         type: Transform
         translation: [ 0.15, -0.05, 0.15 ]
-        rotation: [ 0, 1, 0, -1.5708 ]
+        rotation: [ 0, 1, 0, -90 ]
         elements:
-          Transform:
-            rotation: [ 0, 0, 1, -1.5708 ]
-            elements:
-              Camera:
-                name: RightCamera
-                id: 1
-                format: COLOR_DEPTH
-                frontClipDistance: 0.1
-                elements: *CameraShape
+          Camera:
+            name: RightCamera
+            rotation: [ 0, 0, 1, -90 ]
+            id: 1
+            format: COLOR_DEPTH
+            frontClipDistance: 0.1
+            elements: *CameraShape
   -
     name: LARM_SHOULDER_P
     parent: CHEST
@@ -200,7 +196,7 @@ links:
     elements: &ArmShape2
       -
         type: Transform
-        rotation: [ 0, 0, 1, 1.5708 ]
+        rotation: [ 0, 0, 1, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
@@ -229,7 +225,7 @@ links:
     elements: &ArmShape3
       Transform:
         translation: [ 0, 0, 0.05 ]
-        rotation: [ 1, 0, 0, 1.5708 ]
+        rotation: [ 1, 0, 0, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
@@ -275,7 +271,7 @@ links:
     elements: &ArmShape5
       Transform:
         translation: [ 0, 0, 0.05 ]
-        rotation: [ 1, 0, 0, 1.5708 ]
+        rotation: [ 1, 0, 0, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
@@ -309,7 +305,7 @@ links:
     elements: &ArmShape7
       -
         type: Transform
-        rotation: [ 0, 0, 1, 1.5708 ]
+        rotation: [ 0, 0, 1, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
@@ -434,7 +430,7 @@ links:
       0, 0, 1 ]
     elements: &LegShape1
       Transform:
-        rotation: [ 0, 0, 1, 1.5708 ]
+        rotation: [ 0, 0, 1, 90 ]
         elements:
           Shape:
             geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
@@ -469,7 +465,7 @@ links:
       -
         type: Transform
         translation: [ 0, 0, 0.1 ]
-        rotation: [ 1, 0, 0, 1.5708 ]
+        rotation: [ 1, 0, 0, 90 ]
         elements:
           Shape:
             appearance: &LegApp3
@@ -546,7 +542,7 @@ links:
         -
           type: Transform
           translation: [ 0.1, 0, 0 ]
-          rotation: [ 0, 0, 1, 1.5708 ]
+          rotation: [ 0, 0, 1, 90 ]
           elements:
             Shape:
               geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
