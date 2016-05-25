@@ -129,6 +129,10 @@ public:
     ShapeHandleSetMap* nextShapeHandleSetMap;
     ShapeHandleSet* currentShapeHandleSet;
 
+    bool isCurrentFogUpdated;
+    SgFogPtr prevFog;
+    ScopedConnection currentFogConnection;
+
     GLdouble pickX;
     GLdouble pickY;
     typedef boost::shared_ptr<SgNodePath> SgNodePathPtr;
@@ -182,6 +186,8 @@ public:
     void beginRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
     void renderLights();
+    void renderFog();
+    void onCurrentFogNodeUdpated();
     void endRendering();
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
@@ -257,6 +263,8 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
     defaultLineWidth = 1.0f;
 
+    prevFog = 0;
+
     stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
 
@@ -316,6 +324,8 @@ bool GLSLSceneRendererImpl::initializeGL()
     glDisable(GL_DITHER);
 
     isShapeHandleSetClearRequested = true;
+
+    isCurrentFogUpdated = false;
 
     return true;
 }
@@ -523,6 +533,9 @@ void GLSLSceneRendererImpl::beginRendering()
 
     if(currentLightingProgram){
         renderLights();
+        if(currentLightingProgram == &phongShadowProgram){
+            renderFog();
+        }
     }
 }
 
@@ -558,6 +571,49 @@ void GLSLSceneRendererImpl::renderLights()
     }
 
     currentLightingProgram->setNumLights(lightIndex);
+}
+
+
+void GLSLSceneRendererImpl::renderFog()
+{
+    SgFog* fog = 0;
+    if(self->isFogEnabled()){
+        int n = self->numFogs();
+        if(n > 0){
+            fog = self->fog(n - 1); // use the last fog
+        }
+    }
+    if(fog != prevFog){
+        isCurrentFogUpdated = true;
+        if(!fog){
+            currentFogConnection.disconnect();
+        } else {
+            currentFogConnection.reset(
+                fog->sigUpdated().connect(
+                    boost::bind(&GLSLSceneRendererImpl::onCurrentFogNodeUdpated, this)));
+        }
+    }
+
+    if(isCurrentFogUpdated){
+        if(!fog){
+            phongShadowProgram.setFogEnabled(false);
+        } else {
+            phongShadowProgram.setFogEnabled(true);
+            phongShadowProgram.setFogColor(fog->color());
+            phongShadowProgram.setFogRange(1.0f, 5.0f);
+        }
+    }
+    isCurrentFogUpdated = false;
+    prevFog = fog;
+}
+
+
+void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
+{
+    if(!self->isFogEnabled()){
+        currentFogConnection.disconnect();
+    }
+    isCurrentFogUpdated = true;
 }
 
 

@@ -154,6 +154,13 @@ void PhongShadowProgram::initialize()
 
     isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
 
+    maxFogDistLocation = getUniformLocation("maxFogDist");
+    minFogDistLocation = getUniformLocation("minFogDist");
+    fogColorLocation = getUniformLocation("fogColor");
+    isFogEnabledLocation = getUniformLocation("isFogEnabled");
+                                           
+    glUniform1i(isFogEnabledLocation, false);
+
     shadowMapProgram_.loadVertexShader(":/Base/shader/nolighting.vert");
     shadowMapProgram_.loadFragmentShader(":/Base/shader/shadowmap.frag");
     shadowMapProgram_.link();

@@ -139,6 +139,11 @@ class PhongShadowProgram : public LightingProgram
 
     Matrix4 shadowBias;
 
+    GLint maxFogDistLocation;
+    GLint minFogDistLocation;
+    GLint fogColorLocation;
+    GLint isFogEnabledLocation;
+
 public:
     PhongShadowProgram();
     virtual void initialize();
@@ -162,6 +167,16 @@ public:
     SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
     void setShadowMapViewProjection(const Matrix4& PV);
     NolightingProgram& shadowMapProgram() { return shadowMapProgram_; }
+    void setFogEnabled(bool on) {
+        glUniform1i(isFogEnabledLocation, on);
+    }
+    void setFogColor(const Vector3f& color) {
+        glUniform3fv(fogColorLocation, 1, color.data());
+    }
+    void setFogRange(float minDist, float maxDist){
+        glUniform1f(minFogDistLocation, minDist);
+        glUniform1f(maxFogDistLocation, maxDist);
+    }
 
 private:
     void initializeShadowInfo(int index);

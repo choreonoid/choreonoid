@@ -51,6 +51,11 @@ struct ShadowInfo {
 uniform ShadowInfo shadows[3];
 uniform bool isShadowAntiAliasingEnabled;
 
+uniform vec3 fogColor;
+uniform float maxFogDist;
+uniform float minFogDist;
+uniform bool isFogEnabled;
+
 layout(location = 0) out vec4 color;
 
 vec3 calcDiffuseAndSpecularElements(LightInfo light)
@@ -122,5 +127,13 @@ void main()
     for(int i=0; i < numLights; ++i){
         c += reflectionElements[i] + lights[i].ambientIntensity * ambientColor;
     }
+
+    if(isFogEnabled){
+        float dist = abs(position.z);
+        float f = (maxFogDist - dist) / (maxFogDist - minFogDist);
+        f = clamp(f, 0.0, 1.0);
+        c = mix(fogColor, c, f);
+    }
+    
     color = vec4(c, 1.0);
 }
