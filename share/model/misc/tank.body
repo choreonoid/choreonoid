@@ -152,33 +152,31 @@ links:
                 scanRate:  10
                 maxDistance: 10
       -
-        type: Transform
+        type: RigidBody
         translation: [ 0.2, 0, 0 ]
+        centerOfMass: [ 0.2, 0, 0 ]
+        mass: 1.0
+        inertia: [
+          0.01, 0,   0,
+          0,    0.1, 0,
+          0,    0,   0.1 ]
         elements:
-          RigidBody:
-            centerOfMass: [ 0.2, 0, 0 ]
-            mass: 1.0
-            inertia: [
-              0.01, 0,   0,
-              0,    0.1, 0,
-              0,    0,   0.1 ]
+          -
+            type: Transform
+            rotation: [ 0, 0, 1, 90 ]
             elements:
-              -
-                type: Transform
-                rotation: [ 0, 0, 1, 90 ]
-                elements:
-                  Shape:
-                    appearance: *GREEN
-                    geometry:
-                      type: Cylinder
-                      height: 0.2
-                      radius: 0.02
-              -
-                type: Transform
-                translation: [ 0.2, 0, 0 ]
-                elements:
-                  SpotLight:
-                    name: MainLight
-                    direction: [ 1, 0, 0 ]
-                    cutOffAngle: 35
-                    attenuation: [ 1, 0, 0.01 ]
+              Shape:
+                appearance: *GREEN
+                geometry:
+                  type: Cylinder
+                  height: 0.2
+                  radius: 0.02
+          -
+            type: Transform
+            translation: [ 0.2, 0, 0 ]
+            elements:
+              SpotLight:
+                name: MainLight
+                direction: [ 1, 0, 0 ]
+                cutOffAngle: 35
+                attenuation: [ 1, 0, 0.01 ]
