@@ -32,6 +32,29 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
+namespace {
+
+typedef void (YAMLBodyLoaderImpl::*NodeFunction)(Mapping& node);
+
+struct NodeFunctionInfo
+{
+    NodeFunction function;
+    bool isTransformDerived;
+    void set(NodeFunction function, bool isTransformDerived){
+        this->function = function;
+        this->isTransformDerived = isTransformDerived;
+    }
+};
+
+typedef map<string, NodeFunctionInfo> NodeFunctionMap;
+NodeFunctionMap nodeFunctionMap;
+
+typedef SgNodePtr (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
+typedef map<string, SceneNodeFunction> SceneNodeFunctionMap;
+SceneNodeFunctionMap sceneNodeFunctionMap;
+
+}
+
 namespace cnoid {
 
 class YAMLBodyLoaderImpl
@@ -110,6 +133,7 @@ public:
     void readElements(ValueNode& elements, SgGroupPtr sceneGroup);
     void readNode(Mapping& node, const string& type);
     void readGroup(Mapping& node);
+    void readTransformNode(Mapping& node, NodeFunction nodeFunction);
     void readTransform(Mapping& node);
     void readRigidBody(Mapping& node);
     void readDevice(Device* device, Mapping& node);
@@ -157,14 +181,6 @@ public:
 }
 
 namespace {
-
-typedef void (YAMLBodyLoaderImpl::*NodeTypeFunction)(Mapping& node);
-typedef map<string, NodeTypeFunction> NodeTypeFunctionMap;
-NodeTypeFunctionMap nodeTypeFuncs;
-
-typedef SgNodePtr (YAMLBodyLoaderImpl::*SceneNodeFunction)(Mapping& node);
-typedef map<string, SceneNodeFunction> SceneNodeFunctionMap;
-SceneNodeFunctionMap sceneNodeFuncs;
 
 template<typename ValueType>
 bool extract(Mapping* mapping, const char* key, ValueType& out_value)
@@ -223,19 +239,19 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl()
     body = 0;
     os_ = &nullout();
 
-    if(nodeTypeFuncs.empty()){
-        nodeTypeFuncs["Group"] = &YAMLBodyLoaderImpl::readGroup;
-        nodeTypeFuncs["Transform"] = &YAMLBodyLoaderImpl::readTransform;
-        nodeTypeFuncs["RigidBody"] = &YAMLBodyLoaderImpl::readRigidBody;
-        nodeTypeFuncs["ForceSensor"] = &YAMLBodyLoaderImpl::readForceSensor;
-        nodeTypeFuncs["RateGyroSensor"] = &YAMLBodyLoaderImpl::readRateGyroSensor;
-        nodeTypeFuncs["AccelerationSensor"] = &YAMLBodyLoaderImpl::readAccelerationSensor;
-        nodeTypeFuncs["Camera"] = &YAMLBodyLoaderImpl::readCamera;
-        nodeTypeFuncs["CameraDevice"] = &YAMLBodyLoaderImpl::readCamera;
-        nodeTypeFuncs["RangeSensor"] = &YAMLBodyLoaderImpl::readRangeSensor;
-        nodeTypeFuncs["SpotLight"] = &YAMLBodyLoaderImpl::readSpotLight;
+    if(nodeFunctionMap.empty()){
+        nodeFunctionMap["Group"].set(&YAMLBodyLoaderImpl::readGroup, false);
+        nodeFunctionMap["Transform"].set(&YAMLBodyLoaderImpl::readTransform, false);
+        nodeFunctionMap["RigidBody"].set(&YAMLBodyLoaderImpl::readRigidBody, true);
+        nodeFunctionMap["ForceSensor"].set(&YAMLBodyLoaderImpl::readForceSensor, true);
+        nodeFunctionMap["RateGyroSensor"].set(&YAMLBodyLoaderImpl::readRateGyroSensor, true);
+        nodeFunctionMap["AccelerationSensor"].set(&YAMLBodyLoaderImpl::readAccelerationSensor, true);
+        nodeFunctionMap["Camera"].set(&YAMLBodyLoaderImpl::readCamera, true);
+        nodeFunctionMap["CameraDevice"].set(&YAMLBodyLoaderImpl::readCamera, true);
+        nodeFunctionMap["RangeSensor"].set(&YAMLBodyLoaderImpl::readRangeSensor, true);
+        nodeFunctionMap["SpotLight"].set(&YAMLBodyLoaderImpl::readSpotLight, true);
 
-        sceneNodeFuncs["Shape"] = &YAMLBodyLoaderImpl::readSceneShape;
+        sceneNodeFunctionMap["Shape"] = &YAMLBodyLoaderImpl::readSceneShape;
     }
 
     setDefaultDivisionNumber(20);
@@ -722,13 +738,17 @@ void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup
 
 void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 {
-    NodeTypeFunctionMap::iterator p = nodeTypeFuncs.find(type);
-    if(p != nodeTypeFuncs.end()){
-        NodeTypeFunction readNode = p->second;
-        (this->*readNode)(node);
+    NodeFunctionMap::iterator p = nodeFunctionMap.find(type);
+    if(p != nodeFunctionMap.end()){
+        NodeFunctionInfo& info = p->second;
+        if(info.isTransformDerived){
+            readTransformNode(node, info.function);
+        } else {
+            (this->*info.function)(node);
+        }
     } else {
-        SceneNodeFunctionMap::iterator q = sceneNodeFuncs.find(type);
-        if(q != sceneNodeFuncs.end()){
+        SceneNodeFunctionMap::iterator q = sceneNodeFunctionMap.find(type);
+        if(q != sceneNodeFunctionMap.end()){
             SceneNodeFunction readSceneNode = q->second;
             SgNodePtr scene = (this->*readSceneNode)(node);
             if(scene){
@@ -747,7 +767,7 @@ void YAMLBodyLoaderImpl::readGroup(Mapping& node)
 }
 
 
-void YAMLBodyLoaderImpl::readTransform(Mapping& node)
+void YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction)
 {
     Affine3 T = Affine3::Identity();
 
@@ -761,9 +781,19 @@ void YAMLBodyLoaderImpl::readTransform(Mapping& node)
 
     transformStack.push_back(transformStack.back() * T);
 
+    if(nodeFunction){
+        (this->*nodeFunction)(node);
+    }
+
     findElements(node, new SgPosTransform(T));
 
     transformStack.pop_back();
+}
+
+
+void YAMLBodyLoaderImpl::readTransform(Mapping& node)
+{
+    readTransformNode(node, 0);
 }
 
 
@@ -786,8 +816,6 @@ void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
         rbody.I.setZero();
     }
     rigidBodies.push_back(rbody);
-
-    findElements(node);
 }
 
 
@@ -796,13 +824,11 @@ void YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
     if(node.read("name", symbol)) device->setName(symbol);
     if(node.read("id", id)) device->setId(id);
 
-    device->setLink(currentLink);
     const Affine3& T = transformStack.back();
     device->setLocalTranslation(currentLink->Rs() * T.translation());
     device->setLocalRotation(currentLink->Rs() * T.linear());
+    device->setLink(currentLink);
     body->addDevice(device);
-
-    findElements(node);
 }
 
 
