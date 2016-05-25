@@ -8,6 +8,7 @@
 #include "LinkSelectionView.h"
 #include "WorldItem.h"
 #include "KinematicsBar.h"
+#include "SimulatorItem.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -479,7 +480,7 @@ void BodyLinkViewImpl::update()
     
     BodyPtr body = currentBodyItem->body();
     const vector<int>& selectedLinkIndices =
-        LinkSelectionView::mainInstance()->getSelectedLinkIndices(currentBodyItem);
+        LinkSelectionView::mainInstance()->selectedLinkIndices(currentBodyItem);
 
     if(selectedLinkIndices.empty()){
         currentLink = body->rootLink();
@@ -646,8 +647,14 @@ void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
             const Matrix3 R = currentLink->attitude();
             const Vector3 rpy = rpyFromRot(R);
             for(int i=0; i < 3; ++i){
-                xyzSpin[i].setValue(currentLink->p()[i]);
-                rpySpin[i].setValue(degree(rpy[i]));
+                DoubleSpinBox& xyzSpin_i = xyzSpin[i];
+                if(!xyzSpin_i.hasFocus()){
+                    xyzSpin_i.setValue(currentLink->p()[i]);
+                }
+                DoubleSpinBox& rpySpin_i = rpySpin[i];
+                if(!rpySpin_i.hasFocus()){
+                    rpySpin_i.setValue(degree(rpy[i]));
+                }
             }
             if(attMatrixCheck.isChecked()){
                 for(int i=0; i < 3; ++i){
@@ -772,24 +779,45 @@ void BodyLinkViewImpl::on_dqLimitChanged(bool isMin)
 
 void BodyLinkViewImpl::onXyzChanged()
 {
-    if(currentLink){
-        Vector3 p;
+    if(currentBodyItem && currentLink){
+        Vector3 translation;
         for(int i=0; i < 3; ++i){
-            p[i] = xyzSpin[i].value();
+            translation[i] = xyzSpin[i].value();
         }
-        doInverseKinematics(p, currentLink->R());
+
+        SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
+        if(!activeSimulator){
+            doInverseKinematics(translation, currentLink->R());
+        } else {
+            if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
+                Position position = currentLink->position();
+                position.translation() = translation;
+                activeSimulator->setForcedPosition(currentBodyItem, position);
+            }
+        }
     }
 }
 
 
 void BodyLinkViewImpl::onRpyChanged()
 {
-    if(currentLink){
+    if(currentBodyItem && currentLink){
         Vector3 rpy;
         for(int i=0; i < 3; ++i){
             rpy[i] = radian(rpySpin[i].value());
         }
-        doInverseKinematics(currentLink->p(), currentLink->calcRfromAttitude(rotFromRpy(rpy)));
+        Matrix3 R = currentLink->calcRfromAttitude(rotFromRpy(rpy));
+
+        SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
+        if(!activeSimulator){
+            doInverseKinematics(currentLink->p(), R);
+        } else {
+            if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
+                Position position = currentLink->position();
+                position.linear() = R;
+                activeSimulator->setForcedPosition(currentBodyItem, position);
+            }
+        }
     }
 }
 

@@ -189,7 +189,7 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     bool showStatusBar = config->get("showStatusBar", true);
     QWidget* statusBar = InfoBar::instance();
     statusBar->setVisible(showStatusBar);
-    showStatusBarCheck->setChecked(showStatusBarCheck);
+    showStatusBarCheck->setChecked(showStatusBar);
     showStatusBarCheck->sigToggled().connect(boost::bind(&QWidget::setVisible, statusBar, _1));
     
     fullScreenCheck = mm.addCheckItem(_("Full Screen"));

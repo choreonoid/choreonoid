@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-28 14:53+0900\n"
+"POT-Creation-Date: 2016-05-23 13:58+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -64,12 +64,12 @@ msgid "Save"
 msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:912 ItemManager.cpp:1131
-#: ItemPropertyView.cpp:272 PluginManager.cpp:653 ProjectManager.cpp:475
+#: ItemPropertyView.cpp:273 PluginManager.cpp:653 ProjectManager.cpp:475
 #: ProjectManager.cpp:500 TaskView.cpp:269
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: CaptureBar.cpp:100 ItemManager.cpp:949 ItemPropertyView.cpp:280
+#: CaptureBar.cpp:100 ItemManager.cpp:949 ItemPropertyView.cpp:281
 #: PluginManager.cpp:657 ProjectManager.cpp:479 ProjectManager.cpp:504
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
@@ -391,7 +391,7 @@ msgstr ";;全てのファイル (*)"
 msgid "Select File"
 msgstr "ファイルを選択"
 
-#: ItemPropertyView.cpp:271 MovieRecorder.cpp:364
+#: ItemPropertyView.cpp:272 MovieRecorder.cpp:364
 msgid "Select"
 msgstr "選択"
 

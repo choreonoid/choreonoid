@@ -33,6 +33,7 @@ set(sources
   SimulationBar.cpp
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
+  LinkPropertyView.cpp
   BodyLinkView.cpp
   JointSliderView.cpp
   JointStateView.cpp

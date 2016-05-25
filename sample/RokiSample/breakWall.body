@@ -1,0 +1,82 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: breakWall
+rootLink: BASE
+
+links :
+  -
+   name: BASE
+   jointType: fixed
+   centerOfMass: [ 0, 0, 0 ]
+   mass: 0.25
+   inertia: [
+     0.0002604166667, 0, 0,
+     0, 0.0004166666667, 0,
+     0, 0, 0.0002604166667 ]
+   elements:
+     Shape:
+       appearance: &Appearance1
+         material: 
+           diffuseColor: [ 0.4, 1.0, 0.4 ]
+       geometry: { type: Box, size: [ 0.099, 0.049, 0.099 ] }
+  -
+    name: link1
+    parent: BASE
+    translation : [ 0, 0, 0.05 ]
+    jointType: free
+    centerOfMass: [0, 0, 0.05]
+    mass: 0.25
+    inertia: [
+      0.0002604166667, 0, 0,
+      0, 0.0004166666667, 0,
+      0, 0, 0.0002604166667 ]
+    break: [ 200.0, 200.0 ]
+    elements:
+      - 
+        type: Transform
+        translation: [ 0, 0, 0.05 ]
+        elements: 
+          Shape:
+            appearance: *Appearance1
+            geometry: { type: Box, size: [ 0.099, 0.049, 0.099 ] }
+  -
+    name: link2
+    parent: link1
+    translation : [ 0, 0, 0.1 ]
+    jointType: free
+    centerOfMass: [0, 0, 0.05]
+    mass: 0.25
+    inertia: [
+      0.0002604166667, 0, 0,
+      0, 0.0004166666667, 0,
+      0, 0, 0.0002604166667 ]
+    break: [ 10.0, 10.0 ]
+    elements:
+      - 
+        type: Transform
+        translation: [ 0, 0, 0.05 ]
+        elements :
+          Shape :
+            appearance: *Appearance1
+            geometry: { type: Box, size: [ 0.099, 0.049, 0.099 ] }
+  -
+    name: link3
+    parent: link2
+    translation : [ 0, 0, 0.1 ]
+    jointType: free
+    centerOfMass: [0, 0, 0.05]
+    mass: 0.25
+    inertia: [
+      0.0002604166667, 0, 0,
+      0, 0.0004166666667, 0,
+      0, 0, 0.0002604166667 ]
+    break: [ 10.0, 10.0 ]
+    elements:
+      - 
+        type: Transform
+        translation: [ 0, 0, 0.05 ]
+        elements :
+          Shape :
+            appearance: *Appearance1
+            geometry: { type: Box, size: [ 0.099, 0.049, 0.099 ] }

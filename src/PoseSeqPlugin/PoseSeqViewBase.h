@@ -55,7 +55,7 @@ public:
     PoseSeq::iterator currentPoseIter;
 
     struct PoseIterTimeComp {
-        bool operator()(const PoseSeq::iterator it1, const PoseSeq::iterator it2) {
+        bool operator()(const PoseSeq::iterator it1, const PoseSeq::iterator it2) const {
             return it1->time() < it2->time();
         }
     };

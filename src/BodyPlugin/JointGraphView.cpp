@@ -159,7 +159,7 @@ void JointGraphView::setupGraphWidget()
             MultiValueSeqPtr seq = it->item->seq();
             int numParts = seq->numParts();
             BodyPtr body = it->bodyItem->body();
-            const std::vector<int>& selectedLinkIndices = linkSelection->getSelectedLinkIndices(it->bodyItem);
+            const std::vector<int>& selectedLinkIndices = linkSelection->selectedLinkIndices(it->bodyItem);
             
             for(size_t i=0; i < selectedLinkIndices.size(); ++i){
                 Link* link = body->link(selectedLinkIndices[i]);

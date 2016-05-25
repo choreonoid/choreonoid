@@ -19,6 +19,7 @@
 #include "BodyBar.h"
 #include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
+#include "LinkPropertyView.h"
 #include "BodyLinkView.h"
 #include "JointSliderView.h"
 #include "JointStateView.h"
@@ -82,6 +83,7 @@ public:
         addToolBar(KinematicsBar::instance());
 
         LinkSelectionView::initializeClass(this);
+        LinkPropertyView::initializeClass(this);
         BodyLinkView::initializeClass(this);
         JointSliderView::initializeClass(this);
         JointStateView::initializeClass(this);

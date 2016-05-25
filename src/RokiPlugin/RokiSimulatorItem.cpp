@@ -135,25 +135,6 @@ struct Triangle {
     int indices[3];
 };
 
-struct JointInfo {
-    double motorconstant;
-    double admitance;
-    double minvoltage;
-    double maxvoltage;
-    double inertia;
-    double gearinertia;
-    double ratio;
-    double compk;
-    double compl_;
-    double stiff;
-    double viscos;
-    double coulomb;
-    double staticfriction;
-    bool isBreakJoint;
-    Vector2 breakParam;
-};
-typedef map<Link*, JointInfo> JointInfoMap;
-
 class RokiBody;
 class RokiLink : public Referenced
 {
@@ -195,7 +176,6 @@ public:
     rkChain* chain;
     BasicSensorSimulationHelper sensorHelper;
     int geometryId;
-    JointInfoMap jointInfoMap;
     RokiLinkMap rokiLinkMap;
     vector<RokiBreakLinkTraverse> linkTraverseList;
 
@@ -396,18 +376,39 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     zMat3DSetElem(att, 2, 1, lFrame(2,1));
     zMat3DSetElem(att, 2, 2, lFrame(2,2));
 
-    JointInfo* jointInfo = 0;
-    JointInfoMap::iterator it = body->jointInfoMap.find(link);
-    if(it!=body->jointInfoMap.end())
-        jointInfo = &(it->second);
-
+    bool dc_motor = false;
     breakJoint = false;
-    if(jointInfo && jointInfo->isBreakJoint){
-    	rkLinkBreakPrp(rklink) = zAlloc( rkBreakPrp, 1 );
-    	rkLinkBreakPrp(rklink)->is_broken = false;
-    	rkLinkBreakPrp(rklink)->ep_f = jointInfo->breakParam[0];
-    	rkLinkBreakPrp(rklink)->ep_t = jointInfo->breakParam[1];
-    	breakJoint = true;
+    double motorconstant, admitance, minvoltage, maxvoltage,
+           inertia, gearinertia, ratio, compk,
+           compl_, stiff, viscos, coulomb, staticfriction;
+    motorconstant = admitance = minvoltage = maxvoltage
+        = inertia = gearinertia = ratio = compk
+        = compl_ = stiff = viscos = coulomb
+        = staticfriction = std::numeric_limits<double>::max();
+    const Mapping* jointParams = link->info();
+    if(jointParams->isValid()){
+        jointParams->read("rotorInertia", inertia);
+        jointParams->read("gearRatio", ratio);
+        dc_motor |= jointParams->read("gearInertia", gearinertia);
+        dc_motor |= jointParams->read("motorAdmittance", admitance);
+        dc_motor |= jointParams->read("motorConstant", motorconstant);
+        dc_motor |= jointParams->read("motorMinVoltage", minvoltage);
+        dc_motor |= jointParams->read("motorMaxVoltage", maxvoltage);
+        dc_motor |= jointParams->read("jointStiffness", stiff);
+        dc_motor |= jointParams->read("jointViscosity", viscos);
+        dc_motor |= jointParams->read("jointFriction", coulomb);
+        dc_motor |= jointParams->read("jointStaticFriction", staticfriction);
+        dc_motor |= jointParams->read("compk", compk);
+        dc_motor |= jointParams->read("compl", compl_);
+
+        Vector2 breakParam;
+        if(read(*jointParams, "break", breakParam)){
+            rkLinkBreakPrp(rklink) = zAlloc( rkBreakPrp, 1 );
+            rkLinkBreakPrp(rklink)->is_broken = false;
+            rkLinkBreakPrp(rklink)->ep_f = breakParam[0];
+            rkLinkBreakPrp(rklink)->ep_t = breakParam[1];
+            breakJoint = true;
+        }
     }
 
     rkMotor* rkMotor;
@@ -416,38 +417,38 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     case Link::ROTATIONAL_JOINT:
         rkJointCreate( joint, RK_JOINT_REVOL );
         rkJointGetMotor( joint, &rkMotor );
-        if(!jointInfo && link->Jm2() != 0.0){
+        if(!dc_motor && link->Jm2() != 0.0){
             rkMotorInit( rkMotor );
             rkMotorCreateJm2(rkMotor);
             ((rkMotorPrpJm2 *)rkMotor->prp)->Jm2 = link->Jm2();
-        }else if(jointInfo){
+        }else if(dc_motor){
             rkMotorCreate ( rkMotor, RK_MOTOR_DC );
-            if(jointInfo->motorconstant!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->k = jointInfo->motorconstant;
-            if(jointInfo->admitance!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->admit = jointInfo->admitance;
-            if(jointInfo->minvoltage!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->minvol = jointInfo->minvoltage;
-            if(jointInfo->maxvoltage!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->maxvol = jointInfo->maxvoltage;
-            if(jointInfo->ratio!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ratio;
-            if(jointInfo->inertia!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->inertia = jointInfo->inertia;
-            if(jointInfo->gearinertia!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->inertia_gear = jointInfo->gearinertia;
-            if(jointInfo->compk!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->_comp_k = jointInfo->compk;
-            if(jointInfo->compl_!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->_comp_l = jointInfo->compl_;
-            if(jointInfo->stiff!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->stiff = jointInfo->stiff;
-            if(jointInfo->viscos!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->viscos = jointInfo->viscos;
-            if(jointInfo->coulomb!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->coulomb = jointInfo->coulomb;
-            if(jointInfo->staticfriction!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->sf = jointInfo->staticfriction;
+            if(motorconstant!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->k = motorconstant;
+            if(admitance!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->admit = admitance;
+            if(minvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->minvol = minvoltage;
+            if(maxvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->maxvol = maxvoltage;
+            if(ratio!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->decratio = ratio;
+            if(inertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia = inertia;
+            if(gearinertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia_gear = gearinertia;
+            if(compk!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_k = compk;
+            if(compl_!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_l = compl_;
+            if(stiff!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->stiff = stiff;
+            if(viscos!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->viscos = viscos;
+            if(coulomb!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->coulomb = coulomb;
+            if(staticfriction!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->sf = staticfriction;
         }else{
             rkMotorCreate ( rkMotor, RK_MOTOR_TRQ );
             ((rkMotorPrpTRQ *)rkMotor->prp)->max = std::numeric_limits<double>::max();
@@ -457,38 +458,38 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
     case Link::SLIDE_JOINT:
         rkJointCreate( joint, RK_JOINT_PRISM );
         rkJointGetMotor( joint, &rkMotor );
-        if(!jointInfo && link->Jm2() != 0.0){
+        if(!dc_motor && link->Jm2() != 0.0){
             rkMotorInit( rkMotor );
             rkMotorCreateJm2(rkMotor);
             ((rkMotorPrpJm2 *)rkMotor->prp)->Jm2 = link->Jm2();
-        }else if(jointInfo){
+        }else if(dc_motor){
             rkMotorCreate ( rkMotor, RK_MOTOR_DC );
-            if(jointInfo->motorconstant!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->k = jointInfo->motorconstant;
-            if(jointInfo->admitance!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->admit = jointInfo->admitance;
-            if(jointInfo->minvoltage!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->minvol = jointInfo->minvoltage;
-            if(jointInfo->maxvoltage!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->maxvol = jointInfo->maxvoltage;
-            if(jointInfo->ratio!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->decratio = jointInfo->ratio;
-            if(jointInfo->inertia!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->inertia = jointInfo->inertia;
-            if(jointInfo->gearinertia!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->inertia_gear = jointInfo->gearinertia;
-            if(jointInfo->compk!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->_comp_k = jointInfo->compk;
-            if(jointInfo->compl_!=std::numeric_limits<double>::max())
-                ((rkMotorPrpDC *)rkMotor->prp)->_comp_l = jointInfo->compl_;
-            if(jointInfo->stiff!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->stiff = jointInfo->stiff;
-            if(jointInfo->viscos!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->viscos = jointInfo->viscos;
-            if(jointInfo->coulomb!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->coulomb = jointInfo->coulomb;
-            if(jointInfo->staticfriction!=std::numeric_limits<double>::max())
-                ((rkJointPrpRevol *)joint->prp)->sf = jointInfo->staticfriction;
+            if(motorconstant!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->k = motorconstant;
+            if(admitance!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->admit = admitance;
+            if(minvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->minvol = minvoltage;
+            if(maxvoltage!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->maxvol = maxvoltage;
+            if(ratio!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->decratio = ratio;
+            if(inertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia = inertia;
+            if(gearinertia!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->inertia_gear = gearinertia;
+            if(compk!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_k = compk;
+            if(compl_!=std::numeric_limits<double>::max())
+                ((rkMotorPrpDC *)rkMotor->prp)->_comp_l = compl_;
+            if(stiff!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->stiff = stiff;
+            if(viscos!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->viscos = viscos;
+            if(coulomb!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->coulomb = coulomb;
+            if(staticfriction!=std::numeric_limits<double>::max())
+                ((rkJointPrpRevol *)joint->prp)->sf = staticfriction;
         }else{
             rkMotorCreate ( rkMotor, RK_MOTOR_TRQ );
             ((rkMotorPrpTRQ *)rkMotor->prp)->max = std::numeric_limits<double>::max();
@@ -783,55 +784,6 @@ RokiBody::RokiBody(const Body& orgBody)
     Body* body = this->body();
     rokiLinkMap.clear();
     linkTraverseList.clear();
-
-    const Listing& jointParams = *body->info()->findListing("RokiJointParameters");
-
-    if(jointParams.isValid()){
-        for(int i=0; i < jointParams.size(); ++i){
-            JointInfo jointInfo;
-            const Mapping& jointParam = *jointParams[i].toMapping();
-            Link* link = body->link(jointParam["name"].toString());
-            if(link){
-                double w;
-                jointInfo.motorconstant = jointInfo.admitance = jointInfo.minvoltage = jointInfo.maxvoltage
-                        = jointInfo.inertia = jointInfo.gearinertia = jointInfo.ratio = jointInfo.compk
-                        = jointInfo.compl_ = jointInfo.stiff = jointInfo.viscos = jointInfo.coulomb
-                        = jointInfo.staticfriction = std::numeric_limits<double>::max();
-                jointInfo.isBreakJoint = false;
-                jointInfo.breakParam[0] = jointInfo.breakParam[1] = 0;
-                if(jointParam.read("motorconstant", w))
-                    jointInfo.motorconstant = w;
-                if(jointParam.read("admitance", w))
-                    jointInfo.admitance = w;
-                if(jointParam.read("minvoltage", w))
-                    jointInfo.minvoltage = w;
-                if(jointParam.read("maxvoltage", w))
-                    jointInfo.maxvoltage = w;
-                if(jointParam.read("inertia", w))
-                    jointInfo.inertia = w;
-                if(jointParam.read("gearinertia", w))
-                    jointInfo.gearinertia = w;
-                if(jointParam.read("ratio", w))
-                    jointInfo.ratio = w;
-                if(jointParam.read("compk", w))
-                    jointInfo.compk = w;
-                if(jointParam.read("compl", w))
-                    jointInfo.compl_ = w;
-                if(jointParam.read("stiff", w))
-                    jointInfo.stiff = w;
-                if(jointParam.read("viscos", w))
-                    jointInfo.viscos = w;
-                if(jointParam.read("coulomb", w))
-                    jointInfo.coulomb = w;
-                if(jointParam.read("staticfriction", w))
-                    jointInfo.staticfriction = w;
-                if(read(jointParam, "break", jointInfo.breakParam)){
-                	jointInfo.isBreakJoint = true;
-                }
-                jointInfoMap[link] = jointInfo;
-            }
-        }
-    }
 }
 
 

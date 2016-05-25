@@ -2038,19 +2038,19 @@ void SimulatorItem::pauseSimulation()
 
 void SimulatorItemImpl::pauseSimulation()
 {
-	pauseRequested = true;
+    pauseRequested = true;
 }
 
 
 void SimulatorItem::restartSimulation()
 {
-	impl->restartSimulation();
+    impl->restartSimulation();
 }
 
 
 void SimulatorItemImpl::restartSimulation()
 {
-	pauseRequested = false;
+    pauseRequested = false;
 }
 
 
@@ -2313,13 +2313,19 @@ void SimulatorItemImpl::setVirtualElasticStringForce()
 }
 
 
-void SimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+void SimulatorItem::setForcedPosition(BodyItem* bodyItem, const Position& T)
 {
 
 }
 
 
-void SimulatorItem::clearForcedBodyPositions()
+bool SimulatorItem::isForcedPositionActiveFor(BodyItem* bodyItem) const
+{
+    return false;
+}
+
+
+void SimulatorItem::clearForcedPositions()
 {
 
 }
