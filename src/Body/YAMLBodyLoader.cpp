@@ -585,6 +585,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     ValueNodePtr elements = linkNode->extract("elements");
     if(elements){
         if(readElements(*elements, shape)){
+            shape->setName(link->name());
             hasShape = true;
         }
     }
@@ -700,18 +701,10 @@ bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr& sceneGrou
     if(elements.isListing()){
         Listing& listing = *elements.toListing();
         for(int i=0; i < listing.size(); ++i){
-            ValueNode& elementNode = listing[i];
-            if(elementNode.isListing()){
-                SgGroupPtr group = new SgGroup;
-                if(readElements(elementNode, group)){
-                    isSceneNodeAdded = true;
-                }
-            } else if(elementNode.isMapping()){
-                Mapping& element = *elementNode.toMapping();
-                const string type = element["type"].toString();
-                if(readNode(element, type)){
-                    isSceneNodeAdded = true;
-                }
+            Mapping& element = *listing[i].toMapping();
+            const string type = element["type"].toString();
+            if(readNode(element, type)){
+                isSceneNodeAdded = true;
             }
         }
     } else if(elements.isMapping()){

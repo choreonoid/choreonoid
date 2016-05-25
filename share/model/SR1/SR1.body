@@ -539,23 +539,25 @@ links:
         name: LeftAnkleForceSensor
         id: 0
       - &LegShape6
-        -
-          type: Transform
-          translation: [ 0.1, 0, 0 ]
-          rotation: [ 0, 0, 1, 90 ]
-          elements:
-            Shape:
-              geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
-              appearance: &LegApp6
-                material:
-                  diffuseColor: [ 0.0, 0.5, 0.0 ]
-        -
-          type: Transform
-          translation: [ 0.055, 0, -0.05 ]
-          elements:
-            Shape:
-              geometry: { type: Box, size: [ 0.25, 0.14, 0.01 ] }
-              appearance: *LegApp6
+        type: Group
+        elements:
+          -
+            type: Transform
+            translation: [ 0.1, 0, 0 ]
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape:
+                geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+                appearance: &LegApp6
+                  material:
+                    diffuseColor: [ 0.0, 0.5, 0.0 ]
+          -
+            type: Transform
+            translation: [ 0.055, 0, -0.05 ]
+            elements:
+              Shape:
+                geometry: { type: Box, size: [ 0.25, 0.14, 0.01 ] }
+                appearance: *LegApp6
   -
     name: RLEG_HIP_R
     parent: WAIST
