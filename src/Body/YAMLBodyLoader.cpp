@@ -34,7 +34,7 @@ using namespace cnoid;
 
 namespace {
 
-typedef void (YAMLBodyLoaderImpl::*NodeFunction)(Mapping& node);
+typedef bool (YAMLBodyLoaderImpl::*NodeFunction)(Mapping& node);
 
 struct NodeFunctionInfo
 {
@@ -80,6 +80,7 @@ public:
     LinkMap linkMap;
 
     LinkPtr currentLink;
+    vector<string> nameStack;
     typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Vector;
     Affine3Vector transformStack;
 
@@ -129,20 +130,21 @@ public:
     bool readBody(Mapping* topNode);
     LinkPtr readLink(Mapping* linkNode);
     void setMassParameters(Link* link);
-    void findElements(Mapping& node, SgGroupPtr sceneGroup = 0);
-    void readElements(ValueNode& elements, SgGroupPtr sceneGroup);
-    void readNode(Mapping& node, const string& type);
-    void readGroup(Mapping& node);
-    void readTransformNode(Mapping& node, NodeFunction nodeFunction);
-    void readTransform(Mapping& node);
-    void readRigidBody(Mapping& node);
-    void readDevice(Device* device, Mapping& node);
-    void readForceSensor(Mapping& node);
-    void readRateGyroSensor(Mapping& node);
-    void readAccelerationSensor(Mapping& node);
-    void readCamera(Mapping& node);
-    void readRangeSensor(Mapping& node);
-    void readSpotLight(Mapping& node);
+    //! \return true if any scene nodes other than Group and Transform are added in the sub tree
+    bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
+    bool readNode(Mapping& node, const string& type);
+    bool readContainerNode(Mapping& node, SgGroupPtr& group, NodeFunction nodeFunction);
+    bool readTransformNode(Mapping& node, NodeFunction nodeFunction);
+    bool readGroup(Mapping& node);
+    bool readTransform(Mapping& node);
+    bool readRigidBody(Mapping& node);
+    bool readDevice(Device* device, Mapping& node);
+    bool readForceSensor(Mapping& node);
+    bool readRateGyroSensor(Mapping& node);
+    bool readAccelerationSensor(Mapping& node);
+    bool readCamera(Mapping& node);
+    bool readRangeSensor(Mapping& node);
+    bool readSpotLight(Mapping& node);
     SgNodePtr readSceneShape(Mapping& node);
     SgMesh* readSceneGeometry(Mapping& node);
     SgMesh* readSceneBox(Mapping& node);
@@ -379,6 +381,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     linkInfos.clear();
     linkMap.clear();
     validJointIdSet.clear();
+    nameStack.clear();
     transformStack.clear();
     rigidBodies.clear();
         
@@ -577,11 +580,13 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     currentLink = link;
     rigidBodies.clear();
     currentSceneGroup = 0;
-    //SgGroupPtr shape = new SgGroup;
+    bool hasShape = false;
     SgGroupPtr shape = new SgInvariantGroup;
     ValueNodePtr elements = linkNode->extract("elements");
     if(elements){
-        readElements(*elements, shape);
+        if(readElements(*elements, shape)){
+            hasShape = true;
+        }
     }
 
     RigidBody rbody;
@@ -608,13 +613,12 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             SgNodePtr node = sgConverter.convert(vrmlNode);
             if(node){
                 shape->addChild(node);
+                hasShape = true;
             }
         }
     }
 
-    // \todo remove redundant group nodes here
-
-    if(!shape->empty()){
+    if(hasShape){
         link->setShape(shape);
     }
 
@@ -686,22 +690,10 @@ void YAMLBodyLoaderImpl::setMassParameters(Link* link)
 }
 
 
-void YAMLBodyLoaderImpl::findElements(Mapping& node, SgGroupPtr sceneGroup)
+bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr& sceneGroup)
 {
-    ValueNode& elements = *node.find("elements");
-    if(!elements.isValid()){
-        return;
-    }
-
-    if(!sceneGroup){
-        sceneGroup = new SgGroup;
-    }
-    readElements(elements, sceneGroup);
-}
-
-
-void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup)
-{
+    bool isSceneNodeAdded = false;
+    
     SgGroupPtr parentSceneGroup = currentSceneGroup;
     currentSceneGroup = sceneGroup;
     
@@ -710,12 +702,16 @@ void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup
         for(int i=0; i < listing.size(); ++i){
             ValueNode& elementNode = listing[i];
             if(elementNode.isListing()){
-                readElements(elementNode, new SgGroup);
-
+                SgGroupPtr group = new SgGroup;
+                if(readElements(elementNode, group)){
+                    isSceneNodeAdded = true;
+                }
             } else if(elementNode.isMapping()){
                 Mapping& element = *elementNode.toMapping();
                 const string type = element["type"].toString();
-                readNode(element, type);
+                if(readNode(element, type)){
+                    isSceneNodeAdded = true;
+                }
             }
         }
     } else if(elements.isMapping()){
@@ -733,27 +729,40 @@ void YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr sceneGroup
                             % type2 % type));
                 }
             }
-            readNode(element, type);
+            if(readNode(element, type)){
+                isSceneNodeAdded = true;
+            }
             ++p;
         }
     }
 
-    if(parentSceneGroup && !sceneGroup->empty()){
+    if(parentSceneGroup && isSceneNodeAdded){
         parentSceneGroup->addChild(sceneGroup);
     }
     currentSceneGroup = parentSceneGroup;
+
+    return isSceneNodeAdded;
 }
 
 
-void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
+bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 {
+    bool isSceneNodeAdded = false;
+    
+    nameStack.push_back(string());
+    node.read("name", nameStack.back());
+
     NodeFunctionMap::iterator p = nodeFunctionMap.find(type);
     if(p != nodeFunctionMap.end()){
         NodeFunctionInfo& info = p->second;
         if(info.isTransformDerived){
-            readTransformNode(node, info.function);
+            if(readTransformNode(node, info.function)){
+                isSceneNodeAdded = true;
+            }
         } else {
-            (this->*info.function)(node);
+            if((this->*info.function)(node)){
+                isSceneNodeAdded = true;
+            }
         }
     } else {
         SceneNodeFunctionMap::iterator q = sceneNodeFunctionMap.find(type);
@@ -762,51 +771,95 @@ void YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
             SgNodePtr scene = (this->*readSceneNode)(node);
             if(scene){
                 currentSceneGroup->addChild(scene);
+                isSceneNodeAdded = true;
             }
         } else {
             node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
         }
     }
-}
-        
-   
-void YAMLBodyLoaderImpl::readGroup(Mapping& node)
-{
-    findElements(node);
+
+    nameStack.pop_back();
+    
+    return isSceneNodeAdded;
 }
 
 
-void YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction)
+bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SgGroupPtr& group, NodeFunction nodeFunction)
 {
+    bool isSceneNodeAdded = false;
+
+    group->setName(nameStack.back());
+
+    if(nodeFunction){
+        if((this->*nodeFunction)(node)){
+            isSceneNodeAdded = true;
+        }
+    }
+
+    ValueNode& elements = *node.find("elements");
+    if(elements.isValid()){
+        if(readElements(elements, group)){
+            isSceneNodeAdded = true;
+        }
+    }
+
+    return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction)
+{
+    bool isSceneNodeAdded = false;
+
     Affine3 T = Affine3::Identity();
-
+    bool isIdentity = true;
+    
     if(read(node, "translation", v)){
         T.translation() = v;
+        isIdentity = false;
     }
     Vector4 r;
     if(read(node, "rotation", r)){
         T.linear() = Matrix3(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
+        isIdentity = false;
     }
 
-    transformStack.push_back(transformStack.back() * T);
-
-    if(nodeFunction){
-        (this->*nodeFunction)(node);
+    if(!isIdentity){
+        transformStack.push_back(transformStack.back() * T);
     }
 
-    findElements(node, new SgPosTransform(T));
+    SgGroupPtr group;
+    if(isIdentity){
+        group = new SgGroup;
+    } else {
+        group = new SgPosTransform(T);
+    }
+    if(readContainerNode(node, group, nodeFunction)){
+        isSceneNodeAdded = true;
+    }
 
-    transformStack.pop_back();
+    if(!isIdentity){
+        transformStack.pop_back();
+    }
+
+    return isSceneNodeAdded;
 }
 
 
-void YAMLBodyLoaderImpl::readTransform(Mapping& node)
+bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
-    readTransformNode(node, 0);
+    SgGroupPtr group = new SgGroup;
+    return readContainerNode(node, group, 0);
 }
 
 
-void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
+bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
+{
+    return readTransformNode(node, 0);
+}
+
+
+bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 {
     RigidBody rbody;
     const Affine3& T = transformStack.back();
@@ -825,12 +878,15 @@ void YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
         rbody.I.setZero();
     }
     rigidBodies.push_back(rbody);
+
+    return false;
 }
 
 
-void YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
+bool YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
 {
-    if(node.read("name", symbol)) device->setName(symbol);
+    device->setName(nameStack.back());
+
     if(node.read("id", id)) device->setId(id);
 
     const Affine3& T = transformStack.back();
@@ -838,10 +894,12 @@ void YAMLBodyLoaderImpl::readDevice(Device* device, Mapping& node)
     device->setLocalRotation(currentLink->Rs() * T.linear());
     device->setLink(currentLink);
     body->addDevice(device);
+
+    return false;
 }
 
 
-void YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
+bool YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
 {
     ForceSensorPtr sensor = new ForceSensor;
     if(read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
@@ -850,23 +908,23 @@ void YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
 }
 
 
-void YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
+bool YAMLBodyLoaderImpl::readRateGyroSensor(Mapping& node)
 {
     RateGyroSensorPtr sensor = new RateGyroSensor;
     if(readAngles(node, "maxAngularVelocity", v)) sensor->w_max() = v;
-    readDevice(sensor, node);
+    return readDevice(sensor, node);
 }
 
 
-void YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
+bool YAMLBodyLoaderImpl::readAccelerationSensor(Mapping& node)
 {
     AccelerationSensorPtr sensor = new AccelerationSensor();
     if(read(node, "maxAcceleration", v)) sensor->dv_max() = v;
-    readDevice(sensor, node);
+    return readDevice(sensor, node);
 }
 
 
-void YAMLBodyLoaderImpl::readCamera(Mapping& node)
+bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
 {
     CameraPtr camera;
     RangeCamera* range = 0;
@@ -911,11 +969,11 @@ void YAMLBodyLoaderImpl::readCamera(Mapping& node)
     if(node.read("backClipDistance", value)) camera->setFarDistance(value);
     if(node.read("frameRate", value)) camera->setFrameRate(value);
     
-    readDevice(camera, node);
+    return readDevice(camera, node);
 }
 
 
-void YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
+bool YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
 {
     RangeSensorPtr rangeSensor = new RangeSensor;
     
@@ -927,11 +985,11 @@ void YAMLBodyLoaderImpl::readRangeSensor(Mapping& node)
     if(node.read("maxDistance", value)) rangeSensor->setMaxDistance(value);
     if(node.read("scanRate", value)) rangeSensor->setFrameRate(value);
     
-    readDevice(rangeSensor, node);
+    return readDevice(rangeSensor, node);
 }
 
 
-void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
+bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
 {
     SpotLightPtr light = new SpotLight();
 
@@ -947,7 +1005,7 @@ void YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
         light->setQuadraticAttenuation(color[2]);
     }
 
-    readDevice(light, node);
+    return readDevice(light, node);
 }
 
 
