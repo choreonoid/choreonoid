@@ -396,7 +396,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 {
     double version = 1.0;
     
-    ValueNode* formatNode = topNode->find("format");
+    ValueNodePtr formatNode = topNode->extract("format");
     if(formatNode->isValid()){
         if(formatNode->toString() != "ChoreonoidBody"){
             formatNode->throwException(
@@ -412,8 +412,8 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     isDegreeMode = false;
-    ValueNode* angleUnitNode = topNode->find("angleUnit");
-    if(angleUnitNode->isValid()){
+    ValueNodePtr angleUnitNode = topNode->extract("angleUnit");
+    if(angleUnitNode){
         string unit = angleUnitNode->toString();
         if(unit == "radian"){
             isDegreeMode = false;
@@ -424,20 +424,25 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
-    if(topNode->read("name", symbol)){
+    if(extract(topNode, "name", symbol)){
         body->setModelName(symbol);
     }
 
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
-    Listing& linkNodes = *topNode->find("links")->toListing();
-    for(int i=0; i < linkNodes.size(); ++i){
-        Mapping* linkNode = linkNodes[i].toMapping();
-        LinkInfo* info = new LinkInfo;
-        extract(linkNode, "parent", info->parent);
-        info->link = readLink(linkNode);
-        info->node = linkNode;
-        linkInfos.push_back(info);
+    ValueNodePtr linksNode = topNode->extract("links");
+    if(!linksNode){
+        topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
+    } else {
+        Listing& linkNodes = *linksNode->toListing();
+        for(int i=0; i < linkNodes.size(); ++i){
+            Mapping* linkNode = linkNodes[i].toMapping();
+            LinkInfo* info = new LinkInfo;
+            extract(linkNode, "parent", info->parent);
+            info->link = readLink(linkNode);
+            info->node = linkNode;
+            linkInfos.push_back(info);
+        }
     }
 
     // construct a link tree
@@ -454,16 +459,15 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
                 parentLink->appendChild(link);
             } else {
                 info->node->throwException(
-                    str(format(_("Parent link \"%1%\" of %2% is not defined.")) % parent % info->link->name()));
+                    str(format(_("Parent link \"%1%\" of %2% is not defined")) % parent % info->link->name()));
             }
         }
     }        
 
-    ValueNode* rootLinkNode = topNode->find("rootLink");
-    if(!rootLinkNode->isValid()){
+    ValueNodePtr rootLinkNode = topNode->extract("rootLink");
+    if(!rootLinkNode){
         topNode->throwException(_("There is no \"rootLink\" value for specifying the root link."));
     }
-
     string rootLinkName = rootLinkNode->toString();
     LinkMap::iterator p = linkMap.find(rootLinkName);
     if(p == linkMap.end()){
@@ -481,6 +485,8 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
             }
         }
     }
+
+    body->resetInfo(topNode);
         
     body->installCustomizer();
 
