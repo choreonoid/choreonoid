@@ -23,13 +23,24 @@ public:
             
     LinkSelectionView();
     virtual ~LinkSelectionView();
+
+    BodyItem* currentBodyItem();
+
+    SignalProxy<void()> sigSelectionChanged();
+    int selectedLinkIndex() const;
+    const std::vector<int>& selectedLinkIndices();
+    const boost::dynamic_bitset<>& linkSelection();
             
-    SignalProxy<void()> sigSelectionChanged(BodyItemPtr bodyItem);
+    SignalProxy<void()> sigSelectionChanged(BodyItem* bodyItem);
+    const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
+    const boost::dynamic_bitset<>& linkSelection(BodyItem* bodyItem);
 
-    const std::vector<int>& getSelectedLinkIndices(BodyItemPtr bodyItem);
-    const boost::dynamic_bitset<>& getLinkSelection(BodyItemPtr bodyItem);
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+    const std::vector<int>& getSelectedLinkIndices(BodyItem* bodyItem);
+    const boost::dynamic_bitset<>& getLinkSelection(BodyItem* bodyItem);
+#endif
 
-    bool makeSingleSelection(BodyItemPtr bodyItem, int linkIndex);
+    bool makeSingleSelection(BodyItem* bodyItem, int linkIndex);
 
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);

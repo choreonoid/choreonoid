@@ -86,25 +86,71 @@ LinkSelectionViewImpl::~LinkSelectionViewImpl()
 }
 
 
-SignalProxy<void()> LinkSelectionView::sigSelectionChanged(BodyItemPtr bodyItem)
+BodyItem* LinkSelectionView::currentBodyItem()
+{
+    return impl->linkTreeWidget.bodyItem();
+}
+
+
+SignalProxy<void()> LinkSelectionView::sigSelectionChanged()
+{
+    return impl->linkTreeWidget.sigSelectionChanged();
+}
+
+
+int LinkSelectionView::selectedLinkIndex() const
+{
+    return impl->linkTreeWidget.selectedLinkIndex();
+}
+
+
+const std::vector<int>& LinkSelectionView::selectedLinkIndices()
+{
+    return impl->linkTreeWidget.selectedLinkIndices();
+}
+
+
+const boost::dynamic_bitset<>& LinkSelectionView::linkSelection()
+{
+    return impl->linkTreeWidget.linkSelection();
+}
+
+
+SignalProxy<void()> LinkSelectionView::sigSelectionChanged(BodyItem* bodyItem)
 {
     return impl->linkTreeWidget.sigSelectionChanged(bodyItem);
 }
 
 
-const std::vector<int>& LinkSelectionView::getSelectedLinkIndices(BodyItemPtr bodyItem)
+const std::vector<int>& LinkSelectionView::selectedLinkIndices(BodyItem* bodyItem)
 {
-    return impl->linkTreeWidget.getSelectedLinkIndices(bodyItem);
+    return impl->linkTreeWidget.selectedLinkIndices(bodyItem);
 }
 
 
-const boost::dynamic_bitset<>& LinkSelectionView::getLinkSelection(BodyItemPtr bodyItem)
+const boost::dynamic_bitset<>& LinkSelectionView::linkSelection(BodyItem* bodyItem)
 {
-    return impl->linkTreeWidget.getLinkSelection(bodyItem);
+    return impl->linkTreeWidget.linkSelection(bodyItem);
 }
 
 
-bool LinkSelectionView::makeSingleSelection(BodyItemPtr bodyItem, int linkIndex)
+#ifdef CNOID_BACKWARD_COMPATIBILITY
+
+const std::vector<int>& LinkSelectionView::getSelectedLinkIndices(BodyItem* bodyItem)
+{
+    return impl->linkTreeWidget.selectedLinkIndices(bodyItem);
+}
+
+
+const boost::dynamic_bitset<>& LinkSelectionView::getLinkSelection(BodyItem* bodyItem)
+{
+    return impl->linkTreeWidget.linkSelection(bodyItem);
+}
+
+#endif
+
+
+bool LinkSelectionView::makeSingleSelection(BodyItem* bodyItem, int linkIndex)
 {
     return impl->linkTreeWidget.makeSingleSelection(bodyItem, linkIndex);
 }

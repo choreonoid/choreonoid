@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_VRML_PARSER_H_INCLUDED
-#define CNOID_UTIL_VRML_PARSER_H_INCLUDED
+#ifndef CNOID_UTIL_VRML_PARSER_H
+#define CNOID_UTIL_VRML_PARSER_H
 
 #include "VRML.h"
 #include "exportdecl.h"

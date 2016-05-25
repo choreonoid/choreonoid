@@ -1,0 +1,184 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+
+name: Tank
+rootLink: CHASSIS
+
+links:
+  -
+    name: CHASSIS
+    translation: [ 0, 0, 0.1 ]
+    jointType: free
+    elements:
+      RigidBody:
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 8.0
+        inertia: [
+          0.1, 0,   0,
+          0,   0.1, 0,
+          0,   0,   0.5 ]
+        elements:
+          Shape:
+            appearance: &GREEN
+              material:
+                diffuseColor: [ 0, 0.6, 0 ]
+                ambientIntensity: 0.3
+                specularColor: [ 0.7, 0.7, 0.7 ]
+                shininess: 0.25
+            geometry:
+              type: Box
+              size: [ 0.4, 0.3, 0.1 ]
+  -
+    name: CRAWLER_TRACK_L
+    parent: CHASSIS
+    translation: [ 0, 0.15, 0 ]
+    jointType: crawler
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 0
+    elements:
+      RigidBody:
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 1.0
+        inertia: [
+          0.02, 0,    0,
+          0,    0.02, 0,
+          0,    0,    0.02 ]
+        elements:
+          Transform:
+            translation: [ 0, 0.05, 0 ]
+            elements:
+              Shape: &CRAWLER 
+                appearance: &BLACK
+                  material:
+                    diffuseColor: [ 0.1, 0.1, 0.1 ]
+                    ambientIntensity: 0.01
+                    specularColor: [ 0.3, 0.3, 0.3 ]
+                    shininess: 0.01
+                geometry:
+                  type: Extrusion
+                  crossSection: [
+                    -0.2, -0.1,
+                     0.2, -0.1,
+                     0.3,  0.06,
+                    -0.3,  0.06,
+                    -0.2, -0.1
+                    ]
+                  spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+  -
+    name: CRAWLER_TRACK_R
+    parent: CHASSIS
+    translation: [ 0, -0.15, 0 ]
+    jointType: crawler
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 1
+    elements:
+      RigidBody:
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 1.0
+        inertia: [
+          0.02, 0,    0,
+          0,    0.02, 0,
+          0,    0,    0.02 ]
+        elements:
+          Transform:
+            translation: [ 0, -0.05, 0 ]
+            elements:
+              Shape: *CRAWLER 
+  -
+    name: CANNON_Y
+    parent: CHASSIS
+    translation: [ -0.05, 0, 0.08 ]
+    jointType: revolute
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 2
+    elements:
+      RigidBody:
+        centerOfMass: [ 0, 0, 0.025 ]
+        mass: 4.0
+        inertia: [
+          0.1, 0,   0,
+          0,   0.1, 0,
+          0,   0,   0.1 ]
+        elements:
+          Shape:
+            appearance: *GREEN
+            geometry:
+              type: Box
+              size: [ 0.2, 0.2, 0.08 ]
+  -
+    name: CANNON_P
+    parent: CANNON_Y
+    translation: [ 0, 0, 0.04 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 3
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 3.0
+        inertia: [
+          0.1, 0,   0,
+          0,   0.1, 0,
+          0,   0,   0.1 ]
+        elements:
+          -
+            type: Shape
+            appearance: *GREEN
+            geometry:
+              type: Cylinder
+              height: 0.1
+              radius: 0.11
+          -
+            type: Transform
+            translation: [ 0, 0, 0.13 ]
+            rotation: [ 0.540716, -0.540716, -0.6444, 114.4042 ]
+            elements:
+              -
+                type: Camera
+                name: Camera
+                format: COLOR_DEPTH
+                width: 320
+                height: 240
+                id: 0
+                frameRate: 30
+              -
+                type: RangeSensor
+                name: RangeSensor
+                id: 0
+                scanAngle: 90
+                scanStep:  0.5
+                scanRate:  10
+                maxDistance: 10
+      -
+        type: Transform
+        translation: [ 0.2, 0, 0 ]
+        elements:
+          RigidBody:
+            centerOfMass: [ 0.2, 0, 0 ]
+            mass: 1.0
+            inertia: [
+              0.01, 0,   0,
+              0,    0.1, 0,
+              0,    0,   0.1 ]
+            elements:
+              -
+                type: Transform
+                rotation: [ 0, 0, 1, 90 ]
+                elements:
+                  Shape:
+                    appearance: *GREEN
+                    geometry:
+                      type: Cylinder
+                      height: 0.2
+                      radius: 0.02
+              -
+                type: Transform
+                translation: [ 0.2, 0, 0 ]
+                elements:
+                  SpotLight:
+                    name: MainLight
+                    direction: [ 1, 0, 0 ]
+                    cutOffAngle: 35
+                    attenuation: [ 1, 0, 0.01 ]

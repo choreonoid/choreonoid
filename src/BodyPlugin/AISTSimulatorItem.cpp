@@ -120,8 +120,8 @@ public:
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
-    void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
-    void doSetForcedBodyPosition();
+    void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -530,13 +530,13 @@ CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 }
 
 
-void AISTSimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItem::setForcedPosition(BodyItem* bodyItem, const Position& T)
 {
-    impl->setForcedBodyPosition(bodyItem, T);
+    impl->setForcedPosition(bodyItem, T);
 }
 
 
-void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position& T)
 {
     if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {
@@ -547,13 +547,29 @@ void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Posi
         if(!forcedBodyPositionFunctionId){
             forcedBodyPositionFunctionId =
                 self->addPostDynamicsFunction(
-                    boost::bind(&AISTSimulatorItemImpl::doSetForcedBodyPosition, this));
+                    boost::bind(&AISTSimulatorItemImpl::doSetForcedPosition, this));
         }
     }
 }
 
 
-void AISTSimulatorItem::clearForcedBodyPositions()
+bool AISTSimulatorItem::isForcedPositionActiveFor(BodyItem* bodyItem) const
+{
+    bool isActive = false;
+    if(impl->forcedBodyPositionFunctionId){
+        SimulationBody* simBody = const_cast<AISTSimulatorItem*>(this)->findSimulationBody(bodyItem);
+        {
+            boost::unique_lock<boost::mutex> lock(impl->forcedBodyPositionMutex);
+            if(impl->forcedPositionBody == static_cast<DyBody*>(simBody->body())){
+                isActive = true;
+            }
+        }
+    }
+    return isActive;
+}
+
+
+void AISTSimulatorItem::clearForcedPositions()
 {
     if(impl->forcedBodyPositionFunctionId){
         removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
@@ -562,7 +578,7 @@ void AISTSimulatorItem::clearForcedBodyPositions()
 }
     
 
-void AISTSimulatorItemImpl::doSetForcedBodyPosition()
+void AISTSimulatorItemImpl::doSetForcedPosition()
 {
     boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
     DyLink* rootLink = forcedPositionBody->rootLink();

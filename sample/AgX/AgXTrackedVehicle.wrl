@@ -200,38 +200,56 @@ DEF TrackedVehicle Humanoid {
   version "1.1"
   info [
   ]
-
+  
   humanoidBody [
-
+   
     DEF ROOT Joint {
       jointType "free"
       translation 0 0 0
       children [
-
+	
         DEF CHASSIS_LINK Segment {
           centerOfMass  0 0 0
           mass    750
           momentsOfInertia [ 233.125 0 0 0 593.125 0 0 0 765 ]
-
+	  
           children [
-
-	          Transform {
-	            translation 0 0 0.25
-	            rotation 1 0 0 0
-	            children Shape {
-		            appearance DEF green Appearance {
-		              material Material {
-		                diffuseColor 0.0 0.6 0.0
-		                ambientIntensity 0.3
-		                specularColor 0.7 0.7 0.7
-		                emissiveColor 0 0 0
-		                shininess 0.25
-		                transparency 0
-		              }
-		            }
-		            geometry Box { size 3, 1.8, 0.7 }
+	    
+	    Transform {
+	      translation 0 0 0.25
+	      rotation 1 0 0 0
+	      children Shape {
+		appearance DEF green Appearance {
+		  material Material {
+		    diffuseColor 0.0 0.6 0.0
+		    ambientIntensity 0.3
+		    specularColor 0.7 0.7 0.7
+		    emissiveColor 0 0 0
+		    shininess 0.25
+		    transparency 0
+		  }
+		}
+		geometry Box { size 3, 1.8, 0.7 }
+		
       	      }  # End of Shape node
       	    }
+
+	    Transform {
+	      translation -3.4 0 3.2
+	      rotation 0 1 0 -1.0
+	      children [
+		DEF Camera VisionSensor {
+		  rotation 0 0 1 -1.571
+		  sensorId 0
+		  type "COLOR"
+		  width 640
+		  height 480
+		  frontClipDistance 0.1
+		  backClipDistance 100.0
+		  frameRate 30
+		}
+	      ]
+	    }
       	  ]
       	} # End BODY_LINK
 	
