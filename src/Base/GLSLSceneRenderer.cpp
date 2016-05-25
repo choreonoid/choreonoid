@@ -553,7 +553,7 @@ void GLSLSceneRendererImpl::renderLights()
         Affine3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
-            bool isCastingShadow = (shadowLightIndices.find(lightIndex) != shadowLightIndices.end());
+            bool isCastingShadow = (shadowLightIndices.find(i) != shadowLightIndices.end());
             if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
                 ++lightIndex;
             }
@@ -600,7 +600,7 @@ void GLSLSceneRendererImpl::renderFog()
         } else {
             phongShadowProgram.setFogEnabled(true);
             phongShadowProgram.setFogColor(fog->color());
-            phongShadowProgram.setFogRange(1.0f, 5.0f);
+            phongShadowProgram.setFogRange(0.0f, fog->visibilityRange());
         }
     }
     isCurrentFogUpdated = false;
