@@ -448,7 +448,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
             LinkMap::iterator p = linkMap.find(parent);
             if(p != linkMap.end()){
                 Link* parentLink = p->second;
-                parentLink->appendChild(info->link);
+                Link* link = info->link;
+                link->setOffsetTranslation(parentLink->Rs() * link->offsetTranslation());
+                link->setAccumulatedSegmentRotation(parentLink->Rs() * link->offsetRotation());
+                parentLink->appendChild(link);
             } else {
                 info->node->throwException(
                     str(format(_("Parent link \"%1%\" of %2% is not defined.")) % parent % info->link->name()));
