@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/SR1/SR1.yaml"
+            modelFile: "${SHARE}/model/SR1/SR1.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0, 0.7135 ]
             rootAttitude: [ 
@@ -253,8 +253,20 @@ items:
                 contactReductionMode: Geometry
                 contactReductionBinResolution: 2
                 contactReductionThreshold: 4
+              children: 
+                - 
+                  id: 13
+                  name: "AgXsetContactMaterial.py"
+                  plugin: PythonSimScript
+                  class: PythonSimScriptItem
+                  data: 
+                    timing: Before init.
+                    delay: 0
+                    simulationOnly: true
+                    backgroundExecution: false
+                    file: "${SHARE}/script/AgXsetContactMaterial.py"
             - 
-              id: 13
+              id: 14
               name: "AgXSimulator-Velocity-TorqueSensor"
               plugin: AgX
               class: AgXSimulatorItem
@@ -281,8 +293,8 @@ items:
 views: 
   "Items": 
     selected: [ 7 ]
-    checked: [ 1, 2, 4 ]
-    expanded: [ 1, 2, 3, 6 ]
+    checked: [ 1, 2, 4, 13 ]
+    expanded: [ 1, 2, 3, 6, 12 ]
   "Scene": 
     viewpointControlMode: thirdPerson
     collisionLines: false

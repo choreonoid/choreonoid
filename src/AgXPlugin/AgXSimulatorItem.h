@@ -25,7 +25,26 @@ public:
     enum ControlMode { DEFAULT=0, HIGH_GAIN, TORQUE, FREE };
     void setJointControlMode(Link* joint, ControlMode type);
     void setJointCompliance(Link* joint, double spring, double damping);
-
+    void setContactMaterialParam(Link* link1, Link* link2,
+//        FrictionModelType frictionModel,
+//        FrictionSolveType solveType,
+//        double frictionCoefficient,
+//        vector<SurfaceViscosityParam> surfaceViscosityParam,
+//        double restitution,
+//        Vector2 adhesion,
+          double damping,
+          double youngsModulus);
+    /*
+    void setContactMaterialParam(Body* body1, Body* body2,
+    //        FrictionModelType frictionModel,
+    //        FrictionSolveType solveType,
+    //        double frictionCoefficient,
+    //        vector<SurfaceViscosityParam> surfaceViscosityParam,
+    //        double restitution,
+    //        Vector2 adhesion,
+        double damping,
+        double youngsModulus);
+*/
 protected:
 
     virtual bool startSimulation(bool doReset = true);

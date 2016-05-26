@@ -178,5 +178,7 @@ links:
               SpotLight:
                 name: MainLight
                 direction: [ 1, 0, 0 ]
-                cutOffAngle: 35
+                beamWidth: 36
+                cutOffAngle: 40
+                cutOffExponent: 6
                 attenuation: [ 1, 0, 0.01 ]

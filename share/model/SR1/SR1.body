@@ -302,6 +302,7 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
+    forceRange: [ -1000, 1000 ]
     elements: &ArmShape7
       -
         type: Transform
@@ -414,6 +415,7 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
+    forceRange: [ -1000, 1000 ]
     elements: *ArmShape7
   -
     name: LLEG_HIP_R
