@@ -1148,8 +1148,8 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
     }
     camera->setResolution(getValue<SFInt32>(node, "width"), getValue<SFInt32>(node, "height"));
     camera->setFieldOfView(getValue<SFFloat>(node, "fieldOfView"));
-    camera->setNearDistance(getValue<SFFloat>(node, "frontClipDistance"));
-    camera->setFarDistance(getValue<SFFloat>(node, "backClipDistance"));
+    camera->setNearClipDistance(getValue<SFFloat>(node, "frontClipDistance"));
+    camera->setFarClipDistance(getValue<SFFloat>(node, "backClipDistance"));
     camera->setFrameRate(getValue<SFFloat>(node, "frameRate"));
     
     return camera;

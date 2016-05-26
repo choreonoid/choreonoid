@@ -125,8 +125,11 @@ public:
     BodyTrackingCameraTransformPtr cameraTransform;
     SgPerspectiveCameraPtr persCamera;
     SgOrthographicCameraPtr orthoCamera;
+    SgUpdate update;
     BodyTrackingCameraItemImpl();
-    bool onKeepRelativeAttitudeChanged(bool on);    
+    void doPutProperties(PutPropertyFunction& putProperty);    
+    bool onKeepRelativeAttitudeChanged(bool on);
+    bool setClipDistances(double nearDistance, double farDistance);
 };
 
 }
@@ -172,11 +175,10 @@ void BodyTrackingCameraItem::setName(const std::string& name)
 {
     Item::setName(name);
     
-    SgUpdate update;
     impl->persCamera->setName(name + " (Perspective)");
-    impl->persCamera->notifyUpdate(update);
+    impl->persCamera->notifyUpdate(impl->update);
     impl->orthoCamera->setName(name + " (Orthographic)");
-    impl->orthoCamera->notifyUpdate(update);
+    impl->orthoCamera->notifyUpdate(impl->update);
 }
 
 
@@ -200,8 +202,18 @@ void BodyTrackingCameraItem::onPositionChanged()
 
 void BodyTrackingCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty("Keep relative attitude", impl->cameraTransform->isConstantRelativeAttitudeMode(),
-                boost::bind(&BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged, impl, _1));
+    impl->doPutProperties(putProperty);
+}
+
+
+void BodyTrackingCameraItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty("Keep relative attitude", cameraTransform->isConstantRelativeAttitudeMode(),
+                boost::bind(&BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged, this, _1));
+    putProperty("Near clip distance", persCamera->nearClipDistance(),
+                boost::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, _1, persCamera->farClipDistance()));
+    putProperty("Far clip distance", persCamera->farClipDistance(),
+                boost::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, persCamera->nearClipDistance(), _1));
 }
 
 
@@ -212,9 +224,25 @@ bool BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged(bool on)
 }
 
 
+bool BodyTrackingCameraItemImpl::setClipDistances(double nearDistance, double farDistance)
+{
+    if(persCamera->nearClipDistance() != nearDistance || persCamera->farClipDistance() != farDistance){
+        persCamera->setNearClipDistance(nearDistance);
+        persCamera->setFarClipDistance(farDistance);
+        orthoCamera->setNearClipDistance(nearDistance);
+        orthoCamera->setFarClipDistance(farDistance);
+        persCamera->notifyUpdate(update);
+        orthoCamera->notifyUpdate(update);
+    }
+    return true;
+}
+
+
 bool BodyTrackingCameraItem::store(Archive& archive)
 {
     archive.write("keepRelativeAttitude", impl->cameraTransform->isConstantRelativeAttitudeMode());    
+    archive.write("nearClipDistance", impl->persCamera->nearClipDistance());    
+    archive.write("farClipDistance", impl->persCamera->farClipDistance());    
     return true;
 }
 
@@ -223,5 +251,8 @@ bool BodyTrackingCameraItem::restore(const Archive& archive)
 {
     impl->cameraTransform->setConstantRelativeAttitudeMode(
         archive.get("keepRelativeAttitude", false));
+    double nearDistance = archive.get("nearClipDistance", impl->persCamera->nearClipDistance());
+    double farDistance = archive.get("farClipDistance", impl->persCamera->farClipDistance());
+    impl->setClipDistances(nearDistance, farDistance);
     return true;
 }

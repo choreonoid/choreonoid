@@ -135,5 +135,5 @@ void SceneVisitor::visitOverlay(SgOverlay* overlay)
 
 void SceneVisitor::visitOutlineGroup(SgOutlineGroup* outline)
 {
-
+    visitGroup(outline);
 }

@@ -964,7 +964,7 @@ void SceneWidgetImpl::viewAll()
     Affine3& T = interactiveCameraTransform->T();
     T.translation() +=
         (bbox.center() - T.translation())
-        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearDistance() / length);
+        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearClipDistance() / length);
 
 
     if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(renderer->currentCamera())){
@@ -2175,10 +2175,10 @@ void SceneWidgetImpl::onClippingDepthChanged()
 {
     double zNear = config->zNearSpin.value();
     double zFar = config->zFarSpin.value();
-    builtinPersCamera->setNearDistance(zNear);
-    builtinPersCamera->setFarDistance(zFar);
-    builtinOrthoCamera->setNearDistance(zNear);
-    builtinOrthoCamera->setFarDistance(zFar);
+    builtinPersCamera->setNearClipDistance(zNear);
+    builtinPersCamera->setFarClipDistance(zFar);
+    builtinOrthoCamera->setNearClipDistance(zNear);
+    builtinOrthoCamera->setFarClipDistance(zFar);
     builtinOrthoCamera->notifyUpdate(modified);
     builtinPersCamera->notifyUpdate(modified);
 }
@@ -2527,8 +2527,8 @@ Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCa
         } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
             state->write("orthoHeight", ortho->height());
         }
-        state->write("near", camera->nearDistance());
-        state->write("far", camera->farDistance());
+        state->write("near", camera->nearClipDistance());
+        state->write("far", camera->farClipDistance());
 
         if(cameraTransform){
             const Affine3& T = cameraTransform->T();
@@ -2592,8 +2592,8 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
                 builtinOrthoCamera->setHeight(height);
                 doUpdate = true;
             }
-            config->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearDistance())));
-            config->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farDistance())));
+            config->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearClipDistance())));
+            config->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farClipDistance())));
         
             archive.addPostProcess(
                 boost::bind(&SceneWidgetImpl::restoreCurrentCamera, this, boost::ref(cameraData)),
@@ -2664,11 +2664,11 @@ void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
             }
             double near, far;
             if(state.read("near", near)){
-                camera->setNearDistance(near);
+                camera->setNearClipDistance(near);
                 doUpdate = true;
             }
             if(state.read("far", far)){
-                camera->setFarDistance(far);
+                camera->setFarClipDistance(far);
                 doUpdate = true;
             }
             if(state.get("isCurrent", false)){
@@ -2889,14 +2889,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     zNearSpin.setDecimals(4);
     zNearSpin.setRange(0.0001, 9.9999);
     zNearSpin.setSingleStep(0.0001);
-    zNearSpin.setValue(impl->builtinPersCamera->nearDistance());
+    zNearSpin.setValue(impl->builtinPersCamera->nearClipDistance());
     zNearSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
     hbox->addWidget(&zNearSpin);
     hbox->addWidget(new QLabel(_("Far")));
     zFarSpin.setDecimals(1);
     zFarSpin.setRange(0.1, 9999999.9);
     zFarSpin.setSingleStep(0.1);
-    zFarSpin.setValue(impl->builtinPersCamera->farDistance());
+    zFarSpin.setValue(impl->builtinPersCamera->farClipDistance());
     zFarSpin.sigValueChanged().connect(boost::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
     hbox->addWidget(&zFarSpin);
     hbox->addStretch();

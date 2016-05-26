@@ -461,14 +461,14 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
         self->getPerspectiveProjectionMatrix(
-            pers->fovy(aspectRatio), aspectRatio, pers->nearDistance(), pers->farDistance(),
+            pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
             projectionMatrix);
         
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         GLfloat left, right, bottom, top;
         self->getViewVolume(ortho, left, right, bottom, top);
         self->getOrthographicProjectionMatrix(
-            left, right, bottom, top, ortho->nearDistance(), ortho->farDistance(),
+            left, right, bottom, top, ortho->nearClipDistance(), ortho->farClipDistance(),
             projectionMatrix);
         
     } else {

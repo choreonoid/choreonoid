@@ -254,7 +254,7 @@ void GLSceneRenderer::getOrthographicProjectionMatrix
 void GLSceneRenderer::getViewFrustum
 (const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const
 {
-    top = camera->nearDistance() * tan(camera->fovy(impl->aspectRatio) / 2.0);
+    top = camera->nearClipDistance() * tan(camera->fovy(impl->aspectRatio) / 2.0);
     bottom = -top;
     right = top * impl->aspectRatio;
     left = -right;

@@ -958,8 +958,8 @@ bool YAMLBodyLoaderImpl::readCamera(Mapping& node)
     if(node.read("width", value)) camera->setResolutionX(value);
     if(node.read("height", value)) camera->setResolutionY(value);
     if(readAngle(node, "fieldOfView", value)) camera->setFieldOfView(value);
-    if(node.read("frontClipDistance", value)) camera->setNearDistance(value);
-    if(node.read("backClipDistance", value)) camera->setFarDistance(value);
+    if(node.read("nearClipDistance", value)) camera->setNearClipDistance(value);
+    if(node.read("farClipDistance", value)) camera->setFarClipDistance(value);
     if(node.read("frameRate", value)) camera->setFrameRate(value);
     
     return readDevice(camera, node);

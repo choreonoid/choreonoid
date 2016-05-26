@@ -34,8 +34,8 @@ SceneDeviceFactoryMap sceneDeviceFactories;
 
 void updatePerspectiveCamera(Camera* camera, SgPerspectiveCamera* scamera)
 {
-    scamera->setNearDistance(camera->nearDistance());
-    scamera->setFarDistance(camera->farDistance());
+    scamera->setNearClipDistance(camera->nearClipDistance());
+    scamera->setFarClipDistance(camera->farClipDistance());
     scamera->setFieldOfView(camera->fieldOfView());
 }
 

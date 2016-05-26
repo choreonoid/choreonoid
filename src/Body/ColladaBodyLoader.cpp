@@ -400,7 +400,7 @@ DevicePtr ColladaBodyLoaderImpl::createSensor(DaeSensor* sensor)
                     device = new Camera;
                     Camera* camera = static_cast<Camera*>(device.get());
                     camera->setResolution(sensor->imageDimensions[0], sensor->imageDimensions[1]);
-                    camera->setNearDistance(sensor->focalLength);
+                    camera->setNearClipDistance(sensor->focalLength);
                     camera->setFieldOfView (sensor->focalLength);
                 } else {
                     throwException((format(_("invalid sensor-type:%1%")) % sensor->type).str());
