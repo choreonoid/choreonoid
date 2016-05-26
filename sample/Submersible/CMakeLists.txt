@@ -21,6 +21,6 @@ target_link_libraries(${target} CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target})
 
 configure_file(submersible.wrl ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
-configure_file(submersible.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
+#configure_file(submersible.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
 configure_file(SubmersibleSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
               
