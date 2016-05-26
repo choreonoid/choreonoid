@@ -140,7 +140,7 @@ links:
             rotation: [ 0, 0, 1, -90 ]
             id: 0
             format: COLOR_DEPTH
-            frontClipDistance: 0.1
+            nearClipDistance: 0.1
             elements: &CameraShape
               Transform:
                 rotation: [ 1, 0, 0, 90 ]
@@ -160,7 +160,7 @@ links:
             rotation: [ 0, 0, 1, -90 ]
             id: 1
             format: COLOR_DEPTH
-            frontClipDistance: 0.1
+            nearClipDistance: 0.1
             elements: *CameraShape
   -
     name: LARM_SHOULDER_P
