@@ -104,9 +104,9 @@ class PhongShadowProgram : public LightingProgram
         GLint constantAttenuationLocation;
         GLint linearAttenuationLocation;
         GLint quadraticAttenuationLocation;
-        GLint falloffAngleLocation;
-        GLint falloffExponentLocation;
+        GLint cutoffAngleLocation;
         GLint beamWidthLocation;
+        GLint cutoffExponentLocation;
         GLint directionLocation;
     };
     std::vector<LightInfo> lightInfos;

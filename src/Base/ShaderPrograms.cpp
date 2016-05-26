@@ -138,9 +138,9 @@ void PhongShadowProgram::initialize()
         light.constantAttenuationLocation = getUniformLocation(prefix + "constantAttenuation");
         light.linearAttenuationLocation = getUniformLocation(prefix + "linearAttenuation");
         light.quadraticAttenuationLocation = getUniformLocation(prefix + "quadraticAttenuation");
-        light.falloffAngleLocation = getUniformLocation(prefix + "falloffAngle");
-        light.falloffExponentLocation = getUniformLocation(prefix + "falloffExponent");
+        light.cutoffAngleLocation = getUniformLocation(prefix + "cutoffAngle");
         light.beamWidthLocation = getUniformLocation(prefix + "beamWidth");
+        light.cutoffExponentLocation = getUniformLocation(prefix + "cutoffExponent");
         light.directionLocation = getUniformLocation(prefix + "direction");
     }
 
@@ -315,9 +315,9 @@ bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affi
             Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
             Vector3f direction(d.cast<float>());
             glUniform3fv(info.directionLocation, 1, direction.data());
-            glUniform1f(info.falloffAngleLocation, spotLight->cutOffAngle());
-            glUniform1f(info.falloffExponentLocation, 4.0f);
+            glUniform1f(info.cutoffAngleLocation, spotLight->cutOffAngle());
             glUniform1f(info.beamWidthLocation, spotLight->beamWidth());
+            glUniform1f(info.cutoffExponentLocation, spotLight->cutOffExponent());
         }
     } else {
         return false;

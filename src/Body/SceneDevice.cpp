@@ -61,6 +61,7 @@ void updateSpotLight(SpotLight* light, SgSpotLight* slight)
     slight->setDirection(light->direction());
     slight->setBeamWidth(light->beamWidth());
     slight->setCutOffAngle(light->cutOffAngle());
+    slight->setCutOffExponent(light->cutOffExponent());
 }
 
 SceneDevice* createScenePerspectiveCamera(Device* device)

@@ -32,9 +32,9 @@ struct LightInfo {
     float linearAttenuation;
     float quadraticAttenuation;
     // The following value is 0.0 if the light is not a spot light
-    float falloffAngle; 
-    float falloffExponent;
+    float cutoffAngle; 
     float beamWidth;
+    float cutoffExponent;
     vec3 direction;
 };
 
@@ -75,17 +75,21 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
         vec3 s = normalize(l);
         float ki;
 
-        if(light.falloffAngle == 0.0){ 
+        if(light.cutoffAngle == 0.0){ 
             ki = 1.0;
         } else {
             // spot light            
             vec3 direction = normalize(light.direction);
             float sd = dot(-s, direction);
             float angle = acos(sd);
-            if(angle > light.falloffAngle) {
+            if(angle >= light.cutoffAngle) {
                 return vec3(0.0);
+            } else if(angle <= light.beamWidth){
+                ki = 1.0;
+            } else {
+                float t = (light.cutoffAngle - angle) / (light.cutoffAngle - light.beamWidth);
+                ki = pow(t, light.cutoffExponent);
             }
-            ki = pow(sd, light.falloffExponent);
         }
         
         vec3 v = normalize(vec3(-position));
