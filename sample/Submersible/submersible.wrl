@@ -234,7 +234,7 @@ DEF Submersible Humanoid {
 		}
 		DEF MainLight SpotLightDevice {
 		  direction 1 0 0
-		  cutOffAngle 0.6
+		  cutOffAngle 1.2
 		  attenuation 1 0 0.01
 		  translation 0 0 0.2
 		}
