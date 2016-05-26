@@ -289,9 +289,9 @@ void KinematicFaultCheckerImpl::apply()
                 
                 dynamic_bitset<> linkSelection;
                 if(selectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::mainInstance()->getLinkSelection(bodyItem);
+                    linkSelection = LinkSelectionView::mainInstance()->linkSelection(bodyItem);
                 } else if(nonSelectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::mainInstance()->getLinkSelection(bodyItem);
+                    linkSelection = LinkSelectionView::mainInstance()->linkSelection(bodyItem);
                     linkSelection.flip();
                 } else {
                     linkSelection.resize(bodyItem->body()->numLinks(), true);

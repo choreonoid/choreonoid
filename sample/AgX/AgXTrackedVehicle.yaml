@@ -1,5 +1,5 @@
 
-modelFile: trackedVehicle.wrl
+modelFile: AgXTrackedVehicle.wrl
 
 linkGroups:
   - name: WHEEL_L

@@ -131,6 +131,8 @@ public:
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
     bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
+
+    std::string jointTypeString() const;
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }
@@ -227,9 +229,9 @@ public:
     void setJointRange(double lower, double upper) { q_lower_ = lower; q_upper_ = upper; }
     void setJointVelocityRange(double lower, double upper) { dq_lower_ = lower; dq_upper_ = upper; }
 
+    void setCenterOfMass(const Vector3& c) { c_ = c; }
     void setMass(double m) { m_ = m; }
     void setInertia(const Matrix3& I) { I_ = I; }
-    void setCenterOfMass(const Vector3& c) { c_ = c; }
     void setEquivalentRotorInertia(double Jm2) { Jm2_ = Jm2; }
         
     void setName(const std::string& name);

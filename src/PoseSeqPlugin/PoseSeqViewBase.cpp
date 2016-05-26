@@ -1006,7 +1006,7 @@ void PoseSeqViewBase::selectPosesHavingSelectedLinks()
         return;
     }
     
-    const vector<int> selectedLinkIndices = linkTreeWidget->getSelectedLinkIndices();
+    const vector<int> selectedLinkIndices = linkTreeWidget->selectedLinkIndices();
 
     selectedPoseIters.clear();
     for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
@@ -1038,7 +1038,7 @@ void PoseSeqViewBase::selectPosesJustHavingSelectedLinks()
         return;
     }
     
-    const boost::dynamic_bitset<>& linkSelection = linkTreeWidget->getLinkSelection();
+    const boost::dynamic_bitset<>& linkSelection = linkTreeWidget->linkSelection();
 
     selectedPoseIters.clear();
     for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
@@ -1068,7 +1068,7 @@ void PoseSeqViewBase::removeSelectedPartsFromKeyPoses()
         return;
     }
     
-    const std::vector<int>& selected = linkTreeWidget->getSelectedLinkIndices();
+    const std::vector<int>& selected = linkTreeWidget->selectedLinkIndices();
     bool doRemoveZmp = zmpRow->isSelected();
 
     if(selected.empty() && !doRemoveZmp){
@@ -1234,7 +1234,7 @@ void PoseSeqViewBase::onPoseSelectionDialogAccepted()
     }
 
     selectedPoseIters.clear();
-    const vector<int> selectedLinkIndices = linkTreeWidget->getSelectedLinkIndices();
+    const vector<int> selectedLinkIndices = linkTreeWidget->selectedLinkIndices();
     const double t0 = poseSelectionDialog->startTimeSpin.value();
     const double t1 = poseSelectionDialog->endTimeSpin.value();
 
@@ -1602,7 +1602,7 @@ void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
 bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected)
 {
     const dynamic_bitset<>& linkSelection =
-        LinkSelectionView::mainInstance()->getLinkSelection(currentBodyItem);
+        LinkSelectionView::mainInstance()->linkSelection(currentBodyItem);
             
     bool updated = false;
             

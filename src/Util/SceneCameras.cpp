@@ -12,16 +12,16 @@ using namespace cnoid;
 
 SgCamera::SgCamera()
 {
-    nearDistance_ = 0.01;
-    farDistance_ = 100.0;
+    nearClipDistance_ = 0.01;
+    farClipDistance_ = 100.0;
 }
 
 
 SgCamera::SgCamera(const SgCamera& org)
     : SgPreprocessed(org)
 {
-    nearDistance_ = org.nearDistance_;
-    farDistance_ = org.farDistance_;
+    nearClipDistance_ = org.nearClipDistance_;
+    farClipDistance_ = org.farClipDistance_;
 }
 
 
