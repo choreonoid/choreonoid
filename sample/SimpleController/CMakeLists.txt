@@ -28,6 +28,7 @@ configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
 configure_file(SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(../python/AgXsetContactMaterial.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 
 add_cnoid_simple_controller(PA10PickupController PA10PickupController.cpp)
 configure_file(PA10Pickup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

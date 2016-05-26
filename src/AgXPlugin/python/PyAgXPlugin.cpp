@@ -15,6 +15,7 @@ BOOST_PYTHON_MODULE(AgXPlugin)
                 class_< AgXSimulatorItem, AgXSimulatorItemPtr, bases<SimulatorItem> >("AgXSimulatorItem")
                 .def("setJointControlMode", &AgXSimulatorItem::setJointControlMode)
                 .def("setJointCompliance", &AgXSimulatorItem::setJointCompliance)
+                .def("setContactMaterialParam", &AgXSimulatorItem::setContactMaterialParam)
                 ;
 
         enum_<AgXSimulatorItem::ControlMode>("ControlMode")

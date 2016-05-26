@@ -9,28 +9,25 @@ links:
     name: WAIST
     jointType: free
     translation: [ 0, 0, 0.7135 ]
+    centerOfMass: [ 0, 0, 0.0375 ]
+    mass: 27.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
     elements:
       -
-        type: RigidBody
-        centerOfMass: [ 0, 0, 0.0375 ]
-        mass: 27.0
-        inertia: [
-          1, 0, 0,
-          0, 1, 0,
-          0, 0, 1 ]
+        type: Shape
+        appearance: &WaistAppearance
+          material: { }
+        geometry: { type: Box, size: [ 0.08, 0.08, 0.08 ] }
+      -
+        type: Transform
+        translation: [ 0, 0, 0.0955 ]
         elements:
-          -
-            type: Shape
-            appearance: &WaistAppearance
-              material: { }
-            geometry: { type: Box, size: [ 0.08, 0.08, 0.08 ] }
-          -
-            type: Transform
-            translation: [ 0, 0, 0.0955 ]
-            elements:
-              Shape:
-                appearance: *WaistAppearance
-                geometry: { type: Box, size: [ 0.05, 0.05, 0.111 ] }
+          Shape:
+            appearance: *WaistAppearance
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.111 ] }
       -
         type: AccelerationSensor
         name: WaistAccelSensor
@@ -296,6 +293,7 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
+    forceRange: [ -1000, 1000 ]
     elements: &ArmShape7
       -
         type: Transform
@@ -408,6 +406,7 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
+    forceRange: [ -1000, 1000 ]
     elements: *ArmShape7
   -
     name: LLEG_HIP_R
