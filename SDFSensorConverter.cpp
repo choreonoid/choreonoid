@@ -390,8 +390,8 @@ void SDFSensorConverter::createCameraDevice(const std::string key, const std::st
         }
 
         camera->setFieldOfView(cp->Get<double>("horizontal_fov"));
-        camera->setNearDistance(cp->GetElement("clip")->Get<double>("near"));
-        camera->setFarDistance(cp->GetElement("clip")->Get<double>("far"));
+        camera->setNearClipDistance(cp->GetElement("clip")->Get<double>("near"));
+        camera->setFarClipDistance(cp->GetElement("clip")->Get<double>("far"));
         camera->setResolution(cp->GetElement("image")->Get<int>("width"),
                               cp->GetElement("image")->Get<int>("height"));
     }
@@ -600,8 +600,8 @@ void SDFSensorConverter::createMultiCameraDevice(const std::string key, const st
             }
 
             camera->setFieldOfView(cp->Get<double>("horizontal_fov"));
-            camera->setNearDistance(cp->GetElement("clip")->Get<double>("near"));
-            camera->setFarDistance(cp->GetElement("clip")->Get<double>("far"));
+            camera->setNearClipDistance(cp->GetElement("clip")->Get<double>("near"));
+            camera->setFarClipDistance(cp->GetElement("clip")->Get<double>("far"));
             camera->setResolution(cp->GetElement("image")->Get<int>("width"),
                                   cp->GetElement("image")->Get<int>("height"));
 
