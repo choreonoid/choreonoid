@@ -196,6 +196,7 @@ set(headers
   RectRegionMarker.h
   GLSceneRenderer.h
   GL1SceneRenderer.h
+  GLSLSceneRenderer.h
   SceneView.h
   SceneItem.h
   PointSetItem.h

@@ -11,6 +11,7 @@
 #include <cnoid/Archive>
 #include <cnoid/ValueTreeUtil>
 #include <cnoid/GL1SceneRenderer>
+#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/Body>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
@@ -116,7 +117,7 @@ public:
     vector<SceneBodyPtr> sceneBodies;
 
     QGLPixelBuffer* pixelBuffer;
-    GL1SceneRenderer renderer;
+    GLSceneRenderer* renderer;
     int pixelWidth;
     int pixelHeight;
     boost::shared_ptr<Image> tmpImage;
@@ -126,6 +127,7 @@ public:
     int bodyIndex;
 
     VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
+    ~VisionRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
     void initializeScene(const vector<SimulationBody*>& simBodies);
     SgCamera* initializeCamera();
@@ -141,7 +143,6 @@ public:
     bool getCameraImage(Image& image);
     bool getRangeCameraData(Image& image, vector<Vector3f>& points);
     bool getRangeSensorData(vector<double>& rangeData);
-    ~VisionRenderer();
 };
 typedef ref_ptr<VisionRenderer> VisionRendererPtr;
 }
@@ -159,6 +160,7 @@ public:
     vector<VisionRendererPtr> visionRenderers;
     vector<VisionRenderer*> renderersInRendering;
 
+    bool useGLSL;
     bool useThread;
     bool useQueueThreadForAllSensors;
     bool useThreadsForSensors;
@@ -239,6 +241,8 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
     depthError = 0.0;
+
+    useGLSL = (getenv("CNOID_USE_GLSL") != 0);
     isVisionDataRecordingEnabled = false;
     useThreadProperty = true;
     useThreadsForSensorsProperty = true;
@@ -264,6 +268,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 {
     simulatorItem = 0;
 
+    useGLSL = org.useGLSL;
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
     rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
     depthError = org.depthError;
@@ -529,6 +534,27 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
     }
 
     pixelBuffer = 0;
+    renderer = 0;
+}
+
+
+VisionRenderer::~VisionRenderer()
+{
+    if(simImpl->useThreadsForSensors){
+        {
+            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            isTerminationRequested = true;
+        }
+        renderingCondition.notify_all();
+        renderingThread.join();
+    }
+    if(pixelBuffer){
+        pixelBuffer->makeCurrent();
+        delete pixelBuffer;
+    }
+    if(renderer){
+        delete renderer;
+    }
 }
 
 
@@ -541,24 +567,32 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     if(!sceneCamera){
         return false;
     }
+
+    if(!renderer){
+        if(simImpl->useGLSL){
+            renderer = new GLSLSceneRenderer;
+        } else {
+            renderer = new GL1SceneRenderer;
+        }
+    }
     
-    renderer.sceneRoot()->addChild(sceneGroup);
+    renderer->sceneRoot()->addChild(sceneGroup);
     
     pixelBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, simImpl->glFormat);
     pixelBuffer->makeCurrent();
 
-    renderer.initializeGL();
-    renderer.setViewport(0, 0, pixelWidth, pixelHeight);
-    renderer.extractPreprocessedNodes();
+    renderer->initializeGL();
+    renderer->setViewport(0, 0, pixelWidth, pixelHeight);
+    renderer->extractPreprocessedNodes();
 
     if(rangeSensor){
-        renderer.setDefaultLighting(false);
+        renderer->setDefaultLighting(false);
     } else {
-        renderer.headLight()->on(simImpl->isHeadLightEnabled);
-        renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
+        renderer->headLight()->on(simImpl->isHeadLightEnabled);
+        renderer->enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
     }
     
-    renderer.setCurrentCamera(sceneCamera);
+    renderer->setCurrentCamera(sceneCamera);
     pixelBuffer->doneCurrent();
 
     isRendering = false;
@@ -781,8 +815,8 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 void VisionRenderer::renderInCurrenThread(bool doStoreResultToTmpDataBuffer)
 {
     pixelBuffer->makeCurrent();
-    renderer.render();
-    renderer.flush();
+    renderer->render();
+    renderer->flush();
     if(doStoreResultToTmpDataBuffer){
         storeResultToTmpDataBuffer();
     }
@@ -820,8 +854,8 @@ void VisionRenderer::concurrentRenderingLoop()
                 renderingCondition.wait(lock);
             }
         }
-        renderer.render();
-        renderer.flush();
+        renderer->render();
+        renderer->flush();
         storeResultToTmpDataBuffer();
     
         {
@@ -1042,7 +1076,7 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 
     float* depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
-    const Matrix4f Pinv = renderer.projectionMatrix().inverse().cast<float>();
+    const Matrix4f Pinv = renderer->projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
     Vector4f n;
@@ -1112,7 +1146,7 @@ bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
     const double pitchStep = rangeSensorForRendering->pitchStep();
     const double maxTanPitchAngle = tan(pitchRange / 2.0);
 
-    const Matrix4 Pinv = renderer.projectionMatrix().inverse();
+    const Matrix4 Pinv = renderer->projectionMatrix().inverse();
     const double Pinv_32 = Pinv(3, 2);
     const double Pinv_33 = Pinv(3, 3);
     const double fw = pixelWidth;
@@ -1184,23 +1218,6 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
     visionRenderers.clear();
 }
 
-
-VisionRenderer::~VisionRenderer()
-{
-    if(simImpl->useThreadsForSensors){
-        {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
-            isTerminationRequested = true;
-        }
-        renderingCondition.notify_all();
-        renderingThread.join();
-    }
-    if(pixelBuffer){
-        pixelBuffer->makeCurrent();
-        delete pixelBuffer;
-    }
-}
-    
 
 void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
