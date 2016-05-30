@@ -23,8 +23,8 @@ Camera::Camera()
     resolutionX_ = 640;
     resolutionY_ = 480;
     fieldOfView_ = 0.785398;
-    nearDistance_ = 0.01;
-    farDistance_ = 100.0;
+    nearClipDistance_ = 0.01;
+    farClipDistance_ = 100.0;
     frameRate_ = 30.0;
     delay_ = 0.0;
     image_ = boost::make_shared<Image>();
@@ -55,8 +55,8 @@ void Camera::copyCameraStateFrom(const Camera& other)
     resolutionX_ = other.resolutionX_;
     resolutionY_ = other.resolutionY_;
     fieldOfView_ = other.fieldOfView_;
-    nearDistance_ = other.nearDistance_;
-    farDistance_ = other.farDistance_;
+    nearClipDistance_ = other.nearClipDistance_;
+    farClipDistance_ = other.farClipDistance_;
     frameRate_ = other.frameRate_;
     delay_ = other.delay_;
 }
@@ -154,8 +154,8 @@ const double* Camera::readState(const double* buf)
     on_ = buf[0];
     resolutionX_ = buf[1];
     resolutionY_ = buf[2];
-    nearDistance_ = buf[3];
-    farDistance_ = buf[4];
+    nearClipDistance_ = buf[3];
+    farClipDistance_ = buf[4];
     fieldOfView_ = buf[5];
     frameRate_ = buf[6];
     delay_ = buf[7];
@@ -168,8 +168,8 @@ double* Camera::writeState(double* out_buf) const
     out_buf[0] = on_ ? 1.0 : 0.0;
     out_buf[1] = resolutionX_;
     out_buf[2] = resolutionY_;
-    out_buf[3] = nearDistance_;
-    out_buf[4] = farDistance_;
+    out_buf[3] = nearClipDistance_;
+    out_buf[4] = farClipDistance_;
     out_buf[5] = fieldOfView_;
     out_buf[6] = frameRate_;
     out_buf[7] = delay_;

@@ -1057,12 +1057,12 @@ void GLSceneRendererImpl::renderCamera()
 
     // set projection
     if(SgPerspectiveCamera* camera = dynamic_cast<SgPerspectiveCamera*>(currentCamera)){
-        gluPerspective(degree(camera->fovy(aspectRatio)), aspectRatio, camera->nearDistance(), camera->farDistance());
+        gluPerspective(degree(camera->fovy(aspectRatio)), aspectRatio, camera->nearClipDistance(), camera->farClipDistance());
         
     } else if(SgOrthographicCamera* camera = dynamic_cast<SgOrthographicCamera*>(currentCamera)){
         GLfloat left, right, bottom, top;
         getViewVolume(*camera, left, right, bottom, top);
-        glOrtho(left, right, bottom, top, camera->nearDistance(), camera->farDistance());
+        glOrtho(left, right, bottom, top, camera->nearClipDistance(), camera->farClipDistance());
         
     } else {
         gluPerspective(40.0f, aspectRatio, 0.01, 1.0e4);
@@ -2823,7 +2823,7 @@ const Matrix4& GLSceneRenderer::projectionMatrix() const
 void GLSceneRenderer::getViewFrustum
 (const SgPerspectiveCamera& camera, double& left, double& right, double& bottom, double& top) const
 {
-    top = camera.nearDistance() * tan(camera.fovy(impl->aspectRatio) / 2.0);
+    top = camera.nearClipDistance() * tan(camera.fovy(impl->aspectRatio) / 2.0);
     bottom = -top;
     right = top * impl->aspectRatio;
     left = -right;

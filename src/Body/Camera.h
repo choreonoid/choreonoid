@@ -40,11 +40,17 @@ public:
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
 
+    double nearClipDistance() const { return nearClipDistance_; }
+    void setNearClipDistance(double d) { nearClipDistance_ = d; }
+    double farClipDistance() const { return farClipDistance_; }
+    void setFarClipDistance(double d) { farClipDistance_ = d; }
+
+#ifdef CNOID_BACKWARD_COMPATIBILITY
     double nearDistance() const { return nearDistance_; }
     void setNearDistance(double d) { nearDistance_ = d; }
-
     double farDistance() const { return farDistance_; }
     void setFarDistance(double d) { farDistance_ = d; }
+#endif
         
     double fieldOfView() const { return fieldOfView_; }
     void setFieldOfView(double f) { fieldOfView_ = f; }
@@ -87,8 +93,8 @@ private:
     ImageType imageType_;
     int resolutionX_;
     int resolutionY_;
-    double nearDistance_;
-    double farDistance_;
+    double nearClipDistance_;
+    double farClipDistance_;
     double fieldOfView_;
     double frameRate_;
     double delay_;

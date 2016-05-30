@@ -380,6 +380,7 @@ DEF Tank Humanoid {
 		    }
 		    DEF MainLight SpotLightDevice {
 		      direction 1 0 0
+		      beamWidth 0.55
 		      cutOffAngle 0.6
 		      attenuation 1 0 0.01
 		      translation 0 0 0.2

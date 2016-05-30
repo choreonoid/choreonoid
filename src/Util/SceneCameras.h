@@ -36,15 +36,21 @@ public:
         return T.linear().col(1);
     }
 
+    double nearClipDistance() const { return nearClipDistance_; }
+    void setNearClipDistance(double d) { nearClipDistance_ = d; }
+    double farClipDistance() const { return farClipDistance_; }
+    void setFarClipDistance(double d) { farClipDistance_ = d; }
+
+#ifdef CNOID_BACKWARD_COMPATIBILITY
     double nearDistance() const { return nearDistance_; }
     void setNearDistance(double d) { nearDistance_ = d; }
-
     double farDistance() const { return farDistance_; }
     void setFarDistance(double d) { farDistance_ = d; }
+#endif
 
 private:
-    double nearDistance_;
-    double farDistance_;
+    double nearClipDistance_;
+    double farClipDistance_;
 };
 typedef ref_ptr<SgCamera> SgCameraPtr;
 
