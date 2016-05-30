@@ -35,10 +35,28 @@ public:
     GLuint vao;
     GLuint vbos[3];
     GLsizei numVertices;
+    bool hasBuffers;
+    ScopedConnection connection;
 
-    ShapeHandleSet() {
+    ShapeHandleSet(GLSLSceneRendererImpl* renderer, SgObject* obj)
+    {
+        connection.reset(obj->sigUpdated().connect(boost::bind(&ShapeHandleSet::onUpdated, this)));
         clear();
         glGenVertexArrays(1, &vao);
+        hasBuffers = false;
+    }
+
+    void onUpdated(){
+        numVertices = 0;
+    }
+
+    bool isValid(){
+        if(numVertices > 0){
+            return true;
+        } else if(hasBuffers){
+            deleteBuffers();
+        }
+        return false;
     }
 
     void clear(){
@@ -51,6 +69,7 @@ public:
 
     void genBuffers(int n){
         glGenBuffers(n, vbos);
+        hasBuffers = true;
     }
 
     void deleteBuffers(){
@@ -58,6 +77,7 @@ public:
         for(int i=0; i < 3; ++i){
             vbos[i] = 0;
         }
+        hasBuffers = false;
     }
 
     GLuint vbo(int index) {
@@ -68,9 +88,12 @@ public:
         if(vao > 0){
             glDeleteVertexArrays(1, &vao);
         }
-        glDeleteBuffers(3, vbos);
+        if(hasBuffers){
+            glDeleteBuffers(3, vbos);
+        }
     }
 };
+
 typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
 
 struct SgObjectPtrHash {
@@ -200,6 +223,7 @@ public:
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
     void visitPointSet(SgPointSet* pointSet);
+    void renderPlot(SgPlot* plot, GLenum primitiveMode, boost::function<SgVertexArrayPtr()> getVertices);
     void visitLineSet(SgLineSet* lineSet);
     void visitOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
@@ -727,7 +751,8 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
     ShapeHandleSet* handleSet;
     ShapeHandleSetMap::iterator p = currentShapeHandleSetMap->find(obj);
     if(p == currentShapeHandleSetMap->end()){
-        p = currentShapeHandleSetMap->insert(ShapeHandleSetMap::value_type(obj, new ShapeHandleSet)).first;
+        ShapeHandleSet* handleSet = new ShapeHandleSet(this, obj);
+        p = currentShapeHandleSetMap->insert(ShapeHandleSetMap::value_type(obj, handleSet)).first;
     }
     handleSet = p->second;
 
@@ -762,7 +787,7 @@ void GLSLSceneRendererImpl::visitShape(SgShape* shape)
             renderMaterial(shape->material());
         }
         ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh);
-        if(!handleSet->numVertices){
+        if(!handleSet->isValid()){
             createMeshVertexArray(mesh, handleSet);
         }
         pushPickID(shape);
@@ -878,6 +903,12 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* 
 }
 
 
+static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
+{
+    return pointSet->vertices();
+}
+
+
 void GLSLSceneRenderer::visitPointSet(SgPointSet* pointSet)
 {
     impl->visitPointSet(pointSet);
@@ -889,14 +920,66 @@ void GLSLSceneRendererImpl::visitPointSet(SgPointSet* pointSet)
     if(!pointSet->hasVertices()){
         return;
     }
-    const double s = pointSet->pointSize();
-    if(s > 0.0){
-        setPointSize(s);
+    renderPlot(pointSet, GL_POINTS, boost::bind(getPointSetVertices, pointSet));
+}
+
+
+void GLSLSceneRendererImpl::renderPlot
+(SgPlot* plot, GLenum primitiveMode, boost::function<SgVertexArrayPtr()> getVertices)
+{
+    ShaderProgram* orgProgram;
+    LightingProgram* orgLightingProgram;
+    NolightingProgram* orgNolightingProgram;
+
+    if(isPicking){
+        pushPickID(plot);
+    } else {
+        orgProgram = currentProgram;
+        orgLightingProgram = currentLightingProgram;
+        orgNolightingProgram = currentNolightingProgram;
+        currentProgram = &solidColorProgram;
+        solidColorProgram.use();
+        currentLightingProgram = 0;
+        currentNolightingProgram = &solidColorProgram;
+        renderMaterial(plot->material());
     }
-    //renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
-    if(s > 0.0){
-        setPointSize(s);
+    
+    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot);
+    if(!handleSet->isValid()){
+        SgVertexArrayPtr vertices = getVertices();
+        handleSet->numVertices = vertices->size();
+        handleSet->genBuffers(1);
+        glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(0));
+        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
+        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+        glEnableVertexAttribArray(0);
+    }        
+
+    glDrawArrays(primitiveMode, 0, handleSet->numVertices);
+    
+    if(isPicking){
+        popPickID();
+    } else {
+        currentProgram = orgProgram;
+        currentLightingProgram = orgLightingProgram;
+        currentNolightingProgram = orgNolightingProgram;
+        currentProgram->use();
     }
+}
+
+
+static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
+{
+    const SgVertexArray& orgVertices = *lineSet->vertices();
+    SgVertexArray* vertices = new SgVertexArray;
+    const int n = lineSet->numLines();
+    vertices->reserve(n * 2);
+    for(int i=0; i < n; ++i){
+        SgLineSet::LineRef line = lineSet->line(i);
+        vertices->push_back(orgVertices[line[0]]);
+        vertices->push_back(orgVertices[line[1]]);
+    }
+    return vertices;
 }
 
 
@@ -908,60 +991,18 @@ void GLSLSceneRenderer::visitLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 {
-    const int n = lineSet->numLines();
-
-    if(lineSet->hasVertices() && n > 0){
-
-        ShaderProgram* orgProgram = currentProgram;
-        LightingProgram* orgLightingProgram = currentLightingProgram;
-        NolightingProgram* orgNolightingProgram = currentNolightingProgram;
-
-        if(isPicking){
-            pushPickID(lineSet);
-        } else {
-            solidColorProgram.use();
-            currentProgram = &solidColorProgram;
-            currentLightingProgram = 0;
-            currentNolightingProgram = &solidColorProgram;
-            renderMaterial(lineSet->material());
-        }
-
-        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(lineSet);
-        if(!handleSet->numVertices){
-            const SgVertexArray& orgVertices = *lineSet->vertices();
-            SgVertexArray vertices;
-            handleSet->numVertices = n * 2;
-            vertices.reserve(handleSet->numVertices);
-            for(int i=0; i < n; ++i){
-                SgLineSet::LineRef line = lineSet->line(i);
-                vertices.push_back(orgVertices[line[0]]);
-                vertices.push_back(orgVertices[line[1]]);
-            }
-            handleSet->genBuffers(1);
-            glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(0));
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
-            glEnableVertexAttribArray(0);
-        }
-        
-        const double w = lineSet->lineWidth();
-        if(w > 0.0){
-            setLineWidth(w);
-        } else {
-            setLineWidth(defaultLineWidth);
-        }
-        
-        glDrawArrays(GL_LINES, 0, handleSet->numVertices);
-
-        if(isPicking){
-            popPickID();
-        } else {
-            currentProgram = orgProgram;
-            currentLightingProgram = orgLightingProgram;
-            currentNolightingProgram = orgNolightingProgram;
-            currentProgram->use();
-        }
+    if(!lineSet->hasVertices() || lineSet->numLines() <= 0){
+        return;
     }
+
+    const double w = lineSet->lineWidth();
+    if(w > 0.0){
+        setLineWidth(w);
+    } else {
+        setLineWidth(defaultLineWidth);
+    }
+
+    renderPlot(lineSet, GL_LINES, boost::bind(getLineSetVertices, lineSet));
 }
 
 

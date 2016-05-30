@@ -38,6 +38,7 @@ public:
     weak_ref_ptr<PointSetItem> weakPointSetItem;
     SgPointSetPtr orgPointSet;
     SgPointSetPtr visiblePointSet;
+    SgUpdate update;
     SgShapePtr voxels;
     float voxelSize;
     SgInvariantGroupPtr invariant;
@@ -733,7 +734,7 @@ bool ScenePointSet::removeAttentionPoint(const Vector3& point, double distanceTh
 void ScenePointSet::notifyAttentionPointChange()
 {
     if(attentionPointMarkerGroup){
-        attentionPointMarkerGroup->notifyUpdate();
+        attentionPointMarkerGroup->notifyUpdate(update);
     }
     sigAttentionPointsChanged();
 }
@@ -772,6 +773,7 @@ void ScenePointSet::updateVisiblePointSet()
     visiblePointSet->normalIndices() = orgPointSet->normalIndices();
     visiblePointSet->setColors(orgPointSet->colors());
     visiblePointSet->colorIndices() = orgPointSet->colorIndices();
+    visiblePointSet->notifyUpdate(update);
 }
 
 

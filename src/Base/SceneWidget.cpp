@@ -144,7 +144,7 @@ public:
 
     LazyCaller updateDefaultLightsLater;
 
-    ConfigDialog(SceneWidgetImpl* impl);
+    ConfigDialog(SceneWidgetImpl* impl, bool useGLSL);
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
 };
@@ -553,7 +553,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     numBuiltinCameras = 2;
     systemGroup->addChild(builtinCameraTransform);
 
-    config = new ConfigDialog(this);
+    config = new ConfigDialog(this, useGLSL);
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
@@ -577,9 +577,11 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     initializeCoordinateAxes();
     updateGrids();
 
-    fpsTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
-    fpsRenderingTimer.setSingleShot(true);
-    fpsRenderingTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSRenderingRequest, this));
+    if(!useGLSL){
+        fpsTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
+        fpsRenderingTimer.setSingleShot(true);
+        fpsRenderingTimer.sigTimeout().connect(boost::bind(&SceneWidgetImpl::onFPSRenderingRequest, this));
+    }
 
 #ifdef ENABLE_SIMULATION_PROFILING
     profiling_mode = 1;
@@ -2863,7 +2865,7 @@ void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
 }
 
 
-ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
+ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 {
     setWindowTitle(_("Scene Config"));
 
@@ -3113,8 +3115,11 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl)
     hbox->addWidget(&coordinateAxesCheck);
     
     fpsCheck.setText(_("Show FPS"));
+    fpsCheck.setEnabled(!useGLSL);
     fpsCheck.setChecked(false);
-    fpsCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::showFPS, impl, _1));
+    if(!useGLSL){
+        fpsCheck.sigToggled().connect(boost::bind(&SceneWidgetImpl::showFPS, impl, _1));
+    }
     hbox->addWidget(&fpsCheck);
 
     fpsTestButton.setText(_("Test"));
