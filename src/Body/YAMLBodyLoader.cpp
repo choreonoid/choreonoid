@@ -548,6 +548,8 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             link->setJointType(Link::FIXED_JOINT);
         } else if(jointType == "crawler"){
             link->setJointType(Link::CRAWLER_JOINT);
+        } else  if(jointType == "agx_crawler"){
+            link->setJointType(Link::AGX_CRAWLER_JOINT);
         }
     }
 
