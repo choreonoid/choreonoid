@@ -8,6 +8,17 @@
 using namespace boost::python;
 using namespace cnoid;
 
+namespace
+{
+void  (AgXSimulatorItem::*setContactMaterialDamping1)(Link*, Link*, double) = &AgXSimulatorItem::setContactMaterialDamping;
+void  (AgXSimulatorItem::*setContactMaterialDamping2)(Body*, Body*, double) = &AgXSimulatorItem::setContactMaterialDamping;
+void  (AgXSimulatorItem::*setContactMaterialYoungsModulus1)(Link*, Link*, double) = &AgXSimulatorItem::setContactMaterialYoungsModulus;
+void  (AgXSimulatorItem::*setContactMaterialYoungsModulus2)(Body*, Body*, double) = &AgXSimulatorItem::setContactMaterialYoungsModulus;
+}
+
+namespace cnoid
+{
+
 BOOST_PYTHON_MODULE(AgXPlugin)
 {
     {
@@ -15,7 +26,10 @@ BOOST_PYTHON_MODULE(AgXPlugin)
                 class_< AgXSimulatorItem, AgXSimulatorItemPtr, bases<SimulatorItem> >("AgXSimulatorItem")
                 .def("setJointControlMode", &AgXSimulatorItem::setJointControlMode)
                 .def("setJointCompliance", &AgXSimulatorItem::setJointCompliance)
-                .def("setContactMaterialParam", &AgXSimulatorItem::setContactMaterialParam)
+                .def("setContactMaterialDamping", setContactMaterialDamping1)
+                .def("setContactMaterialDamping", setContactMaterialDamping2)
+                .def("setContactMaterialYoungsModulus", setContactMaterialYoungsModulus1)
+                .def("setContactMaterialYoungsModulus", setContactMaterialYoungsModulus2)
                 ;
 
         enum_<AgXSimulatorItem::ControlMode>("ControlMode")
@@ -29,3 +43,4 @@ BOOST_PYTHON_MODULE(AgXPlugin)
 
 }
 
+}
