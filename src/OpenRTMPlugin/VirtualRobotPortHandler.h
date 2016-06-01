@@ -83,9 +83,11 @@ public:
     SensorStateOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
-    RTC::OutPort<RTC::TimedDoubleSeq> outPort;
 private:
     RTC::TimedDoubleSeq values;
+public:
+    RTC::OutPort<RTC::TimedDoubleSeq> outPort;
+private:
     DataTypeId dataTypeId;
 };
     
@@ -96,11 +98,13 @@ public:
     LinkDataOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
+private:
+    RTC::TimedDoubleSeq value;
+public:
     RTC::OutPort<RTC::TimedDoubleSeq> outPort;
 private:
     std::vector<std::string> linkNames;
     DataTypeId linkDataType;
-    RTC::TimedDoubleSeq value;
 };
     
 class AbsTransformOutPortHandler : public OutPortHandler
@@ -109,11 +113,13 @@ public:
     AbsTransformOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
+private:
+    RTC::TimedPose3D value;
+public:
     RTC::OutPort<RTC::TimedPose3D> outPort;
 private:
     std::vector<std::string> linkNames;
     DataTypeId linkDataType;
-    RTC::TimedPose3D value;
 };
     
     
@@ -123,9 +129,11 @@ public:
     SensorDataOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
-    RTC::OutPort<RTC::TimedDoubleSeq> outPort;
 private:
     RTC::TimedDoubleSeq value;
+public:
+    RTC::OutPort<RTC::TimedDoubleSeq> outPort;
+private:
     std::vector<std::string> sensorNames;
 };
     
@@ -135,9 +143,11 @@ public:
     GyroSensorOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
-    RTC::OutPort<RTC::TimedAngularVelocity3D> outPort;
 private:
     RTC::TimedAngularVelocity3D value;
+public:
+    RTC::OutPort<RTC::TimedAngularVelocity3D> outPort;
+private:
     std::vector<std::string> sensorNames;
 };
     
@@ -147,9 +157,11 @@ public:
     AccelerationSensorOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
-    RTC::OutPort<RTC::TimedAcceleration3D> outPort;
 private:
     RTC::TimedAcceleration3D value;
+public:
+    RTC::OutPort<RTC::TimedAcceleration3D> outPort;
+private:
     std::vector<std::string> sensorNames;
 };
     
@@ -159,9 +171,11 @@ public:
     LightOnOutPortHandler(PortInfo& info);
     virtual void inputDataFromSimulator(BodyRTCItem* bodyRTC);
     virtual void writeDataToPort();
-    RTC::OutPort<RTC::TimedBooleanSeq> outPort;
 private:
     RTC::TimedBooleanSeq value;
+public:
+    RTC::OutPort<RTC::TimedBooleanSeq> outPort;
+private:
     std::vector<std::string> lightNames;
 };
     
@@ -173,10 +187,12 @@ public:
     virtual void writeDataToPort();
     void onCameraStateChanged();
     void initialize(Body* simulationBody);
+private:
+    Img::TimedCameraImage value;
+public:
     RTC::OutPort<Img::TimedCameraImage> outPort;
 private:
     boost::mutex mtx;
-    Img::TimedCameraImage value;
     Camera* camera;
     std::string cameraName;
     boost::shared_ptr<const Image> prevImage;
@@ -191,10 +207,12 @@ public:
     virtual void writeDataToPort();
     void onCameraStateChanged();
     void initialize(Body* simulationBody);
+private:
+    PointCloudTypes::PointCloud value;
+public:
     RTC::OutPort<PointCloudTypes::PointCloud> outPort;
 private:
     boost::mutex mtx;
-    PointCloudTypes::PointCloud value;
     RangeCamera* rangeCamera;
     std::string rangeCameraName;
     boost::shared_ptr<const RangeCamera::PointData> prevPoints;
@@ -211,10 +229,12 @@ public:
     virtual void writeDataToPort();
     void onRangeSensorStateChanged();
     void initialize(Body* simulationBody);
+private:
+    RTC::RangeData value;
+public:
     RTC::OutPort<RTC::RangeData> outPort;
 private:
     boost::mutex mtx;
-    RTC::RangeData value;
     RangeSensor* rangeSensor;
     std::string rangeSensorName;
     boost::shared_ptr<const RangeSensor::RangeData> prevRangeData;
@@ -227,9 +247,11 @@ public:
     JointDataSeqInPortHandler(PortInfo& info);
     virtual void outputDataToSimulator(const BodyPtr& body);
     virtual void readDataFromPort();
-    RTC::InPort<RTC::TimedDoubleSeq> inPort;
 private:
     RTC::TimedDoubleSeq values;
+public:
+    RTC::InPort<RTC::TimedDoubleSeq> inPort;
+private:
     DataTypeId linkDataType;
 };
     
@@ -239,9 +261,11 @@ public:
     LinkDataInPortHandler(PortInfo& info);
     virtual void outputDataToSimulator(const BodyPtr& body);
     virtual void readDataFromPort();
-    RTC::InPort<RTC::TimedDoubleSeq> inPort;
 private:
     RTC::TimedDoubleSeq values;
+public:
+    RTC::InPort<RTC::TimedDoubleSeq> inPort;
+private:
     std::vector<std::string> linkNames;
     DataTypeId linkDataType;
 };
@@ -252,9 +276,11 @@ public:
     AbsTransformInPortHandler(PortInfo& info);
     virtual void outputDataToSimulator(const BodyPtr& body);
     virtual void readDataFromPort();
-    RTC::InPort<RTC::TimedPose3D> inPort;
 private:
     RTC::TimedPose3D values;
+public:
+    RTC::InPort<RTC::TimedPose3D> inPort;
+private:
     std::vector<std::string> linkNames;
     DataTypeId linkDataType;
 };
@@ -265,9 +291,11 @@ public:
     LightOnInPortHandler(PortInfo& info);
     virtual void outputDataToSimulator(const BodyPtr& body);
     virtual void readDataFromPort();
-    RTC::InPort<RTC::TimedBooleanSeq> inPort;
 private:
     RTC::TimedBooleanSeq values;
+public:
+    RTC::InPort<RTC::TimedBooleanSeq> inPort;
+private:
     std::vector<std::string> lightNames;
 };
 }
