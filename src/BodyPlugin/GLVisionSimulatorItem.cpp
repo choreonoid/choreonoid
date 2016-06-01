@@ -393,6 +393,10 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 
     glFormat = QGLFormat::defaultFormat();
     glFormat.setDoubleBuffer(false);
+    if(useGLSL){
+        glFormat.setProfile(QGLFormat::CoreProfile);
+        glFormat.setVersion(3, 3);
+    }
     
     this->simulatorItem = simulatorItem;
     worldTimeStep = simulatorItem->worldTimeStep();
@@ -577,7 +581,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     }
     
     renderer->sceneRoot()->addChild(sceneGroup);
-    
+
     pixelBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, simImpl->glFormat);
     pixelBuffer->makeCurrent();
 

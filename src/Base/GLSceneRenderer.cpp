@@ -167,18 +167,15 @@ double GLSceneRenderer::aspectRatio() const
 }
 
 
-
 bool GLSceneRenderer::initializeGL()
 {
-    MessageView* mv = MessageView::instance();
-    
+    ostream& os = mvout();
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
-    mv->putln(boost::format("OpenGL version is %1%.%2%.") % major % minor);
-
+    os << (boost::format("OpenGL version is %1%.%2%.") % major % minor) << endl;
     if(major >= 2){
-        mv->putln(boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION));
+        os << (boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
     }
 }
 
