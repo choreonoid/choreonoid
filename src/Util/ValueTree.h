@@ -60,10 +60,10 @@ public:
     bool isString() const { return typeBits & SCALAR; }
 
 #ifdef _WIN32
-    const std::string toSring() const;
+    const std::string toString() const;
     const std::string toUTF8String() const;
 
-    operator std::string () const {
+    operator const std::string () const {
         return toString();
     }
 #else
