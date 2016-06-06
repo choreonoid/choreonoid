@@ -126,12 +126,13 @@ DEF Labo1 Humanoid {
 	  mass 1.0
 	  children [
 	    Transform {
-	      translation -0.8 1.48 0
+	      translation 35 20 0
 	      rotation 0 0 1 -1.5708
 	      children [ 
 		Transform {
 		  translation 0 2 0
 		  rotation 1 0 0 1.5708
+		  scale 20.0 20.0 20.0
 		  children [
 		    Inline {
 		      url "floor2.wrl"
