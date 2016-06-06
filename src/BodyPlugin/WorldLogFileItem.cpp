@@ -422,6 +422,8 @@ public:
     bool isOverRange;
         
     vector<BodyInfoPtr> bodyInfos;
+    ScopedConnection worldSubTreeChangedConnection;
+    bool isBodyInfoUpdateNeeded;
     
     WorldLogFileItemImpl(WorldLogFileItem* self);
     WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileItemImpl& org);
@@ -429,6 +431,7 @@ public:
     bool setLogFileName(const std::string& name);
     string getActualFilename();
     void updateBodyInfos();
+    void onWorldSubTreeChanged();
     bool readTopHeader();
     bool readFrameHeader(int pos);
     bool seek(double time);
@@ -479,6 +482,7 @@ WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self)
 {
     isTimeStampSuffixEnabled = false;
     recordingFrameRate = 0.0;
+    isBodyInfoUpdateNeeded = true;
 }
 
 
@@ -498,6 +502,7 @@ WorldLogFileItemImpl::WorldLogFileItemImpl(WorldLogFileItem* self, WorldLogFileI
     filename = org.filename;
     isTimeStampSuffixEnabled = org.isTimeStampSuffixEnabled;
     recordingFrameRate = org.recordingFrameRate;
+    isBodyInfoUpdateNeeded = true;
 }
 
 
@@ -521,7 +526,7 @@ Item* WorldLogFileItem::doDuplicate() const
 
 void WorldLogFileItem::notifyUpdate()
 {
-    impl->updateBodyInfos();
+    impl->isBodyInfoUpdateNeeded = true;
     Item::notifyUpdate();
 }
 
@@ -586,18 +591,35 @@ void WorldLogFileItemImpl::updateBodyInfos()
                         bodyInfos.push_back(new BodyInfo(*p));
                         items.erase(p);
                     } else {
-                        bodyInfos.push_back(new BodyInfo(0));
+                        bodyInfos.push_back(0);
                     }
                 }
             }
         }
     }
+
+    isBodyInfoUpdateNeeded = false;
 }
 
 
 void WorldLogFileItem::onPositionChanged()
 {
-    impl->updateBodyInfos();
+    WorldItem* worldItem = findOwnerItem<WorldItem>();
+    if(!worldItem){
+        impl->worldSubTreeChangedConnection.disconnect();
+    } else {
+        impl->worldSubTreeChangedConnection.reset(
+            worldItem->sigSubTreeChanged().connect(
+                boost::bind(&WorldLogFileItemImpl::onWorldSubTreeChanged, impl)));
+    }
+    
+    impl->isBodyInfoUpdateNeeded = true;
+}
+
+
+void WorldLogFileItemImpl::onWorldSubTreeChanged()
+{
+    isBodyInfoUpdateNeeded = true;
 }
 
 
@@ -625,7 +647,6 @@ bool WorldLogFileItemImpl::readTopHeader()
                 if(readBuf.checkSize(headerSize)){
                     while(!readBuf.isEnd()){
                         bodyNames.push_back(readBuf.readString());
-                        cout << bodyNames.back() << endl;
                     }
                     currentReadFramePos = readBuf.pos;
                     result = readFrameHeader(readBuf.pos);
@@ -636,7 +657,7 @@ bool WorldLogFileItemImpl::readTopHeader()
         }
     }
 
-    updateBodyInfos();
+    isBodyInfoUpdateNeeded = true;
 
     return result;
 }
@@ -747,6 +768,10 @@ bool WorldLogFileItemImpl::recallStateAtTime(double time)
     }
     readBuf.seek(0);
 
+    if(isBodyInfoUpdateNeeded){
+        updateBodyInfos();
+    }
+    
     int bodyIndex = 0;
     while(!readBuf.isEnd()){
         int dataTypeID = readBuf.readID();

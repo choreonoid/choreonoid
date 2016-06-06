@@ -707,7 +707,6 @@ BulletLink::~BulletLink()
     if(motionState)
         delete motionState;
     if(body){
-        dynamicsWorld->removeRigidBody(body);
         delete body;
     }
 }
@@ -812,13 +811,11 @@ BulletBody::~BulletBody()
 {
     for(size_t i=0; i < bulletLinks.size(); ++i){
         if(bulletLinks[i]->joint){
-            dynamicsWorld->removeConstraint(bulletLinks[i]->joint);
             delete bulletLinks[i]->joint;
         }
     }
     for(size_t i=0; i < extraJoints.size(); ++i){
         if(extraJoints[i]){
-            dynamicsWorld->removeConstraint(extraJoints[i]);
             delete extraJoints[i];
         }
     }

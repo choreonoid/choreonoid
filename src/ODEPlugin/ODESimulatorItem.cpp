@@ -472,12 +472,6 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
 
 ODELink::~ODELink()
 {
-    if(jointID){
-        dJointDestroy(jointID);
-    }
-    if(motorID){
-    	dJointDestroy(motorID);
-    }
     for(vector<dGeomID>::iterator it=geomID.begin(); it!=geomID.end(); it++)
         dGeomDestroy(*it);
     if(triMeshDataID){

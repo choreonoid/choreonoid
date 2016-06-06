@@ -900,6 +900,7 @@ bool YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
     if(read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
     if(read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
     readDevice(sensor, node);
+    return true;
 }
 
 

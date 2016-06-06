@@ -70,6 +70,16 @@ items:
             isEditable: false
         - 
           id: 5
+          name: "FogUnderWater"
+          plugin: Base
+          class: SceneItem
+          data: 
+            file: "${SHARE}/model/misc/FogUnderWater.wrl"
+            format: VRML-FILE
+            translation: [ 0, 0, 0 ]
+            rotation: [ 1, 0, 0, 0 ]
+        - 
+          id: 6
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -97,7 +107,7 @@ items:
             2Dmode: false
           children: 
             - 
-              id: 6
+              id: 7
               name: "SubmersibleSimulator"
               plugin: SubmersibleSample
               class: SubmersibleSimulatorItem
@@ -121,7 +131,7 @@ views:
     mounted: true
     state: 
       selected: [ 3 ]
-      checked: [ 2, 3, 4 ]
+      checked: [ 2, 3, 4, 5 ]
       expanded: [ 1, 2, 5 ]
   - 
     id: 3

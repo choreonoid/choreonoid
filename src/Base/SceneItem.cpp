@@ -25,7 +25,7 @@ namespace {
 
 boost::scoped_ptr<VRMLParser> vrmlParser;
 boost::scoped_ptr<VRMLToSGConverter> vrmlConverter;
-    
+
 bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
 {
     item->topNode()->clearChildren(true);
@@ -48,7 +48,7 @@ bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
             }
         }
         vrmlParser->checkEOF();
-            
+
     } catch(EasyScanner::Exception& ex){
         os << ex.getFullMessage();
         return false;
