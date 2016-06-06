@@ -53,7 +53,3 @@ links:
         geometry:
           type: Box
           size: [ 0.6, 0.4, 0.3 ]
-#      -
-#        type: Fog
-#        color: [ 0.4, 0.45, 1.0 ]
-#        visibilityRange: 5.0
