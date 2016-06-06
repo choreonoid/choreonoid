@@ -4,7 +4,7 @@ Group {
   children [
     Fog {
       color 1.0 1.0 1.0
-      visibilityRange 10.0
+      visibilityRange 20.0
     }
     Shape {
       geometry Sphere {
