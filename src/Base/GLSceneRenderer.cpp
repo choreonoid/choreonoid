@@ -773,6 +773,11 @@ SignalProxy<void()> GLSceneRenderer::sigCurrentCameraChanged()
 bool GLSceneRenderer::setSwapInterval(int interval)
 {
 #ifdef _WIN32
+    if(!wglGetProcAddress("wglGetExtensionsStringEXT"))
+        return false;
+    if( strstr(wglGetExtensionsStringEXT(), "WGL_EXT_swap_control" ) == 0 )
+        return false;
+
     return wglSwapIntervalEXT(interval);
 #endif
     return false;
