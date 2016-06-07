@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-23 13:58+0900\n"
+"POT-Creation-Date: 2016-06-06 15:32+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -58,18 +58,18 @@ msgstr "\"%2\"の${%1}は展開できません！"
 msgid "Save the image of %1"
 msgstr "%1の画像を保存"
 
-#: CaptureBar.cpp:96 ItemManager.cpp:1130 ProjectManager.cpp:499
+#: CaptureBar.cpp:96 ItemManager.cpp:1135 ProjectManager.cpp:499
 #: TextEditView.cpp:119
 msgid "Save"
 msgstr "保存"
 
-#: CaptureBar.cpp:97 ItemManager.cpp:912 ItemManager.cpp:1131
+#: CaptureBar.cpp:97 ItemManager.cpp:913 ItemManager.cpp:1136
 #: ItemPropertyView.cpp:273 PluginManager.cpp:653 ProjectManager.cpp:475
 #: ProjectManager.cpp:500 TaskView.cpp:269
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: CaptureBar.cpp:100 ItemManager.cpp:949 ItemPropertyView.cpp:281
+#: CaptureBar.cpp:100 ItemManager.cpp:950 ItemPropertyView.cpp:281
 #: PluginManager.cpp:657 ProjectManager.cpp:479 ProjectManager.cpp:504
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
@@ -239,7 +239,7 @@ msgstr "名前"
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:804 MainWindow.cpp:167 PointSetItem.cpp:519 SceneItem.cpp:142
+#: Item.cpp:804 MainWindow.cpp:167 PointSetItem.cpp:519 SceneItem.cpp:143
 msgid "File"
 msgstr "ファイル"
 
@@ -331,59 +331,59 @@ msgstr "\"%1%\" はフォーマット\"%2%\"が不明なため読み込めませ
 msgid "Loading %1% \"%2%\""
 msgstr "%1% \"%2%\" を読み込み中"
 
-#: ItemManager.cpp:878 ItemManager.cpp:1098
-msgid " -> ok!\n"
-msgstr "-> 完了!\n"
-
-#: ItemManager.cpp:880 ItemManager.cpp:1098
+#: ItemManager.cpp:875 ItemManager.cpp:1096
 msgid " -> failed.\n"
-msgstr "-> 失敗.\n"
+msgstr " -> 失敗.\n"
 
-#: ItemManager.cpp:901
+#: ItemManager.cpp:881 ItemManager.cpp:1102
+msgid " -> ok!\n"
+msgstr " -> 完了!\n"
+
+#: ItemManager.cpp:902
 msgid "The singleton instance of %1% is already loaded."
 msgstr "%1%のシングルトンインスタンスは既に読み込まれています。"
 
-#: ItemManager.cpp:909
+#: ItemManager.cpp:910
 msgid "Load %1%"
 msgstr "%1% の読み込み"
 
-#: ItemManager.cpp:911 PluginManager.cpp:652 ProjectManager.cpp:474
+#: ItemManager.cpp:912 PluginManager.cpp:652 ProjectManager.cpp:474
 msgid "Open"
 msgstr "読み込み"
 
-#: ItemManager.cpp:919
+#: ItemManager.cpp:920
 msgid "Check the item(s) in ItemTreeView"
 msgstr "アイテムツリービューのチェックを入れる"
 
-#: ItemManager.cpp:1080
+#: ItemManager.cpp:1081
 msgid "Saving %1% to \"%2%\""
 msgstr "%1% を \"%2%\" に保存中"
 
-#: ItemManager.cpp:1082
+#: ItemManager.cpp:1083
 msgid "Exporting %1% into \"%2%\""
 msgstr "%1% を \"%2%\" にエクスポート中"
 
-#: ItemManager.cpp:1105
+#: ItemManager.cpp:1110
 msgid "%1% cannot be saved.\n"
 msgstr "%1% は保存できません。\n"
 
-#: ItemManager.cpp:1107
+#: ItemManager.cpp:1112
 msgid "%1% cannot be exported.\n"
 msgstr "%1% はエクスポートできません。\n"
 
-#: ItemManager.cpp:1111
+#: ItemManager.cpp:1116
 msgid "%1% cannot be saved as the %2% format.\n"
 msgstr "%1% はフォーマット%2%として保存できません。\n"
 
-#: ItemManager.cpp:1113
+#: ItemManager.cpp:1118
 msgid "%1% cannot be exported into the %2% format.\n"
 msgstr "%1% はフォーマット%2%としてエクスポートできません。\n"
 
-#: ItemManager.cpp:1126
+#: ItemManager.cpp:1131
 msgid "Save %1% as"
 msgstr "名前を付けて%1%を保存"
 
-#: ItemManager.cpp:1407
+#: ItemManager.cpp:1412
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
@@ -920,7 +920,7 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
-#: PointSetItem.cpp:529 SceneItem.cpp:143
+#: PointSetItem.cpp:529 SceneItem.cpp:144
 msgid "Translation"
 msgstr "並進"
 
@@ -1068,15 +1068,15 @@ msgstr " 頂点: %1%\n"
 msgid " Triangles: %1%"
 msgstr " トライアングル: %1%"
 
-#: SceneItem.cpp:58
+#: SceneItem.cpp:59
 msgid "The VRML file does not have any valid entity."
 msgstr "VRMLファイルに有効な実態が含まれていません。"
 
-#: SceneItem.cpp:71
+#: SceneItem.cpp:72
 msgid "The STL file cannot be loaded."
 msgstr "STLファイルは読み込めませんでした。"
 
-#: SceneItem.cpp:85
+#: SceneItem.cpp:86
 msgid "SceneItem"
 msgstr "シーンアイテム"
 

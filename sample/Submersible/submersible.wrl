@@ -260,11 +260,6 @@ DEF Submersible Humanoid {
 		}
 	      }
 	    }
-
-	    Fog {
-	      color 0.4 0.45 1.0
-	      visibilityRange 5.0
-	    }
 	  ]
 	}
       ]

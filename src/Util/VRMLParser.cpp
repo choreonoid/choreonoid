@@ -775,7 +775,7 @@ VRMLNodePtr VRMLParserImpl::readSpecificNode(VRMLNodeCategory nodeCategory, int 
 
     if(!node->isCategoryOf(nodeCategory)){
         scanner->throwException
-            (string("A ") + nodeTypeName + " node is put in a illegal place");
+            (string("A ") + nodeTypeName + " node is put in illegal place");
     }
 
     return node;
