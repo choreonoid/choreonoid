@@ -58,12 +58,6 @@ set(sources
 set(headers
   )
 
-
-if(NOT QT5)
-  QT4_WRAP_CPP(sources
-    )
-endif()
-
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin ${bullet_LIBRARIES})
