@@ -134,6 +134,7 @@ void PythonConsoleView::initializeClass(ExtensionManager* ext)
 PythonConsoleView::PythonConsoleView()
 {
     impl = new PythonConsoleViewImpl(this);
+    setFocusProxy(impl);
 }
 
 

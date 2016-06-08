@@ -431,7 +431,7 @@ macro(setup_qt5)
   set(QT5 TRUE)
 
   add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
-  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_AUTOMOC OFF)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
   if(MSVC)

@@ -212,14 +212,7 @@ set(headers
 
 set(target CnoidBase)
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS Base.qrc)
-else()
-  QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
-endif()
-
-if(NOT QT5)
-QT4_WRAP_CPP(sources
+set(qtheaders
   App.h
   Menu.h
   ToolBar.h
@@ -248,8 +241,20 @@ QT4_WRAP_CPP(sources
   SelectionListEditor.h
   TextEditView.h
   TextEdit.h
-  OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
+
+if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS Base.qrc)
+  QT4_WRAP_CPP(sources
+    ${qtheaders}
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+    )
+else()
+  QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
+  QT5_WRAP_CPP(sources
+    ${qtheaders}
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+    )
 endif()
 
 make_gettext_mofiles(${target} mofiles)

@@ -83,6 +83,10 @@ if(NOT QT5)
     )
   QT4_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
 else()
+  QT5_WRAP_CPP(sources
+    LinkTreeWidget.h
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+    )
   QT5_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
 endif()
 
