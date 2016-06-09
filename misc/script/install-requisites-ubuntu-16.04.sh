@@ -35,5 +35,6 @@ libsndfile1-dev
 
 #qt5-default
 #libqt5x11extras5-dev
+# qt5-style-plugins
 #libbullet-dev
 #libbullet-extras-dev
