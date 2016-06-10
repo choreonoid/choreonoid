@@ -22,7 +22,6 @@
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
 #include <QGLPixelBuffer>
-#include <QThread>
 #include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
