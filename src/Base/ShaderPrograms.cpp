@@ -36,6 +36,12 @@ void ShaderProgram::setColor(const Vector4f& color)
 }
 
 
+void ShaderProgram::enableColorArray(bool on)
+{
+
+}
+
+
 void NolightingProgram::initialize()
 {
     MVPLocation = getUniformLocation("MVP");
@@ -57,14 +63,23 @@ void SolidColorProgram::initialize()
     NolightingProgram::initialize();
 
     colorLocation = getUniformLocation("color");
+    colorPerVertexLocation = getUniformLocation("colorPerVertex");
+    glUniform1i(colorPerVertexLocation, false);
 }
 
 
 void SolidColorProgram::setColor(const Vector4f& color)
 {
     glUniform4fv(colorLocation, 1, color.data());
+    glUniform1i(colorPerVertexLocation, true);
 }
 
+
+void SolidColorProgram::enableColorArray(bool on)
+{
+    glUniform1i(colorPerVertexLocation, on);
+}
+    
 
 void LightingProgram::initialize()
 {

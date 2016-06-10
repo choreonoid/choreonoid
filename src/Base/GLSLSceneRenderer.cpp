@@ -911,13 +911,13 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* 
         
     glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
     
     if(hasNormals){
         glBindBuffer(GL_ARRAY_BUFFER, normalBufferHandle);
         glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
         glEnableVertexAttribArray(1);
     }
 }
@@ -951,6 +951,8 @@ void GLSLSceneRendererImpl::renderPlot
     LightingProgram* orgLightingProgram;
     NolightingProgram* orgNolightingProgram;
 
+    const bool hasColors = plot->hasColors();
+
     if(isPicking){
         pushPickID(plot);
     } else {
@@ -962,13 +964,36 @@ void GLSLSceneRendererImpl::renderPlot
         currentLightingProgram = 0;
         currentNolightingProgram = &solidColorProgram;
         renderMaterial(plot->material());
+        currentProgram->enableColorArray(hasColors);
     }
     
     ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot);
     if(!handleSet->isValid()){
         SgVertexArrayPtr vertices = getVertices();
-        handleSet->numVertices = vertices->size();
-        handleSet->genBuffers(1);
+        const int n = vertices->size();
+        handleSet->numVertices = n;
+        if(!hasColors){
+            handleSet->genBuffers(1);
+        } else {
+            handleSet->genBuffers(2);
+            glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(1));
+            SgColorArrayPtr colors;
+            if(plot->colorIndices().empty()){
+                const SgColorArray& orgColors = *plot->colors();
+                if(orgColors.size() >= n){
+                    colors = plot->colors();
+                } else {
+                    colors = new SgColorArray(n);
+                    std::copy(orgColors.begin(), orgColors.end(), colors->begin());
+                    std::fill(colors->begin() + orgColors.size(), colors->end(), orgColors.back());
+                }
+            }
+            if(colors){
+                glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
+                glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
+                glEnableVertexAttribArray(1);
+            }
+        }
         glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(0));
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
