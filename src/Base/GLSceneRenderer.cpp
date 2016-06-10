@@ -468,7 +468,8 @@ public:
     bool initializeGL();
     void setViewport(int x, int y, int width, int height);
     void beginRendering(bool doRenderingCommands);
-    void extractPreproNodes(PreproNode* node, const Affine3& T);
+    void extractPreproNodes();
+    void extractPreproNodesIter(PreproNode* node, const Affine3& T);
     void renderCamera();
     void getViewVolume(
         const SgOrthographicCamera& camera,
@@ -915,38 +916,7 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if(doPreprocessedNodeTreeExtraction){
-        PreproTreeExtractor extractor;
-        preproTree.reset(extractor.apply(sceneRoot));
-        doPreprocessedNodeTreeExtraction = false;
-    }
-
-    std::swap(cameras, prevCameras);
-    cameras->clear();
-    camerasChanged = false;
-    currentCameraRemoved = true;
-    
-    lights.clear();
-    currentFog = 0;
-
-    if(preproTree){
-        extractPreproNodes(preproTree.get(), Affine3::Identity());
-    }
-
-    if(!camerasChanged){
-        if(cameras->size() != prevCameras->size()){
-            camerasChanged = true;
-        }
-    }
-    if(camerasChanged){
-        if(currentCameraRemoved){
-            currentCameraIndex = 0;
-        }
-        cameraPaths.clear();
-        sigCamerasChanged();
-    }
-
-    setCurrentCamera(currentCameraIndex, false);
+    extractPreproNodes();
 
     if(doRenderingCommands && currentCamera){
         renderCamera();
@@ -990,13 +960,56 @@ void GLSceneRendererImpl::beginRendering(bool doRenderingCommands)
 }
 
 
-void GLSceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
+void GLSceneRenderer::extractPreprocessedNodes()
+{
+    impl->extractPreproNodes();
+}
+
+
+void GLSceneRendererImpl::extractPreproNodes()
+{
+    if(doPreprocessedNodeTreeExtraction){
+        PreproTreeExtractor extractor;
+        preproTree.reset(extractor.apply(self->sceneRoot()));
+        doPreprocessedNodeTreeExtraction = false;
+    }
+
+    std::swap(cameras, prevCameras);
+    cameras->clear();
+    camerasChanged = false;
+    currentCameraRemoved = true;
+    
+    lights.clear();
+    currentFog = 0;
+
+    if(preproTree){
+        extractPreproNodesIter(preproTree.get(), Affine3::Identity());
+    }
+
+    if(!camerasChanged){
+        if(cameras->size() != prevCameras->size()){
+            camerasChanged = true;
+        }
+    }
+    if(camerasChanged){
+        if(currentCameraRemoved){
+            currentCameraIndex = 0;
+        }
+        cameraPaths.clear();
+        sigCamerasChanged();
+    }
+
+    setCurrentCamera(currentCameraIndex, false);
+}
+
+
+void GLSceneRendererImpl::extractPreproNodesIter(PreproNode* node, const Affine3& T)
 {
     switch(node->node.which()){
 
     case PreproNode::GROUP:
         for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
-            extractPreproNodes(childNode, T);
+            extractPreproNodesIter(childNode, T);
         }
         break;
         
@@ -1007,7 +1020,7 @@ void GLSceneRendererImpl::extractPreproNodes(PreproNode* node, const Affine3& T)
         transform->getTransform(T1);
         const Affine3 T2 = T * T1;
         for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
-            extractPreproNodes(childNode, T2);
+            extractPreproNodesIter(childNode, T2);
         }
     }
     break;
@@ -2669,7 +2682,7 @@ void GLSceneRenderer::setBackgroundColor(const Vector3f& color)
 
 SgLight* GLSceneRenderer::headLight()
 {
-    return impl->headLight.get();
+    return impl->headLight;
 }
 
 

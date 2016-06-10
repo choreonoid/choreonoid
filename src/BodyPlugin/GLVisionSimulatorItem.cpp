@@ -21,7 +21,6 @@
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
 #include <QGLPixelBuffer>
-#include <QThread>
 #include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
@@ -542,6 +541,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     }
     
     renderer.sceneRoot()->addChild(sceneGroup);
+    renderer.extractPreprocessedNodes();
     renderer.headLight()->on(simImpl->isHeadLightEnabled);
     renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
     renderer.setCurrentCamera(sceneCamera);
