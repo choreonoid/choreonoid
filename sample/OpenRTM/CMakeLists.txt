@@ -93,3 +93,11 @@ add_cnoid_sample_rtc(${target} TankKinematicsControllerRTC.cpp)
 configure_file(OpenRTM-TankKinematics.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(TankKinematics.conf ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankKinematics.conf COPYONLY)
 install(FILES TankKinematics.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
+
+# constraintLog
+add_cnoid_sample_rtc(ConstraintLogRTC ConstraintLogRTC.cpp)
+configure_file(OpenRTM-SR1LiftupConstLog.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(SR1LiftupConstLog.conf ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/SR1LiftupConstLog.conf COPYONLY)
+install(FILES SR1LiftupConstLog.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
+configure_file(SR1LiftupConstLog.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
+
