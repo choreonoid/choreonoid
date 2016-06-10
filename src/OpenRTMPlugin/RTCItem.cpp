@@ -226,8 +226,13 @@ bool RTCItem::restore(const Archive& archive)
     if(archive.read("periodicType", symbol)){
         periodicType.select(symbol);
         oldType = periodicType.selectedIndex();
+        properties["exec_cxt.periodic.type"] = symbol;
     }
-    archive.read("periodicRate", periodicRate);
+    if(archive.read("periodicRate", periodicRate)){
+        stringstream ss;
+        ss << periodicRate;
+        properties["exec_cxt.periodic.rate"] = ss.str();
+    }
     if (archive.read("RelativePathBase", symbol)){
         pathBase.select(symbol);
         oldPathBase = pathBase.selectedIndex();
