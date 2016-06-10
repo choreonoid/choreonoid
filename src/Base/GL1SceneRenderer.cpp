@@ -424,6 +424,12 @@ bool GL1SceneRendererImpl::initializeGL()
 }
 
 
+void GL1SceneRenderer::flush()
+{
+    glFlush();
+}
+
+
 void GL1SceneRenderer::requestToClearCache()
 {
     impl->isCacheClearRequested = true;

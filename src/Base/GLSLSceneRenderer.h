@@ -26,6 +26,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual const Matrix4& projectionMatrix() const;
         
     virtual bool initializeGL();
+    virtual void flush();
 
     // The following functions cannot be called bofore calling the initializeGL() function.
     bool setSwapInterval(int interval);

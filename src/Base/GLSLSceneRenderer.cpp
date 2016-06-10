@@ -115,6 +115,8 @@ public:
         
     GLSLSceneRenderer* self;
 
+    GLint defaultFBO;
+
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
     NolightingProgram* currentNolightingProgram;
@@ -264,6 +266,8 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
 GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
+    defaultFBO = 0;
+
     currentProgram = 0;
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
@@ -334,6 +338,9 @@ bool GLSLSceneRendererImpl::initializeGL()
         return false;
     }
 
+    defaultFBO = 0;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFBO);
+
     try {
         solidColorProgram.initialize();
         phongShadowProgram.initialize();
@@ -352,6 +359,19 @@ bool GLSLSceneRendererImpl::initializeGL()
     isCurrentFogUpdated = false;
 
     return true;
+}
+
+
+void GLSLSceneRenderer::flush()
+{
+    glFlush();
+
+    /**
+       This is necessary when the rendering is done for an internal frame buffer object
+       and the rendererd image data is retrieved from it because another frame buffer object
+       may be bounded in the renderer.
+    */
+    glBindFramebuffer(GL_FRAMEBUFFER, impl->defaultFBO);
 }
 
 

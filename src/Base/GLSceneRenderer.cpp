@@ -180,12 +180,6 @@ bool GLSceneRenderer::initializeGL()
 }
 
 
-void GLSceneRenderer::flush()
-{
-    glFlush();
-}
-
-
 bool GLSceneRenderer::setSwapInterval(int interval)
 {
 #ifdef _WIN32

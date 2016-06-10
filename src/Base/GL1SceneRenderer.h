@@ -28,6 +28,7 @@ public:
     virtual const Matrix4& projectionMatrix() const;
         
     virtual bool initializeGL();
+    virtual void flush();
     virtual void render();
     virtual bool pick(int x, int y);
     virtual const Vector3& pickedPoint() const;

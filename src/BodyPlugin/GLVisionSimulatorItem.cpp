@@ -709,17 +709,6 @@ void VisionRenderer::initializeRendering()
 
     renderer->initializeGL();
     renderer->setViewport(0, 0, pixelWidth, pixelHeight);
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    /*
-      In Qt5, the data in the pixel buffer cannot be read unless the following function is called in advance.
-      In the function, the bind function of the frame buffer object used in the QGLPixelBuffer object
-      is called, and it is probaboly necessary for accessing the rendering buffer.
-      However, the frame buffer object is a private member of QGLPixelBuffer and calling the toImage
-      function seems only a way to enable the access to the rendering buffer.
-    */
-    renderingBuffer->toImage();
-#endif
 }
 
 
