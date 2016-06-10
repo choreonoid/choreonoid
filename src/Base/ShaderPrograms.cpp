@@ -64,6 +64,11 @@ void SolidColorProgram::initialize()
 
     colorLocation = getUniformLocation("color");
     colorPerVertexLocation = getUniformLocation("colorPerVertex");
+}
+
+
+void SolidColorProgram::bindGLObjects()
+{
     glUniform1i(colorPerVertexLocation, false);
 }
 
@@ -71,7 +76,7 @@ void SolidColorProgram::initialize()
 void SolidColorProgram::setColor(const Vector4f& color)
 {
     glUniform4fv(colorLocation, 1, color.data());
-    glUniform1i(colorPerVertexLocation, true);
+    glUniform1i(colorPerVertexLocation, false);
 }
 
 

@@ -42,6 +42,7 @@ class SolidColorProgram : public NolightingProgram
     
 public:
     virtual void initialize();
+    virtual void bindGLObjects();
     virtual void setColor(const Vector4f& color);
     virtual void enableColorArray(bool on);
 };

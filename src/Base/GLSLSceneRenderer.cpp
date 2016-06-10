@@ -963,8 +963,12 @@ void GLSLSceneRendererImpl::renderPlot
         solidColorProgram.use();
         currentLightingProgram = 0;
         currentNolightingProgram = &solidColorProgram;
-        renderMaterial(plot->material());
-        currentProgram->enableColorArray(hasColors);
+
+        if(hasColors){
+            currentProgram->enableColorArray(true);
+        } else {
+            renderMaterial(plot->material());
+        }
     }
     
     ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot);
