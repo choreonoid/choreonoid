@@ -706,7 +706,7 @@ SgCamera* VisionRenderer::initializeCamera()
 void VisionRenderer::moveRenderingBufferToThread(QThread& thread)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    renderingBuffer->moveToThread(&thread);
+    renderingBuffer->context()->moveToThread(&thread);
 #endif
 }
 
@@ -714,7 +714,7 @@ void VisionRenderer::moveRenderingBufferToThread(QThread& thread)
 void VisionRenderer::moveRenderingBufferToMainThread()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    renderingBuffer->moveToThread(QApplication::instance()->thread());
+    renderingBuffer->context()->moveToThread(QApplication::instance()->thread());
 #endif
 }
 
