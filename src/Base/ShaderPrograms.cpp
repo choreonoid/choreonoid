@@ -62,6 +62,7 @@ void SolidColorProgram::initialize()
 
     NolightingProgram::initialize();
 
+    pointSizeLocation = getUniformLocation("pointSize");
     colorLocation = getUniformLocation("color");
     colorPerVertexLocation = getUniformLocation("colorPerVertex");
 }
@@ -73,11 +74,18 @@ void SolidColorProgram::bindGLObjects()
 }
 
 
+void SolidColorProgram::setPointSize(float s)
+{
+    glUniform1f(pointSizeLocation, s);
+}
+
+
 void SolidColorProgram::setColor(const Vector4f& color)
 {
     glUniform4fv(colorLocation, 1, color.data());
     glUniform1i(colorPerVertexLocation, false);
 }
+
 
 
 void SolidColorProgram::enableColorArray(bool on)
@@ -179,8 +187,6 @@ void PhongShadowProgram::initialize()
     fogColorLocation = getUniformLocation("fogColor");
     isFogEnabledLocation = getUniformLocation("isFogEnabled");
                                            
-    glUniform1i(isFogEnabledLocation, false);
-
     shadowMapProgram_.loadVertexShader(":/Base/shader/nolighting.vert");
     shadowMapProgram_.loadFragmentShader(":/Base/shader/shadowmap.frag");
     shadowMapProgram_.link();

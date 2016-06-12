@@ -124,6 +124,13 @@ public:
     SolidColorProgram solidColorProgram;
     PhongShadowProgram phongShadowProgram;
 
+    struct ProgramInfo {
+        ShaderProgram* program;
+        LightingProgram* lightingProgram;
+        NolightingProgram* nolightingProgram;
+    };
+    vector<ProgramInfo> programStack;
+        
     bool isPicking;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
@@ -143,6 +150,7 @@ public:
     float lastAlpha;
 
     SgMaterialPtr defaultMaterial;
+    GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
     ShapeHandleSetMap shapeHandleSetMaps[2];
     bool doUnusedShapeHandleSetCheck;
@@ -214,6 +222,8 @@ public:
     void renderFog();
     void onCurrentFogNodeUdpated();
     void endRendering();
+    void pushProgram(ShaderProgram& program, bool isLightingProgram);
+    void popProgram();
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
     void popPickID();
@@ -289,6 +299,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     defaultLighting = true;
     defaultMaterial = new SgMaterial;
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
+    defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
 
     prevFog = 0;
@@ -353,6 +364,8 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
+
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     isShapeHandleSetClearRequested = true;
 
@@ -547,30 +560,29 @@ void GLSLSceneRendererImpl::beginRendering()
         hasValidNextShapeHandleSetMap = false;
     }
     currentShapeHandleSet = 0;
-    
+
+    currentProgram = 0;
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
     GLbitfield clearMask = GL_DEPTH_BUFFER_BIT;
     
     if(isPicking){
-        currentProgram = &solidColorProgram;
-        currentNolightingProgram = &solidColorProgram;
+        pushProgram(solidColorProgram, false);
         currentNodePath.clear();
         pickingNodePathList.clear();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     } else {
-        currentProgram = &phongShadowProgram;
+        const bool isMainRenderingPass = phongShadowProgram.isMainRenderingPass();
         if(phongShadowProgram.isMainRenderingPass()){
-            currentLightingProgram = &phongShadowProgram;
+            pushProgram(phongShadowProgram, true);
             const Vector3f& c = self->backgroundColor();
             glClearColor(c[0], c[1], c[2], 1.0f);
             clearMask |= GL_COLOR_BUFFER_BIT;
         } else {
-            currentNolightingProgram = &phongShadowProgram.shadowMapProgram();
+            pushProgram(phongShadowProgram.shadowMapProgram(), false);
         }
     }
     
-    currentProgram->use();
     currentProgram->bindGLObjects();
     glClear(clearMask);
     clearGLState();
@@ -581,6 +593,8 @@ void GLSLSceneRendererImpl::beginRendering()
             renderFog();
         }
     }
+
+    popProgram();
 }
 
 
@@ -669,6 +683,42 @@ void GLSLSceneRendererImpl::endRendering()
     }
 }
 
+
+void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingProgram)
+{
+    ProgramInfo info;
+    if(&program == currentProgram){
+        info.program = 0;
+    } else {
+        info.program = currentProgram;
+        info.lightingProgram = currentLightingProgram;
+        info.nolightingProgram = currentNolightingProgram;
+        currentProgram = &program;
+        if(isLightingProgram){
+            currentLightingProgram = static_cast<LightingProgram*>(currentProgram);
+            currentNolightingProgram = 0;
+        } else {
+            currentLightingProgram = 0;
+            currentNolightingProgram = static_cast<NolightingProgram*>(currentProgram);
+        }
+        program.use();
+    }
+    programStack.push_back(info);
+}
+
+
+void GLSLSceneRendererImpl::popProgram()
+{
+    ProgramInfo& info = programStack.back();
+    if(info.program){
+        currentProgram = info.program;
+        currentLightingProgram = info.lightingProgram;
+        currentNolightingProgram = info.nolightingProgram;
+        currentProgram->use();
+    }
+    programStack.pop_back();
+}
+    
 
 const std::vector<SgNode*>& GLSLSceneRenderer::pickedNodePath() const
 {
@@ -940,35 +990,36 @@ void GLSLSceneRendererImpl::visitPointSet(SgPointSet* pointSet)
     if(!pointSet->hasVertices()){
         return;
     }
+
+    pushProgram(solidColorProgram, false);
+
+    const double s = pointSet->pointSize();
+    if(s > 0.0){
+        setPointSize(s);
+    } else {
+        setPointSize(defaultPointSize);
+    }
+    
     renderPlot(pointSet, GL_POINTS, boost::bind(getPointSetVertices, pointSet));
+
+    popProgram();
 }
 
 
 void GLSLSceneRendererImpl::renderPlot
 (SgPlot* plot, GLenum primitiveMode, boost::function<SgVertexArrayPtr()> getVertices)
 {
-    ShaderProgram* orgProgram;
-    LightingProgram* orgLightingProgram;
-    NolightingProgram* orgNolightingProgram;
+    pushPickID(plot);
 
-    const bool hasColors = plot->hasColors();
-
+    bool hasColors = plot->hasColors();
+    
     if(isPicking){
-        pushPickID(plot);
+        currentProgram->enableColorArray(false);
     } else {
-        orgProgram = currentProgram;
-        orgLightingProgram = currentLightingProgram;
-        orgNolightingProgram = currentNolightingProgram;
-        currentProgram = &solidColorProgram;
-        solidColorProgram.use();
-        currentLightingProgram = 0;
-        currentNolightingProgram = &solidColorProgram;
-
-        if(hasColors){
-            currentProgram->enableColorArray(true);
-        } else {
+        if(!hasColors){
             renderMaterial(plot->material());
         }
+        currentProgram->enableColorArray(hasColors);
     }
     
     ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot);
@@ -1006,14 +1057,7 @@ void GLSLSceneRendererImpl::renderPlot
 
     glDrawArrays(primitiveMode, 0, handleSet->numVertices);
     
-    if(isPicking){
-        popPickID();
-    } else {
-        currentProgram = orgProgram;
-        currentLightingProgram = orgLightingProgram;
-        currentNolightingProgram = orgNolightingProgram;
-        currentProgram->use();
-    }
+    popPickID();
 }
 
 
@@ -1092,6 +1136,7 @@ void GLSLSceneRendererImpl::clearGLState()
     specularColor << 0.0f, 0.0f, 0.0f, 0.0f;
     shininess = 0.0f;
 
+    pointSize = defaultPointSize;    
     lineWidth = defaultLineWidth;
 }
 
@@ -1349,12 +1394,9 @@ void GLSLSceneRenderer::enableDepthMask(bool on)
 void GLSLSceneRendererImpl::setPointSize(float size)
 {
     if(!stateFlag[POINT_SIZE] || pointSize != size){
-        if(isPicking){
-            //glPointSize(std::max(size, MinLineWidthForPicking));
-        } else {
-            //glPointSize(size);
-        }
-        pointSize = size;
+        float s = isPicking ? std::max(size, MinLineWidthForPicking) : size;
+        solidColorProgram.setPointSize(s);
+        pointSize = s;
         stateFlag.set(POINT_SIZE);
     }
 }
@@ -1418,11 +1460,9 @@ void GLSLSceneRenderer::enableTexture(bool on)
 
 void GLSLSceneRenderer::setDefaultPointSize(double size)
 {
-    /*
     if(size != impl->defaultPointSize){
         impl->defaultPointSize = size;
     }
-    */
 }
 
 

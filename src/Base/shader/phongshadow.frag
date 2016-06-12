@@ -32,7 +32,7 @@ struct LightInfo {
     float linearAttenuation;
     float quadraticAttenuation;
     // The following value is 0.0 if the light is not a spot light
-    float cutoffAngle; 
+    float cutoffAngle;
     float beamWidth;
     float cutoffExponent;
     vec3 direction;
@@ -54,7 +54,7 @@ uniform bool isShadowAntiAliasingEnabled;
 uniform vec3 fogColor;
 uniform float maxFogDist;
 uniform float minFogDist;
-uniform bool isFogEnabled;
+uniform bool isFogEnabled = false;
 
 layout(location = 0) out vec4 color;
 

@@ -37,12 +37,14 @@ public:
 
 class SolidColorProgram : public NolightingProgram
 {
+    GLint pointSizeLocation;
     GLint colorLocation;
     GLint colorPerVertexLocation;
     
 public:
     virtual void initialize();
     virtual void bindGLObjects();
+    virtual void setPointSize(float s);
     virtual void setColor(const Vector4f& color);
     virtual void enableColorArray(bool on);
 };
