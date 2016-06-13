@@ -110,6 +110,7 @@ set(headers
   MeshExtractor.h
   SceneMarkers.h
   SceneProvider.h
+  Collision.h
   CollisionDetector.h
   Triangulator.h
   PolygonMeshTriangulator.h

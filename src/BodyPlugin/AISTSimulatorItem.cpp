@@ -104,6 +104,7 @@ public:
     {
         double staticFriction;
         double slipFriction;
+        int collisionHandlerId;
     };
 
     typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
@@ -116,7 +117,7 @@ public:
 
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
-    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
+    ContactAttribute& getOrCreateContactAttribute(Link* link1, Link* link2);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
@@ -237,6 +238,21 @@ const Vector3& AISTSimulatorItem::gravity() const
 }
 
 
+AISTSimulatorItemImpl::ContactAttribute&
+AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
+{
+    std::pair<ContactAttributeMap::iterator, bool> inserted =
+        contactAttributeMap.insert(make_pair(IdPair<Link*>(link1, link2), ContactAttribute()));
+    ContactAttribute& attr = inserted.first->second;
+    if(inserted.second){
+        attr.staticFriction = staticFriction;
+        attr.slipFriction = slipFriction;
+        attr.collisionHandlerId = 0;
+    }
+    return attr;
+}
+        
+
 void AISTSimulatorItem::setFriction(double staticFriction, double slipFriction)
 {
     impl->staticFriction = staticFriction;
@@ -244,17 +260,30 @@ void AISTSimulatorItem::setFriction(double staticFriction, double slipFriction)
 }
 
 
-void AISTSimulatorItemImpl::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
+void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
 {
-    ContactAttribute& attr = contactAttributeMap[IdPair<Link*>(link1, link2)];
+    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
     attr.staticFriction = staticFriction;
     attr.slipFriction = slipFriction;
 }
 
 
-void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
+int AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
 {
-    impl->setFriction(link1, link2, staticFriction, slipFriction);
+    return impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
+}
+
+
+int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
+{
+    return impl->world.constraintForceSolver.collisionHandlerId(name);
+}
+
+
+void AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId)
+{
+    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
+    attr.collisionHandlerId = handlerId;
 }
 
 
@@ -417,8 +446,12 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
             if(p1 != orgLinkToInternalLinkMap.end()){
                 Link* iLink0 = p0->second;
                 Link* iLink1 = p1->second;
-                world.constraintForceSolver.setFriction(
-                    iLink0, iLink1, attr.staticFriction, attr.slipFriction);
+                if(attr.staticFriction != staticFriction || attr.slipFriction != slipFriction){
+                    cfs.setFriction(iLink0, iLink1, attr.staticFriction, attr.slipFriction);
+                }
+                if(attr.collisionHandlerId){
+                    cfs.setCollisionHandler(iLink0, iLink1, attr.collisionHandlerId);
+                }
             }
         }
         ++p;

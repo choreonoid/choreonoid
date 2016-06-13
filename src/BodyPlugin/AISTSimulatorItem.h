@@ -7,7 +7,7 @@
 #define CNOID_BODYPLUGIN_AIST_SIMULATOR_ITEM_H
 
 #include "SimulatorItem.h"
-#include <cnoid/EigenTypes>
+#include <cnoid/Collision>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -33,7 +33,6 @@ public:
     void setGravity(const Vector3& gravity);
     const Vector3& gravity() const;
     void setFriction(double staticFriction, double slipFriction);
-    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
     void setContactCullingDistance(double value);        
     void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);        
@@ -48,7 +47,15 @@ public:
     virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
     virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
     virtual void clearForcedPositions();
-    
+
+    // experimental functions
+    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
+
+    typedef boost::function<bool(Link* link1, Link* link2, const CollisionArray& collisions)> CollisionHandler;
+    int registerCollisionHandler(const std::string& name, CollisionHandler handler);
+    int collisionHandlerId(const std::string& name) const;
+    void setCollisionHandler(Link* link1, Link* link2, int handlerId);
+
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);

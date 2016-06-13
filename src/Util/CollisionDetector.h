@@ -6,6 +6,7 @@
 #ifndef CNOID_UTIL_COLLISION_DETECTOR_H
 #define CNOID_UTIL_COLLISION_DETECTOR_H
 
+#include "Collision.h"
 #include "SceneGraph.h"
 #include "EigenTypes.h"
 #include <boost/shared_ptr.hpp>
@@ -13,20 +14,11 @@
 
 namespace cnoid {
 
-struct Collision {
-    Vector3 point;
-    Vector3 normal;
-    double depth;
-};
-
-typedef std::vector<Collision> CollisionList;
-            
 struct CollisionPair {
     int geometryId[2];
-    CollisionList collisions;
+    CollisionArray collisions;
 };
 typedef boost::shared_ptr<CollisionPair> CollisionPairPtr;
-
 
 class CollisionDetector;
 typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
