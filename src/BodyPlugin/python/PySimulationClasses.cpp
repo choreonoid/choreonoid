@@ -185,4 +185,8 @@ void exportSimulationClasses()
         .def("stopSimulation", &SimulationBar::stopSimulation)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
+
+#ifdef _MSC_VER
+    register_ptr_to_python<SimulatorItemPtr>();
+#endif
 }

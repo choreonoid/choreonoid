@@ -7,8 +7,11 @@
 
 #include "EigenTypes.h"
 
-#if (BOOST_VERSION >= 105900) && defined(WIN32)
+#if defined(WIN32) && !defined(BOOST_NO_CXX11_ALLOCATOR)
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 105900)
 #define BOOST_NO_CXX11_ALLOCATOR
+#endif
 #endif
 
 #include <boost/make_shared.hpp>
