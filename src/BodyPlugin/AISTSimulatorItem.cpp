@@ -272,6 +272,12 @@ int AISTSimulatorItem::registerCollisionHandler(const std::string& name, Collisi
 }
 
 
+void AISTSimulatorItem::unregisterCollisionHandler(int handlerId)
+{
+    return impl->world.constraintForceSolver.unregisterCollisionHandler(handlerId);
+}
+
+
 int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
 {
     return impl->world.constraintForceSolver.collisionHandlerId(name);

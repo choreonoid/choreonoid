@@ -193,6 +193,15 @@ public:
         double contactCullingDistance;
         double contactCullingDepth;
         CollisionHandler collisionHandler;
+        Connection collisionHandlerConnection;
+
+        void onCollisionHandlerUnregistered(){
+            collisionHandler = CollisionHandler();
+            collisionHandlerConnection.disconnect();
+        }
+        ~ContactAttributeEx(){
+            collisionHandlerConnection.disconnect();
+        }
     };
     
     typedef std::map<IdPair<Link*>, ContactAttributeEx> ContactAttributeMap;
@@ -200,7 +209,16 @@ public:
 
     typedef std::map<string, int> CollisionHandlerIndexMap;
     CollisionHandlerIndexMap collisionHandlerIndexMap;
-    vector<CollisionHandler> collisionHandlers;
+
+    struct CollisionHandlerInfo : public Referenced {
+        CollisionHandler handler;
+        Signal<void()> sigHandlerUnregisterd;
+        ~CollisionHandlerInfo(){
+            sigHandlerUnregisterd();
+        }
+    };
+    typedef ref_ptr<CollisionHandlerInfo> CollisionHandlerInfoPtr;
+    vector<CollisionHandlerInfoPtr> collisionHandlers;
 
     class LinkPair
     {
@@ -2300,26 +2318,37 @@ int ConstraintForceSolver::registerCollisionHandler(const std::string& name, Col
 int CFSImpl::registerCollisionHandler(const std::string& name, CollisionHandler& handler)
 {
     int index = -1;
+    CollisionHandlerInfoPtr info = new CollisionHandlerInfo();
+    info->handler = handler;
+    
     CollisionHandlerIndexMap::iterator p = collisionHandlerIndexMap.find(name);
     if(p != collisionHandlerIndexMap.end()){
         index = p->second;
-        collisionHandlers[index] = handler;
+        collisionHandlers[index] = info;
     } else {
         for(size_t i=0; i < collisionHandlers.size(); ++i){
             if(!collisionHandlers[i]){
-                collisionHandlers[i] = handler;
+                collisionHandlers[i] = info;
                 index = i;
                 break;
             }
         }
         if(index < 0){
             index = collisionHandlers.size();
-            collisionHandlers.push_back(handler);
+            collisionHandlers.push_back(info);
         }
         collisionHandlerIndexMap[name] = index;
     }
     
     return index;
+}
+
+
+void ConstraintForceSolver::unregisterCollisionHandler(int handlerId)
+{
+    if(handlerId >= 0 && handlerId < impl->collisionHandlers.size()){
+        impl->collisionHandlers[handlerId] = 0;
+    }
 }
 
 
@@ -2336,10 +2365,16 @@ int ConstraintForceSolver::collisionHandlerId(const std::string& name) const
 void ConstraintForceSolver::setCollisionHandler(Link* link1, Link* link2, int handlerId)
 {
     CFSImpl::ContactAttributeEx& attr = impl->getOrCreateContactAttribute(link1, link2);
+    attr.collisionHandlerConnection.disconnect();
+
     if(handlerId < 0 || handlerId >= impl->collisionHandlers.size()){
         attr.collisionHandler = CollisionHandler(); // set null handler
     } else {
-        attr.collisionHandler = impl->collisionHandlers[handlerId];
+        CFSImpl::CollisionHandlerInfo* info = impl->collisionHandlers[handlerId];
+        attr.collisionHandler = info->handler;
+        attr.collisionHandlerConnection = 
+            info->sigHandlerUnregisterd.connect(
+                boost::bind(&CFSImpl::ContactAttributeEx::onCollisionHandlerUnregistered, &attr));
     }
 }    
     

@@ -30,6 +30,9 @@ protected:
 
 private:
     bool calcContactForce(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute);
+
+    weak_ref_ptr<AISTSimulatorItem> weakCurrentSimulator;
+    int handlerId;
 };
 
 
@@ -56,14 +59,14 @@ CNOID_IMPLEMENT_PLUGIN_ENTRY(SpringDamperContactPlugin);
 
 SpringDamperContactItem::SpringDamperContactItem()
 {
-
+    handlerId = -1;
 }
 
 
 SpringDamperContactItem::SpringDamperContactItem(const SpringDamperContactItem& org)
     : SubSimulatorItem(org)
 {
-
+    handlerId = -1;
 }
 
 
@@ -75,11 +78,18 @@ Item* SpringDamperContactItem::doDuplicate() const
 
 void SpringDamperContactItem::onPositionChanged()
 {
+    AISTSimulatorItem* currentSimulator = weakCurrentSimulator.lock();
+    if(currentSimulator){
+        currentSimulator->unregisterCollisionHandler(handlerId);
+        currentSimulator = 0;
+    }
     AISTSimulatorItem* simulator = findOwnerItem<AISTSimulatorItem>();
     if(simulator){
-        simulator->registerCollisionHandler(
-            "SpringDamperContact",
-            boost::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
+        handlerId =
+            simulator->registerCollisionHandler(
+                "SpringDamperContact",
+                boost::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
+        currentSimulator = simulator;
     }
 }
 

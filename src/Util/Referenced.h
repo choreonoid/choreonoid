@@ -365,7 +365,7 @@ public:
     operator bool_type() const { return px ? &weak_ref_ptr<T>::bool_type_func : 0; }
 
     ref_ptr<T> lock() const {
-        if(counter->isObjectAlive()){
+        if(counter && counter->isObjectAlive()){
             return ref_ptr<T>(px);
         } else {
             return ref_ptr<T>();
