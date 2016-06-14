@@ -16,6 +16,7 @@ Link::Link()
     index_ = -1;
     jointId_ = -1;
     parent_ = 0;
+    body_ = 0;
     T_.setIdentity();
     Tb_.setIdentity();
     Rs_.setIdentity();
@@ -50,6 +51,7 @@ Link::Link(const Link& org)
     jointId_ = org.jointId_;
 
     parent_ = 0;
+    body_ = 0;
 
     T_ = org.T_;
     Tb_ = org.Tb_;
@@ -100,6 +102,23 @@ Link::~Link()
 }
 
 
+void Link::setBody(Body* newBody)
+{
+    if(body_ != newBody){
+        setBodySub(newBody);
+    }
+}
+
+
+void Link::setBodySub(Body* newBody)
+{
+    body_ = newBody;
+    for(Link* link = child_; link; link = link->sibling_){
+        link->setBodySub(newBody);
+    }
+}
+
+
 void Link::prependChild(Link* link)
 {
     LinkPtr holder;
@@ -110,6 +129,8 @@ void Link::prependChild(Link* link)
     link->sibling_ = child_;
     child_ = link;
     link->parent_ = this;
+
+    link->setBody(body_);
 }
 
 
@@ -132,6 +153,8 @@ void Link::appendChild(Link* link)
         link->sibling_ = 0;
     }
     link->parent_ = this;
+
+    link->setBody(body_);
 }
 
 
@@ -154,6 +177,7 @@ bool Link::removeChild(Link* childToRemove)
             } else {
                 child_ = link->sibling_;
             }
+            childToRemove->setBody(0);
             return true;
         }
         prevSibling = link;
