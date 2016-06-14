@@ -102,6 +102,8 @@ void exportSimulationClasses()
             .def("setGravity", &AISTSimulatorItem::setGravity)
             .def("setFriction", AISTSimulatorItem_setFriction1)
             .def("setFriction", AISTSimulatorItem_setFriction2)
+            .def("collisionHandlerId", &AISTSimulatorItem::collisionHandlerId)
+            .def("setCollisionHandler", &AISTSimulatorItem::setCollisionHandler)
             .def("setContactCullingDistance", &AISTSimulatorItem::setContactCullingDistance)
             .def("setContactCullingDepth", &AISTSimulatorItem::setContactCullingDepth)
             .def("setErrorCriterion", &AISTSimulatorItem::setErrorCriterion)
@@ -185,4 +187,8 @@ void exportSimulationClasses()
         .def("stopSimulation", &SimulationBar::stopSimulation)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
+
+#ifdef _MSC_VER
+    register_ptr_to_python<SimulatorItemPtr>();
+#endif
 }

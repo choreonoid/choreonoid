@@ -156,7 +156,7 @@ bool PenetrationBlockerImpl::adjust(Position& io_T, const Vector3& pushDirection
 void PenetrationBlockerImpl::onCollisionDetected(const CollisionPair& collisionPair)
 {
     double normalSign = (collisionPair.geometryId[0] == 0) ? -1.0 : 1.0;
-    const CollisionList& collisions = collisionPair.collisions;
+    const CollisionArray& collisions = collisionPair.collisions;
     for(size_t i=0; i < collisions.size(); ++i){
         const Collision& c = collisions[i];
         if(c.depth > targetDepth){
