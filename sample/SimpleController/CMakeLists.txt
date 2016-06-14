@@ -24,7 +24,7 @@ configure_file(SR1WalkPush.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(SR1WalkPush.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 configure_file(SR1Walk2D.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
-configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+#configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
 configure_file(SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
