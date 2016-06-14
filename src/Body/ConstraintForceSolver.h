@@ -14,6 +14,7 @@ namespace cnoid {
 class Link;
 class ConstraintForceSolverImpl;
 class WorldBase;
+class ContactAttribute;
 	
 class CNOID_EXPORT ConstraintForceSolver
 {
@@ -64,7 +65,8 @@ public:
 
     // experimental functions
     void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
-    typedef boost::function<bool(Link* link1, Link* link2, const CollisionArray& collisions)> CollisionHandler;
+    typedef boost::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
+        CollisionHandler;
     int registerCollisionHandler(const std::string& name, CollisionHandler handler);
     int collisionHandlerId(const std::string& name) const;
     void setCollisionHandler(Link* link1, Link* link2, int handlerId);

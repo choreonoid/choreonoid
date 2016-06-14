@@ -137,15 +137,15 @@ items:
               class: SpringDamperContactItem
             - 
               id: 8
-              name: "SR1-SpringDamperContact"
+              name: "SetupSR1SpringDamperContact"
               plugin: PythonSimScript
               class: PythonSimScriptItem
               data:
-                timing: During init.
+                timing: Before init.
                 delay: 0
                 simulationOnly: true
                 backgroundExecution: false
-                file: "${SHARE}/script/SR1-SpringDamperContact.py"
+                file: "${SHARE}/script/SetupSR1SpringDamperContact.py"
 
 views: 
   "Items": 

@@ -102,9 +102,9 @@ public:
 
     struct ContactAttribute
     {
-        double staticFriction;
-        double slipFriction;
-        int collisionHandlerId;
+        boost::optional<double> staticFriction;
+        boost::optional<double> slipFriction;
+        boost::optional<int> collisionHandlerId;
     };
 
     typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
@@ -241,15 +241,7 @@ const Vector3& AISTSimulatorItem::gravity() const
 AISTSimulatorItemImpl::ContactAttribute&
 AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
 {
-    std::pair<ContactAttributeMap::iterator, bool> inserted =
-        contactAttributeMap.insert(make_pair(IdPair<Link*>(link1, link2), ContactAttribute()));
-    ContactAttribute& attr = inserted.first->second;
-    if(inserted.second){
-        attr.staticFriction = staticFriction;
-        attr.slipFriction = slipFriction;
-        attr.collisionHandlerId = 0;
-    }
-    return attr;
+    return contactAttributeMap[IdPair<Link*>(link1, link2)];
 }
         
 
@@ -436,25 +428,38 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     world.initialize();
 
-    ContactAttributeMap::iterator p = contactAttributeMap.begin();
-    while(p != contactAttributeMap.end()){
-        const IdPair<Link*>& linkPair = p->first;
-        const ContactAttribute& attr = p->second;
+    ContactAttributeMap::iterator iter = contactAttributeMap.begin();
+    while(iter != contactAttributeMap.end()){
+        bool actualLinksFound = false;
+        const IdPair<Link*>& linkPair = iter->first;
         LinkMap::iterator p0 = orgLinkToInternalLinkMap.find(linkPair(0));
         if(p0 != orgLinkToInternalLinkMap.end()){
             LinkMap::iterator p1 = orgLinkToInternalLinkMap.find(linkPair(1));
             if(p1 != orgLinkToInternalLinkMap.end()){
+
                 Link* iLink0 = p0->second;
                 Link* iLink1 = p1->second;
-                if(attr.staticFriction != staticFriction || attr.slipFriction != slipFriction){
-                    cfs.setFriction(iLink0, iLink1, attr.staticFriction, attr.slipFriction);
+                actualLinksFound = true;
+
+                const ContactAttribute& attr = iter->second;
+                if(attr.staticFriction || attr.slipFriction){
+                    cfs.setFriction(
+                        iLink0, iLink1,
+                        attr.staticFriction ? *attr.staticFriction : staticFriction,
+                        attr.slipFriction ? *attr.slipFriction : slipFriction);
                 }
                 if(attr.collisionHandlerId){
-                    cfs.setCollisionHandler(iLink0, iLink1, attr.collisionHandlerId);
+                    cfs.setCollisionHandler(iLink0, iLink1, *attr.collisionHandlerId);
                 }
             }
         }
-        ++p;
+        if(actualLinksFound){
+            ++iter;
+        } else {
+            // remove the attribute for a non-existent link
+            ContactAttributeMap::iterator current = iter++;
+            contactAttributeMap.erase(current); 
+        }
     }
     
     return true;
