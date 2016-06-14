@@ -21,6 +21,8 @@
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
 #include <QGLPixelBuffer>
+#include <QThread>
+#include <QApplication>
 #include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
@@ -82,6 +84,21 @@ bool updateNames(const string& nameListString, string& newNameListString, vector
 }
 
 
+class QThreadEx : public QThread
+{
+    boost::function<void()> function;
+public:
+    void start(boost::function<void()> function){
+        this->function = function;
+        QThread::start();
+    }
+    virtual void run(){
+        function();
+    }
+};
+        
+
+
 class VisionRenderer : public Referenced
 {
 public:
@@ -91,7 +108,7 @@ public:
     double cycleTime;
     double latency;
     double onsetTime;
-    boost::thread renderingThread;
+    QThreadEx renderingThread;
     boost::condition_variable renderingCondition;
     boost::mutex renderingMutex;
     bool isRenderingRequested;
@@ -127,8 +144,8 @@ public:
     bool initialize(const vector<SimulationBody*>& simBodies);
     void initializeScene(const vector<SimulationBody*>& simBodies);
     SgCamera* initializeCamera();
-    void initializeRendering();
-    void finalizeRendering();
+    void moveRenderingBufferToThread(QThread& thread);
+    void moveRenderingBufferToMainThread();
     void updateScene(bool updateSensorForRenderingThread);
     void renderInCurrentThread(bool doStoreResultToTmpDataBuffer);
     void startConcurrentRendering();
@@ -167,7 +184,7 @@ public:
     bool isQueueRenderingTerminationRequested;
 
     // for the single vision simulator thread rendering
-    boost::thread queueThread;
+    QThreadEx queueThread;
     boost::condition_variable queueCondition;
     boost::mutex queueMutex;
     queue<VisionRenderer*> rendererQueue;
@@ -485,8 +502,10 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
                 rendererQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
-            queueThread = boost::thread(
-                boost::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
+            queueThread.start(boost::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
+            for(size_t i=0; i < visionRenderers.size(); ++i){
+                visionRenderers[i]->moveRenderingBufferToThread(queueThread);
+            }
         }
 
         return true;
@@ -540,11 +559,17 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
         return false;
     }
     
+    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, simImpl->glFormat);
+    renderingBuffer->makeCurrent();
+    
+    renderer.initializeGL();
+    renderer.setViewport(0, 0, pixelWidth, pixelHeight);
     renderer.sceneRoot()->addChild(sceneGroup);
-    renderer.extractPreprocessedNodes();
+    renderer.initializeRendering();
     renderer.headLight()->on(simImpl->isHeadLightEnabled);
     renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
     renderer.setCurrentCamera(sceneCamera);
+    renderingBuffer->doneCurrent();
     
     isRendering = false;
     elapsedTime = cycleTime + 1.0e-6;
@@ -557,8 +582,8 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
         isRenderingFinished = false;
         isTerminationRequested = false;
         if(simImpl->useThreadsForSensors){
-            renderingThread = boost::thread(
-                boost::bind(&VisionRenderer::concurrentRenderingLoop, this));
+            renderingThread.start(boost::bind(&VisionRenderer::concurrentRenderingLoop, this));
+            moveRenderingBufferToThread(renderingThread);
         }
     }
 
@@ -678,14 +703,19 @@ SgCamera* VisionRenderer::initializeCamera()
 }
 
 
-void VisionRenderer::initializeRendering()
+void VisionRenderer::moveRenderingBufferToThread(QThread& thread)
 {
-    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, simImpl->glFormat);
-    renderingBuffer->makeCurrent();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    renderingBuffer->context()->moveToThread(&thread);
+#endif
+}
 
-    renderer.initializeGL();
-    renderer.setViewport(0, 0, pixelWidth, pixelHeight);
-    renderer.initializeRendering();
+
+void VisionRenderer::moveRenderingBufferToMainThread()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    renderingBuffer->context()->moveToThread(QApplication::instance()->thread());
+#endif
 }
 
 
@@ -759,10 +789,8 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
 exitRenderingQueueLoop:
 
     for(size_t i=0; i < visionRenderers.size(); ++i){
-        visionRenderers[i]->finalizeRendering();
+        visionRenderers[i]->moveRenderingBufferToMainThread();
     }
-
-    return;
 }
 
 
@@ -781,9 +809,6 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 
 void VisionRenderer::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
 {
-    if(!renderingBuffer){
-        initializeRendering();
-    }
     renderingBuffer->makeCurrent();
     renderer.render();
     renderer.flush();
@@ -808,9 +833,7 @@ void VisionRenderer::startConcurrentRendering()
 
 void VisionRenderer::concurrentRenderingLoop()
 {
-    if(!renderingBuffer){
-        initializeRendering();
-    }
+    bool isGLContextCurrent = false;
     
     while(true){
         {
@@ -826,6 +849,10 @@ void VisionRenderer::concurrentRenderingLoop()
                 renderingCondition.wait(lock);
             }
         }
+        if(!isGLContextCurrent){
+            renderingBuffer->makeCurrent();
+            isGLContextCurrent = true;
+        }
         renderer.render();
         renderer.flush();
         storeResultToTmpDataBuffer();
@@ -838,8 +865,8 @@ void VisionRenderer::concurrentRenderingLoop()
     }
     
 exitConcurrentRenderingLoop:
-    finalizeRendering();
-    return;
+    renderingBuffer->doneCurrent();
+    moveRenderingBufferToMainThread();
 }
 
 
@@ -862,19 +889,6 @@ void VisionRenderer::storeResultToTmpDataBuffer()
 }
 
 
-void VisionRenderer::finalizeRendering()
-{
-    if(renderingBuffer){
-        renderingBuffer->makeCurrent();
-        //renderer->finalizeRendering();
-        renderingBuffer->doneCurrent();
-
-        delete renderingBuffer;
-        renderingBuffer = 0;
-    }
-}
-
-    
 void GLVisionSimulatorItemImpl::onPostDynamics()
 {
     if(useThreadsForSensors){
@@ -1194,7 +1208,7 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
             isQueueRenderingTerminationRequested = true;
         }
         queueCondition.notify_all();
-        queueThread.join();
+        queueThread.wait();
         while(!rendererQueue.empty()){
             rendererQueue.pop();
         }
@@ -1212,7 +1226,12 @@ VisionRenderer::~VisionRenderer()
             isTerminationRequested = true;
         }
         renderingCondition.notify_all();
-        renderingThread.join();
+        renderingThread.wait();
+    }
+    if(renderingBuffer){
+        renderingBuffer->makeCurrent();
+        delete renderingBuffer;
+        renderingBuffer = 0;
     }
 }
     
