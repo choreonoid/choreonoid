@@ -78,18 +78,20 @@ Item* SpringDamperContactItem::doDuplicate() const
 
 void SpringDamperContactItem::onPositionChanged()
 {
-    AISTSimulatorItem* currentSimulator = weakCurrentSimulator.lock();
-    if(currentSimulator){
-        currentSimulator->unregisterCollisionHandler(handlerId);
-        currentSimulator = 0;
-    }
     AISTSimulatorItem* simulator = findOwnerItem<AISTSimulatorItem>();
-    if(simulator){
-        handlerId =
-            simulator->registerCollisionHandler(
-                "SpringDamperContact",
-                boost::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
-        currentSimulator = simulator;
+    AISTSimulatorItem* currentSimulator = weakCurrentSimulator.lock();
+    if(simulator != currentSimulator){
+        if(currentSimulator){
+            currentSimulator->unregisterCollisionHandler(handlerId);
+            weakCurrentSimulator.reset();
+        }
+        if(simulator){
+            handlerId =
+                simulator->registerCollisionHandler(
+                    "SpringDamperContact",
+                    boost::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
+            weakCurrentSimulator = simulator;
+        }
     }
 }
 
