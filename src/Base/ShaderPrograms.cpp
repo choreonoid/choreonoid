@@ -24,7 +24,19 @@ ShaderProgram::~ShaderProgram()
 }
 
 
-void ShaderProgram::bindGLObjects()
+void ShaderProgram::activate()
+{
+    use();
+}
+
+
+void ShaderProgram::deactivate()
+{
+
+}
+
+
+void ShaderProgram::initializeRendering()
 {
 
 }
@@ -68,9 +80,10 @@ void SolidColorProgram::initialize()
 }
 
 
-void SolidColorProgram::bindGLObjects()
+void SolidColorProgram::initializeRendering()
 {
     glUniform1i(colorPerVertexLocation, false);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
@@ -254,7 +267,15 @@ void PhongShadowProgram::activateMainRenderingPass()
 }
 
 
-void PhongShadowProgram::bindGLObjects()
+void PhongShadowProgram::activate()
+{
+    LightingProgram::activate();
+    
+    glDisable(GL_CULL_FACE);
+}
+
+
+void PhongShadowProgram::initializeRendering()
 {
     glUniform1i(numShadowsLocation, numShadows_);
     if(numShadows_ > 0){
@@ -265,6 +286,8 @@ void PhongShadowProgram::bindGLObjects()
         transformBlockBuffer.bind(*this, 1);
         transformBlockBuffer.bindBufferBase(1);
     }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
     
@@ -399,7 +422,16 @@ void ShadowMapProgram::initialize()
 }
 
 
-void ShadowMapProgram::bindGLObjects()
+void ShadowMapProgram::activate()
+{
+    NolightingProgram::activate();
+    
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+}
+    
+
+void ShadowMapProgram::initializeRendering()
 {
     PhongShadowProgram::ShadowInfo& shadow = mainProgram->shadowInfos[mainProgram->currentShadowIndex];
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
@@ -411,4 +443,12 @@ void ShadowMapProgram::bindGLObjects()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+
+void ShadowMapProgram::deactivate()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

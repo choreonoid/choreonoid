@@ -19,7 +19,9 @@ public:
     ShaderProgram();
     virtual ~ShaderProgram();
     virtual void initialize() = 0;
-    virtual void bindGLObjects();
+    virtual void activate();
+    virtual void initializeRendering();
+    virtual void deactivate();
     virtual void setColor(const Vector3f& color);
     virtual void enableColorArray(bool on);
 };
@@ -43,7 +45,7 @@ class SolidColorProgram : public NolightingProgram
     
 public:
     virtual void initialize();
-    virtual void bindGLObjects();
+    virtual void initializeRendering();
     virtual void setPointSize(float s);
     virtual void setColor(const Vector3f& color);
     virtual void enableColorArray(bool on);
@@ -157,14 +159,16 @@ class PhongShadowProgram : public LightingProgram
 public:
     PhongShadowProgram();
     ~PhongShadowProgram();
+
     virtual void initialize();
-    void activateShadowMapGenerationPass(int shadowIndex);
-    void activateMainRenderingPass();
-    
-    virtual void bindGLObjects();
+    virtual void activate();
+    virtual void initializeRendering();
     virtual void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV);
+
+    void activateShadowMapGenerationPass(int shadowIndex);
+    void activateMainRenderingPass();
 
     int maxNumShadows() const { return maxNumShadows_; }
     void setNumShadows(int n);
@@ -200,7 +204,9 @@ class ShadowMapProgram : public NolightingProgram
 public:
     ShadowMapProgram(PhongShadowProgram* mainProgram);
     virtual void initialize();
-    virtual void bindGLObjects();
+    virtual void activate();
+    virtual void initializeRendering();
+    virtual void deactivate();
 };
 
 }

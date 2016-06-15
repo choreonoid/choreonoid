@@ -411,8 +411,6 @@ void GLSLSceneRendererImpl::render()
     } else {
         Array4i vp = self->viewport();
         self->setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
         pushProgram(program.shadowMapProgram(), false);
         isRenderingShadowMap = true;
         
@@ -431,15 +429,12 @@ void GLSLSceneRendererImpl::render()
         popProgram();
         isRenderingShadowMap = false;
         self->setViewport(vp[0], vp[1], vp[2], vp[3]);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_CULL_FACE);
     }
     
     program.activateMainRenderingPass();
     pushProgram(program, true);
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderScene();
     popProgram();
 
@@ -468,7 +463,6 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
     currentNodePath.clear();
     pickingNodePathList.clear();
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     renderScene();
     
@@ -526,7 +520,6 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
     if(light && light->on()){
         SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
-            glClear(GL_DEPTH_BUFFER_BIT);
             renderCamera(shadowMapCamera, T);
             phongShadowProgram.setShadowMapViewProjection(PV);
             renderSceneGraphNodes();
@@ -599,7 +592,7 @@ void GLSLSceneRendererImpl::endRendering()
 
 void GLSLSceneRendererImpl::renderSceneGraphNodes()
 {
-    currentProgram->bindGLObjects();
+    currentProgram->initializeRendering();
     clearGLState();
 
     if(currentLightingProgram){
@@ -693,12 +686,14 @@ void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
 void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingProgram)
 {
     ProgramInfo info;
-    if(&program == currentProgram){
-        info.program = 0;
-    } else {
-        info.program = currentProgram;
-        info.lightingProgram = currentLightingProgram;
-        info.nolightingProgram = currentNolightingProgram;
+    info.program = currentProgram;
+    info.lightingProgram = currentLightingProgram;
+    info.nolightingProgram = currentNolightingProgram;
+    
+    if(&program != currentProgram){
+        if(currentProgram){
+            currentProgram->deactivate();
+        }
         currentProgram = &program;
         if(isLightingProgram){
             currentLightingProgram = static_cast<LightingProgram*>(currentProgram);
@@ -707,7 +702,7 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
             currentLightingProgram = 0;
             currentNolightingProgram = static_cast<NolightingProgram*>(currentProgram);
         }
-        program.use();
+        program.activate();
     }
     programStack.push_back(info);
 }
@@ -716,11 +711,16 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
 void GLSLSceneRendererImpl::popProgram()
 {
     ProgramInfo& info = programStack.back();
-    if(info.program){
+    if(info.program != currentProgram){
+        if(currentProgram){
+            currentProgram->deactivate();
+        }
         currentProgram = info.program;
         currentLightingProgram = info.lightingProgram;
         currentNolightingProgram = info.nolightingProgram;
-        currentProgram->use();
+        if(currentProgram){
+            currentProgram->activate();
+        }
     }
     programStack.pop_back();
 }
