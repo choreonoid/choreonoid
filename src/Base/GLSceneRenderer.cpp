@@ -584,8 +584,9 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     polygonMode = GLSceneRenderer::FILL_MODE;
     defaultLighting = true;
     defaultSmoothShading = true;
-    defaultMaterial = new SgMaterial;
     defaultColor << 1.0f, 1.0f, 1.0f, 1.0f;
+    defaultMaterial = new SgMaterial;
+    defaultMaterial->setDiffuseColor(Vector3f(1.0f, 1.0f, 1.0f));
     isTextureEnabled = true;
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
@@ -1102,7 +1103,7 @@ void GLSceneRendererImpl::renderCamera()
             glDisable(GL_LIGHT1);
         } else {
             static const Affine3 I = Affine3::Identity();
-            renderLight(headLight.get(), GL_LIGHT0, I);
+            renderLight(headLight, GL_LIGHT0, I);
 
             if(isHeadLightLightingFromBackEnabled){
                 if(SgDirectionalLight* directionalHeadLight = dynamic_cast<SgDirectionalLight*>(headLight.get())){
@@ -2739,7 +2740,7 @@ void GLSceneRenderer::setDefaultSmoothShading(bool on)
 
 SgMaterial* GLSceneRenderer::defaultMaterial()
 {
-    return impl->defaultMaterial.get();
+    return impl->defaultMaterial;
 }
 
 
