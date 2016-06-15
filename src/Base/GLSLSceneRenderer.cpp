@@ -1088,6 +1088,8 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
         return;
     }
 
+    pushProgram(solidColorProgram, false);
+    
     const double w = lineSet->lineWidth();
     if(w > 0.0){
         setLineWidth(w);
@@ -1096,6 +1098,8 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
     }
 
     renderPlot(lineSet, GL_LINES, boost::bind(getLineSetVertices, lineSet));
+
+    popProgram();
 }
 
 
