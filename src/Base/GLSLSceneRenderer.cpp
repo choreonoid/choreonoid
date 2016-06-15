@@ -15,7 +15,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/bind.hpp>
-#include <boost/format.hpp>
 #include <iostream>
 
 using namespace std;
@@ -103,6 +102,17 @@ struct SgObjectPtrHash {
 };
 typedef boost::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
 
+
+struct TraversedShape : public Referenced
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    SgShape* shape;
+    unsigned int pickId;
+    Affine3 modelMatrix;
+};
+typedef ref_ptr<TraversedShape> TraversedShapePtr;
+
+
 }
 
 
@@ -132,11 +142,14 @@ public:
     vector<ProgramInfo> programStack;
         
     bool isPicking;
+    bool isRenderingShadowMap;
     
     Affine3Array modelMatrixStack; // stack of the model matrices
     Affine3 viewMatrix;
     Matrix4 projectionMatrix;
     Matrix4 PV;
+
+    vector<TraversedShapePtr> transparentShapes;
 
     std::set<int> shadowLightIndices;
 
@@ -187,12 +200,6 @@ public:
         SPECULAR_COLOR,
         SHININESS,
         ALPHA,
-        CULL_FACE,
-        CCW,
-        LIGHTING,
-        LIGHT_MODEL_TWO_SIDE,
-        BLEND,
-        DEPTH_MASK,
         POINT_SIZE,
         LINE_WIDTH,
         NUM_STATE_FLAGS
@@ -200,13 +207,6 @@ public:
 
     boost::dynamic_bitset<> stateFlag;
 
-    bool isColorMaterialEnabled;
-    bool isCullFaceEnabled;
-    bool isCCW;
-    bool isLightingEnabled;
-    bool isLightModelTwoSide;
-    bool isBlendEnabled;
-    bool isDepthMaskEnabled;
     float pointSize;
     float lineWidth;
     
@@ -226,12 +226,13 @@ public:
     void pushProgram(ShaderProgram& program, bool isLightingProgram);
     void popProgram();
     inline void setPickColor(unsigned int id);
-    inline unsigned int pushPickID(SgNode* node, bool doSetColor = true);
-    void popPickID();
+    inline unsigned int pushPickId(SgNode* node, bool doSetColor = true);
+    void popPickId();
     void visitInvariantGroup(SgInvariantGroup* group);
     void flushNolightingTransformMatrices();
-    ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj);
+    ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
     void visitShape(SgShape* shape);
+    void renderTransparentShapes();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
@@ -241,19 +242,12 @@ public:
     void visitOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
-    void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector3f& color);
     void setAmbientColor(const Vector3f& color);
     void setEmissionColor(const Vector3f& color);
     void setSpecularColor(const Vector3f& color);
     void setShininess(float shininess);
     void setAlpha(float a);
-    void enableCullFace(bool on);
-    void setFrontCCW(bool on);
-    void enableLighting(bool on);
-    void setLightModelTwoSide(bool on);
-    void enableBlend(bool on);
-    void enableDepthMask(bool on);
     void setPointSize(float size);
     void setLineWidth(float width);
     void getCurrentCameraTransform(Affine3& T);
@@ -285,6 +279,7 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     currentNolightingProgram = 0;
 
     isPicking = false;
+    isRenderingShadowMap = false;
     pickedPoint.setZero();
 
     doUnusedShapeHandleSetCheck = true;
@@ -368,10 +363,6 @@ bool GLSLSceneRendererImpl::initializeGL()
     glDisable(GL_DITHER);
     glDisable(GL_CULL_FACE);
 
-    //
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     isShapeHandleSetClearRequested = true;
@@ -439,6 +430,7 @@ void GLSLSceneRendererImpl::render()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         self->setViewport(vp[0], vp[1], vp[2], vp[3]);
         glDisable(GL_CULL_FACE);
+
         renderScene();
     }
 }
@@ -490,8 +482,17 @@ void GLSLSceneRendererImpl::renderScene()
     SgCamera* camera = self->currentCamera();
     if(camera){
         renderCamera(camera, self->currentCameraPosition());
+
         beginRendering();
+
+        transparentShapes.clear();
+
         self->sceneRoot()->accept(*self);
+
+        if(!transparentShapes.empty()){
+            renderTransparentShapes();
+        }
+        
         endRendering();
     }
 }
@@ -505,6 +506,7 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
     if(light && light->on()){
         SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
+            isRenderingShadowMap = true;
             renderCamera(shadowMapCamera, T);
             phongShadowProgram.setShadowMapViewProjection(PV);
             beginRendering();
@@ -512,6 +514,7 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
             endRendering();
             glFlush();
             glFinish();
+            isRenderingShadowMap = false;
 
             return true;
         }
@@ -755,7 +758,7 @@ inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)
 /**
    @return id of the current object
 */
-inline unsigned int GLSLSceneRendererImpl::pushPickID(SgNode* node, bool doSetColor)
+inline unsigned int GLSLSceneRendererImpl::pushPickId(SgNode* node, bool doSetColor)
 {
     unsigned int id = 0;
     
@@ -772,7 +775,7 @@ inline unsigned int GLSLSceneRendererImpl::pushPickID(SgNode* node, bool doSetCo
 }
 
 
-inline void GLSLSceneRendererImpl::popPickID()
+inline void GLSLSceneRendererImpl::popPickId()
 {
     if(isPicking){
         currentNodePath.pop_back();
@@ -782,9 +785,9 @@ inline void GLSLSceneRendererImpl::popPickID()
 
 void GLSLSceneRenderer::visitGroup(SgGroup* group)
 {
-    impl->pushPickID(group);
+    impl->pushPickId(group);
     SceneVisitor::visitGroup(group);
-    impl->popPickID();
+    impl->popPickId();
 }
 
 
@@ -822,7 +825,7 @@ void GLSLSceneRenderer::visitTransform(SgTransform* transform)
 }
 
 
-ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
+ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix)
 {
     ShapeHandleSet* handleSet;
     ShapeHandleSetMap::iterator p = currentShapeHandleSetMap->find(obj);
@@ -837,9 +840,9 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj)
     }
 
     if(currentLightingProgram){
-        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrixStack.back(), PV);
+        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrix, PV);
     } else if(currentNolightingProgram){
-        const Matrix4f PVM = (PV * modelMatrixStack.back().matrix()).cast<float>();
+        const Matrix4f PVM = (PV * modelMatrix.matrix()).cast<float>();
         currentNolightingProgram->setProjectionMatrix(PVM);
     }
 
@@ -859,17 +862,62 @@ void GLSLSceneRendererImpl::visitShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
-        if(!isPicking){
+        SgMaterial* material = shape->material();
+        if(material && material->transparency() > 0.0){
+            TraversedShapePtr traversed = new TraversedShape();
+            traversed->shape = shape;
+            traversed->modelMatrix = modelMatrixStack.back();
+            traversed->pickId = pushPickId(shape, false);
+            popPickId();
+            if(!isRenderingShadowMap){
+                transparentShapes.push_back(traversed);
+            }
+        } else {
+            if(!isPicking){
+                renderMaterial(shape->material());
+            }
+            ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh, modelMatrixStack.back());
+            if(!handleSet->isValid()){
+                createMeshVertexArray(mesh, handleSet);
+            }
+            pushPickId(shape);
+            glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+            popPickId();
+        }
+    }
+}
+
+
+void GLSLSceneRendererImpl::renderTransparentShapes()
+{
+    if(!isPicking){
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+    }
+
+    const int n = transparentShapes.size();
+    for(int i=0; i < n; ++i){
+        TraversedShape* transparent = transparentShapes[i];
+        SgShape* shape = transparent->shape;
+        if(isPicking){
+            setPickColor(transparent->pickId);
+        } else {
             renderMaterial(shape->material());
         }
-        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh);
+        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(shape->mesh(), transparent->modelMatrix);
         if(!handleSet->isValid()){
-            createMeshVertexArray(mesh, handleSet);
+            createMeshVertexArray(shape->mesh(), handleSet);
         }
-        pushPickID(shape);
         glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
-        popPickID();
     }
+
+    if(!isPicking){
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
+    }
+
+    transparentShapes.clear();
 }
 
 
@@ -1003,7 +1051,7 @@ void GLSLSceneRendererImpl::visitPointSet(SgPointSet* pointSet)
 void GLSLSceneRendererImpl::renderPlot
 (SgPlot* plot, GLenum primitiveMode, boost::function<SgVertexArrayPtr()> getVertices)
 {
-    pushPickID(plot);
+    pushPickId(plot);
 
     bool hasColors = plot->hasColors();
     
@@ -1016,7 +1064,7 @@ void GLSLSceneRendererImpl::renderPlot
         currentProgram->enableColorArray(hasColors);
     }
     
-    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot);
+    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot, modelMatrixStack.back());
     if(!handleSet->isValid()){
         SgVertexArrayPtr vertices = getVertices();
         const int n = vertices->size();
@@ -1051,7 +1099,7 @@ void GLSLSceneRendererImpl::renderPlot
 
     glDrawArrays(primitiveMode, 0, handleSet->numVertices);
     
-    popPickID();
+    popPickId();
 }
 
 
@@ -1156,29 +1204,6 @@ void GLSLSceneRenderer::setColor(const Vector3f& color)
 }
 
 
-void GLSLSceneRendererImpl::enableColorMaterial(bool on)
-{
-    if(!isPicking){
-        if(!stateFlag[COLOR_MATERIAL] || isColorMaterialEnabled != on){
-            if(on){
-                //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-                //glEnable(GL_COLOR_MATERIAL);
-            } else {
-                //glDisable(GL_COLOR_MATERIAL);
-            }
-            isColorMaterialEnabled = on;
-            stateFlag.set(COLOR_MATERIAL);
-        }
-    }
-}
-
-
-void GLSLSceneRenderer::enableColorMaterial(bool on)
-{
-    impl->enableColorMaterial(on);
-}
-
-
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
@@ -1275,73 +1300,6 @@ void GLSLSceneRenderer::setAlpha(float a)
 }
 
 
-void GLSLSceneRendererImpl::enableCullFace(bool on)
-{
-    if(!stateFlag[CULL_FACE] || isCullFaceEnabled != on){
-        if(on){
-            //glEnable(GL_CULL_FACE);
-        } else {
-            //glDisable(GL_CULL_FACE);
-        }
-        isCullFaceEnabled = on;
-        stateFlag.set(CULL_FACE);
-    }
-}
-
-
-void GLSLSceneRenderer::enableCullFace(bool on)
-{
-    impl->enableCullFace(on);
-}
-
-
-void GLSLSceneRendererImpl::setFrontCCW(bool on)
-{
-    if(!stateFlag[CCW] || isCCW != on){
-        if(on){
-            //glFrontFace(GL_CCW);
-        } else {
-            //glFrontFace(GL_CW);
-        }
-        isCCW = on;
-        stateFlag.set(CCW);
-    }
-}
-
-
-void GLSLSceneRenderer::setFrontCCW(bool on)
-{
-    impl->setFrontCCW(on);
-}
-
-
-/**
-   Lighting should not be enabled in rendering code
-   which may be rendered with displaylists.
-*/
-void GLSLSceneRendererImpl::enableLighting(bool on)
-{
-    if(isPicking || !defaultLighting){
-        return;
-    }
-    if(!stateFlag[LIGHTING] || isLightingEnabled != on){
-        if(on){
-            //glEnable(GL_LIGHTING);
-        } else {
-            //glDisable(GL_LIGHTING);
-        }
-        isLightingEnabled = on;
-        stateFlag.set(LIGHTING);
-    }
-}
-
-
-void GLSLSceneRenderer::enableLighting(bool on)
-{
-    impl->enableLighting(on);
-}
-
-
 void GLSLSceneRenderer::clearShadows()
 {
     impl->shadowLightIndices.clear();
@@ -1361,48 +1319,6 @@ void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
 void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
 {
     impl->phongShadowProgram.setShadowAntiAliasingEnabled(on);
-}
-
-
-void GLSLSceneRendererImpl::enableBlend(bool on)
-{
-    if(isPicking){
-        return;
-    }
-    if(!stateFlag[BLEND] || isBlendEnabled != on){
-        if(on){
-            //glEnable(GL_BLEND);
-            //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            //enableDepthMask(false);
-        } else {
-            //glDisable(GL_BLEND);
-            //enableDepthMask(true);
-        }
-        isBlendEnabled = on;
-        stateFlag.set(BLEND);
-    }
-}
-
-
-void GLSLSceneRenderer::enableBlend(bool on)
-{
-    impl->enableBlend(on);
-}
-
-
-void GLSLSceneRendererImpl::enableDepthMask(bool on)
-{
-    if(!stateFlag[DEPTH_MASK] || isDepthMaskEnabled != on){
-        //glDepthMask(on);
-        isDepthMaskEnabled = on;
-        stateFlag.set(DEPTH_MASK);
-    }
-}
-
-
-void GLSLSceneRenderer::enableDepthMask(bool on)
-{
-    impl->enableDepthMask(on);
 }
 
 

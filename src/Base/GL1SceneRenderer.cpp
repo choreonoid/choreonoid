@@ -61,7 +61,7 @@ public:
     GLuint bufferNames[4];
     GLuint size;
     vector<TransparentShapeInfoPtr> transparentShapes;
-        
+
     ShapeCache() {
         listID = 0;
         useIDforPicking = false;
