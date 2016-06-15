@@ -68,7 +68,7 @@ public:
     virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
-    virtual void setColor(const Vector4f& color);
+    virtual void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);
     void setAmbientColor(const Vector4f& color);

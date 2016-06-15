@@ -50,8 +50,8 @@ public:
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
 
-    const Vector4f& defaultColor() const;
-    void setDefaultColor(const Vector4f& color);
+    const Vector3f& defaultColor() const;
+    void setDefaultColor(const Vector3f& color);
 
     virtual void setDefaultLighting(bool on) = 0;
     virtual void clearShadows();
@@ -76,25 +76,7 @@ public:
     virtual const Vector3& pickedPoint() const = 0;
     virtual const SgNodePath& pickedNodePath() const = 0;
 
-    virtual void setColor(const Vector4f& color) = 0;
-
-    /*
-    void enableColorMaterial(bool on);
-    void setDiffuseColor(const Vector4f& color);
-    void setAmbientColor(const Vector4f& color);
-    void setEmissionColor(const Vector4f& color);
-    void setSpecularColor(const Vector4f& color);
-    void setShininess(float shininess);
-    void enableCullFace(bool on);
-    void setFrontCCW(bool on);
-    void enableLighting(bool on);
-    void setLightModelTwoSide(bool on);
-    void enableBlend(bool on);
-    void enableDepthMask(bool on);
-    void setPointSize(float size);
-    void setLineWidth(float width);
-    */
-    
+    virtual void setColor(const Vector3f& color) = 0;
 
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);

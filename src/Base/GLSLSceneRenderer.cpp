@@ -141,13 +141,13 @@ public:
     std::set<int> shadowLightIndices;
 
     bool defaultLighting;
-    Vector4f currentNolightingColor;
-    Vector4f diffuseColor;
-    Vector4f ambientColor;
-    Vector4f specularColor;
-    Vector4f emissionColor;
+    Vector3f currentNolightingColor;
+    Vector3f diffuseColor;
+    Vector3f ambientColor;
+    Vector3f specularColor;
+    Vector3f emissionColor;
     float shininess;
-    float lastAlpha;
+    float alpha;
 
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
@@ -186,6 +186,7 @@ public:
         EMISSION_COLOR,
         SPECULAR_COLOR,
         SHININESS,
+        ALPHA,
         CULL_FACE,
         CCW,
         LIGHTING,
@@ -239,13 +240,14 @@ public:
     void visitLineSet(SgLineSet* lineSet);
     void visitOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
-    void setNolightingColor(const Vector4f& color);
+    void setNolightingColor(const Vector3f& color);
     void enableColorMaterial(bool on);
-    void setDiffuseColor(const Vector4f& color);
-    void setAmbientColor(const Vector4f& color);
-    void setEmissionColor(const Vector4f& color);
-    void setSpecularColor(const Vector4f& color);
+    void setDiffuseColor(const Vector3f& color);
+    void setAmbientColor(const Vector3f& color);
+    void setEmissionColor(const Vector3f& color);
+    void setSpecularColor(const Vector3f& color);
     void setShininess(float shininess);
+    void setAlpha(float a);
     void enableCullFace(bool on);
     void setFrontCCW(bool on);
     void enableLighting(bool on);
@@ -364,6 +366,11 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
+    glDisable(GL_CULL_FACE);
+
+    //
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -734,11 +741,10 @@ const Vector3& GLSLSceneRenderer::pickedPoint() const
 
 inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)
 {
-    Vector4f color;
+    Vector3f color;
     color[0] = (id & 0xff) / 255.0;
     color[1] = ((id >> 8) & 0xff) / 255.0;
     color[2] = ((id >> 16) & 0xff) / 255.0;
-    color[3] = 1.0f;
     if(SHOW_IMAGE_FOR_PICKING){
         color[2] = 1.0f;
     }
@@ -873,28 +879,16 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
         material = defaultMaterial;
     }
     
-    float alpha = 1.0 - material->transparency();
-
-    Vector4f color;
-    color << material->diffuseColor(), alpha;
-
     if(currentNolightingProgram){
-        setNolightingColor(color);
+        setNolightingColor(material->diffuseColor());
 
     } else if(currentLightingProgram){
-        setDiffuseColor(color);
-        
-        color.head<3>() *= material->ambientIntensity();
-        setAmbientColor(color);
-        
-        color << material->emissiveColor(), alpha;
-        setEmissionColor(color);
-        
-        color << material->specularColor(), alpha;
-        setSpecularColor(color);
-        
-        float shininess = (127.0f * material->shininess()) + 1.0f;
-        setShininess(shininess);
+        setDiffuseColor(material->diffuseColor());
+        setAmbientColor(material->ambientIntensity() * material->diffuseColor());
+        setEmissionColor(material->emissiveColor());
+        setSpecularColor(material->specularColor());
+        setShininess((127.0f * material->shininess()) + 1.0f);
+        setAlpha(1.0 - material->transparency());
     }
 }
 
@@ -1139,13 +1133,14 @@ void GLSLSceneRendererImpl::clearGLState()
     emissionColor << 0.0f, 0.0f, 0.0f, 0.0f;
     specularColor << 0.0f, 0.0f, 0.0f, 0.0f;
     shininess = 0.0f;
+    alpha = 1.0f;
 
     pointSize = defaultPointSize;    
     lineWidth = defaultLineWidth;
 }
 
 
-void GLSLSceneRendererImpl::setNolightingColor(const Vector4f& color)
+void GLSLSceneRendererImpl::setNolightingColor(const Vector3f& color)
 {
     if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
         currentProgram->setColor(color);
@@ -1155,7 +1150,7 @@ void GLSLSceneRendererImpl::setNolightingColor(const Vector4f& color)
 }
 
 
-void GLSLSceneRenderer::setColor(const Vector4f& color)
+void GLSLSceneRenderer::setColor(const Vector3f& color)
 {
     impl->setNolightingColor(color);
 }
@@ -1184,7 +1179,7 @@ void GLSLSceneRenderer::enableColorMaterial(bool on)
 }
 
 
-void GLSLSceneRendererImpl::setDiffuseColor(const Vector4f& color)
+void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
         currentLightingProgram->setDiffuseColor(color);
@@ -1194,13 +1189,13 @@ void GLSLSceneRendererImpl::setDiffuseColor(const Vector4f& color)
 }
 
 
-void GLSLSceneRenderer::setDiffuseColor(const Vector4f& color)
+void GLSLSceneRenderer::setDiffuseColor(const Vector3f& color)
 {
     impl->setDiffuseColor(color);
 }
 
 
-void GLSLSceneRendererImpl::setAmbientColor(const Vector4f& color)
+void GLSLSceneRendererImpl::setAmbientColor(const Vector3f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
         currentLightingProgram->setAmbientColor(color);
@@ -1210,13 +1205,13 @@ void GLSLSceneRendererImpl::setAmbientColor(const Vector4f& color)
 }
 
 
-void GLSLSceneRenderer::setAmbientColor(const Vector4f& color)
+void GLSLSceneRenderer::setAmbientColor(const Vector3f& color)
 {
     impl->setAmbientColor(color);
 }
 
 
-void GLSLSceneRendererImpl::setEmissionColor(const Vector4f& color)
+void GLSLSceneRendererImpl::setEmissionColor(const Vector3f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
         currentLightingProgram->setEmissionColor(color);
@@ -1226,13 +1221,13 @@ void GLSLSceneRendererImpl::setEmissionColor(const Vector4f& color)
 }
 
 
-void GLSLSceneRenderer::setEmissionColor(const Vector4f& color)
+void GLSLSceneRenderer::setEmissionColor(const Vector3f& color)
 {
     impl->setEmissionColor(color);
 }
 
 
-void GLSLSceneRendererImpl::setSpecularColor(const Vector4f& color)
+void GLSLSceneRendererImpl::setSpecularColor(const Vector3f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
         currentLightingProgram->setSpecularColor(color);
@@ -1242,7 +1237,7 @@ void GLSLSceneRendererImpl::setSpecularColor(const Vector4f& color)
 }
 
 
-void GLSLSceneRenderer::setSpecularColor(const Vector4f& color)
+void GLSLSceneRenderer::setSpecularColor(const Vector3f& color)
 {
     impl->setSpecularColor(color);
 }
@@ -1261,6 +1256,22 @@ void GLSLSceneRendererImpl::setShininess(float s)
 void GLSLSceneRenderer::setShininess(float s)
 {
     impl->setShininess(s);
+}
+
+
+void GLSLSceneRendererImpl::setAlpha(float a)
+{
+    if(!stateFlag[ALPHA] || alpha != a){
+        currentLightingProgram->setAlpha(a);
+        alpha = a;
+        stateFlag.set(ALPHA);
+    }
+}
+
+
+void GLSLSceneRenderer::setAlpha(float a)
+{
+    impl->setAlpha(a);
 }
 
 

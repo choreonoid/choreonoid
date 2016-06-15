@@ -66,13 +66,15 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void visitOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
-    virtual void setColor(const Vector4f& color);
+    virtual void setColor(const Vector3f& color);
+
     void enableColorMaterial(bool on);
-    void setDiffuseColor(const Vector4f& color);
-    void setAmbientColor(const Vector4f& color);
-    void setEmissionColor(const Vector4f& color);
-    void setSpecularColor(const Vector4f& color);
+    void setDiffuseColor(const Vector3f& color);
+    void setAmbientColor(const Vector3f& color);
+    void setEmissionColor(const Vector3f& color);
+    void setSpecularColor(const Vector3f& color);
     void setShininess(float shininess);
+    void setAlpha(float a);
     void enableCullFace(bool on);
     void setFrontCCW(bool on);
     void enableLighting(bool on);

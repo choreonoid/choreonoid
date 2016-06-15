@@ -1,7 +1,7 @@
 #version 330
 
 uniform bool colorPerVertex;
-uniform vec4 color;
+uniform vec3 color;
 
 in vec3 colorV;
 
@@ -11,6 +11,6 @@ void main() {
     if(colorPerVertex){
         fragColor = vec4(colorV, 1.0);
     } else {
-        fragColor = color;
+        fragColor = vec4(color, 1.0);
     }
 }

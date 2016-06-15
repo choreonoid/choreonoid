@@ -20,6 +20,7 @@ uniform vec3 ambientColor;
 uniform vec3 specularColor;
 uniform vec3 emissionColor;
 uniform float shininess;
+uniform float alpha = 1.0;
 
 uniform int numLights;
 
@@ -139,5 +140,5 @@ void main()
         c = mix(fogColor, c, f);
     }
     
-    color = vec4(c, 1.0);
+    color = vec4(c, alpha);
 }

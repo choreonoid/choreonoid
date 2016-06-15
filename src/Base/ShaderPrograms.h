@@ -20,7 +20,7 @@ public:
     virtual ~ShaderProgram();
     virtual void initialize() = 0;
     virtual void bindGLObjects();
-    virtual void setColor(const Vector4f& color);
+    virtual void setColor(const Vector3f& color);
     virtual void enableColorArray(bool on);
 };
 
@@ -45,7 +45,7 @@ public:
     virtual void initialize();
     virtual void bindGLObjects();
     virtual void setPointSize(float s);
-    virtual void setColor(const Vector4f& color);
+    virtual void setColor(const Vector3f& color);
     virtual void enableColorArray(bool on);
 };
 
@@ -61,6 +61,7 @@ protected:
     GLint specularColorLocation;
     GLint emissionColorLocation;
     GLint shininessLocation;
+    GLint alphaLocation;
     
 public:
     virtual void initialize();
@@ -69,20 +70,23 @@ public:
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) = 0;
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV) = 0;
 
-    void setDiffuseColor(const Vector4f& color){
+    void setDiffuseColor(const Vector3f& color){
         glUniform3fv(diffuseColorLocation, 1, color.data());
     }
-    void setAmbientColor(const Vector4f& color){
+    void setAmbientColor(const Vector3f& color){
         glUniform3fv(ambientColorLocation, 1, color.data());
     }
-    void setEmissionColor(const Vector4f& color){
+    void setEmissionColor(const Vector3f& color){
         glUniform3fv(emissionColorLocation, 1, color.data());
     }
-    void setSpecularColor(const Vector4f& color){
+    void setSpecularColor(const Vector3f& color){
         glUniform3fv(specularColorLocation, 1, color.data());
     }
     void setShininess(float s){
         glUniform1f(shininessLocation, s);
+    }
+    void setAlpha(float a){
+        glUniform1f(alphaLocation, a);
     }
 };
 

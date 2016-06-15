@@ -30,7 +30,7 @@ void ShaderProgram::bindGLObjects()
 }
 
 
-void ShaderProgram::setColor(const Vector4f& color)
+void ShaderProgram::setColor(const Vector3f& color)
 {
 
 }
@@ -80,9 +80,9 @@ void SolidColorProgram::setPointSize(float s)
 }
 
 
-void SolidColorProgram::setColor(const Vector4f& color)
+void SolidColorProgram::setColor(const Vector3f& color)
 {
-    glUniform4fv(colorLocation, 1, color.data());
+    glUniform3fv(colorLocation, 1, color.data());
     glUniform1i(colorPerVertexLocation, false);
 }
 
@@ -101,6 +101,7 @@ void LightingProgram::initialize()
     specularColorLocation = getUniformLocation("specularColor");
     emissionColorLocation = getUniformLocation("emissionColor");
     shininessLocation = getUniformLocation("shininess");
+    alphaLocation = getUniformLocation("alpha");
 }    
     
 

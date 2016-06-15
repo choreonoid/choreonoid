@@ -227,7 +227,7 @@ public:
 
     boost::dynamic_bitset<> stateFlag;
         
-    Vector4f currentColor;
+    Vector3f currentColor;
     Vector4f diffuseColor;
     Vector4f ambientColor;
     Vector4f emissionColor;
@@ -277,7 +277,7 @@ public:
     void visitOutlineGroup(SgOutlineGroup* outline);
 
     void clearGLState();
-    void setColor(const Vector4f& color);
+    void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);
     void setAmbientColor(const Vector4f& color);
@@ -823,7 +823,7 @@ inline void GL1SceneRendererImpl::setPickColor(unsigned int id)
         b = 1.0f;
     }
     glColor4f(r, g, b, 1.0f);
-    currentColor << r, g, b, 1.0f;
+    currentColor << r, g, b;
 }
         
 
@@ -1558,7 +1558,7 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
             }
             glDisableClientState(GL_NORMAL_ARRAY);
             glVertexPointer(3, GL_FLOAT, 0, lines.front().data());
-            setColor(Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
+            setColor(Vector3f(0.0f, 1.0f, 0.0f));
             glDrawArrays(GL_LINES, 0, lines.size());
         }
         enableLighting(true);
@@ -1602,7 +1602,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
         //glDisableClientState(GL_NORMAL_ARRAY);
         lastAlpha = 1.0;
         if(!plot->hasColors()){
-            setColor(createColorWithAlpha(material->diffuseColor()));
+            setColor(material->diffuseColor());
         }
     } else if(!isPicking){
         enableCullFace(false);
@@ -1785,11 +1785,11 @@ void GL1SceneRendererImpl::clearGLState()
 }
 
 
-void GL1SceneRendererImpl::setColor(const Vector4f& color)
+void GL1SceneRendererImpl::setColor(const Vector3f& color)
 {
     if(!isPicking){
         if(!stateFlag[CURRENT_COLOR] || color != currentColor){
-            glColor4f(color[0], color[1], color[2], color[3]);
+            glColor4f(color[0], color[1], color[2], 1.0f);
             currentColor = color;
             stateFlag.set(CURRENT_COLOR);
         }
@@ -1797,7 +1797,7 @@ void GL1SceneRendererImpl::setColor(const Vector4f& color)
 }
 
 
-void GL1SceneRenderer::setColor(const Vector4f& color)
+void GL1SceneRenderer::setColor(const Vector3f& color)
 {
     impl->setColor(color);
 }

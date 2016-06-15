@@ -766,11 +766,11 @@ void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
     Affine3 inv = transform.inverse();
     glMultMatrixd(inv.data());
 
-    renderer.setColor(Vector4f(1.0,0.0,0.0,0.0));
+    renderer.setColor(Vector3f(1.0,0.0,0.0));
     renderer.visitPosTransform(xAxis);
-    renderer.setColor(Vector4f(0.0,1.0,0.0,0.0));
+    renderer.setColor(Vector3f(0.0,1.0,0.0));
     renderer.visitPosTransform(yAxis);
-    renderer.setColor(Vector4f(0.4,0.6,1.0,0.0));
+    renderer.setColor(Vector3f(0.4,0.6,1.0));
     renderer.visitPosTransform(zAxis);
     
     glMatrixMode(GL_PROJECTION);
@@ -784,7 +784,7 @@ void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
 
 void SceneWidgetImpl::renderFPS()
 {
-    renderer->setColor(Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+    renderer->setColor(Vector3f(1.0f, 1.0f, 1.0f));
     renderText(20, 20, QString("FPS: %1").arg(fps));
     fpsRendered = true;
     ++fpsCounter;
@@ -1967,16 +1967,15 @@ void SceneWidgetImpl::showGridColorDialog(int index)
 
 void SceneWidgetImpl::showDefaultColorDialog()
 {
-    const Vector4f& dc = renderer->defaultColor();
+    const Vector3f& dc = renderer->defaultColor();
     QColor c = QColorDialog::getColor(
-        QColor::fromRgbF(dc[0], dc[1], dc[2], dc[3]),
+        QColor::fromRgbF(dc[0], dc[1], dc[2]),
         MainWindow::instance(), _("Default Color"));
     
     if(c.isValid()){
-        Vector4f color(c.redF(), c.greenF(), c.blueF(), c.alphaF());
+        Vector3f color(c.redF(), c.greenF(), c.blueF());
         renderer->setDefaultColor(color);
-        renderer->defaultMaterial()->setDiffuseColor(Vector3f(c.redF(), c.greenF(), c.blueF()));
-        renderer->defaultMaterial()->setTransparency(1.0f - c.alphaF());
+        renderer->defaultMaterial()->setDiffuseColor(color);
         renderer->requestToClearCache();
         update();
     }
@@ -2354,7 +2353,7 @@ void SceneWidget::setBackgroundColor(const Vector3& color)
 
 void SceneWidget::setColor(const Vector4& color)
 {
-    impl->renderer->setColor(color.cast<float>());
+    impl->renderer->setColor(color.head<3>().cast<float>());
 }
 
 

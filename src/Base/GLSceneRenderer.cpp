@@ -26,7 +26,7 @@ public:
     Array4i viewport;
     GLfloat aspectRatio; // width / height;
     Vector3f backgroundColor;
-    Vector4f defaultColor;
+    Vector3f defaultColor;
     GLSceneRenderer::PolygonMode polygonMode;
 
     GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRoot);
@@ -62,7 +62,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
 
     aspectRatio = 1.0f;
     backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
-    defaultColor << 1.0f, 1.0f, 1.0f, 1.0f;
+    defaultColor << 1.0f, 1.0f, 1.0f;
     polygonMode = GLSceneRenderer::FILL_MODE;
 }
 
@@ -112,13 +112,13 @@ void GLSceneRenderer::setBackgroundColor(const Vector3f& color)
 }
 
 
-const Vector4f& GLSceneRenderer::defaultColor() const
+const Vector3f& GLSceneRenderer::defaultColor() const
 {
     return impl->defaultColor;
 }
 
 
-void GLSceneRenderer::setDefaultColor(const Vector4f& color)
+void GLSceneRenderer::setDefaultColor(const Vector3f& color)
 {
     impl->defaultColor = color;
 }
