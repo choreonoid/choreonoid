@@ -91,10 +91,10 @@ public:
 };
 
 
+class ShadowMapProgram;
+
 class PhongShadowProgram : public LightingProgram
 {
-    enum { SHADOWMAP_PASS, MAIN_PASS } renderingPass;
-
     bool useUniformBlockToPassTransformationMatrices;
     GLSLUniformBlockBuffer transformBlockBuffer;
     GLint modelViewMatrixIndex;
@@ -127,7 +127,7 @@ class PhongShadowProgram : public LightingProgram
     int shadowMapHeight_;
     SgPerspectiveCameraPtr persShadowCamera;  
     SgOrthographicCameraPtr orthoShadowCamera;
-    NolightingProgram shadowMapProgram_;
+    ShadowMapProgram* shadowMapProgram_;
     
     GLint isShadowEnabledLocation;
     GLint numShadowsLocation;
@@ -156,13 +156,11 @@ class PhongShadowProgram : public LightingProgram
 
 public:
     PhongShadowProgram();
+    ~PhongShadowProgram();
     virtual void initialize();
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();
-    bool isShadowMapGenerationPass() const { return renderingPass == SHADOWMAP_PASS; }
-    bool isMainRenderingPass() const { return renderingPass == MAIN_PASS; }
     
-    virtual void use() throw (Exception);
     virtual void bindGLObjects();
     virtual void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
@@ -176,7 +174,7 @@ public:
     int shadowMapHeight() const { return shadowMapHeight_; }
     SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
     void setShadowMapViewProjection(const Matrix4& PV);
-    NolightingProgram& shadowMapProgram() { return shadowMapProgram_; }
+    ShadowMapProgram& shadowMapProgram() { return *shadowMapProgram_; }
     void setFogEnabled(bool on) {
         glUniform1i(isFogEnabledLocation, on);
     }
@@ -190,6 +188,19 @@ public:
 
 private:
     void initializeShadowInfo(int index);
+
+    friend class ShadowMapProgram;
+};
+
+
+class ShadowMapProgram : public NolightingProgram
+{
+    PhongShadowProgram* mainProgram;
+    
+public:
+    ShadowMapProgram(PhongShadowProgram* mainProgram);
+    virtual void initialize();
+    virtual void bindGLObjects();
 };
 
 }

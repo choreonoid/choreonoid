@@ -173,7 +173,6 @@ public:
     int currentShapeHandleSetMapIndex;
     ShapeHandleSetMap* currentShapeHandleSetMap;
     ShapeHandleSetMap* nextShapeHandleSetMap;
-    ShapeHandleSet* currentShapeHandleSet;
 
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
@@ -223,6 +222,7 @@ public:
     void renderFog();
     void onCurrentFogNodeUdpated();
     void endRendering();
+    void renderSceneGraphNodes();
     void pushProgram(ShaderProgram& program, bool isLightingProgram);
     void popProgram();
     inline void setPickColor(unsigned int id);
@@ -401,19 +401,21 @@ void GLSLSceneRenderer::render()
 void GLSLSceneRendererImpl::render()
 {
     self->extractPreprocessedNodes();
+    beginRendering();
 
     PhongShadowProgram& program = phongShadowProgram;
     
     if(shadowLightIndices.empty()){
-        program.activateMainRenderingPass();
         program.setNumShadows(0);
-        renderScene();
-
+        
     } else {
         Array4i vp = self->viewport();
         self->setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
+        pushProgram(program.shadowMapProgram(), false);
+        isRenderingShadowMap = true;
+        
         int shadowMapIndex = 0;
         set<int>::iterator iter = shadowLightIndices.begin();
         while(iter != shadowLightIndices.end() && shadowMapIndex < program.maxNumShadows()){
@@ -425,14 +427,23 @@ void GLSLSceneRendererImpl::render()
             ++iter;
         }
         program.setNumShadows(shadowMapIndex);
-
-        program.activateMainRenderingPass();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        
+        popProgram();
+        isRenderingShadowMap = false;
         self->setViewport(vp[0], vp[1], vp[2], vp[3]);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_CULL_FACE);
-
-        renderScene();
     }
+    
+    program.activateMainRenderingPass();
+    pushProgram(program, true);
+    const Vector3f& c = self->backgroundColor();
+    glClearColor(c[0], c[1], c[2], 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderScene();
+    popProgram();
+
+    endRendering();
 }
 
 
@@ -444,16 +455,29 @@ bool GLSLSceneRenderer::pick(int x, int y)
 
 bool GLSLSceneRendererImpl::pick(int x, int y)
 {
+    self->extractPreprocessedNodes();
+    beginRendering();
+    
     if(!SHOW_IMAGE_FOR_PICKING){
         glScissor(x, y, 1, 1);
         glEnable(GL_SCISSOR_TEST);
     }
 
     isPicking = true;
+    pushProgram(solidColorProgram, false);
+    currentNodePath.clear();
+    pickingNodePathList.clear();
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     renderScene();
+    
+    popProgram();
     isPicking = false;
 
     glDisable(GL_SCISSOR_TEST);
+
+    endRendering();
     
     GLfloat color[4];
     glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
@@ -483,17 +507,13 @@ void GLSLSceneRendererImpl::renderScene()
     if(camera){
         renderCamera(camera, self->currentCameraPosition());
 
-        beginRendering();
-
         transparentShapes.clear();
 
-        self->sceneRoot()->accept(*self);
+        renderSceneGraphNodes();
 
         if(!transparentShapes.empty()){
             renderTransparentShapes();
         }
-        
-        endRendering();
     }
 }
 
@@ -506,16 +526,12 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
     if(light && light->on()){
         SgCamera* shadowMapCamera = phongShadowProgram.getShadowMapCamera(light, T);
         if(shadowMapCamera){
-            isRenderingShadowMap = true;
+            glClear(GL_DEPTH_BUFFER_BIT);
             renderCamera(shadowMapCamera, T);
             phongShadowProgram.setShadowMapViewProjection(PV);
-            beginRendering();
-            self->sceneRoot()->accept(*self);
-            endRendering();
+            renderSceneGraphNodes();
             glFlush();
             glFinish();
-            isRenderingShadowMap = false;
-
             return true;
         }
     }
@@ -569,32 +585,21 @@ void GLSLSceneRendererImpl::beginRendering()
         nextShapeHandleSetMap = &shapeHandleSetMaps[1 - currentShapeHandleSetMapIndex];
         hasValidNextShapeHandleSetMap = false;
     }
-    currentShapeHandleSet = 0;
+}
 
-    currentProgram = 0;
-    currentLightingProgram = 0;
-    currentNolightingProgram = 0;
-    GLbitfield clearMask = GL_DEPTH_BUFFER_BIT;
-    
-    if(isPicking){
-        pushProgram(solidColorProgram, false);
-        currentNodePath.clear();
-        pickingNodePathList.clear();
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    } else {
-        const bool isMainRenderingPass = phongShadowProgram.isMainRenderingPass();
-        if(phongShadowProgram.isMainRenderingPass()){
-            pushProgram(phongShadowProgram, true);
-            const Vector3f& c = self->backgroundColor();
-            glClearColor(c[0], c[1], c[2], 1.0f);
-            clearMask |= GL_COLOR_BUFFER_BIT;
-        } else {
-            pushProgram(phongShadowProgram.shadowMapProgram(), false);
-        }
+
+void GLSLSceneRendererImpl::endRendering()
+{
+    if(isCheckingUnusedShapeHandleSets){
+        currentShapeHandleSetMap->clear();
+        hasValidNextShapeHandleSetMap = true;
     }
-    
+}
+
+
+void GLSLSceneRendererImpl::renderSceneGraphNodes()
+{
     currentProgram->bindGLObjects();
-    glClear(clearMask);
     clearGLState();
 
     if(currentLightingProgram){
@@ -603,8 +608,8 @@ void GLSLSceneRendererImpl::beginRendering()
             renderFog();
         }
     }
-
-    popProgram();
+    
+    self->sceneRoot()->accept(*self);
 }
 
 
@@ -682,15 +687,6 @@ void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
         currentFogConnection.disconnect();
     }
     isCurrentFogUpdated = true;
-}
-
-
-void GLSLSceneRendererImpl::endRendering()
-{
-    if(isCheckingUnusedShapeHandleSets){
-        currentShapeHandleSetMap->clear();
-        hasValidNextShapeHandleSetMap = true;
-    }
 }
 
 

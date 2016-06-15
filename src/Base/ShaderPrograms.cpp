@@ -114,8 +114,6 @@ void LightingProgram::setNumLights(int n)
 
 PhongShadowProgram::PhongShadowProgram()
 {
-    renderingPass = MAIN_PASS;
-    
     numShadows_ = 0;
     isShadowAntiAliasingEnabled_ = false;
     shadowMapWidth_ = 1024;
@@ -130,6 +128,14 @@ PhongShadowProgram::PhongShadowProgram()
         0.0, 0.5, 0.0, 0.5,
         0.0, 0.0, 0.5, 0.5,
         0.0, 0.0, 0.0, 1.0;
+
+    shadowMapProgram_ = new ShadowMapProgram(this);
+}
+
+
+PhongShadowProgram::~PhongShadowProgram()
+{
+    delete shadowMapProgram_;
 }
 
 
@@ -187,11 +193,8 @@ void PhongShadowProgram::initialize()
     minFogDistLocation = getUniformLocation("minFogDist");
     fogColorLocation = getUniformLocation("fogColor");
     isFogEnabledLocation = getUniformLocation("isFogEnabled");
-                                           
-    shadowMapProgram_.loadVertexShader(":/Base/shader/nolighting.vert");
-    shadowMapProgram_.loadFragmentShader(":/Base/shader/shadowmap.frag");
-    shadowMapProgram_.link();
-    shadowMapProgram_.initialize();
+
+    shadowMapProgram_->initialize();
 }
 
 
@@ -237,7 +240,6 @@ void PhongShadowProgram::initializeShadowInfo(int index)
 
 void PhongShadowProgram::activateShadowMapGenerationPass(int shadowIndex)
 {
-    renderingPass = SHADOWMAP_PASS;
     if(shadowIndex >= maxNumShadows_){
         currentShadowIndex = maxNumShadows_ - 1;
     } else {
@@ -248,44 +250,20 @@ void PhongShadowProgram::activateShadowMapGenerationPass(int shadowIndex)
 
 void PhongShadowProgram::activateMainRenderingPass()
 {
-    renderingPass = MAIN_PASS;
     currentShadowIndex = 0;
-}
-
-
-void PhongShadowProgram::use() throw (Exception)
-{
-    if(renderingPass == SHADOWMAP_PASS){
-        shadowMapProgram_.use();
-    } else {
-        LightingProgram::use();
-    }
 }
 
 
 void PhongShadowProgram::bindGLObjects()
 {
-    if(renderingPass == SHADOWMAP_PASS){
-        ShadowInfo& shadow = shadowInfos[currentShadowIndex];
-        glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
-        
-        if(isShadowAntiAliasingEnabled_){
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        } else {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        }
-    } else {
-        glUniform1i(numShadowsLocation, numShadows_);
-        if(numShadows_ > 0){
-            glUniform1i(isShadowAntiAliasingEnabledLocation, isShadowAntiAliasingEnabled_);
-        }
+    glUniform1i(numShadowsLocation, numShadows_);
+    if(numShadows_ > 0){
+        glUniform1i(isShadowAntiAliasingEnabledLocation, isShadowAntiAliasingEnabled_);
+    }
 
-        if(useUniformBlockToPassTransformationMatrices){
-            transformBlockBuffer.bind(*this, 1);
-            transformBlockBuffer.bindBufferBase(1);
-        }
+    if(useUniformBlockToPassTransformationMatrices){
+        transformBlockBuffer.bind(*this, 1);
+        transformBlockBuffer.bindBufferBase(1);
     }
 }
 
@@ -400,5 +378,37 @@ void PhongShadowProgram::setTransformMatrices(const Affine3& viewMatrix, const A
             const Matrix4f BPVM = (shadow.BPV * modelMatrix.matrix()).cast<float>();
             glUniformMatrix4fv(shadow.shadowMatrixLocation, 1, GL_FALSE, BPVM.data());
         }
+    }
+}
+
+
+ShadowMapProgram::ShadowMapProgram(PhongShadowProgram* phongShadowProgram)
+    : mainProgram(phongShadowProgram)
+{
+
+}
+
+
+void ShadowMapProgram::initialize()
+{
+    loadVertexShader(":/Base/shader/nolighting.vert");
+    loadFragmentShader(":/Base/shader/shadowmap.frag");
+    link();
+    
+    NolightingProgram::initialize();
+}
+
+
+void ShadowMapProgram::bindGLObjects()
+{
+    PhongShadowProgram::ShadowInfo& shadow = mainProgram->shadowInfos[mainProgram->currentShadowIndex];
+    glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
+        
+    if(mainProgram->isShadowAntiAliasingEnabled_){
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 }
