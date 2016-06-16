@@ -368,6 +368,7 @@ DEF Tank Humanoid {
 		      height 240
 		      sensorId 0
 		      frameRate 30
+		      backClipDistance  120.0
 		    }
 		    DEF RangeSensor RangeSensor {
 		      translation 0.2 0 0.15

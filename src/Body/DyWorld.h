@@ -54,7 +54,7 @@ public:
        @param index index of the body
        @return forward dynamics computation method
     */
-    const ForwardDynamicsPtr& forwardDynamics(int index) const {
+    ForwardDynamicsPtr& forwardDynamics(int index) {
         return bodyInfoArray[index].forwardDynamics;
     }
 
@@ -133,6 +133,8 @@ public:
     */
     void enableSensors(bool on);
 
+    void setOldAccelSensorCalcMode(bool on);
+
     /**
        @brief choose euler method for integration
     */
@@ -176,6 +178,7 @@ protected:
     std::vector<BodyInfo> bodyInfoArray;
 
     bool sensorsAreEnabled;
+    bool isOldAccelSensorCalcMode;
 
 private:
     typedef std::map<std::string, int> NameToIndexMap;

@@ -72,6 +72,16 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
+          id: 10
+          name: "fog"
+          plugin: Base
+          class: SceneItem
+          data: 
+            file: "${SHARE}/model/misc/fog.wrl"
+            format: VRML-FILE
+            translation: [ 0, 0, 0 ]
+            rotation: [ 1, 0, 0, 0 ]
+        - 
           id: 5
           name: "AISTSimulator"
           plugin: Body

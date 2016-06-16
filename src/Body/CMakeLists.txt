@@ -104,6 +104,7 @@ set(headers
   InverseDynamics.h
   Jacobian.h
   MassMatrix.h
+  ContactAttribute.h
   ConstraintForceSolver.h
   PoseProvider.h
   BodyMotion.h

@@ -801,15 +801,12 @@ CommandButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
         button = commandButtons[commandIndex];
     } else {
         button = new CommandButton(&commandButtonBox);
-        //button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-        //button->setMinimumWidth(5);
         button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
-        if(commandButtons.empty()){
-            QWidget::setTabOrder(&menuButton, button);
-        } else {
-            QWidget::setTabOrder(commandButtons.back(), button);
-        }
         commandButtons.push_back(button);
+        /**
+           \note the tab focus order should not be set to command buttons by the setTabOrder function
+           because it causes unexpected focus changes after pushing a command button
+        */
     }
     return button;
 }

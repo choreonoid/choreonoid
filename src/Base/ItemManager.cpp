@@ -866,18 +866,19 @@ bool ItemManagerImpl::load(LoaderPtr loader, Item* item, const std::string& file
         if(!parentItem){
             parentItem = RootItem::mainInstance();
         }
-        if((*loader->loadingFunction)(item, filename, messageView->cout(true), parentItem)){
+
+        ostream& os = messageView->cout(true);
+        loaded = (*loader->loadingFunction)(item, filename, os, parentItem);
+        os.flush();
+        
+        if(!loaded){
+            messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
+        } else {
             if(item->name().empty()){
                 item->setName(filesystem::basename(filesystem::path(filename)));
             }
             item->updateFileInformation(filename, loader->formatId);
-            loaded = true;
-        }
-
-        if(loaded){
             messageView->put(_(" -> ok!\n"));
-        } else {
-            messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
         }
         messageView->flush();
     }
@@ -1087,15 +1088,19 @@ bool ItemManagerImpl::save
             parentItem = RootItem::mainInstance();
         }
 
-        if((*targetSaver->savingFunction)(item, filename, messageView->cout(true), parentItem)){
-            saved = true;
+        ostream& os = messageView->cout(true);
+        saved = (*targetSaver->savingFunction)(item, filename, os, parentItem);
+        os.flush();
+        
+        if(!saved){
+            messageView->put(MessageView::HIGHLIGHT, _(" -> failed.\n"));
+        } else {
             bool isExporter = (targetSaver->priority <= ItemManager::PRIORITY_CONVERSION);
             if(!isExporter){
                 item->updateFileInformation(filename, targetSaver->formatId);
             }
+            messageView->put(_(" -> ok!\n"));
         }
-        
-        messageView->put(saved ? _(" -> ok!\n") : _(" -> failed.\n"));
     }
     
     if(!tryToSave){

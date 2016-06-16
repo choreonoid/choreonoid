@@ -96,15 +96,15 @@ public:
     LazySignal< Signal<void()> > sigKinematicStateChanged;
     LazySignal< Signal<void()> > sigKinematicStateEdited;
 
+    LinkPtr currentBaseLink;
+    LinkTraverse fkTraverse;
+    PinDragIKptr pinDragIK;
+
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
     bool isFkRequested;
     bool isVelFkRequested;
     bool isAccFkRequested;
-    Link* currentBaseLink;
-    LinkTraverse fkTraverse;
-    PinDragIKptr pinDragIK;
-
     bool isCollisionDetectionEnabled;
     bool isSelfCollisionDetectionEnabled;
 

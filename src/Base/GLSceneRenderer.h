@@ -70,6 +70,8 @@ public:
     virtual void initializeRendering();
         
     virtual SignalProxy<void()> sigRenderingRequest();
+
+    void extractPreprocessedNodes();    
         
     virtual void beginRendering();
     virtual void endRendering();

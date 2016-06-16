@@ -170,6 +170,8 @@ void Body::cloneShapes(SgCloneMap& cloneMap)
 
 Body::~Body()
 {
+    setRootLink(0);
+    
     if(impl->customizerHandle){
         impl->customizerInterface->destroy(impl->customizerHandle);
     }
@@ -179,9 +181,12 @@ Body::~Body()
 
 void Body::setRootLink(Link* link)
 {
-    rootLink_ = link;
-
     if(rootLink_){
+        rootLink_->setBody(0);
+    }
+    rootLink_ = link;
+    if(rootLink_){
+        rootLink_->setBody(this);
         updateLinkTree();
     }
 }
