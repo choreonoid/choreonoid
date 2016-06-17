@@ -101,7 +101,7 @@ public:
         vbox->addLayout(hbox);
 
         hbox = new QHBoxLayout();
-        fillLevelSyncCheck.setText(_("Sync to ongoing updates"));
+        fillLevelSyncCheck.setText(_("Sync with ongoing updates"));
         fillLevelSyncCheck.setChecked(true);
         hbox->addWidget(&fillLevelSyncCheck);
         hbox->addStretch();
