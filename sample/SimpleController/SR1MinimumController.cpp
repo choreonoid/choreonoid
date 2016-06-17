@@ -24,24 +24,24 @@ const double dgain[] = {
 class SR1MinimumController : public SimpleController
 {
     BodyPtr ioBody;
+    double dt;
     std::vector<double> qref;
     std::vector<double> qold;
-    double dt;
 
 public:
 
     virtual bool initialize(SimpleControllerIO* io)
     {
-        io->setJointOutput(JOINT_TORQUE);
-        io->setJointInput(JOINT_ANGLE);
-
         ioBody = io->body();
+        dt = io->timeStep();
+
+        io->setJointInput(JOINT_ANGLE);
+        io->setJointOutput(JOINT_TORQUE);
+
         for(int i=0; i < ioBody->numJoints(); ++i){
             qref.push_back(ioBody->joint(i)->q());
         }
         qold = qref;
-
-        dt = io->timeStep();
 
         return true;
     }
