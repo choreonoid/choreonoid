@@ -15,9 +15,10 @@ class SimpleControllerIO
 public:
     virtual std::string optionString() const = 0;
     virtual std::vector<std::string> options() const = 0;
+    virtual std::ostream& os() const = 0;
+
     virtual Body* body() = 0;
     virtual double timeStep() const = 0;
-    virtual std::ostream& os() const = 0;
 
     enum StateType {
         JOINT_ANGLE = 1 << 0,
@@ -47,10 +48,8 @@ public:
 
     virtual bool initialize(); ///< \deprecated
 
-
     virtual bool start();
     virtual bool control() = 0;
-    virtual bool stop();
 
     /*
       The following function is defined for the deprecated functions,
