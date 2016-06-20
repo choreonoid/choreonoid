@@ -31,8 +31,9 @@ public:
     };
     
     virtual void setJointInput(int stateTypes) = 0;
-    virtual void setLinkInput(Link* link, int stateTypes) = 0;
     virtual void setJointOutput(int stateTypes) = 0;
+
+    virtual void setLinkInput(Link* link, int stateTypes) = 0;
     virtual void setLinkOutput(Link* link, int stateTypes) = 0;
 };
 
