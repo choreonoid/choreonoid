@@ -11,7 +11,7 @@
 
 using namespace cnoid;
 
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION110) || defined(OPENRTM_VERSION_TRUNK)
   ChoreonoidExecutionContext::ChoreonoidExecutionContext()
       : PeriodicExecutionContext()
 #else

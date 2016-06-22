@@ -9,7 +9,7 @@
 #include <rtm/RTC.h>
 #include <coil/Task.h>
 #include <rtm/Manager.h>
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION110) || defined(OPENRTM_VERSION_TRUNK)
   #include <rtm/PeriodicExecutionContext.h>
 #else
   #include <rtm/OpenHRPExecutionContext.h>
@@ -28,6 +28,8 @@ namespace cnoid
 */
 #ifdef OPENRTM_VERSION110
   class ChoreonoidExecutionContext : public virtual RTC::PeriodicExecutionContext
+#elif OPENRTM_VERSION_TRUNK
+  class ChoreonoidExecutionContext : public virtual RTC_exp::PeriodicExecutionContext
 #else
   class ChoreonoidExecutionContext : public RTC::OpenHRPExecutionContext
 #endif

@@ -46,8 +46,16 @@ if(UNIX)
   if(NOT OPENRTM_DIR)
     pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
     message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
+    execute_process(
+      COMMAND pkg-config --variable=prefix openrtm-aist
+      OUTPUT_VARIABLE OPENRTM_DIR
+      RESULT_VARIABLE RESULT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
     if(NOT (EXISTS "${OPENRTM_DIR}/include/openrtm-1.1/rtm/RTObjectStateMachine.h"))
       add_definitions(-DOPENRTM_VERSION110)
+    else()
+      add_definitions(-DOPENRTM_VERSION_TRUNK)
     endif()
   endif()
 elseif(MSVC)
