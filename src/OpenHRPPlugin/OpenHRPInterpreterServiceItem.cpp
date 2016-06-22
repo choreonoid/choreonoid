@@ -234,7 +234,7 @@ void OpenHRPInterpreterServiceItem::onPositionChanged()
     if(impl->scriptItem){
         impl->onScriptItemUpdated();
         impl->scriptItemUpdateConnection =
-            impl->scriptItem->sigUpdated().connect(bind(&ItemImpl::onScriptItemUpdated, impl));
+            impl->scriptItem->sigUpdated().connect(boost::bind(&ItemImpl::onScriptItemUpdated, impl));
     }
 }
 
