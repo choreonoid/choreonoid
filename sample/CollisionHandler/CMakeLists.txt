@@ -20,4 +20,4 @@ target_link_libraries(${target} CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target})
 
 configure_file(SR1Liftup-SpringDamperContact.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(SR1-SpringDamperContact.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
+configure_file(SetupSR1SpringDamperContact.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)

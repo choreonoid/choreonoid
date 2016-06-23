@@ -34,6 +34,7 @@ public:
     void setRungeKuttaMethod();
     void setTimeStep(double timeStep);
     void enableSensors(bool on);
+    void setOldAccelSensorCalcMode(bool on);
 
     virtual void initialize() = 0;
     virtual void calcNextState() = 0;

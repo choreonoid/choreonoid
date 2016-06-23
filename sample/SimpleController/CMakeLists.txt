@@ -17,6 +17,7 @@ endif()
 # set(CMAKE_BUILD_TYPE Debug)
 
 add_cnoid_simple_controller(SR1MinimumController SR1MinimumController.cpp)
+configure_file(SR1Minimum.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
 configure_file(SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
@@ -24,7 +25,7 @@ configure_file(SR1WalkPush.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(SR1WalkPush.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 configure_file(SR1Walk2D.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
-configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+#configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
 configure_file(SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

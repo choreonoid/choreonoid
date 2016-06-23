@@ -56,6 +56,12 @@ void ForwardDynamics::enableSensors(bool on)
 }
 
 
+void ForwardDynamics::setOldAccelSensorCalcMode(bool on)
+{
+    sensorHelper.setOldAccelSensorCalcMode(on);
+}
+
+
 /// function from Murray, Li and Sastry p.42
 void ForwardDynamics::SE3exp
 (Position& out_T, const Position& T0, const Vector3& w, const Vector3& vo, double dt)

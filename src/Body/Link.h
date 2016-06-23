@@ -17,6 +17,8 @@
 
 namespace cnoid {
 
+class Body;
+
 class Link;
 typedef ref_ptr<Link> LinkPtr;
 
@@ -49,6 +51,9 @@ public:
     Link* child() const { return child_; }
         
     bool isRoot() const { return !parent_; }
+
+    Body* body() { return body_; }
+    const Body* body() const { return body_; }
 
     Position& T() { return T_; }
     const Position& T() const { return T_; }
@@ -274,6 +279,7 @@ private:
     Link* parent_;
     LinkPtr sibling_;
     LinkPtr child_;
+    Body* body_;
     Position T_;
     Position Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.
@@ -302,6 +308,11 @@ private:
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
     MappingPtr info_;
+
+    friend class Body;
+    
+    void setBody(Body* newBody);
+    void setBodySub(Body* newBody);
 };
 
 template<> CNOID_EXPORT double Link::info(const std::string& key) const;

@@ -99,6 +99,7 @@ public:
     double epsilon;
     bool is2Dmode;
     bool isKinematicWalkingEnabled;
+    bool isOldAccelSensorMode;
 
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
@@ -108,9 +109,9 @@ public:
 
     struct ContactAttribute
     {
-        double staticFriction;
-        double slipFriction;
-        int collisionHandlerId;
+        boost::optional<double> staticFriction;
+        boost::optional<double> slipFriction;
+        boost::optional<int> collisionHandlerId;
     };
 
     typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
@@ -183,6 +184,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
 
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
+    isOldAccelSensorMode = false;
 }
 
 
@@ -211,6 +213,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AIST
     epsilon = org.epsilon;
     isKinematicWalkingEnabled = org.isKinematicWalkingEnabled;
     is2Dmode = org.is2Dmode;
+    isOldAccelSensorMode = org.isOldAccelSensorMode;
 }
 
 
@@ -247,15 +250,7 @@ const Vector3& AISTSimulatorItem::gravity() const
 AISTSimulatorItemImpl::ContactAttribute&
 AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
 {
-    std::pair<ContactAttributeMap::iterator, bool> inserted =
-        contactAttributeMap.insert(make_pair(IdPair<Link*>(link1, link2), ContactAttribute()));
-    ContactAttribute& attr = inserted.first->second;
-    if(inserted.second){
-        attr.staticFriction = staticFriction;
-        attr.slipFriction = slipFriction;
-        attr.collisionHandlerId = 0;
-    }
-    return attr;
+    return contactAttributeMap[IdPair<Link*>(link1, link2)];
 }
         
 
@@ -277,6 +272,12 @@ void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFrict
 int AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
 {
     return impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
+}
+
+
+void AISTSimulatorItem::unregisterCollisionHandler(int handlerId)
+{
+    return impl->world.constraintForceSolver.unregisterCollisionHandler(handlerId);
 }
 
 
@@ -411,6 +412,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     }
     world.setGravityAcceleration(gravity);
     world.enableSensors(true);
+    world.setOldAccelSensorCalcMode(isOldAccelSensorMode);
     world.setTimeStep(self->worldTimeStep());
     world.setCurrentTime(0.0);
 
@@ -442,25 +444,38 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     world.initialize();
 
-    ContactAttributeMap::iterator p = contactAttributeMap.begin();
-    while(p != contactAttributeMap.end()){
-        const IdPair<Link*>& linkPair = p->first;
-        const ContactAttribute& attr = p->second;
+    ContactAttributeMap::iterator iter = contactAttributeMap.begin();
+    while(iter != contactAttributeMap.end()){
+        bool actualLinksFound = false;
+        const IdPair<Link*>& linkPair = iter->first;
         LinkMap::iterator p0 = orgLinkToInternalLinkMap.find(linkPair(0));
         if(p0 != orgLinkToInternalLinkMap.end()){
             LinkMap::iterator p1 = orgLinkToInternalLinkMap.find(linkPair(1));
             if(p1 != orgLinkToInternalLinkMap.end()){
+
                 Link* iLink0 = p0->second;
                 Link* iLink1 = p1->second;
-                if(attr.staticFriction != staticFriction || attr.slipFriction != slipFriction){
-                    cfs.setFriction(iLink0, iLink1, attr.staticFriction, attr.slipFriction);
+                actualLinksFound = true;
+
+                const ContactAttribute& attr = iter->second;
+                if(attr.staticFriction || attr.slipFriction){
+                    cfs.setFriction(
+                        iLink0, iLink1,
+                        attr.staticFriction ? *attr.staticFriction : staticFriction,
+                        attr.slipFriction ? *attr.slipFriction : slipFriction);
                 }
                 if(attr.collisionHandlerId){
-                    cfs.setCollisionHandler(iLink0, iLink1, attr.collisionHandlerId);
+                    cfs.setCollisionHandler(iLink0, iLink1, *attr.collisionHandlerId);
                 }
             }
         }
-        ++p;
+        if(actualLinksFound){
+            ++iter;
+        } else {
+            // remove the attribute for a non-existent link
+            ContactAttributeMap::iterator current = iter++;
+            contactAttributeMap.erase(current); 
+        }
     }
     
     return true;
@@ -489,13 +504,15 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
 
+    int bodyIndex;
     if(dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS)){
         ForwardDynamicsCBMPtr cbm = make_shared_aligned<ForwardDynamicsCBM>(body);
         cbm->setHighGainModeForAllJoints();
-        bodyIndexMap[body] = world.addBody(body, cbm);
+        bodyIndex = world.addBody(body, cbm);
     } else {
-        bodyIndexMap[body] = world.addBody(body);
+        bodyIndex = world.addBody(body);
     }
+    bodyIndexMap[body] = bodyIndex;
 }
 
 
@@ -660,6 +677,7 @@ void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
+    putProperty(_("Old accel sensor mode"), isOldAccelSensorMode, changeProperty(isOldAccelSensorMode));
 }
 
 
@@ -685,6 +703,7 @@ bool AISTSimulatorItemImpl::store(Archive& archive)
     archive.write("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio);
     archive.write("kinematicWalking", isKinematicWalkingEnabled);
     archive.write("2Dmode", is2Dmode);
+    archive.write("oldAccelSensorMode", isOldAccelSensorMode);
     return true;
 }
 
@@ -716,6 +735,7 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     contactCorrectionVelocityRatio = archive.get("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio.string());
     archive.read("kinematicWalking", isKinematicWalkingEnabled);
     archive.read("2Dmode", is2Dmode);
+    archive.read("oldAccelSensorMode", isOldAccelSensorMode);
     return true;
 }
 

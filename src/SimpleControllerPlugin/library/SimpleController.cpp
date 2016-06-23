@@ -38,12 +38,6 @@ bool SimpleController::start()
 }
     
 
-bool SimpleController::stop()
-{
-    return true;
-}
-
-
 void SimpleController::setIO(SimpleControllerIO* io)
 {
     this->io = io;

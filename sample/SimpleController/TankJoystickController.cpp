@@ -31,8 +31,8 @@ class TankJoystickController : public cnoid::SimpleController
 
 public:
     
-    virtual bool initialize(SimpleControllerIO* io) {
-
+    virtual bool initialize(SimpleControllerIO* io)
+    {
         ostream& os = io->os();
         
         Body* body = ioBody();
@@ -76,8 +76,8 @@ public:
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         joystick.readCurrentState();
         
         static const double P = 200.0;

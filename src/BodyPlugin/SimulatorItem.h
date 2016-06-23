@@ -113,7 +113,7 @@ public:
     SignalProxy<void()> sigSimulationFinished();
 
     enum RecordingMode { REC_FULL, REC_TAIL, REC_NONE, N_RECORDING_MODES };
-    enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIC, TR_TIMEBAR, N_TIME_RANGE_MODES };
+    enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIED, TR_TIMEBAR, N_TIME_RANGE_MODES };
     
     void setRecordingMode(int selection);
     Selection recordingMode() const;
