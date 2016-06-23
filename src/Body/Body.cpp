@@ -405,7 +405,7 @@ void Body::initializeState()
     for(int i=0; i < n; ++i){
         Link* link = linkTraverse_[i];
         link->u() = 0.0;
-        link->q() = 0.0;
+        link->q() = link->initialJointDisplacement();
         link->dq() = 0.0;
         link->ddq() = 0.0;
     }

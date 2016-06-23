@@ -489,6 +489,15 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
+    ValueNodePtr initDNode = topNode->extract("initialJointDisplacement");
+    if(initDNode){
+        Listing& initd = *initDNode->toListing();
+        const int n = std::min(initd.size(), body->numLinks());
+        for(int i=0; i < n; i++){
+            body->link(i)->initialJointDisplacement() = toRadian(initd[i].toDouble());
+        }
+    }
+
     body->resetInfo(topNode);
         
     body->installCustomizer();

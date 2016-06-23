@@ -254,6 +254,9 @@ public:
 
     void resetInfo(Mapping* info);
 
+    double initialJointDisplacement() const { return initd_; }
+    double& initialJointDisplacement() { return initd_; }
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     // fext, tauext
     const double& ulimit() const { return q_upper_; }  ///< the upper limit of joint values
@@ -295,6 +298,7 @@ private:
     double dq_upper_;
     double dq_lower_;
     std::string name_;
+    double initd_;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
     MappingPtr info_;
