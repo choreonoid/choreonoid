@@ -28,7 +28,6 @@
 #include <boost/bind.hpp>
 #include <queue>
 
-
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #define USE_QT5_OPENGL 1
 #else
@@ -751,9 +750,8 @@ SgCamera* VisionRenderer::initializeCamera()
 void VisionRenderer::moveRenderingBufferToThread(QThread& thread)
 {
 #if USE_QT5_OPENGL
-    //renderingBuffer->context()->moveToThread(&thread);
     glContext->moveToThread(&thread);
-    offscreenSurface->moveToThread(&thread);
+    //offscreenSurface->moveToThread(&thread);
 #endif
 }
 
@@ -761,10 +759,9 @@ void VisionRenderer::moveRenderingBufferToThread(QThread& thread)
 void VisionRenderer::moveRenderingBufferToMainThread()
 {
 #if USE_QT5_OPENGL
-    //renderingBuffer->context()->moveToThread(QApplication::instance()->thread());
     QThread* mainThread = QApplication::instance()->thread();
     glContext->moveToThread(mainThread);
-    offscreenSurface->moveToThread(mainThread);
+    //offscreenSurface->moveToThread(mainThread);
 #endif
 }
 
