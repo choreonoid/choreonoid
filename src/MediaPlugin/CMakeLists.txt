@@ -27,8 +27,10 @@ if(UNIX)
     AudioItem.cpp
     )
 
-  pkg_check_modules(GSTREAMER REQUIRED gstreamer-interfaces-0.10)
+  #pkg_check_modules(GSTREAMER REQUIRED gstreamer-interfaces-0.10)
+  pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-video-1.0 gstreamer-base-1.0)
   include_directories(${GSTREAMER_INCLUDE_DIRS})
+  #set_source_files_properties(GSMediaView.cpp PROPERTIES COMPILE_DEFINITIONS "GST_DISABLE_DEPRECATED")
 
   pkg_check_modules(SNDFILE REQUIRED sndfile)
   include_directories(${SNDFILE_INCLUDE_DIRS})
@@ -73,7 +75,6 @@ target_link_libraries(${target} ${libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
 message(STATUS "libraries = ${libraries}")
-
 
 if(ENABLE_PYTHON)
   add_subdirectory(python)

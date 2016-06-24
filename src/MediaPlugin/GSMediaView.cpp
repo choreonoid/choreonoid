@@ -18,7 +18,7 @@
 #include <QApplication>
 #include <QPainter>
 #include <gst/gst.h>
-#include <gst/interfaces/xoverlay.h>
+#include <gst/video/videooverlay.h>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
@@ -27,8 +27,6 @@
 using namespace std;
 using namespace boost;
 using namespace cnoid;
-
-//#define CNOID_GST_1_0
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -73,11 +71,7 @@ public:
     GstBusSyncReply onBusMessageSync(GstMessage* msg);
     void onBusMessageAsync(GstMessage* msg);
 
-#ifdef CNOID_GST_1_0
     GstPadProbeReturn onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info);
-#else
-    gulong onVideoPadGotBuffer(GstPad* pad, GstMiniObject* mini_obj);
-#endif
 
     void onSeekLater();
     void seek();
@@ -106,16 +100,12 @@ GstBusSyncReply busSyncHandler(GstBus* bus, GstMessage* message, gpointer instan
     return ((GSMediaViewImpl*)instance)->onBusMessageSync(message);
 }
 
-#ifdef CNOID_GST_1_0
 GstPadProbeReturn videoPadBufferProbeCallback(GstPad* pad, GstPadProbeInfo* info, gpointer instance)
-#else
-    gulong videoPadBufferProbeCallback(GstPad* pad, GstMiniObject* mini_obj, gpointer instance)
-#endif
 {
-    return ((GSMediaViewImpl*)instance)->onVideoPadGotBuffer(pad, mini_obj);
+    return ((GSMediaViewImpl*)instance)->onVideoPadGotBuffer(pad, info);
 }
+
 }
-        
 
 
 bool GSMediaView::initializeClass(ExtensionManager* ext)
@@ -191,10 +181,10 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
         cout << "GSMediaViewImpl::GSMediaViewImpl()" << endl;
     }
 
-    playbin = gst_element_factory_make("playbin2", NULL);
+    playbin = gst_element_factory_make("playbin", NULL);
 
     if(!playbin){
-        mv->putln(_("Initialization of the GSMediaView failed. The playbin2 plugin is missing."));
+        mv->putln(_("Initialization of the GSMediaView failed. The playbin plugin is missing."));
         return;
     }
 
@@ -227,7 +217,7 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     g_object_set(G_OBJECT(playbin), "video-sink", videoSink, NULL);
     
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(playbin));
-    gst_bus_set_sync_handler(GST_BUS(bus), busSyncHandler, (gpointer)this);
+    gst_bus_set_sync_handler(GST_BUS(bus), busSyncHandler, (gpointer)this, NULL);
     gst_object_unref(GST_OBJECT(bus));
 
     videoWidth = -1;
@@ -268,7 +258,7 @@ GSMediaViewImpl::~GSMediaViewImpl()
 
         // unset busSyncHandler
         GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(playbin));
-        gst_bus_set_sync_handler(GST_BUS(bus), NULL, NULL);
+        gst_bus_set_sync_handler(GST_BUS(bus), NULL, NULL, NULL);
         gst_object_unref(GST_OBJECT(bus));
     }
     timeBarConnections.disconnect();
@@ -304,16 +294,10 @@ void GSMediaViewImpl::onWindowIdChanged()
         cout << "GSMediaView::onWindowIdChanged(" << windowId << ")" << endl;
     }
     
-    
     if(currentMediaItem){
         if(prepareXwindowIdProcessed){
-#ifdef CNOID_GST_1_0
             gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(videoSink), windowId);
-#else
-            //gst_x_overlay_prepare_xwindow_id(GST_X_OVERLAY(videoSink));
-            gst_x_overlay_set_window_handle(GST_X_OVERLAY(videoSink), windowId);
-            gst_x_overlay_expose(GST_X_OVERLAY(videoSink));
-#endif
+            gst_video_overlay_expose(GST_VIDEO_OVERLAY(videoSink));
         } else {
             activateCurrentMediaItem();
         }
@@ -362,7 +346,7 @@ void GSMediaViewImpl::updateRenderRectangle()
             y = 0;
         }
     }        
-    gst_x_overlay_set_render_rectangle(GST_X_OVERLAY(videoSink), x, y, width, height);
+    gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(videoSink), x, y, width, height);
     bgRegion = bgRegion.subtracted(QRegion(x, y, width, height));
 }
 
@@ -438,12 +422,7 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
                     cout << "X-WINDOW ID is set" << endl;
                 }
                 prepareXwindowIdProcessed = true;
-
-#ifdef CNOID_GST_1_0                
                 gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), windowId);
-#else
-                gst_x_overlay_set_window_handle(GST_X_OVERLAY(videoSink), windowId);
-#endif
                 gst_message_unref(message);
                 return GST_BUS_DROP;
             }
@@ -509,43 +488,27 @@ void GSMediaViewImpl::onBusMessageAsync(GstMessage* msg)
 }
 
 
-#ifdef CNOID_GST_1_0
 GstPadProbeReturn GSMediaViewImpl::onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info)
-#else
-    gulong GSMediaViewImpl::onVideoPadGotBuffer(GstPad* pad, GstMiniObject* mini_obj)
-#endif
 {
     if(TRACE_FUNCTIONS2){
         cout << "GSMediaView::onVideoPadGotBuffer()" << endl;
     }
 
-#ifdef CNOID_GST_1_0
     GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-#else
-    GstBuffer* buffer = GST_BUFFER_CAST(mini_obj);
-#endif
     
     if(buffer){
-#ifdef CNOID_GST_1_0
         GstCaps* caps = gst_pad_get_current_caps(pad);
-#else
-        GstCaps* caps = gst_buffer_get_caps(buffer);
-#endif
         const GstStructure* structure = gst_caps_get_structure(caps, 0);
-
         if(gst_structure_get_int(structure, "width", &videoWidth) &&
            gst_structure_get_int(structure, "height", &videoHeight)){
             updateRenderRectangle();
         }
     }
 
-#ifndef CNOID_GST_1_0
-    gst_pad_remove_buffer_probe(pad, padProbeId);
+    gst_pad_remove_probe(pad, padProbeId);
     padProbeId = 0; // Clear probe id to indicate that it has been removed
-    return TRUE; // Keep buffer in pipeline (do not throw away)
-#else
+    //return TRUE; // Keep buffer in pipeline (do not throw away)
     return GST_PAD_PROBE_REMOVE;
-#endif
 }
 
 
@@ -617,13 +580,9 @@ void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
 
             } else {
                 GstPad* pad = gst_element_get_static_pad(GST_ELEMENT(videoSink), "sink");
-                //padProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER,
-                //                               (GstPadProbeCallback)videoPadBufferProbeCallback, this, NULL);
-
-                padProbeId = gst_pad_add_buffer_probe(pad, (GCallback)videoPadBufferProbeCallback, this);
-                
+                padProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER,
+                                               (GstPadProbeCallback)videoPadBufferProbeCallback, this, NULL);
                 gst_object_unref(pad);
-
                 if(self->winId()){
                     activateCurrentMediaItem();
                 }
@@ -795,12 +754,12 @@ void GSMediaViewImpl::onZoomPropertyChanged()
     if(orgSizeCheck->isChecked()){
         g_object_set(G_OBJECT(videoSink), "force-aspect-ratio", (gboolean)FALSE, NULL);
         updateRenderRectangle();
-        //gst_x_overlay_expose(GST_X_OVERLAY(videoSink));
+        //gst_video_overlay_expose(GST_VIDEO_OVERLAY(videoSink));
         self->update();
     } else {
         g_object_set(G_OBJECT(videoSink), "force-aspect-ratio", (gboolean)aspectRatioCheck->isChecked(), NULL);
         updateRenderRectangle();
-        gst_x_overlay_expose(GST_X_OVERLAY(videoSink));
+        gst_video_overlay_expose(GST_VIDEO_OVERLAY(videoSink));
     }
 }
 
