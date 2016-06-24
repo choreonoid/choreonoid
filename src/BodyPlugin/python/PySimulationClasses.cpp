@@ -86,7 +86,7 @@ void exportSimulationClasses()
         enum_<SimulatorItem::TimeRangeMode>("TimeRangeMode")
             .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED)
             .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL)
-            .value("TR_SPECIFIC", SimulatorItem::TR_SPECIFIC)
+            .value("TR_SPECIFIED", SimulatorItem::TR_SPECIFIED)
             .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR) 
             .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES);
     }

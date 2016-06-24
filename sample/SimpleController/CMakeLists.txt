@@ -17,6 +17,7 @@ endif()
 # set(CMAKE_BUILD_TYPE Debug)
 
 add_cnoid_simple_controller(SR1MinimumController SR1MinimumController.cpp)
+configure_file(SR1Minimum.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1WalkPatternController SR1WalkPatternController.cpp)
 configure_file(SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

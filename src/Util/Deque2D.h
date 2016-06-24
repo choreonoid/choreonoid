@@ -333,6 +333,7 @@ public:
                 }
             }
         }
+        end_ = iterator(*this, buf + ((capacity_ > 0) ? ((offset + size_) % capacity_) : 0));
     }
 
     Deque2DType& operator=(const Deque2DType& rhs) {

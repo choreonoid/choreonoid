@@ -21,12 +21,14 @@ public:
     BasicSensorSimulationHelper* self;
     BodyPtr body;
 
+    // gravity acceleration
+    Vector3 g;
+
+    bool isOldAccelSensorCalcMode;
+
     // preview control gain matrices for acceleration sensors
     Matrix2 A;
     Vector2 B;
-
-    // gravity acceleration
-    Vector3 g;
 
     struct KFState
     {
@@ -57,13 +59,19 @@ BasicSensorSimulationHelper::BasicSensorSimulationHelper()
 BasicSensorSimulationHelperImpl::BasicSensorSimulationHelperImpl(BasicSensorSimulationHelper* self)
     : self(self)
 {
-
+    isOldAccelSensorCalcMode = false;
 }
 
 
 BasicSensorSimulationHelper::~BasicSensorSimulationHelper()
 {
     delete impl;
+}
+
+
+void BasicSensorSimulationHelper::setOldAccelSensorCalcMode(bool on)
+{
+    impl->isOldAccelSensorCalcMode = on;
 }
 
 
@@ -80,7 +88,7 @@ void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const 
         if(!forceSensors_.empty() ||
            !rateGyroSensors_.empty() ||
            !accelerationSensors_.empty()){
-            impl->initialize(body, timeStep, gravityAcceleration);    
+            impl->initialize(body, timeStep, gravityAcceleration);
             isActive_ = true;
         }
     }
@@ -91,6 +99,10 @@ void Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceler
 {
     this->body = body;
     g = gravityAcceleration;
+
+    if(!isOldAccelSensorCalcMode){
+        return;
+    }
 
     const DeviceList<AccelerationSensor>& accelerationSensors = self->accelerationSensors_;
     if(accelerationSensors.empty()){
@@ -160,11 +172,17 @@ void BasicSensorSimulationHelper::updateGyroAndAccelerationSensors()
         gyro->notifyStateChange();
     }
 
-    if(!accelerationSensors_.empty()){
+    if(!impl->isOldAccelSensorCalcMode){
+        for(size_t i=0; i < accelerationSensors_.size(); ++i){
+            AccelerationSensor* sensor = accelerationSensors_[i];
+            const Link* link = sensor->link();
+            sensor->dv() = sensor->R_local().transpose() * link->R().transpose() * (link->dv() - impl->g);
+            sensor->notifyStateChange();
+        }
 
+    } else if(!accelerationSensors_.empty()){
         const Matrix2& A = impl->A;
         const Vector2& B = impl->B;
-        const Vector3& g = impl->g;
 
         for(size_t i=0; i < accelerationSensors_.size(); ++i){
 
@@ -179,9 +197,9 @@ void BasicSensorSimulationHelper::updateGyroAndAccelerationSensors()
             }
             
             Vector3 o_Agsens(s.x[0](1), s.x[1](1), s.x[2](1));
-            o_Agsens -= g;
+            o_Agsens -= impl->g;
             
-            sensor->dv() = link->R().transpose() * o_Agsens;
+            sensor->dv() = sensor->R_local().transpose() * link->R().transpose() * o_Agsens;
             sensor->notifyStateChange();
         }
     }

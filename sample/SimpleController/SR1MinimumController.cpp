@@ -23,30 +23,33 @@ const double dgain[] = {
 
 class SR1MinimumController : public SimpleController
 {
-    BodyPtr body;
+    BodyPtr ioBody;
     double dt;
     std::vector<double> qref;
     std::vector<double> qold;
 
 public:
 
-    virtual bool initialize()
+    virtual bool initialize(SimpleControllerIO* io)
     {
-        body = ioBody();
-        dt = timeStep();
+        ioBody = io->body();
+        dt = io->timeStep();
 
-        for(int i=0; i < body->numJoints(); ++i){
-            qref.push_back(body->joint(i)->q());
+        io->setJointInput(JOINT_ANGLE);
+        io->setJointOutput(JOINT_TORQUE);
+
+        for(int i=0; i < ioBody->numJoints(); ++i){
+            qref.push_back(ioBody->joint(i)->q());
         }
         qold = qref;
-        
+
         return true;
     }
 
     virtual bool control()
     {
-        for(int i=0; i < body->numJoints(); ++i){
-            Link* joint = body->joint(i);
+        for(int i=0; i < ioBody->numJoints(); ++i){
+            Link* joint = ioBody->joint(i);
             double q = joint->q();
             double dq = (q - qold[i]) / dt;
             double u = (qref[i] - q) * pgain[i] + (0.0 - dq) * dgain[i];

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-06 15:32+0900\n"
+"POT-Creation-Date: 2016-06-17 14:49+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -239,7 +239,7 @@ msgstr "名前"
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:804 MainWindow.cpp:167 PointSetItem.cpp:519 SceneItem.cpp:143
+#: Item.cpp:804 MainWindow.cpp:167 PointSetItem.cpp:519 SceneItem.cpp:142
 msgid "File"
 msgstr "ファイル"
 
@@ -920,7 +920,7 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
-#: PointSetItem.cpp:529 SceneItem.cpp:144
+#: PointSetItem.cpp:529 SceneItem.cpp:143
 msgid "Translation"
 msgstr "並進"
 
@@ -1068,15 +1068,15 @@ msgstr " 頂点: %1%\n"
 msgid " Triangles: %1%"
 msgstr " トライアングル: %1%"
 
-#: SceneItem.cpp:59
+#: SceneItem.cpp:58
 msgid "The VRML file does not have any valid entity."
 msgstr "VRMLファイルに有効な実態が含まれていません。"
 
-#: SceneItem.cpp:72
+#: SceneItem.cpp:71
 msgid "The STL file cannot be loaded."
 msgstr "STLファイルは読み込めませんでした。"
 
-#: SceneItem.cpp:86
+#: SceneItem.cpp:85
 msgid "SceneItem"
 msgstr "シーンアイテム"
 
@@ -1344,11 +1344,11 @@ msgstr ""
 msgid "Task \"%1%\" has been updated with the new one."
 msgstr "タスク \"%1%\" が更新されました。"
 
-#: TaskView.cpp:1428
+#: TaskView.cpp:1425
 msgid "Retry"
 msgstr "リトライ"
 
-#: TaskView.cpp:1430
+#: TaskView.cpp:1427
 msgid "Vertical Layout"
 msgstr "縦配置"
 
@@ -1395,7 +1395,7 @@ msgid "Playback speed scale"
 msgstr "再生スピード倍率"
 
 #: TimeBar.cpp:104
-msgid "Sync to ongoing updates"
+msgid "Sync with ongoing updates"
 msgstr "進行中の更新に同期"
 
 #: TimeBar.cpp:111

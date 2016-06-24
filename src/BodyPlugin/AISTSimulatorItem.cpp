@@ -99,6 +99,7 @@ public:
     double epsilon;
     bool is2Dmode;
     bool isKinematicWalkingEnabled;
+    bool isOldAccelSensorMode;
 
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
@@ -183,6 +184,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
 
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
+    isOldAccelSensorMode = false;
 }
 
 
@@ -211,6 +213,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AIST
     epsilon = org.epsilon;
     isKinematicWalkingEnabled = org.isKinematicWalkingEnabled;
     is2Dmode = org.is2Dmode;
+    isOldAccelSensorMode = org.isOldAccelSensorMode;
 }
 
 
@@ -409,6 +412,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     }
     world.setGravityAcceleration(gravity);
     world.enableSensors(true);
+    world.setOldAccelSensorCalcMode(isOldAccelSensorMode);
     world.setTimeStep(self->worldTimeStep());
     world.setCurrentTime(0.0);
 
@@ -500,13 +504,15 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
 
+    int bodyIndex;
     if(dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS)){
         ForwardDynamicsCBMPtr cbm = make_shared_aligned<ForwardDynamicsCBM>(body);
         cbm->setHighGainModeForAllJoints();
-        bodyIndexMap[body] = world.addBody(body, cbm);
+        bodyIndex = world.addBody(body, cbm);
     } else {
-        bodyIndexMap[body] = world.addBody(body);
+        bodyIndex = world.addBody(body);
     }
+    bodyIndexMap[body] = bodyIndex;
 }
 
 
@@ -671,6 +677,7 @@ void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
+    putProperty(_("Old accel sensor mode"), isOldAccelSensorMode, changeProperty(isOldAccelSensorMode));
 }
 
 
@@ -696,6 +703,7 @@ bool AISTSimulatorItemImpl::store(Archive& archive)
     archive.write("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio);
     archive.write("kinematicWalking", isKinematicWalkingEnabled);
     archive.write("2Dmode", is2Dmode);
+    archive.write("oldAccelSensorMode", isOldAccelSensorMode);
     return true;
 }
 
@@ -727,6 +735,7 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     contactCorrectionVelocityRatio = archive.get("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio.string());
     archive.read("kinematicWalking", isKinematicWalkingEnabled);
     archive.read("2Dmode", is2Dmode);
+    archive.read("oldAccelSensorMode", isOldAccelSensorMode);
     return true;
 }
 

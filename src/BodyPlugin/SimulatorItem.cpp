@@ -1054,7 +1054,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     
     timeRangeMode.setSymbol(SimulatorItem::TR_UNLIMITED, N_("Unlimited"));
     timeRangeMode.setSymbol(SimulatorItem::TR_ACTIVE_CONTROL, N_("Active control period"));
-    timeRangeMode.setSymbol(SimulatorItem::TR_SPECIFIC, N_("Specific time"));
+    timeRangeMode.setSymbol(SimulatorItem::TR_SPECIFIED, N_("Specified time"));
     timeRangeMode.setSymbol(SimulatorItem::TR_TIMEBAR, N_("Time bar range"));
     timeRangeMode.select(SimulatorItem::TR_UNLIMITED);
     specifiedTimeLength = 180.0; // 3 min.
@@ -1422,7 +1422,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
 
         ringBufferSize = std::numeric_limits<int>::max();
         
-        if(timeRangeMode.is(SimulatorItem::TR_SPECIFIC)){
+        if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
             maxFrame = specifiedTimeLength / worldTimeStep_;
         } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
             maxFrame = TimeBar::instance()->maxTime() / worldTimeStep_;
@@ -2428,7 +2428,7 @@ bool SimulatorItemImpl::restore(const Archive& archive)
     } else if(archive.read("timeRangeMode", symbol)){
         if(!timeRangeMode.select(symbol)){
             if(symbol == "Specified period"){
-                timeRangeMode.select(SimulatorItem::TR_SPECIFIC);
+                timeRangeMode.select(SimulatorItem::TR_SPECIFIED);
             } else if(symbol == "TimeBar range"){
                 timeRangeMode.select(SimulatorItem::TR_TIMEBAR);
             }

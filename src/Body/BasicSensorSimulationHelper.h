@@ -23,6 +23,8 @@ public:
     BasicSensorSimulationHelper();
     ~BasicSensorSimulationHelper();
 
+    void setOldAccelSensorCalcMode(bool on);
+    
     void initialize(Body* body, double timeStep, const Vector3& gravityAcceleration);
 
     bool isActive() const { return isActive_; }

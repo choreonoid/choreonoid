@@ -28,6 +28,7 @@ WorldBase::WorldBase()
 
     isEulerMethod =false;
     sensorsAreEnabled = false;
+    isOldAccelSensorCalcMode = false;
     numRegisteredLinkPairs = 0;
 }
 
@@ -88,6 +89,12 @@ void WorldBase::enableSensors(bool on)
 }
 
 
+void WorldBase::setOldAccelSensorCalcMode(bool on)
+{
+    isOldAccelSensorCalcMode = on;
+}
+
+
 void WorldBase::initialize()
 {
     const int n = bodyInfoArray.size();
@@ -108,6 +115,7 @@ void WorldBase::initialize()
         info.forwardDynamics->setGravityAcceleration(g);
         info.forwardDynamics->setTimeStep(timeStep_);
         info.forwardDynamics->enableSensors(sensorsAreEnabled);
+        info.forwardDynamics->setOldAccelSensorCalcMode(isOldAccelSensorCalcMode);
         info.forwardDynamics->initialize();
     }
 }

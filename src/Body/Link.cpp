@@ -41,6 +41,7 @@ Link::Link()
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
     info_ = new Mapping;
+    initd_ = 0.0;
 }
 
 
@@ -87,6 +88,7 @@ Link::Link(const Link& org)
     visualShape_ = org.visualShape_;
     collisionShape_ = org.collisionShape_;
     info_ = org.info_;
+    initd_ = org.initd_;
 }
 
 

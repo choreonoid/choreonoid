@@ -6,11 +6,10 @@
 #include <cnoid/SimpleController>
 #include <cnoid/Joystick>
 
-using namespace std;
 using namespace cnoid;
 
 namespace {
-const int axisIds[] = {1,0};
+const int axisIds[] = { 1, 0 };
 }
 
 class SampleCrawlerJoystickController : public cnoid::SimpleController
@@ -22,32 +21,36 @@ class SampleCrawlerJoystickController : public cnoid::SimpleController
 
 public:
     
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        std::ostream& os = io->os();
 
-        crawlerL = ioBody()->link("CRAWLER_TRACK_L");
-        crawlerR = ioBody()->link("CRAWLER_TRACK_R");
+        crawlerL = io->body()->link("CRAWLER_TRACK_L");
+        crawlerR = io->body()->link("CRAWLER_TRACK_R");
 
         if(!crawlerL || !crawlerR){
-            os() << "Crawlers are not found" << endl;
+            os << "Crawlers are not found" << std::endl;
             return false;
         }
+
+        io->setJointOutput(JOINT_TORQUE);
 
         for(int i=0; i < 2; i++){
             qRef[i] = 0;
         }
 
         if(!joystick.isReady()){
-            os() << "Joystick is not ready: " << joystick.errorMessage() << endl;
+            os << "Joystick is not ready: " << joystick.errorMessage() << std::endl;
         }
         if(joystick.numAxes() < 5){
-            os() << "The number of the joystick axes is not sufficient for controlling the robot." << endl;
+            os << "The number of the joystick axes is not sufficient for controlling the robot." << std::endl;
         }
         
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         joystick.readCurrentState();
 
         double pos[2];
