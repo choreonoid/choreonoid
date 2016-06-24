@@ -20,7 +20,6 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/EigenUtil>
-#include <QGLPixelBuffer>
 #include <QThread>
 #include <QApplication>
 #include <boost/thread.hpp>
@@ -28,6 +27,22 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <queue>
+
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#define USE_QT5_OPENGL 1
+#else
+#define USE_QT5_OPENGL 0
+#endif
+
+#if USE_QT5_OPENGL
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
+#include <QOpenGLFramebufferObject>
+#else
+#include <QGLPixelBuffer>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -130,7 +145,14 @@ public:
     SgGroupPtr sceneGroup;
     vector<SceneBodyPtr> sceneBodies;
 
+#if USE_QT5_OPENGL
+    QOpenGLContext* glContext;
+    QOffscreenSurface* offscreenSurface;
+    QOpenGLFramebufferObject* frameBuffer;
+#else
     QGLPixelBuffer* renderingBuffer;
+#endif
+    
     GLSceneRenderer renderer;
     int pixelWidth;
     int pixelHeight;
@@ -146,6 +168,8 @@ public:
     SgCamera* initializeCamera();
     void moveRenderingBufferToThread(QThread& thread);
     void moveRenderingBufferToMainThread();
+    void makeGLContextCurrent();
+    void doneGLContextCurrent();
     void updateScene(bool updateSensorForRenderingThread);
     void renderInCurrentThread(bool doStoreResultToTmpDataBuffer);
     void startConcurrentRendering();
@@ -205,7 +229,6 @@ public:
     double maxFrameRate;
     double maxLatency;
     SgCloneMap cloneMap;
-    QGLFormat glFormat;
         
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self);
     GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
@@ -397,15 +420,14 @@ bool GLVisionSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 
 bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorItem)
 {
+#if !USE_QT5_OPENGL
     if(!QGLPixelBuffer::hasOpenGLPbuffers()){
         os << (format(_("The vision sensor simulation by %1% cannot be performed because the OpenGL pbuffer is not available."))
                % self->name()) << endl;
         return false;
     }
+#endif
 
-    glFormat = QGLFormat::defaultFormat();
-    glFormat.setDoubleBuffer(false);
-    
     this->simulatorItem = simulatorItem;
     worldTimeStep = simulatorItem->worldTimeStep();
     currentTime = 0;
@@ -546,7 +568,13 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
         rangeSensorForRendering = rangeSensor;
     }
 
+#if USE_QT5_OPENGL
+    glContext = 0;
+    offscreenSurface = 0;
+    frameBuffer = 0;
+#else
     renderingBuffer = 0;
+#endif
 }
 
 
@@ -558,9 +586,25 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     if(!sceneCamera){
         return false;
     }
-    
-    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, simImpl->glFormat);
+
+#if USE_QT5_OPENGL
+    glContext = new QOpenGLContext;
+    QSurfaceFormat format;
+    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    glContext->setFormat(format);
+    glContext->create();
+    offscreenSurface = new QOffscreenSurface;
+    offscreenSurface->setFormat(format);
+    offscreenSurface->create();
+    glContext->makeCurrent(offscreenSurface);
+    frameBuffer = new QOpenGLFramebufferObject(pixelWidth, pixelHeight, QOpenGLFramebufferObject::CombinedDepthStencil);
+    frameBuffer->bind();
+#else
+    QGLFormat format;
+    format.setDoubleBuffer(false);
+    renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, format);
     renderingBuffer->makeCurrent();
+#endif
     
     renderer.initializeGL();
     renderer.setViewport(0, 0, pixelWidth, pixelHeight);
@@ -569,7 +613,8 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     renderer.headLight()->on(simImpl->isHeadLightEnabled);
     renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
     renderer.setCurrentCamera(sceneCamera);
-    renderingBuffer->doneCurrent();
+
+    doneGLContextCurrent();
     
     isRendering = false;
     elapsedTime = cycleTime + 1.0e-6;
@@ -705,16 +750,41 @@ SgCamera* VisionRenderer::initializeCamera()
 
 void VisionRenderer::moveRenderingBufferToThread(QThread& thread)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    renderingBuffer->context()->moveToThread(&thread);
+#if USE_QT5_OPENGL
+    //renderingBuffer->context()->moveToThread(&thread);
+    glContext->moveToThread(&thread);
+    offscreenSurface->moveToThread(&thread);
 #endif
 }
 
 
 void VisionRenderer::moveRenderingBufferToMainThread()
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    renderingBuffer->context()->moveToThread(QApplication::instance()->thread());
+#if USE_QT5_OPENGL
+    //renderingBuffer->context()->moveToThread(QApplication::instance()->thread());
+    QThread* mainThread = QApplication::instance()->thread();
+    glContext->moveToThread(mainThread);
+    offscreenSurface->moveToThread(mainThread);
+#endif
+}
+
+
+void VisionRenderer::makeGLContextCurrent()
+{
+#if USE_QT5_OPENGL
+    glContext->makeCurrent(offscreenSurface);
+#else
+    renderingBuffer->makeCurrent();
+#endif
+}
+
+
+void VisionRenderer::doneGLContextCurrent()
+{
+#if USE_QT5_OPENGL
+    glContext->doneCurrent();
+#else
+    renderingBuffer->doneCurrent();
 #endif
 }
 
@@ -809,13 +879,13 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 
 void VisionRenderer::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
 {
-    renderingBuffer->makeCurrent();
+    makeGLContextCurrent();
     renderer.render();
     renderer.flush();
     if(doStoreResultToTmpDataBuffer){
         storeResultToTmpDataBuffer();
     }
-    renderingBuffer->doneCurrent();
+    doneGLContextCurrent();
 }
 
 
@@ -850,7 +920,7 @@ void VisionRenderer::concurrentRenderingLoop()
             }
         }
         if(!isGLContextCurrent){
-            renderingBuffer->makeCurrent();
+            makeGLContextCurrent();
             isGLContextCurrent = true;
         }
         renderer.render();
@@ -865,7 +935,7 @@ void VisionRenderer::concurrentRenderingLoop()
     }
     
 exitConcurrentRenderingLoop:
-    renderingBuffer->doneCurrent();
+    doneGLContextCurrent();
     moveRenderingBufferToMainThread();
 }
 
@@ -1015,7 +1085,7 @@ void VisionRenderer::copyVisionData()
 
 void VisionRenderer::updateVisionData()
 {
-    renderingBuffer->makeCurrent();
+    makeGLContextCurrent();
     bool updated = false;
     if(camera){
         if(rangeCamera){
@@ -1032,7 +1102,7 @@ void VisionRenderer::updateVisionData()
             rangeSensor->setDelay(simImpl->currentTime - onsetTime);
         }
     }
-    renderingBuffer->doneCurrent();
+    doneGLContextCurrent();
     
     if(updated){
         if(simImpl->isVisionDataRecordingEnabled){
@@ -1228,11 +1298,21 @@ VisionRenderer::~VisionRenderer()
         renderingCondition.notify_all();
         renderingThread.wait();
     }
-    if(renderingBuffer){
-        renderingBuffer->makeCurrent();
-        delete renderingBuffer;
-        renderingBuffer = 0;
+
+#if USE_QT5_OPENGL
+    if(glContext){
+        makeGLContextCurrent();
+        frameBuffer->release();
+        delete frameBuffer;
+        delete glContext;
+        delete offscreenSurface;
     }
+#else
+    if(renderingBuffer){
+        makeGLContextCurrent();
+        delete renderingBuffer;
+    }
+#endif
 }
     
 
