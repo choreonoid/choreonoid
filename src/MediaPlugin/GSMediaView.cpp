@@ -311,7 +311,7 @@ void GSMediaViewImpl::onWindowIdChanged()
             gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(videoSink), windowId);
 #else
             //gst_x_overlay_prepare_xwindow_id(GST_X_OVERLAY(videoSink));
-            gst_x_overlay_set_xwindow_id(GST_X_OVERLAY(videoSink), windowId);
+            gst_x_overlay_set_window_handle(GST_X_OVERLAY(videoSink), windowId);
             gst_x_overlay_expose(GST_X_OVERLAY(videoSink));
 #endif
         } else {
@@ -442,7 +442,7 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
 #ifdef CNOID_GST_1_0                
                 gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), windowId);
 #else
-                gst_x_overlay_set_xwindow_id(GST_X_OVERLAY(videoSink), windowId);
+                gst_x_overlay_set_window_handle(GST_X_OVERLAY(videoSink), windowId);
 #endif
                 gst_message_unref(message);
                 return GST_BUS_DROP;
