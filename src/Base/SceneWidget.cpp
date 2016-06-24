@@ -2562,6 +2562,29 @@ Mapping* SceneWidgetImpl::storeCameraState(int cameraIndex, bool isInteractiveCa
 }
 
 
+template<typename Derived> static bool readColor(const Mapping& mapping, const char* key, Eigen::MatrixBase<Derived>& out_color)
+{
+    const Listing& elements = *mapping.findListing(key);
+    if(!elements.isValid()){
+        return false;
+    }
+    if(elements.size() < 3 || elements.size() > 4){
+        elements.throwException("The color value must have three or four elements");
+    }
+    for(int i=0; i < 3; ++i){
+        out_color[i] = elements[i].toDouble();
+    }
+    if(out_color.rows() == 4){
+        if(elements.size() == 4){
+            out_color[3] = elements[3].toDouble();
+        } else {
+            out_color[3] = 1.0f;
+        }
+    }
+    return true;
+}
+
+    
 bool SceneWidget::restoreState(const Archive& archive)
 {
     return impl->restoreState(archive);
@@ -2621,18 +2644,18 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
         }
     }
 
-    Vector3f bgColor;
-    if(read(archive, "backgroundColor", bgColor)){
-        renderer.setBackgroundColor(bgColor);
+    Vector3f color;
+    if(readColor(archive, "backgroundColor", color)){
+        renderer.setBackgroundColor(color);
         doUpdate = true;
     }
-    if(read(archive, "gridColor", gridColor[FLOOR])){
+    if(readColor(archive, "gridColor", gridColor[FLOOR])){
         doUpdate = true;
     }
-    if(read(archive, "xzgridColor", gridColor[XZ])){
+    if(readColor(archive, "xzgridColor", gridColor[XZ])){
     	doUpdate = true;
     }
-    if(read(archive, "yzgridColor", gridColor[YZ])){
+    if(readColor(archive, "yzgridColor", gridColor[YZ])){
     	doUpdate = true;
     }
     if(doUpdate){
