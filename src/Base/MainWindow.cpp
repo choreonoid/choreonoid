@@ -188,7 +188,6 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     Action* showStatusBarCheck = mm.setCurrent(viewMenu).addCheckItem(_("Show Status Bar"));
     bool showStatusBar = config->get("showStatusBar", true);
     QWidget* statusBar = InfoBar::instance();
-    statusBar->setVisible(showStatusBar);
     showStatusBarCheck->setChecked(showStatusBar);
     showStatusBarCheck->sigToggled().connect(boost::bind(&QWidget::setVisible, statusBar, _1));
     
@@ -288,6 +287,9 @@ void MainWindowImpl::showFirst()
         } else {
             self->QMainWindow::show();
         }
+        bool showStatusBar = config->get("showStatusBar", true);
+        self->statusBar()->setVisible(showStatusBar);
+
         isBeforeShowing = false;
     } else {
         self->QMainWindow::show();
