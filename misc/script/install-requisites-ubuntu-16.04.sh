@@ -30,6 +30,7 @@ omniidl-python \
 uuid-dev \
 libgstreamer0.10-dev \
 libgstreamer-plugins-base0.10-dev \
+gstreamer0.10-plugins-good \
 libpulse-dev \
 libsndfile1-dev
 
