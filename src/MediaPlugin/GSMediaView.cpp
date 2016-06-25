@@ -293,7 +293,8 @@ void GSMediaViewImpl::onWindowIdChanged()
     if(TRACE_FUNCTIONS){
         cout << "GSMediaView::onWindowIdChanged(" << windowId << ")" << endl;
     }
-    
+
+    /*
     if(currentMediaItem){
         if(prepareXwindowIdProcessed){
             gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(videoSink), windowId);
@@ -302,6 +303,8 @@ void GSMediaViewImpl::onWindowIdChanged()
             activateCurrentMediaItem();
         }
     }
+    */
+    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(playbin), windowId);
 }
 
 
@@ -346,7 +349,7 @@ void GSMediaViewImpl::updateRenderRectangle()
             y = 0;
         }
     }        
-    gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(videoSink), x, y, width, height);
+    gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(playbin), x, y, width, height);
     bgRegion = bgRegion.subtracted(QRegion(x, y, width, height));
 }
 
@@ -415,8 +418,8 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
         break;
 
     case GST_MESSAGE_ELEMENT:
-        //gst_is_video_overlay_prepare_window_handle_message(message))
-        if(gst_structure_has_name(gst_message_get_structure(message), "prepare-xwindow-id")){
+        if(gst_is_video_overlay_prepare_window_handle_message(message)){
+        //if(gst_structure_has_name(gst_message_get_structure(message), "prepare-xwindow-handle")){
             if(windowId){
                 if(TRACE_FUNCTIONS2){
                     cout << "X-WINDOW ID is set" << endl;
