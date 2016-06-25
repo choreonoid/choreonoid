@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_MEDIAPLUGIN_GS_MEDIA_VIEW_H_INCLUDED
-#define CNOID_MEDIAPLUGIN_GS_MEDIA_VIEW_H_INCLUDED
+#ifndef CNOID_MEDIAPLUGIN_GS_MEDIA_VIEW_H
+#define CNOID_MEDIAPLUGIN_GS_MEDIA_VIEW_H
 
 #include <cnoid/View>
 
@@ -26,13 +26,13 @@ protected:
     virtual bool event(QEvent* event);
     virtual void resizeEvent(QResizeEvent* event);
     virtual void paintEvent(QPaintEvent* event);
-    virtual QPaintEngine* paintEngine () const;
     virtual void onActivated();
     virtual void onDeactivated();
 
 private:
     GSMediaViewImpl* impl;
 };
+
 }
 
 #endif

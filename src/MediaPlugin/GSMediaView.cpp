@@ -12,28 +12,27 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
-#include <cnoid/Sleep>
 #include <QEvent>
 #include <QResizeEvent>
-#include <QApplication>
 #include <QPainter>
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
 #include <boost/bind.hpp>
-#include "gettext.h"
-
 #include <iostream>
+#include "gettext.h"
 
 using namespace std;
 using namespace boost;
 using namespace cnoid;
 
 namespace {
+
 const bool TRACE_FUNCTIONS = false;
 const bool TRACE_FUNCTIONS2 = false;
 
 Action* aspectRatioCheck = 0;
 Action* orgSizeCheck = 0;
+
 }
 
 namespace cnoid {
@@ -41,18 +40,14 @@ namespace cnoid {
 class GSMediaViewImpl
 {
 public:
-
-    GSMediaViewImpl(GSMediaView* self);
-    ~GSMediaViewImpl();
-
     GSMediaView* self;
     MessageView* mv;
+    ScopedConnectionSet connections;
     TimeBar* timeBar;
     ConnectionSet timeBarConnections;
     MediaItemPtr currentMediaItem;
     GstElement* playbin;
     GstElement* videoSink;        
-    bool prepareXwindowIdProcessed;
     WId windowId;
     gint videoWidth;
     gint videoHeight;
@@ -66,17 +61,16 @@ public:
     gint64 currentSeekPos;
     LazyCaller seekLater;
 
+    GSMediaViewImpl(GSMediaView* self);
+    ~GSMediaViewImpl();
     void updateRenderRectangle();
     void onWindowIdChanged();
     GstBusSyncReply onBusMessageSync(GstMessage* msg);
     void onBusMessageAsync(GstMessage* msg);
-
     GstPadProbeReturn onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info);
-
     void onSeekLater();
     void seek();
     void seek(double time);
-            
     void onItemCheckToggled(Item* item, bool isChecked);
     void activateCurrentMediaItem();
     bool onPlaybackInitialized(double time);
@@ -84,27 +78,21 @@ public:
     bool onTimeChanged(double time);
     void onPlaybackStopped(double time);
     void stopPlayback();
-
     void onZoomPropertyChanged();
-
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
+
 }
 
-
-namespace {
-
-GstBusSyncReply busSyncHandler(GstBus* bus, GstMessage* message, gpointer instance)
+static GstBusSyncReply busSyncHandler(GstBus* bus, GstMessage* message, gpointer instance)
 {
     return ((GSMediaViewImpl*)instance)->onBusMessageSync(message);
 }
 
-GstPadProbeReturn videoPadBufferProbeCallback(GstPad* pad, GstPadProbeInfo* info, gpointer instance)
+static GstPadProbeReturn videoPadBufferProbeCallback(GstPad* pad, GstPadProbeInfo* info, gpointer instance)
 {
     return ((GSMediaViewImpl*)instance)->onVideoPadGotBuffer(pad, info);
-}
-
 }
 
 
@@ -150,19 +138,12 @@ bool GSMediaView::initializeClass(ExtensionManager* ext)
 
 GSMediaView::GSMediaView()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::GSMediaView()" << endl;
-    }
-
     setName(N_("Media"));
     setDefaultLayoutArea(View::CENTER);
 
     setAttribute(Qt::WA_NativeWindow);
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_OpaquePaintEvent);
-
-    //
-    //setAutoFillBackground(true);
 
     impl = new GSMediaViewImpl(this);
 }
@@ -177,10 +158,6 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
       windowId(0),
       seekLater(boost::bind(&GSMediaViewImpl::onSeekLater, this))
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaViewImpl::GSMediaViewImpl()" << endl;
-    }
-
     playbin = gst_element_factory_make("playbin", NULL);
 
     if(!playbin){
@@ -227,13 +204,17 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     isPlaying = false;
     isSeeking = false;
     currentSeekPos = 0;
-    prepareXwindowIdProcessed = false;
 
-    aspectRatioCheck->sigToggled().connect(boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this));
-    orgSizeCheck->sigToggled().connect(boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this));
-    
-    ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        boost::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2));
+    connections.add(
+        aspectRatioCheck->sigToggled().connect(
+            boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
+    connections.add(
+        orgSizeCheck->sigToggled().connect(
+            boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
+
+    connections.add(
+        ItemTreeView::mainInstance()->sigCheckToggled().connect(
+            boost::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2)));
 }
 
 
@@ -286,24 +267,10 @@ void GSMediaViewImpl::onWindowIdChanged()
 {
     windowId = self->winId();
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    QApplication::syncX();
-#endif
-
     if(TRACE_FUNCTIONS){
         cout << "GSMediaView::onWindowIdChanged(" << windowId << ")" << endl;
     }
 
-    /*
-    if(currentMediaItem){
-        if(prepareXwindowIdProcessed){
-            gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(videoSink), windowId);
-            gst_video_overlay_expose(GST_VIDEO_OVERLAY(videoSink));
-        } else {
-            activateCurrentMediaItem();
-        }
-    }
-    */
     gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(playbin), windowId);
 }
 
@@ -373,17 +340,6 @@ void GSMediaView::paintEvent(QPaintEvent* event)
 }    
 
 
-QPaintEngine* GSMediaView::paintEngine () const
-{
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::paintEngine()" << endl;
-    }
-    
-    //return 0;
-    return QWidget::paintEngine();
-}
-
-
 void GSMediaView::onActivated()
 {
     if(TRACE_FUNCTIONS){
@@ -400,7 +356,6 @@ void GSMediaView::onDeactivated()
     if(TRACE_FUNCTIONS){
         cout << "GSMediaView::onDeactivated()" << endl;
     }
-    //gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(videoSink), 0);
 }
 
 
@@ -415,21 +370,6 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
 
     case GST_MESSAGE_ASYNC_DONE:
         isSeeking = false;
-        break;
-
-    case GST_MESSAGE_ELEMENT:
-        if(gst_is_video_overlay_prepare_window_handle_message(message)){
-        //if(gst_structure_has_name(gst_message_get_structure(message), "prepare-xwindow-handle")){
-            if(windowId){
-                if(TRACE_FUNCTIONS2){
-                    cout << "X-WINDOW ID is set" << endl;
-                }
-                prepareXwindowIdProcessed = true;
-                gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), windowId);
-                gst_message_unref(message);
-                return GST_BUS_DROP;
-            }
-        }
         break;
 
     default:
@@ -556,7 +496,6 @@ void GSMediaViewImpl::seek(double time)
 }
 
 
-
 void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
 {
     if(TRACE_FUNCTIONS){
@@ -610,8 +549,7 @@ void GSMediaViewImpl::activateCurrentMediaItem()
         
         GstState state, pending;
         gst_element_get_state(GST_ELEMENT(playbin), &state, &pending, GST_CLOCK_TIME_NONE); // wait
-        //seek(timeBar->time());
-        seekLater();
+        seek(timeBar->time());
 
         g_object_set(G_OBJECT(videoSink), "show-preroll-frame", (gboolean)TRUE, NULL);
 
@@ -642,12 +580,8 @@ bool GSMediaViewImpl::onPlaybackInitialized(double time)
     }
 
     GstState state, pending;
-
-    //playbin->set_state(Gst::STATE_PAUSED);
     gst_element_set_state(GST_ELEMENT(playbin), GST_STATE_PAUSED);
-    
     gst_element_get_state(GST_ELEMENT(playbin), &state, &pending, GST_CLOCK_TIME_NONE); // wait
-    
     seek(time);
     gst_element_get_state(GST_ELEMENT(playbin), &state, &pending, GST_CLOCK_TIME_NONE); // wait for seek
     
@@ -675,12 +609,9 @@ void GSMediaViewImpl::onPlaybackStarted(double time)
 
 bool GSMediaViewImpl::onTimeChanged(double time)
 {
-    /*
-      if(TRACE_FUNCTIONS){
-      cout << "GSMediaViewImpl::onTimeChanged(" << time << ")" << endl;
-      }
-    */
-
+    if(TRACE_FUNCTIONS){
+        cout << "GSMediaViewImpl::onTimeChanged(" << time << ")" << endl;
+    }
     if(!self->isActive()){
         if(TRACE_FUNCTIONS){
             cout << "GSMediaViewImpl::onTimeChanged(): view is not active." << endl;
@@ -757,7 +688,6 @@ void GSMediaViewImpl::onZoomPropertyChanged()
     if(orgSizeCheck->isChecked()){
         g_object_set(G_OBJECT(videoSink), "force-aspect-ratio", (gboolean)FALSE, NULL);
         updateRenderRectangle();
-        //gst_video_overlay_expose(GST_VIDEO_OVERLAY(videoSink));
         self->update();
     } else {
         g_object_set(G_OBJECT(videoSink), "force-aspect-ratio", (gboolean)aspectRatioCheck->isChecked(), NULL);
