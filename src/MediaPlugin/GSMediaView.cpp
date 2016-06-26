@@ -67,6 +67,10 @@ public:
     void onWindowIdChanged();
     GstBusSyncReply onBusMessageSync(GstMessage* msg);
     void onBusMessageAsync(GstMessage* msg);
+    void putGstMessage(
+        GstMessage* message,
+        boost::function<void(GstMessage* message, GError** gerror, gchar** debug)> parse,
+        const char* prefix);
     GstPadProbeReturn onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info);
     void onSeekLater();
     void seek();
@@ -378,7 +382,8 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
 
     callLater(boost::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
 
-    return GST_BUS_PASS;
+    //return GST_BUS_PASS;
+    return GST_BUS_DROP;
 }
 
 
@@ -391,33 +396,20 @@ void GSMediaViewImpl::onBusMessageAsync(GstMessage* msg)
     switch(GST_MESSAGE_TYPE(msg)){
 
     case GST_MESSAGE_EOS:
-        if(TRACE_FUNCTIONS2){
-            cout << "GST_MESSAGE_EOS" << endl;
-        }
         isEOS = true;
         break;
 
     case GST_MESSAGE_ERROR:
-    {
-        if(TRACE_FUNCTIONS2){
-            cout << "GST_MESSAGE_ERROR" << endl;
-        }
-        gchar* debug;
-        GError* err;
-        gst_message_parse_error(msg, &err, &debug);
-        g_free (debug);
-        cout << "Media playback error: " << err->message << endl;
-        g_error_free (err);
+        putGstMessage(msg, gst_message_parse_error, "GStreamer error");
         stopPlayback();
         break;
-    }
 
     case GST_MESSAGE_WARNING:
-        //gst_message_parse_warning();
+        putGstMessage(msg, gst_message_parse_warning, "GStreamer warning");
         break;
 
     case GST_MESSAGE_INFO:
-        //gst_message_parse_info();
+        putGstMessage(msg, gst_message_parse_info, "GStreamer info");
         break;
 
     default:
@@ -430,6 +422,18 @@ void GSMediaViewImpl::onBusMessageAsync(GstMessage* msg)
     gst_message_unref(msg);
 }
 
+
+void GSMediaViewImpl::putGstMessage
+(GstMessage* message, boost::function<void(GstMessage* message, GError** gerror, gchar** debug)> parse, const char* prefix)
+{
+    gchar* debug;
+    GError* err;
+    parse(message, &err, &debug);
+    g_free(debug);
+    mv->putln(MessageView::HIGHLIGHT, format(_("%1%: %2%")) % prefix % err->message);
+    g_error_free(err);
+}
+    
 
 GstPadProbeReturn GSMediaViewImpl::onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info)
 {
