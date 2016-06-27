@@ -565,8 +565,8 @@ void SceneGraphPropertyViewImpl::setProperty(SgSpotLight* slight)
 
 void SceneGraphPropertyViewImpl::setProperty(SgCamera* camera)
 {
-    addProperty(_("near distance"), new PropertyItem(this,Double(camera->nearDistance(), 3)));
-    addProperty(_("far distance"), new PropertyItem(this,Double(camera->farDistance(), 3)));
+    addProperty(_("near distance"), new PropertyItem(this,Double(camera->nearClipDistance(), 3)));
+    addProperty(_("far distance"), new PropertyItem(this,Double(camera->farClipDistance(), 3)));
 }
 
 
