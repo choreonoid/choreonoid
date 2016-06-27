@@ -20,7 +20,7 @@ void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
     const int nc = x.cols();
     if(listing.size() != nr * nc){
         listing.throwException(
-            str(boost::format("A %2% x %3% matrix / vector value is expected") % nr % nc));
+            str(boost::format("A %1% x %2% matrix / vector value is expected") % nr % nc));
     }
     int index = 0;
     for(int i=0; i < nr; ++i){

@@ -46,7 +46,8 @@ public:
     ~ProjectManagerImpl();
         
     template <class TObject>
-    bool restoreObjectStates(Archive* projectArchive, Archive* states, const vector<TObject*>& objects);
+    bool restoreObjectStates(
+        Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
         
     void loadProject(const string& filename, bool isInvokingApplication);
 
@@ -162,16 +163,23 @@ ProjectManagerImpl::~ProjectManagerImpl()
 
 template <class TObject>
 bool ProjectManagerImpl::restoreObjectStates
-(Archive* projectArchive, Archive* states, const vector<TObject*>& objects)
+(Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix)
 {
     bool restored = false;
     for(size_t i=0; i < objects.size(); ++i){
         TObject* object = objects[i];
-        Archive* state = states->findSubArchive(object->objectName().toStdString());
+        const string name = object->objectName().toStdString();
+        Archive* state = states->findSubArchive(name);
         if(state->isValid()){
             state->inheritSharedInfoFrom(*projectArchive);
-            if(object->restoreState(*state)){
-                restored = true;
+            try {
+                if(object->restoreState(*state)){
+                    restored = true;
+                }
+            } catch(const ValueNode::Exception& ex){
+                messageView->putln(MessageView::WARNING,
+                                   format(_("The state of the \"%1%\" %2% was not completely restored.\n%3%"))
+                                   % name % nameSuffix % ex.message());
             }
         }
     }
@@ -265,7 +273,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                 // load the old format (version 1.4 or earlier)
                 Archive* viewStates = archive->findSubArchive("views");
                 if(viewStates->isValid()){
-                    if(restoreObjectStates(archive, viewStates, ViewManager::allViews())){
+                    if(restoreObjectStates(archive, viewStates, ViewManager::allViews(), "view")){
                         loaded = true;
                     }
                 }
@@ -275,7 +283,7 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             if(barStates->isValid()){
                 vector<ToolBar*> toolBars;
                 mainWindow->getAllToolBars(toolBars);
-                if(restoreObjectStates(archive, barStates, toolBars)){
+                if(restoreObjectStates(archive, barStates, toolBars, "bar")){
                     loaded = true;
                 }
             }

@@ -1,4 +1,5 @@
-Agxインストール
+
+*** Agxインストール ****
 
 ファイルをダウンロード
 
@@ -13,3 +14,7 @@ sudo dpkg -i agx-setup-2.13.2.2-x64-Ubuntu-double.deb でインストール
 cd /opt/Algoryx/AgX-2.13.2.2/data/luaDemos
 agxViewer robot.agxLua
 
+
+*** 注意  ***
+使用しているライブラリが、Bulletと競合しているようで、
+Bullet_PluginとAgx_Pluginは共存できない。どちらかを削除する必要がある。

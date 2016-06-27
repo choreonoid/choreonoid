@@ -44,9 +44,7 @@ public:
             MediaItem::initialize(this);
 
 #ifdef WIN32
-            if(DSMediaView::initialize(this)){
-                addView(new DSMediaView());
-            }
+            DSMediaView::initialize(this);
 #else
             GSMediaView::initializeClass(this);
 #endif

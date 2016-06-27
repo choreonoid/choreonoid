@@ -28,10 +28,14 @@ omniorb-nameserver \
 python-omniorb \
 omniidl-python \
 uuid-dev \
-libgstreamer0.10-dev \
-libgstreamer-plugins-base0.10-dev \
 libpulse-dev \
-libsndfile1-dev
+libsndfile1-dev \
+libgstreamer1.0-dev \
+libgstreamer-plugins-base1.0-dev
+
+#libgstreamer0.10-dev
+#libgstreamer-plugins-base0.10-dev
+#gstreamer0.10-plugins-good
 
 #qt5-default
 #libqt5x11extras5-dev

@@ -1,4 +1,7 @@
 # @author Shin'ichiro Nakaoka
+if(NOT ENABLE_GUI)
+  return()
+endif()
 
 option(BUILD_SPRING_MODEL_SAMPLE "Building a spring model sample" OFF)
 

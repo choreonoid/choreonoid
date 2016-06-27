@@ -3,10 +3,6 @@
 
 #set(CMAKE_BUILD_TYPE Debug)
 
-if(WIN32)
-  return()
-endif()
-
 option(BUILD_SCENARIO_PLUGIN "Building ScenarioPlugin" OFF)
 
 if(NOT BUILD_SCENARIO_PLUGIN)

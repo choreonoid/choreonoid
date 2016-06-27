@@ -6,10 +6,6 @@ if(APPLE)
   #return()
 endif()
 
-if(WIN32)
-  return()
-endif()
-
 option(BUILD_MEDIA_PLUGIN "Building MediaPlugin" OFF)
 
 if(NOT BUILD_MEDIA_PLUGIN)
@@ -27,7 +23,7 @@ if(UNIX)
     AudioItem.cpp
     )
 
-  pkg_check_modules(GSTREAMER REQUIRED gstreamer-interfaces-0.10)
+  pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-video-1.0 gstreamer-base-1.0)
   include_directories(${GSTREAMER_INCLUDE_DIRS})
 
   pkg_check_modules(SNDFILE REQUIRED sndfile)
@@ -73,7 +69,6 @@ target_link_libraries(${target} ${libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
 message(STATUS "libraries = ${libraries}")
-
 
 if(ENABLE_PYTHON)
   add_subdirectory(python)
