@@ -195,6 +195,8 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     }
 
     g_object_set(G_OBJECT(videoSink), "force-aspect-ratio", (gboolean)TRUE, NULL);
+    g_object_set(G_OBJECT(videoSink), "pixel-aspect-ratio", "1/1", NULL);
+    g_object_set(G_OBJECT(videoSink), "draw-borders", (gboolean)TRUE, NULL);
     g_object_set(G_OBJECT(playbin), "video-sink", videoSink, NULL);
     
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(playbin));
