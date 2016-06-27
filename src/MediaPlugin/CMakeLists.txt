@@ -6,10 +6,6 @@ if(APPLE)
   #return()
 endif()
 
-if(WIN32)
-  return()
-endif()
-
 option(BUILD_MEDIA_PLUGIN "Building MediaPlugin" OFF)
 
 if(NOT BUILD_MEDIA_PLUGIN)
