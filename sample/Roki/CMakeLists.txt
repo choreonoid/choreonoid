@@ -1,3 +1,6 @@
+if(NOT ENABLE_GUI)
+  return()
+endif()
 
 if(NOT BUILD_ROKI_PLUGIN)
   return()
