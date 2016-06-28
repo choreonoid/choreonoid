@@ -15,6 +15,8 @@
 #include <QEvent>
 #include <QResizeEvent>
 #include <QPainter>
+#include <QX11Info>
+#include <X11/Xlib.h>
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
 #include <boost/bind.hpp>
@@ -49,9 +51,11 @@ public:
     GstElement* playbin;
     GstElement* videoSink;        
     WId windowId;
+    Display* display;
+    GC gc;
     gint videoWidth;
     gint videoHeight;
-    QRegion bgRegion;
+    vector<XRectangle> rects;
     gint64 duration;
     gulong padProbeId;
     bool isPlaying;
@@ -160,6 +164,8 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
       playbin(0),
       videoSink(0),
       windowId(0),
+      display(0),
+      gc(0),
       seekLater(boost::bind(&GSMediaViewImpl::onSeekLater, this))
 {
     playbin = gst_element_factory_make("playbin", NULL);
@@ -196,7 +202,6 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
 
     g_object_set(G_OBJECT(videoSink), "force-aspect-ratio", (gboolean)TRUE, NULL);
     g_object_set(G_OBJECT(videoSink), "pixel-aspect-ratio", "1/1", NULL);
-    g_object_set(G_OBJECT(videoSink), "draw-borders", (gboolean)TRUE, NULL);
     g_object_set(G_OBJECT(playbin), "video-sink", videoSink, NULL);
     
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(playbin));
@@ -226,20 +231,12 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
 
 GSMediaView::~GSMediaView()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::~GSMediaView()" << endl;
-    }
-
     delete impl;
 }
 
 
 GSMediaViewImpl::~GSMediaViewImpl()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaViewImpl::~GSMediaViewImpl()" << endl;
-    }
-    
     if(playbin){
         stopPlayback();
 
@@ -253,15 +250,15 @@ GSMediaViewImpl::~GSMediaViewImpl()
     if(playbin){
         gst_object_unref(GST_OBJECT(playbin));
     }
+
+    if(display && gc){
+        XFreeGC(display, gc);
+    }
 }
 
 
 bool GSMediaView::event(QEvent* event)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::event()" << endl;
-    }
-    
     if(event->type() == QEvent::WinIdChange){
         impl->onWindowIdChanged();
     }
@@ -272,21 +269,19 @@ bool GSMediaView::event(QEvent* event)
 void GSMediaViewImpl::onWindowIdChanged()
 {
     windowId = self->winId();
-
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::onWindowIdChanged(" << windowId << ")" << endl;
+    if(display && gc){
+        XFreeGC(display, gc);
     }
-
+    display = QX11Info::display();
+    gc = XCreateGC(display, windowId, 0, 0);
+    unsigned long black = BlackPixel(display, QX11Info::appScreen());
+    XSetForeground(display, gc, black);
     gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(playbin), windowId);
 }
 
 
 void GSMediaView::resizeEvent(QResizeEvent* event)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::resizeEvent()" << endl;
-    }
-
     impl->updateRenderRectangle();
 
     if(!impl->isPlaying && impl->currentMediaItem){
@@ -297,12 +292,11 @@ void GSMediaView::resizeEvent(QResizeEvent* event)
 
 void GSMediaViewImpl::updateRenderRectangle()
 {
+    int x = 0;
+    int y = 0;
     int width = self->width();
     int height = self->height();
-    
-    bgRegion = QRect(0, 0, width, height);
-
-    int x, y;
+    QRegion background = QRect(0, 0, width, height);
     
     if(orgSizeCheck->isChecked()){
         if(videoWidth > 0 && videoHeight > 0){
@@ -317,40 +311,45 @@ void GSMediaViewImpl::updateRenderRectangle()
             y = 1;
             width -= 2;
             height -= 2;
-        } else {
-            x = 0;
-            y = 0;
         }
     }        
     gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(playbin), x, y, width, height);
-    bgRegion = bgRegion.subtracted(QRegion(x, y, width, height));
+
+    background = background.subtracted(QRegion(x, y, width, height));
+    QVector<QRect> qrects = background.rects();
+    rects.resize(qrects.size());
+    for(int i=0; i < qrects.size(); ++i){
+        XRectangle& r = rects[i];
+        QRect& qr = qrects[i];
+        r.x = qr.x();
+        r.y = qr.y();
+        r.width = qr.width();
+        r.height = qr.height();
+    }
+}
+
+
+QPaintEngine* GSMediaView::paintEngine () const
+{
+    return 0;
 }
 
 
 void GSMediaView::paintEvent(QPaintEvent* event)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::paintEvent()" << endl;
+    if(!impl->currentMediaItem){
+        XFillRectangle(impl->display, impl->windowId, impl->gc, 0, 0, width(), height());
+    } else if(impl->rects.size() > 0){
+        XFillRectangles(impl->display, impl->windowId, impl->gc, &impl->rects[0], impl->rects.size());
     }
-
-    QPainter painter(this);
-    if(impl->currentMediaItem){
-        painter.setClipRegion(impl->bgRegion);
-        painter.setClipping(true);
-    }
-    painter.fillRect(0, 0, width(), height(), Qt::black);
-    
     if(!impl->isPlaying && impl->currentMediaItem){
         impl->seekLater();
     }
-}    
+}
 
 
 void GSMediaView::onActivated()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::onActivated()" << endl;
-    }
     if(!impl->isPlaying && impl->currentMediaItem){
         impl->seekLater();
     }
@@ -359,22 +358,20 @@ void GSMediaView::onActivated()
 
 void GSMediaView::onDeactivated()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaView::onDeactivated()" << endl;
-    }
+
 }
 
 
 GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
 {
     if(TRACE_FUNCTIONS2){
-        cout << "GSMediaViewImpl::onBusMessageSync(): ";
-        cout << "message=" << GST_MESSAGE_TYPE_NAME(message) << endl;
+        cout << "GSMediaViewImpl::onBusMessageSync(" << GST_MESSAGE_TYPE_NAME(message) << ")" << endl;
     }
 
     switch(GST_MESSAGE_TYPE(message)){
 
     case GST_MESSAGE_ASYNC_DONE:
+        //cout << "GST_MESSAGE_ASYNC_DONE:" << endl;
         isSeeking = false;
         break;
 
@@ -384,15 +381,15 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
 
     callLater(boost::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
 
-    //return GST_BUS_PASS;
-    return GST_BUS_DROP;
+    return GST_BUS_PASS;
+    //return GST_BUS_DROP;
 }
 
 
 void GSMediaViewImpl::onBusMessageAsync(GstMessage* msg)
 {
     if(TRACE_FUNCTIONS2){
-        cout << "GSMediaView::onBusMessageAsync()" << endl;
+        cout << "GSMediaView::onBusMessageAsync(" << GST_MESSAGE_TYPE_NAME(msg) << ")" << endl;
     }
     
     switch(GST_MESSAGE_TYPE(msg)){
@@ -466,6 +463,7 @@ void GSMediaViewImpl::onSeekLater()
     if(TRACE_FUNCTIONS){
         cout << "GSMediaViewImpl::onSeekLater()" << endl;
     }
+
     if(!isSeeking){
         isSeeking = true;
         gst_element_seek_simple(playbin, GST_FORMAT_TIME,
@@ -480,6 +478,7 @@ void GSMediaViewImpl::seek()
     if(TRACE_FUNCTIONS){
         cout << "GSMediaViewImpl::seek()" << endl;
     }
+
     if(isSeeking){
         seekLater();
     } else {

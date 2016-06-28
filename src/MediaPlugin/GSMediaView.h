@@ -25,6 +25,7 @@ public:
 protected:
     virtual bool event(QEvent* event);
     virtual void resizeEvent(QResizeEvent* event);
+    virtual QPaintEngine* paintEngine() const;
     virtual void paintEvent(QPaintEvent* event);
     virtual void onActivated();
     virtual void onDeactivated();
