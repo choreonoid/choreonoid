@@ -11,8 +11,8 @@
 #include <cnoid/Archive>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
-#include <cnoid/LazyCaller>
 #include <cnoid/Timer>
+#include <cnoid/LazyCaller>
 #include <QEvent>
 #include <QResizeEvent>
 #include <QPainter>
@@ -62,10 +62,10 @@ public:
     bool isPlaying;
     bool isEOS;
     bool isSeeking;
+    bool hasPendingSeek;
     bool isWaitingForPositiveSeekPos;
     gint64 currentSeekPos;
-    LazyCaller tryToPerformPendingSeekLater;
-    Timer timerToClearSeekFlag;
+    Timer pendingSeekTimer;
 
     GSMediaViewImpl(GSMediaView* self);
     ~GSMediaViewImpl();
@@ -80,8 +80,7 @@ public:
     GstPadProbeReturn onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info);
     void seek(double time);
     void seek();
-    void tryToPerformPendingSeek();
-    void clearSeekFlag();
+    void checkPendingSeek();
     void onItemCheckToggled(Item* item, bool isChecked);
     void activateCurrentMediaItem();
     bool onPlaybackInitialized(double time);
@@ -168,8 +167,7 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
       videoSink(0),
       windowId(0),
       display(0),
-      gc(0),
-      tryToPerformPendingSeekLater(boost::bind(&GSMediaViewImpl::tryToPerformPendingSeek, this))
+      gc(0)
 {
     playbin = gst_element_factory_make("playbin", NULL);
 
@@ -217,12 +215,13 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     padProbeId = 0;
     isPlaying = false;
     isSeeking = false;
+    hasPendingSeek = false;
     currentSeekPos = 0;
     
-    timerToClearSeekFlag.setSingleShot(true);
-    timerToClearSeekFlag.setInterval(100);
-    timerToClearSeekFlag.sigTimeout().connect(
-        boost::bind(&GSMediaViewImpl::clearSeekFlag, this));
+    pendingSeekTimer.setSingleShot(true);
+    pendingSeekTimer.setInterval(200);
+    pendingSeekTimer.sigTimeout().connect(
+        boost::bind(&GSMediaViewImpl::checkPendingSeek, this));
 
     connections.add(
         aspectRatioCheck->sigToggled().connect(
@@ -293,7 +292,7 @@ void GSMediaView::resizeEvent(QResizeEvent* event)
     impl->updateRenderRectangle();
 
     if(!impl->isPlaying && impl->currentMediaItem){
-        impl->tryToPerformPendingSeekLater();
+        impl->seek();
     }
 }
 
@@ -351,7 +350,7 @@ void GSMediaView::paintEvent(QPaintEvent* event)
         XFillRectangles(impl->display, impl->windowId, impl->gc, &impl->rects[0], impl->rects.size());
     }
     if(!impl->isPlaying && impl->currentMediaItem){
-        impl->tryToPerformPendingSeekLater();
+        impl->seek();
     }
 }
 
@@ -359,7 +358,7 @@ void GSMediaView::paintEvent(QPaintEvent* event)
 void GSMediaView::onActivated()
 {
     if(!impl->isPlaying && impl->currentMediaItem){
-        impl->tryToPerformPendingSeekLater();
+        impl->seek();
     }
 }
 
@@ -392,8 +391,7 @@ void GSMediaViewImpl::onBusMessageAsync(GstMessage* msg)
     switch(GST_MESSAGE_TYPE(msg)){
 
     case GST_MESSAGE_ASYNC_DONE:
-        //cout << "GST_MESSAGE_ASYNC_DONE:" << endl;
-        isSeeking = false;
+        checkPendingSeek();
         break;
         
     case GST_MESSAGE_EOS:
@@ -475,50 +473,36 @@ void GSMediaViewImpl::seek()
     }
 
     if(isSeeking){
-        tryToPerformPendingSeekLater();
-    } else {
-        isSeeking = true;
-        gst_element_seek_simple(
-            playbin, GST_FORMAT_TIME,
-            (GstSeekFlags)(GST_SEEK_FLAG_ACCURATE|GST_SEEK_FLAG_FLUSH),
-            std::max((gint64)0, currentSeekPos));
-    }
-}
-
-
-void GSMediaViewImpl::tryToPerformPendingSeek()
-{
-    if(TRACE_FUNCTIONS){
-        cout << "GSMediaViewImpl::onSeekLater()" << endl;
-    }
-    
-    if(isSeeking){
-        if(!timerToClearSeekFlag.isActive()){
+        hasPendingSeek = true;
+        if(!pendingSeekTimer.isActive()){
             /**
                This is needed to avoid the dead lock because sometimes the bus does not
                returns the ASYNC_DONE message after calling the seek function.
             */
-            timerToClearSeekFlag.start();
+            pendingSeekTimer.start();
         }
-        tryToPerformPendingSeekLater();
-
     } else {
         isSeeking = true;
+        hasPendingSeek = false;
         gst_element_seek_simple(
             playbin, GST_FORMAT_TIME,
             (GstSeekFlags)(GST_SEEK_FLAG_ACCURATE|GST_SEEK_FLAG_FLUSH),
             std::max((gint64)0, currentSeekPos));
-        timerToClearSeekFlag.stop();
     }
 }
 
 
-void GSMediaViewImpl::clearSeekFlag()
+void GSMediaViewImpl::checkPendingSeek()
 {
-    //cout << "GSMediaViewImpl::clearSeekFlag()" << endl;
     isSeeking = false;
+    
+    if(hasPendingSeek){
+        hasPendingSeek = false;
+        pendingSeekTimer.stop();
+        seek();
+    }
 }
-
+        
 
 void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
 {
