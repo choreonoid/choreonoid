@@ -478,6 +478,8 @@ void GSMediaViewImpl::seek()
             /**
                This is needed to avoid the dead lock because sometimes the bus does not
                returns the ASYNC_DONE message after calling the seek function.
+               This bug is reported in the following page:
+               https://bugzilla.gnome.org/show_bug.cgi?id=740121
             */
             pendingSeekTimer.start();
         }
