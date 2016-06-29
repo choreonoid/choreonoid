@@ -202,6 +202,7 @@ std::string Link::jointTypeString() const
     case SLIDE_JOINT:       return "prismatic";
     case FREE_JOINT:        return "free";
     case FIXED_JOINT:       return "fixed";
+    case PSEUDO_CONTINUOUS_TRACK: return "pseudo continuous track";
     case CRAWLER_JOINT:     return "crawler";
     case AGX_CRAWLER_JOINT: return "AgX crawler";
     default: return "unknown";

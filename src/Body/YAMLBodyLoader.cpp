@@ -544,9 +544,10 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             }
         }
     }
-    
-    string jointType;
-    if(extract(info, "jointType", jointType)){
+
+    ValueNodePtr jointTypeNode = info->find("jointType");
+    if(jointTypeNode->isValid()){
+        string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
         } else if(jointType == "slide"){
@@ -555,10 +556,12 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             link->setJointType(Link::FREE_JOINT);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FIXED_JOINT);
-        } else if(jointType == "crawler"){
-            link->setJointType(Link::CRAWLER_JOINT);
+        } else if(jointType == "pseudoContinuousTrack"){
+            link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
         } else  if(jointType == "agx_crawler"){
             link->setJointType(Link::AGX_CRAWLER_JOINT);
+        } else {
+            jointTypeNode->throwException("Illegal jointType value");
         }
     }
 

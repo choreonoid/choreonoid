@@ -34,6 +34,7 @@ if(UNIX)
     CnoidUtil CnoidBase 
     ${GSTREAMER_LIBRARIES}
     ${SNDFILE_LIBRARIES}
+    X11
     )
 
   if(NOT APPLE)
