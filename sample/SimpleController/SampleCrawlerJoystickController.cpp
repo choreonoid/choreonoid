@@ -33,7 +33,8 @@ public:
             return false;
         }
 
-        io->setJointOutput(JOINT_TORQUE);
+        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
+        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
 
         for(int i=0; i < 2; i++){
             qRef[i] = 0;
@@ -61,8 +62,8 @@ public:
             }
         }
         // set the velocity of each crawlers
-        crawlerL->u() = -2.0 * pos[1] + pos[0];
-        crawlerR->u() = -2.0 * pos[1] - pos[0];
+        crawlerL->dq() = -2.0 * pos[1] + pos[0];
+        crawlerR->dq() = -2.0 * pos[1] - pos[0];
 
         return true;
     }

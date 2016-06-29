@@ -26,12 +26,12 @@ public:
 
 protected:
     // DataInPort declaration
-    RTC::TimedFloatSeq m_axes;
-    RTC::InPort<RTC::TimedFloatSeq> m_axesIn;
+    RTC::TimedFloatSeq axes;
+    RTC::InPort<RTC::TimedFloatSeq> axesIn;
   
     // DataOutPort declaration
-    RTC::TimedDoubleSeq m_torque;
-    RTC::OutPort<RTC::TimedDoubleSeq> m_torqueOut;
+    RTC::TimedDoubleSeq velocities;
+    RTC::OutPort<RTC::TimedDoubleSeq> velocitiesOut;
 };
 
 extern "C"

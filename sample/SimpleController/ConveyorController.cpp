@@ -8,19 +8,22 @@
 using namespace cnoid;
 
 class ConveyorController : public cnoid::SimpleController
-{ 
+{
+    Link* conveyorJoint;
+    
 public:
-    virtual bool initialize()
-        {
-            return true;
-        }
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        conveyorJoint = io->body()->joint(0);
+        io->setJointOutput(JOINT_VELOCITY);
+        return true;
+    }
 
     virtual bool control()
-        {
-            BodyPtr io = ioBody();
-            io->joint(0)->u() = -1.0;
-            return true;
-        }
+    {
+        conveyorJoint->dq() = -1.0;
+        return true;
+    }
 };
 
 

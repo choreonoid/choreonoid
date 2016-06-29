@@ -29,16 +29,18 @@ const char* spec[] =
     "lang_type",         "compile",
     ""
 };
+
 }
 
 
 TankJoystickControllerRTC::TankJoystickControllerRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager),
-      m_angleIn("q", m_angle),
-      m_axesIn("axes", m_axes),
-      m_buttonsIn("buttons", m_buttons),
-      m_torqueOut("u", m_torque),
-      m_lightOut("light", m_light)
+      anglesIn("q", angles),
+      axesIn("axes", axes),
+      buttonsIn("buttons", buttons),
+      velocitiesOut("dq", velocities),
+      torquesOut("u", torques),
+      lightSwitchOut("lightSwitch", lightSwitch)
 {
 
 }
@@ -53,13 +55,14 @@ TankJoystickControllerRTC::~TankJoystickControllerRTC()
 RTC::ReturnCode_t TankJoystickControllerRTC::onInitialize()
 {
     // Set InPort buffers
-    addInPort("q", m_angleIn);
-    addInPort("axes", m_axesIn);
-    addInPort("buttons", m_buttonsIn);
+    addInPort("q", anglesIn);
+    addInPort("axes", axesIn);
+    addInPort("buttons", buttonsIn);
     
     // Set OutPort buffer
-    addOutPort("u", m_torqueOut);
-    addOutPort("light", m_lightOut);
+    addOutPort("dq", velocitiesOut);
+    addOutPort("u", torquesOut);
+    addOutPort("lightSwitch", lightSwitchOut);
 
     return RTC::RTC_OK;
 }
@@ -67,22 +70,26 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onInitialize()
 
 RTC::ReturnCode_t TankJoystickControllerRTC::onActivated(RTC::UniqueId ec_id)
 {
-    if(m_angleIn.isNew()){
-        m_angleIn.read();
+    // initialize the cannon joints
+    if(anglesIn.isNew()){
+        anglesIn.read();
     }
-    if(m_angle.data.length() >= 4){
+    if(angles.data.length() >= 2){
+        torques.data.length(2);
         for(int i=0; i < 2; ++i){
-            double q = m_angle.data[cannonJointId + i];
+            double q = angles.data[i];
             qref[i] = q;
             qprev[i] = q;
+            torques.data[i] = 0.0;
         }
     }
-    
-    m_torque.data.length(numTankJoints);
-    for(int i=0; i < numTankJoints; ++i){
-        m_torque.data[i] = 0.0;
+
+    // initialize the crawler joints
+    velocities.data.length(2);
+    for(int i=0; i < 2; ++i){
+        velocities.data[i] = 0.0;
     }
-    m_light.data.length(1);
+    lightSwitch.data.length(1);
     prevLightButtonState = false;
 
     return RTC::RTC_OK;
@@ -97,54 +104,53 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onDeactivated(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 {
-    if(m_axesIn.isNew()){
-        m_axesIn.read();
-    }
-    if(m_angleIn.isNew()){
-        m_angleIn.read();
+    if(axesIn.isNew()){
+        axesIn.read();
     }
 
-    if(m_axes.data.length() >= 2){
+    if(axes.data.length() >= 2){
         for(int i=0; i < 2; ++i){
-            if(fabs(m_axes.data[i]) < 0.2){
-                m_axes.data[i] = 0.0;
+            if(fabs(axes.data[i]) < 0.2){
+                axes.data[i] = 0.0;
             }
         }
-        m_torque.data[0] = -2.0 * m_axes.data[1] + m_axes.data[0];
-        m_torque.data[1] = -2.0 * m_axes.data[1] - m_axes.data[0];
+        velocities.data[0] = -2.0 * axes.data[1] + axes.data[0];
+        velocities.data[1] = -2.0 * axes.data[1] - axes.data[0];
     }
+    velocitiesOut.write();
 
-    if(m_angle.data.length() >= 4 && m_axes.data.length() >= 5){
+    if(anglesIn.isNew()){
+        anglesIn.read();
+    }
+    if(angles.data.length() >= 2 && axes.data.length() >= 5){
 
         static const double P = 200.0;
         static const double D = 50.0;
 
         for(int i=0; i < 2; ++i){
-            int jointId = cannonJointId + i;
-            double q = m_angle.data[jointId];
+            double q = angles.data[i];
             double dq = (q - qprev[i]) / timeStep;
             double dqref = 0.0;
-            double command = cannonAxisRatio[i] * m_axes.data[cannonAxis[i]];
+            double command = cannonAxisRatio[i] * axes.data[cannonAxis[i]];
             if(fabs(command) > 0.2){
                 double deltaq = command * 0.002;
                 qref[i] += deltaq;
                 dqref = deltaq / timeStep;
             }
-            m_torque.data[jointId] = P * (qref[i] - q) + D * (dqref - dq);
+            torques.data[i] = P * (qref[i] - q) + D * (dqref - dq);
             qprev[i] = q;
         }
     }
-    
-    m_torqueOut.write();
+    torquesOut.write();
 
-    if(m_buttonsIn.isNew()){
-        m_buttonsIn.read();
-        bool lightButtonState = m_buttons.data[0];
+    if(buttonsIn.isNew()){
+        buttonsIn.read();
+        bool lightButtonState = buttons.data[0];
         if(lightButtonState){
             if(!prevLightButtonState){
                 isLightOn = !isLightOn;
-                m_light.data[0] = isLightOn;
-                m_lightOut.write();
+                lightSwitch.data[0] = isLightOn;
+                lightSwitchOut.write();
             }
         }
         prevLightButtonState = lightButtonState;

@@ -527,13 +527,7 @@ void BodyLinkViewImpl::updateLink()
     } else {
         qBox.hide();
         dqBox.hide();
-        if(currentLink->isFreeJoint()){
-            jointTypeLabel.setText(_("Free"));
-        } else if(currentLink->isFixedJoint()){
-            jointTypeLabel.setText(_("Fixed"));
-        } else if(currentLink->jointType() == Link::CRAWLER_JOINT){
-            jointTypeLabel.setText(_("Crawler"));
-        }
+        jointTypeLabel.setText(currentLink->jointTypeString().c_str());
     }
 }
 
