@@ -142,8 +142,8 @@ private:
     void addModuleInfo(const std::string& value);
     void addTimeRateInfo(const std::string& value);
     
-    std::vector<std::string> extractParameters(const std::string& str, const char delimiter=':');
-    std::string expandEnvironmentVariables(std::string str);
+    void extractParameters(const std::string& str, std::vector<std::string>& result, const char delimiter = ':');
+    std::string expandEnvironmentVariables(const std::string& str);
 };
 
 

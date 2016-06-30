@@ -208,7 +208,8 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
 {
     vector<string> ports = vmap[optionLabel].as<vector<string> >();
     for(size_t i=0; i < ports.size(); ++i){
-        vector<string> parameters = extractParameters(ports[i]);
+        vector<string> parameters;
+        extractParameters(ports[i], parameters);
         int n = parameters.size();
         if(n < 2 || n > 4){
             throw invalid_argument(string("invalid in port setting"));
@@ -223,7 +224,8 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
                 if(j==2)    // 3番目までにプロパティ名がないのでエラー　//
                     throw invalid_argument(string("invalid data type"));
                 string st=parameters[j];
-                vector<string> owners = extractParameters(st, ',');
+                vector<string> owners;
+                extractParameters(st, owners, ',');
                 for(size_t i=0; i<owners.size(); i++){
                     bool digit=true;
                     for(string::iterator itr=owners[i].begin(); itr!=owners[i].end(); itr++){
@@ -265,7 +267,8 @@ void BridgeConf::setPortInfos(const char* optionLabel, PortInfoMap& portInfos)
 
 void BridgeConf::addPortConnection(const std::string& value)
 {
-    vector<string> parameters = extractParameters(value);
+    vector<string> parameters;
+    extractParameters(value, parameters);
     int n = parameters.size();
     if(n < 2 || n > 4){
         throw std::invalid_argument(string("Invalied port connection"));
@@ -306,7 +309,8 @@ void BridgeConf::setPreLoadModuleInfo()
 
 void BridgeConf::addModuleInfo(const std::string& value)
 {
-    vector<string> parameters = extractParameters(value);
+    vector<string> parameters;
+    extractParameters(value, parameters);
 
     if(parameters.size() == 0 || parameters.size() > 2){
         throw std::invalid_argument(std::string("invalid module set"));
@@ -327,7 +331,8 @@ void BridgeConf::addModuleInfo(const std::string& value)
 
 void BridgeConf::addTimeRateInfo(const std::string& value) 
 {
-    vector<string> parameters = extractParameters(value);
+    vector<string> parameters;
+    extractParameters(value, parameters);
     if (parameters.size() == 0 || parameters.size() > 2) {
         throw std::invalid_argument(std::string("invalid time rate set"));
     } else {
@@ -368,9 +373,8 @@ const char* BridgeConf::getVirtualRobotRtcTypeName()
     return virtualRobotRtcTypeName.c_str();
 }
 
-std::vector<std::string> BridgeConf::extractParameters(const std::string& str, const char delimiter )
+void BridgeConf::extractParameters(const std::string& str, std::vector<std::string>& result, const char delimiter)
 {
-    vector<string> result;
     string::size_type sepPos = 0;
     string::size_type nowPos = 0;
   
@@ -385,12 +389,10 @@ std::vector<std::string> BridgeConf::extractParameters(const std::string& str, c
       
         nowPos = sepPos+1;
     }
-  
-    return result;
 }
 
 
-std::string BridgeConf::expandEnvironmentVariables(std::string str)
+std::string BridgeConf::expandEnvironmentVariables(const std::string& str)
 {
     regex variablePattern("\\$([A-z][A-z_0-9]*)");
     
@@ -398,8 +400,9 @@ std::string BridgeConf::expandEnvironmentVariables(std::string str)
     match_flag_type flags = match_default; 
     
     string::const_iterator start, end;
-    start = str.begin();
-    end = str.end();
+    std::string str_(str);
+    start = str_.begin();
+    end = str_.end();
     int pos = 0;
 
     vector< pair< int, int > > results;
@@ -414,7 +417,6 @@ std::string BridgeConf::expandEnvironmentVariables(std::string str)
         flags |= boost::match_prev_avail; 
         flags |= boost::match_not_bob; 
     }
-
     // replace the variables in reverse order
     while (!results.empty()) {
         int begin = results.back().first;
@@ -424,10 +426,10 @@ std::string BridgeConf::expandEnvironmentVariables(std::string str)
         char* envValue = getenv(envName.c_str());
 
         if(envValue){
-            str.replace(begin-1, length+1, string(envValue));
+            str_.replace(begin-1, length+1, string(envValue));
         }
         results.pop_back();
     }
 
-    return str;
+    return str_;
 }
