@@ -27,7 +27,6 @@ public:
     void setMaxFrameRate(double rate);
     void setMaxLatency(double latency);
     void setVisionDataRecordingEnabled(bool on);
-    void setThreadEnabled(bool on);
     void setDedicatedSensorThreadsEnabled(bool on);
     void setBestEffortMode(bool on);
     void setRangeSensorPrecisionRatio(double r);

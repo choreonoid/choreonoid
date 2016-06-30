@@ -33,7 +33,7 @@ links:
     name: CRAWLER_TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.15, 0 ]
-    jointType: crawler
+    jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
     jointId: 0
     elements:
@@ -69,7 +69,7 @@ links:
     name: CRAWLER_TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.15, 0 ]
-    jointType: crawler
+    jointType: pseudoContinuousTrack
     jointAxis: [ 0, 1, 0 ]
     jointId: 1
     elements:

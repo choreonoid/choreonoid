@@ -21,18 +21,18 @@ items:
           data: 
             modelFile: "${SHARE}/model/misc/tank.wrl"
             currentBaseLink: ""
-            rootPosition: [ -0.8, 2.4, 0.1 ]
+            rootPosition: [ -0.8, 2.4, 0.099893 ]
             rootAttitude: [ 
-              0, 1, 0, 
-              -1, 0, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
+              -0, 1, -4e-06, 
+              -1, -0, 0, 
+              0, 4e-06, 1 ]
+            jointPositions: [ 0.0,  0.0,  0.0,  0.0 ]
             initialRootPosition: [ -0.8, 2.4, 0.1 ]
             initialRootAttitude: [ 
               2.22044605e-16, 1, 0, 
               -1, 2.22044605e-16, -0, 
               -0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [ 0.0, 0.0, 0.0 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -40,26 +40,41 @@ items:
           children: 
             - 
               id: 3
-              name: "JoystickController"
-              plugin: SimpleController
-              class: SimpleControllerItem
+              name: "BodyRTCItem"
+              plugin: OpenRTM
+              class: BodyRTCItem
               data: 
                 isImmediateMode: true
-                controller: "TankJoystickController"
-                reloading: true
-                inputLinkPositions: false
+                controllerOptions: ""
+                moduleName: "TankJoystickControllerRTC"
+                confFileName: "TankVisionSensors.conf"
+                configurationMode: "Use Configuration File"
+                AutoConnect: false
+                InstanceName: "Tank"
+                bodyPeriodicRate: 0
+                RelativePathBase: "RTC directory"
             - 
               id: 4
-              name: "LightController"
-              plugin: SimpleController
-              class: SimpleControllerItem
+              name: "RangeCameraPoints"
+              plugin: Base
+              class: PointSetItem
               data: 
-                isImmediateMode: true
-                controller: "TankLightController"
-                reloading: true
-                inputLinkPositions: false
+                renderingMode: Point
+                pointSize: 0
+                voxelSize: 0.01
+                isEditable: false
+            - 
+              id: 5
+              name: "RangeSensorPoints"
+              plugin: Base
+              class: PointSetItem
+              data: 
+                renderingMode: Point
+                pointSize: 0
+                voxelSize: 0.01
+                isEditable: false
         - 
-          id: 5
+          id: 6
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -80,24 +95,34 @@ items:
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            isEditable: false
         - 
-          id: 6
+          id: 7
+          name: "JoystickRTC"
+          plugin: OpenRTM
+          class: RTCItem
+          data: 
+            moduleName: "JoystickRTC"
+            periodicType: PeriodicExecutionContext
+            periodicRate: 500
+            RelativePathBase: "RTC directory"
+        - 
+          id: 8
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recording: off
-            timeRangeMode: Unlimited
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Active control period"
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            integrationMode: Runge Kutta
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 0.5
             slipFriction: 0.5
@@ -109,28 +134,53 @@ items:
             contactCorrectionVelocityRatio: 30
             kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
+          children: 
+            - 
+              id: 9
+              name: "GLVisionSimulator"
+              plugin: Body
+              class: GLVisionSimulatorItem
+              data: 
+                enabled: true
+                maxFrameRate: 1000
+                maxLatency: 1
+                recordVisionData: false
+                useThreadsForSensors: true
+                bestEffort: false
+                allSceneObjects: false
+                rangeSensorPrecisionRatio: 2
+                depthError: 0
+                enableHeadLight: true
+                enableAdditionalLights: true
 views: 
   - 
     id: 0
+    name: "CameraImage"
     plugin: Base
-    class: ItemPropertyView
+    class: ImageView
     mounted: true
   - 
     id: 1
     plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 2
+    plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 6 ]
-      checked: [ 1, 2, 3, 4, 5 ]
-      expanded: [ 1, 2 ]
+      selected: [ 8 ]
+      checked: [ 1, 2, 4, 5, 6 ]
+      expanded: [ 1, 2, 3, 8 ]
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
@@ -171,73 +221,15 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -2.86824, 6.25331, 2.49127 ]
-          direction: [ 0.412288148, -0.847325304, -0.33475112 ]
-          up: [ 0.146464125, -0.301009257, 0.942306578 ]
+          eye: [ -2.99869, 5.22338, 2.18657 ]
+          direction: [ 0.451674882, -0.80210979, -0.390652898 ]
+          up: [ 0.191679057, -0.340395102, 0.920538057 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 10000
       backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
-    id: 4
-    name: "Scene 2"
-    plugin: Base
-    class: SceneView
-    mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 100
-          eye: [ 4, 2, 1.5 ]
-          direction: [ -0.888888889, -0.444444444, -0.111111111 ]
-          up: [ -0.099380799, -0.0496903995, 0.99380799 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-        - 
-          camera: [ Tank, Camera ]
-          isCurrent: true
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -268,7 +260,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 4
+      currentBodyItem: 2
   - 
     id: 8
     plugin: Body
@@ -276,7 +268,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 4
+      currentBodyItem: 2
       bodyItems: 
         - 
           id: 2
@@ -289,7 +281,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 5
+    maxTime: 60
     frameRate: 1000
     playbackFrameRate: 100
     idleLoopDrivenMode: false
@@ -297,22 +289,8 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
-Body: 
-  "BodyMotionEngine": 
-    updateJointVelocities: false
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-      - 
-        bodyItem: 4
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-    staticModelEditing: true
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -320,48 +298,48 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 303, 1291 ]
+      sizes: [ 259, 1101 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 381, 381 ]
+          sizes: [ 379, 378 ]
           children: 
             - 
               type: pane
-              views: [ 1 ]
-              current: 1
+              views: [ 2 ]
+              current: 2
             - 
               type: pane
-              views: [ 0, 8 ]
-              current: 0
+              views: [ 1, 8 ]
+              current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 545, 217 ]
+          sizes: [ 541, 216 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 602, 683 ]
+              sizes: [ 513, 582 ]
               children: 
                 - 
                   type: pane
-                  views: [ 6, 7, 4 ]
-                  current: 4
+                  views: [ 6, 7, 0 ]
+                  current: 0
                 - 
                   type: pane
-                  views: [ 3 ]
-                  current: 3
+                  views: [ 4 ]
+                  current: 4
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 774, 511 ]
+              sizes: [ 548, 547 ]
               children: 
                 - 
                   type: pane
-                  views: [ 2, 9 ]
-                  current: 2
+                  views: [ 3, 9 ]
+                  current: 3
                 - 
                   type: pane
                   views: [ 5 ]
@@ -370,7 +348,6 @@ layoutOfToolBars:
   rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "SimulationBar", x: 95, priority: 1 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
+      - { name: "SimulationBar", x: 48, priority: 1 }
+      - { name: "TimeBar", x: 251, priority: 2 }
+      - { name: "SceneBar", x: 1046, priority: 3 }

@@ -915,7 +915,10 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
             v[k].setZero();
         } else {
             v[k] = link->vo() + link->w().cross(contact.point);
-            if (link->jointType() == Link::CRAWLER_JOINT){
+            if (link->jointType() < Link::PSEUDO_CONTINUOUS_TRACK){
+                continue;
+            }
+            if(link->jointType() <= Link::CRAWLER_JOINT){
                 // tentative
                 // invalid depths should be fixed
                 if (contact.depth > contactCorrectionDepth * 2.0){
@@ -926,7 +929,11 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
                 Vector3 dir = axis.cross(n);
                 if (k) dir *= -1.0;
                 dir.normalize();
-                v[k] += link->u() * dir;
+                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+                    v[k] += link->dq() * dir;
+                } else {
+                    v[k] += link->u() * dir; // CRAWLER_JOINT
+                }
             }
         }
     }

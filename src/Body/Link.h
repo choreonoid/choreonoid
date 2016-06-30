@@ -124,9 +124,12 @@ public:
         */
         /// fixed joint(0 dof)
         FIXED_JOINT = 3,
-        /// special joint for pseudo crawler simulation
-        CRAWLER_JOINT = 4,
-        AGX_CRAWLER_JOINT = 5
+        /// special joint for simplified simulation of a continuous track
+        PSEUDO_CONTINUOUS_TRACK = 4,
+        // deprecated
+        CRAWLER_JOINT = 5,
+        
+        AGX_CRAWLER_JOINT = 6
     };
 
     int jointId() const { return jointId_; }

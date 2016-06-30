@@ -155,7 +155,7 @@ DEF Crawler Humanoid {
 
        DEF CRAWLER_TRACK_L Joint {
 	 translation 0.0 0.15 0
-	 jointType "crawler"           
+	 jointType "pseudoContinuousTrack"           
 	 jointAxis 0 1 0
 	 jointId 0
 	 children [
@@ -197,7 +197,7 @@ DEF Crawler Humanoid {
 
        DEF CRAWLER_TRACK_R Joint {
 	 translation 0.0 -0.15 0
-	 jointType "crawler"
+	 jointType "pseudoContinuousTrack"
 	 jointAxis 0 1 0
 	 jointId 1
 
