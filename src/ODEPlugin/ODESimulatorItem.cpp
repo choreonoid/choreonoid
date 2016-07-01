@@ -324,7 +324,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     	jointID = dJointCreateFixed(worldID, 0);
         dJointAttach(jointID, bodyID, parentBodyID);
     	dJointSetFixed(jointID);
-    	if(link->jointType() == Link::CRAWLER_JOINT){
+    	if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
     	    simImpl->crawlerLinks.insert(make_pair(bodyID, link));
     	}
 #else
@@ -332,7 +332,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
             jointID = dJointCreateFixed(worldID, 0);
             dJointAttach(jointID, bodyID, parentBodyID);
             dJointSetFixed(jointID);
-            if(link->jointType() == Link::CRAWLER_JOINT){
+            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
                 simImpl->crawlerLinks.insert(make_pair(bodyID, link));
             }
         } else {
@@ -1208,7 +1208,10 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                         //Vector3 pos(dpos[0], dpos[1], dpos[2]);
                         //Vector3 v = crawlerlink->v + crawlerlink->w.cross(pos-crawlerlink->p);
                         //surface.motion1 = dir.dot(v) + crawlerlink->u;
-                        surface.motion1 = crawlerlink->u();
+                        if(crawlerlink->jointType()==Link::PSEUDO_CONTINUOUS_TRACK)
+                            surface.motion1 = crawlerlink->dq();
+                        else
+                            surface.motion1 = crawlerlink->u();
                         surface.mu = impl->friction;
                         surface.mu2 = 0.5;
                     }
