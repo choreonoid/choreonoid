@@ -10,7 +10,17 @@
 #include "AppConfig.h"
 #include "TimeBar.h"
 #include <QResizeEvent>
+#include <QWindowStateChangeEvent>
 #include <boost/bind.hpp>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QGuiApplication>
+#include <QScreen>
+#else
+#include <QApplication>
+#include <QDesktopWidget>
+#endif
+
 #include <iostream>
 #include "gettext.h"
 
@@ -23,6 +33,22 @@ const bool TRACE_FUNCTIONS = false;
 
 MainWindow* mainWindow = 0;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+QSize getAvailableScreenSize() {
+    return QGuiApplication::primaryScreen()->availableSize();
+}
+QSize getScreenSize() {
+    return QGuiApplication::primaryScreen()->size();
+}
+#else
+QSize getAvailableScreenSize() {
+    return QApplication::desktop()->availableGeometry().size();
+}
+QSize getScreenSize() {
+    return QApplication::desktop()->screenGeometry().size();
+}
+#endif
+    
 }
 
 namespace cnoid {
@@ -55,7 +81,10 @@ public:
     bool isMaximized;
     bool isMaximizedJustBeforeFullScreen;
     bool isFullScreen;
-    QSize normalStateSize;
+    bool isGoingToMaximized;
+    QSize normalSize;
+    QSize oldNormalSize;
+    int lastWindowState;
     QString currentLayoutFolder;
     Action* fullScreenCheck;
 
@@ -104,6 +133,8 @@ MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionM
 {
     isBeforeDoingInitialLayout = true;
     isMaximized = false;
+    isFullScreen = false;
+    isGoingToMaximized = false;
     
     config = AppConfig::archive()->openMapping("MainWindow");
 
@@ -133,8 +164,52 @@ MainWindowImpl::MainWindowImpl(MainWindow* self, const char* appName, ExtensionM
         cout << "size = (" << self->width() << ", " << self->height() << ")" << endl;
     }
 
-    normalStateSize.setWidth(config->get("width", self->width()));
-    normalStateSize.setHeight(config->get("height", self->width()));
+    int width, height;
+    if(config->read("width", width) && config->read("height", height)){
+        normalSize = QSize(width, height);
+    } else {
+        normalSize = getAvailableScreenSize();
+
+        if(TRACE_FUNCTIONS){
+            cout << "AvailableScreenSize = (" << normalSize.width() << ", " << normalSize.height() << ")" << endl;
+        }
+        static const int defaultSizes[] = {
+            3840, 2160,
+            2560, 1600,
+            1920, 1200,
+            1680, 1050,
+            1400, 1050,
+            1600, 900,
+            1280, 1024,
+            1366, 768,
+            1280, 800,
+            1280, 768,
+            1280, 720,
+            1024, 768,
+            800, 600,
+            640, 480,
+            -1, -1,
+        };
+
+        int i = 0;
+        while(true){
+            int w = defaultSizes[i++];
+            int h = defaultSizes[i++];
+            if(w < normalSize.width() && h < normalSize.height()){
+                if(w > 0){
+                    normalSize = QSize(w, h);
+                }
+                break;
+            }
+        }
+    }
+    oldNormalSize = normalSize;
+
+    if(TRACE_FUNCTIONS){
+        cout << "normalSize = (" << normalSize.width() << ", " << normalSize.height() << ")" << endl;
+    }
+
+    lastWindowState = self->windowState();
 }
 
 
@@ -251,15 +326,50 @@ void MainWindow::setInitialLayout(ArchivePtr archive)
 }
 
 
+bool MainWindow::event(QEvent *event)
+{
+    if(event->type() == QEvent::Polish){
+        if(TRACE_FUNCTIONS){
+            cout << "MainWindow::event(Poslish)" << endl;
+            cout << ", isVisible = " << isVisible() << endl;
+        }
+    }
+    return QMainWindow::event(event);
+}
+
+
 void MainWindow::changeEvent(QEvent* event)
 {
     if(event->type() == QEvent::WindowStateChange){
         if(TRACE_FUNCTIONS){
             cout << "MainWindow::changeEvent() of WindowStateChange: " << windowState() << endl;
         }
+
+        QWindowStateChangeEvent* wsc = static_cast<QWindowStateChangeEvent*>(event);
+        bool wasMaximized = wsc->oldState() & (Qt::WindowMaximized | Qt::WindowFullScreen);
+        bool isMaximized = windowState() & (Qt::WindowMaximized | Qt::WindowFullScreen);
+        if(isMaximized){
+            impl->normalSize = impl->oldNormalSize;
+            if(TRACE_FUNCTIONS){
+                cout << "normalSize = oldNormalSize;" << endl;
+            }
+        }
+
+        if(!impl->isGoingToMaximized && wasMaximized && !isMaximized){
+            if(TRACE_FUNCTIONS){
+                cout << "return to normal size" << endl;
+            }
+            resize(impl->normalSize);
+        }
+
         if(!(windowState() & Qt::WindowFullScreen)){
             impl->isMaximized = (windowState() & Qt::WindowMaximized);
+            if(TRACE_FUNCTIONS){
+                cout << "impl->isMaximized = " << impl->isMaximized << endl;
+            }
         }
+
+        impl->lastWindowState = windowState();
     }
 }
 
@@ -276,16 +386,33 @@ void MainWindowImpl::showFirst()
         cout << "MainWindowImpl::showFirst()" << endl;
     }
     if(isBeforeShowing){
-
-        self->resize(normalStateSize);
-        
         if(config->get("fullScreen", false)){
-            isMaximizedJustBeforeFullScreen = isMaximized;
+            isMaximizedJustBeforeFullScreen = config->get("maximized", true);
+#ifdef Q_OS_WIN32
+            self->resize(getScreenSize());
+#endif
+            isGoingToMaximized = true;
+            if(TRACE_FUNCTIONS){
+                cout << "showFullScreen();" << endl;
+            }
             self->showFullScreen();
+            isGoingToMaximized = false;
         } else if(config->get("maximized", true)){
+#ifdef Q_OS_WIN32
+            self->resize(getAvailableScreenSize());
+#endif
+            isGoingToMaximized = true;
+            if(TRACE_FUNCTIONS){
+                cout << "showMaximized();" << endl;
+            }
             self->showMaximized();
+            isGoingToMaximized = false;
         } else {
-            self->QMainWindow::show();
+            self->resize(normalSize);
+            if(TRACE_FUNCTIONS){
+                cout << "showNormal();" << endl;
+            }
+            self->showNormal();
         }
         bool showStatusBar = config->get("showStatusBar", true);
         self->statusBar()->setVisible(showStatusBar);
@@ -302,13 +429,21 @@ void MainWindowImpl::onFullScreenToggled(bool on)
     if(on){
         if(!self->isFullScreen()){
             isMaximizedJustBeforeFullScreen = isMaximized;
+            isGoingToMaximized = true;
             self->showFullScreen();
+            isGoingToMaximized = false;
         }
     } else {
         if(self->isFullScreen()){
-            self->showNormal();
             if(isMaximizedJustBeforeFullScreen){
+                isGoingToMaximized = true;
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+                self->showNormal();
+#endif
                 self->showMaximized();
+                isGoingToMaximized = false;
+            } else {
+                self->showNormal();
             }
         }
     }
@@ -327,12 +462,20 @@ void MainWindowImpl::resizeEvent(QResizeEvent* event)
     if(TRACE_FUNCTIONS){
         cout << "MainWindowImpl::resizeEvent(): size = (";
         cout << event->size().width() << ", " << event->size().height() << ")";
-        cout << ", isMaximized = " << (self->windowState() & Qt::WindowMaximized) << ", " << isMaximized;
+        cout << "window size = (" << self->width() << ", " << self->height() << ")" << endl;
+        cout << ", windowState = " << self->windowState();
         cout << ", isVisible = " << self->isVisible() << endl;
     }
     
     if(isBeforeDoingInitialLayout){
 
+#ifdef Q_OS_WIN32
+        toolBarArea->resize(event->size().width(), toolBarArea->height());
+        restoreLayout(initialLayoutArchive);
+        initialLayoutArchive = 0;
+        isBeforeDoingInitialLayout = false;
+
+#else
         bool isMaximized = self->windowState() & (Qt::WindowMaximized | Qt::WindowFullScreen);
 
         if(!isMaximized || self->isVisible()){
@@ -352,10 +495,19 @@ void MainWindowImpl::resizeEvent(QResizeEvent* event)
             initialLayoutArchive = 0;
             isBeforeDoingInitialLayout = false;
         }
+#endif
     } else {
-        if(!(self->windowState() &
-             (Qt::WindowMinimized | Qt::WindowMaximized | Qt::WindowFullScreen))){ // normal state ?
-            normalStateSize = self->size();
+        static const int stateMask = (Qt::WindowMinimized | Qt::WindowMaximized | Qt::WindowFullScreen);
+        if(TRACE_FUNCTIONS){
+            cout << "lastWindowState: " << lastWindowState << endl;
+            cout << "windowState: " << self->windowState() << endl;
+        }
+        if(!(lastWindowState & stateMask) && !(self->windowState() & stateMask)){
+            oldNormalSize = normalSize;
+            normalSize = self->size();
+            if(TRACE_FUNCTIONS){
+                cout << "normalSize = (" << normalSize.width() << ", " << normalSize.height() << ")" << endl;
+            }
         }
     }
 }
@@ -408,10 +560,15 @@ void MainWindowImpl::storeWindowStateConfig()
 {
     config->write("showViewTabs", showViewTabCheck->isChecked());
     config->write("showStatusBar", InfoBar::instance()->isVisible());
-    config->write("fullScreen", self->isFullScreen());
-    config->write("maximized", isMaximized);
-    config->write("width", normalStateSize.width());
-    config->write("height", normalStateSize.height());
+    bool isFullScreen = self->isFullScreen();
+    config->write("fullScreen", isFullScreen);
+    if(isFullScreen){
+        config->write("maximized", isMaximizedJustBeforeFullScreen);
+    } else {
+        config->write("maximized", isMaximized);
+    }
+    config->write("width", normalSize.width());
+    config->write("height", normalSize.height());
     config->write("storeLastLayout", storeLastLayoutCheck->isChecked());
     
     if(storeLastLayoutCheck->isChecked()){
