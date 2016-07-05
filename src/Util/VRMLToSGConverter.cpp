@@ -1726,11 +1726,12 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
 
     if(hasColors){
         lineSet->setColors(new SgColorArray(vLineSet->color->color));
+        const int maxColorIndex = lineSet->colors()->size() - 1;
         const MFInt32& orgColorIndices = vLineSet->colorIndex;
         SgIndexArray& colorIndices = lineSet->colorIndices();
         const SgIndexArray& lineVertices = lineSet->lineVertices();
         for(size_t i=0; i < lineVertices.size(); ++i){
-            int orgPos = newColorPosToOrgColorPosMap[i];
+            int orgPos = std::min(maxColorIndex, newColorPosToOrgColorPosMap[i]);
             colorIndices.push_back(orgColorIndices[orgPos]);
         }
     }
