@@ -1546,15 +1546,17 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
 
 void EditableSceneBodyImpl::restoreSceneBodyProperties(const Archive& archive)
 {
-    Listing& states = *archive["editableSceneBodies"].toListing();
-    for(int i=0; i < states.size(); ++i){
-        Mapping* state = states[i].toMapping();
-        BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
-        if(bodyItem){
-            EditableSceneBodyImpl* impl = bodyItem->sceneBody()->impl;
-            impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));
-            impl->showPpcom(state->get("showPpcom", impl->isPpcomVisible));
-            impl->showZmp(state->get("showZmp", impl->isZmpVisible));
+    Listing& states = *archive.findListing("editableSceneBodies");
+    if(states.isValid()){
+        for(int i=0; i < states.size(); ++i){
+            Mapping* state = states[i].toMapping();
+            BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
+            if(bodyItem){
+                EditableSceneBodyImpl* impl = bodyItem->sceneBody()->impl;
+                impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));
+                impl->showPpcom(state->get("showPpcom", impl->isPpcomVisible));
+                impl->showZmp(state->get("showZmp", impl->isZmpVisible));
+            }
         }
     }
 }

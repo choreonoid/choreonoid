@@ -1749,7 +1749,7 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
             colorIndices.push_back(index);
         }
         if(doWarning){
-            putMessage("Warning: The colorIndex elements do not correspond to the colors or the coordIndex elements in a IndexedLineSet node.");
+            putMessage("Warning: The colorIndex elements do not correspond to the colors or the coordIndex elements in an IndexedLineSet node.");
         }
     }
     
