@@ -16,6 +16,7 @@
 #include <cnoid/corba/CameraImage.hh>
 #include <cnoid/corba/PointCloud.hh>
 #include <cnoid/LazyCaller>
+#include <cnoid/OpenRTMUtil>
 #include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
@@ -403,7 +404,7 @@ public:
 
     virtual bool finalize()
     {
-        visionSensorSampleRTC->exit();
+        deleteRTC(visionSensorSampleRTC, true);
         return true;
     }
 
