@@ -58,7 +58,6 @@ public:
     gint videoHeight;
     vector<XRectangle> rects;
     gint64 duration;
-    gulong padProbeId;
     bool isPlaying;
     bool isEOS;
     bool isSeeking;
@@ -212,7 +211,6 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     videoWidth = -1;
     videoHeight = -1;
     
-    padProbeId = 0;
     isPlaying = false;
     isSeeking = false;
     hasPendingSeek = false;
@@ -377,8 +375,7 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
 
     callLater(boost::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
 
-    return GST_BUS_PASS;
-    //return GST_BUS_DROP;
+    return GST_BUS_DROP;
 }
 
 
@@ -444,13 +441,10 @@ GstPadProbeReturn GSMediaViewImpl::onVideoPadGotBuffer(GstPad* pad, GstPadProbeI
         const GstStructure* structure = gst_caps_get_structure(caps, 0);
         if(gst_structure_get_int(structure, "width", &videoWidth) &&
            gst_structure_get_int(structure, "height", &videoHeight)){
-            updateRenderRectangle();
+            callLater(boost::bind(&GSMediaViewImpl::updateRenderRectangle, this));
         }
     }
 
-    gst_pad_remove_probe(pad, padProbeId);
-    padProbeId = 0; // Clear probe id to indicate that it has been removed
-    //return TRUE; // Keep buffer in pipeline (do not throw away)
     return GST_PAD_PROBE_REMOVE;
 }
 
@@ -532,8 +526,8 @@ void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
 
             } else {
                 GstPad* pad = gst_element_get_static_pad(GST_ELEMENT(videoSink), "sink");
-                padProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                               (GstPadProbeCallback)videoPadBufferProbeCallback, this, NULL);
+                gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER,
+                                  (GstPadProbeCallback)videoPadBufferProbeCallback, this, NULL);
                 gst_object_unref(pad);
                 if(self->winId()){
                     activateCurrentMediaItem();
@@ -679,16 +673,6 @@ void GSMediaViewImpl::stopPlayback()
         cout << "ret = " << ret << endl;
     }
     
-    if(padProbeId != 0){
-        if(TRACE_FUNCTIONS){
-            cout << "padProbeId = " << padProbeId << endl;
-        }
-        
-        //GstPad* pad = gst_element_get_static_pad(GST_ELEMENT(videoSink), "sink");
-        //gst_pad_remove_probe(pad, padProbeId);
-        //padProbeId  = 0;
-    }
-
     isPlaying = false;
 }
 

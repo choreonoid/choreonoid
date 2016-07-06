@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-08 21:16+0900\n"
+"POT-Creation-Date: 2016-07-05 00:36+0900\n"
 "PO-Revision-Date: 2012-07-16 14:30+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,4 +17,38 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: ValueTree.cpp:84
+msgid "%1% at line %2%, column %3%."
+msgstr ""
 
+#: ValueTree.cpp:86
+msgid "%1%."
+msgstr ""
+
+#: ValueTree.cpp:90
+msgid "Error at line %2%, column %3%."
+msgstr ""
+
+#: ValueTree.cpp:178
+msgid "The value \"%1%\" must be an integer value"
+msgstr ""
+
+#: ValueTree.cpp:215
+msgid "The value \"%1%\" must be a double value"
+msgstr ""
+
+#: ValueTree.cpp:251
+msgid "The value \"%1%\" must be a boolean value"
+msgstr ""
+
+#: ValueTree.cpp:425
+msgid "A %1% value must be a scalar value"
+msgstr ""
+
+#: ValueTree.cpp:434
+msgid "The value is not a mapping"
+msgstr ""
+
+#: ValueTree.cpp:595
+msgid "Key \"%1%\" is not found in the mapping"
+msgstr ""

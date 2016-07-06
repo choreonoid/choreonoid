@@ -1726,12 +1726,30 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
 
     if(hasColors){
         lineSet->setColors(new SgColorArray(vLineSet->color->color));
+        const int numColors = lineSet->colors()->size();
         const MFInt32& orgColorIndices = vLineSet->colorIndex;
+        const int numOrgColorIndices = orgColorIndices.size();
+        bool doWarning = false;
         SgIndexArray& colorIndices = lineSet->colorIndices();
         const SgIndexArray& lineVertices = lineSet->lineVertices();
         for(size_t i=0; i < lineVertices.size(); ++i){
             int orgPos = newColorPosToOrgColorPosMap[i];
-            colorIndices.push_back(orgColorIndices[orgPos]);
+            if(orgPos >= numOrgColorIndices){
+                orgPos = numOrgColorIndices - 1;
+                doWarning = true;
+            }
+            int index = orgColorIndices[orgPos];
+            if(index < 0){
+                index = 0;
+                doWarning = true;
+            } else if(index >= numColors){
+                index = numColors - 1;
+                doWarning = true;
+            }
+            colorIndices.push_back(index);
+        }
+        if(doWarning){
+            putMessage("Warning: The colorIndex elements do not correspond to the colors or the coordIndex elements in an IndexedLineSet node.");
         }
     }
     

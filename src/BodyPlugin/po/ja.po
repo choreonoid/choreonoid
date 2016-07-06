@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-23 14:03+0900\n"
+"POT-Creation-Date: 2016-07-05 00:55+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -16,81 +16,85 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: AISTSimulatorItem.cpp:138
+#: AISTSimulatorItem.cpp:146
 msgid "AISTSimulatorItem"
 msgstr "AISTシミュレータアイテム"
 
-#: AISTSimulatorItem.cpp:155
+#: AISTSimulatorItem.cpp:163
 msgid "Forward dynamics"
 msgstr "順動力学"
 
-#: AISTSimulatorItem.cpp:156
+#: AISTSimulatorItem.cpp:164
 msgid "High-gain dynamics"
 msgstr "ハイゲイン動力学"
 
-#: AISTSimulatorItem.cpp:157
+#: AISTSimulatorItem.cpp:165
 msgid "Kinematics"
 msgstr "運動学"
 
-#: AISTSimulatorItem.cpp:159
+#: AISTSimulatorItem.cpp:167
 msgid "Euler"
 msgstr "オイラー"
 
-#: AISTSimulatorItem.cpp:160
+#: AISTSimulatorItem.cpp:168
 msgid "Runge Kutta"
 msgstr "ルンゲクッタ"
 
-#: AISTSimulatorItem.cpp:602
+#: AISTSimulatorItem.cpp:658
 msgid "Dynamics mode"
 msgstr "動力学モード"
 
-#: AISTSimulatorItem.cpp:604
+#: AISTSimulatorItem.cpp:660
 msgid "Integration mode"
 msgstr "積分モード"
 
-#: AISTSimulatorItem.cpp:606
+#: AISTSimulatorItem.cpp:662
 msgid "Gravity"
 msgstr "重力加速度"
 
-#: AISTSimulatorItem.cpp:608
+#: AISTSimulatorItem.cpp:664
 msgid "Static friction"
 msgstr "静止摩擦係数"
 
-#: AISTSimulatorItem.cpp:609
+#: AISTSimulatorItem.cpp:665
 msgid "Slip friction"
 msgstr "動摩擦係数"
 
-#: AISTSimulatorItem.cpp:610
+#: AISTSimulatorItem.cpp:666
 msgid "Contact culling distance"
 msgstr "接触間引き距離"
 
-#: AISTSimulatorItem.cpp:612
+#: AISTSimulatorItem.cpp:668
 msgid "Contact culling depth"
 msgstr "接触間引き深度"
 
-#: AISTSimulatorItem.cpp:614
+#: AISTSimulatorItem.cpp:670
 msgid "Error criterion"
 msgstr "収束判定誤差基準"
 
-#: AISTSimulatorItem.cpp:616
+#: AISTSimulatorItem.cpp:672
 msgid "Max iterations"
 msgstr "最大反復計算回数"
 
-#: AISTSimulatorItem.cpp:617
+#: AISTSimulatorItem.cpp:673
 msgid "CC depth"
 msgstr "接触補正深度"
 
-#: AISTSimulatorItem.cpp:619
+#: AISTSimulatorItem.cpp:675
 msgid "CC v-ratio"
 msgstr "接触補正速度係数"
 
-#: AISTSimulatorItem.cpp:621
+#: AISTSimulatorItem.cpp:677
 msgid "Kinematic walking"
 msgstr "運動学歩行モード"
 
-#: AISTSimulatorItem.cpp:623
+#: AISTSimulatorItem.cpp:679
 msgid "2D mode"
 msgstr "2Dモード"
+
+#: AISTSimulatorItem.cpp:680
+msgid "Old accel sensor mode"
+msgstr "旧加速センサモード"
 
 #: BodyBar.cpp:51
 msgid "BodyBar"
@@ -232,39 +236,27 @@ msgstr "自己干渉"
 msgid "ZMP [m]"
 msgstr "ZMP [m]"
 
-#: BodyLinkView.cpp:531
-msgid "Free"
-msgstr "非拘束"
-
-#: BodyLinkView.cpp:533
-msgid "Fixed"
-msgstr "固定"
-
-#: BodyLinkView.cpp:535
-msgid "Crawler"
-msgstr "クローラ"
-
-#: BodyLinkView.cpp:543
+#: BodyLinkView.cpp:537
 msgid "Rotation"
 msgstr "回転"
 
-#: BodyLinkView.cpp:546
+#: BodyLinkView.cpp:540
 msgid "Joint Angle [deg]"
 msgstr "関節角 [deg]"
 
-#: BodyLinkView.cpp:569
+#: BodyLinkView.cpp:563
 msgid "Joint Velocity [deg/s]"
 msgstr "関節角速度 [deg/s]"
 
-#: BodyLinkView.cpp:585
+#: BodyLinkView.cpp:579
 msgid "Slide"
 msgstr "直動"
 
-#: BodyLinkView.cpp:588
+#: BodyLinkView.cpp:582
 msgid "Joint Translation [m]:"
 msgstr "関節並進位置 [m]"
 
-#: BodyLinkView.cpp:611
+#: BodyLinkView.cpp:605
 msgid "Joint Velocity [m/s]"
 msgstr "関節速度 [m/s]"
 
@@ -274,7 +266,7 @@ msgstr "ボディモーションコントローラアイテム"
 
 #: BodyMotionControllerItem.cpp:81
 msgid "Any body motion item for %1% is not found."
-msgstr ""
+msgstr "%1%用ボディモーションアイテムが見つかりません。"
 
 #: BodyMotionControllerItem.cpp:102
 msgid "Reference motion is empty()."
@@ -352,7 +344,7 @@ msgstr ""
 msgid "OFF"
 msgstr ""
 
-#: BodyTrackingCameraItem.cpp:138
+#: BodyTrackingCameraItem.cpp:141
 msgid "BodyTrackingCameraItem"
 msgstr "ボディ追尾カメラ"
 
@@ -480,11 +472,11 @@ msgstr "マージン"
 msgid "Merge selected MultiValueSeqItems (Temporary version)"
 msgstr "選択したMultiValueSeqアイテムをマージ（試験的バージョン）"
 
-#: GLVisionSimulatorItem.cpp:221
+#: GLVisionSimulatorItem.cpp:255
 msgid "GLVisionSimulatorItem"
 msgstr "GLビジョンシミュレータアイテム"
 
-#: GLVisionSimulatorItem.cpp:384
+#: GLVisionSimulatorItem.cpp:411
 msgid ""
 "The vision sensor simulation by %1% cannot be performed because the OpenGL "
 "pbuffer is not available."
@@ -492,67 +484,63 @@ msgstr ""
 "OpenGLのpbufferが利用できないため、%1%による視覚センサのシミュレーションは利"
 "用できません。"
 
-#: GLVisionSimulatorItem.cpp:449
+#: GLVisionSimulatorItem.cpp:467
 msgid "%1% has no target sensors"
 msgstr "%1%は対象センサを有していません"
 
-#: GLVisionSimulatorItem.cpp:474
+#: GLVisionSimulatorItem.cpp:492
 msgid "%1%: Target sensor \"%2%\" cannot be initialized."
 msgstr "%2%用の%1%の初期化に失敗しました。"
 
-#: GLVisionSimulatorItem.cpp:502
+#: GLVisionSimulatorItem.cpp:522
 msgid "%1% detected vision sensor \"%2%\" of %3% as a target."
 msgstr "%1%は%3%の\"%2%\"を対象視覚センサとして検出しました。"
 
-#: GLVisionSimulatorItem.cpp:1208
+#: GLVisionSimulatorItem.cpp:1256
 msgid "Target bodies"
 msgstr "対象ボディ"
 
-#: GLVisionSimulatorItem.cpp:1209
+#: GLVisionSimulatorItem.cpp:1257
 msgid "Target sensors"
 msgstr "対象センサ"
 
-#: GLVisionSimulatorItem.cpp:1210
+#: GLVisionSimulatorItem.cpp:1258
 msgid "Max frame rate"
 msgstr "最大フレームレート"
 
-#: GLVisionSimulatorItem.cpp:1211
+#: GLVisionSimulatorItem.cpp:1259
 msgid "Max latency [s]"
 msgstr "最大レイテンシ[秒]"
 
-#: GLVisionSimulatorItem.cpp:1212
+#: GLVisionSimulatorItem.cpp:1260
 msgid "Record vision data"
 msgstr "ビジョンデータの記録"
 
-#: GLVisionSimulatorItem.cpp:1213
-msgid "Use thread"
-msgstr "スレッドを利用"
-
-#: GLVisionSimulatorItem.cpp:1214
+#: GLVisionSimulatorItem.cpp:1261
 msgid "Threads for sensors"
 msgstr "センサ個別スレッド"
 
-#: GLVisionSimulatorItem.cpp:1215
+#: GLVisionSimulatorItem.cpp:1262
 msgid "Best effort"
 msgstr "ベストエフォート"
 
-#: GLVisionSimulatorItem.cpp:1216
+#: GLVisionSimulatorItem.cpp:1263
 msgid "All scene objects"
 msgstr "全てのシーンオブジェクト"
 
-#: GLVisionSimulatorItem.cpp:1217
+#: GLVisionSimulatorItem.cpp:1264
 msgid "Precision ratio of range sensors"
 msgstr "レンジセンサ精度係数"
 
-#: GLVisionSimulatorItem.cpp:1219
+#: GLVisionSimulatorItem.cpp:1266
 msgid "Depth error"
 msgstr "深度エラー"
 
-#: GLVisionSimulatorItem.cpp:1220
+#: GLVisionSimulatorItem.cpp:1267
 msgid "Head light"
 msgstr "ヘッドライト"
 
-#: GLVisionSimulatorItem.cpp:1221
+#: GLVisionSimulatorItem.cpp:1268
 msgid "Additional lights"
 msgstr "追加のライト"
 
@@ -1107,7 +1095,7 @@ msgid "Active control period"
 msgstr "能動制御期間"
 
 #: SimulatorItem.cpp:1056
-msgid "Specific time"
+msgid "Specified time"
 msgstr "指定時間"
 
 #: SimulatorItem.cpp:1057
@@ -1202,27 +1190,27 @@ msgstr "ワールドアイテム"
 msgid "Collision detector"
 msgstr "干渉検出器"
 
-#: WorldLogFileItem.cpp:459
+#: WorldLogFileItem.cpp:462
 msgid "WorldLogFileItem"
 msgstr "ワールドログファイルアイテム"
 
-#: WorldLogFileItem.cpp:462
+#: WorldLogFileItem.cpp:465
 msgid "World Log"
 msgstr "ワールドログ"
 
-#: WorldLogFileItem.cpp:1139
+#: WorldLogFileItem.cpp:1164
 msgid "Log file name"
 msgstr "ログファイル名"
 
-#: WorldLogFileItem.cpp:1141
+#: WorldLogFileItem.cpp:1166
 msgid "Actual log file"
 msgstr "実際のログファイル"
 
-#: WorldLogFileItem.cpp:1142
+#: WorldLogFileItem.cpp:1167
 msgid "Time-stamp suffix"
 msgstr "タイムスタンプ接尾辞"
 
-#: WorldLogFileItem.cpp:1144
+#: WorldLogFileItem.cpp:1169
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
 
