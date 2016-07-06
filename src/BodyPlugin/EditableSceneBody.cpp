@@ -26,6 +26,9 @@
 #include <cnoid/ConnectionSet>
 #include <boost/bind.hpp>
 #include "gettext.h"
+#if 1
+#include <iostream>
+#endif
 
 using namespace std;
 using namespace cnoid;
@@ -405,6 +408,7 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 {
     const BoundingBox& bb = sceneLink->visualShape()->boundingBox();
+    if (bb.empty()) return 1.0; // Is this OK?
     double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
     return pow(V, 1.0 / 3.0) * 0.6;
 }
