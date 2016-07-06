@@ -85,7 +85,7 @@
                                     PointComponent maxAxis, minAxis;
                                     maxAxis = mExtents.LargestAxis();
                                     minAxis = mExtents.SmallestAxis();
-                                    if (mExtents[maxAxis]/mExtents[minAxis] > 2){
+                                    if (mExtents[minAxis] > 0 && mExtents[maxAxis]/mExtents[minAxis] > 2){
                                         mType = SSV_LSS;
                                         mPoint0 = mCenter;
                                         mPoint0[maxAxis] -= mExtents[maxAxis];
