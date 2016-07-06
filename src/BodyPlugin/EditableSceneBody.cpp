@@ -26,9 +26,6 @@
 #include <cnoid/ConnectionSet>
 #include <boost/bind.hpp>
 #include "gettext.h"
-#if 1
-#include <iostream>
-#endif
 
 using namespace std;
 using namespace cnoid;
