@@ -153,6 +153,8 @@ items:
                 depthError: 0
                 enableHeadLight: true
                 enableAdditionalLights: true
+
+
 views: 
   - 
     id: 0
@@ -171,9 +173,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 8 ]
-      checked: [ 1, 2, 4, 5, 6 ]
-      expanded: [ 1, 2, 3, 8 ]
+      selected: [ 7 ]
+      checked: [ 1, 2, 4, 5 ]
+      expanded: [ 1, 2, 3, 7 ]
   - 
     id: 3
     plugin: Base
@@ -189,7 +191,7 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
-      defaultHeadLight: false
+      defaultHeadLight: true
       defaultHeadLightIntensity: 0.75
       headLightLightingFromBack: false
       worldLight: true
@@ -207,11 +209,11 @@ views:
       yzGridInterval: 0.5
       texture: true
       lineWidth: 1
-      pointSize: 1
+      pointSize: 2
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
-      showFPS: false
+      showFPS: true
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
       cameras: 
@@ -221,9 +223,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -2.99869, 5.22338, 2.18657 ]
-          direction: [ 0.451674882, -0.80210979, -0.390652898 ]
-          up: [ 0.191679057, -0.340395102, 0.920538057 ]
+          eye: [ -2.33531, 4.92902, 1.24164 ]
+          direction: [ 0.35762385, -0.914296616, -0.19017592 ]
+          up: [ 0.0692765472, -0.177109121, 0.981750029 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -236,19 +238,28 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 5
+    name: "Task"
+    plugin: Base
+    class: TaskView
+    state: 
+      layoutMode: horizontal
+      isAutoMode: false
+      currentTask: Wall
+  - 
+    id: 6
     name: "Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -262,7 +273,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 8
+    id: 9
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -274,23 +285,46 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 9
+    id: 10
     plugin: Python
     class: PythonConsoleView
     mounted: true
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 60
+    maxTime: 5
     frameRate: 1000
-    playbackFrameRate: 100
+    playbackFrameRate: 60
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
-OpenRTM: 
-  "deleteUnmanagedRTCsOnStartingSimulation": false
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 6
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+    staticModelEditing: false
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
 viewAreas: 
   - 
     type: embedded
@@ -298,12 +332,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 259, 1101 ]
+      sizes: [ 303, 1291 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 379, 378 ]
+          sizes: [ 381, 381 ]
           children: 
             - 
               type: pane
@@ -311,21 +345,21 @@ viewAreas:
               current: 2
             - 
               type: pane
-              views: [ 1, 8 ]
+              views: [ 1, 9 ]
               current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 541, 216 ]
+          sizes: [ 544, 218 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 513, 582 ]
+              sizes: [ 602, 683 ]
               children: 
                 - 
                   type: pane
-                  views: [ 6, 7, 0 ]
+                  views: [ 7, 8, 0 ]
                   current: 0
                 - 
                   type: pane
@@ -334,20 +368,20 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 548, 547 ]
+              sizes: [ 740, 545 ]
               children: 
                 - 
                   type: pane
-                  views: [ 3, 9 ]
+                  views: [ 3, 10 ]
                   current: 3
                 - 
                   type: pane
-                  views: [ 5 ]
-                  current: 5
+                  views: [ 6 ]
+                  current: 6
 layoutOfToolBars: 
   rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
       - { name: "SimulationBar", x: 48, priority: 1 }
-      - { name: "TimeBar", x: 251, priority: 2 }
-      - { name: "SceneBar", x: 1046, priority: 3 }
+      - { name: "TimeBar", x: 96, priority: 0 }
+      - { name: "SceneBar", x: 1336, priority: 2 }
