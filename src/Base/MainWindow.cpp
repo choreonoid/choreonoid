@@ -326,18 +326,6 @@ void MainWindow::setInitialLayout(ArchivePtr archive)
 }
 
 
-bool MainWindow::event(QEvent *event)
-{
-    if(event->type() == QEvent::Polish){
-        if(TRACE_FUNCTIONS){
-            cout << "MainWindow::event(Poslish)" << endl;
-            cout << ", isVisible = " << isVisible() << endl;
-        }
-    }
-    return QMainWindow::event(event);
-}
-
-
 void MainWindow::changeEvent(QEvent* event)
 {
     if(event->type() == QEvent::WindowStateChange){
@@ -396,7 +384,7 @@ void MainWindowImpl::showFirst()
                 cout << "showFullScreen();" << endl;
             }
             self->showFullScreen();
-            isGoingToMaximized = false;
+            //isGoingToMaximized = false;
         } else if(config->get("maximized", true)){
 #ifdef Q_OS_WIN32
             self->resize(getAvailableScreenSize());
@@ -406,7 +394,7 @@ void MainWindowImpl::showFirst()
                 cout << "showMaximized();" << endl;
             }
             self->showMaximized();
-            isGoingToMaximized = false;
+            //isGoingToMaximized = false;
         } else {
             self->resize(normalSize);
             if(TRACE_FUNCTIONS){
@@ -508,6 +496,10 @@ void MainWindowImpl::resizeEvent(QResizeEvent* event)
             if(TRACE_FUNCTIONS){
                 cout << "normalSize = (" << normalSize.width() << ", " << normalSize.height() << ")" << endl;
             }
+        }
+        isGoingToMaximized = false;
+        if(TRACE_FUNCTIONS){
+            cout << "isGoingToMaximized = false;" << endl;
         }
     }
 }

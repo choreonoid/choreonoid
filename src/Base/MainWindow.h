@@ -35,7 +35,6 @@ public:
     void setInitialLayout(ArchivePtr archive);
 
 protected:
-    virtual bool event(QEvent *event);
     virtual void changeEvent(QEvent* event);
     virtual void resizeEvent(QResizeEvent* event);
     virtual void keyPressEvent(QKeyEvent* event);
