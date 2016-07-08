@@ -28,7 +28,7 @@ elseif(MSVC)
                          debug BulletCollision_Debug debug BulletDynamics_Debug debug LinearMath_Debug debug HACD_Debug)
     set(bullet_INCLUDE_DIRS ${BULLET_DIR}/include/bullet ${BULLET_DIR}/src ${BULLET_DIR}/Extras)
     set(bullet_LIBRARY_DIRS ${BULLET_DIR}/lib/)
-    add_definitions(-DBT_VER_GT_281)
+    add_definitions(-DBT_VER_GT_281 -DBT_USE_DOUBLE_PRECISION)
   endif()
 endif()
 

@@ -207,15 +207,18 @@ class CustomSplitter : public QSplitter
 {
 public:
     ViewAreaImpl* viewAreaImpl;
+    bool defaultOpaqueResize;
     
     CustomSplitter(ViewAreaImpl* viewAreaImpl, QWidget* parent = 0)
         : QSplitter(parent),
           viewAreaImpl(viewAreaImpl) {
+        defaultOpaqueResize = opaqueResize();
     }
 
     CustomSplitter(ViewAreaImpl* viewAreaImpl, Qt::Orientation orientation, QWidget* parent = 0)
         : QSplitter(orientation, parent),
           viewAreaImpl(viewAreaImpl) {
+        defaultOpaqueResize = opaqueResize();
     }
 
     bool moveSplitterPosition(int d){
@@ -251,6 +254,11 @@ public:
         if(event->button() == Qt::LeftButton){
             isDragging = true;
             splitter->viewAreaImpl->showViewSizeLabels(splitter);
+            if(event->modifiers() & Qt::ShiftModifier){
+                splitter->setOpaqueResize(!splitter->defaultOpaqueResize);
+            } else {
+                splitter->setOpaqueResize(splitter->defaultOpaqueResize);
+            }
         }
         QSplitterHandle::mouseMoveEvent(event);
     }
@@ -265,6 +273,7 @@ public:
     virtual void mouseReleaseEvent(QMouseEvent* event) {
         QSplitterHandle::mouseReleaseEvent(event);
         isDragging = false;
+        splitter->setOpaqueResize(splitter->defaultOpaqueResize);
     }
 
     virtual void keyPressEvent(QKeyEvent* event) {

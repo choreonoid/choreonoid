@@ -75,9 +75,9 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
-            timeLength: 8
+            recording: "full"
+            timeRangeMode: "Specified time"
+            timeLength: 15
             allLinkPositionOutputMode: false
             deviceStateRecording: true
             dynamicsMode: Forward dynamics
@@ -98,9 +98,9 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
-            timeLength: 8
+            recording: "full"
+            timeRangeMode: "Specified time"
+            timeLength: 15
             allLinkPositionOutputMode: true
             deviceStateRecording: true
             stepMode: Iterative (quick step)
@@ -275,7 +275,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 5
+    maxTime: 15
     frameRate: 1000
     playbackFrameRate: 100
     currentTime: 0

@@ -85,7 +85,7 @@ items:
           data: 
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Specific time"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -108,7 +108,7 @@ items:
           data: 
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Specific time"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -131,7 +131,7 @@ items:
           data:
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Specific time"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
