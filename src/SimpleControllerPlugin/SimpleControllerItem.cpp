@@ -111,6 +111,9 @@ public:
     virtual void setLinkOutput(Link* link, int stateTypes);
     virtual void setJointInput(int stateTypes);
     virtual void setLinkInput(Link* link, int stateTypes);
+
+    virtual bool isImmediateMode() const;
+    virtual void setImmediateMode(bool on);
 };
 
 }
@@ -506,6 +509,18 @@ static void updateIOStateTypeSet
             }
         }
     }
+}
+
+
+bool SimpleControllerItemImpl::isImmediateMode() const
+{
+    return self->isImmediateMode();
+}
+
+
+void SimpleControllerItemImpl::setImmediateMode(bool on)
+{
+    self->setImmediateMode(on);
 }
 
 

@@ -37,6 +37,7 @@ public:
 
     bool isActive() const;
     bool isImmediateMode() const { return isImmediateMode_; }
+    void setImmediateMode(bool on);
 
     const std::string& optionString() const { return optionString_; }
     bool splitOptionString(const std::string& optionString, std::vector<std::string>& out_options) const;
