@@ -15,6 +15,12 @@ public:
 
     virtual bool initialize(SimpleControllerIO* io) {
 
+        SimulationSimpleControllerIO* sio = dynamic_cast<SimulationSimpleControllerIO*>(io);
+
+        if(!sio){
+            return false;
+        }
+
         spring = io->body()->link("UPPER");
 
         if(!spring){
@@ -25,7 +31,7 @@ public:
         io->setLinkInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
         io->setLinkOutput(spring, JOINT_FORCE);
 
-        io->setImmediateMode(true);
+        sio->setImmediateMode(true);
         
         return true;
     }
