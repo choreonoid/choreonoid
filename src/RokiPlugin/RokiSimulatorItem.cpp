@@ -497,6 +497,7 @@ void RokiLink::createLink(RokiSimulatorItemImpl* simImpl, RokiBody* body, const 
         }
         break;
     case Link::CRAWLER_JOINT:
+    case Link::PSEUDO_CONTINUOUS_TRACK:
         isCrawler = true;
     case Link::FIXED_JOINT:
     default :
@@ -771,7 +772,10 @@ void RokiLink::setTorqueToRoki()
 {
     if(isCrawler){
         for(int i=0; i<cd_cells.size(); i++)
-            rkFDCDCellSetSlideVel( cd_cells[i], link->u() );
+            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
+                rkFDCDCellSetSlideVel( cd_cells[i], link->dq() );
+            else
+                rkFDCDCellSetSlideVel( cd_cells[i], link->u() );
     }else{
         rkJointMotorSetInput( rkLinkJoint(rklink), &link->u() );
     }

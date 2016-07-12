@@ -190,7 +190,7 @@ PhysXLink::PhysXLink
 
     createGeometry(physXBody);
 
-    if(link->jointType() == Link::CRAWLER_JOINT){
+    if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         PxFilterData simFilterData;
         simFilterData.word0 = 1;
         int nbShapes = pxRigidActor->getNbShapes();
@@ -1063,9 +1063,9 @@ void PhysXSimulatorItemImpl::onContactModify(PxContactModifyPair* const pairs, P
 
     Link* crawlerlink = 0;
     double sign = 1;
-    if(link0->jointType() == Link::CRAWLER_JOINT){
+    if(link0->jointType() == Link::CRAWLER_JOINT || link0->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         crawlerlink = link0;
-    }else if(link1->jointType() == Link::CRAWLER_JOINT){
+    }else if(link1->jointType() == Link::CRAWLER_JOINT || link1->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         crawlerlink = link1;
         sign = -1;
     }
@@ -1081,7 +1081,10 @@ void PhysXSimulatorItemImpl::onContactModify(PxContactModifyPair* const pairs, P
             continue;
 
         dir.normalize();
-        dir *= sign * crawlerlink->u();
+        if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
+            dir *= sign * crawlerlink->dq();
+        else
+            dir *= sign * crawlerlink->u();
         pairs->contacts.setTargetVelocity(i, dir);
     }
 }

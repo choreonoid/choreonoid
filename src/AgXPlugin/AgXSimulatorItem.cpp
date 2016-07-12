@@ -125,6 +125,7 @@ public :
     enum InputMode { NON, VEL, TOR };
     InputMode inputMode;
     int numOfTrack;
+    bool isControlJoint;
 
     AgXLink(AgXSimulatorItemImpl* simImpl, AgXBody* agxXBody, AgXLink* parent,
                   const Vector3& parentOrigin, Link* link);
@@ -245,7 +246,10 @@ public :
         if(dir.length() < 1e-5)
             return agx::Vec3f( 0.0, 0.0, 0.0 );
         dir.normalize();
-        dir *= -link->u();
+        if(link->jointType()==Link::PSEUDO_CONTINUOUS_TRACK)
+            dir *= -link->dq();
+        else
+            dir *= -link->u();
         agx::Vec3 ret = agxBody->getFrame()->transformVectorToLocal( dir );
         return agx::Vec3f(ret);
     }
@@ -673,7 +677,8 @@ AgXLink::AgXLink
     link(link),
     parent(parent),
     unit(0),
-    numOfTrack(-1)
+    numOfTrack(-1),
+    isControlJoint(true)
 {
     AgXSimulatorItemImpl::ControlModeMap::iterator it = simImpl->controlModeMap.find(link);
     if(it!=simImpl->controlModeMap.end())
@@ -738,6 +743,7 @@ AgXLink::AgXLink
     if(parent && parent->numOfTrack!=-1){
         numOfTrack = parent->numOfTrack;
         agxBody->tracks[numOfTrack].feet.push_back(this);
+        isControlJoint = false;
     }
 
     for(Link* child = link->child(); child; child = child->sibling()){
@@ -903,6 +909,10 @@ void AgXLink::createJoint()
 
     joint = 0;
 
+    double rotorInertia = link->Jm2();
+    if(!rotorInertia)
+        rotorInertia = link->info("rotorInertia", 0.0);
+
     switch(link->jointType()){
     case Link::ROTATIONAL_JOINT:
     case Link::SLIDE_JOINT:
@@ -914,7 +924,7 @@ void AgXLink::createJoint()
             inputMode = VEL;
             break;
         case AgXSimulatorItem::TORQUE :
-            if(link->Jm2()){
+            if(rotorInertia){
                 part = SHAFT;
                 inputMode = TOR;
             }else{
@@ -927,7 +937,7 @@ void AgXLink::createJoint()
             inputMode = InputMode::NON;
             break;
         case AgXSimulatorItem::DEFAULT :
-            if(!link->Jm2() || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
+            if(!rotorInertia || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
                 part = MOTOR;
                 if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS))
                     inputMode = VEL;
@@ -976,7 +986,7 @@ void AgXLink::createJoint()
                 agxDriveTrain::GearRef gear = new agxDriveTrain::Gear();
                 agxDriveTrain::ShaftRef shaft = new agxDriveTrain::Shaft();
                 shaft->connect(rotationalActuator, gear);
-                shaft->setInertia( link->Jm2() );
+                shaft->setInertia( rotorInertia );
                 simImpl->powerLine->add(shaft);
                 unit = shaft;
             }else if(part==NON)
@@ -1002,7 +1012,7 @@ void AgXLink::createJoint()
                 agxPowerLine::TranslationalConnectorRef connector = new agxPowerLine::TranslationalConnector();
                 agxPowerLine::TranslationalUnitRef translationalUnit = new agxPowerLine::TranslationalUnit();
                 translationalUnit->connect(translationalActuator, connector);
-                translationalUnit->setMass( link->Jm2() );
+                translationalUnit->setMass( rotorInertia );
                 simImpl->powerLine->add(translationalUnit);
                 unit = translationalUnit;
             }else if(part==NON)
@@ -1011,7 +1021,8 @@ void AgXLink::createJoint()
         break;
     }
     case Link::FIXED_JOINT:
-    case Link::CRAWLER_JOINT:{
+    case Link::CRAWLER_JOINT:
+    case Link::PSEUDO_CONTINUOUS_TRACK:{
         if(!parent){
             agxRigidBody->setMotionControl(agx::RigidBody::STATIC);
         }else{
@@ -1044,13 +1055,13 @@ void AgXLink::createGeometry(AgXBody* agxBody)
         if(extractor->extract(link->shape(), boost::bind(&AgXLink::addMesh, this, extractor, agxBody))){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
-                if(link->jointType()!=Link::CRAWLER_JOINT)
-                    agxRigidBody->add( new agxCollide::Geometry( triangleMesh ) );
-                else{
+                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
                     agx::ref_ptr<CrawlerGeometry> crawlerGeometry = new CrawlerGeometry( link, agxRigidBody.get() );
                     crawlerGeometry->add( triangleMesh );
                     crawlerGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );   //適当に設定しておかないとcalculateSurfaceVelocityが呼び出されない。
                     agxRigidBody->add( crawlerGeometry );
+                }else{
+                    agxRigidBody->add( new agxCollide::Geometry( triangleMesh ) );
                 }
             }
         }
@@ -1100,11 +1111,11 @@ void AgXLink::addMesh(MeshExtractor* extractor, AgXBody* agxBody)
         if(doAddPrimitive){
             bool created = false;
             agxCollide::GeometryRef agxGeometry;
-            if(link->jointType()!=Link::CRAWLER_JOINT)
-                agxGeometry = new agxCollide::Geometry();
-            else{
+            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
                 agxGeometry = new CrawlerGeometry(link, agxRigidBody.get());
                 agxGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );
+            }else{
+                agxGeometry = new agxCollide::Geometry();
             }
             switch(mesh->primitiveType()){
             case SgMesh::BOX : {
@@ -1299,6 +1310,9 @@ void AgXLink::getKinematicStateFromAgX()
 
 void AgXLink::setTorqueToAgX()
 {
+    if(!isControlJoint)
+        return;
+
     if(unit){
         agxDriveTrain::Shaft* shaft = dynamic_cast<agxDriveTrain::Shaft*>(unit);
         if(shaft){
@@ -1659,12 +1673,19 @@ void AgXBody::createCrawlerJoint()
 
         // Connect the two ends.
         const Vector3& a = link0->link->a();
+        Vector3 a_ = link0->link->attitude() * a;
         agx::HingeFrame hingeFrame;
-        hingeFrame.setAxis( agx::Vec3( a(0), a(1), a(2)) );
-        agx::Vec3 o = link0->agxRigidBody->getPosition();
-        hingeFrame.setCenter( o );
+        hingeFrame.setAxis( agx::Vec3( a_(0), a_(1), a_(2)) );
+        const Vector3& o = link0->link->p();
+        hingeFrame.setCenter( agx::Vec3( o(0), o(1), o(2)));
+
         agx::HingeRef hinge = new agx::Hinge( hingeFrame, link0->agxRigidBody, link1->agxRigidBody );
         simImpl->agxSimulation->add( hinge );
+        link0->joint = hinge;
+        hinge->getMotor1D()->setEnable(true);
+        Vector2 forceRange(-std::numeric_limits<agx::Real>::max(), std::numeric_limits<agx::Real>::max());
+        agx::Constraint1DOF::safeCast( hinge )->getMotor1D()->setForceRange( forceRange[0], forceRange[1] );
+
         HingeJointParam hingeParam;
         if(link0->getHingeJointParam(hingeParam)){
             for(int i=0; i<hingeParam.complianceParam.size(); i++){
@@ -1709,6 +1730,10 @@ void AgXBody::createCrawlerJoint()
             w = foot->link->info("planeDamping", std::numeric_limits<double>::max());
             if(w!=std::numeric_limits<double>::max())
                 plane->setDamping(w);
+
+            agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(foot->joint);
+            if(joint1DOF)
+                joint1DOF->getMotor1D()->setSpeed( 0.0 );
         }
     }
 }
