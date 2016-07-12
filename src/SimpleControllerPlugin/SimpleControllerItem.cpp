@@ -45,7 +45,7 @@ enum {
 
 namespace cnoid {
 
-class SimpleControllerItemImpl : public SimpleControllerIO
+class SimpleControllerItemImpl : public SimulationSimpleControllerIO
 {
 public:
     SimpleControllerItem* self;
