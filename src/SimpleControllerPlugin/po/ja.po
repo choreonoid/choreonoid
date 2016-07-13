@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-28 15:25+0900\n"
+"POT-Creation-Date: 2016-07-05 00:59+0900\n"
 "PO-Revision-Date: 2012-07-17 00:29+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -69,19 +69,19 @@ msgstr "コントローラインスタンスを生成しました。"
 msgid "%1%'s initialize method failed."
 msgstr "%1%のinitializeメソッドが失敗しました。"
 
-#: SimpleControllerItem.cpp:702
+#: SimpleControllerItem.cpp:708
 msgid "Relative Path Base"
 msgstr "相対パスベース"
 
-#: SimpleControllerItem.cpp:705
+#: SimpleControllerItem.cpp:711
 msgid " Dynamic Link Library "
 msgstr " 共有ライブラリ "
 
-#: SimpleControllerItem.cpp:713
+#: SimpleControllerItem.cpp:719
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:715
+#: SimpleControllerItem.cpp:721
 msgid "Reloading"
 msgstr "再読込"
 
@@ -89,5 +89,3 @@ msgstr "再読込"
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
-#~ msgid "Input link positions"
-#~ msgstr "リンク位置の入力"

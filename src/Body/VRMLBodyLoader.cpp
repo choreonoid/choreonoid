@@ -670,7 +670,7 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
             if(numValidJointIds < validJointIdSet.size()){
                 for(size_t i=0; i < validJointIdSet.size(); ++i){
                     if(!validJointIdSet[i]){
-                        os() << str(format("Warning: Joint ID %1% is not specified.") % i) << endl;
+                        os() << str(format(_("Warning: Joint ID %1% is not specified.")) % i) << endl;
                     }
                 }
             }
@@ -783,7 +783,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
             ++numValidJointIds;
             validJointIdSet.set(link->jointId());
         } else {
-            os() << str(format("Warning: Joint ID %1% is duplicated.") % link->jointId()) << endl;
+            os() << str(format(_("Warning: Joint ID %1% is duplicated.")) % link->jointId()) << endl;
         }
     }
 
@@ -807,12 +807,16 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::ROTATIONAL_JOINT);
     } else if(jointType == "slide" ){
         link->setJointType(Link::SLIDE_JOINT);
+    } else if(jointType == "pseudoContinuousTrack"){
+        link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
     } else if(jointType == "crawler"){
         link->setJointType(Link::CRAWLER_JOINT);
+        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinousTrack' instead."))
+                    % link->name()) << endl;
     } else if(jointType == "agx_crawler"){
         link->setJointType(Link::AGX_CRAWLER_JOINT);
     } else {
-        link->setJointType(Link::FIXED_JOINT);
+        throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
     }
 
     if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
@@ -1033,7 +1037,7 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
     
     DeviceFactoryMap::iterator p = deviceFactories.find(typeName);
     if(p == deviceFactories.end()){
-        os() << str(format("Sensor type %1% is not supported.\n") % typeName) << endl;
+        os() << str(format(_("Sensor type %1% is not supported.\n")) % typeName) << endl;
     } else {
         DeviceFactory& factory = p->second;
         DevicePtr device = factory(deviceNode);
@@ -1224,7 +1228,7 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         for(int j=0; j < 2; ++j){
             if(!joint.link[j]){
                 throw invalid_argument(
-                    str(format("Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name") % (j+1)));
+                    str(format(_("Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name")) % (j+1)));
             }
         }
 
@@ -1235,7 +1239,7 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         } else if(jointType == "ball"){
             joint.type = Body::EJ_BALL;
         } else {
-            throw invalid_argument(str(format("JointType \"%1%\" is not supported.") % jointType));
+            throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
         }
             
         readVRMLfield(f["link1LocalPos"], joint.point[0]);

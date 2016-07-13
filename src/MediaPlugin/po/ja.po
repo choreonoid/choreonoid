@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-20 12:21+0900\n"
+"POT-Creation-Date: 2016-07-05 00:54+0900\n"
 "PO-Revision-Date: 2011-11-15 21:47+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -25,50 +25,55 @@ msgstr "音声アイテム"
 msgid "Audio File"
 msgstr "音声ファイル"
 
-#: DSMediaView.cpp:108
+#: DSMediaView.cpp:109
 msgid "CoInitialize failed. MediaView is not available."
 msgstr ""
 "CoInitialize関数の実行に問題があるため、メディアビューを利用できません。"
 
-#: DSMediaView.cpp:114 GSMediaView.cpp:146
-msgid "Media View"
-msgstr "メディアビュー"
-
-#: DSMediaView.cpp:116 GSMediaView.cpp:148
-msgid "Keep Aspect Ratio"
-msgstr "アスペクト比を維持"
-
-#: DSMediaView.cpp:119 GSMediaView.cpp:151
-msgid "Keep Original Size"
-msgstr "元のサイズを維持"
-
-#: DSMediaView.cpp:147 GSMediaView.cpp:142 GSMediaView.cpp:167
+#: DSMediaView.cpp:114 DSMediaView.cpp:151 GSMediaView.cpp:129
+#: GSMediaView.cpp:150
 msgid "Media"
 msgstr "メディア"
 
-#: DSMediaView.cpp:434
+#: DSMediaView.cpp:118 GSMediaView.cpp:133
+msgid "Media View"
+msgstr "メディアビュー"
+
+#: DSMediaView.cpp:120 GSMediaView.cpp:135
+msgid "Keep Aspect Ratio"
+msgstr "アスペクト比を維持"
+
+#: DSMediaView.cpp:123 GSMediaView.cpp:138
+msgid "Keep Original Size"
+msgstr "元のサイズを維持"
+
+#: DSMediaView.cpp:453
 msgid "This media file is not able to seek!"
 msgstr "本メディアファイルはシーク出来ません。"
 
-#: DSMediaView.cpp:672
+#: DSMediaView.cpp:691
 msgid "Failed(%1%) to stop media clip!\n"
 msgstr "メディアクリップの停止が出来ません(%1)。\n"
 
-#: GSMediaView.cpp:133
+#: GSMediaView.cpp:120
 msgid "GStreamer cannot be initialized:"
 msgstr "GStreamer の初期化が出来ません。"
 
-#: GSMediaView.cpp:197
+#: GSMediaView.cpp:174
 msgid ""
-"Initialization of the GSMediaView failed. The playbin2 plugin is missing."
-msgstr "GSMediaViewの初期化に失敗しました。playbin2プラグインがありません。"
+"Initialization of the GSMediaView failed. The playbin plugin is missing."
+msgstr "GSMediaViewの初期化に失敗しました。playbinプラグインがありません。"
 
-#: GSMediaView.cpp:222
+#: GSMediaView.cpp:199
 msgid ""
 "Initialization of the GSMediaView failed. The ximagesink could not be "
 "created."
 msgstr ""
 "GStreamerのximagesinkが生成できないため、GSMediaViewを初期化出来ません。"
+
+#: GSMediaView.cpp:426
+msgid "%1%: %2%"
+msgstr ""
 
 #: MediaItem.cpp:51
 msgid "MediaItem"

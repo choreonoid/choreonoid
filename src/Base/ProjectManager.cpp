@@ -128,7 +128,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
-    perspectiveCheck->setChecked(config->get("storePerspective", false));
+    perspectiveCheck->setChecked(config->get("storePerspective", true));
     perspectiveCheck->sigToggled().connect(bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
 
     homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));

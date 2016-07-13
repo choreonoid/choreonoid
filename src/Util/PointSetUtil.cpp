@@ -187,7 +187,7 @@ void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Aff
     if(hasColors){
         ofs << "FIELDS x y z rgb\n";
         ofs << "SIZE 4 4 4 4\n";
-        ofs << "TYPE F F F U\n";
+        ofs << "TYPE F F F F\n";
         ofs << "COUNT 1 1 1 1\n";
     } else {
         ofs << "FIELDS x y z\n";

@@ -166,10 +166,10 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     Link* crawlerlink;
     double sign = 1;
     double friction;
-    if(link0 && (link0->jointType() == Link::CRAWLER_JOINT)){
+    if(link0 && ((link0->jointType() == Link::CRAWLER_JOINT) || (link0->jointType() == Link::PSEUDO_CONTINUOUS_TRACK))){
         crawlerlink = link0;
         friction = bulletLink0->simImpl->friction;
-    } else if(link1 && (link1->jointType() == Link::CRAWLER_JOINT)){
+    } else if(link1 && ((link1->jointType() == Link::CRAWLER_JOINT) || (link1->jointType() == Link::PSEUDO_CONTINUOUS_TRACK))) {
         crawlerlink = link1;
         sign = -1;
         friction = bulletLink1->simImpl->friction;
@@ -192,7 +192,10 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     cp.m_lateralFrictionInitialized = true;
     cp.m_lateralFrictionDir1.setValue(frictionDir1.x(), frictionDir1.y(), frictionDir1.z());
     cp.m_lateralFrictionDir2.setValue(frictionDir2.x(), frictionDir2.y(), frictionDir2.z());
-    cp.m_contactMotion1 = crawlerlink->u();
+    if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
+        cp.m_contactMotion1 = crawlerlink->dq();
+    else
+        cp.m_contactMotion1 = crawlerlink->u();
 
     return true;
 }
@@ -674,7 +677,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
             ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, 0.0));
             ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
             ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
-            if(link->jointType() == Link::CRAWLER_JOINT){
+            if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
                 body->setCollisionFlags(body->getCollisionFlags()  | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
                 body->setUserPointer(this);
                 if(!gContactAddedCallback)

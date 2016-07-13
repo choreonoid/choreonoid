@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-23 14:35+0900\n"
+"POT-Creation-Date: 2016-07-05 00:45+0900\n"
 "PO-Revision-Date: 2013-12-11 13:29+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -89,50 +89,84 @@ msgid ""
 "field."
 msgstr "HumanoidノードのhumanoidBodyに含められるJointノードはひとつだけです。"
 
-#: VRMLBodyLoader.cpp:898
+#: VRMLBodyLoader.cpp:672
+msgid "Warning: Joint ID %1% is not specified."
+msgstr "警告: Joint ID %1% の指定がありません。"
+
+#: VRMLBodyLoader.cpp:785
+msgid "Warning: Joint ID %1% is duplicated."
+msgstr "警告： Joint ID %1% は重複しています。"
+
+#: VRMLBodyLoader.cpp:813
+msgid ""
+"Warning: A deprecated joint type 'crawler'is specified for %1%. Use "
+"'pseudoContinousTrack' instead."
+msgstr "警告：廃止予定の関節タイプである'crawler'が%1%で指定されています。この代わりに'pseudoContinousTrack'を使うようにしてください。"
+
+#: VRMLBodyLoader.cpp:818 VRMLBodyLoader.cpp:1240
+msgid "JointType \"%1%\" is not supported."
+msgstr "Jointノード\"%1%\"の位置が正しくありません。"
+
+#: VRMLBodyLoader.cpp:902
 msgid "%1% node is not in a correct place."
 msgstr "%1%ノードの位置が不正です。"
 
-#: VRMLBodyLoader.cpp:907
+#: VRMLBodyLoader.cpp:911
 msgid "Joint node \"%1%\" is not in a correct place."
 msgstr "Jointノード\"%1%\"の位置が正しくありません。"
 
-#: YAMLBodyLoader.cpp:366
+#: VRMLBodyLoader.cpp:1039
+msgid "Sensor type %1% is not supported.\n"
+msgstr "センサ型%1%はサポートされていません。\n"
+
+#: VRMLBodyLoader.cpp:1229
+msgid ""
+"Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name"
+msgstr "ExtraJointノードのフィールド\"link%1%Name\"で有効なリンク名が指定されていません"
+
+#: YAMLBodyLoader.cpp:406
 msgid "The file format cannot be loaded as a Choreonoid body model"
 msgstr ""
 "このファイル形式はChoreonoidのボディモデルとして読み込むことができません。"
 
-#: YAMLBodyLoader.cpp:374
-msgid "This version of the Choreonoid body format is not supported."
+#: YAMLBodyLoader.cpp:414
+msgid "This version of the Choreonoid body format is not supported"
 msgstr "このバージョンのChoreonoidボディ形式はサポートされていません。"
 
-#: YAMLBodyLoader.cpp:404
-msgid "Parent link \"%1%\" of %2% is not defined."
+#: YAMLBodyLoader.cpp:426
+msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
+msgstr "\"angleUnit\"の値は\"radian\"か\"degree\"でなければなりません"
+
+#: YAMLBodyLoader.cpp:438
+msgid "There is no \"links\" values for defining the links in the body"
+msgstr "ボディに含まれるリンクを定義する\"links\"の値がありません。"
+
+#: YAMLBodyLoader.cpp:465
+msgid "Parent link \"%1%\" of %2% is not defined"
 msgstr "%2%リンクの親リンク%1%は定義されていません。"
 
-#: YAMLBodyLoader.cpp:411
+#: YAMLBodyLoader.cpp:472
 msgid "There is no \"rootLink\" value for specifying the root link."
 msgstr "ルートリンクを指定する\"rootLink\"の値がありません。"
 
-#: YAMLBodyLoader.cpp:418
+#: YAMLBodyLoader.cpp:478
 msgid "Link \"%1%\" specified in \"rootLink\" is not defined."
 msgstr "\"rootLink\"で指定されている%1%リンクが定義されていません。"
 
-#: YAMLBodyLoader.cpp:449
+#: YAMLBodyLoader.cpp:520
 msgid "Duplicated link name \"%1%\""
 msgstr "リンク名\"%1%\"は重複しています。"
 
-#: YAMLBodyLoader.cpp:670
+#: YAMLBodyLoader.cpp:735
 msgid ""
 "The node type \"%1%\" is different from the type \"%2%\" specified in the "
 "parent node"
 msgstr "ノート型%1%は親ノードで指定されている%2%型と異なります。"
 
-#: YAMLBodyLoader.cpp:701
+#: YAMLBodyLoader.cpp:784
 msgid "The node type \"%1%\" is not defined."
 msgstr "ノード型%1%は定義されていません。"
 
-#: YAMLBodyLoader.cpp:933
+#: YAMLBodyLoader.cpp:1055
 msgid "Unknown geometry \"%1%\""
 msgstr "不明なジオメトリ%1%"
-

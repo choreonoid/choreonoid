@@ -35,33 +35,34 @@ public:
     {
         ostream& os = io->os();
         
-        Body* body = ioBody();
+        Body* body = io->body();
         crawlerL = body->link("CRAWLER_TRACK_L");
         crawlerR = body->link("CRAWLER_TRACK_R");
         if(!crawlerL || !crawlerR){
             os << "The crawlers are not found." << endl;
             return false;
         }
+        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
+        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+        
         cannonJoint[0] = body->link("CANNON_Y");
         cannonJoint[1] = body->link("CANNON_P");
         for(int i=0; i < 2; ++i){
-            if(!cannonJoint[i]){
+            Link* joint = cannonJoint[i];
+            if(!joint){
                 os << "Cannon joint " << i << " is not found." << endl;
                 return false;
             }
-            double q = cannonJoint[i]->q();
-            qref[i] = q;
-            qprev[i] = q;
+            qref[i] = qprev[i] = joint->q();
+            io->setLinkOutput(joint, JOINT_TORQUE);
+            io->setLinkInput(joint, JOINT_ANGLE);
         }
-
+        
         DeviceList<Light> lights(body->devices());
         if(!lights.empty()){
             light = lights.front();
         }
         prevLightButtonState = false;
-
-        io->setJointOutput(JOINT_TORQUE);
-        io->setJointInput(JOINT_ANGLE);
 
         if(!joystick.isReady()){
             os << "Joystick is not ready: " << joystick.errorMessage() << endl;
@@ -106,8 +107,8 @@ public:
             }
         }
         // set the velocity of each crawlers
-        crawlerL->u() = -2.0 * pos[1] + pos[0];
-        crawlerR->u() = -2.0 * pos[1] - pos[0];
+        crawlerL->dq() = -2.0 * pos[1] + pos[0];
+        crawlerR->dq() = -2.0 * pos[1] - pos[0];
         
         if(light){
             bool lightButtonState = joystick.getButtonState(buttonIds[0]);

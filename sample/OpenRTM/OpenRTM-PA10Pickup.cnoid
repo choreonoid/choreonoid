@@ -120,7 +120,7 @@ items:
           data: 
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Specific time"
+            timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: false
             deviceStateRecording: false
@@ -143,7 +143,7 @@ items:
           data: 
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Specific time"
+            timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: true
             deviceStateRecording: false
@@ -166,7 +166,7 @@ items:
           data: 
             realtimeSync: true
             recording: "full"
-            timeRangeMode: "Specific time"
+            timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: true
             deviceStateRecording: false

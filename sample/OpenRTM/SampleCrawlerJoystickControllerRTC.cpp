@@ -23,8 +23,8 @@ static const char* spec[] =
 
 SampleCrawlerJoystickControllerRTC::SampleCrawlerJoystickControllerRTC(RTC::Manager* manager)
     : RTC::DataFlowComponentBase(manager),
-      m_axesIn("axes", m_axes),
-      m_torqueOut("u", m_torque)
+      axesIn("axes", axes),
+      velocitiesOut("dq", velocities)
 { 
 
 }
@@ -38,10 +38,10 @@ SampleCrawlerJoystickControllerRTC::~SampleCrawlerJoystickControllerRTC()
 RTC::ReturnCode_t SampleCrawlerJoystickControllerRTC::onInitialize()
 {
     // Set InPort buffers
-    addInPort("axes", m_axesIn);
+    addInPort("axes", axesIn);
   
     // Set OutPort buffer
-    addOutPort("u", m_torqueOut);
+    addOutPort("dq", velocitiesOut);
 
     return RTC::RTC_OK;
 }
@@ -49,9 +49,9 @@ RTC::ReturnCode_t SampleCrawlerJoystickControllerRTC::onInitialize()
 
 RTC::ReturnCode_t SampleCrawlerJoystickControllerRTC::onActivated(RTC::UniqueId ec_id)
 {
-    m_torque.data.length(2);
-    m_torque.data[0] = 0.0;
-    m_torque.data[1] = 0.0;
+    velocities.data.length(2);
+    velocities.data[0] = 0.0;
+    velocities.data[1] = 0.0;
 
     return RTC::RTC_OK;
 }
@@ -65,12 +65,12 @@ RTC::ReturnCode_t SampleCrawlerJoystickControllerRTC::onDeactivated(RTC::UniqueI
 
 RTC::ReturnCode_t SampleCrawlerJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 {
-    if(m_axesIn.isNew()){
-        m_axesIn.read();
-        m_torque.data[0] = -2.0 * m_axes.data[1] + m_axes.data[0];
-        m_torque.data[1] = -2.0 * m_axes.data[1] - m_axes.data[0];
+    if(axesIn.isNew()){
+        axesIn.read();
+        velocities.data[0] = -2.0 * axes.data[1] + axes.data[0];
+        velocities.data[1] = -2.0 * axes.data[1] - axes.data[0];
     }
-    m_torqueOut.write();
+    velocitiesOut.write();
 
     return RTC::RTC_OK;
 }
@@ -87,4 +87,3 @@ extern "C"
     }
 
 };
-

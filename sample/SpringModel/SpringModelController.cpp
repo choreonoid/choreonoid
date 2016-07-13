@@ -13,18 +13,25 @@ class SpringModelController : public cnoid::SimpleController
     
 public:
 
-    virtual bool initialize() {
+    virtual bool initialize(SimpleControllerIO* io) {
 
-        spring = ioBody()->link("UPPER");
+        SimulationSimpleControllerIO* sio = dynamic_cast<SimulationSimpleControllerIO*>(io);
+
+        if(!sio){
+            return false;
+        }
+
+        spring = io->body()->link("UPPER");
 
         if(!spring){
             os() << "Spring-damper joint \"UPPER\" cannot be detected." << std::endl;
             return false;
         }
-        if(!isImmediateMode()){
-            os() << "Controller should be used with the immediate mode." << std::endl;
-            return false;
-        }
+        
+        io->setLinkInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
+        io->setLinkOutput(spring, JOINT_FORCE);
+
+        sio->setImmediateMode(true);
         
         return true;
     }

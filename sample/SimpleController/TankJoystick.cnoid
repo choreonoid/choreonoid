@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+
 items: 
   id: 0
   name: "Root"
@@ -32,7 +34,7 @@ items:
               2.22044605e-16, 1, 0, 
               -1, 2.22044605e-16, -0, 
               -0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000, 0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false

@@ -11,7 +11,7 @@ project(Choreonoid)
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)
 
 set(CNOID_MAJOR_VERSION 1) 
-set(CNOID_MINOR_VERSION 5)
+set(CNOID_MINOR_VERSION 6)
 set(CNOID_PATCH_VERSION 0)
 set(CNOID_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION})
 set(CNOID_FULL_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION}.${CNOID_PATCH_VERSION})
@@ -921,9 +921,11 @@ function(apply_common_setting_for_library_core target)
 
   get_target_property(target_type ${target} TYPE)
   if(target_type STREQUAL STATIC_LIBRARY)
-    install(TARGETS ${target}
-      LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    if(INSTALL_SDK)
+      install(TARGETS ${target}
+        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    endif()
   else()
     install(TARGETS ${target}
       RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
@@ -1149,6 +1151,44 @@ endforeach()
 
 # CPack
 include(InstallRequiredSystemLibraries)
+
+# InstallRequiredSystemLibraries does not properly support MSVS 14 yet, so do it manually.  (CMake3.5)
+if(INSTALL_RUNTIME_DEPENDENCIES)
+unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG)
+unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE)
+if(DEFINED MSVC_VERSION AND NOT MSVC_VERSION LESS 1900)
+    # Internal: Architecture-appropriate library directory names.
+    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "ARM")
+        set(_winsdk_arch8 arm) # what the WDK for Win8+ calls this architecture
+    else()
+        if(CMAKE_SIZEOF_VOID_P MATCHES "8")
+            set(_winsdk_arch8 x64) # what the WDK for Win8+ calls this architecture
+        else()
+            set(_winsdk_arch8 x86) # what the WDK for Win8+ calls this architecture
+        endif()
+    endif()
+
+    # The CRT is distributed with MSVS.
+    get_filename_component(MSVS_DIR
+        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0;ShellFolder]" ABSOLUTE)
+
+    # As of MSVC 19 the CRT depends on the 'univeral' CRT (which is part of Windows development kit 10 and above).
+    get_filename_component(WINDOWS_KIT_DIR
+        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" ABSOLUTE)
+
+    file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG
+        "${MSVS_DIR}/VC/redist/debug_nonredist/${_winsdk_arch8}/Microsoft.VC140.DebugCRT/*.dll"
+        "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/api-ms-win-*.dll"
+        "${WINDOWS_KIT_DIR}/bin/${_winsdk_arch8}/ucrt/*.dll"
+    )
+    file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE
+        "${MSVS_DIR}/VC/redist/${_winsdk_arch8}/Microsoft.VC140.CRT/*.dll"
+        "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/*.dll"
+    )
+
+    install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE} DESTINATION bin )
+endif()
+endif()
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Choreonoid")
 set(CPACK_PACKAGE_VENDOR "Shin'ichiro Nakaoka, AIST")

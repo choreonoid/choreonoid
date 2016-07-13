@@ -45,7 +45,7 @@ enum {
 
 namespace cnoid {
 
-class SimpleControllerItemImpl : public SimpleControllerIO
+class SimpleControllerItemImpl : public SimulationSimpleControllerIO
 {
 public:
     SimpleControllerItem* self;
@@ -111,6 +111,9 @@ public:
     virtual void setLinkOutput(Link* link, int stateTypes);
     virtual void setJointInput(int stateTypes);
     virtual void setLinkInput(Link* link, int stateTypes);
+
+    virtual bool isImmediateMode() const;
+    virtual void setImmediateMode(bool on);
 };
 
 }
@@ -414,7 +417,7 @@ void SimpleControllerItemImpl::setJointInput(int stateTypes)
         for(int i=0; i < nj; ++i){
             int linkIndex = ioBody->joint(i)->index();
             if(linkIndex >= 0){
-                linkIndexToInputStateTypeMap[linkIndex] = stateTypes;
+                linkIndexToInputStateTypeMap[linkIndex] |= stateTypes;
             }
         }
     }
@@ -427,7 +430,7 @@ void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
     if(link->index() >= linkIndexToInputStateTypeMap.size()){
         linkIndexToInputStateTypeMap.resize(link->index() + 1, 0);
     }
-    linkIndexToInputStateTypeMap[link->index()] = stateTypes;
+    linkIndexToInputStateTypeMap[link->index()] |= stateTypes;
     isInputStateTypeSetUpdated = true;
 }
 
@@ -442,7 +445,7 @@ void SimpleControllerItemImpl::setJointOutput(int stateTypes)
         for(int i=0; i < nj; ++i){
             int linkIndex = ioBody->joint(i)->index();
             if(linkIndex >= 0){
-                linkIndexToOutputStateTypeMap[linkIndex] = stateTypes;
+                linkIndexToOutputStateTypeMap[linkIndex] |= stateTypes;
             }
         }
     }
@@ -455,7 +458,7 @@ void SimpleControllerItemImpl::setLinkOutput(Link* link, int stateTypes)
     if(link->index() >= linkIndexToOutputStateTypeMap.size()){
         linkIndexToOutputStateTypeMap.resize(link->index() + 1, 0);
     }
-    linkIndexToOutputStateTypeMap[link->index()] = stateTypes;
+    linkIndexToOutputStateTypeMap[link->index()] |= stateTypes;
     isOutputStateTypeSetUpdated = true;
 }
 
@@ -506,6 +509,18 @@ static void updateIOStateTypeSet
             }
         }
     }
+}
+
+
+bool SimpleControllerItemImpl::isImmediateMode() const
+{
+    return self->isImmediateMode();
+}
+
+
+void SimpleControllerItemImpl::setImmediateMode(bool on)
+{
+    self->setImmediateMode(on);
 }
 
 

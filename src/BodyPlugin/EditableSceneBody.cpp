@@ -405,6 +405,7 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 {
     const BoundingBox& bb = sceneLink->visualShape()->boundingBox();
+    if (bb.empty()) return 1.0; // Is this OK?
     double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
     return pow(V, 1.0 / 3.0) * 0.6;
 }
@@ -1546,15 +1547,17 @@ void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
 
 void EditableSceneBodyImpl::restoreSceneBodyProperties(const Archive& archive)
 {
-    Listing& states = *archive["editableSceneBodies"].toListing();
-    for(int i=0; i < states.size(); ++i){
-        Mapping* state = states[i].toMapping();
-        BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
-        if(bodyItem){
-            EditableSceneBodyImpl* impl = bodyItem->sceneBody()->impl;
-            impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));
-            impl->showPpcom(state->get("showPpcom", impl->isPpcomVisible));
-            impl->showZmp(state->get("showZmp", impl->isZmpVisible));
+    Listing& states = *archive.findListing("editableSceneBodies");
+    if(states.isValid()){
+        for(int i=0; i < states.size(); ++i){
+            Mapping* state = states[i].toMapping();
+            BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
+            if(bodyItem){
+                EditableSceneBodyImpl* impl = bodyItem->sceneBody()->impl;
+                impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));
+                impl->showPpcom(state->get("showPpcom", impl->isPpcomVisible));
+                impl->showZmp(state->get("showZmp", impl->isZmpVisible));
+            }
         }
     }
 }

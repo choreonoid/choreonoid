@@ -32,9 +32,16 @@ public:
     
     virtual void setJointInput(int stateTypes) = 0;
     virtual void setJointOutput(int stateTypes) = 0;
-
     virtual void setLinkInput(Link* link, int stateTypes) = 0;
     virtual void setLinkOutput(Link* link, int stateTypes) = 0;
+};
+
+
+class SimulationSimpleControllerIO : public SimpleControllerIO
+{
+public:
+    virtual bool isImmediateMode() const = 0;
+    virtual void setImmediateMode(bool on) = 0;
 };
 
 

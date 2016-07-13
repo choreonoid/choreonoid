@@ -54,6 +54,12 @@ bool ControllerItem::splitOptionString(const std::string& optionString, std::vec
 }
 
 
+void ControllerItem::setImmediateMode(bool on)
+{
+    isImmediateMode_ = on;
+}
+
+
 bool ControllerItem::isActive() const
 {
     return simulatorItem_ ? simulatorItem_->isRunning() : false;
