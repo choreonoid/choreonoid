@@ -565,7 +565,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = src/Util src/Base src/Body src/Collision src/BodyPlugin src/SimpleControllerPlugin src/PoseSeqPlugin src/Corba src/CorbaPlugin src/OpenRTMPlugin src/OpenHRPPlugin src/ODEPlugin src/BulletPlugin src/MediaPlugin
+INPUT                  = src/Util src/Base src/Body src/AISTCollisionDetector src/BodyPlugin src/SimpleControllerPlugin src/PoseSeqPlugin src/BalancerPlugin src/ODEPlugin src/BulletPlugin src/Python src/PythonPlugin src/PythonSimScriptPlugin src/MediaPlugin src/Corba src/CorbaPlugin src/OpenRTMPlugin src/OpenHRPPlugin 
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
