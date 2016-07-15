@@ -182,6 +182,7 @@ PROTO SpotLightDevice [
   exposedField SFFloat beamWidth         1.570796  # (0,/2]
   exposedField SFColor color             1 1 1     # [0,1]
   exposedField SFFloat cutOffAngle       0.785398  # (0,/2]
+  exposedField SFFloat cutOffExponent    1
   exposedField SFVec3f direction         0 0 -1    # (-,)
   exposedField SFFloat intensity         1         # [0,1]
   exposedField SFBool  on                TRUE
@@ -234,7 +235,9 @@ DEF Submersible Humanoid {
 		}
 		DEF MainLight SpotLightDevice {
 		  direction 1 0 0
+		  beamWidth 0.5
 		  cutOffAngle 1.2
+		  cutOffExponent 5
 		  attenuation 1 0 0.01
 		  translation 0 0 0.2
 		}

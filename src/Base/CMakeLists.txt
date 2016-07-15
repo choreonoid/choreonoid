@@ -80,6 +80,10 @@ set(sources
   LazySignal.cpp
   Licenses.cpp
   GLSceneRenderer.cpp
+  GL1SceneRenderer.cpp
+  GLSLProgram.cpp
+  ShaderPrograms.cpp
+  GLSLSceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
@@ -101,6 +105,10 @@ set(sources
   TextEdit.cpp
   TaskView.cpp
   VirtualJoystickView.cpp
+  gl_core_3_3.c
+  #gl_core_4_0.c
+  #gl_core_4_4.c
+  gl_1_5.c
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -187,6 +195,8 @@ set(headers
   InteractiveCameraTransform.h
   RectRegionMarker.h
   GLSceneRenderer.h
+  GL1SceneRenderer.h
+  GLSLSceneRenderer.h
   SceneView.h
   SceneItem.h
   PointSetItem.h
@@ -262,7 +272,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES}
+    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES}
     intl
     )
 
@@ -270,9 +280,9 @@ elseif(UNIX)
 
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARIES}
+    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
     icuuc
-    GLEW
+    X11
     Xfixes
     )
 
@@ -282,7 +292,6 @@ elseif(MSVC)
     ${QT_LIBRARIES}
     general glu32
     CnoidUtil
-    ${GLEW_LIBRARIES}
     )
 endif()
 

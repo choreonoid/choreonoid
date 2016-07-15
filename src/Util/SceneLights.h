@@ -99,11 +99,14 @@ public:
     void setBeamWidth(float w) { beamWidth_ = w; }
     float cutOffAngle() const { return cutOffAngle_; }
     void setCutOffAngle(float a) { cutOffAngle_ = a; }
+    float cutOffExponent() const { return cutOffExponent_; }
+    void setCutOffExponent(float e) { cutOffExponent_ = e; }
 
 private:
     Vector3 direction_;
     float beamWidth_;
     float cutOffAngle_;
+    float cutOffExponent_;
 };
 typedef ref_ptr<SgSpotLight> SgSpotLightPtr;
 

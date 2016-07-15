@@ -100,6 +100,7 @@ SgSpotLight::SgSpotLight()
     direction_ << 0.0, 0.0, -1.0;
     beamWidth_ = 1.570796f;
     cutOffAngle_ = 0.785398f;
+    cutOffExponent_ = 1.0f;
 }
 
 
@@ -109,6 +110,7 @@ SgSpotLight::SgSpotLight(const SgSpotLight& org)
     direction_ = org.direction_;
     beamWidth_ = org.beamWidth_;
     cutOffAngle_ = org.cutOffAngle_;
+    cutOffExponent_ = org.cutOffExponent_;
 }
 
 

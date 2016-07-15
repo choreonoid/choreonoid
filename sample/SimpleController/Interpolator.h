@@ -269,8 +269,8 @@ private:
             
         return begin + 1;
     }
-
 };
+
 }
 
 #endif

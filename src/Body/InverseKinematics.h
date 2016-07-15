@@ -2,8 +2,8 @@
     \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_INVERSE_KINEMATICS_H_INCLUDED
-#define CNOID_INVERSE_KINEMATICS_H_INCLUDED
+#ifndef CNOID_INVERSE_KINEMATICS_H
+#define CNOID_INVERSE_KINEMATICS_H
 
 #include <boost/shared_ptr.hpp>
 #include <cnoid/EigenTypes>
@@ -25,7 +25,6 @@ public:
 };
 
 typedef boost::shared_ptr<InverseKinematics> InverseKinematicsPtr;
-
 
 }
 

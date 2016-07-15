@@ -41,17 +41,16 @@ public:
     SgOutlineGroup();
 
     virtual void accept(SceneVisitor& visitor);
-    const Vector4f& color() const { return color_; }
-    void setColor(const Vector4f& color) { color_ = color; }
+    const Vector3f& color() const { return color_; }
+    void setColor(const Vector3f& color) { color_ = color; }
     void setLineWidth(float width) { lineWidth_ = width; }
     float lineWidth() const { return lineWidth_; }
 
 private:
-    Vector4f color_;
+    Vector3f color_;
     float lineWidth_;
 };
 typedef ref_ptr<SgOutlineGroup> SgOutlineGroupPtr;
-
 
 }
 

@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_MULTI_VECTOR3_SEQ_H_INCLUDED
-#define CNOID_UTIL_MULTI_VECTOR3_SEQ_H_INCLUDED
+#ifndef CNOID_UTIL_MULTI_VECTOR3_SEQ_H
+#define CNOID_UTIL_MULTI_VECTOR3_SEQ_H
 
 #include "MultiSeq.h"
 #include "EigenTypes.h"
@@ -37,7 +37,8 @@ protected:
     virtual bool doReadSeq(const Mapping& archive);
 };
 
-typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;        
+typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;
+
 }
 
 #endif

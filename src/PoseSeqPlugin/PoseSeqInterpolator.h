@@ -1,6 +1,6 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_INTERPOLATOR_H
@@ -20,7 +20,6 @@ class PSIImpl;
 class CNOID_EXPORT PoseSeqInterpolator : public PoseProvider
 {
 public:
-
     PoseSeqInterpolator();
 
     void setBody(Body* body);
@@ -85,6 +84,7 @@ private:
 };
 
 typedef boost::shared_ptr<PoseSeqInterpolator> PoseSeqInterpolatorPtr;
+
 }
 
 #endif

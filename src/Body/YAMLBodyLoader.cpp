@@ -1007,6 +1007,7 @@ bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
     if(read(node, "direction", v)) light->setDirection(v);
     if(readAngle(node, "beamWidth", value)) light->setBeamWidth(value);
     if(readAngle(node, "cutOffAngle", value)) light->setCutOffAngle(value);
+    if(node.read("cutOffExponent", value)) light->setCutOffExponent(value);
     if(read(node, "attenuation", color)){
         light->setConstantAttenuation(color[0]);
         light->setLinearAttenuation(color[1]);

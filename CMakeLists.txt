@@ -11,7 +11,7 @@ project(Choreonoid)
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)
 
 set(CNOID_MAJOR_VERSION 1) 
-set(CNOID_MINOR_VERSION 5)
+set(CNOID_MINOR_VERSION 6)
 set(CNOID_PATCH_VERSION 0)
 set(CNOID_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION})
 set(CNOID_FULL_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION}.${CNOID_PATCH_VERSION})
@@ -921,9 +921,11 @@ function(apply_common_setting_for_library_core target)
 
   get_target_property(target_type ${target} TYPE)
   if(target_type STREQUAL STATIC_LIBRARY)
-    install(TARGETS ${target}
-      LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    if(INSTALL_SDK)
+      install(TARGETS ${target}
+        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    endif()
   else()
     install(TARGETS ${target}
       RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
@@ -1081,34 +1083,6 @@ add_subdirectory(thirdparty/irrxml-1.2)
 set(IRRXML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/irrxml-1.2/src)
 include_directories(${IRRXML_INCLUDE_DIRS})
 
-
-# glew library
-if(ENABLE_GUI)
-  if(UNIX)
-    set(USE_EXTERNAL_GLEW_DEFAULT ON)
-  elseif(MSVC)
-    set(USE_EXTERNAL_GLEW_DEFAULT OFF)
-  endif()
-  option(USE_EXTERNAL_GLEW "Use the GLEW library installed in an external directory" ${USE_EXTERNAL_GLEW_DEFAULT})
-  
-  if(USE_EXTERNAL_GLEW)
-    set(GLEW_DIR CACHE PATH "set the top directory of the GLEW library")
-    if(GLEW_DIR)
-      include_directories(${GLEW_DIR}/include)
-      link_directories(${GLEW_DIR}/lib)
-      set(GLEW_LIBRARIES GLEW)
-    elseif(UNIX)
-      pkg_check_modules(GLEW glew REQUIRED)
-      include_directories(${GLEW_INCLUDE_DIRS})
-      link_directories(${GLEW_LIBRARY_DIRS})
-    endif()
-  else()
-    include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/glew-1.9.0/include)
-    set(GLEW_LIBRARIES glew32)
-    add_subdirectory(thirdparty/glew-1.9.0)
-  endif()
-endif()
-  
 if(UNIX)
   # png
   find_package(PNG REQUIRED)

@@ -26,13 +26,13 @@ public:
     bool addBaseLink(Link* link);
     void setMaxIKerror(double e);
 
-    Body* body() const { return body_; }
-    Link* targetLink() const { return targetLink_; }
+    Body* body() { return body_; }
+    Link* targetLink() { return targetLink_; }
     int numJointPaths() const { return pathList.size(); }
     JointPathPtr jointPath(int index) const { return pathList[index].path; }
     Link* baseLink(int index) const { return pathList[index].endLink; }
 
-    virtual bool hasAnalyticalIK() const;
+    bool hasAnalyticalIK() const;
     virtual bool calcInverseKinematics(const Vector3& p, const Matrix3& R);
         
 private:
@@ -45,6 +45,7 @@ private:
         Matrix3 R_given;
     };
     std::vector<PathInfo> pathList;
+    std::vector<double> q0;
     bool isAnalytical_;
 };
 

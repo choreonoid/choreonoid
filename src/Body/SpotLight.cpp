@@ -19,6 +19,7 @@ SpotLight::SpotLight()
     direction_ << 0.0f, 0.0f, -1.0f;
     beamWidth_ = 1.570796f;
     cutOffAngle_ = 0.785398f;
+    cutOffExponent_ = 1.0f;
 }
 
 
@@ -34,6 +35,7 @@ void SpotLight::copyStateFrom(const SpotLight& other)
     direction_ = other.direction_;
     beamWidth_ = other.beamWidth_;
     cutOffAngle_ = other.cutOffAngle_;
+    cutOffExponent_ = other.cutOffExponent_;
 }
 
 

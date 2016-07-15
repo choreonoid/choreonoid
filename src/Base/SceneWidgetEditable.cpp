@@ -34,7 +34,7 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
 
 const Affine3& SceneWidgetEvent::currentCameraPosition() const
 {
-    return sceneWidget_->renderer().currentCameraPosition();
+    return sceneWidget_->renderer()->currentCameraPosition();
 }
 
 

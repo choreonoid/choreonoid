@@ -7,6 +7,7 @@
 #define CNOID_BODY_LEGGED_BODY_HELPER_H
 
 #include "Body.h"
+#include "InverseKinematics.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,14 +24,16 @@ public:
         
     virtual ~LeggedBodyHelper();
 
-    Body* body() const { return body_.get(); }
+    Body* body() const { return body_; }
 
     int numFeet() const { return footInfos.size(); }
 
     Link* footLink(int index) const { return footInfos[index].link; }
 
     Link* kneePitchJoint(int footIndex) const { return footInfos[footIndex].kneePitchJoint; }
-        
+
+    InverseKinematicsPtr getFootBasedIK(Link* targetLink);
+    
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor = false);
     bool setStance(double width, Link* baseLink);
 

@@ -48,9 +48,27 @@ AbstractSeq::~AbstractSeq()
 }
 
 
+double AbstractSeq::getTimeOfFrame(int frame) const
+{
+    return (frame + getOffsetTimeFrame()) / getFrameRate();
+}
+
+
+int AbstractSeq::getFrameOfTime(double time) const
+{
+    return static_cast<int>(time * getFrameRate()) - getOffsetTimeFrame();
+}
+
+
 int AbstractSeq::getOffsetTimeFrame() const
 {
     return 0;
+}
+
+
+bool AbstractSeq::setOffsetTimeFrame(int offset)
+{
+    return (offset == 0);
 }
 
 

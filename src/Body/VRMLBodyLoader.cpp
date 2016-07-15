@@ -619,6 +619,7 @@ void VRMLBodyLoaderImpl::checkSpotLightDeviceProto(VRMLProto* proto)
     requireField<SFVec3f>(proto, "direction");
     requireField<SFFloat>(proto, "intensity");
     requireField<SFBool>(proto, "on");
+    addField<SFFloat>(proto, "cutOffExponent", 1.0);
 }
 
 
@@ -1201,6 +1202,7 @@ SpotLightPtr VRMLBodyLoaderImpl::createSpotLight(VRMLProtoInstance* node)
     light->setDirection(getValue<SFVec3f>(node, "direction"));
     light->setBeamWidth(getValue<SFFloat>(node, "beamWidth"));
     light->setCutOffAngle(getValue<SFFloat>(node, "cutOffAngle"));
+    light->setCutOffExponent(getValue<SFFloat>(node, "cutOffExponent"));
     SFVec3f attenuation = getValue<SFVec3f>(node, "attenuation");
     light->setConstantAttenuation(attenuation[0]);
     light->setLinearAttenuation(attenuation[1]);

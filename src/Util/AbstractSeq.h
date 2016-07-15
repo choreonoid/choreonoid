@@ -50,14 +50,18 @@ public:
         return setFrameRate(1.0 / timeStep);
     }
 
-    double getTimeOfFrame(int frame){
-        return frame / getFrameRate();
-    }
+    double getTimeOfFrame(int frame) const;
+    int getFrameOfTime(double time) const;
 
     virtual int getOffsetTimeFrame() const;
+    virtual bool setOffsetTimeFrame(int offset);
 
     double getOffsetTime() const {
         return getOffsetTimeFrame() / getFrameRate();
+    }
+
+    bool setOffsetTime(double offset) {
+        return setOffsetTimeFrame(offset * getFrameRate());
     }
     
     virtual int getNumFrames() const = 0;
