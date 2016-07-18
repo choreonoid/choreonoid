@@ -32,7 +32,7 @@ public:
 
     ~ThreadPool() {
         {
-            boost::mutex::scoped_lock lock(mutex);
+            boost::lock_guard<boost::mutex> guard(mutex);
             isDestroying = true;
             condition.notify_all();
         }
@@ -42,15 +42,28 @@ public:
     int size() const { return size_; }
         
     void start(boost::function<void()> f) {
-        boost::mutex::scoped_lock lock(mutex);
+        boost::lock_guard<boost::mutex> guard(mutex);
         queue.push(f);
         condition.notify_one();
     }
 
     void wait(){
-        boost::mutex::scoped_lock lock(mutex);
+        boost::unique_lock<boost::mutex> lock(mutex);
         while(!queue.empty() || numActiveThreads > 0){
             finishCondition.wait(lock);
+        }
+    }
+
+    void wait2(){
+        while(true){
+            {
+                boost::unique_lock<boost::mutex> lock(mutex, boost::try_to_lock_t());
+                if(lock.owns_lock()){
+                    if(queue.empty() && numActiveThreads == 0){
+                        break;
+                    }
+                }
+            }
         }
     }
         
@@ -59,7 +72,7 @@ private:
         while(true){
             boost::function<void()> f;
             {
-                boost::mutex::scoped_lock lock(mutex);
+                boost::unique_lock<boost::mutex> lock(mutex);
 
                 while (queue.empty() && !isDestroying){
                     condition.wait(lock);
@@ -73,7 +86,7 @@ private:
             if(f){
                 f();
                 {
-                    boost::mutex::scoped_lock lock(mutex);
+                    boost::unique_lock<boost::mutex> lock(mutex);
                     --numActiveThreads;
                     if(numActiveThreads == 0){
                         finishCondition.notify_all();
