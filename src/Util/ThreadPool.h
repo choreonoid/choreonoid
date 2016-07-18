@@ -25,7 +25,7 @@ public:
         size_ = size;
         numActiveThreads = 0;
         isDestroying = false;
-        for(int i = 0; i < size; i++){
+        for(int i = 0; i < size; ++i){
             group.create_thread(boost::bind(&ThreadPool::run, this));
         }
     }
@@ -75,7 +75,9 @@ private:
                 {
                     boost::mutex::scoped_lock lock(mutex);
                     --numActiveThreads;
-                    finishCondition.notify_all();
+                    if(numActiveThreads == 0){
+                        finishCondition.notify_all();
+                    }
                 }
             } else {
                 break;
