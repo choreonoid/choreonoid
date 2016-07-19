@@ -20,6 +20,10 @@ using namespace cnoid;
 
 namespace {
 
+const bool MULTITHREAD_TYPE = 0;
+const bool USE_THREAD_POOL = true;
+const bool ENABLE_SHUFFLE = false;
+
 CollisionDetectorPtr factory()
 {
     return boost::make_shared<AISTCollisionDetector>();
@@ -72,20 +76,17 @@ public:
     vector<ColdetModelExPtr> models;
 
     typedef vector<ColdetModelPairExPtr> ModelPairArray;
-
     ModelPairArray modelPairs;
 
     int maxNumThreads;
+    int numThreads;
     boost::scoped_ptr<ThreadPool> threadPool;
+    boost::thread_group threadGroup;
+
     vector<int> shuffledPairIndices;
     boost::random::mt19937 randomEngine;
-    boost::random_number_generator<boost::random::mt19937> randomNumberGenerator;
+    boost::random_number_generator<boost::random::mt19937>randomNumberGenerator;
 
-    //typedef vector<CollisionPair> CollisionPairArray;
-    //vector<CollisionPairArray> collisionPairArrays;
-
-    vector<ModelPairArray> collidingModelPairArrays;
-        
     typedef set< IdPair<> > IdPairSet;
     IdPairSet nonInterfarencePairs;
 
@@ -98,9 +99,21 @@ public:
     bool makeReady();
     void detectCollisions(boost::function<void(const CollisionPair&)> callback);
     void detectCollisionsInParallel(boost::function<void(const CollisionPair&)> callback);
-    //void detectCollisionsOfAssignedPairs(int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs);
-    void detectCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, ModelPairArray& collidingModelPairs);
+
+    // for multithread type 0
+    typedef vector<CollisionPair> CollisionPairArray;
+    vector<CollisionPairArray> collisionPairArrays;
+
+    void extractCollisionsOfAssignedPairs(
+        int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs);    
+    void dispatchCollisionsInCollisionPairArrays(boost::function<void(const CollisionPair&)> callback);    
+    
+    // for multithread type 1
+    vector< vector<ColdetModelPairEx*> > collidingModelPairArrays;
+
+    void checkCollisionsOfAssignedPairs(
+        int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs);
+    void dispatchCollisionsInCollidingModelPairs(boost::function<void(const CollisionPair&)> callback);    
 };
 
 }
@@ -115,7 +128,8 @@ AISTCollisionDetector::AISTCollisionDetector()
 AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
     : randomNumberGenerator(randomEngine)
 {
-    maxNumThreads = 1;
+    maxNumThreads = 0;
+    numThreads = 0;
     meshExtractor = new MeshExtractor();
 }
 
@@ -282,19 +296,29 @@ bool AISTCollisionDetectorImpl::makeReady()
     }
 
     const int numPairs = modelPairs.size();
-    if(maxNumThreads > 0){
-        int numThreads = (maxNumThreads > numPairs) ? numPairs : maxNumThreads;
-        threadPool.reset(new ThreadPool(numThreads));
-        shuffledPairIndices.resize(modelPairs.size());
-        for(size_t i=0; i < shuffledPairIndices.size(); ++i){
-            shuffledPairIndices[i] = i;
-        }
-        //collisionPairArrays.resize(numThreads);
-        collidingModelPairArrays.resize(numThreads);
-    } else {
+
+    if(maxNumThreads <= 0){
+        numThreads = 0;
         threadPool.reset();
-        //collisionPairArrays.clear();
+        collisionPairArrays.clear();
         collidingModelPairArrays.clear();
+
+    } else {
+        numThreads = (maxNumThreads > numPairs) ? numPairs : maxNumThreads;
+        if(USE_THREAD_POOL){
+            threadPool.reset(new ThreadPool(numThreads));
+        }
+        if(ENABLE_SHUFFLE){
+            shuffledPairIndices.resize(modelPairs.size());
+            for(size_t i=0; i < shuffledPairIndices.size(); ++i){
+                shuffledPairIndices[i] = i;
+            }
+        }
+        if(MULTITHREAD_TYPE == 0){
+            collisionPairArrays.resize(numThreads);
+        } else {
+            collidingModelPairArrays.resize(numThreads);
+        }
     }
 
     return true;
@@ -312,7 +336,7 @@ void AISTCollisionDetector::updatePosition(int geometryId, const Position& posit
 
 void AISTCollisionDetector::detectCollisions(boost::function<void(const CollisionPair&)> callback)
 {
-    if(impl->threadPool){
+    if(impl->numThreads > 0){
         impl->detectCollisionsInParallel(callback);
     } else {
         impl->detectCollisions(callback);
@@ -359,48 +383,138 @@ void AISTCollisionDetectorImpl::detectCollisions(boost::function<void(const Coll
 
 void AISTCollisionDetectorImpl::detectCollisionsInParallel(boost::function<void(const CollisionPair&)> callback)
 {
-    //std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomNumberGenerator);
-    const int numPairs = shuffledPairIndices.size();
-    const int numThreads = threadPool->size();
-
-    //if(numThreads == 1){
-    if(false){
-        detectCollisionsOfAssignedPairs(0, numPairs, collidingModelPairArrays[0]);
-    } else {
-        const int minSize = numPairs / numThreads;
-        int remainder = numPairs % numThreads;
-        int index = 0;
-        for(int i=0; i < numThreads; ++i){
-            int size = minSize;
-            if(remainder > 0){
-                ++size;
-                --remainder;
-            }
-            if(size == 0){
-                break;
-            }
-            threadPool->start(
-                boost::bind(&AISTCollisionDetectorImpl::detectCollisionsOfAssignedPairs,
-                            //this, index, index + size, boost::ref(collisionPairArrays[i])));
-                            this, index, index + size, boost::ref(collidingModelPairArrays[i])));
-            index += size;
-        }
-        threadPool->wait2();
+    if(ENABLE_SHUFFLE){
+        std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomNumberGenerator);
     }
 
-    /*
+    const int numPairs = modelPairs.size();
+    const int minSize = numPairs / numThreads;
+    int remainder = numPairs % numThreads;
+    int index = 0;
+    for(int i=0; i < numThreads; ++i){
+        int size = minSize;
+        if(remainder > 0){
+            ++size;
+            --remainder;
+        }
+        if(size == 0){
+            break;
+        }
+        if(MULTITHREAD_TYPE == 0){
+            if(USE_THREAD_POOL){
+                threadPool->start(
+                    boost::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
+                                this, index, index + size, boost::ref(collisionPairArrays[i])));
+            } else {
+                threadGroup.create_thread(
+                    boost::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
+                                this, index, index + size, boost::ref(collisionPairArrays[i])));
+            }
+        } else {
+            if(USE_THREAD_POOL){
+                threadPool->start(
+                    boost::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
+                                this, index, index + size, boost::ref(collidingModelPairArrays[i])));
+            } else {
+                threadGroup.create_thread(
+                    boost::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
+                                this, index, index + size, boost::ref(collidingModelPairArrays[i])));
+            }
+        }
+        index += size;
+    }
+    if(USE_THREAD_POOL){
+        threadPool->waitLoop();
+        //threadPool->wait();
+    } else {
+        threadGroup.join_all();
+    }
+
+    if(MULTITHREAD_TYPE == 0){
+        dispatchCollisionsInCollisionPairArrays(callback);
+    } else {
+        dispatchCollisionsInCollidingModelPairs(callback);
+    }
+}
+
+
+void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
+(int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs)
+{
+    collisionPairs.clear();
+
+    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
+        ColdetModelPairEx* modelPair;
+        if(ENABLE_SHUFFLE){
+            modelPair = modelPairs[shuffledPairIndices[i]].get();
+        } else {
+            modelPair = modelPairs[i].get();
+        }
+        const std::vector<collision_data>& cdata = modelPair->detectCollisions();
+        if(!cdata.empty()){
+            collisionPairs.push_back(CollisionPair());
+            CollisionPair& collisionPair = collisionPairs.back();
+            collisionPair.geometryId[0] = modelPair->id1();
+            collisionPair.geometryId[1] = modelPair->id2();
+            vector<Collision>& collisions = collisionPair.collisions;
+            const int n = cdata.size();
+            collisions.reserve(n);
+            for(int j=0; j < n; ++j){
+                const collision_data& cd = cdata[j];
+                for(int k=0; k < cd.num_of_i_points; ++k){
+                    if(cd.i_point_new[k]){
+                        collisions.push_back(Collision());
+                        Collision& collision = collisions.back();
+                        collision.point = cd.i_points[k];
+                        collision.normal = cd.n_vector;
+                        collision.depth = cd.depth;
+                    }
+                }
+            }
+            if(collisions.empty()){
+                collisionPairs.pop_back();
+            }
+        }
+    }
+}
+
+void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
+(boost::function<void(const CollisionPair&)> callback)
+{
     for(int i=0; i < numThreads; ++i){
         const CollisionPairArray& collisionPairs = collisionPairArrays[i];
         for(size_t j=0; j < collisionPairs.size(); ++j){
             callback(collisionPairs[j]);
         }
     }
-    */
+}
 
+
+void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
+(int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs)
+{
+    collidingModelPairs.clear();
+    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
+        ColdetModelPairEx* modelPair;
+        if(ENABLE_SHUFFLE){
+            modelPair = modelPairs[shuffledPairIndices[i]].get();
+        } else {
+            modelPair = modelPairs[i].get();
+        }
+        if(!modelPair->detectCollisions().empty()){
+            collidingModelPairs.push_back(modelPair);
+        }
+    }
+}
+
+
+void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
+(boost::function<void(const CollisionPair&)> callback)
+{
     CollisionPair collisionPair;
     vector<Collision>& collisions = collisionPair.collisions;
     for(int i=0; i < numThreads; ++i){
-        const ModelPairArray& collidingModelPairs = collidingModelPairArrays[i];
+        const vector<ColdetModelPairEx*>& collidingModelPairs = collidingModelPairArrays[i];
         for(size_t j=0; j < collidingModelPairs.size(); ++j){
             ColdetModelPairEx& collidingModelPair = *collidingModelPairs[j];
             const std::vector<collision_data>& cdata = collidingModelPair.collisions();
@@ -427,53 +541,3 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(boost::function<void(
         }
     }
 }
-
-
-void AISTCollisionDetectorImpl::detectCollisionsOfAssignedPairs
-(int pairIndexBegin, int pairIndexEnd, ModelPairArray& collidingModelPairs)
-{
-    collidingModelPairs.clear();
-    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
-        ColdetModelPairExPtr& modelPair = modelPairs[shuffledPairIndices[i]];
-        if(!modelPair->detectCollisions().empty()){
-            collidingModelPairs.push_back(modelPair);
-        }
-    }
-}
-
-
-/*
-void AISTCollisionDetectorImpl::detectCollisionsOfAssignedPairs(int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs)
-{
-    collisionPairs.clear();
-
-    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
-        ColdetModelPairEx& modelPair = *modelPairs[shuffledPairIndices[i]];
-        const std::vector<collision_data>& cdata = modelPair.detectCollisions();
-        if(!cdata.empty()){
-            collisionPairs.push_back(CollisionPair());
-            CollisionPair& collisionPair = collisionPairs.back();
-            collisionPair.geometryId[0] = modelPair.id1();
-            collisionPair.geometryId[1] = modelPair.id2();
-            vector<Collision>& collisions = collisionPair.collisions;
-            const int n = cdata.size();
-            collision.reserve(n);
-            for(int j=0; j < n); ++j){
-                const collision_data& cd = cdata[j];
-                for(int k=0; k < cd.num_of_i_points; ++k){
-                    if(cd.i_point_new[k]){
-                        collisions.push_back(Collision());
-                        Collision& collision = collisions.back();
-                        collision.point = cd.i_points[k];
-                        collision.normal = cd.n_vector;
-                        collision.depth = cd.depth;
-                    }
-                }
-            }
-            if(collisions.empty()){
-                collisionPairs.pop_back();
-            }
-        }
-    }
-}
-*/

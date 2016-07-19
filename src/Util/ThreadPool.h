@@ -54,7 +54,7 @@ public:
         }
     }
 
-    void wait2(){
+    void waitLoop(){
         while(true){
             {
                 boost::unique_lock<boost::mutex> lock(mutex, boost::try_to_lock_t());
