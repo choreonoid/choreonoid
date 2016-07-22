@@ -775,6 +775,14 @@ SignalProxy<void()> GLSceneRenderer::sigCurrentCameraChanged()
 bool GLSceneRenderer::setSwapInterval(int interval)
 {
 #ifdef _WIN32
+    DISPLAY_DEVICE device;
+    device.cb = sizeof(DISPLAY_DEVICE);
+    for (unsigned int i = 0; EnumDisplayDevices(NULL, i, &device, NULL); i++) {
+        if (strstr(device.DeviceString, "VirtualBox") != NULL){
+            return false;
+        }
+    }
+
     if(!wglGetProcAddress("wglGetExtensionsStringEXT"))
         return false;
     if( strstr(wglGetExtensionsStringEXT(), "WGL_EXT_swap_control" ) == 0 )
