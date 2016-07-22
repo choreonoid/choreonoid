@@ -1,4 +1,24 @@
+Choreonoid 1.5.0 released on July 13, 2016
+==========================================
 
+Changes since 1.4.0:
+
+* Improved the view / toolbar management system
+* Added GLVisionSimulatorItem, which simulates vision sensors such as cameras, RGBD cameras, and laser range sensors
+* Added A function to interactively apply force to an object being simulated using mouse dragging
+* Improved the stabilty the simulation performed by AISTSimulatorItem
+* Added PhysXPlugin, which enable nVidia PhysX to be used as a physics engine in simulation
+* Added WorldLogFileItem, which stores all the log data of a virtual world being simulated online
+* Generalization of collision detectors
+* Added BodyTrackingCameraItem, which provides a camera that automatically tracks a particular object in a virtual world
+* Added SensorVisualizerItem, which visualizes the states of sensors such as force sensors in a scene view
+* Added PointSetItem and MultiPointSetItem, which visualize point cloud data in a scene view
+* Added the Python scripting function, which enables users to controll Choreonoid with a Python script
+* The source code of BalancerPlugin became a part of Choreonoid's main source code with the same license
+* Added samples
+* Supported both Qt4 and Qt5
+* The license was changed from LGPL to the MIT license
+* Other minor improvements and bug fixes
 
 Choreonoid 1.4.0 released on August 29, 2013
 ============================================

@@ -1,20 +1,40 @@
+This is a test version of the plugin for introducing the AgX Dynamics library released by algoryx.
 
-*** Agxインストール ****
+How to use AgXPlugin:
 
-ファイルをダウンロード
+1. Install AgX Dynamics
 
-sudo dpkg -i agx-setup-2.13.2.2-x64-Ubuntu-double.deb でインストール
+For Ubuntu Linux, AgX can be installed by using the dpkg command like:
 
-/opt/Algoryx/AgX-2.13.2.2に入るので、ここにライセンスファイルをコピー
+ sudo dpkg -i agx-setup-2.13.2.2-x64-Ubuntu-double.deb
 
-.bashrcに source /opt/Algoryx/AgX-2.13.2.2/setup_env.bashを記述して、　source ~/.bashrc で有効にする。
+2. Copy the license file to the AgX directory
 
-デモの実行
+AgX is installed into /opt/Algoryx/AgX-x.y.z.2.
+Copy the license file to this directory.
 
-cd /opt/Algoryx/AgX-2.13.2.2/data/luaDemos
-agxViewer robot.agxLua
+3. Set the environment variables
 
+The setup_env.bash script is in the AgX directory.
+Add the command to execute the script to the .profile file like:
 
-*** 注意  ***
-使用しているライブラリが、Bulletと競合しているようで、
-Bullet_PluginとAgx_Pluginは共存できない。どちらかを削除する必要がある。
+ source /opt/Algoryx/AgX-2.13.2.2/setup_env.bash
+
+You can immediately update the environment variables by executing:
+
+ source ~/.profile
+
+4. Compile AgXPlugin
+
+You can compile AgXPlugin by enabling BUILD_AGX_PLUGIN In CMake.
+
+5. Test AgX by using sample projects
+
+Sample projects such as SR1Walk.cnoid include AgXSimulatorItem.
+The item becomes available when AgXPlugin is loaded.
+Select the item and execute the simulation, then the simulation is performed using AgX.
+
+Note:
+Some libraries used in AgX seem to conflict with those used in the Bullet physics library,
+so AgXPlugin and BulletPlugin cannot be used simultaneously.
+Please disable BulletPlugin when you use AgXPlugin.

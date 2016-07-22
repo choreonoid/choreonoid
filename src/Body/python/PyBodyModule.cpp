@@ -94,19 +94,16 @@ PyObject* Body_calcTotalMomentum(Body& self) {
     return python::incref(ret.ptr());
 }
 
-BodyPtr BodyLoader_load2(BodyLoader& self, const std::string& filename) { return self.load(filename); }
 
+BodyPtr BodyLoader_load2(BodyLoader& self, const std::string& filename) { return self.load(filename); }
 
 LinkPtr JointPath_joint(JointPath& self, int index) { return self.joint(index); }
 LinkPtr JointPath_baseLink(JointPath& self) { return self.baseLink(); }
 LinkPtr JointPath_endLink(JointPath& self) { return self.endLink(); }
 
-
 bool (JointPath::*JointPath_calcInverseKinematics)(const Vector3& , const Matrix3&) = &JointPath::calcInverseKinematics;
 bool (JointPath::*JointPath_calcInverseKinematics2)(const Vector3&, const Matrix3&, const Vector3&, const Matrix3&) = &JointPath::calcInverseKinematics;
 
-
-    
 MultiValueSeqPtr BodyMotion_get_jointPosSeq(BodyMotion& self) { return self.jointPosSeq(); }
 void BodyMotion_set_jointPosSeq(BodyMotion& self, const MultiValueSeqPtr& jointPosSeq) { self.jointPosSeq() = jointPosSeq; }
 MultiSE3SeqPtr BodyMotion_get_linkPosSeq(BodyMotion& self) { return self.linkPosSeq(); }
@@ -314,6 +311,8 @@ BOOST_PYTHON_MODULE(Body)
             .def("numFrames", &BodyMotion::numFrames)
             .def("getNumFrames", &BodyMotion::getNumFrames)
             .def("setNumFrames", &BodyMotion::setNumFrames)
+            //.def("jointPosSeq", BodyMotion_jointPosSeq, return_value_policy<reference_existing_object>())
+            //.def("linkPosSeq", BodyMotion_linkPosSeq, return_value_policy<reference_existing_object>());
             .add_property("jointPosSeq", BodyMotion_get_jointPosSeq, BodyMotion_set_jointPosSeq)
             .add_property("linkPosSeq", BodyMotion_get_linkPosSeq, BodyMotion_set_linkPosSeq)
             .def("frame", BodyMotion_frame)
@@ -332,7 +331,7 @@ BOOST_PYTHON_MODULE(Body)
     register_ptr_to_python<BodyPtr>();
     register_ptr_to_python<LinkPtr>();
 #endif
-    
+
 }
 
 }; // namespace cnoid

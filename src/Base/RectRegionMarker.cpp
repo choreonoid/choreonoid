@@ -229,8 +229,7 @@ bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
         event.sceneWidget()->unproject(right, bottom, 0.0, points[2]);
         event.sceneWidget()->unproject(right, top, 0.0, points[3]);
         const Vector3 c = event.currentCameraPosition().translation();
-        SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
-
+        SgCamera* camera = event.sceneWidget()->renderer()->currentCamera();
         region.clear();
         if(dynamic_cast<SgPerspectiveCamera*>(camera)){
             for(int i=0; i < 4; ++i){
@@ -244,7 +243,6 @@ bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
                 region.addBoundingPlane(normal, points[i]);
             }
         }
-
         sigRegionFixed(region);
     }
     showRectangle(false);

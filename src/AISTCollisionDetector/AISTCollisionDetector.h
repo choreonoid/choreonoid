@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_AIST_COLLISION_DETECTOR_AIST_COLLISION_DETECTOR_H_INCLUDED
-#define CNOID_AIST_COLLISION_DETECTOR_AIST_COLLISION_DETECTOR_H_INCLUDED
+#ifndef CNOID_AIST_COLLISION_DETECTOR_AIST_COLLISION_DETECTOR_H
+#define CNOID_AIST_COLLISION_DETECTOR_AIST_COLLISION_DETECTOR_H
 
 #include <cnoid/CollisionDetector>
 #include "exportdecl.h"
@@ -32,11 +32,14 @@ public:
     virtual void updatePosition(int geometryId, const Position& position);
     virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback);
 
+    void setNumThreads(int n);
+
 private:
     AISTCollisionDetectorImpl* impl;
 };
 
 typedef boost::shared_ptr<AISTCollisionDetector> AISTCollisionDetectorPtr;
+
 }
 
 #endif

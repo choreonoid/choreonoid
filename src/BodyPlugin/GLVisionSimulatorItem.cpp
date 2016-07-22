@@ -10,7 +10,8 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/ValueTreeUtil>
-#include <cnoid/GLSceneRenderer>
+#include <cnoid/GL1SceneRenderer>
+#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/Body>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
@@ -148,8 +149,8 @@ public:
 #else
     QGLPixelBuffer* renderingBuffer;
 #endif
-    
-    GLSceneRenderer renderer;
+
+    GLSceneRenderer* renderer;
     int pixelWidth;
     int pixelHeight;
     boost::shared_ptr<Image> tmpImage;
@@ -159,6 +160,7 @@ public:
     int bodyIndex;
 
     VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
+    ~VisionRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
     void initializeScene(const vector<SimulationBody*>& simBodies);
     SgCamera* initializeCamera();
@@ -177,7 +179,6 @@ public:
     bool getCameraImage(Image& image);
     bool getRangeCameraData(Image& image, vector<Vector3f>& points);
     bool getRangeSensorData(vector<double>& rangeData);
-    ~VisionRenderer();
 };
 typedef ref_ptr<VisionRenderer> VisionRendererPtr;
 
@@ -196,6 +197,7 @@ public:
     vector<VisionRendererPtr> visionRenderers;
     vector<VisionRenderer*> renderersInRendering;
 
+    bool useGLSL;
     bool useQueueThreadForAllSensors;
     bool useThreadsForSensors;
     bool isVisionDataRecordingEnabled;
@@ -273,6 +275,8 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     maxLatency = 1.0;
     rangeSensorPrecisionRatio = 2.0;
     depthError = 0.0;
+
+    useGLSL = (getenv("CNOID_USE_GLSL") != 0);
     isVisionDataRecordingEnabled = false;
     useThreadsForSensorsProperty = true;
     isBestEffortModeProperty = false;
@@ -297,6 +301,7 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 {
     simulatorItem = 0;
 
+    useGLSL = org.useGLSL;
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
     rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
     depthError = org.depthError;
@@ -549,6 +554,8 @@ VisionRenderer::VisionRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 #else
     renderingBuffer = 0;
 #endif
+    
+    renderer = 0;
 }
 
 
@@ -565,6 +572,10 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     glContext = new QOpenGLContext;
     QSurfaceFormat format;
     format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    if(simImpl->useGLSL){
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        format.setVersion(3, 3);
+    }
     glContext->setFormat(format);
     glContext->create();
     offscreenSurface = new QOffscreenSurface;
@@ -576,17 +587,34 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
 #else
     QGLFormat format;
     format.setDoubleBuffer(false);
+    if(simImpl->useGLSL){
+        format.setProfile(QGLFormat::CoreProfile);
+        format.setVersion(3, 3);
+    }
     renderingBuffer = new QGLPixelBuffer(pixelWidth, pixelHeight, format);
     renderingBuffer->makeCurrent();
 #endif
+
+    if(!renderer){
+        if(simImpl->useGLSL){
+            renderer = new GLSLSceneRenderer;
+        } else {
+            renderer = new GL1SceneRenderer;
+        }
+    }
     
-    renderer.initializeGL();
-    renderer.setViewport(0, 0, pixelWidth, pixelHeight);
-    renderer.sceneRoot()->addChild(sceneGroup);
-    renderer.initializeRendering();
-    renderer.headLight()->on(simImpl->isHeadLightEnabled);
-    renderer.enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
-    renderer.setCurrentCamera(sceneCamera);
+    renderer->initializeGL();
+    renderer->setViewport(0, 0, pixelWidth, pixelHeight);
+    renderer->sceneRoot()->addChild(sceneGroup);
+    renderer->extractPreprocessedNodes();
+    renderer->setCurrentCamera(sceneCamera);
+
+    if(rangeSensor){
+        renderer->setDefaultLighting(false);
+    } else {
+        renderer->headLight()->on(simImpl->isHeadLightEnabled);
+        renderer->enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
+    }
 
     doneGLContextCurrent();
     
@@ -845,8 +873,8 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
 void VisionRenderer::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
 {
     makeGLContextCurrent();
-    renderer.render();
-    renderer.flush();
+    renderer->render();
+    renderer->flush();
     if(doStoreResultToTmpDataBuffer){
         storeResultToTmpDataBuffer();
     }
@@ -888,8 +916,8 @@ void VisionRenderer::concurrentRenderingLoop()
             makeGLContextCurrent();
             isGLContextCurrent = true;
         }
-        renderer.render();
-        renderer.flush();
+        renderer->render();
+        renderer->flush();
         storeResultToTmpDataBuffer();
     
         {
@@ -1073,7 +1101,7 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
 
     float* depthBuf = (float*)alloca(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuf);
-    const Matrix4f Pinv = renderer.projectionMatrix().inverse().cast<float>();
+    const Matrix4f Pinv = renderer->projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
     Vector4f n;
@@ -1143,7 +1171,7 @@ bool VisionRenderer::getRangeSensorData(vector<double>& rangeData)
     const double pitchStep = rangeSensorForRendering->pitchStep();
     const double maxTanPitchAngle = tan(pitchRange / 2.0);
 
-    const Matrix4 Pinv = renderer.projectionMatrix().inverse();
+    const Matrix4 Pinv = renderer->projectionMatrix().inverse();
     const double Pinv_32 = Pinv(3, 2);
     const double Pinv_33 = Pinv(3, 3);
     const double fw = pixelWidth;
@@ -1241,6 +1269,9 @@ VisionRenderer::~VisionRenderer()
         delete renderingBuffer;
     }
 #endif
+    if(renderer){
+        delete renderer;
+    }
 }
     
 

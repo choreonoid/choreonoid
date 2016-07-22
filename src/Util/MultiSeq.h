@@ -97,8 +97,6 @@ public:
                 std::fill(Container::begin(), Container::end(), defaultValue());
             }
         }
-
-        offsetTimeFrame_ = 0;
     }
 
     virtual double getFrameRate() const {
@@ -135,7 +133,6 @@ public:
 
     void clearFrames(){
         setNumFrames(0);
-        offsetTimeFrame_ = 0;
     }
 
     virtual int getNumParts() const {
@@ -150,8 +147,9 @@ public:
         return numFrames() / frameRate();
     }
 
-    void setOffsetTimeFrame(int frameOffset) {
+    virtual bool setOffsetTimeFrame(int frameOffset) {
         offsetTimeFrame_ = frameOffset;
+        return true;
     }
 
     int offsetTimeFrame() const {

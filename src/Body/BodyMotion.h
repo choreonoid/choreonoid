@@ -50,28 +50,31 @@ public:
     virtual int getNumFrames() const;
     virtual void setNumFrames(int n, bool clearNewArea = false);
 
-    MultiValueSeqPtr& jointPosSeq() {
+    MultiValueSeqPtr jointPosSeq() {
         return jointPosSeq_;
     }
 
-    const MultiValueSeqPtr& jointPosSeq() const {
+    ConstMultiValueSeqPtr jointPosSeq() const {
         return jointPosSeq_;
     }
 
-    MultiSE3SeqPtr& linkPosSeq() {
+    MultiSE3SeqPtr linkPosSeq() {
         return linkPosSeq_;
     }
 
-    const MultiSE3SeqPtr& linkPosSeq() const {
+    ConstMultiSE3SeqPtr linkPosSeq() const {
         return linkPosSeq_;
     }
 
     class Frame {
         BodyMotion& motion_;
-        const int frame_;
+        int frame_;
         Frame(BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
+        Frame& operator=(const Frame& rhs) { }
     public:
+        Frame();
         Frame(const Frame& org) : motion_(org.motion_), frame_(org.frame_) { }
+        ~Frame() { }
         BodyMotion& motion() { return motion_; }
         int frame() const { return frame_; }
         friend class BodyMotion;
@@ -79,10 +82,15 @@ public:
 
     class ConstFrame {
         const BodyMotion& motion_;
-        const int frame_;
+        int frame_;
         ConstFrame(const BodyMotion& motion, int frame) : motion_(motion), frame_(frame) { }
+        ConstFrame& operator=(const ConstFrame& rhs) { }
+        ConstFrame& operator=(const Frame& rhs) { }
     public:
+        ConstFrame();
+        ConstFrame(const ConstFrame& org) : motion_(org.motion_), frame_(org.frame_) { }
         ConstFrame(const Frame& org) : motion_(org.motion_), frame_(org.frame_) { }
+        ~ConstFrame() { }
         const BodyMotion& motion() const { return motion_; }
         int frame() const { return frame_; }
         friend class BodyMotion;
@@ -145,6 +153,7 @@ private:
 };
 
 typedef boost::shared_ptr<BodyMotion> BodyMotionPtr;
+typedef boost::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
 
 class Body;
 

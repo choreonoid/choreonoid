@@ -93,6 +93,7 @@ private:
     double height_;
 };
 typedef ref_ptr<SgOrthographicCamera> SgOrthographicCameraPtr;
+
 }
 
 #endif

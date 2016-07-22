@@ -42,6 +42,7 @@ private:
     SceneViewImpl* impl;
     friend class SceneViewImpl;
 };
+
 }
 
 #endif

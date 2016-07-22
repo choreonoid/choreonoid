@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_COLDET_MODEL_H_INCLUDED
-#define CNOID_COLDET_MODEL_H_INCLUDED
+#ifndef CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
+#define CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
 
 #include <cnoid/EigenTypes>
 #include <boost/shared_ptr.hpp>
@@ -224,7 +224,7 @@ private:
 
     friend class ColdetModelPair;
 };
-}
 
+}
 
 #endif

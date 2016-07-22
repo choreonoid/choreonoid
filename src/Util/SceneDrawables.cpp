@@ -18,11 +18,11 @@ const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
 
 SgMaterial::SgMaterial()
 {
-    ambientIntensity_ = 0.0f;
-    diffuseColor_.setZero();
+    ambientIntensity_ = 0.2f;
+    diffuseColor_ << 0.8f, 0.8f, 0.8f;
     emissiveColor_.setZero();
     specularColor_.setZero();
-    shininess_ = 0.0f;
+    shininess_ = 0.2f;
     transparency_ = 0.0f;
 }
 
@@ -722,6 +722,15 @@ SgMaterial* SgPlot::setMaterial(SgMaterial* material)
         material->addParent(this);
     }
     return material;
+}
+
+
+SgMaterial* SgPlot::getOrCreateMaterial()
+{
+    if(!material_){
+        setMaterial(new SgMaterial);
+    }
+    return material_;
 }
 
 

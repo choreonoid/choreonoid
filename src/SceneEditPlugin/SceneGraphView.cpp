@@ -12,7 +12,7 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
-#include <cnoid/GLSceneRenderer>
+#include <cnoid/GL1SceneRenderer>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #ifdef _WIN32
@@ -95,7 +95,7 @@ public:
     void onSelectionChanged();
     void addSelectedMarker();
     void removeSelectedMarker();
-    void renderMarker(GLSceneRenderer& renderer);
+    void renderMarker(GL1SceneRenderer& renderer);
     const SgObject* selectedObject();
 };
 }
@@ -542,7 +542,7 @@ const SgObject* SceneGraphViewImpl::selectedObject()
 }
 
 
-void SceneGraphViewImpl::renderMarker(GLSceneRenderer& renderer)
+void SceneGraphViewImpl::renderMarker(GL1SceneRenderer& renderer)
 {
     SgNode* node = 0;
     SgTransform* trans = 0;

@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_DATA_MAP_H_INCLUDED
-#define CNOID_UTIL_DATA_MAP_H_INCLUDED
+#ifndef CNOID_UTIL_DATA_MAP_H
+#define CNOID_UTIL_DATA_MAP_H
 
 #include <map>
 #include <vector>
@@ -41,6 +41,19 @@ public:
 
     typedef std::vector<ElementType, Allocator> Data;
 
+    DataMap() { }
+    
+    DataMap(const DataMap& org) : MapType(org) { }
+
+    DataMap& operator=(const DataMap& rhs) {
+        MapType::operator=(rhs);
+        return *this;
+    }
+
+    bool operator==(const DataMap<ElementType, Allocator>& rhs) const {
+        return *this == rhs;
+    }
+    
 #ifndef _MSC_VER
     using typename MapType::iterator;
     using MapType::size;
@@ -51,7 +64,7 @@ public:
     using MapType::find;
 #else
     // In VC++, the above declarations produce C2487 error in compiling a class
-    // which inherits this class. So we use the following code instead of the above one.
+    // which inherits this class. The following code is used instead of the above one.
     typedef typename MapType::iterator iterator;
     size_t size() const { return MapType::size(); }
     bool empty() const { return MapType::empty(); }
@@ -72,14 +85,11 @@ public:
         }
         return emptyData;
     }
-
-    bool operator==(const DataMap<ElementType, Allocator>& rhs) const {
-        return *this == rhs;
-    }
 };
 
 template <class ElementType, class Allocator>
 const std::vector<ElementType, Allocator> DataMap<ElementType, Allocator>::emptyData;
+
 }
 
 #endif

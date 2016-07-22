@@ -92,7 +92,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
         }
     }
 
-    qseqRef = motionItem->jointPosSeq();
+    qseqRef = motionItem->motion()->jointPosSeq();
 
     body = io->body();
     currentFrame = 0;
@@ -108,7 +108,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
     }
 
     // Overwrite the initial position and pose
-    MultiSE3SeqPtr lseq = motionItem->linkPosSeq();
+    MultiSE3SeqPtr lseq = motionItem->motion()->linkPosSeq();
     if(lseq->numParts() > 0 && lseq->numFrames() > 0){
         SE3& p = lseq->at(0, 0);
         Link* rootLink = body->rootLink();

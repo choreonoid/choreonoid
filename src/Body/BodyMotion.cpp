@@ -300,6 +300,29 @@ void BodyMotion::clearExtraSeq(const std::string& contentName)
 }
 
 
+static BodyMotion& emptyMotion()
+{
+    static BodyMotion motion;
+    return motion;
+}
+
+
+BodyMotion::Frame::Frame()
+    : motion_(emptyMotion()),
+      frame_(-1)
+{
+
+}
+
+
+BodyMotion::ConstFrame::ConstFrame()
+    : motion_(emptyMotion()),
+      frame_(-1)
+{
+
+}
+
+    
 static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 {
     BodyMotion& motion = frame.motion();

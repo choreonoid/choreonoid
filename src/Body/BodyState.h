@@ -19,6 +19,7 @@ class Body;
 */
 class CNOID_EXPORT BodyState : public DataMap<double>
 {
+    typedef DataMap<double> BaseType;
 public:
     enum DataType {
         JOINT_POSITIONS,
@@ -29,7 +30,11 @@ public:
 
     BodyState();
     BodyState(const Body& body);
-
+    BodyState(const BodyState& state);
+    BodyState& operator=(const BodyState& rhs) {
+        DataMap<double>::operator=(rhs);
+        return *this;
+    }
     void storePositions(const Body& body);
     bool restorePositions(Body& io_body) const;
 
@@ -51,9 +56,14 @@ protected:
     virtual std::map<std::string, int>& nameToIdMap();
     virtual std::map<int, std::string>& idToNameMap();
     virtual int nextDynamicId();
-        
 };
 
-};
+
+CNOID_EXPORT BodyState& operator<<(BodyState& state, const Body& body);
+CNOID_EXPORT const BodyState& operator>>(const BodyState& state, Body& body);
+CNOID_EXPORT Body& operator<<(Body& body, const BodyState& state);
+CNOID_EXPORT const Body& operator>>(const Body& body, BodyState& state);
+
+}
 
 #endif

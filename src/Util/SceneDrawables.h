@@ -472,6 +472,7 @@ public:
     SgMaterial* material() { return material_; }
     const SgMaterial* material() const { return material_; }
     SgMaterial* setMaterial(SgMaterial* material);
+    SgMaterial* getOrCreateMaterial();
         
     bool hasNormals() const { return (normals_ && !normals_->empty()); }
     SgNormalArray* normals() { return normals_; }

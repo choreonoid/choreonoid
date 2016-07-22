@@ -6,6 +6,7 @@
 #include "LeggedBodyHelper.h"
 #include "Link.h"
 #include "JointPath.h"
+#include "CompositeIK.h"
 #include <cnoid/EigenArchive>
 #include <boost/make_shared.hpp>
 
@@ -87,6 +88,23 @@ bool LeggedBodyHelper::resetBody(Body* body)
     return isValid_;
 }
 
+
+InverseKinematicsPtr LeggedBodyHelper::getFootBasedIK(Link* targetLink)
+{
+    InverseKinematicsPtr ik;
+    if(isValid_){
+        CompositeIKPtr composite = make_shared<CompositeIK>(body_, targetLink);
+        ik = composite;
+        for(size_t i=0; i < footInfos.size(); ++i){
+            if(!composite->addBaseLink(footInfos[i].link)){
+                ik.reset();
+                break;
+            }
+        }
+    }
+    return ik;
+}
+    
 
 bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
 {

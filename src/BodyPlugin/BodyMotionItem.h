@@ -31,9 +31,14 @@ public:
     virtual AbstractMultiSeqPtr abstractMultiSeq();
 
     BodyMotionPtr motion() { return bodyMotion_; }
+    ConstBodyMotionPtr motion() const { return bodyMotion_; }
 
     MultiValueSeqItem* jointPosSeqItem() {
-        return jointPosSeqItem_.get();
+        return jointPosSeqItem_;
+    }
+
+    const MultiValueSeqItem* jointPosSeqItem() const {
+        return jointPosSeqItem_;
     }
 
     MultiValueSeqPtr jointPosSeq() {
@@ -41,9 +46,13 @@ public:
     }
 
     MultiSE3SeqItem* linkPosSeqItem() {
-        return linkPosSeqItem_.get();
+        return linkPosSeqItem_;
     }
-            
+
+    const MultiSE3SeqItem* linkPosSeqItem() const {
+        return linkPosSeqItem_;
+    }
+    
     MultiSE3SeqPtr linkPosSeq() {
         return bodyMotion_->linkPosSeq();
     }
@@ -73,6 +82,7 @@ private:
 };
 
 typedef ref_ptr<BodyMotionItem> BodyMotionItemPtr;
+
 }
 
 #endif

@@ -35,11 +35,15 @@ public:
 
     float cutOffAngle() const { return cutOffAngle_; }
     void setCutOffAngle(float angle) { cutOffAngle_ = angle; }
-        
+
+    float cutOffExponent() const { return cutOffExponent_; }
+    void setCutOffExponent(float e) { cutOffExponent_ = e; }
+    
 private:
     Vector3 direction_;
     float beamWidth_;
     float cutOffAngle_;
+    float cutOffExponent_;
 };
 
 typedef ref_ptr<SpotLight> SpotLightPtr;

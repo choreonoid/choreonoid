@@ -45,6 +45,7 @@ protected:
 };
 
 typedef ref_ptr<AbstractMultiSeqItem> AbstractMultiSeqItemPtr;
+
 }
 
 #endif

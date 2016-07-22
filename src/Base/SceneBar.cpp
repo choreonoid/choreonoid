@@ -4,7 +4,6 @@
 
 #include "SceneBar.h"
 #include "SceneWidget.h"
-#include "GLSceneRenderer.h"
 #include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
@@ -13,6 +12,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
+#include <cnoid/SceneRenderer>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include "gettext.h"
@@ -206,7 +206,7 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
         self->setEnabled(false);
 
     } else {
-        targetRenderer = &sceneWidget->renderer();
+        targetRenderer = sceneWidget->renderer();
 
         onSceneWidgetStateChanged();
 

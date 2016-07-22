@@ -23,6 +23,13 @@ BodyState::BodyState(const Body& body)
 }
 
 
+BodyState::BodyState(const BodyState& state)
+    : DataMap<double>(state)
+{
+
+}
+    
+
 void BodyState::setRootLinkPosition(const Position& T)
 {
     Data& p = data(LINK_POSITIONS);
@@ -187,4 +194,33 @@ int BodyState::nextDynamicId()
 {
     static int dynamicIdCounter = MIN_DYNAMIC_ID;
     return dynamicIdCounter++;
+}
+
+
+namespace cnoid {
+
+BodyState& operator<<(BodyState& state, const Body& body)
+{
+    state.storePositions(body);
+    return state;
+}
+
+const BodyState& operator>>(const BodyState& state, Body& body)
+{
+    state.restorePositions(body);
+    return state;
+}
+
+Body& operator<<(Body& body, const BodyState& state)
+{
+    state.restorePositions(body);
+    return body;
+}
+
+const Body& operator>>(const Body& body, BodyState& state)
+{
+    state.storePositions(body);
+    return body;
+}
+
 }
