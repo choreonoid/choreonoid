@@ -7,9 +7,8 @@
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
-//#include "YAMLWriter.h"
-#include <boost/function.hpp>
 #include <boost/format.hpp>
+#include <functional>
 
 namespace cnoid {
 
@@ -141,7 +140,7 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxis<
     return s;
 }
 
-inline bool read(const Mapping& mapping, const std::string& key, boost::function<void(Vector3&)> setterFunc)
+inline bool read(const Mapping& mapping, const std::string& key, std::function<void(Vector3&)> setterFunc)
 {
     Vector3 x;
     if(read(mapping, key, x)){

@@ -18,8 +18,6 @@
 #include <QMouseEvent>
 #include <QDesktopWidget>
 #include <QLabel>
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <bitset>
 #include <iostream>
 #include "gettext.h"
@@ -113,7 +111,7 @@ public:
     bool viewTabsVisible;
     bool isMaximizedBeforeFullScreen;
     bool needToUpdateDefaultPaneAreas;
-    boost::scoped_ptr< vector<View*> > defaultViewsToShow;
+    std::unique_ptr< vector<View*> > defaultViewsToShow;
 
     ViewPane* areaToPane[View::NUM_AREAS];
 
@@ -461,7 +459,7 @@ ViewAreaImpl::ViewAreaImpl(ViewArea* self)
     viewSizeLabelTimer.setSingleShot(true);
     viewSizeLabelTimer.setInterval(1000);
     viewSizeLabelTimer.sigTimeout().connect(
-        boost::bind(&ViewAreaImpl::hideViewSizeLabels, this));
+        std::bind(&ViewAreaImpl::hideViewSizeLabels, this));
 
     topSplitter = 0;
     needToUpdateDefaultPaneAreas = true;
@@ -1418,7 +1416,7 @@ bool ViewAreaImpl::viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event)
                 viewMenuManager.addSeparator();
             }
             viewMenuManager.addItem(_("Separate the view"))
-                ->sigTriggered().connect(boost::bind(&ViewAreaImpl::separateView, this, view));
+                ->sigTriggered().connect(std::bind(&ViewAreaImpl::separateView, this, view));
                 
             viewMenuManager.popupMenu()->popup(event->globalPos());
         }

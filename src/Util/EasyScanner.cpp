@@ -14,8 +14,8 @@
 #include <errno.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 
 namespace {

@@ -8,8 +8,8 @@
 
 #include "SceneGraph.h"
 #include "Image.h"
-#include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -53,7 +53,7 @@ class CNOID_EXPORT SgImage : public SgObject
 public:
     SgImage();
     SgImage(const Image& image);
-    SgImage(boost::shared_ptr<Image> sharedImage);
+    SgImage(std::shared_ptr<Image> sharedImage);
     SgImage(const SgImage& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
 
@@ -75,7 +75,7 @@ public:
     void setSize(int width, int height);
 
 private:
-    boost::shared_ptr<Image> image_;
+    std::shared_ptr<Image> image_;
 };
 typedef ref_ptr<SgImage> SgImagePtr;
 

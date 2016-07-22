@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_LAZY_CALLER_H
 #define CNOID_BASE_LAZY_CALLER_H
 
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -29,11 +29,11 @@ public:
     enum { PRIORITY_HIGH = 0, PRIORITY_NORMAL, PRIORITY_LOW };
         
     LazyCaller();
-    LazyCaller(const boost::function<void(void)>& function, int priority = PRIORITY_HIGH);
+    LazyCaller(const std::function<void(void)>& function, int priority = PRIORITY_HIGH);
     LazyCaller(const LazyCaller& org);
     virtual ~LazyCaller();
 
-    void setFunction(const boost::function<void(void)>& function);
+    void setFunction(const std::function<void(void)>& function);
     void setPriority(int priority);
 
     /**
@@ -81,7 +81,7 @@ class CNOID_EXPORT QueuedCaller
     QueuedCaller();
     virtual ~QueuedCaller();
     
-    void callLater(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+    void callLater(const std::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
 
     void cancel();
 };
@@ -92,9 +92,9 @@ enum { IDLE_PRIORITY_HIGH = LazyCaller::PRIORITY_HIGH,
        IDLE_PRIORITY_NORMAL = LazyCaller::PRIORITY_NORMAL,
        IDLE_PRIORITY_LOW = LazyCaller::PRIORITY_LOW };
 
-CNOID_EXPORT void callLater(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
-CNOID_EXPORT void callFromMainThread(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
-CNOID_EXPORT bool callSynchronously(const boost::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+CNOID_EXPORT void callLater(const std::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+CNOID_EXPORT void callFromMainThread(const std::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
+CNOID_EXPORT bool callSynchronously(const std::function<void()>& function, int priority = LazyCaller::PRIORITY_NORMAL);
 
 CNOID_EXPORT bool isRunningInMainThread();
 

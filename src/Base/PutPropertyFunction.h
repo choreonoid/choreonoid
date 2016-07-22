@@ -6,7 +6,7 @@
 #define CNOID_BASE_PUT_PROPERTY_FUNCTION_H
 
 #include <cnoid/Selection>
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -48,44 +48,44 @@ public:
     // bool
     virtual void operator()(const std::string& name, bool value) = 0;
     virtual void operator()(const std::string& name, bool value,
-                            const boost::function<bool(bool)>& changeFunc) = 0;
+                            const std::function<bool(bool)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, bool value,
-                            const boost::function<void(bool)>& changeFunc, bool forceUpdate) = 0;
+                            const std::function<void(bool)>& changeFunc, bool forceUpdate) = 0;
 
     // int
     virtual void operator()(const std::string& name, int value) = 0;
     virtual void operator()(const std::string& name, int value,
-                            const boost::function<bool(int)>& changeFunc) = 0;
+                            const std::function<bool(int)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, int value,
-                            const boost::function<void(int)>& changeFunc, bool forceUpdate) = 0;
+                            const std::function<void(int)>& changeFunc, bool forceUpdate) = 0;
 
     // double
     virtual void operator()(const std::string& name, double value) = 0;
     virtual void operator()(const std::string& name, double value,
-                            const boost::function<bool(double)>& changeFunc) = 0;
+                            const std::function<bool(double)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, double value,
-                            const boost::function<void(double)>& func, bool forceUpdate) = 0;
+                            const std::function<void(double)>& func, bool forceUpdate) = 0;
 
     // string
     virtual void operator()(const std::string& name, const std::string& value) = 0;
     virtual void operator()(const std::string& name, const std::string& value,
-                            const boost::function<bool(const std::string&)>& changeFunc) = 0;
+                            const std::function<bool(const std::string&)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, const std::string& value,
-                            const boost::function<void(const std::string&)>& changeFunc, bool forceUpdate) = 0;
+                            const std::function<void(const std::string&)>& changeFunc, bool forceUpdate) = 0;
 
     // selection
     virtual void operator()(const std::string& name, const Selection& selection) = 0;
     virtual void operator()(const std::string& name, const Selection& selection,
-                            const boost::function<bool(int which)>& changeFunc) = 0;
+                            const std::function<bool(int which)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, const Selection& selection,
-                            const boost::function<void(int which)>& changeFunc, bool forceUpdate) = 0;
+                            const std::function<void(int which)>& changeFunc, bool forceUpdate) = 0;
 
     // FilePath
     virtual void operator()(const std::string& name, const FilePath& filePath) = 0;
     virtual void operator()(const std::string& name, const FilePath& filePath,
-                            const boost::function<bool(const std::string&)>& changeFunc) = 0;
+                            const std::function<bool(const std::string&)>& changeFunc) = 0;
     virtual void operator()(const std::string& name, const FilePath& filePath,
-                            const boost::function<void(const std::string&)>& changeFunc, bool forceUpdate) = 0;
+                            const std::function<void(const std::string&)>& changeFunc, bool forceUpdate) = 0;
 };
 
 

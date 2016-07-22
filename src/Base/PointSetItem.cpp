@@ -18,12 +18,11 @@
 #include <cnoid/Exception>
 #include <cnoid/FileUtil>
 #include <cnoid/PolyhedralRegion>
-#include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -145,8 +144,8 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
         im.addCreationPanel<PointSetItem>();
         im.addLoaderAndSaver<PointSetItem>(
             _("Point Cloud (PCD)"), "PCD-FILE", "pcd",
-            boost::bind(::loadPCD, _1, _2, _3),
-            boost::bind(::saveAsPCD, _1, _2, _3),
+            std::bind(::loadPCD, _1, _2, _3),
+            std::bind(::saveAsPCD, _1, _2, _3),
             ItemManager::PRIORITY_CONVERSION);
         
         initialized = true;
@@ -190,7 +189,7 @@ void PointSetItem::initialize()
 {
     impl->pointSetUpdateConnection.reset(
         impl->pointSet->sigUpdated().connect(
-            boost::bind(&PointSetItem::notifyUpdate, this)));
+            std::bind(&PointSetItem::notifyUpdate, this)));
 }
 
 
@@ -484,7 +483,7 @@ void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArra
         const SgIndexArray orgIndices(indices);
         const int numOrgIndices = orgIndices.size();
         indices.clear();
-        dynamic_bitset<> elementValidness(numOrgElements);
+        boost::dynamic_bitset<> elementValidness(numOrgElements);
         int j = 0;
         int nextIndexToRemove = indicesToRemove[j++];
         for(int i=0; i < numOrgIndices; ++i){
@@ -519,18 +518,18 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     ScenePointSet* scene = impl->scene;
     putProperty(_("File"), getFilename(filePath()));
     putProperty(_("Rendering mode"), scene->renderingMode,
-                boost::bind(&PointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
+                std::bind(&PointSetItemImpl::onRenderingModePropertyChanged, impl, _1));
     putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
-                                     boost::bind(&ScenePointSet::setPointSize, scene, _1), true);
+                                     std::bind(&ScenePointSet::setPointSize, scene, _1), true);
     putProperty.decimals(4)(_("Voxel size"), voxelSize(),
-                            boost::bind(&ScenePointSet::setVoxelSize, scene, _1), true);
-    putProperty(_("Editable"), isEditable(), boost::bind(&PointSetItemImpl::onEditableChanged, impl, _1));
+                            std::bind(&ScenePointSet::setVoxelSize, scene, _1), true);
+    putProperty(_("Editable"), isEditable(), std::bind(&PointSetItemImpl::onEditableChanged, impl, _1));
     const SgVertexArray* points = impl->pointSet->vertices();
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
     putProperty(_("Translation"), str(Vector3(offsetTransform().translation())),
-                boost::bind(&PointSetItemImpl::onTranslationPropertyChanged, impl, _1));
+                std::bind(&PointSetItemImpl::onTranslationPropertyChanged, impl, _1));
     Vector3 rpy(rpyFromRot(offsetTransform().linear()));
-    putProperty("RPY", str(TO_DEGREE * rpy), boost::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
+    putProperty("RPY", str(TO_DEGREE * rpy), std::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
 }
 
 
@@ -622,9 +621,9 @@ ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     regionMarker = new RectRegionMarker;
     regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icons/eraser-cursor.png"), 3, 2));
     regionMarker->sigRegionFixed().connect(
-        boost::bind(&ScenePointSet::onRegionFixed, this, _1));
+        std::bind(&ScenePointSet::onRegionFixed, this, _1));
     regionMarker->sigContextMenuRequest().connect(
-        boost::bind(&ScenePointSet::onContextMenuRequestInEraserMode, this, _1, _2));
+        std::bind(&ScenePointSet::onContextMenuRequestInEraserMode, this, _1, _2));
 
     isEditable_ = false;
 }
@@ -897,12 +896,12 @@ void ScenePointSet::onContextMenuRequest(const SceneWidgetEvent& event, MenuMana
 {
     if(isEditable_){
         menuManager.addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
-            boost::bind(&ScenePointSet::clearAttentionPoints, this, true));
+            std::bind(&ScenePointSet::clearAttentionPoints, this, true));
 
         if(!regionMarker->isEditing()){
             eraserModeMenuItemConnection.reset(
                 menuManager.addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-                    boost::bind(&RectRegionMarker::startEditing, regionMarker.get(), event.sceneWidget())));
+                    std::bind(&RectRegionMarker::startEditing, regionMarker.get(), event.sceneWidget())));
         }
     }
 }
@@ -912,7 +911,7 @@ void ScenePointSet::onContextMenuRequestInEraserMode(const SceneWidgetEvent& eve
 {
     eraserModeMenuItemConnection.reset(
         menuManager.addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
-            boost::bind(&RectRegionMarker::finishEditing, regionMarker.get())));
+            std::bind(&RectRegionMarker::finishEditing, regionMarker.get())));
 }
 
 

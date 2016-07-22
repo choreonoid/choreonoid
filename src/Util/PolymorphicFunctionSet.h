@@ -5,7 +5,7 @@
 #ifndef CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace cnoid {
 
@@ -34,7 +34,7 @@ public:
     }
         
     bool operator()(Object* object, Paramter& param) {
-        object->forEachActualType(boost::bind(&callFunctions, this, _1, object, boost::ref(param)));
+        object->forEachActualType(std::bind(&callFunctions, this, _1, object, std::ref(param)));
     }
 
 };

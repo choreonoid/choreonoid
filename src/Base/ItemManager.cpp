@@ -23,17 +23,15 @@
 #include <QFileDialog>
 #include <QSignalMapper>
 #include <QRegExp>
-#include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/weak_ptr.hpp>
 #include <set>
 #include <sstream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace cnoid {
 
@@ -61,10 +59,10 @@ public:
     };
     
     struct Saver;
-    typedef boost::shared_ptr<Saver> SaverPtr;
+    typedef std::shared_ptr<Saver> SaverPtr;
     
     struct Loader;
-    typedef boost::shared_ptr<Loader> LoaderPtr;
+    typedef std::shared_ptr<Loader> LoaderPtr;
 
     struct ClassInfo
     {
@@ -73,14 +71,14 @@ public:
         string moduleName;
         string className;
         string name; // without the 'Item' suffix
-        boost::function<Item*()> factory;
+        std::function<Item*()> factory;
         CreationPanelBase* creationPanelBase;
         list<LoaderPtr> loaders;
         list<SaverPtr> savers;
         ItemPtr singletonInstance;
         bool isSingleton;
     };
-    typedef boost::shared_ptr<ClassInfo> ClassInfoPtr;
+    typedef std::shared_ptr<ClassInfo> ClassInfoPtr;
     
     typedef map<string, ClassInfoPtr> ClassInfoMap;
     
@@ -92,7 +90,7 @@ public:
         string caption;
         int priority;
         ItemManager::FileFunctionBasePtr loadingFunction;
-        boost::weak_ptr<ClassInfo> classInfo;
+        std::weak_ptr<ClassInfo> classInfo;
         vector<string> extensions;
     };
         
@@ -123,7 +121,7 @@ public:
     void detachManagedTypeItems(Item* parentItem);
         
     void registerClass(
-        boost::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className);
+        std::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className);
     
     void addCreationPanel(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilter(
@@ -207,8 +205,8 @@ QWidget* importMenu;
 
 void expandExtensionsToVector(const string& extensions, vector<string>& out_extensions)
 {
-    typedef tokenizer< char_separator<char> > tokenizer;
-    char_separator<char> sep(";");
+    typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+    boost::char_separator<char> sep(";");
     tokenizer tokens(extensions, sep);
     for(tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it){
         out_extensions.push_back(*it);
@@ -228,28 +226,26 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
     : moduleName(moduleName),
       menuManager(menuManager)
 {
-    using boost::bind;
-    
     if(!isStaticMembersInitialized){
 
         menuManager.setPath("/File").setPath(N_("New ..."));
         
         menuManager.setPath("/File");
         menuManager.addItem(_("Open Item"))
-            ->sigTriggered().connect(bind(&ItemManagerImpl::onLoadItemActivated, this));
+            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onLoadItemActivated, this));
         menuManager.setPath(N_("Open ..."));
         menuManager.setPath("/File");
         menuManager.addItem(_("Reload Selected Items"))
-            ->sigTriggered().connect(bind(&ItemManagerImpl::onReloadSelectedItemsActivated, this));
+            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onReloadSelectedItemsActivated, this));
         
         menuManager.addSeparator();
 
         menuManager.addItem(_("Save Selected Items"))
-            ->sigTriggered().connect(bind(&ItemManagerImpl::onSaveSelectedItemsActivated, this));
+            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onSaveSelectedItemsActivated, this));
         menuManager.addItem(_("Save Selected Items As"))
-            ->sigTriggered().connect(bind(&ItemManagerImpl::onSaveSelectedItemsAsActivated, this));
+            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onSaveSelectedItemsAsActivated, this));
         menuManager.addItem(_("Save All Items"))
-            ->sigTriggered().connect(bind(&ItemManagerImpl::onSaveAllItemsActivated, this));
+            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onSaveAllItemsActivated, this));
 
         menuManager.addSeparator();
         
@@ -258,7 +254,7 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
         
         menuManager.setPath("/File");
         menuManager.addItem(_("Export Selected Items"))
-            ->sigTriggered().connect(bind(&ItemManagerImpl::onExportSelectedItemsActivated, this));
+            ->sigTriggered().connect(std::bind(&ItemManagerImpl::onExportSelectedItemsActivated, this));
         
         menuManager.addSeparator();
 
@@ -271,7 +267,7 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
 }
 
 
-void ItemManager::addMenuItemToImport(const std::string& caption, boost::function<void()> slot)
+void ItemManager::addMenuItemToImport(const std::string& caption, std::function<void()> slot)
 {
     impl->menuManager.setCurrent(importMenu).addItem(caption.c_str())->sigTriggered().connect(slot);
 }
@@ -399,19 +395,19 @@ void ItemManager::bindTextDomain(const std::string& domain)
 
 
 void ItemManager::registerClassSub
-(boost::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className)
+(std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className)
 {
     impl->registerClass(factory, singletonInstance, typeId, className);
 }
 
 
 void ItemManagerImpl::registerClass
-(boost::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className)
+(std::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className)
 {
     pair<ClassInfoMap::iterator, bool> ret = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
     ClassInfoPtr& info = ret.first->second;
     if(ret.second){
-        info = boost::make_shared<ClassInfo>();
+        info = std::make_shared<ClassInfo>();
         info->moduleName = moduleName;
         info->className = className;
 
@@ -560,7 +556,7 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
             base = new CreationPanelBase(title, protoItem, info->isSingleton);
             base->hide();
             menuManager.setPath("/File/New ...").addItem(translatedName)
-                ->sigTriggered().connect(boost::bind(ItemManagerImpl::onNewItemActivated, base));
+                ->sigTriggered().connect(std::bind(ItemManagerImpl::onNewItemActivated, base));
             info->creationPanelBase = base;
         }
     }
@@ -728,7 +724,7 @@ void ItemManagerImpl::addLoader
 
         ClassInfoPtr& classInfo = p->second;
         
-        LoaderPtr loader = boost::make_shared<Loader>();
+        LoaderPtr loader = std::make_shared<Loader>();
         loader->typeId = typeId;
         loader->caption = caption;
         loader->formatId = formatId;
@@ -752,7 +748,7 @@ void ItemManagerImpl::addLoader
         }
         menuManager.addItem(caption.c_str())
             ->sigTriggered().connect(
-                boost::bind(&ItemManagerImpl::onLoadSpecificTypeItemActivated, loader));
+                std::bind(&ItemManagerImpl::onLoadSpecificTypeItemActivated, loader));
         
         registeredLoaders.insert(loader);
 
@@ -784,7 +780,7 @@ bool ItemManager::load(Item* item, const std::string& filename, Item* parentItem
 bool ItemManagerImpl::load(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId)
 {
     ParametricPathProcessor* pathProcessor = ParametricPathProcessor::instance();
-    optional<string> expanded = pathProcessor->expand(filename);
+    boost::optional<string> expanded = pathProcessor->expand(filename);
     if(!expanded){
         messageView->putln(pathProcessor->errorMessage());
         return false;
@@ -1011,7 +1007,7 @@ void ItemManagerImpl::addSaver
     ClassInfoMap::iterator p = typeIdToClassInfoMap.find(typeId);
     if(p != typeIdToClassInfoMap.end()){
 
-        SaverPtr saver = boost::make_shared<Saver>();
+        SaverPtr saver = std::make_shared<Saver>();
         
         saver->typeId = typeId;
         saver->formatId = formatId;

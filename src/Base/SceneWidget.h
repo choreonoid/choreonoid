@@ -5,7 +5,6 @@
 #ifndef CNOID_BASE_SCENE_WIDGET_H
 #define CNOID_BASE_SCENE_WIDGET_H
 
-#include <QWidget>
 #include <cnoid/SceneGraph>
 #include <QWidget>
 #include <QBoxLayout>
@@ -31,7 +30,7 @@ public:
     SceneWidget();
     ~SceneWidget();
 
-    static void forEachInstance(SgNode* node, boost::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
+    static void forEachInstance(SgNode* node, std::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
 
     SceneWidgetRoot* sceneRoot();
     SgGroup* scene();

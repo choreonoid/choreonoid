@@ -9,8 +9,8 @@
 #include "AbstractSeq.h"
 #include "Deque2D.h"
 #include <Eigen/StdVector>
-#include <boost/make_shared.hpp>
 #include <algorithm>
+#include <memory>
 
 
 namespace cnoid {
@@ -24,7 +24,7 @@ public:
     typedef Deque2D<ElementType, Allocator> Container;
     
     typedef typename Container::Element Element;
-    typedef boost::shared_ptr< MultiSeqType > Ptr;
+    typedef std::shared_ptr< MultiSeqType > Ptr;
     typedef typename Container::Row Frame;
     typedef typename Container::Column Part;
 
@@ -70,7 +70,7 @@ public:
     }
 
     virtual AbstractSeqPtr cloneSeq() const {
-        return boost::make_shared<MultiSeqType>(*this);
+        return std::make_shared<MultiSeqType>(*this);
     }
         
     void copySeqProperties(const MultiSeqType& source) {

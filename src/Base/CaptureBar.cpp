@@ -15,12 +15,12 @@
 #include <QPainter>
 #include <QFileDialog>
 #include <QTabWidget>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace {
 
@@ -83,7 +83,7 @@ bool saveTabViewImage(QTabWidget* tab, View* view, const QString& filename)
 }
 
 
-void save(QWidget* widget, boost::function<bool(const QString& filename)> saveImage)
+void save(QWidget* widget, std::function<bool(const QString& filename)> saveImage)
 {
     const QString name(widget->windowTitle());
     QString filename;
@@ -139,7 +139,7 @@ void captureView(View* view)
         for(int i=0; i < 2; ++i){
             QTabWidget* tab = dynamic_cast<QTabWidget*>(owner);
             if(tab){
-                save(view, boost::bind(saveTabViewImage, tab, view, _1));
+                save(view, std::bind(saveTabViewImage, tab, view, _1));
                 return;
             }
             owner = owner->parentWidget();
@@ -149,13 +149,13 @@ void captureView(View* view)
         }
     }
 
-    save(view, boost::bind(saveWidgetImage, view, _1));
+    save(view, std::bind(saveWidgetImage, view, _1));
 }
 
 
 void captureToolbar(ToolBar* bar)
 {
-    save(bar, boost::bind(saveWidgetImage, bar, _1));
+    save(bar, std::bind(saveWidgetImage, bar, _1));
 }
 }
 
@@ -192,7 +192,8 @@ CaptureBar::CaptureBar()
     : ToolBar(N_("CaptureBar"))
 {
     addButton(QIcon(":/Base/icons/scenecapture.png"), _("Capture the image of a view or toolbar"))
-        ->sigClicked().connect(boost::bind(&CaptureBar::grabMouse, this));
+        ->sigClicked().connect(
+            std::bind(static_cast<void(CaptureBar::*)()>(&CaptureBar::grabMouse), this));
 }
 
 

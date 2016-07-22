@@ -13,8 +13,7 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/bind.hpp>
+#include <unordered_map>
 #include <iostream>
 
 using namespace std;
@@ -39,7 +38,7 @@ public:
 
     ShapeHandleSet(GLSLSceneRendererImpl* renderer, SgObject* obj)
     {
-        connection.reset(obj->sigUpdated().connect(boost::bind(&ShapeHandleSet::onUpdated, this)));
+        connection.reset(obj->sigUpdated().connect(std::bind(&ShapeHandleSet::onUpdated, this)));
         clear();
         glGenVertexArrays(1, &vao);
         hasBuffers = false;
@@ -95,12 +94,20 @@ public:
 
 typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
 
+/*
 struct SgObjectPtrHash {
     std::size_t operator()(const SgObjectPtr& p) const {
-        return boost::hash_value<SgObject*>(p.get());
+        return std::hash_value<SgObject*>(p.get());
     }
 };
-typedef boost::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
+*/
+struct SgObjectPtrHash {
+    std::hash<SgObject*> hash;
+    std::size_t operator()(const SgObjectPtr& p) const {
+        return hash(p.get());
+    }
+};
+typedef std::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
 
 
 struct TraversedShape : public Referenced
@@ -180,7 +187,7 @@ public:
 
     GLdouble pickX;
     GLdouble pickY;
-    typedef boost::shared_ptr<SgNodePath> SgNodePathPtr;
+    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     vector<SgNodePathPtr> pickingNodePathList;
     SgNodePath pickedNodePath;
@@ -237,7 +244,7 @@ public:
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
     void visitPointSet(SgPointSet* pointSet);
-    void renderPlot(SgPlot* plot, GLenum primitiveMode, boost::function<SgVertexArrayPtr()> getVertices);
+    void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void visitLineSet(SgLineSet* lineSet);
     void visitOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
@@ -656,7 +663,7 @@ void GLSLSceneRendererImpl::renderFog()
         } else {
             currentFogConnection.reset(
                 fog->sigUpdated().connect(
-                    boost::bind(&GLSLSceneRendererImpl::onCurrentFogNodeUdpated, this)));
+                    std::bind(&GLSLSceneRendererImpl::onCurrentFogNodeUdpated, this)));
         }
     }
 
@@ -761,7 +768,7 @@ inline unsigned int GLSLSceneRendererImpl::pushPickId(SgNode* node, bool doSetCo
     if(isPicking){
         id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
-        pickingNodePathList.push_back(boost::make_shared<SgNodePath>(currentNodePath));
+        pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
         if(doSetColor){
             setPickColor(id);
         }
@@ -1038,14 +1045,14 @@ void GLSLSceneRendererImpl::visitPointSet(SgPointSet* pointSet)
         setPointSize(defaultPointSize);
     }
     
-    renderPlot(pointSet, GL_POINTS, boost::bind(getPointSetVertices, pointSet));
+    renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
 
     popProgram();
 }
 
 
 void GLSLSceneRendererImpl::renderPlot
-(SgPlot* plot, GLenum primitiveMode, boost::function<SgVertexArrayPtr()> getVertices)
+(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices)
 {
     pushPickId(plot);
 
@@ -1135,7 +1142,7 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
         setLineWidth(defaultLineWidth);
     }
 
-    renderPlot(lineSet, GL_LINES, boost::bind(getLineSetVertices, lineSet));
+    renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
 
     popProgram();
 }

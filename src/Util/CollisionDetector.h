@@ -9,7 +9,7 @@
 #include "Collision.h"
 #include "SceneGraph.h"
 #include "EigenTypes.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -18,10 +18,10 @@ struct CollisionPair {
     int geometryId[2];
     CollisionArray collisions;
 };
-typedef boost::shared_ptr<CollisionPair> CollisionPairPtr;
+typedef std::shared_ptr<CollisionPair> CollisionPairPtr;
 
 class CollisionDetector;
-typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
+typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 
 class CNOID_EXPORT CollisionDetector
 {

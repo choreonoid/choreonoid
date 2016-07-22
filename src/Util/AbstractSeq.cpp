@@ -8,8 +8,9 @@
 #include <boost/format.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+
+using boost::format;
 
 
 AbstractSeq::AbstractSeq(const char* seqType)

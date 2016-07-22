@@ -6,7 +6,7 @@
 #include "SceneGraph.h"
 #include "SceneVisitor.h"
 #include "Exception.h"
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 
 using namespace std;
 using namespace cnoid;
@@ -18,7 +18,7 @@ SgUpdate::~SgUpdate()
 }
 
 namespace {
-typedef boost::unordered_map<const SgObject*, SgObjectPtr> CloneMap;
+typedef std::unordered_map<const SgObject*, SgObjectPtr> CloneMap;
 }
 
 namespace cnoid {

@@ -6,7 +6,6 @@
 #include "ScriptItem.h"
 #include <cnoid/ExtensionManager>
 #include <cnoid/ItemTreeView>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -28,7 +27,7 @@ ScriptBar::ScriptBar()
     setVisibleByDefault(true);
     
     addButton(QIcon(":/Base/icons/script.png"), _("Execute scripts"))
-        ->sigClicked().connect(boost::bind(&ScriptBar::executeCheckedScriptItems, this));
+        ->sigClicked().connect(std::bind(&ScriptBar::executeCheckedScriptItems, this));
 }
 
 

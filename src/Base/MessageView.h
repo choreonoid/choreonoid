@@ -6,10 +6,10 @@
 #define CNOID_BASE_MESSAGE_VIEW_H
 
 #include <cnoid/View>
+#include <QString>
+#include <boost/format.hpp>
 #include <string>
 #include <iosfwd>
-#include <boost/format.hpp>
-#include <QString>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -116,6 +116,7 @@ CNOID_EXPORT void showWarningDialog(const QString& message);
 CNOID_EXPORT bool showConfirmDialog(const char* caption, const char* message);
 CNOID_EXPORT bool showConfirmDialog(const std::string& caption, const std::string& message);
 CNOID_EXPORT bool showConfirmDialog(const QString& caption, const QString& message);
+
 }
 
 #endif

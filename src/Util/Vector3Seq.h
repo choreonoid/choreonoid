@@ -32,7 +32,7 @@ protected:
     virtual bool doReadSeq(const Mapping& archive);
 };
 
-typedef boost::shared_ptr<Vector3Seq> Vector3SeqPtr;
+typedef std::shared_ptr<Vector3Seq> Vector3SeqPtr;
 }
 
 #endif

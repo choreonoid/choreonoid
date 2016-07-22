@@ -21,8 +21,8 @@ public:
     }
 protected:
     LazySignalBase();
-    LazySignalBase(boost::function<void()> emitFunction, int priority);
-    boost::function<void()> emitFunction;
+    LazySignalBase(std::function<void()> emitFunction, int priority);
+    std::function<void()> emitFunction;
     std::vector<Connection> connectionsToBlock;
     virtual void defaultEmitFunction() = 0;
 
@@ -35,7 +35,7 @@ template <class SignalType> class LazySignal : public LazySignalBase
 public:
     LazySignal() { }
 
-    LazySignal(boost::function<void()> emitFunction, int priority = LazyCaller::PRIORITY_HIGH)
+    LazySignal(std::function<void()> emitFunction, int priority = LazyCaller::PRIORITY_HIGH)
         : LazySignalBase(emitFunction, priority) {
     }
 

@@ -10,7 +10,6 @@
 #include <cnoid/MeshGenerator>
 #include <cnoid/MeshExtractor>
 #include <cnoid/EigenUtil>
-#include <boost/bind.hpp>
 
 using namespace std;
 using namespace cnoid;

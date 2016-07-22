@@ -8,20 +8,19 @@
 #include "InfoBar.h"
 #include "Item.h"
 #include "TextEdit.h"
-#include <stack>
-#include <iostream>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
-#include <boost/bind.hpp>
 #include <QBoxLayout>
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QThread>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
+#include <stack>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace iostreams = boost::iostreams;
 
 namespace {
 

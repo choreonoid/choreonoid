@@ -96,12 +96,12 @@ public:
 
     void setProjectArchiver(
         const std::string& name,
-        boost::function<bool(Archive&)> storeFunction,
-        boost::function<void(const Archive&)> restoreFunction);
+        std::function<bool(Archive&)> storeFunction,
+        std::function<void(const Archive&)> restoreFunction);
 
     void setProjectArchiver(
-        boost::function<bool(Archive&)> storeFunction,
-        boost::function<void(const Archive&)> restoreFunction);
+        std::function<bool(Archive&)> storeFunction,
+        std::function<void(const Archive&)> restoreFunction);
         
 private:
     ExtensionManager(const ExtensionManager& org); // disable the copy constructor

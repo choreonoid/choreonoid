@@ -29,7 +29,7 @@ Vector3Seq::Vector3Seq(const Vector3Seq& org)
 
 AbstractSeqPtr Vector3Seq::cloneSeq() const
 {
-    return boost::make_shared<Vector3Seq>(*this);
+    return std::make_shared<Vector3Seq>(*this);
 }
 
 

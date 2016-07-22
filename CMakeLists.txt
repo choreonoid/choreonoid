@@ -6,6 +6,10 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 include(FindPkgConfig)
 include(CheckIncludeFiles)
 
+if(UNIX)
+  add_definitions("-std=c++11")
+endif()
+
 project(Choreonoid)
 
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)

@@ -4,7 +4,6 @@
 */
 
 #include "CollisionDetector.h"
-#include <boost/make_shared.hpp>
 #include <map>
 
 using namespace std;
@@ -35,7 +34,7 @@ class NullCollisionDetector : public CollisionDetector
 public:
     NullCollisionDetector() { numGeometries_ = 0; }
     virtual const char* name() const { return "NullCollisionDetector"; }
-    virtual CollisionDetectorPtr clone() const { return boost::make_shared<NullCollisionDetector>(); }
+    virtual CollisionDetectorPtr clone() const { return std::make_shared<NullCollisionDetector>(); }
     virtual bool enableGeometryCache(bool on) { return true; }
     virtual void clearGeometryCache(SgNodePtr geometry) { }
     virtual void clearAllGeometryCaches() { }
@@ -54,7 +53,7 @@ public:
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<NullCollisionDetector>();
+    return std::make_shared<NullCollisionDetector>();
 }
 
 struct FactoryRegistration

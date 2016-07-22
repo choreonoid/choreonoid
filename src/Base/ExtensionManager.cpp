@@ -19,7 +19,6 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <QMenuBar>
-#include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <set>
 #include <stack>
@@ -42,10 +41,10 @@ public:
     void deleteManagedObjects();;
 
     ExtensionManager* self;
-    scoped_ptr<MenuManager> menuManager;
-    scoped_ptr<ItemManager> itemManager;
-    scoped_ptr<TimeSyncItemEngineManager> timeSyncItemEngineManger;
-    scoped_ptr<ViewManager> viewManager;
+    std::unique_ptr<MenuManager> menuManager;
+    std::unique_ptr<ItemManager> itemManager;
+    std::unique_ptr<TimeSyncItemEngineManager> timeSyncItemEngineManger;
+    std::unique_ptr<ViewManager> viewManager;
     string moduleName;
     string textDomain;
 
@@ -251,16 +250,16 @@ SignalProxy<void()> ExtensionManager::sigReleaseRequest()
 
 void ExtensionManager::setProjectArchiver(
     const std::string& name,
-    boost::function<bool(Archive&)> storeFunction,
-    boost::function<void(const Archive&)> restoreFunction)
+    std::function<bool(Archive&)> storeFunction,
+    std::function<void(const Archive&)> restoreFunction)
 {
     ProjectManager::instance()->setArchiver(impl->moduleName, name, storeFunction, restoreFunction);
 }
 
 
 void ExtensionManager::setProjectArchiver(
-    boost::function<bool(Archive&)> storeFunction,
-    boost::function<void(const Archive&)> restoreFunction)
+    std::function<bool(Archive&)> storeFunction,
+    std::function<void(const Archive&)> restoreFunction)
 {
     ProjectManager::instance()->setArchiver(impl->moduleName, "", storeFunction, restoreFunction);
 }

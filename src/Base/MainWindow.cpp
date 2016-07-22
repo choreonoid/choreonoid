@@ -11,7 +11,6 @@
 #include "TimeBar.h"
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
-#include <boost/bind.hpp>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QGuiApplication>
@@ -26,6 +25,7 @@
 
 using namespace std;
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace {
 
@@ -240,7 +240,7 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     MenuManager& mm = ext->menuManager();
 
     mm.setPath("/" N_("File")).setBackwardMode().addItem(_("Exit"))
-        ->sigTriggered().connect(boost::bind(&MainWindow::close, self));
+        ->sigTriggered().connect(std::bind(&MainWindow::close, self));
 
     mm.setPath("/" N_("Edit"));
 
@@ -248,14 +248,14 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
 
     mm.setPath(N_("Show Toolbar"));
     Menu* showToolBarMenu = static_cast<Menu*>(mm.current());
-    showToolBarMenu->sigAboutToShow().connect(boost::bind(&ToolBarArea::setVisibilityMenuItems, toolBarArea, showToolBarMenu));
+    showToolBarMenu->sigAboutToShow().connect(std::bind(&ToolBarArea::setVisibilityMenuItems, toolBarArea, showToolBarMenu));
     
     mm.setCurrent(viewMenu).setPath(N_("Show View"));
     mm.setCurrent(viewMenu).setPath(N_("Create View"));
     mm.setCurrent(viewMenu).setPath(N_("Delete View"));
 
     showViewTabCheck = mm.setCurrent(viewMenu).addCheckItem(_("Show View Tabs"));
-    showViewTabCheck->sigToggled().connect(boost::bind(&ViewArea::setViewTabsVisible, viewArea, _1));
+    showViewTabCheck->sigToggled().connect(std::bind(&ViewArea::setViewTabsVisible, viewArea, _1));
     showViewTabCheck->setChecked(config->get("showViewTabs", true));
 
     mm.setCurrent(viewMenu).addSeparator();
@@ -264,18 +264,18 @@ void MainWindowImpl::setupMenus(ExtensionManager* ext)
     bool showStatusBar = config->get("showStatusBar", true);
     QWidget* statusBar = InfoBar::instance();
     showStatusBarCheck->setChecked(showStatusBar);
-    showStatusBarCheck->sigToggled().connect(boost::bind(&QWidget::setVisible, statusBar, _1));
+    showStatusBarCheck->sigToggled().connect(std::bind(&QWidget::setVisible, statusBar, _1));
     
     fullScreenCheck = mm.addCheckItem(_("Full Screen"));
     fullScreenCheck->setChecked(config->get("fullScreen", false));
-    fullScreenCheck->sigToggled().connect(boost::bind(&MainWindowImpl::onFullScreenToggled, this, _1));
+    fullScreenCheck->sigToggled().connect(std::bind(&MainWindowImpl::onFullScreenToggled, this, _1));
 
     mm.setCurrent(viewMenu).setPath(N_("Layout"));
     
     storeLastLayoutCheck = mm.addCheckItem(_("Store Last Toolbar Layout"));
     storeLastLayoutCheck->setChecked(config->get("storeLastLayout", false));
 
-    mm.addItem(_("Reset Layout"))->sigTriggered().connect(boost::bind(&MainWindowImpl::resetLayout, this));
+    mm.addItem(_("Reset Layout"))->sigTriggered().connect(std::bind(&MainWindowImpl::resetLayout, this));
     
     mm.setPath("/" N_("Tools"));
     mm.setPath("/" N_("Filters"));

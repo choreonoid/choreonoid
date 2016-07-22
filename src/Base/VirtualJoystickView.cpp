@@ -12,11 +12,9 @@
 #include <QLabel>
 #include <QKeyEvent>
 #include <boost/thread.hpp>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {

@@ -8,12 +8,12 @@
 #include "ItemPath.h"
 #include "ItemManager.h"
 #include "MessageView.h"
-#include <typeinfo>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <typeinfo>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 namespace filesystem = boost::filesystem;
 using namespace cnoid;
 
@@ -792,7 +792,7 @@ bool onNamePropertyChanged(Item* item, const string& name)
 
 void Item::putProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Name"), name_, boost::bind(onNamePropertyChanged, this, _1));
+    putProperty(_("Name"), name_, std::bind(onNamePropertyChanged, this, _1));
 
     std::string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);

@@ -7,7 +7,7 @@
 #define CNOID_BASE_GL1_SCENE_RENDERER_H
 
 #include <cnoid/GLSceneRenderer>
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -96,7 +96,7 @@ public:
 class CNOID_EXPORT SgCustomGLNode : public SgGroup
 {
   public:
-    typedef boost::function<void(GL1SceneRenderer& renderer)> RenderingFunction;
+    typedef std::function<void(GL1SceneRenderer& renderer)> RenderingFunction;
 
     SgCustomGLNode() { }
     SgCustomGLNode(RenderingFunction f) : renderingFunction(f) { }

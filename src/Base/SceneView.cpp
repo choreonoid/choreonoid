@@ -10,11 +10,11 @@
 #include "Buttons.h"
 #include "CheckBox.h"
 #include <cnoid/SceneProvider>
-#include <boost/bind.hpp>
 #include <list>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -84,7 +84,7 @@ void SceneView::initializeClass(ExtensionManager* ext)
 
         sigItemAddedConnection =
             RootItem::mainInstance()->sigItemAdded().connect(
-                boost::bind(&SceneView::onItemAdded, _1));
+                std::bind(&SceneView::onItemAdded, _1));
     }
 }
 
@@ -120,7 +120,7 @@ SceneViewImpl::SceneViewImpl(SceneView* self)
     QHBoxLayout* hbox = new QHBoxLayout;
     dedicatedCheckCheck.setText(_("Use dedicated item tree view checks to select the target items"));
     dedicatedCheckCheck.sigToggled().connect(
-        boost::bind(&SceneViewImpl::onDedicatedCheckToggled, this, _1));
+        std::bind(&SceneViewImpl::onDedicatedCheckToggled, this, _1));
     hbox->addWidget(&dedicatedCheckCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -205,13 +205,13 @@ void SceneViewImpl::onSceneProviderItemAdded(Item* item, SceneProvider* provider
         
     info.sigDetachedFromRootConnection =
         item->sigDetachedFromRoot().connect(
-            boost::bind(&SceneViewImpl::onSceneProviderItemDetachedFromRoot, this, infoIter));
+            std::bind(&SceneViewImpl::onSceneProviderItemDetachedFromRoot, this, infoIter));
 
     int checkId = dedicatedCheckCheck.isChecked() ? dedicatedCheckId : 0;
         
     info.sigCheckToggledConnection =
         itemTreeView->sigCheckToggled(item, checkId).connect(
-            boost::bind(&SceneViewImpl::showScene, this, infoIter, _1));
+            std::bind(&SceneViewImpl::showScene, this, infoIter, _1));
         
     if(itemTreeView->isItemChecked(item, checkId)){
         showScene(infoIter, true);
@@ -268,7 +268,7 @@ void SceneViewImpl::onDedicatedCheckToggled(bool on)
         p->sigCheckToggledConnection.disconnect();
         p->sigCheckToggledConnection =
             itemTreeView->sigCheckToggled(p->item, checkId).connect(
-                boost::bind(&SceneViewImpl::showScene, this, p, _1));
+                std::bind(&SceneViewImpl::showScene, this, p, _1));
         
         showScene(p, itemTreeView->isItemChecked(p->item, checkId));
     }
@@ -310,7 +310,7 @@ bool SceneViewImpl::restoreState(const Archive& archive)
     bool result = sceneWidget->restoreState(archive);
 
     dedicatedCheckCheck.setChecked(archive.get("dedicatedItemTreeViewChecks", dedicatedCheckCheck.isChecked()));
-    archive.addPostProcess(boost::bind(&SceneViewImpl::restoreDedicatedItemChecks, this, boost::ref(archive)));
+    archive.addPostProcess(std::bind(&SceneViewImpl::restoreDedicatedItemChecks, this, std::ref(archive)));
     
     return result;
 }

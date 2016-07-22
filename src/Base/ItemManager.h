@@ -10,7 +10,6 @@
 #include <string>
 #include <typeinfo>
 #include <iosfwd>
-#include <boost/function.hpp>
 #include <QWidget>
 #include "exportdecl.h"
 
@@ -58,7 +57,7 @@ private:
         virtual ~CreationPanelFilterBase() { }
         virtual bool operator()(Item* protoItem, Item* parentItem) = 0;
     };
-    typedef boost::shared_ptr<CreationPanelFilterBase> CreationPanelFilterBasePtr;
+    typedef std::shared_ptr<CreationPanelFilterBase> CreationPanelFilterBasePtr;
         
 
     class FileFunctionBase
@@ -67,7 +66,7 @@ private:
         virtual ~FileFunctionBase() { }
         virtual bool operator()(Item* item, const std::string& filename, std::ostream& os, Item* parentItem) = 0;
     };
-    typedef boost::shared_ptr<FileFunctionBase> FileFunctionBasePtr;
+    typedef std::shared_ptr<FileFunctionBase> FileFunctionBasePtr;
 
 
     class OverwritingCheckFunctionBase
@@ -76,7 +75,7 @@ private:
         ~OverwritingCheckFunctionBase();
         virtual bool operator()(Item* item) = 0;
     };
-    typedef boost::shared_ptr<OverwritingCheckFunctionBase> OverwritingCheckFunctionBasePtr;
+    typedef std::shared_ptr<OverwritingCheckFunctionBase> OverwritingCheckFunctionBasePtr;
         
 
 public:
@@ -88,7 +87,7 @@ public:
     template <class ItemType> class CreationPanelFilter : public CreationPanelFilterBase
     {
     public:
-        typedef boost::function<bool(ItemType* protoItem, Item* parentItem)> Function;
+        typedef std::function<bool(ItemType* protoItem, Item* parentItem)> Function;
         CreationPanelFilter(Function function) : function(function) { }
         virtual bool operator()(Item* protoItem, Item* parentItem){
             return function(static_cast<ItemType*>(protoItem), parentItem);
@@ -100,7 +99,7 @@ public:
     template <class ItemType> class FileFunction : public FileFunctionBase
     {
     public:
-        typedef boost::function<bool(ItemType* item, const std::string& filename, std::ostream& os, Item* parentItem)> Function;
+        typedef std::function<bool(ItemType* item, const std::string& filename, std::ostream& os, Item* parentItem)> Function;
         FileFunction(Function function) : function(function) { }
         virtual bool operator()(Item* item, const std::string& filename, std::ostream& os, Item* parentItem){
             return function(static_cast<ItemType*>(item), filename, os, parentItem);
@@ -179,14 +178,14 @@ public:
         return *this;
     }
 
-    void addMenuItemToImport(const std::string& caption, boost::function<void()> slot);
+    void addMenuItemToImport(const std::string& caption, std::function<void()> slot);
 
     static void reloadItems(const ItemList<>& items);
 
 private:
         
     void registerClassSub(
-        boost::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
+        std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
         const std::string& typeId, CreationPanelFilterBasePtr filter, bool afterInitializionByPanels);

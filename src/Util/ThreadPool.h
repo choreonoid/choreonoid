@@ -3,15 +3,15 @@
 #define CNOID_UTIL_THREAD_POOL_H
 
 #include <queue>
+#include <functional>
 #include <boost/thread.hpp>
-#include <boost/function.hpp>
 
 namespace cnoid {
 
 class ThreadPool
 {
 private:
-    std::queue<boost::function<void()> > queue;
+    std::queue<std::function<void()> > queue;
     boost::thread_group group;
     boost::mutex mutex;
     boost::condition_variable condition;
@@ -41,7 +41,7 @@ public:
 
     int size() const { return size_; }
         
-    void start(boost::function<void()> f) {
+    void start(std::function<void()> f) {
         boost::lock_guard<boost::mutex> guard(mutex);
         queue.push(f);
         condition.notify_one();
@@ -70,7 +70,7 @@ public:
 private:
     void run() {
         while(true){
-            boost::function<void()> f;
+            std::function<void()> f;
             {
                 boost::unique_lock<boost::mutex> lock(mutex);
 

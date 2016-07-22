@@ -7,10 +7,10 @@
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
-#include <boost/bind.hpp>
 #include <GL/gl.h>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -55,7 +55,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     : self(self),
       sceneRoot(sceneRoot)
 {
-    sceneRoot->sigUpdated().connect(boost::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
+    sceneRoot->sigUpdated().connect(std::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
 
     scene = new SgGroup();
     sceneRoot->addChild(scene);

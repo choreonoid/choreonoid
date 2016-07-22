@@ -32,7 +32,6 @@
 #include <QProgressDialog>
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/bind.hpp>
 #include <deque>
 
 #ifdef Q_OS_LINUX
@@ -46,6 +45,7 @@ const bool ENABLE_MOUSE_CURSOR_CAPTURE = false;
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 
@@ -261,7 +261,7 @@ void MovieRecorder::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(_("Movie Recorder"))
-            ->sigTriggered().connect(boost::bind(&QDialog::show, movieRecorder->impl->dialog));
+            ->sigTriggered().connect(std::bind(&QDialog::show, movieRecorder->impl->dialog));
     }
 }
 
@@ -299,7 +299,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     requestStopRecording = false;
 
     directModeTimer.sigTimeout().connect(
-        boost::bind(&MovieRecorderImpl::onDirectModeTimerTimeout, this));
+        std::bind(&MovieRecorderImpl::onDirectModeTimerTimeout, this));
 
     startMessage = _("Recording of %1% has been started with the %2% mode.");
 
@@ -307,7 +307,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     isViewMarkerEnabled = false;
     flashTimer.setInterval(500);
     flashTimer.sigTimeout().connect(
-        boost::bind(&MovieRecorderImpl::onFlashTimeout, this));
+        std::bind(&MovieRecorderImpl::onFlashTimeout, this));
 
     Mapping& config = *AppConfig::archive()->findMapping("MovieRecorder");
     if(config.isValid()){
@@ -318,7 +318,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 
 ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     : recorder(recorder),
-      updateViewComboLater(boost::bind(&ConfigDialog::updateViewCombo, this))
+      updateViewComboLater(std::bind(&ConfigDialog::updateViewCombo, this))
 {
     setWindowTitle(_("Movie Recorder"));
     
@@ -329,12 +329,12 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addWidget(new QLabel(_("Target view:")));
 
     targetViewCombo.sigCurrentIndexChanged().connect(
-        boost::bind(&ConfigDialog::onTargetViewIndexChanged, this, _1));
+        std::bind(&ConfigDialog::onTargetViewIndexChanged, this, std::placeholders::_1));
     hbox->addWidget(&targetViewCombo);
 
     viewMarkerCheck.setText(_("Show the marker"));
     viewMarkerCheck.sigToggled().connect(
-        boost::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, _1));
+        std::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, std::placeholders::_1));
     hbox->addWidget(&viewMarkerCheck);
     
     hbox->addStretch();
@@ -351,7 +351,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     }
     modeRadioButtons[0].setChecked(true);
     modeGroup->sigButtonClicked().connect(
-        boost::bind(&ConfigDialog::onRecordingModeRadioClicked, this, _1));
+        std::bind(&ConfigDialog::onRecordingModeRadioClicked, this, std::placeholders::_1));
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -366,7 +366,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
         directoryButton.setIcon(folderIcon);
     }
     directoryButton.sigClicked().connect(
-        boost::bind(&ConfigDialog::showDirectorySelectionDialog, this));
+        std::bind(&ConfigDialog::showDirectorySelectionDialog, this));
     hbox->addWidget(&directoryButton);
     vbox->addLayout(hbox);
 
@@ -437,7 +437,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     recordingToggle.setText(_("&Record"));
     recordingToggle.setDefault(true);
     recordingToggle.sigToggled().connect(
-        boost::bind(&MovieRecorderImpl::activateRecording, recorder, _1, true));
+        std::bind(&MovieRecorderImpl::activateRecording, recorder, std::placeholders::_1, true));
     buttonBox->addButton(&recordingToggle, QDialogButtonBox::ActionRole);
 
     vbox->addWidget(buttonBox);
@@ -451,14 +451,14 @@ MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
     
     recordingToggle = addToggleButton("O", _("Toggle Recording"));
     recordingToggle->sigToggled().connect(
-        boost::bind(&MovieRecorderImpl::activateRecording, recorder, _1, false));
+        std::bind(&MovieRecorderImpl::activateRecording, recorder, std::placeholders::_1, false));
 
     viewMarkerToggle = addToggleButton("[ ]", _("Toggle Target View Marker"));
     viewMarkerToggle->sigToggled().connect(
-        boost::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, _1));
+        std::bind(&MovieRecorderImpl::onViewMarkerToggled, recorder, std::placeholders::_1));
     
     addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
-        ->sigClicked().connect(boost::bind(&QDialog::show, recorder->dialog));
+        ->sigClicked().connect(std::bind(&QDialog::show, recorder->dialog));
 }
 
 
@@ -486,10 +486,10 @@ void ConfigDialog::showEvent(QShowEvent* event)
     viewManagerConnections.disconnect();
     viewManagerConnections.add(
         ViewManager::sigViewActivated().connect(
-            boost::bind(boost::ref(updateViewComboLater))));
+            std::bind(std::ref(updateViewComboLater))));
     viewManagerConnections.add(
         ViewManager::sigViewDeactivated().connect(
-            boost::bind(boost::ref(updateViewComboLater))));
+            std::bind(std::ref(updateViewComboLater))));
     
     Dialog::showEvent(event);
 }
@@ -557,10 +557,10 @@ void MovieRecorderImpl::setTargetView(View* view)
             targetViewName = targetView->name();
             targetViewConnections.add(
                 targetView->sigResized().connect(
-                    boost::bind(&MovieRecorderImpl::onTargetViewResized, this, targetView)));
+                    std::bind(&MovieRecorderImpl::onTargetViewResized, this, targetView)));
             targetViewConnections.add(
                 targetView->sigRemoved().connect(
-                    boost::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
+                    std::bind(&MovieRecorderImpl::onTargetViewRemoved, this, targetView)));
         }
 
         showViewMarker();
@@ -600,7 +600,7 @@ void MovieRecorderImpl::setTargetView(const std::string& name)
             if(!targetView){
                 targetViewConnections.add(
                     ViewManager::sigViewCreated().connect(
-                        boost::bind(&MovieRecorderImpl::onViewCreated, this, _1)));
+                        std::bind(&MovieRecorderImpl::onViewCreated, this, std::placeholders::_1)));
             }
         }
     }
@@ -783,7 +783,7 @@ void MovieRecorderImpl::setupOnlineModeRecording()
     } else {
         timeBarConnections.add(
             timeBar->sigPlaybackStarted().connect(
-                boost::bind(&MovieRecorderImpl::onPlaybackStarted, this, _1)));
+                std::bind(&MovieRecorderImpl::onPlaybackStarted, this, std::placeholders::_1)));
         
         mv->putln(boost::format(_("The online mode recording for %1% is ready.")) % targetView->name());
     }
@@ -802,11 +802,11 @@ void MovieRecorderImpl::startOnlineModeRecording()
     
     timeBarConnections.add(
         timeBar->sigTimeChanged().connect(
-            boost::bind(&MovieRecorderImpl::onTimeChanged, this, _1)));
+            std::bind(&MovieRecorderImpl::onTimeChanged, this, std::placeholders::_1)));
 
     timeBarConnections.add(
         timeBar->sigPlaybackStopped().connect(
-            boost::bind(&MovieRecorderImpl::onPlaybackStopped, this, _2)));
+            std::bind(&MovieRecorderImpl::onPlaybackStopped, this, std::placeholders::_2)));
 
     isRecording = true;
     startImageOutput();
@@ -951,7 +951,7 @@ void MovieRecorderImpl::startImageOutput()
 {
     if(!imageOutputThread.joinable()){
         imageOutputThread = boost::thread(
-            boost::bind(&MovieRecorderImpl::outputImages, this));
+            std::bind(&MovieRecorderImpl::outputImages, this));
     }
 }
 

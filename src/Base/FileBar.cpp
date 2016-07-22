@@ -5,7 +5,6 @@
 #include "FileBar.h"
 #include "ExtensionManager.h"
 #include "ProjectManager.h"
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -36,7 +35,7 @@ FileBar::FileBar()
     
     addButton(QIcon(":/Base/icons/projectsave.png"), _("Save the project"))
         ->sigClicked().connect(
-            boost::bind(&ProjectManager::overwriteCurrentProject, ProjectManager::instance()));
+            std::bind(&ProjectManager::overwriteCurrentProject, ProjectManager::instance()));
 }
 
 

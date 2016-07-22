@@ -39,7 +39,7 @@ MultiSE3Seq::MultiSE3Seq(const MultiSE3Seq& org)
 
 AbstractSeqPtr MultiSE3Seq::cloneSeq() const
 {
-    return boost::make_shared<MultiSE3Seq>(*this);
+    return std::make_shared<MultiSE3Seq>(*this);
 }
 
 

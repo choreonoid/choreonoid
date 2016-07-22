@@ -20,7 +20,7 @@ class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_all
     typedef MultiSeq<Vector3, Eigen::aligned_allocator<Vector3> > BaseSeqType;
 
 public:
-    typedef boost::shared_ptr<MultiVector3Seq> Ptr;
+    typedef std::shared_ptr<MultiVector3Seq> Ptr;
 
     MultiVector3Seq();
     MultiVector3Seq(int numFrames, int numParts = 1);

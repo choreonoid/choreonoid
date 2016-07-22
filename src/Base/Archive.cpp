@@ -9,19 +9,19 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/Referenced>
 #include <cnoid/FileUtil>
-#include <map>
-#include <boost/bind.hpp>
+#include <QRegExp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-#include <QRegExp>
+#include <map>
 #include <iostream>
 #include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using namespace std::placeholders;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -32,7 +32,7 @@ typedef map<int, Item*> IdToItemMap;
 typedef map<View*, int> ViewToIdMap;
 typedef map<int, View*> IdToViewMap;
 
-typedef list< boost::function<void()> > PostProcessList;
+typedef list< std::function<void()> > PostProcessList;
 
 }
 
@@ -181,14 +181,14 @@ void Archive::inheritSharedInfoFrom(Archive& archive)
 }
 
 
-void Archive::addPostProcess(const boost::function<void()>& func, int priority) const
+void Archive::addPostProcess(const std::function<void()>& func, int priority) const
 {
     if(shared){
         if(priority <= 0){
             shared->postProcesses.push_back(func);
         } else {
             shared->postProcesses.push_back(
-                boost::bind(&Archive::addPostProcess, this, func, priority - 1));
+                std::bind(&Archive::addPostProcess, this, func, priority - 1));
         }
     }
 }
@@ -226,7 +226,7 @@ const Archive* Archive::findSubArchive(const std::string& name) const
 }
 
 
-bool Archive::forSubArchive(const std::string& name, boost::function<bool(const Archive& archive)> func) const
+bool Archive::forSubArchive(const std::string& name, std::function<bool(const Archive& archive)> func) const
 {
     const Archive* subArchive = findSubArchive(name);
     if(subArchive->isValid()){

@@ -29,7 +29,6 @@
 #include <QPainter>
 #include <QApplication>
 #include <QFileDialog>
-#include <boost/bind.hpp>
 #include <boost/variant.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
@@ -38,6 +37,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -76,17 +76,17 @@ struct Double {
 
 typedef boost::variant<bool, Int, Double, string, Selection, FilePath> ValueVariant;
 
-typedef boost::variant<boost::function<bool(bool)>,
-                       boost::function<bool(int)>,
-                       boost::function<bool(double)>,
-                       boost::function<bool(const string&)>
+typedef boost::variant<std::function<bool(bool)>,
+                       std::function<bool(int)>,
+                       std::function<bool(double)>,
+                       std::function<bool(const string&)>
                        > FunctionVariant;
 
 template<class ValueType> class ReturnTrue {
 public:
     typedef bool result_type;
-    boost::function<void(ValueType)> func;
-    ReturnTrue(boost::function<void(ValueType)> func) : func(func) { }
+    std::function<void(ValueType)> func;
+    ReturnTrue(std::function<void(ValueType)> func) : func(func) { }
     bool operator()(ValueType value) const { func(value); return true; }
 };
 
@@ -102,7 +102,7 @@ struct Property {
     FunctionVariant func;
     bool hasValidFunction;
 };
-typedef boost::shared_ptr<Property> PropertyPtr;
+typedef std::shared_ptr<Property> PropertyPtr;
 
 
 class PropertyItem : public QTableWidgetItem
@@ -358,71 +358,71 @@ public:
     virtual void operator()(const std::string& name, bool value){
         addProperty(name, new PropertyItem(this, value));
     }
-    virtual void operator()(const std::string& name, bool value, const boost::function<bool(bool)>& func) {
+    virtual void operator()(const std::string& name, bool value, const std::function<bool(bool)>& func) {
         addProperty(name, new PropertyItem(this, value, func));
     }
     virtual void operator()(const std::string& name, bool value,
-                            const boost::function<void(bool)>& func, bool forceUpdate) {
+                            const std::function<void(bool)>& func, bool forceUpdate) {
         addProperty(name, new PropertyItem
-                    (this, value, boost::function<bool(bool)>(ReturnTrue<bool>(func))));
+                    (this, value, std::function<bool(bool)>(ReturnTrue<bool>(func))));
     }
     virtual void operator()(const std::string& name, int value){
         addProperty(name, new PropertyItem(this, Int(value)));
     }
-    virtual void operator()(const std::string& name, int value, const boost::function<bool(int)>& func){
+    virtual void operator()(const std::string& name, int value, const std::function<bool(int)>& func){
         addProperty(name, new PropertyItem(this, Int(value, imin, imax), func));
     }
     virtual void operator()(const std::string& name, int value,
-                            const boost::function<void(int)>& func, bool forceUpdate){
+                            const std::function<void(int)>& func, bool forceUpdate){
         addProperty(name, new PropertyItem(this, Int(value, imin, imax),
-                                           boost::function<bool(int)>(ReturnTrue<int>(func))));
+                                           std::function<bool(int)>(ReturnTrue<int>(func))));
     }
     virtual void operator()(const std::string& name, double value){
         addProperty(name, new PropertyItem(this, Double(value, decimals_)));
     }
     virtual void operator()(const std::string& name, double value,
-                            const boost::function<bool(double)>& func){
+                            const std::function<bool(double)>& func){
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax), func));
     }
     virtual void operator()(const std::string& name, double value,
-                            const boost::function<void(double)>& func, bool forceUpdate){
+                            const std::function<void(double)>& func, bool forceUpdate){
         addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax),
-                                           boost::function<bool(double)>(ReturnTrue<double>(func))));
+                                           std::function<bool(double)>(ReturnTrue<double>(func))));
     }
     virtual void operator()(const std::string& name, const std::string& value){
         addProperty(name, new PropertyItem(this, value));
     }
     virtual void operator()(const std::string& name, const std::string& value,
-                            const boost::function<bool(const std::string&)>& func){
+                            const std::function<bool(const std::string&)>& func){
         addProperty(name, new PropertyItem(this, value, func));
     }
     virtual void operator()(const std::string& name, const std::string& value,
-                            const boost::function<void(const std::string&)>& func, bool forceUpdate){
+                            const std::function<void(const std::string&)>& func, bool forceUpdate){
         addProperty(name, new PropertyItem
-                    (this, value, boost::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
+                    (this, value, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
     void operator()(const std::string& name, const Selection& selection){
         addProperty(name, new PropertyItem(this, selection));
     }
     void operator()(const std::string& name, const Selection& selection,
-                    const boost::function<bool(int which)>& func){
+                    const std::function<bool(int which)>& func){
         addProperty(name, new PropertyItem(this, selection, func));
     }
     void operator()(const std::string& name, const Selection& selection,
-                    const boost::function<void(int which)>& func, bool forceUpdate){
+                    const std::function<void(int which)>& func, bool forceUpdate){
         addProperty(name, new PropertyItem
-                    (this, selection,  boost::function<bool(int)>(ReturnTrue<int>(func))));
+                    (this, selection,  std::function<bool(int)>(ReturnTrue<int>(func))));
     }
     void operator()(const std::string& name, const FilePath& filePath){
         addProperty(name, new PropertyItem(this, filePath) );
     }
     void operator()(const std::string& name, const FilePath& filePath,
-                    const boost::function<bool(const std::string&)>& func){
+                    const std::function<bool(const std::string&)>& func){
         addProperty(name, new PropertyItem(this, filePath, func) );
     }
     void operator()(const std::string& name, const FilePath& filePath,
-                    const boost::function<void(const std::string&)>& func, bool forceUpdate){
-        addProperty(name, new PropertyItem(this, filePath, boost::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
+                    const std::function<void(const std::string&)>& func, bool forceUpdate){
+        addProperty(name, new PropertyItem(this, filePath, std::function<bool(const std::string&)>(ReturnTrue<const std::string&>(func))));
     }
 
     void clear();
@@ -502,26 +502,26 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             switch(qvalue.type()){
                 
             case QVariant::Bool:
-                accepted = boost::get< boost::function<bool(bool)> >(func)(qvalue.toBool());
+                accepted = boost::get< std::function<bool(bool)> >(func)(qvalue.toBool());
                 break;
                 
             case QVariant::String:
-                accepted = boost::get< boost::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
+                accepted = boost::get< std::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
                 break;
                 
             case QVariant::Int:
-                accepted = boost::get< boost::function<bool(int)> >(func)(qvalue.toInt());
+                accepted = boost::get< std::function<bool(int)> >(func)(qvalue.toInt());
                 break;
                 
             case QVariant::Double:
-                accepted = boost::get< boost::function<bool(double)> >(func)(qvalue.toDouble());
+                accepted = boost::get< std::function<bool(double)> >(func)(qvalue.toDouble());
                 break;
                 
             case QVariant::StringList:
             {
                 const QStringList& slist = qvalue.toStringList();
                 if(!slist.empty()){
-                    accepted = boost::get< boost::function<bool(int)> >(func)(slist[0].toInt());
+                    accepted = boost::get< std::function<bool(int)> >(func)(slist[0].toInt());
                 }
             }
             break;
@@ -540,7 +540,7 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             }
         }
         if(itemPropertyViewImpl->updateRequestedDuringPropertyEditing){
-            callLater(boost::bind(&ItemPropertyViewImpl::updateProperties, itemPropertyViewImpl));
+            callLater(std::bind(&ItemPropertyViewImpl::updateProperties, itemPropertyViewImpl));
         }
     }
 
@@ -605,7 +605,7 @@ ItemPropertyViewImpl::ItemPropertyViewImpl(ItemPropertyView* self)
 
     selectionChangedConnection =
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            boost::bind(&ItemPropertyViewImpl::onItemSelectionChanged, this, _1));
+            std::bind(&ItemPropertyViewImpl::onItemSelectionChanged, this, _1));
 
     fontPointSizeDiff = 0;
     MappingPtr config = AppConfig::archive()->openMapping("ItemPropertyView");
@@ -699,13 +699,13 @@ void ItemPropertyViewImpl::onItemSelectionChanged(const ItemList<>& items)
         if(item){
             itemConnections.add(
                 item->sigUpdated().connect(
-                    boost::bind(&ItemPropertyViewImpl::updateProperties, this)));
+                    std::bind(&ItemPropertyViewImpl::updateProperties, this)));
             itemConnections.add(
                 item->sigNameChanged().connect(
-                    boost::bind(&ItemPropertyViewImpl::updateProperties, this)));
+                    std::bind(&ItemPropertyViewImpl::updateProperties, this)));
             itemConnections.add(
                 item->sigDetachedFromRoot().connect(
-                    boost::bind(&ItemPropertyViewImpl::clear, this)));
+                    std::bind(&ItemPropertyViewImpl::clear, this)));
         }
         updateProperties();
     }
@@ -744,7 +744,7 @@ void ItemPropertyViewImpl::zoomFontSize(int pointSizeDiff)
 void ItemPropertyView::onAttachedMenuRequest(MenuManager& menuManager)
 {
     menuManager.addItem(_("Update"))->sigTriggered().connect(
-        boost::bind(&ItemPropertyViewImpl::updateProperties, impl));
+        std::bind(&ItemPropertyViewImpl::updateProperties, impl));
     menuManager.addItem(_("Reset Column Sizes"))->sigTriggered().connect(
-        boost::bind(&QTableWidget::resizeColumnsToContents, impl->tableWidget));
+        std::bind(&QTableWidget::resizeColumnsToContents, impl->tableWidget));
 }

@@ -11,10 +11,9 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
-#include <boost/unordered_map.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <functional>
+#include <unordered_map>
 #include <iostream>
 
 /**
@@ -46,7 +45,7 @@ struct TransparentShapeInfo
     unsigned int pickId;
     Affine3 V; // view matrix
 };
-typedef boost::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
+typedef std::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 
     
 /*
@@ -121,12 +120,21 @@ public:
 typedef ref_ptr<TextureCache> TextureCachePtr;
 
 
+/*
 struct SgObjectPtrHash {
     std::size_t operator()(const SgObjectPtr& p) const {
-        return boost::hash_value<SgObject*>(p.get());
+        return std::hash_value<SgObject*>(p.get());
     }
 };
-typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
+*/
+struct SgObjectPtrHash {
+    std::hash<SgObject*> hash;
+    std::size_t operator()(const SgObjectPtr& p) const {
+        return hash(p.get());
+    }
+};
+
+typedef std::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
 
 }
 
@@ -152,7 +160,7 @@ public:
         SgTexCoordArray texCoords;
         vector<char> scaledImageBuf;
     };
-    boost::scoped_ptr<Buf> buf;
+    std::unique_ptr<Buf> buf;
         
     CacheMap cacheMaps[2];
     bool doUnusedCacheCheck;
@@ -197,7 +205,7 @@ public:
 
     GLdouble pickX;
     GLdouble pickY;
-    typedef boost::shared_ptr<SgNodePath> SgNodePathPtr;
+    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     vector<SgNodePathPtr> pickingNodePathList;
     SgNodePath pickedNodePath;
@@ -679,7 +687,7 @@ void GL1SceneRendererImpl::renderFog()
         } else {
             currentFogConnection.reset(
                 fog->sigUpdated().connect(
-                    boost::bind(&GL1SceneRendererImpl::onCurrentFogNodeUdpated, this)));
+                    std::bind(&GL1SceneRendererImpl::onCurrentFogNodeUdpated, this)));
         }
     }
 
@@ -837,7 +845,7 @@ inline unsigned int GL1SceneRendererImpl::pushPickName(SgNode* node, bool doSetC
     if(isPicking && !isCompiling){
         id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
-        pickingNodePathList.push_back(boost::make_shared<SgNodePath>(currentNodePath));
+        pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
         if(doSetColor){
             setPickColor(id);
         }
