@@ -73,7 +73,6 @@ set(sources
   ScriptItem.cpp
   TimeSyncItemEngine.cpp
   AppConfig.cpp
-  AppUtil.cpp
   Archive.cpp
   ItemTreeArchiver.cpp
   LazyCaller.cpp

@@ -6,12 +6,10 @@
 #define CNOID_BASE_GRAPH_WIDGET_H
 
 #include <cnoid/Archive>
-#include <string>
-#include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
 #include <QWidget>
 #include <QLabel>
+#include <string>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,7 +21,7 @@ class GraphDataHandler;
 class GraphDataHandlerImpl;
 class GraphWidgetImpl;
     
-typedef boost::shared_ptr<GraphDataHandler> GraphDataHandlerPtr;
+typedef std::shared_ptr<GraphDataHandler> GraphDataHandlerPtr;
     
 class CNOID_EXPORT GraphDataHandler
 {
@@ -48,10 +46,10 @@ public:
         
     void update();
 
-    typedef boost::function<void(int frame, int size, double* out_values)> DataRequestCallback;
+    typedef std::function<void(int frame, int size, double* out_values)> DataRequestCallback;
     void setDataRequestCallback(DataRequestCallback callback);
 
-    typedef boost::function<void(int frame, int size, double* values)> DataModifiedCallback;
+    typedef std::function<void(int frame, int size, double* values)> DataModifiedCallback;
     void setDataModifiedCallback(DataModifiedCallback callback);
 
 private:

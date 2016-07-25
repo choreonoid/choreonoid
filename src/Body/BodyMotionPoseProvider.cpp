@@ -8,7 +8,6 @@
 #include "LeggedBodyHelper.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 #if defined(_MSC_VER) && _MSC_VER < 1800

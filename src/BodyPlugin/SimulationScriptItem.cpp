@@ -5,10 +5,10 @@
 
 #include "SimulationScriptItem.h"
 #include <cnoid/Archive>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -112,7 +112,7 @@ void SimulationScriptItem::doPutProperties(PutPropertyFunction& putProperty)
     ScriptItem::doPutProperties(putProperty);
     
     putProperty(_("Timing"), impl->executionTiming,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &impl->executionTiming, _1));
+                std::bind((bool(Selection::*)(int))&Selection::select, &impl->executionTiming, _1));
     putProperty(_("Delay"), impl->executionDelay, changeProperty(impl->executionDelay));
     putProperty(_("Simulation only"), impl->isOnlyExecutedAsSimulationScript,
                 changeProperty(impl->isOnlyExecutedAsSimulationScript));

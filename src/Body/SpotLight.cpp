@@ -67,7 +67,7 @@ Device* SpotLight::clone() const
 }
 
 
-void SpotLight::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void SpotLight::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(SpotLight))){
         PointLight::forEachActualType(func);

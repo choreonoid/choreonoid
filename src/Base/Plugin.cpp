@@ -10,7 +10,6 @@
 #include <boost/variant.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 

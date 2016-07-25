@@ -374,12 +374,7 @@ ItemTreeView::~ItemTreeView()
 
 ItemTreeViewImpl::~ItemTreeViewImpl()
 {
-    // On Windows + VC++, boost::signal::trackable, the super class of
-    // ItemTreeViewImpl, does not seem to work correctly, and the connection
-    // is not disconnected and the program aborted by segmentation fault.
-    // So the following explicit disconnection code is added.
 
-    //connectionClassUnregistered.disconnect();
 }
 
 

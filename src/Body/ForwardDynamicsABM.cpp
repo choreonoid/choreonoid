@@ -9,7 +9,6 @@
 #include <cnoid/EigenUtil>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 static const bool debugMode = false;

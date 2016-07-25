@@ -7,7 +7,6 @@
 #include <cnoid/FileUtil>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 ScriptItem::ScriptItem()
@@ -38,7 +37,7 @@ const std::string& ScriptItem::textFilename() const
 std::string ScriptItem::identityName() const
 {
     const string& name_ = name();
-    const string fname = getFilename(filesystem::path(scriptFilename()));
+    const string fname = getFilename(boost::filesystem::path(scriptFilename()));
     if(name_.empty()){
         return fname;
     }

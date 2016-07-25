@@ -19,7 +19,7 @@ protected:
 
 public:
     void copyStateFrom(const Light& other);
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
 
     static int lightStateSize();
     virtual const double* readState(const double* buf);

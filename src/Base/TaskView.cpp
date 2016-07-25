@@ -25,6 +25,7 @@
 using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -475,7 +476,7 @@ void TaskViewImpl::addTask(Task* task)
         setCurrentTask(0, true);
     }
 
-    os << boost::format(_("Task \"%1%\" has been added.")) % task->name() << endl;
+    os << format(_("Task \"%1%\" has been added.")) % task->name() << endl;
 }
 
 
@@ -496,7 +497,7 @@ bool TaskViewImpl::updateTask(Task* task)
     } else {
         if(isWaiting()){
             mv->putln(MessageView::WARNING,
-                      boost::format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
+                      format(_("Task \"%1%\" cannot be updated now because it is wating for a command to finish."))
                       % task->name());
         } else {
             TaskInfo& info = tasks[index];
@@ -530,7 +531,7 @@ bool TaskViewImpl::updateTask(Task* task)
                     task->restoreState(self, *info.state);
                 }
             }
-            os << boost::format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
+            os << format(_("Task \"%1%\" has been updated with the new one.")) % task->name() << endl;
             updated = true;
         }
     }

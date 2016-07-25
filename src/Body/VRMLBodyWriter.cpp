@@ -3,9 +3,9 @@
 */
 
 #include "VRMLBodyWriter.h"
+#include "VRMLBody.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 

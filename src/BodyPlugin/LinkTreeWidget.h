@@ -75,9 +75,9 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
     void setBodyItem(BodyItem* bodyItem);
     BodyItem* bodyItem();
 
-    typedef boost::function<void(const LinkTreeItem* item, int role, QVariant& out_value)> ColumnDataFunction;
-    typedef boost::function<void(const LinkTreeItem* item, int role, const QVariant& value)> ColumnSetDataFunction;
-    typedef boost::function<QWidget*(const LinkTreeItem* item)> ColumnWidgetFunction;
+    typedef std::function<void(const LinkTreeItem* item, int role, QVariant& out_value)> ColumnDataFunction;
+    typedef std::function<void(const LinkTreeItem* item, int role, const QVariant& value)> ColumnSetDataFunction;
+    typedef std::function<QWidget*(const LinkTreeItem* item)> ColumnWidgetFunction;
 
     int setNumColumns(int n);
     int addColumn();

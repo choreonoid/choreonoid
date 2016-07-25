@@ -29,7 +29,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
@@ -44,10 +44,6 @@ public:
 
 typedef ref_ptr<AccelerationSensor> AccelerationSensorPtr;
 
-// for the backward compatibility
-//typedef AccelerationSensorPtr AccelSensor;
-//typedef ref_ptr<AccelSensor> AccelSensorPtr;
-    
 };
 
 #endif

@@ -44,7 +44,7 @@ Device::~Device()
 }
 
 
-void Device::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void Device::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     func(typeid(Device));
 }

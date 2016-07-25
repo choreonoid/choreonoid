@@ -78,7 +78,7 @@ public:
     void setLink(Link* link) { ns->link = link; }
 
     virtual Device* clone() const = 0;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
 
     bool hasStateOnly() const { return (ns != 0); }

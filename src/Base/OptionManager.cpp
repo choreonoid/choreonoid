@@ -7,8 +7,8 @@
 #include <set>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace program_options = boost::program_options;
 
 namespace {
 struct OptionInfo {

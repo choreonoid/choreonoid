@@ -214,7 +214,7 @@ QVariant LinkTreeItem::data(int column, int role) const
     QVariant value;
     LinkTreeWidget* tree = static_cast<LinkTreeWidget*>(treeWidget());
     LinkTreeWidget::ColumnDataFunction& func = tree->impl->columnInfos[column].dataFunction;
-    if(!func.empty()){
+    if(func){
         func(this, role, value);
     }
     if(value.isValid()){
@@ -228,7 +228,7 @@ void LinkTreeItem::setData(int column, int role, const QVariant& value)
 {
     LinkTreeWidget* tree = static_cast<LinkTreeWidget*>(treeWidget());
     LinkTreeWidget::ColumnSetDataFunction& func = tree->impl->columnInfos[column].setDataFunction;
-    if(!func.empty()){
+    if(func){
         func(this, role, value);
     }
     return QTreeWidgetItem::setData(column, role, value);
@@ -765,7 +765,7 @@ void LinkTreeWidgetImpl::addChild(LinkTreeItem* parentItem, LinkTreeItem* item)
 
     for(size_t col=0; col < columnInfos.size(); ++col){
         LinkTreeWidget::ColumnWidgetFunction& func = columnInfos[col].widgetFunction;
-        if(!func.empty()){
+        if(func){
             QWidget* widget = func(item);
             if(widget){
                 self->setItemWidget(item, col, widget);

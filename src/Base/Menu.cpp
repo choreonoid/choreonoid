@@ -4,7 +4,6 @@
 
 #include "Menu.h"
 
-using namespace boost;
 using namespace cnoid;
 
 

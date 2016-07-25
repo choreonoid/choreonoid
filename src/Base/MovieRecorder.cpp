@@ -48,6 +48,7 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 
@@ -214,7 +215,7 @@ public:
     boost::thread imageOutputThread;
     boost::mutex imageQueueMutex;
     boost::condition_variable imageQueueCondition;
-    boost::format filenameFormat;
+    format filenameFormat;
 
     MovieRecorderImpl(ExtensionManager* ext);
     ~MovieRecorderImpl();
@@ -717,7 +718,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         }
     }
 
-    filenameFormat = boost::format((directory / basename).string());
+    filenameFormat = format((directory / basename).string());
 
     if(dialog->imageSizeCheck.isChecked()){
         int width = dialog->imageWidthSpin.value();
@@ -745,7 +746,7 @@ bool MovieRecorderImpl::doOfflineModeRecording()
     startFlash();
     startImageOutput();
 
-    mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
+    mv->putln(format(startMessage) % targetView->name() % recordingMode.selectedLabel());
     
     while(time <= finishTime && doContinue){
 
@@ -785,7 +786,7 @@ void MovieRecorderImpl::setupOnlineModeRecording()
             timeBar->sigPlaybackStarted().connect(
                 std::bind(&MovieRecorderImpl::onPlaybackStarted, this, std::placeholders::_1)));
         
-        mv->putln(boost::format(_("The online mode recording for %1% is ready.")) % targetView->name());
+        mv->putln(format(_("The online mode recording for %1% is ready.")) % targetView->name());
     }
 }
 
@@ -811,7 +812,7 @@ void MovieRecorderImpl::startOnlineModeRecording()
     isRecording = true;
     startImageOutput();
 
-    mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
+    mv->putln(format(startMessage) % targetView->name() % recordingMode.selectedLabel());
 }
 
 
@@ -852,7 +853,7 @@ void MovieRecorderImpl::startDirectModeRecording()
     directModeTimer.setInterval(1000 / dialog->frameRate());
     directModeTimer.start();
 
-    mv->putln(boost::format(startMessage) % targetView->name() % recordingMode.selectedLabel());
+    mv->putln(format(startMessage) % targetView->name() % recordingMode.selectedLabel());
 }
 
 
@@ -987,7 +988,7 @@ void MovieRecorderImpl::outputImages()
 
         if(!saved){
             string message = str(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
-            callLater(boost::bind(&MovieRecorderImpl::onImageOutputFailed, this, message));
+            callLater(std::bind(&MovieRecorderImpl::onImageOutputFailed, this, message));
             {
                 boost::unique_lock<boost::mutex> lock(imageQueueMutex);
                 capturedImages.clear();
@@ -1050,9 +1051,9 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
         imageOutputThread.join();
 
         if(isFinished){
-            mv->putln(boost::format(_("Recording of %1% has been finished.")) % targetView->name());
+            mv->putln(format(_("Recording of %1% has been finished.")) % targetView->name());
         } else {
-            mv->putln(boost::format(_("Recording of %1% has been stopped.")) % targetView->name());
+            mv->putln(format(_("Recording of %1% has been stopped.")) % targetView->name());
         }
     }
     
