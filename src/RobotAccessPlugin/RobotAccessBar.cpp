@@ -8,10 +8,9 @@
 #include <cnoid/RootItem>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -35,7 +34,7 @@ public:
 namespace {
 
 void forEachCheckedRobotAccessItems
-(boost::function<void(RobotAccessItem* item)> func, const char* noTargetMessage)
+(std::function<void(RobotAccessItem* item)> func, const char* noTargetMessage)
 {
     ItemList<RobotAccessItem> items =
         ItemTreeView::instance()->checkedItems<RobotAccessItem>();
@@ -66,20 +65,20 @@ RobotAccessBar::~RobotAccessBar()
 RobotAccessBarImpl::RobotAccessBarImpl(RobotAccessBar* self)
 {
     self->addButton(_("C"), _("Connect to robots"))
-        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::connectToRobots, this));
+        ->sigClicked().connect(std::bind(&RobotAccessBarImpl::connectToRobots, this));
 
     self->addButton(_("D"), _("Disconnect from robots"))
-        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::disconnectFromRobots, this));
+        ->sigClicked().connect(std::bind(&RobotAccessBarImpl::disconnectFromRobots, this));
     
     self->addButton(QIcon(":/RobotAccess/icons/servo-on.png"), _("Turn on servos"))
-        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::turnOnServos, this));
+        ->sigClicked().connect(std::bind(&RobotAccessBarImpl::turnOnServos, this));
 
     self->addButton(_("OFF"), _("Turn off servos"))
-        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::turnOffServos, this));
+        ->sigClicked().connect(std::bind(&RobotAccessBarImpl::turnOffServos, this));
     
     self->addButton(QIcon(":/RobotAccess/icons/sendpose.png"),
                     _("Send the current pose of virtual robots to actual robots"))
-        ->sigClicked().connect(boost::bind(&RobotAccessBarImpl::onSendPoseButtonClicked, this));
+        ->sigClicked().connect(std::bind(&RobotAccessBarImpl::onSendPoseButtonClicked, this));
     
     syncToggle = self->addToggleButton(QIcon(":/RobotAccess/icons/syncpose.png"),
                                        _("Synchronize the pose of actual robots pose with virtual robots"));
@@ -89,7 +88,7 @@ RobotAccessBarImpl::RobotAccessBarImpl(RobotAccessBar* self)
 void RobotAccessBarImpl::connectToRobots()
 {
     forEachCheckedRobotAccessItems(
-        boost::bind(&RobotAccessItem::connectToRobot, _1),
+        std::bind(&RobotAccessItem::connectToRobot, _1),
         _("There are no checked items to connect to robots"));
 }
 
@@ -97,7 +96,7 @@ void RobotAccessBarImpl::connectToRobots()
 void RobotAccessBarImpl::disconnectFromRobots()
 {
     forEachCheckedRobotAccessItems(
-        boost::bind(&RobotAccessItem::disconnectFromRobot, _1),
+        std::bind(&RobotAccessItem::disconnectFromRobot, _1),
         _("There are no checked items to disconnect from robots"));
 }
 
@@ -105,7 +104,7 @@ void RobotAccessBarImpl::disconnectFromRobots()
 void RobotAccessBarImpl::turnOnServos()
 {
     forEachCheckedRobotAccessItems(
-        boost::bind(&RobotAccessItem::activateServos, _1, true),
+        std::bind(&RobotAccessItem::activateServos, _1, true),
         _("There are no checked items to activate servos"));
 }
 
@@ -113,7 +112,7 @@ void RobotAccessBarImpl::turnOnServos()
 void RobotAccessBarImpl::turnOffServos()
 {
     forEachCheckedRobotAccessItems(
-        boost::bind(&RobotAccessItem::activateServos, _1, false),
+        std::bind(&RobotAccessItem::activateServos, _1, false),
         _("There are no checked items to deactivate servos"));
 }
 

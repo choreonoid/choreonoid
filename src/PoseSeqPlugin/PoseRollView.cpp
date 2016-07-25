@@ -16,14 +16,12 @@
 #include <QHeaderView>
 #include <QPaintEvent>
 #include <QPainter>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 #include <iostream>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -176,8 +174,8 @@ public:
     LinkTreeItem* getFirstVisibleAncestor(const LinkTreeItem* item);
     bool checkIfPoseHasRow(const PosePtr& pose, const LinkTreeItem* item);
     double searchLastPoseTime(const LinkTreeItem* item);
-    void processKeyPoseMarkersSub(LinkTreeItem* item, boost::function<void()> func);
-    void processKeyPoseMarkers(boost::function<void()> func);
+    void processKeyPoseMarkersSub(LinkTreeItem* item, std::function<void()> func);
+    void processKeyPoseMarkers(std::function<void()> func);
             
     bool onScreenPaintEvent(QPaintEvent* event);        
     void drawBackground();
@@ -261,20 +259,20 @@ void PoseRollViewImpl::initialize()
     linkTreeWidget->setVerticalScrollBar(treeWidgetVerticalScrollBar);
     linkTreeWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     treeWidgetVerticalScrollBar->sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::requestRowRectsUpdate, this));
+        std::bind(&PoseRollViewImpl::requestRowRectsUpdate, this));
 
     // setup the link tree view model
     linkTreeWidget->sigItemExpanded().connect(
-        boost::bind(&PoseRollViewImpl::requestRowRectsUpdate, this));
+        std::bind(&PoseRollViewImpl::requestRowRectsUpdate, this));
     linkTreeWidget->sigItemCollapsed().connect(
-        boost::bind(&PoseRollViewImpl::requestRowRectsUpdate, this));
+        std::bind(&PoseRollViewImpl::requestRowRectsUpdate, this));
     treeBox->addWidget(linkTreeWidget, 1);
 
     hScrollBar = new DoubleScrollBar(Qt::Horizontal);
     hScrollBar->setSingleStep(0.1);
     hScrollBar->setRange(-leftMargin, timeLength + (2.0 / timeToScreenX));
     hScrollBarChangedConnection = hScrollBar->sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::onHScrollbarChanged, this, _1));
+        std::bind(&PoseRollViewImpl::onHScrollbarChanged, this, _1));
 
     QHBoxLayout* hbox = new QHBoxLayout();
     hbox->setSpacing(8);
@@ -296,24 +294,25 @@ void PoseRollViewImpl::initialize()
     self->setLayout(vbox);
 
     commandMenuManager.addItem(_("Select specified key poses"))->sigTriggered().connect(
-        boost::bind(&PoseRollViewImpl::onSelectSpecifiedKeyPosesActivated, this));
+        std::bind(&PoseRollViewImpl::onSelectSpecifiedKeyPosesActivated, this));
     commandMenuManager.addItem(_("Adjust step positions"))->sigTriggered().connect(
-        boost::bind(&PoseRollViewImpl::onAdjustStepPositionsActivated, this));
+        std::bind(&PoseRollViewImpl::onAdjustStepPositionsActivated, this));
     commandMenuManager.addItem(_("Adjust waist positions of selected key poses"))->sigTriggered().connect(
-        boost::bind(&PoseRollViewImpl::onAdjustWaistPositionActivated, this));
+        std::bind(&PoseRollViewImpl::onAdjustWaistPositionActivated, this));
     commandMenuManager.addItem(_("Rotate yaw orientations"))->sigTriggered().connect(
-        boost::bind(&PoseRollViewImpl::onRotateYawOrientationsActivated, this));
+        std::bind(&PoseRollViewImpl::onRotateYawOrientationsActivated, this));
     commandMenuManager.addItem(_("Update key poses with balanced trajectories"))->sigTriggered().connect(
-        boost::bind(&PoseRollViewImpl::onUpdateKeyposesWithBalancedTrajectoriesActivated, this));
+        std::bind(&PoseRollViewImpl::onUpdateKeyposesWithBalancedTrajectoriesActivated, this));
     commandMenuManager.addItem(_("Flip poses against the x-z plane"))->sigTriggered().connect(
-        boost::bind(&PoseRollViewImpl::onFlipPosesActivated, this));
+        std::bind(&PoseRollViewImpl::onFlipPosesActivated, this));
 
     lipSyncCheck = commandMenuManager.addCheckItem(_("Show lip-sync elements"));
-    lipSyncCheck->sigToggled().connect(boost::bind(&QWidget::update, screen));
+    lipSyncCheck->sigToggled().connect(
+        std::bind(static_cast<void(QWidget::*)()>(&QWidget::update), screen));
 
     commandMenuButton.setText(_("Menu"));
     commandMenuButton.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    commandMenuButton.sigClicked().connect(boost::bind(&PoseRollViewImpl::onMenuButtonClicked, this));
+    commandMenuButton.sigClicked().connect(std::bind(&PoseRollViewImpl::onMenuButtonClicked, this));
 
     onItemSelectionChanged(ItemTreeView::instance()->selectedItems());
 }
@@ -350,7 +349,7 @@ QHBoxLayout* PoseRollViewImpl::layoutOperationParts()
     currentTimeSpin.setRange(0.0, 999.999);
     currentTimeSpin.setSingleStep(0.005);
     currentTimeSpinConnection = currentTimeSpin.sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::onCurrentTimeSpinChanged, this, _1));
+        std::bind(&PoseRollViewImpl::onCurrentTimeSpinChanged, this, _1));
     hbox->addWidget(&currentTimeSpin);
 
     hbox->addWidget(new QLabel(" / "));
@@ -361,7 +360,7 @@ QHBoxLayout* PoseRollViewImpl::layoutOperationParts()
     timeLengthSpin.setSingleStep(1.0);
     timeLengthSpin.setValue(timeLength);
     timeLengthSpin.sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::onTimeLengthChanged, this, _1));
+        std::bind(&PoseRollViewImpl::onTimeLengthChanged, this, _1));
     hbox->addWidget(&timeLengthSpin);
 
     hbox->addWidget(&timeSyncCheck);
@@ -380,7 +379,7 @@ QHBoxLayout* PoseRollViewImpl::layoutOperationParts()
     poseTimeSpin.setRange(0.0, 999.999);
     poseTimeSpin.setSingleStep(0.005);
     poseTimeSpinConnection = poseTimeSpin.sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::onPoseTimeSpinChanged, this, _1));
+        std::bind(&PoseRollViewImpl::onPoseTimeSpinChanged, this, _1));
     hbox->addWidget(&poseTimeSpin);
 
     hbox->addWidget(new QLabel(_("TT:")));
@@ -391,7 +390,7 @@ QHBoxLayout* PoseRollViewImpl::layoutOperationParts()
     poseTTimeSpin.setRange(0.0, 9.999);
     poseTTimeSpin.setSingleStep(0.005);
     poseTTimeSpinConnection = poseTTimeSpin.sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::onPoseTTimeSpinChanged, this, _1));
+        std::bind(&PoseRollViewImpl::onPoseTTimeSpinChanged, this, _1));
     hbox->addWidget(&poseTTimeSpin);
 
     hbox->addWidget(&deleteButton);
@@ -402,7 +401,7 @@ QHBoxLayout* PoseRollViewImpl::layoutOperationParts()
     gridIntervalSpin.setRange(1.0, 10.0);
     gridIntervalSpin.setSingleStep(1.0);
     gridIntervalSpin.sigValueChanged().connect(
-        boost::bind(&PoseRollViewImpl::onGridResolutionChanged, this, _1));
+        std::bind(&PoseRollViewImpl::onGridResolutionChanged, this, _1));
     hbox->addWidget(&gridIntervalSpin);
 
     hbox->addStretch();
@@ -834,7 +833,7 @@ double PoseRollViewImpl::searchLastPoseTime(const LinkTreeItem* item)
 }
 
 
-void PoseRollViewImpl::processKeyPoseMarkersSub(LinkTreeItem* item, boost::function<void()> func)
+void PoseRollViewImpl::processKeyPoseMarkersSub(LinkTreeItem* item, std::function<void()> func)
 {
     while(item){
         const RowInfo& rowInfo = itemIndexToRowInfoMap[item->rowIndex()];
@@ -864,7 +863,7 @@ void PoseRollViewImpl::processKeyPoseMarkersSub(LinkTreeItem* item, boost::funct
 }
 
 
-void PoseRollViewImpl::processKeyPoseMarkers(boost::function<void()> func)
+void PoseRollViewImpl::processKeyPoseMarkers(std::function<void()> func)
 {
     for(size_t i=0; i < rowRenderInfos.size(); ++i){
         RowRenderInfo& info = rowRenderInfos[i];
@@ -951,7 +950,7 @@ bool PoseRollViewImpl::onScreenPaintEvent(QPaintEvent* event)
     painter.setClipping(true);
 
     if(seq){
-        processKeyPoseMarkers(boost::bind(&PoseRollViewImpl::drawKeyPoseMarker, this));
+        processKeyPoseMarkers(std::bind(&PoseRollViewImpl::drawKeyPoseMarker, this));
     }
 
     painter.setClipping(false);
@@ -1115,7 +1114,7 @@ void PoseRollViewImpl::pickPose()
         pickedPoseIter = seq->end();
         pickDistance = std::numeric_limits<double>::max();
         pickedPart = PICK_NONE;
-        processKeyPoseMarkers(boost::bind(&PoseRollViewImpl::pickPoseSub, this));
+        processKeyPoseMarkers(std::bind(&PoseRollViewImpl::pickPoseSub, this));
     }
 }
 

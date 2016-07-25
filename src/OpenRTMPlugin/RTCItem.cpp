@@ -17,14 +17,13 @@
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
-#include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include "gettext.h"
 
-
-using namespace boost;
+using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
-
+namespace filesystem = boost::filesystem;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -177,7 +176,7 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     Item::doPutProperties(putProperty);
     putProperty(_("Relative Path Base"), pathBase,
-        boost::bind(&RTCItem::setPathBase, this, _1), true);
+        std::bind(&RTCItem::setPathBase, this, _1), true);
 
     FileDialogFilter filter;
     filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
@@ -189,13 +188,13 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
     putProperty(_("RTC module Name"), FilePath(moduleName, filter, dir),
-                boost::bind(&RTCItem::setModuleName, this, _1), true);
+                std::bind(&RTCItem::setModuleName, this, _1), true);
 
     putProperty(_("Periodic type"), periodicType,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
+                std::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
     putProperty(_("Periodic Rate"), periodicRate,
-                boost::bind(&RTCItem::setPeriodicRate, this, _1), true);
+                std::bind(&RTCItem::setPeriodicRate, this, _1), true);
 }
 
 
@@ -399,7 +398,7 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
     } else {
         mv->putln(fmt(_("RT Component process \"%1%\" has been executed.")) % command );
         rtcProcess.sigReadyReadStandardOutput().connect(
-            boost::bind(&RTComponent::onReadyReadServerProcessOutput, this));
+            std::bind(&RTComponent::onReadyReadServerProcessOutput, this));
     }
 }
 

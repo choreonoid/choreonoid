@@ -17,7 +17,6 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyCollisionDetectorUtil>
-#include <boost/bind.hpp>
 #include <QElapsedTimer>
 #include "gettext.h"
 
@@ -31,7 +30,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -348,7 +347,7 @@ void ODELink::createGeometry(ODEBody* odeBody)
 {
     if(link->shape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&ODELink::addMesh, this, extractor, odeBody))){
+        if(extractor->extract(link->shape(), std::bind(&ODELink::addMesh, this, extractor, odeBody))){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
@@ -375,7 +374,7 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        optional<Vector3> translation;
+        boost::optional<Vector3> translation;
         if(!extractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
@@ -1254,7 +1253,7 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
                 collisionDetector->updatePosition( k, geometryIdToLink[k]->link->T());
             }
         }
-        collisionDetector->detectCollisions(boost::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
+        collisionDetector->detectCollisions(std::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
     }else{
         if(MEASURE_PHYSICS_CALCULATION_TIME){
             collisionTimer.start();
@@ -1382,7 +1381,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
 
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
+    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
 
     putProperty.decimals(2).min(0.0)
         (_("Friction"), friction, changeProperty(friction));
@@ -1393,7 +1392,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
         (_("Global ERP"), globalERP, changeProperty(globalERP));
 
     putProperty(_("Global CFM"), globalCFM,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(globalCFM), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(globalCFM), _1));
 
     putProperty.min(1)
         (_("Iterations"), numIterations, changeProperty(numIterations));
@@ -1404,7 +1403,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Limit correcting vel."), enableMaxCorrectingVel, changeProperty(enableMaxCorrectingVel));
 
     putProperty(_("Max correcting vel."), maxCorrectingVel,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(maxCorrectingVel), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(maxCorrectingVel), _1));
 
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 

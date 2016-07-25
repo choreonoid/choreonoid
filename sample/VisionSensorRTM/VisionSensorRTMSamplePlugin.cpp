@@ -17,7 +17,6 @@
 #include <cnoid/corba/PointCloud.hh>
 #include <cnoid/LazyCaller>
 #include <cnoid/OpenRTMUtil>
-#include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
 #include <rtm/Manager.h>
@@ -34,9 +33,10 @@
 #include <GL/glew.h>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 using namespace RTC;
+using boost::format;
 
 const int BUF_SIZE = 200;
 
@@ -397,7 +397,7 @@ public:
         rangeSensor = 0;
         sigItemAddedConnection =
             RootItem::instance()->sigItemAdded().connect(
-                bind(&VisionSensorRTMSamplePlugin::onItemAdded, this, _1));
+                std::bind(&VisionSensorRTMSamplePlugin::onItemAdded, this, _1));
         
         return true;
     }
@@ -417,7 +417,7 @@ public:
             for(size_t i=0; i < body->numDevices(); ++i){
                 Device* device = body->device(i);
                 if(!camera){
-                    camera = dynamic_pointer_cast<Camera>(device);
+                    camera = dynamic_cast<Camera*>(device);
                     if(camera){
                         mv->putln(format("VisionSensorRTMSamplePlugin: Detected Camera \"%1%\" of %2%.")
                                   % camera->name() % body->name());
@@ -425,7 +425,7 @@ public:
                     }
                 }
                 if(!rangeSensor){
-                    rangeSensor = dynamic_pointer_cast<RangeSensor>(device);
+                    rangeSensor = dynamic_cast<RangeSensor*>(device);
                     if(rangeSensor){
                         mv->putln(format("VisionSensorRTMSamplePlugin: Detected RangeSensor \"%1%\" of %2%.")
                                   % rangeSensor->name() % body->name());

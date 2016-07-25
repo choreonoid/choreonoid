@@ -10,7 +10,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {

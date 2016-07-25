@@ -6,12 +6,13 @@
 #include "PythonScriptItemImpl.h"
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace stdph = std::placeholders;
 using namespace cnoid;
+using boost::format;
+namespace filesystem = boost::filesystem;
 
 
 PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem)
@@ -122,7 +123,7 @@ bool PythonScriptItemImpl::execute()
             sigFinishedConnection.disconnect();
             sigFinishedConnection =
                 executor.sigFinished().connect(
-                    boost::bind(&PythonScriptItemImpl::onScriptFinished, this));
+                    std::bind(&PythonScriptItemImpl::onScriptFinished, this));
             
             result = executor.execFile(scriptFilename_);
         }
@@ -205,7 +206,7 @@ bool PythonScriptItemImpl::terminate()
 void PythonScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Background execution"), executor.isBackgroundMode(),
-                boost::bind(&PythonScriptItemImpl::onBackgroundModeChanged, this, _1));
+                std::bind(&PythonScriptItemImpl::onBackgroundModeChanged, this, stdph::_1));
 }
 
 

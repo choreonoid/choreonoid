@@ -19,7 +19,7 @@ set(target CnoidPython)
 
 add_cnoid_library(${target} SHARED ${sources} ${headers})
 
-target_link_libraries(${target} ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
+target_link_libraries(${target} ${PYTHON_LIBRARIES})
 
 apply_common_setting_for_library(${target} "${headers}")
 

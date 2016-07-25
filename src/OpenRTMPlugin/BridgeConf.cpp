@@ -5,21 +5,15 @@
 
 #include "BridgeConf.h"
 #include "OpenRTMUtil.h"
-#include <iostream>
-#include <fstream>
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
-#if (BOOST_VERSION <= 103301)
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp> 
-#else
 #include <boost/filesystem.hpp>
-#endif
-
+#include <iostream>
 
 using namespace std;
-using namespace boost;
+namespace program_options = boost::program_options;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 BridgeConf::BridgeConf() :
     options("Allowed options"),
@@ -394,10 +388,10 @@ void BridgeConf::extractParameters(const std::string& str, std::vector<std::stri
 
 std::string BridgeConf::expandEnvironmentVariables(const std::string& str)
 {
-    regex variablePattern("\\$([A-z][A-z_0-9]*)");
+    boost::regex variablePattern("\\$([A-z][A-z_0-9]*)");
     
-    match_results<string::const_iterator> result; 
-    match_flag_type flags = match_default; 
+    boost::match_results<string::const_iterator> result; 
+    boost::regex_constants::match_flag_type flags = boost::regex_constants::match_default; 
     
     string::const_iterator start, end;
     std::string str_(str);
@@ -407,7 +401,7 @@ std::string BridgeConf::expandEnvironmentVariables(const std::string& str)
 
     vector< pair< int, int > > results;
 
-    while ( regex_search(start, end, result, variablePattern, flags) ) {
+    while ( boost::regex_search(start, end, result, variablePattern, flags) ) {
         results.push_back(std::make_pair(pos+result.position(1), result.length(1)));
 
         // seek to the remaining part

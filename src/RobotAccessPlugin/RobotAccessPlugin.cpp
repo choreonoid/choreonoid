@@ -9,7 +9,6 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
 
 namespace {
     

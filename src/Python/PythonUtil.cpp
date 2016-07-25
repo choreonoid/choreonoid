@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include <Python.h>
 #include "PythonUtil.h"
-#include <boost/python.hpp>
 
 void cnoid::handlePythonException()
 {

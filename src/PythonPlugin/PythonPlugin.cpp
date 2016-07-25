@@ -16,13 +16,15 @@
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
 #include <boost/python.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
+namespace stdph = std::placeholders;
 using namespace cnoid;
-using namespace boost;
+using boost::format;
+namespace python = boost::python;
+namespace filesystem = boost::filesystem;
 
 namespace {
     
@@ -71,7 +73,7 @@ python::object pythonExit()
 class PythonPlugin : public Plugin
 {
 public:
-    boost::scoped_ptr<PythonExecutor> executor_;
+    std::unique_ptr<PythonExecutor> executor_;
     python::object messageViewOut;
     python::object messageViewIn;
         
@@ -121,7 +123,8 @@ bool PythonPlugin::initialize()
     redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
                                   
     refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
-    refreshModulesCheck->sigToggled().connect(boost::bind(&PythonExecutor::setModuleRefreshEnabled, _1));
+    refreshModulesCheck->sigToggled().connect(
+        std::bind(&PythonExecutor::setModuleRefreshEnabled, stdph::_1));
     if(pythonConfig->get("refreshModules", false)){
         refreshModulesCheck->setChecked(true);
     }
@@ -130,12 +133,12 @@ bool PythonPlugin::initialize()
     PythonConsoleView::initializeClass(this);
     
     OptionManager& opm = optionManager();
-    opm.addOption("python,p", program_options::value< vector<string> >(), "load a python script file");
-    opm.sigOptionsParsed().connect(boost::bind(&PythonPlugin::onSigOptionsParsed, this, _1));
+    opm.addOption("python,p", boost::program_options::value< vector<string> >(), "load a python script file");
+    opm.sigOptionsParsed().connect(std::bind(&PythonPlugin::onSigOptionsParsed, this, stdph::_1));
 
     setProjectArchiver(
-        boost::bind(&PythonPlugin::storeProperties, this, _1),
-        boost::bind(&PythonPlugin::restoreProperties, this, _1));
+        std::bind(&PythonPlugin::storeProperties, this, stdph::_1),
+        std::bind(&PythonPlugin::restoreProperties, this, stdph::_1));
 
     return true;
 }

@@ -8,7 +8,6 @@
 #include "ScenarioItem.h"
 #include "ScenarioView.h"
 
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -30,6 +29,7 @@ public:
         return true;
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(ScenarioPlugin);

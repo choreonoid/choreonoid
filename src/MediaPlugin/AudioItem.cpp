@@ -6,9 +6,7 @@
 #include "AudioItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <boost/make_shared.hpp>
 #include <boost/format.hpp>
-#include <boost/bind.hpp>
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
 #include <sndfile.h>
@@ -17,11 +15,12 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
-boost::shared_ptr< std::vector<float> > emptySamplingData;
+std::shared_ptr< std::vector<float> > emptySamplingData;
 }
 
 
@@ -29,12 +28,12 @@ void AudioItem::initialize(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        emptySamplingData = boost::make_shared< std::vector<float> >();
+        emptySamplingData = std::make_shared< std::vector<float> >();
         ext->itemManager().registerClass<AudioItem>(N_("AudioItem"));
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
         ext->itemManager().addLoader<AudioItem>(_("Audio File"), "AUDIO-GENERIC", "wav;ogg",
-                                                boost::bind(&AudioItem::loadAudioFile, _1, _2, _3, _4));
+                                                std::bind(&AudioItem::loadAudioFile, _1, _2, _3, _4));
 #endif
         initialized = true;
     }
@@ -143,7 +142,7 @@ bool AudioItem::loadAudioFile(const std::string& filename, std::ostream& os, Ite
         numChannels_ = sfinfo.channels;
         samplingRate_ = sfinfo.samplerate;
 
-        samplingData_ = boost::make_shared< std::vector<float> >(sfinfo.frames * sfinfo.channels);
+        samplingData_ = std::make_shared< std::vector<float> >(sfinfo.frames * sfinfo.channels);
         sf_count_t framesRead = sf_readf_float(sndfile, &(*samplingData_)[0], sfinfo.frames);
 
         if(framesRead < sfinfo.frames){
@@ -182,7 +181,7 @@ void AudioItem::doPutProperties(PutPropertyFunction& putProperty)
     if(!samplingData_->empty()){
         putProperty("title", title);
         putProperty("length", timeLength());
-        putProperty("offset", offsetTime(), boost::bind(&AudioItem::setOffsetTime, this, _1), true);
+        putProperty("offset", offsetTime(), std::bind(&AudioItem::setOffsetTime, this, _1), true);
         putProperty("channels", numChannels());
         putProperty("sampling rate", samplingRate());
         if(!copyright.empty()) putProperty("copyright", copyright);

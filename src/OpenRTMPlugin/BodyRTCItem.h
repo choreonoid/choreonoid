@@ -112,7 +112,7 @@ private:
         double timeRate;
         double timeRateCounter;
     };
-    typedef boost::shared_ptr<RtcInfo> RtcInfoPtr;
+    typedef std::shared_ptr<RtcInfo> RtcInfoPtr;
 
     typedef std::map<std::string, RtcInfoPtr> RtcInfoMap;
     RtcInfoMap rtcInfoMap;

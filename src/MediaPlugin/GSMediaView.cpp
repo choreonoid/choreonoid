@@ -20,13 +20,13 @@
 #include <X11/Xlib.h>
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
-#include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -74,7 +74,7 @@ public:
     void onBusMessageAsync(GstMessage* msg);
     void putGstMessage(
         GstMessage* message,
-        boost::function<void(GstMessage* message, GError** gerror, gchar** debug)> parse,
+        std::function<void(GstMessage* message, GError** gerror, gchar** debug)> parse,
         const char* prefix);
     GstPadProbeReturn onVideoPadGotBuffer(GstPad* pad, GstPadProbeInfo* info);
     void seek(double time);
@@ -219,18 +219,18 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
     pendingSeekTimer.setSingleShot(true);
     pendingSeekTimer.setInterval(200);
     pendingSeekTimer.sigTimeout().connect(
-        boost::bind(&GSMediaViewImpl::checkPendingSeek, this));
+        std::bind(&GSMediaViewImpl::checkPendingSeek, this));
 
     connections.add(
         aspectRatioCheck->sigToggled().connect(
-            boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
+            std::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
     connections.add(
         orgSizeCheck->sigToggled().connect(
-            boost::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
+            std::bind(&GSMediaViewImpl::onZoomPropertyChanged, this)));
 
     connections.add(
         ItemTreeView::mainInstance()->sigCheckToggled().connect(
-            boost::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2)));
+            std::bind(&GSMediaViewImpl::onItemCheckToggled, this, _1, _2)));
 }
 
 
@@ -373,7 +373,7 @@ GstBusSyncReply GSMediaViewImpl::onBusMessageSync(GstMessage* message)
         cout << "GSMediaViewImpl::onBusMessageSync(" << GST_MESSAGE_TYPE_NAME(message) << ")" << endl;
     }
 
-    callLater(boost::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
+    callLater(std::bind(&GSMediaViewImpl::onBusMessageAsync, this, gst_message_copy(message)));
 
     return GST_BUS_DROP;
 }
@@ -417,7 +417,7 @@ void GSMediaViewImpl::onBusMessageAsync(GstMessage* msg)
 
 
 void GSMediaViewImpl::putGstMessage
-(GstMessage* message, boost::function<void(GstMessage* message, GError** gerror, gchar** debug)> parse, const char* prefix)
+(GstMessage* message, std::function<void(GstMessage* message, GError** gerror, gchar** debug)> parse, const char* prefix)
 {
     gchar* debug;
     GError* err;
@@ -441,7 +441,7 @@ GstPadProbeReturn GSMediaViewImpl::onVideoPadGotBuffer(GstPad* pad, GstPadProbeI
         const GstStructure* structure = gst_caps_get_structure(caps, 0);
         if(gst_structure_get_int(structure, "width", &videoWidth) &&
            gst_structure_get_int(structure, "height", &videoHeight)){
-            callLater(boost::bind(&GSMediaViewImpl::updateRenderRectangle, this));
+            callLater(std::bind(&GSMediaViewImpl::updateRenderRectangle, this));
         }
     }
 
@@ -560,16 +560,16 @@ void GSMediaViewImpl::activateCurrentMediaItem()
         if(timeBarConnections.empty()){
             timeBarConnections.add(
                 timeBar->sigPlaybackInitialized().connect(
-                    boost::bind(&GSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                    std::bind(&GSMediaViewImpl::onPlaybackInitialized, this, _1)));
             timeBarConnections.add(
                 timeBar->sigPlaybackStarted().connect(
-                    boost::bind(&GSMediaViewImpl::onPlaybackStarted, this, _1)));
+                    std::bind(&GSMediaViewImpl::onPlaybackStarted, this, _1)));
             timeBarConnections.add(
                 timeBar->sigPlaybackStopped().connect(
-                    boost::bind(&GSMediaViewImpl::onPlaybackStopped, this, _1)));
+                    std::bind(&GSMediaViewImpl::onPlaybackStopped, this, _1)));
             timeBarConnections.add(
                 timeBar->sigTimeChanged().connect(
-                    boost::bind(&GSMediaViewImpl::onTimeChanged, this, _1)));
+                    std::bind(&GSMediaViewImpl::onTimeChanged, this, _1)));
         }
 
         self->update();

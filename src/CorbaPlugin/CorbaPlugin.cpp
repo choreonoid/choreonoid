@@ -19,14 +19,13 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
+namespace filesystem = boost::filesystem;
 
 namespace {
 bool commonInitializationDone;
@@ -143,7 +142,7 @@ public:
         NameServerView::initializeClass(this);
 
         if(doSetupCorbaMainLoop){
-            orbMainLoopThread = thread(boost::bind(&CorbaPlugin::orbMainLoop, this));
+            orbMainLoopThread = boost::thread(std::bind(&CorbaPlugin::orbMainLoop, this));
         }
 
         return true;

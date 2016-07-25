@@ -21,16 +21,15 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
-
+using boost::format;
 
 namespace {
 
@@ -56,10 +55,10 @@ struct Double {
     };
 };
 
-typedef variant<bool, Int, Double, string> ValueVariant;
+typedef boost::variant<bool, Int, Double, string> ValueVariant;
 
-typedef variant<boost::function<bool(bool)>, boost::function<bool(int)>, boost::function<bool(double)>,
-                boost::function<bool(const string&)> > FunctionVariant;
+typedef boost::variant<std::function<bool(bool)>, std::function<bool(int)>, std::function<bool(double)>,
+                std::function<bool(const string&)> > FunctionVariant;
 
 enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING };
 
@@ -236,19 +235,19 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
             switch(qvalue.type()){
                 
             case QVariant::Bool:
-                accepted = get< boost::function<bool(bool)> >(func)(qvalue.toBool());
+                accepted = get< std::function<bool(bool)> >(func)(qvalue.toBool());
                 break;
                 
             case QVariant::String:
-                accepted = get< boost::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
+                accepted = get< std::function<bool(const string&)> >(func)(qvalue.toString().toStdString());
                 break;
                 
             case QVariant::Int:
-                accepted = get< boost::function<bool(int)> >(func)(qvalue.toInt());
+                accepted = get< std::function<bool(int)> >(func)(qvalue.toInt());
                 break;
                 
             case QVariant::Double:
-                accepted = get< boost::function<bool(double)> >(func)(qvalue.toDouble());
+                accepted = get< std::function<bool(double)> >(func)(qvalue.toDouble());
                 break;
             default:
                 break;
@@ -316,8 +315,8 @@ SceneGraphPropertyViewImpl::SceneGraphPropertyViewImpl(SceneGraphPropertyView* s
     layout->addWidget(tableWidget);
     self->setLayout(layout);
     
-    self->sigActivated().connect(boost::bind(&SceneGraphPropertyViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(boost::bind(&SceneGraphPropertyViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(std::bind(&SceneGraphPropertyViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(std::bind(&SceneGraphPropertyViewImpl::onActivated, this ,false));
 
     currentObject = 0;
 
@@ -339,7 +338,7 @@ SceneGraphPropertyViewImpl::~SceneGraphPropertyViewImpl()
 
 void SceneGraphPropertyViewImpl::setProperty(SgObject* obj)
 {
-//    boost::function<bool(const string&)> f = boost::bind(&SceneGraphPropertyViewImpl::setName, this, _1);
+//    std::function<bool(const string&)> f = std::bind(&SceneGraphPropertyViewImpl::setName, this, _1);
 //    addProperty("name", new PropertyItem(this, obj->name(), (FunctionVariant)f));
     addProperty(_("name"), new PropertyItem(this, obj->name()));
 }
@@ -745,7 +744,7 @@ void SceneGraphPropertyViewImpl::onActivated(bool on)
         if(sceneGraphView){
             onItemSelectionChanged(sceneGraphView->selectedObject());
             selectionChangedConnection = sceneGraphView->sigSelectionChanged().connect(
-                boost::bind(&SceneGraphPropertyViewImpl::onItemSelectionChanged, this, _1));
+                std::bind(&SceneGraphPropertyViewImpl::onItemSelectionChanged, this, _1));
         }
     } else {
         connectionOfsceneUpdated.disconnect();
@@ -763,7 +762,9 @@ void SceneGraphPropertyViewImpl::onItemSelectionChanged(const SgObject* object)
         connectionOfsceneUpdated.disconnect();
         currentObject = (SgObject*)object;
         if(currentObject)
-            connectionOfsceneUpdated = currentObject->sigUpdated().connect(boost::bind(&SceneGraphPropertyViewImpl::onSceneGraphUpdated, this, _1));
+            connectionOfsceneUpdated =
+                currentObject->sigUpdated().connect(
+                    std::bind(&SceneGraphPropertyViewImpl::onSceneGraphUpdated, this, _1));
         updateProperties();
     }
 }
@@ -803,4 +804,3 @@ void SceneGraphPropertyViewImpl::zoomFontSize(int pointSizeDiff)
     fontPointSizeDiff += pointSizeDiff;
     AppConfig::archive()->openMapping("SceneGraphPropertyView")->write("fontZoom", fontPointSizeDiff);
 }
-

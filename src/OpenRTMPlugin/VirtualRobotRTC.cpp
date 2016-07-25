@@ -7,13 +7,11 @@
 #include "BodyRTCItem.h"
 #include <cnoid/Config>
 #include <rtm/NVUtil.h>
-#include <boost/bind.hpp>
 #include <cnoid/MessageView>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {

@@ -21,13 +21,10 @@
 #include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <QDialogButtonBox>
-#include <boost/bind.hpp>
-#include <boost/format.hpp>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -347,24 +344,24 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     balancer = 0;
 
     addButton(QIcon(":/PoseSeq/icons/trajectory-generation.png"), _("Generate body motions"))
-        ->sigClicked().connect(boost::bind(&BodyMotionGenerationBar::onGenerationButtonClicked, this));
+        ->sigClicked().connect(std::bind(&BodyMotionGenerationBar::onGenerationButtonClicked, this));
 
     interpolationParameterWidgetsConnection.add(
         setup->timeScaleRatioSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->preInitialDurationSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->postFinalDurationSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     
     interpolationParameterWidgetsConnection.add(
         setup->onlyTimeBarRangeCheck.sigToggled().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     autoGenerationToggle = addToggleButton(QIcon(":/PoseSeq/icons/auto-update.png"), _("Automatic Balance Adjustment Mode"));
     autoGenerationToggle->setChecked(false);
@@ -373,55 +370,55 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     balancerToggle->setEnabled(false);
     balancerToggle->setChecked(false);
 
-    addButton(QIcon(":/Base/icons/setup.png"))->sigClicked().connect(boost::bind(&BodyMotionGenerationSetupDialog::show, setup));
+    addButton(QIcon(":/Base/icons/setup.png"))->sigClicked().connect(std::bind(&BodyMotionGenerationSetupDialog::show, setup));
     
     interpolationParameterWidgetsConnection.add(
         setup->stealthyStepCheck.sigToggled().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->stealthyHeightRatioThreshSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->flatLiftingHeightSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->flatLandingHeightSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->impactReductionHeightSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->impactReductionTimeSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->autoZmpCheck.sigToggled().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->minZmpTransitionTimeSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->zmpCenteringTimeThreshSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->zmpTimeMarginBeforeLiftingSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 
     interpolationParameterWidgetsConnection.add(
         setup->zmpMaxDistanceFromCenterSpin.sigValueChanged().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
     
     interpolationParameterWidgetsConnection.add(
         setup->lipSyncMixCheck.sigToggled().connect(
-            boost::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
+            std::bind(&BodyMotionGenerationBar::notifyInterpolationParametersChanged, this)));
 }
 
 

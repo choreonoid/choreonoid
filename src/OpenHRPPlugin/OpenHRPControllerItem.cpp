@@ -8,16 +8,15 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Sleep>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 using namespace OpenHRP;
-
+namespace filesystem = boost::filesystem;
 
 OpenHRPControllerItem::OpenHRPControllerItem()
 {
@@ -129,7 +128,7 @@ bool OpenHRPControllerItem::start(ControllerItemIO* io)
                     if(serverReady){
                         if(!signalReadyStandardOutputConnected){
                             controllerServerProcess.sigReadyReadStandardOutput().connect(
-                                boost::bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
+                                std::bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
                             signalReadyStandardOutputConnected = true;
                         }
                         break;
@@ -229,9 +228,9 @@ void OpenHRPControllerItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     
     putProperty(_("Controller server name"), controllerServerName,
-                boost::bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
+                std::bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
     putProperty(_("Controller server command"), controllerServerCommand,
-                boost::bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
+                std::bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
 }
 
 

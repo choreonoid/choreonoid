@@ -8,11 +8,9 @@
 #include <cnoid/Timer>
 #include <cv.h>
 #include <highgui.h>
-#include <boost/bind.hpp>
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
 
 namespace {
 

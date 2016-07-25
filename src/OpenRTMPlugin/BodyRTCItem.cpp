@@ -17,14 +17,15 @@
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
-#include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace stdph = std::placeholders;
 using namespace cnoid;
 using namespace RTC;
+using boost::format;
+namespace filesystem = boost::filesystem;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -123,7 +124,7 @@ void BodyRTCItem::createRTC(BodyPtr body)
                         mv->putln(_("Please save the project."));
                             return;
                     }else{
-                        confPath = boost::filesystem::path(projectFileName).parent_path() / confPath;
+                        confPath = filesystem::path(projectFileName).parent_path() / confPath;
                    }
                 }
             }
@@ -170,7 +171,7 @@ void BodyRTCItem::createRTC(BodyPtr body)
                         return;
                     }
                     else{
-                        modulePath = boost::filesystem::path(projectFileName).parent_path() / modulePath;
+                        modulePath = filesystem::path(projectFileName).parent_path() / modulePath;
                     }
                 }
             }
@@ -507,11 +508,11 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     putProperty(_("Auto Connect"), autoConnect, changeProperty(autoConnect));
     putProperty(_("RTC Instance name"), instanceName,
-                boost::bind(&BodyRTCItem::setInstanceName, this, _1), true);
+                std::bind(&BodyRTCItem::setInstanceName, this, stdph::_1), true);
     putProperty.decimals(3)(_("Periodic rate"), executionCycleProperty,
                             changeProperty(executionCycleProperty));
     putProperty(_("Relative Path Base"), pathBase, 
-                boost::bind(&BodyRTCItem::setPathBase, this, _1), true);
+                std::bind(&BodyRTCItem::setPathBase, this, stdph::_1), true);
 
     FileDialogFilter filter;
     filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
@@ -523,10 +524,10 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
     putProperty(_("Controller module name"), FilePath(moduleName, filter, dir),
-                boost::bind(&BodyRTCItem::setControllerModule, this, _1), true);
+                std::bind(&BodyRTCItem::setControllerModule, this, stdph::_1), true);
 
     putProperty(_("Configuration mode"), configMode,
-                boost::bind(&BodyRTCItem::setConfigMode, this, _1), true);
+                std::bind(&BodyRTCItem::setConfigMode, this, stdph::_1), true);
 
     filter.clear();
     filter.push_back(_(" RTC Configuration File (*.conf)") );
@@ -538,7 +539,7 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
     putProperty(_("Configuration file name"), FilePath(confFileName, filter, dir),
-                boost::bind(&BodyRTCItem::setConfigFile, this, _1), true);
+                std::bind(&BodyRTCItem::setConfigFile, this, stdph::_1), true);
 
 }
 

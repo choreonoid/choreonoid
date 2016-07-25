@@ -3,18 +3,16 @@
    \author shizuko hattori
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_RTC_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_RTC_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_RTC_H
+#define CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_RTC_H
 
-#include <set>
-#include <string>
+#include "VirtualRobotPortHandler.h"
+#include <cnoid/Body>
 #include <rtm/RTObject.h>
 #include <rtm/Manager.h>
 #include <rtm/DataFlowComponentBase.h>
-#include <cnoid/Body>
-
-#include "VirtualRobotPortHandler.h"
-
+#include <set>
+#include <string>
 
 namespace cnoid {
 

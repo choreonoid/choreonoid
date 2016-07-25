@@ -8,12 +8,10 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/DyBody>
 #include <cnoid/Light>
-#include <boost/bind.hpp>
 
 using namespace std;
 using namespace RTC;
 using namespace cnoid;
-
 
 PortHandler::~PortHandler()
 {
@@ -413,7 +411,7 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
             for(int j=0; j<4; j++)
                 value.data.extrinsic[i][j] = i==j? 1.0: 0.0;
 
-        camera->sigStateChanged().connect(boost::bind(&CameraImageOutPortHandler::onCameraStateChanged, this));
+        camera->sigStateChanged().connect(std::bind(&CameraImageOutPortHandler::onCameraStateChanged, this));
     }
 }
 
@@ -534,7 +532,7 @@ void CameraRangeOutPortHandler::initialize(Body* simBody)
         value.is_bigendian = false;
         value.is_dense = true;
         
-        rangeCamera->sigStateChanged().connect(boost::bind(&CameraRangeOutPortHandler::onCameraStateChanged, this));
+        rangeCamera->sigStateChanged().connect(std::bind(&CameraRangeOutPortHandler::onCameraStateChanged, this));
     }
 
 }
@@ -642,7 +640,7 @@ void RangeSensorOutPortHandler::initialize(Body* simBody)
         value.geometry.geometry.size.h = 0.0;
         value.geometry.elementGeometries.length(0);
         //
-        rangeSensor->sigStateChanged().connect(boost::bind(&RangeSensorOutPortHandler::onRangeSensorStateChanged, this));
+        rangeSensor->sigStateChanged().connect(std::bind(&RangeSensorOutPortHandler::onRangeSensorStateChanged, this));
     }
 }
 

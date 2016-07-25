@@ -6,7 +6,6 @@
 #ifndef CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H
 #define CNOID_OPENRTM_PLUGIN_VIRTUAL_ROBOT_PORT_HANDLER_H
 
-#include <boost/shared_ptr.hpp>
 #include <cnoid/Body>
 #include <cnoid/BasicSensors>
 #include <cnoid/Camera>
@@ -23,8 +22,6 @@
 #include <rtm/InPort.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
-
-
 #include "BridgeConf.h"
 
 namespace cnoid {
@@ -34,13 +31,13 @@ class BodyRTCItem;
 class PortHandler
 {
 public:
-    PortHandler(PortInfo& info) : portName(info.portName){} 
+    PortHandler(PortInfo& info) : portName(info.portName) { } 
     virtual ~PortHandler();
     RTC::PortService_var portRef;
     std::string portName;
 };
     
-typedef boost::shared_ptr<PortHandler> PortHandlerPtr;
+typedef std::shared_ptr<PortHandler> PortHandlerPtr;
     
 
 class OutPortHandler : public PortHandler
@@ -63,7 +60,7 @@ public:
     bool synchController;
 };
     
-typedef boost::shared_ptr<OutPortHandler> OutPortHandlerPtr;
+typedef std::shared_ptr<OutPortHandler> OutPortHandlerPtr;
     
     
 class InPortHandler : public PortHandler
@@ -74,7 +71,7 @@ public:
     virtual void readDataFromPort() = 0;
 };
     
-typedef boost::shared_ptr<InPortHandler> InPortHandlerPtr;
+typedef std::shared_ptr<InPortHandler> InPortHandlerPtr;
     
     
 class SensorStateOutPortHandler : public OutPortHandler
@@ -195,7 +192,7 @@ private:
     boost::mutex mtx;
     Camera* camera;
     std::string cameraName;
-    boost::shared_ptr<const Image> prevImage;
+    std::shared_ptr<const Image> prevImage;
     double controlTime;
 };
 
@@ -215,8 +212,8 @@ private:
     boost::mutex mtx;
     RangeCamera* rangeCamera;
     std::string rangeCameraName;
-    boost::shared_ptr<const RangeCamera::PointData> prevPoints;
-    boost::shared_ptr<const Image> image;
+    std::shared_ptr<const RangeCamera::PointData> prevPoints;
+    std::shared_ptr<const Image> image;
     std::string format;
     double controlTime;
 };
@@ -237,7 +234,7 @@ private:
     boost::mutex mtx;
     RangeSensor* rangeSensor;
     std::string rangeSensorName;
-    boost::shared_ptr<const RangeSensor::RangeData> prevRangeData;
+    std::shared_ptr<const RangeSensor::RangeData> prevRangeData;
     double controlTime;
 };
 
@@ -298,7 +295,7 @@ public:
 private:
     std::vector<std::string> lightNames;
 };
-}
 
+}
 
 #endif

@@ -8,6 +8,7 @@
 #include <boost/variant.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

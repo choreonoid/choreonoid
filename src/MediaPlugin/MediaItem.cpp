@@ -10,12 +10,11 @@
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/FileUtil>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
 #include <boost/filesystem.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 
@@ -124,7 +123,7 @@ Item* MediaItem::doDuplicate() const
 void MediaItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("uri"), mediaURI_);
-    putProperty(_("offset"), offsetTime_, (boost::lambda::bind(&MediaItem::setOffsetTime, this, boost::lambda::_1), true));
+    putProperty(_("offset"), offsetTime_, std::bind(&MediaItem::setOffsetTime, this, _1), true);
 }
 
 

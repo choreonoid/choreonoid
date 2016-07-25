@@ -7,7 +7,6 @@
 #define CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
 
 #include <cnoid/Item>
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -62,7 +61,7 @@ protected:
 
 private:
 
-    boost::shared_ptr< std::vector<float> > samplingData_;
+    std::shared_ptr< std::vector<float> > samplingData_;
     double offsetTime_;
     int numChannels_;
     double samplingRate_;

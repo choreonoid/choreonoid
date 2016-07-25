@@ -14,7 +14,6 @@
 #include <iostream>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/bind.hpp>
 #include <cnoid/Link>
 #include <cnoid/JointPath>
 #include <cnoid/ValueTree>
@@ -22,9 +21,8 @@
 #include <cnoid/Array2D>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
-
 
 namespace {
 
@@ -189,7 +187,7 @@ struct JointInfo
     double prev_q;
 
     // interpolated state
-    optional<double> q;
+    boost::optional<double> q;
 };
 
 struct ZmpSample
@@ -308,7 +306,7 @@ public:
     double currentTime;
     double timeScaleRatio;
     LinkInfoMap::iterator currentBaseLinkInfoIter;
-    dynamic_bitset<> validIkLinkFlag;
+    boost::dynamic_bitset<> validIkLinkFlag;
     Vector3 waistTranslation;
 
     Signal<void()> sigUpdated;
@@ -962,9 +960,9 @@ void PSIImpl::setPoseSeq(PoseSeqPtr seq)
 
     // for auto update mode (not implemented yet)
     poseSeqConnections = seq->connectSignalSet(
-        boost::bind(&PSIImpl::onPoseInserted, this, _1),
-        boost::bind(&PSIImpl::onPoseRemoving, this, _1, _2),
-        boost::bind(&PSIImpl::onPoseModified, this, _1));
+        std::bind(&PSIImpl::onPoseInserted, this, _1),
+        std::bind(&PSIImpl::onPoseRemoving, this, _1, _2),
+        std::bind(&PSIImpl::onPoseModified, this, _1));
     
     invalidateCurrentInterpolation();
     needUpdate = true;
@@ -1293,7 +1291,7 @@ mix:
 
         int jointId = lipSyncJoint.jointId;
         JointInfo& jointInfo = jointInfos[jointId];
-        optional<double> qorg = self->jointPosition(jointId);
+        boost::optional<double> qorg = self->jointPosition(jointId);
 
         if(!qorg){
             jointInfo.q = q;

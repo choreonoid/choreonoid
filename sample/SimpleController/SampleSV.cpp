@@ -7,8 +7,6 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
-
 
 #define DOF (4)
 #define STEERING_ID 0
