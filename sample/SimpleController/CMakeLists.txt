@@ -56,4 +56,3 @@ add_cnoid_simple_controller(SampleSVController SampleSV.cpp)
 
 add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)
 
-add_cnoid_simple_controller(SingleARM_JoyController SingleARM_Joy.cpp)
