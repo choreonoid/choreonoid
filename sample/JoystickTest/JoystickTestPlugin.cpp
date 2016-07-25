@@ -5,9 +5,8 @@
 #include <cnoid/Plugin>
 #include <cnoid/JoystickCapture>
 #include <cnoid/MessageView>
-#include <boost/bind.hpp>
 
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -25,9 +24,9 @@ public:
         joystick.setDevice("/dev/input/js0");
 
         joystick.sigButton().connect(
-            bind(&JoystickTestPlugin::onButtonEvent, this, _1, _2));
+            std::bind(&JoystickTestPlugin::onButtonEvent, this, _1, _2));
         joystick.sigAxis().connect(
-            bind(&JoystickTestPlugin::onAxisEvent, this, _1, _2));
+            std::bind(&JoystickTestPlugin::onAxisEvent, this, _1, _2));
 
         mv = MessageView::instance();
             
@@ -35,11 +34,11 @@ public:
     }
 
     void onButtonEvent(int id, bool isPressed) {
-        mv->putln(format("Joystick button %1%: %2%") % id % isPressed);
+        mv->putln(boost::format("Joystick button %1%: %2%") % id % isPressed);
     }
 
     void onAxisEvent(int id, double position) {
-        mv->putln(format("Joystick axis %1%: %2%") % id % position);
+        mv->putln(boost::format("Joystick axis %1%: %2%") % id % position);
     }
 };
 

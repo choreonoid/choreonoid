@@ -6,11 +6,10 @@
 
 #include "GLGearsView.h"
 #include <cnoid/MessageView>
-#include <boost/bind.hpp>
 #include <cmath>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 

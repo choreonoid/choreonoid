@@ -8,7 +8,6 @@
 #include <cnoid/SubSimulatorItem>
 #include <cnoid/AISTSimulatorItem>
 #include <cnoid/DyBody>
-#include <boost/bind.hpp>
 #include <sstream>
 
 using namespace std;
@@ -85,7 +84,7 @@ bool ContactForceExtractorItem::initializeSimulation(SimulatorItem* simulator)
     aistSimulator->setConstraintForceOutputEnabled(true);
 
     simulator->addPostDynamicsFunction(
-        boost::bind(&ContactForceExtractorItem::extractContactPoints, this, simulator));
+        std::bind(&ContactForceExtractorItem::extractContactPoints, this, simulator));
 
     return true;
 }

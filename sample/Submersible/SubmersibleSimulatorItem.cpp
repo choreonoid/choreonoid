@@ -12,7 +12,6 @@
 #include <cnoid/Body>
 #include <cnoid/Light>
 #include <cnoid/Joystick>
-#include <boost/bind.hpp>
 
 using namespace std;
 using namespace cnoid;
@@ -23,7 +22,7 @@ namespace {
 std::vector<Vector3, Eigen::aligned_allocator<Vector3> > resistancePoints;
 std::vector<Vector3, Eigen::aligned_allocator<Vector3> > thrustPoints;
 
-boost::shared_ptr<Joystick> joystick;
+std::shared_ptr<Joystick> joystick;
 
 }
 
@@ -92,7 +91,7 @@ bool SubmersibleSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem
         prevLightButtonState = false;
         MessageView::instance()->putln("A submersible model has been detected.");
         simulatorItem->addPreDynamicsFunction(
-            boost::bind(&SubmersibleSimulatorItem::applyResistanceForce, this));
+            std::bind(&SubmersibleSimulatorItem::applyResistanceForce, this));
         joystick.reset(new Joystick());
         joystickIntervalCounter = 0;
     }

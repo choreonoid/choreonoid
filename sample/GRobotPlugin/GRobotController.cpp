@@ -10,7 +10,9 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
+namespace asio = boost::asio;
+namespace this_thread = boost::this_thread;
+namespace posix_time = boost::posix_time;
 
 namespace {
 
@@ -414,7 +416,7 @@ void GRobotController::doOnDemandPoseSending()
 {
     while(true){
         {
-            unique_lock<mutex> lock(poseSendingMutex);
+            boost::unique_lock<boost::mutex> lock(poseSendingMutex);
             poseSendingCondition.wait(lock);
 
             if(mode != ON_DEMAND_POSE_SENDING){
@@ -585,8 +587,8 @@ void GRobotController::requestToSendPose(double transitionTime)
 
         poseSendingMutex.lock();
 
-        if(poseSendingThread == thread()){
-            poseSendingThread = thread(bind(&GRobotController::poseSendingLoop, this));
+        if(poseSendingThread == boost::thread()){
+            poseSendingThread = boost::thread(std::bind(&GRobotController::poseSendingLoop, this));
         }
 
         if(mode == ON_DEMAND_POSE_SENDING){
@@ -644,8 +646,8 @@ bool GRobotController::startMotion(double time, int id)
 
     poseSendingMutex.lock();
 
-    if(poseSendingThread == thread()){
-        poseSendingThread = thread(bind(&GRobotController::poseSendingLoop, this));
+    if(poseSendingThread == boost::thread()){
+        poseSendingThread = boost::thread(std::bind(&GRobotController::poseSendingLoop, this));
     }
     
     if(mode == CONTINUOUS_POSE_SENDING){
