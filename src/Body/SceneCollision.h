@@ -14,7 +14,7 @@ namespace cnoid {
 class CNOID_EXPORT SceneCollision : public SgLineSet
 {
 public:
-    SceneCollision(boost::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs);
+    SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs);
 
     void setDirty() { isDirty = true; }
 
@@ -23,7 +23,7 @@ public:
 private:
     SceneCollision(const SceneCollision& org);
 
-    boost::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs;
+    std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs;
     SgVertexArrayPtr vertices_;
     bool isDirty;
 };

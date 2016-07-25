@@ -8,10 +8,10 @@
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -70,7 +70,7 @@ LinkSelectionViewImpl::LinkSelectionViewImpl(LinkSelectionView* self)
 
     currentBodyItemChangeConnection =
         BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            boost::bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
+            std::bind(&LinkTreeWidget::setBodyItem, &linkTreeWidget, _1));
 }
 
 

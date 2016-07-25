@@ -115,7 +115,7 @@ public:
        @endif
     */
     SignalProxy<void(const ItemList<>&)> sigSelectionOrTreeChanged();
-
+    
     SignalProxy<void(Item* item, bool isChecked)> sigCheckToggled(int id = 0);
 
     SignalProxy<void(bool isChecked)> sigCheckToggled(Item* targetItem, int id = 0);

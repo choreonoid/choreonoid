@@ -14,8 +14,6 @@
 #include <QBoxLayout>
 #include <QEvent>
 #include <QApplication>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <set>
 #include <map>
 #include <deque>
@@ -24,6 +22,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 
@@ -100,7 +99,7 @@ public:
             linkExpansions.resize(n, true);
         }
     };
-    typedef boost::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
+    typedef std::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
 
     typedef map<BodyItemPtr, BodyItemInfoPtr> BodyItemInfoMap;
     BodyItemInfoMap bodyItemInfoCache;
@@ -316,7 +315,7 @@ void LinkTreeWidgetImpl::initialize()
     listingMode = LinkTreeWidget::LINK_LIST;
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.sigCurrentIndexChanged().connect(
-        boost::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
+        std::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
 }
 
 
@@ -562,10 +561,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
             if(!isCacheEnabled){
                 bodyItemInfoCache.clear();
             }
-            info = boost::make_shared<BodyItemInfo>();
+            info = std::make_shared<BodyItemInfo>();
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                boost::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
+                std::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
             bodyItemInfoCache[bodyItem] = info;
         }
 
@@ -1225,7 +1224,7 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
 bool LinkTreeWidget::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(boost::bind(&LinkTreeWidgetImpl::restoreState, impl, boost::ref(archive)));
+    archive.addPostProcess(std::bind(&LinkTreeWidgetImpl::restoreState, impl, std::ref(archive)));
     return true;
 }
 

@@ -70,7 +70,7 @@ void MeshExtractor::visitCamera(SgCamera* camera)
 }
 
 
-bool MeshExtractor::extract(SgNode* node, boost::function<void()> callback)
+bool MeshExtractor::extract(SgNode* node, std::function<void()> callback)
 {
     this->callback = callback;
     currentMesh_ = 0;

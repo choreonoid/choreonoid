@@ -16,8 +16,8 @@
 #include "STLSceneLoader.h"
 #include "NullOut.h"
 #include <boost/format.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/algorithm/string.hpp>
+#include <tuple>
 
 using namespace std;
 using namespace cnoid;
@@ -263,7 +263,7 @@ SgNode* VRMLToSGConverterImpl::convertGroupNode(AbstractVRMLGroup* vgroup)
     SgGroup* group;
 
     if(VRMLTransform* transform = dynamic_cast<VRMLTransform*>(vgroup)){
-        boost::tuples::tie(top, group) = createTransformNodeSet(transform);
+        std::tie(top, group) = createTransformNodeSet(transform);
     } else {
         group = new SgGroup;
         top = group;

@@ -51,7 +51,7 @@ private:
     PinDragIKImpl* impl;
 };
 
-typedef boost::shared_ptr<PinDragIK> PinDragIKptr;
+typedef std::shared_ptr<PinDragIK> PinDragIKptr;
 
 }
 

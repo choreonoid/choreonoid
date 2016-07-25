@@ -7,11 +7,9 @@
 #include "DyBody.h"
 #include "LinkTraverse.h"
 #include <cnoid/EigenUtil>
-#include <boost/bind.hpp>
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 static const bool CALC_ALL_JOINT_TORQUES = false;

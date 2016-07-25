@@ -9,10 +9,10 @@
 #include <cnoid/Link>
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -48,7 +48,7 @@ LinkGraphView::LinkGraphView()
 
     itemTreeViewConnection = 
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            boost::bind(&LinkGraphView::onItemSelectionChanged, this, _1));
+            std::bind(&LinkGraphView::onItemSelectionChanged, this, _1));
 
     linkSelection = LinkSelectionView::mainInstance();
 }
@@ -65,7 +65,7 @@ void LinkGraphView::setupElementToggleSet
 
         toggleConnections.add(
             toggles[i].sigToggled().connect(
-                boost::bind(&LinkGraphView::setupGraphWidget, this)));
+                std::bind(&LinkGraphView::setupGraphWidget, this)));
     }
 }
 
@@ -115,10 +115,10 @@ void LinkGraphView::onItemSelectionChanged(const ItemList<MultiSE3SeqItem>& item
             it->bodyItem = bodyItem;
 
             it->connections.add(it->item->sigUpdated().connect(
-                                    boost::bind(&LinkGraphView::onDataItemUpdated, this, it)));
+                                    std::bind(&LinkGraphView::onDataItemUpdated, this, it)));
 
             it->connections.add(it->item->sigDetachedFromRoot().connect(
-                                    boost::bind(&LinkGraphView::onDataItemDetachedFromRoot, this, it)));
+                                    std::bind(&LinkGraphView::onDataItemDetachedFromRoot, this, it)));
         }
     }
 
@@ -150,11 +150,11 @@ void LinkGraphView::updateBodyItems()
 
             bodyItemConnections.add(
                 linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    boost::bind(&LinkGraphView::setupGraphWidget, this)));
+                    std::bind(&LinkGraphView::setupGraphWidget, this)));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDetachedFromRoot().connect(
-                    boost::bind(&LinkGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
+                    std::bind(&LinkGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
         }
     }
 }
@@ -219,9 +219,9 @@ void LinkGraphView::addPositionTrajectory
             
                 handler->setFrameProperties(seq->numFrames(), seq->frameRate());
                 handler->setDataRequestCallback(
-                    boost::bind(&LinkGraphView::onDataRequest, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
+                    std::bind(&LinkGraphView::onDataRequest, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
                 handler->setDataModifiedCallback(
-                    boost::bind(&LinkGraphView::onDataModified, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
+                    std::bind(&LinkGraphView::onDataModified, this, itemInfoIter, link->index(), i, j, _1, _2, _3));
             
                 graph.addDataHandler(handler);
                 itemInfoIter->handlers.push_back(handler);

@@ -13,8 +13,8 @@ namespace {
 struct FactoryInfo
 {
     string name;
-    boost::function<CollisionDetectorPtr()> factory;
-    FactoryInfo(const string& name, const boost::function<CollisionDetectorPtr()>& factory)
+    std::function<CollisionDetectorPtr()> factory;
+    FactoryInfo(const string& name, const std::function<CollisionDetectorPtr()>& factory)
         : name(name), factory(factory) { }
 };
     
@@ -48,7 +48,7 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) { }
     virtual bool makeReady() { return true; }
     virtual void updatePosition(int geometryId, const Position& position) { }
-    virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback) { }
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) { }
 };
 
 CollisionDetectorPtr factory()
@@ -65,7 +65,7 @@ struct FactoryRegistration
 }
 
 
-bool CollisionDetector::registerFactory(const std::string& name, boost::function<CollisionDetectorPtr()> factory)
+bool CollisionDetector::registerFactory(const std::string& name, std::function<CollisionDetectorPtr()> factory)
 {
     if(!name.empty()){
         int index = factories.size();

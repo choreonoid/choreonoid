@@ -14,10 +14,10 @@
 #include "SpotLight.h"
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
-#include <boost/bind.hpp>
 #include <map>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -68,21 +68,21 @@ SceneDevice* createScenePerspectiveCamera(Device* device)
 {
     Camera* camera = static_cast<Camera*>(device);
     SgPerspectiveCamera* scene = new SgPerspectiveCamera();
-    return new SceneDevice(camera, scene, boost::bind(updatePerspectiveCamera, camera, scene));
+    return new SceneDevice(camera, scene, std::bind(updatePerspectiveCamera, camera, scene));
 }
         
 SceneDevice* createScenePointLight(Device* device)
 {
     PointLight* pointLight = static_cast<PointLight*>(device);
     SgPointLight* scene = new SgPointLight;
-    return new SceneDevice(pointLight, scene, boost::bind(updatePointLight, pointLight, scene));
+    return new SceneDevice(pointLight, scene, std::bind(updatePointLight, pointLight, scene));
 }
 
 SceneDevice* createSceneSpotLight(Device* device)
 {
     SpotLight* spotLight = static_cast<SpotLight*>(device);
     SgSpotLight* scene = new SgSpotLight;
-    return new SceneDevice(spotLight, scene, boost::bind(updateSpotLight, spotLight, scene));
+    return new SceneDevice(spotLight, scene, std::bind(updateSpotLight, spotLight, scene));
 }
 
 SceneDevice* createNullSceneDevice(Device* device)
@@ -135,7 +135,7 @@ static bool createSceneDevice(Device* device, const std::type_info& type, SceneD
 SceneDevice* SceneDevice::create(Device* device)
 {
     SceneDevice* sceneDevice = 0;
-    device->forEachActualType(boost::bind(createSceneDevice, device,  _1, boost::ref(sceneDevice)));
+    device->forEachActualType(std::bind(createSceneDevice, device,  _1, std::ref(sceneDevice)));
     return sceneDevice;
 }
 
@@ -147,7 +147,7 @@ SceneDevice::SceneDevice(Device* device)
 }
 
 
-SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, boost::function<void()> sceneUpdateFunction)
+SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> sceneUpdateFunction)
     : device_(device)
 {
     setTransform(device->link()->Rs().transpose() * device->T_local());
@@ -157,7 +157,7 @@ SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, boost::function<void
 }
     
     
-void SceneDevice::setSceneUpdateFunction(boost::function<void()> function)
+void SceneDevice::setSceneUpdateFunction(std::function<void()> function)
 {
     sceneUpdateFunction = function;
 }

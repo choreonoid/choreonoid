@@ -7,7 +7,6 @@
 #define CNOID_BODY_RATE_GYRO_SENSOR_H
 
 #include "Device.h"
-#include <boost/scoped_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,7 +18,7 @@ class CNOID_EXPORT RateGyroSensor : public Device
     struct Spec {
         Vector3 w_max;
     };
-    boost::scoped_ptr<Spec> spec;
+    std::unique_ptr<Spec> spec;
         
 public:
     RateGyroSensor();
@@ -30,7 +29,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);

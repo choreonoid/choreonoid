@@ -13,26 +13,25 @@
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
-#include <boost/bind.hpp>
 #include <iostream>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
-
+using boost::format;
 
 class VisionSensorSamplePlugin : public Plugin
 {
     ImageView* imageView;
     Connection sigItemAddedConnection;
     CameraPtr camera;
-    boost::shared_ptr<const Image> prevImage;
+    std::shared_ptr<const Image> prevImage;
     RangeCameraPtr rangeCamera;
     SgPointSetPtr pointSetFromRangeCamera;
-    boost::shared_ptr<const std::vector<Vector3f> > prevPoints;
+    std::shared_ptr<const std::vector<Vector3f> > prevPoints;
     RangeSensorPtr rangeSensor;
     SgPointSetPtr pointSetFromRangeSensor;
-    boost::shared_ptr<const RangeSensor::RangeData> prevRangeData;
+    std::shared_ptr<const RangeSensor::RangeData> prevRangeData;
     
 public:
     
@@ -59,7 +58,7 @@ public:
             for(size_t i=0; i < body->numDevices(); ++i){
                 Device* device = body->device(i);
                 if(!camera){
-                    camera = dynamic_pointer_cast<Camera>(device);
+                    camera = dynamic_cast<Camera*>(device);
                     if(camera){
                         mv->putln(format("CameraImageView: Detected Camera \"%1%\" of %2%.")
                                   % camera->name() % body->name());
@@ -69,7 +68,7 @@ public:
                     }
                 }
                 if(!rangeSensor){
-                    rangeSensor = dynamic_pointer_cast<RangeSensor>(device);
+                    rangeSensor = dynamic_cast<RangeSensor*>(device);
                     if(rangeSensor){
                         mv->putln(format("CameraImageView: Detected RangeSensor \"%1%\" of %2%.")
                                   % rangeSensor->name() % body->name());
@@ -164,6 +163,5 @@ public:
         }
     }
 };
-
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(VisionSensorSamplePlugin);

@@ -10,11 +10,10 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneView>
 #include <cnoid/BodyItem>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -75,7 +74,7 @@ class BodyTrackingCameraTransform : public InteractiveCameraTransform
             if(bodyItem){
                 connection.reset(
                     bodyItem->sigKinematicStateChanged().connect(
-                        boost::bind(&BodyTrackingCameraTransform::onBodyMoved, this)));
+                        std::bind(&BodyTrackingCameraTransform::onBodyMoved, this)));
                 updateRelativePosition();
             }
         }
@@ -209,11 +208,11 @@ void BodyTrackingCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 void BodyTrackingCameraItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty("Keep relative attitude", cameraTransform->isConstantRelativeAttitudeMode(),
-                boost::bind(&BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged, this, _1));
+                std::bind(&BodyTrackingCameraItemImpl::onKeepRelativeAttitudeChanged, this, _1));
     putProperty("Near clip distance", persCamera->nearClipDistance(),
-                boost::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, _1, persCamera->farClipDistance()));
+                std::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, _1, persCamera->farClipDistance()));
     putProperty("Far clip distance", persCamera->farClipDistance(),
-                boost::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, persCamera->nearClipDistance(), _1));
+                std::bind(&BodyTrackingCameraItemImpl::setClipDistances, this, persCamera->nearClipDistance(), _1));
 }
 
 

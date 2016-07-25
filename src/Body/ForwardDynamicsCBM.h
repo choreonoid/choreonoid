@@ -9,7 +9,6 @@
 #include "ForwardDynamics.h"
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid
@@ -152,7 +151,7 @@ private:
     void updateForceSensors();
 };
 
-typedef boost::shared_ptr<ForwardDynamicsCBM> ForwardDynamicsCBMPtr;
+typedef std::shared_ptr<ForwardDynamicsCBM> ForwardDynamicsCBMPtr;
 	
 };
 

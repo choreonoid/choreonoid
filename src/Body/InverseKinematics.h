@@ -5,8 +5,8 @@
 #ifndef CNOID_INVERSE_KINEMATICS_H
 #define CNOID_INVERSE_KINEMATICS_H
 
-#include <boost/shared_ptr.hpp>
 #include <cnoid/EigenTypes>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -24,7 +24,7 @@ public:
     virtual bool calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R) = 0;
 };
 
-typedef boost::shared_ptr<InverseKinematics> InverseKinematicsPtr;
+typedef std::shared_ptr<InverseKinematics> InverseKinematicsPtr;
 
 }
 

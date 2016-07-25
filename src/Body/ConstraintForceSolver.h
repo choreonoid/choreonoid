@@ -65,7 +65,7 @@ public:
 
     // experimental functions
     void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
-    typedef boost::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
+    typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
         CollisionHandler;
     int registerCollisionHandler(const std::string& name, CollisionHandler handler);
     void unregisterCollisionHandler(int handlerId);

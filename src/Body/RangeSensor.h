@@ -7,7 +7,6 @@
 #define CNOID_BODY_RANGE_SENSOR_H
 
 #include "Device.h"
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include "exportdecl.h"
 
@@ -24,7 +23,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
@@ -66,14 +65,14 @@ public:
     RangeData& rangeData();
     RangeData& newRangeData();
 
-    boost::shared_ptr<RangeData> sharedRangeData() const { return rangeData_; }
+    std::shared_ptr<RangeData> sharedRangeData() const { return rangeData_; }
 
     /**
        Move semantics. If the use_count() of the given shared range data pointer is one,
        the data is moved to the Camera object and the ownership of the given pointer is released.
        Otherwise, the data is copied.
     */
-    void setRangeData(boost::shared_ptr<RangeData>& rangeData);
+    void setRangeData(std::shared_ptr<RangeData>& rangeData);
 
     /**
        Time [s] consumed in the measurement
@@ -92,7 +91,7 @@ private:
     double maxDistance_;
     double frameRate_;
     double delay_;
-    boost::shared_ptr<RangeData> rangeData_;
+    std::shared_ptr<RangeData> rangeData_;
 
     RangeSensor(const RangeSensor& org, int x /* dummy */);
     void copyRangeSensorStateFrom(const RangeSensor& other);    

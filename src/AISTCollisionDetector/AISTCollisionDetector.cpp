@@ -9,10 +9,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
-#include <boost/make_shared.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
-#include <boost/random.hpp>
+#include <random>
 #include <algorithm>
 
 using namespace std;
@@ -26,7 +23,7 @@ const bool ENABLE_SHUFFLE = false;
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<AISTCollisionDetector>();
+    return std::make_shared<AISTCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -43,7 +40,7 @@ public:
     ColdetModelEx() { isStatic = false; }
     bool isStatic;
 };
-typedef boost::shared_ptr<ColdetModelEx> ColdetModelExPtr;
+typedef std::shared_ptr<ColdetModelEx> ColdetModelExPtr;
         
 
 class ColdetModelPairEx : public ColdetModelPair
@@ -61,7 +58,7 @@ public:
     const int id1() const { return id1_; }
     const int id2() const { return id2_; }
 };
-typedef boost::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
+typedef std::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 
 typedef map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
@@ -80,12 +77,10 @@ public:
 
     int maxNumThreads;
     int numThreads;
-    boost::scoped_ptr<ThreadPool> threadPool;
+    std::unique_ptr<ThreadPool> threadPool;
     boost::thread_group threadGroup;
 
     vector<int> shuffledPairIndices;
-    boost::random::mt19937 randomEngine;
-    boost::random_number_generator<boost::random::mt19937>randomNumberGenerator;
 
     typedef set< IdPair<> > IdPairSet;
     IdPairSet nonInterfarencePairs;
@@ -97,8 +92,8 @@ public:
     int addGeometry(SgNode* geometry);
     void addMesh(ColdetModelEx* model);
     bool makeReady();
-    void detectCollisions(boost::function<void(const CollisionPair&)> callback);
-    void detectCollisionsInParallel(boost::function<void(const CollisionPair&)> callback);
+    void detectCollisions(std::function<void(const CollisionPair&)> callback);
+    void detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback);
 
     // for multithread type 0
     typedef vector<CollisionPair> CollisionPairArray;
@@ -106,14 +101,14 @@ public:
 
     void extractCollisionsOfAssignedPairs(
         int pairIndexBegin, int pairIndexEnd, CollisionPairArray& collisionPairs);    
-    void dispatchCollisionsInCollisionPairArrays(boost::function<void(const CollisionPair&)> callback);    
+    void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
     
     // for multithread type 1
     vector< vector<ColdetModelPairEx*> > collidingModelPairArrays;
 
     void checkCollisionsOfAssignedPairs(
         int pairIndexBegin, int pairIndexEnd, vector<ColdetModelPairEx*>& collidingModelPairs);
-    void dispatchCollisionsInCollidingModelPairs(boost::function<void(const CollisionPair&)> callback);    
+    void dispatchCollisionsInCollidingModelPairs(std::function<void(const CollisionPair&)> callback);    
 };
 
 }
@@ -126,7 +121,6 @@ AISTCollisionDetector::AISTCollisionDetector()
 
 
 AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
-    : randomNumberGenerator(randomEngine)
 {
     maxNumThreads = 0;
     numThreads = 0;
@@ -155,7 +149,7 @@ const char* AISTCollisionDetector::name() const
 
 CollisionDetectorPtr AISTCollisionDetector::clone() const
 {
-    return boost::make_shared<AISTCollisionDetector>();
+    return std::make_shared<AISTCollisionDetector>();
 }
 
 
@@ -191,8 +185,8 @@ int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
     bool isValid = false;
 
     if(geometry){
-        ColdetModelExPtr model = boost::make_shared<ColdetModelEx>();
-        if(meshExtractor->extract(geometry, boost::bind(&AISTCollisionDetectorImpl::addMesh, this, model.get()))){
+        ColdetModelExPtr model = std::make_shared<ColdetModelEx>();
+        if(meshExtractor->extract(geometry, std::bind(&AISTCollisionDetectorImpl::addMesh, this, model.get()))){
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
@@ -287,7 +281,7 @@ bool AISTCollisionDetectorImpl::makeReady()
                 if(model2){
                     if(!model1->isStatic || !model2->isStatic){
                         if(nonInterfarencePairs.find(IdPair<>(i, j)) == nonInterfarencePairs.end()){
-                            modelPairs.push_back(boost::make_shared<ColdetModelPairEx>(model1, i, model2, j));
+                            modelPairs.push_back(std::make_shared<ColdetModelPairEx>(model1, i, model2, j));
                         }
                     }
                 }
@@ -334,7 +328,7 @@ void AISTCollisionDetector::updatePosition(int geometryId, const Position& posit
 }
 
 
-void AISTCollisionDetector::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     if(impl->numThreads > 0){
         impl->detectCollisionsInParallel(callback);
@@ -348,7 +342,7 @@ void AISTCollisionDetector::detectCollisions(boost::function<void(const Collisio
    \todo Remeber which geometry positions are updated after the last collision detection
    and do the actual collision detection only for the updated geometry pairs.
 */
-void AISTCollisionDetectorImpl::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
     vector<Collision>& collisions = collisionPair.collisions;
@@ -381,10 +375,10 @@ void AISTCollisionDetectorImpl::detectCollisions(boost::function<void(const Coll
 }
 
 
-void AISTCollisionDetectorImpl::detectCollisionsInParallel(boost::function<void(const CollisionPair&)> callback)
+void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback)
 {
     if(ENABLE_SHUFFLE){
-        std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomNumberGenerator);
+        std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end());
     }
 
     const int numPairs = modelPairs.size();
@@ -403,22 +397,22 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(boost::function<void(
         if(MULTITHREAD_TYPE == 0){
             if(USE_THREAD_POOL){
                 threadPool->start(
-                    boost::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
-                                this, index, index + size, boost::ref(collisionPairArrays[i])));
+                    std::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
+                                this, index, index + size, std::ref(collisionPairArrays[i])));
             } else {
                 threadGroup.create_thread(
-                    boost::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
-                                this, index, index + size, boost::ref(collisionPairArrays[i])));
+                    std::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
+                                this, index, index + size, std::ref(collisionPairArrays[i])));
             }
         } else {
             if(USE_THREAD_POOL){
                 threadPool->start(
-                    boost::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
-                                this, index, index + size, boost::ref(collidingModelPairArrays[i])));
+                    std::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
+                                this, index, index + size, std::ref(collidingModelPairArrays[i])));
             } else {
                 threadGroup.create_thread(
-                    boost::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
-                                this, index, index + size, boost::ref(collidingModelPairArrays[i])));
+                    std::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
+                                this, index, index + size, std::ref(collidingModelPairArrays[i])));
             }
         }
         index += size;
@@ -479,7 +473,7 @@ void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
 }
 
 void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
-(boost::function<void(const CollisionPair&)> callback)
+(std::function<void(const CollisionPair&)> callback)
 {
     for(int i=0; i < numThreads; ++i){
         const CollisionPairArray& collisionPairs = collisionPairArrays[i];
@@ -509,7 +503,7 @@ void AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs
 
 
 void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
-(boost::function<void(const CollisionPair&)> callback)
+(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
     vector<Collision>& collisions = collisionPair.collisions;

@@ -5,7 +5,6 @@
 #include "ColdetModel.h"
 #include "ColdetModelInternalModel.h"
 #include "Opcode/Opcode.h"
-#include <boost/make_shared.hpp>
 #include <map>
 #include <iostream>
 
@@ -77,7 +76,7 @@ void ColdetModel::initialize()
 
 ColdetModelPtr ColdetModel::clone() const
 {
-    return boost::make_shared<ColdetModel>(*this);
+    return std::make_shared<ColdetModel>(*this);
 }
 
 

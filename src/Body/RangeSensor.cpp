@@ -4,7 +4,6 @@
 */
 
 #include "RangeSensor.h"
-#include <boost/make_shared.hpp>
 
 using namespace std;
 using namespace cnoid;
@@ -32,7 +31,7 @@ RangeSensor::RangeSensor()
     maxDistance_ = 10.0;
     frameRate_ = 10.0;
     delay_ = 0.0;
-    rangeData_ = boost::make_shared<RangeData>();
+    rangeData_ = std::make_shared<RangeData>();
 }
 
 
@@ -92,7 +91,7 @@ RangeSensor::RangeSensor(const RangeSensor& org, int x /* dummy */)
     if(org.isRangeDataStateClonable_){
         rangeData_ = org.rangeData_;
     } else {
-        rangeData_ = boost::make_shared<RangeData>();
+        rangeData_ = std::make_shared<RangeData>();
     }
 }
 
@@ -103,7 +102,7 @@ DeviceState* RangeSensor::cloneState() const
 }
 
 
-void RangeSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void RangeSensor::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(RangeSensor))){
         Device::forEachActualType(func);
@@ -198,7 +197,7 @@ void RangeSensor::setFrameRate(double r)
 RangeSensor::RangeData& RangeSensor::rangeData()
 {
     if(rangeData_.use_count() > 1){
-        rangeData_ = boost::make_shared<RangeData>(*rangeData_);
+        rangeData_ = std::make_shared<RangeData>(*rangeData_);
     }
     return *rangeData_;
 }
@@ -206,17 +205,17 @@ RangeSensor::RangeData& RangeSensor::rangeData()
 
 RangeSensor::RangeData& RangeSensor::newRangeData()
 {
-    rangeData_ = boost::make_shared<RangeData>();
+    rangeData_ = std::make_shared<RangeData>();
     return *rangeData_;
 }
 
 
-void RangeSensor::setRangeData(boost::shared_ptr<RangeData>& data)
+void RangeSensor::setRangeData(std::shared_ptr<RangeData>& data)
 {
     if(data.use_count() == 1){
         rangeData_ = data;
     } else {
-        rangeData_ = boost::make_shared<RangeData>(*data);
+        rangeData_ = std::make_shared<RangeData>(*data);
     }
     data.reset();
 }
@@ -227,7 +226,7 @@ void RangeSensor::clearState()
     if(rangeData_.use_count() == 1){
         rangeData_->clear();
     } else {
-        rangeData_ = boost::make_shared<RangeData>();
+        rangeData_ = std::make_shared<RangeData>();
     }
 }
 

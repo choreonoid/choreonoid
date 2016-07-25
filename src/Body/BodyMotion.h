@@ -9,7 +9,6 @@
 #include <cnoid/MultiValueSeq>
 #include <cnoid/MultiSE3Seq>
 #include <cnoid/Signal>
-#include <boost/make_shared.hpp>
 #include <map>
 #include "exportdecl.h"
 
@@ -112,23 +111,23 @@ public:
     ConstSeqIterator extraSeqEnd() const { return extraSeqs.end(); }
         
     template <class SeqType>
-        boost::shared_ptr<SeqType> extraSeq(const std::string& contentName) const {
+        std::shared_ptr<SeqType> extraSeq(const std::string& contentName) const {
         ExtraSeqMap::const_iterator p = extraSeqs.find(contentName);
         return ((p != extraSeqs.end()) ?
-                boost::dynamic_pointer_cast<SeqType>(p->second) : boost::shared_ptr<SeqType>());
+                std::dynamic_pointer_cast<SeqType>(p->second) : std::shared_ptr<SeqType>());
     }
 
     void setExtraSeq(AbstractSeqPtr seq);
 
     template <class SeqType>
-        boost::shared_ptr<SeqType> getOrCreateExtraSeq(const std::string& contentName) {
+        std::shared_ptr<SeqType> getOrCreateExtraSeq(const std::string& contentName) {
         AbstractSeqPtr& base = extraSeqs[contentName];
-        boost::shared_ptr<SeqType> seq;
+        std::shared_ptr<SeqType> seq;
         if(base){
-            seq = boost::dynamic_pointer_cast<SeqType>(base);
+            seq = std::dynamic_pointer_cast<SeqType>(base);
         }
         if(!seq){
-            seq = boost::make_shared<SeqType>(numFrames());
+            seq = std::make_shared<SeqType>(numFrames());
             seq->setFrameRate(frameRate());
             base = seq;
             sigExtraSeqsChanged_();
@@ -152,8 +151,8 @@ private:
     Signal<void()> sigExtraSeqsChanged_;
 };
 
-typedef boost::shared_ptr<BodyMotion> BodyMotionPtr;
-typedef boost::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
+typedef std::shared_ptr<BodyMotion> BodyMotionPtr;
+typedef std::shared_ptr<const BodyMotion> ConstBodyMotionPtr;
 
 class Body;
 

@@ -12,11 +12,11 @@
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
-#include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -56,6 +56,7 @@ public:
     void onExtraJointStateChanged();
     void updateView();
 };
+
 }
 
 
@@ -121,16 +122,16 @@ JointStateViewImpl::JointStateViewImpl(JointStateView* self)
         jointStateWidget.setHeaderSectionResizeMode(lastColumn, QHeaderView::Stretch);
     }
     
-    jointStateWidget.sigUpdateRequest().connect(boost::bind(&JointStateViewImpl::updateJointList, this));
+    jointStateWidget.sigUpdateRequest().connect(std::bind(&JointStateViewImpl::updateJointList, this));
     
     vbox->addWidget(&jointStateWidget);
 
     self->setLayout(vbox);
 
-    self->sigActivated().connect(boost::bind(&JointStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(boost::bind(&JointStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(std::bind(&JointStateViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(std::bind(&JointStateViewImpl::onActivated, this ,false));
 
-    updateViewLater.setFunction(boost::bind(&JointStateViewImpl::updateView, this));
+    updateViewLater.setFunction(std::bind(&JointStateViewImpl::updateView, this));
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -166,7 +167,7 @@ void JointStateViewImpl::onActivated(bool on)
         BodyBar* bodyBar = BodyBar::instance();
         connections.add(
             bodyBar->sigCurrentBodyItemChanged().connect(
-                boost::bind(&JointStateViewImpl::setCurrentBodyItem, this, _1)));
+                std::bind(&JointStateViewImpl::setCurrentBodyItem, this, _1)));
         
         setCurrentBodyItem(bodyBar->currentBodyItem());
     }
@@ -228,13 +229,13 @@ void JointStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
     if(bodyItem){
         connectionsToBody.add(
             bodyItem->sigKinematicStateChanged().connect(
-                boost::bind(&JointStateViewImpl::onKinematicStateChanged, this)));
+                std::bind(&JointStateViewImpl::onKinematicStateChanged, this)));
     }
 
     for(int i=0; i < accessors.size(); ++i){
         connectionsToBody.add(
             accessors[i]->sigStateChanged().connect(
-                boost::bind(&JointStateViewImpl::onExtraJointStateChanged, this)));
+                std::bind(&JointStateViewImpl::onExtraJointStateChanged, this)));
     }
 }
 

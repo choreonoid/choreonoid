@@ -7,7 +7,6 @@
 #define CNOID_BODY_ACCELERATION_SENSOR_H
 
 #include "Device.h"
-#include <boost/scoped_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,7 +18,7 @@ class CNOID_EXPORT AccelerationSensor : public Device
     struct Spec {
         Vector3 dv_max;
     };
-    boost::scoped_ptr<Spec> spec;
+    std::unique_ptr<Spec> spec;
 
 public:
     AccelerationSensor();

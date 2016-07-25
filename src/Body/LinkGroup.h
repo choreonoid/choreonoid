@@ -6,7 +6,6 @@
 #define CNOID_BODY_LINK_GROUP_H
 
 #include <boost/variant.hpp>
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
 #include "exportdecl.h"
@@ -16,7 +15,7 @@ namespace cnoid {
 class Listing;
 class Body;
 class LinkGroup;
-typedef boost::shared_ptr<LinkGroup> LinkGroupPtr;
+typedef std::shared_ptr<LinkGroup> LinkGroupPtr;
 
 class CNOID_EXPORT LinkGroup
 {

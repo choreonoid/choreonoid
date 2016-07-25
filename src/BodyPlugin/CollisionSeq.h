@@ -9,7 +9,6 @@
 #include <cnoid/CollisionLinkPair>
 #include <cnoid/MultiSeq>
 #include <cnoid/YAMLWriter>
-#include <boost/make_shared.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,9 +16,8 @@ namespace cnoid {
 class YAMLWriter;
 class CollisionSeqItem;
 
-
 typedef std::vector<CollisionLinkPairPtr> CollisionLinkPairList;
-typedef boost::shared_ptr<CollisionLinkPairList> CollisionLinkPairListPtr;
+typedef std::shared_ptr<CollisionLinkPairList> CollisionLinkPairListPtr;
 
 class CNOID_EXPORT CollisionSeq : public MultiSeq<CollisionLinkPairListPtr>
 {
@@ -39,7 +37,8 @@ public:
 
 };
 
-typedef boost::shared_ptr<CollisionSeq> CollisionSeqPtr;
+typedef std::shared_ptr<CollisionSeq> CollisionSeqPtr;
+
 }
 
 #endif

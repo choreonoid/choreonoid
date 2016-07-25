@@ -4,9 +4,7 @@
 */
 
 #include "AbstractBodyLoader.h"
-#include <boost/make_shared.hpp>
 
-using namespace boost;
 using namespace cnoid;
 
 

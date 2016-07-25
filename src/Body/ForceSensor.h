@@ -7,7 +7,6 @@
 #define CNOID_BODY_FORCE_SENSOR_H
 
 #include "Device.h"
-#include <boost/scoped_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -20,7 +19,7 @@ class CNOID_EXPORT ForceSensor : public Device
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Vector6 F_max;
     };
-    boost::scoped_ptr<Spec> spec;
+    std::unique_ptr<Spec> spec;
         
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -33,7 +32,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);

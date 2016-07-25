@@ -8,7 +8,6 @@
 
 #include "Device.h"
 #include <cnoid/Image>
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -24,7 +23,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
@@ -72,14 +71,14 @@ public:
     Image& image();
     Image& newImage();
 
-    boost::shared_ptr<const Image> sharedImage() const { return image_; }
+    std::shared_ptr<const Image> sharedImage() const { return image_; }
 
     /**
        Move semantics. If the use_count() of the given shared image pointer is one,
        the data is moved to the Camera object and the ownership of the given pointer is released.
        Otherwise, the data is copied.
     */
-    void setImage(boost::shared_ptr<Image>& image);
+    void setImage(std::shared_ptr<Image>& image);
 
     /**
        Time [s] consumed in shooting the current image
@@ -98,7 +97,7 @@ private:
     double fieldOfView_;
     double frameRate_;
     double delay_;
-    boost::shared_ptr<Image> image_;
+    std::shared_ptr<Image> image_;
 
     Camera(const Camera& org, int x);
     void copyCameraStateFrom(const Camera& other);

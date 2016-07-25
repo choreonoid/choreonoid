@@ -31,7 +31,6 @@
 #include <QMutex>
 #include <boost/thread.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/bind.hpp>
 
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/ViewManager>
@@ -48,6 +47,7 @@ typedef QTime QElapsedTimer;
 #include "gettext.h"
 
 using namespace std;
+namespace stdph = std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -62,7 +62,7 @@ struct FunctionSet
 {
     struct FunctionInfo {
         int id;
-        boost::function<void()> function;
+        std::function<void()> function;
     };
     vector<FunctionInfo> functions;
     boost::mutex mutex;
@@ -95,7 +95,7 @@ struct FunctionSet
         }
     }
 
-    int add(boost::function<void()>& func);
+    int add(std::function<void()>& func);
     void remove(int id);
     void updateFunctions();
 };
@@ -329,7 +329,7 @@ public:
     SimulatedMotionEngineManager(){
         selectionOrTreeChangedConnection.reset(
             ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(
-                boost::bind(&SimulatedMotionEngineManager::onItemSelectionOrTreeChanged, this, _1)));
+                std::bind(&SimulatedMotionEngineManager::onItemSelectionOrTreeChanged, this, stdph::_1)));
     }
 
     void onItemSelectionOrTreeChanged(const ItemList<SimulatorItem>& selected){
@@ -359,7 +359,7 @@ public:
                 TimeBar* timeBar = TimeBar::instance();
                 timeChangeConnection.reset(
                     timeBar->sigTimeChanged().connect(
-                        boost::bind(&SimulatedMotionEngineManager::setTime, this, _1)));
+                        std::bind(&SimulatedMotionEngineManager::setTime, this, stdph::_1)));
                 setTime(timeBar->time());
             }
         }
@@ -398,7 +398,7 @@ public:
             doExecAfterInit = true;
             time = 0.0;
             delay = scriptItem->executionDelay();
-            executeLater.setFunction(boost::bind(&ScriptControllerItem::execute, this));
+            executeLater.setFunction(std::bind(&ScriptControllerItem::execute, this));
         }
         return true;
     }
@@ -456,7 +456,7 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
     if(item){
         WorldItem* worldItem = item->findOwnerItem<WorldItem>();
         if(worldItem){
-            worldItem->traverse<SimulatorItem>(boost::bind(checkActive, _1, boost::ref(activeSimulatorItem)));
+            worldItem->traverse<SimulatorItem>(std::bind(checkActive, stdph::_1, std::ref(activeSimulatorItem)));
         }
     }
     return activeSimulatorItem;
@@ -676,7 +676,7 @@ void SimulationBodyImpl::initializeResultBuffers()
         for(size_t i=0; i < devices.size(); ++i){
             deviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    boost::bind(&SimulationBodyImpl::onDeviceStateChanged, this, i)));
+                    std::bind(&SimulationBodyImpl::onDeviceStateChanged, this, i)));
         }
     }
 }
@@ -1041,7 +1041,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       itemTreeView(ItemTreeView::instance())
 {
-    flushTimer.sigTimeout().connect(boost::bind(&SimulatorItemImpl::flushResults, this));
+    flushTimer.sigTimeout().connect(std::bind(&SimulatorItemImpl::flushResults, this));
     
     timeBar = TimeBar::instance();
     isDoingSimulationLoop = false;
@@ -1200,7 +1200,7 @@ void SimulatorItemImpl::findTargetItems
 }
 
 
-int SimulatorItem::addPreDynamicsFunction(boost::function<void()> func)
+int SimulatorItem::addPreDynamicsFunction(std::function<void()> func)
 {
     return impl->preDynamicsFunctions.add(func);
 }
@@ -1212,7 +1212,7 @@ void SimulatorItem::removePreDynamicsFunction(int id)
 }
 
 
-int SimulatorItem::addMidDynamicsFunction(boost::function<void()> func)
+int SimulatorItem::addMidDynamicsFunction(std::function<void()> func)
 {
     return impl->midDynamicsFunctions.add(func);
 }
@@ -1224,7 +1224,7 @@ void SimulatorItem::removeMidDynamicsFunction(int id)
 }
 
 
-int SimulatorItem::addPostDynamicsFunction(boost::function<void()> func)
+int SimulatorItem::addPostDynamicsFunction(std::function<void()> func)
 {
     return impl->postDynamicsFunctions.add(func);
 }
@@ -1236,7 +1236,7 @@ void SimulatorItem::removePostDynamicsFunction(int id)
 }
 
 
-int FunctionSet::add(boost::function<void()>& func)
+int FunctionSet::add(std::function<void()>& func)
 {
     boost::unique_lock<boost::mutex> lock(mutex);
     
@@ -1404,7 +1404,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         collisionSeq->setNumParts(1);
         collisionSeq->setNumFrames(1);
         CollisionSeq::Frame frame0 = collisionSeq->frame(0);
-        frame0[0]  = boost::make_shared<CollisionLinkPairList>();
+        frame0[0]  = std::make_shared<CollisionLinkPairList>();
     }
 
     extForceFunctionId = boost::none;
@@ -1498,14 +1498,14 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
-            controlThread = boost::thread(boost::bind(&SimulatorItemImpl::concurrentControlLoop, this));
+            controlThread = boost::thread(std::bind(&SimulatorItemImpl::concurrentControlLoop, this));
             isExitingControlLoopRequested = false;
             isControlRequested = false;
             isControlFinished = false;
         }
 
         aboutToQuitConnection.disconnect();
-        aboutToQuitConnection = cnoid::sigAboutToQuit().connect(boost::bind(&SimulatorItemImpl::stopSimulation, this, true));
+        aboutToQuitConnection = cnoid::sigAboutToQuit().connect(std::bind(&SimulatorItemImpl::stopSimulation, this, true));
 
         worldLogFileItem = 0;
         ItemList<WorldLogFileItem> worldLogFileItems;
@@ -1562,7 +1562,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
         copy(profilingNames.begin(), profilingNames.end(), sw->profilingNames.begin());
         simProfilingBuf.resizeColumn(n);
 
-        //simProfilingSeq = boost::make_shared<MultiValueSeq>();
+        //simProfilingSeq = std::make_shared<MultiValueSeq>();
         simProfilingSeq.setFrameRate(worldFrameRate);
         simProfilingSeq.setNumParts(n);
         simProfilingSeq.setNumFrames(0);
@@ -1776,7 +1776,7 @@ void SimulatorItemImpl::run()
     }
 
     if(!isWaitingForSimulationToStop){
-        callLater(boost::bind(&SimulatorItemImpl::onSimulationLoopStopped, this));
+        callLater(std::bind(&SimulatorItemImpl::onSimulationLoopStopped, this));
     }
 
     self->finalizeSimulationThread();
@@ -2220,7 +2220,7 @@ void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const V
             if(!extForceFunctionId){
                 extForceFunctionId =
                     self->addPreDynamicsFunction(
-                        boost::bind(&SimulatorItemImpl::doSetExternalForce, this));
+                        std::bind(&SimulatorItemImpl::doSetExternalForce, this));
             }
         }
     }
@@ -2280,7 +2280,7 @@ void SimulatorItemImpl::setVirtualElasticString
             if(!virtualElasticStringFunctionId){
                 virtualElasticStringFunctionId =
                     self->addPreDynamicsFunction(
-                        boost::bind(&SimulatorItemImpl::setVirtualElasticStringForce, this));
+                        std::bind(&SimulatorItemImpl::setVirtualElasticStringForce, this));
             }
         }
     }
@@ -2351,15 +2351,15 @@ bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
 void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Sync with realtime"), impl->isRealtimeSyncMode,
-                boost::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
+                std::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, stdph::_1));
     putProperty(_("Time range"), impl->timeRangeMode,
-                boost::bind(&Selection::selectIndex, &impl->timeRangeMode, _1));
+                std::bind(&Selection::selectIndex, &impl->timeRangeMode, stdph::_1));
     putProperty(_("Time length"), impl->specifiedTimeLength,
-                boost::bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, _1));
+                std::bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, stdph::_1));
     putProperty(_("Recording"), impl->recordingMode,
-                boost::bind(&Selection::selectIndex, &impl->recordingMode, _1));
+                std::bind(&Selection::selectIndex, &impl->recordingMode, stdph::_1));
     putProperty(_("All link positions"), impl->isAllLinkPositionOutputMode,
-                boost::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, _1));
+                std::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, stdph::_1));
     putProperty(_("Device state output"), impl->isDeviceStateOutputEnabled,
                 changeProperty(impl->isDeviceStateOutputEnabled));
     putProperty(_("Controller Threads"), impl->useControllerThreadsProperty,
@@ -2456,7 +2456,7 @@ bool SimulatorItemImpl::restore(const Archive& archive)
     archive.read("controllerOptions", controllerOptionString_);
 
     archive.addPostProcess(
-        boost::bind(&SimulatorItemImpl::restoreBodyMotionEngines, this, boost::ref(archive)));
+        std::bind(&SimulatorItemImpl::restoreBodyMotionEngines, this, std::ref(archive)));
     
     return true;
 }

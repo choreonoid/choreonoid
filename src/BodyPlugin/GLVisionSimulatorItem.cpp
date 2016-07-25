@@ -26,7 +26,6 @@
 #include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
 #include <queue>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -46,6 +45,7 @@
 #include "gettext.h"
 
 using namespace std;
+namespace stdph = std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -100,9 +100,9 @@ bool updateNames(const string& nameListString, string& newNameListString, vector
 
 class QThreadEx : public QThread
 {
-    boost::function<void()> function;
+    std::function<void()> function;
 public:
-    void start(boost::function<void()> function){
+    void start(std::function<void()> function){
         this->function = function;
         QThread::start();
     }
@@ -153,9 +153,9 @@ public:
     GLSceneRenderer* renderer;
     int pixelWidth;
     int pixelHeight;
-    boost::shared_ptr<Image> tmpImage;
-    boost::shared_ptr<RangeCamera::PointData> tmpPoints;
-    boost::shared_ptr<RangeSensor::RangeData> tmpRangeData;
+    std::shared_ptr<Image> tmpImage;
+    std::shared_ptr<RangeCamera::PointData> tmpPoints;
+    std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
     SimulationBody* simBody;
     int bodyIndex;
 
@@ -501,15 +501,15 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     }
 
     if(!visionRenderers.empty()){
-        simulatorItem->addPreDynamicsFunction(boost::bind(&GLVisionSimulatorItemImpl::onPreDynamics, this));
-        simulatorItem->addPostDynamicsFunction(boost::bind(&GLVisionSimulatorItemImpl::onPostDynamics, this));
+        simulatorItem->addPreDynamicsFunction(std::bind(&GLVisionSimulatorItemImpl::onPreDynamics, this));
+        simulatorItem->addPostDynamicsFunction(std::bind(&GLVisionSimulatorItemImpl::onPostDynamics, this));
 
         if(useQueueThreadForAllSensors){
             while(!rendererQueue.empty()){
                 rendererQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
-            queueThread.start(boost::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
+            queueThread.start(std::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
             for(size_t i=0; i < visionRenderers.size(); ++i){
                 visionRenderers[i]->moveRenderingBufferToThread(queueThread);
             }
@@ -628,7 +628,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     isRenderingFinished = false;
     isTerminationRequested = false;
     if(simImpl->useThreadsForSensors){
-        renderingThread.start(boost::bind(&VisionRenderer::concurrentRenderingLoop, this));
+        renderingThread.start(std::bind(&VisionRenderer::concurrentRenderingLoop, this));
         moveRenderingBufferToThread(renderingThread);
     }
 
@@ -937,16 +937,16 @@ void VisionRenderer::storeResultToTmpDataBuffer()
 {
     if(cameraForRendering){
         if(!tmpImage){
-            tmpImage = boost::make_shared<Image>();
+            tmpImage = std::make_shared<Image>();
         }
         if(rangeCameraForRendering){
-            tmpPoints = boost::make_shared< vector<Vector3f> >();
+            tmpPoints = std::make_shared< vector<Vector3f> >();
             hasUpdatedData = getRangeCameraData(*tmpImage, *tmpPoints);
         } else {
             hasUpdatedData = getCameraImage(*tmpImage);
         }
     } else if(rangeSensorForRendering){
-        tmpRangeData = boost::make_shared< vector<double> >();
+        tmpRangeData = std::make_shared< vector<double> >();
         hasUpdatedData = getRangeSensorData(*tmpRangeData);
     }
 }
@@ -1284,8 +1284,10 @@ void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Target bodies"), bodyNameListString, boost::bind(updateNames, _1, boost::ref(bodyNameListString), boost::ref(bodyNames)));
-    putProperty(_("Target sensors"), sensorNameListString, boost::bind(updateNames, _1, boost::ref(sensorNameListString), boost::ref(sensorNames)));
+    putProperty(_("Target bodies"), bodyNameListString,
+                std::bind(updateNames, stdph::_1, std::ref(bodyNameListString), std::ref(bodyNames)));
+    putProperty(_("Target sensors"), sensorNameListString,
+                std::bind(updateNames, stdph::_1, std::ref(sensorNameListString), std::ref(sensorNames)));
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));

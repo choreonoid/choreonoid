@@ -24,10 +24,10 @@
 #include <cnoid/ExtensionManager>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -352,9 +352,9 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 
     positionDragger = new PositionDragger;
     positionDragger->setDraggerAlwaysShown(true);
-    positionDragger->sigDragStarted().connect(boost::bind(&EditableSceneBodyImpl::onDraggerDragStarted, this));
-    positionDragger->sigPositionDragged().connect(boost::bind(&EditableSceneBodyImpl::onDraggerDragged, this));
-    positionDragger->sigDragFinished().connect(boost::bind(&EditableSceneBodyImpl::onDraggerDragFinished, this));
+    positionDragger->sigDragStarted().connect(std::bind(&EditableSceneBodyImpl::onDraggerDragStarted, this));
+    positionDragger->sigPositionDragged().connect(std::bind(&EditableSceneBodyImpl::onDraggerDragged, this));
+    positionDragger->sigDragFinished().connect(std::bind(&EditableSceneBodyImpl::onDraggerDragFinished, this));
     
     dragMode = DRAG_NONE;
     isDragging = false;
@@ -398,7 +398,7 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
     }
     isZmpVisible = false;
 
-    self->sigGraphConnection().connect(boost::bind(&EditableSceneBodyImpl::onSceneGraphConnection, this, _1));
+    self->sigGraphConnection().connect(std::bind(&EditableSceneBodyImpl::onSceneGraphConnection, this, _1));
 }
 
 
@@ -418,31 +418,31 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
 
     if(on){
         connections.add(bodyItem->sigUpdated().connect(
-                            boost::bind(&EditableSceneBodyImpl::onBodyItemUpdated, this)));
+                            std::bind(&EditableSceneBodyImpl::onBodyItemUpdated, this)));
         onBodyItemUpdated();
 
         connections.add(bodyItem->sigKinematicStateChanged().connect(
-                            boost::bind(&EditableSceneBodyImpl::onKinematicStateChanged, this)));
+                            std::bind(&EditableSceneBodyImpl::onKinematicStateChanged, this)));
         onKinematicStateChanged();
 
         connections.add(kinematicsBar->sigCollisionVisualizationChanged().connect(
-                            boost::bind(&EditableSceneBodyImpl::onCollisionLinkHighlightModeChanged, this)));
+                            std::bind(&EditableSceneBodyImpl::onCollisionLinkHighlightModeChanged, this)));
         onCollisionLinkHighlightModeChanged();
 
         connections.add(bodyItem->sigModelUpdated().connect(
-                            boost::bind(&EditableSceneBodyImpl::updateModel, this)));
+                            std::bind(&EditableSceneBodyImpl::updateModel, this)));
 
         connections.add(
             linkVisibilityCheck->sigToggled().connect(
-                boost::bind(&EditableSceneBodyImpl::onLinkVisibilityCheckToggled, this)));
+                std::bind(&EditableSceneBodyImpl::onLinkVisibilityCheckToggled, this)));
         onLinkVisibilityCheckToggled();
 
         connections.add(
             showVisualShapeCheck->sigToggled().connect(
-                boost::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
+                std::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
         connections.add(
             showCollisionShapeCheck->sigToggled().connect(
-                boost::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
+                std::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
         onVisibleShapeTypesChanged();
     }
 }
@@ -532,7 +532,7 @@ void EditableSceneBodyImpl::changeCollisionLinkHighlightMode(bool on)
     if(!connectionToSigCollisionsUpdated.connected() && on){
         connectionToSigCollisionsUpdated =
             bodyItem->sigCollisionsUpdated().connect(
-                boost::bind(&EditableSceneBodyImpl::onCollisionsUpdated, this));
+                std::bind(&EditableSceneBodyImpl::onCollisionsUpdated, this));
         onCollisionsUpdated();
 
     } else if(connectionToSigCollisionsUpdated.connected() && !on){
@@ -582,7 +582,7 @@ void EditableSceneBodyImpl::onLinkVisibilityCheckToggled()
     if(linkVisibilityCheck->isChecked()){
         connectionToSigLinkSelectionChanged.reset(
             selectionView->sigSelectionChanged(bodyItem).connect(
-                boost::bind(&EditableSceneBodyImpl::onLinkSelectionChanged, this)));
+                std::bind(&EditableSceneBodyImpl::onLinkSelectionChanged, this)));
         onLinkSelectionChanged();
     } else {
         connectionToSigLinkSelectionChanged.disconnect();
@@ -1100,31 +1100,31 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
                 Action* item1 = menuManager.addCheckItem(_("Move Forcibly"));
                 item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
                 item1->sigToggled().connect(
-                    boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, MOVE_FORCED_POSITION, _1));
+                    std::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, MOVE_FORCED_POSITION, _1));
 
                 Action* item2 = menuManager.addCheckItem(_("Hold Forcibly"));
                 item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
                 item2->sigToggled().connect(
-                    boost::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, KEEP_FORCED_POSITION, _1));
+                    std::bind(&EditableSceneBodyImpl::setForcedPositionMode, this, KEEP_FORCED_POSITION, _1));
                 
                 menuManager.addSeparator();
             }
         } else {
             menuManager.addItem(_("Set Free"))->sigTriggered().connect(
-                boost::bind(&EditableSceneBodyImpl::makeLinkFree, this, pointedSceneLink));
+                std::bind(&EditableSceneBodyImpl::makeLinkFree, this, pointedSceneLink));
             menuManager.addItem(_("Set Base"))->sigTriggered().connect(
-                boost::bind(&EditableSceneBodyImpl::setBaseLink, this, pointedSceneLink));
+                std::bind(&EditableSceneBodyImpl::setBaseLink, this, pointedSceneLink));
             menuManager.addItem(_("Set Translation Pin"))->sigTriggered().connect(
-                boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, false));
+                std::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, false));
             menuManager.addItem(_("Set Rotation Pin"))->sigTriggered().connect(
-                boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, false, true));
+                std::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, false, true));
             menuManager.addItem(_("Set Both Pins"))->sigTriggered().connect(
-                boost::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, true));
+                std::bind(&EditableSceneBodyImpl::togglePin, this, pointedSceneLink, true, true));
 
             menuManager.addSeparator();
 
             menuManager.addItem(_("Level Attitude"))->sigTriggered().connect(
-                boost::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
+                std::bind(&EditableSceneBodyImpl::makeLinkAttitudeLevel, this));
 
             menuManager.addSeparator();
         }
@@ -1133,15 +1133,15 @@ void EditableSceneBodyImpl::onContextMenuRequest(const SceneWidgetEvent& event, 
         
         Action* item = menuManager.addCheckItem(_("Center of Mass"));
         item->setChecked(isCmVisible);
-        item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showCenterOfMass, this, _1));
+        item->sigToggled().connect(std::bind(&EditableSceneBodyImpl::showCenterOfMass, this, _1));
 
         item = menuManager.addCheckItem(_("Projection Point of CoM"));
         item->setChecked(isPpcomVisible);
-        item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showPpcom, this, _1));
+        item->sigToggled().connect(std::bind(&EditableSceneBodyImpl::showPpcom, this, _1));
 
         item = menuManager.addCheckItem(_("ZMP"));
         item->setChecked(isZmpVisible);
-        item->sigToggled().connect(boost::bind(&EditableSceneBodyImpl::showZmp, this, _1));
+        item->sigToggled().connect(std::bind(&EditableSceneBodyImpl::showZmp, this, _1));
 
         menuManager.setPath("/");
         menuManager.addSeparator();
@@ -1541,7 +1541,7 @@ bool EditableSceneBodyImpl::storeProperties(Archive& archive)
 void EditableSceneBodyImpl::restoreProperties(const Archive& archive)
 {
     enableStaticModelEditCheck->setChecked(archive.get("staticModelEditing", false));
-    archive.addPostProcess(boost::bind(&EditableSceneBodyImpl::restoreSceneBodyProperties, boost::ref(archive)), 1);
+    archive.addPostProcess(std::bind(&EditableSceneBodyImpl::restoreSceneBodyProperties, std::ref(archive)), 1);
 }
 
 

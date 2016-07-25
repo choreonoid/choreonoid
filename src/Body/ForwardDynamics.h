@@ -8,7 +8,6 @@
 
 #include "BasicSensorSimulationHelper.h"
 #include "Link.h"
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -64,7 +63,7 @@ protected:
     enum { EULER_METHOD, RUNGEKUTTA_METHOD } integrationMode;
 };
 
-typedef boost::shared_ptr<ForwardDynamics> ForwardDynamicsPtr;
+typedef std::shared_ptr<ForwardDynamics> ForwardDynamicsPtr;
 
 };
 

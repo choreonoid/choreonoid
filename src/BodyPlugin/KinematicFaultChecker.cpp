@@ -26,11 +26,11 @@
 #include <QBoxLayout>
 #include <QFrame>
 #include <QLabel>
-#include <boost/bind.hpp>
 #include <map>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 using boost::format;
@@ -105,12 +105,12 @@ void KinematicFaultChecker::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(_("Kinematic Fault Checker"))
-            ->sigTriggered().connect(boost::bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
+            ->sigTriggered().connect(std::bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
         
         ext->setProjectArchiver(
             "KinematicFaultChecker",
-            boost::bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
-            boost::bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
+            std::bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
+            std::bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
     }
 }
 
@@ -225,7 +225,7 @@ KinematicFaultCheckerImpl::KinematicFaultCheckerImpl()
     applyButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
     buttonBox->addButton(applyButton, QDialogButtonBox::AcceptRole);
-    applyButton->sigClicked().connect(boost::bind(&KinematicFaultCheckerImpl::apply, this));
+    applyButton->sigClicked().connect(std::bind(&KinematicFaultCheckerImpl::apply, this));
     
     vbox->addWidget(buttonBox);
 }
@@ -470,7 +470,7 @@ int KinematicFaultCheckerImpl::checkFaults
                 collisionDetector->updatePosition(i, link->position());
             }
             collisionDetector->detectCollisions(
-                boost::bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, boost::ref(os)));
+                std::bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, std::ref(os)));
         }
     }
 

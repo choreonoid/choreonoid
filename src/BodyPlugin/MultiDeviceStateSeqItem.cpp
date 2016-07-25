@@ -8,7 +8,6 @@
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
 #include <cnoid/ItemManager>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -33,7 +32,7 @@ public:
         
     MultiDeviceStateSeqEngine(MultiDeviceStateSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->seq()), body(bodyItem->body()) {
-        seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
+        seqItem->sigUpdated().connect(std::bind(&TimeSyncItemEngine::notifyUpdate, this));
     }
 
     virtual bool onTimeChanged(double time){
@@ -88,7 +87,7 @@ void MultiDeviceStateSeqItem::initializeClass(ExtensionManager* ext)
 
         
 MultiDeviceStateSeqItem::MultiDeviceStateSeqItem()
-    : seq_(boost::make_shared<MultiDeviceStateSeq>())
+    : seq_(std::make_shared<MultiDeviceStateSeq>())
 {
 
 }
@@ -103,7 +102,7 @@ MultiDeviceStateSeqItem::MultiDeviceStateSeqItem(MultiDeviceStateSeqPtr seq)
 
 MultiDeviceStateSeqItem::MultiDeviceStateSeqItem(const MultiDeviceStateSeqItem& org)
     : AbstractMultiSeqItem(org),
-      seq_(boost::make_shared<MultiDeviceStateSeq>(*org.seq_))
+      seq_(std::make_shared<MultiDeviceStateSeq>(*org.seq_))
 {
 
 }

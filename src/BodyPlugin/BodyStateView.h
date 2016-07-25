@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_BODY_STATE_VIEW_H_INCLUDED
-#define CNOID_BODYPLUGIN_BODY_STATE_VIEW_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_BODY_STATE_VIEW_H
+#define CNOID_BODY_PLUGIN_BODY_STATE_VIEW_H
 
 #include "BodyItem.h"
 #include <cnoid/View>
@@ -28,6 +28,7 @@ protected:
 private:
     BodyStateViewImpl* impl;
 };
+
 }
 
 #endif

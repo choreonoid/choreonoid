@@ -26,7 +26,7 @@ typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 class CNOID_EXPORT CollisionDetector
 {
 public:
-    static bool registerFactory(const std::string& name, boost::function<CollisionDetectorPtr()> factory);
+    static bool registerFactory(const std::string& name, std::function<CollisionDetectorPtr()> factory);
     static int numFactories();
     static std::string factoryName(int factoryIndex);
     static int factoryIndex(const std::string& name);
@@ -60,7 +60,7 @@ public:
     // Is this faster than the above function?
     //virtual void updatePositions(int begin, int end, const std::vector<Position>& positions) = 0;
 
-    virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback) = 0;
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) = 0;
 
     // or
     // virtual void detectCollisions(std::vector<CollisionPair>& out_collisionPairs) = 0;

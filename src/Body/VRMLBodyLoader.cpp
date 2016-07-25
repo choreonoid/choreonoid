@@ -20,15 +20,13 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
-#include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
+using boost::format;
 
 namespace cnoid {
 
@@ -70,7 +68,7 @@ public:
     Body* body;
     VRMLProtoInstancePtr rootJointNode;
     std::vector<VRMLProtoInstancePtr> extraJointNodes;
-    dynamic_bitset<> validJointIdSet;
+    boost::dynamic_bitset<> validJointIdSet;
     int numValidJointIds;
     VRMLToSGConverter sgConverter;
     int divisionNumber;
@@ -78,7 +76,7 @@ public:
     bool isVerbose;
     int messageIndent;
 
-    typedef boost::function<DevicePtr(VRMLProtoInstance* node)> DeviceFactory;
+    typedef std::function<DevicePtr(VRMLProtoInstance* node)> DeviceFactory;
     typedef map<string, DeviceFactory> DeviceFactoryMap;
     static DeviceFactoryMap deviceFactories;
 
@@ -422,7 +420,7 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     } catch(EasyScanner::Exception & ex){
         os() << ex.getFullMessage() << endl;
     } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
+        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
     } catch(const std::exception& ex){

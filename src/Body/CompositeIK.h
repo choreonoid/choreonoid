@@ -13,7 +13,7 @@
 namespace cnoid {
 
 class JointPath;
-typedef boost::shared_ptr<JointPath> JointPathPtr;
+typedef std::shared_ptr<JointPath> JointPathPtr;
 
 class CNOID_EXPORT CompositeIK : public InverseKinematics
 {
@@ -49,7 +49,7 @@ private:
     bool isAnalytical_;
 };
 
-typedef boost::shared_ptr<CompositeIK> CompositeIKPtr;
+typedef std::shared_ptr<CompositeIK> CompositeIKPtr;
 
 }
 

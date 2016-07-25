@@ -79,6 +79,7 @@ private:
 };
             
 typedef ref_ptr<EditableSceneBody> EditableSceneBodyPtr;
+
 }
     
 #endif

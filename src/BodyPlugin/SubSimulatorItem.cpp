@@ -5,9 +5,9 @@
 
 #include "SubSimulatorItem.h"
 #include <cnoid/Archive>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
+using namespace std::placeholders;
 using namespace cnoid;
 
 SubSimulatorItem::SubSimulatorItem()
@@ -51,7 +51,7 @@ void SubSimulatorItem::finalizeSimulation()
 void SubSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Enabled"), isEnabled(),
-                boost::bind(&SubSimulatorItem::setEnabled, this, _1));
+                std::bind(&SubSimulatorItem::setEnabled, this, _1));
 }
 
 

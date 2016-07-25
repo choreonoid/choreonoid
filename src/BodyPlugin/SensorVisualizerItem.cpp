@@ -11,12 +11,11 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ConnectionSet>
-#include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -173,7 +172,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
 
             connections.add(
                 bodyItem->sigKinematicStateChanged().connect(
-                    boost::bind(&SensorVisualizerItemImpl::onSensorPositionsChanged, this)));
+                    std::bind(&SensorVisualizerItemImpl::onSensorPositionsChanged, this)));
 
             scene->clearChildren();
             forceSensorArrows.clear();
@@ -184,7 +183,7 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 scene->addChild(arrow);
                 connections.add(
                     forceSensors[i]->sigStateChanged().connect(
-                        boost::bind(&SensorVisualizerItemImpl::updateForceSensorState, this, i)));
+                        std::bind(&SensorVisualizerItemImpl::updateForceSensorState, this, i)));
                 updateForceSensorState(i);
             }
         }
@@ -224,7 +223,7 @@ void SensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty.decimals(4);
     putProperty(_("Visual ratio"), impl->visualRatio,
-                boost::bind(&SensorVisualizerItemImpl::onLengthRatioPropertyChanged, impl, _1));
+                std::bind(&SensorVisualizerItemImpl::onLengthRatioPropertyChanged, impl, _1));
 }
 
 

@@ -20,10 +20,7 @@
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/TimeMeasure>
 #include <boost/format.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/random.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
 #include <limits>
 
 #include <fstream>
@@ -31,6 +28,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 // Is LCP solved by Iterative or Pivoting method ?
@@ -251,7 +249,7 @@ public:
         Vector3 jointPoint[2];
         Vector3 jointConstraintAxes[3];
     };
-    typedef boost::shared_ptr<ExtraJointLinkPair> ExtraJointLinkPairPtr;
+    typedef std::shared_ptr<ExtraJointLinkPair> ExtraJointLinkPairPtr;
     vector<ExtraJointLinkPairPtr> extraJointLinkPairs;
 
     bool is2Dmode;
@@ -263,7 +261,7 @@ public:
     public:
         double globalYpositions[3];
     };
-    typedef boost::shared_ptr<Constrain2dLinkPair> Constrain2dLinkPairPtr;
+    typedef std::shared_ptr<Constrain2dLinkPair> Constrain2dLinkPairPtr;
     vector<Constrain2dLinkPairPtr> constrain2dLinkPairs;
         
 
@@ -492,7 +490,7 @@ void CFSImpl::initExtraJoints(int bodyIndex)
         Body::ExtraJoint& bodyExtraJoint = body->extraJoint(j);
         ExtraJointLinkPairPtr linkPair;
         if(bodyExtraJoint.type == Body::EJ_PISTON){
-            linkPair = boost::make_shared<ExtraJointLinkPair>();
+            linkPair = std::make_shared<ExtraJointLinkPair>();
             linkPair->isSameBodyPair = true;
             linkPair->isNonContactConstraint = true;
         
@@ -552,7 +550,7 @@ void CFSImpl::init2Dconstraint(int bodyIndex)
 
     DyLink* rootLink = world.body(bodyIndex)->rootLink();
 
-    Constrain2dLinkPairPtr linkPair = boost::make_shared<Constrain2dLinkPair>();
+    Constrain2dLinkPairPtr linkPair = std::make_shared<Constrain2dLinkPair>();
     linkPair->isSameBodyPair = false;
     linkPair->isNonContactConstraint = true;
     
@@ -598,7 +596,7 @@ void CFSImpl::initialize(void)
     bodiesData.resize(numBodies);
 
     if(!collisionDetector){
-        collisionDetector = boost::make_shared<AISTCollisionDetector>();
+        collisionDetector = std::make_shared<AISTCollisionDetector>();
     } else {
         collisionDetector->clearGeometries();
     }
@@ -763,7 +761,7 @@ void CFSImpl::setConstraintPoints()
     timer.begin();
 #endif
 
-    collisionDetector->detectCollisions(boost::bind(&CFSImpl::extractConstraintPoints, this, _1));
+    collisionDetector->detectCollisions(std::bind(&CFSImpl::extractConstraintPoints, this, _1));
 
 #ifdef ENABLE_SIMULATION_PROFILING
         collisionTime = timer.measure();
@@ -852,10 +850,10 @@ void CFSImpl::extractConstraintPoints(const CollisionPair& collisionPair)
 
 CollisionLinkPairListPtr CFSImpl::getCollisions()
 {
-    CollisionLinkPairListPtr collisionPairs = boost::make_shared<CollisionLinkPairList>();
+    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
     for(int i=0; i<constrainedLinkPairs.size(); i++){
         LinkPair& source = *constrainedLinkPairs[i];
-        CollisionLinkPairPtr dest = boost::make_shared<CollisionLinkPair>();
+        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
         int numConstraintsInPair = source.constraintPoints.size();
 
         for(int j=0; j < numConstraintsInPair; ++j){
@@ -2381,7 +2379,7 @@ void ConstraintForceSolver::setCollisionHandler(Link* link1, Link* link2, int ha
         attr.collisionHandler = info->handler;
         attr.collisionHandlerConnection = 
             info->sigHandlerUnregisterd.connect(
-                boost::bind(&CFSImpl::ContactAttributeEx::onCollisionHandlerUnregistered, &attr));
+                std::bind(&CFSImpl::ContactAttributeEx::onCollisionHandlerUnregistered, &attr));
     }
 }    
     

@@ -15,7 +15,6 @@
 #include <cnoid/NullOut>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
-#include <boost/make_shared.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -24,7 +23,7 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 
-typedef boost::function<AbstractBodyLoaderPtr()> LoaderFactory;
+typedef std::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
 boost::mutex loaderFactoryMapMutex;
@@ -32,17 +31,17 @@ boost::mutex loaderFactoryMapMutex;
 
 AbstractBodyLoaderPtr yamlBodyLoaderFactory()
 {
-    return boost::make_shared<YAMLBodyLoader>();
+    return std::make_shared<YAMLBodyLoader>();
 }
 
 AbstractBodyLoaderPtr vrmlBodyLoaderFactory()
 {
-    return boost::make_shared<VRMLBodyLoader>();
+    return std::make_shared<VRMLBodyLoader>();
 }
 
 AbstractBodyLoaderPtr colladaBodyLoaderFactory()
 {
-    return boost::make_shared<ColladaBodyLoader>();
+    return std::make_shared<ColladaBodyLoader>();
 }
 
 class SceneLoaderAdapter : public AbstractBodyLoader
@@ -76,7 +75,7 @@ public:
 
 AbstractBodyLoaderPtr stlBodyLoaderFactory()
 {
-    return boost::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
+    return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
 }
 
     
@@ -95,7 +94,7 @@ struct FactoryRegistration
 }
 
 
-bool BodyLoader::registerLoader(const std::string& extension, boost::function<AbstractBodyLoaderPtr()> factory)
+bool BodyLoader::registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory)
 {
     boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
     loaderFactoryMap[extension] = factory;
