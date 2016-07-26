@@ -437,11 +437,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 
     cloneMap.clear();
 
-#ifdef CNOID_REFERENCED_USE_ATOMIC_COUNTER
     cloneMap.setNonNodeCloning(false);
-#else
-    cloneMap.setNonNodeCloning(true);
-#endif
+    //cloneMap.setNonNodeCloning(true);
 
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){
@@ -643,17 +640,14 @@ void VisionRenderer::initializeScene(const vector<SimulationBody*>& simBodies)
 {
     sceneGroup = new SgGroup;
 
-#ifndef CNOID_REFERENCED_USE_ATOMIC_COUNTER
-    simImpl->cloneMap.clear();
-#endif
+    //simImpl->cloneMap.clear();
 
     // create scene bodies
     for(size_t i=0; i < simBodies.size(); ++i){
         SceneBody* sceneBody = new SceneBody(simBodies[i]->body());
 
-#ifndef CNOID_REFERENCED_USE_ATOMIC_COUNTER
-        sceneBody->cloneShapes(simImpl->cloneMap);
-#endif
+        //sceneBody->cloneShapes(simImpl->cloneMap);
+
         sceneBodies.push_back(sceneBody);
         sceneGroup->addChild(sceneBody);
     }

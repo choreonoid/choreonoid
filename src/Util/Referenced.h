@@ -5,19 +5,13 @@
 #ifndef CNOID_UTIL_REFERENCED_H
 #define CNOID_UTIL_REFERENCED_H
 
-#include <boost/version.hpp>
+#include <atomic>
+#include <cassert>
+#include <iosfwd>
 
 #ifdef WIN32
 #include <memory>
 #endif
-
-#if (BOOST_VERSION >= 105300) && !defined(NOT_USE_BOOST_ATOMIC)
-#include <boost/atomic.hpp>
-#define CNOID_REFERENCED_USE_ATOMIC_COUNTER
-#endif
-
-#include <cassert>
-#include <iosfwd>
 
 namespace cnoid {
 
@@ -81,38 +75,21 @@ public:
         }
     }
 
-#ifdef CNOID_REFERENCED_USE_ATOMIC_COUNTER
     void addRef() const {
-        refCount_.fetch_add(1, boost::memory_order_relaxed);
+        refCount_.fetch_add(1, std::memory_order_relaxed);
     }
     void releaseRef() const {
-        if(refCount_.fetch_sub(1, boost::memory_order_release) == 1) {
-            boost::atomic_thread_fence(boost::memory_order_acquire);
+        if(refCount_.fetch_sub(1, std::memory_order_release) == 1) {
+            std::atomic_thread_fence(std::memory_order_acquire);
             delete this;
         }
     }
 private:
-    mutable boost::atomic<int> refCount_;
+    mutable std::atomic<int> refCount_;
             
 protected:
-    int refCount() const { return refCount_.load(boost::memory_order_relaxed); }
-#else
-    void addRef() {
-        ++refCount_;
-    }
-    void releaseRef() {
-        if(--refCount_ == 0){
-            delete this;
-        }
-    }
+    int refCount() const { return refCount_.load(std::memory_order_relaxed); }
 
-private:
-    int refCount_;
-            
-protected:
-    int refCount() const { return refCount_; }
-#endif
-        
 private:
     WeakCounter* weakCounter_;
         
@@ -162,8 +139,6 @@ public:
         return *this;
     }
 
-#if defined( BOOST_HAS_RVALUE_REFS )
-
     ref_ptr(ref_ptr&& rhs) : px(rhs.px){
         rhs.px = 0;
     }
@@ -172,8 +147,6 @@ public:
         ref_ptr(static_cast<ref_ptr &&>(rhs)).swap(*this);
         return *this;
     }
-
-#endif
 
     ref_ptr& operator=(ref_ptr const & rhs){
         ref_ptr(rhs).swap(*this);
@@ -324,8 +297,6 @@ public:
         return *this;
     }
         
-#if defined( BOOST_HAS_RVALUE_REFS )
-
     template<class Y>
     weak_ref_ptr(weak_ref_ptr<Y>&& rhs) : px(rhs.lock().get()), counter(rhs.counter){
         rhs.px = 0;
@@ -344,7 +315,6 @@ public:
         return rhs;
     }
 
-#endif
     template<class Y>
     weak_ref_ptr(ref_ptr<Y> const & rhs) : px(rhs.px){
         setCounter();
