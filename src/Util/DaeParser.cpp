@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <float.h>
+//#include <tuple>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -18,7 +19,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>

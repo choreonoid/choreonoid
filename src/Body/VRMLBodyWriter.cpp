@@ -41,7 +41,7 @@ void VRMLBodyWriter::registerNodeMethodMap()
 
 void VRMLBodyWriter::writeHumanoidNode(VRMLNodePtr node)
 {
-    VRMLHumanoidPtr humanoid = boost::static_pointer_cast<VRMLHumanoid>(node);
+    VRMLHumanoidPtr humanoid = static_pointer_cast<VRMLHumanoid>(node);
 
     beginNode("Humanoid", humanoid);
     if(!humanoid->humanoidBody.empty()){
@@ -84,7 +84,7 @@ void VRMLBodyWriter::writeHumanoidNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeJointNode(VRMLNodePtr node)
 {
-    VRMLJointPtr joint = boost::static_pointer_cast<VRMLJoint>(node);
+    VRMLJointPtr joint = static_pointer_cast<VRMLJoint>(node);
 
     beginNode("Joint", joint);
 
@@ -122,7 +122,7 @@ void VRMLBodyWriter::writeJointNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeSegmentNode(VRMLNodePtr node)
 {
-    VRMLSegmentPtr segment = boost::static_pointer_cast<VRMLSegment>(node);
+    VRMLSegmentPtr segment = static_pointer_cast<VRMLSegment>(node);
 
     beginNode("Segment", segment);
 
@@ -139,7 +139,7 @@ void VRMLBodyWriter::writeSegmentNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeSurfaceNode(VRMLNodePtr node)
 {
-    VRMLSurfacePtr surface = boost::static_pointer_cast<VRMLSurface>(node);
+    VRMLSurfacePtr surface = static_pointer_cast<VRMLSurface>(node);
 
     beginNode("Surface", surface);
 
@@ -167,7 +167,7 @@ void VRMLBodyWriter::writeSurfaceNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeVisionSensorNode(VRMLNodePtr node)
 {
-    VRMLVisionSensorPtr sensor = boost::static_pointer_cast<VRMLVisionSensor>(node);
+    VRMLVisionSensorPtr sensor = static_pointer_cast<VRMLVisionSensor>(node);
 
     beginNode("VisionSensor", sensor);
 
@@ -190,7 +190,7 @@ void VRMLBodyWriter::writeVisionSensorNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeForceSensorNode(VRMLNodePtr node)
 {
-    VRMLForceSensorPtr sensor = boost::static_pointer_cast<VRMLForceSensor>(node);
+    VRMLForceSensorPtr sensor = static_pointer_cast<VRMLForceSensor>(node);
 
     beginNode("ForceSensor", sensor);
 
@@ -208,7 +208,7 @@ void VRMLBodyWriter::writeForceSensorNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeGyroNode(VRMLNodePtr node)
 {
-    VRMLGyroPtr sensor = boost::static_pointer_cast<VRMLGyro>(node);
+    VRMLGyroPtr sensor = static_pointer_cast<VRMLGyro>(node);
 
     beginNode("Gyro", sensor);
 
@@ -225,7 +225,7 @@ void VRMLBodyWriter::writeGyroNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeAccelerationSensorNode(VRMLNodePtr node)
 {
-    VRMLAccelerationSensorPtr sensor = boost::static_pointer_cast<VRMLAccelerationSensor>(node);
+    VRMLAccelerationSensorPtr sensor = static_pointer_cast<VRMLAccelerationSensor>(node);
 
     beginNode("AccelerationSensor", sensor);
 
@@ -242,7 +242,7 @@ void VRMLBodyWriter::writeAccelerationSensorNode(VRMLNodePtr node)
 
 void VRMLBodyWriter::writeRangeSensorNode(VRMLNodePtr node)
 {
-    VRMLRangeSensorPtr sensor = boost::static_pointer_cast<VRMLRangeSensor>(node);
+    VRMLRangeSensorPtr sensor = static_pointer_cast<VRMLRangeSensor>(node);
 
     beginNode("RangeSensor", sensor);
 

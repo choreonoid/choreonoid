@@ -2,15 +2,14 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_YAML_WRITER_H_INCLUDED
-#define CNOID_UTIL_YAML_WRITER_H_INCLUDED
+#ifndef CNOID_UTIL_YAML_WRITER_H
+#define CNOID_UTIL_YAML_WRITER_H
 
 #include "ValueTree.h"
+#include <boost/lexical_cast.hpp>
 #include <stack>
 #include <string>
 #include <fstream>
-#include <boost/lexical_cast.hpp>
-#include <boost/intrusive_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -124,6 +123,5 @@ typedef YAMLWriter YamlWriter;
 #endif
     
 }
-
 
 #endif

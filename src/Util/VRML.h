@@ -6,14 +6,14 @@
 #ifndef CNOID_UTIL_VRML_H
 #define CNOID_UTIL_VRML_H
 
-#include <map>
-#include <string>
-#include <bitset>
-#include <boost/variant.hpp>
-#include <boost/intrusive_ptr.hpp>
+#include "Referenced.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
+#include <boost/variant.hpp>
+#include <string>
+#include <bitset>
+#include <map>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -93,11 +93,8 @@ enum VRMLNodeCategory {
 
 class VRMLNode;
 
-inline void intrusive_ptr_add_ref(VRMLNode* obj);
-inline void intrusive_ptr_release(VRMLNode* obj);
-
 //! Abstract base class of all vrml nodes.
-class CNOID_EXPORT VRMLNode
+class CNOID_EXPORT VRMLNode : public Referenced
 {
 public:
 
@@ -110,26 +107,9 @@ public:
 
 protected:
     std::bitset<NUM_VRML_NODE_CATEGORIES> categorySet;
-
-private:
-    int refCounter;
-
-    friend void intrusive_ptr_add_ref(VRMLNode* obj);
-    friend void intrusive_ptr_release(VRMLNode* obj);
 };
 
-inline void intrusive_ptr_add_ref(VRMLNode* obj){
-    obj->refCounter++;
-}
-    
-inline void intrusive_ptr_release(VRMLNode* obj){
-    obj->refCounter--;
-    if(obj->refCounter <= 0){
-        delete obj;
-    }
-}
-
-typedef boost::intrusive_ptr<VRMLNode> VRMLNodePtr;
+typedef ref_ptr<VRMLNode> VRMLNodePtr;
 
 typedef VRMLNodePtr SFNode;
 typedef std::vector<SFNode> MFNode;
@@ -141,7 +121,7 @@ public:
     VRMLUnsupportedNode(const std::string& nodeTypeName);
     std::string nodeTypeName;
 };
-typedef boost::intrusive_ptr<VRMLUnsupportedNode> VRMLUnsupportedNodePtr;
+typedef ref_ptr<VRMLUnsupportedNode> VRMLUnsupportedNodePtr;
 
 
 //! VRML Viewpoint node
@@ -158,7 +138,7 @@ public:
     SFVec3f position;
     SFString description;
 };
-typedef boost::intrusive_ptr<VRMLViewpoint> VRMLViewpointPtr;
+typedef ref_ptr<VRMLViewpoint> VRMLViewpointPtr;
 
 
 //! VRML NavigationInfo node
@@ -173,7 +153,7 @@ public:
     MFString type;
     SFFloat visibilityLimit;
 };
-typedef boost::intrusive_ptr<VRMLNavigationInfo> VRMLNavigationInfoPtr;
+typedef ref_ptr<VRMLNavigationInfo> VRMLNavigationInfoPtr;
 
 
 //! VRML Background node
@@ -193,7 +173,7 @@ public:
     MFString rightUrl;
     MFString topUrl;
 };
-typedef boost::intrusive_ptr<VRMLBackground> VRMLBackgroundPtr;
+typedef ref_ptr<VRMLBackground> VRMLBackgroundPtr;
 
 
 class CNOID_EXPORT AbstractVRMLGroup : public VRMLNode
@@ -208,7 +188,7 @@ public:
         
     void removeChild(int childIndex);
 };
-typedef boost::intrusive_ptr<AbstractVRMLGroup> AbstractVRMLGroupPtr;
+typedef ref_ptr<AbstractVRMLGroup> AbstractVRMLGroupPtr;
     
     
 //! VRML Group node
@@ -226,7 +206,7 @@ public:
     SFVec3f bboxSize;  
     MFNode children;
 };
-typedef boost::intrusive_ptr<VRMLGroup> VRMLGroupPtr;
+typedef ref_ptr<VRMLGroup> VRMLGroupPtr;
 
 
 //! VRML Transform node
@@ -243,7 +223,7 @@ public:
     SFRotation scaleOrientation;
     SFVec3f translation;
 };
-typedef boost::intrusive_ptr<VRMLTransform> VRMLTransformPtr;
+typedef ref_ptr<VRMLTransform> VRMLTransformPtr;
 
 //! VRML Inline node
 class CNOID_EXPORT  VRMLInline : public VRMLGroup
@@ -252,7 +232,7 @@ public:
     VRMLInline();
     MFString urls;
 };
-typedef boost::intrusive_ptr<VRMLInline> VRMLInlinePtr;
+typedef ref_ptr<VRMLInline> VRMLInlinePtr;
 
 
 class CNOID_EXPORT  VRMLAnotherFormatFile : public VRMLNode
@@ -262,14 +242,14 @@ public:
     SFString url;
     //SFString extension;
 };
-typedef boost::intrusive_ptr<VRMLAnotherFormatFile> VRMLAnotherFormatFilePtr;
+typedef ref_ptr<VRMLAnotherFormatFile> VRMLAnotherFormatFilePtr;
 
 
 class VRMLAppearance;
-typedef boost::intrusive_ptr<VRMLAppearance> VRMLAppearancePtr;
+typedef ref_ptr<VRMLAppearance> VRMLAppearancePtr;
 
 class VRMLGeometry;
-typedef boost::intrusive_ptr<VRMLGeometry> VRMLGeometryPtr;
+typedef ref_ptr<VRMLGeometry> VRMLGeometryPtr;
 
 
 //! VRML Shape node
@@ -280,17 +260,17 @@ public:
     VRMLAppearancePtr appearance;
     SFNode geometry;
 };
-typedef boost::intrusive_ptr<VRMLShape> VRMLShapePtr;
+typedef ref_ptr<VRMLShape> VRMLShapePtr;
 
 
 class VRMLMaterial;
-typedef boost::intrusive_ptr<VRMLMaterial> VRMLMaterialPtr;
+typedef ref_ptr<VRMLMaterial> VRMLMaterialPtr;
 
 class VRMLTexture;
-typedef boost::intrusive_ptr<VRMLTexture> VRMLTexturePtr;
+typedef ref_ptr<VRMLTexture> VRMLTexturePtr;
 
 class VRMLTextureTransform;
-typedef boost::intrusive_ptr<VRMLTextureTransform> VRMLTextureTransformPtr;
+typedef ref_ptr<VRMLTextureTransform> VRMLTextureTransformPtr;
 
 //! VRML Appearance node
 class CNOID_EXPORT VRMLAppearance : public VRMLNode
@@ -337,7 +317,7 @@ public:
     SFBool   repeatS;
     SFBool   repeatT;
 };
-typedef boost::intrusive_ptr<VRMLImageTexture> VRMLImageTexturePtr;
+typedef ref_ptr<VRMLImageTexture> VRMLImageTexturePtr;
 
 
 //! VRML TextureTransform node
@@ -368,7 +348,7 @@ public:
     VRMLBox();
     SFVec3f size;
 };
-typedef boost::intrusive_ptr<VRMLBox> VRMLBoxPtr;
+typedef ref_ptr<VRMLBox> VRMLBoxPtr;
 
 
 //! VRML Cone node
@@ -382,7 +362,7 @@ public:
     SFFloat height;
     SFBool side;
 };
-typedef boost::intrusive_ptr<VRMLCone> VRMLConePtr;
+typedef ref_ptr<VRMLCone> VRMLConePtr;
 
 
 //! VRML Cylinder node
@@ -397,7 +377,7 @@ public:
     SFBool side;
     SFBool top;
 };
-typedef boost::intrusive_ptr<VRMLCylinder> VRMLCylinderPtr;
+typedef ref_ptr<VRMLCylinder> VRMLCylinderPtr;
 
 
 //! VRML Sphere node
@@ -407,7 +387,7 @@ public:
     VRMLSphere();
     SFFloat radius;
 };
-typedef boost::intrusive_ptr<VRMLSphere> VRMLSpherePtr;
+typedef ref_ptr<VRMLSphere> VRMLSpherePtr;
 
 
 //! VRML FontStyle node
@@ -426,7 +406,7 @@ public:
     SFString style;
     SFBool   topToBottom;
 };
-typedef boost::intrusive_ptr<VRMLFontStyle> VRMLFontStylePtr;
+typedef ref_ptr<VRMLFontStyle> VRMLFontStylePtr;
 
 
 //! VRML Text node
@@ -440,14 +420,14 @@ public:
     MFFloat length;
     SFFloat maxExtent;
 };
-typedef boost::intrusive_ptr<VRMLText> VRMLTextPtr;
+typedef ref_ptr<VRMLText> VRMLTextPtr;
 
 
 class VRMLColor;
-typedef boost::intrusive_ptr<VRMLColor> VRMLColorPtr;
+typedef ref_ptr<VRMLColor> VRMLColorPtr;
 
 class VRMLCoordinate;
-typedef boost::intrusive_ptr<VRMLCoordinate> VRMLCoordinatePtr;
+typedef ref_ptr<VRMLCoordinate> VRMLCoordinatePtr;
 
 //! VRML IndexedLineSet node
 class CNOID_EXPORT VRMLIndexedLineSet : public VRMLGeometry
@@ -461,14 +441,14 @@ public:
     SFBool colorPerVertex;
     MFInt32 coordIndex;
 };
-typedef boost::intrusive_ptr<VRMLIndexedLineSet> VRMLIndexedLineSetPtr;
+typedef ref_ptr<VRMLIndexedLineSet> VRMLIndexedLineSetPtr;
 
 
 class VRMLNormal;
-typedef boost::intrusive_ptr<VRMLNormal> VRMLNormalPtr;
+typedef ref_ptr<VRMLNormal> VRMLNormalPtr;
 
 class VRMLTextureCoordinate;
-typedef boost::intrusive_ptr<VRMLTextureCoordinate> VRMLTextureCoordinatePtr;
+typedef ref_ptr<VRMLTextureCoordinate> VRMLTextureCoordinatePtr;
 
 
 //! VRML IndexedFaseSet node
@@ -487,7 +467,7 @@ public:
     SFBool solid;
     MFInt32 texCoordIndex;
 };
-typedef boost::intrusive_ptr<VRMLIndexedFaceSet> VRMLIndexedFaceSetPtr;
+typedef ref_ptr<VRMLIndexedFaceSet> VRMLIndexedFaceSetPtr;
 
 
 //! VRML Color node
@@ -540,7 +520,7 @@ public:
     SFFloat minAngle;
     SFFloat offset;
 };
-typedef boost::intrusive_ptr<VRMLCylinderSensor> VRMLCylinderSensorPtr;
+typedef ref_ptr<VRMLCylinderSensor> VRMLCylinderSensorPtr;
 
 
 //! VRML PointSet node
@@ -553,7 +533,7 @@ public:
     VRMLColorPtr		color;
 };
 
-typedef boost::intrusive_ptr<VRMLPointSet> VRMLPointSetPtr;
+typedef ref_ptr<VRMLPointSet> VRMLPointSetPtr;
 
 
 //! VRML PixelTexture node
@@ -567,7 +547,7 @@ public:
     SFBool			repeatT;
 };
 
-typedef boost::intrusive_ptr<VRMLPixelTexture> VRMLPixelTexturePtr;
+typedef ref_ptr<VRMLPixelTexture> VRMLPixelTexturePtr;
 
 
 //! VRML MovieTexture node
@@ -585,7 +565,7 @@ public:
     SFBool			repeatT;
 };
 
-typedef boost::intrusive_ptr<VRMLMovieTexture> VRMLMovieTexturePtr;
+typedef ref_ptr<VRMLMovieTexture> VRMLMovieTexturePtr;
 
 
 //! VRML ElevationGrid node
@@ -609,7 +589,7 @@ public:
     VRMLTextureCoordinatePtr	texCoord;
 };
 
-typedef boost::intrusive_ptr<VRMLElevationGrid> VRMLElevationGridPtr;
+typedef ref_ptr<VRMLElevationGrid> VRMLElevationGridPtr;
 
 
 //! VRML Extrusion node
@@ -630,7 +610,7 @@ public:
     SFFloat			creaseAngle;
 };
 
-typedef boost::intrusive_ptr<VRMLExtrusion> VRMLExtrusionPtr;
+typedef ref_ptr<VRMLExtrusion> VRMLExtrusionPtr;
 
 
 class CNOID_EXPORT VRMLSwitch : public AbstractVRMLGroup
@@ -647,7 +627,7 @@ public:
     SFInt32	whichChoice;
 };
 
-typedef boost::intrusive_ptr<VRMLSwitch> VRMLSwitchPtr;
+typedef ref_ptr<VRMLSwitch> VRMLSwitchPtr;
 
 
 class CNOID_EXPORT VRMLLOD : public AbstractVRMLGroup
@@ -665,7 +645,7 @@ public:
     MFNode  level;
 };
 
-typedef boost::intrusive_ptr<VRMLLOD> VRMLLODPtr;
+typedef ref_ptr<VRMLLOD> VRMLLODPtr;
 
 
 class CNOID_EXPORT VRMLCollision : public VRMLGroup
@@ -676,7 +656,7 @@ public:
     SFNode proxy;
 };
 
-typedef boost::intrusive_ptr<VRMLCollision> VRMLCollisionPtr;
+typedef ref_ptr<VRMLCollision> VRMLCollisionPtr;
 
 
 class CNOID_EXPORT VRMLAnchor : public VRMLGroup
@@ -688,7 +668,7 @@ public:
     MFString url;
 };
 
-typedef boost::intrusive_ptr<VRMLAnchor> VRMLAnchorPtr;
+typedef ref_ptr<VRMLAnchor> VRMLAnchorPtr;
 
 
 class CNOID_EXPORT VRMLBillboard : public VRMLGroup
@@ -698,7 +678,7 @@ public:
     SFVec3f axisOfRotation;
 };
 
-typedef boost::intrusive_ptr<VRMLBillboard> VRMLBillboardPtr;
+typedef ref_ptr<VRMLBillboard> VRMLBillboardPtr;
 
 
 class CNOID_EXPORT VRMLFog : public VRMLNode
@@ -710,7 +690,7 @@ public:
     SFString fogType;
 };
 
-typedef boost::intrusive_ptr<VRMLFog> VRMLFogPtr;
+typedef ref_ptr<VRMLFog> VRMLFogPtr;
 
 
 class CNOID_EXPORT  VRMLWorldInfo : public VRMLNode
@@ -721,7 +701,7 @@ public:
     MFString info;
 };
 
-typedef boost::intrusive_ptr<VRMLWorldInfo> VRMLWorldInfoPtr;
+typedef ref_ptr<VRMLWorldInfo> VRMLWorldInfoPtr;
 
 
 class CNOID_EXPORT VRMLLight : public VRMLNode
@@ -734,7 +714,7 @@ public:
     SFFloat ambientIntensity;
 };
 
-typedef boost::intrusive_ptr<VRMLLight> VRMLLightPtr;
+typedef ref_ptr<VRMLLight> VRMLLightPtr;
 
 
 class CNOID_EXPORT VRMLPointLight : public VRMLLight
@@ -746,7 +726,7 @@ public:
     SFVec3f attenuation;
 };
 
-typedef boost::intrusive_ptr<VRMLPointLight> VRMLPointLightPtr;
+typedef ref_ptr<VRMLPointLight> VRMLPointLightPtr;
 
 
 class CNOID_EXPORT VRMLDirectionalLight : public VRMLLight
@@ -756,7 +736,7 @@ public:
     SFVec3f direction;
 };
 
-typedef boost::intrusive_ptr<VRMLDirectionalLight> VRMLDirectionalLightPtr;
+typedef ref_ptr<VRMLDirectionalLight> VRMLDirectionalLightPtr;
 
 
 class CNOID_EXPORT VRMLSpotLight : public VRMLPointLight
@@ -768,7 +748,7 @@ public:
     SFFloat cutOffAngle;
 };
 
-typedef boost::intrusive_ptr<VRMLSpotLight> VRMLSpotLightPtr;
+typedef ref_ptr<VRMLSpotLight> VRMLSpotLightPtr;
 
 typedef boost::variant<SFBool,
                        SFInt32, SFFloat, SFVec2f, SFVec3f, SFRotation, SFColor, SFTime, SFString, SFNode, SFImage,
@@ -817,7 +797,7 @@ public:
     */
 
 };
-typedef boost::intrusive_ptr<VRMLProto> VRMLProtoPtr;
+typedef ref_ptr<VRMLProto> VRMLProtoPtr;
 
 
 //! VRML node which is instance of VRML Prototype
@@ -835,7 +815,7 @@ public:
         return (p != fields.end()) ? &p->second : 0;
     }
 };
-typedef boost::intrusive_ptr<VRMLProtoInstance> VRMLProtoInstancePtr;
+typedef ref_ptr<VRMLProtoInstance> VRMLProtoInstancePtr;
 
 /**
    The upper cast operation that supports the situation where the original pointer
@@ -843,12 +823,12 @@ typedef boost::intrusive_ptr<VRMLProtoInstance> VRMLProtoInstancePtr;
    the node replaced with the pre-defined node type written in the PROTO definition.
 */
 template<class VRMLNodeType>
-inline boost::intrusive_ptr<VRMLNodeType> dynamic_node_cast(VRMLNodePtr node) {
-    VRMLProtoInstancePtr protoInstance = boost::dynamic_pointer_cast<VRMLProtoInstance>(node);
+inline ref_ptr<VRMLNodeType> dynamic_node_cast(VRMLNodePtr node) {
+    VRMLProtoInstancePtr protoInstance = dynamic_pointer_cast<VRMLProtoInstance>(node);
     if(protoInstance){
-        return boost::dynamic_pointer_cast<VRMLNodeType>(protoInstance->actualNode);
+        return dynamic_pointer_cast<VRMLNodeType>(protoInstance->actualNode);
     } else {
-        return boost::dynamic_pointer_cast<VRMLNodeType>(node);
+        return dynamic_pointer_cast<VRMLNodeType>(node);
     }
 }
 
