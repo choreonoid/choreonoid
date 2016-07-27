@@ -17,8 +17,6 @@
 #include <cnoid/corba/PointCloud.hh>
 #include <cnoid/LazyCaller>
 #include <cnoid/OpenRTMUtil>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
 #include <rtm/Manager.h>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
@@ -26,6 +24,7 @@
 #include <rtm/CorbaPort.h>
 #include <rtm/DataInPort.h>
 #include <rtm/DataOutPort.h>
+#include <mutex>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -59,7 +58,7 @@ public :
     TimedDoubleSeq timedCamera_T;
     InPort<TimedDoubleSeq> camera_TInPort;
 
-    boost::mutex mtx;
+    std::mutex mtx;
     Image image;
     ImageView* imageView;
     vector<Vector3f> rangeCameraPoints;
@@ -205,7 +204,7 @@ public :
                 imageInPort.read();
             }while(imageInPort.isNew());
             
-            boost::mutex::scoped_lock lock(mtx);
+            std::unique_lock<std::mutex> lock(mtx);
             int numComponents;
             switch(timedCameraImage.data.image.format){
             case Img::CF_GRAY :
@@ -240,7 +239,7 @@ public :
                 rgb = true;
             
             unsigned char* src = (unsigned char*)timedPointCloud.data.get_buffer();
-            boost::mutex::scoped_lock lock(mtx);
+            std::unique_lock<std::mutex> lock(mtx);
             rangeCameraPoints.resize(numPoints);
             if(rgb)
                 rangeCameraColors.resize(numPoints);
@@ -277,7 +276,7 @@ public :
             const double yawMin = timedRangeData.config.minAngle;
             const double maxDistance = timedRangeData.config.maxRange;
             
-            boost::mutex::scoped_lock lock(mtx);
+            std::unique_lock<std::mutex> lock(mtx);
             rangeSensorPoints.clear();
             rangeSensorPoints.reserve(numPoints);
             for(int yaw=0; yaw < numPoints; yaw++){
@@ -301,7 +300,7 @@ public :
     
     void updateImage()
     {
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         if(image.height() > 1){
             imageView->setImage(image);
         }
@@ -315,7 +314,7 @@ public :
         SgVertexArray& disPoints = *pointSetFromRangeCamera->getOrCreateVertices();
         SgColorArray& disColors = *pointSetFromRangeCamera->getOrCreateColors();
         
-        boost::mutex::scoped_lock lock(mtx);
+        std::unique_lock<std::mutex> lock(mtx);
         disPoints.resize(rangeCameraPoints.size());
         disColors.resize(rangeCameraColors.size());
         copy(rangeCameraPoints.begin(), rangeCameraPoints.end(), disPoints.begin());
@@ -332,7 +331,7 @@ public :
         
         SgVertexArray& disPoints = *pointSetFromRangeSensor->getOrCreateVertices();
         
-        boost::mutex::scoped_lock lock(mtx);
+        std::unique_lock<std::mutex> lock(mtx);
         disPoints.resize(rangeSensorPoints.size());
         copy(rangeSensorPoints.begin(), rangeSensorPoints.end(), disPoints.begin());
         lock.unlock();

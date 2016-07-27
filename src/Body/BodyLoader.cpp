@@ -13,8 +13,7 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
+#include <mutex>
 #include "gettext.h"
 
 using namespace std;
@@ -26,7 +25,7 @@ namespace {
 typedef std::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
-boost::mutex loaderFactoryMapMutex;
+std::mutex loaderFactoryMapMutex;
 
 
 AbstractBodyLoaderPtr yamlBodyLoaderFactory()
@@ -96,7 +95,7 @@ struct FactoryRegistration
 
 bool BodyLoader::registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory)
 {
-    boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
+    std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
     loaderFactoryMap[extension] = factory;
     return  true;
 }
@@ -239,7 +238,7 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
         if(p != loaderMap.end()){
             loader = p->second;
         } else {
-            boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
+            std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
             LoaderFactoryMap::iterator q = loaderFactoryMap.find(ext);
             if(q != loaderFactoryMap.end()){
                 LoaderFactory factory = q->second;

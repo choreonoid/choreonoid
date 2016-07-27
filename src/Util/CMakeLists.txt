@@ -159,6 +159,7 @@ add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
 if(UNIX)
   set(libraries 
     yaml irrXML ${PNG_LIBRARY} ${JPEG_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)

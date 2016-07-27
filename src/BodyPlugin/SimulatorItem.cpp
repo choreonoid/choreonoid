@@ -29,8 +29,10 @@
 #include <cnoid/BodyState>
 #include <QThread>
 #include <QMutex>
-#include <boost/thread.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/ViewManager>
@@ -47,7 +49,7 @@ typedef QTime QElapsedTimer;
 #include "gettext.h"
 
 using namespace std;
-namespace stdph = std::placeholders;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -65,7 +67,7 @@ struct FunctionSet
         std::function<void()> function;
     };
     vector<FunctionInfo> functions;
-    boost::mutex mutex;
+    std::mutex mutex;
     SimulatorItemImpl* simImpl;
     int idCounter;
     bool needToUpdate;
@@ -191,9 +193,9 @@ public:
     ItemList<SubSimulatorItem> subSimulatorItems;
 
     vector<ControllerItem*> activeControllers;
-    boost::thread controlThread;
-    boost::condition_variable controlCondition;
-    boost::mutex controlMutex;
+    std::thread controlThread;
+    std::condition_variable controlCondition;
+    std::mutex controlMutex;
     bool isExitingControlLoopRequested;
     bool isControlRequested;
     bool isControlFinished;
@@ -245,7 +247,7 @@ public:
     double logTimeStep;
     
     boost::optional<int> extForceFunctionId;
-    boost::mutex extForceMutex;
+    std::mutex extForceMutex;
     struct ExtForceInfo {
         Link* link;
         Vector3 point;
@@ -255,7 +257,7 @@ public:
     ExtForceInfo extForceInfo;
 
     boost::optional<int> virtualElasticStringFunctionId;
-    boost::mutex virtualElasticStringMutex;
+    std::mutex virtualElasticStringMutex;
     struct VirtualElasticString {
         Link* link;
         double kp;
@@ -329,7 +331,7 @@ public:
     SimulatedMotionEngineManager(){
         selectionOrTreeChangedConnection.reset(
             ItemTreeView::instance()->sigSelectionOrTreeChanged().connect(
-                std::bind(&SimulatedMotionEngineManager::onItemSelectionOrTreeChanged, this, stdph::_1)));
+                std::bind(&SimulatedMotionEngineManager::onItemSelectionOrTreeChanged, this, _1)));
     }
 
     void onItemSelectionOrTreeChanged(const ItemList<SimulatorItem>& selected){
@@ -359,7 +361,7 @@ public:
                 TimeBar* timeBar = TimeBar::instance();
                 timeChangeConnection.reset(
                     timeBar->sigTimeChanged().connect(
-                        std::bind(&SimulatedMotionEngineManager::setTime, this, stdph::_1)));
+                        std::bind(&SimulatedMotionEngineManager::setTime, this, _1)));
                 setTime(timeBar->time());
             }
         }
@@ -456,7 +458,7 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
     if(item){
         WorldItem* worldItem = item->findOwnerItem<WorldItem>();
         if(worldItem){
-            worldItem->traverse<SimulatorItem>(std::bind(checkActive, stdph::_1, std::ref(activeSimulatorItem)));
+            worldItem->traverse<SimulatorItem>(std::bind(checkActive, _1, std::ref(activeSimulatorItem)));
         }
     }
     return activeSimulatorItem;
@@ -1238,7 +1240,7 @@ void SimulatorItem::removePostDynamicsFunction(int id)
 
 int FunctionSet::add(std::function<void()>& func)
 {
-    boost::unique_lock<boost::mutex> lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     
     FunctionInfo info;
     info.function = func;
@@ -1263,7 +1265,7 @@ int FunctionSet::add(std::function<void()>& func)
 
 void FunctionSet::remove(int id)
 {
-    boost::unique_lock<boost::mutex> lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     idsToRemove.push_back(id);
     needToUpdate = true;
 }
@@ -1271,7 +1273,7 @@ void FunctionSet::remove(int id)
 
 void FunctionSet::updateFunctions()
 {
-    boost::unique_lock<boost::mutex> lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
 
     for(size_t i=0; i < functionsToAdd.size(); ++i){
         functions.push_back(functionsToAdd[i]);
@@ -1498,7 +1500,7 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
-            controlThread = boost::thread(std::bind(&SimulatorItemImpl::concurrentControlLoop, this));
+            controlThread = std::thread(std::bind(&SimulatorItemImpl::concurrentControlLoop, this));
             isExitingControlLoopRequested = false;
             isControlRequested = false;
             isControlFinished = false;
@@ -1768,7 +1770,7 @@ void SimulatorItemImpl::run()
 
     if(useControllerThreads){
         {
-            boost::unique_lock<boost::mutex> lock(controlMutex);
+            std::unique_lock<std::mutex> lock(controlMutex);
             isExitingControlLoopRequested = true;
         }
         controlCondition.notify_all();
@@ -1837,7 +1839,7 @@ bool SimulatorItemImpl::stepSimulationMain()
             controllerTime += timer.nsecsElapsed();
 #endif
             {
-                boost::unique_lock<boost::mutex> lock(controlMutex);                
+                std::unique_lock<std::mutex> lock(controlMutex);                
                 isControlRequested = true;
             }
             controlCondition.notify_all();
@@ -1871,7 +1873,7 @@ bool SimulatorItemImpl::stepSimulationMain()
 
     if(useControllerThreads){
         {
-            boost::unique_lock<boost::mutex> lock(controlMutex);
+            std::unique_lock<std::mutex> lock(controlMutex);
             while(!isControlFinished){
                 controlCondition.wait(lock);
             }
@@ -1928,7 +1930,7 @@ void SimulatorItemImpl::concurrentControlLoop()
 {
     while(true){
         {
-            boost::unique_lock<boost::mutex> lock(controlMutex);
+            std::unique_lock<std::mutex> lock(controlMutex);
             while(true){
                 if(isExitingControlLoopRequested){
                     goto exitConcurrentControlLoop;
@@ -1954,7 +1956,7 @@ void SimulatorItemImpl::concurrentControlLoop()
 #endif
         
         {
-            boost::unique_lock<boost::mutex> lock(controlMutex);
+            std::unique_lock<std::mutex> lock(controlMutex);
             isControlFinished = true;
             isControlToBeContinued = doContinue;
         }
@@ -2211,7 +2213,7 @@ void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const V
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
         if(simBody){
             {
-                boost::unique_lock<boost::mutex> lock(extForceMutex);
+                std::unique_lock<std::mutex> lock(extForceMutex);
                 extForceInfo.link = simBody->body()->link(link->index());
                 extForceInfo.point = point;
                 extForceInfo.f = f;
@@ -2238,7 +2240,7 @@ void SimulatorItem::clearExternalForces()
 
 void SimulatorItemImpl::doSetExternalForce()
 {
-    boost::unique_lock<boost::mutex> lock(extForceMutex);
+    std::unique_lock<std::mutex> lock(extForceMutex);
     Link* link = extForceInfo.link;
     link->f_ext() += extForceInfo.f;
     const Vector3 p = link->T() * extForceInfo.point;
@@ -2266,7 +2268,7 @@ void SimulatorItemImpl::setVirtualElasticString
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
         if(simBody){
             {
-                boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
+                std::unique_lock<std::mutex> lock(virtualElasticStringMutex);
                 Body* body = simBody->body();
                 VirtualElasticString& s = virtualElasticString;
                 s.link = body->link(link->index());
@@ -2298,7 +2300,7 @@ void SimulatorItem::clearVirtualElasticStrings()
 
 void SimulatorItemImpl::setVirtualElasticStringForce()
 {
-    boost::unique_lock<boost::mutex> lock(virtualElasticStringMutex);
+    std::unique_lock<std::mutex> lock(virtualElasticStringMutex);
     const VirtualElasticString& s = virtualElasticString;
     Link* link = s.link;
     Vector3 a = link->R() * s.point;
@@ -2351,15 +2353,15 @@ bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
 void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Sync with realtime"), impl->isRealtimeSyncMode,
-                std::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, stdph::_1));
+                std::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
     putProperty(_("Time range"), impl->timeRangeMode,
-                std::bind(&Selection::selectIndex, &impl->timeRangeMode, stdph::_1));
+                std::bind(&Selection::selectIndex, &impl->timeRangeMode, _1));
     putProperty(_("Time length"), impl->specifiedTimeLength,
-                std::bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, stdph::_1));
+                std::bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, _1));
     putProperty(_("Recording"), impl->recordingMode,
-                std::bind(&Selection::selectIndex, &impl->recordingMode, stdph::_1));
+                std::bind(&Selection::selectIndex, &impl->recordingMode, _1));
     putProperty(_("All link positions"), impl->isAllLinkPositionOutputMode,
-                std::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, stdph::_1));
+                std::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, _1));
     putProperty(_("Device state output"), impl->isDeviceStateOutputEnabled,
                 changeProperty(impl->isDeviceStateOutputEnabled));
     putProperty(_("Controller Threads"), impl->useControllerThreadsProperty,

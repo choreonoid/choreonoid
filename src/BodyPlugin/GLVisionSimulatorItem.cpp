@@ -23,9 +23,10 @@
 #include <cnoid/EigenUtil>
 #include <QThread>
 #include <QApplication>
-#include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
+#include <mutex>
+#include <condition_variable>
 #include <queue>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -45,7 +46,7 @@
 #include "gettext.h"
 
 using namespace std;
-namespace stdph = std::placeholders;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -121,8 +122,8 @@ public:
     double latency;
     double onsetTime;
     QThreadEx renderingThread;
-    boost::condition_variable renderingCondition;
-    boost::mutex renderingMutex;
+    std::condition_variable renderingCondition;
+    std::mutex renderingMutex;
     bool isRenderingRequested;
     bool isRenderingFinished;
     bool isTerminationRequested;
@@ -174,7 +175,7 @@ public:
     void concurrentRenderingLoop();
     void storeResultToTmpDataBuffer();
     bool waitForRenderingToFinish();
-    bool waitForRenderingToFinish(boost::unique_lock<boost::mutex>& lock);
+    bool waitForRenderingToFinish(std::unique_lock<std::mutex>& lock);
     void copyVisionData();
     bool getCameraImage(Image& image);
     bool getRangeCameraData(Image& image, vector<Vector3f>& points);
@@ -206,8 +207,8 @@ public:
 
     // for the single vision simulator thread rendering
     QThreadEx queueThread;
-    boost::condition_variable queueCondition;
-    boost::mutex queueMutex;
+    std::condition_variable queueCondition;
+    std::mutex queueMutex;
     queue<VisionRenderer*> rendererQueue;
     
     double rangeSensorPrecisionRatio;
@@ -783,7 +784,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 {
     currentTime = simulatorItem->currentTime();
 
-    boost::mutex* pQueueMutex = 0;
+    std::mutex* pQueueMutex = 0;
     
     for(size_t i=0; i < visionRenderers.size(); ++i){
         VisionRenderer* renderer = visionRenderers[i];
@@ -821,7 +822,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
     
     while(true){
         {
-            boost::unique_lock<boost::mutex> lock(queueMutex);
+            std::unique_lock<std::mutex> lock(queueMutex);
             while(true){
                 if(isQueueRenderingTerminationRequested){
                     goto exitRenderingQueueLoop;
@@ -837,7 +838,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
         renderer->renderInCurrentThread(true);
         
         {
-            boost::unique_lock<boost::mutex> lock(queueMutex);
+            std::unique_lock<std::mutex> lock(queueMutex);
             renderer->isRenderingFinished = true;
         }
         queueCondition.notify_all();
@@ -879,7 +880,7 @@ void VisionRenderer::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
 void VisionRenderer::startConcurrentRendering()
 {
     {
-        boost::unique_lock<boost::mutex> lock(renderingMutex);
+        std::unique_lock<std::mutex> lock(renderingMutex);
         updateScene(true);
         isRenderingRequested = true;
     }
@@ -894,7 +895,7 @@ void VisionRenderer::concurrentRenderingLoop()
     
     while(true){
         {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            std::unique_lock<std::mutex> lock(renderingMutex);
             while(true){
                 if(isTerminationRequested){
                     goto exitConcurrentRenderingLoop;
@@ -915,7 +916,7 @@ void VisionRenderer::concurrentRenderingLoop()
         storeResultToTmpDataBuffer();
     
         {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            std::unique_lock<std::mutex> lock(renderingMutex);
             isRenderingFinished = true;
         }
         renderingCondition.notify_all();
@@ -978,7 +979,7 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
 
 bool VisionRenderer::waitForRenderingToFinish()
 {
-    boost::unique_lock<boost::mutex> lock(renderingMutex);
+    std::unique_lock<std::mutex> lock(renderingMutex);
 
     if(!isRenderingFinished){
         if(simImpl->isBestEffortMode){
@@ -999,7 +1000,7 @@ bool VisionRenderer::waitForRenderingToFinish()
 
 void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
 {
-    boost::unique_lock<boost::mutex> lock(queueMutex);
+    std::unique_lock<std::mutex> lock(queueMutex);
     
     vector<VisionRenderer*>::iterator p = renderersInRendering.begin();
     while(p != renderersInRendering.end()){
@@ -1019,7 +1020,7 @@ void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
 }
 
 
-bool VisionRenderer::waitForRenderingToFinish(boost::unique_lock<boost::mutex>& lock)
+bool VisionRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock)
 {
     if(!isRenderingFinished){
         if(simImpl->isBestEffortMode){
@@ -1224,7 +1225,7 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
 {
     if(useQueueThreadForAllSensors){
         {
-            boost::unique_lock<boost::mutex> lock(queueMutex);
+            std::unique_lock<std::mutex> lock(queueMutex);
             isQueueRenderingTerminationRequested = true;
         }
         queueCondition.notify_all();
@@ -1242,7 +1243,7 @@ VisionRenderer::~VisionRenderer()
 {
     if(simImpl->useThreadsForSensors){
         {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            std::unique_lock<std::mutex> lock(renderingMutex);
             isTerminationRequested = true;
         }
         renderingCondition.notify_all();
@@ -1279,9 +1280,9 @@ void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Target bodies"), bodyNameListString,
-                std::bind(updateNames, stdph::_1, std::ref(bodyNameListString), std::ref(bodyNames)));
+                std::bind(updateNames, _1, std::ref(bodyNameListString), std::ref(bodyNames)));
     putProperty(_("Target sensors"), sensorNameListString,
-                std::bind(updateNames, stdph::_1, std::ref(sensorNameListString), std::ref(sensorNames)));
+                std::bind(updateNames, _1, std::ref(sensorNameListString), std::ref(sensorNames)));
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));

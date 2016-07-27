@@ -20,8 +20,7 @@
 #include <rtm/PortBase.h>
 #include <rtm/OutPort.h>
 #include <rtm/InPort.h>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
+#include <mutex>
 #include "BridgeConf.h"
 
 namespace cnoid {
@@ -189,7 +188,7 @@ private:
 public:
     RTC::OutPort<Img::TimedCameraImage> outPort;
 private:
-    boost::mutex mtx;
+    std::mutex mtx;
     Camera* camera;
     std::string cameraName;
     std::shared_ptr<const Image> prevImage;
@@ -209,7 +208,7 @@ private:
 public:
     RTC::OutPort<PointCloudTypes::PointCloud> outPort;
 private:
-    boost::mutex mtx;
+    std::mutex mtx;
     RangeCamera* rangeCamera;
     std::string rangeCameraName;
     std::shared_ptr<const RangeCamera::PointData> prevPoints;
@@ -231,7 +230,7 @@ private:
 public:
     RTC::OutPort<RTC::RangeData> outPort;
 private:
-    boost::mutex mtx;
+    std::mutex mtx;
     RangeSensor* rangeSensor;
     std::string rangeSensorName;
     std::shared_ptr<const RangeSensor::RangeData> prevRangeData;

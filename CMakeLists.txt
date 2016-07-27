@@ -7,7 +7,7 @@ include(FindPkgConfig)
 include(CheckIncludeFiles)
 
 if(UNIX)
-  add_definitions("-std=c++11")
+  add_definitions("-std=c++11 -pthread")
 endif()
 
 project(Choreonoid)
@@ -166,6 +166,7 @@ if(MSVC)
   endif()
 endif()
 
+find_package(Threads)
 
 if(ENABLE_GUI)
   FIND_PACKAGE(OpenGL)

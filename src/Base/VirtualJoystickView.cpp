@@ -11,7 +11,8 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QKeyEvent>
-#include <boost/thread.hpp>
+#include <thread>
+#include <mutex>
 #include "gettext.h"
 
 using namespace std;
@@ -77,7 +78,7 @@ public:
     vector<double> keyValues;
     Signal<void(int id, bool isPressed)> sigButton_;
     Signal<void(int id, double position)> sigAxis_;
-    boost::mutex mutex;
+    std::mutex mutex;
     vector<double> axisPositions;
     vector<bool> buttonStates;
 
@@ -188,7 +189,7 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
         ButtonInfo& info = buttonInfo[p->second];
         button.setDown(on);
         {
-            boost::unique_lock<boost::mutex> lock(mutex);
+            std::unique_lock<std::mutex> lock(mutex);
             keyValues[index] = on ? info.activeValue : 0.0;
         }
     }
@@ -213,7 +214,7 @@ bool VirtualJoystickViewImpl::readCurrentState()
     std::fill(axisPositions.begin(), axisPositions.end(), 0.0);
 
     {
-        boost::unique_lock<boost::mutex> lock(mutex);
+        std::unique_lock<std::mutex> lock(mutex);
         for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
             ButtonInfo& info = buttonInfo[i];
             if(info.isAxis){

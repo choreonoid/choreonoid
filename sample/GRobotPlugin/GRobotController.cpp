@@ -5,14 +5,15 @@
 
 #include "GRobotController.h"
 #include <boost/asio/write.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <cmath>
 #include <iostream>
 
+#ifndef WIN32
+#include <sys/time.h>
+#endif
+
 using namespace std;
 namespace asio = boost::asio;
-namespace this_thread = boost::this_thread;
-namespace posix_time = boost::posix_time;
 
 namespace {
 
@@ -183,7 +184,7 @@ bool GRobotController::receiveData(char* buf, int len)
         if(n == len){
             break;
         }
-        this_thread::sleep(posix_time::microseconds(100));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
     return (n == len);
 }
@@ -195,7 +196,7 @@ bool GRobotController::checkConnection()
     char buf;
     
     if(sendData(command, 2)){
-        this_thread::sleep(posix_time::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         if(receiveData(&buf, 1) && buf == 0x07){
             return true;
         }
@@ -416,7 +417,7 @@ void GRobotController::doOnDemandPoseSending()
 {
     while(true){
         {
-            boost::unique_lock<boost::mutex> lock(poseSendingMutex);
+            std::unique_lock<std::mutex> lock(poseSendingMutex);
             poseSendingCondition.wait(lock);
 
             if(mode != ON_DEMAND_POSE_SENDING){
@@ -587,8 +588,8 @@ void GRobotController::requestToSendPose(double transitionTime)
 
         poseSendingMutex.lock();
 
-        if(poseSendingThread == boost::thread()){
-            poseSendingThread = boost::thread(std::bind(&GRobotController::poseSendingLoop, this));
+        if(!poseSendingThread.joinable()){
+            poseSendingThread = std::thread(std::bind(&GRobotController::poseSendingLoop, this));
         }
 
         if(mode == ON_DEMAND_POSE_SENDING){
@@ -646,8 +647,8 @@ bool GRobotController::startMotion(double time, int id)
 
     poseSendingMutex.lock();
 
-    if(poseSendingThread == boost::thread()){
-        poseSendingThread = boost::thread(std::bind(&GRobotController::poseSendingLoop, this));
+    if(!poseSendingThread.joinable()){
+        poseSendingThread = std::thread(std::bind(&GRobotController::poseSendingLoop, this));
     }
     
     if(mode == CONTINUOUS_POSE_SENDING){

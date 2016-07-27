@@ -18,7 +18,6 @@ using namespace cnoid;
 namespace {
 
 const bool MULTITHREAD_TYPE = 0;
-const bool USE_THREAD_POOL = true;
 const bool ENABLE_SHUFFLE = false;
 
 CollisionDetectorPtr factory()
@@ -78,7 +77,6 @@ public:
     int maxNumThreads;
     int numThreads;
     std::unique_ptr<ThreadPool> threadPool;
-    boost::thread_group threadGroup;
 
     vector<int> shuffledPairIndices;
 
@@ -299,9 +297,7 @@ bool AISTCollisionDetectorImpl::makeReady()
 
     } else {
         numThreads = (maxNumThreads > numPairs) ? numPairs : maxNumThreads;
-        if(USE_THREAD_POOL){
-            threadPool.reset(new ThreadPool(numThreads));
-        }
+        threadPool.reset(new ThreadPool(numThreads));
         if(ENABLE_SHUFFLE){
             shuffledPairIndices.resize(modelPairs.size());
             for(size_t i=0; i < shuffledPairIndices.size(); ++i){
@@ -395,34 +391,18 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(co
             break;
         }
         if(MULTITHREAD_TYPE == 0){
-            if(USE_THREAD_POOL){
-                threadPool->start(
-                    std::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
-                                this, index, index + size, std::ref(collisionPairArrays[i])));
-            } else {
-                threadGroup.create_thread(
-                    std::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
-                                this, index, index + size, std::ref(collisionPairArrays[i])));
-            }
+            threadPool->start(
+                std::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
+                          this, index, index + size, std::ref(collisionPairArrays[i])));
         } else {
-            if(USE_THREAD_POOL){
-                threadPool->start(
-                    std::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
-                                this, index, index + size, std::ref(collidingModelPairArrays[i])));
-            } else {
-                threadGroup.create_thread(
-                    std::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
-                                this, index, index + size, std::ref(collidingModelPairArrays[i])));
-            }
+            threadPool->start(
+                std::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
+                          this, index, index + size, std::ref(collidingModelPairArrays[i])));
         }
         index += size;
     }
-    if(USE_THREAD_POOL){
-        threadPool->waitLoop();
-        //threadPool->wait();
-    } else {
-        threadGroup.join_all();
-    }
+    threadPool->waitLoop();
+    //threadPool->wait();
 
     if(MULTITHREAD_TYPE == 0){
         dispatchCollisionsInCollisionPairArrays(callback);

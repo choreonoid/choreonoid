@@ -30,8 +30,10 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QProgressDialog>
-#include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <deque>
 
 #ifdef Q_OS_LINUX
@@ -212,9 +214,9 @@ public:
 
     deque<CapturedImagePtr> capturedImages;
     vector<quint32> tmpImageBuf;
-    boost::thread imageOutputThread;
-    boost::mutex imageQueueMutex;
-    boost::condition_variable imageQueueCondition;
+    std::thread imageOutputThread;
+    std::mutex imageQueueMutex;
+    std::condition_variable imageQueueCondition;
     format filenameFormat;
 
     MovieRecorderImpl(ExtensionManager* ext);
@@ -729,7 +731,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         targetView->setGeometry(x, y, width, height);
     }
 
-    boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+    std::unique_lock<std::mutex> lock(imageQueueMutex);
     capturedImages.clear();
     
     return true;
@@ -889,7 +891,7 @@ void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
     }
 
     {
-        boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+        std::unique_lock<std::mutex> lock(imageQueueMutex);
         if(waitForPrevOutput){
             while(!capturedImages.empty()){
                 imageQueueCondition.wait(lock);
@@ -951,7 +953,7 @@ void MovieRecorderImpl::captureSceneWidgets(QWidget* widget, QPixmap& pixmap)
 void MovieRecorderImpl::startImageOutput()
 {
     if(!imageOutputThread.joinable()){
-        imageOutputThread = boost::thread(
+        imageOutputThread = std::thread(
             std::bind(&MovieRecorderImpl::outputImages, this));
     }
 }
@@ -962,7 +964,7 @@ void MovieRecorderImpl::outputImages()
     while(true){
         CapturedImagePtr captured;
         {
-            boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+            std::unique_lock<std::mutex> lock(imageQueueMutex);
             while(isRecording && capturedImages.empty()){
                 imageQueueCondition.wait(lock);
             }
@@ -990,7 +992,7 @@ void MovieRecorderImpl::outputImages()
             string message = str(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
             callLater(std::bind(&MovieRecorderImpl::onImageOutputFailed, this, message));
             {
-                boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+                std::unique_lock<std::mutex> lock(imageQueueMutex);
                 capturedImages.clear();
             }
             imageQueueCondition.notify_all();
@@ -1017,7 +1019,7 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
         
         int numRemainingImages = 0;
         {
-            boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+            std::unique_lock<std::mutex> lock(imageQueueMutex);
             numRemainingImages = capturedImages.size();
         }
         if(numRemainingImages > 1){
@@ -1027,18 +1029,18 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
             while(true){
                 int index;
                 {
-                    boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+                    std::unique_lock<std::mutex> lock(imageQueueMutex);
                     index = numRemainingImages - capturedImages.size();
                 }
                 progress.setValue(index);
 
                 if(progress.wasCanceled()){
-                    boost::unique_lock<boost::mutex> lock(imageQueueMutex);
+                    std::unique_lock<std::mutex> lock(imageQueueMutex);
                     capturedImages.clear();
                     break;
                 }
                 if(index < numRemainingImages){
-                    boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 } else {
                     break;
                 }

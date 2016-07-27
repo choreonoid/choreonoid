@@ -50,6 +50,7 @@ private:
 };
 
 typedef ref_ptr<PythonScriptItem> PythonScriptItemPtr;
+
 }
 
 #endif

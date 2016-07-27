@@ -21,7 +21,7 @@
 #include "gettext.h"
 
 using namespace std;
-namespace stdph = std::placeholders;
+using namespace std::placeholders;
 using namespace cnoid;
 using namespace RTC;
 using boost::format;
@@ -508,11 +508,11 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     putProperty(_("Auto Connect"), autoConnect, changeProperty(autoConnect));
     putProperty(_("RTC Instance name"), instanceName,
-                std::bind(&BodyRTCItem::setInstanceName, this, stdph::_1), true);
+                std::bind(&BodyRTCItem::setInstanceName, this, _1), true);
     putProperty.decimals(3)(_("Periodic rate"), executionCycleProperty,
                             changeProperty(executionCycleProperty));
     putProperty(_("Relative Path Base"), pathBase, 
-                std::bind(&BodyRTCItem::setPathBase, this, stdph::_1), true);
+                std::bind(&BodyRTCItem::setPathBase, this, _1), true);
 
     FileDialogFilter filter;
     filter.push_back( string(_(" Dynamic Link Library ")) + DLLSFX );
@@ -524,10 +524,10 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
     putProperty(_("Controller module name"), FilePath(moduleName, filter, dir),
-                std::bind(&BodyRTCItem::setControllerModule, this, stdph::_1), true);
+                std::bind(&BodyRTCItem::setControllerModule, this, _1), true);
 
     putProperty(_("Configuration mode"), configMode,
-                std::bind(&BodyRTCItem::setConfigMode, this, stdph::_1), true);
+                std::bind(&BodyRTCItem::setConfigMode, this, _1), true);
 
     filter.clear();
     filter.push_back(_(" RTC Configuration File (*.conf)") );
@@ -539,7 +539,7 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
     putProperty(_("Configuration file name"), FilePath(confFileName, filter, dir),
-                std::bind(&BodyRTCItem::setConfigFile, this, stdph::_1), true);
+                std::bind(&BodyRTCItem::setConfigFile, this, _1), true);
 
 }
 

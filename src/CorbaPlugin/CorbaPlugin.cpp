@@ -16,10 +16,8 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <QTcpSocket>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
+#include <thread>
 #include <iostream>
 #include "gettext.h"
 
@@ -112,7 +110,7 @@ class CorbaPlugin : public Plugin
 {
     QAction* useChoreonoidNameServerIfNecessaryCheck;
     MessageView_impl* messageView;
-    boost::thread orbMainLoopThread;
+    std::thread orbMainLoopThread;
 
 public:
     CorbaPlugin() : Plugin("Corba") {
@@ -142,7 +140,7 @@ public:
         NameServerView::initializeClass(this);
 
         if(doSetupCorbaMainLoop){
-            orbMainLoopThread = boost::thread(std::bind(&CorbaPlugin::orbMainLoop, this));
+            orbMainLoopThread = std::thread(std::bind(&CorbaPlugin::orbMainLoop, this));
         }
 
         return true;

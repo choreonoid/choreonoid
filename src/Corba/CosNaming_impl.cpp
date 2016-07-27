@@ -2,7 +2,6 @@
 #include <cstring>
 #include "CosNaming_impl.h"
 #include <omniORB4/omniURI.h>
-#include <boost/thread/locks.hpp>
 #include <iostream>
 
 using namespace std;
@@ -13,7 +12,7 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 }
 
-boost::shared_mutex NamingContext_impl::mutex;
+std::mutex NamingContext_impl::mtx;
 
 
 BindingNode::BindingNode
@@ -114,7 +113,7 @@ CORBA::Object_ptr NamingContext_impl::resolve(const CosNaming::Name& n)
         cout << "NamingContext_impl::resolve()" << endl;
     }
     if(n.length() == 1) {
-        boost::shared_lock<boost::shared_mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mtx);
         BindingNode* node = resolve_single(n);
         return CORBA::Object::_duplicate(node->object);
         
@@ -132,7 +131,7 @@ void NamingContext_impl::unbind(const CosNaming::Name& n)
         cout << "NamingContext_impl::unbind()" << endl;
     }
     if(n.length() == 1) {
-        boost::unique_lock<boost::shared_mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mtx);
         BindingNode* node = resolve_single(n);
         CosNaming::NamingContext_var nc = _this();
         delete node;
@@ -188,7 +187,7 @@ void NamingContext_impl::destroy()
     if(TRACE_FUNCTIONS){
         cout << "NamingContext_impl::destroy()" << endl;
     }
-    boost::unique_lock<boost::shared_mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mtx);
 
     if(firstNode){
         throw CosNaming::NamingContext::NotEmpty();
@@ -209,7 +208,7 @@ void NamingContext_impl::list(CORBA::ULong how_many, CosNaming::BindingList_out 
     CosNaming::BindingList* allBindings;
     
     {
-        boost::shared_lock<boost::shared_mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mtx);
 
         allBindings = new CosNaming::BindingList(size);
         allBindings->length(size);
@@ -309,7 +308,7 @@ CosNaming::NamingContext_ptr NamingContext_impl::resolve_multi(const CosNaming::
 
     BindingNode* node;
 
-    boost::shared_lock<boost::shared_mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mtx);
 
     try {
         node = resolve_single(contextName);
@@ -337,7 +336,7 @@ void NamingContext_impl::bind_sub
         cout << "NamingContext_impl::bind_sub()" << endl;
     }
     if(n.length() == 1){
-        boost::unique_lock<boost::shared_mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mtx);
         
         BindingNode* node = 0;
         

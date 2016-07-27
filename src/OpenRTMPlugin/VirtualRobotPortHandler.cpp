@@ -439,7 +439,7 @@ void CameraImageOutPortHandler::onCameraStateChanged()
             memcpy(dis, src, length);
         }
         prevImage = camera->sharedImage();
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         setTime(value, controlTime - camera->delay());
         outPort.write();
     }
@@ -448,7 +448,7 @@ void CameraImageOutPortHandler::onCameraStateChanged()
 
 void CameraImageOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     controlTime = bodyRTC->controlTime();
 }
 
@@ -578,7 +578,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
         }
 
         prevPoints = rangeCamera->sharedPoints();
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         setTime(value, controlTime - rangeCamera->delay());
         outPort.write();
     }
@@ -587,7 +587,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
 
 void CameraRangeOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     controlTime = bodyRTC->controlTime();
 }
 
@@ -654,7 +654,7 @@ void RangeSensorOutPortHandler::onRangeSensorStateChanged()
             value.ranges[i] = src[i];
 
         prevRangeData = rangeSensor->sharedRangeData();
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         setTime(value, controlTime - rangeSensor->delay());
         outPort.write();
     }
@@ -663,7 +663,7 @@ void RangeSensorOutPortHandler::onRangeSensorStateChanged()
 
 void RangeSensorOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     controlTime = bodyRTC->controlTime();
 }
 

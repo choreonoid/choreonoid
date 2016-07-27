@@ -1,63 +1,72 @@
+/**
+   @file
+   @author Shin'ichiro Nakaoka
+*/
 
 #ifndef CNOID_UTIL_THREAD_POOL_H
 #define CNOID_UTIL_THREAD_POOL_H
 
 #include <queue>
 #include <functional>
-#include <boost/thread.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace cnoid {
 
 class ThreadPool
 {
 private:
+    std::vector<std::thread> threads;
     std::queue<std::function<void()> > queue;
-    boost::thread_group group;
-    boost::mutex mutex;
-    boost::condition_variable condition;
-    boost::condition_variable finishCondition;
+    std::mutex mutex;
+    std::condition_variable condition;
+    std::condition_variable finishCondition;
     int numActiveThreads;
-    int size_;
     bool isDestroying;
         
 public:
     ThreadPool(int size = 1) {
-        size_ = size;
         numActiveThreads = 0;
         isDestroying = false;
         for(int i = 0; i < size; ++i){
-            group.create_thread(boost::bind(&ThreadPool::run, this));
+            threads.emplace_back(std::bind(&ThreadPool::run, this));
         }
     }
-
+    
     ~ThreadPool() {
         {
-            boost::lock_guard<boost::mutex> guard(mutex);
+            std::lock_guard<std::mutex> guard(mutex);
             isDestroying = true;
             condition.notify_all();
         }
-        group.join_all();
+        // join_all
+        for(auto& thread : threads){
+            if(thread.joinable()){
+                thread.join();
+            }
+        }
     }
-
-    int size() const { return size_; }
-        
+    
+    int size() const { return threads.size(); }
+    
     void start(std::function<void()> f) {
-        boost::lock_guard<boost::mutex> guard(mutex);
+        std::lock_guard<std::mutex> guard(mutex);
         queue.push(f);
         condition.notify_one();
     }
-
+    
     void wait(){
-        boost::unique_lock<boost::mutex> lock(mutex);
+        std::unique_lock<std::mutex> lock(mutex);
         while(!queue.empty() || numActiveThreads > 0){
             finishCondition.wait(lock);
         }
     }
-
+    
     void waitLoop(){
         while(true){
             {
-                boost::unique_lock<boost::mutex> lock(mutex, boost::try_to_lock_t());
+                std::unique_lock<std::mutex> lock(mutex,std::try_to_lock_t());
                 if(lock.owns_lock()){
                     if(queue.empty() && numActiveThreads == 0){
                         break;
@@ -66,14 +75,14 @@ public:
             }
         }
     }
-        
+    
 private:
     void run() {
         while(true){
             std::function<void()> f;
             {
-                boost::unique_lock<boost::mutex> lock(mutex);
-
+                std::unique_lock<std::mutex> lock(mutex);
+                
                 while (queue.empty() && !isDestroying){
                     condition.wait(lock);
                 }
@@ -86,7 +95,7 @@ private:
             if(f){
                 f();
                 {
-                    boost::unique_lock<boost::mutex> lock(mutex);
+                    std::unique_lock<std::mutex> lock(mutex);
                     --numActiveThreads;
                     if(numActiveThreads == 0){
                         finishCondition.notify_all();
