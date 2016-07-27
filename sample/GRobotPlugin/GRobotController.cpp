@@ -101,11 +101,13 @@ void GRobotController::init()
 
 GRobotController::~GRobotController()
 {
-    poseSendingMutex.lock();
-    mode = EXIT_POSE_SENDING;
-    poseSendingMutex.unlock();
-    poseSendingCondition.notify_all();
-    poseSendingThread.join();
+    if(poseSendingThread.joinable()){
+        poseSendingMutex.lock();
+        mode = EXIT_POSE_SENDING;
+        poseSendingMutex.unlock();
+        poseSendingCondition.notify_all();
+        poseSendingThread.join();
+    }
     
     closeSerialPort();
 
