@@ -262,8 +262,11 @@ public:
         
         cnoid::deleteUnmanagedRTCs();
         
-        manager->shutdown();
-        manager->unloadAll();
+        if(rtcManagerMainLoopThread.joinable()){
+            manager->shutdown();
+            manager->unloadAll();
+            rtcManagerMainLoopThread.join();
+        }
         
         return true;
     }

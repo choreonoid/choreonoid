@@ -473,6 +473,12 @@ MovieRecorder::~MovieRecorder()
 
 MovieRecorderImpl::~MovieRecorderImpl()
 {
+    if(imageOutputThread.joinable()){
+        requestStopRecording = true;
+        imageQueueCondition.notify_all();
+        imageOutputThread.join();
+    }
+    
     timeBarConnections.disconnect();
     store(*AppConfig::archive()->openMapping("MovieRecorder"));
     delete dialog;

@@ -18,7 +18,7 @@ class ThreadPool
 {
 private:
     std::vector<std::thread> threads;
-    std::queue<std::function<void()> > queue;
+    std::queue<std::function<void()>> queue;
     std::mutex mutex;
     std::condition_variable condition;
     std::condition_variable finishCondition;
