@@ -37,13 +37,15 @@ public:
     const std::string& pluginPath(int index) const;
     const std::string& pluginName(int index) const;
 
-    enum PluginStatus { NOT_LOADED, LOADED, ACTIVE, FINALIZED, INVALID, CONFLICT };
+    enum PluginStatus { NOT_LOADED, LOADED, ACTIVE, FINALIZED, UNLOADED, INVALID, CONFLICT };
     int pluginStatus(int index) const;
 	
     Plugin* findPlugin(const std::string& name);
 
     bool loadPlugin(int index);
     bool unloadPlugin(int index);
+    bool unloadPlugin(const std::string& name);
+    bool reloadPlugin(const std::string& name);
 
     const char* guessActualPluginName(const std::string& name);
 	

@@ -265,7 +265,5 @@ void GLGearsView::onActivated()
 
 void GLGearsView::onDeactivated()
 {
-    if(timeChangeConnection.connected()){
-        timeChangeConnection.disconnect();
-    }
+    timeChangeConnection.disconnect();
 }

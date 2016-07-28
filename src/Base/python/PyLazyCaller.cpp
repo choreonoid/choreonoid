@@ -48,7 +48,7 @@ void cnoid_callSynchronously(python::object func)
 
 namespace cnoid {
 
-void exportLazyCaller()
+void exportPyLazyCaller()
 {
     python::def("callLater", cnoid_callLater);
     python::def("callSynchronously", cnoid_callSynchronously);
