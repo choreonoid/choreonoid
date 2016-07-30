@@ -714,7 +714,7 @@ void SceneWidgetImpl::paintGL()
     }
 
 #ifdef ENABLE_SIMULATION_PROFILING
-    renderer->setColor(Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+    renderer->setColor(Vector3f(1.0f, 1.0f, 1.0f));
     int n = self->profilingNames.size();
     if(self->profilingTimes.size() == n){
         QFont font("monospace");
