@@ -11,21 +11,29 @@
 
 namespace cnoid {
 
-class Connection;
-
-template<
-    typename TSignature,
-    typename Combiner = signal_private::last_value<typename std::function_traits<TSignature>::result_type>
-    >
-class Signal;
-
-
 namespace signal_private {
+
+template<typename T>
+class function_traits
+{
+    static_assert(sizeof( T ) == 0, "function_traits<T>: T is not a function type");
+};
+
+template<typename R, typename... Ts>
+struct function_traits<R(Ts...)>
+{
+    constexpr static const std::size_t arity = sizeof...(Ts);
+    using result_type = R;
+};
+
+template<typename R, typename... Ts>
+struct function_traits<R(Ts...) const> : function_traits<R(Ts...)> {};
+
 
 template<class F, class... Ts, class... Us>
 typename std::enable_if<
     sizeof...(Us) == sizeof...(Ts),
-    typename std::function<F>::result_type>::type
+    typename F::result_type>::type
 apply_impl(F& func, std::tuple<Ts...>& args, Us*... us) 
 {
     return func(*us...);
@@ -34,15 +42,15 @@ apply_impl(F& func, std::tuple<Ts...>& args, Us*... us)
 template<class F, class... Ts, class... Us>
 typename std::enable_if<
     sizeof...(Us) < sizeof...(Ts),
-    typename std::function<F>::result_type>::type
+    typename F::result_type>::type
 apply_impl(F& func, std::tuple<Ts...>& args, Us*... us) 
 {
     return apply_impl(func, args, us..., &std::get<sizeof...(Us)>(args));
 }
 
-template<class F, class... Ts>
-typename std::function<F>::result_type
-apply(F& fun, std::tuple<Ts...>& args) 
+template<class F, class... Args>
+typename F::result_type
+apply(F& fun, std::tuple<Args...>& args) 
 {
     return apply_impl(fun, args);
 }
@@ -86,56 +94,69 @@ public:
 };
 
 
-template<typename SlotType, typename... Args>
+template<typename SlotHolderType, typename... Args>
 class SlotCallIterator
 {
-    typedef typename SlotType::result_type result_type;
+    typedef typename SlotHolderType::result_type result_type;
 
-    SlotType* currentSlot;
+    SlotHolderType* currentSlotHolder;
     std::tuple<Args...>& args;
 
 public:
     void seekUnblockedSlot(){
-        while(currentSlot && currentSlot->isBlocked){
-            currentSlot = currentSlot->next;
+        while(currentSlotHolder && currentSlotHolder->isBlocked){
+            currentSlotHolder = currentSlotHolder->next;
         }
     }
     
-    SlotCallIterator(SlotType* firstSlot, std::tuple<Args...>& args)
-        : currentSlot(firstSlot), args(args) {
+    SlotCallIterator(SlotHolderType* firstSlot, std::tuple<Args...>& args)
+        : currentSlotHolder(firstSlot), args(args) {
         seekUnblockedSlot();
     }
 
     SlotCallIterator(const SlotCallIterator& org)
-        : currentSlot(org.currentSlot), args(org.args) {
+        : currentSlotHolder(org.currentSlotHolder), args(org.args) {
         seekUnblockedSlot();
     }
 
     bool operator==(const SlotCallIterator& rhs) const {
-        return (currentSlot == rhs.currentSlot);
+        return (currentSlotHolder == rhs.currentSlotHolder);
     }
 
     bool operator!=(const SlotCallIterator& rhs) const {
-        return (currentSlot != rhs.currentSlot);
+        return (currentSlotHolder != rhs.currentSlotHolder);
     }
 
     SlotCallIterator operator++(int) {
         SlotCallIterator iter(*this);
-        currentSlot = currentSlot->next;
+        currentSlotHolder = currentSlotHolder->next;
         seekUnblockedSlot();
         return iter;
     }
     
     result_type operator*() const {
-        return apply(currentSlot, args);
+        return apply(currentSlotHolder->func, args);
     }
 };
 
+} // namespace signal_private
+
+
+template<
+    typename TSignature,
+    typename Combiner = signal_private::last_value<
+        typename signal_private::function_traits<TSignature>::result_type>
+    >
+class Signal;
+
+
+namespace signal_private {
 
 template<typename Signature, typename Combiner>
 class SlotHolder : public SlotHolderBase
 {
-    typedef std::function<TSignature> FuncType;
+public:
+    typedef std::function<Signature> FuncType;
     FuncType func;
     
     typedef ref_ptr<SlotHolder> SlotHolderPtr;
@@ -145,8 +166,7 @@ class SlotHolder : public SlotHolderBase
     typedef Signal<Signature, Combiner> SignalType;
     SignalType* owner;
 
-public:
-    typedef R result_type;
+    typedef typename signal_private::function_traits<Signature>::result_type result_type;
     
     SlotHolder(const FuncType& func)
         : func(func), prev(0), owner(0) {
@@ -237,26 +257,16 @@ private:
 };
 
 
-template<
-    typename TSignature,
-    typename Combiner = signal_private::last_value<typename std::function_traits<TSignature>::result_type>
-    >
-class Signal
+template<typename Combiner, typename R, typename... Args>
+class Signal<R(Args...), Combiner>
 {
 public:
-    typedef TSignature Signature;
-    typedef std::function_traits<Signature> traits;
-    typedef traits::result_type result_type;
-    typedef std::function<Signature> slot_function_type;
-    typedef slot_function_type slot_type;
-    typedef slot_function_type Slot;
-
-    typedef Combiner combiner_type;       
-    typedef struct { } group_type;          
-    typedef struct { } group_compare_type;  
+    typedef typename signal_private::function_traits<R(Args...)>::result_type result_type;
+    typedef std::function<R(Args...)> function_type;
+    typedef function_type Function;
 
 private:
-    typedef signal_private::SlotHolder<Signature, Combiner> SlotHolderType;
+    typedef signal_private::SlotHolder<R(Args...), Combiner> SlotHolderType;
     typedef ref_ptr<SlotHolderType> SlotHolderPtr;
 
     SlotHolderPtr firstSlot;
@@ -272,7 +282,7 @@ public:
         disconnect_all_slots();
     }
 
-    Connection connect(const slot_function_type& func){
+    Connection connect(const Function& func){
 
         SlotHolderType* slot = new SlotHolderType(func);
 
@@ -347,9 +357,8 @@ public:
         return (firstSlot == 0);
     }
     
-    template<typename... Args>
-    typename result_type operator()(Args... args){
-        typedef signal_private::SlotCallIterator<SlotType, Args...> IteratorType;
+    result_type operator()(Args... args){
+        typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
         Combiner combiner;
         std::tuple<Args...> argset(args...);
         return combiner(IteratorType(firstSlot, argset), IteratorType(0, argset));
@@ -389,7 +398,8 @@ public:
 
 template<
     typename Signature,
-    typename Combiner = signal_private::last_value<typename std::function_traits<Signature>::result_type>
+    typename Combiner = signal_private::last_value<
+        typename signal_private::function_traits<Signature>::result_type>
     >
 class SignalProxy
 {
@@ -402,13 +412,11 @@ public:
 
     SignalProxy& operator=(const SignalProxy& rhs) { signal = rhs.signal; }
 
-    typedef typename signal_traits<SignalType>::connection_type connection_type;
-
-    connection_type connect(typename SignalType::slot_function_type f){
+    Connection connect(typename SignalType::Function f){
         if(signal){
             return signal->connect(f);
         } else {
-            return connection_type();
+            return Connection();
         }
     };
 

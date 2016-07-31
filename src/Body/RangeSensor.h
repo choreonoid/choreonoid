@@ -8,6 +8,7 @@
 
 #include "Device.h"
 #include <vector>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

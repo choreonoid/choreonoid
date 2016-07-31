@@ -555,13 +555,13 @@ bool Item::isOwnedBy(Item* item) const
 }
 
 
-bool Item::traverse(boost::function<bool(Item*)> function)
+bool Item::traverse(std::function<bool(Item*)> function)
 {
     return traverse(this, function);
 }
 
 
-bool Item::traverse(Item* item, const boost::function<bool(Item*)>& function)
+bool Item::traverse(Item* item, const std::function<bool(Item*)>& function)
 {
     if(function(item)){
         return true;

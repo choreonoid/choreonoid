@@ -218,7 +218,7 @@ void BodyBarImpl::onBodyItemDetachedFromRoot()
 {
     currentBodyItem = 0;
     connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
-    sigCurrentBodyItemChanged(0);
+    sigCurrentBodyItemChanged(nullptr);
 }
 
 

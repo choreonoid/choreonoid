@@ -62,7 +62,7 @@ SimulationBar::SimulationBar()
               _("Restore body positions from the initial world state"))->
         sigClicked().connect(std::bind(&SimulationBar::onRestoreInitialClicked, this));
 
-    typedef boost::function<void(SimulatorItem* simulator)> Callback;
+    typedef std::function<void(SimulatorItem* simulator)> Callback;
 
     addButton(QIcon(":/Body/icons/start-simulation.png"), _("Start simulation from the beginning"))->
         sigClicked().connect(
@@ -89,7 +89,7 @@ SimulationBar::~SimulationBar()
 }
 
 
-static void forEachTargetBodyItem(boost::function<void(BodyItem*)> callback)
+static void forEachTargetBodyItem(std::function<void(BodyItem*)> callback)
 {
     ItemTreeView* itemTreeView = ItemTreeView::instance();
 

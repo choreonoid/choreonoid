@@ -189,15 +189,15 @@ public:
     }
 
     ConnectionSet connectSignalSet(
-        const Signal<void(iterator, bool isMoving)>::Slot& slotInserted,
-        const Signal<void(iterator, bool isMoving)>::Slot& slotRemoving,
-        const Signal<void(iterator)>::slot_type& slotModified);
+        const Signal<void(iterator, bool isMoving)>::Function& slotInserted,
+        const Signal<void(iterator, bool isMoving)>::Function& slotRemoving,
+        const Signal<void(iterator)>::Function& slotModified);
 
     ConnectionSet connectSignalSet(
-        const Signal<void(iterator, bool isMoving)>::Slot& slotInserted,
-        const Signal<void(iterator, bool isMoving)>::Slot& slotRemoving,
-        const Signal<void(iterator)>::Slot& slotModifying,
-        const Signal<void(iterator)>::Slot& slotModified);
+        const Signal<void(iterator, bool isMoving)>::Function& slotInserted,
+        const Signal<void(iterator, bool isMoving)>::Function& slotRemoving,
+        const Signal<void(iterator)>::Function& slotModifying,
+        const Signal<void(iterator)>::Function& slotModified);
 
     /// \todo Implement and use the followings. For example for loading a file.
     void blockSignals();

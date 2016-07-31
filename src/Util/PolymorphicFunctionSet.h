@@ -11,7 +11,7 @@ namespace cnoid {
 
 template <class Object, class Parameter> class PolymorphicFunctionSet
 {
-    typedef boost::function<void(Parameter p)> Function;
+    typedef std::function<void(Parameter p)> Function;
     struct compare {
         bool operator ()(const std::type_info* a, const std::type_info* b) const {
             return a->before(*b);
@@ -34,10 +34,13 @@ public:
     }
         
     bool operator()(Object* object, Paramter& param) {
-        object->forEachActualType(std::bind(&callFunctions, this, _1, object, std::ref(param)));
+        object->forEachActualType(
+            std::bind(&callFunctions, this, std::placeholders::_1, object, std::ref(param)));
     }
 
 };
+
 }
+
 #endif
 

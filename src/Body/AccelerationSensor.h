@@ -7,6 +7,7 @@
 #define CNOID_BODY_ACCELERATION_SENSOR_H
 
 #include "Device.h"
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

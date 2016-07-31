@@ -7,10 +7,11 @@
 
 #include "ExtensionManager.h"
 #include "ItemList.h"
+#include <QWidget>
 #include <string>
 #include <typeinfo>
 #include <iosfwd>
-#include <QWidget>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

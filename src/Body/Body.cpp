@@ -10,7 +10,6 @@
 #include <cnoid/ValueTree>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {

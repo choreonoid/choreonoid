@@ -7,6 +7,7 @@
 #define CNOID_BODY_RATE_GYRO_SENSOR_H
 
 #include "Device.h"
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

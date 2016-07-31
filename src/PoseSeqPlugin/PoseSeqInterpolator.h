@@ -9,6 +9,7 @@
 #include "PoseSeq.h"
 #include <cnoid/PoseProvider>
 #include <cnoid/Signal>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

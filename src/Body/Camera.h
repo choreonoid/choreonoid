@@ -8,6 +8,7 @@
 
 #include "Device.h"
 #include <cnoid/Image>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {

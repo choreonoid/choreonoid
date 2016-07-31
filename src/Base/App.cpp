@@ -440,6 +440,6 @@ void App::clearFocusView()
 {
     if(lastFocusView_){
         lastFocusView_ = 0;
-        sigFocusViewChanged(0);
+        sigFocusViewChanged(nullptr);
     }
 }
