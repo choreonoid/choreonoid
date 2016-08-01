@@ -7,6 +7,7 @@
 #define CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
 
 #include <cnoid/Item>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -60,7 +61,6 @@ protected:
     virtual bool restore(const Archive& archive);
 
 private:
-
     std::shared_ptr< std::vector<float> > samplingData_;
     double offsetTime_;
     int numChannels_;
@@ -76,5 +76,7 @@ private:
 };
     
 typedef ref_ptr<AudioItem> AudioItemPtr;
+
 };
+
 #endif
