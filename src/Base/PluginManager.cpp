@@ -86,9 +86,10 @@ public:
         PluginInfo(){
             plugin = 0;
             status = PluginManager::NOT_LOADED;
+            areAllRequisitiesResolved = false;
+            doReloading = false;
             aboutMenuItem = 0;
             aboutDialog = 0;
-            areAllRequisitiesResolved = false;
         }
         QLibrary dll;
         std::string pathString;
@@ -97,11 +98,10 @@ public:
         vector<string> requisites;
         vector<string> dependents;
         set<string> subsequences;
-        bool areAllRequisitiesResolved;
-            
         int status;
-            
-        QAction* aboutMenuItem;
+        bool areAllRequisitiesResolved;
+        bool doReloading;
+        Action* aboutMenuItem;
         DescriptionDialog* aboutDialog;
     };
 
@@ -122,6 +122,8 @@ public:
     PluginInfoList pluginsInDeactivationOrder;
 
     PluginInfoArray pluginsToUnload;
+    LazyCaller unloadPluginsLater;
+    LazyCaller reloadPluginsLater;
     
     void clearUnusedPlugins();
     void scanPluginFilesInDefaultPath(const std::string& pathList);
@@ -135,9 +137,11 @@ public:
     void onLoadPluginTriggered();
     void onAboutDialogTriggered(PluginInfo* info);
     const char* guessActualPluginName(const std::string& name);
+    bool unloadPlugin(const std::string& name, bool doReloading);
     bool unloadPlugin(int index);
     bool finalizePlugin(PluginInfoPtr info);
 };
+
 }
 
 
@@ -186,7 +190,9 @@ PluginManager::PluginManager(ExtensionManager* ext)
 
 
 PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
-    : mv(MessageView::mainInstance())
+    : mv(MessageView::mainInstance()),
+      unloadPluginsLater(boost::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW),
+      reloadPluginsLater(boost::bind(&PluginManagerImpl::loadPlugins, this), LazyCaller::PRIORITY_LOW)
 {
     pluginNamePattern.setPattern(QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_SUFFIX);
 
@@ -613,11 +619,11 @@ bool PluginManagerImpl::activatePlugin(int index)
                 }
                 
                 // set an about dialog
-                info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
-                    .addItem(str(fmt(_("About %1% Plugin")) % info->name).c_str())
-                    ->sigTriggered().connect(
-                        boost::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
-                
+                info->aboutMenuItem =
+                    info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
+                    .addItem(str(fmt(_("About %1% Plugin")) % info->name).c_str());
+                info->aboutMenuItem->sigTriggered().connect(
+                    boost::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
                 
                 // register old names
                 int numOldNames = info->plugin->numOldNames();
@@ -723,6 +729,36 @@ const char* PluginManagerImpl::guessActualPluginName(const std::string& name)
 }
 
 
+bool PluginManager::unloadPlugin(const std::string& name)
+{
+    return impl->unloadPlugin(name, false);
+}
+
+
+bool PluginManager::reloadPlugin(const std::string& name)
+{
+    return impl->unloadPlugin(name, true);
+}
+
+
+bool PluginManagerImpl::unloadPlugin(const std::string& name, bool doReloading)
+{
+    PluginMap::iterator p = nameToPluginInfoMap.find(name);
+    if(p != nameToPluginInfoMap.end()){
+        PluginManagerImpl::PluginInfoPtr info = p->second;
+        size_t index = 0;
+        while(index < allPluginInfos.size()){
+            if(allPluginInfos[index] == info){
+                info->doReloading = doReloading;
+                return unloadPlugin(index);
+            }
+            ++index;
+        }
+    }
+    return false;
+}
+
+
 bool PluginManager::unloadPlugin(int index)
 {
     return impl->unloadPlugin(index);
@@ -763,6 +799,10 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
                 } else {
                     bool isUnloadable = info->plugin->isUnloadable();
                     info->status = PluginManager::FINALIZED;
+                    if(info->aboutMenuItem){
+                        delete info->aboutMenuItem;
+                        info->aboutMenuItem = 0;
+                    }
                     delete info->plugin;
                     info->plugin = 0;
                     if(info->aboutDialog){
@@ -773,7 +813,7 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
 
                     if(isUnloadable){
                         pluginsToUnload.push_back(info);
-                        callLater(boost::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW);
+                        unloadPluginsLater();
                     }
                 }
             }
@@ -786,15 +826,27 @@ bool PluginManagerImpl::finalizePlugin(PluginInfoPtr info)
 
 void PluginManagerImpl::unloadPluginsActually()
 {
+    bool doReloading = false;
+    
     for(size_t i=0; i < pluginsToUnload.size(); ++i){
         PluginInfoPtr& info = pluginsToUnload[i];
         if(info->dll.unload()){
-            info->status = PluginManager::NOT_LOADED;
+            info->status = PluginManager::UNLOADED;
+            nameToPluginInfoMap.erase(info->name);
             mv->putln(fmt(_("Plugin dll %1% has been unloaded.")) % info->pathString);
             mv->flush();
+            if(info->doReloading){
+                info->status = PluginManager::NOT_LOADED;
+                info->doReloading = false;
+                doReloading = true;
+            }
         }
     }
     pluginsToUnload.clear();
+
+    if(doReloading){
+        reloadPluginsLater();
+    }
 }
 
 

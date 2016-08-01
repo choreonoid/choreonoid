@@ -13,7 +13,6 @@ using namespace std;
 using namespace boost;
 using namespace cnoid;
 
-
 namespace cnoid {
 
 class PluginImpl
@@ -28,6 +27,7 @@ public:
     vector<string> oldNames;
     int activationPriority;
 };
+
 }
 
 

@@ -46,6 +46,7 @@ add_cnoid_python_module(PyBase
   PyItemTreeView.cpp
   PySceneTypes.cpp
   PyLazyCaller.cpp
+  PyPluginManager.cpp
 )
 
 target_link_libraries(PyBase CnoidPyBase)
