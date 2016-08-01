@@ -1191,7 +1191,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                     if(contacts[i].geom.depth > 0.001){
                         continue;
                     }
-                    surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2;
+                    surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2 | dContactApprox1_1;
                     const Vector3 axis = crawlerlink->R() * crawlerlink->a();
                     const Vector3 n(contacts[i].geom.normal);
                     Vector3 dir = axis.cross(n);
