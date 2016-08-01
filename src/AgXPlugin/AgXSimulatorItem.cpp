@@ -53,9 +53,6 @@ namespace {
 
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
-enum FrictionModelType { MODEL_DEFAULT=-1, BOX, SCALE_BOX, ITERATIVE_PROJECTED };
-enum FrictionSolveType { SOLVE_DEFAULT=-1, DIRECT, ITERATIVE, SPLIT, DIRECT_AND_ITERATIVE };
-
 class AgXBody;
 
 struct SurfaceViscosityParam {
@@ -66,7 +63,7 @@ struct SurfaceViscosityParam {
 class ContactMaterialParam {
 
 public :
-    ContactMaterialParam() : frictionModel(MODEL_DEFAULT), solveType(SOLVE_DEFAULT) {
+    ContactMaterialParam() : frictionModel(AgXSimulatorItem::MODEL_DEFAULT), solveType(AgXSimulatorItem::SOLVE_DEFAULT) {
         frictionCoefficient =
         restitution =
         adhesion[0] = adhesion[1] =
@@ -74,8 +71,8 @@ public :
         youngsModulus =
                 std::numeric_limits<double>::max();
     }
-    FrictionModelType frictionModel;
-    FrictionSolveType solveType;
+    AgXSimulatorItem::FrictionModelType frictionModel;
+    AgXSimulatorItem::FrictionSolveType solveType;
     double frictionCoefficient;
     vector<SurfaceViscosityParam> surfaceViscosityParam;
     double restitution;
@@ -584,12 +581,12 @@ public:
     double restitution;
     double friction;
     Selection frictionModelType;
-    inline agx::FrictionModel::SolveType solveType( FrictionSolveType type ){
+    inline agx::FrictionModel::SolveType solveType( AgXSimulatorItem::FrictionSolveType type ){
         switch(type){
-        case DIRECT: return agx::FrictionModel::DIRECT;
-        case ITERATIVE: return agx::FrictionModel::ITERATIVE;
-        case SPLIT: return agx::FrictionModel::SPLIT;
-        case DIRECT_AND_ITERATIVE: return agx::FrictionModel::DIRECT_AND_ITERATIVE;
+        case AgXSimulatorItem::DIRECT: return agx::FrictionModel::DIRECT;
+        case AgXSimulatorItem::ITERATIVE: return agx::FrictionModel::ITERATIVE;
+        case AgXSimulatorItem::SPLIT: return agx::FrictionModel::SPLIT;
+        case AgXSimulatorItem::DIRECT_AND_ITERATIVE: return agx::FrictionModel::DIRECT_AND_ITERATIVE;
         default : return agx::FrictionModel::NOT_DEFINED;
         }
     };
@@ -641,21 +638,22 @@ public:
     void restore(const Archive& archive);
     void setJointControlMode(Link* joint, AgXSimulatorItem::ControlMode type);
     void setJointCompliance(Link* joint, double spring, double damping);
-    void setFrictionModelsolveType(agx::ContactMaterial* contactMaterial, FrictionModelType model, FrictionSolveType solve){
+    void setFrictionModelsolveType(agx::ContactMaterial* contactMaterial,
+            AgXSimulatorItem::FrictionModelType model, AgXSimulatorItem::FrictionSolveType solve){
         switch(model){
-        case BOX:{
+        case AgXSimulatorItem::BOX:{
             agx::BoxFrictionModelRef boxFriction = new agx::BoxFrictionModel();
             boxFriction->setSolveType( solveType(solve) );
             contactMaterial->setFrictionModel( boxFriction );
             break;
         }
-        case SCALE_BOX:{
+        case AgXSimulatorItem::SCALE_BOX:{
             agx::ScaleBoxFrictionModelRef scaleBoxFriction = new agx::ScaleBoxFrictionModel();
             scaleBoxFriction->setSolveType( solveType(solve) );
             contactMaterial->setFrictionModel( scaleBoxFriction );
             break;
         }
-        case ITERATIVE_PROJECTED:{
+        case AgXSimulatorItem::ITERATIVE_PROJECTED:{
             agx::IterativeProjectedConeFrictionRef ipcFriction = new agx::IterativeProjectedConeFriction();
             ipcFriction->setSolveType( solveType(solve) );
             contactMaterial->setFrictionModel( ipcFriction );
@@ -1419,29 +1417,30 @@ AgXBody::AgXBody(Body& orgBody, AgXSimulatorItemImpl* simImpl)
             string s;
             if(cmParam.read("frictionModel", s )){
                 if(s=="BOX")
-                    contactMaterialParam.frictionModel = BOX;
+                    contactMaterialParam.frictionModel = AgXSimulatorItem::BOX;
                 else if(s=="SCALE_BOX")
-                    contactMaterialParam.frictionModel = SCALE_BOX;
+                    contactMaterialParam.frictionModel = AgXSimulatorItem::SCALE_BOX;
                 else if(s=="ITERATIVE_PROJECTED")
-                    contactMaterialParam.frictionModel = ITERATIVE_PROJECTED;
+                    contactMaterialParam.frictionModel = AgXSimulatorItem::ITERATIVE_PROJECTED;
                 else
-                    contactMaterialParam.frictionModel = MODEL_DEFAULT;
+                    contactMaterialParam.frictionModel = AgXSimulatorItem::MODEL_DEFAULT;
             }
             if(cmParam.read("solveType", s )){
                 if(s=="DIRECT")
-                    contactMaterialParam.solveType = DIRECT;
+                    contactMaterialParam.solveType = AgXSimulatorItem::DIRECT;
                 else if(s=="ITERATIVE")
-                    contactMaterialParam.solveType = ITERATIVE;
+                    contactMaterialParam.solveType = AgXSimulatorItem::ITERATIVE;
                 else if(s=="SPLIT")
-                    contactMaterialParam.solveType = SPLIT;
+                    contactMaterialParam.solveType = AgXSimulatorItem::SPLIT;
                 else if(s=="DIRECT_AND_ITERATIVE")
-                    contactMaterialParam.solveType = DIRECT_AND_ITERATIVE;
+                    contactMaterialParam.solveType = AgXSimulatorItem::DIRECT_AND_ITERATIVE;
                 else
-                    contactMaterialParam.solveType = SOLVE_DEFAULT;
+                    contactMaterialParam.solveType = AgXSimulatorItem::SOLVE_DEFAULT;
             }
             cmParam.read("frictionCoefficient", contactMaterialParam.frictionCoefficient );
             cmParam.read("restitution", contactMaterialParam.restitution );
             cmParam.read("damping", contactMaterialParam.damping );
+            cmParam.read("youngsModulus", contactMaterialParam.youngsModulus );
             read(cmParam, "adhesion", contactMaterialParam.adhesion);
             const Listing& svParams = *cmParam.findListing("surfaceViscosityParameters");
             if(svParams.isValid()){
@@ -1771,16 +1770,16 @@ AgXSimulatorItemImpl::AgXSimulatorItemImpl(AgXSimulatorItem* self)
     contactReductionBinResolution = 2;
     contactReductionThreshold = 4;
 
-    frictionModelType.setSymbol(BOX, "Box");
-    frictionModelType.setSymbol(SCALE_BOX, "Scale Box");
-    frictionModelType.setSymbol(ITERATIVE_PROJECTED, "Iterative Projected");
-    frictionModelType.select(ITERATIVE_PROJECTED);
+    frictionModelType.setSymbol(AgXSimulatorItem::BOX, "Box");
+    frictionModelType.setSymbol(AgXSimulatorItem::SCALE_BOX, "Scale Box");
+    frictionModelType.setSymbol(AgXSimulatorItem::ITERATIVE_PROJECTED, "Iterative Projected");
+    frictionModelType.select(AgXSimulatorItem::ITERATIVE_PROJECTED);
 
-    frictionSolveType.setSymbol(DIRECT, "Direct");
-    frictionSolveType.setSymbol(ITERATIVE, "Iterative");
-    frictionSolveType.setSymbol(SPLIT, "Split");
-    frictionSolveType.setSymbol(DIRECT_AND_ITERATIVE, "Direct and Iterative");
-    frictionSolveType.select(SPLIT);
+    frictionSolveType.setSymbol(AgXSimulatorItem::DIRECT, "Direct");
+    frictionSolveType.setSymbol(AgXSimulatorItem::ITERATIVE, "Iterative");
+    frictionSolveType.setSymbol(AgXSimulatorItem::SPLIT, "Split");
+    frictionSolveType.setSymbol(AgXSimulatorItem::DIRECT_AND_ITERATIVE, "Direct and Iterative");
+    frictionSolveType.select(AgXSimulatorItem::SPLIT);
 
     contactReductionMode.setSymbol(agx::ContactMaterial::REDUCE_NONE, "None");
     contactReductionMode.setSymbol(agx::ContactMaterial::REDUCE_GEOMETRY, "Geometry");
@@ -1902,7 +1901,8 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
             getMaterialManager()->getOrCreateContactMaterial( defaultMaterial, defaultMaterial );
     contactMaterial->setContactReductionMode( (agx::ContactMaterial::ContactReductionMode)contactReductionMode.selectedIndex() );
 
-    setFrictionModelsolveType(contactMaterial, (FrictionModelType)frictionModelType.selectedIndex(), (FrictionSolveType)frictionSolveType.selectedIndex());
+    setFrictionModelsolveType(contactMaterial, (AgXSimulatorItem::FrictionModelType)frictionModelType.selectedIndex(),
+            (AgXSimulatorItem::FrictionSolveType)frictionSolveType.selectedIndex());
 
     for(ContactMaterialBodyMap::iterator it = contactMaterialBodyMap.begin(); it != contactMaterialBodyMap.end(); it++){
         const IdPair<Body*>& bodyPair = it->first;
@@ -1966,7 +1966,7 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
            agx::ContactMaterial* contactMaterial = agxSimulation->getMaterialManager()->
                getOrCreateContactMaterial( mPair(0), mPair(1) );
            ContactMaterialParam* cmp = it->second;
-           if( cmp->frictionModel!=MODEL_DEFAULT && cmp->solveType!=SOLVE_DEFAULT)
+           if( cmp->frictionModel!=AgXSimulatorItem::MODEL_DEFAULT && cmp->solveType!=AgXSimulatorItem::SOLVE_DEFAULT)
                setFrictionModelsolveType(contactMaterial, cmp->frictionModel, cmp->solveType);
            if(cmp->frictionCoefficient!=std::numeric_limits<double>::max())
                contactMaterial->setFrictionCoefficient(cmp->frictionCoefficient);
@@ -2125,6 +2125,51 @@ void AgXSimulatorItemImpl::setJointControlMode(Link* joint, AgXSimulatorItem::Co
 }
 
 
+void AgXSimulatorItem::setContactMaterialFriction(Link* link1, Link* link2, double friction)
+{
+    ContactMaterialParam& cm = impl->contactMaterialLinkMap[IdPair<Link*>(link1, link2)];
+    cm.frictionCoefficient = friction;
+}
+
+
+void AgXSimulatorItem::setContactMaterialViscosity(Link* link1, Link* link2, FrictionDirection direction, double viscosity)
+{
+    ContactMaterialParam& cm = impl->contactMaterialLinkMap[IdPair<Link*>(link1, link2)];
+    cm.surfaceViscosityParam.push_back(SurfaceViscosityParam());
+    SurfaceViscosityParam svParam = cm.surfaceViscosityParam.back();
+    switch(direction){
+    case PRIMARY_DIRECTION:
+        svParam.direction = agx::ContactMaterial::PRIMARY_DIRECTION;
+        break;
+    case SECONDARY_DIRECTION:
+        svParam.direction = agx::ContactMaterial::SECONDARY_DIRECTION;
+        break;
+    case BOTH_PRIMARY_AND_SECONDARY:
+        svParam.direction = agx::ContactMaterial::BOTH_PRIMARY_AND_SECONDARY;
+        break;
+    default :
+        cm.surfaceViscosityParam.pop_back();
+        return;
+    }
+    svParam.viscosity = viscosity;
+}
+
+
+void AgXSimulatorItem::setContactMaterialAdhesion(Link* link1, Link* link2, double  adhesionForce, double adhesiveOverlap )
+{
+    ContactMaterialParam& cm = impl->contactMaterialLinkMap[IdPair<Link*>(link1, link2)];
+    cm.adhesion[0] = adhesionForce;
+    cm.adhesion[1] = adhesiveOverlap;
+}
+
+
+void AgXSimulatorItem::setContactMaterialRestitution(Link* link1, Link* link2, double restitution)
+{
+    ContactMaterialParam& cm = impl->contactMaterialLinkMap[IdPair<Link*>(link1, link2)];
+    cm.restitution = restitution;
+}
+
+
 void AgXSimulatorItem::setContactMaterialDamping(Link* link1, Link* link2, double damping)
 {
     ContactMaterialParam& cm = impl->contactMaterialLinkMap[IdPair<Link*>(link1, link2)];
@@ -2139,6 +2184,60 @@ void AgXSimulatorItem::setContactMaterialYoungsModulus(Link* link1, Link* link2,
 }
 
 
+void AgXSimulatorItem::setContactMaterialFrictionModelsolveType(Link* link1, Link* link2,
+        FrictionModelType model, FrictionSolveType solve )
+{
+    ContactMaterialParam& cm = impl->contactMaterialLinkMap[IdPair<Link*>(link1, link2)];
+    cm.frictionModel = model;
+    cm.solveType = solve;
+}
+
+
+void AgXSimulatorItem::setContactMaterialFriction(Body* body1, Body* body2, double friction)
+{
+    ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
+    cm.frictionCoefficient = friction;
+}
+
+
+void AgXSimulatorItem::setContactMaterialViscosity(Body* body1, Body* body2, FrictionDirection direction, double viscosity)
+{
+    ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
+    cm.surfaceViscosityParam.push_back(SurfaceViscosityParam());
+    SurfaceViscosityParam svParam = cm.surfaceViscosityParam.back();
+    switch(direction){
+    case PRIMARY_DIRECTION:
+        svParam.direction = agx::ContactMaterial::PRIMARY_DIRECTION;
+        break;
+    case SECONDARY_DIRECTION:
+        svParam.direction = agx::ContactMaterial::SECONDARY_DIRECTION;
+        break;
+    case BOTH_PRIMARY_AND_SECONDARY:
+        svParam.direction = agx::ContactMaterial::BOTH_PRIMARY_AND_SECONDARY;
+        break;
+    default :
+        cm.surfaceViscosityParam.pop_back();
+        return;
+    }
+    svParam.viscosity = viscosity;
+}
+
+
+void AgXSimulatorItem::setContactMaterialAdhesion(Body* body1, Body* body2, double  adhesionForce, double adhesiveOverlap )
+{
+    ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
+    cm.adhesion[0] = adhesionForce;
+    cm.adhesion[1] = adhesiveOverlap;
+}
+
+
+void AgXSimulatorItem::setContactMaterialRestitution(Body* body1, Body* body2, double restitution)
+{
+    ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
+    cm.restitution = restitution;
+}
+
+
 void AgXSimulatorItem::setContactMaterialDamping(Body* body1, Body* body2, double damping)
 {
     ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
@@ -2150,6 +2249,15 @@ void AgXSimulatorItem::setContactMaterialYoungsModulus(Body* body1, Body* body2,
 {
     ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
     cm.youngsModulus = youngsmodulus;
+}
+
+
+void AgXSimulatorItem::setContactMaterialFrictionModelsolveType(Body* body1, Body* body2,
+        FrictionModelType model, FrictionSolveType solve )
+{
+    ContactMaterialParam& cm = impl->contactMaterialBodyMap[IdPair<Body*>(body1, body2)];
+    cm.frictionModel = model;
+    cm.solveType = solve;
 }
 
 

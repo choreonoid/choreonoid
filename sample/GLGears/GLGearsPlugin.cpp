@@ -9,7 +9,9 @@ class GLGearsPlugin : public Plugin
 {
 public:
     
-    GLGearsPlugin() : Plugin("GLGears") { }
+    GLGearsPlugin() : Plugin("GLGears") {
+        setUnloadable(true);
+    }
     
     virtual bool initialize() {
 

@@ -504,9 +504,9 @@ void ODELink::setKinematicStateToODE()
                 offset = it0->second;
             Position T_ = T*offset;
             Vector3 p = T_.translation() + link->c();
-            dMatrix3 R2 = { T(0,0), T(0,1), T(0,2), 0.0,
-                            T(1,0), T(1,1), T(1,2), 0.0,
-                            T(2,0), T(2,1), T(2,2), 0.0 };
+            dMatrix3 R2 = { T_(0,0), T_(0,1), T_(0,2), 0.0,
+                            T_(1,0), T_(1,1), T_(1,2), 0.0,
+                            T_(2,0), T_(2,1), T_(2,2), 0.0 };
 
             dGeomSetPosition(*it, p.x(), p.y(), p.z());
             dGeomSetRotation(*it, R2);
@@ -1190,7 +1190,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                     if(contacts[i].geom.depth > 0.001){
                         continue;
                     }
-                    surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2;
+                    surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2 | dContactApprox1_1;
                     const Vector3 axis = crawlerlink->R() * crawlerlink->a();
                     const Vector3 n(contacts[i].geom.normal);
                     Vector3 dir = axis.cross(n);

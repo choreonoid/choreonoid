@@ -17,24 +17,24 @@ items:
       children: 
         - 
           id: 2
-          name: "Tank"
+          name: "Crawler"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/tank.wrl"
-            currentBaseLink: ""
-            rootPosition: [ -0.8, 2.4, 0.1 ]
+            modelFile: "${SHARE}/model/misc/crawler.wrl"
+            currentBaseLink: "BODY"
+            rootPosition: [ -5, 0, 0.1 ]
             rootAttitude: [ 
+              1, 0, 0, 
               0, 1, 0, 
-              -1, 0, 0, 
               0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ -0.8, 2.4, 0.1 ]
+            jointPositions: [  0.000000,  0.000000 ]
+            initialRootPosition: [ -5, 0, 0.1 ]
             initialRootAttitude: [ 
-              2.22044605e-16, 1, 0, 
-              -1, 2.22044605e-16, -0, 
-              -0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000, 0.000000 ]
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            initialJointPositions: [  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -47,61 +47,30 @@ items:
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
-                controller: "TankJoystickController"
+                controllerOptions: ""
+                controller: "SampleCrawlerJoystickController"
                 reloading: true
-                inputLinkPositions: false
+                RelativePathBase: "Controller directory"
         - 
           id: 4
-          name: "Labo1"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/Labo1/Labo1.wrl"
-            currentBaseLink: "Base"
-            rootPosition: [ 0, 0, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: false
-        - 
-          id: 10
-          name: "fog"
-          plugin: Base
-          class: SceneItem
-          data: 
-            file: "${SHARE}/model/misc/fog.wrl"
-            format: VRML-FILE
-            translation: [ 0, 0, 0 ]
-            rotation: [ 1, 0, 0, 0 ]
-        - 
-          id: 5
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recording: off
-            timeRangeMode: Unlimited
-            timeLength: 60
+            recording: "off"
+            timeRangeMode: "Unlimited"
+            timeLength: 100
             allLinkPositionOutputMode: false
             deviceStateOutput: true
             controllerThreads: true
             recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            integrationMode: Runge Kutta
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            slipFriction: 0.5
+            staticFriction: 0.7
+            slipFriction: 1
             cullingThresh: 0.01
             contactCullingDepth: 0.05
             errorCriterion: 0.001
@@ -110,18 +79,22 @@ items:
             contactCorrectionVelocityRatio: 30
             kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
         - 
-          id: 6
+          id: 5
           name: "ODESimulator"
           plugin: ODE
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Direct
-            onlyActiveControlPeriod: true
-            timeLength: 60
+            recording: "off"
+            timeRangeMode: "Unlimited"
+            timeLength: 100
             allLinkPositionOutputMode: true
-            deviceStateRecording: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
             stepMode: Iterative (quick step)
             gravity: [ 0, 0, -9.80665 ]
             friction: 1.0
@@ -133,102 +106,58 @@ items:
             limitCorrectingVel: true
             maxCorrectingVel: 1.0e-3
             2Dmode: false
+            UseWorldItem'sCollisionDetector: false
+            velocityMode: false
         - 
-          id: 7
-          name: "BulletSimulator"
-          plugin: Bullet
-          class: BulletSimulatorItem
+          id: 6
+          name: "slope"
+          plugin: Body
+          class: BodyItem
           data: 
-            realtimeSync: true
-            recordingMode: Direct
-            onlyActiveControlPeriod: true
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            deviceStateRecording: true
-            ErrorReductionParameter: 0.2
-            NumIterations: 10
-            Restitution: 0
-            Friction: 0.9
-            ERP2: 0
-            SplitImpulsePenetrationThreshold: -0.0001
+            modelFile: "${SHARE}/model/misc/slope.wrl"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0, 0, -0.1 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, -0.1 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
 views: 
   - 
     id: 0
+    name: "CameraImage"
+    plugin: Base
+    class: ImageView
+  - 
+    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 1
+    id: 2
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 5 ]
-      checked: [ 1, 2, 4 ]
-      expanded: [ 1, 2 ]
+      selected: [ 4 ]
+      checked: [ 1, 2, 6 ]
+      expanded: [ 1, 2, 3 ]
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
-    plugin: Base
-    class: SceneView
-    mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: false
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.1
-      worldLightAmbient: 0
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      cameras: 
-        - 
-          camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 10000
-          eye: [ -2.86824, 6.25331, 2.49127 ]
-          direction: [ 0.412288148, -0.847325304, -0.33475112 ]
-          up: [ 0.146464125, -0.301009257, 0.942306578 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 10000
-      backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
     id: 4
-    name: "Scene 2"
     plugin: Base
     class: SceneView
     mounted: true
@@ -265,20 +194,18 @@ views:
       cameras: 
         - 
           camera: [ System, Perspective ]
+          isCurrent: true
           fieldOfView: 0.6978
           near: 0.01
-          far: 100
-          eye: [ 4, 2, 1.5 ]
-          direction: [ -0.888888889, -0.444444444, -0.111111111 ]
-          up: [ -0.099380799, -0.0496903995, 0.99380799 ]
+          far: 10000
+          eye: [ -0.811327014, 11.5557541, 5.05653395 ]
+          direction: [ -0.0161003863, -0.938773782, -0.344157761 ]
+          up: [ -0.00590159021, -0.344107157, 0.938911836 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
-          far: 100
-        - 
-          camera: [ Tank, Camera ]
-          isCurrent: true
+          far: 10000
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -286,19 +213,27 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 5
-    name: "Joystick"
+    name: "Task"
+    plugin: Base
+    class: TaskView
+    state: 
+      layoutMode: horizontal
+      isAutoMode: false
+  - 
+    id: 6
+    name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -310,21 +245,21 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 4
+      currentBodyItem: 2
   - 
-    id: 8
+    id: 9
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 4
+      currentBodyItem: 2
       bodyItems: 
         - 
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 9
+    id: 10
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -339,6 +274,51 @@ toolbars:
     speedScale: 1
     syncToOngoingUpdates: true
     autoExpansion: true
+  "KinematicsBar": 
+    mode: AUTO
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 2
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -350,11 +330,25 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 4
+        bodyItem: 6
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
     staticModelEditing: true
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+Media: 
+  "PulseAudioManager": 
+    keepStreamConnection: false
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -362,57 +356,49 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 303, 1291 ]
+      sizes: [ 351, 1498 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 381, 381 ]
+          sizes: [ 558, 557 ]
           children: 
             - 
               type: pane
-              views: [ 1 ]
-              current: 1
+              views: [ 2 ]
+              current: 2
             - 
               type: pane
-              views: [ 0, 8 ]
-              current: 0
+              views: [ 1, 9 ]
+              current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 545, 217 ]
+          sizes: [ 797, 318 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 602, 683 ]
+              sizes: [ 479, 1013 ]
               children: 
                 - 
                   type: pane
-                  views: [ 6, 7, 4 ]
+                  views: [ 7, 8 ]
+                  current: 7
+                - 
+                  type: pane
+                  views: [ 4 ]
                   current: 4
-                - 
-                  type: pane
-                  views: [ 3 ]
-                  current: 3
             - 
-              type: splitter
-              orientation: horizontal
-              sizes: [ 774, 511 ]
-              children: 
-                - 
-                  type: pane
-                  views: [ 2, 9 ]
-                  current: 2
-                - 
-                  type: pane
-                  views: [ 5 ]
-                  current: 5
+              type: pane
+              views: [ 3, 10, 6 ]
+              current: 3
 layoutOfToolBars: 
   rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
       - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "SimulationBar", x: 95, priority: 1 }
       - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
+      - { name: "SceneBar", x: 972, priority: 0 }
+      - { name: "GraphBar", x: 1288, priority: 0 }
+      - { name: "SimulationBar", x: 1398, priority: 0 }

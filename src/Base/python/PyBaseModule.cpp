@@ -13,7 +13,8 @@ void exportPyToolBars();
 void exportPyViews();
 void exportPyItemTreeView();
 void exportPySceneTypes();
-void exportLazyCaller();
+void exportPyLazyCaller();
+void exportPyPluginManager();
 
 BOOST_PYTHON_MODULE(Base)
 {
@@ -29,7 +30,8 @@ BOOST_PYTHON_MODULE(Base)
     exportPyViews();
     exportPyItemTreeView();
     exportPySceneTypes();
-    exportLazyCaller();
+    exportPyLazyCaller();
+    exportPyPluginManager();
 }
 
 }

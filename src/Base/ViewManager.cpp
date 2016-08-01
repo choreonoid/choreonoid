@@ -50,14 +50,8 @@ public:
 
     InstanceInfo(ViewInfo* viewInfo, View* view) : view(view), viewInfo(viewInfo) {
     }
-
+    ~InstanceInfo();
     void remove();
-
-    ~InstanceInfo() {
-        if(view){
-            delete view;
-        }
-    }
 };
 
 class ViewInfo : public ViewClass
@@ -206,6 +200,11 @@ public:
     static void notifySigRemoved(View* view){
         view->notifySigRemoved();
     }
+    static void deactivateView(View* view){
+        if(view->isActive()){
+            view->onDeactivated();
+        }
+    }
 };
 
 }
@@ -230,9 +229,18 @@ ViewInfo::ViewInfo
 
 namespace {
 
+InstanceInfo::~InstanceInfo()
+{
+    if(view){
+        ViewManagerImpl::deactivateView(view);
+        delete view;
+    }
+}
+
 void InstanceInfo::remove()
 {
     if(view){
+        ViewManagerImpl::deactivateView(view);
         ViewManagerImpl::notifySigRemoved(view);
         sigViewRemoved_(view);
         delete view;
