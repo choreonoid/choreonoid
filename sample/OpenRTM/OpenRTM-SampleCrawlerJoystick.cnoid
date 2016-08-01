@@ -115,7 +115,7 @@ items:
             deviceStateRecording: true
             stepMode: Iterative (quick step)
             gravity: [ 0, 0, -9.80665 ]
-            friction: 50
+            friction: 1.0
             jointLimitMode: false
             globalERP: 0.4
             globalCFM: 1e-10
