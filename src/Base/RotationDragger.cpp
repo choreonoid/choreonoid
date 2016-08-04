@@ -58,20 +58,15 @@ public:
         } else {
             const Affine3& C = renderer->currentCameraPosition();
             const Affine3& M = renderer->currentModelTransform();
-            bool isPerspetiveCamera = (renderer->projectionMatrix()(3, 3) == 0.0);
-            if(isPerspetiveCamera){
-                double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
-                if(d > thresh){
-                    if(numChildren() > 0){
-                        child(0)->accept(visitor);
-                    }
-                } else {
-                    if(numChildren() > 1){
-                        child(1)->accept(visitor);
-                    }
+            double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
+            if(d > thresh){
+                if(numChildren() > 0){
+                    child(0)->accept(visitor);
                 }
             } else {
-
+                if(numChildren() > 1){
+                    child(1)->accept(visitor);
+                }
             }
         }
     }
