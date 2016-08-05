@@ -15,6 +15,8 @@ struct Collision {
     Vector3 point;
     Vector3 normal;
     double depth;
+    int id1;
+    int id2;
 };
 
 typedef std::vector<Collision> CollisionArray;
