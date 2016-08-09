@@ -6,6 +6,7 @@
 #include "ODECollisionDetector.h"
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
+#include <cnoid/EigenUtil>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
@@ -278,13 +279,13 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
             }
             if(created){
                 model->primitiveGeomID.push_back(geomId);
+                Affine3 T_ = meshExtractor->currentTransformWithoutScaling();
                 if(translation){
-                    offsetMap.insert(OffsetMap::value_type(geomId,
-                                                           meshExtractor->currentTransformWithoutScaling() *
-                                                           Translation3(*translation)));
-                } else {
-                    offsetMap.insert(OffsetMap::value_type(geomId, meshExtractor->currentTransformWithoutScaling()));
+                    T_ *= Translation3(*translation);
                 }
+                if(mesh->primitiveType()==SgMesh::CYLINDER)
+                    T_ *= AngleAxis(radian(90), Vector3::UnitX());
+                offsetMap.insert(OffsetMap::value_type(geomId, T_));
                 meshAdded = true;
             }
         }
