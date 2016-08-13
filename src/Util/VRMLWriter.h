@@ -73,6 +73,7 @@ public:
         this->ofname = ofname;
     };
     void writeHeader();
+    void writeOpenHRPPROTOs();
     bool writeNode(VRMLNodePtr node);
 
 protected:
