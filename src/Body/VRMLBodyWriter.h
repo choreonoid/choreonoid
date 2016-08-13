@@ -2,8 +2,8 @@
 /*! @file
 */
 
-#ifndef CNOID_BODY_VRMLBODY_WRITER_INCLUDED
-#define CNOID_BODY_VRMLBODY_WRITER_INCLUDED
+#ifndef CNOID_BODY_VRMLBODY_WRITER_H
+#define CNOID_BODY_VRMLBODY_WRITER_H
 
 #include <cnoid/VRMLWriter>
 #include "VRMLBody.h"
@@ -21,6 +21,7 @@ class CNOID_EXPORT VRMLBodyWriter : public VRMLWriter
 {
 public:
     VRMLBodyWriter(std::ostream& out);
+    void writeOpenHRPPROTOs();
 
 protected:
     void registerNodeMethodMap();
@@ -38,6 +39,5 @@ private:
 };
 
 };
-
 
 #endif
