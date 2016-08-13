@@ -73,7 +73,6 @@ public:
         this->ofname = ofname;
     };
     void writeHeader();
-    void writeOpenHRPPROTOs();
     bool writeNode(VRMLNodePtr node);
 
 protected:
@@ -126,10 +125,8 @@ private:
     void writeSphereNode(VRMLNodePtr node);
     void writeIndexedFaceSetNode(VRMLNodePtr node);
     void writeCoordinateNode(VRMLCoordinatePtr coord);
-
 };
 
 };
-
 
 #endif
