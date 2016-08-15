@@ -329,9 +329,15 @@ void VRMLWriter::writeCylinderNode(VRMLNodePtr node)
 
     out << indent << "radius " << cylinder->radius << "\n";
     out << indent << "height " << cylinder->height << "\n";
-    out << indent << "top " << boolstr(cylinder->top) << "\n";
-    out << indent << "bottom " << boolstr(cylinder->bottom) << "\n";
-    out << indent << "side " << boolstr(cylinder->side) << "\n";
+    if (!cylinder->top){
+        out << indent << "top " << boolstr(cylinder->top) << "\n";
+    }
+    if (!cylinder->bottom){
+        out << indent << "bottom " << boolstr(cylinder->bottom) << "\n";
+    }
+    if (!cylinder->side){
+        out << indent << "side " << boolstr(cylinder->side) << "\n";
+    }
 
     endNode();
 }
