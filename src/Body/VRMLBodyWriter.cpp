@@ -78,7 +78,7 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "PROTO Segment [\n";
     out << "  field           SFVec3f     bboxCenter        0 0 0\n";
     out << "  field           SFVec3f     bboxSize          -1 -1 -1\n";
-    out << "  exposedField    SFVec3f     centerOutMass      0 0 0\n";
+    out << "  exposedField    SFVec3f     centerOfMass      0 0 0\n";
     out << "  exposedField    MFNode      children          [ ]\n";
     out << "  exposedField    SFNode      coord             NULL\n";
     out << "  exposedField    MFNode      displacers        [ ]\n";
