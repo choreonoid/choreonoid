@@ -83,7 +83,7 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "  exposedField    SFNode      coord             NULL\n";
     out << "  exposedField    MFNode      displacers        [ ]\n";
     out << "  exposedField    SFFloat     mass              0\n";
-    out << "  exposedField    MFFloat     momentsOutInertia  [ 0 0 0 0 0 0 0 0 0 ]\n";
+    out << "  exposedField    MFFloat     momentsOfInertia  [ 0 0 0 0 0 0 0 0 0 ]\n";
     out << "  exposedField    SFString    name              \"\"\n";
     out << "  eventIn         MFNode      addChildren\n";
     out << "  eventIn         MFNode      removeChildren\n";
