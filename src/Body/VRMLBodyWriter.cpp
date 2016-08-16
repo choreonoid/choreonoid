@@ -149,6 +149,7 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "PROTO VisionSensor [\n";
     out << "  exposedField SFVec3f    translation       0 0 0\n";
     out << "  exposedField SFRotation rotation          0 0 1 0\n";
+    out << "  exposedField MFNode     children          [ ]\n";
     out << "  exposedField SFFloat    fieldOfView       0.785398\n";
     out << "  exposedField SFString   name              \"\"\n";
     out << "  exposedField SFFloat    frontClipDistance 0.01\n";
@@ -163,6 +164,7 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "  Transform {\n";
     out << "    rotation         IS rotation\n";
     out << "    translation      IS translation\n";
+    out << "    children         IS children\n";
     out << "  }\n";
     out << "}\n";
     out << "\n";
@@ -461,6 +463,8 @@ void VRMLBodyWriter::writeVisionSensorNode(VRMLNodePtr node)
         out << indent << "backClipDistance " << sensor->backClipDistance << "\n";
     }
 
+    writeGroupFields(sensor);
+
     endNode();
 }
 
@@ -567,6 +571,8 @@ void VRMLBodyWriter::writeRangeSensorNode(VRMLNodePtr node)
     if (sensor->maxDistance != 100){
         out << indent << "maxDistance " << sensor->maxDistance << "\n";
     }
+
+    writeGroupFields(sensor);
 
     endNode();
 }
