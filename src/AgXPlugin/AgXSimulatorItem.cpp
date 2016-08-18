@@ -1048,9 +1048,9 @@ void AgXLink::createJoint()
 
 void AgXLink::createGeometry(AgXBody* agxBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&AgXLink::addMesh, this, extractor, agxBody))){
+        if(extractor->extract(link->collisionShape(), boost::bind(&AgXLink::addMesh, this, extractor, agxBody))){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){

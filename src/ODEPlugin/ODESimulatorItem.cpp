@@ -346,9 +346,9 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
 void ODELink::createGeometry(ODEBody* odeBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&ODELink::addMesh, this, extractor, odeBody))){
+        if(extractor->extract(link->collisionShape(), boost::bind(&ODELink::addMesh, this, extractor, odeBody))){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
