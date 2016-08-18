@@ -366,4 +366,3 @@ void VRMLWriter::writeCoordinateNode(VRMLCoordinatePtr coord)
 
     endNode();
 }
-
