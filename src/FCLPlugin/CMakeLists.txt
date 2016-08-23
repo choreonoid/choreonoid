@@ -57,5 +57,6 @@ set(headers
 #make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin ${FCL_LIBRARIES})
+set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-std=c++11")
 apply_common_setting_for_plugin(${target} "${headers}")
 install_external_libraries(${FCL_DIR}/bin ${FCL_DIR}/lib ${FCL_LIBRARIES})
