@@ -963,7 +963,9 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     Vector3 c;
     readVRMLfield(sf["centerOfMass"], c);
     iSegment.c = T.linear() * c + T.translation();
-    iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
+    if (iLink.m + iSegment.m > 0){
+        iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
+    }
     iLink.m += iSegment.m;
     
     Matrix3 I;
