@@ -184,8 +184,12 @@ public:
         } else { // SLIDE_JOINT
             max = std::numeric_limits<double>::max();
         }
-        double lower = std::max(unitConversionRatio * joint->q_lower(), -max);
-        double upper = std::min(unitConversionRatio * joint->q_upper(),  max);
+        double lower =
+            joint->q_lower() == -std::numeric_limits<double>::max() ?
+            -max : unitConversionRatio * joint->q_lower();
+        double upper =
+            joint->q_upper() ==  std::numeric_limits<double>::max() ?
+             max : unitConversionRatio * joint->q_upper();
 
         slider.blockSignals(true);
         spin.blockSignals(true);
