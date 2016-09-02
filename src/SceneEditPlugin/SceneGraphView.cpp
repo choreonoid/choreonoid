@@ -18,7 +18,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #endif
-#include <GL/glew.h>
+#include <GL/gl.h>
 #include <boost/bind.hpp>
 #include "gettext.h"
 
