@@ -15,6 +15,7 @@ class AgXSimulatorItemImpl;
 class CNOID_EXPORT AgXSimulatorItem : public SimulatorItem
 {
 public:
+    static bool havePowerLineLicense;
     static void initializeClass(ExtensionManager* ext);
 
     AgXSimulatorItem();
@@ -68,5 +69,6 @@ private:
 
 typedef ref_ptr<AgXSimulatorItem> AgXSimulatorItemPtr;
 }
+
 
 #endif
