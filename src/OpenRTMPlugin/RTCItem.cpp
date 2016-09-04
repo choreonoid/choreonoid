@@ -71,8 +71,8 @@ RTCItem::RTCItem()
 
 
 RTCItem::RTCItem(const RTCItem& org)
-    : os(MessageView::instance()->cout()),
-      Item(org),
+    : Item(org),
+      os(MessageView::instance()->cout()),
       periodicType(org.periodicType),
       pathBase(org.pathBase)
 {

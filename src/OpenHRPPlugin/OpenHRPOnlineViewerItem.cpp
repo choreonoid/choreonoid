@@ -645,7 +645,9 @@ void OpenHRPOnlineViewerItemImpl::clearLogsub()
         }
     }
 
-    collisionSeqItem->collisionSeq()->setNumFrames(0);
+    if (collisionSeqItem){
+        collisionSeqItem->collisionSeq()->setNumFrames(0);
+    }
 }
 
 
