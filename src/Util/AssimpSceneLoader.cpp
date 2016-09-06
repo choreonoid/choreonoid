@@ -20,11 +20,14 @@ public:
     SgNode* load(const std::string& fileName);
     SgPosTransform* convertAinode(aiNode* ainode);
     SgShape* convertAiMesh(unsigned int);
+    SgMaterial* convertAiMaterial(unsigned int);
 
 private:
     const aiScene* scene;
-    typedef map<unsigned int, SgShape*> AiMeshToSgShapeMap;
-    AiMeshToSgShapeMap aiMeshToSgShapeMap;
+    typedef map<unsigned int, SgShape*> AiIndexToSgShapeMap;
+    AiIndexToSgShapeMap aiIndexToSgShapeMap;
+    typedef map<unsigned int, SgMaterial*> AiIndexToSgMaterialMap;
+    AiIndexToSgMaterialMap  aiIndexToSgMaterialMap;
 };
 
 }
@@ -111,14 +114,14 @@ SgPosTransform* AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
 
 SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
 {
-    AiMeshToSgShapeMap::iterator p = aiMeshToSgShapeMap.find(index);
-    if(p != aiMeshToSgShapeMap.end()){
+    AiIndexToSgShapeMap::iterator p = aiIndexToSgShapeMap.find(index);
+    if(p != aiIndexToSgShapeMap.end()){
         return p->second;
     }
 
     SgShape* shape = new SgShape();
-    aiMesh* aimesh = scene->mMeshes[index];
 
+    aiMesh* aimesh = scene->mMeshes[index];
     if(aimesh->HasFaces()){
         SgVertexArray* vertices = new SgVertexArray;
         SgNormalArray* normal = new SgNormalArray;
@@ -131,11 +134,11 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
         for (unsigned int i = 0 ; i < aimesh->mNumVertices ; i++) {
             const aiVector3D& pos = aimesh->mVertices[i];
             const aiVector3D& n_ = aimesh->mNormals[i];
-         //   vertices->push_back(Vector3f(pos.x, pos.y, pos.z));
-         //   normal->push_back(Vector3f(n_.x, n_.y, n_.z));
+            vertices->push_back(Vector3f(pos.x, pos.y, pos.z));
+            normal->push_back(Vector3f(n_.x, n_.y, n_.z));
             if(texCoord){
                 const aiVector3D& tc_ = aimesh->mTextureCoords[0][i];
-         //       texCoord->push_back(Vector3f(tc_.x, tc_.y, tc_.z));
+                texCoord->push_back(Vector2f(tc_.x, tc_.y));
             }
         }
         mesh->setVertices(vertices);
@@ -150,13 +153,56 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
 
         shape->setMesh(mesh);
     }
+    
+    SgMaterial* material = convertAiMaterial(aimesh->mMaterialIndex);
+    shape->setMaterial(material);
 
-    /*
-      SgMaterial* material = shape->getOrCreateMaterial();
-      SgTexture* texture = shape->getOrCreateTexture();
-  */
+    //SgTexture
 
-    aiMeshToSgShapeMap[index] = shape;
+    aiIndexToSgShapeMap[index] = shape;
     return shape;
 }
 
+
+SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
+{
+    AiIndexToSgMaterialMap::iterator p = aiIndexToSgMaterialMap.find(index);
+    if (p != aiIndexToSgMaterialMap.end()){
+        return p->second;
+    }
+
+    SgMaterial* material = new SgMaterial();
+    aiMaterial* aimaterial = scene->mMaterials[index];
+    
+    aiColor3D color(0.f, 0.f, 0.f);
+    float diffuse;
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
+        material->setDiffuseColor(Vector3(color.r, color.g, color.b));
+        diffuse = color.r+color.g+color.b;
+    }
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_SPECULAR, color)){
+        material->setSpecularColor(Vector3(color.r, color.g, color.b));
+    }
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_EMISSIVE, color)){
+        material->setEmissiveColor(Vector3(color.r, color.g, color.b));
+    }
+    float w;
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_SHININESS, w)){
+        material->setShininess(w);
+    }
+
+    // mumumu?
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
+        float c = (color.r+color.g+color.b)/diffuse;
+        material->setAmbientIntensity(c);   
+    }
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_TRANSPARENT, color)){
+        float c = (color.r + color.g + color.b) / diffuse;
+        material->setTransparency(c);
+    }
+
+    aiIndexToSgMaterialMap[index] = material;
+
+    return material;
+
+}

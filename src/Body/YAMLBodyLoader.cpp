@@ -24,6 +24,7 @@
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/NullOut>
+#include <cnoid/AssimpSceneLoader>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
@@ -119,6 +120,8 @@ public:
 
     VRMLParser vrmlParser;
     VRMLToSGConverter sgConverter;
+
+    AssimpSceneLoader assimpLoader;
 
     ostream& os() { return *os_; }
 
@@ -623,6 +626,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             filepath = directoryPath / filepath;
             filepath.normalize();
         }
+        if (0){
         vrmlParser.load(getAbsolutePathString(filepath));
         while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
             SgNodePtr node = sgConverter.convert(vrmlNode);
@@ -630,6 +634,12 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
                 shape->addChild(node);
                 hasShape = true;
             }
+        }
+        }
+        SgNode* node = assimpLoader.load(getAbsolutePathString(filepath));
+        if (node){
+            shape->addChild(node);
+            hasShape = true;
         }
     }
 
