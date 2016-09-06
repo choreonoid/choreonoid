@@ -343,8 +343,8 @@ EditableSceneBody::EditableSceneBody(BodyItemPtr bodyItem)
 EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPtr& bodyItem)
     : self(self),
       bodyItem(bodyItem),
-      kinematicsBar(KinematicsBar::instance()),
-      modified(SgUpdate::MODIFIED)
+      modified(SgUpdate::MODIFIED),
+      kinematicsBar(KinematicsBar::instance())
 {
     pointedSceneLink = 0;
     outlinedLink = 0;

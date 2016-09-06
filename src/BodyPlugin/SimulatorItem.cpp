@@ -1034,13 +1034,13 @@ SimulatorItem::SimulatorItem(const SimulatorItem& org)
 
 SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     : self(self),
-      mv(MessageView::mainInstance()),
-      os(mv->cout()),
       preDynamicsFunctions(this),
       midDynamicsFunctions(this),
       postDynamicsFunctions(this),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
+      mv(MessageView::mainInstance()),
+      os(mv->cout()),
       itemTreeView(ItemTreeView::instance())
 {
     flushTimer.sigTimeout().connect(std::bind(&SimulatorItemImpl::flushResults, this));

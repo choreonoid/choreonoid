@@ -123,7 +123,11 @@ typedef ref_ptr<TextureCache> TextureCachePtr;
 /*
 struct SgObjectPtrHash {
     std::size_t operator()(const SgObjectPtr& p) const {
-        return std::hash_value<SgObject*>(p.get());
+#ifndef WIN32
+        return boost::hash_value<SgObject*>(p.get());
+#else
+        return boost::hash_value<long>((long)p.get());
+#endif
     }
 };
 */

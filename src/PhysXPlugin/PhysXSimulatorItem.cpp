@@ -326,9 +326,9 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
 
 void PhysXLink::createGeometry(PhysXBody* physXBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
+        if(extractor->extract(link->collisionShape(), boost::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
             if(!vertices.empty()){
                 if(pxRigidActor->isRigidStatic()){
                     PxTriangleMesh* triangleMesh = createTriangleMesh();

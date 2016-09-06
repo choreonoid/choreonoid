@@ -360,6 +360,8 @@ void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const Collis
                         collision.point = cd.i_points[k];
                         collision.normal = cd.n_vector;
                         collision.depth = cd.depth;
+                        collision.id1 = cd.id1;
+                        collision.id2 = cd.id2;
                     }
                 }
             }
@@ -442,6 +444,8 @@ void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
                         collision.point = cd.i_points[k];
                         collision.normal = cd.n_vector;
                         collision.depth = cd.depth;
+                        collision.id1 = cd.id1;
+                        collision.id2 = cd.id2;
                     }
                 }
             }
@@ -505,6 +509,8 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
                             collision.point = cd.i_points[l];
                             collision.normal = cd.n_vector;
                             collision.depth = cd.depth;
+                            collision.id1 = cd.id1;
+                            collision.id2 = cd.id2;
                         }
                     }
                 }

@@ -345,9 +345,9 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
 void ODELink::createGeometry(ODEBody* odeBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), std::bind(&ODELink::addMesh, this, extractor, odeBody))){
+        if(extractor->extract(link->collisionShape(), std::bind(&ODELink::addMesh, this, extractor, odeBody))){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
@@ -431,6 +431,8 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
+                if(mesh->primitiveType()==SgMesh::CYLINDER)
+                    T_ *= AngleAxis(radian(90), Vector3::UnitX());
                 Vector3 p = T_.translation()-link->c();
                 dMatrix3 R = { T_(0,0), T_(0,1), T_(0,2), 0.0,
                                T_(1,0), T_(1,1), T_(1,2), 0.0,

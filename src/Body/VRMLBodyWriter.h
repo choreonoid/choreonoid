@@ -15,6 +15,7 @@ class CNOID_EXPORT VRMLBodyWriter : public VRMLWriter
 {
 public:
     VRMLBodyWriter(std::ostream& out);
+    void writeOpenHRPPROTOs();
 
 protected:
     void registerNodeMethodMap();

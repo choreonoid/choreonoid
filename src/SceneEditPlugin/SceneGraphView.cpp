@@ -19,6 +19,7 @@
 #include <GL/glew.h>
 #include <cassert>
 #include <list>
+#include <GL/gl.h>
 #include "gettext.h"
 
 using namespace std;

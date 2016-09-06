@@ -1049,7 +1049,7 @@ bool SceneWidgetImpl::updateLatestEventPath()
         }
     }
 
-    if(pixelBufferForPicking){
+    if(pixelBufferForPicking && !SHOW_IMAGE_FOR_PICKING){
         pixelBufferForPicking->makeCurrent();
     } else {
         QGLWidget::makeCurrent();
@@ -1057,10 +1057,12 @@ bool SceneWidgetImpl::updateLatestEventPath()
 
     bool picked = renderer->pick(latestEvent.x(), latestEvent.y());
 
-    if(pixelBufferForPicking){
+    if(pixelBufferForPicking && !SHOW_IMAGE_FOR_PICKING){
         pixelBufferForPicking->doneCurrent();
-    } else if(SHOW_IMAGE_FOR_PICKING){
-        swapBuffers();
+    } else {
+        if(SHOW_IMAGE_FOR_PICKING)
+            swapBuffers();
+        doneCurrent();
     }
 
     latestEvent.nodePath_.clear();

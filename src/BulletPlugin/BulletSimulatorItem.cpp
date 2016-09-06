@@ -233,9 +233,9 @@ BulletLink::BulletLink(BulletSimulatorItemImpl* _simImpl, BulletBody* bulletBody
 
 void BulletLink::createGeometry()
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
+        if(extractor->extract(link->collisionShape(), boost::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
             if(!simImpl->useHACD){
                 if(!mixedPrimitiveMesh){
                     if(!vertices.empty()){
