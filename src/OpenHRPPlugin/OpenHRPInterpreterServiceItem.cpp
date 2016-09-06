@@ -129,8 +129,8 @@ OpenHRPInterpreterServiceItem::OpenHRPInterpreterServiceItem(const OpenHRPInterp
 
 ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self, const ItemImpl& org)
     : self(self),
-      os(MessageView::instance()->cout()),
-      forceMainThreadExecution(org.forceMainThreadExecution)
+      forceMainThreadExecution(org.forceMainThreadExecution),
+      os(MessageView::instance()->cout())
 {
     rtc = 0;
     scriptItem = 0;

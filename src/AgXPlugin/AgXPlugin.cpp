@@ -31,12 +31,6 @@ public:
 
     virtual bool initialize()
         {
-       //     string pathToAgx = "/opt/Algoryx/AgX-2.13.2.2";
-      //      agxIO::Environment::instance()->getFilePath(agxIO::Environment::RESOURCE_PATH).pushbackPath(pathToAgx);
-       //     agxIO::Environment::instance()->getFilePath(agxIO::Environment::RESOURCE_PATH).addFilePath(pathToAgx);
-      //      agxIO::Environment::instance()->getFilePath(agxIO::Environment::RUNTIME_PATH).addFilePath(pathToAgx+"/bin/plugins");
-       //     agxIO::Environment::instance()->getFilePath(agxIO::Environment::RESOURCE_PATH).addFilePath(pathToAgx+"/data");
-
             AgXSimulatorItem::initializeClass(this);
 
             return true;
@@ -46,6 +40,7 @@ public:
         {
             return true;
         }
+
 };
 }
 

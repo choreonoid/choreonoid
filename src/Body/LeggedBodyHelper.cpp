@@ -93,7 +93,7 @@ InverseKinematicsPtr LeggedBodyHelper::getFootBasedIK(Link* targetLink)
 {
     InverseKinematicsPtr ik;
     if(isValid_){
-        CompositeIKPtr composite = make_shared<CompositeIK>(body_, targetLink);
+        CompositeIKPtr composite = boost::make_shared<CompositeIK>(body_, targetLink);
         ik = composite;
         for(size_t i=0; i < footInfos.size(); ++i){
             if(!composite->addBaseLink(footInfos[i].link)){

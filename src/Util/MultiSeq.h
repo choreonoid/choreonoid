@@ -29,22 +29,22 @@ public:
     typedef typename Container::Column Part;
 
     MultiSeq(const char* seqType)
-        : AbstractMultiSeq(seqType),
-          Container(0, 1) {
+        : Container(0, 1),
+          AbstractMultiSeq(seqType) {
         frameRate_ = defaultFrameRate();
         offsetTimeFrame_ = 0;
     }
 
     MultiSeq(const char* seqType, int numFrames, int numParts)
-        : AbstractMultiSeq(seqType),
-          Container(numFrames, numParts) {
+        : Container(numFrames, numParts),
+          AbstractMultiSeq(seqType) {
         frameRate_ = defaultFrameRate();
         offsetTimeFrame_ = 0;
     }
 
     MultiSeq(const MultiSeqType& org)
-        : AbstractMultiSeq(org),
-          Container(org) {
+        : Container(org),
+          AbstractMultiSeq(org) {
         frameRate_ = org.frameRate_;
         offsetTimeFrame_ = org.offsetTimeFrame_;
     }

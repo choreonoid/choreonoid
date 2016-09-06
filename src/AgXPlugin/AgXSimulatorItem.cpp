@@ -26,6 +26,7 @@
 #include <agxPowerLine/Actuator1DOF.h>
 #include <agx/version.h>
 #include <agx/PlaneJoint.h>
+#include <agx/Runtime.h>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
@@ -47,6 +48,7 @@
 
 using namespace std;
 using namespace cnoid;
+
 
 
 namespace {
@@ -572,6 +574,8 @@ protected:
 
 namespace cnoid {
 
+bool AgXSimulatorItem::havePowerLineLicense;
+
 class AgXSimulatorItemImpl
 {
 public:
@@ -922,7 +926,7 @@ void AgXLink::createJoint()
             inputMode = VEL;
             break;
         case AgXSimulatorItem::TORQUE :
-            if(rotorInertia){
+            if(rotorInertia && AgXSimulatorItem::havePowerLineLicense){
                 part = SHAFT;
                 inputMode = TOR;
             }else{
@@ -935,7 +939,7 @@ void AgXLink::createJoint()
             inputMode = InputMode::NON;
             break;
         case AgXSimulatorItem::DEFAULT :
-            if(!rotorInertia || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
+            if(!rotorInertia || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS) || !AgXSimulatorItem::havePowerLineLicense){
                 part = MOTOR;
                 if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS))
                     inputMode = VEL;
@@ -1742,6 +1746,11 @@ void AgXSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<AgXSimulatorItem>("AgXSimulatorItem");
     ext->itemManager().addCreationPanel<AgXSimulatorItem>();
+
+    //agx::StringVector modules = agx::Runtime::instance()->getEnabledModules();
+    //for(int i=0; i<modules.size(); i++)
+        //std::cout << modules[i] << std::endl;
+    havePowerLineLicense = agx::Runtime::instance()->isModuleEnabled("AgXPowerLine");   // ??
 }
 
 
@@ -1884,8 +1893,10 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     agxSimulation->setContactReductionBinResolution( contactReductionBinResolution );
     agxSimulation->setContactReductionThreshold( contactReductionThreshold );
 
-    powerLine = new agxPowerLine::PowerLine();
-    agxSimulation->add(powerLine);
+    if(AgXSimulatorItem::havePowerLineLicense){
+        powerLine = new agxPowerLine::PowerLine();
+        agxSimulation->add(powerLine);
+    }
 
     agx::UniformGravityField* uniformGravityField = dynamic_cast<agx::UniformGravityField*>( agxSimulation->getGravityField() );
     if(uniformGravityField)

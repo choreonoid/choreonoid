@@ -290,7 +290,7 @@ elseif(MSVC)
 
   target_link_libraries(${target}
     ${QT_LIBRARIES}
-    general glu32
+    general glu32 opengl32
     CnoidUtil
     )
 endif()

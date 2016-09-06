@@ -8,6 +8,10 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <boost/bind.hpp>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 
 using namespace std;
@@ -169,6 +173,7 @@ double GLSceneRenderer::aspectRatio() const
 
 bool GLSceneRenderer::initializeGL()
 {
+#ifndef _WIN32
     ostream& os = mvout();
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -177,11 +182,14 @@ bool GLSceneRenderer::initializeGL()
     if(major >= 2){
         os << (boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
     }
+#endif
+    return true;
 }
 
 
 bool GLSceneRenderer::setSwapInterval(int interval)
 {
+#if 0
 #ifdef _WIN32
     DISPLAY_DEVICE device;
     device.cb = sizeof(DISPLAY_DEVICE);
@@ -198,14 +206,17 @@ bool GLSceneRenderer::setSwapInterval(int interval)
 
     return wglSwapIntervalEXT(interval);
 #endif
+#endif
     return false;
 }
 
 
 int GLSceneRenderer::getSwapInterval() const
 {
+#if 0
 #ifdef _WIN32
     return wglGetSwapIntervalEXT();
+#endif
 #endif
     return -1;
 }
