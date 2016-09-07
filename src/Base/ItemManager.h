@@ -11,6 +11,7 @@
 #include <typeinfo>
 #include <iosfwd>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <QWidget>
 #include "exportdecl.h"
 
