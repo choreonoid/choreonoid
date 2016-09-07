@@ -84,8 +84,8 @@ public:
     boost::thread_group threadGroup;
 
     vector<int> shuffledPairIndices;
-    boost::random::mt19937 randomEngine;
-    boost::random_number_generator<boost::random::mt19937>randomNumberGenerator;
+    //boost::random::mt19937 randomEngine;
+    //boost::random_number_generator<boost::random::mt19937>randomNumberGenerator;
 
     typedef set< IdPair<> > IdPairSet;
     IdPairSet nonInterfarencePairs;
@@ -126,7 +126,7 @@ AISTCollisionDetector::AISTCollisionDetector()
 
 
 AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
-    : randomNumberGenerator(randomEngine)
+//: randomNumberGenerator(randomEngine)
 {
     maxNumThreads = 0;
     numThreads = 0;
@@ -386,7 +386,7 @@ void AISTCollisionDetectorImpl::detectCollisions(boost::function<void(const Coll
 void AISTCollisionDetectorImpl::detectCollisionsInParallel(boost::function<void(const CollisionPair&)> callback)
 {
     if(ENABLE_SHUFFLE){
-        std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomNumberGenerator);
+        //std::random_shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomNumberGenerator);
     }
 
     const int numPairs = modelPairs.size();
