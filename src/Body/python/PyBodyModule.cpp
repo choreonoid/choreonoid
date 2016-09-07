@@ -60,13 +60,12 @@ SgNodePtr Link_collisionShape(const Link& self) { return self.collisionShape(); 
 MappingPtr Link_info(Link& self) { return self.info(); }
 python::object Link_info2(Link& self, const std::string& key, python::object defaultValue)
 {
-    if(PyFloat_Check(defaultValue.ptr())){
-        double v = python::extract<double>(defaultValue);
-        return python::object(self.info(key, v));
-    } else {
+    if(!PyFloat_Check(defaultValue.ptr())){
         PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
         python::throw_error_already_set();
     }
+    double v = python::extract<double>(defaultValue);
+    return python::object(self.info(key, v));
 }
 double Link_floatInfo(Link& self, const std::string& key) { return self.info<double>(key); }
 

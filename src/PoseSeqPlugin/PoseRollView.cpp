@@ -458,6 +458,8 @@ bool PoseRollView::eventFilter(QObject* obj, QEvent* event)
             impl->requestRowRectsUpdate();
             return false;
             break;
+        default:
+            break;
         }
     } else if(obj == impl->screen){
         switch(event->type()){
