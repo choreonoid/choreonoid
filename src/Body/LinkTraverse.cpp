@@ -31,8 +31,8 @@ LinkTraverse::LinkTraverse(Link* root, bool doUpward, bool doDownward)
 
 
 LinkTraverse::LinkTraverse(const LinkTraverse& org)
-    : links(links),
-      numUpwardConnections(numUpwardConnections)
+    : links(org.links),
+      numUpwardConnections(org.numUpwardConnections)
 {
 
 }
