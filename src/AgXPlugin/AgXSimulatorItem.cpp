@@ -40,15 +40,14 @@
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerItem>
 #include <cnoid/BodyMotionItem>
-#include <boost/bind.hpp>
 #include <cnoid/IdPair>
 #include <cnoid/EigenArchive>
 #include <cnoid/LinkGroup>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
-
 
 
 namespace {
@@ -1054,7 +1053,7 @@ void AgXLink::createGeometry(AgXBody* agxBody)
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), boost::bind(&AgXLink::addMesh, this, extractor, agxBody))){
+        if(extractor->extract(link->collisionShape(), std::bind(&AgXLink::addMesh, this, extractor, agxBody))){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
@@ -2097,10 +2096,10 @@ void AgXSimulatorItemImpl::addBody(AgXBody* agxBody, int i)
 CollisionLinkPairListPtr AgXSimulatorItem::getCollisions()
 {
     const agxCollide::GeometryContactPtrVector& contacts = impl->agxSimulation->getSpace()->getGeometryContacts();
-    CollisionLinkPairListPtr collisionPairs = boost::make_shared<CollisionLinkPairList>();
+    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
     for(agxCollide::GeometryContactPtrVector::const_iterator it=contacts.begin();
             it!=contacts.end(); it++){
-        CollisionLinkPairPtr dest = boost::make_shared<CollisionLinkPair>();
+        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
         agxCollide::ContactPointVector& points = (*it)->points();
         for(int i=0; i<points.size(); i++){
             dest->collisions.push_back(Collision());
@@ -2303,8 +2302,8 @@ void AgXSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AgXSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-            boost::bind(&Selection::selectIndex, &dynamicsMode, _1));
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
+                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
+    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
     putProperty.decimals(2).min(0.0)
             (_("Friction"), friction, changeProperty(friction));
     putProperty.decimals(2).min(0.0)
