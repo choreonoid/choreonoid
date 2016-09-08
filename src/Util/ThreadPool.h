@@ -66,7 +66,7 @@ public:
     void waitLoop(){
         while(true){
             {
-                std::unique_lock<std::mutex> lock(mutex,std::try_to_lock_t());
+                std::unique_lock<std::mutex> lock(mutex, std::try_to_lock_t());
                 if(lock.owns_lock()){
                     if(queue.empty() && numActiveThreads == 0){
                         break;
@@ -95,7 +95,7 @@ private:
             if(f){
                 f();
                 {
-                    std::unique_lock<std::mutex> lock(mutex);
+                    std::lock_guard<std::mutex> lock(mutex);
                     --numActiveThreads;
                     if(numActiveThreads == 0){
                         finishCondition.notify_all();

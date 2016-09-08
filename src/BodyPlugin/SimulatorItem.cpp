@@ -1240,7 +1240,7 @@ void SimulatorItem::removePostDynamicsFunction(int id)
 
 int FunctionSet::add(std::function<void()>& func)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     
     FunctionInfo info;
     info.function = func;
@@ -1265,7 +1265,7 @@ int FunctionSet::add(std::function<void()>& func)
 
 void FunctionSet::remove(int id)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     idsToRemove.push_back(id);
     needToUpdate = true;
 }
@@ -1273,7 +1273,7 @@ void FunctionSet::remove(int id)
 
 void FunctionSet::updateFunctions()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     for(size_t i=0; i < functionsToAdd.size(); ++i){
         functions.push_back(functionsToAdd[i]);
@@ -1770,7 +1770,7 @@ void SimulatorItemImpl::run()
 
     if(useControllerThreads){
         {
-            std::unique_lock<std::mutex> lock(controlMutex);
+            std::lock_guard<std::mutex> lock(controlMutex);
             isExitingControlLoopRequested = true;
         }
         controlCondition.notify_all();
@@ -1839,7 +1839,7 @@ bool SimulatorItemImpl::stepSimulationMain()
             controllerTime += timer.nsecsElapsed();
 #endif
             {
-                std::unique_lock<std::mutex> lock(controlMutex);                
+                std::lock_guard<std::mutex> lock(controlMutex);                
                 isControlRequested = true;
             }
             controlCondition.notify_all();
@@ -1956,7 +1956,7 @@ void SimulatorItemImpl::concurrentControlLoop()
 #endif
         
         {
-            std::unique_lock<std::mutex> lock(controlMutex);
+            std::lock_guard<std::mutex> lock(controlMutex);
             isControlFinished = true;
             isControlToBeContinued = doContinue;
         }
@@ -2213,7 +2213,7 @@ void SimulatorItemImpl::setExternalForce(BodyItem* bodyItem, Link* link, const V
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
         if(simBody){
             {
-                std::unique_lock<std::mutex> lock(extForceMutex);
+                std::lock_guard<std::mutex> lock(extForceMutex);
                 extForceInfo.link = simBody->body()->link(link->index());
                 extForceInfo.point = point;
                 extForceInfo.f = f;
@@ -2240,7 +2240,7 @@ void SimulatorItem::clearExternalForces()
 
 void SimulatorItemImpl::doSetExternalForce()
 {
-    std::unique_lock<std::mutex> lock(extForceMutex);
+    std::lock_guard<std::mutex> lock(extForceMutex);
     Link* link = extForceInfo.link;
     link->f_ext() += extForceInfo.f;
     const Vector3 p = link->T() * extForceInfo.point;
@@ -2268,7 +2268,7 @@ void SimulatorItemImpl::setVirtualElasticString
         SimulationBody* simBody = self->findSimulationBody(bodyItem);
         if(simBody){
             {
-                std::unique_lock<std::mutex> lock(virtualElasticStringMutex);
+                std::lock_guard<std::mutex> lock(virtualElasticStringMutex);
                 Body* body = simBody->body();
                 VirtualElasticString& s = virtualElasticString;
                 s.link = body->link(link->index());
@@ -2300,7 +2300,7 @@ void SimulatorItem::clearVirtualElasticStrings()
 
 void SimulatorItemImpl::setVirtualElasticStringForce()
 {
-    std::unique_lock<std::mutex> lock(virtualElasticStringMutex);
+    std::lock_guard<std::mutex> lock(virtualElasticStringMutex);
     const VirtualElasticString& s = virtualElasticString;
     Link* link = s.link;
     Vector3 a = link->R() * s.point;

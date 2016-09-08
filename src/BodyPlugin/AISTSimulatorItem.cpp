@@ -596,7 +596,7 @@ void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position
 {
     if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {
-            std::unique_lock<std::mutex> lock(forcedBodyPositionMutex);
+            std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
             forcedPositionBody = static_cast<DyBody*>(simBody->body());
             forcedBodyPosition = T;
         }
@@ -615,7 +615,7 @@ bool AISTSimulatorItem::isForcedPositionActiveFor(BodyItem* bodyItem) const
     if(impl->forcedBodyPositionFunctionId){
         SimulationBody* simBody = const_cast<AISTSimulatorItem*>(this)->findSimulationBody(bodyItem);
         {
-            std::unique_lock<std::mutex> lock(impl->forcedBodyPositionMutex);
+            std::lock_guard<std::mutex> lock(impl->forcedBodyPositionMutex);
             if(impl->forcedPositionBody == static_cast<DyBody*>(simBody->body())){
                 isActive = true;
             }
@@ -636,7 +636,7 @@ void AISTSimulatorItem::clearForcedPositions()
 
 void AISTSimulatorItemImpl::doSetForcedPosition()
 {
-    std::unique_lock<std::mutex> lock(forcedBodyPositionMutex);
+    std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
     DyLink* rootLink = forcedPositionBody->rootLink();
     rootLink->setPosition(forcedBodyPosition);
     rootLink->v().setZero();

@@ -838,7 +838,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
         renderer->renderInCurrentThread(true);
         
         {
-            std::unique_lock<std::mutex> lock(queueMutex);
+            std::lock_guard<std::mutex> lock(queueMutex);
             renderer->isRenderingFinished = true;
         }
         queueCondition.notify_all();
@@ -880,7 +880,7 @@ void VisionRenderer::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
 void VisionRenderer::startConcurrentRendering()
 {
     {
-        std::unique_lock<std::mutex> lock(renderingMutex);
+        std::lock_guard<std::mutex> lock(renderingMutex);
         updateScene(true);
         isRenderingRequested = true;
     }
@@ -916,7 +916,7 @@ void VisionRenderer::concurrentRenderingLoop()
         storeResultToTmpDataBuffer();
     
         {
-            std::unique_lock<std::mutex> lock(renderingMutex);
+            std::lock_guard<std::mutex> lock(renderingMutex);
             isRenderingFinished = true;
         }
         renderingCondition.notify_all();
@@ -1236,7 +1236,7 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
 {
     if(useQueueThreadForAllSensors){
         {
-            std::unique_lock<std::mutex> lock(queueMutex);
+            std::lock_guard<std::mutex> lock(queueMutex);
             isQueueRenderingTerminationRequested = true;
         }
         queueCondition.notify_all();
@@ -1254,7 +1254,7 @@ VisionRenderer::~VisionRenderer()
 {
     if(simImpl->useThreadsForSensors){
         {
-            std::unique_lock<std::mutex> lock(renderingMutex);
+            std::lock_guard<std::mutex> lock(renderingMutex);
             isTerminationRequested = true;
         }
         renderingCondition.notify_all();

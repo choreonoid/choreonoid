@@ -737,7 +737,7 @@ bool MovieRecorderImpl::setupViewAndFilenameFormat()
         targetView->setGeometry(x, y, width, height);
     }
 
-    std::unique_lock<std::mutex> lock(imageQueueMutex);
+    std::lock_guard<std::mutex> lock(imageQueueMutex);
     capturedImages.clear();
     
     return true;
@@ -998,7 +998,7 @@ void MovieRecorderImpl::outputImages()
             string message = str(fmt(_("Saving an image to \"%1%\" failed.")) % filename);
             callLater(std::bind(&MovieRecorderImpl::onImageOutputFailed, this, message));
             {
-                std::unique_lock<std::mutex> lock(imageQueueMutex);
+                std::lock_guard<std::mutex> lock(imageQueueMutex);
                 capturedImages.clear();
             }
             imageQueueCondition.notify_all();
@@ -1025,7 +1025,7 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
         
         int numRemainingImages = 0;
         {
-            std::unique_lock<std::mutex> lock(imageQueueMutex);
+            std::lock_guard<std::mutex> lock(imageQueueMutex);
             numRemainingImages = capturedImages.size();
         }
         if(numRemainingImages > 1){
@@ -1035,13 +1035,13 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
             while(true){
                 int index;
                 {
-                    std::unique_lock<std::mutex> lock(imageQueueMutex);
+                    std::lock_guard<std::mutex> lock(imageQueueMutex);
                     index = numRemainingImages - capturedImages.size();
                 }
                 progress.setValue(index);
 
                 if(progress.wasCanceled()){
-                    std::unique_lock<std::mutex> lock(imageQueueMutex);
+                    std::lock_guard<std::mutex> lock(imageQueueMutex);
                     capturedImages.clear();
                     break;
                 }

@@ -189,7 +189,7 @@ bool VirtualJoystickViewImpl::onKeyStateChanged(int key, bool on)
         ButtonInfo& info = buttonInfo[p->second];
         button.setDown(on);
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::lock_guard<std::mutex> lock(mutex);
             keyValues[index] = on ? info.activeValue : 0.0;
         }
     }
@@ -214,7 +214,7 @@ bool VirtualJoystickViewImpl::readCurrentState()
     std::fill(axisPositions.begin(), axisPositions.end(), 0.0);
 
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
         for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
             ButtonInfo& info = buttonInfo[i];
             if(info.isAxis){
