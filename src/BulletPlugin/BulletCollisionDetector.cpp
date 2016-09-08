@@ -7,8 +7,6 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
 #include <boost/optional.hpp>
 #include <btBulletDynamicsCommon.h>
 #include <HACD/hacdHACD.h>
@@ -16,7 +14,6 @@
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -26,7 +23,7 @@ const bool useHACD = true;
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<BulletCollisionDetector>();
+    return std::make_shared<BulletCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -49,7 +46,7 @@ public :
     btTriangleMesh* trimesh;
     bool isStatic;
 };
-typedef boost::shared_ptr<GeometryEx> GeometryExPtr;
+typedef std::shared_ptr<GeometryEx> GeometryExPtr;
 
 GeometryEx::GeometryEx()
 {
@@ -108,7 +105,7 @@ public:
     void addMesh(GeometryEx* model);
     bool makeReady();
     void updatePosition(int geometryId, const Position& _position);
-    void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair);
 };
 }
@@ -134,7 +131,7 @@ const char* BulletCollisionDetector::name() const
 
 CollisionDetectorPtr BulletCollisionDetector::clone() const
 {
-    return boost::make_shared<BulletCollisionDetector>();
+    return std::make_shared<BulletCollisionDetector>();
 }
 
 
@@ -190,8 +187,8 @@ int BulletCollisionDetectorImpl::addGeometry(SgNode* geometry)
     const int index = models.size();
 
     if(geometry){
-        GeometryExPtr model =  boost::make_shared<GeometryEx>();
-        if(meshExtractor->extract(geometry, boost::bind(&BulletCollisionDetectorImpl::addMesh, this, model.get()))){
+        GeometryExPtr model =  std::make_shared<GeometryEx>();
+        if(meshExtractor->extract(geometry, std::bind(&BulletCollisionDetectorImpl::addMesh, this, model.get()))){
             if(!useHACD){
                 if(!model->vertices.empty()){
                     model->meshData = new btTriangleIndexVertexArray( model->triangles.size()/3, &model->triangles[0], sizeof(int)*3,
@@ -252,7 +249,7 @@ void BulletCollisionDetectorImpl::addMesh(GeometryEx* model)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        optional<Vector3> translation;
+        boost::optional<Vector3> translation;
         if(!meshExtractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
@@ -555,13 +552,13 @@ void BulletCollisionDetectorImpl::updatePosition(int geometryId, const Position&
 }
 
 
-void BulletCollisionDetector::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void BulletCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     impl->detectCollisions(callback);
 }
 
 
-void BulletCollisionDetectorImpl::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void BulletCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
     vector<Collision>& collisions = collisionPair.collisions;

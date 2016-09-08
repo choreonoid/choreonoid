@@ -8,15 +8,12 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
 #include <fcl/collision.h>
 #include <fcl/shape/geometric_shapes.h>
 #include <fcl/BVH/BVH_model.h>
 #include <boost/optional.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace fcl;
 using namespace cnoid;
 
@@ -51,7 +48,7 @@ CNOID_IMPLEMENT_PLUGIN_ENTRY(FCLPlugin);
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<FCLCollisionDetector>();
+    return std::make_shared<FCLCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -61,7 +58,7 @@ struct FactoryRegistration
     }
 } factoryRegistration;
 
-typedef boost::shared_ptr<CollisionObject> CollisionObjectPtr;
+typedef std::shared_ptr<CollisionObject> CollisionObjectPtr;
 typedef BVHModel<OBBRSS> MeshModel;
 typedef std::shared_ptr<MeshModel> MeshModelPtr;
 
@@ -78,7 +75,7 @@ public :
     vector<Triangle> tri_indices;
     bool isStatic;
 };
-typedef boost::shared_ptr<CollisionObjectEx> CollisionObjectExPtr;
+typedef std::shared_ptr<CollisionObjectEx> CollisionObjectExPtr;
 
 CollisionObjectEx::CollisionObjectEx()
 {
@@ -113,7 +110,7 @@ public:
     void addMesh(CollisionObjectEx* model);
     bool makeReady();
     void updatePosition(int geometryId, const Position& position);
-    void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectObjectCollisions(CollisionObject* object1, CollisionObject* object2, CollisionPair& collisionPair);
 
 private :
@@ -155,7 +152,7 @@ const char* FCLCollisionDetector::name() const
 
 CollisionDetectorPtr FCLCollisionDetector::clone() const
 {
-    return boost::make_shared<FCLCollisionDetector>();
+    return std::make_shared<FCLCollisionDetector>();
 }
 
         
@@ -185,15 +182,15 @@ int FCLCollisionDetectorImpl::addGeometry(SgNode* geometry)
     bool isValid = false;
 
     if(geometry){
-        CollisionObjectExPtr model =  boost::make_shared<CollisionObjectEx>();
-        if(meshExtractor->extract(geometry, boost::bind(&FCLCollisionDetectorImpl::addMesh, this, model.get()))){
+        CollisionObjectExPtr model =  std::make_shared<CollisionObjectEx>();
+        if(meshExtractor->extract(geometry, std::bind(&FCLCollisionDetectorImpl::addMesh, this, model.get()))){
             if(!model->points.empty()){
                 model->meshModel = std::make_shared<MeshModel>();
                 model->meshModel->beginModel();
                 model->meshModel->addSubModel(model->points, model->tri_indices);
                 model->meshModel->endModel();
                 CollisionObject* obj = new CollisionObject(model->meshModel);
-                model->meshObject = boost::shared_ptr<CollisionObject>(obj);
+                model->meshObject = std::shared_ptr<CollisionObject>(obj);
             }
             models.push_back(model);
             isValid = true;
@@ -261,28 +258,28 @@ void FCLCollisionDetectorImpl::addMesh(CollisionObjectEx* model)
                     const Vector3& s = mesh->primitive<SgMesh::Box>().size;
                     fcl::Box* box = new fcl::Box(s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
                     CollisionObject* obj = new CollisionObject(std::shared_ptr<CollisionGeometry>(box));
-                    model->primitiveObjects.push_back(boost::shared_ptr<CollisionObject>(obj));
+                    model->primitiveObjects.push_back(std::shared_ptr<CollisionObject>(obj));
                     created = true;
                     break; }
                 case SgMesh::SPHERE : {
                     double radius = mesh->primitive<SgMesh::Sphere>().radius;
                     fcl::Sphere* sphere = new fcl::Sphere(radius * scale.x());
                     CollisionObject* obj = new CollisionObject(std::shared_ptr<CollisionGeometry>(sphere));
-                    model->primitiveObjects.push_back(boost::shared_ptr<CollisionObject>(obj));
+                    model->primitiveObjects.push_back(std::shared_ptr<CollisionObject>(obj));
                     created = true;
                     break; }
                 case SgMesh::CYLINDER : {
                     SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
                     fcl::Cylinder* cylinder_ = new fcl::Cylinder(cylinder.radius * scale.x(), cylinder.height * scale.y());
                     CollisionObject* obj = new CollisionObject(std::shared_ptr<CollisionGeometry>(cylinder_));
-                    model->primitiveObjects.push_back(boost::shared_ptr<CollisionObject>(obj));
+                    model->primitiveObjects.push_back(std::shared_ptr<CollisionObject>(obj));
                     created = true;
                     break; }
                 case SgMesh::CONE : {
                     SgMesh::Cone cone = mesh->primitive<SgMesh::Cone>();
                     fcl::Cone* cone_ = new fcl::Cone(cone.radius * scale.x(), cone.height * scale.y());
                     CollisionObject* obj = new CollisionObject(std::shared_ptr<CollisionGeometry>(cone_));
-                    model->primitiveObjects.push_back(boost::shared_ptr<CollisionObject>(obj));
+                    model->primitiveObjects.push_back(std::shared_ptr<CollisionObject>(obj));
                     created = true;
                     break; }
                 default :
@@ -421,13 +418,13 @@ void FCLCollisionDetectorImpl::updatePosition(int geometryId, const Position& _p
 }
 
 
-void FCLCollisionDetector::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void FCLCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     impl->detectCollisions(callback);
 }
 
 
-void FCLCollisionDetectorImpl::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void FCLCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
     vector<Collision>& collisions = collisionPair.collisions;

@@ -17,8 +17,6 @@
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <btBulletDynamicsCommon.h>
 #include <HACD/hacdHACD.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
@@ -26,7 +24,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 #define DEBUG_OUT 0
@@ -235,7 +232,7 @@ void BulletLink::createGeometry()
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), boost::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
+        if(extractor->extract(link->collisionShape(), std::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
             if(!simImpl->useHACD){
                 if(!mixedPrimitiveMesh){
                     if(!vertices.empty()){
@@ -249,7 +246,7 @@ void BulletLink::createGeometry()
                             collisionShape = 0;
                             vertices.clear();
                             triangles.clear();
-                            extractor->extract(link->shape(), boost::bind(&BulletLink::addMesh, this, boost::ref(extractor), true));
+                            extractor->extract(link->shape(), std::bind(&BulletLink::addMesh, this, std::ref(extractor), true));
                         }
                     }
                 }
@@ -308,7 +305,7 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
         if(mesh->primitiveType() != SgMesh::MESH){
             bool doAddPrimitive = false;
             Vector3 scale;
-            optional<Vector3> translation;
+            boost::optional<Vector3> translation;
             if(!extractor->isCurrentScaled()){
                 scale.setOnes();
                 doAddPrimitive = true;

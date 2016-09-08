@@ -238,7 +238,6 @@ set(qtheaders
   InfoBar.h
   ItemTreeView.h
   SelectionListEditor.h
-  TextEditView.h
   TextEdit.h
   )
 
