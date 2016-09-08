@@ -37,7 +37,7 @@ void PushButton::initialize()
 
 void PushButton::onClicked(bool checked)
 {
-    sigClicked_(checked);
+    sigClicked_();
 }
 
 
@@ -125,7 +125,7 @@ void ToolButton::initialize()
 
 void ToolButton::onClicked(bool checked)
 {
-    sigClicked_(checked);
+    sigClicked_();
 }
 
 

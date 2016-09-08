@@ -23,7 +23,7 @@ public:
     PushButton(const QString& text, QWidget* parent = 0);
     PushButton(const QIcon& icon, const QString& text, QWidget* parent = 0);
 
-    SignalProxy<void(bool)> sigClicked() {
+    SignalProxy<void()> sigClicked() {
         return sigClicked_;
     }
     SignalProxy<void(bool)> sigToggled() {
@@ -35,7 +35,7 @@ private Q_SLOTS:
     void onToggled(bool checked);
 
 private:
-    Signal<void(bool)> sigClicked_;
+    Signal<void()> sigClicked_;
     Signal<void(bool)> sigToggled_;
 
     void initialize();
@@ -77,7 +77,7 @@ class CNOID_EXPORT ToolButton : public QToolButton
 public:
     ToolButton(QWidget* parent = 0);
 
-    SignalProxy<void(bool)> sigClicked() {
+    SignalProxy<void()> sigClicked() {
         return sigClicked_;
     }
     SignalProxy<void(bool)> sigToggled() {
@@ -89,7 +89,7 @@ private Q_SLOTS:
     void onToggled(bool checked);
 
 private:
-    Signal<void(bool)> sigClicked_;
+    Signal<void()> sigClicked_;
     Signal<void(bool)> sigToggled_;
 
     void initialize();
