@@ -32,7 +32,7 @@ bool loadBodyItem(BodyItem* item, const std::string& filename)
     
 AbstractBodyLoaderPtr sdfBodyLoaderFactory()
 {
-    return boost::make_shared<SDFBodyLoader>();
+    return make_shared<SDFBodyLoader>();
 }
 
 class SDFLoaderPlugin : public Plugin

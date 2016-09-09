@@ -5,6 +5,7 @@ project(choreonoid_sdfloader_plugin)
 set(target CnoidSDFLoaderPlugin)
 
 option(BUILD_SDFLOADER_PLUGIN "Building SDFLoaderPlugin" OFF)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
 option(ENABLE_GCC_FVISIBILITY_HIDDEN "Use the -fvisibility=hidden option when the sources are compiled" OFF)
 option(ENABLE_INSTALL_RPATH "Enable RPATH setting for installed binary files" OFF)
