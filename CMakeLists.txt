@@ -6,12 +6,6 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 include(FindPkgConfig)
 include(CheckIncludeFiles)
 
- 
-if(UNIX)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  add_definitions("-pthread")
-endif()
-
 project(Choreonoid)
 
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)
@@ -29,6 +23,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CNOID_DIR ${CMAKE_INSTALL_PREFIX})
 set(CNOID_SUBDIR choreonoid-${CNOID_VERSION})
 set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
+
+if(UNIX)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  add_definitions("-pthread")
+endif()
 
 if(WIN32)
   set(CNOID_HEADER_SUBDIR "include")
