@@ -2,12 +2,15 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <boost/python.hpp>
+#include <cnoid/PyUtil>
 #include <QObject>
 #include <QTimer>
 
-using namespace boost;
+namespace python = boost::python;
 using namespace boost::python;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(QObject)
 
 namespace {
 
@@ -44,7 +47,7 @@ void (QTimer::*QTimer_start2)(int) = &QTimer::start;
 
 BOOST_PYTHON_MODULE(QtCore)
 {
-    to_python_converter<QString, QString_to_python_str>();
+    python::to_python_converter<QString, QString_to_python_str>();
     QString_from_python_str();
     
     class_<QObject, QObject*, boost::noncopyable>("QObject")

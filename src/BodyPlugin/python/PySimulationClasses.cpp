@@ -14,6 +14,10 @@
 using namespace boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+//CNOID_PYTHON_DEFINE_GET_POINTER(SimulatorItem)
+CNOID_PYTHON_DEFINE_GET_POINTER(SimulationBar)
+
 namespace {
 
 BodyItemPtr SimulationBody_bodyItem(SimulationBody& self) { return self.bodyItem(); }
@@ -39,7 +43,6 @@ void AISTSimulatorItem_setFriction2(AISTSimulatorItem& self, Link* link1, Link* 
 
 }
 
-
 void exportSimulationClasses()
 {
     class_<SimulationBody, SimulationBodyPtr, bases<Referenced>, boost::noncopyable>("SimulationBody", no_init)
@@ -48,6 +51,9 @@ void exportSimulationClasses()
 
     implicitly_convertible<SimulationBodyPtr, ReferencedPtr>();
 
+    // The following code cannot be compiled with VC++2015 Update3
+#ifndef _MSC_VER
+    
     class_<SimulatorItem, SimulatorItemPtr, bases<Item>, boost::noncopyable>
         simulatorItemClass("SimulatorItem", no_init);
 
@@ -93,6 +99,10 @@ void exportSimulationClasses()
 
     implicitly_convertible<SimulatorItemPtr, ItemPtr>();
     PyItemList<SimulatorItem>("SimulatorItemList", simulatorItemClass);
+
+#ifdef _MSC_VER
+    register_ptr_to_python<SimulatorItemPtr>();
+#endif
 
     {
         scope aistSimulatorItemScope = 
@@ -155,6 +165,8 @@ void exportSimulationClasses()
     implicitly_convertible<GLVisionSimulatorItemPtr, SubSimulatorItemPtr>();
     PyItemList<GLVisionSimulatorItem>("GLVisionSimulatorItemList");
 
+#endif
+    
     {
         scope simulationScriptItemScope = 
             class_< SimulationScriptItem, SimulationScriptItemPtr, bases<ScriptItem>, boost::noncopyable >
@@ -186,8 +198,4 @@ void exportSimulationClasses()
         .def("stopSimulation", &SimulationBar::stopSimulation)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
-
-#ifdef _MSC_VER
-    register_ptr_to_python<SimulatorItemPtr>();
-#endif
 }

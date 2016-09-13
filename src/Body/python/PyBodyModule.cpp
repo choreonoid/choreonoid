@@ -15,6 +15,10 @@ using namespace boost;
 using namespace boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(Link)
+CNOID_PYTHON_DEFINE_GET_POINTER(Body)
+
 namespace
 {
 

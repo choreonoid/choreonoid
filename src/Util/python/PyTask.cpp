@@ -17,6 +17,11 @@ using namespace boost::python;
 namespace python = boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(TaskProc)
+CNOID_PYTHON_DEFINE_GET_POINTER(TaskMenu)
+CNOID_PYTHON_DEFINE_GET_POINTER(AbstractTaskSequencer)
+        
 namespace {
 
 void TaskProc_notifyCommandFinishTrue(TaskProc& self){

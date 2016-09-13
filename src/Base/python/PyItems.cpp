@@ -22,6 +22,10 @@ namespace python = boost::python;
 using namespace boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(Item)
+CNOID_PYTHON_DEFINE_GET_POINTER(RootItem)
+
 namespace {
 
 template<typename ItemType>
