@@ -143,7 +143,7 @@ public:
         rhs.px = 0;
     }
 
-    ref_ptr & operator=(ref_ptr&& rhs){
+    ref_ptr& operator=(ref_ptr&& rhs){
         ref_ptr(static_cast<ref_ptr &&>(rhs)).swap(*this);
         return *this;
     }
@@ -290,17 +290,15 @@ public:
         setCounter();
     }
 
+    weak_ref_ptr(weak_ref_ptr const & rhs) : px(rhs.lock().get()){
+        setCounter();
+    }
+    
     template<class Y>
     weak_ref_ptr& operator=(weak_ref_ptr<Y> const & rhs){
         px = rhs.lock().get();
         setCounter();
         return *this;
-    }
-        
-    template<class Y>
-    weak_ref_ptr(weak_ref_ptr<Y>&& rhs) : px(rhs.lock().get()), counter(rhs.counter){
-        rhs.px = 0;
-        rhs.counter = 0;
     }
 
     weak_ref_ptr(weak_ref_ptr&& rhs) : px(rhs.px), counter(rhs.counter){
