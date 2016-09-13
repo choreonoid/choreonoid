@@ -1080,8 +1080,8 @@ if(USE_EXTERNAL_YAML)
     link_directories(${LIBYAML_DIR}/lib)
   endif()
 else()
-  add_subdirectory(thirdparty/yaml-0.1.3)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.3/include)
+  add_subdirectory(thirdparty/yaml-0.1.7)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
 
 # irrxml
