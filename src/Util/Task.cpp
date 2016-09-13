@@ -6,6 +6,7 @@
 #include "Task.h"
 #include "AbstractTaskSequencer.h"
 #include "ValueTree.h"
+#include <algorithm>
 
 using namespace std;
 using namespace cnoid;

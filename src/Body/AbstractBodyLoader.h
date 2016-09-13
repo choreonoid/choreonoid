@@ -6,6 +6,7 @@
 #ifndef CNOID_BODY_ABSTRACT_BODY_LOADER_H
 #define CNOID_BODY_ABSTRACT_BODY_LOADER_H
 
+#include <string>
 #include <memory>
 #include <iosfwd>
 #include "exportdecl.h"

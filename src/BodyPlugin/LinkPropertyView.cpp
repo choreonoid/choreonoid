@@ -255,8 +255,6 @@ void LinkPropertyView::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Minus:
             impl->zoomFontSize(-1);
             return;
-        defaut:
-            break;
         }
     }
     View::keyPressEvent(event);

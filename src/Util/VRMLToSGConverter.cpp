@@ -1765,6 +1765,7 @@ SgNode* VRMLToSGConverterImpl::convertLightNode(VRMLLight* vlight)
     } else if(VRMLDirectionalLight* vDirectionalLight = dynamic_cast<VRMLDirectionalLight*>(vlight)){
         return createDirectionalLight(vDirectionalLight);
     }
+	return 0;
 }
 
 

@@ -82,9 +82,8 @@ public:
     
     typedef map<string, ClassInfoPtr> ClassInfoMap;
     
-    class Loader : public QObject
+    struct Loader : public QObject
     {
-    public:
         string typeId;
         string formatId;
         string caption;

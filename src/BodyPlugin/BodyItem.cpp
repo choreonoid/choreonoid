@@ -916,7 +916,7 @@ void BodyItemImpl::emitSigKinematicStateEdited()
 
 void BodyItem::enableCollisionDetection(bool on)
 {
-    enableCollisionDetection(on);
+    impl->enableCollisionDetection(on);
 }
 
 
@@ -933,7 +933,7 @@ bool BodyItemImpl::enableCollisionDetection(bool on)
 
 void BodyItem::enableSelfCollisionDetection(bool on)
 {
-    enableSelfCollisionDetection(on);
+    impl->enableSelfCollisionDetection(on);
 }
 
 
