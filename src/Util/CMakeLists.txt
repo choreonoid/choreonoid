@@ -136,7 +136,6 @@ set(headers
   EigenUtil.h
   EigenArchive.h
   Signal.h
-  SignalTemplate.h
   ConnectionSet.h
   GettextUtil.h
   Selection.h
