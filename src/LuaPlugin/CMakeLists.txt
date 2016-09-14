@@ -2,11 +2,15 @@
 # @author Shin'ichiro Nakaoka
 
 option(BUILD_LUA_PLUGIN "Building Lua Plugin" OFF)
-if(NOT BUILD_PYTHON_PLUGIN)
+if(NOT BUILD_LUA_PLUGIN)
   return()
 endif()
 
-pkg_check_modules(LUA lua5.2)
+pkg_check_modules(LUA lua5.3)
+if(NOT LUA_FOUND)
+  pkg_check_modules(LUA lua5.2)
+endif()
+
 include_directories(${LUA_INCLUDE_DIRS})
 
 #set(CMAKE_BUILD_TYPE Debug)
