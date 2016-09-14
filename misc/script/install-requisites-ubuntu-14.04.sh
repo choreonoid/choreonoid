@@ -31,4 +31,8 @@ libpulse-dev \
 libsndfile1-dev \
 python2.7-dev \
 python-numpy \
-uuid-dev
+uuid-dev \
+lua5.2 \
+liblua5.2-dev
+
+
