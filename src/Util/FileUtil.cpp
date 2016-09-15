@@ -222,7 +222,7 @@ std::string getExtension(const boost::filesystem::path& path)
 {
     string ext = filesystem::extension(path);
     if(!ext.empty()){
-        if(ext[0] = '.'){
+        if(ext[0] == '.'){
             ext = ext.substr(1);
         } else {
             ext.clear();

@@ -1104,6 +1104,9 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
     const Matrix4f Pinv = renderer->projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
+    const int cx = pixelWidth / 2;
+    const int cy = pixelHeight / 2;
+    const bool isOrganized = rangeCameraForRendering->isOrganized();
     Vector4f n;
     n[3] = 1.0f;
     points.clear();
@@ -1130,15 +1133,23 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
                     pixels[2] = colorSrc[2];
                     pixels += 3;
                 }
-            } else if(rangeCameraForRendering->isOrganized()){
+            } else if(isOrganized){
+                points.push_back(Vector3f());
+                Vector3f& p = points.back();
                 if(z <= 0.0f){
-                    points.push_back(Vector3f::Zero());
+                    p.z() = numeric_limits<float>::infinity();
                 } else {
-                    points.push_back(Vector3f());
-                    points.back() <<
-                        (x - pixelWidth / 2) * numeric_limits<float>::infinity(),
-                        (y - pixelWidth / 2) * numeric_limits<float>::infinity(),
-                        -numeric_limits<float>::infinity();
+                    p.z() = -numeric_limits<float>::infinity();
+                }
+                if(x == cx){
+                    p.x() = 0.0;
+                } else {
+                    p.x() = (x - cx) * numeric_limits<float>::infinity();
+                }
+                if(y == cy){
+                    p.y() = 0.0;
+                } else {
+                    p.y() = (y - cy) * numeric_limits<float>::infinity();
                 }
                 if(pixels){
                     pixels[0] = colorSrc[0];

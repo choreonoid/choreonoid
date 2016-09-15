@@ -78,12 +78,12 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "PROTO Segment [\n";
     out << "  field           SFVec3f     bboxCenter        0 0 0\n";
     out << "  field           SFVec3f     bboxSize          -1 -1 -1\n";
-    out << "  exposedField    SFVec3f     centerOutMass      0 0 0\n";
+    out << "  exposedField    SFVec3f     centerOfMass      0 0 0\n";
     out << "  exposedField    MFNode      children          [ ]\n";
     out << "  exposedField    SFNode      coord             NULL\n";
     out << "  exposedField    MFNode      displacers        [ ]\n";
     out << "  exposedField    SFFloat     mass              0\n";
-    out << "  exposedField    MFFloat     momentsOutInertia  [ 0 0 0 0 0 0 0 0 0 ]\n";
+    out << "  exposedField    MFFloat     momentsOfInertia  [ 0 0 0 0 0 0 0 0 0 ]\n";
     out << "  exposedField    SFString    name              \"\"\n";
     out << "  eventIn         MFNode      addChildren\n";
     out << "  eventIn         MFNode      removeChildren\n";
@@ -149,7 +149,8 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "PROTO VisionSensor [\n";
     out << "  exposedField SFVec3f    translation       0 0 0\n";
     out << "  exposedField SFRotation rotation          0 0 1 0\n";
-    out << "  exposedField SFFloat    fieldOutView       0.785398\n";
+    out << "  exposedField MFNode     children          [ ]\n";
+    out << "  exposedField SFFloat    fieldOfView       0.785398\n";
     out << "  exposedField SFString   name              \"\"\n";
     out << "  exposedField SFFloat    frontClipDistance 0.01\n";
     out << "  exposedField SFFloat    backClipDistance  10.0\n";
@@ -163,6 +164,7 @@ void VRMLBodyWriter::writeOpenHRPPROTOs()
     out << "  Transform {\n";
     out << "    rotation         IS rotation\n";
     out << "    translation      IS translation\n";
+    out << "    children         IS children\n";
     out << "  }\n";
     out << "}\n";
     out << "\n";
@@ -313,26 +315,56 @@ void VRMLBodyWriter::writeJointNode(VRMLNodePtr node)
     }
     out << indent << "jointType \"" << joint->jointType << "\"\n";
     if (joint->jointType != "free" && joint->jointType != "fixed") {
-        out << indent << "jointAxis " << joint->jointAxis << "\n";
-        out << indent << "llimit\n";
-        writeMFValues(joint->llimit, 1);
-        out << indent << "lvlimit\n";
-        writeMFValues(joint->lvlimit, 1);
-        out << indent << "ulimit\n";
-        writeMFValues(joint->ulimit, 1);
-        out << indent << "uvlimit\n";
-        writeMFValues(joint->uvlimit, 1);
+        if (joint->jointAxis != SFVec3f(0,0,1)){
+	    out << indent << "jointAxis " << joint->jointAxis << "\n";
+	}
+	if (!joint->llimit.empty()){
+	    out << indent << "llimit\n";
+	    writeMFValues(joint->llimit, 1);
+	}
+	if (!joint->lvlimit.empty()){
+	    out << indent << "lvlimit\n";
+	    writeMFValues(joint->lvlimit, 1);
+	}
+	if (!joint->ulimit.empty()){
+	    out << indent << "ulimit\n";
+	    writeMFValues(joint->ulimit, 1);
+	}
+	if (!joint->uvlimit.empty()){
+	    out << indent << "uvlimit\n";
+	    writeMFValues(joint->uvlimit, 1);
+	}
     }
-    out << indent << "gearRatio " << joint->gearRatio << "\n";
-    out << indent << "rotorInertia " << joint->rotorInertia << "\n";
-    out << indent << "rotorResistor " << joint->rotorResistor << "\n";
-    out << indent << "torqueConst " << joint->torqueConst << "\n";
-    out << indent << "encoderPulse " << joint->encoderPulse << "\n";
-    out << indent << "center " << joint->center << "\n";
-    out << indent << "rotation " << joint->rotation << "\n";
-    out << indent << "scale " << joint->scale << "\n";
-    out << indent << "scaleOrientation " << joint->scaleOrientation << "\n";
-    out << indent << "translation " << joint->translation << "\n";
+    if (joint->gearRatio != 1){
+        out << indent << "gearRatio " << joint->gearRatio << "\n";
+    }
+    if (joint->rotorInertia != 0){
+        out << indent << "rotorInertia " << joint->rotorInertia << "\n";
+    }
+    if (joint->rotorResistor != 0){
+        out << indent << "rotorResistor " << joint->rotorResistor << "\n";
+    }
+    if (joint->torqueConst != 1){
+        out << indent << "torqueConst " << joint->torqueConst << "\n";
+    }
+    if (joint->encoderPulse != 1){
+        out << indent << "encoderPulse " << joint->encoderPulse << "\n";
+    }
+    if (joint->center != SFVec3f::Zero()){
+        out << indent << "center " << joint->center << "\n";
+    }
+    if (joint->rotation.angle() != 0){
+        out << indent << "rotation " << joint->rotation << "\n";
+    }
+    if (joint->scale != SFVec3f(1,1,1)){
+        out << indent << "scale " << joint->scale << "\n";
+    }
+    if (joint->scaleOrientation.angle() != 0){
+        out << indent << "scaleOrientation " << joint->scaleOrientation << "\n";
+    }
+    if (joint->translation != SFVec3f::Zero()){
+        out << indent << "translation " << joint->translation << "\n";
+    }
 
     writeGroupFields(joint);
 
@@ -346,10 +378,19 @@ void VRMLBodyWriter::writeSegmentNode(VRMLNodePtr node)
 
     beginNode("Segment", segment);
 
-    out << indent << "mass " << segment->mass << "\n";
-    out << indent << "centerOfMass " << segment->centerOfMass << "\n";
-    out << indent << "momentsOfInertia\n";
-    writeMFValues(segment->momentsOfInertia, 3);
+    if (segment->mass != 0){
+        out << indent << "mass " << segment->mass << "\n";
+    }
+    if (segment->centerOfMass != SFVec3f::Zero()){
+        out << indent << "centerOfMass " << segment->centerOfMass << "\n";
+    }
+    for (unsigned int i=0; i<segment->momentsOfInertia.size(); i++){
+        if (segment->momentsOfInertia[i] != 0.0){
+	    out << indent << "momentsOfInertia\n";
+	    writeMFValues(segment->momentsOfInertia, 3);
+	    break;
+	}
+    }
 
     writeGroupFields(segment);
 
@@ -391,18 +432,38 @@ void VRMLBodyWriter::writeVisionSensorNode(VRMLNodePtr node)
 
     beginNode("VisionSensor", sensor);
 
-    out << indent << "rotation " << sensor->rotation << "\n";
-    out << indent << "translation " << sensor->translation << "\n";
+    if (sensor->rotation.angle() != 0){
+        out << indent << "rotation " << sensor->rotation << "\n";
+    }
+    if (sensor->translation != SFVec3f::Zero()){
+        out << indent << "translation " << sensor->translation << "\n";
+    }
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "type \"" << sensor->type << "\"\n";
-    out << indent << "width " << sensor->width << "\n";
-    out << indent << "height " << sensor->height << "\n";
-    out << indent << "frameRate " << sensor->frameRate << "\n";
-    out << indent << "fieldOfView " << sensor->fieldOfView << "\n";
-    out << indent << "frontClipDistance " << sensor->frontClipDistance << "\n";
-    out << indent << "backClipDistance " << sensor->backClipDistance << "\n";
+    if (sensor->type != "NONE"){
+        out << indent << "type \"" << sensor->type << "\"\n";
+    }
+    if (sensor->width != 320){
+        out << indent << "width " << sensor->width << "\n";
+    }
+    if (sensor->height != 240){
+        out << indent << "height " << sensor->height << "\n";
+    }
+    if (sensor->frameRate != 30){
+        out << indent << "frameRate " << sensor->frameRate << "\n";
+    }
+    if (sensor->fieldOfView != 0.785398){
+        out << indent << "fieldOfView " << sensor->fieldOfView << "\n";
+    }
+    if (sensor->frontClipDistance != 0.01){
+        out << indent << "frontClipDistance " << sensor->frontClipDistance << "\n";
+    }
+    if (sensor->backClipDistance != 10.0){
+        out << indent << "backClipDistance " << sensor->backClipDistance << "\n";
+    }
+
+    writeGroupFields(sensor);
 
     endNode();
 }
@@ -414,13 +475,21 @@ void VRMLBodyWriter::writeForceSensorNode(VRMLNodePtr node)
 
     beginNode("ForceSensor", sensor);
 
-    out << indent << "rotation " << sensor->rotation << "\n";
-    out << indent << "translation " << sensor->translation << "\n";
+    if (sensor->rotation.angle() != 0){
+        out << indent << "rotation " << sensor->rotation << "\n";
+    }
+    if (sensor->translation != SFVec3f::Zero()){
+        out << indent << "translation " << sensor->translation << "\n";
+    }
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "maxForce " << sensor->maxForce << "\n";
-    out << indent << "maxTorque " << sensor->maxTorque << "\n";
+    if (sensor->maxForce != SFVec3f(-1,-1,-1)){
+        out << indent << "maxForce " << sensor->maxForce << "\n";
+    }
+    if (sensor->maxTorque != SFVec3f(-1,-1,-1)){
+        out << indent << "maxTorque " << sensor->maxTorque << "\n";
+    }
 
     endNode();
 }
@@ -432,12 +501,18 @@ void VRMLBodyWriter::writeGyroNode(VRMLNodePtr node)
 
     beginNode("Gyro", sensor);
 
-    out << indent << "rotation " << sensor->rotation << "\n";
-    out << indent << "translation " << sensor->translation << "\n";
+    if (sensor->rotation.angle() != 0){
+        out << indent << "rotation " << sensor->rotation << "\n";
+    }
+    if (sensor->translation != SFVec3f::Zero()){
+        out << indent << "translation " << sensor->translation << "\n";
+    }
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "maxAngularVelocity " << sensor->maxAngularVelocity << "\n";
+    if (sensor->maxAngularVelocity != SFVec3f(-1,-1,-1)){
+        out << indent << "maxAngularVelocity " << sensor->maxAngularVelocity << "\n";
+    }
 
     endNode();
 }
@@ -449,12 +524,18 @@ void VRMLBodyWriter::writeAccelerationSensorNode(VRMLNodePtr node)
 
     beginNode("AccelerationSensor", sensor);
 
-    out << indent << "rotation " << sensor->rotation << "\n";
-    out << indent << "translation " << sensor->translation << "\n";
+    if (sensor->rotation.angle() != 0){
+        out << indent << "rotation " << sensor->rotation << "\n";
+    }
+    if (sensor->translation != SFVec3f::Zero()){
+        out << indent << "translation " << sensor->translation << "\n";
+    }
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "maxAcceleration " << sensor->maxAcceleration << "\n";
+    if (sensor->maxAcceleration != SFVec3f(-1,-1,-1)){
+        out << indent << "maxAcceleration " << sensor->maxAcceleration << "\n";
+    }
 
     endNode();
 }
@@ -466,16 +547,32 @@ void VRMLBodyWriter::writeRangeSensorNode(VRMLNodePtr node)
 
     beginNode("RangeSensor", sensor);
 
-    out << indent << "rotation " << sensor->rotation << "\n";
-    out << indent << "translation " << sensor->translation << "\n";
+    if (sensor->rotation.angle() != 0){
+        out << indent << "rotation " << sensor->rotation << "\n";
+    }
+    if (sensor->translation != SFVec3f::Zero()){
+        out << indent << "translation " << sensor->translation << "\n";
+    }
     if(sensor->sensorId >= 0){
         out << indent << "sensorId " << sensor->sensorId << "\n";
     }
-    out << indent << "scanAngle " << sensor->scanAngle << "\n";
-    out << indent << "scanStep " << sensor->scanStep << "\n";
-    out << indent << "scanRate " << sensor->scanRate << "\n";
-    out << indent << "minDistance " << sensor->minDistance << "\n";
-    out << indent << "maxDistance " << sensor->maxDistance << "\n";
+    if (sensor->scanAngle != 3.14159){
+        out << indent << "scanAngle " << sensor->scanAngle << "\n";
+    }
+    if (sensor->scanStep != 0.1){
+        out << indent << "scanStep " << sensor->scanStep << "\n";
+    }
+    if (sensor->scanRate != 10){
+        out << indent << "scanRate " << sensor->scanRate << "\n";
+    }
+    if (sensor->minDistance != 0.01){
+        out << indent << "minDistance " << sensor->minDistance << "\n";
+    }
+    if (sensor->maxDistance != 100){
+        out << indent << "maxDistance " << sensor->maxDistance << "\n";
+    }
+
+    writeGroupFields(sensor);
 
     endNode();
 }
