@@ -14,6 +14,13 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+const char* EOFMARK = "<eof>";
+const size_t EOFMARK_SIZE = (sizeof(EOFMARK) / sizeof(char) - 1);
+
+}
+
 namespace cnoid {
     
 class LuaConsoleViewImpl : public QPlainTextEdit
@@ -24,7 +31,7 @@ public:
     lua_State* luaState;
 
     int inputColumnOffset;
-    QString prompt;
+    QString chunk;
 
     LuaConsoleViewImpl(LuaConsoleView* self);
     ~LuaConsoleViewImpl();
@@ -34,6 +41,7 @@ public:
     void putPrompt();
     QString getInputString();
     void execCommand();
+    void stackDump();
 };
 
 }
@@ -100,7 +108,6 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     
     putln(LUA_COPYRIGHT);
 
-    prompt = "> ";
     putPrompt();
 }
 
@@ -223,7 +230,12 @@ void LuaConsoleViewImpl::putln(const QString& message)
 
 void LuaConsoleViewImpl::putPrompt()
 {
-    put(prompt);
+    if(chunk.isEmpty()){
+        put("> ");
+    } else {
+        put(">> ");
+    }        
+        
     inputColumnOffset = textCursor().columnNumber();
 }
 
@@ -239,19 +251,96 @@ QString LuaConsoleViewImpl::getInputString()
 
 void LuaConsoleViewImpl::execCommand()
 {
-    auto buff = getInputString().toUtf8();
+    ostream& os = mvout();
     
+    bool isFirstLine = chunk.isEmpty();
+    if(!isFirstLine){
+        chunk.append("\n");
+    }
+    chunk.append(getInputString());
+
     put("\n"); // This must be done after getInputString().
 
-    int result = luaL_loadbuffer(luaState, buff.data(), buff.size(), "console");
-    if(result == LUA_OK){
-        result = lua_pcall(luaState, 0, 0, 0);
+    int status = -1;
+
+    bool isIncomplete = true;
+    
+    if(isFirstLine){
+        QString retline = QString("return %1;").arg(chunk);
+        auto buff = retline.toUtf8();
+        status = luaL_loadbuffer(luaState, buff.data(), buff.size(), "console");
+        if(status == LUA_OK){
+            isIncomplete = false;
+        } else {
+            lua_pop(luaState, 1);
+        }
     }
-    if(result != LUA_OK){
-        put(lua_tostring(luaState, -1));
-        put("\n");
-        lua_pop(luaState, 1);
+
+    if(isIncomplete){
+        auto buff = chunk.toUtf8();
+        status = luaL_loadbuffer(luaState, buff.data(), buff.size(), "console");
+        if(status == LUA_OK){
+            isIncomplete = false;
+        } else if(status == LUA_ERRSYNTAX) {
+            size_t lmsg;
+            const char* msg = lua_tolstring(luaState, -1, &lmsg);
+            if (lmsg >= EOFMARK_SIZE && strcmp(msg + lmsg - EOFMARK_SIZE, EOFMARK) == 0) {
+                lua_pop(luaState, 1);
+                isIncomplete = true;
+            } else {
+                isIncomplete = false;
+            }
+        }
+    }
+
+    if(!isIncomplete){
+
+        if(status != LUA_OK){
+            put(lua_tostring(luaState, -1));
+            put("\n");
+            lua_pop(luaState, 1);
+        } else {
+            //status = docall(luaState, 0, LUA_MULTRET);
+            status = lua_pcall(luaState, 0, 0, 0);
+        }
+
+        if(status != LUA_OK){
+            put(lua_tostring(luaState, -1));
+            put("\n");
+            lua_pop(luaState, 1);
+        }
+
+        chunk.clear();
     }
         
     putPrompt();
+}
+
+
+void LuaConsoleViewImpl::stackDump()
+{
+    int top = lua_gettop(luaState);
+    for(int i=0; i <= top; ++i){
+        int t = lua_type(luaState, i);
+        switch(t){
+        case LUA_TSTRING: {
+            mvout() << "'" << lua_tostring(luaState, i) << "'";
+            break;
+        }
+        case LUA_TBOOLEAN: {
+            mvout() << (lua_toboolean(luaState, i) ? "true" : "false");
+            break;
+        }
+        case LUA_TNUMBER: {
+            mvout() << lua_tonumber(luaState, i);
+            break;
+        }
+        default: {
+            mvout() << lua_typename(luaState, t);
+            break;
+        }
+        }
+        mvout() << "   ";
+    }
+    mvout() << endl;
 }
