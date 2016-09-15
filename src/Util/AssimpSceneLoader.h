@@ -13,6 +13,7 @@ class CNOID_EXPORT AssimpSceneLoader : public AbstractSceneLoader
 public:
     AssimpSceneLoader();
     ~AssimpSceneLoader();
+    void setMessageSink(std::ostream& os);
     virtual const char* format() const;
     virtual SgNode* load(const std::string& fileName);
 

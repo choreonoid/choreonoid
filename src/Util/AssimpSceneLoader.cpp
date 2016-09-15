@@ -1,14 +1,20 @@
 #include "AssimpSceneLoader.h"
 #include "SceneDrawables.h"
+#include "FileUtil.h"
+#include "ImageIO.h"
+#include "Exception.h"
+#include "NullOut.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
+#include <boost/filesystem.hpp>
 #include <iostream>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
+using namespace boost;
 using namespace Assimp;
 
 namespace cnoid{
@@ -16,18 +22,29 @@ namespace cnoid{
 class AssimpSceneLoaderImpl
 {
 public:
-    AssimpSceneLoaderImpl(){ };
+    ostream* os_;
+    ostream& os() { return *os_; }
+    AssimpSceneLoaderImpl();
     SgNode* load(const std::string& fileName);
     SgPosTransform* convertAinode(aiNode* ainode);
     SgShape* convertAiMesh(unsigned int);
     SgMaterial* convertAiMaterial(unsigned int);
+    SgTexture* convertAiTexture(unsigned int index);
+    void clear();
 
 private:
+    filesystem::path directoryPath;
     const aiScene* scene;
+    ImageIO imageIO;
+
     typedef map<unsigned int, SgShape*> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
     typedef map<unsigned int, SgMaterial*> AiIndexToSgMaterialMap;
     AiIndexToSgMaterialMap  aiIndexToSgMaterialMap;
+    typedef map<unsigned int, SgTexture*> AiIndexToSgTextureMap;
+    AiIndexToSgTextureMap  aiIndexToSgTextureMap;
+    typedef map<string, SgImage*> ImagePathToSgImageMap;
+    ImagePathToSgImageMap imagePathToSgImageMap;
 };
 
 }
@@ -44,9 +61,22 @@ AssimpSceneLoader::~AssimpSceneLoader()
 }
 
 
+AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
+{
+    imageIO.setUpsideDown(true);
+    os_ = &nullout();
+}
+
+
 const char* AssimpSceneLoader::format() const
 {
     return "assimp";
+}
+
+
+void AssimpSceneLoader::setMessageSink(std::ostream& os)
+{
+    impl->os_ = &os;
 }
 
 
@@ -56,8 +86,19 @@ SgNode* AssimpSceneLoader::load(const std::string& fileName)
 }
 
 
+void AssimpSceneLoaderImpl::clear()
+{
+    aiIndexToSgShapeMap.clear();
+    aiIndexToSgMaterialMap.clear();
+    aiIndexToSgTextureMap.clear();
+    imagePathToSgImageMap.clear();
+}
+
+
 SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
 {
+    clear();
+
     Importer importer;
 
     scene = importer.ReadFile( fileName,
@@ -70,9 +111,12 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
 
     if( !scene )
     {
-        cout << aiGetErrorString() << endl;
+        os() << importer.GetErrorString() << endl;
         return 0;
     }
+
+    filesystem::path path(fileName);
+    directoryPath = path.remove_filename();
 
     SgPosTransform* transform = convertAinode(scene->mRootNode);
 
@@ -119,18 +163,23 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
         return p->second;
     }
 
-    SgShape* shape = new SgShape();
+    SgShape* shape = 0;
 
     aiMesh* aimesh = scene->mMeshes[index];
     if(aimesh->HasFaces()){
+        shape = new SgShape();
         SgVertexArray* vertices = new SgVertexArray;
         SgNormalArray* normal = new SgNormalArray;
         SgTexCoordArray* texCoord = 0;
         if(aimesh->HasTextureCoords(0)){
             texCoord = new SgTexCoordArray;
         }
-        SgMesh* mesh = new SgMesh;
+        SgColorArray* colors = 0;
+        if(aimesh->HasVertexColors(0)){
+            colors = new SgColorArray;
+        }
 
+        SgMesh* mesh = new SgMesh;
         for (unsigned int i = 0 ; i < aimesh->mNumVertices ; i++) {
             const aiVector3D& pos = aimesh->mVertices[i];
             const aiVector3D& n_ = aimesh->mNormals[i];
@@ -140,11 +189,17 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
                 const aiVector3D& tc_ = aimesh->mTextureCoords[0][i];
                 texCoord->push_back(Vector2f(tc_.x, tc_.y));
             }
+            if(colors){
+                const aiColor4D& co = aimesh->mColors[0][i];
+                colors->push_back(Vector3f(co.r, co.g, co.b));
+            }
         }
         mesh->setVertices(vertices);
         mesh->setNormals(normal);
         if(texCoord)
             mesh->setTexCoords(texCoord);
+        if(colors)
+            mesh->setColors(colors);
 
         for (unsigned int i = 0 ; i < aimesh->mNumFaces ; i++) {
             const aiFace& face = aimesh->mFaces[i];
@@ -152,14 +207,17 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
         }
 
         shape->setMesh(mesh);
+
+        SgMaterial* material = convertAiMaterial(aimesh->mMaterialIndex);
+        shape->setMaterial(material);
+
+        SgTexture* texture = convertAiTexture(aimesh->mMaterialIndex);
+        if(texture)
+            shape->setTexture(texture);
     }
     
-    SgMaterial* material = convertAiMaterial(aimesh->mMaterialIndex);
-    shape->setMaterial(material);
-
-    //SgTexture
-
     aiIndexToSgShapeMap[index] = shape;
+
     return shape;
 }
 
@@ -190,19 +248,66 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_SHININESS, w)){
         material->setShininess(w);
     }
-
-    // mumumu?
     if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
-        float c = (color.r+color.g+color.b)/diffuse;
-        material->setAmbientIntensity(c);   
+        float c = diffuse==0? 0 : (color.r+color.g+color.b)/diffuse;
+        if(c>1)
+            c=1;
+        material->setAmbientIntensity(c);
     }
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_TRANSPARENT, color)){
-        float c = (color.r + color.g + color.b) / diffuse;
-        material->setTransparency(c);
+    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_OPACITY, w)){
+        material->setTransparency(1-w);
     }
 
     aiIndexToSgMaterialMap[index] = material;
 
     return material;
+
+}
+
+
+SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
+{
+    AiIndexToSgTextureMap::iterator p = aiIndexToSgTextureMap.find(index);
+    if (p != aiIndexToSgTextureMap.end()){
+        return p->second;
+    }
+
+    SgTexture* texture = 0;
+    aiMaterial* aimaterial = scene->mMaterials[index];
+
+    if (aimaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+        aiString path;
+        if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+            filesystem::path filepath(path.data);
+            if(!checkAbsolute(filepath)){
+                filepath = directoryPath / filepath;
+                filepath.normalize();
+            }
+            string textureFile = getAbsolutePathString(filepath);
+
+            SgImage* image=0;
+            ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(textureFile);
+            if(p != imagePathToSgImageMap.end()){
+                image = p->second;
+            } else {
+                try {
+                    image = new SgImage;
+                    imageIO.load(image->image(), textureFile);
+                    imagePathToSgImageMap[textureFile] = image;
+                } catch(const exception_base& ex){
+                    os() << *boost::get_error_info<error_info_message>(ex) << endl;
+                    image = 0;
+                }
+            }
+            if(image){
+                texture = new SgTexture;
+                texture->setImage(image);
+            }
+        }
+    }
+
+    aiIndexToSgTextureMap[index] = texture;
+
+    return texture;
 
 }

@@ -284,6 +284,7 @@ const char* YAMLBodyLoader::format() const
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->assimpLoader.setMessageSink(os);
 }
 
 
@@ -626,20 +627,21 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             filepath = directoryPath / filepath;
             filepath.normalize();
         }
-        if (0){
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
+        if(filepath.extension() == ".wrl"){
+            vrmlParser.load(getAbsolutePathString(filepath));
+            while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+                SgNodePtr node = sgConverter.convert(vrmlNode);
+                if(node){
+                    shape->addChild(node);
+                    hasShape = true;
+                }
+            }
+        } else {
+            SgNode* node = assimpLoader.load(getAbsolutePathString(filepath));
+            if (node){
                 shape->addChild(node);
                 hasShape = true;
             }
-        }
-        }
-        SgNode* node = assimpLoader.load(getAbsolutePathString(filepath));
-        if (node){
-            shape->addChild(node);
-            hasShape = true;
         }
     }
 
