@@ -9,17 +9,11 @@
 #include <QBoxLayout>
 #include <QTextBlock>
 #include <lua.hpp>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-const char* EOFMARK = "<eof>";
-const size_t EOFMARK_SIZE = (sizeof(EOFMARK) / sizeof(char) - 1);
-
-}
 
 namespace cnoid {
     
@@ -27,9 +21,7 @@ class LuaConsoleViewImpl : public QPlainTextEdit
 {
 public:
     LuaConsoleView* self;
-
-    lua_State* luaState;
-
+    lua_State* L;
     int inputColumnOffset;
     QString chunk;
 
@@ -40,7 +32,8 @@ public:
     void putln(const QString& message);
     void putPrompt();
     QString getInputString();
-    void execCommand();
+    void printResults();
+    void fixLine();
     void stackDump();
 };
 
@@ -97,12 +90,12 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     hbox->addWidget(this);
     self->setLayout(hbox);
 
-    luaState = luaL_newstate();
-    luaL_openlibs(luaState);
+    L = luaL_newstate();
+    luaL_openlibs(L);
 
-    lua_getglobal(luaState, "_G");
-    lua_register(luaState, "print", print_to_console);
-    lua_pop(luaState, 1);
+    lua_getglobal(L, "_G");
+    lua_register(L, "print", print_to_console);
+    lua_pop(L, 1);
 
     inputColumnOffset = 0;
     
@@ -120,7 +113,7 @@ LuaConsoleView::~LuaConsoleView()
 
 LuaConsoleViewImpl::~LuaConsoleViewImpl()
 {
-    lua_close(luaState);
+    lua_close(L);
 }
 
 
@@ -199,7 +192,7 @@ void LuaConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         break;
         
     case Qt::Key_Return:
-        execCommand();
+        fixLine();
         done = true;
         break;
         
@@ -224,7 +217,6 @@ void LuaConsoleViewImpl::put(const QString& message)
 void LuaConsoleViewImpl::putln(const QString& message)
 {
     put(message + "\n");
-    MessageView::instance()->flush();
 }
 
 
@@ -235,7 +227,6 @@ void LuaConsoleViewImpl::putPrompt()
     } else {
         put(">> ");
     }        
-        
     inputColumnOffset = textCursor().columnNumber();
 }
 
@@ -249,7 +240,24 @@ QString LuaConsoleViewImpl::getInputString()
 }
 
 
-void LuaConsoleViewImpl::execCommand()
+/*
+** Prints (calling the Lua 'print' function) any values on the stack
+*/
+void LuaConsoleViewImpl::printResults()
+{
+    int n = lua_gettop(L);
+    if(n > 0){  /* any result to be printed? */
+        luaL_checkstack(L, LUA_MINSTACK, "too many results to print");
+        lua_getglobal(L, "print");
+        lua_insert(L, 1);
+        if(lua_pcall(L, n, 0, 0) != LUA_OK){
+            putln(lua_pushfstring(L, "error calling 'print' (%s)", lua_tostring(L, -1)));
+        }
+    }
+}
+
+
+void LuaConsoleViewImpl::fixLine()
 {
     ostream& os = mvout();
     
@@ -268,24 +276,24 @@ void LuaConsoleViewImpl::execCommand()
     if(isFirstLine){
         QString retline = QString("return %1;").arg(chunk);
         auto buff = retline.toUtf8();
-        status = luaL_loadbuffer(luaState, buff.data(), buff.size(), "console");
+        status = luaL_loadbuffer(L, buff.data(), buff.size(), "=console");
         if(status == LUA_OK){
             isIncomplete = false;
         } else {
-            lua_pop(luaState, 1);
+            lua_pop(L, 1);
         }
     }
 
     if(isIncomplete){
         auto buff = chunk.toUtf8();
-        status = luaL_loadbuffer(luaState, buff.data(), buff.size(), "console");
+        status = luaL_loadbuffer(L, buff.data(), buff.size(), "=console");
         if(status == LUA_OK){
             isIncomplete = false;
         } else if(status == LUA_ERRSYNTAX) {
-            size_t lmsg;
-            const char* msg = lua_tolstring(luaState, -1, &lmsg);
-            if (lmsg >= EOFMARK_SIZE && strcmp(msg + lmsg - EOFMARK_SIZE, EOFMARK) == 0) {
-                lua_pop(luaState, 1);
+            const string msg(lua_tostring(L, -1));
+            static const std::regex eofmark(".*<eof>");
+            if(std::regex_match(msg, eofmark)){
+                lua_pop(L, 1);
                 isIncomplete = true;
             } else {
                 isIncomplete = false;
@@ -294,22 +302,15 @@ void LuaConsoleViewImpl::execCommand()
     }
 
     if(!isIncomplete){
-
-        if(status != LUA_OK){
-            put(lua_tostring(luaState, -1));
-            put("\n");
-            lua_pop(luaState, 1);
+        if(status == LUA_OK){
+            status = lua_pcall(L, 0, LUA_MULTRET, 0);
+        }
+        if(status == LUA_OK){
+            printResults();
         } else {
-            //status = docall(luaState, 0, LUA_MULTRET);
-            status = lua_pcall(luaState, 0, 0, 0);
+            putln(lua_tostring(L, -1));
+            lua_pop(L, 1);
         }
-
-        if(status != LUA_OK){
-            put(lua_tostring(luaState, -1));
-            put("\n");
-            lua_pop(luaState, 1);
-        }
-
         chunk.clear();
     }
         
@@ -319,24 +320,24 @@ void LuaConsoleViewImpl::execCommand()
 
 void LuaConsoleViewImpl::stackDump()
 {
-    int top = lua_gettop(luaState);
+    int top = lua_gettop(L);
     for(int i=0; i <= top; ++i){
-        int t = lua_type(luaState, i);
+        int t = lua_type(L, i);
         switch(t){
         case LUA_TSTRING: {
-            mvout() << "'" << lua_tostring(luaState, i) << "'";
+            mvout() << "'" << lua_tostring(L, i) << "'";
             break;
         }
         case LUA_TBOOLEAN: {
-            mvout() << (lua_toboolean(luaState, i) ? "true" : "false");
+            mvout() << (lua_toboolean(L, i) ? "true" : "false");
             break;
         }
         case LUA_TNUMBER: {
-            mvout() << lua_tonumber(luaState, i);
+            mvout() << lua_tonumber(L, i);
             break;
         }
         default: {
-            mvout() << lua_typename(luaState, t);
+            mvout() << lua_typename(L, t);
             break;
         }
         }
