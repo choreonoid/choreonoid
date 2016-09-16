@@ -152,16 +152,10 @@ set(headers
 
 include_directories(${IRRXML_INCLUDE_DIRS})
 
-if(UNIX)
-  pkg_check_modules(ASSIMP QUIET assimp)
-  if(${ASSIMP_FOUND})
-    set(sources ${sources} AssimpSceneLoader.cpp)
-    set(headers ${headers} AssimpSceneLoader.h)
-  endif()
+if(${ASSIMP_FOUND})
+  set(sources ${sources} AssimpSceneLoader.cpp)
+  set(headers ${headers} AssimpSceneLoader.h)
 endif()
-
-
-
 
 set(target CnoidUtil)
 make_gettext_mofiles(${target} mofiles)
@@ -173,11 +167,8 @@ if(UNIX)
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
-
   if(${ASSIMP_FOUND})
     set(libraries ${libraries} ${ASSIMP_LIBRARIES})
-    include_directories(${ASSIMP_INCLUDEDIR})
-    link_directories(${ASSIMP_LIBDIR})
   endif()
 
   if(APPLE)
@@ -194,9 +185,12 @@ elseif(MSVC)
   else()
     set(libraries ${libraries} yaml)
   endif()
+  if(${ASSIMP_FOUND})
+    set(libraries ${libraries} assimp)
+  endif()
+
   target_link_libraries(${target} ${libraries})
 endif()
-
 
 apply_common_setting_for_library(${target} "${headers}")
 
