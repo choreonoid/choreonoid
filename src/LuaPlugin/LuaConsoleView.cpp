@@ -15,6 +15,12 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+const unsigned int HISTORY_SIZE = 100;
+
+}
+
 namespace cnoid {
     
 class LuaConsoleViewImpl : public QPlainTextEdit
@@ -24,6 +30,10 @@ public:
     lua_State* L;
     int inputColumnOffset;
     QString chunk;
+    std::list<QString>::iterator histIter;
+    std::list<QString> history;
+    std::vector<string> splitStringVec;
+    std::vector<string> keywords;
 
     LuaConsoleViewImpl(LuaConsoleView* self);
     ~LuaConsoleViewImpl();
@@ -32,9 +42,13 @@ public:
     void putln(const QString& message);
     void putPrompt();
     QString getInputString();
+    void setInputString(const QString& command);
     void printResults();
     void luaPrint(lua_State* L);
     void fixLine();
+    void addToHistory(const QString& command);
+    QString getPrevHistoryEntry();
+    QString getNextHistoryEntry();
     void stackDump();
 };
 
@@ -96,6 +110,8 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     lua_setglobal(L, ConsoleInstanceVariableName);
 
     inputColumnOffset = 0;
+
+    histIter = history.end();
     
     putln(LUA_COPYRIGHT);
 
@@ -160,7 +176,7 @@ void LuaConsoleViewImpl::keyPressEvent(QKeyEvent* event)
             break;
         }
     case Qt::Key_Up:
-        //setInputString(getPrevHistoryEntry());
+        setInputString(getPrevHistoryEntry());
         done = true;
         break;
         
@@ -169,7 +185,7 @@ void LuaConsoleViewImpl::keyPressEvent(QKeyEvent* event)
             break;
         }
     case Qt::Key_Down:
-        //setInputString(getNextHistoryEntry());
+        setInputString(getNextHistoryEntry());
         done = true;
         break;
         
@@ -238,6 +254,22 @@ QString LuaConsoleViewImpl::getInputString()
 }
 
 
+void LuaConsoleViewImpl::setInputString(const QString& command)
+{
+    if(getInputString() == command){
+        return;
+    }
+
+    QTextCursor cursor = textCursor();
+    cursor.movePosition(QTextCursor::End);
+    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, inputColumnOffset);
+    cursor.removeSelectedText();
+    cursor.insertText(command);
+    moveCursor(QTextCursor::End);
+}
+
+
 /*
 ** Prints (calling the Lua 'print' function) any values on the stack
 */
@@ -277,7 +309,9 @@ void LuaConsoleViewImpl::fixLine()
     if(!isFirstLine){
         chunk.append("\n");
     }
-    chunk.append(getInputString());
+    QString line = getInputString();
+    chunk.append(line);
+    addToHistory(line);
 
     put("\n"); // This must be done after getInputString().
 
@@ -327,6 +361,46 @@ void LuaConsoleViewImpl::fixLine()
     }
         
     putPrompt();
+}
+
+
+void LuaConsoleViewImpl::addToHistory(const QString& command)
+{
+    if(!command.isEmpty()){
+        if(history.empty() || history.back() != command){
+            if(HISTORY_SIZE <= history.size()){
+                history.pop_front();
+            }
+            history.push_back(command);
+        }
+        histIter = history.end();
+    }
+}
+
+
+QString LuaConsoleViewImpl::getPrevHistoryEntry()
+{
+    if(!history.empty()){
+        if(histIter != history.begin()){
+            --histIter;
+        }
+        return *histIter;
+    }
+    return QString();
+}
+
+
+QString LuaConsoleViewImpl::getNextHistoryEntry()
+{
+    if(!history.empty()){
+        if(histIter != history.end()){
+            ++histIter;
+            if(histIter != history.end()){
+                return *histIter;
+            }
+        }
+    }
+    return QString();
 }
 
 
