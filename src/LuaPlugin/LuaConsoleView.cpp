@@ -44,7 +44,7 @@ public:
     QString getInputString();
     void setInputString(const QString& command);
     void printResults();
-    void luaPrint(lua_State* L);
+    int luaPrint(lua_State* L);
     void fixLine();
     void addToHistory(const QString& command);
     QString getPrevHistoryEntry();
@@ -61,13 +61,16 @@ const char* ConsoleInstanceVariableName = "cnoid_lua_console_view";
 
 int print_to_console(lua_State* L)
 {
+    int result = 0;
     lua_getglobal(L, ConsoleInstanceVariableName);
     if(lua_islightuserdata(L, -1)){
         LuaConsoleViewImpl* view = (LuaConsoleViewImpl*)lua_touserdata(L, -1);
-        view->luaPrint(L);
+        lua_pop(L, 1);
+        result = view->luaPrint(L);
     } else {
         lua_pop(L, 1);
     }
+    return result;
 }
 
 }
@@ -270,9 +273,6 @@ void LuaConsoleViewImpl::setInputString(const QString& command)
 }
 
 
-/*
-** Prints (calling the Lua 'print' function) any values on the stack
-*/
 void LuaConsoleViewImpl::printResults()
 {
     int n = lua_gettop(L);
@@ -287,17 +287,28 @@ void LuaConsoleViewImpl::printResults()
 }
 
 
-void LuaConsoleViewImpl::luaPrint(lua_State* L)
+int LuaConsoleViewImpl::luaPrint(lua_State* L)
 {
-    int nargs = lua_gettop(L);
-
-    for (int i=1; i <= nargs; i++) {
-        if (lua_isstring(L, i)) {
-            putln(lua_tostring(L, i));
-        } else {
-            /* Do something with non-strings if you like */
+    int n = lua_gettop(L);  /* number of arguments */
+    lua_getglobal(L, "tostring");
+    for(int i=1; i <= n; ++i) {
+        const char *s;
+        size_t l;
+        lua_pushvalue(L, -1);  /* function to be called */
+        lua_pushvalue(L, i);   /* value to print */
+        lua_call(L, 1, 1);
+        s = lua_tolstring(L, -1, &l);  /* get result */
+        if(s == NULL){
+            return luaL_error(L, "'tostring' must return a string to 'print'");
         }
+        if(i > 1){
+            put("\t");
+        }
+        put(s);
+        lua_pop(L, 1);  /* pop result */
     }
+    put("\n");
+    return 0;
 }
 
 
