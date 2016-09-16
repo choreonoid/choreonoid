@@ -33,29 +33,27 @@ public:
     void putPrompt();
     QString getInputString();
     void printResults();
+    void luaPrint(lua_State* L);
     void fixLine();
     void stackDump();
 };
 
 }
 
+
 namespace {
 
-LuaConsoleViewImpl* console = 0;
+const char* ConsoleInstanceVariableName = "cnoid_lua_console_view";
 
 int print_to_console(lua_State* L)
 {
-    int nargs = lua_gettop(L);
-
-    for (int i=1; i <= nargs; i++) {
-        if (lua_isstring(L, i)) {
-            console->putln(lua_tostring(L, i));
-        } else {
-            /* Do something with non-strings if you like */
-        }
+    lua_getglobal(L, ConsoleInstanceVariableName);
+    if(lua_islightuserdata(L, -1)){
+        LuaConsoleViewImpl* view = (LuaConsoleViewImpl*)lua_touserdata(L, -1);
+        view->luaPrint(L);
+    } else {
+        lua_pop(L, 1);
     }
-
-    return 0;
 }
 
 }
@@ -71,7 +69,6 @@ void LuaConsoleView::initializeClass(ExtensionManager* ext)
 LuaConsoleView::LuaConsoleView()
 {
     impl = new LuaConsoleViewImpl(this);
-    console = impl;
     setFocusProxy(impl);
 }
 
@@ -93,9 +90,10 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     L = luaL_newstate();
     luaL_openlibs(L);
 
-    lua_getglobal(L, "_G");
+    // for redirecting the output from Lua
     lua_register(L, "print", print_to_console);
-    lua_pop(L, 1);
+    lua_pushlightuserdata(L, this);
+    lua_setglobal(L, ConsoleInstanceVariableName);
 
     inputColumnOffset = 0;
     
@@ -252,6 +250,20 @@ void LuaConsoleViewImpl::printResults()
         lua_insert(L, 1);
         if(lua_pcall(L, n, 0, 0) != LUA_OK){
             putln(lua_pushfstring(L, "error calling 'print' (%s)", lua_tostring(L, -1)));
+        }
+    }
+}
+
+
+void LuaConsoleViewImpl::luaPrint(lua_State* L)
+{
+    int nargs = lua_gettop(L);
+
+    for (int i=1; i <= nargs; i++) {
+        if (lua_isstring(L, i)) {
+            putln(lua_tostring(L, i));
+        } else {
+            /* Do something with non-strings if you like */
         }
     }
 }
