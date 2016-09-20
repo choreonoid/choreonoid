@@ -275,9 +275,9 @@ endif()
 
 # Python
 if(WIN32)
-  option(ENABLE_PYTHON "Enable Python functions" OFF)
+  option(ENABLE_PYTHON "Enable Python" OFF)
 else()
-  option(ENABLE_PYTHON "Enable Python functions" ON)
+  option(ENABLE_PYTHON "Enable Python" ON)
 endif()
 
 if(ENABLE_PYTHON)
@@ -288,6 +288,20 @@ if(ENABLE_PYTHON)
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+endif()
+
+# Lua
+if(UNIX)
+  option(ENABLE_LUA "Enable Lua" ON)
+endif()
+
+if(ENABLE_LUA)
+  pkg_check_modules(LUA lua5.3)
+  if(NOT LUA_FOUND)
+    pkg_check_modules(LUA lua5.2)
+  endif()
+  set(CNOID_LUA_SUBDIR ${CNOID_PLUGIN_SUBDIR}/lua)
+  include_directories(${LUA_INCLUDE_DIRS})
 endif()
 
 # boost
@@ -1030,6 +1044,34 @@ if(ENABLE_PYTHON)
   endfunction()
 
 endif()
+
+
+
+if(ENABLE_LUA)
+  function(add_cnoid_lua_module)
+  
+    set(target ${ARGV0})
+    string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
+    set(sources ${ARGV})
+    list(REMOVE_AT sources 0)
+
+    add_library(${target} SHARED ${sources})
+    
+    set_target_properties(${target}  PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_NAME ${module}
+      LIBRARY_OUTPUT_NAME ${module}
+      PREFIX "")
+
+    install(TARGETS ${target}
+      RUNTIME DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+
+  endfunction()
+
+endif()
+
 
 
 #function(make_gettext_mofiles out_mofiles)

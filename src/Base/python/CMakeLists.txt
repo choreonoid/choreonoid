@@ -1,6 +1,10 @@
 
 # @author Shin'ichiro Nakaoka
 
+if(NOT ENABLE_PYTHON)
+  return()
+endif()
+
 set(PYTHON_SUFFIX -python2.7)
 
 add_cnoid_library(CnoidPyBase SHARED PyBase.cpp)

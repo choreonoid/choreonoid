@@ -5,6 +5,8 @@
 #include "LuaConsoleView.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MessageView>
+#include <cnoid/ExecutablePath>
+#include <cnoid/FileUtil>
 #include <QPlainTextEdit>
 #include <QBoxLayout>
 #include <QTextBlock>
@@ -14,6 +16,7 @@
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -106,6 +109,18 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
 
     L = luaL_newstate();
     luaL_openlibs(L);
+
+    // Append the Choreonoid lua module path to package.cpath
+    lua_getglobal(L, "package");
+    lua_pushstring(L, "cpath");
+    lua_gettable(L, -2);
+    string cpath(lua_tostring(L, -1));
+    lua_pop(L, 1);
+    filesystem::path path = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "lua" / "?.so";
+    lua_pushstring(L, "cpath");
+    lua_pushstring(L, (cpath + ";" + getNativePathString(path)).c_str());
+    lua_settable(L, -3);
+    lua_pop(L, 1);
 
     // for redirecting the output from Lua
     lua_register(L, "print", print_to_console);
