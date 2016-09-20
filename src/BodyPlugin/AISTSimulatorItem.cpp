@@ -2,10 +2,15 @@
   @file
   @author Shin'ichiro Nakaoka
 */
+#ifdef WIN32
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 105900) 
+#define BOOST_NO_CXX11_ALLOCATOR
+#endif
+#endif
 
 #include "AISTSimulatorItem.h"
 #include "BodyItem.h"
-#include "BodyMotionItem.h"
 #include "ControllerItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -17,15 +22,18 @@
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/EigenUtil>
-#include <boost/bind.hpp>
+#include <cnoid/MessageView>
+#include <cnoid/IdPair>
 #include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
 #include <iostream>
 #include <iomanip>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 // for Windows
 #undef min
@@ -36,77 +44,6 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
-
-
-class HighGainControllerItem : public ControllerItem
-{
-    BodyPtr body;
-    MultiValueSeqPtr qseqRef;
-    int currentFrame;
-    int lastFrame;
-    int numJoints;
-
-public:
-    HighGainControllerItem(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem) {
-        qseqRef = bodyMotionItem->jointPosSeq();
-        setName(str(fmt(_("HighGain Controller with %1%")) % bodyMotionItem->name()));
-    }
-
-    virtual bool start(Target* target) {
-        body = target->body();
-        currentFrame = 0;
-        lastFrame = std::max(0, qseqRef->numFrames() - 1);
-        numJoints = std::min(body->numJoints(), qseqRef->numParts());
-        if(qseqRef->numFrames() == 0){
-            putMessage(_("Reference motion is empty()."));
-            return false;
-        }
-        if(fabs(qseqRef->frameRate() - (1.0 / target->worldTimeStep())) > 1.0e-6){
-            putMessage(_("The frame rate of the reference motion is different from the world frame rate."));
-            return false;
-        }
-        control();
-        return true;
-    }
-
-    virtual double timeStep() const {
-        return qseqRef->getTimeStep();
-    }
-        
-    virtual void input() { }
-
-    virtual bool control() {
-
-        if(++currentFrame > lastFrame){
-            currentFrame = lastFrame;
-            return false;
-        }
-        return true;
-    }
-        
-    virtual void output() {
-
-        int prevFrame = std::max(currentFrame - 1, 0);
-        int nextFrame = std::min(currentFrame + 1, lastFrame);
-            
-        MultiValueSeq::Frame q0 = qseqRef->frame(prevFrame);
-        MultiValueSeq::Frame q1 = qseqRef->frame(currentFrame);
-        MultiValueSeq::Frame q2 = qseqRef->frame(nextFrame);
-
-        double dt = qseqRef->getTimeStep();
-        double dt2 = dt * dt;
-
-        for(int i=0; i < numJoints; ++i){
-            Link* joint = body->joint(i);
-            joint->q() = q1[i];
-            joint->dq() = (q2[i] - q1[i]) / dt;
-            joint->ddq() = (q2[i] - 2.0 * q1[i] + q0[i]) / dt2;
-        }
-    }
-        
-    virtual void stop() { }
-};
-
 
 class AISTSimBody : public SimulationBody
 {
@@ -142,6 +79,8 @@ namespace cnoid {
 class AISTSimulatorItemImpl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
     AISTSimulatorItem* self;
 
     World<ConstraintForceSolver> world;
@@ -160,22 +99,37 @@ public:
     double epsilon;
     bool is2Dmode;
     bool isKinematicWalkingEnabled;
+    bool isOldAccelSensorMode;
 
     typedef std::map<Body*, int> BodyIndexMap;
     BodyIndexMap bodyIndexMap;
 
+    typedef std::map<Link*, Link*> LinkMap;
+    LinkMap orgLinkToInternalLinkMap;
+
+    struct ContactAttribute
+    {
+        boost::optional<double> staticFriction;
+        boost::optional<double> slipFriction;
+        boost::optional<int> collisionHandlerId;
+    };
+
+    typedef std::map<IdPair<Link*>, ContactAttribute> ContactAttributeMap;
+    ContactAttributeMap contactAttributeMap;
+
     boost::optional<int> forcedBodyPositionFunctionId;
-    boost::mutex forcedBodyPositionMutex;
+    std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
     Position forcedBodyPosition;
 
     AISTSimulatorItemImpl(AISTSimulatorItem* self);
     AISTSimulatorItemImpl(AISTSimulatorItem* self, const AISTSimulatorItemImpl& org);
+    ContactAttribute& getOrCreateContactAttribute(Link* link1, Link* link2);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(AISTSimBody* simBody);
     void clearExternalForces();
-    void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
-    void doSetForcedBodyPosition();
+    void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -230,6 +184,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
 
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
+    isOldAccelSensorMode = false;
 }
 
 
@@ -258,6 +213,7 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self, const AIST
     epsilon = org.epsilon;
     isKinematicWalkingEnabled = org.isKinematicWalkingEnabled;
     is2Dmode = org.is2Dmode;
+    isOldAccelSensorMode = org.isOldAccelSensorMode;
 }
 
 
@@ -285,15 +241,56 @@ void AISTSimulatorItem::setGravity(const Vector3& gravity)
 }
 
 
-void AISTSimulatorItem::setStaticFriction(double value)
+const Vector3& AISTSimulatorItem::gravity() const
 {
-    impl->staticFriction = value; 
+    return impl->gravity;
 }
 
 
-void AISTSimulatorItem::setSlipFriction(double value)
+AISTSimulatorItemImpl::ContactAttribute&
+AISTSimulatorItemImpl::getOrCreateContactAttribute(Link* link1, Link* link2)
 {
-    impl->slipFriction = value;
+    return contactAttributeMap[IdPair<Link*>(link1, link2)];
+}
+        
+
+void AISTSimulatorItem::setFriction(double staticFriction, double slipFriction)
+{
+    impl->staticFriction = staticFriction;
+    impl->slipFriction = slipFriction;
+}
+
+
+void AISTSimulatorItem::setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction)
+{
+    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
+    attr.staticFriction = staticFriction;
+    attr.slipFriction = slipFriction;
+}
+
+
+int AISTSimulatorItem::registerCollisionHandler(const std::string& name, CollisionHandler handler)
+{
+    return impl->world.constraintForceSolver.registerCollisionHandler(name, handler);
+}
+
+
+void AISTSimulatorItem::unregisterCollisionHandler(int handlerId)
+{
+    return impl->world.constraintForceSolver.unregisterCollisionHandler(handlerId);
+}
+
+
+int AISTSimulatorItem::collisionHandlerId(const std::string& name) const
+{
+    return impl->world.constraintForceSolver.collisionHandlerId(name);
+}
+
+
+void AISTSimulatorItem::setCollisionHandler(Link* link1, Link* link2, int handlerId)
+{
+    AISTSimulatorItemImpl::ContactAttribute& attr = impl->getOrCreateContactAttribute(link1, link2);
+    attr.collisionHandlerId = handlerId;
 }
 
 
@@ -351,16 +348,34 @@ void AISTSimulatorItem::setKinematicWalkingEnabled(bool on)
 }
 
 
-ItemPtr AISTSimulatorItem::doDuplicate() const
+void AISTSimulatorItem::setConstraintForceOutputEnabled(bool on)
+{
+    impl->world.constraintForceSolver.enableConstraintForceOutput(on);
+}
+
+
+Item* AISTSimulatorItem::doDuplicate() const
 {
     return new AISTSimulatorItem(*this);
 }
 
 
-SimulationBodyPtr AISTSimulatorItem::createSimulationBody(BodyPtr orgBody)
+bool AISTSimulatorItem::startSimulation(bool doReset)
+{
+    impl->orgLinkToInternalLinkMap.clear();
+    return SimulatorItem::startSimulation(doReset);
+}
+
+
+SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody)
 {
     SimulationBody* simBody = 0;
     DyBody* body = new DyBody(*orgBody);
+
+    const int n = orgBody->numLinks();
+    for(size_t i=0; i < n; ++i){
+        impl->orgLinkToInternalLinkMap[orgBody->link(i)] = body->link(i);
+    }
     
     if(impl->dynamicsMode.is(KINEMATICS) && impl->isKinematicWalkingEnabled){
         LeggedBodyHelper* legged = getLeggedBodyHelper(body);
@@ -373,12 +388,6 @@ SimulationBodyPtr AISTSimulatorItem::createSimulationBody(BodyPtr orgBody)
     }
 
     return simBody;
-}
-
-
-ControllerItem* AISTSimulatorItem::createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem)
-{
-    return new HighGainControllerItem(bodyItem, bodyMotionItem);
 }
 
 
@@ -403,6 +412,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     }
     world.setGravityAcceleration(gravity);
     world.enableSensors(true);
+    world.setOldAccelSensorCalcMode(isOldAccelSensorMode);
     world.setTimeStep(self->worldTimeStep());
     world.setCurrentTime(0.0);
 
@@ -413,10 +423,11 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactDepthCorrection(
         contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
 
-    self->addPreDynamicsFunction(boost::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
+    self->addPreDynamicsFunction(std::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
 
     world.clearBodies();
     bodyIndexMap.clear();
+
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
     }
@@ -426,13 +437,47 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactCullingDepth(contactCullingDepth.value());
     cfs.setCoefficientOfRestitution(epsilon);
     cfs.setCollisionDetector(self->collisionDetector());
-    
+
     if(is2Dmode){
         cfs.set2Dmode(true);
     }
 
     world.initialize();
 
+    ContactAttributeMap::iterator iter = contactAttributeMap.begin();
+    while(iter != contactAttributeMap.end()){
+        bool actualLinksFound = false;
+        const IdPair<Link*>& linkPair = iter->first;
+        LinkMap::iterator p0 = orgLinkToInternalLinkMap.find(linkPair(0));
+        if(p0 != orgLinkToInternalLinkMap.end()){
+            LinkMap::iterator p1 = orgLinkToInternalLinkMap.find(linkPair(1));
+            if(p1 != orgLinkToInternalLinkMap.end()){
+
+                Link* iLink0 = p0->second;
+                Link* iLink1 = p1->second;
+                actualLinksFound = true;
+
+                const ContactAttribute& attr = iter->second;
+                if(attr.staticFriction || attr.slipFriction){
+                    cfs.setFriction(
+                        iLink0, iLink1,
+                        attr.staticFriction ? *attr.staticFriction : staticFriction,
+                        attr.slipFriction ? *attr.slipFriction : slipFriction);
+                }
+                if(attr.collisionHandlerId){
+                    cfs.setCollisionHandler(iLink0, iLink1, *attr.collisionHandlerId);
+                }
+            }
+        }
+        if(actualLinksFound){
+            ++iter;
+        } else {
+            // remove the attribute for a non-existent link
+            ContactAttributeMap::iterator current = iter++;
+            contactAttributeMap.erase(current); 
+        }
+    }
+    
     return true;
 }
 
@@ -449,11 +494,6 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     rootLink->vo().setZero();
     rootLink->dvo().setZero();
 
-    bool isHighGainMode = dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS);
-    if(dynamic_cast<HighGainControllerItem*>(simBody->controller(0))){
-        isHighGainMode = true;
-    }
-
     for(int i=0; i < body->numLinks(); ++i){
         Link* link = body->link(i);
         link->u() = 0.0;
@@ -464,13 +504,15 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
 
-    if(isHighGainMode){
+    int bodyIndex;
+    if(dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS)){
         ForwardDynamicsCBMPtr cbm = make_shared_aligned<ForwardDynamicsCBM>(body);
         cbm->setHighGainModeForAllJoints();
-        bodyIndexMap[body] = world.addBody(body, cbm);
+        bodyIndex = world.addBody(body, cbm);
     } else {
-        bodyIndexMap[body] = world.addBody(body);
+        bodyIndex = world.addBody(body);
     }
+    bodyIndexMap[body] = bodyIndex;
 }
 
 
@@ -483,7 +525,7 @@ void AISTSimulatorItemImpl::clearExternalForces()
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     if(!impl->dynamicsMode.is(KINEMATICS)){
-        impl->world.calcNextState();
+         impl->world.calcNextState();
         return true;
     }
 
@@ -544,30 +586,46 @@ CollisionLinkPairListPtr AISTSimulatorItem::getCollisions()
 }
 
 
-void AISTSimulatorItem::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItem::setForcedPosition(BodyItem* bodyItem, const Position& T)
 {
-    impl->setForcedBodyPosition(bodyItem, T);
+    impl->setForcedPosition(bodyItem, T);
 }
 
 
-void AISTSimulatorItemImpl::setForcedBodyPosition(BodyItem* bodyItem, const Position& T)
+void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position& T)
 {
     if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {
-            boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+            std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
             forcedPositionBody = static_cast<DyBody*>(simBody->body());
             forcedBodyPosition = T;
         }
         if(!forcedBodyPositionFunctionId){
             forcedBodyPositionFunctionId =
                 self->addPostDynamicsFunction(
-                    boost::bind(&AISTSimulatorItemImpl::doSetForcedBodyPosition, this));
+                    std::bind(&AISTSimulatorItemImpl::doSetForcedPosition, this));
         }
     }
 }
 
 
-void AISTSimulatorItem::clearForcedBodyPositions()
+bool AISTSimulatorItem::isForcedPositionActiveFor(BodyItem* bodyItem) const
+{
+    bool isActive = false;
+    if(impl->forcedBodyPositionFunctionId){
+        SimulationBody* simBody = const_cast<AISTSimulatorItem*>(this)->findSimulationBody(bodyItem);
+        {
+            std::lock_guard<std::mutex> lock(impl->forcedBodyPositionMutex);
+            if(impl->forcedPositionBody == static_cast<DyBody*>(simBody->body())){
+                isActive = true;
+            }
+        }
+    }
+    return isActive;
+}
+
+
+void AISTSimulatorItem::clearForcedPositions()
 {
     if(impl->forcedBodyPositionFunctionId){
         removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
@@ -576,9 +634,9 @@ void AISTSimulatorItem::clearForcedBodyPositions()
 }
     
 
-void AISTSimulatorItemImpl::doSetForcedBodyPosition()
+void AISTSimulatorItemImpl::doSetForcedPosition()
 {
-    boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+    std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
     DyLink* rootLink = forcedPositionBody->rootLink();
     rootLink->setPosition(forcedBodyPosition);
     rootLink->v().setZero();
@@ -598,27 +656,28 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                boost::bind(&Selection::selectIndex, &dynamicsMode, _1));
+                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
     putProperty(_("Integration mode"), integrationMode,
-                boost::bind(&Selection::selectIndex, &integrationMode, _1));
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
+                std::bind(&Selection::selectIndex, &integrationMode, _1));
+    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
     putProperty(_("Slip friction"), slipFriction, changeProperty(slipFriction));
     putProperty(_("Contact culling distance"), contactCullingDistance,
-                (boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDistance), _1)));
+                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDistance), _1)));
     putProperty(_("Contact culling depth"), contactCullingDepth,
-                (boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDepth), _1)));
+                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDepth), _1)));
     putProperty(_("Error criterion"), errorCriterion,
-                boost::bind(&FloatingNumberString::setPositiveValue, boost::ref(errorCriterion), _1));
+                std::bind(&FloatingNumberString::setPositiveValue, std::ref(errorCriterion), _1));
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionDepth), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionDepth), _1));
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionVelocityRatio), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionVelocityRatio), _1));
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
+    putProperty(_("Old accel sensor mode"), isOldAccelSensorMode, changeProperty(isOldAccelSensorMode));
 }
 
 
@@ -631,8 +690,8 @@ bool AISTSimulatorItem::store(Archive& archive)
 
 bool AISTSimulatorItemImpl::store(Archive& archive)
 {
-    archive.write("dynamicsMode", dynamicsMode.selectedSymbol());
-    archive.write("integrationMode", integrationMode.selectedSymbol());
+    archive.write("dynamicsMode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("integrationMode", integrationMode.selectedSymbol(), DOUBLE_QUOTED);
     write(archive, "gravity", gravity);
     archive.write("staticFriction", staticFriction);
     archive.write("slipFriction", slipFriction);
@@ -644,6 +703,7 @@ bool AISTSimulatorItemImpl::store(Archive& archive)
     archive.write("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio);
     archive.write("kinematicWalking", isKinematicWalkingEnabled);
     archive.write("2Dmode", is2Dmode);
+    archive.write("oldAccelSensorMode", isOldAccelSensorMode);
     return true;
 }
 
@@ -675,5 +735,26 @@ bool AISTSimulatorItemImpl::restore(const Archive& archive)
     contactCorrectionVelocityRatio = archive.get("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio.string());
     archive.read("kinematicWalking", isKinematicWalkingEnabled);
     archive.read("2Dmode", is2Dmode);
+    archive.read("oldAccelSensorMode", isOldAccelSensorMode);
     return true;
 }
+
+#ifdef ENABLE_SIMULATION_PROFILING
+void AISTSimulatorItem::getProfilingNames(vector<string>& profilingNames)
+{
+    profilingNames.push_back("Collision detection time");
+    profilingNames.push_back("Constraint force calculation time");
+    profilingNames.push_back("Forward dynamics calculation time");
+    profilingNames.push_back("Customizer calculation time");
+}
+
+
+void AISTSimulatorItem::getProfilingTimes(vector<double>& profilingToimes)
+{
+    double collisionTime = impl->world.constraintForceSolver.getCollisionTime();
+    profilingToimes.push_back(collisionTime);
+    profilingToimes.push_back(impl->world.forceSolveTime - collisionTime);
+    profilingToimes.push_back(impl->world.forwardDynamicsTime);
+    profilingToimes.push_back(impl->world.customizerTime);
+}
+#endif

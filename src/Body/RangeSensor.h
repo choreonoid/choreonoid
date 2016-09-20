@@ -6,23 +6,25 @@
 #ifndef CNOID_BODY_RANGE_SENSOR_H
 #define CNOID_BODY_RANGE_SENSOR_H
 
-#include "VisionSensor.h"
-#include <boost/shared_ptr.hpp>
+#include "Device.h"
+#include <vector>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT RangeSensor : public VisionSensor
+class CNOID_EXPORT RangeSensor : public Device
 {
 public:
     RangeSensor();
-    RangeSensor(const RangeSensor& org, bool copyAll = true);
+    RangeSensor(const RangeSensor& org, bool copyStateOnly = false);
 
+    virtual const char* typeName();
     void copyStateFrom(const RangeSensor& other); 
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
@@ -52,9 +54,9 @@ public:
     void setFrameRate(double r);
 
     typedef std::vector<double> RangeData;
-        
-    void setRangeDataAsState(bool on) { isRangeDataSetAsState_ = on; }
-    bool isRangeDataSetAsState() const { return isRangeDataSetAsState_; }
+
+    void setRangeDataStateClonable(bool on) { isRangeDataStateClonable_ = on; }
+    bool isRangeDataStateClonable() const { return isRangeDataStateClonable_; }
 
     /**
        \note You must check if the range data is not empty before accessing the data
@@ -64,18 +66,24 @@ public:
     RangeData& rangeData();
     RangeData& newRangeData();
 
-    boost::shared_ptr<RangeData> sharedRangeData() const { return rangeData_; }
+    std::shared_ptr<RangeData> sharedRangeData() const { return rangeData_; }
 
     /**
        Move semantics. If the use_count() of the given shared range data pointer is one,
        the data is moved to the Camera object and the ownership of the given pointer is released.
        Otherwise, the data is copied.
     */
-    void setRangeData(boost::shared_ptr<RangeData>& rangeData);
+    void setRangeData(std::shared_ptr<RangeData>& rangeData);
+
+    /**
+       Time [s] consumed in the measurement
+    */
+    double delay() const { return delay_; }
+    void setDelay(double time) { delay_ = time; }
 
 private:
     bool on_;
-    bool isRangeDataSetAsState_;
+    bool isRangeDataStateClonable_;
     int yawResolution_;
     int pitchResolution_;
     double yawRange_;
@@ -83,10 +91,15 @@ private:
     double minDistance_;
     double maxDistance_;
     double frameRate_;
-    boost::shared_ptr<RangeData> rangeData_;
+    double delay_;
+    std::shared_ptr<RangeData> rangeData_;
+
+    RangeSensor(const RangeSensor& org, int x /* dummy */);
+    void copyRangeSensorStateFrom(const RangeSensor& other);    
 };
 
 typedef ref_ptr<RangeSensor> RangeSensorPtr;
+
 };
 
 #endif

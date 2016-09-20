@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_ODEPLUGIN_ODE_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_ODEPLUGIN_ODE_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_ODEPLUGIN_ODE_SIMULATOR_ITEM_H
+#define CNOID_ODEPLUGIN_ODE_SIMULATOR_ITEM_H
 
 #include <cnoid/SimulatorItem>
 #include <cnoid/EigenTypes>
@@ -45,11 +45,14 @@ public:
     void useWorldCollisionDetector(bool on);
 
 protected:
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
+        
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual void initializeSimulationThread();
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-    virtual ItemPtr doDuplicate() const;
+    virtual void finalizeSimulation();
+
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

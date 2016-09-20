@@ -5,6 +5,7 @@
 
 #include "Link.h"
 #include <cnoid/SceneGraph>
+#include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
@@ -15,8 +16,7 @@ Link::Link()
     index_ = -1;
     jointId_ = -1;
     parent_ = 0;
-    sibling_ = 0;
-    child_ = 0;
+    body_ = 0;
     T_.setIdentity();
     Tb_.setIdentity();
     Rs_.setIdentity();
@@ -33,13 +33,15 @@ Link::Link()
     c_.setZero();
     wc_.setZero();
     m_ = 0.0;
-    I_.setZero();
+    I_.setIdentity();
     Jm2_ = 0.0;
     F_ext_.setZero();
     q_upper_ = std::numeric_limits<double>::max();
     q_lower_ = -std::numeric_limits<double>::max();
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
+    info_ = new Mapping;
+    initd_ = 0.0;
 }
 
 
@@ -50,8 +52,7 @@ Link::Link(const Link& org)
     jointId_ = org.jointId_;
 
     parent_ = 0;
-    sibling_ = 0;
-    child_ = 0;
+    body_ = 0;
 
     T_ = org.T_;
     Tb_ = org.Tb_;
@@ -83,37 +84,63 @@ Link::Link(const Link& org)
     dq_upper_ = org.dq_upper_;
     dq_lower_ = org.dq_lower_;
 
-    //! \todo add the mode for doing deep copy of the shape object
+    //! \todo add the mode for doing deep copy of the following objects
     visualShape_ = org.visualShape_;
     collisionShape_ = org.collisionShape_;
+    info_ = org.info_;
+    initd_ = org.initd_;
 }
 
 
 Link::~Link()
 {
-    Link* link = child();
+    LinkPtr link = child_;
     while(link){
-        Link* linkToDelete = link;
-        link = link->sibling();
-        delete linkToDelete;
+        link->parent_ = 0;
+        LinkPtr next = link->sibling_;
+        link->sibling_ = 0;
+        link = next;
+    }
+}
+
+
+void Link::setBody(Body* newBody)
+{
+    if(body_ != newBody){
+        setBodySub(newBody);
+    }
+}
+
+
+void Link::setBodySub(Body* newBody)
+{
+    body_ = newBody;
+    for(Link* link = child_; link; link = link->sibling_){
+        link->setBodySub(newBody);
     }
 }
 
 
 void Link::prependChild(Link* link)
 {
+    LinkPtr holder;
     if(link->parent_){
+        holder = link;
         link->parent_->removeChild(link);
     }
     link->sibling_ = child_;
     child_ = link;
     link->parent_ = this;
+
+    link->setBody(body_);
 }
 
 
 void Link::appendChild(Link* link)
 {
+    LinkPtr holder;
     if(link->parent_){
+        holder = link;
         link->parent_->removeChild(link);
     }
     if(!child_){
@@ -128,12 +155,13 @@ void Link::appendChild(Link* link)
         link->sibling_ = 0;
     }
     link->parent_ = this;
+
+    link->setBody(body_);
 }
 
 
 /**
    A child link is removed from the link.
-   The detached child link is *not* deleted by this function.
    If a link given by the parameter is not a child of the link, false is returned.
 */
 bool Link::removeChild(Link* childToRemove)
@@ -144,22 +172,20 @@ bool Link::removeChild(Link* childToRemove)
     Link* prevSibling = 0;
     while(link){
         if(link == childToRemove){
+            childToRemove->parent_ = 0;
+            childToRemove->sibling_ = 0;
             if(prevSibling){
                 prevSibling->sibling_ = link->sibling_;
             } else {
                 child_ = link->sibling_;
             }
-            removed = true;
-            break;
+            childToRemove->setBody(0);
+            return true;
         }
         prevSibling = link;
         link = link->sibling_;
     }
-    if(removed){
-        childToRemove->parent_ = 0;
-        childToRemove->sibling_ = 0;
-    }
-    return removed;
+    return false;
 }
 
 
@@ -169,19 +195,62 @@ void Link::setName(const std::string& name)
 }
 
 
-void Link::setShape(SgNodePtr shape)
+std::string Link::jointTypeString() const
+{
+    switch(jointType_){
+    case REVOLUTE_JOINT:    return "revolute";
+    case SLIDE_JOINT:       return "prismatic";
+    case FREE_JOINT:        return "free";
+    case FIXED_JOINT:       return "fixed";
+    case PSEUDO_CONTINUOUS_TRACK: return "pseudo continuous track";
+    case CRAWLER_JOINT:     return "crawler";
+    case AGX_CRAWLER_JOINT: return "AgX crawler";
+    default: return "unknown";
+    }
+}
+
+
+void Link::setShape(SgNode* shape)
 {
     visualShape_ = shape;
     collisionShape_ = shape;
 }
 
-void Link::setVisualShape(SgNodePtr shape)
+void Link::setVisualShape(SgNode* shape)
 {
     visualShape_ = shape;
 }
 
 
-void Link::setCollisionShape(SgNodePtr shape)
+void Link::setCollisionShape(SgNode* shape)
 {
     collisionShape_ = shape;
+}
+
+
+void Link::resetInfo(Mapping* info)
+{
+    info_ = info;
+}
+
+
+template<> double Link::info(const std::string& key) const
+{
+    return info_->get(key).toDouble();
+}
+
+
+template<> double Link::info(const std::string& key, const double& defaultValue) const
+{
+    double value;
+    if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> void Link::setInfo(const std::string& key, const double& value)
+{
+    info_->write(key, value);
 }

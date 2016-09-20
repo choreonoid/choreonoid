@@ -1,7 +1,7 @@
 
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(SceneGraph.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-#set_source_files_properties(BoundingBox.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(ImageIO.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(Image.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
 
@@ -31,6 +31,10 @@ set(sources
   RangeLimiter.cpp
   BoundingBox.cpp
   SceneGraph.cpp
+  SceneDrawables.cpp
+  SceneCameras.cpp
+  SceneLights.cpp
+  SceneEffects.cpp
   SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp
@@ -38,7 +42,7 @@ set(sources
   MeshGenerator.cpp
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
-  SceneMarker.cpp
+  SceneMarkers.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
@@ -53,6 +57,7 @@ set(sources
   GettextWrapper.cpp
   GettextUtil.cpp
   CnoidUtil.cpp # This file must be placed at the last position
+  ExtJoystick.cpp
   )
 
 
@@ -93,20 +98,23 @@ set(headers
   UTF8.h
   BoundingBox.h
   SceneGraph.h
-  SceneShape.h
-  SceneCamera.h
-  SceneLight.h
+  SceneDrawables.h
+  SceneCameras.h
+  SceneLights.h
+  SceneEffects.h
   SceneVisitor.h
   SceneRenderer.h
   SceneUtil.h
   MeshGenerator.h
   MeshNormalGenerator.h
   MeshExtractor.h
-  SceneMarker.h
+  SceneMarkers.h
   SceneProvider.h
+  Collision.h
   CollisionDetector.h
   Triangulator.h
   PolygonMeshTriangulator.h
+  PolyhedralRegion.h
   Image.h
   ImageIO.h
   ImageConverter.h
@@ -128,14 +136,15 @@ set(headers
   EigenUtil.h
   EigenArchive.h
   Signal.h
-  SignalTemplate.h
   ConnectionSet.h
   GettextUtil.h
   Selection.h
   DataMap.h
   Joystick.h
+  ExtJoystick.h
   Task.h
   AbstractTaskSequencer.h
+  Exception.h
   exportdecl.h
   Config.h
   )
@@ -149,6 +158,7 @@ add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
 if(UNIX)
   set(libraries 
     yaml irrXML ${PNG_LIBRARY} ${JPEG_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)

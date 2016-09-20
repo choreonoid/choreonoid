@@ -6,15 +6,13 @@
 #include <cnoid/CorbaUtil>
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
 #include <QBoxLayout>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace cnoid {
@@ -58,17 +56,17 @@ NameServerViewImpl::NameServerViewImpl(NameServerView* self)
     QHBoxLayout* hbox = new QHBoxLayout();
     hostAddressBox.setText("localhost");
     hostAddressBox.sigEditingFinished().connect
-        (boost::bind(&NameServerViewImpl::updateObjectList, this));
+        (std::bind(&NameServerViewImpl::updateObjectList, this));
     hbox->addWidget(&hostAddressBox);
 
     portNumberSpin.setRange(0, 65535);
     portNumberSpin.setValue(2809);
     portNumberSpin.sigEditingFinished().connect
-        (boost::bind(&NameServerViewImpl::updateObjectList, this));
+        (std::bind(&NameServerViewImpl::updateObjectList, this));
     hbox->addWidget(&portNumberSpin);
 
     PushButton* updateButton = new PushButton(_("Update"));
-    updateButton->sigClicked().connect(boost::bind(&NameServerViewImpl::updateObjectList, this));
+    updateButton->sigClicked().connect(std::bind(&NameServerViewImpl::updateObjectList, this));
     hbox->addWidget(updateButton);
 
     vbox->addLayout(hbox);

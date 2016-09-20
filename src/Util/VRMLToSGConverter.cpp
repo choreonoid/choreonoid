@@ -3,7 +3,9 @@
 */
 
 #include "VRMLToSGConverter.h"
-#include "SceneLight.h"
+#include "SceneDrawables.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
 #include "Triangulator.h"
 #include "PolygonMeshTriangulator.h"
 #include "MeshNormalGenerator.h"
@@ -14,14 +16,15 @@
 #include "STLSceneLoader.h"
 #include "NullOut.h"
 #include <boost/format.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/algorithm/string.hpp>
+#include <tuple>
 
 using namespace std;
 using namespace cnoid;
 using boost::format;
 
 namespace {
+
 const double PI = 3.14159265358979323846;
 }
 
@@ -112,8 +115,10 @@ public:
     SgNode* createPointLight(VRMLPointLight* vlight);
     SgSpotLight* createSpotLight(VRMLSpotLight* vlight);
     SgDirectionalLight* createDirectionalLight(VRMLDirectionalLight* vlight);
+    SgNode* convertFogNode(VRMLFog* vfog);
     SgNode* readAnotherFormatFile(VRMLAnotherFormatFile* anotherFormat);
 };
+
 }
 
 
@@ -236,6 +241,8 @@ SgNode* VRMLToSGConverterImpl::convertNode(VRMLNode* vnode)
                 node = convertShapeNode(shape);
             } else if(VRMLLight* light = dynamic_cast<VRMLLight*>(vnode)){
                 node = convertLightNode(light);
+            } else if(VRMLFog* fog = dynamic_cast<VRMLFog*>(vnode)){
+                node = convertFogNode(fog);
             } else if(VRMLAnotherFormatFile* anotherFormat = dynamic_cast<VRMLAnotherFormatFile*>(vnode)){
                 node = readAnotherFormatFile(anotherFormat);
             }
@@ -256,7 +263,7 @@ SgNode* VRMLToSGConverterImpl::convertGroupNode(AbstractVRMLGroup* vgroup)
     SgGroup* group;
 
     if(VRMLTransform* transform = dynamic_cast<VRMLTransform*>(vgroup)){
-        boost::tuples::tie(top, group) = createTransformNodeSet(transform);
+        std::tie(top, group) = createTransformNodeSet(transform);
     } else {
         group = new SgGroup;
         top = group;
@@ -324,21 +331,23 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
             mesh = p->second;
         } else {
             if(VRMLIndexedFaceSet* faceSet = dynamic_cast<VRMLIndexedFaceSet*>(vrmlGeometry)){
-                if(isTriangulationEnabled){
-                    SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
-                    mesh = polygonMeshTriangulator.triangulate(*polygonMesh);
-                    const string& errorMessage = polygonMeshTriangulator.errorMessage();
-                    if(!errorMessage.empty()){
-                        string message;
-                        if(faceSet->defName.empty()){
-                            message = "Error of an IndexedFaceSet node: \n";
-                        } else {
-                            message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
-                        }
-                        putMessage(message + errorMessage);
-                    }
-                } else {
+                if(!isTriangulationEnabled){
                     mesh = createMeshFromIndexedFaceSet(faceSet);
+                } else {
+                    SgPolygonMeshPtr polygonMesh = createPolygonMeshFromIndexedFaceSet(faceSet);
+                    if(polygonMesh){
+                        mesh = polygonMeshTriangulator.triangulate(polygonMesh);
+                        const string& errorMessage = polygonMeshTriangulator.errorMessage();
+                        if(!errorMessage.empty()){
+                            string message;
+                            if(faceSet->defName.empty()){
+                                message = "Error of an IndexedFaceSet node: \n";
+                            } else {
+                                message = str(format("Error of IndexedFaceSet node \"%1%\": \n") % faceSet->defName);
+                            }
+                            putMessage(message + errorMessage);
+                        }
+                    }
                 }
                 if(mesh && isNormalGenerationEnabled){
                     normalGenerator.generateNormals(mesh, faceSet->creaseAngle);
@@ -647,7 +656,17 @@ bool VRMLToSGConverterImpl::convertIndicesForTriangles
 
 SgPolygonMeshPtr VRMLToSGConverterImpl::createPolygonMeshFromIndexedFaceSet(VRMLIndexedFaceSet* vface)
 {
-    if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
+    //if(!vface->coord || vface->coord->point.empty() || vface->coordIndex.empty()){
+    if(!vface->coord){
+        putMessage("VRMLIndexedFaceSet: The coord field is not defined." );
+        return  SgPolygonMeshPtr(); // null
+    }
+    if(vface->coord->point.empty()){
+        putMessage("VRMLIndexedFaceSet: The point field is empty." );
+        return  SgPolygonMeshPtr(); // null
+    }
+    if(vface->coordIndex.empty()){
+        putMessage("VRMLIndexedFaceSet: The coordIndex field is empty." );
         return SgPolygonMeshPtr(); // null
     }
     
@@ -1707,12 +1726,30 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
 
     if(hasColors){
         lineSet->setColors(new SgColorArray(vLineSet->color->color));
+        const int numColors = lineSet->colors()->size();
         const MFInt32& orgColorIndices = vLineSet->colorIndex;
+        const int numOrgColorIndices = orgColorIndices.size();
+        bool doWarning = false;
         SgIndexArray& colorIndices = lineSet->colorIndices();
         const SgIndexArray& lineVertices = lineSet->lineVertices();
         for(size_t i=0; i < lineVertices.size(); ++i){
             int orgPos = newColorPosToOrgColorPosMap[i];
-            colorIndices.push_back(orgColorIndices[orgPos]);
+            if(orgPos >= numOrgColorIndices){
+                orgPos = numOrgColorIndices - 1;
+                doWarning = true;
+            }
+            int index = orgColorIndices[orgPos];
+            if(index < 0){
+                index = 0;
+                doWarning = true;
+            } else if(index >= numColors){
+                index = numColors - 1;
+                doWarning = true;
+            }
+            colorIndices.push_back(index);
+        }
+        if(doWarning){
+            putMessage("Warning: The colorIndex elements do not correspond to the colors or the coordIndex elements in an IndexedLineSet node.");
         }
     }
     
@@ -1728,6 +1765,7 @@ SgNode* VRMLToSGConverterImpl::convertLightNode(VRMLLight* vlight)
     } else if(VRMLDirectionalLight* vDirectionalLight = dynamic_cast<VRMLDirectionalLight*>(vlight)){
         return createDirectionalLight(vDirectionalLight);
     }
+	return 0;
 }
 
 
@@ -1783,6 +1821,15 @@ SgDirectionalLight* VRMLToSGConverterImpl::createDirectionalLight(VRMLDirectiona
     light->setDirection(vlight->direction);
     setLightCommonProperties(light, vlight);
     return light;
+}
+
+
+SgNode* VRMLToSGConverterImpl::convertFogNode(VRMLFog* vfog)
+{
+    SgFog* fog = new SgFog;
+    fog->setColor(vfog->color);
+    fog->setVisibilityRange(vfog->visibilityRange);
+    return fog;
 }
 
 

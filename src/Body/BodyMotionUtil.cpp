@@ -6,8 +6,10 @@
 #include "BodyMotionUtil.h"
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
-#include "Link.h"
-#include "Sensor.h"
+#include "Body.h"
+#include "ForceSensor.h"
+#include "RateGyroSensor.h"
+#include "AccelerationSensor.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/Vector3Seq>
 #include <cnoid/GaussianFilter>
@@ -21,8 +23,9 @@
 #include <algorithm>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
+namespace filesystem = boost::filesystem;
 
 static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& filename, std::ostream& os)
 {
@@ -57,7 +60,7 @@ static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& fi
 }
 
 
-static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const std::string& filename, std::ostream& os)
+static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, Body* body, const std::string& filename, std::ostream& os)
 {
     if(!body){
         return false;
@@ -66,10 +69,10 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const s
     format f("%1$.4f %2$g %3$g %4$g\n");
     const MultiSE3SeqPtr& linkPosSeq = motion.linkPosSeq();
 
-    AccelSensor* gsens = 0;
-    DeviceList<AccelSensor> accelSensors = body->devices();
+    AccelerationSensor* gsens = 0;
+    DeviceList<AccelerationSensor> accelSensors(body->devices());
     if(!accelSensors.empty()){
-        gsens = accelSensors.get(0);
+        gsens = accelSensors[0];
     }
     if(!gsens || !gsens->link() || gsens->link()->index() >= linkPosSeq->numParts()){
         return false;
@@ -111,7 +114,7 @@ static bool saveRootLinkAccAsGsensFile(BodyMotion& motion, BodyPtr body, const s
    \todo The localRotaion of gsens should be considered.
 */
 void cnoid::calcLinkAccSeq
-(MultiSE3Seq& linkPosSeq, AccelSensor* gsens, int frameBegin, int numFrames, Vector3Seq& out_accSeq)
+(MultiSE3Seq& linkPosSeq, AccelerationSensor* gsens, int frameBegin, int numFrames, Vector3Seq& out_accSeq)
 {
     const double r = linkPosSeq.frameRate();
     const double dt = 1.0 / r;
@@ -161,6 +164,21 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
             jointPosSeq.reset();
         } else {
             if(posFileString == filename){
+                loaded = true;
+            }
+        }
+    }
+
+    MultiSE3SeqPtr rootLinkAttSeq;
+    filesystem::path hipFile = filesystem::change_extension(orgpath, ".hip");
+    if(filesystem::exists(hipFile) && !filesystem::is_directory(hipFile)){
+        string hipFileString = getNativePathString(hipFile);
+        rootLinkAttSeq = motion.linkPosSeq();
+        if(!rootLinkAttSeq->loadPlainRpyFormat(hipFileString)){
+            os << rootLinkAttSeq->seqMessage();
+            rootLinkAttSeq.reset();
+        } else {
+            if(hipFileString == filename){
                 loaded = true;
             }
         }
@@ -231,12 +249,12 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
     if(!loaded){
         motion.setNumFrames(0);
     }
-        
+
     return loaded;
 }
 
 
-bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, BodyPtr body, const std::string& filename, std::ostream& os)
+bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::string& filename, std::ostream& os)
 {
     filesystem::path orgpath(filename);
     filesystem::path bpath(orgpath.branch_path() / filesystem::path(basename(orgpath)));
@@ -383,7 +401,7 @@ bool cnoid::applyVelocityLimitFilterDummy()
 
 
 static bool applyVelocityLimitFilterMain
-(MultiValueSeq& seq, BodyPtr body, double ks, bool usePollardMethod, std::ostream& os)
+(MultiValueSeq& seq, Body* body, double ks, bool usePollardMethod, std::ostream& os)
 {
     bool applied = false;
     
@@ -424,14 +442,14 @@ static bool applyVelocityLimitFilterMain
 
 
 bool cnoid::applyPollardVelocityLimitFilter
-(MultiValueSeq& seq, BodyPtr body, double ks, std::ostream& os)
+(MultiValueSeq& seq, Body* body, double ks, std::ostream& os)
 {
     return applyVelocityLimitFilterMain(seq, body, ks, true, os);
 }
 
 
 bool cnoid::applyVelocityLimitFilter
-(MultiValueSeq& seq, BodyPtr body, std::ostream& os)
+(MultiValueSeq& seq, Body* body, std::ostream& os)
 {
     return applyVelocityLimitFilterMain(seq, body, 1.0, false, os);
 }
@@ -460,7 +478,7 @@ void cnoid::applyGaussianFilter
 
 
 void cnoid::applyRangeLimitFilter
-(MultiValueSeq& seq, BodyPtr body, double limitGrad, double edgeGradRatio, double margin, std::ostream& os)
+(MultiValueSeq& seq, Body* body, double limitGrad, double edgeGradRatio, double margin, std::ostream& os)
 {
     RangeLimiter limiter;
 

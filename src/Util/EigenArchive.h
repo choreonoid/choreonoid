@@ -7,33 +7,38 @@
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
-//#include "YAMLWriter.h"
-#include <boost/function.hpp>
+#include <boost/format.hpp>
+#include <functional>
 
 namespace cnoid {
+
+template<typename Derived>
+void read(const Listing& listing, Eigen::MatrixBase<Derived>& x)
+{
+    const int nr = x.rows();
+    const int nc = x.cols();
+    if(listing.size() != nr * nc){
+        listing.throwException(
+            str(boost::format("A %1% x %2% matrix / vector value is expected") % nr % nc));
+    }
+    int index = 0;
+    for(int i=0; i < nr; ++i){
+        for(int j=0; j < nc; ++j){
+            x(i, j) = listing[index++].toDouble();
+        }
+    }
+}
+
 
 template<typename Derived>
 bool read(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<Derived>& x)
 {
     const Listing& s = *mapping.findListing(key);
-    if(s.isValid()){
-        const int nr = x.rows();
-        const int nc = x.cols();
-        const int n = s.size();
-        int index = 0;
-        if(n > 0){
-            for(int i=0; i < nr; ++i){
-                for(int j=0; j < nc; ++j){
-                    x(i, j) = s[index++].toDouble();
-                    if(index == n){
-                        break;
-                    }
-                }
-            }
-        }
-        return (index == nr * nc);
+    if(!s.isValid()){
+        return false;
     }
-    return false;
+    read(s, x);
+    return true;
 }
 
 
@@ -135,7 +140,7 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxis<
     return s;
 }
 
-inline bool read(const Mapping& mapping, const std::string& key, boost::function<void(Vector3&)> setterFunc)
+inline bool read(const Mapping& mapping, const std::string& key, std::function<void(Vector3&)> setterFunc)
 {
     Vector3 x;
     if(read(mapping, key, x)){

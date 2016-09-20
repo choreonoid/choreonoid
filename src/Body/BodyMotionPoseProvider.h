@@ -3,11 +3,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_BODY_MOTION_POSE_PROVIDER_H_INCLUDED
-#define CNOID_BODY_BODY_MOTION_POSE_PROVIDER_H_INCLUDED
+#ifndef CNOID_BODY_BODY_MOTION_POSE_PROVIDER_H
+#define CNOID_BODY_BODY_MOTION_POSE_PROVIDER_H
 
 #include "Body.h"
-#include "Link.h"
 #include "PoseProvider.h"
 #include "BodyMotion.h"
 #include "ZMPSeq.h"
@@ -16,16 +15,18 @@
 
 namespace cnoid {
 
+class Link;
+
 class JointPath;
-typedef boost::shared_ptr<JointPath> JointPathPtr;
+typedef std::shared_ptr<JointPath> JointPathPtr;
 
 class CNOID_EXPORT BodyMotionPoseProvider : public PoseProvider
 {
 public:
     BodyMotionPoseProvider();
-    BodyMotionPoseProvider(BodyPtr body, BodyMotionPtr motion);
+    BodyMotionPoseProvider(Body* body, BodyMotionPtr motion);
 
-    void initialize(BodyPtr body, BodyMotionPtr motion);
+    void initialize(Body* body, BodyMotionPtr motion);
 
     bool updateMotion();
 
@@ -54,6 +55,7 @@ private:
 
     bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation, bool applyWaistTranslation);
 };
+
 }
 
 #endif

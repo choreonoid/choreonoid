@@ -2,13 +2,13 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_LINK_GROUP_H_INCLUDED
-#define CNOID_BODY_LINK_GROUP_H_INCLUDED
+#ifndef CNOID_BODY_LINK_GROUP_H
+#define CNOID_BODY_LINK_GROUP_H
 
 #include <boost/variant.hpp>
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -16,7 +16,7 @@ namespace cnoid {
 class Listing;
 class Body;
 class LinkGroup;
-typedef boost::shared_ptr<LinkGroup> LinkGroupPtr;
+typedef std::shared_ptr<LinkGroup> LinkGroupPtr;
 
 class CNOID_EXPORT LinkGroup
 {
@@ -51,7 +51,7 @@ private:
     bool load(const Body& body, const Listing& linkGroupList);
     void setFlatLinkList(const Body& body);
 };
-}
 
+}
 
 #endif

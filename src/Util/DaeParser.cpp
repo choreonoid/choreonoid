@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <float.h>
+//#include <tuple>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -18,7 +19,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -31,7 +31,7 @@
 
 #include <irrXML.h>
 
-#include "SceneGraph.h"
+#include "SceneDrawables.h"
 #include "PolygonMeshTriangulator.h"
 #include "Exception.h"
 #include "DaeParser.h"
@@ -2889,8 +2889,11 @@ void DaeParserImpl::setGeometry(DaeGeometryPtr extGeometry, DaeNodePtr extNode, 
         SgMeshBasePtr sgMesh  = (polygon ? static_cast<SgMeshBase*>(new SgPolygonMesh) 
                                  : static_cast<SgMeshBase*>(new SgMesh));
         setMesh(extGeometry, *iterm, sgMesh, polygon);
-        sgShape->setMesh(polygon ? triangulator.triangulate(*(static_pointer_cast<SgPolygonMesh>(sgMesh)))
-                         : static_pointer_cast<SgMesh>(sgMesh));
+        if(polygon){
+            sgShape->setMesh(triangulator.triangulate(static_pointer_cast<SgPolygonMesh>(sgMesh)));
+        } else {
+            sgShape->setMesh(static_pointer_cast<SgMesh>(sgMesh));
+        }
         // create a normals
         if (!sgMesh->hasNormals()) {
             MeshNormalGenerator generator;
@@ -3112,14 +3115,14 @@ void DaeParserImpl::setColors(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, Sg
 void DaeParserImpl::setVIndexes(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, SgMeshBase* sgMesh, bool polygon)
 {
     unsigned int t = 0, v = 0, vcount = 0;
-    double* value = NULL;
+    vector<double> value;
 
     if (extMesh->verticesIndexes) {
         DaeVectorXArrayPtr vIndexes = extMesh->verticesIndexes;
         for (unsigned int i = 0; i < vIndexes->size(); i++) {
             if (t == 0) {
                 vcount = (polygon ? extMesh->vcount->at(v) : 3);
-                if (value == NULL) value = new double[vcount];
+                value.resize(vcount);
             }
             value[t++] = lexical_cast<double>(vIndexes->at(i));
 
@@ -3135,17 +3138,8 @@ void DaeParserImpl::setVIndexes(DaeGeometryPtr extGeometry, DaeMeshPtr extMesh, 
                         static_cast<SgMesh*>(sgMesh)->triangleVertices().push_back(value[j]);
                     }
                 }
-                if (value) {
-                    delete value;
-                    value = NULL;
-                }
             }
         }
-        if (value) {
-            delete value;
-            value = NULL;
-        }
-
     } else {
         throwException(line(), (format("[%1%]invalid v-index") % line()).str());
     }
@@ -3156,7 +3150,7 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
                                 DaeVectorXArrayPtr extArray, SgIndexArray& sgArray, bool polygon)
 {
     unsigned int t = 0, v = 0, vcount = 0;
-    double* value = NULL;
+    vector<double> value;
 
     if (extArray) {
         DaeStrides::iterator iter = strides.find(id);
@@ -3174,7 +3168,7 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
         for (unsigned int i = 0; i < indexes->size(); i++) {
             if (t == 0) {
                 vcount = (polygon ? extMesh->vcount->at(v) : 3);
-                if (value == NULL) value = new double[vcount];
+                value.resize(vcount);
             }
             value[t++] = lexical_cast<double>(indexes->at(i));       
             if (t == vcount) {
@@ -3185,17 +3179,8 @@ void DaeParserImpl::setXIndexes(DaeGeometryPtr ext, DaeMeshPtr extMesh, string i
                 if (polygon) {
                     sgArray.push_back(-1);
                 }
-                if (value) {
-                    delete value;
-                    value = NULL;
-                }
             }
         }
-        if (value) {
-            delete value;    
-            value = NULL;   
-        }
-
     } else {
         throwException(line(), (format("[%1%]invalid %2%") % line() % text).str());
     }

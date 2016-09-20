@@ -72,12 +72,12 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
 
     SignalProxy<void(bool isInitialCreation)> sigUpdateRequest();
             
-    void setBodyItem(BodyItemPtr bodyItem);
+    void setBodyItem(BodyItem* bodyItem);
     BodyItem* bodyItem();
 
-    typedef boost::function<void(const LinkTreeItem* item, int role, QVariant& out_value)> ColumnDataFunction;
-    typedef boost::function<void(const LinkTreeItem* item, int role, const QVariant& value)> ColumnSetDataFunction;
-    typedef boost::function<QWidget*(const LinkTreeItem* item)> ColumnWidgetFunction;
+    typedef std::function<void(const LinkTreeItem* item, int role, QVariant& out_value)> ColumnDataFunction;
+    typedef std::function<void(const LinkTreeItem* item, int role, const QVariant& value)> ColumnSetDataFunction;
+    typedef std::function<QWidget*(const LinkTreeItem* item)> ColumnWidgetFunction;
 
     int setNumColumns(int n);
     int addColumn();
@@ -107,19 +107,22 @@ class CNOID_EXPORT LinkTreeWidget : public TreeWidget
     SignalProxy<void(LinkTreeItem* item, int column)> sigItemChanged();
                     
     SignalProxy<void()> sigSelectionChanged();
-    const std::vector<int>& getSelectedLinkIndices();
-    const boost::dynamic_bitset<>& getLinkSelection();
+    int selectedLinkIndex() const;
+    const std::vector<int>& selectedLinkIndices();
+    const boost::dynamic_bitset<>& linkSelection();
 
     /// This signal is available after calling 'enableCache(true)'.
-    SignalProxy<void()> sigSelectionChanged(BodyItemPtr bodyItem);
-    /// This member is available after calling 'enableCache(true)'.
-    const std::vector<int>& getSelectedLinkIndices(BodyItemPtr bodyItem);
-    /// This member is available after calling 'enableCache(true)'.
-    const boost::dynamic_bitset<>& getLinkSelection(BodyItemPtr bodyItem);
+    SignalProxy<void()> sigSelectionChanged(BodyItem* bodyItem);
+    /// This function is available after calling 'enableCache(true)'.
+    int selectedLinkIndex(BodyItem* bodyItem) const;
+    /// This function is available after calling 'enableCache(true)'.
+    const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
+    /// This function is available after calling 'enableCache(true)'.
+    const boost::dynamic_bitset<>& linkSelection(BodyItem* bodyItem);
 
     MenuManager& popupMenuManager();
 
-    bool makeSingleSelection(BodyItemPtr bodyItem, int linkIndex);
+    bool makeSingleSelection(BodyItem* bodyItem, int linkIndex);
 
     void enableArchiveOfCurrentBodyItem(bool on);
     bool storeState(Archive& archive);

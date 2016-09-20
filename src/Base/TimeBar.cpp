@@ -11,12 +11,11 @@
 #include "LazyCaller.h"
 #include "SpinBox.h"
 #include "Slider.h"
-#include "Button.h"
+#include "Buttons.h"
+#include "CheckBox.h"
 #include "Dialog.h"
+#include <QDialogButtonBox>
 #include <QTime>
-#include <QCheckBox>
-#include <QLayout>
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cmath>
 #include <limits>
@@ -24,6 +23,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -45,7 +45,7 @@ inline double myNearByInt(double x)
 #endif
 }
 
-class SetupDialog : public Dialog
+class ConfigDialog : public Dialog
 {
 public:
     SpinBox frameRateSpin;
@@ -60,8 +60,8 @@ public:
     SpinBox beatmSpin;
     DoubleSpinBox beatOffsetSpin;
 
-    SetupDialog() {
-        setWindowTitle(_("Time Bar Setup"));
+    ConfigDialog() {
+        setWindowTitle(_("Time Bar Config"));
 
         QVBoxLayout* vbox = new QVBoxLayout();
         setLayout(vbox);
@@ -101,7 +101,7 @@ public:
         vbox->addLayout(hbox);
 
         hbox = new QHBoxLayout();
-        fillLevelSyncCheck.setText(_("Sync to ongoing updates"));
+        fillLevelSyncCheck.setText(_("Sync with ongoing updates"));
         fillLevelSyncCheck.setChecked(true);
         hbox->addWidget(&fillLevelSyncCheck);
         hbox->addStretch();
@@ -156,7 +156,9 @@ public:
 
         PushButton* okButton = new PushButton(_("&OK"));
         okButton->setDefault(true);
-        connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+        QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
+        buttonBox->addButton(okButton, QDialogButtonBox::AcceptRole);
+        connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
         vbox->addWidget(okButton);
     }
 };
@@ -201,7 +203,7 @@ public:
 
     TimeBar* self;
     ostream& os;
-    SetupDialog setup;
+    ConfigDialog config;
 
     ToolButton* stopResumeButton;
     ToolButton* frameModeToggle;
@@ -237,7 +239,7 @@ public:
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-playback")){
-        callLater(boost::bind(&TimeBar::startPlayback, TimeBar::instance()));
+        callLater(std::bind(&TimeBar::startPlayback, TimeBar::instance()));
     }
 }
 
@@ -292,29 +294,29 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     isFillLevelActive = false;
 
     self->addButton(QIcon(":/Base/icons/play.png"), _("Start animation"))
-        ->sigClicked().connect(boost::bind(&TimeBarImpl::onPlayActivated, this));
+        ->sigClicked().connect(std::bind(&TimeBarImpl::onPlayActivated, this));
 
     stopResumeButton = self->addButton(resumeIcon, _("Resume animation"));
     stopResumeButton->setIcon(resumeIcon);
-    stopResumeButton->sigClicked().connect(boost::bind(&TimeBarImpl::onResumeActivated, this));
+    stopResumeButton->sigClicked().connect(std::bind(&TimeBarImpl::onResumeActivated, this));
 
     self->addButton(QIcon(":/Base/icons/refresh.png"), _("Refresh state at the current time"))
-        ->sigClicked().connect(boost::bind(&TimeBarImpl::onRefreshButtonClicked, this));
+        ->sigClicked().connect(std::bind(&TimeBarImpl::onRefreshButtonClicked, this));
     
     timeSpin = new DoubleSpinBox();
     timeSpin->setAlignment(Qt::AlignCenter);
-    timeSpin->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeSpinChanged, this, _1));
+    timeSpin->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeSpinChanged, this, _1));
     self->addWidget(timeSpin);
 
     timeSlider = new Slider(Qt::Horizontal);
-    timeSlider->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeSliderChangeValue, this, _1));
+    timeSlider->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeSliderChangeValue, this, _1));
     timeSlider->setMinimumWidth(timeSlider->sizeHint().width());
     self->addWidget(timeSlider);
 
     minTimeSpin = new DoubleSpinBox();
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(-999.0, 999.0);
-    minTimeSpin->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
+    minTimeSpin->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
     self->addWidget(minTimeSpin);
 
     self->addLabel(" : ");
@@ -322,18 +324,18 @@ TimeBarImpl::TimeBarImpl(TimeBar* self)
     maxTimeSpin = new DoubleSpinBox();
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(-999.0, 999.0);
-    maxTimeSpin->sigValueChanged().connect(boost::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
+    maxTimeSpin->sigValueChanged().connect(std::bind(&TimeBarImpl::onTimeRangeSpinsChanged, this));
     self->addWidget(maxTimeSpin);
 
-    self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the setup dialog"))
-        ->sigClicked().connect(boost::bind(&QDialog::show, &setup));
+    self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+        ->sigClicked().connect(std::bind(&QDialog::show, &config));
 
-    setup.frameRateSpin.sigValueChanged().connect(boost::bind(&TimeBarImpl::onFrameRateSpinChanged, this));
-    setup.playbackFrameRateSpin.sigValueChanged().connect(boost::bind(&TimeBarImpl::onPlaybackFrameRateChanged, this));
-    setup.playbackSpeedScaleSpin.sigValueChanged().connect(boost::bind(&TimeBarImpl::onPlaybackSpeedScaleChanged, this));
+    config.frameRateSpin.sigValueChanged().connect(std::bind(&TimeBarImpl::onFrameRateSpinChanged, this));
+    config.playbackFrameRateSpin.sigValueChanged().connect(std::bind(&TimeBarImpl::onPlaybackFrameRateChanged, this));
+    config.playbackSpeedScaleSpin.sigValueChanged().connect(std::bind(&TimeBarImpl::onPlaybackSpeedScaleChanged, this));
 
-    playbackSpeedScale = setup.playbackSpeedScaleSpin.value();
-    playbackFrameRate = setup.playbackFrameRateSpin.value();
+    playbackSpeedScale = config.playbackSpeedScaleSpin.value();
+    playbackFrameRate = config.playbackFrameRateSpin.value();
 
     updateTimeProperties(true);
 }
@@ -416,7 +418,7 @@ bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* cal
         }
     }
 
-    if(newTime > maxTime && setup.autoExpandCheck.isChecked()){
+    if(newTime > maxTime && config.autoExpandCheck.isChecked()){
         maxTime = newTime;
         timeSpin->blockSignals(true);
         timeSlider->blockSignals(true);
@@ -452,6 +454,9 @@ void TimeBarImpl::onTimeSpinChanged(double value)
     if(TRACE_FUNCTIONS){
         cout << "TimeBarImpl::onTimeSpinChanged()" << endl;
     }
+    if(isDoingPlayback){
+        stopPlayback(true);
+    }
     setTime(value, false, timeSpin);
 }
 
@@ -460,6 +465,9 @@ bool TimeBarImpl::onTimeSliderChangeValue(double value)
 {
     if(TRACE_FUNCTIONS){
         cout << "TimeBarImpl::onTimeSliderChanged(): value = " << value << endl;
+    }
+    if(isDoingPlayback){
+        stopPlayback(true);
     }
     setTime(value / pow(10.0, decimals), false, timeSlider);
     return true;
@@ -515,7 +523,7 @@ void TimeBarImpl::updateTimeProperties(bool forceUpdate)
     timeSlider->blockSignals(true);
     minTimeSpin->blockSignals(true);
     maxTimeSpin->blockSignals(true);
-    setup.frameRateSpin.blockSignals(true);
+    config.frameRateSpin.blockSignals(true);
     
     const double timeStep = 1.0 / self->frameRate_;
     decimals = static_cast<int>(ceil(log10(self->frameRate_)));
@@ -532,9 +540,9 @@ void TimeBarImpl::updateTimeProperties(bool forceUpdate)
     timeSlider->setSingleStep(timeStep * r);
     minTimeSpin->setValue(minTime);
     maxTimeSpin->setValue(maxTime);
-    setup.frameRateSpin.setValue(self->frameRate_);
+    config.frameRateSpin.setValue(self->frameRate_);
 
-    setup.frameRateSpin.blockSignals(false);
+    config.frameRateSpin.blockSignals(false);
     maxTimeSpin->blockSignals(false);
     minTimeSpin->blockSignals(false);
     timeSlider->blockSignals(false);
@@ -546,7 +554,7 @@ void TimeBarImpl::updateTimeProperties(bool forceUpdate)
     
 void TimeBarImpl::onPlaybackSpeedScaleChanged()
 {
-    playbackSpeedScale = setup.playbackSpeedScaleSpin.value();
+    playbackSpeedScale = config.playbackSpeedScaleSpin.value();
     
     if(isDoingPlayback){
         startPlayback();
@@ -556,19 +564,19 @@ void TimeBarImpl::onPlaybackSpeedScaleChanged()
 
 double TimeBar::playbackSpeedScale() const
 {
-    return impl->setup.playbackSpeedScaleSpin.value();
+    return impl->config.playbackSpeedScaleSpin.value();
 }
 
 
 void TimeBar::setPlaybackSpeedScale(double scale)
 {
-    impl->setup.playbackSpeedScaleSpin.setValue(scale);
+    impl->config.playbackSpeedScaleSpin.setValue(scale);
 }
 
 
 void TimeBarImpl::onPlaybackFrameRateChanged()
 {
-    playbackFrameRate = setup.playbackFrameRateSpin.value();
+    playbackFrameRate = config.playbackFrameRateSpin.value();
     
     if(isDoingPlayback){
         startPlayback();
@@ -578,13 +586,13 @@ void TimeBarImpl::onPlaybackFrameRateChanged()
 
 double TimeBar::playbackFrameRate() const
 {
-    return impl->setup.playbackFrameRateSpin.value();
+    return impl->config.playbackFrameRateSpin.value();
 }
 
 
 void TimeBar::setPlaybackFrameRate(double rate)
 {
-    impl->setup.playbackFrameRateSpin.setValue(rate);
+    impl->config.playbackFrameRateSpin.setValue(rate);
 }
 
 
@@ -638,7 +646,7 @@ void TimeBarImpl::startPlayback()
             const static QString tip(_("Stop animation"));
             stopResumeButton->setIcon(stopIcon);
             stopResumeButton->setToolTip(tip);
-            if(setup.idleLoopDrivenCheck.isChecked()){
+            if(config.idleLoopDrivenCheck.isChecked()){
                 timerId = startTimer(0);
             } else {
                 timerId = startTimer((int)myNearByInt(1000.0 / playbackFrameRate));
@@ -748,7 +756,7 @@ void TimeBarImpl::stopFillLevelUpdate(int id)
 
 void TimeBar::setFillLevelSync(bool on)
 {
-    impl->setup.fillLevelSyncCheck.setChecked(on);
+    impl->config.fillLevelSyncCheck.setChecked(on);
 }
 
 
@@ -778,7 +786,7 @@ void TimeBarImpl::timerEvent(QTimerEvent* event)
 
     bool doStopAtLastFillLevel = false;
     if(isFillLevelActive){
-        if(setup.fillLevelSyncCheck.isChecked() || (time > fillLevel)){
+        if(config.fillLevelSyncCheck.isChecked() || (time > fillLevel)){
             animationTimeOffset += (fillLevel - time);
             time = fillLevel;
             if(fillLevelMap.empty()){
@@ -806,7 +814,7 @@ void TimeBarImpl::onTimeRangeSpinsChanged()
 
 void TimeBarImpl::onFrameRateSpinChanged()
 {
-    setFrameRate(setup.frameRateSpin.value());
+    setFrameRate(config.frameRateSpin.value());
 }
 
 
@@ -836,11 +844,11 @@ bool TimeBarImpl::storeState(Archive& archive)
     archive.write("maxTime", maxTime);
     archive.write("frameRate", self->frameRate_);
     archive.write("playbackFrameRate", playbackFrameRate);
-    archive.write("idleLoopDrivenMode", setup.idleLoopDrivenCheck.isChecked());
+    archive.write("idleLoopDrivenMode", config.idleLoopDrivenCheck.isChecked());
     archive.write("currentTime", self->time_);
     archive.write("speedScale", playbackSpeedScale);
-    archive.write("syncToOngoingUpdates", setup.fillLevelSyncCheck.isChecked());
-    archive.write("autoExpansion", setup.autoExpandCheck.isChecked());
+    archive.write("syncToOngoingUpdates", config.fillLevelSyncCheck.isChecked());
+    archive.write("autoExpansion", config.autoExpandCheck.isChecked());
     return true;
 }
 
@@ -857,11 +865,11 @@ bool TimeBarImpl::restoreState(const Archive& archive)
     archive.read("maxTime", maxTime);
     archive.read("currentTime", self->time_);
 
-    setup.playbackFrameRateSpin.setValue(archive.get("playbackFrameRate", playbackFrameRate));
-    setup.idleLoopDrivenCheck.setChecked(archive.get("idleLoopDrivenMode", setup.idleLoopDrivenCheck.isChecked()));
-    setup.playbackSpeedScaleSpin.setValue(archive.get("speedScale", playbackSpeedScale));
-    setup.fillLevelSyncCheck.setChecked(archive.get("syncToOngoingUpdates", setup.fillLevelSyncCheck.isChecked()));
-    setup.autoExpandCheck.setChecked(archive.get("autoExpansion", setup.autoExpandCheck.isChecked()));
+    config.playbackFrameRateSpin.setValue(archive.get("playbackFrameRate", playbackFrameRate));
+    config.idleLoopDrivenCheck.setChecked(archive.get("idleLoopDrivenMode", config.idleLoopDrivenCheck.isChecked()));
+    config.playbackSpeedScaleSpin.setValue(archive.get("speedScale", playbackSpeedScale));
+    config.fillLevelSyncCheck.setChecked(archive.get("syncToOngoingUpdates", config.fillLevelSyncCheck.isChecked()));
+    config.autoExpandCheck.setChecked(archive.get("autoExpansion", config.autoExpandCheck.isChecked()));
 
     double prevFrameRate = self->frameRate_;
     archive.read("frameRate", self->frameRate_);

@@ -85,8 +85,8 @@ items:
           class: AISTSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Direct
-            onlyActiveControlPeriod: true
+            recording: "off"
+            timeRangeMode: "Unlimited"
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateRecording: true
@@ -108,14 +108,14 @@ items:
           class: ODESimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Direct
-            onlyActiveControlPeriod: true
+            recording: "off"
+            timeRangeMode: "Unlimited"
             timeLength: 60
             allLinkPositionOutputMode: true
             deviceStateRecording: true
             stepMode: Iterative (quick step)
             gravity: [ 0, 0, -9.80665 ]
-            friction: 50
+            friction: 1.0
             jointLimitMode: false
             globalERP: 0.4
             globalCFM: 1e-10
@@ -131,8 +131,8 @@ items:
           class: BulletSimulatorItem
           data: 
             realtimeSync: true
-            recordingMode: Direct
-            onlyActiveControlPeriod: true
+            recording: "off"
+            timeRangeMode: "Unlimited"
             timeLength: 60
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -290,7 +290,7 @@ toolbars:
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
   "BodyBar": 
     current: 2
     stanceWidth: 0.15

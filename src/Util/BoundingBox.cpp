@@ -60,13 +60,21 @@ Vector3 BoundingBox::center() const
 
 Vector3 BoundingBox::size() const
 {
-    return (max_ - min_);
+    if(empty_){
+        return Vector3::Zero();
+    } else {
+        return (max_ - min_);
+    }
 }
 
 
 double BoundingBox::boundingSphereRadius() const
 {
-    return (max_ - center()).norm();
+    if(empty_){
+        return 0.0;
+    } else {
+        return (max_ - center()).norm();
+    }
 }
 
 
@@ -146,6 +154,7 @@ std::ostream& cnoid::operator<<(std::ostream& os, const BoundingBox& bb)
 {
     os << "(" << bb.min().x() << ", " << bb.min().y() << ", " << bb.min().z() << ") - (";
     os << bb.max().x() << ", " << bb.max().y() << ", " << bb.max().z() << ")";
+    return os;
 }
 
 
@@ -281,4 +290,5 @@ std::ostream& cnoid::operator<<(std::ostream& os, const BoundingBoxf& bb)
 {
     os << "(" << bb.min().x() << ", " << bb.min().y() << ", " << bb.min().z() << ") - (";
     os << bb.max().x() << ", " << bb.max().y() << ", " << bb.max().z() << ")";
+    return os;
 }

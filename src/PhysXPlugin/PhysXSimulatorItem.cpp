@@ -9,12 +9,11 @@
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include "gettext.h"
 #include <iostream>
 
@@ -27,7 +26,6 @@ using std::isfinite;
 #include <PxPhysicsAPI.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 using namespace physx;
 
@@ -189,7 +187,7 @@ PhysXLink::PhysXLink
 
     createGeometry(physXBody);
 
-    if(link->jointType() == Link::CRAWLER_JOINT){
+    if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         PxFilterData simFilterData;
         simFilterData.word0 = 1;
         int nbShapes = pxRigidActor->getNbShapes();
@@ -325,9 +323,9 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
 
 void PhysXLink::createGeometry(PhysXBody* physXBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
+        if(extractor->extract(link->collisionShape(), std::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
             if(!vertices.empty()){
                 if(pxRigidActor->isRigidStatic()){
                     PxTriangleMesh* triangleMesh = createTriangleMesh();
@@ -796,7 +794,7 @@ void PhysXBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(size_t i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         const PxJoint* joint = physXLinks[link->index()]->pxJoint;
         PxVec3 force, torque;
@@ -946,13 +944,13 @@ void PhysXSimulatorItemImpl::clear()
 }    
 
 
-ItemPtr PhysXSimulatorItem::doDuplicate() const
+Item* PhysXSimulatorItem::doDuplicate() const
 {
     return new PhysXSimulatorItem(*this);
 }
 
 
-SimulationBodyPtr PhysXSimulatorItem::createSimulationBody(const BodyPtr orgBody)
+SimulationBody* PhysXSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new PhysXBody(*orgBody);
 }
@@ -1062,9 +1060,9 @@ void PhysXSimulatorItemImpl::onContactModify(PxContactModifyPair* const pairs, P
 
     Link* crawlerlink = 0;
     double sign = 1;
-    if(link0->jointType() == Link::CRAWLER_JOINT){
+    if(link0->jointType() == Link::CRAWLER_JOINT || link0->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         crawlerlink = link0;
-    }else if(link1->jointType() == Link::CRAWLER_JOINT){
+    }else if(link1->jointType() == Link::CRAWLER_JOINT || link1->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         crawlerlink = link1;
         sign = -1;
     }
@@ -1080,7 +1078,10 @@ void PhysXSimulatorItemImpl::onContactModify(PxContactModifyPair* const pairs, P
             continue;
 
         dir.normalize();
-        dir *= sign * crawlerlink->u();
+        if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
+            dir *= sign * crawlerlink->dq();
+        else
+            dir *= sign * crawlerlink->u();
         pairs->contacts.setTargetVelocity(i, dir);
     }
 }
@@ -1115,8 +1116,8 @@ bool PhysXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& 
             physXBody->updateForceSensors();
         }
 
-        if(physXBody->sensorHelper.hasGyroOrAccelSensors()){
-            physXBody->sensorHelper.updateGyroAndAccelSensors();
+        if(physXBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            physXBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
 

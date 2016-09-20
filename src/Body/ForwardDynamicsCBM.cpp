@@ -7,11 +7,9 @@
 #include "DyBody.h"
 #include "LinkTraverse.h"
 #include <cnoid/EigenUtil>
-#include <boost/bind.hpp>
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 static const bool CALC_ALL_JOINT_TORQUES = false;
@@ -44,7 +42,7 @@ static void putVector(TVector& M, char* name)
 }
 
 
-ForwardDynamicsCBM::ForwardDynamicsCBM(const DyBodyPtr& body) :
+ForwardDynamicsCBM::ForwardDynamicsCBM(DyBody* body) :
     ForwardDynamics(body)
 {
     highGainModeLinkFlag.resize(body->numLinks(), false);
@@ -177,7 +175,7 @@ void ForwardDynamicsCBM::calcNextState()
 		
     if(sensorHelper.isActive()){
         updateForceSensors();
-        sensorHelper.updateGyroAndAccelSensors();
+        sensorHelper.updateGyroAndAccelerationSensors();
     }
 	
     ddqGivenCopied = false;
@@ -778,7 +776,7 @@ void ForwardDynamicsCBM::initializeSensors()
     if(sensorsEnabled){
         const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
         for(size_t i=0; i < forceSensors.size(); ++i){
-            const ForceSensor* sensor = forceSensors.get(i);
+            const ForceSensor* sensor = forceSensors[i];
             forceSensorInfo[sensor->link()->index()].hasSensor = true;
         }
         updateForceSensorInfo(body->rootLink(), false);
@@ -804,7 +802,7 @@ void ForwardDynamicsCBM::updateForceSensors()
 
     for(size_t i=0; i < sensors.size(); ++i){
         
-        ForceSensor* sensor = sensors.get(i);
+        ForceSensor* sensor = sensors[i];
         const Link* link = sensor->link();
 
         const ForceSensorInfo& info = forceSensorInfo[sensor->link()->index()];

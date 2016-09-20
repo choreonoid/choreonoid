@@ -9,7 +9,7 @@
 using namespace std;
 using namespace cnoid;
 
-SceneCollision::SceneCollision(boost::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs)
+SceneCollision::SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs)
     : collisionPairs(collisionPairs)
 {
     vertices_ = setVertices(new SgVertexArray);

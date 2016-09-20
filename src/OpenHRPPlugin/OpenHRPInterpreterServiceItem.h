@@ -6,12 +6,13 @@
 #define CNOID_OPENHRP_PLUGIN_INTERPRETER_SERVICE_ITEM_H
 
 #include <cnoid/Item>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class OpenHRPInterpreterServiceItemImpl;
 
-class OpenHRPInterpreterServiceItem : public Item
+class CNOID_EXPORT OpenHRPInterpreterServiceItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -19,9 +20,11 @@ public:
     OpenHRPInterpreterServiceItem();
     OpenHRPInterpreterServiceItem(const OpenHRPInterpreterServiceItem& org);
     virtual ~OpenHRPInterpreterServiceItem();
+
+    void setRTCInstanceName(const std::string& name);
     
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void onConnectedToRoot();
     virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();

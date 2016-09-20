@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_COLLISION_COLDET_MODEL_PAIR_H_INCLUDED
-#define CNOID_COLLISION_COLDET_MODEL_PAIR_H_INCLUDED
+#ifndef CNOID_AIST_COLLIDION_DETECTOR_COLDET_MODEL_PAIR_H
+#define CNOID_AIST_COLLIDION_DETECTOR_COLDET_MODEL_PAIR_H
 
 #include "CollisionData.h"
 #include "ColdetModel.h"
@@ -89,7 +89,8 @@ private:
     int triTestsCount;
 };
 
-typedef boost::shared_ptr<ColdetModelPair> ColdetModelPairPtr;
+typedef std::shared_ptr<ColdetModelPair> ColdetModelPairPtr;
+
 }
 
 #endif

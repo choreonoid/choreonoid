@@ -21,11 +21,11 @@ class BodyItem;
 typedef ref_ptr<BodyItem> BodyItemPtr;
 class BodyItemImpl;
 class InverseKinematics;
-typedef boost::shared_ptr<InverseKinematics> InverseKinematicsPtr;
+typedef std::shared_ptr<InverseKinematics> InverseKinematicsPtr;
 class PinDragIK;
-typedef boost::shared_ptr<PinDragIK> PinDragIKptr;
+typedef std::shared_ptr<PinDragIK> PinDragIKptr;
 class PenetrationBlocker;
-typedef boost::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
+typedef std::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
 class EditableSceneBody;
 
 class CNOID_EXPORT BodyItem : public Item, public SceneProvider
@@ -64,7 +64,7 @@ public:
     bool restoreKinematicState(const BodyState& state);
 
     void storeInitialState();
-    void restoreInitialState();
+    void restoreInitialState(bool doNotify = true);
 
     void getInitialState(BodyState& out_state);
     void setInitialState(const BodyState& in_state);
@@ -138,7 +138,7 @@ public:
     EditableSceneBody* existingSceneBody();
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doAssign(Item* item);
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);

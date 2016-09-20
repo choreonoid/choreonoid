@@ -25,21 +25,24 @@ public:
     
 protected:
     // DataInPort declaration
-    RTC::TimedDoubleSeq m_angle;
-    RTC::InPort<RTC::TimedDoubleSeq> m_angleIn;
+    RTC::TimedDoubleSeq angles;
+    RTC::InPort<RTC::TimedDoubleSeq> anglesIn;
     
-    RTC::TimedFloatSeq m_axes;
-    RTC::InPort<RTC::TimedFloatSeq> m_axesIn;
+    RTC::TimedFloatSeq axes;
+    RTC::InPort<RTC::TimedFloatSeq> axesIn;
   
-    RTC::TimedBooleanSeq m_buttons;
-    RTC::InPort<RTC::TimedBooleanSeq> m_buttonsIn;
+    RTC::TimedBooleanSeq buttons;
+    RTC::InPort<RTC::TimedBooleanSeq> buttonsIn;
 
     // DataOutPort declaration
-    RTC::TimedDoubleSeq m_torque;
-    RTC::OutPort<RTC::TimedDoubleSeq> m_torqueOut;
+    RTC::TimedDoubleSeq velocities;
+    RTC::OutPort<RTC::TimedDoubleSeq> velocitiesOut;
 
-    RTC::TimedBooleanSeq m_light;
-    RTC::OutPort<RTC::TimedBooleanSeq> m_lightOut;
+    RTC::TimedDoubleSeq torques;
+    RTC::OutPort<RTC::TimedDoubleSeq> torquesOut;
+    
+    RTC::TimedBooleanSeq lightSwitch;
+    RTC::OutPort<RTC::TimedBooleanSeq> lightSwitchOut;
   
 private:
     double qref[2];

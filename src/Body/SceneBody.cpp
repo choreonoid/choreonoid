@@ -4,13 +4,11 @@
 
 #include "SceneBody.h"
 #include "SceneDevice.h"
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -19,9 +17,12 @@ SceneLink::SceneLink(Link* link)
 {
     setName(link->name());
 
+    shapeTransform = new SgPosTransform;
+    shapeTransform->setRotation(link->Rs().transpose());
+    addChild(shapeTransform);
     visualShape_ = link->visualShape();
     collisionShape_ = link->collisionShape();
-    currentShapeGroup = this;
+    currentShapeGroup = shapeTransform;
     isVisible_ = true;
     isVisualShapeVisible_ = true;
     isCollisionShapeVisible_ = false;
@@ -35,7 +36,7 @@ SceneLink::SceneLink(const SceneLink& org)
     : SgPosTransform(org)
 {
     link_ = 0;
-    currentShapeGroup = this;
+    currentShapeGroup = shapeTransform;
     isVisible_ = false;
     isVisualShapeVisible_ = false;
     isCollisionShapeVisible_ = false;
@@ -47,7 +48,7 @@ void SceneLink::setShapeGroup(SgGroup* group)
 {
     if(group != currentShapeGroup){
         if(shapeGroup){
-            removeChild(shapeGroup);
+            shapeTransform->removeChild(shapeGroup);
         }
         if(visualShape_){
             currentShapeGroup->removeChild(visualShape_);
@@ -58,9 +59,9 @@ void SceneLink::setShapeGroup(SgGroup* group)
         shapeGroup = group;
         if(shapeGroup){
             currentShapeGroup = shapeGroup;
-            addChild(shapeGroup);
+            shapeTransform->addChild(shapeGroup);
         } else {
-            currentShapeGroup = this;
+            currentShapeGroup = shapeTransform;
         }
         int action = updateVisibility(SgUpdate::ADDED|SgUpdate::REMOVED, false);
         notifyUpdate(action);
@@ -223,25 +224,27 @@ SceneLink* createSceneLink(Link* link)
 }
 
 
-SceneBody::SceneBody(BodyPtr body)
+SceneBody::SceneBody(Body* body)
 {
     initialize(body, createSceneLink);
 }
 
 
-SceneBody::SceneBody(BodyPtr body, boost::function<SceneLink*(Link*)> sceneLinkFactory)
+SceneBody::SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory)
 {
     initialize(body, sceneLinkFactory);
 }
 
 
-void SceneBody::initialize(BodyPtr& body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory)
+void SceneBody::initialize(Body* body, const std::function<SceneLink*(Link*)>& sceneLinkFactory)
 {
     this->sceneLinkFactory = sceneLinkFactory;
     body_ = body;
     sceneLinkGroup = new SgGroup;
     addChild(sceneLinkGroup);
     updateModel();
+    isVisualShapeVisible = true;
+    isCollisionShapeVisible = false;
 }
 
 
@@ -302,8 +305,12 @@ void SceneBody::cloneShapes(SgCloneMap& cloneMap)
 
 void SceneBody::setVisibleShapeTypes(bool visual, bool collision)
 {
-    for(size_t i=0; i < sceneLinks_.size(); ++i){
-        sceneLinks_[i]->setVisibleShapeTypes(visual, collision);
+    if(visual != isVisualShapeVisible || collision != isCollisionShapeVisible){
+        for(size_t i=0; i < sceneLinks_.size(); ++i){
+            sceneLinks_[i]->setVisibleShapeTypes(visual, collision);
+        }
+        isVisualShapeVisible = visual;
+        isCollisionShapeVisible = collision;
     }
 }
 
@@ -313,7 +320,8 @@ void SceneBody::updateLinkPositions()
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setPosition(sLink->link()->position());
+        sLink->setRotation(sLink->link()->attitude());
+        sLink->setTranslation(sLink->link()->translation());
     }
 }
 
@@ -323,7 +331,8 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
     const int n = sceneLinks_.size();
     for(int i=0; i < n; ++i){
         SceneLinkPtr& sLink = sceneLinks_[i];
-        sLink->setPosition(sLink->link()->position());
+        sLink->setRotation(sLink->link()->attitude());
+        sLink->setTranslation(sLink->link()->translation());
         sLink->notifyUpdate(update);
     }
 }

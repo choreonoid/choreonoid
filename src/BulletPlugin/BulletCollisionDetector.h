@@ -3,10 +3,11 @@
    \author Shizuko Hattori
 */
 
-#ifndef CNOID_BULLETPLUGIN__BULLET_COLLISION_DETECTOR_H_INCLUDED
-#define CNOID_BULLETPLUGIN__BULLET_COLLISION_DETECTOR_H_INCLUDED
+#ifndef CNOID_BULLETPLUGIN_BULLET_COLLISION_DETECTOR_H
+#define CNOID_BULLETPLUGIN_BULLET_COLLISION_DETECTOR_H
 
 #include <cnoid/CollisionDetector>
+
 namespace cnoid {
 
 class BulletCollisionDetectorImpl;
@@ -28,13 +29,14 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
     virtual bool makeReady();
     virtual void updatePosition(int geometryId, const Position& position);
-    virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback);
 
 private:
     BulletCollisionDetectorImpl* impl;
 };
 
-typedef boost::shared_ptr<BulletCollisionDetector> BulletCollisionDetectorPtr;
+typedef std::shared_ptr<BulletCollisionDetector> BulletCollisionDetectorPtr;
+
 }
 
 #endif

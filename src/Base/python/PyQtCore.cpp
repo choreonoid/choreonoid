@@ -2,12 +2,15 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <boost/python.hpp>
+#include <cnoid/PyUtil>
 #include <QObject>
 #include <QTimer>
 
-using namespace boost;
+namespace python = boost::python;
 using namespace boost::python;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(QObject)
 
 namespace {
 
@@ -44,7 +47,7 @@ void (QTimer::*QTimer_start2)(int) = &QTimer::start;
 
 BOOST_PYTHON_MODULE(QtCore)
 {
-    to_python_converter<QString, QString_to_python_str>();
+    python::to_python_converter<QString, QString_to_python_str>();
     QString_from_python_str();
     
     class_<QObject, QObject*, boost::noncopyable>("QObject")
@@ -59,16 +62,25 @@ BOOST_PYTHON_MODULE(QtCore)
         .def("startTimer", &QObject::startTimer)
         .def("deleteLater", &QObject::deleteLater);
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    void (*singleShotPtr) (int, const QObject*, const char*) = &QTimer::singleShot;
+#endif
+
     class_<QTimer, QTimer*, boost::noncopyable>("QTimer")
         .def("interval", &QTimer::interval)
         .def("isActive", &QTimer::isActive)
         .def("isSingleShot", &QTimer::isSingleShot)
         .def("setInterval", &QTimer::setInterval)
-        .def("setSingleShot", &QTimer::singleShot)
+        .def("setSingleShot", &QTimer::setSingleShot)
         .def("timerId", &QTimer::timerId)
         .def("start", QTimer_start1)
         .def("start", QTimer_start2)
         .def("stop", &QTimer::stop)
-        .def("singleShot", &QTimer::singleShot).staticmethod("singleShot");
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+        .def("singleShot", &QTimer::singleShot)
+#else
+        .def("singleShot", singleShotPtr)
+#endif
+        .staticmethod("singleShot");
 }
 

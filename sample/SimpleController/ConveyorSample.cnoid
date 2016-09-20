@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet ]
+
 items: 
   id: 0
   name: "Root"
@@ -40,7 +42,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recordingMode: TimeBar range
             onlyActiveControlPeriod: false
             timeLength: 3
@@ -63,7 +65,7 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recordingMode: TimeBar range
             onlyActiveControlPeriod: true
             timeLength: 3
@@ -87,7 +89,7 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recordingMode: TimeBar range
             onlyActiveControlPeriod: true
             timeLength: 3
@@ -303,7 +305,7 @@ toolbars:
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
     autoExpansion: true
   "BodyBar": 
     current: 6

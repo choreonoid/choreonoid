@@ -4,20 +4,20 @@
 
 #include "SceneBar.h"
 #include "SceneWidget.h"
-#include "GLSceneRenderer.h"
 #include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/ComboBox>
 #include <cnoid/ItemTreeView>
 #include <cnoid/ConnectionSet>
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
-#include <boost/bind.hpp>
+#include <cnoid/SceneRenderer>
 #include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -116,38 +116,38 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
     editModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/sceneedit.png"), _("Switch to the edit mode"));
     editModeToggle->sigToggled().connect(
-        boost::bind(&SceneBarImpl::onEditModeButtonToggled, this, _1));
+        std::bind(&SceneBarImpl::onEditModeButtonToggled, this, _1));
 
     firstPersonModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/walkthrough.png"), _("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect(
-        boost::bind(&SceneBarImpl::onFirstPersonModeButtonToggled, this, _1));
+        std::bind(&SceneBarImpl::onFirstPersonModeButtonToggled, this, _1));
 
     cameraCombo = new ComboBox();
     cameraCombo->setToolTip(_("Select a camera"));
-    cameraCombo->setMinimumContentsLength(1);
+    cameraCombo->setMinimumContentsLength(6);
     cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     cameraCombo->sigCurrentIndexChanged().connect(
-        boost::bind(&SceneBarImpl::onCameraComboCurrentIndexChanged, this, _1));
+        std::bind(&SceneBarImpl::onCameraComboCurrentIndexChanged, this, _1));
     self->addWidget(cameraCombo);
 
     self->addButton(QIcon(":/Base/icons/viewfitting.png"), _("Move the camera to look at the objects"))
-        ->sigClicked().connect(boost::bind(&SceneWidget::viewAll, boost::ref(targetSceneWidget)));
+        ->sigClicked().connect(std::bind(&SceneWidget::viewAll, std::ref(targetSceneWidget)));
 
     collisionLineToggle = self->addToggleButton(
         QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
     collisionLineToggle->sigToggled().connect(
-        boost::bind(&SceneBarImpl::onCollisionLineButtonToggled, this, _1));
+        std::bind(&SceneBarImpl::onCollisionLineButtonToggled, this, _1));
     
     wireframeToggle = self->addToggleButton(
         QIcon(":/Base/icons/wireframe.png"), _("Toggle the wireframe mode"));
     wireframeToggle->sigToggled().connect(
-        boost::bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
+        std::bind(&SceneBarImpl::onWireframeButtonToggled, this, _1));
 
-    self->addButton(QIcon(":/Base/icons/setup.png"), _("Open the dialog to setup scene rendering"))
-        ->sigClicked().connect(boost::bind(&SceneWidget::showSetupDialog, boost::ref(targetSceneWidget)));
+    self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
+        ->sigClicked().connect(std::bind(&SceneWidget::showConfigDialog, std::ref(targetSceneWidget)));
 
-    SceneWidget::sigSceneWidgetCreated().connect(boost::bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
+    SceneWidget::sigSceneWidgetCreated().connect(std::bind(&SceneBarImpl::onSceneWidgetCreated, this, _1));
 }
 
 
@@ -157,11 +157,11 @@ void SceneBarImpl::onSceneWidgetCreated(SceneWidget* sceneWidget)
 
     info.connectionToSigFocusChanged =
         sceneWidget->sigWidgetFocusChanged().connect(
-            boost::bind(&SceneBarImpl::onSceneWidgetFocusChanged, this, sceneWidget, _1));
+            std::bind(&SceneBarImpl::onSceneWidgetFocusChanged, this, sceneWidget, _1));
 
     info.connectionToSigAboutToBeDestroyed =
         sceneWidget->sigAboutToBeDestroyed().connect(
-            boost::bind(&SceneBarImpl::onSceneWidgetAboutToBeDestroyed, this, sceneWidget));
+            std::bind(&SceneBarImpl::onSceneWidgetAboutToBeDestroyed, this, sceneWidget));
 
     if(!targetSceneWidget){
         setTargetSceneWidget(sceneWidget);
@@ -206,23 +206,23 @@ void SceneBarImpl::setTargetSceneWidget(SceneWidget* sceneWidget)
         self->setEnabled(false);
 
     } else {
-        targetRenderer = &sceneWidget->renderer();
+        targetRenderer = sceneWidget->renderer();
 
         onSceneWidgetStateChanged();
 
         sceneWidgetStateConnection =
             sceneWidget->sigStateChanged().connect(
-                boost::bind(&SceneBarImpl::onSceneWidgetStateChanged, this));
+                std::bind(&SceneBarImpl::onSceneWidgetStateChanged, this));
 
         onSceneRendererCamerasChanged();
         
         rendererStateConnections.add(
             targetRenderer->sigCamerasChanged().connect(
-                boost::bind(&SceneBarImpl::onSceneRendererCamerasChanged, this)));
+                std::bind(&SceneBarImpl::onSceneRendererCamerasChanged, this)));
         
         rendererStateConnections.add(
             targetRenderer->sigCurrentCameraChanged().connect(
-                boost::bind(&SceneBarImpl::onSceneRendererCurrentCameraChanged, this)));
+                std::bind(&SceneBarImpl::onSceneRendererCurrentCameraChanged, this)));
 
         self->setEnabled(true);
     }
@@ -296,7 +296,7 @@ void SceneBarImpl::onSceneRendererCamerasChanged()
         } else if(pathStrings.size() == 1){
             label = pathStrings.front();
         } else {
-            label = pathStrings.front() + " - " + pathStrings.back();
+            label = pathStrings.back() + " - " + pathStrings.front();
         }
         cameraCombo->addItem(label.c_str());
     }

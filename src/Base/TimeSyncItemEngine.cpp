@@ -10,14 +10,13 @@
 #include <map>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
 
 double currentTime;
 
-typedef boost::function<TimeSyncItemEnginePtr(Item* sourceItem)> TimeSyncItemEngineFactory;
+typedef std::function<TimeSyncItemEnginePtr(Item* sourceItem)> TimeSyncItemEngineFactory;
 
 typedef vector<TimeSyncItemEngineFactory> FactoryArray;
 typedef map<string, FactoryArray> FactoryArrayMap;
@@ -126,7 +125,7 @@ TimeSyncItemEngineManager::~TimeSyncItemEngineManager()
 }
 
 
-void TimeSyncItemEngineManager::addEngineFactory(boost::function<TimeSyncItemEngine*(Item* sourceItem)> factory)
+void TimeSyncItemEngineManager::addEngineFactory(std::function<TimeSyncItemEngine*(Item* sourceItem)> factory)
 {
     allFactories[moduleName].push_back(factory);
 }

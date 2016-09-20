@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_SCENE_COLLISION_H_INCLUDED
-#define CNOID_BODY_SCENE_COLLISION_H_INCLUDED
+#ifndef CNOID_BODY_SCENE_COLLISION_H
+#define CNOID_BODY_SCENE_COLLISION_H
 
 #include "CollisionLinkPair.h"
-#include <cnoid/SceneShape>
+#include <cnoid/SceneDrawables>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -14,7 +14,7 @@ namespace cnoid {
 class CNOID_EXPORT SceneCollision : public SgLineSet
 {
 public:
-    SceneCollision(boost::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs);
+    SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs);
 
     void setDirty() { isDirty = true; }
 
@@ -23,12 +23,13 @@ public:
 private:
     SceneCollision(const SceneCollision& org);
 
-    boost::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs;
+    std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs;
     SgVertexArrayPtr vertices_;
     bool isDirty;
 };
     
 typedef ref_ptr<SceneCollision> SceneCollisionPtr;
+
 }
 
 #endif

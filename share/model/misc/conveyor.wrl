@@ -117,7 +117,7 @@ DEF Conveyor Humanoid {
        }
        DEF BELT Joint {
 	 jointId 0
-	 jointType "crawler"
+	 jointType "pseudoContinuousTrack"
 	 jointAxis 0 1 0
 	 translation 0.0 0.0 0.15
 	 rotation 0 0 1 0

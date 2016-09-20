@@ -19,14 +19,12 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <QMenuBar>
-#include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <set>
 #include <stack>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace cnoid {
@@ -42,10 +40,10 @@ public:
     void deleteManagedObjects();;
 
     ExtensionManager* self;
-    scoped_ptr<MenuManager> menuManager;
-    scoped_ptr<ItemManager> itemManager;
-    scoped_ptr<TimeSyncItemEngineManager> timeSyncItemEngineManger;
-    scoped_ptr<ViewManager> viewManager;
+    std::unique_ptr<MenuManager> menuManager;
+    std::unique_ptr<ItemManager> itemManager;
+    std::unique_ptr<TimeSyncItemEngineManager> timeSyncItemEngineManger;
+    std::unique_ptr<ViewManager> viewManager;
     string moduleName;
     string textDomain;
 
@@ -190,6 +188,9 @@ void ExtensionManagerImpl::setVersion(const std::string& version, bool isPlugin)
         }
     }
     bindGettextDomain(textDomain.c_str());
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) && CNOID_ENABLE_GETTEXT
+    bind_textdomain_codeset(textDomain.c_str(), "utf-8");
+#endif
 }
 
 
@@ -207,7 +208,12 @@ void ExtensionManager::manageSub(PtrHolderBase* holder)
 
 void ExtensionManager::addToolBar(ToolBar* toolBar)
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->objectName().toAscii()));
+#else
+    toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->objectName().toUtf8()));
+#endif
+
     manage(toolBar);
     MainWindow::instance()->addToolBar(toolBar);
 }
@@ -243,16 +249,16 @@ SignalProxy<void()> ExtensionManager::sigReleaseRequest()
 
 void ExtensionManager::setProjectArchiver(
     const std::string& name,
-    boost::function<bool(Archive&)> storeFunction,
-    boost::function<void(const Archive&)> restoreFunction)
+    std::function<bool(Archive&)> storeFunction,
+    std::function<void(const Archive&)> restoreFunction)
 {
     ProjectManager::instance()->setArchiver(impl->moduleName, name, storeFunction, restoreFunction);
 }
 
 
 void ExtensionManager::setProjectArchiver(
-    boost::function<bool(Archive&)> storeFunction,
-    boost::function<void(const Archive&)> restoreFunction)
+    std::function<bool(Archive&)> storeFunction,
+    std::function<void(const Archive&)> restoreFunction)
 {
     ProjectManager::instance()->setArchiver(impl->moduleName, "", storeFunction, restoreFunction);
 }

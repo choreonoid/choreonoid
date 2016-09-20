@@ -6,7 +6,6 @@
 #include "PythonSimScriptItem.h"
 #include <cnoid/Plugin>
 
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -24,6 +23,7 @@ public:
         return true;
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonSimScriptPlugin);

@@ -1,3 +1,5 @@
+optionalPlugins: [ "GRobot" ]
+
 items: 
   id: 0
   name: "Root"
@@ -14,27 +16,6 @@ items:
       children: 
         - 
           id: 2
-          name: "Floor"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/smallfloor.wrl"
-            currentBaseLink: ""
-            rootPosition: [  0.000000,  0.000000, -0.010000 ]
-            rootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
-            jointPositions: [  ]
-            initialRootPosition: [  0.000000,  0.000000, -0.010000 ]
-            initialRootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000,  1.000000,  0.000000, 
-               0.000000,  0.000000,  1.000000 ]
-            zmp: [  0.000000,  0.000000,  0.000000 ]
-            selfCollisionDetection: false
-        - 
-          id: 3
           name: "GR001"
           plugin: Body
           class: BodyItem
@@ -63,48 +44,80 @@ items:
             selfCollisionDetection: true
           children: 
             - 
-              id: 4
+              id: 3
+              name: "BodyMotionController"
+              plugin: Body
+              class: BodyMotionControllerItem
+              children: 
+                - 
+                  id: 4
+                  name: "SampleMotion1"
+                  plugin: PoseSeq
+                  class: PoseSeqItem
+                  data: 
+                    filename: "${SHARE}/motion/GR001/SampleMotion1.pseq"
+                    format: POSE-SEQ-YAML
+                    barLength: 1
+            - 
+              id: 5
               name: "GRobotController"
               plugin: GRobot
               class: GRobotControllerItem
               data: 
                 port: /dev/ttyUSB0
-            - 
-              id: 5
-              name: "SampleMotion1"
-              plugin: PoseSeq
-              class: PoseSeqItem
-              data: 
-                filename: "${SHARE}/motion/GR001/SampleMotion1.pseq"
-                format: POSE-SEQ-YAML
         - 
           id: 6
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/smallfloor.wrl"
+            currentBaseLink: ""
+            rootPosition: [  0.000000,  0.000000, -0.010000 ]
+            rootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            jointPositions: [  ]
+            initialRootPosition: [  0.000000,  0.000000, -0.010000 ]
+            initialRootAttitude: [ 
+               1.000000,  0.000000,  0.000000, 
+               0.000000,  1.000000,  0.000000, 
+               0.000000,  0.000000,  1.000000 ]
+            zmp: [  0.000000,  0.000000,  0.000000 ]
+            selfCollisionDetection: false
+        - 
+          id: 7
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
             realtimeSync: false
-            recordingMode: TimeBar range
-            onlyActiveControlPeriod: true
+            recording: "full"
+            timeRangeMode: "Active control period"
             timeLength: 60
             allLinkPositionOutputMode: false
-            deviceStateRecording: true
-            dynamicsMode: High-gain dynamics
-            integrationMode: Runge Kutta
+            deviceStateOutput: false
+            controllerThreads: true
+            recordCollisionData: false
+            dynamicsMode: "High-gain dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
             staticFriction: 1
             slipFriction: 1
             cullingThresh: 0.005
+            contactCullingDepth: 0.05
             errorCriterion: 0.001
             maxNumIterations: 1000
             contactCorrectionDepth: 0.0005
             contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
             2Dmode: false
 views: 
   "Items": 
-    selected: [ 5 ]
-    checked: [ 1, 3 ]
-    expanded: [ 1, 3, 5 ]
+    selected: [  ]
+    checked: [ 1, 2 ]
+    expanded: [ 1, 2, 3, 4 ]
   "Scene": 
     walkthrough: false
     showCollisions: false
@@ -263,7 +276,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0001
     lazyCollisionDetectionMode: true
-  "BodyMotionGenerationBar": 
+  "BodyMotionGenerationBar":
+    autoGenerationForNewBody: true
     balancer: true
     autoGeneration: true
     timeScaleRatio: 1

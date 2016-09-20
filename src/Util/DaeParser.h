@@ -3,8 +3,8 @@
  * @author Hisashi Ikari 
  * @file
  */
-#ifndef CNOID_UTIL_EXT_DAE_PARSER_H_INCLUDED
-#define CNOID_UTIL_EXT_DAE_PARSER_H_INCLUDED
+#ifndef CNOID_UTIL_EXT_DAE_PARSER_H
+#define CNOID_UTIL_EXT_DAE_PARSER_H
 
 #include "Parser.h"
 #include "DaeNode.h"

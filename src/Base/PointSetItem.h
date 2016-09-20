@@ -7,13 +7,13 @@
 
 #include <cnoid/Item>
 #include <cnoid/RectRegionMarker>
-#include <cnoid/SceneShape>
 #include <cnoid/SceneProvider>
 #include <boost/optional.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class SgPointSet;
 class PointSetItemImpl;
 
 class CNOID_EXPORT PointSetItem : public Item, public SceneProvider
@@ -38,7 +38,7 @@ public:
     SignalProxy<void(const Affine3& T)> sigOffsetTransformChanged();
     void notifyOffsetTransformChange();
 
-    SgPointSetPtr getTransformedPointSet() const;
+    SgPointSet* getTransformedPointSet() const;
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES
@@ -68,15 +68,15 @@ public:
     void clearAttentionPoint();  // deprecated
     void setAttentionPoint(const Vector3& p);  // deprecated
 
-    void removePoints(const RectRegionMarker::Region& region);
+    void removePoints(const PolyhedralRegion& region);
 
-    SignalProxy<void(const RectRegionMarker::Region& region)> sigPointsInRegionRemoved();
+    SignalProxy<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved();
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
 private:

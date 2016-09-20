@@ -46,8 +46,16 @@ if(UNIX)
   if(NOT OPENRTM_DIR)
     pkg_check_modules(OPENRTM REQUIRED openrtm-aist)
     message(STATUS "OPENRTM VERSION ${OPENRTM_VERSION}" )
+    execute_process(
+      COMMAND pkg-config --variable=prefix openrtm-aist
+      OUTPUT_VARIABLE OPENRTM_DIR
+      RESULT_VARIABLE RESULT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "OPENRTM_DIR=${OPENRTM_DIR}")
     if(NOT (EXISTS "${OPENRTM_DIR}/include/openrtm-1.1/rtm/RTObjectStateMachine.h"))
       add_definitions(-DOPENRTM_VERSION110)
+    else()
+      add_definitions(-DOPENRTM_VERSION_TRUNK)
     endif()
   endif()
 elseif(MSVC)
@@ -60,8 +68,15 @@ if(OPENRTM_DIR)
   if(MSVC)
     set(OPENRTM_DIR_BACK ${OPENRTM_DIR})
     include(${OPENRTM_DIR}/cmake/OpenRTMConfig.cmake)
-    set(OPENRTM_DIR ${OPENRTM_DIR_BACK})
-    set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/bin)
+    if(NOT OPENRTM_VERSION STREQUAL "1.1.2")
+      set(OPENRTM_DIR ${OPENRTM_DIR_BACK})
+      set(OPENRTM_LIBRARY_DIRS ${OPENRTM_DIR}/bin)
+    endif()
+    if(NOT (EXISTS "${OPENRTM_DIR}/rtm/RTObjectStateMachine.h"))
+      add_definitions(-DOPENRTM_VERSION110)
+    else()
+      add_definitions(-DOPENRTM_VERSION_TRUNK)
+    endif()
   else()
     if(EXISTS "${OPENRTM_DIR}/lib/x86_64-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake")
       include(${OPENRTM_DIR}/lib/x86_64-linux-gnu/openrtm-1.1/cmake/OpenRTMConfig.cmake)
@@ -98,18 +113,31 @@ if(OPENRTM_DIR)
       file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???.lib")
       get_filename_component(libcoil ${libcoil} NAME_WE)
       add_definitions(-DOPENRTM_VERSION110)
-    else()
-      file(GLOB librtc RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/RTC???_????.lib")
-      get_filename_component(librtc ${librtc} NAME_WE)
-      file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???_????.lib")
-      get_filename_component(libcoil ${libcoil} NAME_WE)
-    endif()
-    set(OPENRTM_LIBRARIES 
+      set(OPENRTM_LIBRARIES 
       optimized ${librtc} debug ${librtc}d
       optimized ${libcoil} debug ${libcoil}d
       optimized ws2_32 debug ws2_32)
-    message(STATUS "bin dir = ${OPENRTM_DIR}/bin, lib dir = ${OPENRTM_LIBRARY_DIRS}, rtm libs = ${librtc}, ${libcoil}")
-    install_external_libraries(${OPENRTM_DIR}/bin ${OPENRTM_LIBRARY_DIRS} ${OPENRTM_LIBRARIES})
+    endif()
+    if(OPENRTM_VERSION STREQUAL "1.1.1")
+      if(CMAKE_CL_64)
+        file(GLOB librtc RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/RTC???_????_x64.lib")
+      elseif()
+        file(GLOB librtc RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/RTC???_????.lib")
+      endif()
+      get_filename_component(librtc ${librtc} NAME_WE)
+      if(CMAKE_CL_64)
+        file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???_????_x64.lib")
+      elseif()
+        file(GLOB libcoil RELATIVE ${OPENRTM_LIBRARY_DIRS} "${OPENRTM_LIBRARY_DIRS}/coil???_????.lib")
+      endif()
+      get_filename_component(libcoil ${libcoil} NAME_WE)
+      set(OPENRTM_LIBRARIES 
+      optimized ${librtc} debug ${librtc}d
+      optimized ${libcoil} debug ${libcoil}d
+      optimized ws2_32 debug ws2_32)
+    endif()
+    message(STATUS "bin dir = ${OPENRTM_DIR}/bin, lib dir = ${OPENRTM_LIBRARY_DIRS}, rtm libs = ${OPENRTM_LIBRARIES}")
+    install_external_libraries(${OPENRTM_LIBRARY_DIRS} ${OPENRTM_LIBRARY_DIRS} ${OPENRTM_LIBRARIES})
   endif()
 endif()
 
@@ -176,10 +204,16 @@ else()
 endif()
 
 if(NOT QT5)
-QT4_WRAP_CPP(
-  plugin_sources
-  RTSDiagramView.h
-  OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+  QT4_WRAP_CPP(
+    RTSDiagramView.h
+    RTSNameServerView.cpp
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+  )
+else()
+  QT5_WRAP_CPP(
+    RTSDiagramView.h
+    RTSNameServerView.cpp
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 endif()
 

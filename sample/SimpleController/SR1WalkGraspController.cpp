@@ -9,7 +9,7 @@
 #include <cnoid/BodyMotion>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include "Interpolator.h"
 
 using namespace std;

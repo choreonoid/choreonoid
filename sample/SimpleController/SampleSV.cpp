@@ -7,8 +7,6 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
-
 
 #define DOF (4)
 #define STEERING_ID 0
@@ -41,6 +39,8 @@ public:
         const BodyPtr& io = ioBody();
         for(int i=0; i<DOF; i++)
             io->joint(2)->u() = 0.0;
+
+        return true;
     }
     
     virtual bool control() {

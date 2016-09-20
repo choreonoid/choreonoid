@@ -8,6 +8,7 @@
 #include "LinkSelectionView.h"
 #include "WorldItem.h"
 #include "KinematicsBar.h"
+#include "SimulatorItem.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -17,7 +18,8 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
 #include <cnoid/SpinBox>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/Slider>
 #include <cnoid/Separator>
 #include <cnoid/LazyCaller>
@@ -25,10 +27,10 @@
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QGroupBox>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -147,15 +149,15 @@ BodyLinkViewImpl::BodyLinkViewImpl(BodyLinkView* self)
 
     setupWidgets();
 
-    updateKinematicStateLater.setFunction(boost::bind(&BodyLinkViewImpl::updateKinematicState, this, true));
+    updateKinematicStateLater.setFunction(std::bind(&BodyLinkViewImpl::updateKinematicState, this, true));
     updateKinematicStateLater.setPriority(LazyCaller::PRIORITY_LOW);
 
     currentBodyItemChangeConnection = 
         BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            boost::bind(&BodyLinkViewImpl::onCurrentBodyItemChanged, this, _1));
+            std::bind(&BodyLinkViewImpl::onCurrentBodyItemChanged, this, _1));
     
-    self->sigActivated().connect(boost::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, true));
-    self->sigDeactivated().connect(boost::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, false));
+    self->sigActivated().connect(std::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, true));
+    self->sigDeactivated().connect(std::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, false));
 }
 
 
@@ -245,7 +247,7 @@ void BodyLinkViewImpl::setupWidgets()
         
         stateWidgetConnections.add(
             xyzSpin[i].sigValueChanged().connect(
-                boost::bind(&BodyLinkViewImpl::onXyzChanged, this)));
+                std::bind(&BodyLinkViewImpl::onXyzChanged, this)));
     }
 
     static const char* rpyLabels[] = {"R", "P", "Y"};
@@ -261,12 +263,12 @@ void BodyLinkViewImpl::setupWidgets()
 
         stateWidgetConnections.add(
             rpySpin[i].sigValueChanged().connect(
-                boost::bind(&BodyLinkViewImpl::onRpyChanged, this)));
+                std::bind(&BodyLinkViewImpl::onRpyChanged, this)));
     }
 
     attMatrixCheck.setText(_("Matrix"));
     attMatrixCheck.sigToggled().connect(
-        boost::bind(&BodyLinkViewImpl::onAttMatrixCheckToggled, this));
+        std::bind(&BodyLinkViewImpl::onAttMatrixCheckToggled, this));
     vbox->addWidget(&attMatrixCheck, 0, Qt::AlignCenter);
 
     grid = new QGridLayout();
@@ -284,8 +286,10 @@ void BodyLinkViewImpl::setupWidgets()
     hbox->addStretch();
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
-            grid->addWidget(&attLabels[i][j], i, j);
-            attLabels[i][j].setText("0.0");
+            QLabel* label = &attLabels[i][j];
+            label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            label->setText("0.0");
+            grid->addWidget(label, i, j);
         }
     }
     vbox->addWidget(&attMatrixBox);
@@ -314,11 +318,11 @@ void BodyLinkViewImpl::setupWidgets()
 
     stateWidgetConnections.add(
         qSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_qSpinChanged, this, _1)));
+            std::bind(&BodyLinkViewImpl::on_qSpinChanged, this, _1)));
     
     stateWidgetConnections.add(
         qSlider.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_qSliderChanged, this, _1)));
+            std::bind(&BodyLinkViewImpl::on_qSliderChanged, this, _1)));
 
     topVBox->addSpacing(4);
     
@@ -345,10 +349,10 @@ void BodyLinkViewImpl::setupWidgets()
     
     propertyWidgetConnections.add(
         dqMinSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, true)));
+            std::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, true)));
     propertyWidgetConnections.add(
         dqMaxSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, false)));
+            std::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, false)));
     
     topVBox->addSpacing(4);
 
@@ -402,7 +406,7 @@ void BodyLinkViewImpl::setupWidgets()
 
         stateWidgetConnections.add(
             zmpXyzSpin[i].sigValueChanged().connect(
-                boost::bind(&BodyLinkViewImpl::onZmpXyzChanged, this)));
+                std::bind(&BodyLinkViewImpl::onZmpXyzChanged, this)));
     }
 
     topVBox->addWidget(&zmpBox);
@@ -444,17 +448,17 @@ void BodyLinkViewImpl::activateCurrentBodyItem(bool on)
 
             bodyItemConnections.add(
                 LinkSelectionView::mainInstance()->sigSelectionChanged(currentBodyItem).connect(
-                    boost::bind(&BodyLinkViewImpl::update, this)));
+                    std::bind(&BodyLinkViewImpl::update, this)));
 
             bodyItemConnections.add(
                 currentBodyItem->sigKinematicStateChanged().connect(updateKinematicStateLater));
             
             bodyItemConnections.add(
-                currentBodyItem->sigUpdated().connect(boost::bind(&BodyLinkViewImpl::update, this)));
+                currentBodyItem->sigUpdated().connect(std::bind(&BodyLinkViewImpl::update, this)));
 
             bodyItemConnections.add(
                 currentBodyItem->sigCollisionsUpdated().connect(
-                    boost::bind(&BodyLinkViewImpl::updateCollisions, this)));
+                    std::bind(&BodyLinkViewImpl::updateCollisions, this)));
             
             update();
         }
@@ -476,7 +480,7 @@ void BodyLinkViewImpl::update()
     
     BodyPtr body = currentBodyItem->body();
     const vector<int>& selectedLinkIndices =
-        LinkSelectionView::mainInstance()->getSelectedLinkIndices(currentBodyItem);
+        LinkSelectionView::mainInstance()->selectedLinkIndices(currentBodyItem);
 
     if(selectedLinkIndices.empty()){
         currentLink = body->rootLink();
@@ -523,13 +527,7 @@ void BodyLinkViewImpl::updateLink()
     } else {
         qBox.hide();
         dqBox.hide();
-        if(currentLink->isFreeJoint()){
-            jointTypeLabel.setText(_("Free"));
-        } else if(currentLink->isFixedJoint()){
-            jointTypeLabel.setText(_("Fixed"));
-        } else if(currentLink->jointType() == Link::CRAWLER_JOINT){
-            jointTypeLabel.setText(_("Crawler"));
-        }
+        jointTypeLabel.setText(currentLink->jointTypeString().c_str());
     }
 }
 
@@ -643,8 +641,14 @@ void BodyLinkViewImpl::updateKinematicState(bool blockSignals)
             const Matrix3 R = currentLink->attitude();
             const Vector3 rpy = rpyFromRot(R);
             for(int i=0; i < 3; ++i){
-                xyzSpin[i].setValue(currentLink->p()[i]);
-                rpySpin[i].setValue(degree(rpy[i]));
+                DoubleSpinBox& xyzSpin_i = xyzSpin[i];
+                if(!xyzSpin_i.hasFocus()){
+                    xyzSpin_i.setValue(currentLink->p()[i]);
+                }
+                DoubleSpinBox& rpySpin_i = rpySpin[i];
+                if(!rpySpin_i.hasFocus()){
+                    rpySpin_i.setValue(degree(rpy[i]));
+                }
             }
             if(attMatrixCheck.isChecked()){
                 for(int i=0; i < 3; ++i){
@@ -769,24 +773,45 @@ void BodyLinkViewImpl::on_dqLimitChanged(bool isMin)
 
 void BodyLinkViewImpl::onXyzChanged()
 {
-    if(currentLink){
-        Vector3 p;
+    if(currentBodyItem && currentLink){
+        Vector3 translation;
         for(int i=0; i < 3; ++i){
-            p[i] = xyzSpin[i].value();
+            translation[i] = xyzSpin[i].value();
         }
-        doInverseKinematics(p, currentLink->R());
+
+        SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
+        if(!activeSimulator){
+            doInverseKinematics(translation, currentLink->R());
+        } else {
+            if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
+                Position position = currentLink->position();
+                position.translation() = translation;
+                activeSimulator->setForcedPosition(currentBodyItem, position);
+            }
+        }
     }
 }
 
 
 void BodyLinkViewImpl::onRpyChanged()
 {
-    if(currentLink){
+    if(currentBodyItem && currentLink){
         Vector3 rpy;
         for(int i=0; i < 3; ++i){
             rpy[i] = radian(rpySpin[i].value());
         }
-        doInverseKinematics(currentLink->p(), currentLink->calcRfromAttitude(rotFromRpy(rpy)));
+        Matrix3 R = currentLink->calcRfromAttitude(rotFromRpy(rpy));
+
+        SimulatorItem* activeSimulator = SimulatorItem::findActiveSimulatorItemFor(currentBodyItem);
+        if(!activeSimulator){
+            doInverseKinematics(currentLink->p(), R);
+        } else {
+            if(currentLink->isRoot() && activeSimulator->isForcedPositionActiveFor(currentBodyItem)){
+                Position position = currentLink->position();
+                position.linear() = R;
+                activeSimulator->setForcedPosition(currentBodyItem, position);
+            }
+        }
     }
 }
 

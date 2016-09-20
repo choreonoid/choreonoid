@@ -21,7 +21,8 @@ class CNOID_EXPORT MultiSE3Seq : public MultiSeq<SE3, Eigen::aligned_allocator<S
     typedef MultiSeq<SE3, Eigen::aligned_allocator<SE3> > BaseSeqType;
 
 public:
-    typedef boost::shared_ptr<MultiSE3Seq> Ptr;
+    typedef std::shared_ptr<MultiSE3Seq> Ptr;
+    typedef std::shared_ptr<const MultiSE3Seq> ConstPtr;
 
     MultiSE3Seq();
     MultiSE3Seq(int numFrames, int numParts = 1);
@@ -33,6 +34,7 @@ public:
     //virtual bool loadPlainFormat(const std::string& filename);
 
     bool loadPlainMatrixFormat(const std::string& filename);
+    bool loadPlainRpyFormat(const std::string& filename);
     bool saveTopPartAsPlainMatrixFormat(const std::string& filename);
 
 protected:
@@ -46,7 +48,9 @@ private:
     void readPosRpySeq(int nParts, int nFrames, const Listing& values);
 };
 
-typedef MultiSE3Seq::Ptr MultiSE3SeqPtr;        
+typedef MultiSE3Seq::Ptr MultiSE3SeqPtr;
+typedef MultiSE3Seq::ConstPtr ConstMultiSE3SeqPtr;
+
 }
 
 #endif

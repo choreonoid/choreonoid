@@ -4,6 +4,7 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 #set_source_files_properties(SimulatorItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
+#set_source_files_properties(WorldLogFileItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 set(sources
   BodyPlugin.cpp
@@ -12,12 +13,16 @@ set(sources
   BodyMotionItem.cpp
   ZMPSeqItem.cpp
   MultiDeviceStateSeqItem.cpp
+  WorldLogFileItem.cpp
   SimulatorItem.cpp
+  SubSimulatorItem.cpp
   ControllerItem.cpp
+  BodyMotionControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   GLVisionSimulatorItem.cpp
   SensorVisualizerItem.cpp
+  BodyTrackingCameraItem.cpp
   BodyMotionEngine.cpp
   KinematicFaultChecker.cpp
   #FilterDialogs.cpp
@@ -28,6 +33,7 @@ set(sources
   SimulationBar.cpp
   LinkTreeWidget.cpp
   LinkSelectionView.cpp
+  LinkPropertyView.cpp
   BodyLinkView.cpp
   JointSliderView.cpp
   JointStateView.cpp
@@ -44,12 +50,14 @@ set(headers
   BodyItem.h
   WorldItem.h
   BodyMotionItem.h
-  MultiDeviceStateSeqItem.cpp
+  MultiDeviceStateSeqItem.h
+  WorldLogFileItem.h
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h
   SimulationScriptItem.h
   SensorVisualizerItem.h
+  BodyTrackingCameraItem.h
   KinematicFaultChecker.h
   BodyBar.h
   KinematicsBar.h
@@ -75,6 +83,10 @@ if(NOT QT5)
     )
   QT4_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
 else()
+  QT5_WRAP_CPP(sources
+    LinkTreeWidget.h
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+    )
   QT5_ADD_RESOURCES(RC_SRCS BodyPlugin.qrc)
 endif()
 

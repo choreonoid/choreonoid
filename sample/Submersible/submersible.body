@@ -1,0 +1,55 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+
+name: Submersible
+rootLink: CHASSIS
+
+links:
+  -
+    name: CHASSIS
+    jointType: free
+    centerOfMass: [ 0, 0, -0.05 ]
+    mass: 10.0
+    inertia: [
+      3.0, 0,   0,
+      0,   3.0, 0,
+      0,   0,   3.0 ]
+    elements:
+      -
+        type: Transform
+        translation: [ 0.3, 0.0, 0.1 ]
+        elements:
+          -
+            type: Camera
+            name: Camera
+            translation: [ 0, 0, 0.13 ]
+            rotation: [ 0.540716, -0.540716, -0.6444, 114.4 ]
+            format: "COLOR_DEPTH"
+            id: 0
+            width: 320
+            height: 240
+            frameRate: 30
+            nearClipDistance: 0.01
+            farClipDistance: 50.0
+          -
+            type: SpotLight
+            name: MainLight
+            translation: [ 0, 0, 0.2 ]
+            direction: [ 1, 0, 0 ]
+            beamWidth: 30
+            cutOffAngle: 70
+            cutOffExponent: 10
+            attenuation: [ 1, 0, 0.01 ]
+      -
+        type: Shape
+        appearance:
+          material:
+            diffuseColor: [ 0.3, 0.6, 1.0 ]
+            ambientIntensity: 0.3
+            specularColor: [ 0.7, 0.7, 0.7 ]
+            emissiveColor: [ 0, 0, 0 ]
+            shininess: 0.25
+        geometry:
+          type: Box
+          size: [ 0.6, 0.4, 0.3 ]

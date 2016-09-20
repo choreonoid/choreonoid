@@ -9,6 +9,7 @@ libqt4-opengl-dev \
 qt4-dev-tools \
 qt4-qtconfig \
 qt4-doc-html \
+libxfixes-dev \
 libyaml-dev \
 gettext \
 zlib1g-dev \

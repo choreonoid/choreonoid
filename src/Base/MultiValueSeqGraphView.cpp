@@ -4,12 +4,12 @@
 
 #include "MultiValueSeqGraphView.h"
 #include "ViewManager.h"
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using namespace std::placeholders;
 
 
 void MultiValueSeqGraphView::initializeClass(ExtensionManager* ext)
@@ -58,9 +58,9 @@ void MultiValueSeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std
         //handler->setVelocityLimits(lvlimit, uvlimit);
         handler->setFrameProperties(seq->numFrames(), seq->frameRate());
         handler->setDataRequestCallback(
-            boost::bind(&MultiValueSeqGraphView::onDataRequest, this, seq, partIndex, _1, _2, _3));
+            std::bind(&MultiValueSeqGraphView::onDataRequest, this, seq, partIndex, _1, _2, _3));
         handler->setDataModifiedCallback(
-            boost::bind(&MultiValueSeqGraphView::onDataModified, this, seqItem, partIndex, _1, _2, _3));
+            std::bind(&MultiValueSeqGraphView::onDataModified, this, seqItem, partIndex, _1, _2, _3));
 
         out_handlers.push_back(handler);
     }

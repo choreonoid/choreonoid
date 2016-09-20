@@ -13,14 +13,14 @@
 #include <cnoid/Archive>
 #include <cnoid/MenuManager>
 #include <cnoid/Link>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/ButtonGroup>
 #include <cnoid/SpinBox>
 #include <cnoid/BodyItem>
 #include <cnoid/LinkTreeWidget>
 #include <QBoxLayout>
 #include <QLabel>
-#include <boost/function.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <ostream>
 #include <set>
@@ -54,7 +54,7 @@ public:
     PoseSeq::iterator currentPoseIter;
 
     struct PoseIterTimeComp {
-        bool operator()(const PoseSeq::iterator it1, const PoseSeq::iterator it2) {
+        bool operator()(const PoseSeq::iterator it1, const PoseSeq::iterator it2) const {
             return it1->time() < it2->time();
         }
     };
@@ -169,7 +169,7 @@ public:
     void initializeLinkTreeIkLinkColumn();
     void initializeLinkTreeTraverse(QTreeWidgetItem* parentItem);
 
-    void togglePoseAttribute(boost::function<bool(PosePtr& pose)> toggleFunction);
+    void togglePoseAttribute(std::function<bool(PosePtr& pose)> toggleFunction);
     void onBaseLinkRadioClicked();
     bool setBaseLink(PosePtr& pose, Link* link);
     void onValidPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState);
@@ -192,6 +192,9 @@ public:
     bool setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected);
     bool setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* linkInfo);
     ChildrenState updateLinkTreeModelSub(LinkTreeItem* item,  const BodyPtr& body, const Pose& pose);
+
+private:
+    void restoreCurrentPoseSeqItem(const Archive& archive);
 };
 
 }

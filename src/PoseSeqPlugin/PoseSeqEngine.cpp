@@ -8,7 +8,6 @@
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/BodyItem>
 #include <cnoid/TimeSyncItemEngine>
-#include <boost/bind.hpp>
 
 using namespace cnoid;
 
@@ -28,8 +27,8 @@ public:
         interpolator = poseSeqItem->interpolator();
         bodyMotionGenerationBar = BodyMotionGenerationBar::instance();
 
-        poseSeqItem->sigUpdated().connect(boost::bind(&PoseSeqEngine::notifyUpdate, this));
-        interpolator->sigUpdated().connect(boost::bind(&PoseSeqEngine::notifyUpdate, this));
+        poseSeqItem->sigUpdated().connect(std::bind(&PoseSeqEngine::notifyUpdate, this));
+        interpolator->sigUpdated().connect(std::bind(&PoseSeqEngine::notifyUpdate, this));
     }
         
     virtual bool onTimeChanged(double time){

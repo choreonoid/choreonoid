@@ -6,31 +6,32 @@
 #ifndef CNOID_BODY_CAMERA_H
 #define CNOID_BODY_CAMERA_H
 
-#include "VisionSensor.h"
+#include "Device.h"
 #include <cnoid/Image>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT Camera : public VisionSensor
+class CNOID_EXPORT Camera : public Device
 {
 public:
     Camera();
-    Camera(const Camera& org, bool copyAll = true);
+    Camera(const Camera& org, bool copyStateOnly = false);
 
-    void copyStateFrom(const Camera& other); 
+    virtual const char* typeName();
+    void copyStateFrom(const Camera& other);
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
     virtual double* writeState(double* out_buf) const;
 
-    void setShotDataAsState(bool on) { isShotDataSetAsState_ = on; }
-    bool isShotDataSetAsState() const { return isShotDataSetAsState_; }
+    void setImageStateClonable(bool on) { isImageStateClonable_ = on; }
+    bool isImageStateClonable() const { return isImageStateClonable_; }
 
     enum ImageType { NO_IMAGE, COLOR_IMAGE, GRAYSCALE_IMAGE };
     ImageType imageType() const { return imageType_; }
@@ -39,11 +40,17 @@ public:
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
 
+    double nearClipDistance() const { return nearClipDistance_; }
+    void setNearClipDistance(double d) { nearClipDistance_ = d; }
+    double farClipDistance() const { return farClipDistance_; }
+    void setFarClipDistance(double d) { farClipDistance_ = d; }
+
+#ifdef CNOID_BACKWARD_COMPATIBILITY
     double nearDistance() const { return nearDistance_; }
     void setNearDistance(double d) { nearDistance_ = d; }
-
     double farDistance() const { return farDistance_; }
     void setFarDistance(double d) { farDistance_ = d; }
+#endif
         
     double fieldOfView() const { return fieldOfView_; }
     void setFieldOfView(double f) { fieldOfView_ = f; }
@@ -51,82 +58,54 @@ public:
     void setResolution(int x, int y) {
         resolutionX_ = x; resolutionY_ = y;
     }
+    void setResolutionX(int x) { resolutionX_ = x; }
+    void setResolutionY(int y) { resolutionY_ = y; }
+    
     int resolutionX() const { return resolutionX_; }
     int resolutionY() const { return resolutionY_; }
 
     void setFrameRate(double r) { frameRate_ = r; }
     double frameRate() const { return frameRate_; }
 
-    const Image& image() const { return *image_; }
+    const Image& image() const;
     const Image& constImage() const { return *image_; }
     Image& image();
     Image& newImage();
 
-    boost::shared_ptr<const Image> sharedImage() const { return image_; }
+    std::shared_ptr<const Image> sharedImage() const { return image_; }
 
     /**
        Move semantics. If the use_count() of the given shared image pointer is one,
        the data is moved to the Camera object and the ownership of the given pointer is released.
        Otherwise, the data is copied.
     */
-    void setImage(boost::shared_ptr<Image>& image);
+    void setImage(std::shared_ptr<Image>& image);
+
+    /**
+       Time [s] consumed in shooting the current image
+    */
+    double delay() const { return delay_; }
+    void setDelay(double time) { delay_ = time; }
 
 private:
     bool on_;
-    bool isShotDataSetAsState_;
+    bool isImageStateClonable_;
     ImageType imageType_;
     int resolutionX_;
     int resolutionY_;
-    double nearDistance_;
-    double farDistance_;
+    double nearClipDistance_;
+    double farClipDistance_;
     double fieldOfView_;
     double frameRate_;
-    boost::shared_ptr<Image> image_;
+    double delay_;
+    std::shared_ptr<Image> image_;
+
+    Camera(const Camera& org, int x);
+    void copyCameraStateFrom(const Camera& other);
 };
 
 typedef ref_ptr<Camera> CameraPtr;
 
-
-class CNOID_EXPORT RangeCamera : public Camera
-{
-public:
-    RangeCamera();
-    RangeCamera(const RangeCamera& org, bool copyAll = true);
-
-    void copyStateFrom(const RangeCamera& other); 
-    virtual void copyStateFrom(const DeviceState& other);
-    virtual DeviceState* cloneState() const;
-    virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
-    virtual void clearState();
-
-    int numPoints() const { return points_->size(); }
-
-    typedef std::vector<Vector3f> PointData;
-
-    const PointData& points() const { return *points_; }
-    const PointData& constPoints() const { return *points_; }
-    PointData& points();
-    PointData& newPoints();
-
-    bool isOrganized() const { return isOrganized_; }
-    void setOrganized(bool on);
-            
-    boost::shared_ptr<const PointData> sharedPoints() const { return points_; }
-
-    /**
-       Move semantics. If the use_count() of the given shared point data pointer is one,
-       the data is moved to the Camera object and the ownership of the given pointer is released.
-       Otherwise, the data is copied.
-    */
-    void setPoints(boost::shared_ptr<PointData>& points);
-
-private:
-    boost::shared_ptr< std::vector<Vector3f> > points_;
-    bool isOrganized_;
-};
-
-typedef ref_ptr<RangeCamera> RangeCameraPtr;
-};
+}
 
 #endif

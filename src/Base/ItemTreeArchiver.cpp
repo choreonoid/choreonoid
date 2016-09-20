@@ -14,8 +14,8 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 namespace cnoid {
 
@@ -27,13 +27,13 @@ public:
     int itemIdCounter;
     int numArchivedItems;
     int numRestoredItems;
-    std::set<string> noExistingPluginNames;
+    map<string, bool> nonExistentPlugins;
 
     ItemTreeArchiverImpl();
     ArchivePtr store(Archive& parentArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
-    bool restore(Archive& archive, Item* parentItem);
-    void restoreItemIter(Archive& archive, Item* parentItem);
+    bool restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+    void restoreItemIter(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
 };
 
 }
@@ -65,7 +65,7 @@ void ItemTreeArchiver::reset()
     impl->itemIdCounter = 0;
     impl->numArchivedItems = 0;
     impl->numRestoredItems = 0;
-    impl->noExistingPluginNames.clear();
+    impl->nonExistentPlugins.clear();
 }
 
 
@@ -81,7 +81,7 @@ int ItemTreeArchiver::numRestoredItems() const
 }
 
 
-ArchivePtr ItemTreeArchiver::store(ArchivePtr parentArchive, Item* item)
+ArchivePtr ItemTreeArchiver::store(Archive* parentArchive, Item* item)
 {
     return impl->store(*parentArchive, item);
 }
@@ -167,37 +167,40 @@ ArchivePtr ItemTreeArchiverImpl::storeIter(Archive& parentArchive, Item* item, b
 }
 
 
-bool ItemTreeArchiver::restore(ArchivePtr archive, Item* parentItem)
+bool ItemTreeArchiver::restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
-    return impl->restore(*archive, parentItem);
+    return impl->restore(*archive, parentItem, optionalPlugins);
 }
 
 
-bool ItemTreeArchiverImpl::restore(Archive& archive, Item* parentItem)
+bool ItemTreeArchiverImpl::restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
     numArchivedItems = 0;
     numRestoredItems = 0;
 
     archive.setCurrentParentItem(0);
     try {
-        restoreItemIter(archive, parentItem);
+        restoreItemIter(archive, parentItem, optionalPlugins);
     } catch (const ValueNode::Exception& ex){
         os << ex.message();
     }
     archive.setCurrentParentItem(0);
-    noExistingPluginNames.clear();
+    nonExistentPlugins.clear();
 
     return (numRestoredItems > 0);
 }
 
 
-void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem)
+void ItemTreeArchiverImpl::restoreItemIter
+(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
     string name;
     if(!archive.read("name", name)){
         return;
     }
 
+    bool isOptional = false;
+        
     ItemPtr item;
 
     const bool isSubItem = archive.get("isSubItem", false);
@@ -208,26 +211,42 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem)
                       format(_("Sub item \"%1%\" is not found. Its children cannot be restored.")) % name);
         }
     } else {
-        ++numArchivedItems;
         string pluginName;
         string className;
         if(!(archive.read("plugin", pluginName) && archive.read("class", className))){
             mv->putln(MessageView::ERROR, _("Archive is broken."));
             return;
         }
+
         const char* actualPluginName = PluginManager::instance()->guessActualPluginName(pluginName);
         if(actualPluginName){
             item = ItemManager::create(actualPluginName, className);
         } else {
-            if(noExistingPluginNames.insert(pluginName).second){
+            pair<map<string, bool>::iterator, bool> ret =
+                nonExistentPlugins.insert(pair<string, bool>(pluginName, isOptional));
+            if(ret.second){
+                if(optionalPlugins.find(pluginName) != optionalPlugins.end()){
+                    isOptional = true;
+                    ret.first->second = isOptional;
+                }
+            } else {
+                isOptional = ret.first->second;
+            }
+                    
+            if(!isOptional){
                 mv->putln(MessageView::WARNING, format(_("%1%Plugin is not loaded.")) % pluginName);
             }
         }
         if(!item){
-            mv->putln(MessageView::WARNING,
-                      format(_("%1% of %2%Plugin is not a registered item type."))
-                      % className % pluginName);
+            if(!isOptional){
+                mv->putln(MessageView::WARNING,
+                          format(_("%1% of %2%Plugin is not a registered item type."))
+                          % className % pluginName);
+                ++numArchivedItems;
+            }
         } else {
+            ++numArchivedItems;
+            
             item->setName(name);
             bool isRootItem = dynamic_pointer_cast<RootItem>(item);
             if(isRootItem){
@@ -260,7 +279,9 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem)
     }
 
     if(!item){
-        mv->putln(MessageView::WARNING, format(_("\"%1%\" cannot be restored.")) % name);
+        if(!isOptional){
+            mv->putln(MessageView::WARNING, format(_("\"%1%\" cannot be restored.")) % name);
+        }
     } else {
         int id;
         if(archive.read("id", id) && (id >= 0)){
@@ -271,7 +292,7 @@ void ItemTreeArchiverImpl::restoreItemIter(Archive& archive, Item* parentItem)
             for(int i=0; i < children->size(); ++i){
                 Archive* childArchive = dynamic_cast<Archive*>(children->at(i)->toMapping());
                 childArchive->inheritSharedInfoFrom(archive);
-                restoreItemIter(*childArchive, item);
+                restoreItemIter(*childArchive, item, optionalPlugins);
             }
         }
     }

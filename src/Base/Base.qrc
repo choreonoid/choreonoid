@@ -28,6 +28,12 @@
 
   <file>icons/eraser-cursor.png</file>
 
+  <file>shader/phongshadow.vert</file>
+  <file>shader/phongshadow.frag</file>
+  <file>shader/shadowmap.frag</file>
+  <file>shader/nolighting.vert</file>
+  <file>shader/solidcolor.frag</file>
+
   <file alias="LICENSE">../../LICENSE</file>
 
 </qresource>

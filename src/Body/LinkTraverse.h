@@ -20,12 +20,15 @@ public:
     LinkTraverse();
     LinkTraverse(int size);
     LinkTraverse(Link* root, bool doUpward = false, bool doDownward = true);
+    LinkTraverse(const LinkTraverse& org);
 
     virtual ~LinkTraverse();
 
     void clear();
 
     virtual void find(Link* root, bool doUpward = false, bool doDownward = true);
+
+    void append(Link* link, bool isDownward = true);
 
     int numLinks() const {
         return links.size();

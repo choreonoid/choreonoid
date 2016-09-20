@@ -3,13 +3,12 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_FORWARD_DYNAMICS_CBM_H_INCLUDED
-#define CNOID_BODY_FORWARD_DYNAMICS_CBM_H_INCLUDED
+#ifndef CNOID_BODY_FORWARD_DYNAMICS_CBM_H
+#define CNOID_BODY_FORWARD_DYNAMICS_CBM_H
 
 #include "ForwardDynamics.h"
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid
@@ -29,7 +28,7 @@ class CNOID_EXPORT ForwardDynamicsCBM : public ForwardDynamics
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    ForwardDynamicsCBM(const DyBodyPtr& body);
+    ForwardDynamicsCBM(DyBody* body);
     ~ForwardDynamicsCBM();
 
     void setHighGainModeForAllJoints();
@@ -152,7 +151,7 @@ private:
     void updateForceSensors();
 };
 
-typedef boost::shared_ptr<ForwardDynamicsCBM> ForwardDynamicsCBMPtr;
+typedef std::shared_ptr<ForwardDynamicsCBM> ForwardDynamicsCBMPtr;
 	
 };
 

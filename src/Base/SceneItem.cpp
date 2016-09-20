@@ -14,18 +14,17 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/EigenArchive>
 #include <cnoid/Exception>
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
 
-boost::scoped_ptr<VRMLParser> vrmlParser;
-boost::scoped_ptr<VRMLToSGConverter> vrmlConverter;
-    
+std::unique_ptr<VRMLParser> vrmlParser;
+std::unique_ptr<VRMLToSGConverter> vrmlConverter;
+
 bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
 {
     item->topNode()->clearChildren(true);
@@ -48,7 +47,7 @@ bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
             }
         }
         vrmlParser->checkEOF();
-            
+
     } catch(EasyScanner::Exception& ex){
         os << ex.getFullMessage();
         return false;
@@ -86,11 +85,11 @@ void SceneItem::initializeClass(ExtensionManager* ext)
 
         ext->itemManager().addLoader<SceneItem>(
             "VRML", "VRML-FILE", "wrl",
-            boost::bind(::loadVRML, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+            std::bind(::loadVRML, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
 
         ext->itemManager().addLoader<SceneItem>(
             "Stereolithography (STL)", "STL-FILE", "stl",
-            boost::bind(::loadSTL, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+            std::bind(::loadSTL, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
         
         initialized = true;
     }
@@ -131,7 +130,7 @@ SgNode* SceneItem::getScene()
 }
 
 
-ItemPtr SceneItem::doDuplicate() const
+Item* SceneItem::doDuplicate() const
 {
     return new SceneItem(*this);
 }
@@ -141,9 +140,9 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("File"), getFilename(filePath()));
     putProperty(_("Translation"), str(Vector3(topNode_->translation())),
-                boost::bind(&SceneItem::onTranslationChanged, this, _1));
+                std::bind(&SceneItem::onTranslationChanged, this, _1));
     Vector3 rpy(rpyFromRot(topNode_->rotation()));
-    putProperty("RPY", str(TO_DEGREE * rpy), boost::bind(&SceneItem::onRotationChanged, this, _1));
+    putProperty("RPY", str(TO_DEGREE * rpy), std::bind(&SceneItem::onRotationChanged, this, _1));
 }
 
 

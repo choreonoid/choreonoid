@@ -76,10 +76,9 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
-            recording: true
-            timeRangeMode: TimeBar range
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Time bar range"
             timeLength: 25
             allLinkPositionOutputMode: false
             deviceStateOutput: true
@@ -246,7 +245,7 @@ toolbars:
     idleLoopDrivenMode: false
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
     autoExpansion: true
   "BodyBar": 
     current: 4

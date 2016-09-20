@@ -5,10 +5,9 @@
 #include "../GrxUIPlugin.h"
 #include "../GrxUIMenuView.h"
 #include <cnoid/LazyCaller>
-#include <boost/bind.hpp>
 
-using namespace boost;
 using namespace cnoid;
+namespace python = boost::python;
 
 namespace {
 
@@ -20,23 +19,18 @@ namespace {
         }
     }
 
-
     python::object cancelExceptionType;
     
     void waitInputMenu(const python::list& menu)
     {
         checkGrxUIPlugin();
-        callSynchronously(
-            boost::bind(&GrxUIMenuView::setMenu, GrxUIMenuView::instance(),
-                 menu, false, !isRunningInMainThread()));
+        callSynchronously([&](){ GrxUIMenuView::instance()->setMenu(menu, false, !isRunningInMainThread()); });
     }
 
     void waitInputSequentialMenu(const python::list& menu)
     {
         checkGrxUIPlugin();
-        callSynchronously(
-            boost::bind(&GrxUIMenuView::setMenu, GrxUIMenuView::instance(),
-                 menu, true, !isRunningInMainThread()));
+        callSynchronously([&](){ GrxUIMenuView::instance()->setMenu(menu, true, !isRunningInMainThread()); });
     }
 
     void waitInputSelectMain(const std::string& message, QMessageBox::StandardButton& out_result)
@@ -52,7 +46,7 @@ namespace {
         QMessageBox::StandardButton result = QMessageBox::Cancel;
 
         Py_BEGIN_ALLOW_THREADS        
-        callSynchronously(boost::bind(waitInputSelectMain, message, boost::ref(result)));
+        callSynchronously([&](){ waitInputSelectMain(message, result); });
         Py_END_ALLOW_THREADS
         
         if(result == QMessageBox::Cancel){
@@ -76,7 +70,7 @@ namespace {
         bool result = false;
 
         Py_BEGIN_ALLOW_THREADS        
-        callSynchronously(boost::bind(waitInputConfirmMain, message, boost::ref(result)));
+        callSynchronously([&](){ waitInputConfirmMain(message, result); });
         Py_END_ALLOW_THREADS
             
         if(!result){
@@ -101,7 +95,7 @@ namespace {
         std::string result;
 
         Py_BEGIN_ALLOW_THREADS        
-        callSynchronously(boost::bind(waitInputMessageMain, message, boost::ref(result)));
+        callSynchronously([&](){ waitInputMessageMain(message, result); });
         Py_END_ALLOW_THREADS
 
         /*

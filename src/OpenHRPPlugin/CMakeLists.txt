@@ -83,6 +83,7 @@ foreach(version ${versions})
   endif()
   
   set(headers
+    exportdecl.h
     )
   
   if(MSVC)

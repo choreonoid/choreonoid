@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_MULTI_VECTOR3_SEQ_H_INCLUDED
-#define CNOID_UTIL_MULTI_VECTOR3_SEQ_H_INCLUDED
+#ifndef CNOID_UTIL_MULTI_VECTOR3_SEQ_H
+#define CNOID_UTIL_MULTI_VECTOR3_SEQ_H
 
 #include "MultiSeq.h"
 #include "EigenTypes.h"
@@ -20,7 +20,7 @@ class CNOID_EXPORT MultiVector3Seq : public MultiSeq<Vector3, Eigen::aligned_all
     typedef MultiSeq<Vector3, Eigen::aligned_allocator<Vector3> > BaseSeqType;
 
 public:
-    typedef boost::shared_ptr<MultiVector3Seq> Ptr;
+    typedef std::shared_ptr<MultiVector3Seq> Ptr;
 
     MultiVector3Seq();
     MultiVector3Seq(int numFrames, int numParts = 1);
@@ -37,7 +37,8 @@ protected:
     virtual bool doReadSeq(const Mapping& archive);
 };
 
-typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;        
+typedef MultiVector3Seq::Ptr MultiVector3SeqPtr;
+
 }
 
 #endif

@@ -8,12 +8,12 @@
 #include "ItemPath.h"
 #include "ItemManager.h"
 #include "MessageView.h"
-#include <typeinfo>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <typeinfo>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 namespace filesystem = boost::filesystem;
 using namespace cnoid;
 
@@ -555,13 +555,13 @@ bool Item::isOwnedBy(Item* item) const
 }
 
 
-bool Item::traverse(boost::function<bool(Item*)> function)
+bool Item::traverse(std::function<bool(Item*)> function)
 {
     return traverse(this, function);
 }
 
 
-bool Item::traverse(Item* item, const boost::function<bool(Item*)>& function)
+bool Item::traverse(Item* item, const std::function<bool(Item*)>& function)
 {
     if(function(item)){
         return true;
@@ -588,10 +588,11 @@ void Item::notifyUpdate()
    false のときはコピーされない。   
    @endif
 */
-ItemPtr Item::duplicate() const
+Item* Item::duplicate() const
 {
-    ItemPtr duplicated = doDuplicate();
+    Item* duplicated = doDuplicate();
     if(duplicated && (typeid(*duplicated) != typeid(*this))){
+        delete duplicated;
         duplicated = 0;
     }
     return duplicated;
@@ -603,21 +604,21 @@ ItemPtr Item::duplicate() const
    小アイテム（サブツリー）も含めたアイテムのコピーを生成する。   
    @endif
 */
-ItemPtr Item::duplicateAll() const
+Item* Item::duplicateAll() const
 {
     return duplicateAllSub(0);
 }
 
 
-ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
+Item* Item::duplicateAllSub(Item* duplicated) const
 {
     if(!duplicated){
         duplicated = this->duplicate();
     }
     
     if(duplicated){
-        for(ItemPtr child = childItem(); child; child = child->nextItem()){
-            ItemPtr duplicatedChildItem;
+        for(Item* child = childItem(); child; child = child->nextItem()){
+            Item* duplicatedChildItem;
             if(child->isSubItem()){
                 duplicatedChildItem = duplicated->findChildItem(child->name());
                 if(duplicatedChildItem){
@@ -639,7 +640,7 @@ ItemPtr Item::duplicateAllSub(ItemPtr duplicated) const
 /**
    Override this function to allow duplication of an instance.
 */
-ItemPtr Item::doDuplicate() const
+Item* Item::doDuplicate() const
 {
     return 0;
 }
@@ -791,7 +792,7 @@ bool onNamePropertyChanged(Item* item, const string& name)
 
 void Item::putProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Name"), name_, boost::bind(onNamePropertyChanged, this, _1));
+    putProperty(_("Name"), name_, std::bind(onNamePropertyChanged, this, _1));
 
     std::string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);

@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_EXT_COMMAND_ITEM_H_INCLUDED
-#define CNOID_BASE_EXT_COMMAND_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_EXT_COMMAND_ITEM_H
+#define CNOID_BASE_EXT_COMMAND_ITEM_H
 
 #include "Item.h"
 #include "Process.h"
@@ -22,12 +22,14 @@ public:
         
     void setCommand(const std::string& command);
     const std::string& command() const { return command_; }
+    double waitingTimeAfterStarted() const { return waitingTimeAfterStarted_; }
+    void setWaitingTimeAfterStarted(double time);
     bool execute();
     bool terminate();
         
 protected:
     virtual void onDisconnectedFromRoot();
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -37,12 +39,14 @@ private:
         
     std::string command_;
     Process process;
+    double waitingTimeAfterStarted_;
     bool signalReadyStandardOutputConnected;
     bool doCheckExistingProcess;
     bool doExecuteOnLoading;
 };
     
 typedef ref_ptr<ExtCommandItem> ExtCommandItemPtr;
+
 }
 
 #endif

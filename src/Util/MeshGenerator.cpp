@@ -7,6 +7,7 @@
 #include "MeshNormalGenerator.h"
 #include "MeshExtractor.h"
 #include "Triangulator.h"
+#include "SceneDrawables.h"
 
 using namespace std;
 using namespace cnoid;

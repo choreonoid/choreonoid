@@ -8,7 +8,7 @@
 
 #include "LinkTraverse.h"
 #include "Link.h"
-#include "Device.h"
+#include "DeviceList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -67,7 +67,7 @@ public:
     /**
        The number of the joints without joint ids.
        For example, a joint for simulating a spring is usually handled as such a joint.
-       You can get the joints by ginving the index after the last joint id to the joint() function.
+       You can get the joints by giving the index after the last joint id to the joint() function.
     */
     int numVirtualJoints() const {
         return jointIdToLinkArray.size() - numActualJoints;
@@ -136,7 +136,9 @@ public:
 
     /**
        Example:
-       DeviceList<ForceSensor> forceSensors = body->devices();
+       DeviceList<ForceSensor> forceSensors(body->devices());
+        or
+       forceSensors << body->devices();
     */
     const DeviceList<>& devices() const {
         return devices_;
@@ -149,7 +151,11 @@ public:
     template<class DeviceType> DeviceType* findDevice(const std::string& name) const {
         return dynamic_cast<DeviceType*>(findDeviceSub(name));
     }
-        
+
+    Device* findDevice(const std::string& name) const {
+        return findDeviceSub(name);
+    }
+    
     void addDevice(Device* device);
     void initializeDeviceStates();
     void clearDevices();
@@ -239,9 +245,9 @@ protected:
 
 private:
     LinkTraverse linkTraverse_;
-    Link* rootLink_;
+    LinkPtr rootLink_;
     bool isStaticModel_;
-    std::vector<Link*> jointIdToLinkArray;
+    std::vector<LinkPtr> jointIdToLinkArray;
     int numActualJoints;
     DeviceList<> devices_;
     std::vector<ExtraJoint> extraJoints_;
@@ -257,6 +263,6 @@ private:
     void setVirtualJointForcesSub();
 };
 
-};
+}
 
 #endif

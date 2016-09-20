@@ -331,7 +331,7 @@ static int find_common_perpendicular(
     const double det = c11 * c22 - c12 * c21;
     // cout << "det = " << det << endl;
 
-    if(fabs(det) < eps){
+    if(fabs(det) < eps * c11 * c22){
         return 0;
     } else {
         const Vector3 g(q1 - p1);

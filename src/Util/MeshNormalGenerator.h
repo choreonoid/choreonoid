@@ -6,11 +6,11 @@
 #ifndef CNOID_UTIL_MESH_NORMAL_GENERATOR_H
 #define CNOID_UTIL_MESH_NORMAL_GENERATOR_H
 
-#include "SceneShape.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class SgMesh;
 class MeshNormalGeneratorImpl;
 
 class CNOID_EXPORT MeshNormalGenerator

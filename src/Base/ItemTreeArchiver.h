@@ -6,6 +6,7 @@
 #define CNOID_BASE_ITEM_TREE_ARCHIVER_H
 
 #include "Archive.h"
+#include <set>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,8 +20,8 @@ public:
     ItemTreeArchiver();
     ~ItemTreeArchiver();
     void reset();
-    ArchivePtr store(ArchivePtr parentArchive, Item* topItem);
-    bool restore(ArchivePtr archive, Item* parentItem);
+    ArchivePtr store(Archive* parentArchive, Item* topItem);
+    bool restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
     int numArchivedItems() const;
     int numRestoredItems() const;
 

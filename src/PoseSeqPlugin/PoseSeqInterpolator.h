@@ -1,6 +1,6 @@
 /**
    @file
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_INTERPOLATOR_H
@@ -9,7 +9,7 @@
 #include "PoseSeq.h"
 #include <cnoid/PoseProvider>
 #include <cnoid/Signal>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -20,10 +20,9 @@ class PSIImpl;
 class CNOID_EXPORT PoseSeqInterpolator : public PoseProvider
 {
 public:
-
     PoseSeqInterpolator();
 
-    void setBody(const BodyPtr& body);
+    void setBody(Body* body);
     Body* body() const;
 
     void setLinearInterpolationJoint(int jointId);
@@ -84,7 +83,8 @@ private:
     PSIImpl* impl;
 };
 
-typedef boost::shared_ptr<PoseSeqInterpolator> PoseSeqInterpolatorPtr;
+typedef std::shared_ptr<PoseSeqInterpolator> PoseSeqInterpolatorPtr;
+
 }
 
 #endif

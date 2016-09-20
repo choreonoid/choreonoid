@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+
 items: 
   id: 0
   name: "Root"
@@ -80,9 +82,9 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: false
@@ -103,9 +105,9 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: false
@@ -265,7 +267,7 @@ toolbars:
     playbackFrameRate: 100
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
   "BodyBar": 
     current: 4
     stanceWidth: 0.15

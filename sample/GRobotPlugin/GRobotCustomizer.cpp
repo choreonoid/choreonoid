@@ -11,8 +11,6 @@
 
 #include <cnoid/BodyCustomizerInterface>
 #include <cnoid/EigenUtil>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <vector>
 #include <cstring>
 #include <cmath>
@@ -29,7 +27,7 @@
 
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace Eigen;
 using namespace cnoid;
 
@@ -54,7 +52,7 @@ struct GRobotCustomizer
     BodyHandle bodyHandle;
     int modelType;
     JointPathValSet jointPathValSets[NUM_IK_TYPES];
-    typedef function<bool(const Vector3& p, const Matrix3& R)> IkFunc;    
+    typedef std::function<bool(const Vector3& p, const Matrix3& R)> IkFunc;    
     IkFunc ikFuncs[NUM_IK_TYPES];
 
     double l0;
@@ -453,12 +451,12 @@ static BodyCustomizerHandle create(BodyHandle bodyHandle, const char* modelName)
 
         if(initializeIkPath(customizer, WAIST_TO_RFOOT, gr001RightLegLinks)){
             customizer->ikFuncs[WAIST_TO_RFOOT] =
-                bind(calcLegAngles, customizer, _1, _2, -1.0,
+                std::bind(calcLegAngles, customizer, _1, _2, -1.0,
                      customizer->jointPathValSets[WAIST_TO_RFOOT].anglePtrs);
         }
         if(initializeIkPath(customizer, WAIST_TO_LFOOT, gr001LeftLegLinks)){
             customizer->ikFuncs[WAIST_TO_LFOOT] =
-                bind(calcLegAngles, customizer, _1, _2, 1.0,
+                std::bind(calcLegAngles, customizer, _1, _2, 1.0,
                      customizer->jointPathValSets[WAIST_TO_LFOOT].anglePtrs);
         }
     }

@@ -5,7 +5,6 @@
 #ifndef CNOID_BASE_SCENE_WIDGET_H
 #define CNOID_BASE_SCENE_WIDGET_H
 
-#include <QWidget>
 #include <cnoid/SceneGraph>
 #include <QWidget>
 #include <QBoxLayout>
@@ -31,12 +30,12 @@ public:
     SceneWidget();
     ~SceneWidget();
 
-    static void forEachInstance(SgNode* node, boost::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
+    static void forEachInstance(SgNode* node, std::function<void(SceneWidget* sceneWidget, const SgNodePath& path)> function);
 
     SceneWidgetRoot* sceneRoot();
     SgGroup* scene();
 
-    SceneRenderer& renderer();
+    SceneRenderer* renderer();
 
     SignalProxy<void()> sigStateChanged() const;
 
@@ -117,8 +116,8 @@ public:
     SceneWidgetEditable* activeEventFilter();
     void removeEventFilter(SceneWidgetEditable* filter);
 
-    void showSetupDialog();
-    QVBoxLayout* setupDialogVBox();
+    void showConfigDialog();
+    QVBoxLayout* configDialogVBox();
 
     bool saveImage(const std::string& filename);
     QImage getImage();
@@ -133,6 +132,12 @@ public:
     SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
     SignalProxy<void()> sigAboutToBeDestroyed();
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    std::vector<std::string> profilingNames;
+    std::vector<double> profilingTimes;
+    double worldTimeStep;
+#endif
+
 private:
     SceneWidgetImpl* impl;
 };
@@ -145,6 +150,7 @@ public:
 private:
     SceneWidgetRoot(SceneWidget* sceneWidget);
     SceneWidget* sceneWidget_;
+    SgGroupPtr systemGroup;
     friend class SceneWidgetImpl;
 };
 typedef ref_ptr<SceneWidgetRoot> SceneWidgetRootPtr;

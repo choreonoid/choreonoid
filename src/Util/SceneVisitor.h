@@ -31,6 +31,7 @@ public:
     virtual void visitLineSet(SgLineSet* lineSet);        
     virtual void visitPreprocessed(SgPreprocessed* preprocessed);
     virtual void visitLight(SgLight* light);
+    virtual void visitFog(SgFog* fog);
     virtual void visitCamera(SgCamera* camera);
     virtual void visitOverlay(SgOverlay* overlay);
     virtual void visitOutlineGroup(SgOutlineGroup* outline);

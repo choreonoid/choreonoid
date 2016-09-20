@@ -11,12 +11,11 @@
 #include <cnoid/View>
 #include <cnoid/MainWindow>
 #include <cnoid/ConnectionSet>
-#include <boost/bind.hpp>
-#include <boost/format.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <QGridLayout>
 #include <QPainter>
 #include <QFocusEvent>
+#include <boost/format.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <cmath>
 #include <deque>
 #include <limits>
@@ -32,6 +31,7 @@ inline int isfinite(double x) { return _finite(x); }
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -48,7 +48,7 @@ struct EditHistory
     vector<double> orgValues;
     vector<double> newValues;
 };
-typedef boost::shared_ptr<EditHistory> EditHistoryPtr;
+typedef std::shared_ptr<EditHistory> EditHistoryPtr;
 typedef deque<EditHistoryPtr> EditHistoryList;
 }
 
@@ -381,11 +381,11 @@ GraphWidgetImpl::GraphWidgetImpl(GraphWidget* self, View* parentView)
 
     hScrollbar = new DoubleScrollBar(Qt::Horizontal, self);
     hScrollbar->sigValueChanged().connect(
-        boost::bind(&GraphWidgetImpl::onHScrollbarChanged, this, _1));
+        std::bind(&GraphWidgetImpl::onHScrollbarChanged, this, _1));
     
     vScrollbar = new DoubleScrollBar(Qt::Vertical, self);
     vScrollbar->sigValueChanged().connect(
-        boost::bind(&GraphWidgetImpl::onVScrollbarChanged, this, _1));
+        std::bind(&GraphWidgetImpl::onVScrollbarChanged, this, _1));
 
     QGridLayout* grid = new QGridLayout(self);
     grid->setSpacing(0);
@@ -438,8 +438,8 @@ GraphWidgetImpl::GraphWidgetImpl(GraphWidget* self, View* parentView)
     timeBar = TimeBar::instance();
     timeBarSyncMode = true;
 
-    parentView->sigActivated().connect(boost::bind(&GraphWidgetImpl::onActivated, this));
-    parentView->sigDeactivated().connect(boost::bind(&GraphWidgetImpl::onDeactivated, this));
+    parentView->sigActivated().connect(std::bind(&GraphWidgetImpl::onActivated, this));
+    parentView->sigDeactivated().connect(std::bind(&GraphWidgetImpl::onDeactivated, this));
 
     statusLabel.setAlignment(Qt::AlignLeft);
     QFont font = statusLabel.font();
@@ -487,7 +487,7 @@ void GraphWidgetImpl::addDataHandler(GraphDataHandlerPtr handler)
     
     handlers.push_back(handler);
     connections.add(handler->impl->sigDataUpdated.connect(
-                        boost::bind(&GraphWidgetImpl::updateData, this, handler)));
+                        std::bind(&GraphWidgetImpl::updateData, this, handler)));
 
     isReconfigurationNeeded = true;
     isDomainUpdateNeeded = true;
@@ -684,7 +684,7 @@ void GraphWidgetImpl::enableTimeBarSync(bool on)
     } else {
         if(on && parentView->isActive()){
             timeChangedConnetion = timeBar->sigTimeChanged().connect(
-                boost::bind(&GraphWidgetImpl::setCursorPosition, this, _1, false, false));
+                std::bind(&GraphWidgetImpl::setCursorPosition, this, _1, false, false));
             setCursorPosition(timeBar->time(), false, false);
         }
     }

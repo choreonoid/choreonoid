@@ -3,6 +3,7 @@
 */
 
 #include "Joystick.h"
+#include "ExtJoystick.h"
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <linux/joystick.h>
@@ -25,11 +26,14 @@ class JoystickImpl
 {
 public:
     Joystick* self;
+    ExtJoystick* extJoystick;
     int fd;
     vector<double> axes;
     dynamic_bitset<> axisEnabled;
     vector<bool> buttons;
     string errorMessage;
+    Signal<void(int id, bool isPressed)> sigButton;
+    Signal<void(int id, double position)> sigAxis;
 
     JoystickImpl(Joystick* self, const char* device);
     ~JoystickImpl();
@@ -38,6 +42,7 @@ public:
     bool readCurrentState();
     bool readEvent();
 };
+
 }
 
 
@@ -57,7 +62,14 @@ JoystickImpl::JoystickImpl(Joystick* self, const char* device)
     : self(self)
 {
     fd = -1;
-    openDevice(device);
+
+    extJoystick = ExtJoystick::findJoystick(device);
+
+    if(!extJoystick){
+        if(!openDevice(device)){
+            extJoystick = ExtJoystick::findJoystick("*");
+        }
+    }
 }
 
 
@@ -110,7 +122,7 @@ void JoystickImpl::closeDevice()
 
 bool Joystick::isReady() const
 {
-    return (impl->fd >= 0);
+    return impl->extJoystick ? true : (impl->fd >= 0);
 }
 
 
@@ -128,40 +140,30 @@ int Joystick::fileDescriptor() const
 
 int Joystick::numAxes() const
 {
-    return impl->axes.size();
+    return impl->extJoystick ? impl->extJoystick->numAxes() : impl->axes.size();
 }
 
 
 void Joystick::setAxisEnabled(int axis, bool on)
 {
-    if(axis < impl->axes.size()){
-        impl->axes[axis] = 0.0;
-        impl->axisEnabled[axis] = on;
+    if(!impl->extJoystick){
+        if(axis < impl->axes.size()){
+            impl->axes[axis] = 0.0;
+            impl->axisEnabled[axis] = on;
+        }
     }
 }
 
 
 int Joystick::numButtons() const
 {
-    return impl->buttons.size();
-}
-
-
-void Joystick::onJoystickButtonEvent(int id, bool isPressed)
-{
-
-}
-
-
-void Joystick::onJoystickAxisEvent(int id, double position)
-{
-
+    return impl->extJoystick ? impl->extJoystick->numButtons() : impl->buttons.size();
 }
 
 
 bool Joystick::readCurrentState()
 {
-    return impl->readCurrentState();
+    return impl->extJoystick ? impl->extJoystick->readCurrentState() : impl->readCurrentState();
 }
 
 
@@ -203,7 +205,7 @@ bool JoystickImpl::readEvent()
         // button
         bool isPressed = (pos > 0.0);
         buttons[id] = isPressed;
-        self->onJoystickButtonEvent(id, isPressed);
+        sigButton(id, isPressed);
     } else if(event.type & JS_EVENT_AXIS){
         if(axisEnabled[id]){
             // normalize value (-1.0〜1.0)
@@ -211,7 +213,7 @@ bool JoystickImpl::readEvent()
             double prevPos = axes[id];
             if(pos != prevPos){
                 axes[id] = pos;
-                self->onJoystickAxisEvent(id, pos);
+                sigAxis(id, pos);
             }
         }
     }
@@ -221,6 +223,10 @@ bool JoystickImpl::readEvent()
 
 double Joystick::getPosition(int axis) const
 {
+    if(impl->extJoystick){
+        return impl->extJoystick->getPosition(axis);
+    }
+
     if(axis < impl->axes.size()){
         return impl->axes[axis];
     }
@@ -230,6 +236,10 @@ double Joystick::getPosition(int axis) const
 
 bool Joystick::getButtonState(int button) const
 {
+    if(impl->extJoystick){
+        return impl->extJoystick->getButtonState(button);
+    }
+    
     if(button < impl->buttons.size()){
         return impl->buttons[button];
     }
@@ -239,6 +249,10 @@ bool Joystick::getButtonState(int button) const
 
 bool Joystick::isActive() const
 {
+    if(impl->extJoystick){
+        return impl->extJoystick->isActive();
+    }
+    
     for(size_t i=0; i < impl->axes.size(); ++i){
         if(impl->axes[i] != 0.0){
             return true;
@@ -250,4 +264,16 @@ bool Joystick::isActive() const
         }
     }
     return false;
+}
+
+
+SignalProxy<void(int id, bool isPressed)> Joystick::sigButton()
+{
+    return impl->sigButton;
+}
+
+
+SignalProxy<void(int id, double position)> Joystick::sigAxis()
+{
+    return impl->sigAxis;
 }

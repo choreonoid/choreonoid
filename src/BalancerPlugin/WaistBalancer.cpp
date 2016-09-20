@@ -9,18 +9,18 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <cnoid/GaussianFilter>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::optional;
 
 namespace {
 
     const bool DoVerticalAccCompensation = true;
     
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1800
     inline long lround(double x) {
         return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
     }
@@ -171,9 +171,9 @@ void WaistBalancer::setBoundarySmoother(int type, double smoothingTime)
 {
     boundarySmootherType_ = type;
     if(type == CUBIC_SMOOTHER){
-        boundarySmootherFunction = boost::bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction = std::bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
     } else if(type == QUINTIC_SMOOTHER){
-        boundarySmootherFunction = boost::bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction = std::bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
     } else {
         boundarySmootherType_ = NO_SMOOTHER;
     }

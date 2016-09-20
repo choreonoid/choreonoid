@@ -9,6 +9,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/MeshExtractor>
+#include <cnoid/SceneDrawables>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -16,7 +17,7 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyCollisionDetectorUtil>
-#include <boost/bind.hpp>
+#include <QElapsedTimer>
 #include "gettext.h"
 
 #ifdef GAZEBO_ODE
@@ -29,13 +30,16 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
 const bool USE_AMOTOR = false;
+
+const bool MEASURE_PHYSICS_CALCULATION_TIME = true;
+
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
@@ -153,6 +157,11 @@ public:
     bool useWorldCollision;
     CollisionDetectorPtr collisionDetector;
     bool velocityMode;
+
+    double physicsTime;
+    QElapsedTimer physicsTimer;
+    double collisionTime;
+    QElapsedTimer collisionTimer;
 
     ODESimulatorItemImpl(ODESimulatorItem* self);
     ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimulatorItemImpl& org);
@@ -314,7 +323,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     	jointID = dJointCreateFixed(worldID, 0);
         dJointAttach(jointID, bodyID, parentBodyID);
     	dJointSetFixed(jointID);
-    	if(link->jointType() == Link::CRAWLER_JOINT){
+    	if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
     	    simImpl->crawlerLinks.insert(make_pair(bodyID, link));
     	}
 #else
@@ -322,7 +331,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
             jointID = dJointCreateFixed(worldID, 0);
             dJointAttach(jointID, bodyID, parentBodyID);
             dJointSetFixed(jointID);
-            if(link->jointType() == Link::CRAWLER_JOINT){
+            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
                 simImpl->crawlerLinks.insert(make_pair(bodyID, link));
             }
         } else {
@@ -336,9 +345,9 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
 void ODELink::createGeometry(ODEBody* odeBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&ODELink::addMesh, this, extractor, odeBody))){
+        if(extractor->extract(link->collisionShape(), std::bind(&ODELink::addMesh, this, extractor, odeBody))){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(triMeshDataID,
@@ -365,7 +374,7 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        optional<Vector3> translation;
+        boost::optional<Vector3> translation;
         if(!extractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
@@ -422,6 +431,8 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
+                if(mesh->primitiveType()==SgMesh::CYLINDER)
+                    T_ *= AngleAxis(radian(90), Vector3::UnitX());
                 Vector3 p = T_.translation()-link->c();
                 dMatrix3 R = { T_(0,0), T_(0,1), T_(0,2), 0.0,
                                T_(1,0), T_(1,1), T_(1,2), 0.0,
@@ -462,19 +473,10 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
 
 ODELink::~ODELink()
 {
-    if(jointID){
-        dJointDestroy(jointID);
-    }
-    if(motorID){
-    	dJointDestroy(motorID);
-    }
     for(vector<dGeomID>::iterator it=geomID.begin(); it!=geomID.end(); it++)
         dGeomDestroy(*it);
     if(triMeshDataID){
         dGeomTriMeshDataDestroy(triMeshDataID);
-    }
-    if(bodyID){
-        dBodyDestroy(bodyID);
     }
 }
 
@@ -504,9 +506,9 @@ void ODELink::setKinematicStateToODE()
                 offset = it0->second;
             Position T_ = T*offset;
             Vector3 p = T_.translation() + link->c();
-            dMatrix3 R2 = { T(0,0), T(0,1), T(0,2), 0.0,
-                            T(1,0), T(1,1), T(1,2), 0.0,
-                            T(2,0), T(2,1), T(2,2), 0.0 };
+            dMatrix3 R2 = { T_(0,0), T_(0,1), T_(0,2), 0.0,
+                            T_(1,0), T_(1,1), T_(1,2), 0.0,
+                            T_(2,0), T_(2,1), T_(2,2), 0.0 };
 
             dGeomSetPosition(*it, p.x(), p.y(), p.z());
             dGeomSetRotation(*it, R2);
@@ -801,7 +803,7 @@ void ODEBody::updateForceSensors(bool flipYZ)
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(int i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         const dJointFeedback& fb = forceSensorFeedbacks[i];
         Vector3 f, tau;
@@ -1047,13 +1049,13 @@ void ODESimulatorItemImpl::clear()
 }    
 
 
-ItemPtr ODESimulatorItem::doDuplicate() const
+Item* ODESimulatorItem::doDuplicate() const
 {
     return new ODESimulatorItem(*this);
 }
 
 
-SimulationBodyPtr ODESimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* ODESimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new ODEBody(*orgBody);
 }
@@ -1103,6 +1105,11 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     }
     if(useWorldCollision)
         collisionDetector->makeReady();
+
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        physicsTime = 0;
+        collisionTime = 0;
+    }
 
     return true;
 }
@@ -1185,7 +1192,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                     if(contacts[i].geom.depth > 0.001){
                         continue;
                     }
-                    surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2;
+                    surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2 | dContactApprox1_1;
                     const Vector3 axis = crawlerlink->R() * crawlerlink->a();
                     const Vector3 n(contacts[i].geom.normal);
                     Vector3 dir = axis.cross(n);
@@ -1202,7 +1209,10 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                         //Vector3 pos(dpos[0], dpos[1], dpos[2]);
                         //Vector3 v = crawlerlink->v + crawlerlink->w.cross(pos-crawlerlink->p);
                         //surface.motion1 = dir.dot(v) + crawlerlink->u;
-                        surface.motion1 = crawlerlink->u();
+                        if(crawlerlink->jointType()==Link::PSEUDO_CONTINUOUS_TRACK)
+                            surface.motion1 = crawlerlink->dq();
+                        else
+                            surface.motion1 = crawlerlink->u();
                         surface.mu = impl->friction;
                         surface.mu2 = 0.5;
                     }
@@ -1223,14 +1233,18 @@ bool ODESimulatorItem::stepSimulation(const std::vector<SimulationBody*>& active
 
 bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    for(size_t i=0; i < activeSimBodies.size(); ++i){
+	for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
         if(velocityMode)
-            odeBody->setVelocityToODE();
+        	odeBody->setVelocityToODE();
         else
-            odeBody->setTorqueToODE();
+        	odeBody->setTorqueToODE();
     }
+
+	if(MEASURE_PHYSICS_CALCULATION_TIME){
+	    physicsTimer.start();
+	}
 
     dJointGroupEmpty(contactJointGroupID);
     if(useWorldCollision){
@@ -1241,15 +1255,25 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
                 collisionDetector->updatePosition( k, geometryIdToLink[k]->link->T());
             }
         }
-        collisionDetector->detectCollisions(boost::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
+        collisionDetector->detectCollisions(std::bind(&ODESimulatorItemImpl::collisionCallback, this, _1));
     }else{
+        if(MEASURE_PHYSICS_CALCULATION_TIME){
+            collisionTimer.start();
+        }
         dSpaceCollide(spaceID, (void*)this, &nearCallback);
+        if(MEASURE_PHYSICS_CALCULATION_TIME){
+            collisionTime += collisionTimer.nsecsElapsed();
+        }
     }
 
     if(stepMode.is(ODESimulatorItem::STEP_ITERATIVE)){
         dWorldQuickStep(worldID, timeStep);
     } else {
         dWorldStep(worldID, timeStep);
+    }
+
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        physicsTime += physicsTimer.nsecsElapsed();
     }
 
     //! \todo Bodies with sensors should be managed by the specialized container to increase the efficiency
@@ -1265,8 +1289,8 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
             odeBody->updateForceSensors(flipYZ);
         }
         odeBody->getKinematicStateFromODE(flipYZ);
-        if(odeBody->sensorHelper.hasGyroOrAccelSensors()){
-            odeBody->sensorHelper.updateGyroAndAccelSensors();
+        if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            odeBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
 
@@ -1339,6 +1363,15 @@ void ODESimulatorItemImpl::collisionCallback(const CollisionPair& collisionPair)
 }
 
 
+void ODESimulatorItem::finalizeSimulation()
+{
+    if(MEASURE_PHYSICS_CALCULATION_TIME){
+        cout << "ODE physicsTime= " << impl->physicsTime *1.0e-9 << "[s]"<< endl;
+        cout << "ODE collisionTime= " << impl->collisionTime *1.0e-9 << "[s]"<< endl;
+    }
+}
+
+
 void ODESimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     SimulatorItem::doPutProperties(putProperty);
@@ -1350,7 +1383,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
 
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
+    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
 
     putProperty.decimals(2).min(0.0)
         (_("Friction"), friction, changeProperty(friction));
@@ -1361,7 +1394,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
         (_("Global ERP"), globalERP, changeProperty(globalERP));
 
     putProperty(_("Global CFM"), globalCFM,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(globalCFM), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(globalCFM), _1));
 
     putProperty.min(1)
         (_("Iterations"), numIterations, changeProperty(numIterations));
@@ -1372,7 +1405,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Limit correcting vel."), enableMaxCorrectingVel, changeProperty(enableMaxCorrectingVel));
 
     putProperty(_("Max correcting vel."), maxCorrectingVel,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(maxCorrectingVel), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(maxCorrectingVel), _1));
 
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 

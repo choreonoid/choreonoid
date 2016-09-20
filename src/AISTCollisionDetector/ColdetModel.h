@@ -2,13 +2,13 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_COLDET_MODEL_H_INCLUDED
-#define CNOID_COLDET_MODEL_H_INCLUDED
+#ifndef CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
+#define CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
 
 #include <cnoid/EigenTypes>
-#include <boost/shared_ptr.hpp>
 #include <string>
 #include <vector>
+#include <memory>
 #include "exportdecl.h"
 
 namespace IceMaths {
@@ -18,7 +18,7 @@ class Matrix4x4;
 namespace cnoid {
 
 class ColdetModel;
-typedef boost::shared_ptr<ColdetModel> ColdetModelPtr;
+typedef std::shared_ptr<ColdetModel> ColdetModelPtr;
 
 class ColdetModelInternalModel;
 
@@ -224,7 +224,7 @@ private:
 
     friend class ColdetModelPair;
 };
-}
 
+}
 
 #endif

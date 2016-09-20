@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H_INCLUDED
-#define CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H
+#define CNOID_BODY_PLUGIN_SIMULATION_SCRIPT_ITEM_H
 
 #include <cnoid/ScriptItem>
 #include "exportdecl.h"
@@ -19,7 +19,7 @@ public:
     SimulationScriptItem();
     SimulationScriptItem(const SimulationScriptItem& org);
 
-    enum ExecTiming {
+    enum ExecutionTiming {
         BEFORE_INITIALIZATION,
         DURING_INITIALIZATION,
         AFTER_INITIALIZATION,
@@ -28,8 +28,10 @@ public:
         NUM_TIMINGS,
     };
 
-    ExecTiming execTiming() const;
-    double execDelay() const;
+    ExecutionTiming executionTiming() const;
+    void setExecutionTiming(ExecutionTiming timing);
+    double executionDelay() const;
+    void setExecutionDelay(double t);
 
     virtual bool execute();
     virtual bool executeAsSimulationScript() = 0;
@@ -47,6 +49,7 @@ private:
 };
 
 typedef ref_ptr<SimulationScriptItem> SimulationScriptItemPtr;
+
 }
 
 #endif

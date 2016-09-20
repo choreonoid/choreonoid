@@ -11,9 +11,11 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 const int cannonAxis[] = { 3, 4 };
 const double cannonAxisRatio[] = { -1.0, 1.0 };
 const int buttonIds[] = { 0, 1, 2, 3, 4, 5 };
+
 }
 
 class TankJoystickController : public cnoid::SimpleController
@@ -29,48 +31,54 @@ class TankJoystickController : public cnoid::SimpleController
 
 public:
     
-    virtual bool initialize() {
-
-        BodyPtr io = ioBody();
-        crawlerL = io->link("CRAWLER_TRACK_L");
-        crawlerR = io->link("CRAWLER_TRACK_R");
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        ostream& os = io->os();
+        
+        Body* body = io->body();
+        crawlerL = body->link("CRAWLER_TRACK_L");
+        crawlerR = body->link("CRAWLER_TRACK_R");
         if(!crawlerL || !crawlerR){
-            os() << "The crawlers are not found." << endl;
+            os << "The crawlers are not found." << endl;
             return false;
         }
-        cannonJoint[0] = io->link("CANNON_Y");
-        cannonJoint[1] = io->link("CANNON_P");
+        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
+        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+        
+        cannonJoint[0] = body->link("CANNON_Y");
+        cannonJoint[1] = body->link("CANNON_P");
         for(int i=0; i < 2; ++i){
-            if(!cannonJoint[i]){
-                os() << "Cannon joint " << i << " is not found." << endl;
+            Link* joint = cannonJoint[i];
+            if(!joint){
+                os << "Cannon joint " << i << " is not found." << endl;
                 return false;
             }
-            double q = cannonJoint[i]->q();
-            qref[i] = q;
-            qprev[i] = q;
+            qref[i] = qprev[i] = joint->q();
+            io->setLinkOutput(joint, JOINT_TORQUE);
+            io->setLinkInput(joint, JOINT_ANGLE);
         }
-
-        DeviceList<Light> lights = io->devices();
+        
+        DeviceList<Light> lights(body->devices());
         if(!lights.empty()){
             light = lights.front();
         }
         prevLightButtonState = false;
 
         if(!joystick.isReady()){
-            os() << "Joystick is not ready: " << joystick.errorMessage() << endl;
+            os << "Joystick is not ready: " << joystick.errorMessage() << endl;
         }
         if(joystick.numAxes() < 5){
-            os() << "The number of the joystick axes is not sufficient for controlling the robot." << endl;
+            os << "The number of the joystick axes is not sufficient for controlling the robot." << endl;
         }
         if(joystick.numButtons() < 1){
-            os() << "The number of the joystick buttons is not sufficient for controlling the robot." << endl;
+            os << "The number of the joystick buttons is not sufficient for controlling the robot." << endl;
         }
 
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         joystick.readCurrentState();
         
         static const double P = 200.0;
@@ -99,8 +107,8 @@ public:
             }
         }
         // set the velocity of each crawlers
-        crawlerL->u() = -2.0 * pos[1] + pos[0];
-        crawlerR->u() = -2.0 * pos[1] - pos[0];
+        crawlerL->dq() = -2.0 * pos[1] + pos[0];
+        crawlerR->dq() = -2.0 * pos[1] - pos[0];
         
         if(light){
             bool lightButtonState = joystick.getButtonState(buttonIds[0]);

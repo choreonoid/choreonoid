@@ -15,12 +15,16 @@ set(sources
   JointPath.cpp
   Jacobian.cpp
   Device.cpp
-  Sensor.cpp
+  ForceSensor.cpp
+  RateGyroSensor.cpp
+  AccelerationSensor.cpp
   BasicSensorSimulationHelper.cpp
-  VisionSensor.cpp
   Camera.cpp
+  RangeCamera.cpp
   RangeSensor.cpp
   Light.cpp
+  PointLight.cpp
+  SpotLight.cpp
   MultiDeviceStateSeq.cpp
   ExtraBodyStateAccessor.cpp
   SceneBody.cpp
@@ -46,10 +50,11 @@ set(sources
   InverseDynamics.cpp
   PenetrationBlocker.cpp
   AbstractBodyLoader.cpp
-  VRMLBodyLoader.cpp
-  ColladaBodyLoader.cpp
   BodyLoader.cpp
+  YAMLBodyLoader.cpp
+  VRMLBodyLoader.cpp
   VRMLBodyWriter.cpp
+  ColladaBodyLoader.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   )
@@ -72,12 +77,17 @@ set(headers
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
   Device.h
-  Sensor.h
+  DeviceList.h
+  ForceSensor.h
+  RateGyroSensor.h
+  AccelerationSensor.h
   BasicSensorSimulationHelper.h
-  VisionSensor.h
   Camera.h
+  RangeCamera.h
   RangeSensor.h
   Light.h
+  PointLight.h
+  SpotLight.h
   SceneBody.h
   SceneDevice.h
   SceneCollision.h
@@ -94,6 +104,7 @@ set(headers
   InverseDynamics.h
   Jacobian.h
   MassMatrix.h
+  ContactAttribute.h
   ConstraintForceSolver.h
   PoseProvider.h
   BodyMotion.h
@@ -132,6 +143,10 @@ function(add_cnoid_body_customizer)
 
   if(ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+  endif()
+
+  if(QT5)
+    qt5_use_modules(${target} Widgets)
   endif()
 
   install(TARGETS ${target}

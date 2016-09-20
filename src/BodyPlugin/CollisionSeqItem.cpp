@@ -6,10 +6,10 @@
 #include "CollisionSeqItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -66,7 +66,7 @@ void CollisionSeqItem::initislizeClass(ExtensionManager* ext)
     im.registerClass<CollisionSeqItem>(N_("CollisionSeqItem"));
     im.addLoaderAndSaver<CollisionSeqItem>(
         _("Collision Data"), "COLLISION-DATA-YAML", "yaml",
-        boost::bind(loadStandardYamlFormat, _1, _2, _3),  boost::bind(saveAsStandardYamlFormat, _1, _2, _3));
+        std::bind(loadStandardYamlFormat, _1, _2, _3),  std::bind(saveAsStandardYamlFormat, _1, _2, _3));
 
     initialized = true;
 }
@@ -118,7 +118,7 @@ AbstractMultiSeqPtr CollisionSeqItem::abstractMultiSeq()
 }
 
 
-ItemPtr CollisionSeqItem::doDuplicate() const
+Item* CollisionSeqItem::doDuplicate() const
 {
     return new CollisionSeqItem(*this);
 }

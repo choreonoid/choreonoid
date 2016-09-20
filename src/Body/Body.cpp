@@ -5,11 +5,11 @@
 
 #include "Body.h"
 #include "BodyCustomizerInterface.h"
+#include <cnoid/SceneGraph>
 #include <cnoid/EigenUtil>
 #include <cnoid/ValueTree>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -26,11 +26,11 @@ struct BodyHandleEntity {
     Body* body;
 };
 
-typedef std::map<std::string, Link*> NameToLinkMap;
+typedef std::map<std::string, LinkPtr> NameToLinkMap;
 typedef std::map<std::string, Device*> DeviceNameMap;
 typedef std::map<std::string, ReferencedPtr> CacheMap;
-}
 
+}
 
 namespace cnoid {
 
@@ -54,6 +54,7 @@ public:
 
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 };
+
 }
 
 
@@ -72,8 +73,6 @@ Body::Body()
 void Body::initialize()
 {
     impl = new BodyImpl;
-    
-    rootLink_ = 0;
     
     impl->customizerHandle = 0;
     impl->customizerInterface = 0;
@@ -170,10 +169,11 @@ void Body::cloneShapes(SgCloneMap& cloneMap)
 
 Body::~Body()
 {
+    setRootLink(0);
+    
     if(impl->customizerHandle){
         impl->customizerInterface->destroy(impl->customizerHandle);
     }
-    delete rootLink_;
     delete impl;
 }
 
@@ -181,11 +181,11 @@ Body::~Body()
 void Body::setRootLink(Link* link)
 {
     if(rootLink_){
-        delete rootLink_;
+        rootLink_->setBody(0);
     }
     rootLink_ = link;
-
     if(rootLink_){
+        rootLink_->setBody(this);
         updateLinkTree();
     }
 }
@@ -208,7 +208,7 @@ void Body::updateLinkTree()
 
     const int numLinks = linkTraverse_.numLinks();
     jointIdToLinkArray.clear();
-    jointIdToLinkArray.reserve(numLinks);
+    jointIdToLinkArray.reserve(numLinks - 1);
     numActualJoints = 0;
     Link** virtualJoints = (Link**)alloca(numLinks * sizeof(Link*));
     int numVirtualJoints = 0;
@@ -224,12 +224,14 @@ void Body::updateLinkTree()
             if(id >= jointIdToLinkArray.size()){
                 jointIdToLinkArray.resize(id + 1, 0);
             }
-            jointIdToLinkArray[id] = link;
-            ++numActualJoints;
+            if(!jointIdToLinkArray[id]){
+                jointIdToLinkArray[id] = link;
+                ++numActualJoints;
+            }
         }
         if(link->jointType() != Link::FIXED_JOINT){
             isStaticModel_ = false;
-            if(id < 0){
+            if(i > 0 && id < 0){
                 virtualJoints[numVirtualJoints++] = link;
             }
         }
@@ -287,20 +289,19 @@ void Body::setModelName(const std::string& name)
 
 const Mapping* Body::info() const
 {
-    return impl->info.get();
+    return impl->info;
 }
 
 
 Mapping* Body::info()
 {
-    return impl->info.get();
+    return impl->info;
 }
 
 
 void Body::resetInfo(Mapping* info)
 {
     impl->info = info;
-    //doResetInfo(*info);
 }
 
 
@@ -335,7 +336,7 @@ Referenced* Body::findCacheSub(const std::string& name)
 {
     CacheMap::iterator p = impl->cacheMap.find(name);
     if(p != impl->cacheMap.end()){
-        return p->second.get();
+        return p->second;
     }
     return 0;
 }
@@ -345,7 +346,7 @@ const Referenced* Body::findCacheSub(const std::string& name) const
 {
     CacheMap::iterator p = impl->cacheMap.find(name);
     if(p != impl->cacheMap.end()){
-        return p->second.get();
+        return p->second;
     }
     return 0;
 }
@@ -408,7 +409,7 @@ void Body::initializeState()
     for(int i=0; i < n; ++i){
         Link* link = linkTraverse_[i];
         link->u() = 0.0;
-        link->q() = 0.0;
+        link->q() = link->initialJointDisplacement();
         link->dq() = 0.0;
         link->ddq() = 0.0;
     }

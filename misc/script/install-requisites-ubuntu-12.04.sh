@@ -11,6 +11,7 @@ libqt4-opengl-dev \
 qt4-dev-tools \
 qt4-qtconfig \
 qt4-doc-html \
+libxfixes-dev \
 libglew1.6-dev \
 libyaml-dev \
 gettext \

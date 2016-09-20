@@ -27,7 +27,7 @@ FolderItem::~FolderItem()
 }
 
 
-ItemPtr FolderItem::doDuplicate() const
+Item* FolderItem::doDuplicate() const
 {
     return new FolderItem(*this);
 }

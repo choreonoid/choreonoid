@@ -15,7 +15,8 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
 #include <cnoid/SpinBox>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
+#include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <cnoid/Separator>
 #include <cnoid/EigenUtil>
@@ -25,11 +26,11 @@
 #include <QBoxLayout>
 #include <QFrame>
 #include <QLabel>
-#include <boost/bind.hpp>
 #include <map>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 using boost::format;
@@ -40,7 +41,7 @@ bool USE_DUPLICATED_BODY = false;
 
 KinematicFaultChecker* checkerInstance = 0;
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1800
 inline long lround(double x) {
     return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
 }
@@ -104,12 +105,12 @@ void KinematicFaultChecker::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
         mm.addItem(_("Kinematic Fault Checker"))
-            ->sigTriggered().connect(boost::bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
+            ->sigTriggered().connect(std::bind(&KinematicFaultCheckerImpl::show, checkerInstance->impl));
         
         ext->setProjectArchiver(
             "KinematicFaultChecker",
-            boost::bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
-            boost::bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
+            std::bind(&KinematicFaultCheckerImpl::store, checkerInstance->impl, _1),
+            std::bind(&KinematicFaultCheckerImpl::restore, checkerInstance->impl, _1));
     }
 }
 
@@ -224,7 +225,7 @@ KinematicFaultCheckerImpl::KinematicFaultCheckerImpl()
     applyButton->setDefault(true);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
     buttonBox->addButton(applyButton, QDialogButtonBox::AcceptRole);
-    applyButton->sigClicked().connect(boost::bind(&KinematicFaultCheckerImpl::apply, this));
+    applyButton->sigClicked().connect(std::bind(&KinematicFaultCheckerImpl::apply, this));
     
     vbox->addWidget(buttonBox);
 }
@@ -288,9 +289,9 @@ void KinematicFaultCheckerImpl::apply()
                 
                 dynamic_bitset<> linkSelection;
                 if(selectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::mainInstance()->getLinkSelection(bodyItem);
+                    linkSelection = LinkSelectionView::mainInstance()->linkSelection(bodyItem);
                 } else if(nonSelectedJointsRadio.isChecked()){
-                    linkSelection = LinkSelectionView::mainInstance()->getLinkSelection(bodyItem);
+                    linkSelection = LinkSelectionView::mainInstance()->linkSelection(bodyItem);
                     linkSelection.flip();
                 } else {
                     linkSelection.resize(bodyItem->body()->numLinks(), true);
@@ -440,17 +441,28 @@ int KinematicFaultCheckerImpl::checkFaults
         if(checkCollision){
 
             Link* link = body->link(0);
-            const SE3& p = pseq->at(frame, 0);
-            link->p() = p.translation();
-            link->R() = p.rotation().toRotationMatrix();
-            
+            if(!pseq->empty())
+            {
+                const SE3& p = pseq->at(frame, 0);
+                link->p() = p.translation();
+                link->R() = p.rotation().toRotationMatrix();
+            }
+            else
+            {
+                link->p() = Vector3d(0., 0., 0.);
+                link->R() = Matrix3d::Identity();
+            }
+
             body->calcForwardKinematics();
 
             for(int i=1; i < numLinks; ++i){
                 link = body->link(i);
-                const SE3& p = pseq->at(frame, i);
-                link->p() = p.translation();
-                link->R() = p.rotation().toRotationMatrix();
+                if(!pseq->empty())
+                {
+                    const SE3& p = pseq->at(frame, i);
+                    link->p() = p.translation();
+                    link->R() = p.rotation().toRotationMatrix();
+                }
             }
 
             for(int i=0; i < numLinks; ++i){
@@ -458,7 +470,7 @@ int KinematicFaultCheckerImpl::checkFaults
                 collisionDetector->updatePosition(i, link->position());
             }
             collisionDetector->detectCollisions(
-                boost::bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, boost::ref(os)));
+                std::bind(&KinematicFaultCheckerImpl::putSelfCollision, this, body.get(), frame, _1, std::ref(os)));
         }
     }
 

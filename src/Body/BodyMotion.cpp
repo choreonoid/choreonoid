@@ -61,7 +61,7 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
 
 AbstractSeqPtr BodyMotion::cloneSeq() const
 {
-    return boost::make_shared<BodyMotion>(*this);
+    return std::make_shared<BodyMotion>(*this);
 }
 
 
@@ -300,11 +300,32 @@ void BodyMotion::clearExtraSeq(const std::string& contentName)
 }
 
 
-namespace cnoid {
-
-BodyMotion::Frame& operator<<(const BodyMotion::Frame& frame, const Body& body)
+static BodyMotion& emptyMotion()
 {
-    BodyMotion& motion = const_cast<BodyMotion::Frame&>(frame).motion();
+    static BodyMotion motion;
+    return motion;
+}
+
+
+BodyMotion::Frame::Frame()
+    : motion_(emptyMotion()),
+      frame_(-1)
+{
+
+}
+
+
+BodyMotion::ConstFrame::ConstFrame()
+    : motion_(emptyMotion()),
+      frame_(-1)
+{
+
+}
+
+    
+static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
+{
+    BodyMotion& motion = frame.motion();
     int numJoints = std::min(body.numJoints(), motion.numJoints());
     MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
     for(int i=0; i < numJoints; ++i){
@@ -316,10 +337,11 @@ BodyMotion::Frame& operator<<(const BodyMotion::Frame& frame, const Body& body)
         const Link* link = body.link(i);
         p[i].set(link->p(), link->R());
     }
-    return const_cast<BodyMotion::Frame&>(frame);
 }
+    
 
-BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, Body& body)
+template<class FrameType>
+static void copyFrameToBodyState(FrameType& frame, Body& body)
 {
     const BodyMotion& motion = frame.motion();
     int numJoints = std::min(body.numJoints(), motion.numJoints());
@@ -334,64 +356,45 @@ BodyMotion::Frame& operator>>(const BodyMotion::Frame& frame, Body& body)
         link->p() = p[i].translation();
         link->R() = p[i].rotation().toRotationMatrix();
     }
-    /*
-    if(numLinks <= 1){
-        body.calcForwardKinematics();
-    }
-    */
-    return const_cast<BodyMotion::Frame&>(frame);
-}
 }
 
-/*
-  bool BodyMotion::setBodyState(int frameIndex, const Body& body)
-  {
-  bool processed = false;
 
-  const int n = std::min(body->numJoints(), jointPosSeq_->numParts());
-  if(n > 0 && frameIndex < jointPosSeq_->numFrames()){
-  MultiValueSeq::Frame jframe = jointPosSeq_->frame(frameIndex);
-  for(int i=0; i < n; ++i){
-  jframe[i] = body->joint(i)->q;
-  }
-  processed = true;
-  }
-  const int n = std::min(body->numLinks(), linkPosSeq_->numParts());
-  if(n > 0 && frameIndex < linkPosSeq_->numFrames()){
-  MultiSE3Seq::Frame lframe = linkPosSeq_->frame(frameIndex);
-  for(int i=0; i < n; ++i){
-  Link* link = body->link(n);
-  lframe[i].set(link->p, link->R);
-  }
-  processed = true;
-  }
-  return processed;
-  }
+namespace cnoid {
 
+BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body)
+{
+    copyBodyStateToFrame(body, frame);
+    return frame;
+}
 
-  bool BodyMotion::getBodyState(int frameIndex, Body& body)
-  {
-  bool processed = false;
-    
-  const int n = std::min(body->numJoints(), jointPosSeq_->numParts());
-  if(n > 0 && frameIndex < jointPosSeq_->numFrames()){
-  const MultiValueSeq::Frame jframe = jointPosSeq_->frame(frameIndex);
-  for(int i=0; i < n; ++i){
-  body->joint(i)->q = jframe[i];
-  }
-  processed = true;
-  }
-  const int n = std::min(body->numLinks(), linkPosSeq_->numParts());
-  if(n > 0 && frameIndex < linkPosSeq_->numFrames()){
-  const MultiSE3Seq::Frame lframe = linkPosSeq_->frame(frameIndex);
-  for(int i=0; i < n; ++i){
-  Link* link = body->link(n);
-  const SE3& pos = lframe[i];
-  link->p = pos.translation();
-  link->R = pos.rotation();
-  }
-  processed = true;
-  }
-  return processed;
-  }
-*/
+const Body& operator>>(const Body& body, BodyMotion::Frame frame)
+{
+    copyBodyStateToFrame(body, frame);
+    return body;
+}
+
+BodyMotion::Frame operator>>(BodyMotion::Frame frame, Body& body)
+{
+    copyFrameToBodyState(frame, body);
+    return frame;
+}
+
+BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body)
+{
+    copyFrameToBodyState(frame, body);
+    return frame;
+}
+
+Body& operator<<(Body& body, BodyMotion::Frame frame)
+{
+    copyFrameToBodyState(frame, body);
+    return body;
+}
+
+Body& operator<<(Body& body, BodyMotion::ConstFrame frame)
+{
+    copyFrameToBodyState(frame, body);
+    return body;
+}
+
+}

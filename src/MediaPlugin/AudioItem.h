@@ -7,7 +7,7 @@
 #define CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
 
 #include <cnoid/Item>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -55,14 +55,13 @@ public:
 protected:
     ~AudioItem();
 
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
 private:
-
-    boost::shared_ptr< std::vector<float> > samplingData_;
+    std::shared_ptr< std::vector<float> > samplingData_;
     double offsetTime_;
     int numChannels_;
     double samplingRate_;
@@ -77,5 +76,7 @@ private:
 };
     
 typedef ref_ptr<AudioItem> AudioItemPtr;
+
 };
+
 #endif

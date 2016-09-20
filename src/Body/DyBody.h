@@ -58,16 +58,20 @@ public:
     double dd() const { return dd_; }
     double& dd() { return dd_; }
 
-    // This is used for checking or visualizing the actual constraint forces.
-    // This is updated if ConstraintForceSolver::enableConstraintForceOutput(true) is called.
+    /**
+       This is used for checking or visualizing the actual constraint forces.
+       This is updated if ConstraintForceSolver::enableConstraintForceOutput(true) is called.
+    */
     struct ConstraintForce {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         ConstraintForce(const Vector3& point, const Vector3& force) : point(point), force(force) { }
         Vector3 point;
         Vector3 force;
     };
-    std::vector<ConstraintForce>& constraintForces() { return constraintForces_; }
-    const std::vector<ConstraintForce>& constraintForces() const { return constraintForces_; }
+    typedef std::vector<ConstraintForce> ConstraintForceArray;
+    
+    ConstraintForceArray& constraintForces() { return constraintForces_; }
+    const ConstraintForceArray& constraintForces() const { return constraintForces_; }
 
     virtual void prependChild(Link* link);
     virtual void appendChild(Link* link);

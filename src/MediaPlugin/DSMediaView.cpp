@@ -9,12 +9,12 @@
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/MessageView>
+#include <cnoid/ViewManager>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MenuManager>
 #include <cnoid/Sleep>
 #include <QPainter>
 #include <Dshow.h>
-#include <boost/bind.hpp>
 #include <iostream>
 #include <algorithm>
 #include <windows.h>
@@ -22,7 +22,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -109,6 +109,9 @@ bool DSMediaView::initialize(ExtensionManager* ext)
             return false;
         }
 
+        ext->viewManager().registerClass<DSMediaView>(
+            "MediaView", N_("Media"), ViewManager::SINGLE_OPTIONAL);
+
         MenuManager& mm = ext->menuManager();
         
         mm.setPath("/Options").setPath(N_("Media View"));
@@ -181,13 +184,13 @@ DSMediaViewImpl::DSMediaViewImpl(DSMediaView* self)
     orgWinProc = NULL;
 
     aspectRatioCheck->sigToggled().connect(
-        boost::bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
+        std::bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
 
     orgSizeCheck->sigToggled().connect(
-        boost::bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
+        std::bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
     
     ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        boost::bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
+        std::bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
 }
 
 
@@ -364,11 +367,20 @@ void DSMediaViewImpl::initializeScreenWindow()
 
     if(hwnd != NULL && orgWinProc == NULL){
 
-        orgWinProc = (WNDPROC)GetWindowLong(hwnd, GWL_WNDPROC);
+#ifdef _WIN64
+        orgWinProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
         
+        //SetWindowLong(hwnd, GWL_WNDPROC, (LONG)(WNDPROC)videoWindowProc);
+        SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)videoWindowProc);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
+#else
+        orgWinProc = (WNDPROC)GetWindowLong(hwnd, GWL_WNDPROC);
+
         //SetWindowLong(hwnd, GWL_WNDPROC, (LONG)(WNDPROC)videoWindowProc);
         SetWindowLongPtr(hwnd, GWL_WNDPROC, (LONG_PTR)videoWindowProc);
         SetWindowLongPtr(hwnd, GWL_USERDATA, (LONG_PTR)this);
+#endif
+
 
         bMapped = true;
         if(currentMediaItem){
@@ -381,7 +393,13 @@ void DSMediaViewImpl::initializeScreenWindow()
 void DSMediaViewImpl::clearScreenWindow()
 {
     if(hwnd != NULL && orgWinProc != NULL){
+
+#ifdef _WIN64
+        SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)orgWinProc);
+#else
         SetWindowLongPtr(hwnd, GWL_WNDPROC, (LONG_PTR)orgWinProc);
+#endif
+
     }
 
     orgWinProc = NULL;
@@ -417,7 +435,7 @@ void DSMediaViewImpl::load()
         WCHAR wFile[MAX_PATH];
 
         // Convert filename to wide character string
-        MultiByteToWideChar(_getmbcp(), 0, currentMediaItem->uri().c_str(), -1, wFile, sizeof(wFile));
+        MultiByteToWideChar(_getmbcp(), 0, currentMediaItem->mediaURI().c_str(), -1, wFile, sizeof(wFile));
 
         // Have the graph builder construct its the appropriate graph automatically
         EIF(graphBuilder->RenderFile(wFile, NULL));
@@ -530,16 +548,16 @@ void DSMediaViewImpl::connectTimeBarSignals()
         TimeBar* timeBar = TimeBar::instance();
         timeBarConnections.add(
             timeBar->sigPlaybackInitialized().connect(
-                boost::bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                std::bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
         timeBarConnections.add(
             timeBar->sigPlaybackStarted().connect(
-                boost::bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
+                std::bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
         timeBarConnections.add(
             timeBar->sigPlaybackStopped().connect(
-                boost::bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
+                std::bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
         timeBarConnections.add(
             timeBar->sigTimeChanged().connect(
-                boost::bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
+                std::bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
     }
 }
 

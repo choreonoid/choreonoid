@@ -9,8 +9,8 @@
 #include "AbstractSeq.h"
 #include "Deque2D.h"
 #include <Eigen/StdVector>
-#include <boost/make_shared.hpp>
 #include <algorithm>
+#include <memory>
 
 
 namespace cnoid {
@@ -24,27 +24,27 @@ public:
     typedef Deque2D<ElementType, Allocator> Container;
     
     typedef typename Container::Element Element;
-    typedef boost::shared_ptr< MultiSeqType > Ptr;
+    typedef std::shared_ptr< MultiSeqType > Ptr;
     typedef typename Container::Row Frame;
     typedef typename Container::Column Part;
 
     MultiSeq(const char* seqType)
-        : AbstractMultiSeq(seqType),
-          Container(0, 1) {
+        : Container(0, 1),
+          AbstractMultiSeq(seqType) {
         frameRate_ = defaultFrameRate();
         offsetTimeFrame_ = 0;
     }
 
     MultiSeq(const char* seqType, int numFrames, int numParts)
-        : AbstractMultiSeq(seqType),
-          Container(numFrames, numParts) {
+        : Container(numFrames, numParts),
+          AbstractMultiSeq(seqType) {
         frameRate_ = defaultFrameRate();
         offsetTimeFrame_ = 0;
     }
 
     MultiSeq(const MultiSeqType& org)
-        : AbstractMultiSeq(org),
-          Container(org) {
+        : Container(org),
+          AbstractMultiSeq(org) {
         frameRate_ = org.frameRate_;
         offsetTimeFrame_ = org.offsetTimeFrame_;
     }
@@ -70,7 +70,7 @@ public:
     }
 
     virtual AbstractSeqPtr cloneSeq() const {
-        return boost::make_shared<MultiSeqType>(*this);
+        return std::make_shared<MultiSeqType>(*this);
     }
         
     void copySeqProperties(const MultiSeqType& source) {
@@ -97,8 +97,6 @@ public:
                 std::fill(Container::begin(), Container::end(), defaultValue());
             }
         }
-
-        offsetTimeFrame_ = 0;
     }
 
     virtual double getFrameRate() const {
@@ -135,7 +133,6 @@ public:
 
     void clearFrames(){
         setNumFrames(0);
-        offsetTimeFrame_ = 0;
     }
 
     virtual int getNumParts() const {
@@ -150,8 +147,9 @@ public:
         return numFrames() / frameRate();
     }
 
-    void setOffsetTimeFrame(int frameOffset) {
+    virtual bool setOffsetTimeFrame(int frameOffset) {
         offsetTimeFrame_ = frameOffset;
+        return true;
     }
 
     int offsetTimeFrame() const {

@@ -43,7 +43,7 @@ MultiAffine3Seq::~MultiAffine3Seq()
 
 AbstractSeqPtr MultiAffine3Seq::cloneSeq() const
 {
-    return boost::make_shared<MultiAffine3Seq>(*this);
+    return std::make_shared<MultiAffine3Seq>(*this);
 }
 
 

@@ -5,24 +5,14 @@
 
 #include "RectRegionMarker.h"
 #include "SceneWidget.h"
-#include <cnoid/SceneShape>
-#include <cnoid/SceneCamera>
+#include "MenuManager.h"
+#include <cnoid/SceneDrawables>
+#include <cnoid/SceneCameras>
 #include <cnoid/SceneRenderer>
+#include <cnoid/PolyhedralRegion>
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-struct RegionImpl
-{
-    RegionImpl() { }
-    RegionImpl(int n) : normals(n), points(n) { }
-    vector<Vector3> normals;
-    vector<Vector3> points;
-};
-
-}
 
 namespace cnoid {
 
@@ -36,8 +26,8 @@ public:
     SgVertexArrayPtr vertices;
     QCursor editModeCursor;
     int x0, y0;
-    RectRegionMarker::Region region;
-    Signal<void(const RectRegionMarker::Region& region)> sigRegionFixed;
+    PolyhedralRegion region;
+    Signal<void(const PolyhedralRegion& region)> sigRegionFixed;
     Signal<void(const SceneWidgetEvent& event, MenuManager& menuManager)> sigContextMenuRequest;
     
     RectRegionMarkerImpl(RectRegionMarker* self);
@@ -171,13 +161,13 @@ void RectRegionMarker::finishEditing()
 }
 
 
-const RectRegionMarker::Region& RectRegionMarker::region() const
+const PolyhedralRegion& RectRegionMarker::region() const
 {
     return impl->region;
 }
 
 
-SignalProxy<void(const RectRegionMarker::Region& region)> RectRegionMarker::sigRegionFixed()
+SignalProxy<void(const PolyhedralRegion& region)> RectRegionMarker::sigRegionFixed()
 {
     return impl->sigRegionFixed;
 }
@@ -234,26 +224,27 @@ bool RectRegionMarker::onButtonReleaseEvent(const SceneWidgetEvent& event)
 bool RectRegionMarkerImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
 {
     if(left < right && bottom < top){
-        RectRegionMarker::Region& r = region;
-        r.setNumSurroundingPlanes(4);
-        event.sceneWidget()->unproject(left, top, 0.0, r.point(0));
-        event.sceneWidget()->unproject(left, bottom, 0.0, r.point(1));
-        event.sceneWidget()->unproject(right, bottom, 0.0, r.point(2));
-        event.sceneWidget()->unproject(right, top, 0.0, r.point(3));
+        Vector3 points[4];
+        event.sceneWidget()->unproject(left, top, 0.0, points[0]);
+        event.sceneWidget()->unproject(left, bottom, 0.0, points[1]);
+        event.sceneWidget()->unproject(right, bottom, 0.0, points[2]);
+        event.sceneWidget()->unproject(right, top, 0.0, points[3]);
         const Vector3 c = event.currentCameraPosition().translation();
-        SgCamera* camera = event.sceneWidget()->renderer().currentCamera();
+        SgCamera* camera = event.sceneWidget()->renderer()->currentCamera();
+        region.clear();
         if(dynamic_cast<SgPerspectiveCamera*>(camera)){
             for(int i=0; i < 4; ++i){
-                r.normal(i) = (r.point((i + 1) % 4) - c).cross(r.point(i) - c).normalized();
+                const Vector3 normal = (points[(i + 1) % 4] - c).cross(points[i] - c).normalized();
+                region.addBoundingPlane(normal, points[i]);
             }
         } else if(dynamic_cast<SgOrthographicCamera*>(camera)){
-            const Vector3 n0 = (r.point(3) - r.point(0)).cross(r.point(1) - r.point(0)).normalized();
-            for(int i=0; i< 4; ++i){
-                r.normal(i) = (r.point((i + 1) % 4) - r.point(i)).cross(n0).normalized();
+            const Vector3 n0 = (points[3] - points[0]).cross(points[1] - points[0]).normalized();
+            for(int i=0; i < 4; ++i){
+                const Vector3 normal = (points[(i + 1) % 4] - points[i]).cross(n0).normalized();
+                region.addBoundingPlane(normal, points[i]);
             }
         }
-
-        sigRegionFixed(r);
+        sigRegionFixed(region);
     }
     showRectangle(false);
     return true;
@@ -282,87 +273,4 @@ void RectRegionMarker::onContextMenuRequest(const SceneWidgetEvent& event, MenuM
 SignalProxy<void(const SceneWidgetEvent& event, MenuManager& menuManager)> RectRegionMarker::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;
-}
-
-
-RectRegionMarker::Region::Region()
-{
-    impl = new RegionImpl;
-}
-
-
-RectRegionMarker::Region::Region(int numSurroundingPlanes)
-{
-    impl = new RegionImpl(numSurroundingPlanes);
-}
-    
-
-RectRegionMarker::Region::Region(const RectRegionMarker::Region& org)
-{
-    RegionImpl* p = new RegionImpl;
-    RegionImpl* orgImpl = (RegionImpl*)(org.impl);
-    p->normals = orgImpl->normals;
-    p->points = orgImpl->points;
-    impl = p;
-}
-
-
-RectRegionMarker::Region& RectRegionMarker::Region::operator=(const RectRegionMarker::Region& org)
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    RegionImpl* orgImpl = (RegionImpl*)(org.impl);
-    p->normals = orgImpl->normals;
-    p->points = orgImpl->points;
-    return *this;
-}
-
-
-void RectRegionMarker::Region::setNumSurroundingPlanes(int n)
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    p->normals.resize(n);
-    p->points.resize(n);
-}
-
-
-int RectRegionMarker::Region::numSurroundingPlanes() const
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    return p->normals.size();
-}
-
-    
-void RectRegionMarker::Region::addSurroundingPlane(const Vector3& normal, const Vector3& point)
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    p->normals.push_back(normal);
-    p->points.push_back(point);
-}
-
-
-Vector3& RectRegionMarker::Region::normal(int index)
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    return p->normals[index];
-}
-
-
-const Vector3& RectRegionMarker::Region::normal(int index) const
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    return p->normals[index];
-}
-
-
-Vector3& RectRegionMarker::Region::point(int index)
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    return p->points[index];
-}
-
-
-const Vector3& RectRegionMarker::Region::point(int index) const
-{
-    RegionImpl* p = (RegionImpl*)impl;
-    return p->points[index];
 }

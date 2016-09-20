@@ -15,17 +15,17 @@
 #include <cnoid/OpenRTMUtil>
 #include <cnoid/Timer>
 #include <cnoid/BodyItem>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/ExtraBodyStateAccessor>
 #include <QMessageBox>
 #include <rtm/idl/RTC.hh>
-#include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -54,7 +54,7 @@ public:
     static const int numStateItems = 4;
     static const int numJointStateItems = 7;
     vector<JointState> joints;
-    optional<Vector3> localZMP[2];
+    boost::optional<Vector3> localZMP[2];
     double voltage;
     double electricCurrent;
         
@@ -257,7 +257,7 @@ Hrpsys31ItemImpl::Hrpsys31ItemImpl(Hrpsys31Item* self, const Hrpsys31ItemImpl& o
 void Hrpsys31ItemImpl::init()
 {
     mv = MessageView::instance();
-    timer.sigTimeout().connect(boost::bind(&Hrpsys31ItemImpl::onReadRequest, this));
+    timer.sigTimeout().connect(std::bind(&Hrpsys31ItemImpl::onReadRequest, this));
 }
 
 
@@ -531,13 +531,12 @@ void Hrpsys31ItemImpl::onReadRequest()
                 }
                 jointStateChanged = true;
             }
-                
-            DeviceList<Sensor> sensors = body->devices();
-            DeviceList<ForceSensor> forceSensors = sensors;
+
+            DeviceList<ForceSensor> forceSensors = body->devices<ForceSensor>();
             copySensorState(forceSensors, state->force);
-            DeviceList<RateGyroSensor> gyroSensors = sensors;
-            copySensorState(gyroSensors, state->rateGyro);
-            DeviceList<AccelSensor> accelSensors = sensors;
+            DeviceList<RateGyroSensor> gyros = body->devices<RateGyroSensor>();
+            copySensorState(gyros, state->rateGyro);
+            DeviceList<AccelerationSensor> accelSensors = body->devices<AccelerationSensor>();
             copySensorState(accelSensors, state->accel);
 
             for(int i=0; i < 2; ++i){
@@ -604,7 +603,7 @@ void Hrpsys31ItemImpl::copySensorState(DeviceList<SensorType>& sensors, Sequence
     if(seq.length() > 0){
         const int n = std::min((int)sensors.size(), (int)seq.length());
         for(int i=0; i < n; ++i){
-            SensorType* sensor = sensors.get(i);
+            SensorType* sensor = sensors[i];
             sensor->readState(&seq[i][0]);
             sensor->notifyStateChange();
         }
@@ -624,7 +623,7 @@ bool Hrpsys31Item::setPlaybackSyncEnabled(bool on)
 }
 
 
-ItemPtr Hrpsys31Item::doDuplicate() const
+Item* Hrpsys31Item::doDuplicate() const
 {
     return new Hrpsys31Item(*this);
 }
@@ -644,11 +643,11 @@ void Hrpsys31ItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("RobotHardware"), robotHardwareName, changeProperty(robotHardwareName));
     putProperty(_("StateHolder"), stateHolderName, changeProperty(stateHolderName));
     putProperty(_("State reading"), isStateReadingEnabled,
-                boost::bind(&Hrpsys31Item::setStateReadingEnabled, self, _1));
+                std::bind(&Hrpsys31Item::setStateReadingEnabled, self, _1));
     putProperty(_("Read inverval"), (int)readInterval,
-                boost::bind(&Hrpsys31ItemImpl::onReadIntervalEdited, this, _1));
+                std::bind(&Hrpsys31ItemImpl::onReadIntervalEdited, this, _1));
     putProperty(_("Body update mode"), bodyJointUpdateMode,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &bodyJointUpdateMode, _1));
+                std::bind((bool(Selection::*)(int))&Selection::select, &bodyJointUpdateMode, _1));
     putProperty(_("Connect on loading"), doConnectOnLoading, changeProperty(doConnectOnLoading));
 }
 

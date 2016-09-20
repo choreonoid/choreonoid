@@ -4,7 +4,7 @@
 
 #include "MenuManager.h"
 #include "Menu.h"
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <iostream>
 #include "gettext.h"
 
@@ -200,7 +200,7 @@ MenuManager& MenuManager::setPath(const QString& path)
     QAction* item;
     QWidget* menu;
 
-    boost::tie(item, menu) = findPath(path, true);
+    std::tie(item, menu) = findPath(path, true);
 
     if(!menu){
         cerr << "cnoid::MenuManager warning: setting path to " << path.toLocal8Bit().data() << " failed." << endl;

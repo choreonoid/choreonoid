@@ -21,7 +21,7 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     static void addExtraSeqItemFactory(
-        const std::string& key, boost::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory);
+        const std::string& key, std::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory);
 
     BodyMotionItem();
     BodyMotionItem(BodyMotionPtr bodyMotion);
@@ -30,21 +30,30 @@ public:
 
     virtual AbstractMultiSeqPtr abstractMultiSeq();
 
-    const BodyMotionPtr& motion() { return bodyMotion_; }
+    BodyMotionPtr motion() { return bodyMotion_; }
+    ConstBodyMotionPtr motion() const { return bodyMotion_; }
 
     MultiValueSeqItem* jointPosSeqItem() {
-        return jointPosSeqItem_.get();
+        return jointPosSeqItem_;
     }
 
-    const MultiValueSeqPtr& jointPosSeq() {
+    const MultiValueSeqItem* jointPosSeqItem() const {
+        return jointPosSeqItem_;
+    }
+
+    MultiValueSeqPtr jointPosSeq() {
         return bodyMotion_->jointPosSeq();
     }
 
     MultiSE3SeqItem* linkPosSeqItem() {
-        return linkPosSeqItem_.get();
+        return linkPosSeqItem_;
     }
-            
-    const MultiSE3SeqPtr& linkPosSeq() {
+
+    const MultiSE3SeqItem* linkPosSeqItem() const {
+        return linkPosSeqItem_;
+    }
+    
+    MultiSE3SeqPtr linkPosSeq() {
         return bodyMotion_->linkPosSeq();
     }
 
@@ -59,7 +68,7 @@ public:
 
 protected:
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
@@ -73,6 +82,7 @@ private:
 };
 
 typedef ref_ptr<BodyMotionItem> BodyMotionItemPtr;
+
 }
 
 #endif

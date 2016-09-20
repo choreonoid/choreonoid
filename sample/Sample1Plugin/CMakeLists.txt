@@ -10,10 +10,10 @@ if(BUILD_SAMPLE1_SAMPLE)
   add_cnoid_plugin(${target} SHARED Sample1Plugin.cpp)
   target_link_libraries(${target} CnoidBodyPlugin)
   apply_common_setting_for_plugin(${target})
-endif()
 
-if(QT5)
-  qt5_use_modules(${target} Widgets)
+  if(QT5)
+    qt5_use_modules(${target} Widgets)
+  endif()
 endif()
 
 install_sample_source(Sample1Plugin.cpp)

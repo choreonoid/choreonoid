@@ -40,6 +40,8 @@ class CNOID_EXPORT ValueNode : public Referenced
         
 public:
 
+    virtual ValueNode* clone() const;
+
 #ifndef CNOID_BACKWARD_COMPATIBILITY
     enum TypeBit { INVALID_NODE = 0, SCALAR = 1, MAPPING = 2, LISTING = 4, INSERT_LF = 8, APPEND_LF = 16 };
 #else 
@@ -61,7 +63,7 @@ public:
     const std::string toString() const;
     const std::string toUTF8String() const;
 
-    operator std::string () const {
+    operator const std::string () const {
         return toString();
     }
 #else
@@ -107,10 +109,11 @@ public:
     */
     class CNOID_EXPORT Exception {
 public:
+        Exception();
         virtual ~Exception();
         int line() const { return line_; }
         int column() const { return column_; }
-        const std::string& message() const { return message_; }
+        std::string message() const;
         void setPosition(int line, int column) {
             line_ = line;
             column_ = column;
@@ -158,7 +161,7 @@ private:
 
     class UnknownNodeTypeException : public Exception {
     };
-        
+
 protected:
 
     ValueNode() { }
@@ -173,9 +176,7 @@ protected:
     int typeBits;
 
 private:
-
-    // disabled copy operations
-    ValueNode(const ValueNode&);
+    ValueNode(const ValueNode& org);
     ValueNode& operator=(const ValueNode&);
 
     int line_;
@@ -202,9 +203,12 @@ public:
     ScalarNode(const std::string& value, StringStyle stringStyle = PLAIN_STRING);
     ScalarNode(int value);
     
+    virtual ValueNode* clone() const;
+    
 private:
     ScalarNode(const char* text, size_t length);
     ScalarNode(const char* text, size_t length, StringStyle stringStyle);
+    ScalarNode(const ScalarNode& org);
 
     std::string stringValue;
     StringStyle stringStyle;
@@ -229,6 +233,9 @@ public:
     Mapping();
     Mapping(int line, int column);
     virtual ~Mapping();
+
+    virtual ValueNode* clone() const;
+    
     bool empty() const { return values.empty(); }
     int size() const { return values.size(); }
     void clear();
@@ -245,6 +252,8 @@ public:
     Mapping* findMapping(const std::string& key) const;
     Listing* findListing(const std::string& key) const;
 
+    ValueNodePtr extract(const std::string& key);
+
     ValueNode& get(const std::string& key) const;
 
     ValueNode& operator[](const std::string& key) const {
@@ -252,6 +261,8 @@ public:
     }
 
     void insert(const std::string& key, ValueNode* node);
+
+    void insert(const Mapping* other);
 
     Mapping* openMapping(const std::string& key) {
         return openMapping(key, false);
@@ -376,7 +387,7 @@ public:
         
 private:
 
-    Mapping(const Mapping&);
+    Mapping(const Mapping& org);
     Mapping& operator=(const Mapping&);
 
     Mapping* openMapping(const std::string& key, bool doOverwrite);
@@ -420,6 +431,8 @@ public:
     Listing(int size);
     ~Listing();
         
+    virtual ValueNode* clone() const;
+
     typedef Container::iterator iterator;
     typedef Container::const_iterator const_iterator;
 
@@ -435,15 +448,15 @@ public:
     const char* doubleFormat() { return doubleFormat_; }
 
     ValueNode* front() const {
-        return values.front().get();
+        return values.front();
     }
 
     ValueNode* back() const {
-        return values.back().get();
+        return values.back();
     }
 
     ValueNode* at(int i) const {
-        return values[i].get();
+        return values[i];
     }
 
     /**
@@ -536,7 +549,7 @@ private:
     Listing(int line, int column);
     Listing(int line, int column, int reservedSize);
         
-    Listing(const Listing&);
+    Listing(const Listing& org);
     Listing& operator=(const Listing&);
 
     void insertLF(int maxColumns, int numValues);

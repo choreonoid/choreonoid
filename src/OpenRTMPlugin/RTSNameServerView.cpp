@@ -6,14 +6,13 @@
 //#include "RTSPropertiesView.h"
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
 #include <QBoxLayout>
 #include <QIcon>
 #include <QMimeData>
 #include <QDrag>
-#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 //#include "RTSDiagramView.h"
 //#include "RTSCorbaUtil.h"
@@ -21,9 +20,6 @@
 #include "gettext.h"
 
 #undef _HOST_CXT_VERSION
-
-using namespace boost;
-using namespace std;
 
 namespace cnoid {
 
@@ -150,17 +146,21 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     QHBoxLayout* hbox = new QHBoxLayout();
     hostAddressBox.setText("localhost");
     hostAddressBox.sigEditingFinished().connect
-        (bind(&RTSNameServerViewImpl::updateObjectList, this));
+        (std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
     hbox->addWidget(&hostAddressBox);
 
     portNumberSpin.setRange(0, 65535);
     portNumberSpin.setValue(2809);
     portNumberSpin.sigEditingFinished().connect
-        (bind(&RTSNameServerViewImpl::updateObjectList, this));
+        (std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
     hbox->addWidget(&portNumberSpin);
 
     PushButton* updateButton = new PushButton(_("Update"));
-    updateButton->sigClicked().connect(bind(&RTSNameServerViewImpl::updateObjectList, this));
+    updateButton->sigClicked().connect(
+        std::bind(
+            static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
     hbox->addWidget(updateButton);
 
     vbox->addLayout(hbox);
@@ -168,8 +168,9 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     treeWidget.setHeaderLabel(_("Object Name"));
     treeWidget.setDragEnabled(true);
     treeWidget.setDropIndicatorShown(true);
-    //treeWidget.sigItemClicked().connect(bind(&RTSNameServerViewImpl::selectedItem, this));
-    treeWidget.sigItemSelectionChanged().connect(bind(&RTSNameServerViewImpl::onSelectionChanged, this));
+
+    //treeWidget.sigItemClicked().connect(std::bind(&RTSNameServerViewImpl::selectedItem, this));
+    treeWidget.sigItemSelectionChanged().connect(std::bind(&RTSNameServerViewImpl::onSelectionChanged, this));
     treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeWidget.header()->close();
 
@@ -313,13 +314,13 @@ void RTSNameServerViewImpl::updateObjectList(const NamingContextHelper::ObjectIn
 {
     for(size_t i = 0; i < objects.size(); ++i){
         const NamingContextHelper::ObjectInfo& info = objects[i];
-        if (iequals(info.kind, "rtc") || iequals(info.kind, "host_cxt")) {
-            if (parent == NULL && iequals(info.kind, "host_cxt")) {
+        if (boost::iequals(info.kind, "rtc") || boost::iequals(info.kind, "host_cxt")) {
+            if (parent == NULL && boost::iequals(info.kind, "host_cxt")) {
             #ifdef _HOST_CXT_VERSION
                 extendDiagram(info, parent);
-            } else if (parent && iequals(info.kind, "rtc")){
+            } else if (parent && boost::iequals(info.kind, "rtc")){
             #else
-            } else if (iequals(info.kind, "rtc")){
+            } else if (boost::iequals(info.kind, "rtc")){
             #endif
                 RTSVItem* item = new RTSVItem(info);
                 //QTreeWidgetItem* item = new QTreeWidgetItem();

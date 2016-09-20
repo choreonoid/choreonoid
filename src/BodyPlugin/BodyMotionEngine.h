@@ -24,7 +24,7 @@ public:
     static void initialize(ExtensionManager* ext);
 
     static void addExtraSeqEngineFactory(
-        const std::string& key, boost::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);
+        const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);
 
     BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionItem);
     virtual ~BodyMotionEngine();

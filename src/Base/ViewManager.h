@@ -8,6 +8,7 @@
 #include "View.h"
 #include "ExtensionManager.h"
 #include "Archive.h"
+#include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -65,8 +66,8 @@ public:
     // for loading the view layout format of the version 1.4 or earlier
     static View* getOrCreateViewOfDefaultName(const std::string& defaultName);
 
-    // for the compatibility to the version 1.4 or earlier
     static std::vector<View*> allViews();
+    static std::vector<View*> activeViews();
         
     template <class ViewType> static ViewType* getOrCreateView(bool doMountCreatedView = false) {
         return static_cast<ViewType*>(getOrCreateSpecificTypeView(typeid(ViewType), std::string(), doMountCreatedView));
@@ -101,7 +102,14 @@ public:
     static void restoreViews(ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo);
     static bool restoreViewStates(ViewStateInfo& info);
 
+    static SignalProxy<void(View* view)> sigViewCreated();
+    static SignalProxy<void(View* view)> sigViewActivated();
+    static SignalProxy<void(View* view)> sigViewDeactivated();
+    static SignalProxy<void(View* view)> sigViewRemoved();
+
 private:
+    ViewManager(const ViewManager& org) { }
+    
     View* registerClassSub(
         const std::type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
         InstantiationType itype, FactoryBase* factory);
@@ -111,6 +119,7 @@ private:
         
     ViewManagerImpl* impl;
 };
+
 }
 
 #endif

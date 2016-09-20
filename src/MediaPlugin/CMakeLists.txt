@@ -23,7 +23,7 @@ if(UNIX)
     AudioItem.cpp
     )
 
-  pkg_check_modules(GSTREAMER REQUIRED gstreamer-interfaces-0.10)
+  pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-video-1.0 gstreamer-base-1.0)
   include_directories(${GSTREAMER_INCLUDE_DIRS})
 
   pkg_check_modules(SNDFILE REQUIRED sndfile)
@@ -34,6 +34,7 @@ if(UNIX)
     CnoidUtil CnoidBase 
     ${GSTREAMER_LIBRARIES}
     ${SNDFILE_LIBRARIES}
+    X11
     )
 
   if(NOT APPLE)
@@ -62,17 +63,19 @@ set(headers
 
 make_headers_public(${headers})
 
-QT4_WRAP_CPP(sources
-  )
-
 set(target CnoidMediaPlugin)
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} ${libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
-message(STATUS "libraries = ${libraries}")
+if(QT5)
+if(UNIX)
+  qt5_use_modules(${target} X11Extras)
+endif()
+endif()
 
+message(STATUS "libraries = ${libraries}")
 
 if(ENABLE_PYTHON)
   add_subdirectory(python)

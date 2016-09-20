@@ -3,9 +3,9 @@
 */
 
 #include "PenetrationBlocker.h"
-#include <boost/bind.hpp>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -135,7 +135,7 @@ bool PenetrationBlockerImpl::adjust(Position& io_T, const Vector3& pushDirection
         maxsdepth = 0.0;
         maxdepth = 0.0;
 
-        collisionDetector->detectCollisions(boost::bind(&PenetrationBlockerImpl::onCollisionDetected, this, _1));
+        collisionDetector->detectCollisions(std::bind(&PenetrationBlockerImpl::onCollisionDetected, this, _1));
         
         if(maxsdepth > 0.0){
             io_T.translation() += (maxdepth - targetDepth) * maxnormal;
@@ -156,7 +156,7 @@ bool PenetrationBlockerImpl::adjust(Position& io_T, const Vector3& pushDirection
 void PenetrationBlockerImpl::onCollisionDetected(const CollisionPair& collisionPair)
 {
     double normalSign = (collisionPair.geometryId[0] == 0) ? -1.0 : 1.0;
-    const CollisionList& collisions = collisionPair.collisions;
+    const CollisionArray& collisions = collisionPair.collisions;
     for(size_t i=0; i < collisions.size(); ++i){
         const Collision& c = collisions[i];
         if(c.depth > targetDepth){

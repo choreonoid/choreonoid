@@ -10,7 +10,7 @@
 #include <cnoid/CorbaUtil>
 #include <cnoid/ExecutablePath>
 #include <cnoid/BodyLoader>
-#include <cnoid/Link>
+#include <cnoid/Body>
 #include <cnoid/Sleep>
 #include <cnoid/FileUtil>
 #include <iostream>

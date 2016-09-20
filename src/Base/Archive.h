@@ -6,8 +6,9 @@
 #define CNOID_BASE_ARCHIVE_H
 
 #include <cnoid/ValueTree>
-#include <boost/function.hpp>
+#include <boost/filesystem.hpp>
 #include <string>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -28,11 +29,11 @@ public:
     void initSharedInfo(const std::string& projectFile, bool useHomeRelativeDirectories = false);
     void inheritSharedInfoFrom(Archive& archive);
 
-    void addPostProcess(const boost::function<void()>& func) const;
+    void addPostProcess(const std::function<void()>& func, int priority = 0) const;
 
     Archive* findSubArchive(const std::string& name);
     const Archive* findSubArchive(const std::string& name) const;
-    bool forSubArchive(const std::string& name, boost::function<bool(const Archive& archive)> func) const;
+    bool forSubArchive(const std::string& name, std::function<bool(const Archive& archive)> func) const;
     Archive* openSubArchive(const std::string& name);
 
     ValueNodePtr getItemId(Item* item) const;
@@ -69,6 +70,8 @@ public:
 
     Item* currentParentItem() const;
 
+    boost::filesystem::path getProjectDir() const { return projectDirPath; }
+
 private:
 
     ref_ptr<ArchiveSharedData> shared;
@@ -85,6 +88,8 @@ private:
     friend class ItemTreeArchiverImpl;
     friend class ViewManager;
     friend class ProjectManagerImpl;
+
+    boost::filesystem::path projectDirPath;
 };
 
 typedef ref_ptr<Archive> ArchivePtr;

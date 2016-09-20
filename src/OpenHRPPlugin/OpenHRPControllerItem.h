@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H_INCLUDED
-#define CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H_INCLUDED
+#ifndef CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H
+#define CNOID_OPENHRP_PLUGIN_OPENHRP_CONTROLLER_ITEM_H
 
 #ifdef OPENHRP_3_0
 #include <cnoid/corba/OpenHRP/3.0/Controller.hh>
@@ -15,7 +15,6 @@
 #include <cnoid/ControllerItem>
 #include <cnoid/CorbaUtil>
 #include <cnoid/Process>
-#include <boost/scoped_ptr.hpp>
 
 namespace OpenHRP {
 class DynamicsSimulator_impl;
@@ -35,7 +34,7 @@ public:
     void setControllerServerName(const std::string& name);
     void setControllerServerCommand(const std::string& command);
 
-    virtual bool start(Target* target);
+    virtual bool start(ControllerItemIO* io);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
@@ -44,7 +43,7 @@ public:
 
 protected:
     virtual void onDisconnectedFromRoot();
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -55,7 +54,7 @@ private:
     NamingContextHelper* ncHelper;
     std::string controllerServerName;
     std::string controllerServerCommand;
-    boost::scoped_ptr<OpenHRP::DynamicsSimulator_impl> dynamicsSimulator;
+    std::unique_ptr<OpenHRP::DynamicsSimulator_impl> dynamicsSimulator;
     OpenHRP::Controller_var controller;
     double timeStep_;
     Process controllerServerProcess;

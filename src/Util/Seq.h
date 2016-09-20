@@ -7,7 +7,7 @@
 #define CNOID_UTIL_SEQ_H
 
 #include "AbstractSeq.h"
-#include <boost/make_shared.hpp>
+#include <memory>
 #include <vector>
 #include "exportdecl.h"
 
@@ -18,7 +18,7 @@ template <typename ElementType> class Seq : public AbstractSeq
     typedef Seq<ElementType> SeqType;
         
 public:
-    typedef boost::shared_ptr<SeqType> Ptr;
+    typedef std::shared_ptr<SeqType> Ptr;
         
     Seq(const char* seqType, int nFrames = 0.0)
         : AbstractSeq(seqType),
@@ -51,7 +51,7 @@ public:
     }
 
     virtual AbstractSeqPtr cloneSeq() const {
-        return boost::make_shared<SeqType>(*this);
+        return std::make_shared<SeqType>(*this);
     }
         
     virtual ~Seq() { }

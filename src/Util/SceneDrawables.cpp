@@ -1,0 +1,842 @@
+/*!
+  @file
+  @author Shin'ichiro Nakaoka
+*/
+
+#include "SceneDrawables.h"
+#include "SceneVisitor.h"
+
+using namespace std;
+using namespace cnoid;
+
+namespace {
+
+const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
+
+}
+
+SgMaterial::SgMaterial()
+{
+    ambientIntensity_ = 0.2f;
+    diffuseColor_ << 0.8f, 0.8f, 0.8f;
+    emissiveColor_.setZero();
+    specularColor_.setZero();
+    shininess_ = 0.2f;
+    transparency_ = 0.0f;
+}
+
+
+SgMaterial::SgMaterial(const SgMaterial& org)
+    : SgObject(org)
+{
+    ambientIntensity_ = org.ambientIntensity_;
+    diffuseColor_ = org.diffuseColor_;
+    emissiveColor_ = org.emissiveColor_;
+    specularColor_ = org.specularColor_;
+    shininess_ = org.shininess_;
+    transparency_ = org.transparency_;
+}
+
+
+SgObject* SgMaterial::clone(SgCloneMap& cloneMap) const
+{
+    return new SgMaterial(*this);
+}
+
+
+SgImage::SgImage()
+    : image_(std::make_shared<Image>())
+{
+
+}
+
+
+SgImage::SgImage(const Image& image)
+    : image_(std::make_shared<Image>(image))
+{
+
+}
+
+
+SgImage::SgImage(std::shared_ptr<Image> sharedImage)
+    : image_(sharedImage)
+{
+
+}
+
+
+SgImage::SgImage(const SgImage& org)
+    : SgObject(org),
+      image_(org.image_)
+{
+
+}
+
+
+SgObject* SgImage::clone(SgCloneMap& cloneMap) const
+{
+    return new SgImage(*this);
+}
+
+
+Image& SgImage::image()
+{
+    if(image_.use_count() > 1){
+        image_ = std::make_shared<Image>(*image_);
+    }
+    return *image_;
+}
+
+
+unsigned char* SgImage::pixels()
+{
+    if(image_.use_count() > 1){
+        image_ = std::make_shared<Image>(*image_);
+    }
+    return image_->pixels();
+}
+
+
+void SgImage::setSize(int width, int height, int nComponents)
+{
+    image().setSize(width, height, nComponents);
+}
+
+
+void SgImage::setSize(int width, int height)
+{
+    image().setSize(width, height);
+}
+
+
+SgTextureTransform::SgTextureTransform()
+{
+    center_ << 0.0, 0.0; 
+    rotation_ = 0;
+    scale_ << 1.0, 1.0;
+    translation_ << 0.0, 0.0;
+}
+
+
+SgTextureTransform::SgTextureTransform(const SgTextureTransform& org)
+    : SgObject(org)
+{
+    center_ = org.center_;
+    rotation_ = org.rotation_;
+    scale_ = org.scale_;
+    translation_ = org.translation_;
+}
+
+
+SgObject* SgTextureTransform::clone(SgCloneMap& cloneMap) const
+{
+    return new SgTextureTransform(*this);
+}
+
+
+SgTexture::SgTexture()
+{
+    repeatS_ = true; 
+    repeatT_ = true; 
+}
+
+
+SgTexture::SgTexture(const SgTexture& org, SgCloneMap& cloneMap)
+    : SgObject(org)
+{
+    if(cloneMap.isNonNodeCloningEnabled()){
+        if(org.image()){
+            setImage(cloneMap.getClone<SgImage>(org.image()));
+        }
+        if(org.textureTransform()){
+            setTextureTransform(cloneMap.getClone<SgTextureTransform>(org.textureTransform()));
+        }
+    } else {
+        setImage(const_cast<SgImage*>(org.image()));
+        setTextureTransform(const_cast<SgTextureTransform*>(org.textureTransform()));
+    }
+    
+    repeatS_ = org.repeatS_;
+    repeatT_ = org.repeatT_;
+}
+
+
+SgObject* SgTexture::clone(SgCloneMap& cloneMap) const
+{
+    return new SgTexture(*this, cloneMap);
+}
+
+
+int SgTexture::numChildObjects() const
+{
+    int n = 0;
+    if(image_) ++n;
+    if(textureTransform_) ++n;
+    return n;
+}
+
+
+SgObject* SgTexture::childObject(int index)
+{
+    SgObject* objects[2] = { 0, 0 };
+    int i = 0;
+    if(image_) objects[i++] = image_;
+    if(textureTransform_) objects[i++] = textureTransform_;
+    return objects[index];
+}
+
+
+SgImage* SgTexture::setImage(SgImage* image)
+{
+    if(image_){
+        image_->removeParent(this);
+    }
+    image_ = image;
+    if(image){
+        image->addParent(this);
+    }
+    return image;
+}
+
+
+SgImage* SgTexture::getOrCreateImage()
+{
+    if(!image_){
+        setImage(new SgImage);
+    }
+    return image_;
+}    
+
+
+SgTextureTransform* SgTexture::setTextureTransform(SgTextureTransform* textureTransform)
+{
+    if(textureTransform_){
+        textureTransform_->removeParent(this);
+    }
+    textureTransform_ = textureTransform;
+    if(textureTransform){
+        textureTransform->addParent(this);
+    }
+    return textureTransform;
+}
+
+
+SgMeshBase::SgMeshBase()
+{
+    isSolid_ = false;
+}
+
+
+SgMeshBase::SgMeshBase(const SgMeshBase& org, SgCloneMap& cloneMap)
+    : SgObject(org),
+      normalIndices_(org.normalIndices_),
+      colorIndices_(org.colorIndices_),
+      texCoordIndices_(org.texCoordIndices_)
+{
+    if(cloneMap.isNonNodeCloningEnabled()){
+        if(org.vertices_){
+            setVertices(cloneMap.getClone<SgVertexArray>(org.vertices()));
+        }
+        if(org.normals_){
+            setNormals(cloneMap.getClone<SgNormalArray>(org.normals()));
+        }
+        if(org.colors_){
+            setColors(cloneMap.getClone<SgColorArray>(org.colors()));
+        }
+        if(org.texCoords_){
+            setTexCoords(cloneMap.getClone<SgTexCoordArray>(org.texCoords()));
+        }
+    } else {
+        setVertices(const_cast<SgVertexArray*>(org.vertices()));
+        setNormals(const_cast<SgNormalArray*>(org.normals()));
+        setColors(const_cast<SgColorArray*>(org.colors()));
+        setTexCoords(const_cast<SgTexCoordArray*>(org.texCoords()));
+    }
+    isSolid_ = org.isSolid_;
+    bbox = org.bbox;
+}
+
+    
+int SgMeshBase::numChildObjects() const
+{
+    int n = 0;
+    if(vertices_) ++n;
+    if(normals_) ++n;
+    if(colors_) ++n;
+    return n;
+}
+
+
+SgObject* SgMeshBase::childObject(int index)
+{
+    SgObject* objects[3] = { 0, 0, 0 };
+    int i = 0;
+    if(vertices_) objects[i++] = vertices_.get();
+    if(normals_) objects[i++] = normals_.get();
+    if(colors_) objects[i++] = colors_.get();
+    return objects[index];
+}
+
+
+const BoundingBox& SgMeshBase::boundingBox() const
+{
+    return bbox;
+}
+
+
+void SgMeshBase::updateBoundingBox()
+{
+    if(!vertices_){
+        bbox.clear();
+    } else {
+        BoundingBoxf bboxf;
+        for(SgVertexArray::const_iterator p = vertices_->begin(); p != vertices_->end(); ++p){
+            bboxf.expandBy(*p);
+        }
+        bbox = bboxf;
+    }
+}
+
+
+SgVertexArray* SgMeshBase::setVertices(SgVertexArray* vertices)
+{
+    if(vertices_){
+        vertices_->removeParent(this);
+    }
+    vertices_ = vertices;
+    if(vertices){
+        vertices->addParent(this);
+    }
+    return vertices;
+}
+
+
+SgVertexArray* SgMeshBase::getOrCreateVertices()
+{
+    if(!vertices_){
+        setVertices(new SgVertexArray);
+    }
+    return vertices_;
+}
+
+
+SgNormalArray* SgMeshBase::setNormals(SgNormalArray* normals)
+{
+    if(normals_){
+        normals_->removeParent(this);
+    }
+    normals_ = normals;
+    if(normals){
+        normals->addParent(this);
+    }
+    return normals;
+}
+
+
+SgNormalArray* SgMeshBase::getOrCreateNormals()
+{
+    if(!normals_){
+        setNormals(new SgNormalArray);
+    }
+    return normals_;
+}
+
+
+SgColorArray* SgMeshBase::setColors(SgColorArray* colors)
+{
+    if(colors_){
+        colors_->removeParent(this);
+    }
+    colors_ = colors;
+    if(colors){
+        colors->addParent(this);
+    }
+    return colors;
+}
+
+
+SgColorArray* SgMeshBase::getOrCreateColors()
+{
+    if(!colors_){
+        setColors(new SgColorArray);
+    }
+    return colors_;
+}
+
+
+SgTexCoordArray* SgMeshBase::setTexCoords(SgTexCoordArray* texCoords)
+{
+    if(texCoords_){
+        texCoords_->removeParent(this);
+    }
+    texCoords_ = texCoords;
+    if(texCoords){
+        texCoords->addParent(this);
+    }
+    return texCoords;
+}
+
+
+SgMesh::SgMesh()
+{
+
+}
+
+
+SgMesh::SgMesh(const SgMesh& org, SgCloneMap& cloneMap)
+    : SgMeshBase(org, cloneMap),
+      triangleVertices_(org.triangleVertices_),
+      primitive_(org.primitive_)
+{
+
+}
+
+
+SgObject* SgMesh::clone(SgCloneMap& cloneMap) const
+{
+    return new SgMesh(*this, cloneMap);
+}
+
+
+void SgMesh::updateBoundingBox()
+{
+    if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
+        SgMeshBase::updateBoundingBox();
+
+    } else {
+        if(!hasVertices()){
+            bbox.clear();
+        } else {
+            BoundingBoxf bboxf;
+            const SgVertexArray& v = *vertices();
+            for(SgIndexArray::const_iterator iter = triangleVertices_.begin(); iter != triangleVertices_.end(); ++iter){
+                const Vector3f& p = v[*iter];
+                bboxf.expandBy(p);
+            }
+            bbox = bboxf;
+        }
+    }
+}
+
+
+SgPolygonMesh::SgPolygonMesh()
+{
+
+}
+
+
+SgPolygonMesh::SgPolygonMesh(const SgPolygonMesh& org, SgCloneMap& cloneMap)
+    : SgMeshBase(org, cloneMap),
+      polygonVertices_(org.polygonVertices_)
+{
+
+}
+    
+
+SgObject* SgPolygonMesh::clone(SgCloneMap& cloneMap) const
+{
+    return new SgPolygonMesh(*this, cloneMap);
+}
+
+
+void SgPolygonMesh::updateBoundingBox()
+{
+    if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
+        SgMeshBase::updateBoundingBox();
+
+    } else {
+        if(!hasVertices()){
+            bbox.clear();
+        } else {
+            BoundingBoxf bboxf;
+            const SgVertexArray& v = *vertices();
+            for(SgIndexArray::const_iterator iter = polygonVertices_.begin(); iter != polygonVertices_.end(); ++iter){
+                const int index = *iter;
+                if(index >= 0){
+                    const Vector3f& p = v[index];
+                    bboxf.expandBy(p);
+                }
+            }
+            bbox = bboxf;
+        }
+    }
+}
+
+
+SgShape::SgShape()
+{
+
+}
+
+
+SgShape::SgShape(const SgShape& org, SgCloneMap& cloneMap)
+    : SgNode(org)
+{
+    if(cloneMap.isNonNodeCloningEnabled()){
+        if(org.mesh()){
+            setMesh(cloneMap.getClone<SgMesh>(org.mesh()));
+        }
+        if(org.material()){
+            setMaterial(cloneMap.getClone<SgMaterial>(org.material()));
+        }
+        if(org.texture()){
+            setTexture(cloneMap.getClone<SgTexture>(org.texture()));
+        }
+    } else {
+        setMesh(const_cast<SgMesh*>(org.mesh()));
+        setMaterial(const_cast<SgMaterial*>(org.material()));
+        setTexture(const_cast<SgTexture*>(org.texture()));
+    }
+}
+
+
+SgObject* SgShape::clone(SgCloneMap& cloneMap) const
+{
+    return new SgShape(*this, cloneMap);
+}
+
+
+int SgShape::numChildObjects() const
+{
+    int n = 0;
+    if(mesh_) ++n;
+    if(material_) ++n;
+    if(texture_) ++n;
+    return n;
+}
+
+
+SgObject* SgShape::childObject(int index)
+{
+    SgObject* objects[3] = { 0, 0, 0 };
+    int i = 0;
+    if(mesh_) objects[i++] = mesh_.get();
+    if(material_) objects[i++] = material_.get();
+    if(texture_) objects[i++] = texture_.get();
+    return objects[index];
+}
+
+
+void SgShape::accept(SceneVisitor& visitor)
+{
+    visitor.visitShape(this);
+}
+
+
+const BoundingBox& SgShape::boundingBox() const
+{
+    if(mesh()){
+        return mesh()->boundingBox();
+    }
+    return SgNode::boundingBox();
+}
+
+
+SgMesh* SgShape::setMesh(SgMesh* mesh)
+{
+    if(mesh_){
+        mesh_->removeParent(this);
+    }
+    mesh_ = mesh;
+    if(mesh){
+        mesh->addParent(this);
+    }
+    return mesh;
+}
+
+
+SgMesh* SgShape::getOrCreateMesh()
+{
+    if(!mesh_){
+        setMesh(new SgMesh);
+    }
+    return mesh_;
+}
+
+
+SgMaterial* SgShape::setMaterial(SgMaterial* material)
+{
+    if(material_){
+        material_->removeParent(this);
+    }
+    material_ = material;
+    if(material){
+        material->addParent(this);
+    }
+    return material;
+}
+
+
+SgMaterial* SgShape::getOrCreateMaterial()
+{
+    if(!material_){
+        setMaterial(new SgMaterial);
+    }
+    return material_;
+}
+
+
+SgTexture* SgShape::setTexture(SgTexture* texture)
+{
+    if(texture_){
+        texture_->removeParent(this);
+    }
+    texture_ = texture;
+    if(texture){
+        texture->addParent(this);
+    }
+    return texture;
+}
+
+
+SgTexture* SgShape::getOrCreateTexture()
+{
+    if(!texture_){
+        setTexture(new SgTexture);
+    }
+    return texture_;
+}
+
+
+SgPlot::SgPlot()
+{
+
+}
+        
+
+SgPlot::SgPlot(const SgPlot& org, SgCloneMap& cloneMap)
+    : SgNode(org)
+{
+    if(cloneMap.isNonNodeCloningEnabled()){
+        if(org.vertices()){
+            setVertices(cloneMap.getClone<SgVertexArray>(org.vertices()));
+        }
+        if(org.colors()){
+            setColors(cloneMap.getClone<SgColorArray>(org.colors()));
+        }
+        if(org.material()){
+            setMaterial(cloneMap.getClone<SgMaterial>(org.material()));
+        }
+    } else {
+        setVertices(const_cast<SgVertexArray*>(org.vertices()));
+        setColors(const_cast<SgColorArray*>(org.colors()));
+        setMaterial(const_cast<SgMaterial*>(org.material()));
+    }
+    normalIndices_ = org.normalIndices_;
+    colorIndices_ = org.colorIndices_;
+    bbox = org.bbox;
+}
+
+
+int SgPlot::numChildObjects() const
+{
+    int n = 0;
+    if(vertices_) ++n;
+    if(colors_) ++n;
+    return n;
+}
+    
+
+SgObject* SgPlot::childObject(int index)
+{
+    SgObject* objects[2] = { 0, 0 };
+    int i = 0;
+    if(vertices_) objects[i++] = vertices_.get();
+    if(colors_) objects[i++] = colors_.get();
+    return objects[index];
+}
+    
+
+const BoundingBox& SgPlot::boundingBox() const
+{
+    return bbox;
+}
+
+
+void SgPlot::updateBoundingBox()
+{
+    if(!vertices_){
+        bbox.clear();
+    } else {
+        BoundingBoxf bboxf;
+        for(SgVertexArray::const_iterator p = vertices_->begin(); p != vertices_->end(); ++p){
+            bboxf.expandBy(*p);
+        }
+        bbox = bboxf;
+    }
+}
+
+
+SgVertexArray* SgPlot::setVertices(SgVertexArray* vertices)
+{
+    if(vertices_){
+        vertices_->removeParent(this);
+    }
+    vertices_ = vertices;
+    if(vertices){
+        vertices->addParent(this);
+    }
+    return vertices;
+}
+
+
+SgVertexArray* SgPlot::getOrCreateVertices()
+{
+    if(!vertices_){
+        setVertices(new SgVertexArray);
+    }
+    return vertices_;
+}
+
+
+SgNormalArray* SgPlot::setNormals(SgNormalArray* normals)
+{
+    if(normals_){
+        normals_->removeParent(this);
+    }
+    normals_ = normals;
+    if(normals){
+        normals->addParent(this);
+    }
+    return normals;
+}
+
+
+SgNormalArray* SgPlot::getOrCreateNormals()
+{
+    if(!normals_){
+        setNormals(new SgNormalArray);
+    }
+    return normals_;
+}
+
+
+SgMaterial* SgPlot::setMaterial(SgMaterial* material)
+{
+    if(material_){
+        material_->removeParent(this);
+    }
+    material_ = material;
+    if(material){
+        material->addParent(this);
+    }
+    return material;
+}
+
+
+SgMaterial* SgPlot::getOrCreateMaterial()
+{
+    if(!material_){
+        setMaterial(new SgMaterial);
+    }
+    return material_;
+}
+
+
+SgColorArray* SgPlot::setColors(SgColorArray* colors)
+{
+    if(colors_){
+        colors_->removeParent(this);
+    }
+    colors_ = colors;
+    if(colors){
+        colors->addParent(this);
+    }
+    return colors;
+}
+
+
+SgColorArray* SgPlot::getOrCreateColors()
+{
+    if(!colors_){
+        setColors(new SgColorArray);
+    }
+    return colors_;
+}
+
+
+SgPointSet::SgPointSet()
+{
+    pointSize_ = 0.0;
+}
+
+
+SgPointSet::SgPointSet(const SgPointSet& org, SgCloneMap& cloneMap)
+    : SgPlot(org, cloneMap)
+{
+    pointSize_ = org.pointSize_;
+}
+
+
+SgObject* SgPointSet::clone(SgCloneMap& cloneMap) const
+{
+    return new SgPointSet(*this, cloneMap);
+}
+
+
+void SgPointSet::accept(SceneVisitor& visitor)
+{
+    visitor.visitPointSet(this);
+}
+
+   
+SgLineSet::SgLineSet()
+{
+    lineWidth_ = 0.0;
+}
+
+
+SgLineSet::SgLineSet(const SgLineSet& org, SgCloneMap& cloneMap)
+    : SgPlot(org, cloneMap)
+{
+    lineWidth_ = org.lineWidth_;
+}
+
+    
+SgObject* SgLineSet::clone(SgCloneMap& cloneMap) const
+{
+    return new SgLineSet(*this, cloneMap);
+}
+    
+
+void SgLineSet::accept(SceneVisitor& visitor)
+{
+    visitor.visitLineSet(this);
+}
+
+
+SgOverlay::SgOverlay()
+{
+
+}
+
+
+SgOverlay::SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap)
+    : SgGroup(org, cloneMap)
+{
+
+}
+
+
+SgOverlay::~SgOverlay()
+{
+
+}
+
+
+SgObject* SgOverlay::clone(SgCloneMap& cloneMap) const
+{
+    return new SgOverlay(*this, cloneMap);
+}
+
+
+void SgOverlay::accept(SceneVisitor& visitor)
+{
+    visitor.visitOverlay(this);
+}
+
+
+void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
+{
+
+}

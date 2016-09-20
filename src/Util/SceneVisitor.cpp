@@ -5,9 +5,10 @@
 
 #include "SceneVisitor.h"
 #include "SceneGraph.h"
-#include "SceneShape.h"
-#include "SceneCamera.h"
-#include "SceneLight.h"
+#include "SceneDrawables.h"
+#include "SceneCameras.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
 
 using namespace cnoid;
 
@@ -114,6 +115,12 @@ void SceneVisitor::visitLight(SgLight* light)
 }
 
 
+void SceneVisitor::visitFog(SgFog* fog)
+{
+    visitPreprocessed(fog);
+}
+
+
 void SceneVisitor::visitCamera(SgCamera* camera)
 {
     visitPreprocessed(camera);
@@ -128,5 +135,5 @@ void SceneVisitor::visitOverlay(SgOverlay* overlay)
 
 void SceneVisitor::visitOutlineGroup(SgOutlineGroup* outline)
 {
-
+    visitGroup(outline);
 }

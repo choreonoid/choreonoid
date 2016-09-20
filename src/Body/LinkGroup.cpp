@@ -6,7 +6,6 @@
 #include "Body.h"
 #include "Link.h"
 #include <cnoid/ValueTree>
-#include <boost/make_shared.hpp>
 
 using namespace cnoid;
 
@@ -36,7 +35,7 @@ LinkGroup::~LinkGroup()
 LinkGroupPtr LinkGroup::create(const Body& body)
 {
     const Listing& linkGroupList = *body.info()->findListing("linkGroup");
-    LinkGroupPtr group = boost::make_shared<LinkGroup>(private_tag());
+    LinkGroupPtr group = std::make_shared<LinkGroup>(private_tag());
     group->setName("Whole Body");
     if(!linkGroupList.isValid() || !group->load(body, linkGroupList)){
         group->setFlatLinkList(body);
@@ -60,7 +59,7 @@ bool LinkGroup::load(const Body& body, const Listing& linkGroupList)
 
         } else if(node.isMapping()){
             const Mapping& group = *node.toMapping();
-            LinkGroupPtr linkGroup = boost::make_shared<LinkGroup>(private_tag());
+            LinkGroupPtr linkGroup = std::make_shared<LinkGroup>(private_tag());
             linkGroup->setName(group["name"]);
             if(linkGroup->load(body, *group["links"].toListing())){
                 elements.push_back(linkGroup);
@@ -82,4 +81,3 @@ void LinkGroup::setFlatLinkList(const Body& body)
         elements.push_back(i);
     }
 }
-

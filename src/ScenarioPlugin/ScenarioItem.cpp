@@ -11,7 +11,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -44,7 +43,7 @@ ScenarioItem::~ScenarioItem()
 }
 
 
-ItemPtr ScenarioItem::doDuplicate() const
+Item* ScenarioItem::doDuplicate() const
 {
     return new ScenarioItem(*this);
 }

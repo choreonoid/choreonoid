@@ -12,20 +12,24 @@
 namespace cnoid {
 
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 
+class ControllerItemIO
+{
+public:
+    virtual Body* body() = 0;
+    virtual double timeStep() const = 0;
+    virtual double currentTime() const = 0;
+    virtual std::string optionString() const = 0;
+
+    //! \deprecated Use timeStep().
+    virtual double worldTimeStep() const;
+};
     
 class CNOID_EXPORT ControllerItem : public Item
 {
 public:
-
-    class Target
-    {
-    public:
-        virtual Body* body() = 0;
-        virtual double worldTimeStep() const = 0;
-        virtual double currentTime() const = 0;
-    };
+    // for the backward compatibility
+    typedef ControllerItemIO Target;
         
     ControllerItem();
     ControllerItem(const ControllerItem& org);
@@ -33,21 +37,33 @@ public:
 
     bool isActive() const;
     bool isImmediateMode() const { return isImmediateMode_; }
+    void setImmediateMode(bool on);
+
+    const std::string& optionString() const { return optionString_; }
+    bool splitOptionString(const std::string& optionString, std::vector<std::string>& out_options) const;
 
     /**
-       Override this function to control a body
+       This function is called before the simulation world is initialized.
 
        @note If the body() of the target returns a null pointer, a controller is not associated with a particular body.
        This is for a controller which does some general operations.
            
        @note This function is called from the main thread.
     */
-    virtual bool start(Target* target) = 0;
+    virtual bool initialize(ControllerItemIO* io);
+    
+    /**
+       This function is called after the simulation world is initialized.
+    */
+    virtual bool start();
+
+    //! \deprecated
+    virtual bool start(ControllerItemIO* io);
 
     virtual double timeStep() const = 0;
 
     /**
-       @note This function is called from the simulation thread.
+       \note This function is called from the simulation thread.
     */
     virtual void input() = 0;
 
@@ -72,6 +88,11 @@ public:
     SignalProxy<void(const std::string& message)> sigMessage();
     std::string getMessage();
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
+
 protected:
     void putMessage(const std::string& message);
 
@@ -84,6 +105,7 @@ private:
     bool isImmediateMode_;
     std::string message_;
     Signal<void(const std::string& message)> sigMessage_;
+    std::string optionString_;
 
     friend class SimulatorItemImpl;
 
@@ -93,6 +115,7 @@ private:
 };
         
 typedef ref_ptr<ControllerItem> ControllerItemPtr;
+
 }
 
 #endif

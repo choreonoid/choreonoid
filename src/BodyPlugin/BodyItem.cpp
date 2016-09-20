@@ -29,8 +29,6 @@
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/FileUtil>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <bitset>
 #include <deque>
 #include <iostream>
@@ -38,17 +36,16 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
+
+using boost::format;
 
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
 BodyLoader bodyLoader;
-
-Action* linkVisibilityCheck;
-Action* showVisualShapeCheck;
-Action* showCollisionShapeCheck;
 BodyState kinematicStateCopy;
 
 /// \todo move this to hrpUtil ?
@@ -60,6 +57,7 @@ bool loadBodyItem(BodyItem* item, const std::string& filename)
         if(item->name().empty()){
             item->setName(item->body()->modelName());
         }
+        item->setEditable(!item->body()->isStaticModel());
         return true;
     }
     return false;
@@ -97,21 +95,21 @@ public:
     LazySignal< Signal<void()> > sigKinematicStateChanged;
     LazySignal< Signal<void()> > sigKinematicStateEdited;
 
+    LinkPtr currentBaseLink;
+    LinkTraverse fkTraverse;
+    PinDragIKptr pinDragIK;
+
     bool isEditable;
     bool isCallingSlotsOnKinematicStateEdited;
     bool isFkRequested;
     bool isVelFkRequested;
     bool isAccFkRequested;
-    Link* currentBaseLink;
-    LinkTraverse fkTraverse;
-    PinDragIKptr pinDragIK;
-
     bool isCollisionDetectionEnabled;
     bool isSelfCollisionDetectionEnabled;
 
     BodyState initialState;
             
-    typedef boost::shared_ptr<BodyState> BodyStatePtr;
+    typedef std::shared_ptr<BodyState> BodyStatePtr;
     std::deque<BodyStatePtr> kinematicStateHistory;
     size_t currentHistoryIndex;
     bool isCurrentKinematicStateInHistory;
@@ -121,9 +119,6 @@ public:
 
     KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
-
-    ScopedConnection connectionToSigLinkSelectionChanged;
-    ScopedConnectionSet optionCheckConnections;
 
     Signal<void()> sigModelUpdated;
 
@@ -143,9 +138,6 @@ public:
     void appendKinematicStateToHistory();
     bool onStaticModelPropertyChanged(bool on);
     void createSceneBody();
-    void onLinkVisibilityCheckToggled();
-    void onVisibleShapeTypesChanged();
-    void onLinkSelectionChanged();
     void onPositionChanged();
     bool undoKinematicState();
     bool redoKinematicState();
@@ -174,17 +166,11 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
         im.addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "wrl;yaml;dae;stl", boost::bind(loadBodyItem, _1, _2));
+            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
 
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
         om.sigOptionsParsed().connect(onSigOptionsParsed);
-
-        MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
-        linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
-        showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
-        showVisualShapeCheck->setChecked(true);
-        showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
 
         initialized = true;
     }
@@ -200,8 +186,8 @@ BodyItem::BodyItem()
 
 BodyItemImpl::BodyItemImpl(BodyItem* self)
     : self(self),
-      sigKinematicStateChanged(boost::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(boost::bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
+      sigKinematicStateChanged(std::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
+      sigKinematicStateEdited(std::bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
 {
     body = new Body();
     isEditable = true;
@@ -221,8 +207,8 @@ BodyItem::BodyItem(const BodyItem& org)
 BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     : self(self),
       body(org.body->clone()),
-      sigKinematicStateChanged(boost::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(boost::bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
+      sigKinematicStateChanged(std::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
+      sigKinematicStateEdited(std::bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
       initialState(org.initialState)
 {
     if(org.currentBaseLink){
@@ -249,7 +235,7 @@ void BodyItemImpl::init(bool calledFromCopyConstructor)
 
     initBody(calledFromCopyConstructor);
 
-    self->sigPositionChanged().connect(boost::bind(&BodyItemImpl::onPositionChanged, this));
+    self->sigPositionChanged().connect(std::bind(&BodyItemImpl::onPositionChanged, this));
 }
 
 
@@ -282,7 +268,7 @@ BodyItem::~BodyItem()
 
 BodyItemImpl::~BodyItemImpl()
 {
-    connectionToSigLinkSelectionChanged.disconnect();
+
 }
 
 
@@ -456,9 +442,10 @@ void BodyItem::storeInitialState()
 }
 
 
-void BodyItem::restoreInitialState()
+void BodyItem::restoreInitialState(bool doNotify)
 {
-    if(restoreKinematicState(impl->initialState)){
+    bool restored = restoreKinematicState(impl->initialState);
+    if(restored && doNotify){
         notifyKinematicStateChange(false);
     }
 }
@@ -500,7 +487,7 @@ void BodyItemImpl::appendKinematicStateToHistory()
         cout << "BodyItem::appendKinematicStateToHistory()" << endl;
     }
 
-    BodyStatePtr state = boost::make_shared<BodyState>();
+    BodyStatePtr state = std::make_shared<BodyState>();
     self->storeKinematicState(*state);
 
     if(kinematicStateHistory.empty() || (currentHistoryIndex == kinematicStateHistory.size() - 1)){
@@ -589,7 +576,7 @@ bool BodyItemImpl::redoKinematicState()
 PinDragIKptr BodyItem::pinDragIK()
 {
     if(!impl->pinDragIK){
-        impl->pinDragIK = boost::make_shared<PinDragIK>(impl->body);
+        impl->pinDragIK = std::make_shared<PinDragIK>(impl->body);
     }
     return impl->pinDragIK;
 }
@@ -676,7 +663,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
 {
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
-        blocker = boost::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
+        blocker = std::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
         const ItemList<BodyItem>& bodyItems = worldItem->collisionBodyItems();
         for(int i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
@@ -752,7 +739,7 @@ bool BodyItem::isLeggedBody() const
     if(!impl->legged){
         impl->legged = getLeggedBodyHelper(impl->body);
     }
-    return (impl->legged->numFeet() > 0);
+    return impl->legged->isValid();
 }
         
 /**
@@ -767,8 +754,6 @@ bool BodyItem::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
 bool BodyItemImpl::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor)
 {
     bool result = false;
-
-    LeggedBodyHelperPtr legged = getLeggedBodyHelper(body);
 
     if(self->isLeggedBody()){
         
@@ -931,7 +916,7 @@ void BodyItemImpl::emitSigKinematicStateEdited()
 
 void BodyItem::enableCollisionDetection(bool on)
 {
-    enableCollisionDetection(on);
+    impl->enableCollisionDetection(on);
 }
 
 
@@ -948,7 +933,7 @@ bool BodyItemImpl::enableCollisionDetection(bool on)
 
 void BodyItem::enableSelfCollisionDetection(bool on)
 {
-    enableSelfCollisionDetection(on);
+    impl->enableSelfCollisionDetection(on);
 }
 
 
@@ -1001,7 +986,7 @@ void BodyItem::clearCollisions()
 }
 
 
-ItemPtr BodyItem::doDuplicate() const
+Item* BodyItem::doDuplicate() const
 {
     return new BodyItem(*this);
 }
@@ -1083,23 +1068,6 @@ void BodyItemImpl::createSceneBody()
 {
     sceneBody = new EditableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
-
-    optionCheckConnections.add(
-        linkVisibilityCheck->sigToggled().connect(
-            boost::bind(&BodyItemImpl::onLinkVisibilityCheckToggled, this)));
-    onLinkVisibilityCheckToggled();
-
-    optionCheckConnections.add(
-        showVisualShapeCheck->sigToggled().connect(
-            boost::bind(&BodyItemImpl::onVisibleShapeTypesChanged, this)));
-
-    optionCheckConnections.add(
-        showCollisionShapeCheck->sigToggled().connect(
-            boost::bind(&BodyItemImpl::onVisibleShapeTypesChanged, this)));
-    
-    if(!showVisualShapeCheck->isChecked() || showCollisionShapeCheck->isChecked()){
-        onVisibleShapeTypesChanged();
-    }
 }
 
 
@@ -1112,47 +1080,6 @@ SgNode* BodyItem::getScene()
 EditableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
-}
-
-
-void BodyItemImpl::onLinkVisibilityCheckToggled()
-{
-    LinkSelectionView* selectionView = LinkSelectionView::mainInstance();
-
-    connectionToSigLinkSelectionChanged.disconnect();
-    
-    if(linkVisibilityCheck->isChecked()){
-        if(sceneBody){
-            sceneBody->setLinkVisibilities(selectionView->getLinkSelection(self));
-        }
-        connectionToSigLinkSelectionChanged.reset(
-            selectionView->sigSelectionChanged(self).connect(
-                boost::bind(&BodyItemImpl::onLinkSelectionChanged, this)));
-    } else {
-        if(sceneBody){
-            boost::dynamic_bitset<> visibilities;
-            visibilities.resize(body->numLinks(), true);
-            sceneBody->setLinkVisibilities(visibilities);
-        }
-    }
-}
-
-
-void BodyItemImpl::onVisibleShapeTypesChanged()
-{
-    if(sceneBody){
-        sceneBody->setVisibleShapeTypes(
-            showVisualShapeCheck->isChecked(),
-            showCollisionShapeCheck->isChecked());
-    }
-}
-
-
-void BodyItemImpl::onLinkSelectionChanged()
-{
-    if(sceneBody && linkVisibilityCheck->isChecked()){
-        sceneBody->setLinkVisibilities(LinkSelectionView::mainInstance()->getLinkSelection(self));
-    }
 }
 
 
@@ -1179,13 +1106,13 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
-                (boost::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
+                (std::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
     putProperty(_("Model file"), getFilename(boost::filesystem::path(self->filePath())));
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
-                (boost::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
+                (std::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
-                (boost::bind(&BodyItemImpl::enableSelfCollisionDetection, this, _1)));
-    putProperty(_("Editable"), isEditable, boost::bind(&BodyItemImpl::onEditableChanged, this, _1));
+                (std::bind(&BodyItemImpl::enableSelfCollisionDetection, this, _1)));
+    putProperty(_("Editable"), isEditable, std::bind(&BodyItemImpl::onEditableChanged, this, _1));
 }
 
 
@@ -1206,7 +1133,7 @@ bool BodyItemImpl::store(Archive& archive)
     write(archive, "rootPosition", body->rootLink()->p());
     write(archive, "rootAttitude", Matrix3(body->rootLink()->R()));
     Listing* qs = archive.createFlowStyleListing("jointPositions");
-    int n = body->numJoints();
+    int n = body->numAllJoints();
     for(int i=0; i < n; ++i){
         qs->append(body->joint(i)->q(), 10, n);
     }
@@ -1271,7 +1198,14 @@ bool BodyItemImpl::restore(const Archive& archive)
         }
         Listing* qs = archive.findListing("jointPositions");
         if(qs->isValid()){
-            for(int i=0; i < qs->size(); ++i){
+            int nj = body->numAllJoints();
+            if(qs->size() != nj){
+                MessageView::instance()->putln(
+                    MessageView::WARNING,
+                    format("Mismatched size of the stored joint positions for %1%") % self->name());
+                nj = std::min(qs->size(), nj);
+            }
+            for(int i=0; i < nj; ++i){
                 body->joint(i)->q() = (*qs)[i].toDouble();
             }
         }
@@ -1285,8 +1219,15 @@ bool BodyItemImpl::restore(const Archive& archive)
         qs = archive.findListing("initialJointPositions");
         if(qs->isValid()){
             BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
-            q.resize(qs->size());
-            for(int i=0; i < qs->size(); ++i){
+            int nj = body->numAllJoints();
+            if(qs->size() != nj){
+                MessageView::instance()->putln(
+                    MessageView::WARNING,
+                    format("Mismatched size of the stored initial joint positions for %1%") % self->name());
+                nj = std::min(qs->size(), nj);
+            }
+            q.resize(nj);
+            for(int i=0; i < nj; ++i){
                 q[i] = (*qs)[i].toDouble();
             }
         }

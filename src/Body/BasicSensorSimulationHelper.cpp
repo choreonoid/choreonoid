@@ -4,11 +4,10 @@
 */
 
 #include "BasicSensorSimulationHelper.h"
-#include "Link.h"
+#include "Body.h"
 #include <Eigen/StdVector>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace cnoid {
@@ -21,12 +20,14 @@ public:
     BasicSensorSimulationHelper* self;
     BodyPtr body;
 
+    // gravity acceleration
+    Vector3 g;
+
+    bool isOldAccelSensorCalcMode;
+
     // preview control gain matrices for acceleration sensors
     Matrix2 A;
     Vector2 B;
-
-    // gravity acceleration
-    Vector3 g;
 
     struct KFState
     {
@@ -38,7 +39,7 @@ public:
     KFStateArray kfStates;
 
     BasicSensorSimulationHelperImpl(BasicSensorSimulationHelper* self);
-    void initialize(BodyPtr body, double timeStep, const Vector3& gravityAcceleration);
+    void initialize(Body* body, double timeStep, const Vector3& gravityAcceleration);
 };
 }
 
@@ -57,7 +58,7 @@ BasicSensorSimulationHelper::BasicSensorSimulationHelper()
 BasicSensorSimulationHelperImpl::BasicSensorSimulationHelperImpl(BasicSensorSimulationHelper* self)
     : self(self)
 {
-
+    isOldAccelSensorCalcMode = false;
 }
 
 
@@ -67,36 +68,43 @@ BasicSensorSimulationHelper::~BasicSensorSimulationHelper()
 }
 
 
-void BasicSensorSimulationHelper::initialize
-(BodyPtr body, double timeStep, const Vector3& gravityAcceleration)
+void BasicSensorSimulationHelper::setOldAccelSensorCalcMode(bool on)
 {
-    const DeviceList<>& devices = body->devices();
-    DeviceList<Sensor> sensors;
-    sensors.reserve(devices.size());
-    sensors = devices;
+    impl->isOldAccelSensorCalcMode = on;
+}
 
-    if(sensors.empty()){
-        isActive_ = false;
 
-    } else {
-        forceSensors_ = sensors;
-        gyroSensors_ = sensors;
-        accelSensors_ = sensors;
-        
-        impl->initialize(body, timeStep, gravityAcceleration);
+void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
+{
+    isActive_ = false;
 
-        isActive_ = true;
+    DeviceList<> devices = body->devices();
+    if(!devices.empty()){
+        forceSensors_.extractFrom(devices);
+        rateGyroSensors_.extractFrom(devices);
+        accelerationSensors_.extractFrom(devices);
+
+        if(!forceSensors_.empty() ||
+           !rateGyroSensors_.empty() ||
+           !accelerationSensors_.empty()){
+            impl->initialize(body, timeStep, gravityAcceleration);
+            isActive_ = true;
+        }
     }
 }
 
 
-void Impl::initialize(BodyPtr body, double timeStep, const Vector3& gravityAcceleration)
+void Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
 {
     this->body = body;
     g = gravityAcceleration;
 
-    const DeviceList<AccelSensor>& accelSensors = self->accelSensors_;
-    if(accelSensors.empty()){
+    if(!isOldAccelSensorCalcMode){
+        return;
+    }
+
+    const DeviceList<AccelerationSensor>& accelerationSensors = self->accelerationSensors_;
+    if(accelerationSensors.empty()){
         return;
     }
 
@@ -140,9 +148,9 @@ void Impl::initialize(BodyPtr body, double timeStep, const Vector3& gravityAccel
     }
 
     // initialize kalman filtering
-    kfStates.resize(accelSensors.size());
-    for(int i=0; i < accelSensors.size(); ++i){
-        const AccelSensor* sensor = accelSensors.get(i);
+    kfStates.resize(accelerationSensors.size());
+    for(int i=0; i < accelerationSensors.size(); ++i){
+        const AccelerationSensor* sensor = accelerationSensors[i];
         const Link* link = sensor->link();
         const Vector3 o_Vgsens = link->R() * (link->R().transpose() * link->w()).cross(sensor->localTranslation()) + link->v();
         KFState& s = kfStates[i];
@@ -154,24 +162,30 @@ void Impl::initialize(BodyPtr body, double timeStep, const Vector3& gravityAccel
 }
 
 
-void BasicSensorSimulationHelper::updateGyroAndAccelSensors()
+void BasicSensorSimulationHelper::updateGyroAndAccelerationSensors()
 {
-    for(size_t i=0; i < gyroSensors_.size(); ++i){
-        RateGyroSensor* gyro = gyroSensors_.get(i);
+    for(size_t i=0; i < rateGyroSensors_.size(); ++i){
+        RateGyroSensor* gyro = rateGyroSensors_[i];
         const Link* link = gyro->link();
         gyro->w() = gyro->R_local().transpose() * link->R().transpose() * link->w();
         gyro->notifyStateChange();
     }
 
-    if(!accelSensors_.empty()){
+    if(!impl->isOldAccelSensorCalcMode){
+        for(size_t i=0; i < accelerationSensors_.size(); ++i){
+            AccelerationSensor* sensor = accelerationSensors_[i];
+            const Link* link = sensor->link();
+            sensor->dv() = sensor->R_local().transpose() * link->R().transpose() * (link->dv() - impl->g);
+            sensor->notifyStateChange();
+        }
 
+    } else if(!accelerationSensors_.empty()){
         const Matrix2& A = impl->A;
         const Vector2& B = impl->B;
-        const Vector3& g = impl->g;
 
-        for(size_t i=0; i < accelSensors_.size(); ++i){
+        for(size_t i=0; i < accelerationSensors_.size(); ++i){
 
-            AccelSensor* sensor = accelSensors_.get(i);
+            AccelerationSensor* sensor = accelerationSensors_[i];
             const Link* link = sensor->link();
             
             // kalman filtering
@@ -182,9 +196,9 @@ void BasicSensorSimulationHelper::updateGyroAndAccelSensors()
             }
             
             Vector3 o_Agsens(s.x[0](1), s.x[1](1), s.x[2](1));
-            o_Agsens -= g;
+            o_Agsens -= impl->g;
             
-            sensor->dv() = link->R().transpose() * o_Agsens;
+            sensor->dv() = sensor->R_local().transpose() * link->R().transpose() * o_Agsens;
             sensor->notifyStateChange();
         }
     }

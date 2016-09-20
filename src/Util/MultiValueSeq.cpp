@@ -35,7 +35,7 @@ MultiValueSeq::MultiValueSeq(const MultiValueSeq& org)
 
 AbstractSeqPtr MultiValueSeq::cloneSeq() const
 {
-    return boost::make_shared<MultiValueSeq>(*this);
+    return std::make_shared<MultiValueSeq>(*this);
 }
 
 

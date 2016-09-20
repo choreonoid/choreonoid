@@ -16,7 +16,7 @@ void Vector3SeqItem::initializeClass(ExtensionManager* ext)
 
 
 Vector3SeqItem::Vector3SeqItem()
-    : seq_(boost::make_shared<Vector3Seq>())
+    : seq_(std::make_shared<Vector3Seq>())
 {
 
 }
@@ -31,7 +31,7 @@ Vector3SeqItem::Vector3SeqItem(Vector3SeqPtr seq)
 
 Vector3SeqItem::Vector3SeqItem(const Vector3SeqItem& org)
     : AbstractSeqItem(org),
-      seq_(boost::make_shared<Vector3Seq>(*org.seq_))
+      seq_(std::make_shared<Vector3Seq>(*org.seq_))
 {
 
 }
@@ -72,7 +72,7 @@ bool Vector3SeqItem::saveAsPlainFormat(const std::string& filename)
 }
 
 
-ItemPtr Vector3SeqItem::doDuplicate() const
+Item* Vector3SeqItem::doDuplicate() const
 {
     return new Vector3SeqItem(*this);
 }

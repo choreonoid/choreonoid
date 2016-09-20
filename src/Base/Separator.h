@@ -2,8 +2,8 @@
    @author Shin'ichiro NAKAOKA
 */
 
-#ifndef CNOID_GUIBASE_SEPARATOR_H_INCLUDED
-#define CNOID_GUIBASE_SEPARATOR_H_INCLUDED
+#ifndef CNOID_BASE_SEPARATOR_H
+#define CNOID_BASE_SEPARATOR_H
 
 #include <QFrame>
 #include <QBoxLayout>

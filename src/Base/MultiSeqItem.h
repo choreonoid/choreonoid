@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_MULTI_SEQ_ITEM_H_INCLUDED
-#define CNOID_BASE_MULTI_SEQ_ITEM_H_INCLUDED
+#ifndef CNOID_BASE_MULTI_SEQ_ITEM_H
+#define CNOID_BASE_MULTI_SEQ_ITEM_H
 
 #include "AbstractSeqItem.h"
 #include <cnoid/MultiSeq>
@@ -20,7 +20,7 @@ public:
         
     typedef ref_ptr< MultiSeqItem<MultiSeqType> > Ptr;
         
-    MultiSeqItem() : seq_(boost::make_shared<MultiSeqType>()) { }
+    MultiSeqItem() : seq_(std::make_shared<MultiSeqType>()) { }
         
     MultiSeqItem(typename MultiSeqType::Ptr seq) : seq_(seq) { }
 
@@ -30,7 +30,7 @@ public:
 
     MultiSeqItem(const MultiSeqItem<MultiSeqType>& org)
         : AbstractMultiSeqItem(org),
-          seq_(boost::make_shared<MultiSeqType>(*org.seq_)) { }
+          seq_(std::make_shared<MultiSeqType>(*org.seq_)) { }
 
     virtual ~MultiSeqItem() { }
  
@@ -44,7 +44,7 @@ protected:
 
     void resetSeq(typename MultiSeqType::Ptr seq) { seq_ = seq; }
         
-    virtual ItemPtr doDuplicate() const {
+    virtual Item* doDuplicate() const {
         return new MultiSeqItem<MultiSeqType>(*this);
     }
 

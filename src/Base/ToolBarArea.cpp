@@ -11,8 +11,6 @@
 #include <cnoid/ValueTree>
 #include <QResizeEvent>
 #include <QApplication>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
 #include <deque>
 #include <vector>
 #include <list>
@@ -23,6 +21,7 @@
 
 using namespace std;
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace {
 
@@ -46,7 +45,7 @@ public:
     HSeparator separator;
     int height;
 };
-typedef boost::shared_ptr<ToolBarRow> ToolBarRowPtr;
+typedef std::shared_ptr<ToolBarRow> ToolBarRowPtr;
 
 
 // for archiving
@@ -136,7 +135,7 @@ ToolBarArea::ToolBarArea(QWidget* parent)
 ToolBarAreaImpl::ToolBarAreaImpl(ToolBarArea* self)
     : self(self),
       spilledToolBarRow(new ToolBarRow(self)),
-      layoutToolBarsLater(boost::bind(&ToolBarAreaImpl::layoutToolBars, this))
+      layoutToolBarsLater(std::bind(&ToolBarAreaImpl::layoutToolBars, this))
 {
     isBeforeDoingInitialLayout = true;
     defaultOrderIndex = 0;
@@ -282,7 +281,7 @@ void ToolBarAreaImpl::setVisibilityMenuItems(Menu* menu)
         if(toolBar->isVisible()){
             action->setChecked(true);
         }
-        action->sigToggled().connect(boost::bind(&ToolBarAreaImpl::onVisiblityCheckToggled, this, toolBar, _1));
+        action->sigToggled().connect(std::bind(&ToolBarAreaImpl::onVisiblityCheckToggled, this, toolBar, _1));
         menu->addAction(action);
     }
 }

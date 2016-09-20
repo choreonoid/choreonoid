@@ -6,6 +6,7 @@
 #include "../Item.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
+#include "../AbstractTextItem.h"
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
 #include "../MultiValueSeqItem.h"
@@ -20,6 +21,10 @@
 namespace python = boost::python;
 using namespace boost::python;
 using namespace cnoid;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(Item)
+CNOID_PYTHON_DEFINE_GET_POINTER(RootItem)
 
 namespace {
 
@@ -57,6 +62,9 @@ python::object Item_getDescendantItems2(Item& self, python::object itemClass){
     return getPyNarrowedItemList(items, itemClass);
 }
 
+ItemPtr Item_duplicate(Item& self) { return self.duplicate(); }
+ItemPtr Item_duplicateAll(Item& self) { return self.duplicateAll(); }
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_addChildItem_overloads, addChildItem, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_insertChildItem, insertChildItem, 2, 3)
@@ -65,6 +73,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_load1_overloads, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_load2_overloads, load, 2, 3)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_save, load, 1, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Item_overwrite, overwrite, 0, 2)
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ScriptItem_waitToFinish, waitToFinish, 0, 1)
 
 RootItemPtr RootItem_Instance() { return RootItem::instance(); }
 
@@ -138,8 +148,8 @@ void exportPyItems()
         .def("headItem", Item_headItem)
         .def("getDescendantItems", Item_getDescendantItems1)
         .def("getDescendantItems", Item_getDescendantItems2)
-        .def("duplicate", &Item::duplicate)
-        .def("duplicateAll", &Item::duplicateAll)
+        .def("duplicate", Item_duplicate)
+        .def("duplicateAll", Item_duplicateAll)
         .def("assign", &Item::assign)
         .def("load", Item_load1, Item_load1_overloads())
         .def("load", Item_load2, Item_load2_overloads())
@@ -180,9 +190,35 @@ void exportPyItems()
     implicitly_convertible<FolderItemPtr, ItemPtr>();
     PyItemList<FolderItem>("FolderItemList");
 
+    class_< AbstractTextItem, AbstractTextItemPtr, bases<Item>, boost::noncopyable >
+        ("AbstractTextItem", no_init)
+        .def("textFilename", &AbstractTextItem::textFilename, return_value_policy<copy_const_reference>());
+            
+    implicitly_convertible<AbstractTextItemPtr, ItemPtr>();
+    //PyItemList<AbstractTextItem>("AbstractTextItemList");
+    
+    class_< ScriptItem, ScriptItemPtr, bases<AbstractTextItem>, boost::noncopyable >
+        ("ScriptItem", no_init)
+        .def("scriptFilename", &ScriptItem::scriptFilename, return_value_policy<copy_const_reference>())
+        .def("identityName", &ScriptItem::identityName)
+        .def("setBackgroundMode", &ScriptItem::setBackgroundMode)
+        .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
+        .def("isRunning", &ScriptItem::isRunning)
+        .def("execute", &ScriptItem::execute)
+        .def("waitToFinish", &ScriptItem::waitToFinish, ScriptItem_waitToFinish())
+        .def("resultString", &ScriptItem::resultString)
+        .def("sigScriptFinished", &ScriptItem::sigScriptFinished)
+        .def("terminate", &ScriptItem::terminate)
+        ;
+
+    implicitly_convertible<ScriptItemPtr, AbstractTextItemPtr>();
+    //PyItemList<ScriptItem>("ScriptItemList");
+
     class_< ExtCommandItem, ExtCommandItemPtr, bases<Item> >("ExtCommandItem")
         .def("setCommand", &ExtCommandItem::setCommand)
         .def("command", &ExtCommandItem::command, return_value_policy<copy_const_reference>())
+        .def("waitingTimeAfterStarted", &ExtCommandItem::waitingTimeAfterStarted)
+        .def("setWaitingTimeAfterStarted", &ExtCommandItem::setWaitingTimeAfterStarted)
         .def("execute", &ExtCommandItem::execute)
         .def("terminate", &ExtCommandItem::terminate);
     
@@ -282,6 +318,12 @@ void exportPyItems()
     implicitly_convertible<MultiPointSetItemPtr, ItemPtr>();
     implicitly_convertible<MultiPointSetItemPtr, SceneProvider*>();
     PyItemList<MultiPointSetItem>("MultiPointSetItemList");
+
+#ifdef _MSC_VER
+    register_ptr_to_python<ItemPtr>();
+	register_ptr_to_python<RootItemPtr>();
+#endif
+
 }
 
 } // namespace cnoid

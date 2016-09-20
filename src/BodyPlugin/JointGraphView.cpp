@@ -8,10 +8,10 @@
 #include <cnoid/Link>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -33,7 +33,7 @@ JointGraphView::JointGraphView()
 
     itemTreeViewConnection = 
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            boost::bind(&JointGraphView::onItemSelectionChanged, this, _1));
+            std::bind(&JointGraphView::onItemSelectionChanged, this, _1));
 
     linkSelection = LinkSelectionView::mainInstance();
 }
@@ -84,10 +84,10 @@ void JointGraphView::onItemSelectionChanged(const ItemList<MultiValueSeqItem>& i
             it->bodyItem = bodyItem;
 
             it->connections.add(it->item->sigUpdated().connect(
-                                    boost::bind(&JointGraphView::onDataItemUpdated, this, it)));
+                                    std::bind(&JointGraphView::onDataItemUpdated, this, it)));
 
             it->connections.add(it->item->sigDetachedFromRoot().connect(
-                                    boost::bind(&JointGraphView::onDataItemDetachedFromRoot, this, it)));
+                                    std::bind(&JointGraphView::onDataItemDetachedFromRoot, this, it)));
         }
     }
 
@@ -119,11 +119,11 @@ void JointGraphView::updateBodyItems()
 
             bodyItemConnections.add(
                 linkSelection->sigSelectionChanged(it->bodyItem).connect(
-                    boost::bind(&JointGraphView::setupGraphWidget, this)));
+                    std::bind(&JointGraphView::setupGraphWidget, this)));
             
             bodyItemConnections.add(
                 it->bodyItem->sigDetachedFromRoot().connect(
-                    boost::bind(&JointGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
+                    std::bind(&JointGraphView::onBodyItemDetachedFromRoot, this, it->bodyItem)));
         }
     }
 }
@@ -159,7 +159,7 @@ void JointGraphView::setupGraphWidget()
             MultiValueSeqPtr seq = it->item->seq();
             int numParts = seq->numParts();
             BodyPtr body = it->bodyItem->body();
-            const std::vector<int>& selectedLinkIndices = linkSelection->getSelectedLinkIndices(it->bodyItem);
+            const std::vector<int>& selectedLinkIndices = linkSelection->selectedLinkIndices(it->bodyItem);
             
             for(size_t i=0; i < selectedLinkIndices.size(); ++i){
                 Link* link = body->link(selectedLinkIndices[i]);
@@ -182,9 +182,9 @@ void JointGraphView::addJointTrajectory(std::list<ItemInfo>::iterator itemInfoIt
                 
     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
     handler->setDataRequestCallback(
-        boost::bind(&JointGraphView::onDataRequest, this, itemInfoIter, joint->jointId(), _1, _2, _3));
+        std::bind(&JointGraphView::onDataRequest, this, itemInfoIter, joint->jointId(), _1, _2, _3));
     handler->setDataModifiedCallback(
-        boost::bind(&JointGraphView::onDataModified, this, itemInfoIter, joint->jointId(), _1, _2, _3));
+        std::bind(&JointGraphView::onDataModified, this, itemInfoIter, joint->jointId(), _1, _2, _3));
                 
     graph.addDataHandler(handler);
     itemInfoIter->handlers.push_back(handler);

@@ -12,11 +12,10 @@
 #include <cnoid/Archive>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -42,7 +41,7 @@ GRobotControllerItem::~GRobotControllerItem()
 }
 
 
-ItemPtr GRobotControllerItem::doDuplicate() const
+Item* GRobotControllerItem::doDuplicate() const
 {
     return new GRobotControllerItem(*this);
 }
@@ -52,7 +51,7 @@ void GRobotControllerItem::onConnectedToRoot()
 {
     checkToggledConnection =
         ItemTreeView::mainInstance()->sigCheckToggled(this).connect(
-            bind(&GRobotControllerItem::onCheckToggled, this, _1));
+            std::bind(&GRobotControllerItem::onCheckToggled, this, _1));
 }
 
 
@@ -71,15 +70,15 @@ void GRobotControllerItem::onCheckToggled(bool on)
 
         connections.add(
             bar->sigServoSwitchRequest().connect(
-                bind(&GRobotController::switchServos, controller, _1)));
+                std::bind(&GRobotController::switchServos, controller, _1)));
 
         connections.add(
             bar->sigPoseSendRequest().connect(
-                bind(&GRobotControllerItem::requestToSendPose, this, 1.0)));
+                std::bind(&GRobotControllerItem::requestToSendPose, this, 1.0)));
         
         connections.add(
             bar->sigSyncModeToggled().connect(
-                bind(&GRobotControllerItem::setSyncMode, this, _1)));
+                std::bind(&GRobotControllerItem::setSyncMode, this, _1)));
 
         if(bar->isSyncMode()){
             setSyncMode(true);
@@ -106,12 +105,12 @@ void GRobotControllerItem::setSyncMode(bool on)
 
         kinematicStateChangeConnection =
             bodyItem->sigKinematicStateChanged().connect(
-                bind(&GRobotControllerItem::requestToSendPose, this, 0.1));
+                std::bind(&GRobotControllerItem::requestToSendPose, this, 0.1));
         requestToSendPose(1.0);
 
         playbackInitilizeConnection =
             TimeBar::instance()->sigPlaybackInitialized().connect(
-                bind(&GRobotControllerItem::onPlaybackInitialized, this, _1));
+                std::bind(&GRobotControllerItem::onPlaybackInitialized, this, _1));
     }
 }
 
@@ -146,10 +145,10 @@ bool GRobotControllerItem::onPlaybackInitialized(double time)
                     TimeBar* timeBar = TimeBar::instance();
                     playbackConnections.add(
                         timeBar->sigPlaybackStarted().connect(
-                            bind(&GRobotControllerItem::onPlaybackStarted, this, _1)));
+                            std::bind(&GRobotControllerItem::onPlaybackStarted, this, _1)));
                     playbackConnections.add(
                         timeBar->sigPlaybackStopped().connect(
-                            bind(&GRobotControllerItem::onPlaybackStopped, this)));
+                            std::bind(&GRobotControllerItem::onPlaybackStopped, this)));
                 }
             }
         }
@@ -174,7 +173,7 @@ void GRobotControllerItem::onPlaybackStopped()
 void GRobotControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Port"), controller->portDevice(),
-                bind(&GRobotControllerItem::onPortPropertyChanged, this, _1));
+                std::bind(&GRobotControllerItem::onPortPropertyChanged, this, _1));
 }
 
 

@@ -8,11 +8,10 @@
 
 #include "BasicSensorSimulationHelper.h"
 #include "Link.h"
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
-namespace cnoid
-{
+namespace cnoid {
+
 class DyBody;
 typedef ref_ptr<DyBody> DyBodyPtr;
 
@@ -26,7 +25,7 @@ class CNOID_EXPORT ForwardDynamics {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
-    ForwardDynamics(const DyBodyPtr& body);
+    ForwardDynamics(DyBody* body);
     virtual ~ForwardDynamics();
         
     void setGravityAcceleration(const Vector3& g);
@@ -34,6 +33,7 @@ public:
     void setRungeKuttaMethod();
     void setTimeStep(double timeStep);
     void enableSensors(bool on);
+    void setOldAccelSensorCalcMode(bool on);
 
     virtual void initialize() = 0;
     virtual void calcNextState() = 0;
@@ -63,7 +63,8 @@ protected:
     enum { EULER_METHOD, RUNGEKUTTA_METHOD } integrationMode;
 };
 
-typedef boost::shared_ptr<ForwardDynamics> ForwardDynamicsPtr;
+typedef std::shared_ptr<ForwardDynamics> ForwardDynamicsPtr;
+
 };
 
 #endif

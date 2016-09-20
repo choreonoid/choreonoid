@@ -45,7 +45,7 @@ bool ImageWidget::isScalingEnabled() const
 
 void ImageWidget::setPixmap(const QPixmap& pixmap)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     pixmap_ = pixmap;
     fitCenter();
     update();
@@ -54,7 +54,7 @@ void ImageWidget::setPixmap(const QPixmap& pixmap)
 
 void ImageWidget::setImage(const QImage& image)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     pixmap_ = QPixmap::fromImage(image);
     fitCenter();
     update();
@@ -63,7 +63,7 @@ void ImageWidget::setImage(const QImage& image)
 
 void ImageWidget::setImage(const Image& image)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     static QImage::Format componentSizeToFormat[] = {
         QImage::Format_Invalid,
         QImage::Format_Invalid, //! \todo convert a gray scale image to RGB888
@@ -85,7 +85,7 @@ void ImageWidget::setImage(const Image& image)
 
 void ImageWidget::zoom(double scale)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     if(pixmap_.isNull())
         return;
 
@@ -104,7 +104,7 @@ void ImageWidget::zoom(double scale)
 
 void ImageWidget::translate(QPoint pos)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     if(pixmap_.isNull())
         return;
 
@@ -120,7 +120,7 @@ void ImageWidget::translate(QPoint pos)
 
 void ImageWidget::rotate(double angle)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
 	QSize r = rect().size();
 	QTransform invT = transform_.inverted();
 	double x,y;
@@ -199,7 +199,7 @@ QSize ImageWidget::sizeHint() const
 
 void ImageWidget::resizeEvent(QResizeEvent *event)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     if(pixmap_.isNull())
             return;
 
@@ -304,7 +304,7 @@ void ImageWidget::setAngle(double angle)
 
 void ImageWidget::reset()
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     transform_ = initialTransform_;
     fitted = false;
     settedT = true;
@@ -316,7 +316,7 @@ void ImageWidget::reset()
 
 Image& ImageWidget::getImage()
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
 
     if(pixmap_.isNull()){
         transformedImage.setSize(0,0,1);

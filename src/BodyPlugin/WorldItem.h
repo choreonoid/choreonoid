@@ -41,7 +41,7 @@ public:
     virtual SgNode* getScene();
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -51,6 +51,7 @@ private:
 };
 
 typedef ref_ptr<WorldItem> WorldItemPtr;
+
 }
 
 #endif

@@ -22,12 +22,23 @@ public:
     GLVisionSimulatorItem(const GLVisionSimulatorItem& org);
     ~GLVisionSimulatorItem();
         
-    virtual bool isEnabled();
+    void setTargetBodies(const std::string& bodyNames);
+    void setTargetSensors(const std::string& sensorNames);
+    void setMaxFrameRate(double rate);
+    void setMaxLatency(double latency);
+    void setVisionDataRecordingEnabled(bool on);
+    void setDedicatedSensorThreadsEnabled(bool on);
+    void setBestEffortMode(bool on);
+    void setRangeSensorPrecisionRatio(double r);
+    void setAllSceneObjectsEnabled(bool on);
+    void setHeadLightEnabled(bool on);
+    void setAdditionalLightsEnabled(bool on);
+
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
     virtual void finalizeSimulation();
 
 protected:
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
@@ -35,6 +46,8 @@ protected:
 private:
     GLVisionSimulatorItemImpl* impl;
 };
+
+typedef ref_ptr<GLVisionSimulatorItem> GLVisionSimulatorItemPtr;
 
 }
 

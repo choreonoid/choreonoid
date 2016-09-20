@@ -25,7 +25,7 @@ path configDirPath;
 path filePath;
 path fullPath;
 
-boost::shared_ptr<YAMLReader> pYAMLReader;
+std::shared_ptr<YAMLReader> pYAMLReader;
 };
 
 bool AppConfig::initialize(const std::string& application_, const std::string& organization_)
@@ -136,6 +136,6 @@ bool AppConfig::load(const std::string& filename)
         }
     }
     
-    pYAMLReader = boost::shared_ptr<YAMLReader>(pyaml);
+    pYAMLReader = std::shared_ptr<YAMLReader>(pyaml);
     return true;
 }

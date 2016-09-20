@@ -2,45 +2,43 @@
    @author 
 */
 
-#ifndef CNOID_OPENRTM_PLUGIN_RTC_ITEM_H_INCLUDED
-#define CNOID_OPENRTM_PLUGIN_RTC_ITEM_H_INCLUDED
+#ifndef CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
+#define CNOID_OPENRTM_PLUGIN_RTC_ITEM_H
 
 #include <cnoid/Item>
 #include <cnoid/Process>
+#include <boost/filesystem.hpp>
 #include <rtm/Manager.h>
 #include "exportdecl.h"
-
-using namespace std;
-using namespace RTC;
 
 namespace cnoid {
 
 class MessageView;
-typedef map<string, string> PropertyMap;
+typedef std::map<std::string, std::string> PropertyMap;
 
 class RTComponent
 {
 public:
-    RTComponent(string moduleName);
-    RTComponent(string moduleName, PropertyMap& properties);
+    RTComponent(const boost::filesystem::path& modulePath, PropertyMap& properties);
     ~RTComponent();
     void deleteRTC(bool waitToBeDeleted);
-    RtcBase* rtc() { return rtc_; };
+    RTC::RtcBase* rtc() { return rtc_; };
     bool isValid() const;
     const std::string& name() const { return componentName; }
         
 private:
-    RTObject_var rtcRef;
-    RtcBase* rtc_;
-    string moduleName;
+    RTC::RTObject_var rtcRef;
+    RTC::RtcBase* rtc_;
+    boost::filesystem::path modulePath;
     Process rtcProcess;
-    string componentName;
+    std::string componentName;
     MessageView* mv;
 
-    void init(string moduleName, PropertyMap& properties);
+    void init(const std::string& moduleName, PropertyMap& properties);
+    void init(const boost::filesystem::path& modulePath, PropertyMap& properties);
     bool createRTC(PropertyMap& properties);
-    void setupModules(string& fileName, string& initFuncName, string& componentName, PropertyMap& properties );
-    void createProcess(string& command, PropertyMap& properties);
+    void setupModules(std::string& fileName, std::string& initFuncName, std::string& componentName, PropertyMap& properties );
+    void createProcess(std::string& command, PropertyMap& properties);
     void onReadyReadServerProcessOutput();
 };
 
@@ -60,31 +58,44 @@ public:
         CHOREONOID_EXECUTION_CONTEXT,
         N_PERIODIC_TYPE
     };
-           
+    
+    enum PathBase {
+        RTC_DIRECTORY = 0,
+        PROJECT_DIRECTORY,
+        N_PATH_BASE
+    };
+
     void setModuleName(const std::string& name);
     void setPeriodicType(int type);
     void setPeriodicRate(int rate);
+    void setPathBase(int base);
 
 protected:
     virtual void onPositionChanged();
     virtual void onDisconnectedFromRoot();
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
         
 private:
-    ostream& os;
+    std::ostream& os;
     MessageView* mv;
-    string moduleName;
+    std::string moduleName;
     RTComponent* rtcomp;
     Selection periodicType;
     int periodicRate;
     int oldType;
     PropertyMap properties;
+    Selection pathBase;
+    int oldPathBase;
+    boost::filesystem::path modulePath;
+
+    bool convertAbsolutePath();
 };
         
 typedef ref_ptr<RTCItem> RTCItemPtr;
+
 }
 
 #endif

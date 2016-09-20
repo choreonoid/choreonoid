@@ -8,20 +8,19 @@
 #include "InfoBar.h"
 #include "Item.h"
 #include "TextEdit.h"
-#include <stack>
-#include <iostream>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
-#include <boost/bind.hpp>
 #include <QBoxLayout>
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QThread>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
+#include <stack>
+#include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace iostreams = boost::iostreams;
 
 namespace {
 
@@ -1028,6 +1027,29 @@ std::ostream& cnoid::mvout(bool doFlush)
 }
 
 
+void cnoid::showMessageBox(const QString& message)
+{
+    QMessageBox::information(MainWindow::instance(), _("Message"), message);
+}
+
+void cnoid::showMessageBox(const char* message)
+{
+    showMessageBox(QString(message));
+}
+
+    
+void cnoid::showMessageBox(const std::string& message)
+{
+    showMessageBox(QString(message.c_str()));
+}
+
+
+void cnoid::showMessageBox(const boost::format& message)
+{
+    showMessageBox(QString(message.str().c_str()));
+}
+
+
 void cnoid::showWarningDialog(const QString& message)
 {
     QMessageBox::warning(MainWindow::instance(), _("Warning"), message);
@@ -1040,12 +1062,13 @@ void cnoid::showWarningDialog(const char* message)
 
 void cnoid::showWarningDialog(const std::string& message)
 {
-    showWarningDialog(message.c_str());
+    showWarningDialog(QString(message.c_str()));
 }
+
 
 void cnoid::showWarningDialog(const boost::format& message)
 {
-    showWarningDialog(message.str().c_str());
+    showWarningDialog(QString(message.str().c_str()));
 }
 
 

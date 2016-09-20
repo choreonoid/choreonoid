@@ -9,10 +9,9 @@
 #include "BodyCustomizerInterface.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/TruncatedSVD>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -60,8 +59,8 @@ public:
     MatrixXd JJ;
     Eigen::ColPivHouseholderQR<MatrixXd> QR;
     TruncatedSVD<MatrixXd> svd;
-    boost::function<double(VectorXd& out_error)> errorFunc;
-    boost::function<void(MatrixXd& out_Jacobian)> jacobianFunc;
+    std::function<double(VectorXd& out_error)> errorFunc;
+    std::function<void(MatrixXd& out_Jacobian)> jacobianFunc;
 
     JointPathIkImpl() {
         deltaScale = JointPath::numericalIKdefaultDeltaScale();
@@ -196,8 +195,8 @@ int JointPath::indexOf(const Link* link) const
 void JointPath::onJointPathUpdated()
 {
     if(ik){
-        ik->errorFunc.clear();
-        ik->jacobianFunc.clear();
+        ik->errorFunc = nullptr;
+        ik->jacobianFunc = nullptr;
     }
 }
 
@@ -306,8 +305,8 @@ void JointPath::setNumericalIKdampingConstant(double lambda)
 
 void JointPath::customizeTarget
 (int numTargetElements,
- boost::function<double(VectorXd& out_error)> errorFunc,
- boost::function<void(MatrixXd& out_Jacobian)> jacobianFunc)
+ std::function<double(VectorXd& out_error)> errorFunc,
+ std::function<void(MatrixXd& out_Jacobian)> jacobianFunc)
 {
     if(!ik){
         ik = new JointPathIkImpl;
@@ -387,7 +386,7 @@ bool JointPath::calcInverseKinematics()
         ik = new JointPathIkImpl();
     }
     if(!ik->jacobianFunc){
-        ik->jacobianFunc = boost::bind(setJacobian<0x3f, 0, 0>, boost::ref(*this), endLink(), _1);
+        ik->jacobianFunc = std::bind(setJacobian<0x3f, 0, 0>, std::ref(*this), endLink(), _1);
     }
     ik->resize(n);
     
@@ -622,11 +621,11 @@ bool CustomJointPath::hasAnalyticalIK() const
 }
 
 
-JointPathPtr cnoid::getCustomJointPath(BodyPtr body, Link* baseLink, Link* targetLink)
+JointPathPtr cnoid::getCustomJointPath(Body* body, Link* baseLink, Link* targetLink)
 {
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
-        return boost::make_shared<CustomJointPath>(body, baseLink, targetLink);
+        return std::make_shared<CustomJointPath>(body, baseLink, targetLink);
     } else {
-        return boost::make_shared<JointPath>(baseLink, targetLink);
+        return std::make_shared<JointPath>(baseLink, targetLink);
     }
 }

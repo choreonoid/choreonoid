@@ -12,13 +12,17 @@
 
 namespace cnoid {
 
+#ifdef ENABLE_SIMULATION_PROFILING
+const bool SIMULATION_PROFILING = true;
+#else
+const bool SIMULATION_PROFILING = false;
+#endif
+
 class Body;
-typedef ref_ptr<Body> BodyPtr;
 class Device;
 class CollisionDetector;
-typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
+typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 class BodyItem;
-class BodyMotionItem;
 class ControllerItem;
 class SimulationBodyImpl;
 class SimulatorItemImpl;
@@ -28,7 +32,7 @@ class SgCloneMap;
 class CNOID_EXPORT SimulationBody : public Referenced
 {
 public:
-    SimulationBody(BodyPtr body);
+    SimulationBody(Body* body);
     virtual ~SimulationBody();
 
     BodyItem* bodyItem() const;
@@ -49,7 +53,7 @@ public:
     void setActive(bool on);
 
     /**
-       Use this instead of Device::notiryStateChange when the state part which
+       Use this instead of Device::notifyStateChange when the state part which
        is not recoreded is changed
     */
     void notifyUnrecordedDeviceStateChange(Device* device);
@@ -84,28 +88,38 @@ public:
     virtual ~SimulatorItem();
 
     virtual double worldTimeStep();
-            
-    bool startSimulation(bool doReset = true);
-    void stopSimulation();
-    void pauseSimulation();
-    void restartSimulation();
+
+    virtual bool startSimulation(bool doReset = true);
+    virtual void stopSimulation();
+    virtual void pauseSimulation();
+    virtual void restartSimulation();
     bool isRunning() const;
     bool isPausing() const;
     bool isActive() const; ///< isRunning() && !isPausing()
+
+    //! This can only be called from the simulation thread
     int currentFrame() const;
+    
+    //! This can only be called from the simulation thread
     double currentTime() const;
 
+    //! This can be called from non simulation threads
+    int simulationFrame() const;
+
+    //! This can be called from non simulation threads
+    double simulationTime() const;
+    
+    SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationFinished();
 
-    enum RecordingMode { RECORD_FULL, RECORD_TAIL, RECORD_NONE, N_RECORDING_MODES };
-    enum TimeRangeMode { TIMEBAR_RANGE, SPECIFIED_PERIOD, UNLIMITED, N_TIME_RANGE_MODES };
-
+    enum RecordingMode { REC_FULL, REC_TAIL, REC_NONE, N_RECORDING_MODES };
+    enum TimeRangeMode { TR_UNLIMITED, TR_ACTIVE_CONTROL, TR_SPECIFIED, TR_TIMEBAR, N_TIME_RANGE_MODES };
+    
     void setRecordingMode(int selection);
     Selection recordingMode() const;
     void setTimeRangeMode(int selection);
     void setRealtimeSyncMode(bool on);
     void setDeviceStateOutputEnabled(bool on);
-    void setActiveControlPeriodOnlyMode(bool on);
 
     bool isRecordingEnabled() const;
     bool isDeviceStateOutputEnabled() const;
@@ -124,15 +138,15 @@ public:
     /**
        \return The registration id of the function. The id can be used for removing the function.
     */
-    int addPreDynamicsFunction(boost::function<void()> func);
-    int addMidDynamicsFunction(boost::function<void()> func);
-    int addPostDynamicsFunction(boost::function<void()> func);
+    int addPreDynamicsFunction(std::function<void()> func);
+    int addMidDynamicsFunction(std::function<void()> func);
+    int addPostDynamicsFunction(std::function<void()> func);
 
     void removePreDynamicsFunction(int id);
     void removeMidDynamicsFunction(int id);
     void removePostDynamicsFunction(int id);
         
-    //void addRecordFunction(boost::function<void()> func);
+    //void addRecordFunction(std::function<void()> func);
 
     SgCloneMap& sgCloneMap();
 
@@ -161,8 +175,9 @@ public:
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
     virtual void clearVirtualElasticStrings();
 
-    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
-    virtual void clearForcedBodyPositions();
+    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
+    virtual void clearForcedPositions();
 
 protected:
     SimulatorItem(const SimulatorItem& org);
@@ -173,9 +188,7 @@ protected:
        @note orgBody should not owned by the SimulationBody instance.
        Instead of it, a clone instance which may be a sub Body class should be created and owned.
     */
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody) = 0;
-
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
+    virtual SimulationBody* createSimulationBody(Body* orgBody) = 0;
 
     CollisionDetectorPtr collisionDetector();
 
@@ -186,6 +199,8 @@ protected:
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) = 0;
 
     virtual void initializeSimulationThread();
+
+    virtual void finalizeSimulationThread();
 
     /**
        This function is called from the simulation loop thread.
@@ -200,12 +215,17 @@ protected:
 
     virtual CollisionLinkPairListPtr getCollisions()
     {
-        return boost::make_shared<CollisionLinkPairList>();
+        return std::make_shared<CollisionLinkPairList>();
     }
 
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
             
 private:
             
@@ -215,6 +235,7 @@ private:
 };
         
 typedef ref_ptr<SimulatorItem> SimulatorItemPtr;
+
 }
 
 #endif

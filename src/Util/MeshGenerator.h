@@ -6,12 +6,14 @@
 #ifndef CNOID_UTIL_MESH_GENERATOR_H
 #define CNOID_UTIL_MESH_GENERATOR_H
 
-#include "SceneShape.h"
+#include "EigenTypes.h"
 #include <Eigen/StdVector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class SgMesh;
+class SgLineSet;
 class MeshNormalGenerator;
 
 class CNOID_EXPORT MeshGenerator
@@ -43,9 +45,9 @@ public:
     struct Extrusion
     {
         Vector2Array crossSection;
-        Vector2Array scale;
         Vector3Array spine;
         AngleAxisArray orientation;
+        Vector2Array scale;
         double creaseAngle;
         bool beginCap;
         bool endCap;

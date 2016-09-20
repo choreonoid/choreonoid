@@ -3,17 +3,15 @@
 */
 
 #include "PathVariableEditor.h"
-
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MenuManager.h"
-#include "Button.h"
+#include "Buttons.h"
 #include <cnoid/FileUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QHeaderView>
 #include <QDialogButtonBox>
-#include <boost/bind.hpp>
 #include <map>
 #include "gettext.h"
 
@@ -60,7 +58,7 @@ void PathVariableEditor::initialize(ExtensionManager* ext)
         MenuManager& mm = ext->menuManager();
         mm.setPath("/File").setPath(N_("Project File Options"));
         mm.addItem(_("Edit Path Variables"))
-            ->sigTriggered().connect(boost::bind(&PathVariableEditor::initAndShow, editor));
+            ->sigTriggered().connect(std::bind(&PathVariableEditor::initAndShow, editor));
         initialized = true;
     }
 }
@@ -97,7 +95,7 @@ PathVariableEditor::PathVariableEditor()
     hbox->addWidget(newVariableEntry);
     PushButton* button = new PushButton(_("Append"));
     hbox->addWidget(button);
-    button->sigClicked().connect(boost::bind(&PathVariableEditor::onAppendActivated, this));
+    button->sigClicked().connect(std::bind(&PathVariableEditor::onAppendActivated, this));
     vbox->addLayout(hbox);
     
     QPushButton* createButton = new QPushButton(_("&Apply"));

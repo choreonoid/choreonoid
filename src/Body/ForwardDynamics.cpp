@@ -9,7 +9,7 @@
 using namespace cnoid;
 
 
-ForwardDynamics::ForwardDynamics(const DyBodyPtr& body)
+ForwardDynamics::ForwardDynamics(DyBody* body)
     : body(body)
 {
     g.setZero();
@@ -53,6 +53,12 @@ void ForwardDynamics::setRungeKuttaMethod()
 void ForwardDynamics::enableSensors(bool on)
 {
     sensorsEnabled = on;
+}
+
+
+void ForwardDynamics::setOldAccelSensorCalcMode(bool on)
+{
+    sensorHelper.setOldAccelSensorCalcMode(on);
 }
 
 

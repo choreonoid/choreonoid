@@ -7,7 +7,6 @@
 #include <cnoid/Exception>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 

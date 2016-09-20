@@ -6,12 +6,29 @@
 #ifndef CNOID_BODY_LINK_H
 #define CNOID_BODY_LINK_H
 
+#include <cnoid/Referenced>
+#include <cnoid/EigenTypes>
+#ifdef WIN32
+#include "Link.h"
 #include <cnoid/SceneGraph>
+#include <cnoid/ValueTree>
+#endif
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT Link
+class Body;
+
+class Link;
+typedef ref_ptr<Link> LinkPtr;
+
+class SgNode;
+typedef ref_ptr<SgNode> SgNodePtr;
+
+class Mapping;
+typedef ref_ptr<Mapping> MappingPtr;
+
+class CNOID_EXPORT Link : public Referenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -34,6 +51,9 @@ public:
     Link* child() const { return child_; }
         
     bool isRoot() const { return !parent_; }
+
+    Body* body() { return body_; }
+    const Body* body() const { return body_; }
 
     Position& T() { return T_; }
     const Position& T() const { return T_; }
@@ -92,19 +112,24 @@ public:
 
     enum JointType {
         /// rotational joint (1 dof)
-        ROTATIONAL_JOINT,
+        REVOLUTE_JOINT = 0,
+        ROTATIONAL_JOINT = REVOLUTE_JOINT,
         /// translational joint (1 dof)
-        SLIDE_JOINT,
+        SLIDE_JOINT = 1,
         /// 6-DOF root link
-        FREE_JOINT,
+        FREE_JOINT = 2,
         /*
           Joint types below here are treated as a fixed joint
           when a code for processing a joint type is not given
         */
         /// fixed joint(0 dof)
-        FIXED_JOINT,
-        /// special joint for pseudo crawler simulation
-        CRAWLER_JOINT
+        FIXED_JOINT = 3,
+        /// special joint for simplified simulation of a continuous track
+        PSEUDO_CONTINUOUS_TRACK = 4,
+        // deprecated
+        CRAWLER_JOINT = 5,
+        
+        AGX_CRAWLER_JOINT = 6
     };
 
     int jointId() const { return jointId_; }
@@ -114,6 +139,8 @@ public:
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
     bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
+
+    std::string jointTypeString() const;
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }
@@ -193,8 +220,13 @@ public:
         void setOffsetRotation(const Eigen::MatrixBase<Derived>& offset) {
         Tb_.linear() = offset;
     }
+    template<typename T>
+    void setOffsetRotation(const Eigen::AngleAxis<T>& a) {
+        Tb_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+    }
+    
     template<typename Derived>
-        void setAccumlatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
+        void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& Rs) {
         Rs_ = Rs;
     }
         
@@ -205,22 +237,33 @@ public:
     void setJointRange(double lower, double upper) { q_lower_ = lower; q_upper_ = upper; }
     void setJointVelocityRange(double lower, double upper) { dq_lower_ = lower; dq_upper_ = upper; }
 
+    void setCenterOfMass(const Vector3& c) { c_ = c; }
     void setMass(double m) { m_ = m; }
     void setInertia(const Matrix3& I) { I_ = I; }
-    void setCenterOfMass(const Vector3& c) { c_ = c; }
     void setEquivalentRotorInertia(double Jm2) { Jm2_ = Jm2; }
         
     void setName(const std::string& name);
 
-    void setShape(SgNodePtr shape);
-    void setVisualShape(SgNodePtr shape);
-    void setCollisionShape(SgNodePtr shape);
+    void setShape(SgNode* shape);
+    void setVisualShape(SgNode* shape);
+    void setCollisionShape(SgNode* shape);
 
     // The following two methods should be deprecated after introducing Tb
     Matrix3 attitude() const { return R() * Rs_; }
     void setAttitude(const Matrix3& Ra) { R() = Ra * Rs_.transpose(); }
     Matrix3 calcRfromAttitude(const Matrix3& Ra) { return Ra * Rs_.transpose(); }
 
+    const Mapping* info() const { return info_; }
+    Mapping* info() { return info_; }
+
+    template<typename T> T info(const std::string& key) const;
+    template<typename T> T info(const std::string& key, const T& defaultValue) const;
+    template<typename T> void setInfo(const std::string& key, const T& value);
+
+    void resetInfo(Mapping* info);
+
+    double initialJointDisplacement() const { return initd_; }
+    double& initialJointDisplacement() { return initd_; }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     // fext, tauext
@@ -237,8 +280,9 @@ private:
     int index_; 
     int jointId_;
     Link* parent_;
-    Link* sibling_;
-    Link* child_;
+    LinkPtr sibling_;
+    LinkPtr child_;
+    Body* body_;
     Position T_;
     Position Tb_;
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.
@@ -248,10 +292,10 @@ private:
     double dq_;
     double ddq_;
     double u_;
-    Vector3	v_;
-    Vector3	w_;
-    Vector3	dv_;
-    Vector3	dw_;
+    Vector3 v_;
+    Vector3 w_;
+    Vector3 dv_;
+    Vector3 dw_;
     Vector3 c_;
     Vector3 wc_;
     double m_;
@@ -263,9 +307,20 @@ private:
     double dq_upper_;
     double dq_lower_;
     std::string name_;
+    double initd_;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
+    MappingPtr info_;
+
+    friend class Body;
+    
+    void setBody(Body* newBody);
+    void setBodySub(Body* newBody);
 };
+
+template<> CNOID_EXPORT double Link::info(const std::string& key) const;
+template<> CNOID_EXPORT double Link::info(const std::string& key, const double& defaultValue) const;
+template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const double& value);
 
 }
 	

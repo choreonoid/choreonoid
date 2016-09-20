@@ -7,16 +7,13 @@
 #include <vector>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
-#include <boost/make_shared.hpp>
 
 #include <cnoid/Body>
 #include <cnoid/Link>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/Camera>
 #include <cnoid/Exception>
 #include <cnoid/SceneGraph>
@@ -133,7 +130,7 @@ ColladaBodyLoaderImpl::~ColladaBodyLoaderImpl()
 }
 
 
-bool ColladaBodyLoader::load(BodyPtr body, const std::string& filename)
+bool ColladaBodyLoader::load(Body* body, const std::string& filename)
 {
     impl->loadBody(filename, *body); 
     return true;
@@ -394,13 +391,13 @@ DevicePtr ColladaBodyLoaderImpl::createSensor(DaeSensor* sensor)
             device = new ForceSensor;
         } else
             if (iequals(sensor->type, "base_imu")) {
-                device = new AccelSensor;
+                device = new AccelerationSensor;
             } else 
                 if (iequals(sensor->type, "base_pinhole_camera")) {
                     device = new Camera;
                     Camera* camera = static_cast<Camera*>(device.get());
                     camera->setResolution(sensor->imageDimensions[0], sensor->imageDimensions[1]);
-                    camera->setNearDistance(sensor->focalLength);
+                    camera->setNearClipDistance(sensor->focalLength);
                     camera->setFieldOfView (sensor->focalLength);
                 } else {
                     throwException((format(_("invalid sensor-type:%1%")) % sensor->type).str());
@@ -413,7 +410,7 @@ DevicePtr ColladaBodyLoaderImpl::createSensor(DaeSensor* sensor)
 #ifdef _OLD_VERSION
 void ColladaBodyLoaderImpl::setColdetModel(Link* link, SgGroup* group)
 {
-    ColdetModelPtr model(boost::make_shared<ColdetModel>());
+    ColdetModelPtr model(std::make_shared<ColdetModel>());
     createColdetModel(group, NULL, model.get());
     model->setName(link->name());
     model->build();

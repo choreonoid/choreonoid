@@ -4,10 +4,15 @@
 */
 
 #include "VRMLBodyLoader.h"
-#include "Sensor.h"
+#include "Body.h"
+#include "ForceSensor.h"
+#include "RateGyroSensor.h"
+#include "AccelerationSensor.h"
 #include "Camera.h"
+#include "RangeCamera.h"
 #include "RangeSensor.h"
-#include "Light.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/EasyScanner>
@@ -15,15 +20,13 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
-#include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
+using boost::format;
 
 namespace cnoid {
 
@@ -65,7 +68,7 @@ public:
     Body* body;
     VRMLProtoInstancePtr rootJointNode;
     std::vector<VRMLProtoInstancePtr> extraJointNodes;
-    dynamic_bitset<> validJointIdSet;
+    boost::dynamic_bitset<> validJointIdSet;
     int numValidJointIds;
     VRMLToSGConverter sgConverter;
     int divisionNumber;
@@ -73,7 +76,7 @@ public:
     bool isVerbose;
     int messageIndent;
 
-    typedef boost::function<DevicePtr(VRMLProtoInstance* node)> DeviceFactory;
+    typedef std::function<DevicePtr(VRMLProtoInstance* node)> DeviceFactory;
     typedef map<string, DeviceFactory> DeviceFactoryMap;
     static DeviceFactoryMap deviceFactories;
 
@@ -90,7 +93,6 @@ public:
     ~VRMLBodyLoaderImpl();
     VRMLNodePtr getOriginalNode(Link* link);
     bool load(Body* body, const std::string& filename);
-    BodyPtr load(const std::string& filename);        
     void readTopNodes();
     void checkHumanoidProto(VRMLProto* proto);
     void checkJointProto(VRMLProto* proto);
@@ -112,7 +114,7 @@ public:
     static void readDeviceCommonParameters(Device& device, VRMLProtoInstance* node);
     static ForceSensorPtr createForceSensor(VRMLProtoInstance* node);
     static RateGyroSensorPtr createRateGyroSensor(VRMLProtoInstance* node);
-    static AccelSensorPtr createAccelSensor(VRMLProtoInstance* node);
+    static AccelerationSensorPtr createAccelerationSensor(VRMLProtoInstance* node);
     static CameraPtr createCamera(VRMLProtoInstance* node);
     static RangeSensorPtr createRangeSensor(VRMLProtoInstance* node);
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
@@ -310,7 +312,7 @@ VRMLBodyLoaderImpl::VRMLBodyLoaderImpl()
     if(deviceFactories.empty()){
         deviceFactories["ForceSensor"]        = &VRMLBodyLoaderImpl::createForceSensor;
         deviceFactories["Gyro"]               = &VRMLBodyLoaderImpl::createRateGyroSensor;
-        deviceFactories["AccelerationSensor"] = &VRMLBodyLoaderImpl::createAccelSensor;
+        deviceFactories["AccelerationSensor"] = &VRMLBodyLoaderImpl::createAccelerationSensor;
         //sensorTypeMap["PressureSensor"]     = Sensor::PRESSURE;
         //sensorTypeMap["PhotoInterrupter"]   = Sensor::PHOTO_INTERRUPTER;
         //sensorTypeMap["TorqueSensor"]       = Sensor::TORQUE;
@@ -385,11 +387,11 @@ VRMLNodePtr VRMLBodyLoaderImpl::getOriginalNode(Link* link)
 }
 
 
-bool VRMLBodyLoader::load(BodyPtr body, const std::string& filename)
+bool VRMLBodyLoader::load(Body* body, const std::string& filename)
 {
     body->clearDevices();
     body->clearExtraJoints();
-    return impl->load(body.get(), filename);
+    return impl->load(body, filename);
 }
 
 
@@ -418,7 +420,7 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     } catch(EasyScanner::Exception & ex){
         os() << ex.getFullMessage() << endl;
     } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
+        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
     } catch(const std::exception& ex){
@@ -615,6 +617,7 @@ void VRMLBodyLoaderImpl::checkSpotLightDeviceProto(VRMLProto* proto)
     requireField<SFVec3f>(proto, "direction");
     requireField<SFFloat>(proto, "intensity");
     requireField<SFBool>(proto, "on");
+    addField<SFFloat>(proto, "cutOffExponent", 1.0);
 }
 
 
@@ -665,7 +668,7 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
             if(numValidJointIds < validJointIdSet.size()){
                 for(size_t i=0; i < validJointIdSet.size(); ++i){
                     if(!validJointIdSet[i]){
-                        os() << str(format("Warning: Joint ID %1% is not specified.") % i) << endl;
+                        os() << str(format(_("Warning: Joint ID %1% is not specified.")) % i) << endl;
                     }
                 }
             }
@@ -778,7 +781,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
             ++numValidJointIds;
             validJointIdSet.set(link->jointId());
         } else {
-            os() << str(format("Warning: Joint ID %1% is duplicated.") % link->jointId()) << endl;
+            os() << str(format(_("Warning: Joint ID %1% is duplicated.")) % link->jointId()) << endl;
         }
     }
 
@@ -788,7 +791,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setOffsetTranslation(parentRs * b);
         Matrix3 R;
         readVRMLfield(jf["rotation"], R);
-        link->setAccumlatedSegmentRotation(parentRs * R);
+        link->setAccumulatedSegmentRotation(parentRs * R);
     }
 
     string jointType;
@@ -802,10 +805,16 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::ROTATIONAL_JOINT);
     } else if(jointType == "slide" ){
         link->setJointType(Link::SLIDE_JOINT);
+    } else if(jointType == "pseudoContinuousTrack"){
+        link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
     } else if(jointType == "crawler"){
         link->setJointType(Link::CRAWLER_JOINT);
+        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinousTrack' instead."))
+                    % link->name()) << endl;
+    } else if(jointType == "agx_crawler"){
+        link->setJointType(Link::AGX_CRAWLER_JOINT);
     } else {
-        link->setJointType(Link::FIXED_JOINT);
+        throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
     }
 
     if(link->jointType() == Link::FREE_JOINT || link->jointType() == Link::FIXED_JOINT){
@@ -849,7 +858,13 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setEquivalentRotorInertia(get<SFFloat>(*field));
     } else {
         link->setEquivalentRotorInertia(gearRatio * gearRatio * Ir);
-    }    
+    }
+
+    link->setInfo("rotorInertia", Ir);
+    link->setInfo("gearRatio", gearRatio);
+    link->setInfo("torqueConst", torqueConst);
+    link->setInfo("encoderPulse", encoderPulse);
+    link->setInfo("rotorResistor", rotorResistor);
 
     double maxlimit = numeric_limits<double>::max();
 
@@ -946,7 +961,9 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     Vector3 c;
     readVRMLfield(sf["centerOfMass"], c);
     iSegment.c = T.linear() * c + T.translation();
-    iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
+    if (iLink.m + iSegment.m > 0){
+        iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
+    }
     iLink.m += iSegment.m;
     
     Matrix3 I;
@@ -962,12 +979,18 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     SgNodePtr node = sgConverter.convert(segmentNode);
     if(node){
         if(T.isApprox(Affine3::Identity())){
+            node->setName(segmentNode->defName);
             iLink.visualShape->addChild(node);
         } else {
             SgPosTransform* transform = new SgPosTransform(T);
             transform->addChild(node);
+            transform->setName(segmentNode->defName);
             iLink.visualShape->addChild(transform);
         }
+    } else {
+        node = new SgNode;
+        node->setName(segmentNode->defName);
+        iLink.visualShape->addChild(node);
     }
 }
 
@@ -1001,6 +1024,7 @@ void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* seg
         }
     }
     if(transform && !transform->empty()){
+        transform->setName(segmentShapeNode->defName);
         iLink.collisionShape->addChild(transform);
     }
 }
@@ -1013,7 +1037,7 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
     
     DeviceFactoryMap::iterator p = deviceFactories.find(typeName);
     if(p == deviceFactories.end()){
-        os() << str(format("Sensor type %1% is not supported.\n") % typeName) << endl;
+        os() << str(format(_("Sensor type %1% is not supported.\n")) % typeName) << endl;
     } else {
         DeviceFactory& factory = p->second;
         DevicePtr device = factory(deviceNode);
@@ -1075,9 +1099,9 @@ RateGyroSensorPtr VRMLBodyLoaderImpl::createRateGyroSensor(VRMLProtoInstance* no
 }
 
 
-AccelSensorPtr VRMLBodyLoaderImpl::createAccelSensor(VRMLProtoInstance* node)
+AccelerationSensorPtr VRMLBodyLoaderImpl::createAccelerationSensor(VRMLProtoInstance* node)
 {
-    AccelSensorPtr sensor = new AccelSensor();
+    AccelerationSensorPtr sensor = new AccelerationSensor();
     readDeviceCommonParameters(*sensor, node);
 
     SFVec3f dv_max;
@@ -1094,7 +1118,10 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
     RangeCamera* range = 0;
     
     const SFString& type = get<SFString>(node->fields["type"]);
-    if(type == "DEPTH"){
+    if(type == "COLOR"){
+        camera = new Camera;
+        camera->setImageType(Camera::COLOR_IMAGE);
+    } else if(type == "DEPTH"){
         range = new RangeCamera;
         range->setOrganized(true);
         range->setImageType(Camera::NO_IMAGE);
@@ -1110,11 +1137,12 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
         range = new RangeCamera;
         range->setOrganized(false);
         range->setImageType(Camera::COLOR_IMAGE);
-    } else {
-        camera = new Camera;
     }
+
     if(range){
         camera = range;
+    } else {
+        camera = new Camera;
     }
         
     readDeviceCommonParameters(*camera, node);
@@ -1125,8 +1153,8 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
     }
     camera->setResolution(getValue<SFInt32>(node, "width"), getValue<SFInt32>(node, "height"));
     camera->setFieldOfView(getValue<SFFloat>(node, "fieldOfView"));
-    camera->setNearDistance(getValue<SFFloat>(node, "frontClipDistance"));
-    camera->setFarDistance(getValue<SFFloat>(node, "backClipDistance"));
+    camera->setNearClipDistance(getValue<SFFloat>(node, "frontClipDistance"));
+    camera->setFarClipDistance(getValue<SFFloat>(node, "backClipDistance"));
     camera->setFrameRate(getValue<SFFloat>(node, "frameRate"));
     
     return camera;
@@ -1174,6 +1202,7 @@ SpotLightPtr VRMLBodyLoaderImpl::createSpotLight(VRMLProtoInstance* node)
     light->setDirection(getValue<SFVec3f>(node, "direction"));
     light->setBeamWidth(getValue<SFFloat>(node, "beamWidth"));
     light->setCutOffAngle(getValue<SFFloat>(node, "cutOffAngle"));
+    light->setCutOffExponent(getValue<SFFloat>(node, "cutOffExponent"));
     SFVec3f attenuation = getValue<SFVec3f>(node, "attenuation");
     light->setConstantAttenuation(attenuation[0]);
     light->setLinearAttenuation(attenuation[1]);
@@ -1199,7 +1228,7 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         for(int j=0; j < 2; ++j){
             if(!joint.link[j]){
                 throw invalid_argument(
-                    str(format("Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name") % (j+1)));
+                    str(format(_("Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name")) % (j+1)));
             }
         }
 
@@ -1210,7 +1239,7 @@ void VRMLBodyLoaderImpl::setExtraJoints()
         } else if(jointType == "ball"){
             joint.type = Body::EJ_BALL;
         } else {
-            throw invalid_argument(str(format("JointType \"%1%\" is not supported.") % jointType));
+            throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
         }
             
         readVRMLfield(f["link1LocalPos"], joint.point[0]);

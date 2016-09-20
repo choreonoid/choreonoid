@@ -59,7 +59,7 @@ const char* cnoid::labelOfVRMLfieldTypeId(const std::type_info& fieldType)
 
 VRMLNode::VRMLNode()
 {
-    refCounter = 0;
+
 }
 
 
@@ -535,6 +535,8 @@ VRMLBillboard::VRMLBillboard()
 
 VRMLFog::VRMLFog()
 {
+    categorySet.set(TOP_NODE);    
+    categorySet.set(CHILD_NODE);
     color.setZero();
     visibilityRange = 0.0;
     fogType = "LINEAR";
@@ -544,6 +546,7 @@ VRMLFog::VRMLFog()
 VRMLWorldInfo::VRMLWorldInfo()
 {
     categorySet.set(TOP_NODE);
+    categorySet.set(CHILD_NODE);
 }
 
 

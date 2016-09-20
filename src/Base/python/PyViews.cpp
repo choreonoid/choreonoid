@@ -6,11 +6,19 @@
 #include "../SceneWidget.h"
 #include "../SceneView.h"
 #include "../TaskView.h"
+#include "../ViewManager.h"
 #include <cnoid/PySignal>
 #include <QWidget>
 
 using namespace boost::python;
 using namespace cnoid;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(View)
+CNOID_PYTHON_DEFINE_GET_POINTER(TaskView)
+CNOID_PYTHON_DEFINE_GET_POINTER(SceneWidget)
+CNOID_PYTHON_DEFINE_GET_POINTER(SceneView)
+CNOID_PYTHON_DEFINE_GET_POINTER(MessageView)
 
 namespace {
 
@@ -21,6 +29,11 @@ void (MessageView::*MessageView_notify)(const std::string& message) = &MessageVi
 }
 
 namespace cnoid {
+
+template<> boost::python::object pyGetSignalArgObject(View*& view){
+    return boost::python::object(boost::python::ptr(view));
+}
+
 
 void exportPyViews()
 {
@@ -106,6 +119,13 @@ void exportPyViews()
     class_<TaskView, TaskView*, bases<View, AbstractTaskSequencer>, boost::noncopyable>("TaskView", no_init)
         .def("instance", &TaskView::instance,
                 return_value_policy<reference_existing_object>()).staticmethod("instance")
+        ;
+
+    class_<ViewManager, boost::noncopyable>("ViewManager", no_init)
+        .def("sigViewCreated", &ViewManager::sigViewCreated).staticmethod("sigViewCreated")
+        .def("sigViewActivated", &ViewManager::sigViewActivated).staticmethod("sigViewActivated")
+        .def("sigViewDeactivated", &ViewManager::sigViewDeactivated).staticmethod("sigViewDeactivated")
+        .def("sigViewRemoved", &ViewManager::sigViewRemoved).staticmethod("sigViewRemoved")
         ;
 }
 

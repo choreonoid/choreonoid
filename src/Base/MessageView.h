@@ -6,10 +6,10 @@
 #define CNOID_BASE_MESSAGE_VIEW_H
 
 #include <cnoid/View>
+#include <QString>
+#include <boost/format.hpp>
 #include <string>
 #include <iosfwd>
-#include <boost/format.hpp>
-#include <QString>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -26,6 +26,10 @@ public:
       
     MessageView();
     ~MessageView();
+
+#if defined(_WIN32) && defined(ERROR)
+#undef ERROR
+#endif
 
     enum MessageType { NORMAL, ERROR, WARNING, HIGHLIGHT };
 
@@ -99,6 +103,11 @@ private:
 CNOID_EXPORT std::ostream& mvout(bool doFlush = false);
 #endif
 
+CNOID_EXPORT void showMessageBox(const std::string& message);
+CNOID_EXPORT void showMessageBox(const boost::format& message);
+CNOID_EXPORT void showMessageBox(const char* message);
+CNOID_EXPORT void showMessageBox(const QString& message);
+
 CNOID_EXPORT void showWarningDialog(const std::string& message);
 CNOID_EXPORT void showWarningDialog(const boost::format& message);
 CNOID_EXPORT void showWarningDialog(const char* message);
@@ -107,6 +116,7 @@ CNOID_EXPORT void showWarningDialog(const QString& message);
 CNOID_EXPORT bool showConfirmDialog(const char* caption, const char* message);
 CNOID_EXPORT bool showConfirmDialog(const std::string& caption, const std::string& message);
 CNOID_EXPORT bool showConfirmDialog(const QString& caption, const QString& message);
+
 }
 
 #endif

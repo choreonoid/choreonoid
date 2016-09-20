@@ -2,14 +2,14 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_POSE_PROVIDER_TO_BODY_MOTION_CONVERTER_H_INCLUDED
-#define CNOID_BODY_POSE_PROVIDER_TO_BODY_MOTION_CONVERTER_H_INCLUDED
+#ifndef CNOID_BODY_POSE_PROVIDER_TO_BODY_MOTION_CONVERTER_H
+#define CNOID_BODY_POSE_PROVIDER_TO_BODY_MOTION_CONVERTER_H
 
-#include "Body.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class Body;
 class BodyMotion;
 class PoseProvider;
 
@@ -20,13 +20,14 @@ public:
     void setTimeRange(double lower, double upper);
     void setFullTimeRange();
     void setAllLinkPositionOutput(bool on);
-    bool convert(BodyPtr body, PoseProvider* provider, BodyMotion& motion);
+    bool convert(Body* body, PoseProvider* provider, BodyMotion& motion);
 
 private:
     double lowerTime;
     double upperTime;
     bool allLinkPositionOutputMode;
 };
+
 }
 
 #endif

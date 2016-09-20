@@ -12,7 +12,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace stdph = std::placeholders;
 using namespace cnoid;
 
 
@@ -21,7 +21,7 @@ void PythonScriptItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().registerClass<PythonScriptItem>(N_("PythonScriptItem"));
     ext->itemManager().addLoader<PythonScriptItem>(
         _("Python Script"), "PYTHON-SCRIPT-FILE", "py",
-        boost::bind(&PythonScriptItem::setScriptFilename, _1, _2));
+        std::bind(&PythonScriptItem::setScriptFilename, stdph::_1, stdph::_2));
 }
 
 
@@ -56,7 +56,7 @@ bool PythonScriptItem::setScriptFilename(const std::string& filename)
 {
     bool result = impl->setScriptFilename(filename);
     if(result && doExecutionOnLoading){
-        callLater(bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
+        callLater(std::bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
     }
     return result;
 }
@@ -122,7 +122,7 @@ bool PythonScriptItem::terminate()
 }
 
 
-ItemPtr PythonScriptItem::doDuplicate() const
+Item* PythonScriptItem::doDuplicate() const
 {
     return new PythonScriptItem(*this);
 }
@@ -157,7 +157,7 @@ bool PythonScriptItem::restore(const Archive& archive)
         bool loaded = load(filename);
         doExecutionOnLoading = doExecution;
         if(loaded && doExecution){
-            archive.addPostProcess(boost::bind(&PythonScriptItem::execute, this));
+            archive.addPostProcess(std::bind(&PythonScriptItem::execute, this));
         }
         return loaded;
     }

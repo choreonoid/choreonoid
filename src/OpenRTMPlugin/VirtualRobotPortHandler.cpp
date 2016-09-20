@@ -7,12 +7,11 @@
 #include "BodyRTCItem.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/DyBody>
-#include <boost/bind.hpp>
+#include <cnoid/Light>
 
 using namespace std;
 using namespace RTC;
 using namespace cnoid;
-
 
 PortHandler::~PortHandler()
 {
@@ -71,21 +70,21 @@ void SensorStateOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
     break;
     case RATE_GYRO_SENSOR:
     {
-        const DeviceList<RateGyroSensor>& gyroSensors = bodyRTC->gyroSensors();
-        const int n = gyroSensors.size();
+        const DeviceList<RateGyroSensor>& rateGyroSensors = bodyRTC->rateGyroSensors();
+        const int n = rateGyroSensors.size();
         values.data.length(3 * n);
         for(int i=0; i < n; i++){
-            Eigen::Map<Vector3>(&values.data[i*3]) = gyroSensors[i]->w();
+            Eigen::Map<Vector3>(&values.data[i*3]) = rateGyroSensors[i]->w();
         }
     }
     break;
     case ACCELERATION_SENSOR:
     {
-        const DeviceList<AccelSensor>& accelSensors = bodyRTC->accelSensors();
-        const int n = accelSensors.size();
+        const DeviceList<AccelerationSensor>& accelerationSensors = bodyRTC->accelerationSensors();
+        const int n = accelerationSensors.size();
         values.data.length(3 * n);
         for(int i=0; i < n; i++){
-            Eigen::Map<Vector3>(&values.data[i*3]) = accelSensors[i]->dv();
+            Eigen::Map<Vector3>(&values.data[i*3]) = accelerationSensors[i]->dv();
         }
     }
     break;
@@ -260,12 +259,12 @@ void SensorDataOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
     const BodyPtr& body = bodyRTC->body();
     if(!sensorNames.empty()){
-        if(Sensor* sensor = body->findDevice<Sensor>(sensorNames[0])){
+        if(Device* sensor = body->findDevice(sensorNames[0])){
             const int dataSize = sensor->stateSize();
             value.data.length(dataSize);
             if(dataSize > 0){
                 for(size_t i=0; i < sensorNames.size(); ++i){
-                    if(Sensor* sensor = body->findDevice<Sensor>(sensorNames[i])){
+                    if(Device* sensor = body->findDevice(sensorNames[i])){
                         sensor->writeState(&value.data[i * dataSize]);
                     }
                 }
@@ -321,7 +320,7 @@ AccelerationSensorOutPortHandler::AccelerationSensorOutPortHandler(PortInfo& inf
 void AccelerationSensorOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
     if(!sensorNames.empty()){
-        if(AccelSensor* accelSensor = bodyRTC->body()->findDevice<AccelSensor>(sensorNames[0])){
+        if(AccelerationSensor* accelSensor = bodyRTC->body()->findDevice<AccelerationSensor>(sensorNames[0])){
             value.data.ax = accelSensor->dv().x();
             value.data.ay = accelSensor->dv().y();
             value.data.az = accelSensor->dv().z();
@@ -385,32 +384,34 @@ void CameraImageOutPortHandler::initialize(Body* simBody)
     if(!cameraName.empty()){
         camera = simBody->findDevice<Camera>(cameraName);
     }else{
-        DeviceList<Camera> cameras = simBody->devices();
+        DeviceList<Camera> cameras(simBody->devices());
         if(!cameras.empty())
             camera = cameras[0];
     }
 
     if(camera){
         double fovy2 = camera->fieldOfView() / 2.0;
-        double near = camera->nearDistance();
         double width = camera->resolutionX();
         double height = camera->resolutionY();
-        double aspect = width / height;
-        double fv = 1.0 / tan(fovy2);
-        double fu = fv / aspect;
-        double v0 = near * tan(fovy2);
-        double u0 = v0 * aspect;
+        double minlength = std::min(width, height);
+        double fu, fv;
+        fv = fu = minlength / tan(fovy2) / 2.0;
+        double u0 = (width - 1)/2.0;
+        double v0 = (height - 1)/2.0;
+
         value.data.intrinsic.matrix_element[0] = fu;
         value.data.intrinsic.matrix_element[1] = 0.0;
         value.data.intrinsic.matrix_element[2] = u0;
         value.data.intrinsic.matrix_element[3] = fv;
         value.data.intrinsic.matrix_element[4] = v0;
-        value.data.intrinsic.distortion_coefficient.length(0);
+        value.data.intrinsic.distortion_coefficient.length(5);
+        for (int i=0; i<5; i++)
+          value.data.intrinsic.distortion_coefficient[i] = 0.0; // zero distortion is natural in simulator
         for(int i=0; i<4; i++)
             for(int j=0; j<4; j++)
                 value.data.extrinsic[i][j] = i==j? 1.0: 0.0;
 
-        camera->sigStateChanged().connect(boost::bind(&CameraImageOutPortHandler::onCameraStateChanged, this));
+        camera->sigStateChanged().connect(std::bind(&CameraImageOutPortHandler::onCameraStateChanged, this));
     }
 }
 
@@ -438,7 +439,7 @@ void CameraImageOutPortHandler::onCameraStateChanged()
             memcpy(dis, src, length);
         }
         prevImage = camera->sharedImage();
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         setTime(value, controlTime - camera->delay());
         outPort.write();
     }
@@ -447,7 +448,7 @@ void CameraImageOutPortHandler::onCameraStateChanged()
 
 void CameraImageOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     controlTime = bodyRTC->controlTime();
 }
 
@@ -531,7 +532,7 @@ void CameraRangeOutPortHandler::initialize(Body* simBody)
         value.is_bigendian = false;
         value.is_dense = true;
         
-        rangeCamera->sigStateChanged().connect(boost::bind(&CameraRangeOutPortHandler::onCameraStateChanged, this));
+        rangeCamera->sigStateChanged().connect(std::bind(&CameraRangeOutPortHandler::onCameraStateChanged, this));
     }
 
 }
@@ -577,7 +578,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
         }
 
         prevPoints = rangeCamera->sharedPoints();
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         setTime(value, controlTime - rangeCamera->delay());
         outPort.write();
     }
@@ -586,7 +587,7 @@ void CameraRangeOutPortHandler::onCameraStateChanged()
 
 void CameraRangeOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     controlTime = bodyRTC->controlTime();
 }
 
@@ -639,7 +640,7 @@ void RangeSensorOutPortHandler::initialize(Body* simBody)
         value.geometry.geometry.size.h = 0.0;
         value.geometry.elementGeometries.length(0);
         //
-        rangeSensor->sigStateChanged().connect(boost::bind(&RangeSensorOutPortHandler::onRangeSensorStateChanged, this));
+        rangeSensor->sigStateChanged().connect(std::bind(&RangeSensorOutPortHandler::onRangeSensorStateChanged, this));
     }
 }
 
@@ -653,7 +654,7 @@ void RangeSensorOutPortHandler::onRangeSensorStateChanged()
             value.ranges[i] = src[i];
 
         prevRangeData = rangeSensor->sharedRangeData();
-        boost::lock_guard<boost::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         setTime(value, controlTime - rangeSensor->delay());
         outPort.write();
     }
@@ -662,7 +663,7 @@ void RangeSensorOutPortHandler::onRangeSensorStateChanged()
 
 void RangeSensorOutPortHandler::inputDataFromSimulator(BodyRTCItem* bodyRTC)
 {
-    boost::lock_guard<boost::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     controlTime = bodyRTC->controlTime();
 }
 

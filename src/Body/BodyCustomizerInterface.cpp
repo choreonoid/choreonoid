@@ -21,10 +21,13 @@ using namespace cnoid;
 using namespace std;
 using namespace boost;
 
+#ifdef _WIN32
+# include <windows.h>
+#endif
+
 namespace {
 
 #ifdef _WIN32
-# include <windows.h>
 const char* DLLSFX = ".dll";
 const char* PATH_DELIMITER = ";";
 const char* CNOID_BODY_SHARE_DIR="";

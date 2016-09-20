@@ -9,7 +9,6 @@
 #include <cnoid/MenuManager>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
-#include <boost/bind.hpp>
 #include <map>
 #include "gettext.h"
 
@@ -20,7 +19,7 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-typedef boost::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> ExtraSeqEngineFactory;
+typedef std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> ExtraSeqEngineFactory;
 typedef map<string, ExtraSeqEngineFactory> ExtraSeqEngineFactoryMap;
 ExtraSeqEngineFactoryMap extraSeqEngineFactories;
 
@@ -68,11 +67,11 @@ public:
         
         connections.add(
             motionItem->sigUpdated().connect(
-                boost::bind(&BodyMotionEngine::notifyUpdate, self)));
+                std::bind(&BodyMotionEngine::notifyUpdate, self)));
         
         connections.add(
             motionItem->sigExtraSeqItemsChanged().connect(
-                boost::bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
+                std::bind(&BodyMotionEngineImpl::updateExtraSeqEngines, this)));
     }
     
     void updateExtraSeqEngines(){
@@ -215,7 +214,7 @@ void BodyMotionEngine::initialize(ExtensionManager* ext)
 
 
 void BodyMotionEngine::addExtraSeqEngineFactory
-(const std::string& key, boost::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
+(const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
 {
     extraSeqEngineFactories[key] = factory;
 }

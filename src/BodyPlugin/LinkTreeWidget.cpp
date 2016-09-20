@@ -14,8 +14,6 @@
 #include <QBoxLayout>
 #include <QEvent>
 #include <QApplication>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <set>
 #include <map>
 #include <deque>
@@ -24,6 +22,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 
@@ -100,7 +99,7 @@ public:
             linkExpansions.resize(n, true);
         }
     };
-    typedef boost::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
+    typedef std::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
 
     typedef map<BodyItemPtr, BodyItemInfoPtr> BodyItemInfoMap;
     BodyItemInfoMap bodyItemInfoCache;
@@ -116,10 +115,10 @@ public:
 
     void initialize();
     void enableCache(bool on);
-    BodyItemInfoPtr getBodyItemInfo(BodyItemPtr bodyItem);
+    BodyItemInfoPtr getBodyItemInfo(BodyItem* bodyItem);
     void onBodyItemDetachedFromRoot(BodyItem* bodyItem);
     void clearTreeItems();
-    void setCurrentBodyItem(BodyItemPtr bodyItem, bool forceTreeUpdate);
+    void setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate);
     void restoreTreeState();
     void restoreSubTreeState(QTreeWidgetItem* item);
     void restoreTreeStateSub(QTreeWidgetItem* parentItem);
@@ -134,14 +133,15 @@ public:
     void addCustomRows();
     void onListingModeChanged(int index);
     void onSelectionChanged();
-    Signal<void()>& sigSelectionChangedOf(BodyItemPtr bodyItem);
-    const std::vector<int>& getSelectedLinkIndices(BodyItemPtr bodyItem);
-    const boost::dynamic_bitset<>& getLinkSelection(BodyItemPtr bodyItem);
+    Signal<void()>& sigSelectionChangedOf(BodyItem* bodyItem);
+    int selectedLinkIndex(BodyItem* bodyItem) const;
+    const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
+    const boost::dynamic_bitset<>& linkSelection(BodyItem* bodyItem);
     void onCustomContextMenuRequested(const QPoint& pos);
     void setExpansionState(const LinkTreeItem* item, bool on);
     void onItemExpanded(QTreeWidgetItem* treeWidgetItem);
     void onItemCollapsed(QTreeWidgetItem* treeWidgetItem);
-    bool makeSingleSelection(BodyItemPtr& bodyItem, int linkIndex);
+    bool makeSingleSelection(BodyItem* bodyItem, int linkIndex);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -214,7 +214,7 @@ QVariant LinkTreeItem::data(int column, int role) const
     QVariant value;
     LinkTreeWidget* tree = static_cast<LinkTreeWidget*>(treeWidget());
     LinkTreeWidget::ColumnDataFunction& func = tree->impl->columnInfos[column].dataFunction;
-    if(!func.empty()){
+    if(func){
         func(this, role, value);
     }
     if(value.isValid()){
@@ -228,7 +228,7 @@ void LinkTreeItem::setData(int column, int role, const QVariant& value)
 {
     LinkTreeWidget* tree = static_cast<LinkTreeWidget*>(treeWidget());
     LinkTreeWidget::ColumnSetDataFunction& func = tree->impl->columnInfos[column].setDataFunction;
-    if(!func.empty()){
+    if(func){
         func(this, role, value);
     }
     return QTreeWidgetItem::setData(column, role, value);
@@ -315,7 +315,7 @@ void LinkTreeWidgetImpl::initialize()
     listingMode = LinkTreeWidget::LINK_LIST;
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.sigCurrentIndexChanged().connect(
-        boost::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
+        std::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
 }
 
 
@@ -543,7 +543,7 @@ void LinkTreeWidget::fixListingMode(bool on)
 }
 
 
-LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItemPtr bodyItem)
+LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info;
 
@@ -561,10 +561,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
             if(!isCacheEnabled){
                 bodyItemInfoCache.clear();
             }
-            info = boost::make_shared<BodyItemInfo>();
+            info = std::make_shared<BodyItemInfo>();
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                boost::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem.get()));
+                std::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
             bodyItemInfoCache[bodyItem] = info;
         }
 
@@ -579,7 +579,7 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
 
 void LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
 {
-    if(currentBodyItem.get() == bodyItem){
+    if(currentBodyItem == bodyItem){
         setCurrentBodyItem(0, false);
     }
 
@@ -590,7 +590,7 @@ void LinkTreeWidgetImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
     }
 }
 
-void LinkTreeWidget::setBodyItem(BodyItemPtr bodyItem)
+void LinkTreeWidget::setBodyItem(BodyItem* bodyItem)
 {
     impl->setCurrentBodyItem(bodyItem, false);
 }
@@ -598,7 +598,7 @@ void LinkTreeWidget::setBodyItem(BodyItemPtr bodyItem)
 
 BodyItem* LinkTreeWidget::bodyItem()
 {
-    return impl->currentBodyItem.get();
+    return impl->currentBodyItem;
 }
 
 
@@ -624,7 +624,7 @@ void LinkTreeWidgetImpl::clearTreeItems()
 }
 
 
-void LinkTreeWidgetImpl::setCurrentBodyItem(BodyItemPtr bodyItem, bool forceTreeUpdate)
+void LinkTreeWidgetImpl::setCurrentBodyItem(BodyItem* bodyItem, bool forceTreeUpdate)
 {
     if(TRACE_FUNCTIONS){
         cout << "LinkTreeWidgetImpl::setCurrentBodyItem()" << endl;
@@ -765,7 +765,7 @@ void LinkTreeWidgetImpl::addChild(LinkTreeItem* parentItem, LinkTreeItem* item)
 
     for(size_t col=0; col < columnInfos.size(); ++col){
         LinkTreeWidget::ColumnWidgetFunction& func = columnInfos[col].widgetFunction;
-        if(!func.empty()){
+        if(func){
             QWidget* widget = func(item);
             if(widget){
                 self->setItemWidget(item, col, widget);
@@ -934,13 +934,13 @@ SignalProxy<void()> LinkTreeWidget::sigSelectionChanged()
 }
 
 
-SignalProxy<void()> LinkTreeWidget::sigSelectionChanged(BodyItemPtr bodyItem)
+SignalProxy<void()> LinkTreeWidget::sigSelectionChanged(BodyItem* bodyItem)
 {
     return impl->sigSelectionChangedOf(bodyItem);
 }
 
 
-Signal<void()>& LinkTreeWidgetImpl::sigSelectionChangedOf(BodyItemPtr bodyItem)
+Signal<void()>& LinkTreeWidgetImpl::sigSelectionChangedOf(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
     if(info){
@@ -950,19 +950,44 @@ Signal<void()>& LinkTreeWidgetImpl::sigSelectionChangedOf(BodyItemPtr bodyItem)
 }
 
 
-const std::vector<int>& LinkTreeWidget::getSelectedLinkIndices()
+int LinkTreeWidget::selectedLinkIndex() const
 {
-    return impl->getSelectedLinkIndices(impl->currentBodyItem);
+    return impl->selectedLinkIndex(impl->currentBodyItem);
 }
 
 
-const std::vector<int>& LinkTreeWidget::getSelectedLinkIndices(BodyItemPtr bodyItem)
+int LinkTreeWidget::selectedLinkIndex(BodyItem* bodyItem) const
 {
-    return impl->getSelectedLinkIndices(bodyItem);
+    return impl->selectedLinkIndex(bodyItem);
 }
 
 
-const std::vector<int>& LinkTreeWidgetImpl::getSelectedLinkIndices(BodyItemPtr bodyItem)
+int LinkTreeWidgetImpl::selectedLinkIndex(BodyItem* bodyItem) const
+{
+    BodyItemInfoPtr info = const_cast<LinkTreeWidgetImpl*>(this)->getBodyItemInfo(bodyItem);
+    if(info){
+        dynamic_bitset<>::size_type index = info->selection.find_first();
+        if(index != dynamic_bitset<>::npos){
+            return index;
+        }
+    }
+    return -1;
+}
+
+
+const std::vector<int>& LinkTreeWidget::selectedLinkIndices()
+{
+    return impl->selectedLinkIndices(impl->currentBodyItem);
+}
+
+
+const std::vector<int>& LinkTreeWidget::selectedLinkIndices(BodyItem* bodyItem)
+{
+    return impl->selectedLinkIndices(bodyItem);
+}
+
+
+const std::vector<int>& LinkTreeWidgetImpl::selectedLinkIndices(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
     if(info){
@@ -979,19 +1004,19 @@ const std::vector<int>& LinkTreeWidgetImpl::getSelectedLinkIndices(BodyItemPtr b
 }
 
 
-const boost::dynamic_bitset<>& LinkTreeWidget::getLinkSelection()
+const boost::dynamic_bitset<>& LinkTreeWidget::linkSelection()
 {
-    return impl->getLinkSelection(impl->currentBodyItem);
+    return impl->linkSelection(impl->currentBodyItem);
 }
 
 
-const boost::dynamic_bitset<>& LinkTreeWidget::getLinkSelection(BodyItemPtr bodyItem)
+const boost::dynamic_bitset<>& LinkTreeWidget::linkSelection(BodyItem* bodyItem)
 {
-    return impl->getLinkSelection(bodyItem);
+    return impl->linkSelection(bodyItem);
 }
 
 
-const boost::dynamic_bitset<>& LinkTreeWidgetImpl::getLinkSelection(BodyItemPtr bodyItem)
+const boost::dynamic_bitset<>& LinkTreeWidgetImpl::linkSelection(BodyItem* bodyItem)
 {
     BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
     if(info){
@@ -1079,13 +1104,13 @@ void LinkTreeWidget::enableArchiveOfCurrentBodyItem(bool on)
 }
 
 
-bool LinkTreeWidget::makeSingleSelection(BodyItemPtr bodyItem, int linkIndex)
+bool LinkTreeWidget::makeSingleSelection(BodyItem* bodyItem, int linkIndex)
 {
     return impl->makeSingleSelection(bodyItem, linkIndex);
 }
 
 
-bool LinkTreeWidgetImpl::makeSingleSelection(BodyItemPtr& bodyItem, int linkIndex)
+bool LinkTreeWidgetImpl::makeSingleSelection(BodyItem* bodyItem, int linkIndex)
 {
     BodyItemInfoPtr info = getBodyItemInfo(bodyItem);
 
@@ -1145,14 +1170,14 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
         for(BodyItemInfoMap::iterator it = bodyItemInfoCache.begin(); it != bodyItemInfoCache.end(); ++it){
 
-            BodyItemPtr bodyItem = it->first;
+            BodyItem* bodyItem = it->first;
             BodyItemInfo& info = *it->second;
             MappingPtr bodyItemNode = new Mapping();
             bool isEmpty = true;
 
             bodyItemNode->insert("id", archive.getItemId(bodyItem));
             
-            const vector<int>& indices = getSelectedLinkIndices(bodyItem);
+            const vector<int>& indices = selectedLinkIndices(bodyItem);
             if(!indices.empty()){
                 Listing& selected = *bodyItemNode->createFlowStyleListing("selectedLinks");
                 int n = indices.size();
@@ -1199,7 +1224,8 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
 bool LinkTreeWidget::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
+    archive.addPostProcess(std::bind(&LinkTreeWidgetImpl::restoreState, impl, std::ref(archive)));
+    return true;
 }
 
 

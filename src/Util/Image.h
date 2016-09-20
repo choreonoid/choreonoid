@@ -39,6 +39,7 @@ public:
     void applyVerticalFlip();
 
     void load(const std::string& filename);
+    void save(const std::string& filename) const;
 
 private:
     std::vector<unsigned char> pixels_;

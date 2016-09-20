@@ -7,7 +7,7 @@
 #define CNOID_BODY_BODY_LOADER_H
 
 #include "AbstractBodyLoader.h"
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,7 +17,7 @@ class BodyLoaderImpl;
 class CNOID_EXPORT BodyLoader : public AbstractBodyLoader
 {
 public:
-    static bool registerLoader(const std::string& extension, boost::function<AbstractBodyLoaderPtr()> factory);
+    static bool registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory);
         
     BodyLoader();
     ~BodyLoader();
@@ -27,13 +27,14 @@ public:
     virtual void setShapeLoadingEnabled(bool on);
     virtual void setDefaultDivisionNumber(int n);
     virtual void setDefaultCreaseAngle(double theta);
-    virtual bool load(BodyPtr body, const std::string& filename);
-    BodyPtr load(const std::string& filename);
+    virtual bool load(Body* body, const std::string& filename);
+    Body* load(const std::string& filename);
     AbstractBodyLoaderPtr lastActualBodyLoader() const;
 
 private:
     BodyLoaderImpl* impl;
 };
+
 }
 
 #endif

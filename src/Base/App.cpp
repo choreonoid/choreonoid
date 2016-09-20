@@ -5,6 +5,7 @@
 #include "App.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
+#include "ParametricPathProcessor.h"
 #include "ExtensionManager.h"
 #include "OptionManager.h"
 #include "PluginManager.h"
@@ -40,9 +41,10 @@
 #include "Vector3SeqItem.h"
 #include "PathVariableEditor.h"
 #include "Licenses.h"
-#include "MovieGenerator.h"
+#include "MovieRecorder.h"
 #include "LazyCaller.h"
 #include "TextEditView.h"
+#include "VirtualJoystickView.h"
 #include "DescriptionDialog.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -51,7 +53,6 @@
 #include <QGLFormat>
 #include <QTextStream>
 #include <QFile>
-#include <boost/bind.hpp>
 
 #include <csignal>
 
@@ -62,6 +63,7 @@
 #include "gettext.h"
 
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace {
 
@@ -72,13 +74,13 @@ Signal<void()> sigAboutToQuit_;
 
 void onCtrl_C_Input(int p)
 {
-    callLater(boost::bind(&MainWindow::close, MainWindow::instance()));
+    callLater(std::bind(&MainWindow::close, MainWindow::instance()));
 }
 
 #ifdef Q_OS_WIN32
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
-    callLater(boost::bind(&MainWindow::close, MainWindow::instance()));
+    callLater(std::bind(&MainWindow::close, MainWindow::instance()));
     return FALSE;
 }
 #endif
@@ -166,15 +168,18 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForLocale());
 #else
-
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 #endif
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
     qapplication->setWindowIcon(icon);
 
-    ext = new ExtensionManager("Base", false);
-
     AppConfig::initialize(appName, vendorName);
+
+    ParametricPathProcessor::instance()->setVariables(
+        AppConfig::archive()->openMapping("pathVariables"));
+
+    ext = new ExtensionManager("Base", false);
 
     // OpenGL settings
     Mapping* glConfig = AppConfig::archive()->openMapping("OpenGL");
@@ -203,6 +208,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     MultiValueSeqGraphView::initializeClass(ext);
     MultiSE3SeqGraphView::initializeClass(ext);
     TaskView::initializeClass(ext);
+    VirtualJoystickView::initializeClass(ext);
 
     TimeSyncItemEngineManager::initialize();
     
@@ -216,19 +222,19 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PointSetItem::initializeClass(ext);
     MultiPointSetItem::initializeClass(ext);
 
-    initializeMovieGenerator(ext);
+    MovieRecorder::initialize(ext);
 
     CaptureBar::initialize(ext);
     
     PathVariableEditor::initialize(ext);
     
     ext->menuManager().setPath("/Help").addItem(_("About Choreonoid"))
-        ->sigTriggered().connect(boost::bind(&AppImpl::showInformationDialog, this));
+        ->sigTriggered().connect(std::bind(&AppImpl::showInformationDialog, this));
 
     // OpenGL settings
     Action* vsyncItem = ext->menuManager().setPath("/Options/OpenGL").addCheckItem(_("Vertical Sync"));
     vsyncItem->setChecked(glfmt.swapInterval() > 0);
-    vsyncItem->sigToggled().connect(boost::bind(&AppImpl::onOpenGLVSyncToggled, this, _1));
+    vsyncItem->sigToggled().connect(std::bind(&AppImpl::onOpenGLVSyncToggled, this, _1));
 
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
@@ -237,7 +243,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
-    om.sigOptionsParsed().connect(boost::bind(&AppImpl::onSigOptionsParsed, this, _1));
+    om.sigOptionsParsed().connect(std::bind(&AppImpl::onSigOptionsParsed, this, _1));
 
     // Some plugins such as OpenRTM plugin are driven by a library which tries to catch SIGINT.
     // This may block the normal termination by inputting Ctrl+C.
@@ -434,6 +440,6 @@ void App::clearFocusView()
 {
     if(lastFocusView_){
         lastFocusView_ = 0;
-        sigFocusViewChanged(0);
+        sigFocusViewChanged(nullptr);
     }
 }

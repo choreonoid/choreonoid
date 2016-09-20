@@ -9,7 +9,7 @@
 #include <rtm/RTC.h>
 #include <coil/Task.h>
 #include <rtm/Manager.h>
-#ifdef OPENRTM_VERSION110
+#if defined(OPENRTM_VERSION110)
   #include <rtm/PeriodicExecutionContext.h>
 #else
   #include <rtm/OpenHRPExecutionContext.h>

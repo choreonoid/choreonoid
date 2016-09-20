@@ -10,9 +10,7 @@
 #include <boost/variant.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
 
 namespace cnoid {
 
@@ -28,6 +26,7 @@ public:
     vector<string> oldNames;
     int activationPriority;
 };
+
 }
 
 

@@ -3,16 +3,18 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H_INCLUDED
-#define CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H_INCLUDED
+#ifndef CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H
+#define CNOID_BODY_BASIC_SENSOR_SIMULATION_HELPER_H
 
-#include "Body.h"
-#include "Sensor.h"
+#include "DeviceList.h"
+#include "ForceSensor.h"
+#include "RateGyroSensor.h"
+#include "AccelerationSensor.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Referenced;
+class Body;
 class BasicSensorSimulationHelperImpl;
 
 class CNOID_EXPORT BasicSensorSimulationHelper
@@ -21,27 +23,29 @@ public:
     BasicSensorSimulationHelper();
     ~BasicSensorSimulationHelper();
 
-    void initialize(BodyPtr body, double timeStep, const Vector3& gravityAcceleration);
+    void setOldAccelSensorCalcMode(bool on);
+    
+    void initialize(Body* body, double timeStep, const Vector3& gravityAcceleration);
 
     bool isActive() const { return isActive_; }
-    bool hasGyroOrAccelSensors() const { return !gyroSensors_.empty() || !accelSensors_.empty(); }
+    bool hasGyroOrAccelerationSensors() const { return !rateGyroSensors_.empty() || !accelerationSensors_.empty(); }
 
     const DeviceList<ForceSensor>& forceSensors() const { return forceSensors_; }
-    const DeviceList<RateGyroSensor>& gyroSensors() const { return gyroSensors_; }
-    const DeviceList<AccelSensor>& accelSensors() const { return accelSensors_; }
+    const DeviceList<RateGyroSensor>& rateGyroSensors() const { return rateGyroSensors_; }
+    const DeviceList<AccelerationSensor>& accelerationSensors() const { return accelerationSensors_; }
         
-    void updateGyroAndAccelSensors();
+    void updateGyroAndAccelerationSensors();
 
 private:
     BasicSensorSimulationHelperImpl* impl;
     bool isActive_;
     DeviceList<ForceSensor> forceSensors_;
-    DeviceList<RateGyroSensor> gyroSensors_;
-    DeviceList<AccelSensor> accelSensors_;
+    DeviceList<RateGyroSensor> rateGyroSensors_;
+    DeviceList<AccelerationSensor> accelerationSensors_;
 
     friend class BasicSensorSimulationHelperImpl;
 };
+
 }
 
 #endif
-

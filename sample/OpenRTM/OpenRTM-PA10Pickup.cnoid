@@ -118,9 +118,9 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: false
             deviceStateRecording: false
@@ -141,9 +141,9 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: true
             deviceStateRecording: false
@@ -164,9 +164,9 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 8
             allLinkPositionOutputMode: true
             deviceStateRecording: false
@@ -328,7 +328,7 @@ toolbars:
     playbackFrameRate: 100
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
   "BodyBar": 
     current: 4
     stanceWidth: 0.15

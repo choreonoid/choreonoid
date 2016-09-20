@@ -7,11 +7,12 @@
 #define CNOID_BODYPLUGIN_AIST_SIMULATOR_ITEM_H
 
 #include "SimulatorItem.h"
-#include <cnoid/EigenTypes>
+#include <cnoid/Collision>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class ContactAttribute;
 class AISTSimulatorItemImpl;
         
 class CNOID_EXPORT AISTSimulatorItem : public SimulatorItem
@@ -23,14 +24,16 @@ public:
     AISTSimulatorItem(const AISTSimulatorItem& org);
     virtual ~AISTSimulatorItem();
 
+    virtual bool startSimulation(bool doReset = true);
+
     enum DynamicsMode { FORWARD_DYNAMICS = 0, HG_DYNAMICS, KINEMATICS, N_DYNAMICS_MODES };
     enum IntegrationMode { EULER_INTEGRATION = 0, RUNGE_KUTTA_INTEGRATION, N_INTEGRATION_MODES };
 
     void setDynamicsMode(int mode);
     void setIntegrationMode(int mode);
     void setGravity(const Vector3& gravity);
-    void setStaticFriction(double value);
-    void setSlipFriction(double value);
+    const Vector3& gravity() const;
+    void setFriction(double staticFriction, double slipFriction);
     void setContactCullingDistance(double value);        
     void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);        
@@ -39,23 +42,38 @@ public:
     void setContactCorrectionVelocityRatio(double value);
     void setEpsilon(double epsilon);
     void set2Dmode(bool on);
-    void setKinematicWalkingEnabled(bool on); 
+    void setKinematicWalkingEnabled(bool on);
+    void setConstraintForceOutputEnabled(bool on);
 
-    virtual void setForcedBodyPosition(BodyItem* bodyItem, const Position& T);
-    virtual void clearForcedBodyPositions();
-    
+    virtual void setForcedPosition(BodyItem* bodyItem, const Position& T);
+    virtual bool isForcedPositionActiveFor(BodyItem* bodyItem) const;
+    virtual void clearForcedPositions();
+
+    // experimental functions
+    void setFriction(Link* link1, Link* link2, double staticFriction, double slipFriction);
+
+    typedef std::function<bool(Link* link1, Link* link2, const CollisionArray& collisions, const ContactAttribute& attribute)>
+        CollisionHandler;
+    int registerCollisionHandler(const std::string& name, CollisionHandler handler);
+    void unregisterCollisionHandler(int handlerId);
+    int collisionHandlerId(const std::string& name) const;
+    void setCollisionHandler(Link* link1, Link* link2, int handlerId);
+
 protected:
-    virtual SimulationBodyPtr createSimulationBody(BodyPtr orgBody);
-    virtual ControllerItem* createBodyMotionController(BodyItem* bodyItem, BodyMotionItem* bodyMotionItem);
+    virtual SimulationBody* createSimulationBody(Body* orgBody);
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     virtual void finalizeSimulation();
     virtual CollisionLinkPairListPtr getCollisions();
         
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
+#ifdef ENABLE_SIMULATION_PROFILING
+    virtual void getProfilingNames(std::vector<std::string>& profilingNames);
+    virtual void getProfilingTimes(std::vector<double>& profilingTimes);
+#endif
 
 private:
     AISTSimulatorItemImpl* impl;
@@ -63,6 +81,7 @@ private:
 };
 
 typedef ref_ptr<AISTSimulatorItem> AISTSimulatorItemPtr;
+
 }
 
 #endif

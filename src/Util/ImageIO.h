@@ -3,9 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-
-#ifndef CNOID_UTIL_IMAGE_IO_H_INCLUDED
-#define CNOID_UTIL_IMAGE_IO_H_INCLUDED
+#ifndef CNOID_UTIL_IMAGE_IO_H
+#define CNOID_UTIL_IMAGE_IO_H
 
 #include "Image.h"
 #include "exportdecl.h"
@@ -23,10 +22,12 @@ public:
     void allocateAlphaComponent(bool on);
         
     void load(Image& image, const std::string& filename);
+    void save(const Image& image, const std::string& filename);
 
 private:
     bool isUpsideDown_;
 };
+
 }
 
 #endif

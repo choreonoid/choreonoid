@@ -6,10 +6,11 @@
 #include "MultiValueSeqItem.h"
 #include "MultiSeqItemCreationPanel.h"
 #include "ItemManager.h"
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace cnoid;
+using namespace std::placeholders;
+
 
 static bool loadPlainSeqFormat(MultiValueSeqItem* item, const std::string& filename, std::ostream& os)
 {
@@ -42,7 +43,7 @@ template<> void MultiSeqItem<MultiValueSeq>::initializeClass(ExtensionManager* e
     
     ext->itemManager().addLoaderAndSaver<MultiValueSeqItem>(
         _("Plain Format of a Multi Value Sequence"), "PLAIN-MULTI-VALUE-SEQ", "*",
-        boost::bind(loadPlainSeqFormat, _1, _2, _3), boost::bind(saveAsPlainSeqFormat, _1, _2, _3), 
+        std::bind(loadPlainSeqFormat, _1, _2, _3), std::bind(saveAsPlainSeqFormat, _1, _2, _3), 
         ItemManager::PRIORITY_CONVERSION);
 }
 

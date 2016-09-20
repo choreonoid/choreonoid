@@ -8,16 +8,15 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Sleep>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 using namespace OpenHRP;
-
+namespace filesystem = boost::filesystem;
 
 OpenHRPControllerItem::OpenHRPControllerItem()
 {
@@ -51,7 +50,7 @@ void OpenHRPControllerItem::onDisconnectedFromRoot()
 }
 
 
-ItemPtr OpenHRPControllerItem::doDuplicate() const
+Item* OpenHRPControllerItem::doDuplicate() const
 {
     return new OpenHRPControllerItem(*this);
 }
@@ -69,7 +68,7 @@ void OpenHRPControllerItem::setControllerServerCommand(const std::string& comman
 }
 
 
-bool OpenHRPControllerItem::start(Target* target)
+bool OpenHRPControllerItem::start(ControllerItemIO* io)
 {
     ncHelper = getDefaultNamingContextHelper();
     
@@ -129,7 +128,7 @@ bool OpenHRPControllerItem::start(Target* target)
                     if(serverReady){
                         if(!signalReadyStandardOutputConnected){
                             controllerServerProcess.sigReadyReadStandardOutput().connect(
-                                boost::bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
+                                std::bind(&OpenHRPControllerItem::onReadyReadServerProcessOutput, this));
                             signalReadyStandardOutputConnected = true;
                         }
                         break;
@@ -148,7 +147,7 @@ bool OpenHRPControllerItem::start(Target* target)
         return false;
     }
 
-    BodyPtr body = target->body();
+    Body* body = io->body();
 
 #ifdef OPENHRP_3_0
     controller = server->create(body->name().c_str());
@@ -164,7 +163,7 @@ bool OpenHRPControllerItem::start(Target* target)
               % controllerServerName % name());
 #endif
 
-    timeStep_ = target->worldTimeStep();
+    timeStep_ = io->timeStep();
 
     dynamicsSimulator.reset(new DynamicsSimulator_impl(body));
     
@@ -229,9 +228,9 @@ void OpenHRPControllerItem::doPutProperties(PutPropertyFunction& putProperty)
     ControllerItem::doPutProperties(putProperty);
     
     putProperty(_("Controller server name"), controllerServerName,
-                boost::bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
+                std::bind(&OpenHRPControllerItem::setControllerServerName, this, _1), true);
     putProperty(_("Controller server command"), controllerServerCommand,
-                boost::bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
+                std::bind(&OpenHRPControllerItem::setControllerServerCommand, this, _1), true);
 }
 
 

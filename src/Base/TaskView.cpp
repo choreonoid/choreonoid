@@ -7,7 +7,7 @@
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/ComboBox>
 #include <cnoid/SpinBox>
 #include <cnoid/Timer>
@@ -18,14 +18,14 @@
 #include <QLabel>
 #include <QEventLoop>
 #include <QApplication>
-#include <boost/bind.hpp>
 #include <set>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -124,8 +124,8 @@ public:
     ScopedConnectionSet menuConnections;
     MenuManager menuManager;
     struct MenuItem {
-        boost::function<void()> func;
-        boost::function<void(bool on)> checkFunc;
+        std::function<void()> func;
+        std::function<void(bool on)> checkFunc;
         Action* action;
         MenuItem() { action = 0; }
     };
@@ -179,8 +179,8 @@ public:
     
     void onMenuButtonClicked();
     void updateMenuItems(bool doPopup);
-    virtual void addMenuItem(const std::string& caption, boost::function<void()> func);
-    virtual void addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func);
+    virtual void addMenuItem(const std::string& caption, std::function<void()> func);
+    virtual void addCheckMenuItem(const std::string& caption, bool isChecked, std::function<void(bool on)> func);
     virtual void addMenuSeparator();
     void onMenuItemTriggered(int index);
     void onMenuItemToggled(int index, bool on);
@@ -201,7 +201,7 @@ void TaskView::initializeClass(ExtensionManager* ext)
     ext->viewManager().registerClass<TaskView>(
         "TaskView", N_("Task"), ViewManager::SINGLE_OPTIONAL);
 
-    cnoid::sigAboutToQuit().connect(boost::bind(onAboutToQuit));
+    cnoid::sigAboutToQuit().connect(std::bind(onAboutToQuit));
 }
 
 
@@ -239,38 +239,38 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     goToNextCommandLater.setPriority(LazyCaller::PRIORITY_NORMAL);
     
     commandTimer.setSingleShot(true);
-    commandTimer.sigTimeout().connect(bind(&TaskViewImpl::cancelWaiting, this, true));
+    commandTimer.sigTimeout().connect(std::bind(&TaskViewImpl::cancelWaiting, this, true));
 
     waitTimer.setSingleShot(true);
-    waitTimer.sigTimeout().connect(bind(&TaskViewImpl::onWaitTimeout, this));
+    waitTimer.sigTimeout().connect(std::bind(&TaskViewImpl::onWaitTimeout, this));
 
     taskCombo.setToolTip(_("Select a task type"));
     taskCombo.addItem("  ----------  ");
     taskCombo.sigCurrentIndexChanged().connect(
-        boost::bind(&TaskViewImpl::setCurrentTask, this, _1, true));
+        std::bind(&TaskViewImpl::setCurrentTask, this, _1, true));
 
     menuButton.setText("*");
     menuButton.setToolTip(_("Option Menu"));
-    menuButton.sigClicked().connect(boost::bind(&TaskViewImpl::onMenuButtonClicked, this));
+    menuButton.sigClicked().connect(std::bind(&TaskViewImpl::onMenuButtonClicked, this));
 
     usualPhaseButton.setText("   {   ");
     usualPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     usualPhaseButton.setToolTip(_("Return to the current phase"));
-    usualPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onUsualPhaseButtonClicked, this));
+    usualPhaseButton.sigClicked().connect(std::bind(&TaskViewImpl::onUsualPhaseButtonClicked, this));
 
     configPhaseButton.setText("   }   ");
     configPhaseButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     configPhaseButton.setToolTip(_("Go to the config phase"));
-    configPhaseButton.sigClicked().connect(boost::bind(&TaskViewImpl::onConfigPhaseButtonClicked, this));
+    configPhaseButton.sigClicked().connect(std::bind(&TaskViewImpl::onConfigPhaseButtonClicked, this));
     
     prevButton.setText("<");
     prevButton.setToolTip(_("Go back to the previous phase"));
-    prevButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, -1));
+    prevButton.sigClicked().connect(std::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, -1));
 
     cancelButton.setText(_("Cancel"));
     cancelButton.setToolTip(_("Cancel waiting for the command to finish"));
     cancelButton.setEnabled(false);
-    cancelButton.sigClicked().connect(boost::bind(&TaskViewImpl::cancelWaiting, this, true));
+    cancelButton.sigClicked().connect(std::bind(&TaskViewImpl::cancelWaiting, this, true));
 
     phaseIndexSpin.setToolTip(_("Phase index"));
     phaseIndexSpin.setSuffix(" / 0");
@@ -278,19 +278,19 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     phaseIndexSpin.setRange(0, 0);
     phaseIndexSpinConnection =
         phaseIndexSpin.sigValueChanged().connect(
-            boost::bind(&TaskViewImpl::setPhaseIndex, this, _1, false));
+            std::bind(&TaskViewImpl::setPhaseIndex, this, _1, false));
 
     defaultCommandButton.setText(_("V"));
     defaultCommandButton.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     defaultCommandButton.setToolTip(_("Execute the default command of the current phase"));
-    defaultCommandButton.sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, -1));
+    defaultCommandButton.sigClicked().connect(std::bind(&TaskViewImpl::onCommandButtonClicked, this, -1));
 
     autoModeToggle.setText(_("Auto"));
     autoModeToggle.setToolTip(_("Automatic mode"));
 
     nextButton.setText(">");
     nextButton.setToolTip(_("Skip to the next phase"));
-    nextButton.sigClicked().connect(boost::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, +1));
+    nextButton.sigClicked().connect(std::bind(&TaskViewImpl::onNextOrPrevButtonClicked, this, +1));
 
     topVBox.addLayout(&hbox1);
     topVBox.addLayout(&hbox2);
@@ -802,15 +802,12 @@ CommandButton* TaskViewImpl::getOrCreateCommandButton(int commandIndex)
         button = commandButtons[commandIndex];
     } else {
         button = new CommandButton(&commandButtonBox);
-        //button->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-        //button->setMinimumWidth(5);
-        button->sigClicked().connect(boost::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
-        if(commandButtons.empty()){
-            QWidget::setTabOrder(&menuButton, button);
-        } else {
-            QWidget::setTabOrder(commandButtons.back(), button);
-        }
+        button->sigClicked().connect(std::bind(&TaskViewImpl::onCommandButtonClicked, this, commandIndex));
         commandButtons.push_back(button);
+        /**
+           \note the tab focus order should not be set to command buttons by the setTabOrder function
+           because it causes unexpected focus changes after pushing a command button
+        */
     }
     return button;
 }
@@ -1156,7 +1153,7 @@ void TaskViewImpl::setTransitionToNextCommand()
     if(!eventLoop.isRunning()){
         if(nextPhaseIndex && *nextPhaseIndex != currentPhaseIndex_){
             nextCommandIndex = -1;
-            goToNextCommandLater.setFunction(boost::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
+            goToNextCommandLater.setFunction(std::bind(&TaskViewImpl::setPhaseIndex, this, *nextPhaseIndex, true));
             goToNextCommandLater();
             isNextDispatched = true;
 
@@ -1180,7 +1177,7 @@ void TaskViewImpl::setTransitionToNextCommand()
                     sigCurrentCommandChanged();
                 }
                 if(executeNext){
-                    goToNextCommandLater.setFunction(boost::bind(&TaskViewImpl::executeCommandSuccessively, this, index));
+                    goToNextCommandLater.setFunction(std::bind(&TaskViewImpl::executeCommandSuccessively, this, index));
                     goToNextCommandLater();
                     isNextDispatched = true;
                 }
@@ -1426,11 +1423,11 @@ void TaskViewImpl::updateMenuItems(bool doPopup)
         menuManager.addSeparator();
     }
 
-    addMenuItem(_("Retry"), boost::bind(&TaskViewImpl::retry, this));
+    addMenuItem(_("Retry"), std::bind(&TaskViewImpl::retry, this));
     
     Action* verticalCheck = menuManager.addCheckItem(_("Vertical Layout"));
     verticalCheck->setChecked(isVerticalLayout);
-    verticalCheck->sigToggled().connect(boost::bind(&TaskViewImpl::doLayout, this, _1));
+    verticalCheck->sigToggled().connect(std::bind(&TaskViewImpl::doLayout, this, _1));
 
     if(doPopup){
         menuManager.popupMenu()->popup(menuButton.mapToGlobal(QPoint(0,0)));
@@ -1438,14 +1435,14 @@ void TaskViewImpl::updateMenuItems(bool doPopup)
 }
 
 
-void TaskViewImpl::addMenuItem(const std::string& caption, boost::function<void()> func)
+void TaskViewImpl::addMenuItem(const std::string& caption, std::function<void()> func)
 {
     int index = menuItems.size();
     MenuItem menuItem;
     menuItem.action = menuManager.addItem(caption.c_str());
     menuConnections.add(
         menuItem.action->sigTriggered().connect(
-            boost::bind(&TaskViewImpl::onMenuItemTriggered, this, index)));
+            std::bind(&TaskViewImpl::onMenuItemTriggered, this, index)));
     if(func){
         menuItem.func = func;
     }
@@ -1453,7 +1450,7 @@ void TaskViewImpl::addMenuItem(const std::string& caption, boost::function<void(
 }
 
 
-void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func)
+void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, std::function<void(bool on)> func)
 {
     int index = menuItems.size();
     MenuItem menuItem;
@@ -1461,7 +1458,7 @@ void TaskViewImpl::addCheckMenuItem(const std::string& caption, bool isChecked, 
     menuItem.action->setChecked(isChecked);
     menuConnections.add(
         menuItem.action->sigToggled().connect(
-            boost::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1)));
+            std::bind(&TaskViewImpl::onMenuItemToggled, this, index, _1)));
     if(func){
         menuItem.checkFunc = func;
     }
@@ -1603,7 +1600,7 @@ bool TaskView::restoreState(const Archive& archive)
     impl->autoModeToggle.setChecked(archive.get("isAutoMode", false));
     string name;
     if(archive.read("currentTask", name)){
-        archive.addPostProcess(boost::bind(&TaskViewImpl::setCurrentTaskByName, impl, name));
+        archive.addPostProcess(std::bind(&TaskViewImpl::setCurrentTaskByName, impl, name), 1);
     }
     return true;
 }

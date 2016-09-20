@@ -8,40 +8,55 @@
 using namespace cnoid;
 
 class SampleCrawlerController : public cnoid::SimpleController
-{ 
-    int cnt;
+{
+    Link* crawlerL;
+    Link* crawlerR;
+    double time;
+    double dt;
 
 public:
-    virtual bool initialize()
-        {
-            cnt = 0;
-            return true;
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        crawlerL = io->body()->link("CRAWLER_TRACK_L");
+        crawlerR = io->body()->link("CRAWLER_TRACK_R");
+
+        if(!crawlerL || !crawlerR){
+            io->os() << "Crawlers are not found" << std::endl;
+            return false;
         }
+
+        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
+        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+
+        time = 0.0;
+        dt = io->timeStep();
+        
+        return true;
+    }
 
     virtual bool control()
-        {
-            BodyPtr io = ioBody();
+    {
+        if(time < 2.0){
+            crawlerL->dq() = 1.5;
+            crawlerR->dq() = 1.5;
 
-            if(cnt < 1000){
-                io->joint(0)->u() = 0.0;
-                io->joint(1)->u() = 0.0;
+        } else if(time < 3.0){
+            crawlerL->dq() =  1.0;
+            crawlerR->dq() = -1.0;
 
-            } else if(cnt < 3000){
-                io->joint(0)->u() = 1.5;
-                io->joint(1)->u() = 1.5;	
+        } else if(time < 5.0){
+            crawlerL->dq() = 1.5;
+            crawlerR->dq() = 1.5;
 
-            } else if(cnt < 4000){
-                io->joint(0)->u() =  1.0;
-                io->joint(1)->u() = -1.0;	
-            } else {
-                io->joint(0)->u() = 1.0;	
-                io->joint(1)->u() = 1.0;	
-            }
-            cnt++;
-        
-            return true;
+        } else if(time < 6.0){
+            crawlerL->dq() = -1.0;
+            crawlerR->dq() =  1.0;
         }
-};
 
+        time = fmod(time + dt, 6.0);
+
+        return true;
+    }
+};
 
 CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(SampleCrawlerController)

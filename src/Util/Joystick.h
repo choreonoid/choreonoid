@@ -6,6 +6,7 @@
 #ifndef CNOID_UTIL_JOYSTICK_H
 #define CNOID_UTIL_JOYSTICK_H
 
+#include "Signal.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -31,11 +32,9 @@ public:
     double getPosition(int axis) const;
     bool getButtonState(int button) const;
     bool isActive() const;
+    SignalProxy<void(int id, bool isPressed)> sigButton();
+    SignalProxy<void(int id, double position)> sigAxis();
 
-protected:
-    virtual void onJoystickButtonEvent(int id, bool isPressed);
-    virtual void onJoystickAxisEvent(int id, double position);
-       
 private:
     JoystickImpl* impl;
     friend class JoystickImpl;

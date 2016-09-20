@@ -4,15 +4,27 @@
 
 #include "../Body.h"
 #include "../BodyLoader.h"
+#include "../BodyMotion.h"
+#include "../InverseKinematics.h"
+#include "../JointPath.h"
+#include <cnoid/ValueTree>
+#include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
 
 using namespace boost;
 using namespace boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(Link)
+CNOID_PYTHON_DEFINE_GET_POINTER(Body)
+
 namespace
 {
 
+LinkPtr Link_parent(Link& self) { return self.parent(); }
+LinkPtr Link_child(Link& self) { return self.child(); }
+LinkPtr Link_sibling(Link& self) { return self.sibling(); }
 Position Link_get_position(Link& self) { return self.position(); }
 void Link_set_position(Link& self, const Position& T) { self.position() = T; }
 Vector3 Link_get_translation(Link& self) { return self.translation(); }
@@ -49,12 +61,28 @@ Vector3 Link_get_tau_ext(Link& self) { return self.tau_ext(); }
 void Link_set_tau_ext(Link& self, const Vector3& tau) { self.tau_ext() = tau; }
 SgNodePtr Link_visualShape(const Link& self) { return self.visualShape(); }
 SgNodePtr Link_collisionShape(const Link& self) { return self.collisionShape(); }
+MappingPtr Link_info(Link& self) { return self.info(); }
+python::object Link_info2(Link& self, const std::string& key, python::object defaultValue)
+{
+    if(!PyFloat_Check(defaultValue.ptr())){
+        PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
+        python::throw_error_already_set();
+    }
+    double v = python::extract<double>(defaultValue);
+    return python::object(self.info(key, v));
+}
+double Link_floatInfo(Link& self, const std::string& key) { return self.info<double>(key); }
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Body_calcForwardKinematics_overloads, calcForwardKinematics, 0, 2)
 
 BodyPtr Body_clone(Body& self) { return self.clone(); }
-Link* (Body::*Body_link1)(int) const = &Body::link;
-Link* (Body::*Body_link2)(const std::string&) const = &Body::link;
+LinkPtr Body_createLink1(Body& self) { return self.createLink(); }
+LinkPtr Body_createLink2(Body& self, const Link* org) { return self.createLink(org); }
+LinkPtr Body_joint(Body& self, int id) { return self.joint(id); }
+LinkPtr Body_link1(Body& self, int index) { return self.link(index); }
+LinkPtr Body_link2(Body& self, const std::string& name) { return self.link(name); }
+LinkPtr Body_rootLink(Body& self) { return self.rootLink(); }
 DevicePtr Body_device(Body& self, int index) { return self.device(index); }
 
 PyObject* Body_calcTotalMomentum(Body& self) {
@@ -69,8 +97,23 @@ PyObject* Body_calcTotalMomentum(Body& self) {
     return python::incref(ret.ptr());
 }
 
-BodyPtr (BodyLoader::*BodyLoader_load2)(const std::string&) = &BodyLoader::load;
-    
+
+BodyPtr BodyLoader_load2(BodyLoader& self, const std::string& filename) { return self.load(filename); }
+
+LinkPtr JointPath_joint(JointPath& self, int index) { return self.joint(index); }
+LinkPtr JointPath_baseLink(JointPath& self) { return self.baseLink(); }
+LinkPtr JointPath_endLink(JointPath& self) { return self.endLink(); }
+
+bool (JointPath::*JointPath_calcInverseKinematics)(const Vector3& , const Matrix3&) = &JointPath::calcInverseKinematics;
+bool (JointPath::*JointPath_calcInverseKinematics2)(const Vector3&, const Matrix3&, const Vector3&, const Matrix3&) = &JointPath::calcInverseKinematics;
+
+MultiValueSeqPtr BodyMotion_get_jointPosSeq(BodyMotion& self) { return self.jointPosSeq(); }
+void BodyMotion_set_jointPosSeq(BodyMotion& self, const MultiValueSeqPtr& jointPosSeq) { self.jointPosSeq() = jointPosSeq; }
+MultiSE3SeqPtr BodyMotion_get_linkPosSeq(BodyMotion& self) { return self.linkPosSeq(); }
+void BodyMotion_set_linkPosSeq(BodyMotion& self, const MultiSE3SeqPtr& linkPosSeq) { self.linkPosSeq() = linkPosSeq; }
+
+BodyMotion::Frame (BodyMotion::*BodyMotion_frame)(int) = &BodyMotion::frame;
+
 } // namespace
 
 namespace cnoid 
@@ -82,12 +125,12 @@ BOOST_PYTHON_MODULE(Body)
 
     {
         scope linkScope = 
-            class_<Link, Link*>("Link")
+            class_< Link, LinkPtr, bases<Referenced> >("Link")
             .def("index", &Link::index)
             .def("isValid", &Link::isValid)
-            .def("parent", &Link::parent, return_value_policy<reference_existing_object>())
-            .def("sibling", &Link::sibling, return_value_policy<reference_existing_object>())
-            .def("child", &Link::child, return_value_policy<reference_existing_object>())
+            .def("parent", Link_parent)
+            .def("sibling", Link_sibling)
+            .def("child", Link_child)
             .def("isRoot", &Link::isRoot)
             .add_property("T", Link_get_position, Link_set_position)
             .def("position", Link_get_position)
@@ -157,6 +200,9 @@ BOOST_PYTHON_MODULE(Body)
             .def("attitude", &Link::attitude)
             .def("setAttitude", &Link::setAttitude)
             .def("calcRfromAttitude", &Link::calcRfromAttitude)
+            .def("info", Link_info)
+            .def("info", Link_info2)
+            .def("floatInfo", Link_floatInfo)
             ;
 
         enum_<Link::JointType>("JointType")
@@ -164,14 +210,16 @@ BOOST_PYTHON_MODULE(Body)
             .value("SLIDE_JOINT", Link::SLIDE_JOINT) 
             .value("FREE_JOINT", Link::FREE_JOINT) 
             .value("FIXED_JOINT", Link::FIXED_JOINT) 
-            .value("CRAWLER_JOINT", Link::CRAWLER_JOINT);
+            .value("CRAWLER_JOINT", Link::CRAWLER_JOINT)
+            .value("AGX_CRAWLER_JOINT", Link::AGX_CRAWLER_JOINT);
     }        
     
     {
         scope bodyScope =
             class_< Body, BodyPtr, bases<Referenced> >("Body")
             .def("clone", Body_clone)
-            .def("createLink", &Body::createLink, return_value_policy<reference_existing_object>())
+            .def("createLink", Body_createLink1)
+            .def("createLink", Body_createLink2)
             .def("name", &Body::name, return_value_policy<copy_const_reference>())
             .def("setName", &Body::setName)
             .def("modelName", &Body::modelName, return_value_policy<copy_const_reference>())
@@ -182,11 +230,11 @@ BOOST_PYTHON_MODULE(Body)
             .def("numJoints", &Body::numJoints)
             .def("numVirtualJoints", &Body::numVirtualJoints)
             .def("numAllJoints", &Body::numAllJoints)
-            .def("joint", &Body::joint, return_value_policy<reference_existing_object>())
+            .def("joint", Body_joint)
             .def("numLinks", &Body::numLinks)
-            .def("link", Body_link1, return_value_policy<reference_existing_object>())
-            .def("link", Body_link2, return_value_policy<reference_existing_object>())
-            .def("rootLink", &Body::rootLink, return_value_policy<reference_existing_object>())
+            .def("link", Body_link1)
+            .def("link", Body_link2)
+            .def("rootLink", Body_rootLink)
             .def("numDevices", &Body::numDevices)
             .def("device", Body_device)
             .def("addDevice", &Body::addDevice)
@@ -210,6 +258,7 @@ BOOST_PYTHON_MODULE(Body)
             .def("hasVirtualJointForces", &Body::hasVirtualJointForces)
             .def("setVirtualJointForces", &Body::setVirtualJointForces)
             .def("addCustomizerDirectory", &Body::addCustomizerDirectory).staticmethod("addCustomizerDirectory")
+            .def(other<BodyMotion::Frame>() >> self)
             ;
 
         enum_<Body::ExtraJointType>("ExtraJointType")
@@ -232,6 +281,60 @@ BOOST_PYTHON_MODULE(Body)
         .def("load", BodyLoader_load2)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
+
+    {
+        scope jointPathScope =
+            class_< JointPath, JointPathPtr, boost::noncopyable >("JointPath", init<>())
+            .def("numJoints", &JointPath::numJoints)
+            .def("joint", JointPath_joint)
+            .def("baseLink", JointPath_baseLink)
+            .def("endLink", JointPath_endLink)
+            .def("indexOf", &JointPath::indexOf)
+            .def("customizeTarget", &JointPath::customizeTarget)
+            .def("numIterations", &JointPath::numIterations)
+            .def("calcJacobian", &JointPath::calcJacobian)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics)
+            .def("calcInverseKinematics", JointPath_calcInverseKinematics2)
+            ;
+    }
+
+    def("getCustomJointPath", getCustomJointPath);
+
+    {
+        scope bodyMotionScope =
+            class_< BodyMotion, BodyMotionPtr, bases<AbstractMultiSeq> >("BodyMotion")
+            .def("setNumParts", &BodyMotion::setNumParts)
+            .def("getNumParts", &BodyMotion::getNumParts)
+            .def("numJoints", &BodyMotion::numJoints)
+            .def("numLings", &BodyMotion::numLinks)
+            .def("frameRate", &BodyMotion::frameRate)
+            .def("getFrameRate",&BodyMotion::getFrameRate)
+            .def("setFrameRate", &BodyMotion::setFrameRate)
+            .def("getOffsetTimeFrame", &BodyMotion::getOffsetTimeFrame)
+            .def("numFrames", &BodyMotion::numFrames)
+            .def("getNumFrames", &BodyMotion::getNumFrames)
+            .def("setNumFrames", &BodyMotion::setNumFrames)
+            //.def("jointPosSeq", BodyMotion_jointPosSeq, return_value_policy<reference_existing_object>())
+            //.def("linkPosSeq", BodyMotion_linkPosSeq, return_value_policy<reference_existing_object>());
+            .add_property("jointPosSeq", BodyMotion_get_jointPosSeq, BodyMotion_set_jointPosSeq)
+            .add_property("linkPosSeq", BodyMotion_get_linkPosSeq, BodyMotion_set_linkPosSeq)
+            .def("frame", BodyMotion_frame)
+            ;
+
+        class_< BodyMotion::Frame >("Frame", no_init)
+            .def("frame", &BodyMotion::Frame::frame)
+            .def(self << other<Body>())
+            .def(other<Body>() >> self)
+            ;
+    }
+
+    implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
+
+#ifdef _MSC_VER
+    register_ptr_to_python<BodyPtr>();
+    register_ptr_to_python<LinkPtr>();
+#endif
+
 }
 
 }; // namespace cnoid

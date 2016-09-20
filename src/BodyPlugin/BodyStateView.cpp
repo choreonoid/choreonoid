@@ -7,27 +7,27 @@
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExtraBodyStateAccessor>
-#include <cnoid/Sensor>
+#include <cnoid/BasicSensors>
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
-#include <boost/bind.hpp>
 
 #include <iostream>
 
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-struct SensorTypeOrder
+struct DeviceTypeOrder
 {
-    bool operator()(const Sensor* lhs, const Sensor* rhs) const {
+    bool operator()(const Device* lhs, const Device* rhs) const {
         int result = strcmp(typeid(*lhs).name(), typeid(*rhs).name());
         return (result == 0) ? (lhs->id() <= rhs->id()) : (result <= 0);
     }
@@ -111,8 +111,8 @@ BodyStateViewImpl::BodyStateViewImpl(BodyStateView* self)
     vbox->addWidget(&stateTreeWidget);
     self->setLayout(vbox);
 
-    self->sigActivated().connect(boost::bind(&BodyStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(boost::bind(&BodyStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(std::bind(&BodyStateViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(std::bind(&BodyStateViewImpl::onActivated, this ,false));
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -151,7 +151,7 @@ void BodyStateViewImpl::onActivated(bool on)
 
         bodyItemChangeConnection =
             bodyBar->sigCurrentBodyItemChanged().connect(
-                boost::bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
+                std::bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
     }
 }
 
@@ -172,18 +172,20 @@ void BodyStateViewImpl::setCurrentBodyItem(BodyItem* bodyItem)
 void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
 {
     stateConnections.disconnect();
-    DeviceList<Sensor> devices;
-
-    extraStateItemMap.clear();
     stateTreeWidget.clear();
     int maxNumStateElements = 0;
 
     if(currentBody){
-        devices = currentBody->devices();
-        std::stable_sort(devices.begin(), devices.end(), SensorTypeOrder());
+
+        DeviceList<> devices(currentBody->devices());
+        DeviceList<> targetDevices;
+        targetDevices << devices.extract<ForceSensor>();
+        targetDevices << devices.extract<RateGyroSensor>();
+        targetDevices << devices.extract<AccelerationSensor>();
+        std::stable_sort(targetDevices.begin(), targetDevices.end(), DeviceTypeOrder());
             
-        for(int i=0; i < devices.size(); ++i){
-            Device* device = devices.get(i);
+        for(int i=0; i < targetDevices.size(); ++i){
+            Device* device = targetDevices[i];
             StateItem* deviceItem = new StateItem();
         
             deviceItem->setText(0, QString(" %1 ").arg(device->name().c_str()));
@@ -194,9 +196,11 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
             }
             stateConnections.add(
                 device->sigStateChanged().connect(
-                    boost::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
+                    std::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
+            updateDeviceStates(device, i);
         }
 
+        extraStateItemMap.clear();
         vector<string> names;
         currentBody->getCaches(accessors, names);
         for(int i=0; i < accessors.size(); ++i){
@@ -216,9 +220,12 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
                 }
                 stateConnections.add(
                     accessor.sigStateChanged().connect(
-                        boost::bind(&BodyStateViewImpl::updateExtraStates, this)));
+                        std::bind(&BodyStateViewImpl::updateExtraStates, this)));
             }
             extraStateItemMap.push_back(itemMap);
+        }
+        if(!extraStateItemMap.empty()){
+            updateExtraStates();
         }
     }
     

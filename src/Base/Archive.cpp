@@ -9,29 +9,32 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/Referenced>
 #include <cnoid/FileUtil>
-#include <map>
+#include <QRegExp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-#include <QRegExp>
+#include <map>
 #include <iostream>
 #include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
+using namespace std::placeholders;
+namespace filesystem = boost::filesystem;
 
 namespace {
+
 QRegExp regexVar("^\\$\\{(\\w+)\\}");
 
 typedef map<Item*, int> ItemToIdMap;
 typedef map<int, Item*> IdToItemMap;
 typedef map<View*, int> ViewToIdMap;
 typedef map<int, View*> IdToViewMap;
-}
 
+typedef list< std::function<void()> > PostProcessList;
+
+}
 
 namespace cnoid {
     
@@ -43,6 +46,7 @@ public:
     filesystem::path topDirPath;
     filesystem::path shareDirPath;
     filesystem::path homeDirPath;
+    QString projectDirString;
     QString topDirString;
     QString shareDirString;
     QString homeDirString;
@@ -55,7 +59,7 @@ public:
         
     Item* currentParentItem;
 
-    Signal<void()> postProcesses;
+    PostProcessList postProcesses;
 };
 
 
@@ -165,7 +169,9 @@ void Archive::initSharedInfo(const std::string& projectFile, bool useHomeRelativ
     
     shared->directoryVariableMap = AppConfig::archive()->openMapping("pathVariables");
 
-    shared->projectDirPath = getAbsolutePath(filesystem::path(projectFile)).parent_path();
+    shared->projectDirPath = projectDirPath = getAbsolutePath(filesystem::path(projectFile)).parent_path();
+
+    shared->projectDirString = shared->projectDirPath.string().c_str();
 }
 
 
@@ -175,11 +181,15 @@ void Archive::inheritSharedInfoFrom(Archive& archive)
 }
 
 
-// This cannot be signal because the shared instance may not exist
-void Archive::addPostProcess(const boost::function<void()>& func) const
+void Archive::addPostProcess(const std::function<void()>& func, int priority) const
 {
     if(shared){
-        shared->postProcesses.connect(func);
+        if(priority <= 0){
+            shared->postProcesses.push_back(func);
+        } else {
+            shared->postProcesses.push_back(
+                std::bind(&Archive::addPostProcess, this, func, priority - 1));
+        }
     }
 }
 
@@ -187,7 +197,11 @@ void Archive::addPostProcess(const boost::function<void()>& func) const
 void Archive::callPostProcesses()
 {
     if(shared){
-        shared->postProcesses();
+        PostProcessList::iterator p = shared->postProcesses.begin();
+        while(p != shared->postProcesses.end()){
+            (*p)(); // call a post-process function
+            ++p;
+        }
     }
 }
 
@@ -212,7 +226,7 @@ const Archive* Archive::findSubArchive(const std::string& name) const
 }
 
 
-bool Archive::forSubArchive(const std::string& name, boost::function<bool(const Archive& archive)> func) const
+bool Archive::forSubArchive(const std::string& name, std::function<bool(const Archive& archive)> func) const
 {
     const Archive* subArchive = findSubArchive(name);
     if(subArchive->isValid()){
@@ -261,6 +275,8 @@ std::string Archive::expandPathVariables(const std::string& path) const
                 qpath.replace(pos, len, shared->topDirString);
             } else if(varname == "HOME"){
                 qpath.replace(pos, len, shared->homeDirString);
+            } else if (varname == "PROJECT_DIR"){
+                qpath.replace(pos, len, shared->projectDirString);
             } else {
                 replaceDirectoryVariable(shared, qpath, varname, pos, len);
             }
@@ -316,7 +332,7 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
         return getGenericPathString(orgPath);
 
     } else if(findSubDirectory(shared->projectDirPath, orgPath, relativePath)){
-        return getGenericPathString(relativePath);
+        return string("${PROJECT_DIR}/") + getGenericPathString(relativePath);
     
     } else if(findSubDirectoryOfDirectoryVariable(shared, orgPath, varName, relativePath)){
         return string("${") + varName + ("}/") + getGenericPathString(relativePath);
@@ -330,8 +346,6 @@ std::string Archive::getRelocatablePath(const std::string& orgPathString) const
     } else if(findSubDirectory(shared->homeDirPath, orgPath, relativePath)){
         return string("${HOME}/") + getGenericPathString(relativePath);
 
-    } else if(findRelativePath(shared->projectDirPath, orgPath, relativePath)){
-        return getGenericPathString(relativePath);
     }
 
     return getGenericPathString(orgPath);

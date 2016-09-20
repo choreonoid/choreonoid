@@ -7,7 +7,7 @@
 #define CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 
 #include <cnoid/Referenced>
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -33,7 +33,7 @@ public:
     TimeSyncItemEngineManager(const std::string& moduleName);
     ~TimeSyncItemEngineManager();
         
-    void addEngineFactory(boost::function<TimeSyncItemEngine*(Item* sourceItem)> factory);
+    void addEngineFactory(std::function<TimeSyncItemEngine*(Item* sourceItem)> factory);
         
 private:
     std::string moduleName;

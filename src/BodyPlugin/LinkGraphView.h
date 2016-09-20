@@ -2,11 +2,11 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_LINK_GRAPH_VIEW_H_INCLUDED
-#define CNOID_BODYPLUGIN_LINK_GRAPH_VIEW_H_INCLUDED
+#ifndef CNOID_BODYPLUGIN_LINK_GRAPH_VIEW_H
+#define CNOID_BODYPLUGIN_LINK_GRAPH_VIEW_H
 
 #include "BodyItem.h"
-#include <cnoid/Button>
+#include <cnoid/Buttons>
 #include <cnoid/MultiSE3SeqItem>
 #include <cnoid/View>
 #include <cnoid/GraphWidget>
@@ -83,6 +83,7 @@ private:
         int linkIndex, int type, int axis, int frame, int size, double* values);
 
 };
+
 }
 
 #endif

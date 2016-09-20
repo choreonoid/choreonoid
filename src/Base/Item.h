@@ -40,9 +40,10 @@ class CNOID_EXPORT Item : public Referenced
     template<class ItemType>
     class ItemCallback
     {
-        boost::function<bool(ItemType* item)> function;
+        std::function<bool(ItemType* item)> function;
+        
     public:
-        ItemCallback(boost::function<bool(ItemType* item)> f) : function(f) { }
+        ItemCallback(std::function<bool(ItemType* item)> f) : function(f) { }
         bool operator()(Item* item) {
             if(ItemType* casted = dynamic_cast<ItemType*>(item)){
                 return function(casted);
@@ -145,15 +146,15 @@ public:
 
     bool isOwnedBy(Item* item) const;
 
-    bool traverse(boost::function<bool(Item*)> function);
+    bool traverse(std::function<bool(Item*)> function);
 
     template<class ItemType>
-    bool traverse(boost::function<bool(ItemType* item)> function){
+    bool traverse(std::function<bool(ItemType* item)> function){
         return Item::traverse(ItemCallback<ItemType>(function));
     }
 
-    ItemPtr duplicate() const;
-    ItemPtr duplicateAll() const;
+    Item* duplicate() const;
+    Item* duplicateAll() const;
 
     void assign(Item* srcItem);
 
@@ -240,7 +241,7 @@ protected:
     virtual void onPositionChanged();
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
         
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doAssign(Item* srcItem);
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 
@@ -290,8 +291,8 @@ private:
     void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);
-    bool traverse(Item* item, const boost::function<bool(Item*)>& function);
-    ItemPtr duplicateAllSub(ItemPtr duplicated) const;
+    bool traverse(Item* item, const std::function<bool(Item*)>& function);
+    Item* duplicateAllSub(Item* duplicated) const;
         
     void updateFileInformation(const std::string& filename, const std::string& format);
         

@@ -14,13 +14,12 @@
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QPushButton>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <list>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -30,11 +29,16 @@ Menu* showViewMenu = 0;
 Menu* createViewMenu = 0;
 Menu* deleteViewMenu = 0;
 
+Signal<void(View* view)> sigViewCreated_;
+Signal<void(View* view)> sigViewActivated_;
+Signal<void(View* view)> sigViewDeactivated_;
+Signal<void(View* view)> sigViewRemoved_;
+
 class ViewInfo;
-typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
+typedef std::shared_ptr<ViewInfo> ViewInfoPtr;
 
 class InstanceInfo;
-typedef boost::shared_ptr<InstanceInfo> InstanceInfoPtr;
+typedef std::shared_ptr<InstanceInfo> InstanceInfoPtr;
 typedef list<InstanceInfoPtr> InstanceInfoList;
 
 class InstanceInfo {
@@ -46,14 +50,8 @@ public:
 
     InstanceInfo(ViewInfo* viewInfo, View* view) : view(view), viewInfo(viewInfo) {
     }
-
+    ~InstanceInfo();
     void remove();
-
-    ~InstanceInfo() {
-        if(view){
-            delete view;
-        }
-    }
 };
 
 class ViewInfo : public ViewClass
@@ -61,6 +59,7 @@ class ViewInfo : public ViewClass
 public:
     const std::type_info& view_type_info;
     string className_;
+    string textDomain;
     string translatedClassName;
     string defaultInstanceName;
     string translatedDefaultInstanceName; // temporary.
@@ -96,9 +95,10 @@ public:
         return !instances.empty() && (instances.front()->view == view);
     }
 
+private:
     View* createView() {
         View* view = factory->create();
-        InstanceInfoPtr instance = boost::make_shared<InstanceInfo>(this, view);
+        InstanceInfoPtr instance = std::make_shared<InstanceInfo>(this, view);
             
         instances.push_back(instance);
         instance->iterInViewInfo = instances.end();
@@ -108,14 +108,19 @@ public:
         instance->iterInViewManager = instancesInViewManager.end();
         --instance->iterInViewManager;
 
+        view->sigActivated().connect(std::bind(std::ref(sigViewActivated_), view));
+        view->sigDeactivated().connect(std::bind(std::ref(sigViewDeactivated_), view));
+
         return view;
     }
 
+public:
     View* getOrCreateView(bool doMountCreatedView = false){
         if(instances.empty()){
             View* view = createView();
             view->setName(defaultInstanceName);
             view->setWindowTitle(translatedDefaultInstanceName.c_str());
+            sigViewCreated_(view);
             if(doMountCreatedView){
                 mainWindow->viewArea()->addView(view);
             }
@@ -123,12 +128,16 @@ public:
         return instances.front()->view;
     }
         
-    View* createView(const string& name){
+    View* createView(const string& name, bool setTranslatedNameToWindowTitle = false){
         if(name.empty()){
             return 0;
         }
         View* view = createView();
         view->setName(name);
+        if(setTranslatedNameToWindowTitle){
+            view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
+        }
+        sigViewCreated_(view);
         return view;
     }
 
@@ -149,6 +158,7 @@ public:
         View* view = findView(name);
         if(!view){
             view = createView(name);
+            sigViewCreated_(view);
             if(doMountCreatedView){
                 mainWindow->viewArea()->addView(view);
             }
@@ -166,23 +176,10 @@ typedef std::map<const type_info*, ViewInfoPtr, compare_type_info> TypeToViewInf
 TypeToViewInfoMap typeToViewInfoMap;
 
 typedef map<string, ViewInfoPtr> ClassNameToViewInfoMap;
-typedef boost::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
+typedef std::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
 
 typedef map<string, ClassNameToViewInfoMapPtr> ModuleNameToClassNameToViewInfoMap;
 ModuleNameToClassNameToViewInfoMap moduleNameToClassNameToViewInfoMap;
-
-
-void InstanceInfo::remove()
-{
-    if(view){
-        delete view;
-        view = 0;
-    }
-    viewInfo->instances.erase(iterInViewInfo);
-    iterInViewInfo = viewInfo->instances.end();
-    viewInfo->instancesInViewManager.erase(iterInViewManager);
-    iterInViewManager = viewInfo->instancesInViewManager.end();
-}
 
 }
 
@@ -200,6 +197,14 @@ public:
 
     ViewManagerImpl(ExtensionManager* ext);
     ~ViewManagerImpl();
+    static void notifySigRemoved(View* view){
+        view->notifySigRemoved();
+    }
+    static void deactivateView(View* view){
+        if(view->isActive()){
+            view->onDeactivated();
+        }
+    }
 };
 
 }
@@ -211,6 +216,7 @@ ViewInfo::ViewInfo
  const string& textDomain, ViewManager::InstantiationType itype, ViewManager::FactoryBase* factory)
     : view_type_info(view_type_info),
       className_(className),
+      textDomain(textDomain),
       defaultInstanceName(defaultInstanceName),
       itype(itype),
       factory(factory),
@@ -223,45 +229,69 @@ ViewInfo::ViewInfo
 
 namespace {
 
+InstanceInfo::~InstanceInfo()
+{
+    if(view){
+        ViewManagerImpl::deactivateView(view);
+        delete view;
+    }
+}
+
+void InstanceInfo::remove()
+{
+    if(view){
+        ViewManagerImpl::deactivateView(view);
+        ViewManagerImpl::notifySigRemoved(view);
+        sigViewRemoved_(view);
+        delete view;
+        view = 0;
+    }
+    viewInfo->instances.erase(iterInViewInfo);
+    iterInViewInfo = viewInfo->instances.end();
+    viewInfo->instancesInViewManager.erase(iterInViewManager);
+    //iterInViewManager = viewInfo->instancesInViewManager.end();
+}
+
+
 class ViewCreationDialog : public Dialog
 {
 public:
     QLineEdit nameEdit;
         
-    ViewCreationDialog(ViewInfoPtr viewInfo)
-        {
-            QVBoxLayout* vbox = new QVBoxLayout();
+    ViewCreationDialog(ViewInfoPtr viewInfo) {
+
+        QVBoxLayout* vbox = new QVBoxLayout();
             
-            QHBoxLayout* hbox = new QHBoxLayout();
-            hbox->addWidget(new QLabel(_("Name:")));
-            hbox->addWidget(&nameEdit);
-            vbox->addLayout(hbox);
-
-            QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
-
-            QPushButton* createButton = new QPushButton(_("&Create"));
-            createButton->setDefault(true);
-            buttonBox->addButton(createButton, QDialogButtonBox::AcceptRole);
-            connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
-
-            QPushButton* cancelButton = new QPushButton(_("&Cancel"));
-            buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
-            connect(buttonBox,SIGNAL(rejected()), this, SLOT(reject()));
-
-            vbox->addWidget(buttonBox);
-            setLayout(vbox);
-            
-            setWindowTitle(QString(_("Create %1")).arg(viewInfo->translatedClassName.c_str()));
-
-            if(viewInfo->instances.empty()){
-                nameEdit.setText(viewInfo->translatedDefaultInstanceName.c_str());
-            } else {
-                nameEdit.setText(
-                    QString("%1 %2")
-                    .arg(viewInfo->translatedDefaultInstanceName.c_str())
-                    .arg(viewInfo->instances.size() + 1));
-            }
+        QHBoxLayout* hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel(_("Name:")));
+        hbox->addWidget(&nameEdit);
+        vbox->addLayout(hbox);
+        
+        QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
+        
+        QPushButton* createButton = new QPushButton(_("&Create"));
+        createButton->setDefault(true);
+        buttonBox->addButton(createButton, QDialogButtonBox::AcceptRole);
+        connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
+        
+        QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+        buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
+        connect(buttonBox,SIGNAL(rejected()), this, SLOT(reject()));
+        
+        vbox->addWidget(buttonBox);
+        setLayout(vbox);
+        
+        setWindowTitle(QString(_("Create %1")).arg(viewInfo->translatedClassName.c_str()));
+        
+        if(viewInfo->instances.empty()){
+            nameEdit.setText(viewInfo->translatedDefaultInstanceName.c_str());
+        } else {
+            nameEdit.setText(
+                QString("%1 %2")
+                .arg(viewInfo->translatedDefaultInstanceName.c_str())
+                .arg(viewInfo->instances.size() + 1));
         }
+    }
 };
     
 
@@ -326,7 +356,7 @@ void onViewMenuAboutToShow(Menu* menu)
     if(menu == deleteViewMenu){
         Action* action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
-        action->sigTriggered().connect(boost::bind(deleteAllInvisibleViews));
+        action->sigTriggered().connect(std::bind(deleteAllInvisibleViews));
         menu->addAction(action);
         needSeparator = true;
     }
@@ -353,7 +383,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->setCheckable(true);
-                    action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
+                    action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
                     menu->addAction(action);
                 } else {
                     for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
@@ -363,7 +393,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
                         action->setChecked(view->viewArea());
-                        action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
+                        action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
                         menu->addAction(action);
                     }
                 }
@@ -372,7 +402,7 @@ void onViewMenuAboutToShow(Menu* menu)
                    (viewInfo->itype == ViewManager::MULTI_DEFAULT || viewInfo->itype == ViewManager::MULTI_OPTIONAL)){
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
-                    action->sigTriggered().connect(boost::bind(onCreateViewTriggered, viewInfo));
+                    action->sigTriggered().connect(std::bind(onCreateViewTriggered, viewInfo));
                     menu->addAction(action);
                 }
             } else if(menu == deleteViewMenu){
@@ -384,7 +414,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     InstanceInfoPtr& instance = (*p++);
                     Action* action = new Action(menu);
                     action->setText(instance->view->windowTitle());
-                    action->sigTriggered().connect(boost::bind(onDeleteViewTriggered, instance));
+                    action->sigTriggered().connect(std::bind(onDeleteViewTriggered, instance));
                     menu->addAction(action);
                 }
             }
@@ -406,17 +436,17 @@ void ViewManager::initializeClass(ExtensionManager* ext)
 
         QAction* showViewAction = mm.findItem("Show View");
         showViewMenu = new Menu(viewMenu);
-        showViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, showViewMenu));
+        showViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, showViewMenu));
         showViewAction->setMenu(showViewMenu);
 
         QAction* createViewAction = mm.setCurrent(viewMenu).findItem("Create View");
         createViewMenu = new Menu(viewMenu);
-        createViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, createViewMenu));
+        createViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, createViewMenu));
         createViewAction->setMenu(createViewMenu);
 
         QAction* deleteViewAction = mm.setCurrent(viewMenu).findItem("Delete View");
         deleteViewMenu = new Menu(viewMenu);
-        deleteViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, deleteViewMenu));
+        deleteViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, deleteViewMenu));
         deleteViewAction->setMenu(deleteViewMenu);
         
         initialized = true;
@@ -435,7 +465,7 @@ ViewManagerImpl::ViewManagerImpl(ExtensionManager* ext)
       textDomain(ext->textDomain()),
       menuManager(ext->menuManager())
 {
-    classNameToViewInfoMap = boost::make_shared<ClassNameToViewInfoMap>();
+    classNameToViewInfoMap = std::make_shared<ClassNameToViewInfoMap>();
     moduleNameToClassNameToViewInfoMap[moduleName] = classNameToViewInfoMap;
 }
 
@@ -471,7 +501,7 @@ View* ViewManager::registerClassSub
 (const type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
  ViewManager::InstantiationType itype, FactoryBase* factory)
 {
-    ViewInfoPtr info = boost::make_shared<ViewInfo>(
+    ViewInfoPtr info = std::make_shared<ViewInfo>(
         impl, view_type_info, className, defaultInstanceName, impl->textDomain, itype, factory);
     
     (*impl->classNameToViewInfoMap)[className] = info;
@@ -550,9 +580,6 @@ View* ViewManager::getOrCreateViewOfDefaultName(const std::string& defaultName)
 }
 
 
-/**
-   This is implemented for the compatibility to version 1.4 or earlier.
-*/
 std::vector<View*> ViewManager::allViews()
 {
     std::vector<View*> views;
@@ -560,6 +587,22 @@ std::vector<View*> ViewManager::allViews()
         InstanceInfoList& instances = p->second->instances;
         for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
             views.push_back((*p)->view);
+        }
+    }
+    return views;
+}
+
+
+std::vector<View*> ViewManager::activeViews()
+{
+    std::vector<View*> views;
+    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
+        InstanceInfoList& instances = p->second->instances;
+        for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
+            View* view = (*p)->view;
+            if(view->isActive()){
+                views.push_back(view);
+            }
         }
     }
     return views;
@@ -765,7 +808,7 @@ void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                             }
                             if(!view){
                                 if(!info->isSingleton() || info->instances.empty()){
-                                    view = info->createView(instanceName);
+                                    view = info->createView(instanceName, true);
                                 } else {
                                     mv->putln(MessageView::ERROR,
                                               boost::format(_("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
@@ -805,4 +848,25 @@ bool ViewManager::restoreViewStates(ViewStateInfo& info)
         return true;
     }
     return false;
+}
+
+
+SignalProxy<void(View* view)> ViewManager::sigViewCreated()
+{
+    return sigViewCreated_;
+}
+
+SignalProxy<void(View* view)> ViewManager::sigViewActivated()
+{
+    return sigViewActivated_;
+}
+
+SignalProxy<void(View* view)> ViewManager::sigViewDeactivated()
+{
+    return sigViewDeactivated_;
+}
+
+SignalProxy<void(View* view)> ViewManager::sigViewRemoved()
+{
+    return sigViewRemoved_;
 }

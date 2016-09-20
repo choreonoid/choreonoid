@@ -4,6 +4,7 @@
 */
 
 #include "MeshNormalGenerator.h"
+#include "SceneDrawables.h"
 
 using namespace std;
 using namespace cnoid;
@@ -121,7 +122,13 @@ void MeshNormalGeneratorImpl::calculateFaceNormals(SgMesh* mesh)
         const Vector3f& v0 = vertices[triangle[0]];
         const Vector3f& v1 = vertices[triangle[1]];
         const Vector3f& v2 = vertices[triangle[2]];
-        const Vector3f normal((v1 - v0).cross(v2 - v0).normalized());
+        Vector3f normal((v1 - v0).cross(v2 - v0));
+        // prevent NaN
+        if (normal.norm() == 0){
+          normal = Vector3f::UnitZ(); // Is this OK?
+        }else{
+          normal.normalize();
+        }
         faceNormals->push_back(normal);
 
         for(int j=0; j < 3; ++j){
@@ -181,8 +188,12 @@ void MeshNormalGeneratorImpl::setVertexNormals(SgMesh* mesh, float givenCreaseAn
             for(size_t j=0; j < trianglesOfVertex.size(); ++j){
                 const int adjacentFaceIndex = trianglesOfVertex[j];
                 const Vector3f& adjacentFaceNormal = (*faceNormals)[adjacentFaceIndex];
-                const float angle = acosf(currentFaceNormal.dot(adjacentFaceNormal)
-                                          / (currentFaceNormal.norm() * adjacentFaceNormal.norm()));
+                float cosAngle = currentFaceNormal.dot(adjacentFaceNormal)
+                  / (currentFaceNormal.norm() * adjacentFaceNormal.norm());
+                //prevent NaN
+                if (cosAngle >  1.0) cosAngle =  1.0;
+                if (cosAngle < -1.0) cosAngle = -1.0;
+                const float angle = acosf(cosAngle);
                 if(angle > 0.0f && angle < creaseAngle){
                     normal += adjacentFaceNormal;
                     normalIsFaceNormal = false;

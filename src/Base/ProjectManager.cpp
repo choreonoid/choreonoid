@@ -22,13 +22,13 @@
 #include <cnoid/ExecutablePath>
 #include <QFileDialog>
 #include <QCoreApplication>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <string>
 #include <vector>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -46,7 +46,8 @@ public:
     ~ProjectManagerImpl();
         
     template <class TObject>
-    bool restoreObjectStates(Archive* projectArchive, Archive* states, const vector<TObject*>& objects);
+    bool restoreObjectStates(
+        Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
         
     void loadProject(const string& filename, bool isInvokingApplication);
 
@@ -65,8 +66,8 @@ public:
         
     void connectArchiver(
         const std::string& name,
-        boost::function<bool(Archive&)> storeFunction,
-        boost::function<void(const Archive&)> restoreFunction);
+        std::function<bool(Archive&)> storeFunction,
+        std::function<void(const Archive&)> restoreFunction);
 
     ItemTreeArchiver itemTreeArchiver;
     MainWindow* mainWindow;
@@ -76,8 +77,8 @@ public:
     Action* homeRelativeCheck;
 
     struct ArchiverInfo {
-        boost::function<bool(Archive&)> storeFunction;
-        boost::function<void(const Archive&)> restoreFunction;
+        std::function<bool(Archive&)> storeFunction;
+        std::function<void(const Archive&)> restoreFunction;
     };
     typedef map<string, ArchiverInfo> ArchiverMap;
     typedef map<string, ArchiverMap> ArchiverMapMap;
@@ -108,8 +109,6 @@ ProjectManager::ProjectManager(ExtensionManager* em)
 
 ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
 {
-    using boost::bind;
-    
     MappingPtr config = AppConfig::archive()->openMapping("ProjectManager");
     
     MenuManager& mm = em->menuManager();
@@ -117,22 +116,22 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     mm.setPath("/File");
 
     mm.addItem(_("Open Project"))
-        ->sigTriggered().connect(bind(&ProjectManagerImpl::openDialogToLoadProject, this));
+        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToLoadProject, this));
     mm.addItem(_("Save Project"))
-        ->sigTriggered().connect(bind(&ProjectManagerImpl::overwriteCurrentProject, this));
+        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::overwriteCurrentProject, this));
     mm.addItem(_("Save Project As"))
-        ->sigTriggered().connect(bind(&ProjectManagerImpl::openDialogToSaveProject, this));
+        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToSaveProject, this));
 
 
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
-    perspectiveCheck->setChecked(config->get("storePerspective", false));
-    perspectiveCheck->sigToggled().connect(bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
+    perspectiveCheck->setChecked(config->get("storePerspective", true));
+    perspectiveCheck->sigToggled().connect(std::bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
 
     homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));
     homeRelativeCheck->setChecked(config->get("useHomeRelative", false));
-    homeRelativeCheck->sigToggled().connect(bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
+    homeRelativeCheck->sigToggled().connect(std::bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
 
     mm.setPath("/File");
     mm.addSeparator();
@@ -140,7 +139,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     OptionManager& om = em->optionManager();
     om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
     om.addPositionalOption("project", 1);
-    om.sigOptionsParsed().connect(boost::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
+    om.sigOptionsParsed().connect(std::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
     mainWindow = MainWindow::instance();
     messageView = MessageView::mainInstance();
@@ -162,16 +161,23 @@ ProjectManagerImpl::~ProjectManagerImpl()
 
 template <class TObject>
 bool ProjectManagerImpl::restoreObjectStates
-(Archive* projectArchive, Archive* states, const vector<TObject*>& objects)
+(Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix)
 {
     bool restored = false;
     for(size_t i=0; i < objects.size(); ++i){
         TObject* object = objects[i];
-        Archive* state = states->findSubArchive(object->objectName().toStdString());
+        const string name = object->objectName().toStdString();
+        Archive* state = states->findSubArchive(name);
         if(state->isValid()){
             state->inheritSharedInfoFrom(*projectArchive);
-            if(object->restoreState(*state)){
-                restored = true;
+            try {
+                if(object->restoreState(*state)){
+                    restored = true;
+                }
+            } catch(const ValueNode::Exception& ex){
+                messageView->putln(MessageView::WARNING,
+                                   format(_("The state of the \"%1%\" %2% was not completely restored.\n%3%"))
+                                   % name % nameSuffix % ex.message());
             }
         }
     }
@@ -212,6 +218,14 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
             archive->initSharedInfo(filename);
 
+            std::set<string> optionalPlugins;
+            Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
+            if(optionalPluginsNode.isValid()){
+                for(int i=0; i < optionalPluginsNode.size(); ++i){
+                    optionalPlugins.insert(optionalPluginsNode[i].toString());
+                }
+            }
+
             ViewManager::ViewStateInfo viewStateInfo;
             ViewManager::restoreViews(archive, "views", viewStateInfo);
 
@@ -226,53 +240,6 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
             } else {
                 if(perspectiveCheck->isChecked()){
                     mainWindow->restoreLayout(archive);
-                }
-            }
-
-            // Restoring the file dialog directory from the project file.
-            // This should be disabled.
-            /*
-              string currentFileDialogDirectory;
-              if(archive->readRelocatablePath("currentFileDialogDirectory", currentFileDialogDirectory)){
-              AppConfig::archive()->writePath(
-              "currentFileDialogDirectory", currentFileDialogDirectory);
-              }
-            */
-
-            itemTreeArchiver.reset();
-            Archive* items = archive->findSubArchive("items");
-            if(items->isValid()){
-                items->inheritSharedInfoFrom(*archive);
-                itemTreeArchiver.restore(items, RootItem::mainInstance());
-                numArchivedItems = itemTreeArchiver.numArchivedItems();
-                numRestoredItems = itemTreeArchiver.numRestoredItems();
-                messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
-                if(numRestoredItems < numArchivedItems){
-                    messageView->putln(MessageView::WARNING,
-                                       format(_("%1% item(s) are not correctly loaded."))
-                                       % (numArchivedItems - numRestoredItems));
-                }
-                if(numRestoredItems > 0){
-                    loaded = true;
-                }
-            }
-
-            if(!ViewManager::restoreViewStates(viewStateInfo)){
-                // load the old format (version 1.4 or earlier)
-                Archive* viewStates = archive->findSubArchive("views");
-                if(viewStates->isValid()){
-                    if(restoreObjectStates(archive, viewStates, ViewManager::allViews())){
-                        loaded = true;
-                    }
-                }
-            }
-
-            Archive* barStates = archive->findSubArchive("toolbars");
-            if(barStates->isValid()){
-                vector<ToolBar*> toolBars;
-                mainWindow->getAllToolBars(toolBars);
-                if(restoreObjectStates(archive, barStates, toolBars)){
-                    loaded = true;
                 }
             }
 
@@ -297,6 +264,43 @@ void ProjectManagerImpl::loadProject(const std::string& filename, bool isInvokin
                             loaded = true;
                         }
                     }
+                }
+            }
+
+            if(!ViewManager::restoreViewStates(viewStateInfo)){
+                // load the old format (version 1.4 or earlier)
+                Archive* viewStates = archive->findSubArchive("views");
+                if(viewStates->isValid()){
+                    if(restoreObjectStates(archive, viewStates, ViewManager::allViews(), "view")){
+                        loaded = true;
+                    }
+                }
+            }
+
+            Archive* barStates = archive->findSubArchive("toolbars");
+            if(barStates->isValid()){
+                vector<ToolBar*> toolBars;
+                mainWindow->getAllToolBars(toolBars);
+                if(restoreObjectStates(archive, barStates, toolBars, "bar")){
+                    loaded = true;
+                }
+            }
+
+            itemTreeArchiver.reset();
+            Archive* items = archive->findSubArchive("items");
+            if(items->isValid()){
+                items->inheritSharedInfoFrom(*archive);
+                itemTreeArchiver.restore(items, RootItem::mainInstance(), optionalPlugins);
+                numArchivedItems = itemTreeArchiver.numArchivedItems();
+                numRestoredItems = itemTreeArchiver.numRestoredItems();
+                messageView->putln(format(_("%1% / %2% item(s) are loaded.")) % numRestoredItems % numArchivedItems);
+                if(numRestoredItems < numArchivedItems){
+                    messageView->putln(MessageView::WARNING,
+                                       format(_("%1% item(s) are not correctly loaded."))
+                                       % (numArchivedItems - numRestoredItems));
+                }
+                if(numRestoredItems > 0){
+                    loaded = true;
                 }
             }
 
@@ -470,7 +474,7 @@ void ProjectManagerImpl::onSigOptionsParsed(boost::program_options::variables_ma
 void ProjectManagerImpl::openDialogToLoadProject()
 {
     QFileDialog dialog(MainWindow::instance());
-    dialog.setWindowTitle(_("Open a choreonoid project file"));
+    dialog.setWindowTitle(_("Open a Choreonoid project file"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));
@@ -538,8 +542,8 @@ void ProjectManagerImpl::onHomeRelativeCheckToggled()
 void ProjectManager::setArchiver(
     const std::string& moduleName,
     const std::string& name,
-    boost::function<bool(Archive&)> storeFunction,
-    boost::function<void(const Archive&)> restoreFunction)
+    std::function<bool(Archive&)> storeFunction,
+    std::function<void(const Archive&)> restoreFunction)
 {
     ProjectManagerImpl::ArchiverInfo& info = impl->archivers[moduleName][name];
     info.storeFunction = storeFunction;
@@ -550,4 +554,9 @@ void ProjectManager::setArchiver(
 void ProjectManager::resetArchivers(const std::string& moduleName)
 {
     impl->archivers.erase(moduleName);
+}
+
+const std::string& ProjectManager::getProjectFileName()
+{
+    return impl->lastAccessedProjectFile;
 }

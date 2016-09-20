@@ -17,7 +17,7 @@ class CNOID_EXPORT MultiDeviceStateSeq : public MultiSeq<DeviceStatePtr>
     typedef MultiSeq<DeviceStatePtr> BaseSeqType;
             
 public:
-    typedef boost::shared_ptr<MultiDeviceStateSeq> Ptr;
+    typedef std::shared_ptr<MultiDeviceStateSeq> Ptr;
 
     static const std::string& key();
 

@@ -13,26 +13,26 @@
 namespace cnoid {
 
 class JointPath;
-typedef boost::shared_ptr<JointPath> JointPathPtr;
+typedef std::shared_ptr<JointPath> JointPathPtr;
 
 class CNOID_EXPORT CompositeIK : public InverseKinematics
 {
 public:
     CompositeIK();
-    CompositeIK(const BodyPtr& body, Link* targetLink);
+    CompositeIK(Body* body, Link* targetLink);
     ~CompositeIK();
 
-    void reset(const BodyPtr& body, Link* targetLink);
+    void reset(Body* body, Link* targetLink);
     bool addBaseLink(Link* link);
     void setMaxIKerror(double e);
 
-    const BodyPtr& body() const { return body_; }
-    Link* targetLink() const { return targetLink_; }
+    Body* body() { return body_; }
+    Link* targetLink() { return targetLink_; }
     int numJointPaths() const { return pathList.size(); }
     JointPathPtr jointPath(int index) const { return pathList[index].path; }
     Link* baseLink(int index) const { return pathList[index].endLink; }
 
-    virtual bool hasAnalyticalIK() const;
+    bool hasAnalyticalIK() const;
     virtual bool calcInverseKinematics(const Vector3& p, const Matrix3& R);
         
 private:
@@ -45,10 +45,12 @@ private:
         Matrix3 R_given;
     };
     std::vector<PathInfo> pathList;
+    std::vector<double> q0;
     bool isAnalytical_;
 };
 
-typedef boost::shared_ptr<CompositeIK> CompositeIKPtr;
+typedef std::shared_ptr<CompositeIK> CompositeIKPtr;
+
 }
 
 #endif

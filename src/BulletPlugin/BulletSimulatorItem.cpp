@@ -16,8 +16,7 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyCollisionDetectorUtil>
 #include <cnoid/MeshExtractor>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+#include <cnoid/SceneDrawables>
 #include <btBulletDynamicsCommon.h>
 #include <HACD/hacdHACD.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
@@ -25,7 +24,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 #define DEBUG_OUT 0
@@ -165,10 +163,10 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     Link* crawlerlink;
     double sign = 1;
     double friction;
-    if(link0 && (link0->jointType() == Link::CRAWLER_JOINT)){
+    if(link0 && ((link0->jointType() == Link::CRAWLER_JOINT) || (link0->jointType() == Link::PSEUDO_CONTINUOUS_TRACK))){
         crawlerlink = link0;
         friction = bulletLink0->simImpl->friction;
-    } else if(link1 && (link1->jointType() == Link::CRAWLER_JOINT)){
+    } else if(link1 && ((link1->jointType() == Link::CRAWLER_JOINT) || (link1->jointType() == Link::PSEUDO_CONTINUOUS_TRACK))) {
         crawlerlink = link1;
         sign = -1;
         friction = bulletLink1->simImpl->friction;
@@ -191,7 +189,10 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     cp.m_lateralFrictionInitialized = true;
     cp.m_lateralFrictionDir1.setValue(frictionDir1.x(), frictionDir1.y(), frictionDir1.z());
     cp.m_lateralFrictionDir2.setValue(frictionDir2.x(), frictionDir2.y(), frictionDir2.z());
-    cp.m_contactMotion1 = crawlerlink->u();
+    if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
+        cp.m_contactMotion1 = crawlerlink->dq();
+    else
+        cp.m_contactMotion1 = crawlerlink->u();
 
     return true;
 }
@@ -229,9 +230,9 @@ BulletLink::BulletLink(BulletSimulatorItemImpl* _simImpl, BulletBody* bulletBody
 
 void BulletLink::createGeometry()
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
+        if(extractor->extract(link->collisionShape(), std::bind(&BulletLink::addMesh, this, extractor, meshOnly))){
             if(!simImpl->useHACD){
                 if(!mixedPrimitiveMesh){
                     if(!vertices.empty()){
@@ -245,7 +246,7 @@ void BulletLink::createGeometry()
                             collisionShape = 0;
                             vertices.clear();
                             triangles.clear();
-                            extractor->extract(link->shape(), boost::bind(&BulletLink::addMesh, this, boost::ref(extractor), true));
+                            extractor->extract(link->shape(), std::bind(&BulletLink::addMesh, this, std::ref(extractor), true));
                         }
                     }
                 }
@@ -304,7 +305,7 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
         if(mesh->primitiveType() != SgMesh::MESH){
             bool doAddPrimitive = false;
             Vector3 scale;
-            optional<Vector3> translation;
+            boost::optional<Vector3> translation;
             if(!extractor->isCurrentScaled()){
                 scale.setOnes();
                 doAddPrimitive = true;
@@ -673,7 +674,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
             ((btGeneric6DofConstraint*)joint)->setLinearUpperLimit(btVector3(0.0, 0.0, 0.0));
             ((btGeneric6DofConstraint*)joint)->setAngularLowerLimit(btVector3(0.0, 0.0, 0.0));
             ((btGeneric6DofConstraint*)joint)->setAngularUpperLimit(btVector3(0.0, 0.0, 0.0));
-            if(link->jointType() == Link::CRAWLER_JOINT){
+            if(link->jointType() == Link::CRAWLER_JOINT || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
                 body->setCollisionFlags(body->getCollisionFlags()  | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
                 body->setUserPointer(this);
                 if(!gContactAddedCallback)
@@ -706,7 +707,6 @@ BulletLink::~BulletLink()
     if(motionState)
         delete motionState;
     if(body){
-        dynamicsWorld->removeRigidBody(body);
         delete body;
     }
 }
@@ -811,13 +811,11 @@ BulletBody::~BulletBody()
 {
     for(size_t i=0; i < bulletLinks.size(); ++i){
         if(bulletLinks[i]->joint){
-            dynamicsWorld->removeConstraint(bulletLinks[i]->joint);
             delete bulletLinks[i]->joint;
         }
     }
     for(size_t i=0; i < extraJoints.size(); ++i){
         if(extraJoints[i]){
-            dynamicsWorld->removeConstraint(extraJoints[i]);
             delete extraJoints[i];
         }
     }
@@ -969,7 +967,7 @@ void BulletBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(size_t i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors.get(i);
+        ForceSensor* sensor = forceSensors[i];
         const Link* link = sensor->link();
         btTypedConstraint* joint = bulletLinks[link->index()]->joint;
         btJointFeedback* fb = joint->getJointFeedback();
@@ -1090,13 +1088,13 @@ void BulletSimulatorItem::setAllLinkPositionOutputMode(bool on)
 }
 
 
-ItemPtr BulletSimulatorItem::doDuplicate() const
+Item* BulletSimulatorItem::doDuplicate() const
 {
     return new BulletSimulatorItem(*this);
 }
 
 
-SimulationBodyPtr BulletSimulatorItem::createSimulationBody(BodyPtr orgBody)
+SimulationBody* BulletSimulatorItem::createSimulationBody(Body* orgBody)
 {
     return new BulletBody(*orgBody);
 }
@@ -1229,8 +1227,8 @@ bool BulletSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>&
             bulletBody->updateForceSensors();
         }
         bulletBody->getKinematicStateFromBullet();
-        if(bulletBody->sensorHelper.hasGyroOrAccelSensors()){
-            bulletBody->sensorHelper.updateGyroAndAccelSensors();
+        if(bulletBody->sensorHelper.hasGyroOrAccelerationSensors()){
+            bulletBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
     }
     return true;

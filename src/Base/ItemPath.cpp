@@ -7,7 +7,6 @@
 #include "RootItem.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 

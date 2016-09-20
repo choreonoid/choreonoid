@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+
 items: 
   id: 0
   name: "Root"
@@ -19,14 +21,13 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/floor.wrl"
+            modelFile: "${SHARE}/model/misc/floor.wrl"
             currentBaseLink: "BASE"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0, -0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
@@ -41,20 +42,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0, 0.15 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -64,20 +63,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.3, 0.15 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.3, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -87,20 +84,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.6, 0.15 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.6, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -110,20 +105,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.9, 0.15 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.9, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -133,20 +126,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.2, 0.15 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 1.2, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -156,20 +147,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.5, 0.15 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 1.5, 0.15 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -179,20 +168,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.15, 0.45 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.15, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -202,20 +189,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.45, 0.45 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.45, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -225,20 +210,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.75, 0.45 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.75, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -248,20 +231,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.05, 0.45 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 1.05, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -271,20 +252,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.35, 0.45 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 1.35, 0.45 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -294,20 +273,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.3, 0.75 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.3, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -317,20 +294,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.6, 0.75 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.6, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -340,20 +315,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.9, 0.75 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.9, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -363,20 +336,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.2, 0.75 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 1.2, 0.75 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -386,20 +357,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.45, 1.05 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.45, 1.05 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -409,20 +378,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.75, 1.05 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.75, 1.05 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -432,20 +399,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.05, 1.05 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 1.05, 1.05 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -455,20 +420,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.6, 1.35 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.6, 1.35 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -478,20 +441,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.9, 1.35 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.9, 1.35 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -501,20 +462,18 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${MODEL}/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.wrl"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.75, 2 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            jointPositions: [  ]
             initialRootPosition: [ 0, 0.75, 2 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000 ]
             zmp: [ 0, 0, 0 ]
             selfCollisionDetection: false
             isEditable: true
@@ -545,6 +504,96 @@ items:
             contactCorrectionVelocityRatio: 1
             kinematicWalking: false
             2Dmode: false
+        - 
+          id: 25
+          name: "ODESimulator"
+          plugin: ODE
+          class: ODESimulatorItem
+          data: 
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Active control period"
+            timeLength: 60
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            stepMode: Iterative (quick step)
+            gravity: [ 0, 0, -9.8 ]
+            friction: 0.5
+            jointLimitMode: false
+            globalERP: 0.4
+            globalCFM: 1e-10
+            numIterations: 50
+            overRelaxation: 1.3
+            limitCorrectingVel: true
+            maxCorrectingVel: 1.0e-3
+            2Dmode: false
+            UseWorldItem'sCollisionDetector: false
+            velocityMode: false
+        - 
+          id: 26
+          name: "BulletSimulator"
+          plugin: Bullet
+          class: BulletSimulatorItem
+          data: 
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Active control period"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            ErrorReductionParameter: 0.5
+            NumIterations: 10
+            Restitution: 0
+            Friction: 0.7
+            ERP2: 0
+            SplitImpulsePenetrationThreshold: -0.0001
+        - 
+          id: 27
+          name: "PhysXSimulator"
+          plugin: PhysX
+          class: PhysXSimulatorItem
+          data: 
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Active control period"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            staticFriction: 0.5
+            dynamicFriction: 0.8
+            Restitution: 0.1
+            jointLimitMode: false
+        - 
+          id: 28
+          name: "AgXSimulator"
+          plugin: AgX
+          class: AgXSimulatorItem
+          data: 
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Active control period"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            dynamicsMode: Forward dynamics
+            gravity: [ 0, 0, -9.80665 ]
+            friction: 0.5
+            restitution: 0.1
+            frictionModelType: Iterative Projected
+            frictionSolveType: Direct
+            numThreads: 1
+            contactReductionMode: Geometry
+            contactReductionBinResolution: 2
+            contactReductionThreshold: 4
+            
 views: 
   - 
     id: 0

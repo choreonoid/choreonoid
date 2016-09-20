@@ -21,7 +21,7 @@ public:
     OpenHRPClockGeneratorItem(const OpenHRPClockGeneratorItem& org);
     virtual ~OpenHRPClockGeneratorItem();
 
-    virtual bool start(Target* target);
+    virtual bool start(ControllerItemIO* io);
     virtual double timeStep() const;
     virtual void input();
     virtual bool control();
@@ -30,14 +30,14 @@ public:
 
 protected:
     virtual void onDisconnectedFromRoot();
-    virtual ItemPtr doDuplicate() const;
+    virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
 private:
     static OpenHRPClockGenerator_impl* clockGenerator;
-    double worldTimeStep;
+    double timeStep_;
 };
         
 typedef ref_ptr<OpenHRPClockGeneratorItem> OpenHRPClockGeneratorItemPtr;

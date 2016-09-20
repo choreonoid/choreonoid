@@ -14,7 +14,8 @@ timeBar.setFrameRate(500)
 timeBar.setTimeRange(0.0, 15.0)
 timeBar.setFillLevelSync(False)
 
-robotItem = loadBodyItem(shareDirectory() + "/model/SR1/SR1.yaml")
+robotItem = BodyItem()
+robotItem.load(shareDirectory() + "/model/SR1/SR1.yaml")
 
 robot = robotItem.body()
 robot.rootLink().setTranslation( [0.0, 0.0, 0.7135] )
@@ -32,13 +33,16 @@ robot.calcForwardKinematics()
 robotItem.storeInitialState()
 
 controllerItem = SimpleControllerItem()
-controllerItem.setControllerDllName("SR1WalkPatternController")
+controllerItem.setController("SR1WalkPatternController")
 robotItem.addChildItem(controllerItem)
 
 worldItem.addChildItem(robotItem)
+
 ItemTreeView.instance().checkItem(robotItem)
 
-worldItem.addChildItem(loadBodyItem(shareDirectory() + "/model/misc/floor.wrl"))
+floorItem = BodyItem()
+floorItem.load(shareDirectory() + "/model/misc/floor.wrl")
+worldItem.addChildItem(floorItem)
 
 simulatorItem = AISTSimulatorItem()
 worldItem.addChildItem(simulatorItem)

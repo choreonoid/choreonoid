@@ -1,1 +1,3 @@
-#include "src/Base/Button.h"
+// This header is obsolete.
+#include "src/Base/Buttons.h"
+#include "src/Base/CheckBox.h"

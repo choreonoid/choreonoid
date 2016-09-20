@@ -7,13 +7,11 @@
 #include "BodyRTCItem.h"
 #include <cnoid/Config>
 #include <rtm/NVUtil.h>
-#include <boost/bind.hpp>
 #include <cnoid/MessageView>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -134,6 +132,7 @@ bool VirtualRobotRTC::createOutPortHandler(PortInfo& portInfo)
         case ABS_VELOCITY:
         case ABS_ACCELERATION:
         case CONSTRAINT_FORCE:
+        case EXTERNAL_FORCE:
             ret = registerOutPortHandler(new LinkDataOutPortHandler(portInfo));
             break;
         case ABS_TRANSFORM2:

@@ -11,7 +11,7 @@ project(Choreonoid)
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules/)
 
 set(CNOID_MAJOR_VERSION 1) 
-set(CNOID_MINOR_VERSION 5)
+set(CNOID_MINOR_VERSION 6)
 set(CNOID_PATCH_VERSION 0)
 set(CNOID_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION})
 set(CNOID_FULL_VERSION ${CNOID_MAJOR_VERSION}.${CNOID_MINOR_VERSION}.${CNOID_PATCH_VERSION})
@@ -23,6 +23,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CNOID_DIR ${CMAKE_INSTALL_PREFIX})
 set(CNOID_SUBDIR choreonoid-${CNOID_VERSION})
 set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
+
+if(UNIX)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  add_definitions("-pthread")
+endif()
 
 if(WIN32)
   set(CNOID_HEADER_SUBDIR "include")
@@ -138,6 +143,10 @@ if(MSVC)
   if(MSVC_ENABLE_AVX)
     set(ext_compiler_options "${ext_compiler_options} /arch:AVX")
   endif()
+  option(MSVC_ENABLE_AVX2 "Enable AVX2 instructions on VC++." OFF)
+  if(MSVC_ENABLE_AVX2)
+    set(ext_compiler_options "${ext_compiler_options} /arch:AVX2")
+  endif()
   set(ext_linker_options "")
 
   option(MSVC_ENABLE_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" ON)
@@ -158,6 +167,7 @@ if(MSVC)
   endif()
 endif()
 
+find_package(Threads)
 
 if(ENABLE_GUI)
   FIND_PACKAGE(OpenGL)
@@ -210,19 +220,23 @@ option(CNOID_ENABLE_GETTEXT "Enable the gettext library and translation messages
 
 if(CNOID_ENABLE_GETTEXT)
   if(WIN32)
-    if(CMAKE_CL_64)
-      FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows64/bin)
-    else()
+#    if(CMAKE_CL_64)
+#      FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows64/bin)
+#    else()
       FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt ${PROJECT_SOURCE_DIR}/thirdparty/windows/bin)
-    endif()
+#    endif()
   else()
     FIND_PROGRAM(GETTEXT_MSGFMT_EXECUTABLE msgfmt)
   endif()
   if(NOT GETTEXT_MSGFMT_EXECUTABLE)
     message(FATAL_ERROR "Could not find the msgfmt command and gettext cannot be enabled.")
   endif()
-  get_filename_component(GETTEXT_BINARY_DIR ${GETTEXT_MSGFMT_EXECUTABLE} PATH)
-  get_filename_component(GETTEXT_DIR ${GETTEXT_BINARY_DIR} PATH)
+  if(WIN32 AND CMAKE_CL_64)
+    set(GETTEXT_DIR ${PROJECT_SOURCE_DIR}/thirdparty/windows64)
+  else()
+    get_filename_component(GETTEXT_BINARY_DIR ${GETTEXT_MSGFMT_EXECUTABLE} PATH)
+    get_filename_component(GETTEXT_DIR ${GETTEXT_BINARY_DIR} PATH)
+  endif()
   set(GETTEXT_INCLUDE_DIR ${GETTEXT_DIR}/include)
   set(GETTEXT_LIBRARY_DIR ${GETTEXT_DIR}/lib)
   include_directories(${GETTEXT_INCLUDE_DIR})
@@ -267,7 +281,6 @@ else()
 endif()
 
 if(ENABLE_PYTHON)
-
   find_package(PythonLibs 2.7 REQUIRED)
   include_directories(${PYTHON_INCLUDE_PATH})
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
@@ -275,37 +288,7 @@ if(ENABLE_PYTHON)
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
-  function(add_cnoid_python_module)
-  
-    set(target ${ARGV0})
-    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
-    set(sources ${ARGV})
-    list(REMOVE_AT sources 0)
-
-    add_library(${target} SHARED ${sources})
-    
-    if(NOT WIN32)
-      set_target_properties(${target}  PROPERTIES
-      COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
-    endif()
-
-    set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
-      RUNTIME_OUTPUT_NAME ${module}
-      LIBRARY_OUTPUT_NAME ${module}
-      PREFIX "")
-
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
-  endfunction()
-
-
 endif()
-
 
 # boost
 
@@ -328,7 +311,8 @@ endif()
 find_package(Boost 1.36.0 REQUIRED COMPONENTS ${boost_packages})
 
 if(NOT Boost_FOUND)
-  set(BOOST_ROOT ${BOOST_ROOT} CACHE PATH "set the directory of the boost library")
+  set(BOOST_ROOT ${BOOST_ROOT} CACHE PATH "set the directory of the boost root")
+  set(BOOST_LIBRARYDIR ${BOOST_LIBRARYDIR} CACHE PATH "set the directory of the boost library")
   message(FATAL_ERROR "Boost cannot be found. Please specify the boost top directory to BOOST_ROOT.")
 endif()
 
@@ -340,11 +324,11 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
-# set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_FILESYSTEM_VERSION=2)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
   ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
-  ${Boost_DATE_TIME_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_CHRONO_LIBRARY} ${Boost_PYTHON_LIBRARY})
+  ${Boost_DATE_TIME_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_CHRONO_LIBRARY} ${Boost_PYTHON_LIBRARY} 
+  ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
 
 
 if(INSTALL_SDK_WITH_EXTLIBS)
@@ -402,39 +386,61 @@ if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
 endif()
 
 
-# qt
-if(ENABLE_GUI)
-  if(NOT MSVC OR MSVC_VERSION LESS 1700)
-    find_package(Qt4 4.7.0 REQUIRED)
-    set(QT_USE_QTOPENGL TRUE)
-    set(QT_USE_QTNETWORK TRUE)
-    #set(QT_USE_QTTEST TRUE)
-    include(${QT_USE_FILE})
-    add_definitions(-DQT_NO_KEYWORDS)
-    set(QT5 FALSE)
-    
+###############
+#  Setup Qt4  #
+###############
+macro(setup_qt4)
+  find_package(Qt4 4.7.0 REQUIRED)
+  set(QT_USE_QTOPENGL TRUE)
+  set(QT_USE_QTNETWORK TRUE)
+  #set(QT_USE_QTTEST TRUE)
+  include(${QT_USE_FILE})
+  add_definitions(-DQT_NO_KEYWORDS)
+  set(QT5 FALSE)
+
+  if(MSVC)
     install_external_libraries(${QT_BINARY_DIR} ${QT_LIBRARY_DIR} ${QT_LIBRARIES})
-    if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
+    if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
-  	  ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} ${QT_QTNETWORK_INCLUDE_DIR})
-	install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+          ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} ${QT_QTNETWORK_INCLUDE_DIR})
+        install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
       endforeach()
     endif()
-  else()
-    if(MSVC)
-      if(CMAKE_CL_64)
-	set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x64")
-      else()
-	set(CMAKE_LIBRARY_PATH "$ENV{VS110COMNTOOLS}../../../Windows\ Kits/8.0/Lib/win8/um/x86")
+  endif()
+endmacro()
+
+###############
+#  Setup Qt5  #
+###############
+macro(setup_qt5)
+  if(MSVC)
+    set(PROGRAMFILES "ProgramFiles(X86)")
+    if(CMAKE_CL_64)
+      if(MSVC_VERSION EQUAL 1700)    #VS2012
+        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.0/Lib/win8/um/x64")
+      elseif(MSVC_VERSION EQUAL 1800)    #VS2013
+        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.1/Lib/win8/um/x64")
+      endif()
+    else()
+      if(MSVC_VERSION EQUAL 1700) 
+        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.0/Lib/win8/um/x86")
+      elseif(MSVC_VERSION EQUAL 1800)
+        set(CMAKE_LIBRARY_PATH "$ENV{PROGRAMFILES}/Windows\ Kits/8.1/Lib/win8/um/x86")
       endif()
     endif()
-    find_package(Qt5Core)
-    set(QT5 TRUE)
-    
-    add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    
+  endif()
+
+  find_package(Qt5Core)
+  find_package(Qt5Widgets)
+  find_package(Qt5OpenGL)
+  find_package(Qt5Network)
+  set(QT5 TRUE)
+
+  add_definitions(-DQT_NO_KEYWORDS -DQT_NO_OPENGL_ES_2)
+  set(CMAKE_AUTOMOC OFF)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+  if(MSVC)
     list(APPEND QT_INST_LIBRARIES 
       optimized Qt5Core debug Qt5Cored
       optimized Qt5Gui debug Qt5Guid
@@ -447,15 +453,39 @@ if(ENABLE_GUI)
       optimized icuuc51 debug icuuc51d
       optimized icudt51 debug icudt51d
       # for the Qt 5.3 binary package
-      general icuin52 general icuuc52 general icudt52)
-    
+      general icuin52 general icuuc52 general icudt52
+      general icuin53 general icuuc53 general icudt53
+      general icuin54 general icuuc54 general icudt54
+      general icuin55 general icuuc55 general icudt55
+      )
+
     install_external_libraries(${_qt5Core_install_prefix}/bin ${_qt5Core_install_prefix}/lib ${QT_INST_LIBRARIES})
-    if(MSVC AND INSTALL_SDK_WITH_EXTLIBS)
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
+    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
+
+    if(INSTALL_SDK_WITH_EXTLIBS)
       foreach(dir
-  	  ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
-	install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
+          ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+        install(DIRECTORY ${dir} DESTINATION ${CNOID_HEADER_SUBDIR})
       endforeach()
     endif()
+  endif()
+endmacro()
+
+# qt
+if(ENABLE_GUI)
+  if(NOT MSVC OR MSVC_VERSION LESS 1700)
+    set(DEFAULT_USE_QT5 FALSE)
+  else()
+    set(DEFAULT_USE_QT5 TRUE)
+  endif()
+
+  option(USE_QT5 "Use Qt5" ${DEFAULT_USE_QT5})
+
+  if(USE_QT5)
+    setup_qt5()
+  else()
+    setup_qt4()
   endif()
 endif()
 
@@ -722,6 +752,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
 link_directories(${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR})
 
+#Simulation profiling
+option(ENABLE_SIMULATION_PROFILING "Enable simulation plofiling" OFF)
+if(ENABLE_SIMULATION_PROFILING)
+    add_definitions(-DENABLE_SIMULATION_PROFILING)
+endif()
 
 # Document installaiton
 install(FILES NEWS DESTINATION ${CNOID_DOC_SUBDIR})
@@ -871,7 +906,7 @@ function(apply_common_setting_for_target target)
     if(existing_compile_flags STREQUAL existing_compile_flags-NOTFOUND)
       set(existing_compile_flags "")
     endif()
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${existing_compile_flags} /MP /wd4250 /wd4251 /wd4275 /wd4819")
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${existing_compile_flags} /MP /wd4250 /wd4251 /wd4275 /wd4819 /wd4800 /wd4018 /wd4244 /wd4267")
 
     get_target_property(existing_link_flags ${target} LINK_FLAGS)
     if(existing_link_flags STREQUAL existing_link_flags-NOTFOUND)
@@ -890,22 +925,17 @@ function(apply_common_setting_for_library_core target)
   set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
   apply_common_setting_for_target(${target} "${headers}")
 
-  if(INSTALL_SDK)
+  get_target_property(target_type ${target} TYPE)
+  if(target_type STREQUAL STATIC_LIBRARY)
+    if(INSTALL_SDK)
+      install(TARGETS ${target}
+        LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+        ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+    endif()
+  else()
     install(TARGETS ${target}
       RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-  else()
-    get_target_property(target_type ${target} TYPE)
-    if(target_type STREQUAL STATIC_LIBRARY)
-      install(TARGETS ${target}
-	LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-	ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-    else()
-      install(TARGETS ${target}
-	RUNTIME DESTINATION bin CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-	LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-      endif()
+      LIBRARY DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
   endif()
 
 endfunction()
@@ -952,6 +982,56 @@ function(apply_common_setting_for_plugin target)
 endfunction()
 
 
+if(ENABLE_PYTHON)
+  function(add_cnoid_python_module)
+  
+    set(target ${ARGV0})
+    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
+    set(sources ${ARGV})
+    list(REMOVE_AT sources 0)
+
+    add_library(${target} SHARED ${sources})
+    
+    if(NOT WIN32)
+      set_target_properties(${target}  PROPERTIES
+      COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
+    else()
+      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
+    endif()
+
+    set_target_properties(${target}  PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_NAME ${module}
+      LIBRARY_OUTPUT_NAME ${module}
+      PREFIX "")
+
+    install(TARGETS ${target}
+      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+
+  endfunction()
+
+  function(apply_common_setting_for_python_module target)
+    set(headers ${ARGV1})
+    set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
+    apply_common_setting_for_target(${target} "${headers}")
+
+    if(INSTALL_SDK)
+      if(MSVC)
+	install(TARGETS ${target}
+	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      endif()
+      if(headers)
+	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+      endif()
+    endif()
+  endfunction()
+
+endif()
+
+
 #function(make_gettext_mofiles out_mofiles)
 function(make_gettext_mofiles target out_mofiles)
 
@@ -985,10 +1065,6 @@ function(make_gettext_mofiles target out_mofiles)
 
 endfunction()
 
-if(MSVC)
-  add_subdirectory(thirdparty/windows)
-endif()
-
 # libyaml
 if(UNIX)
   set(USE_EXTERNAL_YAML_DEFAULT ON)
@@ -1004,8 +1080,8 @@ if(USE_EXTERNAL_YAML)
     link_directories(${LIBYAML_DIR}/lib)
   endif()
 else()
-  add_subdirectory(thirdparty/yaml-0.1.3)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.3/include)
+  add_subdirectory(thirdparty/yaml-0.1.7)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
 
 # irrxml
@@ -1013,34 +1089,6 @@ add_subdirectory(thirdparty/irrxml-1.2)
 set(IRRXML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/irrxml-1.2/src)
 include_directories(${IRRXML_INCLUDE_DIRS})
 
-
-# glew library
-if(ENABLE_GUI)
-  if(UNIX)
-    set(USE_EXTERNAL_GLEW_DEFAULT ON)
-  elseif(MSVC)
-    set(USE_EXTERNAL_GLEW_DEFAULT OFF)
-  endif()
-  option(USE_EXTERNAL_GLEW "Use the GLEW library installed in an external directory" ${USE_EXTERNAL_GLEW_DEFAULT})
-  
-  if(USE_EXTERNAL_GLEW)
-    set(GLEW_DIR CACHE PATH "set the top directory of the GLEW library")
-    if(GLEW_DIR)
-      include_directories(${GLEW_DIR}/include)
-      link_directories(${GLEW_DIR}/lib)
-      set(GLEW_LIBRARIES GLEW)
-    elseif(UNIX)
-      pkg_check_modules(GLEW glew REQUIRED)
-      include_directories(${GLEW_INCLUDE_DIRS})
-      link_directories(${GLEW_LIBRARY_DIRS})
-    endif()
-  else()
-    add_subdirectory(thirdparty/glew-1.9.0)
-    include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/glew-1.9.0/include)
-    set(GLEW_LIBRARIES glew32)
-  endif()
-endif()
-  
 if(UNIX)
   # png
   find_package(PNG REQUIRED)
@@ -1050,14 +1098,14 @@ if(UNIX)
   include_directories(${JPEG_INCLUDE_DIR})
   
 elseif(MSVC)
-  add_subdirectory(thirdparty/lpng1232)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
-  add_subdirectory(thirdparty/Jpeg-6b)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
-  add_subdirectory(thirdparty/zlib123)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
   set(PNG_LIBRARY libpng)
   set(JPEG_LIBRARY jpeg)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/lpng1232)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/Jpeg-6b)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/zlib123)
+  add_subdirectory(thirdparty/lpng1232)
+  add_subdirectory(thirdparty/Jpeg-6b)
+  add_subdirectory(thirdparty/zlib123)
 endif()
 
 add_subdirectory(src)
@@ -1109,6 +1157,44 @@ endforeach()
 
 # CPack
 include(InstallRequiredSystemLibraries)
+
+# InstallRequiredSystemLibraries does not properly support MSVS 14 yet, so do it manually.  (CMake3.5)
+if(INSTALL_RUNTIME_DEPENDENCIES)
+unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG)
+unset(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE)
+if(DEFINED MSVC_VERSION AND NOT MSVC_VERSION LESS 1900)
+    # Internal: Architecture-appropriate library directory names.
+    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "ARM")
+        set(_winsdk_arch8 arm) # what the WDK for Win8+ calls this architecture
+    else()
+        if(CMAKE_SIZEOF_VOID_P MATCHES "8")
+            set(_winsdk_arch8 x64) # what the WDK for Win8+ calls this architecture
+        else()
+            set(_winsdk_arch8 x86) # what the WDK for Win8+ calls this architecture
+        endif()
+    endif()
+
+    # The CRT is distributed with MSVS.
+    get_filename_component(MSVS_DIR
+        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0;ShellFolder]" ABSOLUTE)
+
+    # As of MSVC 19 the CRT depends on the 'univeral' CRT (which is part of Windows development kit 10 and above).
+    get_filename_component(WINDOWS_KIT_DIR
+        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" ABSOLUTE)
+
+    file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG
+        "${MSVS_DIR}/VC/redist/debug_nonredist/${_winsdk_arch8}/Microsoft.VC140.DebugCRT/*.dll"
+        "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/api-ms-win-*.dll"
+        "${WINDOWS_KIT_DIR}/bin/${_winsdk_arch8}/ucrt/*.dll"
+    )
+    file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE
+        "${MSVS_DIR}/VC/redist/${_winsdk_arch8}/Microsoft.VC140.CRT/*.dll"
+        "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/*.dll"
+    )
+
+    install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_RELEASE} DESTINATION bin )
+endif()
+endif()
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Choreonoid")
 set(CPACK_PACKAGE_VENDOR "Shin'ichiro Nakaoka, AIST")

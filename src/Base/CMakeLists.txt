@@ -10,6 +10,7 @@ set(sources
   MenuManager.cpp
   Menu.cpp
   ProjectManager.cpp
+  ParametricPathProcessor.cpp
   PathVariableEditor.cpp
   PluginManager.cpp
   MainWindow.cpp
@@ -42,10 +43,12 @@ set(sources
   ActionGroup.cpp
   SpinBox.cpp
   FloatingNumberBox.cpp
-  Slider.cpp
   ScrollBar.cpp
-  Button.cpp
+  Slider.cpp
+  Splitter.cpp
+  Buttons.cpp
   ButtonGroup.cpp
+  CheckBox.cpp
   LineEdit.cpp
   ComboBox.cpp
   Dialog.cpp
@@ -70,30 +73,41 @@ set(sources
   ScriptItem.cpp
   TimeSyncItemEngine.cpp
   AppConfig.cpp
-  AppUtil.cpp
   Archive.cpp
   ItemTreeArchiver.cpp
   LazyCaller.cpp
   LazySignal.cpp
   Licenses.cpp
   GLSceneRenderer.cpp
+  GL1SceneRenderer.cpp
+  GLSLProgram.cpp
+  ShaderPrograms.cpp
+  GLSLSceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEditable.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp
   SceneDragProjector.cpp
   SceneDragger.cpp
+  TranslationDragger.cpp
+  RotationDragger.cpp
+  PositionDragger.cpp
   RectRegionMarker.cpp
   SceneView.cpp
   SceneBar.cpp
   SceneItem.cpp
   PointSetItem.cpp
   MultiPointSetItem.cpp
-  MovieGenerator.cpp
+  MovieRecorder.cpp
   TextEditView.cpp
   ImageView.cpp
   TextEdit.cpp
   TaskView.cpp
+  VirtualJoystickView.cpp
+  gl_core_3_3.c
+  #gl_core_4_0.c
+  #gl_core_4_4.c
+  gl_1_5.c
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -112,10 +126,12 @@ set(headers
   ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
-  Slider.h
   ScrollBar.h
-  Button.h
+  Slider.h
+  Splitter.h
+  Buttons.h
   ButtonGroup.h
+  CheckBox.h
   LineEdit.h
   ComboBox.h
   Dialog.h
@@ -138,6 +154,7 @@ set(headers
   ProjectManager.h
   PluginManager.h
   Plugin.h
+  ParametricPathProcessor.h
   MessageView.h
   ItemTreeView.h
   ItemList.h
@@ -169,11 +186,16 @@ set(headers
   SceneProjector.h
   SceneDragProjector.h
   SceneDragger.h
+  TranslationDragger.h
+  RotationDragger.h
+  PositionDragger.h
   SceneBar.h
   SceneWidgetEditable.h
   InteractiveCameraTransform.h
   RectRegionMarker.h
   GLSceneRenderer.h
+  GL1SceneRenderer.h
+  GLSLSceneRenderer.h
   SceneView.h
   SceneItem.h
   PointSetItem.h
@@ -189,14 +211,7 @@ set(headers
 
 set(target CnoidBase)
 
-if(NOT QT5)
-  QT4_ADD_RESOURCES(RC_SRCS Base.qrc)
-else()
-  QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
-endif()
-
-if(NOT QT5)
-QT4_WRAP_CPP(sources
+set(qtheaders
   App.h
   Menu.h
   ToolBar.h
@@ -205,10 +220,12 @@ QT4_WRAP_CPP(sources
   ActionGroup.h
   SpinBox.h
   FloatingNumberBox.h
-  Slider.h
   ScrollBar.h
-  Button.h
+  Slider.h
+  Splitter.h
+  Buttons.h
   ButtonGroup.h
+  CheckBox.h
   ComboBox.h
   LineEdit.h
   Dialog.h
@@ -221,10 +238,21 @@ QT4_WRAP_CPP(sources
   InfoBar.h
   ItemTreeView.h
   SelectionListEditor.h
-  TextEditView.h
   TextEdit.h
-  OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
+
+if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS Base.qrc)
+  QT4_WRAP_CPP(sources
+    ${qtheaders}
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+    )
+else()
+  QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
+  QT5_WRAP_CPP(sources
+    ${qtheaders}
+    OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
+    )
 endif()
 
 make_gettext_mofiles(${target} mofiles)
@@ -233,13 +261,16 @@ add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
 
 if(QT5)
   qt5_use_modules(${target} Gui OpenGL Network Widgets)
+  if(UNIX)
+    qt5_use_modules(${target} X11Extras)
+  endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES}
+    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARIES}
     intl
     )
 
@@ -247,18 +278,18 @@ elseif(UNIX)
 
   target_link_libraries(${target}
     CnoidUtil
-    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARIES}
+    ${QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
     icuuc
-    GLEW
+    X11
+    Xfixes
     )
 
 elseif(MSVC)
 
   target_link_libraries(${target}
     ${QT_LIBRARIES}
-    general glu32
+    general glu32 opengl32
     CnoidUtil
-    ${GLEW_LIBRARIES}
     )
 endif()
 

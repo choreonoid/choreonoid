@@ -3,8 +3,8 @@
    \author Shizuko Hattori
 */
 
-#ifndef CNOID_ODEPLUGIN__ODE_COLLISION_DETECTOR_H_INCLUDED
-#define CNOID_ODEPLUGIN__ODE_COLLISION_DETECTOR_H_INCLUDED
+#ifndef CNOID_ODEPLUGIN_ODE_COLLISION_DETECTOR_H
+#define CNOID_ODEPLUGIN_ODE_COLLISION_DETECTOR_H
 
 #include <cnoid/CollisionDetector>
 #ifdef GAZEBO_ODE
@@ -32,13 +32,14 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
     virtual bool makeReady();
     virtual void updatePosition(int geometryId, const Position& position);
-    virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback);
 
 private:
     ODECollisionDetectorImpl* impl;
 };
 
-typedef boost::shared_ptr<ODECollisionDetector> ODECollisionDetectorPtr;
+typedef std::shared_ptr<ODECollisionDetector> ODECollisionDetectorPtr;
+
 }
 
 #endif

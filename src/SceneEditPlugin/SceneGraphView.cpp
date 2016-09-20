@@ -3,26 +3,27 @@
 */
 
 #include "SceneGraphView.h"
-#include <cassert>
-#include <list>
-#include <cnoid/SceneCamera>
-#include <cnoid/SceneLight>
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
+#include <cnoid/SceneEffects>
 #include <cnoid/SceneVisitor>
-#include <cnoid/SceneMarker>
+#include <cnoid/SceneMarkers>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
-#include <cnoid/GLSceneRenderer>
+#include <cnoid/GL1SceneRenderer>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 #include <GL/glew.h>
-#include <boost/bind.hpp>
+#include <cassert>
+#include <list>
+#include <GL/gl.h>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -94,7 +95,7 @@ public:
     void onSelectionChanged();
     void addSelectedMarker();
     void removeSelectedMarker();
-    void renderMarker(GLSceneRenderer& renderer);
+    void renderMarker(GL1SceneRenderer& renderer);
     const SgObject* selectedObject();
 };
 }
@@ -169,10 +170,10 @@ SceneGraphViewImpl::SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot)
     setIndentation(12);
     setSelectionMode(QAbstractItemView::SingleSelection);
 
-    self->sigActivated().connect(boost::bind(&SceneGraphViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(boost::bind(&SceneGraphViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(std::bind(&SceneGraphViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(std::bind(&SceneGraphViewImpl::onActivated, this ,false));
 
-    sigItemSelectionChanged().connect(boost::bind(&SceneGraphViewImpl::onSelectionChanged, this));
+    sigItemSelectionChanged().connect(std::bind(&SceneGraphViewImpl::onSelectionChanged, this));
 
     parentItem = rootItem = 0;
     visitNode(sceneRoot);
@@ -375,8 +376,10 @@ void SceneGraphViewImpl::onActivated(bool on)
 {
     if(on){
         createGraph();
-        connectionOfsceneUpdated = sceneRoot->sigUpdated().connect(boost::bind(&SceneGraphViewImpl::onSceneGraphUpdated, this, _1));
-    }else{
+        connectionOfsceneUpdated =
+            sceneRoot->sigUpdated().connect(
+                std::bind(&SceneGraphViewImpl::onSceneGraphUpdated, this, _1));
+    } else {
         connectionOfsceneUpdated.disconnect();
     }
 }
@@ -487,7 +490,7 @@ void SceneGraphViewImpl::addSelectedMarker()
     if(!selectedSgvItem->markerItem()){
         selectedSgvItem->setMarkerItem( new SgvMarkerItem() );
         selectedSgvItem->markerItem()->marker->setRenderingFunction(
-            boost::bind(&SceneGraphViewImpl::renderMarker, this, _1));
+            std::bind(&SceneGraphViewImpl::renderMarker, this, _1));
     }
     SgCustomGLNodePtr marker = selectedSgvItem->markerItem()->marker;
     if(marker && !selectedSgvItem->group->contains(marker)){
@@ -541,7 +544,7 @@ const SgObject* SceneGraphViewImpl::selectedObject()
 }
 
 
-void SceneGraphViewImpl::renderMarker(GLSceneRenderer& renderer)
+void SceneGraphViewImpl::renderMarker(GL1SceneRenderer& renderer)
 {
     SgNode* node = 0;
     SgTransform* trans = 0;

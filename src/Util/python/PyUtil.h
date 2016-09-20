@@ -40,4 +40,14 @@ struct pointee< cnoid::ref_ptr<T> >
 
 }} // namespace boost::python
 
+/**
+   The following macro is used to avoid compile errors caused by a bug of VC++ 2015 Update 3
+   http://stackoverflow.com/questions/38261530/unresolved-external-symbols-since-visual-studio-2015-update-3-boost-python-link
+*/
+#ifdef _MSC_VER
+#define CNOID_PYTHON_DEFINE_GET_POINTER(CLASS) namespace boost { template <> CLASS const volatile * get_pointer<class CLASS const volatile >(class CLASS const volatile *c){ return c; } } 
+#else
+#define CNOID_PYTHON_DEFINE_GET_POINTER(classname)
+#endif
+
 #endif

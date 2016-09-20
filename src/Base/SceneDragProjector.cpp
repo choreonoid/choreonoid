@@ -5,12 +5,10 @@
 
 #include "SceneDragProjector.h"
 #include "SceneProjector.h"
-#include <cnoid/SceneCamera>
+#include <cnoid/SceneCameras>
 #include <cnoid/EigenUtil>
-#include <boost/shared_ptr.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -42,7 +40,7 @@ public:
     Vector3 translationPlaneNormal;
     Vector3 translation;
 
-    boost::shared_ptr<SceneProjector> projector;
+    std::shared_ptr<SceneProjector> projector;
 
     SceneDragProjectorImpl();
     bool startRotation(const SceneWidgetEvent& event);

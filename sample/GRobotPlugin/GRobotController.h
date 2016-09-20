@@ -4,11 +4,11 @@
 */
 
 #include <boost/asio/serial_port.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
 #include <string>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #ifndef WIN32
 #include <signal.h>
@@ -51,9 +51,9 @@ private:
     std::vector<double> tmpJointAngles;
     std::vector<double> jointAngles;
 
-    boost::thread poseSendingThread;
-    boost::mutex poseSendingMutex;
-    boost::condition_variable poseSendingCondition;
+    std::thread poseSendingThread;
+    std::mutex poseSendingMutex;
+    std::condition_variable poseSendingCondition;
     enum { ON_DEMAND_POSE_SENDING, CONTINUOUS_POSE_SENDING, EXIT_POSE_SENDING } mode;
     
     struct MotionInfo {

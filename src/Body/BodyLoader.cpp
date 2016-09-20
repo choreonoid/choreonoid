@@ -4,16 +4,16 @@
 */
 
 #include "BodyLoader.h"
+#include "YAMLBodyLoader.h"
 #include "VRMLBodyLoader.h"
 #include "ColladaBodyLoader.h"
+#include "Body.h"
 #include <cnoid/STLSceneLoader>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/make_shared.hpp>
+#include <mutex>
 #include "gettext.h"
 
 using namespace std;
@@ -22,19 +22,25 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 
-typedef boost::function<AbstractBodyLoaderPtr()> LoaderFactory;
+typedef std::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
-boost::mutex loaderFactoryMapMutex;
+std::mutex loaderFactoryMapMutex;
+
+
+AbstractBodyLoaderPtr yamlBodyLoaderFactory()
+{
+    return std::make_shared<YAMLBodyLoader>();
+}
 
 AbstractBodyLoaderPtr vrmlBodyLoaderFactory()
 {
-    return boost::make_shared<VRMLBodyLoader>();
+    return std::make_shared<VRMLBodyLoader>();
 }
 
 AbstractBodyLoaderPtr colladaBodyLoaderFactory()
 {
-    return boost::make_shared<ColladaBodyLoader>();
+    return std::make_shared<ColladaBodyLoader>();
 }
 
 class SceneLoaderAdapter : public AbstractBodyLoader
@@ -45,7 +51,7 @@ public:
     ~SceneLoaderAdapter() { delete loader; }
     virtual const char* format() const { return loader->format(); }
 
-    virtual bool load(BodyPtr body, const std::string& filename) {
+    virtual bool load(Body* body, const std::string& filename) {
 
         body->clearDevices();
         body->clearExtraJoints();
@@ -68,13 +74,16 @@ public:
 
 AbstractBodyLoaderPtr stlBodyLoaderFactory()
 {
-    return boost::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
+    return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
 }
 
     
 struct FactoryRegistration
 {
     FactoryRegistration(){
+        BodyLoader::registerLoader("body", yamlBodyLoaderFactory);
+        BodyLoader::registerLoader("yaml", yamlBodyLoaderFactory);
+        BodyLoader::registerLoader("yml", yamlBodyLoaderFactory);
         BodyLoader::registerLoader("wrl", vrmlBodyLoaderFactory);
         BodyLoader::registerLoader("dae", colladaBodyLoaderFactory);
         BodyLoader::registerLoader("stl", stlBodyLoaderFactory);
@@ -84,9 +93,9 @@ struct FactoryRegistration
 }
 
 
-bool BodyLoader::registerLoader(const std::string& extension, boost::function<AbstractBodyLoaderPtr()> factory)
+bool BodyLoader::registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory)
 {
-    boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
+    std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
     loaderFactoryMap[extension] = factory;
     return  true;
 }
@@ -109,8 +118,9 @@ public:
         
     BodyLoaderImpl();
     ~BodyLoaderImpl();
-    bool load(BodyPtr& body, const std::string& filename);
+    bool load(Body* body, const std::string& filename);
 };
+
 }
 
 
@@ -178,51 +188,57 @@ void BodyLoader::setDefaultCreaseAngle(double theta)
 }
 
 
-bool BodyLoader::load(BodyPtr body, const std::string& filename)
+bool BodyLoader::load(Body* body, const std::string& filename)
 {
     return impl->load(body, filename);
 }
 
 
-BodyPtr BodyLoader::load(const std::string& filename)
+Body* BodyLoader::load(const std::string& filename)
 {
-    BodyPtr body = new Body();
+    Body* body = new Body();
     if(load(body, filename)){
         return body;
+    } else {
+        delete body;
+        return 0;
     }
-    return BodyPtr();
 }
 
 
-bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
+bool BodyLoaderImpl::load(Body* body, const std::string& filename)
 {
     bool result = false;
 
     filesystem::path orgpath(filename);
     string ext = getExtension(orgpath);
     string modelFilename;
-    MappingPtr info;
+    MappingPtr yamlDoc;
 
     try {
         if(ext != "yaml"){
             modelFilename = filename;
         } else {
             YAMLReader parser;
-            info = parser.loadDocument(filename)->toMapping();
-            filesystem::path mpath(info->get("modelFile").toString());
-            if(mpath.has_root_path()){
-                modelFilename = getNativePathString(mpath);
-            } else {
-                modelFilename = getNativePathString(orgpath.parent_path() / mpath);
+            yamlDoc = parser.loadDocument(filename)->toMapping();
+
+            ValueNode* modelFileNode = yamlDoc->find("modelFile");
+            if(modelFileNode->isValid()){
+                filesystem::path mpath(modelFileNode->toString());
+                if(mpath.has_root_path()){
+                    modelFilename = getNativePathString(mpath);
+                } else {
+                    modelFilename = getNativePathString(orgpath.parent_path() / mpath);
+                }
+                ext = getExtension(mpath);
             }
-            ext = getExtension(mpath);
         }
 
         LoaderMap::iterator p = loaderMap.find(ext);
         if(p != loaderMap.end()){
             loader = p->second;
         } else {
-            boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
+            std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
             LoaderFactoryMap::iterator q = loaderFactoryMap.find(ext);
             if(q != loaderFactoryMap.end()){
                 LoaderFactory factory = q->second;
@@ -239,31 +255,39 @@ bool BodyLoaderImpl::load(BodyPtr& body, const std::string& filename)
             loader->setMessageSink(*os);
             loader->setVerbose(isVerbose);
             loader->setShapeLoadingEnabled(isShapeLoadingEnabled);
-            
-            int dn = defaultDivisionNumber;
-            if(info){
-                Mapping& geometryInfo = *info->findMapping("geometry");
-                if(geometryInfo.isValid()){
-                    geometryInfo.read("divisionNumber", dn);
-                }
-            }
-            if(dn > 0){
-                loader->setDefaultDivisionNumber(dn);
+
+            YAMLBodyLoader* yamlBodyLoader = 0;
+            if(yamlDoc){
+                YAMLBodyLoader* yamlBodyLoader = dynamic_cast<YAMLBodyLoader*>(loader.get());
             }
 
-            if(defaultCreaseAngle >= 0.0){
-                loader->setDefaultCreaseAngle(defaultCreaseAngle);
-            }
-            
-            body->clearDevices();
-            body->clearExtraJoints();
-            if(info){
-                body->resetInfo(info.get());
+            if(yamlBodyLoader){
+                result = yamlBodyLoader->read(body, yamlDoc);
+
             } else {
-                body->info()->clear();
-            }
+                int dn = defaultDivisionNumber;
+                if(yamlDoc){
+                    Mapping& geometryInfo = *yamlDoc->findMapping("geometry");
+                    if(geometryInfo.isValid()){
+                        geometryInfo.read("divisionNumber", dn);
+                    }
+                }
+                if(dn > 0){
+                    loader->setDefaultDivisionNumber(dn);
+                }
 
-            result = loader->load(body, modelFilename);
+                if(defaultCreaseAngle >= 0.0){
+                    loader->setDefaultCreaseAngle(defaultCreaseAngle);
+                }
+            
+                if(yamlDoc){
+                    body->resetInfo(yamlDoc);
+                } else {
+                    body->info()->clear();
+                }
+
+                result = loader->load(body, modelFilename);
+            }
         }
         
     } catch(const ValueNode::Exception& ex){

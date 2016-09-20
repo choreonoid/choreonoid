@@ -40,6 +40,7 @@ public:
 private:
     SceneLink(const SceneLink& org);
     Link* link_;
+    SgPosTransformPtr shapeTransform;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
     SgGroup* currentShapeGroup;
@@ -62,8 +63,8 @@ class CNOID_EXPORT SceneBody : public SgPosTransform
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
-    SceneBody(BodyPtr body);
-    SceneBody(BodyPtr body, boost::function<SceneLink*(Link*)> sceneLinkFactory);
+    SceneBody(Body* body);
+    SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
@@ -97,13 +98,16 @@ protected:
     virtual ~SceneBody();
 
 private:
-    boost::function<SceneLink*(Link*)> sceneLinkFactory;
+    std::function<SceneLink*(Link*)> sceneLinkFactory;
+    bool isVisualShapeVisible;
+    bool isCollisionShapeVisible;
 
     SceneBody(const SceneBody& org);
-    void initialize(BodyPtr& body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory);
+    void initialize(Body* body, const std::function<SceneLink*(Link*)>& sceneLinkFactory);
 };
             
 typedef ref_ptr<SceneBody> SceneBodyPtr;
+
 }
     
 #endif

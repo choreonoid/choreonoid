@@ -3,10 +3,11 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_DYWORLD_H_INCLUDED
-#define CNOID_BODY_DYWORLD_H_INCLUDED
+#ifndef CNOID_BODY_DYWORLD_H
+#define CNOID_BODY_DYWORLD_H
 
 #include "ForwardDynamics.h"
+#include <cnoid/TimeMeasure>
 #include <map>
 #include "exportdecl.h"
 
@@ -15,6 +16,12 @@ namespace cnoid {
 class DyLink;
 class DyBody;
 typedef ref_ptr<DyBody> DyBodyPtr;
+
+#ifdef ENABLE_SIMULATION_PROFILING
+const bool BODY_SIMULATION_PROFILING = true;
+#else
+const bool BODY_SIMULATION_PROFILING = false;
+#endif
 
 class CNOID_EXPORT WorldBase
 {
@@ -33,21 +40,21 @@ public:
        @param index of the body
        @return body
     */
-    const DyBodyPtr& body(int index) const;
+    DyBody* body(int index) const;
 
     /**
        @brief get body by name
        @param name of the body
        @return body
     */
-    const DyBodyPtr& body(const std::string& name) const;
+    DyBody* body(const std::string& name) const;
 
     /**
        @brief get forward dynamics computation method for body
        @param index index of the body
        @return forward dynamics computation method
     */
-    const ForwardDynamicsPtr& forwardDynamics(int index) const {
+    ForwardDynamicsPtr& forwardDynamics(int index) {
         return bodyInfoArray[index].forwardDynamics;
     }
 
@@ -64,13 +71,13 @@ public:
        @return index of the body
        @note This must be called before initialize() is called.
     */
-    int addBody(const DyBodyPtr& body);
+    int addBody(DyBody* body);
 
     /**
        Use this method instead of addBody(const DyBodyPtr& body) when you want to specify
        a forward dynamics calculater.
     */
-    int addBody(const DyBodyPtr& body, const ForwardDynamicsPtr& forwardDynamics);
+    int addBody(DyBody* body, const ForwardDynamicsPtr& forwardDynamics);
         
     /**
        @brief clear bodies in this world
@@ -126,6 +133,8 @@ public:
     */
     void enableSensors(bool on);
 
+    void setOldAccelSensorCalcMode(bool on);
+
     /**
        @brief choose euler method for integration
     */
@@ -169,6 +178,7 @@ protected:
     std::vector<BodyInfo> bodyInfoArray;
 
     bool sensorsAreEnabled;
+    bool isOldAccelSensorCalcMode;
 
 private:
     typedef std::map<std::string, int> NameToIndexMap;
@@ -198,6 +208,13 @@ template <class TConstraintForceSolver> class World : public WorldBase
 public:
     TConstraintForceSolver constraintForceSolver;
 
+#ifdef ENABLE_SIMULATION_PROFILING
+    double forceSolveTime;
+    double forwardDynamicsTime;
+    double customizerTime;
+    TimeMeasure timer;
+#endif
+
     World() : constraintForceSolver(*this) { }
 
     virtual void initialize() {
@@ -206,9 +223,23 @@ public:
     }
 
     virtual void calcNextState(){
+#ifdef ENABLE_SIMULATION_PROFILING
+            timer.begin();
+#endif
         WorldBase::setVirtualJointForces();
+#ifdef ENABLE_SIMULATION_PROFILING
+        customizerTime = timer.measure();
+        timer.begin();
+#endif
         constraintForceSolver.solve();
+#ifdef ENABLE_SIMULATION_PROFILING
+        forceSolveTime = timer.measure();
+        timer.begin();
+#endif
         WorldBase::calcNextState();
+#ifdef ENABLE_SIMULATION_PROFILING
+        forwardDynamicsTime = timer.measure();
+#endif
     }
 };
 

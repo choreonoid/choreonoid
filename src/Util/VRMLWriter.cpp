@@ -154,11 +154,21 @@ void VRMLWriter::writeTransformNode(VRMLNodePtr node)
 
     beginNode("Transform", trans);
 
-    out << indent << "center " << trans->center << "\n";
-    out << indent << "rotation " << trans->rotation << "\n";
-    out << indent << "scale " << trans->scale << "\n";
-    out << indent << "scaleOrientation " << trans->scaleOrientation << "\n";
-    out << indent << "translation " << trans->translation << "\n";
+    if (trans->center != SFVec3f::Zero()){
+        out << indent << "center " << trans->center << "\n";
+    }
+    if (trans->rotation.angle() != 0){
+        out << indent << "rotation " << trans->rotation << "\n";
+    }
+    if (trans->scale != SFVec3f(1,1,1)){
+        out << indent << "scale " << trans->scale << "\n";
+    }
+    if (trans->scaleOrientation.angle() != 0){
+        out << indent << "scaleOrientation " << trans->scaleOrientation << "\n";
+    }
+    if (trans->translation != SFVec3f::Zero()){
+        out << indent << "translation " << trans->translation << "\n";
+    }
 
     writeGroupFields(trans);
 
@@ -263,12 +273,22 @@ void VRMLWriter::writeMaterialNode(VRMLMaterialPtr material)
 {
     beginNode("Material", material);
 
-    out << indent << "ambientIntensity " << material->ambientIntensity << "\n";
+    if (material->ambientIntensity != 0.2){
+        out << indent << "ambientIntensity " << material->ambientIntensity << "\n";
+    }
     out << indent << "diffuseColor " << material->diffuseColor << "\n";
-    out << indent << "emissiveColor " << material->emissiveColor << "\n";
-    out << indent << "shininess " << material->shininess << "\n";
-    out << indent << "specularColor " << material->specularColor << "\n";
-    out << indent << "transparency " << material->transparency << "\n";
+    if (material->emissiveColor != SFColor::Zero()){
+        out << indent << "emissiveColor " << material->emissiveColor << "\n";
+    }
+    if (material->shininess != 0.2){
+        out << indent << "shininess " << material->shininess << "\n";
+    }
+    if (material->specularColor != SFColor::Zero()){
+        out << indent << "specularColor " << material->specularColor << "\n";
+    }
+    if (material->transparency != 0){
+        out << indent << "transparency " << material->transparency << "\n";
+    }
 
     endNode();
 }
@@ -309,9 +329,15 @@ void VRMLWriter::writeCylinderNode(VRMLNodePtr node)
 
     out << indent << "radius " << cylinder->radius << "\n";
     out << indent << "height " << cylinder->height << "\n";
-    out << indent << "top " << boolstr(cylinder->top) << "\n";
-    out << indent << "bottom " << boolstr(cylinder->bottom) << "\n";
-    out << indent << "side " << boolstr(cylinder->side) << "\n";
+    if (!cylinder->top){
+        out << indent << "top " << boolstr(cylinder->top) << "\n";
+    }
+    if (!cylinder->bottom){
+        out << indent << "bottom " << boolstr(cylinder->bottom) << "\n";
+    }
+    if (!cylinder->side){
+        out << indent << "side " << boolstr(cylinder->side) << "\n";
+    }
 
     endNode();
 }
@@ -366,4 +392,3 @@ void VRMLWriter::writeCoordinateNode(VRMLCoordinatePtr coord)
 
     endNode();
 }
-

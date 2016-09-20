@@ -11,10 +11,11 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/LazyCaller>
-#include <boost/bind.hpp>
+#include <functional>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -24,7 +25,7 @@ static SimulationBar* instance_ = 0;
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-simulation")){
-        callLater(boost::bind(&SimulationBar::startSimulation, instance_, true));
+        callLater(std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), instance_, true));
     }
 }
 
@@ -51,33 +52,33 @@ SimulationBar* SimulationBar::instance()
 SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
-    using boost::bind;
-
     setVisibleByDefault(true);    
     
     addButton(QIcon(":/Body/icons/store-world-initial.png"),
               _("Store body positions to the initial world state"))->
-        sigClicked().connect(bind(&SimulationBar::onStoreInitialClicked, this));
+        sigClicked().connect(std::bind(&SimulationBar::onStoreInitialClicked, this));
     
     addButton(QIcon(":/Body/icons/restore-world-initial.png"),
               _("Restore body positions from the initial world state"))->
-        sigClicked().connect(bind(&SimulationBar::onRestoreInitialClicked, this));
+        sigClicked().connect(std::bind(&SimulationBar::onRestoreInitialClicked, this));
 
-    typedef boost::function<void(SimulatorItem* simulator)> Callback;
+    typedef std::function<void(SimulatorItem* simulator)> Callback;
 
     addButton(QIcon(":/Body/icons/start-simulation.png"), _("Start simulation from the beginning"))->
-        sigClicked().connect(bind(&SimulationBar::startSimulation, this, true));
+        sigClicked().connect(
+            std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), this, true));
 
     addButton(QIcon(":/Body/icons/restart-simulation.png"),
               _("Start simulation from the current state"))->
-        sigClicked().connect(bind(&SimulationBar::startSimulation, this, false));
+        sigClicked().connect(
+            std::bind(static_cast<void(SimulationBar::*)(bool)>(&SimulationBar::startSimulation), this, false));
     
     pauseToggle = addToggleButton(QIcon(":/Body/icons/pause-simulation.png"), _("Pause simulation"));
-    pauseToggle->sigClicked().connect(bind(&SimulationBar::onPauseSimulationClicked, this));
+    pauseToggle->sigClicked().connect(std::bind(&SimulationBar::onPauseSimulationClicked, this));
     pauseToggle->setChecked(false);
 
     addButton(QIcon(":/Body/icons/stop-simulation.png"), _("Stop simulation"))->
-        sigClicked().connect(bind(&SimulationBar::onStopSimulationClicked, this));
+        sigClicked().connect(std::bind(&SimulationBar::onStopSimulationClicked, this));
 
 }
 
@@ -88,7 +89,7 @@ SimulationBar::~SimulationBar()
 }
 
 
-static void forEachTargetBodyItem(boost::function<void(BodyItem*)> callback)
+static void forEachTargetBodyItem(std::function<void(BodyItem*)> callback)
 {
     ItemTreeView* itemTreeView = ItemTreeView::instance();
 
@@ -127,11 +128,11 @@ void SimulationBar::onStoreInitialClicked()
 
 void SimulationBar::onRestoreInitialClicked()
 {
-    forEachTargetBodyItem(boost::function<void(BodyItem*)>(boost::bind(&BodyItem::restoreInitialState, _1)));
+    forEachTargetBodyItem(std::function<void(BodyItem*)>(std::bind(&BodyItem::restoreInitialState, _1, true)));
 }
 
 
-void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback, bool doSelect)
+void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator)> callback, bool doSelect)
 {
     MessageView* mv = MessageView::instance();
     /*
@@ -195,7 +196,10 @@ void SimulationBar::forEachSimulator(boost::function<void(SimulatorItem* simulat
 
 void SimulationBar::startSimulation(bool doRest)
 {
-    forEachSimulator(boost::bind(&SimulationBar::startSimulation, this, _1, doRest), true);
+    forEachSimulator(
+        std::bind(
+            static_cast<void(SimulationBar::*)(SimulatorItem*,bool)>(&SimulationBar::startSimulation),
+            this, _1, doRest), true);
 }
 
 
@@ -219,7 +223,7 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 
 void SimulationBar::onStopSimulationClicked()
 {
-    forEachSimulator(boost::bind(&SimulationBar::stopSimulation, this, _1));
+    forEachSimulator(std::bind(&SimulationBar::stopSimulation, this, _1));
 
     TimeBar* timeBar = TimeBar::instance();
     if(timeBar->isDoingPlayback()){
@@ -237,7 +241,7 @@ void SimulationBar::stopSimulation(SimulatorItem* simulator)
 
 void SimulationBar::onPauseSimulationClicked()
 {
-    forEachSimulator(boost::bind(&SimulationBar::pauseSimulation, this, _1));
+    forEachSimulator(std::bind(&SimulationBar::pauseSimulation, this, _1));
 }
 
 

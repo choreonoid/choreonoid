@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AgX, OpenHRP3.0 ]
+
 items: 
   id: 0
   name: "Root"
@@ -88,9 +90,9 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -111,9 +113,9 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -134,9 +136,9 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
-            realtimeSync: false
-            recordingMode: Specific time length
-            onlyActiveControlPeriod: true
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Specified time"
             timeLength: 13.4
             allLinkPositionOutputMode: true
             deviceStateRecording: true
@@ -292,7 +294,7 @@ toolbars:
     playbackFrameRate: 100
     currentTime: 0
     speedScale: 1
-    syncToOngoingUpdates: false
+    syncToOngoingUpdates: true
   "BodyBar": 
     current: 5
     stanceWidth: 0.15

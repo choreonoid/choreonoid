@@ -2,20 +2,24 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "WorldItem.h"
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
-#include "WorldItem.h"
-#include "SensorVisualizerItem.h"
+#include "MultiDeviceStateSeqItem.h"
+#include "ZMPSeqItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
+#include "BodyMotionControllerItem.h"
 #include "GLVisionSimulatorItem.h"
-#include "ZMPSeqItem.h"
-#include "MultiDeviceStateSeqItem.h"
+#include "WorldLogFileItem.h"
+#include "SensorVisualizerItem.h"
+#include "BodyTrackingCameraItem.h"
 //#include "FilterDialogs.h"
 #include "KinematicFaultChecker.h"
 #include "BodyBar.h"
 #include "LeggedBodyBar.h"
 #include "LinkSelectionView.h"
+#include "LinkPropertyView.h"
 #include "BodyLinkView.h"
 #include "JointSliderView.h"
 #include "JointStateView.h"
@@ -32,7 +36,6 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -51,13 +54,16 @@ public:
         Body::addCustomizerDirectory(
             executableTopDirectory() + "/" + CNOID_PLUGIN_SUBDIR + "/customizer");
 
+        WorldItem::initializeClass(this);
         BodyItem::initializeClass(this);
         BodyMotionItem::initializeClass(this);
-        WorldItem::initializeClass(this);
-        SensorVisualizerItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
+        BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
+        WorldLogFileItem::initializeClass(this);
+        SensorVisualizerItem::initializeClass(this);
+        BodyTrackingCameraItem::initializeClass(this);
 
         BodyMotionEngine::initialize(this);
         CollisionSeqEngine::initialize(this);
@@ -76,6 +82,7 @@ public:
         addToolBar(KinematicsBar::instance());
 
         LinkSelectionView::initializeClass(this);
+        LinkPropertyView::initializeClass(this);
         BodyLinkView::initializeClass(this);
         JointSliderView::initializeClass(this);
         JointStateView::initializeClass(this);
