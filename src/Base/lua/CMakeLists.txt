@@ -3,7 +3,8 @@ if(NOT ENABLE_LUA)
 endif()
 
 add_cnoid_lua_module(LuaBase
-  LuaBaseModule.cpp
+  #CLuaBaseModule.cpp
+  SolBaseModule.cpp
   )
 target_link_libraries(LuaBase
   CnoidBase

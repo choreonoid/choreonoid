@@ -25,7 +25,8 @@ set(CNOID_SUBDIR choreonoid-${CNOID_VERSION})
 set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
 
 if(UNIX)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
   add_definitions("-pthread")
 endif()
 
@@ -300,8 +301,11 @@ if(ENABLE_LUA)
   if(NOT LUA_FOUND)
     pkg_check_modules(LUA lua5.2)
   endif()
+  if(LUA_FOUND)
+    include_directories(${LUA_INCLUDE_DIRS})
+    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/sol2)
+  endif()
   set(CNOID_LUA_SUBDIR ${CNOID_PLUGIN_SUBDIR}/lua)
-  include_directories(${LUA_INCLUDE_DIRS})
 endif()
 
 # boost
