@@ -60,12 +60,13 @@ public:
 
 namespace {
 
-const char* ConsoleInstanceVariableName = "cnoid_lua_console_view";
+const char* ConsoleInstanceVariableName = "cnoid_console_view";
 
 int print_to_console(lua_State* L)
 {
     int result = 0;
-    lua_getglobal(L, ConsoleInstanceVariableName);
+    lua_pushstring(L, ConsoleInstanceVariableName);
+    lua_gettable(L, LUA_REGISTRYINDEX);
     if(lua_islightuserdata(L, -1)){
         LuaConsoleViewImpl* view = (LuaConsoleViewImpl*)lua_touserdata(L, -1);
         lua_pop(L, 1);
@@ -124,8 +125,9 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
 
     // for redirecting the output from Lua
     lua_register(L, "print", print_to_console);
+    lua_pushstring(L, ConsoleInstanceVariableName);
     lua_pushlightuserdata(L, this);
-    lua_setglobal(L, ConsoleInstanceVariableName);
+    lua_settable(L, LUA_REGISTRYINDEX);
 
     inputColumnOffset = 0;
 
