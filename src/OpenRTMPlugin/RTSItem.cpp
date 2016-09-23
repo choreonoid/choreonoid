@@ -7,16 +7,17 @@
 #include "RTSItem.h"
 #include "RTSNameServerView.h"
 #include "RTSCommonUtil.h"
+#include "RTSDiagramView.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/CorbaUtil>
-#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include "gettext.h"
 
 using namespace cnoid;
 using namespace std;
+using namespace std::placeholders;
 
 
 namespace cnoid 
@@ -44,10 +45,15 @@ public:
     bool compIsAlive(RTSComp* rtsComp);
     RTSConnection* addRTSConnection(const string& id, const string& name,
             RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription);
+    RTSConnection* addRTSConnectionName(const string& id, const string& name,
+            const string& sourceComp, const string& sourcePort,
+            const string& targetComp, const string& targetPort,
+            const string& dataflow, const string& subscription);
     void deleteRTSConnection(const string& id);
     void connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp,
             list<RTSConnection*>& rtsConnectionList, int mode);
+    void diagramViewUpdate();
 };
 
 }
@@ -345,7 +351,7 @@ RTSystemItemImpl::~RTSystemItemImpl()
 }
 
 
-ItemPtr RTSystemItem::doDuplicate() const
+Item* RTSystemItem::doDuplicate() const
 {
     return new RTSystemItem(*this);
 }
@@ -357,7 +363,7 @@ void RTSystemItemImpl::initialize()
     if(nsView){
         if(!locationChangedConnection.connected()){
             locationChangedConnection = nsView->sigLocationChanged().connect(
-                    boost::bind(&RTSystemItemImpl::onLocationChanged, this, _1, _2));
+                    std::bind(&RTSystemItemImpl::onLocationChanged, this, _1, _2));
             ncHelper.setLocation(nsView->getHost(), nsView->getPort());
         }
     }
@@ -446,6 +452,27 @@ RTSConnection* RTSystemItem::addRTSConnection(const string& id, const string& na
             RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription)
 {
     return impl->addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription);
+}
+
+
+RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const string& name,
+        const string& sourceCompName, const string& sourcePortName,
+        const string& targetCompName, const string& targetPortName,
+        const string& dataflow, const string& subscription)
+{
+    RTSPort* sourcePort;
+    RTSPort* targetPort;
+    RTSComp* sourceRtc = nameToRTSComp(sourceCompName);
+    if(sourceRtc){
+        sourcePort = sourceRtc->nameToRTSPort(sourcePortName);
+    }
+    RTSComp* targetRtc = nameToRTSComp(targetCompName);
+    if(targetRtc){
+        targetPort = targetRtc->nameToRTSPort(targetPortName);
+    }
+    if(sourcePort && targetPort){
+        addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription);
+    }
 }
 
 
@@ -604,7 +631,8 @@ bool RTSystemItem::restore(const Archive& archive)
             istringstream ssy(results[2]);
             double x,y;
             ssx >> x; ssy >> y;
-            addRTSComp(name, QPointF(x,y));
+            archive.addPostProcess(
+                    std::bind(&RTSystemItem::addRTSComp, this, name, QPointF(x,y)));
         }
     }
 
@@ -615,23 +643,27 @@ bool RTSystemItem::restore(const Archive& archive)
                 string value = s0[i].toString();
                 vector<string> results;
                 boost::split(results, value, boost::is_any_of(" "));
-                RTSPort* sourcePort;
-                RTSPort* targetPort;
-                RTSComp* sourceRtc = impl->nameToRTSComp(results[1]);
-                if(sourceRtc){
-                    sourcePort = sourceRtc->nameToRTSPort(results[2]);
-                }
-                RTSComp* targetRtc = impl->nameToRTSComp(results[3]);
-                if(targetRtc){
-                    targetPort = targetRtc->nameToRTSPort(results[4]);
-                }
-                if(sourcePort && targetPort){
-                    addRTSConnection("", results[0], sourcePort, targetPort, results[5], results[6]);
-                }
+                archive.addPostProcess(
+                        std::bind(&RTSystemItemImpl::addRTSConnectionName, impl, "", results[0],
+                                results[1], results[2], results[3], results[4], results[5], results[6]));
             }
         }
     }
+
+    archive.addPostProcess(std::bind(&RTSystemItemImpl::diagramViewUpdate, impl));
+
     return true;
 }
 
 
+void RTSystemItemImpl::diagramViewUpdate()
+{
+    RTSNameServerView* nsView = RTSNameServerView::instance();
+    if(nsView){
+        nsView->updateView();
+    }
+    RTSDiagramView* diagramView = RTSDiagramView::instance();
+    if(diagramView){
+        diagramView->updateView();
+    }
+}

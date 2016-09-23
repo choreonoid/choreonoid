@@ -6,11 +6,12 @@
 #include "RTSPropertiesView.h"
 #include "RTSCommonUtil.h"
 #include "RTSNameServerView.h"
+#include "RTSDiagramView.h"
 #include <cnoid/ViewManager>
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <QVBoxLayout>
-#include <boost/bind.hpp>
+//#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
@@ -39,6 +40,7 @@
 using namespace RTC;
 using namespace cnoid;
 using namespace std;
+using namespace std::placeholders;
 
 namespace {
     static const string RTC_CONTEXT_KIND [3] = {_("PERIODIC"), _("EVENT_DRIVEN"), _("OTHER")};
@@ -127,9 +129,11 @@ protected:
 
 public:
     RTSPropertyTreeWidget  treeWidget;
-    const NamingContextHelper::ObjectInfo* currentItem;
+//    const NamingContextHelper::ObjectInfo* currentItem;
     NamingContextHelper ncHelper;
 
+private:
+    NamingContextHelper::ObjectInfo currentItem;
     // Holds the displayed data for updating the properties.
     //RTSConnectionItemPtr connItem;
 };
@@ -206,15 +210,14 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
     if(nsView){
         if(!selectionChangedConnection.connected()){
             selectionChangedConnection = nsView->sigSelectionChanged().connect(
-                boost::bind(&RTSPropertiesViewImpl::onItemSelectionChanged, this, _1));
+                std::bind(&RTSPropertiesViewImpl::onItemSelectionChanged, this, _1));
         }
         if(!locationChangedConnection.connected()){
             locationChangedConnection = nsView->sigLocationChanged().connect(
-                boost::bind(&RTSPropertiesViewImpl::onLocationChanged, this, _1, _2));
+                std::bind(&RTSPropertiesViewImpl::onLocationChanged, this, _1, _2));
             ncHelper.setLocation(nsView->getHost(), nsView->getPort());
         }
     }
-
 }
 
 
@@ -227,9 +230,14 @@ RTSPropertiesViewImpl::~RTSPropertiesViewImpl()
 
 void RTSPropertiesViewImpl::onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items)
 {
-    const NamingContextHelper::ObjectInfo* item = items.size()==1 ? &items.front() : 0;
-    if(item != currentItem){
-        currentItem = item;
+    if(items.size()!=1)
+        return;
+
+    const NamingContextHelper::ObjectInfo& item = items.front();
+    if(item.id != currentItem.id){
+        currentItem.id = item.id;
+        currentItem.isAlive = item.isAlive;
+        currentItem.kind = item.kind;
         showProperties();
     }
 }
@@ -245,8 +253,8 @@ void RTSPropertiesViewImpl::showProperties()
 {
     treeWidget.clear();
 
-    if(currentItem && currentItem->isAlive){
-        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem->id, "rtc");
+    if(currentItem.id!="" && currentItem.isAlive){
+        RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.id, "rtc");
         ComponentProfile_var cprofile = rtc->get_component_profile();
         QTreeWidgetItem *item = new QTreeWidgetItem;
 
@@ -262,7 +270,7 @@ void RTSPropertiesViewImpl::showProperties()
 
 void RTSPropertiesViewImpl::showConnectionProperties(PortService_var port, string id)
 {
-    currentItem = 0;
+    currentItem.id = "";
 
     treeWidget.clear();
     QTreeWidgetItem *item = new QTreeWidgetItem;
@@ -271,43 +279,6 @@ void RTSPropertiesViewImpl::showConnectionProperties(PortService_var port, strin
     treeWidget.expandAll();
 
 }
-
-#if 0
-
-    void RTSPropertiesView::showProperties(string srtc, string sport, string trtc, string tport, string id)
-    {
-        impl->treeWidget.clear();
-
-        if (impl->helper->isAlive()) {
-            CORBA::Object_var obj = RTCCorbaUtil::findObject(impl->helper, srtc);
-            
-            if (!CORBA::is_nil(obj)) {
-                CorbaConsumer<RTObject> rtc;
-                rtc.setObject(obj);
-
-                try {
-                    ComponentProfile_var cprofile = rtc->get_component_profile(); 
-                    QTreeWidgetItem *item = new QTreeWidgetItem;
-                    impl->showConnection(cprofile, sport, id, item);
-                    impl->treeWidget.insertTopLevelItem(0, item);
-                    impl->connItem->id = id;
-
-                } catch (...) {
-                    // Error message without display, It will display a blank.
-                }
-            
-            } else {
-                // If the RTC is dismissed from another tool, it is valid. I will ignore the error.
-                return;
-            }
-        }
-
-        // It will expand all.
-        impl->treeWidget.expandAll();
-    }
-
-
-#endif
 
 
 void RTSPropertiesViewImpl::showProfile(ComponentProfile_var cprofile, QTreeWidgetItem* item)

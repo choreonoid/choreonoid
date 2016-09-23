@@ -5,7 +5,7 @@
 #include "RTSNameServerView.h"
 //#include "RTSPropertiesView.h"
 #include <cnoid/ViewManager>
-#include <cnoid/TreeWidget>
+
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
@@ -35,7 +35,7 @@ public :
     }
     NamingContextHelper::ObjectInfo info_;
 };
-
+/*
 class RTSNameTreeWidget : public TreeWidget
 {
 private :
@@ -50,6 +50,18 @@ private :
         drag->start(Qt::MoveAction);
     }
 };
+*/
+void RTSNameTreeWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    QByteArray itemData;
+    QMimeData *mimeData = new QMimeData;
+    mimeData->setData("application/RTSNameServerItem", itemData);
+    QDrag *drag = new QDrag(this);
+    drag->setPixmap(QPixmap(":/Corba/icons/NSRTC.png"));
+    drag->setMimeData(mimeData);
+    drag->start(Qt::MoveAction);
+}
+
 
 class RTSNameServerViewImpl
 {
@@ -65,16 +77,16 @@ public:
     void extendDiagram(const NamingContextHelper::ObjectInfo& info, QTreeWidgetItem* parent);
 #endif
     void clearDiagram();
-    void setSelection(string RTCName);
+    void setSelection(std::string RTCName);
 
-    Signal<void(const list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
-    Signal<void(string, int)> sigLocationChanged;
+    Signal<void(const std::list<NamingContextHelper::ObjectInfo>&)> sigSelectionChanged;
+    Signal<void(std::string, int)> sigLocationChanged;
     RTSNameTreeWidget treeWidget;
     LineEdit hostAddressBox;
     SpinBox portNumberSpin;
 
     NamingContextHelper ncHelper;
-    list<NamingContextHelper::ObjectInfo> selectedItemList;
+    std::list<NamingContextHelper::ObjectInfo> selectedItemList;
 };
 
 }
@@ -119,19 +131,19 @@ RTSNameServerView::RTSNameServerView()
 }
 
 
-SignalProxy<void(const list<NamingContextHelper::ObjectInfo>&)> RTSNameServerView::sigSelectionChanged()
+SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)> RTSNameServerView::sigSelectionChanged()
 {
     return impl->sigSelectionChanged;
 }
 
 
-SignalProxy<void(string, int)> RTSNameServerView::sigLocationChanged()
+SignalProxy<void(std::string, int)> RTSNameServerView::sigLocationChanged()
 {
     return impl->sigLocationChanged;
 }
 
 
-list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection()
+std::list<NamingContextHelper::ObjectInfo> RTSNameServerView::getSelection()
 {
     return impl->selectedItemList;
 }
@@ -177,17 +189,6 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     vbox->addWidget(&treeWidget);
     self->setLayout(vbox);
 
-    /*
-    RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
-    if(propertiesView){
-        Connection connection = sigSelectionChanged.connect(
-                boost::bind(&RTSPropertiesView::onItemSelectionChanged, propertiesView, _1));
-        propertiesView->setSelectionChangedConnection(connection);
-        connection = sigLocationChanged.connect(
-                boost::bind(&RTSPropertiesView::onLocationChanged, propertiesView, _1, _2));
-        propertiesView->setLocationChangedConnection(connection);
-    }
-    */
 }
 
 #if 0
@@ -263,16 +264,12 @@ RTSNameServerView::~RTSNameServerView()
 
 
 RTSNameServerViewImpl::~RTSNameServerViewImpl()
-{/*
-    RTSPropertiesView* propertiesView = RTSPropertiesView::instance();
-    if(propertiesView){
-        propertiesView->clearSelectionChangedConnection();
-        propertiesView->clearLocationChangedConnection();
-    }*/
+{
+
 }
 
 
-const string RTSNameServerView::getHost()
+const std::string RTSNameServerView::getHost()
 {
     return impl->hostAddressBox.string();
 }
@@ -281,6 +278,12 @@ const string RTSNameServerView::getHost()
 int RTSNameServerView::getPort()
 {
     return impl->portNumberSpin.value();
+}
+
+
+void RTSNameServerView::updateView()
+{
+    impl->updateObjectList();
 }
 
 
@@ -352,13 +355,13 @@ void RTSNameServerViewImpl::onSelectionChanged()
 }
 
 
-void RTSNameServerView::setSelection(string RTCName)
+void RTSNameServerView::setSelection(std::string RTCName)
 {
     impl->setSelection(RTCName);
 }
 
 
-void RTSNameServerViewImpl::setSelection(string RTCName)
+void RTSNameServerViewImpl::setSelection(std::string RTCName)
 {
     if(RTCName.empty()){
         treeWidget.clearSelection();

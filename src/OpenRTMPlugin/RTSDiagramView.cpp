@@ -25,15 +25,19 @@
 #include <QLineEdit>
 #include <QStyleOptionGraphicsItem>
 #include <QGraphicsEffect>
-#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <rtm/CORBA_SeqUtil.h>
 #include "gettext.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#define USE_QT5
+#endif
+
 using namespace cnoid;
 using namespace std;
+using namespace std::placeholders;
 using namespace RTC;
 
 namespace cnoid {
@@ -110,7 +114,7 @@ class RTSConnectionGItem : public QGraphicsItemGroup, public Referenced
 {
 public :
     enum lineType { THREEPARTS_TYPE, FIVEPARTS_TYPE };
-    static const qreal xxoffset = 5;
+    const qreal xxoffset = 5;
 
     RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLeft, QPointF s, bool tIsLeft, QPointF t);
     ~RTSConnectionGItem();
@@ -152,7 +156,7 @@ public :
     bool changePortPos(bool isSource, QPointF s);
     lineType getType(qreal sx, qreal tx);
 
-    RTSConnection* rtsConnection;
+    RTSConnectionPtr rtsConnection;
 
 private:
     bool _sIsLeft;
@@ -306,7 +310,7 @@ RTSConnectionGItem::RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLef
         marker[1] = new RTSConnectionMarkerItem(line[1]->x2 , line[1]->y2, RTSConnectionMarkerItem::UNMOVABLE);
         marker[2] = new RTSConnectionMarkerItem(line[3]->cx , line[3]->cy, RTSConnectionMarkerItem::HORIZONTAL);
         signalConnections.add(marker[2]->sigPositionChanged.connect(
-                boost::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                std::bind(&RTSConnectionGItem::lineMove, this, _1)));
         marker[3] = marker[4] = 0;
     }else{
         line[2] = new RTSConnectionLineItem(sx, s.y(), sx, centerY);
@@ -321,11 +325,11 @@ RTSConnectionGItem::RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLef
         marker[3] = new RTSConnectionMarkerItem(line[3]->cx, line[3]->cy, RTSConnectionMarkerItem::VERTIAL);
         marker[4] = new RTSConnectionMarkerItem(line[4]->cx, line[4]->cy, RTSConnectionMarkerItem::HORIZONTAL);
         signalConnections.add(marker[2]->sigPositionChanged.connect(
-                        boost::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
         signalConnections.add(marker[3]->sigPositionChanged.connect(
-                        boost::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
         signalConnections.add(marker[4]->sigPositionChanged.connect(
-                        boost::bind(&RTSConnectionGItem::lineMove, this, _1)));
+                        std::bind(&RTSConnectionGItem::lineMove, this, _1)));
     }
 
     setFlags(QGraphicsItem::ItemIsSelectable );
@@ -335,6 +339,7 @@ RTSConnectionGItem::RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLef
 RTSConnectionGItem::~RTSConnectionGItem()
 {
     signalConnections.disconnect();
+   // scene()->removeItem(this);
 
     for(int i=0; i<5; i++){
         if(marker[i]){
@@ -346,7 +351,6 @@ RTSConnectionGItem::~RTSConnectionGItem()
             delete line[i];
         }
     }
-   // scene()->removeItem(this);  If this item is currently associated with a scene, the item will be removed from the scene before it is deleted.
 
 }
 
@@ -576,7 +580,7 @@ RTSCompGItem::RTSCompGItem(RTSComp* rtsComp, RTSDiagramViewImpl* impl, const QPo
 
     create(pos);
     positionChangeConnection = sigPositionChanged.connect(
-            boost::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
+            std::bind(&RTSDiagramViewImpl::onRTSCompPositionChanged, impl, _1));
 }
 
 
@@ -682,7 +686,13 @@ void RTSCompGItem::stateCheck()
 
 void RTSDiagramViewImpl::dragEnterEvent(QDragEnterEvent *event)
 {
+#ifdef USE_QT5
+    const RTSNameTreeWidget* nameServerItem =
+            qobject_cast<const RTSNameTreeWidget*>(event->source());//event->mimeData());
+    if (nameServerItem) {
+#else
     if(event->mimeData()->hasFormat("application/RTSNameServerItem")){
+#endif
         event->acceptProposedAction();
     }
 }
@@ -690,7 +700,13 @@ void RTSDiagramViewImpl::dragEnterEvent(QDragEnterEvent *event)
 
 void RTSDiagramViewImpl::dragMoveEvent(QDragMoveEvent *event) //
 {
+#ifdef USE_QT5
+    const RTSNameTreeWidget* nameServerItem =
+            qobject_cast<const RTSNameTreeWidget*>(event->source());//event->mimeData());
+    if (nameServerItem) {
+#else
     if(event->mimeData()->hasFormat("application/RTSNameServerItem")){
+#endif
         event->acceptProposedAction();
     }
 }
@@ -772,7 +788,7 @@ void RTSDiagramViewImpl::mouseMoveEvent(QMouseEvent* event)
         if(port){
             setCursor(Qt::PointingHandCursor);
         }else{
-            QGraphicsItem* gItem = scene.itemAt(pos.x(), pos.y());
+            QGraphicsItem* gItem = scene.itemAt(pos.x(), pos.y(), transform());
             if(gItem){
                 if(findConnectionMarker(gItem))
                     setCursor(Qt::ClosedHandCursor);
@@ -805,7 +821,7 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
             return;
         }
 
-        QGraphicsItem* gItem = scene.itemAt(pos.x(), pos.y());
+        QGraphicsItem* gItem = scene.itemAt(pos.x(), pos.y(), transform());
         if(gItem){
             targetMarker = findConnectionMarker(gItem);
             if(targetMarker){
@@ -820,7 +836,7 @@ void RTSDiagramViewImpl::mousePressEvent(QMouseEvent* event)
         if(!selectionRTCs.empty() || !selectionRTSConnections.empty()){
             menuManager.setNewPopupMenu(this);
             menuManager.addItem("Delete")
-               ->sigTriggered().connect(boost::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
+               ->sigTriggered().connect(std::bind(&RTSDiagramViewImpl::deleteSelectedRTSItem, this));
 
             menuManager.popupMenu()->popup(event->globalPos());
         }
@@ -853,7 +869,7 @@ void RTSDiagramViewImpl::mouseReleaseEvent(QMouseEvent *event)
                     string dataflow = createDialog.dataflowCombo->currentText().toStdString();
                     string subscription = createDialog.subscriptionCombo->currentText().toStdString();
                     timeOutConnection.block();
-                    RTSConnection* rtsConnection = currentRTSItem->addRTSConnection(id, name,
+                    RTSConnectionPtr rtsConnection = currentRTSItem->addRTSConnection(id, name,
                             sourcePort->rtsPort, targetPort->rtsPort, dataflow, subscription);
                     if(rtsConnection){
                         createConnectionGItem(rtsConnection, sourcePort, targetPort);
@@ -914,7 +930,7 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
         nsViewSelections = nsView->getSelection();
         if(!nsViewSelectionChangedConnection.connected()){
             nsViewSelectionChangedConnection = nsView->sigSelectionChanged().connect(
-                    boost::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1));
+                    std::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1));
         }
         /*
         if(!locationChangedConnection.connected()){
@@ -928,13 +944,13 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     timer.setSingleShot(false);
     timer.setInterval(STATE_CHECK_TIME);
     timeOutConnection = timer.sigTimeout().connect(
-            boost::bind(&RTSDiagramViewImpl::onTime, this));
-    self->sigActivated().connect(boost::bind(&RTSDiagramViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(boost::bind(&RTSDiagramViewImpl::onActivated, this ,false));
+            std::bind(&RTSDiagramViewImpl::onTime, this));
+    self->sigActivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this ,false));
 
     itemViewSelectionChangeConnection =
             ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-                    boost::bind(&RTSDiagramViewImpl::onItemviewSelectionChanged, this, _1));
+                    std::bind(&RTSDiagramViewImpl::onItemviewSelectionChanged, this, _1));
 
     ItemList<RTSystemItem> items = ItemTreeView::mainInstance()->selectedItems<RTSystemItem>();
     if(items.empty()){
@@ -943,7 +959,7 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
         currentRTSItem = items.get(0);
         connectionOfRTSystemItemDetachedFromRoot.disconnect();
         connectionOfRTSystemItemDetachedFromRoot = currentRTSItem->sigDetachedFromRoot().connect(
-                boost::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
+                std::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
         updateView();
     }
 
@@ -962,6 +978,12 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
 RTSDiagramView::~RTSDiagramView()
 {
     delete impl;
+}
+
+
+void RTSDiagramView::updateView()
+{
+    impl->updateView();
 }
 
 
@@ -1039,6 +1061,8 @@ void RTSDiagramViewImpl::deleteRTSConnection(RTSConnectionGItem* rtsConnectionGI
     rtsConnectionGItem->rtsConnection->disConnect();
     currentRTSItem->deleteRtsConnection(rtsConnectionGItem->rtsConnection->id);
     rtsConnections.erase(rtsConnectionGItem->rtsConnection->id);
+
+    scene.removeItem(rtsConnectionGItem);
 
     timeOutConnection.unblock();
 }
@@ -1248,7 +1272,7 @@ void RTSDiagramViewImpl::onItemviewSelectionChanged(const ItemList<RTSystemItem>
         updateView();
         currentRTSItem = item;
         connectionOfRTSystemItemDetachedFromRoot = currentRTSItem->sigDetachedFromRoot().connect(
-                    boost::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
+                    std::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
         updateView();
     }
 }

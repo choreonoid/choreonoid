@@ -205,14 +205,16 @@ endif()
 
 if(NOT QT5)
   QT4_WRAP_CPP(
+    plugin_sources
+    RTSNameServerView.h
     RTSDiagramView.h
-    RTSNameServerView.cpp
     OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 else()
   QT5_WRAP_CPP(
+    plugin_sources
     RTSDiagramView.h
-    RTSNameServerView.cpp
+    RTSNameServerView.h
     OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 endif()

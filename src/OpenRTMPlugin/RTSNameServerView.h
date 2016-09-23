@@ -9,6 +9,7 @@
 #include <cnoid/View>
 #include <cnoid/PolymorphicPointerArray>
 #include <cnoid/CorbaUtil>
+#include <cnoid/TreeWidget>
 
 using namespace cnoid;
 
@@ -36,6 +37,7 @@ public:
     int getPort();
     std::list<NamingContextHelper::ObjectInfo> getSelection();
     void setSelection(std::string RTCname);
+    void updateView();
 
 //    virtual void onActivated();
 //    TreeWidget* getTreeWidget();
@@ -44,6 +46,15 @@ public:
 private:
     RTSNameServerViewImpl* impl;
 };
+
+class RTSNameTreeWidget : public TreeWidget
+{
+    Q_OBJECT
+
+private :
+    void mouseMoveEvent(QMouseEvent *event);
+};
+
 }
 
 #endif
