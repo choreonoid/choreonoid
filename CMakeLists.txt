@@ -28,6 +28,7 @@ if(UNIX)
   #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -stdlib=libc++")
   add_definitions("-pthread")
 endif()
 
@@ -305,6 +306,8 @@ if(ENABLE_LUA)
   if(LUA_FOUND)
     include_directories(${LUA_INCLUDE_DIRS})
     include_directories(${PROJECT_SOURCE_DIR}/thirdparty/sol2)
+    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/kaguya)
+    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/selene/include)
   endif()
   set(CNOID_LUA_SUBDIR ${CNOID_PLUGIN_SUBDIR}/lua)
 endif()
@@ -1054,7 +1057,6 @@ endif()
 
 if(ENABLE_LUA)
   function(add_cnoid_lua_module)
-  
     set(target ${ARGV0})
     string(REGEX REPLACE "^Lua(.+)$" "\\1" module ${target})
     set(sources ${ARGV})
@@ -1072,8 +1074,25 @@ if(ENABLE_LUA)
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       LIBRARY DESTINATION ${CNOID_LUA_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
   endfunction()
+
+  function(apply_common_setting_for_lua_module target)
+    set(headers ${ARGV1})
+    set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
+    apply_common_setting_for_target(${target} "${headers}")
+
+    if(INSTALL_SDK)
+      if(MSVC)
+	install(TARGETS ${target}
+	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+      endif()
+      if(headers)
+	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
+      endif()
+    endif()
+  endfunction()
+    
 
 endif()
 

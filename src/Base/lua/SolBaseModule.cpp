@@ -6,75 +6,20 @@
 #include "../ExtCommandItem.h"
 #include "../MessageView.h"
 #include "../TaskView.h"
-#include <sol.hpp>
-#include <cmath>
-#include <iostream>
+#include <cnoid/LuaUtil>
 
 using namespace std;
 using namespace cnoid;
-
-namespace sol {
-
-template <typename T>
-struct unique_usertype_traits<cnoid::ref_ptr<T>> {
-    typedef T type;
-    typedef cnoid::ref_ptr<T> actual_type;
-    static const bool value = true;
-    static bool is_null(const actual_type& value) {
-        return value == nullptr;
-    }
-    static type* get (const actual_type& p) {
-        return p.get();
-    }
-};
-
-}
-
-namespace {
-
-void stackDump(lua_State* L)
-{
-    ostream& os = mvout();
-
-    os << "stack: ";
-    
-    int top = lua_gettop(L);
-    for(int i=1; i <= top; ++i){
-        int t = lua_type(L, i);
-        switch(t){
-        case LUA_TSTRING: {
-            os << "'" << lua_tostring(L, i) << "'";
-            break;
-        }
-        case LUA_TBOOLEAN: {
-            os << (lua_toboolean(L, i) ? "true" : "false");
-            break;
-        }
-        case LUA_TNUMBER: {
-            os << lua_tonumber(L, i);
-            break;
-        }
-        default: {
-            os << lua_typename(L, t);
-            break;
-        }
-        }
-        os << ", ";
-    }
-    os << endl;
-}
-
-}  
 
 extern "C" int luaopen_cnoid_Base(lua_State* L)
 {
     sol::state_view lua(L);
 
-    sol::table base = lua.create_table();
-    
-    base["sin"] = [](double x){ return sin(x); };
+    lua["require"]("cnoid.Util");
 
-    base.new_usertype<View>(
+    sol::table module = lua.create_table();
+    
+    module.new_usertype<View>(
         "View",
         "new", sol::no_constructor,
         "name", &View::name,
@@ -83,7 +28,7 @@ extern "C" int luaopen_cnoid_Base(lua_State* L)
         "lastFocusView", &View::lastFocusView
         );
 
-    base.new_usertype<MessageView>(
+    module.new_usertype<MessageView>(
         "MessageView",
         sol::base_classes, sol::bases<View>(),
         "new", sol::no_constructor,
@@ -95,14 +40,14 @@ extern "C" int luaopen_cnoid_Base(lua_State* L)
         "clear", &MessageView::clear
         );
 
-    base.new_usertype<TaskView>(
+    module.new_usertype<TaskView>(
         "TaskView",
         sol::base_classes, sol::bases<View>(),
         "new", sol::no_constructor,
         "instance", &TaskView::instance
         );
 
-    base.new_usertype<Item>(
+    module.new_usertype<Item>(
         "Item",
         "new", sol::no_constructor,
         "find", [](const char* path) -> ItemPtr { return Item::find(path); },
@@ -117,7 +62,7 @@ extern "C" int luaopen_cnoid_Base(lua_State* L)
         "notifyUpdate", &Item::notifyUpdate
         );
 
-    base.new_usertype<ExtCommandItem>(
+    module.new_usertype<ExtCommandItem>(
         "ExtCommandItem",
         sol::base_classes, sol::bases<Item>(),
         "new", sol::factories([]() -> ExtCommandItemPtr { return new ExtCommandItem(); }),
@@ -131,7 +76,7 @@ extern "C" int luaopen_cnoid_Base(lua_State* L)
         "terminate", &ExtCommandItem::terminate
         );
 
-    sol::stack::push(L, base);
+    sol::stack::push(L, module);
     
     return 1;
 }

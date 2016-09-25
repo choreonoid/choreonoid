@@ -35,4 +35,7 @@ uuid-dev \
 lua5.2 \
 liblua5.2-dev
 
+# libc++-dev
+# clang-3.8
+
 

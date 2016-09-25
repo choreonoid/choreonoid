@@ -201,4 +201,5 @@ endif()
 
 if(ENABLE_PYTHON)
   add_subdirectory(python)
+  add_subdirectory(lua)
 endif()
