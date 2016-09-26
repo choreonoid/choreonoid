@@ -79,6 +79,8 @@ void exportSimulationClasses()
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
         .def("setExternalForce", &SimulatorItem::setExternalForce, SimulatorItem_setExternalForce_overloads())
         .def("clearExternalForces", &SimulatorItem::clearExternalForces)
+        .def("setForcedPosition", &SimulatorItem::setForcedPosition)
+        .def("clearForcedPositions", &SimulatorItem::clearForcedPositions)
         ;
     {
         scope simulatorItemScope = simulatorItemClass;
