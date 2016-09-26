@@ -68,9 +68,9 @@ const std::string& PythonScriptItem::scriptFilename() const
 }
 
 
-bool PythonScriptItem::setBackgroundMode(bool on)
+void PythonScriptItem::setBackgroundMode(bool on)
 {
-    return impl->setBackgroundMode(on);
+    impl->setBackgroundMode(on);
 }
 
 

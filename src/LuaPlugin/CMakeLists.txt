@@ -16,10 +16,12 @@ set(sources
   LuaPlugin.cpp
   LuaInterpreter.cpp
   LuaConsoleView.cpp
+  LuaScriptItem.cpp
   )
 
 set(headers
   LuaInterpreter.h
+  LuaScriptItem.h
   )
 
 make_gettext_mofiles(${target} mofiles)

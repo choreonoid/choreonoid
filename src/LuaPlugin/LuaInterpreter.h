@@ -7,6 +7,7 @@
 
 #include <lua.hpp>
 #include <iosfwd>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,7 +20,7 @@ class LuaInterpreterImpl;
 class CNOID_EXPORT LuaInterpreter
 {
 public:
-    static LuaInterpreter* mainInstance();
+    static std::shared_ptr<LuaInterpreter> mainInstance();
         
     LuaInterpreter();
     virtual ~LuaInterpreter();

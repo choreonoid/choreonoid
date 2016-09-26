@@ -68,10 +68,13 @@ static int print(lua_State* state)
 }
 
 
-LuaInterpreter* LuaInterpreter::mainInstance()
+std::shared_ptr<LuaInterpreter> LuaInterpreter::mainInstance()
 {
-    static LuaInterpreter mainInterpreter;
-    return &mainInterpreter;
+    static std::shared_ptr<LuaInterpreter> mainInterpreter;
+    if(!mainInterpreter){
+        mainInterpreter = make_shared<LuaInterpreter>();
+    }
+    return mainInterpreter;
 }
     
         
