@@ -6,7 +6,9 @@
 #include "../ExtCommandItem.h"
 #include "../MessageView.h"
 #include "../TaskView.h"
+#include "../TimeBar.h"
 #include <cnoid/LuaUtil>
+#include <cnoid/LuaSignal>
 
 using namespace std;
 using namespace cnoid;
@@ -75,6 +77,41 @@ extern "C" int luaopen_cnoid_Base(lua_State* L)
         "execute", &ExtCommandItem::execute,
         "terminate", &ExtCommandItem::terminate
         );
+
+
+    sol::table timeBar = module.new_usertype<TimeBar>(
+        "TimeBar",
+        "instance", &TimeBar::instance,
+        "sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized,
+        "sigPlaybackStarted", &TimeBar::sigPlaybackStarted,
+        "sigTimeChanged", &TimeBar::sigTimeChanged,
+        "sigPlaybackStopped", &TimeBar::sigPlaybackStopped,
+        "time", &TimeBar::time,
+        "setTime", &TimeBar::setTime,
+        "realPlaybackTime", &TimeBar::realPlaybackTime,
+        "minTime", &TimeBar::minTime,
+        "maxTime", &TimeBar::maxTime,
+        "setTimeRange", &TimeBar::setTimeRange,
+        "frameRate", &TimeBar::frameRate,
+        "setFrameRate", &TimeBar::setFrameRate,
+        "timeStep", &TimeBar::timeStep,
+        "playbackSpeedScale", &TimeBar::playbackSpeedScale,
+        "setPlaybackSpeedScale", &TimeBar::setPlaybackSpeedScale,
+        "playbackFrameRate", &TimeBar::playbackFrameRate,
+        "setPlaybackFrameRate", &TimeBar::setPlaybackFrameRate,
+        "setRepeatMode", &TimeBar::setRepeatMode,
+        "startPlayback", &TimeBar::startPlayback,
+        "startPlaybackFromFillLevel", &TimeBar::startPlaybackFromFillLevel,
+        "stopPlayback", [](TimeBar* self) { self->stopPlayback(); },
+        "isDoingPlayback", &TimeBar::isDoingPlayback,
+        "startFillLevelUpdate", &TimeBar::startFillLevelUpdate,
+        "updateFillLevel", &TimeBar::updateFillLevel,
+        "stopFillLevelUpdate", &TimeBar::stopFillLevelUpdate,
+        "setFillLevelSync", &TimeBar::setFillLevelSync
+        );
+
+    LuaSignal<bool(double time), LogicalProduct>("SigPlaybackInitialized", timeBar);
+    LuaSignal<bool(double time), LogicalSum>("SigTimeChanged", timeBar);
 
     sol::stack::push(L, module);
     
