@@ -3,10 +3,9 @@
 */
 
 #include "LuaConsoleView.h"
+#include "LuaInterpreter.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MessageView>
-#include <cnoid/ExecutablePath>
-#include <cnoid/FileUtil>
 #include <QPlainTextEdit>
 #include <QBoxLayout>
 #include <QTextBlock>
@@ -16,7 +15,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -30,7 +28,6 @@ class LuaConsoleViewImpl : public QPlainTextEdit
 {
 public:
     LuaConsoleView* self;
-    lua_State* L;
     int inputColumnOffset;
     QString chunk;
     std::list<QString>::iterator histIter;
@@ -46,36 +43,13 @@ public:
     void putPrompt();
     QString getInputString();
     void setInputString(const QString& command);
-    void printResults();
-    int luaPrint(lua_State* L);
+    void printResults(lua_State* L);
     void fixLine();
     void addToHistory(const QString& command);
     QString getPrevHistoryEntry();
     QString getNextHistoryEntry();
     void stackDump();
 };
-
-}
-
-
-namespace {
-
-const char* ConsoleInstanceVariableName = "cnoid_console_view";
-
-int print_to_console(lua_State* L)
-{
-    int result = 0;
-    lua_pushstring(L, ConsoleInstanceVariableName);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-    if(lua_islightuserdata(L, -1)){
-        LuaConsoleViewImpl* view = (LuaConsoleViewImpl*)lua_touserdata(L, -1);
-        lua_pop(L, 1);
-        result = view->luaPrint(L);
-    } else {
-        lua_pop(L, 1);
-    }
-    return result;
-}
 
 }
 
@@ -108,27 +82,6 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     hbox->addWidget(this);
     self->setLayout(hbox);
 
-    L = luaL_newstate();
-    luaL_openlibs(L);
-
-    // Append the Choreonoid lua module path to package.cpath
-    lua_getglobal(L, "package");
-    lua_pushstring(L, "cpath");
-    lua_gettable(L, -2);
-    string cpath(lua_tostring(L, -1));
-    lua_pop(L, 1);
-    filesystem::path path = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "lua" / "?.so";
-    lua_pushstring(L, "cpath");
-    lua_pushstring(L, (cpath + ";" + getNativePathString(path)).c_str());
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-
-    // for redirecting the output from Lua
-    lua_register(L, "print", print_to_console);
-    lua_pushstring(L, ConsoleInstanceVariableName);
-    lua_pushlightuserdata(L, this);
-    lua_settable(L, LUA_REGISTRYINDEX);
-
     inputColumnOffset = 0;
 
     histIter = history.end();
@@ -147,7 +100,7 @@ LuaConsoleView::~LuaConsoleView()
 
 LuaConsoleViewImpl::~LuaConsoleViewImpl()
 {
-    lua_close(L);
+
 }
 
 
@@ -290,7 +243,7 @@ void LuaConsoleViewImpl::setInputString(const QString& command)
 }
 
 
-void LuaConsoleViewImpl::printResults()
+void LuaConsoleViewImpl::printResults(lua_State* L)
 {
     int n = lua_gettop(L);
     if(n > 0){  /* any result to be printed? */
@@ -301,31 +254,6 @@ void LuaConsoleViewImpl::printResults()
             putln(lua_pushfstring(L, "error calling 'print' (%s)", lua_tostring(L, -1)));
         }
     }
-}
-
-
-int LuaConsoleViewImpl::luaPrint(lua_State* L)
-{
-    int n = lua_gettop(L);  /* number of arguments */
-    lua_getglobal(L, "tostring");
-    for(int i=1; i <= n; ++i) {
-        const char *s;
-        size_t l;
-        lua_pushvalue(L, -1);  /* function to be called */
-        lua_pushvalue(L, i);   /* value to print */
-        lua_call(L, 1, 1);
-        s = lua_tolstring(L, -1, &l);  /* get result */
-        if(s == NULL){
-            return luaL_error(L, "'tostring' must return a string to 'print'");
-        }
-        if(i > 1){
-            put("\t");
-        }
-        put(s);
-        lua_pop(L, 1);  /* pop result */
-    }
-    put("\n");
-    return 0;
 }
 
 
@@ -346,6 +274,8 @@ void LuaConsoleViewImpl::fixLine()
     int status = -1;
 
     bool isIncomplete = true;
+
+    lua_State* L = LuaInterpreter::mainInstance()->state();
     
     if(isFirstLine){
         QString retline = QString("return %1;").arg(chunk);
@@ -380,7 +310,7 @@ void LuaConsoleViewImpl::fixLine()
             status = lua_pcall(L, 0, LUA_MULTRET, 0);
         }
         if(status == LUA_OK){
-            printResults();
+            printResults(L);
         } else {
             putln(lua_tostring(L, -1));
             lua_pop(L, 1);
@@ -429,33 +359,4 @@ QString LuaConsoleViewImpl::getNextHistoryEntry()
         }
     }
     return QString();
-}
-
-
-void LuaConsoleViewImpl::stackDump()
-{
-    int top = lua_gettop(L);
-    for(int i=0; i <= top; ++i){
-        int t = lua_type(L, i);
-        switch(t){
-        case LUA_TSTRING: {
-            mvout() << "'" << lua_tostring(L, i) << "'";
-            break;
-        }
-        case LUA_TBOOLEAN: {
-            mvout() << (lua_toboolean(L, i) ? "true" : "false");
-            break;
-        }
-        case LUA_TNUMBER: {
-            mvout() << lua_tonumber(L, i);
-            break;
-        }
-        default: {
-            mvout() << lua_typename(L, t);
-            break;
-        }
-        }
-        mvout() << "   ";
-    }
-    mvout() << endl;
 }

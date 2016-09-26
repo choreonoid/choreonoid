@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_UTIL_H
-#define CNOID_PYTHON_PLUGIN_PYTHON_UTIL_H
+#ifndef CNOID_PYTHON_PLUGIN_PYTHON_PLUGIN_H
+#define CNOID_PYTHON_PLUGIN_PYTHON_PLUGIN_H
 
 #include <boost/python.hpp>
 #include "exportdecl.h"

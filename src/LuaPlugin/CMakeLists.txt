@@ -14,10 +14,12 @@ set(target CnoidLuaPlugin)
 
 set(sources
   LuaPlugin.cpp
+  LuaInterpreter.cpp
   LuaConsoleView.cpp
   )
 
 set(headers
+  LuaInterpreter.h
   )
 
 make_gettext_mofiles(${target} mofiles)
