@@ -5,10 +5,12 @@
 #include "LuaConsoleView.h"
 #include "LuaInterpreter.h"
 #include <cnoid/ViewManager>
-#include <cnoid/MessageView>
+#include <cnoid/LazyCaller>
 #include <QPlainTextEdit>
 #include <QBoxLayout>
 #include <QTextBlock>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
 #include <lua.hpp>
 #include <regex>
 #include "gettext.h"
@@ -19,6 +21,14 @@ using namespace cnoid;
 namespace {
 
 const unsigned int HISTORY_SIZE = 100;
+
+class TextSink : public boost::iostreams::sink
+{
+public:
+    TextSink(LuaConsoleViewImpl* view) : view(view) { }
+    std::streamsize write(const char* s, std::streamsize n);
+    LuaConsoleViewImpl* view;
+};
 
 }
 
@@ -35,9 +45,14 @@ public:
     std::vector<string> splitStringVec;
     std::vector<string> keywords;
 
+    TextSink textSink;
+    boost::iostreams::stream_buffer<TextSink> sbuf;
+    std::ostream os;
+
     LuaConsoleViewImpl(LuaConsoleView* self);
     ~LuaConsoleViewImpl();
     virtual void keyPressEvent(QKeyEvent* event);
+    std::streamsize write(const char* s, std::streamsize n);
     void put(const QString& message);
     void putln(const QString& message);
     void putPrompt();
@@ -69,7 +84,10 @@ LuaConsoleView::LuaConsoleView()
 
 
 LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
-    : self(self)
+    : self(self),
+      textSink(this),
+      sbuf(textSink),
+      os(&sbuf)
 {
     self->setDefaultLayoutArea(View::BOTTOM);
 
@@ -78,7 +96,7 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     setWordWrapMode(QTextOption::WrapAnywhere);
     setUndoRedoEnabled(false);
 
-    QHBoxLayout* hbox = new QHBoxLayout();
+    auto hbox = new QHBoxLayout();
     hbox->addWidget(this);
     self->setLayout(hbox);
 
@@ -193,6 +211,14 @@ void LuaConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 }
 
 
+std::streamsize TextSink::write(const char* s, std::streamsize n)
+{
+    auto text = QString::fromLocal8Bit(s, n);
+    callFromMainThread([=](){ view->put(text); });
+    return n;
+}
+
+
 void LuaConsoleViewImpl::put(const QString& message)
 {
     moveCursor(QTextCursor::End);
@@ -220,8 +246,8 @@ void LuaConsoleViewImpl::putPrompt()
 
 QString LuaConsoleViewImpl::getInputString()
 {
-    QTextDocument* doc = document();
-    QString line = doc->findBlockByLineNumber(doc->lineCount() - 1).text();
+    auto doc = document();
+    auto line = doc->findBlockByLineNumber(doc->lineCount() - 1).text();
     line.remove(0, inputColumnOffset);
     return line;
 }
@@ -233,7 +259,7 @@ void LuaConsoleViewImpl::setInputString(const QString& command)
         return;
     }
 
-    QTextCursor cursor = textCursor();
+    auto cursor = textCursor();
     cursor.movePosition(QTextCursor::End);
     cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
     cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, inputColumnOffset);
@@ -259,13 +285,11 @@ void LuaConsoleViewImpl::printResults(lua_State* L)
 
 void LuaConsoleViewImpl::fixLine()
 {
-    ostream& os = mvout();
-    
     bool isFirstLine = chunk.isEmpty();
     if(!isFirstLine){
         chunk.append("\n");
     }
-    QString line = getInputString();
+    auto line = getInputString();
     chunk.append(line);
     addToHistory(line);
 
@@ -275,10 +299,13 @@ void LuaConsoleViewImpl::fixLine()
 
     bool isIncomplete = true;
 
-    lua_State* L = LuaInterpreter::mainInstance()->state();
+    auto interpreter = LuaInterpreter::mainInstance();
+    auto L = interpreter->state();
     
+    interpreter->beginRedirect(os);
+
     if(isFirstLine){
-        QString retline = QString("return %1;").arg(chunk);
+        auto retline = QString("return %1;").arg(chunk);
         auto buff = retline.toUtf8();
         status = luaL_loadbuffer(L, buff.data(), buff.size(), "=console");
         if(status == LUA_OK){
@@ -317,6 +344,8 @@ void LuaConsoleViewImpl::fixLine()
         }
         chunk.clear();
     }
+
+    interpreter->endRedirect();
         
     putPrompt();
 }

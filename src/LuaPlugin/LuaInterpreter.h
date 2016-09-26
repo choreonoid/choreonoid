@@ -26,6 +26,7 @@ public:
 
     lua_State* state();
 
+    //! \todo Introduce an object to change the output in a particular scope
     void beginRedirect(std::ostream& os);
     void endRedirect();
 
