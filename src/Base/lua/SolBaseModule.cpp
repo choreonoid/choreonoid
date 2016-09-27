@@ -9,11 +9,12 @@
 #include "../TimeBar.h"
 #include <cnoid/LuaUtil>
 #include <cnoid/LuaSignal>
+#include "exportdecl.h"
 
 using namespace std;
 using namespace cnoid;
 
-extern "C" int luaopen_cnoid_Base(lua_State* L)
+extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 {
     sol::state_view lua(L);
 

@@ -1063,6 +1063,15 @@ if(ENABLE_LUA)
     list(REMOVE_AT sources 0)
 
     add_library(${target} SHARED ${sources})
+
+    if(ENABLE_GCC_FVISIBILITY_HIDDEN)
+      get_target_property(compile_flags ${ARGV0} COMPILE_FLAGS)
+      if(compile_flags)
+	set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "${compile_flags} -fvisibility=hidden")
+      else()
+	set_target_properties(${ARGV0} PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+      endif()
+    endif()
     
     set_target_properties(${target}  PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_LUA_SUBDIR}/cnoid

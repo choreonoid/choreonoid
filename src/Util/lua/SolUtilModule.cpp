@@ -5,6 +5,7 @@
 #include "LuaUtil.h"
 #include <cmath>
 #include <iostream>
+#include "exportdecl.h"
 
 using namespace std;
 using namespace cnoid;
@@ -15,7 +16,7 @@ void exportLuaSignalTypes(sol::table& module);
 
 }
 
-extern "C" int luaopen_cnoid_Util(lua_State* L)
+extern "C" CNOID_EXPORT int luaopen_cnoid_Util(lua_State* L)
 {
     sol::state_view lua(L);
 
