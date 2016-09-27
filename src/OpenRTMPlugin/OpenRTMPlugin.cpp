@@ -362,7 +362,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
     typedef std::map<RTC::ExecutionContextService_var, std::set<RTC::RTObject_impl*> > RemoveMap;
     RemoveMap removeMap;
     for(int i=0; i < rtcs.size(); ++i){
-    	RTObject_impl* rtc = rtcs[i];
+        RTC::RTObject_impl* rtc = rtcs[i];
     	RTC::ExecutionContextList_var eclist = rtc->get_participating_contexts();
     	for(CORBA::ULong j=0; j < eclist->length(); ++j){
     		if(!CORBA::is_nil(eclist[j])){
