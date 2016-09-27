@@ -179,6 +179,12 @@ bool LuaScriptItem::waitToFinish(double timeout)
 {
     return true;
 }
+
+
+std::string LuaScriptItem::resultString() const
+{
+    return string();
+}
     
 
 SignalProxy<void()> LuaScriptItem::sigScriptFinished()
