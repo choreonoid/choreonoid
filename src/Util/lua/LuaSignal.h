@@ -21,7 +21,7 @@ template<typename T> struct lua_function_caller0 {
         try {
             result = func();
         } catch(const sol::error& ex) {
-            // use this_state
+            // put ex.what() by using func.lua_state() and the print function
         }
         return result;
     }
@@ -34,7 +34,7 @@ template<> struct lua_function_caller0<void> {
         try {
             func();
         } catch(const sol::error& ex) {
-            // use this_state
+
         }
     }
 };
@@ -43,13 +43,33 @@ template<typename T, typename ARG1> struct lua_function_caller1 {
     sol::function func;
     lua_function_caller1(sol::function func) : func(func) { }
     T operator()(ARG1 arg1) {
-        T result;
+        T retval;
         try {
-            result = func(arg1);
+            /*
+              The sol::protected_function and sol::protected_function_result types should
+              be used instead of sol::function for checking the return value, but the following
+              code does not seem to to work correctly in my test. The return value cannot be obtained from the
+              protected_function_result even if the lua function returns a value.
+
+              auto result = func(arg1); // func is sol::protected_function
+              if(result.valid()){
+                  sol::optional<T> value = result;
+                  if(value){
+                      retval = value.value();
+                  } else {
+                      // error
+                  }
+              } else {
+                  sol::error err = result;
+              }
+            */
+            retval = func(arg1);
+
         } catch(const sol::error& ex) {
-            // use this_state
+
         }
-        return result;
+            
+        return retval;
     }
 };
 
@@ -60,7 +80,7 @@ template<typename ARG1> struct lua_function_caller1<void, ARG1> {
         try {
             func(arg1);
         } catch(const sol::error& ex) {
-            // use this_state
+
         }
     }
 };
@@ -73,7 +93,7 @@ template<typename T, typename ARG1, typename ARG2> struct lua_function_caller2 {
         try {
             result = func(arg1, arg2);
         } catch(const sol::error& ex) {
-            // use this_state
+
         }
         return result;
     }
@@ -86,7 +106,7 @@ template<typename ARG1, typename ARG2> struct lua_function_caller2<void, ARG1, A
         try {
             func(arg1, arg2);
         } catch(const sol::error& ex) {
-            // use this_state
+
         }
     }
 };

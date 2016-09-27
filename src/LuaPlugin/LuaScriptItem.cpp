@@ -24,7 +24,7 @@ class LuaScriptItemImpl
 {
 public:
     LuaScriptItem* self;
-    shared_ptr<LuaInterpreter> interpreter;
+    LuaInterpreter* interpreter = nullptr;
     std::string scriptFilename;
     Connection sigFinishedConnection;
     Signal<void()> sigScriptFinished;
@@ -90,7 +90,9 @@ LuaScriptItem::~LuaScriptItem()
 
 LuaScriptItemImpl::~LuaScriptItemImpl()
 {
-
+    if(interpreter && !isUsingMainInterpreter){
+        delete interpreter;
+    }
 }
 
 
@@ -103,10 +105,13 @@ void LuaScriptItem::onDisconnectedFromRoot()
 void LuaScriptItemImpl::useMainInterpreter(bool on)
 {
     if(on != isUsingMainInterpreter || !interpreter){
+        if(interpreter && !isUsingMainInterpreter){
+            delete interpreter;
+        }
         if(on){
             interpreter = LuaInterpreter::mainInstance();
         } else {
-            interpreter = make_shared<LuaInterpreter>();
+            interpreter = new LuaInterpreter;
         }
         isUsingMainInterpreter = on;
     }
@@ -169,9 +174,26 @@ bool LuaScriptItem::execute()
 
 bool LuaScriptItemImpl::execute()
 {
-    lua_State* L = interpreter->state();
+    auto mv = MessageView::instance();
+    auto L = interpreter->state();
+    interpreter->beginRedirect(mv->cout());
 
+    bool hasError = false;
 
+    if(luaL_loadfile(L, scriptFilename.c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)){
+        // error
+        auto msg = lua_tostring(L, -1);
+        if(msg == nullptr){
+            mv->putln(MessageView::ERROR, format(_("Error in loading Lua script \"%1%\".")) % scriptFilename);
+        } else {
+            mv->putln(MessageView::ERROR, msg);
+        }
+        hasError = true;
+    }
+
+    interpreter->endRedirect();
+    
+    return !hasError;
 }
 
 

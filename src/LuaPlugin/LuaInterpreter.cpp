@@ -5,6 +5,7 @@
 #include "LuaInterpreter.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/MessageView>
 #include <iostream>
 #include <stack>
 
@@ -28,56 +29,62 @@ public:
 
 static const char* InterpreterInstanceKey = "cnoid_lua_interpreter";
 
-static int print(lua_State* state)
+LuaInterpreter* LuaInterpreter::mainInstance()
 {
-    int result = 0;
+    static LuaInterpreter* mainInterpreter = new LuaInterpreter;
+    return mainInterpreter;
+}
+
+
+std::ostream& LuaInterpreter::getOutputStream(lua_State* state)
+{
     lua_pushstring(state, InterpreterInstanceKey);
     lua_gettable(state, LUA_REGISTRYINDEX);
 
     if(!lua_islightuserdata(state, -1)){
         lua_pop(state, 1);
+        return std::cout;
 
     } else {
         LuaInterpreterImpl* instance = (LuaInterpreterImpl*)lua_touserdata(state, -1);
         ostream& os = *instance->outputStack.top();
         lua_pop(state, 1);
-
-        int n = lua_gettop(state);  // number of arguments
-        lua_getglobal(state, "tostring");
-        for(int i=1; i <= n; ++i) {
-            const char *s;
-            size_t l;
-            lua_pushvalue(state, -1); // function to be called
-            lua_pushvalue(state, i);  // value to print
-            lua_call(state, 1, 1);
-            s = lua_tolstring(state, -1, &l); // get result
-            if(s == NULL){
-                return luaL_error(state, "'tostring' must return a string to 'print'");
-            }
-            if(i > 1){
-                os << "\t";
-            }
-            os << s;
-
-            lua_pop(state, 1);  // pop result
-        }
-        os << endl;
+        return os;
     }
-    
-    return result;
 }
 
 
-std::shared_ptr<LuaInterpreter> LuaInterpreter::mainInstance()
+static int print(lua_State* state)
 {
-    static std::shared_ptr<LuaInterpreter> mainInterpreter;
-    if(!mainInterpreter){
-        mainInterpreter = make_shared<LuaInterpreter>();
-    }
-    return mainInterpreter;
-}
-    
+    int result = 0;
+
+    ostream& os = LuaInterpreter::getOutputStream(state);
+
+    int n = lua_gettop(state);  // number of arguments
+    lua_getglobal(state, "tostring");
+    for(int i=1; i <= n; ++i) {
+        const char *s;
+        size_t l;
+        lua_pushvalue(state, -1); // function to be called
+        lua_pushvalue(state, i);  // value to print
+        lua_call(state, 1, 1);
+        s = lua_tolstring(state, -1, &l); // get result
+        if(s == NULL){
+            return luaL_error(state, "'tostring' must return a string to 'print'");
+        }
+        if(i > 1){
+            os << "\t";
+        }
+        os << s;
         
+        lua_pop(state, 1);  // pop result
+    }
+    os << endl;
+    
+    return 0;
+}
+
+
 LuaInterpreter::LuaInterpreter()
 {
     impl = new LuaInterpreterImpl;
@@ -107,7 +114,7 @@ LuaInterpreterImpl::LuaInterpreterImpl()
     lua_pushlightuserdata(state, this);
     lua_settable(state, LUA_REGISTRYINDEX);
 
-    outputStack.push(&std::cout);
+    outputStack.push(&MessageView::instance()->cout());
 }
     
 

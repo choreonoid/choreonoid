@@ -2,6 +2,7 @@
    @author Shin'ichiro Nakaoka
 */
 
+#include "LuaScriptItem.h"
 #include "LuaConsoleView.h"
 #include <cnoid/Plugin>
 
@@ -19,6 +20,7 @@ public:
     
     virtual bool initialize()
     {
+        LuaScriptItem::initializeClass(this);
         LuaConsoleView::initializeClass(this);
         return true;
     }

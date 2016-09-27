@@ -431,7 +431,7 @@ void MessageViewImpl::put(int type, const QString& message, bool doLF, bool doNo
         // add the escape sequence to make the text red
         QString highlighted("\033[31m");
         if(type == MessageView::ERROR){
-            highlighted.append("Error: ");
+            //highlighted.append("Error: ");
         } else if(type == MessageView::WARNING){
             highlighted.append("Warning: ");
         }
