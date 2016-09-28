@@ -21,22 +21,39 @@ public:
     sol::function storeState_;
     sol::function restoreState_;
     
-    TaskWrap() {
+    TaskWrap(sol::this_state s) {
         /*
-        onMenuRequest_ = bind(&Task::onMenuRequest, this, _1);
-        onMenuRequest_ = [&](TaskMenu& menu){ onMenuRequest(menu); };
-        onActivated_ = bind(&Task::onActivated, this, _1);
-        onDeactivated_ = bind(&Task::onDeactivated, this, _1);
-        storeState_ = bind(&Task::storeState, this, _1, _2);
-        restoreState_ = bind(&Task::restoreState, this, _1, _2);
+        sol::state_view lua(s);
+        sol::table module = lua.create_table();
+        module.set_function("f1", [&](TaskMenu& menu){ onMenuRequest(menu); });
+        onMenuRequest_ = module["f1"];
         */
-    };
+
+        /**
+           onMenuRequest_ = bind(&TaskWrap::onMenuRequest, this, _1);
+        */
+        sol::make_reference(s, bind(&TaskWrap::onMenuRequest, this, _1)).push();
+        onMenuRequest_ = sol::function(s);
+
+        sol::make_reference(s, bind(&TaskWrap::onActivated, this, _1)).push();
+        onActivated_ = sol::function(s);
+
+        sol::make_reference(s, bind(&TaskWrap::onDeactivated, this, _1)).push();
+        onDeactivated_ = sol::function(s);
+
+        sol::make_reference(s, bind(&TaskWrap::storeState, this, _1, _2)).push();
+        storeState_ = sol::function(s);
+
+        sol::make_reference(s, bind(&TaskWrap::restoreState, this, _1, _2)).push();
+        restoreState_ = sol::function(s);
+    }
     //TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) { };
     //TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) { };
 
     virtual void onMenuRequest(TaskMenu& menu) override {
-        onMenuRequest_(menu); // menu must be passed as a reference
+        onMenuRequest_(std::ref(menu));
     }
+    
     /*
     virtual void onMenuRequest(TaskMenu& menu) override {
         if(onMenuRequest_){
@@ -46,11 +63,11 @@ public:
         }
     }
     void set_onMenuRequest(sol::function func){
-        onMenuRequest_override = func;
+        onMenuRequest_ = func;
     }
     sol::function get_onMenuRequest(){
-        if(onMenuRequest_override){
-            return onMenuRequest_override;
+        if(onMenuRequest_){
+            return onMenuRequest_;
         } else {
             return [this](TaskMenu& menu){ this->onMenuRequest(menu); };
         }
@@ -85,12 +102,27 @@ void exportLuaTaskTypes(sol::table& module)
         "setCommandLinkAutomatic", &TaskProc::setCommandLinkAutomatic,
         "executeCommand", &TaskProc::executeCommand,
         "wait", &TaskProc::wait,
-        //"waitForCommandToFinish", TaskProc_waitForCommandToFinish1,
-        //"waitForCommandToFinish", TaskProc_waitForCommandToFinish2,
-        //"waitForCommandToFinish", TaskProc_waitForCommandToFinish3,
-        "notifyCommandFinish", &TaskProc:: notifyCommandFinish
+        "waitForCommandToFinish", sol::overload(
+            [](TaskProc* self){ return self->waitForCommandToFinish(); },
+            [](TaskProc* self, double t){ return self->waitForCommandToFinish(t); },
+            [](TaskProc* self, Connection c, bool t){ return self->waitForCommandToFinish(c, t); }),
+        "notifyCommandFinish", &TaskProc:: notifyCommandFinish,
         //"notifyCommandFinish_true", TaskProc_notifyCommandFinishTrue,
-        //"waitForSignal", TaskPorc_waitForSignal1,
+        "waitForSignal", [](sol::object self, sol::object signalProxy, sol::this_state s){
+            self.push();
+            sol::stack::get_field(s, "notifyCommandFinish_true");
+            sol::function notifyCommandFinish(s);
+            signalProxy.push();
+            sol::stack::get_field(s, "connect");
+            sol::function connect(s);
+            sol::object connection = connect(signalProxy, notifyCommandFinish);
+            self.push();
+            sol::stack::get_field(s, "waitForCommandToFinish");
+            sol::function waitForCommandToFinish(s);
+            bool result = waitForCommandToFinish(self, connection);
+            return result;
+        }
+
         //"waitForSignal", TaskPorc_waitForSignal2,
         //"waitForBooleanSignal", TaskPorc_waitForBooleanSignal1,
         //"waitForBooleanSignal", TaskPorc_waitForBooleanSignal2
@@ -187,7 +219,7 @@ void exportLuaTaskTypes(sol::table& module)
     
     module.new_usertype<TaskWrap>(
         "Task",
-        "new", sol::factories([]() -> TaskWrapPtr { return new TaskWrap(); }),
+        "new", sol::factories([](sol::this_state s) -> TaskWrapPtr { return new TaskWrap(s); }),
         "name", &Task::name, 
         "setName", &Task::setName,
         "caption", &Task::caption,
