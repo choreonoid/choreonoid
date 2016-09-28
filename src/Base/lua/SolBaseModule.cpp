@@ -4,6 +4,7 @@
 
 #include "../Item.h"
 #include "../ExtCommandItem.h"
+#include "../ItemList.h"
 #include "../MessageView.h"
 #include "../TaskView.h"
 #include "../TimeBar.h"
@@ -13,6 +14,26 @@
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+sol::table Item_getDescendantItems(Item* self, sol::table itemClass, sol::this_state s)
+{
+    ItemList<Item> items;
+    items.extractChildItems(self);
+    sol::state_view lua(s);
+    sol::table matched = lua.create_table();
+    int index = 1;
+    for(size_t i=0; i < items.size(); ++i){
+        sol::object casted = itemClass["cast"](items[i]);
+        if(casted != sol::nil){
+            matched[index++] = casted;
+        }
+    }
+    return matched;
+}
+
+}
 
 extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 {
@@ -53,6 +74,7 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
     module.new_usertype<Item>(
         "Item",
         "new", sol::no_constructor,
+        "cast", [](Item* item) -> ItemPtr { return item; },
         "find", [](const char* path) -> ItemPtr { return Item::find(path); },
         "name", &Item::name,
         "setName", &Item::setName,
@@ -62,7 +84,8 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
         "detachFromParentItem", &Item::detachFromParentItem,
         "isTemporal", &Item::isTemporal,
         "setTemporal", &Item::setTemporal,
-        "notifyUpdate", &Item::notifyUpdate
+        "notifyUpdate", &Item::notifyUpdate,
+        "getDescendantItems", Item_getDescendantItems
         );
 
     module.new_usertype<ExtCommandItem>(
