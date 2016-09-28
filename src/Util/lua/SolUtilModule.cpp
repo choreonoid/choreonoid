@@ -13,6 +13,7 @@ using namespace cnoid;
 namespace cnoid {
 
 void exportLuaSignalTypes(sol::table& module);
+void exportLuaTaskTypes(sol::table& module);
 
 }
 
@@ -26,6 +27,7 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Util(lua_State* L)
     module["call"] = [](sol::function func){ func(); };
 
     exportLuaSignalTypes(module);
+    exportLuaTaskTypes(module);
 
     sol::stack::push(L, module);
     
