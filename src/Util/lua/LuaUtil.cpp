@@ -3,9 +3,21 @@
 */
 
 #include "LuaUtil.h"
+#include <iostream>
 
 using namespace std;
 
+/**
+   \todo use the "print" function defined in Lua
+*/
+void cnoid::stackDump(lua_State* L)
+{
+    stackDump(L, std::cout);
+}
+
+/**
+   \todo use the "print" function defined in Lua
+*/
 void cnoid::stackDump(lua_State* L, std::ostream& os)
 {
     os << "stack: ";

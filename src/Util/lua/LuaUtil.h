@@ -7,6 +7,7 @@
 
 #include "../Referenced.h"
 #include <sol.hpp>
+#include <functional>
 #include <iosfwd>
 #include "exportdecl.h"
 
@@ -29,6 +30,16 @@ struct unique_usertype_traits<cnoid::ref_ptr<T>> {
 
 namespace cnoid {
 
+template<typename T>
+sol::function makeLuaFunction(lua_State* L, T func)
+{
+    sol::make_reference(L, sol::as_function(func)).push();
+    sol::function luaFunc(L);
+    lua_pop(L, 1);
+    return luaFunc;
+}
+
+CNOID_EXPORT void stackDump(lua_State* L);
 CNOID_EXPORT void stackDump(lua_State* L, std::ostream& os);
 
 }

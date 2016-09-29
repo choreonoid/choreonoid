@@ -4,6 +4,7 @@
 
 #include "../Task.h"
 #include "../AbstractTaskSequencer.h"
+#include "../ValueTree.h"
 #include "LuaUtil.h"
 
 using namespace std;
@@ -11,6 +12,21 @@ using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
+
+class LuaTaskFunc
+{
+    sol::function func;
+public:
+    LuaTaskFunc(sol::function f) : func(f) { }
+    void operator()(TaskProc* proc){
+        try {
+            func(proc);
+        } catch(const sol::error& ex) {
+            // put ex.what() by using func.lua_state() and the print function
+        }
+    }
+};
+
 
 class TaskWrap : public Task
 {
@@ -32,20 +48,50 @@ public:
         /**
            onMenuRequest_ = bind(&TaskWrap::onMenuRequest, this, _1);
         */
-        sol::make_reference(s, bind(&TaskWrap::onMenuRequest, this, _1)).push();
+        /*
+        stackDump(s);
+        sol::make_reference(s, sol::as_function([](TaskWrap* self, TaskMenu& menu) { self->onMenuRequest(menu); })).push();
+        stackDump(s);
         onMenuRequest_ = sol::function(s);
+        */
 
+        onMenuRequest_ = makeLuaFunction(s, [](TaskWrap* self, TaskMenu& menu) { self->onMenuRequest(menu); });
+        
+        /*
+        stackDump(s);
         sol::make_reference(s, bind(&TaskWrap::onActivated, this, _1)).push();
+        stackDump(s);
         onActivated_ = sol::function(s);
+        */
+        onActivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->onActivated(s); });
 
+        /*
+        stackDump(s);
         sol::make_reference(s, bind(&TaskWrap::onDeactivated, this, _1)).push();
+        stackDump(s);
         onDeactivated_ = sol::function(s);
+        */
+        onDeactivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->onDeactivated(s); });
 
+        /*
+        stackDump(s);
         sol::make_reference(s, bind(&TaskWrap::storeState, this, _1, _2)).push();
+        stackDump(s);
         storeState_ = sol::function(s);
+        */
 
+        storeState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->storeState(s, a); });
+
+        /*
+        stackDump(s);
         sol::make_reference(s, bind(&TaskWrap::restoreState, this, _1, _2)).push();
+        stackDump(s);
         restoreState_ = sol::function(s);
+        stackDump(s);
+        */
+
+        restoreState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->restoreState(s, a); });
+        
     }
     //TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) { };
     //TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) { };
@@ -85,6 +131,29 @@ public:
 typedef ref_ptr<TaskWrap> TaskWrapPtr;
 
 
+bool waitForSignal(sol::object self, sol::object signalProxy, bool isBooleanSignal, double timeout, sol::this_state s)
+{
+    signalProxy.push();
+    sol::stack::get_field(s, "connect");
+    sol::function connect(s);
+
+    sol::function notifyCommandFinish;
+    if(isBooleanSignal){
+        notifyCommandFinish = makeLuaFunction(s, [](TaskProc* self, bool isCompleted){ self->notifyCommandFinish(isCompleted); });
+    } else {
+        notifyCommandFinish = makeLuaFunction(s, [](TaskProc* self){ self->notifyCommandFinish(true); });
+    }
+
+    sol::object connection = connect(signalProxy, notifyCommandFinish);
+
+    sol::function waitForCommandToFinish =
+        makeLuaFunction(s, [](TaskProc* self, Connection c, double timeout){ return self->waitForCommandToFinish(c, timeout); });
+    
+    bool result = waitForCommandToFinish(self, connection, timeout);
+    
+    return result;
+}
+
 }
 
 namespace cnoid {
@@ -107,30 +176,20 @@ void exportLuaTaskTypes(sol::table& module)
             [](TaskProc* self, double t){ return self->waitForCommandToFinish(t); },
             [](TaskProc* self, Connection c, bool t){ return self->waitForCommandToFinish(c, t); }),
         "notifyCommandFinish", &TaskProc:: notifyCommandFinish,
-        //"notifyCommandFinish_true", TaskProc_notifyCommandFinishTrue,
-        "waitForSignal", [](sol::object self, sol::object signalProxy, sol::this_state s){
-            self.push();
-            sol::stack::get_field(s, "notifyCommandFinish_true");
-            sol::function notifyCommandFinish(s);
-            signalProxy.push();
-            sol::stack::get_field(s, "connect");
-            sol::function connect(s);
-            sol::object connection = connect(signalProxy, notifyCommandFinish);
-            self.push();
-            sol::stack::get_field(s, "waitForCommandToFinish");
-            sol::function waitForCommandToFinish(s);
-            bool result = waitForCommandToFinish(self, connection);
-            return result;
-        }
-
-        //"waitForSignal", TaskPorc_waitForSignal2,
-        //"waitForBooleanSignal", TaskPorc_waitForBooleanSignal1,
-        //"waitForBooleanSignal", TaskPorc_waitForBooleanSignal2
+        "waitForSignal", sol::overload(
+            [](sol::object self, sol::object signalProxy, sol::this_state s){
+                return waitForSignal(self, signalProxy, false, 0.0, s); },
+            [](sol::object self, sol::object signalProxy, double timeout, sol::this_state s){
+                return waitForSignal(self, signalProxy, false, timeout, s); }),
+        "waitForBooleanSignal", sol::overload(
+            [](sol::object self, sol::object signalProxy, sol::this_state s){
+                return waitForSignal(self, signalProxy, true, 0.0, s); },
+            [](sol::object self, sol::object signalProxy, double timeout, sol::this_state s){
+                return waitForSignal(self, signalProxy, true, timeout, s); })
         );
 
     module.new_usertype<TaskToggleState>(
         "TaskToggleState",
-        //sol::base_classes, sol::bases<Referenced>(),
         "isChecked", &TaskToggleState::isChecked,
         "setChecked", &TaskToggleState::setChecked,
         "sigToggled", &TaskToggleState::sigToggled
@@ -138,62 +197,65 @@ void exportLuaTaskTypes(sol::table& module)
 
     module.new_usertype<TaskCommand>(
         "TaskCommand",
-        //sol::base_classes, sol::bases<Referenced>(),
         "new", sol::factories([](const char* caption) -> TaskCommandPtr { return new TaskCommand(caption); }),
         "caption", &TaskCommand::caption,
-        //"setCaption", TaskCommand_setCaption,
+        "setCaption", [](TaskCommand* self, const char* caption) -> TaskCommandPtr { return self->setCaption(caption); },
         "description", &TaskCommand::description,
-        //"setDescription", TaskCommand_setDescription,
+        "setDescription", [](TaskCommand* self, const char* description) -> TaskCommandPtr { return self->setDescription(description); },
         "function", &TaskCommand::function,
-        //"setFunction", TaskCommand_setFunction,
-        //"setDefault", TaskCommand_setDefault1,
-        //"setDefault", TaskCommand_setDefault2,
+        "setFunction", [](TaskCommand* self, sol::function func) -> TaskCommandPtr { return self->setFunction(LuaTaskFunc(func)); },
+        "setDefault", sol::overload(
+            [](TaskCommand* self) -> TaskCommandPtr { return self->setDefault(); },
+            [](TaskCommand* self, bool on) -> TaskCommandPtr { return self->setDefault(on); }),
         "isDefault", &TaskCommand::isDefault,
-        //"setCheckable", TaskCommand_setCheckable1,
-        //"setCheckable", TaskCommand_setCheckable2,
-        //"setToggleState", TaskCommand_setToggleState,
-        //"toggleState", TaskCommand_toggleState,
-        //"setChecked", TaskCommand_setChecked,
+        "setCheckable", sol::overload(
+            [](TaskCommand* self) -> TaskCommandPtr { return self->setCheckable(); },
+            [](TaskCommand* self, bool on) -> TaskCommandPtr { return self->setCheckable(on); }),
+        "setToggleState", [](TaskCommand* self, TaskToggleState* state) -> TaskCommandPtr { return self->setToggleState(state); },
+        "toggleState", [](TaskCommand* self) -> TaskToggleStatePtr { return self->toggleState(); },
+        "setChecked", [](TaskCommand* self, bool on) -> TaskCommandPtr { return self->setChecked(on); },
         "isChecked", &TaskCommand::isChecked,
         "nextPhaseIndex", &TaskCommand::nextPhaseIndex,
-        //"setPhaseLink", TaskCommand_setPhaseLink,
-        //"setPhaseLinkStep", TaskCommand_setPhaseLinkStep,
-        //"linkToNextPhase", TaskCommand_linkToNextPhase,
+        "setPhaseLink", [](TaskCommand* self, int phaseIndex) -> TaskCommandPtr { return self->setPhaseLink(phaseIndex); },
+        "setPhaseLinkStep", [](TaskCommand* self, int phaseIndexStep) -> TaskCommandPtr { return self->setPhaseLinkStep(phaseIndexStep); },
+        "linkToNextPhase", [](TaskCommand* self) -> TaskCommandPtr { return self->linkToNextPhase(); },
         "nextCommandIndex", &TaskCommand::nextCommandIndex,
-        //"setCommandLink", TaskCommand_setCommandLink,
-        //"setCommandLinkStep", TaskCommand_setCommandLinkStep,
-        //"linkToNextCommand", TaskCommand_linkToNextCommand,
+        "setCommandLink", [](TaskCommand* self, int commandIndex) -> TaskCommandPtr { return self->setCommandLink(commandIndex); },
+        "setCommandLinkStep", [](TaskCommand* self, int commandIndexStep) -> TaskCommandPtr { return self->setCommandLinkStep(commandIndexStep); },
+        "linkToNextCommand", [](TaskCommand* self) -> TaskCommandPtr { return self->linkToNextCommand(); },
         "isCommandLinkAutomatic", &TaskCommand::isCommandLinkAutomatic,
-        //"setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic1,
-        //"setCommandLinkAutomatic", TaskCommand_setCommandLinkAutomatic2,
-        //"setLevel", TaskCommand_setLevel,
+        "setCommandLinkAutomatic", sol::overload(
+            [](TaskCommand* self) -> TaskCommandPtr { return self->setCommandLinkAutomatic(); },
+            [](TaskCommand* self, bool on) -> TaskCommandPtr { return self->setCommandLinkAutomatic(on); }),
+        "setLevel", [](TaskCommand* self, int level) -> TaskCommandPtr { return self->setLevel(level); },
         "level", &TaskCommand::level
         );
 
-    
     module.new_usertype<TaskPhase>(
         "TaskPhase",
-        "new", sol::factories([](const char* caption) -> TaskPhasePtr { return new TaskPhase(caption); }),
-        //init<const TaskPhase&>())
-        //init<const TaskPhase&, bool>())
-        //"clone", TaskPhase_clone1,
-        //"clone", TaskPhase_clone2,
+        "new", sol::factories(
+            [](const char* caption) -> TaskPhasePtr { return new TaskPhase(caption); },
+            [](TaskPhase* org) -> TaskPhasePtr { return new TaskPhase(*org); },
+            [](TaskPhase* org, bool doDeepCopy) -> TaskPhasePtr { return new TaskPhase(*org, doDeepCopy); }),
+        "clone", sol::overload(
+            [](TaskPhase* self) -> TaskPhasePtr { return self->clone(); },
+            [](TaskPhase* self, bool doDeepCopy) -> TaskPhasePtr { return self->clone(doDeepCopy); }),
         "caption", &TaskPhase::caption,
         "setCaption", &TaskPhase::setCaption,
         "isSkipped", &TaskPhase::isSkipped,
         "setSkipped", &TaskPhase::setSkipped,
-        //"setPreCommand", TaskPhase_setPreCommand,
-        "setPreCommand", &TaskPhase::setPreCommand,
+        "setPreCommand", [](TaskPhase* self, sol::function func) { self->setPreCommand(LuaTaskFunc(func)); },
         "preCommand", &TaskPhase::preCommand,
-        //"addCommand", TaskPhase_addCommand1,
-        //"addCommand", TaskPhase_addCommand2,
-        //"addToggleCommand", TaskPhase_addToggleCommand1,
-        //"addToggleCommand", TaskPhase_addToggleCommand2,
-        //"addCommandEx", python::raw_function(TaskPhase_addCommandEx, 2),
+        "addCommand", sol::overload(
+            [](TaskPhase* self) -> TaskCommandPtr { return self->addCommand(); },
+            [](TaskPhase* self, const char* caption) -> TaskCommandPtr { return self->addCommand(caption); }),
+        "addToggleCommand", sol::overload(
+            [](TaskPhase* self) -> TaskCommandPtr { return self->addToggleCommand(); },
+            [](TaskPhase* self, const char* caption) -> TaskCommandPtr { return self->addToggleCommand(caption); }),
         "numCommands", &TaskPhase::numCommands,
-        //"command", TaskPhase_command,
+        "command", [](TaskPhase* self, int index) -> TaskCommandPtr { return self->command(index); },
         "lastCommandIndex", &TaskPhase::lastCommandIndex,
-        //"lastCommand", TaskPhase_lastCommand,
+        "lastCommand", [](TaskPhase* self) -> TaskCommandPtr { return self->lastCommand(); },
         "commandLevel", &TaskPhase::commandLevel,
         "maxCommandLevel", &TaskPhase::maxCommandLevel
         );
@@ -202,50 +264,61 @@ void exportLuaTaskTypes(sol::table& module)
         "TaskPhaseProxy",
         "new", sol::no_constructor,
         "setCommandLevel", &TaskPhaseProxy::setCommandLevel,
-        "commandLevel", &TaskPhaseProxy::commandLevel
-        //"addCommand", TaskPhaseProxy_addCommand1,
-        //"addCommand", TaskPhaseProxy_addCommand2,
-        //"addToggleCommand", TaskPhaseProxy_addToggleCommand1,
-        //"addToggleCommand", TaskPhaseProxy_addToggleCommand2
+        "commandLevel", &TaskPhaseProxy::commandLevel,
+        "addCommand", sol::overload(
+            [](TaskPhaseProxy* self) -> TaskCommandPtr { return self->addCommand(); },
+            [](TaskPhaseProxy* self, const char* caption) -> TaskCommandPtr { return self->addCommand(caption); }),
+        "addToggleCommand", sol::overload(
+            [](TaskPhaseProxy* self) -> TaskCommandPtr { return self->addToggleCommand(); },
+            [](TaskPhaseProxy* self, const char* caption) -> TaskCommandPtr { return self->addToggleCommand(caption); })
         );
     
     module.new_usertype<TaskMenu>(
         "TaskMenu",
-        "new", sol::no_constructor
-        //"addMenuItem", TaskMenu_addMenuItem1,
-        //"addCheckMenuItem", TaskMenu_addCheckMenuItem1,
-        //"addMenuSeparator", TaskMenu_addMenuSeparator
+        "new", sol::no_constructor,
+        "addMenuItem", [](TaskMenu& self, const char* caption, sol::function func) { self.addMenuItem(caption, func); },
+        "addCheckMenuItem", [](TaskMenu& self, const char* caption, bool isChecked, sol::function func) {
+            self.addCheckMenuItem(caption, isChecked, func); },
+        "addMenuSeparator", [](TaskMenu& self) { self.addMenuSeparator(); }
         );
-    
-    module.new_usertype<TaskWrap>(
-        "Task",
-        "new", sol::factories([](sol::this_state s) -> TaskWrapPtr { return new TaskWrap(s); }),
+
+    module.new_usertype<Task>(
+        "TaskBase",
+        "new", sol::no_constructor,
         "name", &Task::name, 
         "setName", &Task::setName,
         "caption", &Task::caption,
         "setCaption", &Task::setCaption,
         "numPhases", &Task::numPhases,
-        //"phase", Task_phase,
-        //"addPhase", Task_addPhase1,
-        //"addPhase", Task_addPhase2,
-        //"lastPhase", Task_lastPhase,
-        //"setPreCommand", Task_setPreCommand,
-        "setPreCommand", &Task::setPreCommand,
-        //"addCommand", Task_addCommand1,
-        //"addCommand", Task_addCommand2,
-        //"addToggleCommand", Task_addToggleCommand1,
-        //"addToggleCommand", Task_addToggleCommand2,
-        //"addCommandEx", python::raw_function(Task_addCommandEx, 2),
-        //"lastCommand", Task_lastCommand,
+        "phase", [](Task* self, int index) -> TaskPhasePtr { return self->phase(index); },
+        "addPhase", sol::overload(
+            [](Task* self, TaskPhase* phase) -> TaskPhasePtr { return self->addPhase(phase); },
+            [](Task* self, const char* caption) -> TaskPhasePtr { return self->addPhase(caption); }),
+        "lastPhase", [](Task* self) -> TaskPhasePtr { return self->lastPhase(); },
+        "setPreCommand", [](TaskWrap* self, sol::function func) { self->setPreCommand(LuaTaskFunc(func)); },
+        "addCommand", sol::overload(
+            [](Task* self) -> TaskCommandPtr { return self->addCommand(); },
+            [](Task* self, const char* caption) -> TaskCommandPtr { return self->addCommand(caption); }),
+        "addToggleCommand", sol::overload(
+            [](Task* self) -> TaskCommandPtr { return self->addToggleCommand(); },
+            [](Task* self, const char* caption) -> TaskCommandPtr { return self->addToggleCommand(caption); }),
+        "lastCommand", [](Task* self) -> TaskCommandPtr { return self->lastCommand(); },
         "lastCommandIndex", &Task::lastCommandIndex,
         "funcToSetCommandLink", &Task::funcToSetCommandLink,
-        "onMenuRequest", &Task::onMenuRequest,
-        "onActivated", &Task::onActivated,
-        "onDeactivated", &Task::onDeactivated,
-        //"storeState", &Task::storeState,
-        //"restoreState", &Task::restoreState,
         "commandLevel", &Task::commandLevel,
         "maxCommandLevel", &Task::maxCommandLevel
+        );
+        
+    
+    module.new_usertype<TaskWrap>(
+        "Task",
+        sol::base_classes, sol::bases<Task>(),
+        "new", sol::factories([](sol::this_state s) -> TaskWrapPtr { return new TaskWrap(s); }),
+        "onMenuRequest", &TaskWrap::onMenuRequest_,
+        "onActivated", &TaskWrap::onActivated_,
+        "onDeactivated", &TaskWrap::onDeactivated_,
+        "storeState", &TaskWrap::storeState_,
+        "restoreState", &TaskWrap::restoreState_
         );
 
     module.new_usertype<AbstractTaskSequencer>(
@@ -253,14 +326,14 @@ void exportLuaTaskTypes(sol::table& module)
         "new", sol::no_constructor,
         "activate", &AbstractTaskSequencer::activate,
         "isActive", &AbstractTaskSequencer::isActive,
-        //"addTask", AbstractTaskSequencer_addTask,
-        //"updateTask", AbstractTaskSequencer_updateTask,
+        "addTask", &AbstractTaskSequencer::addTask,
+        "updateTask", &AbstractTaskSequencer::updateTask,
         "removeTask", &AbstractTaskSequencer::removeTask,
         "sigTaskAdded", &AbstractTaskSequencer::sigTaskAdded,
         "sigTaskRemoved", &AbstractTaskSequencer::sigTaskRemoved,
         "clearTasks", &AbstractTaskSequencer::clearTasks,
         "numTasks", &AbstractTaskSequencer::numTasks,
-        //"task", AbstractTaskSequencer_task,
+        "task", [](AbstractTaskSequencer* self, int index) -> TaskPtr { return self->task(index); },
         "currentTaskIndex", &AbstractTaskSequencer::currentTaskIndex,
         "setCurrentTask", &AbstractTaskSequencer::setCurrentTask,
         "sigCurrentTaskChanged", &AbstractTaskSequencer::sigCurrentTaskChanged,
