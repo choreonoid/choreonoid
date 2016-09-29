@@ -66,7 +66,7 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 
     module.new_usertype<TaskView>(
         "TaskView",
-        sol::base_classes, sol::bases<View>(),
+        sol::base_classes, sol::bases<View, AbstractTaskSequencer>(),
         "new", sol::no_constructor,
         "instance", &TaskView::instance
         );

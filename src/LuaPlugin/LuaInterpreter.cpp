@@ -114,6 +114,16 @@ LuaInterpreterImpl::LuaInterpreterImpl()
     lua_pushlightuserdata(state, this);
     lua_settable(state, LUA_REGISTRYINDEX);
 
+    // add the "import" function
+    luaL_dostring(
+        state,
+        "cnoid = {\n"
+        "  require = function(sub_module_name)\n"
+        "    local module = require(\"cnoid.\"..sub_module_name)\n"
+        "    for k,v in pairs(module) do cnoid[k] = v end\n"
+        "  end\n"
+        "}");
+
     outputStack.push(&MessageView::instance()->cout());
 }
     

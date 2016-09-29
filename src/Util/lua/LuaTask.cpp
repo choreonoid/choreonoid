@@ -324,7 +324,9 @@ void exportLuaTaskTypes(sol::table& module)
     module.new_usertype<AbstractTaskSequencer>(
         "AbstractTaskSequencer",
         "new", sol::no_constructor,
-        "activate", &AbstractTaskSequencer::activate,
+        "activate", sol::overload(
+            [](AbstractTaskSequencer* self){ self->activate(true); },
+            [](AbstractTaskSequencer* self, bool on){ self->activate(on); }),
         "isActive", &AbstractTaskSequencer::isActive,
         "addTask", &AbstractTaskSequencer::addTask,
         "updateTask", &AbstractTaskSequencer::updateTask,
