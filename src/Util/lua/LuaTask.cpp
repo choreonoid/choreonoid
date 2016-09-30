@@ -1,6 +1,6 @@
 /*!
   @author Shin'ichiro Nakaoka
- */
+*/
 
 #include "../Task.h"
 #include "../AbstractTaskSequencer.h"
@@ -100,26 +100,6 @@ public:
         onMenuRequest_(std::ref(menu));
     }
     
-    /*
-    virtual void onMenuRequest(TaskMenu& menu) override {
-        if(onMenuRequest_){
-            onMenuRequest_(menu);  // menu must be passed as a reference
-        } else {
-            Task::onMenuRequest(menu);
-        }
-    }
-    void set_onMenuRequest(sol::function func){
-        onMenuRequest_ = func;
-    }
-    sol::function get_onMenuRequest(){
-        if(onMenuRequest_){
-            return onMenuRequest_;
-        } else {
-            return [this](TaskMenu& menu){ this->onMenuRequest(menu); };
-        }
-    }
-    */
-
     virtual void onActivated(AbstractTaskSequencer* sequencer){
         onActivated_(sequencer);
     }
@@ -284,41 +264,47 @@ void exportLuaTaskTypes(sol::table& module)
 
     module.new_usertype<Task>(
         "TaskBase",
-        "new", sol::no_constructor,
-        "name", &Task::name, 
-        "setName", &Task::setName,
-        "caption", &Task::caption,
-        "setCaption", &Task::setCaption,
-        "numPhases", &Task::numPhases,
-        "phase", [](Task* self, int index) -> TaskPhasePtr { return self->phase(index); },
-        "addPhase", sol::overload(
-            [](Task* self, TaskPhase* phase) -> TaskPhasePtr { return self->addPhase(phase); },
-            [](Task* self, const char* caption) -> TaskPhasePtr { return self->addPhase(caption); }),
-        "lastPhase", [](Task* self) -> TaskPhasePtr { return self->lastPhase(); },
-        "setPreCommand", [](TaskWrap* self, sol::function func) { self->setPreCommand(LuaTaskFunc(func)); },
-        "addCommand", sol::overload(
-            [](Task* self) -> TaskCommandPtr { return self->addCommand(); },
-            [](Task* self, const char* caption) -> TaskCommandPtr { return self->addCommand(caption); }),
-        "addToggleCommand", sol::overload(
-            [](Task* self) -> TaskCommandPtr { return self->addToggleCommand(); },
-            [](Task* self, const char* caption) -> TaskCommandPtr { return self->addToggleCommand(caption); }),
-        "lastCommand", [](Task* self) -> TaskCommandPtr { return self->lastCommand(); },
-        "lastCommandIndex", &Task::lastCommandIndex,
-        "funcToSetCommandLink", &Task::funcToSetCommandLink,
-        "commandLevel", &Task::commandLevel,
-        "maxCommandLevel", &Task::maxCommandLevel
+        "new", sol::no_constructor
         );
-        
-    
+
     module.new_usertype<TaskWrap>(
         "Task",
         sol::base_classes, sol::bases<Task>(),
         "new", sol::factories([](sol::this_state s) -> TaskWrapPtr { return new TaskWrap(s); }),
-        "onMenuRequest", &TaskWrap::onMenuRequest_,
-        "onActivated", &TaskWrap::onActivated_,
-        "onDeactivated", &TaskWrap::onDeactivated_,
-        "storeState", &TaskWrap::storeState_,
-        "restoreState", &TaskWrap::restoreState_
+
+        "name", [](sol::object self) { return native<Task>(self)->name(); },
+        "setName", [](sol::object self, const char* name) { native<Task>(self)->setName(name); },
+        "caption", [](sol::object self) { return native<Task>(self)->caption(); },
+        "setCaption", [](sol::object self, const char* caption) { native<Task>(self)->setCaption(caption); },
+        "numPhases", [](sol::object self) { return native<Task>(self)->numPhases(); },
+        "phase", [](sol::object self, int index) -> TaskPhasePtr { return native<Task>(self)->phase(index); },
+        "addPhase", sol::overload(
+            [](sol::object self, TaskPhase* phase) -> TaskPhasePtr { return native<Task>(self)->addPhase(phase); },
+            [](sol::object self, const char* caption) -> TaskPhasePtr { return native<Task>(self)->addPhase(caption); }),
+        "lastPhase", [](sol::object self) -> TaskPhasePtr { return native<Task>(self)->lastPhase(); },
+        "setPreCommand", [](sol::object self, sol::function func) { native<Task>(self)->setPreCommand(LuaTaskFunc(func)); },
+        "addCommand", sol::overload(
+            [](sol::object self) -> TaskCommandPtr { return native<Task>(self)->addCommand(); },
+            [](sol::object self, const char* caption) -> TaskCommandPtr { return native<Task>(self)->addCommand(caption); }),
+        "addToggleCommand", sol::overload(
+            [](sol::object self) -> TaskCommandPtr { return native<Task>(self)->addToggleCommand(); },
+            [](sol::object self, const char* caption) -> TaskCommandPtr { return native<Task>(self)->addToggleCommand(caption); }),
+        "lastCommand", [](sol::object self) -> TaskCommandPtr { return native<Task>(self)->lastCommand(); },
+        "lastCommandIndex", [](sol::object self) { return native<Task>(self)->lastCommandIndex(); },
+        "funcToSetCommandLink", [](sol::object self, int commandIndex) { return native<Task>(self)->funcToSetCommandLink(commandIndex); },
+        "commandLevel", [](sol::object self, int level) { return native<Task>(self)->commandLevel(level); },
+        "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); },
+
+        "get_onMenuRequest", [](sol::object self) { return native<TaskWrap>(self)->onMenuRequest_; },
+        "set_onMenuRequest", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onMenuRequest_ = f; },
+        "get_onActivated", [](sol::object self) { return native<TaskWrap>(self)->onActivated_; },
+        "set_onActivated", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onActivated_ = f; },
+        "get_onDeactivated", [](sol::object self) { return native<TaskWrap>(self)->onDeactivated_; },
+        "set_onDeactivated", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onDeactivated_ = f; },
+        "get_storeState", [](sol::object self) { return native<TaskWrap>(self)->storeState_; },
+        "set_storeState", [](sol::object self, sol::function f) { native<TaskWrap>(self)->storeState_ = f; },
+        "get_restoreState", [](sol::object self) { return native<TaskWrap>(self)->restoreState_; },
+        "set_restoreState", [](sol::object self, sol::function f) { native<TaskWrap>(self)->restoreState_ = f; }
         );
 
     module.new_usertype<AbstractTaskSequencer>(
@@ -328,9 +314,9 @@ void exportLuaTaskTypes(sol::table& module)
             [](AbstractTaskSequencer* self){ self->activate(true); },
             [](AbstractTaskSequencer* self, bool on){ self->activate(on); }),
         "isActive", &AbstractTaskSequencer::isActive,
-        "addTask", &AbstractTaskSequencer::addTask,
-        "updateTask", &AbstractTaskSequencer::updateTask,
-        "removeTask", &AbstractTaskSequencer::removeTask,
+        "addTask", [](AbstractTaskSequencer* self, sol::object task) { return self->addTask(native<Task>(task)); },
+        "updateTask", [](AbstractTaskSequencer* self, sol::object task){ return self->updateTask(native<Task>(task)); },
+        "removeTask", [](AbstractTaskSequencer* self, sol::object task) { return self->removeTask(native<Task>(task)); },
         "sigTaskAdded", &AbstractTaskSequencer::sigTaskAdded,
         "sigTaskRemoved", &AbstractTaskSequencer::sigTaskRemoved,
         "clearTasks", &AbstractTaskSequencer::clearTasks,

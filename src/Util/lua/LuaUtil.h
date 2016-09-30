@@ -31,6 +31,17 @@ struct unique_usertype_traits<cnoid::ref_ptr<T>> {
 namespace cnoid {
 
 template<typename T>
+T* native(sol::object obj)
+{
+    if(obj.is<T*>()){
+        return obj.as<T*>();
+    } else if(obj.is<sol::table>()){
+        sol::object cppobj = obj.as<sol::table>()["cppobj"];
+        return cppobj.as<T*>();
+    }
+}
+
+template<typename T>
 sol::function makeLuaFunction(lua_State* L, T func)
 {
     sol::make_reference(L, sol::as_function(func)).push();
