@@ -1,16 +1,20 @@
 cnoid.require("Util")
 cnoid.require("Base")
 
-MyTask = { 
-   new = function()
+function deriveCppClass(base)
+  local class = { }
+  class.new = function(...)
       local obj = { }
-      obj.cppobj = cnoid.Task.new()
-      setmetatable(obj, { __index = obj.cppobj })
+      obj.cppobj = base.new(...)
+      setmetatable(obj, { __index = class })
       MyTask.initialize(obj)
       return obj
-   end
-}
-setmetatable(MyTask, { __index = cnoid.Task })
+  end
+  setmetatable(class, { __index = base })
+  return class
+end
+
+MyTask = deriveCppClass(cnoid.Task)
 
 function MyTask:initialize()
    
@@ -23,6 +27,17 @@ function MyTask:initialize()
           function(proc)
 	     print "Command 1"
           end)
+
+   self:set_onActivated(MyTask.onActivated)
+   self:set_onDeactivated(MyTask.onDeactivated)
+end
+
+function MyTask:onActivated()
+  print "MyTask:onActivated()"
+end
+
+function MyTask:onDeactivated()
+  print "MyTask:onDeactivated()"
 end
 
 task = MyTask.new()

@@ -38,74 +38,34 @@ public:
     sol::function restoreState_;
     
     TaskWrap(sol::this_state s) {
-        /*
-        sol::state_view lua(s);
-        sol::table module = lua.create_table();
-        module.set_function("f1", [&](TaskMenu& menu){ onMenuRequest(menu); });
-        onMenuRequest_ = module["f1"];
-        */
-
-        /**
-           onMenuRequest_ = bind(&TaskWrap::onMenuRequest, this, _1);
-        */
-        /*
-        stackDump(s);
-        sol::make_reference(s, sol::as_function([](TaskWrap* self, TaskMenu& menu) { self->onMenuRequest(menu); })).push();
-        stackDump(s);
-        onMenuRequest_ = sol::function(s);
-        */
-
-        onMenuRequest_ = makeLuaFunction(s, [](TaskWrap* self, TaskMenu& menu) { self->onMenuRequest(menu); });
-        
-        /*
-        stackDump(s);
-        sol::make_reference(s, bind(&TaskWrap::onActivated, this, _1)).push();
-        stackDump(s);
-        onActivated_ = sol::function(s);
-        */
-        onActivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->onActivated(s); });
-
-        /*
-        stackDump(s);
-        sol::make_reference(s, bind(&TaskWrap::onDeactivated, this, _1)).push();
-        stackDump(s);
-        onDeactivated_ = sol::function(s);
-        */
-        onDeactivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->onDeactivated(s); });
-
-        /*
-        stackDump(s);
-        sol::make_reference(s, bind(&TaskWrap::storeState, this, _1, _2)).push();
-        stackDump(s);
-        storeState_ = sol::function(s);
-        */
-
-        storeState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->storeState(s, a); });
-
-        /*
-        stackDump(s);
-        sol::make_reference(s, bind(&TaskWrap::restoreState, this, _1, _2)).push();
-        stackDump(s);
-        restoreState_ = sol::function(s);
-        stackDump(s);
-        */
-
-        restoreState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->restoreState(s, a); });
+        onMenuRequest_ = makeLuaFunction(s, [](TaskWrap* self, TaskMenu& menu) { self->Task::onMenuRequest(menu); });
+        onActivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onActivated(s); });
+        onDeactivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onDeactivated(s); });
+        storeState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::storeState(s, a); });
+        restoreState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::restoreState(s, a); });
         
     }
     //TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) { };
     //TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) { };
 
     virtual void onMenuRequest(TaskMenu& menu) override {
-        onMenuRequest_(std::ref(menu));
+        onMenuRequest_(this, std::ref(menu));
     }
     
     virtual void onActivated(AbstractTaskSequencer* sequencer){
-        onActivated_(sequencer);
+        onActivated_(this, sequencer);
     }
     virtual void onDeactivated(AbstractTaskSequencer* sequencer){
-        onDeactivated_(sequencer);
+        onDeactivated_(this, sequencer);
     }
+    /*
+    virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive){
+        storeState_(this, sequencer, archive);
+    }
+    virtual void restoreState(AbstractTaskSequencer* sequencer, Mapping& archive){
+        restoreState_(this, sequencer, archive);
+    }
+    */
 };
 
 typedef ref_ptr<TaskWrap> TaskWrapPtr;
