@@ -39,10 +39,6 @@ public:
     void setSelection(std::string RTCname);
     void updateView();
 
-//    virtual void onActivated();
-//    TreeWidget* getTreeWidget();
-//    void setConnection();
-
 private:
     RTSNameServerViewImpl* impl;
 };

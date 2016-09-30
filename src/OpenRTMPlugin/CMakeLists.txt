@@ -204,6 +204,7 @@ else()
 endif()
 
 if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
   QT4_WRAP_CPP(
     plugin_sources
     RTSNameServerView.h
@@ -211,6 +212,7 @@ if(NOT QT5)
     OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 else()
+  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
   QT5_WRAP_CPP(
     plugin_sources
     RTSDiagramView.h
@@ -228,7 +230,7 @@ make_gettext_mofiles(${plugin} mofiles)
 if(OPENRTM_VERSION STREQUAL "1.1.0")
   add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles}  ${RC_SRCS})
 else()
-  add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+  add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles} ${RC_SRCS})
   if(ENABLE_GCC_FVISIBILITY_HIDDEN)
     set_source_files_properties(BodyRTCItem.cpp
                                 VirtualRobotRTC.cpp

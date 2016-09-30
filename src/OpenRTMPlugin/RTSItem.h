@@ -7,9 +7,7 @@
 #define CNOID_OPENRTM_PLUGIN_RTS_ITEM_H_INCLUDED
 
 #include <cnoid/Item>
-//#include <cnoid/ItemManager>
-//#include <cnoid/Archive>
-//#include <boost/shared_ptr.hpp>
+#include <cnoid/EigenUtil>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <rtm/CORBA_SeqUtil.h>
@@ -61,12 +59,16 @@ public :
     RTSComp* targetRTC;
     RTSPort* targetPort;
 
-
-    ///RTSConnectionGItem* gItem;
+    Vector2 position[6];
+    bool setPos;
 
     bool connect();
     bool disConnect();
-    ///void createGItem(bool sIsLeft, QPointF s, bool tIsLeft, QPointF t);
+    void setPosition(const Vector2 pos[]){
+        for(int i=0; i<6; i++)
+            position[i] = pos[i];
+        setPos = true;
+    }
 };
 typedef ref_ptr<RTSConnection> RTSConnectionPtr;
 
@@ -86,16 +88,14 @@ public :
     QPointF pos;
 
     bool isActive();
-    //void stateCheck();
     void connectionCheckSub(RTSPort* rtsPort);
     void connectionCheck();
+    void setRtc(RTObject_ptr rtc);
 
     RTSPort* nameToRTSPort(const string& name);
 
 };
 typedef ref_ptr<RTSComp> RTSCompPtr;
-
-
 
 /*!
  * @brief This is the RTSystem item.
@@ -122,6 +122,8 @@ public:
     void deleteRtsConnection(const string& id);
     map<string, RTSCompPtr>& rtsComps();
 
+    bool autoConnection;
+
 protected :
     virtual Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
@@ -130,7 +132,6 @@ protected :
 
 private:
     RTSystemItemImpl* impl;
-    bool autoConnection;
 };
 
 typedef ref_ptr<RTSystemItem> RTSystemItemPtr;

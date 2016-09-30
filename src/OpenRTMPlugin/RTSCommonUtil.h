@@ -18,12 +18,7 @@ namespace cnoid {
     {
     public:
         static void splitPortName(std::string& value);
-//        static void reverseConnection(RTCConnectionPtr conn);
         static void splitPortName(std::string& value, std::vector<std::string>& result);
-//        static bool checkDuplicateConneciton(RTCConnectionListPtr conns, RTCConnectionPtr conn, RTCConnectionPtr* duplicate);
-//        static bool checkDuplicateConneciton(Arrows& conns, RTCConnectionPtr conn, RTCConnectionPtr* duplicate);
-//        static bool checkDuplicateConnectionConcrete(RTCConnectionPtr conns, RTCConnectionPtr conn);
-//        static RTCControllerPtr createController(RTCValuePtr value, std::string name, int x, int y, bool create = true);
     };
 
 };

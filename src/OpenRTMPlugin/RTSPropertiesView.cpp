@@ -11,30 +11,11 @@
 #include <cnoid/TreeWidget>
 #include <cnoid/ConnectionSet>
 #include <QVBoxLayout>
-//#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <coil/Properties.h>
-
-#if 0
-#include <QComboBox>
-#include <QFontMetrics>
-
-#include <rtm/CorbaNaming.h>
-#include <rtm/RTObject.h>
-#include <rtm/CorbaConsumer.h>                
-
-
-
-
-#include "RTSPropertiesItem.h"
-#include "RTSDiagramView.h"
-#include "RTSCommonUtil.h"
-#include "RTSCorbaUtil.h"
-#include "RTSCommonImpl.h"
-#endif
 #include "gettext.h"
 
 using namespace RTC;
@@ -52,50 +33,10 @@ namespace {
 };
 
 namespace cnoid {
-    //typedef shared_ptr<NamingContextHelper> NamingContextHelperPtr;
-
-    //#define IC static_cast<RTSComboBoxItem*>
-    //#define IE static_cast<RTSPlainTextItem*>
 
 class RTSPropertyTreeWidget : public TreeWidget
 {
-    /*
-    Q_OBJECT
-    friend class RTSPlainTextItem;
-    friend class RTSPropertiesView;
-    public:
-        RTSPropertyTreeWidget() : selection(NULL) {
-            connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
-                          SLOT(onCurrentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)));
-            connect(this, SIGNAL(itemActivated(QTreeWidgetItem*, int)),
-                          SLOT(onItemActivated(QTreeWidgetItem*, int)));
-            connect(this, SIGNAL(itemChanged(QTreeWidgetItem*, int)),
-                          SLOT(onItemChanged(QTreeWidgetItem*, int)));
-            connect(this, SIGNAL(itemEntered(QTreeWidgetItem*, int)),
-                          SLOT(onItemEntered(QTreeWidgetItem*, int)));
-            connect(this, SIGNAL(itemPressed(QTreeWidgetItem*, int)),
-                          SLOT(onItemPressed(QTreeWidgetItem*, int)));
-        }
-        ~RTSPropertyTreeWidget() {
-            if (selection) delete selection;
-        }
-        int decideIndex(const std::string* values, int count, std::string target);
-        RTCConnection* updateConnection(std::string id, std::string name,
-                                        std::string dataflow, std::string interface, std::string subscription);
-        void showProperties(RTCConnection* conn);
-        RTCConnection* refreshProperties(RTSConnectionItem* item);
 
-    protected Q_SLOTS:
-        void onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
-        void onItemActivated(QTreeWidgetItem* item, int column);
-        void onItemChanged(QTreeWidgetItem* item, int column);
-        void onItemEntered(QTreeWidgetItem* item, int column);
-        void onItemPressed(QTreeWidgetItem* item, int column);
-
-    protected:
-        QWidget* selection;
-        RTSConnectionItemPtr connItem;
-        */
 };
 
 class RTSPropertiesViewImpl
@@ -108,51 +49,24 @@ public:
     Connection selectionChangedConnection;
     Connection locationChangedConnection;
 
-    //void setSelectionChangedConnection(Connection& connection);
-    //void clearSelectionChangedConnection();
     void onItemSelectionChanged(const list<NamingContextHelper::ObjectInfo>& items);
-    //void setLocationChangedConnection(Connection& connection);
-    //void clearLocationChangedConnection();
     void onLocationChanged(std::string host, int port);
     void showProperties();
     void showPort(ComponentProfile_var cprofile, QTreeWidgetItem* item);
     void showPortConcrete(PortProfile* portprofile, QTreeWidgetItem* item);
     void showProfile(ComponentProfile_var cprofile, QTreeWidgetItem* item);
-    //void showConnection      (ComponentProfile_var cprofile, string port, string id, QTreeWidgetItem* item);
     void showExecutionContext(RTC::RTObject_ptr rtc, QTreeWidgetItem* item);
     void showExecutionContext(RTC::RTObject_ptr rtc, ExecutionContextList_var exeContList, QTreeWidgetItem* item);
     void showConnectionProperties(PortService_var port, string id);
     void showConnection(PortService_var port, string id, QTreeWidgetItem* item);
 
-protected:
-    //QTreeWidgetItem* judgementType(string name);
-
-public:
     RTSPropertyTreeWidget  treeWidget;
-//    const NamingContextHelper::ObjectInfo* currentItem;
     NamingContextHelper ncHelper;
 
 private:
     NamingContextHelper::ObjectInfo currentItem;
-    // Holds the displayed data for updating the properties.
-    //RTSConnectionItemPtr connItem;
 };
 
-#if 0
-    class RTSConnectionItem
-    {
-    public:
-        RTSConnectionItem() {}
-        RTSConnectionItem(string id, string dataflow, string interface, string subscription) 
-            : id(id), dataflow(dataflow), interface(interface), subscription(subscription) {}
-    public:
-        string id;
-        string name;
-        string dataflow;
-        string interface;
-        string subscription;
-    };
-#endif
 }
 
 
@@ -195,12 +109,8 @@ RTSPropertiesViewImpl::RTSPropertiesViewImpl(RTSPropertiesView* self)
     treeWidget.setColumnCount(2);
     treeWidget.setHeaderLabels(columns);
 
-    //impl->helper = NamingContextHelperPtr(new NamingContextHelper);
-
     // It colored a different color for each row.
     treeWidget.setAlternatingRowColors(true);
-    //impl->connItem = RTSConnectionItemPtr(new RTSConnectionItem);
-    //impl->treeWidget.connItem = impl->connItem;
 
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->addWidget(&treeWidget);
@@ -255,6 +165,8 @@ void RTSPropertiesViewImpl::showProperties()
 
     if(currentItem.id!="" && currentItem.isAlive){
         RTC::RTObject_ptr rtc = ncHelper.findObject<RTC::RTObject>(currentItem.id, "rtc");
+        if(!ncHelper.isObjectAlive(rtc))
+                return;
         ComponentProfile_var cprofile = rtc->get_component_profile();
         QTreeWidgetItem *item = new QTreeWidgetItem;
 
@@ -506,17 +418,6 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
                 conPropChild->setText(0, QString(name.c_str()));
                 conPropChild->setText(1, QString((cproperties[*iter]).c_str()));
                 item->addChild(conPropChild);
-/*
-                    // keep the values of connection.
-                    if (iequals(name, "dataport.dataflow_type")) {
-                        this->connItem->dataflow = string((cproperties[*iter]).c_str()); 
-                    } else 
-                    if (iequals(name, "dataport.interface_type")) {
-                        this->connItem->interface = string((cproperties[*iter]).c_str()); 
-                    } else 
-                    if (iequals(name, "dataport.subscription_type")) {
-                        this->connItem->subscription = string((cproperties[*iter]).c_str()); 
-                    } */
             }
 
             // Show the port informations.
@@ -532,227 +433,5 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
 
 }
 
-#if 0
-    QTreeWidgetItem* RTSPropertiesViewImpl::judgementType(string name)
-    {
-        if (iequals(name, "Name")) {
-            return new RTSTreeItem(RTSTreeItem::RTS_ITEM_NAME_TYPE); 
-        } else 
-        if (iequals(name, "dataport.dataflow_type")) {
-            return new RTSTreeItem(RTSTreeItem::RTS_ITEM_DATAFLOW_TYPE); 
-        } else 
-        if (iequals(name, "dataport.interface_type")) {
-            return new RTSTreeItem(RTSTreeItem::RTS_ITEM_INTERFACE_TYPE); 
-        } else 
-        if (iequals(name, "dataport.subscription_type")) {
-            return new RTSTreeItem(RTSTreeItem::RTS_ITEM_SUBSCRIPTION_TYPE); 
-        } else {
-            return new QTreeWidgetItem; 
-        }
-    }
 
-
-    void RTSPropertyTreeWidget::onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
-    {
-        setItemWidget(previous, 1, NULL);
-
-        try {
-            bool presence = false; 
-            if (selection) {
-                presence = true;
-                delete selection;
-                selection = NULL;
-            } 
-            RTCConnection* retConn = NULL;
-            if (presence) {
-                retConn = refreshProperties(connItem.get());
-                if (retConn) {
-                    showProperties(retConn);
-                } else {
-                    clear();
-                }    
-            }
-
-        } catch (...) { /* ignore the exception message */ }
-     
-    }
-
-
-    void RTSPropertyTreeWidget::onItemActivated(QTreeWidgetItem* item, int column)
-    {
-        bool presence = false; 
-        if (selection) {
-            presence = true;
-            delete selection;
-            selection = NULL;
-        }
-
-        if (RTSTreeItem* rts = dynamic_cast<RTSTreeItem*>(item)) {
-            switch (rts->type) {
-                case RTSTreeItem::RTS_ITEM_NAME_TYPE: {
-                    if (!presence) { // avoid the repaint
-                        selection = new RTSPlainTextItem(item, 1, &(connItem->name));
-
-                        QFontMetrics metrics(IE(selection)->font());
-                        int height = metrics.lineSpacing();
-                        IE(selection)->setFixedHeight(1 * (height * 1.8));
-                        IE(selection)->setLineWrapMode(QPlainTextEdit::NoWrap);            
-
-                        IE(selection)->appendPlainText(item->text(1));
-                        setItemWidget(item, 1, selection);
-                    }
-                    break;
-                }
-
-                case RTSTreeItem::RTS_ITEM_DATAFLOW_TYPE: {
-                    int currentTarget = decideIndex(RTC_PROPERTY_DATAFLOW, 2, qtos(item->text(1)));
-                    selection = new RTSComboBoxItem(item, 1, &(connItem->dataflow));
-                    for (int i = 0; i < 2; i++) {
-                        IC(selection)->addItem(QString(RTC_PROPERTY_DATAFLOW[i].c_str()));
-                    }
-                    IC(selection)->setCurrentIndex(currentTarget);
-                    setItemWidget(item, 1, selection);
-                    break;
-                }
-
-                case RTSTreeItem::RTS_ITEM_INTERFACE_TYPE: {
-                    int currentTarget = decideIndex(RTC_PROPERTY_INTERFACE, 1, qtos(item->text(1)));
-                    selection = new RTSComboBoxItem(item, 1, &(connItem->interface));
-                    for (int i = 0; i < 1; i++) {
-                        IC(selection)->addItem(QString(RTC_PROPERTY_INTERFACE[i].c_str()));
-                    }
-                    IC(selection)->setCurrentIndex(currentTarget);
-                    setItemWidget(item, 1, selection);
-                    break;
-                }
-
-                case RTSTreeItem::RTS_ITEM_SUBSCRIPTION_TYPE: {
-                    int currentTarget = decideIndex(RTC_PROPERTY_SUBSCRIPTION, 3, qtos(item->text(1)));
-                    selection = new RTSComboBoxItem(item, 1, &(connItem->subscription));
-                    for (int i = 0; i < 3; i++) {
-                        IC(selection)->addItem(QString(RTC_PROPERTY_SUBSCRIPTION[i].c_str()));
-                    }
-                    IC(selection)->setCurrentIndex(currentTarget);
-                    setItemWidget(item, 1, selection);
-                    break;
-                }
-
-                default: {
-                    break;
-                }
-            }
-        }
-
-        RTCConnection* retConn = NULL;
-        if (presence) {
-            retConn = refreshProperties(connItem.get());
-            if (retConn) {
-                showProperties(retConn);
-            } else {
-                clear();
-            }    
-        }
-
-    }
-
-
-    RTCConnection* RTSPropertyTreeWidget::refreshProperties(RTSConnectionItem* item)
-    {
-        RTCConnection* retConn = updateConnection(connItem->id, connItem->name, 
-                                                  connItem->dataflow, connItem->interface, connItem->subscription);
-        if (!retConn) {
-            MessageView::instance()->putln((format(_("connection failure"))).str());
-            return NULL;
-        }
-        return retConn;
-
-    }
-
-   
-    void RTSPropertyTreeWidget::showProperties(RTCConnection* conn)
-    {
-        // repaint the properties-view.        
-        vector<View*> views = ViewManager::allViews();
-        for (vector<View*>::iterator iterv = views.begin(); iterv != views.end(); iterv++) {
-            const string& viewName = (*iterv)->name();
-            if (iequals(viewName, N_("RTC Properties"))) {
-                RTSPropertiesView* proView = static_cast<RTSPropertiesView*>(*iterv);
-                proView->showProperties(conn->sourceRtcName, conn->sourcePortName, 
-                                        conn->targetRtcName, conn->targetPortName,
-                                        conn->id);
-                break;
-            }       
-        }
-    }
- 
-
-    int RTSPropertyTreeWidget::decideIndex(const string* values, int count, string target)
-    {
-        for (int i = 0; i < count; i++) {
-            if (iequals(values[i], target)) {
-                return i;
-            }
-        } 
-        return 0;
-    }
-
-
-    RTCConnection* RTSPropertyTreeWidget::updateConnection(string id, string name, string dataflow, string interface, string subscription)
-    {
-        vector<View*> views = ViewManager::allViews();
-        for (vector<View*>::iterator iterv = views.begin(); iterv != views.end(); iterv++) {
-            const string& viewName = (*iterv)->name();
-            if (iequals(viewName, N_("RTC Diagram"))) {
-                RTSDiagramView* diaView = static_cast<RTSDiagramView*>(*iterv);
-                return diaView->updateConnection(id, name, dataflow, interface, subscription);
-            }       
-        }
-        throwException((format(_("RTC Diagram view not found"))).str());       
-        return NULL;
-    }
-
-
-    void RTSPropertyTreeWidget::onItemChanged(QTreeWidgetItem* item, int column)
-    {
-    }
-
-
-    void RTSPropertyTreeWidget::onItemEntered(QTreeWidgetItem* item, int column)
-    {
-    }
-
-
-    void RTSPropertyTreeWidget::onItemPressed(QTreeWidgetItem* item, int column)
-    {
-    }
-
-
-    void RTSComboBoxItem::changeItem(int index)
-    {
-        if (0 <= index) {
-            item->setText(this->column, this->itemText(index));
-            *value = qtos(this->itemText(index));
-        }
-    }
-
-
-    void RTSPlainTextItem::changeItem()
-    {
-        item->setText(this->column, this->toPlainText());
-        *value = qtos(this->toPlainText());
-    }
-
-
-    void RTSPropertiesView::onActivated()
-    {
-    }
-
-
-    void RTSPropertiesView::onDeactivated()
-    {
-    }
- 
-
-}; // end of namespace
-#endif
 

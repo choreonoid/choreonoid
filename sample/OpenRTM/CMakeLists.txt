@@ -83,6 +83,7 @@ install(FILES SampleCrawlerJoystick.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 configure_file(OpenRTM-TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(OpenRTM-TankJoystick-RTSystem.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(TankJoystick.conf
   ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankJoystick.conf COPYONLY)
 configure_file(TankJoystick_Noconnection.conf
