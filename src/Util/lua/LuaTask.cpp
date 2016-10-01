@@ -38,34 +38,41 @@ public:
     sol::function restoreState_;
     
     TaskWrap(sol::this_state s) {
-        onMenuRequest_ = makeLuaFunction(s, [](TaskWrap* self, TaskMenu& menu) { self->Task::onMenuRequest(menu); });
-        onActivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onActivated(s); });
-        onDeactivated_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onDeactivated(s); });
-        storeState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::storeState(s, a); });
-        restoreState_ = makeLuaFunction(s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::restoreState(s, a); });
-        
+        onMenuRequest_ = makeLuaFunction(
+            s, [](TaskWrap* self, TaskMenu& menu) { self->Task::onMenuRequest(menu); });
+        onActivated_ = makeLuaFunction(
+            s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onActivated(s); });
+        onDeactivated_ = makeLuaFunction(
+            s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onDeactivated(s); });
+        storeState_ = makeLuaFunction(
+            s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::storeState(s, a); });
+        restoreState_ = makeLuaFunction(
+            s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::restoreState(s, a); });
     }
-    //TaskWrap(const std::string& name, const std::string& caption) : Task(name, caption) { };
-    //TaskWrap(const Task& org, bool doDeepCopy = true) : Task(org, doDeepCopy) { };
+
+    sol::table derive(){
+
+    }
+
+    void setDescendantLuaObject(sol::table obj){
+
+    }
 
     virtual void onMenuRequest(TaskMenu& menu) override {
         onMenuRequest_(this, std::ref(menu));
     }
-    
-    virtual void onActivated(AbstractTaskSequencer* sequencer){
+    virtual void onActivated(AbstractTaskSequencer* sequencer) override {
         onActivated_(this, sequencer);
     }
-    virtual void onDeactivated(AbstractTaskSequencer* sequencer){
+    virtual void onDeactivated(AbstractTaskSequencer* sequencer) override {
         onDeactivated_(this, sequencer);
     }
-    /*
-    virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive){
-        storeState_(this, sequencer, archive);
+    virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override {
+        //storeState_(this, sequencer, std::ref(archive));
     }
-    virtual void restoreState(AbstractTaskSequencer* sequencer, Mapping& archive){
-        restoreState_(this, sequencer, archive);
+    virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive) override {
+        //restoreState_(this, sequencer, std::ref(archive));
     }
-    */
 };
 
 typedef ref_ptr<TaskWrap> TaskWrapPtr;
@@ -79,15 +86,17 @@ bool waitForSignal(sol::object self, sol::object signalProxy, bool isBooleanSign
 
     sol::function notifyCommandFinish;
     if(isBooleanSignal){
-        notifyCommandFinish = makeLuaFunction(s, [](TaskProc* self, bool isCompleted){ self->notifyCommandFinish(isCompleted); });
+        notifyCommandFinish = makeLuaFunction(
+            s, [](TaskProc* self, bool isCompleted){ self->notifyCommandFinish(isCompleted); });
     } else {
-        notifyCommandFinish = makeLuaFunction(s, [](TaskProc* self){ self->notifyCommandFinish(true); });
+        notifyCommandFinish = makeLuaFunction(
+            s, [](TaskProc* self){ self->notifyCommandFinish(true); });
     }
 
     sol::object connection = connect(signalProxy, notifyCommandFinish);
 
-    sol::function waitForCommandToFinish =
-        makeLuaFunction(s, [](TaskProc* self, Connection c, double timeout){ return self->waitForCommandToFinish(c, timeout); });
+    sol::function waitForCommandToFinish = makeLuaFunction(
+        s, [](TaskProc* self, Connection c, double timeout){ return self->waitForCommandToFinish(c, timeout); });
     
     bool result = waitForCommandToFinish(self, connection, timeout);
     
@@ -231,7 +240,6 @@ void exportLuaTaskTypes(sol::table& module)
         "Task",
         sol::base_classes, sol::bases<Task>(),
         "new", sol::factories([](sol::this_state s) -> TaskWrapPtr { return new TaskWrap(s); }),
-
         "name", [](sol::object self) { return native<Task>(self)->name(); },
         "setName", [](sol::object self, const char* name) { native<Task>(self)->setName(name); },
         "caption", [](sol::object self) { return native<Task>(self)->caption(); },
@@ -254,7 +262,6 @@ void exportLuaTaskTypes(sol::table& module)
         "funcToSetCommandLink", [](sol::object self, int commandIndex) { return native<Task>(self)->funcToSetCommandLink(commandIndex); },
         "commandLevel", [](sol::object self, int level) { return native<Task>(self)->commandLevel(level); },
         "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); },
-
         "get_onMenuRequest", [](sol::object self) { return native<TaskWrap>(self)->onMenuRequest_; },
         "set_onMenuRequest", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onMenuRequest_ = f; },
         "get_onActivated", [](sol::object self) { return native<TaskWrap>(self)->onActivated_; },

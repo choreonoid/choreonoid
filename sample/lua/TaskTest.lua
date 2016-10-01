@@ -7,6 +7,7 @@ function deriveCppClass(base)
       local obj = { }
       obj.cppobj = base.new(...)
       setmetatable(obj, { __index = class })
+      -- obj.cppobj:setDescendantLuaObject(obj)
       MyTask.initialize(obj)
       return obj
   end

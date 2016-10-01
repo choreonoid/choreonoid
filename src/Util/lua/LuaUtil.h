@@ -44,10 +44,7 @@ T* native(sol::object obj)
 template<typename T>
 sol::function makeLuaFunction(lua_State* L, T func)
 {
-    sol::make_reference(L, sol::as_function(func)).push();
-    sol::function luaFunc(L);
-    lua_pop(L, 1);
-    return luaFunc;
+    return sol::make_object(L, sol::as_function(func)).template as<sol::function>();
 }
 
 CNOID_EXPORT void stackDump(lua_State* L);
