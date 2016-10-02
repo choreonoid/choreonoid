@@ -8,7 +8,7 @@ add_cnoid_lua_module(LuaUtil
   LuaUtil.cpp
   LuaSignal.cpp
   LuaTask.cpp
-  SolUtilModule.cpp
+  LuaUtilModule.cpp
   )
 
 target_link_libraries(LuaUtil
