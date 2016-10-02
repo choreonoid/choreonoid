@@ -31,47 +31,59 @@ public:
 class TaskWrap : public Task
 {
 public:
-    sol::function onMenuRequest_;
-    sol::function onActivated_;
-    sol::function onDeactivated_;
-    sol::function storeState_;
-    sol::function restoreState_;
-    
-    TaskWrap(sol::this_state s) {
-        onMenuRequest_ = makeLuaFunction(
-            s, [](TaskWrap* self, TaskMenu& menu) { self->Task::onMenuRequest(menu); });
-        onActivated_ = makeLuaFunction(
-            s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onActivated(s); });
-        onDeactivated_ = makeLuaFunction(
-            s, [](TaskWrap* self, AbstractTaskSequencer* s) { self->Task::onDeactivated(s); });
-        storeState_ = makeLuaFunction(
-            s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::storeState(s, a); });
-        restoreState_ = makeLuaFunction(
-            s, [](TaskWrap* self, AbstractTaskSequencer* s, Mapping& a) { self->Task::restoreState(s, a); });
-    }
+    sol::table descendantLuaObject;
 
-    sol::table derive(){
+    sol::table derived(sol::this_state s){
 
     }
 
     void setDescendantLuaObject(sol::table obj){
+        descendantLuaObject = obj;
+    }
+
+    sol::function superMethod(sol::object self){
 
     }
 
     virtual void onMenuRequest(TaskMenu& menu) override {
-        onMenuRequest_(this, std::ref(menu));
+        if(descendantLuaObject){
+            sol::function f = descendantLuaObject["onMenuRequest"];
+            if(f) f(descendantLuaObject, std::ref(menu));
+        } else {
+            Task::onMenuRequest(menu);
+        }
     }
     virtual void onActivated(AbstractTaskSequencer* sequencer) override {
-        onActivated_(this, sequencer);
+        if(descendantLuaObject){
+            sol::function f = descendantLuaObject["onActivated"];
+            if(f) f(descendantLuaObject, sequencer);
+        } else {
+            Task::onActivated(sequencer);
+        }
     }
     virtual void onDeactivated(AbstractTaskSequencer* sequencer) override {
-        onDeactivated_(this, sequencer);
+        if(descendantLuaObject){
+            sol::function f = descendantLuaObject["onDeactivated"];
+            if(f) f(descendantLuaObject, sequencer);
+        } else {
+            Task::onDeactivated(sequencer);
+        }
     }
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override {
-        //storeState_(this, sequencer, std::ref(archive));
+        if(descendantLuaObject){
+            sol::function f = descendantLuaObject["storeState"];
+            if(f) f(descendantLuaObject, sequencer /*, std::ref(archive)*/);
+        } else {
+            Task::storeState(sequencer, archive);
+        }
     }
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive) override {
-        //restoreState_(this, sequencer, std::ref(archive));
+        if(descendantLuaObject){
+            sol::function f = descendantLuaObject["restoreState"];
+            if(f) f(descendantLuaObject, sequencer /*, std::ref(archive)*/);
+        } else {
+            Task::restoreState(sequencer, archive);
+        }
     }
 };
 
@@ -239,7 +251,10 @@ void exportLuaTaskTypes(sol::table& module)
     module.new_usertype<TaskWrap>(
         "Task",
         sol::base_classes, sol::bases<Task>(),
-        "new", sol::factories([](sol::this_state s) -> TaskWrapPtr { return new TaskWrap(s); }),
+        "new", sol::factories([]() -> TaskWrapPtr { return new TaskWrap(); }),
+        "derived", &TaskWrap::derived,
+        "setDescendantLuaObject",
+        [](sol::object self, sol::table obj) { native<TaskWrap>(self)->setDescendantLuaObject(obj); },
         "name", [](sol::object self) { return native<Task>(self)->name(); },
         "setName", [](sol::object self, const char* name) { native<Task>(self)->setName(name); },
         "caption", [](sol::object self) { return native<Task>(self)->caption(); },
@@ -250,7 +265,8 @@ void exportLuaTaskTypes(sol::table& module)
             [](sol::object self, TaskPhase* phase) -> TaskPhasePtr { return native<Task>(self)->addPhase(phase); },
             [](sol::object self, const char* caption) -> TaskPhasePtr { return native<Task>(self)->addPhase(caption); }),
         "lastPhase", [](sol::object self) -> TaskPhasePtr { return native<Task>(self)->lastPhase(); },
-        "setPreCommand", [](sol::object self, sol::function func) { native<Task>(self)->setPreCommand(LuaTaskFunc(func)); },
+        "setPreCommand",
+        [](sol::object self, sol::function func) { native<Task>(self)->setPreCommand(LuaTaskFunc(func)); },
         "addCommand", sol::overload(
             [](sol::object self) -> TaskCommandPtr { return native<Task>(self)->addCommand(); },
             [](sol::object self, const char* caption) -> TaskCommandPtr { return native<Task>(self)->addCommand(caption); }),
@@ -261,17 +277,7 @@ void exportLuaTaskTypes(sol::table& module)
         "lastCommandIndex", [](sol::object self) { return native<Task>(self)->lastCommandIndex(); },
         "funcToSetCommandLink", [](sol::object self, int commandIndex) { return native<Task>(self)->funcToSetCommandLink(commandIndex); },
         "commandLevel", [](sol::object self, int level) { return native<Task>(self)->commandLevel(level); },
-        "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); },
-        "get_onMenuRequest", [](sol::object self) { return native<TaskWrap>(self)->onMenuRequest_; },
-        "set_onMenuRequest", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onMenuRequest_ = f; },
-        "get_onActivated", [](sol::object self) { return native<TaskWrap>(self)->onActivated_; },
-        "set_onActivated", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onActivated_ = f; },
-        "get_onDeactivated", [](sol::object self) { return native<TaskWrap>(self)->onDeactivated_; },
-        "set_onDeactivated", [](sol::object self, sol::function f) { native<TaskWrap>(self)->onDeactivated_ = f; },
-        "get_storeState", [](sol::object self) { return native<TaskWrap>(self)->storeState_; },
-        "set_storeState", [](sol::object self, sol::function f) { native<TaskWrap>(self)->storeState_ = f; },
-        "get_restoreState", [](sol::object self) { return native<TaskWrap>(self)->restoreState_; },
-        "set_restoreState", [](sol::object self, sol::function f) { native<TaskWrap>(self)->restoreState_ = f; }
+        "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); }
         );
 
     module.new_usertype<AbstractTaskSequencer>(

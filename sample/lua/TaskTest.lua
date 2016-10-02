@@ -7,7 +7,7 @@ function deriveCppClass(base)
       local obj = { }
       obj.cppobj = base.new(...)
       setmetatable(obj, { __index = class })
-      -- obj.cppobj:setDescendantLuaObject(obj)
+      obj.cppobj:setDescendantLuaObject(obj)
       MyTask.initialize(obj)
       return obj
   end
@@ -28,9 +28,6 @@ function MyTask:initialize()
           function(proc)
 	     print "Command 1"
           end)
-
-   self:set_onActivated(MyTask.onActivated)
-   self:set_onDeactivated(MyTask.onDeactivated)
 end
 
 function MyTask:onActivated()
@@ -43,6 +40,10 @@ end
 
 task = MyTask.new()
 
+task2 = MyTask.new()
+task2:setName("Task 2");
+
 taskView = cnoid.TaskView.instance()
 taskView:updateTask(task)
+taskView:updateTask(task2)
 taskView:activate(true)

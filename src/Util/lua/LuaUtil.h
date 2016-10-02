@@ -9,6 +9,7 @@
 #include <sol.hpp>
 #include <functional>
 #include <iosfwd>
+#include <iostream>
 #include "exportdecl.h"
 
 namespace sol {
@@ -37,6 +38,17 @@ T* native(sol::object obj)
         return obj.as<T*>();
     } else if(obj.is<sol::table>()){
         sol::object cppobj = obj.as<sol::table>()["cppobj"];
+        return cppobj.as<T*>();
+    }
+}
+
+template<typename T>
+T* native(sol::stack_object obj)
+{
+    if(obj.is<T*>()){
+        return obj.as<T*>();
+    } else if(obj.is<sol::stack_table>()){
+        sol::object cppobj = obj.as<sol::stack_table>()["cppobj"];
         return cppobj.as<T*>();
     }
 }
