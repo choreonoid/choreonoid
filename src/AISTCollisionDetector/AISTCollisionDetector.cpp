@@ -62,6 +62,7 @@ typedef std::shared_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
 
 typedef map<weak_ref_ptr<SgNode>, ColdetModelExPtr>  ModelMap;
 ModelMap modelCache;
+
 }
 
 namespace cnoid {
@@ -71,8 +72,7 @@ class AISTCollisionDetectorImpl
 public:
     vector<ColdetModelExPtr> models;
 
-    typedef vector<ColdetModelPairExPtr> ModelPairArray;
-    ModelPairArray modelPairs;
+    vector<ColdetModelPairExPtr> modelPairs;
 
     int maxNumThreads;
     int numThreads;
@@ -80,7 +80,9 @@ public:
 
     vector<int> shuffledPairIndices;
 
-    typedef set< IdPair<> > IdPairSet;
+    map<IdPair<>, int> modelPairIdMap;
+
+    typedef set<IdPair<>> IdPairSet;
     IdPairSet nonInterfarencePairs;
 
     MeshExtractor* meshExtractor;
@@ -161,6 +163,7 @@ void AISTCollisionDetector::clearGeometries()
 {
     impl->models.clear();
     impl->modelPairs.clear();
+    impl->modelPairIdMap.clear();
     impl->nonInterfarencePairs.clear();
 }
 
@@ -184,7 +187,7 @@ int AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
 
     if(geometry){
         ColdetModelExPtr model = std::make_shared<ColdetModelEx>();
-        if(meshExtractor->extract(geometry, std::bind(&AISTCollisionDetectorImpl::addMesh, this, model.get()))){
+        if(meshExtractor->extract(geometry, [&]() { addMesh(model.get()); })){
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
@@ -269,6 +272,7 @@ bool AISTCollisionDetector::makeReady()
 bool AISTCollisionDetectorImpl::makeReady()
 {
     modelPairs.clear();
+    modelPairIdMap.clear();
 
     const int n = models.size();
     for(int i=0; i < n; ++i){
@@ -278,8 +282,11 @@ bool AISTCollisionDetectorImpl::makeReady()
                 ColdetModelExPtr& model2 = models[j];
                 if(model2){
                     if(!model1->isStatic || !model2->isStatic){
-                        if(nonInterfarencePairs.find(IdPair<>(i, j)) == nonInterfarencePairs.end()){
-                            modelPairs.push_back(std::make_shared<ColdetModelPairEx>(model1, i, model2, j));
+                        IdPair<> idPair(i, j);
+                        if(nonInterfarencePairs.find(idPair) == nonInterfarencePairs.end()){
+                            ColdetModelPairExPtr modelPair = std::make_shared<ColdetModelPairEx>(model1, i, model2, j);
+                            modelPairIdMap[idPair] = modelPairs.size();
+                            modelPairs.push_back(modelPair);
                         }
                     }
                 }
@@ -393,13 +400,11 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(co
             break;
         }
         if(MULTITHREAD_TYPE == 0){
-            threadPool->start(
-                std::bind(&AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs,
-                          this, index, index + size, std::ref(collisionPairArrays[i])));
+            threadPool->start([this, i, index, size](){
+                    extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]); });
         } else {
-            threadPool->start(
-                std::bind(&AISTCollisionDetectorImpl::checkCollisionsOfAssignedPairs,
-                          this, index, index + size, std::ref(collidingModelPairArrays[i])));
+            threadPool->start([this, i, index, size](){
+                    checkCollisionsOfAssignedPairs(index, index + size, collidingModelPairArrays[i]); });
         }
         index += size;
     }
@@ -520,4 +525,20 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
             }
         }
     }
+}
+
+
+int AISTCollisionDetector::getometryPairId(int geometryId1, int geometryId2) const
+{
+    auto p = impl->modelPairIdMap.find(IdPair<>(geometryId1, geometryId2));
+    if(p != impl->modelPairIdMap.end()){
+        return p->second;
+    }
+    return -1;
+}
+
+
+double AISTCollisionDetector::findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2)
+{
+    return impl->modelPairs[geometryPairId]->computeDistance(out_point1.data(), out_point2.data());
 }
