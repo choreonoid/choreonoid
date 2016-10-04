@@ -528,7 +528,7 @@ void AISTCollisionDetectorImpl::dispatchCollisionsInCollidingModelPairs
 }
 
 
-int AISTCollisionDetector::getometryPairId(int geometryId1, int geometryId2) const
+int AISTCollisionDetector::geometryPairId(int geometryId1, int geometryId2) const
 {
     auto p = impl->modelPairIdMap.find(IdPair<>(geometryId1, geometryId2));
     if(p != impl->modelPairIdMap.end()){
