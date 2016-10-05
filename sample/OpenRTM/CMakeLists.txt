@@ -79,6 +79,9 @@ configure_file(SampleCrawlerJoystick.conf
   ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/SampleCrawlerJoystick.conf COPYONLY)
 install(FILES SampleCrawlerJoystick.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
 
+# Tank RTC
+add_cnoid_body_io_rtc(TankRTC TankRTC.cpp)
+
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)

@@ -22,10 +22,14 @@ public:
     BodyIoRTC(RTC::Manager* manager);
     ~BodyIoRTC();
 
-    virtual bool initializePorts(Body* body);
+    virtual RTC::ReturnCode_t onInitialize(Body* body);
+    
     virtual bool initializeSimulation(ControllerItemIO* io);
-    virtual bool inputFromSimulator() = 0;
-    virtual bool outputToSimulator() = 0;
+    virtual void inputFromSimulator() = 0;
+    virtual void outputToSimulator() = 0;
+
+protected:
+    Body* getBody();
 };
 
 }

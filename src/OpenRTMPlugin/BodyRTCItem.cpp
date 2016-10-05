@@ -539,7 +539,6 @@ void BodyRTCItem::doPutProperties(PutPropertyFunction& putProperty)
     }
     putProperty(_("Configuration file name"), FilePath(confFileName, filter, dir),
                 std::bind(&BodyRTCItem::setConfigFile, this, _1), true);
-
 }
 
 

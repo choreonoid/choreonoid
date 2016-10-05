@@ -238,7 +238,7 @@ else()
   endif()
 endif()
 
-target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM ${OPENRTM_LIBRARIES})
+target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
 if(UNIX)
   target_link_libraries(${plugin} ${Boost_REGEX_LIBRARY})
 endif()

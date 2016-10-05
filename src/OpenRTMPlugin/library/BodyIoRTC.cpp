@@ -21,9 +21,9 @@ BodyIoRTC::~BodyIoRTC()
 }
 
 
-bool BodyIoRTC::initializePorts(Body* body)
+RTC::ReturnCode_t  BodyIoRTC::onInitialize(Body* body)
 {
-    return true;
+    return RTC::RTC_OK;
 }
 
 
