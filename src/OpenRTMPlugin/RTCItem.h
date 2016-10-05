@@ -21,7 +21,7 @@ class RTComponent
 public:
     RTComponent(const boost::filesystem::path& modulePath, PropertyMap& properties);
     ~RTComponent();
-    void deleteRTC(bool waitToBeDeleted);
+    void deleteRTC();
     RTC::RtcBase* rtc() { return rtc_; };
     bool isValid() const;
     const std::string& name() const { return componentName; }

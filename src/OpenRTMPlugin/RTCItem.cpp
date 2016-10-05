@@ -102,7 +102,7 @@ void RTCItem::onPositionChanged()
 void RTCItem::onDisconnectedFromRoot()
 {
     if(rtcomp){
-        rtcomp->deleteRTC(false);
+        rtcomp->deleteRTC();
         delete rtcomp;
         rtcomp = 0;
     }
@@ -244,17 +244,15 @@ bool RTCItem::convertAbsolutePath()
 {
     modulePath = moduleName;
     if (!checkAbsolute(modulePath)){
-        if (pathBase.is(RTC_DIRECTORY))
-            modulePath = filesystem::path(executableTopDirectory()) /
-            CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
-        else {
-            const string& projectFileName = ProjectManager::instance()->getProjectFileName();
-            if (projectFileName.empty()){
+        if (pathBase.is(RTC_DIRECTORY)){
+            modulePath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
+        } else {
+            string projectFile = ProjectManager::instance()->currentProjectFile();
+            if (projectFile.empty()){
                 mv->putln(_("Please save the project."));
                 return false;
-            }
-            else{
-                modulePath = boost::filesystem::path(projectFileName).parent_path() / modulePath;
+            } else {
+                modulePath = boost::filesystem::path(projectFile).parent_path() / modulePath;
             }
         }
     }
@@ -275,7 +273,7 @@ RTComponent::RTComponent(const filesystem::path& modulePath, PropertyMap& prop)
 
 RTComponent::~RTComponent()
 {
-    deleteRTC(true);
+    deleteRTC();
 }
 
 
@@ -403,7 +401,7 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
 }
 
 
-void RTComponent::deleteRTC(bool waitToBeDeleted)
+void RTComponent::deleteRTC()
 {
     if(TRACE_FUNCTIONS){
         cout << "BodyRTComponent::deleteRTC()" << endl;
@@ -412,7 +410,7 @@ void RTComponent::deleteRTC(bool waitToBeDeleted)
     if(rtc_){
         string rtcName(rtc_->getInstanceName());
         mv->putln(fmt(_("delete %1%")) % rtcName);
-        if(!cnoid::deleteRTC(rtc_, true)){
+        if(!cnoid::deleteRTC(rtc_)){
             mv->putln(fmt(_("%1% cannot be deleted.")) % rtcName);
         }
         rtc_ = 0;

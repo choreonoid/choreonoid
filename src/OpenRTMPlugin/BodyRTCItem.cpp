@@ -119,12 +119,12 @@ void BodyRTCItem::createRTC(BodyPtr body)
                     confPath = filesystem::path(executableTopDirectory()) /
                         CNOID_PLUGIN_SUBDIR / "rtc" / confPath;
                 else {
-                    const string& projectFileName = ProjectManager::instance()->getProjectFileName();
-                    if (projectFileName.empty()){
+                    string projectFile = ProjectManager::instance()->currentProjectFile();
+                    if (projectFile.empty()){
                         mv->putln(_("Please save the project."));
-                            return;
-                    }else{
-                        confPath = filesystem::path(projectFileName).parent_path() / confPath;
+                        return;
+                    } else {
+                        confPath = filesystem::path(projectFile).parent_path() / confPath;
                    }
                 }
             }
@@ -165,13 +165,12 @@ void BodyRTCItem::createRTC(BodyPtr body)
                     modulePath = filesystem::path(executableTopDirectory()) /
                     CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
                 else {
-                    const string& projectFileName = ProjectManager::instance()->getProjectFileName();
-                    if (projectFileName.empty()){
+                    string projectFile = ProjectManager::instance()->currentProjectFile();
+                    if(projectFile.empty()){
                         mv->putln(_("Please save the project."));
                         return;
-                    }
-                    else{
-                        modulePath = filesystem::path(projectFileName).parent_path() / modulePath;
+                    } else {
+                        modulePath = filesystem::path(projectFile).parent_path() / modulePath;
                     }
                 }
             }
@@ -1086,7 +1085,7 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
     }
     
     if(rtcomp){
-        rtcomp->deleteRTC(waitToBeDeleted);
+        rtcomp->deleteRTC();
         delete rtcomp;
         rtcomp = 0;
     }
@@ -1094,7 +1093,7 @@ void BodyRTCItem::deleteModule(bool waitToBeDeleted)
     if(virtualRobotRTC){
         deleteList.push_back(virtualRobotRTC->getInstanceName());
         mv->putln(fmt(_("delete %1%")) % virtualRobotRTC->getInstanceName());
-        cnoid::deleteRTC(virtualRobotRTC, waitToBeDeleted);
+        cnoid::deleteRTC(virtualRobotRTC);
         virtualRobotRTC = 0;
     }
 
