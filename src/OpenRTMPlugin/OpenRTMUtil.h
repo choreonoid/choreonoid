@@ -33,7 +33,7 @@ typename ServiceType::_ptr_type findRTCService(RTC::RTObject_ptr rtc, const std:
 
 template<> CNOID_EXPORT CORBA::Object::_ptr_type findRTCService<CORBA::Object>(RTC::RTObject_ptr rtc, const std::string& name);
 
-CNOID_EXPORT bool deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted = true);
+CNOID_EXPORT bool deleteRTC(RTC::RtcBase* rtc);
 }
 
 #endif

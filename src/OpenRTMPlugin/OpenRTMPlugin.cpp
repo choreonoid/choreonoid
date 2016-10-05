@@ -402,7 +402,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
 }
 
 
-bool cnoid::deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted)
+    bool cnoid::deleteRTC(RTC::RtcBase* rtc)
 {
     if(rtc){
 

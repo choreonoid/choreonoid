@@ -174,20 +174,24 @@ target_link_libraries(${library} CnoidCorba)
 apply_common_setting_for_library(${library} "")
 
 
+add_subdirectory(library)
+
+
 # Plugin
 set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
   OpenRTMPlugin.cpp
+  BodyIoRTCItem.cpp
+  RTCItem.cpp
+  ChoreonoidExecutionContext.cpp
+  ChoreonoidPeriodicExecutionContext.cpp
+  RTSNameServerView.cpp
+  OpenHRPClockGeneratorItem.cpp
   BodyRTCItem.cpp
   VirtualRobotRTC.cpp
   VirtualRobotPortHandler.cpp
   BridgeConf.cpp
-  RTCItem.cpp
-  OpenHRPClockGeneratorItem.cpp
-  ChoreonoidExecutionContext.cpp
-  ChoreonoidPeriodicExecutionContext.cpp
-  RTSNameServerView.cpp
   )
 
 set(plugin_headers
@@ -227,6 +231,7 @@ else()
                                 VirtualRobotPortHandler.cpp
                                 BridgeConf.cpp
                                 RTCItem.cpp
+				BodyIoRTCItem.cpp
                                 OpenHRPClockGeneratorItem.cpp
                                 ChoreonoidExecutionContext.cpp 
                                 PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
