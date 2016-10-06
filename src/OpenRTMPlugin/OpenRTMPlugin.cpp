@@ -3,8 +3,9 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "BodyRTCItem.h"
 #include "RTCItem.h"
+#include "BodyIoRTCItem.h"
+#include "BodyRTCItem.h"
 #include "OpenHRPClockGeneratorItem.h"
 #include "ChoreonoidExecutionContext.h"
 #include "ChoreonoidPeriodicExecutionContext.h"
@@ -150,8 +151,9 @@ public:
             return false;
         }
         
-        BodyRTCItem::initialize(this);
         RTCItem::initialize(this);
+        BodyIoRTCItem::initialize(this);
+        BodyRTCItem::initialize(this);
         OpenHRPClockGeneratorItem::initialize(this);
         
         VirtualRobotRTC::registerFactory(manager, "VirtualRobot");

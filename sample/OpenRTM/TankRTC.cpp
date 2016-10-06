@@ -85,7 +85,7 @@ RTC::ReturnCode_t TankRTC::onInitialize(Body* body)
     
     // Set OutPort buffer
     addOutPort("q", anglesOut);
-    angles.data.length(ioBody->numJoints());
+    angles.data.length(body->numJoints());
 
     return RTC::RTC_OK;
 }
@@ -95,6 +95,7 @@ bool TankRTC::initializeSimulation(ControllerItemIO* io)
 {
     ioBody = io->body();
     light = ioBody->findDevice<Light>("MainLight");
+    return true;
 }
 
 

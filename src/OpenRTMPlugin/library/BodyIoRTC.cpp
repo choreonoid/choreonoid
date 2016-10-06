@@ -31,3 +31,28 @@ bool BodyIoRTC::initializeSimulation(ControllerItemIO* io)
 {
     return true;
 }
+
+
+bool BodyIoRTC::startSimulation()
+{
+    return true;
+}
+
+
+void BodyIoRTC::inputFromSimulator()
+{
+
+}
+
+
+void BodyIoRTC::outputToSimulator()
+{
+
+}
+
+
+void BodyIoRTC::stopSimulation()
+{
+
+}
+

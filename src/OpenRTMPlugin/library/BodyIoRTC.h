@@ -25,11 +25,10 @@ public:
     virtual RTC::ReturnCode_t onInitialize(Body* body);
     
     virtual bool initializeSimulation(ControllerItemIO* io);
-    virtual void inputFromSimulator() = 0;
-    virtual void outputToSimulator() = 0;
-
-protected:
-    Body* getBody();
+    virtual bool startSimulation();
+    virtual void inputFromSimulator();
+    virtual void outputToSimulator();
+    virtual void stopSimulation();
 };
 
 }

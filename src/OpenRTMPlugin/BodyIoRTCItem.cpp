@@ -43,7 +43,6 @@ public:
     BodyItem* bodyItem = 0;
     BodyIoRTC* bodyIoRTC = 0;
     OpenRTM::ExtTrigExecutionContextService_var execContext;
-    MessageView* mv;
 
     double executionCycleProperty;
     double executionCycle;
@@ -61,6 +60,8 @@ public:
         N_PATH_BASE
     };
     Selection relativePathBaseType;
+
+    MessageView* mv;
     
     BodyIoRTCItemImpl(BodyIoRTCItem* self);
     BodyIoRTCItemImpl(BodyIoRTCItem* self, const BodyIoRTCItemImpl& org);
@@ -72,6 +73,8 @@ public:
     bool resetBodyIoRTC();
     void deleteBodyIoRTC(bool waitToBeDeleted);
     void deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted);
+    bool start();
+    void stop();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -367,7 +370,39 @@ void BodyIoRTCItemImpl::deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted)
 
 bool BodyIoRTCItem::initialize(ControllerItemIO* io)
 {
+    if(impl->bodyIoRTC){
+        return impl->bodyIoRTC->initializeSimulation(io);
+    }
     return false;
+}
+
+
+bool BodyIoRTCItem::start()
+{
+    return impl->start();
+}
+
+
+bool BodyIoRTCItemImpl::start()
+{
+    bool isReady = false;
+    
+    if(bodyIoRTC){
+        if(bodyIoRTC->startSimulation()){
+            if(!CORBA::is_nil(execContext)){
+                if(RTC::PRECONDITION_NOT_MET == execContext->activate_component(bodyIoRTC->getObjRef())){
+                    execContext->reset_component(bodyIoRTC->getObjRef());
+                    execContext->tick();
+                    execContext->activate_component(bodyIoRTC->getObjRef());
+                }
+                execContext->tick();
+                //bodyIoRTC->inputFromSimulator();
+                isReady = true;
+            }
+        }
+    }
+    
+    return isReady;
 }
 
 
@@ -379,25 +414,37 @@ double BodyIoRTCItem::timeStep() const
 
 void BodyIoRTCItem::input()
 {
-
+    impl->bodyIoRTC->inputFromSimulator();
 }
 
 
 bool BodyIoRTCItem::control()
 {
+    if(!CORBA::is_nil(impl->execContext)){
+        impl->execContext->tick();
+    }
+
     return true;
 }
 
 
 void BodyIoRTCItem::output()
 {
-
+    impl->bodyIoRTC->outputToSimulator();
 }
 
 
 void BodyIoRTCItem::stop()
 {
+    impl->stop();
+}
 
+
+void BodyIoRTCItemImpl::stop()
+{
+    bodyIoRTC->stopSimulation();
+    execContext->deactivate_component(bodyIoRTC->getObjRef());
+    execContext->tick();
 }
 
 
