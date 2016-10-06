@@ -186,6 +186,7 @@ private:
     RTSConnectionLineItem* line[5];
     RTSConnectionMarkerItem* marker[5];
     ConnectionSet signalConnections;
+    QGraphicsOpacityEffect* effect;
 
 };
 typedef ref_ptr<RTSConnectionGItem> RTSConnectionGItemPtr;
@@ -301,6 +302,14 @@ RTSConnectionGItem::RTSConnectionGItem(RTSConnection* rtsConnection, bool sIsLef
         bool tIsLeft, QPointF t) :
         rtsConnection(rtsConnection), _sIsLeft(sIsLeft), _tIsLeft(tIsLeft)
 {
+    effect = new QGraphicsOpacityEffect;
+    effect->setOpacity(0.3);
+    setGraphicsEffect(effect);
+    if(rtsConnection->isAlive())
+        effect->setEnabled(false);
+    else
+        effect->setEnabled(true);
+
     if(rtsConnection->setPos){
         Vector2& p0s = rtsConnection->position[0];
         Vector2& p0e = rtsConnection->position[1];
@@ -700,8 +709,8 @@ void RTSCompGItem::create(const QPointF& pos)
         RTSPortGItemPtr inPortGItem = new RTSPortGItem(inPort);
         inPortGItem->create(rectX, pos, i, RTSPortGItem::INPORT);
         addToGroup(inPortGItem);
-        inPorts.insert(pair<string, RTSPortGItemPtr>(inPort->name, inPortGItem));
-        impl->rtsPortMap.insert(pair<RTSPort*, RTSPortGItem*>(inPort, inPortGItem.get()));
+        inPorts[inPort->name] = inPortGItem;
+        impl->rtsPortMap[inPort] = inPortGItem.get();
     }
 
     i = 0;
@@ -724,8 +733,8 @@ void RTSCompGItem::create(const QPointF& pos)
             outPortGItem->create(rectX, pos, i, RTSPortGItem::OUTPORT);
         }
         addToGroup(outPortGItem);
-        outPorts.insert(pair<string, RTSPortGItemPtr>(outPort->name, outPortGItem));
-        impl->rtsPortMap.insert(pair<RTSPort*, RTSPortGItem*>(outPort, outPortGItem.get()));
+        outPorts[outPort->name] = outPortGItem;
+        impl->rtsPortMap[outPort] = outPortGItem.get();
     }
 
     stateCheck();
@@ -1064,8 +1073,8 @@ void RTSDiagramViewImpl::addRTSComp(string name, const QPointF& pos)
         rtsComps[name] = rtsCompGItem;
         scene.addItem(rtsCompGItem);
 
-        map<string, RTSConnectionPtr>& connections = currentRTSItem->rtsConnections();
-        for(map<string, RTSConnectionPtr>::iterator itr = connections.begin();
+        RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
+        for(RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++){
             if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
                 RTSConnection* rtsConnection = itr->second.get();
@@ -1081,9 +1090,11 @@ void RTSDiagramViewImpl::addRTSComp(string name, const QPointF& pos)
 
 void RTSDiagramViewImpl::addRTSComp(RTSComp* rtsComp)
 {
+    timeOutConnection.block();
     RTSCompGItemPtr rtsCompGItem = new RTSCompGItem(rtsComp, this, rtsComp->pos);
     rtsComps[rtsComp->name] = rtsCompGItem;
     scene.addItem(rtsCompGItem);
+    timeOutConnection.unblock();
 }
 
 
@@ -1114,7 +1125,7 @@ void RTSDiagramViewImpl::deleteRTSConnection(RTSConnectionGItem* rtsConnectionGI
     timeOutConnection.block();
 
     rtsConnectionGItem->rtsConnection->disConnect();
-    currentRTSItem->deleteRtsConnection(rtsConnectionGItem->rtsConnection->id);
+    currentRTSItem->deleteRtsConnection(rtsConnectionGItem->rtsConnection);
 
     rtsConnections.erase(rtsConnectionGItem->rtsConnection->id);
     timeOutConnection.unblock();
@@ -1148,7 +1159,7 @@ void RTSDiagramViewImpl::createConnectionGItem(RTSConnection* rtsConnection,
             targetPort->pos);
 
     scene.addItem(gItem);
-    rtsConnections.insert(pair<string, RTSConnectionGItemPtr>(rtsConnection->id, gItem));
+    rtsConnections[rtsConnection->id] = gItem;
 }
 
 
@@ -1248,18 +1259,20 @@ void RTSDiagramViewImpl::onTime()
     for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
             it != rtsComps.end(); it++){
         if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
-            //deleteRTSComp(it->second.get());
             if(!it->second->effect->isEnabled()){
-                it->second->effect->setEnabled(true);
+               // it->second->effect->setEnabled(true);
                 modified=true;
             }
         }else{
             if(it->second->effect->isEnabled()){
-                it->second->effect->setEnabled(false);
+              //  it->second->effect->setEnabled(false);
                 modified=true;
             }
         }
     }
+
+    if(currentRTSItem->connectionCheck())
+        modified = true;
 
     if(modified)
         updateView();
@@ -1269,26 +1282,6 @@ void RTSDiagramViewImpl::onTime()
         it->second->stateCheck();
     }
 
-    currentRTSItem->connectionCheck();
-    map<string, RTSConnectionPtr>& deletedConnections = currentRTSItem->deletedRtsConnections();
-    for(map<string, RTSConnectionPtr>::iterator itr = deletedConnections.begin();
-                itr != deletedConnections.end(); itr++){
-        map<string, RTSConnectionGItemPtr>::iterator it = rtsConnections.find(itr->first);
-        if(it!=rtsConnections.end())
-            deleteRTSConnection(it->second.get());
-    }
-
-    map<string, RTSConnectionPtr>& connections = currentRTSItem->rtsConnections();
-    for(map<string, RTSConnectionPtr>::iterator itr = connections.begin();
-            itr != connections.end(); itr++){
-        map<string, RTSConnectionGItemPtr>::iterator it = rtsConnections.find(itr->first);
-        if(it==rtsConnections.end()){
-            RTSConnection* rtsConnection = itr->second.get();
-            RTSPortGItem* source = rtsPortMap.find(rtsConnection->sourcePort)->second;
-            RTSPortGItem* target = rtsPortMap.find(rtsConnection->targetPort)->second;
-            createConnectionGItem(rtsConnection, source, target);
-        }
-    }
 
     timer.start();
 
@@ -1330,8 +1323,8 @@ void RTSDiagramViewImpl::updateView()
         for(map<string, RTSCompPtr>::iterator itr = comps.begin(); itr != comps.end(); itr++){
             addRTSComp(itr->second.get());
         }
-        map<string, RTSConnectionPtr>& connections = currentRTSItem->rtsConnections();
-        for(map<string, RTSConnectionPtr>::iterator itr = connections.begin();
+        RTSystemItem::RTSConnectionMap& connections = currentRTSItem->rtsConnections();
+        for(RTSystemItem::RTSConnectionMap::iterator itr = connections.begin();
                 itr != connections.end(); itr++){
             if(rtsConnections.find(itr->second->id)==rtsConnections.end()){
                 RTSConnection* rtsConnection = itr->second.get();

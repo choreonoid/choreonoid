@@ -8,6 +8,7 @@
 
 #include <cnoid/Item>
 #include <cnoid/EigenUtil>
+#include <cnoid/IdPair>
 #include <rtm/idl/RTC.hh>
 #include <rtm/NVUtil.h>
 #include <rtm/CORBA_SeqUtil.h>
@@ -53,6 +54,7 @@ public :
     string subscription;
     float  pushRate;
     string pushPolicy;
+    bool isAlive_;
 
     RTSComp* srcRTC;
     RTSPort* sourcePort;
@@ -69,6 +71,9 @@ public :
             position[i] = pos[i];
         setPos = true;
     }
+    bool isAlive(){
+        return isAlive_;
+    };
 };
 typedef ref_ptr<RTSConnection> RTSConnectionPtr;
 
@@ -88,8 +93,8 @@ public :
     QPointF pos;
 
     bool isActive();
-    void connectionCheckSub(RTSPort* rtsPort);
-    void connectionCheck();
+    bool connectionCheckSub(RTSPort* rtsPort);
+    bool connectionCheck();
     void setRtc(RTObject_ptr rtc);
 
     RTSPort* nameToRTSPort(const string& name);
@@ -103,6 +108,8 @@ typedef ref_ptr<RTSComp> RTSCompPtr;
 class CNOID_EXPORT RTSystemItem : public Item
 {
 public:
+    typedef cnoid::IdPair<RTSPort*> RTSPortPair;
+    typedef map<RTSPortPair, RTSConnectionPtr> RTSConnectionMap;
     RTSystemItem();
     RTSystemItem(const RTSystemItem& org);
     virtual ~RTSystemItem();
@@ -114,12 +121,12 @@ public:
     RTSComp* nameToRTSComp(const string& name);
     RTSConnection* addRTSConnection(const string& id, const string& name,
             RTSPort* sourcePort, RTSPort* targetPort, const string& dataflow, const string& subscription);
-    void connectionCheck();
+    bool connectionCheck();
     void RTSCompToConnectionList(const RTSComp* rtsComp,
             list<RTSConnection*>& rtsConnectionList, int mode=0);
-    map<string, RTSConnectionPtr>& rtsConnections();
-    map<string, RTSConnectionPtr>& deletedRtsConnections();
-    void deleteRtsConnection(const string& id);
+    RTSConnectionMap& rtsConnections();
+   // map<string, RTSConnectionPtr>& deletedRtsConnections();
+    void deleteRtsConnection(const RTSConnection* connection);
     map<string, RTSCompPtr>& rtsComps();
 
     bool autoConnection;
