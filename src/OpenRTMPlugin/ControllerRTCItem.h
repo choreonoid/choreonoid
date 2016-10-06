@@ -26,7 +26,8 @@ public:
     void setRTCModule(const std::string& name);
     void setRTCInstanceName(const std::string& name);
     void setExecContextType(int which);
-
+    void setPeriodicRate(int rate);
+    
     RTC::RtcBase* rtc();
     std::string rtcModuleName();
     std::string rtcInstanceName();

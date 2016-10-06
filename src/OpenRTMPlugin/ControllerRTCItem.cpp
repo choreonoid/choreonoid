@@ -37,6 +37,7 @@ public:
     bool isChoreonoidExecutionContext;
 
     int periodicRateProperty;
+    int periodicRate;
     double executionCycle;
     double executionCycleCounter;
 
@@ -109,7 +110,7 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self)
     execContextType.setSymbol(CHOREONOID_EXECUTION_CONTEXT,  N_("ChoreonoidExecutionContext"));
     execContextType.select(CHOREONOID_EXECUTION_CONTEXT);
 
-    periodicRateProperty = 1000;
+    periodicRateProperty = 0;
 }
 
 
@@ -187,6 +188,15 @@ void ControllerRTCItem::setExecContextType(int which)
 {
     if(which != impl->execContextType.which()){
         impl->execContextType.select(which);
+        createRTC();
+    }
+}
+
+
+void ControllerRTCItem::setPeriodicRate(int rate)
+{
+    if(rate != impl->periodicRateProperty){
+        impl->periodicRateProperty = rate;
         createRTC();
     }
 }
@@ -325,11 +335,20 @@ bool ControllerRTCItemImpl::createRTCmain()
         return false;
     }
 
-    string option = 
-        str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
-            % rtcInstanceName % execContextType.selectedSymbol() % periodicRateProperty);
+    string option;
+    if(periodicRateProperty > 0){
+        periodicRate = periodicRateProperty;
+        option = 
+            str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
+                % rtcInstanceName % execContextType.selectedSymbol() % periodicRate);
+    } else {
+        periodicRate = 0;
+        option = 
+            str(format("instance_name=%1%&exec_cxt.periodic.type=%2%")
+                % rtcInstanceName % execContextType.selectedSymbol());
+    }
     rtc = createManagedRTC((moduleName + "?" + option).c_str());
-    
+
     if(!rtc){
         mv->putln(MessageView::ERROR,
                   format(_("RTC \"%1%\" of %2% cannot be created by the RTC manager.\n"
@@ -338,6 +357,10 @@ bool ControllerRTCItemImpl::createRTCmain()
                            " option: %5%"))
                   % moduleName % self->name() % moduleFilename % initFuncName % option);
         return false;
+    }
+
+    if(periodicRate == 0){
+        periodicRate = boost::lexical_cast<int>(rtc->getProperties()["exec_cxt.periodic.rate"]);
     }
 
     execContext = OpenRTM::ExtTrigExecutionContextService::_nil();
@@ -484,7 +507,7 @@ void ControllerRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     }
 
     putProperty.decimals(3)(_("Periodic rate"), periodicRateProperty,
-                            changeProperty(periodicRateProperty));
+                            [&](int rate){ self->setPeriodicRate(rate); return true; });
 }
 
 
