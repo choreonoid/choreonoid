@@ -1,19 +1,5 @@
-/*
- * Copyright (c) 2008, AIST, the University of Tokyo and General Robotix Inc.
- * All rights reserved. This program is made available under the terms of the
- * Eclipse Public License v1.0 which accompanies this distribution, and is
- * available at http://www.eclipse.org/legal/epl-v10.html
- * Contributors:
- * National Institute of Advanced Industrial Science and Technology (AIST)
- * General Robotix Inc. 
- */
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
-#ifndef OPENHRP_BRIDGE_CONF_H_INCLUDED
-#define OPENHRP_BRIDGE_CONF_H_INCLUDED
+#ifndef OPENHRP_BRIDGE_CONF_H
+#define OPENHRP_BRIDGE_CONF_H
 
 #if ( defined ( WIN32 ) || defined ( _WIN32 ) || defined(__WIN32__) || defined(__NT__) )
 #define SUFFIX_SHARED_EXT   ".dll"
@@ -145,6 +131,5 @@ private:
     void extractParameters(const std::string& str, std::vector<std::string>& result, const char delimiter = ':');
     std::string expandEnvironmentVariables(const std::string& str);
 };
-
 
 #endif 

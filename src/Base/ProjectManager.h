@@ -23,7 +23,7 @@ public:
     void loadProject(const std::string& filename);
     void saveProject(const std::string& filename);
     void overwriteCurrentProject();
-    const std::string& getProjectFileName();
+    std::string currentProjectFile() const;
 
     static void initialize(ExtensionManager* em);
 

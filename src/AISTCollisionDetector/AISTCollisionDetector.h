@@ -32,6 +32,10 @@ public:
     virtual void updatePosition(int geometryId, const Position& position);
     virtual void detectCollisions(std::function<void(const CollisionPair&)> callback);
 
+    // experimental API
+    int geometryPairId(int geometryId1, int geometryId2) const;
+    double findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2);
+
     void setNumThreads(int n);
 
 private:
