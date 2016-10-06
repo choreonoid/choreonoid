@@ -4,6 +4,7 @@
 */
 
 #include "RTCItem.h"
+#include "ControllerRTCItem.h"
 #include "BodyIoRTCItem.h"
 #include "BodyRTCItem.h"
 #include "OpenHRPClockGeneratorItem.h"
@@ -152,6 +153,7 @@ public:
         }
         
         RTCItem::initialize(this);
+        ControllerRTCItem::initialize(this);
         BodyIoRTCItem::initialize(this);
         BodyRTCItem::initialize(this);
         OpenHRPClockGeneratorItem::initialize(this);

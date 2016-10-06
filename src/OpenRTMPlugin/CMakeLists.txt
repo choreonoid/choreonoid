@@ -182,6 +182,7 @@ set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
   OpenRTMPlugin.cpp
+  ControllerRTCItem.cpp
   BodyIoRTCItem.cpp
   RTCItem.cpp
   ChoreonoidExecutionContext.cpp
@@ -241,6 +242,7 @@ else()
                                 VirtualRobotPortHandler.cpp
                                 BridgeConf.cpp
                                 RTCItem.cpp
+				ControllerRTCItem.cpp
 				BodyIoRTCItem.cpp
                                 OpenHRPClockGeneratorItem.cpp
                                 ChoreonoidExecutionContext.cpp 
