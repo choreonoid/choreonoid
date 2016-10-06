@@ -11,7 +11,6 @@
 #include <cnoid/Sleep>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
-#include <rtm/RTObject.h>
 #include "gettext.h"
 
 using namespace std;
@@ -60,20 +59,15 @@ public:
         N_EXEC_CONTEXT_TYPES
     };
     Selection execContextType;
+    bool useOnlyChoreonoidExecutionContext = false;
 
     MessageView* mv;
     
     ControllerRTCItemImpl(ControllerRTCItem* self);
     ControllerRTCItemImpl(ControllerRTCItem* self, const ControllerRTCItemImpl& org);
-    bool setRelativePathBaseType(int which);
-    bool setRTCModule(const std::string& name);
-    bool setRTCInstanceName(const std::string& name);
-    bool setExecContextType(int which);
     std::string getModuleFilename();
-    bool createRTC();
-    bool createRTCMain();
+    bool createRTCmain();
     void deleteRTC(bool waitToBeDeleted);
-    void deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted);
     bool start();
     void stop();
     void doPutProperties(PutPropertyFunction& putProperty);
@@ -133,6 +127,8 @@ ControllerRTCItemImpl::ControllerRTCItemImpl(ControllerRTCItem* self, const Cont
     moduleNameProperty = org.moduleNameProperty;
     rtcInstanceNameProperty = org.rtcInstanceNameProperty;
     periodicRateProperty = org.periodicRateProperty;
+    execContextType = org.execContextType;
+    useOnlyChoreonoidExecutionContext = org.useOnlyChoreonoidExecutionContext;
 }
 
 
@@ -150,53 +146,74 @@ Item* ControllerRTCItem::doDuplicate() const
 
 void ControllerRTCItem::onConnectedToRoot()
 {
-    impl->createRTC();
+    createRTC();
 }
 
 
 void ControllerRTCItem::onDisconnectedFromRoot()
 {
-    impl->deleteRTC(false);
+    deleteRTC(false);
 }
 
 
-bool ControllerRTCItemImpl::setRelativePathBaseType(int which)
+void ControllerRTCItem::setRelativePathBaseType(int which)
 {
-    if(which != relativePathBaseType.which()){
-        relativePathBaseType.select(which);
+    if(which != impl->relativePathBaseType.which()){
+        impl->relativePathBaseType.select(which);
         createRTC();
     }
-    return true;
 }
 
 
-bool ControllerRTCItemImpl::setRTCModule(const std::string& name)
+void ControllerRTCItem::setRTCModule(const std::string& name)
 {
-    if(name != moduleNameProperty){
-        moduleNameProperty = name;
+    if(name != impl->moduleNameProperty){
+        impl->moduleNameProperty = name;
         createRTC();
     }
-    return true;
 }
 
 
-bool ControllerRTCItemImpl::setRTCInstanceName(const std::string& name)
+void ControllerRTCItem::setRTCInstanceName(const std::string& name)
 {
-    if(name != rtcInstanceNameProperty){
-        rtcInstanceNameProperty = name;
+    if(name != impl->rtcInstanceNameProperty){
+        impl->rtcInstanceNameProperty = name;
         createRTC();
     }
-    return true;
 }
 
 
-bool ControllerRTCItemImpl::setExecContextType(int which)
+void ControllerRTCItem::setExecContextType(int which)
 {
-    if(which != execContextType.which()){
-        execContextType.select(which);
+    if(which != impl->execContextType.which()){
+        impl->execContextType.select(which);
         createRTC();
     }
-    return true;
+}
+
+
+RTC::RtcBase* ControllerRTCItem::rtc()
+{
+    return impl->rtc;
+}
+
+
+std::string ControllerRTCItem::rtcModuleName()
+{
+    return impl->moduleName;
+}
+
+
+std::string ControllerRTCItem::rtcInstanceName()
+{
+    return impl->rtcInstanceName;
+}
+
+
+void ControllerRTCItem::useOnlyChoreonoidExecutionContext()
+{
+    impl->useOnlyChoreonoidExecutionContext = true;
+    setExecContextType(ControllerRTCItemImpl::CHOREONOID_EXECUTION_CONTEXT);
 }
 
 
@@ -244,7 +261,7 @@ std::string ControllerRTCItemImpl::getModuleFilename()
 }
 
 
-std::string ControllerRTCItem::defaultRTCInstanceName() const
+std::string ControllerRTCItem::getDefaultRTCInstanceName() const
 {
     return impl->moduleName;
 }
@@ -252,24 +269,24 @@ std::string ControllerRTCItem::defaultRTCInstanceName() const
 
 bool ControllerRTCItem::createRTC()
 {
-    impl->createRTCMain();
-}
-
-
-bool ControllerRTCItemImpl::createRTC()
-{
-    if(createRTCMain()){
-        mv->putln(fmt(_("BodyIoRTC \"%1%\" has been created.")) % rtcInstanceName);
+    if(impl->createRTCmain()){
+        impl->mv->putln(fmt(_("BodyIoRTC \"%1%\" has been created.")) % impl->rtcInstanceName);
         return true;
     }
     return false;
 }
 
 
-bool ControllerRTCItemImpl::createRTCMain()
+bool ControllerRTCItem::createRTCmain()
+{
+    return impl->createRTCmain();
+}
+
+
+bool ControllerRTCItemImpl::createRTCmain()
 {
     if(rtc){
-        deleteRTC(true);
+        self->deleteRTC(true);
     }
     
     string moduleFilename = getModuleFilename();
@@ -282,7 +299,7 @@ bool ControllerRTCItemImpl::createRTCMain()
 
     auto instanceBaseName = rtcInstanceNameProperty;
     if(instanceBaseName.empty()){
-        instanceBaseName = self->defaultRTCInstanceName();
+        instanceBaseName = self->getDefaultRTCInstanceName();
     }
     if(instanceBaseName.empty()){
         mv->putln(MessageView::ERROR,
@@ -330,12 +347,6 @@ bool ControllerRTCItemImpl::createRTCMain()
         if(!CORBA::is_nil(eclist[i])){
             execContext = OpenRTM::ExtTrigExecutionContextService::_narrow(eclist[i]);
             isChoreonoidExecutionContext = execContextType.is(CHOREONOID_EXECUTION_CONTEXT);
-            /*
-            SDOPackage::NVList& properties = rtc->get_component_profile()->properties;
-            const char* ec_type(0);
-            NVUtil::find(properties, "exec_cxt.periodic.type") >>= ec_type;
-            cout << "ec_type: " << ec_type << endl;
-            */
             break;
         }
     }
@@ -459,16 +470,18 @@ void ControllerRTCItemImpl::doPutProperties(PutPropertyFunction& putProperty)
         dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").generic_string();
     }
     putProperty(_("RTC module"), FilePath(moduleNameProperty, filter, dir),
-                [&](const std::string& name){ return setRTCModule(name); });
+                [&](const std::string& name){ self->setRTCModule(name); return true; });
 
     putProperty(_("Relative path base"), relativePathBaseType,
-                [&](int which){ return setRelativePathBaseType(which); });
+                [&](int which){ self->setRelativePathBaseType(which); return true; });
     
     putProperty(_("RTC Instance name"), rtcInstanceNameProperty,
-                [&](const std::string& name) { return setRTCInstanceName(name); });
+                [&](const std::string& name) { self->setRTCInstanceName(name); return true; });
 
-    putProperty(_("Execution context"), execContextType,
-                [&](int which){ return setExecContextType(which); });
+    if(!useOnlyChoreonoidExecutionContext){
+        putProperty(_("Execution context"), execContextType,
+                    [&](int which){ self->setExecContextType(which); return true; });
+    }
 
     putProperty.decimals(3)(_("Periodic rate"), periodicRateProperty,
                             changeProperty(periodicRateProperty));
@@ -486,7 +499,9 @@ bool ControllerRTCItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("moduleName", moduleNameProperty);
     archive.write("pathBaseType", relativePathBaseType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("instanceName", rtcInstanceNameProperty, DOUBLE_QUOTED);
-    archive.write("executionContext", execContextType.selectedSymbol(), DOUBLE_QUOTED);
+    if(!useOnlyChoreonoidExecutionContext){
+        archive.write("executionContext", execContextType.selectedSymbol(), DOUBLE_QUOTED);
+    }
     archive.write("periodicRate", periodicRateProperty);
     return true;
 }
@@ -510,8 +525,11 @@ bool ControllerRTCItemImpl::restore(const Archive& archive)
         relativePathBaseType.select(symbol);
     }
     archive.read("instanceName", rtcInstanceNameProperty);
-    if(archive.read("executionContext", symbol)){
-        execContextType.select(symbol);
+
+    if(!useOnlyChoreonoidExecutionContext){
+        if(archive.read("executionContext", symbol)){
+            execContextType.select(symbol);
+        }
     }
     archive.read("periodicRate", periodicRateProperty);
     return true;

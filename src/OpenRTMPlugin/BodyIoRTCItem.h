@@ -5,14 +5,14 @@
 #ifndef CNOID_OPENRTM_PLUGIN_BODY_IO_RTC_ITEM_H
 #define CNOID_OPENRTM_PLUGIN_BODY_IO_RTC_ITEM_H
 
-#include <cnoid/ControllerItem>
+#include "ControllerRTCItem.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class BodyIoRTCItemImpl;
 
-class CNOID_EXPORT BodyIoRTCItem : public ControllerItem
+class CNOID_EXPORT BodyIoRTCItem : public ControllerRTCItem
 {
 public:
     static void initialize(ExtensionManager* ext);
@@ -23,23 +23,20 @@ public:
         
     virtual bool initialize(ControllerItemIO* io) override;
     virtual bool start() override;
-    virtual double timeStep() const override;
     virtual void input() override;
-    virtual bool control() override;
     virtual void output() override;
     virtual void stop() override;
 
 protected:
-    virtual void onConnectedToRoot() override;
-    virtual void onDisconnectedFromRoot() override;
-    virtual void onPositionChanged() override;
     virtual Item* doDuplicate() const override;
-    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
-    virtual bool store(Archive& archive) override;
-    virtual bool restore(const Archive& archive) override;
+    virtual void onPositionChanged() override;
+    virtual std::string getDefaultRTCInstanceName() const override;
+    virtual bool createRTC() override;
+    virtual void deleteRTC(bool waitToBeDeleted) override;
         
 private:
     BodyIoRTCItemImpl* impl;
+    friend class BodyIoRTCItemImpl;
 };
         
 typedef ref_ptr<BodyIoRTCItem> BodyIoRTCItemPtr;

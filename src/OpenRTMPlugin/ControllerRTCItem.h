@@ -6,6 +6,7 @@
 #define CNOID_OPENRTM_PLUGIN_CONTROLLER_RTC_ITEM_H
 
 #include <cnoid/ControllerItem>
+#include <rtm/RTObject.h>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -20,6 +21,15 @@ public:
     ControllerRTCItem();
     ControllerRTCItem(const ControllerRTCItem& org);
     virtual ~ControllerRTCItem();
+
+    void setRelativePathBaseType(int which);
+    void setRTCModule(const std::string& name);
+    void setRTCInstanceName(const std::string& name);
+    void setExecContextType(int which);
+
+    RTC::RtcBase* rtc();
+    std::string rtcModuleName();
+    std::string rtcInstanceName();
         
     virtual bool start() override;
     virtual double timeStep() const override;
@@ -29,13 +39,15 @@ public:
     virtual void stop() override;
 
 protected:
-    bool createRTC();
-    void deleteRTC(bool waitToBeDeleted);
-    
-    virtual std::string defaultRTCInstanceName() const;
+    void useOnlyChoreonoidExecutionContext();
+    bool createRTCmain();
+
     virtual void onConnectedToRoot() override;
     virtual void onDisconnectedFromRoot() override;
     virtual Item* doDuplicate() const override;
+    virtual std::string getDefaultRTCInstanceName() const;
+    virtual bool createRTC();
+    virtual void deleteRTC(bool waitToBeDeleted);
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
