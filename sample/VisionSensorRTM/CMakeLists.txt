@@ -41,3 +41,7 @@ configure_file(OpenRTM-TankJoystickVisionSensors.cnoid ${CNOID_SOURCE_SHARE_DIR}
 configure_file(TankVisionSensors.conf
   ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankVisionSensors.conf COPYONLY)
 install(FILES TankVisionSensors.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
+configure_file(OpenRTM-TankJoystickVisionSensors-RTSystem.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(TankVisionSensors_Noconnection.conf
+  ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankVisionSensors.conf COPYONLY)
+install(FILES TankVisionSensors_Noconnection.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)

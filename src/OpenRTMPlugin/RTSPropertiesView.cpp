@@ -388,6 +388,8 @@ void RTSPropertiesViewImpl::showConnection(PortService_var port, string id, QTre
     item->setText(0, _("Connector Profile"));
     item->setIcon(0, QIcon(":/RTSystemEditor/icons/IconConnector.png"));
 
+    if(CORBA::is_nil(port) || port->_non_existent())
+        return;
     PortProfile_var portprofile = port->get_port_profile();
     ConnectorProfileList connections = portprofile->connector_profiles;
     for(CORBA::ULong i = 0; i < connections.length(); i++){
