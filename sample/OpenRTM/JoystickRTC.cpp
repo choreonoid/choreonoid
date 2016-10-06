@@ -73,7 +73,11 @@ RTC::ReturnCode_t JoystickRTC::onActivated(RTC::UniqueId ec_id)
         int n = m_joystick->numAxes();
         m_axes.data.length(n);
         for(int i=0; i < n; ++i){
-            m_axes.data[i] = m_joystick->getPosition(i);
+            double pos = m_joystick->getPosition(i);
+            if(fabs(pos) < 0.2){
+                pos = 0.0;
+            }
+            m_axes.data[i] = pos;
         }
         int m = m_joystick->numButtons();
         m_buttons.data.length(m);
@@ -103,6 +107,10 @@ RTC::ReturnCode_t JoystickRTC::onDeactivated(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t JoystickRTC::onExecute(RTC::UniqueId ec_id)
 {
+    if(m_debugLevel > 0){
+        std::cout << "JoystickRTC::onExecute(" << ec_id << ")" << std::endl;
+    }
+    
     m_joystick->readCurrentState();
     
     if(m_debugLevel > 0){
@@ -141,8 +149,7 @@ extern "C"
     void JoystickRTCInit(RTC::Manager* manager)
     {
         coil::Properties profile(joystick_spec);
-        manager->registerFactory(profile,
-                                 RTC::Create<JoystickRTC>,
-                                 RTC::Delete<JoystickRTC>);
+        manager->registerFactory(
+            profile, RTC::Create<JoystickRTC>, RTC::Delete<JoystickRTC>);
     }
 };

@@ -25,6 +25,10 @@ public:
     virtual void outputToSimulator() override;
 
     BodyPtr ioBody;
+    Link* cannonY;
+    Link* cannonP;
+    Link* crawlerL;
+    Link* crawlerR;
     
     // DataInPort declaration
     RTC::TimedDoubleSeq torques;
@@ -85,7 +89,7 @@ RTC::ReturnCode_t TankRTC::onInitialize(Body* body)
     
     // Set OutPort buffer
     addOutPort("q", anglesOut);
-    angles.data.length(body->numJoints());
+    angles.data.length(2);
 
     return RTC::RTC_OK;
 }
@@ -94,6 +98,10 @@ RTC::ReturnCode_t TankRTC::onInitialize(Body* body)
 bool TankRTC::initializeSimulation(ControllerItemIO* io)
 {
     ioBody = io->body();
+    cannonY = ioBody->link("CANNON_Y");
+    cannonP = ioBody->link("CANNON_P");
+    crawlerL = ioBody->link("CRAWLER_TRACK_L");
+    crawlerR = ioBody->link("CRAWLER_TRACK_R");
     light = ioBody->findDevice<Light>("MainLight");
     return true;
 }
@@ -101,9 +109,8 @@ bool TankRTC::initializeSimulation(ControllerItemIO* io)
 
 void TankRTC::inputFromSimulator()
 {
-    for(int i=0; i < ioBody->numJoints(); ++i){
-        angles.data[i] = ioBody->joint(i)->q();
-    }
+    angles.data[0] = cannonY->q();
+    angles.data[1] = cannonP->q();
     anglesOut.write();
 }
 
@@ -112,14 +119,16 @@ void TankRTC::outputToSimulator()
 {
     if(torquesIn.isNew()){
         torquesIn.read();
-        for(int i=0; i < torques.data.length(); ++i){
-            ioBody->joint(i)->u() = torques.data[i];
+        if(torques.data.length() >= 2){
+            cannonY->u() = torques.data[0];
+            cannonP->u() = torques.data[1];
         }
     }
     if(velocitiesIn.isNew()){
         velocitiesIn.read();
-        for(int i=0; i < velocities.data.length(); ++i){
-            ioBody->joint(i)->dq() = velocities.data[i];
+        if(velocities.data.length() >= 2){
+            crawlerL->dq() = velocities.data[0];
+            crawlerR->dq() = velocities.data[1];
         }
     }
     if(light && lightSwitchIn.isNew()){

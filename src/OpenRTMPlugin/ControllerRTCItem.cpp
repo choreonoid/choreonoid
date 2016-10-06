@@ -229,7 +229,7 @@ std::string ControllerRTCItemImpl::getModuleFilename()
 
     string ext = path.extension().string();
     if(ext.empty()){
-        path /= DLL_EXTENSION;
+        path += DLL_EXTENSION;
     }
         
     if(filesystem::exists(path)){
@@ -311,7 +311,7 @@ bool ControllerRTCItemImpl::createRTCMain()
     string option = 
         str(format("instance_name=%1%&exec_cxt.periodic.type=%2%&exec_cxt.periodic.rate=%3%")
             % rtcInstanceName % execContextType.selectedSymbol() % periodicRateProperty);
-    RTC::RtcBase* rtc = createManagedRTC((moduleName + "?" + option).c_str());
+    rtc = createManagedRTC((moduleName + "?" + option).c_str());
     
     if(!rtc){
         mv->putln(MessageView::ERROR,

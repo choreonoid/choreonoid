@@ -20,7 +20,7 @@ const char* spec[] =
     "implementation_id", "TankJoystickControllerRTC",
     "type_name",         "TankJoystickControllerRTC",
     "description",       "Tank Joystick Controller ",
-    "version",           "0.1",
+    "version",           "1.0",
     "vendor",            "AIST",
     "category",          "Generic",
     "activity_type",     "DataFlowComponent",
@@ -70,27 +70,28 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onInitialize()
 
 RTC::ReturnCode_t TankJoystickControllerRTC::onActivated(RTC::UniqueId ec_id)
 {
-    // initialize the cannon joints
     if(anglesIn.isNew()){
         anglesIn.read();
-    }
-    if(angles.data.length() >= 2){
-        torques.data.length(2);
-        for(int i=0; i < 2; ++i){
-            double q = angles.data[i];
-            qref[i] = q;
-            qprev[i] = q;
-            torques.data[i] = 0.0;
+        if(angles.data.length() >= 2){
+            for(int i=0; i < 2; ++i){
+                qref[i] = qprev[i] = angles.data[i];
+            }
         }
     }
 
-    // initialize the crawler joints
     velocities.data.length(2);
+    torques.data.length(2);
     for(int i=0; i < 2; ++i){
         velocities.data[i] = 0.0;
+        torques.data[i] = 0.0;
     }
+
     lightSwitch.data.length(1);
-    prevLightButtonState = false;
+    lastLightButtonState = false;
+    isLightOn = true;
+
+    lastAxes.clear();
+    lastAxes.resize(5, 0.0f);
 
     return RTC::RTC_OK;
 }
@@ -106,40 +107,36 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 {
     if(axesIn.isNew()){
         axesIn.read();
+        int n = std::min((int)axes.data.length(), (int)lastAxes.size());
+        for(int i=0; i < n; ++i){
+            lastAxes[i] = axes.data[i];
+        }
     }
 
-    if(axes.data.length() >= 2){
-        for(int i=0; i < 2; ++i){
-            if(fabs(axes.data[i]) < 0.2){
-                axes.data[i] = 0.0;
-            }
-        }
-        velocities.data[0] = -2.0 * axes.data[1] + axes.data[0];
-        velocities.data[1] = -2.0 * axes.data[1] - axes.data[0];
-    }
+    velocities.data[0] = -2.0 * lastAxes[1] + lastAxes[0];
+    velocities.data[1] = -2.0 * lastAxes[1] - lastAxes[0];
     velocitiesOut.write();
 
+    double q[2] = { qprev[0], qprev[1] };
     if(anglesIn.isNew()){
         anglesIn.read();
-    }
-    if(angles.data.length() >= 2 && axes.data.length() >= 5){
-
-        static const double P = 200.0;
-        static const double D = 50.0;
-
-        for(int i=0; i < 2; ++i){
-            double q = angles.data[i];
-            double dq = (q - qprev[i]) / timeStep;
-            double dqref = 0.0;
-            double command = cannonAxisRatio[i] * axes.data[cannonAxis[i]];
-            if(fabs(command) > 0.2){
-                double deltaq = command * 0.002;
-                qref[i] += deltaq;
-                dqref = deltaq / timeStep;
+        if(angles.data.length() >= 2){
+            for(int i=0; i < 2; ++i){
+                q[i] = angles.data[i];
             }
-            torques.data[i] = P * (qref[i] - q) + D * (dqref - dq);
-            qprev[i] = q;
         }
+    }
+
+    static const double P = 200.0;
+    static const double D = 50.0;
+    for(int i=0; i < 2; ++i){
+        double dq = (q[i] - qprev[i]) / timeStep;
+        double dqref = 0.0;
+        double deltaq = 0.002 * cannonAxisRatio[i] * lastAxes[cannonAxis[i]];
+        qref[i] += deltaq;
+        dqref = deltaq / timeStep;
+        torques.data[i] = P * (qref[i] - q[i]) + D * (dqref - dq);
+        qprev[i] = q[i];
     }
     torquesOut.write();
 
@@ -147,13 +144,13 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
         buttonsIn.read();
         bool lightButtonState = buttons.data[0];
         if(lightButtonState){
-            if(!prevLightButtonState){
+            if(!lastLightButtonState){
                 isLightOn = !isLightOn;
                 lightSwitch.data[0] = isLightOn;
                 lightSwitchOut.write();
             }
         }
-        prevLightButtonState = lightButtonState;
+        lastLightButtonState = lightButtonState;
     }
 
     return RTC::RTC_OK;

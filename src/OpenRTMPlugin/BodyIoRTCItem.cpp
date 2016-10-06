@@ -229,7 +229,7 @@ std::string BodyIoRTCItemImpl::getModuleFilename()
 
     string ext = path.extension().string();
     if(ext.empty()){
-        path /= DLL_EXTENSION;
+        path += DLL_EXTENSION;
     }
         
     if(filesystem::exists(path)){
@@ -396,7 +396,7 @@ bool BodyIoRTCItemImpl::start()
                     execContext->activate_component(bodyIoRTC->getObjRef());
                 }
                 execContext->tick();
-                //bodyIoRTC->inputFromSimulator();
+                bodyIoRTC->inputFromSimulator();
                 isReady = true;
             }
         }
@@ -490,7 +490,7 @@ bool BodyIoRTCItemImpl::store(Archive& archive)
     archive.writeRelocatablePath("moduleName", moduleNameProperty);
     archive.write("pathBaseType", relativePathBaseType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("instanceName", rtcInstanceNameProperty, DOUBLE_QUOTED);
-    archive.write("bodyPeriodicRate", executionCycleProperty);
+    archive.write("periodicRate", executionCycleProperty);
     return true;
 }
 
@@ -513,6 +513,6 @@ bool BodyIoRTCItemImpl::restore(const Archive& archive)
         relativePathBaseType.select(symbol);
     }
     archive.read("instanceName", rtcInstanceNameProperty);
-    archive.read("bodyPeriodicRate", executionCycleProperty);
+    archive.read("periodicRate", executionCycleProperty);
     return true;
 }

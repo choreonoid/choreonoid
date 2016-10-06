@@ -268,5 +268,3 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc DESTINATION $
 if(QT5)
   qt5_use_modules(${plugin} Core OpenGL Network)
 endif()
-
-
