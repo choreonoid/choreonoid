@@ -560,7 +560,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
     SgPosTransform* worldLightTransform = new SgPosTransform;
-    worldLightTransform->setTranslation(Vector3(0.0, 0.0, 5.0));
+    worldLightTransform->setTranslation(Vector3(0.0, 0.0, 10.0));
     worldLightTransform->addChild(worldLight);
     systemGroup->addChild(worldLightTransform);
     renderer->setAsDefaultLight(worldLight);
