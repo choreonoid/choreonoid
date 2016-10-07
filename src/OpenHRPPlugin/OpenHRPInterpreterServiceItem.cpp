@@ -207,7 +207,7 @@ bool ItemImpl::createRTC()
 bool ItemImpl::deleteRTC()
 {
     if(rtc){
-        if(cnoid::deleteRTC(rtc, true)){
+        if(cnoid::deleteRTC(rtc)){
             os << (format(_("RTC \"%1%\" of \"%2%\" has been deleted."))
                    % rtcInstanceName % self->name()) << endl;
             rtc = 0;

@@ -403,7 +403,7 @@ public:
 
     virtual bool finalize()
     {
-        deleteRTC(visionSensorSampleRTC, true);
+        deleteRTC(visionSensorSampleRTC);
         return true;
     }
 
