@@ -134,7 +134,7 @@ PhongShadowProgram::PhongShadowProgram()
     shadowMapHeight_ = 2048;
     persShadowCamera = new SgPerspectiveCamera();
     orthoShadowCamera = new SgOrthographicCamera();
-    orthoShadowCamera->setHeight(12.0);
+    orthoShadowCamera->setHeight(15.0);
     currentShadowIndex = 0;
 
     shadowBias <<
