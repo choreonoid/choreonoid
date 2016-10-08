@@ -40,7 +40,7 @@ TankJoystickControllerRTC::TankJoystickControllerRTC(RTC::Manager* manager)
       buttonsIn("buttons", buttons),
       velocitiesOut("dq", velocities),
       torquesOut("u", torques),
-      lightSwitchOut("lightSwitch", lightSwitch)
+      lightSwitchOut("light", lightSwitch)
 {
 
 }
@@ -62,7 +62,7 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onInitialize()
     // Set OutPort buffer
     addOutPort("dq", velocitiesOut);
     addOutPort("u", torquesOut);
-    addOutPort("lightSwitch", lightSwitchOut);
+    addOutPort("light", lightSwitchOut);
 
     return RTC::RTC_OK;
 }

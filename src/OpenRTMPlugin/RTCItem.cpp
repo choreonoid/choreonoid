@@ -190,7 +190,7 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("RTC module Name"), FilePath(moduleName, filter, dir),
                 std::bind(&RTCItem::setModuleName, this, _1), true);
 
-    putProperty(_("Periodic type"), periodicType,
+    putProperty(_("Execution Context"), periodicType,
                 std::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
     putProperty(_("Periodic Rate"), periodicRate,

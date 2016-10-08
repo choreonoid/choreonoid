@@ -80,7 +80,7 @@ configure_file(SampleCrawlerJoystick.conf
 install(FILES SampleCrawlerJoystick.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
 
 # Tank RTC
-add_cnoid_body_io_rtc(TankRTC TankRTC.cpp)
+add_cnoid_body_io_rtc(TankIoRTC TankIoRTC.cpp)
 
 # Tank Joystick Controller
 set(target TankJoystickControllerRTC)

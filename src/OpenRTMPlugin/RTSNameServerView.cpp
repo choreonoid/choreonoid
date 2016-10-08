@@ -130,13 +130,14 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
             static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
     hbox->addWidget(&portNumberSpin);
 
-    PushButton* updateButton = new PushButton(_("Update"));
+    auto updateButton = new ToolButton(_(" Update "));
+    updateButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     updateButton->sigClicked().connect(
         std::bind(
             static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
     hbox->addWidget(updateButton);
 
-    vbox->addLayout(hbox);
+    vbox->addLayout(hbox, 0);
 
     treeWidget.setHeaderLabel(_("Object Name"));
     treeWidget.setDragEnabled(true);
@@ -147,7 +148,7 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeWidget.header()->close();
 
-    vbox->addWidget(&treeWidget);
+    vbox->addWidget(&treeWidget, 1);
     self->setLayout(vbox);
 
 }

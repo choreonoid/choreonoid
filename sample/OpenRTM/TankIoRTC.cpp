@@ -13,11 +13,11 @@ using namespace cnoid;
 
 namespace {
 
-class TankRTC : public BodyIoRTC
+class TankIoRTC : public BodyIoRTC
 {
 public:
-    TankRTC(RTC::Manager* manager);
-    ~TankRTC();
+    TankIoRTC(RTC::Manager* manager);
+    ~TankIoRTC();
 
     virtual RTC::ReturnCode_t onInitialize(Body* body) override;
     virtual bool initializeSimulation(ControllerItemIO* io) override;
@@ -48,8 +48,8 @@ public:
 
 const char* spec[] =
 {
-    "implementation_id", "TankRTC",
-    "type_name",         "TankRTC",
+    "implementation_id", "TankIoRTC",
+    "type_name",         "TankIoRTC",
     "description",       "Tank I/O",
     "version",           "1.0",
     "vendor",            "AIST",
@@ -63,29 +63,29 @@ const char* spec[] =
 
 }
 
-TankRTC::TankRTC(RTC::Manager* manager)
+TankIoRTC::TankIoRTC(RTC::Manager* manager)
     : BodyIoRTC(manager),
       torquesIn("u", torques),
       velocitiesIn("dq", velocities),
-      lightSwitchIn("lightSwitch", lightSwitch),
+      lightSwitchIn("light", lightSwitch),
       anglesOut("q", angles)
 {
 
 }
 
 
-TankRTC::~TankRTC()
+TankIoRTC::~TankIoRTC()
 {
 
 }
 
 
-RTC::ReturnCode_t TankRTC::onInitialize(Body* body)
+RTC::ReturnCode_t TankIoRTC::onInitialize(Body* body)
 {
     // Set InPort buffers
     addInPort("u", torquesIn);
     addInPort("dq", velocitiesIn);
-    addInPort("lightSwitch", lightSwitchIn);
+    addInPort("light", lightSwitchIn);
     
     // Set OutPort buffer
     addOutPort("q", anglesOut);
@@ -95,7 +95,7 @@ RTC::ReturnCode_t TankRTC::onInitialize(Body* body)
 }
 
 
-bool TankRTC::initializeSimulation(ControllerItemIO* io)
+bool TankIoRTC::initializeSimulation(ControllerItemIO* io)
 {
     ioBody = io->body();
     cannonY = ioBody->link("CANNON_Y");
@@ -107,7 +107,7 @@ bool TankRTC::initializeSimulation(ControllerItemIO* io)
 }
 
 
-void TankRTC::inputFromSimulator()
+void TankIoRTC::inputFromSimulator()
 {
     angles.data[0] = cannonY->q();
     angles.data[1] = cannonP->q();
@@ -115,7 +115,7 @@ void TankRTC::inputFromSimulator()
 }
 
 
-void TankRTC::outputToSimulator()
+void TankIoRTC::outputToSimulator()
 {
     if(torquesIn.isNew()){
         torquesIn.read();
@@ -141,10 +141,10 @@ void TankRTC::outputToSimulator()
 
 extern "C"
 {
-    DLL_EXPORT void TankRTCInit(RTC::Manager* manager)
+    DLL_EXPORT void TankIoRTCInit(RTC::Manager* manager)
     {
         coil::Properties profile(spec);
         manager->registerFactory(
-            profile, RTC::Create<TankRTC>, RTC::Delete<TankRTC>);
+            profile, RTC::Create<TankIoRTC>, RTC::Delete<TankIoRTC>);
     }
 };

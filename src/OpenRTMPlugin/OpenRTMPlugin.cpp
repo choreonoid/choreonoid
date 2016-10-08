@@ -152,9 +152,9 @@ public:
             return false;
         }
         
-        RTCItem::initialize(this);
-        ControllerRTCItem::initialize(this);
         BodyIoRTCItem::initialize(this);
+        ControllerRTCItem::initialize(this);
+        RTCItem::initialize(this);
         BodyRTCItem::initialize(this);
         OpenHRPClockGeneratorItem::initialize(this);
         
