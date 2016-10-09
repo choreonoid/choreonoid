@@ -45,7 +45,7 @@ items:
               data: 
                 isImmediateMode: true
                 controllerOptions: ""
-                moduleName: "TankRTC"
+                moduleName: "TankIoRTC"
                 pathBaseType: "RTC directory"
                 instanceName: ""
                 periodicRate: 0
@@ -179,21 +179,21 @@ items:
                     name: JoystickRTC.buttons
                     isServicePort: false
               - 
-                name: Tank
+                name: Tank-TankIoRTC
                 pos: [ -823, -146 ]
                 InPorts: 
                   - 
-                    name: Tank.dq
+                    name: Tank-TankIoRTC.dq
                     isServicePort: false
                   - 
-                    name: Tank.lightSwitch
+                    name: Tank-TankIoRTC.light
                     isServicePort: false
                   - 
-                    name: Tank.u
+                    name: Tank-TankIoRTC.u
                     isServicePort: false
                 OutPorts: 
                   - 
-                    name: Tank.q
+                    name: Tank-TankIoRTC.q
                     isServicePort: false
               - 
                 name: TankJoystickControllerRTC
@@ -213,7 +213,7 @@ items:
                     name: TankJoystickControllerRTC.dq
                     isServicePort: false
                   - 
-                    name: TankJoystickControllerRTC.lightSwitch
+                    name: TankJoystickControllerRTC.light
                     isServicePort: false
                   - 
                     name: TankJoystickControllerRTC.u
@@ -229,9 +229,9 @@ items:
                 subscription: flush
                 position: [ -1197, -128, -1192, -128, -1133, -128, -1133, -192, -1063, -192, -1058, -192 ]
               - 
-                name: Tank.q_TankJoystickControllerRTC.q
-                sourceRtcName: Tank
-                sourcePortName: Tank.q
+                name: Tank-TankIoRTC.q_TankJoystickControllerRTC.q
+                sourceRtcName: Tank-TankIoRTC
+                sourcePortName: Tank-TankIoRTC.q
                 targetRtcName: TankJoystickControllerRTC
                 targetPortName: TankJoystickControllerRTC.q
                 dataflow: push
@@ -241,8 +241,8 @@ items:
                 name: TankJoystickControllerRTC.dq_Tank.dq
                 sourceRtcName: TankJoystickControllerRTC
                 sourcePortName: TankJoystickControllerRTC.dq
-                targetRtcName: Tank
-                targetPortName: Tank.dq
+                targetRtcName: Tank-TankIoRTC
+                targetPortName: Tank-TankIoRTC.dq
                 dataflow: push
                 subscription: flush
                 position: [ -998, -210, -993, -210, -918, -210, -918, -127, -832, -127, -827, -127 ]
@@ -259,17 +259,17 @@ items:
                 name: TankJoystickControllerRTC.u_Tank.u
                 sourceRtcName: TankJoystickControllerRTC
                 sourcePortName: TankJoystickControllerRTC.u
-                targetRtcName: Tank
-                targetPortName: Tank.u
+                targetRtcName: Tank-TankIoRTC
+                targetPortName: Tank-TankIoRTC.u
                 dataflow: push
                 subscription: flush
                 position: [ -998, -174, -993, -174, -918, -174, -918, -91, -832, -91, -827, -91 ]
               - 
-                name: TankJoystickControllerRTC.lightSwitch_Tank.lightSwitch
+                name: TankJoystickControllerRTC.light_Tank.light
                 sourceRtcName: TankJoystickControllerRTC
-                sourcePortName: TankJoystickControllerRTC.lightSwitch
-                targetRtcName: Tank
-                targetPortName: Tank.lightSwitch
+                sourcePortName: TankJoystickControllerRTC.light
+                targetRtcName: Tank-TankIoRTC
+                targetPortName: Tank-TankIoRTC.light
                 dataflow: push
                 subscription: flush
                 position: [ -998, -192, -993, -192, -918, -192, -918, -109, -832, -109, -827, -109 ]

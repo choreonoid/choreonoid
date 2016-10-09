@@ -208,13 +208,13 @@ RTC::RtcBase* ControllerRTCItem::rtc()
 }
 
 
-std::string ControllerRTCItem::rtcModuleName()
+std::string ControllerRTCItem::rtcModuleName() const
 {
     return impl->moduleName;
 }
 
 
-std::string ControllerRTCItem::rtcInstanceName()
+std::string ControllerRTCItem::rtcInstanceName() const
 {
     return impl->rtcInstanceName;
 }

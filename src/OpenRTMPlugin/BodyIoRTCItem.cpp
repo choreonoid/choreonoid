@@ -102,7 +102,7 @@ void BodyIoRTCItemImpl::setBodyItem(BodyItem* newBodyItem, bool forceReset)
 
 std::string BodyIoRTCItem::getDefaultRTCInstanceName() const
 {
-    return impl->bodyItem->name();
+    return impl->bodyItem->name() + "-" + rtcModuleName();
 }
 
 

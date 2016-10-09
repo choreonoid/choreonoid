@@ -29,8 +29,8 @@ public:
     void setPeriodicRate(int rate);
     
     RTC::RtcBase* rtc();
-    std::string rtcModuleName();
-    std::string rtcInstanceName();
+    std::string rtcModuleName() const;
+    std::string rtcInstanceName() const;
         
     virtual bool start() override;
     virtual double timeStep() const override;
