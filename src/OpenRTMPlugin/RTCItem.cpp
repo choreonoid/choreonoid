@@ -175,7 +175,7 @@ void RTCItem::setPathBase(int base)
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     Item::doPutProperties(putProperty);
-    putProperty(_("Relative Path Base"), pathBase,
+    putProperty(_("Relative path base"), pathBase,
         std::bind(&RTCItem::setPathBase, this, _1), true);
 
     FileDialogFilter filter;
@@ -187,13 +187,13 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
         if(pathBase.is(RTC_DIRECTORY))
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
-    putProperty(_("RTC module Name"), FilePath(moduleName, filter, dir),
+    putProperty(_("RTC module name"), FilePath(moduleName, filter, dir),
                 std::bind(&RTCItem::setModuleName, this, _1), true);
 
-    putProperty(_("Execution Context"), periodicType,
+    putProperty(_("Execution context"), periodicType,
                 std::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
-    putProperty(_("Periodic Rate"), periodicRate,
+    putProperty(_("Periodic rate"), periodicRate,
                 std::bind(&RTCItem::setPeriodicRate, this, _1), true);
 }
 
@@ -206,7 +206,7 @@ bool RTCItem::store(Archive& archive)
     archive.writeRelocatablePath("moduleName", moduleName);
     archive.write("periodicType", periodicType.selectedSymbol());
     archive.write("periodicRate", periodicRate);
-    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("relativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -232,7 +232,7 @@ bool RTCItem::restore(const Archive& archive)
         ss << periodicRate;
         properties["exec_cxt.periodic.rate"] = ss.str();
     }
-    if (archive.read("RelativePathBase", symbol)){
+    if(archive.read("relativePathBase", symbol) || archive.read("RelativePathBase", symbol)){
         pathBase.select(symbol);
         oldPathBase = pathBase.selectedIndex();
     }

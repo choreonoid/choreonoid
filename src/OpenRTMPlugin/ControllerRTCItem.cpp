@@ -421,13 +421,22 @@ bool ControllerRTCItemImpl::start()
     
     if(rtc){
         if(!CORBA::is_nil(execContext)){
-            if(RTC::PRECONDITION_NOT_MET == execContext->activate_component(rtc->getObjRef())){
-                execContext->reset_component(rtc->getObjRef());
+            RTC::ReturnCode_t result = RTC::RTC_OK;
+            RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
+            if(state == RTC::ERROR_STATE){
+                result = execContext->reset_component(rtc->getObjRef());
                 execContext->tick();
-                execContext->activate_component(rtc->getObjRef());
+            } else if(state == RTC::ACTIVE_STATE){
+                result = execContext->deactivate_component(rtc->getObjRef());
+                execContext->tick();
             }
-            execContext->tick();
-            isReady = true;
+            if(result == RTC::RTC_OK){
+                result = execContext->activate_component(rtc->getObjRef());
+                execContext->tick();
+            }
+            if(result == RTC::RTC_OK){
+                isReady = true;
+            }
         }
     }
     
@@ -470,7 +479,12 @@ void ControllerRTCItem::stop()
 
 void ControllerRTCItemImpl::stop()
 {
-    execContext->deactivate_component(rtc->getObjRef());
+    RTC::LifeCycleState state = execContext->get_component_state(rtc->getObjRef());
+    if(state == RTC::ERROR_STATE){
+        execContext->reset_component(rtc->getObjRef());
+    } else {
+        execContext->deactivate_component(rtc->getObjRef());
+    }
     execContext->tick();
 }
 

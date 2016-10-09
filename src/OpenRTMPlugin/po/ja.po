@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-09 02:14+0900\n"
+"POT-Creation-Date: 2016-10-10 01:08+0900\n"
 "PO-Revision-Date: 2012-07-17 00:22+0100\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -93,11 +93,11 @@ msgstr "自動ポート接続"
 msgid "RTC Instance name"
 msgstr "RTCインスタンス名"
 
-#: BodyRTCItem.cpp:511 ControllerRTCItem.cpp:509
+#: BodyRTCItem.cpp:511 ControllerRTCItem.cpp:509 RTCItem.cpp:196
 msgid "Periodic rate"
-msgstr "実行周期"
+msgstr "実行周波数"
 
-#: BodyRTCItem.cpp:513 RTCItem.cpp:178
+#: BodyRTCItem.cpp:513
 msgid "Relative Path Base"
 msgstr "相対パスベース"
 
@@ -237,11 +237,11 @@ msgstr "RTコンポーネントモジュールファイル"
 msgid "RTC module"
 msgstr "RTCモジュール"
 
-#: ControllerRTCItem.cpp:498
+#: ControllerRTCItem.cpp:498 RTCItem.cpp:178
 msgid "Relative path base"
 msgstr "相対パスベース"
 
-#: ControllerRTCItem.cpp:505
+#: ControllerRTCItem.cpp:505 RTCItem.cpp:193
 msgid "Execution context"
 msgstr "実行コンテキスト"
 
@@ -314,16 +314,8 @@ msgid "ExtTrigExecutionContext"
 msgstr ""
 
 #: RTCItem.cpp:190
-msgid "RTC module Name"
+msgid "RTC module name"
 msgstr "RTCモジュール名"
-
-#: RTCItem.cpp:193
-msgid "Execution Context"
-msgstr "実行コンテキスト"
-
-#: RTCItem.cpp:196
-msgid "Periodic Rate"
-msgstr "実行周期"
 
 #: RTCItem.cpp:320
 msgid "A file of RTC \"%1%\" does not exist."
@@ -357,43 +349,43 @@ msgstr "RTコンポーネントのプロセス \"%1%\" は起動できません�
 msgid "RT Component process \"%1%\" has been executed."
 msgstr "RTコンポーネントのプロセス \"%1%\" を起動しました。"
 
-#: RTSDiagramView.cpp:788
+#: RTSDiagramView.cpp:789
 msgid "Drag and drop has been canceled. Please be operation again."
 msgstr ""
 
-#: RTSDiagramView.cpp:798
+#: RTSDiagramView.cpp:799
 msgid "%1% is not alive"
 msgstr "%1%は生存していません。"
 
-#: RTSDiagramView.cpp:927
+#: RTSDiagramView.cpp:928
 msgid "These are already connected."
 msgstr "それらは既に接続しています。"
 
-#: RTSDiagramView.cpp:963
+#: RTSDiagramView.cpp:964
 msgid "RTC Diagram"
 msgstr "RTCダイアグラム"
 
-#: RTSDiagramView.cpp:1357
+#: RTSDiagramView.cpp:1386
 msgid "name : "
 msgstr "名前 : "
 
-#: RTSDiagramView.cpp:1363
+#: RTSDiagramView.cpp:1392
 msgid "Interface Type : "
 msgstr "インタフェースタイプ : "
 
-#: RTSDiagramView.cpp:1371
+#: RTSDiagramView.cpp:1400
 msgid "Dataflow Type : "
 msgstr "データフロータイプ : "
 
-#: RTSDiagramView.cpp:1380
+#: RTSDiagramView.cpp:1409
 msgid "Subscription Type : "
 msgstr "サブスクリプションタイプ : "
 
-#: RTSDiagramView.cpp:1390
+#: RTSDiagramView.cpp:1419
 msgid "&OK"
 msgstr ""
 
-#: RTSDiagramView.cpp:1392
+#: RTSDiagramView.cpp:1421
 msgid "&Cancel"
 msgstr ""
 
@@ -556,3 +548,4 @@ msgstr ""
 #: VirtualRobotRTC.cpp:324
 msgid "detected RTC: %1%  Port connection: %2% <--> %3%"
 msgstr "RTCを検出： %1%　ポート接続：　%2% <--> %3%"
+
