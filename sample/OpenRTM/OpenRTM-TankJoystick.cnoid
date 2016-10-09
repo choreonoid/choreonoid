@@ -286,7 +286,7 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 7, 10 ]
+      selected: [ ]
       checked: [ 1, 2, 6 ]
       expanded: [ 1, 2, 3 ]
   - 

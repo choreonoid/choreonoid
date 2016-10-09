@@ -30,6 +30,12 @@ public:
 public Q_SLOTS:
     void onRTSCompSelectionChange();
 
+protected:
+    virtual void onActivated();
+    virtual void onDeactivated();
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+    
 private :
     RTSDiagramViewImpl* impl;
 

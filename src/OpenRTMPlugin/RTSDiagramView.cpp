@@ -16,6 +16,7 @@
 #include <cnoid/Timer>
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
+#include <cnoid/RootItem>
 #include <QGraphicsView>
 #include <QVBoxLayout>
 #include <QDropEvent>
@@ -245,15 +246,14 @@ class RTSDiagramViewImpl : public QGraphicsView
 {
 
 public:
-    RTSDiagramViewImpl(RTSDiagramView* self);
-    ~RTSDiagramViewImpl();
-
     RTSDiagramView* self;
+    RTSystemItemPtr currentRTSItem;
     QGraphicsScene  scene;
-    Connection nsViewSelectionChangedConnection;
-    Connection itemViewSelectionChangeConnection;
-    Connection connectionOfRTSystemItemDetachedFromRoot;
-    Connection timeOutConnection;
+    ScopedConnection nsViewSelectionChangedConnection;
+    ScopedConnection itemAddedConnection;
+    ScopedConnection itemTreeViewSelectionChangedConnection;
+    ScopedConnection connectionOfRTSystemItemDetachedFromRoot;
+    ScopedConnection timeOutConnection;
     map<string, RTSCompGItemPtr> rtsComps;
     map<string, RTSConnectionGItemPtr> rtsConnections;
     map<RTSPort*, RTSPortGItem*> rtsPortMap;
@@ -262,13 +262,13 @@ public:
     list<RTSConnectionGItem*> selectionRTSConnections;
     MenuManager menuManager;
     Timer timer;
-
     RTSPortGItem* sourcePort;
     QGraphicsLineItem* dragPortLine;
     RTSConnectionMarkerItem* targetMarker;
 
-    RTSystemItem* currentRTSItem;
-
+    RTSDiagramViewImpl(RTSDiagramView* self);
+    ~RTSDiagramViewImpl();
+    void setNewRTSItemDetector();
     void addRTSComp(string name, const QPointF& pos);
     void addRTSComp(RTSComp* rtsComp);
     void deleteRTSComp(RTSCompGItem* rtsComp);
@@ -290,8 +290,9 @@ public:
     void onRTSCompPositionChanged(const RTSCompGItem*);
     void onTime();
     void onActivated(bool on);
-    void onItemviewSelectionChanged(const ItemList<RTSystemItem>& items);
+    void onItemTreeViewSelectionChanged(const ItemList<RTSystemItem>& items);
     void onRTSystemItemDetachedFromRoot();
+    void setCurrentRTSItem(RTSystemItem* item);
     void updateView();
 };
 
@@ -999,33 +1000,22 @@ RTSDiagramViewImpl::RTSDiagramViewImpl(RTSDiagramView* self)
     RTSNameServerView* nsView = RTSNameServerView::instance();
     if(nsView){
         nsViewSelections = nsView->getSelection();
-        if(!nsViewSelectionChangedConnection.connected()){
-            nsViewSelectionChangedConnection = nsView->sigSelectionChanged().connect(
-                    std::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1));
-        }
+        nsViewSelectionChangedConnection.reset(
+            nsView->sigSelectionChanged().connect(
+                std::bind(&RTSDiagramViewImpl::onnsViewItemSelectionChanged, this, _1)));
     }
 
     timer.setSingleShot(false);
     timer.setInterval(STATE_CHECK_TIME);
-    timeOutConnection = timer.sigTimeout().connect(
-            std::bind(&RTSDiagramViewImpl::onTime, this));
+    timeOutConnection.reset(
+        timer.sigTimeout().connect(
+            std::bind(&RTSDiagramViewImpl::onTime, this)));
     self->sigActivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this, true));
     self->sigDeactivated().connect(std::bind(&RTSDiagramViewImpl::onActivated, this ,false));
 
-    itemViewSelectionChangeConnection =
-            ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-                    std::bind(&RTSDiagramViewImpl::onItemviewSelectionChanged, this, _1));
-
-    ItemList<RTSystemItem> items = ItemTreeView::mainInstance()->selectedItems<RTSystemItem>();
-    if(items.empty()){
-        currentRTSItem = 0;
-    }else{
-        currentRTSItem = items.get(0);
-        connectionOfRTSystemItemDetachedFromRoot.disconnect();
-        connectionOfRTSystemItemDetachedFromRoot = currentRTSItem->sigDetachedFromRoot().connect(
-                std::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
-        updateView();
-    }
+    itemTreeViewSelectionChangedConnection.reset(
+        ItemTreeView::mainInstance()->sigSelectionChanged().connect(
+            std::bind(&RTSDiagramViewImpl::onItemTreeViewSelectionChanged, this, _1)));
 
     QPen pen(Qt::DashDotLine);
     pen.setWidth(2);
@@ -1045,6 +1035,43 @@ RTSDiagramView::~RTSDiagramView()
 }
 
 
+void RTSDiagramView::onActivated()
+{
+    impl->setNewRTSItemDetector();
+}
+
+
+void RTSDiagramViewImpl::setNewRTSItemDetector()
+{
+    itemAddedConnection.disconnect();
+    
+    if(!currentRTSItem){
+        ItemList<RTSystemItem> rtsItems;
+        if(rtsItems.extractChildItems(RootItem::instance())){
+            setCurrentRTSItem(rtsItems[0]);
+        } else {
+            itemAddedConnection.reset(
+                RootItem::instance()->sigItemAdded().connect(
+                    [&](Item* item){
+                        if(!currentRTSItem){
+                            auto rtsItem = dynamic_cast<RTSystemItem*>(item);
+                            if(rtsItem){
+                                setCurrentRTSItem(rtsItem);
+                                itemAddedConnection.disconnect();
+                            }
+                        }
+                    }));
+        }
+    }
+}
+
+
+void RTSDiagramView::onDeactivated()
+{
+    impl->itemAddedConnection.disconnect();
+}
+
+
 void RTSDiagramView::updateView()
 {
     impl->updateView();
@@ -1055,12 +1082,7 @@ RTSDiagramViewImpl::~RTSDiagramViewImpl()
 {
     rtsComps.clear();
     rtsConnections.clear();
-    nsViewSelectionChangedConnection.disconnect();
-    itemViewSelectionChangeConnection.disconnect();
-    timeOutConnection.disconnect();
     disconnect(&scene, SIGNAL(selectionChanged()), self, SLOT(onRTSCompSelectionChange()));
-    connectionOfRTSystemItemDetachedFromRoot.disconnect();
-
 }
 
 
@@ -1297,17 +1319,23 @@ void RTSDiagramViewImpl::onActivated(bool on)
 }
 
 
-void RTSDiagramViewImpl::onItemviewSelectionChanged(const ItemList<RTSystemItem>& items)
+void RTSDiagramViewImpl::onItemTreeViewSelectionChanged(const ItemList<RTSystemItem>& items)
 {
-    RTSystemItemPtr item = items.toSingle();
+    RTSystemItem* firstItem = items.toSingle();
 
-    if(item && currentRTSItem != item){
-         connectionOfRTSystemItemDetachedFromRoot.disconnect();
-        currentRTSItem = item;
-        connectionOfRTSystemItemDetachedFromRoot = currentRTSItem->sigDetachedFromRoot().connect(
-                    std::bind(&RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot, this));
-        updateView();
+    if(firstItem && firstItem != currentRTSItem){
+        setCurrentRTSItem(firstItem);
     }
+}
+
+
+void RTSDiagramViewImpl::setCurrentRTSItem(RTSystemItem* item)
+{
+    currentRTSItem = item;
+    connectionOfRTSystemItemDetachedFromRoot.reset(
+        item->sigDetachedFromRoot().connect(
+            [&](){ onRTSystemItemDetachedFromRoot(); }));
+    updateView();
 }
 
 
@@ -1344,9 +1372,10 @@ void RTSDiagramViewImpl::updateView()
 
 void RTSDiagramViewImpl::onRTSystemItemDetachedFromRoot()
 {
+    currentRTSItem = nullptr;
     connectionOfRTSystemItemDetachedFromRoot.disconnect();
-    currentRTSItem = 0;
     updateView();
+    setNewRTSItemDetector();
 }
 
 
@@ -1404,5 +1433,24 @@ CreateConnectionDialog::CreateConnectionDialog()
 
     connect(okButton,SIGNAL(clicked()), this, SLOT(accept()) );
     connect(cancelButton,SIGNAL(clicked()), this, SLOT(reject()) );
+}
+
+
+bool RTSDiagramView::storeState(Archive& archive)
+{
+    if(impl->currentRTSItem){
+        archive.writeItemId("currentRTSItem", impl->currentRTSItem);
+    }
+    return true;
+}
+
+
+bool RTSDiagramView::restoreState(const Archive& archive)
+{
+    RTSystemItem* item = archive.findItem<RTSystemItem>("currentRTSItem");
+    if(item){
+        impl->setCurrentRTSItem(item);
+    }
+    return true;
 }
 
