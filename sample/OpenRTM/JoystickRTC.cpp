@@ -12,7 +12,7 @@ static const char* joystick_spec[] =
     "description",       "Access a joystick control device.",
     "version",           "1.0.0",
     "vendor",            "AIST",
-    "category",          "Human input",
+    "category",          "HumanInterfaceDevice",
     "activity_type",     "PERIODIC",
     "kind",              "DataFlowComponent",
     "max_instance",      "1",
