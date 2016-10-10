@@ -17,6 +17,7 @@
 #include <cnoid/ItemList>
 #include <cnoid/ItemTreeView>
 #include <cnoid/RootItem>
+#include <cnoid/SimulatorItem>
 #include <QGraphicsView>
 #include <QVBoxLayout>
 #include <QDropEvent>
@@ -242,6 +243,7 @@ public :
 };
 
 #define STATE_CHECK_TIME 500  //msec
+
 class RTSDiagramViewImpl : public QGraphicsView
 {
 
@@ -1277,36 +1279,44 @@ void RTSDiagramViewImpl::onTime()
     if(!currentRTSItem)
         return;
 
-    bool modified=false;
-    for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
-            it != rtsComps.end(); it++){
-        if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
-            if(!it->second->effect->isEnabled()){
-               // it->second->effect->setEnabled(true);
-                modified=true;
-            }
-        }else{
-            if(it->second->effect->isEnabled()){
-              //  it->second->effect->setEnabled(false);
-                modified=true;
-            }
-        }
+    bool doConnectionCheck = true;
+    /**
+       This is a temporary code to avoid a crach.
+       The crach may be caused by the accesses to non-thread-safe objects
+       of omniORB or OpenRTM from the main thread and simulation threads.
+    */
+    if(SimulatorItem::findActiveSimulatorItemFor(currentRTSItem)){
+        doConnectionCheck = false;
     }
 
-    if(currentRTSItem->connectionCheck())
-        modified = true;
-
-    if(modified)
-        updateView();
+    if(doConnectionCheck){
+        bool modified=false;
+        for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
+            it != rtsComps.end(); it++){
+            if(!currentRTSItem->compIsAlive(it->second->rtsComp)){
+                if(!it->second->effect->isEnabled()){
+                    // it->second->effect->setEnabled(true);
+                    modified=true;
+                }
+            }else{
+                if(it->second->effect->isEnabled()){
+                    //  it->second->effect->setEnabled(false);
+                    modified=true;
+                }
+            }
+        }
+        
+        if(currentRTSItem->connectionCheck())
+            modified = true;
+        
+        if(modified)
+            updateView();
+    }
 
     for(map<string, RTSCompGItemPtr>::iterator it = rtsComps.begin();
                 it != rtsComps.end(); it++){
         it->second->stateCheck();
     }
-
-
-    timer.start();
-
 }
 
 
