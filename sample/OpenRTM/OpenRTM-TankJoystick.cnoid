@@ -170,7 +170,7 @@ items:
             RTSComps: 
               - 
                 name: JoystickRTC
-                pos: [ -1277, -165 ]
+                pos: [ -1256, -241 ]
                 OutPorts: 
                   - 
                     name: JoystickRTC.axes
@@ -180,7 +180,7 @@ items:
                     isServicePort: false
               - 
                 name: Tank-TankIoRTC
-                pos: [ -823, -146 ]
+                pos: [ -886, -241 ]
                 InPorts: 
                   - 
                     name: Tank-TankIoRTC.dq
@@ -197,7 +197,7 @@ items:
                     isServicePort: false
               - 
                 name: TankJoystickControllerRTC
-                pos: [ -1129, -229 ]
+                pos: [ -1105, -241 ]
                 InPorts: 
                   - 
                     name: TankJoystickControllerRTC.axes
@@ -220,23 +220,14 @@ items:
                     isServicePort: false
             RTSConnections: 
               - 
-                name: JoystickRTC.buttons_TankJoystickControllerRTC.buttons
-                sourceRtcName: JoystickRTC
-                sourcePortName: JoystickRTC.buttons
-                targetRtcName: TankJoystickControllerRTC
-                targetPortName: TankJoystickControllerRTC.buttons
+                name: TankJoystickControllerRTC.u_Tank.u
+                sourceRtcName: TankJoystickControllerRTC
+                sourcePortName: TankJoystickControllerRTC.u
+                targetRtcName: Tank-TankIoRTC
+                targetPortName: Tank-TankIoRTC.u
                 dataflow: push
                 subscription: flush
-                position: [ -1197, -128, -1192, -128, -1133, -128, -1133, -192, -1063, -192, -1058, -192 ]
-              - 
-                name: Tank-TankIoRTC.q_TankJoystickControllerRTC.q
-                sourceRtcName: Tank-TankIoRTC
-                sourcePortName: Tank-TankIoRTC.q
-                targetRtcName: TankJoystickControllerRTC
-                targetPortName: TankJoystickControllerRTC.q
-                dataflow: push
-                subscription: flush
-                position: [ -767, -127, -762, -127, -762, -118, -1074, -118, -1074, -174, -1058, -174 ]
+                position: [ -968, -186, -963, -186, -918, -186, -918, -186, -855, -186, -850, -186 ]
               - 
                 name: TankJoystickControllerRTC.dq_Tank.dq
                 sourceRtcName: TankJoystickControllerRTC
@@ -245,7 +236,25 @@ items:
                 targetPortName: Tank-TankIoRTC.dq
                 dataflow: push
                 subscription: flush
-                position: [ -998, -210, -993, -210, -918, -210, -918, -127, -832, -127, -827, -127 ]
+                position: [ -968, -222, -963, -222, -918, -222, -918, -222, -855, -222, -850, -222 ]
+              - 
+                name: Tank-TankIoRTC.q_TankJoystickControllerRTC.q
+                sourceRtcName: Tank-TankIoRTC
+                sourcePortName: Tank-TankIoRTC.q
+                targetRtcName: TankJoystickControllerRTC
+                targetPortName: TankJoystickControllerRTC.q
+                dataflow: push
+                subscription: flush
+                position: [ -790, -222, -762, -222, -762, -282, -1100, -282, -1100, -186, -1028, -186 ]
+              - 
+                name: JoystickRTC.buttons_TankJoystickControllerRTC.buttons
+                sourceRtcName: JoystickRTC
+                sourcePortName: JoystickRTC.buttons
+                targetRtcName: TankJoystickControllerRTC
+                targetPortName: TankJoystickControllerRTC.buttons
+                dataflow: push
+                subscription: flush
+                position: [ -1173, -204, -1168, -204, -1133, -204, -1133, -204, -1033, -204, -1028, -204 ]
               - 
                 name: JoystickRTC.axes_TankJoystickControllerRTC.axes
                 sourceRtcName: JoystickRTC
@@ -254,16 +263,7 @@ items:
                 targetPortName: TankJoystickControllerRTC.axes
                 dataflow: push
                 subscription: flush
-                position: [ -1197, -146, -1192, -146, -1133, -146, -1133, -210, -1063, -210, -1058, -210 ]
-              - 
-                name: TankJoystickControllerRTC.u_Tank.u
-                sourceRtcName: TankJoystickControllerRTC
-                sourcePortName: TankJoystickControllerRTC.u
-                targetRtcName: Tank-TankIoRTC
-                targetPortName: Tank-TankIoRTC.u
-                dataflow: push
-                subscription: flush
-                position: [ -998, -174, -993, -174, -918, -174, -918, -91, -832, -91, -827, -91 ]
+                position: [ -1173, -222, -1168, -222, -1133, -222, -1133, -222, -1033, -222, -1028, -222 ]
               - 
                 name: TankJoystickControllerRTC.light_Tank.light
                 sourceRtcName: TankJoystickControllerRTC
@@ -272,8 +272,7 @@ items:
                 targetPortName: Tank-TankIoRTC.light
                 dataflow: push
                 subscription: flush
-                position: [ -998, -192, -993, -192, -918, -192, -918, -109, -832, -109, -827, -109 ]
-
+                position: [ -968, -204, -963, -204, -918, -204, -918, -204, -855, -204, -850, -204 ]
 views: 
   - 
     id: 0
@@ -286,7 +285,6 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ ]
       checked: [ 1, 2, 6 ]
       expanded: [ 1, 2, 3 ]
   - 
@@ -411,7 +409,7 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 5
-    name: "Joystick"
+    name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
@@ -452,6 +450,8 @@ views:
     plugin: OpenRTM
     class: RTSDiagramView
     mounted: true
+    state: 
+      currentRTSItem: 8
   - 
     id: 10
     plugin: OpenRTM
@@ -468,17 +468,6 @@ views:
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 5
-    frameRate: 1000
-    playbackFrameRate: 100
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
 OpenRTM: 
   "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
@@ -488,12 +477,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 270, 1148 ]
+      sizes: [ 306, 1334 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 381, 380 ]
+          sizes: [ 559, 557 ]
           children: 
             - 
               type: pane
@@ -506,17 +495,26 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 544, 217 ]
+          sizes: [ 815, 301 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 535, 607 ]
+              sizes: [ 568, 760 ]
               children: 
                 - 
-                  type: pane
-                  views: [ 9, 4, 6, 7 ]
-                  current: 9
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 364, 445 ]
+                  children: 
+                    - 
+                      type: pane
+                      views: [ 9, 6, 7 ]
+                      current: 9
+                    - 
+                      type: pane
+                      views: [ 11, 4 ]
+                      current: 4
                 - 
                   type: pane
                   views: [ 3 ]
@@ -524,11 +522,11 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 688, 454 ]
+              sizes: [ 664, 664 ]
               children: 
                 - 
                   type: pane
-                  views: [ 2, 11, 12 ]
+                  views: [ 2, 12 ]
                   current: 2
                 - 
                   type: pane
