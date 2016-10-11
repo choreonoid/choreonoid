@@ -1,9 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-
 name: Tank
-rootLink: CHASSIS
 
 links:
   -
@@ -55,9 +53,6 @@ links:
             appearance:
               material:
                 diffuseColor: [ 0.1, 0.1, 0.1 ]
-                ambientIntensity: 0.01
-                specularColor: [ 0.3, 0.3, 0.3 ]
-                shininess: 0.01
   -
     name: CRAWLER_TRACK_R
     parent: CHASSIS
@@ -157,9 +152,9 @@ links:
                   radius: 0.03
                 appearance:
                   material:
-                    diffuseColor: [ 1.0, 1.0, 1.0 ]
+                    diffuseColor: [ 1.0, 1.0, 0.4 ]
                     ambientIntensity: 0.3
-                    emissiveColor: [ 0.8, 0.8, 0.8 ]
+                    emissiveColor: [ 0.8, 0.8, 0.3 ]
           -
             type: Transform
             translation: [ 0.02, 0, 0 ]
