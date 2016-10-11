@@ -342,10 +342,7 @@ public :
     void clearImage()
     {
         if(imageView){
-            Image image;
             image.clear();
-            image.setSize(1,1,3);
-            *image.pixels() = 0;
             imageView->setImage(image);
         }
         
