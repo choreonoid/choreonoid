@@ -461,6 +461,8 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         body->setModelName(symbol);
     }
 
+    Link* rootLink = nullptr;
+
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
     ValueNodePtr linksNode = topNode->extract("links");
@@ -468,13 +470,20 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
     } else {
         Listing& linkNodes = *linksNode->toListing();
+        if(linkNodes.empty()){
+            linkNodes.throwException(_("No link is contained in the \"links\" listing"));
+        }
         for(int i=0; i < linkNodes.size(); ++i){
             Mapping* linkNode = linkNodes[i].toMapping();
             LinkInfo* info = new LinkInfo;
             extract(linkNode, "parent", info->parent);
-            info->link = readLink(linkNode);
+            Link* link = readLink(linkNode);
+            info->link = link;
             info->node = linkNode;
             linkInfos.push_back(info);
+            if(!rootLink){
+                rootLink = link;
+            }
         }
     }
 
@@ -498,16 +507,16 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }        
 
     ValueNodePtr rootLinkNode = topNode->extract("rootLink");
-    if(!rootLinkNode){
-        topNode->throwException(_("There is no \"rootLink\" value for specifying the root link."));
+    if(rootLinkNode){
+        string rootLinkName = rootLinkNode->toString();
+        LinkMap::iterator p = linkMap.find(rootLinkName);
+        if(p == linkMap.end()){
+            rootLinkNode->throwException(
+                str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
+        }
+        rootLink = p->second;
     }
-    string rootLinkName = rootLinkNode->toString();
-    LinkMap::iterator p = linkMap.find(rootLinkName);
-    if(p == linkMap.end()){
-        rootLinkNode->throwException(
-            str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
-    }
-    Link* rootLink = p->second;
+
     body->setRootLink(rootLink);
 
     // Warn empty joint ids
