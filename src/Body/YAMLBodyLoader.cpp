@@ -148,8 +148,9 @@ public:
     SgNodePtr readSceneShape(Mapping& node);
     SgMesh* readSceneGeometry(Mapping& node);
     SgMesh* readSceneBox(Mapping& node);
-    SgMesh* readSceneCylinder(Mapping& node);
     SgMesh* readSceneSphere(Mapping& node);
+    SgMesh* readSceneCylinder(Mapping& node);
+    SgMesh* readSceneCone(Mapping& node);
     SgMesh* readSceneExtrusion(Mapping& node);
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
@@ -177,6 +178,35 @@ public:
             return true;
         }
         return false;
+    }
+
+    bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract){
+        ValueNodePtr value;
+        if(doExtract){
+            value = node.extract("rotation");
+        } else {
+            value = node.find("rotation");
+        }
+        if(!value || !value->isValid()){
+            return false;
+        }
+        const Listing& rotations = *value->toListing();
+        if(!rotations.empty()){
+            if(rotations[0].isListing()){
+                out_R = Matrix3::Identity();
+                for(int i=0; i < rotations.size(); ++i){
+                    const Listing& rotation = *rotations[i].toListing();
+                    Vector4 r;
+                    cnoid::read(rotation, r);
+                    out_R = out_R * AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]));
+                }
+            } else {
+                Vector4 r;
+                cnoid::read(rotations, r);
+                out_R = AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]));
+            }
+        }
+        return true;
     }
 };
 
@@ -524,9 +554,9 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(extractEigen(info, "translation", v)){
         link->setOffsetTranslation(v);
     }
-    Vector4 r;
-    if(extractEigen(info, "rotation", r)){
-        link->setOffsetRotation(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
+    Matrix3 R;
+    if(readRotation(*info, R, true)){
+        link->setOffsetRotation(R);
     }
     
     if(extract(info, "jointId", id)){
@@ -825,9 +855,9 @@ bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunct
         T.translation() = v;
         isIdentity = false;
     }
-    Vector4 r;
-    if(read(node, "rotation", r)){
-        T.linear() = Matrix3(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
+    Matrix3 R;
+    if(readRotation(node, R, false)){
+        T.linear() = R;
         isIdentity = false;
     }
 
@@ -1045,10 +1075,12 @@ SgMesh* YAMLBodyLoaderImpl::readSceneGeometry(Mapping& node)
     string type = typeNode.toString();
     if(type == "Box"){
         mesh = readSceneBox(node);
-    } else if(type == "Cylinder"){
-        mesh = readSceneCylinder(node);
     } else if(type == "Sphere"){
         mesh = readSceneSphere(node);
+    } else if(type == "Cylinder"){
+        mesh = readSceneCylinder(node);
+    } else if(type == "Cone"){
+        mesh = readSceneCone(node);
     } else if(type == "Extrusion"){
         mesh = readSceneExtrusion(node);
     } else {
@@ -1069,6 +1101,12 @@ SgMesh* YAMLBodyLoaderImpl::readSceneBox(Mapping& node)
 }
 
 
+SgMesh* YAMLBodyLoaderImpl::readSceneSphere(Mapping& node)
+{
+    return meshGenerator.generateSphere(node.get("radius", 1.0));
+}
+
+
 SgMesh* YAMLBodyLoaderImpl::readSceneCylinder(Mapping& node)
 {
     double radius = node.get("radius", 1.0);
@@ -1079,9 +1117,13 @@ SgMesh* YAMLBodyLoaderImpl::readSceneCylinder(Mapping& node)
 }
 
 
-SgMesh* YAMLBodyLoaderImpl::readSceneSphere(Mapping& node)
+SgMesh* YAMLBodyLoaderImpl::readSceneCone(Mapping& node)
 {
-    return meshGenerator.generateSphere(node.get("radius", 1.0));
+    double radius = node.get("radius", 1.0);
+    double height = node.get("height", 1.0);
+    bool bottom = node.get("bottom", true);
+    bool side = node.get("side", true);
+    return meshGenerator.generateCone(radius, height, bottom, side);
 }
 
 
