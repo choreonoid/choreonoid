@@ -126,7 +126,7 @@ DEF Labo1 Humanoid {
 	  mass 1.0
 	  children [
 	    Transform {
-	      translation 35 20 0
+	      translation 35 20 0.055
 	      rotation 0 0 1 -1.5708
 	      children [ 
 		Transform {
