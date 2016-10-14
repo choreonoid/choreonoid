@@ -4,7 +4,6 @@
 */
 
 #include "RTCItem.h"
-#include "BridgeConf.h"
 #include "OpenRTMUtil.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
@@ -16,6 +15,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
+#include <rtm/RTObject.h>
 #include <rtm/CorbaNaming.h>
 #include <boost/regex.hpp>
 #include "gettext.h"
@@ -24,6 +24,17 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+
+#if ( defined ( WIN32 ) || defined ( _WIN32 ) || defined(__WIN32__) || defined(__NT__) )
+#define SUFFIX_SHARED_EXT   ".dll"
+#define SUFFIX_EXE_EXT      ".exe"
+#elif defined(__APPLE__)
+#define SUFFIX_SHARED_EXT   ".dylib"
+#define SUFFIX_EXE_EXT      ".app"
+#else
+#define SUFFIX_SHARED_EXT   ".so"
+#define SUFFIX_EXE_EXT      ""
+#endif
 
 namespace {
 const bool TRACE_FUNCTIONS = false;

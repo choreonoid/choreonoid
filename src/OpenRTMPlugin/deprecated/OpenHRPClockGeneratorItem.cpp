@@ -3,11 +3,11 @@
 */
 
 #include "OpenHRPClockGeneratorItem.h"
-#include "corba/OpenHRP/ClockGenerator.hh"
+#include "../corba/OpenHRP/ClockGenerator.hh"
 #include <cnoid/CorbaUtil>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
-#include "gettext.h"
+#include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;

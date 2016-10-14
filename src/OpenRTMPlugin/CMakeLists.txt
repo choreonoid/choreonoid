@@ -192,11 +192,12 @@ set(plugin_sources
   RTSItem.cpp
   RTSDiagramView.cpp
   RTSCommonUtil.cpp
-  OpenHRPClockGeneratorItem.cpp
-  BodyRTCItem.cpp
-  VirtualRobotRTC.cpp
-  VirtualRobotPortHandler.cpp
-  BridgeConf.cpp
+
+  deprecated/BodyRTCItem.cpp
+  deprecated/VirtualRobotRTC.cpp
+  deprecated/VirtualRobotPortHandler.cpp
+  deprecated/BridgeConf.cpp
+  deprecated/OpenHRPClockGeneratorItem.cpp
   )
 
 set(plugin_headers

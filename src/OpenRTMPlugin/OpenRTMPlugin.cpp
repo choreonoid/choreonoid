@@ -6,8 +6,6 @@
 #include "RTCItem.h"
 #include "ControllerRTCItem.h"
 #include "BodyIoRTCItem.h"
-#include "BodyRTCItem.h"
-#include "OpenHRPClockGeneratorItem.h"
 #include "ChoreonoidExecutionContext.h"
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include "OpenRTMUtil.h"
@@ -15,6 +13,8 @@
 #include "RTSPropertiesView.h"
 #include "RTSDiagramView.h"
 #include "RTSItem.h"
+#include "deprecated/BodyRTCItem.h"
+#include "deprecated/OpenHRPClockGeneratorItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>

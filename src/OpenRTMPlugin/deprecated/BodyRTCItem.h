@@ -7,7 +7,7 @@
 #define CNOID_OPENRTM_PLUGIN_BODY_RTC_ITEM_H
 
 #include "VirtualRobotRTC.h"
-#include "RTCItem.h"
+#include "../RTCItem.h"
 #include <cnoid/ControllerItem>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/Body>
@@ -15,7 +15,7 @@
 #ifdef ENABLE_SIMULATION_PROFILING
 #include <cnoid/TimeMeasure>
 #endif
-#include "exportdecl.h"
+#include "../exportdecl.h"
 
 namespace cnoid {
 

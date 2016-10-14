@@ -9,7 +9,7 @@
 #include <rtm/NVUtil.h>
 #include <cnoid/MessageView>
 #include <iostream>
-#include "gettext.h"
+#include "../gettext.h"
 
 using namespace std;
 using namespace cnoid;

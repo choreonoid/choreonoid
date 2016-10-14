@@ -4,7 +4,7 @@
 */
 
 #include "BridgeConf.h"
-#include "OpenRTMUtil.h"
+#include "../OpenRTMUtil.h"
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>

@@ -5,7 +5,7 @@
 
 #include "BodyRTCItem.h"
 #include "VirtualRobotRTC.h"
-#include "OpenRTMUtil.h"
+#include "../OpenRTMUtil.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
 #include <cnoid/BasicSensors>
@@ -18,7 +18,7 @@
 #include <cnoid/ProjectManager>
 #include <rtm/CorbaNaming.h>
 #include <boost/regex.hpp>
-#include "gettext.h"
+#include "../gettext.h"
 
 using namespace std;
 using namespace std::placeholders;
