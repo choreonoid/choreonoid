@@ -629,6 +629,42 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         }
         link->setJointAxis(axis);
     }
+
+    ValueNodePtr jointRangeNode = info->find("jointRange");
+    if(jointRangeNode->isValid()){
+        Listing& jointRange = *jointRangeNode->toListing();
+        if(jointRange.size() != 2){
+            jointRangeNode->throwException(_("jointRange must have two elements"));
+        }
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointRange(toRadian(jointRange[0].toDouble()), toRadian(jointRange[1].toDouble()));
+        } else {
+            link->setJointRange(jointRange[0].toDouble(), jointRange[1].toDouble());
+        }
+    }
+
+    ValueNodePtr maxVelocityNode = info->find("maxJointVelocity");
+    if(maxVelocityNode->isValid()){
+        double maxVelocity = maxVelocityNode->toDouble();
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
+        } else {
+            link->setJointVelocityRange(-maxVelocity, maxVelocity);
+        }
+    }
+
+    ValueNodePtr velocityRangeNode = info->find("jointVelocityRange");
+    if(velocityRangeNode->isValid()){
+        Listing& velocityRange = *velocityRangeNode->toListing();
+        if(velocityRange.size() != 2){
+            velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
+        }
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
+        } else {
+            link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
+        }
+    }
     
     currentLink = link;
     rigidBodies.clear();
