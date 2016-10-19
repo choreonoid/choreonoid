@@ -412,7 +412,7 @@ void Body::initializeState()
     for(int i=0; i < n; ++i){
         Link* link = linkTraverse_[i];
         link->u() = 0.0;
-        link->q() = link->initialJointDisplacement();
+        link->q() = link->q_initial();
         link->dq() = 0.0;
         link->ddq() = 0.0;
     }
@@ -618,7 +618,11 @@ void Body::expandLinkOffsetRotations()
 {
     Matrix3 Rs = Matrix3::Identity();
     vector<bool> validRsFlags;
-    impl->expandLinkOffsetRotations(this, rootLink_, Rs, validRsFlags);
+
+    for(Link* child = rootLink()->child(); child; child = child->sibling()){
+        impl->expandLinkOffsetRotations(this, child, Rs, validRsFlags);
+    }
+
     if(!validRsFlags.empty()){
         impl->applyLinkOffsetRotationsToDevices(this, validRsFlags);
     }
@@ -643,12 +647,19 @@ void BodyImpl::expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& 
         link->setCenterOfMass(Rs * link->centerOfMass());
         link->setInertia(Rs * link->I() * Rs.transpose());
         link->setJointAxis(Rs * link->jointAxis());
-        
-        if(link->visualShape()){
-            setRsToShape(Rs, link->visualShape(), [&](SgNode* node) { link->setVisualShape(node); });
-        }
-        if(link->collisionShape()){
-            setRsToShape(Rs, link->collisionShape(), [&](SgNode* node) { link->setCollisionShape(node); });
+
+        SgNode* visualShape = link->visualShape();
+        SgNode* collisionShape = link->collisionShape();
+
+        if(visualShape && visualShape == collisionShape){
+            setRsToShape(Rs, visualShape, [&](SgNode* node) { link->setShape(node); });
+        } else {
+            if(link->visualShape()){
+                setRsToShape(Rs, link->visualShape(), [&](SgNode* node) { link->setVisualShape(node); });
+            }
+            if(link->collisionShape()){
+                setRsToShape(Rs, link->collisionShape(), [&](SgNode* node) { link->setCollisionShape(node); });
+            }
         }
     }
     

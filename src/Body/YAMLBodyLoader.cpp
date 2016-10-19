@@ -496,8 +496,6 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
             if(p != linkMap.end()){
                 Link* parentLink = p->second;
                 Link* link = info->link;
-                link->setOffsetTranslation(parentLink->Rs() * link->offsetTranslation());
-                link->setAccumulatedSegmentRotation(parentLink->Rs() * link->offsetRotation());
                 parentLink->appendChild(link);
             } else {
                 info->node->throwException(
@@ -518,8 +516,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     body->setRootLink(rootLink);
-
-    //body->expandLinkOffsetRotations();
+    body->expandLinkOffsetRotations();
 
     // Warn empty joint ids
     if(numValidJointIds < validJointIdSet.size()){
@@ -530,12 +527,13 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
+    //! \todo Remove this later
     ValueNodePtr initDNode = topNode->extract("initialJointDisplacement");
     if(initDNode){
         Listing& initd = *initDNode->toListing();
         const int n = std::min(initd.size(), body->numLinks());
         for(int i=0; i < n; i++){
-            body->link(i)->initialJointDisplacement() = toRadian(initd[i].toDouble());
+            body->link(i)->setInitialJointDisplacement(toRadian(initd[i].toDouble()));
         }
     }
 
@@ -632,6 +630,15 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         link->setJointAxis(axis);
     }
 
+    ValueNodePtr jointAngleNode = info->extract("jointAngle");
+    if(jointAngleNode){
+        link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
+    }
+    ValueNodePtr jointDisplacementNode = info->extract("jointDisplacement");
+    if(jointDisplacementNode){
+        link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+    }
+    
     ValueNodePtr jointRangeNode = info->find("jointRange");
     if(jointRangeNode->isValid()){
         Listing& jointRange = *jointRangeNode->toListing();

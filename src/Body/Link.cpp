@@ -36,12 +36,12 @@ Link::Link()
     I_.setIdentity();
     Jm2_ = 0.0;
     F_ext_.setZero();
+    q_initial_ = 0.0;
     q_upper_ = std::numeric_limits<double>::max();
     q_lower_ = -std::numeric_limits<double>::max();
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
     info_ = new Mapping;
-    initd_ = 0.0;
 }
 
 
@@ -79,6 +79,7 @@ Link::Link(const Link& org)
 
     F_ext_ = org.F_ext_;
 
+    q_initial_ = org.q_initial_;
     q_upper_ = org.q_upper_;
     q_lower_ = org.q_lower_;
     dq_upper_ = org.dq_upper_;
@@ -88,7 +89,6 @@ Link::Link(const Link& org)
     visualShape_ = org.visualShape_;
     collisionShape_ = org.collisionShape_;
     info_ = org.info_;
-    initd_ = org.initd_;
 }
 
 
