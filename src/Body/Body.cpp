@@ -53,6 +53,9 @@ public:
     BodyHandle bodyHandle;
 
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
+    void expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& parentRs, vector<bool>& validRsFlags);
+    void setRsToShape(const Matrix3& Rs, SgNode* shape, std::function<void(SgNode* node)> setShape);
+    void applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& validRsFlags);    
 };
 
 }
@@ -608,4 +611,79 @@ BodyInterface* Body::bodyInterface()
     };
 
     return &interface;
+}
+
+
+void Body::expandLinkOffsetRotations()
+{
+    Matrix3 Rs = Matrix3::Identity();
+    vector<bool> validRsFlags;
+    impl->expandLinkOffsetRotations(this, rootLink_, Rs, validRsFlags);
+    if(!validRsFlags.empty()){
+        impl->applyLinkOffsetRotationsToDevices(this, validRsFlags);
+    }
+}
+
+
+void BodyImpl::expandLinkOffsetRotations(Body* body, Link* link, const Matrix3& parentRs, vector<bool>& validRsFlags)
+{
+    link->setOffsetTranslation(parentRs * link->offsetTranslation());
+
+    Matrix3 Rs = parentRs * link->offsetRotation();
+
+    if(!Rs.isApprox(Matrix3::Identity())){
+
+        if(validRsFlags.empty()){
+            validRsFlags.resize(body->numLinks());
+        }
+        validRsFlags[link->index()] = true;
+        
+        link->setAccumulatedSegmentRotation(Rs);
+
+        link->setCenterOfMass(Rs * link->centerOfMass());
+        link->setInertia(Rs * link->I() * Rs.transpose());
+        link->setJointAxis(Rs * link->jointAxis());
+        
+        if(link->visualShape()){
+            setRsToShape(Rs, link->visualShape(), [&](SgNode* node) { link->setVisualShape(node); });
+        }
+        if(link->collisionShape()){
+            setRsToShape(Rs, link->collisionShape(), [&](SgNode* node) { link->setCollisionShape(node); });
+        }
+    }
+    
+    for(Link* child = link->child(); child; child = child->sibling()){
+        expandLinkOffsetRotations(body, child, Rs, validRsFlags);
+    }
+}
+
+
+void BodyImpl::setRsToShape(const Matrix3& Rs, SgNode* shape, std::function<void(SgNode* node)> setShape)
+{
+    SgPosTransform* transformRs = new SgPosTransform;
+    transformRs->setRotation(Rs);
+    if(SgGroup* group = dynamic_cast<SgGroup*>(shape)){
+        group->moveChildrenTo(transformRs);
+        if(SgInvariantGroup* invariant = dynamic_cast<SgInvariantGroup*>(group)){
+            invariant->addChild(transformRs);
+        } else {
+            setShape(transformRs);
+        }
+    } else {
+        transformRs->addChild(shape);
+        setShape(transformRs);
+    }
+}
+
+
+void BodyImpl::applyLinkOffsetRotationsToDevices(Body* body, vector<bool>& validRsFlags)
+{
+    for(int i=0; i < body->numDevices(); ++i){
+        Device* device = body->device(i);
+        Link* link = device->link();
+        if(validRsFlags[link->index()]){
+            device->setLocalTranslation(link->Rs() * device->localTranslation());
+            device->setLocalRotation(link->Rs() * device->localRotation());
+        }
+    }
 }

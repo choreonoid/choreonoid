@@ -519,6 +519,8 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
     body->setRootLink(rootLink);
 
+    //body->expandLinkOffsetRotations();
+
     // Warn empty joint ids
     if(numValidJointIds < validJointIdSet.size()){
         for(size_t i=0; i < validJointIdSet.size(); ++i){
