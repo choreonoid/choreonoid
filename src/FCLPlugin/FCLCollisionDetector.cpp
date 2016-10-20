@@ -8,9 +8,9 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
-#include <fcl/collision.h>
-#include <fcl/shape/geometric_shapes.h>
-#include <fcl/BVH/BVH_model.h>
+#include <fcl/narrowphase/collision.h>
+//#include <fcl/shape/geometric_shapes.h>
+//#include <fcl/BVH/BVH_model.h>
 #include <boost/optional.hpp>
 
 using namespace std;
@@ -58,8 +58,8 @@ struct FactoryRegistration
     }
 } factoryRegistration;
 
-typedef std::shared_ptr<CollisionObject> CollisionObjectPtr;
-typedef BVHModel<OBBRSS> MeshModel;
+typedef std::shared_ptr< CollisionObject<double> > CollisionObjectPtr;
+typedef BVHModel< OBBRSS<double> > MeshModel;
 typedef std::shared_ptr<MeshModel> MeshModelPtr;
 
 class CollisionObjectEx

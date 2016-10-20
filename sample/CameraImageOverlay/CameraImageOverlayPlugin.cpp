@@ -100,7 +100,7 @@ public:
         SceneView::instance()->scene()->addChild(overlay, true);
         
         timer.sigTimeout().connect(bind(&CameraImageOverlayPlugin::updateCameraImage, this));
-        timer.start(33.3333);
+        timer.start(33);  //msec
         
         return true;
     }

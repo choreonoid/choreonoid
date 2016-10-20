@@ -2053,7 +2053,8 @@ void SceneWidgetImpl::onCurrentCameraChanged()
         int index = renderer->currentCameraIndex();
         const SgNodePath& path = renderer->cameraPath(index);
         for(int i = path.size() - 2; i >= 0; --i){
-            if(interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+            interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i]);
+            if(interactiveCameraTransform){
                 isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
                 break;
             }

@@ -448,7 +448,7 @@ void RTSystemItemImpl::onLocationChanged(string host, int port)
 
 RTSComp* RTSystemItem::nameToRTSComp(const string& name)
 {
-    impl->nameToRTSComp(name);
+    return impl->nameToRTSComp(name);
 }
 
 
@@ -549,8 +549,9 @@ RTSConnection* RTSystemItemImpl::addRTSConnectionName(const string& id, const st
         targetPort = targetRtc->nameToRTSPort(targetPortName);
     }
     if(sourcePort && targetPort){
-        addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription, setPos, pos);
+        return addRTSConnection(id, name, sourcePort, targetPort, dataflow, subscription, setPos, pos);
     }
+    return 0;
 }
 
 string RTSystemItemImpl::getConnectionNumber()

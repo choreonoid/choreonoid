@@ -582,8 +582,8 @@ void SimulationBodyImpl::extractAssociatedItems(bool doReset)
     vector<Item*>::iterator iter = controlSrcItems.begin();
     while(iter != controlSrcItems.end()){
         Item* srcItem = *iter;
-        ControllerItem* controllerItem = 0;
-        if(controllerItem = dynamic_cast<ControllerItem*>(srcItem)){
+        ControllerItem* controllerItem = dynamic_cast<ControllerItem*>(srcItem);
+        if(controllerItem){
             if(controllerItem->initialize(this)){
                 controllers.push_back(controllerItem);
             } else {

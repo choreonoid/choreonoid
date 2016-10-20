@@ -145,7 +145,7 @@ OpenHRPInterpreterServiceItem::~OpenHRPInterpreterServiceItem()
 }
 
 
-ItemImpl::~ItemImpl()
+OpenHRPInterpreterServiceItemImpl::~OpenHRPInterpreterServiceItemImpl()
 {
     deleteRTC();
 }

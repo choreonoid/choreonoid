@@ -154,6 +154,8 @@ public :
     {
         timedTbuf.clear();
         timedTbuf.resize(BUF_SIZE);
+
+        return RTC_OK;
     }
 
     ReturnCode_t onDeactivated(UniqueId ec_id)

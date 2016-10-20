@@ -31,8 +31,8 @@ public Q_SLOTS:
     void onRTSCompSelectionChange();
 
 protected:
-    virtual void onActivated();
-    virtual void onDeactivated();
+    virtual void onActivated() override;
+    virtual void onDeactivated() override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
     
