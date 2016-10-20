@@ -44,6 +44,8 @@ public:
         
     void setRootLink(Link* link);
 
+    void expandLinkOffsetRotations();
+
     /**
        This function must be called when the structure of the link tree is changed.
     */

@@ -1028,8 +1028,18 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    const bool usePixelBufferForPicking =
-        dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked();
+    /**
+       \note
+       QGLPixelBuffer is obsolete in Qt5, and the picking using it fails in some platforms.
+       Confirm that using QGLPixelBuffer for picking is not necessary and remove the code
+       on QGLPixelBuffer.
+    */
+    bool usePixelBufferForPicking = false;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    usePixelBufferForPicking =
+                 dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked();
+#endif
 
     if(pixelBufferForPicking){
         if(!usePixelBufferForPicking || pixelBufferForPicking->size() != size()){
@@ -1060,8 +1070,9 @@ bool SceneWidgetImpl::updateLatestEventPath()
     if(pixelBufferForPicking && !SHOW_IMAGE_FOR_PICKING){
         pixelBufferForPicking->doneCurrent();
     } else {
-        if(SHOW_IMAGE_FOR_PICKING)
+        if(SHOW_IMAGE_FOR_PICKING){
             swapBuffers();
+        }
         doneCurrent();
     }
 

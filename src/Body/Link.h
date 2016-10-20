@@ -155,6 +155,7 @@ public:
     double u() const { return u_; }
     double& u() { return u_; }
 
+    double q_initial() const { return q_initial_; }
     double q_upper() const { return q_upper_; }  ///< the upper limit of joint values
     double q_lower() const { return q_lower_; }  ///< the lower limit of joint values
     double dq_upper() const { return dq_upper_; } ///< the upper limit of joint velocities
@@ -233,7 +234,8 @@ public:
     void setJointType(JointType type) { jointType_ = type; }
     void setJointId(int id) { jointId_ = id; }
     void setJointAxis(const Vector3& axis) { a_ = axis; }
-        
+
+    void setInitialJointDisplacement(double q) { q_initial_ = q; }
     void setJointRange(double lower, double upper) { q_lower_ = lower; q_upper_ = upper; }
     void setJointVelocityRange(double lower, double upper) { dq_lower_ = lower; dq_upper_ = upper; }
 
@@ -261,9 +263,6 @@ public:
     template<typename T> void setInfo(const std::string& key, const T& value);
 
     void resetInfo(Mapping* info);
-
-    double initialJointDisplacement() const { return initd_; }
-    double& initialJointDisplacement() { return initd_; }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     // fext, tauext
@@ -302,12 +301,12 @@ private:
     Matrix3 I_;
     double Jm2_;
     Vector6 F_ext_; // should be Vector3 x 2?
+    double q_initial_;
     double q_upper_;
     double q_lower_;
     double dq_upper_;
     double dq_lower_;
     std::string name_;
-    double initd_;
     SgNodePtr visualShape_;
     SgNodePtr collisionShape_;
     MappingPtr info_;
