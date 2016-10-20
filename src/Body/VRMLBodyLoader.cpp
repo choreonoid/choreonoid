@@ -809,7 +809,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
     } else if(jointType == "crawler"){
         link->setJointType(Link::CRAWLER_JOINT);
-        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinousTrack' instead."))
+        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinuousTrack' instead."))
                     % link->name()) << endl;
     } else if(jointType == "agx_crawler"){
         link->setJointType(Link::AGX_CRAWLER_JOINT);
