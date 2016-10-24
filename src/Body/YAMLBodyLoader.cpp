@@ -152,6 +152,7 @@ public:
     SgMesh* readSceneCylinder(Mapping& node);
     SgMesh* readSceneCone(Mapping& node);
     SgMesh* readSceneExtrusion(Mapping& node);
+    SgMesh* readSceneElevationGrid(Mapping& node);
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
@@ -1137,7 +1138,9 @@ SgMesh* YAMLBodyLoaderImpl::readSceneGeometry(Mapping& node)
         mesh = readSceneCone(node);
     } else if(type == "Extrusion"){
         mesh = readSceneExtrusion(node);
-    } else {
+    } else if(type == "ElevationGrid"){
+        mesh = readSceneElevationGrid(node);
+    }else {
         typeNode.throwException(
             str(format(_("Unknown geometry \"%1%\"")) % type));
     }
@@ -1244,6 +1247,28 @@ SgMesh* YAMLBodyLoaderImpl::readSceneExtrusion(Mapping& node)
     node.read("endCap", extrusion.endCap);
 
     return meshGenerator.generateExtrusion(extrusion);
+}
+
+
+SgMesh* YAMLBodyLoaderImpl::readSceneElevationGrid(Mapping& node)
+{
+    MeshGenerator::ElevationGrid grid;
+
+    node.read("xDimension", grid.xDimension);
+    node.read("zDimension", grid.zDimension);
+    node.read("xSpacing", grid.xSpacing);
+    node.read("zSpacing", grid.zSpacing);
+    node.read("ccw", grid.ccw);
+    readAngle(node, "creaseAngle", grid.creaseAngle);
+
+    Listing& heightNode = *node.findListing("height");
+    if(heightNode.isValid()){
+        for(int i=0; i < heightNode.size(); i++){
+            grid.height.push_back(heightNode[i].toDouble());
+        }
+    }
+
+    return meshGenerator.generateElevationGrid(grid);
 }
 
 
