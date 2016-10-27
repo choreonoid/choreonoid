@@ -7,7 +7,9 @@
 #define CNOID_OPENRTM_PLUGIN_RTS_NAME_SERVER_VIEW_H_INCLUDED
 
 #include <cnoid/View>
+#include <cnoid/PolymorphicPointerArray>
 #include <cnoid/CorbaUtil>
+#include <cnoid/TreeWidget>
 
 using namespace cnoid;
 
@@ -27,13 +29,28 @@ public:
     RTSNameServerView();
     virtual ~RTSNameServerView();
 
-//    virtual void onActivated();
-//    TreeWidget* getTreeWidget();
-//    void setConnection();
+    SignalProxy<void(const std::list<NamingContextHelper::ObjectInfo>&)>
+    	sigSelectionChanged();
+    SignalProxy<void(std::string, int)> sigLocationChanged();
+
+    const std::string getHost();
+    int getPort();
+    std::list<NamingContextHelper::ObjectInfo> getSelection();
+    void setSelection(std::string RTCname);
+    void updateView();
 
 private:
     RTSNameServerViewImpl* impl;
 };
+
+class RTSNameTreeWidget : public TreeWidget
+{
+    Q_OBJECT
+
+private :
+    void mouseMoveEvent(QMouseEvent *event);
+};
+
 }
 
 #endif

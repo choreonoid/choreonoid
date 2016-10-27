@@ -76,7 +76,8 @@ class CNOID_EXPORT ToolButton : public QToolButton
 
 public:
     ToolButton(QWidget* parent = 0);
-
+    ToolButton(const QString& text, QWidget* parent = 0);
+    
     SignalProxy<void()> sigClicked() {
         return sigClicked_;
     }
@@ -91,8 +92,6 @@ private Q_SLOTS:
 private:
     Signal<void()> sigClicked_;
     Signal<void(bool)> sigToggled_;
-
-    void initialize();
 };
 
 

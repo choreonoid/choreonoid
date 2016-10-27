@@ -546,7 +546,8 @@ Item* Item::headItem() const
 bool Item::isOwnedBy(Item* item) const
 {
     Item* current = const_cast<Item*>(this);
-    while(current = current->parent_){
+    while(current->parent_){
+        current = current->parent_;
         if(current == item){
             return true;
         }

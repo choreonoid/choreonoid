@@ -93,33 +93,19 @@ void RadioButton::onToggled(bool checked)
     sigToggled_(checked);
 }
 
+
 ToolButton::ToolButton(QWidget* parent)
     : QToolButton(parent)
 {
-    initialize();
+    connect(this, SIGNAL(clicked(bool)), this, SLOT(onClicked(bool)));
+    connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
 }
 
 
-/*
-  ToolButton::ToolButton(const QString& text, QWidget* parent)
-  : QToolButton(text, parent)
-  {
-  initialize();
-  }
-
-
-  ToolButton::ToolButton(const QIcon & icon, const QString & text, QWidget* parent)
-  : QToolButton(icon, text, parent)
-  {
-  initialize();
-  }
-*/
-
-
-void ToolButton::initialize()
+ToolButton::ToolButton(const QString& text, QWidget* parent)
+    : ToolButton(parent)
 {
-    connect(this, SIGNAL(clicked(bool)), this, SLOT(onClicked(bool)));
-    connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
+    setText(text);
 }
 
 

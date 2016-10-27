@@ -694,7 +694,7 @@ int ColdetModelPair::calculateCentroidIntersection(float &cx, float &cy, float &
 
             numInter = calculateIntersection(x_int, y_int, radius, vx[i], vy[i], vx[(i + 1) % vx.size()], vy[(i + 1) % vx.size()]);
 			
-            if (numInter)
+            if (numInter){
                 for (k = 0; k < numInter; k++) {
                     p.x = x_int[k];
                     p.y = y_int[k];
@@ -704,7 +704,7 @@ int ColdetModelPair::calculateCentroidIntersection(float &cx, float &cy, float &
                     p.code = i + 1;
                     point.push_back(p);
                 }
-			
+            }
             numInter = 0;
         }
 		

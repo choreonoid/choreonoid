@@ -794,7 +794,8 @@ bool ViewAreaImpl::removeView(View* view)
     if(view->viewArea() == self){
         ViewPane* pane = 0;
         for(QWidget* widget = view->parentWidget(); widget; widget = widget->parentWidget()){
-            if(pane = dynamic_cast<ViewPane*>(widget)){
+            pane = dynamic_cast<ViewPane*>(widget);
+            if(pane){
                 break;
             }
         }
@@ -1431,7 +1432,8 @@ bool ViewAreaImpl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
         if(event->buttons() & Qt::LeftButton){
             if((event->pos() - tabDragStartPosition).manhattanLength() > QApplication::startDragDistance()){
                 if(!pane->tabBar()->geometry().contains(event->pos())){
-                    if(draggedView = pane->currentView()){
+                    draggedView = pane->currentView();
+                    if(draggedView){
                         isViewDragging = true;
                         dragSrcPane = pane;
 

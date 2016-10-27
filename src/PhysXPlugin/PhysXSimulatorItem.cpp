@@ -14,6 +14,7 @@
 #include <cnoid/Link>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
+#include <boost/optional.hpp>
 #include "gettext.h"
 #include <iostream>
 
@@ -358,7 +359,7 @@ void PhysXLink::addMesh(MeshExtractor* extractor, PhysXBody* physXBody)
         if(mesh->primitiveType() != SgMesh::MESH){
             bool doAddPrimitive = false;
             Vector3 scale;
-            optional<Vector3> translation;
+            boost::optional<Vector3> translation;
             if(!extractor->isCurrentScaled()){
                 scale.setOnes();
                 doAddPrimitive = true;

@@ -154,6 +154,8 @@ public :
     {
         timedTbuf.clear();
         timedTbuf.resize(BUF_SIZE);
+
+        return RTC_OK;
     }
 
     ReturnCode_t onDeactivated(UniqueId ec_id)
@@ -342,10 +344,7 @@ public :
     void clearImage()
     {
         if(imageView){
-            Image image;
             image.clear();
-            image.setSize(1,1,3);
-            *image.pixels() = 0;
             imageView->setImage(image);
         }
         
@@ -403,7 +402,7 @@ public:
 
     virtual bool finalize()
     {
-        deleteRTC(visionSensorSampleRTC, true);
+        deleteRTC(visionSensorSampleRTC);
         return true;
     }
 

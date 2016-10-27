@@ -583,7 +583,10 @@ bool Source::disconnectStream()
         }
         pa_stream_unref(stream);
         stream = 0;
+        return true;
     }
+
+    return false;
 }
 
 

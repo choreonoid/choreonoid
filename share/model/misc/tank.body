@@ -1,97 +1,83 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-
 name: Tank
-rootLink: CHASSIS
 
 links:
   -
     name: CHASSIS
     translation: [ 0, 0, 0.1 ]
     jointType: free
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 8.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.5 ]
     elements:
-      RigidBody:
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 8.0
-        inertia: [
-          0.1, 0,   0,
-          0,   0.1, 0,
-          0,   0,   0.5 ]
-        elements:
-          Shape:
-            appearance: &GREEN
-              material:
-                diffuseColor: [ 0, 0.6, 0 ]
-                ambientIntensity: 0.3
-                specularColor: [ 0.7, 0.7, 0.7 ]
-                shininess: 0.25
-            geometry:
-              type: Box
-              size: [ 0.4, 0.3, 0.1 ]
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.4, 0.3, 0.1 ]
+        appearance: &GREEN
+          material:
+            diffuseColor: [ 0, 0.6, 0 ]
   -
     name: CRAWLER_TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.15, 0 ]
     jointType: pseudoContinuousTrack
-    jointAxis: [ 0, 1, 0 ]
     jointId: 0
+    jointAxis: [ 0, 1, 0 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
     elements:
-      RigidBody:
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 1.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
+      Transform:
+        translation: [ 0, 0.05, 0 ]
         elements:
-          Transform:
-            translation: [ 0, 0.05, 0 ]
-            elements:
-              Shape: &CRAWLER 
-                appearance: &BLACK
-                  material:
-                    diffuseColor: [ 0.1, 0.1, 0.1 ]
-                    ambientIntensity: 0.01
-                    specularColor: [ 0.3, 0.3, 0.3 ]
-                    shininess: 0.01
-                geometry:
-                  type: Extrusion
-                  crossSection: [
-                    -0.2, -0.1,
-                     0.2, -0.1,
-                     0.3,  0.06,
-                    -0.3,  0.06,
-                    -0.2, -0.1
-                    ]
-                  spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+          Shape: &CRAWLER 
+            geometry:
+              type: Extrusion
+              crossSection: [
+                -0.2, -0.1,
+                0.2, -0.1,
+                0.3,  0.06,
+                -0.3,  0.06,
+                -0.2, -0.1
+                ]
+              spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.1, 0.1, 0.1 ]
   -
     name: CRAWLER_TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.15, 0 ]
     jointType: pseudoContinuousTrack
-    jointAxis: [ 0, 1, 0 ]
     jointId: 1
+    jointAxis: [ 0, 1, 0 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
     elements:
-      RigidBody:
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 1.0
-        inertia: [
-          0.02, 0,    0,
-          0,    0.02, 0,
-          0,    0,    0.02 ]
+      Transform:
+        translation: [ 0, -0.05, 0 ]
         elements:
-          Transform:
-            translation: [ 0, -0.05, 0 ]
-            elements:
-              Shape: *CRAWLER 
+          Shape: *CRAWLER 
   -
     name: CANNON_Y
     parent: CHASSIS
     translation: [ -0.05, 0, 0.08 ]
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
     jointId: 2
+    jointAxis: [ 0, 0, 1 ]
     elements:
       RigidBody:
         centerOfMass: [ 0, 0, 0.025 ]
@@ -102,19 +88,20 @@ links:
           0,   0,   0.1 ]
         elements:
           Shape:
-            appearance: *GREEN
             geometry:
               type: Box
               size: [ 0.2, 0.2, 0.08 ]
+            appearance: *GREEN
   -
     name: CANNON_P
     parent: CANNON_Y
     translation: [ 0, 0, 0.04 ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
     jointId: 3
+    jointAxis: [ 0, 1, 0 ]
     elements:
-      -
+      - 
+        # Turnet
         type: RigidBody
         centerOfMass: [ 0, 0, 0 ]
         mass: 3.0
@@ -123,35 +110,14 @@ links:
           0,   0.1, 0,
           0,   0,   0.1 ]
         elements:
-          -
-            type: Shape
-            appearance: *GREEN
+          Shape:
             geometry:
               type: Cylinder
               height: 0.1
               radius: 0.11
-          -
-            type: Transform
-            translation: [ 0, 0, 0.13 ]
-            rotation: [ 0.540716, -0.540716, -0.6444, 114.4042 ]
-            elements:
-              -
-                type: Camera
-                name: Camera
-                format: COLOR_DEPTH
-                width: 320
-                height: 240
-                id: 0
-                frameRate: 30
-              -
-                type: RangeSensor
-                name: RangeSensor
-                id: 0
-                scanAngle: 90
-                scanStep:  0.5
-                scanRate:  10
-                maxDistance: 10
-      -
+            appearance: *GREEN
+      - 
+        # Cannon barrel
         type: RigidBody
         translation: [ 0.2, 0, 0 ]
         centerOfMass: [ 0.2, 0, 0 ]
@@ -161,24 +127,63 @@ links:
           0,    0.1, 0,
           0,    0,   0.1 ]
         elements:
+          Transform:
+            rotation: [ 0, 0, 1, 90 ]
+            elements:
+              Shape:
+                geometry:
+                  type: Cylinder
+                  height: 0.2
+                  radius: 0.02
+                appearance: *GREEN
+      -
+        # Device Box
+        type: Transform
+        translation: [ 0.08, 0, 0.09 ]
+        elements:
           -
             type: Transform
             rotation: [ 0, 0, 1, 90 ]
             elements:
               Shape:
-                appearance: *GREEN
                 geometry:
-                  type: Cylinder
-                  height: 0.2
-                  radius: 0.02
+                  type: Cone
+                  height: 0.04
+                  radius: 0.03
+                appearance:
+                  material:
+                    diffuseColor: [ 1.0, 1.0, 0.4 ]
+                    ambientIntensity: 0.3
+                    emissiveColor: [ 0.8, 0.8, 0.3 ]
           -
             type: Transform
-            translation: [ 0.2, 0, 0 ]
+            translation: [ 0.02, 0, 0 ]
             elements:
-              SpotLight:
+              -
+                type: SpotLight
                 name: MainLight
                 direction: [ 1, 0, 0 ]
                 beamWidth: 36
                 cutOffAngle: 40
                 cutOffExponent: 6
                 attenuation: [ 1, 0, 0.01 ]
+              - 
+                type: Transform
+                rotation: [ [ 0, 1, 0, -90 ], [ 0, 0, 1, -90 ] ]
+                elements:
+                  -
+                    type: Camera
+                    name: Camera
+                    format: COLOR_DEPTH
+                    width: 320
+                    height: 240
+                    id: 0
+                    frameRate: 30
+                  -
+                    type: RangeSensor
+                    name: RangeSensor
+                    id: 0
+                    scanAngle: 90
+                    scanStep:  0.5
+                    scanRate:  10
+                    maxDistance: 10

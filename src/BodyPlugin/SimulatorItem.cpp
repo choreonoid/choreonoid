@@ -564,6 +564,17 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
 }
 
 
+// For a controller which is not associated with a body
+bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
+{
+    this->simImpl = simImpl;
+    this->controllers.push_back(controllerItem);
+    frameRate = simImpl->worldFrameRate;
+    linkPosBuf.resizeColumn(0);
+    return true;
+}
+
+
 void SimulationBodyImpl::extractAssociatedItems(bool doReset)
 {
     vector<Item*> controlSrcItems;
@@ -571,8 +582,8 @@ void SimulationBodyImpl::extractAssociatedItems(bool doReset)
     vector<Item*>::iterator iter = controlSrcItems.begin();
     while(iter != controlSrcItems.end()){
         Item* srcItem = *iter;
-        ControllerItem* controllerItem = 0;
-        if(controllerItem = dynamic_cast<ControllerItem*>(srcItem)){
+        ControllerItem* controllerItem = dynamic_cast<ControllerItem*>(srcItem);
+        if(controllerItem){
             if(controllerItem->initialize(this)){
                 controllers.push_back(controllerItem);
             } else {
@@ -748,17 +759,6 @@ void SimulationBodyImpl::setInitialStateOfBodyMotion(const BodyMotionPtr& bodyMo
     if(updated){
         body_->calcForwardKinematics();
     }
-}
-
-
-// For a controller which is not associated with a body
-bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, ControllerItem* controllerItem)
-{
-    this->simImpl = simImpl;
-    this->controllers.push_back(controllerItem);
-    frameRate = simImpl->worldFrameRate;
-    linkPosBuf.resizeColumn(0);
-    return true;
 }
 
 

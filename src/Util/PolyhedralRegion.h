@@ -15,7 +15,7 @@ class PolyhedralRegion
 public:
     PolyhedralRegion() { }
     PolyhedralRegion(const PolyhedralRegion& org) : planes(org.planes) { }
-    PolyhedralRegion& operator=(const PolyhedralRegion& org) { planes = org.planes; }
+    PolyhedralRegion& operator=(const PolyhedralRegion& org) { planes = org.planes; return *this; }
 
     struct Plane {
         Vector3 normal;

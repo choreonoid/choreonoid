@@ -3,13 +3,18 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "BodyRTCItem.h"
 #include "RTCItem.h"
-#include "OpenHRPClockGeneratorItem.h"
+#include "ControllerRTCItem.h"
+#include "BodyIoRTCItem.h"
 #include "ChoreonoidExecutionContext.h"
 #include "ChoreonoidPeriodicExecutionContext.h"
 #include "OpenRTMUtil.h"
 #include "RTSNameServerView.h"
+#include "RTSPropertiesView.h"
+#include "RTSDiagramView.h"
+#include "RTSItem.h"
+#include "deprecated/BodyRTCItem.h"
+#include "deprecated/OpenHRPClockGeneratorItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
@@ -147,8 +152,10 @@ public:
             return false;
         }
         
-        BodyRTCItem::initialize(this);
+        BodyIoRTCItem::initialize(this);
+        ControllerRTCItem::initialize(this);
         RTCItem::initialize(this);
+        BodyRTCItem::initialize(this);
         OpenHRPClockGeneratorItem::initialize(this);
         
         VirtualRobotRTC::registerFactory(manager, "VirtualRobot");
@@ -165,10 +172,14 @@ public:
             std::bind(&OpenRTMPlugin::onDeleteRTCsOnSimulationStartToggled, this, _1));
         
         setProjectArchiver(
-            std::bind(&OpenRTMPlugin::store, this, _1),
-            std::bind(&OpenRTMPlugin::restore, this, _1));
+
+        std::bind(&OpenRTMPlugin::store, this, _1),
+        std::bind(&OpenRTMPlugin::restore, this, _1));
         
         RTSNameServerView::initializeClass(this);
+        RTSystemItem::initialize(this);
+        RTSPropertiesView::initializeClass(this);
+        RTSDiagramView::initializeClass(this);
         
         return true;
     }
@@ -402,7 +413,7 @@ CNOID_EXPORT int cnoid::deleteUnmanagedRTCs()
 }
 
 
-bool cnoid::deleteRTC(RTC::RtcBase* rtc, bool waitToBeDeleted)
+    bool cnoid::deleteRTC(RTC::RtcBase* rtc)
 {
     if(rtc){
 

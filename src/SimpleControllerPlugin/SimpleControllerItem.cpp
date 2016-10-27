@@ -262,12 +262,12 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
                 filesystem::path(executableTopDirectory()) /
                 CNOID_PLUGIN_SUBDIR / "simplecontroller" / dllPath;
             else {
-                const string& projectFileName = ProjectManager::instance()->getProjectFileName();
-                if (projectFileName.empty()){
+                string projectFile = ProjectManager::instance()->currentProjectFile();
+                if(projectFile.empty()){
                     mv->putln(_("Please save the project."));
                     return false;
-                }else{
-                    dllPath = boost::filesystem::path(projectFileName).parent_path() / dllPath;
+                } else {
+                    dllPath = boost::filesystem::path(projectFile).parent_path() / dllPath;
                 }
             }
         }

@@ -560,7 +560,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     worldLight->setName("WorldLight");
     worldLight->setDirection(Vector3(0.0, 0.0, -1.0));
     SgPosTransform* worldLightTransform = new SgPosTransform;
-    worldLightTransform->setTranslation(Vector3(0.0, 0.0, 5.0));
+    worldLightTransform->setTranslation(Vector3(0.0, 0.0, 10.0));
     worldLightTransform->addChild(worldLight);
     systemGroup->addChild(worldLightTransform);
     renderer->setAsDefaultLight(worldLight);
@@ -1028,8 +1028,18 @@ void SceneWidgetImpl::updateLatestEvent(QMouseEvent* event)
 
 bool SceneWidgetImpl::updateLatestEventPath()
 {
-    const bool usePixelBufferForPicking =
-        dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked();
+    /**
+       \note
+       QGLPixelBuffer is obsolete in Qt5, and the picking using it fails in some platforms.
+       Confirm that using QGLPixelBuffer for picking is not necessary and remove the code
+       on QGLPixelBuffer.
+    */
+    bool usePixelBufferForPicking = false;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    usePixelBufferForPicking =
+                 dynamic_cast<GL1SceneRenderer*>(renderer) && config->bufferForPickingCheck.isChecked();
+#endif
 
     if(pixelBufferForPicking){
         if(!usePixelBufferForPicking || pixelBufferForPicking->size() != size()){
@@ -1060,8 +1070,9 @@ bool SceneWidgetImpl::updateLatestEventPath()
     if(pixelBufferForPicking && !SHOW_IMAGE_FOR_PICKING){
         pixelBufferForPicking->doneCurrent();
     } else {
-        if(SHOW_IMAGE_FOR_PICKING)
+        if(SHOW_IMAGE_FOR_PICKING){
             swapBuffers();
+        }
         doneCurrent();
     }
 
@@ -2053,7 +2064,8 @@ void SceneWidgetImpl::onCurrentCameraChanged()
         int index = renderer->currentCameraIndex();
         const SgNodePath& path = renderer->cameraPath(index);
         for(int i = path.size() - 2; i >= 0; --i){
-            if(interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+            interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i]);
+            if(interactiveCameraTransform){
                 isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
                 break;
             }

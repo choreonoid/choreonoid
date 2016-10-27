@@ -4,7 +4,6 @@
 */
 
 #include "RTCItem.h"
-#include "BridgeConf.h"
 #include "OpenRTMUtil.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
@@ -16,6 +15,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Sleep>
 #include <cnoid/ProjectManager>
+#include <rtm/RTObject.h>
 #include <rtm/CorbaNaming.h>
 #include <boost/regex.hpp>
 #include "gettext.h"
@@ -24,6 +24,17 @@ using namespace std;
 using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+
+#if ( defined ( WIN32 ) || defined ( _WIN32 ) || defined(__WIN32__) || defined(__NT__) )
+#define SUFFIX_SHARED_EXT   ".dll"
+#define SUFFIX_EXE_EXT      ".exe"
+#elif defined(__APPLE__)
+#define SUFFIX_SHARED_EXT   ".dylib"
+#define SUFFIX_EXE_EXT      ".app"
+#else
+#define SUFFIX_SHARED_EXT   ".so"
+#define SUFFIX_EXE_EXT      ""
+#endif
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -102,7 +113,7 @@ void RTCItem::onPositionChanged()
 void RTCItem::onDisconnectedFromRoot()
 {
     if(rtcomp){
-        rtcomp->deleteRTC(false);
+        rtcomp->deleteRTC();
         delete rtcomp;
         rtcomp = 0;
     }
@@ -175,7 +186,7 @@ void RTCItem::setPathBase(int base)
 void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     Item::doPutProperties(putProperty);
-    putProperty(_("Relative Path Base"), pathBase,
+    putProperty(_("Relative path base"), pathBase,
         std::bind(&RTCItem::setPathBase, this, _1), true);
 
     FileDialogFilter filter;
@@ -187,13 +198,13 @@ void RTCItem::doPutProperties(PutPropertyFunction& putProperty)
         if(pathBase.is(RTC_DIRECTORY))
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc").string();
     }
-    putProperty(_("RTC module Name"), FilePath(moduleName, filter, dir),
+    putProperty(_("RTC module name"), FilePath(moduleName, filter, dir),
                 std::bind(&RTCItem::setModuleName, this, _1), true);
 
-    putProperty(_("Periodic type"), periodicType,
+    putProperty(_("Execution context"), periodicType,
                 std::bind((bool(Selection::*)(int))&Selection::select, &periodicType, _1));
     setPeriodicType(periodicType.selectedIndex());
-    putProperty(_("Periodic Rate"), periodicRate,
+    putProperty(_("Periodic rate"), periodicRate,
                 std::bind(&RTCItem::setPeriodicRate, this, _1), true);
 }
 
@@ -206,7 +217,7 @@ bool RTCItem::store(Archive& archive)
     archive.writeRelocatablePath("moduleName", moduleName);
     archive.write("periodicType", periodicType.selectedSymbol());
     archive.write("periodicRate", periodicRate);
-    archive.write("RelativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("relativePathBase", pathBase.selectedSymbol(), DOUBLE_QUOTED);
     return true;
 }
 
@@ -232,7 +243,7 @@ bool RTCItem::restore(const Archive& archive)
         ss << periodicRate;
         properties["exec_cxt.periodic.rate"] = ss.str();
     }
-    if (archive.read("RelativePathBase", symbol)){
+    if(archive.read("relativePathBase", symbol) || archive.read("RelativePathBase", symbol)){
         pathBase.select(symbol);
         oldPathBase = pathBase.selectedIndex();
     }
@@ -244,17 +255,15 @@ bool RTCItem::convertAbsolutePath()
 {
     modulePath = moduleName;
     if (!checkAbsolute(modulePath)){
-        if (pathBase.is(RTC_DIRECTORY))
-            modulePath = filesystem::path(executableTopDirectory()) /
-            CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
-        else {
-            const string& projectFileName = ProjectManager::instance()->getProjectFileName();
-            if (projectFileName.empty()){
+        if (pathBase.is(RTC_DIRECTORY)){
+            modulePath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "rtc" / modulePath;
+        } else {
+            string projectFile = ProjectManager::instance()->currentProjectFile();
+            if (projectFile.empty()){
                 mv->putln(_("Please save the project."));
                 return false;
-            }
-            else{
-                modulePath = boost::filesystem::path(projectFileName).parent_path() / modulePath;
+            } else {
+                modulePath = boost::filesystem::path(projectFile).parent_path() / modulePath;
             }
         }
     }
@@ -275,7 +284,7 @@ RTComponent::RTComponent(const filesystem::path& modulePath, PropertyMap& prop)
 
 RTComponent::~RTComponent()
 {
-    deleteRTC(true);
+    deleteRTC();
 }
 
 
@@ -403,7 +412,7 @@ void RTComponent::createProcess(string& command, PropertyMap& prop)
 }
 
 
-void RTComponent::deleteRTC(bool waitToBeDeleted)
+void RTComponent::deleteRTC()
 {
     if(TRACE_FUNCTIONS){
         cout << "BodyRTComponent::deleteRTC()" << endl;
@@ -412,7 +421,7 @@ void RTComponent::deleteRTC(bool waitToBeDeleted)
     if(rtc_){
         string rtcName(rtc_->getInstanceName());
         mv->putln(fmt(_("delete %1%")) % rtcName);
-        if(!cnoid::deleteRTC(rtc_, true)){
+        if(!cnoid::deleteRTC(rtc_)){
             mv->putln(fmt(_("%1% cannot be deleted.")) % rtcName);
         }
         rtc_ = 0;

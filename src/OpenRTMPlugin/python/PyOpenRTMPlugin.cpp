@@ -3,7 +3,7 @@
 */
 
 #include "../RTCItem.h"
-#include "../BodyRTCItem.h"
+#include "../deprecated/BodyRTCItem.h"
 
 #ifdef _WIN32
 #undef HAVE_UNISTD_H

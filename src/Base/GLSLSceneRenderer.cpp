@@ -1133,6 +1133,10 @@ void GLSLSceneRenderer::visitLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 {
+    if(isRenderingShadowMap){
+        return;
+    }
+    
     if(!lineSet->hasVertices() || lineSet->numLines() <= 0){
         return;
     }
