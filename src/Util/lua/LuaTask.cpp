@@ -41,10 +41,6 @@ public:
         descendantLuaObject = obj;
     }
 
-    sol::function superMethod(sol::object self){
-
-    }
-
     virtual void onMenuRequest(TaskMenu& menu) override {
         if(descendantLuaObject){
             sol::function f = descendantLuaObject["onMenuRequest"];
