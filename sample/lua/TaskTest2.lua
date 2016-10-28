@@ -1,27 +1,7 @@
 cnoid.require("Util")
 cnoid.require("Base")
 
-function deriveCppClass(baseClass)
-   local class = { }
-   class.new = function(...)
-      local obj = { }
-      baseobj = baseClass.new(...)
-      if type(baseobj) == "table" then
-	obj.cppobj = baseobj.cppobj
-      else
-	obj.cppobj = baseobj
-      end
-      obj.super = baseobj;
-      setmetatable(obj, { __index = class })
-      obj.cppobj:setDerivedLuaObject(obj)
-      class.initialize(obj)
-      return obj
-   end
-   setmetatable(class, { __index = baseClass })
-   return class
-end
-
-TaskBase = deriveCppClass(cnoid.Task)
+TaskBase = cnoid.derive(cnoid.Task)
 
 function TaskBase:initialize()
    print "TaskBase:initialize()"
@@ -39,8 +19,7 @@ function TaskBase:onDeactivated(sequencer)
 end
 
 
-TestTask = deriveCppClass(TaskBase)
-
+TestTask = cnoid.derive(TaskBase)
 
 function TestTask:initialize()
   

@@ -8,7 +8,6 @@
 #include "LuaUtil.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
