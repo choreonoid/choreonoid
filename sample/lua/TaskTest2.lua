@@ -2,39 +2,40 @@ cnoid.require("Util")
 cnoid.require("Base")
 
 function deriveCppClass(baseClass)
-  local class = { }
-  class.new = function(...)
+   local class = { }
+   class.new = function(...)
       local obj = { }
       baseobj = baseClass.new(...)
       if type(baseobj) == "table" then
 	obj.cppobj = baseobj.cppobj
-	obj.super = baseClass
       else
 	obj.cppobj = baseobj
-	obj.super = baseobj;
       end
+      obj.super = baseobj;
       setmetatable(obj, { __index = class })
-      obj.cppobj:setDescendantLuaObject(obj)
+      obj.cppobj:setDerivedLuaObject(obj)
       class.initialize(obj)
       return obj
-  end
-  setmetatable(class, { __index = baseClass })
-  return class
+   end
+   setmetatable(class, { __index = baseClass })
+   return class
 end
 
 TaskBase = deriveCppClass(cnoid.Task)
 
 function TaskBase:initialize()
-  print "TaskBase:initialize()"
-  self:setName("TaskBase")
+   print "TaskBase:initialize()"
+   self:setName("TaskBase")
 end
 
-function TaskBase:onActivated()
-  print "TaskBase::onActivated()"
+function TaskBase:onActivated(sequencer)
+   self.super:onActivated(sequencer)
+   print "TaskBase::onActivated()"
 end
 
-function TaskBase:onDeactivated()
-  print "TaskBase::onDeactivated()"
+function TaskBase:onDeactivated(sequencer)
+   print "TaskBase::onDeactivated()"
+   self.super:onDeactivated(sequencer)
 end
 
 
@@ -56,14 +57,14 @@ function TestTask:initialize()
           end)
 end
 
-function TestTask:onActivated()
-  self.super.onActivated()
+function TestTask:onActivated(sequencer)
+  self.super:onActivated(sequencer)
   print "TestTask:onActivated()"
 end
 
-function TestTask:onDeactivated()
+function TestTask:onDeactivated(sequencer)
   print "TestTask:onDeactivated()"
-  self.super.onDeactivated()
+  self.super:onDeactivated(sequencer)
 end
 
 task = TestTask.new()

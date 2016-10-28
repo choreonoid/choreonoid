@@ -31,52 +31,52 @@ public:
 class TaskWrap : public Task
 {
 public:
-    sol::table descendantLuaObject;
+    sol::table derivedLuaObject;
 
     sol::table derived(sol::this_state s){
 
     }
 
-    void setDescendantLuaObject(sol::table obj){
-        descendantLuaObject = obj;
+    void setDerivedLuaObject(sol::table obj){
+        derivedLuaObject = obj;
     }
 
     virtual void onMenuRequest(TaskMenu& menu) override {
-        if(descendantLuaObject){
-            sol::function f = descendantLuaObject["onMenuRequest"];
-            if(f) f(descendantLuaObject, std::ref(menu));
+        if(derivedLuaObject){
+            sol::function f = derivedLuaObject["onMenuRequest"];
+            if(f) f(derivedLuaObject, std::ref(menu));
         } else {
             Task::onMenuRequest(menu);
         }
     }
     virtual void onActivated(AbstractTaskSequencer* sequencer) override {
-        if(descendantLuaObject){
-            sol::function f = descendantLuaObject["onActivated"];
-            if(f) f(descendantLuaObject, sequencer);
+        if(derivedLuaObject){
+            sol::function f = derivedLuaObject["onActivated"];
+            if(f) f(derivedLuaObject, sequencer);
         } else {
             Task::onActivated(sequencer);
         }
     }
     virtual void onDeactivated(AbstractTaskSequencer* sequencer) override {
-        if(descendantLuaObject){
-            sol::function f = descendantLuaObject["onDeactivated"];
-            if(f) f(descendantLuaObject, sequencer);
+        if(derivedLuaObject){
+            sol::function f = derivedLuaObject["onDeactivated"];
+            if(f) f(derivedLuaObject, sequencer);
         } else {
             Task::onDeactivated(sequencer);
         }
     }
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override {
-        if(descendantLuaObject){
-            sol::function f = descendantLuaObject["storeState"];
-            if(f) f(descendantLuaObject, sequencer /*, std::ref(archive)*/);
+        if(derivedLuaObject){
+            sol::function f = derivedLuaObject["storeState"];
+            if(f) f(derivedLuaObject, sequencer /*, std::ref(archive)*/);
         } else {
             Task::storeState(sequencer, archive);
         }
     }
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive) override {
-        if(descendantLuaObject){
-            sol::function f = descendantLuaObject["restoreState"];
-            if(f) f(descendantLuaObject, sequencer /*, std::ref(archive)*/);
+        if(derivedLuaObject){
+            sol::function f = derivedLuaObject["restoreState"];
+            if(f) f(derivedLuaObject, sequencer /*, std::ref(archive)*/);
         } else {
             Task::restoreState(sequencer, archive);
         }
@@ -249,8 +249,8 @@ void exportLuaTaskTypes(sol::table& module)
         sol::base_classes, sol::bases<Task>(),
         "new", sol::factories([]() -> TaskWrapPtr { return new TaskWrap(); }),
         "derived", &TaskWrap::derived,
-        "setDescendantLuaObject",
-        [](sol::object self, sol::table obj) { native<TaskWrap>(self)->setDescendantLuaObject(obj); },
+        "setDerivedLuaObject",
+        [](sol::object self, sol::table obj) { native<TaskWrap>(self)->setDerivedLuaObject(obj); },
         "name", [](sol::object self) { return native<Task>(self)->name(); },
         "setName", [](sol::object self, const char* name) { native<Task>(self)->setName(name); },
         "caption", [](sol::object self) { return native<Task>(self)->caption(); },
@@ -273,7 +273,9 @@ void exportLuaTaskTypes(sol::table& module)
         "lastCommandIndex", [](sol::object self) { return native<Task>(self)->lastCommandIndex(); },
         "funcToSetCommandLink", [](sol::object self, int commandIndex) { return native<Task>(self)->funcToSetCommandLink(commandIndex); },
         "commandLevel", [](sol::object self, int level) { return native<Task>(self)->commandLevel(level); },
-        "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); }
+        "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); },
+        "onActivated", [](sol::object self, AbstractTaskSequencer* seq) { return native<Task>(self)->Task::onActivated(seq); },
+        "onDeactivated", [](sol::object self, AbstractTaskSequencer* seq) { return native<Task>(self)->Task::onDeactivated(seq); }
         );
 
     module.new_usertype<AbstractTaskSequencer>(
