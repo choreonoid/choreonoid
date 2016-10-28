@@ -32,10 +32,6 @@ class TaskWrap : public Task
 public:
     sol::table derivedLuaObject;
 
-    sol::table derived(sol::this_state s){
-
-    }
-
     void setDerivedLuaObject(sol::table obj){
         derivedLuaObject = obj;
     }
@@ -67,7 +63,8 @@ public:
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override {
         if(derivedLuaObject){
             sol::function f = derivedLuaObject["storeState"];
-            if(f) f(derivedLuaObject, sequencer /*, std::ref(archive)*/);
+            //if(f) f(derivedLuaObject, sequencer, std::ref(archive));
+            if(f) f(derivedLuaObject, sequencer);
         } else {
             Task::storeState(sequencer, archive);
         }
@@ -247,7 +244,6 @@ void exportLuaTaskTypes(sol::table& module)
         "Task",
         sol::base_classes, sol::bases<Task>(),
         "new", sol::factories([]() -> TaskWrapPtr { return new TaskWrap(); }),
-        "derived", &TaskWrap::derived,
         "setDerivedLuaObject",
         [](sol::object self, sol::table obj) { native<TaskWrap>(self)->setDerivedLuaObject(obj); },
         "name", [](sol::object self) { return native<Task>(self)->name(); },

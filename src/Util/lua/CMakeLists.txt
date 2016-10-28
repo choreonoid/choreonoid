@@ -7,6 +7,7 @@ add_definitions(-DSOL_SAFE_USERTYPE -DSOL_CHECK_ARGUMENTS)
 add_cnoid_lua_module(LuaUtil
   LuaUtil.cpp
   LuaSignal.cpp
+  LuaValueTree.cpp
   LuaTask.cpp
   LuaUtilModule.cpp
   )
