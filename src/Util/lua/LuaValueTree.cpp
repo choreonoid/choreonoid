@@ -25,15 +25,17 @@ void exportLuaValueTree(lua_State* L, sol::table& module)
         "ValueNode",
         "new", sol::no_constructor,
         "isValid", &ValueNode::isValid,
+        "nodeType", &ValueNode::nodeType,
+        "isScalar", &ValueNode::isScalar,
+        "isString", &ValueNode::isString,
+        "isMapping", &ValueNode::isMapping,
+        "isListing", &ValueNode::isListing,
         "toInt", &ValueNode::toInt,
         "toNumber", &ValueNode::toDouble,
         "toBool", &ValueNode::toBool,
-        "isScalar", &ValueNode::isScalar,
-        "isString", &ValueNode::isString,
         "toString", &ValueNode::toString,
-        "isMapping", &ValueNode::isMapping,
         "toMapping", [](ValueNode* self) -> MappingPtr { return self->toMapping(); },
-        "isListing", [](ValueNode* self) -> ListingPtr { return self->toListing(); },
+        "toListing", [](ValueNode* self) -> ListingPtr { return self->toListing(); },
         "hasLineInfo", &ValueNode::hasLineInfo,
         "line", &ValueNode::line,
         "column", &ValueNode::column
@@ -41,6 +43,7 @@ void exportLuaValueTree(lua_State* L, sol::table& module)
 
     module.new_usertype<Mapping>(
         "Mapping",
+        sol::base_classes, sol::bases<ValueNode>(),
         "new", sol::factories([]() -> MappingPtr { return new Mapping; }),
         "empty", &Mapping::empty,
         "size", &Mapping::size,
@@ -77,6 +80,7 @@ void exportLuaValueTree(lua_State* L, sol::table& module)
 
     module.new_usertype<Listing>(
         "Listing",
+        sol::base_classes, sol::bases<ValueNode>(),
         "new", sol::factories([]() -> ListingPtr { return new Listing; }),
         "empty", &Listing::empty,
         "size", &Listing::size,

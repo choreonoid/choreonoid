@@ -2,8 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_PYUTIL_H
-#define CNOID_UTIL_PYUTIL_H
+#ifndef CNOID_UTIL_LUA_UTIL_H
+#define CNOID_UTIL_LUA_UTIL_H
 
 #include "../Referenced.h"
 #include <sol.hpp>

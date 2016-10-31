@@ -18,6 +18,25 @@ function TaskBase:onDeactivated(sequencer)
    self.super:onDeactivated(sequencer)
 end
 
+function TaskBase:storeState(sequencer, archive)
+   self.super:storeState(sequencer, archive)
+   print "TaskBase::storeState()"
+   print("currentPhaseIndex: ", sequencer:currentPhaseIndex())
+   print("archive:nodeType(): ", archive:nodeType())
+   print("archive:size(): ", archive:size())
+   print("archive:empty(): ", archive:empty())
+   print("archive:numberFormat(): ", archive:numberFormat())
+   print("archive:isMapping(): ", archive:isMapping())
+   print("archive:isListing(): ", archive:isListing())
+end
+
+function TaskBase:restoreState(sequencer, archive)
+   self.super:restoreState(sequencer, archive)
+   print "TaskBase::restoreState()"
+   print("archive:nodeType(): ", archive:nodeType())
+end
+
+
 
 TestTask = cnoid.derive(TaskBase)
 

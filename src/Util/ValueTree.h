@@ -369,7 +369,7 @@ public:
             break;
         }
     }
-        
+
     iterator begin() { return values.begin(); }
     iterator end() { return values.end(); }
     const_iterator begin() const { return values.begin(); }
@@ -538,7 +538,7 @@ public:
     }
 
     void appendLF();
-        
+
     iterator begin() { return values.begin(); }
     iterator end() { return values.end(); }
     const_iterator begin() const { return values.begin(); }

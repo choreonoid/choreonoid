@@ -63,8 +63,13 @@ public:
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override {
         if(derivedLuaObject){
             sol::function f = derivedLuaObject["storeState"];
-            if(f) f(derivedLuaObject, sequencer, &archive);
-            
+            /**
+               \note If archive is passed as a reference or pointer, the object seems broken in the Lua side.
+               In this case, probably the pointer is not correctly passed to the Lua function.
+               This occurs for a class that has the begin and end methods, and the is_container is set to false
+               to avoid compile errors.
+            */
+            if(f) f(derivedLuaObject, sequencer, MappingPtr(&archive));
         } else {
             Task::storeState(sequencer, archive);
         }
@@ -72,7 +77,7 @@ public:
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive) override {
         if(derivedLuaObject){
             sol::function f = derivedLuaObject["restoreState"];
-            if(f) f(derivedLuaObject, sequencer, const_cast<Mapping*>(&archive));
+            if(f) f(derivedLuaObject, sequencer, MappingPtr(const_cast<Mapping*>(&archive)));
         } else {
             Task::restoreState(sequencer, archive);
         }
@@ -269,8 +274,14 @@ void exportLuaTaskTypes(sol::table& module)
         "funcToSetCommandLink", [](sol::object self, int commandIndex) { return native<Task>(self)->funcToSetCommandLink(commandIndex); },
         "commandLevel", [](sol::object self, int level) { return native<Task>(self)->commandLevel(level); },
         "maxCommandLevel", [](sol::object self) { return native<Task>(self)->maxCommandLevel(); },
-        "onActivated", [](sol::object self, AbstractTaskSequencer* seq) { return native<Task>(self)->Task::onActivated(seq); },
-        "onDeactivated", [](sol::object self, AbstractTaskSequencer* seq) { return native<Task>(self)->Task::onDeactivated(seq); }
+        "onActivated", [](sol::object self, AbstractTaskSequencer* seq) {
+            return native<Task>(self)->Task::onActivated(seq); },
+        "onDeactivated", [](sol::object self, AbstractTaskSequencer* seq) {
+            return native<Task>(self)->Task::onDeactivated(seq); },
+        "storeState", [](sol::object self, AbstractTaskSequencer* seq, Mapping& archive) {
+            return native<Task>(self)->Task::storeState(seq, archive); },
+        "restoreState", [](sol::object self, AbstractTaskSequencer* seq, const Mapping& archive) {
+            return native<Task>(self)->Task::restoreState(seq, archive); }
         );
 
     module.new_usertype<AbstractTaskSequencer>(
