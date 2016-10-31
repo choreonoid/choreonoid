@@ -710,7 +710,7 @@ void RokiLink::getKinematicStateFromRoki()
             link->q() = dis[0];
             link->dq() = v[0];
             break;
-        case Link::FREE_JOINT:
+        case Link::FREE_JOINT:{
             Vector3 aa(dis[3], dis[4], dis[5]);
             double angle = aa.norm();
             Matrix3 R;
@@ -736,6 +736,9 @@ void RokiLink::getKinematicStateFromRoki()
         		link->v() = Vector3(v[0], v[1], v[2]);
         		link->w() = Vector3(v[3], v[4], v[5]);
         	}
+            break;
+        }
+        default:
             break;
     }
 }
@@ -764,6 +767,8 @@ void RokiLink::setKinematicStateToRoki(zVec dis, int k)
             zMat3DToAA( &m, (zVec3D *)&zVecElem(dis,3) );
             break;
         }
+        default:
+            break;
     }
 }
 
