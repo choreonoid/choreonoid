@@ -64,4 +64,17 @@ CNOID_EXPORT void stackDump(lua_State* L, std::ostream& os);
 
 }
 
+namespace cnoid {
+class Mapping;
+class Listing;
+}
+
+namespace sol {
+template <> struct is_container<cnoid::Mapping> : std::false_type {};
+template <> struct is_container<const cnoid::Mapping> : std::false_type {};
+template <> struct is_container<cnoid::Listing> : std::false_type {};
+template <> struct is_container<const cnoid::Listing> : std::false_type {};
+}
+
+
 #endif

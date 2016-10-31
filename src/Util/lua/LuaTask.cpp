@@ -63,8 +63,8 @@ public:
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override {
         if(derivedLuaObject){
             sol::function f = derivedLuaObject["storeState"];
-            //if(f) f(derivedLuaObject, sequencer, std::ref(archive));
-            if(f) f(derivedLuaObject, sequencer);
+            if(f) f(derivedLuaObject, sequencer, &archive);
+            
         } else {
             Task::storeState(sequencer, archive);
         }
@@ -72,7 +72,7 @@ public:
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive) override {
         if(derivedLuaObject){
             sol::function f = derivedLuaObject["restoreState"];
-            if(f) f(derivedLuaObject, sequencer /*, std::ref(archive)*/);
+            if(f) f(derivedLuaObject, sequencer, const_cast<Mapping*>(&archive));
         } else {
             Task::restoreState(sequencer, archive);
         }
