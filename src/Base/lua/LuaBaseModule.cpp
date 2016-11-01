@@ -3,6 +3,7 @@
 */
 
 #include "../Item.h"
+#include "../RootItem.h"
 #include "../ExtCommandItem.h"
 #include "../ItemList.h"
 #include "../MessageView.h"
@@ -14,26 +15,6 @@
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-sol::table Item_getDescendantItems(Item* self, sol::table itemClass, sol::this_state s)
-{
-    ItemList<Item> items;
-    items.extractChildItems(self);
-    sol::state_view lua(s);
-    sol::table matched = lua.create_table();
-    int index = 1;
-    for(size_t i=0; i < items.size(); ++i){
-        sol::object casted = itemClass["cast"](items[i]);
-        if(casted != sol::nil){
-            matched[index++] = casted;
-        }
-    }
-    return matched;
-}
-
-}
 
 extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 {
@@ -85,15 +66,35 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
         "isTemporal", &Item::isTemporal,
         "setTemporal", &Item::setTemporal,
         "notifyUpdate", &Item::notifyUpdate,
-        "getDescendantItems", Item_getDescendantItems
+
+        "getDescendantItems", [](Item* self, sol::table itemClass, sol::this_state s){
+            ItemList<Item> items;
+            items.extractChildItems(self);
+            sol::state_view lua(s);
+            sol::table matched = lua.create_table();
+            int index = 1;
+            for(size_t i=0; i < items.size(); ++i){
+                sol::object casted = itemClass["cast"](items[i]);
+                if(casted != sol::nil){
+                    matched[index++] = casted;
+                }
+            }
+            return matched;
+        }
         );
 
+    module.new_usertype<RootItem>(
+        "RootItem",
+        sol::base_classes, sol::bases<Item>(),
+        "new", sol::no_constructor,
+        "instance", []() -> RootItemPtr { return RootItem::instance(); }
+        );
+    
     module.new_usertype<ExtCommandItem>(
         "ExtCommandItem",
         sol::base_classes, sol::bases<Item>(),
         "new", sol::factories([]() -> ExtCommandItemPtr { return new ExtCommandItem(); }),
         "cast", [](Item* item) -> ExtCommandItemPtr { return dynamic_cast<ExtCommandItem*>(item); },
-        //sol::call_constructor, [](Item* item) -> ExtCommandItemPtr { return dynamic_cast<ExtCommandItem*>(item); },
         "setCommand", &ExtCommandItem::setCommand,
         "command", &ExtCommandItem::command,
         "waitingTimeAfterStarted", &ExtCommandItem::waitingTimeAfterStarted,
@@ -101,7 +102,6 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
         "execute", &ExtCommandItem::execute,
         "terminate", &ExtCommandItem::terminate
         );
-
 
     sol::table timeBar = module.new_usertype<TimeBar>(
         "TimeBar",

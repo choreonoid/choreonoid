@@ -1,17 +1,17 @@
+cnoid.require "Util"
 cnoid.require "Base"
+cnoid.require "Body"
 cnoid.require "BodyPlugin"
-posix = require "posix"
 
 bodyItems = cnoid.RootItem.instance():getDescendantItems(cnoid.BodyItem)
 
-for bodyItem in bodyItems do
+for i, bodyItem in ipairs(bodyItems) do
    body = bodyItem:body()
    rootLink = body:rootLink()
    for i=1,20 do
-      rootLink:p += { 0, 0, 0.01 }
+      rootLink:setTranslation(rootLink:translation() + cnoid.Vector3(0, 0, 0.01))
       body:calcForwardKinematics()
       bodyItem:notifyKinematicStateChange()
-      coid.MessageView.instance():flush()
-      time.sleep(0.01)
+      cnoid.MessageView.instance():flush()
    end
 end

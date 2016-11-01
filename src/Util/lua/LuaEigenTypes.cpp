@@ -3,7 +3,6 @@
 */
 
 #include "LuaUtil.h"
-#include "../EigenTypes.h"
 #include "../EigenUtil.h"
 #include <boost/format.hpp>
 
@@ -20,10 +19,9 @@ void exportLuaEigenTypes(sol::table& module)
         "new", sol::factories(
             []() { return make_shared_aligned<Vector3>(); },
             [](double x, double y, double z) { return make_shared_aligned<Vector3>(x, y, z); }),
-        sol::call_constructor, [](sol::table v){
-            double x = v[1]; double y = v[2]; double z = v[3];
-            return make_shared_aligned<Vector3>(x, y, z);
-        },
+        sol::call_constructor, sol::factories(
+            [](sol::table self){ return make_shared_aligned<Vector3>(); },
+            [](sol::table self, double x, double y, double z){ return make_shared_aligned<Vector3>(x, y, z); }),
         sol::meta_function::index, [](Vector3& self, int index) { return self[index]; },
         sol::meta_function::new_index, [](Vector3& self, int index, double value) { self[index] = value; },
         sol::meta_function::unary_minus, [](Vector3& self) { return make_shared_aligned<Vector3>(-self); },
