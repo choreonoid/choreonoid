@@ -1,8 +1,8 @@
-Base = require "cnoid.Base"
-BodyPlugin = require "cnoid.BodyPlugin"
+cnoid.require "Base"
+cnoid.require "BodyPlugin"
 posix = require "posix"
 
-bodyItems = Base.RootItem.instance():getDescendantItems(BodyPlugin.BodyItem)
+bodyItems = cnoid.RootItem.instance():getDescendantItems(cnoid.BodyItem)
 
 for bodyItem in bodyItems do
    body = bodyItem:body()
@@ -11,7 +11,7 @@ for bodyItem in bodyItems do
       rootLink:p += { 0, 0, 0.01 }
       body:calcForwardKinematics()
       bodyItem:notifyKinematicStateChange()
-      MessageView.instance():flush()
+      coid.MessageView.instance():flush()
       time.sleep(0.01)
    end
 end

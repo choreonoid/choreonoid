@@ -1,5 +1,5 @@
-cnoid.require("Util")
-cnoid.require("Base")
+cnoid.require "Util"
+cnoid.require "Base"
 
 TaskBase = cnoid.derive(cnoid.Task)
 

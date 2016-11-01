@@ -1,12 +1,10 @@
-util = require "cnoid.Util"
-base = require "cnoid.Base"
+cnoid.require "Util"
+cnoid.require "Base"
 
 function onTimeChanged(time)
    print("time changed: ", time)
    return true
 end
 
-timeBar = base.TimeBar.instance()
+timeBar = cnoid.TimeBar.instance()
 timeBar:sigTimeChanged():connect(onTimeChanged)
-
-
