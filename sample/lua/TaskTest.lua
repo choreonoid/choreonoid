@@ -1,46 +1,42 @@
 cnoid.require("Util")
 cnoid.require("Base")
 
-function deriveCppClass(base)
-  local class = { }
-  class.new = function(...)
-      local obj = { }
-      obj.cppobj = base.new(...)
-      setmetatable(obj, { __index = class })
-      obj.cppobj:setDescendantLuaObject(obj)
-      MyTask.initialize(obj)
-      return obj
-  end
-  setmetatable(class, { __index = base })
-  return class
-end
+TaskBase = cnoid.derive(cnoid.Task)
 
-MyTask = deriveCppClass(cnoid.Task)
+TestTask = cnoid.derive(TaskBase)
 
-function MyTask:initialize()
-   
-   self:setName("TestTask")
+function TestTask:initialize()
+  
+  self:setName("TestTask")
 
-   self:addPhase("Phase 1")
-   
-   self:addCommand("Command 1")
+  self:addPhase("Phase 1")
+
+  self:addCommand("Command 1")
        :setFunction(
           function(proc)
 	     print "Command 1"
           end)
 end
 
-function MyTask:onActivated()
-  print "MyTask:onActivated()"
+function TestTask:onActivated(sequencer)
+  self.super:onActivated(sequencer)
 end
 
-function MyTask:onDeactivated()
-  print "MyTask:onDeactivated()"
+function TestTask:onDeactivated(sequencer)
+  self.super:onDeactivated(sequencer)
 end
 
-task = MyTask.new()
+function TestTask:storeState(sequencer, archive)
+   self.super:storeState(sequencer, archive)
+end
 
-task2 = MyTask.new()
+function TestTask:restoreState(sequencer, archive)
+   self.super:restoreState(sequencer, archive)
+end
+
+task = TestTask.new()
+
+task2 = TestTask.new()
 task2:setName("Task 2");
 
 taskView = cnoid.TaskView.instance()
