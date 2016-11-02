@@ -8,13 +8,24 @@
 #include "../ItemList.h"
 #include "../MessageView.h"
 #include "../TaskView.h"
-#include "../TimeBar.h"
 #include <cnoid/LuaUtil>
-#include <cnoid/LuaSignal>
 #include "exportdecl.h"
 
 using namespace std;
 using namespace cnoid;
+
+namespace cnoid {
+
+void exportLuaQtCoreTypes(sol::table& module);
+void exportLuaQtGuiTypes(sol::table& module);
+void exportLuaQtExTypes(sol::table& module);
+void exportLuaMainWindowTypes(sol::table& module);
+void exportLuaItems(sol::table& module);
+void exportLuaViews(sol::table& module);
+void exportLuaToolBarTypes(sol::table& module);
+void exportLuaTimeBar(sol::table& module);
+
+}
 
 extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 {
@@ -23,9 +34,17 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
     lua["require"]("cnoid.Util");
 
     sol::table module = lua.create_table();
-    
+
+    exportLuaQtCoreTypes(module);
+    exportLuaQtGuiTypes(module);
+    exportLuaQtExTypes(module);
+    exportLuaMainWindowTypes(module);
+    exportLuaToolBarTypes(module);
+    exportLuaTimeBar(module);
+
     module.new_usertype<View>(
         "View",
+        sol::base_classes, sol::bases<QWidget, QObject>(),
         "new", sol::no_constructor,
         "name", &View::name,
         "isActive", &View::isActive,
@@ -35,7 +54,7 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 
     module.new_usertype<MessageView>(
         "MessageView",
-        sol::base_classes, sol::bases<View>(),
+        sol::base_classes, sol::bases<View, QWidget, QObject>(),
         "new", sol::no_constructor,
         "instance", &MessageView::instance,
         "put", [](MessageView* self, const char* msg){ self->put(msg); },
@@ -47,7 +66,7 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
 
     module.new_usertype<TaskView>(
         "TaskView",
-        sol::base_classes, sol::bases<View, AbstractTaskSequencer>(),
+        sol::base_classes, sol::bases<View, QWidget, QObject, AbstractTaskSequencer>(),
         "new", sol::no_constructor,
         "instance", &TaskView::instance
         );
@@ -102,40 +121,6 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Base(lua_State* L)
         "execute", &ExtCommandItem::execute,
         "terminate", &ExtCommandItem::terminate
         );
-
-    sol::table timeBar = module.new_usertype<TimeBar>(
-        "TimeBar",
-        "instance", &TimeBar::instance,
-        "sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized,
-        "sigPlaybackStarted", &TimeBar::sigPlaybackStarted,
-        "sigTimeChanged", &TimeBar::sigTimeChanged,
-        "sigPlaybackStopped", &TimeBar::sigPlaybackStopped,
-        "time", &TimeBar::time,
-        "setTime", &TimeBar::setTime,
-        "realPlaybackTime", &TimeBar::realPlaybackTime,
-        "minTime", &TimeBar::minTime,
-        "maxTime", &TimeBar::maxTime,
-        "setTimeRange", &TimeBar::setTimeRange,
-        "frameRate", &TimeBar::frameRate,
-        "setFrameRate", &TimeBar::setFrameRate,
-        "timeStep", &TimeBar::timeStep,
-        "playbackSpeedScale", &TimeBar::playbackSpeedScale,
-        "setPlaybackSpeedScale", &TimeBar::setPlaybackSpeedScale,
-        "playbackFrameRate", &TimeBar::playbackFrameRate,
-        "setPlaybackFrameRate", &TimeBar::setPlaybackFrameRate,
-        "setRepeatMode", &TimeBar::setRepeatMode,
-        "startPlayback", &TimeBar::startPlayback,
-        "startPlaybackFromFillLevel", &TimeBar::startPlaybackFromFillLevel,
-        "stopPlayback", [](TimeBar* self) { self->stopPlayback(); },
-        "isDoingPlayback", &TimeBar::isDoingPlayback,
-        "startFillLevelUpdate", &TimeBar::startFillLevelUpdate,
-        "updateFillLevel", &TimeBar::updateFillLevel,
-        "stopFillLevelUpdate", &TimeBar::stopFillLevelUpdate,
-        "setFillLevelSync", &TimeBar::setFillLevelSync
-        );
-
-    LuaSignal<bool(double time), LogicalProduct>("SigPlaybackInitialized", timeBar);
-    LuaSignal<bool(double time), LogicalSum>("SigTimeChanged", timeBar);
 
     sol::stack::push(L, module);
     

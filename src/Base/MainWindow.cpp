@@ -302,6 +302,12 @@ void MainWindow::addToolBar(ToolBar* toolbar)
 }
 
 
+void MainWindow::removeToolBar(ToolBar* toolbar)
+{
+    impl->toolBarArea->removeToolBar(toolbar);
+}
+
+
 void MainWindow::getAllToolBars(std::vector<ToolBar*>& out_toolBars)
 {
     impl->toolBarArea->getAllToolBars(out_toolBars);
