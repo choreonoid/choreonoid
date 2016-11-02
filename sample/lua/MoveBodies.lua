@@ -13,5 +13,6 @@ for i, bodyItem in ipairs(bodyItems) do
       body:calcForwardKinematics()
       bodyItem:notifyKinematicStateChange()
       cnoid.MessageView.instance():flush()
+      cnoid.sleep(0.01)
    end
 end

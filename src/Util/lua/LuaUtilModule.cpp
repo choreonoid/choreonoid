@@ -3,6 +3,7 @@
 */
 
 #include "LuaUtil.h"
+#include "../Sleep.h"
 #include "exportdecl.h"
 
 using namespace std;
@@ -60,6 +61,8 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_Util(lua_State* L)
     exportLuaEigenTypes(module);
     exportLuaValueTree(L, module);
     exportLuaTaskTypes(module);
+
+    module["sleep"] = [](double time) { cnoid::msleep(time * 1000.0); };
 
     sol::stack::push(L, module);
     
