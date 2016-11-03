@@ -2,15 +2,9 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "../Item.h"
 #include "../RootItem.h"
 #include "../ExtCommandItem.h"
-#include "../ItemList.h"
-#include "LuaBase.h"
-#include <cnoid/LuaUtil>
-
-using namespace std;
-using namespace cnoid;
+#include <cnoid/LuaItemList>
 
 namespace cnoid {
 
@@ -67,7 +61,7 @@ void exportLuaItems(sol::table& module)
         "terminate", &ExtCommandItem::terminate
         );
 
-    defineLuaItemFunctions<ExtCommandItem>("ExtCommandItem", module);
+    LuaItemList<ExtCommandItem>("ExtCommandItem", module);
 }
 
 }

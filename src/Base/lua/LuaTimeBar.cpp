@@ -45,8 +45,8 @@ void exportLuaTimeBar(sol::table& module)
         "stopFillLevelUpdate", &TimeBar::stopFillLevelUpdate,
         "setFillLevelSync", &TimeBar::setFillLevelSync);
 
-    defineLuaSignal<bool(double time), LogicalProduct>("PlaybackInitializationSignal", module);
-    defineLuaSignal<bool(double time), LogicalSum>("PlaybackTimeSignal", module);
+    LuaSignal<bool(double time), LogicalProduct>("PlaybackInitializationSignal", module);
+    LuaSignal<bool(double time), LogicalSum>("PlaybackTimeSignal", module);
 }
 
 }

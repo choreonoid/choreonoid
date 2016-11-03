@@ -14,9 +14,14 @@ BodyShaker = {
       local bodyItems = { }
       local dp = cnoid.Vector3(0.0, 0.0, 0.01)
       local connections = cnoid.ScopedConnectionSet.new()
+      local timer = cnoid.Timer.new()
 
       function onSelectionChanged(items)
+	 print "items:"
+	 for k,item in ipairs(items) do print(item:name()) end
 	 bodyItems = cnoid.extractBodyItems(items)
+	 print "bodyItems:"
+	 for k,item in ipairs(bodyItems) do print(item:name()) end
 	 if #bodyItems > 0 and button:isChecked() then
 	    timer:start(50)
 	 else
@@ -24,7 +29,7 @@ BodyShaker = {
 	 end
       end
 
-      connections.add(
+      connections:add(
 	 cnoid.ItemTreeView.instance():sigSelectionChanged():connect(onSelectionChanged))
 
       connections:add(
@@ -33,7 +38,6 @@ BodyShaker = {
 	       onSelectionChanged(cnoid.ItemTreeView.instance():selectedItems())
 	    end))
 
-      local timer = cnoid.Timer.new()
       connections:add(
 	 timer:sigTimeout():connect(
 	    function()

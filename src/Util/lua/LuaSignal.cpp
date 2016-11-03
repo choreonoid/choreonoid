@@ -14,23 +14,23 @@ void exportLuaSignalTypes(sol::table& module)
 {
     typedef Signal<void()> VoidSignal;
     typedef SignalProxy<void()> VoidSignalProxy;
-    defineLuaSignal<void()>("VoidSignal", module);
+    LuaSignal<void()>("VoidSignal", module);
 
     typedef Signal<void(bool)> BoolSignal;
     typedef SignalProxy<void(bool)> BoolSignalProxy;
-    defineLuaSignal<void(bool)>("BoolSignal", module);
+    LuaSignal<void(bool)>("BoolSignal", module);
     
     typedef Signal<void(int)> IntSignal;
     typedef SignalProxy<void(int)> IntSignalProxy;
-    defineLuaSignal<void(int)>("IntSignal", module);
+    LuaSignal<void(int)>("IntSignal", module);
     
     typedef Signal<void(double)> NumberSignal;
     typedef SignalProxy<void(double)> NumberSignalProxy;
-    defineLuaSignal<void(double)>("NumberSignal", module);
+    LuaSignal<void(double)>("NumberSignal", module);
     
     typedef Signal<void(const std::string& str)> StringSignal;
     typedef SignalProxy<void(const std::string& str)> StringSignalProxy;
-    defineLuaSignal<void(const std::string& str)>("StringSignal", module);
+    LuaSignal<void(const std::string& str)>("StringSignal", module);
 
     module.new_usertype<Connection>(
         "Connection",

@@ -5,7 +5,7 @@
 #include "../BodyItem.h"
 #include <cnoid/LuaUtil>
 #include <cnoid/LuaSignal>
-#include <cnoid/LuaBase>
+#include <cnoid/LuaItemList>
 
 using namespace std;
 using namespace cnoid;
@@ -66,7 +66,7 @@ extern "C" CNOID_EXPORT int luaopen_cnoid_BodyPlugin(lua_State* L)
         "setStance", &BodyItem::setStance
         );
 
-    defineLuaItemFunctions<BodyItem>("BodyItem", module);
+    LuaItemList<BodyItem>("BodyItem", module);
 
     sol::stack::push(L, module);
     
