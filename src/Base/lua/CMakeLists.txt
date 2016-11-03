@@ -13,6 +13,8 @@ add_cnoid_lua_module(LuaBase
   LuaToolBar.cpp
   LuaTimeBar.cpp
   LuaItems.cpp
+  LuaViews.cpp
+  LuaItemTreeView.cpp
   )
 
 target_link_libraries(LuaBase
