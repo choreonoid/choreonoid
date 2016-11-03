@@ -144,57 +144,30 @@ public:
 
 } // namespace signal_private
 
-template<
-    typename Signature, 
-    typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
-    >
-class LuaSignalProxy : public signal_private::lua_signal_impl<
-    (boost::function_traits<Signature>::arity), Signature, Combiner>
-{
-    typedef signal_private::lua_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
-    
-    static Connection connect(SignalProxy<Signature, Combiner>& self, sol::function func){
-        return self.connect(typename base_type::caller(func));
-    }
-public:
-    LuaSignalProxy(const char* name, sol::table& module) {
-        module.new_usertype<SignalProxy<Signature, Combiner>>(
-            name, "connect", &LuaSignalProxy::connect);
-    }
-};
-
 
 template<
     typename Signature, 
     typename Combiner = signal_private::last_value<
         typename signal_private::function_traits<Signature>::result_type>
     >
-class LuaSignal : public signal_private::lua_signal_impl<
-    (boost::function_traits<Signature>::arity), Signature, Combiner>
+void defineLuaSignal(const char* name, sol::table& module)
 {
     typedef Signal<Signature, Combiner> SignalType;
     typedef SignalProxy<Signature, Combiner> SignalProxyType;
-    typedef signal_private::lua_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
+    typedef signal_private::lua_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> signal_impl;
     
-    static Connection connect(SignalType& self, sol::function func){
-        return self.connect(typename base_type::caller(func));
-    }
-    static Connection connectProxy(SignalProxyType& self, sol::function func){
-        return self.connect(typename base_type::caller(func));
-    }
-public:
-    LuaSignal(const char* name, sol::table& module) {
-        module.new_usertype<SignalType>(
-            name,
-            "new", sol::factories([]() -> std::shared_ptr<SignalType> { return std::make_shared<SignalType>(); }),
-            "connect", &LuaSignal::connect);
-
-        module.new_usertype<SignalProxyType>(
-            (std::string(name) + "Proxy"),
-            "new", sol::factories([](SignalType& signal) { return SignalProxyType(signal); }),
-            "connect", &LuaSignal::connectProxy);
-    }
-};
+    module.new_usertype<SignalType>(
+        name,
+        "new", sol::factories([]() -> std::shared_ptr<SignalType> { return std::make_shared<SignalType>(); }),
+        "connect", [](SignalType& self, sol::function func){
+            return self.connect(typename signal_impl::caller(func)); });
+    
+    module.new_usertype<SignalProxyType>(
+        (std::string(name) + "Proxy"),
+        "new", sol::factories([](SignalType& signal) { return SignalProxyType(signal); }),
+        "connect", [](SignalProxyType& self, sol::function func){
+            return self.connect(typename signal_impl::caller(func)); });
+}
 
 }
 

@@ -12,8 +12,6 @@ namespace cnoid {
 
 void exportLuaQtExTypes(sol::table& module)
 {
-    LuaSignal<void(bool)>("BoolSignal", module);
-    
     module.new_usertype<ToolButton>(
         "ToolButton",
         sol::base_classes, sol::bases<QToolButton, QAbstractButton, QWidget, QObject>(),
