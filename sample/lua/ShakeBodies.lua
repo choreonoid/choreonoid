@@ -17,11 +17,7 @@ BodyShaker = {
       local timer = cnoid.Timer.new()
 
       function onSelectionChanged(items)
-	 print "items:"
-	 for k,item in ipairs(items) do print(item:name()) end
 	 bodyItems = cnoid.extractBodyItems(items)
-	 print "bodyItems:"
-	 for k,item in ipairs(bodyItems) do print(item:name()) end
 	 if #bodyItems > 0 and button:isChecked() then
 	    timer:start(50)
 	 else
@@ -50,7 +46,6 @@ BodyShaker = {
 	       end
 	    end))
 
-      print "cnoid.MainWindow.instance():addToolBar(toolBar)"
       cnoid.MainWindow.instance():addToolBar(self.toolBar)
 
       setmetatable(self, { 
