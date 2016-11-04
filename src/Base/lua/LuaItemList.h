@@ -60,7 +60,7 @@ void LuaItemList(const char* itemTypeName, sol::table& module)
         sol::table extracted = lua.create_table();
         const int n = items.size();
         int index = 1;
-        for(int i=i; i <= n; ++i){
+        for(int i=1; i <= n; ++i){
             sol::object obj = items[i];
             if(obj.is<Item*>()){
                 ItemType* casted = dynamic_cast<ItemType*>(obj.as<Item*>());
