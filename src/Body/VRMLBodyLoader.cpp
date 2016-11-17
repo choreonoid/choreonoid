@@ -965,6 +965,7 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
         iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
     }
     iLink.m += iSegment.m;
+    iLink.segments.push_back(iSegment);
     
     Matrix3 I;
     readVRMLfield(sf["momentsOfInertia"], I);
@@ -1047,6 +1048,11 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
             device->setLocalTranslation(RsT * (T * device->localTranslation()));
             device->setLocalRotation(RsT * (T.linear() * device->localRotation()));
             body->addDevice(device);
+
+            SgNodePtr node = sgConverter.convert(deviceNode);
+            if(node){
+                iLink.visualShape->addChild(node);
+            }
         }
     }
 }
