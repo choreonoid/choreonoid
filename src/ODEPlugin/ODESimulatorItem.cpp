@@ -215,7 +215,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     dMass mass;
     dMassSetZero(&mass);
     const Matrix3& I = link->I();
-#if 1
+#if 0
     Vector3 axis = link->a();
     Matrix3 I0 = I + axis * axis.transpose() * link->Jm2();
     dMassSetParameters(&mass, link->m(),
