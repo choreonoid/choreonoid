@@ -14,6 +14,7 @@
 #include "CollisionSeq.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
+#include <cnoid/BodyState>
 #include <cnoid/AppUtil>
 #include <cnoid/ExtensionManager>
 #include <cnoid/TimeBar>
@@ -22,11 +23,11 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
 #include <cnoid/MultiDeviceStateSeq>
+#include <cnoid/Timer>
 #include <cnoid/Deque2D>
 #include <cnoid/ConnectionSet>
+#include <cnoid/FloatingNumberString>
 #include <cnoid/Sleep>
-#include <cnoid/Timer>
-#include <cnoid/BodyState>
 #include <QThread>
 #include <QMutex>
 #include <boost/dynamic_bitset.hpp>
@@ -179,6 +180,8 @@ public:
     BodyItemToSimBodyMap simBodyMap;
 
     int currentFrame;
+    FloatingNumberString timeStepProperty;
+
     double worldFrameRate;
     double worldTimeStep_;
     int frameAtLastBufferWriting;
@@ -2352,6 +2355,8 @@ bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
 
 void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    putProperty(_("Timestep"), impl->timeStepProperty,
+                [&](const std::string& s){ return impl->timeStepProperty.setNonNegativeValue(s); });
     putProperty(_("Sync with realtime"), impl->isRealtimeSyncMode,
                 std::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
     putProperty(_("Time range"), impl->timeRangeMode,
