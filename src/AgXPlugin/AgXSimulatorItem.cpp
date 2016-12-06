@@ -1781,10 +1781,12 @@ void AgXSimulatorItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().registerClass<AgXSimulatorItem>("AgXSimulatorItem");
     ext->itemManager().addCreationPanel<AgXSimulatorItem>();
 
-    agx::StringVector modules = agx::Runtime::instance()->getEnabledModules();
-    for(int i=0; i<modules.size(); i++)
-        std::cout << modules[i] << std::endl;
-    havePowerLineLicense = agx::Runtime::instance()->isModuleEnabled("AgXPowerLine");
+    //agx::StringVector modules = agx::Runtime::instance()->getEnabledModules();
+    //for(int i=0; i<modules.size(); i++)
+    //std::cout << modules[i] << std::endl;
+    //havePowerLineLicense = agx::Runtime::instance()->isModuleEnabled("AgXPowerLine");   // ??
+    havePowerLineLicense = true;
+
 }
 
 
