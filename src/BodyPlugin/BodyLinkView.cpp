@@ -823,6 +823,8 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
     if(ik){
         currentBodyItem->beginKinematicStateEdit();
 
+        Position T0 = currentLink->T();
+
         if(KinematicsBar::instance()->isPenetrationBlockMode()){
             PenetrationBlockerPtr blocker = currentBodyItem->createPenetrationBlocker(currentLink, true);
             if(blocker){
@@ -838,6 +840,22 @@ void BodyLinkViewImpl::doInverseKinematics(Vector3 p, Matrix3 R)
         if(ik->calcInverseKinematics(p, R)){
             currentBodyItem->notifyKinematicStateChange(true);
             currentBodyItem->acceptKinematicStateEdit();
+
+            if(currentLink->isRoot()){
+                Position Tinv = currentLink->T().inverse();
+                Position Trel = T0.inverse() * currentLink->T();
+                const ItemList<BodyItem>& bodyItems = BodyBar::instance()->selectedBodyItems();
+                for(int i=0; i < bodyItems.size(); ++i){
+                    BodyItem* bodyItem = bodyItems[i];
+                    if(bodyItem != currentBodyItem){
+                        Link* rootLink = bodyItem->body()->rootLink();
+                        Position T = currentLink->T() * Trel * Tinv * rootLink->T();
+                        normalizeRotation(T);
+                        rootLink->T() = T;
+                        bodyItem->notifyKinematicStateChange(true);
+                    }
+                }
+            }
         }
     }
 }
