@@ -85,9 +85,9 @@ public:
         
     /**
        @if jp
-       ロボットの関節角、関節角速度、root位置・姿勢などの「運動学的」状態に変更が生じたときに
-       発行されるシグナル。
-       Item::sigUpdated() はモデル自体が変わった場合とし、そちらとは区別して使う。
+       ロボット�E関節角、E��節角速度、root位置・姿勢などの「運動学皁E��状態に変更が生じたときに
+       発行されるシグナル、E
+       Item::sigUpdated() はモチE��自体が変わった場合とし、そちらとは区別して使ぁE��E
        @endif
     */
     SignalProxy<void()> sigKinematicStateChanged();

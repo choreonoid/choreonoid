@@ -3,12 +3,12 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include <GL/glew.h>
 #include "GLSceneRenderer.h"
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <boost/bind.hpp>
-#include <GL/gl.h>
 
 using namespace std;
 using namespace cnoid;
@@ -177,12 +177,14 @@ bool GLSceneRenderer::initializeGL()
     if(major >= 2){
         os << (boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
     }
+	return true;
 }
 
 
 bool GLSceneRenderer::setSwapInterval(int interval)
 {
 #ifdef _WIN32
+	/*
     DISPLAY_DEVICE device;
     device.cb = sizeof(DISPLAY_DEVICE);
     for (unsigned int i = 0; EnumDisplayDevices(NULL, i, &device, NULL); i++) {
@@ -197,6 +199,7 @@ bool GLSceneRenderer::setSwapInterval(int interval)
         return false;
 
     return wglSwapIntervalEXT(interval);
+	*/
 #endif
     return false;
 }
@@ -205,7 +208,7 @@ bool GLSceneRenderer::setSwapInterval(int interval)
 int GLSceneRenderer::getSwapInterval() const
 {
 #ifdef _WIN32
-    return wglGetSwapIntervalEXT();
+    //return wglGetSwapIntervalEXT();
 #endif
     return -1;
 }

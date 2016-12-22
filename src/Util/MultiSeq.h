@@ -12,7 +12,6 @@
 #include <boost/make_shared.hpp>
 #include <algorithm>
 
-
 namespace cnoid {
 
 template <typename ElementType, typename Allocator = std::allocator<ElementType> >

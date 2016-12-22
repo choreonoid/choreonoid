@@ -97,7 +97,7 @@ typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
 
 struct SgObjectPtrHash {
     std::size_t operator()(const SgObjectPtr& p) const {
-        return boost::hash_value<SgObject*>(p.get());
+        return boost::hash_value<SgObject>(p.get());
     }
 };
 typedef boost::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;

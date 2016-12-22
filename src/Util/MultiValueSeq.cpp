@@ -11,7 +11,6 @@
 using namespace std;
 using namespace cnoid;
 
-
 MultiValueSeq::MultiValueSeq()
     : BaseSeqType("MultiValueSeq")
 {

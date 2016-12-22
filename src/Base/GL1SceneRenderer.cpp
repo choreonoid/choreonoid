@@ -123,7 +123,7 @@ typedef ref_ptr<TextureCache> TextureCachePtr;
 
 struct SgObjectPtrHash {
     std::size_t operator()(const SgObjectPtr& p) const {
-        return boost::hash_value<SgObject*>(p.get());
+        return boost::hash_value<SgObject>(p.get());
     }
 };
 typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;

@@ -31,8 +31,8 @@ class Archive;
    @endif
 
    @if jp
-   フレームワーク上で共有されるオブジェクトを表すクラス。   
-   モデル・ビュー・コントローラフレームワークにおけるモデル部分の核となる。   
+   フレームワーク上で共有されるオブジェクトを表すクラス、E  
+   モチE��・ビュー・コントローラフレームワークにおけるモチE��部刁E�E核となる、E  
    @endif
 */
 class CNOID_EXPORT Item : public Referenced
