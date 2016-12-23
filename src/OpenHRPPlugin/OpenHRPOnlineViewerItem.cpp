@@ -27,13 +27,11 @@
 #include <cnoid/CollisionSeqItem>
 #include <cnoid/CollisionSeq>
 #include <QRegExp>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <sstream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 using namespace OpenHRP;
 
@@ -112,7 +110,7 @@ public:
     void onBodyItemDetachedFromRoot(BodyItem* bodyItem);
     void forEachBody(
         const WorldState& state,
-        boost::function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback);
+        std::function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback);
     void drawScenesub(const OpenHRP::WorldState& state);
     void updateBodyState(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time);
     void updatesub(const OpenHRP::WorldState& state);
@@ -179,7 +177,7 @@ void OpenHRPOnlineViewerItemImpl::init()
 {
     timeBar = TimeBar::instance();
     mv = MessageView::instance();
-    collisions = boost::make_shared<CollisionLinkPairList>();
+    collisions = std::make_shared<CollisionLinkPairList>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");
     collisionLogName = "OnlineViewerLog";
@@ -244,7 +242,7 @@ void OpenHRPOnlineViewerItem::onDisconnectedFromRoot()
 void OpenHRPOnlineViewerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Server name"), impl->serverName,
-            boost::bind(&OpenHRPOnlineViewerItemImpl::setServerName, impl, _1), true);
+            std::bind(&OpenHRPOnlineViewerItemImpl::setServerName, impl, _1), true);
 }
 
 
@@ -288,7 +286,7 @@ void OpenHRPOnlineViewerItemImpl::load(const char* name, const char* url)
     // Wait for the load function to finish because
     // the function does MessageView::flush(), which may execute other OnlineViewer's functions
     // before finishing the loading.
-    callSynchronously(boost::bind(&OpenHRPOnlineViewerItemImpl::loadsub, this, string(name), string(url)));
+    callSynchronously(std::bind(&OpenHRPOnlineViewerItemImpl::loadsub, this, string(name), string(url)));
 }
 
 
@@ -361,10 +359,10 @@ void OpenHRPOnlineViewerItemImpl::registerBodyItem(BodyItemPtr bodyItem)
 
     info.bodyItemConnections.add(
         bodyItem->sigNameChanged().connect(
-            boost::bind(&OpenHRPOnlineViewerItemImpl::onBodyItemNameChanged, this, bodyItem.get(), _1)));
+            std::bind(&OpenHRPOnlineViewerItemImpl::onBodyItemNameChanged, this, bodyItem.get(), _1)));
     info.bodyItemConnections.add(
         bodyItem->sigDisconnectedFromRoot().connect(
-            boost::bind(&OpenHRPOnlineViewerItemImpl::onBodyItemDetachedFromRoot, this, bodyItem.get())));
+            std::bind(&OpenHRPOnlineViewerItemImpl::onBodyItemDetachedFromRoot, this, bodyItem.get())));
 
     bodyItemInfoMap.insert(make_pair(bodyItem->name(), info));
 }
@@ -387,7 +385,7 @@ void OpenHRPOnlineViewerItemImpl::onBodyItemDetachedFromRoot(BodyItem* bodyItem)
 
 void OpenHRPOnlineViewerItemImpl::forEachBody
 (const WorldState& state,
- boost::function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback)
+ std::function<void(BodyItemInfo* info, const LinkPositionSequence& links, int numLinks, double time)> callback)
 {
     int numBodies = state.characterPositions.length();
     for(int i=0; i < numBodies; ++i){
@@ -409,13 +407,13 @@ void OpenHRPOnlineViewerItemImpl::forEachBody
 
 void OpenHRPOnlineViewerItemImpl::drawScene(const WorldState& state)
 {
-    callLater(boost::bind(&OpenHRPOnlineViewerItemImpl::drawScenesub, this, state));
+    callLater(std::bind(&OpenHRPOnlineViewerItemImpl::drawScenesub, this, state));
 }
 
 
 void OpenHRPOnlineViewerItemImpl::drawScenesub(const WorldState& state)
 {
-    forEachBody(state, boost::bind(&OpenHRPOnlineViewerItemImpl::updateBodyState, this, _1, _2, _3, _4));
+    forEachBody(state, std::bind(&OpenHRPOnlineViewerItemImpl::updateBodyState, this, _1, _2, _3, _4));
 
     updateCollision(state, collisions.get());
     sceneCollision->setDirty();
@@ -428,7 +426,7 @@ void OpenHRPOnlineViewerItemImpl::updateCollision(const WorldState& state, Colli
     unsigned int n = state.collisions.length();
     for(int i=0; i<n; i++){
         const OpenHRP::Collision& source = state.collisions[i];
-        CollisionLinkPairPtr dest = boost::make_shared<CollisionLinkPair>();
+        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
         unsigned int numPoints = source.points.length();
         for(int j=0; j<numPoints; j++){
            // std::cout << source.points[j].position[0] << " " << source.points[j].position[1] << " " << source.points[j].position[2] << std::endl;
@@ -470,7 +468,7 @@ void OpenHRPOnlineViewerItemImpl::updateBodyState
 
 void OpenHRPOnlineViewerItemImpl::update(const WorldState& state)
 {
-    callLater(boost::bind(&OpenHRPOnlineViewerItemImpl::updatesub, this, state));
+    callLater(std::bind(&OpenHRPOnlineViewerItemImpl::updatesub, this, state));
 }
 
 
@@ -489,7 +487,7 @@ void OpenHRPOnlineViewerItemImpl::updatesub(const WorldState& state)
         }
        worldItemConnections.add(
                worldItem->sigDisconnectedFromRoot().connect(
-                    boost::bind(&OpenHRPOnlineViewerItemImpl::onWorldItemDetachedFromRoot, this)));
+                    std::bind(&OpenHRPOnlineViewerItemImpl::onWorldItemDetachedFromRoot, this)));
     }
 
     if(!collisionSeqItem){
@@ -514,14 +512,14 @@ void OpenHRPOnlineViewerItemImpl::updatesub(const WorldState& state)
     int lastFrame = std::max(0, std::min(frame, colSeq->numFrames()));
     colSeq->setNumFrames(frame + 1);
 
-    CollisionLinkPairListPtr collisionPairs = boost::make_shared<CollisionLinkPairList>();
+    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
     updateCollision(state, collisionPairs.get());
     for(int i=lastFrame; i <= frame; ++i){
         CollisionSeq::Frame collisionPairs0 = colSeq->frame(i);
         collisionPairs0[0] = collisionPairs;
     }
 
-    forEachBody(state, boost::bind(&OpenHRPOnlineViewerItemImpl::updateLog, this, _1, _2, _3, _4));
+    forEachBody(state, std::bind(&OpenHRPOnlineViewerItemImpl::updateLog, this, _1, _2, _3, _4));
 }
 
 
@@ -577,10 +575,10 @@ void OpenHRPOnlineViewerItemImpl::resetLogItem(BodyItemInfo* info, BodyMotionIte
 
         info->logItemConnections.add(
             newLogItem->sigPositionChanged().connect(
-                boost::bind(&OpenHRPOnlineViewerItemImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
+                std::bind(&OpenHRPOnlineViewerItemImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
         info->logItemConnections.add(
             newLogItem->sigNameChanged().connect(
-                boost::bind(&OpenHRPOnlineViewerItemImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
+                std::bind(&OpenHRPOnlineViewerItemImpl::resetLogItem, this, info, (BodyMotionItem*)0)));
     }
 }
 
@@ -598,10 +596,10 @@ void OpenHRPOnlineViewerItemImpl::resetCollisionLogItem(CollisionSeqItem* collis
 
         collisionSeqItemConnections.add(
             collisionSeqItem->sigPositionChanged().connect(
-                boost::bind(&OpenHRPOnlineViewerItemImpl::resetCollisionLogItem, this, (CollisionSeqItem*)0)));
+                std::bind(&OpenHRPOnlineViewerItemImpl::resetCollisionLogItem, this, (CollisionSeqItem*)0)));
         collisionSeqItemConnections.add(
             collisionSeqItem->sigNameChanged().connect(
-                boost::bind(&OpenHRPOnlineViewerItemImpl::resetCollisionLogItem, this, (CollisionSeqItem*)0)));
+                std::bind(&OpenHRPOnlineViewerItemImpl::resetCollisionLogItem, this, (CollisionSeqItem*)0)));
     }
 }
 
@@ -609,7 +607,7 @@ void OpenHRPOnlineViewerItemImpl::resetCollisionLogItem(CollisionSeqItem* collis
 #ifdef OPENHRP_3_1
 void OpenHRPOnlineViewerItemImpl::setLogName(const char* name)
 {
-    callLater(boost::bind(&OpenHRPOnlineViewerItemImpl::setLogNamesub, this, string(name)));
+    callLater(std::bind(&OpenHRPOnlineViewerItemImpl::setLogNamesub, this, string(name)));
 }
 
 void OpenHRPOnlineViewerItemImpl::setLogNamesub(string name)
@@ -632,7 +630,7 @@ void OpenHRPOnlineViewerItemImpl::setLogNamesub(string name)
 
 void OpenHRPOnlineViewerItemImpl::clearLog()
 {
-    callLater(boost::bind(&OpenHRPOnlineViewerItemImpl::clearLogsub, this));
+    callLater(std::bind(&OpenHRPOnlineViewerItemImpl::clearLogsub, this));
 }
 
 
@@ -645,13 +643,15 @@ void OpenHRPOnlineViewerItemImpl::clearLogsub()
         }
     }
 
-    collisionSeqItem->collisionSeq()->setNumFrames(0);
+    if (collisionSeqItem){
+        collisionSeqItem->collisionSeq()->setNumFrames(0);
+    }
 }
 
 
 void OpenHRPOnlineViewerItemImpl::clearData()
 {
-    callLater(boost::bind(&OpenHRPOnlineViewerItemImpl::clearDatasub, this));
+    callLater(std::bind(&OpenHRPOnlineViewerItemImpl::clearDatasub, this));
 }
 
 

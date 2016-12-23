@@ -2,13 +2,16 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <boost/python.hpp>
 #include <QWidget>
 #include <QMainWindow>
 #include <QToolButton>
+#include <cnoid/PyUtil>
 
 using namespace boost;
 using namespace boost::python;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(QWidget)
 
 namespace {
 

@@ -35,7 +35,7 @@ MultiVector3Seq::MultiVector3Seq(const MultiVector3Seq& org)
 
 AbstractSeqPtr MultiVector3Seq::cloneSeq() const
 {
-    return boost::make_shared<MultiVector3Seq>(*this);
+    return std::make_shared<MultiVector3Seq>(*this);
 }
 
 

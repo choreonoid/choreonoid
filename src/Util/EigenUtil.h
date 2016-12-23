@@ -6,6 +6,7 @@
 #define CNOID_UTIL_EIGEN_UTIL_H
 
 #include "EigenTypes.h"
+#include <memory>
 
 #if defined(WIN32) && !defined(BOOST_NO_CXX11_ALLOCATOR)
 #include <boost/version.hpp>
@@ -14,7 +15,6 @@
 #endif
 #endif
 
-#include <boost/make_shared.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -73,24 +73,24 @@ CNOID_EXPORT void normalizeRotation(Position& T);
 CNOID_EXPORT void normalizeRotation(Affine3& T);
 
 template<class T>
-boost::shared_ptr<T> make_shared_aligned() {
-    return boost::allocate_shared<T>(Eigen::aligned_allocator<T>());
+std::shared_ptr<T> make_shared_aligned() {
+    return std::allocate_shared<T>(Eigen::aligned_allocator<T>());
 }
 template<class T, class P1>
-boost::shared_ptr<T> make_shared_aligned(const P1& p1) {
-    return boost::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1);
+std::shared_ptr<T> make_shared_aligned(const P1& p1) {
+    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1);
 }
 template<class T, class P1, class P2>
-boost::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2) {
-    return boost::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2);
+std::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2) {
+    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2);
 }
 template<class T, class P1, class P2, class P3>
-boost::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3) {
-    return boost::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3);
+std::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3) {
+    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3);
 }
 template<class T, class P1, class P2, class P3, class P4>
-boost::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3, const P4& p4) {
-    return boost::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3, p4);
+std::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3, const P4& p4) {
+    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3, p4);
 }
 
 }

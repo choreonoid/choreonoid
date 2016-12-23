@@ -47,7 +47,8 @@ protected:
 private:
     double qref[2];
     double qprev[2];
-    bool prevLightButtonState;
+    std::vector<float> lastAxes;
+    bool lastLightButtonState;
     bool isLightOn;
 };
 

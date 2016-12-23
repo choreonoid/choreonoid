@@ -9,7 +9,6 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <boost/bind.hpp>
 #include <boost/version.hpp>
 #include <map>
 #include <iostream>
@@ -20,8 +19,9 @@
 #endif
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace python = boost::python;
+namespace filesystem = boost::filesystem;
 
 namespace {
     
@@ -77,7 +77,7 @@ public:
     bool isBackgroundMode;
     bool isRunningForeground;
     bool isModuleRefreshEnabled;
-    boost::function<boost::python::object()> functionToExecScript;
+    std::function<boost::python::object()> functionToExecScript;
     Qt::HANDLE threadId;
     mutable QMutex stateMutex;
     QWaitCondition stateCondition;
@@ -107,8 +107,8 @@ public:
     void resetLastResultObjects();
     ~PythonExecutorImpl();
     PythonExecutor::State state() const;
-    bool exec(boost::function<boost::python::object()> execScript, const string& filename);
-    bool execMain(boost::function<boost::python::object()> execScript);
+    bool exec(std::function<boost::python::object()> execScript, const string& filename);
+    bool execMain(std::function<boost::python::object()> execScript);
     virtual void run();
     bool waitToFinish(double timeout);
     void onBackgroundExecutionFinished();
@@ -246,17 +246,17 @@ static boost::python::object execPythonFileSub(const std::string& filename)
 
 bool PythonExecutor::execCode(const std::string& code)
 {
-    return impl->exec(boost::bind(execPythonCodeSub, code), "");
+    return impl->exec(std::bind(execPythonCodeSub, code), "");
 }
 
 
 bool PythonExecutor::execFile(const std::string& filename)
 {
-    return impl->exec(boost::bind(execPythonFileSub, filename), filename);
+    return impl->exec(std::bind(execPythonFileSub, filename), filename);
 }
 
 
-bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScript, const string& filename)
+bool PythonExecutorImpl::exec(std::function<boost::python::object()> execScript, const string& filename)
 {
     if(state() != PythonExecutor::NOT_RUNNING){
         return false;
@@ -340,7 +340,7 @@ bool PythonExecutorImpl::exec(boost::function<boost::python::object()> execScrip
 }
 
 
-bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execScript)
+bool PythonExecutorImpl::execMain(std::function<boost::python::object()> execScript)
 {
     bool completed = false;
     resultObject = boost::python::object();
@@ -400,7 +400,7 @@ bool PythonExecutorImpl::execMain(boost::function<boost::python::object()> execS
     stateMutex.unlock();
     
     if(QThread::isRunning()){
-        callLater(boost::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
+        callLater(std::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
     } else {
         sigFinished();
     }

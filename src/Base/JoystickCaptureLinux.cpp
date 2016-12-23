@@ -5,7 +5,6 @@
 #include "JoystickCapture.h"
 #include "SocketNotifier.h"
 #include <cnoid/Joystick>
-#include <boost/bind.hpp>
 
 using namespace cnoid;
 
@@ -71,7 +70,7 @@ bool JoystickCaptureImpl::setDevice(const char* device)
         joystick = new Joystick(device);
         if(joystick->isReady()){
             notifier = new SocketNotifier(joystick->fileDescriptor(), QSocketNotifier::Read);
-            notifier->sigActivated().connect(boost::bind(&JoystickCaptureImpl::onNotifierActivated, this));
+            notifier->sigActivated().connect(std::bind(&JoystickCaptureImpl::onNotifierActivated, this));
             return true;
         }
     }

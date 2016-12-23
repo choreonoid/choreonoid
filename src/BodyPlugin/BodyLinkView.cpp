@@ -27,10 +27,10 @@
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QGroupBox>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -149,15 +149,15 @@ BodyLinkViewImpl::BodyLinkViewImpl(BodyLinkView* self)
 
     setupWidgets();
 
-    updateKinematicStateLater.setFunction(boost::bind(&BodyLinkViewImpl::updateKinematicState, this, true));
+    updateKinematicStateLater.setFunction(std::bind(&BodyLinkViewImpl::updateKinematicState, this, true));
     updateKinematicStateLater.setPriority(LazyCaller::PRIORITY_LOW);
 
     currentBodyItemChangeConnection = 
         BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            boost::bind(&BodyLinkViewImpl::onCurrentBodyItemChanged, this, _1));
+            std::bind(&BodyLinkViewImpl::onCurrentBodyItemChanged, this, _1));
     
-    self->sigActivated().connect(boost::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, true));
-    self->sigDeactivated().connect(boost::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, false));
+    self->sigActivated().connect(std::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, true));
+    self->sigDeactivated().connect(std::bind(&BodyLinkViewImpl::activateCurrentBodyItem, this, false));
 }
 
 
@@ -247,7 +247,7 @@ void BodyLinkViewImpl::setupWidgets()
         
         stateWidgetConnections.add(
             xyzSpin[i].sigValueChanged().connect(
-                boost::bind(&BodyLinkViewImpl::onXyzChanged, this)));
+                std::bind(&BodyLinkViewImpl::onXyzChanged, this)));
     }
 
     static const char* rpyLabels[] = {"R", "P", "Y"};
@@ -263,12 +263,12 @@ void BodyLinkViewImpl::setupWidgets()
 
         stateWidgetConnections.add(
             rpySpin[i].sigValueChanged().connect(
-                boost::bind(&BodyLinkViewImpl::onRpyChanged, this)));
+                std::bind(&BodyLinkViewImpl::onRpyChanged, this)));
     }
 
     attMatrixCheck.setText(_("Matrix"));
     attMatrixCheck.sigToggled().connect(
-        boost::bind(&BodyLinkViewImpl::onAttMatrixCheckToggled, this));
+        std::bind(&BodyLinkViewImpl::onAttMatrixCheckToggled, this));
     vbox->addWidget(&attMatrixCheck, 0, Qt::AlignCenter);
 
     grid = new QGridLayout();
@@ -318,11 +318,11 @@ void BodyLinkViewImpl::setupWidgets()
 
     stateWidgetConnections.add(
         qSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_qSpinChanged, this, _1)));
+            std::bind(&BodyLinkViewImpl::on_qSpinChanged, this, _1)));
     
     stateWidgetConnections.add(
         qSlider.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_qSliderChanged, this, _1)));
+            std::bind(&BodyLinkViewImpl::on_qSliderChanged, this, _1)));
 
     topVBox->addSpacing(4);
     
@@ -349,10 +349,10 @@ void BodyLinkViewImpl::setupWidgets()
     
     propertyWidgetConnections.add(
         dqMinSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, true)));
+            std::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, true)));
     propertyWidgetConnections.add(
         dqMaxSpin.sigValueChanged().connect(
-            boost::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, false)));
+            std::bind(&BodyLinkViewImpl::on_dqLimitChanged, this, false)));
     
     topVBox->addSpacing(4);
 
@@ -406,7 +406,7 @@ void BodyLinkViewImpl::setupWidgets()
 
         stateWidgetConnections.add(
             zmpXyzSpin[i].sigValueChanged().connect(
-                boost::bind(&BodyLinkViewImpl::onZmpXyzChanged, this)));
+                std::bind(&BodyLinkViewImpl::onZmpXyzChanged, this)));
     }
 
     topVBox->addWidget(&zmpBox);
@@ -448,17 +448,17 @@ void BodyLinkViewImpl::activateCurrentBodyItem(bool on)
 
             bodyItemConnections.add(
                 LinkSelectionView::mainInstance()->sigSelectionChanged(currentBodyItem).connect(
-                    boost::bind(&BodyLinkViewImpl::update, this)));
+                    std::bind(&BodyLinkViewImpl::update, this)));
 
             bodyItemConnections.add(
                 currentBodyItem->sigKinematicStateChanged().connect(updateKinematicStateLater));
             
             bodyItemConnections.add(
-                currentBodyItem->sigUpdated().connect(boost::bind(&BodyLinkViewImpl::update, this)));
+                currentBodyItem->sigUpdated().connect(std::bind(&BodyLinkViewImpl::update, this)));
 
             bodyItemConnections.add(
                 currentBodyItem->sigCollisionsUpdated().connect(
-                    boost::bind(&BodyLinkViewImpl::updateCollisions, this)));
+                    std::bind(&BodyLinkViewImpl::updateCollisions, this)));
             
             update();
         }

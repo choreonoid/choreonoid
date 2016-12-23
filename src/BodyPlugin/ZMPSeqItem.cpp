@@ -8,10 +8,10 @@
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
 #include <cnoid/ItemManager>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -33,7 +33,7 @@ public:
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : seq(seqItem->zmpseq()), bodyItem(bodyItem)
         {
-            seqItem->sigUpdated().connect(boost::bind(&TimeSyncItemEngine::notifyUpdate, this));
+            seqItem->sigUpdated().connect(std::bind(&TimeSyncItemEngine::notifyUpdate, this));
         }
 
     virtual bool onTimeChanged(double time)
@@ -74,7 +74,7 @@ void ZMPSeqItem::initializeClass(ExtensionManager* ext)
 
 
 ZMPSeqItem::ZMPSeqItem()
-    : Vector3SeqItem(boost::make_shared<ZMPSeq>())
+    : Vector3SeqItem(std::make_shared<ZMPSeq>())
 {
     zmpseq_ = static_pointer_cast<ZMPSeq>(seq());
 }
@@ -89,7 +89,7 @@ ZMPSeqItem::ZMPSeqItem(ZMPSeqPtr seq)
 
 
 ZMPSeqItem::ZMPSeqItem(const ZMPSeqItem& org)
-    : Vector3SeqItem(org, boost::make_shared<ZMPSeq>(*org.zmpseq_))
+    : Vector3SeqItem(org, std::make_shared<ZMPSeq>(*org.zmpseq_))
 {
     zmpseq_ = static_pointer_cast<ZMPSeq>(seq());
 }
@@ -130,5 +130,5 @@ void ZMPSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqItem::doPutProperties(putProperty);
     putProperty(_("Root relative"), zmpseq_->isRootRelative(),
-                boost::bind(&ZMPSeqItem::makeRootRelative, this, _1));
+                std::bind(&ZMPSeqItem::makeRootRelative, this, _1));
 }

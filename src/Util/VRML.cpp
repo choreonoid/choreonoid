@@ -59,7 +59,7 @@ const char* cnoid::labelOfVRMLfieldTypeId(const std::type_info& fieldType)
 
 VRMLNode::VRMLNode()
 {
-    refCounter = 0;
+
 }
 
 

@@ -53,7 +53,6 @@
 #include <QGLFormat>
 #include <QTextStream>
 #include <QFile>
-#include <boost/bind.hpp>
 
 #include <csignal>
 
@@ -64,6 +63,7 @@
 #include "gettext.h"
 
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace {
 
@@ -74,13 +74,13 @@ Signal<void()> sigAboutToQuit_;
 
 void onCtrl_C_Input(int p)
 {
-    callLater(boost::bind(&MainWindow::close, MainWindow::instance()));
+    callLater(std::bind(&MainWindow::close, MainWindow::instance()));
 }
 
 #ifdef Q_OS_WIN32
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
-    callLater(boost::bind(&MainWindow::close, MainWindow::instance()));
+    callLater(std::bind(&MainWindow::close, MainWindow::instance()));
     return FALSE;
 }
 #endif
@@ -229,12 +229,12 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     PathVariableEditor::initialize(ext);
     
     ext->menuManager().setPath("/Help").addItem(_("About Choreonoid"))
-        ->sigTriggered().connect(boost::bind(&AppImpl::showInformationDialog, this));
+        ->sigTriggered().connect(std::bind(&AppImpl::showInformationDialog, this));
 
     // OpenGL settings
     Action* vsyncItem = ext->menuManager().setPath("/Options/OpenGL").addCheckItem(_("Vertical Sync"));
     vsyncItem->setChecked(glfmt.swapInterval() > 0);
-    vsyncItem->sigToggled().connect(boost::bind(&AppImpl::onOpenGLVSyncToggled, this, _1));
+    vsyncItem->sigToggled().connect(std::bind(&AppImpl::onOpenGLVSyncToggled, this, _1));
 
     PluginManager::initialize(ext);
     PluginManager::instance()->doStartupLoading(pluginPathList);
@@ -243,7 +243,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
-    om.sigOptionsParsed().connect(boost::bind(&AppImpl::onSigOptionsParsed, this, _1));
+    om.sigOptionsParsed().connect(std::bind(&AppImpl::onSigOptionsParsed, this, _1));
 
     // Some plugins such as OpenRTM plugin are driven by a library which tries to catch SIGINT.
     // This may block the normal termination by inputting Ctrl+C.
@@ -440,6 +440,6 @@ void App::clearFocusView()
 {
     if(lastFocusView_){
         lastFocusView_ = 0;
-        sigFocusViewChanged(0);
+        sigFocusViewChanged(nullptr);
     }
 }

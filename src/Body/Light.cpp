@@ -31,7 +31,7 @@ Light::Light(const Light& org, bool copyStateOnly)
 }
 
 
-void Light::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void Light::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(Light))){
         Device::forEachActualType(func);

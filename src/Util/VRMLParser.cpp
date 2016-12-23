@@ -9,7 +9,6 @@
 #include "EasyScanner.h"
 #include "UTF8.h"
 #include "FileUtil.h"
-#include <boost/make_shared.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <list>
 #include <cmath>
@@ -374,13 +373,13 @@ public:
     VRMLParserImpl(VRMLParser* self);
     VRMLParser* self;
 
-    boost::shared_ptr<EasyScanner> topScanner;
+    std::shared_ptr<EasyScanner> topScanner;
     EasyScanner* scanner; // current one
     VRMLProtoInstancePtr currentProtoInstance;
 
     bool protoInstanceActualNodeExtractionMode;
 
-    typedef map<VRMLProto*, boost::shared_ptr<EasyScanner> > ProtoToEntityScannerMap;
+    typedef map<VRMLProto*, std::shared_ptr<EasyScanner> > ProtoToEntityScannerMap;
     ProtoToEntityScannerMap protoToEntityScannerMap;
 
     typedef map<string, VRMLNodePtr> TDefNodeMap;
@@ -1019,7 +1018,7 @@ VRMLProtoPtr VRMLParserImpl::defineProto()
         }
     }
 
-    boost::shared_ptr<EasyScanner> entityScanner = boost::make_shared<EasyScanner>(*scanner, false);
+    std::shared_ptr<EasyScanner> entityScanner = std::make_shared<EasyScanner>(*scanner, false);
     entityScanner->setText(begin, scanner->text - begin - 1);
     entityScanner->setLineNumberOffset(scanner->lineNumber);
 
@@ -2502,7 +2501,7 @@ void VRMLParserImpl::init()
     currentProtoInstance = 0;
     protoInstanceActualNodeExtractionMode = true;
 
-    topScanner = boost::make_shared<EasyScanner>();
+    topScanner = std::make_shared<EasyScanner>();
     scanner = topScanner.get();
     setSymbols();
 }

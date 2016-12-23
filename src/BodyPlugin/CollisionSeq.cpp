@@ -167,9 +167,9 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
         const Mapping& frameNode = *values[i].toMapping();
         const Listing& linkPairs = *frameNode.findListing("LinkPairs");
         Frame f = frame(i);
-        f[0] = boost::make_shared<CollisionLinkPairList>();
+        f[0] = std::make_shared<CollisionLinkPairList>();
         for(int j=0; j<linkPairs.size(); j++){
-            CollisionLinkPairPtr destLinkPair = boost::make_shared<CollisionLinkPair>();
+            CollisionLinkPairPtr destLinkPair = std::make_shared<CollisionLinkPair>();
             const Mapping& linkPair = *linkPairs[j].toMapping();
             string body0name = linkPair["body0"].toString();
             string body1name = linkPair["body1"].toString();

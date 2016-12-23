@@ -15,6 +15,10 @@ using namespace boost;
 using namespace boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(Link)
+CNOID_PYTHON_DEFINE_GET_POINTER(Body)
+
 namespace
 {
 
@@ -60,13 +64,12 @@ SgNodePtr Link_collisionShape(const Link& self) { return self.collisionShape(); 
 MappingPtr Link_info(Link& self) { return self.info(); }
 python::object Link_info2(Link& self, const std::string& key, python::object defaultValue)
 {
-    if(PyFloat_Check(defaultValue.ptr())){
-        double v = python::extract<double>(defaultValue);
-        return python::object(self.info(key, v));
-    } else {
+    if(!PyFloat_Check(defaultValue.ptr())){
         PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
         python::throw_error_already_set();
     }
+    double v = python::extract<double>(defaultValue);
+    return python::object(self.info(key, v));
 }
 double Link_floatInfo(Link& self, const std::string& key) { return self.info<double>(key); }
 
@@ -110,6 +113,12 @@ MultiSE3SeqPtr BodyMotion_get_linkPosSeq(BodyMotion& self) { return self.linkPos
 void BodyMotion_set_linkPosSeq(BodyMotion& self, const MultiSE3SeqPtr& linkPosSeq) { self.linkPosSeq() = linkPosSeq; }
 
 BodyMotion::Frame (BodyMotion::*BodyMotion_frame)(int) = &BodyMotion::frame;
+
+DevicePtr Device_clone(Device& self) { return self.clone(); }
+void Device_clearState(Device& self) { return self.clearState(); }
+LinkPtr Device_link(Device& self) { return self.link(); }
+Position Device_get_T_local(Device& self) { return (Position) self.T_local(); }
+void Device_set_T_local(Device& self, const Position& T_local) { self.T_local() = T_local.matrix(); }
 
 } // namespace
 
@@ -326,6 +335,24 @@ BOOST_PYTHON_MODULE(Body)
     }
 
     implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
+
+    {
+      scope deviceScope =
+        class_< Device, DevicePtr, boost::noncopyable >("Device", no_init)
+        .def("setIndex", &Device::setIndex)
+        .def("setId", &Device::setId)
+        .def("setName", &Device::setName)
+        .def("setLink", &Device::setLink)
+        .def("clone", &Device_clone)
+        .def("clearState", &Device_clearState)
+        .def("hasStateOnly", &Device::hasStateOnly)
+        .def("index", &Device::index)
+        .def("id", &Device::id)
+        .def("name", &Device::name, return_value_policy<copy_const_reference>())
+        .def("link", &Device_link)
+        .add_property("T_local", Device_get_T_local, Device_set_T_local)
+        ;
+    }
 
 #ifdef _MSC_VER
     register_ptr_to_python<BodyPtr>();

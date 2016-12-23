@@ -5,7 +5,6 @@
 
 #include "SceneDrawables.h"
 #include "SceneVisitor.h"
-#include <boost/make_shared.hpp>
 
 using namespace std;
 using namespace cnoid;
@@ -46,20 +45,20 @@ SgObject* SgMaterial::clone(SgCloneMap& cloneMap) const
 
 
 SgImage::SgImage()
-    : image_(boost::make_shared<Image>())
+    : image_(std::make_shared<Image>())
 {
 
 }
 
 
 SgImage::SgImage(const Image& image)
-    : image_(boost::make_shared<Image>(image))
+    : image_(std::make_shared<Image>(image))
 {
 
 }
 
 
-SgImage::SgImage(boost::shared_ptr<Image> sharedImage)
+SgImage::SgImage(std::shared_ptr<Image> sharedImage)
     : image_(sharedImage)
 {
 
@@ -83,7 +82,7 @@ SgObject* SgImage::clone(SgCloneMap& cloneMap) const
 Image& SgImage::image()
 {
     if(image_.use_count() > 1){
-        image_ = boost::make_shared<Image>(*image_);
+        image_ = std::make_shared<Image>(*image_);
     }
     return *image_;
 }
@@ -92,7 +91,7 @@ Image& SgImage::image()
 unsigned char* SgImage::pixels()
 {
     if(image_.use_count() > 1){
-        image_ = boost::make_shared<Image>(*image_);
+        image_ = std::make_shared<Image>(*image_);
     }
     return image_->pixels();
 }

@@ -6,7 +6,7 @@
 #define CNOID_BODY_SCENE_DEVICE_H
 
 #include <cnoid/SceneGraph>
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,7 +23,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
     // for integrating new device types
-    typedef boost::function<SceneDevice*(Device* device)> SceneDeviceFactory;
+    typedef std::function<SceneDevice*(Device* device)> SceneDeviceFactory;
     template<class DeviceType>
     static void registerSceneDeviceFactory(const SceneDeviceFactory& factory) {
         registerSceneDeviceFactory_(&typeid(DeviceType), factory);
@@ -32,7 +32,7 @@ public:
     static SceneDevice* create(Device* device);
 
     SceneDevice(Device* device);
-    SceneDevice(Device* device, SgNode* sceneNode, boost::function<void()> sceneUpdateFunction);
+    SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> sceneUpdateFunction);
     
     template <class DeviceType> DeviceType* device() {
         return static_cast<DeviceType*>(device_);
@@ -43,7 +43,7 @@ public:
     Device* device() { return device_; }
     const Device* device() const { return device_; }
 
-    void setSceneUpdateFunction(boost::function<void()> function);
+    void setSceneUpdateFunction(std::function<void()> function);
     void updateScene() { if(sceneUpdateFunction) sceneUpdateFunction(); }
     void setSceneUpdateConnection(bool on);
 
@@ -53,7 +53,7 @@ protected:
 private:
     SceneDevice(const SceneDevice& org);
     Device* device_;
-    boost::function<void()> sceneUpdateFunction;
+    std::function<void()> sceneUpdateFunction;
     Connection connection;
 
     static void registerSceneDeviceFactory_(const std::type_info* pTypeInfo, const SceneDeviceFactory& factory);

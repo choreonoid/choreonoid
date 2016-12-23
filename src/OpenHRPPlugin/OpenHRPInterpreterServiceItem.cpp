@@ -12,12 +12,12 @@
 #include <cnoid/ScriptItem>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/CorbaPort.h>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -129,8 +129,8 @@ OpenHRPInterpreterServiceItem::OpenHRPInterpreterServiceItem(const OpenHRPInterp
 
 ItemImpl::OpenHRPInterpreterServiceItemImpl(OpenHRPInterpreterServiceItem* self, const ItemImpl& org)
     : self(self),
-      os(MessageView::instance()->cout()),
-      forceMainThreadExecution(org.forceMainThreadExecution)
+      forceMainThreadExecution(org.forceMainThreadExecution),
+      os(MessageView::instance()->cout())
 {
     rtc = 0;
     scriptItem = 0;
@@ -145,7 +145,7 @@ OpenHRPInterpreterServiceItem::~OpenHRPInterpreterServiceItem()
 }
 
 
-ItemImpl::~ItemImpl()
+OpenHRPInterpreterServiceItemImpl::~OpenHRPInterpreterServiceItemImpl()
 {
     deleteRTC();
 }
@@ -207,7 +207,7 @@ bool ItemImpl::createRTC()
 bool ItemImpl::deleteRTC()
 {
     if(rtc){
-        if(cnoid::deleteRTC(rtc, true)){
+        if(cnoid::deleteRTC(rtc)){
             os << (format(_("RTC \"%1%\" of \"%2%\" has been deleted."))
                    % rtcInstanceName % self->name()) << endl;
             rtc = 0;
@@ -234,7 +234,7 @@ void OpenHRPInterpreterServiceItem::onPositionChanged()
     if(impl->scriptItem){
         impl->onScriptItemUpdated();
         impl->scriptItemUpdateConnection =
-            impl->scriptItem->sigUpdated().connect(boost::bind(&ItemImpl::onScriptItemUpdated, impl));
+            impl->scriptItem->sigUpdated().connect(std::bind(&ItemImpl::onScriptItemUpdated, impl));
     }
 }
 
@@ -255,7 +255,7 @@ void OpenHRPInterpreterServiceItem::onDisconnectedFromRoot()
 void OpenHRPInterpreterServiceItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("RTC Instance name"), impl->rtcInstanceName,
-                boost::bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
+                std::bind(&ItemImpl::setRTCinstanceName, impl, _1), true);
     putProperty(_("Force main thread execution"), impl->forceMainThreadExecution,
                 changeProperty(impl->forceMainThreadExecution));
     putProperty(_("Put script text to interpret"), impl->doPutScriptTextToInterpret,
@@ -313,7 +313,7 @@ char* InterpreterService_impl::interpret(const char* expr)
     result.clear();
 
     if(!itemImpl->isScriptItemBackgroundMode || itemImpl->forceMainThreadExecution){
-        callSynchronously(boost::bind(&InterpreterService_impl::interpretMain, this, expr));
+        callSynchronously(std::bind(&InterpreterService_impl::interpretMain, this, expr));
     } else {
         interpretMain(expr);
     }

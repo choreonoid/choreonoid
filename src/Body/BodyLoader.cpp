@@ -13,9 +13,7 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/FileUtil>
 #include <cnoid/NullOut>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/make_shared.hpp>
+#include <mutex>
 #include "gettext.h"
 
 using namespace std;
@@ -24,25 +22,25 @@ namespace filesystem = boost::filesystem;
 
 namespace {
 
-typedef boost::function<AbstractBodyLoaderPtr()> LoaderFactory;
+typedef std::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
-boost::mutex loaderFactoryMapMutex;
+std::mutex loaderFactoryMapMutex;
 
 
 AbstractBodyLoaderPtr yamlBodyLoaderFactory()
 {
-    return boost::make_shared<YAMLBodyLoader>();
+    return std::make_shared<YAMLBodyLoader>();
 }
 
 AbstractBodyLoaderPtr vrmlBodyLoaderFactory()
 {
-    return boost::make_shared<VRMLBodyLoader>();
+    return std::make_shared<VRMLBodyLoader>();
 }
 
 AbstractBodyLoaderPtr colladaBodyLoaderFactory()
 {
-    return boost::make_shared<ColladaBodyLoader>();
+    return std::make_shared<ColladaBodyLoader>();
 }
 
 class SceneLoaderAdapter : public AbstractBodyLoader
@@ -76,7 +74,7 @@ public:
 
 AbstractBodyLoaderPtr stlBodyLoaderFactory()
 {
-    return boost::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
+    return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
 }
 
     
@@ -95,9 +93,9 @@ struct FactoryRegistration
 }
 
 
-bool BodyLoader::registerLoader(const std::string& extension, boost::function<AbstractBodyLoaderPtr()> factory)
+bool BodyLoader::registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory)
 {
-    boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
+    std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
     loaderFactoryMap[extension] = factory;
     return  true;
 }
@@ -240,7 +238,7 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
         if(p != loaderMap.end()){
             loader = p->second;
         } else {
-            boost::lock_guard<boost::mutex> lock(loaderFactoryMapMutex);
+            std::lock_guard<std::mutex> lock(loaderFactoryMapMutex);
             LoaderFactoryMap::iterator q = loaderFactoryMap.find(ext);
             if(q != loaderFactoryMap.end()){
                 LoaderFactory factory = q->second;

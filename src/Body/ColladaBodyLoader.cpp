@@ -7,12 +7,9 @@
 #include <vector>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
-#include <boost/make_shared.hpp>
 
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -413,7 +410,7 @@ DevicePtr ColladaBodyLoaderImpl::createSensor(DaeSensor* sensor)
 #ifdef _OLD_VERSION
 void ColladaBodyLoaderImpl::setColdetModel(Link* link, SgGroup* group)
 {
-    ColdetModelPtr model(boost::make_shared<ColdetModel>());
+    ColdetModelPtr model(std::make_shared<ColdetModel>());
     createColdetModel(group, NULL, model.get());
     model->setName(link->name());
     model->build();

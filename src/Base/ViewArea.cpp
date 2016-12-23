@@ -18,8 +18,6 @@
 #include <QMouseEvent>
 #include <QDesktopWidget>
 #include <QLabel>
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <bitset>
 #include <iostream>
 #include "gettext.h"
@@ -113,7 +111,7 @@ public:
     bool viewTabsVisible;
     bool isMaximizedBeforeFullScreen;
     bool needToUpdateDefaultPaneAreas;
-    boost::scoped_ptr< vector<View*> > defaultViewsToShow;
+    std::unique_ptr< vector<View*> > defaultViewsToShow;
 
     ViewPane* areaToPane[View::NUM_AREAS];
 
@@ -461,7 +459,7 @@ ViewAreaImpl::ViewAreaImpl(ViewArea* self)
     viewSizeLabelTimer.setSingleShot(true);
     viewSizeLabelTimer.setInterval(1000);
     viewSizeLabelTimer.sigTimeout().connect(
-        boost::bind(&ViewAreaImpl::hideViewSizeLabels, this));
+        std::bind(&ViewAreaImpl::hideViewSizeLabels, this));
 
     topSplitter = 0;
     needToUpdateDefaultPaneAreas = true;
@@ -796,7 +794,8 @@ bool ViewAreaImpl::removeView(View* view)
     if(view->viewArea() == self){
         ViewPane* pane = 0;
         for(QWidget* widget = view->parentWidget(); widget; widget = widget->parentWidget()){
-            if(pane = dynamic_cast<ViewPane*>(widget)){
+            pane = dynamic_cast<ViewPane*>(widget);
+            if(pane){
                 break;
             }
         }
@@ -1418,7 +1417,7 @@ bool ViewAreaImpl::viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event)
                 viewMenuManager.addSeparator();
             }
             viewMenuManager.addItem(_("Separate the view"))
-                ->sigTriggered().connect(boost::bind(&ViewAreaImpl::separateView, this, view));
+                ->sigTriggered().connect(std::bind(&ViewAreaImpl::separateView, this, view));
                 
             viewMenuManager.popupMenu()->popup(event->globalPos());
         }
@@ -1433,7 +1432,8 @@ bool ViewAreaImpl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
         if(event->buttons() & Qt::LeftButton){
             if((event->pos() - tabDragStartPosition).manhattanLength() > QApplication::startDragDistance()){
                 if(!pane->tabBar()->geometry().contains(event->pos())){
-                    if(draggedView = pane->currentView()){
+                    draggedView = pane->currentView();
+                    if(draggedView){
                         isViewDragging = true;
                         dragSrcPane = pane;
 

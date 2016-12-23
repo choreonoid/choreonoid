@@ -11,8 +11,9 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
+namespace filesystem = boost::filesystem;
 
 namespace {
 

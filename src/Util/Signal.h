@@ -1,6 +1,4 @@
 /**
-   @file Implementation of Signal template classes
-   @note The classes are written by using the boost.signals library as a reference.
    @author Shin'ichiro Nakaoka
 */
 
@@ -8,20 +6,58 @@
 #define CNOID_UTIL_SIGNAL_H
 
 #include "Referenced.h"
-#include <boost/type_traits/function_traits.hpp>
-
-#define CNOID_SIGNAL_CONCAT( X, Y ) CNOID_SIGNAL_DO_CONCAT( X, Y )
-#define CNOID_SIGNAL_DO_CONCAT( X, Y ) CNOID_SIGNAL_DO_CONCAT2(X,Y)
-#define CNOID_SIGNAL_DO_CONCAT2( X, Y ) X##Y
+#include <functional>
+#include <tuple>
 
 namespace cnoid {
-
-class Connection;
 
 namespace signal_private {
 
 template<typename T>
-struct last_value {
+class function_traits
+{
+    static_assert(sizeof( T ) == 0, "function_traits<T>: T is not a function type");
+};
+
+template<typename R, typename... Ts>
+struct function_traits<R(Ts...)>
+{
+    constexpr static const std::size_t arity = sizeof...(Ts);
+    using result_type = R;
+};
+
+template<typename R, typename... Ts>
+struct function_traits<R(Ts...) const> : function_traits<R(Ts...)> {};
+
+
+template<class F, class... Ts, class... Us>
+typename std::enable_if<
+    sizeof...(Us) == sizeof...(Ts),
+    typename F::result_type>::type
+apply_impl(F& func, std::tuple<Ts...>& args, Us*... us) 
+{
+    return func(*us...);
+}
+
+template<class F, class... Ts, class... Us>
+typename std::enable_if<
+    sizeof...(Us) < sizeof...(Ts),
+    typename F::result_type>::type
+apply_impl(F& func, std::tuple<Ts...>& args, Us*... us) 
+{
+    return apply_impl(func, args, us..., &std::get<sizeof...(Us)>(args));
+}
+
+template<class F, class... Args>
+typename F::result_type
+apply(F& fun, std::tuple<Args...>& args) 
+{
+    return apply_impl(fun, args);
+}
+
+template<typename T>
+struct last_value
+{
     typedef T result_type;
     
     template<typename InputIterator>
@@ -58,51 +94,99 @@ public:
 };
 
 
-template<typename SlotType, typename ArgSetType>
+template<typename SlotHolderType, typename... Args>
 class SlotCallIterator
 {
-    typedef typename SlotType::result_type result_type;
+    typedef typename SlotHolderType::result_type result_type;
 
-    SlotType* currentSlot;
-    ArgSetType& args;
+    SlotHolderType* currentSlotHolder;
+    std::tuple<Args...>& args;
 
 public:
     void seekUnblockedSlot(){
-        while(currentSlot && currentSlot->isBlocked){
-            currentSlot = currentSlot->next;
+        while(currentSlotHolder && currentSlotHolder->isBlocked){
+            currentSlotHolder = currentSlotHolder->next;
         }
     }
     
-    SlotCallIterator(SlotType* firstSlot, ArgSetType& args)
-        : currentSlot(firstSlot), args(args) {
+    SlotCallIterator(SlotHolderType* firstSlot, std::tuple<Args...>& args)
+        : currentSlotHolder(firstSlot), args(args) {
         seekUnblockedSlot();
     }
 
     SlotCallIterator(const SlotCallIterator& org)
-        : currentSlot(org.currentSlot), args(org.args) {
+        : currentSlotHolder(org.currentSlotHolder), args(org.args) {
         seekUnblockedSlot();
     }
 
     bool operator==(const SlotCallIterator& rhs) const {
-        return (currentSlot == rhs.currentSlot);
+        return (currentSlotHolder == rhs.currentSlotHolder);
     }
 
     bool operator!=(const SlotCallIterator& rhs) const {
-        return (currentSlot != rhs.currentSlot);
+        return (currentSlotHolder != rhs.currentSlotHolder);
     }
 
     SlotCallIterator operator++(int) {
         SlotCallIterator iter(*this);
-        currentSlot = currentSlot->next;
+        currentSlotHolder = currentSlotHolder->next;
         seekUnblockedSlot();
         return iter;
     }
     
-    result_type operator*() const { return args.call(currentSlot); }
+    result_type operator*() const {
+        return apply(currentSlotHolder->func, args);
+    }
 };
 
-
 } // namespace signal_private
+
+
+template<
+    typename TSignature,
+    typename Combiner = signal_private::last_value<
+        typename signal_private::function_traits<TSignature>::result_type>
+    >
+class Signal;
+
+
+namespace signal_private {
+
+template<typename Signature, typename Combiner>
+class SlotHolder : public SlotHolderBase
+{
+public:
+    typedef std::function<Signature> FuncType;
+    FuncType func;
+    
+    typedef ref_ptr<SlotHolder> SlotHolderPtr;
+    SlotHolderPtr next;
+    SlotHolder* prev;
+
+    typedef Signal<Signature, Combiner> SignalType;
+    SignalType* owner;
+
+    typedef typename signal_private::function_traits<Signature>::result_type result_type;
+    
+    SlotHolder(const FuncType& func)
+        : func(func), prev(0), owner(0) {
+    }
+
+    virtual void disconnect() {
+        if(owner) owner->remove(this);
+    }
+
+    virtual bool connected() const {
+        return owner != 0;
+    }
+
+    virtual void changeOrder(int orderId) {
+        if(owner) owner->changeOrder(this, orderId);
+    }
+};
+    
+} // namespace signal_private
+
 
 class Connection
 {
@@ -153,6 +237,7 @@ public:
     }
 };
 
+
 class ScopedConnection : private Connection
 {
 public:
@@ -171,176 +256,114 @@ private:
     ScopedConnection& operator=(const ScopedConnection& rhs);
 };
 
-}
 
-
-#define CNOID_SIGNAL_NUM_ARGS 0
-#define CNOID_SIGNAL_TEMPLATE_PARMS
-#define CNOID_SIGNAL_TEMPLATE_ARGS
-#define CNOID_SIGNAL_PARMS
-#define CNOID_SIGNAL_ARGS
-#define CNOID_SIGNAL_ARGS_AS_MEMBERS
-#define CNOID_SIGNAL_COPY_PARMS
-#define CNOID_SIGNAL_INIT_ARGS
-
-#include "SignalTemplate.h"
-
-#undef CNOID_SIGNAL_INIT_ARGS
-#undef CNOID_SIGNAL_COPY_PARMS
-#undef CNOID_SIGNAL_ARGS_AS_MEMBERS
-#undef CNOID_SIGNAL_ARGS
-#undef CNOID_SIGNAL_PARMS
-#undef CNOID_SIGNAL_TEMPLATE_ARGS
-#undef CNOID_SIGNAL_TEMPLATE_PARMS
-#undef CNOID_SIGNAL_NUM_ARGS
-
-#define CNOID_SIGNAL_NUM_ARGS 1
-#define CNOID_SIGNAL_TEMPLATE_PARMS typename T1
-#define CNOID_SIGNAL_TEMPLATE_ARGS T1
-#define CNOID_SIGNAL_PARMS T1 a1
-#define CNOID_SIGNAL_ARGS a1
-#define CNOID_SIGNAL_ARGS_AS_MEMBERS T1 a1;
-#define CNOID_SIGNAL_COPY_PARMS T1 ia1
-#define CNOID_SIGNAL_INIT_ARGS :a1(ia1)
-
-#include "SignalTemplate.h"
-
-#undef CNOID_SIGNAL_INIT_ARGS
-#undef CNOID_SIGNAL_COPY_PARMS
-#undef CNOID_SIGNAL_ARGS_AS_MEMBERS
-#undef CNOID_SIGNAL_ARGS
-#undef CNOID_SIGNAL_PARMS
-#undef CNOID_SIGNAL_TEMPLATE_ARGS
-#undef CNOID_SIGNAL_TEMPLATE_PARMS
-#undef CNOID_SIGNAL_NUM_ARGS
-
-#define CNOID_SIGNAL_NUM_ARGS 2
-#define CNOID_SIGNAL_TEMPLATE_PARMS typename T1, typename T2
-#define CNOID_SIGNAL_TEMPLATE_ARGS T1, T2
-#define CNOID_SIGNAL_PARMS T1 a1, T2 a2
-#define CNOID_SIGNAL_ARGS a1, a2
-#define CNOID_SIGNAL_ARGS_AS_MEMBERS T1 a1;T2 a2;
-#define CNOID_SIGNAL_COPY_PARMS T1 ia1, T2 ia2
-#define CNOID_SIGNAL_INIT_ARGS :a1(ia1), a2(ia2)
-
-#include "SignalTemplate.h"
-
-#undef CNOID_SIGNAL_INIT_ARGS
-#undef CNOID_SIGNAL_COPY_PARMS
-#undef CNOID_SIGNAL_ARGS_AS_MEMBERS
-#undef CNOID_SIGNAL_ARGS
-#undef CNOID_SIGNAL_PARMS
-#undef CNOID_SIGNAL_TEMPLATE_ARGS
-#undef CNOID_SIGNAL_TEMPLATE_PARMS
-#undef CNOID_SIGNAL_NUM_ARGS
-
-#define CNOID_SIGNAL_NUM_ARGS 3
-#define CNOID_SIGNAL_TEMPLATE_PARMS typename T1, typename T2, typename T3
-#define CNOID_SIGNAL_TEMPLATE_ARGS T1, T2, T3
-#define CNOID_SIGNAL_PARMS T1 a1, T2 a2, T3 a3
-#define CNOID_SIGNAL_ARGS a1, a2, a3
-#define CNOID_SIGNAL_ARGS_AS_MEMBERS T1 a1;T2 a2;T3 a3;
-#define CNOID_SIGNAL_COPY_PARMS T1 ia1, T2 ia2, T3 ia3
-#define CNOID_SIGNAL_INIT_ARGS :a1(ia1), a2(ia2), a3(ia3)
-
-#include "SignalTemplate.h"
-
-#undef CNOID_SIGNAL_INIT_ARGS
-#undef CNOID_SIGNAL_COPY_PARMS
-#undef CNOID_SIGNAL_ARGS_AS_MEMBERS
-#undef CNOID_SIGNAL_ARGS
-#undef CNOID_SIGNAL_PARMS
-#undef CNOID_SIGNAL_TEMPLATE_ARGS
-#undef CNOID_SIGNAL_TEMPLATE_PARMS
-#undef CNOID_SIGNAL_NUM_ARGS
-
-
-namespace cnoid {
-
-namespace signal_private {
-
-template<int Arity, typename Signature, typename Combiner>
-class real_get_signal_impl;
-
-template<typename Signature, typename Combiner>
-class real_get_signal_impl<0, Signature, Combiner>
+template<typename Combiner, typename R, typename... Args>
+class Signal<R(Args...), Combiner>
 {
-    typedef boost::function_traits<Signature> traits;
 public:
-    typedef Signal0<typename traits::result_type, Combiner> type;
-};
+    typedef typename signal_private::function_traits<R(Args...)>::result_type result_type;
+    typedef std::function<R(Args...)> function_type;
+    typedef function_type Function;
 
-template<typename Signature,typename Combiner>
-class real_get_signal_impl<1, Signature, Combiner>
-{
-    typedef boost::function_traits<Signature> traits;
+private:
+    typedef signal_private::SlotHolder<R(Args...), Combiner> SlotHolderType;
+    typedef ref_ptr<SlotHolderType> SlotHolderPtr;
+
+    SlotHolderPtr firstSlot;
+    SlotHolderType* lastSlot;
+
+    Signal(const Signal& org);
+    Signal& operator=(const Signal& rhs);
+
 public:
-    typedef Signal1<typename traits::result_type,
-                    typename traits::arg1_type,
-                    Combiner> type;
-};
+    Signal() : lastSlot(0) { }
 
-template<typename Signature,typename Combiner>
-class real_get_signal_impl<2, Signature, Combiner>
-{
-    typedef boost::function_traits<Signature> traits;
-public:
-    typedef Signal2<typename traits::result_type,
-                    typename traits::arg1_type,
-                    typename traits::arg2_type,
-                    Combiner> type;
-};
+    ~Signal() {
+        disconnect_all_slots();
+    }
 
+    Connection connect(const Function& func){
 
-template<typename Signature, typename Combiner>
-class real_get_signal_impl<3, Signature, Combiner>
-{
-    typedef boost::function_traits<Signature> traits;
-public:
-    typedef Signal3<typename traits::result_type,
-                    typename traits::arg1_type,
-                    typename traits::arg2_type,
-                    typename traits::arg3_type,
-                    Combiner> type;
-};
+        SlotHolderType* slot = new SlotHolderType(func);
+
+        if(!firstSlot){
+            firstSlot = slot;
+            lastSlot = slot;
+        } else {
+            lastSlot->next = slot;
+            slot->prev = lastSlot;
+            lastSlot = slot;
+        }
+        slot->owner = this;
+
+        return Connection(slot);
+    }
+
+    void remove(SlotHolderPtr slot){
+        if(slot->owner == this){
+            SlotHolderType* next = slot->next;
+            SlotHolderType* prev = slot->prev;
+            if(next){
+                next->prev = prev;
+            } else {
+                lastSlot = prev;
+            }
+            if(prev){
+                prev->next = next;
+            } else {
+                firstSlot = next;
+            }
+            slot->prev = 0;
+            slot->next = 0;
+            slot->owner = 0;
+        }
+    }
+
+    void changeOrder(SlotHolderPtr slot, int orderId){
+        if(slot->owner == this){
+            if(orderId == Connection::FIRST){
+                if(firstSlot != slot){
+                    remove(slot);
+                    slot->owner = this;
+                    if(firstSlot){
+                        slot->next = firstSlot;
+                        slot->next->prev = slot;
+                    }
+                    firstSlot = slot;
+                }
+            } else if(orderId == Connection::LAST){
+                if(lastSlot != slot){
+                    remove(slot);
+                    slot->owner = this;
+                    if(lastSlot){
+                        lastSlot->next = slot;
+                        slot->prev = lastSlot;
+                    } else {
+                        firstSlot = slot;
+                    }
+                    lastSlot = slot;
+                }
+            }
+        }
+    }
+                        
+    void disconnect_all_slots() {
+        while(firstSlot){
+            remove(firstSlot);
+        }
+    }
+
+    bool empty() const {
+        return (firstSlot == 0);
+    }
     
-template<typename Signature, typename Combiner>
-struct get_signal_impl : public real_get_signal_impl<
-    (boost::function_traits<Signature>::arity), Signature, Combiner>
-{
-
+    result_type operator()(Args... args){
+        typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+        Combiner combiner;
+        std::tuple<Args...> argset(args...);
+        return combiner(IteratorType(firstSlot, argset), IteratorType(0, argset));
+    }
 };
-    
-} // namespace signal_private
-
-template<
-    typename TSignature, 
-    typename Combiner = signal_private::last_value<typename boost::function_traits<TSignature>::result_type>
-    >
-class Signal : public signal_private::get_signal_impl<TSignature, Combiner>::type
-{
-public:
-    typedef TSignature Signature;
-};
-
-
-template<typename Signal> struct signal_traits { };
-
-template<typename Signature, typename Combiner>
-struct signal_traits< Signal<Signature, Combiner> >
-{
-    typedef Connection connection_type;
-};
-
-
-// for boost.signals
-/*  
-template<typename Signature, typename Combiner, typename Group, typename GroupCompare, typename SlotFunction>
-struct signal_traits< boost::signal<Signature, Combiner, Group, GroupCompare, SlotFunction> >
-{
-    typedef boost::signals::connection connection_type;
-};
-*/
 
 
 class LogicalProduct
@@ -375,7 +398,8 @@ public:
 
 template<
     typename Signature,
-    typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
+    typename Combiner = signal_private::last_value<
+        typename signal_private::function_traits<Signature>::result_type>
     >
 class SignalProxy
 {
@@ -388,13 +412,11 @@ public:
 
     SignalProxy& operator=(const SignalProxy& rhs) { signal = rhs.signal; }
 
-    typedef typename signal_traits<SignalType>::connection_type connection_type;
-
-    connection_type connect(typename SignalType::slot_function_type f){
+    Connection connect(typename SignalType::Function f){
         if(signal){
             return signal->connect(f);
         } else {
-            return connection_type();
+            return Connection();
         }
     };
 

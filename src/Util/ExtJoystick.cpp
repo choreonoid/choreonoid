@@ -4,7 +4,7 @@
 
 #include "ExtJoystick.h"
 #include <map>
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace std;
 using namespace cnoid;
@@ -32,7 +32,7 @@ void ExtJoystick::registerJoystick(const std::string& name, ExtJoystick* joystic
         // overwrite a pre-registered object
         result.first->second = joystick;
     }
-    joystick->sigDestroyed().connect(boost::bind(onExtJoystickDestroyed, result.first, joystick));
+    joystick->sigDestroyed().connect(std::bind(onExtJoystickDestroyed, result.first, joystick));
 }
 
 

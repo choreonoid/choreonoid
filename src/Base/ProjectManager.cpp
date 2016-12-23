@@ -22,13 +22,13 @@
 #include <cnoid/ExecutablePath>
 #include <QFileDialog>
 #include <QCoreApplication>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <string>
 #include <vector>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 using boost::format;
@@ -66,8 +66,8 @@ public:
         
     void connectArchiver(
         const std::string& name,
-        boost::function<bool(Archive&)> storeFunction,
-        boost::function<void(const Archive&)> restoreFunction);
+        std::function<bool(Archive&)> storeFunction,
+        std::function<void(const Archive&)> restoreFunction);
 
     ItemTreeArchiver itemTreeArchiver;
     MainWindow* mainWindow;
@@ -77,8 +77,8 @@ public:
     Action* homeRelativeCheck;
 
     struct ArchiverInfo {
-        boost::function<bool(Archive&)> storeFunction;
-        boost::function<void(const Archive&)> restoreFunction;
+        std::function<bool(Archive&)> storeFunction;
+        std::function<void(const Archive&)> restoreFunction;
     };
     typedef map<string, ArchiverInfo> ArchiverMap;
     typedef map<string, ArchiverMap> ArchiverMapMap;
@@ -109,8 +109,6 @@ ProjectManager::ProjectManager(ExtensionManager* em)
 
 ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
 {
-    using boost::bind;
-    
     MappingPtr config = AppConfig::archive()->openMapping("ProjectManager");
     
     MenuManager& mm = em->menuManager();
@@ -118,22 +116,22 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     mm.setPath("/File");
 
     mm.addItem(_("Open Project"))
-        ->sigTriggered().connect(bind(&ProjectManagerImpl::openDialogToLoadProject, this));
+        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToLoadProject, this));
     mm.addItem(_("Save Project"))
-        ->sigTriggered().connect(bind(&ProjectManagerImpl::overwriteCurrentProject, this));
+        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::overwriteCurrentProject, this));
     mm.addItem(_("Save Project As"))
-        ->sigTriggered().connect(bind(&ProjectManagerImpl::openDialogToSaveProject, this));
+        ->sigTriggered().connect(std::bind(&ProjectManagerImpl::openDialogToSaveProject, this));
 
 
     mm.setPath(N_("Project File Options"));
 
     perspectiveCheck = mm.addCheckItem(_("Perspective"));
     perspectiveCheck->setChecked(config->get("storePerspective", true));
-    perspectiveCheck->sigToggled().connect(bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
+    perspectiveCheck->sigToggled().connect(std::bind(&ProjectManagerImpl::onPerspectiveCheckToggled, this));
 
     homeRelativeCheck = mm.addCheckItem(_("Use HOME relative directories"));
     homeRelativeCheck->setChecked(config->get("useHomeRelative", false));
-    homeRelativeCheck->sigToggled().connect(bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
+    homeRelativeCheck->sigToggled().connect(std::bind(&ProjectManagerImpl::onHomeRelativeCheckToggled, this));
 
     mm.setPath("/File");
     mm.addSeparator();
@@ -141,7 +139,7 @@ ProjectManagerImpl::ProjectManagerImpl(ExtensionManager* em)
     OptionManager& om = em->optionManager();
     om.addOption("project", boost::program_options::value< vector<string> >(), "load a project file");
     om.addPositionalOption("project", 1);
-    om.sigOptionsParsed().connect(boost::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
+    om.sigOptionsParsed().connect(std::bind(&ProjectManagerImpl::onSigOptionsParsed, this, _1));
 
     mainWindow = MainWindow::instance();
     messageView = MessageView::mainInstance();
@@ -544,8 +542,8 @@ void ProjectManagerImpl::onHomeRelativeCheckToggled()
 void ProjectManager::setArchiver(
     const std::string& moduleName,
     const std::string& name,
-    boost::function<bool(Archive&)> storeFunction,
-    boost::function<void(const Archive&)> restoreFunction)
+    std::function<bool(Archive&)> storeFunction,
+    std::function<void(const Archive&)> restoreFunction)
 {
     ProjectManagerImpl::ArchiverInfo& info = impl->archivers[moduleName][name];
     info.storeFunction = storeFunction;
@@ -558,7 +556,7 @@ void ProjectManager::resetArchivers(const std::string& moduleName)
     impl->archivers.erase(moduleName);
 }
 
-const std::string& ProjectManager::getProjectFileName()
+std::string ProjectManager::currentProjectFile() const
 {
     return impl->lastAccessedProjectFile;
 }

@@ -8,8 +8,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 #include <vector>
 #include "exportdecl.h"
 
@@ -34,18 +33,20 @@ public:
     virtual bool waitForCommandToFinish(Connection connectionToDisconnect, double timeout) = 0;
 
     template<class Signature> bool waitForSignal(SignalProxy<Signature> signalProxy, double timeout = 0.0){
-        return waitForCommandToFinish(signalProxy.connect(boost::bind(&TaskProc::notifyCommandFinish, this, true)), timeout);
+        return waitForCommandToFinish(signalProxy.connect(std::bind(&TaskProc::notifyCommandFinish, this, true)), timeout);
     }
 
     template<class Signature> bool waitForBooleanSignal(SignalProxy<Signature> signalProxy, double timeout = 0.0){
-        return waitForCommandToFinish(signalProxy.connect(boost::bind(&TaskProc::notifyCommandFinish, this, _1)), timeout);
+        return waitForCommandToFinish(
+            signalProxy.connect(
+                std::bind(&TaskProc::notifyCommandFinish, this, std::placeholders::_1)), timeout);
     }
     
     virtual void notifyCommandFinish(bool isCompleted = true) = 0;
 };
 
 
-typedef boost::function<void(TaskProc* proc)> TaskFunc;
+typedef std::function<void(TaskProc* proc)> TaskFunc;
 
 
 class CNOID_EXPORT TaskToggleState : public Referenced
@@ -197,8 +198,8 @@ class CNOID_EXPORT TaskMenu
 {
 public:
     virtual ~TaskMenu();
-    virtual void addMenuItem(const std::string& caption, boost::function<void()> func) = 0;
-    virtual void addCheckMenuItem(const std::string& caption, bool isChecked, boost::function<void(bool on)> func) = 0;
+    virtual void addMenuItem(const std::string& caption, std::function<void()> func) = 0;
+    virtual void addCheckMenuItem(const std::string& caption, bool isChecked, std::function<void(bool on)> func) = 0;
     virtual void addMenuSeparator() = 0;
 };
 

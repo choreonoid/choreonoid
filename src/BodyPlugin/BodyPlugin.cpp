@@ -36,7 +36,6 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace cnoid;

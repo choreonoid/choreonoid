@@ -65,7 +65,7 @@ Device* AccelerationSensor::clone() const
 }
 
 
-void AccelerationSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void AccelerationSensor::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(AccelerationSensor))){
         Device::forEachActualType(func);

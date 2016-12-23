@@ -5,7 +5,7 @@
 
 #include "MeshExtractor.h"
 #include "SceneDrawables.h"
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace cnoid;
 
@@ -70,7 +70,7 @@ void MeshExtractor::visitCamera(SgCamera* camera)
 }
 
 
-bool MeshExtractor::extract(SgNode* node, boost::function<void()> callback)
+bool MeshExtractor::extract(SgNode* node, std::function<void()> callback)
 {
     this->callback = callback;
     currentMesh_ = 0;
@@ -138,6 +138,6 @@ static void integrateMesh(MeshExtractor* extractor, SgMesh* mesh)
 SgMesh* MeshExtractor::integrate(SgNode* node)
 {
     SgMesh* mesh = new SgMesh;
-    extract(node, boost::bind(integrateMesh, this, mesh));
+    extract(node, std::bind(integrateMesh, this, mesh));
     return mesh;
 }

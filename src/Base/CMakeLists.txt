@@ -73,7 +73,6 @@ set(sources
   ScriptItem.cpp
   TimeSyncItemEngine.cpp
   AppConfig.cpp
-  AppUtil.cpp
   Archive.cpp
   ItemTreeArchiver.cpp
   LazyCaller.cpp
@@ -239,7 +238,6 @@ set(qtheaders
   InfoBar.h
   ItemTreeView.h
   SelectionListEditor.h
-  TextEditView.h
   TextEdit.h
   )
 
@@ -290,7 +288,7 @@ elseif(MSVC)
 
   target_link_libraries(${target}
     ${QT_LIBRARIES}
-    general glu32
+    general glu32 opengl32
     CnoidUtil
     )
 endif()

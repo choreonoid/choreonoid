@@ -8,8 +8,7 @@
 #include <QCoreApplication>
 #include <QThread>
 #include <QSemaphore>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
+#include <memory>
 
 using namespace std;
 using namespace cnoid;
@@ -35,17 +34,17 @@ public:
         completed = false;
     }
 };
-typedef boost::shared_ptr<SyncInfo> SyncInfoPtr;
+typedef std::shared_ptr<SyncInfo> SyncInfoPtr;
     
 
 class CallEvent : public QEvent
 {
 public:
-    CallEvent(const boost::function<void(void)>& function)
+    CallEvent(const std::function<void(void)>& function)
         : QEvent(QEvent::User),
           function(function) {
     }
-    CallEvent(const boost::function<void(void)>& function, SyncInfoPtr& syncInfo)
+    CallEvent(const std::function<void(void)>& function, SyncInfoPtr& syncInfo)
         : QEvent(QEvent::User),
           function(function),
           syncInfo(syncInfo) {
@@ -60,7 +59,7 @@ public:
             syncInfo->semaphore.release(); // wake up the caller process
         }
     }
-    boost::function<void(void)> function;
+    std::function<void(void)> function;
     SyncInfoPtr syncInfo;
 };
     
@@ -84,11 +83,11 @@ class LazyCallerImpl : public QObject
 {
 public:
     LazyCaller* self;
-    boost::function<void(void)> function;
+    std::function<void(void)> function;
     int priority;
     bool isConservative;
     LazyCallerImpl(LazyCaller* self);
-    LazyCallerImpl(LazyCaller* self, const boost::function<void(void)>& function, int priority);
+    LazyCallerImpl(LazyCaller* self, const std::function<void(void)>& function, int priority);
     virtual bool event(QEvent* e);
 };
 
@@ -109,14 +108,14 @@ bool cnoid::isRunningInMainThread()
 }
 
 
-void cnoid::callLater(const boost::function<void(void)>& function, int priority)
+void cnoid::callLater(const std::function<void(void)>& function, int priority)
 {
     CallEvent* event = new CallEvent(function);
     QCoreApplication::postEvent(&callEventHandler, event, toQtPriority(priority));
 }
 
 
-void cnoid::callFromMainThread(const boost::function<void(void)>& function, int priority)
+void cnoid::callFromMainThread(const std::function<void(void)>& function, int priority)
 {
     if(QThread::currentThreadId() == callEventHandler.mainThreadId){
         function();
@@ -127,14 +126,14 @@ void cnoid::callFromMainThread(const boost::function<void(void)>& function, int 
 }
 
 
-bool cnoid::callSynchronously(const boost::function<void(void)>& function, int priority)
+bool cnoid::callSynchronously(const std::function<void(void)>& function, int priority)
 {
     if(QThread::currentThreadId() == callEventHandler.mainThreadId){
         function();
         //callLater(function, priority);
         return true;
     } else {
-        SyncInfoPtr syncInfo = boost::make_shared<SyncInfo>();
+        SyncInfoPtr syncInfo = std::make_shared<SyncInfo>();
         QCoreApplication::postEvent(
             &callEventHandler, new CallEvent(function, syncInfo), toQtPriority(priority));
         syncInfo->semaphore.acquire(); // wait for finish
@@ -172,14 +171,14 @@ LazyCallerImpl::LazyCallerImpl(LazyCaller* self)
 }
     
 
-LazyCaller::LazyCaller(const boost::function<void(void)>& function, int priority)
+LazyCaller::LazyCaller(const std::function<void(void)>& function, int priority)
 {
     isPending_ = false;
     impl = new LazyCallerImpl(this, function, priority);
 }
 
 
-LazyCallerImpl::LazyCallerImpl(LazyCaller* self, const boost::function<void(void)>& function, int priority)
+LazyCallerImpl::LazyCallerImpl(LazyCaller* self, const std::function<void(void)>& function, int priority)
     : self(self),
       function(function),
       priority(priority)
@@ -203,7 +202,7 @@ LazyCaller::~LazyCaller()
 }
 
 
-void LazyCaller::setFunction(const boost::function<void(void)>& function)
+void LazyCaller::setFunction(const std::function<void(void)>& function)
 {
     impl->function = function;
 }
@@ -283,7 +282,7 @@ QueuedCallerImpl::~QueuedCallerImpl()
 }
 
 
-void QueuedCaller::callLater(const boost::function<void()>& function, int priority)
+void QueuedCaller::callLater(const std::function<void()>& function, int priority)
 {
     CallEvent* event = new CallEvent(function);
     QCoreApplication::postEvent(impl, event, toQtPriority(priority));

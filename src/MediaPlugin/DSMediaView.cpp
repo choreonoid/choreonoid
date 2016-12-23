@@ -15,7 +15,6 @@
 #include <cnoid/Sleep>
 #include <QPainter>
 #include <Dshow.h>
-#include <boost/bind.hpp>
 #include <iostream>
 #include <algorithm>
 #include <windows.h>
@@ -23,7 +22,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -185,13 +184,13 @@ DSMediaViewImpl::DSMediaViewImpl(DSMediaView* self)
     orgWinProc = NULL;
 
     aspectRatioCheck->sigToggled().connect(
-        boost::bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
+        std::bind(&DSMediaViewImpl::onAspectRatioCheckToggled, this));
 
     orgSizeCheck->sigToggled().connect(
-        boost::bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
+        std::bind(&DSMediaViewImpl::onOrgSizeCheckToggled, this));
     
     ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        boost::bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
+        std::bind(&DSMediaViewImpl::onItemCheckToggled, this, _1, _2));
 }
 
 
@@ -549,16 +548,16 @@ void DSMediaViewImpl::connectTimeBarSignals()
         TimeBar* timeBar = TimeBar::instance();
         timeBarConnections.add(
             timeBar->sigPlaybackInitialized().connect(
-                boost::bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
+                std::bind(&DSMediaViewImpl::onPlaybackInitialized, this, _1)));
         timeBarConnections.add(
             timeBar->sigPlaybackStarted().connect(
-                boost::bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
+                std::bind(&DSMediaViewImpl::onPlaybackStarted, this, _1)));
         timeBarConnections.add(
             timeBar->sigPlaybackStopped().connect(
-                boost::bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
+                std::bind(&DSMediaViewImpl::onPlaybackStopped, this, _1)));
         timeBarConnections.add(
             timeBar->sigTimeChanged().connect(
-                boost::bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
+                std::bind(&DSMediaViewImpl::onTimeChanged, this, _1)));
     }
 }
 

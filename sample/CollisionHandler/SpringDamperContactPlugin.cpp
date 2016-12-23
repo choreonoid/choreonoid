@@ -8,9 +8,9 @@
 #include <cnoid/SubSimulatorItem>
 #include <cnoid/AISTSimulatorItem>
 #include <cnoid/ContactAttribute>
-#include <boost/bind.hpp>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -89,7 +89,7 @@ void SpringDamperContactItem::onPositionChanged()
             handlerId =
                 simulator->registerCollisionHandler(
                     "SpringDamperContact",
-                    boost::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
+                    std::bind(&SpringDamperContactItem::calcContactForce, this, _1, _2, _3, _4));
             weakCurrentSimulator = simulator;
         }
     }

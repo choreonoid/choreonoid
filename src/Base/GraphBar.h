@@ -6,9 +6,6 @@
 #define CNOID_BASE_GRAPH_BAR_H
 
 #include <cnoid/ToolBar>
-#include <string>
-#include <vector>
-#include <boost/shared_ptr.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -35,6 +32,4 @@ private:
 
 }
 
-
 #endif
-

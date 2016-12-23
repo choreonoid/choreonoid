@@ -4,7 +4,6 @@
 */
 
 #include "Camera.h"
-#include <boost/make_shared.hpp>
 
 using namespace cnoid;
 
@@ -27,7 +26,7 @@ Camera::Camera()
     farClipDistance_ = 100.0;
     frameRate_ = 30.0;
     delay_ = 0.0;
-    image_ = boost::make_shared<Image>();
+    image_ = std::make_shared<Image>();
 }
 
 
@@ -87,7 +86,7 @@ Camera::Camera(const Camera& org, int x /* dummy */)
     if(org.isImageStateClonable_){
         image_ = org.image_;
     } else {
-        image_ = boost::make_shared<Image>();
+        image_ = std::make_shared<Image>();
     }
 }
 
@@ -98,7 +97,7 @@ DeviceState* Camera::cloneState() const
 }
 
 
-void Camera::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void Camera::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(Camera))){
         Device::forEachActualType(func);
@@ -109,7 +108,7 @@ void Camera::forEachActualType(boost::function<bool(const std::type_info& type)>
 Image& Camera::image()
 {
     if(image_.use_count() > 1){
-        image_ = boost::make_shared<Image>(*image_);
+        image_ = std::make_shared<Image>(*image_);
     }
     return *image_;
 }
@@ -117,17 +116,17 @@ Image& Camera::image()
 
 Image& Camera::newImage()
 {
-    image_ = boost::make_shared<Image>();
+    image_ = std::make_shared<Image>();
     return *image_;
 }
 
 
-void Camera::setImage(boost::shared_ptr<Image>& image)
+void Camera::setImage(std::shared_ptr<Image>& image)
 {
     if(image.use_count() == 1){
         image_ = image;
     } else {
-        image_ = boost::make_shared<Image>(*image);
+        image_ = std::make_shared<Image>(*image);
     }
     image.reset();
 }
@@ -138,7 +137,7 @@ void Camera::clearState()
     if(image_.use_count() == 1){
         image_->clear();
     } else {
-        image_ = boost::make_shared<Image>();
+        image_ = std::make_shared<Image>();
     }
 }
 

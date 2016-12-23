@@ -11,7 +11,8 @@
 #include "InverseKinematics.h"
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
-#include <boost/function.hpp>
+#include <functional>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -80,8 +81,8 @@ public:
         
     void customizeTarget(
         int numTargetElements,
-        boost::function<double(VectorXd& out_error)> errorFunc,
-        boost::function<void(MatrixXd& out_Jacobian)> jacobianFunc);
+        std::function<double(VectorXd& out_error)> errorFunc,
+        std::function<void(MatrixXd& out_Jacobian)> jacobianFunc);
 
     // InverseKinematics Interface
     virtual bool hasAnalyticalIK() const;
@@ -137,7 +138,7 @@ private:
     JointPathIkImpl* ik;
 };
 
-typedef boost::shared_ptr<JointPath> JointPathPtr;
+typedef std::shared_ptr<JointPath> JointPathPtr;
 
 class Body;
 

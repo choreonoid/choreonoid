@@ -6,11 +6,10 @@
 #include "AbstractSeqItem.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace cnoid;
-
+using namespace std::placeholders;
 
 AbstractSeqItem::AbstractSeqItem()
 {
@@ -63,9 +62,9 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqPtr seq = abstractSeq();
     putProperty(_("Frame rate"), seq->getFrameRate());
-    putProperty(_("Offset time"), seq->getOffsetTime(), boost::bind(setOffsetTime, this, _1));
-    putProperty(_("Number of frames"), seq->getNumFrames(), boost::bind(setPropertyNumFrames, this, _1));
-    putProperty(_("Time length"), seq->getTimeLength(), boost::bind(setPropertyTimeLength, this, _1));
+    putProperty(_("Offset time"), seq->getOffsetTime(), std::bind(setOffsetTime, this, _1));
+    putProperty(_("Number of frames"), seq->getNumFrames(), std::bind(setPropertyNumFrames, this, _1));
+    putProperty(_("Time length"), seq->getTimeLength(), std::bind(setPropertyTimeLength, this, _1));
     putProperty.decimals(3)(_("Time step"), seq->getTimeStep());
 }
 

@@ -61,7 +61,7 @@ AbstractSeq& ZMPSeq::operator=(const AbstractSeq& rhs)
 
 AbstractSeqPtr ZMPSeq::cloneSeq() const
 {
-    return boost::make_shared<ZMPSeq>(*this);
+    return std::make_shared<ZMPSeq>(*this);
 }
 
 

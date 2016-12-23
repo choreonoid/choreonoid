@@ -12,16 +12,15 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
 #include <pulse/pulseaudio.h>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <map>
 #include <cmath>
 //#include <iostream> // for debug
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -71,7 +70,7 @@ public:
     void stop();
 };
 
-typedef boost::shared_ptr<Source> SourcePtr;
+typedef std::shared_ptr<Source> SourcePtr;
 }
 
 
@@ -211,26 +210,26 @@ PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
 
     fullSyncPlaybackMenuItem = mm.addCheckItem(_("Fully-Synchronized Audio Playback"));
     fullSyncPlaybackMenuItem->sigToggled().connect(
-        boost::bind(&PulseAudioManagerImpl::onFullSyncPlaybackToggled, this));
+        std::bind(&PulseAudioManagerImpl::onFullSyncPlaybackToggled, this));
 
     ext->setProjectArchiver(
         "PulseAudioManager",
-        boost::bind(&PulseAudioManagerImpl::store, this, _1),
-        boost::bind(&PulseAudioManagerImpl::restore, this, _1));
+        std::bind(&PulseAudioManagerImpl::store, this, _1),
+        std::bind(&PulseAudioManagerImpl::restore, this, _1));
     
     ItemTreeView::mainInstance()->sigCheckToggled().connect(
-        boost::bind(&PulseAudioManagerImpl::onItemCheckToggled, this, _1, _2));
+        std::bind(&PulseAudioManagerImpl::onItemCheckToggled, this, _1, _2));
 
     timeBar = TimeBar::instance();
 
     timeBar->sigPlaybackInitialized().connect(
-        boost::bind(&PulseAudioManagerImpl::onPlaybackInitialized, this, _1));
+        std::bind(&PulseAudioManagerImpl::onPlaybackInitialized, this, _1));
 
     timeBar->sigPlaybackStarted().connect(
-        boost::bind(&PulseAudioManagerImpl::onPlaybackStarted, this, _1));
+        std::bind(&PulseAudioManagerImpl::onPlaybackStarted, this, _1));
 
     timeBar->sigPlaybackStopped().connect(
-        boost::bind(&PulseAudioManagerImpl::onPlaybackStopped, this, _1));
+        std::bind(&PulseAudioManagerImpl::onPlaybackStopped, this, _1));
 
     // In some environments, the initial stream connection after starting up an
     // operating system produces an undesired playback timing offset.
@@ -287,7 +286,7 @@ bool PulseAudioManagerImpl::playAudioFile(const std::string& filename, double vo
 {
     AudioItemPtr audioItem = new AudioItem();
     if(audioItem->load(filename)){
-        SourcePtr source = boost::make_shared<Source>(this, audioItem);
+        SourcePtr source = std::make_shared<Source>(this, audioItem);
         source->volumeRatio = volumeRatio;
         if(source->initialize()){
             if(timeBar->isDoingPlayback()){
@@ -296,7 +295,7 @@ bool PulseAudioManagerImpl::playAudioFile(const std::string& filename, double vo
             activeSources[audioItem] = source;
 
             timeBar->sigPlaybackStopped().connect(
-                boost::bind(&PulseAudioManagerImpl::onAudioFilePlaybackStopped, this, audioItem));
+                std::bind(&PulseAudioManagerImpl::onAudioFilePlaybackStopped, this, audioItem));
 
             timeBar->setTime(0.0);
             timeBar->startPlayback();
@@ -317,7 +316,7 @@ void PulseAudioManagerImpl::onItemCheckToggled(Item* item, bool isChecked)
 {
     if(AudioItem* audioItem = dynamic_cast<AudioItem*>(item)){
         if(isChecked){
-            SourcePtr source = boost::make_shared<Source>(this, audioItem);
+            SourcePtr source = std::make_shared<Source>(this, audioItem);
             if(source->initialize()){
                 activeSources[audioItem] = source;
                 if(sigTimeChangedConnection.connected()){
@@ -348,7 +347,7 @@ bool PulseAudioManagerImpl::onPlaybackInitialized(double time)
             source->initializePlayback(time);
         }
         sigTimeChangedConnection = timeBar->sigTimeChanged().connect(
-            boost::bind(&PulseAudioManagerImpl::onTimeChanged, this, _1));
+            std::bind(&PulseAudioManagerImpl::onTimeChanged, this, _1));
     }
     return true;
 }
@@ -405,7 +404,7 @@ void PulseAudioManagerImpl::restore(const Archive& archive)
 Source::Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem)
     : manager(manager),
       audioItem(audioItem),
-      stopLater(boost::bind(&Source::stop, this))
+      stopLater(std::bind(&Source::stop, this))
 {
     stream = 0;
     currentFrame = 0;
@@ -448,14 +447,14 @@ void pa_stream_success_callback(pa_stream* stream, int success, void* userdata)
 void pa_stream_overflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
-    callLater(boost::bind(&Source::onBufferOverflow, source));
+    callLater(std::bind(&Source::onBufferOverflow, source));
 }
 
 void pa_stream_underflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
     if(!source->hasAllFramesWritten){
-        callLater(boost::bind(&Source::onBufferUnderflow, source));
+        callLater(std::bind(&Source::onBufferUnderflow, source));
     }
 }
 }
@@ -584,7 +583,10 @@ bool Source::disconnectStream()
         }
         pa_stream_unref(stream);
         stream = 0;
+        return true;
     }
+
+    return false;
 }
 
 
@@ -694,7 +696,7 @@ void Source::write(size_t nbytes, bool isDoingInitialization)
             if(negative){
                 latency = 0;
             }
-            callLater(boost::bind(&Source::onAllFramesWritten, this, latency));
+            callLater(std::bind(&Source::onAllFramesWritten, this, latency));
         }
     }
 }

@@ -12,7 +12,6 @@
 #include <cnoid/Dialog>
 #include <cnoid/LazyCaller>
 #include <QBoxLayout>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
@@ -113,14 +112,14 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
     collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icons/collisionoutline.png"), _("Highlight colliding links"));
     collisionLinkHighlightToggle->setChecked(false);
     collisionLinkHighlightToggle->sigToggled().connect(
-        boost::bind(&KinematicsBarImpl::onCollisionVisualizationChanged, this));
+        std::bind(&KinematicsBarImpl::onCollisionVisualizationChanged, this));
 
     self->addButton(QIcon(":/Base/icons/setup.png"))
         ->sigClicked().connect(
-            boost::bind(&KinematicsBarSetupDialog::show, setup));
+            std::bind(&KinematicsBarSetupDialog::show, setup));
     
     setup->lazyCollisionDetectionModeCheck.sigToggled().connect(
-        boost::bind(&KinematicsBarImpl::onLazyCollisionDetectionModeToggled, this));
+        std::bind(&KinematicsBarImpl::onLazyCollisionDetectionModeToggled, this));
     
     onLazyCollisionDetectionModeToggled();
 }

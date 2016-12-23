@@ -30,7 +30,11 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
     virtual bool makeReady();
     virtual void updatePosition(int geometryId, const Position& position);
-    virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback);
+
+    // experimental API
+    int geometryPairId(int geometryId1, int geometryId2) const;
+    double findClosestPoints(int geometryPairId, Vector3& out_point1, Vector3& out_point2);
 
     void setNumThreads(int n);
 
@@ -38,7 +42,7 @@ private:
     AISTCollisionDetectorImpl* impl;
 };
 
-typedef boost::shared_ptr<AISTCollisionDetector> AISTCollisionDetectorPtr;
+typedef std::shared_ptr<AISTCollisionDetector> AISTCollisionDetectorPtr;
 
 }
 

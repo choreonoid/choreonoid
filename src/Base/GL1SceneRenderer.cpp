@@ -11,10 +11,9 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
-#include <boost/unordered_map.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <functional>
+#include <unordered_map>
 #include <iostream>
 
 /**
@@ -39,6 +38,16 @@ const float MinLineWidthForPicking = 5.0f;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
 
+struct SgObjectPtrHash {
+    std::hash<SgObject*> hash;
+    std::size_t operator()(const SgObjectPtr& p) const {
+        return hash(p.get());
+    }
+};
+
+typedef std::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
+
+
 struct TransparentShapeInfo
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -46,8 +55,33 @@ struct TransparentShapeInfo
     unsigned int pickId;
     Affine3 V; // view matrix
 };
-typedef boost::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
+typedef std::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 
+
+class DisplayListCache : public Referenced
+{
+public:
+    GLuint listID;
+    GLuint listIDforPicking;
+    bool useIDforPicking;
+    vector<TransparentShapeInfoPtr> transparentShapes;
+    CacheMap cacheMap;
+
+    DisplayListCache(){
+        listID = 0;
+        useIDforPicking = false;
+        listIDforPicking = 0;
+    }
+    ~DisplayListCache() {
+        if(listID){
+            glDeleteLists(listID, 1);
+        }
+        if(listIDforPicking){
+            glDeleteLists(listIDforPicking, 1);
+        }
+    }
+};
+    
     
 /*
   A set of variables associated with a scene node
@@ -55,28 +89,15 @@ typedef boost::shared_ptr<TransparentShapeInfo> TransparentShapeInfoPtr;
 class ShapeCache : public Referenced
 {
 public:
-    GLuint listID;
-    GLuint listIDforPicking;
-    bool useIDforPicking;
     GLuint bufferNames[4];
     GLuint size;
-    vector<TransparentShapeInfoPtr> transparentShapes;
 
     ShapeCache() {
-        listID = 0;
-        useIDforPicking = false;
-        listIDforPicking = 0;
         for(int i=0; i < 4; ++i){
             bufferNames[i] = GL_INVALID_VALUE;
         }
     }
     ~ShapeCache() {
-        if(listID){
-            glDeleteLists(listID, 1);
-        }
-        if(listIDforPicking){
-            glDeleteLists(listIDforPicking, 1);
-        }
         for(int i=0; i < 4; ++i){
             if(bufferNames[i] != GL_INVALID_VALUE){
                 glDeleteBuffers(1, &bufferNames[i]);
@@ -120,14 +141,6 @@ public:
 };
 typedef ref_ptr<TextureCache> TextureCachePtr;
 
-
-struct SgObjectPtrHash {
-    std::size_t operator()(const SgObjectPtr& p) const {
-        return boost::hash_value<SgObject>(p.get());
-    }
-};
-typedef boost::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> CacheMap;
-
 }
 
 namespace cnoid {
@@ -152,7 +165,7 @@ public:
         SgTexCoordArray texCoords;
         vector<char> scaledImageBuf;
     };
-    boost::scoped_ptr<Buf> buf;
+    std::unique_ptr<Buf> buf;
         
     CacheMap cacheMaps[2];
     bool doUnusedCacheCheck;
@@ -162,9 +175,9 @@ public:
     int currentCacheMapIndex;
     CacheMap* currentCacheMap;
     CacheMap* nextCacheMap;
-    ShapeCache* currentShapeCache;
+    DisplayListCache* currentDisplayListCache;
 
-    int currentShapeCacheTopViewMatrixIndex;
+    int currentDisplayListCacheTopViewMatrixIndex;
 
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
@@ -197,7 +210,7 @@ public:
 
     GLdouble pickX;
     GLdouble pickY;
-    typedef boost::shared_ptr<SgNodePath> SgNodePathPtr;
+    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     vector<SgNodePathPtr> pickingNodePathList;
     SgNodePath pickedNodePath;
@@ -264,6 +277,7 @@ public:
     inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
     void popPickName();
     void visitInvariantGroup(SgInvariantGroup* group);
+    void visitDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID);
     void visitShape(SgShape* shape);
     void visitPointSet(SgPointSet* pointSet);
     void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
@@ -453,7 +467,7 @@ void GL1SceneRendererImpl::beginRendering(bool doRenderingCommands)
         nextCacheMap = &cacheMaps[1 - currentCacheMapIndex];
         hasValidNextCacheMap = false;
     }
-    currentShapeCache = 0;
+    currentDisplayListCache = 0;
 
     if(doRenderingCommands){
         if(isPicking){
@@ -679,7 +693,7 @@ void GL1SceneRendererImpl::renderFog()
         } else {
             currentFogConnection.reset(
                 fog->sigUpdated().connect(
-                    boost::bind(&GL1SceneRendererImpl::onCurrentFogNodeUdpated, this)));
+                    std::bind(&GL1SceneRendererImpl::onCurrentFogNodeUdpated, this)));
         }
     }
 
@@ -837,7 +851,7 @@ inline unsigned int GL1SceneRendererImpl::pushPickName(SgNode* node, bool doSetC
     if(isPicking && !isCompiling){
         id = pickingNodePathList.size() + 1;
         currentNodePath.push_back(node);
-        pickingNodePathList.push_back(boost::make_shared<SgNodePath>(currentNodePath));
+        pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
         if(doSetColor){
             setPickColor(id);
         }
@@ -875,33 +889,26 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
         self->visitGroup(group);
 
     } else {
-        ShapeCache* cache;
+        DisplayListCache* cache;
         CacheMap::iterator p = currentCacheMap->find(group);
         if(p == currentCacheMap->end()){
-            cache = new ShapeCache();
+            cache = new DisplayListCache();
             currentCacheMap->insert(CacheMap::value_type(group, cache));
         } else {
-            cache = static_cast<ShapeCache*>(p->second.get());
+            cache = static_cast<DisplayListCache*>(p->second.get());
         }
 
         if(!cache->listID && !isPicking){
-            currentShapeCache = cache;
-            currentShapeCacheTopViewMatrixIndex = Vstack.size() - 1;
+            currentDisplayListCache = cache;
+            currentDisplayListCacheTopViewMatrixIndex = Vstack.size() - 1;
 
             cache->listID = glGenLists(1);
             if(cache->listID){
-                glNewList(cache->listID, GL_COMPILE);
-
-                isCompiling = true;
-                clearGLState();
-                self->visitGroup(group);
-                isCompiling = false;
+                visitDisplayListSubTree(group, cache, cache->listID);
 
                 if(stateFlag[LIGHTING] || stateFlag[CURRENT_COLOR]){
                     cache->useIDforPicking = true;
                 }
-                glEndList();
-
                 isNewDisplayListCreated = true;
             }
         }
@@ -911,16 +918,11 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
         if(listID){
             if(isPicking && cache->useIDforPicking){
                 if(!cache->listIDforPicking){
-                    currentShapeCache = cache;
-                    currentShapeCacheTopViewMatrixIndex = Vstack.size() - 1;
+                    currentDisplayListCache = cache;
+                    currentDisplayListCacheTopViewMatrixIndex = Vstack.size() - 1;
                     cache->listIDforPicking = glGenLists(1);
                     if(cache->listIDforPicking){
-                        glNewList(cache->listIDforPicking, GL_COMPILE);
-                        isCompiling = true;
-                        clearGLState();
-                        self->visitGroup(group);
-                        isCompiling = false;
-                        glEndList();
+                        visitDisplayListSubTree(group, cache, cache->listIDforPicking);
                     }
                 }
                 listID = cache->listIDforPicking;
@@ -949,11 +951,27 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
 
             if(isCheckingUnusedCaches){
                 nextCacheMap->insert(CacheMap::value_type(group, cache));
+                nextCacheMap->insert(cache->cacheMap.begin(), cache->cacheMap.end());
             }
         }
     }
-    currentShapeCache = 0;
+    currentDisplayListCache = 0;
 }
+
+
+void GL1SceneRendererImpl::visitDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID)
+{
+    glNewList(listID, GL_COMPILE);
+
+    isCompiling = true;
+    auto orgNextCacheMap = nextCacheMap;
+    nextCacheMap = &cache->cacheMap;
+    clearGLState();
+    self->visitGroup(group);
+    nextCacheMap = orgNextCacheMap;
+    isCompiling = false;
+    glEndList();
+}    
 
 
 void GL1SceneRenderer::visitTransform(SgTransform* transform)
@@ -1006,8 +1024,8 @@ void GL1SceneRendererImpl::visitShape(SgShape* shape)
                     TransparentShapeInfoPtr info = make_shared_aligned<TransparentShapeInfo>();
                     info->shape = shape;
                     if(isCompiling){
-                        info->V = Vstack[currentShapeCacheTopViewMatrixIndex].inverse() * Vstack.back();
-                        currentShapeCache->transparentShapes.push_back(info);
+                        info->V = Vstack[currentDisplayListCacheTopViewMatrixIndex].inverse() * Vstack.back();
+                        currentDisplayListCache->transparentShapes.push_back(info);
                     } else {
                         info->V = Vstack.back();
                         info->pickId = pushPickName(shape, false);

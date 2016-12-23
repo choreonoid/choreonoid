@@ -585,3 +585,44 @@ SgLineSet* MeshGenerator::generateExtrusionLineSet(const Extrusion& extrusion, S
 
     return lineSet;
 }
+
+
+SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid)
+{
+    SgMesh* mesh = new SgMesh;
+    if(grid.xDimension * grid.zDimension != grid.height.size()){
+        return mesh;
+    }
+
+    mesh->setVertices(new SgVertexArray());
+    SgVertexArray& vertices = *mesh->vertices();
+    vertices.reserve(grid.zDimension * grid.xDimension);
+
+    for(int z=0; z < grid.zDimension; z++){
+        for(int x=0; x < grid.xDimension; x++){
+            vertices.push_back(Vector3f(x * grid.xSpacing, grid.height[z * grid.xDimension + x], z * grid.zSpacing));
+        }
+    }
+
+    mesh->reserveNumTriangles((grid.zDimension - 1) * (grid.xDimension - 1) * 2);
+
+    for(int z=0; z < grid.zDimension - 1; ++z){
+        const int current = z * grid.xDimension;
+        const int next = (z + 1) * grid.xDimension;
+        for(int x=0; x < grid.xDimension - 1; ++x){
+            if(grid.ccw){
+                mesh->addTriangle( x + current, x + next, (x + 1) + next);
+                mesh->addTriangle( x + current, (x + 1) + next, (x + 1) + current);
+            }else{
+                mesh->addTriangle( x + current, (x + 1) + next, x + next);
+                mesh->addTriangle( x + current, (x + 1) + current, (x + 1) + next);
+            }
+        }
+    }
+
+    generateNormals(mesh, grid.creaseAngle);
+
+    mesh->updateBoundingBox();
+
+    return mesh;
+}

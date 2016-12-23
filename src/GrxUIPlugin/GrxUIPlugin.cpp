@@ -10,12 +10,15 @@
 #include <cnoid/AppConfig>
 #include "gettext.h"
 
-using namespace boost;
+namespace stdph = std::placeholders;
+namespace python = boost::python;
 using namespace cnoid;
 
 namespace {
+
 bool isActive_ = false;
 Action* importGrxUICheck;
+
 }
 
 
@@ -48,7 +51,8 @@ bool GrxUIPlugin::initialize()
         importGrxUICheck->setChecked(on);
         onImportGrxUICheckToggled(on, false);
     }
-    importGrxUICheck->sigToggled().connect(boost::bind(&GrxUIPlugin::onImportGrxUICheckToggled, this, _1, true));
+    importGrxUICheck->sigToggled().connect(
+        std::bind(&GrxUIPlugin::onImportGrxUICheckToggled, this, stdph::_1, true));
 
     return true;
 }

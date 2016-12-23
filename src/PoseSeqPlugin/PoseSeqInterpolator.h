@@ -9,7 +9,7 @@
 #include "PoseSeq.h"
 #include <cnoid/PoseProvider>
 #include <cnoid/Signal>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -83,7 +83,7 @@ private:
     PSIImpl* impl;
 };
 
-typedef boost::shared_ptr<PoseSeqInterpolator> PoseSeqInterpolatorPtr;
+typedef std::shared_ptr<PoseSeqInterpolator> PoseSeqInterpolatorPtr;
 
 }
 

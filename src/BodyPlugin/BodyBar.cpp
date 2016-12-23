@@ -6,10 +6,10 @@
 #include "BodyItem.h"
 #include <cnoid/ItemTreeView>
 #include <cnoid/Archive>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace cnoid {
 
@@ -56,39 +56,37 @@ BodyBar::BodyBar()
 
 BodyBarImpl::BodyBarImpl(BodyBar* self)
 {
-    using boost::bind;
-    
     self->setVisibleByDefault(true);
 
     self->addButton(QIcon(":/Body/icons/storepose.png"), _("Memory the current pose"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onCopyButtonClicked, this));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onCopyButtonClicked, this));
 
     self->addButton(QIcon(":/Body/icons/restorepose.png"), _("Recall the memorized pose"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onPasteButtonClicked, this));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onPasteButtonClicked, this));
     
     self->addButton(QIcon(":/Body/icons/origin.png"), _("Move the selected bodies to the origin"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onOriginButtonClicked, this));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onOriginButtonClicked, this));
 
     self->addButton(QIcon(":/Body/icons/initialpose.png"), _("Set the preset initial pose to the selected bodies"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onPoseButtonClicked, this, BodyItem::INITIAL_POSE));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onPoseButtonClicked, this, BodyItem::INITIAL_POSE));
 
     self->addButton(QIcon(":/Body/icons/stdpose.png"), _("Set the preset standard pose to the selected bodies"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onPoseButtonClicked, this, BodyItem::STANDARD_POSE));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onPoseButtonClicked, this, BodyItem::STANDARD_POSE));
 
     self->addSeparator();
 
     self->addButton(QIcon(":/Body/icons/right-to-left.png"), _("Copy the right side pose to the left side"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 1, false));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 1, false));
 
     self->addButton(QIcon(":/Body/icons/flip.png"), _("Mirror copy"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 0, true));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 0, true));
 
     self->addButton(QIcon(":/Body/icons/left-to-right.png"), _("Copy the left side pose to the right side"))
-        ->sigClicked().connect(bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 0, false));
+        ->sigClicked().connect(std::bind(&BodyBarImpl::onSymmetricCopyButtonClicked, this, 0, false));
 
     connectionOfItemSelectionChanged = 
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            bind(&BodyBarImpl::onItemSelectionChanged, this, _1));
+            std::bind(&BodyBarImpl::onItemSelectionChanged, this, _1));
 }
 
 
@@ -181,7 +179,7 @@ void BodyBarImpl::onItemSelectionChanged(const ItemList<BodyItem>& bodyItems)
         currentBodyItem = firstItem;
         connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
         connectionOfCurrentBodyItemDetachedFromRoot = currentBodyItem->sigDetachedFromRoot().connect(
-            boost::bind(&BodyBarImpl::onBodyItemDetachedFromRoot, this));
+            std::bind(&BodyBarImpl::onBodyItemDetachedFromRoot, this));
         sigCurrentBodyItemChanged(currentBodyItem.get());
     }
 
@@ -220,7 +218,7 @@ void BodyBarImpl::onBodyItemDetachedFromRoot()
 {
     currentBodyItem = 0;
     connectionOfCurrentBodyItemDetachedFromRoot.disconnect();
-    sigCurrentBodyItemChanged(0);
+    sigCurrentBodyItemChanged(nullptr);
 }
 
 
@@ -293,7 +291,7 @@ bool BodyBar::storeState(Archive& archive)
 
 bool BodyBar::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(boost::bind(&BodyBarImpl::restoreState, impl, boost::ref(archive)));
+    archive.addPostProcess(std::bind(&BodyBarImpl::restoreState, impl, std::ref(archive)));
     return true;
 }
 

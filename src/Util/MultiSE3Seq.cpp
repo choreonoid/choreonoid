@@ -39,7 +39,7 @@ MultiSE3Seq::MultiSE3Seq(const MultiSE3Seq& org)
 
 AbstractSeqPtr MultiSE3Seq::cloneSeq() const
 {
-    return boost::make_shared<MultiSE3Seq>(*this);
+    return std::make_shared<MultiSE3Seq>(*this);
 }
 
 
@@ -79,12 +79,14 @@ bool MultiSE3Seq::loadPlainMatrixFormat(const std::string& filename)
         Frame frame = MultiSE3Seq::frame(f++);
         for(int j=0; j < m; ++j){
             SE3& x = frame[j];
-            x.translation() << data[i++], data[i++], data[i++];
+            x.translation() << data[i], data[i+1], data[i+2];
+            i += 3;
             Matrix3 R;
             R <<
-                data[i++], data[i++], data[i++],
-                data[i++], data[i++], data[i++],
-                data[i++], data[i++], data[i++];
+                data[i],   data[i+1], data[i+2],
+                data[i+3], data[i+4], data[i+5],
+                data[i+6], data[i+7], data[i+8];
+            i += 9;
             x.rotation() = R;
         }
     }

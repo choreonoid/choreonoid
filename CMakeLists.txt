@@ -24,6 +24,11 @@ set(CNOID_DIR ${CMAKE_INSTALL_PREFIX})
 set(CNOID_SUBDIR choreonoid-${CNOID_VERSION})
 set(CNOID_PLUGIN_SUBDIR lib/${CNOID_SUBDIR})
 
+if(UNIX)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  add_definitions("-pthread")
+endif()
+
 if(WIN32)
   set(CNOID_HEADER_SUBDIR "include")
   set(CNOID_SHARE_SUBDIR "share")
@@ -162,6 +167,7 @@ if(MSVC)
   endif()
 endif()
 
+find_package(Threads)
 
 if(ENABLE_GUI)
   FIND_PACKAGE(OpenGL)
@@ -1074,8 +1080,8 @@ if(USE_EXTERNAL_YAML)
     link_directories(${LIBYAML_DIR}/lib)
   endif()
 else()
-  add_subdirectory(thirdparty/yaml-0.1.3)
-  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.3/include)
+  add_subdirectory(thirdparty/yaml-0.1.7)
+  include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
 
 # irrxml

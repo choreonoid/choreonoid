@@ -22,7 +22,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
 
     int numPoints() const { return points_->size(); }
@@ -37,17 +37,17 @@ public:
     bool isOrganized() const { return isOrganized_; }
     void setOrganized(bool on);
             
-    boost::shared_ptr<const PointData> sharedPoints() const { return points_; }
+    std::shared_ptr<const PointData> sharedPoints() const { return points_; }
 
     /**
        Move semantics. If the use_count() of the given shared point data pointer is one,
        the data is moved to the Camera object and the ownership of the given pointer is released.
        Otherwise, the data is copied.
     */
-    void setPoints(boost::shared_ptr<PointData>& points);
+    void setPoints(std::shared_ptr<PointData>& points);
 
 private:
-    boost::shared_ptr< std::vector<Vector3f> > points_;
+    std::shared_ptr< std::vector<Vector3f> > points_;
     bool isOrganized_;
 
     RangeCamera(const RangeCamera& org, int x);
@@ -55,6 +55,7 @@ private:
 };
 
 typedef ref_ptr<RangeCamera> RangeCameraPtr;
+
 };
 
 #endif

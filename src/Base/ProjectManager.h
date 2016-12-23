@@ -2,12 +2,12 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_PROJECT_MANAGER_H_INCLUDED
-#define CNOID_BASE_PROJECT_MANAGER_H_INCLUDED
+#ifndef CNOID_BASE_PROJECT_MANAGER_H
+#define CNOID_BASE_PROJECT_MANAGER_H
 
 #include "Archive.h"
 #include <string>
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -23,7 +23,7 @@ public:
     void loadProject(const std::string& filename);
     void saveProject(const std::string& filename);
     void overwriteCurrentProject();
-    const std::string& getProjectFileName();
+    std::string currentProjectFile() const;
 
     static void initialize(ExtensionManager* em);
 
@@ -39,8 +39,8 @@ private:
     void setArchiver(
         const std::string& moduleName,
         const std::string& objectName,
-        boost::function<bool(Archive&)> storeFunction,
-        boost::function<void(const Archive&)> restoreFunction);
+        std::function<bool(Archive&)> storeFunction,
+        std::function<void(const Archive&)> restoreFunction);
 
     void resetArchivers(const std::string& moduleName);
 };

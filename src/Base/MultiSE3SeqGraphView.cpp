@@ -5,12 +5,12 @@
 #include "MultiSE3SeqGraphView.h"
 #include "ViewManager.h"
 #include <cnoid/EigenUtil>
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using namespace std::placeholders;
 
 
 void MultiSE3SeqGraphView::initializeClass(ExtensionManager* ext)
@@ -48,7 +48,7 @@ void MultiSE3SeqGraphView::setupElementToggleSet
 
         toggleConnections.add(
             toggles[i].sigToggled().connect(
-                boost::bind(&MultiSE3SeqGraphView::updateSelections, this)));
+                std::bind(&MultiSE3SeqGraphView::updateSelections, this)));
     }
 }
 
@@ -90,9 +90,9 @@ void MultiSE3SeqGraphView::addGraphDataHandlers(Item* item, int partIndex, std::
                     handler->setLabel(boost::lexical_cast<string>(partIndex));
                     handler->setFrameProperties(seq->numFrames(), seq->frameRate());
                     handler->setDataRequestCallback(
-                        boost::bind(&MultiSE3SeqGraphView::onDataRequest, this, seq, partIndex, i, j, _1, _2, _3));
+                        std::bind(&MultiSE3SeqGraphView::onDataRequest, this, seq, partIndex, i, j, _1, _2, _3));
                     handler->setDataModifiedCallback(
-                        boost::bind(&MultiSE3SeqGraphView::onDataModified, this, seqItem, partIndex, i, j, _1, _2, _3));
+                        std::bind(&MultiSE3SeqGraphView::onDataModified, this, seqItem, partIndex, i, j, _1, _2, _3));
 
                     out_handlers.push_back(handler);
                 }

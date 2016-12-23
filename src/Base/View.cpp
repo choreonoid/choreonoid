@@ -189,7 +189,8 @@ void View::bringToFront()
     if(impl->viewArea){
         QTabWidget* tab = 0;
         for(QWidget* widget = parentWidget(); widget; widget = widget->parentWidget()){
-            if(tab = dynamic_cast<QTabWidget*>(widget)){
+            tab = dynamic_cast<QTabWidget*>(widget);
+            if(tab){
                 tab->setCurrentWidget(this);
             }
         }

@@ -65,7 +65,7 @@ Device* PointLight::clone() const
 }
 
 
-void PointLight::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void PointLight::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(PointLight))){
         Light::forEachActualType(func);

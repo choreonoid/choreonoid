@@ -10,6 +10,7 @@
 
 using namespace std;
 using namespace cnoid;
+using boost::format;
 
 
 ShaderProgram::ShaderProgram()
@@ -129,11 +130,11 @@ PhongShadowProgram::PhongShadowProgram()
 {
     numShadows_ = 0;
     isShadowAntiAliasingEnabled_ = false;
-    shadowMapWidth_ = 1024;
-    shadowMapHeight_ = 1024;
+    shadowMapWidth_ = 2048;
+    shadowMapHeight_ = 2048;
     persShadowCamera = new SgPerspectiveCamera();
     orthoShadowCamera = new SgOrthographicCamera();
-    orthoShadowCamera->setHeight(5.0);
+    orthoShadowCamera->setHeight(15.0);
     currentShadowIndex = 0;
 
     shadowBias <<
@@ -176,7 +177,7 @@ void PhongShadowProgram::initialize()
     
     numLightsLocation = getUniformLocation("numLights");
     lightInfos.resize(maxNumLights());
-    boost::format lightFormat("lights[%1%].");
+    format lightFormat("lights[%1%].");
     for(int i=0; i < maxNumLights(); ++i){
         LightInfo& light = lightInfos[i];
         string prefix = str(lightFormat % i);
@@ -215,11 +216,11 @@ void PhongShadowProgram::initializeShadowInfo(int index)
 {
     ShadowInfo& shadow = shadowInfos[index];
 
-    boost::format shadowMatrixFormat("shadowMatrices[%1%]");
-    shadow.shadowMatrixLocation = getUniformLocation(str(boost::format("shadowMatrices[%1%]") % index));
+    format shadowMatrixFormat("shadowMatrices[%1%]");
+    shadow.shadowMatrixLocation = getUniformLocation(str(format("shadowMatrices[%1%]") % index));
     
-    boost::format shadowFormat("shadows[%1%].");
-    string prefix = str(boost::format("shadows[%1%].") % index);
+    format shadowFormat("shadows[%1%].");
+    string prefix = str(format("shadows[%1%].") % index);
     shadow.lightIndexLocation = getUniformLocation(prefix + "lightIndex");
     shadow.shadowMapLocation = getUniformLocation(prefix + "shadowMap");
 

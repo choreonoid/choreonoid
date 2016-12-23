@@ -40,6 +40,7 @@ private:
 };
 
 typedef ref_ptr<CollisionSeqItem> CollisionSeqItemPtr;
+
 }
 
 #endif

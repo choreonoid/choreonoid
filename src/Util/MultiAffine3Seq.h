@@ -20,8 +20,8 @@ class CNOID_EXPORT MultiAffine3Seq : public MultiSeq<Affine3, Eigen::aligned_all
     typedef MultiSeq<Affine3, Eigen::aligned_allocator<Affine3> > BaseSeqType;
 
 public:
-    typedef boost::shared_ptr<MultiAffine3Seq> Ptr;
-    typedef boost::shared_ptr<const MultiAffine3Seq> ConstPtr;
+    typedef std::shared_ptr<MultiAffine3Seq> Ptr;
+    typedef std::shared_ptr<const MultiAffine3Seq> ConstPtr;
 
     MultiAffine3Seq();
     MultiAffine3Seq(int numFrames, int numParts = 1);

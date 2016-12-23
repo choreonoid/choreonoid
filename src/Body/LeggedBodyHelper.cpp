@@ -8,10 +8,8 @@
 #include "JointPath.h"
 #include "CompositeIK.h"
 #include <cnoid/EigenArchive>
-#include <boost/make_shared.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -93,8 +91,7 @@ InverseKinematicsPtr LeggedBodyHelper::getFootBasedIK(Link* targetLink)
 {
     InverseKinematicsPtr ik;
     if(isValid_){
-        CompositeIKPtr composite = boost::make_shared<CompositeIK>(body_, targetLink);
-        ik = composite;
+        CompositeIKPtr composite = boost::make_shared<CompositeIK>(body_, targetLink);        ik = composite;
         for(size_t i=0; i < footInfos.size(); ++i){
             if(!composite->addBaseLink(footInfos[i].link)){
                 ik.reset();

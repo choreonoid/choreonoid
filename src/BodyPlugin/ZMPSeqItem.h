@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODYPLUGIN_ZMPSEQ_ITEM_H_INCLUDED
-#define CNOID_BODYPLUGIN_ZMPSEQ_ITEM_H_INCLUDED
+#ifndef CNOID_BODY_PLUGIN_ZMPSEQ_ITEM_H
+#define CNOID_BODY_PLUGIN_ZMPSEQ_ITEM_H
 
 #include <cnoid/Vector3SeqItem>
 #include <cnoid/ZMPSeq>
@@ -37,6 +37,7 @@ private:
 };
 
 typedef ref_ptr<ZMPSeqItem> ZMPSeqItemPtr;
+
 }
 
 #endif

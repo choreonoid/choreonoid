@@ -2,14 +2,12 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_CAPTURE_BAR_H_INCLUDED
-#define CNOID_BASE_CAPTURE_BAR_H_INCLUDED
+#ifndef CNOID_BASE_CAPTURE_BAR_H
+#define CNOID_BASE_CAPTURE_BAR_H
 
 #include <cnoid/ToolBar>
 
 namespace cnoid {
-
-class View;
 
 class CaptureBar : public ToolBar
 {
@@ -22,6 +20,7 @@ private:
     virtual void mouseMoveEvent(QMouseEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
 };
+
 }
 
 #endif

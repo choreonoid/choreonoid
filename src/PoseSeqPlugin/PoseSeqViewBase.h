@@ -21,7 +21,6 @@
 #include <cnoid/LinkTreeWidget>
 #include <QBoxLayout>
 #include <QLabel>
-#include <boost/function.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <ostream>
 #include <set>
@@ -170,7 +169,7 @@ public:
     void initializeLinkTreeIkLinkColumn();
     void initializeLinkTreeTraverse(QTreeWidgetItem* parentItem);
 
-    void togglePoseAttribute(boost::function<bool(PosePtr& pose)> toggleFunction);
+    void togglePoseAttribute(std::function<bool(PosePtr& pose)> toggleFunction);
     void onBaseLinkRadioClicked();
     bool setBaseLink(PosePtr& pose, Link* link);
     void onValidPartCheckClicked(LinkTreeItem* item, Qt::CheckState checkState);

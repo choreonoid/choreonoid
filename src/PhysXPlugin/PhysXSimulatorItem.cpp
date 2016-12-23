@@ -14,8 +14,7 @@
 #include <cnoid/Link>
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+#include <boost/optional.hpp>
 #include "gettext.h"
 #include <iostream>
 
@@ -28,7 +27,6 @@ using std::isfinite;
 #include <PxPhysicsAPI.h>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 using namespace physx;
 
@@ -326,9 +324,9 @@ void PhysXLink::createLinkBody(bool isStatic, PhysXLink* parent, const Vector3& 
 
 void PhysXLink::createGeometry(PhysXBody* physXBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
+        if(extractor->extract(link->collisionShape(), std::bind(&PhysXLink::addMesh, this, extractor, physXBody))){
             if(!vertices.empty()){
                 if(pxRigidActor->isRigidStatic()){
                     PxTriangleMesh* triangleMesh = createTriangleMesh();
@@ -361,7 +359,7 @@ void PhysXLink::addMesh(MeshExtractor* extractor, PhysXBody* physXBody)
         if(mesh->primitiveType() != SgMesh::MESH){
             bool doAddPrimitive = false;
             Vector3 scale;
-            optional<Vector3> translation;
+            boost::optional<Vector3> translation;
             if(!extractor->isCurrentScaled()){
                 scale.setOnes();
                 doAddPrimitive = true;

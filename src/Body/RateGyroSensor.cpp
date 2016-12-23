@@ -65,7 +65,7 @@ Device* RateGyroSensor::clone() const
 }
 
 
-void RateGyroSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void RateGyroSensor::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(RateGyroSensor))){
         Device::forEachActualType(func);

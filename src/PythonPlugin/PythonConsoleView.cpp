@@ -19,9 +19,9 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 using namespace boost::assign;
+namespace python = boost::python;
 
 namespace {
 const unsigned int HISTORY_SIZE = 100;

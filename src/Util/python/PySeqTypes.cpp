@@ -11,6 +11,11 @@
 using namespace boost::python;
 using namespace cnoid;
 
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(AbstractSeq)
+CNOID_PYTHON_DEFINE_GET_POINTER(AbstractMultiSeq)
+CNOID_PYTHON_DEFINE_GET_POINTER(MultiValueSeq)
+
 namespace {
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(AbstractSeq_setNumFrames, setNumFrames, 1, 2)

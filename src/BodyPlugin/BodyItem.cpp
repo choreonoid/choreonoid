@@ -29,8 +29,6 @@
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/FileUtil>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <bitset>
 #include <deque>
 #include <iostream>
@@ -38,6 +36,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 using boost::format;
@@ -110,7 +109,7 @@ public:
 
     BodyState initialState;
             
-    typedef boost::shared_ptr<BodyState> BodyStatePtr;
+    typedef std::shared_ptr<BodyState> BodyStatePtr;
     std::deque<BodyStatePtr> kinematicStateHistory;
     size_t currentHistoryIndex;
     bool isCurrentKinematicStateInHistory;
@@ -167,7 +166,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<BodyItem>(N_("BodyItem"));
         im.addLoader<BodyItem>(
-            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", boost::bind(loadBodyItem, _1, _2));
+            _("OpenHRP Model File"), "OpenHRP-VRML-MODEL", "body;wrl;yaml;yml;dae;stl", std::bind(loadBodyItem, _1, _2));
 
         OptionManager& om = ext->optionManager();
         om.addOption("hrpmodel", boost::program_options::value< vector<string> >(), "load an OpenHRP model file");
@@ -187,8 +186,8 @@ BodyItem::BodyItem()
 
 BodyItemImpl::BodyItemImpl(BodyItem* self)
     : self(self),
-      sigKinematicStateChanged(boost::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(boost::bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
+      sigKinematicStateChanged(std::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
+      sigKinematicStateEdited(std::bind(&BodyItemImpl::emitSigKinematicStateEdited, this))
 {
     body = new Body();
     isEditable = true;
@@ -208,8 +207,8 @@ BodyItem::BodyItem(const BodyItem& org)
 BodyItemImpl::BodyItemImpl(BodyItem* self, const BodyItemImpl& org)
     : self(self),
       body(org.body->clone()),
-      sigKinematicStateChanged(boost::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
-      sigKinematicStateEdited(boost::bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
+      sigKinematicStateChanged(std::bind(&BodyItemImpl::emitSigKinematicStateChanged, this)),
+      sigKinematicStateEdited(std::bind(&BodyItemImpl::emitSigKinematicStateEdited, this)),
       initialState(org.initialState)
 {
     if(org.currentBaseLink){
@@ -236,7 +235,7 @@ void BodyItemImpl::init(bool calledFromCopyConstructor)
 
     initBody(calledFromCopyConstructor);
 
-    self->sigPositionChanged().connect(boost::bind(&BodyItemImpl::onPositionChanged, this));
+    self->sigPositionChanged().connect(std::bind(&BodyItemImpl::onPositionChanged, this));
 }
 
 
@@ -488,7 +487,7 @@ void BodyItemImpl::appendKinematicStateToHistory()
         cout << "BodyItem::appendKinematicStateToHistory()" << endl;
     }
 
-    BodyStatePtr state = boost::make_shared<BodyState>();
+    BodyStatePtr state = std::make_shared<BodyState>();
     self->storeKinematicState(*state);
 
     if(kinematicStateHistory.empty() || (currentHistoryIndex == kinematicStateHistory.size() - 1)){
@@ -577,7 +576,7 @@ bool BodyItemImpl::redoKinematicState()
 PinDragIKptr BodyItem::pinDragIK()
 {
     if(!impl->pinDragIK){
-        impl->pinDragIK = boost::make_shared<PinDragIK>(impl->body);
+        impl->pinDragIK = std::make_shared<PinDragIK>(impl->body);
     }
     return impl->pinDragIK;
 }
@@ -664,7 +663,7 @@ void BodyItemImpl::createPenetrationBlocker(Link* link, bool excludeSelfCollisio
 {
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
-        blocker = boost::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
+        blocker = std::make_shared<PenetrationBlocker>(worldItem->collisionDetector()->clone(), link);
         const ItemList<BodyItem>& bodyItems = worldItem->collisionBodyItems();
         for(int i=0; i < bodyItems.size(); ++i){
             BodyItem* bodyItem = bodyItems.get(i);
@@ -934,8 +933,7 @@ bool BodyItemImpl::enableCollisionDetection(bool on)
 
 void BodyItem::enableSelfCollisionDetection(bool on)
 {
-	impl->enableSelfCollisionDetection(on);
-}
+    impl->enableSelfCollisionDetection(on);}
 
 
 bool BodyItemImpl::enableSelfCollisionDetection(bool on)
@@ -1107,13 +1105,13 @@ void BodyItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static model"), body->isStaticModel(),
-                (boost::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
+                (std::bind(&BodyItemImpl::onStaticModelPropertyChanged, this, _1)));
     putProperty(_("Model file"), getFilename(boost::filesystem::path(self->filePath())));
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
-                (boost::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
+                (std::bind(&BodyItemImpl::enableCollisionDetection, this, _1)));
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
-                (boost::bind(&BodyItemImpl::enableSelfCollisionDetection, this, _1)));
-    putProperty(_("Editable"), isEditable, boost::bind(&BodyItemImpl::onEditableChanged, this, _1));
+                (std::bind(&BodyItemImpl::enableSelfCollisionDetection, this, _1)));
+    putProperty(_("Editable"), isEditable, std::bind(&BodyItemImpl::onEditableChanged, this, _1));
 }
 
 

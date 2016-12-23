@@ -13,13 +13,13 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/ProjectManager>
 #include <QLibrary>
-#include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -225,10 +225,10 @@ void SimpleControllerItemImpl::initializeIoBody(Body* body)
     for(size_t i=0; i < devices.size(); ++i){
         inputDeviceStateConnections.add(
             devices[i]->sigStateChanged().connect(
-                boost::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
+                std::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
         outputDeviceStateConnections.add(
             ioDevices[i]->sigStateChanged().connect(
-                boost::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
+                std::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
     }
 }
 
@@ -262,12 +262,12 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
                 filesystem::path(executableTopDirectory()) /
                 CNOID_PLUGIN_SUBDIR / "simplecontroller" / dllPath;
             else {
-                const string& projectFileName = ProjectManager::instance()->getProjectFileName();
-                if (projectFileName.empty()){
+                string projectFile = ProjectManager::instance()->currentProjectFile();
+                if(projectFile.empty()){
                     mv->putln(_("Please save the project."));
                     return false;
-                }else{
-                    dllPath = boost::filesystem::path(projectFileName).parent_path() / dllPath;
+                } else {
+                    dllPath = boost::filesystem::path(projectFile).parent_path() / dllPath;
                 }
             }
         }
@@ -491,7 +491,7 @@ static int getOutputStateTypeIndex(int type){
 
 static void updateIOStateTypeSet
 (vector<char>& linkIndexToStateTypeMap, vector<unsigned short>& linkIndices, vector<char>& stateTypes,
- boost::function<int(int type)> getStateTypeIndex)
+ std::function<int(int type)> getStateTypeIndex)
 {
     linkIndices.clear();
     stateTypes.clear();
@@ -732,9 +732,9 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
     }
     putProperty(_("Controller module"), FilePath(controllerModuleName, filter, dir),
-                boost::bind(&SimpleControllerItem::setController, self, _1), true);
+                std::bind(&SimpleControllerItem::setController, self, _1), true);
     putProperty(_("Reloading"), doReloading,
-                boost::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
+                std::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
 }
 
 

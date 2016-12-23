@@ -21,7 +21,7 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     static void addExtraSeqItemFactory(
-        const std::string& key, boost::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory);
+        const std::string& key, std::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory);
 
     BodyMotionItem();
     BodyMotionItem(BodyMotionPtr bodyMotion);

@@ -5,7 +5,6 @@
 #include "SimpleController.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 SimpleController::SimpleController()

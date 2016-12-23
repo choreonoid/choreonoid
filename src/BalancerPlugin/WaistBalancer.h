@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BALANCER_PLUGIN_WAIST_BALANCER_H_INCLUDED
-#define CNOID_BALANCER_PLUGIN_WAIST_BALANCER_H_INCLUDED
+#ifndef CNOID_BALANCER_PLUGIN_WAIST_BALANCER_H
+#define CNOID_BALANCER_PLUGIN_WAIST_BALANCER_H
 
 #include <cnoid/BodyMotion>
 #include <cnoid/Body>
@@ -11,7 +11,6 @@
 #include <cnoid/LinkTraverse>
 #include <cnoid/CompositeIK>
 #include <boost/optional.hpp>
-#include <boost/function.hpp>
 #include <vector>
 
 namespace cnoid {
@@ -131,7 +130,7 @@ namespace cnoid {
         int boundarySmootherType_;
         bool doBoundarySmoother;
         double boundarySmoothingTime;
-        boost::function<void(int begin, int direction)> boundarySmootherFunction;
+        std::function<void(int begin, int direction)> boundarySmootherFunction;
         int numBoundarySmoothingFrames;
         bool doProcessFinalBoundary;
 

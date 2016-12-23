@@ -11,7 +11,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 static const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;

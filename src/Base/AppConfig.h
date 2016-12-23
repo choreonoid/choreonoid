@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GUIBASE_APP_CONFIG_H_INCLUDED
-#define CNOID_GUIBASE_APP_CONFIG_H_INCLUDED
+#ifndef CNOID_BASE_APP_CONFIG_H
+#define CNOID_BASE_APP_CONFIG_H
 
 #include <string>
 #include <cnoid/ValueTree>
@@ -20,6 +20,7 @@ public:
     static bool save(const std::string& filename);
     static bool load(const std::string& filename);
 };
+
 }
 
 #endif

@@ -3,20 +3,19 @@
 */
 
 #include "LazySignal.h"
-#include <boost/bind.hpp>
 
 using namespace cnoid;
 
 
 LazySignalBase::LazySignalBase()
-    : LazyCaller(boost::bind(&LazySignalBase::doEmit, this))
+    : LazyCaller(std::bind(&LazySignalBase::doEmit, this))
 {
 
 }
 
 
-LazySignalBase::LazySignalBase(boost::function<void()> emitFunction, int priority)
-    : LazyCaller(boost::bind(&LazySignalBase::doEmit, this), priority),
+LazySignalBase::LazySignalBase(std::function<void()> emitFunction, int priority)
+    : LazyCaller(std::bind(&LazySignalBase::doEmit, this), priority),
       emitFunction(emitFunction)
 {
 

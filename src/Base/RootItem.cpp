@@ -6,12 +6,10 @@
 #include "ExtensionManager.h"
 #include "ItemManager.h"
 #include "LazySignal.h"
-#include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {

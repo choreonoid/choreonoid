@@ -16,9 +16,7 @@
 #include <QLibrary>
 #include <QRegExp>
 #include <QFileDialog>
-#include <boost/make_shared.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/bind.hpp>
 #include <vector>
 #include <map>
 #include <set>
@@ -79,7 +77,7 @@ public:
     QRegExp pluginNamePattern;
 
     struct PluginInfo;
-    typedef boost::shared_ptr<PluginInfo> PluginInfoPtr;
+    typedef std::shared_ptr<PluginInfo> PluginInfoPtr;
     typedef map<std::string, PluginInfoPtr> PluginMap;
 
     struct PluginInfo {
@@ -191,22 +189,22 @@ PluginManager::PluginManager(ExtensionManager* ext)
 
 PluginManagerImpl::PluginManagerImpl(ExtensionManager* ext)
     : mv(MessageView::mainInstance()),
-      unloadPluginsLater(boost::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW),
-      reloadPluginsLater(boost::bind(&PluginManagerImpl::loadPlugins, this), LazyCaller::PRIORITY_LOW)
+      unloadPluginsLater(std::bind(&PluginManagerImpl::unloadPluginsActually, this), LazyCaller::PRIORITY_LOW),
+      reloadPluginsLater(std::bind(&PluginManagerImpl::loadPlugins, this), LazyCaller::PRIORITY_LOW)
 {
     pluginNamePattern.setPattern(QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_SUFFIX);
 
     MappingPtr config = AppConfig::archive()->openMapping("PluginManager");
 
     // for the base module
-    PluginInfoPtr info = boost::make_shared<PluginInfo>();
+    PluginInfoPtr info = std::make_shared<PluginInfo>();
     info->name = "Base";
     nameToPluginInfoMap.insert(make_pair(string("Base"), info));
 
     MenuManager& mm = ext->menuManager();
     mm.setPath("/File");
     mm.addItem(_("Load Plugin"))
-        ->sigTriggered().connect(boost::bind(&PluginManagerImpl::onLoadPluginTriggered, this));
+        ->sigTriggered().connect(std::bind(&PluginManagerImpl::onLoadPluginTriggered, this));
 
     startupLoadingCheck = mm.addCheckItem(_("Startup Plugin Loading"));
     startupLoadingCheck->setChecked(config->get("startupPluginLoading", true));
@@ -352,7 +350,7 @@ void PluginManagerImpl::scanPluginFiles(const std::string& pathString, bool isRe
             if(pluginNamePattern.exactMatch(filename)){
                 PluginMap::iterator p = pathToPluginInfoMap.find(pathString);
                 if(p == pathToPluginInfoMap.end()){
-                    PluginInfoPtr info = boost::make_shared<PluginInfo>();
+                    PluginInfoPtr info = std::make_shared<PluginInfo>();
                     info->pathString = pathString;
                     allPluginInfos.push_back(info);
                     pathToPluginInfoMap[pathString] = info;
@@ -623,7 +621,7 @@ bool PluginManagerImpl::activatePlugin(int index)
                     info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
                     .addItem(str(fmt(_("About %1% Plugin")) % info->name).c_str());
                 info->aboutMenuItem->sigTriggered().connect(
-                    boost::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
+                    std::bind(&PluginManagerImpl::onAboutDialogTriggered, this, info.get()));
                 
                 // register old names
                 int numOldNames = info->plugin->numOldNames();

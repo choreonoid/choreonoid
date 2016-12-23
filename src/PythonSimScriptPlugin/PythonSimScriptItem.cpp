@@ -7,11 +7,10 @@
 #include <cnoid/PythonScriptItemImpl>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace stdph = std::placeholders;
 using namespace cnoid;
 
 
@@ -20,7 +19,7 @@ void PythonSimScriptItem::initialize(ExtensionManager* ext)
     ext->itemManager().registerClass<PythonSimScriptItem>(N_("PythonSimScriptItem"));
     ext->itemManager().addLoader<PythonSimScriptItem>(
         _("Python Script for Simulation"), "PYTHON-SCRIPT-FILE", "py",
-        boost::bind(&PythonSimScriptItem::setScriptFilename, _1, _2));
+        std::bind(&PythonSimScriptItem::setScriptFilename, stdph::_1, stdph::_2));
 }
 
 

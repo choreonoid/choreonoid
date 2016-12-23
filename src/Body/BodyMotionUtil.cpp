@@ -23,8 +23,9 @@
 #include <algorithm>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
+namespace filesystem = boost::filesystem;
 
 static bool saveRootLinkAttAsRpyFormat(BodyMotion& motion, const std::string& filename, std::ostream& os)
 {

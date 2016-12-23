@@ -7,7 +7,7 @@
 
 #include <cnoid/ToolBar>
 #include <cnoid/Signal>
-#include <boost/function.hpp>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -36,7 +36,7 @@ private:
 
     void onStoreInitialClicked();
     void onRestoreInitialClicked();
-    void forEachSimulator(boost::function<void(SimulatorItem* simulator)> callback, bool doSelect = false);
+    void forEachSimulator(std::function<void(SimulatorItem* simulator)> callback, bool doSelect = false);
     void onStopSimulationClicked();
     void onPauseSimulationClicked();
     ToolButton* pauseToggle;

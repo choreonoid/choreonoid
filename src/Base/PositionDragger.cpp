@@ -7,7 +7,6 @@
 #include "RotationDragger.h"
 #include "SceneDragProjector.h"
 #include <cnoid/SceneWidget>
-#include <boost/bind.hpp>
 #include <deque>
 
 using namespace std;
@@ -120,16 +119,16 @@ PositionDraggerImpl::PositionDraggerImpl(PositionDragger* self, const PositionDr
 void PositionDraggerImpl::initializeDraggers()
 {
     translationDragger->sigTranslationStarted().connect(
-        boost::bind(&PositionDraggerImpl::onSubDraggerDragStarted, this));
+        std::bind(&PositionDraggerImpl::onSubDraggerDragStarted, this));
     translationDragger->sigTranslationDragged().connect(
-        boost::bind(&PositionDraggerImpl::onSubDraggerDragged, this));
-    translationDragger->sigTranslationFinished().connect(boost::ref(sigDragFinished));
+        std::bind(&PositionDraggerImpl::onSubDraggerDragged, this));
+    translationDragger->sigTranslationFinished().connect(std::ref(sigDragFinished));
     
     rotationDragger->sigRotationStarted().connect(
-        boost::bind(&PositionDraggerImpl::onSubDraggerDragStarted, this));
+        std::bind(&PositionDraggerImpl::onSubDraggerDragStarted, this));
     rotationDragger->sigRotationDragged().connect(
-        boost::bind(&PositionDraggerImpl::onSubDraggerDragged, this));
-    rotationDragger->sigRotationFinished().connect(boost::ref(sigDragFinished));
+        std::bind(&PositionDraggerImpl::onSubDraggerDragged, this));
+    rotationDragger->sigRotationFinished().connect(std::ref(sigDragFinished));
 }
 
 

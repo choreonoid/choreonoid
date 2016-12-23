@@ -22,7 +22,6 @@ set(sources
   PoseSeqItem.cpp
   PoseSeqEngine.cpp
   PoseSeqViewBase.cpp
-  #PoseSeqView.cpp
   PoseRollView.cpp
   BodyMotionGenerationBar.cpp
   FcpFileLoader.cpp

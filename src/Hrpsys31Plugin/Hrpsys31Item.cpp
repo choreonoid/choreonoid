@@ -19,13 +19,13 @@
 #include <cnoid/ExtraBodyStateAccessor>
 #include <QMessageBox>
 #include <rtm/idl/RTC.hh>
-#include <boost/bind.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -54,7 +54,7 @@ public:
     static const int numStateItems = 4;
     static const int numJointStateItems = 7;
     vector<JointState> joints;
-    optional<Vector3> localZMP[2];
+    boost::optional<Vector3> localZMP[2];
     double voltage;
     double electricCurrent;
         
@@ -257,7 +257,7 @@ Hrpsys31ItemImpl::Hrpsys31ItemImpl(Hrpsys31Item* self, const Hrpsys31ItemImpl& o
 void Hrpsys31ItemImpl::init()
 {
     mv = MessageView::instance();
-    timer.sigTimeout().connect(boost::bind(&Hrpsys31ItemImpl::onReadRequest, this));
+    timer.sigTimeout().connect(std::bind(&Hrpsys31ItemImpl::onReadRequest, this));
 }
 
 
@@ -643,11 +643,11 @@ void Hrpsys31ItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("RobotHardware"), robotHardwareName, changeProperty(robotHardwareName));
     putProperty(_("StateHolder"), stateHolderName, changeProperty(stateHolderName));
     putProperty(_("State reading"), isStateReadingEnabled,
-                boost::bind(&Hrpsys31Item::setStateReadingEnabled, self, _1));
+                std::bind(&Hrpsys31Item::setStateReadingEnabled, self, _1));
     putProperty(_("Read inverval"), (int)readInterval,
-                boost::bind(&Hrpsys31ItemImpl::onReadIntervalEdited, this, _1));
+                std::bind(&Hrpsys31ItemImpl::onReadIntervalEdited, this, _1));
     putProperty(_("Body update mode"), bodyJointUpdateMode,
-                boost::bind((bool(Selection::*)(int))&Selection::select, &bodyJointUpdateMode, _1));
+                std::bind((bool(Selection::*)(int))&Selection::select, &bodyJointUpdateMode, _1));
     putProperty(_("Connect on loading"), doConnectOnLoading, changeProperty(doConnectOnLoading));
 }
 

@@ -37,7 +37,7 @@ void PushButton::initialize()
 
 void PushButton::onClicked(bool checked)
 {
-    sigClicked_(checked);
+    sigClicked_();
 }
 
 
@@ -93,39 +93,25 @@ void RadioButton::onToggled(bool checked)
     sigToggled_(checked);
 }
 
+
 ToolButton::ToolButton(QWidget* parent)
     : QToolButton(parent)
-{
-    initialize();
-}
-
-
-/*
-  ToolButton::ToolButton(const QString& text, QWidget* parent)
-  : QToolButton(text, parent)
-  {
-  initialize();
-  }
-
-
-  ToolButton::ToolButton(const QIcon & icon, const QString & text, QWidget* parent)
-  : QToolButton(icon, text, parent)
-  {
-  initialize();
-  }
-*/
-
-
-void ToolButton::initialize()
 {
     connect(this, SIGNAL(clicked(bool)), this, SLOT(onClicked(bool)));
     connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
 }
 
 
+ToolButton::ToolButton(const QString& text, QWidget* parent)
+    : ToolButton(parent)
+{
+    setText(text);
+}
+
+
 void ToolButton::onClicked(bool checked)
 {
-    sigClicked_(checked);
+    sigClicked_();
 }
 
 

@@ -4,12 +4,11 @@
  * @author Hisashi Ikari 
  * @file
  */
-#ifndef CNOID_UTIL_DAE_NODE_H_INCLUDED
-#define CNOID_UTIL_DAE_NODE_H_INCLUDED
+#ifndef CNOID_UTIL_DAE_NODE_H
+#define CNOID_UTIL_DAE_NODE_H
 
 #include "Referenced.h"
 #include <cnoid/EigenTypes>
-#include <boost/shared_ptr.hpp>
 
 namespace cnoid {
 
@@ -17,7 +16,7 @@ namespace cnoid {
 // But, Link does not receive that type. To that end, I will use the type double(Maximum accuracy) in DaeNode.
 
 typedef std::vector<double>                       DaeVectorXArray;
-typedef boost::shared_ptr<DaeVectorXArray>        DaeVectorXArrayPtr;
+typedef std::shared_ptr<DaeVectorXArray>        DaeVectorXArrayPtr;
 typedef std::map<std::string, DaeVectorXArrayPtr> DaeVectorMap;
 
 /*!
@@ -441,7 +440,7 @@ public:
 typedef ref_ptr<DaeSensor>                                 DaeSensorPtr;
 typedef std::map<std::string, DaeSensorPtr>                DaeSensors;
 typedef std::vector<DaeSensor*>                            DaeResultSensors;
-typedef boost::shared_ptr<DaeResultSensors>                DaeResultSensorsPtr;
+typedef std::shared_ptr<DaeResultSensors>                DaeResultSensorsPtr;
 typedef std::vector< std::pair<std::string, std::string> > DaeSensorRelations;
 
 

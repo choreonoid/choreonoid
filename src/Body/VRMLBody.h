@@ -19,7 +19,7 @@ public:
     MFNode joints;
 };
 
-typedef boost::intrusive_ptr<VRMLHumanoid> VRMLHumanoidPtr;
+typedef ref_ptr<VRMLHumanoid> VRMLHumanoidPtr;
 
 
 class CNOID_EXPORT VRMLJoint : public VRMLTransform
@@ -40,7 +40,7 @@ public:
     SFFloat encoderPulse;
 };
 
-typedef boost::intrusive_ptr<VRMLJoint> VRMLJointPtr;
+typedef ref_ptr<VRMLJoint> VRMLJointPtr;
 
 
 class CNOID_EXPORT VRMLSegment : public VRMLGroup
@@ -52,7 +52,7 @@ public:
     MFFloat momentsOfInertia;
 };
 
-typedef boost::intrusive_ptr<VRMLSegment> VRMLSegmentPtr;
+typedef ref_ptr<VRMLSegment> VRMLSegmentPtr;
 
 
 class CNOID_EXPORT VRMLSurface : public VRMLNode
@@ -63,7 +63,7 @@ public:
     MFNode collision;
 };
 
-typedef boost::intrusive_ptr<VRMLSurface> VRMLSurfacePtr;
+typedef ref_ptr<VRMLSurface> VRMLSurfacePtr;
 
 
 class CNOID_EXPORT VRMLVisionSensor : public VRMLTransform
@@ -80,7 +80,7 @@ public:
     SFFloat     backClipDistance;
 };
 
-typedef boost::intrusive_ptr<VRMLVisionSensor> VRMLVisionSensorPtr;
+typedef ref_ptr<VRMLVisionSensor> VRMLVisionSensorPtr;
 
 
 class CNOID_EXPORT VRMLForceSensor : public VRMLTransform
@@ -92,7 +92,7 @@ public:
     SFVec3f     maxTorque;
 };
 
-typedef boost::intrusive_ptr<VRMLForceSensor> VRMLForceSensorPtr;
+typedef ref_ptr<VRMLForceSensor> VRMLForceSensorPtr;
 
 
 class CNOID_EXPORT VRMLGyro : public VRMLTransform
@@ -103,7 +103,7 @@ public:
     SFVec3f     maxAngularVelocity;
 };
 
-typedef boost::intrusive_ptr<VRMLGyro> VRMLGyroPtr;
+typedef ref_ptr<VRMLGyro> VRMLGyroPtr;
 
 
 class CNOID_EXPORT VRMLAccelerationSensor : public VRMLTransform
@@ -114,7 +114,7 @@ public:
     SFVec3f     maxAcceleration;
 };
 
-typedef boost::intrusive_ptr<VRMLAccelerationSensor> VRMLAccelerationSensorPtr;
+typedef ref_ptr<VRMLAccelerationSensor> VRMLAccelerationSensorPtr;
 
  
 class CNOID_EXPORT VRMLRangeSensor : public VRMLTransform
@@ -129,7 +129,7 @@ public:
     SFFloat     maxDistance;
 };
 
-typedef boost::intrusive_ptr<VRMLRangeSensor> VRMLRangeSensorPtr;
+typedef ref_ptr<VRMLRangeSensor> VRMLRangeSensorPtr;
 
 };
 

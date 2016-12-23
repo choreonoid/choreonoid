@@ -3,3 +3,11 @@
              PhysX_DIR に展開したディレクトリを指定する。
 ・ubuntu 32bit OS の場合は、ADDITIONAL_CXX_FLAGS_RELEASE に -malign-double を指定する。
 
+***** 2016.10.18 追記 
+NVIDIAのアカウント必要
+https://developer.nvidia.com/content/apply-access-nvidia-physx-source-code
+ここからGitHubのアカウント入力
+メールが届くのでそこからアクセス
+
+
+

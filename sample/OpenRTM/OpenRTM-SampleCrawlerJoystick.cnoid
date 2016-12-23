@@ -1,3 +1,5 @@
+optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+
 items: 
   id: 0
   name: "Root"

@@ -36,7 +36,7 @@ private:
     bool isRootRelative_;
 };
 
-typedef boost::shared_ptr<ZMPSeq> ZMPSeqPtr;
+typedef std::shared_ptr<ZMPSeq> ZMPSeqPtr;
         
 class BodyMotion;
 
@@ -44,6 +44,7 @@ CNOID_EXPORT ZMPSeqPtr getZMPSeq(const BodyMotion& motion);
 CNOID_EXPORT ZMPSeqPtr getOrCreateZMPSeq(BodyMotion& motion);
 CNOID_EXPORT void clearZMPSeq(BodyMotion& motion);
 CNOID_EXPORT bool makeRootRelative(ZMPSeq& zmpseq, BodyMotion& motion, bool on);
+
 }
 
 #endif

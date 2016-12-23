@@ -21,17 +21,15 @@
 #include "LinkTraverse.h"
 #include "ForwardDynamicsCBM.h"
 #include "ConstraintForceSolver.h"
-
 #include <cnoid/uBlasCommonTypes>
 #include <cnoidCorba/OpenHRPCommon.hh>
 #include <cnoid/ColdetModelPair>
-
-#include <limits>
 #include <boost/format.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/random.hpp>
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/lu.hpp>
+#include <tuple>
+#include <limits>
 
 
 using namespace std;
@@ -213,7 +211,7 @@ public:
         Body::LinkConnection* connection;
 
     };
-    typedef boost::shared_ptr<LinkPair> LinkPairPtr;
+    typedef std::shared_ptr<LinkPair> LinkPairPtr;
     typedef std::vector<LinkPairPtr> LinkPairArray;
 
     LinkPairArray collisionCheckLinkPairs;
@@ -384,7 +382,7 @@ bool CFSImpl::addCollisionCheckLinkPair
     int index;
     int isRegistered;
 
-    boost::tie(index, isRegistered) = world.getIndexOfLinkPairs(link1, link2);
+    std::tie(index, isRegistered) = world.getIndexOfLinkPairs(link1, link2);
 
     if(index >= 0){
 

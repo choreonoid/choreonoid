@@ -9,12 +9,12 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <cnoid/GaussianFilter>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::optional;
 
 namespace {
 
@@ -171,9 +171,9 @@ void WaistBalancer::setBoundarySmoother(int type, double smoothingTime)
 {
     boundarySmootherType_ = type;
     if(type == CUBIC_SMOOTHER){
-        boundarySmootherFunction = boost::bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction = std::bind(&WaistBalancer::applyCubicBoundarySmoother, this, _1, _2);
     } else if(type == QUINTIC_SMOOTHER){
-        boundarySmootherFunction = boost::bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
+        boundarySmootherFunction = std::bind(&WaistBalancer::applyQuinticBoundarySmoother, this, _1, _2);
     } else {
         boundarySmootherType_ = NO_SMOOTHER;
     }

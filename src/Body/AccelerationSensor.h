@@ -7,7 +7,7 @@
 #define CNOID_BODY_ACCELERATION_SENSOR_H
 
 #include "Device.h"
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,7 +19,7 @@ class CNOID_EXPORT AccelerationSensor : public Device
     struct Spec {
         Vector3 dv_max;
     };
-    boost::scoped_ptr<Spec> spec;
+    std::unique_ptr<Spec> spec;
 
 public:
     AccelerationSensor();
@@ -30,7 +30,7 @@ public:
     virtual void copyStateFrom(const DeviceState& other);
     virtual DeviceState* cloneState() const;
     virtual Device* clone() const;
-    virtual void forEachActualType(boost::function<bool(const std::type_info& type)> func);
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func);
     virtual void clearState();
     virtual int stateSize() const;
     virtual const double* readState(const double* buf);
@@ -45,10 +45,6 @@ public:
 
 typedef ref_ptr<AccelerationSensor> AccelerationSensorPtr;
 
-// for the backward compatibility
-//typedef AccelerationSensorPtr AccelSensor;
-//typedef ref_ptr<AccelSensor> AccelSensorPtr;
-    
 };
 
 #endif

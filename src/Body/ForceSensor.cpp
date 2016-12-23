@@ -65,7 +65,7 @@ Device* ForceSensor::clone() const
 }
 
 
-void ForceSensor::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void ForceSensor::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(ForceSensor))){
         Device::forEachActualType(func);

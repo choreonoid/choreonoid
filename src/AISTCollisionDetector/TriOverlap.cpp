@@ -35,20 +35,20 @@ const int INTERSECT = 1;
 **********************************************************/	
 static int separability_test_by_face(const Vector3& nm)
 {
-    if(nm[0] < 0.0 && nm[1] < 0.0 && nm[2] < 0.0 ||
-       nm[0] > 0.0 && nm[1] > 0.0 && nm[2] > 0.0){
+    if( (nm[0] < 0.0 && nm[1] < 0.0 && nm[2] < 0.0) ||
+        (nm[0] > 0.0 && nm[1] > 0.0 && nm[2] > 0.0) ){
         return NOT_INTERSECT;
     }
-    if(nm[0] < 0.0 && nm[1] < 0.0 && nm[2] > 0.0 ||
-       nm[0] > 0.0 && nm[1] > 0.0 && nm[2] < 0.0){
+    if( (nm[0] < 0.0 && nm[1] < 0.0 && nm[2] > 0.0) ||
+        (nm[0] > 0.0 && nm[1] > 0.0 && nm[2] < 0.0) ){
         return EDGE1_NOT_INTERSECT;
     }
-    if(nm[0] < 0.0 && nm[1] > 0.0 && nm[2] > 0.0 ||
-       nm[0] > 0.0 && nm[1] < 0.0 && nm[2] < 0.0){
+    if( (nm[0] < 0.0 && nm[1] > 0.0 && nm[2] > 0.0) ||
+        (nm[0] > 0.0 && nm[1] < 0.0 && nm[2] < 0.0) ){
         return EDGE2_NOT_INTERSECT;
     }
-    if(nm[0] > 0.0 && nm[1] < 0.0 && nm[2] > 0.0 ||
-       nm[0] < 0.0 && nm[1] > 0.0 && nm[2] < 0.0){
+    if( (nm[0] > 0.0 && nm[1] < 0.0 && nm[2] > 0.0) ||
+        (nm[0] < 0.0 && nm[1] > 0.0 && nm[2] < 0.0) ){
         return EDGE3_NOT_INTERSECT;
     }
     return 0;
@@ -80,14 +80,14 @@ static int triangle_inside_test(
     double ef3P2 = ef3.dot(P2);  /*project P2 on ef3*/		
     double ef3Q  = ef3.dot(Q);   /*project Q on ef3*/		
 
-    if((ef1P3 > ef1P1 && ef1Q > ef1P1 	||
-        ef1P3 < ef1P1 && ef1Q < ef1P1     ) 
+    if(( (ef1P3 > ef1P1 && ef1Q > ef1P1) 	||
+         (ef1P3 < ef1P1 && ef1Q < ef1P1)     )
        &&
-       (ef2P1 > ef2P2 && ef2Q > ef2P2 	||
-        ef2P1 < ef2P2 && ef2Q < ef2P2     ) 
+       ( (ef2P1 > ef2P2 && ef2Q > ef2P2) 	||
+         (ef2P1 < ef2P2 && ef2Q < ef2P2)     )
        &&
-       (ef3P2 > ef3P3 && ef3Q > ef3P3 	||
-        ef3P2 < ef3P3 && ef3Q < ef3P3     )) {
+       ( (ef3P2 > ef3P3 && ef3Q > ef3P3) 	||
+         (ef3P2 < ef3P3 && ef3Q < ef3P3)     )) {
         return INTERSECT;
     }
 
@@ -331,7 +331,7 @@ static int find_common_perpendicular(
     const double det = c11 * c22 - c12 * c21;
     // cout << "det = " << det << endl;
 
-    if(fabs(det) < eps){
+    if(fabs(det) < eps * c11 * c22){
         return 0;
     } else {
         const Vector3 g(q1 - p1);

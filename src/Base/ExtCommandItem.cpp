@@ -8,13 +8,14 @@
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/Sleep>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <functional>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
+using namespace std::placeholders;
 
 
 void ExtCommandItem::initializeClass(ExtensionManager* ext)
@@ -37,7 +38,7 @@ ExtCommandItem::ExtCommandItem()
     doExecuteOnLoading = true;
 
     process.sigReadyReadStandardOutput().connect(
-        boost::bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
+        std::bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
 }
 
 
@@ -51,7 +52,7 @@ ExtCommandItem::ExtCommandItem(const ExtCommandItem& org)
     doExecuteOnLoading = org.doExecuteOnLoading;
 
     process.sigReadyReadStandardOutput().connect(
-        boost::bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
+        std::bind(&ExtCommandItem::onReadyReadServerProcessOutput, this));
 }
 
 
@@ -150,7 +151,7 @@ void ExtCommandItem::onReadyReadServerProcessOutput()
 void ExtCommandItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Command"), command_,
-                boost::bind(&ExtCommandItem::setCommand, this, _1), true);
+                std::bind(&ExtCommandItem::setCommand, this, _1), true);
     putProperty(_("Execute on loading"), doExecuteOnLoading,
                 changeProperty(doExecuteOnLoading));
     putProperty(_("Waiting time after started"), waitingTimeAfterStarted_,

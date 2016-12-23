@@ -55,7 +55,7 @@ MultiDeviceStateSeq& MultiDeviceStateSeq::operator=(const MultiDeviceStateSeq& r
 */
 AbstractSeqPtr MultiDeviceStateSeq::cloneSeq() const
 {
-    return boost::make_shared<MultiDeviceStateSeq>(*this);
+    return std::make_shared<MultiDeviceStateSeq>(*this);
 }
 
 

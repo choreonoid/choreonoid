@@ -7,8 +7,6 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
 #include <boost/optional.hpp>
 #ifdef GAZEBO_ODE
 #include <gazebo/ode/ode.h>
@@ -18,14 +16,13 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<ODECollisionDetector>();
+    return std::make_shared<ODECollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -54,7 +51,7 @@ public :
     vector<Vertex> vertices;
     vector<Triangle> triangles;
 };
-typedef boost::shared_ptr<GeometryEx> GeometryExPtr;
+typedef std::shared_ptr<GeometryEx> GeometryExPtr;
 
 GeometryEx::GeometryEx()
 {
@@ -101,7 +98,7 @@ public:
                  Eigen::aligned_allocator< pair<const dGeomID, Position> > > OffsetMap;
     OffsetMap offsetMap;
 
-    boost::function<void(const CollisionPair&)> callback_;
+    std::function<void(const CollisionPair&)> callback_;
 
     MeshExtractor* meshExtractor;
 
@@ -110,7 +107,7 @@ public:
     void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
     bool makeReady();
     void updatePosition(int geometryId, const Position& position);
-    void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    void detectCollisions(std::function<void(const CollisionPair&)> callback);
 
 private :
 
@@ -156,7 +153,7 @@ const char* ODECollisionDetector::name() const
 
 CollisionDetectorPtr ODECollisionDetector::clone() const
 {
-    return boost::make_shared<ODECollisionDetector>();
+    return std::make_shared<ODECollisionDetector>();
 }
 
         
@@ -187,10 +184,10 @@ int ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
     bool isValid = false;
 
     if(geometry){
-        GeometryExPtr model =  boost::make_shared<GeometryEx>();
+        GeometryExPtr model =  std::make_shared<GeometryEx>();
         model->spaceID = dHashSpaceCreate(spaceID);
         dSpaceSetCleanup(model->spaceID, 0);
-        if(meshExtractor->extract(geometry, boost::bind(&ODECollisionDetectorImpl::addMesh, this, model.get()))){
+        if(meshExtractor->extract(geometry, std::bind(&ODECollisionDetectorImpl::addMesh, this, model.get()))){
             if(!model->vertices.empty()){
                 model->triMeshDataID = dGeomTriMeshDataCreate();
                 dGeomTriMeshDataBuildSingle(model->triMeshDataID,
@@ -227,7 +224,7 @@ void ODECollisionDetectorImpl::addMesh(GeometryEx* model)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        optional<Vector3> translation;
+        boost::optional<Vector3> translation;
         if(!meshExtractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
@@ -463,7 +460,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 }
 
 
-void ODECollisionDetector::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void ODECollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     impl->callback_ = callback;
     dSpaceCollide(impl->spaceID, (void*)impl, &nearCallback);

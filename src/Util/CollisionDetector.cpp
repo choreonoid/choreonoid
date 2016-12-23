@@ -4,7 +4,6 @@
 */
 
 #include "CollisionDetector.h"
-#include <boost/make_shared.hpp>
 #include <map>
 
 using namespace std;
@@ -14,8 +13,8 @@ namespace {
 struct FactoryInfo
 {
     string name;
-    boost::function<CollisionDetectorPtr()> factory;
-    FactoryInfo(const string& name, const boost::function<CollisionDetectorPtr()>& factory)
+    std::function<CollisionDetectorPtr()> factory;
+    FactoryInfo(const string& name, const std::function<CollisionDetectorPtr()>& factory)
         : name(name), factory(factory) { }
 };
     
@@ -35,7 +34,7 @@ class NullCollisionDetector : public CollisionDetector
 public:
     NullCollisionDetector() { numGeometries_ = 0; }
     virtual const char* name() const { return "NullCollisionDetector"; }
-    virtual CollisionDetectorPtr clone() const { return boost::make_shared<NullCollisionDetector>(); }
+    virtual CollisionDetectorPtr clone() const { return std::make_shared<NullCollisionDetector>(); }
     virtual bool enableGeometryCache(bool on) { return true; }
     virtual void clearGeometryCache(SgNodePtr geometry) { }
     virtual void clearAllGeometryCaches() { }
@@ -49,12 +48,12 @@ public:
     virtual void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2) { }
     virtual bool makeReady() { return true; }
     virtual void updatePosition(int geometryId, const Position& position) { }
-    virtual void detectCollisions(boost::function<void(const CollisionPair&)> callback) { }
+    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) { }
 };
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<NullCollisionDetector>();
+    return std::make_shared<NullCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -66,7 +65,7 @@ struct FactoryRegistration
 }
 
 
-bool CollisionDetector::registerFactory(const std::string& name, boost::function<CollisionDetectorPtr()> factory)
+bool CollisionDetector::registerFactory(const std::string& name, std::function<CollisionDetectorPtr()> factory)
 {
     if(!name.empty()){
         int index = factories.size();

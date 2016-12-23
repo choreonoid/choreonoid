@@ -8,13 +8,11 @@
 #include <boost/dynamic_bitset.hpp>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
 
 namespace {
 
-void setStaticFlags(Link* link, dynamic_bitset<>& staticFlags)
+void setStaticFlags(Link* link, boost::dynamic_bitset<>& staticFlags)
 {
     staticFlags.set(link->index());
     for(Link* child = link->child(); child; child = child->sibling()){
@@ -36,8 +34,8 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
     const int idTop = detector.numGeometries();
     const int numLinks = body.numLinks();
     int excludeTreeDepth = 3;
-    dynamic_bitset<> exclusions(numLinks);
-    dynamic_bitset<> staticFlags(numLinks);
+    boost::dynamic_bitset<> exclusions(numLinks);
+    boost::dynamic_bitset<> staticFlags(numLinks);
     
     const Mapping& cdInfo = *body.info()->findMapping("collisionDetection");
     if(cdInfo.isValid()){

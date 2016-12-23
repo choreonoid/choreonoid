@@ -64,7 +64,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
     SceneBody(Body* body);
-    SceneBody(Body* body, boost::function<SceneLink*(Link*)> sceneLinkFactory);
+    SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
@@ -98,15 +98,16 @@ protected:
     virtual ~SceneBody();
 
 private:
-    boost::function<SceneLink*(Link*)> sceneLinkFactory;
+    std::function<SceneLink*(Link*)> sceneLinkFactory;
     bool isVisualShapeVisible;
     bool isCollisionShapeVisible;
 
     SceneBody(const SceneBody& org);
-    void initialize(Body* body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory);
+    void initialize(Body* body, const std::function<SceneLink*(Link*)>& sceneLinkFactory);
 };
             
 typedef ref_ptr<SceneBody> SceneBodyPtr;
+
 }
     
 #endif

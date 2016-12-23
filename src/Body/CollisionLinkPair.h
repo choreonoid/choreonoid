@@ -35,7 +35,7 @@ struct CollisionLinkPair
     std::vector<Collision> collisions;
 };
     
-typedef boost::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
+typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
 
 }
 

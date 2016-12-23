@@ -23,8 +23,9 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+namespace stdph = std::placeholders;
 using namespace cnoid;
+namespace python = boost::python;
 
 namespace {
 
@@ -396,7 +397,7 @@ MenuWidget::MenuWidget
     this->isLocalSequentialMode = isLocalSequentialMode;
     sequenceModeButton.setText("V");
     sequenceModeButton.setToolTip(_("Show buttons executed sequentially"));
-    sequenceModeButton.sigClicked().connect(boost::bind(&MenuWidget::showSequencePages, this));
+    sequenceModeButton.sigClicked().connect(std::bind(&MenuWidget::showSequencePages, this));
     hbox->addWidget(&sequenceModeButton);
     hbox->addStretch();
             
@@ -405,7 +406,7 @@ MenuWidget::MenuWidget
             
     terminateButton1.setText("X");
     terminateButton1.setToolTip(_("Terminate the command being executed"));
-    terminateButton1.sigClicked().connect(boost::bind(&MenuWidget::onTerminateClicked, this));
+    terminateButton1.sigClicked().connect(std::bind(&MenuWidget::onTerminateClicked, this));
     hbox->addWidget(&terminateButton1);
             
     regularBar->setLayout(hbox);
@@ -418,39 +419,39 @@ MenuWidget::MenuWidget
 
     regularModeButton.setText("^");
     regularModeButton.setToolTip(_("Show buttons always enabled"));
-    regularModeButton.sigClicked().connect(boost::bind(&MenuWidget::showRegularPage, this));
+    regularModeButton.sigClicked().connect(std::bind(&MenuWidget::showRegularPage, this));
     hbox->addWidget(&regularModeButton);
             
     hbox->addStretch();
 
     prevPageButton.setText("<");
     prevPageButton.setToolTip(_("Show previous menu"));
-    prevPageButton.sigClicked().connect(boost::bind(&MenuWidget::moveSequentialPage, this, -1));
+    prevPageButton.sigClicked().connect(std::bind(&MenuWidget::moveSequentialPage, this, -1));
     hbox->addWidget(&prevPageButton);
             
     hbox->addWidget(&pageIndexLabel);
             
     nextPageButton.setText(">");
     nextPageButton.setToolTip(_("Show next menu"));
-    nextPageButton.sigClicked().connect(boost::bind(&MenuWidget::moveSequentialPage, this, +1));
+    nextPageButton.sigClicked().connect(std::bind(&MenuWidget::moveSequentialPage, this, +1));
     hbox->addWidget(&nextPageButton);
             
     sequentialCheck.setText(_("sequential"));
     sequentialCheck.setToolTip(_("Enable sequential execution"));
     sequentialCheck.setChecked(true);
-    sequentialCheck.sigToggled().connect(boost::bind(&MenuWidget::onSequentialCheckToggled, this, _1));
+    sequentialCheck.sigToggled().connect(std::bind(&MenuWidget::onSequentialCheckToggled, this, stdph::_1));
     hbox->addWidget(&sequentialCheck);
 
     hbox->addStretch();
             
     retryButton.setText("<-|");
     retryButton.setToolTip(_("Retry from first"));
-    retryButton.sigClicked().connect(boost::bind(&MenuWidget::onRetryClicked, this));
+    retryButton.sigClicked().connect(std::bind(&MenuWidget::onRetryClicked, this));
     hbox->addWidget(&retryButton);
             
     terminateButton2.setText("X");
     terminateButton2.setToolTip(_("Terminate the command being executed"));
-    terminateButton2.sigClicked().connect(boost::bind(&MenuWidget::onTerminateClicked, this));
+    terminateButton2.sigClicked().connect(std::bind(&MenuWidget::onTerminateClicked, this));
     hbox->addWidget(&terminateButton2);
             
     sequenceBar->setLayout(hbox);
@@ -461,7 +462,7 @@ MenuWidget::MenuWidget
     createPages(menu);
 
     pythonExecutor.setBackgroundMode(doBackgroundExecution);
-    pythonExecutor.sigFinished().connect(boost::bind(&MenuWidget::onScriptFinished, this));
+    pythonExecutor.sigFinished().connect(std::bind(&MenuWidget::onScriptFinished, this));
 
     currentButton = 0;
     currentButtonPage = 0;
@@ -522,7 +523,7 @@ void MenuWidget::addSection(const python::list& section)
 
         } else {
             FuncButtonBox* box = new FuncButtonBox(label, function);
-            box->button.sigClicked().connect(boost::bind(&MenuWidget::onButtonClicked, this, buttons.size(), box));
+            box->button.sigClicked().connect(std::bind(&MenuWidget::onButtonClicked, this, buttons.size(), box));
             vbox->addWidget(box, 0, Qt::AlignCenter);
             buttons.push_back(box);
         }

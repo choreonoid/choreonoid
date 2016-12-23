@@ -89,7 +89,7 @@ private:
     int triTestsCount;
 };
 
-typedef boost::shared_ptr<ColdetModelPair> ColdetModelPairPtr;
+typedef std::shared_ptr<ColdetModelPair> ColdetModelPairPtr;
 
 }
 

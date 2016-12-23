@@ -5,7 +5,7 @@
 #ifndef CNOID_UTIL_POLYMORPHIC_POINTER_ARRAY_H
 #define CNOID_UTIL_POLYMORPHIC_POINTER_ARRAY_H
 
-#include <boost/pointer_cast.hpp>
+#include "Referenced.h"
 #include <vector>
 
 namespace cnoid {
@@ -15,8 +15,8 @@ class PolymorphicPointerArrayBase
 public:
     virtual ~PolymorphicPointerArrayBase() { }
 };
-    
-    
+
+
 template<class ObjectType, class PointerType>
 class PolymorphicPointerArray : public PolymorphicPointerArrayBase
 {
@@ -42,7 +42,7 @@ public:
     template <class RhsObjectType, class RhsPointerType>
     PolymorphicPointerArray& operator<<(const PolymorphicPointerArray<RhsObjectType, RhsPointerType>& rhs){
         for(std::size_t i=0; i < rhs.size(); ++i){
-            PointerType p = dynamic_pointer_cast<ObjectType>(rhs[i]);
+            PointerType p = cnoid::dynamic_pointer_cast<ObjectType>(rhs[i]);
             if(p){
                 push_back(p);
             }

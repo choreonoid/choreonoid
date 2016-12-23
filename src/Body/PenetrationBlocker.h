@@ -33,7 +33,8 @@ private:
     PenetrationBlockerImpl* impl;
 };
 
-typedef boost::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
+typedef std::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
+
 }
 
 #endif

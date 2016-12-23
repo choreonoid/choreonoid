@@ -59,7 +59,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     Link* rootLink = body->rootLink();
     Link* baseLink = rootLink;
 
-    boost::shared_ptr<LinkTraverse> fkTraverse;
+    std::shared_ptr<LinkTraverse> fkTraverse;
     if(allLinkPositionOutputMode){
         fkTraverse.reset(new LinkTraverse(baseLink, true, true));
     } else {

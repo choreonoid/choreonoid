@@ -5,13 +5,13 @@
 #ifndef CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace cnoid {
 
 template <class Object, class Parameter> class PolymorphicFunctionSet
 {
-    typedef boost::function<void(Parameter p)> Function;
+    typedef std::function<void(Parameter p)> Function;
     struct compare {
         bool operator ()(const std::type_info* a, const std::type_info* b) const {
             return a->before(*b);
@@ -34,10 +34,13 @@ public:
     }
         
     bool operator()(Object* object, Paramter& param) {
-        object->forEachActualType(boost::bind(&callFunctions, this, _1, object, boost::ref(param)));
+        object->forEachActualType(
+            std::bind(&callFunctions, this, std::placeholders::_1, object, std::ref(param)));
     }
 
 };
+
 }
+
 #endif
 

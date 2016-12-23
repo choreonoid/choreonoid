@@ -21,7 +21,7 @@ const bool SIMULATION_PROFILING = false;
 class Body;
 class Device;
 class CollisionDetector;
-typedef boost::shared_ptr<CollisionDetector> CollisionDetectorPtr;
+typedef std::shared_ptr<CollisionDetector> CollisionDetectorPtr;
 class BodyItem;
 class ControllerItem;
 class SimulationBodyImpl;
@@ -138,15 +138,15 @@ public:
     /**
        \return The registration id of the function. The id can be used for removing the function.
     */
-    int addPreDynamicsFunction(boost::function<void()> func);
-    int addMidDynamicsFunction(boost::function<void()> func);
-    int addPostDynamicsFunction(boost::function<void()> func);
+    int addPreDynamicsFunction(std::function<void()> func);
+    int addMidDynamicsFunction(std::function<void()> func);
+    int addPostDynamicsFunction(std::function<void()> func);
 
     void removePreDynamicsFunction(int id);
     void removeMidDynamicsFunction(int id);
     void removePostDynamicsFunction(int id);
         
-    //void addRecordFunction(boost::function<void()> func);
+    //void addRecordFunction(std::function<void()> func);
 
     SgCloneMap& sgCloneMap();
 
@@ -215,7 +215,7 @@ protected:
 
     virtual CollisionLinkPairListPtr getCollisions()
     {
-        return boost::make_shared<CollisionLinkPairList>();
+        return std::make_shared<CollisionLinkPairList>();
     }
 
     void doPutProperties(PutPropertyFunction& putProperty);
@@ -235,6 +235,7 @@ private:
 };
         
 typedef ref_ptr<SimulatorItem> SimulatorItemPtr;
+
 }
 
 #endif

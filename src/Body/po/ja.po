@@ -100,8 +100,8 @@ msgstr "警告： Joint ID %1% は重複しています。"
 #: VRMLBodyLoader.cpp:813
 msgid ""
 "Warning: A deprecated joint type 'crawler'is specified for %1%. Use "
-"'pseudoContinousTrack' instead."
-msgstr "警告：廃止予定の関節タイプである'crawler'が%1%で指定されています。この代わりに'pseudoContinousTrack'を使うようにしてください。"
+"'pseudoContinuousTrack' instead."
+msgstr "警告：廃止予定の関節タイプである'crawler'が%1%で指定されています。この代わりに'pseudoContinuousTrack'を使うようにしてください。"
 
 #: VRMLBodyLoader.cpp:818 VRMLBodyLoader.cpp:1240
 msgid "JointType \"%1%\" is not supported."

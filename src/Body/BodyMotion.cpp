@@ -61,7 +61,7 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
 
 AbstractSeqPtr BodyMotion::cloneSeq() const
 {
-    return boost::make_shared<BodyMotion>(*this);
+    return std::make_shared<BodyMotion>(*this);
 }
 
 

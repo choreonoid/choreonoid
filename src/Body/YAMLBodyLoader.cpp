@@ -148,9 +148,11 @@ public:
     SgNodePtr readSceneShape(Mapping& node);
     SgMesh* readSceneGeometry(Mapping& node);
     SgMesh* readSceneBox(Mapping& node);
-    SgMesh* readSceneCylinder(Mapping& node);
     SgMesh* readSceneSphere(Mapping& node);
+    SgMesh* readSceneCylinder(Mapping& node);
+    SgMesh* readSceneCone(Mapping& node);
     SgMesh* readSceneExtrusion(Mapping& node);
+    SgMesh* readSceneElevationGrid(Mapping& node);
     void readSceneAppearance(SgShape* shape, Mapping& node);
     void readSceneMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
@@ -177,6 +179,35 @@ public:
             return true;
         }
         return false;
+    }
+
+    bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract){
+        ValueNodePtr value;
+        if(doExtract){
+            value = node.extract("rotation");
+        } else {
+            value = node.find("rotation");
+        }
+        if(!value || !value->isValid()){
+            return false;
+        }
+        const Listing& rotations = *value->toListing();
+        if(!rotations.empty()){
+            if(rotations[0].isListing()){
+                out_R = Matrix3::Identity();
+                for(int i=0; i < rotations.size(); ++i){
+                    const Listing& rotation = *rotations[i].toListing();
+                    Vector4 r;
+                    cnoid::read(rotation, r);
+                    out_R = out_R * AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]));
+                }
+            } else {
+                Vector4 r;
+                cnoid::read(rotations, r);
+                out_R = AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]));
+            }
+        }
+        return true;
     }
 };
 
@@ -431,6 +462,8 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         body->setModelName(symbol);
     }
 
+    Link* rootLink = nullptr;
+
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
     ValueNodePtr linksNode = topNode->extract("links");
@@ -438,13 +471,20 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
     } else {
         Listing& linkNodes = *linksNode->toListing();
+        if(linkNodes.empty()){
+            linkNodes.throwException(_("No link is contained in the \"links\" listing"));
+        }
         for(int i=0; i < linkNodes.size(); ++i){
             Mapping* linkNode = linkNodes[i].toMapping();
             LinkInfo* info = new LinkInfo;
             extract(linkNode, "parent", info->parent);
-            info->link = readLink(linkNode);
+            Link* link = readLink(linkNode);
+            info->link = link;
             info->node = linkNode;
             linkInfos.push_back(info);
+            if(!rootLink){
+                rootLink = link;
+            }
         }
     }
 
@@ -457,8 +497,6 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
             if(p != linkMap.end()){
                 Link* parentLink = p->second;
                 Link* link = info->link;
-                link->setOffsetTranslation(parentLink->Rs() * link->offsetTranslation());
-                link->setAccumulatedSegmentRotation(parentLink->Rs() * link->offsetRotation());
                 parentLink->appendChild(link);
             } else {
                 info->node->throwException(
@@ -468,17 +506,18 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }        
 
     ValueNodePtr rootLinkNode = topNode->extract("rootLink");
-    if(!rootLinkNode){
-        topNode->throwException(_("There is no \"rootLink\" value for specifying the root link."));
+    if(rootLinkNode){
+        string rootLinkName = rootLinkNode->toString();
+        LinkMap::iterator p = linkMap.find(rootLinkName);
+        if(p == linkMap.end()){
+            rootLinkNode->throwException(
+                str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
+        }
+        rootLink = p->second;
     }
-    string rootLinkName = rootLinkNode->toString();
-    LinkMap::iterator p = linkMap.find(rootLinkName);
-    if(p == linkMap.end()){
-        rootLinkNode->throwException(
-            str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
-    }
-    Link* rootLink = p->second;
+
     body->setRootLink(rootLink);
+    body->expandLinkOffsetRotations();
 
     // Warn empty joint ids
     if(numValidJointIds < validJointIdSet.size()){
@@ -489,12 +528,13 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
+    //! \todo Remove this later
     ValueNodePtr initDNode = topNode->extract("initialJointDisplacement");
     if(initDNode){
         Listing& initd = *initDNode->toListing();
         const int n = std::min(initd.size(), body->numLinks());
         for(int i=0; i < n; i++){
-            body->link(i)->initialJointDisplacement() = toRadian(initd[i].toDouble());
+            body->link(i)->setInitialJointDisplacement(toRadian(initd[i].toDouble()));
         }
     }
 
@@ -524,9 +564,9 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(extractEigen(info, "translation", v)){
         link->setOffsetTranslation(v);
     }
-    Vector4 r;
-    if(extractEigen(info, "rotation", r)){
-        link->setOffsetRotation(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
+    Matrix3 R;
+    if(readRotation(*info, R, true)){
+        link->setOffsetRotation(R);
     }
     
     if(extract(info, "jointId", id)){
@@ -589,6 +629,51 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             jointAxisNode->throwException("Illegal jointAxis value");
         }
         link->setJointAxis(axis);
+    }
+
+    ValueNodePtr jointAngleNode = info->extract("jointAngle");
+    if(jointAngleNode){
+        link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
+    }
+    ValueNodePtr jointDisplacementNode = info->extract("jointDisplacement");
+    if(jointDisplacementNode){
+        link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
+    }
+    
+    ValueNodePtr jointRangeNode = info->find("jointRange");
+    if(jointRangeNode->isValid()){
+        Listing& jointRange = *jointRangeNode->toListing();
+        if(jointRange.size() != 2){
+            jointRangeNode->throwException(_("jointRange must have two elements"));
+        }
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointRange(toRadian(jointRange[0].toDouble()), toRadian(jointRange[1].toDouble()));
+        } else {
+            link->setJointRange(jointRange[0].toDouble(), jointRange[1].toDouble());
+        }
+    }
+
+    ValueNodePtr maxVelocityNode = info->find("maxJointVelocity");
+    if(maxVelocityNode->isValid()){
+        double maxVelocity = maxVelocityNode->toDouble();
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
+        } else {
+            link->setJointVelocityRange(-maxVelocity, maxVelocity);
+        }
+    }
+
+    ValueNodePtr velocityRangeNode = info->find("jointVelocityRange");
+    if(velocityRangeNode->isValid()){
+        Listing& velocityRange = *velocityRangeNode->toListing();
+        if(velocityRange.size() != 2){
+            velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
+        }
+        if(link->jointType() == Link::REVOLUTE_JOINT){
+            link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
+        } else {
+            link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
+        }
     }
     
     currentLink = link;
@@ -825,9 +910,9 @@ bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunct
         T.translation() = v;
         isIdentity = false;
     }
-    Vector4 r;
-    if(read(node, "rotation", r)){
-        T.linear() = Matrix3(AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2])));
+    Matrix3 R;
+    if(readRotation(node, R, false)){
+        T.linear() = R;
         isIdentity = false;
     }
 
@@ -1045,13 +1130,17 @@ SgMesh* YAMLBodyLoaderImpl::readSceneGeometry(Mapping& node)
     string type = typeNode.toString();
     if(type == "Box"){
         mesh = readSceneBox(node);
-    } else if(type == "Cylinder"){
-        mesh = readSceneCylinder(node);
     } else if(type == "Sphere"){
         mesh = readSceneSphere(node);
+    } else if(type == "Cylinder"){
+        mesh = readSceneCylinder(node);
+    } else if(type == "Cone"){
+        mesh = readSceneCone(node);
     } else if(type == "Extrusion"){
         mesh = readSceneExtrusion(node);
-    } else {
+    } else if(type == "ElevationGrid"){
+        mesh = readSceneElevationGrid(node);
+    }else {
         typeNode.throwException(
             str(format(_("Unknown geometry \"%1%\"")) % type));
     }
@@ -1069,6 +1158,12 @@ SgMesh* YAMLBodyLoaderImpl::readSceneBox(Mapping& node)
 }
 
 
+SgMesh* YAMLBodyLoaderImpl::readSceneSphere(Mapping& node)
+{
+    return meshGenerator.generateSphere(node.get("radius", 1.0));
+}
+
+
 SgMesh* YAMLBodyLoaderImpl::readSceneCylinder(Mapping& node)
 {
     double radius = node.get("radius", 1.0);
@@ -1079,9 +1174,13 @@ SgMesh* YAMLBodyLoaderImpl::readSceneCylinder(Mapping& node)
 }
 
 
-SgMesh* YAMLBodyLoaderImpl::readSceneSphere(Mapping& node)
+SgMesh* YAMLBodyLoaderImpl::readSceneCone(Mapping& node)
 {
-    return meshGenerator.generateSphere(node.get("radius", 1.0));
+    double radius = node.get("radius", 1.0);
+    double height = node.get("height", 1.0);
+    bool bottom = node.get("bottom", true);
+    bool side = node.get("side", true);
+    return meshGenerator.generateCone(radius, height, bottom, side);
 }
 
 
@@ -1148,6 +1247,28 @@ SgMesh* YAMLBodyLoaderImpl::readSceneExtrusion(Mapping& node)
     node.read("endCap", extrusion.endCap);
 
     return meshGenerator.generateExtrusion(extrusion);
+}
+
+
+SgMesh* YAMLBodyLoaderImpl::readSceneElevationGrid(Mapping& node)
+{
+    MeshGenerator::ElevationGrid grid;
+
+    node.read("xDimension", grid.xDimension);
+    node.read("zDimension", grid.zDimension);
+    node.read("xSpacing", grid.xSpacing);
+    node.read("zSpacing", grid.zSpacing);
+    node.read("ccw", grid.ccw);
+    readAngle(node, "creaseAngle", grid.creaseAngle);
+
+    Listing& heightNode = *node.findListing("height");
+    if(heightNode.isValid()){
+        for(int i=0; i < heightNode.size(); i++){
+            grid.height.push_back(heightNode[i].toDouble());
+        }
+    }
+
+    return meshGenerator.generateElevationGrid(grid);
 }
 
 

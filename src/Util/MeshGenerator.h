@@ -61,6 +61,27 @@ public:
     SgMesh* generateExtrusion(const Extrusion& extrusion);
     SgLineSet* generateExtrusionLineSet(const Extrusion& extrusion, SgMesh* mesh);
 
+    struct ElevationGrid
+    {
+        int xDimension;
+        int zDimension;
+        double xSpacing;
+        double zSpacing;
+        std::vector<double> height;
+        bool ccw;
+        double creaseAngle;
+        ElevationGrid() {
+            xDimension = 0;
+            zDimension = 0;
+            xSpacing = 1.0;
+            zSpacing = 1.0;
+            ccw = true;
+            creaseAngle = 0.0;
+        }
+    };
+
+    SgMesh* generateElevationGrid(const ElevationGrid& elevationGrid);
+
 private:
     int divisionNumber_;
     bool isNormalGenerationEnabled_;

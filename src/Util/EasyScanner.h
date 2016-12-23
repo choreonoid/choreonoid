@@ -10,7 +10,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -41,7 +41,7 @@ public:
 
     typedef std::map<std::string, int> SymbolMap;
     typedef std::pair<std::string, int> SymbolPair;
-    typedef boost::shared_ptr<SymbolMap> SymbolMapPtr;
+    typedef std::shared_ptr<SymbolMap> SymbolMapPtr;
 
     Endl endl;
 

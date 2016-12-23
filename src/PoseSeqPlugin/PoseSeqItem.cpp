@@ -11,14 +11,14 @@
 #include <cnoid/LinkPath>
 #include <cnoid/BodyItem>
 #include <cnoid/LeggedBodyHelper>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 
@@ -87,10 +87,10 @@ void PoseSeqItem::initializeClass(ExtensionManager* ext)
             _("Pose Sequence"), "POSE-SEQ-YAML", "pseq", loadPoseSeqItem, savePoseSeqItem);
         im.addSaver<PoseSeqItem>(
             _("Talk Plugin File"), "TALK-PLUGIN-FORMAT", "talk",
-            boost::bind(exportTalkPluginFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
+            std::bind(exportTalkPluginFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
         im.addSaver<PoseSeqItem>(
             _("Seq File for the Face Controller"), "FACE-CONTROLLER-SEQ-FORMAT", "poseseq",
-            boost::bind(exportFaceControllerFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
+            std::bind(exportFaceControllerFormat, _1, _2), ItemManager::PRIORITY_CONVERSION);
 
         initialized = true;
     }
@@ -155,7 +155,7 @@ void PoseSeqItem::onPositionChanged()
     if(!sigInterpolationParametersChangedConnection.connected()){
         sigInterpolationParametersChangedConnection =
             generationBar->sigInterpolationParametersChanged().connect(
-                boost::bind(&PoseSeqItem::updateInterpolationParameters, this));
+                std::bind(&PoseSeqItem::updateInterpolationParameters, this));
         updateInterpolationParameters();
     }
 
@@ -379,10 +379,10 @@ void PoseSeqItem::beginEditing()
 
     if(editConnections.empty()){
         editConnections = seq->connectSignalSet(
-            boost::bind(&PoseSeqItem::onInserted, this, _1, _2),
-            boost::bind(&PoseSeqItem::onRemoving, this, _1, _2),
-            boost::bind(&PoseSeqItem::onModifying, this, _1),
-            boost::bind(&PoseSeqItem::onModified, this, _1));
+            std::bind(&PoseSeqItem::onInserted, this, _1, _2),
+            std::bind(&PoseSeqItem::onRemoving, this, _1, _2),
+            std::bind(&PoseSeqItem::onModifying, this, _1),
+            std::bind(&PoseSeqItem::onModified, this, _1));
     }
 }
 

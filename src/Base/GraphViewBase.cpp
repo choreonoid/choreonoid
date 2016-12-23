@@ -3,22 +3,22 @@
 */
 
 #include "GraphViewBase.h"
-#include <map>
-#include <list>
-#include <vector>
 #include <cnoid/Item>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ItemTreeView>
 #include <cnoid/Archive>
 #include <cnoid/TreeWidget>
-#include <boost/bind.hpp>
 #include <QBoxLayout>
 #include <QHeaderView>
 #include <QScrollBar>
+#include <map>
+#include <list>
+#include <vector>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -144,11 +144,11 @@ GraphViewBaseImpl::GraphViewBaseImpl(GraphViewBase* self)
     
     itemSelectionChangedConnection =
         ItemTreeView::mainInstance()->sigSelectionChanged().connect(
-            boost::bind(&GraphViewBaseImpl::onItemSelectionChanged, this, _1));
+            std::bind(&GraphViewBaseImpl::onItemSelectionChanged, this, _1));
 
     partSelectionChangedConnection =
         treeWidget.sigItemSelectionChanged().connect(
-            boost::bind(&GraphViewBaseImpl::updateSelections, this));
+            std::bind(&GraphViewBaseImpl::updateSelections, this));
 }
 
 
@@ -209,10 +209,10 @@ void GraphViewBaseImpl::onItemSelectionChanged(const ItemList<>& allItems)
 
         ConnectionSet& connections = itemToConnectionSetMap[it->item.get()];
         connections.add(it->item->sigUpdated().connect(
-                            boost::bind(&GraphViewBaseImpl::onItemUpdated, this, it)));
+                            std::bind(&GraphViewBaseImpl::onItemUpdated, this, it)));
 
         connections.add(it->item->sigDetachedFromRoot().connect(
-                            boost::bind(&GraphViewBaseImpl::onItemDetachedFromRoot, this, it)));
+                            std::bind(&GraphViewBaseImpl::onItemDetachedFromRoot, this, it)));
     }
 
     updatePartList();

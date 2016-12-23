@@ -8,11 +8,9 @@
 #include <cnoid/Timer>
 #include <cv.h>
 #include <highgui.h>
-#include <boost/bind.hpp>
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
 
 namespace {
 
@@ -102,7 +100,7 @@ public:
         SceneView::instance()->scene()->addChild(overlay, true);
         
         timer.sigTimeout().connect(bind(&CameraImageOverlayPlugin::updateCameraImage, this));
-        timer.start(33.3333);
+        timer.start(33);  //msec
         
         return true;
     }

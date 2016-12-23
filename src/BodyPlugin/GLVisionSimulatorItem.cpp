@@ -23,10 +23,10 @@
 #include <cnoid/EigenUtil>
 #include <QThread>
 #include <QApplication>
-#include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <mutex>
+#include <condition_variable>
 #include <queue>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -46,6 +46,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -100,9 +101,9 @@ bool updateNames(const string& nameListString, string& newNameListString, vector
 
 class QThreadEx : public QThread
 {
-    boost::function<void()> function;
+    std::function<void()> function;
 public:
-    void start(boost::function<void()> function){
+    void start(std::function<void()> function){
         this->function = function;
         QThread::start();
     }
@@ -121,8 +122,8 @@ public:
     double latency;
     double onsetTime;
     QThreadEx renderingThread;
-    boost::condition_variable renderingCondition;
-    boost::mutex renderingMutex;
+    std::condition_variable renderingCondition;
+    std::mutex renderingMutex;
     bool isRenderingRequested;
     bool isRenderingFinished;
     bool isTerminationRequested;
@@ -153,9 +154,9 @@ public:
     GLSceneRenderer* renderer;
     int pixelWidth;
     int pixelHeight;
-    boost::shared_ptr<Image> tmpImage;
-    boost::shared_ptr<RangeCamera::PointData> tmpPoints;
-    boost::shared_ptr<RangeSensor::RangeData> tmpRangeData;
+    std::shared_ptr<Image> tmpImage;
+    std::shared_ptr<RangeCamera::PointData> tmpPoints;
+    std::shared_ptr<RangeSensor::RangeData> tmpRangeData;
     SimulationBody* simBody;
     int bodyIndex;
 
@@ -174,7 +175,7 @@ public:
     void concurrentRenderingLoop();
     void storeResultToTmpDataBuffer();
     bool waitForRenderingToFinish();
-    bool waitForRenderingToFinish(boost::unique_lock<boost::mutex>& lock);
+    bool waitForRenderingToFinish(std::unique_lock<std::mutex>& lock);
     void copyVisionData();
     bool getCameraImage(Image& image);
     bool getRangeCameraData(Image& image, vector<Vector3f>& points);
@@ -206,8 +207,8 @@ public:
 
     // for the single vision simulator thread rendering
     QThreadEx queueThread;
-    boost::condition_variable queueCondition;
-    boost::mutex queueMutex;
+    std::condition_variable queueCondition;
+    std::mutex queueMutex;
     queue<VisionRenderer*> rendererQueue;
     
     double rangeSensorPrecisionRatio;
@@ -437,11 +438,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 
     cloneMap.clear();
 
-#ifdef CNOID_REFERENCED_USE_ATOMIC_COUNTER
     cloneMap.setNonNodeCloning(false);
-#else
-    cloneMap.setNonNodeCloning(true);
-#endif
+    //cloneMap.setNonNodeCloning(true);
 
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){
@@ -501,15 +499,15 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     }
 
     if(!visionRenderers.empty()){
-        simulatorItem->addPreDynamicsFunction(boost::bind(&GLVisionSimulatorItemImpl::onPreDynamics, this));
-        simulatorItem->addPostDynamicsFunction(boost::bind(&GLVisionSimulatorItemImpl::onPostDynamics, this));
+        simulatorItem->addPreDynamicsFunction(std::bind(&GLVisionSimulatorItemImpl::onPreDynamics, this));
+        simulatorItem->addPostDynamicsFunction(std::bind(&GLVisionSimulatorItemImpl::onPostDynamics, this));
 
         if(useQueueThreadForAllSensors){
             while(!rendererQueue.empty()){
                 rendererQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
-            queueThread.start(boost::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
+            queueThread.start(std::bind(&GLVisionSimulatorItemImpl::queueRenderingLoop, this));
             for(size_t i=0; i < visionRenderers.size(); ++i){
                 visionRenderers[i]->moveRenderingBufferToThread(queueThread);
             }
@@ -628,7 +626,7 @@ bool VisionRenderer::initialize(const vector<SimulationBody*>& simBodies)
     isRenderingFinished = false;
     isTerminationRequested = false;
     if(simImpl->useThreadsForSensors){
-        renderingThread.start(boost::bind(&VisionRenderer::concurrentRenderingLoop, this));
+        renderingThread.start(std::bind(&VisionRenderer::concurrentRenderingLoop, this));
         moveRenderingBufferToThread(renderingThread);
     }
 
@@ -643,17 +641,14 @@ void VisionRenderer::initializeScene(const vector<SimulationBody*>& simBodies)
 {
     sceneGroup = new SgGroup;
 
-#ifndef CNOID_REFERENCED_USE_ATOMIC_COUNTER
-    simImpl->cloneMap.clear();
-#endif
+    //simImpl->cloneMap.clear();
 
     // create scene bodies
     for(size_t i=0; i < simBodies.size(); ++i){
         SceneBody* sceneBody = new SceneBody(simBodies[i]->body());
 
-#ifndef CNOID_REFERENCED_USE_ATOMIC_COUNTER
-        sceneBody->cloneShapes(simImpl->cloneMap);
-#endif
+        //sceneBody->cloneShapes(simImpl->cloneMap);
+
         sceneBodies.push_back(sceneBody);
         sceneGroup->addChild(sceneBody);
     }
@@ -789,7 +784,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 {
     currentTime = simulatorItem->currentTime();
 
-    boost::mutex* pQueueMutex = 0;
+    std::mutex* pQueueMutex = 0;
     
     for(size_t i=0; i < visionRenderers.size(); ++i){
         VisionRenderer* renderer = visionRenderers[i];
@@ -827,7 +822,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
     
     while(true){
         {
-            boost::unique_lock<boost::mutex> lock(queueMutex);
+            std::unique_lock<std::mutex> lock(queueMutex);
             while(true){
                 if(isQueueRenderingTerminationRequested){
                     goto exitRenderingQueueLoop;
@@ -843,7 +838,7 @@ void GLVisionSimulatorItemImpl::queueRenderingLoop()
         renderer->renderInCurrentThread(true);
         
         {
-            boost::unique_lock<boost::mutex> lock(queueMutex);
+            std::lock_guard<std::mutex> lock(queueMutex);
             renderer->isRenderingFinished = true;
         }
         queueCondition.notify_all();
@@ -885,7 +880,7 @@ void VisionRenderer::renderInCurrentThread(bool doStoreResultToTmpDataBuffer)
 void VisionRenderer::startConcurrentRendering()
 {
     {
-        boost::unique_lock<boost::mutex> lock(renderingMutex);
+        std::lock_guard<std::mutex> lock(renderingMutex);
         updateScene(true);
         isRenderingRequested = true;
     }
@@ -900,7 +895,7 @@ void VisionRenderer::concurrentRenderingLoop()
     
     while(true){
         {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            std::unique_lock<std::mutex> lock(renderingMutex);
             while(true){
                 if(isTerminationRequested){
                     goto exitConcurrentRenderingLoop;
@@ -921,7 +916,7 @@ void VisionRenderer::concurrentRenderingLoop()
         storeResultToTmpDataBuffer();
     
         {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            std::lock_guard<std::mutex> lock(renderingMutex);
             isRenderingFinished = true;
         }
         renderingCondition.notify_all();
@@ -937,16 +932,16 @@ void VisionRenderer::storeResultToTmpDataBuffer()
 {
     if(cameraForRendering){
         if(!tmpImage){
-            tmpImage = boost::make_shared<Image>();
+            tmpImage = std::make_shared<Image>();
         }
         if(rangeCameraForRendering){
-            tmpPoints = boost::make_shared< vector<Vector3f> >();
+            tmpPoints = std::make_shared< vector<Vector3f> >();
             hasUpdatedData = getRangeCameraData(*tmpImage, *tmpPoints);
         } else {
             hasUpdatedData = getCameraImage(*tmpImage);
         }
     } else if(rangeSensorForRendering){
-        tmpRangeData = boost::make_shared< vector<double> >();
+        tmpRangeData = std::make_shared< vector<double> >();
         hasUpdatedData = getRangeSensorData(*tmpRangeData);
     }
 }
@@ -984,7 +979,7 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
 
 bool VisionRenderer::waitForRenderingToFinish()
 {
-    boost::unique_lock<boost::mutex> lock(renderingMutex);
+    std::unique_lock<std::mutex> lock(renderingMutex);
 
     if(!isRenderingFinished){
         if(simImpl->isBestEffortMode){
@@ -1005,7 +1000,7 @@ bool VisionRenderer::waitForRenderingToFinish()
 
 void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
 {
-    boost::unique_lock<boost::mutex> lock(queueMutex);
+    std::unique_lock<std::mutex> lock(queueMutex);
     
     vector<VisionRenderer*>::iterator p = renderersInRendering.begin();
     while(p != renderersInRendering.end()){
@@ -1025,7 +1020,7 @@ void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
 }
 
 
-bool VisionRenderer::waitForRenderingToFinish(boost::unique_lock<boost::mutex>& lock)
+bool VisionRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock)
 {
     if(!isRenderingFinished){
         if(simImpl->isBestEffortMode){
@@ -1104,6 +1099,9 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
     const Matrix4f Pinv = renderer->projectionMatrix().inverse().cast<float>();
     const float fw = pixelWidth;
     const float fh = pixelHeight;
+    const int cx = pixelWidth / 2;
+    const int cy = pixelHeight / 2;
+    const bool isOrganized = rangeCameraForRendering->isOrganized();
     Vector4f n;
     n[3] = 1.0f;
     points.clear();
@@ -1130,15 +1128,23 @@ bool VisionRenderer::getRangeCameraData(Image& image, vector<Vector3f>& points)
                     pixels[2] = colorSrc[2];
                     pixels += 3;
                 }
-            } else if(rangeCameraForRendering->isOrganized()){
+            } else if(isOrganized){
+                points.push_back(Vector3f());
+                Vector3f& p = points.back();
                 if(z <= 0.0f){
-                    points.push_back(Vector3f::Zero());
+                    p.z() = numeric_limits<float>::infinity();
                 } else {
-                    points.push_back(Vector3f());
-                    points.back() <<
-                        (x - pixelWidth / 2) * numeric_limits<float>::infinity(),
-                        (y - pixelWidth / 2) * numeric_limits<float>::infinity(),
-                        -numeric_limits<float>::infinity();
+                    p.z() = -numeric_limits<float>::infinity();
+                }
+                if(x == cx){
+                    p.x() = 0.0;
+                } else {
+                    p.x() = (x - cx) * numeric_limits<float>::infinity();
+                }
+                if(y == cy){
+                    p.y() = 0.0;
+                } else {
+                    p.y() = (y - cy) * numeric_limits<float>::infinity();
                 }
                 if(pixels){
                     pixels[0] = colorSrc[0];
@@ -1230,7 +1236,7 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
 {
     if(useQueueThreadForAllSensors){
         {
-            boost::unique_lock<boost::mutex> lock(queueMutex);
+            std::lock_guard<std::mutex> lock(queueMutex);
             isQueueRenderingTerminationRequested = true;
         }
         queueCondition.notify_all();
@@ -1248,7 +1254,7 @@ VisionRenderer::~VisionRenderer()
 {
     if(simImpl->useThreadsForSensors){
         {
-            boost::unique_lock<boost::mutex> lock(renderingMutex);
+            std::lock_guard<std::mutex> lock(renderingMutex);
             isTerminationRequested = true;
         }
         renderingCondition.notify_all();
@@ -1284,8 +1290,10 @@ void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Target bodies"), bodyNameListString, boost::bind(updateNames, _1, boost::ref(bodyNameListString), boost::ref(bodyNames)));
-    putProperty(_("Target sensors"), sensorNameListString, boost::bind(updateNames, _1, boost::ref(sensorNameListString), boost::ref(sensorNames)));
+    putProperty(_("Target bodies"), bodyNameListString,
+                std::bind(updateNames, _1, std::ref(bodyNameListString), std::ref(bodyNames)));
+    putProperty(_("Target sensors"), sensorNameListString,
+                std::bind(updateNames, _1, std::ref(sensorNameListString), std::ref(sensorNames)));
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));

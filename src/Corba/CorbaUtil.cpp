@@ -8,8 +8,8 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+using boost::format;
 
 namespace {
 CORBA::ORB_ptr orb = 0;

@@ -5,7 +5,6 @@
 
 #include "PinDragIK.h"
 #include "Body.h"
-//#include "Link.h"
 #include "JointPath.h"
 #include <cnoid/EigenUtil>
 #include <map>
@@ -13,7 +12,6 @@
 #include <algorithm>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {

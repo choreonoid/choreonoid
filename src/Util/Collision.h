@@ -15,8 +15,13 @@ struct Collision {
     Vector3 point;
     Vector3 normal;
     double depth;
-    int id1;
-    int id2;
+    union {
+        struct {
+            unsigned int id1;
+            unsigned int id2;
+        };
+        unsigned long long int id;
+    };
 };
 
 typedef std::vector<Collision> CollisionArray;

@@ -7,8 +7,8 @@
 #define CNOID_UTIL_ABSTRACT_SEQ_H
 
 #include <string>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
+#include <memory>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,7 +17,7 @@ class Mapping;
 class YAMLWriter;
     
 class AbstractSeq;
-typedef boost::shared_ptr<AbstractSeq> AbstractSeqPtr;
+typedef std::shared_ptr<AbstractSeq> AbstractSeqPtr;
 
 
 class CNOID_EXPORT AbstractSeq
@@ -142,12 +142,12 @@ public:
 protected:
     virtual bool doWriteSeq(YAMLWriter& writer);
 
-    typedef boost::function<void(const std::string& label, int index)> SetPartLabelFunction;
+    typedef std::function<void(const std::string& label, int index)> SetPartLabelFunction;
     bool readSeqPartLabels(const Mapping& archive, SetPartLabelFunction setPartLabel);
     bool writeSeqPartLabels(YAMLWriter& writer);
 };
 
-typedef boost::shared_ptr<AbstractMultiSeq> AbstractMultiSeqPtr;
+typedef std::shared_ptr<AbstractMultiSeq> AbstractMultiSeqPtr;
 }
 
 #endif

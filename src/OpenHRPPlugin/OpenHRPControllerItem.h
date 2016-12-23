@@ -15,7 +15,6 @@
 #include <cnoid/ControllerItem>
 #include <cnoid/CorbaUtil>
 #include <cnoid/Process>
-#include <boost/scoped_ptr.hpp>
 
 namespace OpenHRP {
 class DynamicsSimulator_impl;
@@ -55,7 +54,7 @@ private:
     NamingContextHelper* ncHelper;
     std::string controllerServerName;
     std::string controllerServerCommand;
-    boost::scoped_ptr<OpenHRP::DynamicsSimulator_impl> dynamicsSimulator;
+    std::unique_ptr<OpenHRP::DynamicsSimulator_impl> dynamicsSimulator;
     OpenHRP::Controller_var controller;
     double timeStep_;
     Process controllerServerProcess;

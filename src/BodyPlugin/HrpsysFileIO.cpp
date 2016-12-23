@@ -11,7 +11,6 @@
 #include <cnoid/BodyMotionUtil>
 #include <cnoid/ZMPSeq>
 #include <QMessageBox>
-#include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -29,8 +28,10 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 
@@ -48,8 +49,8 @@ public:
            ZMP, WAIST, RPY,
            NUM_DATA_TYPES };
     
-    typedef char_separator<char> Separator;
-    typedef tokenizer<Separator> Tokenizer;
+    typedef boost::char_separator<char> Separator;
+    typedef boost::tokenizer<Separator> Tokenizer;
     
     struct Element {
         Element(){
@@ -87,14 +88,14 @@ public:
 
     bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os){
 
-        iostreams::filtering_istream is;
+        boost::iostreams::filtering_istream is;
 
 #ifndef _WINDOWS
         string ext = filesystem::extension(filesystem::path(filename));
         if(ext == ".gz"){
-            is.push(iostreams::gzip_decompressor());
+            is.push(boost::iostreams::gzip_decompressor());
         } else if(ext == ".bz2"){
-            is.push(iostreams::bzip2_decompressor());
+            is.push(boost::iostreams::bzip2_decompressor());
         }
 #endif
         ifstream ifs(filename.c_str());
@@ -136,7 +137,7 @@ public:
                 vector<double>& frame = frames.back();
                 size_t i;
                 for(i=0; (i < numElements) && (it != tokens.end()); ++i, ++it){
-                    frame[i] = lexical_cast<double>(*it);
+                    frame[i] = boost::lexical_cast<double>(*it);
                 }
                 if(i < numElements /* || it != tokens.end() */ ){
                     os << (format("\"%1%\" contains different size columns.") % filename) << endl;
@@ -218,7 +219,7 @@ public:
                     
                     const string& indexString = match.str(3);
                     if(!indexString.empty()){
-                        element.index = lexical_cast<int>(indexString);
+                        element.index = boost::lexical_cast<int>(indexString);
                     }
                     
                     if(element.type == WAIST){
@@ -315,7 +316,7 @@ void cnoid::initializeHrpsysFileIO(ExtensionManager* ext)
     
     im.addLoaderAndSaver<BodyMotionItem>(
         _("HRPSYS Sequence File Set"), "HRPSYS-SEQ-FILE-SET", "pos;vel;acc;hip;waist;gsens;zmp",
-        boost::bind(importHrpsysSeqFileSet, _1, _2, _3), boost::bind(exportHrpsysSeqFileSet, _1, _2, _3),
+        std::bind(importHrpsysSeqFileSet, _1, _2, _3), std::bind(exportHrpsysSeqFileSet, _1, _2, _3),
         ItemManager::PRIORITY_CONVERSION);
 
     im.addLoader<BodyMotionItem>(

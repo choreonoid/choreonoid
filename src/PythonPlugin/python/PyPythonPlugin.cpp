@@ -4,7 +4,7 @@
 
 #include <boost/python.hpp>
 
-using namespace boost;
+namespace python = boost::python;
 
 BOOST_PYTHON_MODULE(PythonPlugin)
 {

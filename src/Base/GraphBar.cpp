@@ -10,14 +10,14 @@
 #include "SpinBox.h"
 #include "ComboBox.h"
 #include "Dialog.h"
-#include <cnoid/ConnectionSet>
 #include <QFileDialog>
-#include <boost/bind.hpp>
+#include <cnoid/ConnectionSet>
 #include <cmath>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using namespace std::placeholders;
 
 namespace {
 
@@ -114,8 +114,6 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
     : self(self),
       config(this)
 {
-    using boost::bind;
-
     self->setVisibleByDefault(true);    
     
     orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icons/graph.png"),
@@ -123,13 +121,13 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
     orgRenderingToggle->setChecked(true);
     connections.add(
         orgRenderingToggle->sigToggled().connect(
-            bind(&GraphBarImpl::onRenderingTypesToggled, this)));
+            std::bind(&GraphBarImpl::onRenderingTypesToggled, this)));
 
     velRenderingToggle = self->addToggleButton(QIcon(":/Base/icons/velocitygraph.png"),
                                                _("Plot velocity trajectories"));
     connections.add(
         velRenderingToggle->sigToggled().connect(
-            bind(&GraphBarImpl::onRenderingTypesToggled, this)));
+            std::bind(&GraphBarImpl::onRenderingTypesToggled, this)));
 
     accRenderingToggle = self->addToggleButton(QIcon(":/Base/icons/accgraph.png"),
                                                _("Plot acceleration trajectories"));
@@ -138,10 +136,10 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
     
     connections.add(
         accRenderingToggle->sigToggled().connect(
-            bind(&GraphBarImpl::onRenderingTypesToggled, this)));
+            std::bind(&GraphBarImpl::onRenderingTypesToggled, this)));
 
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
-        ->sigClicked().connect(bind(&QDialog::show, &config));
+        ->sigClicked().connect(std::bind(&QDialog::show, &config));
 
     self->setEnabled(false);
     
@@ -153,8 +151,6 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     : connections(barImpl->connections),
       focusedGraphWidget(barImpl->focusedGraphWidget)
 {
-    using boost::bind;
-    
     setWindowTitle(_("Graph Config"));
 
     QVBoxLayout* vbox = new QVBoxLayout();
@@ -167,7 +163,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     lineWidthSpin.setValue(1);
     connections.add(
         lineWidthSpin.sigValueChanged().connect(
-            bind(&ConfigDialog::onLineWidthChanged, this, _1)));
+            std::bind(&ConfigDialog::onLineWidthChanged, this, _1)));
     hbox->addWidget(&lineWidthSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -181,14 +177,14 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     verticalValueRangeSpin.setValue(1.0);
     connections.add(
         verticalValueRangeSpin.sigValueChanged().connect(
-            bind(&ConfigDialog::onVerticalValueRangeChanged, this, _1)));
+            std::bind(&ConfigDialog::onVerticalValueRangeChanged, this, _1)));
     hbox->addWidget(&verticalValueRangeSpin);
 
     showLimitCheck.setText(_("Show limit values"));
     showLimitCheck.setChecked(true);
     connections.add(
         showLimitCheck.sigToggled().connect(
-            bind(&ConfigDialog::onShowLimitToggled, this, _1)));
+            std::bind(&ConfigDialog::onShowLimitToggled, this, _1)));
     hbox->addWidget(&showLimitCheck);
     vbox->addLayout(hbox);
 
@@ -196,7 +192,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     gridCheck.setText(_("Show grid"));
     connections.add(
         gridCheck.sigToggled().connect(
-            bind(&ConfigDialog::onGridToggled, this, _1)));
+            std::bind(&ConfigDialog::onGridToggled, this, _1)));
     hbox->addWidget(&gridCheck);
     
     gridSizeSpin.setDecimals(3);
@@ -205,14 +201,14 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     gridSizeSpin.setValue(0.2);
     connections.add(
         gridSizeSpin.sigValueChanged().connect(
-            bind(&ConfigDialog::onGridSizeChanged, this, _1)));
+            std::bind(&ConfigDialog::onGridSizeChanged, this, _1)));
     hbox->addWidget(&gridSizeSpin);
     
     rulerCheck.setText(_("Show rulers"));
     rulerCheck.setEnabled(false);
     connections.add(
         rulerCheck.sigToggled().connect(
-            bind(&ConfigDialog::onRulerToggled, this, _1)));
+            std::bind(&ConfigDialog::onRulerToggled, this, _1)));
     hbox->addWidget(&rulerCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -221,7 +217,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     editModeCheck.setText(_("Edit mode"));
     connections.add(
         editModeCheck.sigToggled().connect(
-            bind(&ConfigDialog::onEditModeToggled, this, _1)));
+            std::bind(&ConfigDialog::onEditModeToggled, this, _1)));
     hbox->addWidget(&editModeCheck);
 
     radioGroup.addButton(&freeLineModeRadio);
@@ -231,13 +227,13 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     freeLineModeRadio.setChecked(true);
     connections.add(
         freeLineModeRadio.sigToggled().connect(
-            bind(&ConfigDialog::onFreeLineModeToggled, this, _1)));
+            std::bind(&ConfigDialog::onFreeLineModeToggled, this, _1)));
     hbox->addWidget(&freeLineModeRadio);
     
     lineModeRadio.setText(_("Line edit"));
     connections.add(
         lineModeRadio.sigToggled().connect(
-            bind(&ConfigDialog::onLineModeToggled, this, _1)));
+            std::bind(&ConfigDialog::onLineModeToggled, this, _1)));
     hbox->addWidget(&lineModeRadio);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -246,7 +242,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     highlightingControlPointCheck.setText(_("Control points"));
     connections.add(
         highlightingControlPointCheck.sigToggled().connect(
-            bind(&ConfigDialog::onHighlightingControlPointToggled, this, _1)));
+            std::bind(&ConfigDialog::onHighlightingControlPointToggled, this, _1)));
     hbox->addWidget(&highlightingControlPointCheck);
     
     hbox->addWidget(new QLabel(_("Step")));
@@ -254,7 +250,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     controlPointStepSpin.setValue(1);
     connections.add(
         controlPointStepSpin.sigValueChanged().connect(
-            bind(&ConfigDialog::onControlPointStepOrOffsetChanged, this)));
+            std::bind(&ConfigDialog::onControlPointStepOrOffsetChanged, this)));
     hbox->addWidget(&controlPointStepSpin);
     
     hbox->addWidget(new QLabel(_("Offset")));
@@ -262,7 +258,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     controlPointOffsetSpin.setValue(0);
     connections.add(
         controlPointOffsetSpin.sigValueChanged().connect(
-            bind(&ConfigDialog::onControlPointStepOrOffsetChanged, this)));
+            std::bind(&ConfigDialog::onControlPointStepOrOffsetChanged, this)));
     hbox->addWidget(&controlPointOffsetSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -272,7 +268,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     timeBarSyncToggle.setChecked(true);
     connections.add(
         timeBarSyncToggle.sigToggled().connect(
-            bind(&ConfigDialog::onTimeBarSyncToggled, this, _1)));
+            std::bind(&ConfigDialog::onTimeBarSyncToggled, this, _1)));
     hbox->addWidget(&timeBarSyncToggle);
 
     autoScrollModeCombo.addItem(_("off"));
@@ -281,7 +277,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     autoScrollModeCombo.setCurrentIndex(1);
     connections.add(
         autoScrollModeCombo.sigCurrentIndexChanged().connect(
-            bind(&ConfigDialog::onAutoScrollModeChanged, this, _1)));
+            std::bind(&ConfigDialog::onAutoScrollModeChanged, this, _1)));
     hbox->addWidget(&autoScrollModeCombo);
     hbox->addStretch();
     vbox->addLayout(hbox);

@@ -50,7 +50,7 @@ public:
 
     bool isAlive(bool doRescan = true);
 
-    bool isObjectAlive(CORBA::Object_ptr obj);
+    static bool isObjectAlive(CORBA::Object_ptr obj);
 
     struct ObjectInfo
     {

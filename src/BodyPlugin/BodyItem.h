@@ -21,11 +21,11 @@ class BodyItem;
 typedef ref_ptr<BodyItem> BodyItemPtr;
 class BodyItemImpl;
 class InverseKinematics;
-typedef boost::shared_ptr<InverseKinematics> InverseKinematicsPtr;
+typedef std::shared_ptr<InverseKinematics> InverseKinematicsPtr;
 class PinDragIK;
-typedef boost::shared_ptr<PinDragIK> PinDragIKptr;
+typedef std::shared_ptr<PinDragIK> PinDragIKptr;
 class PenetrationBlocker;
-typedef boost::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
+typedef std::shared_ptr<PenetrationBlocker> PenetrationBlockerPtr;
 class EditableSceneBody;
 
 class CNOID_EXPORT BodyItem : public Item, public SceneProvider

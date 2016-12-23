@@ -8,12 +8,12 @@
 #include "ItemPath.h"
 #include "ItemManager.h"
 #include "MessageView.h"
-#include <typeinfo>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <typeinfo>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 namespace filesystem = boost::filesystem;
 using namespace cnoid;
 
@@ -546,7 +546,8 @@ Item* Item::headItem() const
 bool Item::isOwnedBy(Item* item) const
 {
     Item* current = const_cast<Item*>(this);
-    while(current = current->parent_){
+    while(current->parent_){
+        current = current->parent_;
         if(current == item){
             return true;
         }
@@ -555,13 +556,13 @@ bool Item::isOwnedBy(Item* item) const
 }
 
 
-bool Item::traverse(boost::function<bool(Item*)> function)
+bool Item::traverse(std::function<bool(Item*)> function)
 {
     return traverse(this, function);
 }
 
 
-bool Item::traverse(Item* item, const boost::function<bool(Item*)>& function)
+bool Item::traverse(Item* item, const std::function<bool(Item*)>& function)
 {
     if(function(item)){
         return true;
@@ -792,7 +793,7 @@ bool onNamePropertyChanged(Item* item, const string& name)
 
 void Item::putProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Name"), name_, boost::bind(onNamePropertyChanged, this, _1));
+    putProperty(_("Name"), name_, std::bind(onNamePropertyChanged, this, _1));
 
     std::string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);

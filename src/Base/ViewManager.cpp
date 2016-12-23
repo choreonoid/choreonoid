@@ -14,13 +14,12 @@
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QPushButton>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <list>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -36,10 +35,10 @@ Signal<void(View* view)> sigViewDeactivated_;
 Signal<void(View* view)> sigViewRemoved_;
 
 class ViewInfo;
-typedef boost::shared_ptr<ViewInfo> ViewInfoPtr;
+typedef std::shared_ptr<ViewInfo> ViewInfoPtr;
 
 class InstanceInfo;
-typedef boost::shared_ptr<InstanceInfo> InstanceInfoPtr;
+typedef std::shared_ptr<InstanceInfo> InstanceInfoPtr;
 typedef list<InstanceInfoPtr> InstanceInfoList;
 
 class InstanceInfo {
@@ -99,7 +98,7 @@ public:
 private:
     View* createView() {
         View* view = factory->create();
-        InstanceInfoPtr instance = boost::make_shared<InstanceInfo>(this, view);
+        InstanceInfoPtr instance = std::make_shared<InstanceInfo>(this, view);
             
         instances.push_back(instance);
         instance->iterInViewInfo = instances.end();
@@ -109,8 +108,8 @@ private:
         instance->iterInViewManager = instancesInViewManager.end();
         --instance->iterInViewManager;
 
-        view->sigActivated().connect(boost::bind(boost::ref(sigViewActivated_), view));
-        view->sigDeactivated().connect(boost::bind(boost::ref(sigViewDeactivated_), view));
+        view->sigActivated().connect(std::bind(std::ref(sigViewActivated_), view));
+        view->sigDeactivated().connect(std::bind(std::ref(sigViewDeactivated_), view));
 
         return view;
     }
@@ -177,7 +176,7 @@ typedef std::map<const type_info*, ViewInfoPtr, compare_type_info> TypeToViewInf
 TypeToViewInfoMap typeToViewInfoMap;
 
 typedef map<string, ViewInfoPtr> ClassNameToViewInfoMap;
-typedef boost::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
+typedef std::shared_ptr<ClassNameToViewInfoMap> ClassNameToViewInfoMapPtr;
 
 typedef map<string, ClassNameToViewInfoMapPtr> ModuleNameToClassNameToViewInfoMap;
 ModuleNameToClassNameToViewInfoMap moduleNameToClassNameToViewInfoMap;
@@ -357,7 +356,7 @@ void onViewMenuAboutToShow(Menu* menu)
     if(menu == deleteViewMenu){
         Action* action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
-        action->sigTriggered().connect(boost::bind(deleteAllInvisibleViews));
+        action->sigTriggered().connect(std::bind(deleteAllInvisibleViews));
         menu->addAction(action);
         needSeparator = true;
     }
@@ -384,7 +383,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->setCheckable(true);
-                    action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
+                    action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
                     menu->addAction(action);
                 } else {
                     for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
@@ -394,7 +393,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
                         action->setChecked(view->viewArea());
-                        action->sigToggled().connect(boost::bind(onShowViewToggled, viewInfo, view, _1));
+                        action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
                         menu->addAction(action);
                     }
                 }
@@ -403,7 +402,7 @@ void onViewMenuAboutToShow(Menu* menu)
                    (viewInfo->itype == ViewManager::MULTI_DEFAULT || viewInfo->itype == ViewManager::MULTI_OPTIONAL)){
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
-                    action->sigTriggered().connect(boost::bind(onCreateViewTriggered, viewInfo));
+                    action->sigTriggered().connect(std::bind(onCreateViewTriggered, viewInfo));
                     menu->addAction(action);
                 }
             } else if(menu == deleteViewMenu){
@@ -415,7 +414,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     InstanceInfoPtr& instance = (*p++);
                     Action* action = new Action(menu);
                     action->setText(instance->view->windowTitle());
-                    action->sigTriggered().connect(boost::bind(onDeleteViewTriggered, instance));
+                    action->sigTriggered().connect(std::bind(onDeleteViewTriggered, instance));
                     menu->addAction(action);
                 }
             }
@@ -437,17 +436,17 @@ void ViewManager::initializeClass(ExtensionManager* ext)
 
         QAction* showViewAction = mm.findItem("Show View");
         showViewMenu = new Menu(viewMenu);
-        showViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, showViewMenu));
+        showViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, showViewMenu));
         showViewAction->setMenu(showViewMenu);
 
         QAction* createViewAction = mm.setCurrent(viewMenu).findItem("Create View");
         createViewMenu = new Menu(viewMenu);
-        createViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, createViewMenu));
+        createViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, createViewMenu));
         createViewAction->setMenu(createViewMenu);
 
         QAction* deleteViewAction = mm.setCurrent(viewMenu).findItem("Delete View");
         deleteViewMenu = new Menu(viewMenu);
-        deleteViewMenu->sigAboutToShow().connect(boost::bind(onViewMenuAboutToShow, deleteViewMenu));
+        deleteViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, deleteViewMenu));
         deleteViewAction->setMenu(deleteViewMenu);
         
         initialized = true;
@@ -466,7 +465,7 @@ ViewManagerImpl::ViewManagerImpl(ExtensionManager* ext)
       textDomain(ext->textDomain()),
       menuManager(ext->menuManager())
 {
-    classNameToViewInfoMap = boost::make_shared<ClassNameToViewInfoMap>();
+    classNameToViewInfoMap = std::make_shared<ClassNameToViewInfoMap>();
     moduleNameToClassNameToViewInfoMap[moduleName] = classNameToViewInfoMap;
 }
 
@@ -502,7 +501,7 @@ View* ViewManager::registerClassSub
 (const type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
  ViewManager::InstantiationType itype, FactoryBase* factory)
 {
-    ViewInfoPtr info = boost::make_shared<ViewInfo>(
+    ViewInfoPtr info = std::make_shared<ViewInfo>(
         impl, view_type_info, className, defaultInstanceName, impl->textDomain, itype, factory);
     
     (*impl->classNameToViewInfoMap)[className] = info;

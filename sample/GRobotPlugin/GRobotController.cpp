@@ -5,12 +5,15 @@
 
 #include "GRobotController.h"
 #include <boost/asio/write.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <cmath>
 #include <iostream>
 
+#ifndef WIN32
+#include <sys/time.h>
+#endif
+
 using namespace std;
-using namespace boost;
+namespace asio = boost::asio;
 
 namespace {
 
@@ -98,11 +101,13 @@ void GRobotController::init()
 
 GRobotController::~GRobotController()
 {
-    poseSendingMutex.lock();
-    mode = EXIT_POSE_SENDING;
-    poseSendingMutex.unlock();
-    poseSendingCondition.notify_all();
-    poseSendingThread.join();
+    if(poseSendingThread.joinable()){
+        poseSendingMutex.lock();
+        mode = EXIT_POSE_SENDING;
+        poseSendingMutex.unlock();
+        poseSendingCondition.notify_all();
+        poseSendingThread.join();
+    }
     
     closeSerialPort();
 
@@ -181,7 +186,7 @@ bool GRobotController::receiveData(char* buf, int len)
         if(n == len){
             break;
         }
-        this_thread::sleep(posix_time::microseconds(100));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
     return (n == len);
 }
@@ -193,7 +198,7 @@ bool GRobotController::checkConnection()
     char buf;
     
     if(sendData(command, 2)){
-        this_thread::sleep(posix_time::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         if(receiveData(&buf, 1) && buf == 0x07){
             return true;
         }
@@ -414,7 +419,7 @@ void GRobotController::doOnDemandPoseSending()
 {
     while(true){
         {
-            unique_lock<mutex> lock(poseSendingMutex);
+            std::unique_lock<std::mutex> lock(poseSendingMutex);
             poseSendingCondition.wait(lock);
 
             if(mode != ON_DEMAND_POSE_SENDING){
@@ -585,8 +590,8 @@ void GRobotController::requestToSendPose(double transitionTime)
 
         poseSendingMutex.lock();
 
-        if(poseSendingThread == thread()){
-            poseSendingThread = thread(bind(&GRobotController::poseSendingLoop, this));
+        if(!poseSendingThread.joinable()){
+            poseSendingThread = std::thread(std::bind(&GRobotController::poseSendingLoop, this));
         }
 
         if(mode == ON_DEMAND_POSE_SENDING){
@@ -644,8 +649,8 @@ bool GRobotController::startMotion(double time, int id)
 
     poseSendingMutex.lock();
 
-    if(poseSendingThread == thread()){
-        poseSendingThread = thread(bind(&GRobotController::poseSendingLoop, this));
+    if(!poseSendingThread.joinable()){
+        poseSendingThread = std::thread(std::bind(&GRobotController::poseSendingLoop, this));
     }
     
     if(mode == CONTINUOUS_POSE_SENDING){

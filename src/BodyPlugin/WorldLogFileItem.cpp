@@ -11,7 +11,6 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Archive>
 #include <QDateTime>
-#include <boost/bind.hpp>
 #include <fstream>
 #include <stack>
 
@@ -20,8 +19,9 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 
 namespace {
 
@@ -462,7 +462,7 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     im.registerClass<WorldLogFileItem>(N_("WorldLogFileItem"));
     im.addCreationPanel<WorldLogFileItem>();
     im.addLoader<WorldLogFileItem>(
-        _("World Log"), "CNOID-WORLD-LOG", "log", boost::bind(loadWorldLogFile, _1, _2, _3));
+        _("World Log"), "CNOID-WORLD-LOG", "log", std::bind(loadWorldLogFile, _1, _2, _3));
 
     ext->timeSyncItemEngineManger().addEngineFactory(createWorldLogFileEngine);    
 }
@@ -610,7 +610,7 @@ void WorldLogFileItem::onPositionChanged()
     } else {
         impl->worldSubTreeChangedConnection.reset(
             worldItem->sigSubTreeChanged().connect(
-                boost::bind(&WorldLogFileItemImpl::onWorldSubTreeChanged, impl)));
+                std::bind(&WorldLogFileItemImpl::onWorldSubTreeChanged, impl)));
     }
     
     impl->isBodyInfoUpdateNeeded = true;
@@ -1162,7 +1162,7 @@ void WorldLogFileItemImpl::exchangeDeviceStateCacheArrays()
 void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Log file name"), impl->filename,
-                boost::bind(&WorldLogFileItemImpl::setLogFileName, impl, _1));
+                std::bind(&WorldLogFileItemImpl::setLogFileName, impl, _1));
     putProperty(_("Actual log file"), impl->getActualFilename());
     putProperty(_("Time-stamp suffix"), impl->isTimeStampSuffixEnabled,
                 changeProperty(impl->isTimeStampSuffixEnabled));

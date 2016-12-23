@@ -14,8 +14,6 @@
 #include <QBoxLayout>
 #include <QEvent>
 #include <QApplication>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <set>
 #include <map>
 #include <deque>
@@ -24,6 +22,7 @@
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::dynamic_bitset;
 
@@ -100,7 +99,7 @@ public:
             linkExpansions.resize(n, true);
         }
     };
-    typedef boost::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
+    typedef std::shared_ptr<BodyItemInfo> BodyItemInfoPtr;
 
     typedef map<BodyItemPtr, BodyItemInfoPtr> BodyItemInfoMap;
     BodyItemInfoMap bodyItemInfoCache;
@@ -215,7 +214,7 @@ QVariant LinkTreeItem::data(int column, int role) const
     QVariant value;
     LinkTreeWidget* tree = static_cast<LinkTreeWidget*>(treeWidget());
     LinkTreeWidget::ColumnDataFunction& func = tree->impl->columnInfos[column].dataFunction;
-    if(!func.empty()){
+    if(func){
         func(this, role, value);
     }
     if(value.isValid()){
@@ -229,7 +228,7 @@ void LinkTreeItem::setData(int column, int role, const QVariant& value)
 {
     LinkTreeWidget* tree = static_cast<LinkTreeWidget*>(treeWidget());
     LinkTreeWidget::ColumnSetDataFunction& func = tree->impl->columnInfos[column].setDataFunction;
-    if(!func.empty()){
+    if(func){
         func(this, role, value);
     }
     return QTreeWidgetItem::setData(column, role, value);
@@ -316,7 +315,7 @@ void LinkTreeWidgetImpl::initialize()
     listingMode = LinkTreeWidget::LINK_LIST;
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.sigCurrentIndexChanged().connect(
-        boost::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
+        std::bind(&LinkTreeWidgetImpl::onListingModeChanged, this, _1));
 }
 
 
@@ -562,10 +561,10 @@ LinkTreeWidgetImpl::BodyItemInfoPtr LinkTreeWidgetImpl::getBodyItemInfo(BodyItem
             if(!isCacheEnabled){
                 bodyItemInfoCache.clear();
             }
-            info = boost::make_shared<BodyItemInfo>();
+            info = std::make_shared<BodyItemInfo>();
             info->linkGroup = LinkGroup::create(*bodyItem->body());
             info->detachedFromRootConnection = bodyItem->sigDetachedFromRoot().connect(
-                boost::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
+                std::bind(&LinkTreeWidgetImpl::onBodyItemDetachedFromRoot, this, bodyItem));
             bodyItemInfoCache[bodyItem] = info;
         }
 
@@ -766,7 +765,7 @@ void LinkTreeWidgetImpl::addChild(LinkTreeItem* parentItem, LinkTreeItem* item)
 
     for(size_t col=0; col < columnInfos.size(); ++col){
         LinkTreeWidget::ColumnWidgetFunction& func = columnInfos[col].widgetFunction;
-        if(!func.empty()){
+        if(func){
             QWidget* widget = func(item);
             if(widget){
                 self->setItemWidget(item, col, widget);
@@ -1225,7 +1224,7 @@ bool LinkTreeWidgetImpl::storeState(Archive& archive)
 
 bool LinkTreeWidget::restoreState(const Archive& archive)
 {
-    archive.addPostProcess(boost::bind(&LinkTreeWidgetImpl::restoreState, impl, boost::ref(archive)));
+    archive.addPostProcess(std::bind(&LinkTreeWidgetImpl::restoreState, impl, std::ref(archive)));
     return true;
 }
 

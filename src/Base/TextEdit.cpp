@@ -58,7 +58,7 @@ int TextEdit::scrollSingleStep()
 
 void TextEdit::onCurrentCharFormatChanged(const QTextCharFormat& f)
 {
-    sigCurrentCharFormatChanged_(boost::ref(f));
+    sigCurrentCharFormatChanged_(std::ref(f));
 }
 
 

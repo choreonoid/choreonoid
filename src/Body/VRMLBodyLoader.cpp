@@ -20,15 +20,13 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
-#include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
-
+using boost::format;
 
 namespace cnoid {
 
@@ -70,7 +68,7 @@ public:
     Body* body;
     VRMLProtoInstancePtr rootJointNode;
     std::vector<VRMLProtoInstancePtr> extraJointNodes;
-    dynamic_bitset<> validJointIdSet;
+    boost::dynamic_bitset<> validJointIdSet;
     int numValidJointIds;
     VRMLToSGConverter sgConverter;
     int divisionNumber;
@@ -78,7 +76,7 @@ public:
     bool isVerbose;
     int messageIndent;
 
-    typedef boost::function<DevicePtr(VRMLProtoInstance* node)> DeviceFactory;
+    typedef std::function<DevicePtr(VRMLProtoInstance* node)> DeviceFactory;
     typedef map<string, DeviceFactory> DeviceFactoryMap;
     static DeviceFactoryMap deviceFactories;
 
@@ -422,7 +420,7 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     } catch(EasyScanner::Exception & ex){
         os() << ex.getFullMessage() << endl;
     } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
+        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
     } catch(const std::exception& ex){
@@ -811,7 +809,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
     } else if(jointType == "crawler"){
         link->setJointType(Link::CRAWLER_JOINT);
-        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinousTrack' instead."))
+        os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinuousTrack' instead."))
                     % link->name()) << endl;
     } else if(jointType == "agx_crawler"){
         link->setJointType(Link::AGX_CRAWLER_JOINT);
@@ -963,8 +961,11 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     Vector3 c;
     readVRMLfield(sf["centerOfMass"], c);
     iSegment.c = T.linear() * c + T.translation();
-    iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
+    if (iLink.m + iSegment.m > 0){
+        iLink.c = (iSegment.c * iSegment.m + iLink.c * iLink.m) / (iLink.m + iSegment.m);
+    }
     iLink.m += iSegment.m;
+    iLink.segments.push_back(iSegment);
     
     Matrix3 I;
     readVRMLfield(sf["momentsOfInertia"], I);
@@ -1047,6 +1048,11 @@ void VRMLBodyLoaderImpl::readDeviceNode(LinkInfo& iLink, VRMLProtoInstance* devi
             device->setLocalTranslation(RsT * (T * device->localTranslation()));
             device->setLocalRotation(RsT * (T.linear() * device->localRotation()));
             body->addDevice(device);
+
+            SgNodePtr node = sgConverter.convert(deviceNode);
+            if(node){
+                iLink.visualShape->addChild(node);
+            }
         }
     }
 }

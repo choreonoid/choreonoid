@@ -174,20 +174,30 @@ target_link_libraries(${library} CnoidCorba)
 apply_common_setting_for_library(${library} "")
 
 
+add_subdirectory(library)
+
+
 # Plugin
 set(plugin CnoidOpenRTMPlugin)
 
 set(plugin_sources
   OpenRTMPlugin.cpp
-  BodyRTCItem.cpp
-  VirtualRobotRTC.cpp
-  VirtualRobotPortHandler.cpp
-  BridgeConf.cpp
+  ControllerRTCItem.cpp
+  BodyIoRTCItem.cpp
   RTCItem.cpp
-  OpenHRPClockGeneratorItem.cpp
   ChoreonoidExecutionContext.cpp
   ChoreonoidPeriodicExecutionContext.cpp
   RTSNameServerView.cpp
+  RTSPropertiesView.cpp
+  RTSItem.cpp
+  RTSDiagramView.cpp
+  RTSCommonUtil.cpp
+
+  deprecated/BodyRTCItem.cpp
+  deprecated/VirtualRobotRTC.cpp
+  deprecated/VirtualRobotPortHandler.cpp
+  deprecated/BridgeConf.cpp
+  deprecated/OpenHRPClockGeneratorItem.cpp
   )
 
 set(plugin_headers
@@ -200,13 +210,19 @@ else()
 endif()
 
 if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
   QT4_WRAP_CPP(
-    RTSNameServerView.cpp
+    plugin_sources
+    RTSNameServerView.h
+    RTSDiagramView.h
     OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 else()
+  QT5_ADD_RESOURCES(RC_SRCS OpenRTMPlugin.qrc)
   QT5_WRAP_CPP(
-    RTSNameServerView.cpp
+    plugin_sources
+    RTSDiagramView.h
+    RTSNameServerView.h
     OPTIONS "-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED"
   )
 endif()
@@ -218,22 +234,24 @@ endif()
 make_gettext_mofiles(${plugin} mofiles)
 
 if(OPENRTM_VERSION STREQUAL "1.1.0")
-  add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+  add_cnoid_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles}  ${RC_SRCS})
 else()
-  add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles})
+  add_cnoid_OpenRTM_plugin(${plugin} SHARED ${plugin_sources} ${plugin_headers} ${mofiles} ${RC_SRCS})
   if(ENABLE_GCC_FVISIBILITY_HIDDEN)
     set_source_files_properties(BodyRTCItem.cpp
                                 VirtualRobotRTC.cpp
                                 VirtualRobotPortHandler.cpp
                                 BridgeConf.cpp
                                 RTCItem.cpp
+				ControllerRTCItem.cpp
+				BodyIoRTCItem.cpp
                                 OpenHRPClockGeneratorItem.cpp
                                 ChoreonoidExecutionContext.cpp 
                                 PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   endif()
 endif()
 
-target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM ${OPENRTM_LIBRARIES})
+target_link_libraries(${plugin} CnoidBodyPlugin CnoidCorbaPlugin CnoidOpenRTM CnoidBodyIoRTC ${OPENRTM_LIBRARIES})
 if(UNIX)
   target_link_libraries(${plugin} ${Boost_REGEX_LIBRARY})
 endif()
@@ -251,5 +269,3 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc DESTINATION $
 if(QT5)
   qt5_use_modules(${plugin} Core OpenGL Network)
 endif()
-
-

@@ -3,7 +3,7 @@
 #define CNOID_COS_NAMING_IMPL_H
 
 #include <omniORB4/Naming.hh>
-#include <boost/thread/shared_mutex.hpp>
+#include <mutex>
 
 namespace cnoid {
 
@@ -54,7 +54,7 @@ private:
     PortableServer::POA_ptr poa;
 
     // Multiple-readers, single-writer lock
-    static boost::shared_mutex mutex;
+    static std::mutex mtx;
 
     BindingNode* firstNode;
     BindingNode* lastNode;

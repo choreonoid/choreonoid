@@ -2,12 +2,18 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <cnoid/PySignal>
 #include "../ToolBar.h"
 #include "../TimeBar.h"
+#include <cnoid/PySignal>
+#include <cnoid/PyUtil>
 
 using namespace boost::python;
 using namespace cnoid;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(QWidget)
+CNOID_PYTHON_DEFINE_GET_POINTER(ToolButton)
+CNOID_PYTHON_DEFINE_GET_POINTER(TimeBar)
 
 namespace {
 

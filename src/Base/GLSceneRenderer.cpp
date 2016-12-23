@@ -8,9 +8,12 @@
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
-#include <boost/bind.hpp>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -55,7 +58,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     : self(self),
       sceneRoot(sceneRoot)
 {
-    sceneRoot->sigUpdated().connect(boost::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
+    sceneRoot->sigUpdated().connect(std::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
 
     scene = new SgGroup();
     sceneRoot->addChild(scene);
@@ -169,6 +172,7 @@ double GLSceneRenderer::aspectRatio() const
 
 bool GLSceneRenderer::initializeGL()
 {
+#ifndef _WIN32
     ostream& os = mvout();
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -176,13 +180,14 @@ bool GLSceneRenderer::initializeGL()
     os << (boost::format("OpenGL version is %1%.%2%.") % major % minor) << endl;
     if(major >= 2){
         os << (boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
-    }
-	return true;
+    }#endif
+    return true;
 }
 
 
 bool GLSceneRenderer::setSwapInterval(int interval)
 {
+#if 0
 #ifdef _WIN32
 	/*
     DISPLAY_DEVICE device;
@@ -201,14 +206,17 @@ bool GLSceneRenderer::setSwapInterval(int interval)
     return wglSwapIntervalEXT(interval);
 	*/
 #endif
+#endif
     return false;
 }
 
 
 int GLSceneRenderer::getSwapInterval() const
 {
+#if 0
 #ifdef _WIN32
     //return wglGetSwapIntervalEXT();
+#endif
 #endif
     return -1;
 }

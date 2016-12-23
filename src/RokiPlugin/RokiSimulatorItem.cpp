@@ -23,13 +23,13 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/FileUtil>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 #include <iostream>
 #include <QElapsedTimer>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 extern "C" {
@@ -517,7 +517,7 @@ void RokiLink::createGeometry()
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), boost::bind(&RokiLink::addMesh, this, extractor))){
+        if(extractor->extract(link->collisionShape(), std::bind(&RokiLink::addMesh, this, extractor))){
             if(!vertices.empty()){
                 zShape3D* sp = zAlloc( zShape3D, 1 );
                 zShape3DInit(sp);
@@ -710,7 +710,7 @@ void RokiLink::getKinematicStateFromRoki()
             link->q() = dis[0];
             link->dq() = v[0];
             break;
-        case Link::FREE_JOINT:
+        case Link::FREE_JOINT:{
             Vector3 aa(dis[3], dis[4], dis[5]);
             double angle = aa.norm();
             Matrix3 R;
@@ -736,6 +736,9 @@ void RokiLink::getKinematicStateFromRoki()
         		link->v() = Vector3(v[0], v[1], v[2]);
         		link->w() = Vector3(v[3], v[4], v[5]);
         	}
+            break;
+        }
+        default:
             break;
     }
 }
@@ -764,6 +767,8 @@ void RokiLink::setKinematicStateToRoki(zVec dis, int k)
             zMat3DToAA( &m, (zVec3D *)&zVecElem(dis,3) );
             break;
         }
+        default:
+            break;
     }
 }
 
@@ -1170,7 +1175,7 @@ bool RokiSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& a
                 collisionDetector->updatePosition( k, geometryIdToLink[k]->link->T());
             }
         }
-        collisionDetector->detectCollisions(boost::bind(&RokiSimulatorItemImpl::collisionCallback, this, _1, &fd.cd));
+        collisionDetector->detectCollisions(std::bind(&RokiSimulatorItemImpl::collisionCallback, this, _1, &fd.cd));
 
         //rkCDColChkVert( &fd.cd );
 
@@ -1223,11 +1228,11 @@ CollisionLinkPairListPtr RokiSimulatorItem::getCollisions()
 
 CollisionLinkPairListPtr RokiSimulatorItemImpl::getCollisions()
 {
-    CollisionLinkPairListPtr collisionPairs = boost::make_shared<CollisionLinkPairList>();
+    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
     rkCDPair *cdp;
     zListForEach( &fd.cd.plist, cdp ){
         if( !cdp->data.is_col ) continue;
-        CollisionLinkPairPtr dest = boost::make_shared<CollisionLinkPair>();
+        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
         for(int j=0; j<2; j++){
             dest->body[j] = bodyMap[cdp->data.cell[j]->data.chain];
             dest->link[j] = dest->body[j]->link(zName(cdp->data.cell[j]->data.shape));

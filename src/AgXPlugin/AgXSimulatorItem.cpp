@@ -26,6 +26,7 @@
 #include <agxPowerLine/Actuator1DOF.h>
 #include <agx/version.h>
 #include <agx/PlaneJoint.h>
+#include <agx/Runtime.h>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
@@ -39,13 +40,13 @@
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerItem>
 #include <cnoid/BodyMotionItem>
-#include <boost/bind.hpp>
 #include <cnoid/IdPair>
 #include <cnoid/EigenArchive>
 #include <cnoid/LinkGroup>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -572,6 +573,8 @@ protected:
 
 namespace cnoid {
 
+bool AgXSimulatorItem::havePowerLineLicense;
+
 class AgXSimulatorItemImpl
 {
 public:
@@ -922,7 +925,7 @@ void AgXLink::createJoint()
             inputMode = VEL;
             break;
         case AgXSimulatorItem::TORQUE :
-            if(rotorInertia){
+            if(rotorInertia && AgXSimulatorItem::havePowerLineLicense){
                 part = SHAFT;
                 inputMode = TOR;
             }else{
@@ -935,7 +938,7 @@ void AgXLink::createJoint()
             inputMode = InputMode::NON;
             break;
         case AgXSimulatorItem::DEFAULT :
-            if(!rotorInertia || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS)){
+            if(!rotorInertia || simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS) || !AgXSimulatorItem::havePowerLineLicense){
                 part = MOTOR;
                 if(simImpl->dynamicsMode.is(AgXSimulatorItem::HG_DYNAMICS))
                     inputMode = VEL;
@@ -1048,9 +1051,9 @@ void AgXLink::createJoint()
 
 void AgXLink::createGeometry(AgXBody* agxBody)
 {
-    if(link->shape()){
+    if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->shape(), boost::bind(&AgXLink::addMesh, this, extractor, agxBody))){
+        if(extractor->extract(link->collisionShape(), std::bind(&AgXLink::addMesh, this, extractor, agxBody))){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
@@ -1742,6 +1745,11 @@ void AgXSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<AgXSimulatorItem>("AgXSimulatorItem");
     ext->itemManager().addCreationPanel<AgXSimulatorItem>();
+
+    //agx::StringVector modules = agx::Runtime::instance()->getEnabledModules();
+    //for(int i=0; i<modules.size(); i++)
+        //std::cout << modules[i] << std::endl;
+    havePowerLineLicense = agx::Runtime::instance()->isModuleEnabled("AgXPowerLine");   // ??
 }
 
 
@@ -1884,8 +1892,10 @@ bool AgXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     agxSimulation->setContactReductionBinResolution( contactReductionBinResolution );
     agxSimulation->setContactReductionThreshold( contactReductionThreshold );
 
-    powerLine = new agxPowerLine::PowerLine();
-    agxSimulation->add(powerLine);
+    if(AgXSimulatorItem::havePowerLineLicense){
+        powerLine = new agxPowerLine::PowerLine();
+        agxSimulation->add(powerLine);
+    }
 
     agx::UniformGravityField* uniformGravityField = dynamic_cast<agx::UniformGravityField*>( agxSimulation->getGravityField() );
     if(uniformGravityField)
@@ -2086,10 +2096,10 @@ void AgXSimulatorItemImpl::addBody(AgXBody* agxBody, int i)
 CollisionLinkPairListPtr AgXSimulatorItem::getCollisions()
 {
     const agxCollide::GeometryContactPtrVector& contacts = impl->agxSimulation->getSpace()->getGeometryContacts();
-    CollisionLinkPairListPtr collisionPairs = boost::make_shared<CollisionLinkPairList>();
+    CollisionLinkPairListPtr collisionPairs = std::make_shared<CollisionLinkPairList>();
     for(agxCollide::GeometryContactPtrVector::const_iterator it=contacts.begin();
             it!=contacts.end(); it++){
-        CollisionLinkPairPtr dest = boost::make_shared<CollisionLinkPair>();
+        CollisionLinkPairPtr dest = std::make_shared<CollisionLinkPair>();
         agxCollide::ContactPointVector& points = (*it)->points();
         for(int i=0; i<points.size(); i++){
             dest->collisions.push_back(Collision());
@@ -2292,8 +2302,8 @@ void AgXSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AgXSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-            boost::bind(&Selection::selectIndex, &dynamicsMode, _1));
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
+                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
+    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
     putProperty.decimals(2).min(0.0)
             (_("Friction"), friction, changeProperty(friction));
     putProperty.decimals(2).min(0.0)

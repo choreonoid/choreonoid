@@ -18,7 +18,7 @@ namespace cnoid {
 class Link;
 
 class JointPath;
-typedef boost::shared_ptr<JointPath> JointPathPtr;
+typedef std::shared_ptr<JointPath> JointPathPtr;
 
 class CNOID_EXPORT BodyMotionPoseProvider : public PoseProvider
 {

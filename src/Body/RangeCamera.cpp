@@ -4,7 +4,6 @@
 */
 
 #include "RangeCamera.h"
-#include <boost/make_shared.hpp>
 
 using namespace cnoid;
 
@@ -12,7 +11,7 @@ using namespace cnoid;
 RangeCamera::RangeCamera()
 {
     setImageType(NO_IMAGE);
-    points_ = boost::make_shared<PointData>();
+    points_ = std::make_shared<PointData>();
     isOrganized_ = false;
 }
 
@@ -71,7 +70,7 @@ RangeCamera::RangeCamera(const RangeCamera& org, int x /* dummy */)
     if(org.isImageStateClonable()){
         points_ = org.points_;
     } else {
-        points_ = boost::make_shared<PointData>();
+        points_ = std::make_shared<PointData>();
     }
 }
 
@@ -82,7 +81,7 @@ DeviceState* RangeCamera::cloneState() const
 }
 
 
-void RangeCamera::forEachActualType(boost::function<bool(const std::type_info& type)> func)
+void RangeCamera::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(RangeCamera))){
         Camera::forEachActualType(func);
@@ -93,7 +92,7 @@ void RangeCamera::forEachActualType(boost::function<bool(const std::type_info& t
 RangeCamera::PointData& RangeCamera::points()
 {
     if(points_.use_count() > 1){
-        points_ = boost::make_shared<PointData>(*points_);
+        points_ = std::make_shared<PointData>(*points_);
     }
     return *points_;
 }
@@ -101,17 +100,17 @@ RangeCamera::PointData& RangeCamera::points()
 
 RangeCamera::PointData& RangeCamera::newPoints()
 {
-    points_ = boost::make_shared<PointData>();
+    points_ = std::make_shared<PointData>();
     return *points_;
 }
 
 
-void RangeCamera::setPoints(boost::shared_ptr<PointData>& points)
+void RangeCamera::setPoints(std::shared_ptr<PointData>& points)
 {
     if(points.use_count() == 1){
         points_ = points;
     } else {
-        points_ = boost::make_shared<PointData>(*points);
+        points_ = std::make_shared<PointData>(*points);
     }
     points.reset();
 }
@@ -124,7 +123,7 @@ void RangeCamera::clearState()
     if(points_.use_count() == 1){
         points_->clear();
     } else {
-        points_ = boost::make_shared<PointData>();
+        points_ = std::make_shared<PointData>();
     }
 }
 

@@ -5,7 +5,6 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
 
 #define ROKISAMPLE
 #define DOF (2)

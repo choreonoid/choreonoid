@@ -9,7 +9,6 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
 #include <Eigen/StdVector>
-#include <boost/scoped_ptr.hpp>
 #include <boost/variant.hpp>
 
 using namespace std;
@@ -62,7 +61,7 @@ class SceneRendererImpl
 {
 public:
     SceneRenderer* self;
-    boost::scoped_ptr<PreproNode> preproTree;
+    std::unique_ptr<PreproNode> preproTree;
     Signal<void()> sigRenderingRequest;
     bool doPreprocessedNodeTreeExtraction;
 

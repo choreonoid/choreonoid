@@ -24,14 +24,14 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/MessageView>
 #include <cnoid/IdPair>
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
 #include <iostream>
 #include <iomanip>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -118,7 +118,7 @@ public:
     ContactAttributeMap contactAttributeMap;
 
     boost::optional<int> forcedBodyPositionFunctionId;
-    boost::mutex forcedBodyPositionMutex;
+    std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
     Position forcedBodyPosition;
 
@@ -423,7 +423,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactDepthCorrection(
         contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
 
-    self->addPreDynamicsFunction(boost::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
+    self->addPreDynamicsFunction(std::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
 
     world.clearBodies();
     bodyIndexMap.clear();
@@ -596,14 +596,14 @@ void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position
 {
     if(SimulationBody* simBody = self->findSimulationBody(bodyItem)){
         {
-            boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+            std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
             forcedPositionBody = static_cast<DyBody*>(simBody->body());
             forcedBodyPosition = T;
         }
         if(!forcedBodyPositionFunctionId){
             forcedBodyPositionFunctionId =
                 self->addPostDynamicsFunction(
-                    boost::bind(&AISTSimulatorItemImpl::doSetForcedPosition, this));
+                    std::bind(&AISTSimulatorItemImpl::doSetForcedPosition, this));
         }
     }
 }
@@ -615,7 +615,7 @@ bool AISTSimulatorItem::isForcedPositionActiveFor(BodyItem* bodyItem) const
     if(impl->forcedBodyPositionFunctionId){
         SimulationBody* simBody = const_cast<AISTSimulatorItem*>(this)->findSimulationBody(bodyItem);
         {
-            boost::unique_lock<boost::mutex> lock(impl->forcedBodyPositionMutex);
+            std::lock_guard<std::mutex> lock(impl->forcedBodyPositionMutex);
             if(impl->forcedPositionBody == static_cast<DyBody*>(simBody->body())){
                 isActive = true;
             }
@@ -636,7 +636,7 @@ void AISTSimulatorItem::clearForcedPositions()
 
 void AISTSimulatorItemImpl::doSetForcedPosition()
 {
-    boost::unique_lock<boost::mutex> lock(forcedBodyPositionMutex);
+    std::lock_guard<std::mutex> lock(forcedBodyPositionMutex);
     DyLink* rootLink = forcedPositionBody->rootLink();
     rootLink->setPosition(forcedBodyPosition);
     rootLink->v().setZero();
@@ -656,24 +656,24 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                boost::bind(&Selection::selectIndex, &dynamicsMode, _1));
+                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
     putProperty(_("Integration mode"), integrationMode,
-                boost::bind(&Selection::selectIndex, &integrationMode, _1));
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
+                std::bind(&Selection::selectIndex, &integrationMode, _1));
+    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
     putProperty(_("Slip friction"), slipFriction, changeProperty(slipFriction));
     putProperty(_("Contact culling distance"), contactCullingDistance,
-                (boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDistance), _1)));
+                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDistance), _1)));
     putProperty(_("Contact culling depth"), contactCullingDepth,
-                (boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCullingDepth), _1)));
+                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDepth), _1)));
     putProperty(_("Error criterion"), errorCriterion,
-                boost::bind(&FloatingNumberString::setPositiveValue, boost::ref(errorCriterion), _1));
+                std::bind(&FloatingNumberString::setPositiveValue, std::ref(errorCriterion), _1));
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionDepth), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionDepth), _1));
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                boost::bind(&FloatingNumberString::setNonNegativeValue, boost::ref(contactCorrectionVelocityRatio), _1));
+                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionVelocityRatio), _1));
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));

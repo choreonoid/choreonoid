@@ -6,7 +6,8 @@
 #ifndef CNOID_BODY_ABSTRACT_BODY_LOADER_H
 #define CNOID_BODY_ABSTRACT_BODY_LOADER_H
 
-#include <boost/shared_ptr.hpp>
+#include <string>
+#include <memory>
 #include <iosfwd>
 #include "exportdecl.h"
 
@@ -34,7 +35,7 @@ public:
     virtual bool load(Body* body, const std::string& filename) = 0;
 };
 
-typedef boost::shared_ptr<AbstractBodyLoader> AbstractBodyLoaderPtr;
+typedef std::shared_ptr<AbstractBodyLoader> AbstractBodyLoaderPtr;
 
 }
 

@@ -13,10 +13,10 @@
 #include <QHeaderView>
 #include <QBoxLayout>
 #include <QKeyEvent>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -100,11 +100,11 @@ LinkPropertyViewImpl::LinkPropertyViewImpl(LinkPropertyView* self)
 
     connections.add(
         BodyBar::instance()->sigCurrentBodyItemChanged().connect(
-            boost::bind(&LinkPropertyViewImpl::onCurrentBodyItemChanged, this, _1)));
+            std::bind(&LinkPropertyViewImpl::onCurrentBodyItemChanged, this, _1)));
 
     connections.add(
         linkSelectionView->sigSelectionChanged().connect(
-            boost::bind(&LinkPropertyViewImpl::updateProperties, this)));
+            std::bind(&LinkPropertyViewImpl::updateProperties, this)));
 }
 
 
@@ -255,8 +255,6 @@ void LinkPropertyView::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Minus:
             impl->zoomFontSize(-1);
             return;
-        defaut:
-            break;
         }
     }
     View::keyPressEvent(event);

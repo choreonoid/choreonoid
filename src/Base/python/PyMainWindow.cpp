@@ -6,10 +6,13 @@
 #include "../ToolBar.h"
 #include "../ToolBarArea.h"
 #include "../ViewArea.h"
-#include <boost/python.hpp>
+#include <cnoid/PyUtil>
 
 using namespace boost::python;
 using namespace cnoid;
+
+// for MSVC++2015 Update3
+CNOID_PYTHON_DEFINE_GET_POINTER(MainWindow)
 
 namespace cnoid {
 

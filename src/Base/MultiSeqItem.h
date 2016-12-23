@@ -20,7 +20,7 @@ public:
         
     typedef ref_ptr< MultiSeqItem<MultiSeqType> > Ptr;
         
-    MultiSeqItem() : seq_(boost::make_shared<MultiSeqType>()) { }
+    MultiSeqItem() : seq_(std::make_shared<MultiSeqType>()) { }
         
     MultiSeqItem(typename MultiSeqType::Ptr seq) : seq_(seq) { }
 
@@ -30,7 +30,7 @@ public:
 
     MultiSeqItem(const MultiSeqItem<MultiSeqType>& org)
         : AbstractMultiSeqItem(org),
-          seq_(boost::make_shared<MultiSeqType>(*org.seq_)) { }
+          seq_(std::make_shared<MultiSeqType>(*org.seq_)) { }
 
     virtual ~MultiSeqItem() { }
  

@@ -11,17 +11,17 @@
 #include <cnoid/ZMPSeq>
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
 namespace {
 
-typedef boost::function<AbstractSeqItem*(AbstractSeqPtr seq)> ExtraSeqItemFactory;
+typedef std::function<AbstractSeqItem*(AbstractSeqPtr seq)> ExtraSeqItemFactory;
 typedef map<string, ExtraSeqItemFactory> ExtraSeqItemFactoryMap;
 ExtraSeqItemFactoryMap extraSeqItemFactories;
 
@@ -150,14 +150,14 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
     im.addLoaderAndSaver<BodyMotionItem>(
         _("Body Motion"), "BODY-MOTION-YAML", "yaml",
-        boost::bind(loadStandardYamlFormat, _1, _2, _3),  boost::bind(saveAsStandardYamlFormat, _1, _2, _3));
+        std::bind(loadStandardYamlFormat, _1, _2, _3),  std::bind(saveAsStandardYamlFormat, _1, _2, _3));
 
     initialized = true;
 }
 
 
 void BodyMotionItem::addExtraSeqItemFactory
-(const std::string& key, boost::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory)
+(const std::string& key, std::function<AbstractSeqItem*(AbstractSeqPtr seq)> factory)
 {
     extraSeqItemFactories[key] = factory;
 }
@@ -200,7 +200,7 @@ void BodyMotionItemImpl::initialize()
 
     jointPosSeqUpdateConnection =
         self->jointPosSeqItem_->sigUpdated().connect(
-            boost::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+            std::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
 
     self->linkPosSeqItem_ = new MultiSE3SeqItem(self->bodyMotion_->linkPosSeq());
     self->linkPosSeqItem_->setName("Cartesian");
@@ -208,11 +208,11 @@ void BodyMotionItemImpl::initialize()
 
     linkPosSeqUpdateConnection = 
         self->linkPosSeqItem_->sigUpdated().connect(
-            boost::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+            std::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
 
     extraSeqsChangedConnection =
         self->bodyMotion_->sigExtraSeqsChanged().connect(
-            boost::bind(&BodyMotionItemImpl::onExtraSeqItemSetChanged, this));
+            std::bind(&BodyMotionItemImpl::onExtraSeqItemSetChanged, this));
 
     updateExtraSeqItems();
 }
@@ -299,7 +299,7 @@ SignalProxy<void()> BodyMotionItem::sigExtraSeqItemsChanged()
 
 void BodyMotionItemImpl::onExtraSeqItemSetChanged()
 {
-    callLater(boost::bind(&BodyMotionItemImpl::updateExtraSeqItems, this));
+    callLater(std::bind(&BodyMotionItemImpl::updateExtraSeqItems, this));
 }
 
 
@@ -338,7 +338,7 @@ void BodyMotionItemImpl::updateExtraSeqItems()
                     ExtraSeqItemInfo* info = new ExtraSeqItemInfo(key, newItem);
                     info->sigUpdateConnection =
                         newItem->sigUpdated().connect(
-                            boost::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
+                            std::bind(&BodyMotionItemImpl::onSubItemUpdated, this));
                     extraSeqItemInfos.push_back(info);
                 }
             }

@@ -6,11 +6,9 @@
 #include "SceneDevice.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
-#include <boost/bind.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 
@@ -232,13 +230,13 @@ SceneBody::SceneBody(Body* body)
 }
 
 
-SceneBody::SceneBody(Body* body, boost::function<SceneLink*(Link*)> sceneLinkFactory)
+SceneBody::SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory)
 {
     initialize(body, sceneLinkFactory);
 }
 
 
-void SceneBody::initialize(Body* body, const boost::function<SceneLink*(Link*)>& sceneLinkFactory)
+void SceneBody::initialize(Body* body, const std::function<SceneLink*(Link*)>& sceneLinkFactory)
 {
     this->sceneLinkFactory = sceneLinkFactory;
     body_ = body;

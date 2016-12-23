@@ -12,13 +12,13 @@
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
 #include <QHeaderView>
-#include <boost/bind.hpp>
 
 #include <iostream>
 
 #include "gettext.h"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -111,8 +111,8 @@ BodyStateViewImpl::BodyStateViewImpl(BodyStateView* self)
     vbox->addWidget(&stateTreeWidget);
     self->setLayout(vbox);
 
-    self->sigActivated().connect(boost::bind(&BodyStateViewImpl::onActivated, this, true));
-    self->sigDeactivated().connect(boost::bind(&BodyStateViewImpl::onActivated, this ,false));
+    self->sigActivated().connect(std::bind(&BodyStateViewImpl::onActivated, this, true));
+    self->sigDeactivated().connect(std::bind(&BodyStateViewImpl::onActivated, this ,false));
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -151,7 +151,7 @@ void BodyStateViewImpl::onActivated(bool on)
 
         bodyItemChangeConnection =
             bodyBar->sigCurrentBodyItemChanged().connect(
-                boost::bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
+                std::bind(&BodyStateViewImpl::setCurrentBodyItem, this, _1));
     }
 }
 
@@ -196,7 +196,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
             }
             stateConnections.add(
                 device->sigStateChanged().connect(
-                    boost::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
+                    std::bind(&BodyStateViewImpl::updateDeviceStates, this, device, i)));
             updateDeviceStates(device, i);
         }
 
@@ -220,7 +220,7 @@ void BodyStateViewImpl::updateStateList(BodyItem* bodyItem)
                 }
                 stateConnections.add(
                     accessor.sigStateChanged().connect(
-                        boost::bind(&BodyStateViewImpl::updateExtraStates, this)));
+                        std::bind(&BodyStateViewImpl::updateExtraStates, this)));
             }
             extraStateItemMap.push_back(itemMap);
         }

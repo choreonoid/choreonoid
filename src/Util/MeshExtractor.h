@@ -16,7 +16,7 @@ class CNOID_EXPORT MeshExtractor : public SceneVisitor
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    bool extract(SgNode* node, boost::function<void()> callback);
+    bool extract(SgNode* node, std::function<void()> callback);
     SgMesh* integrate(SgNode* node);
 
     SgMesh* currentMesh() const { return currentMesh_; }
@@ -34,7 +34,7 @@ protected:
     virtual void visitCamera(SgCamera* camera);
 
 private:
-    boost::function<void()> callback;
+    std::function<void()> callback;
     SgMesh* currentMesh_;
     Affine3 currentTransform_;
     Affine3 currentTransformWithoutScaling_;
