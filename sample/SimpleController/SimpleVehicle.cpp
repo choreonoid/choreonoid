@@ -15,8 +15,7 @@ using namespace cnoid;
 
 #define STEERING_P_GAIN 100.0
 #define STEERING_D_GAIN 1.0
-#define WHEEL_P_GAIN 100.0
-#define WHEEL_D_GAIN 0.5
+#define WHEEL_GAIN 0.5
 #define WHEEL_REF_VEL 6.28  // [rad/s]
 
 
@@ -28,6 +27,7 @@ class SampleSVController : public cnoid::SimpleController
     double steer_ref;
     double torque[2];
     double dt;
+    double eold;
 
 public:
 
@@ -45,6 +45,7 @@ public:
             body->link(i)->u() = 0.0;
 
         dt = io->timeStep();
+        eold = 0;
 
         return true;
     }
@@ -66,12 +67,14 @@ public:
         time += dt;
 
         double q = body->joint(STEERING_ID)->q();
-        double dq = body->joint(STEERING_ID)->dq();
-        torque[STEERING_ID] = (steer_ref - q) * STEERING_P_GAIN - dq * STEERING_D_GAIN;
+        double err = steer_ref - q;
+        double derr = (err - eold) / dt;
+        torque[STEERING_ID] = err * STEERING_P_GAIN + derr * STEERING_D_GAIN;
         body->joint(STEERING_ID)->u() = torque[STEERING_ID];
+        eold = err;
 
-        dq = body->joint(WHEEL_ID)->dq();
-        torque[WHEEL_ID] = (WHEEL_REF_VEL - dq) * WHEEL_D_GAIN;
+        double dq = body->joint(WHEEL_ID)->dq();
+        torque[WHEEL_ID] = (WHEEL_REF_VEL - dq) * WHEEL_GAIN;
         body->joint(WHEEL_ID)->u() = torque[WHEEL_ID];
 
 
