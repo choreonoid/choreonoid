@@ -185,8 +185,10 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisio
     dir.normalize();
     Vector3 frictionDir1 = friction * dir;
     Vector3 frictionDir2 = 0.1 * axis;
-    
+
+#ifndef BT_VER_GT_284
     cp.m_lateralFrictionInitialized = true;
+#endif
     cp.m_lateralFrictionDir1.setValue(frictionDir1.x(), frictionDir1.y(), frictionDir1.z());
     cp.m_lateralFrictionDir2.setValue(frictionDir2.x(), frictionDir2.y(), frictionDir2.z());
     if(crawlerlink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK)
