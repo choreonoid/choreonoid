@@ -7,7 +7,6 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
-#include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
 #include <Springhead.h>
@@ -24,7 +23,7 @@ namespace {
 
 CollisionDetectorPtr factory()
 {
-    return boost::make_shared<SpringheadCollisionDetector>();
+    return std::make_shared<SpringheadCollisionDetector>();
 }
 
 struct FactoryRegistration
@@ -46,7 +45,7 @@ public :
     vector<Spr::CDShapeIf*>  cdShapes;
 
 };
-typedef boost::shared_ptr<GeometryEx> GeometryExPtr;
+typedef std::shared_ptr<GeometryEx> GeometryExPtr;
 
 GeometryEx::GeometryEx()
 {
@@ -85,7 +84,7 @@ public:
 	Spr::PHSdkIf*   phSdk;
 	Spr::PHSceneIf* phScene;
        
-    boost::function<void(const CollisionPair&)> callback_;
+    std::function<void(const CollisionPair&)> callback_;
 
     MeshExtractor* meshExtractor;
 
@@ -94,7 +93,7 @@ public:
     void setNonInterfarenceGeometyrPair(int geometryId1, int geometryId2);
     bool makeReady();
     void updatePosition(int geometryId, const Position& position);
-    void detectCollisions(boost::function<void(const CollisionPair&)> callback);
+    void detectCollisions(std::function<void(const CollisionPair&)> callback);
 
 private :
 
@@ -135,7 +134,7 @@ const char* SpringheadCollisionDetector::name() const
 
 CollisionDetectorPtr SpringheadCollisionDetector::clone() const
 {
-    return boost::make_shared<SpringheadCollisionDetector>();
+    return std::make_shared<SpringheadCollisionDetector>();
 }
 
         
@@ -166,10 +165,10 @@ int SpringheadCollisionDetectorImpl::addGeometry(SgNode* geometry)
     bool isValid = false;
 
     if(geometry){
-        GeometryExPtr model = boost::make_shared<GeometryEx>();
+        GeometryExPtr model = std::make_shared<GeometryEx>();
 		model->phSolid = phScene->CreateSolid();
 
-        if( meshExtractor->extract(geometry, boost::bind(&SpringheadCollisionDetectorImpl::addMesh, this, model.get())) ){
+        if( meshExtractor->extract(geometry, std::bind(&SpringheadCollisionDetectorImpl::addMesh, this, model.get())) ){
 			phSolidMap.insert( make_pair(model->phSolid, index) );
 			for(int i = 0; i < model->cdShapes.size(); i++){
 				cdShapeMap.insert( make_pair(model->cdShapes[i], index) );
@@ -453,12 +452,12 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 }
 */
 
-void SpringheadCollisionDetector::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void SpringheadCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
 	impl->detectCollisions(callback);
 }
 
-void SpringheadCollisionDetectorImpl::detectCollisions(boost::function<void(const CollisionPair&)> callback)
+void SpringheadCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
 	// execute collision detection part of Springhead
 	phScene->IntegratePart1();

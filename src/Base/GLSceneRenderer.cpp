@@ -180,7 +180,8 @@ bool GLSceneRenderer::initializeGL()
     os << (boost::format("OpenGL version is %1%.%2%.") % major % minor) << endl;
     if(major >= 2){
         os << (boost::format("GLSL version is %1%.") % glGetString(GL_SHADING_LANGUAGE_VERSION)) << endl;
-    }#endif
+    }
+#endif
     return true;
 }
 
