@@ -72,25 +72,10 @@ CNOID_EXPORT void normalizeRotation(Matrix3& R);
 CNOID_EXPORT void normalizeRotation(Position& T);
 CNOID_EXPORT void normalizeRotation(Affine3& T);
 
-template<class T>
-std::shared_ptr<T> make_shared_aligned() {
-    return std::allocate_shared<T>(Eigen::aligned_allocator<T>());
-}
-template<class T, class P1>
-std::shared_ptr<T> make_shared_aligned(const P1& p1) {
-    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1);
-}
-template<class T, class P1, class P2>
-std::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2) {
-    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2);
-}
-template<class T, class P1, class P2, class P3>
-std::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3) {
-    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3);
-}
-template<class T, class P1, class P2, class P3, class P4>
-std::shared_ptr<T> make_shared_aligned(const P1& p1, const P2& p2, const P3& p3, const P4& p4) {
-    return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), p1, p2, p3, p4);
+template<class T, typename... Args>
+std::shared_ptr<T> make_shared_aligned(Args&&... args)
+{
+  return std::allocate_shared<T>(Eigen::aligned_allocator<T>(), std::forward<Args>(args)...);
 }
 
 }
