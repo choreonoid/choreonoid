@@ -66,6 +66,8 @@ public:
     
     Body* body;
 
+    Link* rootLink;
+
     struct LinkInfo : public Referenced
     {
         LinkPtr link;
@@ -128,6 +130,7 @@ public:
     bool readTopNode(Body* body, Mapping* topNode);
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
+    void readLinkNode(Mapping* linkNode);
     LinkPtr readLink(Mapping* linkNode);
     void setMassParameters(Link* link);
     //! \return true if any scene nodes other than Group and Transform are added in the sub tree
@@ -392,6 +395,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     body->clearDevices();
     body->clearExtraJoints();
 
+    rootLink = nullptr;
     linkInfos.clear();
     linkMap.clear();
     validJointIdSet.clear();
@@ -462,29 +466,35 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         body->setModelName(symbol);
     }
 
-    Link* rootLink = nullptr;
-
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
     ValueNodePtr linksNode = topNode->extract("links");
     if(!linksNode){
         topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
     } else {
-        Listing& linkNodes = *linksNode->toListing();
-        if(linkNodes.empty()){
-            linkNodes.throwException(_("No link is contained in the \"links\" listing"));
-        }
-        for(int i=0; i < linkNodes.size(); ++i){
-            Mapping* linkNode = linkNodes[i].toMapping();
-            LinkInfo* info = new LinkInfo;
-            extract(linkNode, "parent", info->parent);
-            Link* link = readLink(linkNode);
-            info->link = link;
-            info->node = linkNode;
-            linkInfos.push_back(info);
-            if(!rootLink){
-                rootLink = link;
+        if(linksNode->isListing()){
+            Listing& linkNodes = *linksNode->toListing();
+            if(linkNodes.empty()){
+                linkNodes.throwException(_("No link is contained in the \"links\" listing"));
             }
+            for(int i=0; i < linkNodes.size(); ++i){
+                readLinkNode(linkNodes[i].toMapping());
+            }
+        } else if(linksNode->isMapping()){
+            Mapping* links = linksNode->toMapping();
+            Mapping::iterator p = links->begin();
+            while(p != links->end()){
+                const string& type = p->first;
+                if(type == "Link"){
+                    readLinkNode(p->second->toMapping());
+                } else {
+                    linksNode->throwException(
+                        str(format(_("A %1% node cannot be specified in links")) % type));
+                }
+                ++p;
+            }
+        } else {
+            linksNode->throwException(_("Invalid value specified in the \"links\" key."));
         }
     }
 
@@ -514,6 +524,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
                 str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
         }
         rootLink = p->second;
+    }
+
+    if(!rootLink){
+        topNode->throwException(_("There is no link defined."));
     }
 
     body->setRootLink(rootLink);
@@ -546,8 +560,30 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
+void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+{
+    string type;
+    if(extract(linkNode, "type", type)){
+        if(type != "Link"){
+            linkNode->throwException(
+                str(format(_("A %1% node cannot be specified in links")) % type));
+        }
+    }
+    LinkInfoPtr info = new LinkInfo;
+    extract(linkNode, "parent", info->parent);
+    Link* link = readLink(linkNode);
+    info->link = link;
+    info->node = linkNode;
+    linkInfos.push_back(info);
+    if(!rootLink){
+        rootLink = link;
+    }
+}
+
+
 LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
+    
     MappingPtr info = static_cast<Mapping*>(linkNode->clone());
     
     LinkPtr link = body->createLink();
