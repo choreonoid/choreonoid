@@ -25,7 +25,7 @@ links:
   -
     name: CRAWLER_TRACK_L
     parent: CHASSIS
-    translation: [ 0, 0.15, 0 ]
+    translation: [ 0, 0.2, 0 ]
     jointType: pseudoContinuousTrack
     jointId: 0
     jointAxis: [ 0, 1, 0 ]
@@ -36,27 +36,24 @@ links:
       0,    0.02, 0,
       0,    0,    0.02 ]
     elements:
-      Transform:
-        translation: [ 0, 0.05, 0 ]
-        elements:
-          Shape: &CRAWLER 
-            geometry:
-              type: Extrusion
-              crossSection: [
-                -0.2, -0.1,
-                0.2, -0.1,
-                0.3,  0.06,
-                -0.3,  0.06,
-                -0.2, -0.1
-                ]
-              spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
-            appearance:
-              material:
-                diffuseColor: [ 0.2, 0.2, 0.2 ]
+      Shape: &CRAWLER 
+        geometry:
+          type: Extrusion
+          crossSection: [
+            -0.2, -0.1,
+             0.2, -0.1,
+             0.3,  0.06,
+            -0.3,  0.06,
+            -0.2, -0.1
+            ]
+          spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+        appearance:
+          material:
+            diffuseColor: [ 0.2, 0.2, 0.2 ]
   -
     name: CRAWLER_TRACK_R
     parent: CHASSIS
-    translation: [ 0, -0.15, 0 ]
+    translation: [ 0, -0.2, 0 ]
     jointType: pseudoContinuousTrack
     jointId: 1
     jointAxis: [ 0, 1, 0 ]
@@ -67,10 +64,7 @@ links:
       0,    0.02, 0,
       0,    0,    0.02 ]
     elements:
-      Transform:
-        translation: [ 0, -0.05, 0 ]
-        elements:
-          Shape: *CRAWLER 
+      Shape: *CRAWLER 
   -
     name: CANNON_Y
     parent: CHASSIS
