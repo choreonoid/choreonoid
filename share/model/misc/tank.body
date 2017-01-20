@@ -52,7 +52,7 @@ links:
               spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
             appearance:
               material:
-                diffuseColor: [ 0.1, 0.1, 0.1 ]
+                diffuseColor: [ 0.2, 0.2, 0.2 ]
   -
     name: CRAWLER_TRACK_R
     parent: CHASSIS
