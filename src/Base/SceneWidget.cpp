@@ -145,6 +145,7 @@ public:
     LazyCaller updateDefaultLightsLater;
 
     ConfigDialog(SceneWidgetImpl* impl, bool useGLSL);
+    void updateBuiltinCameraConfig();
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
 };
@@ -204,6 +205,7 @@ public:
 
     InteractiveCameraTransformPtr builtinCameraTransform;
     SgPerspectiveCameraPtr builtinPersCamera;
+    ScopedConnection builtinPersCameraConnection;
     SgOrthographicCameraPtr builtinOrthoCamera;
     int numBuiltinCameras;
     bool isBuiltinCameraCurrent;
@@ -555,6 +557,10 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     systemGroup->addChild(builtinCameraTransform);
 
     config = new ConfigDialog(this, useGLSL);
+
+    builtinPersCameraConnection.reset(
+        builtinPersCamera->sigUpdated().connect(
+            std::bind(&ConfigDialog::updateBuiltinCameraConfig, config)));
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
@@ -2713,6 +2719,7 @@ void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
             if(state.get("isCurrent", false)){
                 renderer->setCurrentCamera(cameraIndex);
             }
+            camera->notifyUpdate();
         }
     }
 
@@ -3191,6 +3198,13 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     topVBox->addWidget(buttonBox);
     
     setLayout(topVBox);
+}
+
+
+void ConfigDialog::updateBuiltinCameraConfig()
+{
+
+
 }
 
 
