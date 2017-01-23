@@ -27,8 +27,9 @@ links:
     parent: CHASSIS
     translation: [ -0.05, 0, 0.08 ]
     jointType: revolute
-    jointId: 0
     jointAxis: [ 0, 0, 1 ]
+    jointRange: unlimited
+    jointId: 0
     centerOfMass: [ 0, 0, 0.025 ]
     mass: 4.0
     inertia: [
@@ -46,8 +47,9 @@ links:
     parent: CANNON_Y
     translation: [ 0, 0, 0.04 ]
     jointType: revolute
-    jointId: 1
     jointAxis: [ 0, 1, 0 ]
+    jointRange: [ -45, 10 ]
+    jointId: 1
     elements:
       - 
         # Turnet

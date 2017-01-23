@@ -164,6 +164,26 @@ public:
         return isDegreeMode ? radian(angle) : angle;
     }
 
+    double readLimitValue(ValueNode& node, bool isUpper){
+        double value;
+        if(node.read(value)){
+            return value;
+        }
+        std::string symbol;
+        if(node.read(symbol)){
+            if(symbol == "unlimited"){
+                if(isUpper){
+                    return std::numeric_limits<double>::max();
+                } else {
+                    return -std::numeric_limits<double>::max();
+                }
+            } else {
+                node.throwException(_("Unknown symbol is used as a jointRange value"));
+            }
+        }
+        node.throwException(_("Invalid type value is used as a jointRange value"));
+    }
+
     bool readAngle(Mapping& node, const char* key, double& angle){
         if(node.read(key, angle)){
             angle = toRadian(angle);
@@ -626,6 +646,8 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
+        } else if(jointType == "prismatic"){
+            link->setJointType(Link::SLIDE_JOINT);
         } else if(jointType == "slide"){
             link->setJointType(Link::SLIDE_JOINT);
         } else if(jointType == "free"){
@@ -675,18 +697,32 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(jointDisplacementNode){
         link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
     }
+
+    double lower = -std::numeric_limits<double>::max();
+    double upper =  std::numeric_limits<double>::max();
     
-    ValueNodePtr jointRangeNode = info->find("jointRange");
-    if(jointRangeNode->isValid()){
-        Listing& jointRange = *jointRangeNode->toListing();
-        if(jointRange.size() != 2){
-            jointRangeNode->throwException(_("jointRange must have two elements"));
-        }
-        if(link->jointType() == Link::REVOLUTE_JOINT){
-            link->setJointRange(toRadian(jointRange[0].toDouble()), toRadian(jointRange[1].toDouble()));
+    ValueNode& jointRangeNode = *info->find("jointRange");
+    if(jointRangeNode.isValid()){
+        if(jointRangeNode.isScalar()){
+            upper = readLimitValue(jointRangeNode, true);
+            lower = -upper;
+        } else if(jointRangeNode.isListing()){
+            Listing& jointRange = *jointRangeNode.toListing();
+            if(jointRange.size() != 2){
+                jointRangeNode.throwException(_("jointRange must have two elements"));
+            }
+            lower = readLimitValue(jointRange[0], false);
+            upper = readLimitValue(jointRange[1], true);
         } else {
-            link->setJointRange(jointRange[0].toDouble(), jointRange[1].toDouble());
+            jointRangeNode.throwException(_("Invalid type value is specefied as a jointRange"));
         }
+    }
+    if(link->jointType() == Link::REVOLUTE_JOINT && isDegreeMode){
+        link->setJointRange(
+            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
+            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
+    } else {
+        link->setJointRange(lower, upper);
     }
 
     ValueNodePtr maxVelocityNode = info->find("maxJointVelocity");
