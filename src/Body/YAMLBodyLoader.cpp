@@ -262,6 +262,51 @@ bool extractEigen(Mapping* mapping, const char* key, Eigen::MatrixBase<Derived>&
 }
 
 
+void readInertia(Listing& inertia, Matrix3& I)
+{
+    if(inertia.size() == 9){
+        for(int i=0; i < 3; ++i){
+            for(int j=0; j < 3; ++j){
+                I(i, j) = inertia[i * 3 + j].toDouble();
+            }
+        }
+    } else if(inertia.size() == 6){
+        I(0, 0) = inertia[0].toDouble();
+        I(0, 1) = inertia[1].toDouble();
+        I(0, 2) = inertia[2].toDouble();
+        I(1, 0) = I(0, 1);
+        I(1, 1) = inertia[3].toDouble();
+        I(1, 2) = inertia[4].toDouble();
+        I(2, 0) = I(0, 2);
+        I(2, 1) = I(1, 2);
+        I(2, 2) = inertia[5].toDouble();
+    } else {
+        inertia.throwException(_("The number of elements specified as an inertia value must be six or nine."));
+    }
+}
+    
+bool extractInertia(Mapping* mapping, const char* key, Matrix3& I)
+{
+    ListingPtr listing = dynamic_pointer_cast<Listing>(mapping->extract(key));
+    if(listing){
+        readInertia(*listing, I);
+        return true;
+    }
+    return false;
+}
+
+
+bool readInertia(Mapping& node, const char* key, Matrix3& I)
+{
+    Listing* inertia = node.findListing(key);
+    if(inertia->isValid()){
+        readInertia(*inertia, I);
+        return true;
+    }
+    return false;
+}
+
+
 // for debug
 void putLinkInfoValues(Body* body, ostream& os)
 {
@@ -768,7 +813,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(!extract(info, "mass", rbody.m)){
         rbody.m = 0.0;
     }
-    if(!extractEigen(info, "inertia", rbody.I)){
+    if(!extractInertia(info, "inertia", rbody.I)){
         rbody.I.setZero();
     }
     rigidBodies.push_back(rbody);
@@ -1036,7 +1081,7 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     if(!node.read("mass", rbody.m)){
         rbody.m = 0.0;
     }
-    if(read(node, "inertia", M)){
+    if(readInertia(node, "inertia", M)){
         rbody.I = T.linear() * M * T.linear().transpose();
     } else {
         rbody.I.setZero();
