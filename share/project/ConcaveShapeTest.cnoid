@@ -1,5 +1,3 @@
-optionalPlugins: [ ODE, Bullet ]
-
 items: 
   id: 0
   name: "Root"
@@ -17,42 +15,6 @@ items:
       children: 
         - 
           id: 2
-          name: "4wheelsVehicle"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/4wheelsVehicle.wrl"
-            currentBaseLink: "BODY"
-            rootPosition: [ 0, 0, 0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ 0, 0, 0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
-              id: 3
-              name: "4WheelsController"
-              plugin: SimpleController
-              class: SimpleControllerItem
-              data: 
-                isImmediateMode: true
-                controllerOptions: ""
-                controller: "4WheelsJoystickController.so"
-                reloading: true
-                RelativePathBase: "Controller directory"
-        - 
-          id: 4
           name: "Floor"
           plugin: Body
           class: BodyItem
@@ -75,7 +37,76 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
+          id: 3
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/box1.wrl"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0, 0.4, 0.1 ]
+            rootAttitude: [ 
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0.4, 0.1 ]
+            initialRootAttitude: [ 
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 4
+          name: "Torus"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/Torus.wrl"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0, 0, 0.5 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, 0.5 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
           id: 5
+          name: "box1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/misc/box1.wrl"
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0, 0, 1.5 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 2.22044605e-16, -1, 
+              0, 1, 2.22044605e-16 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, 1.5 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 2.22044605e-16, -1, 
+              0, 1, 2.22044605e-16 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+        - 
+          id: 6
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -92,9 +123,9 @@ items:
             dynamicsMode: "Forward dynamics"
             integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            slipFriction: 0.5
-            cullingThresh: 0
+            staticFriction: 1
+            slipFriction: 1
+            cullingThresh: 0.005
             contactCullingDepth: 0.05
             errorCriterion: 0.001
             maxNumIterations: 1000
@@ -104,7 +135,7 @@ items:
             2Dmode: false
             oldAccelSensorMode: false
         - 
-          id: 6
+          id: 7
           name: "BulletSimulator"
           plugin: Bullet
           class: BulletSimulatorItem
@@ -127,35 +158,6 @@ items:
             useHACD: false
             CollisionMargin: 0.0001
             velocityMode: false
-            usefeatherstoneAlgorithm: false
-        - 
-          id: 7
-          name: "ODESimulator"
-          plugin: ODE
-          class: ODESimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 180
-            allLinkPositionOutputMode: true
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            stepMode: Iterative (quick step)
-            gravity: [ 0, 0, -9.80665 ]
-            friction: 1
-            jointLimitMode: false
-            globalERP: 0.4
-            globalCFM: 1.0e-10
-            numIterations: 50
-            overRelaxation: 1.3
-            limitCorrectingVel: true
-            maxCorrectingVel: 1.0e-3
-            2Dmode: false
-            UseWorldItem'sCollisionDetector: false
-            velocityMode: false
 views: 
   - 
     id: 0
@@ -173,8 +175,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 2, 4 ]
-      expanded: [ 1, 2, 3 ]
+      selected: [ 6 ]
+      checked: [ 2, 3, 4, 5 ]
+      expanded: [ 1, 3, 4, 5 ]
   - 
     id: 3
     plugin: Base
@@ -223,9 +226,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 100
-          eye: [ 8.84225901, -0.792459242, 4.48633749 ]
-          direction: [ -0.856903871, 0.0140136674, -0.51528572 ]
-          up: [ -0.515216828, 0.00842577271, 0.857018452 ]
+          eye: [ 6.74110241, 0.0389581346, 1.4093901 ]
+          direction: [ -0.994500407, 0.0660844786, -0.0812513474 ]
+          up: [ -0.0810725529, 0.00538726515, 0.996693643 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -264,7 +267,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 2
+      currentBodyItem: 5
   - 
     id: 8
     plugin: Body
@@ -272,7 +275,7 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 2
+      currentBodyItem: 5
   - 
     id: 9
     plugin: OpenRTM
@@ -286,7 +289,7 @@ views:
 toolbars: 
   "TimeBar": 
     minTime: 0
-    maxTime: 133.94
+    maxTime: 30
     frameRate: 500
     playbackFrameRate: 50
     idleLoopDrivenMode: false
@@ -302,6 +305,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 5
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -348,7 +353,17 @@ Body:
         showPpcom: false
         showZmp: false
       - 
+        bodyItem: 3
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
         bodyItem: 4
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 5
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -394,12 +409,12 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 489, 1039 ]
+              sizes: [ 664, 864 ]
               children: 
                 - 
                   type: pane
                   views: [ 6, 7 ]
-                  current: 7
+                  current: 6
                 - 
                   type: pane
                   views: [ 4 ]

@@ -22,7 +22,7 @@ public:
     BulletSimulatorItem(const BulletSimulatorItem& org);
     virtual ~BulletSimulatorItem();
 
-    virtual void setAllLinkPositionOutputMode(bool on);
+//    virtual void setAllLinkPositionOutputMode(bool on);
 
 protected:
         

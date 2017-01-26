@@ -151,6 +151,7 @@ items:
             Friction: 0.9
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
+            usefeatherstoneAlgorithm: false
 views: 
   - 
     id: 0
