@@ -66,6 +66,8 @@ public:
     
     Body* body;
 
+    Link* rootLink;
+
     struct LinkInfo : public Referenced
     {
         LinkPtr link;
@@ -128,6 +130,7 @@ public:
     bool readTopNode(Body* body, Mapping* topNode);
     void setDefaultDivisionNumber(int n);
     bool readBody(Mapping* topNode);
+    void readLinkNode(Mapping* linkNode);
     LinkPtr readLink(Mapping* linkNode);
     void setMassParameters(Link* link);
     //! \return true if any scene nodes other than Group and Transform are added in the sub tree
@@ -159,6 +162,26 @@ public:
 
     double toRadian(double angle){
         return isDegreeMode ? radian(angle) : angle;
+    }
+
+    double readLimitValue(ValueNode& node, bool isUpper){
+        double value;
+        if(node.read(value)){
+            return value;
+        }
+        std::string symbol;
+        if(node.read(symbol)){
+            if(symbol == "unlimited"){
+                if(isUpper){
+                    return std::numeric_limits<double>::max();
+                } else {
+                    return -std::numeric_limits<double>::max();
+                }
+            } else {
+                node.throwException(_("Unknown symbol is used as a jointRange value"));
+            }
+        }
+        node.throwException(_("Invalid type value is used as a jointRange value"));
     }
 
     bool readAngle(Mapping& node, const char* key, double& angle){
@@ -233,6 +256,51 @@ bool extractEigen(Mapping* mapping, const char* key, Eigen::MatrixBase<Derived>&
     ListingPtr listing = dynamic_pointer_cast<Listing>(mapping->extract(key));
     if(listing){
         read(*listing, x);
+        return true;
+    }
+    return false;
+}
+
+
+void readInertia(Listing& inertia, Matrix3& I)
+{
+    if(inertia.size() == 9){
+        for(int i=0; i < 3; ++i){
+            for(int j=0; j < 3; ++j){
+                I(i, j) = inertia[i * 3 + j].toDouble();
+            }
+        }
+    } else if(inertia.size() == 6){
+        I(0, 0) = inertia[0].toDouble();
+        I(0, 1) = inertia[1].toDouble();
+        I(0, 2) = inertia[2].toDouble();
+        I(1, 0) = I(0, 1);
+        I(1, 1) = inertia[3].toDouble();
+        I(1, 2) = inertia[4].toDouble();
+        I(2, 0) = I(0, 2);
+        I(2, 1) = I(1, 2);
+        I(2, 2) = inertia[5].toDouble();
+    } else {
+        inertia.throwException(_("The number of elements specified as an inertia value must be six or nine."));
+    }
+}
+    
+bool extractInertia(Mapping* mapping, const char* key, Matrix3& I)
+{
+    ListingPtr listing = dynamic_pointer_cast<Listing>(mapping->extract(key));
+    if(listing){
+        readInertia(*listing, I);
+        return true;
+    }
+    return false;
+}
+
+
+bool readInertia(Mapping& node, const char* key, Matrix3& I)
+{
+    Listing* inertia = node.findListing(key);
+    if(inertia->isValid()){
+        readInertia(*inertia, I);
         return true;
     }
     return false;
@@ -392,6 +460,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     body->clearDevices();
     body->clearExtraJoints();
 
+    rootLink = nullptr;
     linkInfos.clear();
     linkMap.clear();
     validJointIdSet.clear();
@@ -462,29 +531,35 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         body->setModelName(symbol);
     }
 
-    Link* rootLink = nullptr;
-
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
     ValueNodePtr linksNode = topNode->extract("links");
     if(!linksNode){
         topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
     } else {
-        Listing& linkNodes = *linksNode->toListing();
-        if(linkNodes.empty()){
-            linkNodes.throwException(_("No link is contained in the \"links\" listing"));
-        }
-        for(int i=0; i < linkNodes.size(); ++i){
-            Mapping* linkNode = linkNodes[i].toMapping();
-            LinkInfo* info = new LinkInfo;
-            extract(linkNode, "parent", info->parent);
-            Link* link = readLink(linkNode);
-            info->link = link;
-            info->node = linkNode;
-            linkInfos.push_back(info);
-            if(!rootLink){
-                rootLink = link;
+        if(linksNode->isListing()){
+            Listing& linkNodes = *linksNode->toListing();
+            if(linkNodes.empty()){
+                linkNodes.throwException(_("No link is contained in the \"links\" listing"));
             }
+            for(int i=0; i < linkNodes.size(); ++i){
+                readLinkNode(linkNodes[i].toMapping());
+            }
+        } else if(linksNode->isMapping()){
+            Mapping* links = linksNode->toMapping();
+            Mapping::iterator p = links->begin();
+            while(p != links->end()){
+                const string& type = p->first;
+                if(type == "Link"){
+                    readLinkNode(p->second->toMapping());
+                } else {
+                    linksNode->throwException(
+                        str(format(_("A %1% node cannot be specified in links")) % type));
+                }
+                ++p;
+            }
+        } else {
+            linksNode->throwException(_("Invalid value specified in the \"links\" key."));
         }
     }
 
@@ -514,6 +589,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
                 str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
         }
         rootLink = p->second;
+    }
+
+    if(!rootLink){
+        topNode->throwException(_("There is no link defined."));
     }
 
     body->setRootLink(rootLink);
@@ -546,8 +625,30 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
+void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+{
+    string type;
+    if(extract(linkNode, "type", type)){
+        if(type != "Link"){
+            linkNode->throwException(
+                str(format(_("A %1% node cannot be specified in links")) % type));
+        }
+    }
+    LinkInfoPtr info = new LinkInfo;
+    extract(linkNode, "parent", info->parent);
+    Link* link = readLink(linkNode);
+    info->link = link;
+    info->node = linkNode;
+    linkInfos.push_back(info);
+    if(!rootLink){
+        rootLink = link;
+    }
+}
+
+
 LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
+    
     MappingPtr info = static_cast<Mapping*>(linkNode->clone());
     
     LinkPtr link = body->createLink();
@@ -590,6 +691,8 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
+        } else if(jointType == "prismatic"){
+            link->setJointType(Link::SLIDE_JOINT);
         } else if(jointType == "slide"){
             link->setJointType(Link::SLIDE_JOINT);
         } else if(jointType == "free"){
@@ -639,18 +742,32 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(jointDisplacementNode){
         link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
     }
+
+    double lower = -std::numeric_limits<double>::max();
+    double upper =  std::numeric_limits<double>::max();
     
-    ValueNodePtr jointRangeNode = info->find("jointRange");
-    if(jointRangeNode->isValid()){
-        Listing& jointRange = *jointRangeNode->toListing();
-        if(jointRange.size() != 2){
-            jointRangeNode->throwException(_("jointRange must have two elements"));
-        }
-        if(link->jointType() == Link::REVOLUTE_JOINT){
-            link->setJointRange(toRadian(jointRange[0].toDouble()), toRadian(jointRange[1].toDouble()));
+    ValueNode& jointRangeNode = *info->find("jointRange");
+    if(jointRangeNode.isValid()){
+        if(jointRangeNode.isScalar()){
+            upper = readLimitValue(jointRangeNode, true);
+            lower = -upper;
+        } else if(jointRangeNode.isListing()){
+            Listing& jointRange = *jointRangeNode.toListing();
+            if(jointRange.size() != 2){
+                jointRangeNode.throwException(_("jointRange must have two elements"));
+            }
+            lower = readLimitValue(jointRange[0], false);
+            upper = readLimitValue(jointRange[1], true);
         } else {
-            link->setJointRange(jointRange[0].toDouble(), jointRange[1].toDouble());
+            jointRangeNode.throwException(_("Invalid type value is specefied as a jointRange"));
         }
+    }
+    if(link->jointType() == Link::REVOLUTE_JOINT && isDegreeMode){
+        link->setJointRange(
+            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
+            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
+    } else {
+        link->setJointRange(lower, upper);
     }
 
     ValueNodePtr maxVelocityNode = info->find("maxJointVelocity");
@@ -696,7 +813,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     if(!extract(info, "mass", rbody.m)){
         rbody.m = 0.0;
     }
-    if(!extractEigen(info, "inertia", rbody.I)){
+    if(!extractInertia(info, "inertia", rbody.I)){
         rbody.I.setZero();
     }
     rigidBodies.push_back(rbody);
@@ -964,7 +1081,7 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     if(!node.read("mass", rbody.m)){
         rbody.m = 0.0;
     }
-    if(read(node, "inertia", M)){
+    if(readInertia(node, "inertia", M)){
         rbody.I = T.linear() * M * T.linear().transpose();
     } else {
         rbody.I.setZero();

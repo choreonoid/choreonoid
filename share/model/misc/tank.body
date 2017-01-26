@@ -23,82 +23,33 @@ links:
           material:
             diffuseColor: [ 0, 0.6, 0 ]
   -
-    name: CRAWLER_TRACK_L
-    parent: CHASSIS
-    translation: [ 0, 0.15, 0 ]
-    jointType: pseudoContinuousTrack
-    jointId: 0
-    jointAxis: [ 0, 1, 0 ]
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
-    inertia: [
-      0.02, 0,    0,
-      0,    0.02, 0,
-      0,    0,    0.02 ]
-    elements:
-      Transform:
-        translation: [ 0, 0.05, 0 ]
-        elements:
-          Shape: &CRAWLER 
-            geometry:
-              type: Extrusion
-              crossSection: [
-                -0.2, -0.1,
-                0.2, -0.1,
-                0.3,  0.06,
-                -0.3,  0.06,
-                -0.2, -0.1
-                ]
-              spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
-            appearance:
-              material:
-                diffuseColor: [ 0.1, 0.1, 0.1 ]
-  -
-    name: CRAWLER_TRACK_R
-    parent: CHASSIS
-    translation: [ 0, -0.15, 0 ]
-    jointType: pseudoContinuousTrack
-    jointId: 1
-    jointAxis: [ 0, 1, 0 ]
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 1.0
-    inertia: [
-      0.02, 0,    0,
-      0,    0.02, 0,
-      0,    0,    0.02 ]
-    elements:
-      Transform:
-        translation: [ 0, -0.05, 0 ]
-        elements:
-          Shape: *CRAWLER 
-  -
     name: CANNON_Y
     parent: CHASSIS
     translation: [ -0.05, 0, 0.08 ]
     jointType: revolute
-    jointId: 2
     jointAxis: [ 0, 0, 1 ]
+    jointRange: unlimited
+    jointId: 0
+    centerOfMass: [ 0, 0, 0.025 ]
+    mass: 4.0
+    inertia: [
+      0.1, 0,   0,
+      0,   0.1, 0,
+      0,   0,   0.1 ]
     elements:
-      RigidBody:
-        centerOfMass: [ 0, 0, 0.025 ]
-        mass: 4.0
-        inertia: [
-          0.1, 0,   0,
-          0,   0.1, 0,
-          0,   0,   0.1 ]
-        elements:
-          Shape:
-            geometry:
-              type: Box
-              size: [ 0.2, 0.2, 0.08 ]
-            appearance: *GREEN
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.2, 0.2, 0.08 ]
+        appearance: *GREEN
   -
     name: CANNON_P
     parent: CANNON_Y
     translation: [ 0, 0, 0.04 ]
     jointType: revolute
-    jointId: 3
     jointAxis: [ 0, 1, 0 ]
+    jointRange: [ -45, 10 ]
+    jointId: 1
     elements:
       - 
         # Turnet
@@ -187,3 +138,44 @@ links:
                     scanStep:  0.5
                     scanRate:  10
                     maxDistance: 10
+  -
+    name: CRAWLER_TRACK_L
+    parent: CHASSIS
+    translation: [ 0, 0.2, 0 ]
+    jointType: pseudoContinuousTrack
+    jointAxis: [ 0, 1, 0 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      Shape: &CRAWLER 
+        geometry:
+          type: Extrusion
+          crossSection: [
+            -0.2, -0.1,
+             0.2, -0.1,
+             0.3,  0.06,
+            -0.3,  0.06,
+            -0.2, -0.1
+            ]
+          spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+        appearance:
+          material:
+            diffuseColor: [ 0.2, 0.2, 0.2 ]
+  -
+    name: CRAWLER_TRACK_R
+    parent: CHASSIS
+    translation: [ 0, -0.2, 0 ]
+    jointType: pseudoContinuousTrack
+    jointAxis: [ 0, 1, 0 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      0.02, 0,    0,
+      0,    0.02, 0,
+      0,    0,    0.02 ]
+    elements:
+      Shape: *CRAWLER 
