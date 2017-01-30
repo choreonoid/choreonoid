@@ -23,12 +23,12 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
-#include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 
@@ -103,7 +103,7 @@ public:
 
     ostream* os_;
 
-    dynamic_bitset<> validJointIdSet;
+    vector<bool> validJointIdSet;
     int numValidJointIds;
 
     VRMLParser vrmlParser;
@@ -318,12 +318,6 @@ void YAMLBodyLoader::setMessageSink(std::ostream& os)
 }
 
 
-void YAMLBodyLoader::enableShapeLoading(bool on)
-{
-
-}
-    
-
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
@@ -395,7 +389,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
     } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
+        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
     }
@@ -600,7 +594,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             }
             if(!validJointIdSet[id]){
                 ++numValidJointIds;
-                validJointIdSet.set(id);
+                validJointIdSet[id] = true;
             } else {
                 os() << str(format("Warning: Joint ID %1% of %2% is duplicated.")
                             % id % link->name()) << endl;

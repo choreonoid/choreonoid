@@ -21,7 +21,6 @@ public:
     ~YAMLBodyLoader();
     virtual const char* format() const;
     virtual void setMessageSink(std::ostream& os);
-    virtual void enableShapeLoading(bool on);
     virtual void setDefaultDivisionNumber(int n);
     virtual bool load(Body* body, const std::string& filename);
 
