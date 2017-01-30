@@ -1,0 +1,28 @@
+<package>
+  <name>choreonoid_sdfloader_plugin</name>
+  <version>1.0.0</version>
+  <description>
+    Choreonoid plugin for loading URDF and SDF simulation models.
+  </description>
+
+  <maintainer email="f-kanehiro@aist.go.jp">Fumio Kanehiro</maintainer>
+
+  <license>MIT</license>
+
+  <url type="website">http://choreonid.org/</url>
+
+  <author>Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>choreonoid_ros</build_depend>
+	<build_depend>boost</build_depend>
+	<build_depend>eigen</build_depend>
+  <build_depend>sdformat</build_depend>
+  <build_depend>assimp</build_depend>
+
+  <run_depend>choreonoid_ros</run_depend>
+  <run_depend>sdformat</run_depend>
+  <run_depend>assimp</run_depend>
+
+</package>
