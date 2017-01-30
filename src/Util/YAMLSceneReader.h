@@ -8,7 +8,6 @@
 
 #include <cnoid/EigenUtil>
 #include <cnoid/SceneGraph>
-#include <iosfwd>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -21,23 +20,19 @@ class CNOID_EXPORT YAMLSceneReader
 public:
     YAMLSceneReader();
     ~YAMLSceneReader();
-    void setMessageSink(std::ostream& os);
-    void setVerbose(bool on);
+
     enum AngleUnit { DEGREE, RADIAN };
     void setAngleUnit(AngleUnit unit);
-
     bool isDegreeMode() const {
         return isDegreeMode_;
     }
-
     double toRadian(double angle){
         return isDegreeMode_ ? radian(angle) : angle;
     }
 
-    bool readAngle(Mapping& node, const char* key, double& angle);
-
     void setDefaultDivisionNumber(int n);
     void clear();
+    bool readAngle(Mapping& node, const char* key, double& angle);
     bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract);
     SgNodePtr readNode(Mapping& node);
     SgNodePtr readNode(Mapping& node, const std::string& type);
