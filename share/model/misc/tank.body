@@ -71,41 +71,37 @@ links:
         # Cannon barrel
         type: RigidBody
         translation: [ 0.2, 0, 0 ]
-        centerOfMass: [ 0.2, 0, 0 ]
+        centerOfMass: [ 0, 0, 0 ]
         mass: 1.0
         inertia: [
           0.01, 0,   0,
           0,    0.1, 0,
           0,    0,   0.1 ]
         elements:
-          Transform:
+          Shape:
             rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape:
-                geometry:
-                  type: Cylinder
-                  height: 0.2
-                  radius: 0.02
-                appearance: *GREEN
+            geometry:
+              type: Cylinder
+              height: 0.2
+              radius: 0.02
+            appearance: *GREEN
       -
         # Device Box
         type: Transform
         translation: [ 0.08, 0, 0.09 ]
         elements:
           -
-            type: Transform
+            type: Shape
             rotation: [ 0, 0, 1, 90 ]
-            elements:
-              Shape:
-                geometry:
-                  type: Cone
-                  height: 0.04
-                  radius: 0.03
-                appearance:
-                  material:
-                    diffuseColor: [ 1.0, 1.0, 0.4 ]
-                    ambientIntensity: 0.3
-                    emissiveColor: [ 0.8, 0.8, 0.3 ]
+            geometry:
+              type: Cone
+              height: 0.04
+              radius: 0.03
+            appearance:
+              material:
+                diffuseColor: [ 1.0, 1.0, 0.4 ]
+                ambientIntensity: 0.3
+                emissiveColor: [ 0.8, 0.8, 0.3 ]
           -
             type: Transform
             translation: [ 0.02, 0, 0 ]
