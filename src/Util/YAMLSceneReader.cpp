@@ -6,7 +6,6 @@
 #include "YAMLSceneReader.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
-#include <cnoid/NullOut>
 #include <cnoid/EigenArchive>
 #include <boost/format.hpp>
 #include <unordered_map>
@@ -30,30 +29,18 @@ class YAMLSceneReaderImpl
 {
 public:
     YAMLSceneReader* self;
-    vector<string> nameStack;
 
     // temporary variables for reading values
-    //int id;
     double value;
     string symbol;
-    bool on;
     Vector3f color;
     Vector3 v;
-    Matrix3 M;
-
-    bool isVerbose;
-    int divisionNumber;
-    ostream* os_;
-
+    
     MeshGenerator meshGenerator;
-
     SgMaterialPtr defaultMaterial;
-
-    ostream& os() { return *os_; }
 
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
-    void clear();
     void setDefaultDivisionNumber(int n);
     SgNodePtr readNode(Mapping& node, const string& type);
     SgNodePtr readGroup(Mapping& node);
@@ -93,25 +80,18 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 YAMLSceneReader::YAMLSceneReader()
 {
     impl = new YAMLSceneReaderImpl(this);
+    clear();
 }
 
 
 YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
     : self(self)
 {
-    self->isDegreeMode_ = true;
-    isVerbose = false;
-    os_ = &nullout();
-
     if(nodeFunctionMap.empty()){
         nodeFunctionMap["Group"] = &YAMLSceneReaderImpl::readGroup;
         nodeFunctionMap["Transform"] = &YAMLSceneReaderImpl::readTransform;
         nodeFunctionMap["Shape"] = &YAMLSceneReaderImpl::readShape;
     }
-
-    setDefaultDivisionNumber(20);
-
-    clear();
 }
 
 
@@ -124,18 +104,6 @@ YAMLSceneReader::~YAMLSceneReader()
 YAMLSceneReaderImpl::~YAMLSceneReaderImpl()
 {
 
-}
-
-
-void YAMLSceneReader::setMessageSink(std::ostream& os)
-{
-    impl->os_ = &os;
-}
-
-
-void YAMLSceneReader::setVerbose(bool on)
-{
-    impl->isVerbose = on;
 }
 
 
@@ -157,21 +125,14 @@ bool YAMLSceneReader::readAngle(Mapping& node, const char* key, double& angle)
 
 void YAMLSceneReader::setDefaultDivisionNumber(int n)
 {
-    impl->setDefaultDivisionNumber(n);
+    impl->meshGenerator.setDivisionNumber(n);
 }
 
 
-void YAMLSceneReaderImpl::setDefaultDivisionNumber(int n)
+void YAMLSceneReader::clear()
 {
-    divisionNumber = n;
-    meshGenerator.setDivisionNumber(divisionNumber);
-}
-
-
-void YAMLSceneReaderImpl::clear()
-{
-    defaultMaterial = 0;
-    nameStack.clear();
+    isDegreeMode_ = true;
+    impl->defaultMaterial = 0;
 }
 
 
@@ -221,9 +182,6 @@ SgNodePtr YAMLSceneReader::readNode(Mapping& node, const std::string& type)
 
 SgNodePtr YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
-    nameStack.push_back(string());
-    node.read("name", nameStack.back());
-
     SgNodePtr scene;
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
@@ -231,14 +189,10 @@ SgNodePtr YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
     } else {
         NodeFunction readNode = q->second;
         scene = (this->*readNode)(node);
+        if(node.read("name", symbol)){
+            scene->setName(symbol);
+        }
     }
-
-    if(scene){
-        scene->setName(nameStack.back());
-    }
-
-    nameStack.pop_back();
-
     return scene;
 }
 
