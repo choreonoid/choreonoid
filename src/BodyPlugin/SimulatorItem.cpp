@@ -1503,10 +1503,10 @@ bool SimulatorItemImpl::startSimulation(bool doReset)
             
         useControllerThreads = useControllerThreadsProperty;
         if(useControllerThreads){
-            controlThread = std::thread(std::bind(&SimulatorItemImpl::concurrentControlLoop, this));
             isExitingControlLoopRequested = false;
             isControlRequested = false;
             isControlFinished = false;
+            controlThread = std::thread(std::bind(&SimulatorItemImpl::concurrentControlLoop, this));
         }
 
         aboutToQuitConnection.disconnect();
