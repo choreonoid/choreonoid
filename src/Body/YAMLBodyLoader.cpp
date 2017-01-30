@@ -631,12 +631,13 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         if(jointAxisNode->isListing()){
             read(*jointAxisNode->toListing(), axis);
         } else if(jointAxisNode->isString()){
-            string label = jointAxisNode->toString();
-            if(label == "X"){
+            string symbol = jointAxisNode->toString();
+            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
+            if(symbol == "X"){
                 axis = Vector3::UnitX();
-            } else if(label == "Y"){
+            } else if(symbol == "Y"){
                 axis = Vector3::UnitY();
-            } else if(label == "Z"){
+            } else if(symbol == "Z"){
                 axis = Vector3::UnitZ();
             } else {
                 isValid = false;
