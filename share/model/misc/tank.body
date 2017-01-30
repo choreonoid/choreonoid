@@ -22,6 +22,8 @@ links:
         appearance: &GREEN
           material:
             diffuseColor: [ 0, 0.6, 0 ]
+            specularColor: [ 0.2, 0.8, 0.2 ]
+            shinines: 0.6
   -
     name: CANNON_Y
     parent: CHASSIS
@@ -86,54 +88,59 @@ links:
               radius: 0.02
             appearance: *GREEN
       -
-        # Device Box
-        type: Transform
-        translation: [ 0.08, 0, 0.09 ]
+        type: SpotLight
+        name: MainLight
+        translation: [ 0.08, 0, 0.1 ]
+        direction: [ 1, 0, 0 ]
+        beamWidth: 36
+        cutOffAngle: 40
+        cutOffExponent: 6
+        attenuation: [ 1, 0, 0.01 ]
         elements:
-          -
-            type: Shape
+          Shape:
             rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.02, 0, 0 ]
             geometry:
               type: Cone
               height: 0.04
-              radius: 0.03
+              radius: 0.025
             appearance:
               material:
                 diffuseColor: [ 1.0, 1.0, 0.4 ]
                 ambientIntensity: 0.3
                 emissiveColor: [ 0.8, 0.8, 0.3 ]
+      - 
+        type: Transform
+        translation: [ 0.1, 0, 0.05 ]
+        rotation: [ [ 0, 1, 0, -90 ], [ 0, 0, 1, -90 ] ]
+        elements:
           -
-            type: Transform
-            translation: [ 0.02, 0, 0 ]
-            elements:
-              -
-                type: SpotLight
-                name: MainLight
-                direction: [ 1, 0, 0 ]
-                beamWidth: 36
-                cutOffAngle: 40
-                cutOffExponent: 6
-                attenuation: [ 1, 0, 0.01 ]
-              - 
-                type: Transform
-                rotation: [ [ 0, 1, 0, -90 ], [ 0, 0, 1, -90 ] ]
-                elements:
-                  -
-                    type: Camera
-                    name: Camera
-                    format: COLOR_DEPTH
-                    width: 320
-                    height: 240
-                    id: 0
-                    frameRate: 30
-                  -
-                    type: RangeSensor
-                    name: RangeSensor
-                    id: 0
-                    scanAngle: 90
-                    scanStep:  0.5
-                    scanRate:  10
-                    maxDistance: 10
+            type: Camera
+            name: Camera
+            format: COLOR_DEPTH
+            fieldOfView: 65
+            width: 320
+            height: 240
+            id: 0
+            frameRate: 30
+          -
+            type: RangeSensor
+            name: RangeSensor
+            id: 0
+            scanAngle: 90
+            scanStep:  0.5
+            scanRate:  10
+            maxDistance: 10
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 0.04, 0.015, 0.01 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.2, 0.2, 0.8 ]
+                specularColor: [ 0.6, 0.6, 1.0 ]
+                shininess: 0.6
   -
     name: CRAWLER_TRACK_L
     parent: CHASSIS
