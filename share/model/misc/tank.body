@@ -18,8 +18,8 @@ links:
       Shape:
         geometry:
           type: Box
-          size: [ 0.4, 0.3, 0.1 ]
-        appearance: &GREEN
+          size: [ 0.45, 0.3, 0.1 ]
+        appearance: &BodyMaterial
           material:
             diffuseColor: [ 0, 0.6, 0 ]
             specularColor: [ 0.2, 0.8, 0.2 ]
@@ -27,9 +27,9 @@ links:
   -
     name: CANNON_Y
     parent: CHASSIS
-    translation: [ -0.05, 0, 0.08 ]
+    translation: [ -0.04, 0, 0.08 ]
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
+    jointAxis: Z
     jointRange: unlimited
     jointId: 0
     centerOfMass: [ 0, 0, 0.025 ]
@@ -43,13 +43,13 @@ links:
         geometry:
           type: Box
           size: [ 0.2, 0.2, 0.08 ]
-        appearance: *GREEN
+        appearance: *BodyMaterial
   -
     name: CANNON_P
     parent: CANNON_Y
     translation: [ 0, 0, 0.04 ]
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     jointRange: [ -45, 10 ]
     jointId: 1
     elements:
@@ -68,7 +68,7 @@ links:
               type: Cylinder
               height: 0.1
               radius: 0.11
-            appearance: *GREEN
+            appearance: *BodyMaterial
       - 
         # Cannon barrel
         type: RigidBody
@@ -86,7 +86,7 @@ links:
               type: Cylinder
               height: 0.2
               radius: 0.02
-            appearance: *GREEN
+            appearance: *BodyMaterial
       -
         type: SpotLight
         name: MainLight
@@ -146,7 +146,7 @@ links:
     parent: CHASSIS
     translation: [ 0, 0.2, 0 ]
     jointType: pseudoContinuousTrack
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
@@ -158,11 +158,11 @@ links:
         geometry:
           type: Extrusion
           crossSection: [
-            -0.2, -0.1,
-             0.2, -0.1,
-             0.3,  0.06,
-            -0.3,  0.06,
-            -0.2, -0.1
+            -0.22, -0.1,
+             0.22, -0.1,
+             0.34,  0.06,
+            -0.34,  0.06,
+            -0.22, -0.1
             ]
           spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
         appearance:
@@ -173,7 +173,7 @@ links:
     parent: CHASSIS
     translation: [ 0, -0.2, 0 ]
     jointType: pseudoContinuousTrack
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     centerOfMass: [ 0, 0, 0 ]
     mass: 1.0
     inertia: [
