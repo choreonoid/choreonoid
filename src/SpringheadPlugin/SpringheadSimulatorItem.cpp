@@ -363,7 +363,7 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
                 }
                 if(mesh->primitiveType()==SgMesh::CYLINDER)
                     T_ *= AngleAxis(radian(90), Vector3::UnitX());
-                Spr::Vec3d p    = ToSpr((Vector3)(T_.translation() - link->c()));
+                Spr::Vec3d p    = ToSpr((Vector3)T_.translation());
                 Spr::Matrix3d R = ToSpr(T_.rotation());
 				Spr::Quaterniond q;
 				q.FromMatrix(R);
