@@ -19,7 +19,7 @@ links:
         geometry:
           type: Box
           size: [ 0.45, 0.3, 0.1 ]
-        appearance: &BodyMaterial
+        appearance: &BodyAppearance
           material:
             diffuseColor: [ 0, 0.6, 0 ]
             specularColor: [ 0.2, 0.8, 0.2 ]
@@ -43,7 +43,7 @@ links:
         geometry:
           type: Box
           size: [ 0.2, 0.2, 0.08 ]
-        appearance: *BodyMaterial
+        appearance: *BodyAppearance
   -
     name: CANNON_P
     parent: CANNON_Y
@@ -68,25 +68,27 @@ links:
               type: Cylinder
               height: 0.1
               radius: 0.11
-            appearance: *BodyMaterial
+            appearance: *BodyAppearance
       - 
-        # Cannon barrel
-        type: RigidBody
+        # Barrel
+        type: Transform
         translation: [ 0.2, 0, 0 ]
-        centerOfMass: [ 0, 0, 0 ]
-        mass: 1.0
-        inertia: [
-          0.01, 0,   0,
-          0,    0.1, 0,
-          0,    0,   0.1 ]
+        rotation: [ 0, 0, 1, 90 ]
         elements:
-          Shape:
-            rotation: [ 0, 0, 1, 90 ]
-            geometry:
-              type: Cylinder
-              height: 0.2
-              radius: 0.02
-            appearance: *BodyMaterial
+          RigidBody:
+            centerOfMass: [ 0, 0, 0 ]
+            mass: 1.0
+            inertia: [
+              0.01, 0,   0,
+              0,    0.1, 0,
+              0,    0,   0.1 ]
+            elements:
+              Shape:
+                geometry:
+                  type: Cylinder
+                  height: 0.2
+                  radius: 0.02
+                appearance: *BodyAppearance
       -
         type: SpotLight
         name: MainLight
@@ -112,7 +114,7 @@ links:
       - 
         type: Transform
         translation: [ 0.1, 0, 0.05 ]
-        rotation: [ [ 0, 1, 0, -90 ], [ 0, 0, 1, -90 ] ]
+        rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
         elements:
           -
             type: Camera
@@ -121,12 +123,10 @@ links:
             fieldOfView: 65
             width: 320
             height: 240
-            id: 0
             frameRate: 30
           -
             type: RangeSensor
             name: RangeSensor
-            id: 0
             scanAngle: 90
             scanStep:  0.5
             scanRate:  10
