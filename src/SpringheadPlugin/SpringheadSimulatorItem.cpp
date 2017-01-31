@@ -105,9 +105,7 @@ public:
     BasicSensorSimulationHelper sensorHelper;
     int                         geometryId;
 
-	//Spr::PHSceneIf*             phScene;
-        
-     SpringheadBody(const Body& orgBody);
+	 SpringheadBody(const Body& orgBody);
     ~SpringheadBody();
     void createBody(SpringheadSimulatorItemImpl* simImpl);
     void setExtraJoints(bool flipYZ);
@@ -662,17 +660,18 @@ void SpringheadBody::updateForceSensors(bool flipYZ)
 
 		// get constraint force
 		Spr::Vec3d f, t;
-		sprLink->phJoint->GetConstraintForce(f, t);
+		if(sprLink->phJoint){
+			sprLink->phJoint->GetConstraintForce(f, t);
 
-		// transform constraint force from socket local coord. to global coord.
-		Spr::Posed poseSolid, poseSocket;
-		poseSolid = sprLink->phJoint->GetSocketSolid()->GetPose();
-		sprLink->phJoint->GetSocketPose(poseSocket);
+			// transform constraint force from socket local coord. to global coord.
+			Spr::Posed poseSolid, poseSocket;
+			poseSolid = sprLink->phJoint->GetSocketSolid()->GetPose();
+			sprLink->phJoint->GetSocketPose(poseSocket);
 
-		Spr::Quaterniond q = poseSolid.Ori() * poseSocket.Ori();
-		f = q * f;
-		t = q * t;
-
+			Spr::Quaterniond q = poseSolid.Ori() * poseSocket.Ori();
+			f = q * f;
+			t = q * t;
+		}
 
 		Vector3 f2, t2;
 		if(!flipYZ){
@@ -838,7 +837,8 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
 {
     clear();
 
-    flipYZ = is2Dmode;
+    flipYZ   = is2Dmode;
+	timeStep = self->worldTimeStep();
 
     phSdk   = Spr::PHSdkIf::CreateSdk();
 	phScene = phSdk->CreateScene();
@@ -849,6 +849,7 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
     }
 	phScene->SetGravity( Spr::Vec3d(g.x(), g.y(), g.z()) );
 	phScene->SetNumIteration(numIterations);
+	phScene->SetTimeStep(timeStep);
 
     if(useWorldCollision){
         collisionDetector = self->collisionDetector();
@@ -858,7 +859,6 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
         
     }
 
-	timeStep = self->worldTimeStep();
 
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<SpringheadBody*>(simBodies[i]));
@@ -930,6 +930,18 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
 	else{
 		if(MEASURE_PHYSICS_CALCULATION_TIME)
 			collisionTimer.start();
+
+		// “¯‚¶body‚É‘®‚·‚éPHSolid‚ÌÕ“Ë”»’è‚ð–³Œø‰»
+		std::vector<Spr::PHSolidIf*> solids;
+		for(int i = 0; i < (int)activeSimBodies.size(); i++){
+			SpringheadBody* sprBody = static_cast<SpringheadBody*>(activeSimBodies[i]);
+
+			solids.clear();
+			for(int j = 0; j < sprBody->sprLinks.size(); j++)
+				solids.push_back(sprBody->sprLinks[j]->phSolid);
+
+			phScene->SetContactMode(&solids[0], solids.size(), Spr::PHSceneDesc::MODE_NONE);
+		}
 
 		phScene->Step();
 		

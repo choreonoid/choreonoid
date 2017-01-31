@@ -55,6 +55,7 @@ public:
             double u = (qref[i] - q) * pgain[i] + (0.0 - dq) * dgain[i];
             qold[i] = q;
             joint->u() = u;
+			//joint->u() = 0.0;
         }
         return true;
     }

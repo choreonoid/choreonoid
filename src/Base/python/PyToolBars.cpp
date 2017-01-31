@@ -11,9 +11,10 @@ using namespace boost::python;
 using namespace cnoid;
 
 // for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(QWidget)
-CNOID_PYTHON_DEFINE_GET_POINTER(ToolButton)
-CNOID_PYTHON_DEFINE_GET_POINTER(TimeBar)
+// Update2以前だと逆にシンボル重複が生じるのでコメントアウト
+//CNOID_PYTHON_DEFINE_GET_POINTER(QWidget)
+//CNOID_PYTHON_DEFINE_GET_POINTER(ToolButton)
+//CNOID_PYTHON_DEFINE_GET_POINTER(TimeBar)
 
 namespace {
 
