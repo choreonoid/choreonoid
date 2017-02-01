@@ -334,6 +334,7 @@ class CNOID_EXPORT SgScaleTransform : public SgTransform
 {
 public:
     SgScaleTransform();
+    SgScaleTransform(const Vector3& scale);
     SgScaleTransform(const SgScaleTransform& org);
     SgScaleTransform(const SgScaleTransform& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;

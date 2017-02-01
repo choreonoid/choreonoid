@@ -525,6 +525,13 @@ SgScaleTransform::SgScaleTransform()
 }
 
 
+SgScaleTransform::SgScaleTransform(const Vector3& scale)
+    : scale_(scale)
+{
+
+}
+
+
 SgScaleTransform::SgScaleTransform(const SgScaleTransform& org)
     : SgTransform(org),
       scale_(org.scale_)

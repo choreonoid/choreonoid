@@ -38,9 +38,11 @@ struct NodeFunctionInfo
 {
     NodeFunction function;
     bool isTransformDerived;
-    void set(NodeFunction function, bool isTransformDerived){
+    bool hasElements;
+    void set(NodeFunction function, bool isTransformDerived = false, bool hasElements = false){
         this->function = function;
         this->isTransformDerived = isTransformDerived;
+        this->hasElements = hasElements;
     }
 };
 
@@ -123,9 +125,10 @@ public:
     bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
     bool readNode(Mapping& node, const string& type);
     bool readContainerNode(Mapping& node, SgGroupPtr& group, NodeFunction nodeFunction);
-    bool readTransformNode(Mapping& node, NodeFunction nodeFunction);
+    bool readTransformNode(Mapping& node, NodeFunction nodeFunction, bool hasElements);
     bool readGroup(Mapping& node);
     bool readTransform(Mapping& node);
+    bool readResource(Mapping& node);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -280,16 +283,17 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     os_ = &nullout();
     
     if(nodeFunctionMap.empty()){
-        nodeFunctionMap["Group"].set(&YAMLBodyLoaderImpl::readGroup, false);
-        nodeFunctionMap["Transform"].set(&YAMLBodyLoaderImpl::readTransform, false);
-        nodeFunctionMap["RigidBody"].set(&YAMLBodyLoaderImpl::readRigidBody, true);
-        nodeFunctionMap["ForceSensor"].set(&YAMLBodyLoaderImpl::readForceSensor, true);
-        nodeFunctionMap["RateGyroSensor"].set(&YAMLBodyLoaderImpl::readRateGyroSensor, true);
-        nodeFunctionMap["AccelerationSensor"].set(&YAMLBodyLoaderImpl::readAccelerationSensor, true);
-        nodeFunctionMap["Camera"].set(&YAMLBodyLoaderImpl::readCamera, true);
-        nodeFunctionMap["CameraDevice"].set(&YAMLBodyLoaderImpl::readCamera, true);
-        nodeFunctionMap["RangeSensor"].set(&YAMLBodyLoaderImpl::readRangeSensor, true);
-        nodeFunctionMap["SpotLight"].set(&YAMLBodyLoaderImpl::readSpotLight, true);
+        nodeFunctionMap["Group"].set(&YAMLBodyLoaderImpl::readGroup);
+        nodeFunctionMap["Transform"].set(&YAMLBodyLoaderImpl::readTransform);
+        nodeFunctionMap["Resource"].set(&YAMLBodyLoaderImpl::readResource, true);
+        nodeFunctionMap["RigidBody"].set(&YAMLBodyLoaderImpl::readRigidBody, true, true);
+        nodeFunctionMap["ForceSensor"].set(&YAMLBodyLoaderImpl::readForceSensor, true, true);
+        nodeFunctionMap["RateGyroSensor"].set(&YAMLBodyLoaderImpl::readRateGyroSensor, true, true);
+        nodeFunctionMap["AccelerationSensor"].set(&YAMLBodyLoaderImpl::readAccelerationSensor, true, true);
+        nodeFunctionMap["Camera"].set(&YAMLBodyLoaderImpl::readCamera, true, true);
+        nodeFunctionMap["CameraDevice"].set(&YAMLBodyLoaderImpl::readCamera, true, true);
+        nodeFunctionMap["RangeSensor"].set(&YAMLBodyLoaderImpl::readRangeSensor, true, true);
+        nodeFunctionMap["SpotLight"].set(&YAMLBodyLoaderImpl::readSpotLight, true, true);
     }
 }
 
@@ -736,7 +740,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     rigidBodies.push_back(rbody);
     setMassParameters(link);
     
-    if(extract(linkNode, "shapeFile", symbol)){
+    if(extract(linkNode, "uri", symbol)){
         filesystem::path filepath(symbol);
         if(!checkAbsolute(filepath)){
             filepath = directoryPath / filepath;
@@ -883,7 +887,7 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
         node.read("name", nameStack.back());
         
         if(info.isTransformDerived){
-            if(readTransformNode(node, info.function)){
+            if(readTransformNode(node, info.function, info.hasElements)){
                 isSceneNodeAdded = true;
             }
         } else {
@@ -929,7 +933,7 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SgGroupPtr& group, Nod
 }
 
 
-bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction)
+bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction, bool hasElements)
 {
     bool isSceneNodeAdded = false;
 
@@ -945,19 +949,35 @@ bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunct
         T.linear() = R;
         isIdentity = false;
     }
-
+    Vector3 scale;
+    bool hasScale = read(node, "scale", scale);
+    
     if(!isIdentity){
         transformStack.push_back(transformStack.back() * T);
     }
 
     SgGroupPtr group;
     if(isIdentity){
-        group = new SgGroup;
+        if(hasScale){
+            group = new SgScaleTransform(scale);
+        } else {
+            group = new SgGroup;
+        }
     } else {
         group = new SgPosTransform(T);
     }
-    if(readContainerNode(node, group, nodeFunction)){
-        isSceneNodeAdded = true;
+    if(hasElements){
+        if(readContainerNode(node, group, nodeFunction)){
+            isSceneNodeAdded = true;
+        }
+    } else {
+        SgGroupPtr parentSceneGroup = currentSceneGroup;
+        currentSceneGroup = group;
+        if((this->*nodeFunction)(node)){
+            isSceneNodeAdded = true;
+            parentSceneGroup->addChild(group);
+        }
+        currentSceneGroup = parentSceneGroup;
     }
 
     if(!isIdentity){
@@ -977,7 +997,31 @@ bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 
 bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
 {
-    return readTransformNode(node, 0);
+    return readTransformNode(node, 0, true);
+}
+
+
+bool YAMLBodyLoaderImpl::readResource(Mapping& node)
+{
+    bool isSceneNodeAdded = false;
+    
+    if(node.read("uri", symbol)){
+        filesystem::path filepath(symbol);
+        if(!checkAbsolute(filepath)){
+            filepath = directoryPath / filepath;
+            filepath.normalize();
+        }
+        vrmlParser.load(getAbsolutePathString(filepath));
+        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+            SgNodePtr node = sgConverter.convert(vrmlNode);
+            if(node){
+                currentSceneGroup->addChild(node);
+                isSceneNodeAdded = true;
+            }
+        }
+    }
+
+    return isSceneNodeAdded;
 }
 
 
