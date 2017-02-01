@@ -1,0 +1,108 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Labo1
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    elements:
+      -
+        name: Floor1
+        type: Transform:
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { uri: "floor1.wrl" }
+      -
+        name: Floor2
+        type: Transform:
+        translation: [ 35, 20, 0.055 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            scale: [ 20.0, 1.0, 20.0 ]
+            elements:
+              Resource: { uri: "floor2.wrl" }
+      -
+        name: Wall1
+        type: Transform
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { url: "wall1.wrl" }
+      -
+        name: Wall2
+        type: Transform
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { url: "wall2.wrl" }
+      -
+        name: Rack1
+        type: Transform
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { uri: "rack1.wrl" }
+      -
+        name: Rack2
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        Transform:
+          translation: [ 0, 2, 0 ]
+          rotation: [ 1, 0, 0, 90 ]
+          elements:
+            Resource: { uri: "rack2.wrl" }
+      -
+        name: Rack3
+        type: Transform
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { uri: "rack3.wrl" }
+      -
+        name: Tank
+        type: Transform
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { uri: "tank.wrl" }
+      -
+        name: Pipes
+        type: Transform
+        translation: [ -0.8, 1.48, 0 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            translation: [ 0, 2, 0 ]
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Resource: { uri: "pipes.wrl" }
