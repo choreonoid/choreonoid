@@ -53,6 +53,8 @@ Third-part libraries bundled with the Choreonoid source distribution:
     * gettext (http://www.gnu.org/software/gettext/)
         see thirdparty/windows/include/libintl.h
 
+    * Sol (https://github.com/ThePhD/sol2)
+        see thirdparty/sol2/LICENSE
 
 ---------------------------------------------------------------------------
 
