@@ -19,19 +19,19 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/tank.wrl"
+            modelFile: "${SHARE}/model/misc/tank.body"
             currentBaseLink: ""
-            rootPosition: [ -0.8, 2.4, 0.1 ]
+            rootPosition: [ -0.8, -2, 0.1 ]
             rootAttitude: [ 
-              0, 1, 0, 
-              -1, 0, 0, 
+              1, 0, 0,
+              0, 1, 0,
               0, 0, 1 ]
             jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ -0.8, 2.4, 0.1 ]
+            initialRootPosition: [ -0.8, -2, 0.1 ]
             initialRootAttitude: [ 
-              2.22044605e-16, 1, 0, 
-              -1, 2.22044605e-16, -0, 
-              -0, 0, 1 ]
+              1, 0, 0,
+              0, 1, 0,
+              0, 0, 1 ]
             initialJointPositions: [  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
@@ -64,7 +64,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/Labo1/Labo1.wrl"
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
             currentBaseLink: "Base"
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
@@ -171,9 +171,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -2.86824, 6.25331, 2.49127 ]
-          direction: [ 0.412288148, -0.847325304, -0.33475112 ]
-          up: [ 0.146464125, -0.301009257, 0.942306578 ]
+          eye: [ -5.74105474, -4.60124674, 3.21961268 ]
+          direction: [ 0.819988251, 0.45015162, -0.353529047 ]
+          up: [ 0.309902039, 0.170127931, 0.935423547 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
