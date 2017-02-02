@@ -1,6 +1,10 @@
 
 # @author Shin'ichiro Nakaoka
 
+if(NOT ENABLE_PYTHON)
+  return()
+endif()
+
 #set_source_files_properties(PyTask.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 add_cnoid_python_module(PyUtil

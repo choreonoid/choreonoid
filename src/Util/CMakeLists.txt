@@ -199,8 +199,5 @@ if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
   make_header_public(EigenArchive.h EigenYaml)
 endif()
 
-
-if(ENABLE_PYTHON)
-  add_subdirectory(python)
-  add_subdirectory(lua)
-endif()
+add_subdirectory(python)
+add_subdirectory(lua)
