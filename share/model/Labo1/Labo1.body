@@ -1,0 +1,58 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Labo1
+
+links:
+  -
+    name: Base
+    jointType: fixed
+    elements:
+      - type: Transform
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          -
+            type: Resource
+            name: Floor1
+            uri: "floor1.wrl"
+          -
+            type: Resource
+            name: Wall1
+            uri: "wall1.wrl"
+          -
+            type: Resource
+            name: Wall2
+            uri: "wall2.wrl"
+          -
+            type: Resource
+            name: Rack1
+            uri: "rack1.wrl"
+          -
+            type: Resource
+            name: Rack2
+            uri: "rack2.wrl"
+          -
+            type: Resource
+            name: Rack3
+            uri: "rack3.wrl"
+          -
+            type: Resource
+            name: Tank
+            uri: "tank.wrl"
+          -
+            type: Resource
+            name: Pipes
+            uri: "pipes.wrl"
+      -
+        name: Floor2
+        type: Transform
+        translation: [ 35, 20, 0.055 ]
+        rotation: [ 0, 0, 1, -90 ]
+        elements:
+          Transform:
+            rotation: [ 1, 0, 0, 90 ]
+            elements:
+              Transform:
+                scale: [ 20.0, 1.0, 20.0 ]
+                elements:
+                  Resource: { uri: "floor2.wrl" }

@@ -25,6 +25,7 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
+#include <cnoid/ConnectionSet>
 #include <QGLWidget>
 #include <QGLPixelBuffer>
 #include <QLabel>
@@ -103,7 +104,9 @@ public:
 class ConfigDialog : public Dialog
 {
 public:
+    SceneWidgetImpl* sceneWidgetImpl;
     QVBoxLayout* vbox;
+    ScopedConnectionSet builtinCameraConnections;
     SpinBox fieldOfViewSpin;
     DoubleSpinBox zNearSpin;
     DoubleSpinBox zFarSpin;
@@ -145,6 +148,7 @@ public:
     LazyCaller updateDefaultLightsLater;
 
     ConfigDialog(SceneWidgetImpl* impl, bool useGLSL);
+    void updateBuiltinCameraConfig();
     void storeState(Archive& archive);
     void restoreState(const Archive& archive);
 };
@@ -542,7 +546,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
 
     builtinPersCamera = new SgPerspectiveCamera();
     builtinPersCamera->setName("Perspective");
-    builtinPersCamera->setFieldOfView(0.6978);
+    builtinPersCamera->setFieldOfView(radian(40.0));
     builtinCameraTransform->addChild(builtinPersCamera);
 
     builtinOrthoCamera = new SgOrthographicCamera();
@@ -555,6 +559,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     systemGroup->addChild(builtinCameraTransform);
 
     config = new ConfigDialog(this, useGLSL);
+    config->updateBuiltinCameraConfig();
 
     worldLight = new SgDirectionalLight();
     worldLight->setName("WorldLight");
@@ -2182,21 +2187,25 @@ bool SceneWidget::collisionLinesVisible() const
 
 void SceneWidgetImpl::onFieldOfViewChanged()
 {
-    builtinPersCamera->setFieldOfView(PI * config->fieldOfViewSpin.value() / 180.0);
+    config->builtinCameraConnections.block();
+    builtinPersCamera->setFieldOfView(radian(config->fieldOfViewSpin.value()));
     builtinPersCamera->notifyUpdate(modified);
+    config->builtinCameraConnections.unblock();
 }
 
 
 void SceneWidgetImpl::onClippingDepthChanged()
 {
+    config->builtinCameraConnections.block();
     double zNear = config->zNearSpin.value();
     double zFar = config->zFarSpin.value();
     builtinPersCamera->setNearClipDistance(zNear);
     builtinPersCamera->setFarClipDistance(zFar);
     builtinOrthoCamera->setNearClipDistance(zNear);
     builtinOrthoCamera->setFarClipDistance(zFar);
-    builtinOrthoCamera->notifyUpdate(modified);
     builtinPersCamera->notifyUpdate(modified);
+    builtinOrthoCamera->notifyUpdate(modified);
+    config->builtinCameraConnections.unblock();
 }
 
 
@@ -2619,21 +2628,30 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
                read(cameraData, "direction", direction) &&
                read(cameraData, "up", up)){
                 builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
-                doUpdate = true;
             }
             double fov;
             if(cameraData.read("fieldOfView", fov)){
                 builtinPersCamera->setFieldOfView(fov);
-                doUpdate = true;
             }
             double height;
             if(cameraData.read("orthoHeight", height)){
                 builtinOrthoCamera->setHeight(height);
-                doUpdate = true;
             }
-            config->zNearSpin.setValue(cameraData.get("near", static_cast<double>(builtinPersCamera->nearClipDistance())));
-            config->zFarSpin.setValue(cameraData.get("far", static_cast<double>(builtinPersCamera->farClipDistance())));
-        
+            double zNear, zFar;
+            if(cameraData.read("near", zNear)){
+                builtinPersCamera->setNearClipDistance(zNear);
+                builtinOrthoCamera->setNearClipDistance(zNear);
+            }
+            if(cameraData.read("far", zFar)){
+                builtinPersCamera->setFarClipDistance(zFar);
+                builtinOrthoCamera->setFarClipDistance(zFar);
+            }
+
+            builtinPersCamera->notifyUpdate();
+            builtinOrthoCamera->notifyUpdate();
+            builtinCameraTransform->notifyUpdate();
+            doUpdate = true;
+            
             archive.addPostProcess(
                 std::bind(&SceneWidgetImpl::restoreCurrentCamera, this, std::ref(cameraData)),
                 1);
@@ -2713,6 +2731,7 @@ void SceneWidgetImpl::restoreCameraStates(const Listing& cameraListing)
             if(state.get("isCurrent", false)){
                 renderer->setCurrentCamera(cameraIndex);
             }
+            camera->notifyUpdate();
         }
     }
 
@@ -2903,18 +2922,22 @@ void SceneWidgetImpl::activateSystemNode(SgNode* node, bool on)
 
 
 ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
+    : sceneWidgetImpl(impl)
 {
     setWindowTitle(_("Scene Config"));
 
     QVBoxLayout* topVBox = new QVBoxLayout();
     vbox = new QVBoxLayout();
     QHBoxLayout* hbox;
+
+    builtinCameraConnections.add(
+        impl->builtinPersCamera->sigUpdated().connect(
+            std::bind(&ConfigDialog::updateBuiltinCameraConfig, this)));
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Default Camera"))));
     hbox = new QHBoxLayout();
     hbox->addWidget(new QLabel(_("Field of view")));
     fieldOfViewSpin.setRange(1, 179);
-    fieldOfViewSpin.setValue(45);
     fieldOfViewSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onFieldOfViewChanged, impl));
     hbox->addWidget(&fieldOfViewSpin);
     hbox->addWidget(new QLabel("[deg]"));
@@ -2928,14 +2951,12 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     zNearSpin.setDecimals(4);
     zNearSpin.setRange(0.0001, 9.9999);
     zNearSpin.setSingleStep(0.0001);
-    zNearSpin.setValue(impl->builtinPersCamera->nearClipDistance());
     zNearSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
     hbox->addWidget(&zNearSpin);
     hbox->addWidget(new QLabel(_("Far")));
     zFarSpin.setDecimals(1);
     zFarSpin.setRange(0.1, 9999999.9);
     zFarSpin.setSingleStep(0.1);
-    zFarSpin.setValue(impl->builtinPersCamera->farClipDistance());
     zFarSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
     hbox->addWidget(&zFarSpin);
     hbox->addStretch();
@@ -3194,6 +3215,24 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 }
 
 
+void ConfigDialog::updateBuiltinCameraConfig()
+{
+    auto persCamera = sceneWidgetImpl->builtinPersCamera;
+
+    fieldOfViewSpin.blockSignals(true);
+    fieldOfViewSpin.setValue(round(degree(persCamera->fieldOfView())));
+    fieldOfViewSpin.blockSignals(false);
+    
+    zNearSpin.blockSignals(true);
+    zNearSpin.setValue(persCamera->nearClipDistance());
+    zNearSpin.blockSignals(false);
+
+    zFarSpin.blockSignals(true);
+    zFarSpin.setValue(persCamera->farClipDistance());
+    zFarSpin.blockSignals(false);
+}
+
+
 void ConfigDialog::storeState(Archive& archive)
 {
     archive.write("defaultHeadLight", headLightCheck.isChecked());
@@ -3279,4 +3318,3 @@ void ConfigDialog::restoreState(const Archive& archive)
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
 }
-

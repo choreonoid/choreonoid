@@ -101,8 +101,8 @@ items:
             gravity: [ 0, 0, -9.80665 ]
             friction: 0.5
             restitution: 0.1
-            frictionModelType: Box
-            frictionSolveType: Direct
+            frictionModelType: Iterative Projected
+            frictionSolveType: Iterative
             numThreads: 1
             contactReductionMode: Geometry
             contactReductionBinResolution: 2

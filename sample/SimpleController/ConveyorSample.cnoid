@@ -101,6 +101,10 @@ items:
             Friction: 1
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
+            useHACD: false
+            CollisionMargin: 0.0001
+            velocityMode: false
+            usefeatherstoneAlgorithm: false
         - 
           id: 6
           name: "Conveyor"

@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_FLOATING_NUMBER_STRING_H_INCLUDED
-#define CNOID_UTIL_FLOATING_NUMBER_STRING_H_INCLUDED
+#ifndef CNOID_UTIL_FLOATING_NUMBER_STRING_H
+#define CNOID_UTIL_FLOATING_NUMBER_STRING_H
 
 #include <string>
 #include <boost/format.hpp>
@@ -21,6 +21,7 @@ class FloatingNumberString
 {
     double v;
     std::string s;
+
 public:
     FloatingNumberString() {
         v = 0.0;
@@ -81,7 +82,7 @@ public:
         return false;
     }
 
-    bool setNonNegativeValue(const  std::string& value){
+    bool setNonNegativeValue(const std::string& value){
         char* p;
         double nv = strtod(value.c_str(), &p);
         if(p != value.c_str() && nv >= 0.0){

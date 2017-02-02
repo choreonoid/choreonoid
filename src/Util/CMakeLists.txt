@@ -47,6 +47,7 @@ set(sources
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
+  YAMLSceneReader.cpp
   PointSetUtil.cpp
   VRML.cpp
   VRMLParser.cpp

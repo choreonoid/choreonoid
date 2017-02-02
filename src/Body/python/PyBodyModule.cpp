@@ -114,6 +114,12 @@ void BodyMotion_set_linkPosSeq(BodyMotion& self, const MultiSE3SeqPtr& linkPosSe
 
 BodyMotion::Frame (BodyMotion::*BodyMotion_frame)(int) = &BodyMotion::frame;
 
+DevicePtr Device_clone(Device& self) { return self.clone(); }
+void Device_clearState(Device& self) { return self.clearState(); }
+LinkPtr Device_link(Device& self) { return self.link(); }
+Position Device_get_T_local(Device& self) { return (Position) self.T_local(); }
+void Device_set_T_local(Device& self, const Position& T_local) { self.T_local() = T_local.matrix(); }
+
 } // namespace
 
 namespace cnoid 
@@ -329,6 +335,24 @@ BOOST_PYTHON_MODULE(Body)
     }
 
     implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
+
+    {
+      scope deviceScope =
+        class_< Device, DevicePtr, boost::noncopyable >("Device", no_init)
+        .def("setIndex", &Device::setIndex)
+        .def("setId", &Device::setId)
+        .def("setName", &Device::setName)
+        .def("setLink", &Device::setLink)
+        .def("clone", &Device_clone)
+        .def("clearState", &Device_clearState)
+        .def("hasStateOnly", &Device::hasStateOnly)
+        .def("index", &Device::index)
+        .def("id", &Device::id)
+        .def("name", &Device::name, return_value_policy<copy_const_reference>())
+        .def("link", &Device_link)
+        .add_property("T_local", Device_get_T_local, Device_set_T_local)
+        ;
+    }
 
 #ifdef _MSC_VER
     register_ptr_to_python<BodyPtr>();

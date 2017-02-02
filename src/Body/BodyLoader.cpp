@@ -119,6 +119,7 @@ public:
     BodyLoaderImpl();
     ~BodyLoaderImpl();
     bool load(Body* body, const std::string& filename);
+    void mergeExtraLinkInfos(Body* body, Mapping* info);
 };
 
 }
@@ -256,37 +257,36 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
             loader->setVerbose(isVerbose);
             loader->setShapeLoadingEnabled(isShapeLoadingEnabled);
 
+            int dn = defaultDivisionNumber;
+            if(yamlDoc){
+                Mapping& geometryInfo = *yamlDoc->findMapping("geometry");
+                if(geometryInfo.isValid()){
+                    geometryInfo.read("divisionNumber", dn);
+                }
+            }
+            if(dn > 0){
+                loader->setDefaultDivisionNumber(dn);
+            }
+            if(defaultCreaseAngle >= 0.0){
+                loader->setDefaultCreaseAngle(defaultCreaseAngle);
+            }
+
             YAMLBodyLoader* yamlBodyLoader = 0;
             if(yamlDoc){
-                YAMLBodyLoader* yamlBodyLoader = dynamic_cast<YAMLBodyLoader*>(loader.get());
+                body->resetInfo(yamlDoc);
+                yamlBodyLoader = dynamic_cast<YAMLBodyLoader*>(loader.get());
+            } else {
+                body->info()->clear();
             }
 
             if(yamlBodyLoader){
                 result = yamlBodyLoader->read(body, yamlDoc);
-
             } else {
-                int dn = defaultDivisionNumber;
-                if(yamlDoc){
-                    Mapping& geometryInfo = *yamlDoc->findMapping("geometry");
-                    if(geometryInfo.isValid()){
-                        geometryInfo.read("divisionNumber", dn);
-                    }
-                }
-                if(dn > 0){
-                    loader->setDefaultDivisionNumber(dn);
-                }
-
-                if(defaultCreaseAngle >= 0.0){
-                    loader->setDefaultCreaseAngle(defaultCreaseAngle);
-                }
-            
-                if(yamlDoc){
-                    body->resetInfo(yamlDoc);
-                } else {
-                    body->info()->clear();
-                }
-
                 result = loader->load(body, modelFilename);
+            }
+
+            if(result && yamlDoc){
+                mergeExtraLinkInfos(body, yamlDoc);
             }
         }
         
@@ -302,6 +302,26 @@ bool BodyLoaderImpl::load(Body* body, const std::string& filename)
     os->flush();
     
     return result;
+}
+
+
+void BodyLoaderImpl::mergeExtraLinkInfos(Body* body, Mapping* info)
+{
+    Mapping* linkInfo = info->findMapping("linkInfo");
+    if(linkInfo->isValid()){
+        auto p = linkInfo->begin();
+        while(p != linkInfo->end()){
+            const string& linkName = p->first;
+            ValueNode* node = p->second;
+            if(node->isMapping()){
+                auto link = body->link(linkName);
+                if(link){
+                    link->info()->insert(node->toMapping());
+                }
+            }
+            ++p;
+        }
+    }
 }
 
 

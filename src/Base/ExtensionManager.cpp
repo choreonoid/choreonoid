@@ -40,18 +40,15 @@ public:
     void deleteManagedObjects();;
 
     ExtensionManager* self;
+    string moduleName;
+    string textDomain;
+    stack<ExtensionManager::PtrHolderBase*> pointerHolders;
+    Signal<void()> sigSystemUpdated;
+    Signal<void()> sigReleaseRequest;
     std::unique_ptr<MenuManager> menuManager;
     std::unique_ptr<ItemManager> itemManager;
     std::unique_ptr<TimeSyncItemEngineManager> timeSyncItemEngineManger;
     std::unique_ptr<ViewManager> viewManager;
-    string moduleName;
-    string textDomain;
-
-    stack<ExtensionManager::PtrHolderBase*> pointerHolders;
-
-    Signal<void()> sigSystemUpdated;
-    Signal<void()> sigReleaseRequest;
-
 };
 
 }

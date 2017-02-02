@@ -186,7 +186,7 @@ items:
             controllerThreads: true
             recordCollisionData: false
             ErrorReductionParameter: 0.2
-            NumIterations: 10
+            NumIterations: 30
             Restitution: 0
             Friction: 0.7
             ERP2: 0

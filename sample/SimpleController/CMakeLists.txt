@@ -56,3 +56,9 @@ add_cnoid_simple_controller(SampleSVController SampleSV.cpp)
 
 add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)
 
+add_cnoid_simple_controller(SimpleVehicle SimpleVehicle.cpp)
+configure_file(SimpleVehicle.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
+add_cnoid_simple_controller(4WheelsJoystickController 4WheelsJoystickController.cpp)
+configure_file(4WheelVehicleJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+
