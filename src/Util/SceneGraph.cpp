@@ -7,6 +7,7 @@
 #include "SceneVisitor.h"
 #include "Exception.h"
 #include <unordered_map>
+#include <typeindex>
 
 using namespace std;
 using namespace cnoid;
@@ -130,14 +131,58 @@ void SgObject::removeParent(SgObject* parent)
 }
 
 
+namespace {
+
+struct NodeTypeInfo {
+    int number;
+    std::type_index super;
+    NodeTypeInfo(int number, const std::type_info& super) : number(number), super(super) { }
+};
+
+typedef std::unordered_map<std::type_index, NodeTypeInfo> NodeTypeInfoMap;
+NodeTypeInfoMap nodeTypeInfoMap;
+
+}
+
+int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_info& superType)
+{
+    const int number = nodeTypeInfoMap.size() + 1;
+    nodeTypeInfoMap.insert(NodeTypeInfoMap::value_type(nodeType, NodeTypeInfo(number, superType)));
+    return number;
+}
+
+int SgNode::findTypeNumber(const std::type_info& nodeType)
+{
+    auto iter = nodeTypeInfoMap.find(nodeType);
+    if(iter != nodeTypeInfoMap.end()){
+        return iter->second.number;
+    }
+    return 0;
+}
+
+
+int SgNode::numRegistredTypes()
+{
+    return nodeTypeInfoMap.size();
+}
+
+
 SgNode::SgNode()
+{
+    typeNumber_ = findTypeNumber<SgNode>();
+}
+
+
+SgNode::SgNode(int typeNumber)
+    : typeNumber_(typeNumber)
 {
 
 }
 
 
 SgNode::SgNode(const SgNode& org)
-    : SgObject(org)
+    : SgObject(org),
+      typeNumber_(org.typeNumber_)
 {
 
 }
@@ -175,6 +220,14 @@ bool SgNode::isGroup() const
 
 
 SgGroup::SgGroup()
+    : SgNode(findTypeNumber<SgGroup>())
+{
+    isBboxCacheValid = false;
+}
+
+
+SgGroup::SgGroup(int typeNumber)
+    : SgNode(typeNumber)
 {
     isBboxCacheValid = false;
 }
@@ -426,7 +479,8 @@ void SgInvariantGroup::accept(SceneVisitor& visitor)
 }
 
 
-SgTransform::SgTransform()
+SgTransform::SgTransform(int typeNumber)
+    : SgGroup(typeNumber)
 {
 
 }
@@ -456,14 +510,16 @@ const BoundingBox& SgTransform::untransformedBoundingBox() const
 
 
 SgPosTransform::SgPosTransform()
-    : T_(Affine3::Identity())
+    : SgTransform(findTypeNumber<SgPosTransform>()),
+      T_(Affine3::Identity())
 {
 
 }
 
 
 SgPosTransform::SgPosTransform(const Affine3& T)
-    : T_(T)
+    : SgTransform(findTypeNumber<SgPosTransform>()),
+      T_(T)
 {
 
 }
@@ -520,13 +576,15 @@ void SgPosTransform::getTransform(Affine3& out_T) const
 
 
 SgScaleTransform::SgScaleTransform()
+    : SgTransform(findTypeNumber<SgPosTransform>())
 {
     scale_.setOnes();
 }
 
 
 SgScaleTransform::SgScaleTransform(const Vector3& scale)
-    : scale_(scale)
+    : SgTransform(findTypeNumber<SgPosTransform>()),
+      scale_(scale)
 {
 
 }
@@ -646,7 +704,8 @@ void SgUnpickableGroup::accept(SceneVisitor& visitor)
 }
 
 
-SgPreprocessed::SgPreprocessed()
+SgPreprocessed::SgPreprocessed(int typeNumber)
+    : SgNode(typeNumber)
 {
 
 }
@@ -668,4 +727,20 @@ SgObject* SgPreprocessed::clone(SgCloneMap& cloneMap) const
 void SgPreprocessed::accept(SceneVisitor& visitor)
 {
     visitor.visitPreprocessed(this);
+}
+
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgGroup, SgNode>();
+        SgNode::registerType<SgInvariantGroup, SgGroup>();
+        SgNode::registerType<SgTransform, SgGroup>();
+        SgNode::registerType<SgPosTransform, SgTransform>();
+        SgNode::registerType<SgScaleTransform, SgTransform>();
+        SgNode::registerType<SgSwitch, SgGroup>();
+        SgNode::registerType<SgUnpickableGroup, SgGroup>();
+        SgNode::registerType<SgPreprocessed, SgGroup>();
+    }
+} registration;
 }

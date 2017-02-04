@@ -35,6 +35,7 @@ set(sources
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
+  SceneProcessor.cpp
   SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp

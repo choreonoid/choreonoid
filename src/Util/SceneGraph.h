@@ -141,10 +141,34 @@ typedef std::vector<SgNode*> SgNodePath;
 
 class CNOID_EXPORT SgNode : public SgObject
 {
+    static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);
+    static int findTypeNumber(const std::type_info& nodeType);
+
+    int typeNumber_;
+
 public:
     SgNode();
     SgNode(const SgNode& org);
+
+    template <class NodeType, class SuperType> struct registerType {
+        registerType() {
+            SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
+        }
+    };
+
+    template <class NodeType, class SuperType> int registerType_() {
+        return SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
+    };
+    
+    template <class NodeType> static int findTypeNumber() {
+        return findTypeNumber(typeid(NodeType));
+    }
+
+    static int numRegistredTypes();
+    static int findSuperTypeNumber(int typeNumber);
+        
     ~SgNode();
+    int typeNumber() const { return typeNumber_; }
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
@@ -154,8 +178,10 @@ public:
     }
 
     virtual bool isGroup() const;
-};
 
+protected:
+    SgNode(int typeNumber);
+};
 
 class CNOID_EXPORT SgGroup : public SgNode
 {
@@ -234,6 +260,7 @@ public:
     }
 
 protected:
+    SgGroup(int typeNumber);
     mutable BoundingBox bboxCache;
     mutable bool isBboxCacheValid;
 
@@ -262,15 +289,14 @@ typedef ref_ptr<SgInvariantGroup> SgInvariantGroupPtr;
 class CNOID_EXPORT SgTransform : public SgGroup
 {
 public:
-    SgTransform();
-    SgTransform(const SgTransform& org);
-    SgTransform(const SgTransform& org, SgCloneMap& cloneMap);
-
     const BoundingBox& untransformedBoundingBox() const;
 
     virtual void getTransform(Affine3& out_T) const = 0;
 
 protected:
+    SgTransform(int typeNumber);
+    SgTransform(const SgTransform& org);
+    SgTransform(const SgTransform& org, SgCloneMap& cloneMap);
     mutable BoundingBox untransformedBboxCache;
 };
 typedef ref_ptr<SgTransform> SgTransformPtr;
@@ -395,7 +421,7 @@ typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
 class CNOID_EXPORT SgPreprocessed : public SgNode
 {
 protected:
-    SgPreprocessed();
+    SgPreprocessed(int typeNumber);
     SgPreprocessed(const SgPreprocessed& org);
 
 public:

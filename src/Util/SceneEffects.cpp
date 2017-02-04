@@ -11,6 +11,7 @@ using namespace cnoid;
 
 
 SgFog::SgFog()
+    : SgPreprocessed(findTypeNumber<SgFog>())
 {
     color_.setOnes();
     visibilityRange_ = 0.0f;
@@ -47,4 +48,14 @@ SgOutlineGroup::SgOutlineGroup()
 void SgOutlineGroup::accept(SceneVisitor& visitor)
 {
     visitor.visitOutlineGroup(this);
+}
+
+
+namespace {
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgFog, SgPreprocessed>();
+        SgNode::registerType<SgOutlineGroup, SgGroup>();
+    }
+} registration;
 }

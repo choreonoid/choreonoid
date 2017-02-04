@@ -6,41 +6,39 @@
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
 #include <functional>
+#include <unordered_map>
+#include <typeindex>
 
 namespace cnoid {
 
-template <class Object, class Parameter> class PolymorphicFunctionSet
+template <class Processor, class Object> class PolymorphicFunctionSet
 {
-    typedef std::function<void(Parameter p)> Function;
-    struct compare {
-        bool operator ()(const std::type_info* a, const std::type_info* b) const {
-            return a->before(*b);
-        }
-    };
-    typedef std::map<const std::type_info*, Function, compare> FunctionMap;
+    typedef std::function<void(Processor& proc, Object* obj)> Function;
+    typedef std::unordered_map<std::type_index, Function> FunctionMap;
     FunctionMap functions;
 
-    bool callFuntions(const std::type_info& type, Object* object, Parameter& param){
-        FunctionMap::iterator p = functions.find(&type);
+    bool callFunctionForType(Processor& proc, const std::type_info& type, Object* object){
+        FunctionMap::iterator p = functions.find(type);
         if(p != functions.end()){
-            return p->second(param);
+            return p->second(proc, object);
         }
         return true;
     }
                     
 public:
     template <class Type> void setFunction(FunctionType f) {
-        functions[&typeid(Type)] = f;
+        functions[typeid(Type)] = f;
     }
         
-    bool operator()(Object* object, Paramter& param) {
-        object->forEachActualType(
-            std::bind(&callFunctions, this, std::placeholders::_1, object, std::ref(param)));
+    bool operator()(Processor& porc, Object* object) {
+        if(!callFunctionForType(porc, typeid(object), object)){
+            return object->callBySuper(
+                [&](const std::type_info& type){ return this->callFunctionForType(proc, type, object); });
+        }
+        return true;
     }
-
 };
 
 }
 
 #endif
-

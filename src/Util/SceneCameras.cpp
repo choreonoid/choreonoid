@@ -11,6 +11,7 @@ using namespace cnoid;
 
 
 SgCamera::SgCamera()
+    : SgPreprocessed(findTypeNumber<SgCamera>())
 {
     nearClipDistance_ = 0.01;
     farClipDistance_ = 100.0;
@@ -109,4 +110,15 @@ SgObject* SgOrthographicCamera::clone(SgCloneMap& cloneMap) const
 void SgOrthographicCamera::accept(SceneVisitor& visitor)
 {
     visitor.visitCamera(this);
+}
+
+
+namespace {
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgCamera, SgPreprocessed>();
+        SgNode::registerType<SgPerspectiveCamera, SgCamera>();
+        SgNode::registerType<SgOrthographicCamera, SgCamera>();
+    }
+} registration;
 }

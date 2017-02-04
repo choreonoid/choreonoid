@@ -840,3 +840,16 @@ void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, View
 {
 
 }
+
+
+namespace {
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgShape, SgNode>();
+        SgNode::registerType<SgPlot, SgNode>();
+        SgNode::registerType<SgPointSet, SgPlot>();
+        SgNode::registerType<SgLineSet, SgPlot>();
+        SgNode::registerType<SgOverlay, SgGroup>();
+    }
+} registration;
+}

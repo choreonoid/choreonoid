@@ -11,6 +11,7 @@ using namespace cnoid;
 
 
 SgLight::SgLight()
+    : SgPreprocessed(findTypeNumber<SgLight>())
 {
     on_ = true;
     color_.setOnes();
@@ -123,4 +124,16 @@ SgObject* SgSpotLight::clone(SgCloneMap& cloneMap) const
 void SgSpotLight::accept(SceneVisitor& visitor)
 {
     visitor.visitLight(this);
+}
+
+
+namespace {
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgLight, SgPreprocessed>();
+        SgNode::registerType<SgDirectionalLight, SgLight>();
+        SgNode::registerType<SgPointLight, SgLight>();
+        SgNode::registerType<SgSpotLight, SgPointLight>();
+    }
+} registration;
 }

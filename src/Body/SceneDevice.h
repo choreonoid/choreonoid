@@ -26,7 +26,7 @@ public:
     typedef std::function<SceneDevice*(Device* device)> SceneDeviceFactory;
     template<class DeviceType>
     static void registerSceneDeviceFactory(const SceneDeviceFactory& factory) {
-        registerSceneDeviceFactory_(&typeid(DeviceType), factory);
+        registerSceneDeviceFactory_(typeid(DeviceType), factory);
     }
 
     static SceneDevice* create(Device* device);
@@ -56,7 +56,7 @@ private:
     std::function<void()> sceneUpdateFunction;
     Connection connection;
 
-    static void registerSceneDeviceFactory_(const std::type_info* pTypeInfo, const SceneDeviceFactory& factory);
+    static void registerSceneDeviceFactory_(const std::type_info& type, const SceneDeviceFactory& factory);
 };
     
 typedef ref_ptr<SceneDevice> SceneDevicePtr;

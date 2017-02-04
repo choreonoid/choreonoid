@@ -14,7 +14,8 @@
 #include "SpotLight.h"
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
-#include <map>
+#include <typeindex>
+#include <unordered_map>
 
 using namespace std;
 using namespace std::placeholders;
@@ -22,13 +23,7 @@ using namespace cnoid;
 
 namespace {
 
-struct compare {
-    bool operator ()(const std::type_info* a, const std::type_info* b) const {
-        return a->before(*b);
-    }
-};
-
-typedef std::map<const std::type_info*, SceneDevice::SceneDeviceFactory, compare> SceneDeviceFactoryMap;
+typedef std::unordered_map<std::type_index, SceneDevice::SceneDeviceFactory> SceneDeviceFactoryMap;
 SceneDeviceFactoryMap sceneDeviceFactories;
 
 
@@ -93,14 +88,14 @@ SceneDevice* createNullSceneDevice(Device* device)
 struct SceneDeviceFactoryMapInitializer
 {
     SceneDeviceFactoryMapInitializer() {
-        sceneDeviceFactories[&typeid(ForceSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(RateGyroSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(AccelerationSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(Camera)] = createScenePerspectiveCamera;
-        sceneDeviceFactories[&typeid(RangeCamera)] = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(RangeSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(PointLight)] = createScenePointLight;
-        sceneDeviceFactories[&typeid(SpotLight)]  = createSceneSpotLight;
+        sceneDeviceFactories[typeid(ForceSensor)]  = createNullSceneDevice;
+        sceneDeviceFactories[typeid(RateGyroSensor)]  = createNullSceneDevice;
+        sceneDeviceFactories[typeid(AccelerationSensor)]  = createNullSceneDevice;
+        sceneDeviceFactories[typeid(Camera)] = createScenePerspectiveCamera;
+        sceneDeviceFactories[typeid(RangeCamera)] = createNullSceneDevice;
+        sceneDeviceFactories[typeid(RangeSensor)]  = createNullSceneDevice;
+        sceneDeviceFactories[typeid(PointLight)] = createScenePointLight;
+        sceneDeviceFactories[typeid(SpotLight)]  = createSceneSpotLight;
     }
 };
 SceneDeviceFactoryMapInitializer initializer;
@@ -109,15 +104,15 @@ SceneDeviceFactoryMapInitializer initializer;
 }
 
 
-void SceneDevice::registerSceneDeviceFactory_(const std::type_info* pTypeInfo, const SceneDeviceFactory& factory)
+void SceneDevice::registerSceneDeviceFactory_(const std::type_info& type, const SceneDeviceFactory& factory)
 {
-    sceneDeviceFactories[pTypeInfo] = factory;
+    sceneDeviceFactories[type] = factory;
 }
 
 
 static bool createSceneDevice(Device* device, const std::type_info& type, SceneDevice*& out_sceneDevice)
 {
-    SceneDeviceFactoryMap::iterator p = sceneDeviceFactories.find(&type);
+    SceneDeviceFactoryMap::iterator p = sceneDeviceFactories.find(type);
     if(p != sceneDeviceFactories.end()){
         SceneDevice::SceneDeviceFactory& factory = p->second;
         out_sceneDevice = factory(device);
@@ -174,7 +169,6 @@ SceneDevice::~SceneDevice()
 {
     connection.disconnect();
 }
-
 
 void SceneDevice::setSceneUpdateConnection(bool on)
 {
