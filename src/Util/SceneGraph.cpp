@@ -133,6 +133,7 @@ void SgObject::removeParent(SgObject* parent)
 
 namespace {
 
+/*
 struct NodeTypeInfo {
     int number;
     std::type_index super;
@@ -141,30 +142,63 @@ struct NodeTypeInfo {
 
 typedef std::unordered_map<std::type_index, NodeTypeInfo> NodeTypeInfoMap;
 NodeTypeInfoMap nodeTypeInfoMap;
+*/
+
+typedef std::unordered_map<std::type_index, int> NodeTypeIndexMap;
+NodeTypeIndexMap nodeTypeIndexMap;
+
+std::vector<int> superTypeIndexMap;
 
 }
 
 int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_info& superType)
 {
-    const int number = nodeTypeInfoMap.size() + 1;
-    nodeTypeInfoMap.insert(NodeTypeInfoMap::value_type(nodeType, NodeTypeInfo(number, superType)));
-    return number;
+    int superTypeIndex;
+    NodeTypeIndexMap::iterator iter = nodeTypeIndexMap.find(superType);
+    if(iter == nodeTypeIndexMap.end()){
+        superTypeIndex = nodeTypeIndexMap.size();
+        nodeTypeIndexMap[superType] = superTypeIndex;
+    } else {
+        superTypeIndex = iter->second;
+    }
+    int typeIndex;
+    if(nodeType == superType){
+        typeIndex = superTypeIndex;
+    } else {
+        typeIndex = nodeTypeIndexMap.size();
+        nodeTypeIndexMap[nodeType] = typeIndex;
+        if(typeIndex >= superTypeIndexMap.size()){
+            superTypeIndexMap.resize(typeIndex + 1, -1);
+        }
+        superTypeIndexMap[typeIndex] = superTypeIndex;
+    }
+
+    return typeIndex;
 }
 
 int SgNode::findTypeNumber(const std::type_info& nodeType)
 {
-    auto iter = nodeTypeInfoMap.find(nodeType);
-    if(iter != nodeTypeInfoMap.end()){
-        return iter->second.number;
+    auto iter = nodeTypeIndexMap.find(nodeType);
+    if(iter != nodeTypeIndexMap.end()){
+        return iter->second;
     }
-    return 0;
+    return -1;
+}
+
+
+int SgNode::findSuperTypeNumber(int typeNumber)
+{
+    return superTypeIndexMap[typeNumber];
 }
 
 
 int SgNode::numRegistredTypes()
 {
-    return nodeTypeInfoMap.size();
+    return nodeTypeIndexMap.size();
 }
+
+
+
 
 
 SgNode::SgNode()

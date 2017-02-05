@@ -164,8 +164,8 @@ public:
         return findTypeNumber(typeid(NodeType));
     }
 
-    static int numRegistredTypes();
     static int findSuperTypeNumber(int typeNumber);
+    static int numRegistredTypes();
         
     ~SgNode();
     int typeNumber() const { return typeNumber_; }

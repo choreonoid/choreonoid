@@ -36,21 +36,19 @@ struct PreproNode
 };
     
 
-class PreproTreeExtractor : public SceneVisitor
+class PreproTreeExtractor : public SceneProcessor
 {
     PreproNode* node;
     bool found;
 public:
+    PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitTransform(SgTransform* transform);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed);
-    virtual void visitLight(SgLight* light);
-    virtual void visitFog(SgFog* fog);
-    virtual void visitCamera(SgCamera* camera);
+    void visitGroup(SgGroup* group);
+    void visitTransform(SgTransform* transform);
+    void visitPreprocessed(SgPreprocessed* preprocessed);
+    void visitLight(SgLight* light);
+    void visitFog(SgFog* fog);
+    void visitCamera(SgCamera* camera);
 };
 
 }
@@ -286,11 +284,24 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 }
 
 
+PreproTreeExtractor::PreproTreeExtractor()
+{
+    setFunction<PreproTreeExtractor, SgGroup>(&PreproTreeExtractor::visitGroup);
+    setFunction<PreproTreeExtractor, SgTransform>(&PreproTreeExtractor::visitTransform);
+    setFunction<PreproTreeExtractor, SgPreprocessed>(&PreproTreeExtractor::visitPreprocessed);
+    setFunction<PreproTreeExtractor, SgLight>(&PreproTreeExtractor::visitLight);
+    setFunction<PreproTreeExtractor, SgFog>(&PreproTreeExtractor::visitFog);
+    setFunction<PreproTreeExtractor, SgCamera>(&PreproTreeExtractor::visitCamera);
+
+    complementDispatchTable();
+}
+
+
 PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 {
     node = 0;
     found = false;
-    snode->accept(*this);
+    dispatch(snode);
     return node;
 }
 
@@ -306,8 +317,8 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         
         node = 0;
         found = false;
-        
-        (*p)->accept(*this);
+
+        dispatch(*p);
         
         if(node){
             if(found){
@@ -338,24 +349,6 @@ void PreproTreeExtractor::visitTransform(SgTransform* transform)
     if(node){
         node->setNode(transform);
     }
-}
-
-
-void PreproTreeExtractor::visitShape(SgShape* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitPointSet(SgPointSet* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitLineSet(SgLineSet* shape)
-{
-
 }
 
 
