@@ -13,6 +13,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
 #include <cnoid/SceneRenderer>
+#include <cnoid/SceneVisitor>
 #include <boost/format.hpp>
 #include "gettext.h"
 

@@ -15,7 +15,7 @@ using namespace cnoid;
 
 SceneVisitor::SceneVisitor()
 {
-    property_ = new Mapping();
+
 }
 
 

@@ -463,7 +463,15 @@ void SgPolygonMesh::updateBoundingBox()
 }
 
 
+SgShape::SgShape(int polymorhicId)
+    : SgNode(polymorhicId)
+{
+
+}
+
+
 SgShape::SgShape()
+    : SgShape(findPolymorphicId<SgShape>())
 {
 
 }
@@ -598,7 +606,8 @@ SgTexture* SgShape::getOrCreateTexture()
 }
 
 
-SgPlot::SgPlot()
+SgPlot::SgPlot(int polymorhicId)
+    : SgNode(polymorhicId)
 {
 
 }
@@ -755,9 +764,17 @@ SgColorArray* SgPlot::getOrCreateColors()
 }
 
 
-SgPointSet::SgPointSet()
+SgPointSet::SgPointSet(int polymorhicId)
+    : SgPlot(polymorhicId)
 {
     pointSize_ = 0.0;
+}
+
+
+SgPointSet::SgPointSet()
+    : SgPointSet(findPolymorphicId<SgPointSet>())
+{
+
 }
 
 
@@ -780,7 +797,15 @@ void SgPointSet::accept(SceneVisitor& visitor)
 }
 
    
+SgLineSet::SgLineSet(int polymorhicId)
+    : SgPlot(polymorhicId)
+{
+    lineWidth_ = 0.0;
+}
+
+
 SgLineSet::SgLineSet()
+    : SgLineSet(findPolymorphicId<SgLineSet>())
 {
     lineWidth_ = 0.0;
 }
@@ -843,6 +868,7 @@ void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, View
 
 
 namespace {
+
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgShape, SgNode>();
@@ -852,4 +878,5 @@ struct NodeTypeRegistration {
         SgNode::registerType<SgOverlay, SgGroup>();
     }
 } registration;
+
 }

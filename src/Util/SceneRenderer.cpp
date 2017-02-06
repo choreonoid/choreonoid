@@ -40,7 +40,15 @@ struct PreproNode
 class PreproTreeExtractor
 {
     struct NodeFunctionSet : public PolymorphicFunctionSet<PreproTreeExtractor, SgNode> {
-        NodeFunctionSet();
+        NodeFunctionSet() {
+            setFunction<SgGroup>(&PreproTreeExtractor::visitGroup);
+            setFunction<SgTransform>(&PreproTreeExtractor::visitTransform);
+            setFunction<SgPreprocessed>(&PreproTreeExtractor::visitPreprocessed);
+            setFunction<SgLight>(&PreproTreeExtractor::visitLight);
+            setFunction<SgFog>(&PreproTreeExtractor::visitFog);
+            setFunction<SgCamera>(&PreproTreeExtractor::visitCamera);
+            updateDispatchTable();
+        }
     };
     static NodeFunctionSet functions;
         
@@ -58,20 +66,8 @@ public:
     void visitCamera(SgCamera* camera);
 };
 
-
 PreproTreeExtractor::NodeFunctionSet PreproTreeExtractor::functions;
-
-PreproTreeExtractor::NodeFunctionSet::NodeFunctionSet()
-{
-    setFunction<SgGroup>(&PreproTreeExtractor::visitGroup);
-    setFunction<SgTransform>(&PreproTreeExtractor::visitTransform);
-    setFunction<SgPreprocessed>(&PreproTreeExtractor::visitPreprocessed);
-    setFunction<SgLight>(&PreproTreeExtractor::visitLight);
-    setFunction<SgFog>(&PreproTreeExtractor::visitFog);
-    setFunction<SgCamera>(&PreproTreeExtractor::visitCamera);
-    updateDispatchTable();
-}
-
+        
 }
 
 namespace cnoid {
@@ -149,6 +145,7 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new SceneRendererImpl(this);
+    property_ = new Mapping();    
 }
 
 

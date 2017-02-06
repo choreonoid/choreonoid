@@ -24,6 +24,7 @@ SceneCollision::SceneCollision(const SceneCollision& org)
 }
 
 
+#if 0
 void SceneCollision::accept(SceneVisitor& visitor)
 {
     if(!visitor.property()->get("collision", false)){
@@ -57,3 +58,5 @@ void SceneCollision::accept(SceneVisitor& visitor)
     
     visitor.visitLineSet(this);
 }
+#endif
+

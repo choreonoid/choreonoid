@@ -7,14 +7,14 @@
 #define CNOID_UTIL_SCENE_RENDERER_H
 
 #include <cnoid/SceneGraph>
-#include <cnoid/SceneVisitor>
+#include "ValueTree.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class SceneRendererImpl;
 
-class CNOID_EXPORT SceneRenderer : public SceneVisitor
+class CNOID_EXPORT SceneRenderer
 {
 public:
     SceneRenderer();
@@ -69,12 +69,15 @@ public:
 
     Signal<void()>& sigRenderingRequest();
 
+    Mapping* property() { return property_; }
+
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);
 
 
 private:
     SceneRendererImpl* impl;
+    MappingPtr property_;
 };
 
 }

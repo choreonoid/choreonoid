@@ -443,6 +443,7 @@ public:
     SgTexture* getOrCreateTexture();
 
 protected:
+    SgShape(int polymorhicId);
     SgShape(const SgShape& org, SgCloneMap& cloneMap);
 
 private:
@@ -455,8 +456,11 @@ typedef ref_ptr<SgShape> SgShapePtr;
 
 class CNOID_EXPORT SgPlot : public SgNode
 {
+protected:
+    SgPlot(int polymorhicId);
+    SgPlot(const SgPlot& org, SgCloneMap& cloneMap);
+    
 public:
-    SgPlot();
 
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
@@ -492,9 +496,6 @@ public:
     const SgIndexArray& colorIndices() const { return colorIndices_; }
     SgIndexArray& colorIndices() { return colorIndices_; }
 
-protected:
-    SgPlot(const SgPlot& org, SgCloneMap& cloneMap);
-
 private:
     BoundingBox bbox;
     SgVertexArrayPtr vertices_;
@@ -522,6 +523,7 @@ public:
     double pointSize() const { return pointSize_; }
 
 protected:
+    SgPointSet(int polymorhicId);
     SgPointSet(const SgPointSet& org, SgCloneMap& cloneMap);
 
 private:
@@ -579,6 +581,7 @@ public:
     float lineWidth() const { return lineWidth_; }
 
 protected:
+    SgLineSet(int polymorhicId);
     SgLineSet(const SgLineSet& org, SgCloneMap& cloneMap);
 
 private:

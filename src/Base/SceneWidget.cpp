@@ -26,6 +26,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ConnectionSet>
+#include <cnoid/SceneVisitor>
 #include <QGLWidget>
 #include <QGLPixelBuffer>
 #include <QLabel>
@@ -773,11 +774,11 @@ void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
     glMultMatrixd(inv.data());
 
     renderer.setColor(Vector3f(1.0,0.0,0.0));
-    renderer.visitPosTransform(xAxis);
+    renderer.renderTransform(xAxis);
     renderer.setColor(Vector3f(0.0,1.0,0.0));
-    renderer.visitPosTransform(yAxis);
+    renderer.renderTransform(yAxis);
     renderer.setColor(Vector3f(0.4,0.6,1.0));
-    renderer.visitPosTransform(zAxis);
+    renderer.renderTransform(zAxis);
     
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

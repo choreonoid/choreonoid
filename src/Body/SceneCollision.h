@@ -18,7 +18,7 @@ public:
 
     void setDirty() { isDirty = true; }
 
-    virtual void accept(SceneVisitor& visitor);
+    //virtual void accept(SceneVisitor& visitor);
 
 private:
     SceneCollision(const SceneCollision& org);

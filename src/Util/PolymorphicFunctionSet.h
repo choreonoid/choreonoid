@@ -12,22 +12,22 @@ namespace cnoid {
 template<class Processor, class ObjectBase>
 class CNOID_EXPORT PolymorphicFunctionSet
 {
-  public:
+public:
     typedef std::function<void(Processor* proc, ObjectBase* obj)> Function;
     
-  private:
+private:
     std::vector<Function> dispatchTable;
     std::vector<bool> dispatchTableFixedness;
     bool isDispatchTableDirty;
 
-  public:
+public:
     PolymorphicFunctionSet() {
         const int n = ObjectBase::numPolymorphicTypes();
         dispatchTable.resize(n);
         dispatchTableFixedness.resize(n, false);
         isDispatchTableDirty = true;
     }
-        
+
     template <class Object>
     void setFunction(std::function<void(Processor* proc, ObjectBase* obj)> func){
         int id = ObjectBase::template findPolymorphicId<Object>();

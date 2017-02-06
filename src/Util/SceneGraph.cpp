@@ -764,6 +764,7 @@ namespace {
 
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
+        //SgNode::registerType<SgNode, SgNode>();
         SgNode::registerType<SgGroup, SgNode>();
         SgNode::registerType<SgInvariantGroup, SgGroup>();
         SgNode::registerType<SgTransform, SgGroup>();
@@ -771,7 +772,8 @@ struct NodeTypeRegistration {
         SgNode::registerType<SgScaleTransform, SgTransform>();
         SgNode::registerType<SgSwitch, SgGroup>();
         SgNode::registerType<SgUnpickableGroup, SgGroup>();
-        SgNode::registerType<SgPreprocessed, SgGroup>();
+        SgNode::registerType<SgPreprocessed, SgNode>();
     }
 } registration;
+
 }

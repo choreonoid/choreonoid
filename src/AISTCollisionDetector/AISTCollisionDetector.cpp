@@ -11,6 +11,7 @@
 #include <cnoid/ThreadPool>
 #include <random>
 #include <algorithm>
+#include <map>
 
 using namespace std;
 using namespace cnoid;

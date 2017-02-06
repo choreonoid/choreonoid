@@ -53,17 +53,15 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void requestToClearCache();
     virtual void enableUnusedCacheCheck(bool on);
 
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitInvariantGroup(SgInvariantGroup* group);
-    virtual void visitTransform(SgTransform* transform);
-    virtual void visitUnpickableGroup(SgUnpickableGroup* group);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed);
-    virtual void visitLight(SgLight* light);
-    virtual void visitOverlay(SgOverlay* overlay);
-    virtual void visitOutlineGroup(SgOutlineGroup* outline);
+    void renderGroup(SgGroup* group);
+    void renderInvariantGroup(SgInvariantGroup* group);
+    void renderTransform(SgTransform* transform);
+    void renderUnpickableGroup(SgUnpickableGroup* group);
+    void renderShape(SgShape* shape);
+    void renderPointSet(SgPointSet* pointSet);        
+    void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOutlineGroup(SgOutlineGroup* outline);
 
     bool isPicking();
     virtual void setColor(const Vector3f& color);

@@ -7,7 +7,6 @@
 #define CNOID_UTIL_SCENE_VISITOR_H
 
 #include "SceneGraph.h"
-#include "ValueTree.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -35,11 +34,6 @@ public:
     virtual void visitCamera(SgCamera* camera);
     virtual void visitOverlay(SgOverlay* overlay);
     virtual void visitOutlineGroup(SgOutlineGroup* outline);
-
-    Mapping* property() { return property_.get(); }
-
-private:
-    MappingPtr property_;
 };
 
 }
