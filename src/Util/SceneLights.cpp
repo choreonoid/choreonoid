@@ -10,8 +10,8 @@ using namespace std;
 using namespace cnoid;
 
 
-SgLight::SgLight()
-    : SgPreprocessed(findTypeNumber<SgLight>())
+SgLight::SgLight(int polymorhicId)
+    : SgPreprocessed(polymorhicId)
 {
     on_ = true;
     color_.setOnes();
@@ -42,9 +42,17 @@ void SgLight::accept(SceneVisitor& visitor)
 }
 
 
-SgDirectionalLight::SgDirectionalLight()
+SgDirectionalLight::SgDirectionalLight(int polymorhicId)
+    : SgLight(polymorhicId)
 {
     direction_ << 0.0, 0.0, -1.0;
+}
+
+
+SgDirectionalLight::SgDirectionalLight()
+    : SgDirectionalLight(findPolymorphicId<SgDirectionalLight>())
+{
+
 }
 
 
@@ -67,11 +75,19 @@ void SgDirectionalLight::accept(SceneVisitor& visitor)
 }
 
 
-SgPointLight::SgPointLight()
+SgPointLight::SgPointLight(int polymorhicId)
+    : SgLight(polymorhicId)
 {
     constantAttenuation_ = 1.0f;
     linearAttenuation_ = 0.0f;
     quadraticAttenuation_ = 0.0f;
+}
+
+
+SgPointLight::SgPointLight()
+    : SgPointLight(findPolymorphicId<SgPointLight>())
+{
+
 }
 
 
@@ -96,12 +112,20 @@ void SgPointLight::accept(SceneVisitor& visitor)
 }
 
 
-SgSpotLight::SgSpotLight()
+SgSpotLight::SgSpotLight(int polymorhicId)
+    : SgPointLight(polymorhicId)
 {
     direction_ << 0.0, 0.0, -1.0;
     beamWidth_ = 1.570796f;
     cutOffAngle_ = 0.785398f;
     cutOffExponent_ = 1.0f;
+}
+
+
+SgSpotLight::SgSpotLight()
+    : SgSpotLight(findPolymorphicId<SgSpotLight>())
+{
+
 }
 
 
@@ -128,6 +152,7 @@ void SgSpotLight::accept(SceneVisitor& visitor)
 
 
 namespace {
+
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgLight, SgPreprocessed>();
@@ -136,4 +161,5 @@ struct NodeTypeRegistration {
         SgNode::registerType<SgSpotLight, SgPointLight>();
     }
 } registration;
+
 }

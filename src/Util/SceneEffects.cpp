@@ -10,11 +10,18 @@ using namespace std;
 using namespace cnoid;
 
 
-SgFog::SgFog()
-    : SgPreprocessed(findTypeNumber<SgFog>())
+SgFog::SgFog(int polymorhicId)
+    : SgPreprocessed(polymorhicId)
 {
     color_.setOnes();
     visibilityRange_ = 0.0f;
+}
+
+
+SgFog::SgFog()
+    : SgFog(findPolymorphicId<SgFog>())
+{
+
 }
 
 
@@ -38,10 +45,18 @@ void SgFog::accept(SceneVisitor& visitor)
 }
 
 
-SgOutlineGroup::SgOutlineGroup()
+SgOutlineGroup::SgOutlineGroup(int polymorhicId)
+    : SgGroup(polymorhicId)
 {
     lineWidth_ = 1.0;
     color_ << 1.0, 0.0, 0.0;
+}
+
+
+SgOutlineGroup::SgOutlineGroup()
+    : SgOutlineGroup(findPolymorphicId<SgOutlineGroup>())
+{
+
 }
 
 
@@ -52,10 +67,12 @@ void SgOutlineGroup::accept(SceneVisitor& visitor)
 
 
 namespace {
+
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgFog, SgPreprocessed>();
         SgNode::registerType<SgOutlineGroup, SgGroup>();
     }
 } registration;
+
 }

@@ -142,9 +142,9 @@ typedef std::vector<SgNode*> SgNodePath;
 class CNOID_EXPORT SgNode : public SgObject
 {
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);
-    static int findTypeNumber(const std::type_info& nodeType);
+    static int findPolymorphicId(const std::type_info& nodeType);
 
-    int typeNumber_;
+    int polymorhicId_;
 
 public:
     SgNode();
@@ -160,15 +160,15 @@ public:
         return SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
     };
     
-    template <class NodeType> static int findTypeNumber() {
-        return findTypeNumber(typeid(NodeType));
+    template <class NodeType> static int findPolymorphicId() {
+        return findPolymorphicId(typeid(NodeType));
     }
 
-    static int findSuperTypeNumber(int typeNumber);
-    static int numRegistredTypes();
+    static int findSuperTypePolymorphicId(int polymorhicId);
+    static int numPolymorphicTypes();
         
     ~SgNode();
-    int typeNumber() const { return typeNumber_; }
+    int polymorhicId() const { return polymorhicId_; }
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
@@ -180,7 +180,7 @@ public:
     virtual bool isGroup() const;
 
 protected:
-    SgNode(int typeNumber);
+    SgNode(int polymorhicId);
 };
 
 class CNOID_EXPORT SgGroup : public SgNode
@@ -260,7 +260,7 @@ public:
     }
 
 protected:
-    SgGroup(int typeNumber);
+    SgGroup(int polymorhicId);
     mutable BoundingBox bboxCache;
     mutable bool isBboxCacheValid;
 
@@ -294,7 +294,7 @@ public:
     virtual void getTransform(Affine3& out_T) const = 0;
 
 protected:
-    SgTransform(int typeNumber);
+    SgTransform(int polymorhicId);
     SgTransform(const SgTransform& org);
     SgTransform(const SgTransform& org, SgCloneMap& cloneMap);
     mutable BoundingBox untransformedBboxCache;
@@ -421,7 +421,7 @@ typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
 class CNOID_EXPORT SgPreprocessed : public SgNode
 {
 protected:
-    SgPreprocessed(int typeNumber);
+    SgPreprocessed(int polymorhicId);
     SgPreprocessed(const SgPreprocessed& org);
 
 public:

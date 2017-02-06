@@ -13,6 +13,9 @@ namespace cnoid {
 
 class CNOID_EXPORT SgFog : public SgPreprocessed
 {
+protected:
+    SgFog(int polymorhicId);
+    
 public:
     SgFog();
     SgFog(const SgFog& org);
@@ -35,6 +38,9 @@ typedef ref_ptr<SgFog> SgFogPtr;
 
 class CNOID_EXPORT SgOutlineGroup : public SgGroup
 {
+protected:
+    SgOutlineGroup(int polymorhicId);
+    
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 

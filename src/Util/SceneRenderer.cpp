@@ -4,10 +4,11 @@
 */
 
 #include "SceneRenderer.h"
-#include <cnoid/SceneDrawables>
-#include <cnoid/SceneCameras>
-#include <cnoid/SceneLights>
-#include <cnoid/SceneEffects>
+#include "SceneDrawables.h"
+#include "SceneCameras.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
+#include "PolymorphicFunctionSet.h"
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
 
@@ -34,12 +35,18 @@ struct PreproNode
         base = n;
     }
 };
-    
 
-class PreproTreeExtractor : public SceneProcessor
+
+class PreproTreeExtractor
 {
+    struct NodeFunctionSet : public PolymorphicFunctionSet<PreproTreeExtractor, SgNode> {
+        NodeFunctionSet();
+    };
+    static NodeFunctionSet functions;
+        
     PreproNode* node;
     bool found;
+    
 public:
     PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
@@ -50,6 +57,20 @@ public:
     void visitFog(SgFog* fog);
     void visitCamera(SgCamera* camera);
 };
+
+
+PreproTreeExtractor::NodeFunctionSet PreproTreeExtractor::functions;
+
+PreproTreeExtractor::NodeFunctionSet::NodeFunctionSet()
+{
+    setFunction<SgGroup>(&PreproTreeExtractor::visitGroup);
+    setFunction<SgTransform>(&PreproTreeExtractor::visitTransform);
+    setFunction<SgPreprocessed>(&PreproTreeExtractor::visitPreprocessed);
+    setFunction<SgLight>(&PreproTreeExtractor::visitLight);
+    setFunction<SgFog>(&PreproTreeExtractor::visitFog);
+    setFunction<SgCamera>(&PreproTreeExtractor::visitCamera);
+    updateDispatchTable();
+}
 
 }
 
@@ -286,14 +307,7 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 
 PreproTreeExtractor::PreproTreeExtractor()
 {
-    setFunction<PreproTreeExtractor, SgGroup>(&PreproTreeExtractor::visitGroup);
-    setFunction<PreproTreeExtractor, SgTransform>(&PreproTreeExtractor::visitTransform);
-    setFunction<PreproTreeExtractor, SgPreprocessed>(&PreproTreeExtractor::visitPreprocessed);
-    setFunction<PreproTreeExtractor, SgLight>(&PreproTreeExtractor::visitLight);
-    setFunction<PreproTreeExtractor, SgFog>(&PreproTreeExtractor::visitFog);
-    setFunction<PreproTreeExtractor, SgCamera>(&PreproTreeExtractor::visitCamera);
 
-    updateDispatchTable();
 }
 
 
@@ -301,7 +315,7 @@ PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 {
     node = 0;
     found = false;
-    dispatch(snode);
+    functions.dispatch(this, snode);
     return node;
 }
 
@@ -318,7 +332,7 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         node = 0;
         found = false;
 
-        dispatch(*p);
+        functions.dispatch(this, *p);
         
         if(node){
             if(found){

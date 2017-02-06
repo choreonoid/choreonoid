@@ -6,36 +6,96 @@
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
 #include <functional>
-#include <unordered_map>
-#include <typeindex>
 
 namespace cnoid {
 
-template <class Processor, class Object> class PolymorphicFunctionSet
+template<class Processor, class ObjectBase>
+class CNOID_EXPORT PolymorphicFunctionSet
 {
-    typedef std::function<void(Processor& proc, Object* obj)> Function;
-    typedef std::unordered_map<std::type_index, Function> FunctionMap;
-    FunctionMap functions;
+  public:
+    typedef std::function<void(Processor* proc, ObjectBase* obj)> Function;
+    
+  private:
+    std::vector<Function> dispatchTable;
+    std::vector<bool> dispatchTableFixedness;
+    bool isDispatchTableDirty;
 
-    bool callFunctionForType(Processor& proc, const std::type_info& type, Object* object){
-        FunctionMap::iterator p = functions.find(type);
-        if(p != functions.end()){
-            return p->second(proc, object);
-        }
-        return true;
-    }
-                    
-public:
-    template <class Type> void setFunction(FunctionType f) {
-        functions[typeid(Type)] = f;
+  public:
+    PolymorphicFunctionSet() {
+        const int n = ObjectBase::numPolymorphicTypes();
+        dispatchTable.resize(n);
+        dispatchTableFixedness.resize(n, false);
+        isDispatchTableDirty = true;
     }
         
-    bool operator()(Processor& porc, Object* object) {
-        if(!callFunctionForType(porc, typeid(object), object)){
-            return object->callBySuper(
-                [&](const std::type_info& type){ return this->callFunctionForType(proc, type, object); });
+    template <class Object>
+    void setFunction(std::function<void(Processor* proc, ObjectBase* obj)> func){
+        int id = ObjectBase::template findPolymorphicId<Object>();
+        if(id >= 0){
+            if(id >= dispatchTable.size()){
+                dispatchTable.resize(id + 1);
+                dispatchTableFixedness.resize(id + 1, false);
+            }
+            dispatchTable[id] = func;
+            dispatchTableFixedness[id] = true;
+            isDispatchTableDirty = true;
         }
-        return true;
+    }
+
+    template <class Object>
+    void setFunction(std::function<void(Processor* proc, Object* obj)> func){
+        setFunction<Object>(
+            [func](Processor* proc, ObjectBase* obj){ func(proc, static_cast<Object*>(obj)); });
+    }
+
+    void updateDispatchTable() {
+        if(!isDispatchTableDirty){
+            return;
+        }
+        
+        const int numTypes = ObjectBase::numPolymorphicTypes();
+        if(dispatchTable.size() < numTypes){
+            dispatchTable.resize(numTypes);
+            dispatchTableFixedness.resize(numTypes, false);
+        }
+    
+        const int n = dispatchTable.size();
+        for(int i=0; i < n; ++i){
+            if(!dispatchTableFixedness[i]){
+                dispatchTable[i] = nullptr;
+            }
+        }
+        for(int i=0; i < n; ++i){
+            if(!dispatchTable[i]){
+                int id = i;
+                while(true){
+                    int superTypeId = ObjectBase::findSuperTypePolymorphicId(id);
+                    if(superTypeId < 0){
+                        break;
+                    }
+                    if(dispatchTable[superTypeId]){
+                        dispatchTable[i] = dispatchTable[superTypeId];
+                        break;
+                    }
+                    id = superTypeId;
+                }
+            }
+        }
+    }
+
+    void dispatch(Processor* proc, ObjectBase* obj){
+        Function& func = dispatchTable[obj->polymorhicId()];
+        if(func){
+            func(proc, obj);
+        }
+    }
+
+    template <class Object>
+    void dispatch(Processor* proc, Object* obj){
+        Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
+        if(func){
+            func(proc, obj);
+        }
     }
 };
 

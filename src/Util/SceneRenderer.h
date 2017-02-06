@@ -8,7 +8,6 @@
 
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneVisitor>
-#include <cnoid/SceneProcessor>
 #include "exportdecl.h"
 
 namespace cnoid {

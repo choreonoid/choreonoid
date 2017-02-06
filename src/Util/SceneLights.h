@@ -14,7 +14,7 @@ namespace cnoid {
 class CNOID_EXPORT SgLight : public SgPreprocessed
 {
 protected:
-    SgLight();
+    SgLight(int polymorhicId);
     SgLight(const SgLight& org);
         
 public:
@@ -42,6 +42,9 @@ typedef ref_ptr<SgLight> SgLightPtr;
 
 class CNOID_EXPORT SgDirectionalLight : public SgLight
 {
+protected:
+    SgDirectionalLight(int polymorhicId);
+    
 public:
     SgDirectionalLight();
     SgDirectionalLight(const SgDirectionalLight& org);
@@ -60,6 +63,9 @@ typedef ref_ptr<SgDirectionalLight> SgDirectionalLightPtr;
 
 class CNOID_EXPORT SgPointLight : public SgLight
 {
+protected:
+    SgPointLight(int polymorhicId);
+    
 public:
     SgPointLight();
     SgPointLight(const SgPointLight& org);
@@ -85,6 +91,9 @@ typedef ref_ptr<SgPointLight> SgPointLightPtr;
 
 class CNOID_EXPORT SgSpotLight : public SgPointLight
 {
+protected:
+    SgSpotLight(int polymorhicId);
+    
 public:
     SgSpotLight();
     SgSpotLight(const SgSpotLight& org);

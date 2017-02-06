@@ -35,7 +35,6 @@ set(sources
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
-  SceneProcessor.cpp
   SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp
@@ -80,6 +79,7 @@ set(headers
   Deque2D.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
+  PolymorphicFunctionSet.h
   MultiSE3Seq.h
   MultiAffine3Seq.h
   MultiSeq.h

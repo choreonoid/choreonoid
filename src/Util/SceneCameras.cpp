@@ -10,8 +10,8 @@ using namespace std;
 using namespace cnoid;
 
 
-SgCamera::SgCamera()
-    : SgPreprocessed(findTypeNumber<SgCamera>())
+SgCamera::SgCamera(int polymorhicId)
+    : SgPreprocessed(polymorhicId)
 {
     nearClipDistance_ = 0.01;
     farClipDistance_ = 100.0;
@@ -50,9 +50,17 @@ Affine3 SgCamera::positionLookingAt(const Vector3& eye, const Vector3& center, c
 }
 
 
-SgPerspectiveCamera::SgPerspectiveCamera()
+SgPerspectiveCamera::SgPerspectiveCamera(int polymorhicId)
+    : SgCamera(polymorhicId)
 {
     fieldOfView_ = 0.785398;
+}
+
+
+SgPerspectiveCamera::SgPerspectiveCamera()
+    : SgPerspectiveCamera(findPolymorphicId<SgPerspectiveCamera>())
+{
+
 }
 
 
@@ -88,9 +96,17 @@ double SgPerspectiveCamera::fovy(double aspectRatio, double fieldOfView)
 }
 
 
-SgOrthographicCamera::SgOrthographicCamera()
+SgOrthographicCamera::SgOrthographicCamera(int polymorhicId)
+    : SgCamera(polymorhicId)
 {
     height_ = 2.0;
+}
+
+
+SgOrthographicCamera::SgOrthographicCamera()
+    : SgOrthographicCamera(findPolymorphicId<SgOrthographicCamera>())
+{
+
 }
 
 
@@ -114,6 +130,7 @@ void SgOrthographicCamera::accept(SceneVisitor& visitor)
 
 
 namespace {
+
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SgNode::registerType<SgCamera, SgPreprocessed>();
@@ -121,4 +138,5 @@ struct NodeTypeRegistration {
         SgNode::registerType<SgOrthographicCamera, SgCamera>();
     }
 } registration;
+
 }

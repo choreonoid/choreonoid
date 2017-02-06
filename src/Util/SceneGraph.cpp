@@ -144,71 +144,68 @@ typedef std::unordered_map<std::type_index, NodeTypeInfo> NodeTypeInfoMap;
 NodeTypeInfoMap nodeTypeInfoMap;
 */
 
-typedef std::unordered_map<std::type_index, int> NodeTypeIndexMap;
-NodeTypeIndexMap nodeTypeIndexMap;
+typedef std::unordered_map<std::type_index, int> PolymorphicIdMap;
+PolymorphicIdMap polymorphicIdMap;
 
-std::vector<int> superTypeIndexMap;
+std::vector<int> superTypePolymorphicIdMap;
 
 }
 
 int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_info& superType)
 {
-    int superTypeIndex;
-    NodeTypeIndexMap::iterator iter = nodeTypeIndexMap.find(superType);
-    if(iter == nodeTypeIndexMap.end()){
-        superTypeIndex = nodeTypeIndexMap.size();
-        nodeTypeIndexMap[superType] = superTypeIndex;
+    int superTypeId;
+    PolymorphicIdMap::iterator iter = polymorphicIdMap.find(superType);
+    if(iter == polymorphicIdMap.end()){
+        superTypeId = polymorphicIdMap.size();
+        polymorphicIdMap[superType] = superTypeId;
     } else {
-        superTypeIndex = iter->second;
+        superTypeId = iter->second;
     }
-    int typeIndex;
+    int id;
     if(nodeType == superType){
-        typeIndex = superTypeIndex;
+        id = superTypeId;
     } else {
-        typeIndex = nodeTypeIndexMap.size();
-        nodeTypeIndexMap[nodeType] = typeIndex;
-        if(typeIndex >= superTypeIndexMap.size()){
-            superTypeIndexMap.resize(typeIndex + 1, -1);
+        id = polymorphicIdMap.size();
+        polymorphicIdMap[nodeType] = id;
+        if(id >= superTypePolymorphicIdMap.size()){
+            superTypePolymorphicIdMap.resize(id + 1, -1);
         }
-        superTypeIndexMap[typeIndex] = superTypeIndex;
+        superTypePolymorphicIdMap[id] = superTypeId;
     }
 
-    return typeIndex;
+    return id;
 }
 
-int SgNode::findTypeNumber(const std::type_info& nodeType)
+int SgNode::findPolymorphicId(const std::type_info& nodeType)
 {
-    auto iter = nodeTypeIndexMap.find(nodeType);
-    if(iter != nodeTypeIndexMap.end()){
+    auto iter = polymorphicIdMap.find(nodeType);
+    if(iter != polymorphicIdMap.end()){
         return iter->second;
     }
     return -1;
 }
 
 
-int SgNode::findSuperTypeNumber(int typeNumber)
+int SgNode::findSuperTypePolymorphicId(int polymorhicId)
 {
-    return superTypeIndexMap[typeNumber];
+    return superTypePolymorphicIdMap[polymorhicId];
 }
 
 
-int SgNode::numRegistredTypes()
+int SgNode::numPolymorphicTypes()
 {
-    return nodeTypeIndexMap.size();
+    return polymorphicIdMap.size();
 }
-
-
-
 
 
 SgNode::SgNode()
 {
-    typeNumber_ = findTypeNumber<SgNode>();
+    polymorhicId_ = findPolymorphicId<SgNode>();
 }
 
 
-SgNode::SgNode(int typeNumber)
-    : typeNumber_(typeNumber)
+SgNode::SgNode(int polymorhicId)
+    : polymorhicId_(polymorhicId)
 {
 
 }
@@ -216,7 +213,7 @@ SgNode::SgNode(int typeNumber)
 
 SgNode::SgNode(const SgNode& org)
     : SgObject(org),
-      typeNumber_(org.typeNumber_)
+      polymorhicId_(org.polymorhicId_)
 {
 
 }
@@ -254,14 +251,14 @@ bool SgNode::isGroup() const
 
 
 SgGroup::SgGroup()
-    : SgNode(findTypeNumber<SgGroup>())
+    : SgNode(findPolymorphicId<SgGroup>())
 {
     isBboxCacheValid = false;
 }
 
 
-SgGroup::SgGroup(int typeNumber)
-    : SgNode(typeNumber)
+SgGroup::SgGroup(int polymorhicId)
+    : SgNode(polymorhicId)
 {
     isBboxCacheValid = false;
 }
@@ -513,8 +510,8 @@ void SgInvariantGroup::accept(SceneVisitor& visitor)
 }
 
 
-SgTransform::SgTransform(int typeNumber)
-    : SgGroup(typeNumber)
+SgTransform::SgTransform(int polymorhicId)
+    : SgGroup(polymorhicId)
 {
 
 }
@@ -544,7 +541,7 @@ const BoundingBox& SgTransform::untransformedBoundingBox() const
 
 
 SgPosTransform::SgPosTransform()
-    : SgTransform(findTypeNumber<SgPosTransform>()),
+    : SgTransform(findPolymorphicId<SgPosTransform>()),
       T_(Affine3::Identity())
 {
 
@@ -552,7 +549,7 @@ SgPosTransform::SgPosTransform()
 
 
 SgPosTransform::SgPosTransform(const Affine3& T)
-    : SgTransform(findTypeNumber<SgPosTransform>()),
+    : SgTransform(findPolymorphicId<SgPosTransform>()),
       T_(T)
 {
 
@@ -610,14 +607,14 @@ void SgPosTransform::getTransform(Affine3& out_T) const
 
 
 SgScaleTransform::SgScaleTransform()
-    : SgTransform(findTypeNumber<SgPosTransform>())
+    : SgTransform(findPolymorphicId<SgScaleTransform>())
 {
     scale_.setOnes();
 }
 
 
 SgScaleTransform::SgScaleTransform(const Vector3& scale)
-    : SgTransform(findTypeNumber<SgPosTransform>()),
+    : SgTransform(findPolymorphicId<SgScaleTransform>()),
       scale_(scale)
 {
 
@@ -738,8 +735,8 @@ void SgUnpickableGroup::accept(SceneVisitor& visitor)
 }
 
 
-SgPreprocessed::SgPreprocessed(int typeNumber)
-    : SgNode(typeNumber)
+SgPreprocessed::SgPreprocessed(int polymorhicId)
+    : SgNode(polymorhicId)
 {
 
 }
