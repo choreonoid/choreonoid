@@ -35,42 +35,45 @@ void processSwitch(SceneProcessor* proc, SgSwitch* switchNode)
 SceneProcessor::SceneProcessor()
 {
     const int n = SgNode::numRegistredTypes();
-    functions.resize(n);
-    isFunctionSpecified.resize(n, false);
+    dispatchTable.resize(n);
+    dispatchTableFixedness.resize(n, false);
+    isDispatchTableDirty = true;
     
     setFunction<SceneProcessor, SgGroup>(processGroup);
     setFunction<SceneProcessor, SgSwitch>(processSwitch);
 }
 
 
-void SceneProcessor::complementDispatchTable()
+void SceneProcessor::doUpdateDispatchTable()
 {
     const int numRegistredTypes = SgNode::numRegistredTypes();
-    if(functions.size() < numRegistredTypes){
-        functions.resize(numRegistredTypes);
-        isFunctionSpecified.resize(numRegistredTypes, false);
+    if(dispatchTable.size() < numRegistredTypes){
+        dispatchTable.resize(numRegistredTypes);
+        dispatchTableFixedness.resize(numRegistredTypes, false);
     }
     
-    const int n = functions.size();
+    const int n = dispatchTable.size();
     for(int i=0; i < n; ++i){
-        if(!isFunctionSpecified[i]){
-            functions[i] = nullptr;
+        if(!dispatchTableFixedness[i]){
+            dispatchTable[i] = nullptr;
         }
     }
     for(int i=0; i < n; ++i){
-        if(!functions[i]){
+        if(!dispatchTable[i]){
             int index = i;
             while(true){
                 int superIndex = SgNode::findSuperTypeNumber(index);
                 if(superIndex < 0){
                     break;
                 }
-                if(functions[superIndex]){
-                    functions[i] = functions[superIndex];
+                if(dispatchTable[superIndex]){
+                    dispatchTable[i] = dispatchTable[superIndex];
                     break;
                 }
                 index = superIndex;
             }
         }
     }
+    
+    isDispatchTableDirty = false;
 }

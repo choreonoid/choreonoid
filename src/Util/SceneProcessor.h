@@ -16,8 +16,11 @@ public:
     typedef std::function<void(SceneProcessor* proc, SgNode* node)> NodeFunction;
 
 private:
-    std::vector<NodeFunction> functions;;
-    std::vector<bool> isFunctionSpecified;
+    std::vector<NodeFunction> dispatchTable;;
+    std::vector<bool> dispatchTableFixedness;
+    bool isDispatchTableDirty;
+
+    void doUpdateDispatchTable();
     
 public:
     SceneProcessor();
@@ -26,21 +29,26 @@ public:
         void setFunction(std::function<void(ProcessorType* proc, NodeType* node)> func){
         int number = SgNode::findTypeNumber<NodeType>();
         if(number){
-            if(number >= functions.size()){
-                functions.resize(number + 1);
-                isFunctionSpecified.resize(number + 1, false);
+            if(number >= dispatchTable.size()){
+                dispatchTable.resize(number + 1);
+                dispatchTableFixedness.resize(number + 1, false);
             }
-            functions[number] = [func](SceneProcessor* proc, SgNode* node){
+            dispatchTable[number] = [func](SceneProcessor* proc, SgNode* node){
                 func(static_cast<ProcessorType*>(proc), static_cast<NodeType*>(node));
             };
-            isFunctionSpecified[number] = true;
+            dispatchTableFixedness[number] = true;
+            isDispatchTableDirty = true;
         }
     }
 
-    void complementDispatchTable();
+    void updateDispatchTable() {
+        if(isDispatchTableDirty){
+            doUpdateDispatchTable();
+        }
+    }
 
     void dispatch(SgNode* node){
-        NodeFunction& func = functions[node->typeNumber()];
+        NodeFunction& func = dispatchTable[node->typeNumber()];
         if(func){
             func(this, node);
         }
@@ -48,7 +56,7 @@ public:
 
     template <class NodeType>
     void process(SgNode* node){
-        NodeFunction& func = functions[SgNode::findTypeNumber<NodeType>()];
+        NodeFunction& func = dispatchTable[SgNode::findTypeNumber<NodeType>()];
         if(func){
             func(this, node);
         }

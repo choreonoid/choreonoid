@@ -293,7 +293,7 @@ PreproTreeExtractor::PreproTreeExtractor()
     setFunction<PreproTreeExtractor, SgFog>(&PreproTreeExtractor::visitFog);
     setFunction<PreproTreeExtractor, SgCamera>(&PreproTreeExtractor::visitCamera);
 
-    complementDispatchTable();
+    updateDispatchTable();
 }
 
 
