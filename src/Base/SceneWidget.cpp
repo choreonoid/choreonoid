@@ -143,6 +143,7 @@ public:
     CheckBox coordinateAxesCheck;
     CheckBox fpsCheck;
     PushButton fpsTestButton;
+    SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
 
@@ -838,24 +839,28 @@ void SceneWidgetImpl::doFPSTest()
 
     QElapsedTimer timer;
     timer.start();
-    
-    for(double i=1.0; i <= 360.0; i+=1.0){
-        double a = 3.14159265 * i / 180.0;
-        builtinCameraTransform->setTransform(
-            normalizedCameraTransform(
-                Translation3(p) *
-                AngleAxis(a, Vector3::UnitZ()) *
-                Translation3(-p) *
-                C));
-        glDraw();
+
+    const int n = config->fpsTestIterationSpin.value();
+    for(int i=0; i < n; ++i){
+        for(double theta=1.0; theta <= 360.0; theta += 1.0){
+            double a = 3.14159265 * theta / 180.0;
+            builtinCameraTransform->setTransform(
+                normalizedCameraTransform(
+                    Translation3(p) *
+                    AngleAxis(a, Vector3::UnitZ()) *
+                    Translation3(-p) *
+                    C));
+            glDraw();
+        }
     }
 
     double time = timer.elapsed() / 1000.0;
-    fps = 360.0 / time;
+    const int numFrames = n * 360;
+    fps = numFrames / time;
     fpsCounter = 0;
 
     QMessageBox::information(config, _("FPS Test Result"),
-                             QString(_("FPS: %1 frames / %2 [s] = %3")).arg(360).arg(time).arg(fps));
+                             QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
 
     update();
 }
@@ -3184,6 +3189,9 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     fpsTestButton.setText(_("Test"));
     fpsTestButton.sigClicked().connect(std::bind(&SceneWidgetImpl::doFPSTest, impl));
     hbox->addWidget(&fpsTestButton);
+    fpsTestIterationSpin.setRange(1, 99);
+    fpsTestIterationSpin.setValue(1);
+    hbox->addWidget(&fpsTestIterationSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -3267,6 +3275,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("normalVisualization", normalVisualizationCheck.isChecked());
     archive.write("normalLength", normalLengthSpin.value());
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
+    archive.write("fpsTestIteration", fpsTestIterationSpin.value());
     archive.write("showFPS", fpsCheck.isChecked());
     archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
     archive.write("useBufferForPicking", bufferForPickingCheck.isChecked());
@@ -3315,6 +3324,7 @@ void ConfigDialog::restoreState(const Archive& archive)
     normalVisualizationCheck.setChecked(archive.get("normalVisualization", normalVisualizationCheck.isChecked()));
     normalLengthSpin.setValue(archive.get("normalLength", normalLengthSpin.value()));
     coordinateAxesCheck.setChecked(archive.get("coordinateAxes", coordinateAxesCheck.isChecked()));
+    fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
