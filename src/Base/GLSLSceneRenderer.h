@@ -57,7 +57,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
 #ifdef CNOID_USE_DISPATCH_CASTING
     void renderGroup(SgGroup* group);
-    void renderInvariantGroup(SgInvariantGroup* group);
     void renderTransform(SgTransform* transform);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
@@ -67,7 +66,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void renderOutlineGroup(SgOutlineGroup* outline);
 #else
     void renderGroup(SgNode* group);
-    void renderInvariantGroup(SgNode* group);
     void renderTransform(SgNode* transform);
     void renderUnpickableGroup(SgNode* group);
     void renderShape(SgNode* shape);

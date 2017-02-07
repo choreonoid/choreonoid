@@ -127,7 +127,6 @@ typedef ref_ptr<TraversedShape> TraversedShapePtr;
 struct RenderingFunctionSet : public PolymorphicFunctionSet<GLSLSceneRenderer, SgNode> {
     RenderingFunctionSet() {
         setFunction<SgGroup>(&GLSLSceneRenderer::renderGroup);
-        setFunction<SgInvariantGroup>(&GLSLSceneRenderer::renderInvariantGroup);
         setFunction<SgTransform>(&GLSLSceneRenderer::renderTransform);
         setFunction<SgUnpickableGroup>(&GLSLSceneRenderer::renderUnpickableGroup);
         setFunction<SgShape>(&GLSLSceneRenderer::renderShape);
@@ -261,7 +260,6 @@ public:
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickId(SgNode* node, bool doSetColor = true);
     void popPickId();
-    void renderInvariantGroup(SgInvariantGroup* group);
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
     void renderShape(SgShape* shape);
@@ -831,24 +829,8 @@ void GLSLSceneRenderer::renderUnpickableGroup(SgNode* group)
 #endif
 {
     if(!impl->isPicking){
-        impl->renderChildNodes(static_cast<SgUnpickableGroup*>(group));
+        renderGroup(static_cast<SgUnpickableGroup*>(group));
     }
-}
-
-
-#ifdef CNOID_USE_DISPATCH_CASTING
-void GLSLSceneRenderer::renderInvariantGroup(SgInvariantGroup* group)
-#else
-void GLSLSceneRenderer::renderInvariantGroup(SgNode* group)
-#endif
-{
-    impl->renderInvariantGroup(static_cast<SgInvariantGroup*>(group));
-}
-
-
-void GLSLSceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
-{
-    renderChildNodes(group);
 }
 
 
@@ -866,7 +848,7 @@ void GLSLSceneRenderer::renderTransform(SgNode* transform_)
     Affine3Array& modelMatrixStack = impl->modelMatrixStack;
     modelMatrixStack.push_back(modelMatrixStack.back() * T);
 
-    impl->renderChildNodes(transform);
+    renderGroup(transform);
     
     modelMatrixStack.pop_back();
 }
