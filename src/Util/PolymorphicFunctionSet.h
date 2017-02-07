@@ -12,8 +12,6 @@ namespace cnoid {
 template<class Processor, class ObjectBase>
 class PolymorphicFunctionSet
 {
-    static const bool USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES = false;
-    
 public:
     typedef std::function<void(Processor* proc, ObjectBase* obj)> Function;
     
@@ -82,23 +80,12 @@ public:
                 }
             }
         }
-        if(USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES){
-            for(int i=0; i < n; ++i){
-                if(!dispatchTable[i]){
-                    dispatchTable[i] = [](Processor* proc, ObjectBase* obj){ };
-                }
-            }
-        }
     }
 
     void dispatch(Processor* proc, ObjectBase* obj){
-        if(USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES){
-            dispatchTable[obj->polymorhicId()](proc, obj);
-        } else {
-            const Function& func = dispatchTable[obj->polymorhicId()];
-            if(func){
-                func(proc, obj);
-            }
+        const Function& func = dispatchTable[obj->polymorhicId()];
+        if(func){
+            func(proc, obj);
         }
     }
 
