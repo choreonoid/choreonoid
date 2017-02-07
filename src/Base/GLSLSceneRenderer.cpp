@@ -262,14 +262,11 @@ public:
     void popPickId();
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
-    void renderShape(SgShape* shape);
     void renderTransparentShapes();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
-    void renderPointSet(SgPointSet* pointSet);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
-    void renderLineSet(SgLineSet* lineSet);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
     void setDiffuseColor(const Vector3f& color);
@@ -809,46 +806,34 @@ inline void GLSLSceneRendererImpl::popPickId()
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
-void GLSLSceneRenderer::renderGroup(SgGroup* group_)
-#else
-void GLSLSceneRenderer::renderGroup(SgNode* group_)
-#endif
+void GLSLSceneRenderer::renderGroup(SgGroup* group)
 {
-    auto group = static_cast<SgGroup*>(group_);
     impl->pushPickId(group);
     impl->renderChildNodes(group);
     impl->popPickId();
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderUnpickableGroup(SgUnpickableGroup* group)
-#else
-void GLSLSceneRenderer::renderUnpickableGroup(SgNode* group)
-#endif
 {
     if(!impl->isPicking){
-        renderGroup(static_cast<SgUnpickableGroup*>(group));
+        renderGroup(group);
     }
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
-void GLSLSceneRenderer::renderTransform(SgTransform* transform_)
-#elsen
-#endif
-void GLSLSceneRenderer::renderTransform(SgNode* transform_)
+void GLSLSceneRenderer::renderTransform(SgTransform* transform)
 {
-    auto transform = static_cast<SgTransform*>(transform_);
-    
     Affine3 T;
     transform->getTransform(T);
 
     Affine3Array& modelMatrixStack = impl->modelMatrixStack;
     modelMatrixStack.push_back(modelMatrixStack.back() * T);
 
-    renderGroup(transform);
+    // renderGroup(transform);
+    impl->pushPickId(transform);
+    impl->renderChildNodes(transform);
+    impl->popPickId();
     
     modelMatrixStack.pop_back();
 }
@@ -881,17 +866,7 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderShape(SgShape* shape)
-#else
-void GLSLSceneRenderer::renderShape(SgNode* shape)
-#endif
-{
-    impl->renderShape(static_cast<SgShape*>(shape));
-}
-
-
-void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
@@ -899,23 +874,23 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
         if(material && material->transparency() > 0.0){
             TraversedShapePtr traversed = new TraversedShape();
             traversed->shape = shape;
-            traversed->modelMatrix = modelMatrixStack.back();
-            traversed->pickId = pushPickId(shape, false);
-            popPickId();
-            if(!isRenderingShadowMap){
-                transparentShapes.push_back(traversed);
+            traversed->modelMatrix = impl->modelMatrixStack.back();
+            traversed->pickId = impl->pushPickId(shape, false);
+            impl->popPickId();
+            if(!impl->isRenderingShadowMap){
+                impl->transparentShapes.push_back(traversed);
             }
         } else {
-            if(!isPicking){
-                renderMaterial(shape->material());
+            if(!impl->isPicking){
+                impl->renderMaterial(shape->material());
             }
-            ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh, modelMatrixStack.back());
+            ShapeHandleSet* handleSet = impl->getOrCreateShapeHandleSet(mesh, impl->modelMatrixStack.back());
             if(!handleSet->isValid()){
-                createMeshVertexArray(mesh, handleSet);
+                impl->createMeshVertexArray(mesh, handleSet);
             }
-            pushPickId(shape);
+            impl->pushPickId(shape);
             glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
-            popPickId();
+            impl->popPickId();
         }
     }
 }
@@ -1054,34 +1029,24 @@ static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderPointSet(SgPointSet* pointSet)
-#else
-void GLSLSceneRenderer::renderPointSet(SgNode* pointSet)
-#endif
-{
-    impl->renderPointSet(static_cast<SgPointSet*>(pointSet));
-}
-
-
-void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
     }
 
-    pushProgram(solidColorProgram, false);
+    impl->pushProgram(impl->solidColorProgram, false);
 
     const double s = pointSet->pointSize();
     if(s > 0.0){
-        setPointSize(s);
+        impl->setPointSize(s);
     } else {
-        setPointSize(defaultPointSize);
+        impl->setPointSize(impl->defaultPointSize);
     }
     
-    renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
+    impl->renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
 
-    popProgram();
+    impl->popProgram();
 }
 
 
@@ -1155,19 +1120,9 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderLineSet(SgLineSet* lineSet)
-#else
-void GLSLSceneRenderer::renderLineSet(SgNode* lineSet)
-#endif
 {
-    impl->renderLineSet(static_cast<SgLineSet*>(lineSet));
-}
-
-
-void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
-{
-    if(isRenderingShadowMap){
+    if(impl->isRenderingShadowMap){
         return;
     }
     
@@ -1175,26 +1130,22 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
         return;
     }
 
-    pushProgram(solidColorProgram, false);
+    impl->pushProgram(impl->solidColorProgram, false);
     
     const double w = lineSet->lineWidth();
     if(w > 0.0){
-        setLineWidth(w);
+        impl->setLineWidth(w);
     } else {
-        setLineWidth(defaultLineWidth);
+        impl->setLineWidth(impl->defaultLineWidth);
     }
 
-    renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
+    impl->renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
 
-    popProgram();
+    impl->popProgram();
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderOverlay(SgOverlay* overlay)
-#else
-void GLSLSceneRenderer::renderOverlay(SgNode* overlay)
-#endif
 {
     if(isPicking()){
         return;
@@ -1203,13 +1154,9 @@ void GLSLSceneRenderer::renderOverlay(SgNode* overlay)
 }
 
 
-#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
-#else
-void GLSLSceneRenderer::renderOutlineGroup(SgNode* outline)
-#endif
 {
-    impl->renderChildNodes(static_cast<SgOutlineGroup*>(outline));
+    renderGroup(outline);
 }
 
 

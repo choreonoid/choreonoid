@@ -9,8 +9,6 @@
 #include <cnoid/GLSceneRenderer>
 #include "exportdecl.h"
 
-//#define CNOID_USE_DISPATCH_CASTING
-
 namespace cnoid {
 
 class GLSLSceneRendererImpl;
@@ -55,7 +53,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void requestToClearCache();
     virtual void enableUnusedCacheCheck(bool on);
 
-#ifdef CNOID_USE_DISPATCH_CASTING
     void renderGroup(SgGroup* group);
     void renderTransform(SgTransform* transform);
     void renderUnpickableGroup(SgUnpickableGroup* group);
@@ -64,16 +61,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
-#else
-    void renderGroup(SgNode* group);
-    void renderTransform(SgNode* transform);
-    void renderUnpickableGroup(SgNode* group);
-    void renderShape(SgNode* shape);
-    void renderPointSet(SgNode* pointSet);        
-    void renderLineSet(SgNode* lineSet);        
-    void renderOverlay(SgNode* overlay);
-    void renderOutlineGroup(SgNode* outline);
-#endif
 
     bool isPicking();
     virtual void setColor(const Vector3f& color);

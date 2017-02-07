@@ -311,16 +311,13 @@ public:
     void renderInvariantGroup(SgInvariantGroup* group);
     void renderDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID);
     void renderShape(SgShape* shape);
-    void renderPointSet(SgPointSet* pointSet);
     void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
-    void renderLineSet(SgLineSet* lineSet);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void putMeshData(SgMesh* mesh);
     void renderMesh(SgMesh* mesh, bool hasTexture);
     void renderTransparentShapes();
     void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
-    void renderOutlineGroup(SgOutlineGroup* outline);
 
     void clearGLState();
     void setColor(const Vector3f& color);
@@ -911,7 +908,7 @@ void GL1SceneRenderer::renderInvariantGroup(SgInvariantGroup* group)
 void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {
     if(!USE_DISPLAY_LISTS || isCompiling){
-        renderChildNodes(group);
+        self->renderGroup(group);
 
     } else {
         DisplayListCache* cache;
@@ -992,7 +989,7 @@ void GL1SceneRendererImpl::renderDisplayListSubTree(SgInvariantGroup* group, Dis
     auto orgNextCacheMap = nextCacheMap;
     nextCacheMap = &cache->cacheMap;
     clearGLState();
-    renderChildNodes(group);
+    self->renderGroup(group);
     nextCacheMap = orgNextCacheMap;
     isCompiling = false;
     glEndList();
@@ -1016,8 +1013,11 @@ void GL1SceneRenderer::renderTransform(SgTransform* transform)
       glEnable(GL_NORMALIZE);
       }
     */
-    
+
+    // impl->renderGroup(transform);
+    impl->pushPickName(transform);
     impl->renderChildNodes(transform);
+    impl->popPickName();
     
     /*
       if(isNotRotationMatrix){
@@ -1078,7 +1078,7 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
 void GL1SceneRenderer::renderUnpickableGroup(SgUnpickableGroup* group)
 {
     if(!impl->isPicking){
-        impl->renderChildNodes(group);
+        renderGroup(group);
     }
 }
 
@@ -1611,22 +1611,16 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
 
 void GL1SceneRenderer::renderPointSet(SgPointSet* pointSet)
 {
-    impl->renderPointSet(pointSet);
-}
-
-
-void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
-{
     if(!pointSet->hasVertices()){
         return;
     }
     const double s = pointSet->pointSize();
     if(s > 0.0){
-        setPointSize(s);
+        impl->setPointSize(s);
     }
-    renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
+    impl->renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
     if(s > 0.0){
-        setPointSize(s);
+        impl->setPointSize(s);
     }
 }
 
@@ -1714,19 +1708,13 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
 
 void GL1SceneRenderer::renderLineSet(SgLineSet* lineSet)
 {
-    impl->renderLineSet(lineSet);
-}
-
-
-void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
-{
     const int n = lineSet->numLines();
     if(!lineSet->hasVertices() || (n <= 0)){
         return;
     }
 
     const SgVertexArray& orgVertices = *lineSet->vertices();
-    SgVertexArray& vertices = buf->vertices;
+    SgVertexArray& vertices = impl->buf->vertices;
     vertices.clear();
     vertices.reserve(n * 2);
     for(int i=0; i < n; ++i){
@@ -1737,11 +1725,11 @@ void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
     const double w = lineSet->lineWidth();
     if(w > 0.0){
-        setLineWidth(w);
+        impl->setLineWidth(w);
     }
-    renderPlot(lineSet, vertices, GL_LINES);
+    impl->renderPlot(lineSet, vertices, GL_LINES);
     if(w > 0.0){
-        setLineWidth(defaultLineWidth);
+        impl->setLineWidth(impl->defaultLineWidth);
     }
 }
 
@@ -1775,7 +1763,7 @@ void GL1SceneRenderer::renderOverlay(SgOverlay* overlay)
     glLoadIdentity();
     glOrtho(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar);
 
-    impl->renderChildNodes(overlay);
+    renderGroup(overlay);
     
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -1788,12 +1776,6 @@ void GL1SceneRenderer::renderOverlay(SgOverlay* overlay)
 
 void GL1SceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
 {
-    impl->renderOutlineGroup(outline);
-}
-
-
-void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outlineGroup)
-{
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
 
@@ -1802,26 +1784,26 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outlineGroup)
     glStencilFunc(GL_ALWAYS, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-    renderChildNodes(outlineGroup);
+    impl->renderChildNodes(outline);
 
     glStencilFunc(GL_NOTEQUAL, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     glPushAttrib(GL_POLYGON_BIT);
-    glLineWidth(outlineGroup->lineWidth()*2+1);
+    glLineWidth(outline->lineWidth()*2+1);
     glPolygonMode(GL_FRONT, GL_LINE);
-    setColor(outlineGroup->color());
-    enableColorMaterial(true);
+    impl->setColor(outline->color());
+    impl->enableColorMaterial(true);
 
-    renderChildNodes(outlineGroup);
+    impl->renderChildNodes(outline);
 
-    enableColorMaterial(false);
-    setLineWidth(lineWidth);
+    impl->enableColorMaterial(false);
+    impl->setLineWidth(impl->lineWidth);
     glPopAttrib();
 
     glDisable(GL_STENCIL_TEST);
 
-    clearGLState();
+    impl->clearGLState();
 }
 
 

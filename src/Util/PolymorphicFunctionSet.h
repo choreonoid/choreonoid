@@ -6,14 +6,13 @@
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
 #include <functional>
-#include <iostream>
 
 namespace cnoid {
 
 template<class Processor, class ObjectBase>
-class CNOID_EXPORT PolymorphicFunctionSet
+class PolymorphicFunctionSet
 {
-    static const bool USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES = true;
+    static const bool USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES = false;
     
 public:
     typedef std::function<void(Processor* proc, ObjectBase* obj)> Function;
