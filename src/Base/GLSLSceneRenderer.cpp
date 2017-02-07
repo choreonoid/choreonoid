@@ -20,6 +20,8 @@
 using namespace std;
 using namespace cnoid;
 
+using namespace std::placeholders;
+
 namespace {
 
 const bool SHOW_IMAGE_FOR_PICKING = false;
@@ -124,21 +126,6 @@ struct TraversedShape : public Referenced
 };
 typedef ref_ptr<TraversedShape> TraversedShapePtr;
 
-struct RenderingFunctionSet : public PolymorphicFunctionSet<GLSLSceneRenderer, SgNode> {
-    RenderingFunctionSet() {
-        setFunction<SgGroup>(&GLSLSceneRenderer::renderGroup);
-        setFunction<SgTransform>(&GLSLSceneRenderer::renderTransform);
-        setFunction<SgUnpickableGroup>(&GLSLSceneRenderer::renderUnpickableGroup);
-        setFunction<SgShape>(&GLSLSceneRenderer::renderShape);
-        setFunction<SgPointSet>(&GLSLSceneRenderer::renderPointSet);
-        setFunction<SgLineSet>(&GLSLSceneRenderer::renderLineSet);
-        setFunction<SgOverlay>(&GLSLSceneRenderer::renderOverlay);
-        setFunction<SgOutlineGroup>(&GLSLSceneRenderer::renderOutlineGroup);
-        updateDispatchTable();
-    }
-};
-RenderingFunctionSet renderingFunctions;
-
 }
 
 
@@ -150,6 +137,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     GLSLSceneRenderer* self;
+
+    PolymorphicFunctionSet<SgNode> renderingFunctions;
 
     GLint defaultFBO;
 
@@ -237,7 +226,7 @@ public:
 
     void renderChildNodes(SgGroup* group){
         for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            renderingFunctions.dispatch(self, *p);
+            renderingFunctions.dispatch(*p);
         }
     }
     
@@ -260,6 +249,14 @@ public:
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickId(SgNode* node, bool doSetColor = true);
     void popPickId();
+    void renderGroup(SgGroup* group);
+    void renderTransform(SgTransform* transform);
+    void renderUnpickableGroup(SgUnpickableGroup* group);
+    void renderShape(SgShape* shape);
+    void renderPointSet(SgPointSet* pointSet);        
+    void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOutlineGroup(SgOutlineGroup* outline);
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
     void renderTransparentShapes();
@@ -332,6 +329,25 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     clearGLState();
 
     os_ = &nullout();
+
+    renderingFunctions.setFunction<SgGroup>(
+        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+    renderingFunctions.setFunction<SgTransform>(
+        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+    renderingFunctions.setFunction<SgUnpickableGroup>(
+        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+    renderingFunctions.setFunction<SgShape>(
+        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+    renderingFunctions.setFunction<SgPointSet>(
+        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+    renderingFunctions.setFunction<SgLineSet>(
+        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+    renderingFunctions.setFunction<SgOverlay>(
+        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+    renderingFunctions.setFunction<SgOutlineGroup>(
+        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+
+    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -629,7 +645,7 @@ void GLSLSceneRendererImpl::renderSceneGraphNodes()
         }
     }
 
-    renderingFunctions.dispatch(self, self->sceneRoot());
+    renderingFunctions.dispatch(self->sceneRoot());
 }
 
 
@@ -806,34 +822,33 @@ inline void GLSLSceneRendererImpl::popPickId()
 }
 
 
-void GLSLSceneRenderer::renderGroup(SgGroup* group)
+void GLSLSceneRendererImpl::renderGroup(SgGroup* group)
 {
-    impl->pushPickId(group);
-    impl->renderChildNodes(group);
-    impl->popPickId();
+    pushPickId(group);
+    renderChildNodes(group);
+    popPickId();
 }
 
 
-void GLSLSceneRenderer::renderUnpickableGroup(SgUnpickableGroup* group)
+void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!impl->isPicking){
+    if(!isPicking){
         renderGroup(group);
     }
 }
 
 
-void GLSLSceneRenderer::renderTransform(SgTransform* transform)
+void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
     transform->getTransform(T);
 
-    Affine3Array& modelMatrixStack = impl->modelMatrixStack;
     modelMatrixStack.push_back(modelMatrixStack.back() * T);
 
     // renderGroup(transform);
-    impl->pushPickId(transform);
-    impl->renderChildNodes(transform);
-    impl->popPickId();
+    pushPickId(transform);
+    renderChildNodes(transform);
+    popPickId();
     
     modelMatrixStack.pop_back();
 }
@@ -866,7 +881,7 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
 }
 
 
-void GLSLSceneRenderer::renderShape(SgShape* shape)
+void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
@@ -874,23 +889,23 @@ void GLSLSceneRenderer::renderShape(SgShape* shape)
         if(material && material->transparency() > 0.0){
             TraversedShapePtr traversed = new TraversedShape();
             traversed->shape = shape;
-            traversed->modelMatrix = impl->modelMatrixStack.back();
-            traversed->pickId = impl->pushPickId(shape, false);
-            impl->popPickId();
-            if(!impl->isRenderingShadowMap){
-                impl->transparentShapes.push_back(traversed);
+            traversed->modelMatrix = modelMatrixStack.back();
+            traversed->pickId = pushPickId(shape, false);
+            popPickId();
+            if(!isRenderingShadowMap){
+                transparentShapes.push_back(traversed);
             }
         } else {
-            if(!impl->isPicking){
-                impl->renderMaterial(shape->material());
+            if(!isPicking){
+                renderMaterial(shape->material());
             }
-            ShapeHandleSet* handleSet = impl->getOrCreateShapeHandleSet(mesh, impl->modelMatrixStack.back());
+            ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh, modelMatrixStack.back());
             if(!handleSet->isValid()){
-                impl->createMeshVertexArray(mesh, handleSet);
+                createMeshVertexArray(mesh, handleSet);
             }
-            impl->pushPickId(shape);
+            pushPickId(shape);
             glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
-            impl->popPickId();
+            popPickId();
         }
     }
 }
@@ -1029,24 +1044,24 @@ static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
 }
 
 
-void GLSLSceneRenderer::renderPointSet(SgPointSet* pointSet)
+void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
     }
 
-    impl->pushProgram(impl->solidColorProgram, false);
+    pushProgram(solidColorProgram, false);
 
     const double s = pointSet->pointSize();
     if(s > 0.0){
-        impl->setPointSize(s);
+        setPointSize(s);
     } else {
-        impl->setPointSize(impl->defaultPointSize);
+        setPointSize(defaultPointSize);
     }
     
-    impl->renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
+    renderPlot(pointSet, GL_POINTS, std::bind(getPointSetVertices, pointSet));
 
-    impl->popProgram();
+    popProgram();
 }
 
 
@@ -1120,9 +1135,9 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 }
 
 
-void GLSLSceneRenderer::renderLineSet(SgLineSet* lineSet)
+void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 {
-    if(impl->isRenderingShadowMap){
+    if(isRenderingShadowMap){
         return;
     }
     
@@ -1130,31 +1145,31 @@ void GLSLSceneRenderer::renderLineSet(SgLineSet* lineSet)
         return;
     }
 
-    impl->pushProgram(impl->solidColorProgram, false);
+    pushProgram(solidColorProgram, false);
     
     const double w = lineSet->lineWidth();
     if(w > 0.0){
-        impl->setLineWidth(w);
+        setLineWidth(w);
     } else {
-        impl->setLineWidth(impl->defaultLineWidth);
+        setLineWidth(defaultLineWidth);
     }
 
-    impl->renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
+    renderPlot(lineSet, GL_LINES, std::bind(getLineSetVertices, lineSet));
 
-    impl->popProgram();
+    popProgram();
 }
 
 
-void GLSLSceneRenderer::renderOverlay(SgOverlay* overlay)
+void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-    if(isPicking()){
+    if(isPicking){
         return;
     }
     
 }
 
 
-void GLSLSceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
+void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 {
     renderGroup(outline);
 }

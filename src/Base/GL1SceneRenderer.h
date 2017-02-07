@@ -55,16 +55,6 @@ public:
     */
     void enableUnusedCacheCheck(bool on);
 
-    void renderGroup(SgGroup* group);
-    void renderInvariantGroup(SgInvariantGroup* group);
-    void renderTransform(SgTransform* transform);
-    void renderUnpickableGroup(SgUnpickableGroup* group);
-    void renderShape(SgShape* shape);
-    void renderPointSet(SgPointSet* pointSet);        
-    void renderLineSet(SgLineSet* lineSet);        
-    void renderOverlay(SgOverlay* overlay);
-    void renderOutlineGroup(SgOutlineGroup* outline);
-
     bool isPicking();
     virtual void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);

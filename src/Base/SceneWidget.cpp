@@ -775,11 +775,11 @@ void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
     glMultMatrixd(inv.data());
 
     renderer.setColor(Vector3f(1.0,0.0,0.0));
-    renderer.renderTransform(xAxis);
+    //renderer.renderTransform(xAxis);
     renderer.setColor(Vector3f(0.0,1.0,0.0));
-    renderer.renderTransform(yAxis);
+    //renderer.renderTransform(yAxis);
     renderer.setColor(Vector3f(0.4,0.6,1.0));
-    renderer.renderTransform(zAxis);
+    //renderer.renderTransform(zAxis);
     
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

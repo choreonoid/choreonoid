@@ -39,19 +39,7 @@ struct PreproNode
 
 class PreproTreeExtractor
 {
-    struct NodeFunctionSet : public PolymorphicFunctionSet<PreproTreeExtractor, SgNode> {
-        NodeFunctionSet() {
-            setFunction<SgGroup>(&PreproTreeExtractor::visitGroup);
-            setFunction<SgTransform>(&PreproTreeExtractor::visitTransform);
-            setFunction<SgPreprocessed>(&PreproTreeExtractor::visitPreprocessed);
-            setFunction<SgLight>(&PreproTreeExtractor::visitLight);
-            setFunction<SgFog>(&PreproTreeExtractor::visitFog);
-            setFunction<SgCamera>(&PreproTreeExtractor::visitCamera);
-            updateDispatchTable();
-        }
-    };
-    static NodeFunctionSet functions;
-        
+    PolymorphicFunctionSet<SgNode> functions;
     PreproNode* node;
     bool found;
     
@@ -71,8 +59,6 @@ public:
     void visitCamera(SgNode* camera);
 };
 
-PreproTreeExtractor::NodeFunctionSet PreproTreeExtractor::functions;
-        
 }
 
 namespace cnoid {
@@ -309,7 +295,13 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 
 PreproTreeExtractor::PreproTreeExtractor()
 {
-
+    functions.setFunction<SgGroup>([&](SgNode* node){ visitGroup(node); });
+    functions.setFunction<SgTransform>([&](SgNode* node){ visitTransform(node); });
+    functions.setFunction<SgPreprocessed>([&](SgNode* node){ visitPreprocessed(node); });
+    functions.setFunction<SgLight>([&](SgNode* node){ visitLight(node); });
+    functions.setFunction<SgFog>([&](SgNode* node){ visitFog(node); });
+    functions.setFunction<SgCamera>([&](SgNode* node){ visitCamera(node); });
+    functions.updateDispatchTable();
 }
 
 
@@ -317,7 +309,7 @@ PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 {
     node = 0;
     found = false;
-    functions.dispatch(this, snode);
+    functions.dispatch(snode);
     return node;
 }
 
@@ -336,7 +328,7 @@ void PreproTreeExtractor::visitGroup(SgNode* group_)
         node = 0;
         found = false;
 
-        functions.dispatch(this, *p);
+        functions.dispatch(*p);
         
         if(node){
             if(found){

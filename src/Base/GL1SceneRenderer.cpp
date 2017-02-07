@@ -143,23 +143,6 @@ public:
 };
 typedef ref_ptr<TextureCache> TextureCachePtr;
 
-struct RenderingFunctionSet : public PolymorphicFunctionSet<GL1SceneRenderer, SgNode> {
-    RenderingFunctionSet() {
-        setFunction<SgGroup>(&GL1SceneRenderer::renderGroup);
-        setFunction<SgInvariantGroup>(&GL1SceneRenderer::renderInvariantGroup);
-        setFunction<SgTransform>(&GL1SceneRenderer::renderTransform);
-        setFunction<SgUnpickableGroup>(&GL1SceneRenderer::renderUnpickableGroup);
-        setFunction<SgShape>(&GL1SceneRenderer::renderShape);
-        setFunction<SgPointSet>(&GL1SceneRenderer::renderPointSet);
-        setFunction<SgLineSet>(&GL1SceneRenderer::renderLineSet);
-        setFunction<SgOverlay>(&GL1SceneRenderer::renderOverlay);
-        setFunction<SgOutlineGroup>(&GL1SceneRenderer::renderOutlineGroup);
-        updateDispatchTable();
-    }
-};
-RenderingFunctionSet renderingFunctions;
-
-
 }
 
 namespace cnoid {
@@ -171,6 +154,8 @@ public:
         
     GL1SceneRenderer* self;
 
+    PolymorphicFunctionSet<SgNode> renderingFunctions;
+    
     Affine3Array Vstack; // stack of the model/view matrices
 
     typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f> > ColorArray;
@@ -281,7 +266,7 @@ public:
 
     void renderChildNodes(SgGroup* group){
         for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            renderingFunctions.dispatch(self, *p);
+            renderingFunctions.dispatch(*p);
         }
     }
     
@@ -308,17 +293,24 @@ public:
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
     void popPickName();
+
+    void renderGroup(SgGroup* group);
     void renderInvariantGroup(SgInvariantGroup* group);
     void renderDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID);
+    void renderTransform(SgTransform* transform);
     void renderShape(SgShape* shape);
-    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
+    void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
+    void renderTransparentShapes();
     void putMeshData(SgMesh* mesh);
     void renderMesh(SgMesh* mesh, bool hasTexture);
-    void renderTransparentShapes();
     void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
-
+    void renderPointSet(SgPointSet* pointSet);
+    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
+    void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
     void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);
@@ -398,6 +390,27 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     clearGLState();
 
     os_ = &nullout();
+
+    renderingFunctions.setFunction<SgGroup>(
+        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+    renderingFunctions.setFunction<SgInvariantGroup>(
+        [&](SgNode* node){ renderGroup(static_cast<SgInvariantGroup*>(node)); });
+    renderingFunctions.setFunction<SgTransform>(
+        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+    renderingFunctions.setFunction<SgUnpickableGroup>(
+        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+    renderingFunctions.setFunction<SgShape>(
+        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+    renderingFunctions.setFunction<SgPointSet>(
+        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+    renderingFunctions.setFunction<SgLineSet>(
+        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+    renderingFunctions.setFunction<SgOverlay>(
+        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+    renderingFunctions.setFunction<SgOutlineGroup>(
+        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+
+    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -771,7 +784,7 @@ void GL1SceneRendererImpl::render()
 {
     beginRendering(true);
 
-    renderingFunctions.dispatch(self, self->sceneRoot());
+    renderingFunctions.dispatch(self->sceneRoot());
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();
@@ -891,24 +904,18 @@ inline void GL1SceneRendererImpl::popPickName()
 }
 
 
-void GL1SceneRenderer::renderGroup(SgGroup* group)
+void GL1SceneRendererImpl::renderGroup(SgGroup* group)
 {
-    impl->pushPickName(group);
-    impl->renderChildNodes(group);
-    impl->popPickName();
-}
-
-
-void GL1SceneRenderer::renderInvariantGroup(SgInvariantGroup* group)
-{
-    impl->renderInvariantGroup(group);
+    pushPickName(group);
+    renderChildNodes(group);
+    popPickName();
 }
 
 
 void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {
     if(!USE_DISPLAY_LISTS || isCompiling){
-        self->renderGroup(group);
+        renderGroup(group);
 
     } else {
         DisplayListCache* cache;
@@ -989,19 +996,18 @@ void GL1SceneRendererImpl::renderDisplayListSubTree(SgInvariantGroup* group, Dis
     auto orgNextCacheMap = nextCacheMap;
     nextCacheMap = &cache->cacheMap;
     clearGLState();
-    self->renderGroup(group);
+    renderGroup(group);
     nextCacheMap = orgNextCacheMap;
     isCompiling = false;
     glEndList();
 }    
 
 
-void GL1SceneRenderer::renderTransform(SgTransform* transform)
+void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
     transform->getTransform(T);
 
-    Affine3Array& Vstack = impl->Vstack;
     Vstack.push_back(Vstack.back() * T);
 
     glPushMatrix();
@@ -1014,10 +1020,10 @@ void GL1SceneRenderer::renderTransform(SgTransform* transform)
       }
     */
 
-    // impl->renderGroup(transform);
-    impl->pushPickName(transform);
-    impl->renderChildNodes(transform);
-    impl->popPickName();
+    // renderGroup(transform);
+    pushPickName(transform);
+    renderChildNodes(transform);
+    popPickName();
     
     /*
       if(isNotRotationMatrix){
@@ -1075,17 +1081,11 @@ void GL1SceneRendererImpl::renderShape(SgShape* shape)
 }
 
 
-void GL1SceneRenderer::renderUnpickableGroup(SgUnpickableGroup* group)
+void GL1SceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!impl->isPicking){
+    if(!isPicking){
         renderGroup(group);
     }
-}
-
-
-void GL1SceneRenderer::renderShape(SgShape* shape)
-{
-    impl->renderShape(shape);
 }
 
 
@@ -1609,18 +1609,18 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
 }
 
 
-void GL1SceneRenderer::renderPointSet(SgPointSet* pointSet)
+void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
     }
     const double s = pointSet->pointSize();
     if(s > 0.0){
-        impl->setPointSize(s);
+        setPointSize(s);
     }
-    impl->renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
+    renderPlot(pointSet, *pointSet->vertices(), (GLenum)GL_POINTS);
     if(s > 0.0){
-        impl->setPointSize(s);
+        setPointSize(s);
     }
 }
 
@@ -1706,7 +1706,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
 }
 
 
-void GL1SceneRenderer::renderLineSet(SgLineSet* lineSet)
+void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 {
     const int n = lineSet->numLines();
     if(!lineSet->hasVertices() || (n <= 0)){
@@ -1714,7 +1714,7 @@ void GL1SceneRenderer::renderLineSet(SgLineSet* lineSet)
     }
 
     const SgVertexArray& orgVertices = *lineSet->vertices();
-    SgVertexArray& vertices = impl->buf->vertices;
+    SgVertexArray& vertices = buf->vertices;
     vertices.clear();
     vertices.reserve(n * 2);
     for(int i=0; i < n; ++i){
@@ -1725,18 +1725,18 @@ void GL1SceneRenderer::renderLineSet(SgLineSet* lineSet)
 
     const double w = lineSet->lineWidth();
     if(w > 0.0){
-        impl->setLineWidth(w);
+        setLineWidth(w);
     }
-    impl->renderPlot(lineSet, vertices, GL_LINES);
+    renderPlot(lineSet, vertices, GL_LINES);
     if(w > 0.0){
-        impl->setLineWidth(impl->defaultLineWidth);
+        setLineWidth(defaultLineWidth);
     }
 }
 
 
-void GL1SceneRenderer::renderOverlay(SgOverlay* overlay)
+void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-    if(isPicking()){
+    if(isPicking){
         return;
     }
     
@@ -1755,7 +1755,7 @@ void GL1SceneRenderer::renderOverlay(SgOverlay* overlay)
     v.zNear = 1.0;
     v.zFar = -1.0;
 
-    const Array4i vp = viewport();
+    const Array4i vp = self->viewport();
     overlay->calcViewVolume(vp[2], vp[3], v);
 
     glMatrixMode(GL_PROJECTION);
@@ -1774,7 +1774,7 @@ void GL1SceneRenderer::renderOverlay(SgOverlay* overlay)
 }
 
 
-void GL1SceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
+void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 {
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
@@ -1784,7 +1784,7 @@ void GL1SceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
     glStencilFunc(GL_ALWAYS, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-    impl->renderChildNodes(outline);
+    renderChildNodes(outline);
 
     glStencilFunc(GL_NOTEQUAL, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -1792,18 +1792,18 @@ void GL1SceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
     glPushAttrib(GL_POLYGON_BIT);
     glLineWidth(outline->lineWidth()*2+1);
     glPolygonMode(GL_FRONT, GL_LINE);
-    impl->setColor(outline->color());
-    impl->enableColorMaterial(true);
+    setColor(outline->color());
+    enableColorMaterial(true);
 
-    impl->renderChildNodes(outline);
+    renderChildNodes(outline);
 
-    impl->enableColorMaterial(false);
-    impl->setLineWidth(impl->lineWidth);
+    enableColorMaterial(false);
+    setLineWidth(lineWidth);
     glPopAttrib();
 
     glDisable(GL_STENCIL_TEST);
 
-    impl->clearGLState();
+    clearGLState();
 }
 
 

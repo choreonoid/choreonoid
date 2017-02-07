@@ -9,11 +9,11 @@
 
 namespace cnoid {
 
-template<class Processor, class ObjectBase>
+template<class ObjectBase>
 class PolymorphicFunctionSet
 {
 public:
-    typedef std::function<void(Processor* proc, ObjectBase* obj)> Function;
+    typedef std::function<void(ObjectBase* obj)> Function;
     
 private:
     std::vector<Function> dispatchTable;
@@ -43,8 +43,8 @@ public:
     }
 
     template <class Object>
-    void setFunction(std::function<void(Processor* proc, Object* obj)> func){
-        setFunction<Object>([func](Processor* proc, ObjectBase* obj){ func(proc, static_cast<Object*>(obj)); });
+    void setFunction(std::function<void(Object* obj)> func){
+        setFunction<Object>([func](ObjectBase* obj){ func(static_cast<Object*>(obj)); });
     }
 
     void updateDispatchTable() {
@@ -82,18 +82,18 @@ public:
         }
     }
 
-    void dispatch(Processor* proc, ObjectBase* obj){
+    void dispatch(ObjectBase* obj){
         const Function& func = dispatchTable[obj->polymorhicId()];
         if(func){
-            func(proc, obj);
+            func(obj);
         }
     }
 
     template <class Object>
-    void dispatchAs(Processor* proc, Object* obj){
+    void dispatchAs(Object* obj){
         const Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
         if(func){
-            func(proc, obj);
+            func(obj);
         }
     }
 };
