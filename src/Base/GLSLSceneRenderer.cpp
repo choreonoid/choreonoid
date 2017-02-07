@@ -239,7 +239,6 @@ public:
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickId(SgNode* node, bool doSetColor = true);
     void popPickId();
-    void visitInvariantGroup(SgInvariantGroup* group);
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
     void visitShape(SgShape* shape);
@@ -793,7 +792,9 @@ inline void GLSLSceneRendererImpl::popPickId()
 void GLSLSceneRenderer::visitGroup(SgGroup* group)
 {
     impl->pushPickId(group);
-    SceneVisitor::visitGroup(group);
+    for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+        (*p)->accept(*this);
+    }
     impl->popPickId();
 }
 
@@ -808,13 +809,7 @@ void GLSLSceneRenderer::visitUnpickableGroup(SgUnpickableGroup* group)
 
 void GLSLSceneRenderer::visitInvariantGroup(SgInvariantGroup* group)
 {
-    impl->visitInvariantGroup(group);
-}
-
-
-void GLSLSceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
-{
-    self->visitGroup(group);
+    visitGroup(group);
 }
 
 
