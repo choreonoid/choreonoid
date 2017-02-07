@@ -811,25 +811,38 @@ inline void GLSLSceneRendererImpl::popPickId()
 }
 
 
-void GLSLSceneRenderer::renderGroup(SgGroup* group)
+#ifdef CNOID_USE_DISPATCH_CASTING
+void GLSLSceneRenderer::renderGroup(SgGroup* group_)
+#else
+void GLSLSceneRenderer::renderGroup(SgNode* group_)
+#endif
 {
+    auto group = static_cast<SgGroup*>(group_);
     impl->pushPickId(group);
     impl->renderChildNodes(group);
     impl->popPickId();
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderUnpickableGroup(SgUnpickableGroup* group)
+#else
+void GLSLSceneRenderer::renderUnpickableGroup(SgNode* group)
+#endif
 {
     if(!impl->isPicking){
-        impl->renderChildNodes(group);
+        impl->renderChildNodes(static_cast<SgUnpickableGroup*>(group));
     }
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderInvariantGroup(SgInvariantGroup* group)
+#else
+void GLSLSceneRenderer::renderInvariantGroup(SgNode* group)
+#endif
 {
-    impl->renderInvariantGroup(group);
+    impl->renderInvariantGroup(static_cast<SgInvariantGroup*>(group));
 }
 
 
@@ -839,8 +852,14 @@ void GLSLSceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 }
 
 
-void GLSLSceneRenderer::renderTransform(SgTransform* transform)
+#ifdef CNOID_USE_DISPATCH_CASTING
+void GLSLSceneRenderer::renderTransform(SgTransform* transform_)
+#elsen
+#endif
+void GLSLSceneRenderer::renderTransform(SgNode* transform_)
 {
+    auto transform = static_cast<SgTransform*>(transform_);
+    
     Affine3 T;
     transform->getTransform(T);
 
@@ -880,9 +899,13 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderShape(SgShape* shape)
+#else
+void GLSLSceneRenderer::renderShape(SgNode* shape)
+#endif
 {
-    impl->renderShape(shape);
+    impl->renderShape(static_cast<SgShape*>(shape));
 }
 
 
@@ -1049,9 +1072,13 @@ static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderPointSet(SgPointSet* pointSet)
+#else
+void GLSLSceneRenderer::renderPointSet(SgNode* pointSet)
+#endif
 {
-    impl->renderPointSet(pointSet);
+    impl->renderPointSet(static_cast<SgPointSet*>(pointSet));
 }
 
 
@@ -1146,9 +1173,13 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderLineSet(SgLineSet* lineSet)
+#else
+void GLSLSceneRenderer::renderLineSet(SgNode* lineSet)
+#endif
 {
-    impl->renderLineSet(lineSet);
+    impl->renderLineSet(static_cast<SgLineSet*>(lineSet));
 }
 
 
@@ -1177,7 +1208,11 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderOverlay(SgOverlay* overlay)
+#else
+void GLSLSceneRenderer::renderOverlay(SgNode* overlay)
+#endif
 {
     if(isPicking()){
         return;
@@ -1186,9 +1221,13 @@ void GLSLSceneRenderer::renderOverlay(SgOverlay* overlay)
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void GLSLSceneRenderer::renderOutlineGroup(SgOutlineGroup* outline)
+#else
+void GLSLSceneRenderer::renderOutlineGroup(SgNode* outline)
+#endif
 {
-    impl->renderChildNodes(outline);
+    impl->renderChildNodes(static_cast<SgOutlineGroup*>(outline));
 }
 
 

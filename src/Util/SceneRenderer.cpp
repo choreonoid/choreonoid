@@ -15,6 +15,8 @@
 using namespace std;
 using namespace cnoid;
 
+//#define CNOID_USE_DISPATCH_CASTING
+
 namespace {
 
 struct PreproNode
@@ -58,12 +60,22 @@ class PreproTreeExtractor
 public:
     PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
+
+#ifdef CNOID_USE_DISPATCH_CASTING
     void visitGroup(SgGroup* group);
     void visitTransform(SgTransform* transform);
     void visitPreprocessed(SgPreprocessed* preprocessed);
     void visitLight(SgLight* light);
     void visitFog(SgFog* fog);
     void visitCamera(SgCamera* camera);
+#else
+    void visitGroup(SgNode* group);
+    void visitTransform(SgNode* transform);
+    void visitPreprocessed(SgNode* preprocessed);
+    void visitLight(SgNode* light);
+    void visitFog(SgNode* fog);
+    void visitCamera(SgNode* camera);
+#endif
 };
 
 PreproTreeExtractor::NodeFunctionSet PreproTreeExtractor::functions;
@@ -317,8 +329,14 @@ PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 }
 
 
-void PreproTreeExtractor::visitGroup(SgGroup* group)
+#ifdef CNOID_USE_DISPATCH_CASTING
+void PreproTreeExtractor::visitGroup(SgGroup* group_)
+#else
+void PreproTreeExtractor::visitGroup(SgNode* group_)
+#endif
 {
+    auto group = static_cast<SgGroup*>(group_);
+    
     bool foundInSubTree = false;
 
     PreproNode* self = new PreproNode();
@@ -354,43 +372,63 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void PreproTreeExtractor::visitTransform(SgTransform* transform)
+#else
+void PreproTreeExtractor::visitTransform(SgNode* transform)
+#endif
 {
     visitGroup(transform);
     if(node){
-        node->setNode(transform);
+        node->setNode(static_cast<SgTransform*>(transform));
     }
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void PreproTreeExtractor::visitPreprocessed(SgPreprocessed* preprocessed)
+#else
+void PreproTreeExtractor::visitPreprocessed(SgNode* preprocessed)
+#endif
 {
     node = new PreproNode();
-    node->setNode(preprocessed);
+    node->setNode(static_cast<SgPreprocessed*>(preprocessed));
     found = true;
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void PreproTreeExtractor::visitLight(SgLight* light)
+#else
+void PreproTreeExtractor::visitLight(SgNode* light)
+#endif
 {
     node = new PreproNode();
-    node->setNode(light);
+    node->setNode(static_cast<SgLight*>(light));
     found = true;
 }
 
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void PreproTreeExtractor::visitFog(SgFog* fog)
+#else
+void PreproTreeExtractor::visitFog(SgNode* fog)
+#endif
 {
     node = new PreproNode();
-    node->setNode(fog);
+    node->setNode(static_cast<SgFog*>(fog));
     found = true;
 }
     
 
+#ifdef CNOID_USE_DISPATCH_CASTING
 void PreproTreeExtractor::visitCamera(SgCamera* camera)
+#else
+void PreproTreeExtractor::visitCamera(SgNode* camera)
+#endif
 {
     node = new PreproNode();
-    node->setNode(camera);
+    node->setNode(static_cast<SgCamera*>(camera));
     found = true;
 }
 

@@ -142,7 +142,6 @@ typedef std::vector<SgNode*> SgNodePath;
 class CNOID_EXPORT SgNode : public SgObject
 {
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);
-    static int findPolymorphicId(const std::type_info& nodeType);
 
     int polymorhicId_;
 
@@ -159,6 +158,8 @@ public:
     template <class NodeType, class SuperType> int registerType_() {
         return SgNode::registerNodeType(typeid(NodeType), typeid(SuperType));
     };
+    
+    static int findPolymorphicId(const std::type_info& nodeType);
     
     template <class NodeType> static int findPolymorphicId() {
         return findPolymorphicId(typeid(NodeType));

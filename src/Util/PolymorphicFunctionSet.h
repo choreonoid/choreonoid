@@ -6,12 +6,15 @@
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
 #include <functional>
+#include <iostream>
 
 namespace cnoid {
 
 template<class Processor, class ObjectBase>
 class CNOID_EXPORT PolymorphicFunctionSet
 {
+    static const bool USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES = true;
+    
 public:
     typedef std::function<void(Processor* proc, ObjectBase* obj)> Function;
     
@@ -29,7 +32,7 @@ public:
     }
 
     template <class Object>
-    void setFunction(std::function<void(Processor* proc, ObjectBase* obj)> func){
+    void setFunction(Function func){
         int id = ObjectBase::template findPolymorphicId<Object>();
         if(id >= 0){
             if(id >= dispatchTable.size()){
@@ -44,8 +47,7 @@ public:
 
     template <class Object>
     void setFunction(std::function<void(Processor* proc, Object* obj)> func){
-        setFunction<Object>(
-            [func](Processor* proc, ObjectBase* obj){ func(proc, static_cast<Object*>(obj)); });
+        setFunction<Object>([func](Processor* proc, ObjectBase* obj){ func(proc, static_cast<Object*>(obj)); });
     }
 
     void updateDispatchTable() {
@@ -81,18 +83,29 @@ public:
                 }
             }
         }
+        if(USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES){
+            for(int i=0; i < n; ++i){
+                if(!dispatchTable[i]){
+                    dispatchTable[i] = [](Processor* proc, ObjectBase* obj){ };
+                }
+            }
+        }
     }
 
     void dispatch(Processor* proc, ObjectBase* obj){
-        Function& func = dispatchTable[obj->polymorhicId()];
-        if(func){
-            func(proc, obj);
+        if(USE_EMPTY_FUNCTION_FOR_UNSPECIFIED_TYPES){
+            dispatchTable[obj->polymorhicId()](proc, obj);
+        } else {
+            const Function& func = dispatchTable[obj->polymorhicId()];
+            if(func){
+                func(proc, obj);
+            }
         }
     }
 
     template <class Object>
-    void dispatch(Processor* proc, Object* obj){
-        Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
+    void dispatchAs(Processor* proc, Object* obj){
+        const Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
         if(func){
             func(proc, obj);
         }
