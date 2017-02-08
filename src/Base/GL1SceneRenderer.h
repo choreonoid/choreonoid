@@ -22,31 +22,34 @@ public:
     GL1SceneRenderer(SgGroup* root);
     virtual ~GL1SceneRenderer();
 
-    virtual void setOutputStream(std::ostream& os);
+    virtual void setOutputStream(std::ostream& os) override;
     
-    virtual const Affine3& currentModelTransform() const;
-    virtual const Matrix4& projectionMatrix() const;
-        
-    virtual bool initializeGL();
-    virtual void flush();
-    virtual void render();
-    virtual bool pick(int x, int y);
-    virtual const Vector3& pickedPoint() const;
-    virtual const SgNodePath& pickedNodePath() const;
+    virtual NodeFunctionSet& renderingFunctionSet() override;
+    virtual void renderNode(SgNode* node) override;
 
-    virtual void setDefaultLighting(bool on);
+    virtual const Affine3& currentModelTransform() const override;
+    virtual const Matrix4& projectionMatrix() const override;
+        
+    virtual bool initializeGL() override;
+    virtual void flush() override;
+    virtual void render() override;
+    virtual bool pick(int x, int y) override;
+    virtual const Vector3& pickedPoint() const override;
+    virtual const SgNodePath& pickedNodePath() const override;
+
+    virtual void setDefaultLighting(bool on) override;
     void setHeadLightLightingFromBackEnabled(bool on);
-    virtual void setDefaultSmoothShading(bool on);
-    virtual SgMaterial* defaultMaterial();
-    virtual void enableTexture(bool on);
-    virtual void setDefaultPointSize(double size);
-    virtual void setDefaultLineWidth(double width);
+    virtual void setDefaultSmoothShading(bool on) override;
+    virtual SgMaterial* defaultMaterial() override;
+    virtual void enableTexture(bool on) override;
+    virtual void setDefaultPointSize(double size) override;
+    virtual void setDefaultLineWidth(double width) override;
 
     void setNewDisplayListDoubleRenderingEnabled(bool on);
 
-    virtual void showNormalVectors(double length);
+    virtual void showNormalVectors(double length) override;
 
-    virtual void requestToClearCache();
+    virtual void requestToClearCache() override;
 
     /**
        If this is enabled, OpenGL resources such as display lists, vertex buffer objects
@@ -56,7 +59,7 @@ public:
     void enableUnusedCacheCheck(bool on);
 
     bool isPicking();
-    virtual void setColor(const Vector3f& color);
+    virtual void setColor(const Vector3f& color) override;
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);
     void setAmbientColor(const Vector4f& color);
@@ -73,8 +76,8 @@ public:
     void setLineWidth(float width);
 
   protected:
-    virtual void onImageUpdated(SgImage* image);    
-        
+    virtual void onImageUpdated(SgImage* image) override;
+    
   private:
     GL1SceneRendererImpl* impl;
     friend class GL1SceneRendererImpl;

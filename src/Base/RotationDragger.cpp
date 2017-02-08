@@ -8,7 +8,6 @@
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>
-#include <cnoid/MeshExtractor>
 #include <cnoid/EigenUtil>
 
 using namespace std;
@@ -50,26 +49,38 @@ public:
         thresh = cos(rad);
     }
 
-    virtual void accept(SceneVisitor& visitor) {
-        SceneRenderer* renderer = dynamic_cast<SceneRenderer*>(&visitor);
-        if(!renderer){
-            visitor.visitGroup(this);
+    void render(SceneRenderer* renderer) {
+        const Affine3& C = renderer->currentCameraPosition();
+        const Affine3& M = renderer->currentModelTransform();
+        double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
+        if(d > thresh){
+            if(numChildren() > 0){
+                renderer->renderNode(child(0));
+            }
         } else {
-            const Affine3& C = renderer->currentCameraPosition();
-            const Affine3& M = renderer->currentModelTransform();
-            double d = fabs((C.translation() - M.translation()).normalized().dot((M.linear() * axis).normalized()));
-            if(d > thresh){
-                if(numChildren() > 0){
-                    child(0)->accept(visitor);
-                }
-            } else {
-                if(numChildren() > 1){
-                    child(1)->accept(visitor);
-                }
+            if(numChildren() > 1){
+                renderer->renderNode(child(1));
             }
         }
     }
 };
+
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<RotationDragger, SceneDragger>();
+        SgNode::registerType<ViewpointDependentRenderingSelector, SgGroup>();
+
+        SceneRenderer::addExtension(
+            [](SceneRenderer* renderer){
+                auto& functions = renderer->renderingFunctionSet();
+                functions.setFunction<ViewpointDependentRenderingSelector>(
+                    [&](SgNode* node){
+                        static_cast<ViewpointDependentRenderingSelector*>(node)->render(renderer);
+                    });
+            });
+    }
+} registration;
 
 }
 

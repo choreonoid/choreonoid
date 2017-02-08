@@ -370,6 +370,12 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
 }
 
 
+SceneRenderer::NodeFunctionSet& GLSLSceneRenderer::renderingFunctionSet()
+{
+    return impl->renderingFunctions;
+}
+
+
 void GLSLSceneRenderer::setOutputStream(std::ostream& os)
 {
     impl->os_ = &os;
@@ -819,6 +825,12 @@ inline void GLSLSceneRendererImpl::popPickId()
     if(isPicking){
         currentNodePath.pop_back();
     }
+}
+
+
+void GLSLSceneRenderer::renderNode(SgNode* node)
+{
+    impl->renderingFunctions.dispatch(node);
 }
 
 

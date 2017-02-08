@@ -133,17 +133,6 @@ void SgObject::removeParent(SgObject* parent)
 
 namespace {
 
-/*
-struct NodeTypeInfo {
-    int number;
-    std::type_index super;
-    NodeTypeInfo(int number, const std::type_info& super) : number(number), super(super) { }
-};
-
-typedef std::unordered_map<std::type_index, NodeTypeInfo> NodeTypeInfoMap;
-NodeTypeInfoMap nodeTypeInfoMap;
-*/
-
 typedef std::unordered_map<std::type_index, int> PolymorphicIdMap;
 PolymorphicIdMap polymorphicIdMap;
 
@@ -540,9 +529,16 @@ const BoundingBox& SgTransform::untransformedBoundingBox() const
 }
 
 
-SgPosTransform::SgPosTransform()
-    : SgTransform(findPolymorphicId<SgPosTransform>()),
+SgPosTransform::SgPosTransform(int polymorhicId)
+    : SgTransform(polymorhicId),
       T_(Affine3::Identity())
+{
+
+}
+
+
+SgPosTransform::SgPosTransform()
+    : SgPosTransform(findPolymorphicId<SgPosTransform>())
 {
 
 }
@@ -606,10 +602,17 @@ void SgPosTransform::getTransform(Affine3& out_T) const
 }
 
 
-SgScaleTransform::SgScaleTransform()
-    : SgTransform(findPolymorphicId<SgScaleTransform>())
+SgScaleTransform::SgScaleTransform(int polymorhicId)
+    : SgTransform(polymorhicId)
 {
     scale_.setOnes();
+}
+
+
+SgScaleTransform::SgScaleTransform()
+    : SgScaleTransform(findPolymorphicId<SgScaleTransform>())
+{
+
 }
 
 
@@ -759,6 +762,7 @@ void SgPreprocessed::accept(SceneVisitor& visitor)
 {
     visitor.visitPreprocessed(this);
 }
+
 
 namespace {
 

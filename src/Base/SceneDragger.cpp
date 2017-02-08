@@ -13,9 +13,24 @@ namespace {
 
 const char* axisNames[3] = { "x", "y", "z" };
 
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SceneDragger, SgPosTransform>();
+    }
+} registration;
+
 }
 
+
+SceneDragger::SceneDragger(int polymorphicId)
+    : SgPosTransform(polymorphicId)
+{
+    isContainerMode_ = false;
+}
+
+
 SceneDragger::SceneDragger()
+    : SceneDragger(findPolymorphicId<SceneDragger>())
 {
     isContainerMode_ = false;
 }

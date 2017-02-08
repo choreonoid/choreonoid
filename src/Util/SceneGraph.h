@@ -351,6 +351,9 @@ public:
         T_.translation() = p.template cast<Affine3::Scalar>();
     }
 
+protected:
+    SgPosTransform(int polymorhicId);
+
 private:
     Affine3 T_;
 };
@@ -379,6 +382,9 @@ public:
     }
 
     Eigen::DiagonalWrapper<const Vector3> T() const { return scale_.asDiagonal(); }
+
+protected:
+    SgScaleTransform(int polymorhicId);
 
 private:
     Vector3 scale_;

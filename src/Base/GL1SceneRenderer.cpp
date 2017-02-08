@@ -426,6 +426,12 @@ GL1SceneRendererImpl::~GL1SceneRendererImpl()
 }
 
 
+SceneRenderer::NodeFunctionSet& GL1SceneRenderer::renderingFunctionSet()
+{
+    return impl->renderingFunctions;
+}
+
+
 void GL1SceneRenderer::setOutputStream(std::ostream& os)
 {
     impl->os_ = &os;
@@ -901,6 +907,12 @@ inline void GL1SceneRendererImpl::popPickName()
     if(isPicking && !isCompiling){
         currentNodePath.pop_back();
     }
+}
+
+
+void GL1SceneRenderer::renderNode(SgNode* node)
+{
+    impl->renderingFunctions.dispatch(node);
 }
 
 

@@ -6,40 +6,30 @@
 #ifndef CNOID_UTIL_MESH_EXTRACTOR_H
 #define CNOID_UTIL_MESH_EXTRACTOR_H
 
-#include "SceneVisitor.h"
+#include "EigenTypes.h"
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT MeshExtractor : public SceneVisitor
+class SgNode;
+class SgMesh;
+class MeshExtractorImpl;
+
+class CNOID_EXPORT MeshExtractor
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-
+    MeshExtractor();
     bool extract(SgNode* node, std::function<void()> callback);
     SgMesh* integrate(SgNode* node);
 
-    SgMesh* currentMesh() const { return currentMesh_; }
-    const Affine3& currentTransform() const { return currentTransform_; }
-    const Affine3& currentTransformWithoutScaling() const { return currentTransformWithoutScaling_; }
-    bool isCurrentScaled() const { return isCurrentScaled_; }
-
-protected:
-    virtual void visitPosTransform(SgPosTransform* transform);
-    virtual void visitScaleTransform(SgScaleTransform* transform);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitLight(SgLight* light);
-    virtual void visitCamera(SgCamera* camera);
+    SgMesh* currentMesh() const;
+    const Affine3& currentTransform() const;
+    const Affine3& currentTransformWithoutScaling() const;
+    bool isCurrentScaled() const;
 
 private:
-    std::function<void()> callback;
-    SgMesh* currentMesh_;
-    Affine3 currentTransform_;
-    Affine3 currentTransformWithoutScaling_;
-    bool isCurrentScaled_;
-    bool meshFound;
+    MeshExtractorImpl* impl;
 };
 
 }

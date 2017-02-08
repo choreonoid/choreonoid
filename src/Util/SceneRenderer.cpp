@@ -11,6 +11,9 @@
 #include "PolymorphicFunctionSet.h"
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
+#include <set>
+#include <thread>
+#include <mutex>
 
 using namespace std;
 using namespace cnoid;
@@ -656,4 +659,38 @@ int SceneRenderer::numFogs() const
 SgFog* SceneRenderer::fog(int index) const
 {
     return impl->fogs[index];
+}
+
+
+namespace {
+
+std::mutex extensionMutex;
+set<SceneRenderer*> renderers;
+vector<SceneRenderer::ExtendFunction> extendFunctions;
+
+}
+
+
+void SceneRenderer::addExtension(ExtendFunction func)
+{
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    extendFunctions.push_back(func);
+    for(SceneRenderer* renderer : renderers){
+        renderer->onExtensionAdded(func);
+    }
+}
+
+
+void SceneRenderer::applyExtensions()
+{
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    for(int i=0; i < extendFunctions.size(); ++i){
+        extendFunctions[i](this);
+    }
+}
+
+
+void SceneRenderer::onExtensionAdded(ExtendFunction func)
+{
+
 }

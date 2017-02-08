@@ -6,7 +6,8 @@
 #ifndef CNOID_UTIL_SCENE_RENDERER_H
 #define CNOID_UTIL_SCENE_RENDERER_H
 
-#include <cnoid/SceneGraph>
+#include "SceneGraph.h"
+#include "PolymorphicFunctionSet.h"
 #include "ValueTree.h"
 #include "exportdecl.h"
 
@@ -23,6 +24,16 @@ public:
     virtual SgGroup* sceneRoot() = 0;
     virtual SgGroup* scene() = 0;
     virtual void clearScene();
+
+    typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
+    virtual NodeFunctionSet& renderingFunctionSet() = 0;
+
+    typedef std::function<void(SceneRenderer* renderer)> ExtendFunction;
+    static void addExtension(ExtendFunction func);
+    void applyExtensions();
+    virtual void onExtensionAdded(ExtendFunction func);
+
+    virtual void renderNode(SgNode* node) = 0;
 
     int numCameras() const;
     SgCamera* camera(int index);
@@ -73,7 +84,6 @@ public:
 
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);
-
 
 private:
     SceneRendererImpl* impl;
