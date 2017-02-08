@@ -290,6 +290,8 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GLSLSceneRendererImpl(this);
+    applyExtensions();
+    impl->renderingFunctions.updateDispatchTable();
 }
 
 
@@ -346,8 +348,6 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
         [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
-
-    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -443,6 +443,8 @@ void GLSLSceneRenderer::requestToClearCache()
 
 void GLSLSceneRenderer::render()
 {
+    applyNewExtensions();
+    impl->renderingFunctions.updateDispatchTable();
     impl->render();
 }
 
