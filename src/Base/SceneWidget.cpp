@@ -26,7 +26,6 @@
 #include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ConnectionSet>
-#include <cnoid/SceneVisitor>
 #include <QGLWidget>
 #include <QGLPixelBuffer>
 #include <QLabel>
@@ -62,7 +61,7 @@ const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
-class EditableExtractor : public SceneVisitor
+class EditableExtractor : public PolymorphicFunctionSet<SgNode>
 {
 public:
     vector<SgNode*> editables;
@@ -71,35 +70,24 @@ public:
     SgNode* editableNode(int index) { return editables[index]; }
     SceneWidgetEditable* editable(int index) { return dynamic_cast<SceneWidgetEditable*>(editables[index]); }
 
-    void apply(SgNode* node) {
-        editables.clear();
-        node->accept(*this);
+    EditableExtractor(){
+        setFunction<SgGroup>(
+            [&](SgNode* node){
+                auto group = static_cast<SgGroup*>(node);
+                if(SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(group)){
+                    editables.push_back(group);
+                }
+                for(auto child : *group){
+                    dispatch(child);
+                }
+            });
+        updateDispatchTable();
     }
 
-    virtual void visitNode(SgNode* node) {  }
-    virtual void visitGroup(SgGroup* group) {
-        if(SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(group)){
-            editables.push_back(group);
-        }
-        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            (*p)->accept(*this);
-        }
+    void apply(SgNode* node) {
+        editables.clear();
+        dispatch(node);
     }
-    virtual void visitInvariantGroup(SgInvariantGroup* group) { }
-    virtual void visitPosTransform(SgPosTransform* transform) {
-        EditableExtractor::visitGroup(transform);
-    }
-    virtual void visitScaleTransform(SgScaleTransform* transform) {
-        EditableExtractor::visitGroup(transform);
-    }
-    virtual void visitShape(SgShape* shape) {  }
-    virtual void visitPlot(SgPlot* plot)  {  }
-    virtual void visitPointSet(SgPointSet* pointSet) { }        
-    virtual void visitLineSet(SgLineSet* lineSet) { }        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed) {  }
-    virtual void visitLight(SgLight* light) {  }
-    virtual void visitCamera(SgCamera* camera) {  }
-    virtual void visitOverlay(SgOverlay* overlay) { }
 };
 
 class ConfigDialog : public Dialog
@@ -186,7 +174,6 @@ Affine3 normalizedCameraTransform(const Affine3& T)
 Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
 }
-
 
 namespace cnoid {
 

@@ -9,7 +9,6 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneVisitor>
-#include <cnoid/PolymorphicFunctionSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
@@ -154,8 +153,8 @@ public:
         
     GL1SceneRenderer* self;
 
-    PolymorphicFunctionSet<SgNode> renderingFunctions;
-    
+    SceneRenderer::NodeFunctionSet renderingFunctions;
+
     Affine3Array Vstack; // stack of the model/view matrices
 
     typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f> > ColorArray;
@@ -170,22 +169,22 @@ public:
         vector<char> scaledImageBuf;
     };
     std::unique_ptr<Buf> buf;
-        
-    CacheMap cacheMaps[2];
-    bool doUnusedCacheCheck;
-    bool isCheckingUnusedCaches;
-    bool hasValidNextCacheMap;
-    bool isCacheClearRequested;
-    int currentCacheMapIndex;
-    CacheMap* currentCacheMap;
-    CacheMap* nextCacheMap;
-    DisplayListCache* currentDisplayListCache;
 
     int currentDisplayListCacheTopViewMatrixIndex;
 
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
     Affine3 currentModelTransform;
+
+    bool doUnusedCacheCheck;
+    bool isCheckingUnusedCaches;
+    bool hasValidNextCacheMap;
+    bool isCacheClearRequested;
+    CacheMap cacheMaps[2];
+    CacheMap* currentCacheMap;
+    CacheMap* nextCacheMap;
+    int currentCacheMapIndex;
+    DisplayListCache* currentDisplayListCache;
 
     int numSystemLights;
     int prevNumLights;
@@ -343,6 +342,8 @@ GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GL1SceneRendererImpl(this);
+    applyExtensions();
+    impl->renderingFunctions.updateDispatchTable();
 }
 
 
@@ -409,8 +410,6 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
         [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
-
-    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -782,6 +781,7 @@ void GL1SceneRendererImpl::endRendering()
 
 void GL1SceneRenderer::render()
 {
+    applyNewExtensions();
     impl->render();
 }
 

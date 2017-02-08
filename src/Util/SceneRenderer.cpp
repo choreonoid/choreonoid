@@ -20,6 +20,10 @@ using namespace cnoid;
 
 namespace {
 
+std::mutex extensionMutex;
+set<SceneRenderer*> renderers;
+vector<SceneRenderer::ExtendFunction> extendFunctions;
+
 struct PreproNode
 {
     PreproNode() : parent(0), child(0), next(0) { }
@@ -124,6 +128,9 @@ public:
     vector<SgFogPtr> fogs;
     bool isFogEnabled;
 
+    std::mutex newExtensionMutex;
+    vector<SceneRenderer::ExtendFunction> newExtendFunctions;
+    
     SceneRendererImpl(SceneRenderer* self);
 
     void extractPreproNodes();
@@ -131,6 +138,7 @@ public:
     void updateCameraPaths();
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
+    void onExtensionAdded(SceneRenderer::ExtendFunction func);
 };
 
 }
@@ -139,7 +147,9 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new SceneRendererImpl(this);
-    property_ = new Mapping();    
+    property_ = new Mapping();
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.insert(this);
 }
 
 
@@ -163,6 +173,8 @@ SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
 
 SceneRenderer::~SceneRenderer()
 {
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.erase(this);
     delete impl;
 }
 
@@ -662,21 +674,14 @@ SgFog* SceneRenderer::fog(int index) const
 }
 
 
-namespace {
-
-std::mutex extensionMutex;
-set<SceneRenderer*> renderers;
-vector<SceneRenderer::ExtendFunction> extendFunctions;
-
-}
-
-
 void SceneRenderer::addExtension(ExtendFunction func)
 {
-    std::lock_guard<std::mutex> guard(extensionMutex);
-    extendFunctions.push_back(func);
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        extendFunctions.push_back(func);
+    }
     for(SceneRenderer* renderer : renderers){
-        renderer->onExtensionAdded(func);
+        renderer->impl->onExtensionAdded(func);
     }
 }
 
@@ -690,7 +695,20 @@ void SceneRenderer::applyExtensions()
 }
 
 
-void SceneRenderer::onExtensionAdded(ExtendFunction func)
+void SceneRendererImpl::onExtensionAdded(SceneRenderer::ExtendFunction func)
 {
+    std::lock_guard<std::mutex> guard(newExtensionMutex);
+    newExtendFunctions.push_back(func);
+}
 
+
+void SceneRenderer::applyNewExtensions()
+{
+    std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
+    if(!impl->newExtendFunctions.empty()){
+        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+            impl->newExtendFunctions[i](this);
+        }
+        impl->newExtendFunctions.clear();
+    }
 }

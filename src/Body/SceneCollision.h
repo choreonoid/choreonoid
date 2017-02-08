@@ -11,14 +11,14 @@
 
 namespace cnoid {
 
+class SceneRenderer;
+
 class CNOID_EXPORT SceneCollision : public SgLineSet
 {
 public:
     SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs);
-
     void setDirty() { isDirty = true; }
-
-    //virtual void accept(SceneVisitor& visitor);
+    void render(SceneRenderer* renderer);
 
 private:
     SceneCollision(const SceneCollision& org);

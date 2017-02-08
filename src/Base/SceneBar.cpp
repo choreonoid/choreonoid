@@ -13,7 +13,6 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneProvider>
 #include <cnoid/SceneRenderer>
-#include <cnoid/SceneVisitor>
 #include <boost/format.hpp>
 #include "gettext.h"
 
@@ -325,32 +324,45 @@ void SceneBarImpl::onCameraComboCurrentIndexChanged(int index)
 
 namespace {
 
-class SceneCounter : public SceneVisitor
+class SceneCounter : public PolymorphicFunctionSet<SgNode>
 {
 public:
     int numVertices;
     int numTriangles;
+
+    SceneCounter() {
+        setFunction<SgGroup>(
+            [&](SgGroup* group){
+                for(auto child : *group){
+                    dispatch(child);
+                }
+            });
+
+        setFunction<SgShape>(
+            [&](SgShape* shape){
+                SgMesh* mesh = shape->mesh();
+                if(mesh){
+                    if(mesh->hasVertices()){
+                        numVertices += mesh->vertices()->size();
+                    }
+                    numTriangles += mesh->numTriangles();
+                }
+            });
+
+        setFunction<SgPointSet>(
+            [&](SgPointSet* pointSet){
+                if(pointSet->hasVertices()){
+                    numVertices += pointSet->vertices()->size();
+                }
+            });
+
+        updateDispatchTable();
+    }
     
     void count(SgNode* node) {
         numVertices = 0;
         numTriangles = 0;
-        node->accept(*this);
-    }
-
-    virtual void visitShape(SgShape* shape) {
-        SgMesh* mesh = shape->mesh();
-        if(mesh){
-            if(mesh->hasVertices()){
-                numVertices += mesh->vertices()->size();
-            }
-            numTriangles += mesh->numTriangles();
-        }
-    }
-            
-    virtual void visitPointSet(SgPointSet* pointSet){
-        if(pointSet->hasVertices()){
-            numVertices += pointSet->vertices()->size();
-        }
+        dispatch(node);
     }
 };
 

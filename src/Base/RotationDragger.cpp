@@ -26,7 +26,8 @@ class ViewpointDependentRenderingSelector : public SgGroup
     double thresh;
     
 public:
-    ViewpointDependentRenderingSelector(){
+    ViewpointDependentRenderingSelector()
+        : SgGroup(findPolymorphicId<ViewpointDependentRenderingSelector>()) {
         axis = Vector3::UnitX();
         thresh = cos(radian(45.0));
     }
@@ -75,7 +76,7 @@ struct NodeTypeRegistration {
             [](SceneRenderer* renderer){
                 auto& functions = renderer->renderingFunctionSet();
                 functions.setFunction<ViewpointDependentRenderingSelector>(
-                    [&](SgNode* node){
+                    [=](SgNode* node){
                         static_cast<ViewpointDependentRenderingSelector*>(node)->render(renderer);
                     });
             });
@@ -85,7 +86,8 @@ struct NodeTypeRegistration {
 }
 
 
-RotationDragger::RotationDragger()
+RotationDragger::RotationDragger(int polymorphicId)
+    : SceneDragger(polymorphicId)
 {
     draggableAxes_ = RX | RY | RZ;
 
@@ -153,6 +155,13 @@ RotationDragger::RotationDragger()
     }
 
     addChild(scale);
+}
+
+
+RotationDragger::RotationDragger()
+    : RotationDragger(findPolymorphicId<RotationDragger>())
+{
+
 }
 
 

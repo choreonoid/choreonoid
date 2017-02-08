@@ -30,8 +30,8 @@ public:
 
     typedef std::function<void(SceneRenderer* renderer)> ExtendFunction;
     static void addExtension(ExtendFunction func);
-    void applyExtensions();
-    virtual void onExtensionAdded(ExtendFunction func);
+    virtual void applyExtensions();
+    virtual void applyNewExtensions();
 
     virtual void renderNode(SgNode* node) = 0;
 

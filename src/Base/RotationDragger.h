@@ -50,6 +50,9 @@ public:
     virtual bool onButtonReleaseEvent(const SceneWidgetEvent& event);
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
+
+protected:
+    RotationDragger(int polymorphicId);
         
 private:
     int draggableAxes_;

@@ -6,7 +6,6 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
-#include <cnoid/SceneVisitor>
 #include <cnoid/SceneMarkers>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
@@ -60,13 +59,16 @@ public:
 
 namespace cnoid {
 
-class SceneGraphViewImpl : public TreeWidget, public SceneVisitor
+class SceneGraphViewImpl : public TreeWidget
 {
 public:
     SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot);
     ~SceneGraphViewImpl();
 
     SceneGraphView* self;
+
+    PolymorphicFunctionSet<SgNode> visitor;
+    
     SgNode* sceneRoot;
     SgvItem* rootItem;
     SgvItem* parentItem;
@@ -87,10 +89,10 @@ public:
     void removeItem(SgvItem* item);
 
     void visitObject(SgObject* obj);
-    virtual void visitNode(SgNode* node);
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);
+    void visitNode(SgNode* node);
+    void visitGroup(SgGroup* group);
+    void visitShape(SgShape* shape);
+    void visitPointSet(SgPointSet* pointSet);
 
     void onSelectionChanged();
     void addSelectedMarker();
@@ -153,6 +155,12 @@ SceneGraphViewImpl::SceneGraphViewImpl(SceneGraphView* self, SgNode* sceneRoot)
     : self(self),
       sceneRoot(sceneRoot)
 {
+    visitor.setFunction<SgNode>([&](SgNode* node){ visitNode(node); });
+    visitor.setFunction<SgGroup>([&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+    visitor.setFunction<SgShape>([&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
+    visitor.setFunction<SgPointSet>([&](SgNode* node){ visitPointSet(static_cast<SgPointSet*>(node)); });
+    visitor.updateDispatchTable();
+    
     setColumnCount(2);
     header()->setStretchLastSection(false);
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -206,13 +214,13 @@ void SceneGraphViewImpl::createGraph(SgvItem* item, SgNode* node)
 
     SgGroup* group = dynamic_cast<SgGroup*>(node);
     if(group){
-        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            SgvItem* item_ = findItem(parentItem, (*p).get());
+        for(const auto childNode : *group){
+            SgvItem* item_ = findItem(parentItem, childNode);
             if(item_){
-                createGraph(item_, (*p).get());
+                createGraph(item_, childNode);
                 children.remove(item_);
             }else{
-                (*p)->accept(*this);
+                visitor.dispatch(childNode);
             }
         }
         for(list<SgvItem*>::iterator it = children.begin(); it != children.end(); it++){
@@ -301,8 +309,8 @@ void SceneGraphViewImpl::visitGroup(SgGroup* group)
     visitNode(group);
     SgvItem* oldParent = parentItem;
     parentItem = sgvItem;
-    for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-        (*p)->accept(*this);
+    for(const auto childNode : *group){
+        visitor.dispatch(childNode);
     }
     parentItem = oldParent;
 }
@@ -438,7 +446,7 @@ void SceneGraphViewImpl::onSceneGraphUpdated(const SgUpdate& update)
         if(group){
             SgNode* node = findAddNode(group);
             if(node){
-                node->accept(*this);
+                visitor.dispatch(node);
             }
         }
     }
