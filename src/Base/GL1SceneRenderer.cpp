@@ -8,12 +8,10 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
-#include <cnoid/SceneVisitor>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
-#include <functional>
 #include <unordered_map>
 #include <iostream>
 
@@ -2147,41 +2145,6 @@ void GL1SceneRendererImpl::setLineWidth(float width)
 void GL1SceneRenderer::setLineWidth(float width)
 {
     impl->setLineWidth(width);
-}
-
-
-
-SgObject* SgCustomGLNode::clone(SgCloneMap& cloneMap) const
-{
-    return new SgCustomGLNode(*this, cloneMap);
-}
-
-
-void SgCustomGLNode::accept(SceneVisitor& visitor)
-{
-    GL1SceneRenderer* renderer = dynamic_cast<GL1SceneRenderer*>(&visitor);
-    if(renderer){
-        renderer->impl->pushPickName(this);
-        render(*renderer);
-        renderer->impl->popPickName();
-        renderer->impl->clearGLState();
-    } else {
-        visitor.visitGroup(this);
-    }
-}
-    
-
-void SgCustomGLNode::render(GL1SceneRenderer& renderer)
-{
-    if(renderingFunction){
-        renderingFunction(renderer);
-    }
-}
-
-
-void SgCustomGLNode::setRenderingFunction(RenderingFunction f)
-{
-    renderingFunction = f;
 }
 
 

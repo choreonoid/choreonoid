@@ -9,7 +9,6 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
-#include <cnoid/PolymorphicFunctionSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>

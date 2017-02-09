@@ -7,13 +7,11 @@
 #define CNOID_BASE_GL1_SCENE_RENDERER_H
 
 #include <cnoid/GLSceneRenderer>
-#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class GL1SceneRendererImpl;
-class SgCustomGLNode;
     
 class CNOID_EXPORT GL1SceneRenderer : public GLSceneRenderer
 {
@@ -81,28 +79,7 @@ public:
   private:
     GL1SceneRendererImpl* impl;
     friend class GL1SceneRendererImpl;
-    friend class SgCustomGLNode;
 };
-
-class CNOID_EXPORT SgCustomGLNode : public SgGroup
-{
-  public:
-    typedef std::function<void(GL1SceneRenderer& renderer)> RenderingFunction;
-
-    SgCustomGLNode() { }
-    SgCustomGLNode(RenderingFunction f) : renderingFunction(f) { }
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
-    virtual void render(GL1SceneRenderer& renderer);
-    void setRenderingFunction(RenderingFunction f);
-
-  protected:
-    SgCustomGLNode(const SgCustomGLNode& org, SgCloneMap& cloneMap) : SgGroup(org, cloneMap) { }
-
-  private:
-    RenderingFunction renderingFunction;
-};
-typedef ref_ptr<SgCustomGLNode> SgCustomGLNodePtr;
 
 }
 

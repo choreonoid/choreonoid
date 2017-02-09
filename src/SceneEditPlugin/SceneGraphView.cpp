@@ -3,22 +3,18 @@
 */
 
 #include "SceneGraphView.h"
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneMarkers>
+#include <cnoid/PolymorphicFunctionSet>
 #include <cnoid/TreeWidget>
 #include <cnoid/SceneView>
-#include <cnoid/GL1SceneRenderer>
 #include <cnoid/ViewManager>
 #include <QBoxLayout>
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#include <GL/glew.h>
 #include <cassert>
 #include <list>
-#include <GL/gl.h>
 #include "gettext.h"
 
 using namespace std;
@@ -52,8 +48,9 @@ public:
     SgvMarkerItem();
     ~SgvMarkerItem();
 
-    SgCustomGLNodePtr marker;
+    SgLineSetPtr marker;
 };
+
 }
 
 
@@ -96,10 +93,11 @@ public:
 
     void onSelectionChanged();
     void addSelectedMarker();
+    void updateSelectedMarker(SgLineSet* marker);
     void removeSelectedMarker();
-    void renderMarker(GL1SceneRenderer& renderer);
     const SgObject* selectedObject();
 };
+
 }
 
 
@@ -112,8 +110,9 @@ SgvItem::~SgvItem()
 
 SgvMarkerItem::SgvMarkerItem()
 {
-    marker = new SgCustomGLNode();
+    marker = new SgLineSet();
     marker->setName("GraphViewMarker");
+    marker->getOrCreateMaterial()->setDiffuseColor(Vector3f(1.0f, 0.0f, 1.0f));
     setFlags(Qt::NoItemFlags);
     setText(0, QString("GraphViewMarker (SgCustomGLNode)"));
 }
@@ -293,8 +292,6 @@ void SceneGraphViewImpl::visitNode(SgNode* node)
         type = "SgGroup";
     else if(dynamic_cast<CrossMarker*>(node))
         type = "CrossMarker";
-    else if(dynamic_cast<SgCustomGLNode*>(node))
-        type = "SgCustomGLNode";
     else if(dynamic_cast<SgNode*>(node))
         type = "SgNode";
 
@@ -497,15 +494,85 @@ void SceneGraphViewImpl::addSelectedMarker()
 {
     if(!selectedSgvItem->markerItem()){
         selectedSgvItem->setMarkerItem( new SgvMarkerItem() );
-        selectedSgvItem->markerItem()->marker->setRenderingFunction(
-            std::bind(&SceneGraphViewImpl::renderMarker, this, _1));
     }
-    SgCustomGLNodePtr marker = selectedSgvItem->markerItem()->marker;
+    auto marker = selectedSgvItem->markerItem()->marker;
     if(marker && !selectedSgvItem->group->contains(marker)){
         selectedSgvItem->group->addChild(marker);
         selectedSgvItem->groupItem->addChild(selectedSgvItem->markerItem());
-        selectedSgvItem->group->notifyUpdate();
+        updateSelectedMarker(marker);
     }
+}
+
+
+void SceneGraphViewImpl::updateSelectedMarker(SgLineSet* marker)
+{
+    SgNode* node = 0;
+    SgTransform* trans = 0;
+    SgMeshBase* mesh = 0;
+
+    if(selectedSgvItem->markerNode){
+        node = selectedSgvItem->markerNode;
+    }else if(dynamic_cast<SgScaleTransform*>(selectedSgvItem->node) ||
+             dynamic_cast<SgPosTransform*>(selectedSgvItem->node)){
+        trans = dynamic_cast<SgTransform*>(selectedSgvItem->node);
+    }else{
+        mesh = dynamic_cast<SgMeshBase*>(selectedSgvItem->node);
+        if(!mesh)
+            node = dynamic_cast<SgNode*>(selectedSgvItem->node);
+    }
+
+    BoundingBoxf bb;
+    if(trans)
+        bb = trans->untransformedBoundingBox();
+    else if(mesh){
+        bb = mesh->boundingBox();
+    }else if(node){
+        bb = node->boundingBox();
+    }else
+        return;
+    if(bb.empty())
+        return;
+
+    SgVertexArray& vertices = *marker->getOrCreateVertices();
+    vertices.clear();
+
+    const Vector3f& min = bb.min();
+    const Vector3f& max = bb.max();
+
+    float y[2];
+    y[0] = min.y();
+    y[1] = max.y();
+            
+    for(int i=0; i < 2; ++i){
+        vertices.push_back(Vector3f(min.x(), y[i], min.z()));
+        vertices.push_back(Vector3f(min.x(), y[i], max.z()));
+        vertices.push_back(Vector3f(min.x(), y[i], max.z()));
+        vertices.push_back(Vector3f(max.x(), y[i], max.z()));
+
+        vertices.push_back(Vector3f(max.x(), y[i], max.z()));
+        vertices.push_back(Vector3f(max.x(), y[i], min.z()));
+        vertices.push_back(Vector3f(max.x(), y[i], min.z()));
+        vertices.push_back(Vector3f(min.x(), y[i], min.z()));
+    }
+
+    float z[2];
+    z[0] = min.z();
+    z[1] = max.z();
+    for(int i=0; i < 2; ++i){
+        vertices.push_back(Vector3f(min.x(), min.y(), z[i]));
+        vertices.push_back(Vector3f(min.x(), max.y(), z[i]));
+        vertices.push_back(Vector3f(max.x(), min.y(), z[i]));
+        vertices.push_back(Vector3f(max.x(), max.y(), z[i]));
+    }
+
+    const int n = vertices.size();
+    SgIndexArray& lineVertices = marker->lineVertices();
+    lineVertices.resize(n);
+    for(int i=0; i < n; ++i){
+        lineVertices[i] = i;
+    }
+
+    marker->notifyUpdate();
 }
 
 
@@ -549,76 +616,6 @@ const SgObject* SceneGraphView::selectedObject()
 const SgObject* SceneGraphViewImpl::selectedObject()
 {
     return selectedSgObject;
-}
-
-
-void SceneGraphViewImpl::renderMarker(GL1SceneRenderer& renderer)
-{
-    SgNode* node = 0;
-    SgTransform* trans = 0;
-    SgMeshBase* mesh = 0;
-
-    if(selectedSgvItem->markerNode){
-        node = selectedSgvItem->markerNode;
-    }else if(dynamic_cast<SgScaleTransform*>(selectedSgvItem->node) ||
-             dynamic_cast<SgPosTransform*>(selectedSgvItem->node)){
-        trans = dynamic_cast<SgTransform*>(selectedSgvItem->node);
-    }else{
-        mesh = dynamic_cast<SgMeshBase*>(selectedSgvItem->node);
-        if(!mesh)
-            node = dynamic_cast<SgNode*>(selectedSgvItem->node);
-    }
-
-    BoundingBoxf bb;
-    if(trans)
-        bb = trans->untransformedBoundingBox();
-    else if(mesh){
-        bb = mesh->boundingBox();
-    }else if(node){
-        bb = node->boundingBox();
-    }else
-        return;
-    if(bb.empty())
-        return;
-
-    glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT);
-    glDisable(GL_LIGHTING);
-
-    glColor3f(1.0f, 0.0f, 1.0f);
-
-    glBegin(GL_LINES);
-
-    const Vector3f& min = bb.min();
-    const Vector3f& max = bb.max();
-
-    float y[2];
-    y[0] = min.y();
-    y[1] = max.y();
-            
-    for(int i=0; i < 2; ++i){
-        glVertex3f(min.x(), y[i], min.z());
-        glVertex3f(min.x(), y[i], max.z());
-        glVertex3f(min.x(), y[i], max.z());
-        glVertex3f(max.x(), y[i], max.z());
-
-        glVertex3f(max.x(), y[i], max.z());
-        glVertex3f(max.x(), y[i], min.z());
-        glVertex3f(max.x(), y[i], min.z());
-        glVertex3f(min.x(), y[i], min.z());
-    }
-
-    float z[2];
-    z[0] = min.z();
-    z[1] = max.z();
-    for(int i=0; i < 2; ++i){
-        glVertex3f(min.x(), min.y(), z[i]);
-        glVertex3f(min.x(), max.y(), z[i]);
-        glVertex3f(max.x(), min.y(), z[i]);
-        glVertex3f(max.x(), max.y(), z[i]);
-    }
-
-    glEnd();
-    glPopAttrib();
 }
 
 
