@@ -51,9 +51,6 @@ public:
     virtual bool onPointerMoveEvent(const SceneWidgetEvent& event);
     virtual void onPointerLeaveEvent(const SceneWidgetEvent& event);
 
-protected:
-    RotationDragger(int polymorphicId);
-        
 private:
     int draggableAxes_;
     SgScaleTransformPtr scale;

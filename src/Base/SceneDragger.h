@@ -24,7 +24,6 @@ class CNOID_EXPORT SceneDragger : public SgPosTransform, public SceneWidgetEdita
     virtual Affine3 draggedPosition() const = 0;
 
   protected:
-    SceneDragger(int polymorphicId);
     static bool detectAxisFromNodePath(const SgNodePath& path, SgNode* topNode, int& out_axis, int& out_indexOfTopNode);
         
   private:

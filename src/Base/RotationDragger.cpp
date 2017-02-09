@@ -69,7 +69,6 @@ public:
 
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
-        SgNode::registerType<RotationDragger, SceneDragger>();
         SgNode::registerType<ViewpointDependentRenderingSelector, SgGroup>();
 
         SceneRenderer::addExtension(
@@ -86,8 +85,7 @@ struct NodeTypeRegistration {
 }
 
 
-RotationDragger::RotationDragger(int polymorphicId)
-    : SceneDragger(polymorphicId)
+RotationDragger::RotationDragger()
 {
     draggableAxes_ = RX | RY | RZ;
 
@@ -155,13 +153,6 @@ RotationDragger::RotationDragger(int polymorphicId)
     }
 
     addChild(scale);
-}
-
-
-RotationDragger::RotationDragger()
-    : RotationDragger(findPolymorphicId<RotationDragger>())
-{
-
 }
 
 
