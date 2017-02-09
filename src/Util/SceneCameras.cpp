@@ -4,7 +4,6 @@
 */
 
 #include "SceneCameras.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
@@ -23,12 +22,6 @@ SgCamera::SgCamera(const SgCamera& org)
 {
     nearClipDistance_ = org.nearClipDistance_;
     farClipDistance_ = org.farClipDistance_;
-}
-
-
-void SgCamera::accept(SceneVisitor& visitor)
-{
-    visitor.visitCamera(this);
 }
 
 
@@ -77,12 +70,6 @@ SgObject* SgPerspectiveCamera::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPerspectiveCamera::accept(SceneVisitor& visitor)
-{
-    visitor.visitCamera(this);
-}
-
-
 /**
    @param aspectRatio width / height
 */
@@ -120,12 +107,6 @@ SgOrthographicCamera::SgOrthographicCamera(const SgOrthographicCamera& org)
 SgObject* SgOrthographicCamera::clone(SgCloneMap& cloneMap) const
 {
     return new SgOrthographicCamera(*this);
-}
-
-
-void SgOrthographicCamera::accept(SceneVisitor& visitor)
-{
-    visitor.visitCamera(this);
 }
 
 

@@ -58,12 +58,13 @@ public:
       Only SgNode* is used as the parameter type of the following functions to avoid
       the overhead due to the additional function call required for casting the types
     */
-    void visitGroup(SgNode* group);
-    void visitTransform(SgNode* transform);
-    void visitPreprocessed(SgNode* preprocessed);
-    void visitLight(SgNode* light);
-    void visitFog(SgNode* fog);
-    void visitCamera(SgNode* camera);
+    void visitGroup(SgGroup* group);
+    void visitSwitch(SgSwitch* switchNode);
+    void visitTransform(SgTransform* transform);
+    void visitPreprocessed(SgPreprocessed* preprocessed);
+    void visitLight(SgLight* light);
+    void visitFog(SgFog* fog);
+    void visitCamera(SgCamera* camera);
 };
 
 }
@@ -310,12 +311,20 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 
 PreproTreeExtractor::PreproTreeExtractor()
 {
-    functions.setFunction<SgGroup>([&](SgNode* node){ visitGroup(node); });
-    functions.setFunction<SgTransform>([&](SgNode* node){ visitTransform(node); });
-    functions.setFunction<SgPreprocessed>([&](SgNode* node){ visitPreprocessed(node); });
-    functions.setFunction<SgLight>([&](SgNode* node){ visitLight(node); });
-    functions.setFunction<SgFog>([&](SgNode* node){ visitFog(node); });
-    functions.setFunction<SgCamera>([&](SgNode* node){ visitCamera(node); });
+    functions.setFunction<SgGroup>(
+        [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+    functions.setFunction<SgSwitch>(
+        [&](SgNode* node){ visitSwitch(static_cast<SgSwitch*>(node)); });
+    functions.setFunction<SgTransform>(
+        [&](SgNode* node){ visitTransform(static_cast<SgTransform*>(node)); });
+    functions.setFunction<SgPreprocessed>(
+        [&](SgNode* node){ visitPreprocessed(static_cast<SgPreprocessed*>(node)); });
+    functions.setFunction<SgLight>(
+        [&](SgNode* node){ visitLight(static_cast<SgLight*>(node)); });
+    functions.setFunction<SgFog>(
+        [&](SgNode* node){ visitFog(static_cast<SgFog*>(node)); });
+    functions.setFunction<SgCamera>(
+        [&](SgNode* node){ visitCamera(static_cast<SgCamera*>(node)); });
     functions.updateDispatchTable();
 }
 
@@ -329,10 +338,8 @@ PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 }
 
 
-void PreproTreeExtractor::visitGroup(SgNode* group_)
+void PreproTreeExtractor::visitGroup(SgGroup* group)
 {
-    auto group = static_cast<SgGroup*>(group_);
-    
     bool foundInSubTree = false;
 
     PreproNode* self = new PreproNode();
@@ -368,43 +375,51 @@ void PreproTreeExtractor::visitGroup(SgNode* group_)
 }
 
 
-void PreproTreeExtractor::visitTransform(SgNode* transform)
+void PreproTreeExtractor::visitSwitch(SgSwitch* switchNode)
+{
+    if(switchNode->isTurnedOn()){
+        functions.dispatchAs<SgGroup>(switchNode);
+    }
+}    
+
+
+void PreproTreeExtractor::visitTransform(SgTransform* transform)
 {
     visitGroup(transform);
     if(node){
-        node->setNode(static_cast<SgTransform*>(transform));
+        node->setNode(transform);
     }
 }
 
 
-void PreproTreeExtractor::visitPreprocessed(SgNode* preprocessed)
+void PreproTreeExtractor::visitPreprocessed(SgPreprocessed* preprocessed)
 {
     node = new PreproNode();
-    node->setNode(static_cast<SgPreprocessed*>(preprocessed));
+    node->setNode(preprocessed);
     found = true;
 }
 
 
-void PreproTreeExtractor::visitLight(SgNode* light)
+void PreproTreeExtractor::visitLight(SgLight* light)
 {
     node = new PreproNode();
-    node->setNode(static_cast<SgLight*>(light));
+    node->setNode(light);
     found = true;
 }
 
 
-void PreproTreeExtractor::visitFog(SgNode* fog)
+void PreproTreeExtractor::visitFog(SgFog* fog)
 {
     node = new PreproNode();
-    node->setNode(static_cast<SgFog*>(fog));
+    node->setNode(fog);
     found = true;
 }
     
 
-void PreproTreeExtractor::visitCamera(SgNode* camera)
+void PreproTreeExtractor::visitCamera(SgCamera* camera)
 {
     node = new PreproNode();
-    node->setNode(static_cast<SgCamera*>(camera));
+    node->setNode(camera);
     found = true;
 }
 

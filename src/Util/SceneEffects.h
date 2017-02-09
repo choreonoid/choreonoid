@@ -20,7 +20,6 @@ public:
     SgFog();
     SgFog(const SgFog& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const Vector3f& color() const { return color_; }
     template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
@@ -46,7 +45,6 @@ public:
 
     SgOutlineGroup();
 
-    virtual void accept(SceneVisitor& visitor);
     const Vector3f& color() const { return color_; }
     void setColor(const Vector3f& color) { color_ = color; }
     void setLineWidth(float width) { lineWidth_ = width; }

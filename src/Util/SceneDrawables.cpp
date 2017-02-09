@@ -4,7 +4,6 @@
 */
 
 #include "SceneDrawables.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
@@ -573,12 +572,6 @@ SgObject* SgShape::childObject(int index)
 }
 
 
-void SgShape::accept(SceneVisitor& visitor)
-{
-    visitor.visitShape(this);
-}
-
-
 const BoundingBox& SgShape::boundingBox() const
 {
     if(mesh()){
@@ -839,12 +832,6 @@ SgObject* SgPointSet::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPointSet::accept(SceneVisitor& visitor)
-{
-    visitor.visitPointSet(this);
-}
-
-   
 SgLineSet::SgLineSet(int polymorhicId)
     : SgPlot(polymorhicId)
 {
@@ -871,12 +858,6 @@ SgObject* SgLineSet::clone(SgCloneMap& cloneMap) const
     return new SgLineSet(*this, cloneMap);
 }
     
-
-void SgLineSet::accept(SceneVisitor& visitor)
-{
-    visitor.visitLineSet(this);
-}
-
 
 SgOverlay::SgOverlay(int polymorhicId)
     : SgGroup(polymorhicId)
@@ -908,12 +889,6 @@ SgOverlay::~SgOverlay()
 SgObject* SgOverlay::clone(SgCloneMap& cloneMap) const
 {
     return new SgOverlay(*this, cloneMap);
-}
-
-
-void SgOverlay::accept(SceneVisitor& visitor)
-{
-    visitor.visitOverlay(this);
 }
 
 

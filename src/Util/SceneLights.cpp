@@ -4,7 +4,6 @@
 */
 
 #include "SceneLights.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
@@ -36,12 +35,6 @@ SgObject* SgLight::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
-}
-
-
 SgDirectionalLight::SgDirectionalLight(int polymorhicId)
     : SgLight(polymorhicId)
 {
@@ -66,12 +59,6 @@ SgDirectionalLight::SgDirectionalLight(const SgDirectionalLight& org)
 SgObject* SgDirectionalLight::clone(SgCloneMap& cloneMap) const
 {
     return new SgDirectionalLight(*this);
-}
-
-
-void SgDirectionalLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
 }
 
 
@@ -106,12 +93,6 @@ SgObject* SgPointLight::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPointLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
-}
-
-
 SgSpotLight::SgSpotLight(int polymorhicId)
     : SgPointLight(polymorhicId)
 {
@@ -142,12 +123,6 @@ SgSpotLight::SgSpotLight(const SgSpotLight& org)
 SgObject* SgSpotLight::clone(SgCloneMap& cloneMap) const
 {
     return new SgSpotLight(*this);
-}
-
-
-void SgSpotLight::accept(SceneVisitor& visitor)
-{
-    visitor.visitLight(this);
 }
 
 

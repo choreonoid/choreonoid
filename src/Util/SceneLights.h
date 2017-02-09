@@ -19,7 +19,6 @@ protected:
         
 public:
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     bool on() const { return on_; }
     void on(bool on) { on_ = on; }
@@ -49,7 +48,6 @@ public:
     SgDirectionalLight();
     SgDirectionalLight(const SgDirectionalLight& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const Vector3& direction() const { return direction_; }
     template<typename Derived> void setDirection(const Eigen::MatrixBase<Derived>& d) {
@@ -70,7 +68,6 @@ public:
     SgPointLight();
     SgPointLight(const SgPointLight& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     float constantAttenuation() const { return constantAttenuation_; }
     void setConstantAttenuation(float a) { constantAttenuation_ = a; }
@@ -98,7 +95,6 @@ public:
     SgSpotLight();
     SgSpotLight(const SgSpotLight& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const Vector3& direction() const { return direction_; }
     template<typename Derived> void setDirection(const Eigen::MatrixBase<Derived>& d) {

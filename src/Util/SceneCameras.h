@@ -18,8 +18,6 @@ protected:
     SgCamera(const SgCamera& org);
         
 public:
-    virtual void accept(SceneVisitor& visitor);
-
     static Affine3 positionLookingFor(const Vector3& eye, const Vector3& direction, const Vector3& up);
     static Affine3 positionLookingAt(const Vector3& eye, const Vector3& center, const Vector3& up);
 
@@ -64,7 +62,6 @@ public:
     SgPerspectiveCamera();
     SgPerspectiveCamera(const SgPerspectiveCamera& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     double fieldOfView() const { return fieldOfView_; }
     void setFieldOfView(double fov) { fieldOfView_ = fov; }
@@ -90,7 +87,6 @@ public:
     SgOrthographicCamera();
     SgOrthographicCamera(const SgOrthographicCamera& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     double height() const { return height_; }
     void setHeight(double h) { height_ = h; }

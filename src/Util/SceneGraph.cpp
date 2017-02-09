@@ -4,7 +4,6 @@
 */
 
 #include "SceneGraph.h"
-#include "SceneVisitor.h"
 #include "Exception.h"
 #include <unordered_map>
 #include <typeindex>
@@ -220,12 +219,6 @@ SgObject* SgNode::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgNode::accept(SceneVisitor& visitor)
-{
-    visitor.visitNode(this);
-}
-
-
 const BoundingBox& SgNode::boundingBox() const
 {
     static const BoundingBox bbox; // empty one
@@ -305,12 +298,6 @@ int SgGroup::numChildObjects() const
 SgObject* SgGroup::childObject(int index)
 {
     return children[index].get();
-}
-
-
-void SgGroup::accept(SceneVisitor& visitor)
-{
-    visitor.visitGroup(this);
 }
 
 
@@ -493,12 +480,6 @@ SgObject* SgInvariantGroup::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgInvariantGroup::accept(SceneVisitor& visitor)
-{
-    visitor.visitInvariantGroup(this);
-}
-
-
 SgTransform::SgTransform(int polymorhicId)
     : SgGroup(polymorhicId)
 {
@@ -574,12 +555,6 @@ SgObject* SgPosTransform::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPosTransform::accept(SceneVisitor& visitor)
-{
-    visitor.visitPosTransform(this);
-}
-
-
 const BoundingBox& SgPosTransform::boundingBox() const
 {
     if(isBboxCacheValid){
@@ -646,12 +621,6 @@ SgObject* SgScaleTransform::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgScaleTransform::accept(SceneVisitor& visitor)
-{
-    visitor.visitScaleTransform(this);
-}
-
-
 const BoundingBox& SgScaleTransform::boundingBox() const
 {
     if(isBboxCacheValid){
@@ -700,12 +669,6 @@ SgObject* SgSwitch::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgSwitch::accept(SceneVisitor& visitor)
-{
-    visitor.visitSwitch(this);
-}
-
-
 SgUnpickableGroup::SgUnpickableGroup()
 {
 
@@ -732,12 +695,6 @@ SgObject* SgUnpickableGroup::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgUnpickableGroup::accept(SceneVisitor& visitor)
-{
-    visitor.visitUnpickableGroup(this);
-}
-
-
 SgPreprocessed::SgPreprocessed(int polymorhicId)
     : SgNode(polymorhicId)
 {
@@ -755,12 +712,6 @@ SgPreprocessed::SgPreprocessed(const SgPreprocessed& org)
 SgObject* SgPreprocessed::clone(SgCloneMap& cloneMap) const
 {
     return new SgPreprocessed(*this);
-}
-
-
-void SgPreprocessed::accept(SceneVisitor& visitor)
-{
-    visitor.visitPreprocessed(this);
 }
 
 

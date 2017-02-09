@@ -428,7 +428,6 @@ public:
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
-    virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
         
     SgMesh* mesh() { return mesh_; }
@@ -517,7 +516,6 @@ class CNOID_EXPORT SgPointSet : public SgPlot
 public:
     SgPointSet();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     void setPointSize(double size) { pointSize_ = size; }
 
@@ -541,7 +539,6 @@ class CNOID_EXPORT SgLineSet : public SgPlot
 public:
     SgLineSet();
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     const SgIndexArray& lineVertices() const { return lineVertices_; }
     SgIndexArray& lineVertices() { return lineVertices_; }
@@ -602,7 +599,6 @@ public:
     ~SgOverlay();
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     struct ViewVolume {
         double left;

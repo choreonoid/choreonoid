@@ -35,7 +35,6 @@ set(sources
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
-  SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
@@ -105,7 +104,6 @@ set(headers
   SceneCameras.h
   SceneLights.h
   SceneEffects.h
-  SceneVisitor.h
   SceneRenderer.h
   SceneUtil.h
   MeshGenerator.h

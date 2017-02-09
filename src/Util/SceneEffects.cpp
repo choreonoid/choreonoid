@@ -4,7 +4,6 @@
 */
 
 #include "SceneEffects.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
@@ -39,12 +38,6 @@ SgObject* SgFog::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgFog::accept(SceneVisitor& visitor)
-{
-    visitor.visitFog(this);
-}
-
-
 SgOutlineGroup::SgOutlineGroup(int polymorhicId)
     : SgGroup(polymorhicId)
 {
@@ -57,12 +50,6 @@ SgOutlineGroup::SgOutlineGroup()
     : SgOutlineGroup(findPolymorphicId<SgOutlineGroup>())
 {
 
-}
-
-
-void SgOutlineGroup::accept(SceneVisitor& visitor)
-{
-    visitor.visitOutlineGroup(this);
 }
 
 

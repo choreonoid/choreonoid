@@ -19,8 +19,6 @@ namespace cnoid {
 class SgObject;
 typedef ref_ptr<SgObject> SgObjectPtr;
 
-class SceneVisitor;
-
 class CNOID_EXPORT SgUpdate
 {
 public:
@@ -171,7 +169,6 @@ public:
     ~SgNode();
     int polymorhicId() const { return polymorhicId_; }
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
 
     SgNode* cloneNode(SgCloneMap& cloneMap) const {
@@ -207,7 +204,6 @@ public:
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
-    virtual void accept(SceneVisitor& visitor);
     virtual void onUpdated(SgUpdate& update);
     virtual const BoundingBox& boundingBox() const;
     virtual bool isGroup() const;
@@ -281,7 +277,6 @@ public:
     SgInvariantGroup(const SgInvariantGroup& org);
     SgInvariantGroup(const SgInvariantGroup& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
 };
 typedef ref_ptr<SgInvariantGroup> SgInvariantGroupPtr;
@@ -314,7 +309,6 @@ public:
     SgPosTransform(const SgPosTransform& org, SgCloneMap& cloneMap);
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
     virtual void getTransform(Affine3& out_T) const;
 
@@ -368,7 +362,6 @@ public:
     SgScaleTransform(const SgScaleTransform& org);
     SgScaleTransform(const SgScaleTransform& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
     virtual const BoundingBox& boundingBox() const;
     virtual void getTransform(Affine3& out_T) const;
 
@@ -399,7 +392,6 @@ public:
     SgSwitch(const SgSwitch& org);
     SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
     void turnOn() { isTurnedOn_ = true; }
     void turnOff() { isTurnedOn_ = false; }
@@ -419,7 +411,6 @@ public:
     SgUnpickableGroup(const SgUnpickableGroup& org);
     SgUnpickableGroup(const SgUnpickableGroup& org, SgCloneMap& cloneMap);
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 
 };
 typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
@@ -433,7 +424,6 @@ protected:
 
 public:
     virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual void accept(SceneVisitor& visitor);
 };
 
 
