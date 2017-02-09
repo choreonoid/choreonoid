@@ -370,7 +370,7 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
 }
 
 
-SceneRenderer::NodeFunctionSet& GLSLSceneRenderer::renderingFunctionSet()
+SceneRenderer::NodeFunctionSet& GLSLSceneRenderer::renderingFunctions()
 {
     return impl->renderingFunctions;
 }

@@ -425,7 +425,7 @@ GL1SceneRendererImpl::~GL1SceneRendererImpl()
 }
 
 
-SceneRenderer::NodeFunctionSet& GL1SceneRenderer::renderingFunctionSet()
+SceneRenderer::NodeFunctionSet& GL1SceneRenderer::renderingFunctions()
 {
     return impl->renderingFunctions;
 }
@@ -1103,6 +1103,13 @@ void GL1SceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 
 void GL1SceneRendererImpl::renderMaterial(const SgMaterial* material)
 {
+    if(!isLightingEnabled){
+        if(material){
+            setColor(material->diffuseColor());
+        }
+        return;
+    }
+    
     if(!material){
         material = defaultMaterial;
     }
@@ -1751,9 +1758,9 @@ void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
     if(isPicking){
         return;
     }
-    
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
+
+    const bool wasLightingEnabled = isLightingEnabled;
+    enableLighting(false);
             
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1781,8 +1788,10 @@ void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    
-    glPopAttrib();
+
+    if(wasLightingEnabled){
+        enableLighting(true);
+    }
 }
 
 

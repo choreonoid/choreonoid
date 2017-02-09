@@ -43,6 +43,7 @@ set(sources
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
   SceneMarkers.cpp
+  CoordinateAxesOverlay.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
@@ -111,6 +112,7 @@ set(headers
   MeshNormalGenerator.h
   MeshExtractor.h
   SceneMarkers.h
+  CoordinateAxesOverlay.h
   SceneProvider.h
   Collision.h
   CollisionDetector.h

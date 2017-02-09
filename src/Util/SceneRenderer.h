@@ -26,7 +26,7 @@ public:
     virtual void clearScene();
 
     typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
-    virtual NodeFunctionSet& renderingFunctionSet() = 0;
+    virtual NodeFunctionSet& renderingFunctions() = 0;
 
     typedef std::function<void(SceneRenderer* renderer)> ExtendFunction;
     static void addExtension(ExtendFunction func);

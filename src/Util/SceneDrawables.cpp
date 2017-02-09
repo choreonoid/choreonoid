@@ -419,6 +419,54 @@ void SgMesh::updateBoundingBox()
 }
 
 
+void SgMesh::transform(const Affine3f& T)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] = T.linear() * v[i] + T.translation();
+        }
+        if(hasNormals()){
+            auto& n = *normals();
+            for(size_t i=0; i < n.size(); ++i){
+                n[i] = T.linear() * n[i];
+            }
+        }
+    }
+    setPrimitive(MESH); // clear the primitive information
+}
+
+
+void SgMesh::translate(const Vector3f& translation)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] += translation;
+        }
+    }
+    setPrimitive(MESH); // clear the primitive information
+}
+    
+
+void SgMesh::rotate(const Matrix3f& R)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] = R * v[i];
+        }
+        if(hasNormals()){
+            auto& n = *normals();
+            for(size_t i=0; i < n.size(); ++i){
+                n[i] = R * n[i];
+            }
+        }
+    }
+    setPrimitive(MESH); // clear the primitive information
+}    
+    
+
 SgPolygonMesh::SgPolygonMesh()
 {
 
@@ -830,7 +878,15 @@ void SgLineSet::accept(SceneVisitor& visitor)
 }
 
 
+SgOverlay::SgOverlay(int polymorhicId)
+    : SgGroup(polymorhicId)
+{
+
+}
+
+
 SgOverlay::SgOverlay()
+    : SgOverlay(findPolymorphicId<SgOverlay>())
 {
 
 }

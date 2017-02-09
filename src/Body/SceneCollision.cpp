@@ -17,7 +17,7 @@ struct NodeTypeRegistration {
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
-                auto& functions = renderer->renderingFunctionSet();
+                auto& functions = renderer->renderingFunctions();
                 functions.setFunction<SceneCollision>(
                     [renderer](SgNode* node){
                         static_cast<SceneCollision*>(node)->render(renderer);
@@ -75,5 +75,5 @@ void SceneCollision::render(SceneRenderer* renderer)
         isDirty = false;
     }
     
-    renderer->renderingFunctionSet().dispatchAs<SgLineSet>(this);
+    renderer->renderingFunctions().dispatchAs<SgLineSet>(this);
 }

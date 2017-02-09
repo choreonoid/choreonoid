@@ -20,26 +20,26 @@ const char* axisNames[3] = { "x", "y", "z" };
 /**
    \note This node is not inserted the node path obtained by SceneWidgetEvent::nodePath()
 */
-class ViewpointDependentRenderingSelector : public SgGroup
+class SgViewpointDependentSelector : public SgGroup
 {
     Vector3 axis;
     double thresh;
     
 public:
-    ViewpointDependentRenderingSelector()
-        : SgGroup(findPolymorphicId<ViewpointDependentRenderingSelector>()) {
+    SgViewpointDependentSelector()
+        : SgGroup(findPolymorphicId<SgViewpointDependentSelector>()) {
         axis = Vector3::UnitX();
         thresh = cos(radian(45.0));
     }
 
-    ViewpointDependentRenderingSelector(const ViewpointDependentRenderingSelector& org, SgCloneMap& cloneMap)
+    SgViewpointDependentSelector(const SgViewpointDependentSelector& org, SgCloneMap& cloneMap)
         : SgGroup(org, cloneMap) {
         axis = org.axis;
         thresh = org.thresh;
     }
 
     virtual SgObject* clone(SgCloneMap& cloneMap) const {
-        return new ViewpointDependentRenderingSelector(*this, cloneMap);
+        return new SgViewpointDependentSelector(*this, cloneMap);
     }
 
     void setAxis(const Vector3& axis){
@@ -69,14 +69,14 @@ public:
 
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
-        SgNode::registerType<ViewpointDependentRenderingSelector, SgGroup>();
+        SgNode::registerType<SgViewpointDependentSelector, SgGroup>();
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
-                auto& functions = renderer->renderingFunctionSet();
-                functions.setFunction<ViewpointDependentRenderingSelector>(
+                auto& functions = renderer->renderingFunctions();
+                functions.setFunction<SgViewpointDependentSelector>(
                     [=](SgNode* node){
-                        static_cast<ViewpointDependentRenderingSelector*>(node)->render(renderer);
+                        static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
                     });
             });
     }
@@ -116,7 +116,7 @@ RotationDragger::RotationDragger()
         beltShape2->setMesh(beltMesh2);
         beltShape2->setMaterial(material);
         
-        ViewpointDependentRenderingSelector* selector = new ViewpointDependentRenderingSelector;
+        SgViewpointDependentSelector* selector = new SgViewpointDependentSelector;
         
         SgPosTransform* transform1 = new SgPosTransform;
         if(i == 0){ // x-axis

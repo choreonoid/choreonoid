@@ -379,6 +379,10 @@ public:
     template<class TPrimitive> const TPrimitive& primitive() const { return boost::get<TPrimitive>(primitive_); }
     template<class TPrimitive> void setPrimitive(const TPrimitive& prim) { primitive_ = prim; }
 
+    void transform(const Affine3f& T);
+    void translate(const Vector3f& translation);
+    void rotate(const Matrix3f& R);
+
 protected:
     SgMesh(const SgMesh& org, SgCloneMap& cloneMap);
 
@@ -612,6 +616,7 @@ public:
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
 
 protected:
+    SgOverlay(int polymorhicId);
     SgOverlay(const SgOverlay& org, SgCloneMap& cloneMap);
 };
 

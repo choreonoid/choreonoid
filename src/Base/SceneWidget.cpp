@@ -21,10 +21,9 @@
 #include "LazyCaller.h"
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
-#include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
-#include <cnoid/MeshGenerator>
+#include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
 #include <QGLWidget>
 #include <QGLPixelBuffer>
@@ -49,7 +48,6 @@
 
 using namespace std;
 using namespace std::placeholders;
-using namespace Eigen;
 using namespace cnoid;
 
 namespace {
@@ -246,10 +244,7 @@ public:
     Selection polygonMode;
     bool collisionLinesVisible;
 
-    SgCustomGLNodePtr coordinateAxes;
-    SgPosTransform* xAxis;
-    SgPosTransform* yAxis;
-    SgPosTransform* zAxis;
+    ref_ptr<CoordinateAxesOverlay> coordinateAxesOverlay;
 
     SgInvariantGroupPtr gridGroup;
     Vector4f gridColor[3];
@@ -281,8 +276,6 @@ public:
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
 
-    void initializeCoordinateAxes();
-    void renderCoordinateAxes(GL1SceneRenderer& renderer);
     void updateGrids();
     SgLineSet* createGrid(int index);
 
@@ -569,7 +562,9 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
 
     collisionLinesVisible = false;
 
-    initializeCoordinateAxes();
+    coordinateAxesOverlay = new CoordinateAxesOverlay;
+    activateSystemNode(coordinateAxesOverlay, config->coordinateAxesCheck.isChecked());
+
     updateGrids();
 
     if(!useGLSL){
@@ -738,42 +733,6 @@ void SceneWidgetImpl::paintGL()
     }
 #endif
 
-}
-
-
-void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
-{
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-
-    int x, y, w, h;
-    renderer.getViewport(x, y, w, h);
-    glOrtho((double)(x - 26), (double)(w - 26), (double)(y - 24), (double)(h - 24), -100.0, 100.0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    Affine3 transform(renderer.currentCameraPosition());
-    Affine3 inv = transform.inverse();
-    glMultMatrixd(inv.data());
-
-    renderer.setColor(Vector3f(1.0,0.0,0.0));
-    //renderer.renderTransform(xAxis);
-    renderer.setColor(Vector3f(0.0,1.0,0.0));
-    //renderer.renderTransform(yAxis);
-    renderer.setColor(Vector3f(0.4,0.6,1.0));
-    //renderer.renderTransform(zAxis);
-    
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glPopAttrib();
 }
 
 
@@ -2767,62 +2726,6 @@ void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 }
 
 
-void SceneWidgetImpl::initializeCoordinateAxes()
-{
-    coordinateAxes = new SgCustomGLNode(std::bind(&SceneWidgetImpl::renderCoordinateAxes, this, _1));
-    coordinateAxes->setName("CoordinateAxes");
-
-    float length = 16;
-    float width = 2;
-
-    MeshGenerator meshGenerator;
-    SgMeshPtr cylinder = meshGenerator.generateCylinder(width, length);
-    SgMeshPtr cone = meshGenerator.generateCone(width * 2.0, width * 4.0);
-
-    SgShapePtr xCylinderShape = new SgShape;
-    xCylinderShape->setMesh(cylinder);
-    SgShapePtr xConeShape = new SgShape;
-    xConeShape->setMesh(cone);
-    SgPosTransform* xtransform = new SgPosTransform;
-    xtransform->setTranslation(Vector3(0.0, length / 2.0, 0.0));
-    xtransform->addChild(xConeShape);
-    xAxis = new SgPosTransform;
-    xAxis->setTranslation(Vector3(length / 2.0, 0.0, 0.0));
-    AngleAxis xangleA(1.571, Vector3(0.0, 0.0, -1.0));
-    xAxis->setRotation(xangleA.toRotationMatrix ());
-    xAxis->addChild(xCylinderShape);
-    xAxis->addChild(xtransform);
-
-    SgShapePtr yCylinderShape = new SgShape;
-    yCylinderShape->setMesh(cylinder);
-    SgShapePtr yConeShape = new SgShape;
-    yConeShape->setMesh(cone);
-    SgPosTransform* ytransform = new SgPosTransform;
-    ytransform->setTranslation(Vector3(0.0, length/2.0, 0.0));
-    ytransform->addChild(yConeShape);
-    yAxis = new SgPosTransform;
-    yAxis->setTranslation(Vector3(0.0, length / 2.0, 0.0));
-    yAxis->addChild(yCylinderShape);
-    yAxis->addChild(ytransform);
-
-    SgShapePtr zCylinderShape = new SgShape;
-    zCylinderShape->setMesh(cylinder);
-    SgShapePtr zConeShape = new SgShape;
-    zConeShape->setMesh(cone);
-    SgPosTransform* ztransform = new SgPosTransform;
-    ztransform->setTranslation(Vector3(0.0, length / 2.0, 0.0));
-    ztransform->addChild(zConeShape);
-    zAxis = new SgPosTransform;
-    AngleAxis zangleA(1.571, Vector3(1.0, 0.0, 0.0));
-    zAxis->setRotation(zangleA.toRotationMatrix ());
-    zAxis->setTranslation(Vector3(0.0, 0.0, length / 2.0));
-    zAxis->addChild(zCylinderShape);
-    zAxis->addChild(ztransform);
-
-    activateSystemNode(coordinateAxes, config->coordinateAxesCheck.isChecked());
-}
-
-
 void SceneWidgetImpl::updateGrids()
 {
     if(gridGroup){
@@ -3162,7 +3065,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     coordinateAxesCheck.setText(_("Coordinate axes"));
     coordinateAxesCheck.setChecked(true);
     coordinateAxesCheck.sigToggled().connect(
-        std::bind(&SceneWidgetImpl::activateSystemNode, impl, std::ref(impl->coordinateAxes), _1));
+        std::bind(&SceneWidgetImpl::activateSystemNode, impl, std::ref(impl->coordinateAxesOverlay), _1));
     hbox->addWidget(&coordinateAxesCheck);
     
     fpsCheck.setText(_("Show FPS"));

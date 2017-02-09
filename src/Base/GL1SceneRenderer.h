@@ -24,7 +24,7 @@ public:
 
     virtual void setOutputStream(std::ostream& os) override;
     
-    virtual NodeFunctionSet& renderingFunctionSet() override;
+    virtual NodeFunctionSet& renderingFunctions() override;
     virtual void renderNode(SgNode* node) override;
 
     virtual const Affine3& currentModelTransform() const override;
