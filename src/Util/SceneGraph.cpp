@@ -720,7 +720,7 @@ namespace {
 
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
-        //SgNode::registerType<SgNode, SgNode>();
+        SgNode::registerType<SgNode, SgNode>();
         SgNode::registerType<SgGroup, SgNode>();
         SgNode::registerType<SgInvariantGroup, SgGroup>();
         SgNode::registerType<SgTransform, SgGroup>();

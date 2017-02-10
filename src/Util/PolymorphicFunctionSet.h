@@ -6,6 +6,7 @@
 #define CNOID_UTIL_POLYMORPHIC_FUNCTION_SET_H
 
 #include <functional>
+#include <vector>
 
 namespace cnoid {
 
@@ -17,15 +18,15 @@ public:
     
 private:
     std::vector<Function> dispatchTable;
-    std::vector<bool> dispatchTableFixedness;
-    bool isDispatchTableDirty;
+    std::vector<bool> isFixed;
+    bool isDirty;
 
 public:
     PolymorphicFunctionSet() {
         const int n = ObjectBase::numPolymorphicTypes();
         dispatchTable.resize(n);
-        dispatchTableFixedness.resize(n, false);
-        isDispatchTableDirty = true;
+        isFixed.resize(n, false);
+        isDirty = true;
     }
 
     template <class Object>
@@ -34,11 +35,11 @@ public:
         if(id >= 0){
             if(id >= dispatchTable.size()){
                 dispatchTable.resize(id + 1);
-                dispatchTableFixedness.resize(id + 1, false);
+                isFixed.resize(id + 1, false);
             }
             dispatchTable[id] = func;
-            dispatchTableFixedness[id] = true;
-            isDispatchTableDirty = true;
+            isFixed[id] = true;
+            isDirty = true;
         }
     }
 
@@ -50,18 +51,18 @@ public:
     void updateDispatchTable() {
 
         const int numTypes = ObjectBase::numPolymorphicTypes();
-        if(dispatchTable.size() == numTypes && !isDispatchTableDirty){
+        if(dispatchTable.size() == numTypes && !isDirty){
             return;
         }
         
         if(dispatchTable.size() < numTypes){
             dispatchTable.resize(numTypes);
-            dispatchTableFixedness.resize(numTypes, false);
+            isFixed.resize(numTypes, false);
         }
     
         const int n = dispatchTable.size();
         for(int i=0; i < n; ++i){
-            if(!dispatchTableFixedness[i]){
+            if(!isFixed[i]){
                 dispatchTable[i] = nullptr;
             }
         }
