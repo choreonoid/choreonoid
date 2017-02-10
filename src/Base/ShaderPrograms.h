@@ -64,7 +64,7 @@ protected:
     GLint emissionColorLocation;
     GLint shininessLocation;
     GLint alphaLocation;
-    
+
 public:
     virtual void initialize();
     int maxNumLights() const { return maxNumLights_; }

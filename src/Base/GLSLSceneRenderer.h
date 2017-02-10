@@ -20,6 +20,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     GLSLSceneRenderer(SgGroup* root);
     virtual ~GLSLSceneRenderer();
 
+    static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
+
     virtual void setOutputStream(std::ostream& os) override;
 
     virtual NodeFunctionSet& renderingFunctions() override;

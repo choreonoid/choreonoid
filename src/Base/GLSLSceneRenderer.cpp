@@ -379,6 +379,12 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
 }
 
 
+void GLSLSceneRenderer::addExtension(std::function<void(GLSLSceneRenderer* renderer)> func)
+{
+
+}
+
+
 SceneRenderer::NodeFunctionSet& GLSLSceneRenderer::renderingFunctions()
 {
     return impl->renderingFunctions;
