@@ -48,11 +48,12 @@ public:
     }
 
     void updateDispatchTable() {
-        if(!isDispatchTableDirty){
+
+        const int numTypes = ObjectBase::numPolymorphicTypes();
+        if(dispatchTable.size() == numTypes && !isDispatchTableDirty){
             return;
         }
         
-        const int numTypes = ObjectBase::numPolymorphicTypes();
         if(dispatchTable.size() < numTypes){
             dispatchTable.resize(numTypes);
             dispatchTableFixedness.resize(numTypes, false);
@@ -82,15 +83,19 @@ public:
         }
     }
 
-    void dispatch(ObjectBase* obj){
-        const Function& func = dispatchTable[obj->polymorhicId()];
+    inline void dispatch(ObjectBase* obj){
+        const int id = obj->polymorhicId();
+        if(id >= dispatchTable.size()){
+            updateDispatchTable();
+        }
+        const Function& func = dispatchTable[id];
         if(func){
             func(obj);
-        }
+        } 
     }
 
     template <class Object>
-    void dispatchAs(Object* obj){
+    inline void dispatchAs(Object* obj){
         const Function& func = dispatchTable[ObjectBase::template findPolymorphicId<Object>()];
         if(func){
             func(obj);

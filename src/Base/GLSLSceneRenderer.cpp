@@ -231,6 +231,7 @@ public:
     
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
+    void initialize();
     bool initializeGL();
     void render();
     bool pick(int x, int y);
@@ -282,6 +283,7 @@ public:
 GLSLSceneRenderer::GLSLSceneRenderer()
 {
     impl = new GLSLSceneRendererImpl(this);
+    impl->initialize();
 }
 
 
@@ -289,13 +291,18 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GLSLSceneRendererImpl(this);
-    applyExtensions();
-    impl->renderingFunctions.updateDispatchTable();
+    impl->initialize();
 }
 
 
 GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
+{
+
+}
+
+
+void GLSLSceneRendererImpl::initialize()
 {
     defaultFBO = 0;
 
@@ -347,6 +354,9 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
         [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+
+    self->applyExtensions();
+    renderingFunctions.updateDispatchTable();
 }
 
 

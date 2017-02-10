@@ -132,6 +132,7 @@ void SgObject::removeParent(SgObject* parent)
 
 namespace {
 
+// Need mutex to access the following variables?
 typedef std::unordered_map<std::type_index, int> PolymorphicIdMap;
 PolymorphicIdMap polymorphicIdMap;
 

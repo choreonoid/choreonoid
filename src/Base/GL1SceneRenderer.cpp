@@ -276,6 +276,7 @@ public:
 
     GL1SceneRendererImpl(GL1SceneRenderer* self);
     ~GL1SceneRendererImpl();
+    void initialize();
     bool initializeGL();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
@@ -333,6 +334,7 @@ public:
 GL1SceneRenderer::GL1SceneRenderer()
 {
     impl = new GL1SceneRendererImpl(this);
+    impl->initialize();
 }
 
 
@@ -340,13 +342,18 @@ GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GL1SceneRendererImpl(this);
-    applyExtensions();
-    impl->renderingFunctions.updateDispatchTable();
+    impl->initialize();
 }
 
 
 GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     : self(self)
+{
+
+}
+
+
+void GL1SceneRendererImpl::initialize()
 {
     Vstack.reserve(16);
     
@@ -408,6 +415,9 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
         [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
     renderingFunctions.setFunction<SgOutlineGroup>(
         [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+
+    self->applyExtensions();
+    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -780,6 +790,7 @@ void GL1SceneRendererImpl::endRendering()
 void GL1SceneRenderer::render()
 {
     applyNewExtensions();
+    impl->renderingFunctions.updateDispatchTable();
     impl->render();
 }
 
