@@ -227,6 +227,7 @@ public:
     bool empty() const { return children.empty(); }
     int numChildren() const { return children.size(); }
     SgNode* child(int index) { return children[index]; }
+    const SgNode* child(int index) const { return children[index]; }
 
     //! This throws an exeption when the index is invalid or the type is not matched.
     template<class NodeType> NodeType* getChild(int index) {
