@@ -8,12 +8,13 @@
 #include "GLSLProgram.h"
 #include <cnoid/SceneCameras>
 #include <vector>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class SgLight;
 
-class ShaderProgram : public GLSLProgram
+class CNOID_EXPORT ShaderProgram : public GLSLProgram
 {
 public:
     ShaderProgram();
@@ -27,7 +28,7 @@ public:
 };
 
 
-class NolightingProgram : public ShaderProgram
+class CNOID_EXPORT NolightingProgram : public ShaderProgram
 {
     GLint MVPLocation;
     
@@ -37,7 +38,7 @@ public:
 };
 
 
-class SolidColorProgram : public NolightingProgram
+class CNOID_EXPORT SolidColorProgram : public NolightingProgram
 {
     GLint pointSizeLocation;
     GLint colorLocation;
@@ -52,7 +53,7 @@ public:
 };
 
 
-class LightingProgram : public ShaderProgram
+class CNOID_EXPORT LightingProgram : public ShaderProgram
 {
     static const int maxNumLights_ = 10;
 

@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/PhenomenonPlugin" >
+  <file>shader/fountain.vert</file>
+  <file>shader/fountain.frag</file>
+</qresource>
+</RCC>

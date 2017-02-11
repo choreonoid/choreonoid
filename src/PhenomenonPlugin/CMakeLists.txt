@@ -16,13 +16,19 @@ set(headers
 
   )
 
+if(NOT QT5)
+  QT4_ADD_RESOURCES(RC_SRCS PhenomenonPlugin.qrc)
+else()
+  QT5_ADD_RESOURCES(RC_SRCS PhenomenonPlugin.qrc)
+endif()
+
 set(target CnoidPhenomenonPlugin)
 
 make_gettext_mofiles(${target} mofiles)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
+add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles} ${RC_SRCS})
 
 target_link_libraries(${target} CnoidBase CnoidBodyPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
