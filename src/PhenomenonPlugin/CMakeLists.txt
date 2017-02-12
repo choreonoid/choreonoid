@@ -10,6 +10,7 @@ endif()
 set(sources
   PhenomenonPlugin.cpp
   SceneFountain.cpp
+  gl_core_3_3.c
   )
 
 set(headers
