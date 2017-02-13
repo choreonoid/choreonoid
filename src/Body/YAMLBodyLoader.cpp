@@ -22,6 +22,9 @@
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/NullOut>
+#ifdef USE_ASSIMP
+#include <cnoid/AssimpSceneLoader>
+#endif
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
@@ -108,6 +111,10 @@ public:
 
     VRMLParser vrmlParser;
     VRMLToSGConverter sgConverter;
+
+#ifdef USE_ASSIMP
+    AssimpSceneLoader assimpLoader;
+#endif
 
     ostream& os() { return *os_; }
 
@@ -315,6 +322,9 @@ const char* YAMLBodyLoader::format() const
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+#ifdef USE_ASSIMP
+    impl->assimpLoader.setMessageSink(os);
+#endif
 }
 
 
@@ -747,14 +757,25 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             filepath = directoryPath / filepath;
             filepath.normalize();
         }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
+        if(filepath.extension() == ".wrl"){
+            vrmlParser.load(getAbsolutePathString(filepath));
+            while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+                SgNodePtr node = sgConverter.convert(vrmlNode);
+                if(node){
+                    shape->addChild(node);
+                    hasShape = true;
+                }
+            }
+        }
+#ifdef USE_ASSIMP
+        else {
+            SgNode* node = assimpLoader.load(getAbsolutePathString(filepath));
+            if (node){
                 shape->addChild(node);
                 hasShape = true;
             }
         }
+#endif
     }
 
     if(hasShape){
