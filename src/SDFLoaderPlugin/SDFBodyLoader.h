@@ -7,6 +7,7 @@
 #define CNOID_BODY_SDF_BODY_LOADER_H_INCLUDED
 
 #include <cnoid/AbstractBodyLoader>
+#include <cnoid/BodyItem>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -22,6 +23,8 @@ public:
     virtual void setMessageSink(std::ostream& os);
     virtual void setVerbose(bool on);
     virtual bool load(Body* body, const std::string& filename);
+
+    bool load(BodyItem* item, const std::string& filename);
 
 private:
     SDFBodyLoaderImpl* impl;

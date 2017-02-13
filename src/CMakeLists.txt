@@ -33,6 +33,7 @@ if(ENABLE_GUI)
   
   add_subdirectory(GrxUIPlugin)
   add_subdirectory(PythonSimScriptPlugin)
+  add_subdirectory(SDFLoaderPlugin)
 
   add_subdirectory(Choreonoid)
 endif()

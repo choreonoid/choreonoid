@@ -23,6 +23,8 @@
 #include <cnoid/ImageIO>
 #include <cnoid/Exception>
 #include <cnoid/MessageView>
+#include <cnoid/WorldItem>
+#include <cnoid/RootItem>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
 #include <boost/function.hpp>
@@ -50,6 +52,13 @@ using namespace boost;
 using namespace cnoid;
 
 namespace {
+
+std::map<std::string, Link::JointType> jointTypeMap = {
+        { "revolute", Link::REVOLUTE_JOINT },
+        { "prismatic", Link::SLIDE_JOINT },
+        { "fixed", Link::FIXED_JOINT },
+        { "free", Link::FREE_JOINT }
+};
 
 MeshGenerator meshGenerator;
     
@@ -93,16 +102,66 @@ void setShape(Link* link, SgGroup* shape, bool isVisual)
 
 namespace cnoid {
 
-class LinkInfo
+class GeometryInfo : public Referenced
+{
+public:
+    Vector3 scale;
+    SgNodePtr sgNode;
+};
+typedef ref_ptr<GeometryInfo> GeometryInfoPtr;
+
+class MaterialInfo : public Referenced
+{
+public:
+    string scriptName;
+    string uri;
+    sdf::Color ambient;
+    sdf::Color diffuse;
+    sdf::Color specular;
+    sdf::Color emissive;
+};
+typedef ref_ptr<MaterialInfo> MaterialInfoPtr;
+
+class VisualInfo : public Referenced
+{
+public:
+    Affine3 pose;
+    float transparency;
+    MaterialInfoPtr material;
+    GeometryInfoPtr geometry;
+
+};
+typedef ref_ptr<VisualInfo> VisualInfoPtr;
+
+class CollisionInfo : public Referenced
+{
+public:
+    Affine3 pose;
+    GeometryInfoPtr geometry;
+};
+typedef ref_ptr<CollisionInfo> CollisionInfoPtr;
+
+class JointInfo;
+
+class LinkInfo : public Referenced
 {
 public:
     std::string linkName;
     double m;
-    sdf::Pose c;
+    cnoid::Affine3 c;
     cnoid::Matrix3 I;
     cnoid::SgGroupPtr visualShape;
     cnoid::SgGroupPtr collisionShape;
     cnoid::Affine3 pose;
+    bool isRoot;
+    vector<VisualInfoPtr> visuals;
+    vector<CollisionInfoPtr> collisions;
+
+    LinkInfo* parent;
+    LinkInfo* child;
+    LinkInfo* sibling;
+    JointInfo* jointInfo;
+    Affine3 origin;
 
     LinkInfo() {
         /*
@@ -110,16 +169,37 @@ public:
           see Choreonoid src/Body/Link.cpp Link::Link().
          */
         m = 0.0;
-        c = sdf::Pose();
+        c = Affine3::Identity();
         I.setZero();
         visualShape = new SgGroup;
         collisionShape = new SgGroup;
         pose = cnoid::Affine3::Identity();
+        parent = child = sibling  = 0;
+        jointInfo = 0;
+        isRoot = false;
     }
-};
-typedef boost::shared_ptr<LinkInfo> LinkInfoPtr;
 
-class JointInfo
+    void addChild(LinkInfo* link) {
+        if(!child){
+            child = link;
+            link->sibling = 0;
+        } else {
+            LinkInfo* lastChild = child;
+            while(lastChild->sibling){
+                lastChild = lastChild->sibling;
+            }
+            lastChild->sibling = link;
+            link->sibling = 0;
+        }
+        link->parent = this;
+    }
+
+    Link* createLink();
+
+};
+typedef ref_ptr<LinkInfo> LinkInfoPtr;
+
+class JointInfo: public Referenced
 {
 public:
     std::string jointName;
@@ -129,6 +209,7 @@ public:
     LinkInfoPtr child;
     std::string jointType;
     cnoid::Vector3 axis;
+    bool useparent;
     double upper;
     double lower;
     double velocity;
@@ -139,44 +220,90 @@ public:
           initialize value by Choreonoid's constructor value.
           see Choreonoid src/Body/Link.cpp Link::Link().
          */
-        parent = LinkInfoPtr();
-        child = LinkInfoPtr();
         axis = Vector3::UnitZ();
         upper = std::numeric_limits<double>::max();
         lower = -std::numeric_limits<double>::max();
         velocity = 0.0;
         pose = cnoid::Affine3::Identity();
+        useparent = false;
+        parent = child = 0;
     }
+
+    Link::JointType convertJointType();
+    void convertAxis(Vector3& axis);
+
 };
-typedef boost::shared_ptr<JointInfo> JointInfoPtr;
+typedef ref_ptr<JointInfo> JointInfoPtr;
+
+class ModelInfo;
+typedef ref_ptr<ModelInfo> ModelInfoPtr;
+
+class ModelInfo : public Referenced
+{
+public:
+    std::string name;
+    bool isStatic;
+    bool selfCollide;
+    cnoid::Affine3 pose;
+    vector<ModelInfoPtr> nestedModels;
+    std::map<std::string, LinkInfoPtr> linkInfos;
+    vector<JointInfoPtr> jointInfos;
+    LinkInfo* root;
+
+    ModelInfo(){
+        isStatic = false;
+        selfCollide = false;
+        pose = cnoid::Affine3::Identity();
+        nestedModels.clear();
+        root = 0;
+    }
+
+    LinkInfo* findRootLinks();
+    void nestModel(string parentName, ModelInfo* orgModel);
+};
 
 class SDFBodyLoaderImpl
 {
 public:   
-    Body* body;
     dynamic_bitset<> validJointIdSet;
     int numValidJointIds;
     ostream* os_;
     bool isVerbose;
     std::vector<JointInfoPtr> joints;
     std::map<std::string, LinkInfoPtr> linkdataMap;
-    std::map<std::string, Link::JointType> jointTypeMap;
     typedef std::map<std::string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
+    sdf::ElementPtr root;
 
     ostream& os() { return *os_; }
 
     SDFBodyLoaderImpl();
     ~SDFBodyLoaderImpl();
     cnoid::Affine3 pose2affine(const sdf::Pose& pose);
+
+    void readSDF(const std::string& filename, vector<ModelInfoPtr>& modelInfos);
+
     bool load(Body* body, const std::string& filename);
-    BodyPtr load(const std::string& filename);        
+    bool load(BodyItem* item, const std::string& filename);
+    BodyPtr load(const std::string& filename);
+
+    bool createBody(Body* body, ModelInfo* model);
     SgNodePtr readGeometry(sdf::ElementPtr geometry, SgMaterial* material, const cnoid::Affine3 &pose);
     std::vector<std::string> findRootLinks();
     bool hasOpenLink(const std::string& linkName);
     std::vector<JointInfoPtr> findChildJoints(const std::string& linkName);
     std::vector<JointInfoPtr> findParentJoints(const std::string& linkName);
     void convertChildren(Link* plink, JointInfoPtr parent);
+
+    void readWorld(sdf::ElementPtr world, vector<ModelInfoPtr>& modelInfos);
+    void readInclude(sdf::ElementPtr include, vector<ModelInfoPtr>& modelInfos);
+    void readModel(sdf::ElementPtr model, vector<ModelInfoPtr>& modelInfos);
+    void readLink(sdf::ElementPtr link, std::map<std::string, LinkInfoPtr>& linksInfos);
+    void readJoint(sdf::ElementPtr joint, vector<JointInfoPtr>& jointInfos);
+    void readVisual(sdf::ElementPtr visual, vector<VisualInfoPtr>& visuals);
+    void readCollision(sdf::ElementPtr collision, vector<CollisionInfoPtr>& collisions);
+    GeometryInfo* readGeometry(sdf::ElementPtr geometry);
+    MaterialInfo* readMaterial(sdf::ElementPtr material);
 
 private:
     SDFLoaderPseudoGazeboColor* gazeboColor;
@@ -191,15 +318,173 @@ private:
     void getDaeScaleAndAxis(const std::string& url, float& scale, std::string& axis, bool& hasMeter);
     SgMaterial* createSgMaterial(sdf::ElementPtr material, float transparency);
     void convertJointType(Link *link, JointInfoPtr info);
-    void addModelSearchPath(const char *envname);
     void readShapes(cnoid::SgGroup* shapes, sdf::ElementPtr link, const std::string tagname);
 };
 
 }
 
 
-std::vector<std::string> SDFBodyLoaderImpl::findRootLinks()
+/**
+   @brief Convert joint type.
+ */
+Link::JointType JointInfo::convertJointType()
 {
+    std::map<std::string, Link::JointType>::iterator it;
+
+    if (jointType == "revolute" && upper == lower) {
+        // Gazebo's way to express fixed joint
+        return Link::FIXED_JOINT;
+    } else {
+        it = jointTypeMap.find(jointType);
+        if (it != jointTypeMap.end()) {
+            return it->second;
+        } else {
+            std::cout  << "Warning: unable to handle joint type " << jointType << " of joint "
+                 << jointName << " assume as fixed joint." << std::endl;
+            return Link::FIXED_JOINT;
+        }
+    }
+
+    return Link::FIXED_JOINT;
+}
+
+
+void JointInfo::convertAxis(Vector3& axis_)
+{
+
+    if(useparent){
+        axis_ = child->origin.linear().transpose() * parent->pose.linear() * axis;
+        axis_.normalize();
+    }else{
+        axis_ = axis;
+    }
+
+}
+
+
+Link* LinkInfo::createLink()
+{
+    Link* link = new Link();
+
+    link->setName(linkName);
+
+    if(parent){
+        origin = pose * jointInfo->pose;
+        link->setOffsetTranslation(origin.translation() -
+                parent->origin.translation());
+    }else{
+        origin = pose;
+        link->setOffsetTranslation(origin.translation());
+    }
+    link->setAccumulatedSegmentRotation(origin.linear());
+
+    link->setMass(m);
+    Affine3 c_ = jointInfo->pose.inverse() * c;
+    link->setCenterOfMass(link->Rs() * c_.translation());
+    link->setInertia(link->Rs() * c_.linear() * I * c_.linear().transpose() * link->Rs().transpose());
+
+    setShape(link, visualShape, true);
+    setShape(link, collisionShape, false);
+
+    link->setJointType( jointInfo->convertJointType() );
+
+    Vector3 axis;
+    jointInfo->convertAxis(axis);
+    link->setJointAxis(link->Rs() * axis);
+
+    double maxlimit = numeric_limits<double>::max();
+    link->setJointRange(jointInfo->lower, jointInfo->upper);
+    link->setJointVelocityRange(getLimitValue(-jointInfo->velocity, -maxlimit),
+            getLimitValue(jointInfo->velocity, +maxlimit));
+
+
+    for(LinkInfo* linkInfo = child; child; child = child->sibling){
+        link->appendChild(linkInfo->createLink());
+    }
+
+    return link;
+}
+
+
+void ModelInfo::nestModel(string parentName, ModelInfo* orgModel)
+{
+    string modelName;
+    if(parentName=="")
+        modelName = name;
+    else
+        modelName = parentName + "::" + name;
+
+    for(vector<ModelInfoPtr>::iterator it = nestedModels.begin();
+            it != nestedModels.end(); it++){
+        (*it)->nestModel(modelName, orgModel);
+    }
+
+    if(orgModel==this)
+        return;
+
+    // modelのposeが反映されない？
+    for(std::map<std::string, LinkInfoPtr>::iterator it = linkInfos.begin();
+            it != linkInfos.end(); it++){
+        orgModel->linkInfos[modelName + "::" + it->second->linkName] = it->second;
+    }
+
+    for(vector<JointInfoPtr>::iterator it = jointInfos.begin();
+            it != jointInfos.end(); it++){
+        orgModel->jointInfos.push_back(*it);
+    }
+}
+
+
+LinkInfo* ModelInfo::findRootLinks()
+{
+    if(root)
+        return root;
+
+    // parentが二人以上いてはいけない　closed Linkは?　　TODO
+    for(vector<JointInfoPtr>::iterator it = jointInfos.begin();
+                it != jointInfos.end(); it++){
+        LinkInfo* parent = linkInfos[(*it)->parentName].get();
+        LinkInfo* child = linkInfos[(*it)->childName].get();
+        if(parent && child){
+            (*it)->parent = parent;
+            (*it)->child = child;
+            child->jointInfo = (*it).get();
+            parent->addChild(child);
+        }else{
+               // TODO  エラー表示
+        }
+    }
+
+    // base指定されているLinkがあればそれがroot
+    for(map<string, LinkInfoPtr>::iterator it = linkInfos.begin();
+            it != linkInfos.end(); it++){
+        LinkInfo* link = it->second;
+        if(link->isRoot){
+            root = link;
+        }
+    }
+
+    //rootがない場合、parentがいないLinkがroot、それ以外は別モデルにしなきゃいけない？
+    for(map<string, LinkInfoPtr>::iterator it = linkInfos.begin();
+                it != linkInfos.end(); it++){
+        LinkInfo* link = it->second;
+        if(!link->parent){
+            if(root){
+                ;
+            }else{
+                root = link;
+            }
+        }
+    }
+
+    if(root->linkName=="world"){
+         root = root->child;
+         root->parent = 0;
+     }
+
+    return root;
+
+/*
     std::vector<std::string> ret;
     std::map<std::string, JointInfoPtr> usedlinks;
     std::vector<JointInfoPtr>::iterator it;
@@ -230,6 +515,7 @@ std::vector<std::string> SDFBodyLoaderImpl::findRootLinks()
         it2++;
     }
     return ret;
+    */
 }
 
 bool SDFBodyLoaderImpl::hasOpenLink(const std::string& linkName)
@@ -294,6 +580,7 @@ std::vector<JointInfoPtr> SDFBodyLoaderImpl::findParentJoints(const std::string&
     return ret;
 }
 
+
 SDFBodyLoader::SDFBodyLoader()
 {
     impl = new SDFBodyLoaderImpl();
@@ -303,16 +590,8 @@ SDFBodyLoader::SDFBodyLoader()
 SDFBodyLoaderImpl::SDFBodyLoaderImpl()
 {
     isVerbose = false;
-    body = 0;
     os_ = &nullout();
 
-    jointTypeMap["revolute"] = Link::ROTATIONAL_JOINT;
-    jointTypeMap["prismatic"] = Link::SLIDE_JOINT;
-    jointTypeMap["fixed"] = Link::FIXED_JOINT;
-#if 0    /* Unused */
-    jointTypeMap[] = Link::FREE_JOINT;
-    jointTypeMap[] = Link::CRAWLER_JOINT;
-#endif   /* Unused */
 
     gazeboColor = new SDFLoaderPseudoGazeboColor;
     sensorConverter = new SDFSensorConverter;
@@ -354,6 +633,12 @@ bool SDFBodyLoader::load(Body* body, const std::string& filename)
     return impl->load(body, filename);
 }
 
+
+bool SDFBodyLoader::load(BodyItem* item, const std::string& filename)
+{
+    return impl->load(item, filename);
+}
+
 cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
 {
     cnoid::Affine3 ret = cnoid::Affine3::Identity();
@@ -372,105 +657,633 @@ cnoid::Affine3 SDFBodyLoaderImpl::pose2affine(const sdf::Pose& pose)
     return ret;
 }
 
-bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
+
+bool SDFBodyLoaderImpl::load(BodyItem* item, const std::string& filename)
 {
-    bool result = false;
+    vector<ModelInfoPtr> models;
 
-    this->body = body;
-    joints.clear();
-    linkdataMap.clear();
-    validJointIdSet.clear();
-    numValidJointIds = 0;
-    os_ = &std::cout;
-    
+    try{
+        readSDF(filename, models);
+    } catch(const std::exception& ex){
+        os() << "Error: " << ex.what() << endl;
+        return false;
+    }
+
+    std::cout << "num of models= " << models.size() << std::endl;
+
+    if(!models.size()){
+        os() <<  "The model is not declared." << std::endl;
+        return false;
+    }
+
+    WorldItem* worldItem = 0;
+    if( models.size()>1 ){
+        worldItem = new WorldItem;
+        Item* parentItem = item->parentItem();
+        if(!parentItem){
+            parentItem = RootItem::instance();
+        }
+        parentItem->addChildItem(worldItem);
+    }
+
+    for(size_t i=0; i<models.size(); i++){
+        //  アイテムを追加して、それに対してモデルを読み込む
+
+        Body* body = new Body();
+        createBody(body, models[i].get());
+
+        BodyItem* bodyItem;
+        if(worldItem){
+            bodyItem = new BodyItem;
+            worldItem->addChildItem(bodyItem);
+        }else{
+            bodyItem = item;
+        }
+
+        bodyItem->setBody(body);
+
+        if(bodyItem->name().empty()){
+            bodyItem->setName(body->modelName());
+        }
+        bodyItem->setEditable(!body->isStaticModel());
+    }
+
+    if(worldItem)
+        return false;          // メッセージが失敗になる。
+    else
+        return true;
+}
+
+
+void  SDFBodyLoaderImpl::readSDF(const std::string& filename, vector<ModelInfoPtr>& models)
+{
     try {
-        sdf::SDFPtr robot(new sdf::SDF());
-        sdf::init(robot);
+        sdf::ElementPtr root = NULL;
 
-        addModelSearchPath("HOME");
-        addModelSearchPath("ROS_PACKAGE_PATH");
-        addModelSearchPath("GAZEBO_MODEL_PATH");
+        sdf::SDFPtr sdf(new sdf::SDF());
+        sdf::init(sdf);
 
-        if (sdf::readFile(filename, robot) == false) {  // this can read both SDF and URDF
+        if (sdf::readFile(filename, sdf) == false) {  // this can read both SDF and URDF
             throw std::invalid_argument("load failed");
-        } else if (robot->root == NULL) {
+        }
+        root = sdf->Root();
+        if (root == NULL) {
             throw std::out_of_range("root element is NULL");
         }
-        sdf::ElementPtr model = robot->root->GetElement("model");
-        if (model == NULL) {
-            throw std::out_of_range("model element is NULL");
-        }
-        std::string modelName = model->Get<std::string>("name");
-        body->setModelName(modelName);
 
-        if (isVerbose) {
-            os() << "model name " << modelName << std::endl;
+        if(root->HasElement("world")){
+            for(sdf::ElementPtr world = root->GetElement("world"); world != NULL;
+                    world = world->GetNextElement("world")){
+                readWorld(world, models);
+            }
         }
 
+        if(root->HasElement("model")){
+            for(sdf::ElementPtr model = root->GetElement("model"); model != NULL;
+                    model = model->GetNextElement("model")){
+                readModel(model, models);
+            }
+        }
         /*
+        for(sdf::ElementPtr element = root->GetFirstElement(); element != NULL; element = element->GetNextElement() ){
+            if(element->GetName()=="world"){
+                readWorld(element, models);
+            }else if(element->GetName()=="model"){
+                readModel(element, models);
+                //string s = element->GetName();
+                //models.push_back(element);
+            }
+        }
+    */
+
+    } catch(const std::exception& ex){
+        throw ex;
+    }
+}
+
+
+void SDFBodyLoaderImpl::readWorld(sdf::ElementPtr world, vector<ModelInfoPtr>& modelInfos)
+{
+    if(world->HasElement("model")){
+        for(sdf::ElementPtr model = world->GetElement("model"); model != NULL;
+                model = model->GetNextElement("model")){
+            readModel(model, modelInfos);
+        }
+    }
+    /*
+    for(sdf::ElementPtr element = world->GetFirstElement(); element != NULL; element = element->GetNextElement() ){
+        cout << element->GetName() << std::endl;
+//        if(element->GetName()=="include"){
+//            readInclude(element, modelInfos);
+//        }else
+        if(element->GetName()=="model"){
+            readModel(element, modelInfos);
+        }
+    }
+    */
+}
+
+
+void SDFBodyLoaderImpl::readInclude(sdf::ElementPtr include, vector<ModelInfoPtr>& modelInfos)
+{ /*
+    for(sdf::ElementPtr element = include->GetFirstElement(); element != NULL; element = element->GetNextElement() ){
+        if(element->GetName()=="uri"){
+            string uri = element->Get<std::string>("uri");
+            // TODO
+            try{
+                readSDF(uri, modelInfos);
+            }catch(const std::exception& ex){
+                throw ex;
+            }
+        }else if(element->GetName()=="name"){
+            modelInfos.back()->name = element->Get<string>("name");
+        }else if(element->GetName()=="static"){
+            modelInfos.back()->isStatic = element->Get<bool>("static");
+        }else if(element->GetName()=="pose"){
+            modelInfos.back()->pose = pose2affine(element->Get<sdf::Pose>("pose"));
+        }
+    }
+*/
+}
+
+
+void SDFBodyLoaderImpl::readModel(sdf::ElementPtr model, vector<ModelInfoPtr>& modelInfos)
+{
+    ModelInfoPtr modelInfo(new ModelInfo());
+
+    modelInfo->name = model->Get<std::string>("name");
+
+    if(model->HasElement("static")){
+        sdf::ElementPtr staticE = model->GetElement("static");
+        modelInfo->isStatic = staticE->Get<bool>("static");
+    }
+
+    if(model->HasElement("self_collide")){
+        sdf::ElementPtr selfCollide = model->GetElement("self_collide");
+        modelInfo->selfCollide = selfCollide->Get<bool>("self_collide");
+    }
+
+    /*
+    if(model->HasElement("include")){
+        for(sdf::ElementPtr include = model->GetElement("include"); include != NULL;
+                include =include->GetNextElement("include")){
+                    readInclude(include, modelInfo->nestedModels);
+                }
+    }*/
+
+    if(model->HasElement("model")){
+        for(sdf::ElementPtr nestedModel = model->GetElement("model"); nestedModel != NULL;
+                nestedModel = nestedModel->GetNextElement("model")){
+                    readModel(nestedModel, modelInfo->nestedModels);
+                }
+    }
+
+    if(model->HasElement("link")){
+        for(sdf::ElementPtr link = model->GetElement("link"); link != NULL;
+                link = link->GetNextElement("link")){
+                    readLink(link, modelInfo->linkInfos);
+                }
+    }
+
+    if(model->HasElement("joint")){
+        for(sdf::ElementPtr joint = model->GetElement("joint"); joint != NULL;
+                joint = joint->GetNextElement("joint")){
+                    readJoint(joint, modelInfo->jointInfos);
+                }
+    }
+
+    modelInfos.push_back(modelInfo);
+
+}
+
+
+void SDFBodyLoaderImpl::readLink(sdf::ElementPtr link, std::map<std::string, LinkInfoPtr>& linkInfos)
+{
+    LinkInfoPtr linkdata(new LinkInfo());
+
+    linkdata->linkName = link->Get<std::string>("name");
+
+    if (isVerbose) {
+        os() << " link name " << linkdata->linkName << std::endl;
+    }
+
+    if(link->HasElement("must_be_base_link")){
+        linkdata->isRoot = link->Get<bool>("must_be_base_link");
+    }
+
+    if(link->HasElement("pose")){
+        linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
+    }
+    if(link->HasElement("inertial")){
+        sdf::ElementPtr inertial = link->GetElement("inertial");
+        if(inertial->HasElement("inertia")) {
+            sdf::ElementPtr inertia = inertial->GetElement("inertia");
+            linkdata->I(0,0) = inertia->Get<double>("ixx");
+            linkdata->I(1,1) = inertia->Get<double>("iyy");
+            linkdata->I(2,2) = inertia->Get<double>("izz");
+            linkdata->I(0,1) = linkdata->I(1,0) = inertia->Get<double>("ixy");
+            linkdata->I(0,2) = linkdata->I(2,0) = inertia->Get<double>("ixz");
+            linkdata->I(1,2) = linkdata->I(2,1) = inertia->Get<double>("iyz");
+        }
+        if(inertial->HasElement("mass")){
+            linkdata->m = inertial->Get<double>("mass");
+        }
+        if(inertial->HasElement("pose")){
+            linkdata->c = pose2affine(inertial->Get<sdf::Pose>("pose"));
+        }
+    }
+    if(link->HasElement("visual")) {
+        for(sdf::ElementPtr visual = link->GetElement("visual"); visual != NULL;
+                visual = visual->GetNextElement("visual")){
+            readVisual(visual, linkdata->visuals);
+        }
+    //    readShapes(linkdata->visualShape, link, "visual");
+    }
+
+    if(link->HasElement("collision")){
+        for(sdf::ElementPtr collision = link->GetElement("collision"); collision != NULL;
+                collision = collision->GetNextElement("collision")){
+            readCollision(collision, linkdata->collisions);
+        }
+        //readShapes(linkdata->collisionShape, link, "collision");
+    }
+
+    if(link->HasElement("sensor")){
+        sensorConverter->convert(linkdata->linkName, link);
+    }
+
+    linkInfos[linkdata->linkName] = linkdata;
+}
+
+
+void SDFBodyLoaderImpl::readJoint(sdf::ElementPtr joint, vector<JointInfoPtr>& jointInfos)
+{
+    JointInfoPtr jointdata(new JointInfo());
+
+    jointdata->jointName = joint->Get<std::string>("name");
+    jointdata->jointType = joint->Get<std::string>("type");
+    jointdata->parentName = joint->Get<std::string>("parent");
+    jointdata->childName = joint->Get<std::string>("child");
+    //jointdata->parent = linkdataMap[jointdata->parentName];
+    //jointdata->child = linkdataMap[jointdata->childName];
+
+    if (isVerbose) {
+        os() << " joint name " << jointdata->jointName << std::endl;
+    }
+
+
+    if(joint->HasElement("pose")){
+        jointdata->pose = pose2affine(joint->Get<sdf::Pose>("pose"));
+        //jointdata->pose = jointdata->child->pose * jointdata->pose;
+    } else {
+        //jointdata->pose = jointdata->child->pose;
+        jointdata->pose = cnoid::Affine3::Identity();
+    }
+    if(isVerbose){
+        os() << jointdata->pose.matrix() << std::endl;
+    }
+    if(joint->HasElement("axis")){
+        sdf::ElementPtr axis = joint->GetElement("axis");
+        sdf::Vector3 xyz = axis->Get<sdf::Vector3>("xyz");
+        jointdata->axis[0] = xyz.x;
+        jointdata->axis[1] = xyz.y;
+        jointdata->axis[2] = xyz.z;
+
+        // convert axis relative to child or parent frame
+        // https://github.com/yosuke/simtrans/blob/master/simtrans/sdf.py#L198
+        jointdata->useparent = false;
+        if(axis->HasElement("use_parent_model_frame")){
+            jointdata->useparent = axis->Get<bool>("use_parent_model_frame");
+        }
+        /*
+        cnoid::Affine3 work = cnoid::Affine3::Identity();
+        cnoid::Affine3 work2 = cnoid::Affine3::Identity();
+        work.translation() = jointdata->axis;
+        if(useparent){
+            work2.linear() = jointdata->parent->pose.linear();
+        } else {
+            work2.linear() = jointdata->child->pose.linear();
+        }
+        work = work2.inverse() * work;
+        jointdata->axis = work.translation();
+        jointdata->axis.normalize();
+*/
+        if(axis->HasElement("limit")){
+            sdf::ElementPtr limit = axis->GetElement("limit");
+            jointdata->lower = limit->Get<double>("lower");
+            jointdata->upper = limit->Get<double>("upper");
+            if(limit->HasElement("velocity")){
+                jointdata->velocity = limit->Get<double>("velocity");
+            }
+        } else {
+            // corrupted? (axis element must be have limit element)
+            os() << "Warning: '" << jointdata->jointName << "' limit not found" << std::endl;
+        }
+    }
+
+    if(joint->HasElement("sensor")){
+        sensorConverter->convert(jointdata->jointName, joint);
+    }
+
+    jointInfos.push_back(jointdata);
+
+}
+
+
+void SDFBodyLoaderImpl::readVisual(sdf::ElementPtr visual, vector<VisualInfoPtr>& visuals)
+{
+    VisualInfoPtr visualInfo(new VisualInfo());
+
+    if (visual->HasElement("pose")) {
+        visualInfo->pose = pose2affine(visual->Get<sdf::Pose>("pose"));
+    } else {
+        visualInfo->pose = cnoid::Affine3::Identity();
+    }
+
+    visualInfo->transparency = -1.0;
+    if (visual->HasElement("transparency")){
+        visualInfo->transparency = visual->Get<float>("transparency");
+    }
+
+    if (visual->HasElement("material")){
+        visualInfo->material = readMaterial(visual->GetElement("material"));
+    }else{
+        visualInfo->material = 0;
+    }
+
+    if (visual->HasElement("geometry")) {
+        visualInfo->geometry = readGeometry(visual->GetElement("geometry"));
+    } else {
+        // corrupted? (geometry must be set)
+        os() << "Warning: '" << visual->Get<std::string>("name") << "' geometry not found" << std::endl;
+    }
+
+    visuals.push_back(visualInfo);
+}
+
+
+void SDFBodyLoaderImpl::readCollision(sdf::ElementPtr collision, vector<CollisionInfoPtr>& collisions)
+{
+    CollisionInfoPtr collisionInfo(new CollisionInfo());
+
+    if (collision->HasElement("pose")) {
+        collisionInfo->pose = pose2affine(collision->Get<sdf::Pose>("pose"));
+    } else {
+        collisionInfo->pose = cnoid::Affine3::Identity();
+    }
+
+    if (collision->HasElement("geometry")) {
+        collisionInfo->geometry = readGeometry(collision->GetElement("geometry"));
+    } else {
+        // corrupted? (geometry must be set)
+        os() << "Warning: '" << collision->Get<std::string>("name") << "' geometry not found" << std::endl;
+    }
+
+    collisions.push_back(collisionInfo);
+}
+
+
+MaterialInfo* SDFBodyLoaderImpl::readMaterial(sdf::ElementPtr material)
+{
+    MaterialInfo* materialInfo = new MaterialInfo;
+
+    if (material->HasElement("script")) {
+        sdf::ElementPtr script = material->GetElement("script");
+        /* script element must have name element */
+        if (script->HasElement("name")) {
+            materialInfo->scriptName = script->Get<string>("name");
+        }
+        if (script->HasElement("uri")) {
+            materialInfo->uri = script->Get<string>("uri");
+        }
+    }
+
+    if (material->HasElement("ambient")) {
+        materialInfo->ambient = material->Get<sdf::Color>("ambient");
+    }
+
+    if (material->HasElement("diffuse")) {
+        materialInfo->diffuse = material->Get<sdf::Color>("diffuse");
+    }
+
+    if (material->HasElement("specular")) {
+        materialInfo->specular = material->Get<sdf::Color>("specular");
+    }
+
+    if (material->HasElement("emissive")) {
+        materialInfo->emissive = material->Get<sdf::Color>("emissive");
+    }
+
+    return materialInfo;
+}
+
+
+GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
+{
+    GeometryInfo* geometryInfo = new GeometryInfo;
+
+    for(sdf::ElementPtr el = geometry->GetFirstElement(); el; el = el->GetNextElement()) {
+        if(el->GetName() == "mesh") {
+            std::string url = sdf::findFile(el->Get<std::string>("uri"));
+            std::string urllower = url;
+            boost::algorithm::to_lower(urllower);
+
+            if (!url.empty()) {
+                if (isVerbose) {
+                    os() << "     read mesh " << url << std::endl;
+                }
+
+                if (boost::algorithm::iends_with(urllower, "dae")) {
+                    Assimp::Importer importer;
+                    const aiScene* scene = importer.ReadFile(url, aiProcess_SortByPType|aiProcess_GenNormals|aiProcess_Triangulate|aiProcess_GenUVCoords|aiProcess_FlipUVs);
+                    if(!scene)
+                    {
+                        std::cout << importer.GetErrorString() <<std::endl;
+                    }
+                    //std::vector<SgMaterial*> material_table;
+                    //std::vector<SgTexture*> texture_table;
+                    float meter;
+                    std::string axis;
+                    //Vector3 scale;
+                    bool hasMeter;
+
+                    getDaeScaleAndAxis(url, meter, axis, hasMeter);
+
+                    if (el->HasElement("scale")) {
+                        sdf::Vector3 v = el->Get<sdf::Vector3>("scale");
+                        geometryInfo->scale = Vector3(v.x, v.y, v.z);
+                    } else {
+                        geometryInfo->scale = Vector3(1.0, 1.0, 1.0);    // SDF default values.
+                    }
+
+                    if (hasMeter) {
+                        geometryInfo->scale *= meter;
+                    }
+
+                    //scaletrans->setScale(scale);
+                    //if (axis == "Z_UP") {
+                    //    cnoid::AngleAxis xaxis(M_PI/2.0, cnoid::Vector3::UnitX());
+                   //     transform->rotation() = transform->rotation() * xaxis.toRotationMatrix();
+                   // }
+             //       loadMaterials(url, scene, material_table, texture_table);
+             //       buildMesh(scene, scene->mRootNode, scaletrans, material_table, texture_table);
+
+                    // TODO  assImpのローダを入れる
+                    //geometryInfo->sgNode = node;
+
+                } else if (boost::algorithm::iends_with(urllower, "stl")) {
+                    STLSceneLoader loader;
+                    geometryInfo->sgNode = loader.load(url);
+
+                    if(el->HasElement("scale")){
+                        sdf::Vector3 scale = el->Get<sdf::Vector3>("scale");
+                        geometryInfo->scale = Vector3(scale.x, scale.y, scale.z);
+                    } else {
+                        geometryInfo->scale = Vector3(1,1,1);
+                    }
+                }
+            } else {
+                MessageView::instance()->putln(
+                    MessageView::WARNING,
+                    boost::format("%1% not found") % el->Get<std::string>("uri")
+                    );
+            }
+
+        } else if(el->GetName() == "box"){
+            SgShapePtr shape = new SgShape;
+            sdf::Vector3 size = el->Get<sdf::Vector3>("size");
+            shape->setMesh(meshGenerator.generateBox(Vector3(size.x, size.y, size.z)));
+            geometryInfo->sgNode = shape;
+        } else if(el->GetName() == "sphere"){
+            SgShapePtr shape = new SgShape;
+            double radius = el->Get<double>("radius");
+            shape->setMesh(meshGenerator.generateSphere(radius));
+            geometryInfo->sgNode = shape;
+        } else if(el->GetName() == "cylinder"){
+            SgShapePtr shape = new SgShape;
+            double radius = el->Get<double>("radius");
+            double length = el->Get<double>("length");
+            shape->setMesh(meshGenerator.generateCylinder(radius, length));
+            geometryInfo->sgNode = shape;
+        } else if(el->GetName() == "empty"){
+            geometryInfo->sgNode = 0;
+        }
+    }
+
+    return geometryInfo;
+}
+
+
+bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
+{
+    vector<ModelInfoPtr> models;
+
+    try{
+        readSDF(filename, models);
+    } catch(const std::exception& ex){
+        os() << "Error: " << ex.what() << endl;
+        return false;
+    }
+
+    if(models.size() != 1){
+        os() << "Error: multiple models defined in one model file. please consider reading each separate files." << endl;
+        return false;
+    }
+
+    createBody(body, models[0].get());
+
+}
+
+
+bool SDFBodyLoaderImpl::createBody(Body* body, ModelInfo* model)
+{
+    //validJointIdSet.clear();
+   // numValidJointIds = 0;
+
+    body->setModelName(model->name);
+
+    model->nestModel("", model);
+    LinkInfo* root = model->findRootLinks();
+
+    if(!root->jointInfo){
+        JointInfo* jointInfo = new JointInfo();
+        jointInfo->jointType = "free";
+        model->jointInfos.push_back(jointInfo);
+        root->jointInfo = jointInfo;
+    }
+    Link* rootLink = root->createLink();
+
+    body->setRootLink(rootLink);
+
+    return true;
+}
+
+#if 0
+    /*
         if(link->HasElement("static")){
             body->setStaticModel(link->Get<bool>("static"));
-        }
-        */
+            }
+     */
         
-        LinkInfoPtr worldlink(new LinkInfo());
-        worldlink->linkName = "world";
-        linkdataMap[worldlink->linkName] = worldlink;
+    LinkInfoPtr worldlink(new LinkInfo());
+    worldlink->linkName = "world";
+    linkdataMap[worldlink->linkName] = worldlink;
+/*
+    cnoid::Affine3 rootpose;
+    if(model->HasElement("pose")){
+        if (isVerbose) {
+            os() << " this model has root pose node" << std::endl;
+        }
+        rootpose = pose2affine(model->Get<sdf::Pose>("pose"));
+    } else {
+        rootpose = cnoid::Affine3::Identity();
+    }
+*/
+/*
+    if(model->HasElement("link")){
+        sdf::ElementPtr link = model->GetElement("link");
+        while(link){
+            LinkInfoPtr linkdata(new LinkInfo());
+            linkdata->linkName = link->Get<std::string>("name");
 
-        cnoid::Affine3 rootpose;
-        if(model->HasElement("pose")){
             if (isVerbose) {
-                os() << " this model has root pose node" << std::endl;
+                os() << " link name " << linkdata->linkName << std::endl;
             }
-            rootpose = pose2affine(model->Get<sdf::Pose>("pose"));
-        } else {
-            rootpose = cnoid::Affine3::Identity();
-        }
-        
-        if(model->HasElement("link")){
-            sdf::ElementPtr link = model->GetElement("link");
-            while(link){
-                LinkInfoPtr linkdata(new LinkInfo());
-                linkdata->linkName = link->Get<std::string>("name");
 
-                if (isVerbose) {
-                    os() << " link name " << linkdata->linkName << std::endl;
-                }
-
-                if(link->HasElement("pose")){
-                    linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
-                }
-                if(link->HasElement("inertial")){
-                    sdf::ElementPtr inertial = link->GetElement("inertial");
-                    if(inertial->HasElement("inertia")) {
-                        sdf::ElementPtr inertia = inertial->GetElement("inertia");
-                        linkdata->I(0,0) = inertia->Get<double>("ixx");
-                        linkdata->I(1,1) = inertia->Get<double>("iyy");
-                        linkdata->I(2,2) = inertia->Get<double>("izz");
-                        linkdata->I(0,1) = linkdata->I(1,0) = inertia->Get<double>("ixy");
-                        linkdata->I(0,2) = linkdata->I(2,0) = inertia->Get<double>("ixz");
-                        linkdata->I(1,2) = linkdata->I(2,1) = inertia->Get<double>("iyz");
-                    }
-                    if(inertial->HasElement("mass")){
-                        linkdata->m = inertial->Get<double>("mass");
-                    }
-                    if(inertial->HasElement("pose")){
-                        linkdata->c = inertial->Get<sdf::Pose>("pose");
-                    }
-                }
-                if(link->HasElement("visual")) {
-                    readShapes(linkdata->visualShape, link, "visual");
-                }
-                if(link->HasElement("collision")){
-                    readShapes(linkdata->collisionShape, link, "collision");
-                }
-
-                sensorConverter->convert(linkdata->linkName, link);
-
-                linkdataMap[linkdata->linkName] = linkdata;
-                link = link->GetNextElement("link");
+            if(link->HasElement("pose")){
+                linkdata->pose = pose2affine(link->Get<sdf::Pose>("pose"));
             }
+            if(link->HasElement("inertial")){
+                sdf::ElementPtr inertial = link->GetElement("inertial");
+                if(inertial->HasElement("inertia")) {
+                    sdf::ElementPtr inertia = inertial->GetElement("inertia");
+                    linkdata->I(0,0) = inertia->Get<double>("ixx");
+                    linkdata->I(1,1) = inertia->Get<double>("iyy");
+                    linkdata->I(2,2) = inertia->Get<double>("izz");
+                    linkdata->I(0,1) = linkdata->I(1,0) = inertia->Get<double>("ixy");
+                    linkdata->I(0,2) = linkdata->I(2,0) = inertia->Get<double>("ixz");
+                    linkdata->I(1,2) = linkdata->I(2,1) = inertia->Get<double>("iyz");
+                }
+                if(inertial->HasElement("mass")){
+                    linkdata->m = inertial->Get<double>("mass");
+                }
+                if(inertial->HasElement("pose")){
+                    linkdata->c = inertial->Get<sdf::Pose>("pose");
+                }
+            }
+            if(link->HasElement("visual")) {
+                readShapes(linkdata->visualShape, link, "visual");
+            }
+            if(link->HasElement("collision")){
+                readShapes(linkdata->collisionShape, link, "collision");
+            }
+
+            sensorConverter->convert(linkdata->linkName, link);
+
+            linkdataMap[linkdata->linkName] = linkdata;
+            link = link->GetNextElement("link");
         }
+    }
         if(model->HasElement("joint")){
             sdf::ElementPtr joint = model->GetElement("joint");
             while(joint){
@@ -539,31 +1352,31 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 joint = joint->GetNextElement("joint");
             }
         }
+*/
 
-        // create fixed joint if link is not referred by joint at all
-        if(linkdataMap.size() > 0){
-            std::map<std::string, bool> usedlinks;
-            std::vector<JointInfoPtr>::iterator it = joints.begin();
-            while(it != joints.end()){
-                usedlinks[(*it)->parentName] = true;
-                usedlinks[(*it)->childName] = true;
-                it++;
-            }
-            std::map<std::string, LinkInfoPtr>::const_iterator it2 = linkdataMap.begin();
-            while(it2 != linkdataMap.end()){
-                if (it2->second->linkName != "world" && usedlinks.find(it2->second->linkName) == usedlinks.end()) {
-                    JointInfoPtr j(new JointInfo());
-                    j->parent = worldlink;
-                    j->child = it2->second;
-                    j->parentName = j->parent->linkName;
-                    j->jointName = j->childName = j->child->linkName;
-                    j->jointType = "revolute";
-                    j->upper = j->lower = 0.0;
-                    joints.push_back(j);
-                }
-                it2++;
+    // create fixed joint if link is not referred by joint at all
+    if(model->linkInfos.size() > 0){
+        std::map<std::string, bool> usedlinks;
+        for(std::vector<JointInfoPtr>::iterator it = model->jointInfos.begin();
+                it != model->jointInfos.end(); it++){
+            usedlinks[(*it)->parentName] = true;
+            usedlinks[(*it)->childName] = true;
+        }
+
+        for(std::map<std::string, LinkInfoPtr>::const_iterator it2 = model->linkInfos.begin();
+                it2 != model->linkInfos.end(); it2++){
+            if (it2->second->linkName != "world" && usedlinks.find(it2->second->linkName) == usedlinks.end()) {
+                JointInfoPtr j(new JointInfo());
+                j->parent = worldlink;
+                j->child = it2->second;
+                j->parentName = j->parent->linkName;
+                j->jointName = j->childName = j->child->linkName;
+                j->jointType = "fixed";
+                j->upper = j->lower = 0.0;
+                joints.push_back(j);
             }
         }
+    }
 
         // construct tree structure of joints and links
         std::vector<std::string> roots = findRootLinks();
@@ -587,7 +1400,7 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
                 link->setName((*c)->childName);
                 link->setJointType(Link::FIXED_JOINT);
                 link->setJointAxis(Vector3::Zero());
-                link->Tb() = rootpose * (*c)->pose;
+                //link->Tb() = rootpose * (*c)->pose;
                 root.reset(new JointInfo());
                 root->jointName = (*c)->jointName;
                 root->childName = (*c)->parentName;
@@ -629,9 +1442,6 @@ bool SDFBodyLoaderImpl::load(Body* body, const std::string& filename)
 
         result = true;
         os().flush();
-    } catch(const std::exception& ex){
-        os() << "Error: " << ex.what() << endl;
-    }
     
     return result;
 }
@@ -702,6 +1512,7 @@ void SDFBodyLoaderImpl::convertChildren(Link* plink, JointInfoPtr parent)
         it++;
     }
 }
+#endif
 
 void SDFBodyLoaderImpl::buildMesh(const aiScene* scene, const aiNode* node, SgTransform* sgnode,
                                   std::vector<SgMaterial*>& material_table,
@@ -924,6 +1735,10 @@ SgNodePtr SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry, SgMaterial* 
                     SgScaleTransformPtr scaletrans = new SgScaleTransform;
                     Assimp::Importer importer;
                     const aiScene* scene = importer.ReadFile(url, aiProcess_SortByPType|aiProcess_GenNormals|aiProcess_Triangulate|aiProcess_GenUVCoords|aiProcess_FlipUVs);
+                    if(!scene)
+                    {
+                        std::cout << importer.GetErrorString() <<std::endl;
+                    }
                     std::vector<SgMaterial*> material_table;
                     std::vector<SgTexture*> texture_table;
                     float meter;
@@ -1112,62 +1927,6 @@ SgMaterial* SDFBodyLoaderImpl::createSgMaterial(sdf::ElementPtr material, float 
     return ret;
 }
 
-/**
-   @brief Convert joint type.
-   @param[in/out] link Instance of Link.
-   @param[in] info Joint info
- */
-void SDFBodyLoaderImpl::convertJointType(Link *link, JointInfoPtr info)
-{
-    std::map<std::string, Link::JointType>::iterator it;
-
-    assert(link);
-    assert(info);
-
-    if (info->jointType == "revolute" && info->upper == info->lower) {
-        // Gazebo's way to express fixed joint
-        link->setJointType(Link::FIXED_JOINT);
-    } else {
-        it = jointTypeMap.find(info->jointType);
-        if (it != jointTypeMap.end()) {
-            link->setJointType(it->second);
-        } else {
-            os() << "Warning: unable to handle joint type " << info->jointType << " of joint "
-                 << info->jointName << " assume as fixed joint." << std::endl;
-            link->setJointType(Link::FIXED_JOINT);
-        }
-    }
-
-    return;
-}
-
-/**
-   @brief Add model search path from environment variable.
-   @param[in] envname Environment variable name.
-   special process by set 'HOME'. (add ${HOME}/.gazebo/models)
- */
-void SDFBodyLoaderImpl::addModelSearchPath(const char *envname)
-{
-    std::list<std::string> paths;
-    std::string path;
-    char *p;
-
-    if (envname != NULL && (p = getenv(envname)) != NULL) {
-        if (envname != "HOME") {
-            boost::split(paths, p, boost::is_any_of(":"));
-            BOOST_FOREACH(path, paths) {
-                if (path != "") {
-                    sdf::addURIPath("model://", path);
-                }
-            }
-        } else {
-            path = p;
-            sdf::addURIPath("model://", path + "/.gazebo/models");
-        }
-    }
-
-    return;
-}
 
 /**
    @brief Read shapes.

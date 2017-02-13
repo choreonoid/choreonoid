@@ -153,6 +153,7 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+    void setBody(Body* body);
 };
 
 }
@@ -339,6 +340,21 @@ bool BodyItemImpl::loadModelFile(const std::string& filename)
     initBody(false);
 
     return (newBody);
+}
+
+
+void BodyItem::setBody(Body* body)
+{
+    impl->setBody(body);
+}
+
+
+void BodyItemImpl::setBody(Body* body_)
+{
+    body = body_;
+    body->initializeState();
+
+    initBody(false);
 }
 
 

@@ -38,6 +38,8 @@ public:
     virtual ~BodyItem();
 
     bool loadModelFile(const std::string& filename);
+
+    void setBody(Body* body);
             
     virtual void setName(const std::string& name);
 
