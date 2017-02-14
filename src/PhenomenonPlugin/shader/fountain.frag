@@ -1,12 +1,11 @@
-#version 400
+#version 330
 
-in float Transp;
-uniform sampler2D ParticleTex;
+in float transparency;
 
-layout (location = 0) out vec4 FragColor;
+layout (location = 0) out vec4 fragColor;
 
 void main()
 {
-    FragColor = texture(ParticleTex, gl_PointCoord);
-    FragColor.a *= Transp;
+    fragColor = vecr(1.0, 1.0, 1.0, 1.0);
+    fragColor.a *= transparency;
 }

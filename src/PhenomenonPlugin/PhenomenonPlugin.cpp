@@ -3,6 +3,8 @@
 */
 
 #include <cnoid/Plugin>
+#include <cnoid/SceneItem>
+#include <cnoid/RootItem>
 #include "SceneFountain.h"
 
 using namespace cnoid;
@@ -18,6 +20,13 @@ public:
     virtual bool initialize() {
 
         SceneFountain::initializeClass();
+
+        // for test
+        SceneItem* item = new SceneItem;
+        item->setName("Fountain");
+        SceneFountain* fountain = new SceneFountain;
+        item->topNode()->addChild(fountain);
+        RootItem::instance()->addChildItem(item);
 
         return true;
     }

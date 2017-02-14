@@ -12,6 +12,7 @@
 namespace cnoid {
 
 class GLSLSceneRendererImpl;
+class ShaderProgram;
     
 class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 {
@@ -21,6 +22,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual ~GLSLSceneRenderer();
 
     static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
+    virtual void applyExtensions();
+    virtual void applyNewExtensions();
 
     virtual void setOutputStream(std::ostream& os) override;
 
@@ -29,6 +32,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
+    Matrix4 modelViewProjectionMatrix() const;
+
+    void pushShaderProgram(ShaderProgram& program, bool isLightingProgram);
+    void popShaderProgram();
         
     virtual bool initializeGL() override;
     virtual void flush() override;

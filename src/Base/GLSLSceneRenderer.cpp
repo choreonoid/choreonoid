@@ -14,6 +14,7 @@
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include <unordered_map>
+#include <mutex>
 #include <iostream>
 
 using namespace std;
@@ -28,6 +29,10 @@ const bool SHOW_IMAGE_FOR_PICKING = false;
 const float MinLineWidthForPicking = 5.0f;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
+
+std::mutex extensionMutex;
+set<GLSLSceneRenderer*> renderers;
+vector<std::function<void(GLSLSceneRenderer* renderer)>> extendFunctions;
 
 class ShapeHandleSet : public Referenced
 {
@@ -223,6 +228,9 @@ public:
     float pointSize;
     float lineWidth;
 
+    std::mutex newExtensionMutex;
+    vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
+
     void renderChildNodes(SgGroup* group){
         for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
             renderingFunctions.dispatch(*p);
@@ -232,6 +240,7 @@ public:
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
     void initialize();
+    void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
     bool initializeGL();
     void render();
     bool pick(int x, int y);
@@ -304,6 +313,9 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
 
 void GLSLSceneRendererImpl::initialize()
 {
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.insert(self);
+    
     defaultFBO = 0;
 
     currentProgram = 0;
@@ -362,6 +374,9 @@ void GLSLSceneRendererImpl::initialize()
 
 GLSLSceneRenderer::~GLSLSceneRenderer()
 {
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.erase(this);
+    
     delete impl;
 }
 
@@ -381,7 +396,45 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
 
 void GLSLSceneRenderer::addExtension(std::function<void(GLSLSceneRenderer* renderer)> func)
 {
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        extendFunctions.push_back(func);
+    }
+    for(GLSLSceneRenderer* renderer : renderers){
+        renderer->impl->onExtensionAdded(func);
+    }
+}
 
+
+void GLSLSceneRenderer::applyExtensions()
+{
+    SceneRenderer::applyExtensions();
+    
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    for(int i=0; i < extendFunctions.size(); ++i){
+        extendFunctions[i](this);
+    }
+}
+
+
+void GLSLSceneRendererImpl::onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func)
+{
+    std::lock_guard<std::mutex> guard(newExtensionMutex);
+    newExtendFunctions.push_back(func);
+}
+
+
+void GLSLSceneRenderer::applyNewExtensions()
+{
+    SceneRenderer::applyExtensions();
+    
+    std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
+    if(!impl->newExtendFunctions.empty()){
+        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+            impl->newExtendFunctions[i](this);
+        }
+        impl->newExtendFunctions.clear();
+    }
 }
 
 
@@ -749,6 +802,24 @@ void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
 }
 
 
+const Affine3& GLSLSceneRenderer::currentModelTransform() const
+{
+    return impl->modelMatrixStack.back();
+}
+
+
+const Matrix4& GLSLSceneRenderer::projectionMatrix() const
+{
+    return impl->projectionMatrix;
+}
+
+
+Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
+{
+    return impl->PV * impl->modelMatrixStack.back().matrix();
+}
+
+
 void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingProgram)
 {
     ProgramInfo info;
@@ -774,6 +845,12 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
 }
 
 
+void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program, bool isLightingProgram)
+{
+    impl->pushProgram(program, isLightingProgram);
+}
+
+
 void GLSLSceneRendererImpl::popProgram()
 {
     ProgramInfo& info = programStack.back();
@@ -790,7 +867,13 @@ void GLSLSceneRendererImpl::popProgram()
     }
     programStack.pop_back();
 }
-    
+
+
+void GLSLSceneRenderer::popShaderProgram()
+{
+    impl->popProgram();
+}
+
 
 const std::vector<SgNode*>& GLSLSceneRenderer::pickedNodePath() const
 {
@@ -1461,16 +1544,4 @@ void GLSLSceneRenderer::enableUnusedCacheCheck(bool on)
         impl->nextShapeHandleSetMap->clear();
     }
     impl->doUnusedShapeHandleSetCheck = on;
-}
-
-
-const Affine3& GLSLSceneRenderer::currentModelTransform() const
-{
-    return impl->modelMatrixStack.back();
-}
-
-
-const Matrix4& GLSLSceneRenderer::projectionMatrix() const
-{
-    return impl->projectionMatrix;
 }

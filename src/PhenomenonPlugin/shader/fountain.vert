@@ -1,4 +1,4 @@
-#version 400
+#version 330
 
 layout (location = 0) in vec3 vertexInitVel;
 layout (location = 1) in float startTime;
@@ -7,7 +7,7 @@ out float transparency;
 
 uniform float time;
 uniform float lifeTime;
-uniform vec3 gravity = vec3(0.0,-0.05,0.0);
+uniform vec3 gravity = vec3(0.0, 0.0, -0.05);
 
 uniform mat4 MVP;
 

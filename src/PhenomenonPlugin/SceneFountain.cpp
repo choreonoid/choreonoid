@@ -30,10 +30,14 @@ public:
 
     void render(SceneFountain* fountain);
 
-    GLuint timeLocation;
-    GLuint lifeTimeLocation;
-    GLuint initVel, startTime, particles;
+    GLSLSceneRenderer* renderer;
+    bool isInitialized;
+    GLint timeLocation;
+    GLint lifeTimeLocation;
     GLuint nParticles;
+    GLuint initVelBuffer;
+    GLuint startTimeBuffer;
+    GLuint vertexArray;
 };
 
 }
@@ -64,8 +68,9 @@ SceneFountain::SceneFountain()
 
 
 FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
+    : renderer(renderer)
 {
-
+    isInitialized = false;
 }
 
 
@@ -83,24 +88,25 @@ void FountainProgram::initialize()
     
     timeLocation = getUniformLocation("time");
     lifeTimeLocation = getUniformLocation("lifeTime");
+    glUniform1f(lifeTimeLocation, 3.5f);
 
     nParticles = 8000;
 
     // Generate the buffers
-    glGenBuffers(1, &initVel);   // Initial velocity buffer
-    glGenBuffers(1, &startTime); // Start time buffer
+    glGenBuffers(1, &initVelBuffer);   // Initial velocity buffer
+    glGenBuffers(1, &startTimeBuffer); // Start time buffer
 
     // Allocate space for all buffers
     int size = nParticles * 3 * sizeof(float);
-    glBindBuffer(GL_ARRAY_BUFFER, initVel);
+    glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
     glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, startTime);
+    glBindBuffer(GL_ARRAY_BUFFER, startTimeBuffer);
     glBufferData(GL_ARRAY_BUFFER, nParticles * sizeof(float), NULL, GL_STATIC_DRAW);
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
     float velocity, theta, phi;
-    GLfloat* data = new GLfloat[nParticles * 3];
+    vector<GLfloat> data(nParticles * 3);
     for(int i = 0; i < nParticles; ++i) {
         
         theta = PI / 6.0f * randFloat();
@@ -117,41 +123,45 @@ void FountainProgram::initialize()
         data[3*i+1] = v.y();
         data[3*i+2] = v.z();
     }
-    glBindBuffer(GL_ARRAY_BUFFER,initVel);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+    glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size, &data.front());
 
     // Fill the start time buffer
-    delete [] data;
-    data = new GLfloat[nParticles];
+    data.resize(nParticles);
     float time = 0.0f;
     float rate = 0.00075f;
-    for( unsigned int i = 0; i < nParticles; i++ ) {
+    for(int i = 0; i < nParticles; ++i) {
         data[i] = time;
         time += rate;
     }
-    glBindBuffer(GL_ARRAY_BUFFER,startTime);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), data);
+    glBindBuffer(GL_ARRAY_BUFFER, startTimeBuffer);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), &data.front());
 
-    glBindBuffer(GL_ARRAY_BUFFER,0);
-    delete [] data;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Attach these to the torus's vertex array
-    glGenVertexArrays(1, &particles);
-    glBindVertexArray(particles);
-    glBindBuffer(GL_ARRAY_BUFFER, initVel);
+    glGenVertexArrays(1, &vertexArray);
+    glBindVertexArray(vertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, startTime);
+    glBindBuffer(GL_ARRAY_BUFFER, startTimeBuffer);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
+
+    isInitialized = true;
 }
 
 
 void FountainProgram::activate()
 {
+    if(!isInitialized){
+        initialize();
+    }
+    
     NolightingProgram::activate();
 
     glEnable(GL_BLEND);
@@ -175,7 +185,15 @@ void FountainProgram::deactivate()
 
 void FountainProgram::render(SceneFountain* fountain)
 {
+    renderer->pushShaderProgram(*this, false);
+
+    setProjectionMatrix(renderer->modelViewProjectionMatrix().cast<float>());
+    
     glUniform1f(timeLocation, fountain->time());
-    glBindVertexArray(particles);
+    glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
+
+    fountain->setTime(fountain->time() + 0.01);
+
+    renderer->popShaderProgram();
 }

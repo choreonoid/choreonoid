@@ -12,7 +12,6 @@
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
 #include <set>
-#include <thread>
 #include <mutex>
 
 using namespace std;
