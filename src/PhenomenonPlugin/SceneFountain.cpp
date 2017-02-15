@@ -32,6 +32,7 @@ public:
     GLint MVPLocation;
     GLint timeLocation;
     GLint lifeTimeLocation;
+    GLint cycleTimeLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint startTimeBuffer;
@@ -87,6 +88,7 @@ bool FountainProgram::initialize()
     MVPLocation = getUniformLocation("MVP");
     timeLocation = getUniformLocation("time");
     lifeTimeLocation = getUniformLocation("lifeTime");
+    cycleTimeLocation = getUniformLocation("cycleTime");
 
     nParticles = 8000;
 
@@ -181,6 +183,7 @@ void FountainProgram::doRender(SceneFountain* fountain)
     
     glUniform1f(timeLocation, fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
+    glUniform1f(cycleTimeLocation, 6.0f);
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
 
