@@ -56,7 +56,7 @@ public:
     */
     void enableUnusedCacheCheck(bool on);
 
-    bool isPicking();
+    virtual bool isPicking() const override;
     virtual void setColor(const Vector3f& color) override;
     void enableColorMaterial(bool on);
     void setDiffuseColor(const Vector4f& color);

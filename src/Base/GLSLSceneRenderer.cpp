@@ -168,7 +168,7 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    vector<TraversedShapePtr> transparentShapes;
+    vector<function<void()>> transparentRenderingFunctions;
 
     std::set<int> shadowLightIndices;
 
@@ -262,13 +262,14 @@ public:
     void renderTransform(SgTransform* transform);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
+    void renderTransparentShape(SgShape* shape, Affine3 modelMatrix, unsigned int pickId);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
-    void renderTransparentShapes();
+    void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
@@ -313,8 +314,10 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
 
 void GLSLSceneRendererImpl::initialize()
 {
-    std::lock_guard<std::mutex> guard(extensionMutex);
-    renderers.insert(self);
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        renderers.insert(self);
+    }
     
     defaultFBO = 0;
 
@@ -620,12 +623,12 @@ void GLSLSceneRendererImpl::renderScene()
     if(camera){
         renderCamera(camera, self->currentCameraPosition());
 
-        transparentShapes.clear();
+        transparentRenderingFunctions.clear();
 
         renderSceneGraphNodes();
 
-        if(!transparentShapes.empty()){
-            renderTransparentShapes();
+        if(!transparentRenderingFunctions.empty()){
+            renderTransparentObjects();
         }
     }
 }
@@ -711,7 +714,7 @@ void GLSLSceneRendererImpl::endRendering()
 
 void GLSLSceneRendererImpl::renderSceneGraphNodes()
 {
-    currentProgram->initializeRendering();
+    currentProgram->initializeFrameRendering();
     clearGLState();
 
     if(currentLightingProgram){
@@ -817,6 +820,12 @@ const Matrix4& GLSLSceneRenderer::projectionMatrix() const
 Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
 {
     return impl->PV * impl->modelMatrixStack.back().matrix();
+}
+
+
+bool GLSLSceneRenderer::isPicking() const
+{
+    return impl->isPicking;
 }
 
 
@@ -999,13 +1008,13 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
     if(mesh && mesh->hasVertices()){
         SgMaterial* material = shape->material();
         if(material && material->transparency() > 0.0){
-            TraversedShapePtr traversed = new TraversedShape();
-            traversed->shape = shape;
-            traversed->modelMatrix = modelMatrixStack.back();
-            traversed->pickId = pushPickId(shape, false);
-            popPickId();
             if(!isRenderingShadowMap){
-                transparentShapes.push_back(traversed);
+                const Affine3& M = modelMatrixStack.back();
+                unsigned int pickId = pushPickId(shape, false);
+                transparentRenderingFunctions.push_back(
+                    [this,shape,M,pickId](){
+                        renderTransparentShape(shape, M, pickId); });
+                popPickId();
             }
         } else {
             if(!isPicking){
@@ -1023,7 +1032,28 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 }
 
 
-void GLSLSceneRendererImpl::renderTransparentShapes()
+void GLSLSceneRendererImpl::renderTransparentShape(SgShape* shape, Affine3 modelMatrix, unsigned int pickId)
+{
+    if(isPicking){
+        setPickColor(pickId);
+    } else {
+        renderMaterial(shape->material());
+    }
+    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(shape->mesh(), modelMatrix);
+    if(!handleSet->isValid()){
+        createMeshVertexArray(shape->mesh(), handleSet);
+    }
+    glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+}
+
+
+void GLSLSceneRenderer::dispatchToTransparentPhase(std::function<void()> renderingFunction)
+{
+    impl->transparentRenderingFunctions.push_back(renderingFunction);
+}
+
+
+void GLSLSceneRendererImpl::renderTransparentObjects()
 {
     if(!isPicking){
         glEnable(GL_BLEND);
@@ -1031,20 +1061,9 @@ void GLSLSceneRendererImpl::renderTransparentShapes()
         glDepthMask(GL_FALSE);
     }
 
-    const int n = transparentShapes.size();
+    const int n = transparentRenderingFunctions.size();
     for(int i=0; i < n; ++i){
-        TraversedShape* transparent = transparentShapes[i];
-        SgShape* shape = transparent->shape;
-        if(isPicking){
-            setPickColor(transparent->pickId);
-        } else {
-            renderMaterial(shape->material());
-        }
-        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(shape->mesh(), transparent->modelMatrix);
-        if(!handleSet->isValid()){
-            createMeshVertexArray(shape->mesh(), handleSet);
-        }
-        glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+        transparentRenderingFunctions[i]();
     }
 
     if(!isPicking){
@@ -1052,7 +1071,7 @@ void GLSLSceneRendererImpl::renderTransparentShapes()
         glDepthMask(GL_TRUE);
     }
 
-    transparentShapes.clear();
+    transparentRenderingFunctions.clear();
 }
 
 
@@ -1284,12 +1303,6 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 {
     renderGroup(outline);
-}
-
-
-bool GLSLSceneRenderer::isPicking()
-{
-    return impl->isPicking;
 }
 
 

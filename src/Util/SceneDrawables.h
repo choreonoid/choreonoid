@@ -420,7 +420,7 @@ private:
 
 typedef ref_ptr<SgPolygonMesh> SgPolygonMeshPtr;
 
-    
+
 class CNOID_EXPORT SgShape : public SgNode
 {
 public:

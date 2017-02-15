@@ -6,6 +6,6 @@ layout (location = 0) out vec4 fragColor;
 
 void main()
 {
-    fragColor = vecr(1.0, 1.0, 1.0, 1.0);
+    fragColor = vec4(1.0, 1.0, 1.0, 1.0);
     fragColor.a *= transparency;
 }

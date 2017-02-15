@@ -26,4 +26,5 @@ void main()
     }
 
     gl_Position = MVP * vec4(pos, 1.0);
+    gl_PointSize = 10.0;
 }

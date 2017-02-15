@@ -17,13 +17,16 @@ public:
     SceneFountain();
 
     float time() const { return time_; }
+    float lifeTime() const { return lifeTime_; }
+
     void setTime(double t) { time_ = t; }
+    void setLifeTime(double t) { lifeTime_ = t; }
     void setGravity(const Vector3f& g) { gravity_ = g; }
     void setTexture(const std::string& file) { texture_ = file; }
-
 private:
     float angle_;
     float time_;
+    float lifeTime_;
     Vector3f gravity_;
     std::string texture_;
 };

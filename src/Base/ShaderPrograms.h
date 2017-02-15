@@ -19,9 +19,8 @@ class CNOID_EXPORT ShaderProgram : public GLSLProgram
 public:
     ShaderProgram();
     virtual ~ShaderProgram();
-    virtual void initialize() = 0;
     virtual void activate();
-    virtual void initializeRendering();
+    virtual void initializeFrameRendering();
     virtual void deactivate();
     virtual void setColor(const Vector3f& color);
     virtual void enableColorArray(bool on);
@@ -46,7 +45,7 @@ class CNOID_EXPORT SolidColorProgram : public NolightingProgram
     
 public:
     virtual void initialize();
-    virtual void initializeRendering();
+    virtual void initializeFrameRendering();
     virtual void setPointSize(float s);
     virtual void setColor(const Vector3f& color);
     virtual void enableColorArray(bool on);
@@ -163,7 +162,7 @@ public:
 
     virtual void initialize();
     virtual void activate();
-    virtual void initializeRendering();
+    virtual void initializeFrameRendering();
     virtual void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
     virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV);
@@ -206,7 +205,7 @@ public:
     ShadowMapProgram(PhongShadowProgram* mainProgram);
     virtual void initialize();
     virtual void activate();
-    virtual void initializeRendering();
+    virtual void initializeFrameRendering();
     virtual void deactivate();
 };
 

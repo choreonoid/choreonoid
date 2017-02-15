@@ -22,8 +22,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual ~GLSLSceneRenderer();
 
     static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
-    virtual void applyExtensions();
-    virtual void applyNewExtensions();
+    virtual void applyExtensions() override;
+    virtual void applyNewExtensions() override;
 
     virtual void setOutputStream(std::ostream& os) override;
 
@@ -36,6 +36,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     void pushShaderProgram(ShaderProgram& program, bool isLightingProgram);
     void popShaderProgram();
+
+    void dispatchToTransparentPhase(std::function<void()> renderingFunction);
         
     virtual bool initializeGL() override;
     virtual void flush() override;
@@ -48,6 +50,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual bool pick(int x, int y) override;
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;
+    virtual bool isPicking() const override;
 
     virtual void setDefaultLighting(bool on) override;
     void setHeadLightLightingFromBackEnabled(bool on);
@@ -65,7 +68,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void requestToClearCache() override;
     virtual void enableUnusedCacheCheck(bool on) override;
 
-    bool isPicking();
     virtual void setColor(const Vector3f& color) override;
 
     void setDiffuseColor(const Vector3f& color);

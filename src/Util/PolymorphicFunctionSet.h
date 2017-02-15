@@ -47,6 +47,18 @@ public:
         setFunction<Object>([func](ObjectBase* obj){ func(static_cast<Object*>(obj)); });
     }
 
+    template <class Object>
+    void resetFunction(bool doUpdate = false){
+        int id = ObjectBase::template findPolymorphicId<Object>();
+        if(id >= 0 && id < dispatchTable.size()){
+            dispatchTable[id] = nullptr;
+            dispatchTableFixedness[id] = false;
+            if(doUpdate){
+                updateDispatchTable();
+            }
+        }
+    }
+
     void updateDispatchTable() {
 
         const int numTypes = ObjectBase::numPolymorphicTypes();

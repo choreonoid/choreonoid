@@ -8,6 +8,7 @@
 #include <cnoid/ShaderPrograms>
 #include <cnoid/EigenUtil>
 #include <memory>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -18,20 +19,21 @@ float randFloat() {
     return ((float)rand() / RAND_MAX);
 }
 
-class FountainProgram : public NolightingProgram
+class FountainProgram : public ShaderProgram
 {
 public:
     FountainProgram(GLSLSceneRenderer* renderer);
 
-    virtual void initialize() override;
+    bool initialize();
     virtual void activate() override;
-    virtual void initializeRendering() override;
     virtual void deactivate() override;
 
     void render(SceneFountain* fountain);
+    void doRender(SceneFountain* fountain);
 
     GLSLSceneRenderer* renderer;
     bool isInitialized;
+    GLint MVPLocation;
     GLint timeLocation;
     GLint lifeTimeLocation;
     GLuint nParticles;
@@ -62,6 +64,7 @@ SceneFountain::SceneFountain()
     : SgNode(findPolymorphicId<SceneFountain>())
 {
     time_ = 0.0f;
+    lifeTime_ = 4.0f;
     gravity_ << 0.0f, 0.0f, -9.8f;
     angle_ = 0.1f;
 }
@@ -74,21 +77,20 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 }
 
 
-void FountainProgram::initialize()
+bool FountainProgram::initialize()
 {
     if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
-        //return false;
+        cout << "ogl_LoadFunctions() == ogl_LOAD_FAILED" << endl;
+        return false;
     }
     
     loadVertexShader(":/PhenomenonPlugin/shader/fountain.vert");
     loadFragmentShader(":/PhenomenonPlugin/shader/fountain.frag");
     link();
     
-    NolightingProgram::initialize();
-    
+    MVPLocation = getUniformLocation("MVP");
     timeLocation = getUniformLocation("time");
     lifeTimeLocation = getUniformLocation("lifeTime");
-    glUniform1f(lifeTimeLocation, 3.5f);
 
     nParticles = 8000;
 
@@ -113,8 +115,8 @@ void FountainProgram::initialize()
         phi = 2.0 * PI / 6.0f * randFloat();
 
         v.x() = sinf(theta) * cosf(phi);
-        v.y() = cosf(theta);
-        v.z() = sinf(theta) * sinf(phi);
+        v.y() = sinf(theta) * sinf(phi);
+        v.z() = cosf(theta);
 
         velocity = 1.24f + (1.5f - 1.25f) * randFloat();
         v = v.normalized() * velocity;
@@ -139,7 +141,6 @@ void FountainProgram::initialize()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // Attach these to the torus's vertex array
     glGenVertexArrays(1, &vertexArray);
     glBindVertexArray(vertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
@@ -153,47 +154,53 @@ void FountainProgram::initialize()
     glBindVertexArray(0);
 
     isInitialized = true;
+
+    return true;
 }
 
 
 void FountainProgram::activate()
 {
-    if(!isInitialized){
-        initialize();
-    }
-    
-    NolightingProgram::activate();
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthMask(GL_FALSE);
+    ShaderProgram::activate();
 }
     
-
-void FountainProgram::initializeRendering()
-{
-
-}
-
 
 void FountainProgram::deactivate()
 {
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
+
 }
 
 
 void FountainProgram::render(SceneFountain* fountain)
 {
+    if(renderer->isPicking()){
+        return;
+    }
+
+    if(!isInitialized){
+        if(!initialize()){
+            renderer->renderingFunctions().resetFunction<SceneFountain>(true);
+            return;
+        }
+    }
+
+    renderer->dispatchToTransparentPhase([this, fountain](){ doRender(fountain); });
+}
+
+
+void FountainProgram::doRender(SceneFountain* fountain)
+{
     renderer->pushShaderProgram(*this, false);
 
-    setProjectionMatrix(renderer->modelViewProjectionMatrix().cast<float>());
+    const Matrix4f M = renderer->modelViewProjectionMatrix().cast<float>();
+    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, M.data());
     
     glUniform1f(timeLocation, fountain->time());
+    glUniform1f(lifeTimeLocation, fountain->lifeTime());
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
 
-    fountain->setTime(fountain->time() + 0.01);
-
     renderer->popShaderProgram();
+
+    fountain->setTime(fountain->time() + 0.005);
 }

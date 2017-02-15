@@ -37,7 +37,7 @@ void ShaderProgram::deactivate()
 }
 
 
-void ShaderProgram::initializeRendering()
+void ShaderProgram::initializeFrameRendering()
 {
 
 }
@@ -81,7 +81,7 @@ void SolidColorProgram::initialize()
 }
 
 
-void SolidColorProgram::initializeRendering()
+void SolidColorProgram::initializeFrameRendering()
 {
     glUniform1i(colorPerVertexLocation, false);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -276,7 +276,7 @@ void PhongShadowProgram::activate()
 }
 
 
-void PhongShadowProgram::initializeRendering()
+void PhongShadowProgram::initializeFrameRendering()
 {
     glUniform1i(numShadowsLocation, numShadows_);
     if(numShadows_ > 0){
@@ -432,7 +432,7 @@ void ShadowMapProgram::activate()
 }
     
 
-void ShadowMapProgram::initializeRendering()
+void ShadowMapProgram::initializeFrameRendering()
 {
     PhongShadowProgram::ShadowInfo& shadow = mainProgram->shadowInfos[mainProgram->currentShadowIndex];
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
