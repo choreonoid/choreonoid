@@ -101,17 +101,6 @@ public:
 
 typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
 
-/*
-struct SgObjectPtrHash {
-    std::size_t operator()(const SgObjectPtr& p) const {
-#ifndef WIN32
-        return boost::hash_value<SgObject*>(p.get());
-#else
-        return boost::hash_value<long>((long)p.get());
-#endif
-    }
-};
-*/
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
     std::size_t operator()(const SgObjectPtr& p) const {
@@ -120,18 +109,7 @@ struct SgObjectPtrHash {
 };
 typedef std::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
 
-
-struct TraversedShape : public Referenced
-{
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    SgShape* shape;
-    unsigned int pickId;
-    Affine3 modelMatrix;
-};
-typedef ref_ptr<TraversedShape> TraversedShapePtr;
-
 }
-
 
 namespace cnoid {
 
