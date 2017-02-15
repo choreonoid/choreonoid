@@ -23,11 +23,7 @@ class FountainProgram : public ShaderProgram
 {
 public:
     FountainProgram(GLSLSceneRenderer* renderer);
-
     bool initialize();
-    virtual void activate() override;
-    virtual void deactivate() override;
-
     void render(SceneFountain* fountain);
     void doRender(SceneFountain* fountain);
 
@@ -112,7 +108,7 @@ bool FountainProgram::initialize()
     for(int i = 0; i < nParticles; ++i) {
         
         theta = PI / 6.0f * randFloat();
-        phi = 2.0 * PI / 6.0f * randFloat();
+        phi = 2.0 * PI * randFloat();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
@@ -156,18 +152,6 @@ bool FountainProgram::initialize()
     isInitialized = true;
 
     return true;
-}
-
-
-void FountainProgram::activate()
-{
-    ShaderProgram::activate();
-}
-    
-
-void FountainProgram::deactivate()
-{
-
 }
 
 
