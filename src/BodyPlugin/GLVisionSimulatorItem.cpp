@@ -857,7 +857,7 @@ void VisionRenderer::updateScene(bool updateSensorForRenderingThread)
     for(size_t i=0; i < sceneBodies.size(); ++i){
         SceneBody* sceneBody = sceneBodies[i];
         sceneBody->updateLinkPositions();
-        sceneBody->updateSceneDevices();
+        sceneBody->updateSceneDevices(simImpl->currentTime);
     }
     if(updateSensorForRenderingThread){
         deviceForRendering->copyStateFrom(*device);

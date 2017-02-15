@@ -61,6 +61,7 @@ class CNOID_EXPORT Device : public DeviceState
         double cycle;
         const Isometry3& const_T_local() const { return T_local; }
         Signal<void()> sigStateChanged;
+        Signal<void(double time)> sigTimeChanged;
     };
         
     NonState* ns;
@@ -122,6 +123,13 @@ public:
         ns->sigStateChanged();
     }
 
+    SignalProxy<void(double time)> sigTimeChanged() {
+        return ns->sigTimeChanged;
+    }
+
+    void notifyTimeChange(double time) {
+        ns->sigTimeChanged(time);
+    }
 };
 
 typedef ref_ptr<Device> DevicePtr;

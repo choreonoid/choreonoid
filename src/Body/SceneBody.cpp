@@ -290,7 +290,7 @@ void SceneBody::updateModel()
     }
 
     updateLinkPositions();
-    updateSceneDevices();
+    updateSceneDevices(0.0);
     notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED | SgUpdate::MODIFIED);
 }
 
@@ -356,10 +356,10 @@ void SceneBody::setSceneDeviceUpdateConnection(bool on)
 }
 
 
-void SceneBody::updateSceneDevices()
+void SceneBody::updateSceneDevices(double time)
 {
     for(size_t i=0; i < sceneDevices.size(); ++i){
-        sceneDevices[i]->updateScene();
+        sceneDevices[i]->updateScene(time);
     }
 }
 
