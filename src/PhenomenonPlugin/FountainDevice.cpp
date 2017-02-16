@@ -5,12 +5,20 @@
 
 #include "FountainDevice.h"
 #include "SceneFountain.h"
+#include <cnoid/YAMLBodyLoader>
 #include <cnoid/SceneDevice>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
+
+bool readFountainDevice(YAMLBodyLoader& loader, Mapping& node)
+{
+    FountainDevicePtr fountain = new FountainDevice;
+    return loader.readDevice(fountain, node);
+}
+
 
 SceneDevice* createSceneFountainDevice(Device* device)
 {
@@ -26,9 +34,10 @@ SceneDevice* createSceneFountainDevice(Device* device)
     return sceneDevice;
 }
                         
-struct SceneDeviceFactoryRegistration
+struct TypeRegistration
 {
-    SceneDeviceFactoryRegistration() {
+    TypeRegistration() {
+        YAMLBodyLoader::addNodeType("FountainDevice", readFountainDevice);
         SceneDevice::registerSceneDeviceFactory<FountainDevice>(createSceneFountainDevice);
     }
 } registration;
