@@ -438,8 +438,12 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 
     cloneMap.clear();
 
-    cloneMap.setNonNodeCloning(false);
-    //cloneMap.setNonNodeCloning(true);
+    /*
+      If this is set to false, rendering may crach in multi-thread rendering
+      even if the non node objects in the scene are not modified because
+      the signal connection / disconnection operations may collide.
+    */
+    cloneMap.setNonNodeCloning(true);
 
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){
