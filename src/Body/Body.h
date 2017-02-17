@@ -161,7 +161,7 @@ public:
     void addDevice(Device* device);
     void initializeDeviceStates();
     void clearDevices();
-        
+
     /**
        This function returns true when the whole body is a static, fixed object like a floor.
     */
