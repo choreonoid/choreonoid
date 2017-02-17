@@ -25,7 +25,7 @@ public:
     FountainProgram(GLSLSceneRenderer* renderer);
     bool initialize();
     void render(SceneFountain* fountain);
-    void doRender(SceneFountain* fountain);
+    void doRender(SceneFountain* fountain, const Matrix4f& PVM);
 
     GLSLSceneRenderer* renderer;
     bool isInitialized;
@@ -169,18 +169,17 @@ void FountainProgram::render(SceneFountain* fountain)
             return;
         }
     }
-
-    renderer->dispatchToTransparentPhase([this, fountain](){ doRender(fountain); });
+    
+    const Matrix4f PVM = renderer->modelViewProjectionMatrix().cast<float>();
+    renderer->dispatchToTransparentPhase([this, fountain, PVM](){ doRender(fountain, PVM); });
 }
 
 
-void FountainProgram::doRender(SceneFountain* fountain)
+void FountainProgram::doRender(SceneFountain* fountain, const Matrix4f& PVM)
 {
     renderer->pushShaderProgram(*this, false);
 
-    const Matrix4f M = renderer->modelViewProjectionMatrix().cast<float>();
-    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, M.data());
-    
+    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, PVM.data());
     glUniform1f(timeLocation, fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
     glUniform1f(cycleTimeLocation, 6.0f);
@@ -188,6 +187,4 @@ void FountainProgram::doRender(SceneFountain* fountain)
     glDrawArrays(GL_POINTS, 0, nParticles);
 
     renderer->popShaderProgram();
-
-    fountain->setTime(fountain->time() + 0.005);
 }
