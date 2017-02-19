@@ -7,6 +7,7 @@
 #include <cnoid/GLSLSceneRenderer>
 #include <cnoid/ShaderPrograms>
 #include <cnoid/EigenUtil>
+#include <QImage>
 #include <memory>
 #include <iostream>
 
@@ -33,10 +34,12 @@ public:
     GLint timeLocation;
     GLint lifeTimeLocation;
     GLint cycleTimeLocation;
+    GLint particleTexLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint startTimeBuffer;
     GLuint vertexArray;
+    GLuint textureId;
 };
 
 }
@@ -85,11 +88,6 @@ bool FountainProgram::initialize()
     loadFragmentShader(":/PhenomenonPlugin/shader/fountain.frag");
     link();
     
-    MVPLocation = getUniformLocation("MVP");
-    timeLocation = getUniformLocation("time");
-    lifeTimeLocation = getUniformLocation("lifeTime");
-    cycleTimeLocation = getUniformLocation("cycleTime");
-
     nParticles = 8000;
 
     // Generate the buffers
@@ -151,6 +149,22 @@ bool FountainProgram::initialize()
 
     glBindVertexArray(0);
 
+    QImage image(":/PhenomenonPlugin/texture/bluewater.png");
+    QImage texture = image.rgbSwapped();
+    glActiveTexture(GL_TEXTURE0);
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width(), texture.height(),
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.constBits());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    MVPLocation = getUniformLocation("MVP");
+    timeLocation = getUniformLocation("time");
+    lifeTimeLocation = getUniformLocation("lifeTime");
+    cycleTimeLocation = getUniformLocation("cycleTime");
+    particleTexLocation = getUniformLocation("particleTex");
+    
     isInitialized = true;
 
     return true;
@@ -183,6 +197,7 @@ void FountainProgram::doRender(SceneFountain* fountain, const Matrix4f& PVM)
     glUniform1f(timeLocation, fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
     glUniform1f(cycleTimeLocation, 6.0f);
+    glUniform1i(particleTexLocation, 0);
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
 
