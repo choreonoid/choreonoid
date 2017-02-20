@@ -27,7 +27,7 @@ links:
   -
     name: CANNON_Y
     parent: CHASSIS
-    translation: [ -0.04, 0, 0.08 ]
+    translation: [ -0.04, 0, 0.1 ]
     jointType: revolute
     jointAxis: Z
     jointRange: unlimited
@@ -42,12 +42,12 @@ links:
       Shape:
         geometry:
           type: Box
-          size: [ 0.2, 0.2, 0.08 ]
+          size: [ 0.2, 0.2, 0.1 ]
         appearance: *BodyAppearance
   -
     name: CANNON_P
     parent: CANNON_Y
-    translation: [ 0, 0, 0.04 ]
+    translation: [ 0, 0, 0.05 ]
     jointType: revolute
     jointAxis: Y
     jointRange: [ -45, 10 ]
@@ -67,7 +67,7 @@ links:
             geometry:
               type: Cylinder
               height: 0.1
-              radius: 0.11
+              radius: 0.1
             appearance: *BodyAppearance
       - 
         # Barrel
