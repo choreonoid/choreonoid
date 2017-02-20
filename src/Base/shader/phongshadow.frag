@@ -95,7 +95,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
         
         vec3 v = normalize(vec3(-position));
         vec3 n = normalize(normal);
-        vec3 r = reflect(-s, normal);
+        vec3 r = reflect(-s, n);
         //float distance = l.length();
         float distance = sqrt(dot(l, l));
         ki *= 1.0 / max(1.0,

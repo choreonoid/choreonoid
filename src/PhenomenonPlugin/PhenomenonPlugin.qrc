@@ -3,6 +3,7 @@
 <qresource prefix="/PhenomenonPlugin" >
   <file>shader/fountain.vert</file>
   <file>shader/fountain.frag</file>
+  <file>shader/particles.frag</file>
   <file>texture/bluewater.png</file>
 </qresource>
 </RCC>

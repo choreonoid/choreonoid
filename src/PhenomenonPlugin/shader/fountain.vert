@@ -4,6 +4,7 @@ layout (location = 0) in vec3 vertexInitVel;
 layout (location = 1) in float offsetTime;
 
 out float transparency;
+out vec3 position;
 
 uniform float time;
 uniform float lifeTime;
@@ -26,5 +27,6 @@ void main()
     }
 
     gl_Position = MVP * vec4(pos, 1.0);
+    position = vec3(gl_Position);
     gl_PointSize = 12.0;
 }

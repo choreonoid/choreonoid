@@ -86,6 +86,7 @@ bool FountainProgram::initialize()
     
     loadVertexShader(":/PhenomenonPlugin/shader/fountain.vert");
     loadFragmentShader(":/PhenomenonPlugin/shader/fountain.frag");
+    //loadFragmentShader(":/PhenomenonPlugin/shader/particles.frag");
     link();
     
     nParticles = 8000;
