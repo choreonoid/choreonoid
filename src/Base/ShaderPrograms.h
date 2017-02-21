@@ -44,11 +44,11 @@ class CNOID_EXPORT SolidColorProgram : public NolightingProgram
     GLint colorPerVertexLocation;
     
 public:
-    virtual void initialize();
-    virtual void initializeFrameRendering();
+    virtual void initialize() override;
+    virtual void initializeFrameRendering() override;
     virtual void setPointSize(float s);
-    virtual void setColor(const Vector3f& color);
-    virtual void enableColorArray(bool on);
+    virtual void setColor(const Vector3f& color) override;
+    virtual void enableColorArray(bool on) override;
 };
 
 
@@ -57,7 +57,50 @@ class CNOID_EXPORT LightingProgram : public ShaderProgram
     static const int maxNumLights_ = 10;
 
 protected:
+    GLint numLightsLocation;
 
+    struct LightInfo {
+        GLint positionLocation;
+        GLint intensityLocation;
+        GLint ambientIntensityLocation;
+        GLint constantAttenuationLocation;
+        GLint linearAttenuationLocation;
+        GLint quadraticAttenuationLocation;
+        GLint cutoffAngleLocation;
+        GLint beamWidthLocation;
+        GLint cutoffExponentLocation;
+        GLint directionLocation;
+    };
+    std::vector<LightInfo> lightInfos;
+
+    GLint maxFogDistLocation;
+    GLint minFogDistLocation;
+    GLint fogColorLocation;
+    GLint isFogEnabledLocation;
+
+public:
+    virtual void initialize();
+    int maxNumLights() const { return maxNumLights_; }
+    void setNumLights(int n);
+    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
+    virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV) = 0;
+
+    void setFogEnabled(bool on) {
+        glUniform1i(isFogEnabledLocation, on);
+    }
+    void setFogColor(const Vector3f& color) {
+        glUniform3fv(fogColorLocation, 1, color.data());
+    }
+    void setFogRange(float minDist, float maxDist){
+        glUniform1f(minFogDistLocation, minDist);
+        glUniform1f(maxFogDistLocation, maxDist);
+    }
+};
+
+
+class MaterialProgram : public LightingProgram
+{
+protected:
     GLint diffuseColorLocation;
     GLint ambientColorLocation;
     GLint specularColorLocation;
@@ -66,11 +109,7 @@ protected:
     GLint alphaLocation;
 
 public:
-    virtual void initialize();
-    int maxNumLights() const { return maxNumLights_; }
-    virtual void setNumLights(int n) = 0;
-    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) = 0;
-    virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV) = 0;
+    virtual void initialize() override;
 
     void setDiffuseColor(const Vector3f& color){
         glUniform3fv(diffuseColorLocation, 1, color.data());
@@ -95,7 +134,7 @@ public:
 
 class ShadowMapProgram;
 
-class PhongShadowProgram : public LightingProgram
+class PhongShadowProgram : public MaterialProgram
 {
     bool useUniformBlockToPassTransformationMatrices;
     GLSLUniformBlockBuffer transformBlockBuffer;
@@ -106,22 +145,6 @@ class PhongShadowProgram : public LightingProgram
     GLint modelViewMatrixLocation;
     GLint normalMatrixLocation;
     GLint MVPLocation;
-
-    GLint numLightsLocation;
-
-    struct LightInfo {
-        GLint positionLocation;
-        GLint intensityLocation;
-        GLint ambientIntensityLocation;
-        GLint constantAttenuationLocation;
-        GLint linearAttenuationLocation;
-        GLint quadraticAttenuationLocation;
-        GLint cutoffAngleLocation;
-        GLint beamWidthLocation;
-        GLint cutoffExponentLocation;
-        GLint directionLocation;
-    };
-    std::vector<LightInfo> lightInfos;
 
     bool isShadowAntiAliasingEnabled_;
     int numShadows_;
@@ -151,21 +174,15 @@ class PhongShadowProgram : public LightingProgram
 
     Matrix4 shadowBias;
 
-    GLint maxFogDistLocation;
-    GLint minFogDistLocation;
-    GLint fogColorLocation;
-    GLint isFogEnabledLocation;
-
 public:
     PhongShadowProgram();
     ~PhongShadowProgram();
 
-    virtual void initialize();
-    virtual void activate();
-    virtual void initializeFrameRendering();
-    virtual void setNumLights(int n);
-    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
-    virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV);
+    virtual void initialize() override;
+    virtual void activate() override;
+    virtual void initializeFrameRendering() override;
+    virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) override;
+    virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV) override;
 
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();
@@ -179,16 +196,6 @@ public:
     SgCamera* getShadowMapCamera(SgLight* light, Affine3& io_T);
     void setShadowMapViewProjection(const Matrix4& PV);
     ShadowMapProgram& shadowMapProgram() { return *shadowMapProgram_; }
-    void setFogEnabled(bool on) {
-        glUniform1i(isFogEnabledLocation, on);
-    }
-    void setFogColor(const Vector3f& color) {
-        glUniform3fv(fogColorLocation, 1, color.data());
-    }
-    void setFogRange(float minDist, float maxDist){
-        glUniform1f(minFogDistLocation, minDist);
-        glUniform1f(maxFogDistLocation, maxDist);
-    }
 
 private:
     void initializeShadowInfo(int index);
@@ -203,10 +210,10 @@ class ShadowMapProgram : public NolightingProgram
     
 public:
     ShadowMapProgram(PhongShadowProgram* mainProgram);
-    virtual void initialize();
-    virtual void activate();
-    virtual void initializeFrameRendering();
-    virtual void deactivate();
+    virtual void initialize() override;
+    virtual void activate() override;
+    virtual void initializeFrameRendering() override;
+    virtual void deactivate() override;
 };
 
 }

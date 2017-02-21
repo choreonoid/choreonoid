@@ -126,6 +126,7 @@ public:
 
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
+    MaterialProgram* materialProgram;
     NolightingProgram* currentNolightingProgram;
     
     SolidColorProgram solidColorProgram;
@@ -302,6 +303,7 @@ void GLSLSceneRendererImpl::initialize()
     currentProgram = 0;
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
+    materialProgram = &phongShadowProgram;
 
     isPicking = false;
     isRenderingShadowMap = false;
@@ -697,7 +699,7 @@ void GLSLSceneRendererImpl::renderSceneGraphNodes()
 
     if(currentLightingProgram){
         renderLights();
-        if(currentLightingProgram == &phongShadowProgram){
+        if(currentLightingProgram){
             renderFog();
         }
     }
@@ -762,11 +764,11 @@ void GLSLSceneRendererImpl::renderFog()
 
     if(isCurrentFogUpdated){
         if(!fog){
-            phongShadowProgram.setFogEnabled(false);
+            currentLightingProgram->setFogEnabled(false);
         } else {
-            phongShadowProgram.setFogEnabled(true);
-            phongShadowProgram.setFogColor(fog->color());
-            phongShadowProgram.setFogRange(0.0f, fog->visibilityRange());
+            currentLightingProgram->setFogEnabled(true);
+            currentLightingProgram->setFogColor(fog->color());
+            currentLightingProgram->setFogRange(0.0f, fog->visibilityRange());
         }
     }
     isCurrentFogUpdated = false;
@@ -1058,17 +1060,17 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
     if(!material){
         material = defaultMaterial;
     }
-    
-    if(currentNolightingProgram){
-        setNolightingColor(material->diffuseColor());
 
-    } else if(currentLightingProgram){
+    if(currentLightingProgram == materialProgram){
         setDiffuseColor(material->diffuseColor());
         setAmbientColor(material->ambientIntensity() * material->diffuseColor());
         setEmissionColor(material->emissiveColor());
         setSpecularColor(material->specularColor());
         setShininess((127.0f * material->shininess()) + 1.0f);
         setAlpha(1.0 - material->transparency());
+
+    } else if(currentNolightingProgram){
+        setNolightingColor(material->diffuseColor());
     }
 }
 
@@ -1319,7 +1321,7 @@ void GLSLSceneRenderer::setColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        currentLightingProgram->setDiffuseColor(color);
+        materialProgram->setDiffuseColor(color);
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
@@ -1335,7 +1337,7 @@ void GLSLSceneRenderer::setDiffuseColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setAmbientColor(const Vector3f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        currentLightingProgram->setAmbientColor(color);
+        materialProgram->setAmbientColor(color);
         ambientColor = color;
         stateFlag.set(AMBIENT_COLOR);
     }
@@ -1351,7 +1353,7 @@ void GLSLSceneRenderer::setAmbientColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setEmissionColor(const Vector3f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
-        currentLightingProgram->setEmissionColor(color);
+        materialProgram->setEmissionColor(color);
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
@@ -1367,7 +1369,7 @@ void GLSLSceneRenderer::setEmissionColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setSpecularColor(const Vector3f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        currentLightingProgram->setSpecularColor(color);
+        materialProgram->setSpecularColor(color);
         specularColor = color;
         stateFlag.set(SPECULAR_COLOR);
     }
@@ -1383,7 +1385,7 @@ void GLSLSceneRenderer::setSpecularColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
-        currentLightingProgram->setShininess(s);
+        materialProgram->setShininess(s);
         shininess = s;
         stateFlag.set(SHININESS);
     }
@@ -1399,7 +1401,7 @@ void GLSLSceneRenderer::setShininess(float s)
 void GLSLSceneRendererImpl::setAlpha(float a)
 {
     if(!stateFlag[ALPHA] || alpha != a){
-        currentLightingProgram->setAlpha(a);
+        materialProgram->setAlpha(a);
         alpha = a;
         stateFlag.set(ALPHA);
     }
