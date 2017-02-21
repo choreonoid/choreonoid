@@ -227,8 +227,8 @@ public:
     bool renderShadowMap(int lightIndex);
     void beginRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
-    void renderLights();
-    void renderFog();
+    void renderLights(LightingProgram* program);
+    void renderFog(LightingProgram* program);
     void onCurrentFogNodeUdpated();
     void endRendering();
     void renderSceneGraphNodes();
@@ -698,23 +698,27 @@ void GLSLSceneRendererImpl::renderSceneGraphNodes()
     clearGLState();
 
     if(currentLightingProgram){
-        renderLights();
-        if(currentLightingProgram){
-            renderFog();
-        }
+        renderLights(currentLightingProgram);
+        renderFog(currentLightingProgram);
     }
 
     renderingFunctions.dispatch(self->sceneRoot());
 }
 
 
-void GLSLSceneRendererImpl::renderLights()
+void GLSLSceneRenderer::renderLights(LightingProgram* program)
+{
+    impl->renderLights(program);
+}
+
+
+void GLSLSceneRendererImpl::renderLights(LightingProgram* program)
 {
     int lightIndex = 0;
 
     const int n = self->numLights();
     for(int i=0; i < n; ++i){
-        if(lightIndex == currentLightingProgram->maxNumLights()){
+        if(lightIndex == program->maxNumLights()){
             break;
         }
         SgLight* light;
@@ -722,27 +726,33 @@ void GLSLSceneRendererImpl::renderLights()
         self->getLightInfo(i, light, T);
         if(light->on()){
             bool isCastingShadow = (shadowLightIndices.find(i) != shadowLightIndices.end());
-            if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
+            if(program->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
                 ++lightIndex;
             }
         }
     }
 
-    if(lightIndex < currentLightingProgram->maxNumLights()){
+    if(lightIndex < program->maxNumLights()){
         SgLight* headLight = self->headLight();
         if(headLight->on()){
-            if(currentLightingProgram->renderLight(
+            if(program->renderLight(
                    lightIndex, headLight, self->currentCameraPosition(), viewMatrix, false)){
                 ++lightIndex;
             }
         }
     }
 
-    currentLightingProgram->setNumLights(lightIndex);
+    program->setNumLights(lightIndex);
 }
 
 
-void GLSLSceneRendererImpl::renderFog()
+void GLSLSceneRenderer::renderFog(LightingProgram* program)
+{
+    impl->renderFog(program);
+}
+
+
+void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
 {
     SgFog* fog = 0;
     if(self->isFogEnabled()){
@@ -794,6 +804,18 @@ const Affine3& GLSLSceneRenderer::currentModelTransform() const
 const Matrix4& GLSLSceneRenderer::projectionMatrix() const
 {
     return impl->projectionMatrix;
+}
+
+
+const Matrix4& GLSLSceneRenderer::viewProjectionMatrix() const
+{
+    return impl->PV;
+}
+
+
+Matrix4 GLSLSceneRenderer::modelViewMatrix() const
+{
+    return impl->viewMatrix * impl->modelMatrixStack.back().matrix();
 }
 
 
@@ -969,8 +991,8 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
         nextShapeHandleSetMap->insert(*p);
     }
 
-    if(currentLightingProgram){
-        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrix, PV);
+    if(currentLightingProgram == &phongShadowProgram){
+        phongShadowProgram.setTransformMatrices(viewMatrix, modelMatrix, PV);
     } else if(currentNolightingProgram){
         const Matrix4f PVM = (PV * modelMatrix.matrix()).cast<float>();
         currentNolightingProgram->setProjectionMatrix(PVM);

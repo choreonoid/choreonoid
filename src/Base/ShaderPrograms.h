@@ -83,7 +83,6 @@ public:
     int maxNumLights() const { return maxNumLights_; }
     void setNumLights(int n);
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting);
-    virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV) = 0;
 
     void setFogEnabled(bool on) {
         glUniform1i(isFogEnabledLocation, on);
@@ -182,7 +181,8 @@ public:
     virtual void activate() override;
     virtual void initializeFrameRendering() override;
     virtual bool renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting) override;
-    virtual void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV) override;
+
+    void setTransformMatrices(const Affine3& viewMatrix, const Affine3& modelMatrix, const Matrix4& PV);
 
     void activateShadowMapGenerationPass(int shadowIndex);
     void activateMainRenderingPass();

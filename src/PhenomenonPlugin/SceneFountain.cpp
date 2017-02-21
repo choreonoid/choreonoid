@@ -20,16 +20,17 @@ float randFloat() {
     return ((float)rand() / RAND_MAX);
 }
 
-class FountainProgram : public ShaderProgram
+class FountainProgram : public LightingProgram
 {
 public:
     FountainProgram(GLSLSceneRenderer* renderer);
-    bool initialize();
+    bool initializeRendering();
     void render(SceneFountain* fountain);
-    void doRender(SceneFountain* fountain, const Matrix4f& PVM);
+    void doRender(SceneFountain* fountain, const Matrix4f& MV);
 
     GLSLSceneRenderer* renderer;
     bool isInitialized;
+    GLint modelViewMatrixLocation;
     GLint MVPLocation;
     GLint timeLocation;
     GLint lifeTimeLocation;
@@ -77,7 +78,7 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 }
 
 
-bool FountainProgram::initialize()
+bool FountainProgram::initializeRendering()
 {
     if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
         cout << "ogl_LoadFunctions() == ogl_LOAD_FAILED" << endl;
@@ -85,9 +86,13 @@ bool FountainProgram::initialize()
     }
     
     loadVertexShader(":/PhenomenonPlugin/shader/fountain.vert");
-    loadFragmentShader(":/PhenomenonPlugin/shader/fountain.frag");
-    //loadFragmentShader(":/PhenomenonPlugin/shader/particles.frag");
+    loadFragmentShader(":/PhenomenonPlugin/shader/particles.frag");
     link();
+
+    LightingProgram::initialize();
+
+    modelViewMatrixLocation = getUniformLocation("modelViewMatrix");
+    MVPLocation = getUniformLocation("MVP");
     
     nParticles = 8000;
 
@@ -160,12 +165,11 @@ bool FountainProgram::initialize()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    MVPLocation = getUniformLocation("MVP");
     timeLocation = getUniformLocation("time");
     lifeTimeLocation = getUniformLocation("lifeTime");
     cycleTimeLocation = getUniformLocation("cycleTime");
     particleTexLocation = getUniformLocation("particleTex");
-    
+
     isInitialized = true;
 
     return true;
@@ -179,26 +183,33 @@ void FountainProgram::render(SceneFountain* fountain)
     }
 
     if(!isInitialized){
-        if(!initialize()){
+        if(!initializeRendering()){
             renderer->renderingFunctions().resetFunction<SceneFountain>(true);
             return;
         }
     }
-    
-    const Matrix4f PVM = renderer->modelViewProjectionMatrix().cast<float>();
-    renderer->dispatchToTransparentPhase([this, fountain, PVM](){ doRender(fountain, PVM); });
+
+    const Matrix4f MV = renderer->modelViewMatrix().cast<float>();
+    renderer->dispatchToTransparentPhase([this, fountain, MV](){ doRender(fountain, MV); });
 }
 
 
-void FountainProgram::doRender(SceneFountain* fountain, const Matrix4f& PVM)
+void FountainProgram::doRender(SceneFountain* fountain, const Matrix4f& MV)
 {
     renderer->pushShaderProgram(*this, false);
 
-    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, PVM.data());
+    renderer->renderLights(this);
+    renderer->renderFog(this);
+
+    glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
+    const Matrix4f MVP = renderer->projectionMatrix().cast<float>() * MV;
+    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
+    
     glUniform1f(timeLocation, fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
     glUniform1f(cycleTimeLocation, 6.0f);
     glUniform1i(particleTexLocation, 0);
+    
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
 
