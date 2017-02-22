@@ -31,7 +31,9 @@ public:
     GLSLSceneRenderer* renderer;
     bool isInitialized;
     GLint modelViewMatrixLocation;
-    GLint MVPLocation;
+    GLint projectionMatrixLocation;
+    GLint pointSizeLocation;
+    GLint angle2pixelsLocation;
     GLint timeLocation;
     GLint lifeTimeLocation;
     GLint cycleTimeLocation;
@@ -92,7 +94,9 @@ bool FountainProgram::initializeRendering()
     LightingProgram::initialize();
 
     modelViewMatrixLocation = getUniformLocation("modelViewMatrix");
-    MVPLocation = getUniformLocation("MVP");
+    projectionMatrixLocation = getUniformLocation("projectionMatrix");
+    pointSizeLocation = getUniformLocation("pointSize");
+    angle2pixelsLocation = getUniformLocation("angle2pixels");
     
     nParticles = 8000;
 
@@ -202,8 +206,16 @@ void FountainProgram::doRender(SceneFountain* fountain, const Matrix4f& MV)
     renderer->renderFog(this);
 
     glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
-    const Matrix4f MVP = renderer->projectionMatrix().cast<float>() * MV;
-    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, MVP.data());
+    const Matrix4f P = renderer->projectionMatrix().cast<float>();
+    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, P.data());
+    glUniform1f(pointSizeLocation, 0.08f);
+    
+    SgPerspectiveCamera* camera = dynamic_cast<SgPerspectiveCamera*>(renderer->currentCamera());
+    if(camera){
+        int x, y, width, height;
+        renderer->getViewport(x, y, width, height);
+        glUniform1f(angle2pixelsLocation, height / camera->fovy((double)width / height));
+    }
     
     glUniform1f(timeLocation, fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());

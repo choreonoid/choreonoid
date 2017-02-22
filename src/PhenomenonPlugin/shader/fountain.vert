@@ -12,7 +12,9 @@ uniform float cycleTime;
 uniform vec3 gravity = vec3(0.0, 0.0, -0.05);
 
 uniform mat4 modelViewMatrix;
-uniform mat4 MVP;
+uniform mat4 projectionMatrix;
+uniform float pointSize;
+uniform float angle2pixels = 1.0;
 
 void main()
 {
@@ -27,8 +29,11 @@ void main()
         }
     }
 
-    vec4 pos4 = vec4(pos, 1.0);
-    position = vec3(modelViewMatrix * pos4);
-    gl_Position = MVP * pos4;
-    gl_PointSize = 12.0;
+    vec4 lpos = modelViewMatrix * vec4(pos, 1.0);
+    position = vec3(lpos);
+    gl_Position = projectionMatrix * lpos;
+
+    float d = sqrt(dot(position, position));
+    float angle = asin(pointSize / d);
+    gl_PointSize = angle * angle2pixels;
 }
