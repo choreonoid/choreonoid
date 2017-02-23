@@ -53,7 +53,7 @@ public:
         int id = ObjectBase::template findPolymorphicId<Object>();
         if(id >= 0 && id < dispatchTable.size()){
             dispatchTable[id] = nullptr;
-            dispatchTableFixedness[id] = false;
+            isFixed[id] = false;
             if(doUpdate){
                 updateDispatchTable();
             }

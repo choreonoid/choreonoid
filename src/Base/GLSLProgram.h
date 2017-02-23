@@ -16,7 +16,6 @@
 //#include "gl_core_4_4.h"
 
 #include <cnoid/EigenTypes>
-#include <cnoid/Referenced>
 #include <vector>
 #include <string>
 #include <stdexcept>
