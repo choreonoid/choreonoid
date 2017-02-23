@@ -21,6 +21,7 @@ if(ENABLE_GUI)
   add_subdirectory(FCLPlugin)
   add_subdirectory(SceneEditPlugin)
   add_subdirectory(PCLPlugin)
+  add_subdirectory(PhenomenonPlugin)
   
   add_subdirectory(MediaPlugin)
   add_subdirectory(ScenarioPlugin)

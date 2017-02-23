@@ -23,6 +23,8 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
+#include <unordered_map>
+#include <mutex>
 #include "gettext.h"
 
 using namespace std;
@@ -32,26 +34,21 @@ using boost::format;
 
 namespace {
 
-typedef bool (YAMLBodyLoaderImpl::*NodeFunction)(Mapping& node);
-
-struct NodeFunctionInfo
-{
-    NodeFunction function;
-    bool isTransformDerived;
-    bool hasElements;
-    void set(NodeFunction function, bool isTransformDerived = false, bool hasElements = false){
-        this->function = function;
-        this->isTransformDerived = isTransformDerived;
-        this->hasElements = hasElements;
-    }
-};
-
-typedef map<string, NodeFunctionInfo> NodeFunctionMap;
-NodeFunctionMap nodeFunctionMap;
+std::mutex customNodeFunctionMutex;
+typedef function<bool(YAMLBodyLoader& loader, Mapping& node)> CustomNodeFunction;
+typedef map<string, CustomNodeFunction> CustomNodeFunctionMap;
+CustomNodeFunctionMap customNodeFunctions;
 
 }
 
 namespace cnoid {
+
+void YAMLBodyLoader::addNodeType
+(const std::string& typeName,  std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+{
+    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
+    customNodeFunctions[typeName] = readFunction;
+}
 
 class YAMLBodyLoaderImpl
 {
@@ -60,6 +57,21 @@ public:
     YAMLReader reader;
     YAMLSceneReader sceneReader;
     filesystem::path directoryPath;
+
+    typedef function<bool(Mapping& node)> NodeFunction;
+
+    struct NodeFunctionInfo {
+        NodeFunction function;
+        bool isTransformDerived;
+        bool hasElements;
+        void set(NodeFunction f) { function = f; isTransformDerived = false; hasElements = false; }
+        void setT(NodeFunction f) { function = f; isTransformDerived = true; hasElements = false; }
+        void setTE(NodeFunction f) { function = f; isTransformDerived = true; hasElements = true; }
+    };
+    typedef unordered_map<string, NodeFunctionInfo> NodeFunctionMap;
+    
+    NodeFunctionMap nodeFunctions;
+    int numCustomNodeFunctions;
     
     Body* body;
     Link* rootLink;
@@ -115,6 +127,7 @@ public:
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
+    void updateCustomNodeFunctions();
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
     bool readBody(Mapping* topNode);
@@ -279,22 +292,22 @@ YAMLBodyLoader::YAMLBodyLoader()
 YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     : self(self)
 {
+    nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
+    nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
+    nodeFunctions["Resource"].setT([&](Mapping& node){ return readResource(node); });
+    nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
+    nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
+    nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
+    nodeFunctions["AccelerationSensor"].setTE([&](Mapping& node){ return readAccelerationSensor(node); });
+    nodeFunctions["Camera"].setTE([&](Mapping& node){ return readCamera(node); });
+    nodeFunctions["CameraDevice"].setTE([&](Mapping& node){ return readCamera(node); });
+    nodeFunctions["RangeSensor"].setTE([&](Mapping& node){ return readRangeSensor(node); });
+    nodeFunctions["SpotLight"].setTE([&](Mapping& node){ return readSpotLight(node); });
+
+    numCustomNodeFunctions = 0;
+
     body = 0;
     os_ = &nullout();
-    
-    if(nodeFunctionMap.empty()){
-        nodeFunctionMap["Group"].set(&YAMLBodyLoaderImpl::readGroup);
-        nodeFunctionMap["Transform"].set(&YAMLBodyLoaderImpl::readTransform);
-        nodeFunctionMap["Resource"].set(&YAMLBodyLoaderImpl::readResource, true);
-        nodeFunctionMap["RigidBody"].set(&YAMLBodyLoaderImpl::readRigidBody, true, true);
-        nodeFunctionMap["ForceSensor"].set(&YAMLBodyLoaderImpl::readForceSensor, true, true);
-        nodeFunctionMap["RateGyroSensor"].set(&YAMLBodyLoaderImpl::readRateGyroSensor, true, true);
-        nodeFunctionMap["AccelerationSensor"].set(&YAMLBodyLoaderImpl::readAccelerationSensor, true, true);
-        nodeFunctionMap["Camera"].set(&YAMLBodyLoaderImpl::readCamera, true, true);
-        nodeFunctionMap["CameraDevice"].set(&YAMLBodyLoaderImpl::readCamera, true, true);
-        nodeFunctionMap["RangeSensor"].set(&YAMLBodyLoaderImpl::readRangeSensor, true, true);
-        nodeFunctionMap["SpotLight"].set(&YAMLBodyLoaderImpl::readSpotLight, true, true);
-    }
 }
 
 
@@ -326,6 +339,19 @@ void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
     impl->sgConverter.setDivisionNumber(n);
+}
+
+
+void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
+{
+    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
+    if(customNodeFunctions.size() > numCustomNodeFunctions){
+        for(auto& p : customNodeFunctions){
+            CustomNodeFunction& func = p.second;
+            nodeFunctions[p.first].setTE([&, func](Mapping& node){ return func(*self, node); });
+        }
+        numCustomNodeFunctions = customNodeFunctions.size();
+    }
 }
 
 
@@ -375,6 +401,8 @@ bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
 
 bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 {
+    updateCustomNodeFunctions();
+    
     bool result = false;
     this->body = body;
     body->clearDevices();
@@ -879,8 +907,8 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 {
     bool isSceneNodeAdded = false;
     
-    NodeFunctionMap::iterator p = nodeFunctionMap.find(type);
-    if(p != nodeFunctionMap.end()){
+    auto p = nodeFunctions.find(type);
+    if(p != nodeFunctions.end()){
         NodeFunctionInfo& info = p->second;
 
         nameStack.push_back(string());
@@ -891,7 +919,7 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
                 isSceneNodeAdded = true;
             }
         } else {
-            if((this->*info.function)(node)){
+            if(info.function(node)){
                 isSceneNodeAdded = true;
             }
         }
@@ -917,7 +945,7 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SgGroupPtr& group, Nod
     group->setName(nameStack.back());
 
     if(nodeFunction){
-        if((this->*nodeFunction)(node)){
+        if(nodeFunction(node)){
             isSceneNodeAdded = true;
         }
     }
@@ -973,7 +1001,7 @@ bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunct
     } else {
         SgGroupPtr parentSceneGroup = currentSceneGroup;
         currentSceneGroup = group;
-        if((this->*nodeFunction)(node)){
+        if(nodeFunction(node)){
             isSceneNodeAdded = true;
             parentSceneGroup->addChild(group);
         }
@@ -1046,6 +1074,12 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     rigidBodies.push_back(rbody);
 
     return false;
+}
+
+
+bool YAMLBodyLoader::readDevice(Device* device, Mapping& node)
+{
+    return impl->readDevice(device, node);
 }
 
 

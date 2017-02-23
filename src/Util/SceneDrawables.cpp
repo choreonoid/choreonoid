@@ -12,6 +12,16 @@ namespace {
 
 const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
 
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgShape, SgNode>();
+        SgNode::registerType<SgPlot, SgNode>();
+        SgNode::registerType<SgPointSet, SgPlot>();
+        SgNode::registerType<SgLineSet, SgPlot>();
+        SgNode::registerType<SgOverlay, SgGroup>();
+    }
+} registration;
+
 }
 
 SgMaterial::SgMaterial()
@@ -894,20 +904,5 @@ SgObject* SgOverlay::clone(SgCloneMap& cloneMap) const
 
 void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
 {
-
-}
-
-
-namespace {
-
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
-        SgNode::registerType<SgShape, SgNode>();
-        SgNode::registerType<SgPlot, SgNode>();
-        SgNode::registerType<SgPointSet, SgPlot>();
-        SgNode::registerType<SgLineSet, SgPlot>();
-        SgNode::registerType<SgOverlay, SgGroup>();
-    }
-} registration;
 
 }

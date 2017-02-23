@@ -12,7 +12,6 @@
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
 #include <set>
-#include <thread>
 #include <mutex>
 
 using namespace std;
@@ -22,7 +21,7 @@ namespace {
 
 std::mutex extensionMutex;
 set<SceneRenderer*> renderers;
-vector<SceneRenderer::ExtendFunction> extendFunctions;
+vector<std::function<void(SceneRenderer* renderer)>> extendFunctions;
 
 struct PreproNode
 {
@@ -130,7 +129,7 @@ public:
     bool isFogEnabled;
 
     std::mutex newExtensionMutex;
-    vector<SceneRenderer::ExtendFunction> newExtendFunctions;
+    vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
     
     SceneRendererImpl(SceneRenderer* self);
 
@@ -139,7 +138,7 @@ public:
     void updateCameraPaths();
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
-    void onExtensionAdded(SceneRenderer::ExtendFunction func);
+    void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
 };
 
 }
@@ -689,7 +688,7 @@ SgFog* SceneRenderer::fog(int index) const
 }
 
 
-void SceneRenderer::addExtension(ExtendFunction func)
+void SceneRenderer::addExtension(std::function<void(SceneRenderer* renderer)> func)
 {
     {
         std::lock_guard<std::mutex> guard(extensionMutex);
@@ -710,7 +709,7 @@ void SceneRenderer::applyExtensions()
 }
 
 
-void SceneRendererImpl::onExtensionAdded(SceneRenderer::ExtendFunction func)
+void SceneRendererImpl::onExtensionAdded(std::function<void(SceneRenderer* renderer)> func)
 {
     std::lock_guard<std::mutex> guard(newExtensionMutex);
     newExtendFunctions.push_back(func);

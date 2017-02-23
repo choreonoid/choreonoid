@@ -21,17 +21,16 @@ public:
     SceneRenderer();
     virtual ~SceneRenderer();
     
+    static void addExtension(std::function<void(SceneRenderer* renderer)> func);
+    virtual void applyExtensions();
+    virtual void applyNewExtensions();
+
     virtual SgGroup* sceneRoot() = 0;
     virtual SgGroup* scene() = 0;
     virtual void clearScene();
 
     typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
     virtual NodeFunctionSet& renderingFunctions() = 0;
-
-    typedef std::function<void(SceneRenderer* renderer)> ExtendFunction;
-    static void addExtension(ExtendFunction func);
-    virtual void applyExtensions();
-    virtual void applyNewExtensions();
 
     virtual void renderNode(SgNode* node) = 0;
 

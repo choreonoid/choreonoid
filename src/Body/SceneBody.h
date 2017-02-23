@@ -82,7 +82,7 @@ public:
 
     SceneDevice* getSceneDevice(Device* device);
     void setSceneDeviceUpdateConnection(bool on);
-    void updateSceneDevices();
+    void updateSceneDevices(double time);
 
     void makeTransparent(float transparency);
     void makeTransparent(float transparency, SgCloneMap& cloneMap);

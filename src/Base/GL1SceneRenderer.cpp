@@ -1837,7 +1837,7 @@ void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 }
 
 
-bool GL1SceneRenderer::isPicking()
+bool GL1SceneRenderer::isPicking() const
 {
     return impl->isPicking;
 }

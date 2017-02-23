@@ -16,16 +16,19 @@
 //#include "gl_core_4_4.h"
 
 #include <cnoid/EigenTypes>
+#include <cnoid/Referenced>
 #include <vector>
 #include <string>
 #include <stdexcept>
 #include <cstring>
 
+#include "exportdecl.h"
+
 #define CNOID_GL_CORE_3_3
 
 namespace cnoid {
 
-class GLSLProgram
+class CNOID_EXPORT GLSLProgram
 {
 public:
     class Exception : public std::runtime_error {
@@ -75,7 +78,7 @@ private:
 };
 
 
-class GLSLUniformBlockBuffer
+class CNOID_EXPORT GLSLUniformBlockBuffer
 {
 public:
     GLSLUniformBlockBuffer();

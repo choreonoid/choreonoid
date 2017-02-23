@@ -37,7 +37,7 @@ void ShaderProgram::deactivate()
 }
 
 
-void ShaderProgram::initializeRendering()
+void ShaderProgram::initializeFrameRendering()
 {
 
 }
@@ -81,7 +81,7 @@ void SolidColorProgram::initialize()
 }
 
 
-void SolidColorProgram::initializeRendering()
+void SolidColorProgram::initializeFrameRendering()
 {
     glUniform1i(colorPerVertexLocation, false);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -110,19 +110,86 @@ void SolidColorProgram::enableColorArray(bool on)
 
 void LightingProgram::initialize()
 {
-    diffuseColorLocation = getUniformLocation("diffuseColor");
-    ambientColorLocation = getUniformLocation("ambientColor");
-    specularColorLocation = getUniformLocation("specularColor");
-    emissionColorLocation = getUniformLocation("emissionColor");
-    shininessLocation = getUniformLocation("shininess");
-    alphaLocation = getUniformLocation("alpha");
+    numLightsLocation = getUniformLocation("numLights");
+    lightInfos.resize(maxNumLights());
+    format lightFormat("lights[%1%].");
+    for(int i=0; i < maxNumLights(); ++i){
+        LightInfo& light = lightInfos[i];
+        string prefix = str(lightFormat % i);
+        light.positionLocation = getUniformLocation(prefix + "position");
+        light.intensityLocation = getUniformLocation(prefix + "intensity");
+        light.ambientIntensityLocation = getUniformLocation(prefix + "ambientIntensity");
+        light.constantAttenuationLocation = getUniformLocation(prefix + "constantAttenuation");
+        light.linearAttenuationLocation = getUniformLocation(prefix + "linearAttenuation");
+        light.quadraticAttenuationLocation = getUniformLocation(prefix + "quadraticAttenuation");
+        light.cutoffAngleLocation = getUniformLocation(prefix + "cutoffAngle");
+        light.beamWidthLocation = getUniformLocation(prefix + "beamWidth");
+        light.cutoffExponentLocation = getUniformLocation(prefix + "cutoffExponent");
+        light.directionLocation = getUniformLocation(prefix + "direction");
+    }
+
+    maxFogDistLocation = getUniformLocation("maxFogDist");
+    minFogDistLocation = getUniformLocation("minFogDist");
+    fogColorLocation = getUniformLocation("fogColor");
+    isFogEnabledLocation = getUniformLocation("isFogEnabled");
 }    
     
 
 
 void LightingProgram::setNumLights(int n)
 {
+    glUniform1i(numLightsLocation, n);
+}
 
+
+bool LightingProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting)
+{
+    LightInfo& info = lightInfos[index];
+
+    if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
+        Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
+        Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
+        glUniform4fv(info.positionLocation, 1, pos.data());
+
+    } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
+        Vector3 p(viewMatrix * T.translation());
+        Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
+        glUniform4fv(info.positionLocation, 1, pos.data());
+        glUniform1f(info.constantAttenuationLocation, pointLight->constantAttenuation());
+        glUniform1f(info.linearAttenuationLocation, pointLight->linearAttenuation());
+        glUniform1f(info.quadraticAttenuationLocation, pointLight->quadraticAttenuation());
+        
+        if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
+            Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
+            Vector3f direction(d.cast<float>());
+            glUniform3fv(info.directionLocation, 1, direction.data());
+            glUniform1f(info.cutoffAngleLocation, spotLight->cutOffAngle());
+            glUniform1f(info.beamWidthLocation, spotLight->beamWidth());
+            glUniform1f(info.cutoffExponentLocation, spotLight->cutOffExponent());
+        }
+    } else {
+        return false;
+    }
+        
+    Vector3f intensity(light->intensity() * light->color());
+    glUniform3fv(info.intensityLocation, 1, intensity.data());
+    Vector3f ambientIntensity(light->ambientIntensity() * light->color());
+    glUniform3fv(info.ambientIntensityLocation, 1, ambientIntensity.data());
+
+    return true;
+}
+
+
+void MaterialProgram::initialize()
+{
+    LightingProgram::initialize();
+    
+    diffuseColorLocation = getUniformLocation("diffuseColor");
+    ambientColorLocation = getUniformLocation("ambientColor");
+    specularColorLocation = getUniformLocation("specularColor");
+    emissionColorLocation = getUniformLocation("emissionColor");
+    shininessLocation = getUniformLocation("shininess");
+    alphaLocation = getUniformLocation("alpha");
 }
 
 
@@ -159,7 +226,7 @@ void PhongShadowProgram::initialize()
     loadFragmentShader(":/Base/shader/phongshadow.frag");
     link();
 
-    LightingProgram::initialize();
+    MaterialProgram::initialize();
 
     useUniformBlockToPassTransformationMatrices = transformBlockBuffer.initialize(*this, "TransformBlock");
 
@@ -175,24 +242,6 @@ void PhongShadowProgram::initialize()
         MVPLocation = getUniformLocation("MVP");
     }
     
-    numLightsLocation = getUniformLocation("numLights");
-    lightInfos.resize(maxNumLights());
-    format lightFormat("lights[%1%].");
-    for(int i=0; i < maxNumLights(); ++i){
-        LightInfo& light = lightInfos[i];
-        string prefix = str(lightFormat % i);
-        light.positionLocation = getUniformLocation(prefix + "position");
-        light.intensityLocation = getUniformLocation(prefix + "intensity");
-        light.ambientIntensityLocation = getUniformLocation(prefix + "ambientIntensity");
-        light.constantAttenuationLocation = getUniformLocation(prefix + "constantAttenuation");
-        light.linearAttenuationLocation = getUniformLocation(prefix + "linearAttenuation");
-        light.quadraticAttenuationLocation = getUniformLocation(prefix + "quadraticAttenuation");
-        light.cutoffAngleLocation = getUniformLocation(prefix + "cutoffAngle");
-        light.beamWidthLocation = getUniformLocation(prefix + "beamWidth");
-        light.cutoffExponentLocation = getUniformLocation(prefix + "cutoffExponent");
-        light.directionLocation = getUniformLocation(prefix + "direction");
-    }
-
     numShadowsLocation = getUniformLocation("numShadows");
     shadowInfos.resize(maxNumShadows_);
     for(int i=0; i < maxNumShadows_; ++i){
@@ -202,11 +251,6 @@ void PhongShadowProgram::initialize()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     isShadowAntiAliasingEnabledLocation = getUniformLocation("isShadowAntiAliasingEnabled");
-
-    maxFogDistLocation = getUniformLocation("maxFogDist");
-    minFogDistLocation = getUniformLocation("minFogDist");
-    fogColorLocation = getUniformLocation("fogColor");
-    isFogEnabledLocation = getUniformLocation("isFogEnabled");
 
     shadowMapProgram_->initialize();
 }
@@ -276,7 +320,7 @@ void PhongShadowProgram::activate()
 }
 
 
-void PhongShadowProgram::initializeRendering()
+void PhongShadowProgram::initializeFrameRendering()
 {
     glUniform1i(numShadowsLocation, numShadows_);
     if(numShadows_ > 0){
@@ -317,47 +361,11 @@ SgCamera* PhongShadowProgram::getShadowMapCamera(SgLight* light, Affine3& io_T)
 }
 
 
-void PhongShadowProgram::setNumLights(int n)
-{
-    glUniform1i(numLightsLocation, n);
-}
-
-
 bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affine3& T, const Affine3& viewMatrix, bool shadowCasting)
 {
-    LightInfo& info = lightInfos[index];
+    bool result = LightingProgram::renderLight(index, light, T, viewMatrix, shadowCasting);
 
-    if(const SgDirectionalLight* dirLight = dynamic_cast<const SgDirectionalLight*>(light)){
-        Vector3 d = viewMatrix.linear() * T.linear() * -dirLight->direction();
-        Vector4f pos(d.x(), d.y(), d.z(), 0.0f);
-        glUniform4fv(info.positionLocation, 1, pos.data());
-
-    } else if(const SgPointLight* pointLight = dynamic_cast<const SgPointLight*>(light)){
-        Vector3 p(viewMatrix * T.translation());
-        Vector4f pos(p.x(), p.y(), p.z(), 1.0f);
-        glUniform4fv(info.positionLocation, 1, pos.data());
-        glUniform1f(info.constantAttenuationLocation, pointLight->constantAttenuation());
-        glUniform1f(info.linearAttenuationLocation, pointLight->linearAttenuation());
-        glUniform1f(info.quadraticAttenuationLocation, pointLight->quadraticAttenuation());
-        
-        if(const SgSpotLight* spotLight = dynamic_cast<const SgSpotLight*>(pointLight)){
-            Vector3 d = viewMatrix.linear() * T.linear() * spotLight->direction();
-            Vector3f direction(d.cast<float>());
-            glUniform3fv(info.directionLocation, 1, direction.data());
-            glUniform1f(info.cutoffAngleLocation, spotLight->cutOffAngle());
-            glUniform1f(info.beamWidthLocation, spotLight->beamWidth());
-            glUniform1f(info.cutoffExponentLocation, spotLight->cutOffExponent());
-        }
-    } else {
-        return false;
-    }
-        
-    Vector3f intensity(light->intensity() * light->color());
-    glUniform3fv(info.intensityLocation, 1, intensity.data());
-    Vector3f ambientIntensity(light->ambientIntensity() * light->color());
-    glUniform3fv(info.ambientIntensityLocation, 1, ambientIntensity.data());
-
-    if(shadowCasting){
+    if(result && shadowCasting){
         if(currentShadowIndex < numShadows_){
             ShadowInfo& shadow = shadowInfos[currentShadowIndex];
             glUniform1i(shadow.shadowMapLocation, currentShadowIndex + 1);
@@ -366,7 +374,7 @@ bool PhongShadowProgram::renderLight(int index, const SgLight* light, const Affi
         }
     }
 
-    return true;
+    return result;
 }
 
 
@@ -432,7 +440,7 @@ void ShadowMapProgram::activate()
 }
     
 
-void ShadowMapProgram::initializeRendering()
+void ShadowMapProgram::initializeFrameRendering()
 {
     PhongShadowProgram::ShadowInfo& shadow = mainProgram->shadowInfos[mainProgram->currentShadowIndex];
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
