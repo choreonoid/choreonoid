@@ -14,7 +14,7 @@ uniform vec3 gravity = vec3(0.0, 0.0, -0.05);
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float pointSize;
-uniform float angle2pixels = 1.0;
+uniform float angle2pixels;
 
 void main()
 {
@@ -33,7 +33,12 @@ void main()
     position = vec3(lpos);
     gl_Position = projectionMatrix * lpos;
 
-    float d = sqrt(dot(position, position));
-    float angle = asin(pointSize / d);
-    gl_PointSize = angle * angle2pixels;
+    if(pointSize >= 0.0){ // Perspective
+        float d = max(1.0e-6, sqrt(dot(position, position)));
+        float angle = asin(pointSize / d);
+        gl_PointSize = angle * angle2pixels;
+
+    } else {  // Orthographic
+        gl_PointSize = -pointSize;
+    }
 }
