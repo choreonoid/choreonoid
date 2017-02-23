@@ -4,45 +4,27 @@
 */
 
 #include "SceneFountain.h"
-#include <cnoid/GLSLSceneRenderer>
-#include <cnoid/ShaderPrograms>
+#include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
-#include <QImage>
-#include <memory>
-#include <iostream>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
 
-float randFloat() {
-    return ((float)rand() / RAND_MAX);
-}
-
-class FountainProgram : public LightingProgram
+class FountainProgram : public ParticlesProgram
 {
 public:
     FountainProgram(GLSLSceneRenderer* renderer);
-    bool initializeRendering();
+    virtual bool initializeRendering() override;
     void render(SceneFountain* fountain);
-    void doRender(SceneFountain* fountain, const Matrix4f& MV);
 
-    GLSLSceneRenderer* renderer;
-    bool isInitialized;
-    GLint modelViewMatrixLocation;
-    GLint projectionMatrixLocation;
-    GLint pointSizeLocation;
-    GLint angle2pixelsLocation;
-    GLint timeLocation;
     GLint lifeTimeLocation;
     GLint cycleTimeLocation;
-    GLint particleTexLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint startTimeBuffer;
     GLuint vertexArray;
-    GLuint textureId;
 };
 
 }
@@ -57,7 +39,7 @@ void SceneFountain::initializeClass()
             shared_ptr<FountainProgram> program = make_shared<FountainProgram>(renderer);
             renderer->renderingFunctions().setFunction<SceneFountain>(
                 [program](SceneFountain* fountain){
-                    program->render(fountain);
+                    program->requestRendering([program, fountain]() { program->render(fountain); });
                 });
         });
 }
@@ -74,30 +56,18 @@ SceneFountain::SceneFountain()
 
 
 FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
-    : renderer(renderer)
+    : ParticlesProgram(renderer, ":/PhenomenonPlugin/shader/fountain.vert")
 {
-    isInitialized = false;
+
 }
 
 
 bool FountainProgram::initializeRendering()
 {
-    if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
-        cout << "ogl_LoadFunctions() == ogl_LOAD_FAILED" << endl;
+    if(!ParticlesProgram::initializeRendering()){
         return false;
     }
-    
-    loadVertexShader(":/PhenomenonPlugin/shader/fountain.vert");
-    loadFragmentShader(":/PhenomenonPlugin/shader/particles.frag");
-    link();
 
-    LightingProgram::initialize();
-
-    modelViewMatrixLocation = getUniformLocation("modelViewMatrix");
-    projectionMatrixLocation = getUniformLocation("projectionMatrix");
-    pointSizeLocation = getUniformLocation("pointSize");
-    angle2pixelsLocation = getUniformLocation("angle2pixels");
-    
     nParticles = 8000;
 
     // Generate the buffers
@@ -117,14 +87,14 @@ bool FountainProgram::initializeRendering()
     vector<GLfloat> data(nParticles * 3);
     for(int i = 0; i < nParticles; ++i) {
         
-        theta = PI / 6.0f * randFloat();
-        phi = 2.0 * PI * randFloat();
+        theta = PI / 6.0f * random();
+        phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        velocity = 1.24f + (1.5f - 1.25f) * randFloat();
+        velocity = 1.24f + (1.5f - 1.25f) * random();
         v = v.normalized() * velocity;
 
         data[3*i]   = v.x();
@@ -159,22 +129,10 @@ bool FountainProgram::initializeRendering()
 
     glBindVertexArray(0);
 
-    QImage image(":/PhenomenonPlugin/texture/bluewater.png");
-    QImage texture = image.rgbSwapped();
-    glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width(), texture.height(),
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.constBits());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    setParticleTexture(":/PhenomenonPlugin/texture/bluewater.png");
 
-    timeLocation = getUniformLocation("time");
     lifeTimeLocation = getUniformLocation("lifeTime");
     cycleTimeLocation = getUniformLocation("cycleTime");
-    particleTexLocation = getUniformLocation("particleTex");
-
-    isInitialized = true;
 
     return true;
 }
@@ -182,51 +140,10 @@ bool FountainProgram::initializeRendering()
 
 void FountainProgram::render(SceneFountain* fountain)
 {
-    if(renderer->isPicking()){
-        return;
-    }
-
-    if(!isInitialized){
-        if(!initializeRendering()){
-            renderer->renderingFunctions().resetFunction<SceneFountain>(true);
-            return;
-        }
-    }
-
-    const Matrix4f MV = renderer->modelViewMatrix().cast<float>();
-    renderer->dispatchToTransparentPhase([this, fountain, MV](){ doRender(fountain, MV); });
-}
-
-
-void FountainProgram::doRender(SceneFountain* fountain, const Matrix4f& MV)
-{
-    renderer->pushShaderProgram(*this, false);
-
-    renderer->renderLights(this);
-    renderer->renderFog(this);
-
-    glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
-    const Matrix4f P = renderer->projectionMatrix().cast<float>();
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, P.data());
-
-    int x, y, width, height;
-    renderer->getViewport(x, y, width, height);
-    SgCamera* camera = renderer->currentCamera();
-    if(SgPerspectiveCamera* persCamera = dynamic_cast<SgPerspectiveCamera*>(camera)){
-        glUniform1f(angle2pixelsLocation, height / persCamera->fovy((double)width / height));
-        glUniform1f(pointSizeLocation, 0.08f);
-    } else if(SgOrthographicCamera* orthoCamera = dynamic_cast<SgOrthographicCamera*>(camera)){
-        float size = 0.08f * height / orthoCamera->height();
-        glUniform1f(pointSizeLocation, -size);
-    }
-    
-    glUniform1f(timeLocation, fountain->time());
+    setTime(fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
     glUniform1f(cycleTimeLocation, 6.0f);
-    glUniform1i(particleTexLocation, 0);
     
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
-
-    renderer->popShaderProgram();
 }
