@@ -1,7 +1,7 @@
 #version 330
 
-in float transparency;
 in vec3 position;
+in float alpha;
 
 layout (location = 0) out vec4 fragColor;
 
@@ -85,5 +85,5 @@ void main()
         c = mix(fogColor, c, f);
     }
 
-    fragColor = vec4(c, texColor.a * transparency);
+    fragColor = vec4(c, texColor.a * alpha);
 }

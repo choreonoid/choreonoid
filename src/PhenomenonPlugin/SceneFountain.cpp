@@ -15,43 +15,48 @@ namespace {
 class FountainProgram : public ParticlesProgram
 {
 public:
+    typedef SceneFountain NodeType;
+    
     FountainProgram(GLSLSceneRenderer* renderer);
-    virtual bool initializeRendering() override;
+    virtual bool initializeRendering(SceneParticles* particles) override;
     void render(SceneFountain* fountain);
 
     GLint lifeTimeLocation;
     GLint cycleTimeLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
-    GLuint startTimeBuffer;
+    GLuint offsetTimeBuffer;
     GLuint vertexArray;
 };
 
-}
+ParticlesProgram::Registration<FountainProgram> registration;
 
-
-void SceneFountain::initializeClass()
-{
-    SgNode::registerType<SceneFountain, SgNode>();
-
-    GLSLSceneRenderer::addExtension(
-        [](GLSLSceneRenderer* renderer){
-            shared_ptr<FountainProgram> program = make_shared<FountainProgram>(renderer);
-            renderer->renderingFunctions().setFunction<SceneFountain>(
-                [program](SceneFountain* fountain){
-                    program->requestRendering([program, fountain]() { program->render(fountain); });
-                });
-        });
 }
 
 
 SceneFountain::SceneFountain()
-    : SgNode(findPolymorphicId<SceneFountain>())
+    : SceneParticles(findPolymorphicId<SceneFountain>())
 {
-    time_ = 0.0f;
+    angle_ = 0.1f;
     lifeTime_ = 4.0f;
     gravity_ << 0.0f, 0.0f, -9.8f;
-    angle_ = 0.1f;
+
+    setParticleSize(0.08f);
+}
+
+
+SceneFountain::SceneFountain(const SceneFountain& org)
+    : SceneParticles(org)
+{
+    angle_ = org.angle_;
+    lifeTime_ = org.lifeTime_;
+    gravity_ = org.gravity_;
+}
+
+
+SgObject* SceneFountain::clone(SgCloneMap& cloneMap) const
+{
+    return new SceneFountain(*this);
 }
 
 
@@ -62,24 +67,13 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 }
 
 
-bool FountainProgram::initializeRendering()
+bool FountainProgram::initializeRendering(SceneParticles* particles)
 {
-    if(!ParticlesProgram::initializeRendering()){
+    if(!ParticlesProgram::initializeRendering(particles)){
         return false;
     }
 
     nParticles = 8000;
-
-    // Generate the buffers
-    glGenBuffers(1, &initVelBuffer);   // Initial velocity buffer
-    glGenBuffers(1, &startTimeBuffer); // Start time buffer
-
-    // Allocate space for all buffers
-    int size = nParticles * 3 * sizeof(float);
-    glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
-    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, startTimeBuffer);
-    glBufferData(GL_ARRAY_BUFFER, nParticles * sizeof(float), NULL, GL_STATIC_DRAW);
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
@@ -101,10 +95,11 @@ bool FountainProgram::initializeRendering()
         data[3*i+1] = v.y();
         data[3*i+2] = v.z();
     }
+    glGenBuffers(1, &initVelBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, size, &data.front());
-
-    // Fill the start time buffer
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
+    
+    // Fill the offset time buffer
     data.resize(nParticles);
     float time = 0.0f;
     float rate = 0.00075f;
@@ -112,9 +107,9 @@ bool FountainProgram::initializeRendering()
         data[i] = time;
         time += rate;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, startTimeBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), &data.front());
-
+    glGenBuffers(1, &offsetTimeBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenVertexArrays(1, &vertexArray);
@@ -122,11 +117,9 @@ bool FountainProgram::initializeRendering()
     glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, startTimeBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(1);
-
     glBindVertexArray(0);
 
     setParticleTexture(":/PhenomenonPlugin/texture/bluewater.png");

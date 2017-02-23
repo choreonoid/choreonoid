@@ -9,9 +9,12 @@ endif()
 
 set(sources
   PhenomenonPlugin.cpp
-  ParticlesProgram.cpp
+  SceneParticles.cpp
   SceneFountain.cpp
+  SceneSnow.cpp
+  ParticlesProgram.cpp
   FountainDevice.cpp
+  SnowDevice.cpp
   gl_core_3_3.c
   )
 

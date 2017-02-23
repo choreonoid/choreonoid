@@ -5,30 +5,25 @@
 #ifndef CNOID_PHENOMENON_PLUGIN_SCENE_FOUNTAIN_H
 #define CNOID_PHENOMENON_PLUGIN_SCENE_FOUNTAIN_H
 
-#include <cnoid/SceneGraph>
+#include "SceneParticles.h"
 
 namespace cnoid {
 
-class SceneFountain : public SgNode
+class SceneFountain : public SceneParticles
 {
 public:
-    static void initializeClass();
-    
     SceneFountain();
+    SceneFountain(const SceneFountain& org);
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
-    float time() const { return time_; }
     float lifeTime() const { return lifeTime_; }
-
-    void setTime(double t) { time_ = t; }
-    void setLifeTime(double t) { lifeTime_ = t; }
+    void setLifeTime(float t) { lifeTime_ = t; }
     void setGravity(const Vector3f& g) { gravity_ = g; }
-    void setTexture(const std::string& file) { texture_ = file; }
+    
 private:
     float angle_;
-    float time_;
     float lifeTime_;
     Vector3f gravity_;
-    std::string texture_;
 };
 
 }

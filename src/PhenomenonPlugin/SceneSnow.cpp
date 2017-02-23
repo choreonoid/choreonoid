@@ -1,0 +1,147 @@
+/**
+   @file
+   @author Shin'ichiro Nakaoka
+*/
+
+#include "SceneSnow.h"
+#include "ParticlesProgram.h"
+#include <cnoid/EigenUtil>
+
+using namespace std;
+using namespace cnoid;
+
+namespace {
+
+class SnowProgram : public ParticlesProgram
+{
+public:
+    typedef SceneSnow NodeType;
+    
+    SnowProgram(GLSLSceneRenderer* renderer);
+    virtual bool initializeRendering(SceneParticles* particles) override;
+    void render(SceneSnow* snow);
+
+    GLint velocityLocation;
+    GLint lifeTimeLocation;
+
+    GLfloat lifeTime;
+    GLuint numParticles;
+    GLuint initPosBuffer;
+    GLuint offsetTimeBuffer;
+    GLuint vertexArray;
+};
+
+ParticlesProgram::Registration<SnowProgram> registration;
+
+}
+
+
+SceneSnow::SceneSnow()
+    : SceneParticles(findPolymorphicId<SceneSnow>())
+{
+    velocity_ << 0.0f, 0.0f, -0.2f;
+    radius_ = 10.0f;
+    top_ = 10.0f;
+    bottom_ = 0.0f;
+
+    setParticleSize(0.025f);
+}
+
+
+SceneSnow::SceneSnow(const SceneSnow& org)
+    : SceneParticles(org)
+{
+    radius_ = org.radius_;
+    top_ = org.top_;
+    bottom_ = org.bottom_;
+    velocity_ = org.velocity_;
+}
+
+
+SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
+{
+    return new SceneSnow(*this);
+}
+
+
+SnowProgram::SnowProgram(GLSLSceneRenderer* renderer)
+    : ParticlesProgram(renderer, ":/PhenomenonPlugin/shader/snow.vert")
+{
+
+}
+
+
+bool SnowProgram::initializeRendering(SceneParticles* particles)
+{
+    if(!ParticlesProgram::initializeRendering(particles)){
+        return false;
+    }
+
+    numParticles = 8000;
+    SceneSnow* snow = static_cast<SceneSnow*>(particles);
+
+    // Initial position buffer
+    vector<GLfloat> data(numParticles * 3);
+    const float r = snow->radius();
+    const float r2 = r * 4;
+    for(int i = 0; i < numParticles; ++i) {
+        float x, y;
+        while(true){
+            x = 2.0 * r * random() - r;
+            y = 2.0 * r * random() - r;
+            if(x * x + y * y <= r2){
+                break;
+            }
+        }
+        data[3*i]     = x;
+        data[3*i + 1] = y;
+        data[3*i + 2] = snow->top();
+    }
+    glGenBuffers(1, &initPosBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, initPosBuffer);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
+
+    // Offset time buffer
+    data.resize(numParticles);
+    lifeTime = fabsf((snow->top() - snow->bottom()) / snow->velocity().z());
+    float rate = lifeTime / numParticles;
+    float time = 0.0f;
+    for(int i = 0; i < numParticles; ++i) {
+        data[i] = time;
+        time += rate;
+    }
+    glGenBuffers(1, &offsetTimeBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Vertex arrays
+    glGenVertexArrays(1, &vertexArray);
+    glBindVertexArray(vertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, initPosBuffer);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+
+    setParticleTexture(":/PhenomenonPlugin/texture/snow.png");
+
+    velocityLocation = getUniformLocation("velocity");
+    lifeTimeLocation = getUniformLocation("lifeTime");
+
+    return true;
+}
+
+
+void SnowProgram::render(SceneSnow* snow)
+{
+    setTime(snow->time());
+
+    glUniform1f(lifeTimeLocation, lifeTime);
+    glUniform3fv(velocityLocation, 1, snow->velocity().data());
+
+    glBindVertexArray(vertexArray);
+    glDrawArrays(GL_POINTS, 0, numParticles);
+}

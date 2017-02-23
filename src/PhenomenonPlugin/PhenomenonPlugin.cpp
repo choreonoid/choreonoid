@@ -3,7 +3,6 @@
 */
 
 #include <cnoid/Plugin>
-#include "SceneFountain.h"
 
 using namespace cnoid;
 
@@ -16,9 +15,6 @@ public:
     }
     
     virtual bool initialize() {
-
-        SceneFountain::initializeClass();
-
         return true;
     }
 };

@@ -2,7 +2,9 @@
 <RCC version="1.0">
 <qresource prefix="/PhenomenonPlugin" >
   <file>shader/fountain.vert</file>
+  <file>shader/snow.vert</file>
   <file>shader/particles.frag</file>
   <file>texture/bluewater.png</file>
+  <file>texture/snow.png</file>
 </qresource>
 </RCC>

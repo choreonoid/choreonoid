@@ -22,7 +22,7 @@ ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer, const char* vert
 }
 
 
-bool ParticlesProgram::initializeRendering()
+bool ParticlesProgram::initializeRendering(SceneParticles* particles)
 {
     loadVertexShader(vertexShaderFile.c_str());
     loadFragmentShader(":/PhenomenonPlugin/shader/particles.frag");
@@ -35,16 +35,6 @@ bool ParticlesProgram::initializeRendering()
     pointSizeLocation = getUniformLocation("pointSize");
     angle2pixelsLocation = getUniformLocation("angle2pixels");
     
-    QImage image(":/PhenomenonPlugin/texture/bluewater.png");
-    QImage texture = image.rgbSwapped();
-    glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width(), texture.height(),
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.constBits());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
     timeLocation = getUniformLocation("time");
     particleTexLocation = getUniformLocation("particleTex");
 
@@ -66,7 +56,7 @@ void ParticlesProgram::setParticleTexture(const char* textureFile)
 }
 
 
-void ParticlesProgram::requestRendering(std::function<void()> renderingFunction)
+void ParticlesProgram::requestRendering(SceneParticles* particles, std::function<void()> renderingFunction)
 {
     if(renderer->isPicking()){
         return;
@@ -88,7 +78,7 @@ void ParticlesProgram::requestRendering(std::function<void()> renderingFunction)
                     isOglFunctionsLoaded = true;
                 }
             }
-            if(initializeRendering()){
+            if(initializeRendering(particles)){
                 initializationState = INITIALIZED;
             } else {
                 initializationState = FAILED;
@@ -98,11 +88,11 @@ void ParticlesProgram::requestRendering(std::function<void()> renderingFunction)
     }
 
     const Matrix4f MV = renderer->modelViewMatrix().cast<float>();
-    renderer->dispatchToTransparentPhase([this, MV, renderingFunction](){ render(MV, renderingFunction); });
+    renderer->dispatchToTransparentPhase([=](){ render(particles, MV, renderingFunction); });
 }
 
 
-void ParticlesProgram::render(const Matrix4f& MV, const std::function<void()>& renderingFunction)
+void ParticlesProgram::render(SceneParticles* particles, const Matrix4f& MV, const std::function<void()>& renderingFunction)
 {
     renderer->pushShaderProgram(*this, false);
 
@@ -118,11 +108,14 @@ void ParticlesProgram::render(const Matrix4f& MV, const std::function<void()>& r
     SgCamera* camera = renderer->currentCamera();
     if(SgPerspectiveCamera* persCamera = dynamic_cast<SgPerspectiveCamera*>(camera)){
         glUniform1f(angle2pixelsLocation, height / persCamera->fovy((double)width / height));
-        glUniform1f(pointSizeLocation, 0.08f);
+        glUniform1f(pointSizeLocation, particles->particleSize());
     } else if(SgOrthographicCamera* orthoCamera = dynamic_cast<SgOrthographicCamera*>(camera)){
         float size = 0.08f * height / orthoCamera->height();
-        glUniform1f(pointSizeLocation, -size);
+        glUniform1f(pointSizeLocation, -particles->particleSize());
     }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureId);
     
     glUniform1i(particleTexLocation, 0);
 
