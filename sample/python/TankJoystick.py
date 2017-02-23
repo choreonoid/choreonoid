@@ -45,7 +45,7 @@ tankItem.addChildItem(controllerItem)
 
 simulatorItem = AISTSimulatorItem()
 simulatorItem.setRealtimeSyncMode(True)
-simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.UNLIMITED)
+simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.TR_UNLIMITED)
 worldItem.addChildItem(simulatorItem)
 ItemTreeView.instance().selectItem(simulatorItem)
 
