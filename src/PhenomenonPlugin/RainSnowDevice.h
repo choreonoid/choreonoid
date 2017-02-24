@@ -10,16 +10,14 @@
 
 namespace cnoid {
 
-class RainDevice : public Device
+class RainSnowDevice : public Device
 {
+protected:
+    RainSnowDevice();
+    RainSnowDevice(const RainSnowDevice& org, bool copyStateOnly = false);
+    
 public:
-    RainDevice();
-    RainDevice(const RainDevice& org, bool copyStateOnly = false);
-    virtual const char* typeName() override;
-    void copyStateFrom(const RainDevice& other);
-    virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState() const override;
-    virtual Device* clone() const override;
+    void copyStateFrom(const RainSnowDevice& other);
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
@@ -33,26 +31,31 @@ private:
 };
 
 
-class SnowDevice : public Device
+class RainDevice : public RainSnowDevice
+{
+public:
+    RainDevice();
+    RainDevice(const RainDevice& org, bool copyStateOnly = false);
+    virtual const char* typeName() override;
+    virtual void copyStateFrom(const DeviceState& other) override;
+    virtual DeviceState* cloneState() const override;
+    virtual Device* clone() const override;
+    virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
+};
+
+typedef ref_ptr<RainDevice> RainDevicePtr;
+
+
+class SnowDevice : public RainSnowDevice
 {
 public:
     SnowDevice();
     SnowDevice(const SnowDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() override;
-    void copyStateFrom(const SnowDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual Device* clone() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
-    virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
-    virtual double* writeState(double* out_buf) const override;
-
-    bool on() const { return on_; }
-    void on(bool on) { on_ = on; }
-        
-private:
-    bool on_;
 };
 
 typedef ref_ptr<SnowDevice> SnowDevicePtr;

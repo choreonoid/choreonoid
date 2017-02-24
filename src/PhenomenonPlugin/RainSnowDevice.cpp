@@ -13,22 +13,24 @@ using namespace cnoid;
 
 namespace {
 
-bool readSnowDevice(YAMLBodyLoader& loader, Mapping& node)
+template <class DeviceType>
+bool readDevice(YAMLBodyLoader& loader, Mapping& node)
 {
-    SnowDevicePtr fountain = new SnowDevice;
-    return loader.readDevice(fountain, node);
+    ref_ptr<DeviceType> device = new DeviceType;
+    return loader.readDevice(device, node);
 }
 
 
-SceneDevice* createSceneSnowDevice(Device* device)
+template <class SceneNodeType>
+SceneDevice* createSceneDevice(Device* device)
 {
-    auto sceneSnow = new SceneSnow;
-    auto sceneDevice = new SceneDevice(device, sceneSnow);
+    auto sceneNode = new SceneNodeType;
+    auto sceneDevice = new SceneDevice(device, sceneNode);
 
     sceneDevice->setFunctionOnTimeChanged(
-        [sceneSnow](double time){
-            sceneSnow->setTime(time);
-            sceneSnow->notifyUpdate();
+        [sceneNode](double time){
+            sceneNode->setTime(time);
+            sceneNode->notifyUpdate();
         });
             
     return sceneDevice;
@@ -37,22 +39,120 @@ SceneDevice* createSceneSnowDevice(Device* device)
 struct TypeRegistration
 {
     TypeRegistration() {
-        YAMLBodyLoader::addNodeType("SnowDevice", readSnowDevice);
-        SceneDevice::registerSceneDeviceFactory<SnowDevice>(createSceneSnowDevice);
+        YAMLBodyLoader::addNodeType("SnowDevice", readDevice<SnowDevice>);
+        SceneDevice::registerSceneDeviceFactory<SnowDevice>(createSceneDevice<SceneSnow>);
+
+        YAMLBodyLoader::addNodeType("RainDevice", readDevice<RainDevice>);
+        SceneDevice::registerSceneDeviceFactory<RainDevice>(createSceneDevice<SceneRain>);
     }
 } registration;
 
 }
 
 
-SnowDevice::SnowDevice()
+RainSnowDevice::RainSnowDevice()
 {
     on_ = true;
 }
 
 
-SnowDevice::SnowDevice(const SnowDevice& org, bool copyStateOnly)
+RainSnowDevice::RainSnowDevice(const RainSnowDevice& org, bool copyStateOnly)
     : Device(org, copyStateOnly)
+{
+    copyStateFrom(org);
+}
+
+
+void RainSnowDevice::copyStateFrom(const RainSnowDevice& other)
+{
+    on_ = other.on_;
+}
+
+
+void RainSnowDevice::forEachActualType(std::function<bool(const std::type_info& type)> func)
+{
+    if(!func(typeid(RainSnowDevice))){
+        Device::forEachActualType(func);
+    }
+}
+
+
+int RainSnowDevice::stateSize() const
+{
+    return 1;
+}
+
+
+const double* RainSnowDevice::readState(const double* buf)
+{
+    on_ = buf[0];
+    return buf + 1;
+}
+
+
+double* RainSnowDevice::writeState(double* out_buf) const
+{
+    out_buf[0] = on_ ? 1.0 : 0.0;
+    return out_buf + 1;
+}
+
+
+RainDevice::RainDevice()
+{
+
+}
+
+
+RainDevice::RainDevice(const RainDevice& org, bool copyStateOnly)
+    : RainSnowDevice(org, copyStateOnly)
+{
+    copyStateFrom(org);
+}
+
+
+const char* RainDevice::typeName()
+{
+    return "RainDevice";
+}
+
+
+void RainDevice::copyStateFrom(const DeviceState& other)
+{
+    if(typeid(other) != typeid(RainDevice)){
+        throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
+    }
+    RainSnowDevice::copyStateFrom(static_cast<const RainDevice&>(other));
+}
+
+
+DeviceState* RainDevice::cloneState() const
+{
+    return new RainDevice(*this, false);
+}
+
+
+Device* RainDevice::clone() const
+{
+    return new RainDevice(*this);
+}
+
+
+void RainDevice::forEachActualType(std::function<bool(const std::type_info& type)> func)
+{
+    if(!func(typeid(RainDevice))){
+        RainSnowDevice::forEachActualType(func);
+    }
+}
+
+
+SnowDevice::SnowDevice()
+{
+
+}
+
+
+SnowDevice::SnowDevice(const SnowDevice& org, bool copyStateOnly)
+    : RainSnowDevice(org, copyStateOnly)
 {
     copyStateFrom(org);
 }
@@ -64,18 +164,12 @@ const char* SnowDevice::typeName()
 }
 
 
-void SnowDevice::copyStateFrom(const SnowDevice& other)
-{
-    on_ = other.on_;
-}
-
-
 void SnowDevice::copyStateFrom(const DeviceState& other)
 {
     if(typeid(other) != typeid(SnowDevice)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyStateFrom(static_cast<const SnowDevice&>(other));
+    RainSnowDevice::copyStateFrom(static_cast<const SnowDevice&>(other));
 }
 
 
@@ -94,26 +188,6 @@ Device* SnowDevice::clone() const
 void SnowDevice::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(SnowDevice))){
-        Device::forEachActualType(func);
+        RainSnowDevice::forEachActualType(func);
     }
-}
-
-
-int SnowDevice::stateSize() const
-{
-    return 1;
-}
-
-
-const double* SnowDevice::readState(const double* buf)
-{
-    on_ = buf[0];
-    return buf + 1;
-}
-
-
-double* SnowDevice::writeState(double* out_buf) const
-{
-    out_buf[0] = on_ ? 1.0 : 0.0;
-    return out_buf + 1;
 }

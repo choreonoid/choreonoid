@@ -6,5 +6,6 @@
   <file>shader/particles.frag</file>
   <file>texture/bluewater.png</file>
   <file>texture/snow.png</file>
+  <file>texture/rain.png</file>
 </qresource>
 </RCC>

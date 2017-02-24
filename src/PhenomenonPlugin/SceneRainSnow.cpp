@@ -65,7 +65,7 @@ SceneRainSnowBase::SceneRainSnowBase(const SceneRainSnowBase& org)
 SceneRain::SceneRain()
     : SceneRainSnowBase(findPolymorphicId<SceneRain>())
 {
-    setVelocity(Vector3f(0.0f, 0.0f, -2.0f));
+    setVelocity(Vector3f(0.0f, 0.0f, -5.0f));
     setParticleSize(0.02f);
     setTexture(":/PhenomenonPlugin/texture/rain.png");
 }
@@ -87,7 +87,7 @@ SgObject* SceneRain::clone(SgCloneMap& cloneMap) const
 SceneSnow::SceneSnow()
     : SceneRainSnowBase(findPolymorphicId<SceneSnow>())
 {
-    setVelocity(Vector3f(0.0f, 0.0f, -0.2f));
+    setVelocity(Vector3f(0.0f, 0.0f, -0.3f));
     setParticleSize(0.025f);
     setTexture(":/PhenomenonPlugin/texture/snow.png");
 }
