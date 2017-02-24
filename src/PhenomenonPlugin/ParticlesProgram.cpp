@@ -38,21 +38,19 @@ bool ParticlesProgram::initializeRendering(SceneParticles* particles)
     timeLocation = getUniformLocation("time");
     particleTexLocation = getUniformLocation("particleTex");
 
+    if(!particles->texture().empty()){
+        QImage image(particles->texture().c_str());
+        QImage texture = image.rgbSwapped();
+        glActiveTexture(GL_TEXTURE0);
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width(), texture.height(),
+                     0, GL_RGBA, GL_UNSIGNED_BYTE, texture.constBits());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    }
+
     return true;
-}
-
-
-void ParticlesProgram::setParticleTexture(const char* textureFile)
-{
-    QImage image(textureFile);
-    QImage texture = image.rgbSwapped();
-    glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width(), texture.height(),
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.constBits());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 

@@ -3,7 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "SceneSnow.h"
+#include "SceneRainSnow.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
 
@@ -12,14 +12,12 @@ using namespace cnoid;
 
 namespace {
 
-class SnowProgram : public ParticlesProgram
+class RainSnowProgram : public ParticlesProgram
 {
 public:
-    typedef SceneSnow NodeType;
-    
-    SnowProgram(GLSLSceneRenderer* renderer);
+    RainSnowProgram(GLSLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
-    void render(SceneSnow* snow);
+    void render(SceneRainSnowBase* particles);
 
     GLint velocityLocation;
     GLint lifeTimeLocation;
@@ -31,24 +29,30 @@ public:
     GLuint vertexArray;
 };
 
-ParticlesProgram::Registration<SnowProgram> registration;
+struct Registration {
+    Registration(){
+        SgNode::registerType<SceneRainSnowBase, SceneParticles>();
+        SgNode::registerType<SceneRain, SceneRainSnowBase>();
+        SgNode::registerType<SceneSnow, SceneRainSnowBase>();
+
+        ParticlesProgram::registerType<SceneRain, RainSnowProgram>();
+        ParticlesProgram::registerType<SceneSnow, RainSnowProgram>();
+    }
+} registration;
 
 }
 
 
-SceneSnow::SceneSnow()
-    : SceneParticles(findPolymorphicId<SceneSnow>())
+SceneRainSnowBase::SceneRainSnowBase(int polymorphicId)
+    : SceneParticles(polymorphicId)
 {
-    velocity_ << 0.0f, 0.0f, -0.2f;
     radius_ = 10.0f;
     top_ = 10.0f;
     bottom_ = 0.0f;
-
-    setParticleSize(0.025f);
 }
 
 
-SceneSnow::SceneSnow(const SceneSnow& org)
+SceneRainSnowBase::SceneRainSnowBase(const SceneRainSnowBase& org)
     : SceneParticles(org)
 {
     radius_ = org.radius_;
@@ -58,20 +62,59 @@ SceneSnow::SceneSnow(const SceneSnow& org)
 }
 
 
+SceneRain::SceneRain()
+    : SceneRainSnowBase(findPolymorphicId<SceneRain>())
+{
+    setVelocity(Vector3f(0.0f, 0.0f, -2.0f));
+    setParticleSize(0.02f);
+    setTexture(":/PhenomenonPlugin/texture/rain.png");
+}
+
+
+SceneRain::SceneRain(const SceneRain& org)
+    : SceneRainSnowBase(org)
+{
+
+}
+
+
+SgObject* SceneRain::clone(SgCloneMap& cloneMap) const
+{
+    return new SceneRain(*this);
+}
+
+
+SceneSnow::SceneSnow()
+    : SceneRainSnowBase(findPolymorphicId<SceneSnow>())
+{
+    setVelocity(Vector3f(0.0f, 0.0f, -0.2f));
+    setParticleSize(0.025f);
+    setTexture(":/PhenomenonPlugin/texture/snow.png");
+}
+
+
+SceneSnow::SceneSnow(const SceneSnow& org)
+    : SceneRainSnowBase(org)
+{
+
+}
+
+
 SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
 {
     return new SceneSnow(*this);
 }
 
 
-SnowProgram::SnowProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer, ":/PhenomenonPlugin/shader/snow.vert")
+
+RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
+    : ParticlesProgram(renderer, ":/PhenomenonPlugin/shader/rainsnow.vert")
 {
 
 }
 
 
-bool SnowProgram::initializeRendering(SceneParticles* particles)
+bool RainSnowProgram::initializeRendering(SceneParticles* particles)
 {
     if(!ParticlesProgram::initializeRendering(particles)){
         return false;
@@ -126,8 +169,6 @@ bool SnowProgram::initializeRendering(SceneParticles* particles)
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    setParticleTexture(":/PhenomenonPlugin/texture/snow.png");
-
     velocityLocation = getUniformLocation("velocity");
     lifeTimeLocation = getUniformLocation("lifeTime");
 
@@ -135,12 +176,12 @@ bool SnowProgram::initializeRendering(SceneParticles* particles)
 }
 
 
-void SnowProgram::render(SceneSnow* snow)
+void RainSnowProgram::render(SceneRainSnowBase* particles)
 {
-    setTime(snow->time());
+    setTime(particles->time());
 
     glUniform1f(lifeTimeLocation, lifeTime);
-    glUniform3fv(velocityLocation, 1, snow->velocity().data());
+    glUniform3fv(velocityLocation, 1, particles->velocity().data());
 
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, numParticles);

@@ -29,7 +29,13 @@ public:
     GLuint vertexArray;
 };
 
-ParticlesProgram::Registration<FountainProgram> registration;
+struct Registration {
+    Registration(){
+        SgNode::registerType<SceneFountain, SceneParticles>();
+        ParticlesProgram::registerType<SceneFountain, FountainProgram>();
+    }
+} registration;
+
 
 }
 
@@ -42,6 +48,7 @@ SceneFountain::SceneFountain()
     gravity_ << 0.0f, 0.0f, -9.8f;
 
     setParticleSize(0.08f);
+    setTexture(":/PhenomenonPlugin/texture/bluewater.png");
 }
 
 
@@ -121,8 +128,6 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
-
-    setParticleTexture(":/PhenomenonPlugin/texture/bluewater.png");
 
     lifeTimeLocation = getUniformLocation("lifeTime");
     cycleTimeLocation = getUniformLocation("cycleTime");

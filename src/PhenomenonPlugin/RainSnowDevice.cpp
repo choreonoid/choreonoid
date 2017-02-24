@@ -3,8 +3,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "SnowDevice.h"
-#include "SceneSnow.h"
+#include "RainSnowDevice.h"
+#include "SceneRainSnow.h"
 #include <cnoid/YAMLBodyLoader>
 #include <cnoid/SceneDevice>
 

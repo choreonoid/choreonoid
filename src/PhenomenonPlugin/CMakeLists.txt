@@ -11,10 +11,10 @@ set(sources
   PhenomenonPlugin.cpp
   SceneParticles.cpp
   SceneFountain.cpp
-  SceneSnow.cpp
+  SceneRainSnow.cpp
   ParticlesProgram.cpp
   FountainDevice.cpp
-  SnowDevice.cpp
+  RainSnowDevice.cpp
   gl_core_3_3.c
   )
 

@@ -18,6 +18,7 @@ protected:
 public:
     float time() const { return time_; }
     float particleSize() const { return particleSize_; }
+    const std::string& texture() const { return texture_; }
 
     void setTime(float t) { time_ = t; }
     void setParticleSize(float s) { particleSize_ = s; }

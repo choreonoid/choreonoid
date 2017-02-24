@@ -16,29 +16,39 @@ class ParticlesProgram : public LightingProgram
 {
 public:
 
-    template<class Program>
+    template<class SceneNodeType, class SceneNodeBaseType, class ShaderProgramType>
     struct Registration
     {
         Registration(){
-            SgNode::registerType<typename Program::NodeType, SceneParticles>();
 
             GLSLSceneRenderer::addExtension(
                 [](GLSLSceneRenderer* renderer){
-                    std::shared_ptr<Program> program = std::make_shared<Program>(renderer);
-                    renderer->renderingFunctions().setFunction<typename Program::NodeType>(
-                        [program](typename Program::NodeType* particles){
+                    std::shared_ptr<ShaderProgramType> program = std::make_shared<ShaderProgramType>(renderer);
+                    renderer->renderingFunctions().setFunction<SceneNodeType>(
+                        [program](SceneNodeType* particles){
                             program->requestRendering(particles, [program, particles]() { program->render(particles); });
                         });
                 });
         }
     };
+
+    template<class SceneNode, class Program>
+    static void registerType(){
+        GLSLSceneRenderer::addExtension(
+            [](GLSLSceneRenderer* renderer){
+                auto program = std::make_shared<Program>(renderer);
+                renderer->renderingFunctions().setFunction<SceneNode>(
+                    [program](SceneNode* particles){
+                        program->requestRendering(particles, [program, particles]() { program->render(particles); });
+                    });
+            });
+    }
     
     ParticlesProgram(GLSLSceneRenderer* renderer, const char* vertexShaderFile);
     void requestRendering(SceneParticles* particles, std::function<void()> renderingFunction);
 
 protected:
     virtual bool initializeRendering(SceneParticles* particles);
-    void setParticleTexture(const char* textureFile);
     void setTime(float time){
         glUniform1f(timeLocation, time);
     }
