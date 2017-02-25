@@ -6,11 +6,11 @@
 
 using namespace cnoid;
 
-class PhenomenonPlugin : public Plugin
+class SceneEffectsPlugin : public Plugin
 {
 public:
     
-    PhenomenonPlugin() : Plugin("Phenomenon") {
+    SceneEffectsPlugin() : Plugin("SceneEffects") {
         require("Body");
     }
     
@@ -19,4 +19,4 @@ public:
     }
 };
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(PhenomenonPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(SceneEffectsPlugin);
