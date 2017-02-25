@@ -25,7 +25,7 @@ ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer, const char* vert
 bool ParticlesProgram::initializeRendering(SceneParticles* particles)
 {
     loadVertexShader(vertexShaderFile.c_str());
-    loadFragmentShader(":/PhenomenonPlugin/shader/particles.frag");
+    loadFragmentShader(":/SceneEffectsPlugin/shader/particles.frag");
     link();
 
     LightingProgram::initialize();

@@ -11,9 +11,11 @@ set(sources
   SceneEffectsPlugin.cpp
   SceneParticles.cpp
   SceneFountain.cpp
+  SceneSmoke.cpp
   SceneRainSnow.cpp
   ParticlesProgram.cpp
   FountainDevice.cpp
+  SmokeDevice.cpp
   RainSnowDevice.cpp
   gl_core_3_3.c
   )

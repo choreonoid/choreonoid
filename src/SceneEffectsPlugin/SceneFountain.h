@@ -18,12 +18,13 @@ public:
 
     float lifeTime() const { return lifeTime_; }
     void setLifeTime(float t) { lifeTime_ = t; }
-    void setGravity(const Vector3f& g) { gravity_ = g; }
+    void setAcceleration(const Vector3f& a) { acceleration_ = a; }
+    const Vector3f& acceleration() const { return acceleration_; }
     
 private:
     float angle_;
     float lifeTime_;
-    Vector3f gravity_;
+    Vector3f acceleration_;
 };
 
 }

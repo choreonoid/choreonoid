@@ -1,10 +1,12 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-<qresource prefix="/PhenomenonPlugin" >
+<qresource prefix="/SceneEffectsPlugin" >
   <file>shader/fountain.vert</file>
+  <file>shader/smoke.vert</file>
   <file>shader/rainsnow.vert</file>
   <file>shader/particles.frag</file>
   <file>texture/bluewater.png</file>
+  <file>texture/smoke.png</file>
   <file>texture/snow.png</file>
   <file>texture/rain.png</file>
 </qresource>

@@ -16,6 +16,7 @@ class ParticlesProgram : public LightingProgram
 {
 public:
 
+    /*
     template<class SceneNodeType, class SceneNodeBaseType, class ShaderProgramType>
     struct Registration
     {
@@ -31,6 +32,7 @@ public:
                 });
         }
     };
+    */
 
     template<class SceneNode, class Program>
     static void registerType(){
@@ -49,6 +51,7 @@ public:
 
 protected:
     virtual bool initializeRendering(SceneParticles* particles);
+
     void setTime(float time){
         glUniform1f(timeLocation, time);
     }

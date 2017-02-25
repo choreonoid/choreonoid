@@ -67,7 +67,7 @@ SceneRain::SceneRain()
 {
     setVelocity(Vector3f(0.0f, 0.0f, -5.0f));
     setParticleSize(0.02f);
-    setTexture(":/PhenomenonPlugin/texture/rain.png");
+    setTexture(":/SceneEffectsPlugin/texture/rain.png");
 }
 
 
@@ -89,7 +89,7 @@ SceneSnow::SceneSnow()
 {
     setVelocity(Vector3f(0.0f, 0.0f, -0.3f));
     setParticleSize(0.025f);
-    setTexture(":/PhenomenonPlugin/texture/snow.png");
+    setTexture(":/SceneEffectsPlugin/texture/snow.png");
 }
 
 
@@ -108,7 +108,7 @@ SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
 
 
 RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer, ":/PhenomenonPlugin/shader/rainsnow.vert")
+    : ParticlesProgram(renderer, ":/SceneEffectsPlugin/shader/rainsnow.vert")
 {
 
 }
