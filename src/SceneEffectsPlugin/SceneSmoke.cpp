@@ -15,8 +15,6 @@ namespace {
 class SmokeProgram : public ParticlesProgram
 {
 public:
-    typedef SceneSmoke NodeType;
-    
     SmokeProgram(GLSLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
     void render(SceneSmoke* fountain);
@@ -44,7 +42,7 @@ SceneSmoke::SceneSmoke()
 {
     angle_ = 0.1f;
     lifeTime_ = 5.0f;
-    gravity_ << 0.0f, 0.0f, -9.8f;
+    acceleration_ << 0.0f, 0.0f, -9.8f;
 
     setParticleSize(0.06f);
     setTexture(":/SceneEffectsPlugin/texture/smoke.png");
@@ -56,7 +54,7 @@ SceneSmoke::SceneSmoke(const SceneSmoke& org)
 {
     angle_ = org.angle_;
     lifeTime_ = org.lifeTime_;
-    gravity_ = org.gravity_;
+    acceleration_ = org.acceleration_;
 }
 
 

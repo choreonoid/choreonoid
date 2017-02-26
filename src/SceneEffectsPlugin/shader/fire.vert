@@ -8,8 +8,7 @@ out float alpha;
 
 uniform float time;
 uniform float lifeTime;
-uniform float cycleTime;
-uniform vec3 accel = vec3(0.0, 0.0, -0.05);
+uniform vec3 accel = vec3(0.0, 0.0, 0.1);
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -18,15 +17,16 @@ uniform float angle2pixels;
 
 void main()
 {
-    vec3 pos = vec3(0.0);
-    alpha = 0.0;
+    vec3 pos;
     float t = time - offsetTime;
     if(t > 0){
-        t = mod(t, cycleTime);
-        if(t < lifeTime){
-            pos = vertexInitVel * t + accel * t * t;
-            alpha = 1.0 - t / lifeTime;
-        }
+        t = mod(t, lifeTime);
+        pos = vertexInitVel * t + accel * t * t;
+        //alpha = 1.0 - t / lifeTime;
+        alpha = 1.0 - (t/lifeTime)*(t/lifeTime);
+    } else {
+        alpha = 0.0;
+        pos = vec3(0.0);
     }
 
     vec4 lpos = modelViewMatrix * vec4(pos, 1.0);
@@ -38,7 +38,7 @@ void main()
         float angle = asin(pointSize / d);
         gl_PointSize = angle * angle2pixels;
 
-    } else {  // Orthographic
+    } else { // Orthographic
         gl_PointSize = -pointSize;
     }
 }

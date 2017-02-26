@@ -2,18 +2,18 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PHENOMENON_PLUGIN_SCENE_SMOKE_H
-#define CNOID_PHENOMENON_PLUGIN_SCENE_SMOKE_H
+#ifndef CNOID_PHENOMENON_PLUGIN_SCENE_FIRE_H
+#define CNOID_PHENOMENON_PLUGIN_SCENE_FIRE_H
 
 #include "SceneParticles.h"
 
 namespace cnoid {
 
-class SceneSmoke : public SceneParticles
+class SceneFire : public SceneParticles
 {
 public:
-    SceneSmoke();
-    SceneSmoke(const SceneSmoke& org);
+    SceneFire();
+    SceneFire(const SceneFire& org);
     virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
     float lifeTime() const { return lifeTime_; }

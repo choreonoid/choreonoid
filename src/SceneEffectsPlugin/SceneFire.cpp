@@ -3,7 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "SceneFountain.h"
+#include "SceneFire.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
 
@@ -12,15 +12,14 @@ using namespace cnoid;
 
 namespace {
 
-class FountainProgram : public ParticlesProgram
+class FireProgram : public ParticlesProgram
 {
 public:
-    FountainProgram(GLSLSceneRenderer* renderer);
+    FireProgram(GLSLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
-    void render(SceneFountain* fountain);
+    void render(SceneFire* fountain);
 
     GLint lifeTimeLocation;
-    GLint cycleTimeLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
@@ -29,8 +28,8 @@ public:
 
 struct Registration {
     Registration(){
-        SgNode::registerType<SceneFountain, SceneParticles>();
-        ParticlesProgram::registerType<SceneFountain, FountainProgram>();
+        SgNode::registerType<SceneFire, SceneParticles>();
+        ParticlesProgram::registerType<SceneFire, FireProgram>();
     }
 } registration;
 
@@ -38,19 +37,19 @@ struct Registration {
 }
 
 
-SceneFountain::SceneFountain()
-    : SceneParticles(findPolymorphicId<SceneFountain>())
+SceneFire::SceneFire()
+    : SceneParticles(findPolymorphicId<SceneFire>())
 {
     angle_ = 0.1f;
-    lifeTime_ = 4.0f;
+    lifeTime_ = 2.5f;
     acceleration_ << 0.0f, 0.0f, -9.8f;
 
-    setParticleSize(0.08f);
-    setTexture(":/SceneEffectsPlugin/texture/bluewater.png");
+    setParticleSize(0.15f);
+    setTexture(":/SceneEffectsPlugin/texture/fire.png");
 }
 
 
-SceneFountain::SceneFountain(const SceneFountain& org)
+SceneFire::SceneFire(const SceneFire& org)
     : SceneParticles(org)
 {
     angle_ = org.angle_;
@@ -59,41 +58,41 @@ SceneFountain::SceneFountain(const SceneFountain& org)
 }
 
 
-SgObject* SceneFountain::clone(SgCloneMap& cloneMap) const
+SgObject* SceneFire::clone(SgCloneMap& cloneMap) const
 {
-    return new SceneFountain(*this);
+    return new SceneFire(*this);
 }
 
 
-FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer, ":/SceneEffectsPlugin/shader/fountain.vert")
+FireProgram::FireProgram(GLSLSceneRenderer* renderer)
+    : ParticlesProgram(renderer, ":/SceneEffectsPlugin/shader/fire.vert")
 {
 
 }
 
 
-bool FountainProgram::initializeRendering(SceneParticles* particles)
+bool FireProgram::initializeRendering(SceneParticles* particles)
 {
     if(!ParticlesProgram::initializeRendering(particles)){
         return false;
     }
+    SceneFire* fire = static_cast<SceneFire*>(particles);
 
-    nParticles = 8000;
+    nParticles = 500;
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
     float velocity, theta, phi;
     vector<GLfloat> data(nParticles * 3);
     for(int i = 0; i < nParticles; ++i) {
-        
-        theta = PI / 6.0f * random();
+        theta = PI / 3.0f * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        velocity = 1.24f + (1.5f - 1.25f) * random();
+        velocity = 0.1f + (0.2f - 0.1f) * random();
         v = v.normalized() * velocity;
 
         data[3*i]   = v.x();
@@ -102,19 +101,22 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     }
     glGenBuffers(1, &initVelBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, initVelBuffer);
-    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_STATIC_DRAW);
     
     // Fill the offset time buffer
-    data.resize(nParticles);
+    //data.resize(nParticles);
+    vector<GLfloat> offsets(nParticles);
+    float rate = fire->lifeTime() / nParticles;
     float time = 0.0f;
-    float rate = 0.00075f;
     for(int i = 0; i < nParticles; ++i) {
-        data[i] = time;
+        //data[i] = time;
+        offsets[i] = time;
         time += rate;
     }
     glGenBuffers(1, &offsetTimeBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
-    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, offsets.size() * sizeof(GLfloat), &offsets.front(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenVertexArrays(1, &vertexArray);
@@ -128,18 +130,23 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     glBindVertexArray(0);
 
     lifeTimeLocation = getUniformLocation("lifeTime");
-    cycleTimeLocation = getUniformLocation("cycleTime");
 
     return true;
 }
 
 
-void FountainProgram::render(SceneFountain* fountain)
+void FireProgram::render(SceneFire* fire)
 {
-    setTime(fountain->time());
-    glUniform1f(lifeTimeLocation, fountain->lifeTime());
-    glUniform1f(cycleTimeLocation, 6.0f);
+    setTime(fire->time());
+    glUniform1f(lifeTimeLocation, fire->lifeTime());
+
+    GLint blendSrc, blendDst;
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
+
+    glBlendFunc(blendSrc, blendDst);
 }

@@ -28,7 +28,7 @@ void main()
     }
 
     vec4 lpos = modelViewMatrix * vec4(pos, 1.0);
-    position = vec3(lpos);
+    position = lpos.xyz;
     gl_Position = projectionMatrix * lpos;
 
     if(pointSize >= 0.0){ // Perspective

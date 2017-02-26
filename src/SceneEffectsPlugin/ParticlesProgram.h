@@ -15,25 +15,6 @@ namespace cnoid {
 class ParticlesProgram : public LightingProgram
 {
 public:
-
-    /*
-    template<class SceneNodeType, class SceneNodeBaseType, class ShaderProgramType>
-    struct Registration
-    {
-        Registration(){
-
-            GLSLSceneRenderer::addExtension(
-                [](GLSLSceneRenderer* renderer){
-                    std::shared_ptr<ShaderProgramType> program = std::make_shared<ShaderProgramType>(renderer);
-                    renderer->renderingFunctions().setFunction<SceneNodeType>(
-                        [program](SceneNodeType* particles){
-                            program->requestRendering(particles, [program, particles]() { program->render(particles); });
-                        });
-                });
-        }
-    };
-    */
-
     template<class SceneNode, class Program>
     static void registerType(){
         GLSLSceneRenderer::addExtension(

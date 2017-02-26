@@ -72,7 +72,7 @@ void main()
 {
     vec4 texColor = texture(particleTex, gl_PointCoord);
 
-    vec3 color = vec3(texColor);
+    vec3 color = texColor.xyz;
     vec3 c = vec3(0.0);
     for(int i=0; i < numLights; ++i){
         c += calcLightingColor(color, lights[i]);
