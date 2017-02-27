@@ -1,6 +1,6 @@
 /*!
   @file
-  @author 
+  @author Shizuko Hattori
 */
 
 #include <cnoid/Plugin>
@@ -15,7 +15,7 @@
 #include <boost/foreach.hpp>
 #include <sdf/sdf.hh>
 #include "SDFBodyLoader.h"
-//#include <sdf/sdf.hh>
+#include <OGRE/OgreRoot.h>
 
 using namespace std;
 
@@ -51,17 +51,18 @@ public:
         itemManager().addLoader<BodyItem>(
             "Gazebo Model File", "GAZEBO-MODEL", "sdf;urdf", boost::bind(loadBodyItem, _1, _2));
 
-        //DEBUG
-        sdf::addURIPath("model://", "/home/hattori/testModel/gazebo_models");
-        ////
-        addModelSearchPath("HOME");
-        addModelSearchPath("ROS_PACKAGE_PATH");
         addModelSearchPath("GAZEBO_MODEL_PATH");
+        addModelSearchPath("ROS_PACKAGE_PATH");
+        addModelSearchPath("HOME");
+
+        ogreRoot = new Ogre::Root();
 
         return true;
     }
         
     virtual bool finalize() {
+        delete ogreRoot;
+
         return true;
     }
 
@@ -88,6 +89,9 @@ public:
         return;
     }
 
+private:
+
+    Ogre::Root* ogreRoot;
 };
 
 }

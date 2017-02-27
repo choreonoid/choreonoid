@@ -1,9 +1,9 @@
 #include "AssimpSceneLoader.h"
-#include "SceneDrawables.h"
-#include "FileUtil.h"
-#include "ImageIO.h"
-#include "Exception.h"
-#include "NullOut.h"
+#include <cnoid/SceneDrawables>
+#include <cnoid/FileUtil>
+#include <cnoid/ImageIO>
+#include <cnoid/Exception>
+#include <cnoid/NullOut>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
@@ -111,7 +111,7 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
 
     if( !scene )
     {
-        os() << importer.GetErrorString() << endl;
+        cout << importer.GetErrorString() << endl;
         return 0;
     }
 
@@ -255,7 +255,10 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
         material->setAmbientIntensity(c);
     }
     if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_OPACITY, w)){
-        material->setTransparency(1-w);
+        if(!w)    //設定値が逆のものがある？暫定処理 TODO
+            material->setTransparency(w);
+        else
+            material->setTransparency(1-w);
     }
 
     aiIndexToSgMaterialMap[index] = material;

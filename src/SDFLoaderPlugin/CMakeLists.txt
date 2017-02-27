@@ -37,17 +37,23 @@ elseif(MSVC)
   endif()
 endif()
 
-if( ASSIMP_FOUND )
-  if( NOT ${ASSIMP_VERSION} VERSION_LESS "2.0.1150" )
-    add_definitions(-DASSIMP_UNIFIED_HEADER_NAMES)
-  endif()
-  if( NOT ${ASSIMP_VERSION} VERSION_LESS "2.0.885" )
-    add_definitions(-DASSIMP_EXPORT_API)
-  endif()
-else()
+if(NOT ASSIMP_FOUND )
   set(ASSIMP_LIBRARIES assimp)
   set(ASSIMP_INCLUDE_DIRS ${ASSIMP_DIR}/include)
   set(ASSIMP_LIBRARY_DIRS ${ASSIMP_DIR}/lib)
+endif()
+
+set(OGRE_DIR ${OGRE_DIR} CACHE PATH "set the top directory of the OGRE ")
+if(UNIX)
+  if(NOT OGRE_DIR)
+    pkg_check_modules(OGRE REQUIRED OGRE)
+  endif()
+endif()
+
+if(NOT OGRE_FOUND)
+  set(OGRE_LIBRARIES OgreMain pthread)
+  set(OGRE_INCLUDE_DIRS ${OGRE_DIR}/include)
+  set(OGRE_LIBRARY_DIRS ${OGRE_DIR}/lib)
 endif()
 
 
@@ -56,29 +62,31 @@ set(target CnoidSDFLoaderPlugin)
 include_directories(
   ${SDFORMAT_INCLUDE_DIRS}
   ${ASSIMP_INCLUDE_DIRS}
+  ${OGRE_INCLUDE_DIRS}
 )
 
 link_directories(
   ${SDFORMAT_LIBRARY_DIRS}
   ${ASSIMP_LIBRARY_DIRS}
+  ${OGRE_LIBRARY_DIRS}
 )
 
 set(sources
   SDFLoaderPlugin.cpp
   SDFBodyLoader.cpp
   SDFLoaderPseudoGazeboColor.cpp
-  SDFSensorConverter.cpp
+  AssimpSceneLoader.cpp
 )
 
 set(headers
   SDFBodyLoader.h
   SDFLoaderPseudoGazeboColor.h
-  SDFSensorConverter.h
+  AssimpSceneLoader.h
 )
 
 make_gettext_mofiles(${target} mofiles) 
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
-target_link_libraries(${target} CnoidBodyPlugin ${SDFORMAT_LIBRARIES} ${ASSIMP_LIBRARIES})
+target_link_libraries(${target} CnoidBodyPlugin ${SDFORMAT_LIBRARIES} ${ASSIMP_LIBRARIES} ${OGRE_LIBRARIES})
 apply_common_setting_for_plugin(${target} "${headers}")
 
 
