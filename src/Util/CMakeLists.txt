@@ -164,6 +164,7 @@ if(UNIX)
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
     m)
+
   if(APPLE)
     target_link_libraries(${target} ${libraries} "-framework IOKit -framework Foundation")
   else()
@@ -180,6 +181,7 @@ elseif(MSVC)
   endif()
   target_link_libraries(${target} ${libraries})
 endif()
+
 
 apply_common_setting_for_library(${target} "${headers}")
 

@@ -774,14 +774,12 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             filepath = directoryPath / filepath;
             filepath.normalize();
         }
-        if(filepath.extension() == ".wrl"){
-            vrmlParser.load(getAbsolutePathString(filepath));
-            while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-                SgNodePtr node = sgConverter.convert(vrmlNode);
-                if(node){
-                    shape->addChild(node);
-                    hasShape = true;
-                }
+        vrmlParser.load(getAbsolutePathString(filepath));
+        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+            SgNodePtr node = sgConverter.convert(vrmlNode);
+            if(node){
+                shape->addChild(node);
+                hasShape = true;
             }
         }
     }
