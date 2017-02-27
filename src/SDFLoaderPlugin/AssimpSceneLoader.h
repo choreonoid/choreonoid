@@ -2,7 +2,6 @@
 #define CNOID_UTIL_ASSIMP_SCENE_LOADER_H
 
 #include <cnoid/AbstractSceneLoader>
-#include "exportdecl.h"
 
 namespace cnoid {
 

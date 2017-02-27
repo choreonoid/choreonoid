@@ -8,13 +8,12 @@
 
 #include <cnoid/AbstractBodyLoader>
 #include <cnoid/BodyItem>
-#include "exportdecl.h"
 
 namespace cnoid {
 
 class SDFBodyLoaderImpl;
   
-class CNOID_EXPORT SDFBodyLoader : public AbstractBodyLoader
+class SDFBodyLoader : public AbstractBodyLoader
 {
 public:
     SDFBodyLoader();

@@ -19,7 +19,7 @@
 #include <cnoid/WorldItem>
 #include <cnoid/RootItem>
 #include <cnoid/EigenUtil>
-#include <cnoid/SceneVisitor>
+#include <cnoid/PolymorphicFunctionSet>
 #include <map>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
@@ -54,17 +54,32 @@ double getLimitValue(double val, double defaultValue)
 
 namespace cnoid {
 
-class MaterialTextureInstructor : public SceneVisitor
+class MaterialTextureInstructor
 {
 public:
+    PolymorphicFunctionSet<SgNode> functions;
+
     MaterialTextureInstructor( SgMaterial* material, SgTexture* texture ) :
-        material(material), texture(texture) {};
+        material(material), texture(texture) {
+        functions.setFunction<SgGroup>(
+                [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+        functions.setFunction<SgShape>(
+                [&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
+        functions.updateDispatchTable();
+    };
+
     bool set(SgNode* node){
-        node->accept(*this);
+        functions.dispatch(node);
     }
 
-protected:
-    virtual void visitShape(SgShape* shape){
+    void visitGroup(SgGroup* group)
+    {
+        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+            functions.dispatch(*p);
+        }
+    }
+
+    void visitShape(SgShape* shape){
         if(material)
             shape->setMaterial(material);
         if(texture)

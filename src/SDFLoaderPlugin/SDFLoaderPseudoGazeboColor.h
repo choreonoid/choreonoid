@@ -8,13 +8,12 @@
 
 #include <map>
 #include <cnoid/SceneDrawables>
-#include "exportdecl.h"
 
 namespace cnoid {
 
 /**
  */
-class CNOID_EXPORT SDFLoaderPseudoGazeboColorInfo
+class SDFLoaderPseudoGazeboColorInfo
 {
 public:
     /**
