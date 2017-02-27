@@ -4,16 +4,23 @@
 */
 
 #include "SceneEffects.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
 
 
-SgFog::SgFog()
+SgFog::SgFog(int polymorhicId)
+    : SgPreprocessed(polymorhicId)
 {
     color_.setOnes();
     visibilityRange_ = 0.0f;
+}
+
+
+SgFog::SgFog()
+    : SgFog(findPolymorphicId<SgFog>())
+{
+
 }
 
 
@@ -31,20 +38,28 @@ SgObject* SgFog::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgFog::accept(SceneVisitor& visitor)
-{
-    visitor.visitFog(this);
-}
-
-
-SgOutlineGroup::SgOutlineGroup()
+SgOutlineGroup::SgOutlineGroup(int polymorhicId)
+    : SgGroup(polymorhicId)
 {
     lineWidth_ = 1.0;
     color_ << 1.0, 0.0, 0.0;
 }
 
 
-void SgOutlineGroup::accept(SceneVisitor& visitor)
+SgOutlineGroup::SgOutlineGroup()
+    : SgOutlineGroup(findPolymorphicId<SgOutlineGroup>())
 {
-    visitor.visitOutlineGroup(this);
+
+}
+
+
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgFog, SgPreprocessed>();
+        SgNode::registerType<SgOutlineGroup, SgGroup>();
+    }
+} registration;
+
 }

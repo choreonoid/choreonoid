@@ -270,18 +270,31 @@ SgNodePtr YAMLSceneReaderImpl::readTransform(Mapping& node)
 
 SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
 {
-    SgShapePtr shape = new SgShape;
+    SgShapePtr shape;
 
     Mapping& geometry = *node.findMapping("geometry");
     if(geometry.isValid()){
+        shape = new SgShape;
         shape->setMesh(readGeometry(geometry));
-    }
 
-    Mapping& appearance = *node.findMapping("appearance");
-    if(appearance.isValid()){
-        readAppearance(shape, appearance);
-    } else {
-        setDefaultMaterial(shape);
+        Mapping& appearance = *node.findMapping("appearance");
+        if(appearance.isValid()){
+            readAppearance(shape, appearance);
+        } else {
+            setDefaultMaterial(shape);
+        }
+
+        Matrix3 R;
+        bool isTransformed = self->readRotation(node, R, false);
+        Vector3 p;
+        isTransformed |= read(node, "translation", p);
+        if(isTransformed){
+            SgPosTransformPtr transform = new SgPosTransform;
+            transform->setRotation(R);
+            transform->setTranslation(p);
+            transform->addChild(shape);
+            return transform;
+        }
     }
 
     return shape;

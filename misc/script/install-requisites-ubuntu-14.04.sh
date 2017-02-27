@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sudo apt-get install \
+sudo apt-get -y install \
 build-essential \
 cmake-curses-gui \
 libboost-all-dev \
@@ -31,4 +31,11 @@ libpulse-dev \
 libsndfile1-dev \
 python2.7-dev \
 python-numpy \
-uuid-dev
+uuid-dev \
+lua5.2 \
+liblua5.2-dev
+
+# libc++-dev
+# clang-3.8
+
+

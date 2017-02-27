@@ -4,17 +4,24 @@
 */
 
 #include "SceneRenderer.h"
-#include <cnoid/SceneDrawables>
-#include <cnoid/SceneCameras>
-#include <cnoid/SceneLights>
-#include <cnoid/SceneEffects>
+#include "SceneDrawables.h"
+#include "SceneCameras.h"
+#include "SceneLights.h"
+#include "SceneEffects.h"
+#include "PolymorphicFunctionSet.h"
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
+#include <set>
+#include <mutex>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
+
+std::mutex extensionMutex;
+set<SceneRenderer*> renderers;
+vector<std::function<void(SceneRenderer* renderer)>> extendFunctions;
 
 struct PreproNode
 {
@@ -34,23 +41,29 @@ struct PreproNode
         base = n;
     }
 };
-    
 
-class PreproTreeExtractor : public SceneVisitor
+
+class PreproTreeExtractor
 {
+    PolymorphicFunctionSet<SgNode> functions;
     PreproNode* node;
     bool found;
+    
 public:
+    PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
-    virtual void visitGroup(SgGroup* group);
-    virtual void visitTransform(SgTransform* transform);
-    virtual void visitShape(SgShape* shape);
-    virtual void visitPointSet(SgPointSet* pointSet);        
-    virtual void visitLineSet(SgLineSet* lineSet);        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed);
-    virtual void visitLight(SgLight* light);
-    virtual void visitFog(SgFog* fog);
-    virtual void visitCamera(SgCamera* camera);
+
+    /*
+      Only SgNode* is used as the parameter type of the following functions to avoid
+      the overhead due to the additional function call required for casting the types
+    */
+    void visitGroup(SgGroup* group);
+    void visitSwitch(SgSwitch* switchNode);
+    void visitTransform(SgTransform* transform);
+    void visitPreprocessed(SgPreprocessed* preprocessed);
+    void visitLight(SgLight* light);
+    void visitFog(SgFog* fog);
+    void visitCamera(SgCamera* camera);
 };
 
 }
@@ -115,6 +128,9 @@ public:
     vector<SgFogPtr> fogs;
     bool isFogEnabled;
 
+    std::mutex newExtensionMutex;
+    vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
+    
     SceneRendererImpl(SceneRenderer* self);
 
     void extractPreproNodes();
@@ -122,6 +138,7 @@ public:
     void updateCameraPaths();
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
+    void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
 };
 
 }
@@ -130,6 +147,9 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new SceneRendererImpl(this);
+    property_ = new Mapping();
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.insert(this);
 }
 
 
@@ -153,6 +173,8 @@ SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
 
 SceneRenderer::~SceneRenderer()
 {
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.erase(this);
     delete impl;
 }
 
@@ -286,11 +308,31 @@ void SceneRendererImpl::extractPreproNodeIter(PreproNode* node, const Affine3& T
 }
 
 
+PreproTreeExtractor::PreproTreeExtractor()
+{
+    functions.setFunction<SgGroup>(
+        [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+    functions.setFunction<SgSwitch>(
+        [&](SgNode* node){ visitSwitch(static_cast<SgSwitch*>(node)); });
+    functions.setFunction<SgTransform>(
+        [&](SgNode* node){ visitTransform(static_cast<SgTransform*>(node)); });
+    functions.setFunction<SgPreprocessed>(
+        [&](SgNode* node){ visitPreprocessed(static_cast<SgPreprocessed*>(node)); });
+    functions.setFunction<SgLight>(
+        [&](SgNode* node){ visitLight(static_cast<SgLight*>(node)); });
+    functions.setFunction<SgFog>(
+        [&](SgNode* node){ visitFog(static_cast<SgFog*>(node)); });
+    functions.setFunction<SgCamera>(
+        [&](SgNode* node){ visitCamera(static_cast<SgCamera*>(node)); });
+    functions.updateDispatchTable();
+}
+
+
 PreproNode* PreproTreeExtractor::apply(SgNode* snode)
 {
     node = 0;
     found = false;
-    snode->accept(*this);
+    functions.dispatch(snode);
     return node;
 }
 
@@ -306,8 +348,8 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         
         node = 0;
         found = false;
-        
-        (*p)->accept(*this);
+
+        functions.dispatch(*p);
         
         if(node){
             if(found){
@@ -332,30 +374,20 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 }
 
 
+void PreproTreeExtractor::visitSwitch(SgSwitch* switchNode)
+{
+    if(switchNode->isTurnedOn()){
+        functions.dispatchAs<SgGroup>(switchNode);
+    }
+}    
+
+
 void PreproTreeExtractor::visitTransform(SgTransform* transform)
 {
     visitGroup(transform);
     if(node){
         node->setNode(transform);
     }
-}
-
-
-void PreproTreeExtractor::visitShape(SgShape* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitPointSet(SgPointSet* shape)
-{
-
-}
-
-
-void PreproTreeExtractor::visitLineSet(SgLineSet* shape)
-{
-
 }
 
 
@@ -653,4 +685,44 @@ int SceneRenderer::numFogs() const
 SgFog* SceneRenderer::fog(int index) const
 {
     return impl->fogs[index];
+}
+
+
+void SceneRenderer::addExtension(std::function<void(SceneRenderer* renderer)> func)
+{
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        extendFunctions.push_back(func);
+    }
+    for(SceneRenderer* renderer : renderers){
+        renderer->impl->onExtensionAdded(func);
+    }
+}
+
+
+void SceneRenderer::applyExtensions()
+{
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    for(int i=0; i < extendFunctions.size(); ++i){
+        extendFunctions[i](this);
+    }
+}
+
+
+void SceneRendererImpl::onExtensionAdded(std::function<void(SceneRenderer* renderer)> func)
+{
+    std::lock_guard<std::mutex> guard(newExtensionMutex);
+    newExtendFunctions.push_back(func);
+}
+
+
+void SceneRenderer::applyNewExtensions()
+{
+    std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
+    if(!impl->newExtendFunctions.empty()){
+        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+            impl->newExtendFunctions[i](this);
+        }
+        impl->newExtendFunctions.clear();
+    }
 }

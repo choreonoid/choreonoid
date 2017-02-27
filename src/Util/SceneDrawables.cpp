@@ -4,7 +4,6 @@
 */
 
 #include "SceneDrawables.h"
-#include "SceneVisitor.h"
 
 using namespace std;
 using namespace cnoid;
@@ -12,6 +11,16 @@ using namespace cnoid;
 namespace {
 
 const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SgShape, SgNode>();
+        SgNode::registerType<SgPlot, SgNode>();
+        SgNode::registerType<SgPointSet, SgPlot>();
+        SgNode::registerType<SgLineSet, SgPlot>();
+        SgNode::registerType<SgOverlay, SgGroup>();
+    }
+} registration;
 
 }
 
@@ -419,6 +428,54 @@ void SgMesh::updateBoundingBox()
 }
 
 
+void SgMesh::transform(const Affine3f& T)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] = T.linear() * v[i] + T.translation();
+        }
+        if(hasNormals()){
+            auto& n = *normals();
+            for(size_t i=0; i < n.size(); ++i){
+                n[i] = T.linear() * n[i];
+            }
+        }
+    }
+    setPrimitive(MESH); // clear the primitive information
+}
+
+
+void SgMesh::translate(const Vector3f& translation)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] += translation;
+        }
+    }
+    setPrimitive(MESH); // clear the primitive information
+}
+    
+
+void SgMesh::rotate(const Matrix3f& R)
+{
+    if(hasVertices()){
+        auto& v = *vertices();
+        for(size_t i=0; i < v.size(); ++i){
+            v[i] = R * v[i];
+        }
+        if(hasNormals()){
+            auto& n = *normals();
+            for(size_t i=0; i < n.size(); ++i){
+                n[i] = R * n[i];
+            }
+        }
+    }
+    setPrimitive(MESH); // clear the primitive information
+}    
+    
+
 SgPolygonMesh::SgPolygonMesh()
 {
 
@@ -463,7 +520,15 @@ void SgPolygonMesh::updateBoundingBox()
 }
 
 
+SgShape::SgShape(int polymorhicId)
+    : SgNode(polymorhicId)
+{
+
+}
+
+
 SgShape::SgShape()
+    : SgShape(findPolymorphicId<SgShape>())
 {
 
 }
@@ -514,12 +579,6 @@ SgObject* SgShape::childObject(int index)
     if(material_) objects[i++] = material_.get();
     if(texture_) objects[i++] = texture_.get();
     return objects[index];
-}
-
-
-void SgShape::accept(SceneVisitor& visitor)
-{
-    visitor.visitShape(this);
 }
 
 
@@ -598,7 +657,8 @@ SgTexture* SgShape::getOrCreateTexture()
 }
 
 
-SgPlot::SgPlot()
+SgPlot::SgPlot(int polymorhicId)
+    : SgNode(polymorhicId)
 {
 
 }
@@ -755,9 +815,17 @@ SgColorArray* SgPlot::getOrCreateColors()
 }
 
 
-SgPointSet::SgPointSet()
+SgPointSet::SgPointSet(int polymorhicId)
+    : SgPlot(polymorhicId)
 {
     pointSize_ = 0.0;
+}
+
+
+SgPointSet::SgPointSet()
+    : SgPointSet(findPolymorphicId<SgPointSet>())
+{
+
 }
 
 
@@ -774,13 +842,15 @@ SgObject* SgPointSet::clone(SgCloneMap& cloneMap) const
 }
 
 
-void SgPointSet::accept(SceneVisitor& visitor)
+SgLineSet::SgLineSet(int polymorhicId)
+    : SgPlot(polymorhicId)
 {
-    visitor.visitPointSet(this);
+    lineWidth_ = 0.0;
 }
 
-   
+
 SgLineSet::SgLineSet()
+    : SgLineSet(findPolymorphicId<SgLineSet>())
 {
     lineWidth_ = 0.0;
 }
@@ -799,13 +869,15 @@ SgObject* SgLineSet::clone(SgCloneMap& cloneMap) const
 }
     
 
-void SgLineSet::accept(SceneVisitor& visitor)
+SgOverlay::SgOverlay(int polymorhicId)
+    : SgGroup(polymorhicId)
 {
-    visitor.visitLineSet(this);
+
 }
 
 
 SgOverlay::SgOverlay()
+    : SgOverlay(findPolymorphicId<SgOverlay>())
 {
 
 }
@@ -827,12 +899,6 @@ SgOverlay::~SgOverlay()
 SgObject* SgOverlay::clone(SgCloneMap& cloneMap) const
 {
     return new SgOverlay(*this, cloneMap);
-}
-
-
-void SgOverlay::accept(SceneVisitor& visitor)
-{
-    visitor.visitOverlay(this);
 }
 
 

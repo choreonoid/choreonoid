@@ -23,33 +23,32 @@
 #include <cnoid/VRMLToSGConverter>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
-#include <boost/dynamic_bitset.hpp>
+#include <unordered_map>
+#include <mutex>
 #include "gettext.h"
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 namespace {
 
-typedef bool (YAMLBodyLoaderImpl::*NodeFunction)(Mapping& node);
-
-struct NodeFunctionInfo
-{
-    NodeFunction function;
-    bool isTransformDerived;
-    void set(NodeFunction function, bool isTransformDerived){
-        this->function = function;
-        this->isTransformDerived = isTransformDerived;
-    }
-};
-
-typedef map<string, NodeFunctionInfo> NodeFunctionMap;
-NodeFunctionMap nodeFunctionMap;
+std::mutex customNodeFunctionMutex;
+typedef function<bool(YAMLBodyLoader& loader, Mapping& node)> CustomNodeFunction;
+typedef map<string, CustomNodeFunction> CustomNodeFunctionMap;
+CustomNodeFunctionMap customNodeFunctions;
 
 }
 
 namespace cnoid {
+
+void YAMLBodyLoader::addNodeType
+(const std::string& typeName,  std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction)
+{
+    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
+    customNodeFunctions[typeName] = readFunction;
+}
 
 class YAMLBodyLoaderImpl
 {
@@ -58,6 +57,21 @@ public:
     YAMLReader reader;
     YAMLSceneReader sceneReader;
     filesystem::path directoryPath;
+
+    typedef function<bool(Mapping& node)> NodeFunction;
+
+    struct NodeFunctionInfo {
+        NodeFunction function;
+        bool isTransformDerived;
+        bool hasElements;
+        void set(NodeFunction f) { function = f; isTransformDerived = false; hasElements = false; }
+        void setT(NodeFunction f) { function = f; isTransformDerived = true; hasElements = false; }
+        void setTE(NodeFunction f) { function = f; isTransformDerived = true; hasElements = true; }
+    };
+    typedef unordered_map<string, NodeFunctionInfo> NodeFunctionMap;
+    
+    NodeFunctionMap nodeFunctions;
+    int numCustomNodeFunctions;
     
     Body* body;
     Link* rootLink;
@@ -103,7 +117,7 @@ public:
 
     ostream* os_;
 
-    dynamic_bitset<> validJointIdSet;
+    vector<bool> validJointIdSet;
     int numValidJointIds;
 
     VRMLParser vrmlParser;
@@ -113,6 +127,7 @@ public:
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
+    void updateCustomNodeFunctions();
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
     bool readBody(Mapping* topNode);
@@ -123,9 +138,10 @@ public:
     bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
     bool readNode(Mapping& node, const string& type);
     bool readContainerNode(Mapping& node, SgGroupPtr& group, NodeFunction nodeFunction);
-    bool readTransformNode(Mapping& node, NodeFunction nodeFunction);
+    bool readTransformNode(Mapping& node, NodeFunction nodeFunction, bool hasElements);
     bool readGroup(Mapping& node);
     bool readTransform(Mapping& node);
+    bool readResource(Mapping& node);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -276,21 +292,22 @@ YAMLBodyLoader::YAMLBodyLoader()
 YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     : self(self)
 {
+    nodeFunctions["Group"].set([&](Mapping& node){ return readGroup(node); });
+    nodeFunctions["Transform"].set([&](Mapping& node){ return readTransform(node); });
+    nodeFunctions["Resource"].setT([&](Mapping& node){ return readResource(node); });
+    nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
+    nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
+    nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
+    nodeFunctions["AccelerationSensor"].setTE([&](Mapping& node){ return readAccelerationSensor(node); });
+    nodeFunctions["Camera"].setTE([&](Mapping& node){ return readCamera(node); });
+    nodeFunctions["CameraDevice"].setTE([&](Mapping& node){ return readCamera(node); });
+    nodeFunctions["RangeSensor"].setTE([&](Mapping& node){ return readRangeSensor(node); });
+    nodeFunctions["SpotLight"].setTE([&](Mapping& node){ return readSpotLight(node); });
+
+    numCustomNodeFunctions = 0;
+
     body = 0;
     os_ = &nullout();
-    
-    if(nodeFunctionMap.empty()){
-        nodeFunctionMap["Group"].set(&YAMLBodyLoaderImpl::readGroup, false);
-        nodeFunctionMap["Transform"].set(&YAMLBodyLoaderImpl::readTransform, false);
-        nodeFunctionMap["RigidBody"].set(&YAMLBodyLoaderImpl::readRigidBody, true);
-        nodeFunctionMap["ForceSensor"].set(&YAMLBodyLoaderImpl::readForceSensor, true);
-        nodeFunctionMap["RateGyroSensor"].set(&YAMLBodyLoaderImpl::readRateGyroSensor, true);
-        nodeFunctionMap["AccelerationSensor"].set(&YAMLBodyLoaderImpl::readAccelerationSensor, true);
-        nodeFunctionMap["Camera"].set(&YAMLBodyLoaderImpl::readCamera, true);
-        nodeFunctionMap["CameraDevice"].set(&YAMLBodyLoaderImpl::readCamera, true);
-        nodeFunctionMap["RangeSensor"].set(&YAMLBodyLoaderImpl::readRangeSensor, true);
-        nodeFunctionMap["SpotLight"].set(&YAMLBodyLoaderImpl::readSpotLight, true);
-    }
 }
 
 
@@ -318,16 +335,23 @@ void YAMLBodyLoader::setMessageSink(std::ostream& os)
 }
 
 
-void YAMLBodyLoader::enableShapeLoading(bool on)
-{
-
-}
-    
-
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
     impl->sgConverter.setDivisionNumber(n);
+}
+
+
+void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
+{
+    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
+    if(customNodeFunctions.size() > numCustomNodeFunctions){
+        for(auto& p : customNodeFunctions){
+            CustomNodeFunction& func = p.second;
+            nodeFunctions[p.first].setTE([&, func](Mapping& node){ return func(*self, node); });
+        }
+        numCustomNodeFunctions = customNodeFunctions.size();
+    }
 }
 
 
@@ -377,6 +401,8 @@ bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
 
 bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 {
+    updateCustomNodeFunctions();
+    
     bool result = false;
     this->body = body;
     body->clearDevices();
@@ -395,7 +421,7 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
     } catch(const nonexistent_key_error& error){
-        if(const std::string* message = get_error_info<error_info_message>(error)){
+        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
     }
@@ -600,7 +626,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             }
             if(!validJointIdSet[id]){
                 ++numValidJointIds;
-                validJointIdSet.set(id);
+                validJointIdSet[id] = true;
             } else {
                 os() << str(format("Warning: Joint ID %1% of %2% is duplicated.")
                             % id % link->name()) << endl;
@@ -637,12 +663,13 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         if(jointAxisNode->isListing()){
             read(*jointAxisNode->toListing(), axis);
         } else if(jointAxisNode->isString()){
-            string label = jointAxisNode->toString();
-            if(label == "X"){
+            string symbol = jointAxisNode->toString();
+            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
+            if(symbol == "X"){
                 axis = Vector3::UnitX();
-            } else if(label == "Y"){
+            } else if(symbol == "Y"){
                 axis = Vector3::UnitY();
-            } else if(label == "Z"){
+            } else if(symbol == "Z"){
                 axis = Vector3::UnitZ();
             } else {
                 isValid = false;
@@ -741,7 +768,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     rigidBodies.push_back(rbody);
     setMassParameters(link);
     
-    if(extract(linkNode, "shapeFile", symbol)){
+    if(extract(linkNode, "uri", symbol)){
         filesystem::path filepath(symbol);
         if(!checkAbsolute(filepath)){
             filepath = directoryPath / filepath;
@@ -882,19 +909,19 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 {
     bool isSceneNodeAdded = false;
     
-    NodeFunctionMap::iterator p = nodeFunctionMap.find(type);
-    if(p != nodeFunctionMap.end()){
+    auto p = nodeFunctions.find(type);
+    if(p != nodeFunctions.end()){
         NodeFunctionInfo& info = p->second;
 
         nameStack.push_back(string());
         node.read("name", nameStack.back());
         
         if(info.isTransformDerived){
-            if(readTransformNode(node, info.function)){
+            if(readTransformNode(node, info.function, info.hasElements)){
                 isSceneNodeAdded = true;
             }
         } else {
-            if((this->*info.function)(node)){
+            if(info.function(node)){
                 isSceneNodeAdded = true;
             }
         }
@@ -920,7 +947,7 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SgGroupPtr& group, Nod
     group->setName(nameStack.back());
 
     if(nodeFunction){
-        if((this->*nodeFunction)(node)){
+        if(nodeFunction(node)){
             isSceneNodeAdded = true;
         }
     }
@@ -936,7 +963,7 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SgGroupPtr& group, Nod
 }
 
 
-bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction)
+bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunction, bool hasElements)
 {
     bool isSceneNodeAdded = false;
 
@@ -952,19 +979,35 @@ bool YAMLBodyLoaderImpl::readTransformNode(Mapping& node, NodeFunction nodeFunct
         T.linear() = R;
         isIdentity = false;
     }
-
+    Vector3 scale;
+    bool hasScale = read(node, "scale", scale);
+    
     if(!isIdentity){
         transformStack.push_back(transformStack.back() * T);
     }
 
     SgGroupPtr group;
     if(isIdentity){
-        group = new SgGroup;
+        if(hasScale){
+            group = new SgScaleTransform(scale);
+        } else {
+            group = new SgGroup;
+        }
     } else {
         group = new SgPosTransform(T);
     }
-    if(readContainerNode(node, group, nodeFunction)){
-        isSceneNodeAdded = true;
+    if(hasElements){
+        if(readContainerNode(node, group, nodeFunction)){
+            isSceneNodeAdded = true;
+        }
+    } else {
+        SgGroupPtr parentSceneGroup = currentSceneGroup;
+        currentSceneGroup = group;
+        if(nodeFunction(node)){
+            isSceneNodeAdded = true;
+            parentSceneGroup->addChild(group);
+        }
+        currentSceneGroup = parentSceneGroup;
     }
 
     if(!isIdentity){
@@ -984,7 +1027,31 @@ bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 
 bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
 {
-    return readTransformNode(node, 0);
+    return readTransformNode(node, 0, true);
+}
+
+
+bool YAMLBodyLoaderImpl::readResource(Mapping& node)
+{
+    bool isSceneNodeAdded = false;
+    
+    if(node.read("uri", symbol)){
+        filesystem::path filepath(symbol);
+        if(!checkAbsolute(filepath)){
+            filepath = directoryPath / filepath;
+            filepath.normalize();
+        }
+        vrmlParser.load(getAbsolutePathString(filepath));
+        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+            SgNodePtr node = sgConverter.convert(vrmlNode);
+            if(node){
+                currentSceneGroup->addChild(node);
+                isSceneNodeAdded = true;
+            }
+        }
+    }
+
+    return isSceneNodeAdded;
 }
 
 
@@ -1009,6 +1076,12 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
     rigidBodies.push_back(rbody);
 
     return false;
+}
+
+
+bool YAMLBodyLoader::readDevice(Device* device, Mapping& node)
+{
+    return impl->readDevice(device, node);
 }
 
 

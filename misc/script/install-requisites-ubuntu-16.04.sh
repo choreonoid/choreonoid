@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sudo apt-get install \
+sudo apt-get -y install \
 build-essential \
 cmake-curses-gui \
 libboost-all-dev \
@@ -31,14 +31,10 @@ uuid-dev \
 libpulse-dev \
 libsndfile1-dev \
 libgstreamer1.0-dev \
-libgstreamer-plugins-base1.0-dev
-
-#libgstreamer0.10-dev
-#libgstreamer-plugins-base0.10-dev
-#gstreamer0.10-plugins-good
-
+libgstreamer-plugins-base1.0-dev \
+lua5.3 \
+liblua5.3-dev \
+lua-posix     
 #qt5-default
 #libqt5x11extras5-dev
-# qt5-style-plugins
-#libbullet-dev
-#libbullet-extras-dev
+#qt5-style-plugins

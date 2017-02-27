@@ -14,10 +14,13 @@
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
 #include <unordered_map>
+#include <mutex>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
+
+using namespace std::placeholders;
 
 namespace {
 
@@ -26,6 +29,10 @@ const bool SHOW_IMAGE_FOR_PICKING = false;
 const float MinLineWidthForPicking = 5.0f;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Array;
+
+std::mutex extensionMutex;
+set<GLSLSceneRenderer*> renderers;
+vector<std::function<void(GLSLSceneRenderer* renderer)>> extendFunctions;
 
 class ShapeHandleSet : public Referenced
 {
@@ -94,17 +101,6 @@ public:
 
 typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
 
-/*
-struct SgObjectPtrHash {
-    std::size_t operator()(const SgObjectPtr& p) const {
-#ifndef WIN32
-        return boost::hash_value<SgObject*>(p.get());
-#else
-        return boost::hash_value<long>((long)p.get());
-#endif
-    }
-};
-*/
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
     std::size_t operator()(const SgObjectPtr& p) const {
@@ -113,19 +109,7 @@ struct SgObjectPtrHash {
 };
 typedef std::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
 
-
-struct TraversedShape : public Referenced
-{
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    SgShape* shape;
-    unsigned int pickId;
-    Affine3 modelMatrix;
-};
-typedef ref_ptr<TraversedShape> TraversedShapePtr;
-
-
 }
-
 
 namespace cnoid {
 
@@ -136,10 +120,13 @@ public:
         
     GLSLSceneRenderer* self;
 
+    PolymorphicFunctionSet<SgNode> renderingFunctions;
+
     GLint defaultFBO;
 
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
+    MaterialProgram* materialProgram;
     NolightingProgram* currentNolightingProgram;
     
     SolidColorProgram solidColorProgram;
@@ -160,7 +147,7 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
-    vector<TraversedShapePtr> transparentShapes;
+    vector<function<void()>> transparentRenderingFunctions;
 
     std::set<int> shadowLightIndices;
 
@@ -219,9 +206,20 @@ public:
 
     float pointSize;
     float lineWidth;
+
+    std::mutex newExtensionMutex;
+    vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
+
+    void renderChildNodes(SgGroup* group){
+        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+            renderingFunctions.dispatch(*p);
+        }
+    }
     
     GLSLSceneRendererImpl(GLSLSceneRenderer* self);
     ~GLSLSceneRendererImpl();
+    void initialize();
+    void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
     bool initializeGL();
     void render();
     bool pick(int x, int y);
@@ -229,8 +227,8 @@ public:
     bool renderShadowMap(int lightIndex);
     void beginRendering();
     void renderCamera(SgCamera* camera, const Affine3& cameraPosition);
-    void renderLights();
-    void renderFog();
+    void renderLights(LightingProgram* program);
+    void renderFog(LightingProgram* program);
     void onCurrentFogNodeUdpated();
     void endRendering();
     void renderSceneGraphNodes();
@@ -239,18 +237,22 @@ public:
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickId(SgNode* node, bool doSetColor = true);
     void popPickId();
-    void visitInvariantGroup(SgInvariantGroup* group);
+    void renderGroup(SgGroup* group);
+    void renderTransform(SgTransform* transform);
+    void renderUnpickableGroup(SgUnpickableGroup* group);
+    void renderShape(SgShape* shape);
+    void renderTransparentShape(SgShape* shape, Affine3 modelMatrix, unsigned int pickId);
+    void renderPointSet(SgPointSet* pointSet);        
+    void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOutlineGroup(SgOutlineGroup* outline);
     void flushNolightingTransformMatrices();
     ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
-    void visitShape(SgShape* shape);
-    void renderTransparentShapes();
+    void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
-    void visitPointSet(SgPointSet* pointSet);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
-    void visitLineSet(SgLineSet* lineSet);
-    void visitOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
     void setDiffuseColor(const Vector3f& color);
@@ -270,6 +272,7 @@ public:
 GLSLSceneRenderer::GLSLSceneRenderer()
 {
     impl = new GLSLSceneRendererImpl(this);
+    impl->initialize();
 }
 
 
@@ -277,17 +280,30 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GLSLSceneRendererImpl(this);
+    impl->initialize();
 }
 
 
 GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     : self(self)
 {
+
+}
+
+
+void GLSLSceneRendererImpl::initialize()
+{
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        renderers.insert(self);
+    }
+    
     defaultFBO = 0;
 
     currentProgram = 0;
     currentLightingProgram = 0;
     currentNolightingProgram = 0;
+    materialProgram = &phongShadowProgram;
 
     isPicking = false;
     isRenderingShadowMap = false;
@@ -316,11 +332,34 @@ GLSLSceneRendererImpl::GLSLSceneRendererImpl(GLSLSceneRenderer* self)
     clearGLState();
 
     os_ = &nullout();
+
+    renderingFunctions.setFunction<SgGroup>(
+        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+    renderingFunctions.setFunction<SgTransform>(
+        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+    renderingFunctions.setFunction<SgUnpickableGroup>(
+        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+    renderingFunctions.setFunction<SgShape>(
+        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+    renderingFunctions.setFunction<SgPointSet>(
+        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+    renderingFunctions.setFunction<SgLineSet>(
+        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+    renderingFunctions.setFunction<SgOverlay>(
+        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+    renderingFunctions.setFunction<SgOutlineGroup>(
+        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+
+    self->applyExtensions();
+    renderingFunctions.updateDispatchTable();
 }
 
 
 GLSLSceneRenderer::~GLSLSceneRenderer()
 {
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    renderers.erase(this);
+    
     delete impl;
 }
 
@@ -335,6 +374,56 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
             handleSet->clear();
         }
     }
+}
+
+
+void GLSLSceneRenderer::addExtension(std::function<void(GLSLSceneRenderer* renderer)> func)
+{
+    {
+        std::lock_guard<std::mutex> guard(extensionMutex);
+        extendFunctions.push_back(func);
+    }
+    for(GLSLSceneRenderer* renderer : renderers){
+        renderer->impl->onExtensionAdded(func);
+    }
+}
+
+
+void GLSLSceneRenderer::applyExtensions()
+{
+    SceneRenderer::applyExtensions();
+    
+    std::lock_guard<std::mutex> guard(extensionMutex);
+    for(int i=0; i < extendFunctions.size(); ++i){
+        extendFunctions[i](this);
+    }
+}
+
+
+void GLSLSceneRendererImpl::onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func)
+{
+    std::lock_guard<std::mutex> guard(newExtensionMutex);
+    newExtendFunctions.push_back(func);
+}
+
+
+void GLSLSceneRenderer::applyNewExtensions()
+{
+    SceneRenderer::applyExtensions();
+    
+    std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
+    if(!impl->newExtendFunctions.empty()){
+        for(int i=0; i < impl->newExtendFunctions.size(); ++i){
+            impl->newExtendFunctions[i](this);
+        }
+        impl->newExtendFunctions.clear();
+    }
+}
+
+
+SceneRenderer::NodeFunctionSet& GLSLSceneRenderer::renderingFunctions()
+{
+    return impl->renderingFunctions;
 }
 
 
@@ -405,6 +494,8 @@ void GLSLSceneRenderer::requestToClearCache()
 
 void GLSLSceneRenderer::render()
 {
+    applyNewExtensions();
+    impl->renderingFunctions.updateDispatchTable();
     impl->render();
 }
 
@@ -512,12 +603,12 @@ void GLSLSceneRendererImpl::renderScene()
     if(camera){
         renderCamera(camera, self->currentCameraPosition());
 
-        transparentShapes.clear();
+        transparentRenderingFunctions.clear();
 
         renderSceneGraphNodes();
 
-        if(!transparentShapes.empty()){
-            renderTransparentShapes();
+        if(!transparentRenderingFunctions.empty()){
+            renderTransparentObjects();
         }
     }
 }
@@ -603,27 +694,31 @@ void GLSLSceneRendererImpl::endRendering()
 
 void GLSLSceneRendererImpl::renderSceneGraphNodes()
 {
-    currentProgram->initializeRendering();
+    currentProgram->initializeFrameRendering();
     clearGLState();
 
     if(currentLightingProgram){
-        renderLights();
-        if(currentLightingProgram == &phongShadowProgram){
-            renderFog();
-        }
+        renderLights(currentLightingProgram);
+        renderFog(currentLightingProgram);
     }
-    
-    self->sceneRoot()->accept(*self);
+
+    renderingFunctions.dispatch(self->sceneRoot());
 }
 
 
-void GLSLSceneRendererImpl::renderLights()
+void GLSLSceneRenderer::renderLights(LightingProgram* program)
+{
+    impl->renderLights(program);
+}
+
+
+void GLSLSceneRendererImpl::renderLights(LightingProgram* program)
 {
     int lightIndex = 0;
 
     const int n = self->numLights();
     for(int i=0; i < n; ++i){
-        if(lightIndex == currentLightingProgram->maxNumLights()){
+        if(lightIndex == program->maxNumLights()){
             break;
         }
         SgLight* light;
@@ -631,27 +726,33 @@ void GLSLSceneRendererImpl::renderLights()
         self->getLightInfo(i, light, T);
         if(light->on()){
             bool isCastingShadow = (shadowLightIndices.find(i) != shadowLightIndices.end());
-            if(currentLightingProgram->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
+            if(program->renderLight(lightIndex, light, T, viewMatrix, isCastingShadow)){
                 ++lightIndex;
             }
         }
     }
 
-    if(lightIndex < currentLightingProgram->maxNumLights()){
+    if(lightIndex < program->maxNumLights()){
         SgLight* headLight = self->headLight();
         if(headLight->on()){
-            if(currentLightingProgram->renderLight(
+            if(program->renderLight(
                    lightIndex, headLight, self->currentCameraPosition(), viewMatrix, false)){
                 ++lightIndex;
             }
         }
     }
 
-    currentLightingProgram->setNumLights(lightIndex);
+    program->setNumLights(lightIndex);
 }
 
 
-void GLSLSceneRendererImpl::renderFog()
+void GLSLSceneRenderer::renderFog(LightingProgram* program)
+{
+    impl->renderFog(program);
+}
+
+
+void GLSLSceneRendererImpl::renderFog(LightingProgram* program)
 {
     SgFog* fog = 0;
     if(self->isFogEnabled()){
@@ -673,11 +774,11 @@ void GLSLSceneRendererImpl::renderFog()
 
     if(isCurrentFogUpdated){
         if(!fog){
-            phongShadowProgram.setFogEnabled(false);
+            currentLightingProgram->setFogEnabled(false);
         } else {
-            phongShadowProgram.setFogEnabled(true);
-            phongShadowProgram.setFogColor(fog->color());
-            phongShadowProgram.setFogRange(0.0f, fog->visibilityRange());
+            currentLightingProgram->setFogEnabled(true);
+            currentLightingProgram->setFogColor(fog->color());
+            currentLightingProgram->setFogRange(0.0f, fog->visibilityRange());
         }
     }
     isCurrentFogUpdated = false;
@@ -691,6 +792,42 @@ void GLSLSceneRendererImpl::onCurrentFogNodeUdpated()
         currentFogConnection.disconnect();
     }
     isCurrentFogUpdated = true;
+}
+
+
+const Affine3& GLSLSceneRenderer::currentModelTransform() const
+{
+    return impl->modelMatrixStack.back();
+}
+
+
+const Matrix4& GLSLSceneRenderer::projectionMatrix() const
+{
+    return impl->projectionMatrix;
+}
+
+
+const Matrix4& GLSLSceneRenderer::viewProjectionMatrix() const
+{
+    return impl->PV;
+}
+
+
+Matrix4 GLSLSceneRenderer::modelViewMatrix() const
+{
+    return impl->viewMatrix * impl->modelMatrixStack.back().matrix();
+}
+
+
+Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
+{
+    return impl->PV * impl->modelMatrixStack.back().matrix();
+}
+
+
+bool GLSLSceneRenderer::isPicking() const
+{
+    return impl->isPicking;
 }
 
 
@@ -719,6 +856,12 @@ void GLSLSceneRendererImpl::pushProgram(ShaderProgram& program, bool isLightingP
 }
 
 
+void GLSLSceneRenderer::pushShaderProgram(ShaderProgram& program, bool isLightingProgram)
+{
+    impl->pushProgram(program, isLightingProgram);
+}
+
+
 void GLSLSceneRendererImpl::popProgram()
 {
     ProgramInfo& info = programStack.back();
@@ -735,7 +878,13 @@ void GLSLSceneRendererImpl::popProgram()
     }
     programStack.pop_back();
 }
-    
+
+
+void GLSLSceneRenderer::popShaderProgram()
+{
+    impl->popProgram();
+}
+
 
 const std::vector<SgNode*>& GLSLSceneRenderer::pickedNodePath() const
 {
@@ -790,43 +939,39 @@ inline void GLSLSceneRendererImpl::popPickId()
 }
 
 
-void GLSLSceneRenderer::visitGroup(SgGroup* group)
+void GLSLSceneRenderer::renderNode(SgNode* node)
 {
-    impl->pushPickId(group);
-    SceneVisitor::visitGroup(group);
-    impl->popPickId();
+    impl->renderingFunctions.dispatch(node);
 }
 
 
-void GLSLSceneRenderer::visitUnpickableGroup(SgUnpickableGroup* group)
+void GLSLSceneRendererImpl::renderGroup(SgGroup* group)
 {
-    if(!impl->isPicking){
-        visitGroup(group);
+    pushPickId(group);
+    renderChildNodes(group);
+    popPickId();
+}
+
+
+void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
+{
+    if(!isPicking){
+        renderGroup(group);
     }
 }
 
 
-void GLSLSceneRenderer::visitInvariantGroup(SgInvariantGroup* group)
-{
-    impl->visitInvariantGroup(group);
-}
-
-
-void GLSLSceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
-{
-    self->visitGroup(group);
-}
-
-
-void GLSLSceneRenderer::visitTransform(SgTransform* transform)
+void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
     transform->getTransform(T);
 
-    Affine3Array& modelMatrixStack = impl->modelMatrixStack;
     modelMatrixStack.push_back(modelMatrixStack.back() * T);
 
-    visitGroup(transform);
+    // renderGroup(transform);
+    pushPickId(transform);
+    renderChildNodes(transform);
+    popPickId();
     
     modelMatrixStack.pop_back();
 }
@@ -846,8 +991,8 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
         nextShapeHandleSetMap->insert(*p);
     }
 
-    if(currentLightingProgram){
-        currentLightingProgram->setTransformMatrices(viewMatrix, modelMatrix, PV);
+    if(currentLightingProgram == &phongShadowProgram){
+        phongShadowProgram.setTransformMatrices(viewMatrix, modelMatrix, PV);
     } else if(currentNolightingProgram){
         const Matrix4f PVM = (PV * modelMatrix.matrix()).cast<float>();
         currentNolightingProgram->setProjectionMatrix(PVM);
@@ -859,25 +1004,19 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
 }
 
 
-void GLSLSceneRenderer::visitShape(SgShape* shape)
-{
-    impl->visitShape(shape);
-}
-
-
-void GLSLSceneRendererImpl::visitShape(SgShape* shape)
+void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
         SgMaterial* material = shape->material();
         if(material && material->transparency() > 0.0){
-            TraversedShapePtr traversed = new TraversedShape();
-            traversed->shape = shape;
-            traversed->modelMatrix = modelMatrixStack.back();
-            traversed->pickId = pushPickId(shape, false);
-            popPickId();
             if(!isRenderingShadowMap){
-                transparentShapes.push_back(traversed);
+                const Affine3& M = modelMatrixStack.back();
+                unsigned int pickId = pushPickId(shape, false);
+                transparentRenderingFunctions.push_back(
+                    [this,shape,M,pickId](){
+                        renderTransparentShape(shape, M, pickId); });
+                popPickId();
             }
         } else {
             if(!isPicking){
@@ -895,7 +1034,28 @@ void GLSLSceneRendererImpl::visitShape(SgShape* shape)
 }
 
 
-void GLSLSceneRendererImpl::renderTransparentShapes()
+void GLSLSceneRendererImpl::renderTransparentShape(SgShape* shape, Affine3 modelMatrix, unsigned int pickId)
+{
+    if(isPicking){
+        setPickColor(pickId);
+    } else {
+        renderMaterial(shape->material());
+    }
+    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(shape->mesh(), modelMatrix);
+    if(!handleSet->isValid()){
+        createMeshVertexArray(shape->mesh(), handleSet);
+    }
+    glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+}
+
+
+void GLSLSceneRenderer::dispatchToTransparentPhase(std::function<void()> renderingFunction)
+{
+    impl->transparentRenderingFunctions.push_back(renderingFunction);
+}
+
+
+void GLSLSceneRendererImpl::renderTransparentObjects()
 {
     if(!isPicking){
         glEnable(GL_BLEND);
@@ -903,20 +1063,9 @@ void GLSLSceneRendererImpl::renderTransparentShapes()
         glDepthMask(GL_FALSE);
     }
 
-    const int n = transparentShapes.size();
+    const int n = transparentRenderingFunctions.size();
     for(int i=0; i < n; ++i){
-        TraversedShape* transparent = transparentShapes[i];
-        SgShape* shape = transparent->shape;
-        if(isPicking){
-            setPickColor(transparent->pickId);
-        } else {
-            renderMaterial(shape->material());
-        }
-        ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(shape->mesh(), transparent->modelMatrix);
-        if(!handleSet->isValid()){
-            createMeshVertexArray(shape->mesh(), handleSet);
-        }
-        glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+        transparentRenderingFunctions[i]();
     }
 
     if(!isPicking){
@@ -924,7 +1073,7 @@ void GLSLSceneRendererImpl::renderTransparentShapes()
         glDepthMask(GL_TRUE);
     }
 
-    transparentShapes.clear();
+    transparentRenderingFunctions.clear();
 }
 
 
@@ -933,17 +1082,17 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
     if(!material){
         material = defaultMaterial;
     }
-    
-    if(currentNolightingProgram){
-        setNolightingColor(material->diffuseColor());
 
-    } else if(currentLightingProgram){
+    if(currentLightingProgram == materialProgram){
         setDiffuseColor(material->diffuseColor());
         setAmbientColor(material->ambientIntensity() * material->diffuseColor());
         setEmissionColor(material->emissiveColor());
         setSpecularColor(material->specularColor());
         setShininess((127.0f * material->shininess()) + 1.0f);
         setAlpha(1.0 - material->transparency());
+
+    } else if(currentNolightingProgram){
+        setNolightingColor(material->diffuseColor());
     }
 }
 
@@ -1028,13 +1177,7 @@ static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
 }
 
 
-void GLSLSceneRenderer::visitPointSet(SgPointSet* pointSet)
-{
-    impl->visitPointSet(pointSet);
-}
-
-
-void GLSLSceneRendererImpl::visitPointSet(SgPointSet* pointSet)
+void GLSLSceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
@@ -1125,13 +1268,7 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 }
 
 
-void GLSLSceneRenderer::visitLineSet(SgLineSet* lineSet)
-{
-    impl->visitLineSet(lineSet);
-}
-
-
-void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
+void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 {
     if(isRenderingShadowMap){
         return;
@@ -1156,30 +1293,18 @@ void GLSLSceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 }
 
 
-void GLSLSceneRenderer::visitPreprocessed(SgPreprocessed* preprocessed)
+void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-
-}
-
-
-void GLSLSceneRenderer::visitLight(SgLight* light)
-{
-
-}
-
-
-void GLSLSceneRenderer::visitOverlay(SgOverlay* overlay)
-{
-    if(isPicking()){
+    if(isPicking){
         return;
     }
     
 }
 
 
-bool GLSLSceneRenderer::isPicking()
+void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 {
-    return impl->isPicking;
+    renderGroup(outline);
 }
 
 
@@ -1218,7 +1343,7 @@ void GLSLSceneRenderer::setColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setDiffuseColor(const Vector3f& color)
 {
     if(!stateFlag[DIFFUSE_COLOR] || diffuseColor != color){
-        currentLightingProgram->setDiffuseColor(color);
+        materialProgram->setDiffuseColor(color);
         diffuseColor = color;
         stateFlag.set(DIFFUSE_COLOR);
     }
@@ -1234,7 +1359,7 @@ void GLSLSceneRenderer::setDiffuseColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setAmbientColor(const Vector3f& color)
 {
     if(!stateFlag[AMBIENT_COLOR] || ambientColor != color){
-        currentLightingProgram->setAmbientColor(color);
+        materialProgram->setAmbientColor(color);
         ambientColor = color;
         stateFlag.set(AMBIENT_COLOR);
     }
@@ -1250,7 +1375,7 @@ void GLSLSceneRenderer::setAmbientColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setEmissionColor(const Vector3f& color)
 {
     if(!stateFlag[EMISSION_COLOR] || emissionColor != color){
-        currentLightingProgram->setEmissionColor(color);
+        materialProgram->setEmissionColor(color);
         emissionColor = color;
         stateFlag.set(EMISSION_COLOR);
     }
@@ -1266,7 +1391,7 @@ void GLSLSceneRenderer::setEmissionColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setSpecularColor(const Vector3f& color)
 {
     if(!stateFlag[SPECULAR_COLOR] || specularColor != color){
-        currentLightingProgram->setSpecularColor(color);
+        materialProgram->setSpecularColor(color);
         specularColor = color;
         stateFlag.set(SPECULAR_COLOR);
     }
@@ -1282,7 +1407,7 @@ void GLSLSceneRenderer::setSpecularColor(const Vector3f& color)
 void GLSLSceneRendererImpl::setShininess(float s)
 {
     if(!stateFlag[SHININESS] || shininess != s){
-        currentLightingProgram->setShininess(s);
+        materialProgram->setShininess(s);
         shininess = s;
         stateFlag.set(SHININESS);
     }
@@ -1298,7 +1423,7 @@ void GLSLSceneRenderer::setShininess(float s)
 void GLSLSceneRendererImpl::setAlpha(float a)
 {
     if(!stateFlag[ALPHA] || alpha != a){
-        currentLightingProgram->setAlpha(a);
+        materialProgram->setAlpha(a);
         alpha = a;
         stateFlag.set(ALPHA);
     }
@@ -1434,30 +1559,4 @@ void GLSLSceneRenderer::enableUnusedCacheCheck(bool on)
         impl->nextShapeHandleSetMap->clear();
     }
     impl->doUnusedShapeHandleSetCheck = on;
-}
-
-
-const Affine3& GLSLSceneRenderer::currentModelTransform() const
-{
-    return impl->modelMatrixStack.back();
-}
-
-
-const Matrix4& GLSLSceneRenderer::projectionMatrix() const
-{
-    return impl->projectionMatrix;
-}
-
-
-void GLSLSceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
-{
-    impl->visitOutlineGroup(outline);
-}
-
-
-void GLSLSceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
-{
-    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
-        (*p)->accept(*self);
-    }
 }

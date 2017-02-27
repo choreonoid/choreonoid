@@ -4,7 +4,7 @@
 
 #include "SceneUtil.h"
 #include "SceneDrawables.h"
-#include "SceneVisitor.h"
+#include "PolymorphicFunctionSet.h"
 
 using namespace std;
 using namespace cnoid;
@@ -57,7 +57,7 @@ Affine3 cnoid::calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::
 
 namespace {
 
-class Transparenter : SceneVisitor
+class Transparenter : PolymorphicFunctionSet<SgNode>
 {
 public:
     SgCloneMap& cloneMap;
@@ -68,44 +68,57 @@ public:
     Transparenter(SgCloneMap& cloneMap, bool doKeepOrgTransparency)
         : cloneMap(cloneMap),
           doKeepOrgTransparency(doKeepOrgTransparency)
-        {
-
-        }
+    {
+        setFunction<SgGroup>(
+            [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+        setFunction<SgShape>(
+            [&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
+        setFunction<SgPlot>(
+            [&](SgNode* node){ visitPlot(static_cast<SgPlot*>(node)); });
+        updateDispatchTable();
+    }
 
     SgMaterial* getTransparentMaterial(SgMaterial* material)
-        {
-            SgMaterial* modified = cloneMap.getClone(material);
-            if(doKeepOrgTransparency){
-                modified->setTransparency(std::max(transparency, material->transparency()));
-            } else {
-                modified->setTransparency(transparency);
-            }
-            return modified;
+    {
+        SgMaterial* modified = cloneMap.getClone(material);
+        if(doKeepOrgTransparency){
+            modified->setTransparency(std::max(transparency, material->transparency()));
+        } else {
+            modified->setTransparency(transparency);
         }
+        return modified;
+    }
         
-    virtual void visitShape(SgShape* shape)
-        {
-            if(shape->material()){
-                shape->setMaterial(getTransparentMaterial(shape->material()));
-                ++numModified;
-            }
+    void visitGroup(SgGroup* group)
+    {
+        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+            dispatch(*p);
         }
+    }
+    
+    void visitShape(SgShape* shape)
+    {
+        if(shape->material()){
+            shape->setMaterial(getTransparentMaterial(shape->material()));
+            ++numModified;
+        }
+    }
                 
-    virtual void visitPlot(SgPlot* plot)
-        {
-            if(plot->material()){
-                plot->setMaterial(getTransparentMaterial(plot->material()));
-                ++numModified;
-            }
+    void visitPlot(SgPlot* plot)
+    {
+        if(plot->material()){
+            plot->setMaterial(getTransparentMaterial(plot->material()));
+            ++numModified;
         }
+    }
 
     int apply(SgNode* topNode, float transparency)
-        {
-            this->transparency = transparency;
-            numModified = 0;
-            topNode->accept(*this);
-            return numModified;
-        }
+    {
+        this->transparency = transparency;
+        numModified = 0;
+        dispatch(topNode);
+        return numModified;
+    }
 };
 
 }

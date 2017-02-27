@@ -26,13 +26,13 @@ public:
     typedef std::function<SceneDevice*(Device* device)> SceneDeviceFactory;
     template<class DeviceType>
     static void registerSceneDeviceFactory(const SceneDeviceFactory& factory) {
-        registerSceneDeviceFactory_(&typeid(DeviceType), factory);
+        registerSceneDeviceFactory_(typeid(DeviceType), factory);
     }
 
     static SceneDevice* create(Device* device);
 
     SceneDevice(Device* device);
-    SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> sceneUpdateFunction);
+    SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> functionOnStateChanged = nullptr);
     
     template <class DeviceType> DeviceType* device() {
         return static_cast<DeviceType*>(device_);
@@ -44,7 +44,13 @@ public:
     const Device* device() const { return device_; }
 
     void setSceneUpdateFunction(std::function<void()> function);
-    void updateScene() { if(sceneUpdateFunction) sceneUpdateFunction(); }
+    void setFunctionOnTimeChanged(std::function<void(double time)> function);
+    
+    void updateScene(double time) {
+        if(functionOnStateChanged) functionOnStateChanged();
+        if(functionOnTimeChanged) functionOnTimeChanged(time);
+    }
+    
     void setSceneUpdateConnection(bool on);
 
 protected:
@@ -53,10 +59,12 @@ protected:
 private:
     SceneDevice(const SceneDevice& org);
     Device* device_;
-    std::function<void()> sceneUpdateFunction;
-    Connection connection;
+    std::function<void()> functionOnStateChanged;
+    std::function<void(double time)> functionOnTimeChanged;
+    Connection stateChangeConnection;
+    Connection timeChangeConnection;
 
-    static void registerSceneDeviceFactory_(const std::type_info* pTypeInfo, const SceneDeviceFactory& factory);
+    static void registerSceneDeviceFactory_(const std::type_info& type, const SceneDeviceFactory& factory);
 };
     
 typedef ref_ptr<SceneDevice> SceneDevicePtr;

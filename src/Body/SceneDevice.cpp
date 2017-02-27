@@ -14,7 +14,8 @@
 #include "SpotLight.h"
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
-#include <map>
+#include <typeindex>
+#include <unordered_map>
 
 using namespace std;
 using namespace std::placeholders;
@@ -22,13 +23,7 @@ using namespace cnoid;
 
 namespace {
 
-struct compare {
-    bool operator ()(const std::type_info* a, const std::type_info* b) const {
-        return a->before(*b);
-    }
-};
-
-typedef std::map<const std::type_info*, SceneDevice::SceneDeviceFactory, compare> SceneDeviceFactoryMap;
+typedef std::unordered_map<std::type_index, SceneDevice::SceneDeviceFactory> SceneDeviceFactoryMap;
 SceneDeviceFactoryMap sceneDeviceFactories;
 
 
@@ -68,21 +63,21 @@ SceneDevice* createScenePerspectiveCamera(Device* device)
 {
     Camera* camera = static_cast<Camera*>(device);
     SgPerspectiveCamera* scene = new SgPerspectiveCamera();
-    return new SceneDevice(camera, scene, std::bind(updatePerspectiveCamera, camera, scene));
+    return new SceneDevice(camera, scene, [=](){ updatePerspectiveCamera(camera, scene); });
 }
         
 SceneDevice* createScenePointLight(Device* device)
 {
     PointLight* pointLight = static_cast<PointLight*>(device);
     SgPointLight* scene = new SgPointLight;
-    return new SceneDevice(pointLight, scene, std::bind(updatePointLight, pointLight, scene));
+    return new SceneDevice(pointLight, scene, [=](){ updatePointLight(pointLight, scene); });
 }
 
 SceneDevice* createSceneSpotLight(Device* device)
 {
     SpotLight* spotLight = static_cast<SpotLight*>(device);
     SgSpotLight* scene = new SgSpotLight;
-    return new SceneDevice(spotLight, scene, std::bind(updateSpotLight, spotLight, scene));
+    return new SceneDevice(spotLight, scene, [=](){ updateSpotLight(spotLight, scene); });
 }
 
 SceneDevice* createNullSceneDevice(Device* device)
@@ -90,39 +85,23 @@ SceneDevice* createNullSceneDevice(Device* device)
     return 0;
 }
 
-struct SceneDeviceFactoryMapInitializer
-{
-    SceneDeviceFactoryMapInitializer() {
-        sceneDeviceFactories[&typeid(ForceSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(RateGyroSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(AccelerationSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(Camera)] = createScenePerspectiveCamera;
-        sceneDeviceFactories[&typeid(RangeCamera)] = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(RangeSensor)]  = createNullSceneDevice;
-        sceneDeviceFactories[&typeid(PointLight)] = createScenePointLight;
-        sceneDeviceFactories[&typeid(SpotLight)]  = createSceneSpotLight;
-    }
-};
-SceneDeviceFactoryMapInitializer initializer;
-
-
 }
 
 
-void SceneDevice::registerSceneDeviceFactory_(const std::type_info* pTypeInfo, const SceneDeviceFactory& factory)
+void SceneDevice::registerSceneDeviceFactory_(const std::type_info& type, const SceneDeviceFactory& factory)
 {
-    sceneDeviceFactories[pTypeInfo] = factory;
+    sceneDeviceFactories[type] = factory;
 }
 
 
 static bool createSceneDevice(Device* device, const std::type_info& type, SceneDevice*& out_sceneDevice)
 {
-    SceneDeviceFactoryMap::iterator p = sceneDeviceFactories.find(&type);
+    SceneDeviceFactoryMap::iterator p = sceneDeviceFactories.find(type);
     if(p != sceneDeviceFactories.end()){
         SceneDevice::SceneDeviceFactory& factory = p->second;
         out_sceneDevice = factory(device);
         if(out_sceneDevice){
-            out_sceneDevice->updateScene();
+            out_sceneDevice->updateScene(0.0);
             return true;
         } else {
             return false;
@@ -147,19 +126,24 @@ SceneDevice::SceneDevice(Device* device)
 }
 
 
-SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> sceneUpdateFunction)
-    : device_(device)
+SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> functionOnStateChanged)
+    : SceneDevice(device)
 {
-    setTransform(device->link()->Rs().transpose() * device->T_local());
     sceneNode->setName(device->name());
     addChild(sceneNode);
-    setSceneUpdateFunction(sceneUpdateFunction);
+    setSceneUpdateFunction(functionOnStateChanged);
 }
     
     
 void SceneDevice::setSceneUpdateFunction(std::function<void()> function)
 {
-    sceneUpdateFunction = function;
+    functionOnStateChanged = function;
+}
+
+
+void SceneDevice::setFunctionOnTimeChanged(std::function<void(double time)> function)
+{
+    functionOnTimeChanged = function;
 }
 
 
@@ -172,14 +156,40 @@ SceneDevice::SceneDevice(const SceneDevice& org)
 
 SceneDevice::~SceneDevice()
 {
-    connection.disconnect();
+    stateChangeConnection.disconnect();
+    timeChangeConnection.disconnect();
 }
-
 
 void SceneDevice::setSceneUpdateConnection(bool on)
 {
-    connection.disconnect();
-    if(on && sceneUpdateFunction){
-        connection = device_->sigStateChanged().connect(sceneUpdateFunction);
+    stateChangeConnection.disconnect();
+    timeChangeConnection.disconnect();
+    if(on){
+        if(functionOnStateChanged){
+            stateChangeConnection = device_->sigStateChanged().connect(functionOnStateChanged);
+        }
+        if(functionOnTimeChanged){
+            timeChangeConnection = device_->sigTimeChanged().connect(functionOnTimeChanged);
+        }
     }
 }
+
+namespace {
+
+struct SceneDeviceFactoryRegistration
+{
+    SceneDeviceFactoryRegistration() {
+        SceneDevice::registerSceneDeviceFactory<ForceSensor>(createNullSceneDevice);
+        SceneDevice::registerSceneDeviceFactory<RateGyroSensor>(createNullSceneDevice);
+        SceneDevice::registerSceneDeviceFactory<AccelerationSensor>(createNullSceneDevice);
+        SceneDevice::registerSceneDeviceFactory<Camera>(createScenePerspectiveCamera);
+        SceneDevice::registerSceneDeviceFactory<RangeCamera>(createNullSceneDevice);
+        SceneDevice::registerSceneDeviceFactory<RangeSensor>(createNullSceneDevice);
+        SceneDevice::registerSceneDeviceFactory<PointLight>(createScenePointLight);
+        SceneDevice::registerSceneDeviceFactory<SpotLight>(createSceneSpotLight);
+    }
+} registration;
+
+}
+
+

@@ -1,0 +1,35 @@
+diff --git a/sol.hpp b/sol.hpp
+index e7dbdab..5b16af3 100644
+--- a/sol.hpp
++++ b/sol.hpp
+@@ -4769,25 +4769,25 @@ namespace sol {
+ 	namespace detail {
+ 
+ 		template <typename T>
+-		struct has_derived {
++		struct __attribute__ ((visibility("default"))) has_derived {
+ 			static bool value;
+ 		};
+ 
+-		template <typename T>
++		template <typename T> __attribute__ ((visibility("default"))) 
+ 		bool has_derived<T>::value = false;
+ 
+-		inline std::size_t unique_id() {
++		__attribute__ ((visibility("default"))) inline std::size_t unique_id() {
+ 			static std::atomic<std::size_t> x(0);
+ 			return ++x;
+ 		}
+ 
+ 		template <typename T>
+-		struct id_for {
++		struct __attribute__ ((visibility("default"))) id_for {
+ 			static const std::size_t value;
+ 		};
+ 
+ 		template <typename T>
+-		const std::size_t id_for<T>::value = unique_id();
++		__attribute__ ((visibility("default"))) const std::size_t id_for<T>::value = unique_id();
+ 
+ 		inline decltype(auto) base_class_check_key() {
+ 			static const auto& key = "class_check";

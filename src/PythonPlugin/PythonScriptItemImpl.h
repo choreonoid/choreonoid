@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H_INCLUDED
-#define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H_INCLUDED
+#ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H
+#define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H
 
 #include "PythonExecutor.h"
 #include <cnoid/ScriptItem>
@@ -23,7 +23,7 @@ public:
     void onDisconnectedFromRoot();
     bool setScriptFilename(const std::string& filename);
     const std::string& scriptFilename() const { return scriptFilename_; }
-    bool setBackgroundMode(bool on);
+    void setBackgroundMode(bool on);
     bool isBackgroundMode() const;
     bool isRunning() const;
     bool execute();

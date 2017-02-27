@@ -315,29 +315,22 @@ SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
 }
 
 
-SgMesh* MeshGenerator::generateArrow(double length, double width, double coneLengthRatio, double coneWidthRatio)
+SgMesh* MeshGenerator::generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight)
 {
-    double r = width / 2.0;
-    double h = length * coneLengthRatio;
     SgShapePtr cone = new SgShape;
     //setDivisionNumber(20);
-    cone->setMesh(generateCone(r * coneWidthRatio, h));
+    cone->setMesh(generateCone(coneRadius, coneHeight));
     SgPosTransform* conePos = new SgPosTransform;
-    conePos->setTranslation(Vector3(0.0, length / 2.0 + h / 2.0, 0.0));
+    conePos->setTranslation(Vector3(0.0, cylinderHeight / 2.0 + coneHeight / 2.0, 0.0));
     conePos->addChild(cone);
 
     SgShapePtr cylinder = new SgShape;
     //setDivisionNumber(12);
-    cylinder->setMesh(generateCylinder(r, length, true, false));
-    //cylinder->setMesh(generateCylinder(r, length - h, true, false));
-    //SgPosTransform* cylinderPos = new SgPosTransform;
-    //cylinderPos->setTranslation(Vector3(0.0, -h, 0.0));
-    //cylinderPos->addChild(cylinder);
+    cylinder->setMesh(generateCylinder(cylinderRadius, cylinderHeight, true, false));
         
     MeshExtractor meshExtractor;
     SgGroupPtr group = new SgGroup;
     group->addChild(conePos);
-    //group->addChild(cylinderPos);
     group->addChild(cylinder);
     return meshExtractor.integrate(group);
 }

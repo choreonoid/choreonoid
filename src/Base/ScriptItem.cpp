@@ -49,12 +49,6 @@ std::string ScriptItem::identityName() const
 }
 
 
-bool ScriptItem::setBackgroundMode(bool on)
-{
-    return on ? false : true;
-}
-
-
 bool ScriptItem::isBackgroundMode() const
 {
     return false;

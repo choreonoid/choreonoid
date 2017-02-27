@@ -118,6 +118,7 @@ public:
     SimulatorItemImpl* simImpl;
 
     bool isActive;
+    bool isDynamic;
     bool areShapesCloned;
 
     Deque2D<double> jointPosBuf;
@@ -154,7 +155,7 @@ public:
     void flushResultsToBodyMotionItems();
     void flushResultsToBody();
     void flushResultsToWorldLogFile(int bufferFrame);
-    void notifyResults();
+    void notifyResults(double time);
 
     // Functions defined in the ControllerItemIO class
     virtual Body* body();
@@ -481,6 +482,7 @@ SimulationBodyImpl::SimulationBodyImpl(SimulationBody* self, Body* body)
     simImpl = 0;
     areShapesCloned = false;
     isActive = false;
+    isDynamic = false;
 }
 
 
@@ -549,11 +551,12 @@ bool SimulationBodyImpl::initialize(SimulatorItemImpl* simImpl, BodyItem* bodyIt
     deviceStateConnections.disconnect();
     controllers.clear();
     resultItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
-    
-    bool doReset = simImpl->doReset && !body_->isStaticModel();
+
+    isDynamic = !body_->isStaticModel();
+    bool doReset = simImpl->doReset && isDynamic;
     extractAssociatedItems(doReset);
     
-    if(body_->isStaticModel()){
+    if(!isDynamic && body_->numDevices() == 0){
         return true;
     }
 
@@ -672,7 +675,10 @@ void SimulationBody::initializeResultBuffers()
 void SimulationBodyImpl::initializeResultBuffers()
 {
     jointPosBuf.resizeColumn(body_->numAllJoints());
-    const int numLinksToRecord = simImpl->isAllLinkPositionOutputMode ? body_->numLinks() : 1;
+    int numLinksToRecord = 0;
+    if(isDynamic){
+        numLinksToRecord = simImpl->isAllLinkPositionOutputMode ? body_->numLinks() : 1;
+    }
     linkPosBuf.resizeColumn(numLinksToRecord);
 
     const DeviceList<>& devices = body_->devices();
@@ -827,12 +833,13 @@ void SimulationBodyImpl::bufferResults()
             q[i] = body_->joint(i)->q();
         }
     }
-    MultiSE3Deque::Row pos = linkPosBuf.append();
-    for(int i=0; i < linkPosBuf.colSize(); ++i){
-        Link* link = body_->link(i);
-        pos[i].set(link->p(), link->R());
+    if(linkPosBuf.colSize() > 0){
+        MultiSE3Deque::Row pos = linkPosBuf.append();
+        for(int i=0; i < linkPosBuf.colSize(); ++i){
+            Link* link = body_->link(i);
+            pos[i].set(link->p(), link->R());
+        }
     }
-
     if(deviceStateBuf.colSize() > 0){
         const int prevIndex = std::max(0, deviceStateBuf.rowSize() - 1);
         Deque2D<DeviceStatePtr>::Row current = deviceStateBuf.append();
@@ -883,14 +890,15 @@ void SimulationBodyImpl::flushResultsToBodyMotionItems()
     const int ringBufferSize = simImpl->ringBufferSize;
     const int numBufFrames = linkPosBuf.rowSize();
 
-    for(int i=0; i < numBufFrames; ++i){
-        MultiSE3Deque::Row buf = linkPosBuf.row(i);
-        if(linkPosResults->numFrames() >= ringBufferSize){
-            linkPosResults->popFrontFrame();
+    if(linkPosBuf.colSize() > 0){
+        for(int i=0; i < numBufFrames; ++i){
+            MultiSE3Deque::Row buf = linkPosBuf.row(i);
+            if(linkPosResults->numFrames() >= ringBufferSize){
+                linkPosResults->popFrontFrame();
+            }
+            std::copy(buf.begin(), buf.end(), linkPosResults->appendFrame().begin());
         }
-        std::copy(buf.begin(), buf.end(), linkPosResults->appendFrame().begin());
     }
-            
     if(jointPosBuf.colSize() > 0){
         for(int i=0; i < numBufFrames; ++i){
             Deque2D<double>::Row buf = jointPosBuf.row(i);
@@ -980,12 +988,19 @@ void SimulationBodyImpl::flushResultsToWorldLogFile(int bufferFrame)
 }
 
 
-void SimulationBodyImpl::notifyResults()
+/**
+   This function is called when the no recording mode
+*/
+void SimulationBodyImpl::notifyResults(double time)
 {
-    bodyItem->notifyKinematicStateChange(!simImpl->isAllLinkPositionOutputMode);
-
-    for(size_t i=0; i < devicesToNotifyResults.size(); ++i){
-        devicesToNotifyResults[i]->notifyStateChange();
+    if(isDynamic){
+        bodyItem->notifyKinematicStateChange(!simImpl->isAllLinkPositionOutputMode);
+    }
+    for(Device* device : devicesToNotifyResults){
+        device->notifyStateChange();
+    }
+    for(Device* device : bodyItem->body()->devices()){
+        device->notifyTimeChange(time);
     }
 }
 
@@ -2027,10 +2042,11 @@ void SimulatorItemImpl::flushResults()
         double fillLevel = frame / worldFrameRate;
         timeBar->updateFillLevel(fillLevelId, fillLevel);
     } else {
+        const double time = frame / worldFrameRate;
         for(size_t i=0; i < activeSimBodies.size(); ++i){
-            activeSimBodies[i]->impl->notifyResults();
+            activeSimBodies[i]->impl->notifyResults(time);
         }
-        timeBar->setTime(frame / worldFrameRate);
+        timeBar->setTime(time);
     }
 }
 

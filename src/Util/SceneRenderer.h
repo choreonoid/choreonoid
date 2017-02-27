@@ -6,23 +6,33 @@
 #ifndef CNOID_UTIL_SCENE_RENDERER_H
 #define CNOID_UTIL_SCENE_RENDERER_H
 
-#include <cnoid/SceneGraph>
-#include <cnoid/SceneVisitor>
+#include "SceneGraph.h"
+#include "PolymorphicFunctionSet.h"
+#include "ValueTree.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class SceneRendererImpl;
 
-class CNOID_EXPORT SceneRenderer : public SceneVisitor
+class CNOID_EXPORT SceneRenderer
 {
 public:
     SceneRenderer();
     virtual ~SceneRenderer();
     
+    static void addExtension(std::function<void(SceneRenderer* renderer)> func);
+    virtual void applyExtensions();
+    virtual void applyNewExtensions();
+
     virtual SgGroup* sceneRoot() = 0;
     virtual SgGroup* scene() = 0;
     virtual void clearScene();
+
+    typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
+    virtual NodeFunctionSet& renderingFunctions() = 0;
+
+    virtual void renderNode(SgNode* node) = 0;
 
     int numCameras() const;
     SgCamera* camera(int index);
@@ -58,7 +68,6 @@ public:
     virtual const Affine3& currentModelTransform() const = 0;
     virtual const Matrix4& projectionMatrix() const = 0;
 
-
     /**
        This function updates the information on preprocessed nodes such as
        cameras, lights, and fogs.
@@ -70,12 +79,14 @@ public:
 
     Signal<void()>& sigRenderingRequest();
 
+    Mapping* property() { return property_; }
+
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);
 
-
 private:
     SceneRendererImpl* impl;
+    MappingPtr property_;
 };
 
 }

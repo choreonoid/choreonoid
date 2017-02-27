@@ -106,6 +106,5 @@ endif()
 target_link_libraries(${target} CnoidBase CnoidBody ${boost_libraries})
 apply_common_setting_for_plugin(${target} "${headers}")
 
-if(ENABLE_PYTHON)
-  add_subdirectory(python)
-endif()
+add_subdirectory(python)
+add_subdirectory(lua)

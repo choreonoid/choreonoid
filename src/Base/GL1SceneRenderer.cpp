@@ -12,7 +12,6 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
-#include <functional>
 #include <unordered_map>
 #include <iostream>
 
@@ -152,6 +151,8 @@ public:
         
     GL1SceneRenderer* self;
 
+    SceneRenderer::NodeFunctionSet renderingFunctions;
+
     Affine3Array Vstack; // stack of the model/view matrices
 
     typedef vector<Vector4f, Eigen::aligned_allocator<Vector4f> > ColorArray;
@@ -166,22 +167,22 @@ public:
         vector<char> scaledImageBuf;
     };
     std::unique_ptr<Buf> buf;
-        
-    CacheMap cacheMaps[2];
-    bool doUnusedCacheCheck;
-    bool isCheckingUnusedCaches;
-    bool hasValidNextCacheMap;
-    bool isCacheClearRequested;
-    int currentCacheMapIndex;
-    CacheMap* currentCacheMap;
-    CacheMap* nextCacheMap;
-    DisplayListCache* currentDisplayListCache;
 
     int currentDisplayListCacheTopViewMatrixIndex;
 
     Affine3 lastViewMatrix;
     Matrix4 lastProjectionMatrix;
     Affine3 currentModelTransform;
+
+    bool doUnusedCacheCheck;
+    bool isCheckingUnusedCaches;
+    bool hasValidNextCacheMap;
+    bool isCacheClearRequested;
+    CacheMap cacheMaps[2];
+    CacheMap* currentCacheMap;
+    CacheMap* nextCacheMap;
+    int currentCacheMapIndex;
+    DisplayListCache* currentDisplayListCache;
 
     int numSystemLights;
     int prevNumLights;
@@ -260,8 +261,22 @@ public:
     ostream* os_;
     ostream& os() { return *os_; }
 
+    void renderChildNodes(SgGroup* group){
+        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+            renderingFunctions.dispatch(*p);
+        }
+    }
+    
+    Vector4f createColorWithAlpha(const Vector3f& c3){
+        Vector4f c4;
+        c4.head<3>() = c3;
+        c4[3] = lastAlpha;
+        return c4;
+    }
+
     GL1SceneRendererImpl(GL1SceneRenderer* self);
     ~GL1SceneRendererImpl();
+    void initialize();
     bool initializeGL();
     void beginRendering(bool doRenderingCommands);
     void beginActualRendering(SgCamera* camera);
@@ -276,20 +291,24 @@ public:
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
     void popPickName();
-    void visitInvariantGroup(SgInvariantGroup* group);
-    void visitDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID);
-    void visitShape(SgShape* shape);
-    void visitPointSet(SgPointSet* pointSet);
-    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
-    void visitLineSet(SgLineSet* lineSet);
+
+    void renderGroup(SgGroup* group);
+    void renderInvariantGroup(SgInvariantGroup* group);
+    void renderDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID);
+    void renderTransform(SgTransform* transform);
+    void renderShape(SgShape* shape);
+    void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
+    void renderTransparentShapes();
     void putMeshData(SgMesh* mesh);
     void renderMesh(SgMesh* mesh, bool hasTexture);
-    void renderTransparentShapes();
     void writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, bool hasTexture);
-    void visitOutlineGroup(SgOutlineGroup* outline);
-
+    void renderPointSet(SgPointSet* pointSet);
+    void renderPlot(SgPlot* plot, SgVertexArray& expandedVertices, GLenum primitiveMode);
+    void renderLineSet(SgLineSet* lineSet);        
+    void renderOverlay(SgOverlay* overlay);
+    void renderOutlineGroup(SgOutlineGroup* outline);
     void clearGLState();
     void setColor(const Vector3f& color);
     void enableColorMaterial(bool on);
@@ -307,13 +326,6 @@ public:
     void setPointSize(float size);
     void setLineWidth(float width);
     void getCurrentCameraTransform(Affine3& T);
-
-    Vector4f createColorWithAlpha(const Vector3f& c3){
-        Vector4f c4;
-        c4.head<3>() = c3;
-        c4[3] = lastAlpha;
-        return c4;
-    }
 };
 
 }
@@ -322,6 +334,7 @@ public:
 GL1SceneRenderer::GL1SceneRenderer()
 {
     impl = new GL1SceneRendererImpl(this);
+    impl->initialize();
 }
 
 
@@ -329,11 +342,18 @@ GL1SceneRenderer::GL1SceneRenderer(SgGroup* sceneRoot)
     : GLSceneRenderer(sceneRoot)
 {
     impl = new GL1SceneRendererImpl(this);
+    impl->initialize();
 }
 
 
 GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     : self(self)
+{
+
+}
+
+
+void GL1SceneRendererImpl::initialize()
 {
     Vstack.reserve(16);
     
@@ -376,6 +396,28 @@ GL1SceneRendererImpl::GL1SceneRendererImpl(GL1SceneRenderer* self)
     clearGLState();
 
     os_ = &nullout();
+
+    renderingFunctions.setFunction<SgGroup>(
+        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+    renderingFunctions.setFunction<SgInvariantGroup>(
+        [&](SgNode* node){ renderGroup(static_cast<SgInvariantGroup*>(node)); });
+    renderingFunctions.setFunction<SgTransform>(
+        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+    renderingFunctions.setFunction<SgUnpickableGroup>(
+        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+    renderingFunctions.setFunction<SgShape>(
+        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+    renderingFunctions.setFunction<SgPointSet>(
+        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+    renderingFunctions.setFunction<SgLineSet>(
+        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+    renderingFunctions.setFunction<SgOverlay>(
+        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+    renderingFunctions.setFunction<SgOutlineGroup>(
+        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+
+    self->applyExtensions();
+    renderingFunctions.updateDispatchTable();
 }
 
 
@@ -388,6 +430,12 @@ GL1SceneRenderer::~GL1SceneRenderer()
 GL1SceneRendererImpl::~GL1SceneRendererImpl()
 {
 
+}
+
+
+SceneRenderer::NodeFunctionSet& GL1SceneRenderer::renderingFunctions()
+{
+    return impl->renderingFunctions;
 }
 
 
@@ -741,6 +789,8 @@ void GL1SceneRendererImpl::endRendering()
 
 void GL1SceneRenderer::render()
 {
+    applyNewExtensions();
+    impl->renderingFunctions.updateDispatchTable();
     impl->render();
 }
 
@@ -749,7 +799,7 @@ void GL1SceneRendererImpl::render()
 {
     beginRendering(true);
 
-    self->sceneRoot()->accept(*self);
+    renderingFunctions.dispatch(self->sceneRoot());
 
     if(!transparentShapeInfos.empty()){
         renderTransparentShapes();
@@ -869,24 +919,24 @@ inline void GL1SceneRendererImpl::popPickName()
 }
 
 
-void GL1SceneRenderer::visitGroup(SgGroup* group)
+void GL1SceneRenderer::renderNode(SgNode* node)
 {
-    impl->pushPickName(group);
-    SceneVisitor::visitGroup(group);
-    impl->popPickName();
+    impl->renderingFunctions.dispatch(node);
 }
 
 
-void GL1SceneRenderer::visitInvariantGroup(SgInvariantGroup* group)
+void GL1SceneRendererImpl::renderGroup(SgGroup* group)
 {
-    impl->visitInvariantGroup(group);
+    pushPickName(group);
+    renderChildNodes(group);
+    popPickName();
 }
 
 
-void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
+void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {
     if(!USE_DISPLAY_LISTS || isCompiling){
-        self->visitGroup(group);
+        renderGroup(group);
 
     } else {
         DisplayListCache* cache;
@@ -904,7 +954,7 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
 
             cache->listID = glGenLists(1);
             if(cache->listID){
-                visitDisplayListSubTree(group, cache, cache->listID);
+                renderDisplayListSubTree(group, cache, cache->listID);
 
                 if(stateFlag[LIGHTING] || stateFlag[CURRENT_COLOR]){
                     cache->useIDforPicking = true;
@@ -922,7 +972,7 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
                     currentDisplayListCacheTopViewMatrixIndex = Vstack.size() - 1;
                     cache->listIDforPicking = glGenLists(1);
                     if(cache->listIDforPicking){
-                        visitDisplayListSubTree(group, cache, cache->listIDforPicking);
+                        renderDisplayListSubTree(group, cache, cache->listIDforPicking);
                     }
                 }
                 listID = cache->listIDforPicking;
@@ -959,7 +1009,7 @@ void GL1SceneRendererImpl::visitInvariantGroup(SgInvariantGroup* group)
 }
 
 
-void GL1SceneRendererImpl::visitDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID)
+void GL1SceneRendererImpl::renderDisplayListSubTree(SgInvariantGroup* group, DisplayListCache* cache, GLuint& listID)
 {
     glNewList(listID, GL_COMPILE);
 
@@ -967,19 +1017,18 @@ void GL1SceneRendererImpl::visitDisplayListSubTree(SgInvariantGroup* group, Disp
     auto orgNextCacheMap = nextCacheMap;
     nextCacheMap = &cache->cacheMap;
     clearGLState();
-    self->visitGroup(group);
+    renderGroup(group);
     nextCacheMap = orgNextCacheMap;
     isCompiling = false;
     glEndList();
 }    
 
 
-void GL1SceneRenderer::visitTransform(SgTransform* transform)
+void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
     transform->getTransform(T);
 
-    Affine3Array& Vstack = impl->Vstack;
     Vstack.push_back(Vstack.back() * T);
 
     glPushMatrix();
@@ -991,8 +1040,11 @@ void GL1SceneRenderer::visitTransform(SgTransform* transform)
       glEnable(GL_NORMALIZE);
       }
     */
-    
-    visitGroup(transform);
+
+    // renderGroup(transform);
+    pushPickName(transform);
+    renderChildNodes(transform);
+    popPickName();
     
     /*
       if(isNotRotationMatrix){
@@ -1005,7 +1057,7 @@ void GL1SceneRenderer::visitTransform(SgTransform* transform)
 }
 
 
-void GL1SceneRendererImpl::visitShape(SgShape* shape)
+void GL1SceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh){
@@ -1050,22 +1102,23 @@ void GL1SceneRendererImpl::visitShape(SgShape* shape)
 }
 
 
-void GL1SceneRenderer::visitUnpickableGroup(SgUnpickableGroup* group)
+void GL1SceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!impl->isPicking){
-        visitGroup(group);
+    if(!isPicking){
+        renderGroup(group);
     }
-}
-
-
-void GL1SceneRenderer::visitShape(SgShape* shape)
-{
-    impl->visitShape(shape);
 }
 
 
 void GL1SceneRendererImpl::renderMaterial(const SgMaterial* material)
 {
+    if(!isLightingEnabled){
+        if(material){
+            setColor(material->diffuseColor());
+        }
+        return;
+    }
+    
     if(!material){
         material = defaultMaterial;
     }
@@ -1584,13 +1637,7 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeCache* cache, b
 }
 
 
-void GL1SceneRenderer::visitPointSet(SgPointSet* pointSet)
-{
-    impl->visitPointSet(pointSet);
-}
-
-
-void GL1SceneRendererImpl::visitPointSet(SgPointSet* pointSet)
+void GL1SceneRendererImpl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
         return;
@@ -1687,13 +1734,7 @@ void GL1SceneRendererImpl::renderPlot(SgPlot* plot, SgVertexArray& expandedVerti
 }
 
 
-void GL1SceneRenderer::visitLineSet(SgLineSet* lineSet)
-{
-    impl->visitLineSet(lineSet);
-}
-
-
-void GL1SceneRendererImpl::visitLineSet(SgLineSet* lineSet)
+void GL1SceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 {
     const int n = lineSet->numLines();
     if(!lineSet->hasVertices() || (n <= 0)){
@@ -1721,26 +1762,14 @@ void GL1SceneRendererImpl::visitLineSet(SgLineSet* lineSet)
 }
 
 
-void GL1SceneRenderer::visitPreprocessed(SgPreprocessed* preprocessed)
+void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-
-}
-
-
-void GL1SceneRenderer::visitLight(SgLight* light)
-{
-
-}
-
-
-void GL1SceneRenderer::visitOverlay(SgOverlay* overlay)
-{
-    if(isPicking()){
+    if(isPicking){
         return;
     }
-    
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
+
+    const bool wasLightingEnabled = isLightingEnabled;
+    enableLighting(false);
             
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1754,7 +1783,7 @@ void GL1SceneRenderer::visitOverlay(SgOverlay* overlay)
     v.zNear = 1.0;
     v.zFar = -1.0;
 
-    const Array4i vp = viewport();
+    const Array4i vp = self->viewport();
     overlay->calcViewVolume(vp[2], vp[3], v);
 
     glMatrixMode(GL_PROJECTION);
@@ -1762,18 +1791,53 @@ void GL1SceneRenderer::visitOverlay(SgOverlay* overlay)
     glLoadIdentity();
     glOrtho(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar);
 
-    visitGroup(overlay);
+    renderGroup(overlay);
     
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    
-    glPopAttrib();
+
+    if(wasLightingEnabled){
+        enableLighting(true);
+    }
 }
 
 
-bool GL1SceneRenderer::isPicking()
+void GL1SceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
+{
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_STENCIL_TEST);
+
+    glStencilFunc(GL_ALWAYS, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    renderChildNodes(outline);
+
+    glStencilFunc(GL_NOTEQUAL, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glPushAttrib(GL_POLYGON_BIT);
+    glLineWidth(outline->lineWidth()*2+1);
+    glPolygonMode(GL_FRONT, GL_LINE);
+    setColor(outline->color());
+    enableColorMaterial(true);
+
+    renderChildNodes(outline);
+
+    enableColorMaterial(false);
+    setLineWidth(lineWidth);
+    glPopAttrib();
+
+    glDisable(GL_STENCIL_TEST);
+
+    clearGLState();
+}
+
+
+bool GL1SceneRenderer::isPicking() const
 {
     return impl->isPicking;
 }
@@ -2095,41 +2159,6 @@ void GL1SceneRenderer::setLineWidth(float width)
 }
 
 
-
-SgObject* SgCustomGLNode::clone(SgCloneMap& cloneMap) const
-{
-    return new SgCustomGLNode(*this, cloneMap);
-}
-
-
-void SgCustomGLNode::accept(SceneVisitor& visitor)
-{
-    GL1SceneRenderer* renderer = dynamic_cast<GL1SceneRenderer*>(&visitor);
-    if(renderer){
-        renderer->impl->pushPickName(this);
-        render(*renderer);
-        renderer->impl->popPickName();
-        renderer->impl->clearGLState();
-    } else {
-        visitor.visitGroup(this);
-    }
-}
-    
-
-void SgCustomGLNode::render(GL1SceneRenderer& renderer)
-{
-    if(renderingFunction){
-        renderingFunction(renderer);
-    }
-}
-
-
-void SgCustomGLNode::setRenderingFunction(RenderingFunction f)
-{
-    renderingFunction = f;
-}
-
-
 void GL1SceneRenderer::setDefaultLighting(bool on)
 {
     if(on != impl->defaultLighting){
@@ -2214,45 +2243,4 @@ const Affine3& GL1SceneRenderer::currentModelTransform() const
 const Matrix4& GL1SceneRenderer::projectionMatrix() const
 {
     return impl->lastProjectionMatrix;
-}
-
-
-void GL1SceneRenderer::visitOutlineGroup(SgOutlineGroup* outline)
-{
-    impl->visitOutlineGroup(outline);
-}
-
-
-void GL1SceneRendererImpl::visitOutlineGroup(SgOutlineGroup* outlineGroup)
-{
-    glClearStencil(0);
-    glClear(GL_STENCIL_BUFFER_BIT);
-
-    glEnable(GL_STENCIL_TEST);
-
-    glStencilFunc(GL_ALWAYS, 1, -1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
-        (*p)->accept(*self);
-    }
-
-    glStencilFunc(GL_NOTEQUAL, 1, -1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    glPushAttrib(GL_POLYGON_BIT);
-    glLineWidth(outlineGroup->lineWidth()*2+1);
-    glPolygonMode(GL_FRONT, GL_LINE);
-    setColor(outlineGroup->color());
-    enableColorMaterial(true);
-    for(SgGroup::const_iterator p = outlineGroup->begin(); p != outlineGroup->end(); ++p){
-        (*p)->accept(*self);
-    }
-    enableColorMaterial(false);
-    setLineWidth(lineWidth);
-    glPopAttrib();
-
-    glDisable(GL_STENCIL_TEST);
-
-    clearGLState();
 }

@@ -21,10 +21,9 @@
 #include "LazyCaller.h"
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
-#include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
-#include <cnoid/MeshGenerator>
+#include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
 #include <QGLWidget>
 #include <QGLPixelBuffer>
@@ -49,7 +48,6 @@
 
 using namespace std;
 using namespace std::placeholders;
-using namespace Eigen;
 using namespace cnoid;
 
 namespace {
@@ -61,7 +59,7 @@ const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
-class EditableExtractor : public SceneVisitor
+class EditableExtractor : public PolymorphicFunctionSet<SgNode>
 {
 public:
     vector<SgNode*> editables;
@@ -70,35 +68,24 @@ public:
     SgNode* editableNode(int index) { return editables[index]; }
     SceneWidgetEditable* editable(int index) { return dynamic_cast<SceneWidgetEditable*>(editables[index]); }
 
-    void apply(SgNode* node) {
-        editables.clear();
-        node->accept(*this);
+    EditableExtractor(){
+        setFunction<SgGroup>(
+            [&](SgNode* node){
+                auto group = static_cast<SgGroup*>(node);
+                if(SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(group)){
+                    editables.push_back(group);
+                }
+                for(auto child : *group){
+                    dispatch(child);
+                }
+            });
+        updateDispatchTable();
     }
 
-    virtual void visitNode(SgNode* node) {  }
-    virtual void visitGroup(SgGroup* group) {
-        if(SceneWidgetEditable* editable = dynamic_cast<SceneWidgetEditable*>(group)){
-            editables.push_back(group);
-        }
-        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
-            (*p)->accept(*this);
-        }
+    void apply(SgNode* node) {
+        editables.clear();
+        dispatch(node);
     }
-    virtual void visitInvariantGroup(SgInvariantGroup* group) { }
-    virtual void visitPosTransform(SgPosTransform* transform) {
-        EditableExtractor::visitGroup(transform);
-    }
-    virtual void visitScaleTransform(SgScaleTransform* transform) {
-        EditableExtractor::visitGroup(transform);
-    }
-    virtual void visitShape(SgShape* shape) {  }
-    virtual void visitPlot(SgPlot* plot)  {  }
-    virtual void visitPointSet(SgPointSet* pointSet) { }        
-    virtual void visitLineSet(SgLineSet* lineSet) { }        
-    virtual void visitPreprocessed(SgPreprocessed* preprocessed) {  }
-    virtual void visitLight(SgLight* light) {  }
-    virtual void visitCamera(SgCamera* camera) {  }
-    virtual void visitOverlay(SgOverlay* overlay) { }
 };
 
 class ConfigDialog : public Dialog
@@ -142,6 +129,7 @@ public:
     CheckBox coordinateAxesCheck;
     CheckBox fpsCheck;
     PushButton fpsTestButton;
+    SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
 
@@ -184,7 +172,6 @@ Affine3 normalizedCameraTransform(const Affine3& T)
 Signal<void(SceneWidget*)> sigSceneWidgetCreated;
 
 }
-
 
 namespace cnoid {
 
@@ -257,10 +244,7 @@ public:
     Selection polygonMode;
     bool collisionLinesVisible;
 
-    SgCustomGLNodePtr coordinateAxes;
-    SgPosTransform* xAxis;
-    SgPosTransform* yAxis;
-    SgPosTransform* zAxis;
+    ref_ptr<CoordinateAxesOverlay> coordinateAxesOverlay;
 
     SgInvariantGroupPtr gridGroup;
     Vector4f gridColor[3];
@@ -292,8 +276,6 @@ public:
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
 
-    void initializeCoordinateAxes();
-    void renderCoordinateAxes(GL1SceneRenderer& renderer);
     void updateGrids();
     SgLineSet* createGrid(int index);
 
@@ -580,7 +562,9 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
 
     collisionLinesVisible = false;
 
-    initializeCoordinateAxes();
+    coordinateAxesOverlay = new CoordinateAxesOverlay;
+    activateSystemNode(coordinateAxesOverlay, config->coordinateAxesCheck.isChecked());
+
     updateGrids();
 
     if(!useGLSL){
@@ -752,42 +736,6 @@ void SceneWidgetImpl::paintGL()
 }
 
 
-void SceneWidgetImpl::renderCoordinateAxes(GL1SceneRenderer& renderer)
-{
-    glPushAttrib(GL_LIGHTING_BIT);
-    glDisable(GL_LIGHTING);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-
-    int x, y, w, h;
-    renderer.getViewport(x, y, w, h);
-    glOrtho((double)(x - 26), (double)(w - 26), (double)(y - 24), (double)(h - 24), -100.0, 100.0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    Affine3 transform(renderer.currentCameraPosition());
-    Affine3 inv = transform.inverse();
-    glMultMatrixd(inv.data());
-
-    renderer.setColor(Vector3f(1.0,0.0,0.0));
-    renderer.visitPosTransform(xAxis);
-    renderer.setColor(Vector3f(0.0,1.0,0.0));
-    renderer.visitPosTransform(yAxis);
-    renderer.setColor(Vector3f(0.4,0.6,1.0));
-    renderer.visitPosTransform(zAxis);
-    
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glPopAttrib();
-}
-
-
 void SceneWidgetImpl::renderFPS()
 {
     renderer->setColor(Vector3f(1.0f, 1.0f, 1.0f));
@@ -837,24 +785,28 @@ void SceneWidgetImpl::doFPSTest()
 
     QElapsedTimer timer;
     timer.start();
-    
-    for(double i=1.0; i <= 360.0; i+=1.0){
-        double a = 3.14159265 * i / 180.0;
-        builtinCameraTransform->setTransform(
-            normalizedCameraTransform(
-                Translation3(p) *
-                AngleAxis(a, Vector3::UnitZ()) *
-                Translation3(-p) *
-                C));
-        glDraw();
+
+    const int n = config->fpsTestIterationSpin.value();
+    for(int i=0; i < n; ++i){
+        for(double theta=1.0; theta <= 360.0; theta += 1.0){
+            double a = 3.14159265 * theta / 180.0;
+            builtinCameraTransform->setTransform(
+                normalizedCameraTransform(
+                    Translation3(p) *
+                    AngleAxis(a, Vector3::UnitZ()) *
+                    Translation3(-p) *
+                    C));
+            glDraw();
+        }
     }
 
     double time = timer.elapsed() / 1000.0;
-    fps = 360.0 / time;
+    const int numFrames = n * 360;
+    fps = numFrames / time;
     fpsCounter = 0;
 
     QMessageBox::information(config, _("FPS Test Result"),
-                             QString(_("FPS: %1 frames / %2 [s] = %3")).arg(360).arg(time).arg(fps));
+                             QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
 
     update();
 }
@@ -2774,62 +2726,6 @@ void SceneWidgetImpl::restoreCurrentCamera(const Mapping& cameraData)
 }
 
 
-void SceneWidgetImpl::initializeCoordinateAxes()
-{
-    coordinateAxes = new SgCustomGLNode(std::bind(&SceneWidgetImpl::renderCoordinateAxes, this, _1));
-    coordinateAxes->setName("CoordinateAxes");
-
-    float length = 16;
-    float width = 2;
-
-    MeshGenerator meshGenerator;
-    SgMeshPtr cylinder = meshGenerator.generateCylinder(width, length);
-    SgMeshPtr cone = meshGenerator.generateCone(width * 2.0, width * 4.0);
-
-    SgShapePtr xCylinderShape = new SgShape;
-    xCylinderShape->setMesh(cylinder);
-    SgShapePtr xConeShape = new SgShape;
-    xConeShape->setMesh(cone);
-    SgPosTransform* xtransform = new SgPosTransform;
-    xtransform->setTranslation(Vector3(0.0, length / 2.0, 0.0));
-    xtransform->addChild(xConeShape);
-    xAxis = new SgPosTransform;
-    xAxis->setTranslation(Vector3(length / 2.0, 0.0, 0.0));
-    AngleAxis xangleA(1.571, Vector3(0.0, 0.0, -1.0));
-    xAxis->setRotation(xangleA.toRotationMatrix ());
-    xAxis->addChild(xCylinderShape);
-    xAxis->addChild(xtransform);
-
-    SgShapePtr yCylinderShape = new SgShape;
-    yCylinderShape->setMesh(cylinder);
-    SgShapePtr yConeShape = new SgShape;
-    yConeShape->setMesh(cone);
-    SgPosTransform* ytransform = new SgPosTransform;
-    ytransform->setTranslation(Vector3(0.0, length/2.0, 0.0));
-    ytransform->addChild(yConeShape);
-    yAxis = new SgPosTransform;
-    yAxis->setTranslation(Vector3(0.0, length / 2.0, 0.0));
-    yAxis->addChild(yCylinderShape);
-    yAxis->addChild(ytransform);
-
-    SgShapePtr zCylinderShape = new SgShape;
-    zCylinderShape->setMesh(cylinder);
-    SgShapePtr zConeShape = new SgShape;
-    zConeShape->setMesh(cone);
-    SgPosTransform* ztransform = new SgPosTransform;
-    ztransform->setTranslation(Vector3(0.0, length / 2.0, 0.0));
-    ztransform->addChild(zConeShape);
-    zAxis = new SgPosTransform;
-    AngleAxis zangleA(1.571, Vector3(1.0, 0.0, 0.0));
-    zAxis->setRotation(zangleA.toRotationMatrix ());
-    zAxis->setTranslation(Vector3(0.0, 0.0, length / 2.0));
-    zAxis->addChild(zCylinderShape);
-    zAxis->addChild(ztransform);
-
-    activateSystemNode(coordinateAxes, config->coordinateAxesCheck.isChecked());
-}
-
-
 void SceneWidgetImpl::updateGrids()
 {
     if(gridGroup){
@@ -3169,7 +3065,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     coordinateAxesCheck.setText(_("Coordinate axes"));
     coordinateAxesCheck.setChecked(true);
     coordinateAxesCheck.sigToggled().connect(
-        std::bind(&SceneWidgetImpl::activateSystemNode, impl, std::ref(impl->coordinateAxes), _1));
+        std::bind(&SceneWidgetImpl::activateSystemNode, impl, std::ref(impl->coordinateAxesOverlay), _1));
     hbox->addWidget(&coordinateAxesCheck);
     
     fpsCheck.setText(_("Show FPS"));
@@ -3183,6 +3079,9 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     fpsTestButton.setText(_("Test"));
     fpsTestButton.sigClicked().connect(std::bind(&SceneWidgetImpl::doFPSTest, impl));
     hbox->addWidget(&fpsTestButton);
+    fpsTestIterationSpin.setRange(1, 99);
+    fpsTestIterationSpin.setValue(1);
+    hbox->addWidget(&fpsTestIterationSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -3266,6 +3165,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("normalVisualization", normalVisualizationCheck.isChecked());
     archive.write("normalLength", normalLengthSpin.value());
     archive.write("coordinateAxes", coordinateAxesCheck.isChecked());
+    archive.write("fpsTestIteration", fpsTestIterationSpin.value());
     archive.write("showFPS", fpsCheck.isChecked());
     archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
     archive.write("useBufferForPicking", bufferForPickingCheck.isChecked());
@@ -3314,6 +3214,7 @@ void ConfigDialog::restoreState(const Archive& archive)
     normalVisualizationCheck.setChecked(archive.get("normalVisualization", normalVisualizationCheck.isChecked()));
     normalLengthSpin.setValue(archive.get("normalLength", normalLengthSpin.value()));
     coordinateAxesCheck.setChecked(archive.get("coordinateAxes", coordinateAxesCheck.isChecked()));
+    fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));

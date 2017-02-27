@@ -168,8 +168,5 @@ endif()
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
-if(ENABLE_PYTHON)
-  add_subdirectory(python)
-endif()
-
-
+add_subdirectory(python)
+add_subdirectory(lua)

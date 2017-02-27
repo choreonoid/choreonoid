@@ -35,7 +35,6 @@ set(sources
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
-  SceneVisitor.cpp
   SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
@@ -43,6 +42,7 @@ set(sources
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
   SceneMarkers.cpp
+  CoordinateAxesOverlay.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
@@ -79,6 +79,7 @@ set(headers
   Deque2D.h
   PolymorphicReferencedArray.h
   PolymorphicPointerArray.h
+  PolymorphicFunctionSet.h
   MultiSE3Seq.h
   MultiAffine3Seq.h
   MultiSeq.h
@@ -103,13 +104,13 @@ set(headers
   SceneCameras.h
   SceneLights.h
   SceneEffects.h
-  SceneVisitor.h
   SceneRenderer.h
   SceneUtil.h
   MeshGenerator.h
   MeshNormalGenerator.h
   MeshExtractor.h
   SceneMarkers.h
+  CoordinateAxesOverlay.h
   SceneProvider.h
   Collision.h
   CollisionDetector.h
@@ -197,7 +198,5 @@ if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
   make_header_public(EigenArchive.h EigenYaml)
 endif()
 
-
-if(ENABLE_PYTHON)
-  add_subdirectory(python)
-endif()
+add_subdirectory(python)
+add_subdirectory(lua)

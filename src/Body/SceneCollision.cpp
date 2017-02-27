@@ -4,13 +4,34 @@
 */
 
 #include "SceneCollision.h"
-#include <cnoid/SceneVisitor>
+#include <cnoid/SceneRenderer>
 
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        SgNode::registerType<SceneCollision, SgLineSet>();
+
+        SceneRenderer::addExtension(
+            [](SceneRenderer* renderer){
+                auto& functions = renderer->renderingFunctions();
+                functions.setFunction<SceneCollision>(
+                    [renderer](SgNode* node){
+                        static_cast<SceneCollision*>(node)->render(renderer);
+                    });
+            });
+    }
+} registration;
+
+}
+
+
 SceneCollision::SceneCollision(std::shared_ptr< std::vector<CollisionLinkPairPtr> > collisionPairs)
-    : collisionPairs(collisionPairs)
+    : SgLineSet(findPolymorphicId<SceneCollision>()),
+      collisionPairs(collisionPairs)
 {
     vertices_ = setVertices(new SgVertexArray);
     setMaterial(new SgMaterial)->setDiffuseColor(Vector3f(0.0f, 1.0f, 0.0f));
@@ -24,10 +45,9 @@ SceneCollision::SceneCollision(const SceneCollision& org)
 }
 
 
-void SceneCollision::accept(SceneVisitor& visitor)
+void SceneCollision::render(SceneRenderer* renderer)
 {
-    if(!visitor.property()->get("collision", false)){
-        visitor.visitNode(this);
+    if(!renderer->property()->get("collision", false)){
         return;
     }
     
@@ -55,5 +75,5 @@ void SceneCollision::accept(SceneVisitor& visitor)
         isDirty = false;
     }
     
-    visitor.visitLineSet(this);
+    renderer->renderingFunctions().dispatchAs<SgLineSet>(this);
 }
