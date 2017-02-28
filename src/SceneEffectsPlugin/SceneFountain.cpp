@@ -21,7 +21,7 @@ public:
     void render(SceneFountain* fountain);
 
     GLint lifeTimeLocation;
-    GLint cycleTimeLocation;
+    GLint accelLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
@@ -43,10 +43,10 @@ SceneFountain::SceneFountain()
     : SceneParticles(findPolymorphicId<SceneFountain>())
 {
     angle_ = 0.1f;
-    lifeTime_ = 4.0f;
-    acceleration_ << 0.0f, 0.0f, -9.8f;
+    lifeTime_ = 3.0f;
+    acceleration_ << 0.0f, 0.0f, -0.2f;
 
-    setParticleSize(0.08f);
+    setParticleSize(0.06f);
     setTexture(":/SceneEffectsPlugin/texture/bluewater.png");
 }
 
@@ -82,8 +82,9 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
+    auto fountain = static_cast<SceneFountain*>(particles);
 
-    nParticles = 8000;
+    nParticles = 10000;
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
@@ -91,14 +92,14 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     vector<GLfloat> data(nParticles * 3);
     for(int i = 0; i < nParticles; ++i) {
         
-        theta = PI / 6.0f * random();
+        theta = PI / 12.0f * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        velocity = 1.24f + (1.5f - 1.25f) * random();
+        velocity = 1.25f + (1.5f - 1.25f) * random();
         v = v.normalized() * velocity;
 
         data[3*i]   = v.x();
@@ -111,8 +112,8 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     
     // Fill the offset time buffer
     data.resize(nParticles);
+    float rate = fountain->lifeTime() / nParticles;
     float time = 0.0f;
-    float rate = 0.00075f;
     for(int i = 0; i < nParticles; ++i) {
         data[i] = time;
         time += rate;
@@ -133,7 +134,7 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     glBindVertexArray(0);
 
     lifeTimeLocation = getUniformLocation("lifeTime");
-    cycleTimeLocation = getUniformLocation("cycleTime");
+    accelLocation = getUniformLocation("accel");
 
     return true;
 }
@@ -143,8 +144,6 @@ void FountainProgram::render(SceneFountain* fountain)
 {
     setTime(fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
-    glUniform1f(cycleTimeLocation, 6.0f);
-    
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
 }

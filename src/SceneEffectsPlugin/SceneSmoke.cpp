@@ -81,7 +81,7 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
-    SceneSmoke* smoke = static_cast<SceneSmoke*>(particles);
+    auto smoke = static_cast<SceneSmoke*>(particles);
 
     nParticles = 2000;
 
