@@ -13,30 +13,27 @@ using namespace std;
 using namespace cnoid;
 
 
-ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer, const char* vertexShaderFile)
-    : renderer(renderer),
-      vertexShaderFile(vertexShaderFile)
+ParticlesProgramBase::ParticlesProgramBase(GLSLSceneRenderer* renderer)
+    : renderer(renderer)
 {
     
     initializationState = NOT_INITIALIZED;
 }
 
 
-bool ParticlesProgram::initializeRendering(SceneParticles* particles)
+bool ParticlesProgramBase::initializeRendering(SceneParticles* particles)
 {
-    loadVertexShader(vertexShaderFile.c_str());
-    loadFragmentShader(":/SceneEffectsPlugin/shader/particles.frag");
-    link();
+    auto program = shaderProgram();
 
-    LightingProgram::initialize();
+    program->initialize();
 
-    modelViewMatrixLocation = getUniformLocation("modelViewMatrix");
-    projectionMatrixLocation = getUniformLocation("projectionMatrix");
-    pointSizeLocation = getUniformLocation("pointSize");
-    angle2pixelsLocation = getUniformLocation("angle2pixels");
+    modelViewMatrixLocation = program->getUniformLocation("modelViewMatrix");
+    projectionMatrixLocation = program->getUniformLocation("projectionMatrix");
+    pointSizeLocation = program->getUniformLocation("pointSize");
+    angle2pixelsLocation = program->getUniformLocation("angle2pixels");
     
-    timeLocation = getUniformLocation("time");
-    particleTexLocation = getUniformLocation("particleTex");
+    timeLocation = program->getUniformLocation("time");
+    particleTexLocation = program->getUniformLocation("particleTex");
 
     if(!particles->texture().empty()){
         QImage image(particles->texture().c_str());
@@ -54,7 +51,7 @@ bool ParticlesProgram::initializeRendering(SceneParticles* particles)
 }
 
 
-void ParticlesProgram::requestRendering(SceneParticles* particles, std::function<void()> renderingFunction)
+void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::function<void()> renderingFunction)
 {
     if(renderer->isPicking()){
         return;
@@ -90,12 +87,18 @@ void ParticlesProgram::requestRendering(SceneParticles* particles, std::function
 }
 
 
-void ParticlesProgram::render(SceneParticles* particles, const Matrix4f& MV, const std::function<void()>& renderingFunction)
+void ParticlesProgramBase::render
+(SceneParticles* particles, const Matrix4f& MV, const std::function<void()>& renderingFunction)
 {
-    renderer->pushShaderProgram(*this, false);
+    ShaderProgram* program = shaderProgram();
+    
+    renderer->pushShaderProgram(*program, false);
 
-    renderer->renderLights(this);
-    renderer->renderFog(this);
+    auto lightingProgram = dynamic_cast<LightingProgram*>(program);
+    if(lightingProgram){
+        renderer->renderLights(lightingProgram);
+        renderer->renderFog(lightingProgram);
+    }
 
     glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
     const Matrix4f P = renderer->projectionMatrix().cast<float>();
@@ -120,4 +123,11 @@ void ParticlesProgram::render(SceneParticles* particles, const Matrix4f& MV, con
     renderingFunction();
 
     renderer->popShaderProgram();
+}
+
+
+ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer)
+    : ParticlesProgramBase(renderer)
+{
+
 }

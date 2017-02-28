@@ -12,26 +12,12 @@
 
 namespace cnoid {
 
-class ParticlesProgram : public LightingProgram
+class ParticlesProgramBase
 {
 public:
-    template<class SceneNode, class Program>
-    static void registerType(){
-        GLSLSceneRenderer::addExtension(
-            [](GLSLSceneRenderer* renderer){
-                auto program = std::make_shared<Program>(renderer);
-                renderer->renderingFunctions().setFunction<SceneNode>(
-                    [program](SceneNode* particles){
-                        program->requestRendering(particles, [program, particles]() { program->render(particles); });
-                    });
-            });
-    }
+    ParticlesProgramBase(GLSLSceneRenderer* renderer);
     
-    ParticlesProgram(GLSLSceneRenderer* renderer, const char* vertexShaderFile);
     void requestRendering(SceneParticles* particles, std::function<void()> renderingFunction);
-
-protected:
-    virtual bool initializeRendering(SceneParticles* particles);
 
     void setTime(float time){
         glUniform1f(timeLocation, time);
@@ -40,10 +26,13 @@ protected:
         return ((float)rand() / RAND_MAX) * max;
     }
 
+protected:
+    virtual bool initializeRendering(SceneParticles* particles) = 0;
+    virtual ShaderProgram* shaderProgram() = 0;
+
 private:
     enum State { NOT_INITIALIZED, INITIALIZED, FAILED } initializationState;
     GLSLSceneRenderer* renderer;
-    std::string vertexShaderFile;
     GLint modelViewMatrixLocation;
     GLint projectionMatrixLocation;
     GLint pointSizeLocation;
@@ -54,6 +43,28 @@ private:
 
     void render(SceneParticles* particles, const Matrix4f& MV, const std::function<void()>& renderingFunction);
 };
+
+    
+class ParticlesProgram : public LightingProgram, public ParticlesProgramBase
+{
+public:
+    ParticlesProgram(GLSLSceneRenderer* renderer);
+
+protected:
+    virtual ShaderProgram* shaderProgram() { return this; }
+};
+
+
+/*
+class LuminousParticlesProgram : public ShaderProgram, public ParticlesProgramBase
+{
+public:
+    LuminousParticlesProgram(GLSLSceneRenderer* renderer, const char* vertexShaderFile);
+
+protected:
+    virtual bool initializeRendering(SceneParticles* particles) override;
+};
+*/
 
 }
 

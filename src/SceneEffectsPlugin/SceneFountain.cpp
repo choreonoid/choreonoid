@@ -3,6 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
+#include "SceneEffectsPlugin.h"
 #include "SceneFountain.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
@@ -30,7 +31,7 @@ public:
 struct Registration {
     Registration(){
         SgNode::registerType<SceneFountain, SceneParticles>();
-        ParticlesProgram::registerType<SceneFountain, FountainProgram>();
+        registerSceneEffectType<SceneFountain, FountainProgram>();
     }
 } registration;
 
@@ -66,7 +67,7 @@ SgObject* SceneFountain::clone(SgCloneMap& cloneMap) const
 
 
 FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer, ":/SceneEffectsPlugin/shader/fountain.vert")
+    : ParticlesProgram(renderer)
 {
 
 }
@@ -74,6 +75,10 @@ FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
 
 bool FountainProgram::initializeRendering(SceneParticles* particles)
 {
+    loadVertexShader(":/SceneEffectsPlugin/shader/Fountain.vert");
+    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    link();
+    
     if(!ParticlesProgram::initializeRendering(particles)){
         return false;
     }

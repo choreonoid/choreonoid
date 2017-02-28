@@ -3,6 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
+#include "SceneEffectsPlugin.h"
 #include "SceneFire.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
@@ -29,7 +30,7 @@ public:
 struct Registration {
     Registration(){
         SgNode::registerType<SceneFire, SceneParticles>();
-        ParticlesProgram::registerType<SceneFire, FireProgram>();
+        registerSceneEffectType<SceneFire, FireProgram>();
     }
 } registration;
 
@@ -65,7 +66,7 @@ SgObject* SceneFire::clone(SgCloneMap& cloneMap) const
 
 
 FireProgram::FireProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer, ":/SceneEffectsPlugin/shader/fire.vert")
+    : ParticlesProgram(renderer)
 {
 
 }
@@ -73,6 +74,10 @@ FireProgram::FireProgram(GLSLSceneRenderer* renderer)
 
 bool FireProgram::initializeRendering(SceneParticles* particles)
 {
+    loadVertexShader(":/SceneEffectsPlugin/shader/Fire.vert");
+    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    link();
+    
     if(!ParticlesProgram::initializeRendering(particles)){
         return false;
     }

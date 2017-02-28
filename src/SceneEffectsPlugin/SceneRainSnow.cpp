@@ -3,6 +3,7 @@
    @author Shin'ichiro Nakaoka
 */
 
+#include "SceneEffectsPlugin.h"
 #include "SceneRainSnow.h"
 #include "ParticlesProgram.h"
 #include <cnoid/EigenUtil>
@@ -35,8 +36,8 @@ struct Registration {
         SgNode::registerType<SceneRain, SceneRainSnowBase>();
         SgNode::registerType<SceneSnow, SceneRainSnowBase>();
 
-        ParticlesProgram::registerType<SceneRain, RainSnowProgram>();
-        ParticlesProgram::registerType<SceneSnow, RainSnowProgram>();
+        registerSceneEffectType<SceneRain, RainSnowProgram>();
+        registerSceneEffectType<SceneSnow, RainSnowProgram>();
     }
 } registration;
 
@@ -108,7 +109,7 @@ SgObject* SceneSnow::clone(SgCloneMap& cloneMap) const
 
 
 RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer, ":/SceneEffectsPlugin/shader/rainsnow.vert")
+    : ParticlesProgram(renderer)
 {
 
 }
@@ -116,6 +117,10 @@ RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
 
 bool RainSnowProgram::initializeRendering(SceneParticles* particles)
 {
+    loadVertexShader(":/SceneEffectsPlugin/shader/RainSnow.vert");
+    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    link();
+    
     if(!ParticlesProgram::initializeRendering(particles)){
         return false;
     }

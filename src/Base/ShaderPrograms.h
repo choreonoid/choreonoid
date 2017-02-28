@@ -20,6 +20,7 @@ public:
     ShaderProgram();
     virtual ~ShaderProgram();
     virtual void activate();
+    virtual void initialize() = 0;
     virtual void initializeFrameRendering();
     virtual void deactivate();
     virtual void setColor(const Vector3f& color);
