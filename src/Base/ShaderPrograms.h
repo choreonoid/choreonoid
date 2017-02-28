@@ -19,8 +19,8 @@ class CNOID_EXPORT ShaderProgram : public GLSLProgram
 public:
     ShaderProgram();
     virtual ~ShaderProgram();
+    virtual void initialize();
     virtual void activate();
-    virtual void initialize() = 0;
     virtual void initializeFrameRendering();
     virtual void deactivate();
     virtual void setColor(const Vector3f& color);

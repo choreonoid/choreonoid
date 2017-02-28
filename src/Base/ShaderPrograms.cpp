@@ -25,6 +25,12 @@ ShaderProgram::~ShaderProgram()
 }
 
 
+void ShaderProgram::initialize()
+{
+
+}
+
+
 void ShaderProgram::activate()
 {
     use();

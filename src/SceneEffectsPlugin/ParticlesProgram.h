@@ -55,16 +55,14 @@ protected:
 };
 
 
-/*
 class LuminousParticlesProgram : public ShaderProgram, public ParticlesProgramBase
 {
 public:
-    LuminousParticlesProgram(GLSLSceneRenderer* renderer, const char* vertexShaderFile);
+    LuminousParticlesProgram(GLSLSceneRenderer* renderer);
 
 protected:
-    virtual bool initializeRendering(SceneParticles* particles) override;
+    virtual ShaderProgram* shaderProgram() { return this; }
 };
-*/
 
 }
 

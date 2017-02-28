@@ -78,7 +78,7 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
     link();
     
-    if(!ParticlesProgram::initializeRendering(particles)){
+    if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
     SceneSmoke* smoke = static_cast<SceneSmoke*>(particles);

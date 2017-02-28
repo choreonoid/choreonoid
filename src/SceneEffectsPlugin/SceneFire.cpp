@@ -13,7 +13,7 @@ using namespace cnoid;
 
 namespace {
 
-class FireProgram : public ParticlesProgram
+class FireProgram : public LuminousParticlesProgram
 {
 public:
     FireProgram(GLSLSceneRenderer* renderer);
@@ -66,7 +66,7 @@ SgObject* SceneFire::clone(SgCloneMap& cloneMap) const
 
 
 FireProgram::FireProgram(GLSLSceneRenderer* renderer)
-    : ParticlesProgram(renderer)
+    : LuminousParticlesProgram(renderer)
 {
 
 }
@@ -75,10 +75,10 @@ FireProgram::FireProgram(GLSLSceneRenderer* renderer)
 bool FireProgram::initializeRendering(SceneParticles* particles)
 {
     loadVertexShader(":/SceneEffectsPlugin/shader/Fire.vert");
-    loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
+    loadFragmentShader(":/SceneEffectsPlugin/shader/LuminousParticles.frag");
     link();
     
-    if(!ParticlesProgram::initializeRendering(particles)){
+    if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
     SceneFire* fire = static_cast<SceneFire*>(particles);
@@ -109,19 +109,16 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_STATIC_DRAW);
     
     // Fill the offset time buffer
-    //data.resize(nParticles);
-    vector<GLfloat> offsets(nParticles);
+    data.resize(nParticles);
     float rate = fire->lifeTime() / nParticles;
     float time = 0.0f;
     for(int i = 0; i < nParticles; ++i) {
-        //data[i] = time;
-        offsets[i] = time;
+        data[i] = time;
         time += rate;
     }
     glGenBuffers(1, &offsetTimeBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, offsetTimeBuffer);
-    //glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_STATIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, offsets.size() * sizeof(GLfloat), &offsets.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenVertexArrays(1, &vertexArray);

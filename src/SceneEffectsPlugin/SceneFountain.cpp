@@ -79,7 +79,7 @@ bool FountainProgram::initializeRendering(SceneParticles* particles)
     loadFragmentShader(":/SceneEffectsPlugin/shader/Particles.frag");
     link();
     
-    if(!ParticlesProgram::initializeRendering(particles)){
+    if(!ParticlesProgramBase::initializeRendering(particles)){
         return false;
     }
 

@@ -131,3 +131,10 @@ ParticlesProgram::ParticlesProgram(GLSLSceneRenderer* renderer)
 {
 
 }
+
+
+LuminousParticlesProgram::LuminousParticlesProgram(GLSLSceneRenderer* renderer)
+    : ParticlesProgramBase(renderer)
+{
+
+}
