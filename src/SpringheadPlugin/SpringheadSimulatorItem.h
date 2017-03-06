@@ -23,11 +23,13 @@ public:
     SpringheadSimulatorItem(const SpringheadSimulatorItem& org);
     virtual ~SpringheadSimulatorItem();
 
-    void setGravity(const Vector3& gravity);
-    void setFriction(double friction);
-    void setJointLimitMode(bool on);
-    void set2Dmode(bool on);
-    void setNumIterations(int n);
+    void setGravity               (const Vector3& gravity);
+    void setStaticFriction        (double mu0);
+	void setDynamicFriction       (double mu);
+	void setBouncingFactor        (double e);
+	void setContactSpring         (double K);
+	void setContactDamper         (double D);
+    void setNumIterations         (int n);
     void useWorldCollisionDetector(bool on);
 
 protected:

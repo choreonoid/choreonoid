@@ -17,7 +17,6 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyCollisionDetectorUtil>
-#include <boost/bind.hpp>
 #include <QElapsedTimer>
 #include "gettext.h"
 
@@ -29,13 +28,13 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
+using namespace std::placeholders;
 using namespace cnoid;
 
 #include "SpringheadConvert.h"
 
-namespace {
-
+namespace cnoid {
+  
 const bool MEASURE_PHYSICS_CALCULATION_TIME = true;
 
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
@@ -52,30 +51,16 @@ Spr::Matrix3d identity(
     0.0, 0.0, 1.0
 );
 
-Spr::Matrix3d flippedIdentity(
-    1.0,  0.0, 0.0,
-    0.0,  0.0, 1.0,
-    0.0, -1.0, 0.0
-);
-    
-inline void makeInternal(Vector3& v) {
-    double a =  v.z();
-    v.z()    = -v.y();
-    v.y()    =  a;
-}
-inline void toInternal(const Vector3& v, Vector3& out_v) {
-    out_v.x() =  v.x();
-	out_v.y() =  v.z();
-	out_v.z() = -v.y();
-}
-
+class SpringheadLink;
 class SpringheadBody;
+class SpringheadSimulatorItemImpl;
 
 class SpringheadLink : public Referenced
 {
 public:
-    Link*              link;
-	SpringheadBody*    body;
+    Link*                        link;
+	SpringheadBody*              body;
+	SpringheadSimulatorItemImpl* impl;
 	
 	Spr::PHSolidIf*         phSolid;
 	Spr::PHJointIf*         phJoint;
@@ -89,11 +74,9 @@ public:
     void createLinkBody(SpringheadSimulatorItemImpl* simImpl, SpringheadLink* parent, const Vector3& origin);
     void createGeometry(SpringheadBody* sprBody);
     void setKinematicStateToSpringhead();
-    void setKinematicStateToSpringheadflip();
     void setTorqueToSpringhead();
     void setVelocityToSpringhead();
     void getKinematicStateFromSpringhead();
-    void getKinematicStateFromSpringheadflip();
     void addMesh(MeshExtractor* extractor, SpringheadBody* sprBody);
 };
 typedef ref_ptr<SpringheadLink> SpringheadLinkPtr;
@@ -108,19 +91,15 @@ public:
 	 SpringheadBody(const Body& orgBody);
     ~SpringheadBody();
     void createBody(SpringheadSimulatorItemImpl* simImpl);
-    void setExtraJoints(bool flipYZ);
-    void setKinematicStateToSpringhead(bool flipYZ);
+    void setExtraJoints();
+    void setKinematicStateToSpringhead();
     void setTorqueToSpringhead();
     void setVelocityToSpringhead();
-    void getKinematicStateFromSpringhead(bool flipYZ);
-    void updateForceSensors(bool flipYZ);
+    void getKinematicStateFromSpringhead();
+    void updateForceSensors();
     void alignToZAxisIn2Dmode();
 };
-}
 
-
-namespace cnoid {
-  
 class SpringheadSimulatorItemImpl
 {
 public:
@@ -128,18 +107,25 @@ public:
 
    	Spr::PHSdkIf*           phSdk;
 	Spr::PHSceneIf*         phScene;
-        
-    bool                    flipYZ;
-	double                  timeStep;
-    Vector3                 gravity;
-    double                  friction;
-    bool                    isJointLimitMode;
-    bool                    is2Dmode;
-    int                     numIterations;
-    bool                    useWorldCollision;
-    CollisionDetectorPtr    collisionDetector;
-    bool                    velocityMode;
 
+	struct Param{
+		double  timeStep;
+		Vector3 gravity;
+		double  staticFriction;
+		double  dynamicFriction;
+		double  elasticity   ;
+		double  contactSpring;
+		double  contactDamper;
+		int     numIterations;
+		bool    velocityMode;
+	    bool    useWorldCollision;
+
+		Param();
+    };
+
+	Param                   param;
+	CollisionDetectorPtr    collisionDetector;
+    
     double                  physicsTime;
     QElapsedTimer           physicsTimer;
     double                  collisionTime;
@@ -148,6 +134,7 @@ public:
      SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self);
      SpringheadSimulatorItemImpl(SpringheadSimulatorItem* self, const SpringheadSimulatorItemImpl& org);
     ~SpringheadSimulatorItemImpl();
+
     void clear();
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody             (SpringheadBody* sprBody);
@@ -157,8 +144,10 @@ public:
     void restore             (const Archive& archive);
     void collisionCallback   (const CollisionPair& collisionPair);
 };
+
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadBody* sprBody, SpringheadLink* parent, const Vector3& parentOrigin, Link* link)
 {
@@ -169,6 +158,7 @@ SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadB
 
     sprBody->sprLinks.push_back(this);
 
+	this->impl = simImpl;
     this->link = link;
 	this->body = sprBody;
     
@@ -176,7 +166,7 @@ SpringheadLink::SpringheadLink(SpringheadSimulatorItemImpl* simImpl, SpringheadB
     
     createLinkBody(simImpl, parent, o);
     
-	if(!simImpl->useWorldCollision){
+	if(!simImpl->param.useWorldCollision){
         createGeometry(sprBody);
     }
 
@@ -197,27 +187,15 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
     Vector3 a; ///< direction of the joint axis (in world coord.)
     Vector3 d; ///< same as 'a'
 
-    if(!simImpl->flipYZ){
-        c = link->c();
-        o = origin;
-        a = link->a();
-        d = link->d();
+    c = link->c();
+    o = origin;
+    a = link->a();
+    d = link->d();
 
-		Spr::Quaterniond q;
-		q.FromMatrix(identity);
-		phSolid->SetOrientation(q);
-    }
-	else {
-        toInternal(link->c(), c);
-        toInternal(origin   , o);
-        toInternal(link->a(), a);
-        toInternal(link->d(), d);
-
-		Spr::Quaterniond q;
-		q.FromMatrix(flippedIdentity);
-		phSolid->SetOrientation(q);
-    }
-
+	Spr::Quaterniond q;
+	q.FromMatrix(identity);
+	phSolid->SetOrientation(q);
+    
 	// set center-of-mass position
 	phSolid->SetCenterOfMass(ToSpr(c));
     
@@ -265,7 +243,7 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 	}
 
 	// joint limit
-	if(phJoint1D && simImpl->isJointLimitMode){
+	if(phJoint1D){
 		phJointLimit1D = phJoint1D->CreateLimit();
 		phJointLimit1D->SetRange(Spr::Vec2d(link->q_lower(), link->q_upper()));
 	}
@@ -277,7 +255,7 @@ void SpringheadLink::createGeometry(SpringheadBody* sprBody)
 {
     if(link->shape()){
         MeshExtractor* extractor = new MeshExtractor;
-        extractor->extract(link->shape(), boost::bind(&SpringheadLink::addMesh, this, extractor, sprBody));
+        extractor->extract(link->shape(), std::bind(&SpringheadLink::addMesh, this, extractor, sprBody));
         delete extractor;
     }
 }
@@ -297,7 +275,7 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        optional<Vector3> translation;
+        boost::optional<Vector3> translation;
         if(!extractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;
@@ -354,6 +332,13 @@ void SpringheadLink::addMesh(MeshExtractor* extractor, SpringheadBody* sprBody)
                 break;
             }
             if(created){
+				// set physical materials
+				cdShape->SetStaticFriction (impl->param.staticFriction );
+				cdShape->SetDynamicFriction(impl->param.dynamicFriction);
+				cdShape->SetElasticity     (impl->param.elasticity     );
+				cdShape->SetContactSpring  (impl->param.contactSpring  );
+				cdShape->SetContactDamper  (impl->param.contactDamper  );
+
 				cdShapes.push_back(cdShape);
 				phSolid->AddShape(cdShape);
 
@@ -422,33 +407,6 @@ void SpringheadLink::setKinematicStateToSpringhead()
     }
 }
 
-
-void SpringheadLink::setKinematicStateToSpringheadflip()
-{
-    const Position& T = link->T();
-	Spr::Matrix3d R2;
-	R2[0][0] =  T(0,0); R2[0][1] =  T(0,1); R2[0][2] =  T(0,2);
-	R2[1][0] =  T(2,0); R2[1][1] =  T(2,1); R2[1][2] =  T(2,2);
-	R2[2][0] = -T(1,0); R2[2][1] = -T(1,1); R2[2][2] = -T(1,2);
-
-	Spr::Quaterniond q;
-	q.FromMatrix(R2);
-
-    if(phSolid){
-		phSolid->SetOrientation(q);
-
-		Spr::Vec3d p = ToSpr((Vector3)link->p());
-		Spr::Vec3d w = ToSpr((Vector3)link->w());
-        Spr::Vec3d v = ToSpr((Vector3)link->v());
-        
-		phSolid->SetFramePosition  ( Spr::Vec3d(p.x, p.z, -p.y) );
-		phSolid->SetVelocity       ( Spr::Vec3d(v.x, v.z, -v.y) );
-		phSolid->SetAngularVelocity( Spr::Vec3d(w.x, w.z, -w.y) );
-    }else{
-    }
-}
-
-
 /**
    \note This method must not be called for a static body.
 */
@@ -469,35 +427,6 @@ void SpringheadLink::getKinematicStateFromSpringhead()
 	link->w() = FromSpr(phSolid->GetAngularVelocity());
 }
 
-
-/**
-   \note This method must not be called for a static body.
-*/
-void SpringheadLink::getKinematicStateFromSpringheadflip()
-{
-	if(phJoint1D){
-		link->q () = phJoint1D->GetPosition();
-		link->dq() = phJoint1D->GetVelocity();
-	}
-
-	Spr::Posed pose = phSolid->GetPose();
-	Spr::Matrix3d R, Rflip;
-	pose.Ori().ToMatrix(R);
-
-	Rflip.row(0) =  R.row(0);
-	Rflip.row(1) = -R.row(2);
-	Rflip.row(2) =  R.row(1);
-
-	Spr::Vec3d p = pose.Pos();
-	Spr::Vec3d v = phSolid->GetVelocity();
-	Spr::Vec3d w = phSolid->GetAngularVelocity();
-
-	link->R() = FromSpr(Rflip);
-	link->p() = FromSpr( Spr::Vec3d(p.x, -p.z, p.y) );
-	link->v() = FromSpr( Spr::Vec3d(v.x, -v.z, v.y) );
-	link->w() = FromSpr( Spr::Vec3d(w.x, -w.z, w.y) );
-}
-
 /**
    \note This method must not be called for the root link and a static body.
 */
@@ -516,6 +445,7 @@ void SpringheadLink::setVelocityToSpringhead()
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 SpringheadBody::SpringheadBody(const Body& orgBody)
     : SimulationBody(new Body(orgBody))
@@ -534,7 +464,7 @@ void SpringheadBody::createBody(SpringheadSimulatorItemImpl* simImpl)
     Body* body = this->body();
     
     //worldID = body->isStaticModel() ? 0 : simImpl->worldID;
-    if(simImpl->useWorldCollision){
+    if(simImpl->param.useWorldCollision){
         geometryId = addBodyToCollisionDetector(*body, *simImpl->collisionDetector, 
                                                 bodyItem()->isSelfCollisionDetectionEnabled());
     }else{
@@ -542,25 +472,21 @@ void SpringheadBody::createBody(SpringheadSimulatorItemImpl* simImpl)
 
     SpringheadLink* rootLink = new SpringheadLink(simImpl, this, 0, Vector3::Zero(), body->rootLink());
 
-    setKinematicStateToSpringhead(simImpl->flipYZ);
+    setKinematicStateToSpringhead();
 
-    if(simImpl->useWorldCollision){
+    if(simImpl->param.useWorldCollision){
 		// world collision not supported
     }
 
-    setExtraJoints(simImpl->flipYZ);
+    setExtraJoints();
 
-    if(simImpl->is2Dmode){
-		// 2D mode not supported
-    }
-    
     setTorqueToSpringhead();
 
-    sensorHelper.initialize(body, simImpl->timeStep, simImpl->gravity);
+    sensorHelper.initialize(body, simImpl->param.timeStep, simImpl->param.gravity);
 }
 
 
-void SpringheadBody::setExtraJoints(bool flipYZ)
+void SpringheadBody::setExtraJoints()
 {
     Body* body = this->body();
     const int n = body->numExtraJoints();
@@ -588,11 +514,7 @@ void SpringheadBody::setExtraJoints(bool flipYZ)
 			Link* link = sprLinkPair[0]->link;
             Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
             Vector3 a = link->attitude() * extraJoint.axis;
-            if(flipYZ){
-                makeInternal(p);
-                makeInternal(a);
-            }
-
+            
             // \todo do the destroy management for these joints
             if(extraJoint.type == Body::EJ_PISTON){
 
@@ -604,16 +526,10 @@ void SpringheadBody::setExtraJoints(bool flipYZ)
 }
 
 
-void SpringheadBody::setKinematicStateToSpringhead(bool flipYZ)
+void SpringheadBody::setKinematicStateToSpringhead()
 {
-    if(!flipYZ){
-        for(size_t i=0; i < sprLinks.size(); ++i){
-            sprLinks[i]->setKinematicStateToSpringhead();
-        }
-    } else {
-        for(size_t i=0; i < sprLinks.size(); ++i){
-            sprLinks[i]->setKinematicStateToSpringheadflip();
-        }
+    for(size_t i=0; i < sprLinks.size(); ++i){
+        sprLinks[i]->setKinematicStateToSpringhead();
     }
 }
 
@@ -636,21 +552,15 @@ void SpringheadBody::setVelocityToSpringhead()
 }
 
 
-void SpringheadBody::getKinematicStateFromSpringhead(bool flipYZ)
+void SpringheadBody::getKinematicStateFromSpringhead()
 {
-    if(!flipYZ){
-        for(size_t i=0; i < sprLinks.size(); ++i){
-            sprLinks[i]->getKinematicStateFromSpringhead();
-        }
-    } else {
-        for(size_t i=0; i < sprLinks.size(); ++i){
-            sprLinks[i]->getKinematicStateFromSpringheadflip();
-        }
+    for(size_t i=0; i < sprLinks.size(); ++i){
+        sprLinks[i]->getKinematicStateFromSpringhead();
     }
 }
 
 
-void SpringheadBody::updateForceSensors(bool flipYZ)
+void SpringheadBody::updateForceSensors()
 {
     const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
     for(int i=0; i < forceSensors.size(); ++i){
@@ -674,13 +584,9 @@ void SpringheadBody::updateForceSensors(bool flipYZ)
 		}
 
 		Vector3 f2, t2;
-		if(!flipYZ){
-            f2 << f.x, f.y, f.z;
-            t2 << t.x, t.y, t.z;
-        } else {
-            f2 << f.x, -f.z, f.y;
-            t2 << t.x, -t.z, t.y;
-        }
+		f2 << f.x, f.y, f.z;
+        t2 << t.x, t.y, t.z;
+        
         const Matrix3 R = link->R() * sensor->R_local();
         const Vector3 p = link->R() * sensor->p_local();
 		
@@ -715,6 +621,22 @@ void SpringheadBody::alignToZAxisIn2Dmode()
 	phSolid->SetAngularVelocity( Spr::Vec3d(0.0, 0.0, w.z) );
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+SpringheadSimulatorItemImpl::Param::Param()
+{
+    gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
+    numIterations          = 50;
+
+	// Spr::PHMaterialのデフォルト値
+    staticFriction         = 0.4;
+	dynamicFriction        = 0.4;
+	elasticity             = 0.4;
+	contactSpring          = 0.0;
+	contactDamper          = 0.0;
+    useWorldCollision      = false;
+    velocityMode           = false;
+}
 
 void SpringheadSimulatorItem::initializeClass(ExtensionManager* ext)
 {
@@ -734,15 +656,6 @@ SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem
 {
     phSdk   = 0;
 	phScene = 0;
-
-    gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
-    numIterations          = 50;
-    friction               = 1.0;
-    isJointLimitMode       = false;
-    is2Dmode               = false;
-    flipYZ                 = false;
-    useWorldCollision      = false;
-    velocityMode           = false;
 }
 
 
@@ -758,14 +671,7 @@ SpringheadSimulatorItemImpl::SpringheadSimulatorItemImpl(SpringheadSimulatorItem
 {
     phSdk = 0;
 
-    gravity           = org.gravity;
-    numIterations     = org.numIterations;
-    friction          = org.friction;
-    isJointLimitMode  = org.isJointLimitMode;
-    is2Dmode          = org.is2Dmode;
-    flipYZ            = org.flipYZ;
-    useWorldCollision = org.useWorldCollision;
-    velocityMode      = org.velocityMode;
+    param = org.param;
 }
 
 
@@ -782,32 +688,42 @@ SpringheadSimulatorItemImpl::~SpringheadSimulatorItemImpl()
 
 void SpringheadSimulatorItem::setGravity(const Vector3& gravity)
 {
-    impl->gravity = gravity;
+    impl->param.gravity = gravity;
 }
 
-void SpringheadSimulatorItem::setFriction(double friction)
+void SpringheadSimulatorItem::setStaticFriction(double mu0)
 {
-    impl->friction = friction;
+    impl->param.staticFriction = mu0;
 }
 
-void SpringheadSimulatorItem::setJointLimitMode(bool on)
+void SpringheadSimulatorItem::setDynamicFriction(double mu)
 {
-    impl->isJointLimitMode = on;
+	impl->param.dynamicFriction = mu;
 }
 
-void SpringheadSimulatorItem::set2Dmode(bool on)
+void SpringheadSimulatorItem::setBouncingFactor(double e)
 {
-    impl->is2Dmode = on;
+	impl->param.elasticity = e;
 }
 
+void SpringheadSimulatorItem::setContactSpring(double K)
+{
+	impl->param.contactSpring = K;
+}
+
+void SpringheadSimulatorItem::setContactDamper(double D)
+{
+	impl->param.contactDamper = D;
+}
+    
 void SpringheadSimulatorItem::setNumIterations(int n)
 {
-    impl->numIterations = n;
+    impl->param.numIterations = n;
 }
 
 void SpringheadSimulatorItem::useWorldCollisionDetector(bool on)
 {
-    impl->useWorldCollision = on;
+    impl->param.useWorldCollision = on;
 }
 
 void SpringheadSimulatorItemImpl::clear()
@@ -832,26 +748,23 @@ bool SpringheadSimulatorItem::initializeSimulation(const std::vector<SimulationB
     return impl->initializeSimulation(simBodies);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     clear();
 
-    flipYZ   = is2Dmode;
-	timeStep = self->worldTimeStep();
+	// パラメータを反映
+	param.timeStep = self->worldTimeStep();
 
     phSdk   = Spr::PHSdkIf::CreateSdk();
 	phScene = phSdk->CreateScene();
 	
-	Vector3 g = gravity;
-    if(flipYZ){
-        toInternal(gravity, g);
-    }
-	phScene->SetGravity( Spr::Vec3d(g.x(), g.y(), g.z()) );
-	phScene->SetNumIteration(numIterations);
-	phScene->SetTimeStep(timeStep);
+	phScene->SetGravity     (ToSpr(param.gravity));
+	phScene->SetNumIteration(param.numIterations);
+	phScene->SetTimeStep    (param.timeStep);
 
-    if(useWorldCollision){
+	if(param.useWorldCollision){
         collisionDetector = self->collisionDetector();
         collisionDetector->clearGeometries();
     }
@@ -859,11 +772,10 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
         
     }
 
-
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<SpringheadBody*>(simBodies[i]));
     }
-    if(useWorldCollision)
+    if(param.useWorldCollision)
         collisionDetector->makeReady();
 
     if(MEASURE_PHYSICS_CALCULATION_TIME){
@@ -914,7 +826,7 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
 	for(size_t i=0; i < activeSimBodies.size(); ++i){
         SpringheadBody* sprBody = static_cast<SpringheadBody*>(activeSimBodies[i]);
         sprBody->body()->setVirtualJointForces();
-        if(velocityMode)
+        if(param.velocityMode)
         	sprBody->setVelocityToSpringhead();
         else
         	sprBody->setTorqueToSpringhead();
@@ -924,7 +836,7 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
 	    physicsTimer.start();
 	}
 
-	if(useWorldCollision){
+	if(param.useWorldCollision){
 	
 	}
 	else{
@@ -958,13 +870,10 @@ bool SpringheadSimulatorItemImpl::stepSimulation(const std::vector<SimulationBod
         SpringheadBody* sprBody = static_cast<SpringheadBody*>(activeSimBodies[i]);
 
         // Move the following code to the SpringheadBody class
-        if(is2Dmode){
-            sprBody->alignToZAxisIn2Dmode();
-        }
         if(!sprBody->sensorHelper.forceSensors().empty()){
-            sprBody->updateForceSensors(flipYZ);
+            sprBody->updateForceSensors();
         }
-        sprBody->getKinematicStateFromSpringhead(flipYZ);
+        sprBody->getKinematicStateFromSpringhead();
         if(sprBody->sensorHelper.hasGyroOrAccelerationSensors()){
             sprBody->sensorHelper.updateGyroAndAccelerationSensors();
         }
@@ -991,22 +900,14 @@ void SpringheadSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
 void SpringheadSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Gravity"), str(gravity), boost::bind(toVector3, _1, boost::ref(gravity)));
-
-    putProperty.decimals(2).min(0.0)
-        (_("Friction"), friction, changeProperty(friction));
-
-    putProperty(_("Limit joint range"), isJointLimitMode, changeProperty(isJointLimitMode));
-
-    putProperty.min(1)
-        (_("Iterations"), numIterations, changeProperty(numIterations));
-
-    putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
-
-    putProperty(_("Use WorldItem's Collision Detector"), useWorldCollision, changeProperty(useWorldCollision));
-
-    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
-
+    putProperty                     (_("Gravity"                           ), str(param.gravity)     , std::bind(toVector3, _1, std::ref(param.gravity)));
+	putProperty.decimals(2).min(0.0)(_("Static friction"                   ), param.staticFriction   , changeProperty(param.staticFriction)               );
+	putProperty.decimals(2).min(0.0)(_("Dynamic friction"                  ), param.dynamicFriction  , changeProperty(param.dynamicFriction)              );
+	putProperty.decimals(2).min(0.0)(_("Elasticity"                        ), param.elasticity       , changeProperty(param.elasticity)                   );
+	putProperty.decimals(2).min(0.0)(_("Contact spring"                    ), param.contactSpring    , changeProperty(param.contactSpring)                );
+	putProperty.decimals(2).min(0.0)(_("Contact damper"                    ), param.contactDamper    , changeProperty(param.contactDamper)                );
+	putProperty.min(1)              (_("Iterations"                        ), param.numIterations    , changeProperty(param.numIterations)                );
+	putProperty                     (_("Use WorldItem's Collision Detector"), param.useWorldCollision, changeProperty(param.useWorldCollision)            );
 }
 
 
@@ -1020,13 +921,14 @@ bool SpringheadSimulatorItem::store(Archive& archive)
 
 void SpringheadSimulatorItemImpl::store(Archive& archive)
 {
-    write(archive, "gravity", gravity);
-    archive.write("friction", friction);
-    archive.write("jointLimitMode", isJointLimitMode);
-    archive.write("numIterations", numIterations);
-    archive.write("2Dmode", is2Dmode);
-    archive.write("UseWorldItem'sCollisionDetector", useWorldCollision);
-    archive.write("velocityMode", velocityMode);
+    write(archive, "gravity"         , param.gravity          );
+    archive.write("staticFriction"   , param.staticFriction   );
+    archive.write("dynamicFriction"  , param.dynamicFriction  );
+    archive.write("elasticity"       , param.elasticity       );
+    archive.write("contactSpring"    , param.contactSpring    );
+    archive.write("contactDamper"    , param.contactDamper    );
+    archive.write("numIterations"    , param.numIterations    );
+    archive.write("useWorldCollision", param.useWorldCollision);
 }
 
 
@@ -1040,12 +942,12 @@ bool SpringheadSimulatorItem::restore(const Archive& archive)
 
 void SpringheadSimulatorItemImpl::restore(const Archive& archive)
 {
-    string symbol;
-    read(archive, "gravity", gravity);
-    archive.read("friction", friction);
-    archive.read("jointLimitMode", isJointLimitMode);
-    archive.read("numIterations", numIterations);
-    archive.read("2Dmode", is2Dmode);
-    archive.read("UseWorldItem'sCollisionDetector", useWorldCollision);
-    archive.read("velocityMode", velocityMode);
+    read(archive, "gravity"         , param.gravity          );
+    archive.read("staticFriction"   , param.staticFriction   );
+    archive.read("dynamicFriction"  , param.dynamicFriction  );
+    archive.read("elasticity"       , param.elasticity       );
+    archive.read("contactSpring"    , param.contactSpring    );
+    archive.read("contactDamper"    , param.contactDamper    );
+    archive.read("numIterations"    , param.numIterations    );
+    archive.read("useWorldCollision", param.useWorldCollision);
 }
