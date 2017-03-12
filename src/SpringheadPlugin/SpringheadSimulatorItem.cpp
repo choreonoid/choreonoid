@@ -66,6 +66,7 @@ public:
 	Spr::PHJointIf*         phJoint;
 	Spr::PH1DJointIf*       phJoint1D;
 	Spr::PH1DJointLimitIf*  phJointLimit1D;
+	Spr::PHTreeNodeIf*      phTreeNode;
 
     vector<Spr::CDShapeIf*> cdShapes;
 
@@ -87,6 +88,8 @@ public:
     vector<SpringheadLinkPtr>   sprLinks;
     BasicSensorSimulationHelper sensorHelper;
     int                         geometryId;
+
+	Spr::PHRootNodeIf*          rootNode;
 
 	 SpringheadBody(const Body& orgBody);
     ~SpringheadBody();
@@ -118,6 +121,7 @@ public:
 		double  contactDamper;
 		int     numIterations;
 		bool    velocityMode;
+		bool    useABA;
 	    bool    useWorldCollision;
 
 		Param();
@@ -179,7 +183,7 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 {
 	phSolid = simImpl->phScene->CreateSolid();
 
-	phSolid->SetMass   (link->m());
+	phSolid->SetMass(link->m());
 	phSolid->SetInertia(ToSpr(link->I()));
 
     Vector3 c; ///< center of mass of the link
@@ -200,7 +204,7 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 	phSolid->SetCenterOfMass(ToSpr(c));
     
 	// set the default global position to set a joint
-    phSolid->SetFramePosition(ToSpr(o));
+    phSolid->SetFramePosition(ToSpr(Vector3(o)));
 
 	switch(link->jointType()){
     case Link::ROTATIONAL_JOINT:
@@ -246,6 +250,16 @@ void SpringheadLink::createLinkBody(SpringheadSimulatorItemImpl* simImpl, Spring
 	if(phJoint1D){
 		phJointLimit1D = phJoint1D->CreateLimit();
 		phJointLimit1D->SetRange(Spr::Vec2d(link->q_lower(), link->q_upper()));
+	}
+
+	// tree node
+	if(simImpl->param.useABA){
+		if(!parent){
+			phTreeNode = simImpl->phScene->CreateRootNode(phSolid);
+		}
+		else{
+			phTreeNode = simImpl->phScene->CreateTreeNode(parent->phTreeNode, phSolid);
+		}
 	}
 
 }
@@ -398,6 +412,8 @@ void SpringheadLink::setKinematicStateToSpringhead()
 		Spr::Vec3d p = ToSpr((Vector3)link->p());
 		Spr::Vec3d v = ToSpr((Vector3)link->v());
 		Spr::Vec3d w = ToSpr((Vector3)link->w());
+		//Spr::Vec3d c = R * ToSpr((Vector3)link->c());
+		//Spr::Vec3d vc = v + w % c;
 		
 		phSolid->SetFramePosition  (p);
 		phSolid->SetOrientation    (q);
@@ -423,6 +439,12 @@ void SpringheadLink::getKinematicStateFromSpringhead()
 
 	link->R() = FromSpr(R);
 	link->p() = FromSpr(pose.Pos());
+
+	//Spr::Vec3d vc = phSolid->GetVelocity();
+	//Spr::Vec3d w  = phSolid->GetAngularVelocity();
+	//Spr::Vec3d c  = R * phSolid->GetCenterOfMass();
+	//Spr::Vec3d v  = vc - w % c;
+
 	link->v() = FromSpr(phSolid->GetVelocity());
 	link->w() = FromSpr(phSolid->GetAngularVelocity());
 }
@@ -471,7 +493,7 @@ void SpringheadBody::createBody(SpringheadSimulatorItemImpl* simImpl)
     }
 
     SpringheadLink* rootLink = new SpringheadLink(simImpl, this, 0, Vector3::Zero(), body->rootLink());
-
+	
     setKinematicStateToSpringhead();
 
     if(simImpl->param.useWorldCollision){
@@ -634,6 +656,7 @@ SpringheadSimulatorItemImpl::Param::Param()
 	elasticity             = 0.4;
 	contactSpring          = 0.0;
 	contactDamper          = 0.0;
+	useABA                 = false;
     useWorldCollision      = false;
     velocityMode           = false;
 }
@@ -760,9 +783,15 @@ bool SpringheadSimulatorItemImpl::initializeSimulation(const std::vector<Simulat
     phSdk   = Spr::PHSdkIf::CreateSdk();
 	phScene = phSdk->CreateScene();
 	
-	phScene->SetGravity     (ToSpr(param.gravity));
-	phScene->SetNumIteration(param.numIterations);
-	phScene->SetTimeStep    (param.timeStep);
+	phScene->SetGravity        (ToSpr(param.gravity));
+	phScene->SetNumIteration   (param.numIterations);
+	phScene->SetTimeStep       (param.timeStep);
+	phScene->SetImpactThreshold(1.0);
+	phScene->SetContactTolerance(0.0001);
+	phScene->GetConstraintEngine()->SetVelCorrectionRate(0.5);
+	phScene->GetConstraintEngine()->SetContactCorrectionRate(0.5);
+	phScene->GetConstraintEngine()->SetShrinkRate(0.0);
+	//phScene->GetConstraintEngine()->SetUseContactSurface(true);
 
 	if(param.useWorldCollision){
         collisionDetector = self->collisionDetector();
@@ -901,13 +930,14 @@ void SpringheadSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void SpringheadSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty                     (_("Gravity"                           ), str(param.gravity)     , std::bind(toVector3, _1, std::ref(param.gravity)));
-	putProperty.decimals(2).min(0.0)(_("Static friction"                   ), param.staticFriction   , changeProperty(param.staticFriction)               );
-	putProperty.decimals(2).min(0.0)(_("Dynamic friction"                  ), param.dynamicFriction  , changeProperty(param.dynamicFriction)              );
-	putProperty.decimals(2).min(0.0)(_("Elasticity"                        ), param.elasticity       , changeProperty(param.elasticity)                   );
-	putProperty.decimals(2).min(0.0)(_("Contact spring"                    ), param.contactSpring    , changeProperty(param.contactSpring)                );
-	putProperty.decimals(2).min(0.0)(_("Contact damper"                    ), param.contactDamper    , changeProperty(param.contactDamper)                );
-	putProperty.min(1)              (_("Iterations"                        ), param.numIterations    , changeProperty(param.numIterations)                );
-	putProperty                     (_("Use WorldItem's Collision Detector"), param.useWorldCollision, changeProperty(param.useWorldCollision)            );
+	putProperty.decimals(2).min(0.0)(_("Static friction"                   ), param.staticFriction   , changeProperty(param.staticFriction   ));
+	putProperty.decimals(2).min(0.0)(_("Dynamic friction"                  ), param.dynamicFriction  , changeProperty(param.dynamicFriction  ));
+	putProperty.decimals(2).min(0.0)(_("Elasticity"                        ), param.elasticity       , changeProperty(param.elasticity       ));
+	putProperty.decimals(2).min(0.0)(_("Contact spring"                    ), param.contactSpring    , changeProperty(param.contactSpring    ));
+	putProperty.decimals(2).min(0.0)(_("Contact damper"                    ), param.contactDamper    , changeProperty(param.contactDamper    ));
+	putProperty.min(1)              (_("Iterations"                        ), param.numIterations    , changeProperty(param.numIterations    ));
+	putProperty                     (_("Use Joint Coordinate Simulation"   ), param.useABA           , changeProperty(param.useABA           ));
+	putProperty                     (_("Use WorldItem's Collision Detector"), param.useWorldCollision, changeProperty(param.useWorldCollision));
 }
 
 
@@ -928,6 +958,7 @@ void SpringheadSimulatorItemImpl::store(Archive& archive)
     archive.write("contactSpring"    , param.contactSpring    );
     archive.write("contactDamper"    , param.contactDamper    );
     archive.write("numIterations"    , param.numIterations    );
+	archive.write("useABA"           , param.useABA           );
     archive.write("useWorldCollision", param.useWorldCollision);
 }
 
@@ -949,5 +980,6 @@ void SpringheadSimulatorItemImpl::restore(const Archive& archive)
     archive.read("contactSpring"    , param.contactSpring    );
     archive.read("contactDamper"    , param.contactDamper    );
     archive.read("numIterations"    , param.numIterations    );
+	archive.read("useABA"           , param.useABA           );
     archive.read("useWorldCollision", param.useWorldCollision);
 }
