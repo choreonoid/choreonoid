@@ -204,7 +204,7 @@ DEF SR1 Humanoid {
           jointId  26
           children [
             DEF WAIST_LINK1 Segment {
-              centerOfMass  0 0 -0.1
+              centerOfMass  0 0 0
               mass    6.0
               momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
               children [
@@ -225,7 +225,7 @@ DEF SR1 Humanoid {
               jointId  27
               children [
                 DEF WAIST_LINK2 Segment {
-                  centerOfMass  0.11 0 0.25
+                  centerOfMass  0 0 0.16
                   mass    30.0
                   momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                   children [
@@ -256,7 +256,7 @@ DEF SR1 Humanoid {
                   translation 0 0 0.35
                   children [
                     DEF WAIST_LINK3 Segment {
-                      centerOfMass  0 0 0
+                      centerOfMass  0 0 0.08
                       mass    13.0
                       momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                       children [
@@ -345,8 +345,8 @@ DEF SR1 Humanoid {
                       translation   0 0.21 0
                       children [
                         DEF LARM_LINK1 Segment {
-                          centerOfMass  0.1 0 0
-                          mass    3.0
+                          centerOfMass  0 -0.05 0.0
+                          mass    0.4
                           momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                           children Transform {
                             translation 0 -0.05 0
@@ -367,7 +367,7 @@ DEF SR1 Humanoid {
                           children [
                             DEF LARM_LINK2 Segment {
                               centerOfMass  0 0 -0.1
-                              mass    0.6
+                              mass    2.2
                               momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                               children DEF ARM_SHAPE2 Transform {
                                 children [
@@ -399,8 +399,8 @@ DEF SR1 Humanoid {
                               translation     0 0 -0.263
                               children [
                                 DEF LARM_LINK3 Segment {
-                                  centerOfMass  0 0 0
-                                  mass    1.0
+                                  centerOfMass  0 0 0.05
+                                  mass    0.4
                                   momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                                   children DEF ARM_SHAPE3 Transform {
                                     translation 0 0 0.05
@@ -421,8 +421,8 @@ DEF SR1 Humanoid {
                                   jointId  22
                                   children [
                                     DEF LARM_LINK4 Segment {
-                                      centerOfMass  0 0 -0.3
-                                      mass    0.6
+                                      centerOfMass  0 0 -0.1
+                                      mass    2.2
                                       momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                                       children DEF ARM_SHAPE4 Transform {
                                         children [
@@ -452,7 +452,7 @@ DEF SR1 Humanoid {
                                       translation       0 0 -0.247
                                       children [
                                         DEF LARM_LINK5 Segment {
-                                          centerOfMass  0 0 0.1
+                                          centerOfMass  0 0 0.5
                                           mass    0.4
                                           momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                                           children DEF ARM_SHAPE5 Transform {
@@ -474,7 +474,7 @@ DEF SR1 Humanoid {
                                           jointId  24
                                           children [
                                             DEF LARM_LINK6 Segment {
-                                              centerOfMass  -0.1 0 0
+                                              centerOfMass  0 0.01 -0.09
                                               mass    0.4
                                               momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                                               children DEF ARM_SHAPE6 Shape {
@@ -492,7 +492,7 @@ DEF SR1 Humanoid {
                                               jointId  25
                                               children [
                                                 DEF LARM_LINK7 Segment {
-                                                  centerOfMass  0 0 -0.1
+                                                  centerOfMass  0 -0.03 -0.1
                                                   mass    0.4
                                                   momentsOfInertia [ 1 0 0 0 1 0 0 0 1 ]
                                                   children DEF ARM_SHAPE7 Transform {
@@ -542,8 +542,8 @@ DEF SR1 Humanoid {
                       translation   0 -0.21 0
                       children [
                         DEF RARM_LINK1 Segment {
-                          centerOfMass          0.1 0 0
-                          mass                  3.0
+                          centerOfMass          0 0.05 0
+                          mass                  0.4
                           momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                           children Transform {
                             translation 0 0.05 0
@@ -558,7 +558,7 @@ DEF SR1 Humanoid {
                           children [
                             DEF RARM_LINK2 Segment {
                               centerOfMass          0 0 -0.1
-                              mass                  0.6
+                              mass                  2.2
                               momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                               children [
                                 USE ARM_SHAPE2
@@ -571,8 +571,8 @@ DEF SR1 Humanoid {
                               translation     0 0 -0.263
                               children [
                                 DEF RARM_LINK3 Segment {
-                                  centerOfMass          0 0 0
-                                  mass                  1.0
+                                  centerOfMass          0 0 0.05
+                                  mass                  0.4
                                   momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                   children USE ARM_SHAPE3
                                 }
@@ -583,8 +583,8 @@ DEF SR1 Humanoid {
                                   jointId 9
                                   children [
                                     DEF RARM_LINK4 Segment {
-                                      centerOfMass          0 0 -0.3
-                                      mass                  0.6
+                                      centerOfMass          0 0 -0.1
+                                      mass                  2.2
                                       momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                       children USE ARM_SHAPE4 
                                     } # Segment RARM_LINK4
@@ -596,7 +596,7 @@ DEF SR1 Humanoid {
                                       translation  0 0 -0.247
                                       children [
                                         DEF RARM_LINK5 Segment {
-                                          centerOfMass          0 0 0.1
+                                          centerOfMass          0 0 0.05
                                           mass                  0.4
                                           momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                           children USE ARM_SHAPE5
@@ -608,7 +608,7 @@ DEF SR1 Humanoid {
                                           jointId 11
                                           children [
                                             DEF RARM_LINK6 Segment {
-                                              centerOfMass          -0.1 0 0
+                                              centerOfMass          0 -0.01 -0.09
                                               mass                  0.4
                                               momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                               children USE ARM_SHAPE6
@@ -620,7 +620,7 @@ DEF SR1 Humanoid {
                                               jointId 12
                                               children [
                                                 DEF RARM_LINK7 Segment {
-                                                  centerOfMass          0 0 -0.1
+                                                  centerOfMass          0 0.03 -0.1
                                                   mass                  0.4
                                                   momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                                   children [
@@ -657,7 +657,7 @@ DEF SR1 Humanoid {
           translation   0 0.09 0
           children [
             DEF LLEG_LINK1 Segment {
-              centerOfMass          0 0.1 0
+              centerOfMass          0 0 0
               mass                  2.5
               momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
               children DEF LEG_SHAPE1 Transform {
@@ -678,7 +678,7 @@ DEF SR1 Humanoid {
               jointId 14
               children    [
                    DEF LLEG_LINK2 Segment {
-                     centerOfMass          0 0 -0.15
+                     centerOfMass          0 0 0
                      mass                  2.0
                      momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                      children DEF LEG_SHAPE2 Shape {
@@ -696,7 +696,7 @@ DEF SR1 Humanoid {
                      translation     0 0 -0.3535
                      children [
                        DEF LLEG_LINK3 Segment {
-                         centerOfMass          0 0.04 0
+                         centerOfMass          0 0 0.18
                          mass                  5.1
                          momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                          children DEF LEG_SHAPE3 Transform {
@@ -731,7 +731,7 @@ DEF SR1 Humanoid {
                          children [
                                    
                            DEF LLEG_LINK4 Segment {
-                             centerOfMass          0 0 -0.3
+                             centerOfMass          0 0 -0.12
                              mass                  7.0
                              momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                              children DEF LEG_SHAPE4 Transform {
@@ -762,7 +762,7 @@ DEF SR1 Humanoid {
                              translation       0 0 -0.3
                              children [
                                DEF LLEG_LINK5 Segment {
-                                 centerOfMass          -0.15 0 0
+                                 centerOfMass          0 0 0
                                  mass                  2.5
                                  momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                  children DEF LEG_SHAPE5 Shape {
@@ -779,7 +779,7 @@ DEF SR1 Humanoid {
                                  jointId 18
                                  children [
                                    DEF LLEG_LINK6 Segment {
-                                     centerOfMass          0.28 0 -0.2
+                                     centerOfMass          0.08 0 -0.03
                                      mass                  1.9
                                      momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                      children [
@@ -835,7 +835,7 @@ DEF SR1 Humanoid {
           translation   0 -0.09 0
           children [
             DEF RLEG_LINK1 Segment {
-              centerOfMass          0 -0.1 0
+              centerOfMass          0 0 0
               mass                  2.5
               momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
               children USE LEG_SHAPE1
@@ -847,7 +847,7 @@ DEF SR1 Humanoid {
               jointId 1
               children [
                 DEF RLEG_LINK2 Segment {
-                  centerOfMass          0 0 -0.15
+                  centerOfMass          0 0 0
                   mass                  2.0
                   momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                   children USE LEG_SHAPE2
@@ -858,7 +858,7 @@ DEF SR1 Humanoid {
                   translation     0 0 -0.3535
                   children [
                     DEF RLEG_LINK3 Segment {
-                      centerOfMass          0 -0.04 0
+                      centerOfMass          0 0 0.18
                       mass                  5.1
                       momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                       children [
@@ -872,7 +872,7 @@ DEF SR1 Humanoid {
                       jointId 3
                       children [
                         DEF RLEG_LINK4 Segment {
-                          centerOfMass          0 0 -0.3
+                          centerOfMass          0 0 -0.12
                           mass                  7.0
                           momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                           children [
@@ -887,7 +887,7 @@ DEF SR1 Humanoid {
                           translation     0 0 -0.3
                           children [
                             DEF RLEG_LINK5 Segment {
-                              centerOfMass          -0.15 0 0
+                              centerOfMass          0 0 0
                               mass                  2.5
                               momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                               children USE LEG_SHAPE5
@@ -899,7 +899,7 @@ DEF SR1 Humanoid {
                               jointId 5
                               children [
                                 DEF RLEG_LINK6 Segment {
-                                  centerOfMass          0.28 0 -0.2
+                                  centerOfMass          0.080 0 -0.03
                                   mass                  1.9
                                   momentsOfInertia      [ 1 0 0 0 1 0 0 0 1 ]
                                   children [
