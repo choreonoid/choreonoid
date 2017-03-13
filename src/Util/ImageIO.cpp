@@ -284,6 +284,69 @@ void loadJPEG(Image& image, const std::string& filename, bool isUpsideDown)
     fclose(fp);
 }
 
+
+void loadTGA(Image& image, const std::string& filename, bool isUpsideDown)
+{
+    FILE* fp = 0;
+    fp = fopen(filename.c_str(), "rb");
+    if(!fp){
+        throwLoadException(filename, strerror(errno));
+    }
+
+    unsigned char header[12]={0,0,2,0,0,0,0,0,0,0,0,0};
+    unsigned char header_buf[12];
+    unsigned char header_buf2[6];
+
+    if( fread(header_buf,1,sizeof(header),fp)!=sizeof(header) ||
+        memcmp(header,header_buf,sizeof(header))!=0 ||
+        fread(header_buf2, 1, sizeof(header_buf2), fp)!=sizeof(header_buf2) ){
+        fclose(fp);
+        throwLoadException(filename, "The file is not the Uncompressed TGA format.");
+    }
+
+    unsigned int width = header_buf2[1] * 256 + header_buf2[0];
+    unsigned int height = header_buf2[3] * 256 + header_buf2[2];
+    unsigned int bitPerPixel = header_buf2[4];
+    unsigned int bytesPerPixel = bitPerPixel/8;
+
+    if( width<=0 || height<=0 || (bytesPerPixel!=3 && bytesPerPixel!=4) )
+    {
+        fclose(fp);
+        image.setSize(0, 0);
+        return;
+    }
+
+    image.setSize(width, height, bytesPerPixel);
+
+    unsigned char* pixels = image.pixels();
+    for(unsigned int i=0; i<height; i++){
+        unsigned int row;
+        if(isUpsideDown){
+            row = (height-1-i) * width * bytesPerPixel;
+        }else{
+            row = i * width * bytesPerPixel;
+        }
+
+        for(unsigned int j=0, k=row; j<width; j++){
+
+            unsigned char imageBuf[4];
+            if( fread(imageBuf, 1, bytesPerPixel, fp)!=bytesPerPixel ){
+                fclose(fp);
+                throwLoadException(filename, "Internal error." );
+            }
+
+            pixels[k++] = imageBuf[2];
+            pixels[k++] = imageBuf[1];
+            pixels[k++] = imageBuf[0];
+            if(bytesPerPixel==4)
+                pixels[k++] = imageBuf[3];
+        }
+    }
+
+    fclose (fp);
+
+}
+
 }
 
 
@@ -299,6 +362,8 @@ void ImageIO::load(Image& image, const std::string& filename)
         loadPNG(image, filename, isUpsideDown_);
     } else if(iends_with(filename, "jpg") || iends_with(filename, "jpeg")) {
         loadJPEG(image, filename, isUpsideDown_);
+    } else if(iends_with(filename, "tga")){
+        loadTGA(image, filename, isUpsideDown_);
     } else {
         throwLoadException(filename, "The image format type is not supported.");
     }
