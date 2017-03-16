@@ -4,6 +4,7 @@
 */
 
 #include "ODECollisionDetector.h"
+#include <map>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
