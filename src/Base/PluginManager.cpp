@@ -539,6 +539,8 @@ bool PluginManagerImpl::loadPlugin(int index)
     }
 
     if(!errorMessage.isEmpty()){
+        string s = errorMessage.toLocal8Bit().constData();
+        cout << s << endl;
         mv->putln(_("Loading the plugin failed."));
         mv->putln(errorMessage);
         mv->flush();
