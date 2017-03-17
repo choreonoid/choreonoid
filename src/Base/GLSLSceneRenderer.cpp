@@ -1295,10 +1295,24 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-    if(isPicking){
+    if(isPicking || isRenderingShadowMap){
         return;
     }
-    
+
+    pushProgram(solidColorProgram, false);
+    modelMatrixStack.push_back(Affine3::Identity());
+
+    const Matrix4 PV0 = PV;
+    SgOverlay::ViewVolume v;
+    const Array4i vp = self->viewport();
+    overlay->calcViewVolume(vp[2], vp[3], v);
+    self->getOrthographicProjectionMatrix(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar, PV);
+            
+    renderGroup(overlay);
+
+    PV = PV0;
+    modelMatrixStack.pop_back();
+    popProgram();
 }
 
 

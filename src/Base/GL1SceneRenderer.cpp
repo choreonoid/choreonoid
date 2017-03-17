@@ -1776,13 +1776,6 @@ void GL1SceneRendererImpl::renderOverlay(SgOverlay* overlay)
     glLoadIdentity();
 
     SgOverlay::ViewVolume v;
-    v.left = -1.0;
-    v.right = 1.0;
-    v.bottom = -1.0;
-    v.top = 1.0;
-    v.zNear = 1.0;
-    v.zFar = -1.0;
-
     const Array4i vp = self->viewport();
     overlay->calcViewVolume(vp[2], vp[3], v);
 

@@ -904,5 +904,10 @@ SgObject* SgOverlay::clone(SgCloneMap& cloneMap) const
 
 void SgOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
 {
-
+    io_volume.left = -1.0;
+    io_volume.right = 1.0;
+    io_volume.bottom = -1.0;
+    io_volume.top = 1.0;
+    io_volume.zNear = 1.0;
+    io_volume.zFar = -1.0;
 }

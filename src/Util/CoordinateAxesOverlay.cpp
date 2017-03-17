@@ -71,8 +71,8 @@ void CoordinateAxesOverlay::calcViewVolume(double viewportWidth, double viewport
     io_volume.right = viewportWidth - margin;
     io_volume.top = viewportHeight - margin;
     io_volume.bottom = -margin;
-    io_volume.zNear = margin;
-    io_volume.zFar = -margin;
+    io_volume.zNear = -margin;
+    io_volume.zFar = margin;
 }
 
 
