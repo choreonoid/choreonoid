@@ -69,8 +69,8 @@ public:
 
     virtual void showNormalVectors(double length) = 0;
 
-    virtual void requestToClearCache() = 0;
-    virtual void enableUnusedCacheCheck(bool on) = 0;
+    virtual void requestToClearResources() = 0;
+    virtual void enableUnusedResourceCheck(bool on) = 0;
     
     virtual bool pick(int x, int y) = 0;
     virtual const Vector3& pickedPoint() const = 0;

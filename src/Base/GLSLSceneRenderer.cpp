@@ -34,7 +34,15 @@ std::mutex extensionMutex;
 set<GLSLSceneRenderer*> renderers;
 vector<std::function<void(GLSLSceneRenderer* renderer)>> extendFunctions;
 
-class ShapeHandleSet : public Referenced
+class GLResource : public Referenced
+{
+public:
+    virtual void discard() = 0;
+};
+
+typedef ref_ptr<GLResource> GLResourcePtr;
+
+class VertexResource : public GLResource
 {
 public:
     GLuint vao;
@@ -43,13 +51,23 @@ public:
     bool hasBuffers;
     ScopedConnection connection;
 
-    ShapeHandleSet(GLSLSceneRendererImpl* renderer, SgObject* obj)
+    VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
     {
-        connection.reset(obj->sigUpdated().connect(std::bind(&ShapeHandleSet::onUpdated, this)));
-        clear();
+        connection.reset(obj->sigUpdated().connect(std::bind(&VertexResource::onUpdated, this)));
+        clearHandles();
         glGenVertexArrays(1, &vao);
         hasBuffers = false;
     }
+
+    void clearHandles(){
+        vao = 0;
+        for(int i=0; i < 3; ++i){
+            vbos[i] = 0;
+        }
+        numVertices = 0;
+    }
+
+    virtual void discard() override { clearHandles(); }
 
     void onUpdated(){
         numVertices = 0;
@@ -62,14 +80,6 @@ public:
             deleteBuffers();
         }
         return false;
-    }
-
-    void clear(){
-        vao = 0;
-        for(int i=0; i < 3; ++i){
-            vbos[i] = 0;
-        }
-        numVertices = 0;
     }
 
     void genBuffers(int n){
@@ -89,7 +99,7 @@ public:
         return vbos[index];
     }
 
-    ~ShapeHandleSet() { 
+    ~VertexResource() { 
         if(vao > 0){
             glDeleteVertexArrays(1, &vao);
         }
@@ -99,7 +109,40 @@ public:
     }
 };
 
-typedef ref_ptr<ShapeHandleSet> ShapeHandleSetPtr;
+typedef ref_ptr<VertexResource> VertexResourcePtr;
+
+class TextureResource : public GLResource
+{
+public:
+    bool isBound;
+    bool isImageUpdateNeeded;
+    GLuint textureName;
+    int width;
+    int height;
+    int numComponents;
+        
+    TextureResource(){
+        isBound = false;
+        isImageUpdateNeeded = true;
+        width = 0;
+        height = 0;
+        numComponents = 0;
+    }
+
+    virtual void discard() override { isBound = false; }
+    
+    bool isSameSizeAs(const Image& image){
+        return (width == image.width() && height == image.height() && numComponents == image.numComponents());
+    }
+            
+    ~TextureResource(){
+        if(isBound){
+            glDeleteTextures(1, &textureName);
+        }
+    }
+};
+
+typedef ref_ptr<TextureResource> TextureResourcePtr;
 
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
@@ -107,7 +150,8 @@ struct SgObjectPtrHash {
         return hash(p.get());
     }
 };
-typedef std::unordered_map<SgObjectPtr, ShapeHandleSetPtr, SgObjectPtrHash> ShapeHandleSetMap;
+
+typedef std::unordered_map<SgObjectPtr, GLResourcePtr, SgObjectPtrHash> GLResourceMap;
 
 }
 
@@ -163,14 +207,14 @@ public:
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
-    ShapeHandleSetMap shapeHandleSetMaps[2];
-    bool doUnusedShapeHandleSetCheck;
-    bool isCheckingUnusedShapeHandleSets;
-    bool hasValidNextShapeHandleSetMap;
-    bool isShapeHandleSetClearRequested;
-    int currentShapeHandleSetMapIndex;
-    ShapeHandleSetMap* currentShapeHandleSetMap;
-    ShapeHandleSetMap* nextShapeHandleSetMap;
+    GLResourceMap resourceMaps[2];
+    bool doUnusedResourceCheck;
+    bool isCheckingUnusedResources;
+    bool hasValidNextResourceMap;
+    bool isResourceClearRequested;
+    int currentResourceMapIndex;
+    GLResourceMap* currentResourceMap;
+    GLResourceMap* nextResourceMap;
 
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
@@ -247,11 +291,11 @@ public:
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void flushNolightingTransformMatrices();
-    ShapeHandleSet* getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix);
+    VertexResource* getOrCreateVertexResource(SgObject* obj, const Affine3& modelMatrix);
     void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
-    void createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet);
+    void createMeshVertexArray(SgMesh* mesh, VertexResource* resource);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
@@ -309,12 +353,12 @@ void GLSLSceneRendererImpl::initialize()
     isRenderingShadowMap = false;
     pickedPoint.setZero();
 
-    doUnusedShapeHandleSetCheck = true;
-    currentShapeHandleSetMapIndex = 0;
-    hasValidNextShapeHandleSetMap = false;
-    isShapeHandleSetClearRequested = false;
-    currentShapeHandleSetMap = &shapeHandleSetMaps[0];
-    nextShapeHandleSetMap = &shapeHandleSetMaps[1];
+    doUnusedResourceCheck = true;
+    currentResourceMapIndex = 0;
+    hasValidNextResourceMap = false;
+    isResourceClearRequested = false;
+    currentResourceMap = &resourceMaps[0];
+    nextResourceMap = &resourceMaps[1];
 
     modelMatrixStack.reserve(16);
     viewMatrix.setIdentity();
@@ -368,10 +412,10 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
 {
     // clear handles to avoid the deletion of them without the corresponding GL context
     for(int i=0; i < 2; ++i){
-        ShapeHandleSetMap& handleSetMap = shapeHandleSetMaps[i];
-        for(ShapeHandleSetMap::iterator p = handleSetMap.begin(); p != handleSetMap.end(); ++p){
-            ShapeHandleSet* handleSet = p->second;
-            handleSet->clear();
+        GLResourceMap& resourceMap = resourceMaps[i];
+        for(GLResourceMap::iterator p = resourceMap.begin(); p != resourceMap.end(); ++p){
+            GLResource* resource = p->second;
+            resource->discard();
         }
     }
 }
@@ -465,7 +509,7 @@ bool GLSLSceneRendererImpl::initializeGL()
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-    isShapeHandleSetClearRequested = true;
+    isResourceClearRequested = true;
 
     isCurrentFogUpdated = false;
 
@@ -486,9 +530,9 @@ void GLSLSceneRenderer::flush()
 }
 
 
-void GLSLSceneRenderer::requestToClearCache()
+void GLSLSceneRenderer::requestToClearResources()
 {
-    impl->isShapeHandleSetClearRequested = true;
+    impl->isResourceClearRequested = true;
 }
 
 
@@ -665,29 +709,29 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
 
 void GLSLSceneRendererImpl::beginRendering()
 {
-    isCheckingUnusedShapeHandleSets = isPicking ? false : doUnusedShapeHandleSetCheck;
+    isCheckingUnusedResources = isPicking ? false : doUnusedResourceCheck;
 
-    if(isShapeHandleSetClearRequested){
-        shapeHandleSetMaps[0].clear();
-        shapeHandleSetMaps[1].clear();
-        hasValidNextShapeHandleSetMap = false;
-        isCheckingUnusedShapeHandleSets = false;
-        isShapeHandleSetClearRequested = false; 
+    if(isResourceClearRequested){
+        resourceMaps[0].clear();
+        resourceMaps[1].clear();
+        hasValidNextResourceMap = false;
+        isCheckingUnusedResources = false;
+        isResourceClearRequested = false; 
     }
-    if(hasValidNextShapeHandleSetMap){
-        currentShapeHandleSetMapIndex = 1 - currentShapeHandleSetMapIndex;
-        currentShapeHandleSetMap = &shapeHandleSetMaps[currentShapeHandleSetMapIndex];
-        nextShapeHandleSetMap = &shapeHandleSetMaps[1 - currentShapeHandleSetMapIndex];
-        hasValidNextShapeHandleSetMap = false;
+    if(hasValidNextResourceMap){
+        currentResourceMapIndex = 1 - currentResourceMapIndex;
+        currentResourceMap = &resourceMaps[currentResourceMapIndex];
+        nextResourceMap = &resourceMaps[1 - currentResourceMapIndex];
+        hasValidNextResourceMap = false;
     }
 }
 
 
 void GLSLSceneRendererImpl::endRendering()
 {
-    if(isCheckingUnusedShapeHandleSets){
-        currentShapeHandleSetMap->clear();
-        hasValidNextShapeHandleSetMap = true;
+    if(isCheckingUnusedResources){
+        currentResourceMap->clear();
+        hasValidNextResourceMap = true;
     }
 }
 
@@ -977,18 +1021,19 @@ void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 }
 
 
-ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, const Affine3& modelMatrix)
+VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj, const Affine3& modelMatrix)
 {
-    ShapeHandleSet* handleSet;
-    ShapeHandleSetMap::iterator p = currentShapeHandleSetMap->find(obj);
-    if(p == currentShapeHandleSetMap->end()){
-        ShapeHandleSet* handleSet = new ShapeHandleSet(this, obj);
-        p = currentShapeHandleSetMap->insert(ShapeHandleSetMap::value_type(obj, handleSet)).first;
+    VertexResource* resource;
+    auto p = currentResourceMap->find(obj);
+    if(p == currentResourceMap->end()){
+        resource = new VertexResource(this, obj);
+        p = currentResourceMap->insert(GLResourceMap::value_type(obj, resource)).first;
+    } else {
+        resource = static_cast<VertexResource*>(p->second.get());
     }
-    handleSet = p->second;
 
-    if(isCheckingUnusedShapeHandleSets){
-        nextShapeHandleSetMap->insert(*p);
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(*p);
     }
 
     if(currentLightingProgram == &phongShadowProgram){
@@ -998,9 +1043,9 @@ ShapeHandleSet* GLSLSceneRendererImpl::getOrCreateShapeHandleSet(SgObject* obj, 
         currentNolightingProgram->setProjectionMatrix(PVM);
     }
 
-    glBindVertexArray(handleSet->vao);
+    glBindVertexArray(resource->vao);
 
-    return handleSet;
+    return resource;
 }
 
 
@@ -1022,12 +1067,12 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
             if(!isPicking){
                 renderMaterial(shape->material());
             }
-            ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(mesh, modelMatrixStack.back());
-            if(!handleSet->isValid()){
-                createMeshVertexArray(mesh, handleSet);
+            VertexResource* resource = getOrCreateVertexResource(mesh, modelMatrixStack.back());
+            if(!resource->isValid()){
+                createMeshVertexArray(mesh, resource);
             }
             pushPickId(shape);
-            glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+            glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
             popPickId();
         }
     }
@@ -1041,11 +1086,11 @@ void GLSLSceneRendererImpl::renderTransparentShape(SgShape* shape, Affine3 model
     } else {
         renderMaterial(shape->material());
     }
-    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(shape->mesh(), modelMatrix);
-    if(!handleSet->isValid()){
-        createMeshVertexArray(shape->mesh(), handleSet);
+    VertexResource* resource = getOrCreateVertexResource(shape->mesh(), modelMatrix);
+    if(!resource->isValid()){
+        createMeshVertexArray(shape->mesh(), resource);
     }
-    glDrawArrays(GL_TRIANGLES, 0, handleSet->numVertices);
+    glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
 }
 
 
@@ -1109,7 +1154,7 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* handleSet)
+void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* resource)
 {
     SgIndexArray& triangleVertices = mesh->triangleVertices();
     const size_t totalNumVertices = triangleVertices.size();
@@ -1117,7 +1162,7 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* 
     const SgVertexArray& orgVertices = *mesh->vertices();
     SgVertexArray vertices;
     vertices.reserve(totalNumVertices);
-    handleSet->numVertices = totalNumVertices;
+    resource->numVertices = totalNumVertices;
 
     const bool hasNormals = mesh->hasNormals();
     const SgNormalArray& orgNormals = *mesh->normals();
@@ -1149,13 +1194,13 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, ShapeHandleSet* 
 
     GLuint normalBufferHandle;
     if(hasNormals){
-        handleSet->genBuffers(2);
-        normalBufferHandle = handleSet->vbo(1);
+        resource->genBuffers(2);
+        normalBufferHandle = resource->vbo(1);
     } else {
-        handleSet->genBuffers(1);
+        resource->genBuffers(1);
         normalBufferHandle = 0;
     }
-    GLuint positionBufferHandle = handleSet->vbo(0);
+    GLuint positionBufferHandle = resource->vbo(0);
         
     glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
@@ -1214,16 +1259,16 @@ void GLSLSceneRendererImpl::renderPlot
         currentProgram->enableColorArray(hasColors);
     }
     
-    ShapeHandleSet* handleSet = getOrCreateShapeHandleSet(plot, modelMatrixStack.back());
-    if(!handleSet->isValid()){
+    VertexResource* resource = getOrCreateVertexResource(plot, modelMatrixStack.back());
+    if(!resource->isValid()){
         SgVertexArrayPtr vertices = getVertices();
         const int n = vertices->size();
-        handleSet->numVertices = n;
+        resource->numVertices = n;
         if(!hasColors){
-            handleSet->genBuffers(1);
+            resource->genBuffers(1);
         } else {
-            handleSet->genBuffers(2);
-            glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(1));
+            resource->genBuffers(2);
+            glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(1));
             SgColorArrayPtr colors;
             if(plot->colorIndices().empty()){
                 const SgColorArray& orgColors = *plot->colors();
@@ -1241,13 +1286,13 @@ void GLSLSceneRendererImpl::renderPlot
                 glEnableVertexAttribArray(1);
             }
         }
-        glBindBuffer(GL_ARRAY_BUFFER, handleSet->vbo(0));
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(0));
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
         glEnableVertexAttribArray(0);
     }        
 
-    glDrawArrays(primitiveMode, 0, handleSet->numVertices);
+    glDrawArrays(primitiveMode, 0, resource->numVertices);
     
     popPickId();
 }
@@ -1567,10 +1612,10 @@ void GLSLSceneRenderer::showNormalVectors(double length)
 }
 
 
-void GLSLSceneRenderer::enableUnusedCacheCheck(bool on)
+void GLSLSceneRenderer::enableUnusedResourceCheck(bool on)
 {
     if(!on){
-        impl->nextShapeHandleSetMap->clear();
+        impl->nextResourceMap->clear();
     }
-    impl->doUnusedShapeHandleSetCheck = on;
+    impl->doUnusedResourceCheck = on;
 }

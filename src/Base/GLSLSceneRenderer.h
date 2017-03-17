@@ -71,8 +71,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void showNormalVectors(double length) override;
 
-    virtual void requestToClearCache() override;
-    virtual void enableUnusedCacheCheck(bool on) override;
+    virtual void requestToClearResources() override;
+    virtual void enableUnusedResourceCheck(bool on) override;
 
     virtual void setColor(const Vector3f& color) override;
 

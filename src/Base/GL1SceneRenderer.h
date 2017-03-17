@@ -47,14 +47,14 @@ public:
 
     virtual void showNormalVectors(double length) override;
 
-    virtual void requestToClearCache() override;
+    virtual void requestToClearResources() override;
 
     /**
        If this is enabled, OpenGL resources such as display lists, vertex buffer objects
        are checked if they are still used or not, and the unused resources are released
        when finalizeRendering() is called. The default value is true.
     */
-    void enableUnusedCacheCheck(bool on);
+    void enableUnusedResourceCheck(bool on);
 
     virtual bool isPicking() const override;
     virtual void setColor(const Vector3f& color) override;
