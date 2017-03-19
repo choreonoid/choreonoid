@@ -4,6 +4,7 @@
 
 in vec3 position;
 in vec3 normal;
+in vec2 texCoord;
 in vec4 shadowCoords[MAX_NUM_SHADOWS];
 
 /*
@@ -43,6 +44,9 @@ uniform LightInfo lights[10];
 
 vec3 reflectionElements[10];
 
+uniform bool isTextureEnabled;
+uniform sampler2D tex1;
+
 uniform int numShadows;
 
 struct ShadowInfo {
@@ -59,7 +63,7 @@ uniform bool isFogEnabled = false;
 
 layout(location = 0) out vec4 color;
 
-vec3 calcDiffuseAndSpecularElements(LightInfo light)
+vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
 {
     if(light.position.w == 0.0){
         // directional light
@@ -111,9 +115,20 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light)
 
 void main()
 {
-    for(int i=0; i < numLights; ++i){
-        reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i]);
+    float alpha2;
+    if(isTextureEnabled){
+        vec4 texColor = texture(tex1, texCoord);
+        alpha2 = alpha * texColor.a;
+        for(int i=0; i < numLights; ++i){
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], vec3(texColor));
+        }
+    } else {
+        alpha2 = alpha;
+        for(int i=0; i < numLights; ++i){
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], diffuseColor);
+        }
     }
+        
     for(int i=0; i < numShadows; ++i){
         float shadow;
         if(isShadowAntiAliasingEnabled){
@@ -140,5 +155,5 @@ void main()
         c = mix(fogColor, c, f);
     }
     
-    color = vec4(c, alpha);
+    color = vec4(c, alpha2);
 }

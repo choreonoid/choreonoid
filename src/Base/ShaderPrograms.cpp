@@ -78,6 +78,7 @@ void SolidColorProgram::initialize()
     loadVertexShader(":/Base/shader/nolighting.vert");
     loadFragmentShader(":/Base/shader/solidcolor.frag");
     link();
+    use();
 
     NolightingProgram::initialize();
 
@@ -196,6 +197,12 @@ void MaterialProgram::initialize()
     emissionColorLocation = getUniformLocation("emissionColor");
     shininessLocation = getUniformLocation("shininess");
     alphaLocation = getUniformLocation("alpha");
+
+    isTextureEnabledLocation = getUniformLocation("isTextureEnabled");
+    tex1Location = getUniformLocation("tex1");
+    glUniform1i(tex1Location, 0);
+    isTextureEnabled_ = false;
+    glUniform1i(isTextureEnabledLocation, isTextureEnabled_);
 }
 
 
@@ -231,6 +238,7 @@ void PhongShadowProgram::initialize()
     loadVertexShader(":/Base/shader/phongshadow.vert");
     loadFragmentShader(":/Base/shader/phongshadow.frag");
     link();
+    use();
 
     MaterialProgram::initialize();
 
@@ -432,6 +440,7 @@ void ShadowMapProgram::initialize()
     loadVertexShader(":/Base/shader/nolighting.vert");
     loadFragmentShader(":/Base/shader/shadowmap.frag");
     link();
+    use();
     
     NolightingProgram::initialize();
 }

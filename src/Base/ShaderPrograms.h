@@ -108,6 +108,10 @@ protected:
     GLint shininessLocation;
     GLint alphaLocation;
 
+    GLint isTextureEnabledLocation;
+    GLint tex1Location;
+    bool isTextureEnabled_;
+
 public:
     virtual void initialize() override;
 
@@ -128,6 +132,13 @@ public:
     }
     void setAlpha(float a){
         glUniform1f(alphaLocation, a);
+    }
+
+    void setTextureEnabled(bool on){
+        if(on != isTextureEnabled_){
+            glUniform1i(isTextureEnabledLocation, on);
+            isTextureEnabled_ = on;
+        }
     }
 };
 

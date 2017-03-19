@@ -15,6 +15,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <unordered_map>
 #include <mutex>
+#include <GL/glu.h>
 #include <iostream>
 
 using namespace std;
@@ -114,30 +115,32 @@ typedef ref_ptr<VertexResource> VertexResourcePtr;
 class TextureResource : public GLResource
 {
 public:
-    bool isBound;
+    bool isLoaded;
     bool isImageUpdateNeeded;
-    GLuint textureName;
+    GLuint textureId;
+    GLuint samplerId;
     int width;
     int height;
     int numComponents;
         
     TextureResource(){
-        isBound = false;
+        isLoaded = false;
         isImageUpdateNeeded = true;
         width = 0;
         height = 0;
         numComponents = 0;
     }
 
-    virtual void discard() override { isBound = false; }
+    virtual void discard() override { isLoaded = false; }
     
     bool isSameSizeAs(const Image& image){
         return (width == image.width() && height == image.height() && numComponents == image.numComponents());
     }
             
     ~TextureResource(){
-        if(isBound){
-            glDeleteTextures(1, &textureName);
+        if(isLoaded){
+            glDeleteTextures(1, &textureId);
+            glDeleteSamplers(1, &samplerId);
         }
     }
 };
@@ -216,6 +219,8 @@ public:
     GLResourceMap* currentResourceMap;
     GLResourceMap* nextResourceMap;
 
+    vector<char> scaledImageBuf;
+
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
@@ -285,7 +290,7 @@ public:
     void renderTransform(SgTransform* transform);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
-    void renderTransparentShape(SgShape* shape, Affine3 modelMatrix, unsigned int pickId);
+    void renderShapeMain(SgShape* shape, const Affine3& modelMatrix, unsigned int pickId);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
@@ -294,8 +299,8 @@ public:
     VertexResource* getOrCreateVertexResource(SgObject* obj, const Affine3& modelMatrix);
     void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
-    bool renderTexture(SgTexture* texture, bool withMaterial);
-    void createMeshVertexArray(SgMesh* mesh, VertexResource* resource);
+    bool renderTexture(SgTexture* texture);
+    void createMeshVertexArray(SgMesh* mesh, VertexResource* resource, bool hasTexture);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
@@ -1059,36 +1064,38 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
                 const Affine3& M = modelMatrixStack.back();
                 unsigned int pickId = pushPickId(shape, false);
                 transparentRenderingFunctions.push_back(
-                    [this,shape,M,pickId](){
-                        renderTransparentShape(shape, M, pickId); });
+                    [this, shape, M, pickId](){
+                        renderShapeMain(shape, M, pickId); });
                 popPickId();
             }
         } else {
-            if(!isPicking){
-                renderMaterial(shape->material());
-            }
-            VertexResource* resource = getOrCreateVertexResource(mesh, modelMatrixStack.back());
-            if(!resource->isValid()){
-                createMeshVertexArray(mesh, resource);
-            }
-            pushPickId(shape);
-            glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
+            int pickId = pushPickId(shape, false);
+            renderShapeMain(shape, modelMatrixStack.back(), pickId);
             popPickId();
         }
     }
 }
 
 
-void GLSLSceneRendererImpl::renderTransparentShape(SgShape* shape, Affine3 modelMatrix, unsigned int pickId)
+void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& modelMatrix, unsigned int pickId)
 {
+    bool hasTexture = false;
+    SgMesh* mesh = shape->mesh();
     if(isPicking){
         setPickColor(pickId);
     } else {
         renderMaterial(shape->material());
+        if(currentLightingProgram == &phongShadowProgram){
+            if(shape->texture() && mesh->hasTexCoords()){
+                hasTexture = true;
+                renderTexture(shape->texture());
+            }
+            phongShadowProgram.setTextureEnabled(hasTexture);
+        }
     }
-    VertexResource* resource = getOrCreateVertexResource(shape->mesh(), modelMatrix);
+    VertexResource* resource = getOrCreateVertexResource(mesh, modelMatrix);
     if(!resource->isValid()){
-        createMeshVertexArray(shape->mesh(), resource);
+        createMeshVertexArray(mesh, resource, hasTexture);
     }
     glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
 }
@@ -1142,34 +1149,154 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
 }
 
 
-bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
+bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
 {
-    return false;
+    SgImage* sgImage = texture->image();
+    if(!sgImage || sgImage->empty()){
+        return false;
+    }
+
+    const Image& image = sgImage->constImage();
+    const int width = image.width();
+    const int height = image.height();
+    bool doLoadTexImage = false;
+    bool doReloadTexImage = false;
+
+    auto p = currentResourceMap->find(sgImage);
+    TextureResource* resource;
+    if(p != currentResourceMap->end()){
+        resource = static_cast<TextureResource*>(p->second.get());
+    } else {
+        resource = new TextureResource;
+        currentResourceMap->insert(GLResourceMap::value_type(sgImage, resource));
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    if(resource->isLoaded){
+        if(resource->isImageUpdateNeeded){
+            doLoadTexImage = true;
+            doReloadTexImage = resource->isSameSizeAs(image);
+        }
+    } else {
+        glGenTextures(1, &resource->textureId);
+        glGenSamplers(1, &resource->samplerId);
+        glSamplerParameteri(resource->samplerId, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(resource->samplerId, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(resource->samplerId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(resource->samplerId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        //glSamplerParameteri(resource->samplerId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        resource->isLoaded = true;
+        doLoadTexImage = true;
+    }
+    glBindTexture(GL_TEXTURE_2D, resource->textureId);
+    glBindSampler(0, resource->samplerId);
+    
+    if(isCheckingUnusedResources){
+        nextResourceMap->insert(GLResourceMap::value_type(sgImage, resource)); 
+   }
+    resource->width = width;
+    resource->height = height;
+    resource->numComponents = image.numComponents();
+    resource->isImageUpdateNeeded = false;
+    
+    if(doLoadTexImage){
+        GLenum format = GL_RGB;
+        switch(image.numComponents()){
+        case 1 : format = GL_RED; break;
+        case 2 : format = GL_RG; break;
+        case 3 : format = GL_RGB; break;
+        case 4 : format = GL_RGBA; break;
+        default : return false;
+        }
+        
+        if(image.numComponents() == 3){
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        } else {
+            glPixelStorei(GL_UNPACK_ALIGNMENT, image.numComponents());
+        }
+
+        if(doReloadTexImage){
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
+
+        } else {
+            double w2 = log2(width);
+            double h2 = log2(height);
+            double pw = ceil(w2);
+            double ph = ceil(h2);
+            if((pw - w2 == 0.0) && (ph - h2 == 0.0)){
+                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
+            } else{
+                GLsizei potWidth = pow(2.0, pw);
+                GLsizei potHeight = pow(2.0, ph);
+                scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
+                gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
+                              potWidth, potHeight, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
+                glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0, format, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
+            }
+        }
+
+        //glGenerateTextureMipmap(resource->textureId);
+    }
+
+    /*
+    if(SgTextureTransform* tt = texture->textureTransform()){
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+        glTranslated(-tt->center()[0], -tt->center()[1], 0.0 );
+        glScaled(tt->scale()[0], tt->scale()[1], 0.0 );
+        glRotated(tt->rotation(), 0.0, 0.0, 1.0 );
+        glTranslated(tt->center()[0], tt->center()[1], 0.0 );
+        glTranslated(tt->translation()[0], tt->translation()[1], 0.0 );
+        glMatrixMode(GL_MODELVIEW);
+    } else {
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+    }
+    */
+
+    return true;
 }
 
 
 void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 {
-
+    GLResourceMap* resourceMap = impl->hasValidNextResourceMap ? impl->nextResourceMap : impl->currentResourceMap;
+    auto p = resourceMap->find(image);
+    if(p != resourceMap->end()){
+        TextureResource* resource = static_cast<TextureResource*>(p->second.get());
+        resource->isImageUpdateNeeded = true;
+    }
 }
 
 
-void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* resource, bool hasTexture)
 {
-    SgIndexArray& triangleVertices = mesh->triangleVertices();
-    const size_t totalNumVertices = triangleVertices.size();
+    int numBuffers = 1;
+
+    auto& triangleVertices = mesh->triangleVertices();
+    const int totalNumVertices = triangleVertices.size();
     
-    const SgVertexArray& orgVertices = *mesh->vertices();
+    const auto& orgVertices = *mesh->vertices();
     SgVertexArray vertices;
     vertices.reserve(totalNumVertices);
     resource->numVertices = totalNumVertices;
 
     const bool hasNormals = mesh->hasNormals();
-    const SgNormalArray& orgNormals = *mesh->normals();
-    const SgIndexArray& normalIndices = mesh->normalIndices();
+    const auto& orgNormals = *mesh->normals();
+    const auto& normalIndices = mesh->normalIndices();
     SgNormalArray normals;
     if(hasNormals){
         normals.reserve(totalNumVertices);
+        numBuffers = 2;
+    }
+
+    const auto& orgTexCoords = *mesh->texCoords();
+    const auto& texCoordIndices = mesh->texCoordIndices();
+    SgTexCoordArray texCoords;
+    if(hasTexture){
+        texCoords.reserve(totalNumVertices);
+        numBuffers = 3;
     }
         
     const int numTriangles = mesh->numTriangles();
@@ -1188,30 +1315,37 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
                     normals.push_back(orgNormals[normalIndex]);
                 }
             }
+            if(hasTexture){
+                if(texCoordIndices.empty()){
+                    texCoords.push_back(orgTexCoords[orgVertexIndex]);
+                } else {
+                    const int texCoordIndex = texCoordIndices[faceVertexIndex];
+                    texCoords.push_back(orgTexCoords[texCoordIndex]);
+                }
+            }
             ++faceVertexIndex;
         }
     }
 
-    GLuint normalBufferHandle;
-    if(hasNormals){
-        resource->genBuffers(2);
-        normalBufferHandle = resource->vbo(1);
-    } else {
-        resource->genBuffers(1);
-        normalBufferHandle = 0;
-    }
-    GLuint positionBufferHandle = resource->vbo(0);
+    resource->genBuffers(numBuffers);
         
-    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(0));
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
     
     if(hasNormals){
-        glBindBuffer(GL_ARRAY_BUFFER, normalBufferHandle);
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(1));
         glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
         glEnableVertexAttribArray(1);
+    }
+
+    if(hasTexture){
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(2));
+        glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+        glEnableVertexAttribArray(2);
     }
 }
 

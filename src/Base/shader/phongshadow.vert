@@ -4,9 +4,11 @@
 
 layout (location = 0) in vec4 vertexPosition;
 layout (location = 1) in vec3 vertexNormal;
+layout (location = 2) in vec2 vertexTexCoord;
 
 out vec3 position;
 out vec3 normal;
+out vec2 texCoord;
 out vec4 shadowCoords[MAX_NUM_SHADOWS];
 
 
@@ -36,6 +38,8 @@ void main()
     normal = normalize(normalMatrix * vertexNormal);
     position = vec3(modelViewMatrix * vertexPosition);
 
+    texCoord = vertexTexCoord;
+    
     for(int i=0; i < numShadows; ++i){
         shadowCoords[i] = shadowMatrices[i] * vertexPosition;
     }
