@@ -13,6 +13,7 @@
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include <GL/glu.h>
@@ -220,6 +221,7 @@ public:
     GLResourceMap* nextResourceMap;
 
     vector<char> scaledImageBuf;
+    boost::optional<Eigen::Affine2f> textureTransform;
 
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
@@ -1238,22 +1240,17 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
         //glGenerateTextureMipmap(resource->textureId);
     }
 
-    /*
     if(SgTextureTransform* tt = texture->textureTransform()){
-        glMatrixMode(GL_TEXTURE);
-        glLoadIdentity();
-        glTranslated(-tt->center()[0], -tt->center()[1], 0.0 );
-        glScaled(tt->scale()[0], tt->scale()[1], 0.0 );
-        glRotated(tt->rotation(), 0.0, 0.0, 1.0 );
-        glTranslated(tt->center()[0], tt->center()[1], 0.0 );
-        glTranslated(tt->translation()[0], tt->translation()[1], 0.0 );
-        glMatrixMode(GL_MODELVIEW);
+        Eigen::Rotation2Df R(tt->rotation());
+        const auto& c = tt->center();
+        Eigen::Translation<float, 2> C(c.x(), c.y());
+        const auto& t = tt->translation();
+        Eigen::Translation<float, 2> T(t.x(), t.y());
+        const auto s = tt->scale().cast<float>();
+        textureTransform = Eigen::Affine2f(C.inverse() * Eigen::Scaling(s.x(), s.y()) * R * C * T);
     } else {
-        glMatrixMode(GL_TEXTURE);
-        glLoadIdentity();
-        glMatrixMode(GL_MODELVIEW);
+        textureTransform = boost::none;
     }
-    */
 
     return true;
 }
@@ -1291,12 +1288,23 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
         numBuffers = 2;
     }
 
-    const auto& orgTexCoords = *mesh->texCoords();
+    SgTexCoordArrayPtr pOrgTexCoords;
     const auto& texCoordIndices = mesh->texCoordIndices();
     SgTexCoordArray texCoords;
     if(hasTexture){
         texCoords.reserve(totalNumVertices);
         numBuffers = 3;
+        if(!textureTransform){
+            pOrgTexCoords = mesh->texCoords();
+        } else {
+            const auto& orgTexCoords = *mesh->texCoords();
+            const size_t n = orgTexCoords.size();
+            pOrgTexCoords = new SgTexCoordArray(n);
+            const Eigen::Affine2f& T = *textureTransform;
+            for(size_t i=0; i < n; ++i){
+                (*pOrgTexCoords)[i] = T * orgTexCoords[i];
+            }
+        }
     }
         
     const int numTriangles = mesh->numTriangles();
@@ -1317,10 +1325,10 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
             }
             if(hasTexture){
                 if(texCoordIndices.empty()){
-                    texCoords.push_back(orgTexCoords[orgVertexIndex]);
+                    texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
                 } else {
                     const int texCoordIndex = texCoordIndices[faceVertexIndex];
-                    texCoords.push_back(orgTexCoords[texCoordIndex]);
+                    texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
                 }
             }
             ++faceVertexIndex;

@@ -1240,7 +1240,7 @@ bool GL1SceneRendererImpl::renderTexture(SgTexture* texture, bool withMaterial)
         glLoadIdentity();
         glTranslated(-tt->center()[0], -tt->center()[1], 0.0 );
         glScaled(tt->scale()[0], tt->scale()[1], 0.0 );
-        glRotated(tt->rotation(), 0.0, 0.0, 1.0 );
+        glRotated(degree(tt->rotation()), 0.0, 0.0, 1.0 );
         glTranslated(tt->center()[0], tt->center()[1], 0.0 );
         glTranslated(tt->translation()[0], tt->translation()[1], 0.0 );
         glMatrixMode(GL_MODELVIEW);
