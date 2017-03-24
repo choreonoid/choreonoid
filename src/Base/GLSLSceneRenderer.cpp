@@ -47,8 +47,9 @@ typedef ref_ptr<GLResource> GLResourcePtr;
 class VertexResource : public GLResource
 {
 public:
+    static const int MAX_NUM_BUFFERS = 4;
     GLuint vao;
-    GLuint vbos[3];
+    GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
     bool hasBuffers;
     ScopedConnection connection;
@@ -64,7 +65,7 @@ public:
 
     void clearHandles(){
         vao = 0;
-        for(int i=0; i < 3; ++i){
+        for(int i=0; i < MAX_NUM_BUFFERS; ++i){
             vbos[i] = 0;
         }
         numVertices = 0;
@@ -91,8 +92,8 @@ public:
     }
 
     void deleteBuffers(){
-        glDeleteBuffers(3, vbos);
-        for(int i=0; i < 3; ++i){
+        glDeleteBuffers(MAX_NUM_BUFFERS, vbos);
+        for(int i=0; i < MAX_NUM_BUFFERS; ++i){
             vbos[i] = 0;
         }
         hasBuffers = false;
@@ -1121,6 +1122,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& model
                 hasTexture = renderTexture(shape->texture());
             }
             phongShadowProgram.setTextureEnabled(hasTexture);
+            //phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
         }
     }
     VertexResource* resource = getOrCreateVertexResource(mesh, modelMatrix);
@@ -1323,7 +1325,7 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
     SgNormalArray normals;
     if(hasNormals){
         normals.reserve(totalNumVertices);
-        numBuffers = 2;
+        ++numBuffers;
     }
 
     SgTexCoordArrayPtr pOrgTexCoords;
@@ -1331,7 +1333,7 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
     SgTexCoordArray texCoords;
     if(hasTexture){
         texCoords.reserve(totalNumVertices);
-        numBuffers = 3;
+        ++numBuffers;
         if(!textureTransform){
             pOrgTexCoords = mesh->texCoords();
         } else {
@@ -1343,6 +1345,15 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
                 (*pOrgTexCoords)[i] = T * orgTexCoords[i];
             }
         }
+    }
+
+    const bool hasColors = mesh->hasColors();
+    SgColorArray colors;
+    const auto& orgColors = *mesh->colors();
+    const auto& colorIndices = mesh->colorIndices();
+    if(hasColors){
+        colors.reserve(totalNumVertices);
+        ++numBuffers;
     }
         
     const int numTriangles = mesh->numTriangles();
@@ -1369,22 +1380,33 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
                     texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
                 }
             }
+            if(hasColors){
+                if(colorIndices.empty()){
+                    colors.push_back(orgColors[orgVertexIndex]);
+                } else {
+                    const int colorIndex = colorIndices[faceVertexIndex];
+                    colors.push_back(orgColors[colorIndex]);
+                }
+            }
             ++faceVertexIndex;
         }
     }
 
     resource->genBuffers(numBuffers);
+    int vboIndex = 0;
         
-    glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(0));
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
+    ++vboIndex;
     
     if(hasNormals){
-        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(1));
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
         glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
         glEnableVertexAttribArray(1);
+        ++vboIndex;
 
         if(isNormalVisualizationEnabled){
             auto lines = new SgLineSet;
@@ -1401,10 +1423,18 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
     }
 
     if(hasTexture){
-        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(2));
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
         glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
         glEnableVertexAttribArray(2);
+        ++vboIndex;
+    }
+
+    if(hasColors){
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
+        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+        glEnableVertexAttribArray(3);
     }
 }
 

@@ -5,6 +5,7 @@
 in vec3 position;
 in vec3 normal; // already normalized
 in vec2 texCoord;
+in vec3 colorV;
 in vec4 shadowCoords[MAX_NUM_SHADOWS];
 
 /*
@@ -46,6 +47,8 @@ vec3 reflectionElements[10];
 
 uniform bool isTextureEnabled;
 uniform sampler2D tex1;
+
+uniform bool isVertexColorEnabled;
 
 uniform int numShadows;
 
@@ -120,9 +123,15 @@ void main()
             reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], vec3(texColor));
         }
     } else {
+        vec3 color;
+        if(isVertexColorEnabled){
+            color = colorV;
+        } else {
+            color = diffuseColor;
+        }
         alpha2 = alpha;
         for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], diffuseColor);
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], color);
         }
     }
         

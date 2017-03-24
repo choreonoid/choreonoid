@@ -112,6 +112,9 @@ protected:
     GLint tex1Location;
     bool isTextureEnabled_;
 
+    GLint isVertexColorEnabledLocation;
+    bool isVertexColorEnabled_;
+
 public:
     virtual void initialize() override;
 
@@ -138,6 +141,13 @@ public:
         if(on != isTextureEnabled_){
             glUniform1i(isTextureEnabledLocation, on);
             isTextureEnabled_ = on;
+        }
+    }
+
+    void setVertexColorEnabled(bool on){
+        if(on != isVertexColorEnabled_){
+            glUniform1i(isVertexColorEnabledLocation, on);
+            isVertexColorEnabled_ = on;
         }
     }
 };

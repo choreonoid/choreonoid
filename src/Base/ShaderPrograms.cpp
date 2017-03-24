@@ -203,6 +203,10 @@ void MaterialProgram::initialize()
     glUniform1i(tex1Location, 0);
     isTextureEnabled_ = false;
     glUniform1i(isTextureEnabledLocation, isTextureEnabled_);
+
+    isVertexColorEnabledLocation = getUniformLocation("isVertexColorEnabled");
+    isVertexColorEnabled_ = false;
+    glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled_);
 }
 
 
