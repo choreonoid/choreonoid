@@ -52,6 +52,7 @@ public:
     GLsizei numVertices;
     bool hasBuffers;
     ScopedConnection connection;
+    SgLineSetPtr normalVisualization;
 
     VertexResource(GLSLSceneRendererImpl* renderer, SgObject* obj)
     {
@@ -199,7 +200,8 @@ public:
         NolightingProgram* nolightingProgram;
     };
     vector<ProgramInfo> programStack;
-        
+
+    bool isActuallyRendering;
     bool isPicking;
     bool isRenderingShadowMap;
     
@@ -239,6 +241,10 @@ public:
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
+
+    bool isNormalVisualizationEnabled;
+    float normalVisualizationLength;
+    SgMaterialPtr normalVisualizationMaterial;
 
     GLdouble pickX;
     GLdouble pickY;
@@ -370,6 +376,7 @@ void GLSLSceneRendererImpl::initialize()
     currentNolightingProgram = 0;
     materialProgram = &phongShadowProgram;
 
+    isActuallyRendering = false;
     isPicking = false;
     isRenderingShadowMap = false;
     pickedPoint.setZero();
@@ -392,6 +399,11 @@ void GLSLSceneRendererImpl::initialize()
     defaultLineWidth = 1.0f;
 
     prevFog = 0;
+
+    isNormalVisualizationEnabled = false;
+    normalVisualizationLength = 0.0f;
+    normalVisualizationMaterial = new SgMaterial;
+    normalVisualizationMaterial->setDiffuseColor(Vector3f(0.0f, 1.0f, 0.0f));
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
@@ -580,6 +592,7 @@ void GLSLSceneRendererImpl::render()
         self->setViewport(0, 0, program.shadowMapWidth(), program.shadowMapHeight());
         pushProgram(program.shadowMapProgram(), false);
         isRenderingShadowMap = true;
+        isActuallyRendering = false;
         
         int shadowMapIndex = 0;
         set<int>::iterator iter = shadowLightIndices.begin();
@@ -602,6 +615,7 @@ void GLSLSceneRendererImpl::render()
     pushProgram(program, true);
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
+    isActuallyRendering = true;
     renderScene();
     popProgram();
 
@@ -618,7 +632,6 @@ bool GLSLSceneRenderer::pick(int x, int y)
 bool GLSLSceneRendererImpl::pick(int x, int y)
 {
     self->extractPreprocessedNodes();
-    beginRendering();
     
     if(!SHOW_IMAGE_FOR_PICKING){
         glScissor(x, y, 1, 1);
@@ -626,6 +639,8 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
     }
 
     isPicking = true;
+    isActuallyRendering = false;
+    beginRendering();
     pushProgram(solidColorProgram, false);
     currentNodePath.clear();
     pickingNodePathList.clear();
@@ -1113,6 +1128,10 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& model
         createMeshVertexArray(mesh, resource, hasTexture);
     }
     glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
+
+    if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
+        renderLineSet(resource->normalVisualization);
+    }
 }
 
 
@@ -1366,6 +1385,19 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
         glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
         glEnableVertexAttribArray(1);
+
+        if(isNormalVisualizationEnabled){
+            auto lines = new SgLineSet;
+            auto lineVertices = lines->getOrCreateVertices();
+            for(size_t i=0; i < vertices.size(); ++i){
+                const Vector3f& v = vertices[i];
+                lineVertices->push_back(v);
+                lineVertices->push_back(v + normals[i] * normalVisualizationLength);
+                lines->addLine(i*2, i*2+1);
+            }
+            lines->setMaterial(normalVisualizationMaterial);
+            resource->normalVisualization = lines;
+        }
     }
 
     if(hasTexture){
@@ -1501,7 +1533,7 @@ void GLSLSceneRendererImpl::renderLineSet(SgLineSet* lineSet)
 
 void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 {
-    if(isPicking || isRenderingShadowMap){
+    if(!isActuallyRendering){
         return;
     }
 
@@ -1763,13 +1795,12 @@ void GLSLSceneRenderer::setDefaultLineWidth(double width)
 
 void GLSLSceneRenderer::showNormalVectors(double length)
 {
-    /*
-    bool doNormalVisualization = (length > 0.0);
-    if(doNormalVisualization != impl->doNormalVisualization || length != impl->normalLength){
-        impl->doNormalVisualization = doNormalVisualization;
-        impl->normalLength = length;
+    bool isEnabled = (length > 0.0);
+    if(isEnabled != impl->isNormalVisualizationEnabled || length != impl->normalVisualizationLength){
+        impl->isNormalVisualizationEnabled = isEnabled;
+        impl->normalVisualizationLength = length;
+        requestToClearResources();
     }
-    */
 }
 
 
