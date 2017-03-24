@@ -312,18 +312,19 @@ public:
     void renderTransform(SgTransform* transform);
     void renderUnpickableGroup(SgUnpickableGroup* group);
     void renderShape(SgShape* shape);
-    void renderShapeMain(SgShape* shape, const Affine3& modelMatrix, unsigned int pickId);
+    void renderShapeMain(SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
     void flushNolightingTransformMatrices();
-    VertexResource* getOrCreateVertexResource(SgObject* obj, const Affine3& modelMatrix);
+    VertexResource* getOrCreateVertexResource(SgObject* obj);
+    void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
     void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
-    void createMeshVertexArray(SgMesh* mesh, VertexResource* resource, bool hasTexture);
+    void createMeshVertexArray(SgMesh* mesh, VertexResource* resource);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
@@ -1058,7 +1059,7 @@ void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 }
 
 
-VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj, const Affine3& modelMatrix)
+VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
 {
     VertexResource* resource;
     auto p = currentResourceMap->find(obj);
@@ -1073,16 +1074,20 @@ VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj, 
         nextResourceMap->insert(*p);
     }
 
+    return resource;
+}
+
+
+void GLSLSceneRendererImpl::drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position)
+{
     if(currentLightingProgram == &phongShadowProgram){
-        phongShadowProgram.setTransformMatrices(viewMatrix, modelMatrix, PV);
+        phongShadowProgram.setTransformMatrices(viewMatrix, position, PV);
     } else if(currentNolightingProgram){
-        const Matrix4f PVM = (PV * modelMatrix.matrix()).cast<float>();
+        const Matrix4f PVM = (PV * position.matrix()).cast<float>();
         currentNolightingProgram->setProjectionMatrix(PVM);
     }
-
     glBindVertexArray(resource->vao);
-
-    return resource;
+    glDrawArrays(primitiveMode, 0, resource->numVertices);
 }
 
 
@@ -1090,50 +1095,55 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 {
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
+
+        VertexResource* resource = getOrCreateVertexResource(mesh);
+        if(!resource->isValid()){
+            createMeshVertexArray(mesh, resource);
+        }
+        
         SgMaterial* material = shape->material();
         if(material && material->transparency() > 0.0){
             if(!isRenderingShadowMap){
-                const Affine3& M = modelMatrixStack.back();
+                const Affine3& position = modelMatrixStack.back();
                 unsigned int pickId = pushPickId(shape, false);
                 transparentRenderingFunctions.push_back(
-                    [this, shape, M, pickId](){
-                        renderShapeMain(shape, M, pickId); });
+                    [this, shape, resource, position, pickId](){
+                        renderShapeMain(shape, resource, position, pickId); });
                 popPickId();
             }
         } else {
             int pickId = pushPickId(shape, false);
-            renderShapeMain(shape, modelMatrixStack.back(), pickId);
+            renderShapeMain(shape, resource, modelMatrixStack.back(), pickId);
             popPickId();
+        }
+
+        if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
+            renderLineSet(resource->normalVisualization);
         }
     }
 }
 
 
-void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& modelMatrix, unsigned int pickId)
+void GLSLSceneRendererImpl::renderShapeMain
+(SgShape* shape, VertexResource* resource, const Affine3& position, unsigned int pickId)
 {
-    bool hasTexture = false;
-    SgMesh* mesh = shape->mesh();
     if(isPicking){
         setPickColor(pickId);
     } else {
+        SgMesh* mesh = shape->mesh();
         renderMaterial(shape->material());
         if(currentLightingProgram == &phongShadowProgram){
+            bool hasTexture;
             if(shape->texture() && mesh->hasTexCoords()){
                 hasTexture = renderTexture(shape->texture());
+            } else {
+                hasTexture = false;
             }
             phongShadowProgram.setTextureEnabled(hasTexture);
             phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
         }
     }
-    VertexResource* resource = getOrCreateVertexResource(mesh, modelMatrix);
-    if(!resource->isValid()){
-        createMeshVertexArray(mesh, resource, hasTexture);
-    }
-    glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
-
-    if(isNormalVisualizationEnabled && isActuallyRendering && resource->normalVisualization){
-        renderLineSet(resource->normalVisualization);
-    }
+    drawVertexResource(resource, GL_TRIANGLES, position);
 }
 
 
@@ -1307,7 +1317,7 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* resource, bool hasTexture)
+void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* resource)
 {
     int numBuffers = 1;
 
@@ -1328,10 +1338,11 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
         ++numBuffers;
     }
 
+    const bool hasTexCoords = mesh->hasTexCoords();
     SgTexCoordArrayPtr pOrgTexCoords;
     const auto& texCoordIndices = mesh->texCoordIndices();
     SgTexCoordArray texCoords;
-    if(hasTexture){
+    if(hasTexCoords){
         texCoords.reserve(totalNumVertices);
         ++numBuffers;
         if(!textureTransform){
@@ -1372,7 +1383,7 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
                     normals.push_back(orgNormals[normalIndex]);
                 }
             }
-            if(hasTexture){
+            if(hasTexCoords){
                 if(texCoordIndices.empty()){
                     texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
                 } else {
@@ -1392,6 +1403,8 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
         }
     }
 
+    glBindVertexArray(resource->vao);
+    
     resource->genBuffers(numBuffers);
     int vboIndex = 0;
         
@@ -1422,7 +1435,7 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
         }
     }
 
-    if(hasTexture){
+    if(hasTexCoords){
         glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
         glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
         glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
@@ -1482,8 +1495,9 @@ void GLSLSceneRendererImpl::renderPlot
         currentProgram->enableColorArray(hasColors);
     }
     
-    VertexResource* resource = getOrCreateVertexResource(plot, modelMatrixStack.back());
+    VertexResource* resource = getOrCreateVertexResource(plot);
     if(!resource->isValid()){
+        glBindVertexArray(resource->vao);
         SgVertexArrayPtr vertices = getVertices();
         const int n = vertices->size();
         resource->numVertices = n;
@@ -1515,7 +1529,7 @@ void GLSLSceneRendererImpl::renderPlot
         glEnableVertexAttribArray(0);
     }        
 
-    glDrawArrays(primitiveMode, 0, resource->numVertices);
+    drawVertexResource(resource, primitiveMode, modelMatrixStack.back());
     
     popPickId();
 }
