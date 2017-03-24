@@ -12,11 +12,11 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
+#include <GL/glu.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
-#include <GL/glu.h>
 #include <iostream>
 
 using namespace std;
@@ -126,23 +126,36 @@ public:
         
     TextureResource(){
         isLoaded = false;
-        isImageUpdateNeeded = true;
+        isImageUpdateNeeded = false;
+        textureId = 0;
+        samplerId = 0;
         width = 0;
         height = 0;
         numComponents = 0;
     }
 
+    ~TextureResource(){
+        clear();
+    }
+
     virtual void discard() override { isLoaded = false; }
+
+    void clear() {
+        if(isLoaded){
+            if(textureId){
+                glDeleteTextures(1, &textureId);
+                textureId = 0;
+            }
+            if(samplerId){
+                glDeleteSamplers(1, &samplerId);
+                samplerId = 0;
+            }
+            isLoaded = false;
+        }
+    }
     
     bool isSameSizeAs(const Image& image){
         return (width == image.width() && height == image.height() && numComponents == image.numComponents());
-    }
-            
-    ~TextureResource(){
-        if(isLoaded){
-            glDeleteTextures(1, &textureId);
-            glDeleteSamplers(1, &samplerId);
-        }
     }
 };
 
@@ -302,6 +315,7 @@ public:
     void renderTransparentObjects();
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
+    bool loadTextureImage(TextureResource* resource, const Image& image);
     void createMeshVertexArray(SgMesh* mesh, VertexResource* resource, bool hasTexture);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
@@ -1089,8 +1103,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& model
         renderMaterial(shape->material());
         if(currentLightingProgram == &phongShadowProgram){
             if(shape->texture() && mesh->hasTexCoords()){
-                hasTexture = true;
-                renderTexture(shape->texture());
+                hasTexture = renderTexture(shape->texture());
             }
             phongShadowProgram.setTextureEnabled(hasTexture);
         }
@@ -1158,12 +1171,6 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
         return false;
     }
 
-    const Image& image = sgImage->constImage();
-    const int width = image.width();
-    const int height = image.height();
-    bool doLoadTexImage = false;
-    bool doReloadTexImage = false;
-
     auto p = currentResourceMap->find(sgImage);
     TextureResource* resource;
     if(p != currentResourceMap->end()){
@@ -1175,71 +1182,30 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
 
     glActiveTexture(GL_TEXTURE0);
     if(resource->isLoaded){
+        glBindTexture(GL_TEXTURE_2D, resource->textureId);
+        glBindSampler(0, resource->samplerId);
         if(resource->isImageUpdateNeeded){
-            doLoadTexImage = true;
-            doReloadTexImage = resource->isSameSizeAs(image);
+            loadTextureImage(resource, sgImage->constImage());
         }
     } else {
+        GLuint samplerId;
         glGenTextures(1, &resource->textureId);
-        glGenSamplers(1, &resource->samplerId);
-        glSamplerParameteri(resource->samplerId, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-        glSamplerParameteri(resource->samplerId, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-        glSamplerParameteri(resource->samplerId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glSamplerParameteri(resource->samplerId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        //glSamplerParameteri(resource->samplerId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        resource->isLoaded = true;
-        doLoadTexImage = true;
+        glBindTexture(GL_TEXTURE_2D, resource->textureId);
+        if(loadTextureImage(resource, sgImage->constImage())){
+            glGenSamplers(1, &samplerId);
+            glBindSampler(0, samplerId);
+            glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+            glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+            glSamplerParameteri(samplerId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glSamplerParameteri(samplerId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            resource->samplerId = samplerId;
+        }
     }
-    glBindTexture(GL_TEXTURE_2D, resource->textureId);
-    glBindSampler(0, resource->samplerId);
     
     if(isCheckingUnusedResources){
         nextResourceMap->insert(GLResourceMap::value_type(sgImage, resource)); 
-   }
-    resource->width = width;
-    resource->height = height;
-    resource->numComponents = image.numComponents();
-    resource->isImageUpdateNeeded = false;
-    
-    if(doLoadTexImage){
-        GLenum format = GL_RGB;
-        switch(image.numComponents()){
-        case 1 : format = GL_RED; break;
-        case 2 : format = GL_RG; break;
-        case 3 : format = GL_RGB; break;
-        case 4 : format = GL_RGBA; break;
-        default : return false;
-        }
-        
-        if(image.numComponents() == 3){
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        } else {
-            glPixelStorei(GL_UNPACK_ALIGNMENT, image.numComponents());
-        }
-
-        if(doReloadTexImage){
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
-
-        } else {
-            double w2 = log2(width);
-            double h2 = log2(height);
-            double pw = ceil(w2);
-            double ph = ceil(h2);
-            if((pw - w2 == 0.0) && (ph - h2 == 0.0)){
-                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
-            } else{
-                GLsizei potWidth = pow(2.0, pw);
-                GLsizei potHeight = pow(2.0, ph);
-                scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
-                gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
-                              potWidth, potHeight, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
-                glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0, format, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
-            }
-        }
-
-        //glGenerateTextureMipmap(resource->textureId);
     }
-
+    
     if(SgTextureTransform* tt = texture->textureTransform()){
         Eigen::Rotation2Df R(tt->rotation());
         const auto& c = tt->center();
@@ -1251,6 +1217,59 @@ bool GLSLSceneRendererImpl::renderTexture(SgTexture* texture)
     } else {
         textureTransform = boost::none;
     }
+
+    return resource->isLoaded;
+}
+
+
+bool GLSLSceneRendererImpl::loadTextureImage(TextureResource* resource, const Image& image)
+{
+    GLenum format = GL_RGB;
+    switch(image.numComponents()){
+    case 1 : format = GL_RED; break;
+    case 2 : format = GL_RG; break;
+    case 3 : format = GL_RGB; break;
+    case 4 : format = GL_RGBA; break;
+    default:
+        resource->clear();
+        return false;
+    }
+    
+    if(image.numComponents() == 3){
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    } else {
+        glPixelStorei(GL_UNPACK_ALIGNMENT, image.numComponents());
+    }
+    resource->numComponents = image.numComponents();
+
+    const int width = image.width();
+    const int height = image.height();
+
+    if(resource->isLoaded && resource->isSameSizeAs(image)){
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
+
+    } else {
+        double w2 = log2(width);
+        double h2 = log2(height);
+        double pw = ceil(w2);
+        double ph = ceil(h2);
+        if((pw - w2 == 0.0) && (ph - h2 == 0.0)){
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
+        } else{
+            GLsizei potWidth = pow(2.0, pw);
+            GLsizei potHeight = pow(2.0, ph);
+            scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
+            gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
+                          potWidth, potHeight, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
+            glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0, format, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
+        }
+        resource->isLoaded = true;
+        resource->width = width;
+        resource->height = height;
+    }
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    resource->isImageUpdateNeeded = false;
 
     return true;
 }
