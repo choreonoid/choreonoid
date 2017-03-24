@@ -30,7 +30,6 @@ namespace {
 
 const bool USE_DISPLAY_LISTS = true;
 const bool USE_VBO = false;
-const bool USE_INDEXING = false;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
@@ -1417,14 +1416,7 @@ void GL1SceneRendererImpl::renderMesh(SgMesh* mesh, bool hasTexture)
                 glTexCoordPointer(2, GL_FLOAT, 0, 0);
                 glEnable(GL_TEXTURE_2D);
             }
-            if(USE_INDEXING){
-                if(resource->indexBufferName() != GL_INVALID_VALUE){
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, resource->indexBufferName());
-                    glDrawElements(GL_TRIANGLES, resource->size, GL_UNSIGNED_INT, 0);
-                }
-            } else {
-                glDrawArrays(GL_TRIANGLES, 0, resource->size);
-            }
+            glDrawArrays(GL_TRIANGLES, 0, resource->size);
             if(resource->texCoordBufferName() != GL_INVALID_VALUE){
                 glDisable(GL_TEXTURE_2D);
             }
@@ -1450,44 +1442,23 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resou
     ColorArray* colors = 0;
     SgTexCoordArray* texCoords = 0;
 
-    if(USE_INDEXING){
-        vertices = &orgVertices;
-        triangleVertices = &orgTriangleVertices;
-        if(hasNormals){
-            if(mesh->normalIndices().empty() && mesh->normals()->size() == orgVertices.size()){
-                normals = mesh->normals();
-            } else {
-                normals = &buf->normals;
-                normals->resize(orgVertices.size());
-            }
-        }
-        if(hasTexture){
-            if(mesh->texCoordIndices().empty() && mesh->texCoords()->size() == orgVertices.size()){
-                texCoords = mesh->texCoords();
-            } else {
-                texCoords = &buf->texCoords;
-                texCoords->resize(orgVertices.size());
-            }
-        }
-    } else {
-        vertices = &buf->vertices;
-        vertices->clear();
-        vertices->reserve(totalNumVertices);
-        if(hasNormals){
-            normals = &buf->normals;
-            normals->clear();
-            normals->reserve(totalNumVertices);
-        }
-        if(hasColors){
-            colors = &buf->colors;
-            colors->clear();
-            colors->reserve(totalNumVertices);
-        }
-        if(hasTexture){
-            texCoords = &buf->texCoords;
-            texCoords->clear();
-            texCoords->reserve(totalNumVertices);
-        }
+    vertices = &buf->vertices;
+    vertices->clear();
+    vertices->reserve(totalNumVertices);
+    if(hasNormals){
+        normals = &buf->normals;
+        normals->clear();
+        normals->reserve(totalNumVertices);
+    }
+    if(hasColors){
+        colors = &buf->colors;
+        colors->clear();
+        colors->reserve(totalNumVertices);
+    }
+    if(hasTexture){
+        texCoords = &buf->texCoords;
+        texCoords->clear();
+        texCoords->reserve(totalNumVertices);
     }
     
     int faceVertexIndex = 0;
@@ -1496,49 +1467,29 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resou
     for(size_t i=0; i < numTriangles; ++i){
         for(size_t j=0; j < 3; ++j){
             const int orgVertexIndex = orgTriangleVertices[faceVertexIndex];
-            if(!USE_INDEXING){
-                vertices->push_back(orgVertices[orgVertexIndex]);
-            }
+            vertices->push_back(orgVertices[orgVertexIndex]);
             if(hasNormals){
                 if(mesh->normalIndices().empty()){
-                    if(!USE_INDEXING){
-                        normals->push_back(mesh->normals()->at(orgVertexIndex));
-                    }
+                    normals->push_back(mesh->normals()->at(orgVertexIndex));
                 } else {
                     const int normalIndex = mesh->normalIndices()[faceVertexIndex];
-                    if(USE_INDEXING){
-                        normals->at(orgVertexIndex) = mesh->normals()->at(normalIndex);
-                    } else {
-                        normals->push_back(mesh->normals()->at(normalIndex));
-                    }
+                    normals->push_back(mesh->normals()->at(normalIndex));
                 }
             }
             if(hasColors){
                 if(mesh->colorIndices().empty()){
-                    if(!USE_INDEXING){
-                        colors->push_back(createColorWithAlpha(mesh->colors()->at(faceVertexIndex)));
-                    }
+                    colors->push_back(createColorWithAlpha(mesh->colors()->at(faceVertexIndex)));
                 } else {
                     const int colorIndex = mesh->colorIndices()[faceVertexIndex];
-                    if(USE_INDEXING){
-                        colors->at(orgVertexIndex) = createColorWithAlpha(mesh->colors()->at(colorIndex));
-                    } else {
-                        colors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
-                    }
+                    colors->push_back(createColorWithAlpha(mesh->colors()->at(colorIndex)));
                 }
             }
             if(hasTexture){
                 if(mesh->texCoordIndices().empty()){
-                    if(!USE_INDEXING){
-                        texCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
-                    }
+                    texCoords->push_back(mesh->texCoords()->at(orgVertexIndex));
                 }else{
                     const int texCoordIndex = mesh->texCoordIndices()[faceVertexIndex];
-                    if(USE_INDEXING){
-                        texCoords->at(orgVertexIndex) = mesh->texCoords()->at(texCoordIndex);
-                    } else {
-                        texCoords->push_back(mesh->texCoords()->at(texCoordIndex));
-                    }
+                    texCoords->push_back(mesh->texCoords()->at(texCoordIndex));
                 }
             }
             ++faceVertexIndex;
@@ -1603,11 +1554,7 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resou
         }
             
     } else {
-        if(USE_INDEXING){
-            glDrawElements(GL_TRIANGLES, triangleVertices->size(), GL_UNSIGNED_INT, &triangleVertices->front());
-        } else {
-            glDrawArrays(GL_TRIANGLES, 0, vertices->size());
-        }
+        glDrawArrays(GL_TRIANGLES, 0, vertices->size());
     }
 
     if(useColorArray){
@@ -1620,18 +1567,16 @@ void GL1SceneRendererImpl::writeVertexBuffers(SgMesh* mesh, ShapeResource* resou
 
     if(doNormalVisualization && !isPicking){
         enableLighting(false);
-        if(!USE_INDEXING){
-            vector<Vector3f> lines;
-            for(size_t i=0; i < vertices->size(); ++i){
-                const Vector3f& v = (*vertices)[i];
-                lines.push_back(v);
-                lines.push_back(v + (*normals)[i] * normalLength);
-            }
-            glDisableClientState(GL_NORMAL_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 0, lines.front().data());
-            setColor(Vector3f(0.0f, 1.0f, 0.0f));
-            glDrawArrays(GL_LINES, 0, lines.size());
+        vector<Vector3f> lines;
+        for(size_t i=0; i < vertices->size(); ++i){
+            const Vector3f& v = (*vertices)[i];
+            lines.push_back(v);
+            lines.push_back(v + (*normals)[i] * normalLength);
         }
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, lines.front().data());
+        setColor(Vector3f(0.0f, 1.0f, 0.0f));
+        glDrawArrays(GL_LINES, 0, lines.size());
         enableLighting(true);
     }
 }
