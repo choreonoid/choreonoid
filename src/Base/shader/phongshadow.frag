@@ -3,7 +3,7 @@
 #define MAX_NUM_SHADOWS 3
 
 in vec3 position;
-in vec3 normal; // already normalized
+in vec3 normal; // interpolated normal
 in vec2 texCoord;
 in vec3 colorV;
 in vec4 shadowCoords[MAX_NUM_SHADOWS];
@@ -72,9 +72,10 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         // directional light
         vec3 s = normalize(vec3(light.position));
         vec3 v = normalize(vec3(-position));
-        vec3 r = reflect(-s, normal);
+        vec3 n = normalize(normal);
+        vec3 r = reflect(-s, n);
         return light.intensity * (
-            diffuseColor * max(abs(dot(s, normal)), 0.0) +
+            diffuseColor * max(abs(dot(s, n)), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess));
     } else {
         // point light
@@ -100,7 +101,8 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         }
         
         vec3 v = normalize(vec3(-position));
-        vec3 r = reflect(-s, normal);
+        vec3 n = normalize(normal);
+        vec3 r = reflect(-s, n);
         float distance = sqrt(dot(l, l)); // l.length()
         ki *= 1.0 / max(1.0,
                         light.constantAttenuation +
@@ -108,7 +110,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
                         distance * distance * light.quadraticAttenuation);
         
         return ki * light.intensity * (
-            diffuseColor * max(abs(dot(s, normal)), 0.0) +
+            diffuseColor * max(abs(dot(s, n)), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess));
     }
 }

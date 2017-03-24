@@ -1122,7 +1122,7 @@ void GLSLSceneRendererImpl::renderShapeMain(SgShape* shape, const Affine3& model
                 hasTexture = renderTexture(shape->texture());
             }
             phongShadowProgram.setTextureEnabled(hasTexture);
-            //phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
+            phongShadowProgram.setVertexColorEnabled(mesh->hasColors());
         }
     }
     VertexResource* resource = getOrCreateVertexResource(mesh, modelMatrix);
