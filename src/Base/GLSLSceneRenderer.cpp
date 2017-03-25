@@ -108,7 +108,7 @@ public:
             glDeleteVertexArrays(1, &vao);
         }
         if(hasBuffers){
-            glDeleteBuffers(3, vbos);
+            glDeleteBuffers(MAX_NUM_BUFFERS, vbos);
         }
     }
 };
@@ -243,6 +243,7 @@ public:
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
 
+    bool defaultSmoothShading;
     bool isNormalVisualizationEnabled;
     float normalVisualizationLength;
     SgMaterialPtr normalVisualizationMaterial;
@@ -324,7 +325,10 @@ public:
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
-    void createMeshVertexArray(SgMesh* mesh, VertexResource* resource);
+    void writeMeshVertices(SgMesh* mesh, VertexResource* resource);
+    void writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNormalArray& normals);
+    void writeMeshTexCoords(SgMesh* mesh, GLuint buffer);
+    void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
     void setNolightingColor(const Vector3f& color);
@@ -395,6 +399,7 @@ void GLSLSceneRendererImpl::initialize()
     projectionMatrix.setIdentity();
 
     defaultLighting = true;
+    defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
     defaultMaterial->setDiffuseColor(Vector3f(0.8, 0.8, 0.8));
     defaultPointSize = 1.0f;
@@ -1115,7 +1120,7 @@ void GLSLSceneRendererImpl::renderShape(SgShape* shape)
 
         VertexResource* resource = getOrCreateVertexResource(mesh);
         if(!resource->isValid()){
-            createMeshVertexArray(mesh, resource);
+            writeMeshVertices(mesh, resource);
         }
         
         SgMaterial* material = shape->material();
@@ -1334,10 +1339,8 @@ void GLSLSceneRenderer::onImageUpdated(SgImage* image)
 }
 
 
-void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* resource)
+void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* resource)
 {
-    int numBuffers = 1;
-
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
     
@@ -1346,128 +1349,182 @@ void GLSLSceneRendererImpl::createMeshVertexArray(SgMesh* mesh, VertexResource* 
     vertices.reserve(totalNumVertices);
     resource->numVertices = totalNumVertices;
 
-    const bool hasNormals = mesh->hasNormals();
-    const auto& orgNormals = *mesh->normals();
-    const auto& normalIndices = mesh->normalIndices();
-    SgNormalArray normals;
-    if(hasNormals){
-        normals.reserve(totalNumVertices);
-        ++numBuffers;
-    }
-
-    const bool hasTexCoords = mesh->hasTexCoords();
-    SgTexCoordArrayPtr pOrgTexCoords;
-    const auto& texCoordIndices = mesh->texCoordIndices();
-    SgTexCoordArray texCoords;
-    if(hasTexCoords){
-        texCoords.reserve(totalNumVertices);
-        ++numBuffers;
-        if(!textureTransform){
-            pOrgTexCoords = mesh->texCoords();
-        } else {
-            const auto& orgTexCoords = *mesh->texCoords();
-            const size_t n = orgTexCoords.size();
-            pOrgTexCoords = new SgTexCoordArray(n);
-            const Eigen::Affine2f& T = *textureTransform;
-            for(size_t i=0; i < n; ++i){
-                (*pOrgTexCoords)[i] = T * orgTexCoords[i];
-            }
-        }
-    }
-
-    const bool hasColors = mesh->hasColors();
-    SgColorArray colors;
-    const auto& orgColors = *mesh->colors();
-    const auto& colorIndices = mesh->colorIndices();
-    if(hasColors){
-        colors.reserve(totalNumVertices);
-        ++numBuffers;
-    }
-        
     const int numTriangles = mesh->numTriangles();
     int faceVertexIndex = 0;
-    int numFaceVertices = 0;
     
     for(size_t i=0; i < numTriangles; ++i){
         for(size_t j=0; j < 3; ++j){
-            const int orgVertexIndex = triangleVertices[faceVertexIndex];
+            const int orgVertexIndex = triangleVertices[faceVertexIndex++];
             vertices.push_back(orgVertices[orgVertexIndex]);
-            if(hasNormals){
-                if(normalIndices.empty()){
-                    normals.push_back(orgNormals[orgVertexIndex]);
-                } else {
-                    const int normalIndex = normalIndices[faceVertexIndex];
-                    normals.push_back(orgNormals[normalIndex]);
-                }
-            }
-            if(hasTexCoords){
-                if(texCoordIndices.empty()){
-                    texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
-                } else {
-                    const int texCoordIndex = texCoordIndices[faceVertexIndex];
-                    texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
-                }
-            }
-            if(hasColors){
-                if(colorIndices.empty()){
-                    colors.push_back(orgColors[orgVertexIndex]);
-                } else {
-                    const int colorIndex = colorIndices[faceVertexIndex];
-                    colors.push_back(orgColors[colorIndex]);
-                }
-            }
-            ++faceVertexIndex;
         }
     }
 
     glBindVertexArray(resource->vao);
     
-    resource->genBuffers(numBuffers);
+    resource->genBuffers(2);
     int vboIndex = 0;
         
-    glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
+    glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex++));
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
-    ++vboIndex;
     
-    if(hasNormals){
-        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
-        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-        glEnableVertexAttribArray(1);
-        ++vboIndex;
-
-        if(isNormalVisualizationEnabled){
-            auto lines = new SgLineSet;
-            auto lineVertices = lines->getOrCreateVertices();
-            for(size_t i=0; i < vertices.size(); ++i){
-                const Vector3f& v = vertices[i];
-                lineVertices->push_back(v);
-                lineVertices->push_back(v + normals[i] * normalVisualizationLength);
-                lines->addLine(i*2, i*2+1);
-            }
-            lines->setMaterial(normalVisualizationMaterial);
-            resource->normalVisualization = lines;
+    SgNormalArray normals;
+    writeMeshNormals(mesh, resource->vbo(vboIndex++), normals);
+    if(isNormalVisualizationEnabled){
+        auto lines = new SgLineSet;
+        auto lineVertices = lines->getOrCreateVertices();
+        for(size_t i=0; i < vertices.size(); ++i){
+            const Vector3f& v = vertices[i];
+            lineVertices->push_back(v);
+            lineVertices->push_back(v + normals[i] * normalVisualizationLength);
+            lines->addLine(i*2, i*2+1);
         }
+        lines->setMaterial(normalVisualizationMaterial);
+        resource->normalVisualization = lines;
     }
 
-    if(hasTexCoords){
-        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
-        glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-        glEnableVertexAttribArray(2);
-        ++vboIndex;
+    GLuint buffer;
+    if(mesh->hasTexCoords()){
+        glGenBuffers(1, &buffer);
+        writeMeshTexCoords(mesh, buffer);
+        resource->vbos[vboIndex++] = buffer;
     }
-
-    if(hasColors){
-        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex));
-        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-        glEnableVertexAttribArray(3);
+    if(mesh->hasColors()){
+        glGenBuffers(1, &buffer);
+        writeMeshColors(mesh, buffer);
+        resource->vbos[vboIndex++] = buffer;
     }
 }
 
+
+void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNormalArray& normals)
+{
+    auto& triangleVertices = mesh->triangleVertices();
+    const int totalNumVertices = triangleVertices.size();
+    const auto& orgNormals = *mesh->normals();
+    normals.reserve(totalNumVertices);
+
+    const int numTriangles = mesh->numTriangles();
+
+    if(defaultSmoothShading && !orgNormals.empty()){
+        const auto& normalIndices = mesh->normalIndices();
+        int faceVertexIndex = 0;
+        if(normalIndices.empty()){
+            for(size_t i=0; i < numTriangles; ++i){
+                for(size_t j=0; j < 3; ++j){
+                    const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+                    normals.push_back(orgNormals[orgVertexIndex]);
+                }
+            }
+        } else {
+            for(size_t i=0; i < numTriangles; ++i){
+                for(size_t j=0; j < 3; ++j){
+                    const int normalIndex = normalIndices[faceVertexIndex++];
+                    normals.push_back(orgNormals[normalIndex]);
+                }
+            }
+        }
+    } else {
+        // flat shading
+        const auto& orgVertices = *mesh->vertices();
+        for(size_t i=0; i < numTriangles; ++i){
+            SgMesh::TriangleRef triangle = mesh->triangle(i);
+            const Vector3f e1 = orgVertices[triangle[1]] - orgVertices[triangle[0]];
+            const Vector3f e2 = orgVertices[triangle[2]] - orgVertices[triangle[0]];
+            const Vector3f normal = e1.cross(e2).normalized();
+            for(size_t j=0; j < 3; ++j){
+                normals.push_back(normal);
+            }
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vector3f), normals.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    glEnableVertexAttribArray(1);
+}
+
+
+void GLSLSceneRendererImpl::writeMeshTexCoords(SgMesh* mesh, GLuint buffer)
+{
+    auto& triangleVertices = mesh->triangleVertices();
+    const int totalNumVertices = triangleVertices.size();
+    SgTexCoordArrayPtr pOrgTexCoords;
+    const auto& texCoordIndices = mesh->texCoordIndices();
+    SgTexCoordArray texCoords;
+    texCoords.reserve(totalNumVertices);
+    if(!textureTransform){
+        pOrgTexCoords = mesh->texCoords();
+    } else {
+        const auto& orgTexCoords = *mesh->texCoords();
+        const size_t n = orgTexCoords.size();
+        pOrgTexCoords = new SgTexCoordArray(n);
+        const Eigen::Affine2f& T = *textureTransform;
+        for(size_t i=0; i < n; ++i){
+            (*pOrgTexCoords)[i] = T * orgTexCoords[i];
+        }
+    }
+
+    const int numTriangles = mesh->numTriangles();
+    int faceVertexIndex = 0;
+    
+    if(texCoordIndices.empty()){
+        for(size_t i=0; i < numTriangles; ++i){
+            for(size_t j=0; j < 3; ++j){
+                const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+                texCoords.push_back((*pOrgTexCoords)[orgVertexIndex]);
+            }
+        }
+    } else {
+        for(size_t i=0; i < numTriangles; ++i){
+            for(size_t j=0; j < 3; ++j){
+                const int texCoordIndex = texCoordIndices[faceVertexIndex++];
+                texCoords.push_back((*pOrgTexCoords)[texCoordIndex]);
+            }
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(Vector2f), texCoords.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    glEnableVertexAttribArray(2);
+}
+
+
+void GLSLSceneRendererImpl::writeMeshColors(SgMesh* mesh, GLuint buffer)
+{
+    auto& triangleVertices = mesh->triangleVertices();
+    const int totalNumVertices = triangleVertices.size();
+    const auto& orgColors = *mesh->colors();
+    const auto& colorIndices = mesh->colorIndices();
+    SgColorArray colors;
+    colors.reserve(totalNumVertices);
+    const int numTriangles = mesh->numTriangles();
+    int faceVertexIndex = 0;
+
+    if(colorIndices.empty()){
+        for(size_t i=0; i < numTriangles; ++i){
+            for(size_t j=0; j < 3; ++j){
+                const int orgVertexIndex = triangleVertices[faceVertexIndex++];
+                colors.push_back(orgColors[orgVertexIndex]);
+            }
+        }
+    } else {
+        for(size_t i=0; i < numTriangles; ++i){
+            for(size_t j=0; j < 3; ++j){
+                const int colorIndex = colorIndices[faceVertexIndex++];
+                colors.push_back(orgColors[colorIndex]);
+            }
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Vector3f), colors.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    glEnableVertexAttribArray(3);
+}
+    
 
 static SgVertexArrayPtr getPointSetVertices(SgPointSet* pointSet)
 {
@@ -1818,7 +1875,10 @@ void GLSLSceneRenderer::setDefaultLighting(bool on)
 
 void GLSLSceneRenderer::setDefaultSmoothShading(bool on)
 {
-    //impl->defaultSmoothShading = on;
+    if(on != impl->defaultSmoothShading){
+        impl->defaultSmoothShading = on;
+        requestToClearResources();
+    }
 }
 
 
