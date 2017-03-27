@@ -43,13 +43,17 @@ class CNOID_EXPORT SolidColorProgram : public NolightingProgram
     GLint pointSizeLocation;
     GLint colorLocation;
     GLint colorPerVertexLocation;
+    bool isColorChangable_;
     
 public:
+    SolidColorProgram();
     virtual void initialize() override;
     virtual void initializeFrameRendering() override;
     virtual void setPointSize(float s);
     virtual void setColor(const Vector3f& color) override;
     virtual void enableColorArray(bool on) override;
+    void setColorChangable(bool on) { isColorChangable_ = on; }
+    bool isColorChangable() const { return isColorChangable_; }
 };
 
 

@@ -1674,7 +1674,41 @@ void GLSLSceneRendererImpl::renderOverlay(SgOverlay* overlay)
 
 void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 {
-    renderGroup(outline);
+    if(isPicking){
+        renderGroup(outline);
+        return;
+    }
+    
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    renderChildNodes(outline);
+
+    glStencilFunc(GL_NOTEQUAL, 1, -1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    float orgLineWidth = lineWidth;
+    setLineWidth(outline->lineWidth()*2+1);
+    GLint polygonMode;
+    glGetIntegerv(GL_POLYGON_MODE, &polygonMode);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    pushProgram(solidColorProgram, false);
+    solidColorProgram.setColor(outline->color());
+    solidColorProgram.setColorChangable(false);
+
+    renderChildNodes(outline);
+
+    setLineWidth(orgLineWidth);
+    glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+    glDisable(GL_STENCIL_TEST);
+    solidColorProgram.setColorChangable(true);
+    popProgram();
+    
+    clearGLState();
 }
 
 
@@ -1696,11 +1730,14 @@ void GLSLSceneRendererImpl::clearGLState()
 
 void GLSLSceneRendererImpl::setNolightingColor(const Vector3f& color)
 {
+    /*
     if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
         currentProgram->setColor(color);
         currentNolightingColor = color;
         stateFlag.set(CURRENT_NOLIGHTING_COLOR);
     }
+    */
+    currentProgram->setColor(color);
 }
 
 
@@ -1849,9 +1886,9 @@ void GLSLSceneRendererImpl::setLineWidth(float width)
 {
     if(!stateFlag[LINE_WIDTH] || lineWidth != width){
         if(isPicking){
-            //glLineWidth(std::max(width, MinLineWidthForPicking));
+            glLineWidth(std::max(width, MinLineWidthForPicking));
         } else {
-            //glLineWidth(width);
+            glLineWidth(width);
         }
         lineWidth = width;
         stateFlag.set(LINE_WIDTH);

@@ -73,6 +73,12 @@ void NolightingProgram::setProjectionMatrix(const Matrix4f& PVM)
 }
 
 
+SolidColorProgram::SolidColorProgram()
+{
+    isColorChangable_ = true;
+}
+
+
 void SolidColorProgram::initialize()
 {
     loadVertexShader(":/Base/shader/nolighting.vert");
@@ -102,8 +108,10 @@ void SolidColorProgram::setPointSize(float s)
 
 void SolidColorProgram::setColor(const Vector3f& color)
 {
-    glUniform3fv(colorLocation, 1, color.data());
-    glUniform1i(colorPerVertexLocation, false);
+    if(isColorChangable_){
+        glUniform3fv(colorLocation, 1, color.data());
+        glUniform1i(colorPerVertexLocation, false);
+    }
 }
 
 
