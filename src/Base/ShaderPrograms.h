@@ -40,6 +40,7 @@ public:
 
 class CNOID_EXPORT SolidColorProgram : public NolightingProgram
 {
+    Vector3f color_;
     GLint pointSizeLocation;
     GLint colorLocation;
     GLint colorPerVertexLocation;

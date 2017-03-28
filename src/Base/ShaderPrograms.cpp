@@ -75,6 +75,7 @@ void NolightingProgram::setProjectionMatrix(const Matrix4f& PVM)
 
 SolidColorProgram::SolidColorProgram()
 {
+    color_.setZero();
     isColorChangable_ = true;
 }
 
@@ -90,6 +91,7 @@ void SolidColorProgram::initialize()
 
     pointSizeLocation = getUniformLocation("pointSize");
     colorLocation = getUniformLocation("color");
+    glUniform3fv(colorLocation, 1, color_.data());
     colorPerVertexLocation = getUniformLocation("colorPerVertex");
 }
 
@@ -109,11 +111,13 @@ void SolidColorProgram::setPointSize(float s)
 void SolidColorProgram::setColor(const Vector3f& color)
 {
     if(isColorChangable_){
-        glUniform3fv(colorLocation, 1, color.data());
-        glUniform1i(colorPerVertexLocation, false);
+        if(color != color_){
+            glUniform3fv(colorLocation, 1, color.data());
+            glUniform1i(colorPerVertexLocation, false);
+            color_ = color;
+        }
     }
 }
-
 
 
 void SolidColorProgram::enableColorArray(bool on)

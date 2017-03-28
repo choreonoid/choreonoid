@@ -217,7 +217,6 @@ public:
     std::set<int> shadowLightIndices;
 
     bool defaultLighting;
-    Vector3f currentNolightingColor;
     Vector3f diffuseColor;
     Vector3f ambientColor;
     Vector3f specularColor;
@@ -262,7 +261,6 @@ public:
 
     // OpenGL states
     enum StateFlag {
-        CURRENT_NOLIGHTING_COLOR,
         COLOR_MATERIAL,
         DIFFUSE_COLOR,
         AMBIENT_COLOR,
@@ -333,7 +331,6 @@ public:
     void writeMeshColors(SgMesh* mesh, GLuint buffer);
     void renderPlot(SgPlot* plot, GLenum primitiveMode, std::function<SgVertexArrayPtr()> getVertices);
     void clearGLState();
-    void setNolightingColor(const Vector3f& color);
     void setDiffuseColor(const Vector3f& color);
     void setAmbientColor(const Vector3f& color);
     void setEmissionColor(const Vector3f& color);
@@ -655,6 +652,11 @@ bool GLSLSceneRenderer::pick(int x, int y)
 bool GLSLSceneRendererImpl::pick(int x, int y)
 {
     self->extractPreprocessedNodes();
+
+    const GLboolean isMultiSampleEnabled = glIsEnabled(GL_MULTISAMPLE);
+    if(isMultiSampleEnabled){
+        glDisable(GL_MULTISAMPLE);
+    }
     
     if(!SHOW_IMAGE_FOR_PICKING){
         glScissor(x, y, 1, 1);
@@ -677,6 +679,10 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
     isPicking = false;
 
     glDisable(GL_SCISSOR_TEST);
+
+    if(isMultiSampleEnabled){
+        glEnable(GL_MULTISAMPLE);
+    }
 
     endRendering();
     
@@ -1019,7 +1025,7 @@ inline void GLSLSceneRendererImpl::setPickColor(unsigned int id)
     if(SHOW_IMAGE_FOR_PICKING){
         color[2] = 1.0f;
     }
-    setNolightingColor(color);
+    solidColorProgram.setColor(color);
 }
         
 
@@ -1080,7 +1086,6 @@ void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 
     modelMatrixStack.push_back(modelMatrixStack.back() * T);
 
-    // renderGroup(transform);
     pushPickId(transform);
     renderChildNodes(transform);
     popPickId();
@@ -1220,7 +1225,7 @@ void GLSLSceneRendererImpl::renderMaterial(const SgMaterial* material)
         setAlpha(1.0 - material->transparency());
 
     } else if(currentNolightingProgram){
-        setNolightingColor(material->diffuseColor());
+        currentProgram->setColor(material->diffuseColor());
     }
 }
 
@@ -1747,22 +1752,9 @@ void GLSLSceneRendererImpl::clearGLState()
 }
 
 
-void GLSLSceneRendererImpl::setNolightingColor(const Vector3f& color)
-{
-    /*
-    if(!stateFlag[CURRENT_NOLIGHTING_COLOR] || color != currentNolightingColor){
-        currentProgram->setColor(color);
-        currentNolightingColor = color;
-        stateFlag.set(CURRENT_NOLIGHTING_COLOR);
-    }
-    */
-    currentProgram->setColor(color);
-}
-
-
 void GLSLSceneRenderer::setColor(const Vector3f& color)
 {
-    impl->setNolightingColor(color);
+    impl->currentProgram->setColor(color);
 }
 
 
