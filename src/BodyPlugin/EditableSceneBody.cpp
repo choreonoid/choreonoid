@@ -45,14 +45,12 @@ class EditableSceneLinkImpl
 {
 public:
     EditableSceneLink* self;
-    SgLineSetPtr bbLineSet;
     SgOutlineGroupPtr outlineGroup;
     BoundingBoxMarkerPtr bbMarker;
     bool isPointed;
     bool isColliding;
 
     EditableSceneLinkImpl(EditableSceneLink* self);
-    void createBoundingBoxLineSet();
 };
 
 }
@@ -79,69 +77,21 @@ EditableSceneLink::~EditableSceneLink()
 }
 
 
-void EditableSceneLink::showBoundingBox(bool on)
+void EditableSceneLink::showOutline(bool on)
 {
     if(!visualShape()){
         return;
     }
-#if 0
-    if(on){
-        if(!impl->bbLineSet){
-            impl->createBoundingBoxLineSet();
-        }
-        addChildOnce(impl->bbLineSet, true);
-    } else if(impl->bbLineSet){
-        removeChild(impl->bbLineSet, true);
-    }
-#else
     if(on){
         if(!impl->outlineGroup){
-            impl->outlineGroup = new SgOutlineGroup();
+            auto outline = new SgOutlineGroup;
+            outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
+            impl->outlineGroup = outline;
         }
         setShapeGroup(impl->outlineGroup);
     } else if(impl->outlineGroup){
         resetShapeGroup();
     }
-#endif
-}
-
-
-void EditableSceneLinkImpl::createBoundingBoxLineSet()
-{
-    bbLineSet = new SgLineSet;
-    bbLineSet->setName("BoundingBox");
-
-    SgVertexArray& vertices = *bbLineSet->setVertices(new SgVertexArray);
-    vertices.resize(8);
-    const BoundingBoxf bb(self->visualShape()->boundingBox());
-    const Vector3f& min = bb.min();
-    const Vector3f& max = bb.max();
-    vertices[0] << min.x(), min.y(), min.z();
-    vertices[1] << max.x(), min.y(), min.z();
-    vertices[2] << max.x(), max.y(), min.z();
-    vertices[3] << min.x(), max.y(), min.z();
-    vertices[4] << min.x(), min.y(), max.z();
-    vertices[5] << max.x(), min.y(), max.z();
-    vertices[6] << max.x(), max.y(), max.z();
-    vertices[7] << min.x(), max.y(), max.z();
-
-    bbLineSet->reserveNumLines(12);
-    bbLineSet->addLine(0, 1);
-    bbLineSet->addLine(1, 2);
-    bbLineSet->addLine(2, 3);
-    bbLineSet->addLine(3, 0);
-    bbLineSet->addLine(4, 5);
-    bbLineSet->addLine(5, 6);
-    bbLineSet->addLine(6, 7);
-    bbLineSet->addLine(7, 4);
-    bbLineSet->addLine(0, 4);
-    bbLineSet->addLine(1, 5);
-    bbLineSet->addLine(2, 6);
-    bbLineSet->addLine(3, 7);
-
-    bbLineSet->setColors(new SgColorArray)->push_back(Vector3f(1.0f, 0.0f, 0.0f));
-    SgIndexArray& iColors = bbLineSet->colorIndices();
-    iColors.resize(24, 0);
 }
 
 
@@ -459,7 +409,7 @@ void EditableSceneBodyImpl::updateModel()
     pointedSceneLink = 0;
     targetLink = 0;
     if(outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         outlinedLink = 0;
     }
     isDragging = false;
@@ -859,14 +809,14 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     }
     
     if(outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         outlinedLink = 0;
     }
 
     PointedType pointedType = findPointedObject(event.nodePath());
     
     if(pointedSceneLink){
-        pointedSceneLink->showBoundingBox(true);
+        pointedSceneLink->showOutline(true);
         outlinedLink = pointedSceneLink;
     }
     
@@ -928,7 +878,7 @@ bool EditableSceneBodyImpl::onButtonPressEvent(const SceneWidgetEvent& event)
     }
 
     if(dragMode != DRAG_NONE && outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         self->notifyUpdate(modified);
     }
 
@@ -947,7 +897,7 @@ bool EditableSceneBodyImpl::onButtonReleaseEvent(const SceneWidgetEvent& event)
     bool handled = finishEditing();
 
     if(outlinedLink){
-        outlinedLink->showBoundingBox(true);
+        outlinedLink->showOutline(true);
         self->notifyUpdate(modified);
     }
 
@@ -992,9 +942,9 @@ bool EditableSceneBodyImpl::onPointerMoveEvent(const SceneWidgetEvent& event)
         if(pointedSceneLink){
             if(pointedSceneLink != outlinedLink){
                 if(outlinedLink){
-                    outlinedLink->showBoundingBox(false);
+                    outlinedLink->showOutline(false);
                 }
-                pointedSceneLink->showBoundingBox(true);
+                pointedSceneLink->showOutline(true);
                 outlinedLink = pointedSceneLink;
             }
         }
@@ -1060,7 +1010,7 @@ void EditableSceneBodyImpl::onPointerLeaveEvent(const SceneWidgetEvent& event)
         return;
     }
     if(outlinedLink){
-        outlinedLink->showBoundingBox(false);
+        outlinedLink->showOutline(false);
         outlinedLink = 0;
     }
 }
@@ -1165,12 +1115,12 @@ void EditableSceneBodyImpl::onSceneModeChanged(const SceneWidgetEvent& event)
 
     if(isEditMode){
         if(outlinedLink){
-            outlinedLink->showBoundingBox(true);
+            outlinedLink->showOutline(true);
         }
     } else {
         finishEditing();
         if(outlinedLink){
-            outlinedLink->showBoundingBox(false);
+            outlinedLink->showOutline(false);
             outlinedLink = 0;
         }
         updateMarkersAndManipulators();

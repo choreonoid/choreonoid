@@ -211,6 +211,7 @@ public:
     Matrix4 projectionMatrix;
     Matrix4 PV;
 
+    vector<function<void()>> postRenderingFunctions;
     vector<function<void()>> transparentRenderingFunctions;
 
     std::set<int> shadowLightIndices;
@@ -318,6 +319,7 @@ public:
     void renderLineSet(SgLineSet* lineSet);        
     void renderOverlay(SgOverlay* overlay);
     void renderOutlineGroup(SgOutlineGroup* outline);
+    void renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T);
     void flushNolightingTransformMatrices();
     VertexResource* getOrCreateVertexResource(SgObject* obj);
     void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& position);
@@ -706,10 +708,16 @@ void GLSLSceneRendererImpl::renderScene()
     if(camera){
         renderCamera(camera, self->currentCameraPosition());
 
+        postRenderingFunctions.clear();
         transparentRenderingFunctions.clear();
 
         renderSceneGraphNodes();
 
+        for(auto&& func : postRenderingFunctions){
+            func();
+        }
+        postRenderingFunctions.clear();
+        
         if(!transparentRenderingFunctions.empty()){
             renderTransparentObjects();
         }
@@ -1676,14 +1684,23 @@ void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
 {
     if(isPicking){
         renderGroup(outline);
-        return;
+    } else {
+        const Affine3& T = modelMatrixStack.back();
+        postRenderingFunctions.push_back(
+            [this, outline, T](){ renderOutlineGroupMain(outline, T); });
     }
-    
+}
+
+
+void GLSLSceneRendererImpl::renderOutlineGroupMain(SgOutlineGroup* outline, const Affine3& T)
+{
+    modelMatrixStack.push_back(T);
+
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, -1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
 
     renderChildNodes(outline);
 
@@ -1699,16 +1716,18 @@ void GLSLSceneRendererImpl::renderOutlineGroup(SgOutlineGroup* outline)
     pushProgram(solidColorProgram, false);
     solidColorProgram.setColor(outline->color());
     solidColorProgram.setColorChangable(false);
+    glDisable(GL_DEPTH_TEST);
 
     renderChildNodes(outline);
 
+    glEnable(GL_DEPTH_TEST);
     setLineWidth(orgLineWidth);
     glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
     glDisable(GL_STENCIL_TEST);
     solidColorProgram.setColorChangable(true);
     popProgram();
-    
-    clearGLState();
+
+    modelMatrixStack.pop_back();
 }
 
 
