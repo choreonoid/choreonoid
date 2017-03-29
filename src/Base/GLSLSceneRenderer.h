@@ -48,9 +48,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual bool initializeGL() override;
     virtual void flush() override;
 
-    // The following functions cannot be called bofore calling the initializeGL() function.
-    bool setSwapInterval(int interval);
-    int getSwapInterval() const;
+    virtual void setViewport(int x, int y, int width, int height) override;
 
     virtual void render() override;
     virtual bool pick(int x, int y) override;

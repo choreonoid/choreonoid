@@ -22,8 +22,8 @@ public:
 
     virtual void setOutputStream(std::ostream& os) = 0;
 
-    virtual SgGroup* sceneRoot();
-    virtual SgGroup* scene();
+    virtual SgGroup* sceneRoot() override;
+    virtual SgGroup* scene() override;
 
     virtual bool initializeGL();
     virtual void flush() = 0;
@@ -32,10 +32,10 @@ public:
     bool setSwapInterval(int interval);
     int getSwapInterval() const;
 
-    virtual void setViewport(int x, int y, int width, int height);
-    virtual Array4i viewport() const;
+    virtual void setViewport(int x, int y, int width, int height) override;
+    virtual Array4i viewport() const override;
     void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
-    virtual double aspectRatio() const; // width / height;
+    virtual double aspectRatio() const override; // width / height;
 
     void getPerspectiveProjectionMatrix(
         double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);

@@ -26,6 +26,7 @@ using namespace std::placeholders;
 
 namespace {
 
+const bool USE_FBO_FOR_PICKING = true;
 const bool SHOW_IMAGE_FOR_PICKING = false;
 
 const float MinLineWidthForPicking = 5.0f;
@@ -185,7 +186,13 @@ public:
 
     PolymorphicFunctionSet<SgNode> renderingFunctions;
 
-    GLint defaultFBO;
+    GLuint defaultFBO;
+    GLuint fboForPicking;
+    GLuint colorBufferForPicking;
+    GLuint depthBufferForPicking;
+    int viewportWidth;
+    int viewportHeight;
+    bool needToChangeBufferSizeForPicking;
 
     ShaderProgram* currentProgram;
     LightingProgram* currentLightingProgram;
@@ -375,6 +382,12 @@ void GLSLSceneRendererImpl::initialize()
     }
     
     defaultFBO = 0;
+    fboForPicking = 0;
+    colorBufferForPicking = 0;
+    depthBufferForPicking = 0;
+    viewportWidth = 1;
+    viewportHeight = 1;
+    needToChangeBufferSizeForPicking = true;
 
     currentProgram = 0;
     currentLightingProgram = 0;
@@ -457,6 +470,12 @@ GLSLSceneRendererImpl::~GLSLSceneRendererImpl()
             resource->discard();
         }
     }
+
+    if(fboForPicking){
+        glDeleteRenderbuffers(1, &colorBufferForPicking);
+        glDeleteRenderbuffers(1, &depthBufferForPicking);
+        glDeleteFramebuffers(1, &fboForPicking);
+    }
 }
 
 
@@ -529,8 +548,7 @@ bool GLSLSceneRendererImpl::initializeGL()
         return false;
     }
 
-    defaultFBO = 0;
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFBO);
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&defaultFBO));
 
     try {
         solidColorProgram.initialize();
@@ -566,6 +584,15 @@ void GLSLSceneRenderer::flush()
        may be bounded in the renderer.
     */
     glBindFramebuffer(GL_FRAMEBUFFER, impl->defaultFBO);
+}
+
+
+void GLSLSceneRenderer::setViewport(int x, int y, int width, int height)
+{
+    GLSceneRenderer::setViewport(x, y, width, height);
+    impl->viewportWidth = width;
+    impl->viewportHeight = height;
+    impl->needToChangeBufferSizeForPicking = true;
 }
 
 
@@ -651,11 +678,44 @@ bool GLSLSceneRenderer::pick(int x, int y)
 
 bool GLSLSceneRendererImpl::pick(int x, int y)
 {
+    if(USE_FBO_FOR_PICKING){
+        if(!fboForPicking){
+            glGenFramebuffers(1, &fboForPicking);
+            needToChangeBufferSizeForPicking = true;
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
+
+        if(needToChangeBufferSizeForPicking){
+            // color buffer
+            if(colorBufferForPicking){
+                glDeleteRenderbuffers(1, &colorBufferForPicking);
+            }
+            glGenRenderbuffers(1, &colorBufferForPicking);
+            glBindRenderbuffer(GL_RENDERBUFFER, colorBufferForPicking);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, viewportWidth, viewportHeight);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
+            
+            // depth buffer
+            if(depthBufferForPicking){
+                glDeleteRenderbuffers(1, &depthBufferForPicking);
+            }
+            glGenRenderbuffers(1, &depthBufferForPicking);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, viewportWidth, viewportHeight);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
+            
+            needToChangeBufferSizeForPicking = false;
+        }
+    }
+    
     self->extractPreprocessedNodes();
 
-    const GLboolean isMultiSampleEnabled = glIsEnabled(GL_MULTISAMPLE);
-    if(isMultiSampleEnabled){
-        glDisable(GL_MULTISAMPLE);
+    GLboolean isMultiSampleEnabled;
+    if(!USE_FBO_FOR_PICKING){
+        isMultiSampleEnabled = glIsEnabled(GL_MULTISAMPLE);
+        if(isMultiSampleEnabled){
+            glDisable(GL_MULTISAMPLE);
+        }
     }
     
     if(!SHOW_IMAGE_FOR_PICKING){
@@ -680,11 +740,15 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
 
     glDisable(GL_SCISSOR_TEST);
 
-    if(isMultiSampleEnabled){
-        glEnable(GL_MULTISAMPLE);
-    }
-
     endRendering();
+
+    if(!USE_FBO_FOR_PICKING){
+        if(isMultiSampleEnabled){
+            glEnable(GL_MULTISAMPLE);
+        }
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboForPicking);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+    }
     
     GLfloat color[4];
     glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
@@ -702,6 +766,11 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
         if(self->unproject(x, y, depth, pickedPoint)){
             pickedNodePath = *pickingNodePathList[id];
         }
+    }
+
+    if(USE_FBO_FOR_PICKING){
+        glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFBO);
     }
 
     return !pickedNodePath.empty();
