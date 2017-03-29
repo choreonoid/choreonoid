@@ -649,7 +649,6 @@ void GLSLSceneRendererImpl::render()
     isActuallyRendering = true;
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     switch(self->polygonMode()){
     case GLSceneRenderer::FILL_MODE:
@@ -731,7 +730,6 @@ bool GLSLSceneRendererImpl::pick(int x, int y)
     pickingNodePathList.clear();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     renderScene();
     
@@ -810,7 +808,6 @@ bool GLSLSceneRendererImpl::renderShadowMap(int lightIndex)
         if(shadowMapCamera){
             renderCamera(shadowMapCamera, T);
             phongShadowProgram.setShadowMapViewProjection(PV);
-            glClear(GL_DEPTH_BUFFER_BIT);
             renderSceneGraphNodes();
             glFlush();
             glFinish();

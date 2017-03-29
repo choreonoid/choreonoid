@@ -99,6 +99,7 @@ void SolidColorProgram::initialize()
 void SolidColorProgram::initializeFrameRendering()
 {
     glUniform1i(colorPerVertexLocation, false);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
@@ -360,6 +361,8 @@ void PhongShadowProgram::initializeFrameRendering()
         transformBlockBuffer.bind(*this, 1);
         transformBlockBuffer.bindBufferBase(1);
     }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
     
@@ -480,6 +483,8 @@ void ShadowMapProgram::initializeFrameRendering()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
+
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 
