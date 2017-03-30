@@ -61,12 +61,11 @@ public:
         connection.reset(obj->sigUpdated().connect(std::bind(&VertexResource::onUpdated, this)));
         clearHandles();
         glGenVertexArrays(1, &vao);
-        numBuffers = 0;
     }
 
     void clearHandles(){
         vao = 0;
-        for(int i=0; i < numBuffers; ++i){
+        for(int i=0; i < MAX_NUM_BUFFERS; ++i){
             vbos[i] = 0;
         }
         numBuffers = 0;
