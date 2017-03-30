@@ -75,7 +75,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
         vec3 n = normalize(normal);
         vec3 r = reflect(-s, n);
         return light.intensity * (
-            diffuseColor * max(abs(dot(s, n)), 0.0) +
+            diffuseColor * max(dot(s, n), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess));
     } else {
         // point light
@@ -110,7 +110,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
                         distance * distance * light.quadraticAttenuation);
         
         return ki * light.intensity * (
-            diffuseColor * max(abs(dot(s, n)), 0.0) +
+            diffuseColor * max(dot(s, n), 0.0) +
             specularColor * pow(max(dot(r, v), 0.0), shininess));
     }
 }

@@ -52,7 +52,7 @@ public:
     GLuint vao;
     GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
-    bool hasBuffers;
+    int numBuffers;
     ScopedConnection connection;
     SgLineSetPtr normalVisualization;
 
@@ -61,14 +61,15 @@ public:
         connection.reset(obj->sigUpdated().connect(std::bind(&VertexResource::onUpdated, this)));
         clearHandles();
         glGenVertexArrays(1, &vao);
-        hasBuffers = false;
+        numBuffers = 0;
     }
 
     void clearHandles(){
         vao = 0;
-        for(int i=0; i < MAX_NUM_BUFFERS; ++i){
+        for(int i=0; i < numBuffers; ++i){
             vbos[i] = 0;
         }
+        numBuffers = 0;
         numVertices = 0;
     }
 
@@ -81,35 +82,35 @@ public:
     bool isValid(){
         if(numVertices > 0){
             return true;
-        } else if(hasBuffers){
+        } else if(numBuffers){
             deleteBuffers();
         }
         return false;
     }
 
-    void genBuffers(int n){
-        glGenBuffers(n, vbos);
-        hasBuffers = true;
+    GLuint newBuffer(){
+        GLuint buffer;
+        glGenBuffers(1, &buffer);
+        vbos[numBuffers++] = buffer;
+        return buffer;
     }
 
     void deleteBuffers(){
-        glDeleteBuffers(MAX_NUM_BUFFERS, vbos);
-        for(int i=0; i < MAX_NUM_BUFFERS; ++i){
+        glDeleteBuffers(numBuffers, vbos);
+        for(int i=0; i < numBuffers; ++i){
             vbos[i] = 0;
         }
-        hasBuffers = false;
+        numBuffers = 0;
     }
 
     GLuint vbo(int index) {
         return vbos[index];
     }
 
-    ~VertexResource() { 
+    ~VertexResource() {
+        deleteBuffers();
         if(vao > 0){
             glDeleteVertexArrays(1, &vao);
-        }
-        if(hasBuffers){
-            glDeleteBuffers(MAX_NUM_BUFFERS, vbos);
         }
     }
 };
@@ -1440,39 +1441,34 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
 
     glBindVertexArray(resource->vao);
     
-    resource->genBuffers(2);
-    int vboIndex = 0;
-        
-    glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(vboIndex++));
+    glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
-    
-    SgNormalArray normals;
-    writeMeshNormals(mesh, resource->vbo(vboIndex++), normals);
-    if(isNormalVisualizationEnabled){
-        auto lines = new SgLineSet;
-        auto lineVertices = lines->getOrCreateVertices();
-        for(size_t i=0; i < vertices.size(); ++i){
-            const Vector3f& v = vertices[i];
-            lineVertices->push_back(v);
-            lineVertices->push_back(v + normals[i] * normalVisualizationLength);
-            lines->addLine(i*2, i*2+1);
+
+    if(currentLightingProgram){
+        SgNormalArray normals;
+        writeMeshNormals(mesh, resource->newBuffer(), normals);
+        if(isNormalVisualizationEnabled){
+            auto lines = new SgLineSet;
+            auto lineVertices = lines->getOrCreateVertices();
+            for(size_t i=0; i < vertices.size(); ++i){
+                const Vector3f& v = vertices[i];
+                lineVertices->push_back(v);
+                lineVertices->push_back(v + normals[i] * normalVisualizationLength);
+                lines->addLine(i*2, i*2+1);
+            }
+            lines->setMaterial(normalVisualizationMaterial);
+            resource->normalVisualization = lines;
         }
-        lines->setMaterial(normalVisualizationMaterial);
-        resource->normalVisualization = lines;
     }
 
-    GLuint buffer;
     if(mesh->hasTexCoords()){
-        glGenBuffers(1, &buffer);
-        writeMeshTexCoords(mesh, buffer);
-        resource->vbos[vboIndex++] = buffer;
+        writeMeshTexCoords(mesh, resource->newBuffer());
     }
+    
     if(mesh->hasColors()){
-        glGenBuffers(1, &buffer);
-        writeMeshColors(mesh, buffer);
-        resource->vbos[vboIndex++] = buffer;
+        writeMeshColors(mesh, resource->newBuffer());
     }
 }
 
@@ -1481,12 +1477,11 @@ void GLSLSceneRendererImpl::writeMeshNormals(SgMesh* mesh, GLuint buffer, SgNorm
 {
     auto& triangleVertices = mesh->triangleVertices();
     const int totalNumVertices = triangleVertices.size();
-    const auto& orgNormals = *mesh->normals();
     normals.reserve(totalNumVertices);
-
     const int numTriangles = mesh->numTriangles();
 
-    if(defaultSmoothShading && !orgNormals.empty()){
+    if(defaultSmoothShading && mesh->normals()){
+        const auto& orgNormals = *mesh->normals();
         const auto& normalIndices = mesh->normalIndices();
         int faceVertexIndex = 0;
         if(normalIndices.empty()){
@@ -1654,11 +1649,13 @@ void GLSLSceneRendererImpl::renderPlot
         SgVertexArrayPtr vertices = getVertices();
         const int n = vertices->size();
         resource->numVertices = n;
-        if(!hasColors){
-            resource->genBuffers(1);
-        } else {
-            resource->genBuffers(2);
-            glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(1));
+
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
+        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+        glEnableVertexAttribArray(0);
+
+        if(hasColors){
             SgColorArrayPtr colors;
             if(plot->colorIndices().empty()){
                 const SgColorArray& orgColors = *plot->colors();
@@ -1670,16 +1667,11 @@ void GLSLSceneRendererImpl::renderPlot
                     std::fill(colors->begin() + orgColors.size(), colors->end(), orgColors.back());
                 }
             }
-            if(colors){
-                glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
-                glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
-                glEnableVertexAttribArray(1);
-            }
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+            glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), colors->data(), GL_STATIC_DRAW);
+            glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL +(0)));
+            glEnableVertexAttribArray(1);
         }
-        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(0));
-        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
-        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
-        glEnableVertexAttribArray(0);
     }        
 
     drawVertexResource(resource, primitiveMode, modelMatrixStack.back());
