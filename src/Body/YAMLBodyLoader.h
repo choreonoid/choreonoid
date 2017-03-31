@@ -7,6 +7,7 @@
 #define CNOID_BODY_YAML_BODY_LOADER_H
 
 #include "AbstractBodyLoader.h"
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
