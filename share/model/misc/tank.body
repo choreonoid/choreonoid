@@ -31,6 +31,7 @@ links:
     jointType: revolute
     jointAxis: Z
     jointRange: unlimited
+    maxJointVelocity: 90
     jointId: 0
     centerOfMass: [ 0, 0, 0.025 ]
     mass: 4.0
@@ -51,6 +52,7 @@ links:
     jointType: revolute
     jointAxis: Y
     jointRange: [ -45, 10 ]
+    maxJointVelocity: 90
     jointId: 1
     elements:
       - 
