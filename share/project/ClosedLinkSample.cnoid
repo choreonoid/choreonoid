@@ -40,7 +40,7 @@ items:
           plugin: Body
           class: AISTSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recordingMode: TimeBar range
             timeLength: 60
             allLinkPositionOutputMode: false
@@ -60,7 +60,7 @@ items:
           plugin: ODE
           class: ODESimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recordingMode: TimeBar range
             timeLength: 60
             allLinkPositionOutputMode: true
@@ -81,7 +81,7 @@ items:
           plugin: Bullet
           class: BulletSimulatorItem
           data: 
-            realtimeSync: false
+            realtimeSync: true
             recordingMode: TimeBar range
             onlyActiveControlPeriod: true
             timeLength: 60
