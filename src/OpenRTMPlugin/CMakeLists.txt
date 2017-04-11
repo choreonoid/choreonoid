@@ -259,7 +259,11 @@ apply_common_setting_for_plugin(${plugin} "${plugin_headers}")
 
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYTHON3)
+  #  add_subdirectory(python3)
+  else()
+    add_subdirectory(python)
+  endif()
 endif()
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc)

@@ -341,7 +341,7 @@ static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
     
 
 template<class FrameType>
-static void copyFrameToBodyState(FrameType& frame, Body& body)
+static void copyFrameToBodyState(FrameType& frame, const Body& body)
 {
     const BodyMotion& motion = frame.motion();
     int numJoints = std::min(body.numJoints(), motion.numJoints());
@@ -373,7 +373,7 @@ const Body& operator>>(const Body& body, BodyMotion::Frame frame)
     return body;
 }
 
-BodyMotion::Frame operator>>(BodyMotion::Frame frame, Body& body)
+BodyMotion::Frame operator>>(BodyMotion::Frame frame, const Body& body)
 {
     copyFrameToBodyState(frame, body);
     return frame;

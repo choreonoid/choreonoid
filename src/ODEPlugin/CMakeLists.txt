@@ -139,7 +139,11 @@ foreach(version ${versions})
 endforeach()
 
 if(ENABLE_PYTHON)
-  add_subdirectory(python)
+  if(USE_PYTHON3)
+ #   add_subdirectory(python3)
+  else()
+    add_subdirectory(python)
+  endif()
 endif()
   
 

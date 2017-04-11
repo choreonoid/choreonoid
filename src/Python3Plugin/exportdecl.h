@@ -1,0 +1,38 @@
+  
+#ifndef CNOID_PYTHONPLUGIN_EXPORTDECL_H_INCLUDED
+# define CNOID_PYTHONPLUGIN_EXPORTDECL_H_INCLUDED
+
+# if defined _WIN32 || defined __CYGWIN__
+#  define CNOID_PYTHONPLUGIN_DLLIMPORT __declspec(dllimport)
+#  define CNOID_PYTHONPLUGIN_DLLEXPORT __declspec(dllexport)
+#  define CNOID_PYTHONPLUGIN_DLLLOCAL
+# else
+#  if __GNUC__ >= 4
+#   define CNOID_PYTHONPLUGIN_DLLIMPORT __attribute__ ((visibility("default")))
+#   define CNOID_PYTHONPLUGIN_DLLEXPORT __attribute__ ((visibility("default")))
+#   define CNOID_PYTHONPLUGIN_DLLLOCAL  __attribute__ ((visibility("hidden")))
+#  else
+#   define CNOID_PYTHONPLUGIN_DLLIMPORT
+#   define CNOID_PYTHONPLUGIN_DLLEXPORT
+#   define CNOID_PYTHONPLUGIN_DLLLOCAL
+#  endif
+# endif
+
+# ifdef CNOID_PYTHONPLUGIN_STATIC
+#  define CNOID_PYTHONPLUGIN_DLLAPI
+#  define CNOID_PYTHONPLUGIN_LOCAL
+# else
+#  ifdef CnoidPythonPlugin_EXPORTS
+#   define CNOID_PYTHONPLUGIN_DLLAPI CNOID_PYTHONPLUGIN_DLLEXPORT
+#  else
+#   define CNOID_PYTHONPLUGIN_DLLAPI CNOID_PYTHONPLUGIN_DLLIMPORT
+#  endif
+#  define CNOID_PYTHONPLUGIN_LOCAL CNOID_PYTHONPLUGIN_DLLLOCAL
+# endif
+
+#endif
+
+#ifdef CNOID_EXPORT
+# undef CNOID_EXPORT
+#endif
+#define CNOID_EXPORT CNOID_PYTHONPLUGIN_DLLAPI
