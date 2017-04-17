@@ -258,7 +258,7 @@ bool ValueNode::toBool() const
 bool ValueNode::read(std::string& out_value) const
 {
     if(isScalar()){
-        out_value = fromUTF8(static_cast<const ScalarNode* const>(this)->stringValue);
+        out_value = static_cast<const ScalarNode* const>(this)->stringValue;
         return !out_value.empty();
     }
     return false;
@@ -270,17 +270,8 @@ const std::string ValueNode::toString() const
     if(!isScalar()){
         throwNotScalrException();
     }
-    return fromUTF8(static_cast<const ScalarNode* const>(this)->stringValue);
-}
-
-
-const std::string ValueNode::toUTF8String() const
-{
-    if(!isScalar()){
-        throwNotScalrException();
-    }
     return static_cast<const ScalarNode* const>(this)->stringValue;
-}    
+}
 
 #else
 
@@ -302,22 +293,7 @@ const std::string& ValueNode::toString() const
     return static_cast<const ScalarNode* const>(this)->stringValue;
 }
 
-
-const std::string& ValueNode::toUTF8String() const
-{
-    return toString();
-}
 #endif
-
-
-bool ValueNode::readUTF8String(std::string& out_value) const
-{
-    if(isScalar()){
-        out_value = static_cast<const ScalarNode* const>(this)->stringValue;
-        return !out_value.empty();
-    }
-    return false;
-}
 
 
 ScalarNode::ScalarNode(const std::string& value, StringStyle stringStyle)
@@ -517,7 +493,7 @@ ValueNode* Mapping::find(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(toUTF8(key));
+    const_iterator p = values.find(key);
     if(p != values.end()){
         return p->second.get();
     } else {
@@ -531,7 +507,7 @@ Mapping* Mapping::findMapping(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(toUTF8(key));
+    const_iterator p = values.find(key);
     if(p != values.end()){
         ValueNode* node = p->second.get();
         if(node->isMapping()){
@@ -547,7 +523,7 @@ Listing* Mapping::findListing(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(toUTF8(key));
+    const_iterator p = values.find(key);
     if(p != values.end()){
         ValueNode* node = p->second.get();
         if(node->isListing()){
@@ -563,7 +539,7 @@ ValueNodePtr Mapping::extract(const std::string& key)
     if(!isValid()){
         throwNotMappingException();
     }
-    iterator p = values.find(toUTF8(key));
+    iterator p = values.find(key);
     if(p != values.end()){
         ValueNodePtr value = p->second;
         values.erase(p);
@@ -579,7 +555,7 @@ ValueNode& Mapping::get(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(toUTF8(key));
+    const_iterator p = values.find(key);
     if(p == values.end()){
         throwKeyNotFoundException(key);
     }
@@ -614,7 +590,7 @@ void Mapping::insert(const std::string& key, ValueNode* node)
     if(!isValid()){
         throwNotMappingException();
     }
-    const string uKey(toUTF8(key));
+    const string uKey(key);
     insertSub(uKey, node);
 }
 
@@ -635,7 +611,7 @@ Mapping* Mapping::openMapping(const std::string& key, bool doOverwrite)
     }
 
     Mapping* mapping = 0;
-    const string uKey(toUTF8(key));
+    const string uKey(key);
     iterator p = values.find(uKey);
     if(p != values.end()){
         ValueNode* node = p->second.get();
@@ -675,7 +651,7 @@ Listing* Mapping::openListing(const std::string& key, bool doOverwrite)
     }
 
     Listing* sequence = 0;
-    const string uKey(toUTF8(key));
+    const string uKey(key);
     iterator p = values.find(uKey);
     if(p != values.end()){
         ValueNode* node = p->second.get();
@@ -716,7 +692,7 @@ bool Mapping::remove(const std::string& key)
 
 bool Mapping::read(const std::string &key, std::string &out_value) const
 {
-    ValueNode* node = find(toUTF8(key));
+    ValueNode* node = find(key);
     if(node->isValid()){
         return node->read(out_value);
     }
@@ -724,19 +700,9 @@ bool Mapping::read(const std::string &key, std::string &out_value) const
 }
 
 
-bool Mapping::readUTF8(const std::string &key, std::string &out_value) const
-{
-    ValueNode* node = find(toUTF8(key));
-    if(node->isValid()){
-        return node->readUTF8String(out_value);
-    }
-    return false;
-}
-
-
 bool Mapping::read(const std::string &key, bool &out_value) const
 {
-    ValueNode* node = find(toUTF8(key));
+    ValueNode* node = find(key);
     if(node->isValid()){
         return node->read(out_value);
     }
@@ -746,7 +712,7 @@ bool Mapping::read(const std::string &key, bool &out_value) const
 
 bool Mapping::read(const std::string &key, int &out_value) const
 {
-    ValueNode* node = find(toUTF8(key));
+    ValueNode* node = find(key);
     if(node->isValid()){
         return node->read(out_value);
     }
@@ -756,20 +722,18 @@ bool Mapping::read(const std::string &key, int &out_value) const
 
 bool Mapping::read(const std::string &key, double &out_value) const
 {
-    ValueNode* node = find(toUTF8(key));
+    ValueNode* node = find(key);
     if(node->isValid()){
         return node->read(out_value);
     }
     return false;
 }
 
-
-void Mapping::writeUTF8(const std::string &key, const std::string& value, StringStyle stringStyle)
+void Mapping::write(const std::string &key, const std::string& value, StringStyle stringStyle)
 {
-    string uKey(toUTF8(key));
-    iterator p = values.find(uKey);
+    iterator p = values.find(key);
     if(p == values.end()){
-        insertSub(uKey, new ScalarNode(value, stringStyle));
+        insertSub(key, new ScalarNode(value, stringStyle));
     } else {
         ValueNode* node = p->second.get();
         if(node->isScalar()){
@@ -784,15 +748,11 @@ void Mapping::writeUTF8(const std::string &key, const std::string& value, String
 }
 
 
-/**
-   This is for internal use. Text are not converted to UTF-8.
-*/
 void Mapping::writeSub(const std::string &key, const char* text, size_t length, StringStyle stringStyle)
 {
-    const string uKey(toUTF8(key));
-    iterator p = values.find(uKey);
+    iterator p = values.find(key);
     if(p == values.end()){
-        insertSub(uKey, new ScalarNode(text, length, stringStyle));
+        insertSub(key, new ScalarNode(text, length, stringStyle));
     } else {
         ValueNode* node = p->second.get();
         if(node->isScalar()){
@@ -805,6 +765,7 @@ void Mapping::writeSub(const std::string &key, const char* text, size_t length, 
         }
     }
 }
+
 
 
 void Mapping::write(const std::string &key, bool value)
@@ -1010,7 +971,7 @@ void Listing::append(double value)
 
 void Listing::append(const std::string& value, StringStyle stringStyle)
 {
-    ScalarNode* node = new ScalarNode(toUTF8(value), stringStyle);
+    ScalarNode* node = new ScalarNode(value, stringStyle);
     if(doInsertLFBeforeNextElement){
         node->typeBits |= INSERT_LF;
         doInsertLFBeforeNextElement = false;
@@ -1032,5 +993,5 @@ void Listing::insert(int index, ValueNode* node)
 
 void Listing::write(int i, const std::string& value, StringStyle stringStyle)
 {
-    values[i] = new ScalarNode(toUTF8(value), stringStyle);
+    values[i] = new ScalarNode(value, stringStyle);
 }
