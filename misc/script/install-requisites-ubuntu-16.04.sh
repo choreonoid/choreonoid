@@ -20,6 +20,7 @@ qt4-qtconfig \
 qt4-doc-html \
 python2.7-dev \
 python-numpy \
+libassimp-dev \
 libode-dev \
 libomniorb4-dev \
 libcos4-dev \
@@ -34,7 +35,7 @@ libgstreamer1.0-dev \
 libgstreamer-plugins-base1.0-dev \
 lua5.3 \
 liblua5.3-dev \
-lua-posix     
+lua-posix
 #qt5-default
 #libqt5x11extras5-dev
 #qt5-style-plugins

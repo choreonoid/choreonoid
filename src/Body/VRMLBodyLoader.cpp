@@ -335,12 +335,6 @@ VRMLBodyLoaderImpl::~VRMLBodyLoaderImpl()
 }
 
 
-const char* VRMLBodyLoader::format() const
-{
-    return "OpenHRP3-VRML97";
-}
-
-
 void VRMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;

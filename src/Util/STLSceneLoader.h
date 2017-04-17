@@ -11,8 +11,7 @@ class STLSceneLoaderImpl;
 class CNOID_EXPORT STLSceneLoader : public AbstractSceneLoader
 {
 public:
-    virtual const char* format() const;
-    virtual SgNode* load(const std::string& fileName);
+    virtual SgNode* load(const std::string& filename);
 
 private:
     STLSceneLoaderImpl* impl;

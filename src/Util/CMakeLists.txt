@@ -38,6 +38,8 @@ set(sources
   SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
+  AbstractSceneLoader.cpp
+  SceneLoader.cpp
   MeshGenerator.cpp
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
@@ -106,6 +108,8 @@ set(headers
   SceneEffects.h
   SceneRenderer.h
   SceneUtil.h
+  AbstractSceneLoader.h
+  SceneLoader.h
   MeshGenerator.h
   MeshNormalGenerator.h
   MeshExtractor.h
@@ -128,7 +132,6 @@ set(headers
   Parser.h
   DaeNode.h
   DaeParser.h
-  AbstractSceneLoader.h
   STLSceneLoader.h
   ValueTree.h
   ValueTreeUtil.h

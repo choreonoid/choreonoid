@@ -323,12 +323,6 @@ YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
 }
 
 
-const char* YAMLBodyLoader::format() const
-{
-    return "ChoreonoidBody";
-}
-
-
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;

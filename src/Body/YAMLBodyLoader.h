@@ -21,7 +21,6 @@ class CNOID_EXPORT YAMLBodyLoader : public AbstractBodyLoader
 public:
     YAMLBodyLoader();
     ~YAMLBodyLoader();
-    virtual const char* format() const override;
     virtual void setMessageSink(std::ostream& os) override;
     virtual void setDefaultDivisionNumber(int n) override;
     virtual bool load(Body* body, const std::string& filename) override;

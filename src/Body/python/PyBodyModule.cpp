@@ -275,7 +275,6 @@ BOOST_PYTHON_MODULE(Body)
     implicitly_convertible<BodyPtr, ReferencedPtr>();
 
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
-        .def("format", &AbstractBodyLoader::format)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)
         .def("setShapeLoadingEnabled", &AbstractBodyLoader::setShapeLoadingEnabled)
         .def("setDefaultDivisionNumber", &AbstractBodyLoader::setDefaultDivisionNumber)
