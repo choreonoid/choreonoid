@@ -381,6 +381,10 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
 {
     const int numSpines = extrusion.spine.size();
     const int numCrosses = extrusion.crossSection.size();
+
+    if(numSpines < 2 || numCrosses < 2){
+        return 0;
+    }
     
     bool isClosed = false;
     if(extrusion.spine[0][0] == extrusion.spine[numSpines - 1][0] &&
