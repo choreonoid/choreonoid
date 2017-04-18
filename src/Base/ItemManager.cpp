@@ -275,8 +275,10 @@ ItemManagerImpl::ItemManagerImpl(const string& moduleName, MenuManager& menuMana
         menuManager.setPath("/File").setPath(N_("New ..."));
         
         menuManager.setPath("/File");
+        /*
         menuManager.addItem(_("Open Item"))
             ->sigTriggered().connect(std::bind(&ItemManagerImpl::onLoadItemActivated, this));
+        */
         menuManager.setPath(N_("Open ..."));
         menuManager.setPath("/File");
         menuManager.addItem(_("Reload Selected Items"))
