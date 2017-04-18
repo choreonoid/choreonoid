@@ -39,7 +39,7 @@ public:
     ostream* os_;
     ostream& os() { return *os_; }
     AssimpSceneLoaderImpl();
-    SgNode* load(const std::string& fileName);
+    SgNodePtr load(const std::string& fileName);
     SgPosTransformPtr convertAinode(aiNode* ainode);
     SgShape* convertAiMesh(unsigned int);
     SgMaterial* convertAiMaterial(unsigned int);
@@ -103,7 +103,7 @@ SgNodePtr AssimpSceneLoader::load(const std::string& fileName)
 }
 
 
-SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
+SgNodePtr AssimpSceneLoaderImpl::load(const std::string& fileName)
 {
     clear();
 
@@ -126,7 +126,7 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
     boost::filesystem::path path(fileName);
     directoryPath = path.remove_filename();
 
-    SgPosTransform* transform = convertAinode(scene->mRootNode);
+    SgPosTransformPtr transform = convertAinode(scene->mRootNode);
 
     return transform;
 
@@ -135,7 +135,7 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
 
 SgPosTransformPtr AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
 {
-    aiMatrix4x4& aiT = ainode->mTransformation;
+    const aiMatrix4x4& aiT = ainode->mTransformation;
     Affine3 T;
     T.linear() << aiT[0][0], aiT[0][1], aiT[0][2],
                   aiT[1][0], aiT[1][1], aiT[1][2],
@@ -151,7 +151,7 @@ SgPosTransformPtr AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
     }
 
     for(int i=0; i<ainode->mNumChildren; i++){
-        SgPosTransform* child = convertAinode(ainode->mChildren[i]);
+        SgPosTransformPtr child = convertAinode(ainode->mChildren[i]);
         if(child)
             transform->addChild(child);
     }
