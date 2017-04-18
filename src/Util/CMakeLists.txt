@@ -38,8 +38,6 @@ set(sources
   SceneRenderer.cpp
   SceneProvider.cpp
   SceneUtil.cpp
-  AbstractSceneLoader.cpp
-  SceneLoader.cpp
   MeshGenerator.cpp
   MeshNormalGenerator.cpp
   MeshExtractor.cpp
@@ -49,12 +47,15 @@ set(sources
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
+  AbstractSceneLoader.cpp
+  SceneLoader.cpp
   YAMLSceneReader.cpp
   PointSetUtil.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
+  VRMLSceneLoader.cpp
   DaeParser.cpp
   STLSceneLoader.cpp
   GettextWrapper.cpp

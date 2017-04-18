@@ -15,10 +15,12 @@ using namespace cnoid;
 
 namespace {
 
+typedef shared_ptr<AbstractSceneLoader> AbstractSceneLoaderPtr;
 typedef function<AbstractSceneLoaderPtr()> LoaderFactory;
-typedef map<string, LoaderFactory> LoaderFactoryMap;
-LoaderFactoryMap loaderFactoryMap;
-mutex loaderFactoryMapMutex;
+typedef map<string, int> LoaderIdMap;
+LoaderIdMap loaderIdMap;
+vector<LoaderFactory> loaderFactories;
+mutex loaderMutex;
 
 }
 
@@ -28,22 +30,44 @@ class SceneLoaderImpl
 {
 public:
     ostream* os;
-    typedef map<string, AbstractSceneLoaderPtr> LoaderMap;
-    LoaderMap loaderMap;
+    typedef map<int, AbstractSceneLoaderPtr> LoaderMap;
+    LoaderMap loaders;
     int defaultDivisionNumber;
     double defaultCreaseAngle;
 
     SceneLoaderImpl();
-    SgNode* load(const std::string& filename);
+    AbstractSceneLoaderPtr findLoader(const string& ext);
+    SgNodePtr load(const std::string& filename);
 };
 
 }
 
 
-void SceneLoader::registerLoader(const std::string& extension, std::function<AbstractSceneLoaderPtr()> factory)
+void SceneLoader::registerLoader(const char* extensions, std::function<AbstractSceneLoaderPtr()> factory)
 {
-    lock_guard<mutex> lock(loaderFactoryMapMutex);
-    loaderFactoryMap[extension] = factory;
+    vector<string> extensionArray;
+    const char* str = extensions;;
+    do {
+        const char* begin = str;
+        while(*str != ';' && *str) ++str;
+        extensionArray.push_back(string(begin, str));
+    } while(0 != *str++);
+    
+    {
+        lock_guard<mutex> lock(loaderMutex);
+        const int id = loaderFactories.size();
+        loaderFactories.push_back(factory);
+        for(size_t i=0; i < extensionArray.size(); ++i){
+            loaderIdMap[extensionArray[i]] = id;
+        }
+    }
+}
+
+
+SceneLoader* SceneLoader::instance()
+{
+    static SceneLoader sceneLoader;
+    return &sceneLoader;
 }
 
 
@@ -67,35 +91,41 @@ SceneLoader::~SceneLoader()
 }
 
 
-SgNode* SceneLoader::load(const std::string& filename)
+AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(const string& ext)
+{
+    AbstractSceneLoaderPtr loader;
+    
+    lock_guard<mutex> lock(loaderMutex);
+
+    auto p = loaderIdMap.find(ext);
+    if(p != loaderIdMap.end()){
+        const int loaderId = p->second;
+        auto q = loaders.find(loaderId);
+        if(q == loaders.end()){
+            loader = loaderFactories[loaderId]();
+            loaders[loaderId] = loader;
+        } else {
+            loader = q->second;
+        }
+    }
+
+    return loader;
+}
+
+
+SgNodePtr SceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNode* SceneLoaderImpl::load(const std::string& filename)
+SgNodePtr SceneLoaderImpl::load(const std::string& filename)
 {
-    SgNode* node = 0;
+    SgNodePtr node;
     boost::filesystem::path filepath(filename);
     string ext = getExtension(filepath);
 
-    auto iter = loaderMap.find(ext);
-
-    AbstractSceneLoaderPtr loader;
-    
-    LoaderMap::iterator p = loaderMap.find(ext);
-    if(p != loaderMap.end()){
-        loader = p->second;
-    } else {
-        lock_guard<mutex> lock(loaderFactoryMapMutex);
-        LoaderFactoryMap::iterator q = loaderFactoryMap.find(ext);
-        if(q != loaderFactoryMap.end()){
-            LoaderFactory factory = q->second;
-            loader = factory();
-            loaderMap[ext] = loader;
-        }
-    }
-    
+    auto loader = findLoader(ext);
     if(!loader){
         (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
                      % getFilename(filepath)) << endl;

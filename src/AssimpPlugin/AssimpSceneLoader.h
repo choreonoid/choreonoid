@@ -17,9 +17,8 @@ class AssimpSceneLoader : public AbstractSceneLoader
 public:
     AssimpSceneLoader();
     ~AssimpSceneLoader();
-    void setMessageSink(std::ostream& os);
-    virtual const char* format() const;
-    virtual SgNode* load(const std::string& fileName);
+    void setMessageSink(std::ostream& os) override;
+    virtual SgNodePtr load(const std::string& fileName) override;
 
 private:
     AssimpSceneLoaderImpl* impl;

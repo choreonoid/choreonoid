@@ -4,7 +4,6 @@
 */
 
 #include <cnoid/Plugin>
-#include <cnoid/AbstractSceneLoader>
 
 using namespace std;
 using namespace cnoid;
@@ -14,17 +13,18 @@ namespace {
 class AssimpPlugin : public Plugin
 {
 public:
-    AssimpPlugin() {
+    AssimpPlugin() : Plugin("Assimp")
+    {
 
     }
         
-    virtual bool initialize() {
-
+    virtual bool initialize()
+    {
         return true;
     }
         
-    virtual bool finalize() {
-
+    virtual bool finalize()
+    {
         return true;
     }
 };

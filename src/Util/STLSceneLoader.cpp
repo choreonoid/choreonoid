@@ -16,7 +16,7 @@ struct Registration {
     Registration(){
         SceneLoader::registerLoader(
             "stl",
-            []() -> AbstractSceneLoaderPtr { return std::make_shared<STLSceneLoader>(); });
+            []() -> shared_ptr<AbstractSceneLoader> { return make_shared<STLSceneLoader>(); });
     }
 } registration;
 
@@ -38,7 +38,7 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
 }
 
 
-SgNode* STLSceneLoader::load(const std::string& filename)
+SgNodePtr STLSceneLoader::load(const std::string& filename)
 {
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 

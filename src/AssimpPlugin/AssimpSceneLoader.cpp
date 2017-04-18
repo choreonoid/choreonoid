@@ -1,23 +1,37 @@
+/*!
+  @author Shizuko Hattori, Shin'ichiro Nakaoka
+*/
+
 #include "AssimpSceneLoader.h"
+#include <cnoid/SceneLoader>
 #include <cnoid/SceneDrawables>
-#include <cnoid/FileUtil>
 #include <cnoid/ImageIO>
+#include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/NullOut>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
-#include <boost/filesystem.hpp>
-#include <iostream>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
-using namespace boost;
 using namespace Assimp;
 
-namespace cnoid{
+namespace {
+
+struct Registration {
+    Registration() {
+        SceneLoader::registerLoader(
+            "dae;blend;x",
+            []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
+    }
+} registration;
+
+}
+
+namespace cnoid {
 
 class AssimpSceneLoaderImpl
 {
@@ -26,14 +40,14 @@ public:
     ostream& os() { return *os_; }
     AssimpSceneLoaderImpl();
     SgNode* load(const std::string& fileName);
-    SgPosTransform* convertAinode(aiNode* ainode);
+    SgPosTransformPtr convertAinode(aiNode* ainode);
     SgShape* convertAiMesh(unsigned int);
     SgMaterial* convertAiMaterial(unsigned int);
     SgTexture* convertAiTexture(unsigned int index);
     void clear();
 
 private:
-    filesystem::path directoryPath;
+    boost::filesystem::path directoryPath;
     const aiScene* scene;
     ImageIO imageIO;
 
@@ -68,21 +82,9 @@ AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 }
 
 
-const char* AssimpSceneLoader::format() const
-{
-    return "assimp";
-}
-
-
 void AssimpSceneLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
-}
-
-
-SgNode* AssimpSceneLoader::load(const std::string& fileName)
-{
-    return impl->load(fileName);
 }
 
 
@@ -92,6 +94,12 @@ void AssimpSceneLoaderImpl::clear()
     aiIndexToSgMaterialMap.clear();
     aiIndexToSgTextureMap.clear();
     imagePathToSgImageMap.clear();
+}
+
+
+SgNodePtr AssimpSceneLoader::load(const std::string& fileName)
+{
+    return impl->load(fileName);
 }
 
 
@@ -111,11 +119,11 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
 
     if( !scene )
     {
-        cout << importer.GetErrorString() << endl;
+        os() << importer.GetErrorString() << endl;
         return 0;
     }
 
-    filesystem::path path(fileName);
+    boost::filesystem::path path(fileName);
     directoryPath = path.remove_filename();
 
     SgPosTransform* transform = convertAinode(scene->mRootNode);
@@ -125,7 +133,7 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& fileName)
 }
 
 
-SgPosTransform* AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
+SgPosTransformPtr AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
 {
     aiMatrix4x4& aiT = ainode->mTransformation;
     Affine3 T;
@@ -133,7 +141,8 @@ SgPosTransform* AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
                   aiT[1][0], aiT[1][1], aiT[1][2],
                   aiT[2][0], aiT[2][1], aiT[2][2];
     T.translation() << aiT[0][3], aiT[1][3], aiT[2][3];
-    SgPosTransform* transform = new SgPosTransform(T);
+
+    SgPosTransformPtr transform = new SgPosTransform(T);
 
     for(int i=0; i<ainode->mNumMeshes; i++){
         SgShape* shape = convertAiMesh(ainode->mMeshes[i]);
@@ -148,7 +157,6 @@ SgPosTransform* AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
     }
 
     if(transform->numChildren() == 0){
-        delete  transform;
         transform = 0;
     }
 
@@ -281,7 +289,7 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
     if (aimaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
         aiString path;
         if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-            filesystem::path filepath(path.data);
+            boost::filesystem::path filepath(path.data);
             if(!checkAbsolute(filepath)){
                 filepath = directoryPath / filepath;
                 filepath.normalize();
@@ -312,5 +320,4 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
     aiIndexToSgTextureMap[index] = texture;
 
     return texture;
-
 }
