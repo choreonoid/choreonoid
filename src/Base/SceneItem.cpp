@@ -43,12 +43,16 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().registerClass<SceneItem>(N_("SceneItem"));
 
         ext->itemManager().addLoader<SceneItem>(
-            "VRML", "VRML-FILE", "wrl",
+            "Scene", "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
             std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
 
         ext->itemManager().addLoader<SceneItem>(
+            "VRML", "VRML-FILE", "wrl",
+            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
+
+        ext->itemManager().addLoader<SceneItem>(
             "Stereolithography (STL)", "STL-FILE", "stl",
-            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
         
         initialized = true;
     }

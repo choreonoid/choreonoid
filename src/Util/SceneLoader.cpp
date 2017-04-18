@@ -71,6 +71,20 @@ SceneLoader* SceneLoader::instance()
 }
 
 
+std::string SceneLoader::availableFileExtensions()
+{
+    string extensions;
+    for(auto iter = loaderIdMap.begin(); iter != loaderIdMap.end(); ++iter){
+        const string& extension = iter->first;
+        if(!extensions.empty()){
+            extensions += ";";
+        }
+        extensions += extension;
+    }
+    return extensions;
+}
+
+
 SceneLoader::SceneLoader()
 {
     impl = new SceneLoaderImpl;
