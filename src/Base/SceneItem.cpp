@@ -20,7 +20,12 @@ namespace {
 
 bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
 {
-    auto scene = SceneLoader::instance()->load(filename);
+    static SceneLoader* loader = 0;
+    if(!loader){
+        loader = new SceneLoader;
+        loader->setMessageSink(mvout(true));
+    }
+    auto scene = loader->load(filename);
     if(scene){
         if(SgGroup* group = dynamic_cast<SgGroup*>(scene.get())){
             SgInvariantGroupPtr invariant = new SgInvariantGroup;
@@ -53,7 +58,7 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().addLoader<SceneItem>(
             "Stereolithography (STL)", "STL-FILE", "stl",
             std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
-        
+
         initialized = true;
     }
 }

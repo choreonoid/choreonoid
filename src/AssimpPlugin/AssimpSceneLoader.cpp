@@ -24,7 +24,7 @@ namespace {
 struct Registration {
     Registration() {
         SceneLoader::registerLoader(
-            "dae;blend;x",
+            "dae;blend;x;obj;dxf",
             []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
     }
 } registration;
@@ -39,7 +39,7 @@ public:
     ostream* os_;
     ostream& os() { return *os_; }
     AssimpSceneLoaderImpl();
-    SgNodePtr load(const std::string& fileName);
+    SgNodePtr load(const std::string& filename);
     SgPosTransformPtr convertAinode(aiNode* ainode);
     SgShape* convertAiMesh(unsigned int);
     SgMaterial* convertAiMaterial(unsigned int);
@@ -51,13 +51,13 @@ private:
     const aiScene* scene;
     ImageIO imageIO;
 
-    typedef map<unsigned int, SgShape*> AiIndexToSgShapeMap;
+    typedef map<unsigned int, SgShapePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
-    typedef map<unsigned int, SgMaterial*> AiIndexToSgMaterialMap;
+    typedef map<unsigned int, SgMaterialPtr> AiIndexToSgMaterialMap;
     AiIndexToSgMaterialMap  aiIndexToSgMaterialMap;
-    typedef map<unsigned int, SgTexture*> AiIndexToSgTextureMap;
+    typedef map<unsigned int, SgTexturePtr> AiIndexToSgTextureMap;
     AiIndexToSgTextureMap  aiIndexToSgTextureMap;
-    typedef map<string, SgImage*> ImagePathToSgImageMap;
+    typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 };
 
@@ -97,25 +97,26 @@ void AssimpSceneLoaderImpl::clear()
 }
 
 
-SgNodePtr AssimpSceneLoader::load(const std::string& fileName)
+SgNodePtr AssimpSceneLoader::load(const std::string& filename)
 {
-    return impl->load(fileName);
+    return impl->load(filename);
 }
 
 
-SgNodePtr AssimpSceneLoaderImpl::load(const std::string& fileName)
+SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
     Importer importer;
 
-    scene = importer.ReadFile( fileName,
-            aiProcess_Triangulate            |    //三角面へ変換
-            aiProcess_JoinIdenticalVertices  |    //重複する頂点座標の削除
-            aiProcess_GenNormals             |    //面法線を生成
-            aiProcess_FindInstances          |    //重複するメッシュを探し初出のメッシュに置き換える
-            aiProcess_SortByPType                 //異なる複数のプリミティブ型からなるメッシュをサブメッシュに分割
-            );
+    scene = importer.ReadFile(
+        filename,
+        aiProcess_Triangulate                //三角面へ変換
+        //| aiProcess_JoinIdenticalVertices  //重複する頂点座標の削除
+        | aiProcess_GenNormals               //面法線を生成
+        //| aiProcess_FindInstances          //重複するメッシュを探し初出のメッシュに置き換える
+        //| aiProcess_SortByPType            //異なる複数のプリミティブ型からなるメッシュをサブメッシュに分割
+        );
 
     if( !scene )
     {
@@ -123,7 +124,7 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& fileName)
         return 0;
     }
 
-    boost::filesystem::path path(fileName);
+    boost::filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
     SgPosTransformPtr transform = convertAinode(scene->mRootNode);
@@ -144,16 +145,18 @@ SgPosTransformPtr AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
 
     SgPosTransformPtr transform = new SgPosTransform(T);
 
-    for(int i=0; i<ainode->mNumMeshes; i++){
+    for(int i=0; i < ainode->mNumMeshes; ++i){
         SgShape* shape = convertAiMesh(ainode->mMeshes[i]);
-        if(shape)
+        if(shape){
             transform->addChild(shape);
+        }
     }
 
-    for(int i=0; i<ainode->mNumChildren; i++){
+    for(int i=0; i < ainode->mNumChildren; ++i){
         SgPosTransformPtr child = convertAinode(ainode->mChildren[i]);
-        if(child)
+        if(child){
             transform->addChild(child);
+        }
     }
 
     if(transform->numChildren() == 0){
@@ -220,8 +223,9 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
         shape->setMaterial(material);
 
         SgTexture* texture = convertAiTexture(aimesh->mMaterialIndex);
-        if(texture)
+        if(texture){
             shape->setTexture(texture);
+        }
     }
     
     aiIndexToSgShapeMap[index] = shape;

@@ -19,14 +19,14 @@ public:
     //! @param extensions semi-colon separated extension list
     static void registerLoader(const char* extensions, std::function<std::shared_ptr<AbstractSceneLoader>()> factory);
 
-    //! This function returns a SceneLoader instance. The instance can only be used in the main thread.
-    static SceneLoader* instance();
-
     //! This function returns a semi-colon separated list of availabe file extensions.
     static std::string availableFileExtensions();
 
     SceneLoader();
     virtual ~SceneLoader();
+    virtual void setMessageSink(std::ostream& os) override;
+    virtual void setDefaultDivisionNumber(int n) override;
+    virtual void setDefaultCreaseAngle(double theta) override;
     virtual SgNodePtr load(const std::string& filename) override;
 
 private:

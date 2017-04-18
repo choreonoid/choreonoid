@@ -64,13 +64,6 @@ void SceneLoader::registerLoader(const char* extensions, std::function<AbstractS
 }
 
 
-SceneLoader* SceneLoader::instance()
-{
-    static SceneLoader sceneLoader;
-    return &sceneLoader;
-}
-
-
 std::string SceneLoader::availableFileExtensions()
 {
     string extensions;
@@ -102,6 +95,24 @@ SceneLoaderImpl::SceneLoaderImpl()
 SceneLoader::~SceneLoader()
 {
     delete impl;
+}
+
+
+void SceneLoader::setMessageSink(std::ostream& os)
+{
+    impl->os = &os;
+}
+
+
+void SceneLoader::setDefaultDivisionNumber(int n)
+{
+    impl->defaultDivisionNumber = n;
+}
+
+
+void SceneLoader::setDefaultCreaseAngle(double theta)
+{
+    impl->defaultCreaseAngle = theta;
 }
 
 
