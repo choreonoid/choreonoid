@@ -11,13 +11,11 @@
 #include <cnoid/NullOut>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
-#include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
-using namespace Assimp;
 
 namespace {
 
@@ -38,17 +36,9 @@ class AssimpSceneLoaderImpl
 public:
     ostream* os_;
     ostream& os() { return *os_; }
-    AssimpSceneLoaderImpl();
-    SgNodePtr load(const std::string& filename);
-    SgPosTransformPtr convertAinode(aiNode* ainode);
-    SgShape* convertAiMesh(unsigned int);
-    SgMaterial* convertAiMaterial(unsigned int);
-    SgTexture* convertAiTexture(unsigned int index);
-    void clear();
-
-private:
-    boost::filesystem::path directoryPath;
+    Assimp::Importer importer;
     const aiScene* scene;
+    boost::filesystem::path directoryPath;
     ImageIO imageIO;
 
     typedef map<unsigned int, SgShapePtr> AiIndexToSgShapeMap;
@@ -59,9 +49,18 @@ private:
     AiIndexToSgTextureMap  aiIndexToSgTextureMap;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
+
+    AssimpSceneLoaderImpl();
+    void clear();
+    SgNodePtr load(const std::string& filename);
+    SgPosTransformPtr convertAiNode(aiNode* node);
+    SgShape* convertAiMesh(unsigned int);
+    SgMaterial* convertAiMaterial(unsigned int);
+    SgTexture* convertAiTexture(unsigned int index);
 };
 
 }
+
 
 AssimpSceneLoader::AssimpSceneLoader()
 {
@@ -107,8 +106,6 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
-    Importer importer;
-
     scene = importer.ReadFile(
         filename,
         aiProcess_Triangulate                //三角面へ変換
@@ -118,8 +115,7 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
         //| aiProcess_SortByPType            //異なる複数のプリミティブ型からなるメッシュをサブメッシュに分割
         );
 
-    if( !scene )
-    {
+    if(!scene){
         os() << importer.GetErrorString() << endl;
         return 0;
     }
@@ -127,39 +123,42 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
     boost::filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
-    SgPosTransformPtr transform = convertAinode(scene->mRootNode);
+    SgPosTransformPtr transform = convertAiNode(scene->mRootNode);
+
+    importer.FreeScene();
 
     return transform;
-
 }
 
 
-SgPosTransformPtr AssimpSceneLoaderImpl::convertAinode(aiNode* ainode)
+SgPosTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 {
-    const aiMatrix4x4& aiT = ainode->mTransformation;
-    Affine3 T;
-    T.linear() << aiT[0][0], aiT[0][1], aiT[0][2],
-                  aiT[1][0], aiT[1][1], aiT[1][2],
-                  aiT[2][0], aiT[2][1], aiT[2][2];
-    T.translation() << aiT[0][3], aiT[1][3], aiT[2][3];
+    SgPosTransformPtr transform = new SgPosTransform;
 
-    SgPosTransformPtr transform = new SgPosTransform(T);
+    transform->setName(node->mName.C_Str());
+    
+    const aiMatrix4x4& T = node->mTransformation;
+    transform->translation() << T[0][3], T[1][3], T[2][3];
+    transform->rotation() <<
+        T[0][0], T[0][1], T[0][2],
+        T[1][0], T[1][1], T[1][2],
+        T[2][0], T[2][1], T[2][2];
 
-    for(int i=0; i < ainode->mNumMeshes; ++i){
-        SgShape* shape = convertAiMesh(ainode->mMeshes[i]);
+    for(unsigned int i=0; i < node->mNumMeshes; ++i){
+        SgShape* shape = convertAiMesh(node->mMeshes[i]);
         if(shape){
             transform->addChild(shape);
         }
     }
 
-    for(int i=0; i < ainode->mNumChildren; ++i){
-        SgPosTransformPtr child = convertAinode(ainode->mChildren[i]);
+    for(unsigned int i=0; i < node->mNumChildren; ++i){
+        SgPosTransformPtr child = convertAiNode(node->mChildren[i]);
         if(child){
             transform->addChild(child);
         }
     }
 
-    if(transform->numChildren() == 0){
+    if(transform->empty()){
         transform = 0;
     }
 
@@ -175,54 +174,62 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
     }
 
     SgShape* shape = 0;
+    aiMesh* srcMesh = scene->mMeshes[index];
+    
+    if(srcMesh->HasFaces()){
+        shape = new SgShape;
+        shape->setName(srcMesh->mName.C_Str());
+        auto mesh = shape->getOrCreateMesh();
+        mesh->setName(shape->name());
 
-    aiMesh* aimesh = scene->mMeshes[index];
-    if(aimesh->HasFaces()){
-        shape = new SgShape();
-        SgVertexArray* vertices = new SgVertexArray;
-        SgNormalArray* normal = new SgNormalArray;
-        SgTexCoordArray* texCoord = 0;
-        if(aimesh->HasTextureCoords(0)){
-            texCoord = new SgTexCoordArray;
+        const unsigned int numVertices = srcMesh->mNumVertices;
+        const auto srcVertices = srcMesh->mVertices;
+        auto& vertices = *mesh->getOrCreateVertices();
+        vertices.resize(numVertices);
+        for(unsigned int i=0; i < numVertices; ++i){
+            const auto& v = srcVertices[i];
+            vertices[i] << v.x, v.y, v.z;
         }
-        SgColorArray* colors = 0;
-        if(aimesh->HasVertexColors(0)){
-            colors = new SgColorArray;
-        }
-
-        SgMesh* mesh = new SgMesh;
-        for (unsigned int i = 0 ; i < aimesh->mNumVertices ; i++) {
-            const aiVector3D& pos = aimesh->mVertices[i];
-            const aiVector3D& n_ = aimesh->mNormals[i];
-            vertices->push_back(Vector3f(pos.x, pos.y, pos.z));
-            normal->push_back(Vector3f(n_.x, n_.y, n_.z));
-            if(texCoord){
-                const aiVector3D& tc_ = aimesh->mTextureCoords[0][i];
-                texCoord->push_back(Vector2f(tc_.x, tc_.y));
-            }
-            if(colors){
-                const aiColor4D& co = aimesh->mColors[0][i];
-                colors->push_back(Vector3f(co.r, co.g, co.b));
+        if(srcMesh->HasNormals()){
+            const auto srcNormals = srcMesh->mNormals;
+            auto& normals = *mesh->getOrCreateNormals();
+            normals.resize(numVertices);
+            for(unsigned int i=0; i < numVertices; ++i){
+                const auto& n = srcNormals[i];
+                normals[i] << n.x, n.y, n.z;
             }
         }
-        mesh->setVertices(vertices);
-        mesh->setNormals(normal);
-        if(texCoord)
-            mesh->setTexCoords(texCoord);
-        if(colors)
-            mesh->setColors(colors);
-
-        for (unsigned int i = 0 ; i < aimesh->mNumFaces ; i++) {
-            const aiFace& face = aimesh->mFaces[i];
-            mesh->addTriangle(face.mIndices[0], face.mIndices[1], face.mIndices[2]);
+        if(srcMesh->HasTextureCoords(0)){
+            const auto srcTexCoords = srcMesh->mTextureCoords[0];
+            auto& texCoords = *mesh->getOrCreateTexCoords();
+            texCoords.resize(numVertices);
+            for(unsigned int i=0; i < numVertices; ++i){
+                const auto& p = srcTexCoords[i];
+                texCoords[i] << p.x, p.y;
+            }
+        }
+        if(srcMesh->HasVertexColors(0)){
+            const auto srcColors = srcMesh->mColors[0];
+            auto& colors = *mesh->getOrCreateColors();
+            colors.resize(numVertices);
+            for(unsigned int i=0; i < numVertices; ++i){
+                const auto& c = srcColors[i];
+                colors[i] << c.r, c.g, c.b;
+            }
         }
 
-        shape->setMesh(mesh);
+        const unsigned int numFaces = srcMesh->mNumFaces;
+        const auto srcFaces = srcMesh->mFaces;
+        mesh->setNumTriangles(numFaces);
+        for(unsigned int i = 0; i < numFaces; ++i){
+            const auto& indices = srcFaces[i].mIndices;
+            mesh->setTriangle(i, indices[0], indices[1], indices[2]);
+        }
 
-        SgMaterial* material = convertAiMaterial(aimesh->mMaterialIndex);
+        SgMaterial* material = convertAiMaterial(srcMesh->mMaterialIndex);
         shape->setMaterial(material);
 
-        SgTexture* texture = convertAiTexture(aimesh->mMaterialIndex);
+        SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
         if(texture){
             shape->setTexture(texture);
         }
@@ -242,31 +249,36 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     }
 
     SgMaterial* material = new SgMaterial();
-    aiMaterial* aimaterial = scene->mMaterials[index];
+    aiMaterial* srcMaterial = scene->mMaterials[index];
+
+    aiString name;
+    if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_NAME, name)){
+        material->setName(name.C_Str());
+    }
     
     aiColor3D color(0.f, 0.f, 0.f);
     float diffuse;
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
         material->setDiffuseColor(Vector3(color.r, color.g, color.b));
         diffuse = color.r+color.g+color.b;
     }
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_SPECULAR, color)){
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color)){
         material->setSpecularColor(Vector3(color.r, color.g, color.b));
     }
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_EMISSIVE, color)){
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, color)){
         material->setEmissiveColor(Vector3(color.r, color.g, color.b));
     }
     float w;
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_SHININESS, w)){
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_SHININESS, w)){
         material->setShininess(w);
     }
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
         float c = diffuse==0? 0 : (color.r+color.g+color.b)/diffuse;
         if(c>1)
             c=1;
         material->setAmbientIntensity(c);
     }
-    if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_OPACITY, w)){
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_OPACITY, w)){
         if(!w)    //設定値が逆のものがある？暫定処理 TODO
             material->setTransparency(w);
         else
@@ -288,11 +300,11 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
     }
 
     SgTexture* texture = 0;
-    aiMaterial* aimaterial = scene->mMaterials[index];
+    aiMaterial* srcMaterial = scene->mMaterials[index];
 
-    if (aimaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+    if (srcMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
         aiString path;
-        if (aimaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+        if (srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
             boost::filesystem::path filepath(path.data);
             if(!checkAbsolute(filepath)){
                 filepath = directoryPath / filepath;
