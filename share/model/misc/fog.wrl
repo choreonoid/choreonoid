@@ -4,11 +4,11 @@ Group {
   children [
     Fog {
       color 1.0 1.0 1.0
-      visibilityRange 20.0
+      visibilityRange 25.0
     }
     Shape {
       geometry Sphere {
-	radius 100.0
+	radius 90.0
       }
       appearance Appearance {
 	material Material {

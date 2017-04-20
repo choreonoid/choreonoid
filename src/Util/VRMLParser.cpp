@@ -859,7 +859,7 @@ VRMLNodePtr VRMLParserImpl::readInlineNode(VRMLNodeCategory nodeCategory)
             } else {
                 inlineNode->children.push_back(createAnotherFormatFileNode(url));
             }
-            inlineNode->urls.push_back(url);
+            inlineNode->urls.push_back(inlineUrls[i]);
         }
         return inlineNode;
     }

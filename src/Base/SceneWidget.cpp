@@ -469,7 +469,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     }
     
     renderer->setOutputStream(os);
-    renderer->enableUnusedCacheCheck(true);
+    renderer->enableUnusedResourceCheck(true);
     renderer->sigRenderingRequest().connect(
         std::bind(static_cast<void(QWidget::*)()>(&SceneWidgetImpl::update), this));
     renderer->sigCamerasChanged().connect(std::bind(&SceneWidgetImpl::onCamerasChanged, this));
@@ -1947,7 +1947,7 @@ void SceneWidgetImpl::showDefaultColorDialog()
         Vector3f color(c.redF(), c.greenF(), c.blueF());
         renderer->setDefaultColor(color);
         renderer->defaultMaterial()->setDiffuseColor(color);
-        renderer->requestToClearCache();
+        renderer->requestToClearResources();
         update();
     }
 }

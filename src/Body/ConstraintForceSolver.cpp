@@ -489,11 +489,12 @@ void CFSImpl::initExtraJoints(int bodyIndex)
     for(int j=0; j < body->numExtraJoints(); ++j){
         Body::ExtraJoint& bodyExtraJoint = body->extraJoint(j);
         ExtraJointLinkPairPtr linkPair;
+        linkPair = std::make_shared<ExtraJointLinkPair>();
+        linkPair->isSameBodyPair = true;
+        linkPair->isNonContactConstraint = true;
+        linkPair->constraintPoints.resize(2);
+
         if(bodyExtraJoint.type == Body::EJ_PISTON){
-            linkPair = std::make_shared<ExtraJointLinkPair>();
-            linkPair->isSameBodyPair = true;
-            linkPair->isNonContactConstraint = true;
-        
             // generate two vectors orthogonal to the joint axis
             Vector3 u = Vector3::Zero();
             int minElem = 0;
@@ -504,13 +505,14 @@ void CFSImpl::initExtraJoints(int bodyIndex)
                 }
             }
             u(minElem) = 1.0;
-            linkPair->constraintPoints.resize(2);
             const Vector3 t1 = axis.cross(u).normalized();
             linkPair->jointConstraintAxes[0] = t1;
             linkPair->jointConstraintAxes[1] = axis.cross(t1).normalized();
             
         } else if(bodyExtraJoint.type == Body::EJ_BALL){
-            
+            linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
+            linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);
+            linkPair->jointConstraintAxes[2] = Vector3(0.0, 0.0, 1.0);
         }
         
         if(linkPair){

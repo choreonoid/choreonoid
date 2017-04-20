@@ -3,7 +3,6 @@
 */
 
 #include "YAMLWriter.h"
-#include "UTF8.h"
 #include <iostream>
 #include <algorithm>
 #include <boost/tokenizer.hpp>
@@ -130,7 +129,7 @@ void YAMLWriter::putComment(const std::string& comment, bool doNewLine)
     if(doNewLine){
         indent();
     }
-    os << "# " << toUTF8(comment);
+    os << "# " << comment;
     isCurrentNewLine = false;
     newLine();
 }
@@ -197,7 +196,7 @@ void YAMLWriter::putString_(const std::string& value)
 
 void YAMLWriter::putString(const std::string& value)
 {
-    putString_(toUTF8(value));
+    putString_(value);
 }
 
 
@@ -212,7 +211,7 @@ void YAMLWriter::putSingleQuotedString_(const std::string& value)
 
 void YAMLWriter::putSingleQuotedString(const std::string& value)
 {
-    putSingleQuotedString_(toUTF8(value));
+    putSingleQuotedString_(value);
 }
 
 
@@ -227,7 +226,7 @@ void YAMLWriter::putDoubleQuotedString_(const std::string& value)
 
 void YAMLWriter::putDoubleQuotedString(const std::string& value)
 {
-    putDoubleQuotedString_(toUTF8(value));
+    putDoubleQuotedString_(value);
 }
 
 
@@ -266,7 +265,7 @@ void YAMLWriter::putBlockStyleString(const std::string& value, bool isLiteral)
                 os << "\n";
                 afterLF = true;
             } else {
-                os << toUTF8(*it++);
+                os << *it++;
             }
         }
         
@@ -353,7 +352,7 @@ void YAMLWriter::putKey_(const std::string& key, StringStyle style)
 
 void YAMLWriter::putKey(const std::string& key, StringStyle style)
 {
-    putKey_(toUTF8(key), style);
+    putKey_(key, style);
 }
 
 

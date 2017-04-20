@@ -40,16 +40,21 @@ public:
 
 class CNOID_EXPORT SolidColorProgram : public NolightingProgram
 {
+    Vector3f color_;
     GLint pointSizeLocation;
     GLint colorLocation;
     GLint colorPerVertexLocation;
+    bool isColorChangable_;
     
 public:
+    SolidColorProgram();
     virtual void initialize() override;
     virtual void initializeFrameRendering() override;
     virtual void setPointSize(float s);
     virtual void setColor(const Vector3f& color) override;
     virtual void enableColorArray(bool on) override;
+    void setColorChangable(bool on) { isColorChangable_ = on; }
+    bool isColorChangable() const { return isColorChangable_; }
 };
 
 
@@ -108,6 +113,13 @@ protected:
     GLint shininessLocation;
     GLint alphaLocation;
 
+    GLint isTextureEnabledLocation;
+    GLint tex1Location;
+    bool isTextureEnabled_;
+
+    GLint isVertexColorEnabledLocation;
+    bool isVertexColorEnabled_;
+
 public:
     virtual void initialize() override;
 
@@ -128,6 +140,20 @@ public:
     }
     void setAlpha(float a){
         glUniform1f(alphaLocation, a);
+    }
+
+    void setTextureEnabled(bool on){
+        if(on != isTextureEnabled_){
+            glUniform1i(isTextureEnabledLocation, on);
+            isTextureEnabled_ = on;
+        }
+    }
+
+    void setVertexColorEnabled(bool on){
+        if(on != isVertexColorEnabled_){
+            glUniform1i(isVertexColorEnabledLocation, on);
+            isVertexColorEnabled_ = on;
+        }
     }
 };
 

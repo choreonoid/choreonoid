@@ -6,6 +6,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
+#include <cnoid/UTF8>
 #include <QRegExp>
 #include <boost/format.hpp>
 #include "gettext.h"

@@ -6,7 +6,6 @@
 #define CNOID_UTIL_VALUE_TREE_H
 
 #include "Referenced.h"
-#include "UTF8.h"
 #include <map>
 #include <vector>
 #include "exportdecl.h"
@@ -61,14 +60,12 @@ public:
 
 #ifdef _WIN32
     const std::string toString() const;
-    const std::string toUTF8String() const;
 
     operator const std::string () const {
         return toString();
     }
 #else
     const std::string& toString() const;
-    const std::string& toUTF8String() const;
 
     operator const std::string& () const {
         return toString();
@@ -96,7 +93,6 @@ public:
     bool read(double &out_value) const;
     bool read(bool &out_value) const;
     bool read(std::string &out_value) const;
-    bool readUTF8String(std::string& out_value) const;
 
     bool hasLineInfo() const { return (line_ >= 0); }
     int line() const { return line_ + 1; }
@@ -299,7 +295,6 @@ public:
     bool remove(const std::string& key);
 
     bool read(const std::string &key, std::string &out_value) const;
-    bool readUTF8(const std::string &key, std::string &out_value) const;
     bool read(const std::string &key, bool &out_value) const;
     bool read(const std::string &key, int &out_value) const;
     bool read(const std::string &key, double &out_value) const;
@@ -333,16 +328,7 @@ public:
         }
     }
 
-    void writeUTF8(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
-
-    void write(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING) {
-        writeUTF8(key, toUTF8(value), stringStyle);
-    }
-
-    void writeUTF8(const std::string &key, const char* value, StringStyle stringStyle = PLAIN_STRING){
-        writeUTF8(key, std::string(value), stringStyle);
-    }
-        
+    void write(const std::string &key, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
     void write(const std::string &key, const char* value, StringStyle stringStyle = PLAIN_STRING){
         write(key, std::string(value), stringStyle);
     }

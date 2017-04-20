@@ -1599,7 +1599,7 @@ SgTextureTransform* VRMLToSGConverterImpl::createTextureTransform(VRMLTextureTra
 {
     SgTextureTransform* textureTransform = new SgTextureTransform;
     textureTransform->setCenter(tt->center);
-    textureTransform->setRotation(tt->rotation * 180.0 / PI);
+    textureTransform->setRotation(tt->rotation);
     textureTransform->setScale(tt->scale);
     textureTransform->setTranslation(tt->translation);
     return textureTransform;
