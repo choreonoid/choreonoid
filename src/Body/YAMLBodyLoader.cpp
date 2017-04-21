@@ -18,9 +18,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
-#include <cnoid/VRMLParser>
-#include <cnoid/EasyScanner>
-#include <cnoid/VRMLToSGConverter>
+#include <cnoid/SceneLoader>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <unordered_map>
@@ -56,6 +54,7 @@ public:
     YAMLBodyLoader* self;
     YAMLReader reader;
     YAMLSceneReader sceneReader;
+    SceneLoader sceneLoader;
     filesystem::path directoryPath;
 
     typedef function<bool(Mapping& node)> NodeFunction;
@@ -120,9 +119,6 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
-    VRMLParser vrmlParser;
-    VRMLToSGConverter sgConverter;
-
     ostream& os() { return *os_; }
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
@@ -142,6 +138,7 @@ public:
     bool readGroup(Mapping& node);
     bool readTransform(Mapping& node);
     bool readResource(Mapping& node);
+    bool importModel(SgGroup* group, const std::string& uri);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -326,13 +323,14 @@ YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
 }
 
 
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
-    impl->sgConverter.setDivisionNumber(n);
+    impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
@@ -377,8 +375,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
-    } catch(EasyScanner::Exception & ex){
-        os() << ex.getFullMessage();
     }
 
     os().flush();
@@ -763,18 +759,8 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     setMassParameters(link);
     
     if(extract(linkNode, "uri", symbol)){
-        filesystem::path filepath(symbol);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
-        }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
-                shape->addChild(node);
-                hasShape = true;
-            }
+        if(importModel(shape, symbol)){
+            hasShape = true;
         }
     }
 
@@ -1026,26 +1012,28 @@ bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
 bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 {
     bool isSceneNodeAdded = false;
-    
     if(node.read("uri", symbol)){
-        filesystem::path filepath(symbol);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
-        }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
-                currentSceneGroup->addChild(node);
-                isSceneNodeAdded = true;
-            }
-        }
+        isSceneNodeAdded = importModel(currentSceneGroup, symbol);
     }
-
     return isSceneNodeAdded;
 }
 
+
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const std::string& uri)
+{
+    filesystem::path filepath(symbol);
+    if(!checkAbsolute(filepath)){
+        filepath = directoryPath / filepath;
+        filepath.normalize();
+    }
+    SgNodePtr model = sceneLoader.load(getAbsolutePathString(filepath));
+    if(model){
+        group->addChild(model);
+        return true;
+    }
+    return false;
+}
+    
 
 bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 {
