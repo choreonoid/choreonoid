@@ -268,9 +268,10 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, color)){
         material->setEmissiveColor(Vector3(color.r, color.g, color.b));
     }
-    float w;
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_SHININESS, w)){
-        material->setShininess(w);
+    float s;
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_SHININESS, s)){
+        s = std::min(128.0f, s);
+        material->setShininess(s / 128.0f);
     }
     if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
         float c = diffuse==0? 0 : (color.r+color.g+color.b)/diffuse;
@@ -278,11 +279,14 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
             c=1;
         material->setAmbientIntensity(c);
     }
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_OPACITY, w)){
-        if(!w)    //設定値が逆のものがある？暫定処理 TODO
-            material->setTransparency(w);
-        else
-            material->setTransparency(1-w);
+
+    float o;
+    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_OPACITY, o)){
+        if(!o){    //設定値が逆のものがある？暫定処理 TODO
+            material->setTransparency(o);
+        } else {
+            material->setTransparency(1.0f - o);
+        }
     }
 
     aiIndexToSgMaterialMap[index] = material;
