@@ -338,6 +338,7 @@ VRMLBodyLoaderImpl::~VRMLBodyLoaderImpl()
 void VRMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->vrmlParser.setMessageSink(os);
     impl->sgConverter.setMessageSink(os);
 }
 

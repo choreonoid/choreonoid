@@ -3,8 +3,8 @@
 */
 
 #include "SceneLoader.h"
-#include <cnoid/NullOut>
-#include <cnoid/FileUtil>
+#include "NullOut.h"
+#include "FileUtil.h"
 #include <boost/format.hpp>
 #include <mutex>
 #include <map>

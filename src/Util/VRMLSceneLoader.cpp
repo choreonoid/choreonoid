@@ -65,6 +65,7 @@ VRMLSceneLoader::~VRMLSceneLoader()
 void VRMLSceneLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->parser.setMessageSink(os);
     impl->converter.setMessageSink(os);
 }
     
