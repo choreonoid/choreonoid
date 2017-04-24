@@ -119,11 +119,24 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
+    typedef unordered_map<string, SgNodePtr> NodeMap;
+    
+    struct ResourceInfo : public Referenced
+    {
+        SgNodePtr rootNode;
+        unique_ptr<NodeMap> nodeMap;
+    };
+    typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
+        
+    map<string, ResourceInfoPtr> resourceInfoMap;
+    
+
     ostream& os() { return *os_; }
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
+    bool clear();
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
     bool readBody(Mapping* topNode);
@@ -139,6 +152,11 @@ public:
     bool readTransform(Mapping& node);
     bool readResource(Mapping& node);
     bool importModel(SgGroup* group, const std::string& uri);
+    bool importModel(SgGroup* group, const string& uri, const string& nodeName);
+    ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    SgNode* invalidatePosTransformParameters(SgNode* node);
+    void makeNodeMap(ResourceInfo* info);
+    void makeNodeMapSub(SgNode* node, NodeMap& nodeMap);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -347,6 +365,21 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
 }
 
 
+bool YAMLBodyLoaderImpl::clear()
+{
+    rootLink = nullptr;
+    linkInfos.clear();
+    linkMap.clear();
+    validJointIdSet.clear();
+    numValidJointIds = 0;
+    nameStack.clear();
+    transformStack.clear();
+    rigidBodies.clear();
+    sceneReader.clear();
+    resourceInfoMap.clear();
+}    
+
+
 bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 {
     return impl->load(body, filename);
@@ -391,19 +424,14 @@ bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
 
 bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 {
+    clear();
+    
     updateCustomNodeFunctions();
     
     bool result = false;
     this->body = body;
     body->clearDevices();
     body->clearExtraJoints();
-
-    rootLink = nullptr;
-    linkInfos.clear();
-    linkMap.clear();
-    validJointIdSet.clear();
-    numValidJointIds = 0;
-    sceneReader.clear();
 
     try {
         result = readBody(topNode);
@@ -414,16 +442,13 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
         if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
+    } catch(...){
+        clear();
+        throw;
     }
 
-    linkInfos.clear();
-    linkMap.clear();
-    validJointIdSet.clear();
-    nameStack.clear();
-    transformStack.clear();
-    rigidBodies.clear();
-    sceneReader.clear();
-        
+    clear();
+
     os().flush();
 
     if(false){ // for debug
@@ -1019,19 +1044,103 @@ bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 }
 
 
-bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const std::string& uri)
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri)
 {
-    filesystem::path filepath(symbol);
-    if(!checkAbsolute(filepath)){
-        filepath = directoryPath / filepath;
-        filepath.normalize();
+    ResourceInfo* info = getOrCreateResourceInfo(uri);
+    if(info){
+        group->addChild(info->rootNode);
+        return true;
     }
-    SgNodePtr model = sceneLoader.load(getAbsolutePathString(filepath));
+    return false;
+}
+
+
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri, const string& nodeName)
+{
+    ResourceInfo* info = getOrCreateResourceInfo(uri);
+
+    SgNodePtr model;
+    if(info){
+        if(nodeName.empty()){
+            model = info->rootNode;
+        } else {
+            if(!info->nodeMap){
+                makeNodeMap(info);
+            }
+            auto iter = info->nodeMap->find(nodeName);
+            if(iter != info->nodeMap->end()){
+                model = invalidatePosTransformParameters(iter->second);
+                iter->second = model;
+            }
+        }
+    }
+
     if(model){
         group->addChild(model);
         return true;
     }
     return false;
+}
+
+
+YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(const string& uri)
+{
+    ResourceInfo* info = 0;
+    
+    auto iter = resourceInfoMap.find(uri);
+    if(iter != resourceInfoMap.end()){
+        info = iter->second;
+    } else {
+        filesystem::path filepath(uri);
+        if(!checkAbsolute(filepath)){
+            filepath = directoryPath / filepath;
+            filepath.normalize();
+        }
+        SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
+        if(rootNode){
+            info = new ResourceInfo;
+            info->rootNode = invalidatePosTransformParameters(rootNode);
+        }
+        resourceInfoMap[uri] = info;
+    }
+
+    return info;
+}
+
+
+SgNode* YAMLBodyLoaderImpl::invalidatePosTransformParameters(SgNode* node)
+{
+    SgNode* invalidated = 0;
+    auto transform = dynamic_cast<SgPosTransform*>(node);
+    if(transform){
+        auto group = new SgGroup;
+        transform->moveChildrenTo(group);
+        invalidated = group;
+    } else {
+        invalidated = node;
+    }
+    return invalidated;
+}
+        
+
+void YAMLBodyLoaderImpl::makeNodeMap(ResourceInfo* info)
+{
+    info->nodeMap.reset(new NodeMap);
+    makeNodeMapSub(info->rootNode, *info->nodeMap);
+}
+
+
+void YAMLBodyLoaderImpl::makeNodeMapSub(SgNode* node, NodeMap& nodeMap)
+{
+    if(!node->name().empty()){
+        nodeMap.insert(make_pair(node->name(), node));
+        SgGroup* group = dynamic_cast<SgGroup*>(node);
+        if(group){
+            for(SgNode* child : *group){
+                makeNodeMapSub(child, nodeMap);
+            }
+        }
+    }
 }
     
 
