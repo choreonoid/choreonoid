@@ -492,13 +492,13 @@ void CFSImpl::initExtraJoints(int bodyIndex)
         linkPair = std::make_shared<ExtraJointLinkPair>();
         linkPair->isSameBodyPair = true;
         linkPair->isNonContactConstraint = true;
-        linkPair->constraintPoints.resize(2);
 
         if(bodyExtraJoint.type == Body::EJ_PISTON){
+            linkPair->constraintPoints.resize(2);
             // generate two vectors orthogonal to the joint axis
             Vector3 u = Vector3::Zero();
             int minElem = 0;
-            Vector3& axis = bodyExtraJoint.axis;
+            Vector3 axis = bodyExtraJoint.link[0]->Rs() * bodyExtraJoint.axis;
             for(int k=1; k < 3; k++){
                 if(fabs(axis(k)) < fabs(axis(minElem))){
                     minElem = k;
@@ -510,6 +510,7 @@ void CFSImpl::initExtraJoints(int bodyIndex)
             linkPair->jointConstraintAxes[1] = axis.cross(t1).normalized();
             
         } else if(bodyExtraJoint.type == Body::EJ_BALL){
+            linkPair->constraintPoints.resize(3);
             linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
             linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);
             linkPair->jointConstraintAxes[2] = Vector3(0.0, 0.0, 1.0);
@@ -528,7 +529,7 @@ void CFSImpl::initExtraJoints(int bodyIndex)
                 DyLink* link = static_cast<DyLink*>(bodyExtraJoint.link[k]);
                 linkPair->link[k] = link;
                 linkPair->linkData[k] = &(bodyData.linksData[link->index()]);
-                linkPair->jointPoint[k] = bodyExtraJoint.point[k];
+                linkPair->jointPoint[k] = link->Rs() * bodyExtraJoint.point[k];
             }
             extraJointLinkPairs.push_back(linkPair);
         }
