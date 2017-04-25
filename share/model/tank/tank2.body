@@ -86,7 +86,7 @@ links:
     elements:
       Resource:
         uri: tank2.dae
-        node: CRWLER_TRACK_L
+        node: CRAWLER_TRACK_L
   -
     name: CRAWLER_TRACK_R
     parent: CHASSIS
@@ -101,5 +101,5 @@ links:
       0,    0,    0.02 ]
     elements:
       Resource:
-        uri: tank
+        uri: tank2.dae
         node: CRAWLER_TRACK_R

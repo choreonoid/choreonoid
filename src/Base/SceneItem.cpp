@@ -27,12 +27,9 @@ bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
     }
     auto scene = loader->load(filename);
     if(scene){
-        if(SgGroup* group = dynamic_cast<SgGroup*>(scene.get())){
-            SgInvariantGroupPtr invariant = new SgInvariantGroup;
-            group->moveChildrenTo(invariant);
-            scene = invariant;
-        }
-        item->topNode()->addChild(scene);
+        auto invariant = new SgInvariantGroup;
+        invariant->addChild(scene);
+        item->topNode()->addChild(invariant);
         return true;
     }
     return false;

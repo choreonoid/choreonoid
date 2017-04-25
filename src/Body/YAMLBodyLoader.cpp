@@ -90,7 +90,7 @@ public:
 
     LinkPtr currentLink;
     vector<string> nameStack;
-    typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Vector;
+    typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Vector;
     Affine3Vector transformStack;
 
     struct RigidBody
@@ -100,7 +100,7 @@ public:
         double m;
         Matrix3 I;
     };
-    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
+    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody>> RigidBodyVector;
     RigidBodyVector rigidBodies;
 
     SgGroupPtr currentSceneGroup;
@@ -119,7 +119,14 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
-    typedef unordered_map<string, SgNodePtr> NodeMap;
+    struct NodeInfo
+    {
+        SgGroupPtr parent;
+        SgNodePtr node;
+        Matrix3 R;
+    };
+
+    typedef unordered_map<string, NodeInfo> NodeMap;
     
     struct ResourceInfo : public Referenced
     {
@@ -154,9 +161,9 @@ public:
     bool importModel(SgGroup* group, const std::string& uri);
     bool importModel(SgGroup* group, const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(const string& uri);
-    SgNode* invalidatePosTransformParameters(SgNode* node);
+    SgNode* adjustNodeCoordinate(SgNode* node, const Matrix3& R);
     void makeNodeMap(ResourceInfo* info);
-    void makeNodeMapSub(SgNode* node, NodeMap& nodeMap);
+    void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -782,12 +789,15 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     }
     rigidBodies.push_back(rbody);
     setMassParameters(link);
-    
+
+    // The uri parameter should be used in a Resource node
+    /*
     if(extract(linkNode, "uri", symbol)){
         if(importModel(shape, symbol)){
             hasShape = true;
         }
     }
+    */
 
     if(hasShape){
         link->setShape(shape);
@@ -1038,7 +1048,12 @@ bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 {
     bool isSceneNodeAdded = false;
     if(node.read("uri", symbol)){
-        isSceneNodeAdded = importModel(currentSceneGroup, symbol);
+        string nodeName;
+        if(node.read("node", nodeName)){
+            isSceneNodeAdded = importModel(currentSceneGroup, symbol, nodeName);
+        } else {
+            isSceneNodeAdded = importModel(currentSceneGroup, symbol);
+        }
     }
     return isSceneNodeAdded;
 }
@@ -1046,9 +1061,9 @@ bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 
 bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri)
 {
-    ResourceInfo* info = getOrCreateResourceInfo(uri);
-    if(info){
-        group->addChild(info->rootNode);
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    if(resourceInfo){
+        group->addChild(resourceInfo->rootNode);
         return true;
     }
     return false;
@@ -1057,20 +1072,28 @@ bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri)
 
 bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri, const string& nodeName)
 {
-    ResourceInfo* info = getOrCreateResourceInfo(uri);
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
 
     SgNodePtr model;
-    if(info){
+    if(resourceInfo){
         if(nodeName.empty()){
-            model = info->rootNode;
+            model = resourceInfo->rootNode;
         } else {
-            if(!info->nodeMap){
-                makeNodeMap(info);
+            unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
+            if(!nodeMap){
+                makeNodeMap(resourceInfo);
             }
-            auto iter = info->nodeMap->find(nodeName);
-            if(iter != info->nodeMap->end()){
-                model = invalidatePosTransformParameters(iter->second);
-                iter->second = model;
+            auto iter = nodeMap->find(nodeName);
+            if(iter == nodeMap->end()){
+                os() << str(format("Warning: Node \"%1%\" is not found in \"%2%\".") % nodeName % uri) << endl;
+            } else {
+                NodeInfo& nodeInfo = iter->second;
+                if(nodeInfo.parent){
+                    nodeInfo.parent->removeChild(nodeInfo.node);
+                    nodeInfo.parent = 0;
+                    nodeInfo.node = adjustNodeCoordinate(nodeInfo.node, nodeInfo.R);
+                }
+                model = nodeInfo.node;
             }
         }
     }
@@ -1099,7 +1122,7 @@ YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(co
         SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
         if(rootNode){
             info = new ResourceInfo;
-            info->rootNode = invalidatePosTransformParameters(rootNode);
+            info->rootNode = adjustNodeCoordinate(rootNode, Matrix3::Identity());
         }
         resourceInfoMap[uri] = info;
     }
@@ -1108,36 +1131,53 @@ YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(co
 }
 
 
-SgNode* YAMLBodyLoaderImpl::invalidatePosTransformParameters(SgNode* node)
+SgNode* YAMLBodyLoaderImpl::adjustNodeCoordinate(SgNode* node, const Matrix3& R)
 {
-    SgNode* invalidated = 0;
     auto transform = dynamic_cast<SgPosTransform*>(node);
     if(transform){
-        auto group = new SgGroup;
-        transform->moveChildrenTo(group);
-        invalidated = group;
+        transform->translation().setZero();
+        transform->setRotation(R * transform->rotation());
     } else {
-        invalidated = node;
+        transform = new SgPosTransform;
+        transform->setRotation(R);
+        transform->addChild(node);
     }
-    return invalidated;
+    return transform;
 }
         
 
 void YAMLBodyLoaderImpl::makeNodeMap(ResourceInfo* info)
 {
     info->nodeMap.reset(new NodeMap);
-    makeNodeMapSub(info->rootNode, *info->nodeMap);
+    NodeInfo nodeInfo;
+    nodeInfo.parent = 0;
+    nodeInfo.node = info->rootNode;
+    nodeInfo.R = Matrix3::Identity();
+    makeNodeMapSub(nodeInfo, *info->nodeMap);
 }
 
 
-void YAMLBodyLoaderImpl::makeNodeMapSub(SgNode* node, NodeMap& nodeMap)
+void YAMLBodyLoaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap)
 {
-    if(!node->name().empty()){
-        nodeMap.insert(make_pair(node->name(), node));
-        SgGroup* group = dynamic_cast<SgGroup*>(node);
+    const string& name = nodeInfo.node->name();
+    bool wasProcessed = false;
+    if(!name.empty()){
+        wasProcessed = !nodeMap.insert(make_pair(name, nodeInfo)).second;
+    }
+    if(!wasProcessed){
+        SgGroup* group = dynamic_cast<SgGroup*>(nodeInfo.node.get());
         if(group){
+            NodeInfo childInfo;
+            childInfo.parent = group;
+            SgPosTransform* transform = dynamic_cast<SgPosTransform*>(group);
+            if(transform){
+                childInfo.R = nodeInfo.R * transform->rotation();
+            } else {
+                childInfo.R = nodeInfo.R;
+            }
             for(SgNode* child : *group){
-                makeNodeMapSub(child, nodeMap);
+                childInfo.node = child;
+                makeNodeMapSub(childInfo, nodeMap);
             }
         }
     }

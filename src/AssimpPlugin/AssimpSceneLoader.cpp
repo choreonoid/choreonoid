@@ -68,16 +68,17 @@ AssimpSceneLoader::AssimpSceneLoader()
 }
 
 
-AssimpSceneLoader::~AssimpSceneLoader()
+AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 {
-    delete impl;
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
+    imageIO.setUpsideDown(true);
+    os_ = &nullout();
 }
 
 
-AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
+AssimpSceneLoader::~AssimpSceneLoader()
 {
-    imageIO.setUpsideDown(true);
-    os_ = &nullout();
+    delete impl;
 }
 
 

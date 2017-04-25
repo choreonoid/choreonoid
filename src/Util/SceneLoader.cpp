@@ -146,10 +146,15 @@ SgNodePtr SceneLoader::load(const std::string& filename)
 
 SgNodePtr SceneLoaderImpl::load(const std::string& filename)
 {
-    SgNodePtr node;
     boost::filesystem::path filepath(filename);
     string ext = getExtension(filepath);
+    if(ext.empty()){
+        (*os) << str(boost::format(_("The file format of \"%1%\" is unknown because it lacks a file name extension."))
+                     % getFilename(filepath)) << endl;
+        return 0;
+    }
 
+    SgNodePtr node;
     auto loader = findLoader(ext);
     if(!loader){
         (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
