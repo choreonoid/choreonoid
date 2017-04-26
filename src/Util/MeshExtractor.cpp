@@ -27,8 +27,8 @@ public:
     MeshExtractorImpl();
     void visitGroup(SgGroup* group);
     void visitSwitch(SgSwitch* switchNode);    
+    void visitTransform(SgTransform* transform);
     void visitPosTransform(SgPosTransform* transform);
-    void visitScaleTransform(SgScaleTransform* transform);
     void visitShape(SgShape* shape);
 };
 
@@ -47,10 +47,10 @@ MeshExtractorImpl::MeshExtractorImpl()
         [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
     functions.setFunction<SgSwitch>(
         [&](SgNode* node){ visitSwitch(static_cast<SgSwitch*>(node)); });
+    functions.setFunction<SgTransform>(
+        [&](SgNode* node){ visitTransform(static_cast<SgTransform*>(node)); });
     functions.setFunction<SgPosTransform>(
         [&](SgNode* node){ visitPosTransform(static_cast<SgPosTransform*>(node)); });
-    functions.setFunction<SgScaleTransform>(
-        [&](SgNode* node){ visitScaleTransform(static_cast<SgScaleTransform*>(node)); });
     functions.setFunction<SgShape>(
         [&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
     functions.updateDispatchTable();
@@ -68,10 +68,24 @@ void MeshExtractorImpl::visitGroup(SgGroup* group)
 void MeshExtractorImpl::visitSwitch(SgSwitch* switchNode)
 {
     if(switchNode->isTurnedOn()){
-        functions.dispatchAs<SgGroup>(switchNode);
+        visitGroup(switchNode);
     }
 }
     
+
+void MeshExtractorImpl::visitTransform(SgTransform* transform)
+{
+    bool isParentScaled = isCurrentScaled;
+    isCurrentScaled = true;
+    Affine3 T0 = currentTransform;
+    Affine3 T;
+    transform->getTransform(T);
+    currentTransform = T0 * T;
+    visitGroup(transform);
+    currentTransform = T0;
+    isCurrentScaled = isParentScaled;
+}
+
 
 void MeshExtractorImpl::visitPosTransform(SgPosTransform* transform)
 {
@@ -82,18 +96,6 @@ void MeshExtractorImpl::visitPosTransform(SgPosTransform* transform)
     visitGroup(transform);
     currentTransform = T0;
     currentTransformWithoutScaling = P0;
-}
-
-
-void MeshExtractorImpl::visitScaleTransform(SgScaleTransform* transform)
-{
-    bool isParentScaled = isCurrentScaled;
-    isCurrentScaled = true;
-    Affine3 T0 = currentTransform;
-    currentTransform = T0 * transform->T();
-    visitGroup(transform);
-    currentTransform = T0;
-    isCurrentScaled = isParentScaled;
 }
 
 
