@@ -53,7 +53,7 @@ public:
     AssimpSceneLoaderImpl();
     void clear();
     SgNodePtr load(const std::string& filename);
-    SgPosTransformPtr convertAiNode(aiNode* node);
+    SgTransformPtr convertAiNode(aiNode* node);
     SgShape* convertAiMesh(unsigned int);
     SgMaterial* convertAiMaterial(unsigned int);
     SgTexture* convertAiTexture(unsigned int index);
@@ -124,27 +124,32 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
     boost::filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
-    SgPosTransformPtr transform = convertAiNode(scene->mRootNode);
+    SgNodePtr node = convertAiNode(scene->mRootNode);
 
     importer.FreeScene();
 
-    return transform;
+    return node;
 }
 
 
-SgPosTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
+SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 {
-    SgPosTransformPtr transform = new SgPosTransform;
-
-    transform->setName(node->mName.C_Str());
-    
     const aiMatrix4x4& T = node->mTransformation;
-    transform->translation() << T[0][3], T[1][3], T[2][3];
-    transform->rotation() <<
+    Affine3 M;
+    M.translation() << T[0][3], T[1][3], T[2][3];
+    M.linear() << 
         T[0][0], T[0][1], T[0][2],
         T[1][0], T[1][1], T[1][2],
         T[2][0], T[2][1], T[2][2];
 
+    SgTransformPtr transform;
+    if(M.linear().isUnitary(1.0e-6)){
+        transform = new SgPosTransform(M);
+    } else {
+        transform = new SgAffineTransform(M);
+    }
+    transform->setName(node->mName.C_Str());
+ 
     for(unsigned int i=0; i < node->mNumMeshes; ++i){
         SgShape* shape = convertAiMesh(node->mMeshes[i]);
         if(shape){
@@ -153,7 +158,7 @@ SgPosTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
     }
 
     for(unsigned int i=0; i < node->mNumChildren; ++i){
-        SgPosTransformPtr child = convertAiNode(node->mChildren[i]);
+        SgTransformPtr child = convertAiNode(node->mChildren[i]);
         if(child){
             transform->addChild(child);
         }

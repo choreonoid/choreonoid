@@ -124,6 +124,7 @@ public:
         SgGroupPtr parent;
         SgNodePtr node;
         Matrix3 R;
+        bool isScaled;
     };
 
     typedef unordered_map<string, NodeInfo> NodeMap;
@@ -161,7 +162,7 @@ public:
     bool importModel(SgGroup* group, const std::string& uri);
     bool importModel(SgGroup* group, const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(const string& uri);
-    SgNode* adjustNodeCoordinate(SgNode* node, const Matrix3& R);
+    void adjustNodeCoordinate(NodeInfo& info);
     void makeNodeMap(ResourceInfo* info);
     void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
     bool readRigidBody(Mapping& node);
@@ -1091,7 +1092,7 @@ bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri, const st
                 if(nodeInfo.parent){
                     nodeInfo.parent->removeChild(nodeInfo.node);
                     nodeInfo.parent = 0;
-                    nodeInfo.node = adjustNodeCoordinate(nodeInfo.node, nodeInfo.R);
+                    adjustNodeCoordinate(nodeInfo);
                 }
                 model = nodeInfo.node;
             }
@@ -1122,7 +1123,12 @@ YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(co
         SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
         if(rootNode){
             info = new ResourceInfo;
-            info->rootNode = adjustNodeCoordinate(rootNode, Matrix3::Identity());
+            if(auto transform = dynamic_cast<SgPosTransform*>(rootNode.get())){
+                transform->translation().setZero();
+            } else if(auto transform = dynamic_cast<SgAffineTransform*>(rootNode.get())){
+                transform->translation().setZero();
+            }
+            info->rootNode = rootNode;
         }
         resourceInfoMap[uri] = info;
     }
@@ -1131,18 +1137,39 @@ YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(co
 }
 
 
-SgNode* YAMLBodyLoaderImpl::adjustNodeCoordinate(SgNode* node, const Matrix3& R)
+void YAMLBodyLoaderImpl::adjustNodeCoordinate(NodeInfo& info)
 {
-    auto transform = dynamic_cast<SgPosTransform*>(node);
-    if(transform){
-        transform->translation().setZero();
-        transform->setRotation(R * transform->rotation());
-    } else {
-        transform = new SgPosTransform;
-        transform->setRotation(R);
-        transform->addChild(node);
+    if(auto posTransform = dynamic_cast<SgPosTransform*>(info.node.get())){
+        if(info.isScaled){
+            auto transform = new SgAffineTransform;
+            transform->setLinear(info.R * posTransform->rotation());
+            transform->translation().setZero();
+            posTransform->moveChildrenTo(transform);
+            info.node = transform;
+        } else {
+            posTransform->setRotation(info.R * posTransform->rotation());
+            posTransform->translation().setZero();
+        }
+            
+    } else if(auto affineTransform = dynamic_cast<SgAffineTransform*>(info.node.get())){
+        affineTransform->setLinear(info.R * affineTransform->linear());
+        affineTransform->translation().setZero();
+            
+    } else if(auto scaleTransform = dynamic_cast<SgScaleTransform*>(info.node.get())){
+        if(info.isScaled){
+            auto transform = new SgAffineTransform;
+            transform->setLinear(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        } else {
+            auto transform = new SgPosTransform;
+            transform->setRotation(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        }
     }
-    return transform;
 }
         
 
@@ -1153,6 +1180,7 @@ void YAMLBodyLoaderImpl::makeNodeMap(ResourceInfo* info)
     nodeInfo.parent = 0;
     nodeInfo.node = info->rootNode;
     nodeInfo.R = Matrix3::Identity();
+    nodeInfo.isScaled = false;
     makeNodeMapSub(nodeInfo, *info->nodeMap);
 }
 
@@ -1172,8 +1200,10 @@ void YAMLBodyLoaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeM
             SgPosTransform* transform = dynamic_cast<SgPosTransform*>(group);
             if(transform){
                 childInfo.R = nodeInfo.R * transform->rotation();
+                childInfo.isScaled = true;
             } else {
                 childInfo.R = nodeInfo.R;
+                childInfo.isScaled = nodeInfo.isScaled;
             }
             for(SgNode* child : *group){
                 childInfo.node = child;
