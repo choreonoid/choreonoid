@@ -207,8 +207,6 @@ public:
     virtual void onUpdated(SgUpdate& update) override;
     virtual const BoundingBox& boundingBox() const override;
     virtual bool isGroup() const override;
-    virtual bool hasTransform() const;
-    virtual void getTransform(Affine3& out_T) const;
     
     void invalidateBoundingBox() { isBboxCacheValid = false; }
 
@@ -290,8 +288,8 @@ class CNOID_EXPORT SgTransform : public SgGroup
 public:
     const BoundingBox& untransformedBoundingBox() const;
 
-    virtual bool hasTransform() const override;
-
+    virtual void getTransform(Affine3& out_T) const = 0;
+    
 protected:
     SgTransform(int polymorhicId);
     SgTransform(const SgTransform& org);
@@ -420,8 +418,8 @@ public:
     Affine3::ConstLinearPart linear() const { return T_.linear(); }
 
     template<typename Derived>
-        void setLinear(const Eigen::MatrixBase<Derived>& R) {
-        T_.linear() = R.template cast<Affine3::Scalar>();
+        void setLinear(const Eigen::MatrixBase<Derived>& M) {
+        T_.linear() = M.template cast<Affine3::Scalar>();
     }
     template<typename T>
         void setLinear(const Eigen::AngleAxis<T>& a) {

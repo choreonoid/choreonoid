@@ -332,18 +332,6 @@ bool SgGroup::isGroup() const
 }
 
 
-bool SgGroup::hasTransform() const
-{
-    return false;
-}
-
-
-void SgGroup::getTransform(Affine3& out_T) const
-{
-    out_T = Affine3::Identity();
-}
-
-
 bool SgGroup::contains(SgNode* node) const
 {
     for(const_iterator p = begin(); p != end(); ++p){
@@ -520,12 +508,6 @@ const BoundingBox& SgTransform::untransformedBoundingBox() const
         boundingBox();
     }
     return untransformedBboxCache;
-}
-
-
-bool SgTransform::hasTransform() const
-{
-    return true;
 }
 
 
