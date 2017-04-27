@@ -1236,10 +1236,12 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 	for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
-        if(velocityMode)
-        	odeBody->setVelocityToODE();
-        else
-        	odeBody->setTorqueToODE();
+        if(odeBody->worldID){
+        	if(velocityMode)
+        		odeBody->setVelocityToODE();
+        	else
+        		odeBody->setTorqueToODE();
+        }
     }
 
 	if(MEASURE_PHYSICS_CALCULATION_TIME){
@@ -1280,17 +1282,18 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
 
-
-        // Move the following code to the ODEBody class
-        if(is2Dmode){
-            odeBody->alignToZAxisIn2Dmode();
-        }
-        if(!odeBody->sensorHelper.forceSensors().empty()){
-            odeBody->updateForceSensors(flipYZ);
-        }
-        odeBody->getKinematicStateFromODE(flipYZ);
-        if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
-            odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+        if(odeBody->worldID){
+			// Move the following code to the ODEBody class
+			if(is2Dmode){
+				odeBody->alignToZAxisIn2Dmode();
+			}
+			if(!odeBody->sensorHelper.forceSensors().empty()){
+				odeBody->updateForceSensors(flipYZ);
+			}
+			odeBody->getKinematicStateFromODE(flipYZ);
+			if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
+				odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+			}
         }
     }
 
