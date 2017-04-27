@@ -2883,7 +2883,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addWidget(new QLabel(_("Intensity")));
     headLightIntensitySpin.setDecimals(2);
     headLightIntensitySpin.setSingleStep(0.01);    
-    headLightIntensitySpin.setRange(0.0, 1.0);
+    headLightIntensitySpin.setRange(0.0, 2.0);
     headLightIntensitySpin.setValue(0.75);
     headLightIntensitySpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
     hbox->addWidget(&headLightIntensitySpin);
@@ -2903,7 +2903,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addWidget(new QLabel(_("Intensity")));
     worldLightIntensitySpin.setDecimals(2);
     worldLightIntensitySpin.setSingleStep(0.01);    
-    worldLightIntensitySpin.setRange(0.0, 1.0);
+    worldLightIntensitySpin.setRange(0.0, 2.0);
     worldLightIntensitySpin.setValue(0.5);
     worldLightIntensitySpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
     hbox->addWidget(&worldLightIntensitySpin);
