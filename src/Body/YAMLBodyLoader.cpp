@@ -862,8 +862,15 @@ bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr& sceneGrou
     
     SgGroupPtr parentSceneGroup = currentSceneGroup;
     currentSceneGroup = sceneGroup;
-    
+
     if(elements.isListing()){
+        /*
+          Process the case like
+          elements:
+            -
+              type: Transform
+              translation: [ 1, 0, 0 ]
+        */
         Listing& listing = *elements.toListing();
         for(int i=0; i < listing.size(); ++i){
             Mapping& element = *listing[i].toMapping();
@@ -874,23 +881,43 @@ bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr& sceneGrou
         }
     } else if(elements.isMapping()){
         Mapping& mapping = *elements.toMapping();
-        Mapping::iterator p = mapping.begin();
-        while(p != mapping.end()){
-            const string& type = p->first;
-            Mapping& element = *p->second->toMapping();
-            ValueNode* typeNode = element.find("type");
-            if(typeNode->isValid()){
-                string type2 = typeNode->toString();
-                if(type2 != type){
-                    element.throwException(
-                        str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
-                            % type2 % type));
-                }
-            }
-            if(readNode(element, type)){
+
+        /* Check the case like
+           elements:
+             type: Transform
+             translation: [ 1, 0, 0 ]
+        */
+        ValueNode* typeNode = mapping.find("type");
+        if(typeNode->isValid()){
+            const string type = typeNode->toString();
+            if(readNode(mapping, type)){
                 isSceneNodeAdded = true;
             }
-            ++p;
+        } else {
+            /*
+               Process the case like
+               elements:
+                 Transform:
+                   translation: [ 1, 0, 0 ]
+            */
+            Mapping::iterator p = mapping.begin();
+            while(p != mapping.end()){
+                const string& type = p->first;
+                Mapping& element = *p->second->toMapping();
+                ValueNode* typeNode = element.find("type");
+                if(typeNode->isValid()){
+                    string type2 = typeNode->toString();
+                    if(type2 != type){
+                        element.throwException(
+                            str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
+                                % type2 % type));
+                    }
+                }
+                if(readNode(element, type)){
+                    isSceneNodeAdded = true;
+                }
+                ++p;
+            }
         }
     }
 
