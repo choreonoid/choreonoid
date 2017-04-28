@@ -29,10 +29,11 @@ public:
 protected:
     virtual bool initializeRendering(SceneParticles* particles) = 0;
     virtual ShaderProgram* shaderProgram() = 0;
+    GLSLSceneRenderer* renderer() { return renderer_; }
 
 private:
     enum State { NOT_INITIALIZED, INITIALIZED, FAILED } initializationState;
-    GLSLSceneRenderer* renderer;
+    GLSLSceneRenderer* renderer_;
     GLint modelViewMatrixLocation;
     GLint projectionMatrixLocation;
     GLint pointSizeLocation;

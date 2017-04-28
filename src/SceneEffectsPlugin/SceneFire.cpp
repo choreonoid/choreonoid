@@ -21,6 +21,7 @@ public:
     void render(SceneFire* fountain);
 
     GLint lifeTimeLocation;
+    GLint accelLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
@@ -43,7 +44,7 @@ SceneFire::SceneFire()
 {
     angle_ = 0.1f;
     lifeTime_ = 2.5f;
-    acceleration_ << 0.0f, 0.0f, -9.8f;
+    acceleration_ << 0.0f, 0.0f, 0.1f;
 
     setParticleSize(0.15f);
     setTexture(":/SceneEffectsPlugin/texture/fire.png");
@@ -132,6 +133,7 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     glBindVertexArray(0);
 
     lifeTimeLocation = getUniformLocation("lifeTime");
+    accelLocation = getUniformLocation("accel");
 
     return true;
 }
@@ -141,6 +143,8 @@ void FireProgram::render(SceneFire* fire)
 {
     setTime(fire->time());
     glUniform1f(lifeTimeLocation, fire->lifeTime());
+    //Vector3f a = renderer()->modelViewMatrix().cast<float>().block<3, 3>(0, 0) * fire->acceleration();
+    //glUniform3fv(accelLocation, 1, a.data());
 
     GLint blendSrc, blendDst;
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);

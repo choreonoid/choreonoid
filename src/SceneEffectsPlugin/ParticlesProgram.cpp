@@ -14,7 +14,7 @@ using namespace cnoid;
 
 
 ParticlesProgramBase::ParticlesProgramBase(GLSLSceneRenderer* renderer)
-    : renderer(renderer)
+    : renderer_(renderer)
 {
     
     initializationState = NOT_INITIALIZED;
@@ -53,7 +53,7 @@ bool ParticlesProgramBase::initializeRendering(SceneParticles* particles)
 
 void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::function<void()> renderingFunction)
 {
-    if(renderer->isPicking()){
+    if(renderer_->isPicking()){
         return;
     }
 
@@ -82,8 +82,8 @@ void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::func
         }
     }
 
-    const Matrix4f MV = renderer->modelViewMatrix().cast<float>();
-    renderer->dispatchToTransparentPhase([=](){ render(particles, MV, renderingFunction); });
+    const Matrix4f MV = renderer_->modelViewMatrix().cast<float>();
+    renderer_->dispatchToTransparentPhase([=](){ render(particles, MV, renderingFunction); });
 }
 
 
@@ -92,21 +92,21 @@ void ParticlesProgramBase::render
 {
     ShaderProgram* program = shaderProgram();
     
-    renderer->pushShaderProgram(*program, false);
+    renderer_->pushShaderProgram(*program, false);
 
     auto lightingProgram = dynamic_cast<LightingProgram*>(program);
     if(lightingProgram){
-        renderer->renderLights(lightingProgram);
-        renderer->renderFog(lightingProgram);
+        renderer_->renderLights(lightingProgram);
+        renderer_->renderFog(lightingProgram);
     }
 
     glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, MV.data());
-    const Matrix4f P = renderer->projectionMatrix().cast<float>();
+    const Matrix4f P = renderer_->projectionMatrix().cast<float>();
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, P.data());
 
     int x, y, width, height;
-    renderer->getViewport(x, y, width, height);
-    SgCamera* camera = renderer->currentCamera();
+    renderer_->getViewport(x, y, width, height);
+    SgCamera* camera = renderer_->currentCamera();
     if(SgPerspectiveCamera* persCamera = dynamic_cast<SgPerspectiveCamera*>(camera)){
         glUniform1f(angle2pixelsLocation, height / persCamera->fovy((double)width / height));
         glUniform1f(pointSizeLocation, particles->particleSize());
@@ -122,7 +122,7 @@ void ParticlesProgramBase::render
 
     renderingFunction();
 
-    renderer->popShaderProgram();
+    renderer_->popShaderProgram();
 }
 
 
