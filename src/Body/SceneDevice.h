@@ -32,7 +32,10 @@ public:
     static SceneDevice* create(Device* device);
 
     SceneDevice(Device* device);
-    SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> functionOnStateChanged = nullptr);
+    SceneDevice(
+        Device* device, SgNode* sceneNode,
+        std::function<void()> functionOnStateChanged = nullptr,
+        std::function<void(double time)> functionOnTimeChanged = nullptr);
     
     template <class DeviceType> DeviceType* device() {
         return static_cast<DeviceType*>(device_);
@@ -43,7 +46,10 @@ public:
     Device* device() { return device_; }
     const Device* device() const { return device_; }
 
-    void setSceneUpdateFunction(std::function<void()> function);
+    void setFunctionOnStateChanged(std::function<void()> function);
+    //! @deprecated
+    void setSceneUpdateFunction(std::function<void()> function){
+        setFunctionOnStateChanged(function); };
     void setFunctionOnTimeChanged(std::function<void(double time)> function);
     
     void updateScene(double time) {

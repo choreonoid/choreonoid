@@ -82,13 +82,14 @@ void ParticlesProgramBase::requestRendering(SceneParticles* particles, std::func
         }
     }
 
+    Matrix3f R = renderer_->currentModelTransform().linear().cast<float>();
     const Matrix4f MV = renderer_->modelViewMatrix().cast<float>();
-    renderer_->dispatchToTransparentPhase([=](){ render(particles, MV, renderingFunction); });
+    renderer_->dispatchToTransparentPhase([=](){ render(particles, R, MV, renderingFunction); });
 }
 
 
 void ParticlesProgramBase::render
-(SceneParticles* particles, const Matrix4f& MV, const std::function<void()>& renderingFunction)
+(SceneParticles* particles, const Matrix3f& R, const Matrix4f& MV, const std::function<void()>& renderingFunction)
 {
     ShaderProgram* program = shaderProgram();
     
@@ -120,6 +121,7 @@ void ParticlesProgramBase::render
     
     glUniform1i(particleTexLocation, 0);
 
+    globalAttitude_ = R;
     renderingFunction();
 
     renderer_->popShaderProgram();

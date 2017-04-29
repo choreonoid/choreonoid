@@ -155,7 +155,7 @@ public:
         return sceneReader.isDegreeMode();
     }
     
-    double toRadian(double angle){
+    double toRadian(double angle) const {
         return sceneReader.toRadian(angle);
     }
 
@@ -352,6 +352,30 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
         }
         numCustomNodeFunctions = customNodeFunctions.size();
     }
+}
+
+
+bool YAMLBodyLoader::isDegreeMode() const
+{
+    return impl->isDegreeMode();
+}
+
+
+double YAMLBodyLoader::toRadian(double angle) const
+{
+    return impl->toRadian(angle);
+}
+
+
+bool YAMLBodyLoader::readAngle(Mapping& node, const char* key, double& angle)
+{
+    return impl->readAngle(node, key, angle);
+}
+
+
+bool YAMLBodyLoader::readRotation(Mapping& node, Matrix3& out_R)
+{
+    return impl->readRotation(node, out_R, false);
 }
 
 

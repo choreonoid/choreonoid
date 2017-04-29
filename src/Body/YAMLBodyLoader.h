@@ -7,6 +7,7 @@
 #define CNOID_BODY_YAML_BODY_LOADER_H
 
 #include "AbstractBodyLoader.h"
+#include <cnoid/EigenTypes>
 #include <functional>
 #include "exportdecl.h"
 
@@ -34,6 +35,11 @@ public:
         std::function<bool(YAMLBodyLoader& loader, Mapping& node)> readFunction);
     
     bool readDevice(Device* device, Mapping& node);
+
+    bool isDegreeMode() const;
+    double toRadian(double angle) const;
+    bool readAngle(Mapping& node, const char* key, double& angle);
+    bool readRotation(Mapping& node, Matrix3& out_R);
 
 private:
     YAMLBodyLoaderImpl* impl;

@@ -2,7 +2,6 @@ format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
 name: Fire
-
 links:
   -
     name: Base
