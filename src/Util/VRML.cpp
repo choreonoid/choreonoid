@@ -204,7 +204,7 @@ VRMLInline::VRMLInline()
 }
 
 
-VRMLAnotherFormatFile::VRMLAnotherFormatFile()
+VRMLNonVrmlInline::VRMLNonVrmlInline()
 {
     categorySet.set(TOP_NODE);
     categorySet.set(CHILD_NODE);

@@ -256,6 +256,7 @@ public:
     SgTexCoordArray* texCoords() { return texCoords_; }
     const SgTexCoordArray* texCoords() const { return texCoords_; }
     SgTexCoordArray* setTexCoords(SgTexCoordArray* texCoords);
+    SgTexCoordArray* getOrCreateTexCoords();
 
     /**
        Normals are assinged for vertices in triangles.

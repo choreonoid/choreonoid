@@ -1,6 +1,6 @@
 /*!
   @file
-  @author Shizuko Hattori
+  @author Shizuko Hattori, Shin'ichiro Nakaoka
 */
 
 #include <cnoid/Plugin>
@@ -35,14 +35,15 @@ AbstractBodyLoaderPtr sdfBodyLoaderFactory()
     return make_shared<SDFBodyLoader>();
 }
 
-class SDFLoaderPlugin : public Plugin
+class SDFPlugin : public Plugin
 {
 public:
-    SDFLoaderPlugin() : Plugin("SDFLoader") {
+    SDFPlugin() : Plugin("SDF") {
         require("Body");
+        require("Assimp");
     }
         
-    virtual ~SDFLoaderPlugin() {
+    virtual ~SDFPlugin() {
     }
     
     virtual bool initialize() {
@@ -96,4 +97,4 @@ private:
 
 }
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(SDFLoaderPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(SDFPlugin);

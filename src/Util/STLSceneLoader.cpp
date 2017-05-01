@@ -1,6 +1,7 @@
 
 #include "STLSceneLoader.h"
 #include "SceneDrawables.h"
+#include "SceneLoader.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
@@ -9,12 +10,17 @@ using namespace std;
 using namespace boost::algorithm;
 using namespace cnoid;
 
+namespace {
 
-const char* STLSceneLoader::format() const
-{
-    return "STL";
+struct Registration {
+    Registration(){
+        SceneLoader::registerLoader(
+            "stl",
+            []() -> shared_ptr<AbstractSceneLoader> { return make_shared<STLSceneLoader>(); });
+    }
+} registration;
+
 }
-
 
 static void readVector3(string text, SgVectorArray<Vector3f>* array)
 {
@@ -32,9 +38,9 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
 }
 
 
-SgNode* STLSceneLoader::load(const std::string& fileName)
+SgNodePtr STLSceneLoader::load(const std::string& filename)
 {
-    std::ifstream ifs(fileName.c_str(), std::ios::in | std::ios::binary);
+    std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 
     SgVertexArrayPtr vertices = new SgVertexArray;
     SgNormalArrayPtr normals = new SgNormalArray;
@@ -67,7 +73,7 @@ SgNode* STLSceneLoader::load(const std::string& fileName)
         }
     } else {
         // stl file is in text format
-        std::ifstream ifs(fileName.c_str(), std::ios::in);
+        std::ifstream ifs(filename.c_str(), std::ios::in);
         std::string line;
         while(!ifs.eof() && getline(ifs, line)){
             trim(line);

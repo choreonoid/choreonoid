@@ -6,16 +6,10 @@
 
 namespace cnoid {
 
-class STLSceneLoaderImpl;
-
 class CNOID_EXPORT STLSceneLoader : public AbstractSceneLoader
 {
 public:
-    virtual const char* format() const;
-    virtual SgNode* load(const std::string& fileName);
-
-private:
-    STLSceneLoaderImpl* impl;
+    virtual SgNodePtr load(const std::string& filename) override;
 };
 
 };

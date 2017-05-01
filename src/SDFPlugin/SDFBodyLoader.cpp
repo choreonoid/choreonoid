@@ -1,17 +1,16 @@
 /**
    \file
-   \author Shizuko Hattori
+   \author Yosuke Matsusaka, Shizuko Hattori, Shin'ichiro Nakaoka
 */
 
-#include "AssimpSceneLoader.h"
 #include "SDFBodyLoader.h"
 #include "SDFLoaderPseudoGazeboColor.h"
 #include <cnoid/Sensor>
 #include <cnoid/Camera>
 #include <cnoid/RangeSensor>
 #include <cnoid/RangeCamera>
-#include <cnoid/STLSceneLoader>
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneLoader>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ImageIO>
 #include <cnoid/Exception>
@@ -20,14 +19,14 @@
 #include <cnoid/RootItem>
 #include <cnoid/EigenUtil>
 #include <cnoid/PolymorphicFunctionSet>
-#include <map>
 #include <sdf/sdf.hh>
 #include <sdf/parser_urdf.hh>
+#include <OGRE/OgreRoot.h>
+#include <OGRE/OgreMaterialManager.h>
 #include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
-#include <OGRE/OgreRoot.h>
-#include <OGRE/OgreMaterialManager.h>
+#include <map>
 
 using namespace std;
 using namespace boost;
@@ -299,6 +298,7 @@ public:
     std::map<std::string, LinkInfoPtr> linkdataMap;
     typedef std::map<std::string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
+    SceneLoader sceneLoader;
     MeshGenerator meshGenerator;
 
     ostream& os() { return *os_; }
@@ -670,15 +670,10 @@ SDFBodyLoaderImpl::~SDFBodyLoaderImpl()
 }
 
 
-const char* SDFBodyLoader::format() const
-{
-    return "SDF";
-}
-
-
 void SDFBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
 }
 
 
@@ -1130,8 +1125,7 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
 
                 float scale0 = 1;
 
-                if (boost::algorithm::iends_with(urllower, "dae")) {
-
+                if (boost::algorithm::iends_with(urllower, "dae")){
                     TiXmlDocument xmlDoc;
                     xmlDoc.LoadFile(url);
                     string dae_axis = "Y_UP";
@@ -1142,7 +1136,7 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
                             if(assetXml) {
                                 TiXmlElement *unitXml = assetXml->FirstChildElement("unit");
                                 if (unitXml && unitXml->Attribute("meter") &&
-                                        unitXml->QueryFloatAttribute("meter", &scale0) == TIXML_SUCCESS) {
+                                    unitXml->QueryFloatAttribute("meter", &scale0) == TIXML_SUCCESS) {
                                 }
                                 TiXmlElement *up_axisXml = assetXml->FirstChildElement("up_axis");
                                 if (up_axisXml) {
@@ -1154,8 +1148,7 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
                         cout << xmlDoc.ErrorDesc() << endl;
                     }
 
-                    AssimpSceneLoader loader;
-                    SgNode* node = loader.load(url);
+                    SgNode* node = sceneLoader.load(url);
 
                     if (dae_axis == "Z_UP") {
                         SgPosTransformPtr transform = new SgPosTransform;
@@ -1165,9 +1158,8 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
                     }else{
                         geometryInfo->sgNode = node;
                     }
-                } else if (boost::algorithm::iends_with(urllower, "stl")) {
-                    STLSceneLoader loader;
-                    geometryInfo->sgNode = loader.load(url);
+                } else {
+                    geometryInfo->sgNode = sceneLoader.load(url);
                 }
 
                 if(el->HasElement("scale")){
@@ -1697,4 +1689,3 @@ SgMaterial* SDFBodyLoaderImpl::convertMaterial(MaterialInfo* material, float tra
 
     return sgMaterial;
 }
-

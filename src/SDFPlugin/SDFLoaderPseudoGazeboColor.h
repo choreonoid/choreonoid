@@ -3,8 +3,8 @@
    @author Hiroyuki Matsushita
 */
 
-#ifndef CNOID_BODY_SDF_LOADER_PSEUDO_GAZEBO_COLOR_H_INCLUDED
-#define CNOID_BODY_SDF_LOADER_PSEUDO_GAZEBO_COLOR_H_INCLUDED
+#ifndef CNOID_SDF_PLUGIN_PSEUDO_GAZEBO_COLOR_H
+#define CNOID_SDF_PLUGIN_PSEUDO_GAZEBO_COLOR_H
 
 #include <map>
 #include <cnoid/SceneDrawables>
@@ -33,7 +33,7 @@ public:
 
 /**
  */
-class CNOID_EXPORT SDFLoaderPseudoGazeboColor
+class SDFLoaderPseudoGazeboColor
 {
 public:
     /**
@@ -54,4 +54,4 @@ private:
 
 }
 
-#endif    /* CNOID_BODY_SDF_LOADER_PSEUDO_GAZEBO_COLOR_H_INCLUDED */
+#endif

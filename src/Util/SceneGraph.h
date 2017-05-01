@@ -168,7 +168,7 @@ public:
         
     ~SgNode();
     int polymorhicId() const { return polymorhicId_; }
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
     virtual const BoundingBox& boundingBox() const;
 
     SgNode* cloneNode(SgCloneMap& cloneMap) const {
@@ -201,13 +201,13 @@ public:
         
     ~SgGroup();
         
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual int numChildObjects() const;
-    virtual SgObject* childObject(int index);
-    virtual void onUpdated(SgUpdate& update);
-    virtual const BoundingBox& boundingBox() const;
-    virtual bool isGroup() const;
-        
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
+    virtual void onUpdated(SgUpdate& update) override;
+    virtual const BoundingBox& boundingBox() const override;
+    virtual bool isGroup() const override;
+    
     void invalidateBoundingBox() { isBboxCacheValid = false; }
 
     iterator begin() { return children.begin(); }
@@ -277,7 +277,7 @@ public:
     SgInvariantGroup();
     SgInvariantGroup(const SgInvariantGroup& org);
     SgInvariantGroup(const SgInvariantGroup& org, SgCloneMap& cloneMap);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
 };
 typedef ref_ptr<SgInvariantGroup> SgInvariantGroupPtr;
@@ -289,7 +289,7 @@ public:
     const BoundingBox& untransformedBoundingBox() const;
 
     virtual void getTransform(Affine3& out_T) const = 0;
-
+    
 protected:
     SgTransform(int polymorhicId);
     SgTransform(const SgTransform& org);
@@ -309,9 +309,9 @@ public:
     SgPosTransform(const SgPosTransform& org);
     SgPosTransform(const SgPosTransform& org, SgCloneMap& cloneMap);
 
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual const BoundingBox& boundingBox() const;
-    virtual void getTransform(Affine3& out_T) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
+    virtual const BoundingBox& boundingBox() const override;
+    virtual void getTransform(Affine3& out_T) const override;
 
     Affine3& T() { return T_; }
     const Affine3& T() const { return T_; }
@@ -362,9 +362,9 @@ public:
     SgScaleTransform(const Vector3& scale);
     SgScaleTransform(const SgScaleTransform& org);
     SgScaleTransform(const SgScaleTransform& org, SgCloneMap& cloneMap);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
-    virtual const BoundingBox& boundingBox() const;
-    virtual void getTransform(Affine3& out_T) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
+    virtual const BoundingBox& boundingBox() const override;
+    virtual void getTransform(Affine3& out_T) const override;
 
     const Vector3& scale() const { return scale_; }
     Vector3& scale() { return scale_; }
@@ -386,13 +386,66 @@ private:
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;
 
 
+class CNOID_EXPORT SgAffineTransform : public SgTransform
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+    SgAffineTransform();
+    SgAffineTransform(const Affine3& T);
+    SgAffineTransform(const SgAffineTransform& org);
+    SgAffineTransform(const SgAffineTransform& org, SgCloneMap& cloneMap);
+
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
+    virtual const BoundingBox& boundingBox() const override;
+    virtual void getTransform(Affine3& out_T) const override;
+
+    Affine3& T() { return T_; }
+    const Affine3& T() const { return T_; }
+
+    Affine3& transform() { return T_; }
+    const Affine3& transform() const { return T_; }
+
+    template<class Scalar, int Mode, int Options>
+        void setTransform(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Affine3::Scalar>();
+    }
+
+    Affine3::TranslationPart translation() { return T_.translation(); }
+    Affine3::ConstTranslationPart translation() const { return T_.translation(); }
+
+    Affine3::LinearPart linear() { return T_.linear(); }
+    Affine3::ConstLinearPart linear() const { return T_.linear(); }
+
+    template<typename Derived>
+        void setLinear(const Eigen::MatrixBase<Derived>& M) {
+        T_.linear() = M.template cast<Affine3::Scalar>();
+    }
+    template<typename T>
+        void setLinear(const Eigen::AngleAxis<T>& a) {
+        T_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+    }
+    template<typename Derived>
+        void setTranslation(const Eigen::MatrixBase<Derived>& p) {
+        T_.translation() = p.template cast<Affine3::Scalar>();
+    }
+
+protected:
+    SgAffineTransform(int polymorhicId);
+
+private:
+    Affine3 T_;
+};
+typedef ref_ptr<SgAffineTransform> SgAffineTransformPtr;
+
+
 class CNOID_EXPORT SgSwitch : public SgGroup
 {
 public:
     SgSwitch();
     SgSwitch(const SgSwitch& org);
     SgSwitch(const SgSwitch& org, SgCloneMap& cloneMap);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
     void turnOn() { isTurnedOn_ = true; }
     void turnOff() { isTurnedOn_ = false; }
@@ -411,7 +464,7 @@ public:
     SgUnpickableGroup();
     SgUnpickableGroup(const SgUnpickableGroup& org);
     SgUnpickableGroup(const SgUnpickableGroup& org, SgCloneMap& cloneMap);
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 
 };
 typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
@@ -424,7 +477,7 @@ protected:
     SgPreprocessed(const SgPreprocessed& org);
 
 public:
-    virtual SgObject* clone(SgCloneMap& cloneMap) const;
+    virtual SgObject* clone(SgCloneMap& cloneMap) const override;
 };
 
 

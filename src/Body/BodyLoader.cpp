@@ -49,7 +49,6 @@ class SceneLoaderAdapter : public AbstractBodyLoader
 public:
     SceneLoaderAdapter(AbstractSceneLoader* loader) : loader(loader) { }
     ~SceneLoaderAdapter() { delete loader; }
-    virtual const char* format() const { return loader->format(); }
 
     virtual bool load(Body* body, const std::string& filename) {
 
@@ -150,12 +149,6 @@ BodyLoader::~BodyLoader()
 BodyLoaderImpl::~BodyLoaderImpl()
 {
 
-}
-
-
-const char* BodyLoader::format() const
-{
-    return "General";
 }
 
 

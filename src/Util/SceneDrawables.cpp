@@ -386,6 +386,15 @@ SgTexCoordArray* SgMeshBase::setTexCoords(SgTexCoordArray* texCoords)
 }
 
 
+SgTexCoordArray* SgMeshBase::getOrCreateTexCoords()
+{
+    if(!texCoords_){
+        setTexCoords(new SgTexCoordArray);
+    }
+    return texCoords_;
+}
+
+
 SgMesh::SgMesh()
 {
 
