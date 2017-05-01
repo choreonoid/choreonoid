@@ -7,12 +7,13 @@
 #define CNOID_ASSIMP_ASSIMP_SCENE_LOADER_H
 
 #include <cnoid/AbstractSceneLoader>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class AssimpSceneLoaderImpl;
 
-class AssimpSceneLoader : public AbstractSceneLoader
+class CNOID_EXPORT AssimpSceneLoader : public AbstractSceneLoader
 {
 public:
     AssimpSceneLoader();

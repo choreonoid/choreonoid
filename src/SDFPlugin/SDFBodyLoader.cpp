@@ -673,6 +673,7 @@ SDFBodyLoaderImpl::~SDFBodyLoaderImpl()
 void SDFBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
 }
 
 
@@ -1146,7 +1147,7 @@ GeometryInfo* SDFBodyLoaderImpl::readGeometry(sdf::ElementPtr geometry)
                     }else{
                         cout << xmlDoc.ErrorDesc() << endl;
                     }
-                    
+
                     SgNode* node = sceneLoader.load(url);
 
                     if (dae_axis == "Z_UP") {

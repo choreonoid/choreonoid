@@ -40,6 +40,7 @@ class SDFPlugin : public Plugin
 public:
     SDFPlugin() : Plugin("SDF") {
         require("Body");
+        require("Assimp");
     }
         
     virtual ~SDFPlugin() {

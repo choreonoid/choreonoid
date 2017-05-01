@@ -1,15 +1,20 @@
 
-option(BUILD_SDF_PLUGIN "Building SDFPlugin" OFF)
-
-if(NOT BUILD_SDF_PLUGIN)
-  return()
-endif()
-
 if(NOT UNIX)
   return()
 endif()
 
-set(SDFORMAT_DIR ${SDFORMAT_DIR} CACHE PATH "set the top directory of the SDFORMAT ")
+option(BUILD_SDF_PLUGIN "Building SDFPlugin" OFF)
+
+
+if(NOT BUILD_SDF_PLUGIN)
+  return()
+else()
+  if(NOT BUILD_ASSIMP_PLUGIN)
+    message(FATAL_ERROR "SDFPlugin requires AssimpPlugin.")
+  endif()
+endif()
+
+set(SDFORMAT_DIR ${SDFORMAT_DIR} CACHE PATH "set the top directory of the SDFORMAT")
 if(UNIX)
   if(NOT SDFORMAT_DIR)
     pkg_check_modules(SDFORMAT REQUIRED sdformat)
@@ -39,7 +44,6 @@ if(NOT OGRE_FOUND)
   set(OGRE_LIBRARY_DIRS ${OGRE_DIR}/lib)
 endif()
 
-
 set(target CnoidSDFPlugin)
 
 include_directories(
@@ -65,5 +69,5 @@ set(headers
 
 make_gettext_mofiles(${target} mofiles) 
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
-target_link_libraries(${target} CnoidBodyPlugin ${SDFORMAT_LIBRARIES} ${OGRE_LIBRARIES})
+target_link_libraries(${target} CnoidBodyPlugin CnoidAssimpPlugin ${SDFORMAT_LIBRARIES} ${OGRE_LIBRARIES})
 apply_common_setting_for_plugin(${target} "${headers}")

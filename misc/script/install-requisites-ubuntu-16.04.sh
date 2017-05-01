@@ -21,6 +21,8 @@ qt4-doc-html \
 python2.7-dev \
 python-numpy \
 libassimp-dev \
+libsdformat4-dev \
+libogre-1.9-dev \
 libode-dev \
 libomniorb4-dev \
 libcos4-dev \

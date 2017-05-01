@@ -264,22 +264,22 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
     
     aiColor3D color(0.f, 0.f, 0.f);
     float diffuse;
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
+    if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color)){
         material->setDiffuseColor(Vector3(color.r, color.g, color.b));
         diffuse = color.r+color.g+color.b;
     }
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color)){
+    if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color)){
         material->setSpecularColor(Vector3(color.r, color.g, color.b));
     }
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, color)){
+    if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, color)){
         material->setEmissiveColor(Vector3(color.r, color.g, color.b));
     }
     float s;
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_SHININESS, s)){
+    if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_SHININESS, s)){
         s = std::min(128.0f, s);
         material->setShininess(s / 128.0f);
     }
-    if (AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
+    if(AI_SUCCESS == srcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color)){
         float c = diffuse==0? 0 : (color.r+color.g+color.b)/diffuse;
         if(c>1)
             c=1;
@@ -305,16 +305,16 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
 SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
 {
     AiIndexToSgTextureMap::iterator p = aiIndexToSgTextureMap.find(index);
-    if (p != aiIndexToSgTextureMap.end()){
+    if(p != aiIndexToSgTextureMap.end()){
         return p->second;
     }
 
     SgTexture* texture = 0;
     aiMaterial* srcMaterial = scene->mMaterials[index];
 
-    if (srcMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+    if(srcMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0){
         aiString path;
-        if (srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+        if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
             boost::filesystem::path filepath(path.data);
             if(!checkAbsolute(filepath)){
                 filepath = directoryPath / filepath;
@@ -322,7 +322,7 @@ SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
             }
             string textureFile = getAbsolutePathString(filepath);
 
-            SgImage* image=0;
+            SgImagePtr image;
             ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(textureFile);
             if(p != imagePathToSgImageMap.end()){
                 image = p->second;
