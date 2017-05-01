@@ -25,6 +25,7 @@ class TankJoystickController : public cnoid::SimpleController
     Link* cannonJoint[2];
     double qref[2];
     double qprev[2];
+    double dt;
     LightPtr light;
     bool prevLightButtonState;
     Joystick joystick;
@@ -57,6 +58,8 @@ public:
             io->setLinkOutput(joint, JOINT_TORQUE);
             io->setLinkInput(joint, JOINT_ANGLE);
         }
+
+        dt = io->timeStep();
         
         DeviceList<Light> lights(body->devices());
         if(!lights.empty()){
@@ -87,13 +90,13 @@ public:
         for(int i=0; i < 2; ++i){
             Link* joint = cannonJoint[i];
             double q = joint->q();
-            double dq = (q - qprev[i]) / timeStep();
+            double dq = (q - qprev[i]) / dt;
             double dqref = 0.0;
             double command = cannonAxisRatio[i] * joystick.getPosition(cannonAxis[i]);
             if(fabs(command) > 0.2){
                 double deltaq = command * 0.002;
                 qref[i] += deltaq;
-                dqref = deltaq / timeStep();
+                dqref = deltaq / dt;
             }
             joint->u() = P * (qref[i] - q) + D * (dqref - dq);
             qprev[i] = q;

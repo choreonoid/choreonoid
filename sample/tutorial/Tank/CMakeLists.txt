@@ -1,0 +1,4 @@
+
+add_cnoid_simple_controller(TankController1 TankController1.cpp)
+add_cnoid_simple_controller(TankController2 TankController2.cpp)
+
