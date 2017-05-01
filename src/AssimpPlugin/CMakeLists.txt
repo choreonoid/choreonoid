@@ -1,13 +1,14 @@
 
-option(BUILD_ASSIMP_PLUGIN "Building ASSIMPPlugin" OFF)
+if(NOT UNIX)
+  return()
+endif()
+
+option(BUILD_ASSIMP_PLUGIN "Building ASSIMPPlugin" ON)
 
 if(NOT BUILD_ASSIMP_PLUGIN)
   return()
 endif()
 
-if(NOT UNIX)
-  return()
-endif()
 
 set(ASSIMP_DIR ${ASSIMP_DIR} CACHE PATH "set the top directory of the ASSIMP ")
 if(UNIX)
