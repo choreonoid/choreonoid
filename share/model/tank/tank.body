@@ -25,7 +25,7 @@ links:
             specularColor: [ 0.2, 0.8, 0.2 ]
             shinines: 0.6
   -
-    name: CANNON_Y
+    name: TURRET_Y
     parent: CHASSIS
     translation: [ -0.04, 0, 0.1 ]
     jointType: revolute
@@ -46,8 +46,8 @@ links:
           size: [ 0.2, 0.2, 0.1 ]
         appearance: *BodyAppearance
   -
-    name: CANNON_P
-    parent: CANNON_Y
+    name: TURRET_P
+    parent: TURRET_Y
     translation: [ 0, 0, 0.05 ]
     jointType: revolute
     jointAxis: Y
@@ -56,7 +56,7 @@ links:
     jointId: 1
     elements:
       - 
-        # Turnet
+        # Turret
         type: RigidBody
         centerOfMass: [ 0, 0, 0 ]
         mass: 3.0
@@ -72,7 +72,7 @@ links:
               radius: 0.1
             appearance: *BodyAppearance
       - 
-        # Barrel
+        # Gun
         type: Transform
         translation: [ 0.2, 0, 0 ]
         rotation: [ 0, 0, 1, 90 ]
@@ -144,7 +144,7 @@ links:
                 specularColor: [ 0.6, 0.6, 1.0 ]
                 shininess: 0.6
   -
-    name: CRAWLER_TRACK_L
+    name: TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.2, 0 ]
     jointType: pseudoContinuousTrack
@@ -171,7 +171,7 @@ links:
           material:
             diffuseColor: [ 0.2, 0.2, 0.2 ]
   -
-    name: CRAWLER_TRACK_R
+    name: TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.2, 0 ]
     jointType: pseudoContinuousTrack

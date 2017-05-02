@@ -16,8 +16,8 @@ public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         Body* body = io->body();
-        joints[0] = body->link("CANNON_Y");
-        joints[1] = body->link("CANNON_P");
+        joints[0] = body->link("TURRET_Y");
+        joints[1] = body->link("TURRET_P");
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
             qref[i] = qold[i] = joint->q();

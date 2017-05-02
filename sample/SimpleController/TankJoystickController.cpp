@@ -12,17 +12,17 @@ using namespace cnoid;
 
 namespace {
 
-const int cannonAxis[] = { 3, 4 };
-const double cannonAxisRatio[] = { -1.0, 1.0 };
+const int turretAxis[] = { 3, 4 };
+const double turretAxisRatio[] = { -1.0, 1.0 };
 const int buttonIds[] = { 0, 1, 2, 3, 4, 5 };
 
 }
 
 class TankJoystickController : public cnoid::SimpleController
 { 
-    Link* crawlerL;
-    Link* crawlerR;
-    Link* cannonJoint[2];
+    Link* trackL;
+    Link* trackR;
+    Link* turretJoint[2];
     double qref[2];
     double qprev[2];
     double dt;
@@ -37,21 +37,21 @@ public:
         ostream& os = io->os();
         
         Body* body = io->body();
-        crawlerL = body->link("CRAWLER_TRACK_L");
-        crawlerR = body->link("CRAWLER_TRACK_R");
-        if(!crawlerL || !crawlerR){
-            os << "The crawlers are not found." << endl;
+        trackL = body->link("TRACK_L");
+        trackR = body->link("TRACK_R");
+        if(!trackL || !trackR){
+            os << "The tracks are not found." << endl;
             return false;
         }
-        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
-        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
+        io->setLinkOutput(trackL, JOINT_VELOCITY);
+        io->setLinkOutput(trackR, JOINT_VELOCITY);
         
-        cannonJoint[0] = body->link("CANNON_Y");
-        cannonJoint[1] = body->link("CANNON_P");
+        turretJoint[0] = body->link("TURRET_Y");
+        turretJoint[1] = body->link("TURRET_P");
         for(int i=0; i < 2; ++i){
-            Link* joint = cannonJoint[i];
+            Link* joint = turretJoint[i];
             if(!joint){
-                os << "Cannon joint " << i << " is not found." << endl;
+                os << "Turret joint " << i << " is not found." << endl;
                 return false;
             }
             qref[i] = qprev[i] = joint->q();
@@ -88,11 +88,11 @@ public:
         static const double D = 50.0;
 
         for(int i=0; i < 2; ++i){
-            Link* joint = cannonJoint[i];
+            Link* joint = turretJoint[i];
             double q = joint->q();
             double dq = (q - qprev[i]) / dt;
             double dqref = 0.0;
-            double command = cannonAxisRatio[i] * joystick.getPosition(cannonAxis[i]);
+            double command = turretAxisRatio[i] * joystick.getPosition(turretAxis[i]);
             if(fabs(command) > 0.2){
                 double deltaq = command * 0.002;
                 qref[i] += deltaq;
@@ -109,9 +109,9 @@ public:
                 pos[i] = 0.0;
             }
         }
-        // set the velocity of each crawlers
-        crawlerL->dq() = -2.0 * pos[1] + pos[0];
-        crawlerR->dq() = -2.0 * pos[1] - pos[0];
+        // set the velocity of each tracks
+        trackL->dq() = -2.0 * pos[1] + pos[0];
+        trackR->dq() = -2.0 * pos[1] - pos[0];
         
         if(light){
             bool lightButtonState = joystick.getButtonState(buttonIds[0]);

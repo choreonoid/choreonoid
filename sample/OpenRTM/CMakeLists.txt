@@ -86,13 +86,6 @@ add_cnoid_body_io_rtc(TankIoRTC TankIoRTC.cpp)
 set(target TankJoystickControllerRTC)
 add_cnoid_sample_rtc(${target} TankJoystickControllerRTC.cpp)
 configure_file(OpenRTM-TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(OpenRTM-TankJoystick-RTSystem.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(TankJoystick.conf
-  ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankJoystick.conf COPYONLY)
-configure_file(TankJoystick_Noconnection.conf
-  ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc/TankJoystick_Noconnection.conf COPYONLY)
-install(FILES TankJoystick.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
-install(FILES TankJoystick_Noconnection.conf DESTINATION ${CNOID_PLUGIN_SUBDIR}/rtc)
 
 # Tank Kinematics Controller
 set(target TankKinematicsControllerRTC)

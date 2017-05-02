@@ -16,10 +16,10 @@ links:
       0,   0,   0.5 ]
     elements:
       Resource:
-        uri: tank2.dae
+        uri: "resource/tank2.dae"
         node: CHASSIS
   -
-    name: CANNON_Y
+    name: TURRET_Y
     parent: CHASSIS
     translation: [ -0.04, 0, 0.1 ]
     jointType: revolute
@@ -35,11 +35,11 @@ links:
       0,   0,   0.1 ]
     elements:
       Resource:
-        uri: tank2.dae
-        node: CANNON_Y
+        uri: "resource/tank2.dae"
+        node: TURRET_Y
   -
-    name: CANNON_P
-    parent: CANNON_Y
+    name: TURRET_P
+    parent: TURRET_Y
     translation: [ 0, 0, 0.05 ]
     jointType: revolute
     jointAxis: Y
@@ -50,9 +50,9 @@ links:
       -
         type: Resource
         uri: tank2.dae
-        node: CANNON_P
+        node: TURRET_P
       - 
-        # Turnet
+        # Turret
         type: RigidBody
         centerOfMass: [ 0, 0, 0 ]
         mass: 3.0
@@ -61,7 +61,7 @@ links:
           0,   0.1, 0,
           0,   0,   0.1 ]
       - 
-        # Barrel
+        # Gun
         type: Transform
         translation: [ 0.2, 0, 0 ]
         rotation: [ 0, 0, 1, 90 ]
@@ -116,7 +116,7 @@ links:
             scanRate:  10
             maxDistance: 10
   -
-    name: CRAWLER_TRACK_L
+    name: TRACK_L
     parent: CHASSIS
     translation: [ 0, 0.2, 0 ]
     jointType: pseudoContinuousTrack
@@ -129,10 +129,10 @@ links:
       0,    0,    0.02 ]
     elements:
       Resource:
-        uri: tank2.dae
-        node: CRAWLER_TRACK_L
+        uri: "resource/tank2.dae"
+        node: TRACK_L
   -
-    name: CRAWLER_TRACK_R
+    name: TRACK_R
     parent: CHASSIS
     translation: [ 0, -0.2, 0 ]
     jointType: pseudoContinuousTrack
@@ -145,5 +145,5 @@ links:
       0,    0,    0.02 ]
     elements:
       Resource:
-        uri: tank2.dae
-        node: CRAWLER_TRACK_R
+        uri: "resource/tank2.dae"
+        node: TRACK_R

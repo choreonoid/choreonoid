@@ -1,4 +1,3 @@
-
 #include <cnoid/SimpleController>
 
 using namespace cnoid;
@@ -13,7 +12,7 @@ class TankController1 : public SimpleController
 public:
     virtual bool initialize(SimpleControllerIO* io)
     {
-        pitchJoint = io->body()->link("CANNON_P");
+        pitchJoint = io->body()->link("TURRET_P");
 
         io->setLinkOutput(pitchJoint, JOINT_TORQUE);
         io->setLinkInput (pitchJoint, JOINT_ANGLE);
