@@ -28,7 +28,7 @@ class JoystickImpl
 public:
     enum Model { PS4=0, PS3=1, XBOX=2, F310_XInput=3, F310_DirectInput=4, OTHER=5 };
     static const int STANDARD_AXIS_NUM = 8;    // LeftStick, RightStick, DirectionalPad, L2, R2
-    static const int STANDARD_BUTTON_NUM = 8; // A,B,X,Y,L1,R1,L3,R3
+    static const int STANDARD_BUTTON_NUM = 11; // A,B,X,Y,L1,R1,L3,R3,START(PS4:option),SELECT(PS4:share),Logo(PS4:PS)
     Joystick* self;
     ExtJoystick* extJoystick;
     int fd;
@@ -41,7 +41,7 @@ public:
     Model model;
     vector<int> axis_map;
     vector<int> button_map;
-    static const int invalid_axis = 1024;
+    static const int invalid = 1024;
 
     JoystickImpl(Joystick* self, const char* device);
     ~JoystickImpl();
@@ -111,17 +111,19 @@ bool JoystickImpl::openDevice(const char* device)
     cout << "numButtons : " << to_string(numButtons) << ", " << buttons.size() << endl;
     axis_map.resize(STANDARD_AXIS_NUM);
     static const vector<int> PS4_AM{ 0, 1, 2, 5, 6, 7, 3, 4 };
-    static const vector<int> PS3_AM{ 0, 1, 2, 3, invalid_axis, invalid_axis, 12, 13 };
+    static const vector<int> PS3_AM{ 0, 1, 2, 3, invalid, invalid, 12, 13 };
     static const vector<int> XBOX_AM{ 0, 1, 3, 4, 6, 7, 2, 5 };
     static const vector<int> F310_X_AM{ 0, 1, 3, 4, 6, 7, 2, 5 };
-    static const vector<int> F310_D_AM{ 0, 1, 2, 3, 4, 5, invalid_axis, invalid_axis };
+    static const vector<int> F310_D_AM{ 0, 1, 2, 3, 4, 5, invalid, invalid };
+    static const vector<int> OTHER_AM(STANDARD_AXIS_NUM, invalid);
     button_map.resize(STANDARD_BUTTON_NUM);
-    // Mapping square, cross, circle, triangle, L1, R1, L3, R3
-    static const vector<int> PS4_BM{ 0, 1, 2, 3, 4, 5, 10, 11 };
-    static const vector<int> PS3_BM{ 15, 14, 13, 12, 10, 11, 1, 2 };
-    static const vector<int> XBOX_BM{ 2, 0, 1, 3, 4, 5, 9, 10 };
-    static const vector<int> F310_X_BM{ 2, 0, 1, 3, 4, 5, 9, 10 };
-    static const vector<int> F310_D_BM{ 0, 1, 2, 3, 4, 5, 10, 11 };
+    // Mapping square, cross, circle, triangle, L1, R1, L3, R3, START, SELECT, LOGO
+    static const vector<int> PS4_BM{ 0, 1, 2, 3, 4, 5, 10, 11, 9, 8, 12 };
+    static const vector<int> PS3_BM{ 15, 14, 13, 12, 10, 11, 1, 2, 3, 0, 16 };
+    static const vector<int> XBOX_BM{ 2, 0, 1, 3, 4, 5, 9, 10, 7, 6, 8 };
+    static const vector<int> F310_X_BM{ 2, 0, 1, 3, 4, 5, 9, 10, 7, 6, 8 };
+    static const vector<int> F310_D_BM{ 0, 1, 2, 3, 4, 5, 10, 11, 9, 8, invalid };
+    static const vector<int> OTHER_BM(STANDARD_BUTTON_NUM, invalid);
     if(model_id == "Sony Computer Entertainment Wireless Controller"){
       model = PS4;
       axis_map = PS4_AM;
@@ -144,6 +146,8 @@ bool JoystickImpl::openDevice(const char* device)
       button_map = F310_D_BM;
     }else{
       model = OTHER;
+      axis_map = OTHER_AM;
+      button_map = OTHER_BM;
     }
     // read initial state
     return readCurrentState();
@@ -311,7 +315,7 @@ double Joystick::getPosition(int axis) const
       return getNativePosition(axis);
     }
 
-    if(impl->axis_map[axis]==JoystickImpl::invalid_axis){
+    if(impl->axis_map[axis]==JoystickImpl::invalid){
       return impl->readDirectionPadAsAxis(axis);
     }else{
       return impl->axes[impl->axis_map[axis]];
@@ -330,7 +334,10 @@ bool Joystick::getButtonState(int button) const
       return getNativeButtonState(button);
     }
 
-    return impl->buttons[impl->button_map[button]];
+    if(impl->button_map[button]!=JoystickImpl::invalid){
+      return impl->buttons[impl->button_map[button]];
+    }
+    return false;
 }
 
 double Joystick::getNativePosition(int axis) const
