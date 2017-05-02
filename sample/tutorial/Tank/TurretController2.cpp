@@ -1,4 +1,3 @@
-
 #include <cnoid/SimpleController>
 #include <cnoid/Joystick>
 
@@ -16,8 +15,10 @@ public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         Body* body = io->body();
+
         joints[0] = body->link("TURRET_Y");
         joints[1] = body->link("TURRET_P");
+
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
             qref[i] = qold[i] = joint->q();
@@ -47,7 +48,7 @@ public:
             double dqref = 0.0;
 
             double pos = joystick.getPosition(cannonAxis[i]);
-            if(fabs(pos) > 0.2){
+            if(fabs(pos) > 0.25){
                 double deltaq = cannonAxisRatio[i] * pos;
                 qref[i] += deltaq;
                 dqref = deltaq / dt;

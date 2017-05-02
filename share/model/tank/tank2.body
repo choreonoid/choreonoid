@@ -23,7 +23,7 @@ links:
     parent: CHASSIS
     translation: [ -0.04, 0, 0.1 ]
     jointType: revolute
-    jointAxis: Z
+    jointAxis: -Z
     jointRange: unlimited
     maxJointVelocity: 90
     jointId: 0
@@ -42,8 +42,8 @@ links:
     parent: TURRET_Y
     translation: [ 0, 0, 0.05 ]
     jointType: revolute
-    jointAxis: Y
-    jointRange: [ -45, 10 ]
+    jointAxis: -Y
+    jointRange: [ -10, 45 ]
     maxJointVelocity: 90
     jointId: 1
     elements:

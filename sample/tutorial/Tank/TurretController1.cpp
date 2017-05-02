@@ -2,9 +2,9 @@
 
 using namespace cnoid;
 
-class TankController1 : public SimpleController
+class TurretController1 : public SimpleController
 {
-    Link* pitchJoint;
+    Link* joint;
     double qref;
     double qold;
     double dt;
@@ -12,12 +12,12 @@ class TankController1 : public SimpleController
 public:
     virtual bool initialize(SimpleControllerIO* io)
     {
-        pitchJoint = io->body()->link("TURRET_P");
+        joint = io->body()->link("TURRET_P");
 
-        io->setLinkOutput(pitchJoint, JOINT_TORQUE);
-        io->setLinkInput (pitchJoint, JOINT_ANGLE);
+        io->setLinkOutput(joint, JOINT_TORQUE);
+        io->setLinkInput (joint, JOINT_ANGLE);
 
-        qref = qold = pitchJoint->q();
+        qref = qold = joint->q();
 
         dt = io->timeStep();
 
@@ -26,17 +26,18 @@ public:
 
     virtual bool control()
     {
+        // PD gains
         static const double P = 200.0;
         static const double D = 50.0;
 
-        double q = pitchJoint->q();
+        double q = joint->q(); // input
         double dq = (q - qold) / dt;
         double dqref = 0.0;
-        pitchJoint->u() = P * (qref - q) + D * (dqref - dq);
+        joint->u() = P * (qref - q) + D * (dqref - dq); // output
         qold = q;
         
         return true;
     }
 };
 
-CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(TankController1)
+CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(TurretController1)

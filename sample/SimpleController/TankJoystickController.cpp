@@ -13,7 +13,6 @@ using namespace cnoid;
 namespace {
 
 const int turretAxis[] = { 3, 4 };
-const double turretAxisRatio[] = { -1.0, 1.0 };
 const int buttonIds[] = { 0, 1, 2, 3, 4, 5 };
 
 }
@@ -92,9 +91,9 @@ public:
             double q = joint->q();
             double dq = (q - qprev[i]) / dt;
             double dqref = 0.0;
-            double command = turretAxisRatio[i] * joystick.getPosition(turretAxis[i]);
-            if(fabs(command) > 0.2){
-                double deltaq = command * 0.002;
+            double pos = joystick.getPosition(turretAxis[i]);
+            if(fabs(pos) > 0.25){
+                double deltaq = 0.002 * pos;
                 qref[i] += deltaq;
                 dqref = deltaq / dt;
             }

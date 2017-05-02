@@ -714,10 +714,16 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
             if(symbol == "X"){
                 axis = Vector3::UnitX();
+            } else if(symbol == "-X"){
+                axis = -Vector3::UnitX();
             } else if(symbol == "Y"){
                 axis = Vector3::UnitY();
+            } else if(symbol == "-Y"){
+                axis = -Vector3::UnitY();
             } else if(symbol == "Z"){
                 axis = Vector3::UnitZ();
+            } else if(symbol == "-Z"){
+                axis = -Vector3::UnitZ();
             } else {
                 isValid = false;
             }
