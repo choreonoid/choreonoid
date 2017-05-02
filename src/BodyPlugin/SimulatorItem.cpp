@@ -57,6 +57,8 @@ using boost::format;
 
 namespace {
 
+enum { RESOLUTION_TIMESTEP, RESOLUTION_FRAMERATE, RESOLUTION_TIMEBAR, N_TEMPORARL_RESOLUTION_TYPES };
+
 typedef Deque2D<SE3, Eigen::aligned_allocator<SE3> > MultiSE3Deque;
 
 typedef map<weak_ref_ptr<BodyItem>, SimulationBodyPtr> BodyItemToSimBodyMap;
@@ -180,9 +182,11 @@ public:
 
     BodyItemToSimBodyMap simBodyMap;
 
-    int currentFrame;
+    Selection temporalResolutionType;
     FloatingNumberString timeStepProperty;
+    int frameRateProperty;
 
+    int currentFrame;
     double worldFrameRate;
     double worldTimeStep_;
     int frameAtLastBufferWriting;
@@ -308,9 +312,10 @@ public:
     void setVirtualElasticString(
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);
     void setVirtualElasticStringForce();
-    bool onRealtimeSyncChanged(bool on);
+    void onRealtimeSyncChanged(bool on);
     bool onAllLinkPositionOutputModeChanged(bool on);
-    bool setSpecifiedRecordingTimeLength(double length);
+    void setSpecifiedRecordingTimeLength(double length);
+    void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
     void restoreBodyMotionEngines(const Archive& archive);
@@ -1036,35 +1041,26 @@ SimulatorItem::SimulatorItem()
 }
 
 
-SimulatorItem::SimulatorItem(const SimulatorItem& org)
-    : Item(org)
-{
-    impl = new SimulatorItemImpl(this);
-
-    impl->isRealtimeSyncMode = org.impl->isRealtimeSyncMode;
-    impl->isAllLinkPositionOutputMode = org.impl->isAllLinkPositionOutputMode;
-    impl->isDeviceStateOutputEnabled = org.impl->isDeviceStateOutputEnabled;
-    impl->recordingMode = org.impl->recordingMode;
-    impl->timeRangeMode = org.impl->timeRangeMode;
-    impl->useControllerThreadsProperty = org.impl->useControllerThreadsProperty;
-    impl->isSelfCollisionEnabled = org.impl->isSelfCollisionEnabled;
-    impl->recordCollisionData = org.impl->recordCollisionData;
-}
-
-
 SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     : self(self),
       preDynamicsFunctions(this),
       midDynamicsFunctions(this),
       postDynamicsFunctions(this),
+      temporalResolutionType(N_TEMPORARL_RESOLUTION_TYPES, CNOID_GETTEXT_DOMAIN_NAME),
       recordingMode(SimulatorItem::N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(SimulatorItem::N_TIME_RANGE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
       mv(MessageView::mainInstance()),
       os(mv->cout()),
       itemTreeView(ItemTreeView::instance())
 {
+    temporalResolutionType.setSymbol(RESOLUTION_TIMESTEP, N_("Timestep"));
+    temporalResolutionType.setSymbol(RESOLUTION_FRAMERATE, N_("Framerate"));
+    temporalResolutionType.setSymbol(RESOLUTION_TIMEBAR, N_("Time bar"));
+    timeStepProperty = 0.001;
+    frameRateProperty = 1000;
+
     flushTimer.sigTimeout().connect(std::bind(&SimulatorItemImpl::flushResults, this));
-    
+
     timeBar = TimeBar::instance();
     isDoingSimulationLoop = false;
     isRealtimeSyncMode = true;
@@ -1092,6 +1088,30 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
 }
 
 
+SimulatorItem::SimulatorItem(const SimulatorItem& org)
+    : Item(org)
+{
+    impl = new SimulatorItemImpl(this, *org.impl);
+}
+
+
+SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self, const SimulatorItemImpl& org)
+    : SimulatorItemImpl(self)
+{
+    temporalResolutionType = org.temporalResolutionType;
+    timeStepProperty = org.timeStepProperty;
+    frameRateProperty = org.frameRateProperty;
+    isRealtimeSyncMode = org.isRealtimeSyncMode;
+    isAllLinkPositionOutputMode = org.isAllLinkPositionOutputMode;
+    isDeviceStateOutputEnabled = org.isDeviceStateOutputEnabled;
+    recordingMode = org.recordingMode;
+    timeRangeMode = org.timeRangeMode;
+    useControllerThreadsProperty = org.useControllerThreadsProperty;
+    isSelfCollisionEnabled = org.isSelfCollisionEnabled;
+    recordCollisionData = org.recordCollisionData;
+}
+    
+
 SimulatorItem::~SimulatorItem()
 {
     impl->stopSimulation(true);
@@ -1113,7 +1133,15 @@ void SimulatorItem::onDisconnectedFromRoot()
 
 double SimulatorItem::worldTimeStep()
 {
-    return TimeBar::instance()->timeStep();
+    switch(impl->temporalResolutionType.which()){
+    case RESOLUTION_TIMESTEP:
+        return impl->timeStepProperty.value();
+    case RESOLUTION_FRAMERATE:
+        return 1.0 / impl->frameRateProperty;
+    case RESOLUTION_TIMEBAR:
+    default:
+        return TimeBar::instance()->timeStep();
+    }
 }
 
 
@@ -1171,10 +1199,9 @@ bool SimulatorItem::isDeviceStateOutputEnabled() const
 }
 
 
-bool SimulatorItemImpl::setSpecifiedRecordingTimeLength(double length)
+void SimulatorItemImpl::setSpecifiedRecordingTimeLength(double length)
 {
     specifiedTimeLength = length;
-    return true;
 }
 
 
@@ -2367,10 +2394,9 @@ void SimulatorItem::clearForcedPositions()
 }
 
 
-bool SimulatorItemImpl::onRealtimeSyncChanged(bool on)
+void SimulatorItemImpl::onRealtimeSyncChanged(bool on)
 {
     isRealtimeSyncMode = on;
-    return true;
 }
 
 
@@ -2386,28 +2412,43 @@ bool SimulatorItemImpl::onAllLinkPositionOutputModeChanged(bool on)
 
 void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Timestep"), impl->timeStepProperty,
-                [&](const std::string& s){ return impl->timeStepProperty.setNonNegativeValue(s); });
-    putProperty(_("Sync with realtime"), impl->isRealtimeSyncMode,
-                std::bind(&SimulatorItemImpl::onRealtimeSyncChanged, impl, _1));
-    putProperty(_("Time range"), impl->timeRangeMode,
-                std::bind(&Selection::selectIndex, &impl->timeRangeMode, _1));
-    putProperty(_("Time length"), impl->specifiedTimeLength,
-                std::bind(&SimulatorItemImpl::setSpecifiedRecordingTimeLength, impl, _1));
-    putProperty(_("Recording"), impl->recordingMode,
-                std::bind(&Selection::selectIndex, &impl->recordingMode, _1));
-    putProperty(_("All link positions"), impl->isAllLinkPositionOutputMode,
-                std::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, _1));
-    putProperty(_("Device state output"), impl->isDeviceStateOutputEnabled,
-                changeProperty(impl->isDeviceStateOutputEnabled));
-    putProperty(_("Self-collision"), impl->isSelfCollisionEnabled,
-                changeProperty(impl->isSelfCollisionEnabled));
-    putProperty(_("Controller Threads"), impl->useControllerThreadsProperty,
-                changeProperty(impl->useControllerThreadsProperty));
-    putProperty(_("Record collision data"), impl->recordCollisionData,
-                changeProperty(impl->recordCollisionData));
-    putProperty(_("Controller options"), impl->controllerOptionString_,
-                changeProperty(impl->controllerOptionString_));
+    impl->doPutProperties(putProperty);
+}
+
+
+void SimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Temporal resolution type"), temporalResolutionType,
+                [&](int index){ return temporalResolutionType.select(index); });
+
+    if(temporalResolutionType.is(RESOLUTION_TIMESTEP)){
+        putProperty(_("Timestep"), timeStepProperty,
+                    [&](const std::string& s){ return timeStepProperty.setPositiveValue(s); });
+    } else if(temporalResolutionType.is(RESOLUTION_FRAMERATE)){
+        putProperty.min(1)(_("Framerate"), frameRateProperty, changeProperty(frameRateProperty));
+        putProperty.reset();
+    }
+
+    putProperty(_("Sync with realtime"), isRealtimeSyncMode,
+                [&](bool on){ onRealtimeSyncChanged(on); return true; });
+    putProperty(_("Time range"), timeRangeMode,
+                [&](int index){ return timeRangeMode.select(index); });
+    putProperty(_("Time length"), specifiedTimeLength,
+                [&](double length){ setSpecifiedRecordingTimeLength(length); return true; });
+    putProperty(_("Recording"), recordingMode,
+                [&](int index){ return recordingMode.select(index); });
+    putProperty(_("All link positions"), isAllLinkPositionOutputMode,
+                [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
+    putProperty(_("Device state output"), isDeviceStateOutputEnabled,
+                changeProperty(isDeviceStateOutputEnabled));
+    putProperty(_("Self-collision"), isSelfCollisionEnabled,
+                changeProperty(isSelfCollisionEnabled));
+    putProperty(_("Controller Threads"), useControllerThreadsProperty,
+                changeProperty(useControllerThreadsProperty));
+    putProperty(_("Record collision data"), recordCollisionData,
+                changeProperty(recordCollisionData));
+    putProperty(_("Controller options"), controllerOptionString_,
+                changeProperty(controllerOptionString_));
 }
 
 
@@ -2419,6 +2460,11 @@ bool SimulatorItem::store(Archive& archive)
 
 bool SimulatorItemImpl::store(Archive& archive)
 {
+    if(temporalResolutionType.is(RESOLUTION_TIMESTEP)){
+        archive.write("timestep", timeStepProperty.string());
+    } else if(temporalResolutionType.is(RESOLUTION_FRAMERATE)){
+        archive.write("framerate", frameRateProperty);
+    }
     archive.write("realtimeSync", isRealtimeSyncMode);
     archive.write("recording", recordingMode.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("timeRangeMode", timeRangeMode.selectedSymbol(), DOUBLE_QUOTED);
@@ -2464,6 +2510,16 @@ bool SimulatorItemImpl::restore(const Archive& archive)
 {
     bool boolValue;
     string symbol;
+
+    if(archive.read("timestep", symbol)){
+        timeStepProperty = symbol;
+        temporalResolutionType.select(RESOLUTION_TIMESTEP);
+    } else if(archive.read("framerate", frameRateProperty)){
+        temporalResolutionType.select(RESOLUTION_FRAMERATE);
+    } else {
+        temporalResolutionType.select(RESOLUTION_TIMEBAR);
+    }
+    
     if(archive.read("onlyActiveControlPeriod", boolValue) && boolValue){
         timeRangeMode.select(SimulatorItem::TR_ACTIVE_CONTROL);
     } else if(archive.read("timeRangeMode", symbol)){
