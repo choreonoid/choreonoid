@@ -31,8 +31,6 @@ public:
     virtual void output();
     virtual void stop();
 
-    SimpleController* initialize(ControllerItemIO* io, Body* sharedIoBody);
-
 protected:
     virtual void onDisconnectedFromRoot();
     virtual Item* doDuplicate() const;
@@ -42,6 +40,7 @@ protected:
         
 private:
     SimpleControllerItemImpl* impl;
+    friend class SimpleControllerItemImpl;
 };
         
 typedef ref_ptr<SimpleControllerItem> SimpleControllerItemPtr;

@@ -41,6 +41,17 @@ enum {
     OUTPUT_NONE = 5
 };
 
+
+struct SharedInfo : public Referenced
+{
+    BodyPtr ioBody;
+    ScopedConnectionSet inputDeviceStateConnections;
+    boost::dynamic_bitset<> inputEnabledDeviceFlag;
+    boost::dynamic_bitset<> inputDeviceStateChangeFlag;
+};
+
+typedef ref_ptr<SharedInfo> SharedInfoPtr;
+
 }
 
 namespace cnoid {
@@ -51,8 +62,9 @@ public:
     SimpleControllerItem* self;
     SimpleController* controller;
     Body* simulationBody;
-    BodyPtr ioBody;
+    Body* ioBody;
     ControllerItemIO* io;
+    SharedInfoPtr sharedInfo;
 
     bool isInputStateTypeSetUpdated;
     bool isOutputStateTypeSetUpdated;
@@ -61,9 +73,6 @@ public:
     vector<unsigned short> outputLinkIndices;
     vector<char> outputStateTypes;
 
-    ConnectionSet inputDeviceStateConnections;
-    boost::dynamic_bitset<> inputDeviceStateChangeFlag;
-        
     ConnectionSet outputDeviceStateConnections;
     boost::dynamic_bitset<> outputDeviceStateChangeFlag;
 
@@ -90,8 +99,9 @@ public:
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
     void unloadController();
-    void initializeIoBody(Body* body);
-    bool initialize(ControllerItemIO* io, Body* sharedIoBody);
+    void initializeIoBody();
+    void updateInputEnabledDevices();
+    SimpleController* initialize(ControllerItemIO* io, SharedInfo* info);
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
     void onOutputDeviceStateChanged(int deviceIndex);
@@ -102,18 +112,19 @@ public:
     bool restore(const Archive& archive);
 
     // virtual functions of SimpleControllerIO
-    virtual std::string optionString() const;
-    virtual std::vector<std::string> options() const;
-    virtual Body* body();
-    virtual double timeStep() const;
-    virtual std::ostream& os() const;
-    virtual void setJointOutput(int stateTypes);
-    virtual void setLinkOutput(Link* link, int stateTypes);
-    virtual void setJointInput(int stateTypes);
-    virtual void setLinkInput(Link* link, int stateTypes);
+    virtual std::string optionString() const override;
+    virtual std::vector<std::string> options() const override;
+    virtual Body* body() override;
+    virtual double timeStep() const override;
+    virtual std::ostream& os() const override;
+    virtual void setJointOutput(int stateTypes) override;
+    virtual void setLinkOutput(Link* link, int stateTypes) override;
+    virtual void setJointInput(int stateTypes) override;
+    virtual void setLinkInput(Link* link, int stateTypes) override;
+    virtual void enableInput(Device* device) override;
 
-    virtual bool isImmediateMode() const;
-    virtual void setImmediateMode(bool on);
+    virtual bool isImmediateMode() const override;
+    virtual void setImmediateMode(bool on) override;
 };
 
 }
@@ -168,7 +179,6 @@ SimpleControllerItem::~SimpleControllerItem()
 SimpleControllerItemImpl::~SimpleControllerItemImpl()
 {
     unloadController();
-    inputDeviceStateConnections.disconnect();
     outputDeviceStateConnections.disconnect();
 }
 
@@ -210,47 +220,63 @@ void SimpleControllerItem::setController(const std::string& name)
 }
 
 
-void SimpleControllerItemImpl::initializeIoBody(Body* body)
+void SimpleControllerItemImpl::initializeIoBody()
 {
-    ioBody = body->clone();
+    ioBody = simulationBody->clone();
 
-    inputDeviceStateConnections.disconnect();
     outputDeviceStateConnections.disconnect();
-    const DeviceList<>& devices = body->devices();
     const DeviceList<>& ioDevices = ioBody->devices();
-    inputDeviceStateChangeFlag.resize(devices.size());
-    inputDeviceStateChangeFlag.reset();
     outputDeviceStateChangeFlag.resize(ioDevices.size());
     outputDeviceStateChangeFlag.reset();
-    for(size_t i=0; i < devices.size(); ++i){
-        inputDeviceStateConnections.add(
-            devices[i]->sigStateChanged().connect(
-                std::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
+    for(size_t i=0; i < ioDevices.size(); ++i){
         outputDeviceStateConnections.add(
             ioDevices[i]->sigStateChanged().connect(
                 std::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
+    }
+
+    sharedInfo->inputEnabledDeviceFlag.resize(simulationBody->numDevices());
+    sharedInfo->inputEnabledDeviceFlag.reset();
+
+    sharedInfo->ioBody = ioBody;
+}
+
+
+void SimpleControllerItemImpl::updateInputEnabledDevices()
+{
+    const DeviceList<>& devices = simulationBody->devices();
+    sharedInfo->inputDeviceStateChangeFlag.resize(devices.size());
+    sharedInfo->inputDeviceStateChangeFlag.reset();
+    sharedInfo->inputDeviceStateConnections.disconnect();
+
+    const boost::dynamic_bitset<>& flag = sharedInfo->inputEnabledDeviceFlag;
+    for(size_t i=0; i < devices.size(); ++i){
+        if(flag[i]){
+            sharedInfo->inputDeviceStateConnections.add(
+                devices[i]->sigStateChanged().connect(
+                    std::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
+        } else {
+            sharedInfo->inputDeviceStateConnections.add(Connection()); // null connection
+        }
     }
 }
 
 
 bool SimpleControllerItem::initialize(ControllerItemIO* io)
 {
-    return impl->initialize(io, 0);
-}
-
-
-SimpleController* SimpleControllerItem::initialize(ControllerItemIO* io, Body* sharedIoBody)
-{
-    if(impl->initialize(io, sharedIoBody)){
-        return impl->controller;
+    if(impl->initialize(io, new SharedInfo)){
+        impl->updateInputEnabledDevices();
+        return true;
     }
-    return 0;
+    return false;
 }
-    
-    
-bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBody)
+
+
+SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, SharedInfo* info)
 {
     this->io = io;
+    simulationBody = io->body();
+    sharedInfo = info;
+    
     bool result = false;
 
     if(!controller){
@@ -265,7 +291,7 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
                 string projectFile = ProjectManager::instance()->currentProjectFile();
                 if(projectFile.empty()){
                     mv->putln(_("Please save the project."));
-                    return false;
+                    return 0;
                 } else {
                     dllPath = boost::filesystem::path(projectFile).parent_path() / dllPath;
                 }
@@ -311,9 +337,10 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
     childControllerItems.clear();
 
     if(controller){
-        ioBody = sharedIoBody;
-        if(!ioBody){
-            initializeIoBody(io->body());
+        if(!sharedInfo->ioBody){
+            initializeIoBody();
+        } else {
+            ioBody = sharedInfo->ioBody;
         }
         
         controller->setIO(this);
@@ -340,12 +367,10 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
                 self->stop();
             }
         } else {
-            simulationBody = io->body();
-
             for(Item* child = self->childItem(); child; child = child->nextItem()){
                 SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
                 if(childControllerItem){
-                    SimpleController* childController = childControllerItem->initialize(io, ioBody);
+                    SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
                     if(childController){
                         childControllerItems.push_back(childControllerItem);
                     }
@@ -354,7 +379,7 @@ bool SimpleControllerItemImpl::initialize(ControllerItemIO* io, Body* sharedIoBo
         }
     }
 
-    return result;
+    return controller;
 }
 
 
@@ -432,6 +457,12 @@ void SimpleControllerItemImpl::setLinkInput(Link* link, int stateTypes)
     }
     linkIndexToInputStateTypeMap[link->index()] |= stateTypes;
     isInputStateTypeSetUpdated = true;
+}
+
+
+void SimpleControllerItemImpl::enableInput(Device* device)
+{
+    sharedInfo->inputEnabledDeviceFlag.set(device->index());
 }
 
 
@@ -582,7 +613,8 @@ void SimpleControllerItemImpl::input()
             }
         }
     }
-                
+
+    boost::dynamic_bitset<>& inputDeviceStateChangeFlag = sharedInfo->inputDeviceStateChangeFlag;
     if(inputDeviceStateChangeFlag.any()){
         const DeviceList<>& devices = simulationBody->devices();
         const DeviceList<>& ioDevices = ioBody->devices();
@@ -602,7 +634,7 @@ void SimpleControllerItemImpl::input()
 
 void SimpleControllerItemImpl::onInputDeviceStateChanged(int deviceIndex)
 {
-    inputDeviceStateChangeFlag.set(deviceIndex);
+    sharedInfo->inputDeviceStateChangeFlag.set(deviceIndex);
 }
 
 
@@ -679,9 +711,9 @@ void SimpleControllerItemImpl::output()
         while(i != outputDeviceStateChangeFlag.npos){
             Device* device = devices[i];
             device->copyStateFrom(*ioDevices[i]);
-            inputDeviceStateConnections.block(i);
+            sharedInfo->inputDeviceStateConnections.block(i);
             device->notifyStateChange();
-            inputDeviceStateConnections.unblock(i);
+            sharedInfo->inputDeviceStateConnections.unblock(i);
             i = outputDeviceStateChangeFlag.find_next(i);
         }
         outputDeviceStateChangeFlag.reset();
