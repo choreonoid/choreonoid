@@ -228,6 +228,7 @@ public:
     bool isRealtimeSyncMode;
     bool needToUpdateSimBodyLists;
     bool hasActiveFreeBodies;
+    bool isSelfCollisionEnabled;
     bool recordCollisionData;
 
     string controllerOptionString_;
@@ -1046,6 +1047,7 @@ SimulatorItem::SimulatorItem(const SimulatorItem& org)
     impl->recordingMode = org.impl->recordingMode;
     impl->timeRangeMode = org.impl->timeRangeMode;
     impl->useControllerThreadsProperty = org.impl->useControllerThreadsProperty;
+    impl->isSelfCollisionEnabled = org.impl->isSelfCollisionEnabled;
     impl->recordCollisionData = org.impl->recordCollisionData;
 }
 
@@ -1081,6 +1083,7 @@ SimulatorItemImpl::SimulatorItemImpl(SimulatorItem* self)
     useControllerThreadsProperty = true;
     isAllLinkPositionOutputMode = false;
     isDeviceStateOutputEnabled = true;
+    isSelfCollisionEnabled = false;
     recordCollisionData = false;
 
     currentFrame = 0;
@@ -1185,6 +1188,18 @@ CollisionDetectorPtr SimulatorItem::collisionDetector()
         return worldItem->collisionDetector()->clone();
     }
     return CollisionDetector::create(0); // the null collision detector
+}
+
+
+void SimulatorItem::setSelfCollisionEnabled(bool on)
+{
+    impl->isSelfCollisionEnabled = on;
+}
+
+
+bool SimulatorItem::isSelfCollisionEnabled() const
+{
+    return impl->isSelfCollisionEnabled;
 }
 
 
@@ -2385,6 +2400,8 @@ void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
                 std::bind(&SimulatorItemImpl::onAllLinkPositionOutputModeChanged, impl, _1));
     putProperty(_("Device state output"), impl->isDeviceStateOutputEnabled,
                 changeProperty(impl->isDeviceStateOutputEnabled));
+    putProperty(_("Self-collision"), impl->isSelfCollisionEnabled,
+                changeProperty(impl->isSelfCollisionEnabled));
     putProperty(_("Controller Threads"), impl->useControllerThreadsProperty,
                 changeProperty(impl->useControllerThreadsProperty));
     putProperty(_("Record collision data"), impl->recordCollisionData,
@@ -2408,6 +2425,7 @@ bool SimulatorItemImpl::store(Archive& archive)
     archive.write("timeLength", specifiedTimeLength);
     archive.write("allLinkPositionOutputMode", isAllLinkPositionOutputMode);
     archive.write("deviceStateOutput", isDeviceStateOutputEnabled);
+    archive.write("selfCollision", isSelfCollisionEnabled);
     archive.write("controllerThreads", useControllerThreadsProperty);
     archive.write("recordCollisionData", recordCollisionData);
     archive.write("controllerOptions", controllerOptionString_, DOUBLE_QUOTED);
@@ -2474,6 +2492,7 @@ bool SimulatorItemImpl::restore(const Archive& archive)
     archive.read("timeLength", specifiedTimeLength);
     self->setAllLinkPositionOutputMode(archive.get("allLinkPositionOutputMode", isAllLinkPositionOutputMode));
     archive.read("deviceStateOutput", isDeviceStateOutputEnabled);
+    archive.read("selfCollision", isSelfCollisionEnabled);
     archive.read("recordCollisionData", recordCollisionData);
     archive.read("controllerThreads", useControllerThreadsProperty);
     archive.read("controllerOptions", controllerOptionString_);

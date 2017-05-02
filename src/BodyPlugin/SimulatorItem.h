@@ -126,6 +126,9 @@ public:
         
     bool isAllLinkPositionOutputMode();
     virtual void setAllLinkPositionOutputMode(bool on);
+
+    void setSelfCollisionEnabled(bool on);
+    bool isSelfCollisionEnabled() const ;
         
     /**
        For sub simulators

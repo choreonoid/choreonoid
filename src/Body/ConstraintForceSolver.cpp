@@ -128,6 +128,7 @@ public:
     WorldBase& world;
 
     bool isConstraintForceOutputMode;
+    bool isSelfCollisionEnabled;
         
     struct ConstraintPoint {
         int globalIndex;
@@ -450,6 +451,7 @@ CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
     isConstraintForceOutputMode = false;
+    isSelfCollisionEnabled = false;
     is2Dmode = false;
 }
 
@@ -630,7 +632,7 @@ void CFSImpl::initialize(void)
             }
         }
 
-        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, false);
+        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, isSelfCollisionEnabled);
         geometryIdToBodyIndexMap.resize(collisionDetector->numGeometries(), bodyIndex);
 
         initExtraJoints(bodyIndex);
@@ -2384,7 +2386,19 @@ void ConstraintForceSolver::setCollisionHandler(Link* link1, Link* link2, int ha
             info->sigHandlerUnregisterd.connect(
                 std::bind(&CFSImpl::ContactAttributeEx::onCollisionHandlerUnregistered, &attr));
     }
-}    
+}
+
+
+void ConstraintForceSolver::setSelfCollisionEnabled(bool on)
+{
+    impl->isSelfCollisionEnabled = on;
+}
+
+
+bool ConstraintForceSolver::isSelfCollisionEnabled() const
+{
+    return impl->isSelfCollisionEnabled;
+}
     
 
 void ConstraintForceSolver::setContactCullingDistance(double distance)
