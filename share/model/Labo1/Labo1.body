@@ -6,6 +6,7 @@ name: Labo1
 links:
   -
     name: Base
+    translation: [ 0, 2, 0 ]
     jointType: fixed
     elements:
       - type: Transform

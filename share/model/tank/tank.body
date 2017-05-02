@@ -93,7 +93,7 @@ links:
                 appearance: *BodyAppearance
       -
         type: SpotLight
-        name: MainLight
+        name: Light
         translation: [ 0.08, 0, 0.1 ]
         direction: [ 1, 0, 0 ]
         beamWidth: 36

@@ -1,6 +1,7 @@
 
-add_cnoid_simple_controller(TurretController1 TurretController1.cpp)
-add_cnoid_simple_controller(TurretController2 TurretController2.cpp)
-add_cnoid_simple_controller(TrackController TrackController.cpp)
-add_cnoid_simple_controller(LightController LightController.cpp)
+add_cnoid_simple_controller(TankTutorial_TurretController1 TurretController1.cpp)
+add_cnoid_simple_controller(TankTutorial_TurretController2 TurretController2.cpp)
+add_cnoid_simple_controller(TankTutorial_TrackController TrackController.cpp)
+add_cnoid_simple_controller(TankTutorial_LightController LightController.cpp)
+add_cnoid_simple_controller(TankTutorial_CameraController CameraController.cpp)
 

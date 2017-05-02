@@ -20,14 +20,14 @@ items:
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/tank/tank.body"
-            currentBaseLink: ""
-            rootPosition: [ -0.8, -2, 0.1 ]
+            currentBaseLink: "CHASSIS"
+            rootPosition: [ 0, 0, 0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ -0.8, -2, 0.1 ]
+            initialRootPosition: [ 0, 0, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -40,30 +40,64 @@ items:
           children: 
             - 
               id: 3
-              name: "TankController"
+              name: "TurretController2"
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
                 controllerOptions: ""
-                controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankController1.so"
+                controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TurretController2.so"
                 reloading: true
                 RelativePathBase: "Controller directory"
+              children: 
+                - 
+                  id: 4
+                  name: "TrackController"
+                  plugin: SimpleController
+                  class: SimpleControllerItem
+                  data: 
+                    isImmediateMode: true
+                    controllerOptions: ""
+                    controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TrackController.so"
+                    reloading: true
+                    RelativePathBase: "Controller directory"
+                - 
+                  id: 5
+                  name: "LightController"
+                  plugin: SimpleController
+                  class: SimpleControllerItem
+                  data: 
+                    isImmediateMode: true
+                    controllerOptions: ""
+                    controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_LightController.so"
+                    reloading: true
+                    RelativePathBase: "Controller directory"
+                - 
+                  id: 6
+                  name: "CameraController"
+                  plugin: SimpleController
+                  class: SimpleControllerItem
+                  data: 
+                    isImmediateMode: true
+                    controllerOptions: ""
+                    controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_CameraController.so"
+                    reloading: true
+                    RelativePathBase: "Controller directory"
         - 
-          id: 4
+          id: 7
           name: "Labo1"
           plugin: Body
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/Labo1/Labo1.body"
             currentBaseLink: "Base"
-            rootPosition: [ 0, 0, 0 ]
+            rootPosition: [ 0, 2, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0 ]
+            initialRootPosition: [ 0, 2, 0 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -73,28 +107,28 @@ items:
             selfCollisionDetection: false
             isEditable: false
         - 
-          id: 5
+          id: 8
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
           data: 
             timestep: 0.001
             realtimeSync: true
-            recording: "off"
+            recording: "full"
             timeRangeMode: "Unlimited"
-            timeLength: 60
+            timeLength: 180
             allLinkPositionOutputMode: false
             deviceStateOutput: true
-            selfCollision: false
+            selfCollision: true
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
             dynamicsMode: "Forward dynamics"
             integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
-            staticFriction: 0.5
-            dynamicFriction: 0.5
-            cullingThresh: 0.01
+            staticFriction: 1
+            dynamicFriction: 1
+            cullingThresh: 0.005
             contactCullingDepth: 0.05
             errorCriterion: 0.001
             maxNumIterations: 1000
@@ -109,6 +143,7 @@ views:
     name: "CameraImage"
     plugin: Base
     class: ImageView
+    mounted: true
   - 
     id: 1
     plugin: Base
@@ -120,9 +155,8 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 5 ]
-      checked: [ 2, 4 ]
-      expanded: [ 1, 2 ]
+      checked: [ 2, 7 ]
+      expanded: [ 1, 2, 3 ]
   - 
     id: 3
     plugin: Base
@@ -147,7 +181,7 @@ views:
       additionalLights: true
       shadowLights: 
       fog: true
-      floorGrid: false
+      floorGrid: true
       floorGridSpan: 10
       floorGridInterval: 0.5
       xzGridSpan: 10
@@ -172,9 +206,9 @@ views:
           fieldOfView: 0.698132
           near: 0.01
           far: 100
-          eye: [ -4.63487489, -3.23175507, 1.97102796 ]
-          direction: [ 0.927878472, 0.212603228, -0.30633545 ]
-          up: [ 0.298597557, 0.0684171543, 0.951923627 ]
+          eye: [ -5.85136729, -3.19736007, 2.71161714 ]
+          direction: [ 0.764043382, 0.551524665, -0.334751034 ]
+          up: [ 0.271423664, 0.195927154, 0.942306609 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -187,7 +221,7 @@ views:
       dedicatedItemTreeViewChecks: false
   - 
     id: 5
-    name: "Joystick"
+    name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
@@ -211,6 +245,7 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
+      currentBodyItem: 7
   - 
     id: 8
     plugin: Body
@@ -218,15 +253,17 @@ views:
     mounted: true
     state: 
       listingMode: "Link List"
+      currentBodyItem: 7
   - 
     id: 9
     plugin: OpenRTM
     class: RTSNameServerView
+    mounted: true
 toolbars: 
   "TimeBar": 
     minTime: 0
     maxTime: 30
-    frameRate: 1000
+    frameRate: 100
     playbackFrameRate: 50
     idleLoopDrivenMode: false
     currentTime: 0
@@ -241,6 +278,8 @@ toolbars:
     snapDistance: 0.025
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 7
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -287,7 +326,7 @@ Body:
         showPpcom: false
         showZmp: false
       - 
-        bodyItem: 4
+        bodyItem: 7
         showCenterOfMass: false
         showPpcom: false
         showZmp: false
@@ -310,12 +349,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 472, 2012 ]
+      sizes: [ 473, 2011 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 749, 748 ]
+          sizes: [ 765, 765 ]
           children: 
             - 
               type: pane
@@ -323,40 +362,48 @@ viewAreas:
               current: 2
             - 
               type: pane
-              views: [ 1, 8 ]
+              views: [ 1, 8, 9 ]
               current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 1069, 428 ]
+          sizes: [ 1093, 437 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 939, 1067 ]
+              sizes: [ 939, 1066 ]
               children: 
                 - 
                   type: pane
-                  views: [ 6, 7 ]
+                  views: [ 6, 7, 0 ]
                   current: 6
                 - 
                   type: pane
                   views: [ 4 ]
                   current: 4
             - 
-              type: pane
-              views: [ 3, 5 ]
-              current: 3
+              type: splitter
+              orientation: horizontal
+              sizes: [ 1003, 1002 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+                - 
+                  type: pane
+                  views: [ 5 ]
+                  current: 5
 layoutOfToolBars: 
   rows: 
     - 
       - { name: "FileBar", x: 0, priority: 0 }
       - { name: "ScriptBar", x: 48, priority: 0 }
       - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1061, priority: 0 }
-      - { name: "GraphBar", x: 1377, priority: 0 }
-      - { name: "SimulationBar", x: 1487, priority: 0 }
-      - { name: "BodyBar", x: 1690, priority: 0 }
-    - 
-      - { name: "KinematicsBar", x: 0, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 241, priority: 0 }
+      - { name: "SceneBar", x: 1218, priority: 0 }
+      - { name: "GraphBar", x: 1528, priority: 0 }
+      - { name: "SimulationBar", x: 1638, priority: 0 }
+      - { name: "BodyBar", x: 1841, priority: 0 }
+      - { name: "KinematicsBar", x: 2109, priority: 0 }
+      - { name: "BodyMotionGenerationBar", x: 2350, priority: 0 }

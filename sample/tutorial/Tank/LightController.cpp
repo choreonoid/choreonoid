@@ -13,7 +13,7 @@ class LightController : public SimpleController
 public:
     virtual bool initialize(SimpleControllerIO* io)
     {
-        light = io->body()->findDevice<SpotLight>("MainLight");
+        light = io->body()->findDevice<SpotLight>("Light");
         oldButtonState = false;
         return true;
     }
