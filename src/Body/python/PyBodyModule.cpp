@@ -267,9 +267,9 @@ BOOST_PYTHON_MODULE(Body)
             .def(other<BodyMotion::Frame>() >> self)
             ;
 
-        enum_<Body::ExtraJointType>("ExtraJointType")
-            .value("EJ_PISTON", Body::EJ_PISTON) 
-            .value("EJ_BALL", Body::EJ_BALL);
+    //    enum_<Body::ExtraJointType>("ExtraJointType")
+    //        .value("EJ_PISTON", Body::EJ_PISTON)
+    //        .value("EJ_BALL", Body::EJ_BALL);
     }
 
     implicitly_convertible<BodyPtr, ReferencedPtr>();
