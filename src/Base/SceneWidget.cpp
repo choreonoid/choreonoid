@@ -132,6 +132,7 @@ public:
     SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
+    CheckBox rotate180Check;
 
     LazyCaller updateDefaultLightsLater;
 
@@ -319,6 +320,8 @@ public:
 
     void onNewDisplayListDoubleRenderingToggled(bool on);
     void onBufferForPickingToggled(bool on);
+
+    void onRotate180Toggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
     void updateLatestEvent(int x, int y, int modifiers);
@@ -958,6 +961,13 @@ void SceneWidgetImpl::onBufferForPickingToggled(bool on)
             pixelBufferForPicking = 0;
         }
     }
+}
+
+
+void SceneWidgetImpl::onRotate180Toggled(bool on)
+{
+    renderer->setRotate180(on);
+    update();
 }
 
 
@@ -2926,8 +2936,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout();
     for(int i=0; i < NUM_SHADOWS; ++i){
-        hbox = new QHBoxLayout();
         Shadow& shadow = shadows[i];
         shadow.check.setText(QString(_("Shadow %1")).arg(i+1));
         shadow.check.setChecked(false);
@@ -2938,9 +2948,10 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         shadow.lightSpin.setValue(0);
         shadow.lightSpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
         hbox->addWidget(&shadow.lightSpin);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
     }
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
     hbox = new QHBoxLayout();
     shadowAntiAliasingCheck.setText(_("Anti-aliasing of shadows"));
     shadowAntiAliasingCheck.setChecked(true);
@@ -3097,6 +3108,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     bufferForPickingCheck.setChecked(true);
     bufferForPickingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onBufferForPickingToggled, impl, _1));
     hbox->addWidget(&bufferForPickingCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout();
+    rotate180Check.setText(_("Rotate the view 180 degree"));
+    rotate180Check.setChecked(false);
+    rotate180Check.sigToggled().connect([=](bool on){ impl->onRotate180Toggled(on); });
+    hbox->addWidget(&rotate180Check);
     hbox->addStretch();
     vbox->addLayout(hbox);
 

@@ -145,6 +145,7 @@ void GLSceneRenderer::setViewport(int x, int y, int width, int height)
         impl->aspectRatio = (double)width / height;
     }
     impl->viewport << x, y, width, height;
+    //glViewport(x, y, width, height);
     glViewport(x, y, width, height);
 }
 
@@ -234,6 +235,12 @@ void GLSceneRenderer::enableShadowOfLight(int index, bool on)
 
 
 void GLSceneRenderer::enableShadowAntiAliasing(bool on)
+{
+
+}
+
+
+void GLSceneRenderer::setRotate180(bool on)
 {
 
 }
