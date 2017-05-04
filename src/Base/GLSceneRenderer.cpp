@@ -240,7 +240,7 @@ void GLSceneRenderer::enableShadowAntiAliasing(bool on)
 }
 
 
-void GLSceneRenderer::setRotate180(bool on)
+void GLSceneRenderer::setUpsideDown(bool on)
 {
 
 }

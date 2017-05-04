@@ -79,7 +79,7 @@ public:
 
     virtual void setColor(const Vector3f& color) = 0;
 
-    virtual void setRotate180(bool on);
+    virtual void setUpsideDown(bool on);
 
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);

@@ -74,7 +74,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void setColor(const Vector3f& color) override;
 
-    virtual void setRotate180(bool on) override;
+    virtual void setUpsideDown(bool on) override;
 
     void setDiffuseColor(const Vector3f& color);
     void setAmbientColor(const Vector3f& color);

@@ -132,7 +132,7 @@ public:
     SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
-    CheckBox rotate180Check;
+    CheckBox upsideDownCheck;
 
     LazyCaller updateDefaultLightsLater;
 
@@ -321,7 +321,7 @@ public:
     void onNewDisplayListDoubleRenderingToggled(bool on);
     void onBufferForPickingToggled(bool on);
 
-    void onRotate180Toggled(bool on);
+    void onUpsideDownToggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
     void updateLatestEvent(int x, int y, int modifiers);
@@ -964,9 +964,9 @@ void SceneWidgetImpl::onBufferForPickingToggled(bool on)
 }
 
 
-void SceneWidgetImpl::onRotate180Toggled(bool on)
+void SceneWidgetImpl::onUpsideDownToggled(bool on)
 {
-    renderer->setRotate180(on);
+    renderer->setUpsideDown(on);
     update();
 }
 
@@ -3112,10 +3112,10 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
-    rotate180Check.setText(_("Rotate the view 180 degree"));
-    rotate180Check.setChecked(false);
-    rotate180Check.sigToggled().connect([=](bool on){ impl->onRotate180Toggled(on); });
-    hbox->addWidget(&rotate180Check);
+    upsideDownCheck.setText(_("Upside down"));
+    upsideDownCheck.setChecked(false);
+    upsideDownCheck.sigToggled().connect([=](bool on){ impl->onUpsideDownToggled(on); });
+    hbox->addWidget(&upsideDownCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -3188,6 +3188,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("showFPS", fpsCheck.isChecked());
     archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
     archive.write("useBufferForPicking", bufferForPickingCheck.isChecked());
+    archive.write("upsideDown", upsideDownCheck.isChecked());
 }
 
 
@@ -3237,4 +3238,5 @@ void ConfigDialog::restoreState(const Archive& archive)
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
+    upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
 }

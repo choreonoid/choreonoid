@@ -285,7 +285,7 @@ public:
     float pointSize;
     float lineWidth;
 
-    bool isViewRotated180Degee;
+    bool isUpsideDownEnabled;
 
     std::mutex newExtensionMutex;
     vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
@@ -426,7 +426,7 @@ void GLSLSceneRendererImpl::initialize()
     normalVisualizationMaterial = new SgMaterial;
     normalVisualizationMaterial->setDiffuseColor(Vector3f(0.0f, 1.0f, 0.0f));
 
-    isViewRotated180Degee = false;
+    isUpsideDownEnabled = false;
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
@@ -843,7 +843,7 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
             projectionMatrix);
     }
 
-    if(isViewRotated180Degee){
+    if(isUpsideDownEnabled){
         Affine3 T = cameraPosition * AngleAxis(PI, Vector3(0.0, 0.0, 1.0));
         viewMatrix = T.inverse(Eigen::Isometry);
     } else {
@@ -2055,7 +2055,7 @@ void GLSLSceneRenderer::enableUnusedResourceCheck(bool on)
 }
 
 
-void GLSLSceneRenderer::setRotate180(bool on)
+void GLSLSceneRenderer::setUpsideDown(bool on)
 {
-    impl->isViewRotated180Degee = on;
+    impl->isUpsideDownEnabled = on;
 }
