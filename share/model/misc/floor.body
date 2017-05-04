@@ -1,9 +1,9 @@
 format: ChoreonoidBody
 formatVersion: 1.0
-name: floor
+name: Floor
 links:
   -
-    name: floor
+    name: Floor
     translation: [ 0, 0, -0.1 ]
     jointType: fixed
     elements:
