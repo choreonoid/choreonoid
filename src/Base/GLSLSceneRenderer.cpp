@@ -1656,14 +1656,21 @@ void GLSLSceneRendererImpl::renderPlot
 
         if(hasColors){
             SgColorArrayPtr colors;
+            const SgColorArray& orgColors = *plot->colors();
+            const SgIndexArray& colorIndices = plot->colorIndices();
             if(plot->colorIndices().empty()){
-                const SgColorArray& orgColors = *plot->colors();
                 if(orgColors.size() >= n){
                     colors = plot->colors();
                 } else {
                     colors = new SgColorArray(n);
                     std::copy(orgColors.begin(), orgColors.end(), colors->begin());
                     std::fill(colors->begin() + orgColors.size(), colors->end(), orgColors.back());
+                }
+            } else {
+                const int m = colorIndices.size();
+                colors = new SgColorArray(m);
+                for(size_t i=0; i < m; ++i){
+                    (*colors)[i] = orgColors[colorIndices[i]];
                 }
             }
             glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
