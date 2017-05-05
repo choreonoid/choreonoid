@@ -285,6 +285,8 @@ public:
     float pointSize;
     float lineWidth;
 
+    bool isUpsideDownEnabled;
+
     std::mutex newExtensionMutex;
     vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
 
@@ -423,6 +425,8 @@ void GLSLSceneRendererImpl::initialize()
     normalVisualizationLength = 0.0f;
     normalVisualizationMaterial = new SgMaterial;
     normalVisualizationMaterial->setDiffuseColor(Vector3f(0.0f, 1.0f, 0.0f));
+
+    isUpsideDownEnabled = false;
 
     stateFlag.resize(NUM_STATE_FLAGS, false);
     clearGLState();
@@ -839,7 +843,12 @@ void GLSLSceneRendererImpl::renderCamera(SgCamera* camera, const Affine3& camera
             projectionMatrix);
     }
 
-    viewMatrix = cameraPosition.inverse(Eigen::Isometry);
+    if(isUpsideDownEnabled){
+        Affine3 T = cameraPosition * AngleAxis(PI, Vector3(0.0, 0.0, 1.0));
+        viewMatrix = T.inverse(Eigen::Isometry);
+    } else {
+        viewMatrix = cameraPosition.inverse(Eigen::Isometry);
+    }
     PV = projectionMatrix * viewMatrix.matrix();
 
     modelMatrixStack.clear();
@@ -1656,14 +1665,21 @@ void GLSLSceneRendererImpl::renderPlot
 
         if(hasColors){
             SgColorArrayPtr colors;
+            const SgColorArray& orgColors = *plot->colors();
+            const SgIndexArray& colorIndices = plot->colorIndices();
             if(plot->colorIndices().empty()){
-                const SgColorArray& orgColors = *plot->colors();
                 if(orgColors.size() >= n){
                     colors = plot->colors();
                 } else {
                     colors = new SgColorArray(n);
                     std::copy(orgColors.begin(), orgColors.end(), colors->begin());
                     std::fill(colors->begin() + orgColors.size(), colors->end(), orgColors.back());
+                }
+            } else {
+                const int m = colorIndices.size();
+                colors = new SgColorArray(m);
+                for(size_t i=0; i < m; ++i){
+                    (*colors)[i] = orgColors[colorIndices[i]];
                 }
             }
             glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
@@ -2036,4 +2052,10 @@ void GLSLSceneRenderer::enableUnusedResourceCheck(bool on)
         impl->nextResourceMap->clear();
     }
     impl->doUnusedResourceCheck = on;
+}
+
+
+void GLSLSceneRenderer::setUpsideDown(bool on)
+{
+    impl->isUpsideDownEnabled = on;
 }

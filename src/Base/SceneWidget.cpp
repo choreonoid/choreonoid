@@ -132,6 +132,7 @@ public:
     SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
+    CheckBox upsideDownCheck;
 
     LazyCaller updateDefaultLightsLater;
 
@@ -319,6 +320,8 @@ public:
 
     void onNewDisplayListDoubleRenderingToggled(bool on);
     void onBufferForPickingToggled(bool on);
+
+    void onUpsideDownToggled(bool on);
         
     void updateLatestEvent(QKeyEvent* event);
     void updateLatestEvent(int x, int y, int modifiers);
@@ -958,6 +961,13 @@ void SceneWidgetImpl::onBufferForPickingToggled(bool on)
             pixelBufferForPicking = 0;
         }
     }
+}
+
+
+void SceneWidgetImpl::onUpsideDownToggled(bool on)
+{
+    renderer->setUpsideDown(on);
+    update();
 }
 
 
@@ -2926,8 +2936,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout();
     for(int i=0; i < NUM_SHADOWS; ++i){
-        hbox = new QHBoxLayout();
         Shadow& shadow = shadows[i];
         shadow.check.setText(QString(_("Shadow %1")).arg(i+1));
         shadow.check.setChecked(false);
@@ -2938,9 +2948,10 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         shadow.lightSpin.setValue(0);
         shadow.lightSpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
         hbox->addWidget(&shadow.lightSpin);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
     }
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
     hbox = new QHBoxLayout();
     shadowAntiAliasingCheck.setText(_("Anti-aliasing of shadows"));
     shadowAntiAliasingCheck.setChecked(true);
@@ -3100,6 +3111,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout();
+    upsideDownCheck.setText(_("Upside down"));
+    upsideDownCheck.setChecked(false);
+    upsideDownCheck.sigToggled().connect([=](bool on){ impl->onUpsideDownToggled(on); });
+    hbox->addWidget(&upsideDownCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
     topVBox->addLayout(vbox);
 
     topVBox->addWidget(new HSeparator());
@@ -3169,6 +3188,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("showFPS", fpsCheck.isChecked());
     archive.write("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked());
     archive.write("useBufferForPicking", bufferForPickingCheck.isChecked());
+    archive.write("upsideDown", upsideDownCheck.isChecked());
 }
 
 
@@ -3218,4 +3238,5 @@ void ConfigDialog::restoreState(const Archive& archive)
     fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     newDisplayListDoubleRenderingCheck.setChecked(archive.get("enableNewDisplayListDoubleRendering", newDisplayListDoubleRenderingCheck.isChecked()));
     bufferForPickingCheck.setChecked(archive.get("useBufferForPicking", bufferForPickingCheck.isChecked()));
+    upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
 }
