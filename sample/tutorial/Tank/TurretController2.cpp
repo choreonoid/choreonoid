@@ -20,8 +20,8 @@ public:
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
             qref[i] = qold[i] = joint->q();
-            io->setLinkOutput(joint, JOINT_TORQUE);
             io->setLinkInput(joint, JOINT_ANGLE);
+            io->setLinkOutput(joint, JOINT_TORQUE);
         }
 
         dt = io->timeStep();

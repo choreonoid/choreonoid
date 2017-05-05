@@ -14,8 +14,8 @@ public:
     {
         joint = io->body()->link("TURRET_P");
 
-        io->setLinkOutput(joint, JOINT_TORQUE);
         io->setLinkInput (joint, JOINT_ANGLE);
+        io->setLinkOutput(joint, JOINT_TORQUE);
 
         qref = qold = joint->q();
 
