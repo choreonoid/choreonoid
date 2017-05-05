@@ -156,7 +156,7 @@ links:
       0,    0.02, 0,
       0,    0,    0.02 ]
     elements:
-      Shape: &CRAWLER 
+      Shape: &TRACK 
         geometry:
           type: Extrusion
           crossSection: [
@@ -183,4 +183,4 @@ links:
       0,    0.02, 0,
       0,    0,    0.02 ]
     elements:
-      Shape: *CRAWLER 
+      Shape: *TRACK 
