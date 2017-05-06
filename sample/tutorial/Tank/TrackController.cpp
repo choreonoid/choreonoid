@@ -23,11 +23,13 @@ public:
 
     virtual bool control()
     {
+        static const int trackAxis[] = { 0, 1 };
+        
         joystick.readCurrentState();
 
         double pos[2];
         for(int i=0; i < 2; ++i){
-            pos[i] = joystick.getPosition(i);
+            pos[i] = joystick.getPosition(trackAxis[i]);
             if(fabs(pos[i]) < 0.25){
                 pos[i] = 0.0;
             }

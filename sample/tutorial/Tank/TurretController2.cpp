@@ -33,7 +33,7 @@ public:
     {
         static const double P = 200.0;
         static const double D = 50.0;
-        static const int cannonAxis[] = { 3, 4 };
+        static const int turretAxis[] = { 3, 4 };
 
         joystick.readCurrentState();
 
@@ -43,7 +43,7 @@ public:
             double dq = (q - qold[i]) / dt;
             double dqref = 0.0;
 
-            double pos = joystick.getPosition(cannonAxis[i]);
+            double pos = joystick.getPosition(turretAxis[i]);
             if(fabs(pos) > 0.25){
                 double deltaq = 0.002 * pos;
                 qref[i] += deltaq;
