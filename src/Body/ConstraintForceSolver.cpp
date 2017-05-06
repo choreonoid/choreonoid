@@ -927,15 +927,18 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
                 if (contact.depth > contactCorrectionDepth * 2.0){
                     contact.depth = contactCorrectionDepth * 2.0;
                 }
-                Vector3 axis = link->R() * link->a();
-                Vector3 n(collision.normal);
-                Vector3 dir = axis.cross(n);
-                if (k) dir *= -1.0;
-                dir.normalize();
-                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
-                    v[k] += link->dq() * dir;
+                const Vector3 axis = link->R() * link->a();
+                Vector3 direction;
+                if(k==0){
+                    direction = axis.cross(collision.normal);
                 } else {
-                    v[k] += link->u() * dir; // CRAWLER_JOINT
+                    direction = collision.normal.cross(axis);
+                }
+                direction.normalize();
+                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+                    v[k] += link->dq() * direction;
+                } else {
+                    v[k] += link->u() * direction; // CRAWLER_JOINT
                 }
             }
         }
