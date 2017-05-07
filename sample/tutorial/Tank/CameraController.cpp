@@ -8,31 +8,35 @@ class CameraController : public SimpleController
 {
     Camera* camera;
     Joystick joystick;
-    bool oldButtonState;
+    bool prevButtonState;
+    std::ostream* os;
     
 public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         camera = io->body()->findDevice<Camera>("Camera");
         io->enableInput(camera);
-        oldButtonState = false;
+        prevButtonState = false;
+        os = &io->os();
         return true;
     }
 
     virtual bool control()
     {
+        static const int button[] = { 1 };
+        
         joystick.readCurrentState();
 
-        bool currentState = joystick.getButtonState(1);
-        if(currentState && !oldButtonState){
+        bool currentState = joystick.getButtonState(button[0]);
+        if(currentState && !prevButtonState){
             const Image& image = camera->constImage();
             if(!image.empty()){
                 std::string filename = camera->name() + ".png";
                 camera->constImage().save(filename);
-                os() << "The image of " << camera->name() << " has been saved to \"" << filename << "\"." << std::endl;
+                (*os) << "The image of " << camera->name() << " has been saved to \"" << filename << "\"." << std::endl;
             }
         }
-        oldButtonState = currentState;
+        prevButtonState = currentState;
 
         return true;
     }

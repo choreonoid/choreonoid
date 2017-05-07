@@ -6,8 +6,8 @@ using namespace cnoid;
 class TurretController2 : public SimpleController
 { 
     Link* joints[2];
-    double qref[2];
-    double qold[2];
+    double q_ref[2];
+    double q_prev[2];
     double dt;
     Joystick joystick;
 
@@ -19,7 +19,7 @@ public:
 
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
-            qref[i] = qold[i] = joint->q();
+            q_ref[i] = q_prev[i] = joint->q();
             io->setLinkInput(joint, JOINT_ANGLE);
             io->setLinkOutput(joint, JOINT_TORQUE);
         }
@@ -33,25 +33,25 @@ public:
     {
         static const double P = 200.0;
         static const double D = 50.0;
-        static const int turretAxis[] = { 3, 4 };
+        static const int axisID[] = { 3, 4 };
 
         joystick.readCurrentState();
 
         for(int i=0; i < 2; ++i){
             Link* joint = joints[i];
             double q = joint->q();
-            double dq = (q - qold[i]) / dt;
-            double dqref = 0.0;
+            double dq = (q - q_prev[i]) / dt;
+            double dq_ref = 0.0;
 
-            double pos = joystick.getPosition(turretAxis[i]);
+            double pos = joystick.getPosition(axisID[i]);
             if(fabs(pos) > 0.25){
                 double deltaq = 0.002 * pos;
-                qref[i] += deltaq;
-                dqref = deltaq / dt;
+                q_ref[i] += deltaq;
+                dq_ref = deltaq / dt;
             }
             
-            joint->u() = P * (qref[i] - q) + D * (dqref - dq);
-            qold[i] = q;
+            joint->u() = P * (q_ref[i] - q) + D * (dq_ref - dq);
+            q_prev[i] = q;
         }
 
         return true;

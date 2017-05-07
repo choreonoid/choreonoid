@@ -5,8 +5,8 @@ using namespace cnoid;
 class TurretController1 : public SimpleController
 {
     Link* joint;
-    double qref;
-    double qold;
+    double q_ref;
+    double q_prev;
     double dt;
 
 public:
@@ -17,7 +17,7 @@ public:
         io->setLinkInput (joint, JOINT_ANGLE);
         io->setLinkOutput(joint, JOINT_TORQUE);
 
-        qref = qold = joint->q();
+        q_ref = q_prev = joint->q();
 
         dt = io->timeStep();
 
@@ -31,10 +31,10 @@ public:
         static const double D = 50.0;
 
         double q = joint->q(); // input
-        double dq = (q - qold) / dt;
-        double dqref = 0.0;
-        joint->u() = P * (qref - q) + D * (dqref - dq); // output
-        qold = q;
+        double dq = (q - q_prev) / dt;
+        double dq_ref = 0.0;
+        joint->u() = P * (q_ref - q) + D * (dq_ref - dq); // output
+        q_prev = q;
         
         return true;
     }

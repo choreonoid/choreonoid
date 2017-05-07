@@ -8,33 +8,35 @@ class LightController : public SimpleController
 {
     SpotLight* light;
     Joystick joystick;
-    bool oldButtonState;
+    bool prevButtonState;
 
 public:
     virtual bool initialize(SimpleControllerIO* io)
     {
         light = io->body()->findDevice<SpotLight>("Light");
-        oldButtonState = false;
+        prevButtonState = false;
         return true;
     }
 
     virtual bool control()
     {
+        static const int buttonID[] = { 0, 2, 3 };
+
         joystick.readCurrentState();
 
         bool changed = false;
 
-        bool currentState = joystick.getButtonState(0);
-        if(currentState && !oldButtonState){
+        bool currentState = joystick.getButtonState(buttonID[0]);
+        if(currentState && !prevButtonState){
             light->on(!light->on());
             changed = true;
         }
-        oldButtonState = currentState;
+        prevButtonState = currentState;
 
-        if(joystick.getButtonState(2)){
+        if(joystick.getButtonState(buttonID[1])){
             light->setBeamWidth(std::min(0.7854f, light->beamWidth() + 0.001f));
             changed = true;
-        } else if(joystick.getButtonState(3)){
+        } else if(joystick.getButtonState(buttonID[2])){
             light->setBeamWidth(std::max(0.1f, light->beamWidth() - 0.001f));
             changed = true;
         }
