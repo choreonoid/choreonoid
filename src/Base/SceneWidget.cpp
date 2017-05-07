@@ -2870,9 +2870,9 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     updateDefaultLightsLater.setFunction(std::bind(&SceneWidgetImpl::updateDefaultLights, impl));
     
-    vbox->addLayout(new HSeparatorBox(new QLabel(_("Light"))));
+    vbox->addLayout(new HSeparatorBox(new QLabel(_("Lighting"))));
     hbox = new QHBoxLayout();
-    lightingCheck.setText(_("Lighiting"));
+    lightingCheck.setText(_("Do lighiting"));
     lightingCheck.setChecked(true);
     lightingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onLightingToggled, impl, _1));
     hbox->addWidget(&lightingCheck);
