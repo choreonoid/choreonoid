@@ -23,13 +23,13 @@ items:
           data: 
             modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: ""
-            rootPosition: [ -0.8, -2, 0.1 ]
+            rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
               1, 0, 0,
               0, 1, 0,
               0, 0, 1 ]
             jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ -0.8, -2, 0.1 ]
+            initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0,
               0, 1, 0,
@@ -214,19 +214,14 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -5.74105474, -4.60124674, 3.21961268 ]
+          eye: [ -6.44723288, -3.30408906, 3.23335936 ]
           direction: [ 0.819988251, 0.45015162, -0.353529047 ]
-          up: [ 0.309902039, 0.170127931, 0.935423547 ]
+          up: [ 0.309902039, 0.170127932, 0.935423547 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 10000
-      backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
   - 
     id: 4
     name: "Scene 2"

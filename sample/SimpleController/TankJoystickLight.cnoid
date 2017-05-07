@@ -21,18 +21,18 @@ items:
           data: 
             modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: ""
-            rootPosition: [ -0.8, -2, 0.1 ]
+            rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
               1, 0, 0,
               0, 1, 0,
               0, 0, 1 ]
             jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ -0.8, -2, 0.1 ]
+            initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0,
               0, 1, 0,
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000, 0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
