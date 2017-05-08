@@ -1454,21 +1454,19 @@ void GLSLSceneRendererImpl::writeMeshVertices(SgMesh* mesh, VertexResource* reso
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
     glEnableVertexAttribArray(0);
 
-    if(currentLightingProgram){
-        SgNormalArray normals;
-        writeMeshNormals(mesh, resource->newBuffer(), normals);
-        if(isNormalVisualizationEnabled){
-            auto lines = new SgLineSet;
-            auto lineVertices = lines->getOrCreateVertices();
-            for(size_t i=0; i < vertices.size(); ++i){
-                const Vector3f& v = vertices[i];
-                lineVertices->push_back(v);
-                lineVertices->push_back(v + normals[i] * normalVisualizationLength);
-                lines->addLine(i*2, i*2+1);
-            }
-            lines->setMaterial(normalVisualizationMaterial);
-            resource->normalVisualization = lines;
+    SgNormalArray normals;
+    writeMeshNormals(mesh, resource->newBuffer(), normals);
+    if(isNormalVisualizationEnabled){
+        auto lines = new SgLineSet;
+        auto lineVertices = lines->getOrCreateVertices();
+        for(size_t i=0; i < vertices.size(); ++i){
+            const Vector3f& v = vertices[i];
+            lineVertices->push_back(v);
+            lineVertices->push_back(v + normals[i] * normalVisualizationLength);
+            lines->addLine(i*2, i*2+1);
         }
+        lines->setMaterial(normalVisualizationMaterial);
+        resource->normalVisualization = lines;
     }
 
     if(mesh->hasTexCoords()){

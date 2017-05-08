@@ -182,13 +182,14 @@ views:
       viewpointControlMode: thirdPerson
       collisionLines: false
       polygonMode: fill
-      defaultHeadLight: false
-      defaultHeadLightIntensity: 0.75
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.4
       headLightLightingFromBack: false
       worldLight: true
       worldLightIntensity: 0.1
       worldLightAmbient: 0
       additionalLights: true
+      shadowLights: [ 0, 1 ]
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -240,6 +241,7 @@ views:
       worldLightIntensity: 0.5
       worldLightAmbient: 0.3
       additionalLights: true
+      shadowLights: [ 0 ]
       fog: true
       floorGrid: false
       floorGridSpan: 10
