@@ -49,7 +49,7 @@ links:
     elements:
       -
         type: Resource
-        uri: tank2.dae
+        uri: "resource/tank2.dae"
         node: TURRET_P
       - 
         # Turret
@@ -75,7 +75,7 @@ links:
               0,    0,   0.1 ]
       -
         type: SpotLight
-        name: MainLight
+        name: Light
         translation: [ 0.08, 0, 0.1 ]
         direction: [ 1, 0, 0 ]
         beamWidth: 36
