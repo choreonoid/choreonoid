@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-07 21:34+0900\n"
+"POT-Creation-Date: 2017-05-08 23:50+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -504,43 +504,47 @@ msgstr "'data'キーがマッピング型のデータを有していません。
 msgid "\"%1%\" cannot be restored."
 msgstr "\"%1%\" を読み込むことができません。"
 
-#: ItemTreeView.cpp:246
+#: ItemTreeView.cpp:243
 msgid "Items"
 msgstr "アイテム"
 
-#: ItemTreeView.cpp:337
+#: ItemTreeView.cpp:334
 msgid "Cut"
 msgstr "カット"
 
-#: ItemTreeView.cpp:339
+#: ItemTreeView.cpp:336
 msgid "Copy (single)"
 msgstr "コピー（単独）"
 
-#: ItemTreeView.cpp:341
+#: ItemTreeView.cpp:338
 msgid "Copy (sub tree)"
 msgstr "コピー（サブツリー）"
 
-#: ItemTreeView.cpp:343
+#: ItemTreeView.cpp:340
 msgid "Paste"
 msgstr "ペースト"
 
-#: ItemTreeView.cpp:347
+#: ItemTreeView.cpp:344
 msgid "Check"
 msgstr "チェック"
 
-#: ItemTreeView.cpp:349
+#: ItemTreeView.cpp:346
 msgid "Uncheck"
 msgstr "アンチェック"
 
-#: ItemTreeView.cpp:351
+#: ItemTreeView.cpp:348
 msgid "Toggle checks"
 msgstr "チェックの反転"
 
-#: ItemTreeView.cpp:355
+#: ItemTreeView.cpp:352
+msgid "Reload"
+msgstr "再読み込み"
+
+#: ItemTreeView.cpp:356
 msgid "Select all"
 msgstr "全て選択"
 
-#: ItemTreeView.cpp:357
+#: ItemTreeView.cpp:358
 msgid "Clear selection"
 msgstr "選択解除"
 
@@ -1525,4 +1529,3 @@ msgstr ""
 #: VirtualJoystickView.cpp:105
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
-
