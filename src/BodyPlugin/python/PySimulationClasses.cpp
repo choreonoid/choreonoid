@@ -126,6 +126,8 @@ void exportSimulationClasses()
             .def("set2Dmode", &AISTSimulatorItem::set2Dmode)
             .def("setKinematicWalkingEnabled", &AISTSimulatorItem::setKinematicWalkingEnabled)
             .def("setConstraintForceOutputEnabled", &AISTSimulatorItem::setConstraintForceOutputEnabled)
+            .def("clearExtraJoint", &AISTSimulatorItem::clearExtraJoint)
+            .def("addExtraJoint", &AISTSimulatorItem::addExtraJoint)
             ;
 
         enum_<AISTSimulatorItem::DynamicsMode>("DynamicsMode")

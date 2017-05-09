@@ -487,11 +487,18 @@ void CFSImpl::initWorldExtraJoints()
 {
     for(int i=0; i<world.extrajoints.size(); i++){
         ExtraJoint& extrajoint = world.extrajoints[i];
-        Body* body0 = extrajoint.body[0];
-        Body* body1 = extrajoint.body[1];
-        int bodyIndex0 = world.bodyIndex(body0->name());
-        int bodyIndex1 =  world.bodyIndex(body1->name());
-        initExtraJointSub(extrajoint, bodyIndex0, bodyIndex1);
+        int bodyIndex[2];
+        for(int k=0; k<2; k++){
+            if(!extrajoint.body[k]){
+                bodyIndex[k] = world.bodyIndex(extrajoint.bodyName[k]);
+                Body* body = world.body(bodyIndex[k]);
+                extrajoint.body[k] = body;
+                extrajoint.link[k] = body->link(extrajoint.linkName[k]);
+            }else{
+                bodyIndex[k] = world.bodyIndex(extrajoint.body[k]->name());
+            }
+        }
+        initExtraJointSub(extrajoint, bodyIndex[0], bodyIndex[1]);
     }
 }
 
@@ -511,7 +518,7 @@ void CFSImpl::initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int body
 {
     ExtraJointLinkPairPtr linkPair;
     linkPair = std::make_shared<ExtraJointLinkPair>();
-    linkPair->isSameBodyPair = true;
+    linkPair->isSameBodyPair = (bodyIndex0 == bodyIndex1);
     linkPair->isNonContactConstraint = true;
 
     if(extrajoint.type == ExtraJoint::EJ_PISTON){
@@ -545,7 +552,7 @@ void CFSImpl::initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int body
     }
 
     int index[2];
-    index[0] = bodyIndex0; index[1] = bodyIndex0;
+    index[0] = bodyIndex0; index[1] = bodyIndex1;
     for(int k=0; k < 2; ++k){
         linkPair->bodyIndex[k] = index[k];
         linkPair->bodyData[k] = &bodiesData[index[k]];
