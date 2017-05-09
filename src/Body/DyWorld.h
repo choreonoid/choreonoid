@@ -7,6 +7,7 @@
 #define CNOID_BODY_DYWORLD_H
 
 #include "ForwardDynamics.h"
+#include "ExtraJoint.h"
 #include <cnoid/TimeMeasure>
 #include <map>
 #include "exportdecl.h"
@@ -164,6 +165,8 @@ public:
        @return pair of index and flag. The flag is true if the pair was already registered, false othewise.
     */
     std::pair<int,bool> getIndexOfLinkPairs(DyLink* link1, DyLink* link2);
+
+    std::vector<ExtraJoint> extrajoints;
 
 protected:
 

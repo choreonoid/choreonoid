@@ -131,6 +131,8 @@ public:
     void setForcedPosition(BodyItem* bodyItem, const Position& T);
     void doSetForcedPosition();
     void doPutProperties(PutPropertyFunction& putProperty);
+    void addExtraJoint(ExtraJoint& extrajoint);
+    void clearExtraJoint();
     bool store(Archive& archive);
     bool restore(const Archive& archive);
 
@@ -663,6 +665,30 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     SimulatorItem::doPutProperties(putProperty);
     impl->doPutProperties(putProperty);
+}
+
+
+void AISTSimulatorItem::clearExtraJoint()
+{
+    impl->clearExtraJoint();
+}
+
+
+void AISTSimulatorItem::addExtraJoint(ExtraJoint& extrajoint)
+{
+    impl->addExtraJoint(extrajoint);
+}
+
+
+void AISTSimulatorItemImpl::clearExtraJoint()
+{
+    world.extrajoints.clear();
+}
+
+
+void AISTSimulatorItemImpl::addExtraJoint(ExtraJoint& extrajoint)
+{
+    world.extrajoints.push_back(extrajoint);
 }
 
 

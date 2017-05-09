@@ -267,12 +267,21 @@ BOOST_PYTHON_MODULE(Body)
             .def(other<BodyMotion::Frame>() >> self)
             ;
 
-        enum_<Body::ExtraJointType>("ExtraJointType")
-            .value("EJ_PISTON", Body::EJ_PISTON) 
-            .value("EJ_BALL", Body::EJ_BALL);
     }
 
     implicitly_convertible<BodyPtr, ReferencedPtr>();
+
+    {
+        scope ExtraJointScope = class_< ExtraJoint >("ExtraJoint", init<ExtraJoint::ExtraJointType, const Vector3&>())
+            .def("setType", &ExtraJoint::setType)
+            .def("setAxis", &ExtraJoint::setAxis)
+            .def("setPoint", &ExtraJoint::setPoint)
+            ;
+
+        enum_<ExtraJoint::ExtraJointType>("ExtraJointType")
+              .value("EJ_PISTON", ExtraJoint::EJ_PISTON)
+              .value("EJ_BALL", ExtraJoint::EJ_BALL);
+    }
 
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)

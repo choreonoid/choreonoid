@@ -60,6 +60,8 @@ public:
     void unregisterCollisionHandler(int handlerId);
     int collisionHandlerId(const std::string& name) const;
     void setCollisionHandler(Link* link1, Link* link2, int handlerId);
+    void addExtraJoint(ExtraJoint& extrajoint);
+    void clearExtraJoint();
 
 protected:
     virtual SimulationBody* createSimulationBody(Body* orgBody);
