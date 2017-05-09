@@ -23,16 +23,16 @@ items:
             currentBaseLink: ""
             rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
-              1, 0, 0,
-              0, 1, 0,
+              1, 0, 0, 
+              0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
-              1, 0, 0,
-              0, 1, 0,
+              1, 0, 0, 
+              0, 1, 0, 
               0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000, 0.000000 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -94,6 +94,7 @@ items:
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
+            selfCollision: false
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
@@ -119,17 +120,17 @@ items:
           data: 
             modelFile: "${SHARE}/model/misc/fountain.body"
             currentBaseLink: "Base"
-            rootPosition: [ 2.53, -2.05, 1.85 ]
+            rootPosition: [ 1.68, -0.55, 1.85 ]
             rootAttitude: [ 
               0.819152045, -2.42882936e-10, 0.573576436, 
               0.573576436, 1.08772247e-09, -0.819152044, 
               -2.42882936e-10, 1, 1.08772247e-09 ]
             jointPositions: [  ]
-            initialRootPosition: [ 2.53, -2.05, 1.85 ]
+            initialRootPosition: [ 1.68, -0.55, 1.85 ]
             initialRootAttitude: [ 
-              0.819152045, -7.59287078e-11, 0.573576436, 
-              0.573576436, 5.05570807e-10, -0.819152044, 
-              -7.59287078e-11, 1, 5.05570807e-10 ]
+              0.819152045, -5.74604586e-10, 0.573576436, 
+              0.573576436, 2.14443341e-09, -0.819152044, 
+              -5.74604586e-10, 1, 2.14443341e-09 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -140,19 +141,19 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "fire1.body"
+            modelFile: "${PROJECT_DIR}/fire1.body"
             currentBaseLink: "Base"
-            rootPosition: [ 2.261, -1.304, 0.693 ]
+            rootPosition: [ 1.411, 0.196, 0.693 ]
             rootAttitude: [ 
               0.656059029, -4.62126336e-17, 0.75470958, 
               0.75470958, 4.01720295e-17, -0.656059029, 
               0, 1, 6.123234e-17 ]
             jointPositions: [  ]
-            initialRootPosition: [ 2.261, -1.304, 0.693 ]
+            initialRootPosition: [ 1.411, 0.196, 0.693 ]
             initialRootAttitude: [ 
-              0.656059029, 0, 0.75470958, 
-              0.75470958, 0, -0.656059029, 
-              0, 1, 0 ]
+              0.656059029, -4.45527504e-11, 0.75470958, 
+              0.75470958, 2.15828244e-10, -0.656059029, 
+              -4.45527504e-11, 1, 2.15828244e-10 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -165,13 +166,13 @@ items:
           data: 
             modelFile: "${SHARE}/model/misc/smoke.body"
             currentBaseLink: "Base"
-            rootPosition: [ 1.1, -0.85, 0.22 ]
+            rootPosition: [ 0.25, 0.65, 0.22 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [ 1.1, -0.85, 0.22 ]
+            initialRootPosition: [ 0.25, 0.65, 0.22 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -244,7 +245,7 @@ views:
     mounted: true
     state: 
       selected: [ 8 ]
-      checked: [ 1, 2, 4, 7, 8 ]
+      checked: [ 1, 2, 4 ]
       expanded: [ 1, 2, 3, 7, 8, 9, 10, 11 ]
   - 
     id: 3
@@ -268,6 +269,9 @@ views:
       worldLightIntensity: 0.1
       worldLightAmbient: 0
       additionalLights: true
+      shadowLights: 
+        - 0
+        - 1
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -287,6 +291,7 @@ views:
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
+      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -356,6 +361,10 @@ views:
           selectedLinks: [ 0 ]
   - 
     id: 10
+    plugin: OpenRTM
+    class: RTSNameServerView
+  - 
+    id: 11
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -381,6 +390,39 @@ toolbars:
     current: 8
   "LeggedBodyBar": 
     stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -431,6 +473,11 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
+Media: 
+  "PulseAudioManager": 
+    keepStreamConnection: false
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false
 viewAreas: 
   - 
     type: embedded
@@ -438,12 +485,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 372, 1579 ]
+      sizes: [ 365, 1549 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 591, 590 ]
+          sizes: [ 471, 471 ]
           children: 
             - 
               type: pane
@@ -456,12 +503,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 946, 235 ]
+          sizes: [ 755, 187 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 787, 786 ]
+              sizes: [ 772, 771 ]
               children: 
                 - 
                   type: pane
@@ -474,7 +521,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 733, 840 ]
+              sizes: [ 719, 824 ]
               children: 
                 - 
                   type: pane
