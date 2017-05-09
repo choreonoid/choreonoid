@@ -2870,9 +2870,9 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     updateDefaultLightsLater.setFunction(std::bind(&SceneWidgetImpl::updateDefaultLights, impl));
     
-    vbox->addLayout(new HSeparatorBox(new QLabel(_("Light"))));
+    vbox->addLayout(new HSeparatorBox(new QLabel(_("Lighting"))));
     hbox = new QHBoxLayout();
-    lightingCheck.setText(_("Lighiting"));
+    lightingCheck.setText(_("Do lighiting"));
     lightingCheck.setChecked(true);
     lightingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onLightingToggled, impl, _1));
     hbox->addWidget(&lightingCheck);
@@ -3161,11 +3161,14 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("worldLightAmbient", worldLightAmbientSpin.value());
     archive.write("additionalLights", additionalLightsCheck.isChecked());
 
-    Listing* shadowLights = archive.openListing("shadowLights");
+    ListingPtr shadowLights = new Listing;
     for(int i=0; i < NUM_SHADOWS; ++i){
         if(shadows[i].check.isChecked()){
             shadowLights->append(shadows[i].lightSpin.value());
         }
+    }
+    if(!shadowLights->empty()){
+        archive.insert("shadowLights", shadowLights);
     }
     
     archive.write("fog", fogCheck.isChecked());
@@ -3205,16 +3208,17 @@ void ConfigDialog::restoreState(const Archive& archive)
     for(int i=0; i < NUM_SHADOWS; ++i){
         shadows[i].check.setChecked(false);
     }
+    
     Listing& shadowLights = *archive.findListing("shadowLights");
     if(shadowLights.isValid()){
-        int shadowIndex = 0;
+        int configIndex = 0;
         for(int i=0; i < shadowLights.size(); ++i){
-            if(shadowIndex >= NUM_SHADOWS){
+            if(configIndex == NUM_SHADOWS){
                 break;
             }
-            Shadow& shadow = shadows[shadowIndex++];
-            shadow.check.setChecked(true);
+            Shadow& shadow = shadows[configIndex++];
             shadow.lightSpin.setValue(shadowLights[i].toInt());
+            shadow.check.setChecked(true);
         }
     }
 

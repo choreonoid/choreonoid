@@ -708,7 +708,7 @@ void ODEBody::setExtraJoints(bool flipYZ)
 
     for(int j=0; j < n; ++j){
 
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
 
         ODELinkPtr odeLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -737,13 +737,13 @@ void ODEBody::setExtraJoints(bool flipYZ)
             }
 
             // \todo do the destroy management for these joints
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 jointID = dJointCreatePiston(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
                 dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
 
-            } else if(extraJoint.type == Body::EJ_BALL){
+            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 jointID = dJointCreateBall(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());

@@ -1659,7 +1659,7 @@ void AgXBody::setExtraJoints()
     Body* body = this->body();
     const int n = body->numExtraJoints();
     for(int j=0; j < n; ++j){
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
 
         AgXLinkPtr agxLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -1673,14 +1673,14 @@ void AgXBody::setExtraJoints()
             Link* link = agxLinkPair[0]->link;
             Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
             Vector3 a = link->attitude() * extraJoint.axis;
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 agx::HingeFrame hingeFrame;
                 hingeFrame.setAxis( agx::Vec3( a(0), a(1), a(2)) );
                 hingeFrame.setCenter( agx::Vec3( p(0), p(1), p(2)) );
                 agx::HingeRef hinge = new agx::Hinge( hingeFrame,
                         agxLinkPair[0]->agxRigidBody, agxLinkPair[1]->agxRigidBody );
                 simImpl->agxSimulation->add( hinge );
-            }else if(extraJoint.type == Body::EJ_BALL){
+            }else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 agx::BallJointFrame ballJointFrame;
                 ballJointFrame.setCenter( agx::Vec3( p(0), p(1), p(2)) );
                 agx::BallJointRef ballJoint = new agx::BallJoint( ballJointFrame,

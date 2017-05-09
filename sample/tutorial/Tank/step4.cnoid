@@ -37,6 +37,30 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "TurretController"
+              plugin: SimpleController
+              class: SimpleControllerItem
+              data: 
+                isImmediateMode: true
+                controllerOptions: ""
+                controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TurretController2.so"
+                reloading: true
+                RelativePathBase: "Controller directory"
+              children: 
+                - 
+                  id: 4
+                  name: "TrackController"
+                  plugin: SimpleController
+                  class: SimpleControllerItem
+                  data: 
+                    isImmediateMode: true
+                    controllerOptions: ""
+                    controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TrackController.so"
+                    reloading: true
+                    RelativePathBase: "Controller directory"
         - 
           id: 6
           name: "Floor"
@@ -113,6 +137,12 @@ views:
     id: 4
     plugin: Base
     class: SceneView
+    mounted: true
+  - 
+    id: 6
+    name: "Virtual Joystick"
+    plugin: Base
+    class: VirtualJoystickView
     mounted: true
   - 
     id: 7
@@ -199,9 +229,18 @@ viewAreas:
                   views: [ 4 ]
                   current: 4
             - 
-              type: pane
-              views: [ 3 ]
-              current: 3
+              type: splitter
+              orientation: horizontal
+              sizes: [ 500, 300 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+                - 
+                  type: pane
+                  views: [ 6 ]
+                  current: 6
 layoutOfToolBars: 
   rows: 
     - 

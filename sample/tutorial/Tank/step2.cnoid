@@ -37,6 +37,18 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "TurretController"
+              plugin: SimpleController
+              class: SimpleControllerItem
+              data: 
+                isImmediateMode: true
+                controllerOptions: ""
+                controller: "${PROGRAM_TOP}/lib/choreonoid-1.6/simplecontroller/TankTutorial_TurretController1.so"
+                reloading: true
+                RelativePathBase: "Controller directory"
         - 
           id: 6
           name: "Floor"
