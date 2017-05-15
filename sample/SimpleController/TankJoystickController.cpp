@@ -4,7 +4,7 @@
 */
 
 #include <cnoid/SimpleController>
-#include <cnoid/Light>
+#include <cnoid/SpotLight>
 #include <cnoid/Joystick>
 
 using namespace std;
@@ -12,12 +12,12 @@ using namespace cnoid;
 
 namespace {
 
-const int turretAxis[] = { 3, 4 };
-const int buttonIds[] = { 0, 1, 2, 3, 4, 5 };
+const int axisID[] = { 0, 1, 3, 4 };
+const int buttonID[] = { 0, 2, 3 };
 
 }
 
-class TankJoystickController : public cnoid::SimpleController
+class TankJoystickController : public SimpleController
 { 
     Link* trackL;
     Link* trackR;
@@ -26,6 +26,7 @@ class TankJoystickController : public cnoid::SimpleController
     double qprev[2];
     double dt;
     LightPtr light;
+    SpotLightPtr spotLight;
     bool prevLightButtonState;
     Joystick joystick;
 
@@ -63,6 +64,7 @@ public:
         DeviceList<Light> lights(body->devices());
         if(!lights.empty()){
             light = lights.front();
+            spotLight = dynamic_pointer_cast<SpotLight>(light);
         }
         prevLightButtonState = false;
 
@@ -83,6 +85,17 @@ public:
     {
         joystick.readCurrentState();
         
+        double pos[2];
+        for(int i=0; i < 2; ++i){
+            pos[i] = joystick.getPosition(axisID[i]);
+            if(fabs(pos[i]) < 0.2){
+                pos[i] = 0.0;
+            }
+        }
+        // set the velocity of each tracks
+        trackL->dq() = -2.0 * pos[1] + pos[0];
+        trackR->dq() = -2.0 * pos[1] - pos[0];
+        
         static const double P = 200.0;
         static const double D = 50.0;
 
@@ -91,7 +104,7 @@ public:
             double q = joint->q();
             double dq = (q - qprev[i]) / dt;
             double dqref = 0.0;
-            double pos = joystick.getPosition(turretAxis[i]);
+            double pos = joystick.getPosition(axisID[i + 2]);
             if(fabs(pos) > 0.25){
                 double deltaq = 0.002 * pos;
                 qref[i] += deltaq;
@@ -101,26 +114,31 @@ public:
             qprev[i] = q;
         }
 
-        double pos[2];
-        for(int i=0; i < 2; ++i){
-            pos[i] = joystick.getPosition(i);
-            if(fabs(pos[i]) < 0.2){
-                pos[i] = 0.0;
-            }
-        }
-        // set the velocity of each tracks
-        trackL->dq() = -2.0 * pos[1] + pos[0];
-        trackR->dq() = -2.0 * pos[1] - pos[0];
-        
         if(light){
-            bool lightButtonState = joystick.getButtonState(buttonIds[0]);
+            bool changed = false;
+            
+            bool lightButtonState = joystick.getButtonState(buttonID[0]);
             if(lightButtonState){
                 if(!prevLightButtonState){
                     light->on(!light->on());
-                    light->notifyStateChange();
+                    changed = true;
                 }
             }
             prevLightButtonState = lightButtonState;
+
+            if(spotLight){
+                if(joystick.getButtonState(buttonID[1])){
+                    spotLight->setBeamWidth(std::min(0.7854f, spotLight->beamWidth() + 0.001f));
+                    changed = true;
+                } else if(joystick.getButtonState(buttonID[2])){
+                    spotLight->setBeamWidth(std::max(0.1f, spotLight->beamWidth() - 0.001f));
+                    changed = true;
+                }
+            }
+
+            if(changed){
+                light->notifyStateChange();
+            }
         }
 
         return true;
