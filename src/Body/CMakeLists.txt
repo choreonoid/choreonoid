@@ -115,6 +115,7 @@ set(headers
   exportdecl.h
   gettext.h
   CollisionLinkPair.h
+  ExtraJoint.h
   )
 
 

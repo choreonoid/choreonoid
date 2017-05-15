@@ -70,6 +70,7 @@ set(headers
   CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h
+  AISTSimulatorItem.h
   )
 
 set(target CnoidBodyPlugin)
