@@ -15,6 +15,7 @@
 #include "SpotLight.h"
 #include <cnoid/YAMLSceneReader>
 #include <cnoid/EigenArchive>
+#include <cnoid/EigenUtil>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
@@ -150,6 +151,8 @@ public:
     bool readBody(Mapping* topNode);
     void readLinkNode(Mapping* linkNode);
     LinkPtr readLink(Mapping* linkNode);
+    vector<LinkInfoPtr> readContinuousTrack(ValueNodePtr crawlerNode, bool isDegreeMode);
+    vector<LinkInfoPtr> generateCrawlerNode(Mapping* linkNode, bool isDegreeMode);
     void setMassParameters(Link* link);
     //! \return true if any scene nodes other than Group and Transform are added in the sub tree
     bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
@@ -558,6 +561,12 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
+    ValueNodePtr crawlerNode = topNode->extract("ContinuousTrack");
+    if(crawlerNode){
+        vector<LinkInfoPtr> crawlerInfos = readContinuousTrack(crawlerNode, isDegreeMode());
+        linkInfos.insert(linkInfos.end(), crawlerInfos.begin(), crawlerInfos.end());
+    }
+
     // construct a link tree
     for(size_t i=0; i < linkInfos.size(); ++i){
         LinkInfo* info = linkInfos[i];
@@ -852,6 +861,176 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     return link;
 }
 
+vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::readContinuousTrack(ValueNodePtr crawlerNode, bool isDegreeMode){
+    vector<LinkInfoPtr> allCrawlerInfos;
+    allCrawlerInfos.clear();
+    if(crawlerNode->isListing()){
+        Listing& crawlerNodes = *crawlerNode->toListing();
+        for(int i=0; i < crawlerNodes.size(); ++i){
+            vector<LinkInfoPtr> crawlerInfo = generateCrawlerNode(crawlerNodes[i].toMapping(), isDegreeMode);
+            allCrawlerInfos.insert(allCrawlerInfos.end(), crawlerInfo.begin(), crawlerInfo.end());
+        }
+    } else if(crawlerNode->isMapping()){
+        allCrawlerInfos = generateCrawlerNode(crawlerNode->toMapping(), isDegreeMode);
+    }
+    return allCrawlerInfos;
+}
+
+
+vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::generateCrawlerNode(Mapping* linkNode, bool isDegreeMode)
+{
+    MappingPtr info = static_cast<Mapping*>(linkNode->clone());
+    string parent;
+    if(!extract(info, "parent", parent)){
+        info->throwException("parent must be specified.");
+    }
+
+    string crawlername;
+    if(!extract(info, "name", crawlername)){
+        info->throwException("name must be specified.");
+    }
+
+    int numTracks;
+    if(!extract(info, "numTracks", numTracks)){
+        info->throwException("numTracks must be specified.");
+    }
+
+    bool hasShape = false;
+    SgGroupPtr shape = new SgInvariantGroup;
+    ValueNodePtr elements = info->extract("elements");
+    if(elements){
+        if(readElements(*elements, shape)){
+            hasShape = true;
+        }
+    }
+//    if(extract(info, "uri", symbol)){
+//        filesystem::path filepath(symbol);
+//        if(!checkAbsolute(filepath)){
+//            filepath = directoryPath / filepath;
+//            filepath.normalize();
+//        }
+//        vrmlParser.load(getAbsolutePathString(filepath));
+//        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
+//            SgNodePtr node = sgConverter.convert(vrmlNode);
+//            if(node){
+//                shape->addChild(node);
+//                hasShape = true;
+//            }
+//        }
+//    }
+
+    bool hasRootOffsetTranslation = false;
+    if(extractEigen(info, "translation", v)){
+        hasRootOffsetTranslation = true;
+    }
+    bool hasRootOffsetRotation = false;
+    Matrix3 R;
+    if(readRotation(*info, R, true)){
+        hasRootOffsetRotation = true;
+    }
+
+    Vector3 step;
+    if(!extractEigen(info, "stepTranslation", step)){
+        info->throwException("stepTranslation must be specified.");
+    }
+
+    Vector3 axis;
+    ValueNodePtr jointAxisNode = info->find("jointAxis");
+    if(jointAxisNode->isValid()){
+        bool isValid = true;
+        if(jointAxisNode->isListing()){
+            read(*jointAxisNode->toListing(), axis);
+        } else if(jointAxisNode->isString()){
+            string symbol = jointAxisNode->toString();
+            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
+            if(symbol == "X"){
+                axis = Vector3::UnitX();
+            } else if(symbol == "-X"){
+                axis = -Vector3::UnitX();
+            } else if(symbol == "Y"){
+                axis = Vector3::UnitY();
+            } else if(symbol == "-Y"){
+                axis = -Vector3::UnitY();
+            } else if(symbol == "Z"){
+                axis = Vector3::UnitZ();
+            } else if(symbol == "-Z"){
+                axis = -Vector3::UnitZ();
+            } else {
+                isValid = false;
+            }
+        } else {
+            isValid = false;
+        }
+        if(!isValid){
+            jointAxisNode->throwException("Illegal jointAxis value");
+        }
+    }
+
+    RigidBodyVector rigidBodies;
+    rigidBodies.clear();
+    RigidBody rbody;
+    if(!extractEigen(info, "centerOfMass", rbody.c)){
+        rbody.c.setZero();
+    }
+    if(!extract(info, "mass", rbody.m)){
+        rbody.m = 0.0;
+    }
+    if(!extractInertia(info, "inertia", rbody.I)){
+        rbody.I.setZero();
+    }
+    rigidBodies.push_back(rbody);
+
+    vector<double> bendingAngles(numTracks, 0.0);
+    ValueNodePtr initAnglesNode = info->extract("bendingAngles");
+    if(initAnglesNode){
+        Listing& initAngles = *initAnglesNode->toListing();
+        const int n = std::min(initAngles.size(), numTracks);
+        for(int i=0; i < n; i++){
+            bendingAngles[i] = isDegreeMode ? radian(initAngles[i].toDouble()) : initAngles[i].toDouble();
+        }
+    }
+
+    vector<YAMLBodyLoaderImpl::LinkInfoPtr> crawlerlinks;
+    crawlerlinks.clear();
+    for(int i = 0; i < numTracks; ++i){
+        LinkInfoPtr crawler_info = new LinkInfo;
+        crawler_info->parent = parent;
+        LinkPtr link = body->createLink();
+        if(hasShape){
+            link->setShape(shape);
+        }
+        link->setName(str(format("%1%%2%") % crawlername % i));
+        if(!linkMap.insert(make_pair(link->name(), link)).second){
+            info->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
+        }
+        link->setJointId(-1);
+        link->setJointAxis(axis);
+        //link->setJointType(Link::AGX_CRAWLER_JOINT);
+        if(i==0){
+            link->setJointType(Link::AGX_CRAWLER_JOINT);
+            if(hasRootOffsetTranslation){
+                link->setOffsetTranslation(v);
+            }
+            if(hasRootOffsetRotation){
+                link->setOffsetRotation(R);
+            }
+        } else {
+            link->setJointType(Link::REVOLUTE_JOINT);
+            link->setOffsetTranslation(step);
+        }
+        setMassParameters(link);
+        link->setInitialJointDisplacement(bendingAngles[i]);
+        crawler_info->link = link;
+        crawler_info->node = linkNode;
+        crawlerlinks.push_back(crawler_info);
+
+        parent = crawler_info->link->name();
+    }
+    rigidBodies.clear();
+
+    return crawlerlinks;
+
+}
 
 void YAMLBodyLoaderImpl::setMassParameters(Link* link)
 {
