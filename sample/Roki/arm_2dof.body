@@ -1,5 +1,6 @@
 format: ChoreonoidBody
 formatVersion: 1.0
+angleUnit: radian
 
 name: ARM
 rootLink: BASE
@@ -28,8 +29,11 @@ links:
       0, 8.645833e-03, 0,
       0, 0, 8.541667e-03 ]
     elements:
-      - type: Shape
-        geometry: { type: Box, size: [ 0.2, 0.2, 0.2 ] }
+      - type: Transform
+        translation: [ 0, 0, 0.05001 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.2, 0.2, 0.1 ] }
       - type: Transform
         translation: [ 0, 0, 0.15 ]
         rotation: [ 0, 0, 1, 1.5707 ]
