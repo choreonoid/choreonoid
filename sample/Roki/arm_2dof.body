@@ -30,7 +30,7 @@ links:
       0, 0, 8.541667e-03 ]
     elements:
       - type: Transform
-        translation: [ 0, 0, 0.05001 ]
+        translation: [ 0, 0, 0.05 ]
         elements:
           Shape:
             geometry: { type: Box, size: [ 0.2, 0.2, 0.1 ] }
