@@ -27,7 +27,7 @@ public:
     virtual void setMessageSink(std::ostream& os) override;
     virtual void setDefaultDivisionNumber(int n) override;
     virtual void setDefaultCreaseAngle(double theta) override;
-    virtual SgNodePtr load(const std::string& filename) override;
+    virtual SgNode* load(const std::string& filename) override;
 
 private:
     SceneLoaderImpl* impl;

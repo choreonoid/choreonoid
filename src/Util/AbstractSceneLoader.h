@@ -17,7 +17,7 @@ public:
     virtual void setMessageSink(std::ostream& os);
     virtual void setDefaultDivisionNumber(int n);
     virtual void setDefaultCreaseAngle(double theta);
-    virtual SgNodePtr load(const std::string& filename) = 0;
+    virtual SgNode* load(const std::string& filename) = 0;
 };
 
 };

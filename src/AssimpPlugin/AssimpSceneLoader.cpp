@@ -52,8 +52,8 @@ public:
 
     AssimpSceneLoaderImpl();
     void clear();
-    SgNodePtr load(const std::string& filename);
-    SgTransformPtr convertAiNode(aiNode* node);
+    SgNode* load(const std::string& filename);
+    SgTransform* convertAiNode(aiNode* node);
     SgShape* convertAiMesh(unsigned int);
     SgMaterial* convertAiMaterial(unsigned int);
     SgTexture* convertAiTexture(unsigned int index);
@@ -97,13 +97,13 @@ void AssimpSceneLoaderImpl::clear()
 }
 
 
-SgNodePtr AssimpSceneLoader::load(const std::string& filename)
+SgNode* AssimpSceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
+SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
@@ -124,7 +124,7 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
     boost::filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
-    SgNodePtr node = convertAiNode(scene->mRootNode);
+    SgNode* node = convertAiNode(scene->mRootNode);
 
     importer.FreeScene();
 
@@ -132,7 +132,7 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
 }
 
 
-SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
+SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 {
     const aiMatrix4x4& T = node->mTransformation;
     Affine3 M;
@@ -158,7 +158,7 @@ SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
     }
 
     for(unsigned int i=0; i < node->mNumChildren; ++i){
-        SgTransformPtr child = convertAiNode(node->mChildren[i]);
+        SgTransform* child = convertAiNode(node->mChildren[i]);
         if(child){
             transform->addChild(child);
         }
@@ -168,7 +168,7 @@ SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
         transform = 0;
     }
 
-    return transform;
+    return transform.retn();
 }
 
 

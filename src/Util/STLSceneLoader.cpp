@@ -38,7 +38,7 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
 }
 
 
-SgNodePtr STLSceneLoader::load(const std::string& filename)
+SgNode* STLSceneLoader::load(const std::string& filename)
 {
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 

@@ -38,7 +38,7 @@ public:
 
     VRMLSceneLoaderImpl();
     ostream& os() { return *os_; }
-    SgNodePtr load(const std::string& filename);
+    SgNode* load(const std::string& filename);
 };
 
 }
@@ -70,13 +70,13 @@ void VRMLSceneLoader::setMessageSink(std::ostream& os)
 }
     
 
-SgNodePtr VRMLSceneLoader::load(const std::string& filename)
+SgNode* VRMLSceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNodePtr VRMLSceneLoaderImpl::load(const std::string& filename)
+SgNode* VRMLSceneLoaderImpl::load(const std::string& filename)
 {
     converter.clearConvertedNodeMap();
 
@@ -107,5 +107,5 @@ SgNodePtr VRMLSceneLoaderImpl::load(const std::string& filename)
         return top->child(0);
     }
 
-    return top;
+    return top.retn();
 }

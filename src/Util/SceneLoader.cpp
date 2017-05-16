@@ -37,7 +37,7 @@ public:
 
     SceneLoaderImpl();
     AbstractSceneLoaderPtr findLoader(const string& ext);
-    SgNodePtr load(const std::string& filename);
+    SgNode* load(const std::string& filename);
 };
 
 }
@@ -138,13 +138,13 @@ AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(const string& ext)
 }
 
 
-SgNodePtr SceneLoader::load(const std::string& filename)
+SgNode* SceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNodePtr SceneLoaderImpl::load(const std::string& filename)
+SgNode* SceneLoaderImpl::load(const std::string& filename)
 {
     boost::filesystem::path filepath(filename);
     string ext = getExtension(filepath);
@@ -154,7 +154,7 @@ SgNodePtr SceneLoaderImpl::load(const std::string& filename)
         return 0;
     }
 
-    SgNodePtr node;
+    SgNode* node = 0;
     auto loader = findLoader(ext);
     if(!loader){
         (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
