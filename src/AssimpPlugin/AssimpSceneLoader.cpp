@@ -41,7 +41,7 @@ public:
     boost::filesystem::path directoryPath;
     ImageIO imageIO;
 
-    typedef map<unsigned int, SgShapePtr> AiIndexToSgShapeMap;
+    typedef map<unsigned int, SgNodePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
     typedef map<unsigned int, SgMaterialPtr> AiIndexToSgMaterialMap;
     AiIndexToSgMaterialMap  aiIndexToSgMaterialMap;
@@ -54,7 +54,8 @@ public:
     void clear();
     SgNode* load(const std::string& filename);
     SgTransform* convertAiNode(aiNode* node);
-    SgShape* convertAiMesh(unsigned int);
+    SgNode* convertAiMesh(unsigned int);
+    SgShape* convertAiTriangleMesh(aiMesh* srcMesh);
     SgMaterial* convertAiMaterial(unsigned int);
     SgTexture* convertAiTexture(unsigned int index);
 };
@@ -151,7 +152,7 @@ SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
     transform->setName(node->mName.C_Str());
  
     for(unsigned int i=0; i < node->mNumMeshes; ++i){
-        SgShape* shape = convertAiMesh(node->mMeshes[i]);
+        SgNode* shape = convertAiMesh(node->mMeshes[i]);
         if(shape){
             transform->addChild(shape);
         }
@@ -172,76 +173,90 @@ SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 }
 
 
-SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
+SgNode* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
 {
     AiIndexToSgShapeMap::iterator p = aiIndexToSgShapeMap.find(index);
     if(p != aiIndexToSgShapeMap.end()){
         return p->second;
     }
 
-    SgShape* shape = 0;
+    SgNode* shape = 0;
     aiMesh* srcMesh = scene->mMeshes[index];
-    
+
     if(srcMesh->HasFaces()){
-        shape = new SgShape;
-        shape->setName(srcMesh->mName.C_Str());
-        auto mesh = shape->getOrCreateMesh();
-        mesh->setName(shape->name());
-
-        const unsigned int numVertices = srcMesh->mNumVertices;
-        const auto srcVertices = srcMesh->mVertices;
-        auto& vertices = *mesh->getOrCreateVertices();
-        vertices.resize(numVertices);
-        for(unsigned int i=0; i < numVertices; ++i){
-            const auto& v = srcVertices[i];
-            vertices[i] << v.x, v.y, v.z;
-        }
-        if(srcMesh->HasNormals()){
-            const auto srcNormals = srcMesh->mNormals;
-            auto& normals = *mesh->getOrCreateNormals();
-            normals.resize(numVertices);
-            for(unsigned int i=0; i < numVertices; ++i){
-                const auto& n = srcNormals[i];
-                normals[i] << n.x, n.y, n.z;
-            }
-        }
-        if(srcMesh->HasTextureCoords(0)){
-            const auto srcTexCoords = srcMesh->mTextureCoords[0];
-            auto& texCoords = *mesh->getOrCreateTexCoords();
-            texCoords.resize(numVertices);
-            for(unsigned int i=0; i < numVertices; ++i){
-                const auto& p = srcTexCoords[i];
-                texCoords[i] << p.x, p.y;
-            }
-        }
-        if(srcMesh->HasVertexColors(0)){
-            const auto srcColors = srcMesh->mColors[0];
-            auto& colors = *mesh->getOrCreateColors();
-            colors.resize(numVertices);
-            for(unsigned int i=0; i < numVertices; ++i){
-                const auto& c = srcColors[i];
-                colors[i] << c.r, c.g, c.b;
-            }
-        }
-
-        const unsigned int numFaces = srcMesh->mNumFaces;
-        const auto srcFaces = srcMesh->mFaces;
-        mesh->setNumTriangles(numFaces);
-        for(unsigned int i = 0; i < numFaces; ++i){
-            const auto& indices = srcFaces[i].mIndices;
-            mesh->setTriangle(i, indices[0], indices[1], indices[2]);
-        }
-
-        SgMaterial* material = convertAiMaterial(srcMesh->mMaterialIndex);
-        shape->setMaterial(material);
-
-        SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
-        if(texture){
-            shape->setTexture(texture);
+        switch(srcMesh->mPrimitiveTypes){
+        case aiPrimitiveType_TRIANGLE:
+            shape = convertAiTriangleMesh(srcMesh);
+            break;
+        default:
+            break;
         }
     }
-    
+
     aiIndexToSgShapeMap[index] = shape;
+
+    return shape;
+}
+
+
+SgShape* AssimpSceneLoaderImpl::convertAiTriangleMesh(aiMesh* srcMesh)
+{
+    SgShape* shape = new SgShape;
+    shape->setName(srcMesh->mName.C_Str());
+    auto mesh = shape->getOrCreateMesh();
+    mesh->setName(shape->name());
+
+    const unsigned int numVertices = srcMesh->mNumVertices;
+    const auto srcVertices = srcMesh->mVertices;
+    auto& vertices = *mesh->getOrCreateVertices();
+    vertices.resize(numVertices);
+    for(unsigned int i=0; i < numVertices; ++i){
+        const auto& v = srcVertices[i];
+        vertices[i] << v.x, v.y, v.z;
+    }
+    if(srcMesh->HasNormals()){
+        const auto srcNormals = srcMesh->mNormals;
+        auto& normals = *mesh->getOrCreateNormals();
+        normals.resize(numVertices);
+        for(unsigned int i=0; i < numVertices; ++i){
+            const auto& n = srcNormals[i];
+            normals[i] << n.x, n.y, n.z;
+        }
+    }
+    if(srcMesh->HasTextureCoords(0)){
+        const auto srcTexCoords = srcMesh->mTextureCoords[0];
+        auto& texCoords = *mesh->getOrCreateTexCoords();
+        texCoords.resize(numVertices);
+        for(unsigned int i=0; i < numVertices; ++i){
+            const auto& p = srcTexCoords[i];
+            texCoords[i] << p.x, p.y;
+        }
+    }
+    if(srcMesh->HasVertexColors(0)){
+        const auto srcColors = srcMesh->mColors[0];
+        auto& colors = *mesh->getOrCreateColors();
+        colors.resize(numVertices);
+        for(unsigned int i=0; i < numVertices; ++i){
+            const auto& c = srcColors[i];
+            colors[i] << c.r, c.g, c.b;
+        }
+    }
+
+    const unsigned int numFaces = srcMesh->mNumFaces;
+    const auto srcFaces = srcMesh->mFaces;
+    mesh->setNumTriangles(numFaces);
+    for(unsigned int i = 0; i < numFaces; ++i){
+        const auto& indices = srcFaces[i].mIndices;
+        mesh->setTriangle(i, indices[0], indices[1], indices[2]);
+    }
+    
+    SgMaterial* material = convertAiMaterial(srcMesh->mMaterialIndex);
+    shape->setMaterial(material);
+
+    SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
+    if(texture){
+        shape->setTexture(texture);
+    }
 
     return shape;
 }
