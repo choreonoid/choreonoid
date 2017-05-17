@@ -55,7 +55,7 @@ public:
     SgNode* load(const std::string& filename);
     SgTransform* convertAiNode(aiNode* node);
     SgNode* convertAiMesh(unsigned int);
-    SgShape* convertAiTriangleMesh(aiMesh* srcMesh);
+    SgNode* convertAiMeshFaces(aiMesh* srcMesh);
     SgMaterial* convertAiMaterial(unsigned int);
     SgTexture* convertAiTexture(unsigned int index);
 };
@@ -108,14 +108,7 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
-    scene = importer.ReadFile(
-        filename,
-        aiProcess_Triangulate                //三角面へ変換
-        //| aiProcess_JoinIdenticalVertices  //重複する頂点座標の削除
-        | aiProcess_GenNormals               //面法線を生成
-        //| aiProcess_FindInstances          //重複するメッシュを探し初出のメッシュに置き換える
-        //| aiProcess_SortByPType            //異なる複数のプリミティブ型からなるメッシュをサブメッシュに分割
-        );
+    scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_GenNormals);
 
     if(!scene){
         os() << importer.GetErrorString() << endl;
@@ -180,85 +173,133 @@ SgNode* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
         return p->second;
     }
 
-    SgNode* shape = 0;
+    SgNode* node = 0;
     aiMesh* srcMesh = scene->mMeshes[index];
-
     if(srcMesh->HasFaces()){
-        switch(srcMesh->mPrimitiveTypes){
-        case aiPrimitiveType_TRIANGLE:
-            shape = convertAiTriangleMesh(srcMesh);
-            break;
-        default:
-            break;
-        }
+        node = convertAiMeshFaces(srcMesh);
     }
+    aiIndexToSgShapeMap[index] = node;
 
-    aiIndexToSgShapeMap[index] = shape;
-
-    return shape;
+    return node;;
 }
 
 
-SgShape* AssimpSceneLoaderImpl::convertAiTriangleMesh(aiMesh* srcMesh)
+SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
 {
-    SgShape* shape = new SgShape;
-    shape->setName(srcMesh->mName.C_Str());
-    auto mesh = shape->getOrCreateMesh();
-    mesh->setName(shape->name());
+    const unsigned int types = srcMesh->mPrimitiveTypes;
+    SgGroupPtr group = new SgGroup;
+    group->setName(srcMesh->mName.C_Str());
 
     const unsigned int numVertices = srcMesh->mNumVertices;
     const auto srcVertices = srcMesh->mVertices;
-    auto& vertices = *mesh->getOrCreateVertices();
-    vertices.resize(numVertices);
+    SgVertexArrayPtr vertices = new SgVertexArray;
+    vertices->resize(numVertices);
     for(unsigned int i=0; i < numVertices; ++i){
         const auto& v = srcVertices[i];
-        vertices[i] << v.x, v.y, v.z;
+        vertices->at(i) << v.x, v.y, v.z;
     }
+
+    SgNormalArrayPtr normals;
     if(srcMesh->HasNormals()){
         const auto srcNormals = srcMesh->mNormals;
-        auto& normals = *mesh->getOrCreateNormals();
-        normals.resize(numVertices);
+        normals = new SgNormalArray;
+        normals->resize(numVertices);
         for(unsigned int i=0; i < numVertices; ++i){
             const auto& n = srcNormals[i];
-            normals[i] << n.x, n.y, n.z;
+            normals->at(i) << n.x, n.y, n.z;
         }
     }
-    if(srcMesh->HasTextureCoords(0)){
-        const auto srcTexCoords = srcMesh->mTextureCoords[0];
-        auto& texCoords = *mesh->getOrCreateTexCoords();
-        texCoords.resize(numVertices);
-        for(unsigned int i=0; i < numVertices; ++i){
-            const auto& p = srcTexCoords[i];
-            texCoords[i] << p.x, p.y;
-        }
-    }
+
+    SgColorArrayPtr colors;
     if(srcMesh->HasVertexColors(0)){
         const auto srcColors = srcMesh->mColors[0];
-        auto& colors = *mesh->getOrCreateColors();
-        colors.resize(numVertices);
+        colors = new SgColorArray;
+        colors->resize(numVertices);
         for(unsigned int i=0; i < numVertices; ++i){
             const auto& c = srcColors[i];
-            colors[i] << c.r, c.g, c.b;
+            colors->at(i) << c.r, c.g, c.b;
         }
     }
 
+    SgMaterialPtr material = convertAiMaterial(srcMesh->mMaterialIndex);
+
     const unsigned int numFaces = srcMesh->mNumFaces;
-    const auto srcFaces = srcMesh->mFaces;
-    mesh->setNumTriangles(numFaces);
-    for(unsigned int i = 0; i < numFaces; ++i){
-        const auto& indices = srcFaces[i].mIndices;
-        mesh->setTriangle(i, indices[0], indices[1], indices[2]);
+    const aiFace* srcFaces = srcMesh->mFaces;
+    
+    if(types & aiPrimitiveType_POINT){
+        auto pointSet = new SgPointSet;
+        pointSet->setVertices(vertices);
+        pointSet->setNormals(normals);
+        pointSet->setColors(colors);
+        pointSet->setMaterial(material);
+        group->addChild(pointSet);
     }
     
-    SgMaterial* material = convertAiMaterial(srcMesh->mMaterialIndex);
-    shape->setMaterial(material);
+    if(types & aiPrimitiveType_LINE){
+        auto lineSet = new SgLineSet;
+        lineSet->setVertices(vertices);
+        lineSet->setNormals(normals);
+        lineSet->setColors(colors);
+        lineSet->setMaterial(material);
 
-    SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
-    if(texture){
-        shape->setTexture(texture);
+        if(types == aiPrimitiveType_LINE){
+            lineSet->reserveNumLines(numFaces);
+        }
+        for(unsigned int i = 0; i < numFaces; ++i){
+            const aiFace& face = srcFaces[i];
+            if(face.mNumIndices == 2){
+                const unsigned int* indices = face.mIndices;
+                lineSet->addLine(indices[0], indices[1]);
+            }
+        }
+        group->addChild(lineSet);
+    }
+    
+    if(types & aiPrimitiveType_TRIANGLE){
+        auto shape = new SgShape;
+        shape->setMaterial(material);
+        auto mesh = shape->getOrCreateMesh();
+        mesh->setVertices(vertices);
+        mesh->setNormals(normals);
+        mesh->setColors(colors);
+
+        if(types == aiPrimitiveType_TRIANGLE){
+            mesh->reserveNumTriangles(numFaces);
+        }
+        for(unsigned int i = 0; i < numFaces; ++i){
+            const aiFace& face = srcFaces[i];
+            if(face.mNumIndices == 3){
+                const unsigned int* indices = face.mIndices;
+                mesh->addTriangle(indices[0], indices[1], indices[2]);
+            }
+        }
+
+        if(srcMesh->HasTextureCoords(0)){
+            const auto srcTexCoords = srcMesh->mTextureCoords[0];
+            auto& texCoords = *mesh->getOrCreateTexCoords();
+            texCoords.resize(numVertices);
+            for(unsigned int i=0; i < numVertices; ++i){
+                const auto& p = srcTexCoords[i];
+                texCoords[i] << p.x, p.y;
+            }
+        }
+        SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
+        if(texture){
+            shape->setTexture(texture);
+        }
+
+        group->addChild(shape);
     }
 
-    return shape;
+    if(group->empty()){
+        return 0;
+    } else if(group->numChildren() == 1){
+        SgNodePtr node = group->child(0);
+        node->setName(group->name());
+        group->clearChildren();
+        return node.retn();
+    }
+    return group.retn();
 }
 
 
