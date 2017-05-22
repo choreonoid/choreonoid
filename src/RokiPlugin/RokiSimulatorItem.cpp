@@ -281,7 +281,7 @@ RokiLink::RokiLink
     	o = link->p();
 
     rklink = rkChainLink(rokiBody->chain, link->index());
-    if(link->jointType()==Link::FIXED_JOINT)
+    if(link->isRoot() && link->jointType()==Link::FIXED_JOINT)
         simImpl->fixedLinkList.push_back(rklink);
 
     createLink(simImpl, rokiBody, o, stuffisLinkName);
