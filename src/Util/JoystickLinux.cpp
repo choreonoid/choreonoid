@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include <iostream>
 
 using namespace std;
 using namespace boost;
@@ -28,7 +27,7 @@ class JoystickImpl
 public:
     enum Model { PS4=0, PS3=1, XBOX=2, F310_XInput=3, F310_DirectInput=4, OTHER=5 };
     static const int STANDARD_AXIS_NUM = 8;    // LeftStick, RightStick, DirectionalPad, L2, R2
-    static const int STANDARD_BUTTON_NUM = 11; // A,B,X,Y,L1,R1,L3,R3,START(PS4:option),SELECT(PS4:share),Logo(PS4:PS)
+    static const int STANDARD_BUTTON_NUM = 11; // square,cross,circle,triangle,L1,R1,L3,R3,START(PS4:option),SELECT(PS4:share),Logo(PS4:PS)
     Joystick* self;
     ExtJoystick* extJoystick;
     int fd;
@@ -106,9 +105,6 @@ bool JoystickImpl::openDevice(const char* device)
     char identifier[1024];
     ioctl(fd, JSIOCGNAME(sizeof(identifier)), identifier);
     string model_id = identifier;
-    cout << "joystick identifier : " << identifier << "," << model_id << endl;
-    cout << "numAxes : " << to_string(numAxes) << ", " << axes.size() << endl;
-    cout << "numButtons : " << to_string(numButtons) << ", " << buttons.size() << endl;
     axis_map.resize(STANDARD_AXIS_NUM);
     static const vector<int> PS4_AM{ 0, 1, 2, 5, 6, 7, 3, 4 };
     static const vector<int> PS3_AM{ 0, 1, 2, 3, invalid, invalid, 12, 13 };
