@@ -12,6 +12,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/ProjectManager>
+#include <cnoid/ItemManager>
 #include <QLibrary>
 #include <boost/dynamic_bitset.hpp>
 #include "gettext.h"
@@ -127,6 +128,14 @@ public:
     virtual void setImmediateMode(bool on) override;
 };
 
+}
+
+
+void SimpleControllerItem::initializeClass(ExtensionManager* ext)
+{
+    ItemManager& itemManager = ext->itemManager();
+    itemManager.registerClass<SimpleControllerItem>(N_("SimpleControllerItem"));
+    itemManager.addCreationPanel<SimpleControllerItem>();
 }
 
 

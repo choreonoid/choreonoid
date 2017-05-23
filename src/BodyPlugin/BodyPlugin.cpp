@@ -9,6 +9,7 @@
 #include "ZMPSeqItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
+#include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
 #include "GLVisionSimulatorItem.h"
 #include "WorldLogFileItem.h"
@@ -59,6 +60,7 @@ public:
         BodyMotionItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
+        SimpleControllerItem::initializeClass(this);
         BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
         WorldLogFileItem::initializeClass(this);
