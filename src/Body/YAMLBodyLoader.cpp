@@ -512,7 +512,9 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     ValueNodePtr angleUnitNode = topNode->extract("angleUnit");
-    if(angleUnitNode){
+    if(!angleUnitNode){
+        sceneReader.setAngleUnit(YAMLSceneReader::DEGREE);
+    } else {
         string unit = angleUnitNode->toString();
         if(unit == "radian"){
             sceneReader.setAngleUnit(YAMLSceneReader::RADIAN);
@@ -604,7 +606,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     }
 
     //! \todo Remove this later
-    ValueNodePtr initDNode = topNode->extract("initialJointDisplacement");
+    ValueNodePtr initDNode = topNode->extract("initialJointDisplacements");
     if(initDNode){
         Listing& initd = *initDNode->toListing();
         const int n = std::min(initd.size(), body->numLinks());

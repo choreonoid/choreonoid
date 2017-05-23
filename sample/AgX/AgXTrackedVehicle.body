@@ -1,15 +1,15 @@
 format: ChoreonoidBody
 formatVersion: 1.0
-
+angleUnit: degree
 name: TrackedVehicle
 rootLink: ROOT
 
-initialJointDisplacement: [
+initialJointDisplacements: [
   0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667, 
-  -0.523598667, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667, 
-  -0.523598667, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30, 
+  -30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30, 
+  -30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30
 ]
 
 agxJointParameters: &wheelHigeParam
@@ -59,15 +59,15 @@ links:
         translation: [ 0, 0, 0.25 ]
         elements:
           Shape:
-            appearance: &green
-              material: {
-                diffuseColor: [ 0.0, 0.6, 0.0 ],
-	        	    ambientIntensity: 0.3,
-        		    specularColor: [ 0.7, 0.7, 0.7 ],
-		            emissiveColor: [ 0, 0, 0 ],
-		            shininess: 0.25,
-		            transparency: 0 }
             geometry: { type: Box, size: [ 3, 1.8, 0.7 ] }
+            appearance: &green
+              material:
+                diffuseColor: [ 0.0, 0.6, 0.0 ]
+                ambientIntensity: 0.3
+                specularColor: [ 0.7, 0.7, 0.7 ]
+                emissiveColor: [ 0, 0, 0 ]
+                shininess: 0.25
+                transparency: 0
       -
         type: Transform
         translation: [ -3.4, 0, 3.2 ]
@@ -225,15 +225,15 @@ links:
         translation: [ -0.0854, 0, 0.025 ]
         elements:
           Shape:
-            appearance: &red
-              material: {
-                diffuseColor: [ 0.6, 0.0, 0.0 ],
-	        	    ambientIntensity: 0.3,
-          		  specularColor: [ 0.7, 0.7, 0.7 ],
-		            emissiveColor: [ 0, 0, 0 ],
-		            shininess: 0.25,
-		            transparency: 0 }
             geometry: { type: Box, size: [ 0.167, 0.3, 0.05 ] }
+            appearance: &red
+              material:
+                diffuseColor: [ 0.6, 0.0, 0.0 ]
+                ambientIntensity: 0.3
+                specularColor: [ 0.7, 0.7, 0.7 ]
+                emissiveColor: [ 0, 0, 0 ]
+                shininess: 0.25
+                transparency: 0
   -
     name: FOOT_L1
     parent: FOOT_L0
@@ -1455,6 +1455,3 @@ agxContactMaterialParameters:
 
 agxSelfCollisionDetection:
     linkGroupPairs: [ [ WHEEL_L, TRACK_L ], [WHEEL_R, TRACK_R ] ]
-         
-            
-            
