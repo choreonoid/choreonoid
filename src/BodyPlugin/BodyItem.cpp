@@ -728,9 +728,10 @@ void BodyItemImpl::setPresetPose(BodyItem::PresetPoseID id)
         }
     }
 
-    const int n = body->numJoints();
+    const int n = body->numAllJoints();
     while(jointIndex < n){
-        body->joint(jointIndex++)->q() = 0.0;
+        Link* joint = body->joint(jointIndex++);
+        joint->q() = joint->q_initial();
     }
 
     fkTraverse.calcForwardKinematics();
