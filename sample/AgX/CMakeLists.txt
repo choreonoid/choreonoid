@@ -18,4 +18,5 @@ endif()
 
 add_cnoid_simple_controller(AgXTrackedVehicleController AgXTrackedVehicleController.cpp)
 configure_file(AgXTrackedVehicle.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
+configure_file(AgXTrackedVehicle_old.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
 configure_file(AgXTrackedVehicle.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

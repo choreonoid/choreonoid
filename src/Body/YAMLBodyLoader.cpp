@@ -149,10 +149,10 @@ public:
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
     bool readBody(Mapping* topNode);
+    void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
     LinkPtr readLink(Mapping* linkNode);
-    vector<LinkInfoPtr> readContinuousTrack(ValueNodePtr crawlerNode, bool isDegreeMode);
-    vector<LinkInfoPtr> generateCrawlerNode(Mapping* linkNode, bool isDegreeMode);
+    void readContinuousTrackNode(Mapping* linkNode);
     void setMassParameters(Link* link);
     //! \return true if any scene nodes other than Group and Transform are added in the sub tree
     bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
@@ -534,40 +534,31 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
-    ValueNodePtr linksNode = topNode->extract("links");
-    if(!linksNode){
+    ValueNodePtr links = topNode->extract("links");
+    string unspecifiedType;
+    if(!links){
         topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
     } else {
-        if(linksNode->isListing()){
-            Listing& linkNodes = *linksNode->toListing();
-            if(linkNodes.empty()){
-                linkNodes.throwException(_("No link is contained in the \"links\" listing"));
+        if(links->isListing()){
+            Listing& linkList = *links->toListing();
+            if(linkList.empty()){
+                linkList.throwException(_("No link is contained in the \"links\" listing"));
             }
-            for(int i=0; i < linkNodes.size(); ++i){
-                readLinkNode(linkNodes[i].toMapping());
+            for(int i=0; i < linkList.size(); ++i){
+                readNodeInLinks(linkList[i].toMapping(), unspecifiedType);
             }
-        } else if(linksNode->isMapping()){
-            Mapping* links = linksNode->toMapping();
-            Mapping::iterator p = links->begin();
-            while(p != links->end()){
+        } else if(links->isMapping()){
+            Mapping* linksMap = links->toMapping();
+            Mapping::iterator p = linksMap->begin();
+            while(p != linksMap->end()){
                 const string& type = p->first;
-                if(type == "Link"){
-                    readLinkNode(p->second->toMapping());
-                } else {
-                    linksNode->throwException(
-                        str(format(_("A %1% node cannot be specified in links")) % type));
-                }
+                Mapping* node = p->second->toMapping();
+                readNodeInLinks(node, type);
                 ++p;
             }
         } else {
-            linksNode->throwException(_("Invalid value specified in the \"links\" key."));
+            links->throwException(_("Invalid value specified in the \"links\" key."));
         }
-    }
-
-    ValueNodePtr crawlerNode = topNode->extract("ContinuousTrack");
-    if(crawlerNode){
-        vector<LinkInfoPtr> crawlerInfos = readContinuousTrack(crawlerNode, isDegreeMode());
-        linkInfos.insert(linkInfos.end(), crawlerInfos.begin(), crawlerInfos.end());
     }
 
     // construct a link tree
@@ -632,15 +623,32 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
 {
     string type;
-    if(extract(linkNode, "type", type)){
-        if(type != "Link"){
-            linkNode->throwException(
-                str(format(_("A %1% node cannot be specified in links")) % type));
+    if(extract(node, "type", type)){
+        if(!nodeType.empty() && type != nodeType){
+            node->throwException(
+                str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
+                    % type % nodeType));
         }
+    } else if(!nodeType.empty()){
+        type = nodeType;
     }
+
+    if(type.empty() || type == "Link"){
+        readLinkNode(node);
+    } else if(type == "ContinuousTrack"){
+        readContinuousTrackNode(node);
+    } else {
+        node->throwException(
+            str(format(_("A %1% node cannot be specified in links")) % type));
+    }
+}
+
+
+void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+{
     LinkInfoPtr info = new LinkInfo;
     extract(linkNode, "parent", info->parent);
     Link* link = readLink(linkNode);
@@ -655,7 +663,6 @@ void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
 
 LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
-    
     MappingPtr info = static_cast<Mapping*>(linkNode->clone());
     
     LinkPtr link = body->createLink();
@@ -708,7 +715,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             link->setJointType(Link::FIXED_JOINT);
         } else if(jointType == "pseudoContinuousTrack"){
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-        } else  if(jointType == "agx_crawler"){
+        } else if(jointType == "agx_crawler"){
             link->setJointType(Link::AGX_CRAWLER_JOINT);
         } else {
             jointTypeNode->throwException("Illegal jointType value");
@@ -864,25 +871,10 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     return link;
 }
 
-vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::readContinuousTrack(ValueNodePtr crawlerNode, bool isDegreeMode){
-    vector<LinkInfoPtr> allCrawlerInfos;
-    allCrawlerInfos.clear();
-    if(crawlerNode->isListing()){
-        Listing& crawlerNodes = *crawlerNode->toListing();
-        for(int i=0; i < crawlerNodes.size(); ++i){
-            vector<LinkInfoPtr> crawlerInfo = generateCrawlerNode(crawlerNodes[i].toMapping(), isDegreeMode);
-            allCrawlerInfos.insert(allCrawlerInfos.end(), crawlerInfo.begin(), crawlerInfo.end());
-        }
-    } else if(crawlerNode->isMapping()){
-        allCrawlerInfos = generateCrawlerNode(crawlerNode->toMapping(), isDegreeMode);
-    }
-    return allCrawlerInfos;
-}
 
-
-vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::generateCrawlerNode(Mapping* linkNode, bool isDegreeMode)
+void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
 {
-    MappingPtr info = static_cast<Mapping*>(linkNode->clone());
+    MappingPtr info = static_cast<Mapping*>(node->clone());
     string parent;
     if(!extract(info, "parent", parent)){
         info->throwException("parent must be specified.");
@@ -989,12 +981,12 @@ vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::generateCrawlerNode(
         Listing& initAngles = *initAnglesNode->toListing();
         const int n = std::min(initAngles.size(), numTracks);
         for(int i=0; i < n; i++){
-            bendingAngles[i] = isDegreeMode ? radian(initAngles[i].toDouble()) : initAngles[i].toDouble();
+            bendingAngles[i] = toRadian(initAngles[i].toDouble());
         }
     }
 
-    vector<YAMLBodyLoaderImpl::LinkInfoPtr> crawlerlinks;
-    crawlerlinks.clear();
+    //vector<YAMLBodyLoaderImpl::LinkInfoPtr> crawlerlinks;
+    
     for(int i = 0; i < numTracks; ++i){
         LinkInfoPtr crawler_info = new LinkInfo;
         crawler_info->parent = parent;
@@ -1006,7 +998,6 @@ vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::generateCrawlerNode(
         if(!linkMap.insert(make_pair(link->name(), link)).second){
             info->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
         }
-        link->setJointId(-1);
         link->setJointAxis(axis);
         //link->setJointType(Link::AGX_CRAWLER_JOINT);
         if(i==0){
@@ -1024,16 +1015,13 @@ vector<YAMLBodyLoaderImpl::LinkInfoPtr> YAMLBodyLoaderImpl::generateCrawlerNode(
         setMassParameters(link);
         link->setInitialJointDisplacement(bendingAngles[i]);
         crawler_info->link = link;
-        crawler_info->node = linkNode;
-        crawlerlinks.push_back(crawler_info);
-
+        crawler_info->node = node;
+        linkInfos.push_back(crawler_info);
         parent = crawler_info->link->name();
     }
     rigidBodies.clear();
-
-    return crawlerlinks;
-
 }
+
 
 void YAMLBodyLoaderImpl::setMassParameters(Link* link)
 {
