@@ -92,6 +92,12 @@ Link::Link(const Link& org)
 }
 
 
+Link* Link::clone() const
+{
+    return new Link(*this);
+}
+
+
 Link::~Link()
 {
     LinkPtr link = child_;

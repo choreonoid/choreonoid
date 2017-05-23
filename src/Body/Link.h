@@ -40,6 +40,8 @@ public:
        You have to use the copy constructor of the Body class to copy the link tree
     */
     Link(const Link& link);
+
+    virtual Link* clone() const;
         
     virtual ~Link();
 
@@ -236,6 +238,7 @@ public:
     void setJointAxis(const Vector3& axis) { a_ = axis; }
 
     void setInitialJointDisplacement(double q) { q_initial_ = q; }
+    void setInitialJointAngle(double q) { q_initial_ = q; }
     void setJointRange(double lower, double upper) { q_lower_ = lower; q_upper_ = upper; }
     void setJointVelocityRange(double lower, double upper) { dq_lower_ = lower; dq_upper_ = upper; }
 

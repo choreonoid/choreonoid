@@ -13,15 +13,15 @@ initialJointDisplacements: [
 ]
 
 agxJointParameters: &wheelHigeParam
-  hingeCompliance :
+  hingeCompliance:
     - dof: TRANSLATIONAL_3
       compliance: 2E-6
       damping: 0.1
-  hingeMotor :
+  hingeMotor:
     compliance: 3E-5
 
 agxJointParameters: &trackJointParam   
-  hingeCompliance :
+  hingeCompliance:
     - dof: TRANSLATIONAL_1
       compliance: 2E-8
       damping: 0.1
@@ -37,7 +37,7 @@ agxJointParameters: &trackJointParam
     - dof: ROTATIONAL_2
       compliance: 8E-8
       damping: 0.1
-  hingeMotor :
+  hingeMotor:
     compliance: 0.0005
   planeCompliance: 3E-9
   planeDamping: 0.003

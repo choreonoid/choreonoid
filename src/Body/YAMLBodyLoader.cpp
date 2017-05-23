@@ -153,6 +153,7 @@ public:
     void readLinkNode(Mapping* linkNode);
     LinkPtr readLink(Mapping* linkNode);
     void readContinuousTrackNode(Mapping* linkNode);
+    void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
     void setMassParameters(Link* link);
     //! \return true if any scene nodes other than Group and Transform are added in the sub tree
     bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
@@ -885,43 +886,12 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
         info->throwException("name must be specified.");
     }
 
-    int numTracks;
+    int numTracks = 0;
     if(!extract(info, "numTracks", numTracks)){
         info->throwException("numTracks must be specified.");
     }
-
-    bool hasShape = false;
-    SgGroupPtr shape = new SgInvariantGroup;
-    ValueNodePtr elements = info->extract("elements");
-    if(elements){
-        if(readElements(*elements, shape)){
-            hasShape = true;
-        }
-    }
-//    if(extract(info, "uri", symbol)){
-//        filesystem::path filepath(symbol);
-//        if(!checkAbsolute(filepath)){
-//            filepath = directoryPath / filepath;
-//            filepath.normalize();
-//        }
-//        vrmlParser.load(getAbsolutePathString(filepath));
-//        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-//            SgNodePtr node = sgConverter.convert(vrmlNode);
-//            if(node){
-//                shape->addChild(node);
-//                hasShape = true;
-//            }
-//        }
-//    }
-
-    bool hasRootOffsetTranslation = false;
-    if(extractEigen(info, "translation", v)){
-        hasRootOffsetTranslation = true;
-    }
-    bool hasRootOffsetRotation = false;
-    Matrix3 R;
-    if(readRotation(*info, R, true)){
-        hasRootOffsetRotation = true;
+    if(numTracks <= 0){
+        info->throwException("numTracks must be more than 0.");
     }
 
     Vector3 step;
@@ -929,97 +899,45 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
         info->throwException("stepTranslation must be specified.");
     }
 
-    Vector3 axis;
-    ValueNodePtr jointAxisNode = info->find("jointAxis");
-    if(jointAxisNode->isValid()){
-        bool isValid = true;
-        if(jointAxisNode->isListing()){
-            read(*jointAxisNode->toListing(), axis);
-        } else if(jointAxisNode->isString()){
-            string symbol = jointAxisNode->toString();
-            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
-            if(symbol == "X"){
-                axis = Vector3::UnitX();
-            } else if(symbol == "-X"){
-                axis = -Vector3::UnitX();
-            } else if(symbol == "Y"){
-                axis = Vector3::UnitY();
-            } else if(symbol == "-Y"){
-                axis = -Vector3::UnitY();
-            } else if(symbol == "Z"){
-                axis = Vector3::UnitZ();
-            } else if(symbol == "-Z"){
-                axis = -Vector3::UnitZ();
-            } else {
-                isValid = false;
-            }
-        } else {
-            isValid = false;
-        }
-        if(!isValid){
-            jointAxisNode->throwException("Illegal jointAxis value");
-        }
-    }
-
-    RigidBodyVector rigidBodies;
-    rigidBodies.clear();
-    RigidBody rbody;
-    if(!extractEigen(info, "centerOfMass", rbody.c)){
-        rbody.c.setZero();
-    }
-    if(!extract(info, "mass", rbody.m)){
-        rbody.m = 0.0;
-    }
-    if(!extractInertia(info, "inertia", rbody.I)){
-        rbody.I.setZero();
-    }
-    rigidBodies.push_back(rbody);
-
-    vector<double> bendingAngles(numTracks, 0.0);
+    vector<double> initialAngles(numTracks, 0.0);
     ValueNodePtr initAnglesNode = info->extract("bendingAngles");
     if(initAnglesNode){
         Listing& initAngles = *initAnglesNode->toListing();
         const int n = std::min(initAngles.size(), numTracks);
         for(int i=0; i < n; i++){
-            bendingAngles[i] = toRadian(initAngles[i].toDouble());
+            initialAngles[i] = toRadian(initAngles[i].toDouble());
         }
     }
 
-    //vector<YAMLBodyLoaderImpl::LinkInfoPtr> crawlerlinks;
+    LinkPtr firstTrack = readLink(node);
+    LinkPtr subsequentTrack = firstTrack->clone();
     
-    for(int i = 0; i < numTracks; ++i){
-        LinkInfoPtr crawler_info = new LinkInfo;
-        crawler_info->parent = parent;
-        LinkPtr link = body->createLink();
-        if(hasShape){
-            link->setShape(shape);
-        }
-        link->setName(str(format("%1%%2%") % crawlername % i));
-        if(!linkMap.insert(make_pair(link->name(), link)).second){
-            info->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
-        }
-        link->setJointAxis(axis);
-        //link->setJointType(Link::AGX_CRAWLER_JOINT);
-        if(i==0){
-            link->setJointType(Link::AGX_CRAWLER_JOINT);
-            if(hasRootOffsetTranslation){
-                link->setOffsetTranslation(v);
-            }
-            if(hasRootOffsetRotation){
-                link->setOffsetRotation(R);
-            }
-        } else {
-            link->setJointType(Link::REVOLUTE_JOINT);
-            link->setOffsetTranslation(step);
-        }
-        setMassParameters(link);
-        link->setInitialJointDisplacement(bendingAngles[i]);
-        crawler_info->link = link;
-        crawler_info->node = node;
-        linkInfos.push_back(crawler_info);
-        parent = crawler_info->link->name();
+    firstTrack->setJointType(Link::AGX_CRAWLER_JOINT);
+    addTrackLink(0, firstTrack, node, parent, initialAngles[0]);
+
+    subsequentTrack->setJointType(Link::REVOLUTE_JOINT);
+    subsequentTrack->setOffsetTranslation(step);
+    for(int i=1; i < numTracks; ++i){
+        addTrackLink(i, subsequentTrack->clone(), node, parent, initialAngles[i]);
     }
-    rigidBodies.clear();
+}
+
+
+void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle)
+{
+    link->setName(str(format("%1%%2%") % link->name() % index));
+    if(!linkMap.insert(make_pair(link->name(), link)).second){
+        node->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
+    }
+    link->setInitialJointAngle(initialAngle);
+
+    LinkInfoPtr info = new LinkInfo;
+    info->link = link;
+    info->node = node;
+    info->parent = io_parent;
+    linkInfos.push_back(info);
+    
+    io_parent = link->name();
 }
 
 
