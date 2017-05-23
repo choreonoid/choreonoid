@@ -8,6 +8,7 @@
 
 #include "LinkTraverse.h"
 #include "Link.h"
+#include "ExtraJoint.h"
 #include "DeviceList.h"
 #include "exportdecl.h"
 
@@ -187,15 +188,6 @@ public:
     }
         
     void clearExternalForces();
-
-    enum ExtraJointType { EJ_PISTON, EJ_BALL };
-
-    struct ExtraJoint {
-        ExtraJointType type;
-        Vector3 axis;
-        Link* link[2];
-        Vector3 point[2];
-    };
 
     int numExtraJoints() const { return extraJoints_.size(); }
     ExtraJoint& extraJoint(int index) { return extraJoints_[index]; }

@@ -33,7 +33,7 @@ int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, b
 {
     const int idTop = detector.numGeometries();
     const int numLinks = body.numLinks();
-    int excludeTreeDepth = 3;
+    int excludeTreeDepth = 1;
     boost::dynamic_bitset<> exclusions(numLinks);
     boost::dynamic_bitset<> staticFlags(numLinks);
     

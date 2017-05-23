@@ -21,6 +21,7 @@ public:
     void render(SceneFire* fountain);
 
     GLint lifeTimeLocation;
+    GLint accelLocation;
     GLuint nParticles;
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
@@ -34,17 +35,17 @@ struct Registration {
     }
 } registration;
 
-
 }
 
 
 SceneFire::SceneFire()
     : SceneParticles(findPolymorphicId<SceneFire>())
 {
-    angle_ = 0.1f;
     lifeTime_ = 2.5f;
-    acceleration_ << 0.0f, 0.0f, -9.8f;
-
+    acceleration_ << 0.0f, 0.0f, 0.1f;
+    initialSpeedAverage_ = 0.15f;
+    initialSpeedVariation_ = 0.1f;
+    initialVelocityAngleRange_ = PI / 3.0f;
     setParticleSize(0.15f);
     setTexture(":/SceneEffectsPlugin/texture/fire.png");
 }
@@ -53,9 +54,11 @@ SceneFire::SceneFire()
 SceneFire::SceneFire(const SceneFire& org)
     : SceneParticles(org)
 {
-    angle_ = org.angle_;
     lifeTime_ = org.lifeTime_;
     acceleration_ = org.acceleration_;
+    initialSpeedAverage_ = org.initialSpeedAverage_;
+    initialSpeedVariation_ = org.initialSpeedVariation_;
+    initialVelocityAngleRange_ = org.initialVelocityAngleRange_;
 }
 
 
@@ -87,18 +90,18 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
 
     // Fill the first velocity buffer with random velocities
     Vector3f v;
-    float velocity, theta, phi;
+    float speed, theta, phi;
     vector<GLfloat> data(nParticles * 3);
     for(int i = 0; i < nParticles; ++i) {
-        theta = PI / 3.0f * random();
+        theta = fire->initialVelocityAngleRange() * random();
         phi = 2.0 * PI * random();
 
         v.x() = sinf(theta) * cosf(phi);
         v.y() = sinf(theta) * sinf(phi);
         v.z() = cosf(theta);
 
-        velocity = 0.1f + (0.2f - 0.1f) * random();
-        v = v.normalized() * velocity;
+        speed = std::max(0.0f, fire->initialSpeedAverage() + fire->initialSpeedVariation() * random());
+        v = v.normalized() * speed;
 
         data[3*i]   = v.x();
         data[3*i+1] = v.y();
@@ -132,6 +135,7 @@ bool FireProgram::initializeRendering(SceneParticles* particles)
     glBindVertexArray(0);
 
     lifeTimeLocation = getUniformLocation("lifeTime");
+    accelLocation = getUniformLocation("accel");
 
     return true;
 }
@@ -141,7 +145,8 @@ void FireProgram::render(SceneFire* fire)
 {
     setTime(fire->time());
     glUniform1f(lifeTimeLocation, fire->lifeTime());
-
+    Vector3f accel = globalAttitude().transpose() * fire->acceleration();
+    glUniform3fv(accelLocation, 1, accel.data());
     GLint blendSrc, blendDst;
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);

@@ -32,6 +32,7 @@ public:
     VRMLParser();
     ~VRMLParser();
 
+    void setMessageSink(std::ostream& os);
     void setProtoInstanceActualNodeExtractionMode(bool isOn);
     void load(const std::string& filename);
 
@@ -46,6 +47,7 @@ private:
     VRMLParserImpl* impl;
     void init();
 };
+
 };
 
 #endif

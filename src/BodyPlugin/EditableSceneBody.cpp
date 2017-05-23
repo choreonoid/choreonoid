@@ -100,8 +100,10 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
     if(impl->bbMarker){
         removeChild(impl->bbMarker);
     }
-    impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
-    addChildOnce(impl->bbMarker, true);
+    if(visualShape()){
+        impl->bbMarker = new BoundingBoxMarker(visualShape()->boundingBox(), color, transparency);
+        addChildOnce(impl->bbMarker, true);
+    }
 }
 
 
@@ -354,10 +356,14 @@ EditableSceneBodyImpl::EditableSceneBodyImpl(EditableSceneBody* self, BodyItemPt
 
 double EditableSceneBodyImpl::calcLinkMarkerRadius(SceneLink* sceneLink) const
 {
-    const BoundingBox& bb = sceneLink->visualShape()->boundingBox();
-    if (bb.empty()) return 1.0; // Is this OK?
-    double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
-    return pow(V, 1.0 / 3.0) * 0.6;
+    SgNode* shape = sceneLink->visualShape();
+    if(shape){
+        const BoundingBox& bb = shape->boundingBox();
+        if (bb.empty()) return 1.0; // Is this OK?
+        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
+        return pow(V, 1.0 / 3.0) * 0.6;
+    }
+    return 1.0;
 }
 
 

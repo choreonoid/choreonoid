@@ -1132,7 +1132,7 @@ void BulletBody::setExtraJoints()
     int n = body->numExtraJoints();
 
     for(int j=0; j < n; ++j){
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
         
         BulletLinkPtr bulletLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -1156,7 +1156,7 @@ void BulletBody::setExtraJoints()
             Vector3 a = link0->Rs() * extraJoint.axis;        // link0 local axis
             Vector3 p1 = link1->Rs() * extraJoint.point[1];  // link1 local position
 
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 Vector3 u(0,0,1);
                 Vector3 ty = a.cross(u);
                 btMatrix3x3 btR;
@@ -1189,7 +1189,7 @@ void BulletBody::setExtraJoints()
                 joint->calculateTransforms();
                 dynamicsWorld->addConstraint(joint, true);
                 extraJoints.push_back(joint);
-            }else if(extraJoint.type == Body::EJ_BALL){
+            }else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 btVector3 pivotInA(p0(0), p0(1), p0(2));
                 btVector3 pivotInB(p1(0), p1(1), p1(2));
                 btPoint2PointConstraint* joint = new btPoint2PointConstraint(*(bulletLinkPair[0]->body), *(bulletLinkPair[1]->body),

@@ -703,7 +703,7 @@ void PhysXBody::setExtraJoints()
     const int n = body()->numExtraJoints();
 
     for(int j=0; j < n; ++j){
-        Body::ExtraJoint& extraJoint = body()->extraJoint(j);
+        ExtraJoint& extraJoint = body()->extraJoint(j);
 
         PhysXLinkPtr physXLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -727,7 +727,7 @@ void PhysXBody::setExtraJoints()
             Vector3 a = link0->Rs() * extraJoint.axis;        // link0 local axis
             Vector3 p1 = link1->Rs() * extraJoint.point[1];  // link1 local position
 
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 Vector3 u(1,0,0);
                 Vector3 ty = a.cross(u);
                 PxMat33 R0;
@@ -745,7 +745,7 @@ void PhysXBody::setExtraJoints()
                 PxRevoluteJoint* joint = PxRevoluteJointCreate(*simImpl->pxPhysics, 
                                                                physXLinkPair[0]->pxRigidActor, T0, physXLinkPair[1]->pxRigidActor, T1);
                 extraJoints.push_back(joint);
-            } else if(extraJoint.type == Body::EJ_BALL){
+            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 PxTransform T0(PxVec3(p0(0), p0(1), p0(2)));
                 PxTransform T1(PxVec3(p1(0), p1(1), p1(2)));
                 PxSphericalJoint* joint = PxSphericalJointCreate(*simImpl->pxPhysics, 

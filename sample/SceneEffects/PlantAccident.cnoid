@@ -19,15 +19,15 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/tank.body"
+            modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: ""
-            rootPosition: [ -0.8, -2, 0.1 ]
+            rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  0.000000,  0.000000,  0.000000,  0.000000 ]
-            initialRootPosition: [ -0.8, -2, 0.1 ]
+            initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -94,6 +94,7 @@ items:
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
+            selfCollision: false
             controllerThreads: true
             recordCollisionData: false
             controllerOptions: ""
@@ -119,17 +120,17 @@ items:
           data: 
             modelFile: "${SHARE}/model/misc/fountain.body"
             currentBaseLink: "Base"
-            rootPosition: [ 2.53, -2.05, 1.85 ]
+            rootPosition: [ 1.68, -0.55, 1.85 ]
             rootAttitude: [ 
-              0.819152044, -3.51214273e-17, 0.573576436, 
-              0.573576436, 5.01585965e-17, -0.819152044, 
-              0, 1, 6.123234e-17 ]
+              0.819152045, -2.42882936e-10, 0.573576436, 
+              0.573576436, 1.08772247e-09, -0.819152044, 
+              -2.42882936e-10, 1, 1.08772247e-09 ]
             jointPositions: [  ]
-            initialRootPosition: [ 2.53, -2.05, 1.85 ]
+            initialRootPosition: [ 1.68, -0.55, 1.85 ]
             initialRootAttitude: [ 
-              0.819152044, 5.55111512e-17, 0.573576436, 
-              0.573576436, 2.40815146e-10, -0.819152044, 
-              5.55111512e-17, 1, 2.40815146e-10 ]
+              0.819152045, -5.74604586e-10, 0.573576436, 
+              0.573576436, 2.14443341e-09, -0.819152044, 
+              -5.74604586e-10, 1, 2.14443341e-09 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -140,19 +141,19 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/fire.body"
+            modelFile: "${PROJECT_DIR}/fire1.body"
             currentBaseLink: "Base"
-            rootPosition: [ 2.02, -1.1, 0.9 ]
+            rootPosition: [ 1.411, 0.196, 0.693 ]
             rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
+              0.656059029, -4.62126336e-17, 0.75470958, 
+              0.75470958, 4.01720295e-17, -0.656059029, 
+              0, 1, 6.123234e-17 ]
             jointPositions: [  ]
-            initialRootPosition: [ 2.02, -1.1, 0.9 ]
+            initialRootPosition: [ 1.411, 0.196, 0.693 ]
             initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
+              0.656059029, -4.45527504e-11, 0.75470958, 
+              0.75470958, 2.15828244e-10, -0.656059029, 
+              -4.45527504e-11, 1, 2.15828244e-10 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -165,13 +166,13 @@ items:
           data: 
             modelFile: "${SHARE}/model/misc/smoke.body"
             currentBaseLink: "Base"
-            rootPosition: [ 1.1, -0.85, 0.22 ]
+            rootPosition: [ 0.25, 0.65, 0.22 ]
             rootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [  ]
-            initialRootPosition: [ 1.1, -0.85, 0.22 ]
+            initialRootPosition: [ 0.25, 0.65, 0.22 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
@@ -229,25 +230,30 @@ items:
 views: 
   - 
     id: 0
+    name: "CameraImage"
+    plugin: Base
+    class: ImageView
+  - 
+    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 1
+    id: 2
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 6 ]
+      selected: [ 8 ]
       checked: [ 1, 2, 4 ]
       expanded: [ 1, 2, 3, 7, 8, 9, 10, 11 ]
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
@@ -264,6 +270,8 @@ views:
       worldLightAmbient: 0
       additionalLights: true
       shadowLights: 
+        - 0
+        - 1
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -283,6 +291,7 @@ views:
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
+      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -290,9 +299,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -3.72903142, -3.91767763, 1.67237445 ]
-          direction: [ 0.846830304, 0.464887189, -0.258376348 ]
-          up: [ 0.226491594, 0.124337827, 0.966044338 ]
+          eye: [ -6.44723288, -3.30408906, 3.23335936 ]
+          direction: [ 0.819988251, 0.45015162, -0.353529047 ]
+          up: [ 0.309902039, 0.170127932, 0.935423547 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -304,7 +313,7 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 4
+    id: 5
     name: "Task"
     plugin: Base
     class: TaskView
@@ -312,20 +321,20 @@ views:
       layoutMode: horizontal
       isAutoMode: false
   - 
-    id: 5
+    id: 6
     name: "Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 6
+    id: 7
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -337,25 +346,25 @@ views:
       spinBox: true
       slider: true
       labelOnLeft: true
-      currentBodyItem: 7
+      currentBodyItem: 8
   - 
-    id: 8
+    id: 9
     plugin: Body
     class: LinkSelectionView
     mounted: true
     state: 
       listingMode: "Link List"
-      currentBodyItem: 7
+      currentBodyItem: 8
       bodyItems: 
         - 
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 9
+    id: 10
     plugin: OpenRTM
     class: RTSNameServerView
   - 
-    id: 10
+    id: 11
     plugin: Python
     class: PythonConsoleView
 toolbars: 
@@ -378,7 +387,7 @@ toolbars:
     penetrationBlockDepth: 0.0005
     lazyCollisionDetectionMode: true
   "BodyBar": 
-    current: 7
+    current: 8
   "LeggedBodyBar": 
     stanceWidth: 0.15
   "BodyMotionGenerationBar": 
@@ -476,43 +485,52 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 228, 969 ]
+      sizes: [ 365, 1549 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 363, 362 ]
+          sizes: [ 471, 471 ]
           children: 
             - 
               type: pane
-              views: [ 1 ]
-              current: 1
+              views: [ 2 ]
+              current: 2
             - 
               type: pane
-              views: [ 0, 8 ]
-              current: 0
+              views: [ 1, 9 ]
+              current: 1
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 581, 144 ]
+          sizes: [ 755, 187 ]
           children: 
-            - 
-              type: pane
-              views: [ 7, 3, 6 ]
-              current: 3
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 449, 514 ]
+              sizes: [ 772, 771 ]
               children: 
                 - 
                   type: pane
-                  views: [ 2 ]
-                  current: 2
+                  views: [ 7 ]
+                  current: 7
                 - 
                   type: pane
-                  views: [ 5 ]
-                  current: 5
+                  views: [ 8, 4 ]
+                  current: 4
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 719, 824 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 3 ]
+                  current: 3
+                - 
+                  type: pane
+                  views: [ 6 ]
+                  current: 6
 layoutOfToolBars: 
   rows: 
     - 

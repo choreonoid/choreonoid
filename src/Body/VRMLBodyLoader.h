@@ -20,7 +20,6 @@ class CNOID_EXPORT VRMLBodyLoader : public AbstractBodyLoader
 public:
     VRMLBodyLoader();
     ~VRMLBodyLoader();
-    virtual const char* format() const;
     virtual void setMessageSink(std::ostream& os);
     virtual void setVerbose(bool on);
     virtual void enableShapeLoading(bool on);

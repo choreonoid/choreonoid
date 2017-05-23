@@ -47,12 +47,15 @@ set(sources
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
+  AbstractSceneLoader.cpp
+  SceneLoader.cpp
   YAMLSceneReader.cpp
   PointSetUtil.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
+  VRMLSceneLoader.cpp
   DaeParser.cpp
   STLSceneLoader.cpp
   GettextWrapper.cpp
@@ -106,6 +109,8 @@ set(headers
   SceneEffects.h
   SceneRenderer.h
   SceneUtil.h
+  AbstractSceneLoader.h
+  SceneLoader.h
   MeshGenerator.h
   MeshNormalGenerator.h
   MeshExtractor.h
@@ -128,7 +133,6 @@ set(headers
   Parser.h
   DaeNode.h
   DaeParser.h
-  AbstractSceneLoader.h
   STLSceneLoader.h
   ValueTree.h
   ValueTreeUtil.h

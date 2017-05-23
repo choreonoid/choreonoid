@@ -698,7 +698,10 @@ void GL1SceneRendererImpl::renderLight(const SgLight* light, GLint id, const Aff
                 Vector3f direction = (T.linear() * spotLight->direction()).cast<GLfloat>();
                 glLightfv(id, GL_SPOT_DIRECTION, direction.data());
                 glLightf(id, GL_SPOT_CUTOFF, degree(spotLight->cutOffAngle()));
-                glLightf(id, GL_SPOT_EXPONENT, 0.5f);
+                float r = spotLight->cutOffAngle() - spotLight->beamWidth();
+                r = std::max(0.0f, std::min((float)PI, r));
+                r = (r * 128.0) / PI;
+                glLightf(id, GL_SPOT_EXPONENT, r);
                 
             } else {
                 glLightf(id, GL_SPOT_CUTOFF, 180.0f);

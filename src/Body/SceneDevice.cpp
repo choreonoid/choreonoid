@@ -32,6 +32,7 @@ void updatePerspectiveCamera(Camera* camera, SgPerspectiveCamera* scamera)
     scamera->setNearClipDistance(camera->nearClipDistance());
     scamera->setFarClipDistance(camera->farClipDistance());
     scamera->setFieldOfView(camera->fieldOfView());
+    scamera->notifyUpdate();
 }
 
 void updateLight(Light* light, SgLight* slight)
@@ -39,24 +40,24 @@ void updateLight(Light* light, SgLight* slight)
     slight->on(light->on());
     slight->setColor(light->color());
     slight->setIntensity(light->intensity());
+    slight->notifyUpdate();
 }
 
 void updatePointLight(PointLight* light, SgPointLight* slight)
 {
-    updateLight(light, slight);
     slight->setConstantAttenuation(light->constantAttenuation());
     slight->setLinearAttenuation(light->linearAttenuation());
     slight->setQuadraticAttenuation(light->quadraticAttenuation());
+    updateLight(light, slight);
 }
 
 void updateSpotLight(SpotLight* light, SgSpotLight* slight)
 {
-    updatePointLight(light, slight);
-        
     slight->setDirection(light->direction());
     slight->setBeamWidth(light->beamWidth());
     slight->setCutOffAngle(light->cutOffAngle());
     slight->setCutOffExponent(light->cutOffExponent());
+    updatePointLight(light, slight);
 }
 
 SceneDevice* createScenePerspectiveCamera(Device* device)
@@ -126,16 +127,21 @@ SceneDevice::SceneDevice(Device* device)
 }
 
 
-SceneDevice::SceneDevice(Device* device, SgNode* sceneNode, std::function<void()> functionOnStateChanged)
+SceneDevice::SceneDevice
+(Device* device, SgNode* sceneNode,
+ std::function<void()> functionOnStateChanged,
+ std::function<void(double time)> functionOnTimeChanged)
     : SceneDevice(device)
 {
     sceneNode->setName(device->name());
     addChild(sceneNode);
-    setSceneUpdateFunction(functionOnStateChanged);
+    setFunctionOnStateChanged(functionOnStateChanged);
+    setFunctionOnTimeChanged(functionOnTimeChanged);
 }
     
-    
-void SceneDevice::setSceneUpdateFunction(std::function<void()> function)
+
+
+void SceneDevice::setFunctionOnStateChanged(std::function<void()> function)
 {
     functionOnStateChanged = function;
 }

@@ -18,9 +18,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
-#include <cnoid/VRMLParser>
-#include <cnoid/EasyScanner>
-#include <cnoid/VRMLToSGConverter>
+#include <cnoid/SceneLoader>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <unordered_map>
@@ -56,6 +54,7 @@ public:
     YAMLBodyLoader* self;
     YAMLReader reader;
     YAMLSceneReader sceneReader;
+    SceneLoader sceneLoader;
     filesystem::path directoryPath;
 
     typedef function<bool(Mapping& node)> NodeFunction;
@@ -91,7 +90,7 @@ public:
 
     LinkPtr currentLink;
     vector<string> nameStack;
-    typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Vector;
+    typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Vector;
     Affine3Vector transformStack;
 
     struct RigidBody
@@ -101,7 +100,7 @@ public:
         double m;
         Matrix3 I;
     };
-    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
+    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody>> RigidBodyVector;
     RigidBodyVector rigidBodies;
 
     SgGroupPtr currentSceneGroup;
@@ -120,14 +119,32 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
-    VRMLParser vrmlParser;
-    VRMLToSGConverter sgConverter;
+    struct NodeInfo
+    {
+        SgGroupPtr parent;
+        SgNodePtr node;
+        Matrix3 R;
+        bool isScaled;
+    };
+
+    typedef unordered_map<string, NodeInfo> NodeMap;
+    
+    struct ResourceInfo : public Referenced
+    {
+        SgNodePtr rootNode;
+        unique_ptr<NodeMap> nodeMap;
+    };
+    typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
+        
+    map<string, ResourceInfoPtr> resourceInfoMap;
+    
 
     ostream& os() { return *os_; }
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
+    bool clear();
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
     bool readBody(Mapping* topNode);
@@ -142,6 +159,12 @@ public:
     bool readGroup(Mapping& node);
     bool readTransform(Mapping& node);
     bool readResource(Mapping& node);
+    bool importModel(SgGroup* group, const std::string& uri);
+    bool importModel(SgGroup* group, const string& uri, const string& nodeName);
+    ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    void adjustNodeCoordinate(NodeInfo& info);
+    void makeNodeMap(ResourceInfo* info);
+    void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -155,7 +178,7 @@ public:
         return sceneReader.isDegreeMode();
     }
     
-    double toRadian(double angle){
+    double toRadian(double angle) const {
         return sceneReader.toRadian(angle);
     }
 
@@ -323,22 +346,17 @@ YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
 }
 
 
-const char* YAMLBodyLoader::format() const
-{
-    return "ChoreonoidBody";
-}
-
-
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
 }
 
 
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
-    impl->sgConverter.setDivisionNumber(n);
+    impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
@@ -353,6 +371,46 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
         numCustomNodeFunctions = customNodeFunctions.size();
     }
 }
+
+
+bool YAMLBodyLoader::isDegreeMode() const
+{
+    return impl->isDegreeMode();
+}
+
+
+double YAMLBodyLoader::toRadian(double angle) const
+{
+    return impl->toRadian(angle);
+}
+
+
+bool YAMLBodyLoader::readAngle(Mapping& node, const char* key, double& angle)
+{
+    return impl->readAngle(node, key, angle);
+}
+
+
+bool YAMLBodyLoader::readRotation(Mapping& node, Matrix3& out_R)
+{
+    return impl->readRotation(node, out_R, false);
+}
+
+
+bool YAMLBodyLoaderImpl::clear()
+{
+    rootLink = nullptr;
+    linkInfos.clear();
+    linkMap.clear();
+    validJointIdSet.clear();
+    numValidJointIds = 0;
+    nameStack.clear();
+    transformStack.clear();
+    rigidBodies.clear();
+    sceneReader.clear();
+    resourceInfoMap.clear();
+    return true;
+}    
 
 
 bool YAMLBodyLoader::load(Body* body, const std::string& filename)
@@ -383,8 +441,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
-    } catch(EasyScanner::Exception & ex){
-        os() << ex.getFullMessage();
     }
 
     os().flush();
@@ -401,19 +457,14 @@ bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
 
 bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 {
+    clear();
+    
     updateCustomNodeFunctions();
     
     bool result = false;
     this->body = body;
     body->clearDevices();
     body->clearExtraJoints();
-
-    rootLink = nullptr;
-    linkInfos.clear();
-    linkMap.clear();
-    validJointIdSet.clear();
-    numValidJointIds = 0;
-    sceneReader.clear();
 
     try {
         result = readBody(topNode);
@@ -424,16 +475,13 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
         if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
+    } catch(...){
+        clear();
+        throw;
     }
 
-    linkInfos.clear();
-    linkMap.clear();
-    validJointIdSet.clear();
-    nameStack.clear();
-    transformStack.clear();
-    rigidBodies.clear();
-    sceneReader.clear();
-        
+    clear();
+
     os().flush();
 
     if(false){ // for debug
@@ -667,10 +715,16 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
             if(symbol == "X"){
                 axis = Vector3::UnitX();
+            } else if(symbol == "-X"){
+                axis = -Vector3::UnitX();
             } else if(symbol == "Y"){
                 axis = Vector3::UnitY();
+            } else if(symbol == "-Y"){
+                axis = -Vector3::UnitY();
             } else if(symbol == "Z"){
                 axis = Vector3::UnitZ();
+            } else if(symbol == "-Z"){
+                axis = -Vector3::UnitZ();
             } else {
                 isValid = false;
             }
@@ -767,22 +821,15 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     }
     rigidBodies.push_back(rbody);
     setMassParameters(link);
-    
+
+    // The uri parameter should be used in a Resource node
+    /*
     if(extract(linkNode, "uri", symbol)){
-        filesystem::path filepath(symbol);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
-        }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
-                shape->addChild(node);
-                hasShape = true;
-            }
+        if(importModel(shape, symbol)){
+            hasShape = true;
         }
     }
+    */
 
     if(hasShape){
         link->setShape(shape);
@@ -1059,26 +1106,175 @@ bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
 bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 {
     bool isSceneNodeAdded = false;
-    
     if(node.read("uri", symbol)){
-        filesystem::path filepath(symbol);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
+        string nodeName;
+        if(node.read("node", nodeName)){
+            isSceneNodeAdded = importModel(currentSceneGroup, symbol, nodeName);
+        } else {
+            isSceneNodeAdded = importModel(currentSceneGroup, symbol);
         }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
-                currentSceneGroup->addChild(node);
-                isSceneNodeAdded = true;
+    }
+    return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri)
+{
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    if(resourceInfo){
+        group->addChild(resourceInfo->rootNode);
+        return true;
+    }
+    return false;
+}
+
+
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri, const string& nodeName)
+{
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+
+    SgNodePtr model;
+    if(resourceInfo){
+        if(nodeName.empty()){
+            model = resourceInfo->rootNode;
+        } else {
+            unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
+            if(!nodeMap){
+                makeNodeMap(resourceInfo);
+            }
+            auto iter = nodeMap->find(nodeName);
+            if(iter == nodeMap->end()){
+                os() << str(format("Warning: Node \"%1%\" is not found in \"%2%\".") % nodeName % uri) << endl;
+            } else {
+                NodeInfo& nodeInfo = iter->second;
+                if(nodeInfo.parent){
+                    nodeInfo.parent->removeChild(nodeInfo.node);
+                    nodeInfo.parent = 0;
+                    adjustNodeCoordinate(nodeInfo);
+                }
+                model = nodeInfo.node;
             }
         }
     }
 
-    return isSceneNodeAdded;
+    if(model){
+        group->addChild(model);
+        return true;
+    }
+    return false;
 }
 
+
+YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(const string& uri)
+{
+    ResourceInfo* info = 0;
+    
+    auto iter = resourceInfoMap.find(uri);
+    if(iter != resourceInfoMap.end()){
+        info = iter->second;
+    } else {
+        filesystem::path filepath(uri);
+        if(!checkAbsolute(filepath)){
+            filepath = directoryPath / filepath;
+            filepath.normalize();
+        }
+        SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
+        if(rootNode){
+            info = new ResourceInfo;
+            if(auto transform = dynamic_cast<SgPosTransform*>(rootNode.get())){
+                transform->translation().setZero();
+            } else if(auto transform = dynamic_cast<SgAffineTransform*>(rootNode.get())){
+                transform->translation().setZero();
+            }
+            info->rootNode = rootNode;
+        }
+        resourceInfoMap[uri] = info;
+    }
+
+    return info;
+}
+
+
+void YAMLBodyLoaderImpl::adjustNodeCoordinate(NodeInfo& info)
+{
+    if(auto pos = dynamic_cast<SgPosTransform*>(info.node.get())){
+        if(info.isScaled){
+            auto affine = new SgAffineTransform;
+            affine->setLinear(info.R * pos->rotation());
+            affine->translation().setZero();
+            pos->moveChildrenTo(affine);
+            info.node = affine;
+        } else {
+            pos->setRotation(info.R * pos->rotation());
+            pos->translation().setZero();
+        }
+            
+    } else if(auto affine = dynamic_cast<SgAffineTransform*>(info.node.get())){
+        affine->setLinear(info.R * affine->linear());
+        affine->translation().setZero();
+            
+    } else {
+        if(info.isScaled){
+            auto transform = new SgAffineTransform;
+            transform->setLinear(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        } else if(!info.R.isApprox(Matrix3::Identity())){
+            auto transform = new SgPosTransform;
+            transform->setRotation(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        }
+    }
+}
+        
+
+void YAMLBodyLoaderImpl::makeNodeMap(ResourceInfo* info)
+{
+    info->nodeMap.reset(new NodeMap);
+    NodeInfo nodeInfo;
+    nodeInfo.parent = 0;
+    nodeInfo.node = info->rootNode;
+    nodeInfo.R = Matrix3::Identity();
+    nodeInfo.isScaled = false;
+    makeNodeMapSub(nodeInfo, *info->nodeMap);
+}
+
+
+void YAMLBodyLoaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap)
+{
+    const string& name = nodeInfo.node->name();
+    bool wasProcessed = false;
+    if(!name.empty()){
+        wasProcessed = !nodeMap.insert(make_pair(name, nodeInfo)).second;
+    }
+    if(!wasProcessed){
+        SgGroup* group = dynamic_cast<SgGroup*>(nodeInfo.node.get());
+        if(group){
+            NodeInfo childInfo;
+            childInfo.parent = group;
+            childInfo.isScaled = nodeInfo.isScaled;
+            SgTransform* transform = dynamic_cast<SgTransform*>(group);
+            if(!transform){
+                childInfo.R = nodeInfo.R;
+            } else if(auto pos = dynamic_cast<SgPosTransform*>(transform)){
+                childInfo.R = nodeInfo.R * pos->rotation();
+            } else {
+                Affine3 T;
+                transform->getTransform(T);
+                childInfo.R = nodeInfo.R * T.linear();
+                childInfo.isScaled = true;
+            }
+            for(SgNode* child : *group){
+                childInfo.node = child;
+                makeNodeMapSub(childInfo, nodeMap);
+            }
+        }
+    }
+}
+    
 
 bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 {

@@ -27,7 +27,7 @@ public:
     bool isDegreeMode() const {
         return isDegreeMode_;
     }
-    double toRadian(double angle){
+    double toRadian(double angle) const {
         return isDegreeMode_ ? radian(angle) : angle;
     }
 
