@@ -15,7 +15,6 @@
 #include "SpotLight.h"
 #include <cnoid/YAMLSceneReader>
 #include <cnoid/EigenArchive>
-#include <cnoid/EigenUtil>
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
