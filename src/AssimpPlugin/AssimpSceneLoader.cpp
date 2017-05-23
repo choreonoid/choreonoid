@@ -41,7 +41,7 @@ public:
     boost::filesystem::path directoryPath;
     ImageIO imageIO;
 
-    typedef map<unsigned int, SgShapePtr> AiIndexToSgShapeMap;
+    typedef map<unsigned int, SgNodePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
     typedef map<unsigned int, SgMaterialPtr> AiIndexToSgMaterialMap;
     AiIndexToSgMaterialMap  aiIndexToSgMaterialMap;
@@ -52,9 +52,10 @@ public:
 
     AssimpSceneLoaderImpl();
     void clear();
-    SgNodePtr load(const std::string& filename);
-    SgTransformPtr convertAiNode(aiNode* node);
-    SgShape* convertAiMesh(unsigned int);
+    SgNode* load(const std::string& filename);
+    SgTransform* convertAiNode(aiNode* node);
+    SgNode* convertAiMesh(unsigned int);
+    SgNode* convertAiMeshFaces(aiMesh* srcMesh);
     SgMaterial* convertAiMaterial(unsigned int);
     SgTexture* convertAiTexture(unsigned int index);
 };
@@ -97,24 +98,17 @@ void AssimpSceneLoaderImpl::clear()
 }
 
 
-SgNodePtr AssimpSceneLoader::load(const std::string& filename)
+SgNode* AssimpSceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
+SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 {
     clear();
 
-    scene = importer.ReadFile(
-        filename,
-        aiProcess_Triangulate                //三角面へ変換
-        //| aiProcess_JoinIdenticalVertices  //重複する頂点座標の削除
-        | aiProcess_GenNormals               //面法線を生成
-        //| aiProcess_FindInstances          //重複するメッシュを探し初出のメッシュに置き換える
-        //| aiProcess_SortByPType            //異なる複数のプリミティブ型からなるメッシュをサブメッシュに分割
-        );
+    scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_GenNormals);
 
     if(!scene){
         os() << importer.GetErrorString() << endl;
@@ -124,7 +118,7 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
     boost::filesystem::path path(filename);
     directoryPath = path.remove_filename();
 
-    SgNodePtr node = convertAiNode(scene->mRootNode);
+    SgNode* node = convertAiNode(scene->mRootNode);
 
     importer.FreeScene();
 
@@ -132,7 +126,7 @@ SgNodePtr AssimpSceneLoaderImpl::load(const std::string& filename)
 }
 
 
-SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
+SgTransform* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 {
     const aiMatrix4x4& T = node->mTransformation;
     Affine3 M;
@@ -151,14 +145,14 @@ SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
     transform->setName(node->mName.C_Str());
  
     for(unsigned int i=0; i < node->mNumMeshes; ++i){
-        SgShape* shape = convertAiMesh(node->mMeshes[i]);
+        SgNode* shape = convertAiMesh(node->mMeshes[i]);
         if(shape){
             transform->addChild(shape);
         }
     }
 
     for(unsigned int i=0; i < node->mNumChildren; ++i){
-        SgTransformPtr child = convertAiNode(node->mChildren[i]);
+        SgTransform* child = convertAiNode(node->mChildren[i]);
         if(child){
             transform->addChild(child);
         }
@@ -168,43 +162,118 @@ SgTransformPtr AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
         transform = 0;
     }
 
-    return transform;
+    return transform.retn();
 }
 
 
-SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
+SgNode* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
 {
     AiIndexToSgShapeMap::iterator p = aiIndexToSgShapeMap.find(index);
     if(p != aiIndexToSgShapeMap.end()){
         return p->second;
     }
 
-    SgShape* shape = 0;
+    SgNode* node = 0;
     aiMesh* srcMesh = scene->mMeshes[index];
-    
     if(srcMesh->HasFaces()){
-        shape = new SgShape;
-        shape->setName(srcMesh->mName.C_Str());
-        auto mesh = shape->getOrCreateMesh();
-        mesh->setName(shape->name());
+        node = convertAiMeshFaces(srcMesh);
+    }
+    aiIndexToSgShapeMap[index] = node;
 
-        const unsigned int numVertices = srcMesh->mNumVertices;
-        const auto srcVertices = srcMesh->mVertices;
-        auto& vertices = *mesh->getOrCreateVertices();
-        vertices.resize(numVertices);
+    return node;;
+}
+
+
+SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
+{
+    const unsigned int types = srcMesh->mPrimitiveTypes;
+    SgGroupPtr group = new SgGroup;
+    group->setName(srcMesh->mName.C_Str());
+
+    const unsigned int numVertices = srcMesh->mNumVertices;
+    const auto srcVertices = srcMesh->mVertices;
+    SgVertexArrayPtr vertices = new SgVertexArray;
+    vertices->resize(numVertices);
+    for(unsigned int i=0; i < numVertices; ++i){
+        const auto& v = srcVertices[i];
+        vertices->at(i) << v.x, v.y, v.z;
+    }
+
+    SgNormalArrayPtr normals;
+    if(srcMesh->HasNormals()){
+        const auto srcNormals = srcMesh->mNormals;
+        normals = new SgNormalArray;
+        normals->resize(numVertices);
         for(unsigned int i=0; i < numVertices; ++i){
-            const auto& v = srcVertices[i];
-            vertices[i] << v.x, v.y, v.z;
+            const auto& n = srcNormals[i];
+            normals->at(i) << n.x, n.y, n.z;
         }
-        if(srcMesh->HasNormals()){
-            const auto srcNormals = srcMesh->mNormals;
-            auto& normals = *mesh->getOrCreateNormals();
-            normals.resize(numVertices);
-            for(unsigned int i=0; i < numVertices; ++i){
-                const auto& n = srcNormals[i];
-                normals[i] << n.x, n.y, n.z;
+    }
+
+    SgColorArrayPtr colors;
+    if(srcMesh->HasVertexColors(0)){
+        const auto srcColors = srcMesh->mColors[0];
+        colors = new SgColorArray;
+        colors->resize(numVertices);
+        for(unsigned int i=0; i < numVertices; ++i){
+            const auto& c = srcColors[i];
+            colors->at(i) << c.r, c.g, c.b;
+        }
+    }
+
+    SgMaterialPtr material = convertAiMaterial(srcMesh->mMaterialIndex);
+
+    const unsigned int numFaces = srcMesh->mNumFaces;
+    const aiFace* srcFaces = srcMesh->mFaces;
+    
+    if(types & aiPrimitiveType_POINT){
+        auto pointSet = new SgPointSet;
+        pointSet->setVertices(vertices);
+        pointSet->setNormals(normals);
+        pointSet->setColors(colors);
+        pointSet->setMaterial(material);
+        group->addChild(pointSet);
+    }
+    
+    if(types & aiPrimitiveType_LINE){
+        auto lineSet = new SgLineSet;
+        lineSet->setVertices(vertices);
+        lineSet->setNormals(normals);
+        lineSet->setColors(colors);
+        lineSet->setMaterial(material);
+
+        if(types == aiPrimitiveType_LINE){
+            lineSet->reserveNumLines(numFaces);
+        }
+        for(unsigned int i = 0; i < numFaces; ++i){
+            const aiFace& face = srcFaces[i];
+            if(face.mNumIndices == 2){
+                const unsigned int* indices = face.mIndices;
+                lineSet->addLine(indices[0], indices[1]);
             }
         }
+        group->addChild(lineSet);
+    }
+    
+    if(types & aiPrimitiveType_TRIANGLE){
+        auto shape = new SgShape;
+        shape->setMaterial(material);
+        auto mesh = shape->getOrCreateMesh();
+        mesh->setVertices(vertices);
+        mesh->setNormals(normals);
+        mesh->setColors(colors);
+
+        if(types == aiPrimitiveType_TRIANGLE){
+            mesh->reserveNumTriangles(numFaces);
+        }
+        for(unsigned int i = 0; i < numFaces; ++i){
+            const aiFace& face = srcFaces[i];
+            if(face.mNumIndices == 3){
+                const unsigned int* indices = face.mIndices;
+                mesh->addTriangle(indices[0], indices[1], indices[2]);
+            }
+        }
+
         if(srcMesh->HasTextureCoords(0)){
             const auto srcTexCoords = srcMesh->mTextureCoords[0];
             auto& texCoords = *mesh->getOrCreateTexCoords();
@@ -214,36 +283,23 @@ SgShape* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
                 texCoords[i] << p.x, p.y;
             }
         }
-        if(srcMesh->HasVertexColors(0)){
-            const auto srcColors = srcMesh->mColors[0];
-            auto& colors = *mesh->getOrCreateColors();
-            colors.resize(numVertices);
-            for(unsigned int i=0; i < numVertices; ++i){
-                const auto& c = srcColors[i];
-                colors[i] << c.r, c.g, c.b;
-            }
-        }
-
-        const unsigned int numFaces = srcMesh->mNumFaces;
-        const auto srcFaces = srcMesh->mFaces;
-        mesh->setNumTriangles(numFaces);
-        for(unsigned int i = 0; i < numFaces; ++i){
-            const auto& indices = srcFaces[i].mIndices;
-            mesh->setTriangle(i, indices[0], indices[1], indices[2]);
-        }
-
-        SgMaterial* material = convertAiMaterial(srcMesh->mMaterialIndex);
-        shape->setMaterial(material);
-
         SgTexture* texture = convertAiTexture(srcMesh->mMaterialIndex);
         if(texture){
             shape->setTexture(texture);
         }
-    }
-    
-    aiIndexToSgShapeMap[index] = shape;
 
-    return shape;
+        group->addChild(shape);
+    }
+
+    if(group->empty()){
+        return 0;
+    } else if(group->numChildren() == 1){
+        SgNodePtr node = group->child(0);
+        node->setName(group->name());
+        group->clearChildren();
+        return node.retn();
+    }
+    return group.retn();
 }
 
 

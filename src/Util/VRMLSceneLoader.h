@@ -18,7 +18,7 @@ public:
     VRMLSceneLoader();
     virtual ~VRMLSceneLoader();
     virtual void setMessageSink(std::ostream& os) override;
-    virtual SgNodePtr load(const std::string& filename) override;
+    virtual SgNode* load(const std::string& filename) override;
 
 private:
     VRMLSceneLoaderImpl* impl;

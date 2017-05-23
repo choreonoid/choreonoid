@@ -2,6 +2,7 @@
 #include "STLSceneLoader.h"
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
+#include "NullOut.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
@@ -38,20 +39,42 @@ static void readVector3(string text, SgVectorArray<Vector3f>* array)
 }
 
 
-SgNodePtr STLSceneLoader::load(const std::string& filename)
+STLSceneLoader::STLSceneLoader()
 {
-    std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+    os_ = &nullout();
+}
 
+
+void STLSceneLoader::setMessageSink(std::ostream& os)
+{
+    os_ = &os;
+}
+
+
+SgNode* STLSceneLoader::load(const std::string& filename)
+{
     SgVertexArrayPtr vertices = new SgVertexArray;
     SgNormalArrayPtr normals = new SgNormalArray;
 
-    uint8_t header[80];
-    ifs.read((char *)header, 80);
-    if(strncmp((char *)header, "solid", 5) != 0){
-        // stl file is in binary format
-        uint32_t ntriangle;
-        ifs.read((char *)&ntriangle, 4);
-        for(size_t i = 0; i < ntriangle; i++){
+    std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+    ifs.seekg(0, fstream::end);
+    unsigned int fileSize = ifs.tellg();
+    ifs.seekg(0, fstream::beg);
+
+    bool isBinary = false;
+    unsigned int numFaces = 0;
+    uint8_t buf[84];
+    ifs.read((char*)buf, 84);
+    if(ifs.gcount() == 84){
+        numFaces = buf[80] + (buf[81] << 8) + (buf[82] << 16) + (buf[83] << 24);
+        unsigned int expectedSize = numFaces * 50 + 84;
+        if(expectedSize == fileSize){
+            isBinary = true;
+        }
+    }
+
+    if(isBinary){
+        for(size_t i = 0; i < numFaces; i++){
             Vector3f value;
             for(size_t j = 0; j < 3; j++){
                 float v;
@@ -72,7 +95,7 @@ SgNodePtr STLSceneLoader::load(const std::string& filename)
             ifs.read((char *)&attrib, 2);
         }
     } else {
-        // stl file is in text format
+        // text format
         std::ifstream ifs(filename.c_str(), std::ios::in);
         std::string line;
         while(!ifs.eof() && getline(ifs, line)){
@@ -84,9 +107,13 @@ SgNodePtr STLSceneLoader::load(const std::string& filename)
             }
         }
     }
+    
     SgShape* shape = 0;
     
-    if(!vertices->empty()){
+    if(vertices->empty()){
+        os() << "Empty vertices." << endl;
+            
+    } else {
         shape = new SgShape;
         SgMesh* mesh = shape->getOrCreateMesh();
         mesh->setVertices(vertices);

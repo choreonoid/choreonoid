@@ -19,7 +19,7 @@ public:
     AssimpSceneLoader();
     ~AssimpSceneLoader();
     void setMessageSink(std::ostream& os) override;
-    virtual SgNodePtr load(const std::string& filename) override;
+    virtual SgNode* load(const std::string& filename) override;
 
 private:
     AssimpSceneLoaderImpl* impl;

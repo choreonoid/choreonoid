@@ -8,8 +8,12 @@ namespace cnoid {
 
 class CNOID_EXPORT STLSceneLoader : public AbstractSceneLoader
 {
+    std::ostream* os_;
+    std::ostream& os() { return *os_; }
 public:
-    virtual SgNodePtr load(const std::string& filename) override;
+    STLSceneLoader();
+    virtual void setMessageSink(std::ostream& os);
+    virtual SgNode* load(const std::string& filename) override;
 };
 
 };

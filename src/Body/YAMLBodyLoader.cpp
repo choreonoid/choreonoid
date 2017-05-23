@@ -412,6 +412,7 @@ bool YAMLBodyLoaderImpl::clear()
     rigidBodies.clear();
     sceneReader.clear();
     resourceInfoMap.clear();
+    return true;
 }    
 
 

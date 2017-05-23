@@ -8,6 +8,7 @@
 #include <boost/format.hpp>
 #include <mutex>
 #include <map>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -36,8 +37,8 @@ public:
     double defaultCreaseAngle;
 
     SceneLoaderImpl();
-    AbstractSceneLoaderPtr findLoader(const string& ext);
-    SgNodePtr load(const std::string& filename);
+    AbstractSceneLoaderPtr findLoader(string ext);
+    SgNode* load(const std::string& filename);
 };
 
 }
@@ -116,11 +117,13 @@ void SceneLoader::setDefaultCreaseAngle(double theta)
 }
 
 
-AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(const string& ext)
+AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(string ext)
 {
     AbstractSceneLoaderPtr loader;
     
     lock_guard<mutex> lock(loaderMutex);
+
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     auto p = loaderIdMap.find(ext);
     if(p != loaderIdMap.end()){
@@ -138,13 +141,13 @@ AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(const string& ext)
 }
 
 
-SgNodePtr SceneLoader::load(const std::string& filename)
+SgNode* SceneLoader::load(const std::string& filename)
 {
     return impl->load(filename);
 }
 
 
-SgNodePtr SceneLoaderImpl::load(const std::string& filename)
+SgNode* SceneLoaderImpl::load(const std::string& filename)
 {
     boost::filesystem::path filepath(filename);
     string ext = getExtension(filepath);
@@ -154,7 +157,7 @@ SgNodePtr SceneLoaderImpl::load(const std::string& filename)
         return 0;
     }
 
-    SgNodePtr node;
+    SgNode* node = 0;
     auto loader = findLoader(ext);
     if(!loader){
         (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
