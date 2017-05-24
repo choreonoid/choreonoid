@@ -47,6 +47,7 @@ class BodyPlugin : public Plugin
 {
 public:
     BodyPlugin() : Plugin("Body") {
+        addOldName("SimpleController");
         setActivationPriority(0);
     }
 
