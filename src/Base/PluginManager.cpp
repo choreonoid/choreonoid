@@ -504,8 +504,8 @@ bool PluginManagerImpl::loadPlugin(int index)
 
                     if(plugin->internalVersion() != CNOID_INTERNAL_VERSION){
                         mv->putln(MessageView::WARNING,
-                                  fmt(_("The internal version of %1% is different from the system internal version.\n"
-                                           "The plugin file \"%2%\" should be removed or updated to avoid a problem."))
+                                  fmt(_("The internal version of the %1% plugin is different from the system internal version.\n"
+                                        "The plugin file \"%2%\" should be removed or updated to avoid a problem."))
                                   % info->name % info->pathString);
                     }
                         
