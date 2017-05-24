@@ -38,11 +38,11 @@ items:
             isEditable: false
         - 
           id: 3
-          name: "AgXTrackedVehicle"
+          name: "TrackedVehicle"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/AgXTrackedVehicle.body"
+            modelFile: "${SHARE}/model/misc/TrackedVehicle.body"
             currentBaseLink: "ROOT"
             rootPosition: [ -5, 5, 0.6 ]
             rootAttitude: [ 
@@ -81,13 +81,13 @@ items:
           children: 
             - 
               id: 4
-              name: "AgXTrackedVehicleController"
+              name: "TrackedVehicleController"
               plugin: Body
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
                 controllerOptions: "velocity"
-                controller: "AgXTrackedVehicleController"
+                controller: "TrackedVehicleController"
                 reloading: true
                 RelativePathBase: "Controller directory"
         - 
@@ -251,7 +251,7 @@ views:
           near: 0.01
           far: 100
         - 
-          camera: [ AgXTrackedVehicle, Camera ]
+          camera: [ TrackedVehicle, Camera ]
           isCurrent: true
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
