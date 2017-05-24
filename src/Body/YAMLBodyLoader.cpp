@@ -605,16 +605,6 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
-    //! \todo Remove this later
-    ValueNodePtr initDNode = topNode->extract("initialJointDisplacements");
-    if(initDNode){
-        Listing& initd = *initDNode->toListing();
-        const int n = std::min(initd.size(), body->numLinks());
-        for(int i=0; i < n; i++){
-            body->link(i)->setInitialJointDisplacement(toRadian(initd[i].toDouble()));
-        }
-    }
-
     body->resetInfo(topNode);
         
     body->installCustomizer();
@@ -840,15 +830,6 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     rigidBodies.push_back(rbody);
     setMassParameters(link);
 
-    // The uri parameter should be used in a Resource node
-    /*
-    if(extract(linkNode, "uri", symbol)){
-        if(importModel(shape, symbol)){
-            hasShape = true;
-        }
-    }
-    */
-
     if(hasShape){
         link->setShape(shape);
     }
@@ -885,39 +866,40 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
         info->throwException("name must be specified.");
     }
 
-    int numTracks = 0;
-    if(!extract(info, "numTracks", numTracks)){
-        info->throwException("numTracks must be specified.");
+    int numJoints = 0;
+    if(!extract(info, "numJoints", numJoints)){
+        info->throwException("numJoints must be specified.");
     }
-    if(numTracks <= 0){
-        info->throwException("numTracks must be more than 0.");
-    }
-
-    Vector3 step;
-    if(!extractEigen(info, "stepTranslation", step)){
-        info->throwException("stepTranslation must be specified.");
+    if(numJoints < 3){
+        info->throwException("numJoints must be more than 2.");
     }
 
-    vector<double> initialAngles(numTracks, 0.0);
-    ValueNodePtr initAnglesNode = info->extract("bendingAngles");
+    Vector3 jointOffset;
+    if(!extractEigen(info, "jointOffset", jointOffset)){
+        info->throwException("jointOffset must be specified.");
+    }
+
+    const int numOpenJoints = numJoints - 1;
+    vector<double> initialAngles(numOpenJoints - 1, 0.0);
+    ValueNodePtr initAnglesNode = info->extract("initialJointAngles");
     if(initAnglesNode){
         Listing& initAngles = *initAnglesNode->toListing();
-        const int n = std::min(initAngles.size(), numTracks);
+        const int n = std::min(initAngles.size(), numOpenJoints);
         for(int i=0; i < n; i++){
             initialAngles[i] = toRadian(initAngles[i].toDouble());
         }
     }
 
-    LinkPtr firstTrack = readLink(node);
-    LinkPtr subsequentTrack = firstTrack->clone();
+    LinkPtr firstLink = readLink(node);
+    LinkPtr subsequentLink = firstLink->clone();
     
-    firstTrack->setJointType(Link::AGX_CRAWLER_JOINT);
-    addTrackLink(0, firstTrack, node, parent, initialAngles[0]);
+    firstLink->setJointType(Link::AGX_CRAWLER_JOINT);
+    addTrackLink(0, firstLink, node, parent, 0.0);
 
-    subsequentTrack->setJointType(Link::REVOLUTE_JOINT);
-    subsequentTrack->setOffsetTranslation(step);
-    for(int i=1; i < numTracks; ++i){
-        addTrackLink(i, subsequentTrack->clone(), node, parent, initialAngles[i]);
+    subsequentLink->setJointType(Link::REVOLUTE_JOINT);
+    subsequentLink->setOffsetTranslation(jointOffset);
+    for(int i=0; i < numOpenJoints; ++i){
+        addTrackLink(i + 1, subsequentLink->clone(), node, parent, initialAngles[i]);
     }
 }
 

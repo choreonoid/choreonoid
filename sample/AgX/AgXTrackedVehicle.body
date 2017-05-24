@@ -203,23 +203,22 @@ links:
     type: ContinuousTrack
     parent: ROOT
     name: FOOT_L
-    numTracks: 40
-    translation: [ 1.2854, 1.1, 0.15 ]
-    jointAxis: [ 0, 1, 0 ]
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 5.142
-    inertia: [
-      0.03963625, 0, 0,
-      0, 0.013659706, 0,
-      0, 0, 0.051153456 ] 
-    stepTranslation: [ -0.1670, 0, 0 ]
-    bendingAngles: [ 
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30, 
-      -30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30 ]
+    translation: [ 1.1184, 1.1, 0.15 ]
+    numJoints: 40
+    jointAxis: Y
+    jointOffset: [ 0.1670, 0, 0 ]
+    initialJointAngles: [ 
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
     import: *trackJointParam
-    elements: &footShape
-      Transform: 
-        translation: [ -0.0854, 0, 0.025 ]
+    elements: &TrackFoot
+      RigidBody:
+        translation: [ 0.0854, 0, 0.025 ]
+        mass: 5.142
+        inertia: [
+          0.03963625, 0, 0,
+          0, 0.013659706, 0,
+          0, 0, 0.051153456 ] 
         elements:
           Shape:
             geometry: { type: Box, size: [ 0.167, 0.3, 0.05 ] }
@@ -235,21 +234,16 @@ links:
     type: ContinuousTrack
     parent: ROOT
     name: FOOT_R
-    numTracks: 40
-    translation: [ 1.2854, -1.1, 0.15 ]
-    stepTranslation: [ -0.1670, 0, 0 ]
-    jointAxis: [ 0, 1, 0 ]
-    centerOfMass: [ 0, 0, 0 ]
-    mass: 5.142
-    inertia: [
-      0.03963625, 0, 0,
-      0, 0.013659706, 0,
-      0, 0, 0.051153456 ] 
-    bendingAngles: [ 
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30,
-      -30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -30, -30, -30, -30, -30 ]
+    translation: [ 1.1184, -1.1, 0.15 ]
+    numJoints: 40
+    jointAxis: Y
+    jointOffset: [ 0.1670, 0, 0 ]
+    centerOfMass: [ 0.0854, 0, 0 ]
+    initialJointAngles: [ 
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
     import: *trackJointParam
-    elements: *footShape
+    elements: *TrackFoot
 
 linkGroup:
   - ROOT
