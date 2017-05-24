@@ -238,7 +238,6 @@ links:
     numJoints: 40
     jointAxis: Y
     jointOffset: [ 0.1670, 0, 0 ]
-    centerOfMass: [ 0.0854, 0, 0 ]
     initialJointAngles: [ 
       30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  ]
