@@ -117,7 +117,9 @@ public:
         REVOLUTE_JOINT = 0,
         ROTATIONAL_JOINT = REVOLUTE_JOINT,
         /// translational joint (1 dof)
-        SLIDE_JOINT = 1,
+        PRISMATIC_JOINT = 1,
+        /// deprecated
+        SLIDE_JOINT = PRISMATIC_JOINT,
         /// 6-DOF root link
         FREE_JOINT = 2,
         /*
@@ -129,9 +131,7 @@ public:
         /// special joint for simplified simulation of a continuous track
         PSEUDO_CONTINUOUS_TRACK = 4,
         // deprecated
-        CRAWLER_JOINT = 5,
-        
-        AGX_CRAWLER_JOINT = 6
+        CRAWLER_JOINT = 5
     };
 
     int jointId() const { return jointId_; }
@@ -139,7 +139,12 @@ public:
     JointType jointType() const { return jointType_; }
     bool isFixedJoint() const { return (jointType_ >= FIXED_JOINT); }
     bool isFreeJoint() const { return jointType_ == FREE_JOINT; }
+    bool isRevoluteJoint() const { return jointType_ == REVOLUTE_JOINT; }
+    bool isPrismaticJoint() const { return jointType_ == PRISMATIC_JOINT; }
+
+    /// deprecated
     bool isRotationalJoint() const { return jointType_ == ROTATIONAL_JOINT; }
+    /// deprecated
     bool isSlideJoint() const { return jointType_ == SLIDE_JOINT; }
 
     std::string jointTypeString() const;
@@ -322,7 +327,9 @@ private:
 
 template<> CNOID_EXPORT double Link::info(const std::string& key) const;
 template<> CNOID_EXPORT double Link::info(const std::string& key, const double& defaultValue) const;
+template<> CNOID_EXPORT bool Link::info(const std::string& key, const bool& defaultValue) const;
 template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const double& value);
+template<> CNOID_EXPORT void Link::setInfo(const std::string& key, const bool& value);
 
 }
 	

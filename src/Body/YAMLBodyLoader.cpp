@@ -696,17 +696,15 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
         } else if(jointType == "prismatic"){
-            link->setJointType(Link::SLIDE_JOINT);
+            link->setJointType(Link::PRISMATIC_JOINT);
         } else if(jointType == "slide"){
-            link->setJointType(Link::SLIDE_JOINT);
+            link->setJointType(Link::PRISMATIC_JOINT);
         } else if(jointType == "free"){
             link->setJointType(Link::FREE_JOINT);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FIXED_JOINT);
         } else if(jointType == "pseudoContinuousTrack"){
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-        } else if(jointType == "agx_crawler"){
-            link->setJointType(Link::AGX_CRAWLER_JOINT);
         } else {
             jointTypeNode->throwException("Illegal jointType value");
         }
@@ -892,8 +890,10 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
 
     LinkPtr firstLink = readLink(node);
     LinkPtr subsequentLink = firstLink->clone();
+    subsequentLink->resetInfo(subsequentLink->info()->cloneMapping());
     
-    firstLink->setJointType(Link::AGX_CRAWLER_JOINT);
+    firstLink->setJointType(Link::FREE_JOINT);
+    firstLink->setInfo("isContinuousTrack", true);
     addTrackLink(0, firstLink, node, parent, 0.0);
 
     subsequentLink->setJointType(Link::REVOLUTE_JOINT);
