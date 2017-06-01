@@ -17,6 +17,7 @@ set(sources
   SimulatorItem.cpp
   SubSimulatorItem.cpp
   ControllerItem.cpp
+  SimpleControllerItem.cpp
   BodyMotionControllerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
@@ -55,6 +56,7 @@ set(headers
   SimulatorItem.h
   SubSimulatorItem.h
   ControllerItem.h
+  SimpleControllerItem.h
   SimulationScriptItem.h
   SensorVisualizerItem.h
   BodyTrackingCameraItem.h

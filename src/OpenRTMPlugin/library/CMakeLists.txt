@@ -2,6 +2,9 @@
 set(target CnoidBodyIoRTC)
 set(sources BodyIoRTC.cpp)
 set(headers BodyIoRTC.h exportdecl.h)
+if(MSVC)
+  add_definitions(-DRTC_CORBA_CXXMAPPING11)
+endif()
 add_cnoid_library(${target} SHARED ${sources} ${headers})
 target_link_libraries(${target} CnoidBody CnoidOpenRTM ${OPENRTM_LIBRARIES})
 apply_common_setting_for_library(${target} "${headers}")
@@ -14,6 +17,10 @@ function(add_cnoid_body_io_rtc)
   add_library(${target} SHARED ${ARGV})
 
   target_link_libraries(${target} CnoidBodyIoRTC)
+  
+  if(MSVC)
+    add_definitions(-DRTC_CORBA_CXXMAPPING11)
+  endif()
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/rtc

@@ -231,6 +231,7 @@ public:
     virtual ~Mapping();
 
     virtual ValueNode* clone() const;
+    virtual Mapping* cloneMapping() const;
     
     bool empty() const { return values.empty(); }
     int size() const { return values.size(); }

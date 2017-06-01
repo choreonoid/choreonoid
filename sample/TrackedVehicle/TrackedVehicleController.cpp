@@ -8,18 +8,17 @@
 using namespace std;
 using namespace cnoid;
 
-class AgxCrawlerController : public cnoid::SimpleController
+class TrackedVehicleController : public SimpleController
 {
     enum { TORQUE_MODE, VELOCITY_MODE } mode;
     Link* wheelR[4];
     Link* wheelL[4];
     Joystick joystick;
 
-    
 public:
 
-    virtual bool initialize(SimpleControllerIO* io) {
-
+    virtual bool initialize(SimpleControllerIO* io)
+    {
         mode = TORQUE_MODE;
         vector<string> options = io->options();
         for(vector<string>::iterator p = options.begin(); p != options.end(); ++p){
@@ -49,8 +48,8 @@ public:
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         joystick.readCurrentState();
 
         double pos[2];
@@ -61,7 +60,7 @@ public:
             }
         }
 
-        for(int i=0; i<4; i++){
+        for(int i=0; i < 4; ++i){
             wheelR[i]->dq() = -5*(2.0 * pos[1] + pos[0]);
             wheelL[i]->dq() = -5*(2.0 * pos[1] - pos[0]);
         }
@@ -70,4 +69,4 @@ public:
     }
 };
 
-CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(AgxCrawlerController)
+CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(TrackedVehicleController)

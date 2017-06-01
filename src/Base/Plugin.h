@@ -6,6 +6,7 @@
 #define CNOID_BASE_PLUGIN_H
 
 #include "ExtensionManager.h"
+#include <cnoid/Config>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -43,6 +44,11 @@ public:
 
     int activationPriority() const;
 
+    unsigned int internalVersion() const;
+
+    // Only called from the getChoreonoidPlugin() function
+    void setInternalVersion(unsigned int version);
+
 protected:
     void setPluginScope(Item* item);
     void setPluginScope(View* view);
@@ -78,15 +84,17 @@ private:
     Plugin(const Plugin& org); // disable the copy constructor
 
     PluginImpl* impl;
-
 };
+
 }
 
 
 #define CNOID_IMPLEMENT_PLUGIN_ENTRY(PluginTypeName)                    \
     extern "C" CNOID_BASE_DLLEXPORT cnoid::Plugin* getChoreonoidPlugin() \
     {                                                                   \
-        return new PluginTypeName();                                    \
+        cnoid::Plugin* plugin = new PluginTypeName();                   \
+        plugin->setInternalVersion(CNOID_INTERNAL_VERSION); \
+        return plugin;            \
     }
 
 #endif

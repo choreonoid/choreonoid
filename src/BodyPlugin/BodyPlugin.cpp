@@ -9,6 +9,7 @@
 #include "ZMPSeqItem.h"
 #include "SimulatorItem.h"
 #include "AISTSimulatorItem.h"
+#include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
 #include "GLVisionSimulatorItem.h"
 #include "WorldLogFileItem.h"
@@ -46,6 +47,7 @@ class BodyPlugin : public Plugin
 {
 public:
     BodyPlugin() : Plugin("Body") {
+        addOldName("SimpleController");
         setActivationPriority(0);
     }
 
@@ -59,6 +61,7 @@ public:
         BodyMotionItem::initializeClass(this);
         SimulatorItem::initializeClass(this);
         AISTSimulatorItem::initializeClass(this);
+        SimpleControllerItem::initializeClass(this);
         BodyMotionControllerItem::initializeClass(this);
         GLVisionSimulatorItem::initializeClass(this);
         WorldLogFileItem::initializeClass(this);

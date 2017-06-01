@@ -135,7 +135,7 @@ void DynamicsSimulator_impl::setCharacterLinkData(
             break;
             
         case OpenHRP::DynamicsSimulator::JOINT_VELOCITY:
-            if(!link->isFixedJoint()){
+            if(!link->isFixedJoint() || link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
                 link->dq() = data[0];
             }
             break;

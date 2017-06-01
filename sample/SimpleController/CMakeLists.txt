@@ -10,9 +10,6 @@ option(BUILD_SIMPLE_CONTROLLER_SAMPLES "Building sample simulation controllers b
 if(NOT BUILD_SIMPLE_CONTROLLER_SAMPLES)
   return()
 endif()
-if(NOT BUILD_SIMPLE_CONTROLLER_PLUGIN)
-  message(FATAL_ERROR "Simple controller samples need to build SimpleControllerPlugin.")
-endif()
 
 # set(CMAKE_BUILD_TYPE Debug)
 

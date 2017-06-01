@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H
-#define CNOID_SIMPLE_CONTROLLER_SIMPLE_CONTROLLER_H
+#ifndef CNOID_BODY_SIMPLE_CONTROLLER_H
+#define CNOID_BODY_SIMPLE_CONTROLLER_H
 
 #include <cnoid/Body>
 #include "exportdecl.h"

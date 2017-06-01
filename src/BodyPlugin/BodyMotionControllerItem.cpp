@@ -36,8 +36,9 @@ public:
 
 void BodyMotionControllerItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<BodyMotionControllerItem>(N_("BodyMotionControllerItem"));
-    ext->itemManager().addCreationPanel<BodyMotionControllerItem>();
+    ItemManager& itemManager = ext->itemManager();
+    itemManager.registerClass<BodyMotionControllerItem>(N_("BodyMotionControllerItem"));
+    itemManager.addCreationPanel<BodyMotionControllerItem>();
 }
 
 

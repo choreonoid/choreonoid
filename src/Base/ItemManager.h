@@ -1,5 +1,5 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_BASE_ITEM_MANAGER_H
@@ -39,14 +39,12 @@ protected:
 class CNOID_EXPORT ItemManager
 {
 public:
-
     ItemManager(const std::string& moduleName, MenuManager& menuManager);
     ~ItemManager();
 
     void detachAllManagedTypeItemsFromRoot();
 
 private:
-
     template <class ItemType> class Factory {
     public:
         virtual Item* operator()() { return new ItemType(); }
@@ -69,7 +67,6 @@ private:
     };
     typedef std::shared_ptr<FileFunctionBase> FileFunctionBasePtr;
 
-
     class OverwritingCheckFunctionBase
     {
     public:
@@ -78,9 +75,7 @@ private:
     };
     typedef std::shared_ptr<OverwritingCheckFunctionBase> OverwritingCheckFunctionBasePtr;
         
-
 public:
-
     void bindTextDomain(const std::string& domain);
 
     enum { PRIORITY_COMPATIBILITY, PRIORITY_CONVERSION = -10, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10, PRIORITY_FORCE = 20 };
@@ -120,11 +115,6 @@ public:
         return *this;
     }
     
-    template <class ItemType, class BaseType>
-        void registerDerivedClass(const std::string& className) {
-        // registerClassSub(new Factory<ItemType>(), typeid(ItemType).name(), className);
-    }
-
     static bool getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className);
 
     template <class ItemType> static ItemType* singletonInstance() {
@@ -211,7 +201,6 @@ public:
     static void reloadItems(const ItemList<>& items);
 
 private:
-        
     void registerClassSub(
         std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
@@ -236,6 +225,7 @@ private:
 
 CNOID_EXPORT std::string getOpenFileName(const std::string& caption, const std::string& extensions);
 CNOID_EXPORT std::vector<std::string> getOpenFileNames(const std::string& caption, const std::string& extensions);
+
 }
 
 #endif
