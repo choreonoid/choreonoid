@@ -6,45 +6,66 @@
 #define CNOID_UTIL_PYUTIL_H
 
 #include "../Referenced.h"
+#include "../EigenTypes.h"
 #include <pybind11/pybind11.h>
+#include <pybind11/eigen.h>
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, cnoid::ref_ptr<T>);
 
-namespace cnoid {
+namespace pybind11 { namespace detail {
 
-class PyGILock
-{
-    PyGILState_STATE gstate;
-public:
-    PyGILock(){
-        gstate = PyGILState_Ensure();
-    }
-    ~PyGILock() {
-        PyGILState_Release(gstate);
-    }
-};
+    template<> struct type_caster<cnoid::Position> {
+    public:
+        PYBIND11_TYPE_CASTER(cnoid::Position, _("Position"));
 
-/*
-template <typename T>
-T* get_pointer(cnoid::ref_ptr<T> const& p)
-{
-    return p.get();
-}
-*/
+        //Conversion part 1 (Python->C++)
+        bool load(handle src, bool) {
+            try{
+                Eigen::Matrix4d mat = src.cast<Eigen::Matrix4d>();
+                value.linear() = mat.block(0, 0, 3, 3);
+                value.translation() = mat.block(0, 3, 3, 1);
+            }catch(pybind11::cast_error error){
+                return false;
+            }
 
-} // namespace cnoid
+            return true;
+        }
 
-/*
-namespace boost { namespace python {
+        //Conversion part 2 (C++ -> Python)
+        static handle cast(cnoid::Position src, return_value_policy, handle ) {
+            Eigen::Matrix4d retval = Eigen::Matrix4d::Identity();
+            retval.block(0, 0, 3, 3) = src.linear();
+            retval.block(0, 3, 3, 1) = src.translation();
+            return  pybind11::cast(&retval, pybind11::return_value_policy::reference_internal).inc_ref();
+        }
+    };
 
-template <typename T>
-struct pointee< cnoid::ref_ptr<T> >
-{
-    typedef T type;
-};
+    template<> struct type_caster<cnoid::Affine3> {
+    public:
+        PYBIND11_TYPE_CASTER(cnoid::Affine3, _("Affine3"));
 
-}} // namespace boost::python
-*/
+        //Conversion part 1 (Python->C++)
+        bool load(handle src, bool) {
+            try{
+                Eigen::Matrix4d mat = src.cast<Eigen::Matrix4d>();
+                value.linear() = mat.block(0, 0, 3, 3);
+                value.translation() = mat.block(0, 3, 3, 1);
+            }catch(pybind11::cast_error error){
+                return false;
+            }
+
+            return true;
+        }
+
+        //Conversion part 2 (C++ -> Python)
+        static handle cast(cnoid::Position src, return_value_policy, handle ) {
+            Eigen::Matrix4d retval = Eigen::Matrix4d::Identity();
+            retval.block(0, 0, 3, 3) = src.linear();
+            retval.block(0, 3, 3, 1) = src.translation();
+            return  pybind11::cast(&retval, pybind11::return_value_policy::reference_internal).inc_ref();
+        }
+    };
+}}
 
 /**
    The following macro is used to avoid compile errors caused by a bug of VC++ 2015 Update 3

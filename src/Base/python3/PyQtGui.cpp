@@ -99,4 +99,6 @@ PYBIND11_PLUGIN(QtGui)
     
     py::class_<QToolButton, QAbstractButton>(m, "QToolButton")
         .def("autoRaise", &QToolButton::autoRaise);
+
+    return m.ptr();
 }

@@ -13,6 +13,7 @@ namespace cnoid {
 void exportPyGeometryTypes(py::module& m)
 {
     py::class_<PolyhedralRegion>(m, "PolyhedralRegion")
+        .def(py::init())
         .def("numBoundingPlanes", &PolyhedralRegion::numBoundingPlanes)
         .def("clear", &PolyhedralRegion::clear)
         .def("addBoundingPlane", &PolyhedralRegion::addBoundingPlane)

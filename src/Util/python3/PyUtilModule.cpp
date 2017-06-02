@@ -1,5 +1,5 @@
 /*!
-  @author Shin'ichiro Nakaoka
+  @author Shizuko Hattori
 */
 
 #include "PyUtil.h"
@@ -37,8 +37,7 @@ PYBIND11_PLUGIN(Util)
 {
     py::module m("Util", "Python Utility Module");
 
-    py::class_<Referenced>(m, "Referenced");
-    //class_<Referenced, ReferencedPtr, boost::noncopyable>("Referenced", no_init);
+    py::class_<Referenced, ReferencedPtr>(m, "Referenced");
 
     exportPySignalTypes(m);
     exportPyValueTree(m);
@@ -64,7 +63,7 @@ PYBIND11_PLUGIN(Util)
     py::class_<Deque2DDouble::Row>(m, "Row")
         .def(py::init<>())
         .def("size", &Deque2DDouble::Row::size)
-        .def("at", &Deque2DDouble::Row::at, py::return_value_policy::reference)
+        .def("at", &Deque2DDouble::Row::at, py::return_value_policy::reference_internal)
         .def("__getitem__", Row_getitem)
         .def("__getitem__", Row_getitem_const)
         .def("__setitem__", Deque2DDouble_Row_setitem)

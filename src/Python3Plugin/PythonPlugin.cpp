@@ -15,6 +15,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
+#include <pybind11/functional.h>
 #include <iostream>
 #include "gettext.h"
 
@@ -32,7 +33,7 @@ namespace {
 py::module mainModule;
 py::object mainNamespace;
 py::object cnoidModule;
-py::object sysModule;
+py::module sysModule;
 py::object exitExceptionType;
 MappingPtr pythonConfig;
 Action* redirectionCheck;
@@ -157,7 +158,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
                 MessageView::instance()->putln(_("The script finished."));
             } else {
                 MessageView::instance()->putln(_("Failed to run the python script."));
-                PyGILock lock;
+                py::gil_scoped_acquire lock;
                 MessageView::instance()->put(executor().exceptionText());
             }
         }
@@ -191,7 +192,7 @@ bool PythonPlugin::initializeInterpreter()
     
     // set the choreonoid default python script path
     filesystem::path scriptPath =
-        filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";
+        filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python3";
     sysModule.attr("path").attr("insert")(0, getNativePathString(scriptPath));
 
     if(debugMode)
@@ -216,12 +217,12 @@ bool PythonPlugin::initializeInterpreter()
 
     // Override exit and quit
     py::object builtins = mainNamespace["__builtins__"];
-    py::object exitFunc = mainModule.def("", &pythonExit, "");
     exitExceptionType = py::module::import("cnoid.PythonPlugin").attr("ExitException");
- //   py::object exitFunc = py::make_function(pythonExit);
+    py::object exitFunc = py::cpp_function(pythonExit);
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
+
 
     PyEval_InitThreads();
     PyEval_SaveThread();
@@ -249,7 +250,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
     Listing& pathListing = *archive.findListing("moduleSearchPath");
     if(pathListing.isValid()){
         MessageView* mv = MessageView::instance();
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         string newPath;
         for(int i=0; i < pathListing.size(); ++i){
             newPath = archive.resolveRelocatablePath(pathListing[i].toString());
@@ -310,7 +311,7 @@ bool cnoid::execPythonCode(const std::string& code)
     PythonExecutor& executor = pythonPlugin->executor();
     bool result = executor.execCode(code);
     if(executor.hasException()){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         MessageView::instance()->putln(executor.exceptionText());
         result = false;
     }

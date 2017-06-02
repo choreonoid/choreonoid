@@ -28,11 +28,6 @@ void checkIfItemSubclass(PyObject* typeObject)
 } // namespace
 
 namespace cnoid {
-
-py::list getPyNarrowedItemList(pybind11::list orgItemList, pybind11::detail::type_info* itemClass){
-
-}
-
 py::list getPyNarrowedItemList(const ItemList<>& orgItemList, py::object itemClass)
 {
     checkIfItemSubclass(itemClass.ptr());

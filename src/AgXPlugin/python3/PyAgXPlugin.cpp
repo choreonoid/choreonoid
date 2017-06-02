@@ -14,7 +14,7 @@ namespace cnoid
 PYBIND11_PLUGIN(AgXPlugin) {
     py::module m("AgXPlugin", "AgXPlugin Python Module");
 
-    py::class_<AgXSimulatorItem, SimulatorItem> agxSimulatorItem(m, " AgXSimulatorItem");
+    py::class_<AgXSimulatorItem, SimulatorItem, AgXSimulatorItemPtr> agxSimulatorItem(m, " AgXSimulatorItem");
 
     agxSimulatorItem
             .def(py::init<>())
@@ -63,7 +63,7 @@ PYBIND11_PLUGIN(AgXPlugin) {
             .value("BOTH_PRIMARY_AND_SECONDARY", AgXSimulatorItem::FrictionDirection::BOTH_PRIMARY_AND_SECONDARY)
             .export_values();
 
-    py::implicitly_convertible<AgXSimulatorItemPtr, SimulatorItemPtr>();
+    py::implicitly_convertible<AgXSimulatorItem, SimulatorItem>();
     PyItemList<AgXSimulatorItem>(m, "AgXSimulatorItemList");
 
     return m.ptr();

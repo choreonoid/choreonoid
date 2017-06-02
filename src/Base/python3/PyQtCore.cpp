@@ -2,6 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "PyQtCore.h"
 #include <cnoid/Py3Util>
 #include <QObject>
 #include <QTimer>
@@ -10,28 +11,6 @@ namespace py = pybind11;
 
 // for MSVC++2015 Update3
 CNOID_PYTHON_DEFINE_GET_POINTER(QObject)
-
-namespace pybind11 { namespace detail {
-    template <> struct type_caster<QString> {
-    public:
-        PYBIND11_TYPE_CASTER(QString, _("QString"));
-
-        //Conversion part 1 (Python->C++)
-        bool load(handle src, bool) {
-            PyObject *source = src.ptr();
-            if (PyBytes_Check(source)) {
-                value = PyBytes_AS_STRING(source);
-            }
-            return !PyErr_Occurred();
-        }
-
-        //Conversion part 2 (C++ -> Python)
-        static handle cast(QString src, return_value_policy, handle ) {
-            QByteArray ba = src.toUtf8();
-            return  PyByteArray_FromStringAndSize( ba.constData(), ba.size() );
-        }
-    };
-}}
 
 PYBIND11_PLUGIN(QtCore)
 {

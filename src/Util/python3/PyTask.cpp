@@ -42,7 +42,7 @@ struct PyTaskFunc
         }
     }
     void operator()(TaskProc* proc) {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             int numArgs = func.attr("func_code").attr("co_argcount").cast<int>();
             if(numArgs == 0){
@@ -61,7 +61,7 @@ struct PyMenuItemFunc
     py::object func;
     PyMenuItemFunc(py::object f) : func(f) { }
     void operator()() {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             func();
         } catch(py::error_already_set const& ex) {
@@ -75,7 +75,7 @@ struct PyCheckMenuItemFunc
     py::object func;
     PyCheckMenuItemFunc(py::object f) : func(f) { }
     void operator()(bool on) {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             func(on);
         } catch(py::error_already_set const& ex) {
@@ -118,7 +118,7 @@ public:
     using Task::Task;
 
     void onMenuRequest(TaskMenu& menu) override{
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             PYBIND11_OVERLOAD( void, Task, onMenuRequest, boost::ref(menu));
         } catch(py::error_already_set const& ex) {
@@ -127,7 +127,7 @@ public:
     }
 
     void onActivated(AbstractTaskSequencer* sequencer){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             PYBIND11_OVERLOAD( void, Task, onActivated, boost::ref(sequencer));
         } catch(py::error_already_set const& ex) {
@@ -136,7 +136,7 @@ public:
     }
 
     void onDeactivated(AbstractTaskSequencer* sequencer){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             PYBIND11_OVERLOAD( void, Task, onDeactivated, boost::ref(sequencer));
         } catch(py::error_already_set const& ex) {
@@ -145,7 +145,7 @@ public:
     }
 
     void storeState(AbstractTaskSequencer* sequencer, Mapping& archive){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             //MappingPtr a = &archive;
             PYBIND11_OVERLOAD( void, Task, storeState, boost::ref(sequencer), archive);
@@ -155,7 +155,7 @@ public:
     }
     
     void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             //MappingPtr a = const_cast<Mapping*>(&archive);
             PYBIND11_OVERLOAD( void, Task, restoreState, boost::ref(sequencer), archive);
@@ -185,7 +185,7 @@ void onTaskRemoved(Task* task)
 {
     PyTaskMap::iterator p  = pyTasks.find(task);
     if(p != pyTasks.end()){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         pyTasks.erase(p);
     }
 }
@@ -193,7 +193,7 @@ void onTaskRemoved(Task* task)
 
 TaskPtr registerTask(AbstractTaskSequencer* sequencer, py::object& pyTask)
 {
-    PyGILock lock;
+    py::gil_scoped_acquire lock;
     TaskPtr task = pyTask.cast<TaskPtr>();
     if(task){
         if(taskSequencers.find(sequencer) == taskSequencers.end()){
@@ -266,8 +266,6 @@ void exportPyTaskTypes(py::module& m)
         .def("sigToggled", &TaskToggleState::sigToggled)
         ;
 
-    py::implicitly_convertible<TaskToggleStatePtr, ReferencedPtr>();
-
     py::class_<TaskCommand, TaskCommandPtr, Referenced>(m, "TaskCommand")
         .def(py::init<const std::string&>())
         .def("caption", &TaskCommand::caption, py::return_value_policy::reference)
@@ -337,8 +335,6 @@ void exportPyTaskTypes(py::module& m)
         })
         .def("level", &TaskCommand::level)
         ;
-    
-    py::implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
 
     py::class_<TaskPhase, TaskPhasePtr, Referenced>(m, "TaskPhase")
         .def(py::init<const std::string&>())
@@ -384,8 +380,6 @@ void exportPyTaskTypes(py::module& m)
         .def("maxCommandLevel", &TaskPhase::maxCommandLevel)
         ;
 
-    py::implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
-
     py::class_<TaskPhaseProxy, TaskPhaseProxyPtr, Referenced >(m, "TaskPhaseProxy")
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
         .def("commandLevel", &TaskPhaseProxy::commandLevel)
@@ -402,8 +396,6 @@ void exportPyTaskTypes(py::module& m)
             return TaskCommandPtr(self.addToggleCommand(caption));
         })
         ;
-    
-    py::implicitly_convertible<TaskPhaseProxyPtr, ReferencedPtr>();
 
     py::class_<TaskMenu>(m, "TaskMenu")
         .def("addMenuItem", [](TaskMenu& self, const std::string& caption, py::object func) {
@@ -471,9 +463,6 @@ void exportPyTaskTypes(py::module& m)
         .def("commandLevel", &Task::commandLevel)
         .def("maxCommandLevel", &Task::maxCommandLevel)
         ;
-
-    py::implicitly_convertible<TaskPtr, ReferencedPtr>();
-    py::implicitly_convertible<PyTaskPtr, TaskPtr>();
 
     py::class_<AbstractTaskSequencer>(m, "AbstractTaskSequencer")
         .def("activate", &AbstractTaskSequencer::activate)

@@ -25,27 +25,6 @@ using namespace cnoid;
 CNOID_PYTHON_DEFINE_GET_POINTER(Item)
 CNOID_PYTHON_DEFINE_GET_POINTER(RootItem)
 
-namespace pybind11 { namespace detail {
-    template<typename ItemType> struct type_caster<ItemList<ItemType>> {
-    public:
-        PYBIND11_TYPE_CASTER(ItemList<ItemType>, _("ItemList"));    //???
-
-        //Conversion part 1 (Python->C++)
-        bool load(handle src, bool) {
-
-        }
-
-        //Conversion part 2 (C++ -> Python)
-        static handle cast(ItemList<ItemType> src, return_value_policy, handle ) {
-            py::list retval;
-            for(int i=0; i < src.size(); i++){
-                retval.append(src[i]);
-            }
-            return  retval.inc_ref();
-        }
-    };
-}}
-
 namespace cnoid {
 
 void exportPyItems(py::module m)
@@ -56,7 +35,7 @@ void exportPyItems(py::module m)
         .def_static("find", [](const std::string& path){
             return ItemPtr(Item::find(path));
         })
-        .def("name", &Item::name, py::return_value_policy::copy)
+        .def("name", &Item::name, py::return_value_policy::reference)
         .def("setName", &Item::setName)
         .def("hasAttribute", &Item::hasAttribute)
         .def("childItem", [](Item& self) { return ItemPtr(self.childItem()); })
@@ -98,8 +77,8 @@ void exportPyItems(py::module m)
         .def("save", &Item::save, py::arg("filename"), py::arg("format")=std::string() )
         .def("overwrite", &Item::overwrite,
                 py::arg("forceOverwrite")=false, py::arg("format")=std::string() )
-        .def("filePath", &Item::filePath, py::return_value_policy::copy)
-        .def("fileFormat", &Item::fileFormat, py::return_value_policy::copy)
+        .def("filePath", &Item::filePath, py::return_value_policy::reference)
+        .def("fileFormat", &Item::fileFormat, py::return_value_policy::reference)
         .def("clearFileInformation", &Item::clearFileInformation)
         .def("suggestFileUpdate", &Item::suggestFileUpdate)
         .def("notifyUpdate", &Item::notifyUpdate)
@@ -116,28 +95,25 @@ void exportPyItems(py::module m)
         .value("NUM_ATTRIBUTES", Item::Attribute::NUM_ATTRIBUTES)
         .export_values();
 
-    py::implicitly_convertible<ItemPtr, ReferencedPtr>();
     PyItemList<Item>(m, "ItemList");
 
     py::class_< RootItem, RootItemPtr, Item >(m, "RootItem")
         .def_static("instance", []() { return RootItemPtr(RootItem::instance()); });
 
-    py::implicitly_convertible<RootItemPtr, ItemPtr>();
     PyItemList<RootItem>(m, "RootItemList");
 
-    py::class_< FolderItem, FolderItemPtr, Item >(m, "FolderItem");
+    py::class_< FolderItem, FolderItemPtr, Item >(m, "FolderItem")
+        .def(py::init<>());
 
-    py::implicitly_convertible<FolderItemPtr, ItemPtr>();
     PyItemList<FolderItem>(m, "FolderItemList");
 
     py::class_< AbstractTextItem, AbstractTextItemPtr, Item >(m, "AbstractTextItem")
-        .def("textFilename", &AbstractTextItem::textFilename, py::return_value_policy::copy);
+        .def("textFilename", &AbstractTextItem::textFilename, py::return_value_policy::reference);
             
-    py::implicitly_convertible<AbstractTextItemPtr, ItemPtr>();
     //PyItemList<AbstractTextItem>("AbstractTextItemList");
     
     py::class_< ScriptItem, ScriptItemPtr, AbstractTextItem> (m, "ScriptItem")
-        .def("scriptFilename", &ScriptItem::scriptFilename, py::return_value_policy::copy)
+        .def("scriptFilename", &ScriptItem::scriptFilename, py::return_value_policy::reference)
         .def("identityName", &ScriptItem::identityName)
         .def("setBackgroundMode", &ScriptItem::setBackgroundMode)
         .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
@@ -149,71 +125,68 @@ void exportPyItems(py::module m)
         .def("terminate", &ScriptItem::terminate)
         ;
 
-    py::implicitly_convertible<ScriptItemPtr, AbstractTextItemPtr>();
     //PyItemList<ScriptItem>("ScriptItemList");
 
     py::class_< ExtCommandItem, ExtCommandItemPtr, Item >(m, "ExtCommandItem")
+        .def(py::init<>())
         .def("setCommand", &ExtCommandItem::setCommand)
-        .def("command", &ExtCommandItem::command, py::return_value_policy::copy)
+        .def("command", &ExtCommandItem::command, py::return_value_policy::reference)
         .def("waitingTimeAfterStarted", &ExtCommandItem::waitingTimeAfterStarted)
         .def("setWaitingTimeAfterStarted", &ExtCommandItem::setWaitingTimeAfterStarted)
         .def("execute", &ExtCommandItem::execute)
         .def("terminate", &ExtCommandItem::terminate);
     
-    py::implicitly_convertible<ExtCommandItemPtr, ItemPtr>();
     PyItemList<ExtCommandItem>(m, "ExtCommandItemList");
 
     // seq items
     py::class_< AbstractSeqItem, AbstractSeqItemPtr, Item > abstractSeqItemClass(m, "AbstractSeqItem");
+    abstractSeqItemClass
+        .def("abstractSeq", &AbstractSeqItem::abstractSeq);
 
-    abstractSeqItemClass.def("abstractSeq", &AbstractSeqItem::abstractSeq);
-
-    py::implicitly_convertible<AbstractSeqItemPtr, ItemPtr>();
     PyItemList<AbstractSeqItem>(m, "AbstractSeqItemList", abstractSeqItemClass);
 
     py::class_< Vector3SeqItem, Vector3SeqItemPtr, AbstractSeqItem >(m, "Vector3SeqItem")
+        .def(py::init<>())
         .def("seq", &Vector3SeqItem::seq);
-    
-    py::implicitly_convertible<Vector3SeqItemPtr, AbstractSeqItemPtr>();
+
     PyItemList<Vector3SeqItem>(m, "Vector3SeqItemList");
 
     // multi seq items
     py::class_< AbstractMultiSeqItem, AbstractMultiSeqItemPtr, AbstractSeqItem >
         abstractMultiSeqItemClass(m, "AbstractMultiSeqItem");
-    abstractMultiSeqItemClass.def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
+    abstractMultiSeqItemClass
+        .def("abstractMultiSeq", &AbstractMultiSeqItem::abstractMultiSeq);
 
-    py::implicitly_convertible<AbstractMultiSeqItemPtr, AbstractSeqItemPtr>();
     //PyItemList<AbstractMultiSeqItem>("AbstractMultiSeqItemList", abstractMultiSeqItemClass);
     
     py::class_< MultiValueSeqItem, MultiValueSeqItemPtr, AbstractMultiSeqItem >(m, "MultiValueSeqItem")
+        .def(py::init<>())
         .def("abstractMultiSeq", &MultiValueSeqItem::abstractMultiSeq)
         .def("seq", &MultiValueSeqItem::seq);
 
-    py::implicitly_convertible<MultiValueSeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiValueSeqItem>(m, "MultiValueSeqItemList");
 
     py::class_< MultiAffine3SeqItem, MultiAffine3SeqItemPtr, AbstractMultiSeqItem >(m, "MultiAffine3SeqItem")
+        .def(py::init<>())
         .def("abstractMultiSeq", &MultiAffine3SeqItem::abstractMultiSeq)
         .def("seq", &MultiAffine3SeqItem::seq);
 
-    py::implicitly_convertible<MultiAffine3SeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiAffine3SeqItem>(m, "MultiAffine3SeqItemList");
 
     py::class_< MultiSE3SeqItem, MultiSE3SeqItemPtr, AbstractMultiSeqItem > (m, "MultiSE3SeqItem")
+        .def(py::init<>())
         .def("abstractMultiSeq", &MultiSE3SeqItem::abstractMultiSeq)
         .def("seq", &MultiSE3SeqItem::seq);
     
-    py::implicitly_convertible<MultiSE3SeqItemPtr, AbstractMultiSeqItemPtr>();
     PyItemList<MultiSE3SeqItem>(m, "MultiSE3SeqItemList");
 
-    py::class_< SceneItem, SceneItemPtr, Item, SceneProvider >(m, "SceneItem")
+    py::class_< SceneItem, SceneItemPtr, Item>(m, "SceneItem")
+        .def(py::init<>())
         .def("topNode", [](SceneItem& self) { return SgPosTransformPtr(self.topNode()); })
         ;
 
-    py::implicitly_convertible<SceneItemPtr, ItemPtr>();
-    py::implicitly_convertible<SceneItemPtr, SceneProvider*>();
-
-    py::class_< PointSetItem, PointSetItemPtr, Item, SceneProvider > (m, "PointSetItem")
+    py::class_< PointSetItem, PointSetItemPtr, Item > (m, "PointSetItem")
+        .def(py::init<>())
         .def("offsetTransform", [](PointSetItem& self) {
             return Affine3(self.offsetTransform());
         })
@@ -230,11 +203,10 @@ void exportPyItems(py::module m)
         .def("notifyAttentionPointChange", &PointSetItem::notifyAttentionPointChange)
         ;
 
-    py::implicitly_convertible<PointSetItemPtr, ItemPtr>();
-    py::implicitly_convertible<PointSetItemPtr, SceneProvider*>();
     PyItemList<PointSetItem>(m, "PointSetItemList");
 
-    py::class_< MultiPointSetItem, MultiPointSetItemPtr, Item, SceneProvider >(m, "MultiPointSetItem")
+    py::class_< MultiPointSetItem, MultiPointSetItemPtr, Item >(m, "MultiPointSetItem")
+        .def(py::init<>())
         .def("numPointSetItems", &MultiPointSetItem::numPointSetItems)
         .def("pointSetItem", [](MultiPointSetItem& self, int index) { return PointSetItemPtr(self.pointSetItem(index)); })
         .def("numActivePointSetItems", &MultiPointSetItem::numActivePointSetItems)
@@ -243,7 +215,7 @@ void exportPyItems(py::module m)
         })
         .def("sigPointSetItemAdded", &MultiPointSetItem::sigPointSetItemAdded)
         .def("sigPointSetUpdated", &MultiPointSetItem::sigPointSetUpdated)
-        .def("topOffsetTransform", &MultiPointSetItem::topOffsetTransform, py::return_value_policy::copy)
+        .def("topOffsetTransform", &MultiPointSetItem::topOffsetTransform, py::return_value_policy::reference_internal)
         .def("setTopOffsetTransform", &MultiPointSetItem::setTopOffsetTransform)
         .def("sigTopOffsetTransformChanged", &MultiPointSetItem::sigTopOffsetTransformChanged)
         .def("notifyTopOffsetTransformChange", &MultiPointSetItem::notifyTopOffsetTransformChange)
@@ -259,8 +231,6 @@ void exportPyItems(py::module m)
         .def("stopAutomaticSave", &MultiPointSetItem::stopAutomaticSave);
         ;
 
-    py::implicitly_convertible<MultiPointSetItemPtr, ItemPtr>();
-    py::implicitly_convertible<MultiPointSetItemPtr, SceneProvider*>();
     PyItemList<MultiPointSetItem>(m, "MultiPointSetItemList");
 
 #ifdef _MSC_VER

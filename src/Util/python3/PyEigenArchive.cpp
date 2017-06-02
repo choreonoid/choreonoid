@@ -24,7 +24,7 @@ py::object readVector3(MappingPtr mapping, const std::string& key){
 py::object readVector4(MappingPtr mapping, const std::string& key){
     Vector4 v;
     if(cnoid::read(*mapping, key, v)){
-        return py::object(py::cast(v));
+        return py::cast(v);
     }
     return py::object();
 }
@@ -32,7 +32,7 @@ py::object readVector4(MappingPtr mapping, const std::string& key){
 py::object readMatrix4(MappingPtr mapping, const std::string& key){
     Matrix4 T;
     if(cnoid::read(*mapping, key, T)){
-        return py::object(py::cast(T));
+        return py::cast(T);
     }
     return py::object();
 }
@@ -42,7 +42,7 @@ py::object readAffine3(MappingPtr mapping, const std::string& key){
     Affine3 T;
     try {
         if(cnoid::read(*mapping, key, T.matrix())){
-            return py::object(py::cast(T));
+            return py::cast(T);
         }
     }
     catch(const ValueNode::ScalarTypeMismatchException& ex){

@@ -52,28 +52,8 @@ void exportPySeqTypes(py::module& m)
                 py::arg("numParts"), py::arg("clearNewElements") = false)
         .def("getNumParts", &AbstractMultiSeq::getNumParts)
         .def("partIndex", &AbstractMultiSeq::partIndex)
-        .def("partLabel", &AbstractMultiSeq::partLabel, py::return_value_policy::reference);
+        .def("partLabel", &AbstractMultiSeq::partLabel, py::return_value_policy::copy);
 
-    py::implicitly_convertible<AbstractMultiSeqPtr, AbstractSeqPtr>();
-
-    const MultiValueSeq::Element& (MultiValueSeq::*MultiValueSeq_at_const)(int, int) const = &MultiValueSeq::at;
-    MultiValueSeq::Element& (MultiValueSeq::*MultiValueSeq_at)(int, int) = &MultiValueSeq::at;
-
-    void (MultiValueSeq::*MultiValueSeq_pop_front_int)(int) = &MultiValueSeq::pop_front;
-    void (MultiValueSeq::*MultiValueSeq_pop_front)(int) = &MultiValueSeq::pop_front;    
-    
-    MultiValueSeq::Row (MultiValueSeq::*MultiValueSeq_row)(int) = &MultiValueSeq::row;
-    const MultiValueSeq::Row (MultiValueSeq::*MultiValueSeq_row_const)(int) const = &MultiValueSeq::row;
-
-    MultiValueSeq::Column (MultiValueSeq::*MultiValueSeq_column)(int) = &MultiValueSeq::column;
-    const MultiValueSeq::Column (MultiValueSeq::*MultiValueSeq_column_const)(int) const = &MultiValueSeq::column;
-    
-    MultiValueSeq::Frame (MultiValueSeq::*MultiValueSeq_frame)(int) = &MultiValueSeq::frame;
-    const MultiValueSeq::Frame (MultiValueSeq::*MultiValueSeq_frame_const)(int) const = &MultiValueSeq::frame;
-
-    MultiValueSeq::Part (MultiValueSeq::*MultiValueSeq_part)(int) = &MultiValueSeq::part;
-    const MultiValueSeq::Part (MultiValueSeq::*MultiValueSeq_part_const)(int) const = &MultiValueSeq::part;
-    
     py::class_< MultiValueSeq, AbstractMultiSeq >(m, "MultiValueSeq")
         .def("empty", &MultiValueSeq::empty)
         .def("resize", &MultiValueSeq::resize)
@@ -82,15 +62,15 @@ void exportPySeqTypes(py::module& m)
         .def("resizeRow", &MultiValueSeq::resizeRow)
         .def("colSize", &MultiValueSeq::colSize)
         .def("clear", &MultiValueSeq::clear)
-        .def("at", MultiValueSeq_at_const, py::return_value_policy::reference)
-        .def("row", MultiValueSeq_row)
-        .def("row", MultiValueSeq_row_const)
-        .def("column", MultiValueSeq_column)
-        .def("column", MultiValueSeq_column_const)
+        .def("at", (const MultiValueSeq::Element& (MultiValueSeq::*)(int, int) const) &MultiValueSeq::at, py::return_value_policy::reference_internal)
+        .def("row", (MultiValueSeq::Row (MultiValueSeq::*)(int)) &MultiValueSeq::row)
+        .def("row", (const MultiValueSeq::Row (MultiValueSeq::*)(int) const ) &MultiValueSeq::row)
+        .def("column", (MultiValueSeq::Column (MultiValueSeq::*)(int)) &MultiValueSeq::column)
+        .def("column", (const MultiValueSeq::Column (MultiValueSeq::*)(int) const ) &MultiValueSeq::column)
         .def("append", &MultiValueSeq::append)
         .def("pop_back", &MultiValueSeq::pop_back)
-        .def("pop_front", MultiValueSeq_pop_front_int)
-        .def("pop_front", MultiValueSeq_pop_front)
+        .def("pop_front", (void (MultiValueSeq::*)(int)) &MultiValueSeq::pop_front)
+        .def("pop_front", (void (MultiValueSeq::*)()) &MultiValueSeq::pop_front)
         
         .def("copySeqProperties", &MultiValueSeq::copySeqProperties)
         .def("frameRate", &MultiValueSeq::frameRate)
@@ -101,15 +81,14 @@ void exportPySeqTypes(py::module& m)
         .def("frameOfTime", &MultiValueSeq::frameOfTime)
         .def("timeOfFrame", &MultiValueSeq::timeOfFrame)
         .def("clampFrameIndex", &MultiValueSeq::clampFrameIndex)
-        .def("frame", MultiValueSeq_frame)
-        .def("frame", MultiValueSeq_frame_const)
-        .def("part", MultiValueSeq_part)
-        .def("part", MultiValueSeq_part_const)
+        .def("frame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
+        .def("frame", (const MultiValueSeq::Frame (MultiValueSeq::*)(int) const ) &MultiValueSeq::frame)
+        .def("part", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
+        .def("part", (const MultiValueSeq::Part (MultiValueSeq::*)(int) const ) &MultiValueSeq::part)
 
         .def("loadPlainFormat", &MultiValueSeq::loadPlainFormat)
         .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat);
 
-    py::implicitly_convertible<MultiValueSeqPtr, AbstractMultiSeqPtr>();
 }
 
 }

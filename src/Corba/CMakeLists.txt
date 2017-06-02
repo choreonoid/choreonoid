@@ -30,7 +30,7 @@ target_link_libraries(${target} ${OMNIORB_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${B
 
 if(ENABLE_PYTHON)
   if(USE_PYTHON3)
-    add_subdirectory(python3)
+
   else()
     add_subdirectory(python)
   endif()

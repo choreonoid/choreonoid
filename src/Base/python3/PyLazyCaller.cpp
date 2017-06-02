@@ -21,7 +21,7 @@ struct PyFunc
         }
     }
     void operator()() {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             func();
         } catch(py::error_already_set const& ex) {

@@ -102,7 +102,6 @@ PYBIND11_PLUGIN(Body)
         .def("isFreeJoint", &Link::isFreeJoint)
         .def("isRotationalJoint", &Link::isRotationalJoint)
         .def("isSlideJoint", &Link::isSlideJoint)
-
         .def_property_readonly("a", &Link::a, py::return_value_policy::copy)
         .def("jointAxis", &Link::jointAxis, py::return_value_policy::copy)
         .def_property_readonly("d", &Link::d, py::return_value_policy::copy)
@@ -129,7 +128,7 @@ PYBIND11_PLUGIN(Body)
         .def_property("F_ext", Link_get_F_ext, Link_set_F_ext)
         .def_property("f_ext", Link_get_f_ext, Link_set_f_ext)
         .def_property("tau_ext", Link_get_tau_ext, Link_set_tau_ext)
-        .def("name", &Link::name, py::return_value_policy::copy)
+        .def("name", &Link::name, py::return_value_policy::reference)
         .def("visualShape", [](const Link& self) { return SgNodePtr(self.visualShape()); })
         .def("collisionShape",  [](const Link& self) { return SgNodePtr(self.collisionShape()); })
         .def("setIndex", &Link::setIndex)
@@ -177,9 +176,9 @@ PYBIND11_PLUGIN(Body)
         .def("clone", [](Body& self) { return BodyPtr(self.clone()); })
         .def("createLink", [](Body& self, const Link* org) {
             return self.createLink(org); }, py::arg("org")=0 )
-        .def("name", &Body::name, py::return_value_policy::copy)
+        .def("name", &Body::name, py::return_value_policy::reference)
         .def("setName", &Body::setName)
-        .def("modelName", &Body::modelName, py::return_value_policy::copy)
+        .def("modelName", &Body::modelName, py::return_value_policy::reference)
         .def("setModelName", &Body::setModelName)
         .def("setRootLink", &Body::setRootLink)
         .def("updateLinkTree", &Body::updateLinkTree)
@@ -233,8 +232,6 @@ PYBIND11_PLUGIN(Body)
         .value("EJ_BALL", Body::ExtraJointType::EJ_BALL)
         .export_values();
 
-    py::implicitly_convertible<BodyPtr, ReferencedPtr>();
-
     py::class_<AbstractBodyLoader>(m, "AbstractBodyLoader")
         .def("format", &AbstractBodyLoader::format)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)
@@ -267,7 +264,7 @@ PYBIND11_PLUGIN(Body)
 
     m.def("getCustomJointPath", getCustomJointPath);
 
-    py::class_< BodyMotion, BodyMotionPtr, AbstractMultiSeq> bodyMotion(m, "BodyMotion");
+    py::class_< BodyMotion, BodyMotionPtr> bodyMotion(m, "BodyMotion");
     bodyMotion
         .def("setNumParts", &BodyMotion::setNumParts)
         .def("getNumParts", &BodyMotion::getNumParts)
@@ -293,8 +290,6 @@ PYBIND11_PLUGIN(Body)
         .def(Body() >> py::self)
         ;
 
-    py::implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
-
     py::class_< Device, DevicePtr>(m, "Device")
         .def("setIndex", &Device::setIndex)
         .def("setId", &Device::setId)
@@ -305,7 +300,7 @@ PYBIND11_PLUGIN(Body)
         .def("hasStateOnly", &Device::hasStateOnly)
         .def("index", &Device::index)
         .def("id", &Device::id)
-        .def("name", &Device::name, py::return_value_policy::copy)
+        .def("name", &Device::name, py::return_value_policy::reference)
         .def("link", [](Device& self) { return LinkPtr(self.link()); })
         .def_property("T_local", Device_get_T_local, Device_set_T_local)
         ;

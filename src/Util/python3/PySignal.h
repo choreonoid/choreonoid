@@ -22,7 +22,7 @@ template<typename T> struct python_function_caller0 {
     pybind11::object func;
     python_function_caller0(pybind11::object func) : func(func) { }
     T operator()() {
-        PyGILock lock;
+        pybind11::gil_scoped_acquire lock;
         T result;
         try {
             pybind11::object result0 = func();
@@ -38,7 +38,7 @@ template<> struct python_function_caller0<void> {
     pybind11::object func;
     python_function_caller0(pybind11::object func) : func(func) { }
     void operator()() {
-        PyGILock lock;
+        pybind11::gil_scoped_acquire lock;
         try {
             func();
         } catch(pybind11::error_already_set const& ex) {
@@ -51,7 +51,7 @@ template<typename T, typename ARG1> struct python_function_caller1 {
     pybind11::object func;
     python_function_caller1(pybind11::object func) : func(func) { }
     T operator()(ARG1 arg1) {
-        PyGILock lock;
+        pybind11::gil_scoped_acquire lock;
         T result;
         try {
             pybind11::object result0 = func(pyGetSignalArgObject(arg1));
@@ -67,7 +67,7 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
     pybind11::object func;
     python_function_caller1(pybind11::object func) : func(func) { }
     void operator()(ARG1 arg1) {
-        PyGILock lock;
+        pybind11::gil_scoped_acquire lock;
         try {
             func(pyGetSignalArgObject(arg1));
         } catch(pybind11::error_already_set const& ex) {
@@ -80,7 +80,7 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
     pybind11::object func;
     python_function_caller2(pybind11::object func) : func(func) { }
     T operator()(ARG1 arg1, ARG2 arg2) {
-        PyGILock lock;
+        pybind11::gil_scoped_acquire lock;
         T result;
         try {
             pybind11::object result0 = func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
@@ -96,7 +96,7 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
     pybind11::object func;
     python_function_caller2(pybind11::object func) : func(func) { }
     void operator()(ARG1 arg1, ARG2 arg2) {
-        PyGILock lock;
+        pybind11::gil_scoped_acquire lock;
         try {
             func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
         } catch(pybind11::error_already_set const& ex) {

@@ -2,12 +2,12 @@
 # @author Shin'ichiro Nakaoka
 
 if(WIN32)
-  option(BUILD_PYTHON_PLUGIN "Building Python Plugin" OFF)
+  option(BUILD_PYTHON3_PLUGIN "Building Python Plugin" OFF)
 else()
-  option(BUILD_PYTHON_PLUGIN "Building Python Plugin" ON)
+  option(BUILD_PYTHON3_PLUGIN "Building Python Plugin" ON)
 endif()
 
-if(NOT BUILD_PYTHON_PLUGIN)
+if(NOT BUILD_PYTHON3_PLUGIN)
   return()
 elesif(NOT ENABLE_PYTHON)
   message(FATAL_ERROR "PythonPlugin needs to ENABLE_PYTHON")

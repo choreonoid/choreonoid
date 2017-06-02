@@ -42,14 +42,15 @@ public:
     void write(string const& text){
         buf += text;
     }
-    const string& text() const { return buf; }
+    const string& text() const {
+        return buf; }
 };
         
 void initializeStaticObjects()
 {
     if(!isInitialized){
 
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
 
         exitExceptionType = py::module::import("cnoid.PythonPlugin").attr("ExitException");
         sys = py::module::import("sys");
@@ -59,7 +60,7 @@ void initializeStaticObjects()
                 py::class_<StringOut>(m, "StringOut")
                 .def(py::init<>())
                 .def("write", &StringOut::write)
-                .def("text", &StringOut::text);
+                .def("text", &StringOut::text, py::return_value_policy::copy);
 
         rollBackImporter = py::module::import("cnoid.rbimporter");
 
@@ -224,7 +225,7 @@ PythonExecutor::State PythonExecutor::state() const
 
 static py::object execPythonCodeSub(const std::string& code)
 {
-    return py::eval(code.c_str(), cnoid::pythonMainNamespace());
+    return py::eval<py::eval_statements>(code.c_str(), cnoid::pythonMainNamespace());
 }
 
 
@@ -279,7 +280,7 @@ bool PythonExecutorImpl::exec(std::function<py::object()> execScript, const stri
 
     bool result = true;
     {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
 
         // clear exception variables
         hasException = false;
@@ -337,41 +338,19 @@ bool PythonExecutorImpl::execMain(std::function<py::object()> execScript)
     
     try {
         resultObject = execScript();
-        resultString =  resultObject.cast<string>();
         completed = true;
     }
     catch(py::error_already_set const & ex) {
-        if(PyErr_Occurred()){
-            if(PyErr_ExceptionMatches(exitExceptionType.ptr())){
-                PyErr_Clear();
-                isTerminated = true;
-            } else {
-                PyObject* ptype;
-                PyObject* pvalue;
-                PyObject* ptraceback;
-                PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-                if(ptype){
-                    exceptionType = py::cast<py::object>(py::handle(ptype));
-                    exceptionTypeName = exceptionType.attr("__name__").cast<string>();
-                 }
-                if(pvalue){
-                    exceptionValue = py::cast<py::object>(py::handle(pvalue));
-                }
-                // get an error message by redirecting the output of PyErr_Print()
-                py::object stderr_ = sys.attr("stderr");
-                py::object strout = StringOutClass();
-                sys.attr("stderr") = strout;
-                PyErr_Restore(ptype, pvalue, ptraceback);
-                PyErr_Print();
-                sys.attr("stderr") = stderr_;
-                exceptionText = strout.attr("text").cast<string>();
+        py::object stdout_ = sys.attr("stdout");
+        py::object strout = StringOutClass();
+        sys.attr("stdout") = strout;
+        py::print(ex.what());
+        sys.attr("stdout") = stdout_;
+        py::object st = strout.attr("text")();
+        exceptionText = strout.attr("text")().cast<string>();
+        resultString = exceptionText;
 
-                resultObject = exceptionValue;
-                resultString = exceptionText;
-
-                hasException = true;
-            }
-        }
+        hasException = true;
     }
 
     //releasePythonPathRef();
@@ -403,7 +382,7 @@ void PythonExecutorImpl::run()
     threadId = currentThreadId();
     stateCondition.wakeAll();
     stateMutex.unlock();
-    PyGILock lock;
+    py::gil_scoped_acquire lock;
     execMain(functionToExecScript);
 }
 
@@ -480,7 +459,7 @@ void PythonExecutorImpl::releasePythonPathRef()
 {
     if(pathRefIter != additionalPythonPathRefMap.end()){
         if(--pathRefIter->second == 0){
-            PyGILock lock;
+            py::gil_scoped_acquire lock;
             pythonSysModule().attr("path").attr("remove")(scriptDirectory);
 
             additionalPythonPathRefMap.erase(pathRefIter);
@@ -511,7 +490,7 @@ bool PythonExecutorImpl::terminateScript()
 
         for(int i=0; i < 400; ++i){
             {
-                PyGILock lock;
+                py::gil_scoped_acquire lock;
                 PyThreadState_SetAsyncExc((long)threadId, exitExceptionType().ptr());
             }
             if(wait(20)){
@@ -522,7 +501,7 @@ bool PythonExecutorImpl::terminateScript()
         //releasePythonPathRef();
         
     } else if(isRunningForeground){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         PyErr_SetObject(exitExceptionType().ptr(), 0);
         //releasePythonPathRef();
         if( PyErr_Occurred())

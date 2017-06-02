@@ -21,8 +21,6 @@ void exportPySceneTypes(py::module m)
         .def("draggedPosition", &SceneDragger::draggedPosition)
         ;
 
-    py::implicitly_convertible<SceneDraggerPtr, SgPosTransformPtr>();
-    
     py::object positionDraggerClass =
         py::class_<PositionDragger, PositionDraggerPtr, SceneDragger>(m, "PositionDragger")
         .def("setDraggableAxes", &PositionDragger::setDraggableAxes)
@@ -39,7 +37,6 @@ void exportPySceneTypes(py::module m)
     positionDraggerClass.attr("ROTATION_AXES") = (int)PositionDragger::ROTATION_AXES;
     positionDraggerClass.attr("ALL_AXES") = (int)PositionDragger::ALL_AXES;
     
-    py::implicitly_convertible<PositionDraggerPtr, SceneDraggerPtr>();
 }
 
 }

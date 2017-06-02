@@ -33,7 +33,7 @@ endif()
 
 if(ENABLE_PYTHON)
   if(USE_PYTHON3)
- #   add_subdirectory(python3)
+    add_subdirectory(python3)
   else()
     add_subdirectory(python)
   endif()

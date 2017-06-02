@@ -32,16 +32,10 @@ void exportPySceneGraph(py::module& m)
         .def("setName", &SgObject::setName)
         .def("notifyUpdate",(void (SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
         .def("notifyUpdate",(void (SgObject::*)(int)) &SgObject::notifyUpdate, py::arg("action")=SgUpdate::MODIFIED)
-        //.def("notifyUpdate", py::overload_cast<SgUpdate&>(&SgObject::notifyUpdate))      //Rewrite if C++14
-        //.def("notifyUpdate", py::overload_cast<int>(&SgObject::notifyUpdate), py::arg("action")=SgUpdate::MODIFIED)
         ;
-        
-    py::implicitly_convertible<SgObjectPtr, ReferencedPtr>();
 
     py::class_< SgNode, SgNodePtr, SgObject >(m, "SgNode")
         .def("isGroup", &SgNode::isGroup);
-
-    py::implicitly_convertible<SgNodePtr, SgObjectPtr>();
     
     py::class_< SgGroup, SgGroupPtr, SgNode >(m, "SgGroup")
         .def("empty", &SgGroup::empty)
@@ -51,17 +45,13 @@ void exportPySceneGraph(py::module& m)
             return SgNodePtr(self.child(index));
         })
         .def("addChild", &SgGroup::addChild, py::arg("node"), py::arg("doNotify")=false);
-
-    py::implicitly_convertible<SgGroupPtr, SgNodePtr>();
     
     py::class_< SgTransform, SgTransformPtr, SgGroup >(m, "SgTransform");
 
-    py::implicitly_convertible<SgTransformPtr, SgGroupPtr>();
-
     py::class_< SgPosTransform, SgPosTransformPtr, SgTransform >(m, "SgPosTransform")
-        .def("position", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)  //makes a copy
+        .def("position", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position, py::return_value_policy::reference_internal)
         .def("setPosition", [](SgPosTransform& self, const Affine3& T) { self.position() = T; } )
-        .def_property("T", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position,
+        .def_property("T", (const Affine3& (SgPosTransform::*)() const ) &SgPosTransform::T,
                 [](SgPosTransform& self, const Affine3& T) { self.position() = T; } )
         .def("translation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
         .def("setTranslation", [](SgPosTransform& self, const Vector3& p) {
@@ -72,7 +62,6 @@ void exportPySceneGraph(py::module& m)
             self.setRotation(R);
         })
         ;
-    py::implicitly_convertible<SgPosTransformPtr, SgTransformPtr>();
 
     py::class_<SceneProvider>(m, "SceneProvider");
 }

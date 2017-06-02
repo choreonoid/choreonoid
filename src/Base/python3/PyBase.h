@@ -9,11 +9,32 @@
 #include <cnoid/Py3Util>
 #include "exportdecl.h"
 
+namespace pybind11 { namespace detail {
+    template<typename ItemType> struct type_caster<cnoid::ItemList<ItemType>> {
+    public:
+        PYBIND11_TYPE_CASTER(cnoid::ItemList<ItemType>, _("ItemList"));
+
+        //Conversion part 1 (Python->C++)
+        bool load(handle src, bool) {
+
+        }
+
+        //Conversion part 2 (C++ -> Python)
+        static handle cast(cnoid::ItemList<ItemType> src, return_value_policy, handle ) {
+            pybind11::list retval;
+            for(int i=0; i < src.size(); i++){
+                retval.append(src[i]);
+            }
+            return  retval.inc_ref();
+        }
+    };
+}}
+
+
 namespace cnoid {
 
 CNOID_EXPORT pybind11::list getPyNarrowedItemList(const ItemList<>& orgItemList, pybind11::object itemClass);
 CNOID_EXPORT pybind11::list getPyNarrowedItemList(pybind11::list orgItemList, const PyTypeObject* itemClass);
-CNOID_EXPORT pybind11::list getPyNarrowedItemList(pybind11::list orgItemList, pybind11::detail::type_info* itemClass);
 CNOID_EXPORT pybind11::object getPyNarrowedFirstItem(const ItemList<>& orgItemList, pybind11::object itemClass);
 
 template<typename ItemType>
@@ -28,7 +49,7 @@ class PyItemList
         if (it != types.end())
             itemClass = (pybind11::detail::type_info *) it->second;
 
-        return getPyNarrowedItemList(items, itemClass);
+        return getPyNarrowedItemList(items, itemClass->type);
     }
     static pybind11::list construct2(pybind11::list items){
         return getPyNarrowedItemList(items, (PyTypeObject*)itemType.ptr());

@@ -157,7 +157,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     hbox->addWidget(this);
     self->setLayout(hbox);
 
-    PyGILock lock;
+    py::gil_scoped_acquire lock;
     
 #ifdef _WIN32
     try { interpreter = py::import("code").attr("InteractiveConsole")(pythonMainNamespace());
@@ -172,7 +172,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
            .def(py::init<>())
            .def("write", &PythonConsoleOut::write);
     consoleOut = consoleOutClass();
-    PythonConsoleOut& consoleOut_ = py::cast<PythonConsoleOut&>(consoleOut);
+    PythonConsoleOut& consoleOut_ = consoleOut.cast<PythonConsoleOut&>();
     consoleOut_.setConsole(this);
 
     py::object consoleInClass =
@@ -180,7 +180,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
             .def(py::init<>())
             .def("readline", &PythonConsoleIn::readline);
     consoleIn = consoleInClass();
-    PythonConsoleIn& consoleIn_ = py::cast<PythonConsoleIn&>(consoleIn);
+    PythonConsoleIn& consoleIn_ = consoleIn.cast<PythonConsoleIn&>();
     consoleIn_.setConsole(this);
 
     sys = pythonSysModule();
@@ -200,7 +200,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 
 PythonConsoleView::~PythonConsoleView()
 {
-    PyGILock lock;
+    py::gil_scoped_acquire lock;
     delete impl;
 }
 
@@ -255,7 +255,7 @@ void PythonConsoleViewImpl::putPrompt()
 
 void PythonConsoleViewImpl::execCommand()
 {
-    PyGILock lock;
+    py::gil_scoped_acquire lock;
     
     orgStdout = sys.attr("stdout");
     orgStderr = sys.attr("stderr");
@@ -329,7 +329,7 @@ std::vector<string> PythonConsoleViewImpl::getMemberNames(py::object& moduleObje
 
 void PythonConsoleViewImpl::tabComplete()
 {
-    PyGILock lock;
+    py::gil_scoped_acquire lock;
     orgStdout = sys.attr("stdout");
     orgStderr = sys.attr("stderr");
     orgStdin = sys.attr("stdin");

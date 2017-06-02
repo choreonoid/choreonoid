@@ -250,7 +250,7 @@ void exportPyValueTree(py::module& m)
         .value("FOLDED_STRING", FOLDED_STRING)
         .export_values();
 
-    py::class_<ValueNode, ValueNodePtr, Referenced, std::unique_ptr<ValueNode, py::nodelete>>(m, "ValueNode")
+    py::class_<ValueNode, ValueNodePtr, Referenced>(m, "ValueNode")
         .def("isValid", &ValueNode::isValid)
         .def("toInt", &ValueNode::toInt)
         .def("toFloat", &ValueNode::toDouble)
@@ -270,8 +270,6 @@ void exportPyValueTree(py::module& m)
         .def("line", &ValueNode::line)
         .def("column", &ValueNode::column)
         ;
-
-    py::implicitly_convertible<ValueNodePtr, ReferencedPtr>();
 
     py::class_< Mapping, MappingPtr, ValueNode>(m, "Mapping")
         .def("empty", &Mapping::empty)
@@ -308,8 +306,6 @@ void exportPyValueTree(py::module& m)
         .def("write", Mapping_write)
         ;
 
-    py::implicitly_convertible<MappingPtr, ReferencedPtr>();
-
     py::class_< Listing, ListingPtr, ValueNode>(m, "Listing")
         .def("empty", &Listing::empty)
         .def("size", &Listing::size)
@@ -335,7 +331,6 @@ void exportPyValueTree(py::module& m)
         .def("appendLF", &Listing::appendLF)
         ;
 
-    py::implicitly_convertible<ListingPtr, ReferencedPtr>();
 }
 
 }
