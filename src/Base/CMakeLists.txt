@@ -203,10 +203,9 @@ set(headers
   TextEditView.h
   ImageView.h
   JoystickCapture.h
-  exportdecl.h
-  gettext.h
   TextEdit.h
   TaskView.h
+  exportdecl.h
   )
 
 set(target CnoidBase)

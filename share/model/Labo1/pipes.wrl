@@ -1,7 +1,5 @@
 #VRML V2.0 utf8
 
-#VRML V2.0 utf8
-#Cosmo Worlds V2.0
 Transform 
   {
   children 
@@ -18,9 +16,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
 		Transform 
 		  {
 		  children 
@@ -15739,1140 +15734,7 @@ Transform
     ]
   }
 
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -0.606143 0.606144 0.514956 4.092669
-      translation 1.555698 1.694000 0.538084
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation 0 1 0 2.187050
-      translation 1.621899 1.947499 0.824751
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation 0.911889 0.290230 -0.290215 1.662909
-      translation 1.998939 2.106488 1.357089
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      translation 1.529999 1.820749 0.694994
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation 0.993448 -8.080607e-2 8.080587e-2 1.577370
-      translation 1.604179 1.534999 0.242027
-      }
-    ]
-  }
 
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation 0.606992 -0.606992 -0.512953 2.193680
-      translation 2.518520 1.702000 0.753228
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation 3.485909e-7 1 -1.059858e-7 2.209870
-      translation 2.586838 1.958500 1.037618
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation 0.905747 -0.299685 -0.299685 4.613550
-      translation 2.809560 2.117500 1.337339
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation -5.348458e-13 1 -2.215429e-13 0.785395
-      translation 2.492000 1.830250 0.910000
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation 0.993023 -8.338183e-2 8.338183e-2 1.577800
-      translation 2.585220 1.542999 0.358828
-      }
-    ]
-  }
-
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation -0.357403 0.357402 0.862859 4.565410
-      scaleOrientation 0.977248 0.149976 -0.149977 4.689380
-      translation 0.125101 1.735000 0.256105
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -0.678599 0.678599 -0.281081 2.593569
-      scaleOrientation -0.303838 -3.283892e-2 -0.952157 0.664129
-      translation 9.681860e-2 1.812999 0.227822
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation -6.738029e-21 1 1.626719e-20 3.141598
-      scaleOrientation 2.338130e-20 1 3.141188e-20 1.570798
-      translation 4.166390e-2 1.902999 0.172666
-      }
-    Transform 
-      {
-      children 
-	[
-	Transform 
-	  {
-	  children 
-	    [
-	    Group 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		Transform 
-		  {
-		  }
-		Transform 
-		  {
-		  rotation 0 0 1 1.570798
-		  }
-		]
-	      }
-	    ]
-	  rotation -0.577350 0.577350 -0.577350 2.094398
-	  scaleOrientation 0.151967 -0.379547 0.912606 3.860579
-	  translation -0.158000 0.199598 -6.800039e-2
-	  }
-	]
-      rotation -6.738029e-21 1 1.626719e-20 3.141598
-      scaleOrientation 2.338130e-20 1 3.141188e-20 1.570798
-      translation -0.116336 1.735000 0.172670
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation -0.357403 0.357402 0.862859 4.565410
-      translation 0.217028 1.735000 0.348028
-      }
-    ]
-  }
-
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
-	Transform 
-	  {
-	  translation 0 2.455119e-2 0
-	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    Group 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		Transform 
-		  {
-		  }
-		Transform 
-		  {
-		  rotation 0 0 1 1.570798
-		  }
-		]
-	      }
-	    ]
-	  rotation 0.707107 0.707105 8.359236e-8 3.141590
-	  scaleOrientation 6.178900e-7 -1.133588e-6 -1 0.785398
-	  translation -0.324124 0.268000 0.324375
-	  }
-	Transform 
-	  {
-	  }
-	]
-      }
-    Transform 
-      {
-      children 
-	[
-	Transform 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Group 
-			  {
-			  children 
-			    [
-			    Transform 
-			      {
-			      children 
-				[
-				Group 
-				  {
-				  }
-				]
-			      }
-			    Transform 
-			      {
-			      rotation 0 0 1 1.570798
-			      }
-			    Transform 
-			      {
-			      rotation 0 0 1 1.570798
-			      }
-			    ]
-			  }
-			]
-		      translation -0.826246 -3.203749e-7 0.810000
-		      }
-		    ]
-		  translation -7.064720e-2 2.072988 -7.638449e-2
-		  }
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      children 
-			[
-			Transform 
-			  {
-			  children 
-			    [
-			    Group 
-			      {
-			      }
-			    ]
-			  }
-			Transform 
-			  {
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			]
-		      }
-		    ]
-		  rotation 0 0 1 1.570798
-		  scaleOrientation 0 0 -1 0.785398
-		  translation -1.114400 2.054490 0.733614
-		  }
-		]
-	      rotation 0 -1 0 0.785395
-	      translation 0.150150 5.124690e-2 1.104730
-	      }
-	    Transform 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      children 
-			[
-			Transform 
-			  {
-			  children 
-			    [
-			    Group 
-			      {
-			      }
-			    ]
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			]
-		      }
-		    ]
-		  translation -0.896893 1.815989 0.733614
-		  }
-		]
-	      rotation 0 -1 0 0.785395
-	      translation 0.150150 5.124690e-2 1.104730
-	      }
-	    Transform 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      children 
-			[
-			Transform 
-			  {
-			  children 
-			    [
-			    Group 
-			      {
-			      }
-			    ]
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			]
-		      }
-		    ]
-		  translation -0.896893 1.345988 0.733614
-		  }
-		]
-	      rotation 0 -1 0 0.785395
-	      translation 0.150150 5.124690e-2 1.104730
-	      }
-	    Transform 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      children 
-			[
-			Transform 
-			  {
-			  children 
-			    [
-			    Group 
-			      {
-			      }
-			    ]
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			]
-		      }
-		    ]
-		  translation -0.896893 0.865989 0.733614
-		  }
-		]
-	      rotation 0 -1 0 0.785395
-	      translation 0.150150 5.124690e-2 1.104730
-	      }
-	    Transform 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      children 
-			[
-			Transform 
-			  {
-			  children 
-			    [
-			    Group 
-			      {
-			      }
-			    ]
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			Transform 
-			  {
-			  rotation 0 0 1 1.570798
-			  }
-			]
-		      }
-		    ]
-		  translation -0.896893 0.614988 0.733614
-		  }
-		]
-	      rotation 0 -1 0 0.785395
-	      translation 0.150150 5.124690e-2 1.104730
-	      }
-	    ]
-	  }
-	Transform 
-	  {
-	  }
-	Transform 
-	  {
-	  rotation -1.776360e-15 1 5.960459e-8 4.712388
-	  translation -0.524845 -1.187368e-7 1.992079
-	  }
-	Transform 
-	  {
-	  }
-	Transform 
-	  {
-	  rotation 1.776360e-15 1 5.960459e-8 1.570798
-	  translation -1.992079 3.128320e-8 -0.524842
-	  }
-	Transform 
-	  {
-	  rotation 0 1 5.960459e-8 3.141598
-	  translation -2.516920 -8.745418e-8 1.467239
-	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    Group 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		]
-	      }
-	    ]
-	  rotation 0 -1 0 0.785395
-	  translation -1.258460 0.621999 0.733614
-	  }
-	]
-      }
-    ]
-  }
-
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
-	Transform 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Group 
-			  {
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      rotation 0.864005 0.342910 -0.368656 1.728729
-	      translation 0.446805 0.629620 0.566805
-	      }
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Group 
-			  {
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      rotation 0.862856 0.357405 -0.357406 1.717769
-	      scale 1 0.999997 1
-	      scaleOrientation -8.046282e-3 0.998225 -5.900602e-2 0.355004
-	      translation 0.524644 1.754500 0.642645
-	      }
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Group 
-			  {
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      rotation 0.862855 -0.357408 -0.357408 4.565410
-	      scaleOrientation -0.900057 0.435083 -2.447990e-2 1.570070
-	      translation 0.228709 1.475000 0.359710
-	      }
-	    Transform 
-	      {
-	      rotation 0 1 0 0.785394
-	      translation 0.360000 0 0.477999
-	      }
-	    ]
-	  }
-	]
-      }
-    Transform 
-      {
-      children 
-	[
-	Transform 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      rotation 0 1 0 0.785395
-	      translation 0.252254 0 2.569000
-	      }
-	    Transform 
-	      {
-	      rotation 0 -1 0 0.785399
-	      translation 1.638190 0 -1.994930
-	      }
-	    Transform 
-	      {
-	      rotation 0 1 0 3.926990
-	      translation 6.202118 0 -0.609000
-	      }
-	    Transform 
-	      {
-	      rotation 0 1 0 2.356189
-	      translation 4.816180 0 3.954940
-	      }
-	    ]
-	  translation -3.227190 0 -0.980000
-	  }
-	Transform 
-	  {
-	  rotation 0 -1 0 1.134500
-	  }
-	Transform 
-	  {
-	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    Group 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		]
-	      }
-	    ]
-	  rotation 1 0 0 1.570798
-	  translation -5.963509e-8 0.884998 0.312799
-	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    Group 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		Transform 
-		  {
-		  }
-		Transform 
-		  {
-		  rotation 0 0 1 1.570798
-		  }
-		]
-	      }
-	    ]
-	  rotation 5.338514e-8 0.707106 0.707106 3.141590
-	  scaleOrientation 1 -9.735359e-8 -9.735359e-8 4.712388
-	  translation 4.599988e-2 0.884998 0.328599
-	  }
-	Transform 
-	  {
-	  children 
-	    [
-	    Group 
-	      {
-	      children 
-		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		]
-	      }
-	    ]
-	  rotation 0 0 1 1.570798
-	  translation 0.193498 0.884998 0.374599
-	  }
-	Transform 
-	  {
-	  }
-	]
-      translation 3.186388 0 1.086770
-      }
-    ]
-  }
-
-Transform 
-  {
-  children 
-    [
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -3.514132e-7 0.707106 0.707107 3.141590
-      scaleOrientation -0.769733 0.543533 0.334787 0.890945
-      translation 1.103999 0.272998 0.823580
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -3.322932e-7 0.707106 0.707107 3.141590
-      scaleOrientation 0.506385 0.207348 0.837007 4.521770
-      translation 1.103999 0.206999 0.823580
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -3.586980e-7 1 6.888200e-7 3.141590
-      scaleOrientation 0.506385 0.207348 0.837007 4.521770
-      translation 1.103999 0.378998 0.383758
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      }
-	    Transform 
-	      {
-	      rotation 0 0 1 1.570798
-	      }
-	    ]
-	  }
-	]
-      rotation -3.563170e-7 5.804798e-7 1 3.141590
-      scaleOrientation -0.270304 -0.870295 0.411730 0.936537
-      translation 1.103999 0.112905 0.383760
-      }
-    Transform 
-      {
-      children 
-	[
-	Transform 
-	  {
-	  }
-	]
-      }
-    Transform 
-      {
-      children 
-	[
-	Group 
-	  {
-	  children 
-	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    ]
-	  }
-	]
-      rotation -4.748544e-7 0.707108 -0.707105 3.141590
-      translation 1.090000 0.239997 0.414999
-      }
-    ]
-  }
 
 Transform 
   {
@@ -17082,15 +15944,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -17187,15 +16040,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -17315,37 +16159,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -17442,15 +16255,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -17571,15 +16375,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -17696,37 +16491,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -17827,15 +16591,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -17932,15 +16687,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -18061,15 +16807,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -18184,15 +16921,6 @@ Transform
 	    [
 	    Transform 
 	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
 	      rotation 0 0 1 1.570798
 	      }
 	    Transform 
@@ -18286,15 +17014,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -18400,15 +17119,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -18509,37 +17219,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -18636,15 +17315,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -18768,15 +17438,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -19015,15 +17676,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -19976,15 +18628,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -20082,15 +18725,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -20483,15 +19117,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -21769,15 +20394,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -21876,15 +20492,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -22129,37 +20736,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -22256,15 +20832,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -22385,15 +20952,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -22510,15 +21068,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -22616,15 +21165,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -22745,15 +21285,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -22852,15 +21383,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -24743,15 +23265,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -24837,15 +23350,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -24962,15 +23466,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -26031,15 +24526,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -26144,15 +24630,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -26273,15 +24750,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -26379,15 +24847,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -27503,15 +25962,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -27609,15 +26059,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -28616,15 +27057,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -28741,15 +27173,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -28851,15 +27274,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -28957,15 +27371,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -29087,15 +27492,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -29193,15 +27589,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -29318,15 +27705,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -29690,15 +28068,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -29800,15 +28169,6 @@ Transform
 	      {
 	      children 
 		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
 		Transform 
 		  {
 		  children 
@@ -29929,15 +28289,6 @@ Transform
 		  {
 		  children 
 		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		Transform 
-		  {
-		  children 
-		    [
 		    Transform 
 		      {
 		      children 
@@ -30054,37 +28405,6 @@ Transform
 		  {
 		  children 
 		    [
-		    Group 
-		      {
-		      children 
-			[
-			Transform 
-			  {
-			  children 
-			    [
-			    Shape 
-			      {
-			      appearance 			      Appearance 
-				{
-				material 				Material 
-				  {
-				  ambientIntensity 0.270269
-				  diffuseColor 0.370000 0.370000 0.370000
-				  shininess 0.129998
-				  specularColor 0.889998 0.889998 0.889998
-				  }
-				}
-			      }
-			    ]
-			  }
-			]
-		      }
-		    ]
-		  }
-		Transform 
-		  {
-		  children 
-		    [
 		    Shape 
 		      {
 		      appearance 		      Appearance 
@@ -30183,15 +28503,6 @@ Transform
 	      {
 	      children 
 		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
 		Transform 
 		  {
 		  children 
@@ -30312,15 +28623,6 @@ Transform
 		  {
 		  children 
 		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
-		Transform 
-		  {
-		  children 
-		    [
 		    Shape 
 		      {
 		      appearance 		      Appearance 
@@ -30423,15 +28725,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -30552,37 +28845,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -30680,15 +28942,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -30809,15 +29062,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -30930,15 +29174,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -31059,15 +29294,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -31165,15 +29391,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -31294,15 +29511,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -31419,37 +29627,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -31551,15 +29728,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -31657,15 +29825,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -31778,15 +29937,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -31884,15 +30034,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -31998,15 +30139,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -32104,15 +30236,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -32233,15 +30356,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -32354,15 +30468,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -32483,15 +30588,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -32608,15 +30704,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -32714,15 +30801,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -32843,15 +30921,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -32953,15 +31022,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -33059,15 +31119,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -33188,15 +31239,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -33295,15 +31337,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -33425,37 +31458,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -33554,15 +31556,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -33683,37 +31676,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -33812,15 +31774,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -33942,15 +31895,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -34068,15 +32012,6 @@ Transform
 	      {
 	      children 
 		[
-		Transform 
-		  {
-		  children 
-		    [
-		    Group 
-		      {
-		      }
-		    ]
-		  }
 		Transform 
 		  {
 		  children 
@@ -34299,37 +32234,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -34432,15 +32336,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -34567,15 +32462,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -34672,15 +32558,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -34801,15 +32678,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -34907,15 +32775,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -35036,15 +32895,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -35157,15 +33007,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -36149,15 +33990,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -36255,15 +34087,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -36380,15 +34203,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -37873,15 +35687,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -37978,15 +35783,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -38103,15 +35899,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -39096,15 +36883,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Transform 
 		  {
 		  children 
@@ -39221,37 +36999,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  children 
-		    [
-		    Transform 
-		      {
-		      children 
-			[
-			Shape 
-			  {
-			  appearance 			  Appearance 
-			    {
-			    material 			    Material 
-			      {
-			      ambientIntensity 0.270269
-			      diffuseColor 0.370000 0.370000 0.370000
-			      shininess 0.129998
-			      specularColor 0.889998 0.889998 0.889998
-			      }
-			    }
-			  }
-			]
-		      }
-		    ]
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -39349,15 +37096,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -39478,15 +37216,6 @@ Transform
 	      {
 	      children 
 		[
-		Group 
-		  {
-		  }
-		]
-	      }
-	    Transform 
-	      {
-	      children 
-		[
 		Shape 
 		  {
 		  appearance 		  Appearance 
@@ -39583,15 +37312,6 @@ Transform
 	  {
 	  children 
 	    [
-	    Transform 
-	      {
-	      children 
-		[
-		Group 
-		  {
-		  }
-		]
-	      }
 	    Transform 
 	      {
 	      children 
@@ -61653,4 +59373,3 @@ DEF _@PATCH_NAME_A1_1 Transform
   scaleOrientation 0.363300 0.664404 -0.653131 1.093029
   translation 2.988919 1.850728 0.703975
   }
-

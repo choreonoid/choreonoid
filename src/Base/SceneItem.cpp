@@ -7,13 +7,9 @@
 #include "ItemManager.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
+#include <cnoid/SceneLoader>
 #include <cnoid/FileUtil>
-#include <cnoid/VRMLParser>
-#include <cnoid/STLSceneLoader>
-#include <cnoid/EasyScanner>
-#include <cnoid/VRMLToSGConverter>
 #include <cnoid/EigenArchive>
-#include <cnoid/Exception>
 #include "gettext.h"
 
 using namespace std;
@@ -22,56 +18,21 @@ using namespace cnoid;
 
 namespace {
 
-std::unique_ptr<VRMLParser> vrmlParser;
-std::unique_ptr<VRMLToSGConverter> vrmlConverter;
-
-bool loadVRML(SceneItem* item, const std::string& filename, std::ostream& os)
+bool loadScene(SceneItem* item, const std::string& filename, std::ostream& os)
 {
-    item->topNode()->clearChildren(true);
-    
-    if(!vrmlParser){
-        vrmlParser.reset(new VRMLParser);
-        vrmlConverter.reset(new VRMLToSGConverter);
+    static SceneLoader* loader = 0;
+    if(!loader){
+        loader = new SceneLoader;
+        loader->setMessageSink(mvout(true));
     }
-    vrmlConverter->setMessageSink(os);
-    vrmlConverter->clearConvertedNodeMap();
-
-    SgInvariantGroupPtr group = new SgInvariantGroup;
-
-    try {
-        vrmlParser->load(filename);
-        while(VRMLNodePtr vrml = vrmlParser->readNode()){
-            SgNodePtr node = vrmlConverter->convert(vrml);
-            if(node){
-                group->addChild(node);
-            }
-        }
-        vrmlParser->checkEOF();
-
-    } catch(EasyScanner::Exception& ex){
-        os << ex.getFullMessage();
-        return false;
-    }
-        
-    if(group->empty()){
-        os << _("The VRML file does not have any valid entity.") << endl;
-    } else {
-        item->topNode()->addChild(group, true);
+    auto scene = loader->load(filename);
+    if(scene){
+        auto invariant = new SgInvariantGroup;
+        invariant->addChild(scene);
+        item->topNode()->addChild(invariant);
         return true;
     }
     return false;
-}
-
-bool loadSTL(SceneItem* item, const std::string& filename, std::ostream& os)
-{
-    STLSceneLoader loader;
-    SgNode* scene = loader.load(filename);
-    if(!scene){
-        os << _("The STL file cannot be loaded.") << endl;
-    } else {
-        item->topNode()->addChild(scene);
-    }
-    return (scene != 0);
 }
 
 }
@@ -84,13 +45,17 @@ void SceneItem::initializeClass(ExtensionManager* ext)
         ext->itemManager().registerClass<SceneItem>(N_("SceneItem"));
 
         ext->itemManager().addLoader<SceneItem>(
+            "Scene", "AVAILABLE-SCENE-FILE", SceneLoader::availableFileExtensions,
+            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+
+        ext->itemManager().addLoader<SceneItem>(
             "VRML", "VRML-FILE", "wrl",
-            std::bind(::loadVRML, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
+            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
 
         ext->itemManager().addLoader<SceneItem>(
             "Stereolithography (STL)", "STL-FILE", "stl",
-            std::bind(::loadSTL, _1, _2, _3), ItemManager::PRIORITY_CONVERSION);
-        
+            std::bind(::loadScene, _1, _2, _3), ItemManager::PRIORITY_COMPATIBILITY);
+
         initialized = true;
     }
 }

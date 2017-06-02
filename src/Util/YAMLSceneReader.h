@@ -13,6 +13,7 @@
 namespace cnoid {
 
 class Mapping;
+class Listing;
 class YAMLSceneReaderImpl;
   
 class CNOID_EXPORT YAMLSceneReader
@@ -26,7 +27,7 @@ public:
     bool isDegreeMode() const {
         return isDegreeMode_;
     }
-    double toRadian(double angle){
+    double toRadian(double angle) const {
         return isDegreeMode_ ? radian(angle) : angle;
     }
 
@@ -41,6 +42,7 @@ private:
     YAMLSceneReaderImpl* impl;
     friend class YAMLSceneReaderImpl;
     bool isDegreeMode_;
+    AngleAxis readAngleAxis(const Listing& rotation);
 };
 
 }

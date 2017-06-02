@@ -144,6 +144,8 @@ void FountainProgram::render(SceneFountain* fountain)
 {
     setTime(fountain->time());
     glUniform1f(lifeTimeLocation, fountain->lifeTime());
+    Vector3f accel = globalAttitude().transpose() * fountain->acceleration();
+    glUniform3fv(accelLocation, 1, accel.data());
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, nParticles);
 }

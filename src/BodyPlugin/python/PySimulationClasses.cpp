@@ -9,6 +9,7 @@
 #include "../SimulationScriptItem.h"
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
+#include "../SimpleControllerItem.h"
 #include <cnoid/PyBase>
 
 using namespace boost::python;
@@ -126,6 +127,8 @@ void exportSimulationClasses()
             .def("set2Dmode", &AISTSimulatorItem::set2Dmode)
             .def("setKinematicWalkingEnabled", &AISTSimulatorItem::setKinematicWalkingEnabled)
             .def("setConstraintForceOutputEnabled", &AISTSimulatorItem::setConstraintForceOutputEnabled)
+            .def("clearExtraJoint", &AISTSimulatorItem::clearExtraJoint)
+            .def("addExtraJoint", &AISTSimulatorItem::addExtraJoint)
             ;
 
         enum_<AISTSimulatorItem::DynamicsMode>("DynamicsMode")
@@ -200,4 +203,7 @@ void exportSimulationClasses()
         .def("stopSimulation", &SimulationBar::stopSimulation)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
+
+    class_< SimpleControllerItem, SimpleControllerItemPtr, bases<Item> >("SimpleControllerItem")
+        .def("setController", &SimpleControllerItem::setController);
 }

@@ -20,6 +20,7 @@ public:
 
         for(size_t i=0; i < cameras.size(); ++i){
             Device* camera = cameras[i];
+            io->enableInput(camera);
             os() << "Device type: " << camera->typeName()
                  << ", id: " << camera->id()
                  << ", name: " << camera->name() << std::endl;

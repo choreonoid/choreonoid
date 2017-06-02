@@ -1,5 +1,5 @@
 /**
-   @author Shin'ichiro NAKAOKA
+   @author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_BASE_ITEM_MANAGER_H
@@ -39,14 +39,12 @@ protected:
 class CNOID_EXPORT ItemManager
 {
 public:
-
     ItemManager(const std::string& moduleName, MenuManager& menuManager);
     ~ItemManager();
 
     void detachAllManagedTypeItemsFromRoot();
 
 private:
-
     template <class ItemType> class Factory {
     public:
         virtual Item* operator()() { return new ItemType(); }
@@ -69,7 +67,6 @@ private:
     };
     typedef std::shared_ptr<FileFunctionBase> FileFunctionBasePtr;
 
-
     class OverwritingCheckFunctionBase
     {
     public:
@@ -78,12 +75,10 @@ private:
     };
     typedef std::shared_ptr<OverwritingCheckFunctionBase> OverwritingCheckFunctionBasePtr;
         
-
 public:
-
     void bindTextDomain(const std::string& domain);
 
-    enum { PRIORITY_CONVERSION = -10, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10, PRIORITY_FORCE = 20 };
+    enum { PRIORITY_COMPATIBILITY, PRIORITY_CONVERSION = -10, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10, PRIORITY_FORCE = 20 };
 
     template <class ItemType> class CreationPanelFilter : public CreationPanelFilterBase
     {
@@ -120,11 +115,6 @@ public:
         return *this;
     }
     
-    template <class ItemType, class BaseType>
-        void registerDerivedClass(const std::string& className) {
-        // registerClassSub(new Factory<ItemType>(), typeid(ItemType).name(), className);
-    }
-
     static bool getClassIdentifier(ItemPtr item, std::string& out_moduleName, std::string& out_className);
 
     template <class ItemType> static ItemType* singletonInstance() {
@@ -155,19 +145,35 @@ public:
     template <class ItemType>
         ItemManager& addLoader(const std::string& caption, const std::string& formatId, const std::string& extensions, 
                                const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoaderSub(typeid(ItemType).name(), caption, formatId, extensions,
+        addLoaderSub(typeid(ItemType).name(), caption, formatId, [extensions](){ return extensions; },
                      FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
         return *this;
     }
 
+    template <class ItemType>
+        ItemManager& addLoader(const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
+                               const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
+        addLoaderSub(typeid(ItemType).name(), caption, formatId, getExtensions,
+                     FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
+        return *this;
+    }
+    
     template<class ItemType>
         ItemManager& addSaver(const std::string& caption, const std::string& formatId, const std::string& extensions,
                               const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaverSub(typeid(ItemType).name(), caption, formatId, extensions,
+        addSaverSub(typeid(ItemType).name(), caption, formatId, [extensions](){ return extensions; },
                     FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
         return *this;
     }
 
+    template<class ItemType>
+        ItemManager& addSaver(const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
+                              const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
+        addSaverSub(typeid(ItemType).name(), caption, formatId, getExtensions, 
+                    FileFunctionBasePtr(new FileFunction<ItemType>(function)), priority);
+        return *this;
+    }
+    
     template<class ItemType>
         ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
                                        const std::string& extensions,
@@ -179,21 +185,31 @@ public:
         return *this;
     }
 
+    template<class ItemType>
+        ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
+                                       std::function<std::string()> getExtensions,
+                                       const typename FileFunction<ItemType>::Function& loadingFunction,
+                                       const typename FileFunction<ItemType>::Function& savingFunction,
+                                       int priority = PRIORITY_DEFAULT){
+        addLoader<ItemType>(caption, formatId, getExtensions, loadingFunction, priority);
+        addSaver<ItemType>(caption, formatId, getExtensions, savingFunction, priority);
+        return *this;
+    }
+    
     void addMenuItemToImport(const std::string& caption, std::function<void()> slot);
 
     static void reloadItems(const ItemList<>& items);
 
 private:
-        
     void registerClassSub(
         std::function<Item*()> factory, Item* singletonInstance, const std::string& typeId, const std::string& className);
     void addCreationPanelSub(const std::string& typeId, ItemCreationPanel* panel);
     void addCreationPanelFilterSub(
         const std::string& typeId, CreationPanelFilterBasePtr filter, bool afterInitializionByPanels);
     void addLoaderSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
-                      const std::string& extensions, FileFunctionBasePtr function, int priority);
+                      std::function<std::string()> getExtensions, FileFunctionBasePtr function, int priority);
     void addSaverSub(const std::string& typeId, const std::string& caption, const std::string& formatId,
-                     const std::string& extensions, FileFunctionBasePtr function, int priority);
+                     std::function<std::string()> getExtensions, FileFunctionBasePtr function, int priority);
 
     static Item* getSingletonInstance(const std::string& typeId);
 
@@ -209,6 +225,7 @@ private:
 
 CNOID_EXPORT std::string getOpenFileName(const std::string& caption, const std::string& extensions);
 CNOID_EXPORT std::vector<std::string> getOpenFileNames(const std::string& caption, const std::string& extensions);
+
 }
 
 #endif

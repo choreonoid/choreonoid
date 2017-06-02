@@ -212,12 +212,10 @@ BOOST_PYTHON_MODULE(Body)
             ;
 
         enum_<Link::JointType>("JointType")
-            .value("ROTATIONAL_JOINT", Link::ROTATIONAL_JOINT) 
-            .value("SLIDE_JOINT", Link::SLIDE_JOINT) 
+            .value("REVOLUTE_JOINT", Link::REVOLUTE_JOINT)
+            .value("PRISMATIC_JOINT", Link::PRISMATIC_JOINT) 
             .value("FREE_JOINT", Link::FREE_JOINT) 
-            .value("FIXED_JOINT", Link::FIXED_JOINT) 
-            .value("CRAWLER_JOINT", Link::CRAWLER_JOINT)
-            .value("AGX_CRAWLER_JOINT", Link::AGX_CRAWLER_JOINT);
+            .value("FIXED_JOINT", Link::FIXED_JOINT);
     }        
     
     {
@@ -267,15 +265,23 @@ BOOST_PYTHON_MODULE(Body)
             .def(other<BodyMotion::Frame>() >> self)
             ;
 
-        enum_<Body::ExtraJointType>("ExtraJointType")
-            .value("EJ_PISTON", Body::EJ_PISTON) 
-            .value("EJ_BALL", Body::EJ_BALL);
     }
 
     implicitly_convertible<BodyPtr, ReferencedPtr>();
 
+    {
+        scope ExtraJointScope = class_< ExtraJoint >("ExtraJoint", init<ExtraJoint::ExtraJointType, const Vector3&>())
+            .def("setType", &ExtraJoint::setType)
+            .def("setAxis", &ExtraJoint::setAxis)
+            .def("setPoint", &ExtraJoint::setPoint)
+            ;
+
+        enum_<ExtraJoint::ExtraJointType>("ExtraJointType")
+              .value("EJ_PISTON", ExtraJoint::EJ_PISTON)
+              .value("EJ_BALL", ExtraJoint::EJ_BALL);
+    }
+
     class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
-        .def("format", &AbstractBodyLoader::format)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)
         .def("setShapeLoadingEnabled", &AbstractBodyLoader::setShapeLoadingEnabled)
         .def("setDefaultDivisionNumber", &AbstractBodyLoader::setDefaultDivisionNumber)

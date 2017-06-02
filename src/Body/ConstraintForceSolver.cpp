@@ -128,6 +128,7 @@ public:
     WorldBase& world;
 
     bool isConstraintForceOutputMode;
+    bool isSelfCollisionEnabled;
         
     struct ConstraintPoint {
         int globalIndex;
@@ -314,7 +315,9 @@ public:
     int numGaussSeidelTotalLoopsMax;
 
     void initBody(const DyBodyPtr& body, BodyData& bodyData);
-    void initExtraJoints(int bodyIndex);
+    void initBodyExtraJoints(int bodyIndex);
+    void initWorldExtraJoints();
+    void initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int bodyIndex1);
     void init2Dconstraint(int bodyIndex);
     void setConstraintPoints();
     void setDefaultContactAttributeValues(ContactAttributeEx& attr);
@@ -450,6 +453,7 @@ CFSImpl::ConstraintForceSolverImpl(WorldBase& world) :
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
     isConstraintForceOutputMode = false;
+    isSelfCollisionEnabled = false;
     is2Dmode = false;
 }
 
@@ -481,59 +485,89 @@ void CFSImpl::initBody(const DyBodyPtr& body, BodyData& bodyData)
 }
 
 
-// initialize extra joints for making closed links
-void CFSImpl::initExtraJoints(int bodyIndex)
+void CFSImpl::initWorldExtraJoints()
+{
+    for(int i=0; i<world.extrajoints.size(); i++){
+        ExtraJoint& extrajoint = world.extrajoints[i];
+        int bodyIndex[2];
+        for(int k=0; k<2; k++){
+            if(!extrajoint.body[k]){
+                bodyIndex[k] = world.bodyIndex(extrajoint.bodyName[k]);
+                Body* body = world.body(bodyIndex[k]);
+                extrajoint.body[k] = body;
+                extrajoint.link[k] = body->link(extrajoint.linkName[k]);
+            }else{
+                bodyIndex[k] = world.bodyIndex(extrajoint.body[k]->name());
+            }
+        }
+        initExtraJointSub(extrajoint, bodyIndex[0], bodyIndex[1]);
+    }
+}
+
+
+void CFSImpl::initBodyExtraJoints(int bodyIndex)
 {
     const DyBodyPtr& body = world.body(bodyIndex);
-    BodyData& bodyData = bodiesData[bodyIndex];
     for(int j=0; j < body->numExtraJoints(); ++j){
-        Body::ExtraJoint& bodyExtraJoint = body->extraJoint(j);
-        ExtraJointLinkPairPtr linkPair;
-        linkPair = std::make_shared<ExtraJointLinkPair>();
-        linkPair->isSameBodyPair = true;
-        linkPair->isNonContactConstraint = true;
-        linkPair->constraintPoints.resize(2);
-
-        if(bodyExtraJoint.type == Body::EJ_PISTON){
-            // generate two vectors orthogonal to the joint axis
-            Vector3 u = Vector3::Zero();
-            int minElem = 0;
-            Vector3& axis = bodyExtraJoint.axis;
-            for(int k=1; k < 3; k++){
-                if(fabs(axis(k)) < fabs(axis(minElem))){
-                    minElem = k;
-                }
-            }
-            u(minElem) = 1.0;
-            const Vector3 t1 = axis.cross(u).normalized();
-            linkPair->jointConstraintAxes[0] = t1;
-            linkPair->jointConstraintAxes[1] = axis.cross(t1).normalized();
-            
-        } else if(bodyExtraJoint.type == Body::EJ_BALL){
-            linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
-            linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);
-            linkPair->jointConstraintAxes[2] = Vector3(0.0, 0.0, 1.0);
-        }
-        
-        if(linkPair){
-            int numConstraints = linkPair->constraintPoints.size();
-            for(int k=0; k < numConstraints; ++k){
-                ConstraintPoint& constraint = linkPair->constraintPoints[k];
-                constraint.numFrictionVectors = 0;
-                constraint.globalFrictionIndex = numeric_limits<int>::max();
-            }
-            for(int k=0; k < 2; ++k){
-                linkPair->bodyIndex[k] = bodyIndex;
-                linkPair->bodyData[k] = &bodiesData[bodyIndex];
-                DyLink* link = static_cast<DyLink*>(bodyExtraJoint.link[k]);
-                linkPair->link[k] = link;
-                linkPair->linkData[k] = &(bodyData.linksData[link->index()]);
-                linkPair->jointPoint[k] = bodyExtraJoint.point[k];
-            }
-            extraJointLinkPairs.push_back(linkPair);
-        }
+        ExtraJoint& bodyExtraJoint = body->extraJoint(j);
+        initExtraJointSub(bodyExtraJoint, bodyIndex, bodyIndex);
     }
-}    
+}
+
+
+// initialize extra joints for making closed links
+void CFSImpl::initExtraJointSub(ExtraJoint& extrajoint, int bodyIndex0, int bodyIndex1)
+{
+    ExtraJointLinkPairPtr linkPair;
+    linkPair = std::make_shared<ExtraJointLinkPair>();
+    linkPair->isSameBodyPair = (bodyIndex0 == bodyIndex1);
+    linkPair->isNonContactConstraint = true;
+
+    if(extrajoint.type == ExtraJoint::EJ_PISTON){
+        linkPair->constraintPoints.resize(2);
+        // generate two vectors orthogonal to the joint axis
+        Vector3 u = Vector3::Zero();
+        int minElem = 0;
+        Vector3 axis = extrajoint.link[0]->Rs() * extrajoint.axis;
+        for(int k=1; k < 3; k++){
+            if(fabs(axis(k)) < fabs(axis(minElem))){
+                minElem = k;
+            }
+        }
+        u(minElem) = 1.0;
+        const Vector3 t1 = axis.cross(u).normalized();
+        linkPair->jointConstraintAxes[0] = t1;
+        linkPair->jointConstraintAxes[1] = axis.cross(t1).normalized();
+
+     } else if(extrajoint.type == ExtraJoint::EJ_BALL){
+        linkPair->constraintPoints.resize(3);
+        linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
+        linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);
+        linkPair->jointConstraintAxes[2] = Vector3(0.0, 0.0, 1.0);
+     }
+
+    int numConstraints = linkPair->constraintPoints.size();
+    for(int k=0; k < numConstraints; ++k){
+        ConstraintPoint& constraint = linkPair->constraintPoints[k];
+        constraint.numFrictionVectors = 0;
+        constraint.globalFrictionIndex = numeric_limits<int>::max();
+    }
+
+    int index[2];
+    index[0] = bodyIndex0; index[1] = bodyIndex1;
+    for(int k=0; k < 2; ++k){
+        linkPair->bodyIndex[k] = index[k];
+        linkPair->bodyData[k] = &bodiesData[index[k]];
+        DyLink* link = static_cast<DyLink*>(extrajoint.link[k]);
+        linkPair->link[k] = link;
+        BodyData& bodyData = bodiesData[index[k]];
+        linkPair->linkData[k] = &(bodyData.linksData[link->index()]);
+        linkPair->jointPoint[k] = link->Rs() * extrajoint.point[k];
+    }
+
+    extraJointLinkPairs.push_back(linkPair);
+
+}
 
 
 void CFSImpl::init2Dconstraint(int bodyIndex)
@@ -629,15 +663,17 @@ void CFSImpl::initialize(void)
             }
         }
 
-        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, false);
+        bodyData.geometryId = addBodyToCollisionDetector(*body, *collisionDetector, isSelfCollisionEnabled);
         geometryIdToBodyIndexMap.resize(collisionDetector->numGeometries(), bodyIndex);
 
-        initExtraJoints(bodyIndex);
+        initBodyExtraJoints(bodyIndex);
 
         if(is2Dmode && !body->isStaticModel()){
             init2Dconstraint(bodyIndex);
         }
     }
+
+    initWorldExtraJoints();
 
     collisionDetector->makeReady();
 
@@ -924,15 +960,18 @@ bool CFSImpl::setContactConstraintPoint(LinkPair& linkPair, const Collision& col
                 if (contact.depth > contactCorrectionDepth * 2.0){
                     contact.depth = contactCorrectionDepth * 2.0;
                 }
-                Vector3 axis = link->R() * link->a();
-                Vector3 n(collision.normal);
-                Vector3 dir = axis.cross(n);
-                if (k) dir *= -1.0;
-                dir.normalize();
-                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
-                    v[k] += link->dq() * dir;
+                const Vector3 axis = link->R() * link->a();
+                Vector3 direction;
+                if(k==0){
+                    direction = axis.cross(collision.normal);
                 } else {
-                    v[k] += link->u() * dir; // CRAWLER_JOINT
+                    direction = collision.normal.cross(axis);
+                }
+                direction.normalize();
+                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+                    v[k] += link->dq() * direction;
+                } else {
+                    v[k] += link->u() * direction; // CRAWLER_JOINT
                 }
             }
         }
@@ -2383,7 +2422,19 @@ void ConstraintForceSolver::setCollisionHandler(Link* link1, Link* link2, int ha
             info->sigHandlerUnregisterd.connect(
                 std::bind(&CFSImpl::ContactAttributeEx::onCollisionHandlerUnregistered, &attr));
     }
-}    
+}
+
+
+void ConstraintForceSolver::setSelfCollisionEnabled(bool on)
+{
+    impl->isSelfCollisionEnabled = on;
+}
+
+
+bool ConstraintForceSolver::isSelfCollisionEnabled() const
+{
+    return impl->isSelfCollisionEnabled;
+}
     
 
 void ConstraintForceSolver::setContactCullingDistance(double distance)

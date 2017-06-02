@@ -18,11 +18,10 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
-#include <cnoid/VRMLParser>
-#include <cnoid/EasyScanner>
-#include <cnoid/VRMLToSGConverter>
+#include <cnoid/SceneLoader>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
+#include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
 #include "gettext.h"
@@ -56,6 +55,7 @@ public:
     YAMLBodyLoader* self;
     YAMLReader reader;
     YAMLSceneReader sceneReader;
+    SceneLoader sceneLoader;
     filesystem::path directoryPath;
 
     typedef function<bool(Mapping& node)> NodeFunction;
@@ -91,7 +91,7 @@ public:
 
     LinkPtr currentLink;
     vector<string> nameStack;
-    typedef vector<Affine3, Eigen::aligned_allocator<Affine3> > Affine3Vector;
+    typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Vector;
     Affine3Vector transformStack;
 
     struct RigidBody
@@ -101,7 +101,7 @@ public:
         double m;
         Matrix3 I;
     };
-    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody> > RigidBodyVector;
+    typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody>> RigidBodyVector;
     RigidBodyVector rigidBodies;
 
     SgGroupPtr currentSceneGroup;
@@ -120,19 +120,39 @@ public:
     vector<bool> validJointIdSet;
     int numValidJointIds;
 
-    VRMLParser vrmlParser;
-    VRMLToSGConverter sgConverter;
+    struct NodeInfo
+    {
+        SgGroupPtr parent;
+        SgNodePtr node;
+        Matrix3 R;
+        bool isScaled;
+    };
+
+    typedef unordered_map<string, NodeInfo> NodeMap;
+    
+    struct ResourceInfo : public Referenced
+    {
+        SgNodePtr rootNode;
+        unique_ptr<NodeMap> nodeMap;
+    };
+    typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
+        
+    map<string, ResourceInfoPtr> resourceInfoMap;
+    
 
     ostream& os() { return *os_; }
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
     void updateCustomNodeFunctions();
+    bool clear();
     bool load(Body* body, const std::string& filename);
     bool readTopNode(Body* body, Mapping* topNode);
     bool readBody(Mapping* topNode);
+    void readNodeInLinks(Mapping* linkNode, const string& nodeType);
     void readLinkNode(Mapping* linkNode);
     LinkPtr readLink(Mapping* linkNode);
+    boost::optional<Vector3> readAxis(Mapping* node, const char* key);
     void setMassParameters(Link* link);
     //! \return true if any scene nodes other than Group and Transform are added in the sub tree
     bool readElements(ValueNode& elements, SgGroupPtr& sceneGroup);
@@ -142,6 +162,12 @@ public:
     bool readGroup(Mapping& node);
     bool readTransform(Mapping& node);
     bool readResource(Mapping& node);
+    bool importModel(SgGroup* group, const std::string& uri);
+    bool importModel(SgGroup* group, const string& uri, const string& nodeName);
+    ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    void adjustNodeCoordinate(NodeInfo& info);
+    void makeNodeMap(ResourceInfo* info);
+    void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
     bool readRigidBody(Mapping& node);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
@@ -150,12 +176,16 @@ public:
     bool readCamera(Mapping& node);
     bool readRangeSensor(Mapping& node);
     bool readSpotLight(Mapping& node);
+    void readContinuousTrackNode(Mapping* linkNode);
+    void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
+    void readExtraJoints(Mapping* topNode);
+    void readExtraJoint(Mapping* node);
 
     bool isDegreeMode() const {
         return sceneReader.isDegreeMode();
     }
     
-    double toRadian(double angle){
+    double toRadian(double angle) const {
         return sceneReader.toRadian(angle);
     }
 
@@ -323,22 +353,17 @@ YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
 }
 
 
-const char* YAMLBodyLoader::format() const
-{
-    return "ChoreonoidBody";
-}
-
-
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
 }
 
 
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
-    impl->sgConverter.setDivisionNumber(n);
+    impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
@@ -353,6 +378,46 @@ void YAMLBodyLoaderImpl::updateCustomNodeFunctions()
         numCustomNodeFunctions = customNodeFunctions.size();
     }
 }
+
+
+bool YAMLBodyLoader::isDegreeMode() const
+{
+    return impl->isDegreeMode();
+}
+
+
+double YAMLBodyLoader::toRadian(double angle) const
+{
+    return impl->toRadian(angle);
+}
+
+
+bool YAMLBodyLoader::readAngle(Mapping& node, const char* key, double& angle)
+{
+    return impl->readAngle(node, key, angle);
+}
+
+
+bool YAMLBodyLoader::readRotation(Mapping& node, Matrix3& out_R)
+{
+    return impl->readRotation(node, out_R, false);
+}
+
+
+bool YAMLBodyLoaderImpl::clear()
+{
+    rootLink = nullptr;
+    linkInfos.clear();
+    linkMap.clear();
+    validJointIdSet.clear();
+    numValidJointIds = 0;
+    nameStack.clear();
+    transformStack.clear();
+    rigidBodies.clear();
+    sceneReader.clear();
+    resourceInfoMap.clear();
+    return true;
+}    
 
 
 bool YAMLBodyLoader::load(Body* body, const std::string& filename)
@@ -383,8 +448,6 @@ bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         }
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
-    } catch(EasyScanner::Exception & ex){
-        os() << ex.getFullMessage();
     }
 
     os().flush();
@@ -401,19 +464,14 @@ bool YAMLBodyLoader::read(Body* body, Mapping* topNode)
 
 bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
 {
+    clear();
+    
     updateCustomNodeFunctions();
     
     bool result = false;
     this->body = body;
     body->clearDevices();
     body->clearExtraJoints();
-
-    rootLink = nullptr;
-    linkInfos.clear();
-    linkMap.clear();
-    validJointIdSet.clear();
-    numValidJointIds = 0;
-    sceneReader.clear();
 
     try {
         result = readBody(topNode);
@@ -424,16 +482,13 @@ bool YAMLBodyLoaderImpl::readTopNode(Body* body, Mapping* topNode)
         if(const std::string* message = boost::get_error_info<error_info_message>(error)){
             os() << *message << endl;
         }
+    } catch(...){
+        clear();
+        throw;
     }
 
-    linkInfos.clear();
-    linkMap.clear();
-    validJointIdSet.clear();
-    nameStack.clear();
-    transformStack.clear();
-    rigidBodies.clear();
-    sceneReader.clear();
-        
+    clear();
+
     os().flush();
 
     if(false){ // for debug
@@ -448,7 +503,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 {
     double version = 1.0;
     
-    ValueNodePtr formatNode = topNode->extract("format");
+    auto formatNode = topNode->extract("format");
     if(formatNode->isValid()){
         if(formatNode->toString() != "ChoreonoidBody"){
             formatNode->throwException(
@@ -463,8 +518,10 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         topNode->throwException(_("This version of the Choreonoid body format is not supported"));
     }
 
-    ValueNodePtr angleUnitNode = topNode->extract("angleUnit");
-    if(angleUnitNode){
+    auto angleUnitNode = topNode->extract("angleUnit");
+    if(!angleUnitNode){
+        sceneReader.setAngleUnit(YAMLSceneReader::DEGREE);
+    } else {
         string unit = angleUnitNode->toString();
         if(unit == "radian"){
             sceneReader.setAngleUnit(YAMLSceneReader::RADIAN);
@@ -481,63 +538,65 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 
     transformStack.clear();
     transformStack.push_back(Affine3::Identity());
-    ValueNodePtr linksNode = topNode->extract("links");
-    if(!linksNode){
+    auto links = topNode->extract("links");
+    string unspecifiedType;
+    if(!links){
         topNode->throwException(_("There is no \"links\" values for defining the links in the body"));
     } else {
-        if(linksNode->isListing()){
-            Listing& linkNodes = *linksNode->toListing();
-            if(linkNodes.empty()){
-                linkNodes.throwException(_("No link is contained in the \"links\" listing"));
+        if(links->isListing()){
+            Listing& linkList = *links->toListing();
+            if(linkList.empty()){
+                linkList.throwException(_("No link is contained in the \"links\" listing"));
             }
-            for(int i=0; i < linkNodes.size(); ++i){
-                readLinkNode(linkNodes[i].toMapping());
+            for(int i=0; i < linkList.size(); ++i){
+                readNodeInLinks(linkList[i].toMapping(), unspecifiedType);
             }
-        } else if(linksNode->isMapping()){
-            Mapping* links = linksNode->toMapping();
-            Mapping::iterator p = links->begin();
-            while(p != links->end()){
+        } else if(links->isMapping()){
+            auto linksMap = links->toMapping();
+            auto p = linksMap->begin();
+            while(p != linksMap->end()){
                 const string& type = p->first;
-                if(type == "Link"){
-                    readLinkNode(p->second->toMapping());
-                } else {
-                    linksNode->throwException(
-                        str(format(_("A %1% node cannot be specified in links")) % type));
-                }
+                auto node = p->second->toMapping();
+                readNodeInLinks(node, type);
                 ++p;
             }
         } else {
-            linksNode->throwException(_("Invalid value specified in the \"links\" key."));
+            links->throwException(_("Invalid value specified in the \"links\" key."));
         }
     }
 
-    // construct a link tree
-    for(size_t i=0; i < linkInfos.size(); ++i){
-        LinkInfo* info = linkInfos[i];
-        const std::string& parent = info->parent;
-        if(!parent.empty()){
-            LinkMap::iterator p = linkMap.find(parent);
-            if(p != linkMap.end()){
-                Link* parentLink = p->second;
-                Link* link = info->link;
-                parentLink->appendChild(link);
-            } else {
-                info->node->throwException(
-                    str(format(_("Parent link \"%1%\" of %2% is not defined")) % parent % info->link->name()));
-            }
-        }
-    }        
-
-    ValueNodePtr rootLinkNode = topNode->extract("rootLink");
+    auto rootLinkNode = topNode->extract("rootLink");
     if(rootLinkNode){
         string rootLinkName = rootLinkNode->toString();
-        LinkMap::iterator p = linkMap.find(rootLinkName);
+        auto p = linkMap.find(rootLinkName);
         if(p == linkMap.end()){
             rootLinkNode->throwException(
                 str(format(_("Link \"%1%\" specified in \"rootLink\" is not defined.")) % rootLinkName));
         }
         rootLink = p->second;
     }
+
+    // construct a link tree
+    for(size_t i=0; i < linkInfos.size(); ++i){
+        LinkInfo* info = linkInfos[i];
+        Link* link = info->link;
+        const std::string& parent = info->parent;
+        if(parent.empty()){
+            if(info->link != rootLink){
+                info->node->throwException(
+                    str(format(_("The parent of %1% is not specified.")) % link->name()));
+            }
+        } else {
+            auto p = linkMap.find(parent);
+            if(p != linkMap.end()){
+                Link* parentLink = p->second;
+                parentLink->appendChild(link);
+            } else {
+                info->node->throwException(
+                    str(format(_("Parent link \"%1%\" of %2% is not defined")) % parent % link->name()));
+            }
+        }
+    }        
 
     if(!rootLink){
         topNode->throwException(_("There is no link defined."));
@@ -555,15 +614,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
         }
     }
 
-    //! \todo Remove this later
-    ValueNodePtr initDNode = topNode->extract("initialJointDisplacement");
-    if(initDNode){
-        Listing& initd = *initDNode->toListing();
-        const int n = std::min(initd.size(), body->numLinks());
-        for(int i=0; i < n; i++){
-            body->link(i)->setInitialJointDisplacement(toRadian(initd[i].toDouble()));
-        }
-    }
+    readExtraJoints(topNode);
 
     body->resetInfo(topNode);
         
@@ -573,15 +624,32 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
 }
 
 
-void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+void YAMLBodyLoaderImpl::readNodeInLinks(Mapping* node, const string& nodeType)
 {
     string type;
-    if(extract(linkNode, "type", type)){
-        if(type != "Link"){
-            linkNode->throwException(
-                str(format(_("A %1% node cannot be specified in links")) % type));
+    if(extract(node, "type", type)){
+        if(!nodeType.empty() && type != nodeType){
+            node->throwException(
+                str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
+                    % type % nodeType));
         }
+    } else if(!nodeType.empty()){
+        type = nodeType;
     }
+
+    if(type.empty() || type == "Link"){
+        readLinkNode(node);
+    } else if(type == "ContinuousTrack"){
+        readContinuousTrackNode(node);
+    } else {
+        node->throwException(
+            str(format(_("A %1% node cannot be specified in links")) % type));
+    }
+}
+
+
+void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
+{
     LinkInfoPtr info = new LinkInfo;
     extract(linkNode, "parent", info->parent);
     Link* link = readLink(linkNode);
@@ -596,12 +664,11 @@ void YAMLBodyLoaderImpl::readLinkNode(Mapping* linkNode)
 
 LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
 {
-    
     MappingPtr info = static_cast<Mapping*>(linkNode->clone());
     
     LinkPtr link = body->createLink();
 
-    ValueNodePtr nameNode = info->extract("name");
+    auto nameNode = info->extract("name");
     if(nameNode){
         link->setName(nameNode->toString());
         if(!linkMap.insert(make_pair(link->name(), link)).second){
@@ -634,60 +701,36 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         }
     }
 
-    ValueNodePtr jointTypeNode = info->find("jointType");
+    auto jointTypeNode = info->find("jointType");
     if(jointTypeNode->isValid()){
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
         } else if(jointType == "prismatic"){
-            link->setJointType(Link::SLIDE_JOINT);
+            link->setJointType(Link::PRISMATIC_JOINT);
         } else if(jointType == "slide"){
-            link->setJointType(Link::SLIDE_JOINT);
+            link->setJointType(Link::PRISMATIC_JOINT);
         } else if(jointType == "free"){
             link->setJointType(Link::FREE_JOINT);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FIXED_JOINT);
         } else if(jointType == "pseudoContinuousTrack"){
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-        } else  if(jointType == "agx_crawler"){
-            link->setJointType(Link::AGX_CRAWLER_JOINT);
         } else {
             jointTypeNode->throwException("Illegal jointType value");
         }
     }
 
-    ValueNodePtr jointAxisNode = info->find("jointAxis");
-    if(jointAxisNode->isValid()){
-        bool isValid = true;
-        Vector3 axis;
-        if(jointAxisNode->isListing()){
-            read(*jointAxisNode->toListing(), axis);
-        } else if(jointAxisNode->isString()){
-            string symbol = jointAxisNode->toString();
-            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
-            if(symbol == "X"){
-                axis = Vector3::UnitX();
-            } else if(symbol == "Y"){
-                axis = Vector3::UnitY();
-            } else if(symbol == "Z"){
-                axis = Vector3::UnitZ();
-            } else {
-                isValid = false;
-            }
-        } else {
-            isValid = false;
-        }
-        if(!isValid){
-            jointAxisNode->throwException("Illegal jointAxis value");
-        }
-        link->setJointAxis(axis);
+    boost::optional<Vector3> axis = readAxis(info, "jointAxis");
+    if(axis){
+        link->setJointAxis(*axis);
     }
-
-    ValueNodePtr jointAngleNode = info->extract("jointAngle");
+    
+    auto jointAngleNode = info->extract("jointAngle");
     if(jointAngleNode){
         link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
     }
-    ValueNodePtr jointDisplacementNode = info->extract("jointDisplacement");
+    auto jointDisplacementNode = info->extract("jointDisplacement");
     if(jointDisplacementNode){
         link->setInitialJointDisplacement(jointDisplacementNode->toDouble());
     }
@@ -695,20 +738,20 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     double lower = -std::numeric_limits<double>::max();
     double upper =  std::numeric_limits<double>::max();
     
-    ValueNode& jointRangeNode = *info->find("jointRange");
-    if(jointRangeNode.isValid()){
-        if(jointRangeNode.isScalar()){
-            upper = readLimitValue(jointRangeNode, true);
+    auto jointRangeNode = info->find("jointRange");
+    if(jointRangeNode->isValid()){
+        if(jointRangeNode->isScalar()){
+            upper = readLimitValue(*jointRangeNode, true);
             lower = -upper;
-        } else if(jointRangeNode.isListing()){
-            Listing& jointRange = *jointRangeNode.toListing();
+        } else if(jointRangeNode->isListing()){
+            Listing& jointRange = *jointRangeNode->toListing();
             if(jointRange.size() != 2){
-                jointRangeNode.throwException(_("jointRange must have two elements"));
+                jointRangeNode->throwException(_("jointRange must have two elements"));
             }
             lower = readLimitValue(jointRange[0], false);
             upper = readLimitValue(jointRange[1], true);
         } else {
-            jointRangeNode.throwException(_("Invalid type value is specefied as a jointRange"));
+            jointRangeNode->throwException(_("Invalid type value is specefied as a jointRange"));
         }
     }
     if(link->jointType() == Link::REVOLUTE_JOINT && isDegreeMode()){
@@ -719,7 +762,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         link->setJointRange(lower, upper);
     }
 
-    ValueNodePtr maxVelocityNode = info->find("maxJointVelocity");
+    auto maxVelocityNode = info->find("maxJointVelocity");
     if(maxVelocityNode->isValid()){
         double maxVelocity = maxVelocityNode->toDouble();
         if(link->jointType() == Link::REVOLUTE_JOINT){
@@ -729,7 +772,7 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
         }
     }
 
-    ValueNodePtr velocityRangeNode = info->find("jointVelocityRange");
+    auto velocityRangeNode = info->find("jointVelocityRange");
     if(velocityRangeNode->isValid()){
         Listing& velocityRange = *velocityRangeNode->toListing();
         if(velocityRange.size() != 2){
@@ -741,6 +784,10 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
             link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
         }
     }
+
+    double Ir = info->get("rotorInertia", 0.0);
+    double r = info->get("gearRatio", 1.0);
+    link->setEquivalentRotorInertia(r * r * Ir);
     
     currentLink = link;
     rigidBodies.clear();
@@ -767,22 +814,6 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     }
     rigidBodies.push_back(rbody);
     setMassParameters(link);
-    
-    if(extract(linkNode, "uri", symbol)){
-        filesystem::path filepath(symbol);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
-        }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
-                shape->addChild(node);
-                hasShape = true;
-            }
-        }
-    }
 
     if(hasShape){
         link->setShape(shape);
@@ -804,6 +835,44 @@ LinkPtr YAMLBodyLoaderImpl::readLink(Mapping* linkNode)
     currentLink = 0;
 
     return link;
+}
+
+
+boost::optional<Vector3> YAMLBodyLoaderImpl::readAxis(Mapping* node, const char* key)
+{
+    boost::optional<Vector3> axis;
+
+    auto axisNode = node->find(key);
+
+    if(axisNode->isValid()){
+        if(axisNode->isListing()){
+            Vector3 a;
+            read(*axisNode->toListing(), a);
+            axis = a;
+            
+        } else if(axisNode->isString()){
+            string symbol = axisNode->toString();
+            std::transform(symbol.cbegin(), symbol.cend(), symbol.begin(), ::toupper);
+            if(symbol == "X"){
+                axis = Vector3::UnitX();
+            } else if(symbol == "-X"){
+                axis = -Vector3::UnitX();
+            } else if(symbol == "Y"){
+                axis = Vector3::UnitY();
+            } else if(symbol == "-Y"){
+                axis = -Vector3::UnitY();
+            } else if(symbol == "Z"){
+                axis = Vector3::UnitZ();
+            } else if(symbol == "-Z"){
+                axis = -Vector3::UnitZ();
+            }
+        }
+        if(!axis){
+            axisNode->throwException("Illegal axis value");
+        }
+    }
+
+    return axis;
 }
 
 
@@ -862,8 +931,15 @@ bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr& sceneGrou
     
     SgGroupPtr parentSceneGroup = currentSceneGroup;
     currentSceneGroup = sceneGroup;
-    
+
     if(elements.isListing()){
+        /*
+          Process the case like
+          elements:
+            -
+              type: Transform
+              translation: [ 1, 0, 0 ]
+        */
         Listing& listing = *elements.toListing();
         for(int i=0; i < listing.size(); ++i){
             Mapping& element = *listing[i].toMapping();
@@ -874,23 +950,43 @@ bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SgGroupPtr& sceneGrou
         }
     } else if(elements.isMapping()){
         Mapping& mapping = *elements.toMapping();
-        Mapping::iterator p = mapping.begin();
-        while(p != mapping.end()){
-            const string& type = p->first;
-            Mapping& element = *p->second->toMapping();
-            ValueNode* typeNode = element.find("type");
-            if(typeNode->isValid()){
-                string type2 = typeNode->toString();
-                if(type2 != type){
-                    element.throwException(
-                        str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
-                            % type2 % type));
-                }
-            }
-            if(readNode(element, type)){
+
+        /* Check the case like
+           elements:
+             type: Transform
+             translation: [ 1, 0, 0 ]
+        */
+        ValueNode* typeNode = mapping.find("type");
+        if(typeNode->isValid()){
+            const string type = typeNode->toString();
+            if(readNode(mapping, type)){
                 isSceneNodeAdded = true;
             }
-            ++p;
+        } else {
+            /*
+               Process the case like
+               elements:
+                 Transform:
+                   translation: [ 1, 0, 0 ]
+            */
+            Mapping::iterator p = mapping.begin();
+            while(p != mapping.end()){
+                const string& type = p->first;
+                Mapping& element = *p->second->toMapping();
+                ValueNode* typeNode = element.find("type");
+                if(typeNode->isValid()){
+                    string type2 = typeNode->toString();
+                    if(type2 != type){
+                        element.throwException(
+                            str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
+                                % type2 % type));
+                    }
+                }
+                if(readNode(element, type)){
+                    isSceneNodeAdded = true;
+                }
+                ++p;
+            }
         }
     }
 
@@ -1032,26 +1128,175 @@ bool YAMLBodyLoaderImpl::readTransform(Mapping& node)
 bool YAMLBodyLoaderImpl::readResource(Mapping& node)
 {
     bool isSceneNodeAdded = false;
-    
     if(node.read("uri", symbol)){
-        filesystem::path filepath(symbol);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
+        string nodeName;
+        if(node.read("node", nodeName)){
+            isSceneNodeAdded = importModel(currentSceneGroup, symbol, nodeName);
+        } else {
+            isSceneNodeAdded = importModel(currentSceneGroup, symbol);
         }
-        vrmlParser.load(getAbsolutePathString(filepath));
-        while(VRMLNodePtr vrmlNode = vrmlParser.readNode()){
-            SgNodePtr node = sgConverter.convert(vrmlNode);
-            if(node){
-                currentSceneGroup->addChild(node);
-                isSceneNodeAdded = true;
+    }
+    return isSceneNodeAdded;
+}
+
+
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri)
+{
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    if(resourceInfo){
+        group->addChild(resourceInfo->rootNode);
+        return true;
+    }
+    return false;
+}
+
+
+bool YAMLBodyLoaderImpl::importModel(SgGroup* group, const string& uri, const string& nodeName)
+{
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+
+    SgNodePtr model;
+    if(resourceInfo){
+        if(nodeName.empty()){
+            model = resourceInfo->rootNode;
+        } else {
+            unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
+            if(!nodeMap){
+                makeNodeMap(resourceInfo);
+            }
+            auto iter = nodeMap->find(nodeName);
+            if(iter == nodeMap->end()){
+                os() << str(format("Warning: Node \"%1%\" is not found in \"%2%\".") % nodeName % uri) << endl;
+            } else {
+                NodeInfo& nodeInfo = iter->second;
+                if(nodeInfo.parent){
+                    nodeInfo.parent->removeChild(nodeInfo.node);
+                    nodeInfo.parent = 0;
+                    adjustNodeCoordinate(nodeInfo);
+                }
+                model = nodeInfo.node;
             }
         }
     }
 
-    return isSceneNodeAdded;
+    if(model){
+        group->addChild(model);
+        return true;
+    }
+    return false;
 }
 
+
+YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(const string& uri)
+{
+    ResourceInfo* info = 0;
+    
+    auto iter = resourceInfoMap.find(uri);
+    if(iter != resourceInfoMap.end()){
+        info = iter->second;
+    } else {
+        filesystem::path filepath(uri);
+        if(!checkAbsolute(filepath)){
+            filepath = directoryPath / filepath;
+            filepath.normalize();
+        }
+        SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
+        if(rootNode){
+            info = new ResourceInfo;
+            if(auto transform = dynamic_cast<SgPosTransform*>(rootNode.get())){
+                transform->translation().setZero();
+            } else if(auto transform = dynamic_cast<SgAffineTransform*>(rootNode.get())){
+                transform->translation().setZero();
+            }
+            info->rootNode = rootNode;
+        }
+        resourceInfoMap[uri] = info;
+    }
+
+    return info;
+}
+
+
+void YAMLBodyLoaderImpl::adjustNodeCoordinate(NodeInfo& info)
+{
+    if(auto pos = dynamic_cast<SgPosTransform*>(info.node.get())){
+        if(info.isScaled){
+            auto affine = new SgAffineTransform;
+            affine->setLinear(info.R * pos->rotation());
+            affine->translation().setZero();
+            pos->moveChildrenTo(affine);
+            info.node = affine;
+        } else {
+            pos->setRotation(info.R * pos->rotation());
+            pos->translation().setZero();
+        }
+            
+    } else if(auto affine = dynamic_cast<SgAffineTransform*>(info.node.get())){
+        affine->setLinear(info.R * affine->linear());
+        affine->translation().setZero();
+            
+    } else {
+        if(info.isScaled){
+            auto transform = new SgAffineTransform;
+            transform->setLinear(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        } else if(!info.R.isApprox(Matrix3::Identity())){
+            auto transform = new SgPosTransform;
+            transform->setRotation(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        }
+    }
+}
+        
+
+void YAMLBodyLoaderImpl::makeNodeMap(ResourceInfo* info)
+{
+    info->nodeMap.reset(new NodeMap);
+    NodeInfo nodeInfo;
+    nodeInfo.parent = 0;
+    nodeInfo.node = info->rootNode;
+    nodeInfo.R = Matrix3::Identity();
+    nodeInfo.isScaled = false;
+    makeNodeMapSub(nodeInfo, *info->nodeMap);
+}
+
+
+void YAMLBodyLoaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap)
+{
+    const string& name = nodeInfo.node->name();
+    bool wasProcessed = false;
+    if(!name.empty()){
+        wasProcessed = !nodeMap.insert(make_pair(name, nodeInfo)).second;
+    }
+    if(!wasProcessed){
+        SgGroup* group = dynamic_cast<SgGroup*>(nodeInfo.node.get());
+        if(group){
+            NodeInfo childInfo;
+            childInfo.parent = group;
+            childInfo.isScaled = nodeInfo.isScaled;
+            SgTransform* transform = dynamic_cast<SgTransform*>(group);
+            if(!transform){
+                childInfo.R = nodeInfo.R;
+            } else if(auto pos = dynamic_cast<SgPosTransform*>(transform)){
+                childInfo.R = nodeInfo.R * pos->rotation();
+            } else {
+                Affine3 T;
+                transform->getTransform(T);
+                childInfo.R = nodeInfo.R * T.linear();
+                childInfo.isScaled = true;
+            }
+            for(SgNode* child : *group){
+                childInfo.node = child;
+                makeNodeMapSub(childInfo, nodeMap);
+            }
+        }
+    }
+}
+    
 
 bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 {
@@ -1215,4 +1460,127 @@ bool YAMLBodyLoaderImpl::readSpotLight(Mapping& node)
     }
 
     return readDevice(light, node);
+}
+
+
+void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
+{
+    MappingPtr info = static_cast<Mapping*>(node->clone());
+    string parent;
+    if(!extract(info, "parent", parent)){
+        info->throwException("parent must be specified.");
+    }
+
+    string crawlername;
+    if(!extract(info, "name", crawlername)){
+        info->throwException("name must be specified.");
+    }
+
+    int numJoints = 0;
+    if(!extract(info, "numJoints", numJoints)){
+        info->throwException("numJoints must be specified.");
+    }
+    if(numJoints < 3){
+        info->throwException("numJoints must be more than 2.");
+    }
+
+    Vector3 jointOffset;
+    if(!extractEigen(info, "jointOffset", jointOffset)){
+        info->throwException("jointOffset must be specified.");
+    }
+
+    const int numOpenJoints = numJoints - 1;
+    vector<double> initialAngles(numOpenJoints - 1, 0.0);
+    ValueNodePtr initAnglesNode = info->extract("initialJointAngles");
+    if(initAnglesNode){
+        Listing& initAngles = *initAnglesNode->toListing();
+        const int n = std::min(initAngles.size(), numOpenJoints);
+        for(int i=0; i < n; i++){
+            initialAngles[i] = toRadian(initAngles[i].toDouble());
+        }
+    }
+
+    LinkPtr firstLink = readLink(node);
+    LinkPtr subsequentLink = firstLink->clone();
+    subsequentLink->resetInfo(subsequentLink->info()->cloneMapping());
+    
+    firstLink->setJointType(Link::FREE_JOINT);
+    firstLink->setInfo("isContinuousTrack", true);
+    addTrackLink(0, firstLink, node, parent, 0.0);
+
+    subsequentLink->setJointType(Link::REVOLUTE_JOINT);
+    subsequentLink->setOffsetTranslation(jointOffset);
+    for(int i=0; i < numOpenJoints; ++i){
+        addTrackLink(i + 1, subsequentLink->clone(), node, parent, initialAngles[i]);
+    }
+}
+
+
+void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle)
+{
+    link->setName(str(format("%1%%2%") % link->name() % index));
+    if(!linkMap.insert(make_pair(link->name(), link)).second){
+        node->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
+    }
+    link->setInitialJointAngle(initialAngle);
+
+    LinkInfoPtr info = new LinkInfo;
+    info->link = link;
+    info->node = node;
+    info->parent = io_parent;
+    linkInfos.push_back(info);
+    
+    io_parent = link->name();
+}
+
+
+void YAMLBodyLoaderImpl::readExtraJoints(Mapping* topNode)
+{
+    auto node = topNode->extract("extraJoints");
+    if(node){
+        if(node->isListing()){
+            Listing& extraJoints = *node->toListing();
+            for(int i=0; i < extraJoints.size(); ++i){
+                readExtraJoint(extraJoints[i].toMapping());
+            }
+        }
+    }
+}
+
+
+void YAMLBodyLoaderImpl::readExtraJoint(Mapping* node)
+{
+    ExtraJoint joint;
+
+    joint.body[0] = joint.body[1] = body;
+    
+    joint.link[0] = body->link(node->get("link1Name").toString());
+    joint.link[1] = body->link(node->get("link2Name").toString());
+
+    for(int i=0; i < 2; ++i){
+        if(!joint.link[i]){
+            node->throwException(
+                str(format(_("The link specified in \"link%1%Name\" is not found.")) % (i + 1)));
+        }
+    }
+
+    string jointType = node->get("jointType").toString();
+    if(jointType == "piston"){
+        joint.type = ExtraJoint::EJ_PISTON;
+        boost::optional<Vector3> axis = readAxis(node, "jointAxis");
+        if(axis){
+            joint.axis = *axis;
+        } else {
+            node->throwException(_("The jointAxis value must be specified for the pistion type."));
+        }
+    } else if(jointType == "ball"){
+        joint.type = ExtraJoint::EJ_BALL;
+    } else {
+        node->throwException(str(format(_("Joint type \"%1%\" is not available.")) % jointType));
+    }
+
+    readEx(*node, "link1LocalPos", joint.point[0]);
+    readEx(*node, "link2LocalPos", joint.point[1]);
+
+    body->addExtraJoint(joint);
 }

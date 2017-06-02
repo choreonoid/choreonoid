@@ -708,7 +708,7 @@ void ODEBody::setExtraJoints(bool flipYZ)
 
     for(int j=0; j < n; ++j){
 
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
 
         ODELinkPtr odeLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -737,13 +737,13 @@ void ODEBody::setExtraJoints(bool flipYZ)
             }
 
             // \todo do the destroy management for these joints
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 jointID = dJointCreatePiston(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
                 dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
 
-            } else if(extraJoint.type == Body::EJ_BALL){
+            } else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 jointID = dJointCreateBall(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());
@@ -1236,10 +1236,12 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 	for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
-        if(velocityMode)
-        	odeBody->setVelocityToODE();
-        else
-        	odeBody->setTorqueToODE();
+        if(odeBody->worldID){
+        	if(velocityMode)
+        		odeBody->setVelocityToODE();
+        	else
+        		odeBody->setTorqueToODE();
+        }
     }
 
 	if(MEASURE_PHYSICS_CALCULATION_TIME){
@@ -1280,17 +1282,18 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
 
-
-        // Move the following code to the ODEBody class
-        if(is2Dmode){
-            odeBody->alignToZAxisIn2Dmode();
-        }
-        if(!odeBody->sensorHelper.forceSensors().empty()){
-            odeBody->updateForceSensors(flipYZ);
-        }
-        odeBody->getKinematicStateFromODE(flipYZ);
-        if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
-            odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+        if(odeBody->worldID){
+			// Move the following code to the ODEBody class
+			if(is2Dmode){
+				odeBody->alignToZAxisIn2Dmode();
+			}
+			if(!odeBody->sensorHelper.forceSensors().empty()){
+				odeBody->updateForceSensors(flipYZ);
+			}
+			odeBody->getKinematicStateFromODE(flipYZ);
+			if(odeBody->sensorHelper.hasGyroOrAccelerationSensors()){
+				odeBody->sensorHelper.updateGyroAndAccelerationSensors();
+			}
         }
     }
 

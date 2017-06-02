@@ -20,11 +20,12 @@ public:
     PluginImpl(const char* name);
 
     string name;
-    bool isUnloadable;
     vector<string> requisites;
     vector<string> subsequences;
     vector<string> oldNames;
     int activationPriority;
+    unsigned int internalVersion;
+    bool isUnloadable;
 };
 
 }
@@ -40,8 +41,9 @@ Plugin::Plugin(const char* name)
 PluginImpl::PluginImpl(const char* name)
     : name(name)
 {
-    isUnloadable = false;
     activationPriority = std::numeric_limits<int>::max();
+    internalVersion = 0;
+    isUnloadable = false;
 }
 
 
@@ -54,6 +56,18 @@ Plugin::~Plugin()
 const char* Plugin::name()
 {
     return impl->name.c_str();
+}
+
+
+void Plugin::setInternalVersion(unsigned int version)
+{
+    impl->internalVersion = version;
+}
+
+
+unsigned int Plugin::internalVersion() const
+{
+    return impl->internalVersion;
 }
 
 

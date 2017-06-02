@@ -7,7 +7,7 @@
 #ifndef CNOID_UTIL_EASYSCANNER_H_INCLUDED
 #define CNOID_UTIL_EASYSCANNER_H_INCLUDED
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <memory>
@@ -16,7 +16,7 @@
 namespace cnoid {
 
 /**
-   @todo introduce a pimpl to hide the use of map, vector
+   @todo introduce a pimpl to hide the use of unordered_map, vector
 */
 class CNOID_EXPORT  EasyScanner {
 
@@ -39,9 +39,8 @@ public:
         T_STRING, T_SIGLUM, T_LF, T_EOF
     };
 
-    typedef std::map<std::string, int> SymbolMap;
+    typedef std::unordered_map<std::string, int> SymbolMap;
     typedef std::pair<std::string, int> SymbolPair;
-    typedef std::shared_ptr<SymbolMap> SymbolMapPtr;
 
     Endl endl;
 
@@ -54,6 +53,10 @@ public:
 
     inline void registerSymbol(int id, const std::string& symbol) {
         symbols->insert(SymbolPair(symbol, id));
+    }
+
+    void setSymbols(std::shared_ptr<SymbolMap> symbols){
+        this->symbols = symbols;
     }
 
     inline int  getSymbolID(const std::string& symbol) {
@@ -266,7 +269,7 @@ private:
 
     std::vector<int> whiteSpaceChars;
 
-    SymbolMapPtr symbols;
+    std::shared_ptr<SymbolMap> symbols;
 
     friend CNOID_EXPORT EasyScanner& operator>>(EasyScanner& scanner, double& value);
     friend CNOID_EXPORT EasyScanner& operator>>(EasyScanner& scanner, int& value);

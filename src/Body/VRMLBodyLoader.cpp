@@ -335,15 +335,10 @@ VRMLBodyLoaderImpl::~VRMLBodyLoaderImpl()
 }
 
 
-const char* VRMLBodyLoader::format() const
-{
-    return "OpenHRP3-VRML97";
-}
-
-
 void VRMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->vrmlParser.setMessageSink(os);
     impl->sgConverter.setMessageSink(os);
 }
 
@@ -811,8 +806,6 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
         link->setJointType(Link::CRAWLER_JOINT);
         os() << str(format(_("Warning: A deprecated joint type 'crawler'is specified for %1%. Use 'pseudoContinuousTrack' instead."))
                     % link->name()) << endl;
-    } else if(jointType == "agx_crawler"){
-        link->setJointType(Link::AGX_CRAWLER_JOINT);
     } else {
         throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
     }
@@ -1223,13 +1216,14 @@ void VRMLBodyLoaderImpl::setExtraJoints()
     for(size_t i=0; i < extraJointNodes.size(); ++i){
 
         VRMLProtoFieldMap& f = extraJointNodes[i]->fields;
-        Body::ExtraJoint joint;
+        ExtraJoint joint;
 
         string link1Name, link2Name;
         readVRMLfield(f["link1Name"], link1Name);
         readVRMLfield(f["link2Name"], link2Name);
         joint.link[0] = body->link(link1Name);
         joint.link[1] = body->link(link2Name);
+        joint.body[0] = joint.body[1] = body;
 
         for(int j=0; j < 2; ++j){
             if(!joint.link[j]){
@@ -1240,10 +1234,10 @@ void VRMLBodyLoaderImpl::setExtraJoints()
 
         SFString& jointType = get<SFString>(f["jointType"]);
         if(jointType == "piston"){
-            joint.type = Body::EJ_PISTON;
+            joint.type = ExtraJoint::EJ_PISTON;
             joint.axis = get<SFVec3f>(f["jointAxis"]);
         } else if(jointType == "ball"){
-            joint.type = Body::EJ_BALL;
+            joint.type = ExtraJoint::EJ_BALL;
         } else {
             throw invalid_argument(str(format(_("JointType \"%1%\" is not supported.")) % jointType));
         }

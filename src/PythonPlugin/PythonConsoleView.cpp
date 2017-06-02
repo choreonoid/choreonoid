@@ -607,6 +607,7 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
         break;
         
     case Qt::Key_Return:
+    case Qt::Key_Enter:
         if(isConsoleInMode){
             fixInput();
         } else {

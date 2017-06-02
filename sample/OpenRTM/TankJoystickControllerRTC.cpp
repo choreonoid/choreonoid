@@ -13,7 +13,6 @@ const double timeStep = 0.001;
 const int numTankJoints = 4;
 const int cannonJointId = 2;
 const int cannonAxis[] = { 3, 4 };
-const double cannonAxisRatio[] = { -1.0, 1.0 };
 
 const char* spec[] =
 {
@@ -132,9 +131,12 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
     for(int i=0; i < 2; ++i){
         double dq = (q[i] - qprev[i]) / timeStep;
         double dqref = 0.0;
-        double deltaq = 0.002 * cannonAxisRatio[i] * lastAxes[cannonAxis[i]];
-        qref[i] += deltaq;
-        dqref = deltaq / timeStep;
+        double pos = lastAxes[cannonAxis[i]];
+        if(fabs(pos) > 0.25){
+            double deltaq = 0.002 * pos;
+            qref[i] += deltaq;
+            dqref = deltaq / timeStep;
+        }
         torques.data[i] = P * (qref[i] - q[i]) + D * (dqref - dq);
         qprev[i] = q[i];
     }

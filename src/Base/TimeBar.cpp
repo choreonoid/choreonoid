@@ -404,7 +404,15 @@ bool TimeBarImpl::setTime(double time, bool calledFromPlaybackLoop, QWidget* cal
         return false;
     }
 
-    const double newTime = myNearByInt(time * self->frameRate_) / self->frameRate_;
+    /*
+    double newTime; 
+    if(isFillLevelActive && calledFromPlaybackLoop){
+        newTime = floor(time * self->frameRate_) / self->frameRate_;
+    } else {
+        newTime = myNearByInt(time * self->frameRate_) / self->frameRate_;
+    }
+    */
+    const double newTime = floor(time * self->frameRate_) / self->frameRate_;
 
     // When the optimization is enabled,
     // the result of (newTime == self->time_) sometimes becomes false,

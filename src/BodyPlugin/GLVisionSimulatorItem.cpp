@@ -707,7 +707,7 @@ SgCamera* VisionRenderer::initializeCamera()
                 persCamera->setNearClipDistance(rangeSensor->minDistance());
                 persCamera->setFarClipDistance(rangeSensor->maxDistance());
                 SgPosTransform* cameraPos = new SgPosTransform();
-                cameraPos->setTransform(rangeSensor->T_local());
+                cameraPos->setTransform(rangeSensor->link()->Rs().transpose() * rangeSensor->T_local());
                 cameraPos->addChild(persCamera);
                 sceneLink->addChild(cameraPos);
 

@@ -41,7 +41,6 @@ public:
 
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
-    void setDefaultDivisionNumber(int n);
     SgNodePtr readNode(Mapping& node, const string& type);
     SgNodePtr readGroup(Mapping& node);
     bool readElements(Mapping& node, SgGroup* group);
@@ -136,6 +135,20 @@ void YAMLSceneReader::clear()
 }
 
 
+AngleAxis YAMLSceneReader::readAngleAxis(const Listing& rotation)
+{
+    Vector4 r;
+    cnoid::read(rotation, r);
+    Vector3 axis(r[0], r[1], r[2]);
+    double size = axis.norm();
+    if(size < 1.0e-6){
+        rotation.throwException("Rotation axis is the zero vector");
+    }
+    axis /= size; // normalize
+    return AngleAxis(toRadian(r[3]), axis);
+}
+
+        
 bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract)
 {
     ValueNodePtr value;
@@ -152,15 +165,10 @@ bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract
         if(rotations[0].isListing()){
             out_R = Matrix3::Identity();
             for(int i=0; i < rotations.size(); ++i){
-                const Listing& rotation = *rotations[i].toListing();
-                Vector4 r;
-                cnoid::read(rotation, r);
-                out_R = out_R * AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]));
+                out_R = out_R * readAngleAxis(*rotations[i].toListing());
             }
         } else {
-            Vector4 r;
-            cnoid::read(rotations, r);
-            out_R = AngleAxis(toRadian(r[3]), Vector3(r[0], r[1], r[2]));
+            out_R = readAngleAxis(rotations);
         }
     }
     return true;

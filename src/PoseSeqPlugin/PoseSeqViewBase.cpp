@@ -504,21 +504,27 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
     possibleIkLinkFlag.resize(body->numLinks());
     possibleIkLinkFlag.reset();
 
-    const Listing& possibleIkLinks = *info.findListing("possibleIkInterpolationLinks");
-    if(possibleIkLinks.isValid()){
-        for(int i=0; i < possibleIkLinks.size(); ++i){
-            Link* link = body->link(possibleIkLinks[i]);
-            if(link){
-                possibleIkLinkFlag[link->index()] = true;
-                LinkTreeItem* item = linkTreeWidget->itemOfLink(link->index());
-                if(item){
-                    ColumnCheckBox* checkBox = new ColumnCheckBox(
-                        std::bind(&PoseSeqViewBase::onIkPartCheckClicked, this, item, _1));
-                    linkTreeWidget->setAlignedItemWidget(item, ikPartColumn, checkBox);
+    if(body->numLinks() > 0){
+        const Listing& possibleIkLinks = *info.findListing("possibleIkInterpolationLinks");
+        if(possibleIkLinks.isValid()){
+            for(int i=0; i < possibleIkLinks.size(); ++i){
+                Link* link = body->link(possibleIkLinks[i]);
+                if(link){
+                    possibleIkLinkFlag[link->index()] = true;
+                    LinkTreeItem* item = linkTreeWidget->itemOfLink(link->index());
+                    if(item){
+                        ColumnCheckBox* checkBox = new ColumnCheckBox(
+                            std::bind(&PoseSeqViewBase::onIkPartCheckClicked, this, item, _1));
+                        linkTreeWidget->setAlignedItemWidget(item, ikPartColumn, checkBox);
+                    }
                 }
             }
         }
+        if(!body->isFixedRootModel()){
+            possibleIkLinkFlag[0] = true;
+        }
     }
+    
     const Listing& defaultIkLinks = *info.findListing("defaultIkInterpolationLinks");
     if(defaultIkLinks.isValid()){
         for(int i=0; i < defaultIkLinks.size(); ++i){
@@ -1776,7 +1782,7 @@ void PoseSeqViewBase::updateLinkTreeModel()
 
 
 PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
-(LinkTreeItem* item,  const BodyPtr& body, const Pose& pose)
+(LinkTreeItem* item, const BodyPtr& body, const Pose& pose)
 {
     ChildrenState state;
 

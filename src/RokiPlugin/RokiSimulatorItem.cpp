@@ -224,6 +224,7 @@ public:
     double timeStep;
     bool createdFD;
     vector<RokiBody*> staticBodyList;
+    vector<rkLink*> fixedLinkList;
 
     Selection fdSolverType;
     Selection contactType;
@@ -280,6 +281,9 @@ RokiLink::RokiLink
     	o = link->p();
 
     rklink = rkChainLink(rokiBody->chain, link->index());
+    if(link->isRoot() && link->jointType()==Link::FIXED_JOINT)
+        simImpl->fixedLinkList.push_back(rklink);
+
     createLink(simImpl, rokiBody, o, stuffisLinkName);
     rkChainMass(rokiBody->chain) += link->mass();
 
@@ -1053,6 +1057,7 @@ bool RokiSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     bodyMap.clear();
     staticBodyList.clear();
+    fixedLinkList.clear();
 
     if(createdFD){
         rkFDUpdateDestroy( &fd );
@@ -1095,6 +1100,12 @@ bool RokiSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     for(size_t i=0; i< staticBodyList.size(); i++){
         _rkFDCellPush( &fd, staticBodyList[i]->lc );
+    }
+
+    if(fixedLinkList.size()>1){
+        for(int i=0; i<fixedLinkList.size()-1; i++)
+            for(int j=i+1; j<fixedLinkList.size(); j++)
+                rkCDPairUnreg(&fd.cd, fixedLinkList[i], fixedLinkList[j]);
     }
 
     rkFDODE2Assign( &fd, Regular );

@@ -891,10 +891,12 @@ void AgXLink::createLinkBody(bool isStatic)
                     cout << "Create Joint Error" << endl;
                     for(size_t j=0; j<constraintLinks.size(); j++){
                         Vector3 o = constraintLinks[j]->origin;
-                        Link::JointType type = constraintLinks[j]->link->jointType();
-                        cout << "Link " << constraintLinks[j]->link->name() << " : " << "mass=" << constraintLinks[j]->link->mass()
-                        << " jointType=" << (type==Link::ROTATIONAL_JOINT? "Rotational" : type==Link::SLIDE_JOINT? "Slide" : type==Link::FREE_JOINT? "Free" : type==Link::FIXED_JOINT? "Fixed" : type==Link::CRAWLER_JOINT? "Crawler" : "Unknown")
-                        << " origin=" << o(0) << " " << o(1) <<" " << o(2) << endl;
+                        Link* link = constraintLinks[j]->link;
+                        Link::JointType type = link->jointType();
+                        cout << "Link " << link->name() << " : "
+                             << "mass=" << link->mass()
+                             << " jointType=" << link->jointTypeString()
+                             << " origin=" << o(0) << " " << o(1) <<" " << o(2) << endl;
                     }
                     return;
                 }
@@ -1052,7 +1054,6 @@ void AgXLink::createJoint()
         break;
     }
     case Link::FIXED_JOINT:
-    case Link::CRAWLER_JOINT:
     case Link::PSEUDO_CONTINUOUS_TRACK:{
         if(!parent){
             agxRigidBody->setMotionControl(agx::RigidBody::STATIC);
@@ -1064,17 +1065,20 @@ void AgXLink::createJoint()
         }
         break;
     }
-    case Link::AGX_CRAWLER_JOINT:{
-        numOfTrack = agxBody->tracks.size();
-        agxBody->tracks.resize(numOfTrack+1);
-        AgXBody::Track& track = agxBody->tracks[numOfTrack];
-        track.parent = parent;
-        track.feet.push_back(this);
-        break;
-    }
+
     case Link::FREE_JOINT:
     default :
         break;
+    }
+
+    if(link->info("isContinuousTrack", false)){
+        if(parent && parent->numOfTrack < 0){
+            numOfTrack = agxBody->tracks.size();
+            agxBody->tracks.resize(numOfTrack+1);
+            AgXBody::Track& track = agxBody->tracks[numOfTrack];
+            track.parent = parent;
+            track.feet.push_back(this);
+        };
     }
 }
 
@@ -1086,7 +1090,7 @@ void AgXLink::createGeometry(AgXBody* agxBody)
         if(extractor->extract(link->collisionShape(), std::bind(&AgXLink::addMesh, this, extractor, agxBody))){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
-                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
+                if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
                     agx::ref_ptr<CrawlerGeometry> crawlerGeometry = new CrawlerGeometry( link, agxRigidBody.get() );
                     crawlerGeometry->add( triangleMesh );
                     crawlerGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );   //適当に設定しておかないとcalculateSurfaceVelocityが呼び出されない。
@@ -1142,7 +1146,7 @@ void AgXLink::addMesh(MeshExtractor* extractor, AgXBody* agxBody)
         if(doAddPrimitive){
             bool created = false;
             agxCollide::GeometryRef agxGeometry;
-            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK || link->jointType() == Link::CRAWLER_JOINT){
+            if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
                 agxGeometry = new CrawlerGeometry(link, agxRigidBody.get());
                 agxGeometry->setSurfaceVelocity( agx::Vec3f(1,0,0) );
             }else{
@@ -1659,7 +1663,7 @@ void AgXBody::setExtraJoints()
     Body* body = this->body();
     const int n = body->numExtraJoints();
     for(int j=0; j < n; ++j){
-        Body::ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint& extraJoint = body->extraJoint(j);
 
         AgXLinkPtr agxLinkPair[2];
         for(int i=0; i < 2; ++i){
@@ -1673,14 +1677,14 @@ void AgXBody::setExtraJoints()
             Link* link = agxLinkPair[0]->link;
             Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
             Vector3 a = link->attitude() * extraJoint.axis;
-            if(extraJoint.type == Body::EJ_PISTON){
+            if(extraJoint.type == ExtraJoint::EJ_PISTON){
                 agx::HingeFrame hingeFrame;
                 hingeFrame.setAxis( agx::Vec3( a(0), a(1), a(2)) );
                 hingeFrame.setCenter( agx::Vec3( p(0), p(1), p(2)) );
                 agx::HingeRef hinge = new agx::Hinge( hingeFrame,
                         agxLinkPair[0]->agxRigidBody, agxLinkPair[1]->agxRigidBody );
                 simImpl->agxSimulation->add( hinge );
-            }else if(extraJoint.type == Body::EJ_BALL){
+            }else if(extraJoint.type == ExtraJoint::EJ_BALL){
                 agx::BallJointFrame ballJointFrame;
                 ballJointFrame.setCenter( agx::Vec3( p(0), p(1), p(2)) );
                 agx::BallJointRef ballJoint = new agx::BallJoint( ballJointFrame,

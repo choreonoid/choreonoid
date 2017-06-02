@@ -616,6 +616,73 @@ SgScaleTransform::SgScaleTransform(const SgScaleTransform& org, SgCloneMap& clon
 }
 
 
+SgAffineTransform::SgAffineTransform(int polymorhicId)
+    : SgTransform(polymorhicId),
+      T_(Affine3::Identity())
+{
+
+}
+
+
+SgAffineTransform::SgAffineTransform()
+    : SgAffineTransform(findPolymorphicId<SgAffineTransform>())
+{
+
+}
+
+
+SgAffineTransform::SgAffineTransform(const Affine3& T)
+    : SgTransform(findPolymorphicId<SgAffineTransform>()),
+      T_(T)
+{
+
+}
+
+
+SgAffineTransform::SgAffineTransform(const SgAffineTransform& org)
+    : SgTransform(org),
+      T_(org.T_)
+{
+
+}
+
+
+SgAffineTransform::SgAffineTransform(const SgAffineTransform& org, SgCloneMap& cloneMap)
+    : SgTransform(org, cloneMap),
+      T_(org.T_)
+{
+
+}
+
+
+SgObject* SgAffineTransform::clone(SgCloneMap& cloneMap) const
+{
+    return new SgAffineTransform(*this, cloneMap);
+}
+
+
+const BoundingBox& SgAffineTransform::boundingBox() const
+{
+    if(isBboxCacheValid){
+        return bboxCache;
+    }
+    bboxCache.clear();
+    for(const_iterator p = begin(); p != end(); ++p){
+        bboxCache.expandBy((*p)->boundingBox());
+    }
+    untransformedBboxCache = bboxCache;
+    bboxCache.transform(T_);
+    isBboxCacheValid = true;
+    return bboxCache;
+}
+
+
+void SgAffineTransform::getTransform(Affine3& out_T) const
+{
+    out_T = T_;
+}
+
+
 SgObject* SgScaleTransform::clone(SgCloneMap& cloneMap) const
 {
     return new SgScaleTransform(*this, cloneMap);
@@ -724,6 +791,7 @@ struct NodeTypeRegistration {
         SgNode::registerType<SgGroup, SgNode>();
         SgNode::registerType<SgInvariantGroup, SgGroup>();
         SgNode::registerType<SgTransform, SgGroup>();
+        SgNode::registerType<SgAffineTransform, SgTransform>();
         SgNode::registerType<SgPosTransform, SgTransform>();
         SgNode::registerType<SgScaleTransform, SgTransform>();
         SgNode::registerType<SgSwitch, SgGroup>();

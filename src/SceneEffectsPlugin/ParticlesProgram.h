@@ -29,10 +29,12 @@ public:
 protected:
     virtual bool initializeRendering(SceneParticles* particles) = 0;
     virtual ShaderProgram* shaderProgram() = 0;
+    GLSLSceneRenderer* renderer() { return renderer_; }
+    const Matrix3f& globalAttitude() const { return globalAttitude_; }
 
 private:
     enum State { NOT_INITIALIZED, INITIALIZED, FAILED } initializationState;
-    GLSLSceneRenderer* renderer;
+    GLSLSceneRenderer* renderer_;
     GLint modelViewMatrixLocation;
     GLint projectionMatrixLocation;
     GLint pointSizeLocation;
@@ -40,8 +42,9 @@ private:
     GLint timeLocation;
     GLint particleTexLocation;
     GLuint textureId;
+    Matrix3f globalAttitude_;
 
-    void render(SceneParticles* particles, const Matrix4f& MV, const std::function<void()>& renderingFunction);
+    void render(SceneParticles* particles, const Matrix3f& R, const Matrix4f& MV, const std::function<void()>& renderingFunction);
 };
 
     
