@@ -1203,11 +1203,6 @@ YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(co
         SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
         if(rootNode){
             info = new ResourceInfo;
-            if(auto transform = dynamic_cast<SgPosTransform*>(rootNode.get())){
-                transform->translation().setZero();
-            } else if(auto transform = dynamic_cast<SgAffineTransform*>(rootNode.get())){
-                transform->translation().setZero();
-            }
             info->rootNode = rootNode;
         }
         resourceInfoMap[uri] = info;
