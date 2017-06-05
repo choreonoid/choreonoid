@@ -168,7 +168,6 @@ PYBIND11_PLUGIN(Body)
         .value("FREE_JOINT", Link::JointType::FREE_JOINT)
         .value("FIXED_JOINT", Link::JointType::FIXED_JOINT)
         .value("CRAWLER_JOINT", Link::JointType::CRAWLER_JOINT)
-        .value("AGX_CRAWLER_JOINT", Link::JointType::AGX_CRAWLER_JOINT)
         .export_values();
 
     py::class_< Body, BodyPtr, Referenced> body(m, "Body");
@@ -227,13 +226,21 @@ PYBIND11_PLUGIN(Body)
         .def(BodyMotion::Frame() >> py::self)
         ;
 
-    py::enum_<Body::ExtraJointType>(body, "ExtraJointType")
-        .value("EJ_PISTON", Body::ExtraJointType::EJ_PISTON)
-        .value("EJ_BALL", Body::ExtraJointType::EJ_BALL)
+    py::class_< ExtraJoint > extraJoint(m, "ExtraJoint");
+    extraJoint
+        .def(py::init<>())
+        .def(py::init<ExtraJoint::ExtraJointType, const Vector3&>())
+        .def("setType", &ExtraJoint::setType)
+        .def("setAxis", &ExtraJoint::setAxis)
+        .def("setPoint", &ExtraJoint::setPoint)
+        ;
+
+    py::enum_<ExtraJoint::ExtraJointType>(extraJoint, "ExtraJointType")
+        .value("EJ_PISTON", ExtraJoint::ExtraJointType::EJ_PISTON)
+        .value("EJ_BALL", ExtraJoint::ExtraJointType::EJ_BALL)
         .export_values();
 
     py::class_<AbstractBodyLoader>(m, "AbstractBodyLoader")
-        .def("format", &AbstractBodyLoader::format)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)
         .def("setShapeLoadingEnabled", &AbstractBodyLoader::setShapeLoadingEnabled)
         .def("setDefaultDivisionNumber", &AbstractBodyLoader::setDefaultDivisionNumber)

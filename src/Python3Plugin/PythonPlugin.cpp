@@ -26,7 +26,7 @@ using boost::format;
 namespace py = pybind11;
 namespace filesystem = boost::filesystem;
 
-static const bool debugMode = true;
+static const bool debugMode = false;
 
 namespace {
     
