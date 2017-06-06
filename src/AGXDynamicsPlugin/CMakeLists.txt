@@ -12,7 +12,7 @@ SET(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics 
 
 if(UNIX)
 set(AGX_INCLUDE_DIRS ${AGX_DIR}/include)
-set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib/)
+set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib)
 set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel) 
 endif()
 
@@ -25,9 +25,12 @@ set(target CnoidAGXDynamicsPlugin)
 set(sources
   AGXDynamicsPlugin.cpp
   AGXSimulatorItem.cpp
+  AGXSimulatorItemImpl.cpp
   )
 
 set(headers
+  AGXSimulatorItem.h
+  AGXSimulatorItemImpl.h
   )
 
 make_gettext_mofiles(${target} mofiles)
