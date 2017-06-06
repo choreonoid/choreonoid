@@ -7,46 +7,37 @@ namespace cnoid {
 //using namespace std;
 ////using namespace cnoid;
 
-    void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
-    {
-        ext->itemManager().registerClass<AGXSimulatorItem>("AGXSimulatorItem");
-        ext->itemManager().addCreationPanel<AGXSimulatorItem>();
-    }
+void AGXSimulatorItem::initializeClass(ExtensionManager* ext){
+	ext->itemManager().registerClass<AGXSimulatorItem>("AGXSimulatorItem");
+	ext->itemManager().addCreationPanel<AGXSimulatorItem>();
+}
 
-    AGXSimulatorItem::AGXSimulatorItem()
-    {
-        impl = new AGXSimulatorItemImpl(this);
-    }
+AGXSimulatorItem::AGXSimulatorItem(){
+	impl = new AGXSimulatorItemImpl(this);
+}
 
-    AGXSimulatorItem::AGXSimulatorItem(const AGXSimulatorItem& org)
-            : SimulatorItem(org)
-    {
-        impl = new AGXSimulatorItemImpl(this, *org.impl);
-    }
+AGXSimulatorItem::AGXSimulatorItem(const AGXSimulatorItem& org): SimulatorItem(org){
+	impl = new AGXSimulatorItemImpl(this, *org.impl);
+}
 
-    AGXSimulatorItem::~AGXSimulatorItem()
-    {
-        delete impl;
-    }
+AGXSimulatorItem::~AGXSimulatorItem(){
+	delete impl;
+}
 
-    Item* AGXSimulatorItem::doDuplicate() const
-    {
-        return new AGXSimulatorItem(*this);
-    }
+Item* AGXSimulatorItem::doDuplicate() const{
+	return new AGXSimulatorItem(*this);
+}
 
-    SimulationBody* AGXSimulatorItem::createSimulationBody(Body* orgBody)
-    {
-        return 0;
-    }
+SimulationBody* AGXSimulatorItem::createSimulationBody(Body* orgBody){
+	return impl->createSimulationBody(orgBody);
+}
 
-    bool AGXSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
-    {
-        return false;
-    }
+bool AGXSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies){
+	return impl->initializeSimulation(simBodies);
+}
 
-    bool AGXSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
-    {
-        return false;
-    }
+bool AGXSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies){
+	return false;
+}
 
 }

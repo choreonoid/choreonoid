@@ -10,10 +10,16 @@ ENDIF()
 
 SET(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics library")
 
-if(UNIX)
 set(AGX_INCLUDE_DIRS ${AGX_DIR}/include)
 set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib)
-set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel) 
+if(CMAKE_CL_64)
+  set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib/x64)
+endif()
+
+if(WIN32)
+  set(AGX_LIBRARIES debug agxSabred agxCored agxPhysicsd agxModeld) 
+else()
+  set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel) 
 endif()
 
 #add_definitions(${AGX_CFLAGS})

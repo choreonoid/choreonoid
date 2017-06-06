@@ -3,26 +3,23 @@
 
 namespace cnoid {
 
-    AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
-            : self(self)
-    {
+AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self) : self(self){}
+AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org) 
+	: AGXSimulatorItemImpl(self) {}
 
-    }
+AGXSimulatorItemImpl::~AGXSimulatorItemImpl(){}
 
-    AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
-            : AGXSimulatorItemImpl(self)
-    {
+SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody){
+	return new AGXBody(*orgBody);
+}
 
-    }
+bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies){
+	return false;
+}
 
-    AGXSimulatorItemImpl::~AGXSimulatorItemImpl()
-    {
-    }
-
-    bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
-    {
-        std::cout << "hogehoge" << std::endl;
-        return false;
-    }
+bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies){
+	std::cout << "hogehoge" << std::endl;
+	return false;
+}
 
 }

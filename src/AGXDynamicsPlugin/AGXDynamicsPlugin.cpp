@@ -3,39 +3,25 @@
 #include <cnoid/Plugin>
 
 using namespace std;
-using namespace cnoid;
+//using namespace cnoid;
 
-namespace {
+namespace cnoid {
 
-class AGXDynamicsPlugin : public Plugin
-{
+class AGXDynamicsPlugin : public Plugin{
 public:
-    agx::AutoInit agxInit;
-
-    AGXDynamicsPlugin() : Plugin("AGXDynamics")
-    { 
-        require("Body");
-    }
-        
-    virtual ~AGXDynamicsPlugin()
-    {
-
-    }
-
-    virtual bool initialize()
-    {
-        AGXSimulatorItem::initializeClass(this);
-
-        return true;
-    }
-        
-    virtual bool finalize()
-    {
-        return true;
-    }
-
+	agx::AutoInit agxInit;
+	AGXDynamicsPlugin() : Plugin("AGXDynamics"){ 
+		require("Body");
+	}
+	virtual ~AGXDynamicsPlugin(){}
+	virtual bool initialize(){
+		AGXSimulatorItem::initializeClass(this);
+		return true;
+	}
+	virtual bool finalize(){
+		return true;
+	}
 };
 
-}
-
 CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXDynamicsPlugin);
+}
