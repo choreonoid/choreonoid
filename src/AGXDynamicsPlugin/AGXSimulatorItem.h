@@ -7,6 +7,7 @@
 namespace cnoid {
 
 class AGXSimulatorItemImpl;
+typedef ref_ptr<AGXSimulatorItemImpl> AGXSimulatorItemImplPtr;
 
 class CNOID_EXPORT AGXSimulatorItem : public SimulatorItem{
 public:
@@ -20,13 +21,16 @@ protected:
 	virtual SimulationBody* createSimulationBody(Body* orgBody);
 	virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
 	virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
+	virtual void stopSimulation();
+	virtual void pauseSimulation();
+	virtual void restartSimulation();
 
 private:
-	AGXSimulatorItemImpl* impl;
+	AGXSimulatorItemImplPtr impl;
 //	friend class AGXSimulatorItemImpl;
 };
 
-typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
+
 
 }
 

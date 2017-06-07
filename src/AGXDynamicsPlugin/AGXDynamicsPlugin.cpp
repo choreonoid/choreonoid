@@ -1,5 +1,5 @@
 #include "AGXSimulatorItem.h"
-#include <agxSDK/Simulation.h>
+//#include <agxSDK/Simulation.h>
 #include <cnoid/Plugin>
 
 using namespace std;
@@ -9,7 +9,7 @@ namespace cnoid {
 
 class AGXDynamicsPlugin : public Plugin{
 public:
-	agx::AutoInit agxInit;
+	//agx::AutoInit agxInit;
 	AGXDynamicsPlugin() : Plugin("AGXDynamics"){ 
 		require("Body");
 	}

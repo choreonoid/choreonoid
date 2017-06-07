@@ -32,11 +32,14 @@ set(sources
   AGXDynamicsPlugin.cpp
   AGXSimulatorItem.cpp
   AGXSimulatorItemImpl.cpp
+  AGXBody.cpp
   )
 
 set(headers
   AGXSimulatorItem.h
   AGXSimulatorItemImpl.h
+  AGXInclude.h
+  AGXBody.h
   )
 
 make_gettext_mofiles(${target} mofiles)
