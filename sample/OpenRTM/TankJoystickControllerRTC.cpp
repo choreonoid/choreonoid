@@ -12,7 +12,7 @@ namespace {
 const double timeStep = 0.001;
 const int numTankJoints = 4;
 const int cannonJointId = 2;
-const int cannonAxis[] = { 3, 4 };
+const int cannonAxis[] = { 2, 3 };
 
 const char* spec[] =
 {
@@ -144,7 +144,7 @@ RTC::ReturnCode_t TankJoystickControllerRTC::onExecute(RTC::UniqueId ec_id)
 
     if(buttonsIn.isNew()){
         buttonsIn.read();
-        bool lightButtonState = buttons.data[0];
+        bool lightButtonState = buttons.data[1];
         if(lightButtonState){
             if(!lastLightButtonState){
                 isLightOn = !isLightOn;

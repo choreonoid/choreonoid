@@ -23,7 +23,7 @@ public:
 
     virtual bool control()
     {
-        static const int button[] = { 1 };
+        static const int button[] = { 2 };
         
         joystick.readCurrentState();
 
