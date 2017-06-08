@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-08 23:50+0900\n"
+"POT-Creation-Date: 2017-05-24 14:15+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -64,13 +64,13 @@ msgid "Save"
 msgstr "保存"
 
 #: CaptureBar.cpp:97 ItemManager.cpp:944 ItemManager.cpp:1152
-#: ItemPropertyView.cpp:273 PluginManager.cpp:659 ProjectManager.cpp:481
+#: ItemPropertyView.cpp:273 PluginManager.cpp:660 ProjectManager.cpp:481
 #: ProjectManager.cpp:506 TaskView.cpp:270
 msgid "Cancel"
 msgstr "キャンセル"
 
 #: CaptureBar.cpp:100 ItemManager.cpp:248 ItemPropertyView.cpp:281
-#: PluginManager.cpp:663 ProjectManager.cpp:485 ProjectManager.cpp:510
+#: PluginManager.cpp:664 ProjectManager.cpp:485 ProjectManager.cpp:510
 msgid "Any files (*)"
 msgstr "全てのファイル (*)"
 
@@ -287,31 +287,31 @@ msgstr "グラフ位置 = (%1$.5f, %2$.5f)"
 msgid "Image"
 msgstr "画像"
 
-#: Item.cpp:796 MultiSeqItemCreationPanel.cpp:27
+#: Item.cpp:757 MultiSeqItemCreationPanel.cpp:27
 msgid "Name"
 msgstr "名前"
 
-#: Item.cpp:800
+#: Item.cpp:761
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:805 MainWindow.cpp:242 PointSetItem.cpp:519 SceneItem.cpp:106
+#: Item.cpp:766 MainWindow.cpp:242 PointSetItem.cpp:519 SceneItem.cpp:106
 msgid "File"
 msgstr "ファイル"
 
-#: Item.cpp:808
+#: Item.cpp:769
 msgid "Num children"
 msgstr "小アイテムの数"
 
-#: Item.cpp:809
+#: Item.cpp:770
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:810
+#: Item.cpp:771
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:811
+#: Item.cpp:772
 msgid "Refs"
 msgstr "参照数"
 
@@ -403,7 +403,7 @@ msgstr "%1%のシングルトンインスタンスは既に読み込まれてい
 msgid "Load %1%"
 msgstr "%1% の読み込み"
 
-#: ItemManager.cpp:943 PluginManager.cpp:658 ProjectManager.cpp:480
+#: ItemManager.cpp:943 PluginManager.cpp:659 ProjectManager.cpp:480
 msgid "Open"
 msgstr "読み込み"
 
@@ -889,74 +889,82 @@ msgstr "追加"
 msgid "&Apply"
 msgstr "適用(&A)"
 
-#: PluginManager.cpp:206
+#: PluginManager.cpp:205
 msgid "Load Plugin"
 msgstr "プラグインの読み込み"
 
-#: PluginManager.cpp:209
+#: PluginManager.cpp:208
 msgid "Startup Plugin Loading"
 msgstr "起動時のプラグイン読み込み"
 
-#: PluginManager.cpp:442
+#: PluginManager.cpp:441
 msgid ""
 "%1%-plugin cannot be initialized because required plugin(s) %2% are not "
 "found."
 msgstr ""
 "必要なプラグイン%2%が見つからないため、%1%プラグインの初期化ができません。"
 
-#: PluginManager.cpp:469 PluginManager.cpp:560
+#: PluginManager.cpp:466 PluginManager.cpp:561
 msgid "Plugin file \"%1%\" has already been activated."
 msgstr "プラグインファイル\"%1%\"は既に読み込まれています。"
 
-#: PluginManager.cpp:472
+#: PluginManager.cpp:469
 msgid "Detecting plugin file \"%1%\""
 msgstr "プラグインファイル\"%1%\"を検出しました。"
 
-#: PluginManager.cpp:492
-msgid "The plugin entry function \"getChoreonoidPlugin\" is not found.\n"
-msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません。\n"
+#: PluginManager.cpp:488
+msgid "The plugin entry function \"getChoreonoidPlugin\" is not found."
+msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません。"
 
-#: PluginManager.cpp:502
+#: PluginManager.cpp:498
 msgid "The plugin object cannot be created."
 msgstr "プラグインオブジェクトが生成できません。"
 
-#: PluginManager.cpp:533
+#: PluginManager.cpp:507
+msgid ""
+"The internal version of the %1% plugin is different from the system internal "
+"version.\n"
+"The plugin file \"%2%\" should be removed or updated to avoid a problem."
+msgstr "%1%プラグインの内部バージョンがシステムの内部バージョンと一致しません。\n"
+"問題を避けるため、プラグインファイル \"%2%\" は削除か更新を行なってください。"
+
+#: PluginManager.cpp:537
 msgid "Plugin file \"%1%\" conflicts with \"%2%\"."
 msgstr "このプラグインは\"%1%\"と競合しています。"
 
-#: PluginManager.cpp:544 PluginManager.cpp:643
+#: PluginManager.cpp:546 PluginManager.cpp:644
 msgid "Loading the plugin failed."
 msgstr "プラグインの読み込みができませんでした。"
 
-#: PluginManager.cpp:600
+#: PluginManager.cpp:601
 msgid "The plugin object cannot be intialized."
 msgstr "プラグインオブジェクトの初期化ができません。"
 
-#: PluginManager.cpp:623
+#: PluginManager.cpp:624
 msgid "About Plugins"
 msgstr "プラグインについて"
 
-#: PluginManager.cpp:624 PluginManager.cpp:696
+#: PluginManager.cpp:625 PluginManager.cpp:697
 msgid "About %1% Plugin"
 msgstr "%1%プラグインについて"
 
-#: PluginManager.cpp:635
+#: PluginManager.cpp:636
 msgid "%1%-plugin has been activated."
 msgstr "%1%プラグインが読み込まれました。"
 
-#: PluginManager.cpp:655
+#: PluginManager.cpp:656
 msgid "Load plugins"
 msgstr "プラグインの読み込み"
 
-#: PluginManager.cpp:662
+#: PluginManager.cpp:663
 msgid "Plugin files (*.%1)"
 msgstr "プラグインファイル (*.%1)"
 
-#: PluginManager.cpp:797
+#: PluginManager.cpp:798
 msgid "Plugin %1% cannot be finalized."
 msgstr "プラグイン %1% を終了できません。"
 
-#: PluginManager.cpp:836
+#: PluginManager.cpp:837
 msgid "Plugin dll %1% has been unloaded."
 msgstr "プラグイン %1% のDLLが解放されました。"
 

@@ -9,6 +9,7 @@
 #include "../SimulationScriptItem.h"
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
+#include "../SimpleControllerItem.h"
 #include <cnoid/PyBase>
 
 using namespace boost::python;
@@ -202,4 +203,7 @@ void exportSimulationClasses()
         .def("stopSimulation", &SimulationBar::stopSimulation)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
+
+    class_< SimpleControllerItem, SimpleControllerItemPtr, bases<Item> >("SimpleControllerItem")
+        .def("setController", &SimpleControllerItem::setController);
 }

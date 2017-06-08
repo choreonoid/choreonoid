@@ -20,7 +20,7 @@ items:
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/misc/unevenground.body"
-            currentBaseLink: "WAIST"
+            currentBaseLink: ""
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -38,11 +38,11 @@ items:
             isEditable: false
         - 
           id: 3
-          name: "AgXTrackedVehicle"
+          name: "TrackedVehicle"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/AgXTrackedVehicle.body"
+            modelFile: "${SHARE}/model/misc/TrackedVehicle.body"
             currentBaseLink: "ROOT"
             rootPosition: [ -5, 5, 0.6 ]
             rootAttitude: [ 
@@ -50,22 +50,30 @@ items:
               0, 1, 0, 
               0, 0, 1 ]
             jointPositions: [ 
-               0, 0, 0, 0, 0, 0, 0, 0,
-               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667, 
-               -0.523598667, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667,
-               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667, 
-               -0.523598667, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667 ]
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             initialRootPosition: [ -5, 5, 0.6 ]
             initialRootAttitude: [ 
               1, 0, 0, 
               0, 1, 0, 
               0, 0, 1 ]
             initialJointPositions: [ 
-               0, 0, 0, 0, 0, 0, 0, 0,
-               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667, 
-               -0.523598667, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667,
-               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667, 
-               -0.523598667, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.523598667, -0.523598667, -0.523598667, -0.523598667, -0.523598667 ]
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.523599, 
+               0.523599,  0.523599,  0.523599,  0.523599,  0.523599,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000, 
+               0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -73,13 +81,13 @@ items:
           children: 
             - 
               id: 4
-              name: "AgXTrackedVehicleController"
-              plugin: SimpleController
+              name: "TrackedVehicleController"
+              plugin: Body
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
                 controllerOptions: "velocity"
-                controller: "AgXTrackedVehicleController"
+                controller: "TrackedVehicleController"
                 reloading: true
                 RelativePathBase: "Controller directory"
         - 
@@ -94,6 +102,7 @@ items:
             timeLength: 180
             allLinkPositionOutputMode: true
             deviceStateOutput: true
+            selfCollision: false
             controllerThreads: true
             recordCollisionData: true
             controllerOptions: ""
@@ -164,9 +173,11 @@ views:
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
+      fpsTestIteration: 1
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
+      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -174,9 +185,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ 2.13603247, 21.4299594, 13.8352714 ]
-          direction: [ -0.030625062, -0.824008714, -0.565748835 ]
-          up: [ -0.0210120826, -0.565358503, 0.824577623 ]
+          eye: [ 6.84350021, 18.4877342, 12.4285281 ]
+          direction: [ -0.500421043, -0.67613364, -0.54076065 ]
+          up: [ -0.321701813, -0.434660815, 0.841176509 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -220,9 +231,11 @@ views:
       normalVisualization: false
       normalLength: 0.01
       coordinateAxes: true
+      fpsTestIteration: 1
       showFPS: false
       enableNewDisplayListDoubleRendering: false
       useBufferForPicking: true
+      upsideDown: false
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -231,14 +244,14 @@ views:
           far: 100
           eye: [ 4.01321619, 2.00660809, 1.45520439 ]
           direction: [ -0.889838236, -0.444919118, -0.101167642 ]
-          up: [ -0.0904870895, -0.0452435447, 0.994869393 ]
+          up: [ -0.0904870899, -0.0452435449, 0.994869393 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 100
         - 
-          camera: [ AgXTrackedVehicle, Camera ]
+          camera: [ TrackedVehicle, Camera ]
           isCurrent: true
       backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
       gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
@@ -316,6 +329,39 @@ toolbars:
     current: 3
   "LeggedBodyBar": 
     stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+    timeToStartBalancer: 0
+    balancerIterations: 2
+    plainBalancerMode: false
+    boundaryConditionType: position
+    boundarySmootherType: quintic
+    boundarySmootherTime: 0.5
+    boundaryCmAdjustment: false
+    boundaryCmAdjustmentTime: 1
+    waistHeightRelaxation: false
+    gravity: 9.8
+    dynamicsTimeRatio: 1
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -348,12 +394,12 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 422, 1794 ]
+      sizes: [ 282, 1452 ]
       children: 
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 681, 680 ]
+          sizes: [ 560, 559 ]
           children: 
             - 
               type: pane
@@ -366,12 +412,12 @@ viewAreas:
         - 
           type: splitter
           orientation: vertical
-          sizes: [ 972, 389 ]
+          sizes: [ 847, 272 ]
           children: 
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 838, 950 ]
+              sizes: [ 721, 725 ]
               children: 
                 - 
                   type: pane
@@ -384,7 +430,7 @@ viewAreas:
             - 
               type: splitter
               orientation: horizontal
-              sizes: [ 894, 894 ]
+              sizes: [ 838, 608 ]
               children: 
                 - 
                   type: pane

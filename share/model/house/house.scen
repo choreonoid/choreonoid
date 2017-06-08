@@ -1,0 +1,31 @@
+format: ChoreonoidScene
+formatVersion: 1.0
+angleUnit: degree
+scene:
+  Transform:
+    translation: [ 0, 2.5, 0 ]
+    rotation: [ 1, 0, 0, 90 ]
+    elements:
+      -
+        type: Resource
+        uri: "house.wrl"
+      -
+        type: DirectionalLight
+        ambientIntensity: 0.17
+        direction: [ 1, -1, 0 ]
+      -
+        type: DirectionalLight
+        ambientIntensity: 0.2
+        direction: [ -1, -1, 0 ]
+      -
+        type: DirectionalLight
+        ambientIntensity: 0.2
+        direction: [ 0, -1, 1 ]
+      -
+        type: DirectionalLight
+        ambientIntensity: 0.2
+        direction: [ 0, -1, -1 ]
+      -
+        type: DirectionalLight
+        ambientIntensity: 0
+        direction: [ 0, 1, 0 ]

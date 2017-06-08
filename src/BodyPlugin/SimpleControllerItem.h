@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_SIMPLE_CONTROLLER_PLUGIN_SIMPLE_CONTROLLER_ITEM_H
-#define CNOID_SIMPLE_CONTROLLER_PLUGIN_SIMPLE_CONTROLLER_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_SIMPLE_CONTROLLER_ITEM_H
+#define CNOID_BODY_PLUGIN_SIMPLE_CONTROLLER_ITEM_H
 
 #include <cnoid/ControllerItem>
 #include "exportdecl.h"
@@ -17,6 +17,8 @@ class MessageView;
 class CNOID_EXPORT SimpleControllerItem : public ControllerItem
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+    
     SimpleControllerItem();
     SimpleControllerItem(const SimpleControllerItem& org);
     virtual ~SimpleControllerItem();

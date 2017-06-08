@@ -463,6 +463,12 @@ ValueNode* Mapping::clone() const
 }
 
 
+Mapping* Mapping::cloneMapping() const
+{
+    return new Mapping(*this);
+}
+
+
 Mapping::~Mapping()
 {
     clear();
