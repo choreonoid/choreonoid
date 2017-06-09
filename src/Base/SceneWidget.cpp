@@ -2134,7 +2134,7 @@ void SceneWidgetImpl::setCollisionLinesVisible(bool on)
 {
     if(on != collisionLinesVisible){
         collisionLinesVisible = on;
-        renderer->property()->write("collision", on);
+        renderer->setProperty(SceneRenderer::PropertyKey("collisionLineRatio"), on ? 50.0 : 0.0);
         update();
         emitSigStateChangedLater();
     }
