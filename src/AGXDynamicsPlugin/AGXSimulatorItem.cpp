@@ -24,9 +24,32 @@ AGXSimulatorItem::~AGXSimulatorItem(){
 	delete impl;
 }
 
+bool AGXSimulatorItem::saveSimulationToAGXFile(){
+	return impl->saveSimulationToAGXFile();
+}
+
 Item* AGXSimulatorItem::doDuplicate() const{
 	return new AGXSimulatorItem(*this);
 }
+
+//void AGXSimulatorItem::doPutProperties(PutPropertyFunction & putProperty){
+//	SimulatorItem::doPutProperties(putProperty);
+//	impl->doPutProperties(putProperty);
+//}
+//
+//bool AGXSimulatorItem::store(Archive & archive){
+//	// save the common properties of SimulatorItem
+//	SimulatorItem::store(archive);
+//	//save the agx properties
+//	return impl->store(archive);
+//}
+//
+//bool AGXSimulatorItem::restore(const Archive & archive){
+//	// restore the common properties of SimulatorItem
+//	SimulatorItem::restore(archive);
+//	// restore the agx properties
+//	return impl->restore(archive);
+//}
 
 SimulationBody* AGXSimulatorItem::createSimulationBody(Body* orgBody){
 	return impl->createSimulationBody(orgBody);
@@ -37,7 +60,6 @@ bool AGXSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& 
 }
 
 bool AGXSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies){
-
 	return impl->stepSimulation(activeSimBodies);
 }
 
@@ -55,6 +77,8 @@ void AGXSimulatorItem::restartSimulation(){
 	impl->restartSimulation();
 	SimulatorItem::restartSimulation();
 }
+
+
 
 
 }

@@ -3,7 +3,9 @@
 
 #include <cnoid/SimulatorItem>
 #include "AGXInclude.h"
+//#include "AGXScene.h"
 #include "AGXBody.h"
+#include <agxSDK/Simulation.h>
 #include <iostream>
 //#include<vector>
 
@@ -18,8 +20,17 @@ public:
 	AGXSimulatorItemImpl(AGXSimulatorItemPtr self);
 	AGXSimulatorItemImpl(AGXSimulatorItemPtr self, const AGXSimulatorItemImpl& org);
 	~AGXSimulatorItemImpl();
+	// call from defualt constructer
+	void initialize();
+	// add parameters to property panel
+	void doPutProperties(PutPropertyFunction& putProperty);
+	// save simulation parameter to cnoid file
+	bool store(Archive& archive);
+	// store simulation parameter from cnoid file
+    bool restore(const Archive& archive);
+
+	// Function of create, step simulation
 	SimulationBody* createSimulationBody(Body* orgBody);
-	/** Build AGX simulation */
 	bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
 	bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
 	void stopSimulation();
@@ -27,14 +38,14 @@ public:
 	void restartSimulation();
 
 	// API
-	void clearAGXSimulation();
-	agxSDK::SimulationRef createAGXSimulation();
-	agxSDK::SimulationRef getAGXSimulation();
-	bool saveAGXSimulationToFile();
-	
+	//void clearAGXSimulation();
+	//agxSDK::SimulationRef createAGXSimulation();
+	//agxSDK::SimulationRef getAGXSimulation();
+	bool saveSimulationToAGXFile();
+	agxSDK::SimulationRef agxSimulation;
+
 private:
-	agx::AutoInit agxInit;
-	agxSDK::SimulationRef agxSimulation = nullptr;
+	//AGXScene* agxScene = nullptr;
 };
 }
 #endif

@@ -33,6 +33,7 @@ set(sources
   AGXSimulatorItem.cpp
   AGXSimulatorItemImpl.cpp
   AGXBody.cpp
+  AGXScene.cpp
   )
 
 set(headers
@@ -40,6 +41,7 @@ set(headers
   AGXSimulatorItemImpl.h
   AGXInclude.h
   AGXBody.h
+  AGXScene.h
   )
 
 make_gettext_mofiles(${target} mofiles)
