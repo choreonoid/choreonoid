@@ -432,9 +432,9 @@ GL1SceneRendererImpl::~GL1SceneRendererImpl()
 }
 
 
-SceneRenderer::NodeFunctionSet& GL1SceneRenderer::renderingFunctions()
+SceneRenderer::NodeFunctionSet* GL1SceneRenderer::renderingFunctions()
 {
-    return impl->renderingFunctions;
+    return &impl->renderingFunctions;
 }
 
 

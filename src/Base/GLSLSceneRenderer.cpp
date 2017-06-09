@@ -527,9 +527,9 @@ void GLSLSceneRenderer::applyNewExtensions()
 }
 
 
-SceneRenderer::NodeFunctionSet& GLSLSceneRenderer::renderingFunctions()
+SceneRenderer::NodeFunctionSet* GLSLSceneRenderer::renderingFunctions()
 {
-    return impl->renderingFunctions;
+    return &impl->renderingFunctions;
 }
 
 

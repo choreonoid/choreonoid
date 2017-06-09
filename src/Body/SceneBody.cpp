@@ -9,7 +9,52 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace cnoid;
+using namespace cnoid
+
+namespace {
+
+class VisualGroup : public SgGroup
+{
+public:
+    VisualGroup() : SgGroup(findPolymorphicId<VisualGroup>()) { }
+    
+    void render(SceneRenderer* renderer){
+        static const SceneRenderer::PropertyKey key("isVisualModelVisible");
+        if(renderer->property(key, false)){
+            renderer->renderingFunctions().dispatchAs<SgGroup>(this);
+        }
+    }
+};
+
+class CollisionGroup : public SgGroup
+{
+public:
+    CollisionGroup() : SgGroup(findPolymorphicId<CollisionGroup>()) { }
+    
+    void render(SceneRenderer* renderer){
+        static const SceneRenderer::PropertyKey key("isCollisionModelVisible");
+        if(renderer->property(key, false)){
+            renderer->renderingFunctions().dispatchAs<SgGroup>(this);
+        }
+    }
+};
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration(){
+        SgNode::registerType<CollisionShapeSwitch, SgNode>();
+
+        SceneRenderer::addExtension(
+            [](SceneRenderer* renderer){
+                auto& functions = renderer->renderingFunctions();
+                functions.setFunction<CollisionShapeSwitch>(
+                    [renderer](SgNode* node){
+                        static_cast<CollisionShapeSwitch*>(node)->render(renderer);
+                    });
+            });
+    }
+} registration;
+
+}
 
 
 SceneLink::SceneLink(Link* link)
@@ -216,11 +261,9 @@ SceneDevice* SceneLink::getSceneDevice(Device* device)
 }
 
 
-namespace {
-SceneLink* createSceneLink(Link* link)
+static SceneLink* createSceneLink(Link* link)
 {
     return new SceneLink(link);
-}
 }
 
 

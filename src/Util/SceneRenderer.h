@@ -29,7 +29,7 @@ public:
     virtual void clearScene();
 
     typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
-    virtual NodeFunctionSet& renderingFunctions() = 0;
+    virtual NodeFunctionSet* renderingFunctions() = 0;
 
     virtual void renderNode(SgNode* node) = 0;
 

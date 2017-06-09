@@ -28,7 +28,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void setOutputStream(std::ostream& os) override;
 
-    virtual NodeFunctionSet& renderingFunctions() override;
+    virtual NodeFunctionSet* renderingFunctions() override;
     virtual void renderNode(SgNode* node) override;
 
     virtual const Affine3& currentModelTransform() const override;
