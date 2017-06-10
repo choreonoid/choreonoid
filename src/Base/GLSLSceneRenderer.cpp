@@ -291,7 +291,7 @@ public:
     vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
 
     void renderChildNodes(SgGroup* group){
-        for(SgGroup::const_iterator p = group->begin(); p != group->end(); ++p){
+        for(auto p = group->cbegin(); p != group->cend(); ++p){
             renderingFunctions.dispatch(*p);
         }
     }
@@ -1146,6 +1146,14 @@ void GLSLSceneRendererImpl::renderGroup(SgGroup* group)
 }
 
 
+void GLSLSceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction)
+{
+    impl->pushPickId(group);
+    traverseFunction();
+    impl->popPickId();
+}
+
+
 void GLSLSceneRendererImpl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
     if(!isPicking){
@@ -1158,16 +1166,29 @@ void GLSLSceneRendererImpl::renderTransform(SgTransform* transform)
 {
     Affine3 T;
     transform->getTransform(T);
-
     modelMatrixStack.push_back(modelMatrixStack.back() * T);
-
     pushPickId(transform);
+
     renderChildNodes(transform);
+
     popPickId();
-    
     modelMatrixStack.pop_back();
 }
 
+
+void GLSLSceneRenderer::renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction)
+{
+    Affine3 T;
+    transform->getTransform(T);
+    impl->modelMatrixStack.push_back(impl->modelMatrixStack.back() * T);
+    impl->pushPickId(transform);
+
+    traverseFunction();
+
+    impl->popPickId();
+    impl->modelMatrixStack.pop_back();
+}    
+    
 
 VertexResource* GLSLSceneRendererImpl::getOrCreateVertexResource(SgObject* obj)
 {

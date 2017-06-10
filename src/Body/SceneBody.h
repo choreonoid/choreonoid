@@ -12,51 +12,44 @@
 
 namespace cnoid {
 
+class SceneLinkImpl;
+
 class CNOID_EXPORT SceneLink : public SgPosTransform
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         
     SceneLink(Link* link);
+    ~SceneLink();
 
     Link* link() { return link_; }
     const Link* link() const { return link_; }
 
-    const SgNode* visualShape() const { return visualShape_; }
-    SgNode* visualShape() { return visualShape_; }
-    const SgNode* collisionShape() const { return collisionShape_; }
-    SgNode* collisionShape() { return collisionShape_; }
+    const SgNode* visualShape() const;
+    SgNode* visualShape();
+    const SgNode* collisionShape() const;
+    SgNode* collisionShape();
     void setShapeGroup(SgGroup* group);
     void resetShapeGroup();
     void cloneShape(SgCloneMap& cloneMap);
     void setVisible(bool on);
     void setVisibleShapeTypes(bool visual, bool collision);
     void makeTransparent(float transparency);
-    void makeTransparent(float transparency, SgCloneMap& cloneMap);
     
     void addSceneDevice(SceneDevice* sdev);
     SceneDevice* getSceneDevice(Device* device);
 
 private:
     SceneLink(const SceneLink& org);
-    Link* link_;
-    SgPosTransformPtr shapeTransform;
-    SgNodePtr visualShape_;
-    SgNodePtr collisionShape_;
-    SgGroup* currentShapeGroup;
-    SgGroupPtr shapeGroup;
-    bool isVisible_;
-    bool isVisualShapeVisible_;
-    bool isCollisionShapeVisible_;
-    std::vector<SceneDevicePtr> sceneDevices_;
-    SgGroupPtr deviceGroup;
-    float transparency_;
 
-    int cloneShape(SgCloneMap& cloneMap, bool doNotify);
-    int updateVisibility(int action, bool doNotify);
+    Link* link_;
+    SceneLinkImpl* impl;
+    friend class SceneBody;
 };
+
 typedef ref_ptr<SceneLink> SceneLinkPtr;
-    
+
+class SceneBodyImpl;
     
 class CNOID_EXPORT SceneBody : public SgPosTransform
 {
@@ -65,6 +58,7 @@ public:
         
     SceneBody(Body* body);
     SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);
+    virtual ~SceneBody();
 
     Body* body() { return body_; }
     const Body* body() const { return body_; }
@@ -89,21 +83,12 @@ public:
 
     virtual void updateModel();
 
-protected:
-    BodyPtr body_;
-    SgGroupPtr sceneLinkGroup;
-    std::vector<SceneLinkPtr> sceneLinks_;
-    std::vector<SceneDevicePtr> sceneDevices;
-
-    virtual ~SceneBody();
-
 private:
-    std::function<SceneLink*(Link*)> sceneLinkFactory;
-    bool isVisualShapeVisible;
-    bool isCollisionShapeVisible;
-
     SceneBody(const SceneBody& org);
-    void initialize(Body* body, const std::function<SceneLink*(Link*)>& sceneLinkFactory);
+
+    BodyPtr body_;
+    std::vector<SceneLinkPtr> sceneLinks_;
+    SceneBodyImpl* impl;
 };
             
 typedef ref_ptr<SceneBody> SceneBodyPtr;

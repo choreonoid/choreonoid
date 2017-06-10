@@ -15,7 +15,7 @@ static void registerSceneEffectType(){
     GLSLSceneRenderer::addExtension(
         [](GLSLSceneRenderer* renderer){
             auto program = std::make_shared<Program>(renderer);
-            renderer->renderingFunctions().setFunction<SceneNode>(
+            renderer->renderingFunctions()->setFunction<SceneNode>(
                 [program](SceneNode* particles){
                     program->requestRendering(particles, [program, particles]() { program->render(particles); });
                 });

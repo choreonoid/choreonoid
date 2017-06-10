@@ -6,74 +6,160 @@
 #include "SceneDevice.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneUtil>
+#include <cnoid/SceneRenderer>
 #include "gettext.h"
 
 using namespace std;
-using namespace cnoid
+using namespace cnoid;
 
 namespace {
 
-class VisualGroup : public SgGroup
+class LinkShapeTransform : public SgPosTransform
 {
-public:
-    VisualGroup() : SgGroup(findPolymorphicId<VisualGroup>()) { }
+    SgNodePtr visualModel;
+    SgNodePtr collisionModel;
+    bool isVisible;
     
-    void render(SceneRenderer* renderer){
-        static const SceneRenderer::PropertyKey key("isVisualModelVisible");
-        if(renderer->property(key, false)){
-            renderer->renderingFunctions().dispatchAs<SgGroup>(this);
-        }
-    }
-};
+public:
+    LinkShapeTransform() : SgPosTransform(findPolymorphicId<LinkShapeTransform>()) { }
 
-class CollisionGroup : public SgGroup
-{
-public:
-    CollisionGroup() : SgGroup(findPolymorphicId<CollisionGroup>()) { }
-    
+    void setVisualModel(SgNode* node) {
+        visualModel = node;
+        addChild(node);
+    }
+
+    void setCollisionModel(SgNode* node) {
+        collisionModel = node;
+        addChild(node);
+    }
+
+    void setVisible(bool on){
+        isVisible = on;
+    }
+
     void render(SceneRenderer* renderer){
-        static const SceneRenderer::PropertyKey key("isCollisionModelVisible");
-        if(renderer->property(key, false)){
-            renderer->renderingFunctions().dispatchAs<SgGroup>(this);
+        renderer->renderCustomTransform(
+            this, [=](){ traverse(renderer, renderer->renderingFunctions()); });
+    }
+
+    /*
+    void preprocess(SceneRenderer* renderer){
+        renderer->renderCustomTransform(
+            this, [=](){ traverse(renderer, renderer->preprocessFunctions()); });
+    }
+    */
+    
+    void traverse(SceneRenderer* renderer, SceneRenderer::NodeFunctionSet* functions){
+        int visibility = 0;
+        if(isVisible){
+            static const SceneRenderer::PropertyKey key("collisionModelVisibility");
+            visibility = renderer->property(key, 1);
+        }
+        for(auto p = cbegin(); p != cend(); ++p){
+            SgNode* node = *p;
+            if(node == visualModel){
+                if(visibility & 1){
+                    functions->dispatch(node);
+                }
+            } else if(node == collisionModel){
+                if(visibility & 2){
+                    functions->dispatch(node);
+                }
+            } else {
+                functions->dispatch(node);
+            }
         }
     }
 };
 
 struct NodeTypeRegistration {
     NodeTypeRegistration(){
-        SgNode::registerType<CollisionShapeSwitch, SgNode>();
+        SgNode::registerType<LinkShapeTransform, SgPosTransform>();
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
-                auto& functions = renderer->renderingFunctions();
-                functions.setFunction<CollisionShapeSwitch>(
+                renderer->renderingFunctions()->setFunction<LinkShapeTransform>(
                     [renderer](SgNode* node){
-                        static_cast<CollisionShapeSwitch*>(node)->render(renderer);
+                        static_cast<LinkShapeTransform*>(node)->render(renderer);
                     });
+                /*
+                renderer->preprocessFunctions()->setFunction<LinkShapeTransform>(
+                    [renderer](SgNode* node){
+                        static_cast<CollisionModelVisualizer*>(node)->process(renderer);
+                    });
+                */
             });
     }
 } registration;
 
 }
 
+namespace cnoid {
+
+class SceneLinkImpl
+{
+public:
+    SceneLink* self;
+    SgPosTransformPtr shapeTransform;
+    SgNodePtr visualShape;
+    SgNodePtr collisionShape;
+    SgGroup* currentShapeGroup;
+    SgGroupPtr shapeGroup;
+    bool isVisible;
+    bool isVisualShapeVisible;
+    bool isCollisionShapeVisible;
+    std::vector<SceneDevicePtr> sceneDevices;
+    SgGroupPtr deviceGroup;
+    float transparency;
+
+    SceneLinkImpl(SceneLink* self, Link* link);
+    SceneLinkImpl(SceneLink* self, const SceneLinkImpl& org);
+    void setShapeGroup(SgGroup* group);
+    int cloneShape(SgCloneMap& cloneMap, bool doNotify);
+    int updateVisibility(int action, bool doNotify);
+    void setVisibleShapeTypes(bool visual, bool collision);
+    void makeTransparent(float transparency, SgCloneMap& cloneMap);
+};
+
+class SceneBodyImpl
+{
+public:
+    SceneBody* self;
+    SgGroupPtr sceneLinkGroup;
+    std::vector<SceneDevicePtr> sceneDevices;
+    std::function<SceneLink*(Link*)> sceneLinkFactory;
+    bool isVisualShapeVisible;
+    bool isCollisionShapeVisible;
+
+    SceneBodyImpl(SceneBody* self, std::function<SceneLink*(Link*)> sceneLinkFactory);
+};
+
+}
+
 
 SceneLink::SceneLink(Link* link)
-    : link_(link)
 {
+    link_ = link;
     setName(link->name());
+    impl = new SceneLinkImpl(this, link);
+}
 
+
+SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
+    : self(self)
+{
     shapeTransform = new SgPosTransform;
     shapeTransform->setRotation(link->Rs().transpose());
-    addChild(shapeTransform);
-    visualShape_ = link->visualShape();
-    collisionShape_ = link->collisionShape();
+    self->addChild(shapeTransform);
+    visualShape = link->visualShape();
+    collisionShape = link->collisionShape();
     currentShapeGroup = shapeTransform;
-    isVisible_ = true;
-    isVisualShapeVisible_ = true;
-    isCollisionShapeVisible_ = false;
+    isVisible = true;
+    isVisualShapeVisible = true;
+    isCollisionShapeVisible = false;
     updateVisibility(0, false);
     
-    transparency_ = 0.0;
+    transparency = 0.0;
 }
 
 
@@ -81,25 +167,68 @@ SceneLink::SceneLink(const SceneLink& org)
     : SgPosTransform(org)
 {
     link_ = 0;
+    impl = new SceneLinkImpl(this, *org.impl);
+}
+
+
+SceneLinkImpl::SceneLinkImpl(SceneLink* self, const SceneLinkImpl& org)
+    : self(self)
+{
     currentShapeGroup = shapeTransform;
-    isVisible_ = false;
-    isVisualShapeVisible_ = false;
-    isCollisionShapeVisible_ = false;
-    transparency_ = 0.0;
+    isVisible = false;
+    isVisualShapeVisible = false;
+    isCollisionShapeVisible = false;
+    transparency = 0.0;
+}
+
+
+SceneLink::~SceneLink()
+{
+    delete impl;
+}
+
+
+const SgNode* SceneLink::visualShape() const
+{
+    return impl->visualShape;
+}
+
+
+SgNode* SceneLink::visualShape()
+{
+    return impl->visualShape;
+}
+
+
+const SgNode* SceneLink::collisionShape() const
+{
+    return impl->collisionShape;
+}
+
+
+SgNode* SceneLink::collisionShape()
+{
+    return impl->collisionShape;
 }
 
 
 void SceneLink::setShapeGroup(SgGroup* group)
 {
+    impl->setShapeGroup(group);
+}
+
+
+void SceneLinkImpl::setShapeGroup(SgGroup* group)
+{
     if(group != currentShapeGroup){
         if(shapeGroup){
             shapeTransform->removeChild(shapeGroup);
         }
-        if(visualShape_){
-            currentShapeGroup->removeChild(visualShape_);
+        if(visualShape){
+            currentShapeGroup->removeChild(visualShape);
         }
-        if(collisionShape_){
-            currentShapeGroup->removeChild(collisionShape_);
+        if(collisionShape){
+            currentShapeGroup->removeChild(collisionShape);
         }
         shapeGroup = group;
         if(shapeGroup){
@@ -109,37 +238,37 @@ void SceneLink::setShapeGroup(SgGroup* group)
             currentShapeGroup = shapeTransform;
         }
         int action = updateVisibility(SgUpdate::ADDED|SgUpdate::REMOVED, false);
-        notifyUpdate(action);
+        self->notifyUpdate(action);
     }
 }
 
 
 void SceneLink::resetShapeGroup()
 {
-    setShapeGroup(0);
+    impl->setShapeGroup(0);
 }
 
 
-int SceneLink::cloneShape(SgCloneMap& cloneMap, bool doNotify)
+int SceneLinkImpl::cloneShape(SgCloneMap& cloneMap, bool doNotify)
 {
     int action = 0;
 
-    SgNode* orgVisualShape = link_->visualShape();
+    SgNode* orgVisualShape = self->link()->visualShape();
     if(orgVisualShape){
-        if(currentShapeGroup->removeChild(visualShape_)){
+        if(currentShapeGroup->removeChild(visualShape)){
             action |= SgUpdate::REMOVED;
         }
-        visualShape_ = orgVisualShape->cloneNode(cloneMap);
+        visualShape = orgVisualShape->cloneNode(cloneMap);
     }
-    SgNode* orgCollisionShape = link_->collisionShape();
+    SgNode* orgCollisionShape = self->link()->collisionShape();
     if(orgCollisionShape == orgVisualShape){
-        collisionShape_ = visualShape_;
+        collisionShape = visualShape;
     } else {
         if(orgCollisionShape){
-            if(currentShapeGroup->removeChild(collisionShape_)){
+            if(currentShapeGroup->removeChild(collisionShape)){
                 action |= SgUpdate::REMOVED;
             }
-            collisionShape_ = orgCollisionShape->cloneNode(cloneMap);
+            collisionShape = orgCollisionShape->cloneNode(cloneMap);
         }
     }
     return updateVisibility(action, doNotify);
@@ -148,31 +277,31 @@ int SceneLink::cloneShape(SgCloneMap& cloneMap, bool doNotify)
 
 void SceneLink::cloneShape(SgCloneMap& cloneMap)
 {
-    cloneShape(cloneMap, true);
+    impl->cloneShape(cloneMap, true);
 }
 
 
-int SceneLink::updateVisibility(int action, bool doNotify)
+int SceneLinkImpl::updateVisibility(int action, bool doNotify)
 {
-    if(visualShape_){
-        if(isVisible_ && isVisualShapeVisible_){
-            if(currentShapeGroup->addChildOnce(visualShape_)){
+    if(visualShape){
+        if(isVisible && isVisualShapeVisible){
+            if(currentShapeGroup->addChildOnce(visualShape)){
                 action |= SgUpdate::ADDED;
             }
         } else {
-            if(currentShapeGroup->removeChild(visualShape_)){
+            if(currentShapeGroup->removeChild(visualShape)){
                 action |= SgUpdate::REMOVED;
             }
         }
     }
-    if(collisionShape_ != visualShape_){
-        if(collisionShape_){
-            if(isVisible_ && isCollisionShapeVisible_){
-                if(currentShapeGroup->addChildOnce(collisionShape_)){
+    if(collisionShape != visualShape){
+        if(collisionShape){
+            if(isVisible && isCollisionShapeVisible){
+                if(currentShapeGroup->addChildOnce(collisionShape)){
                     action |= SgUpdate::ADDED;
                 }
             } else {
-                if(currentShapeGroup->removeChild(collisionShape_)){
+                if(currentShapeGroup->removeChild(collisionShape)){
                     action |= SgUpdate::REMOVED;
                 }
             }
@@ -187,16 +316,22 @@ int SceneLink::updateVisibility(int action, bool doNotify)
 
 void SceneLink::setVisible(bool on)
 {
-    if(on != isVisible_){
-        isVisible_ = on;
-        updateVisibility(0, true);
+    if(on != impl->isVisible){
+        impl->isVisible = on;
+        impl->updateVisibility(0, true);
     }
 }
 
 
 void SceneLink::setVisibleShapeTypes(bool visual, bool collision)
 {
-    if(visualShape_ == collisionShape_){
+    impl->setVisibleShapeTypes(visual, collision);
+}
+
+
+void SceneLinkImpl::setVisibleShapeTypes(bool visual, bool collision)
+{
+    if(visualShape == collisionShape){
         if(visual || collision){
             visual = true;
         } else {
@@ -204,28 +339,10 @@ void SceneLink::setVisibleShapeTypes(bool visual, bool collision)
         }
         collision = false;
     }
-    if(visual != isVisualShapeVisible_ || collision != isCollisionShapeVisible_){
-        isVisualShapeVisible_ = visual;
-        isCollisionShapeVisible_ = collision;
+    if(visual != isVisualShapeVisible || collision != isCollisionShapeVisible){
+        isVisualShapeVisible = visual;
+        isCollisionShapeVisible = collision;
         updateVisibility(0, true);
-    }
-}
-
-
-void SceneLink::makeTransparent(float transparency, SgCloneMap& cloneMap)
-{
-    if(transparency == transparency_){
-        return;
-    }
-    transparency_ = transparency;
-
-    if(visualShape_){
-        int action = 0;
-        if(visualShape_ == link_->visualShape()){
-            action = cloneShape(cloneMap, false);
-        }
-        cnoid::makeTransparent(visualShape_, transparency, cloneMap, true);
-        visualShape_->notifyUpdate((SgUpdate::Action)action);
     }
 }
 
@@ -234,25 +351,44 @@ void SceneLink::makeTransparent(float transparency)
 {
     SgCloneMap cloneMap;
     cloneMap.setNonNodeCloning(false);
-    makeTransparent(transparency, cloneMap);
+    impl->makeTransparent(transparency, cloneMap);
+}
+
+
+void SceneLinkImpl::makeTransparent(float transparency, SgCloneMap& cloneMap)
+{
+    if(transparency == this->transparency){
+        return;
+    }
+    this->transparency = transparency;
+
+    if(visualShape){
+        int action = 0;
+        if(visualShape == self->link()->visualShape()){
+            action = cloneShape(cloneMap, false);
+        }
+        cnoid::makeTransparent(visualShape, transparency, cloneMap, true);
+        visualShape->notifyUpdate((SgUpdate::Action)action);
+    }
 }
 
 
 void SceneLink::addSceneDevice(SceneDevice* sdev)
 {
-    if(!deviceGroup){
-        deviceGroup = new SgGroup();
-        addChild(deviceGroup);
+    if(!impl->deviceGroup){
+        impl->deviceGroup = new SgGroup();
+        addChild(impl->deviceGroup);
     }
-    sceneDevices_.push_back(sdev);
-    deviceGroup->addChild(sdev);
+    impl->sceneDevices.push_back(sdev);
+    impl->deviceGroup->addChild(sdev);
 }
 
 
 SceneDevice* SceneLink::getSceneDevice(Device* device)
 {
-    for(size_t i=0; i < sceneDevices_.size(); ++i){
-        SceneDevice* sdev = sceneDevices_[i];
+    auto& devices = impl->sceneDevices;
+    for(size_t i=0; i < devices.size(); ++i){
+        SceneDevice* sdev = devices[i];
         if(sdev->device() == device){
             return sdev;
         }
@@ -261,31 +397,27 @@ SceneDevice* SceneLink::getSceneDevice(Device* device)
 }
 
 
-static SceneLink* createSceneLink(Link* link)
-{
-    return new SceneLink(link);
-}
-
-
 SceneBody::SceneBody(Body* body)
+    : SceneBody(body, [](Link* link){ return new SceneLink(link); })
 {
-    initialize(body, createSceneLink);
+
 }
 
 
 SceneBody::SceneBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory)
+    : body_(body)
 {
-    initialize(body, sceneLinkFactory);
+    impl = new SceneBodyImpl(this, sceneLinkFactory);
+    addChild(impl->sceneLinkGroup);
+    updateModel();
 }
 
 
-void SceneBody::initialize(Body* body, const std::function<SceneLink*(Link*)>& sceneLinkFactory)
+SceneBodyImpl::SceneBodyImpl(SceneBody* self, std::function<SceneLink*(Link*)> sceneLinkFactory)
+    : self(self),
+      sceneLinkFactory(sceneLinkFactory)
 {
-    this->sceneLinkFactory = sceneLinkFactory;
-    body_ = body;
     sceneLinkGroup = new SgGroup;
-    addChild(sceneLinkGroup);
-    updateModel();
     isVisualShapeVisible = true;
     isCollisionShapeVisible = false;
 }
@@ -300,7 +432,7 @@ SceneBody::SceneBody(const SceneBody& org)
 
 SceneBody::~SceneBody()
 {
-
+    delete impl;
 }
 
 
@@ -309,16 +441,16 @@ void SceneBody::updateModel()
     setName(body_->name());
 
     if(sceneLinks_.empty()){
-        sceneLinkGroup->clearChildren();
+        impl->sceneLinkGroup->clearChildren();
         sceneLinks_.clear();
     }
-    sceneDevices.clear();
+    impl->sceneDevices.clear();
         
     const int n = body_->numLinks();
     for(int i=0; i < n; ++i){
         Link* link = body_->link(i);
-        SceneLink* sLink = sceneLinkFactory(link);
-        sceneLinkGroup->addChild(sLink);
+        SceneLink* sLink = impl->sceneLinkFactory(link);
+        impl->sceneLinkGroup->addChild(sLink);
         sceneLinks_.push_back(sLink);
     }
 
@@ -328,7 +460,7 @@ void SceneBody::updateModel()
         SceneDevice* sceneDevice = SceneDevice::create(device);
         if(sceneDevice){
             sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
-            sceneDevices.push_back(sceneDevice);
+            impl->sceneDevices.push_back(sceneDevice);
         }
     }
 
@@ -348,12 +480,12 @@ void SceneBody::cloneShapes(SgCloneMap& cloneMap)
 
 void SceneBody::setVisibleShapeTypes(bool visual, bool collision)
 {
-    if(visual != isVisualShapeVisible || collision != isCollisionShapeVisible){
+    if(visual != impl->isVisualShapeVisible || collision != impl->isCollisionShapeVisible){
         for(size_t i=0; i < sceneLinks_.size(); ++i){
             sceneLinks_[i]->setVisibleShapeTypes(visual, collision);
         }
-        isVisualShapeVisible = visual;
-        isCollisionShapeVisible = collision;
+        impl->isVisualShapeVisible = visual;
+        impl->isCollisionShapeVisible = collision;
     }
 }
 
@@ -393,6 +525,7 @@ SceneDevice* SceneBody::getSceneDevice(Device* device)
 
 void SceneBody::setSceneDeviceUpdateConnection(bool on)
 {
+    auto& sceneDevices = impl->sceneDevices;
     for(size_t i=0; i < sceneDevices.size(); ++i){
         sceneDevices[i]->setSceneUpdateConnection(on);
     }
@@ -401,6 +534,7 @@ void SceneBody::setSceneDeviceUpdateConnection(bool on)
 
 void SceneBody::updateSceneDevices(double time)
 {
+    auto& sceneDevices = impl->sceneDevices;
     for(size_t i=0; i < sceneDevices.size(); ++i){
         sceneDevices[i]->updateScene(time);
     }
@@ -410,7 +544,7 @@ void SceneBody::updateSceneDevices(double time)
 void SceneBody::makeTransparent(float transparency, SgCloneMap& cloneMap)
 {
     for(size_t i=0; i < sceneLinks_.size(); ++i){
-        sceneLinks_[i]->makeTransparent(transparency, cloneMap);
+        sceneLinks_[i]->impl->makeTransparent(transparency, cloneMap);
     }
 }
 

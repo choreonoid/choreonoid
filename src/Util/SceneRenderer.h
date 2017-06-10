@@ -29,7 +29,10 @@ public:
     virtual void clearScene();
 
     typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
+
     virtual NodeFunctionSet* renderingFunctions() = 0;
+    virtual void renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction) = 0;
+    virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) = 0;
 
     virtual void renderNode(SgNode* node) = 0;
 
