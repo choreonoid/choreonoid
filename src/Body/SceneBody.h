@@ -29,11 +29,11 @@ public:
     SgNode* visualShape();
     const SgNode* collisionShape() const;
     SgNode* collisionShape();
-    void setShapeGroup(SgGroup* group);
-    void resetShapeGroup();
-    void cloneShape(SgCloneMap& cloneMap);
+
+    void insertEffectGroup(SgGroup* group);
+    void removeEffectGroup(SgGroup* group);
+    
     void setVisible(bool on);
-    void setVisibleShapeTypes(bool visual, bool collision);
     void makeTransparent(float transparency);
     
     void addSceneDevice(SceneDevice* sdev);
@@ -64,8 +64,6 @@ public:
     const Body* body() const { return body_; }
 
     void cloneShapes(SgCloneMap& cloneMap);
-
-    void setVisibleShapeTypes(bool visual, bool collision);
 
     int numSceneLinks() const { return sceneLinks_.size(); }
     SceneLink* sceneLink(int index) { return sceneLinks_[index]; }

@@ -21,6 +21,9 @@ public:
 
     SceneWidget* targetSceneWidget();
 
+    bool isCollisionVisualizationButtonSetVisible() const;
+    void setCollisionVisualizationButtonSetVisible(bool on);
+
 protected:
     SceneBar();
 
