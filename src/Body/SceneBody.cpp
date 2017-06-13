@@ -230,7 +230,7 @@ void SceneLink::insertEffectGroup(SgGroup* group)
     group->addChild(impl->topShapeGroup);
     impl->shapeTransform->addChild(group);
     impl->topShapeGroup = group;
-    // notifyUpdate(SgUpdate::ADDED);
+    impl->shapeTransform->notifyUpdate(SgUpdate::ADDED|SgUpdate::REMOVED);
 }
 
 
@@ -246,7 +246,22 @@ bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effectGroup)
         return false;
     }
     if(parent->removeChild(effectGroup)){
-        effectGroup->moveChildrenTo(parent);
+        SgGroup* childGroup = 0;
+        for(auto child : *effectGroup){
+            if(childGroup = dynamic_cast<SgGroup*>(child.get())){
+                parent->addChild(childGroup);
+                break;
+            }
+        }
+        if(topShapeGroup == effectGroup){
+            if(childGroup){
+                topShapeGroup = childGroup;
+            } else {
+                topShapeGroup = mainShapeGroup;
+            }
+        }
+        effectGroup->clearChildren();
+        parent->notifyUpdate(SgUpdate::ADDED|SgUpdate::REMOVED);
         return true;
     } else {
         for(auto child : *parent){
