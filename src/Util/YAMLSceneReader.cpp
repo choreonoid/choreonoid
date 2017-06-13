@@ -293,13 +293,17 @@ SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
         }
 
         Matrix3 R;
-        bool isTransformed = self->readRotation(node, R, false);
+        bool isRotated = self->readRotation(node, R, false);
         Vector3 p;
-        isTransformed |= read(node, "translation", p);
-        if(isTransformed){
+        bool isTranslated = read(node, "translation", p);
+        if(isRotated || isTranslated){
             SgPosTransformPtr transform = new SgPosTransform;
-            transform->setRotation(R);
-            transform->setTranslation(p);
+            if(isRotated){
+                transform->setRotation(R);
+            }
+            if(isTranslated){
+                transform->setTranslation(p);
+            }
             transform->addChild(shape);
             return transform;
         }
