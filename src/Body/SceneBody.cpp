@@ -90,13 +90,13 @@ public:
             if(node == visualShape){
                 if(visibility & 1){
                     functions->dispatch(node);
+                    continue;
                 }
-            } else if(node == collisionShape){
+            }
+            if(node == collisionShape){
                 if(visibility & 2){
                     functions->dispatch(node);
                 }
-            } else {
-                functions->dispatch(node);
             }
         }
     }
