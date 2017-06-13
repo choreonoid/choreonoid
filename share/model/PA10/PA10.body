@@ -14,17 +14,16 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual:
-        resource:
-          uri: "parts/BASE.wrl"
+      Visual: { elements: { Resource: { uri: "parts/BASE.wrl" } } }
       Collision:
-        shape:
-          rotation: [ 1, 0, 0, 90 ]
-          translation: [ 0, 0, 0.1 ]
-          geometry:
-            type: Cylinder
-            height: 0.2
-            radius: 0.115
+        elements:
+          Shape:
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.1 ]
+            geometry:
+              type: Cylinder
+              height: 0.2
+              radius: 0.115
   -
     name: J1
     parent: BASE
@@ -42,7 +41,30 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J1.wrl" } }
+    elements: 
+      Visual: { elements: { Resource: { uri: "parts/J1.wrl" } } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            translation: [ 0.105, 0, 0.09 ]
+            geometry:
+              type: Box
+              size: [ 0.06, 0.1, 0.155 ]
+          -
+            type: Shape
+            translation: [ -0.11, 0, 0.09 ]
+            geometry:
+              type: Box
+              size: [ 0.06, 0.1, 0.155 ]
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.01 ]
+            geometry:
+              type: Cylinder
+              height: 0.02
+              radius: 0.115
   -
     name: J2
     parent: J1
@@ -59,7 +81,32 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J2.wrl" } }
+    elements:
+      Visual: { elements: { Resource: { uri: "parts/J2.wrl" } } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.002, 0, 0 ]
+            geometry:
+              type: Cylinder
+              height: 0.15
+              radius: 0.06
+            appearance:
+              material:
+                diffuseColor: [ 0.85, 0.9, 0.85 ]
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.15 ]
+            geometry:
+              type: Cylinder
+              height: 0.26
+              radius: 0.06
+            appearance:
+              material:
+                diffuseColor: [ 0.85, 0.9, 0.85 ]
   -
     name: J3
     parent: J2
