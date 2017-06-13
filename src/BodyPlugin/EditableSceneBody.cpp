@@ -33,8 +33,6 @@ using namespace cnoid;
 namespace {
 
 Action* linkVisibilityCheck;
-Action* showVisualShapeCheck;
-Action* showCollisionShapeCheck;
 Action* enableStaticModelEditCheck;
 
 }
@@ -88,9 +86,9 @@ void EditableSceneLink::showOutline(bool on)
             outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
             impl->outlineGroup = outline;
         }
-        setShapeGroup(impl->outlineGroup);
+        insertEffectGroup(impl->outlineGroup);
     } else if(impl->outlineGroup){
-        resetShapeGroup();
+        removeEffectGroup(impl->outlineGroup);
     }
 }
 
@@ -217,7 +215,6 @@ public:
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
     void onLinkVisibilityCheckToggled();
-    void onVisibleShapeTypesChanged();
     void onLinkSelectionChanged();
 
     void showCenterOfMass(bool on);
@@ -392,14 +389,6 @@ void EditableSceneBodyImpl::onSceneGraphConnection(bool on)
             linkVisibilityCheck->sigToggled().connect(
                 std::bind(&EditableSceneBodyImpl::onLinkVisibilityCheckToggled, this)));
         onLinkVisibilityCheckToggled();
-
-        connections.add(
-            showVisualShapeCheck->sigToggled().connect(
-                std::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
-        connections.add(
-            showCollisionShapeCheck->sigToggled().connect(
-                std::bind(&EditableSceneBodyImpl::onVisibleShapeTypesChanged, this)));
-        onVisibleShapeTypesChanged();
     }
 }
 
@@ -554,13 +543,6 @@ void EditableSceneBodyImpl::onLinkSelectionChanged()
     if(linkVisibilityCheck->isChecked()){
         self->setLinkVisibilities(LinkSelectionView::mainInstance()->linkSelection(bodyItem));
     }
-}
-
-
-void EditableSceneBodyImpl::onVisibleShapeTypesChanged()
-{
-    self->setVisibleShapeTypes(
-        showVisualShapeCheck->isChecked(), showCollisionShapeCheck->isChecked());
 }
 
 
@@ -1523,9 +1505,6 @@ void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
     MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
     linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
-    showVisualShapeCheck = mm.addCheckItem(_("Show visual shapes"));
-    showVisualShapeCheck->setChecked(true);
-    showCollisionShapeCheck = mm.addCheckItem(_("Show collision shapes"));
     enableStaticModelEditCheck = mm.addCheckItem(_("Enable editing static models"));
     enableStaticModelEditCheck->setChecked(true);
 

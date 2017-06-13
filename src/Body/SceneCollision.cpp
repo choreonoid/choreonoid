@@ -17,8 +17,8 @@ struct NodeTypeRegistration {
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
-                auto& functions = renderer->renderingFunctions();
-                functions.setFunction<SceneCollision>(
+                auto functions = renderer->renderingFunctions();
+                functions->setFunction<SceneCollision>(
                     [renderer](SgNode* node){
                         static_cast<SceneCollision*>(node)->render(renderer);
                     });
@@ -47,7 +47,10 @@ SceneCollision::SceneCollision(const SceneCollision& org)
 
 void SceneCollision::render(SceneRenderer* renderer)
 {
-    if(!renderer->property()->get("collision", false)){
+    static const SceneRenderer::PropertyKey key("collisionLineRatio");
+
+    const double collisionLineRatio = renderer->property(key, 0.0);
+    if(collisionLineRatio <= 0.0){
         return;
     }
     
@@ -69,11 +72,11 @@ void SceneCollision::render(SceneRenderer* renderer)
                 const int index = vertices_->size();
                 addLine(index, index + 1);
                 vertices_->push_back(c.point.cast<float>());
-                vertices_->push_back((c.point + direction * 50.0 * c.depth * c.normal).cast<float>());
+                vertices_->push_back((c.point + direction * collisionLineRatio * c.depth * c.normal).cast<float>());
             }
         }
         isDirty = false;
     }
     
-    renderer->renderingFunctions().dispatchAs<SgLineSet>(this);
+    renderer->renderingFunctions()->dispatchAs<SgLineSet>(this);
 }

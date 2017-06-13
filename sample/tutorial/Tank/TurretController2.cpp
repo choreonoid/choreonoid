@@ -33,7 +33,7 @@ public:
     {
         static const double P = 200.0;
         static const double D = 50.0;
-        static const int axisID[] = { 3, 4 };
+        static const int axisID[] = { 2, 3 };
 
         joystick.readCurrentState();
 

@@ -181,6 +181,7 @@ protected:
     SgNode(int polymorhicId);
 };
 
+
 class CNOID_EXPORT SgGroup : public SgNode
 {
     typedef std::vector<SgNodePtr> Container;
@@ -212,6 +213,8 @@ public:
 
     iterator begin() { return children.begin(); }
     iterator end() { return children.end(); }
+    const_iterator cbegin() { return children.cbegin(); }
+    const_iterator cend() { return children.cend(); }
     reverse_iterator rbegin() { return children.rbegin(); }
     reverse_iterator rend() { return children.rend(); }
 

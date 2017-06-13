@@ -12,8 +12,8 @@ using namespace cnoid;
 
 namespace {
 
-const int axisID[] = { 0, 1, 3, 4 };
-const int buttonID[] = { 0, 2, 3 };
+const int axisID[] = { 0, 1, 2, 3 };
+const int buttonID[] = { 1, 0, 3 };
 
 }
 

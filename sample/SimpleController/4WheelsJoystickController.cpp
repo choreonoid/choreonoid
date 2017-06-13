@@ -59,7 +59,7 @@ public:
         static const double VEL_MAX = 20;
 
         double pos[2];
-        pos[0] = joystick.getPosition(3);
+        pos[0] = joystick.getPosition(2);
         pos[1] = joystick.getPosition(1);
 
         double steer_ref = - pos[0] * 0.8;

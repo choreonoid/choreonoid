@@ -12,6 +12,7 @@
 #include <Eigen/StdVector>
 #include <boost/variant.hpp>
 #include <set>
+#include <unordered_map>
 #include <mutex>
 
 using namespace std;
@@ -22,6 +23,10 @@ namespace {
 std::mutex extensionMutex;
 set<SceneRenderer*> renderers;
 vector<std::function<void(SceneRenderer* renderer)>> extendFunctions;
+
+std::mutex propertyKeyMutex;
+int propertyKeyCount = 0;
+std::unordered_map<string, int> propertyKeyMap;
 
 struct PreproNode
 {
@@ -130,6 +135,9 @@ public:
 
     std::mutex newExtensionMutex;
     vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
+
+    typedef boost::variant<bool, int, double> PropertyValue;
+    vector<PropertyValue> properties;
     
     SceneRendererImpl(SceneRenderer* self);
 
@@ -139,6 +147,28 @@ public:
     void setCurrentCamera(int index, bool doRenderingRequest);
     bool setCurrentCamera(SgCamera* camera);
     void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
+
+    template<class ValueType> void setProperty(SceneRenderer::PropertyKey key, ValueType value){
+        const int id = key.id;
+        if(id >= properties.size()){
+            properties.resize(id + 1);
+        }
+        properties[id] = value;
+    }
+
+    template<class ValueType> ValueType property(SceneRenderer::PropertyKey key, int which, ValueType defaultValue){
+        const int id = key.id;
+        if(id >= properties.size()){
+            properties.resize(id + 1);
+            return defaultValue;
+        }
+        const PropertyValue& value = properties[id];
+        if(value.which() == which){
+            return get<ValueType>(value);
+        }
+        return defaultValue;
+    }
+    
 };
 
 }
@@ -147,7 +177,6 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new SceneRendererImpl(this);
-    property_ = new Mapping();
     std::lock_guard<std::mutex> guard(extensionMutex);
     renderers.insert(this);
 }
@@ -725,4 +754,55 @@ void SceneRenderer::applyNewExtensions()
         }
         impl->newExtendFunctions.clear();
     }
+}
+
+
+SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
+{
+    std::lock_guard<std::mutex> guard(propertyKeyMutex);
+
+    auto iter = propertyKeyMap.find(key);
+    if(iter != propertyKeyMap.end()){
+        id = iter->second;
+    } else {
+        id = propertyKeyCount;
+        propertyKeyMap.insert(make_pair(key, id));
+        propertyKeyCount++;
+    }
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, bool value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, int value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, double value)
+{
+    impl->setProperty(key, value);
+}
+
+
+bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
+{
+    return impl->property(key, 0, defaultValue);
+}
+
+
+int SceneRenderer::property(PropertyKey key, int defaultValue) const
+{
+    return impl->property(key, 1, defaultValue);
+}
+
+
+double SceneRenderer::property(PropertyKey key, double defaultValue) const
+{
+    return impl->property(key, 2, defaultValue);
 }

@@ -42,24 +42,24 @@ struct ButtonInfo {
 
 ButtonInfo buttonInfo[] = {
 
-    { "^", 0, 1, true, -1.0, 7, Qt::Key_Up },
-    { "v", 2, 1, true,  1.0, 7, Qt::Key_Down },
-    { "<", 1, 0, true, -1.0, 6, Qt::Key_Left },
-    { ">", 1, 2, true,  1.0, 6, Qt::Key_Right },
+    { "^", 0, 1, true, -1.0, 5, Qt::Key_Up },
+    { "v", 2, 1, true,  1.0, 5, Qt::Key_Down },
+    { "<", 1, 0, true, -1.0, 4, Qt::Key_Left },
+    { ">", 1, 2, true,  1.0, 4, Qt::Key_Right },
 
     { "E", 3, 3, true, -1.0, 1, Qt::Key_E },
     { "D", 5, 3, true,  1.0, 1, Qt::Key_D },
     { "S", 4, 2, true, -1.0, 0, Qt::Key_S },
     { "F", 4, 4, true,  1.0, 0, Qt::Key_F },
 
-    { "I", 3, 8, true, -1.0, 4, Qt::Key_I },
-    { "K", 5, 8, true,  1.0, 4, Qt::Key_K },
-    { "J", 4, 7, true, -1.0, 3, Qt::Key_J },
-    { "L", 4, 9, true,  1.0, 3, Qt::Key_L },
+    { "I", 3, 8, true, -1.0, 3, Qt::Key_I },
+    { "K", 5, 8, true,  1.0, 3, Qt::Key_K },
+    { "J", 4, 7, true, -1.0, 2, Qt::Key_J },
+    { "L", 4, 9, true,  1.0, 2, Qt::Key_L },
 
-    { "A", 2, 10, false, 1.0, 0, Qt::Key_A },
-    { "B", 1, 11, false, 1.0, 1, Qt::Key_B },
-    { "X", 1,  9, false, 1.0, 2, Qt::Key_X },
+    { "A", 2, 10, false, 1.0, 1, Qt::Key_A },
+    { "B", 1, 11, false, 1.0, 2, Qt::Key_B },
+    { "X", 1,  9, false, 1.0, 0, Qt::Key_X },
     { "Y", 0, 10, false, 1.0, 3, Qt::Key_Y }
 };
     

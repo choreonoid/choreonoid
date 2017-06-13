@@ -3,6 +3,8 @@
 */
 
 #include "SceneWidget.h"
+#include "SceneBar.h"
+#include "ToolBarArea.h"
 #include "GL1SceneRenderer.h"
 #include "GLSLSceneRenderer.h"
 #include "SceneWidgetEditable.h"
@@ -132,6 +134,7 @@ public:
     SpinBox fpsTestIterationSpin;
     CheckBox newDisplayListDoubleRenderingCheck;
     CheckBox bufferForPickingCheck;
+    CheckBox collisionVisualizationButtonsCheck;
     CheckBox upsideDownCheck;
 
     LazyCaller updateDefaultLightsLater;
@@ -2134,7 +2137,7 @@ void SceneWidgetImpl::setCollisionLinesVisible(bool on)
 {
     if(on != collisionLinesVisible){
         collisionLinesVisible = on;
-        renderer->property()->write("collision", on);
+        renderer->setProperty(SceneRenderer::PropertyKey("collisionLineRatio"), on ? 50.0 : 0.0);
         update();
         emitSigStateChangedLater();
     }
@@ -3112,6 +3115,16 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
+    collisionVisualizationButtonsCheck.setText(_("Show collision visualization button set"));
+    collisionVisualizationButtonsCheck.setChecked(false);
+    collisionVisualizationButtonsCheck.sigToggled().connect(
+        [&](bool on){
+            auto sceneBar = SceneBar::instance();
+            sceneBar->setCollisionVisualizationButtonSetVisible(on);
+            sceneBar->toolBarArea()->layoutToolBars();
+        });
+    hbox->addWidget(&collisionVisualizationButtonsCheck);
+    
     upsideDownCheck.setText(_("Upside down"));
     upsideDownCheck.setChecked(false);
     upsideDownCheck.sigToggled().connect([=](bool on){ impl->onUpsideDownToggled(on); });
