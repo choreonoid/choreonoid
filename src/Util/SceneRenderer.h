@@ -81,7 +81,7 @@ public:
 
     Signal<void()>& sigRenderingRequest();
 
-    class PropertyKey {
+    class CNOID_EXPORT PropertyKey {
         int id;
     public:
         PropertyKey(const std::string& key);
