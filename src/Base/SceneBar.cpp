@@ -64,7 +64,13 @@ public:
     ToolButton* collisionModelToggle;
     ToolButton* collisionLineToggle;
 
+    bool isCollisionVisualizationButtonSetVisible;
+
+    MappingPtr config;
+
     SceneBarImpl(SceneBar* self);
+    ~SceneBarImpl();
+    void initialize();
     void onSceneWidgetCreated(SceneWidget* sceneWidget);
     void onSceneWidgetFocusChanged(SceneWidget* sceneWidget, bool isFocused);
     void onSceneWidgetAboutToBeDestroyed(SceneWidget* sceneWidget);
@@ -106,18 +112,26 @@ SceneBar::SceneBar()
     : ToolBar(N_("SceneBar"))
 {
     impl = new SceneBarImpl(this);
-    setCollisionVisualizationButtonSetVisible(false);
+    impl->initialize();
 }
 
 
 SceneBarImpl::SceneBarImpl(SceneBar* self)
     : self(self)
 {
+
+}
+
+
+void SceneBarImpl::initialize()
+{
     self->setVisibleByDefault(true);
-    
     self->setEnabled(false);
+    
     targetSceneWidget = 0;
     targetRenderer = 0;
+    
+    config = AppConfig::archive()->openMapping("SceneBar");
     
     editModeToggle = self->addToggleButton(
         QIcon(":/Base/icons/sceneedit.png"), _("Switch to the edit mode"));
@@ -162,12 +176,27 @@ SceneBarImpl::SceneBarImpl(SceneBar* self)
         QIcon(":/Base/icons/collisionlines.png"), _("Toggle the collision line visibility"));
     collisionLineToggle->sigToggled().connect(
         [&](bool on){ onCollisionLineButtonToggled(on); });
+
+    isCollisionVisualizationButtonSetVisible = config->get("collisionButtonSet", false);
+    self->setCollisionVisualizationButtonSetVisible(isCollisionVisualizationButtonSetVisible);
     
     self->addButton(QIcon(":/Base/icons/setup.png"), _("Show the config dialog"))
         ->sigClicked().connect([&](){ targetSceneWidget->showConfigDialog(); });
 
     SceneWidget::sigSceneWidgetCreated().connect(
         [&](SceneWidget* widget){ onSceneWidgetCreated(widget); });
+}
+
+
+SceneBar::~SceneBar()
+{
+    delete impl;
+}
+
+
+SceneBarImpl::~SceneBarImpl()
+{
+    config->write("collisionButtonSet", isCollisionVisualizationButtonSetVisible);
 }
 
 
@@ -295,7 +324,7 @@ void SceneBarImpl::onWireframeButtonToggled(bool on)
 
 bool SceneBar::isCollisionVisualizationButtonSetVisible() const
 {
-    return impl->visualModelToggle->isVisible();
+    return impl->isCollisionVisualizationButtonSetVisible;
 }
 
 
@@ -305,7 +334,7 @@ void SceneBar::setCollisionVisualizationButtonSetVisible(bool on)
     impl->modelTypeFlipButton->setVisible(on);
     impl->collisionModelToggle->setVisible(on);
     impl->collisionLineToggle->setVisible(on);
-    
+    impl->isCollisionVisualizationButtonSetVisible = on;
 }
 
 

@@ -28,6 +28,7 @@ protected:
     SceneBar();
 
 private:
+    ~SceneBar();
     SceneBarImpl* impl;
 };
 
