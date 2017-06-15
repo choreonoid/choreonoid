@@ -43,9 +43,9 @@ void exportPyItemTreeView(py::module m)
         .def("selectItem", &ItemTreeView::selectItem, py::arg("item"), py::arg("select")=true)
         .def("selectAllItems", &ItemTreeView::selectAllItems)
         .def("clearSelection", &ItemTreeView::clearSelection)
-        .def("checkedItems", [](ItemTreeView& self,int id = 0) {
+        .def("checkedItems", [](ItemTreeView& self,int id) {
             return self.checkedItems<Item>();
-        })
+        }, py::arg("id")=0)
         .def("isItemChecked", &ItemTreeView::isItemChecked, py::arg("item"), py::arg("id")=0)
         .def("checkItem", &ItemTreeView::checkItem, py::arg("item"), py::arg("check")=true, py::arg("id")=0)
         .def("sigSelectionChanged", &ItemTreeView::sigSelectionChanged)

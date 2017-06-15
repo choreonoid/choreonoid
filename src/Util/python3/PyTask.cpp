@@ -10,6 +10,7 @@
 #include <cnoid/PythonUtil>
 #include <boost/ref.hpp>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 #include <set>
 #include <map>
 
@@ -24,34 +25,23 @@ CNOID_PYTHON_DEFINE_GET_POINTER(AbstractTaskSequencer)
         
 namespace {
 
-/**
-   \todo Currently boost::python::object is used for storing the callback function object,
-   but this generates a circular reference between the task object and the function object
-   because callback functions are ususally instance methods of the task object and the reference
-   to the task object (self) is contained in the function objcets. In this case, the task object
-   is never released even if the task is removed from the task sequencer and there is no
-   varibale that refers to the task in Python. Using the weakref module may solve this problem.
-*/
 struct PyTaskFunc
 {
-    py::object func;
-    PyTaskFunc(py::object f) : func(f) {
-        if(!PyFunction_Check(f.ptr()) && !PyMethod_Check(f.ptr())){
-            PyErr_SetString(PyExc_TypeError, "Task command must be a function type object");
-            throw py::error_already_set();
-        }
+    py::function func;
+    PyTaskFunc(py::function f) : func(f) {
     }
+
     void operator()(TaskProc* proc) {
         py::gil_scoped_acquire lock;
         try {
-            int numArgs = func.attr("func_code").attr("co_argcount").cast<int>();
+            int numArgs = func.attr("__code__").attr("co_argcount").cast<int>();
             if(numArgs == 0){
                 func();
             } else {
-                func(boost::ref(proc));
+                func(proc);
             }
-        } catch(py::error_already_set const& ex) {
-            handlePythonException();
+        }catch(py::error_already_set const& ex){
+            py::print(ex.what());
         }
     }
 };
@@ -65,7 +55,7 @@ struct PyMenuItemFunc
         try {
             func();
         } catch(py::error_already_set const& ex) {
-            handlePythonException();
+            py::print(ex.what());
         }
     }
 };
@@ -79,7 +69,7 @@ struct PyCheckMenuItemFunc
         try {
             func(on);
         } catch(py::error_already_set const& ex) {
-            handlePythonException();
+            py::print(ex.what());
         }
     }
 };
@@ -119,48 +109,73 @@ public:
 
     void onMenuRequest(TaskMenu& menu) override{
         py::gil_scoped_acquire lock;
-        try {
-            PYBIND11_OVERLOAD( void, Task, onMenuRequest, boost::ref(menu));
-        } catch(py::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        py::function overload = py::get_overload(static_cast<const Task *>(this), "onMenuRequest");
+        if (overload){
+            try {
+                overload(py::cast(menu, py::return_value_policy::reference));
+            } catch(py::error_already_set const& ex) {
+                py::print(ex.what());
+            }
+        }else{
+            Task::onMenuRequest(menu);
         }
     }
 
-    void onActivated(AbstractTaskSequencer* sequencer){
+    void onActivated(AbstractTaskSequencer* sequencer)  override{
         py::gil_scoped_acquire lock;
-        try {
-            PYBIND11_OVERLOAD( void, Task, onActivated, boost::ref(sequencer));
-        } catch(py::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        py::function overload = py::get_overload(static_cast<const Task *>(this), "onActivated");
+        if (overload){
+            try {
+                overload(sequencer);
+            } catch(py::error_already_set const& ex) {
+                py::print(ex.what());
+            }
+        }else{
+            Task::onActivated(sequencer);
         }
     }
 
-    void onDeactivated(AbstractTaskSequencer* sequencer){
+    void onDeactivated(AbstractTaskSequencer* sequencer)  override{
         py::gil_scoped_acquire lock;
-        try {
-            PYBIND11_OVERLOAD( void, Task, onDeactivated, boost::ref(sequencer));
-        } catch(py::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        py::function overload = py::get_overload(static_cast<const Task *>(this), "onDeactivated");
+        if (overload){
+            try {
+                overload(sequencer);
+            } catch(py::error_already_set const& ex) {
+                py::print(ex.what());
+            }
+        }else{
+            Task::onDeactivated(sequencer);
         }
     }
 
-    void storeState(AbstractTaskSequencer* sequencer, Mapping& archive){
+    void storeState(AbstractTaskSequencer* sequencer, Mapping& archive)  override {
         py::gil_scoped_acquire lock;
-        try {
-            //MappingPtr a = &archive;
-            PYBIND11_OVERLOAD( void, Task, storeState, boost::ref(sequencer), archive);
-        } catch(py::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        py::function overload = py::get_overload(static_cast<const Task *>(this), "storeState");
+        if (overload){
+            try {
+                MappingPtr a = &archive;
+                overload(sequencer, a);
+            } catch(py::error_already_set const& ex) {
+                py::print(ex.what());
+            }
+        }else{
+            Task::storeState(sequencer, archive);
         }
     }
     
-    void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive){
+    void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive)  override {
         py::gil_scoped_acquire lock;
-        try {
-            //MappingPtr a = const_cast<Mapping*>(&archive);
-            PYBIND11_OVERLOAD( void, Task, restoreState, boost::ref(sequencer), archive);
-        } catch(py::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        py::function overload = py::get_overload(static_cast<const Task *>(this), "restoreState");
+        if (overload){
+            try {
+                MappingPtr a = const_cast<Mapping*>(&archive);
+                overload(sequencer, a);
+            } catch(py::error_already_set const& ex) {
+                py::print(ex.what());
+            }
+        }else{
+            Task::restoreState(sequencer, archive);
         }
     }
 
@@ -228,32 +243,32 @@ void exportPyTaskTypes(py::module& m)
         .def("setCommandLinkAutomatic", &TaskProc::setCommandLinkAutomatic)
         .def("executeCommand", &TaskProc::executeCommand)
         .def("wait", &TaskProc::wait)
-        .def("waitForCommandToFinish", [](TaskProc& self, double timeout = 0.0) {
+        .def("waitForCommandToFinish", [](TaskProc& self, double timeout) {
             bool ret;
             Py_BEGIN_ALLOW_THREADS
             ret = self.waitForCommandToFinish(timeout);
             Py_END_ALLOW_THREADS
             return ret;
-        })
-        .def("waitForCommandToFinish", [](TaskProc& self, Connection connectionToDisconnect, double timeout = 0.0) {
+        }, py::arg("timeout")=0.0)
+        .def("waitForCommandToFinish", [](TaskProc& self, Connection connectionToDisconnect, double timeout) {
             bool ret;
             Py_BEGIN_ALLOW_THREADS
             ret = self.waitForCommandToFinish(connectionToDisconnect, timeout);
             Py_END_ALLOW_THREADS
             return ret;
-        })
+        }, py::arg("connectionToDisconnect"), py::arg("timeout")=0.0)
         .def("notifyCommandFinish", &TaskProc:: notifyCommandFinish, py::arg("isCompleted")=true)
         .def("notifyCommandFinish_true", &TaskProc:: notifyCommandFinish, py::arg("isCompleted")=true)
-        .def("waitForSignal", [](py::object self, py::object signalProxy, double timeout = 0.0){
+        .def("waitForSignal", [](py::object self, py::object signalProxy, double timeout){
             py::object notifyCommandFinish = self.attr("notifyCommandFinish")(true);
             py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
             return self.attr("waitForCommandToFinish")(connection, timeout).cast<bool>();
-        })
-        .def("waitForBooleanSignal", [](py::object self, py::object signalProxy, double timeout = 0.0){
+        }, py::arg("signalProxy"), py::arg("timeout")=0.0)
+        .def("waitForBooleanSignal", [](py::object self, py::object signalProxy, double timeout){
             py::object notifyCommandFinish = self.attr("notifyCommandFinish")();
             py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
             return self.attr("waitForCommandToFinish")(connection, timeout).cast<bool>();
-        })
+        }, py::arg("signalProxy"), py::arg("timeout")=0.0)
         ;
 
     py::class_<TaskFunc>(m, "TaskFunc")
@@ -287,12 +302,9 @@ void exportPyTaskTypes(py::module& m)
              return TaskCommandPtr(self.setDefault(on));
         })
         .def("isDefault", &TaskCommand::isDefault)
-        .def("setCheckable", [](TaskCommand& self){
-            return TaskCommandPtr(self.setCheckable());
-        })
         .def("setCheckable", [](TaskCommand& self, bool on){
-            return TaskCommandPtr(self.setCheckable(on));
-        })
+            return TaskCommandPtr(self.setCheckable());
+        }, py::arg("on")=true)
         .def("setToggleState", [](TaskCommand& self,  TaskToggleState* state){
             return TaskCommandPtr(self.setToggleState(state));
         })
@@ -350,7 +362,7 @@ void exportPyTaskTypes(py::module& m)
         .def("setCaption", &TaskPhase::setCaption)
         .def("isSkipped", &TaskPhase::isSkipped)
         .def("setSkipped", &TaskPhase::setSkipped)
-        .def("setPreCommand", [](TaskPhase& self, py::object func){
+        .def("setPreCommand", [](TaskPhase& self, py::function func){
             return self.setPreCommand(PyTaskFunc(func));
         })
         .def("setPreCommand", &TaskPhase::setPreCommand)
@@ -453,8 +465,6 @@ void exportPyTaskTypes(py::module& m)
         })
         .def("lastCommandIndex", &Task::lastCommandIndex)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
-
-
         .def("onMenuRequest", &Task::onMenuRequest)
         .def("onActivated", &Task::onActivated)
         .def("onDeactivated", &Task::onDeactivated)
