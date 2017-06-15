@@ -20,7 +20,7 @@ public:
 
     virtual bool control()
     {
-        static const int buttonID[] = { 0, 2, 3 };
+        static const int buttonID[] = { 1, 0, 3 };
 
         joystick.readCurrentState();
 

@@ -22,7 +22,10 @@ public:
 
     virtual void setOutputStream(std::ostream& os) override;
     
-    virtual NodeFunctionSet& renderingFunctions() override;
+    virtual NodeFunctionSet* renderingFunctions() override;
+    virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
+    virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
+
     virtual void renderNode(SgNode* node) override;
 
     virtual const Affine3& currentModelTransform() const override;

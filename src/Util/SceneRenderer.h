@@ -8,7 +8,6 @@
 
 #include "SceneGraph.h"
 #include "PolymorphicFunctionSet.h"
-#include "ValueTree.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -30,7 +29,10 @@ public:
     virtual void clearScene();
 
     typedef PolymorphicFunctionSet<SgNode> NodeFunctionSet;
-    virtual NodeFunctionSet& renderingFunctions() = 0;
+
+    virtual NodeFunctionSet* renderingFunctions() = 0;
+    virtual void renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction) = 0;
+    virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) = 0;
 
     virtual void renderNode(SgNode* node) = 0;
 
@@ -79,14 +81,25 @@ public:
 
     Signal<void()>& sigRenderingRequest();
 
-    Mapping* property() { return property_; }
+    class CNOID_EXPORT PropertyKey {
+        int id;
+    public:
+        PropertyKey(const std::string& key);
+        friend class SceneRendererImpl;
+    };
+    
+    void setProperty(PropertyKey key, bool value);
+    void setProperty(PropertyKey key, int value);
+    void setProperty(PropertyKey key, double value);
+    bool property(PropertyKey key, bool defaultValue) const;
+    int property(PropertyKey key, int defaultValue) const;
+    double property(PropertyKey key, double defaultValue) const;
 
 protected:
     virtual void onSceneGraphUpdated(const SgUpdate& update);
 
 private:
     SceneRendererImpl* impl;
-    MappingPtr property_;
 };
 
 }

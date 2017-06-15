@@ -432,9 +432,9 @@ GL1SceneRendererImpl::~GL1SceneRendererImpl()
 }
 
 
-SceneRenderer::NodeFunctionSet& GL1SceneRenderer::renderingFunctions()
+SceneRenderer::NodeFunctionSet* GL1SceneRenderer::renderingFunctions()
 {
-    return impl->renderingFunctions;
+    return &impl->renderingFunctions;
 }
 
 
@@ -935,6 +935,14 @@ void GL1SceneRendererImpl::renderGroup(SgGroup* group)
 }
 
 
+void GL1SceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction)
+{
+    impl->pushPickName(group);
+    traverseFunction();
+    impl->popPickName();
+}
+
+
 void GL1SceneRendererImpl::renderInvariantGroup(SgInvariantGroup* group)
 {
     if(!USE_DISPLAY_LISTS || isCompiling){
@@ -1057,6 +1065,23 @@ void GL1SceneRendererImpl::renderTransform(SgTransform* transform)
     glPopMatrix();
     Vstack.pop_back();
 }
+
+
+void GL1SceneRenderer::renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction)
+{
+    Affine3 T;
+    transform->getTransform(T);
+    impl->Vstack.push_back(impl->Vstack.back() * T);
+    glPushMatrix();
+    glMultMatrixd(T.data());
+    impl->pushPickName(transform);
+
+    traverseFunction();
+
+    impl->popPickName();
+    glPopMatrix();
+    impl->Vstack.pop_back();
+}    
 
 
 void GL1SceneRendererImpl::renderShape(SgShape* shape)

@@ -73,8 +73,8 @@ struct NodeTypeRegistration {
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
-                auto& functions = renderer->renderingFunctions();
-                functions.setFunction<SgViewpointDependentSelector>(
+                auto functions = renderer->renderingFunctions();
+                functions->setFunction<SgViewpointDependentSelector>(
                     [=](SgNode* node){
                         static_cast<SgViewpointDependentSelector*>(node)->render(renderer);
                     });

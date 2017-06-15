@@ -129,7 +129,7 @@ void SubmersibleSimulatorItem::applyResistanceForce()
     }
 
     double thrust[2];
-    thrust[0]  = -joystick->getPosition(4); // right
+    thrust[0]  = -joystick->getPosition(3); // right
     thrust[1]  = -joystick->getPosition(1); // left
     for(int i=0; i < 2; ++i){
         Vector3 f = root->R() * Vector3(15.0 * thrust[i], 0.0, 0.0);
@@ -138,13 +138,13 @@ void SubmersibleSimulatorItem::applyResistanceForce()
         root->tau_ext() += p.cross(f);
     }
 
-    Vector3 fz(0.0, 0.0, -5.0 * joystick->getPosition(7));
+    Vector3 fz(0.0, 0.0, -5.0 * joystick->getPosition(5));
     root->f_ext() += fz;
     Vector3 cz = root->T() * Vector3(0.0, 0.0, -1.5);
     root->tau_ext() += cz.cross(fz);
 
     if(light){
-        bool lightButtonState = joystick->getButtonState(0);
+        bool lightButtonState = joystick->getButtonState(1);
         if(lightButtonState){
             if(!prevLightButtonState){
                 light->on(!light->on());

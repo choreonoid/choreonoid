@@ -17,8 +17,8 @@ struct NodeTypeRegistration {
 
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
-                auto& functions = renderer->renderingFunctions();
-                functions.setFunction<CoordinateAxesOverlay>(
+                auto functions = renderer->renderingFunctions();
+                functions->setFunction<CoordinateAxesOverlay>(
                     [=](SgNode* node){
                         static_cast<CoordinateAxesOverlay*>(node)->render(renderer);
                     });
@@ -80,5 +80,5 @@ void CoordinateAxesOverlay::render(SceneRenderer* renderer)
 {
     const Affine3& T = renderer->currentCameraPosition();
     axesTransform->setRotation(T.linear().transpose());
-    renderer->renderingFunctions().dispatchAs<SgOverlay>(this);
+    renderer->renderingFunctions()->dispatchAs<SgOverlay>(this);
 }

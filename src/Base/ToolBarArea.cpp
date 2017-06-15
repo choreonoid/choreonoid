@@ -622,6 +622,12 @@ void ToolBarAreaImpl::setNewToolBar(ToolBar* toolBar, vector<int>& numStrechable
 }
 
 
+void ToolBarArea::layoutToolBars()
+{
+    impl->layoutToolBars();
+}
+
+
 void ToolBarAreaImpl::layoutToolBars()
 {
     if(DEBUG_MODE){
