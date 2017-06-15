@@ -22,6 +22,12 @@ public:
     YAMLSceneReader();
     ~YAMLSceneReader();
 
+    void setMessageSink(std::ostream& os);
+    void setDefaultDivisionNumber(int n);
+    void setBaseDirectory(const std::string& directory);
+
+    void clear();
+
     enum AngleUnit { DEGREE, RADIAN };
     void setAngleUnit(AngleUnit unit);
     bool isDegreeMode() const {
@@ -30,9 +36,6 @@ public:
     double toRadian(double angle) const {
         return isDegreeMode_ ? radian(angle) : angle;
     }
-
-    void setDefaultDivisionNumber(int n);
-    void clear();
     bool readAngle(Mapping& node, const char* key, double& angle);
     bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract);
     SgNodePtr readNode(Mapping& node);
