@@ -1063,7 +1063,7 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
         nameStack.pop_back();
         
     } else {
-        SgNodePtr scene = sceneReader.readNode(node, type);
+        SgNode* scene = sceneReader.readNode(node, type);
         if(scene){
             addScene(scene);
             isSceneNodeAdded = true;

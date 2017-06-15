@@ -21,7 +21,7 @@ using boost::format;
 
 namespace {
 
-typedef SgNodePtr (YAMLSceneReaderImpl::*NodeFunction)(Mapping& node);
+typedef SgNode* (YAMLSceneReaderImpl::*NodeFunction)(Mapping& node);
 typedef unordered_map<string, NodeFunction> NodeFunctionMap;
 NodeFunctionMap nodeFunctionMap;
 
@@ -69,11 +69,11 @@ public:
     
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
-    SgNodePtr readNode(Mapping& node, const string& type);
-    SgNodePtr readGroup(Mapping& node);
+    SgNode* readNode(Mapping& node, const string& type);
+    SgNode* readGroup(Mapping& node);
     bool readElements(Mapping& node, SgGroup* group);
-    SgNodePtr readTransform(Mapping& node);
-    SgNodePtr readShape(Mapping& node);
+    SgNode* readTransform(Mapping& node);
+    SgNode* readShape(Mapping& node);
     SgMesh* readGeometry(Mapping& node);
     SgMesh* readBox(Mapping& node);
     SgMesh* readSphere(Mapping& node);
@@ -84,9 +84,9 @@ public:
     void readAppearance(SgShape* shape, Mapping& node);
     void readMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
-    SgNodePtr readResource(Mapping& node);
-    SgNode* importScene(const string& uri);
-    SgNode* importScene(const string& uri, const string& nodeName);
+    SgNode* readResource(Mapping& node);
+    SgNode* loadResource(const string& uri);
+    SgNode* loadResource(const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(const string& uri);
     void adjustNodeCoordinate(NodeInfo& info);
     void makeNodeMap(ResourceInfo* info);
@@ -227,43 +227,42 @@ bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract
 }
 
 
-SgNodePtr YAMLSceneReader::readNode(Mapping& node)
+SgNode* YAMLSceneReader::readNode(Mapping& node)
 {
     const string type = node["type"].toString();
     return impl->readNode(node, type);
 }
 
 
-SgNodePtr YAMLSceneReader::readNode(Mapping& node, const std::string& type)
+SgNode* YAMLSceneReader::readNode(Mapping& node, const std::string& type)
 {
     return impl->readNode(node, type);
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
+SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
-    SgNodePtr scene;
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
         node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
-    } else {
-        NodeFunction readNode = q->second;
-        scene = (this->*readNode)(node);
-        if(node.read("name", symbol)){
-            scene->setName(symbol);
-        }
+    }
+
+    NodeFunction readNode = q->second;
+    SgNode* scene = (this->*readNode)(node);
+    if(node.read("name", symbol)){
+        scene->setName(symbol);
     }
     return scene;
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readGroup(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readGroup(Mapping& node)
 {
     SgGroupPtr group = new SgGroup;
     if(!readElements(node, group)){
         group = 0; // clear group if empty
     }
-    return group;
+    return group.retn();
 }
 
 
@@ -309,7 +308,7 @@ bool YAMLSceneReaderImpl::readElements(Mapping& node, SgGroup* group)
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readTransform(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 {
     SgPosTransformPtr transform = new SgPosTransform;
 
@@ -324,11 +323,11 @@ SgNodePtr YAMLSceneReaderImpl::readTransform(Mapping& node)
             transform->setRotation(R);
         }
     }
-    return transform;
+    return transform.retn();
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
 {
     SgShapePtr shape;
 
@@ -349,7 +348,7 @@ SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
         Vector3 p;
         bool isTranslated = read(node, "translation", p);
         if(isRotated || isTranslated){
-            SgPosTransformPtr transform = new SgPosTransform;
+            SgPosTransform* transform = new SgPosTransform;
             if(isRotated){
                 transform->setRotation(R);
             }
@@ -361,7 +360,7 @@ SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
         }
     }
 
-    return shape;
+    return shape.retn();
 }
 
 
@@ -556,22 +555,22 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readResource(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
 {
-    SgNodePtr scene;
+    SgNodePtr resource;
     if(node.read("uri", symbol)){
         string nodeName;
         if(node.read("node", nodeName)){
-            scene = importScene(symbol, nodeName);
+            resource = loadResource(symbol, nodeName);
         } else {
-            scene = importScene(symbol);
+            resource = loadResource(symbol);
         }
     }
-    return scene;
+    return resource.retn();
 }
 
 
-SgNode* YAMLSceneReaderImpl::importScene(const string& uri)
+SgNode* YAMLSceneReaderImpl::loadResource(const string& uri)
 {
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
     if(resourceInfo){
@@ -581,7 +580,7 @@ SgNode* YAMLSceneReaderImpl::importScene(const string& uri)
 }
 
 
-SgNode* YAMLSceneReaderImpl::importScene(const string& uri, const string& nodeName)
+SgNode* YAMLSceneReaderImpl::loadResource(const string& uri, const string& nodeName)
 {
     SgNode* scene = 0;
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);

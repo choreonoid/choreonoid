@@ -38,8 +38,8 @@ public:
     }
     bool readAngle(Mapping& node, const char* key, double& angle);
     bool readRotation(Mapping& node, Matrix3& out_R, bool doExtract);
-    SgNodePtr readNode(Mapping& node);
-    SgNodePtr readNode(Mapping& node, const std::string& type);
+    SgNode* readNode(Mapping& node);
+    SgNode* readNode(Mapping& node, const std::string& type);
 
 private:
     YAMLSceneReaderImpl* impl;
