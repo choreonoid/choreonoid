@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.wrl"
+            modelFile: "${SHARE}/model/misc/floor.body"
             currentBaseLink: "BASE"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
@@ -42,7 +42,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0, 0.15 ]
             rootAttitude: [ 
@@ -63,7 +63,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.3, 0.15 ]
             rootAttitude: [ 
@@ -84,7 +84,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.6, 0.15 ]
             rootAttitude: [ 
@@ -105,7 +105,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.9, 0.15 ]
             rootAttitude: [ 
@@ -126,7 +126,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.2, 0.15 ]
             rootAttitude: [ 
@@ -147,7 +147,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.5, 0.15 ]
             rootAttitude: [ 
@@ -168,7 +168,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.15, 0.45 ]
             rootAttitude: [ 
@@ -189,7 +189,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.45, 0.45 ]
             rootAttitude: [ 
@@ -210,7 +210,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.75, 0.45 ]
             rootAttitude: [ 
@@ -231,7 +231,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.05, 0.45 ]
             rootAttitude: [ 
@@ -252,7 +252,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.35, 0.45 ]
             rootAttitude: [ 
@@ -273,7 +273,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.3, 0.75 ]
             rootAttitude: [ 
@@ -294,7 +294,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.6, 0.75 ]
             rootAttitude: [ 
@@ -315,7 +315,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.9, 0.75 ]
             rootAttitude: [ 
@@ -336,7 +336,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.2, 0.75 ]
             rootAttitude: [ 
@@ -357,7 +357,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.45, 1.05 ]
             rootAttitude: [ 
@@ -378,7 +378,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.75, 1.05 ]
             rootAttitude: [ 
@@ -399,7 +399,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 1.05, 1.05 ]
             rootAttitude: [ 
@@ -420,7 +420,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.6, 1.35 ]
             rootAttitude: [ 
@@ -441,7 +441,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.9, 1.35 ]
             rootAttitude: [ 
@@ -462,7 +462,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/box2.wrl"
+            modelFile: "${SHARE}/model/misc/box2.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0.75, 2 ]
             rootAttitude: [ 

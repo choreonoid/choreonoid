@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/crawler.wrl"
+            modelFile: "${SHARE}/model/misc/crawler.body"
             currentBaseLink: "BODY"
             rootPosition: [ -5, 0, 0.1 ]
             rootAttitude: [ 
@@ -114,7 +114,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/slope.wrl"
+            modelFile: "${SHARE}/model/misc/slope.body"
             currentBaseLink: "WAIST"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 

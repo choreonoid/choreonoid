@@ -21,7 +21,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/4wheelsVehicle.wrl"
+            modelFile: "${SHARE}/model/misc/4wheelsVehicle.body"
             currentBaseLink: "BODY"
             rootPosition: [ 0, 0, 0.1 ]
             rootAttitude: [ 
@@ -57,7 +57,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/floor.wrl"
+            modelFile: "${SHARE}/model/misc/floor.body"
             currentBaseLink: "BASE"
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 

@@ -1,0 +1,684 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+
+name: SR1
+rootLink: WAIST
+
+links:
+  -
+    name: WAIST
+    jointType: free
+    translation: [ 0, 0, 0.7135 ]
+    centerOfMass: [ 0, 0, 0.0375 ]
+    mass: 27.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements:
+      -
+        type: Shape
+        appearance: &WaistAppearance
+          material: { }
+        geometry: { type: Box, size: [ 0.08, 0.08, 0.08 ] }
+      -
+        type: Transform
+        translation: [ 0, 0, 0.0955 ]
+        elements:
+          Shape:
+            appearance: *WaistAppearance
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.111 ] }
+      -
+        type: AccelerationSensor
+        name: WaistAccelSensor
+        id: 0
+      -
+        type: RateGyroSensor
+        name: WaistGyro
+        id: 0
+  -
+    name: WAIST_P
+    parent: WAIST
+    translation : [ 0, 0, 0.176 ]
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 26
+    centerOfMass: [ 0, 0, -0.1 ]
+    mass: 6.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements:
+      Shape:
+        geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+        appearance: &Appearance1
+          material:
+            diffuseColor: [ 0.6, 1.0, 0.6 ]
+  -
+    name: WAIST_R
+    parent: WAIST_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 27
+    childLinks: [ CHEST ]
+    centerOfMass: [ 0.11, 0, 0.25 ]
+    mass: 30.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements:
+      -
+        type: Transform
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance: &Appearance2
+              material:
+                diffuseColor: [0.6, 0.8, 0.6 ]
+      -
+        type: Transform
+        translation: [ 0, 0, 0.1625 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.275 ] }
+            appearance: *Appearance2
+  -
+    name: CHEST
+    parent: WAIST_R
+    jointType: fixed
+    jointId: 28
+    translation: [ 0, 0, 0.35 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 13.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements:
+      -
+        type: Transform
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.1 }
+            appearance: &Appearance3
+              material:
+                diffuseColor: [ 0.8, 0.8, 0.8 ]
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 0.15, 0.27, 0.05 ] }
+        appearance: *Appearance3
+      -
+        type: Transform
+        translation: [ 0, 0, 0.065 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.03 ] }
+            appearance:
+              material:
+                diffuseColor: [ 0.5, 0.8, 0.5 ]
+      -
+        type: Transform
+        translation: [ -0.015, 0, 0.16 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.31, 0.16, 0.16 ] }
+            appearance:
+              material:
+                diffuseColor: [ 0.5, 0.8, 0.5]
+      -
+        type: Transform
+        translation: [ 0.15, 0.05, 0.15 ]
+        rotation: [ 0, 1, 0, -90 ]
+        elements:
+          Camera:
+            name: LeftCamera
+            rotation: [ 0, 0, 1, -90 ]
+            id: 0
+            format: DEPTH
+            nearClipDistance: 0.1
+            elements: &CameraShape
+              Transform:
+                rotation: [ 1, 0, 0, 90 ]
+                elements:
+                  Shape:
+                    geometry: { type: Cylinder, radius: 0.02, height: 0.025 }
+                    appearance:
+                      material:
+                        diffuseColor: [ 1, 0, 0 ]
+      -
+        type: Transform
+        translation: [ 0.15, -0.05, 0.15 ]
+        rotation: [ 0, 1, 0, -90 ]
+        elements:
+          Camera:
+            name: RightCamera
+            rotation: [ 0, 0, 1, -90 ]
+            id: 1
+            format: DEPTH
+            nearClipDistance: 0.1
+            elements: *CameraShape
+  -
+    name: LARM_SHOULDER_P
+    parent: CHEST
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 19
+    translation: [ 0, 0.21, 0 ]
+    centerOfMass: [ 0.1, 0, 0 ]
+    mass: 3.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements:
+      Transform:
+        translation: [ 0, -0.05, 0 ]
+        elements: &ArmShape1
+          Shape: 
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+  -
+    name: LARM_SHOULDER_R
+    parent: LARM_SHOULDER_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 20
+    centerOfMass: [ 0, 0, -0.1 ]
+    mass: 0.6
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &ArmShape2
+      -
+        type: Transform
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance:
+              material:
+                diffuseColor: [ 0.8, 0.9, 0.8 ]
+      -
+        type: Transform
+        translation: [ 0, 0, -0.1065 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.163 ] }
+            appearance: *Appearance2
+  -
+    name: LARM_SHOULDER_Y
+    parent: LARM_SHOULDER_R
+    jointType: fixed
+    jointId: 21
+    translation: [ 0, 0, -0.263 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &ArmShape3
+      Transform:
+        translation: [ 0, 0, 0.05 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+  -
+    name: LARM_ELBOW
+    parent: LARM_SHOULDER_Y
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 22
+    centerOfMass: [ 0, 0, -0.3 ]
+    mass: 0.6
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &ArmShape4
+      -
+        type: Shape
+        geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+        appearance: &Appearance4
+          material:
+            diffuseColor: [ 0.8, 1.0, 0.8 ]
+      -
+        type: Transform
+        translation: [ 0, 0, -0.0985 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.147 ] }
+            appearance: *Appearance4
+  -
+    name: LARM_WRIST_Y
+    parent: LARM_ELBOW
+    jointType: fixed
+    jointAxis: [ 0, 0, 1 ]
+    jointId: 23
+    translation: [ 0, 0, -0.247 ]
+    centerOfMass: [ 0, 0, 0.1 ]
+    mass: 0.4
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &ArmShape5
+      Transform:
+        translation: [ 0, 0, 0.05 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+  -
+    name: LARM_WRIST_P
+    parent: LARM_WRIST_Y
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId:  24
+    centerOfMass: [ -0.1, 0, 0 ]
+    mass: 0.4
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &ArmShape6
+      Shape:
+        geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+  -
+    name: LARM_WRIST_R
+    parent: LARM_WRIST_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId:  25
+    centerOfMass: [ 0, 0, -0.1 ]
+    mass: 0.4
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    forceRange: [ -1000, 1000 ]
+    elements: &ArmShape7
+      -
+        type: Transform
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.025, height: 0.05 }
+            appearance: &Appearance7
+              material:
+                diffuseColor: [ 0.7, 0.9, 0.7 ]
+      -
+        type: Transform
+        translation: [ 0, 0, -0.1125 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.05, 0.05, 0.175 ] }
+            appearance: *Appearance7
+  -
+    name: RARM_SHOULDER_P
+    parent: CHEST
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 6
+    translation: [ 0, -0.21, 0 ]
+    centerOfMass: [ 0.1, 0, 0 ]
+    mass: 3.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements:
+      Transform:
+        translation: [ 0, 0.05, 0 ]
+        elements: *ArmShape1
+  -
+    name: RARM_SHOULDER_R
+    parent: RARM_SHOULDER_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 7
+    centerOfMass: [ 0, 0, -0.1 ]
+    mass: 0.6
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *ArmShape2
+  -
+    name: RARM_SHOULDER_Y
+    parent: RARM_SHOULDER_R
+    jointType: fixed
+    jointId:  8
+    translation: [ 0, 0, -0.263 ]
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 1.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *ArmShape3
+  -
+    name: RARM_ELBOW
+    parent: RARM_SHOULDER_Y
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 9
+    centerOfMass: [ 0, 0, -0.3 ]
+    mass: 0.6
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *ArmShape4
+  -
+    name: RARM_WRIST_Y
+    parent: RARM_ELBOW
+    jointType: fixed
+    jointAxis: [ 0, 0, 1 ]
+    jointId:  10
+    translation: [ 0, 0, -0.247 ]
+    centerOfMass: [ 0, 0, 0.1 ]
+    mass: 0.4
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *ArmShape5
+  -
+    name: RARM_WRIST_P
+    parent: RARM_WRIST_Y
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId:  11
+    centerOfMass: [ -0.1, 0, 0 ]
+    mass: 0.4
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *ArmShape6
+  -
+    name: RARM_WRIST_R
+    parent: RARM_WRIST_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId:  12
+    centerOfMass: [ 0, 0, -0.1 ]
+    mass: 0.4
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    forceRange: [ -1000, 1000 ]
+    elements: *ArmShape7
+  -
+    name: LLEG_HIP_R
+    parent: WAIST
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 13
+    translation: [ 0, 0.09, 0 ]
+    centerOfMass: [ 0, 0.1, 0 ]
+    mass: 2.5
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &LegShape1
+      Transform:
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+  -
+    name: LLEG_HIP_P
+    parent: LLEG_HIP_R
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 14
+    centerOfMass: 0 0 -0.15
+    mass: 2.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &LegShape2
+      Shape:
+        geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+  -
+    name: LLEG_HIP_Y
+    parent: LLEG_HIP_P
+    jointType: fixed
+    jointId: 15
+    translation: [ 0, 0, -0.3535 ]
+    centerOfMass: [ 0, 0.04, 0 ]
+    mass: 5.1
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &LegShape3
+      -
+        type: Transform
+        translation: [ 0, 0, 0.1 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            appearance: &LegApp3
+              material:
+                diffuseColor: [ 0.8, 0.9, 0.8 ]
+            geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+      -
+        type: Transform
+        translation: [ 0, 0, 0.22675 ]
+        elements:
+          Shape:
+            appearance: *LegApp3
+            geometry: { type: Box, size: [ 0.1, 0.1, 0.1535 ] }
+  -
+    name: LLEG_KNEE
+    parent: LLEG_HIP_Y
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 16
+    centerOfMass: [ 0, 0, -0.3 ]
+    mass: 7.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &LegShape4
+      -
+        type: Shape
+        geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+        appearance: &LegApp4
+          material:
+            diffuseColor: [ 0.8, 1.0, 0.8 ]
+      -
+        type: Transform
+        translation: [ 0, 0, -0.15 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.1, 0.1, 0.2 ] }
+            appearance: *LegApp4
+  -
+    name: LLEG_ANKLE_P
+    parent: LLEG_KNEE
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 17
+    translation: [ 0, 0, -0.3 ]
+    centerOfMass: [ -0.15, 0, 0 ]
+    mass: 2.5
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &LegShape5
+      Shape:
+        geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+  -
+    name: LLEG_ANKLE_R
+    parent: LLEG_ANKLE_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 18
+    centerOfMass: [ 0.28, 0, -0.2 ]
+    mass: 1.9
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: &LegShape6
+      -
+        type: Transform
+        translation: [ 0.1, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.05, height: 0.1 }
+            appearance: &LegApp6
+              material:
+                diffuseColor: [ 0.0, 0.5, 0.0 ]
+      -
+        type: Transform
+        translation: [ 0.055, 0, -0.05 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.25, 0.14, 0.01 ] }
+            appearance: *LegApp6
+  -
+    name: RLEG_HIP_R
+    parent: WAIST
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 0
+    translation: [ 0, -0.09, 0 ]
+    centerOfMass: [ 0, -0.1, 0 ]
+    mass: 2.5
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *LegShape1
+  -
+    name: RLEG_HIP_P
+    parent: RLEG_HIP_R
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 1
+    centerOfMass: 0 0 -0.15
+    mass: 2.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *LegShape2
+  -
+    name: RLEG_HIP_Y
+    parent: RLEG_HIP_P
+    jointType: fixed
+    jointId: 2
+    translation: [ 0, 0, -0.3535 ]
+    centerOfMass: [ 0, -0.04, 0 ]
+    mass: 5.1
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *LegShape3
+  -
+    name: RLEG_KNEE
+    parent: RLEG_HIP_Y
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 3
+    centerOfMass: [ 0, 0, -0.3 ]
+    mass: 7.0
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *LegShape4
+  -
+    name: RLEG_ANKLE_P
+    parent: RLEG_KNEE
+    jointType: revolute
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 4
+    translation: [ 0, 0, -0.3 ]
+    centerOfMass: [ -0.15, 0, 0 ]
+    mass: 2.5
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *LegShape5
+  -
+    name: RLEG_ANKLE_R
+    parent: RLEG_ANKLE_P
+    jointType: fixed
+    jointAxis: [ 1, 0, 0 ]
+    jointId: 5
+    centerOfMass: [ 0.28, 0, -0.2 ]
+    mass: 1.9
+    inertia: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1 ]
+    elements: *LegShape6
+
+standardPose: [ 
+   0, -30, 0,  60, -30, 0,
+  20, -10, 0, -40,   0, 0, 0,
+   0, -30, 0,  60, -30, 0,
+  20,  10, 0, -40,   0, 0, 0,
+   0,   0, 0 
+]
+
+linkGroup:
+  - name: UPPER-BODY
+    links:
+      - WAIST_P
+      - WAIST_R
+      - CHEST
+      - name: ARMS
+        links:
+          - name: R-ARM
+            links: [ RARM_SHOULDER_P, RARM_SHOULDER_R, RARM_SHOULDER_Y, RARM_ELBOW, 
+                     RARM_WRIST_Y, RARM_WRIST_P, RARM_WRIST_R ]
+          - name: L-ARM
+            links: [ LARM_SHOULDER_P, LARM_SHOULDER_R, LARM_SHOULDER_Y, LARM_ELBOW, 
+                     LARM_WRIST_Y, LARM_WRIST_P, LARM_WRIST_R ]
+  - WAIST
+  - name: LEGS
+    links:
+      - name: R-LEG
+        links: [ RLEG_HIP_R, RLEG_HIP_P, RLEG_HIP_Y, RLEG_KNEE, RLEG_ANKLE_P, RLEG_ANKLE_R ]
+      - name: L-LEG
+        links: [ LLEG_HIP_R, LLEG_HIP_P, LLEG_HIP_Y, LLEG_KNEE, LLEG_ANKLE_P, LLEG_ANKLE_R ]
+
+footLinks:
+  - link: RLEG_ANKLE_R
+    soleCenter: [ 0.05, 0.0, -0.055 ]
+  - link: LLEG_ANKLE_R
+    soleCenter: [ 0.05, 0.0, -0.055 ]
+
+defaultIKsetup:
+  WAIST: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
+  RLEG_ANKLE_R: [ WAIST ]
+  LLEG_ANKLE_R: [ WAIST ]
+
+possibleIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
+defaultIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
+possileSupportLinks: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
+
+collisionDetection:
+  excludeTreeDepth: 3
+  excludeLinks: [ ]
