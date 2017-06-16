@@ -80,15 +80,19 @@ void EditableSceneLink::showOutline(bool on)
     if(!visualShape()){
         return;
     }
+    SgOutlineGroupPtr& outline = impl->outlineGroup;
     if(on){
-        if(!impl->outlineGroup){
-            auto outline = new SgOutlineGroup;
+        if(!outline){
+            outline = new SgOutlineGroup;
             outline->setColor(Vector3f(1.0f, 1.0f, 0.0f));
-            impl->outlineGroup = outline;
         }
-        insertEffectGroup(impl->outlineGroup);
-    } else if(impl->outlineGroup){
-        removeEffectGroup(impl->outlineGroup);
+        if(!outline->hasParents()){
+            insertEffectGroup(outline);
+        }
+    } else {
+        if(outline && outline->hasParents()){
+            removeEffectGroup(outline);
+        }
     }
 }
 
