@@ -1,0 +1,51 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: Conveyor
+
+links:
+  -
+    name: BASE
+    jointType: fixed
+    translation: [ 0.0, 0.0, 0.05 ]
+    rotation: [ 0, 0, 1, 0 ]
+    elements:
+      -
+        type: RigidBody
+        mass: 20.0
+        inertia: [
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1 ]
+        elements:
+          Shape:
+            geometry:
+              type: Box
+              size: [ 7.0, 2.0, 0.1 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.6, 0.4, 0.2 ]
+  -
+    name: BELT
+    parent: BASE
+    jointId: 0
+    jointType: pseudoContinuousTrack
+    jointAxis: [ 0, 1, 0 ]
+    translation: [ 0.0, 0.0, 0.15 ]
+    rotation: [ 0, 0, 1, 0 ]
+    elements:
+      -
+        type: RigidBody
+        mass: 10.0
+        inertia: [
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1 ]
+        elements:
+          Shape:
+            geometry:
+              type: Box
+              size: [ 6.0, 1.0, 0.2 ]
+            appearance:
+              material:
+                diffuseColor: [ 1.0, 0.4, 0.2 ]

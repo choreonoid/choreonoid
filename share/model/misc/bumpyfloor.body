@@ -1,0 +1,55 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: floor
+
+links:
+  -
+    name: WAIST
+    jointType: fixed
+    translation: [ 0.0, 0.0, -0.1 ]
+    rotation: [ 0, 0, 1, 0 ]
+    elements:
+      -
+        type: RigidBody
+        mass: 0.5
+        inertia: [
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1 ]
+        elements:
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 8, 8, 0.2 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.0, 0.0, 1.0 ]
+          -
+            type: Transform
+            translation: [ 0, 0, 0 ]
+            elements:
+              Shape:
+                appearance:
+                  material:
+                    diffuseColor: [ 0, 1, 0 ]
+                geometry:
+                  type: Extrusion
+                  crossSection: [
+                    -0.2, 0.1,
+                    0.2, 0.1,
+                    0.2, 0.12,
+                    -0.2, 0.1 ]
+                  spine: [ 0, -2, 0, 0, 2, 0 ]
+          -
+            type: Transform
+            translation: [ 1.0, 0, 0.105 ]
+            elements:
+              Shape:
+                geometry:
+                  type: Box
+                  size: [ 0.2, 4, 0.01 ]
+                appearance:
+                  material:
+                    diffuseColor: [ 1.0, 0.0, 0.0 ]

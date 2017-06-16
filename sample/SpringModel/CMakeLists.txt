@@ -7,8 +7,8 @@ option(BUILD_SPRING_MODEL_SAMPLE "Building a spring model sample" OFF)
 
 if(BUILD_SPRING_MODEL_SAMPLE)
   
-  configure_file(SpringModel.wrl ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
-  configure_file(CustomizedSpringModel.wrl ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
+  configure_file(SpringModel.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
+  configure_file(CustomizedSpringModel.body ${CNOID_SOURCE_SHARE_DIR}/model/misc COPYONLY)
 
   if(NOT BUILD_SIMPLE_CONTROLLER_PLUGIN)
     message(WARNING "The spring model sample controller needs SimpleControllerPlugin.")

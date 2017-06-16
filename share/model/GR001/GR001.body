@@ -1,6 +1,6 @@
 format: ChoreonoidBody
 formatVersion: 1.0
-
+angleUnit: radian
 name: GR001
 rootLink: WAIST
 

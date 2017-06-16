@@ -1,0 +1,385 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: RIC30
+
+links:
+  -
+    name: WAIST
+    jointType: free
+    translation: [ 0, 0, 0.1605 ]
+    centerOfMass: [ -0.0087, 0.0001, 0.0346 ]
+    mass: 0.238
+    inertia: [
+      0.0002369394, 1.0608E-8, -3.322424E-6,
+      1.0608E-8, 0.0001612104, 4.6692E-8,
+      -3.322424E-6, 4.6692E-8, 0.0001608802 ]
+    elements: { Resource: { uri: "parts/WAIST.wrl" } }
+  -
+    name: R_HIP_Y
+    parent: WAIST
+    jointType: revolute
+    jointId: 0
+    jointAxis: [ 0.0, 0.0, 1.0 ]
+    translation: [ 0.0, -0.0245, -0.0023 ]
+    jointRange: [ -2.618, 0.524 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0088, 0.0061, 0 ]
+    mass: 0.007
+    inertia: [
+      6.01175E-7, 5.7E-11, -4.4577E-8,
+      5.7E-11, 3.544498E-6, 2.3E-11,
+      -4.4577E-8, 2.3E-11, 3.417531E-6 ]
+    elements: { Resource: { uri: "parts/R_HIP_Y.wrl" } }
+  -
+    name: R_HIP_R
+    parent: R_HIP_Y
+    jointType: revolute
+    jointId: 1
+    jointAxis: [ -1, 0, 0 ]
+    translation: [ 0.0026, 0.0, -0.020 ]
+    jointRange: [ -1.571, 1.571 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0111, 0.0001, -0.0094 ]
+    mass: 0.049
+    inertia: [
+      8.439237E-6, -3.344E-8, -2.23407E-7,
+      -3.344E-8, 1.5317246E-5, -6.663E-9,
+      -2.23407E-7, -6.663E-9, 1.0887867E-5 ]
+    elements: { Resource: { uri: "parts/R_HIP_R.wrl" } }
+  -
+    name: R_HIP_P
+    parent: R_HIP_R
+    jointType: revolute
+    jointId: 2
+    jointAxis: [ 0, -1, 0 ]
+    translation: [ 0.0, 0.0, 0.0 ]
+    jointRange: [ -0.698, 2.094 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0054, -0.0028, -0.0488 ]
+    mass: 0.039
+    inertia: [
+      2.0443109E-5, -5.87461E-7, 0.000002607,
+      -5.87461E-7, 0.000018454, 2.50548E-6,
+      0.000002607, 2.50548E-6, 9.004707E-6 ]
+    elements: { Resource: { uri: "parts/R_HIP_P.wrl" } }
+  -
+    name: R_KNEE_P
+    parent: R_HIP_P
+    jointType: revolute
+    jointId: 3
+    jointAxis: [ 0, -1, 0 ]
+    translation: [ -0.001, 0, -0.0635 ]
+    jointRange: [ -2.269, 0.0 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0003, -0.0068, -0.0333 ]
+    mass: 0.019
+    inertia: [
+      1.0997074E-5, -2.65E-8, -1.5143E-8,
+      -2.65E-8, 6.487118E-6, -8.97665E-7,
+      -1.5143E-8, -8.97665E-7, 5.683179E-6 ]
+    elements: { Resource: { uri: "parts/R_KNEE_P.wrl" } }
+  -
+    name: R_ANKLE_P
+    parent: R_KNEE_P
+    jointType: revolute
+    jointId: 4
+    jointAxis: [ 0, 1, 0 ]
+    translation: [ 0, 0, -0.067 ]
+    jointRange: [ -1.658, 1.047 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0099, 0.0001, 0.0094 ]
+    mass: 0.049
+    inertia: [
+      8.439237E-6, -3.3438E-8, 2.23405E-7,
+      -3.3438E-8, 1.5317249E-5, 6.661E-9,
+      2.23405E-7, 6.661E-9, 1.088787E-5 ]
+    elements: { Resource: { uri: "parts/R_ANKLE_P.wrl" } }
+  -
+    name: R_ANKLE_R
+    parent: R_ANKLE_P
+    jointType: revolute
+    jointId: 5
+    jointAxis: [ 1, 0, 0 ]
+    translation: [ 0, 0, 0 ]
+    jointRange: [ -0.785, 1.571 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0032, -0.0105, -0.0177 ]
+    mass: 0.022
+    inertia: [
+      5.172795E-6, 3.806E-8, 7.7086E-8,
+      3.806E-8, 1.6885864E-5, -0.000000127,
+      7.7086E-8, -0.000000127, 2.0883897E-5 ]
+    elements: { Resource: { uri: "parts/R_ANKLE_R.wrl" } }
+  -
+    name: L_HIP_Y
+    parent: WAIST
+    jointType: revolute
+    jointId: 6
+    jointAxis: [ 0.0, 0.0, 1.0 ]
+    translation: [ 0.0, 0.0245, -0.0023 ]
+    jointRange: [ -0.524, 2.618 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0088, 0.0061, 0 ]
+    mass: 0.007
+    inertia: [
+      6.01175E-7, 5.7E-11, -4.4577E-8,
+      5.7E-11, 3.544498E-6, 2.3E-11,
+      -4.4577E-8, 2.3E-11, 3.417531E-6 ]
+    elements: { Resource: { uri: "parts/L_HIP_Y.wrl" } }
+  -
+    name: L_HIP_R
+    parent: L_HIP_Y
+    jointType: revolute
+    jointId: 7
+    jointAxis: [ -1, 0, 0 ]
+    translation: [ 0.0026, 0.0, -0.020 ]
+    jointRange: [ -1.571, 1.571 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0111, -0.0001, -0.0094 ]
+    mass: 0.049
+    inertia: [
+      8.439237E-6, 3.3438E-8, -2.23405E-7,
+      3.3438E-8, 1.5317249E-5, 6.661E-9,
+      -2.23405E-7, 6.661E-9, 1.088787E-5 ]
+    elements: { Resource: { uri: "parts/L_HIP_R.wrl" } }
+  -
+    name: L_HIP_P
+    parent: L_HIP_R
+    jointType: revolute
+    jointId: 8
+    jointAxis: [ 0, 1, 0 ]
+    translation: [ 0.0, 0.0, 0.0 ]
+    jointRange: [ -2.094, 0.698 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0054, 0.0028, -0.0488 ]
+    mass: 0.039
+    inertia: [
+      2.0443105E-5, 5.87577E-7, 2.606668E-6,
+      5.87577E-7, 1.8453949E-5, -2.505812E-6,
+      2.606668E-6, -2.505812E-6, 9.004633E-6 ]
+    elements: { Resource: { uri: "parts/L_HIP_P.wrl" } }
+  -
+    name: L_KNEE_P
+    parent: L_HIP_P
+    jointType: revolute
+    jointId: 9
+    jointAxis: [ 0, 1, 0 ]
+    translation: [ -0.001, 0, -0.0635 ]
+    jointRange: [ 0.0, 2.269 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0003, 0.0068, -0.0333 ]
+    mass: 0.019
+    inertia: [
+      1.0994372E-5, 2.65E-8, -1.5141E-8,
+      2.65E-8, 6.487415E-6, 8.97518E-7,
+      -1.5141E-8, 8.97518E-7, 5.683179E-6 ]
+    elements: { Resource: { uri: "parts/L_KNEE_P.wrl" } }
+  -
+    name: L_ANKLE_P
+    parent: L_KNEE_P
+    jointType: revolute
+    jointId: 10
+    jointAxis: [ 0, -1, 0 ]
+    translation: [ 0, 0, -0.067 ]
+    jointRange: [ -1.047, 1.658 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0111, -0.0001, 0.0094 ]
+    mass: 0.049
+    inertia: [
+      8.439237E-6, 3.344E-8, 2.23407E-7,
+      3.344E-8, 1.5317246E-5, -6.663E-9,
+      2.23407E-7, -6.663E-9, 1.0887867E-5 ]
+    elements: { Resource: { uri: "parts/L_ANKLE_P.wrl" } }
+  -
+    name: L_ANKLE_R
+    parent: L_ANKLE_P
+    jointType: revolute
+    jointId: 11
+    jointAxis: [ 1, 0, 0 ]
+    translation: [ 0, 0, 0 ]
+    jointRange: [ -1.571, 0.785 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0032, -0.0105, -0.0177 ]
+    mass: 0.022
+    inertia: [
+      5.171949E-6, -4.4614E-8, 7.7086E-8,
+      -4.4614E-8, 1.6885864E-5, 1.25902E-7,
+      7.7086E-8, 1.25902E-7, 2.0883051E-5 ]
+    elements: { Resource: { uri: "parts/L_ANKLE_R.wrl" } }
+  -
+    name: R_SHOULDER_P
+    parent: WAIST
+    jointType: revolute
+    jointId: 14
+    jointAxis: [ 0, 1, 0 ]
+    translation: [ 0, -0.0453, 0.0535 ]
+    jointRange: [ -2.618, 2.618 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0002, -0.0074, -0.0028 ]
+    mass: 0.004
+    inertia: [
+      4.40882E-7, 9.359E-9, 6.942E-9,
+      9.359E-9, 8.88196E-7, -1.00458E-7,
+      6.942E-9, -1.00458E-7, 9.34149E-7 ]
+    elements: { Resource: { uri: "parts/R_SHOULDER_P.wrl" } }
+  -
+    name: R_SHOULDER_R
+    parent: R_SHOULDER_P
+    jointType: revolute
+    jointId: 15
+    jointAxis: [ 1, 0, 0 ]
+    translation: [ 0, -0.018, -0.0101 ]
+    jointRange: [ -2.618, 0.698 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0011, -0.0035, -0.0176 ]
+    mass: 0.035
+    inertia: [
+      8.750522E-6, 5.17797E-7, -6.22484E-7,
+      5.17797E-7, 1.0943558E-5, 2.85317E-7,
+      -6.22484E-7, 2.85317E-7, 5.785189E-6 ]
+    elements: { Resource: { uri: "parts/R_SHOULDER_R.wrl" } }
+  -
+    name: R_ELBOW_P
+    parent: R_SHOULDER_R
+    jointType: revolute
+    jointId: 16
+    jointAxis: [ 0, 1, 0 ]
+    translation: [ 0.0101, 0, -0.0496 ]
+    jointRange: [ -2.269, 0.873 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0003, 0.0001, -0.0161 ]
+    mass: 0.027
+    inertia: [
+      8.566369E-6, -1.06E-9, -1.21581E-7,
+      -1.06E-9, 7.88368E-6, -3.2839E-8,
+      -1.21581E-7, -3.2839E-8, 2.479052E-6 ]
+    elements: { Resource: { uri: "parts/R_ELBOW_P.wrl" } }
+  -
+    name: L_SHOULDER_P
+    parent: WAIST
+    jointType: revolute
+    jointId: 17
+    jointAxis: [ 0, -1, .0 ]
+    translation: [ 0, 0.0453, 0.0535 ]
+    jointRange: [ -2.618, 2.618 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0002, 0.0074, -0.0028 ]
+    mass: 0.004
+    inertia: [
+      4.41064E-7, -9.454E-9, 6.943E-9,
+      -9.454E-9, 8.88234E-7, 1.00565E-7,
+      6.943E-9, 1.00565E-7, 9.34293E-7 ]
+    elements: { Resource: { uri: "parts/L_SHOULDER_P.wrl" } }
+  -
+    name: L_SHOULDER_R
+    parent: L_SHOULDER_P
+    jointType: revolute
+    jointId: 18
+    jointAxis: [ 1, 0, 0 ]
+    translation: [ 0, 0.018, -0.0101 ]
+    jointRange: [ -0.698, 2.618 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ 0.0011, -0.0035, -0.0176 ]
+    mass: 0.035
+    inertia: [
+      8.750672E-6, -5.17799E-7, -6.22787E-7,
+      -5.17799E-7, 1.0943706E-5, -2.85341E-7,
+      -6.22787E-7, -2.85341E-7, 5.785188E-6 ]
+    elements: { Resource: { uri: "parts/L_SHOULDER_R.wrl" } }
+  -
+    name: L_ELBOW_P
+    parent: L_SHOULDER_R
+    jointType: revolute
+    jointId: 19
+    jointAxis: [ 0, -1, 0 ]
+    translation: [ 0.0101, 0, -0.0496 ]
+    jointRange: [ -0.873, 2.269 ]
+    rotorInertia: 1.0
+    rotorResistor: 1.0
+    centerOfMass: [ -0.0003, -0.0001, -0.0161 ]
+    mass: 0.027
+    inertia: [
+      8.566372E-6, 1.062E-9, -1.2158E-7,
+      1.062E-9, 7.883684E-6, 3.2839E-8,
+      -1.2158E-7, 3.2839E-8, 2.479052E-6 ]
+    elements: { Resource: { uri: "parts/L_ELBOW_P.wrl" } }
+
+
+standardPose: [ 
+0, 0,  20, -40, -20, 0,
+0, 0, -20,  40,  20, 0,
+0, 0,
+ 20, -10, -40,
+-20,  10,  40 ]
+
+linkGroup: 
+  - name: UPPER-BODY
+    links: 
+      - name: ARMS
+        links:
+          - name: R-ARM
+            links: [ R_SHOULDER_P, R_SHOULDER_R, R_ELBOW_P ]
+          - name: L-ARM
+            links: [ L_SHOULDER_P, L_SHOULDER_R, L_ELBOW_P ]
+  - WAIST
+  - name: LOWER-BODY
+    links:
+      - name: LEGS
+        links:
+        - name: R-LEG
+          links: [ R_HIP_Y, R_HIP_R, R_HIP_P, R_KNEE_P, R_ANKLE_P, R_ANKLE_R ]
+        - name: L-LEG
+          links: [ L_HIP_Y, L_HIP_R, L_HIP_P, L_KNEE_P, L_ANKLE_P, L_ANKLE_R ]
+
+possibleIkInterpolationLinks: [ WAIST, R_ANKLE_R, L_ANKLE_R ]
+defaultIkInterpolationLinks: [ WAIST, R_ANKLE_R, L_ANKLE_R ]
+possileSupportLinks: [ R_ANKLE_R, L_ANKLE_R ]
+
+defaultIKsetup:
+  WAIST: [ R_ANKLE_R, L_ANKLE_R ]
+  R_ANKLE_R: [ WAIST ]
+  L_ANKLE_R: [ WAIST ]
+
+footLinks:
+  - link: R_ANKLE_R
+    soleCenter: [ -0.0098, -0.00455, -0.0212 ]
+  - link: L_ANKLE_R
+    soleCenter: [ -0.0098,  0.00455, -0.0212 ]
+
+symmetricJoints:
+  - [ L_SHOULDER_P, R_SHOULDER_P, -1 ]
+  - [ L_SHOULDER_R, R_SHOULDER_R, -1 ]
+  - [ L_ELBOW_P,    R_ELBOW_P,    -1 ]
+  - [ L_HIP_Y,      R_HIP_Y,      -1 ]
+  - [ L_HIP_R,      R_HIP_R,      -1 ]
+  - [ L_HIP_P,      R_HIP_P,      -1 ]
+  - [ L_KNEE_P,     R_KNEE_P,     -1 ]
+  - [ L_ANKLE_P,    R_ANKLE_P,    -1 ]
+  - [ L_ANKLE_R,    R_ANKLE_R,    -1 ]
+
+symmetricIkLinks:
+  - [ WAIST ]
+  - [ L_ANKLE_R, R_ANKLE_R ]
+
+
+selfCollisionDetection:
+  excludeTreeDepth: 3
+  excludeLinks: [ ]

@@ -3,7 +3,6 @@ from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.Body import *
 from cnoid.BodyPlugin import *
-from cnoid.SimpleControllerPlugin import *
 import math;
 
 worldItem = WorldItem()
@@ -15,7 +14,7 @@ timeBar.setTimeRange(0.0, 15.0)
 timeBar.setFillLevelSync(False)
 
 robotItem = BodyItem()
-robotItem.load(shareDirectory() + "/model/SR1/SR1.yaml")
+robotItem.load(shareDirectory() + "/model/SR1/SR1.body")
 
 robot = robotItem.body()
 robot.rootLink().setTranslation( [0.0, 0.0, 0.7135] )
@@ -41,7 +40,7 @@ worldItem.addChildItem(robotItem)
 ItemTreeView.instance().checkItem(robotItem)
 
 floorItem = BodyItem()
-floorItem.load(shareDirectory() + "/model/misc/floor.wrl")
+floorItem.load(shareDirectory() + "/model/misc/floor.body")
 worldItem.addChildItem(floorItem)
 
 simulatorItem = AISTSimulatorItem()

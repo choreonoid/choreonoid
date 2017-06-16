@@ -1,0 +1,144 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: ClosedLinkSample
+
+links:
+  -
+    name: WAIST
+    translation: [ 0.000000, 0.000000, 0.000000 ]
+    rotation: [ 1.000000, 0.000000, 0.000000, -90 ]
+    jointType: fixed
+    mass: 27.000000
+    centerOfMass: [ 0.100000, 0.025000, 0.050000 ]
+    inertia: [
+      0.163125, 0.000000, 0.000000,
+      0.000000, 0.382500, 0.000000,
+      0.000000, 0.000000, 0.163125 ]
+    elements:
+      Transform:
+        translation: [ 0.1, 0.025, 0.05 ]
+        elements:
+          Shape:
+            geometry: { type: Box, size: [ 0.4, 0.25, 0.1 ]}
+            appearance:
+              material:
+                diffuseColor: [ 0.5, 0.5, 0.5 ]
+  -
+    name: J0
+    parent: WAIST
+    translation: [ 0.000000, 0.000000, 0.120000 ]
+    rotation: [ 0.000000, 0.000000, 1.000000, 0.000000 ]
+    jointType: revolute
+    jointId: 0
+    jointAxis: [ 0, 0, 1 ]
+    mass: 0.084823
+    centerOfMass: [ 0.000000, 0.050000, 0.000000 ]
+    inertia: [
+      0.000073, 0.000000, 0.000000,
+      0.000000, 0.000004, -0.000000,
+      0.000000, -0.000000, 0.000073 ]
+    elements:
+      -
+        type: Transform
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.02, height: 0.04 }
+      -
+        type: Transform
+        translation: [ 0, 0.05, 0 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.01, height: 0.10 }
+      -
+        type: Transform
+        translation: [ 0, 0.10, 0 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.0143, height: 0.04 }
+  -
+    name: J1
+    parent: J0
+    translation: [ 0.000000, 0.100000, 0.040000 ]
+    rotation: [ 0.000000, 0.000000, 1.000000, 0.000000 ]
+    jointType: revolute
+    jointId: 1
+    jointAxis: [ 0, 0, 1 ]
+    mass: 0.169646
+    centerOfMass: [ 0.100000, 0.000000, 0.000000 ]
+    inertia: [
+      0.000008, 0.000000, -0.000000,
+      0.000000, 0.000570, 0.000000,
+      -0.000000, 0.000000, 0.000570 ]
+    elements:
+      -
+        type: Transform
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.013, height: 0.04 }
+            appearance: &red
+              material:
+                diffuseColor: [ 1.0, 0.0, 0.0 ]
+      -
+        type: Transform
+        translation: [ 0.10, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.01, height: 0.20 }
+            appearance: *red
+      -
+        type: Transform
+        translation: [ 0.20, 0, 0 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.013, height: 0.04 }
+            appearance: *red
+  -
+    name: J3
+    parent: WAIST
+    translation: [ 0.200000, 0.000000, 0.120000 ]
+    rotation: [ 0.000000, 0.000000, 1.000000, 0.000000 ]
+    jointType: revolute
+    jointId: 2
+    jointAxis: [ 0, 0, 1 ]
+    mass: 0.084823
+    centerOfMass: [ 0.000000, 0.050000, 0.000000 ]
+    inertia: [
+      0.000073, 0.000000, 0.000000,
+      0.000000, 0.000004, -0.000000,
+      0.000000, -0.000000, 0.000073 ]
+    elements:
+      -
+        type: Transform
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.02, height: 0.04 }
+      -
+        type: Transform
+        translation: [ 0, 0.05, 0 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.01, height: 0.10 }
+      -
+        type: Transform
+        translation: [ 0, 0.10, 0 ]
+        rotation: [ 1, 0, 0, 90 ]
+        elements:
+          Shape:
+            geometry: { type: Cylinder, radius: 0.0143, height: 0.04 }
+
+extraJoints:
+  -
+    link1Name: J1
+    link2Name: J3
+    jointType: piston
+    jointAxis: [ 0, 0, 1 ]
+    link1LocalPos: [ 0.2, 0, 0 ]
+    link2LocalPos: [ 0, 0.1, 0 ]
+
