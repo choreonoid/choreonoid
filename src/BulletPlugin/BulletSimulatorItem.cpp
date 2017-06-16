@@ -373,7 +373,8 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
                         if(scale.x() == scale.y() && scale.x() == scale.z()){
                             doAddPrimitive = true;
                         }
-                    } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                    } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                            mesh->primitiveType() == SgMesh::CAPSULE ){
                         // check if the bottom circle face is uniformly scaled
                         if(scale.x() == scale.z()){
                             doAddPrimitive = true;
@@ -408,6 +409,11 @@ void BulletLink::addMesh(MeshExtractor* extractor, bool meshOnly)
                 case SgMesh::CONE : {
                     SgMesh::Cone cone = mesh->primitive<SgMesh::Cone>();
                     primitiveShape = new btConeShape(cone.radius * scale.x(), cone.height * scale.y());
+                    created = true;
+                    break; }
+                case SgMesh::CAPSULE : {
+                    SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                    primitiveShape = new btCapsuleShape(capsule.radius * scale.x(), capsule.height * scale.y());
                     created = true;
                     break; }
                 default :

@@ -33,6 +33,7 @@ public:
     SgMesh* generateSphere(double radius);
     SgMesh* generateCylinder(double radius, double height, bool bottom = true, bool top = true, bool side = true);
     SgMesh* generateCone(double radius, double height, bool bottom = true, bool side = true);
+    SgMesh* generateCapsule(double radius, double height);
     SgMesh* generateDisc(double radius, double innerRadius);
     SgMesh* generateArrow(double cylinderRadius, double cylinderHeight, double coneRadius, double coneHeight);
     SgMesh* generateTorus(double radius, double crossSectionRadius);

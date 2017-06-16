@@ -51,6 +51,7 @@ public:
     SgMesh* readSphere(Mapping& node);
     SgMesh* readCylinder(Mapping& node);
     SgMesh* readCone(Mapping& node);
+    SgMesh* readCapsule(Mapping& node);
     SgMesh* readExtrusion(Mapping& node);
     SgMesh* readElevationGrid(Mapping& node);
     void readAppearance(SgShape* shape, Mapping& node);
@@ -326,6 +327,8 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& node)
         mesh = readCylinder(node);
     } else if(type == "Cone"){
         mesh = readCone(node);
+    } else if(type == "Capsule"){
+        mesh = readCapsule(node);
     } else if(type == "Extrusion"){
         mesh = readExtrusion(node);
     } else if(type == "ElevationGrid"){
@@ -371,6 +374,14 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& node)
     bool bottom = node.get("bottom", true);
     bool side = node.get("side", true);
     return meshGenerator.generateCone(radius, height, bottom, side);
+}
+
+
+SgMesh* YAMLSceneReaderImpl::readCapsule(Mapping& node)
+{
+    double radius = node.get("radius", 1.0);
+    double height = node.get("height", 1.0);
+    return meshGenerator.generateCapsule(radius, height);
 }
 
 

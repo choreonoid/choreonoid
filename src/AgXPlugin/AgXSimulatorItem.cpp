@@ -10,6 +10,7 @@
 #include <agxCollide/Box.h>
 #include <agxCollide/Sphere.h>
 #include <agxCollide/Cylinder.h>
+#include <agxCollide/Capsule.h>
 #include <agxCollide/Trimesh.h>
 #include <agx/Hinge.h>
 #include <agx/Prismatic.h>
@@ -1135,7 +1136,8 @@ void AgXLink::addMesh(MeshExtractor* extractor, AgXBody* agxBody)
                     if(scale.x() == scale.y() && scale.x() == scale.z()){
                         doAddPrimitive = true;
                     }
-                } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                        mesh->primitiveType() == SgMesh::CAPSULE ){
                     // check if the bottom circle face is uniformly scaled
                     if(scale.x() == scale.z()){
                         doAddPrimitive = true;
@@ -1173,6 +1175,14 @@ void AgXLink::addMesh(MeshExtractor* extractor, AgXBody* agxBody)
                 SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
                 agxCollide::CylinderRef cylinder_ = new agxCollide::Cylinder(cylinder.radius * scale.x(), cylinder.height * scale.y());
                 agxGeometry->add(cylinder_);
+                agxRigidBody->add( agxGeometry );
+                created = true;
+                break;
+            }
+            case SgMesh::CAPSULE : {
+                SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                agxCollide::CapsuleRef capsule_ = new agxCollide::Capsule(capsule.radius * scale.x(), capsule.height * scale.y());
+                agxGeometry->add(capsule_);
                 agxRigidBody->add( agxGeometry );
                 created = true;
                 break;
