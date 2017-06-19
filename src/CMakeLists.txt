@@ -14,8 +14,6 @@ if(ENABLE_GUI)
   add_subdirectory(SceneEffectsPlugin)
   add_subdirectory(SceneEditPlugin)
   add_subdirectory(RobotAccessPlugin)
-  
-  add_subdirectory(PythonSimScriptPlugin)
 
   add_subdirectory(LuaPlugin)
 
@@ -44,6 +42,8 @@ if(ENABLE_GUI)
     add_subdirectory(PythonPlugin)
     add_subdirectory(GrxUIPlugin)
   endif()
+  
+  add_subdirectory(PythonSimScriptPlugin)
   
   add_subdirectory(Choreonoid)
 endif()
