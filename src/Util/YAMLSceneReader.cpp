@@ -82,6 +82,7 @@ public:
     SgMesh* readCapsule(Mapping& node);
     SgMesh* readExtrusion(Mapping& node);
     SgMesh* readElevationGrid(Mapping& node);
+    SgMesh* readResourceAsGeometry(Mapping& node);
     void readAppearance(SgShape* shape, Mapping& node);
     void readMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
@@ -384,7 +385,9 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& node)
         mesh = readExtrusion(node);
     } else if(type == "ElevationGrid"){
         mesh = readElevationGrid(node);
-    }else {
+    } else if(type == "Resource"){
+        mesh = readResourceAsGeometry(node);
+    } else {
         typeNode.throwException(
             str(format(_("Unknown geometry \"%1%\"")) % type));
     }
@@ -521,6 +524,17 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& node)
     }
 
     return meshGenerator.generateElevationGrid(grid);
+}
+
+
+SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
+{
+    SgNode* resource = readResource(node);
+    SgShape* shape = dynamic_cast<SgShape*>(resource);
+    if(!shape){
+        node.throwException(_("A resouce specified as a geometry contains more than a single mesh"));
+    }
+    return shape->mesh();
 }
 
 

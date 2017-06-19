@@ -21,24 +21,18 @@ public:
     bool isVisible;
     bool hasClone;
     
-    LinkShapeGroup()
+    LinkShapeGroup(Link* link)
         : SgGroup(findPolymorphicId<LinkShapeGroup>())
     {
+        visualShape = link->visualShape();
+        if(visualShape){
+            addChild(visualShape);
+        }
+        collisionShape = link->collisionShape();
+        if(collisionShape != visualShape){
+            addChild(collisionShape);
+        }
         isVisible = true;
-        hasClone = false;
-    }
-
-    void setVisualShape(SgNode* node)
-    {
-        if(node) addChild(node);
-        visualShape = node;
-        hasClone = false;
-    }
-
-    void setCollisionShape(SgNode* node)
-    {
-        if(node) addChild(node);
-        collisionShape = node;
         hasClone = false;
     }
 
@@ -50,15 +44,20 @@ public:
     void cloneShapes(SgCloneMap& cloneMap)
     {
         if(!hasClone){
+            bool sameness = (visualShape == collisionShape);
             if(visualShape){
                 removeChild(visualShape);
                 visualShape = visualShape->cloneNode(cloneMap);
                 addChild(visualShape);
             }
             if(collisionShape){
-                removeChild(collisionShape);
-                collisionShape = collisionShape->cloneNode(cloneMap);
-                addChild(collisionShape);
+                if(sameness){
+                    collisionShape = visualShape;
+                } else {
+                    removeChild(collisionShape);
+                    collisionShape = collisionShape->cloneNode(cloneMap);
+                    addChild(collisionShape);
+                }
             }
             hasClone = true;
             notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED);
@@ -175,9 +174,7 @@ SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
     shapeTransform = new SgPosTransform;
     shapeTransform->setRotation(link->Rs().transpose());
 
-    mainShapeGroup = new LinkShapeGroup;
-    mainShapeGroup->setVisualShape(link->visualShape());
-    mainShapeGroup->setCollisionShape(link->collisionShape());
+    mainShapeGroup = new LinkShapeGroup(link);
     topShapeGroup = mainShapeGroup;
 
     shapeTransform->addChild(topShapeGroup);
