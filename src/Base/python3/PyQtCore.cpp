@@ -41,7 +41,7 @@ PYBIND11_PLUGIN(QtCore)
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         .def_static("singleShot", &QTimer::singleShot)
 #else
-        .def_static("singleShot", (void (*singleShotPtr) (int, const QObject*, const char*)) &QTimer::singleShot)
+        .def_static("singleShot", (void(*)(int, const QObject*, const char*)) &QTimer::singleShot)
 #endif
         ;
 
