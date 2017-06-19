@@ -10,6 +10,7 @@
 #include "Link.h"
 #include "ExtraJoint.h"
 #include "DeviceList.h"
+#include "MassMatrix.h"
 #include "exportdecl.h"
 
 namespace cnoid {
