@@ -2,35 +2,51 @@
 
 namespace cnoid{
 
-AGXScene::AGXScene(){
-}
+AGXScene::AGXScene(){}
 
-AGXScene* AGXScene::create(){
+AGXScene* AGXScene::create()
+{
 	return new AGXScene();
 }
 
-void AGXScene::initializeScene(){
-	agxSimulation = new agxSDK::Simulation();
+void AGXScene::initializeScene()
+{
+	clearAGXScene();
+	createAGXSimulation();
 }
 
-void AGXScene::clearScene(){
+void AGXScene::clearAGXScene()
+{ 
 	if(agxSimulation) agxSimulation->cleanup(agxSDK::Simulation::CLEANUP_ALL);
 }
 
-void AGXScene::stepSimulation(){
+void AGXScene::stepAGXSimulation()
+{
+	agx::Thread::makeCurrentThreadMainThread();
 	agxSimulation->stepForward();
+	//agx::Thread::unregisterAsAgxThread();
 }
 
-agxSDK::SimulationRef AGXScene::getSimulation(){
+agxSDK::SimulationRef AGXScene::getAGXSimulation()
+{
 	return agxSimulation;
 }
 
-bool AGXScene::saveSceneToAGXFile(){
+agxSDK::SimulationRef AGXScene::createAGXSimulation()
+{
+	if(agxSimulation) return agxSimulation;
+	agxSimulation = new agxSDK::Simulation();
+	return agxSimulation;
+}
+
+bool AGXScene::saveSceneToAGXFile()
+{
 	if(!agxIO::writeFile("simulation.agx", agxSimulation)) return false;
 	return true;
 }
 
-void AGXScene::buildTestScene(){
+void AGXScene::buildTestScene()
+{
 	// boxçÏê¨
 	agx::RigidBodyRef rigidBox = new agx::RigidBody();
 	agxCollide::GeometryRef geometryBox = new agxCollide::Geometry();

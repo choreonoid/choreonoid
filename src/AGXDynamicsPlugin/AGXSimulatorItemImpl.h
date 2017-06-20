@@ -3,7 +3,7 @@
 
 #include <cnoid/SimulatorItem>
 #include "AGXInclude.h"
-//#include "AGXScene.h"
+#include "AGXScene.h"
 #include "AGXBody.h"
 #include <agxSDK/Simulation.h>
 #include <iostream>
@@ -42,10 +42,12 @@ public:
 	//agxSDK::SimulationRef createAGXSimulation();
 	//agxSDK::SimulationRef getAGXSimulation();
 	bool saveSimulationToAGXFile();
-	agxSDK::SimulationRef agxSimulation;
+	//agxSDK::SimulationRef agxSimulation;
 
 private:
-	//AGXScene* agxScene = nullptr;
+	AGXSceneRef agxScene = nullptr;
+	//AGXSceneRef createAGXScene();
+	//AGXSceneRef getAGXScene();
 };
 }
 #endif

@@ -5,19 +5,26 @@
 
 namespace cnoid{
 
-class AGXScene{
+
+struct AGXSimulationDesc
+{
+	
+};
+
+class AGXScene : public agx::Referenced{
 public:
 	AGXScene();
 	static AGXScene* create();
 	void initializeScene();
-	void clearScene();
-	void stepSimulation();
+	void clearAGXScene();
+	void stepAGXSimulation();
 	bool saveSceneToAGXFile();
 	void buildTestScene();
-	agxSDK::SimulationRef getSimulation();
+	agxSDK::SimulationRef getAGXSimulation();
 private:
 	agxSDK::SimulationRef agxSimulation;
+	agxSDK::SimulationRef createAGXSimulation();
 };
-//typedef agx::ref_ptr<AGXScene> AGXSceneRef;
+typedef agx::ref_ptr<AGXScene> AGXSceneRef;
 }
 #endif

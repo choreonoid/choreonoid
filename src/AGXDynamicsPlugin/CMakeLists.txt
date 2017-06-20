@@ -29,19 +29,21 @@ link_directories(${AGX_LIBRARY_DIRS})
 set(target CnoidAGXDynamicsPlugin)
 
 set(sources
+  AGXBody.cpp
+  AGXLinkBody.cpp
+  AGXScene.cpp
   AGXDynamicsPlugin.cpp
   AGXSimulatorItem.cpp
   AGXSimulatorItemImpl.cpp
-  AGXBody.cpp
-  AGXScene.cpp
   )
 
 set(headers
+  AGXBody.h
+  AGXInclude.h
+  AGXLinkBody.h
+  AGXScene.h
   AGXSimulatorItem.h
   AGXSimulatorItemImpl.h
-  AGXInclude.h
-  AGXBody.h
-  AGXScene.h
   )
 
 make_gettext_mofiles(${target} mofiles)

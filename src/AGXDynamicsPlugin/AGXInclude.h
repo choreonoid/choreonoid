@@ -9,10 +9,15 @@
 
 // Collide
 #include <agxCollide/Box.h>
-#include <agxCollide/Cylinder.h>
 #include <agxCollide/Sphere.h>
-#include <agxCollide/HeightField.h>
 #include <agxCollide/Capsule.h>
+#include <agxCollide/Cylinder.h>
+#include <agxCollide/Plane.h>
+#include <agxCollide/Line.h>
+#include <agxCollide/Mesh.h>
+#include <agxCollide/HeightField.h>
+#include <agxCollide/Convex.h>
+#include <agxCollide/Trimesh.h>
 
 // Constraint
 #include <agx/Hinge.h>
