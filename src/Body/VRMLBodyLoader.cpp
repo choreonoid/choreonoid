@@ -846,11 +846,16 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode, const Matrix3
     readVRMLfield(jf["encoderPulse"], encoderPulse);
     readVRMLfield(jf["rotorResistor"], rotorResistor);
 
+    double equivalentInertia = 0.0;
     VRMLVariantField* field = jointNode->findField("equivalentInertia");
     if(field){
-        link->setEquivalentRotorInertia(get<SFFloat>(*field));
+      equivalentInertia = get<SFFloat>(*field);
+    }
+    
+    if( equivalentInertia == 0.0 ){
+      link->setEquivalentRotorInertia(gearRatio * gearRatio * Ir);
     } else {
-        link->setEquivalentRotorInertia(gearRatio * gearRatio * Ir);
+      link->setEquivalentRotorInertia(equivalentInertia);
     }
 
     link->setInfo("rotorInertia", Ir);
