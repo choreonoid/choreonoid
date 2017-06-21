@@ -141,6 +141,7 @@ SgNode* STLSceneLoader::load(const std::string& filename)
                 indices.push_back(i);
             }
         }
+        mesh->updateBoundingBox();
     }
     
     return shape; 
