@@ -58,15 +58,16 @@ links:
         elements: *M1
       -
         type: Transform
-        translation: [ 0.3, 0.0, 0.1 ]
+        translation: [ 0.12, 0.0, 0.2 ]
         elements:
           -
             type: Camera
             name: Camera
-            translation: [ 0, 0, 0.13 ]
+            translation: [ -0.02, 0, 0.04 ]
             rotation: [ 0.540716, -0.540716, -0.6444, 114.4 ]
             format: "COLOR_DEPTH"
             id: 0
+            fieldOfView: 80
             width: 320
             height: 240
             frameRate: 30
@@ -75,9 +76,36 @@ links:
           -
             type: SpotLight
             name: MainLight
-            translation: [ 0, 0, 0.2 ]
             direction: [ 1, 0, 0 ]
+            intensity: 1.2
             beamWidth: 30
             cutOffAngle: 70
             cutOffExponent: 10
-            attenuation: [ 1, 0, 0.01 ]
+            attenuation: [ 1.0, 0, 0.01 ]
+            elements:
+              -
+                type: Shape
+                rotation: [ 0, 0, 1, 90 ]
+                geometry:
+                  type: Cylinder
+                  height: 0.01
+                  radius: 0.024
+                appearance:
+                  material:
+                    diffuseColor: [ 1.0, 1.0, 0.4 ]
+                    ambientIntensity: 0.3
+                    emissiveColor: [ 0.9, 0.9, 0.3 ]
+              - 
+                type: Shape
+                rotation: [ 0, 0, 1, 90 ]
+                translation: [ -0.035, 0, 0 ]
+                geometry:
+                  type: Cylinder
+                  height: 0.06
+                  radius: 0.025
+                appearance:
+                  material:
+                    diffuseColor: [ 0.8, 0.8, 0.8 ]
+                    ambientIntensity: 0.3
+                    specularColor: [ 1, 1, 1 ]
+                    shininess: 0.02
