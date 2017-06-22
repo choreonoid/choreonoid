@@ -5,7 +5,6 @@
 
 #include "CompositeIK.h"
 #include "Link.h"
-#include "JointPath.h"
 
 using namespace std;
 using namespace cnoid;
@@ -14,7 +13,7 @@ using namespace cnoid;
 CompositeIK::CompositeIK()
 {
     targetLink_ = 0;
-    isAnalytical_ = false;
+    hasAnalyticalIK_ = false;
 }
 
 
@@ -34,8 +33,8 @@ void CompositeIK::reset(Body* body, Link* targetLink)
 {
     body_ = body;
     targetLink_ = targetLink;
-    isAnalytical_ = false;
-    pathList.clear();
+    hasAnalyticalIK_ = false;
+    paths.clear();
 }
    
 
@@ -44,11 +43,8 @@ bool CompositeIK::addBaseLink(Link* baseLink)
     if(baseLink && targetLink_){
         JointPathPtr path = getCustomJointPath(body_, targetLink_, baseLink);
         if(path){
-            isAnalytical_ = pathList.empty() ? path->hasAnalyticalIK() : (isAnalytical_ && path->hasAnalyticalIK());
-            PathInfo info;
-            info.path = path;
-            info.endLink = baseLink;
-            pathList.push_back(info);
+            hasAnalyticalIK_ = paths.empty() ? path->hasAnalyticalIK() : (hasAnalyticalIK_ && path->hasAnalyticalIK());
+            paths.push_back(path);
             return true;
         }
     }
@@ -58,16 +54,11 @@ bool CompositeIK::addBaseLink(Link* baseLink)
 
 void CompositeIK::setMaxIKerror(double e)
 {
-    for(size_t i=0; i < pathList.size(); ++i){
-        pathList[i].path->setNumericalIKmaxIKerror(e);
+    for(size_t i=0; i < paths.size(); ++i){
+        paths[i]->setNumericalIKmaxIKerror(e);
     }
 }
 
-
-bool CompositeIK::hasAnalyticalIK() const
-{
-    return isAnalytical_;
-}
 
 bool CompositeIK::calcInverseKinematics(const Vector3& p, const Matrix3& R)
 {
@@ -83,17 +74,17 @@ bool CompositeIK::calcInverseKinematics(const Vector3& p, const Matrix3& R)
     targetLink_->p() = p;
     targetLink_->R() = R;
     bool solved = true;
-    for(size_t i=0; i < pathList.size(); ++i){
-        PathInfo& info = pathList[i];
-        info.p_given = info.endLink->p();
-        info.R_given = info.endLink->R();
-        //solved = info.path->setGoal(p, R, info.p_given, info.R_given).calcInverseKinematics();
-        solved = info.path->calcInverseKinematics(p, R, info.p_given, info.R_given);
+    size_t pathIndex;
+    for(pathIndex=0; pathIndex < paths.size(); ++pathIndex){
+        JointPath& path = *paths[pathIndex];
+        Link* link = path.endLink();
+        Position T0 = link->T();
+        //solved = path.setGoal(p, R, link->p(), link->R()).calcInverseKinematics();
+        solved = path.calcInverseKinematics(p, R, link->p(), link->R());
         if(!solved){
+            link->setPosition(T0);
             break;
         }
-        info.endLink->p() = info.p_given;
-        info.endLink->R() = info.R_given;
     }
 
     if(!solved){
@@ -102,11 +93,8 @@ bool CompositeIK::calcInverseKinematics(const Vector3& p, const Matrix3& R)
         for(int i=0; i < n; ++i){
             body_->joint(i)->q() = q0[i];
         }
-        for(size_t i=0; i < pathList.size(); ++i){
-            PathInfo& info = pathList[i];
-            info.path->calcForwardKinematics();
-            info.endLink->p() = info.p_given;
-            info.endLink->R() = info.R_given;
+        for(size_t i=0; i < pathIndex; ++i){
+            paths[i]->calcForwardKinematics();
         }
     }
 
