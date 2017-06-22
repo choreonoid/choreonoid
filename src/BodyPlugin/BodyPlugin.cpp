@@ -34,9 +34,11 @@
 #include "HrpsysFileIO.h"
 #include "CollisionSeqEngine.h"
 #include "CollisionSeqItem.h"
+#include <cnoid/BodyCustomizerInterface>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
+#include <cnoid/MessageView>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -96,6 +98,8 @@ public:
         CollisionSeqItem::initislizeClass(this);
 
         initializeHrpsysFileIO(this);
+
+        loadDefaultBodyCustomizers(mvout());
 
         return true;
     }

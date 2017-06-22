@@ -646,7 +646,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     readExtraJoints(topNode);
 
     body->resetInfo(topNode);
-        
+
     body->installCustomizer();
 
     return true;

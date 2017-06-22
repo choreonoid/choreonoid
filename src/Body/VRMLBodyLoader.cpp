@@ -667,7 +667,7 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
                     }
                 }
             }
-        
+
             body->installCustomizer();
         }
     }

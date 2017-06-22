@@ -58,6 +58,7 @@ set(sources
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   SimpleController.cpp
+  CnoidBody.cpp # This file must be placed at the last position
   )
 
 set(headers

@@ -220,7 +220,7 @@ public:
     }
 
     bool getCaches(PolymorphicReferencedArrayBase<>& out_caches, std::vector<std::string>& out_names) const;
-            
+
     void removeCache(const std::string& name);
 
     BodyCustomizerHandle customizerHandle() const;

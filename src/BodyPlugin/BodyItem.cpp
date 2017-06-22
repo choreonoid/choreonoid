@@ -323,14 +323,10 @@ bool BodyItem::loadModelFile(const std::string& filename)
 
 bool BodyItemImpl::loadModelFile(const std::string& filename)
 {
-    MessageView* mv = MessageView::instance();
-    mv->beginStdioRedirect();
-    bodyLoader.setMessageSink(mv->cout(true));
+    bodyLoader.setMessageSink(mvout(true));
 
     BodyPtr newBody = bodyLoader.load(filename);
 
-    mv->endStdioRedirect();
-    
     if(newBody){
         body = newBody;
         body->setName(self->name());
