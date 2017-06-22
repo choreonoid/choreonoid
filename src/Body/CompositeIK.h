@@ -30,7 +30,13 @@ public:
     Link* baseLink(int index) const { return paths[index]->endLink(); }
 
     bool hasAnalyticalIK() const { return hasAnalyticalIK_; }
-    virtual bool calcInverseKinematics(const Vector3& p, const Matrix3& R) override;
+
+    virtual bool calcInverseKinematics(const Position& T) override;
+
+    //! deprecated
+    bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
+        return InverseKinematics::calcInverseKinematics(p, R);
+    }
         
 private:
     BodyPtr body_;

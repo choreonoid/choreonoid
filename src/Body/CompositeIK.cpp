@@ -60,36 +60,33 @@ void CompositeIK::setMaxIKerror(double e)
 }
 
 
-bool CompositeIK::calcInverseKinematics(const Vector3& p, const Matrix3& R)
+bool CompositeIK::calcInverseKinematics(const Position& T)
 {
     const int n = body_->numJoints();
 
-    Vector3 p0 = targetLink_->p();
-    Matrix3 R0 = targetLink_->R();
+    Position T0 = targetLink_->T();
     q0.resize(n);
     for(int i=0; i < n; ++i){
         q0[i] = body_->joint(i)->q();
     }
 
-    targetLink_->p() = p;
-    targetLink_->R() = R;
+    targetLink_->setPosition(T);
+
     bool solved = true;
     size_t pathIndex;
     for(pathIndex=0; pathIndex < paths.size(); ++pathIndex){
         JointPath& path = *paths[pathIndex];
         Link* link = path.endLink();
-        Position T0 = link->T();
-        //solved = path.setGoal(p, R, link->p(), link->R()).calcInverseKinematics();
-        solved = path.calcInverseKinematics(p, R, link->p(), link->R());
+        Position T_end = link->T();
+        solved = path.setBaseLinkGoal(T).calcInverseKinematics(T_end);
         if(!solved){
-            link->setPosition(T0);
+            link->setPosition(T_end);
             break;
         }
     }
 
     if(!solved){
-        targetLink_->p() = p0;
-        targetLink_->R() = R0;
+        targetLink_->setPosition(T0);
         for(int i=0; i < n; ++i){
             body_->joint(i)->q() = q0[i];
         }
