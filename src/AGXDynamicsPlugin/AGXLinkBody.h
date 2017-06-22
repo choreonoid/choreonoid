@@ -9,7 +9,9 @@ struct AGXRigidBodyDesc
 	AGXRigidBodyDesc(){}
 	agx::RigidBody::MotionControl control = agx::RigidBody::DYNAMICS;
 	agx::Vec3 v = agx::Vec3();			// velocity
+	agx::Vec3 w = agx::Vec3();			// angular velocity
 	agx::Vec3 p = agx::Vec3();			// position(world)
+	agx::OrthoMatrix3x3 R = agx::OrthoMatrix3x3(); // rotation(world);
 	agx::Real m = 1.0;					// mass
 	agx::SPDMatrix3x3 I = agx::SPDMatrix3x3(agx::Vec3(1.0, 1.0, 1.0));	// inertia
 	agx::Vec3 c = agx::Vec3();			// center of mass(local)
@@ -58,6 +60,25 @@ struct AGXSphereDesc : public AGXShapeDesc{
 	{
 		shapeType = AGXShapeType::AGXCOLLIDE_SPHERE;
 	}
+	agx::Real radius;
+};
+
+struct AGXCapsuleDesc : public AGXShapeDesc{
+	AGXCapsuleDesc()
+	{
+		shapeType = AGXShapeType::AGXCOLLIDE_CAPSULE;
+	}
+	agx::Real radius;
+	agx::Real hegiht;
+};
+
+struct AGXCylinderDesc : public AGXShapeDesc{
+	AGXCylinderDesc()
+	{
+		shapeType = AGXShapeType::AGXCOLLIDE_CYLINDER;
+	}
+	agx::Real radius;
+	agx::Real hegiht;
 };
 
 struct AGXTrimeshDesc : public AGXShapeDesc
@@ -65,9 +86,39 @@ struct AGXTrimeshDesc : public AGXShapeDesc
 	AGXTrimeshDesc()
 	{
 		shapeType = AGXShapeType::AGXCOLLIDE_TRIMESH;
+		name = "";
+		optionsMask = 0;
+		bottomMargin = 0;
 	}
 	agx::Vec3Vector vertices;
-	agx::UIntVector indices;
+	agx::UInt32Vector indices;
+	char* name;
+	uint32_t optionsMask;     // agxCollide::Trimesh::TrimeshOptionsFlags
+	agx::Real bottomMargin;
+};
+
+enum AGXConstraintType{
+	AGXHIGE,
+	AGXBALLJOINT
+};
+
+struct AGXConstraintDesc {
+	AGXConstraintType constraintType;
+	agx::Vec3 myFramePos;  // local
+	agx::EulerAngles myFrameRot;  // local
+	agx::Vec3 parentFramePos;  // local
+	agx::EulerAngles parentFrameRot;  // local
+	agx::RigidBodyRef myRigidBody;
+	agx::RigidBodyRef parentRigidBody;
+	agx::Vec3 hingeFrameAxis;
+	agx::Vec3 hingeFrameCenter;
+};
+
+struct AGXHingeDesc : public AGXConstraintDesc{
+	AGXHingeDesc(){
+		constraintType = AGXConstraintType::AGXHIGE;
+	}
+
 };
 
 class AGXLinkBody : public agx::Referenced
@@ -76,14 +127,21 @@ public:
 	AGXLinkBody();
 	agx::RigidBodyRef getRigidBody();
 	agxCollide::GeometryRef getGeometry();
+	agx::ConstraintRef getConstraint();
 	void createRigidBody(AGXRigidBodyDesc desc);
 	void createGeometry(AGXGeometryDesc desc);
 	void createShape(const AGXShapeDesc& desc);
+	void createConstraint(const AGXConstraintDesc& desc);
 private:
 	agx::RigidBodyRef _rigid;
+	agx::ConstraintRef constraint;
 	agxCollide::GeometryRef _geometry;
 	agxCollide::BoxRef createShapeBox(const AGXBoxDesc& desc);
-	agxCollide::MeshRef createShapeTrimesh(const AGXTrimeshDesc & desc);
+	agxCollide::SphereRef createShapeSphere(const AGXSphereDesc& desc);
+	agxCollide::CapsuleRef createShapeCapsule(const AGXCapsuleDesc& desc);
+	agxCollide::CylinderRef createShapeCylinder(const AGXCylinderDesc& desc);
+	agxCollide::MeshRef createShapeTrimesh(const AGXTrimeshDesc& desc);
+	agx::HingeRef createConstraintHinge(const AGXHingeDesc& desc);
 };
 typedef agx::ref_ptr<AGXLinkBody> AGXLinkBodyRef;
 }

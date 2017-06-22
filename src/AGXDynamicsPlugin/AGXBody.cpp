@@ -23,6 +23,11 @@ agx::RigidBodyRef AGXLink::getAGXRigidBody(){
 	return agxLinkBody->getRigidBody();
 }
 
+agx::ConstraintRef AGXLink::getAGXConstraint()
+{
+	return agxLinkBody->getConstraint();
+}
+
 void AGXLink::createLinkBody(){
 	agxLinkBody = new AGXLinkBody();
 	createAGXRigidBody();
@@ -30,20 +35,32 @@ void AGXLink::createLinkBody(){
 	createAGXShape();
 }
 
+void AGXLink::createConstraints()
+{
+	createAGXConstraints();
+}
+
 void AGXLink::createAGXRigidBody(){
-	const Matrix3 I = orgLink->I();
-	const Vector3 c = orgLink->c();
-	const Vector3 p = orgLink->p();
+	const Matrix3& I = orgLink->I();
+	const Vector3& c = orgLink->c();
+	const Vector3& v = orgLink->v(); 
+	const Vector3& w = orgLink->w(); 
+	const Vector3& p = orgLink->p();
+	const Matrix3& R = orgLink->R();
 
 	AGXRigidBodyDesc desc;
 	desc.name = orgLink->name();
-	desc.p.set(p(0), p(1), p(2));
-	std::cout << desc.p << std::endl;
 	desc.m = orgLink->m();
 	desc.I.set( I(0,0), I(1,0), I(2,0),
 				I(0,1), I(1,1), I(2,1),
 				I(0,2), I(1,2), I(2,2));
 	desc.c.set(c(0), c(1), c(2));
+	desc.v.set(v(0), v(1), v(2));
+	desc.w.set(w(0), w(1), w(2));
+	desc.p.set(p(0), p(1), p(2));
+	desc.R.set(	R(0,0), R(1,0), R(2,0),
+				R(0,1), R(1,1), R(2,1),
+				R(0,2), R(1,2), R(2,2));
 
 	Link::JointType jt = orgLink->jointType();
 	if(jt == Link::FIXED_JOINT){
@@ -61,20 +78,20 @@ void AGXLink::createAGXGeometry(){
 void AGXLink::createAGXShape(){
 	if(!orgLink->collisionShape()) return;
 	MeshExtractor* extractor = new MeshExtractor;
-	AGXShapeDesc desc;
-	std::vector<Vertex> vertices;
-	Affine3 T;
-	if(extractor->extract(orgLink->collisionShape(), std::bind(&AGXLink::detectPrimitiveShape, this, extractor))){
+	AGXTrimeshDesc td;
+	if(extractor->extract(orgLink->collisionShape(), std::bind(&AGXLink::detectPrimitiveShape, this, extractor, std::ref(td)))){
+		std::cout << &td << std::endl;
+		std::cout << "mesh vertices" << td.vertices.size() << std::endl;
+		std::cout << "mesh indices" << td.indices.size() << std::endl;
 		// if vertices have values, it will be trimesh 
-		if(!vertices.empty()){
-			AGXTrimeshDesc desc;
-			agxLinkBody->createShape(desc);
+		if(!td.vertices.empty()){
+			agxLinkBody->createShape(td);
 		}
 	}
 	delete extractor;
 }
 
-void AGXLink::detectPrimitiveShape(MeshExtractor* extractor){
+void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td){
 	SgMesh* mesh = extractor->currentMesh();
 	const Affine3& T = extractor->currentTransform();
 
@@ -124,20 +141,27 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor){
 			}
 			case SgMesh::SPHERE : {
 				SgMesh::Sphere sphere = mesh->primitive<SgMesh::Sphere>();
-				//agxCollide::SphereRef sphere_ = new agxCollide::Sphere( sphere.radius * scale.x() );
 				AGXSphereDesc sd;
-				//sd.radius = sphere.radius * scale.x();
-				//getAGXLinkBody()->createShape(sd);
+				sd.radius = sphere.radius * scale.x();
+				getAGXLinkBody()->createShape(sd);
 				created = true;
 				break;
 			}
+			//case SgMesh::CAPSULE : {
+			//	//SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
+			//	AGXCapsuleDesc cd;
+			//	//cd.radius = capsule.radius * scale.x();
+			//	//cd .hegiht =  capsule.height * scale.y();
+			//	getAGXLinkBody()->createShape(cd);
+			//	created = true;
+			//	break;
+			//}
 			case SgMesh::CYLINDER : {
 				SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-				//agxCollide::CylinderRef cylinder_ = new agxCollide::Cylinder(cylinder.radius * scale.x(), cylinder.height * scale.y());
-				//AGXCylinderDesc cd;
-				//cd.radius = cylinder.radius * scale.x();
-				//cd.height = cylinder.height * scale.y()
-				//getAGXLinkBody()->createShape(cd);
+				AGXCylinderDesc cd;
+				cd.radius = cylinder.radius * scale.x();
+				cd .hegiht =  cylinder.height * scale.y();
+				getAGXLinkBody()->createShape(cd);
 				created = true;
 				break;
 			}
@@ -159,22 +183,45 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor){
 	}
 
 	if(!meshAdded){
-		const size_t vertexIndexTop = vertices.size();
+		const size_t vertexIndexTop = td.vertices.size();
 		const SgVertexArray& vertices_ = *mesh->vertices();
 		const int numVertices = vertices_.size();
 		for(int i=0; i < numVertices; ++i){
 			const Vector3 v = T * vertices_[i].cast<Position::Scalar>();
-			vertices.push_back(Vertex(v.x(), v.y(), v.z()));
+			td.vertices.push_back(agx::Vec3(v.x(), v.y(), v.z()));
 		}
 
 		const int numTriangles = mesh->numTriangles();
 		for(int i=0; i < numTriangles; ++i){
 			SgMesh::TriangleRef src = mesh->triangle(i);
-			indices.push_back(vertexIndexTop + src[0]);
-			indices.push_back(vertexIndexTop + src[1]);
-			indices.push_back(vertexIndexTop + src[2]);
+			td.indices.push_back(vertexIndexTop + src[0]);
+			td.indices.push_back(vertexIndexTop + src[1]);
+			td.indices.push_back(vertexIndexTop + src[2]);
 		}
 	}
+		std::cout << &td << std::endl;
+		std::cout << "mesh vertices" << td.vertices.size() << std::endl;
+		std::cout << "mesh indices" << td.indices.size() << std::endl;
+}
+
+void AGXLink::createAGXConstraints(){
+
+	switch(orgLink->jointType()){
+		case Link::REVOLUTE_JOINT :{
+			AGXHingeDesc desc;
+			const Vector3& a = orgLink->a();
+			const Vector3& p = orgLink->p();
+			desc.hingeFrameAxis.set(a(0),a(1),a(2));
+			desc.hingeFrameCenter.set(p(0),p(1),p(2));
+			desc.myRigidBody = getAGXRigidBody();
+			desc.parentRigidBody = agxParentLink->getAGXRigidBody();
+			agxLinkBody->createConstraint(desc);
+			break;
+		}
+		default:
+			break;
+	}
+
 }
 
 void AGXLink::synchronizeLinkStateToCnoid()
@@ -182,18 +229,27 @@ void AGXLink::synchronizeLinkStateToCnoid()
 	agx::RigidBodyRef agxRigidBody = getAGXRigidBody();
 	if(!agxRigidBody) return;
 
+	std::cout << orgLink->name() << std::endl;
+	std::cout << orgLink->p() << std::endl;
+	// position, rotation
 	agx::AffineMatrix4x4 t = agxRigidBody->getTransform();
     orgLink->p() = Vector3(t(3,0), t(3,1), t(3,2));
     orgLink->R() << t(0,0), t(1,0), t(2,0),
                  t(0,1), t(1,1), t(2,1),
                  t(0,2), t(1,2), t(2,2);
 
+    // angular velocity
     agx::Vec3 w = agxRigidBody->getAngularVelocity();
     orgLink->w() = Vector3(w.x(), w.y(), w.z());
+
+    // velocity
     agx::Vec3 v = agxRigidBody->getVelocity();
     Vector3 v0(v.x(), v.y(), v.z());
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
+
+	std::cout << orgLink->p() << std::endl;
+	std::cout << agxRigidBody->getPosition() << std::endl;
 }
 
 //LinkPtr AGXLink::link(){
@@ -248,16 +304,19 @@ void AGXBody::createBody(){
 		agxLinks.push_back(agxLink);
 	}
 	// Create rigidbody and geometry of AGX
-	// Set parent link to each AGXLink
 	for(int i = 0; i < body()->numLinks(); ++i){
 		agxLinks[i]->createLinkBody();
 
+		// Set parent link to each AGXLink
 		LinkPtr parent = body()->link(i)->parent();
 		if(parent){
 			agxLinks[i]->setParentLink(agxLinks[parent->index()]);
 		}
 	}
 	// Create constraints
+	for(int i = 0; i < body()->numLinks(); ++i){
+		agxLinks[i]->createConstraints();
+	}
 }
 
 void AGXBody::synchronizeLinkStateToCnoid(){
@@ -273,6 +332,11 @@ void AGXBody::synchronizeLinkStateToCnoid(){
 agx::RigidBodyRef AGXBody::getAGXRigidBody(int index)
 {
 	return agxLinks[index]->getAGXRigidBody();
+}
+
+agx::ConstraintRef AGXBody::getAGXConstraint(int index)
+{
+	return agxLinks[index]->getAGXConstraint();
 }
 
 int AGXBody::getNumLinks(){

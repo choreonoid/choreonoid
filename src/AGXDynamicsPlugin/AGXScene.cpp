@@ -9,12 +9,6 @@ AGXScene* AGXScene::create()
 	return new AGXScene();
 }
 
-void AGXScene::initializeScene()
-{
-	clearAGXScene();
-	createAGXSimulation();
-}
-
 void AGXScene::clearAGXScene()
 { 
 	if(agxSimulation) agxSimulation->cleanup(agxSDK::Simulation::CLEANUP_ALL);
@@ -24,7 +18,7 @@ void AGXScene::stepAGXSimulation()
 {
 	agx::Thread::makeCurrentThreadMainThread();
 	agxSimulation->stepForward();
-	//agx::Thread::unregisterAsAgxThread();
+	agx::Thread::unregisterAsAgxThread();
 }
 
 agxSDK::SimulationRef AGXScene::getAGXSimulation()
@@ -32,10 +26,11 @@ agxSDK::SimulationRef AGXScene::getAGXSimulation()
 	return agxSimulation;
 }
 
-agxSDK::SimulationRef AGXScene::createAGXSimulation()
+agxSDK::SimulationRef AGXScene::createAGXSimulation(const AGXSimulationDesc& desc)
 {
 	if(agxSimulation) return agxSimulation;
 	agxSimulation = new agxSDK::Simulation();
+	agxSimulation->setTimeStep(desc.timeStep);
 	return agxSimulation;
 }
 

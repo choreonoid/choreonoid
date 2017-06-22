@@ -8,22 +8,26 @@ namespace cnoid{
 
 struct AGXSimulationDesc
 {
-	
+	AGXSimulationDesc(){}
+	agx::UInt8 binResolution;
+	agx::UInt  threshhold;
+	agx::Vec3  gravity;
+	agx::Real  timeStep;
 };
 
 class AGXScene : public agx::Referenced{
 public:
 	AGXScene();
 	static AGXScene* create();
-	void initializeScene();
 	void clearAGXScene();
 	void stepAGXSimulation();
 	bool saveSceneToAGXFile();
 	void buildTestScene();
+	agxSDK::SimulationRef createAGXSimulation(const AGXSimulationDesc& desc);
 	agxSDK::SimulationRef getAGXSimulation();
 private:
 	agxSDK::SimulationRef agxSimulation;
-	agxSDK::SimulationRef createAGXSimulation();
+
 };
 typedef agx::ref_ptr<AGXScene> AGXSceneRef;
 }

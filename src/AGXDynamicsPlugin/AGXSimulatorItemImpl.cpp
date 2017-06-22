@@ -54,16 +54,19 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 	cout << "initializeSimulation" << endl;
 	if(agxScene) agxScene->clearAGXScene();
 	agxScene = AGXScene::create();
-	agxScene->initializeScene();
+	agxScene->clearAGXScene();
+	AGXSimulationDesc sd;
+	sd.timeStep = self->worldTimeStep();
+	agxScene->createAGXSimulation(sd);
 //	agxScene->buildTestScene();
 
 	// Create AGXLink and add to AGXsimulation
 	for(size_t i=0; i < simBodies.size(); ++i){
 		AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
 		body->createBody();
-		std::cout << body->getNumLinks() << std::endl;
 		for(int j = 0; j < body->getNumLinks(); ++j){
 			agxScene->getAGXSimulation()->add(body->getAGXRigidBody(j));
+			agxScene->getAGXSimulation()->add(body->getAGXConstraint(j));
 		}
 	}
 

@@ -20,19 +20,22 @@ public:
 	int getIndex();
 	AGXLinkBodyRef getAGXLinkBody();
 	agx::RigidBodyRef  getAGXRigidBody();
+	agx::ConstraintRef getAGXConstraint();
 	void createLinkBody();
+	void createConstraints();
 	void synchronizeLinkStateToCnoid();
 private:
 	int _index;
 	LinkPtr orgLink;
 	AGXLinkPtr agxParentLink;
 	AGXLinkBodyRef agxLinkBody;
-	std::vector<Vertex> vertices;
-	agx::UInt32Vector indices;
+	//std::vector<Vertex> vertices;
+	//agx::UInt32Vector indices;
 	void createAGXRigidBody();
 	void createAGXGeometry();
 	void createAGXShape();
-	void detectPrimitiveShape(MeshExtractor* extractor);
+	void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
+	void createAGXConstraints();
 
 	//LinkPtr link();
 	//LinkPtr getLink();
@@ -48,6 +51,7 @@ public:
 	void synchronizeLinkStateToCnoid();
 	//AGXLinkPtr getAGXLink(int index);
 	agx::RigidBodyRef getAGXRigidBody(int index);
+	agx::ConstraintRef getAGXConstraint(int index);
 	int getNumLinks();
 private:
 	std::vector<AGXLinkPtr> agxLinks;
