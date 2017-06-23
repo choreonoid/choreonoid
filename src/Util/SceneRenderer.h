@@ -76,7 +76,9 @@ public:
     */
     virtual void extractPreprocessedNodes();
     
-    virtual void render() = 0;
+    void render();
+    bool pick(int x, int y);
+    
     virtual void flush() = 0;
 
     Signal<void()>& sigRenderingRequest();
@@ -96,6 +98,8 @@ public:
     double property(PropertyKey key, double defaultValue) const;
 
 protected:
+    virtual void doRender() = 0;
+    virtual bool doPick(int x, int y);
     virtual void onSceneGraphUpdated(const SgUpdate& update);
 
 private:

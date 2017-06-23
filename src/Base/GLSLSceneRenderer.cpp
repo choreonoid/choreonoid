@@ -301,8 +301,8 @@ public:
     void initialize();
     void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
     bool initializeGL();
-    void render();
-    bool pick(int x, int y);
+    void doRender();
+    bool doPick(int x, int y);
     void renderScene();
     bool renderShadowMap(int lightIndex);
     void beginRendering();
@@ -606,15 +606,15 @@ void GLSLSceneRenderer::requestToClearResources()
 }
 
 
-void GLSLSceneRenderer::render()
+void GLSLSceneRenderer::doRender()
 {
     applyNewExtensions();
     impl->renderingFunctions.updateDispatchTable();
-    impl->render();
+    impl->doRender();
 }
 
 
-void GLSLSceneRendererImpl::render()
+void GLSLSceneRendererImpl::doRender()
 {
     self->extractPreprocessedNodes();
     beginRendering();
@@ -673,13 +673,13 @@ void GLSLSceneRendererImpl::render()
 }
 
 
-bool GLSLSceneRenderer::pick(int x, int y)
+bool GLSLSceneRenderer::doPick(int x, int y)
 {
-    return impl->pick(x, y);
+    return impl->doPick(x, y);
 }
 
 
-bool GLSLSceneRendererImpl::pick(int x, int y)
+bool GLSLSceneRendererImpl::doPick(int x, int y)
 {
     if(USE_FBO_FOR_PICKING){
         if(!fboForPicking){

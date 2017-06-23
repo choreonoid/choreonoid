@@ -285,8 +285,8 @@ public:
     void renderFog();
     void onCurrentFogNodeUdpated();
     void endRendering();
-    void render();
-    bool pick(int x, int y);
+    void doRender();
+    bool doPick(int x, int y);
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
     void popPickName();
@@ -789,15 +789,15 @@ void GL1SceneRendererImpl::endRendering()
 }
 
 
-void GL1SceneRenderer::render()
+void GL1SceneRenderer::doRender()
 {
     applyNewExtensions();
     impl->renderingFunctions.updateDispatchTable();
-    impl->render();
+    impl->doRender();
 }
 
 
-void GL1SceneRendererImpl::render()
+void GL1SceneRendererImpl::doRender()
 {
     beginRendering(true);
 
@@ -811,9 +811,9 @@ void GL1SceneRendererImpl::render()
 }
 
 
-bool GL1SceneRenderer::pick(int x, int y)
+bool GL1SceneRenderer::doPick(int x, int y)
 {
-    return impl->pick(x, y);
+    return impl->doPick(x, y);
 }
 
 
@@ -824,7 +824,7 @@ bool GL1SceneRenderer::pick(int x, int y)
   http://www.codeproject.com/Articles/35139/Interactive-Techniques-in-Three-dimensional-Scenes#_OpenGL_Picking_by
   http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
 */
-bool GL1SceneRendererImpl::pick(int x, int y)
+bool GL1SceneRendererImpl::doPick(int x, int y)
 {
     glPushAttrib(GL_ENABLE_BIT);
 
@@ -840,7 +840,7 @@ bool GL1SceneRendererImpl::pick(int x, int y)
     }
     
     isPicking = true;
-    render();
+    doRender();
     isPicking = false;
 
     glPopAttrib();

@@ -75,13 +75,28 @@ public:
 
 namespace cnoid {
 
+SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
+{
+    std::lock_guard<std::mutex> guard(propertyKeyMutex);
+
+    auto iter = propertyKeyMap.find(key);
+    if(iter != propertyKeyMap.end()){
+        id = iter->second;
+    } else {
+        id = propertyKeyCount;
+        propertyKeyMap.insert(make_pair(key, id));
+        propertyKeyCount++;
+    }
+}
+
 class SceneRendererImpl
 {
 public:
     SceneRenderer* self;
-    std::unique_ptr<PreproNode> preproTree;
-    Signal<void()> sigRenderingRequest;
+    bool isRendering;
     bool doPreprocessedNodeTreeExtraction;
+    Signal<void()> sigRenderingRequest;
+    std::unique_ptr<PreproNode> preproTree;
 
     struct CameraInfo
     {
@@ -167,8 +182,7 @@ public:
             return get<ValueType>(value);
         }
         return defaultValue;
-    }
-    
+    }    
 };
 
 }
@@ -185,6 +199,7 @@ SceneRenderer::SceneRenderer()
 SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
     : self(self)
 {
+    isRendering = false;
     doPreprocessedNodeTreeExtraction = true;
 
     cameras = &cameras1;
@@ -222,10 +237,72 @@ Signal<void()>& SceneRenderer::sigRenderingRequest()
 
 void SceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 {
+    static int counter = 0;
+    
     if(update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED)){
         impl->doPreprocessedNodeTreeExtraction = true;
     }
-    impl->sigRenderingRequest();
+    if(!impl->isRendering){
+        impl->sigRenderingRequest();
+    }
+}
+
+
+void SceneRenderer::render()
+{
+    impl->isRendering = true;
+    doRender();
+    impl->isRendering = false;
+}
+
+
+bool SceneRenderer::pick(int x, int y)
+{
+    impl->isRendering = true;
+    bool result = doPick(x, y);
+    impl->isRendering = false;
+}
+
+
+bool SceneRenderer::doPick(int x, int y)
+{
+    return false;
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, bool value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, int value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, double value)
+{
+    impl->setProperty(key, value);
+}
+
+
+bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
+{
+    return impl->property(key, 0, defaultValue);
+}
+
+
+int SceneRenderer::property(PropertyKey key, int defaultValue) const
+{
+    return impl->property(key, 1, defaultValue);
+}
+
+
+double SceneRenderer::property(PropertyKey key, double defaultValue) const
+{
+    return impl->property(key, 2, defaultValue);
 }
 
 
@@ -754,55 +831,4 @@ void SceneRenderer::applyNewExtensions()
         }
         impl->newExtendFunctions.clear();
     }
-}
-
-
-SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
-{
-    std::lock_guard<std::mutex> guard(propertyKeyMutex);
-
-    auto iter = propertyKeyMap.find(key);
-    if(iter != propertyKeyMap.end()){
-        id = iter->second;
-    } else {
-        id = propertyKeyCount;
-        propertyKeyMap.insert(make_pair(key, id));
-        propertyKeyCount++;
-    }
-}
-
-
-void SceneRenderer::setProperty(PropertyKey key, bool value)
-{
-    impl->setProperty(key, value);
-}
-
-
-void SceneRenderer::setProperty(PropertyKey key, int value)
-{
-    impl->setProperty(key, value);
-}
-
-
-void SceneRenderer::setProperty(PropertyKey key, double value)
-{
-    impl->setProperty(key, value);
-}
-
-
-bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
-{
-    return impl->property(key, 0, defaultValue);
-}
-
-
-int SceneRenderer::property(PropertyKey key, int defaultValue) const
-{
-    return impl->property(key, 1, defaultValue);
-}
-
-
-double SceneRenderer::property(PropertyKey key, double defaultValue) const
-{
-    return impl->property(key, 2, defaultValue);
 }
