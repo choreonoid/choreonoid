@@ -528,8 +528,8 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
     putProperty(_("Translation"), str(Vector3(offsetTransform().translation())),
                 std::bind(&PointSetItemImpl::onTranslationPropertyChanged, impl, _1));
-    Vector3 rpy(rpyFromRot(offsetTransform().linear()));
-    putProperty("RPY", str(TO_DEGREE * rpy), std::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
+    Vector3 rpy(TO_DEGREE * rpyFromRot(offsetTransform().linear()));
+    putProperty("RPY", str(rpy), std::bind(&PointSetItemImpl::onRotationPropertyChanged, impl, _1));
 }
 
 

@@ -106,8 +106,8 @@ void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("File"), getFilename(filePath()));
     putProperty(_("Translation"), str(Vector3(topNode_->translation())),
                 std::bind(&SceneItem::onTranslationChanged, this, _1));
-    Vector3 rpy(rpyFromRot(topNode_->rotation()));
-    putProperty("RPY", str(TO_DEGREE * rpy), std::bind(&SceneItem::onRotationChanged, this, _1));
+    Vector3 rpy(TO_DEGREE * rpyFromRot(topNode_->rotation()));
+    putProperty("RPY", str(rpy), std::bind(&SceneItem::onRotationChanged, this, _1));
 }
 
 
