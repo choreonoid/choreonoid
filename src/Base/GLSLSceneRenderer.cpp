@@ -513,9 +513,9 @@ void GLSLSceneRendererImpl::onExtensionAdded(std::function<void(GLSLSceneRendere
 }
 
 
-void GLSLSceneRenderer::applyNewExtensions()
+bool GLSLSceneRenderer::applyNewExtensions()
 {
-    SceneRenderer::applyExtensions();
+    bool applied = SceneRenderer::applyNewExtensions();
     
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
@@ -523,7 +523,10 @@ void GLSLSceneRenderer::applyNewExtensions()
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();
+        applied = true;
     }
+
+    return applied;
 }
 
 
@@ -608,14 +611,16 @@ void GLSLSceneRenderer::requestToClearResources()
 
 void GLSLSceneRenderer::doRender()
 {
-    applyNewExtensions();
-    impl->renderingFunctions.updateDispatchTable();
     impl->doRender();
 }
 
 
 void GLSLSceneRendererImpl::doRender()
 {
+    if(self->applyNewExtensions()){
+        renderingFunctions.updateDispatchTable();
+    }
+
     self->extractPreprocessedNodes();
     beginRendering();
 

@@ -791,14 +791,16 @@ void GL1SceneRendererImpl::endRendering()
 
 void GL1SceneRenderer::doRender()
 {
-    applyNewExtensions();
-    impl->renderingFunctions.updateDispatchTable();
     impl->doRender();
 }
 
 
 void GL1SceneRendererImpl::doRender()
 {
+    if(self->applyNewExtensions()){
+        renderingFunctions.updateDispatchTable();
+    }
+    
     beginRendering(true);
 
     renderingFunctions.dispatch(self->sceneRoot());

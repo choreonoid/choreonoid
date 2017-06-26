@@ -22,7 +22,7 @@ public:
     
     static void addExtension(std::function<void(SceneRenderer* renderer)> func);
     virtual void applyExtensions();
-    virtual void applyNewExtensions();
+    virtual bool applyNewExtensions();
 
     virtual SgGroup* sceneRoot() = 0;
     virtual SgGroup* scene() = 0;

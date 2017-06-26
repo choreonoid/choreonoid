@@ -822,7 +822,7 @@ void SceneRendererImpl::onExtensionAdded(std::function<void(SceneRenderer* rende
 }
 
 
-void SceneRenderer::applyNewExtensions()
+bool SceneRenderer::applyNewExtensions()
 {
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
@@ -830,5 +830,7 @@ void SceneRenderer::applyNewExtensions()
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();
+        return true;
     }
+    return false;
 }

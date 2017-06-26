@@ -24,7 +24,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
     virtual void applyExtensions() override;
-    virtual void applyNewExtensions() override;
+    virtual bool applyNewExtensions() override;
 
     virtual void setOutputStream(std::ostream& os) override;
 
