@@ -47,7 +47,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -1088,7 +1087,7 @@ void AgXLink::createGeometry(AgXBody* agxBody)
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), std::bind(&AgXLink::addMesh, this, extractor, agxBody))){
+        if(extractor->extract(link->collisionShape(), [&](){ addMesh(extractor, agxBody); })){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
@@ -2379,8 +2378,8 @@ void AgXSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AgXSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
-    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
+                [&](int index){ return dynamicsMode.selectIndex(index); });
+    putProperty(_("Gravity"), str(gravity), [&](const string& value){ return toVector3(value, gravity); });
     putProperty.decimals(2).min(0.0)
             (_("Friction"), friction, changeProperty(friction));
     putProperty.decimals(2).min(0.0)
