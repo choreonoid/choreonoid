@@ -9,6 +9,7 @@
 #include "EigenUtil.h"
 #include <boost/format.hpp>
 #include <functional>
+#include "exportdecl.h"
 
 namespace cnoid {
 
@@ -87,68 +88,13 @@ Listing& write(Mapping& mapping, const std::string& key, const Eigen::Transform<
 }
 
 
-/**
-   This should be defined in another file
-*/
-/*
-template<typename Derived>
-void write(YAMLWriter& writer, const std::string& key, const Eigen::MatrixBase<Derived>& x)
-{
-    writer.putKey(key);
-    writer.startFlowStyleMapping();
-    
-    const int nr = x.rows();
-    const int nc = x.cols();
-    if(nc == 1){
-        for(int i=0; i < nr; ++i){
-            writer.putScalar(x(i));
-        }
-    } else {
-        for(int i=0; i < nr; ++i){
-            //writer.putLF();
-            for(int j=0; j < nc; ++j){
-                writer.putScalar(x(i, j));
-            }
-        }
-    }
-    writer.endListing();
-}
-*/
+CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& r);
+CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxisf& r);
 
+CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& r);
+CNOID_EXPORT Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxisf& r);
 
-template<typename Scalar>
-bool read(const Mapping& mapping, const std::string& key, Eigen::AngleAxis<Scalar>& r)
-{
-    const Listing& s = *mapping.findListing(key);
-    if(s.isValid() && s.size() == 4){
-        r.axis() << s[0].toDouble(), s[1].toDouble(), s[2].toDouble();
-        r.angle() = s[3].toDouble();
-        return true;
-    }
-    return false;
-}
-
-template<typename Scalar>
-Listing& write(Mapping& mapping, const std::string& key, const Eigen::AngleAxis<Scalar>& r)
-{
-    Listing& s = *mapping.createFlowStyleListing(key);
-    s.setDoubleFormat("%.9g");
-    s.append(r.axis()[0]);
-    s.append(r.axis()[1]);
-    s.append(r.axis()[2]);
-    s.append(r.angle());
-    return s;
-}
-
-inline bool read(const Mapping& mapping, const std::string& key, std::function<void(Vector3&)> setterFunc)
-{
-    Vector3 x;
-    if(read(mapping, key, x)){
-        setterFunc(x);
-        return true;
-    }
-    return false;
-}
+CNOID_EXPORT bool read(const Mapping& mapping, const std::string& key, std::function<void(const Eigen::Vector3d& value)> setterFunc);
 
 }
 

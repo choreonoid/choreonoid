@@ -10,6 +10,7 @@ set(sources
   Selection.cpp
   DataMap.cpp
   EigenUtil.cpp
+  EigenArchive.cpp
   ValueTree.cpp
   YAMLReader.cpp
   YAMLWriter.cpp
