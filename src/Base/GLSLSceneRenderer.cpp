@@ -434,21 +434,21 @@ void GLSLSceneRendererImpl::initialize()
     os_ = &nullout();
 
     renderingFunctions.setFunction<SgGroup>(
-        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+        [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
-        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+        [&](SgTransform* node){ renderTransform(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
-        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+        [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
-        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+        [&](SgShape* node){ renderShape(node); });
     renderingFunctions.setFunction<SgPointSet>(
-        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+        [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
-        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+        [&](SgLineSet* node){ renderLineSet(node); });
     renderingFunctions.setFunction<SgOverlay>(
-        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+        [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
-        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+        [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
 
     self->applyExtensions();
     renderingFunctions.updateDispatchTable();

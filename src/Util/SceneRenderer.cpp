@@ -30,20 +30,26 @@ std::unordered_map<string, int> propertyKeyMap;
 
 struct PreproNode
 {
-    PreproNode() : parent(0), child(0), next(0) { }
-    ~PreproNode() {
-        if(child) delete child;
-        if(next) delete next;
-    }
     enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
     boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
     SgNode* base;
     PreproNode* parent;
     PreproNode* child;
     PreproNode* next;
+
+    template<class T>
+    PreproNode(T* n) : parent(0), child(0), next(0) {
+        setNode(n);
+    }
+    
     template<class T> void setNode(T* n){
         node = n;
         base = n;
+    }
+
+    ~PreproNode() {
+        if(child) delete child;
+        if(next) delete next;
     }
 };
 
@@ -53,22 +59,11 @@ class PreproTreeExtractor
     PolymorphicFunctionSet<SgNode> functions;
     PreproNode* node;
     bool found;
-    
+
 public:
     PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
-
-    /*
-      Only SgNode* is used as the parameter type of the following functions to avoid
-      the overhead due to the additional function call required for casting the types
-    */
     void visitGroup(SgGroup* group);
-    void visitSwitch(SgSwitch* switchNode);
-    void visitTransform(SgTransform* transform);
-    void visitPreprocessed(SgPreprocessed* preprocessed);
-    void visitLight(SgLight* light);
-    void visitFog(SgFog* fog);
-    void visitCamera(SgCamera* camera);
 };
 
 }
@@ -418,18 +413,46 @@ PreproTreeExtractor::PreproTreeExtractor()
 {
     functions.setFunction<SgGroup>(
         [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+
     functions.setFunction<SgSwitch>(
-        [&](SgNode* node){ visitSwitch(static_cast<SgSwitch*>(node)); });
+        [&](SgSwitch* node){
+            if(node->isTurnedOn()){
+                functions.dispatchAs<SgGroup>(node);
+            }
+        });
+
     functions.setFunction<SgTransform>(
-        [&](SgNode* node){ visitTransform(static_cast<SgTransform*>(node)); });
+        [&](SgTransform* transform){
+            visitGroup(transform);
+            if(node){
+                node->setNode(transform);
+            }
+        });
+
     functions.setFunction<SgPreprocessed>(
-        [&](SgNode* node){ visitPreprocessed(static_cast<SgPreprocessed*>(node)); });
+        [&](SgPreprocessed* preprocessed){
+            node = new PreproNode(preprocessed);
+            found = true;
+        });
+
     functions.setFunction<SgLight>(
-        [&](SgNode* node){ visitLight(static_cast<SgLight*>(node)); });
+        [&](SgLight* light){
+            node = new PreproNode(light);
+            found = true;
+        });
+
     functions.setFunction<SgFog>(
-        [&](SgNode* node){ visitFog(static_cast<SgFog*>(node)); });
+        [&](SgFog* fog){
+            node = new PreproNode(fog);
+            found = true;
+        });
+
     functions.setFunction<SgCamera>(
-        [&](SgNode* node){ visitCamera(static_cast<SgCamera*>(node)); });
+        [&](SgCamera* camera){
+            node = new PreproNode(camera);
+            found = true;
+        });
+    
     functions.updateDispatchTable();
 }
 
@@ -447,8 +470,7 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 {
     bool foundInSubTree = false;
 
-    PreproNode* self = new PreproNode();
-    self->setNode(group);
+    PreproNode* self = new PreproNode(group);
 
     for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
         
@@ -477,55 +499,6 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         delete self;
         node = 0;
     }
-}
-
-
-void PreproTreeExtractor::visitSwitch(SgSwitch* switchNode)
-{
-    if(switchNode->isTurnedOn()){
-        functions.dispatchAs<SgGroup>(switchNode);
-    }
-}    
-
-
-void PreproTreeExtractor::visitTransform(SgTransform* transform)
-{
-    visitGroup(transform);
-    if(node){
-        node->setNode(transform);
-    }
-}
-
-
-void PreproTreeExtractor::visitPreprocessed(SgPreprocessed* preprocessed)
-{
-    node = new PreproNode();
-    node->setNode(preprocessed);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitLight(SgLight* light)
-{
-    node = new PreproNode();
-    node->setNode(light);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitFog(SgFog* fog)
-{
-    node = new PreproNode();
-    node->setNode(fog);
-    found = true;
-}
-    
-
-void PreproTreeExtractor::visitCamera(SgCamera* camera)
-{
-    node = new PreproNode();
-    node->setNode(camera);
-    found = true;
 }
 
 

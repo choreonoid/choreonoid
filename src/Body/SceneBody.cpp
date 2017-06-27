@@ -105,6 +105,7 @@ typedef ref_ptr<LinkShapeGroup> LinkShapeGroupPtr;
 
 struct NodeTypeRegistration {
     NodeTypeRegistration(){
+
         SgNode::registerType<LinkShapeGroup, SgGroup>();
 
         SceneRenderer::addExtension(
