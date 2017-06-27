@@ -14,16 +14,15 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/BASE.wrl" } } }
+      Visual: { resource: { uri: "parts/BASE.wrl" } }
       Collision:
-        elements:
-          Shape:
-            rotation: [ 1, 0, 0, 90 ]
-            translation: [ 0, 0, 0.1 ]
-            geometry:
-              type: Cylinder
-              height: 0.2
-              radius: 0.115
+        shape:
+          rotation: [ 1, 0, 0, 90 ]
+          translation: [ 0, 0, 0.1 ]
+          geometry:
+            type: Cylinder
+            height: 0.2
+            radius: 0.115
   -
     name: J1
     parent: BASE
@@ -42,7 +41,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements: 
-      Visual: { elements: { Resource: { uri: "parts/J1.wrl" } } }
+      Visual: { resource: { uri: "parts/J1.wrl" } }
       Collision:
         elements:
           -
@@ -84,7 +83,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/J2.wrl" } } }
+      Visual: { resource: { uri: "parts/J2.wrl" } }
       Collision:
         elements:
           -
@@ -120,7 +119,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements: 
-      Visual: { elements: { Resource: { uri: "parts/J3.wrl" } } }
+      Visual: { resource: { uri: "parts/J3.wrl" } }
       Collision:
         elements:
           -
@@ -162,7 +161,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/J4.wrl" } } }
+      Visual: { resource: { uri: "parts/J4.wrl" } }
       Collision:
         elements:
           -
@@ -237,7 +236,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/J5.wrl" } } }
+      Visual: { resource: { uri: "parts/J5.wrl" } }
       Collision:
         elements:
           -
@@ -275,7 +274,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/J6.wrl" } } }
+      Visual: { resource: { uri: "parts/J6.wrl" } }
       Collision:
         elements:
           -
@@ -350,16 +349,15 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/J7.wrl" } } }
+      Visual: { resource: { uri: "parts/J7.wrl" } }
       Collision:
-        elements:
-          Shape:
-            rotation: [ 1, 0, 0, 90 ]
-            translation: [ 0, 0, 0.045 ]
-            geometry:
-              type: Cylinder
-              height: 0.09
-              radius: 0.04
+        shape:
+          rotation: [ 1, 0, 0, 90 ]
+          translation: [ 0, 0, 0.045 ]
+          geometry:
+            type: Cylinder
+            height: 0.09
+            radius: 0.04
   -
     name: HAND_L
     parent: J7
@@ -375,14 +373,13 @@ links:
       0, 0.1, 0,
       0, 0, 0.1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/HAND_L.wrl" } } }
+      Visual: { resource: { uri: "parts/HAND_L.wrl" } }
       Collision:
-        elements:
-          Shape:
-            translation: [ 0, -0.005, 0.125 ]
-            geometry: &HAND_BOX
-              type: Box
-              size: [ 0.03, 0.01, 0.07 ]
+        shape:
+          translation: [ 0, -0.005, 0.125 ]
+          geometry: &HAND_BOX
+            type: Box
+            size: [ 0.03, 0.01, 0.07 ]
   -
     name: HAND_R
     parent: J7
@@ -398,12 +395,11 @@ links:
       0, 0.1, 0,
       0, 0, 0.1 ]
     elements:
-      Visual: { elements: { Resource: { uri: "parts/HAND_R.wrl" } } }
+      Visual: { resource: { uri: "parts/HAND_R.wrl" } }
       Collision:
-        elements:
-          Shape:
-            translation: [ 0, 0.005, 0.125 ]
-            geometry: *HAND_BOX
+        shape:
+          translation: [ 0, 0.005, 0.125 ]
+          geometry: *HAND_BOX
 
 standardPose: [ 45, 30, 0, 60, 0, 45, 0, 0, 0 ]
 

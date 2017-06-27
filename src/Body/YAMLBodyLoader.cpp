@@ -1195,23 +1195,6 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 
 bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 {
-    /*
-    Mapping& resource = *node.findMapping("resource");
-    if(resource.isValid()){
-        scene = readResourceContents(resource);
-    }
-
-    Mapping& shape = *node.findMapping("shape");
-    if(shape.isValid()){
-        if(resource.isValid()){
-            node.throwException(
-                str(format(_("%1% node cannot contain both the Shape contents and the Resource contents"))
-                    % (isVisual ? "Visual" : "Collision")));
-        }
-        scene = sceneReader.readNode(shape, "Shape");
-    }
-    */
-
     ModelType prevModelType = currentModelType;
 
     if(isVisual){
@@ -1230,6 +1213,21 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 
     bool isSceneNodeAdded = readElements(node);
 
+    auto resource = node.findMapping("resource");
+    if(resource->isValid()){
+        if(auto scene = sceneReader.readNode(*resource, "Resource")){
+            addScene(scene);
+            isSceneNodeAdded = true;
+        }
+    }
+    auto shape = node.findMapping("shape");
+    if(shape->isValid()){
+        if(auto scene = sceneReader.readNode(*shape, "Shape")){
+            addScene(scene);
+            isSceneNodeAdded = true;
+        }
+    }
+ 
     if(isSceneNodeAdded){
         hasVisualOrCollisionNodes = true;
     }
