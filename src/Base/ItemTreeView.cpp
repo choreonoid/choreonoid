@@ -149,7 +149,7 @@ public:
     void forEachTopItems(const ItemList<>& orgItemList, std::function<void(Item*)> callback);
     void cutSelectedItems();
     void copySelectedItems();
-    void copySelectedItemsSub(Item* item, ItemPtr& duplicated, set<Item*>& items);
+    void copySelectedItemsSub(Item* item, Item* duplicated, set<Item*>& items);
     void copySelectedItemsWithChildren();
     void addCopiedItemToCopiedItemList(Item* item);
     void pasteItems();
@@ -165,6 +165,7 @@ public:
     void restoreExpandedItems(const Archive& archive);
     void zoomFontSize(int pointSizeDiff);
 };
+
 }
 
 
@@ -227,7 +228,7 @@ void ItvItem::setData(int column, int role, const QVariant& value)
             CheckColumnPtr& cc = itemTreeViewImpl->checkColumns[id];
             cc->needToUpdateCheckedItemList = true;
             const bool checked = ((Qt::CheckState)value.toInt() == Qt::Checked);
-            cc->sigCheckToggled(item.get(), checked);
+            cc->sigCheckToggled(item, checked);
             SigCheckToggled* sig = sigCheckToggled(id);
             if(sig){
                 (*sig)(checked);
@@ -484,7 +485,7 @@ void ItemTreeViewImpl::releaseCheckColumn(int id)
 
 RootItem* ItemTreeView::rootItem()
 {
-    return impl->rootItem.get();
+    return impl->rootItem;
 }
 
 
@@ -666,7 +667,7 @@ void ItemTreeViewImpl::onRowsAboutToBeRemoved(const QModelIndex& parent, int sta
         if(itvItem){
             itvItem->isExpandedBeforeRemoving = itvItem->isExpanded();
             if(!isDropping){
-                ItemPtr& item = itvItem->item;
+                ItemPtr item = itvItem->item;
                 if(!item->isSubItem()){
                     item->detachFromParentItem();
                 }
@@ -761,7 +762,7 @@ void ItemTreeViewImpl::onSelectionChanged()
     for(int i=0; i < selected.size(); ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(selected[i]);
         if(itvItem){
-            selectedItemList.push_back(itvItem->item.get());
+            selectedItemList.push_back(itvItem->item);
         }
     }
 
@@ -822,9 +823,9 @@ void ItemTreeView::clearSelection()
 }
 
 
-bool ItemTreeView::isItemChecked(ItemPtr item, int id)
+bool ItemTreeView::isItemChecked(Item* item, int id)
 {
-    return impl->isItemChecked(item.get(), id);
+    return impl->isItemChecked(item, id);
 }
 
 
@@ -838,9 +839,9 @@ bool ItemTreeViewImpl::isItemChecked(Item* item, int id)
 }
     
 
-bool ItemTreeView::checkItem(ItemPtr item, bool checked, int id)
+bool ItemTreeView::checkItem(Item* item, bool checked, int id)
 {
-    return impl->checkItem(item.get(), checked, id);
+    return impl->checkItem(item, checked, id);
 }
 
 
@@ -891,7 +892,7 @@ ItemList<>& ItemTreeView::allSelectedItems()
 }
 
 
-void ItemTreeView::extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& io_items)
+void ItemTreeView::extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& io_items)
 {
     topItem->traverse([&](Item* item){ return impl->extractSelectedItemsOfSubTreeTraverse(item, &io_items); });
 }
@@ -936,7 +937,7 @@ void ItemTreeViewImpl::extractCheckedItems(QTreeWidgetItem* twItem, int column, 
     ItvItem* itvItem = dynamic_cast<ItvItem*>(twItem);
     if(itvItem){
         if(itvItem->checkState(column) == Qt::Checked){
-            checkedItemList.push_back(itvItem->item.get());
+            checkedItemList.push_back(itvItem->item);
         }
     }
     int n = twItem->childCount();
@@ -950,11 +951,11 @@ void ItemTreeViewImpl::forEachTopItems(const ItemList<>& items, std::function<vo
 {
     set<Item*> itemSet;
     for(size_t i=0; i < items.size(); ++i){
-        itemSet.insert(items.get(i));
+        itemSet.insert(items[i]);
     }
 
     for(size_t i=0; i < items.size(); ++i){
-        Item* item = items.get(i);
+        Item* item = items[i];
         bool isChild = false;
         Item* parentItem = item->parentItem();
         while(parentItem){
@@ -992,11 +993,11 @@ void ItemTreeViewImpl::copySelectedItems()
 
     set<Item*> items;
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        items.insert(selectedItemList.get(i));
+        items.insert(selectedItemList[i]);
     }
     
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        Item* item = selectedItemList.get(i);
+        Item* item = selectedItemList[i];
         bool isChild = false;
         Item* parentItem = item->parentItem();
         while(parentItem){
@@ -1020,7 +1021,7 @@ void ItemTreeViewImpl::copySelectedItems()
 }
 
 
-void ItemTreeViewImpl::copySelectedItemsSub(Item* item, ItemPtr& duplicated, set<Item*>& items)
+void ItemTreeViewImpl::copySelectedItemsSub(Item* item, Item* duplicated, set<Item*>& items)
 {
     for(Item* childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
         set<Item*>::iterator p = items.find(childItem);
@@ -1093,7 +1094,7 @@ void ItemTreeViewImpl::moveCutItemsToCopiedItemList(Item* item)
 void ItemTreeViewImpl::checkSelectedItems(bool on)
 {
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        checkItem(selectedItemList[i].get(), on, 0);
+        checkItem(selectedItemList[i], on, 0);
     }
 }
 
@@ -1101,7 +1102,7 @@ void ItemTreeViewImpl::checkSelectedItems(bool on)
 void ItemTreeViewImpl::toggleSelectedItemChecks()
 {
     for(size_t i=0; i < selectedItemList.size(); ++i){
-        Item* item = selectedItemList[i].get();
+        Item* item = selectedItemList[i];
         checkItem(item, !isItemChecked(item, 0), 0);
     }
 }

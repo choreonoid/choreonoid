@@ -61,13 +61,13 @@ public:
        topItem は選択されていてもリストには含まれない。
        @endif
     */
-    template <class ItemType> inline ItemList<ItemType> selectedSubItems(ItemPtr topItem) {
+    template <class ItemType> inline ItemList<ItemType> selectedSubItems(Item* topItem) {
         ItemList<> items;
         extractSelectedItemsOfSubTree(topItem, items);
         return items;
     }
 
-    template <class ItemType> inline ItemType* selectedSubItem(ItemPtr topItem, bool fromMultiItems = false) {
+    template <class ItemType> inline ItemType* selectedSubItem(Item* topItem, bool fromMultiItems = false) {
         return selectedSubItems<ItemType>(topItem).toSingle(fromMultiItems);
     }
         
@@ -98,8 +98,8 @@ public:
         return allCheckedItems(id);
     }
 
-    bool isItemChecked(ItemPtr item, int id = 0);
-    bool checkItem(ItemPtr item, bool check = true, int id = 0);
+    bool isItemChecked(Item* item, int id = 0);
+    bool checkItem(Item* item, bool check = true, int id = 0);
 
     /**
        @if jp
@@ -123,18 +123,16 @@ public:
     void cutSelectedItems();
 
 protected:
-
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
 
 private:
-
     ItemTreeViewImpl* impl;
 
     void construct(RootItem* rootItem, bool showRoot);
     ItemList<>& allSelectedItems();
     ItemList<>& allCheckedItems(int id);
-    void extractSelectedItemsOfSubTree(ItemPtr topItem, ItemList<>& items);
+    void extractSelectedItemsOfSubTree(Item* topItem, ItemList<>& items);
 
 private Q_SLOTS:
     void onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);

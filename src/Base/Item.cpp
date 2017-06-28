@@ -300,12 +300,6 @@ void Item::setTemporal(bool on)
 }
 
 
-/**
-   @if jp
-   アイテムを親アイテムから切り離す。
-   @return ルートアイテムのツリー内から切り離される場合は、そのルートアイテムを返す。
-   @endif
-*/
 void Item::detachFromParentItem()
 {
     ItemPtr self = this;
