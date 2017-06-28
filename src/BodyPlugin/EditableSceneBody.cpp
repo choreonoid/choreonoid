@@ -1191,7 +1191,9 @@ void EditableSceneBodyImpl::onDraggerDragged()
     if(activeSimulatorItem){
         setForcedPosition(positionDragger->draggedPosition());
     } else {
-        doIK(positionDragger->draggedPosition());
+        Affine3 T = positionDragger->draggedPosition();
+        T.linear() = targetLink->calcRfromAttitude(T.linear());
+        doIK(T);
     }
 }
 
@@ -1202,7 +1204,9 @@ void EditableSceneBodyImpl::onDraggerDragFinished()
     if(activeSimulatorItem){
         finishForcedPosition();
     } else {
-        doIK(positionDragger->draggedPosition());
+        Affine3 T = positionDragger->draggedPosition();
+        T.linear() = targetLink->calcRfromAttitude(T.linear());
+        doIK(T);
     }
 }
 
