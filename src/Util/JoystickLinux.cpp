@@ -119,7 +119,8 @@ bool JoystickImpl::openDevice(const char* device)
     static const vector<int> F310_X_BM{ 2, 0, 1, 3, 4, 5, 9, 10, 7, 6, 8 };
     static const vector<int> F310_D_BM{ 0, 1, 2, 3, 4, 5, 10, 11, 9, 8, -1 };
     static const vector<int> OTHER_BM(STANDARD_BUTTON_NUM, -1);
-    if(model_id == "Sony Computer Entertainment Wireless Controller"){
+    if(model_id == "Sony Computer Entertainment Wireless Controller" || model_id == "Sony Interactive Entertainment Wireless Controller"){
+      // CUH-ZCT1J or CUH-ZCT2J
       model = PS4;
       axis_map = PS4_AM;
       button_map = PS4_BM;
@@ -127,7 +128,7 @@ bool JoystickImpl::openDevice(const char* device)
       model = PS3;
       axis_map = PS3_AM;
       button_map = PS3_BM;
-    }else if(model_id == "Microsoft X-Box 360 pad"){
+    }else if(model_id == "Microsoft X-Box 360 pad" || model_id == "Microsoft X-Box One pad"){
       model = XBOX;
       axis_map = XBOX_AM;
       button_map = XBOX_BM;
