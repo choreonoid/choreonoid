@@ -37,7 +37,7 @@ void AGXLinkBody::createGeometry(AGXGeometryDesc desc){
 	_geometry = g;
 }
 
-void AGXLinkBody::createShape(const AGXShapeDesc& desc){
+void AGXLinkBody::createShape(const AGXShapeDesc& desc, const agx::AffineMatrix4x4& af){
 	agxCollide::ShapeRef shape = nullptr;
 	if(desc.shapeType == AGXShapeType::AGXCOLLIDE_BOX){
 		shape = createShapeBox(static_cast<const AGXBoxDesc&>(desc));
@@ -50,13 +50,15 @@ void AGXLinkBody::createShape(const AGXShapeDesc& desc){
 	}else if(desc.shapeType == AGXShapeType::AGXCOLLIDE_TRIMESH){
 		shape = createShapeTrimesh(static_cast<const AGXTrimeshDesc&>(desc));
 	}else{}
-	getGeometry()->add(shape);
+	getGeometry()->add(shape, af);
 }
 
 void AGXLinkBody::createConstraint(const AGXConstraintDesc& desc){
 	agx::ConstraintRef c = nullptr;
 	if(desc.constraintType == AGXConstraintType::AGXHIGE){
 		c = createConstraintHinge(static_cast<const AGXHingeDesc&>(desc));
+	}else if(desc.constraintType == AGXConstraintType::AGXLOCKJOINT){
+		c = createConstraintLockJoint(static_cast<const AGXLockJointDesc&>(desc));
 	}
 	constraint = c; 
 }
@@ -99,7 +101,12 @@ agx::HingeRef AGXLinkBody::createConstraintHinge(const AGXHingeDesc& desc)
 	agx::HingeFrame hingeFrame;
 	hingeFrame.setAxis(desc.hingeFrameAxis);
 	hingeFrame.setCenter(desc.hingeFrameCenter);
-	return new agx::Hinge(hingeFrame, desc.myRigidBody, desc.parentRigidBody);
+	return new agx::Hinge(hingeFrame, desc.RigidBodyA, desc.RigidBodyB);
+}
+
+agx::LockJointRef AGXLinkBody::createConstraintLockJoint(const AGXLockJointDesc & desc)
+{
+	return new agx::LockJoint(desc.RigidBodyA, desc.RigidBodyB);
 }
 
 

@@ -85,7 +85,7 @@ void AGXLink::createAGXShape(){
 		std::cout << "mesh indices" << td.indices.size() << std::endl;
 		// if vertices have values, it will be trimesh 
 		if(!td.vertices.empty()){
-			agxLinkBody->createShape(td);
+			agxLinkBody->createShape(td, agx::AffineMatrix4x4());
 		}
 	}
 	delete extractor;
@@ -129,13 +129,23 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 			}
 		}
 		if(doAddPrimitive){
+			Affine3 T_ = extractor->currentTransformWithoutScaling();
+			//if(translation.norm() > 0){
+			//	T_ *= Translation3(translation);
+			//}
+			agx::AffineMatrix4x4 af;
+			af.set( T_(0,0), T_(1,0), T_(2,0), 0.0,
+                    T_(0,1), T_(1,1), T_(2,1), 0.0,
+                    T_(0,2), T_(1,2), T_(2,2), 0.0,
+                    T_(0,3), T_(1,3), T_(2,3), 1.0);
+
 			bool created = false;
 			switch(mesh->primitiveType()){
 			case SgMesh::BOX : {
 				const Vector3& s = mesh->primitive<SgMesh::Box>().size / 2.0;
 				AGXBoxDesc bd;
 				bd.halfExtents = agx::Vec3( s.x()*scale.x(), s.y()*scale.y(), s.z()*scale.z());
-				getAGXLinkBody()->createShape(bd);
+				getAGXLinkBody()->createShape(bd, af);
 				created = true;
 				break;
 			}
@@ -143,7 +153,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 				SgMesh::Sphere sphere = mesh->primitive<SgMesh::Sphere>();
 				AGXSphereDesc sd;
 				sd.radius = sphere.radius * scale.x();
-				getAGXLinkBody()->createShape(sd);
+				getAGXLinkBody()->createShape(sd, af);
 				created = true;
 				break;
 			}
@@ -152,7 +162,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 			//	AGXCapsuleDesc cd;
 			//	//cd.radius = capsule.radius * scale.x();
 			//	//cd .hegiht =  capsule.height * scale.y();
-			//	getAGXLinkBody()->createShape(cd);
+			//	getAGXLinkBody()->createShape(cd, af);
 			//	created = true;
 			//	break;
 			//}
@@ -161,7 +171,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 				AGXCylinderDesc cd;
 				cd.radius = cylinder.radius * scale.x();
 				cd .hegiht =  cylinder.height * scale.y();
-				getAGXLinkBody()->createShape(cd);
+				getAGXLinkBody()->createShape(cd, af);
 				created = true;
 				break;
 			}
@@ -169,14 +179,6 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 				break;
 			}
 			if(created){
-				Affine3 T_ = extractor->currentTransformWithoutScaling();
-				if(translation.norm() > 0){
-					T_ *= Translation3(translation);
-				}
-				//agxGeometry->setLocalTransform( agx::AffineMatrix4x4( T_(0,0), T_(1,0), T_(2,0), 0.0,
-    //                                                  T_(0,1), T_(1,1), T_(2,1), 0.0,
-    //                                                  T_(0,2), T_(1,2), T_(2,2), 0.0,
-    //                                                  T_(0,3), T_(1,3), T_(2,3), 1.0) );
 				meshAdded = true;
 			}
 		}
@@ -213,8 +215,15 @@ void AGXLink::createAGXConstraints(){
 			const Vector3& p = orgLink->p();
 			desc.hingeFrameAxis.set(a(0),a(1),a(2));
 			desc.hingeFrameCenter.set(p(0),p(1),p(2));
-			desc.myRigidBody = getAGXRigidBody();
-			desc.parentRigidBody = agxParentLink->getAGXRigidBody();
+			desc.RigidBodyA = getAGXRigidBody();
+			desc.RigidBodyB = agxParentLink->getAGXRigidBody();
+			agxLinkBody->createConstraint(desc);
+			break;
+		}
+		case Link::PSEUDO_CONTINUOUS_TRACK :{
+			AGXLockJointDesc desc;
+			desc.RigidBodyA = getAGXRigidBody();
+			desc.RigidBodyB = agxParentLink->getAGXRigidBody();
 			agxLinkBody->createConstraint(desc);
 			break;
 		}

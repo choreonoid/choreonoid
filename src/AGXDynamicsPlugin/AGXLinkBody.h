@@ -99,17 +99,18 @@ struct AGXTrimeshDesc : public AGXShapeDesc
 
 enum AGXConstraintType{
 	AGXHIGE,
-	AGXBALLJOINT
+	AGXBALLJOINT,
+	AGXLOCKJOINT
 };
 
 struct AGXConstraintDesc {
 	AGXConstraintType constraintType;
-	agx::Vec3 myFramePos;  // local
-	agx::EulerAngles myFrameRot;  // local
-	agx::Vec3 parentFramePos;  // local
-	agx::EulerAngles parentFrameRot;  // local
-	agx::RigidBodyRef myRigidBody;
-	agx::RigidBodyRef parentRigidBody;
+	agx::Vec3 FramePosA;  // local
+	agx::EulerAngles FrameRotA;  // local
+	agx::Vec3 FramePosB;  // local
+	agx::EulerAngles FrameRotB;  // local
+	agx::RigidBodyRef RigidBodyA;
+	agx::RigidBodyRef RigidBodyB;
 	agx::Vec3 hingeFrameAxis;
 	agx::Vec3 hingeFrameCenter;
 };
@@ -121,6 +122,12 @@ struct AGXHingeDesc : public AGXConstraintDesc{
 
 };
 
+struct AGXLockJointDesc : public AGXConstraintDesc{
+	AGXLockJointDesc(){
+		constraintType = AGXConstraintType::AGXLOCKJOINT;
+	}
+};
+
 class AGXLinkBody : public agx::Referenced
 {
 public:
@@ -130,7 +137,7 @@ public:
 	agx::ConstraintRef getConstraint();
 	void createRigidBody(AGXRigidBodyDesc desc);
 	void createGeometry(AGXGeometryDesc desc);
-	void createShape(const AGXShapeDesc& desc);
+	void createShape(const AGXShapeDesc& desc, const agx::AffineMatrix4x4& af);
 	void createConstraint(const AGXConstraintDesc& desc);
 private:
 	agx::RigidBodyRef _rigid;
@@ -142,6 +149,7 @@ private:
 	agxCollide::CylinderRef createShapeCylinder(const AGXCylinderDesc& desc);
 	agxCollide::MeshRef createShapeTrimesh(const AGXTrimeshDesc& desc);
 	agx::HingeRef createConstraintHinge(const AGXHingeDesc& desc);
+	agx::LockJointRef createConstraintLockJoint(const AGXLockJointDesc& desc);
 };
 typedef agx::ref_ptr<AGXLinkBody> AGXLinkBodyRef;
 }
