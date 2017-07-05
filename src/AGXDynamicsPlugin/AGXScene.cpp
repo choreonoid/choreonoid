@@ -18,7 +18,7 @@ void AGXScene::stepAGXSimulation()
 {
 	agx::Thread::makeCurrentThreadMainThread();
 	agxSimulation->stepForward();
-	agx::Thread::unregisterAsAgxThread();
+	//agx::Thread::unregisterAsAgxThread();
 }
 
 agxSDK::SimulationRef AGXScene::getAGXSimulation()

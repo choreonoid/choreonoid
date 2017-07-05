@@ -23,6 +23,7 @@ public:
 	agx::ConstraintRef getAGXConstraint();
 	void createLinkBody();
 	void createConstraints();
+	void synchronizeLinkStateToAGX();
 	void synchronizeLinkStateToCnoid();
 private:
 	int _index;
@@ -48,6 +49,7 @@ public:
 	AGXBody(Body& orgBody);
 	void initialize();
 	void createBody();
+	void synchronizeLinkStateToAGX();
 	void synchronizeLinkStateToCnoid();
 	//AGXLinkPtr getAGXLink(int index);
 	agx::RigidBodyRef getAGXRigidBody(int index);

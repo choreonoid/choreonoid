@@ -1,5 +1,6 @@
 #include "AGXBody.h"
 #include <cnoid/SceneDrawables>
+#include <boost/optional/optional.hpp>
 
 namespace cnoid{
 
@@ -46,7 +47,6 @@ void AGXLink::createAGXRigidBody(){
 	const Vector3& v = orgLink->v(); 
 	const Vector3& w = orgLink->w(); 
 	const Vector3& p = orgLink->p();
-	const Matrix3& R = orgLink->R();
 
 	AGXRigidBodyDesc desc;
 	desc.name = orgLink->name();
@@ -58,9 +58,9 @@ void AGXLink::createAGXRigidBody(){
 	desc.v.set(v(0), v(1), v(2));
 	desc.w.set(w(0), w(1), w(2));
 	desc.p.set(p(0), p(1), p(2));
-	desc.R.set(	R(0,0), R(1,0), R(2,0),
-				R(0,1), R(1,1), R(2,1),
-				R(0,2), R(1,2), R(2,2));
+	// First set rotation with default values. Choreonoid uses relative angles to set rotation and viewing models.
+	// When set rotation here relative angles shift from correct angles.
+	desc.R.set(agx::Quat(0,0,0,1));
 
 	Link::JointType jt = orgLink->jointType();
 	if(jt == Link::FIXED_JOINT){
@@ -80,9 +80,6 @@ void AGXLink::createAGXShape(){
 	MeshExtractor* extractor = new MeshExtractor;
 	AGXTrimeshDesc td;
 	if(extractor->extract(orgLink->collisionShape(), std::bind(&AGXLink::detectPrimitiveShape, this, extractor, std::ref(td)))){
-		std::cout << &td << std::endl;
-		std::cout << "mesh vertices" << td.vertices.size() << std::endl;
-		std::cout << "mesh indices" << td.indices.size() << std::endl;
 		// if vertices have values, it will be trimesh 
 		if(!td.vertices.empty()){
 			agxLinkBody->createShape(td, agx::AffineMatrix4x4());
@@ -100,7 +97,7 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 	if(mesh->primitiveType() != SgMesh::MESH){
 		bool doAddPrimitive = false;
 		Vector3 scale;
-		Vector3 translation;
+		boost::optional<Vector3> translation;
 		if(!extractor->isCurrentScaled()){
 			scale.setOnes();
 			doAddPrimitive = true;
@@ -130,9 +127,9 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 		}
 		if(doAddPrimitive){
 			Affine3 T_ = extractor->currentTransformWithoutScaling();
-			//if(translation.norm() > 0){
-			//	T_ *= Translation3(translation);
-			//}
+			if(translation){
+				T_ *= Translation3(*translation);
+			}
 			agx::AffineMatrix4x4 af;
 			af.set( T_(0,0), T_(1,0), T_(2,0), 0.0,
                     T_(0,1), T_(1,1), T_(2,1), 0.0,
@@ -201,13 +198,10 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 			td.indices.push_back(vertexIndexTop + src[2]);
 		}
 	}
-		std::cout << &td << std::endl;
-		std::cout << "mesh vertices" << td.vertices.size() << std::endl;
-		std::cout << "mesh indices" << td.indices.size() << std::endl;
 }
 
 void AGXLink::createAGXConstraints(){
-
+	if(!agxParentLink) return;
 	switch(orgLink->jointType()){
 		case Link::REVOLUTE_JOINT :{
 			AGXHingeDesc desc;
@@ -215,11 +209,17 @@ void AGXLink::createAGXConstraints(){
 			const Vector3& p = orgLink->p();
 			desc.hingeFrameAxis.set(a(0),a(1),a(2));
 			desc.hingeFrameCenter.set(p(0),p(1),p(2));
+			std::cout << "hingeaxis " << desc.hingeFrameAxis << std::endl;
+			std::cout << "hingecenter " << desc.hingeFrameCenter << std::endl;
 			desc.RigidBodyA = getAGXRigidBody();
 			desc.RigidBodyB = agxParentLink->getAGXRigidBody();
 			agxLinkBody->createConstraint(desc);
 			break;
 		}
+		case Link::PRISMATIC_JOINT :{
+			break;
+		}
+		case Link::FIXED_JOINT :
 		case Link::PSEUDO_CONTINUOUS_TRACK :{
 			AGXLockJointDesc desc;
 			desc.RigidBodyA = getAGXRigidBody();
@@ -227,9 +227,37 @@ void AGXLink::createAGXConstraints(){
 			agxLinkBody->createConstraint(desc);
 			break;
 		}
+		case Link::FREE_JOINT :
 		default:
 			break;
 	}
+}
+
+void AGXLink::synchronizeLinkStateToAGX()
+{
+	agx::RigidBodyRef agxRigidBody = getAGXRigidBody();	
+    if(!agxRigidBody)
+        return;
+
+    const Vector3& p = orgLink->p();
+    const Matrix3& R = orgLink->R();
+    agx::Vec3 translation(p(0), p(1), p(2));
+    agx::OrthoMatrix3x3 rotation(R(0,0), R(1,0), R(2,0),
+                                 R(0,1), R(1,1), R(2,1),
+                                 R(0,2), R(1,2), R(2,2));
+    agxRigidBody->setTransform( agx::AffineMatrix4x4( rotation, translation) );
+
+    const Vector3 lc = orgLink->R() * orgLink->c();
+    const Vector3& w = orgLink->w();
+    const Vector3 v = orgLink->v() + w.cross(lc);
+    agxRigidBody->setVelocity( agx::Vec3(v(0),v(1),v(2)) );     // the linear velocity of the center of mass
+    agxRigidBody->setAngularVelocity( agx::Vec3(w(0),w(1),w(2)) );
+
+	std::cout << orgLink->name() << "pos " << getAGXRigidBody()->getPosition() << std::endl;
+	std::cout << orgLink->name() << "rot " << getAGXRigidBody()->getRotation() << std::endl;
+	std::cout << orgLink->name() << "cm  " << getAGXRigidBody()->getCmLocalTranslate() << std::endl;
+	//if(getAGXConstraint())
+	//std::cout << orgLink->name() << "joint" << agx::Constraint1DOF::safeCast(getAGXConstraint())->getAngle() << std::endl;
 
 }
 
@@ -238,8 +266,35 @@ void AGXLink::synchronizeLinkStateToCnoid()
 	agx::RigidBodyRef agxRigidBody = getAGXRigidBody();
 	if(!agxRigidBody) return;
 
-	std::cout << orgLink->name() << std::endl;
-	std::cout << orgLink->p() << std::endl;
+//	std::cout << orgLink->name() << std::endl;
+//	std::cout << orgLink->p() << std::endl;
+
+	// constraint
+    switch(orgLink->jointType()){
+        case Link::ROTATIONAL_JOINT:
+        case Link::SLIDE_JOINT:{
+            agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
+            if(joint1DOF){
+                orgLink->q() = joint1DOF->getAngle();
+                orgLink->dq() = joint1DOF->getCurrentSpeed();
+                //if(inputMode==VEL){
+                //    link->u() = joint1DOF->getMotor1D()->getCurrentForce();
+                //    //cout << link->name() << " " << link->u() << endl;
+                //}
+                break;
+            }
+            //agx::PrismaticUniversalJoint* pujoint = dynamic_cast<agx::PrismaticUniversalJoint*>(joint);
+            //if(pujoint){
+            //    link->q() = pujoint->getAngle(customConstraintIndex);
+            //    link->dq() = pujoint->getCurrentSpeed(customConstraintIndex);
+            //    break;
+            //}
+        }
+        default :
+            break;
+    }	
+
+
 	// position, rotation
 	agx::AffineMatrix4x4 t = agxRigidBody->getTransform();
     orgLink->p() = Vector3(t(3,0), t(3,1), t(3,2));
@@ -257,8 +312,9 @@ void AGXLink::synchronizeLinkStateToCnoid()
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
 
-	std::cout << orgLink->p() << std::endl;
-	std::cout << agxRigidBody->getPosition() << std::endl;
+	std::cout << orgLink->name() << "pos " << getAGXRigidBody()->getPosition() << std::endl;
+	std::cout << orgLink->name() << "rot " << getAGXRigidBody()->getRotation() << std::endl;
+	std::cout << orgLink->name() << "cm  " << getAGXRigidBody()->getCmLocalTranslate() << std::endl;
 }
 
 //LinkPtr AGXLink::link(){
@@ -326,9 +382,19 @@ void AGXBody::createBody(){
 	for(int i = 0; i < body()->numLinks(); ++i){
 		agxLinks[i]->createConstraints();
 	}
+
+	synchronizeLinkStateToAGX();
 }
 
-void AGXBody::synchronizeLinkStateToCnoid(){
+void AGXBody::synchronizeLinkStateToAGX()
+{
+	for(size_t i = 0; i < agxLinks.size(); ++i){
+		agxLinks[i]->synchronizeLinkStateToAGX();
+	}
+}
+
+void AGXBody::synchronizeLinkStateToCnoid()
+{
 	for(size_t i = 0; i < agxLinks.size(); ++i){
 		agxLinks[i]->synchronizeLinkStateToCnoid();
 	}	

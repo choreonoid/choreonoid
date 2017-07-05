@@ -24,9 +24,11 @@ void AGXLinkBody::createRigidBody(AGXRigidBodyDesc desc){
 	r->setAngularVelocity(desc.w);
 	r->setPosition(desc.p);
 	r->setRotation(desc.R);
-	r->getMassProperties()->setAutoGenerateMask(desc.genflags);
+	r->getMassProperties()->setAutoGenerateMask(0);
+	//r->getMassProperties()->setAutoGenerateMask(desc.genflags);
 	r->getMassProperties()->setMass(desc.m, false);
 	r->getMassProperties()->setInertiaTensor(desc.I, false);
+	r->setCmLocalTranslate(desc.c);
 	r->setName(desc.name);
 	_rigid = r;
 }
