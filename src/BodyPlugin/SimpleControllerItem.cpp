@@ -96,10 +96,12 @@ public:
         N_PATH_BASE
     };
 
+    Signal<void()> sigControllerChanged;
+
     SimpleControllerItemImpl(SimpleControllerItem* self);
     SimpleControllerItemImpl(SimpleControllerItem* self, const SimpleControllerItemImpl& org);
     ~SimpleControllerItemImpl();
-    void unloadController();
+    void unloadController(bool doNotify);
     void initializeIoBody();
     void updateInputEnabledDevices();
     SimpleController* initialize(ControllerItemIO* io, SharedInfo* info);
@@ -187,29 +189,15 @@ SimpleControllerItem::~SimpleControllerItem()
 
 SimpleControllerItemImpl::~SimpleControllerItemImpl()
 {
-    unloadController();
+    unloadController(false);
     outputDeviceStateConnections.disconnect();
-}
-
-
-void SimpleControllerItemImpl::unloadController()
-{
-    if(controller){
-        delete controller;
-        controller = 0;
-    }
-
-    if(controllerModule.unload()){
-        mv->putln(fmt(_("The controller module \"%2%\" of %1% has been unloaded."))
-                  % self->name() % controllerModuleFileName);
-    }
 }
 
 
 void SimpleControllerItem::onDisconnectedFromRoot()
 {
     if(!isActive()){
-        impl->unloadController();
+        impl->unloadController(false);
     }
     impl->childControllerItems.clear();
 }
@@ -223,9 +211,39 @@ Item* SimpleControllerItem::doDuplicate() const
 
 void SimpleControllerItem::setController(const std::string& name)
 {
-    impl->unloadController();
+    impl->unloadController(true);
     impl->controllerModuleName = name;
     impl->controllerModuleFileName.clear();
+}
+
+
+SimpleController* SimpleControllerItem::controller()
+{
+    return impl->controller;
+}
+
+
+void SimpleControllerItemImpl::unloadController(bool doNotify)
+{
+    if(controller){
+        delete controller;
+        controller = 0;
+
+        if(doNotify){
+            sigControllerChanged();
+        }
+    }
+
+    if(controllerModule.unload()){
+        mv->putln(fmt(_("The controller module \"%2%\" of %1% has been unloaded."))
+                  % self->name() % controllerModuleFileName);
+    }
+}
+
+
+SignalProxy<void()> SimpleControllerItem::sigControllerChanged()
+{
+    return impl->sigControllerChanged;
 }
 
 
@@ -338,6 +356,7 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
                     mv->putln(_("The factory failed to create a controller instance."));
                 } else {
                     mv->putln(_("A controller instance has successfully been created."));
+                    sigControllerChanged();
                 }
             }
         }
@@ -733,7 +752,7 @@ void SimpleControllerItemImpl::output()
 void SimpleControllerItem::stop()
 {
     if(impl->doReloading || !findRootItem()){
-        impl->unloadController();
+        impl->unloadController(true);
     }
 
     for(size_t i=0; i < impl->childControllerItems.size(); ++i){
