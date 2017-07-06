@@ -41,6 +41,11 @@ void AGXLink::createConstraints()
 	createAGXConstraints();
 }
 
+void AGXLink::setCollision(bool bOn)
+{
+	getAGXLinkBody()->getGeometry()->setEnableCollisions(bOn);
+}
+
 void AGXLink::createAGXRigidBody(){
 	const Matrix3& I = orgLink->I();
 	const Vector3& c = orgLink->c();
@@ -72,6 +77,7 @@ void AGXLink::createAGXRigidBody(){
 
 void AGXLink::createAGXGeometry(){
 	AGXGeometryDesc gdesc;
+	gdesc.selfCollsionGroupName = orgLink->body()->name();
 	agxLinkBody->createGeometry(gdesc);
 }
 
@@ -207,23 +213,29 @@ void AGXLink::createAGXConstraints(){
 			AGXHingeDesc desc;
 			const Vector3& a = orgLink->a();
 			const Vector3& p = orgLink->p();
-			desc.hingeFrameAxis.set(a(0),a(1),a(2));
-			desc.hingeFrameCenter.set(p(0),p(1),p(2));
-			std::cout << "hingeaxis " << desc.hingeFrameAxis << std::endl;
-			std::cout << "hingecenter " << desc.hingeFrameCenter << std::endl;
-			desc.RigidBodyA = getAGXRigidBody();
-			desc.RigidBodyB = agxParentLink->getAGXRigidBody();
+			desc.frameAxis.set(a(0),a(1),a(2));
+			desc.frameCenter.set(p(0),p(1),p(2));
+			desc.rigidBodyA = getAGXRigidBody();
+			desc.rigidBodyB = agxParentLink->getAGXRigidBody();
 			agxLinkBody->createConstraint(desc);
 			break;
 		}
 		case Link::PRISMATIC_JOINT :{
+			AGXPrismaticDesc desc;
+			const Vector3& a = orgLink->a();
+			const Vector3& p = orgLink->p();
+			desc.frameAxis.set(a(0),a(1),a(2));
+			desc.framePoint.set(p(0),p(1),p(2));
+			desc.rigidBodyA = getAGXRigidBody();
+			desc.rigidBodyB = agxParentLink->getAGXRigidBody();
+			agxLinkBody->createConstraint(desc);
 			break;
 		}
 		case Link::FIXED_JOINT :
 		case Link::PSEUDO_CONTINUOUS_TRACK :{
 			AGXLockJointDesc desc;
-			desc.RigidBodyA = getAGXRigidBody();
-			desc.RigidBodyB = agxParentLink->getAGXRigidBody();
+			desc.rigidBodyA = getAGXRigidBody();
+			desc.rigidBodyB = agxParentLink->getAGXRigidBody();
 			agxLinkBody->createConstraint(desc);
 			break;
 		}
@@ -386,6 +398,13 @@ void AGXBody::createBody(){
 	synchronizeLinkStateToAGX();
 }
 
+void AGXBody::setCollision(bool bOn)
+{
+	for(size_t i = 0; i < agxLinks.size(); ++i){
+		agxLinks[i]->setCollision(bOn);
+	}
+}
+
 void AGXBody::synchronizeLinkStateToAGX()
 {
 	for(size_t i = 0; i < agxLinks.size(); ++i){
@@ -399,10 +418,6 @@ void AGXBody::synchronizeLinkStateToCnoid()
 		agxLinks[i]->synchronizeLinkStateToCnoid();
 	}	
 }
-
-//AGXLinkPtr AGXBody::getAGXLink(int index){
-//	return agxLinks[index];
-//}
 
 agx::RigidBodyRef AGXBody::getAGXRigidBody(int index)
 {
@@ -418,8 +433,5 @@ int AGXBody::getNumLinks(){
 	return agxLinks.size();
 }
 
-//AGXLinkPtr AGXBody::getAGXLinks(){
-//	return &_agxLinks;
-//}
 
 }

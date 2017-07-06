@@ -5,6 +5,7 @@
 //#include <cnoid/EigenUtil>
 //#include <cnoid/EigenArchive>
 #include "AGXLinkBody.h"
+#include <cnoid/BodyItem>
 #include <cnoid/MeshExtractor>
 
 namespace cnoid{
@@ -23,6 +24,7 @@ public:
 	agx::ConstraintRef getAGXConstraint();
 	void createLinkBody();
 	void createConstraints();
+	void setCollision(bool bOn);
 	void synchronizeLinkStateToAGX();
 	void synchronizeLinkStateToCnoid();
 private:
@@ -45,21 +47,17 @@ private:
 
 class AGXBody :  public SimulationBody{
 public:
-	//std::vector<AGXLinkPtr> agxLinks;
 	AGXBody(Body& orgBody);
 	void initialize();
 	void createBody();
+	void setCollision(bool bOn);
 	void synchronizeLinkStateToAGX();
 	void synchronizeLinkStateToCnoid();
-	//AGXLinkPtr getAGXLink(int index);
 	agx::RigidBodyRef getAGXRigidBody(int index);
 	agx::ConstraintRef getAGXConstraint(int index);
 	int getNumLinks();
 private:
 	std::vector<AGXLinkPtr> agxLinks;
-	//AGXLinkPtr getAGXLinks();
-
-	
 };
 typedef ref_ptr<AGXBody> AGXBodyPtr;
 

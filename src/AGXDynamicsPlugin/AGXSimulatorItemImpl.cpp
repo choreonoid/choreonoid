@@ -68,6 +68,14 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 			agxScene->getAGXSimulation()->add(body->getAGXRigidBody(j));
 			agxScene->getAGXSimulation()->add(body->getAGXConstraint(j));
 		}
+		// Set self collision
+		if(!body->bodyItem()->isSelfCollisionDetectionEnabled()){
+			agxScene->setCollisionPair(body->bodyItem()->name(), body->bodyItem()->name(), false); 
+		}
+		// Set external collision
+		if(!body->bodyItem()->isCollisionDetectionEnabled()){
+			body->setCollision(false);
+		}
 	}
 
 	saveSimulationToAGXFile();

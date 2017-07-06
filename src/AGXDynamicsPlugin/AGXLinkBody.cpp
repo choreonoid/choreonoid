@@ -35,6 +35,7 @@ void AGXLinkBody::createRigidBody(AGXRigidBodyDesc desc){
 void AGXLinkBody::createGeometry(AGXGeometryDesc desc){
 	agxCollide::GeometryRef g = new agxCollide::Geometry();
 	//g->setSurfaceVelocity(desc.surfacevel);
+	g->addGroup(desc.selfCollsionGroupName);
 	getRigidBody()->add(g);
 	_geometry = g;
 }
@@ -57,7 +58,7 @@ void AGXLinkBody::createShape(const AGXShapeDesc& desc, const agx::AffineMatrix4
 
 void AGXLinkBody::createConstraint(const AGXConstraintDesc& desc){
 	agx::ConstraintRef c = nullptr;
-	if(desc.constraintType == AGXConstraintType::AGXHIGE){
+	if(desc.constraintType == AGXConstraintType::AGXHINGE){
 		c = createConstraintHinge(static_cast<const AGXHingeDesc&>(desc));
 	}else if(desc.constraintType == AGXConstraintType::AGXLOCKJOINT){
 		c = createConstraintLockJoint(static_cast<const AGXLockJointDesc&>(desc));
@@ -91,25 +92,26 @@ agxCollide::MeshRef AGXLinkBody::createShapeTrimesh(const AGXTrimeshDesc& desc){
 
 agx::HingeRef AGXLinkBody::createConstraintHinge(const AGXHingeDesc& desc)
 {
-	/*
-	agx::FrameRef myFrame = new agx::Frame();
-	agx::FrameRef parentFrame = new agx::Frame();
-	myFrame->setLocalTranslate(desc.myFramePos);
-	myFrame->setLocalRotate(desc.myFrameRot);
-	parentFrame->setLocalTranslate(desc.parentFramePos);
-	parentFrame->setRotate(desc.parentFrameRot);
-	return new agx::Hinge(desc.myRigidBody, myFrame, desc.parentRigidBody, parentFrame);
-	*/
 	agx::HingeFrame hingeFrame;
-	hingeFrame.setAxis(desc.hingeFrameAxis);
-	hingeFrame.setCenter(desc.hingeFrameCenter);
-	return new agx::Hinge(hingeFrame, desc.RigidBodyA, desc.RigidBodyB);
+	hingeFrame.setAxis(desc.frameAxis);
+	hingeFrame.setCenter(desc.frameCenter);
+	return new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
 }
 
 agx::LockJointRef AGXLinkBody::createConstraintLockJoint(const AGXLockJointDesc & desc)
 {
-	return new agx::LockJoint(desc.RigidBodyA, desc.RigidBodyB);
+	return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
 }
+
+agx::PrismaticRef AGXLinkBody::createConstraintPrismatic(const AGXPrismaticDesc & desc)
+{
+	agx::PrismaticFrame prismaticFrame;
+	prismaticFrame.setAxis(desc.frameAxis);
+	prismaticFrame.setPoint(desc.framePoint);
+	return new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
+}
+
+
 
 
 }

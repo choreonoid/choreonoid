@@ -22,6 +22,7 @@ struct AGXRigidBodyDesc
 struct AGXGeometryDesc{
 	AGXGeometryDesc(){};
 	agx::Vec3f surfacevel;
+	agx::Name selfCollsionGroupName;
 };
 
 enum AGXShapeType
@@ -98,34 +99,43 @@ struct AGXTrimeshDesc : public AGXShapeDesc
 };
 
 enum AGXConstraintType{
-	AGXHIGE,
+	AGXHINGE,
 	AGXBALLJOINT,
-	AGXLOCKJOINT
+	AGXLOCKJOINT,
+	AGXPRISMATIC,
 };
 
 struct AGXConstraintDesc {
 	AGXConstraintType constraintType;
-	agx::Vec3 FramePosA;  // local
-	agx::EulerAngles FrameRotA;  // local
-	agx::Vec3 FramePosB;  // local
-	agx::EulerAngles FrameRotB;  // local
-	agx::RigidBodyRef RigidBodyA;
-	agx::RigidBodyRef RigidBodyB;
-	agx::Vec3 hingeFrameAxis;
-	agx::Vec3 hingeFrameCenter;
+	//agx::Vec3 FramePosA;  // local
+	//agx::EulerAngles FrameRotA;  // local
+	//agx::Vec3 FramePosB;  // local
+	//agx::EulerAngles FrameRotB;  // local
+	agx::RigidBodyRef rigidBodyA;
+	agx::RigidBodyRef rigidBodyB;
+
 };
 
 struct AGXHingeDesc : public AGXConstraintDesc{
 	AGXHingeDesc(){
-		constraintType = AGXConstraintType::AGXHIGE;
+		constraintType = AGXConstraintType::AGXHINGE;
 	}
-
+	agx::Vec3 frameAxis;
+	agx::Vec3 frameCenter;
 };
 
 struct AGXLockJointDesc : public AGXConstraintDesc{
 	AGXLockJointDesc(){
 		constraintType = AGXConstraintType::AGXLOCKJOINT;
 	}
+};
+
+struct AGXPrismaticDesc : public AGXConstraintDesc{
+	AGXPrismaticDesc(){
+		constraintType = AGXConstraintType::AGXPRISMATIC;
+	}
+	agx::Vec3 frameAxis;
+	agx::Vec3 framePoint;
 };
 
 class AGXLinkBody : public agx::Referenced
@@ -150,6 +160,7 @@ private:
 	agxCollide::MeshRef createShapeTrimesh(const AGXTrimeshDesc& desc);
 	agx::HingeRef createConstraintHinge(const AGXHingeDesc& desc);
 	agx::LockJointRef createConstraintLockJoint(const AGXLockJointDesc& desc);
+	agx::PrismaticRef createConstraintPrismatic(const AGXPrismaticDesc& desc);
 };
 typedef agx::ref_ptr<AGXLinkBody> AGXLinkBodyRef;
 }

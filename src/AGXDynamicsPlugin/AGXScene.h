@@ -22,6 +22,9 @@ public:
 	void clearAGXScene();
 	void stepAGXSimulation();
 	bool saveSceneToAGXFile();
+	void setCollisionPair(const unsigned& id1, const unsigned& id2, bool bOn);
+	void setCollisionPair(const agx::Name& name1, const agx::Name& name2, bool bOn);
+
 	void buildTestScene();
 	agxSDK::SimulationRef createAGXSimulation(const AGXSimulationDesc& desc);
 	agxSDK::SimulationRef getAGXSimulation();
