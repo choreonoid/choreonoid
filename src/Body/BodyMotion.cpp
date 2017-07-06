@@ -175,6 +175,7 @@ bool BodyMotion::read(const Mapping& archive)
     bool result = true;
     bool loaded = false;
     ZMPSeqPtr zmpSeq;
+    Vector3SeqPtr userVec3;
     
     try {
         if(archive["type"].toString() != "BodyMotion"){
@@ -197,7 +198,8 @@ bool BodyMotion::read(const Mapping& archive)
                     } else {
                         addSeqMessage(jointPosSeq_->seqMessage());
                     }
-                } else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
+                }
+		else if((type == "MultiAffine3Seq" || type == "MultiSe3Seq" || type == "MultiSE3Seq")
                           && content == "LinkPosition"){
                     result &= linkPosSeq_->readSeq(component);
                     if(result){
@@ -205,26 +207,40 @@ bool BodyMotion::read(const Mapping& archive)
                     } else {
                         addSeqMessage(linkPosSeq_->seqMessage());
                     }
-                } else if(type == "Vector3Seq") {
-                    bool isRelativeZmp = false;
-                    if(content == "RelativeZMP" || content == "RelativeZmp"){
-                        isRelativeZmp = true;
-                    } else if(content != "ZMP"){
-                        continue;
-                    }
-                    zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
-                    result = zmpSeq->readSeq(component);
-                    if(result){
-                        if(isRelativeZmp){
-                            zmpSeq->setRootRelative(true);
-                        }
-                    } else {
-                        addSeqMessage(zmpSeq->seqMessage());
-                    }
                 }
-                if(!result){
-                    break;
-                }
+		else if(type == "Vector3Seq") {
+		  if(content == "ZMP" || content == "RelativeZMP" || content == "RelativeZmp"){
+		    bool isRelativeZmp = false;
+		    if(content != "ZMP"){
+		      isRelativeZmp = true;
+		    }
+
+		    zmpSeq = getOrCreateExtraSeq<ZMPSeq>("ZMP");
+		    result = zmpSeq->readSeq(component);
+		    if(result){
+		      if(isRelativeZmp){
+			zmpSeq->setRootRelative(true);
+		      }
+		    } else {
+		      addSeqMessage(zmpSeq->seqMessage());
+		    }
+		    if(!result){
+		      //break;
+		    }
+		  }
+		  else {
+		    //----------- user defined Vector3 data --------- 
+		    userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
+		    result = userVec3->readSeq(component);
+		    if(!result){
+		      addSeqMessage(userVec3->seqMessage());
+		    }
+		    if(!result){
+		      //break;
+		    }
+		  }
+		}
+		
             }
         }
     } catch(const ValueNode::Exception& ex){

@@ -31,7 +31,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using boost::format;
 
@@ -437,7 +436,7 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
     cfs.setContactDepthCorrection(
         contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
 
-    self->addPreDynamicsFunction(std::bind(&AISTSimulatorItemImpl::clearExternalForces, this));
+    self->addPreDynamicsFunction([&](){ clearExternalForces(); });
 
     world.clearBodies();
     bodyIndexMap.clear();
@@ -617,8 +616,7 @@ void AISTSimulatorItemImpl::setForcedPosition(BodyItem* bodyItem, const Position
         }
         if(!forcedBodyPositionFunctionId){
             forcedBodyPositionFunctionId =
-                self->addPostDynamicsFunction(
-                    std::bind(&AISTSimulatorItemImpl::doSetForcedPosition, this));
+                self->addPostDynamicsFunction([&](){ doSetForcedPosition(); });
         }
     }
 }
@@ -695,24 +693,24 @@ void AISTSimulatorItemImpl::addExtraJoint(ExtraJoint& extrajoint)
 void AISTSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
+                [&](int index){ return dynamicsMode.selectIndex(index); });
     putProperty(_("Integration mode"), integrationMode,
-                std::bind(&Selection::selectIndex, &integrationMode, _1));
-    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
+                [&](int index){ return integrationMode.selectIndex(index); });
+    putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
     putProperty.decimals(3).min(0.0);
     putProperty(_("Static friction"), staticFriction, changeProperty(staticFriction));
     putProperty(_("Slip friction"), dynamicFriction, changeProperty(dynamicFriction));
     putProperty(_("Contact culling distance"), contactCullingDistance,
-                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDistance), _1)));
+                [&](const string& v){ return contactCullingDistance.setNonNegativeValue(v); });
     putProperty(_("Contact culling depth"), contactCullingDepth,
-                (std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCullingDepth), _1)));
+                [&](const string& v){ return contactCullingDepth.setNonNegativeValue(v); });
     putProperty(_("Error criterion"), errorCriterion,
-                std::bind(&FloatingNumberString::setPositiveValue, std::ref(errorCriterion), _1));
+                [&](const string& v){ return errorCriterion.setPositiveValue(v); });
     putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
-                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionDepth), _1));
+                [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
-                std::bind(&FloatingNumberString::setNonNegativeValue, std::ref(contactCorrectionVelocityRatio), _1));
+                [&](const string& v){ return contactCorrectionVelocityRatio.setNonNegativeValue(v); });
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));

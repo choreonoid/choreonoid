@@ -29,9 +29,7 @@ public:
             addChild(visualShape);
         }
         collisionShape = link->collisionShape();
-        if(collisionShape != visualShape){
-            addChild(collisionShape);
-        }
+
         isVisible = true;
         hasClone = false;
     }
@@ -54,9 +52,7 @@ public:
                 if(sameness){
                     collisionShape = visualShape;
                 } else {
-                    removeChild(collisionShape);
                     collisionShape = collisionShape->cloneNode(cloneMap);
-                    addChild(collisionShape);
                 }
             }
             hasClone = true;
@@ -70,13 +66,6 @@ public:
             this, [=](){ traverse(renderer, renderer->renderingFunctions()); });
     }
 
-    /*
-    void preprocess(SceneRenderer* renderer){
-        renderer->renderCustomTransform(
-            this, [=](){ traverse(renderer, renderer->preprocessFunctions()); });
-    }
-    */
-    
     void traverse(SceneRenderer* renderer, SceneRenderer::NodeFunctionSet* functions)
     {
         int visibility = 0;
@@ -87,16 +76,14 @@ public:
         for(auto p = cbegin(); p != cend(); ++p){
             SgNode* node = *p;
             if(node == visualShape){
-                if(visibility & 1){
-                    functions->dispatch(node);
+                if(!(visibility & 1)){
                     continue;
                 }
             }
-            if(node == collisionShape){
-                if(visibility & 2){
-                    functions->dispatch(node);
-                }
-            }
+            functions->dispatch(node);
+        }
+        if(collisionShape && (visibility & 2)){
+            functions->dispatch(collisionShape);
         }
     }
 };
@@ -106,19 +93,10 @@ typedef ref_ptr<LinkShapeGroup> LinkShapeGroupPtr;
 struct NodeTypeRegistration {
     NodeTypeRegistration(){
         SgNode::registerType<LinkShapeGroup, SgGroup>();
-
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
                 renderer->renderingFunctions()->setFunction<LinkShapeGroup>(
-                    [renderer](SgNode* node){
-                        static_cast<LinkShapeGroup*>(node)->render(renderer);
-                    });
-                /*
-                renderer->preprocessFunctions()->setFunction<LinkShapeGroup>(
-                    [renderer](SgNode* node){
-                        static_cast<CollisionModelVisualizer*>(node)->process(renderer);
-                    });
-                */
+                    [renderer](LinkShapeGroup* node){ node->render(renderer); });
             });
     }
 } registration;

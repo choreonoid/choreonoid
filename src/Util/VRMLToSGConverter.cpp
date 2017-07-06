@@ -1756,6 +1756,8 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
             putMessage("Warning: The colorIndex elements do not correspond to the colors or the coordIndex elements in an IndexedLineSet node.");
         }
     }
+
+    lineSet->updateBoundingBox();
     
     vrmlGeometryToSgPlotMap[vLineSet] = lineSet;
     return lineSet;

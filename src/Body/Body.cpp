@@ -8,6 +8,7 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/EigenUtil>
 #include <cnoid/ValueTree>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -524,14 +525,12 @@ void Body::setVirtualJointForces()
 */
 bool Body::installCustomizer()
 {
-    if(!pluginsInDefaultDirectoriesLoaded){
-        loadBodyCustomizers(bodyInterface());
-        pluginsInDefaultDirectoriesLoaded = true;
-    }
-		
+    loadDefaultBodyCustomizers(std::cerr);
     BodyCustomizerInterface* interface = findBodyCustomizer(impl->modelName);
-
-    return interface ? installCustomizer(interface) : false;
+    if(interface){
+        return installCustomizer(interface);
+    }
+    return false;
 }
 
 

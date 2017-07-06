@@ -16,10 +16,13 @@
 #include <cstdlib>
 #include <iostream>
 #include <boost/tokenizer.hpp>
+#include <boost/format.hpp>
+#include "gettext.h"
 
-using namespace cnoid;
 using namespace std;
-using namespace boost;
+using namespace cnoid;
+namespace filesystem = boost::filesystem;
+using boost::format;
 
 #ifdef _WIN32
 # include <windows.h>
@@ -72,7 +75,7 @@ static bool checkInterface(BodyCustomizerInterface* customizerInterface)
 }
 
 
-static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string filename)
+static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string filename, std::ostream& os)
 {
     BodyCustomizerInterface* customizerInterface = 0;
 
@@ -91,23 +94,22 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
             if(customizerInterface){
 				
                 if(!checkInterface(customizerInterface)){
-                    cerr << "Body customizer \"" << filename << "\" is incomatible and cannot be loaded.";
+                    os << (format(_("Body customizer \"%1%\" is incomatible and cannot be loaded.")) % filename) << endl;
                 } else {
-                    cerr << "Loading body customizer \"" << filename << "\" for ";
-					
+                
                     const char** names = customizerInterface->getTargetModelNames();
-					
-                    for(int i=0; names[i]; ++i){
+                    string modelNames;
+		    for(int i=0; names[i]; ++i){
                         if(i > 0){
-                            cerr << ", ";
+                            modelNames += ", ";
                         }
                         string name(names[i]);
                         if(!name.empty()){
                             customizerRepository[name] = customizerInterface;
                         }
-                        cerr << names[i];
+                        modelNames += name;
                     }
-                    cerr << endl;
+                    os << (format(_("Body customizer \"%1%\" for %2% has been loaded.")) % filename % modelNames) << endl;
                 }
             }
         }
@@ -117,16 +119,7 @@ static bool loadCustomizerDll(BodyInterface* bodyInterface, const std::string fi
 }
 
 
-/**
-   DLLs of body customizer in the path are loaded and
-   they are registered to the customizer repository.
-
-   The loaded customizers can be obtained by using
-   findBodyCustomizer() function.
-
-   \param pathString the path to a DLL file or a directory that contains DLLs
-*/
-int cnoid::loadBodyCustomizers(const std::string pathString, BodyInterface* bodyInterface)
+static int loadBodyCustomizers(BodyInterface* bodyInterface, const std::string pathString, std::ostream& os)
 {
     pluginLoadingFunctionsCalled = true;
 	
@@ -136,7 +129,7 @@ int cnoid::loadBodyCustomizers(const std::string pathString, BodyInterface* body
 	
     if(filesystem::exists(pluginPath)){
         if(!filesystem::is_directory(pluginPath)){
-            if(loadCustomizerDll(bodyInterface, pathString)){
+            if(loadCustomizerDll(bodyInterface, pathString, os)){
                 numLoaded++;
             }
         } else {
@@ -148,7 +141,7 @@ int cnoid::loadBodyCustomizers(const std::string pathString, BodyInterface* body
                     string filename(getFilename(filepath));
                     size_t pos = filename.rfind(pluginNamePattern);
                     if(pos == (filename.size() - pluginNamePattern.size())){
-                        if(loadCustomizerDll(bodyInterface, getNativePathString(filepath))){
+                        if(loadCustomizerDll(bodyInterface, getNativePathString(filepath), os)){
                             numLoaded++;
                         }
                     }
@@ -161,17 +154,22 @@ int cnoid::loadBodyCustomizers(const std::string pathString, BodyInterface* body
 }
 
 
-int cnoid::loadBodyCustomizers(const std::string pathString)
+/**
+   DLLs of body customizer in the path are loaded and
+   they are registered to the customizer repository.
+
+   The loaded customizers can be obtained by using
+   findBodyCustomizer() function.
+
+   \param pathString the path to a DLL file or a directory that contains DLLs
+*/
+int cnoid::loadBodyCustomizers(const std::string pathString, std::ostream& os)
 {
-    return loadBodyCustomizers(pathString, Body::bodyInterface());
+    return ::loadBodyCustomizers(Body::bodyInterface(), pathString, os);
 }
 
 
-/**
-   The function loads the customizers in the directories specified
-   by the environmental variable CNOID_CUSTOMIZER_PATH
-*/
-int cnoid::loadBodyCustomizers(BodyInterface* bodyInterface)
+static int loadBodyCustomizers(BodyInterface* bodyInterface, std::ostream& os)
 {
     int numLoaded = 0;
 
@@ -182,12 +180,11 @@ int cnoid::loadBodyCustomizers(BodyInterface* bodyInterface)
         char* pathListEnv = getenv("CNOID_CUSTOMIZER_PATH");
 
         if(pathListEnv){
-            char_separator<char> sep(PATH_DELIMITER);
+            boost::char_separator<char> sep(PATH_DELIMITER);
             string pathList(pathListEnv);
-            tokenizer< char_separator<char> > paths(pathList, sep);
-            tokenizer< char_separator<char> >::iterator p;
-            for(p = paths.begin(); p != paths.end(); ++p){
-                numLoaded = loadBodyCustomizers(*p, bodyInterface);
+            boost::tokenizer<boost::char_separator<char>> paths(pathList, sep);
+            for(auto p = paths.begin(); p != paths.end(); ++p){
+                numLoaded = ::loadBodyCustomizers(bodyInterface, *p, os);
             }
         }
 
@@ -205,7 +202,7 @@ int cnoid::loadBodyCustomizers(BodyInterface* bodyInterface)
 #endif
 
         for(std::set<string>::iterator p = customizerDirectories.begin(); p != customizerDirectories.end(); ++p){
-            numLoaded += loadBodyCustomizers(*p, bodyInterface);
+            numLoaded += ::loadBodyCustomizers(bodyInterface, *p, os);
         }
     }
 
@@ -213,9 +210,19 @@ int cnoid::loadBodyCustomizers(BodyInterface* bodyInterface)
 }
 
 
-int cnoid::loadBodyCustomizers()
+/**
+   The function loads the customizers in the directories specified
+   by the environmental variable CNOID_CUSTOMIZER_PATH
+*/
+int cnoid::loadDefaultBodyCustomizers(std::ostream& os)
 {
-    return loadBodyCustomizers(Body::bodyInterface());
+    static bool loaded = false;
+    int numLoaded = 0;
+    if(!loaded){
+        numLoaded = ::loadBodyCustomizers(Body::bodyInterface(), os);
+        loaded = true;
+    }
+    return numLoaded;
 }
 
 

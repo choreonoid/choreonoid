@@ -301,8 +301,8 @@ public:
     void initialize();
     void onExtensionAdded(std::function<void(GLSLSceneRenderer* renderer)> func);
     bool initializeGL();
-    void render();
-    bool pick(int x, int y);
+    void doRender();
+    bool doPick(int x, int y);
     void renderScene();
     bool renderShadowMap(int lightIndex);
     void beginRendering();
@@ -434,21 +434,21 @@ void GLSLSceneRendererImpl::initialize()
     os_ = &nullout();
 
     renderingFunctions.setFunction<SgGroup>(
-        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+        [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
-        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+        [&](SgTransform* node){ renderTransform(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
-        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+        [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
-        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+        [&](SgShape* node){ renderShape(node); });
     renderingFunctions.setFunction<SgPointSet>(
-        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+        [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
-        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+        [&](SgLineSet* node){ renderLineSet(node); });
     renderingFunctions.setFunction<SgOverlay>(
-        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+        [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
-        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+        [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
 
     self->applyExtensions();
     renderingFunctions.updateDispatchTable();
@@ -513,9 +513,9 @@ void GLSLSceneRendererImpl::onExtensionAdded(std::function<void(GLSLSceneRendere
 }
 
 
-void GLSLSceneRenderer::applyNewExtensions()
+bool GLSLSceneRenderer::applyNewExtensions()
 {
-    SceneRenderer::applyExtensions();
+    bool applied = SceneRenderer::applyNewExtensions();
     
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
@@ -523,7 +523,10 @@ void GLSLSceneRenderer::applyNewExtensions()
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();
+        applied = true;
     }
+
+    return applied;
 }
 
 
@@ -606,16 +609,18 @@ void GLSLSceneRenderer::requestToClearResources()
 }
 
 
-void GLSLSceneRenderer::render()
+void GLSLSceneRenderer::doRender()
 {
-    applyNewExtensions();
-    impl->renderingFunctions.updateDispatchTable();
-    impl->render();
+    impl->doRender();
 }
 
 
-void GLSLSceneRendererImpl::render()
+void GLSLSceneRendererImpl::doRender()
 {
+    if(self->applyNewExtensions()){
+        renderingFunctions.updateDispatchTable();
+    }
+
     self->extractPreprocessedNodes();
     beginRendering();
 
@@ -673,13 +678,13 @@ void GLSLSceneRendererImpl::render()
 }
 
 
-bool GLSLSceneRenderer::pick(int x, int y)
+bool GLSLSceneRenderer::doPick(int x, int y)
 {
-    return impl->pick(x, y);
+    return impl->doPick(x, y);
 }
 
 
-bool GLSLSceneRendererImpl::pick(int x, int y)
+bool GLSLSceneRendererImpl::doPick(int x, int y)
 {
     if(USE_FBO_FOR_PICKING){
         if(!fboForPicking){

@@ -38,7 +38,6 @@
 #include <QElapsedTimer>
 #include <QMessageBox>
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <set>
 #include <iostream>
 #include "gettext.h"
@@ -49,7 +48,6 @@
 #endif
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -306,7 +304,7 @@ public:
     void setPolygonMode(int mode);
     void onPointRenderingModeToggled(bool on);
     void setCollisionLinesVisible(bool on);
-    void onFieldOfViewChanged();
+    void onFieldOfViewChanged(double fov);
     void onClippingDepthChanged();
     void onLightingToggled(bool on);
     void onSmoothShadingToggled(bool on);
@@ -454,7 +452,7 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
       sceneRoot(new SceneWidgetRoot(self)),
       systemGroup(sceneRoot->systemGroup),
       emitSigStateChangedLater(std::ref(sigStateChanged)),
-      updateGridsLater(std::bind(&SceneWidgetImpl::updateGrids, this))
+      updateGridsLater([this](){ updateGrids(); })
 {
     if(false){ // test
         cout << "swapInterval = " << QGLWidget::format().swapInterval() << endl;
@@ -476,25 +474,23 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     
     renderer->setOutputStream(os);
     renderer->enableUnusedResourceCheck(true);
-    renderer->sigRenderingRequest().connect(
-        std::bind(static_cast<void(QWidget::*)()>(&SceneWidgetImpl::update), this));
-    renderer->sigCamerasChanged().connect(std::bind(&SceneWidgetImpl::onCamerasChanged, this));
-    renderer->sigCurrentCameraChanged().connect(std::bind(&SceneWidgetImpl::onCurrentCameraChanged, this));
+    renderer->sigRenderingRequest().connect([&](){ update(); });
+    renderer->sigCamerasChanged().connect([&](){ onCamerasChanged(); });
+    renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
 
-    sceneRoot->sigUpdated().connect(std::bind(&SceneWidgetImpl::onSceneGraphUpdated, this, _1));
+    sceneRoot->sigUpdated().connect([this](const SgUpdate& update){ onSceneGraphUpdated(update); });
 
     scene = renderer->scene();
 
     pixelBufferForPicking = 0;
 
-    extractPreprocessedNodesLater.setFunction(
-        std::bind(&SceneRenderer::extractPreprocessedNodes, renderer));
+    extractPreprocessedNodesLater.setFunction([&](){ renderer->extractPreprocessedNodes(); });
 
     modified.setAction(SgUpdate::MODIFIED);
     added.setAction(SgUpdate::ADDED);
     removed.setAction(SgUpdate::REMOVED);
 
-    BOOST_FOREACH(Vector4f& color, gridColor){
+    for(auto& color : gridColor){
     	color << 0.9f, 0.9f, 0.9f, 1.0f;
     }
 
@@ -574,9 +570,9 @@ SceneWidgetImpl::SceneWidgetImpl(QGLFormat& format, bool useGLSL, SceneWidget* s
     updateGrids();
 
     if(!useGLSL){
-        fpsTimer.sigTimeout().connect(std::bind(&SceneWidgetImpl::onFPSUpdateRequest, this));
+        fpsTimer.sigTimeout().connect([&](){ onFPSUpdateRequest(); });
         fpsRenderingTimer.setSingleShot(true);
-        fpsRenderingTimer.sigTimeout().connect(std::bind(&SceneWidgetImpl::onFPSRenderingRequest, this));
+        fpsRenderingTimer.sigTimeout().connect([&](){ onFPSRenderingRequest(); });
     }
 
 #ifdef ENABLE_SIMULATION_PROFILING
@@ -1179,7 +1175,9 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
 
     bool handled = false;
     if(isEditMode){
-        handled = applyFunction(focusedEditablePath, std::bind(&SceneWidgetEditable::onKeyPressEvent, _1, std::ref(latestEvent)));
+        handled = applyFunction(
+            focusedEditablePath,
+            [&](SceneWidgetEditable* editable){ return editable->onKeyPressEvent(latestEvent); });
     }
 
     if(!handled){
@@ -1193,9 +1191,13 @@ void SceneWidgetImpl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Z:
             if(event->modifiers() & Qt::ControlModifier){
                 if(event->modifiers() & Qt::ShiftModifier){
-                    handled = applyFunction(focusedEditablePath, std::bind(&SceneWidgetEditable::onRedoRequest, _1));
+                    handled = applyFunction(
+                        focusedEditablePath,
+                        [&](SceneWidgetEditable* editable){ return editable->onRedoRequest(); });
                 } else {
-                    handled = applyFunction(focusedEditablePath, std::bind(&SceneWidgetEditable::onUndoRequest, _1));
+                    handled = applyFunction(
+                        focusedEditablePath,
+                        [&](SceneWidgetEditable* editable){ return editable->onUndoRequest(); });
                 }
             }
             break;
@@ -1289,7 +1291,8 @@ void SceneWidgetImpl::mousePressEvent(QMouseEvent* event)
             if(!handled){
                 handled = setFocusToPointedEditablePath(
                     applyFunction(
-                        pointedEditablePath, std::bind(&SceneWidgetEditable::onButtonPressEvent, _1, std::ref(latestEvent))));
+                        pointedEditablePath,
+                        [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(latestEvent); }));
             }
             if(handled){
                 dragMode = EDITING;
@@ -1323,7 +1326,8 @@ void SceneWidgetImpl::mouseDoubleClickEvent(QMouseEvent* event)
         if(!handled){
             handled = setFocusToPointedEditablePath(
                 applyFunction(
-                    pointedEditablePath, std::bind(&SceneWidgetEditable::onDoubleClickEvent, _1, std::ref(latestEvent))));
+                    pointedEditablePath,
+                    [&](SceneWidgetEditable* editable){ return editable->onDoubleClickEvent(latestEvent); }));
         }
     }
     if(!handled){
@@ -1405,7 +1409,8 @@ void SceneWidgetImpl::updatePointerPosition()
         updateIndicator(str(f % p.x() % p.y() % p.z()));
     } else {
         SceneWidgetEditable* mouseMovedEditable = applyFunction(
-            pointedEditablePath, std::bind(&SceneWidgetEditable::onPointerMoveEvent, _1, std::ref(latestEvent)));
+            pointedEditablePath,
+            [&](SceneWidgetEditable* editable){ return editable->onPointerMoveEvent(latestEvent); });
 
         if(mouseMovedEditable){
             if(!QWidget::hasFocus()){
@@ -1447,7 +1452,8 @@ void SceneWidgetImpl::wheelEvent(QWheelEvent* event)
         if(!handled){
             handled = setFocusToPointedEditablePath(
                 applyFunction(
-                    pointedEditablePath, std::bind(&SceneWidgetEditable::onScrollEvent, _1, std::ref(latestEvent))));
+                    pointedEditablePath,
+                    [&](SceneWidgetEditable* editable){ return editable->onScrollEvent(latestEvent); }));
         }
     }    
 
@@ -1824,8 +1830,7 @@ void SceneWidgetImpl::showViewModePopupMenu(const QPoint& globalPos)
     sigContextMenuRequest(latestEvent, menuManager);
 
     menuManager.setPath("/");
-    menuManager.addItem(_("Edit Mode"))
-        ->sigTriggered().connect(std::bind(&SceneWidgetImpl::toggleEditMode, this));
+    menuManager.addItem(_("Edit Mode")) ->sigTriggered().connect([&](){ toggleEditMode(); });
 
     menuManager.popupMenu()->popup(globalPos);
 }
@@ -1866,8 +1871,7 @@ void SceneWidgetImpl::showEditModePopupMenu(const QPoint& globalPos)
     }
 
     menuManager.setPath("/");
-    menuManager.addItem(_("View Mode"))
-        ->sigTriggered().connect(std::bind(&SceneWidgetImpl::toggleEditMode, this));
+    menuManager.addItem(_("View Mode"))->sigTriggered().connect([&](){ toggleEditMode(); });
     
     menuManager.popupMenu()->popup(globalPos);
 }
@@ -2150,10 +2154,10 @@ bool SceneWidget::collisionLinesVisible() const
 }
 
 
-void SceneWidgetImpl::onFieldOfViewChanged()
+void SceneWidgetImpl::onFieldOfViewChanged(double fov)
 {
     config->builtinCameraConnections.block();
-    builtinPersCamera->setFieldOfView(radian(config->fieldOfViewSpin.value()));
+    builtinPersCamera->setFieldOfView(fov);
     builtinPersCamera->notifyUpdate(modified);
     config->builtinCameraConnections.unblock();
 }
@@ -2581,9 +2585,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
 
     const Listing& cameraListing = *archive.findListing("cameras");
     if(cameraListing.isValid()){
-        archive.addPostProcess(
-            std::bind(&SceneWidgetImpl::restoreCameraStates, this, std::ref(cameraListing)),
-            1);
+        archive.addPostProcess([&](){ restoreCameraStates(cameraListing); }, 1);
     } else {
         // for the compatibility to the older versions
         const Mapping& cameraData = *archive.findMapping("camera");
@@ -2617,9 +2619,7 @@ bool SceneWidgetImpl::restoreState(const Archive& archive)
             builtinCameraTransform->notifyUpdate();
             doUpdate = true;
             
-            archive.addPostProcess(
-                std::bind(&SceneWidgetImpl::restoreCurrentCamera, this, std::ref(cameraData)),
-                1);
+            archive.addPostProcess([&](){ restoreCurrentCamera(cameraData); }, 1);
         }
     }
 
@@ -2841,13 +2841,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     builtinCameraConnections.add(
         impl->builtinPersCamera->sigUpdated().connect(
-            std::bind(&ConfigDialog::updateBuiltinCameraConfig, this)));
+            [&](const SgUpdate& update){ updateBuiltinCameraConfig(); }));
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Default Camera"))));
     hbox = new QHBoxLayout();
     hbox->addWidget(new QLabel(_("Field of view")));
     fieldOfViewSpin.setRange(1, 179);
-    fieldOfViewSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onFieldOfViewChanged, impl));
+    fieldOfViewSpin.sigValueChanged().connect(
+        [=](int value){ impl->onFieldOfViewChanged(radian(value)); });
     hbox->addWidget(&fieldOfViewSpin);
     hbox->addWidget(new QLabel("[deg]"));
     hbox->addStretch();
@@ -2860,29 +2861,29 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     zNearSpin.setDecimals(4);
     zNearSpin.setRange(0.0001, 9.9999);
     zNearSpin.setSingleStep(0.0001);
-    zNearSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
+    zNearSpin.sigValueChanged().connect([=](double v){ impl->onClippingDepthChanged(); });
     hbox->addWidget(&zNearSpin);
     hbox->addWidget(new QLabel(_("Far")));
     zFarSpin.setDecimals(1);
     zFarSpin.setRange(0.1, 9999999.9);
     zFarSpin.setSingleStep(0.1);
-    zFarSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onClippingDepthChanged, impl));
+    zFarSpin.sigValueChanged().connect([=](double v){ impl->onClippingDepthChanged(); });
     hbox->addWidget(&zFarSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    updateDefaultLightsLater.setFunction(std::bind(&SceneWidgetImpl::updateDefaultLights, impl));
+    updateDefaultLightsLater.setFunction([=](){ impl->updateDefaultLights(); });
     
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Lighting"))));
     hbox = new QHBoxLayout();
     lightingCheck.setText(_("Do lighiting"));
     lightingCheck.setChecked(true);
-    lightingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onLightingToggled, impl, _1));
+    lightingCheck.sigToggled().connect([=](bool on){ impl->onLightingToggled(on); });
     hbox->addWidget(&lightingCheck);
 
     smoothShadingCheck.setText(_("Smooth shading"));
     smoothShadingCheck.setChecked(true);
-    smoothShadingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onSmoothShadingToggled, impl, _1));
+    smoothShadingCheck.sigToggled().connect([=](bool on){ impl->onSmoothShadingToggled(on); });
     hbox->addWidget(&smoothShadingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2890,7 +2891,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     headLightCheck.setText(_("Head light"));
     headLightCheck.setChecked(true);
-    headLightCheck.sigToggled().connect(std::bind(updateDefaultLightsLater));
+    headLightCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&headLightCheck);
 
     hbox->addWidget(new QLabel(_("Intensity")));
@@ -2898,11 +2899,11 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     headLightIntensitySpin.setSingleStep(0.01);    
     headLightIntensitySpin.setRange(0.0, 2.0);
     headLightIntensitySpin.setValue(0.75);
-    headLightIntensitySpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
+    headLightIntensitySpin.sigValueChanged().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&headLightIntensitySpin);
 
     headLightFromBackCheck.setText(_("Back lighting"));
-    headLightFromBackCheck.sigToggled().connect(std::bind(updateDefaultLightsLater));
+    headLightFromBackCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&headLightFromBackCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2910,7 +2911,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     worldLightCheck.setText(_("World light"));
     worldLightCheck.setChecked(true);
-    worldLightCheck.sigToggled().connect(std::bind(updateDefaultLightsLater));
+    worldLightCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&worldLightCheck);
 
     hbox->addWidget(new QLabel(_("Intensity")));
@@ -2918,7 +2919,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     worldLightIntensitySpin.setSingleStep(0.01);    
     worldLightIntensitySpin.setRange(0.0, 2.0);
     worldLightIntensitySpin.setValue(0.5);
-    worldLightIntensitySpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
+    worldLightIntensitySpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
     hbox->addWidget(&worldLightIntensitySpin);
 
     hbox->addWidget(new QLabel(_("Ambient")));
@@ -2926,7 +2927,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     worldLightAmbientSpin.setSingleStep(0.01);    
     worldLightAmbientSpin.setRange(0.0, 1.0);
     worldLightAmbientSpin.setValue(0.3);
-    worldLightAmbientSpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
+    worldLightAmbientSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
     hbox->addWidget(&worldLightAmbientSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2934,7 +2935,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     additionalLightsCheck.setText(_("Additional lights"));
     additionalLightsCheck.setChecked(true);
-    additionalLightsCheck.sigToggled().connect(std::bind(updateDefaultLightsLater));
+    additionalLightsCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&additionalLightsCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2944,12 +2945,12 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         Shadow& shadow = shadows[i];
         shadow.check.setText(QString(_("Shadow %1")).arg(i+1));
         shadow.check.setChecked(false);
-        shadow.check.sigToggled().connect(std::bind(updateDefaultLightsLater));
+        shadow.check.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
         hbox->addWidget(&shadow.check);
         hbox->addWidget(new QLabel(_("Light")));
         shadow.lightSpin.setRange(0, 99);
         shadow.lightSpin.setValue(0);
-        shadow.lightSpin.sigValueChanged().connect(std::bind(updateDefaultLightsLater));
+        shadow.lightSpin.sigValueChanged().connect([&](double){ updateDefaultLightsLater(); });
         hbox->addWidget(&shadow.lightSpin);
     }
     hbox->addStretch();
@@ -2958,7 +2959,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     shadowAntiAliasingCheck.setText(_("Anti-aliasing of shadows"));
     shadowAntiAliasingCheck.setChecked(true);
-    shadowAntiAliasingCheck.sigToggled().connect(std::bind(updateDefaultLightsLater));
+    shadowAntiAliasingCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&shadowAntiAliasingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2966,7 +2967,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     fogCheck.setText(_("Fog"));
     fogCheck.setChecked(true);
-    fogCheck.sigToggled().connect(std::bind(updateDefaultLightsLater));
+    fogCheck.sigToggled().connect([&](bool){ updateDefaultLightsLater(); });
     hbox->addWidget(&fogCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2974,7 +2975,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Background"))));
     hbox = new QHBoxLayout();
     backgroundColorButton.setText(_("Background color"));
-    backgroundColorButton.sigClicked().connect(std::bind(&SceneWidgetImpl::showBackgroundColorDialog, impl));
+    backgroundColorButton.sigClicked().connect([=](){ impl->showBackgroundColorDialog(); });
     hbox->addWidget(&backgroundColorButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -2982,7 +2983,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     for(int i=0; i<3; i++){
     	hbox = new QHBoxLayout();
     	gridCheck[i].setChecked(false);
-    	gridCheck[i].sigToggled().connect(std::bind(std::ref(impl->updateGridsLater)));
+    	gridCheck[i].sigToggled().connect([=](bool){ impl->updateGridsLater(); });
     	hbox->addWidget(&gridCheck[i]);
     
     	hbox->addWidget(new QLabel(_("Span")));
@@ -2991,7 +2992,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     	gridSpanSpin[i].setRange(0.0, 99.9);
         gridSpanSpin[i].setSingleStep(0.1);
         gridSpanSpin[i].setValue(10.0);
-        gridSpanSpin[i].sigValueChanged().connect(std::bind(std::ref(impl->updateGridsLater)));
+        gridSpanSpin[i].sigValueChanged().connect([=](double){ impl->updateGridsLater(); });
         hbox->addWidget(&gridSpanSpin[i]);
         hbox->addSpacing(8);
         
@@ -3001,11 +3002,11 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
         gridIntervalSpin[i].setRange(0.01, 9.99);
         gridIntervalSpin[i].setSingleStep(0.01);
         gridIntervalSpin[i].setValue(0.5);
-        gridIntervalSpin[i].sigValueChanged().connect(std::bind(std::ref(impl->updateGridsLater)));
+        gridIntervalSpin[i].sigValueChanged().connect([=](double){ impl->updateGridsLater(); });
         hbox->addWidget(&gridIntervalSpin[i]);
         
         gridColorButton[i].setText(_("Color"));
-        gridColorButton[i].sigClicked().connect(std::bind(&SceneWidgetImpl::showGridColorDialog, impl, i));
+        gridColorButton[i].sigClicked().connect([=](){ impl->showGridColorDialog(i); });
         hbox->addWidget(&gridColorButton[i]);
         hbox->addStretch();
         vbox->addLayout(hbox);
@@ -3021,14 +3022,14 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     textureCheck.setText(_("Texture"));
     textureCheck.setChecked(true);
-    textureCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onTextureToggled, impl, _1));
+    textureCheck.sigToggled().connect([=](bool on){ impl->onTextureToggled(on); });
     hbox->addWidget(&textureCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout();
     defaultColorButton.setText(_("Default color"));
-    defaultColorButton.sigClicked().connect(std::bind(&SceneWidgetImpl::showDefaultColorDialog, impl));
+    defaultColorButton.sigClicked().connect([=](){ impl->showDefaultColorDialog(); });
     hbox->addWidget(&defaultColorButton);
     
     hbox->addWidget(new QLabel(_("Default line width")));
@@ -3036,7 +3037,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     lineWidthSpin.setRange(0.1, 9.9);
     lineWidthSpin.setSingleStep(0.1);
     lineWidthSpin.setValue(1.0);
-    lineWidthSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onLineWidthChanged, impl, _1));
+    lineWidthSpin.sigValueChanged().connect([=](double width){ impl->onLineWidthChanged(width); });
     hbox->addWidget(&lineWidthSpin);
 
     hbox->addWidget(new QLabel(_("Default point size")));
@@ -3044,7 +3045,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     pointSizeSpin.setRange(0.1, 9.9);
     pointSizeSpin.setSingleStep(0.1);
     pointSizeSpin.setValue(1.0);
-    pointSizeSpin.sigValueChanged().connect(std::bind(&SceneWidgetImpl::onPointSizeChanged, impl, _1));
+    pointSizeSpin.sigValueChanged().connect([=](double size){ impl->onPointSizeChanged(size); });
     hbox->addWidget(&pointSizeSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -3052,23 +3053,20 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     pointRenderingModeCheck.setText(_("Do point rendering in the wireframe mode"));
     pointRenderingModeCheckConnection =
-        pointRenderingModeCheck.sigToggled().connect(
-            std::bind(&SceneWidgetImpl::onPointRenderingModeToggled, impl, _1));
+        pointRenderingModeCheck.sigToggled().connect([=](bool on){ impl->onPointRenderingModeToggled(on); });
     hbox->addWidget(&pointRenderingModeCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
     
     hbox = new QHBoxLayout();
     normalVisualizationCheck.setText(_("Normal Visualization"));
-    normalVisualizationCheck.sigToggled().connect(
-        std::bind(&SceneWidgetImpl::onNormalVisualizationChanged, impl));
+    normalVisualizationCheck.sigToggled().connect([=](bool){ impl->onNormalVisualizationChanged(); });
     hbox->addWidget(&normalVisualizationCheck);
     normalLengthSpin.setDecimals(3);
     normalLengthSpin.setRange(0.0, 1000.0);
     normalLengthSpin.setSingleStep(0.001);
     normalLengthSpin.setValue(0.01);
-    normalLengthSpin.sigValueChanged().connect(
-        std::bind(&SceneWidgetImpl::onNormalVisualizationChanged, impl));
+    normalLengthSpin.sigValueChanged().connect([=](double){ impl->onNormalVisualizationChanged(); });
     hbox->addWidget(&normalLengthSpin);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -3079,19 +3077,19 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     coordinateAxesCheck.setText(_("Coordinate axes"));
     coordinateAxesCheck.setChecked(true);
     coordinateAxesCheck.sigToggled().connect(
-        std::bind(&SceneWidgetImpl::activateSystemNode, impl, std::ref(impl->coordinateAxesOverlay), _1));
+        [=](bool on){ impl->activateSystemNode(impl->coordinateAxesOverlay, on); });
     hbox->addWidget(&coordinateAxesCheck);
     
     fpsCheck.setText(_("Show FPS"));
     fpsCheck.setEnabled(!useGLSL);
     fpsCheck.setChecked(false);
     if(!useGLSL){
-        fpsCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::showFPS, impl, _1));
+        fpsCheck.sigToggled().connect([=](bool on){ impl->showFPS(on); });
     }
     hbox->addWidget(&fpsCheck);
 
     fpsTestButton.setText(_("Test"));
-    fpsTestButton.sigClicked().connect(std::bind(&SceneWidgetImpl::doFPSTest, impl));
+    fpsTestButton.sigClicked().connect([=](){ impl->doFPSTest(); });
     hbox->addWidget(&fpsTestButton);
     fpsTestIterationSpin.setRange(1, 99);
     fpsTestIterationSpin.setValue(1);
@@ -3101,7 +3099,8 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
 
     hbox = new QHBoxLayout();
     newDisplayListDoubleRenderingCheck.setText(_("Do double rendering when a new display list is created."));
-    newDisplayListDoubleRenderingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onNewDisplayListDoubleRenderingToggled, impl, _1));
+    newDisplayListDoubleRenderingCheck.sigToggled().connect(
+        [=](bool on){ impl->onNewDisplayListDoubleRenderingToggled(on); });
     hbox->addWidget(&newDisplayListDoubleRenderingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -3109,7 +3108,7 @@ ConfigDialog::ConfigDialog(SceneWidgetImpl* impl, bool useGLSL)
     hbox = new QHBoxLayout();
     bufferForPickingCheck.setText(_("Use an OpenGL pixel buffer for picking"));
     bufferForPickingCheck.setChecked(true);
-    bufferForPickingCheck.sigToggled().connect(std::bind(&SceneWidgetImpl::onBufferForPickingToggled, impl, _1));
+    bufferForPickingCheck.sigToggled().connect([=](bool on){ impl->onBufferForPickingToggled(on); });
     hbox->addWidget(&bufferForPickingCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);

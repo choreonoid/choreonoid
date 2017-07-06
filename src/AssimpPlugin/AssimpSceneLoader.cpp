@@ -232,6 +232,7 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
         pointSet->setNormals(normals);
         pointSet->setColors(colors);
         pointSet->setMaterial(material);
+        pointSet->updateBoundingBox();
         group->addChild(pointSet);
     }
     
@@ -252,6 +253,8 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
                 lineSet->addLine(indices[0], indices[1]);
             }
         }
+        lineSet->updateBoundingBox();
+        
         group->addChild(lineSet);
     }
     
@@ -287,6 +290,8 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
         if(texture){
             shape->setTexture(texture);
         }
+
+        mesh->updateBoundingBox();
 
         group->addChild(shape);
     }

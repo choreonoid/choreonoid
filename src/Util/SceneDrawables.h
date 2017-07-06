@@ -555,6 +555,7 @@ public:
     int numLines() const { return lineVertices_.size() / 2; }
     void setNumLines(int n) { lineVertices_.resize(n * 2); }
     void reserveNumLines(int n) { lineVertices_.reserve(n * 2); }
+    void clearLines() { lineVertices_.clear(); }
 
     typedef Eigen::Map<Array2i> LineRef;
     LineRef line(int index){

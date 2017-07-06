@@ -104,17 +104,26 @@ public:
     {
         SgGroupPtr visual;
         SgGroupPtr collision;
-        template<class NodeType> void newNode(){
+        bool hasVisualChild;
+        bool hasCollisionChild;
+
+        SceneGroupSet(){
+            hasVisualChild = false;
+            hasCollisionChild = false;
+        }
+        template<class NodeType> void newGroup(){
             visual = new NodeType;
             collision = new NodeType;
         }
-        template<class NodeType, class ParameterType> void newNode(const ParameterType& param){
+        template<class NodeType, class ParameterType> void newGroup(const ParameterType& param){
             visual = new NodeType(param);
             collision = new NodeType(param);
         }
         void setName(const std::string& name){
             visual->setName(name);
             collision->setName(name);
+            // Group node that has name is kept even if it does not have contents
+            hasVisualChild = true;
         }
     };
 
@@ -131,12 +140,16 @@ public:
         case VISUAL_AND_COLLISION:
             current.visual->addChild(node);
             current.collision->addChild(node);
+            current.hasVisualChild = true;
+            current.hasCollisionChild = true;
             break;
         case VISUAL:
             current.visual->addChild(node);
+            current.hasVisualChild = true;
             break;
         case COLLISION:
             current.collision->addChild(node);
+            current.hasCollisionChild = true;
             break;
         }
     }
@@ -145,14 +158,22 @@ public:
         auto& current = sceneGroupSetStack.back();
         switch(currentModelType){
         case VISUAL_AND_COLLISION:
-            parent.visual->addChild(current.visual);
-            parent.collision->addChild(current.collision);
+            if(current.hasVisualChild){
+                parent.visual->addChild(current.visual);
+            }
+            if(current.hasCollisionChild){
+                parent.collision->addChild(current.collision);
+            }
             break;
         case VISUAL:
-            parent.visual->addChild(current.visual);
+            if(current.hasVisualChild){
+                parent.visual->addChild(current.visual);
+            }
             break;
         case COLLISION:
-            parent.collision->addChild(current.collision);
+            if(current.hasCollisionChild){
+                parent.collision->addChild(current.collision);
+            }
             break;
         }
     }
@@ -646,7 +667,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     readExtraJoints(topNode);
 
     body->resetInfo(topNode);
-        
+
     body->installCustomizer();
 
     return true;
@@ -827,7 +848,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
         hasVisualOrCollisionNodes = false;
 
         sceneGroupSetStack.push_back(SceneGroupSet());
-        currentSceneGroupSet().newNode<SgInvariantGroup>();
+        currentSceneGroupSet().newGroup<SgInvariantGroup>();
         
         if(readElementContents(*elements)){
             SceneGroupSet& sgs = currentSceneGroupSet();
@@ -1124,12 +1145,12 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
     
     if(isIdentity){
         if(hasScale){
-            currentSceneGroupSet().newNode<SgScaleTransform>(scale);
+            currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
         } else {
-            currentSceneGroupSet().newNode<SgGroup>();
+            currentSceneGroupSet().newGroup<SgGroup>();
         }
     } else {
-        currentSceneGroupSet().newNode<SgPosTransform>(T);
+        currentSceneGroupSet().newGroup<SgPosTransform>(T);
     }
     if(hasElements){
         isSceneNodeAdded = readContainerNode(node, nodeFunction);
@@ -1153,7 +1174,7 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
 bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
     sceneGroupSetStack.push_back(SceneGroupSet());
-    currentSceneGroupSet().newNode<SgGroup>();
+    currentSceneGroupSet().newGroup<SgGroup>();
     bool isSceneNodeAdded = readContainerNode(node, 0);
     if(isSceneNodeAdded){
         addCurrentSceneGroupToParentSceneGroup();
@@ -1195,23 +1216,6 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 
 bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 {
-    /*
-    Mapping& resource = *node.findMapping("resource");
-    if(resource.isValid()){
-        scene = readResourceContents(resource);
-    }
-
-    Mapping& shape = *node.findMapping("shape");
-    if(shape.isValid()){
-        if(resource.isValid()){
-            node.throwException(
-                str(format(_("%1% node cannot contain both the Shape contents and the Resource contents"))
-                    % (isVisual ? "Visual" : "Collision")));
-        }
-        scene = sceneReader.readNode(shape, "Shape");
-    }
-    */
-
     ModelType prevModelType = currentModelType;
 
     if(isVisual){
@@ -1230,6 +1234,21 @@ bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 
     bool isSceneNodeAdded = readElements(node);
 
+    auto resource = node.findMapping("resource");
+    if(resource->isValid()){
+        if(auto scene = sceneReader.readNode(*resource, "Resource")){
+            addScene(scene);
+            isSceneNodeAdded = true;
+        }
+    }
+    auto shape = node.findMapping("shape");
+    if(shape->isValid()){
+        if(auto scene = sceneReader.readNode(*shape, "Shape")){
+            addScene(scene);
+            isSceneNodeAdded = true;
+        }
+    }
+ 
     if(isSceneNodeAdded){
         hasVisualOrCollisionNodes = true;
     }

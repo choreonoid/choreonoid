@@ -44,15 +44,15 @@ MeshExtractor::MeshExtractor()
 MeshExtractorImpl::MeshExtractorImpl()
 {
     functions.setFunction<SgGroup>(
-        [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+        [&](SgGroup* node){ visitGroup(node); });
     functions.setFunction<SgSwitch>(
-        [&](SgNode* node){ visitSwitch(static_cast<SgSwitch*>(node)); });
+        [&](SgSwitch* node){ visitSwitch(node); });
     functions.setFunction<SgTransform>(
-        [&](SgNode* node){ visitTransform(static_cast<SgTransform*>(node)); });
+        [&](SgTransform* node){ visitTransform(node); });
     functions.setFunction<SgPosTransform>(
-        [&](SgNode* node){ visitPosTransform(static_cast<SgPosTransform*>(node)); });
+        [&](SgPosTransform* node){ visitPosTransform(node); });
     functions.setFunction<SgShape>(
-        [&](SgNode* node){ visitShape(static_cast<SgShape*>(node)); });
+        [&](SgShape* node){ visitShape(node); });
     functions.updateDispatchTable();
 }
     

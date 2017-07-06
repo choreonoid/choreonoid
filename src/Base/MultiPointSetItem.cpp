@@ -522,8 +522,8 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                             std::bind(&MultiPointSetItem::setVoxelSize, this, _1), true);
     putProperty(_("Top translation"), str(Vector3(topOffsetTransform().translation())),
                 std::bind(&MultiPointSetItemImpl::onTopTranslationPropertyChanged, impl, _1));
-    Vector3 rpy(rpyFromRot(topOffsetTransform().linear()));
-    putProperty("Top RPY", str(TO_DEGREE * rpy), std::bind(&MultiPointSetItemImpl::onTopRotationPropertyChanged, impl, _1));
+    Vector3 rpy(TO_DEGREE * rpyFromRot(topOffsetTransform().linear()));
+    putProperty("Top RPY", str(rpy), std::bind(&MultiPointSetItemImpl::onTopRotationPropertyChanged, impl, _1));
     
 }
 

@@ -10,6 +10,7 @@ set(sources
   Selection.cpp
   DataMap.cpp
   EigenUtil.cpp
+  EigenArchive.cpp
   ValueTree.cpp
   YAMLReader.cpp
   YAMLWriter.cpp
@@ -60,8 +61,8 @@ set(sources
   STLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
-  CnoidUtil.cpp # This file must be placed at the last position
   ExtJoystick.cpp
+  CnoidUtil.cpp # This file must be placed at the last position
   )
 
 

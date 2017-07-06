@@ -30,20 +30,26 @@ std::unordered_map<string, int> propertyKeyMap;
 
 struct PreproNode
 {
-    PreproNode() : parent(0), child(0), next(0) { }
-    ~PreproNode() {
-        if(child) delete child;
-        if(next) delete next;
-    }
     enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
     boost::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
     SgNode* base;
     PreproNode* parent;
     PreproNode* child;
     PreproNode* next;
+
+    template<class T>
+    PreproNode(T* n) : parent(0), child(0), next(0) {
+        setNode(n);
+    }
+    
     template<class T> void setNode(T* n){
         node = n;
         base = n;
+    }
+
+    ~PreproNode() {
+        if(child) delete child;
+        if(next) delete next;
     }
 };
 
@@ -53,35 +59,39 @@ class PreproTreeExtractor
     PolymorphicFunctionSet<SgNode> functions;
     PreproNode* node;
     bool found;
-    
+
 public:
     PreproTreeExtractor();
     PreproNode* apply(SgNode* node);
-
-    /*
-      Only SgNode* is used as the parameter type of the following functions to avoid
-      the overhead due to the additional function call required for casting the types
-    */
     void visitGroup(SgGroup* group);
-    void visitSwitch(SgSwitch* switchNode);
-    void visitTransform(SgTransform* transform);
-    void visitPreprocessed(SgPreprocessed* preprocessed);
-    void visitLight(SgLight* light);
-    void visitFog(SgFog* fog);
-    void visitCamera(SgCamera* camera);
 };
 
 }
 
 namespace cnoid {
 
+SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
+{
+    std::lock_guard<std::mutex> guard(propertyKeyMutex);
+
+    auto iter = propertyKeyMap.find(key);
+    if(iter != propertyKeyMap.end()){
+        id = iter->second;
+    } else {
+        id = propertyKeyCount;
+        propertyKeyMap.insert(make_pair(key, id));
+        propertyKeyCount++;
+    }
+}
+
 class SceneRendererImpl
 {
 public:
     SceneRenderer* self;
-    std::unique_ptr<PreproNode> preproTree;
-    Signal<void()> sigRenderingRequest;
+    bool isRendering;
     bool doPreprocessedNodeTreeExtraction;
+    Signal<void()> sigRenderingRequest;
+    std::unique_ptr<PreproNode> preproTree;
 
     struct CameraInfo
     {
@@ -167,8 +177,7 @@ public:
             return get<ValueType>(value);
         }
         return defaultValue;
-    }
-    
+    }    
 };
 
 }
@@ -185,6 +194,7 @@ SceneRenderer::SceneRenderer()
 SceneRendererImpl::SceneRendererImpl(SceneRenderer* self)
     : self(self)
 {
+    isRendering = false;
     doPreprocessedNodeTreeExtraction = true;
 
     cameras = &cameras1;
@@ -222,10 +232,72 @@ Signal<void()>& SceneRenderer::sigRenderingRequest()
 
 void SceneRenderer::onSceneGraphUpdated(const SgUpdate& update)
 {
+    static int counter = 0;
+    
     if(update.action() & (SgUpdate::ADDED | SgUpdate::REMOVED)){
         impl->doPreprocessedNodeTreeExtraction = true;
     }
-    impl->sigRenderingRequest();
+    if(!impl->isRendering){
+        impl->sigRenderingRequest();
+    }
+}
+
+
+void SceneRenderer::render()
+{
+    impl->isRendering = true;
+    doRender();
+    impl->isRendering = false;
+}
+
+
+bool SceneRenderer::pick(int x, int y)
+{
+    impl->isRendering = true;
+    bool result = doPick(x, y);
+    impl->isRendering = false;
+}
+
+
+bool SceneRenderer::doPick(int x, int y)
+{
+    return false;
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, bool value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, int value)
+{
+    impl->setProperty(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, double value)
+{
+    impl->setProperty(key, value);
+}
+
+
+bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
+{
+    return impl->property(key, 0, defaultValue);
+}
+
+
+int SceneRenderer::property(PropertyKey key, int defaultValue) const
+{
+    return impl->property(key, 1, defaultValue);
+}
+
+
+double SceneRenderer::property(PropertyKey key, double defaultValue) const
+{
+    return impl->property(key, 2, defaultValue);
 }
 
 
@@ -341,18 +413,46 @@ PreproTreeExtractor::PreproTreeExtractor()
 {
     functions.setFunction<SgGroup>(
         [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
+
     functions.setFunction<SgSwitch>(
-        [&](SgNode* node){ visitSwitch(static_cast<SgSwitch*>(node)); });
+        [&](SgSwitch* node){
+            if(node->isTurnedOn()){
+                functions.dispatchAs<SgGroup>(node);
+            }
+        });
+
     functions.setFunction<SgTransform>(
-        [&](SgNode* node){ visitTransform(static_cast<SgTransform*>(node)); });
+        [&](SgTransform* transform){
+            visitGroup(transform);
+            if(node){
+                node->setNode(transform);
+            }
+        });
+
     functions.setFunction<SgPreprocessed>(
-        [&](SgNode* node){ visitPreprocessed(static_cast<SgPreprocessed*>(node)); });
+        [&](SgPreprocessed* preprocessed){
+            node = new PreproNode(preprocessed);
+            found = true;
+        });
+
     functions.setFunction<SgLight>(
-        [&](SgNode* node){ visitLight(static_cast<SgLight*>(node)); });
+        [&](SgLight* light){
+            node = new PreproNode(light);
+            found = true;
+        });
+
     functions.setFunction<SgFog>(
-        [&](SgNode* node){ visitFog(static_cast<SgFog*>(node)); });
+        [&](SgFog* fog){
+            node = new PreproNode(fog);
+            found = true;
+        });
+
     functions.setFunction<SgCamera>(
-        [&](SgNode* node){ visitCamera(static_cast<SgCamera*>(node)); });
+        [&](SgCamera* camera){
+            node = new PreproNode(camera);
+            found = true;
+        });
+    
     functions.updateDispatchTable();
 }
 
@@ -370,8 +470,7 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 {
     bool foundInSubTree = false;
 
-    PreproNode* self = new PreproNode();
-    self->setNode(group);
+    PreproNode* self = new PreproNode(group);
 
     for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
         
@@ -400,55 +499,6 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         delete self;
         node = 0;
     }
-}
-
-
-void PreproTreeExtractor::visitSwitch(SgSwitch* switchNode)
-{
-    if(switchNode->isTurnedOn()){
-        functions.dispatchAs<SgGroup>(switchNode);
-    }
-}    
-
-
-void PreproTreeExtractor::visitTransform(SgTransform* transform)
-{
-    visitGroup(transform);
-    if(node){
-        node->setNode(transform);
-    }
-}
-
-
-void PreproTreeExtractor::visitPreprocessed(SgPreprocessed* preprocessed)
-{
-    node = new PreproNode();
-    node->setNode(preprocessed);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitLight(SgLight* light)
-{
-    node = new PreproNode();
-    node->setNode(light);
-    found = true;
-}
-
-
-void PreproTreeExtractor::visitFog(SgFog* fog)
-{
-    node = new PreproNode();
-    node->setNode(fog);
-    found = true;
-}
-    
-
-void PreproTreeExtractor::visitCamera(SgCamera* camera)
-{
-    node = new PreproNode();
-    node->setNode(camera);
-    found = true;
 }
 
 
@@ -745,7 +795,7 @@ void SceneRendererImpl::onExtensionAdded(std::function<void(SceneRenderer* rende
 }
 
 
-void SceneRenderer::applyNewExtensions()
+bool SceneRenderer::applyNewExtensions()
 {
     std::lock_guard<std::mutex> guard(impl->newExtensionMutex);
     if(!impl->newExtendFunctions.empty()){
@@ -753,56 +803,7 @@ void SceneRenderer::applyNewExtensions()
             impl->newExtendFunctions[i](this);
         }
         impl->newExtendFunctions.clear();
+        return true;
     }
-}
-
-
-SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
-{
-    std::lock_guard<std::mutex> guard(propertyKeyMutex);
-
-    auto iter = propertyKeyMap.find(key);
-    if(iter != propertyKeyMap.end()){
-        id = iter->second;
-    } else {
-        id = propertyKeyCount;
-        propertyKeyMap.insert(make_pair(key, id));
-        propertyKeyCount++;
-    }
-}
-
-
-void SceneRenderer::setProperty(PropertyKey key, bool value)
-{
-    impl->setProperty(key, value);
-}
-
-
-void SceneRenderer::setProperty(PropertyKey key, int value)
-{
-    impl->setProperty(key, value);
-}
-
-
-void SceneRenderer::setProperty(PropertyKey key, double value)
-{
-    impl->setProperty(key, value);
-}
-
-
-bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
-{
-    return impl->property(key, 0, defaultValue);
-}
-
-
-int SceneRenderer::property(PropertyKey key, int defaultValue) const
-{
-    return impl->property(key, 1, defaultValue);
-}
-
-
-double SceneRenderer::property(PropertyKey key, double defaultValue) const
-{
-    return impl->property(key, 2, defaultValue);
+    return false;
 }
