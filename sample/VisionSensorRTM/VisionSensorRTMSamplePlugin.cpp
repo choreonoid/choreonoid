@@ -150,7 +150,7 @@ public :
         return RTC_OK;
     }
 
-    ReturnCode_t onActivateted(UniqueId ec_id)
+    ReturnCode_t onActivated(UniqueId ec_id)
     {
         timedTbuf.clear();
         timedTbuf.resize(BUF_SIZE);

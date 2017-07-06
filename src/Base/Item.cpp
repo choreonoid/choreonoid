@@ -346,10 +346,11 @@ void Item::detachFromParentItemSub(bool isMoving)
         rootItem->notifyEventOnSubTreeRemoved(this, isMoving);
         if(!isMoving){
             callSlotsOnPositionChanged(); // sigPositionChanged is also emitted
-            emitSigDetachedFromRootForSubTree();
+           // emitSigDetachedFromRootForSubTree();
         }
     }
     if(!isMoving){
+        emitSigDetachedFromRootForSubTree();
         emitSigSubTreeChanged();
     }
 }
