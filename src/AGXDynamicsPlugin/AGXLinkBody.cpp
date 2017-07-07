@@ -95,7 +95,9 @@ agx::HingeRef AGXLinkBody::createConstraintHinge(const AGXHingeDesc& desc)
 	agx::HingeFrame hingeFrame;
 	hingeFrame.setAxis(desc.frameAxis);
 	hingeFrame.setCenter(desc.frameCenter);
-	return new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
+	agx::HingeRef hinge = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
+	hinge->getMotor1D()->setEnable(true);
+	return hinge;
 }
 
 agx::LockJointRef AGXLinkBody::createConstraintLockJoint(const AGXLockJointDesc & desc)

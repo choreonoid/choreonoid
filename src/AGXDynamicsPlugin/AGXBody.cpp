@@ -46,6 +46,33 @@ void AGXLink::setCollision(bool bOn)
 	getAGXLinkBody()->getGeometry()->setEnableCollisions(bOn);
 }
 
+void AGXLink::setTorqueToAGX()
+{
+	// constraint
+    switch(orgLink->jointType()){
+        case Link::ROTATIONAL_JOINT:
+        case Link::SLIDE_JOINT:{
+			agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
+			if(!joint1DOF) break;
+			joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? -1.0e12 : 1.0e12);
+			joint1DOF->getMotor1D()->setForceRange( agx::RangeReal(orgLink->u()));
+            break;
+        }
+		case Link::PSEUDO_CONTINUOUS_TRACK:{
+			const Vector3 a = orgLink->a();  // rigidbody coordinate
+			const agx::Vec3 dir_r = agx::Vec3(a(0), a(1), a(2));
+			agxCollide::GeometryRef g = getAGXLinkBody()->getGeometry();
+			const agx::Vec3 dir_g = g->getLocalRotation().inverse() * dir_r;   // geometry coordinate
+			getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(-1.0 * orgLink->dq() * dir_g.normal()));
+//			std::cout << "rigid x" << getAGXRigidBody()->getRotation() * dir_g << std::endl;
+//			std::cout << "geo   x" << getAGXLinkBody()->getGeometry()->getLocalRotation() * dir_w << std::endl;
+			break;
+		}
+        default :
+            break;
+    }
+}
+
 void AGXLink::createAGXRigidBody(){
 	const Matrix3& I = orgLink->I();
 	const Vector3& c = orgLink->c();
@@ -264,22 +291,12 @@ void AGXLink::synchronizeLinkStateToAGX()
     const Vector3 v = orgLink->v() + w.cross(lc);
     agxRigidBody->setVelocity( agx::Vec3(v(0),v(1),v(2)) );     // the linear velocity of the center of mass
     agxRigidBody->setAngularVelocity( agx::Vec3(w(0),w(1),w(2)) );
-
-	std::cout << orgLink->name() << "pos " << getAGXRigidBody()->getPosition() << std::endl;
-	std::cout << orgLink->name() << "rot " << getAGXRigidBody()->getRotation() << std::endl;
-	std::cout << orgLink->name() << "cm  " << getAGXRigidBody()->getCmLocalTranslate() << std::endl;
-	//if(getAGXConstraint())
-	//std::cout << orgLink->name() << "joint" << agx::Constraint1DOF::safeCast(getAGXConstraint())->getAngle() << std::endl;
-
 }
 
 void AGXLink::synchronizeLinkStateToCnoid()
 {
 	agx::RigidBodyRef agxRigidBody = getAGXRigidBody();
 	if(!agxRigidBody) return;
-
-//	std::cout << orgLink->name() << std::endl;
-//	std::cout << orgLink->p() << std::endl;
 
 	// constraint
     switch(orgLink->jointType()){
@@ -324,9 +341,6 @@ void AGXLink::synchronizeLinkStateToCnoid()
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
 
-	std::cout << orgLink->name() << "pos " << getAGXRigidBody()->getPosition() << std::endl;
-	std::cout << orgLink->name() << "rot " << getAGXRigidBody()->getRotation() << std::endl;
-	std::cout << orgLink->name() << "cm  " << getAGXRigidBody()->getCmLocalTranslate() << std::endl;
 }
 
 //LinkPtr AGXLink::link(){
@@ -403,6 +417,14 @@ void AGXBody::setCollision(bool bOn)
 	for(size_t i = 0; i < agxLinks.size(); ++i){
 		agxLinks[i]->setCollision(bOn);
 	}
+}
+
+void AGXBody::setTorqueToAGX()
+{
+    // Skip the root link
+    for(size_t i=1; i < agxLinks.size(); ++i){
+        agxLinks[i]->setTorqueToAGX();
+    }
 }
 
 void AGXBody::synchronizeLinkStateToAGX()

@@ -86,6 +86,17 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
 //	cout << "step" << std::endl;
+    for(size_t i=0; i < activeSimBodies.size(); ++i){
+        AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
+        agxBody->setTorqueToAGX();
+
+        //if(!agxBody->sensorHelper.forceSensors().empty()){
+        //    agxBody->updateForceSensors();
+        //}
+        //if(agxBody->sensorHelper.hasGyroOrAccelerationSensors()){
+        //    agxBody->sensorHelper.updateGyroAndAccelerationSensors();
+        //}
+    }
 
 	agxScene->stepAGXSimulation();
 

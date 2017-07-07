@@ -25,6 +25,7 @@ public:
 	void createLinkBody();
 	void createConstraints();
 	void setCollision(bool bOn);
+	void setTorqueToAGX();
 	void synchronizeLinkStateToAGX();
 	void synchronizeLinkStateToCnoid();
 private:
@@ -51,6 +52,7 @@ public:
 	void initialize();
 	void createBody();
 	void setCollision(bool bOn);
+	void setTorqueToAGX();
 	void synchronizeLinkStateToAGX();
 	void synchronizeLinkStateToCnoid();
 	agx::RigidBodyRef getAGXRigidBody(int index);
