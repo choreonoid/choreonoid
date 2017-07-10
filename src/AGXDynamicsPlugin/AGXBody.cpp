@@ -59,11 +59,11 @@ void AGXLink::setTorqueToAGX()
             break;
         }
 		case Link::PSEUDO_CONTINUOUS_TRACK:{
-			const Vector3 a = orgLink->a();  // rigidbody coordinate
-			const agx::Vec3 dir_r = agx::Vec3(a(0), a(1), a(2));
-			agxCollide::GeometryRef g = getAGXLinkBody()->getGeometry();
-			const agx::Vec3 dir_g = g->getLocalRotation().inverse() * dir_r;   // geometry coordinate
-			getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(-1.0 * orgLink->dq() * dir_g.normal()));
+			//const Vector3 a = orgLink->a();  // rigidbody coordinate
+			//const agx::Vec3 dir_r = agx::Vec3(a(0), a(1), a(2));
+			//agxCollide::GeometryRef g = getAGXLinkBody()->getGeometry();
+			//const agx::Vec3 dir_g = g->getLocalRotation().inverse() * dir_r;   // geometry coordinate
+			getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
 //			std::cout << "rigid x" << getAGXRigidBody()->getRotation() * dir_g << std::endl;
 //			std::cout << "geo   x" << getAGXLinkBody()->getGeometry()->getLocalRotation() * dir_w << std::endl;
 			break;
@@ -105,6 +105,11 @@ void AGXLink::createAGXRigidBody(){
 void AGXLink::createAGXGeometry(){
 	AGXGeometryDesc gdesc;
 	gdesc.selfCollsionGroupName = orgLink->body()->name();
+	if(orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
+		gdesc.isPseudoContinuousTrack = true;
+		Vector3 a = orgLink->a();
+		gdesc.axis = agx::Vec3f(a(0), a(1), a(2));
+	}
 	agxLinkBody->createGeometry(gdesc);
 }
 

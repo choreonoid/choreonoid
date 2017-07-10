@@ -20,9 +20,22 @@ struct AGXRigidBodyDesc
 };
 
 struct AGXGeometryDesc{
-	AGXGeometryDesc(){};
+	AGXGeometryDesc(){
+		isPseudoContinuousTrack = false;
+	};
+	bool isPseudoContinuousTrack;
+	agx::Vec3f axis;
 	agx::Vec3f surfacevel;
 	agx::Name selfCollsionGroupName;
+};
+
+class AGXPseudoContinuousTrackGeometry : public agxCollide::Geometry{
+public:
+	void setAxis(const agx::Vec3f& a);
+	agx::Vec3f getAxis();
+	virtual agx::Vec3f calculateSurfaceVelocity( const agxCollide::LocalContactPoint& point , size_t index ) const;
+private:
+	agx::Vec3f axis;
 };
 
 enum AGXShapeType

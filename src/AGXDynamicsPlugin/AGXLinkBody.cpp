@@ -2,6 +2,26 @@
 
 namespace cnoid{
 
+	////////////////////////////////////////////////////////////
+// AGXPseudoContinuousTrackGeometry
+void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& a)
+{
+	axis = a;
+}
+
+agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis()
+{
+	return axis;
+}
+
+agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
+{
+	agx::Vec3f dir = axis ^ point.normal();
+	dir.normalize();
+	agx::Vec3f ret =dir * -1.0 * getSurfaceVelocity().x();
+	return ret;
+}
+
 ////////////////////////////////////////////////////////////
 // AGXLinkBody
 AGXLinkBody::AGXLinkBody(){}
@@ -33,8 +53,14 @@ void AGXLinkBody::createRigidBody(AGXRigidBodyDesc desc){
 	_rigid = r;
 }
 void AGXLinkBody::createGeometry(AGXGeometryDesc desc){
-	agxCollide::GeometryRef g = new agxCollide::Geometry();
-	//g->setSurfaceVelocity(desc.surfacevel);
+	agxCollide::GeometryRef g;
+	if(desc.isPseudoContinuousTrack){
+		AGXPseudoContinuousTrackGeometry* pg = new AGXPseudoContinuousTrackGeometry();
+		pg->setAxis(desc.axis);
+		g = pg;
+	}else{
+		g = new agxCollide::Geometry();
+	}
 	g->addGroup(desc.selfCollsionGroupName);
 	getRigidBody()->add(g);
 	_geometry = g;
@@ -112,8 +138,6 @@ agx::PrismaticRef AGXLinkBody::createConstraintPrismatic(const AGXPrismaticDesc 
 	prismaticFrame.setPoint(desc.framePoint);
 	return new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
 }
-
-
 
 
 }
