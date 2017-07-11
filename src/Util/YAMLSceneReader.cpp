@@ -73,6 +73,7 @@ public:
     SgNode* readGroup(Mapping& node);
     bool readElements(Mapping& node, SgGroup* group);
     SgNode* readTransform(Mapping& node);
+    SgNode* readTransformParameters(Mapping& node, SgNode* scene);
     SgNode* readShape(Mapping& node);
     SgMesh* readGeometry(Mapping& node);
     SgMesh* readBox(Mapping& node);
@@ -329,13 +330,34 @@ SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 }
 
 
+SgNode* YAMLSceneReaderImpl::readTransformParameters(Mapping& node, SgNode* scene)
+{
+    Matrix3 R;
+    bool isRotated = self->readRotation(node, R, false);
+    Vector3 p;
+    bool isTranslated = read(node, "translation", p);
+    if(isRotated || isTranslated){
+        SgPosTransform* transform = new SgPosTransform;
+        if(isRotated){
+            transform->setRotation(R);
+        }
+        if(isTranslated){
+            transform->setTranslation(p);
+        }
+        transform->addChild(scene);
+        return transform;
+    }
+    return scene;
+}
+
+
 SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
 {
-    SgShapePtr shape;
+    SgNode* scene = 0;
 
     Mapping& geometry = *node.findMapping("geometry");
     if(geometry.isValid()){
-        shape = new SgShape;
+        SgShapePtr shape = new SgShape;
         shape->setMesh(readGeometry(geometry));
 
         Mapping& appearance = *node.findMapping("appearance");
@@ -345,24 +367,14 @@ SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
             setDefaultMaterial(shape);
         }
 
-        Matrix3 R;
-        bool isRotated = self->readRotation(node, R, false);
-        Vector3 p;
-        bool isTranslated = read(node, "translation", p);
-        if(isRotated || isTranslated){
-            SgPosTransform* transform = new SgPosTransform;
-            if(isRotated){
-                transform->setRotation(R);
-            }
-            if(isTranslated){
-                transform->setTranslation(p);
-            }
-            transform->addChild(shape);
-            return transform;
+        scene = readTransformParameters(node, shape);
+
+        if(scene == shape){
+            return shape.retn();
         }
     }
 
-    return shape.retn();
+    return scene;
 }
 
 
@@ -582,16 +594,23 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
 
 SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
 {
-    SgNodePtr resource;
+    SgNode* scene = 0;
+    
     if(node.read("uri", symbol)){
+        SgNodePtr resource;
         string nodeName;
         if(node.read("node", nodeName)){
             resource = loadResource(symbol, nodeName);
         } else {
             resource = loadResource(symbol);
         }
+        scene = readTransformParameters(node, resource);
+        if(scene == resource){
+            return resource.retn();
+        }
     }
-    return resource.retn();
+    
+    return scene;
 }
 
 
