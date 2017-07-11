@@ -25,24 +25,18 @@ public:
     void createConstraints();
     void setCollision(bool bOn);
     void setTorqueToAGX();
-    void synchronizeLinkStateToAGX();
-    void synchronizeLinkStateToCnoid();
+    void setLinkStateToAGX();
+    void setLinkStateToCnoid();
 private:
     int _index;
     LinkPtr orgLink;
     AGXLinkPtr agxParentLink;
     AGXLinkBodyRef agxLinkBody;
-    //std::vector<Vertex> vertices;
-    //agx::UInt32Vector indices;
     void createAGXRigidBody();
     void createAGXGeometry();
     void createAGXShape();
     void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
     void createAGXConstraints();
-
-    //LinkPtr link();
-    //LinkPtr getLink();
-    //AGXLinkPtr getParent();
 };
 
 class AGXBody :  public SimulationBody
@@ -53,8 +47,8 @@ public:
     void createBody();
     void setCollision(bool bOn);
     void setTorqueToAGX();
-    void synchronizeLinkStateToAGX();
-    void synchronizeLinkStateToCnoid();
+    void setLinkStateToAGX();
+    void setLinkStateToCnoid();
     agx::RigidBodyRef getAGXRigidBody(int index);
     agx::ConstraintRef getAGXConstraint(int index);
     int getNumLinks();

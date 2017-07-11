@@ -64,13 +64,8 @@ void AGXLink::setTorqueToAGX()
             break;
         }
         case Link::PSEUDO_CONTINUOUS_TRACK:{
-            //const Vector3 a = orgLink->a();  // rigidbody coordinate
-            //const agx::Vec3 dir_r = agx::Vec3(a(0), a(1), a(2));
-            //agxCollide::GeometryRef g = getAGXLinkBody()->getGeometry();
-            //const agx::Vec3 dir_g = g->getLocalRotation().inverse() * dir_r;   // geometry coordinate
+            // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
             getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
-//            std::cout << "rigid x" << getAGXRigidBody()->getRotation() * dir_g << std::endl;
-//            std::cout << "geo   x" << getAGXLinkBody()->getGeometry()->getLocalRotation() * dir_w << std::endl;
             break;
         }
         default :
@@ -129,6 +124,14 @@ void AGXLink::createAGXShape()
         // if vertices have values, it will be trimesh 
         if(!td.vertices.empty()){
             agxLinkBody->createShape(td, agx::AffineMatrix4x4());
+        //    std::cout << orgLink->name() << std::endl;
+        //    std::cout << td.vertices.size() << std::endl;
+        //    for(int i = 0; i < td.vertices.size(); ++i){
+        //        std::cout << "vertices " << td.vertices[i] << std::endl;
+        //    } 
+        //    for(int i = 0; i < td.indices.size(); ++i){
+        //        std::cout << "vertices " << td.indices[i] << std::endl;
+        //    } 
         }
     }
     delete extractor;
@@ -287,7 +290,7 @@ void AGXLink::createAGXConstraints()
     }
 }
 
-void AGXLink::synchronizeLinkStateToAGX()
+void AGXLink::setLinkStateToAGX()
 {
     agx::RigidBodyRef agxRigidBody = getAGXRigidBody();    
     if(!agxRigidBody)
@@ -308,7 +311,7 @@ void AGXLink::synchronizeLinkStateToAGX()
     agxRigidBody->setAngularVelocity( agx::Vec3(w(0),w(1),w(2)) );
 }
 
-void AGXLink::synchronizeLinkStateToCnoid()
+void AGXLink::setLinkStateToCnoid()
 {
     agx::RigidBodyRef agxRigidBody = getAGXRigidBody();
     if(!agxRigidBody) return;
@@ -357,19 +360,6 @@ void AGXLink::synchronizeLinkStateToCnoid()
     orgLink->v() = v0 - orgLink->w().cross(c);
 
 }
-
-//LinkPtr AGXLink::link(){
-//    return orgLink;
-//}
-//
-//
-//LinkPtr AGXLink::getLink(){
-//    return orgLink;
-//}
-
-//AGXLinkPtr AGXLink::getParent(){
-//    return agxParentLink;
-//}
 
 ////////////////////////////////////////////////////////////
 // AGXBody
@@ -426,7 +416,7 @@ void AGXBody::createBody()
         agxLinks[i]->createConstraints();
     }
 
-    synchronizeLinkStateToAGX();
+    setLinkStateToAGX();
 }
 
 void AGXBody::setCollision(bool bOn)
@@ -444,17 +434,17 @@ void AGXBody::setTorqueToAGX()
     }
 }
 
-void AGXBody::synchronizeLinkStateToAGX()
+void AGXBody::setLinkStateToAGX()
 {
     for(size_t i = 0; i < agxLinks.size(); ++i){
-        agxLinks[i]->synchronizeLinkStateToAGX();
+        agxLinks[i]->setLinkStateToAGX();
     }
 }
 
-void AGXBody::synchronizeLinkStateToCnoid()
+void AGXBody::setLinkStateToCnoid()
 {
     for(size_t i = 0; i < agxLinks.size(); ++i){
-        agxLinks[i]->synchronizeLinkStateToCnoid();
+        agxLinks[i]->setLinkStateToCnoid();
     }    
 }
 

@@ -102,7 +102,7 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
-        agxBody->synchronizeLinkStateToCnoid();
+        agxBody->setLinkStateToCnoid();
 
         //if(!agxBody->sensorHelper.forceSensors().empty()){
         //    agxBody->updateForceSensors();
@@ -130,36 +130,9 @@ void AGXSimulatorItemImpl::restartSimulation()
     cout << "restartSimulation" << endl;
 }
 
-
-//// API
-//void AGXSimulatorItemImpl::clearAGXSimulation(){
-//    if(getAGXSimulation()) getAGXSimulation()->cleanup(agxSDK::Simulation::CLEANUP_ALL);
-//}
-//
-//agxSDK::SimulationRef AGXSimulatorItemImpl::createAGXSimulation(){
-//    agxSimulation = new agxSDK::Simulation();
-//    return agxSimulation;
-//}
-//
-//agxSDK::SimulationRef AGXSimulatorItemImpl::getAGXSimulation(){
-//    return agxSimulation;
-//}
-
 bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
 {
     return agxScene->saveSceneToAGXFile();
 }
-
-//AGXSceneRef AGXSimulatorItemImpl::createAGXScene()
-//{
-//    if(agxScene) return agxScene;
-//    agxScene = new AGXScene();
-//    return  agxScene;
-//}
-
-//AGXSceneRef AGXSimulatorItemImpl::getAGXScene()
-//{
-//    return agxScene;
-//}
 
 }

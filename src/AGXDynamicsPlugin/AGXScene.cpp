@@ -1,4 +1,6 @@
 #include "AGXScene.h"
+#include <agx/Thread.h>
+#include <agxIO/ReaderWriter.h>
 
 namespace cnoid{
 
@@ -18,7 +20,6 @@ void AGXScene::stepAGXSimulation()
 {
     agx::Thread::makeCurrentThreadMainThread();
     agxSimulation->stepForward();
-    //agx::Thread::unregisterAsAgxThread();
 }
 
 agxSDK::SimulationRef AGXScene::getAGXSimulation()
@@ -48,25 +49,6 @@ void AGXScene::setCollisionPair(const unsigned & id1, const unsigned & id2, bool
 void AGXScene::setCollisionPair(const agx::Name & name1, const agx::Name & name2, bool bOn)
 {
     agxSimulation->getSpace()->setEnablePair(name1, name2, bOn);
-}
-
-void AGXScene::buildTestScene()
-{
-    // box
-    agx::RigidBodyRef rigidBox = new agx::RigidBody();
-    agxCollide::GeometryRef geometryBox = new agxCollide::Geometry();
-    agxCollide::BoxRef shapeBox = new agxCollide::Box(agx::Vec3d(0.5, 0.5, 0.5));
-    geometryBox->add(shapeBox);
-    rigidBox->add(geometryBox);
-    rigidBox->setPosition(agx::Vec3d(0.0, 0.0, 5.0));
-    agxSimulation->add(rigidBox);
-
-    // Floor
-    agx::RigidBodyRef rigidFloor = new agx::RigidBody();
-    rigidFloor->add(new agxCollide::Geometry(new agxCollide::Box(agx::Vec3(5.0, 5.0, 0.2))));
-    rigidFloor->setMotionControl(agx::RigidBody::STATIC);
-    rigidFloor->setPosition(agx::Vec3(0, 0, -0.2));
-    agxSimulation->add(rigidFloor);
 }
 
 }

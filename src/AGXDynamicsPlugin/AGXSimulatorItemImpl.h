@@ -2,12 +2,10 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SIMULATOR_ITEM_IMPL_H
 
 #include <cnoid/SimulatorItem>
-#include "AGXInclude.h"
+//#include "AGXInclude.h"
 #include "AGXScene.h"
 #include "AGXBody.h"
-#include <agxSDK/Simulation.h>
 #include <iostream>
-//#include<vector>
 
 namespace cnoid {
 class AGXSimulatorItem;
@@ -38,17 +36,11 @@ public:
     void pauseSimulation();
     void restartSimulation();
 
-    // API
-    //void clearAGXSimulation();
-    //agxSDK::SimulationRef createAGXSimulation();
-    //agxSDK::SimulationRef getAGXSimulation();
     bool saveSimulationToAGXFile();
-    //agxSDK::SimulationRef agxSimulation;
+
 
 private:
     AGXSceneRef agxScene = nullptr;
-    //AGXSceneRef createAGXScene();
-    //AGXSceneRef getAGXScene();
 };
 }
 #endif

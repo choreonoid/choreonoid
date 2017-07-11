@@ -1,10 +1,9 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 
-#include "AGXInclude.h"
+#include <agxSDK/Simulation.h>
 
 namespace cnoid{
-
 
 struct AGXSimulationDesc
 {
@@ -26,7 +25,6 @@ public:
     void setCollisionPair(const unsigned& id1, const unsigned& id2, bool bOn);
     void setCollisionPair(const agx::Name& name1, const agx::Name& name2, bool bOn);
 
-    void buildTestScene();
     agxSDK::SimulationRef createAGXSimulation(const AGXSimulationDesc& desc);
     agxSDK::SimulationRef getAGXSimulation();
 private:
