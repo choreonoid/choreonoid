@@ -160,19 +160,23 @@ public:
         case VISUAL_AND_COLLISION:
             if(current.hasVisualChild){
                 parent.visual->addChild(current.visual);
+                parent.hasVisualChild = true;
             }
             if(current.hasCollisionChild){
                 parent.collision->addChild(current.collision);
+                parent.hasCollisionChild = true;
             }
             break;
         case VISUAL:
             if(current.hasVisualChild){
                 parent.visual->addChild(current.visual);
+                parent.hasVisualChild = true;
             }
             break;
         case COLLISION:
             if(current.hasCollisionChild){
                 parent.collision->addChild(current.collision);
+                parent.hasCollisionChild = true;
             }
             break;
         }
