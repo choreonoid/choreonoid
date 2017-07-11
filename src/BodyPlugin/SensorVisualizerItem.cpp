@@ -198,7 +198,6 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 forceSensorVisualizerItem->setVisualRatio(forceSensor_visualRatio);
                 forceSensorVisualizerItem->setBodyItem(bodyItem);
                 self->addSubItem(forceSensorVisualizerItem);
-                ItemTreeView::instance()->checkItem(forceSensorVisualizerItem, true);
                 subItems.push_back(forceSensorVisualizerItem);
             }
 
@@ -207,7 +206,6 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 PointCloudVisualizerItemPtr pointCloudVisualizerItem = new PointCloudVisualizerItem();
                 pointCloudVisualizerItem->setBodyItem(bodyItem, rangeCameras[i]);
                 self->addSubItem(pointCloudVisualizerItem);
-                ItemTreeView::instance()->checkItem(pointCloudVisualizerItem, true);
                 subItems.push_back(pointCloudVisualizerItem);
             }
 
@@ -216,7 +214,6 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 RangeSensorVisualizerItemPtr rangeSensorVisualizerItem = new RangeSensorVisualizerItem();
                 rangeSensorVisualizerItem->setBodyItem(bodyItem, rangeSensors[i]);
                 self->addSubItem(rangeSensorVisualizerItem);
-                ItemTreeView::instance()->checkItem(rangeSensorVisualizerItem, true);
                 subItems.push_back(rangeSensorVisualizerItem);
             }
         }
