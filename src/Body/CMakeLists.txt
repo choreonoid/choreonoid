@@ -58,6 +58,7 @@ set(sources
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   SimpleController.cpp
+  CnoidBody.cpp # This file must be placed at the last position
   )
 
 set(headers
@@ -199,5 +200,11 @@ install(
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
-add_subdirectory(python)
+if(ENABLE_PYTHON)
+  if(USE_PYTHON3)
+    add_subdirectory(python3)
+  else()
+    add_subdirectory(python)
+  endif()
+endif()
 add_subdirectory(lua)

@@ -55,8 +55,29 @@ python::object ItemTreeView_checkedItems4(ItemTreeView& self, python::object ite
 */
 
 
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_isItemChecked_overloads, isItemChecked, 1, 2)
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_checkItem_overloads, checkItem, 1, 3)
+bool ItemTreeView_isItemChecked1(ItemTreeView& self, ItemPtr item){
+    return self.isItemChecked(item);
+}
+
+bool ItemTreeView_isItemChecked2(ItemTreeView& self, ItemPtr item, int id){
+    return self.isItemChecked(item, id);
+}
+
+bool ItemTreeView_checkItem1(ItemTreeView& self, ItemPtr item)
+{
+    return self.checkItem(item);
+}
+
+bool ItemTreeView_checkItem2(ItemTreeView& self, ItemPtr item, bool check)
+{
+    return self.checkItem(item, check);
+}
+
+bool ItemTreeView_checkItem3(ItemTreeView& self, ItemPtr item, bool check, int id)
+{
+    return self.checkItem(item, check, id);
+}
+
 SignalProxy<void(Item*, bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled1)(int) = &ItemTreeView::sigCheckToggled;
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ItemTreeView_sigCheckToggled1_overloads, sigCheckToggled, 0, 1)
 SignalProxy<void(bool)> (ItemTreeView::*ItemTreeView_sigCheckToggled2)(Item*, int) = &ItemTreeView::sigCheckToggled;
@@ -88,8 +109,11 @@ void exportPyItemTreeView()
         .def("checkedItems", ItemTreeView_checkedItems2)
         //.def("checkedItems", ItemTreeView_checkedItems3)
         //.def("checkedItems", ItemTreeView_checkedItems4)
-        .def("isItemChecked", &ItemTreeView::isItemChecked, ItemTreeView_isItemChecked_overloads())
-        .def("checkItem", &ItemTreeView::checkItem, ItemTreeView_checkItem_overloads())
+        .def("isItemChecked", ItemTreeView_isItemChecked1)
+        .def("isItemChecked", ItemTreeView_isItemChecked2)
+        .def("checkItem", ItemTreeView_checkItem1)
+        .def("checkItem", ItemTreeView_checkItem2)
+        .def("checkItem", ItemTreeView_checkItem3)
         .def("sigSelectionChanged", &ItemTreeView::sigSelectionChanged)
         .def("sigSelectionOrTreeChanged", &ItemTreeView::sigSelectionOrTreeChanged)
         .def("sigCheckToggled", ItemTreeView_sigCheckToggled1, ItemTreeView_sigCheckToggled1_overloads())

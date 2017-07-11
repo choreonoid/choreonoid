@@ -1,0 +1,27 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: Floor
+
+links:
+  -
+    name: BASE
+    jointType: fixed
+    translation: [ 0.0, 0.0, -0.01 ]
+    rotation: [ 0, 0, 1, 0 ]
+    elements:
+      -
+        type: RigidBody
+        mass: 0.5
+        inertia: [
+          1, 0, 0,
+          0, 1, 0,
+          0, 0, 1 ]
+        elements:
+          Shape:
+            geometry:
+              type: Box
+              size: [ 2.0, 2.0, 0.02 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.0, 0.0, 1.0 ]

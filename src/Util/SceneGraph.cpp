@@ -7,6 +7,7 @@
 #include "Exception.h"
 #include <unordered_map>
 #include <typeindex>
+#include <mutex>
 
 using namespace std;
 using namespace cnoid;
@@ -131,17 +132,16 @@ void SgObject::removeParent(SgObject* parent)
 
 
 namespace {
-
-// Need mutex to access the following variables?
+std::mutex polymorphicIdMutex;
 typedef std::unordered_map<std::type_index, int> PolymorphicIdMap;
 PolymorphicIdMap polymorphicIdMap;
-
 std::vector<int> superTypePolymorphicIdMap;
-
 }
 
 int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_info& superType)
 {
+    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
+
     int superTypeId;
     PolymorphicIdMap::iterator iter = polymorphicIdMap.find(superType);
     if(iter == polymorphicIdMap.end()){
@@ -167,6 +167,8 @@ int SgNode::registerNodeType(const std::type_info& nodeType, const std::type_inf
 
 int SgNode::findPolymorphicId(const std::type_info& nodeType)
 {
+    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
+
     auto iter = polymorphicIdMap.find(nodeType);
     if(iter != polymorphicIdMap.end()){
         return iter->second;
@@ -177,12 +179,14 @@ int SgNode::findPolymorphicId(const std::type_info& nodeType)
 
 int SgNode::findSuperTypePolymorphicId(int polymorhicId)
 {
+    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
     return superTypePolymorphicIdMap[polymorhicId];
 }
 
 
 int SgNode::numPolymorphicTypes()
 {
+    std::lock_guard<std::mutex> guard(polymorphicIdMutex);
     return polymorphicIdMap.size();
 }
 

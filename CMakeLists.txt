@@ -283,9 +283,16 @@ else()
 endif()
 
 if(ENABLE_PYTHON)
-  find_package(PythonLibs 2.7 REQUIRED)
-  include_directories(${PYTHON_INCLUDE_PATH})
-  set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
+  option(USE_PYTHON3 "Use Python3" OFF)
+  if(USE_PYTHON3)
+    pkg_check_modules(PYTHON REQUIRED python3)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
+  else()    
+    find_package(PythonLibs 2.7 REQUIRED)
+    include_directories(${PYTHON_INCLUDE_PATH})
+    set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
+  endif()
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
@@ -325,7 +332,7 @@ endif()
 
 set(boost_packages system filesystem program_options regex thread iostreams date_time)
 
-if(ENABLE_PYTHON)
+if(ENABLE_PYTHON AND NOT USE_PYTHON3)
   set(boost_packages ${boost_packages} python)
 endif()
 

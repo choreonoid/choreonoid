@@ -394,7 +394,8 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                     if(scale.x() == scale.y() && scale.x() == scale.z()){
                         doAddPrimitive = true;
                     }
-                } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                          mesh->primitiveType() == SgMesh::CAPSULE ){
                     // check if the bottom circle face is uniformly scaled
                     if(scale.x() == scale.z()){
                         doAddPrimitive = true;
@@ -421,6 +422,11 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 geomId = dCreateCylinder(odeBody->spaceID, cylinder.radius * scale.x(), cylinder.height * scale.y());
                 created = true;
                 break; }
+            case SgMesh::CAPSULE : {
+                SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                geomId = dCreateCapsule(odeBody->spaceID, capsule.radius * scale.x(), capsule.height * scale.y());
+                created = true;
+                break; }
             default :
                 break;
             }
@@ -431,7 +437,8 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody)
                 if(translation){
                     T_ *= Translation3(*translation);
                 }
-                if(mesh->primitiveType()==SgMesh::CYLINDER)
+                if(mesh->primitiveType()==SgMesh::CYLINDER ||
+                        mesh->primitiveType()==SgMesh::CAPSULE )
                     T_ *= AngleAxis(radian(90), Vector3::UnitX());
                 Vector3 p = T_.translation()-link->c();
                 dMatrix3 R = { T_(0,0), T_(0,1), T_(0,2), 0.0,

@@ -13,7 +13,6 @@
 #include <GL/gl.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace cnoid {
@@ -58,7 +57,7 @@ GLSceneRendererImpl::GLSceneRendererImpl(GLSceneRenderer* self, SgGroup* sceneRo
     : self(self),
       sceneRoot(sceneRoot)
 {
-    sceneRoot->sigUpdated().connect(std::bind(&GLSceneRenderer::onSceneGraphUpdated, self, _1));
+    sceneRoot->sigUpdated().connect([self](const SgUpdate& update){ self->onSceneGraphUpdated(update); });
 
     scene = new SgGroup();
     sceneRoot->addChild(scene);

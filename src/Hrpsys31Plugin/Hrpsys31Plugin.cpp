@@ -3,6 +3,7 @@
 */
 
 #include "Hrpsys31Item.h"
+#include "RTMPointCloudIOItem.h"
 #include <cnoid/Plugin>
 
 using namespace std;
@@ -25,12 +26,14 @@ Hrpsys31Plugin::Hrpsys31Plugin()
     : Plugin("Hrpsys31")
 {
     require("RobotAccess");
+    require("OpenRTM");
 }
 
 
 bool Hrpsys31Plugin::initialize()
 {
     Hrpsys31Item::initializeClass(this);
+    RTMPointCloudIOItem::initializeClass(this);
     return true;
 }
 

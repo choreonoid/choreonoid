@@ -18,7 +18,6 @@
 #include <cnoid/FileUtil>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
-#include <cnoid/SceneLoader>
 #include <cnoid/NullOut>
 #include <Eigen/StdVector>
 #include <boost/optional.hpp>
@@ -28,7 +27,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = boost::filesystem;
 using boost::format;
 
 namespace {
@@ -55,8 +53,6 @@ public:
     YAMLBodyLoader* self;
     YAMLReader reader;
     YAMLSceneReader sceneReader;
-    SceneLoader sceneLoader;
-    filesystem::path directoryPath;
 
     typedef function<bool(Mapping& node)> NodeFunction;
 
@@ -104,34 +100,83 @@ public:
     typedef vector<RigidBody, Eigen::aligned_allocator<RigidBody>> RigidBodyVector;
     RigidBodyVector rigidBodies;
 
-    struct SceneGroupSet : public Referenced
+    struct SceneGroupSet
     {
         SgGroupPtr visual;
         SgGroupPtr collision;
-        template<class NodeType> void newNode(){
+        bool hasVisualChild;
+        bool hasCollisionChild;
+
+        SceneGroupSet(){
+            hasVisualChild = false;
+            hasCollisionChild = false;
+        }
+        template<class NodeType> void newGroup(){
             visual = new NodeType;
             collision = new NodeType;
         }
-        template<class NodeType, class ParameterType> void newNode(const ParameterType& param){
+        template<class NodeType, class ParameterType> void newGroup(const ParameterType& param){
             visual = new NodeType(param);
             collision = new NodeType(param);
         }
         void setName(const std::string& name){
             visual->setName(name);
             collision->setName(name);
-        }
-        void addChild(SceneGroupSet* groupSet){
-            visual->addChild(groupSet->visual);
-            collision->addChild(groupSet->collision);
-        }
-        void addChild(SgNode* node){
-            visual->addChild(node);
-            collision->addChild(node);
+            // Group node that has name is kept even if it does not have contents
+            hasVisualChild = true;
         }
     };
-    typedef ref_ptr<SceneGroupSet> SceneGroupSetPtr;
-    SceneGroupSetPtr currentSceneGroupSet;
+
+    vector<SceneGroupSet> sceneGroupSetStack;
+
+    enum ModelType { VISUAL_AND_COLLISION, VISUAL, COLLISION } currentModelType;
     bool hasVisualOrCollisionNodes;
+
+    SceneGroupSet& currentSceneGroupSet(){ return sceneGroupSetStack.back(); }
+    
+    void addScene(SgNode* node){
+        auto& current = sceneGroupSetStack.back();
+        switch(currentModelType){
+        case VISUAL_AND_COLLISION:
+            current.visual->addChild(node);
+            current.collision->addChild(node);
+            current.hasVisualChild = true;
+            current.hasCollisionChild = true;
+            break;
+        case VISUAL:
+            current.visual->addChild(node);
+            current.hasVisualChild = true;
+            break;
+        case COLLISION:
+            current.collision->addChild(node);
+            current.hasCollisionChild = true;
+            break;
+        }
+    }
+    void addCurrentSceneGroupToParentSceneGroup(){
+        auto& parent = sceneGroupSetStack[sceneGroupSetStack.size() - 2];
+        auto& current = sceneGroupSetStack.back();
+        switch(currentModelType){
+        case VISUAL_AND_COLLISION:
+            if(current.hasVisualChild){
+                parent.visual->addChild(current.visual);
+            }
+            if(current.hasCollisionChild){
+                parent.collision->addChild(current.collision);
+            }
+            break;
+        case VISUAL:
+            if(current.hasVisualChild){
+                parent.visual->addChild(current.visual);
+            }
+            break;
+        case COLLISION:
+            if(current.hasCollisionChild){
+                parent.collision->addChild(current.collision);
+            }
+            break;
+        }
+    }
 
     // temporary variables for reading values
     int id;
@@ -143,30 +188,10 @@ public:
     Matrix3 M;
 
     ostream* os_;
+    ostream& os() { return *os_; }
 
     vector<bool> validJointIdSet;
     int numValidJointIds;
-
-    struct NodeInfo
-    {
-        SgGroupPtr parent;
-        SgNodePtr node;
-        Matrix3 R;
-        bool isScaled;
-    };
-
-    typedef unordered_map<string, NodeInfo> NodeMap;
-    
-    struct ResourceInfo : public Referenced
-    {
-        SgNodePtr rootNode;
-        unique_ptr<NodeMap> nodeMap;
-    };
-    typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
-        
-    map<string, ResourceInfoPtr> resourceInfoMap;
-    
-    ostream& os() { return *os_; }
 
     YAMLBodyLoaderImpl(YAMLBodyLoader* self);
     ~YAMLBodyLoaderImpl();
@@ -180,23 +205,20 @@ public:
     LinkPtr readLinkContents(Mapping* linkNode);
     boost::optional<Vector3> readAxis(Mapping* node, const char* key);
     void setMassParameters(Link* link);
-    //! \return true if any scene nodes other than Group and Transform are added in the sub tree
-    bool readElements(ValueNode& elements, SceneGroupSet* sceneGroupSet);
+
+    /*
+      The following functions return true if any scene nodes other than Group and Transform
+      are added in the sub tree.
+    */
+    bool readElements(Mapping& node);
+    bool readElementContents(ValueNode& elements);
     bool readNode(Mapping& node, const string& type);
-    bool readContainerNode(Mapping& node, SceneGroupSetPtr groupSet, NodeFunction nodeFunction);
+    bool readContainerNode(Mapping& node, NodeFunction nodeFunction);
     bool readTransformContents(Mapping& node, NodeFunction nodeFunction, bool hasElements);
     bool readGroup(Mapping& node);
     bool readTransform(Mapping& node);
     bool readRigidBody(Mapping& node);
     bool readVisualOrCollision(Mapping& node, bool isVisual);
-    bool readResource(Mapping& node);
-    SgNode* readResourceContents(Mapping& node);
-    SgNode* importScene(const std::string& uri);
-    SgNode* importScene(const string& uri, const string& nodeName);
-    ResourceInfo* getOrCreateResourceInfo(const string& uri);
-    void adjustNodeCoordinate(NodeInfo& info);
-    void makeNodeMap(ResourceInfo* info);
-    void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
     bool readDevice(Device* device, Mapping& node);
     bool readForceSensor(Mapping& node);
     bool readRateGyroSensor(Mapping& node);
@@ -355,7 +377,6 @@ YAMLBodyLoaderImpl::YAMLBodyLoaderImpl(YAMLBodyLoader* self)
     nodeFunctions["RigidBody"].setTE([&](Mapping& node){ return readRigidBody(node); });
     nodeFunctions["Visual"].setT([&](Mapping& node){ return readVisualOrCollision(node, true); });
     nodeFunctions["Collision"].setT([&](Mapping& node){ return readVisualOrCollision(node, false); });
-    nodeFunctions["Resource"].setT([&](Mapping& node){ return readResource(node); });
     nodeFunctions["ForceSensor"].setTE([&](Mapping& node){ return readForceSensor(node); });
     nodeFunctions["RateGyroSensor"].setTE([&](Mapping& node){ return readRateGyroSensor(node); });
     nodeFunctions["AccelerationSensor"].setTE([&](Mapping& node){ return readAccelerationSensor(node); });
@@ -386,14 +407,13 @@ YAMLBodyLoaderImpl::~YAMLBodyLoaderImpl()
 void YAMLBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
-    impl->sceneLoader.setMessageSink(os);
+    impl->sceneReader.setMessageSink(os);
 }
 
 
 void YAMLBodyLoader::setDefaultDivisionNumber(int n)
 {
     impl->sceneReader.setDefaultDivisionNumber(n);
-    impl->sceneLoader.setDefaultDivisionNumber(n);
 }
 
 
@@ -444,9 +464,8 @@ bool YAMLBodyLoaderImpl::clear()
     nameStack.clear();
     transformStack.clear();
     rigidBodies.clear();
-    currentSceneGroupSet = 0;
+    sceneGroupSetStack.clear();
     sceneReader.clear();
-    resourceInfoMap.clear();
     return true;
 }    
 
@@ -459,8 +478,8 @@ bool YAMLBodyLoader::load(Body* body, const std::string& filename)
 
 bool YAMLBodyLoaderImpl::load(Body* body, const std::string& filename)
 {
-    filesystem::path filepath(filename);
-    directoryPath = filepath.parent_path();
+    boost::filesystem::path filepath(filename);
+    sceneReader.setBaseDirectory(filepath.parent_path().string());
 
     bool result = false;
 
@@ -648,7 +667,7 @@ bool YAMLBodyLoaderImpl::readBody(Mapping* topNode)
     readExtraJoints(topNode);
 
     body->resetInfo(topNode);
-        
+
     body->installCustomizer();
 
     return true;
@@ -825,18 +844,24 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
 
     ValueNodePtr elements = linkNode->extract("elements");
     if(elements){
+        currentModelType = VISUAL_AND_COLLISION;
         hasVisualOrCollisionNodes = false;
-        SceneGroupSetPtr sceneGroupSet = new SceneGroupSet;
-        sceneGroupSet->newNode<SgInvariantGroup>();
-        if(readElements(*elements, sceneGroupSet)){
-            sceneGroupSet->setName(link->name());
+
+        sceneGroupSetStack.push_back(SceneGroupSet());
+        currentSceneGroupSet().newGroup<SgInvariantGroup>();
+        
+        if(readElementContents(*elements)){
+            SceneGroupSet& sgs = currentSceneGroupSet();
+            sgs.setName(link->name());
             if(hasVisualOrCollisionNodes){
-                link->setVisualShape(sceneGroupSet->visual);
-                link->setCollisionShape(sceneGroupSet->collision);
+                link->setVisualShape(sgs.visual);
+                link->setCollisionShape(sgs.collision);
             } else {
-                link->setShape(sceneGroupSet->visual);
+                link->setShape(sgs.visual);
             }
         }
+
+        sceneGroupSetStack.pop_back();
     }
 
     RigidBody rbody;
@@ -958,12 +983,20 @@ void YAMLBodyLoaderImpl::setMassParameters(Link* link)
 }
 
 
-bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SceneGroupSet* sceneGroupSet)
+bool YAMLBodyLoaderImpl::readElements(Mapping& node)
 {
     bool isSceneNodeAdded = false;
+    ValueNode& elements = *node.find("elements");
+    if(elements.isValid()){
+        isSceneNodeAdded = readElementContents(elements);
+    }
+    return isSceneNodeAdded;
+}
 
-    SceneGroupSetPtr parentSceneGroupSet = currentSceneGroupSet;
-    currentSceneGroupSet = sceneGroupSet;
+
+bool YAMLBodyLoaderImpl::readElementContents(ValueNode& elements)
+{
+    bool isSceneNodeAdded = false;
 
     if(elements.isListing()){
         /*
@@ -1023,11 +1056,6 @@ bool YAMLBodyLoaderImpl::readElements(ValueNode& elements, SceneGroupSet* sceneG
         }
     }
 
-    if(parentSceneGroupSet && isSceneNodeAdded){
-        parentSceneGroupSet->addChild(sceneGroupSet);
-    }
-    currentSceneGroupSet = parentSceneGroupSet;
-
     return isSceneNodeAdded;
 }
 
@@ -1056,9 +1084,9 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
         nameStack.pop_back();
         
     } else {
-        SgNodePtr scene = sceneReader.readNode(node, type);
+        SgNode* scene = sceneReader.readNode(node, type);
         if(scene){
-            currentSceneGroupSet->addChild(scene);
+            addScene(scene);
             isSceneNodeAdded = true;
         }
     }
@@ -1067,11 +1095,11 @@ bool YAMLBodyLoaderImpl::readNode(Mapping& node, const string& type)
 }
 
 
-bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SceneGroupSetPtr groupSet, NodeFunction nodeFunction)
+bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, NodeFunction nodeFunction)
 {
     bool isSceneNodeAdded = false;
 
-    groupSet->visual->setName(nameStack.back());
+    currentSceneGroupSet().setName(nameStack.back());
 
     if(nodeFunction){
         if(nodeFunction(node)){
@@ -1081,7 +1109,7 @@ bool YAMLBodyLoaderImpl::readContainerNode(Mapping& node, SceneGroupSetPtr group
 
     ValueNode& elements = *node.find("elements");
     if(elements.isValid()){
-        if(readElements(elements, groupSet)){
+        if(readElementContents(elements)){
             isSceneNodeAdded = true;
         }
     }
@@ -1113,29 +1141,27 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
         transformStack.push_back(transformStack.back() * T);
     }
 
-    SceneGroupSetPtr groupSet = new SceneGroupSet;
+    sceneGroupSetStack.push_back(SceneGroupSet());
+    
     if(isIdentity){
         if(hasScale){
-            groupSet->newNode<SgScaleTransform>(scale);
+            currentSceneGroupSet().newGroup<SgScaleTransform>(scale);
         } else {
-            groupSet->newNode<SgGroup>();
+            currentSceneGroupSet().newGroup<SgGroup>();
         }
     } else {
-        groupSet->newNode<SgPosTransform>(T);
+        currentSceneGroupSet().newGroup<SgPosTransform>(T);
     }
     if(hasElements){
-        if(readContainerNode(node, groupSet, nodeFunction)){
-            isSceneNodeAdded = true;
-        }
+        isSceneNodeAdded = readContainerNode(node, nodeFunction);
     } else {
-        SceneGroupSetPtr parentSceneGroupSet = currentSceneGroupSet;
-        currentSceneGroupSet = groupSet;
-        if(nodeFunction(node)){
-            isSceneNodeAdded = true;
-            parentSceneGroupSet->addChild(groupSet);
-        }
-        currentSceneGroupSet = parentSceneGroupSet;
+        isSceneNodeAdded = nodeFunction(node);
     }
+
+    if(isSceneNodeAdded){
+        addCurrentSceneGroupToParentSceneGroup();
+    }
+    sceneGroupSetStack.pop_back();
 
     if(!isIdentity){
         transformStack.pop_back();
@@ -1147,9 +1173,14 @@ bool YAMLBodyLoaderImpl::readTransformContents(Mapping& node, NodeFunction nodeF
 
 bool YAMLBodyLoaderImpl::readGroup(Mapping& node)
 {
-    SceneGroupSet* groupSet = new SceneGroupSet;
-    groupSet->newNode<SgGroup>();
-    return readContainerNode(node, groupSet, 0);
+    sceneGroupSetStack.push_back(SceneGroupSet());
+    currentSceneGroupSet().newGroup<SgGroup>();
+    bool isSceneNodeAdded = readContainerNode(node, 0);
+    if(isSceneNodeAdded){
+        addCurrentSceneGroupToParentSceneGroup();
+    }
+    sceneGroupSetStack.pop_back();
+    return isSceneNodeAdded;
 }
 
 
@@ -1185,207 +1216,48 @@ bool YAMLBodyLoaderImpl::readRigidBody(Mapping& node)
 
 bool YAMLBodyLoaderImpl::readVisualOrCollision(Mapping& node, bool isVisual)
 {
-    SgNodePtr scene;
+    ModelType prevModelType = currentModelType;
 
-    Mapping& resource = *node.findMapping("resource");
-    if(resource.isValid()){
-        scene = readResourceContents(resource);
-    }
-
-    Mapping& shape = *node.findMapping("shape");
-    if(shape.isValid()){
-        if(resource.isValid()){
+    if(isVisual){
+        if(currentModelType == COLLISION){
             node.throwException(
-                str(format(_("%1% node cannot contain both the Shape contents and the Resource contents"))
-                    % (isVisual ? "Visual" : "Collision")));
+                _("The visual node is conflicting with the Collision node defined at the higher level."));
         }
-        scene = sceneReader.readNode(shape, "Shape");
+        currentModelType = VISUAL;
+    } else {
+        if(currentModelType == VISUAL){
+            node.throwException(
+                _("The collision node is conflicting with the Visual node defined at the higher level."));
+        }
+        currentModelType = COLLISION;
     }
 
-    if(scene){
-        if(isVisual){
-            currentSceneGroupSet->visual->addChild(scene);
-        } else {
-            currentSceneGroupSet->collision->addChild(scene);
+    bool isSceneNodeAdded = readElements(node);
+
+    auto resource = node.findMapping("resource");
+    if(resource->isValid()){
+        if(auto scene = sceneReader.readNode(*resource, "Resource")){
+            addScene(scene);
+            isSceneNodeAdded = true;
         }
+    }
+    auto shape = node.findMapping("shape");
+    if(shape->isValid()){
+        if(auto scene = sceneReader.readNode(*shape, "Shape")){
+            addScene(scene);
+            isSceneNodeAdded = true;
+        }
+    }
+ 
+    if(isSceneNodeAdded){
         hasVisualOrCollisionNodes = true;
     }
 
-    return (scene != 0);
-}
+    currentModelType = prevModelType;
 
-
-bool YAMLBodyLoaderImpl::readResource(Mapping& node)
-{
-    SgNode* scene = readResourceContents(node);
-    if(scene){
-        currentSceneGroupSet->addChild(scene);
-        return true;
-    }
-    return false;
-}
-
-
-SgNode* YAMLBodyLoaderImpl::readResourceContents(Mapping& node)
-{
-    SgNode* scene = 0;
-    if(node.read("uri", symbol)){
-        string nodeName;
-        if(node.read("node", nodeName)){
-            scene = importScene(symbol, nodeName);
-        } else {
-            scene = importScene(symbol);
-        }
-    }
-    return scene;
-}
-
-
-SgNode* YAMLBodyLoaderImpl::importScene(const string& uri)
-{
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
-    if(resourceInfo){
-        return resourceInfo->rootNode;
-    }
-    return 0;
-}
-
-
-SgNode* YAMLBodyLoaderImpl::importScene(const string& uri, const string& nodeName)
-{
-    SgNode* scene = 0;
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
-    if(resourceInfo){
-        if(nodeName.empty()){
-            scene = resourceInfo->rootNode;
-        } else {
-            unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
-            if(!nodeMap){
-                makeNodeMap(resourceInfo);
-            }
-            auto iter = nodeMap->find(nodeName);
-            if(iter == nodeMap->end()){
-                os() << str(format("Warning: Node \"%1%\" is not found in \"%2%\".") % nodeName % uri) << endl;
-            } else {
-                NodeInfo& nodeInfo = iter->second;
-                if(nodeInfo.parent){
-                    nodeInfo.parent->removeChild(nodeInfo.node);
-                    nodeInfo.parent = 0;
-                    adjustNodeCoordinate(nodeInfo);
-                }
-                scene = nodeInfo.node;
-            }
-        }
-    }
-    return scene;
-}
-
-
-YAMLBodyLoaderImpl::ResourceInfo* YAMLBodyLoaderImpl::getOrCreateResourceInfo(const string& uri)
-{
-    ResourceInfo* info = 0;
-    
-    auto iter = resourceInfoMap.find(uri);
-    if(iter != resourceInfoMap.end()){
-        info = iter->second;
-    } else {
-        filesystem::path filepath(uri);
-        if(!checkAbsolute(filepath)){
-            filepath = directoryPath / filepath;
-            filepath.normalize();
-        }
-        SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
-        if(rootNode){
-            info = new ResourceInfo;
-            info->rootNode = rootNode;
-        }
-        resourceInfoMap[uri] = info;
-    }
-
-    return info;
-}
-
-
-void YAMLBodyLoaderImpl::adjustNodeCoordinate(NodeInfo& info)
-{
-    if(auto pos = dynamic_cast<SgPosTransform*>(info.node.get())){
-        if(info.isScaled){
-            auto affine = new SgAffineTransform;
-            affine->setLinear(info.R * pos->rotation());
-            affine->translation().setZero();
-            pos->moveChildrenTo(affine);
-            info.node = affine;
-        } else {
-            pos->setRotation(info.R * pos->rotation());
-            pos->translation().setZero();
-        }
-            
-    } else if(auto affine = dynamic_cast<SgAffineTransform*>(info.node.get())){
-        affine->setLinear(info.R * affine->linear());
-        affine->translation().setZero();
-            
-    } else {
-        if(info.isScaled){
-            auto transform = new SgAffineTransform;
-            transform->setLinear(info.R);
-            transform->translation().setZero();
-            transform->addChild(info.node);
-            info.node = transform;
-        } else if(!info.R.isApprox(Matrix3::Identity())){
-            auto transform = new SgPosTransform;
-            transform->setRotation(info.R);
-            transform->translation().setZero();
-            transform->addChild(info.node);
-            info.node = transform;
-        }
-    }
+    return isSceneNodeAdded;
 }
         
-
-void YAMLBodyLoaderImpl::makeNodeMap(ResourceInfo* info)
-{
-    info->nodeMap.reset(new NodeMap);
-    NodeInfo nodeInfo;
-    nodeInfo.parent = 0;
-    nodeInfo.node = info->rootNode;
-    nodeInfo.R = Matrix3::Identity();
-    nodeInfo.isScaled = false;
-    makeNodeMapSub(nodeInfo, *info->nodeMap);
-}
-
-
-void YAMLBodyLoaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap)
-{
-    const string& name = nodeInfo.node->name();
-    bool wasProcessed = false;
-    if(!name.empty()){
-        wasProcessed = !nodeMap.insert(make_pair(name, nodeInfo)).second;
-    }
-    if(!wasProcessed){
-        SgGroup* group = dynamic_cast<SgGroup*>(nodeInfo.node.get());
-        if(group){
-            NodeInfo childInfo;
-            childInfo.parent = group;
-            childInfo.isScaled = nodeInfo.isScaled;
-            SgTransform* transform = dynamic_cast<SgTransform*>(group);
-            if(!transform){
-                childInfo.R = nodeInfo.R;
-            } else if(auto pos = dynamic_cast<SgPosTransform*>(transform)){
-                childInfo.R = nodeInfo.R * pos->rotation();
-            } else {
-                Affine3 T;
-                transform->getTransform(T);
-                childInfo.R = nodeInfo.R * T.linear();
-                childInfo.isScaled = true;
-            }
-            for(SgNode* child : *group){
-                childInfo.node = child;
-                makeNodeMapSub(childInfo, nodeMap);
-            }
-        }
-    }
-}
-    
 
 bool YAMLBodyLoader::readDevice(Device* device, Mapping& node)
 {

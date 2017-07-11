@@ -130,25 +130,27 @@ bool LeggedBodyHelper::doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFl
         }
         size_t numDone = 0;
         JointPathPtr baseToWaist = getCustomJointPath(body_, baseFoot, waist);
-        if(baseToWaist && baseToWaist->calcInverseKinematics(waist->p() + e, waist->R())){
-            numDone++;
-            for(size_t j=1; j < footInfos.size(); ++j){
-                Link* foot = footInfos[j].link;
-                JointPathPtr waistToFoot = getCustomJointPath(body_, waist, foot);
-                if(waistToFoot){
-                    bool ikDone;
-                    if(waistToFoot->hasAnalyticalIK()){
-                        ikDone = waistToFoot->calcInverseKinematics(foot->p(), foot->R());
-                    } else {
-                        Vector3 p0 = foot->p();
-                        Matrix3 R0 = foot->R();
-                        waistToFoot->calcForwardKinematics();
-                        ikDone = waistToFoot->calcInverseKinematics(p0, R0);
-                    }
-                    if(ikDone){
-                        numDone++;
-                    } else {
-                        break;
+        if(baseToWaist){
+            Position T = waist->T();
+            T.translation() += e;
+            if(baseToWaist->calcInverseKinematics(T)){
+                numDone++;
+                for(size_t j=1; j < footInfos.size(); ++j){
+                    Link* foot = footInfos[j].link;
+                    JointPathPtr waistToFoot = getCustomJointPath(body_, waist, foot);
+                    if(waistToFoot){
+                        bool ikDone;
+                        if(waistToFoot->hasAnalyticalIK()){
+                            ikDone = waistToFoot->calcInverseKinematics(foot->T());
+                        } else {
+                            waistToFoot->calcForwardKinematics();
+                            ikDone = waistToFoot->calcInverseKinematics(foot->T());
+                        }
+                        if(ikDone){
+                            numDone++;
+                        } else {
+                            break;
+                        }
                     }
                 }
             }
@@ -188,23 +190,26 @@ bool LeggedBodyHelper::setStance(double width, Link* baseLink)
         foot[1] = footInfos[1].link;
         sign = 1.0;
     }
-        
-    const Matrix3& R0 = foot[0]->R();
-    const Vector3 baseY(R0(0,1), sign * R0(1,1), 0.0);
-    
-    Link* waist = body_->rootLink();
 
-    foot[1]->p() = foot[0]->p() + baseY * width;
-    Vector3 wp = (foot[0]->p() + foot[1]->p()) / 2.0;
-    wp[2] = waist->p()[2];
+    Link* waist = body_->rootLink();
         
     JointPathPtr ikPath = getCustomJointPath(body_, foot[0], waist);
-    if(ikPath && ikPath->calcInverseKinematics(wp, waist->R())){
-        ikPath = getCustomJointPath(body_, waist, foot[1]);
-        if(ikPath && ikPath->calcInverseKinematics(foot[1]->p(), foot[1]->R())){
-            LinkTraverse fkTraverse(baseLink);
-            fkTraverse.calcForwardKinematics();
-            result = true;
+
+    if(ikPath){
+        Position T = waist->T();
+        const Matrix3& R0 = foot[0]->R();
+        const Vector3 baseY(R0(0,1), sign * R0(1,1), 0.0);
+        foot[1]->p() = foot[0]->p() + baseY * width;
+        Vector3 wp = (foot[0]->p() + foot[1]->p()) / 2.0;
+        T.translation() << wp.x(), wp.y();
+        
+        if(ikPath->calcInverseKinematics(T)){
+            ikPath = getCustomJointPath(body_, waist, foot[1]);
+            if(ikPath && ikPath->calcInverseKinematics(foot[1]->T())){
+                LinkTraverse fkTraverse(baseLink);
+                fkTraverse.calcForwardKinematics();
+                result = true;
+            }
         }
     }
 

@@ -6,20 +6,41 @@
 #include "YAMLSceneReader.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
+#include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
+#include <cnoid/FileUtil>
+#include <cnoid/NullOut>
 #include <boost/format.hpp>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 using boost::format;
 
 namespace {
 
-typedef SgNodePtr (YAMLSceneReaderImpl::*NodeFunction)(Mapping& node);
+typedef SgNode* (YAMLSceneReaderImpl::*NodeFunction)(Mapping& node);
 typedef unordered_map<string, NodeFunction> NodeFunctionMap;
 NodeFunctionMap nodeFunctionMap;
+
+struct NodeInfo
+{
+    SgGroupPtr parent;
+    SgNodePtr node;
+    Matrix3 R;
+    bool isScaled;
+};
+
+typedef unordered_map<string, NodeInfo> NodeMap;
+    
+struct ResourceInfo : public Referenced
+{
+    SgNodePtr rootNode;
+    unique_ptr<NodeMap> nodeMap;
+};
+typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
 }
 
@@ -30,6 +51,9 @@ class YAMLSceneReaderImpl
 public:
     YAMLSceneReader* self;
 
+    ostream* os_;
+    ostream& os() { return *os_; }
+
     // temporary variables for reading values
     double value;
     string symbol;
@@ -39,23 +63,36 @@ public:
     MeshGenerator meshGenerator;
     SgMaterialPtr defaultMaterial;
 
+    map<string, ResourceInfoPtr> resourceInfoMap;
+    filesystem::path baseDirectory;
+    SceneLoader sceneLoader;
+    
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
-    SgNodePtr readNode(Mapping& node, const string& type);
-    SgNodePtr readGroup(Mapping& node);
+    SgNode* readNode(Mapping& node, const string& type);
+    SgNode* readGroup(Mapping& node);
     bool readElements(Mapping& node, SgGroup* group);
-    SgNodePtr readTransform(Mapping& node);
-    SgNodePtr readShape(Mapping& node);
+    SgNode* readTransform(Mapping& node);
+    SgNode* readShape(Mapping& node);
     SgMesh* readGeometry(Mapping& node);
     SgMesh* readBox(Mapping& node);
     SgMesh* readSphere(Mapping& node);
     SgMesh* readCylinder(Mapping& node);
     SgMesh* readCone(Mapping& node);
+    SgMesh* readCapsule(Mapping& node);
     SgMesh* readExtrusion(Mapping& node);
     SgMesh* readElevationGrid(Mapping& node);
+    SgMesh* readResourceAsGeometry(Mapping& node);
     void readAppearance(SgShape* shape, Mapping& node);
     void readMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
+    SgNode* readResource(Mapping& node);
+    SgNode* loadResource(const string& uri);
+    SgNode* loadResource(const string& uri, const string& nodeName);
+    ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    void adjustNodeCoordinate(NodeInfo& info);
+    void makeNodeMap(ResourceInfo* info);
+    void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
 };
 
 }
@@ -90,7 +127,9 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Group"] = &YAMLSceneReaderImpl::readGroup;
         nodeFunctionMap["Transform"] = &YAMLSceneReaderImpl::readTransform;
         nodeFunctionMap["Shape"] = &YAMLSceneReaderImpl::readShape;
+        nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
+    os_ = &nullout();
 }
 
 
@@ -103,6 +142,34 @@ YAMLSceneReader::~YAMLSceneReader()
 YAMLSceneReaderImpl::~YAMLSceneReaderImpl()
 {
 
+}
+
+
+void YAMLSceneReader::setMessageSink(std::ostream& os)
+{
+    impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
+}
+
+
+void YAMLSceneReader::setDefaultDivisionNumber(int n)
+{
+    impl->meshGenerator.setDivisionNumber(n);
+    impl->sceneLoader.setDefaultDivisionNumber(n);
+}
+
+
+void YAMLSceneReader::setBaseDirectory(const std::string& directory)
+{
+    impl->baseDirectory = directory;
+}
+
+
+void YAMLSceneReader::clear()
+{
+    isDegreeMode_ = true;
+    impl->defaultMaterial = 0;
+    impl->resourceInfoMap.clear();
 }
 
 
@@ -119,19 +186,6 @@ bool YAMLSceneReader::readAngle(Mapping& node, const char* key, double& angle)
         return true;
     }
     return false;
-}
-
-
-void YAMLSceneReader::setDefaultDivisionNumber(int n)
-{
-    impl->meshGenerator.setDivisionNumber(n);
-}
-
-
-void YAMLSceneReader::clear()
-{
-    isDegreeMode_ = true;
-    impl->defaultMaterial = 0;
 }
 
 
@@ -175,43 +229,42 @@ bool YAMLSceneReader::readRotation(Mapping& node, Matrix3& out_R, bool doExtract
 }
 
 
-SgNodePtr YAMLSceneReader::readNode(Mapping& node)
+SgNode* YAMLSceneReader::readNode(Mapping& node)
 {
     const string type = node["type"].toString();
     return impl->readNode(node, type);
 }
 
 
-SgNodePtr YAMLSceneReader::readNode(Mapping& node, const std::string& type)
+SgNode* YAMLSceneReader::readNode(Mapping& node, const std::string& type)
 {
     return impl->readNode(node, type);
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
+SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
-    SgNodePtr scene;
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
     if(q == nodeFunctionMap.end()){
         node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
-    } else {
-        NodeFunction readNode = q->second;
-        scene = (this->*readNode)(node);
-        if(node.read("name", symbol)){
-            scene->setName(symbol);
-        }
+    }
+
+    NodeFunction readNode = q->second;
+    SgNode* scene = (this->*readNode)(node);
+    if(node.read("name", symbol)){
+        scene->setName(symbol);
     }
     return scene;
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readGroup(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readGroup(Mapping& node)
 {
     SgGroupPtr group = new SgGroup;
     if(!readElements(node, group)){
         group = 0; // clear group if empty
     }
-    return group;
+    return group.retn();
 }
 
 
@@ -257,7 +310,7 @@ bool YAMLSceneReaderImpl::readElements(Mapping& node, SgGroup* group)
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readTransform(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 {
     SgPosTransformPtr transform = new SgPosTransform;
 
@@ -272,11 +325,11 @@ SgNodePtr YAMLSceneReaderImpl::readTransform(Mapping& node)
             transform->setRotation(R);
         }
     }
-    return transform;
+    return transform.retn();
 }
 
 
-SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
+SgNode* YAMLSceneReaderImpl::readShape(Mapping& node)
 {
     SgShapePtr shape;
 
@@ -293,19 +346,23 @@ SgNodePtr YAMLSceneReaderImpl::readShape(Mapping& node)
         }
 
         Matrix3 R;
-        bool isTransformed = self->readRotation(node, R, false);
+        bool isRotated = self->readRotation(node, R, false);
         Vector3 p;
-        isTransformed |= read(node, "translation", p);
-        if(isTransformed){
-            SgPosTransformPtr transform = new SgPosTransform;
-            transform->setRotation(R);
-            transform->setTranslation(p);
+        bool isTranslated = read(node, "translation", p);
+        if(isRotated || isTranslated){
+            SgPosTransform* transform = new SgPosTransform;
+            if(isRotated){
+                transform->setRotation(R);
+            }
+            if(isTranslated){
+                transform->setTranslation(p);
+            }
             transform->addChild(shape);
             return transform;
         }
     }
 
-    return shape;
+    return shape.retn();
 }
 
 
@@ -322,11 +379,15 @@ SgMesh* YAMLSceneReaderImpl::readGeometry(Mapping& node)
         mesh = readCylinder(node);
     } else if(type == "Cone"){
         mesh = readCone(node);
+    } else if(type == "Capsule"){
+        mesh = readCapsule(node);
     } else if(type == "Extrusion"){
         mesh = readExtrusion(node);
     } else if(type == "ElevationGrid"){
         mesh = readElevationGrid(node);
-    }else {
+    } else if(type == "Resource"){
+        mesh = readResourceAsGeometry(node);
+    } else {
         typeNode.throwException(
             str(format(_("Unknown geometry \"%1%\"")) % type));
     }
@@ -367,6 +428,14 @@ SgMesh* YAMLSceneReaderImpl::readCone(Mapping& node)
     bool bottom = node.get("bottom", true);
     bool side = node.get("side", true);
     return meshGenerator.generateCone(radius, height, bottom, side);
+}
+
+
+SgMesh* YAMLSceneReaderImpl::readCapsule(Mapping& node)
+{
+    double radius = node.get("radius", 1.0);
+    double height = node.get("height", 1.0);
+    return meshGenerator.generateCapsule(radius, height);
 }
 
 
@@ -458,6 +527,17 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& node)
 }
 
 
+SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
+{
+    SgNode* resource = readResource(node);
+    SgShape* shape = dynamic_cast<SgShape*>(resource);
+    if(!shape){
+        node.throwException(_("A resouce specified as a geometry contains more than a single mesh"));
+    }
+    return shape->mesh();
+}
+
+
 void YAMLSceneReaderImpl::readAppearance(SgShape* shape, Mapping& node)
 {
     Mapping& material = *node.findMapping("material");
@@ -497,4 +577,165 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
         defaultMaterial->setShininess(0.2f);
     }
     shape->setMaterial(defaultMaterial);
+}
+
+
+SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
+{
+    SgNodePtr resource;
+    if(node.read("uri", symbol)){
+        string nodeName;
+        if(node.read("node", nodeName)){
+            resource = loadResource(symbol, nodeName);
+        } else {
+            resource = loadResource(symbol);
+        }
+    }
+    return resource.retn();
+}
+
+
+SgNode* YAMLSceneReaderImpl::loadResource(const string& uri)
+{
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    if(resourceInfo){
+        return resourceInfo->rootNode;
+    }
+    return 0;
+}
+
+
+SgNode* YAMLSceneReaderImpl::loadResource(const string& uri, const string& nodeName)
+{
+    SgNode* scene = 0;
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(uri);
+    if(resourceInfo){
+        if(nodeName.empty()){
+            scene = resourceInfo->rootNode;
+        } else {
+            unique_ptr<NodeMap>& nodeMap = resourceInfo->nodeMap;
+            if(!nodeMap){
+                makeNodeMap(resourceInfo);
+            }
+            auto iter = nodeMap->find(nodeName);
+            if(iter == nodeMap->end()){
+                os() << str(format("Warning: Node \"%1%\" is not found in \"%2%\".") % nodeName % uri) << endl;
+            } else {
+                NodeInfo& nodeInfo = iter->second;
+                if(nodeInfo.parent){
+                    nodeInfo.parent->removeChild(nodeInfo.node);
+                    nodeInfo.parent = 0;
+                    adjustNodeCoordinate(nodeInfo);
+                }
+                scene = nodeInfo.node;
+            }
+        }
+    }
+    return scene;
+}
+
+
+ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
+{
+    ResourceInfo* info = 0;
+    
+    auto iter = resourceInfoMap.find(uri);
+    if(iter != resourceInfoMap.end()){
+        info = iter->second;
+    } else {
+        filesystem::path filepath(uri);
+        if(!checkAbsolute(filepath)){
+            filepath = baseDirectory / filepath;
+            filepath.normalize();
+        }
+        SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
+        if(rootNode){
+            info = new ResourceInfo;
+            info->rootNode = rootNode;
+        }
+        resourceInfoMap[uri] = info;
+    }
+
+    return info;
+}
+
+
+void YAMLSceneReaderImpl::adjustNodeCoordinate(NodeInfo& info)
+{
+    if(auto pos = dynamic_cast<SgPosTransform*>(info.node.get())){
+        if(info.isScaled){
+            auto affine = new SgAffineTransform;
+            affine->setLinear(info.R * pos->rotation());
+            affine->translation().setZero();
+            pos->moveChildrenTo(affine);
+            info.node = affine;
+        } else {
+            pos->setRotation(info.R * pos->rotation());
+            pos->translation().setZero();
+        }
+            
+    } else if(auto affine = dynamic_cast<SgAffineTransform*>(info.node.get())){
+        affine->setLinear(info.R * affine->linear());
+        affine->translation().setZero();
+            
+    } else {
+        if(info.isScaled){
+            auto transform = new SgAffineTransform;
+            transform->setLinear(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        } else if(!info.R.isApprox(Matrix3::Identity())){
+            auto transform = new SgPosTransform;
+            transform->setRotation(info.R);
+            transform->translation().setZero();
+            transform->addChild(info.node);
+            info.node = transform;
+        }
+    }
+}
+        
+
+void YAMLSceneReaderImpl::makeNodeMap(ResourceInfo* info)
+{
+    info->nodeMap.reset(new NodeMap);
+    NodeInfo nodeInfo;
+    nodeInfo.parent = 0;
+    nodeInfo.node = info->rootNode;
+    nodeInfo.R = Matrix3::Identity();
+    nodeInfo.isScaled = false;
+    makeNodeMapSub(nodeInfo, *info->nodeMap);
+}
+
+
+void YAMLSceneReaderImpl::makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap)
+{
+    const string& name = nodeInfo.node->name();
+    bool wasProcessed = false;
+    if(!name.empty()){
+        wasProcessed = !nodeMap.insert(make_pair(name, nodeInfo)).second;
+    }
+    if(!wasProcessed){
+        SgGroup* group = dynamic_cast<SgGroup*>(nodeInfo.node.get());
+        if(group){
+            NodeInfo childInfo;
+            childInfo.parent = group;
+            childInfo.isScaled = nodeInfo.isScaled;
+            SgTransform* transform = dynamic_cast<SgTransform*>(group);
+            if(!transform){
+                childInfo.R = nodeInfo.R;
+            } else if(auto pos = dynamic_cast<SgPosTransform*>(transform)){
+                childInfo.R = nodeInfo.R * pos->rotation();
+            } else {
+                Affine3 T;
+                transform->getTransform(T);
+                childInfo.R = nodeInfo.R * T.linear();
+                childInfo.isScaled = true;
+            }
+            for(SgNode* child : *group){
+                childInfo.node = child;
+                makeNodeMapSub(childInfo, nodeMap);
+            }
+        }
+    }
 }

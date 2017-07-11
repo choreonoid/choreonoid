@@ -146,7 +146,7 @@ public:
     void enableJointRangeConstraints(bool on);
     bool initialize();
             
-    bool calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R);
+    bool calcInverseKinematics(const Position& T);
             
     IKStepResult calcOneStep(const Vector3& v, const Vector3& omega);
     void solveConstraints();
@@ -462,13 +462,13 @@ bool PinDragIKImpl::initialize()
 }
 
 
-bool PinDragIK::calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R)
+bool PinDragIK::calcInverseKinematics(const Position& T)
 {
-    return impl->calcInverseKinematics(end_p, end_R);
+    return impl->calcInverseKinematics(T);
 }
 
 
-bool PinDragIKImpl::calcInverseKinematics(const Vector3& end_p, const Matrix3& end_R)
+bool PinDragIKImpl::calcInverseKinematics(const Position& T)
 {
     for(int i=0; i < NJ; i++){
         q_org[i] = body_->joint(i)->q();
@@ -490,8 +490,8 @@ bool PinDragIKImpl::calcInverseKinematics(const Vector3& end_p, const Matrix3& e
     int i;
     for(i=0; i < maxIteration; i++){
         
-        const Vector3 dp = end_p - targetLink->p();
-        const Vector3 omega = targetLink->R() * omegaFromRot(targetLink->R().transpose() * end_R);
+        const Vector3 dp = T.translation() - targetLink->p();
+        const Vector3 omega = targetLink->R() * omegaFromRot(targetLink->R().transpose() * T.linear());
         
         if((dp.squaredNorm() + omega.squaredNorm()) < ikErrorSqrThresh && result == PINS_CONVERGED){
             break;

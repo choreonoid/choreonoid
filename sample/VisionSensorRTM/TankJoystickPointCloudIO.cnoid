@@ -1,0 +1,522 @@
+items: 
+  id: 0
+  name: "Root"
+  plugin: Base
+  class: RootItem
+  children: 
+    - 
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data: 
+        collisionDetection: false
+        collisionDetector: AISTCollisionDetector
+      children: 
+        - 
+          id: 2
+          name: "Tank"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/tank/tank.body"
+            currentBaseLink: ""
+            rootPosition: [ -0.800000015, 2.40000002, 0.0498998071 ]
+            rootAttitude: [ 
+              6.11733544e-08, 1, -3.52052089e-08, 
+              -1, 6.11733529e-08, -4.11120005e-08, 
+              -4.11119984e-08, 3.52052114e-08, 1 ]
+            jointPositions: [ -0.000000, -0.009360,  0.000000,  0.019610 ]
+            initialRootPosition: [ -0.8, 2.4, 0.1 ]
+            initialRootAttitude: [ 
+              2.22044605e-16, 1, 0, 
+              -1, 2.22044605e-16, -0, 
+              -0, 0, 1 ]
+            initialJointPositions: [  0.000000,  0.000000,  0.000000 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: true
+          children: 
+            - 
+              id: 3
+              name: "BodyRTCItem"
+              plugin: OpenRTM
+              class: BodyRTCItem
+              data: 
+                isImmediateMode: true
+                controllerOptions: ""
+                moduleName: "TankJoystickControllerRTC"
+                confFileName: "TankVisionSensors_Noconnection.conf"
+                configurationMode: "Use Configuration File"
+                AutoConnect: false
+                InstanceName: "Tank"
+                bodyPeriodicRate: 0
+                RelativePathBase: "RTC directory"
+            - 
+              id: 4
+              name: "RTMPointCloudIO"
+              plugin: Hrpsys31
+              class: RTMPointCloudIOItem
+              data: 
+                componentName: Tank_PointCloudIO
+                pointCloudPortNames: [ cameraRange ]
+                rangeSensorPortNames: [ RangeSensor ]
+            - 
+              id: 5
+              name: "SensorVisualizer"
+              plugin: Body
+              class: SensorVisualizer
+              data: 
+                renderingMode: Point
+                pointSize: 0
+                voxelSize: 0.01
+                isEditable: false
+        - 
+          id: 6
+          name: "Labo1"
+          plugin: Body
+          class: BodyItem
+          data: 
+            modelFile: "${SHARE}/model/Labo1/Labo1.body"
+            currentBaseLink: "Base"
+            rootPosition: [ 0, 0, 0 ]
+            rootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0, 0, 0 ]
+            initialRootAttitude: [ 
+              1, 0, 0, 
+              0, 1, 0, 
+              0, 0, 1 ]
+            zmp: [ 0, 0, 0 ]
+            collisionDetection: true
+            selfCollisionDetection: false
+            isEditable: false
+        - 
+          id: 7
+          name: "JoystickRTC"
+          plugin: OpenRTM
+          class: RTCItem
+          data: 
+            moduleName: "JoystickRTC"
+            periodicType: PeriodicExecutionContext
+            periodicRate: 500
+            relativePathBase: "RTC directory"
+        - 
+          id: 8
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
+          data: 
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Active control period"
+            timeLength: 60
+            allLinkPositionOutputMode: false
+            deviceStateOutput: false
+            selfCollision: false
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
+            gravity: [ 0, 0, -9.80665 ]
+            staticFriction: 0.5
+            dynamicFriction: 0.5
+            cullingThresh: 0.01
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 1000
+            contactCorrectionDepth: 0.0001
+            contactCorrectionVelocityRatio: 30
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
+          children: 
+            - 
+              id: 9
+              name: "GLVisionSimulator"
+              plugin: Body
+              class: GLVisionSimulatorItem
+              data: 
+                enabled: true
+                maxFrameRate: 1000
+                maxLatency: 1
+                recordVisionData: false
+                useThreadsForSensors: true
+                bestEffort: false
+                allSceneObjects: false
+                rangeSensorPrecisionRatio: 2
+                depthError: 0
+                enableHeadLight: true
+                enableAdditionalLights: true
+        - 
+          id: 10
+          name: "RTSystem"
+          plugin: OpenRTM
+          class: RTSystemItem
+          data: 
+            AutoConnection: true
+            RTSComps: 
+              - 
+                name: JoystickRTC0
+                pos: [ -285, -116 ]
+                OutPorts: 
+                  - 
+                    name: JoystickRTC0.axes
+                    isServicePort: false
+                  - 
+                    name: JoystickRTC0.buttons
+                    isServicePort: false
+              - 
+                name: Tank
+                pos: [ -80, 40 ]
+                InPorts: 
+                  - 
+                    name: Tank.dq
+                    isServicePort: false
+                  - 
+                    name: Tank.lightSwitch
+                    isServicePort: false
+                  - 
+                    name: Tank.u
+                    isServicePort: false
+                OutPorts: 
+                  - 
+                    name: Tank.cameraImage
+                    isServicePort: false
+                  - 
+                    name: Tank.cameraRange
+                    isServicePort: false
+                  - 
+                    name: Tank.cameraTrans
+                    isServicePort: false
+                  - 
+                    name: Tank.q
+                    isServicePort: false
+                  - 
+                    name: Tank.rangeSensor
+                    isServicePort: false
+              - 
+                name: TankJoystickControllerRTC0
+                pos: [ -139, -90 ]
+                InPorts: 
+                  - 
+                    name: TankJoystickControllerRTC0.axes
+                    isServicePort: false
+                  - 
+                    name: TankJoystickControllerRTC0.buttons
+                    isServicePort: false
+                  - 
+                    name: TankJoystickControllerRTC0.q
+                    isServicePort: false
+                OutPorts: 
+                  - 
+                    name: TankJoystickControllerRTC0.dq
+                    isServicePort: false
+                  - 
+                    name: TankJoystickControllerRTC0.light
+                    isServicePort: false
+                  - 
+                    name: TankJoystickControllerRTC0.u
+                    isServicePort: false
+              - 
+                name: Tank_PointCloudIO
+                pos: [ 180, 112 ]
+                InPorts: 
+                  - 
+                    name: Tank_PointCloudIO.RangeSensor
+                    isServicePort: false
+                  - 
+                    name: Tank_PointCloudIO.cameraRange
+                    isServicePort: false
+            RTSConnections: 
+              - 
+                name: connector0
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.buttons
+                targetRtcName: JoystickRTC0
+                targetPortName: JoystickRTC0.buttons
+                dataflow: Push
+                subscription: flush
+                position: [ -65, -53, -70, -53, -142, -53, -142, -79, -196, -79, -201, -79 ]
+              - 
+                name: Tank.rangeSensor_Tank_PointCloudIO.RangeSensor
+                sourceRtcName: Tank
+                sourcePortName: Tank.rangeSensor
+                targetRtcName: Tank_PointCloudIO
+                targetPortName: Tank_PointCloudIO.RangeSensor
+                dataflow: push
+                subscription: flush
+                position: [ -24, 131, -19, 131, 98, 131, 98, 131, 219, 131, 224, 131 ]
+              - 
+                name: TankJoystickControllerRTC0.u_Tank.u
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.u
+                targetRtcName: Tank
+                targetPortName: Tank.u
+                dataflow: push
+                subscription: flush
+                position: [ -5, -35, 63, -35, 63, 6, -246, 6, -246, 95, -84, 95 ]
+              - 
+                name: connector0
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.axes
+                targetRtcName: JoystickRTC0
+                targetPortName: JoystickRTC0.axes
+                dataflow: Push
+                subscription: flush
+                position: [ -65, -71, -70, -71, -115, -71, -115, -97, -196, -97, -201, -97 ]
+              - 
+                name: TankJoystickControllerRTC0.q_Tank.q
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.q
+                targetRtcName: Tank
+                targetPortName: Tank.q
+                dataflow: push
+                subscription: flush
+                position: [ -65, -35, -261, -35, -261, 174, 77, 174, 77, 113, -24, 113 ]
+              - 
+                name: Tank.cameraRange_Tank_PointCloudIO.cameraRange
+                sourceRtcName: Tank
+                sourcePortName: Tank.cameraRange
+                targetRtcName: Tank_PointCloudIO
+                targetPortName: Tank_PointCloudIO.cameraRange
+                dataflow: push
+                subscription: flush
+                position: [ -24, 77, -19, 77, 100, 77, 100, 149, 219, 149, 224, 149 ]
+              - 
+                name: TankJoystickControllerRTC0.dq_Tank.dq
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.dq
+                targetRtcName: Tank
+                targetPortName: Tank.dq
+                dataflow: push
+                subscription: flush
+                position: [ -5, -71, 104, -71, 104, 29, -223, 29, -223, 59, -84, 59 ]
+views: 
+  - 
+    id: 0
+    name: "CameraImage"
+    plugin: Base
+    class: ImageView
+    mounted: true
+  - 
+    id: 1
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  - 
+    id: 2
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state: 
+      selected: [ 4 ]
+      checked: [ 1, 2, [ 5, "Camera" ], [ 5, "RangeSensor" ] ]
+      expanded: [ 1, 2, 5, 7, 8 ]
+  - 
+    id: 3
+    plugin: Base
+    class: MessageView
+    mounted: true
+  - 
+    id: 4
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      editMode: false
+      viewpointControlMode: thirdPerson
+      collisionLines: false
+      polygonMode: fill
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      headLightLightingFromBack: false
+      worldLight: true
+      worldLightIntensity: 0.1
+      worldLightAmbient: 0
+      additionalLights: true
+      fog: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      xzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      texture: true
+      lineWidth: 1
+      pointSize: 2
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      fpsTestIteration: 1
+      showFPS: true
+      enableNewDisplayListDoubleRendering: false
+      useBufferForPicking: true
+      upsideDown: false
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.6978
+          near: 0.01
+          far: 10000
+          eye: [ -2.57943812, 5.90659741, 1.16760035 ]
+          direction: [ 0.341624315, -0.927665329, -0.15076427 ]
+          up: [ 0.0521002599, -0.141475892, 0.988569742 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.01
+          far: 10000
+      backgroundColor: [ 0, 0, 0 ]
+      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
+      dedicatedItemTreeViewChecks: false
+  - 
+    id: 5
+    name: "Task"
+    plugin: Base
+    class: TaskView
+    state: 
+      layoutMode: horizontal
+      isAutoMode: false
+  - 
+    id: 6
+    name: "Joystick"
+    plugin: Base
+    class: VirtualJoystickView
+    mounted: true
+  - 
+    id: 7
+    plugin: Body
+    class: BodyLinkView
+    mounted: true
+    state: 
+      showRotationMatrix: false
+  - 
+    id: 8
+    plugin: Body
+    class: JointSliderView
+    mounted: true
+    state: 
+      showAllJoints: true
+      jointId: true
+      name: true
+      numColumns: 1
+      spinBox: true
+      slider: true
+      labelOnLeft: true
+      currentBodyItem: 2
+  - 
+    id: 9
+    plugin: Body
+    class: LinkSelectionView
+    mounted: true
+    state: 
+      listingMode: "Link List"
+      currentBodyItem: 2
+      bodyItems: 
+        - 
+          id: 2
+          selectedLinks: [ 0 ]
+  - 
+    id: 10
+    name: "RTCダイアグラム"
+    plugin: OpenRTM
+    class: RTSDiagramView
+    mounted: true
+    state: 
+      currentRTSItem: 10
+  - 
+    id: 11
+    plugin: OpenRTM
+    class: RTSNameServerView
+    mounted: true
+  - 
+    id: 12
+    plugin: Python
+    class: PythonConsoleView
+    mounted: true
+toolbars: 
+  "TimeBar": 
+    minTime: 0
+    maxTime: 67.633
+    frameRate: 1000
+    playbackFrameRate: 60
+    idleLoopDrivenMode: false
+    currentTime: 0
+    speedScale: 1
+    syncToOngoingUpdates: true
+    autoExpansion: true
+  "KinematicsBar": 
+    mode: AUTO
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+  "BodyBar": 
+    current: 2
+  "LeggedBodyBar": 
+    stanceWidth: 0.15
+  "BodyMotionGenerationBar": 
+    autoGenerationForNewBody: true
+    balancer: false
+    autoGeneration: false
+    timeScaleRatio: 1
+    preInitialDuration: 1
+    postFinalDuration: 1
+    onlyTimeBarRange: false
+    makeNewBodyItem: true
+    stealthyStepMode: true
+    stealthyHeightRatioThresh: 2
+    flatLiftingHeight: 0.005
+    flatLandingHeight: 0.005
+    impactReductionHeight: 0.005
+    impactReductionTime: 0.04
+    autoZmp: true
+    minZmpTransitionTime: 0.1
+    zmpCenteringTimeThresh: 0.03
+    zmpTimeMarginBeforeLiftingSpin: 0
+    zmpMaxDistanceFromCenter: 0.02
+    allLinkPositions: false
+    lipSyncMix: false
+Body: 
+  "BodyMotionEngine": 
+    updateJointVelocities: false
+  "EditableSceneBody": 
+    editableSceneBodies: 
+      - 
+        bodyItem: 2
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+      - 
+        bodyItem: 6
+        showCenterOfMass: false
+        showPpcom: false
+        showZmp: false
+    staticModelEditing: false
+  "KinematicFaultChecker": 
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+Media: 
+  "PulseAudioManager": 
+    keepStreamConnection: false
+OpenRTM: 
+  "deleteUnmanagedRTCsOnStartingSimulation": false

@@ -344,6 +344,10 @@ public:
         void setRotation(const Eigen::AngleAxis<T>& a) {
         T_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
     }
+    template<typename T>
+        void setRotation(const Eigen::Quaternion<T>& q) {
+        T_.linear() = q.template cast<Affine3::Scalar>().toRotationMatrix();
+    }
     template<typename Derived>
         void setTranslation(const Eigen::MatrixBase<Derived>& p) {
         T_.translation() = p.template cast<Affine3::Scalar>();

@@ -24,7 +24,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
     virtual void applyExtensions() override;
-    virtual void applyNewExtensions() override;
+    virtual bool applyNewExtensions() override;
 
     virtual void setOutputStream(std::ostream& os) override;
 
@@ -53,8 +53,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void setViewport(int x, int y, int width, int height) override;
 
-    virtual void render() override;
-    virtual bool pick(int x, int y) override;
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;
     virtual bool isPicking() const override;
@@ -89,6 +87,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     void setLineWidth(float width);
 
   protected:
+    virtual void doRender() override;
+    virtual bool doPick(int x, int y) override;
     virtual void onImageUpdated(SgImage* image) override;
     
   private:

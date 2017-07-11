@@ -484,6 +484,12 @@ void SceneGraphPropertyViewImpl::setProperty(SgMesh* mesh)
             addProperty(_("bottom"), new PropertyItem(this,cone.bottom));
             addProperty(_("side"), new PropertyItem(this,cone.side));
             break; }
+        case SgMesh::CAPSULE :{
+            addProperty(_("primitive type"), new PropertyItem(this, string("Capsule")));
+            SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+            addProperty(_("radius"), new PropertyItem(this,Double(capsule.radius,3)));
+            addProperty(_("height"), new PropertyItem(this,Double(capsule.height,3)));
+            break; }
         }
 }
 

@@ -144,6 +144,7 @@ void ColladaBodyLoaderImpl::loadBody(const string& fileName, Body& body)
     this->fileName = fileName;
     parser->parse(fileName);
     convertToBody(body);
+    
     body.installCustomizer();
 
     if (parser) delete parser;

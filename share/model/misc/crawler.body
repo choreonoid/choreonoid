@@ -1,0 +1,109 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: radian
+name: Crawler
+
+links:
+  -
+    name: BODY
+    jointType: free
+    translation: [ 0, 0, 0.1 ]
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 10.0
+        inertia: [
+          0.1, 0, 0,
+          0, 0.1, 0,
+          0, 0, 0.5 ]
+        elements:
+          -
+            type: Shape
+            appearance:
+              material: &green
+                diffuseColor: [ 0.0, 0.6, 0.0 ]
+                ambientIntensity: 0.3
+                specularColor: [ 0.7, 0.7, 0.7 ]
+                emissiveColor: [ 0, 0, 0 ]
+                shininess: 0.25
+                transparency: 0
+            geometry:
+              type: Box
+              size: [ 0.4, 0.3, 0.1 ]
+          -
+            type: Transform
+            translation: [ 0, 0, 0.05 ]
+            elements:
+              Shape:
+                appearance:
+                  material: *green
+                geometry:
+                  type: Extrusion
+                  crossSection: [
+                    0.2, 0,
+                    0.1, 0.1,
+                    -0.2, 0.1,
+                    -0.2, 0,
+                    0.2, 0 ]
+                  spine: [ 0, -0.1, 0, 0, 0.1, 0 ]
+  -
+    name: CRAWLER_TRACK_L
+    parent: BODY
+    translation: [ 0.0, 0.15, 0 ]
+    jointType: pseudoContinuousTrack
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 0
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 1
+        inertia: [
+          0.02, 0, 0,
+          0, 0.02, 0,
+          0, 0, 0.02 ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0, 0.05, 0 ]
+            elements: &CRAWLER
+              Shape:
+                appearance:
+                  material:
+                    diffuseColor: [ 0.1, 0.1, 0.1 ]
+                    ambientIntensity: 0.01
+                    specularColor: [ 0.3, 0.3, 0.3 ]
+                    emissiveColor: [ 0, 0, 0 ]
+                    shininess: 0.01
+                    transparency: 0
+                geometry:
+                  type: Extrusion
+                  crossSection: [
+                    -0.18, -0.1,
+                    0.18, -0.1,
+                    0.3, 0.06,
+                    -0.3, 0.06,
+                    -0.18, -0.1 ]
+                  spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+  -
+    name: CRAWLER_TRACK_R
+    parent: BODY
+    translation: [ 0.0, -0.15, 0 ]
+    jointType: pseudoContinuousTrack
+    jointAxis: [ 0, 1, 0 ]
+    jointId: 1
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 1
+        inertia: [
+          0.02, 0, 0,
+          0, 0.02, 0,
+          0, 0, 0.02 ]
+        elements:
+          -
+            type: Transform
+            translation: [ 0.0, -0.05, 0 ]
+            elements: *CRAWLER

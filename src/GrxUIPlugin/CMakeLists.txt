@@ -21,4 +21,6 @@ add_cnoid_plugin(${target} SHARED ${sources}  ${mofiles})
 target_link_libraries(${target} CnoidPythonPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
 
-add_subdirectory(python)
+if(ENABLE_PYTHON)
+  add_subdirectory(python)
+endif()

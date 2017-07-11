@@ -3,7 +3,6 @@ from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.Body import *
 from cnoid.BodyPlugin import *
-from cnoid.SimpleControllerPlugin import *
 import math;
 
 worldItem = WorldItem()
@@ -25,12 +24,12 @@ sceneWidget.setCameraPosition(
     [  0.146464, -0.301009,  0.942307 ])
 
 laboItem = BodyItem()
-laboItem.load(shareDirectory() + "/model/Labo1/Labo1.wrl")
+laboItem.load(shareDirectory() + "/model/Labo1/Labo1.body")
 worldItem.addChildItem(laboItem)
 ItemTreeView.instance().checkItem(laboItem)
 
 tankItem = BodyItem()
-tankItem.load(shareDirectory() + "/model/tank/tank.wrl")
+tankItem.load(shareDirectory() + "/model/tank/tank.body")
 tank = tankItem.body()
 tank.rootLink().setTranslation([-0.8, 2.4, 0.1])
 tank.rootLink().setRotation(rotFromRpy([0, 0, math.radians(-90.0)]))

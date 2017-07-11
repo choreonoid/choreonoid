@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-05 00:45+0900\n"
+"POT-Creation-Date: 2017-06-22 18:18+0900\n"
 "PO-Revision-Date: 2013-12-11 13:29+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,56 +17,64 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: BodyLoader.cpp:253
+#: BodyCustomizerInterface.cpp:97
+msgid "Body customizer \"%1%\" is incomatible and cannot be loaded."
+msgstr "ボディカスタマイザ\"%1%\"は互換性の無いものなのでロードできません。"
+
+#: BodyCustomizerInterface.cpp:112
+msgid "Body customizer \"%1%\" for %2% has been loaded."
+msgstr "ボディカスタマイザ\"%1%\"がロードされました。%2%が対象です。"
+
+#: BodyLoader.cpp:245
 msgid "The file format of \"%1%\" is not supported by the body loader.\n"
 msgstr "%1%のファイル形式はボディローダではサポートされていません。\n"
 
-#: ColladaBodyLoader.cpp:227
+#: ColladaBodyLoader.cpp:225
 msgid "joint node can not be root link"
 msgstr ""
 "[警告]jointはルートになることはできません。jointタグの親にlinkタグを利用し"
 "て、linkタグをルートとして定義する必要があります。"
 
-#: ColladaBodyLoader.cpp:252
+#: ColladaBodyLoader.cpp:250
 msgid "[WARNING]there is no mass:%1%"
 msgstr ""
 "[警告]この剛体にはmassタグによる質量が指定されていません。剛体には質量をご指"
 "定ください。"
 
-#: ColladaBodyLoader.cpp:325
+#: ColladaBodyLoader.cpp:323
 msgid "we are sorry, It does not support axis more than one."
 msgstr ""
 "[警告]申し訳ございません。複数の可動軸の定義に対応していません。もし複数の可"
 "動軸を指定する場合は一つのaxisの中で可動軸をご定義ください。"
 
-#: ColladaBodyLoader.cpp:406
+#: ColladaBodyLoader.cpp:404
 msgid "invalid sensor-type:%1%"
 msgstr ""
 "[警告]sensorタグに対応していないセンサーの種別(%1%)が指定されています。"
 "force6d(ForceSensor)、imu(AccelerrationSensor)、pin-hole-"
 "camera(VisionSensor)、空文字(GyroSensor)の内のいずれかをご定義ください。"
 
-#: VRMLBodyLoader.cpp:151
+#: VRMLBodyLoader.cpp:149
 msgid "Proto \"%1%\" must have the \"%2%\" field of %3% type"
 msgstr "プロトタイプ\"%1%\"には%3%型のフィールド\"%2%\"が必要です"
 
-#: VRMLBodyLoader.cpp:195
+#: VRMLBodyLoader.cpp:193
 msgid "Node \"%1%\" should have the field \"%2%\""
 msgstr "ノード\"%1%\"にはフィールド\"%2%\"が必要です"
 
-#: VRMLBodyLoader.cpp:455
+#: VRMLBodyLoader.cpp:448
 msgid "Humanoid nodes more than one are defined."
 msgstr "２つ以上のHumanoidノードが定義されています。"
 
-#: VRMLBodyLoader.cpp:489
+#: VRMLBodyLoader.cpp:482
 msgid "There are no VRML nodes which can be loaded as a Body."
 msgstr "ボディとして読み込み可能なVRMLノードがありません。"
 
-#: VRMLBodyLoader.cpp:525
+#: VRMLBodyLoader.cpp:518
 msgid "Prototype of Humanoid must have the \"jointAxis\" field"
 msgstr "Humanoidのプロトタイプには\"jointAxis\"フィールドが必要です。"
 
-#: VRMLBodyLoader.cpp:528
+#: VRMLBodyLoader.cpp:521
 msgid ""
 "The type of \"jointAxis\" field in \"Humanoid\" prototype must be SFString "
 "or SFVec3f"
@@ -74,99 +82,162 @@ msgstr ""
 "\"Humanoid\"プロトタイプの\"jointAxis\"フィールドの型はSFStringかSFVec3fであ"
 "る必要があります。"
 
-#: VRMLBodyLoader.cpp:549
+#: VRMLBodyLoader.cpp:542
 msgid "The \"equivalentInertia\" field of the Joint node is obsolete."
 msgstr "JointノードのequivalentInertiaフィールドは廃止予定です。"
 
-#: VRMLBodyLoader.cpp:645
+#: VRMLBodyLoader.cpp:639
 msgid ""
 "The Humanoid node does not have a Joint node in its \"humanoidBody\" field."
 msgstr "HumanoidノードのhumanoidBodyフィールドにJointノードがありません。"
 
-#: VRMLBodyLoader.cpp:647
+#: VRMLBodyLoader.cpp:641
 msgid ""
 "The Humanoid node must have a unique Joint node in its \"humanoidBody\" "
 "field."
 msgstr "HumanoidノードのhumanoidBodyに含められるJointノードはひとつだけです。"
 
-#: VRMLBodyLoader.cpp:672
+#: VRMLBodyLoader.cpp:666
 msgid "Warning: Joint ID %1% is not specified."
 msgstr "警告: Joint ID %1% の指定がありません。"
 
-#: VRMLBodyLoader.cpp:785
+#: VRMLBodyLoader.cpp:779
 msgid "Warning: Joint ID %1% is duplicated."
 msgstr "警告： Joint ID %1% は重複しています。"
 
-#: VRMLBodyLoader.cpp:813
+#: VRMLBodyLoader.cpp:807
 msgid ""
 "Warning: A deprecated joint type 'crawler'is specified for %1%. Use "
 "'pseudoContinuousTrack' instead."
-msgstr "警告：廃止予定の関節タイプである'crawler'が%1%で指定されています。この代わりに'pseudoContinuousTrack'を使うようにしてください。"
+msgstr ""
+"警告：廃止予定の関節タイプである'crawler'が%1%で指定されています。この代わり"
+"に'pseudoContinuousTrack'を使うようにしてください。"
 
-#: VRMLBodyLoader.cpp:818 VRMLBodyLoader.cpp:1240
+#: VRMLBodyLoader.cpp:810 VRMLBodyLoader.cpp:1242
 msgid "JointType \"%1%\" is not supported."
 msgstr "Jointノード\"%1%\"の位置が正しくありません。"
 
-#: VRMLBodyLoader.cpp:902
+#: VRMLBodyLoader.cpp:894
 msgid "%1% node is not in a correct place."
 msgstr "%1%ノードの位置が不正です。"
 
-#: VRMLBodyLoader.cpp:911
+#: VRMLBodyLoader.cpp:903
 msgid "Joint node \"%1%\" is not in a correct place."
 msgstr "Jointノード\"%1%\"の位置が正しくありません。"
 
-#: VRMLBodyLoader.cpp:1039
+#: VRMLBodyLoader.cpp:1034
 msgid "Sensor type %1% is not supported.\n"
 msgstr "センサ型%1%はサポートされていません。\n"
 
-#: VRMLBodyLoader.cpp:1229
+#: VRMLBodyLoader.cpp:1231
 msgid ""
 "Field \"link%1%Name\" of a ExtraJoint node does not specify a valid link name"
-msgstr "ExtraJointノードのフィールド\"link%1%Name\"で有効なリンク名が指定されていません"
+msgstr ""
+"ExtraJointノードのフィールド\"link%1%Name\"で有効なリンク名が指定されていませ"
+"ん"
 
-#: YAMLBodyLoader.cpp:406
+#: YAMLBodyLoader.cpp:235
+msgid "Unknown symbol is used as a jointRange value"
+msgstr "jointRangeの値に不明なシンボルが使用されています。"
+
+#: YAMLBodyLoader.cpp:238
+msgid "Invalid type value is used as a jointRange value"
+msgstr "jointRangeの値に無効な型の値が使用されています。"
+
+#: YAMLBodyLoader.cpp:297
+msgid ""
+"The number of elements specified as an inertia value must be six or nine."
+msgstr "inertiaの要素は6つか9つでなければなりません。"
+
+#: YAMLBodyLoader.cpp:539
 msgid "The file format cannot be loaded as a Choreonoid body model"
 msgstr ""
 "このファイル形式はChoreonoidのボディモデルとして読み込むことができません。"
 
-#: YAMLBodyLoader.cpp:414
+#: YAMLBodyLoader.cpp:547
 msgid "This version of the Choreonoid body format is not supported"
 msgstr "このバージョンのChoreonoidボディ形式はサポートされていません。"
 
-#: YAMLBodyLoader.cpp:426
+#: YAMLBodyLoader.cpp:560
 msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
 msgstr "\"angleUnit\"の値は\"radian\"か\"degree\"でなければなりません"
 
-#: YAMLBodyLoader.cpp:438
+#: YAMLBodyLoader.cpp:573
 msgid "There is no \"links\" values for defining the links in the body"
 msgstr "ボディに含まれるリンクを定義する\"links\"の値がありません。"
 
-#: YAMLBodyLoader.cpp:465
-msgid "Parent link \"%1%\" of %2% is not defined"
-msgstr "%2%リンクの親リンク%1%は定義されていません。"
+#: YAMLBodyLoader.cpp:578
+msgid "No link is contained in the \"links\" listing"
+msgstr "\"links\"にリンクが含まれていません。"
 
-#: YAMLBodyLoader.cpp:472
-msgid "There is no \"rootLink\" value for specifying the root link."
-msgstr "ルートリンクを指定する\"rootLink\"の値がありません。"
+#: YAMLBodyLoader.cpp:593
+msgid "Invalid value specified in the \"links\" key."
+msgstr "\"link\"に無効な値が記述されています。"
 
-#: YAMLBodyLoader.cpp:478
+#: YAMLBodyLoader.cpp:603
 msgid "Link \"%1%\" specified in \"rootLink\" is not defined."
 msgstr "\"rootLink\"で指定されている%1%リンクが定義されていません。"
 
-#: YAMLBodyLoader.cpp:520
-msgid "Duplicated link name \"%1%\""
-msgstr "リンク名\"%1%\"は重複しています。"
+#: YAMLBodyLoader.cpp:616
+msgid "The parent of %1% is not specified."
+msgstr "%1%の親が指定されていません。"
 
-#: YAMLBodyLoader.cpp:735
+#: YAMLBodyLoader.cpp:625
+msgid "Parent link \"%1%\" of %2% is not defined"
+msgstr "%2%リンクの親リンク%1%は定義されていません。"
+
+#: YAMLBodyLoader.cpp:631
+msgid "There is no link defined."
+msgstr "リンクが定義されていません。"
+
+#: YAMLBodyLoader.cpp:662 YAMLBodyLoader.cpp:1026
 msgid ""
 "The node type \"%1%\" is different from the type \"%2%\" specified in the "
 "parent node"
 msgstr "ノート型%1%は親ノードで指定されている%2%型と異なります。"
 
-#: YAMLBodyLoader.cpp:784
-msgid "The node type \"%1%\" is not defined."
-msgstr "ノード型%1%は定義されていません。"
+#: YAMLBodyLoader.cpp:675
+msgid "A %1% node cannot be specified in links"
+msgstr ""
+"%1%ノードがlinksに定義されていません。"
 
-#: YAMLBodyLoader.cpp:1055
-msgid "Unknown geometry \"%1%\""
-msgstr "不明なジオメトリ%1%"
+#: YAMLBodyLoader.cpp:705 YAMLBodyLoader.cpp:1441
+msgid "Duplicated link name \"%1%\""
+msgstr "リンク名\"%1%\"は重複しています。"
+
+#: YAMLBodyLoader.cpp:778
+msgid "jointRange must have two elements"
+msgstr "jointRangeには２つ以上の要素を記述できません。"
+
+#: YAMLBodyLoader.cpp:783
+msgid "Invalid type value is specefied as a jointRange"
+msgstr "jointRangeに無効な型の値が記述されています。"
+
+#: YAMLBodyLoader.cpp:808
+msgid "jointVelocityRange must have two elements"
+msgstr "jointVelocityRangeには２つ以上の要素を記述できません。"
+
+#: YAMLBodyLoader.cpp:1220
+msgid ""
+"The visual node is conflicting with the Collision node defined at the higher "
+"level."
+msgstr "Visualノードがその上位で定義されているCollisionノードと競合しています。"
+
+#: YAMLBodyLoader.cpp:1226
+msgid ""
+"The collision node is conflicting with the Visual node defined at the higher "
+"level."
+msgstr "Collisionノードがその上位で定義されているVisualノードと競合しています。"
+
+#: YAMLBodyLoader.cpp:1481
+msgid "The link specified in \"link%1%Name\" is not found."
+msgstr "\"link%1%Name\"で指定されているリンクがありません。"
+
+#: YAMLBodyLoader.cpp:1492
+msgid "The jointAxis value must be specified for the pistion type."
+msgstr "pistionタイプではjointAxisを指定する必要があります。"
+
+#: YAMLBodyLoader.cpp:1497
+msgid "Joint type \"%1%\" is not available."
+msgstr "関節タイプ\"%1%\"は利用できません。"
+

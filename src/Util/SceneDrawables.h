@@ -336,7 +336,7 @@ public:
         triangleVertices_.push_back(v2);
     }
         
-    enum PrimitiveType { MESH = 0, BOX, SPHERE, CYLINDER, CONE };
+    enum PrimitiveType { MESH = 0, BOX, SPHERE, CYLINDER, CONE, CAPSULE };
 
     class Mesh { }; // defined for no primitive information
 
@@ -373,8 +373,16 @@ public:
         bool bottom;
         bool side;
     };
+    class Capsule {
+        public:
+            Capsule() { }
+            Capsule(double radius, double height) :
+                radius(radius), height(height) { }
+            double radius;
+            double height;
+        };
 
-    typedef boost::variant<Mesh, Box, Sphere, Cylinder, Cone> Primitive;
+    typedef boost::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
 
     const int primitiveType() const { return primitive_.which(); }
     template<class TPrimitive> const TPrimitive& primitive() const { return boost::get<TPrimitive>(primitive_); }
@@ -547,6 +555,7 @@ public:
     int numLines() const { return lineVertices_.size() / 2; }
     void setNumLines(int n) { lineVertices_.resize(n * 2); }
     void reserveNumLines(int n) { lineVertices_.reserve(n * 2); }
+    void clearLines() { lineVertices_.clear(); }
 
     typedef Eigen::Map<Array2i> LineRef;
     LineRef line(int index){

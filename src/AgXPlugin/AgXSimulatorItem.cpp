@@ -10,6 +10,7 @@
 #include <agxCollide/Box.h>
 #include <agxCollide/Sphere.h>
 #include <agxCollide/Cylinder.h>
+#include <agxCollide/Capsule.h>
 #include <agxCollide/Trimesh.h>
 #include <agx/Hinge.h>
 #include <agx/Prismatic.h>
@@ -46,7 +47,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 
@@ -1087,7 +1087,7 @@ void AgXLink::createGeometry(AgXBody* agxBody)
 {
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
-        if(extractor->extract(link->collisionShape(), std::bind(&AgXLink::addMesh, this, extractor, agxBody))){
+        if(extractor->extract(link->collisionShape(), [&](){ addMesh(extractor, agxBody); })){
             if(!vertices.empty()){
                 agxCollide::TrimeshRef triangleMesh = new agxCollide::Trimesh( &vertices, &indices, "" );
                 if(link->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
@@ -1135,7 +1135,8 @@ void AgXLink::addMesh(MeshExtractor* extractor, AgXBody* agxBody)
                     if(scale.x() == scale.y() && scale.x() == scale.z()){
                         doAddPrimitive = true;
                     }
-                } else if(mesh->primitiveType() == SgMesh::CYLINDER){
+                } else if(mesh->primitiveType() == SgMesh::CYLINDER ||
+                        mesh->primitiveType() == SgMesh::CAPSULE ){
                     // check if the bottom circle face is uniformly scaled
                     if(scale.x() == scale.z()){
                         doAddPrimitive = true;
@@ -1173,6 +1174,14 @@ void AgXLink::addMesh(MeshExtractor* extractor, AgXBody* agxBody)
                 SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
                 agxCollide::CylinderRef cylinder_ = new agxCollide::Cylinder(cylinder.radius * scale.x(), cylinder.height * scale.y());
                 agxGeometry->add(cylinder_);
+                agxRigidBody->add( agxGeometry );
+                created = true;
+                break;
+            }
+            case SgMesh::CAPSULE : {
+                SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                agxCollide::CapsuleRef capsule_ = new agxCollide::Capsule(capsule.radius * scale.x(), capsule.height * scale.y());
+                agxGeometry->add(capsule_);
                 agxRigidBody->add( agxGeometry );
                 created = true;
                 break;
@@ -2369,8 +2378,8 @@ void AgXSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void AgXSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
-                std::bind(&Selection::selectIndex, &dynamicsMode, _1));
-    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
+                [&](int index){ return dynamicsMode.selectIndex(index); });
+    putProperty(_("Gravity"), str(gravity), [&](const string& value){ return toVector3(value, gravity); });
     putProperty.decimals(2).min(0.0)
             (_("Friction"), friction, changeProperty(friction));
     putProperty.decimals(2).min(0.0)

@@ -14,9 +14,6 @@ if(ENABLE_GUI)
   add_subdirectory(SceneEffectsPlugin)
   add_subdirectory(SceneEditPlugin)
   add_subdirectory(RobotAccessPlugin)
-  
-  add_subdirectory(PythonPlugin)
-  add_subdirectory(PythonSimScriptPlugin)
 
   add_subdirectory(LuaPlugin)
 
@@ -36,8 +33,17 @@ if(ENABLE_GUI)
   add_subdirectory(CorbaPlugin)
   add_subdirectory(OpenRTMPlugin)
   add_subdirectory(OpenHRPPlugin)
-  add_subdirectory(GrxUIPlugin)
   add_subdirectory(Hrpsys31Plugin)
+  
+  if(USE_PYTHON3)
+    add_subdirectory(Python3Plugin)
+    add_subdirectory(GrxUIPython3Plugin)
+  else()
+    add_subdirectory(PythonPlugin)
+    add_subdirectory(GrxUIPlugin)
+  endif()
+  
+  add_subdirectory(PythonSimScriptPlugin)
   
   add_subdirectory(Choreonoid)
 endif()

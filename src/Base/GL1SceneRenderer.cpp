@@ -285,8 +285,8 @@ public:
     void renderFog();
     void onCurrentFogNodeUdpated();
     void endRendering();
-    void render();
-    bool pick(int x, int y);
+    void doRender();
+    bool doPick(int x, int y);
     inline void setPickColor(unsigned int id);
     inline unsigned int pushPickName(SgNode* node, bool doSetColor = true);
     void popPickName();
@@ -397,23 +397,23 @@ void GL1SceneRendererImpl::initialize()
     os_ = &nullout();
 
     renderingFunctions.setFunction<SgGroup>(
-        [&](SgNode* node){ renderGroup(static_cast<SgGroup*>(node)); });
+        [&](SgGroup* node){ renderGroup(node); });
     renderingFunctions.setFunction<SgInvariantGroup>(
-        [&](SgNode* node){ renderGroup(static_cast<SgInvariantGroup*>(node)); });
+        [&](SgInvariantGroup* node){ renderInvariantGroup(node); });
     renderingFunctions.setFunction<SgTransform>(
-        [&](SgNode* node){ renderTransform(static_cast<SgTransform*>(node)); });
+        [&](SgTransform* node){ renderTransform(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
-        [&](SgNode* node){ renderUnpickableGroup(static_cast<SgUnpickableGroup*>(node)); });
+        [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
     renderingFunctions.setFunction<SgShape>(
-        [&](SgNode* node){ renderShape(static_cast<SgShape*>(node)); });
+        [&](SgShape* node){ renderShape(node); });
     renderingFunctions.setFunction<SgPointSet>(
-        [&](SgNode* node){ renderPointSet(static_cast<SgPointSet*>(node)); });
+        [&](SgPointSet* node){ renderPointSet(node); });
     renderingFunctions.setFunction<SgLineSet>(
-        [&](SgNode* node){ renderLineSet(static_cast<SgLineSet*>(node)); });
+        [&](SgLineSet* node){ renderLineSet(node); });
     renderingFunctions.setFunction<SgOverlay>(
-        [&](SgNode* node){ renderOverlay(static_cast<SgOverlay*>(node)); });
+        [&](SgOverlay* node){ renderOverlay(node); });
     renderingFunctions.setFunction<SgOutlineGroup>(
-        [&](SgNode* node){ renderOutlineGroup(static_cast<SgOutlineGroup*>(node)); });
+        [&](SgOutlineGroup* node){ renderOutlineGroup(node); });
 
     self->applyExtensions();
     renderingFunctions.updateDispatchTable();
@@ -789,16 +789,18 @@ void GL1SceneRendererImpl::endRendering()
 }
 
 
-void GL1SceneRenderer::render()
+void GL1SceneRenderer::doRender()
 {
-    applyNewExtensions();
-    impl->renderingFunctions.updateDispatchTable();
-    impl->render();
+    impl->doRender();
 }
 
 
-void GL1SceneRendererImpl::render()
+void GL1SceneRendererImpl::doRender()
 {
+    if(self->applyNewExtensions()){
+        renderingFunctions.updateDispatchTable();
+    }
+    
     beginRendering(true);
 
     renderingFunctions.dispatch(self->sceneRoot());
@@ -811,9 +813,9 @@ void GL1SceneRendererImpl::render()
 }
 
 
-bool GL1SceneRenderer::pick(int x, int y)
+bool GL1SceneRenderer::doPick(int x, int y)
 {
-    return impl->pick(x, y);
+    return impl->doPick(x, y);
 }
 
 
@@ -824,7 +826,7 @@ bool GL1SceneRenderer::pick(int x, int y)
   http://www.codeproject.com/Articles/35139/Interactive-Techniques-in-Three-dimensional-Scenes#_OpenGL_Picking_by
   http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
 */
-bool GL1SceneRendererImpl::pick(int x, int y)
+bool GL1SceneRendererImpl::doPick(int x, int y)
 {
     glPushAttrib(GL_ENABLE_BIT);
 
@@ -840,7 +842,7 @@ bool GL1SceneRendererImpl::pick(int x, int y)
     }
     
     isPicking = true;
-    render();
+    doRender();
     isPicking = false;
 
     glPopAttrib();

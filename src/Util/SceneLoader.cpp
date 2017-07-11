@@ -30,7 +30,8 @@ namespace cnoid {
 class SceneLoaderImpl
 {
 public:
-    ostream* os;
+    ostream* os_;
+    ostream& os() { return *os_; }
     typedef map<int, AbstractSceneLoaderPtr> LoaderMap;
     LoaderMap loaders;
     int defaultDivisionNumber;
@@ -87,7 +88,7 @@ SceneLoader::SceneLoader()
 
 SceneLoaderImpl::SceneLoaderImpl()
 {
-    os = &nullout();
+    os_ = &nullout();
     defaultDivisionNumber = -1;
     defaultCreaseAngle = -1.0;
 }
@@ -101,7 +102,7 @@ SceneLoader::~SceneLoader()
 
 void SceneLoader::setMessageSink(std::ostream& os)
 {
-    impl->os = &os;
+    impl->os_ = &os;
 }
 
 
@@ -150,20 +151,21 @@ SgNode* SceneLoader::load(const std::string& filename)
 SgNode* SceneLoaderImpl::load(const std::string& filename)
 {
     boost::filesystem::path filepath(filename);
+
     string ext = getExtension(filepath);
     if(ext.empty()){
-        (*os) << str(boost::format(_("The file format of \"%1%\" is unknown because it lacks a file name extension."))
-                     % getFilename(filepath)) << endl;
+        os() << str(boost::format(_("The file format of \"%1%\" is unknown because it lacks a file name extension."))
+                    % getFilename(filepath)) << endl;
         return 0;
     }
 
     SgNode* node = 0;
     auto loader = findLoader(ext);
     if(!loader){
-        (*os) << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
-                     % getFilename(filepath)) << endl;
+        os() << str(boost::format(_("The file format of \"%1%\" is not supported by the scene loader."))
+                    % getFilename(filepath)) << endl;
     } else {
-        loader->setMessageSink(*os);
+        loader->setMessageSink(os());
         if(defaultDivisionNumber > 0){
             loader->setDefaultDivisionNumber(defaultDivisionNumber);
         }

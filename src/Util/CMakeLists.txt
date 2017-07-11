@@ -10,6 +10,7 @@ set(sources
   Selection.cpp
   DataMap.cpp
   EigenUtil.cpp
+  EigenArchive.cpp
   ValueTree.cpp
   YAMLReader.cpp
   YAMLWriter.cpp
@@ -60,8 +61,8 @@ set(sources
   STLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
-  CnoidUtil.cpp # This file must be placed at the last position
   ExtJoystick.cpp
+  CnoidUtil.cpp # This file must be placed at the last position
   )
 
 
@@ -204,5 +205,11 @@ if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
   make_header_public(EigenArchive.h EigenYaml)
 endif()
 
-add_subdirectory(python)
+if(ENABLE_PYTHON)
+  if(USE_PYTHON3)
+    add_subdirectory(python3)
+  else()
+    add_subdirectory(python)
+  endif()
+endif()
 add_subdirectory(lua)

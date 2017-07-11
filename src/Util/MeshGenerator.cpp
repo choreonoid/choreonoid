@@ -274,6 +274,79 @@ SgMesh* MeshGenerator::generateCone(double radius, double height, bool bottom, b
 }
 
 
+SgMesh* MeshGenerator::generateCapsule(double radius, double height)
+{
+    if(height < 0.0 || radius < 0.0){
+        return 0;
+    }
+
+    SgMesh* mesh = new SgMesh();
+
+    int vdn = divisionNumber_ / 2;  // latitudinal division number
+    if(vdn%2)
+        vdn +=1;
+
+    const int hdn = divisionNumber_;      // longitudinal division number
+
+    SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
+    vertices.reserve( vdn * hdn + 2);
+
+    for(int i=1; i < vdn+1; i++){ // latitudinal direction
+        double y;
+        double tv;
+        if(i <= vdn / 2){
+            y = height / 2.0;
+            tv = i * PI / vdn;
+        }else{
+            y = - height / 2.0;
+            tv = (i-1) * PI / vdn;
+        }
+
+        for(int j=0; j < hdn; j++){ // longitudinal direction
+            const double th = j * 2.0 * PI / hdn;
+            vertices.push_back(Vector3f(radius * sin(tv) * cos(th), radius * cos(tv) + y, radius * sin(tv) * sin(th)));
+        }
+    }
+
+    const int topIndex  = vertices.size();
+    vertices.push_back(Vector3f(0.0f,  radius + height /2.0, 0.0f));
+    const int bottomIndex = vertices.size();
+    vertices.push_back(Vector3f(0.0f, -radius - height / 2.0, 0.0f));
+
+    mesh->reserveNumTriangles(vdn * hdn * 2);
+
+    // top faces
+    for(int i=0; i < hdn; ++i){
+        mesh->addTriangle(topIndex, (i+1) % hdn, i);
+    }
+
+    // side faces
+    for(int i=0; i < vdn - 1; ++i){
+        const int upper = i * hdn;
+        const int lower = (i + 1) * hdn;
+        for(int j=0; j < hdn; ++j) {
+            // upward convex triangle
+            mesh->addTriangle(j + upper, ((j + 1) % hdn) + lower, j + lower);
+            // downward convex triangle
+            mesh->addTriangle(j + upper, ((j + 1) % hdn) + upper, ((j + 1) % hdn) + lower);
+        }
+    }
+
+    // bottom faces
+    const int offset = (vdn - 1) * hdn;
+    for(int i=0; i < hdn; ++i){
+        mesh->addTriangle(bottomIndex, (i % hdn) + offset, ((i+1) % hdn) + offset);
+    }
+
+    mesh->setPrimitive(SgMesh::Capsule(radius, height));
+    mesh->updateBoundingBox();
+
+    generateNormals(mesh, PI / 2.0);
+
+    return mesh;
+}
+
+
 SgMesh* MeshGenerator::generateDisc(double radius, double innerRadius)
 {
     if(innerRadius <= 0.0 || radius <= innerRadius){

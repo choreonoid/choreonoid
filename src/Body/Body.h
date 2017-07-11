@@ -10,6 +10,7 @@
 #include "Link.h"
 #include "ExtraJoint.h"
 #include "DeviceList.h"
+#include "MassMatrix.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -219,7 +220,7 @@ public:
     }
 
     bool getCaches(PolymorphicReferencedArrayBase<>& out_caches, std::vector<std::string>& out_names) const;
-            
+
     void removeCache(const std::string& name);
 
     BodyCustomizerHandle customizerHandle() const;

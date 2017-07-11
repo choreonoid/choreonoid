@@ -14,9 +14,7 @@ links:
       0, 1, 0,
       0, 0, 1 ]
     elements:
-      Visual:
-        resource:
-          uri: "parts/BASE.wrl"
+      Visual: { resource: { uri: "parts/BASE.wrl" } }
       Collision:
         shape:
           rotation: [ 1, 0, 0, 90 ]
@@ -33,8 +31,8 @@ links:
     jointId: 0
     translation: [ 0, 0, 0.2 ]
     rotation: [ 0, 0, 1, 0 ]
-    jointRange: [ -3.08923278, 3.08923278 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -177, 177 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 3.0E-4
     mass: 9.78
     centerOfMass: [ 0, 0, 0.14818 ]
@@ -42,7 +40,32 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J1.wrl" } }
+    elements: 
+      Visual: { resource: { uri: "parts/J1.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.01 ]
+            geometry:
+              type: Cylinder
+              height: 0.02
+              radius: 0.115
+          -
+            type: Transform
+            translation: [ 0.085, 0, 0.09 ]
+            elements: &J1_FRAME
+              Shape:
+                rotation: [ 1, 0, 0, 90 ]
+                geometry:
+                  type: Capsule
+                  height: 0.062
+                  radius: 0.058
+          -
+            type: Transform
+            translation: [ -0.09, 0, 0.09 ]
+            elements: *J1_FRAME
   -
     name: J2
     parent: J1
@@ -50,8 +73,8 @@ links:
     jointAxis: [ 1, 0, 0 ]
     jointId: 1
     translation: [ 0, 0, 0.115 ]
-    jointRange: [ -1.6406095, 1.6406095 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -94, 94 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 3.0E-04
     mass: 8.41
     centerOfMass: [ 0, 0, 0.37675 ]
@@ -59,7 +82,26 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J2.wrl" } }
+    elements:
+      Visual: { resource: { uri: "parts/J2.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            translation: [ -0.002, 0, 0 ]
+            geometry:
+              type: Cylinder
+              height: 0.15
+              radius: 0.06
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.15 ]
+            geometry:
+              type: Cylinder
+              height: 0.26
+              radius: 0.06
   -
     name: J3
     parent: J2
@@ -67,8 +109,8 @@ links:
     jointAxis: [ 0, 0, 1 ]
     jointId: 2
     translation: [ 0, 0, 0.28 ]
-    jointRange: [ -3.0368729, 3.0368729 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -174, 174 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 8.5E-5
     mass: 3.52
     centerOfMass: [ 0, 0, 0.672141 ]
@@ -76,7 +118,32 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J3.wrl" } }
+    elements: 
+      Visual: { resource: { uri: "parts/J3.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.035 ]
+            geometry:
+              type: Cylinder
+              height: 0.07
+              radius: 0.06
+          - 
+            type: Transform
+            translation: [ 0.055, 0, 0.12 ]
+            elements: &J3_FRAME
+              Shape:
+                rotation: [ 1, 0, 0, 90 ]
+                geometry:
+                  type: Capsule
+                  height: 0.09
+                  radius: 0.058
+          - 
+            type: Transform
+            translation: [ -0.055, 0, 0.12 ]
+            elements: *J3_FRAME
   -
     name: J4
     parent: J3
@@ -84,8 +151,8 @@ links:
     jointAxis: [ 1, 0, 0 ]
     jointId: 3
     translation: [ 0, 0, 0.17 ]
-    jointRange: [ -2.39110108, 2.39110108 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -137, 137 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 8.5E-5
     mass: 4.31
     centerOfMass: [ 0, 0, 0.809590 ]
@@ -93,7 +160,65 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J4.wrl" } }
+    elements:
+      Visual: { resource: { uri: "parts/J4.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            geometry:
+              type: Cylinder
+              radius: 0.05
+              height: 0.1
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.06 ]
+            geometry:
+              type: Cylinder
+              radius: 0.046
+              height: 0.02
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.08 ]
+            geometry:
+              type: Cylinder
+              radius: 0.04
+              height: 0.02
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.1 ]
+            geometry:
+              type: Cylinder
+              radius: 0.032
+              height: 0.02
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.13 ]
+            geometry:
+              type: Cylinder
+              radius: 0.036
+              height: 0.04
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.17 ]
+            geometry:
+              type: Cylinder
+              radius: 0.044
+              height: 0.04
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.22 ]
+            geometry:
+              type: Cylinder
+              radius: 0.05
+              height: 0.06
   -
     name: J5
     parent: J4
@@ -101,8 +226,8 @@ links:
     jointAxis: [ 0, 0, 1 ]
     jointId: 4
     translation: [ 0, 0, 0.25 ]
-    jointRange: [ -4.45058959, 4.45058959 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -255, 255 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 2.3E-6
     mass: 3.45
     centerOfMass: [ 0, 0, 1.09875 ]
@@ -110,7 +235,28 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J5.wrl" } }
+    elements:
+      Visual: { resource: { uri: "parts/J5.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.035 ]
+            geometry:
+              type: Cylinder
+              radius: 0.06
+              height: 0.07
+          -
+            type: Shape
+            translation: [ 0.065, 0, 0.14 ]
+            geometry: &J5_FRAME
+              type: Box
+              size: [ 0.03, 0.07, 0.27 ]
+          -
+            type: Shape
+            translation: [ -0.065, 0, 0.14 ]
+            geometry: *J5_FRAME
   -
     name: J6
     parent: J5
@@ -118,8 +264,8 @@ links:
     jointAxis: [ 1, 0, 0 ]
     jointId: 5
     translation: [ -0.0025, 0, 0.25 ]
-    jointRange: [ -2.87979327, 2.87979327 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -165, 165 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 2.3E-6
     mass: 1.46
     centerOfMass: [ 0, 0, 1.2335 ]
@@ -127,7 +273,65 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J6.wrl" } }
+    elements:
+      Visual: { resource: { uri: "parts/J6.wrl" } }
+      Collision:
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.12 ]
+            geometry:
+              type: Cylinder
+              height: 0.05
+              radius: 0.035
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.085 ]
+            geometry:
+              type: Cylinder
+              height: 0.02
+              radius: 0.03
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, -0.06 ]
+            geometry:
+              type: Cylinder
+              height: 0.05
+              radius: 0.025
+          -
+            type: Shape
+            rotation: [ 0, 0, 1, 90 ]
+            geometry:
+              type: Cylinder
+              height: 0.09
+              radius: 0.035
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.044 ]
+            geometry:
+              type: Cylinder
+              height: 0.018
+              radius: 0.028
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.061 ]
+            geometry:
+              type: Cylinder
+              height: 0.018
+              radius: 0.033
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 0, 0.075 ]
+            geometry:
+              type: Cylinder
+              height: 0.02
+              radius: 0.036
   -
     name: J7
     parent: J6
@@ -135,8 +339,8 @@ links:
     jointAxis: [ 0, 0, 1 ]
     jointId: 6
     translation: [ 0, 0, 0.08 ]
-    jointRange: [ -4.45058959, 4.45058959 ]
-    jointVelocityRange: [ -3.141592653589793, 3.141592653589793 ]
+    jointRange: [ -255, 255 ]
+    jointVelocityRange: [ -180, 180 ]
     rotorInertia: 2.3E-6
     mass: 0.24
     centerOfMass: [ 0, 0, 1.3145 ]
@@ -144,7 +348,16 @@ links:
       1, 0, 0,
       0, 1, 0,
       0, 0, 1 ]
-    elements: { Resource: { uri: "parts/J7.wrl" } }
+    elements:
+      Visual: { resource: { uri: "parts/J7.wrl" } }
+      Collision:
+        shape:
+          rotation: [ 1, 0, 0, 90 ]
+          translation: [ 0, 0, 0.045 ]
+          geometry:
+            type: Cylinder
+            height: 0.09
+            radius: 0.04
   -
     name: HAND_L
     parent: J7
@@ -159,7 +372,14 @@ links:
       0.1, 0, 0,
       0, 0.1, 0,
       0, 0, 0.1 ]
-    elements: { Resource: { uri: "parts/HAND_L.wrl" } }
+    elements:
+      Visual: { resource: { uri: "parts/HAND_L.wrl" } }
+      Collision:
+        shape:
+          translation: [ 0, -0.005, 0.125 ]
+          geometry: &HAND_BOX
+            type: Box
+            size: [ 0.03, 0.01, 0.07 ]
   -
     name: HAND_R
     parent: J7
@@ -174,8 +394,12 @@ links:
       0.1, 0, 0,
       0, 0.1, 0,
       0, 0, 0.1 ]
-    elements: { Resource: { uri: "parts/HAND_R.wrl" } }
-
+    elements:
+      Visual: { resource: { uri: "parts/HAND_R.wrl" } }
+      Collision:
+        shape:
+          translation: [ 0, 0.005, 0.125 ]
+          geometry: *HAND_BOX
 
 standardPose: [ 45, 30, 0, 60, 0, 45, 0, 0, 0 ]
 

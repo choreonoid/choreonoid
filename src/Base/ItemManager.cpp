@@ -440,9 +440,9 @@ void ItemManager::registerClassSub
 void ItemManagerImpl::registerClass
 (std::function<Item*()>& factory, Item* singletonInstance, const string& typeId, const string& className)
 {
-    pair<ClassInfoMap::iterator, bool> ret = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
-    ClassInfoPtr& info = ret.first->second;
-    if(ret.second){
+    auto inserted = classNameToClassInfoMap.insert(make_pair(className, ClassInfoPtr()));
+    ClassInfoPtr& info = inserted.first->second;
+    if(inserted.second){
         info = std::make_shared<ClassInfo>();
         info->moduleName = moduleName;
         info->className = className;
@@ -577,10 +577,16 @@ ItemManagerImpl::CreationPanelBase* ItemManagerImpl::getOrCreateCreationPanelBas
         ClassInfoPtr& info = p->second;
         base = info->creationPanelBase;
         if(!base){
-            QString className(info->className.c_str());
-            QString translatedClassName(dgettext(textDomain.c_str(), info->className.c_str()));
+            const char* className_c_str = info->className.c_str();
+            QString className(className_c_str);
+            const char* translatedClassName_c_str = dgettext(textDomain.c_str(), className_c_str);
+            QString translatedClassName(translatedClassName_c_str);
             QString translatedName(translatedClassName);
-            translatedName.replace(QRegExp(_("Item$")), "");
+            if(translatedClassName_c_str == className_c_str){
+                translatedName.replace(QRegExp("Item$"), "");
+            } else {
+                translatedName.replace(QRegExp(_("Item$")), "");
+            }
             QString title(QString(_("Create New %1")).arg(translatedClassName));
             ItemPtr protoItem;
             if(info->isSingleton){

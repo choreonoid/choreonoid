@@ -5,10 +5,13 @@
 #include "NullOut.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 #include <fstream>
+#include "gettext.h"
 
 using namespace std;
 using namespace boost::algorithm;
+using boost::format;
 using namespace cnoid;
 
 namespace {
@@ -53,13 +56,18 @@ void STLSceneLoader::setMessageSink(std::ostream& os)
 
 SgNode* STLSceneLoader::load(const std::string& filename)
 {
-    SgVertexArrayPtr vertices = new SgVertexArray;
-    SgNormalArrayPtr normals = new SgNormalArray;
-
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+    if(!ifs.is_open()){
+        os() << str(format(_("Unable to open file \"%1%\".")) % filename) << endl;
+        return 0;
+    }
+    
     ifs.seekg(0, fstream::end);
     unsigned int fileSize = ifs.tellg();
     ifs.seekg(0, fstream::beg);
+
+    SgVertexArrayPtr vertices = new SgVertexArray;
+    SgNormalArrayPtr normals = new SgNormalArray;
 
     bool isBinary = false;
     unsigned int numFaces = 0;
@@ -133,6 +141,7 @@ SgNode* STLSceneLoader::load(const std::string& filename)
                 indices.push_back(i);
             }
         }
+        mesh->updateBoundingBox();
     }
     
     return shape; 
