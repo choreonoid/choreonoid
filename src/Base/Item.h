@@ -244,9 +244,6 @@ private:
 
     std::bitset<NUM_ATTRIBUTES> attributes;
 
-    std::vector<int> extraStates;
-    std::vector<ReferencedPtr> extraData;
-
     Signal<void(const std::string& oldName)> sigNameChanged_;
     Signal<void()> sigDetachedFromRoot_;
     Signal<void()> sigUpdated_;
@@ -269,7 +266,7 @@ private:
     void callSlotsOnPositionChanged();
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
-    void emitSigSubTreeChanged();
+    static void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);
     bool traverse(Item* item, const std::function<bool(Item*)>& function);
