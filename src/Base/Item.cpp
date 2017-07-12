@@ -700,41 +700,6 @@ void Item::clearFileInformation()
 }
 
 
-const Referenced* Item::customData(int id) const
-{
-    if(id >= (int)extraData.size()){
-        return 0;
-    }
-    return extraData[id].get();
-}
-
-
-Referenced* Item::customData(int id)
-{
-    if(id >= (int)extraData.size()){
-        return 0;
-    }
-    return extraData[id].get();
-}
-
-
-void Item::setCustomData(int id, ReferencedPtr data)
-{
-    if(id >= (int)extraData.size()){
-        extraData.resize(id + 1, 0);
-    }
-    extraData[id] = data;
-}
-
-
-void Item::clearCustomData(int id)
-{
-    if(customData(id)){
-        extraData[id] = 0;
-    }
-}
-
-
 namespace {
 bool onNamePropertyChanged(Item* item, const string& name)
 {

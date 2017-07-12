@@ -17,6 +17,7 @@
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <set>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -61,14 +62,6 @@ private:
     vector<SigCheckToggledPtr> sigCheckToggledList;
 };
 
-// Preserved as custom data in an item
-class ItvItemRef : public Referenced
-{
-public:
-    ItvItemRef(ItvItem* itvItem) : itvItem(itvItem) { }
-    ItvItem* itvItem;
-};
-
 class CheckColumn : public Referenced
 {
 public:
@@ -83,8 +76,8 @@ public:
 };
 
 typedef ref_ptr<CheckColumn> CheckColumnPtr;
-}
 
+}
 
 namespace cnoid {
 
@@ -97,9 +90,10 @@ public:
     ItemTreeView* self;
     RootItemPtr rootItem;
 
+    unordered_map<Item*, ItvItem*> itemToItvItemMap;
+
     int isProceccingSlotForRootItemSignals;
     ScopedConnectionSet connectionsFromRootItem;
-
     set<Item*> itemsBeingOperated;
 
     vector<CheckColumnPtr> checkColumns;
@@ -190,9 +184,8 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
         setCheckState(i + 1, Qt::Unchecked);
         setToolTip(i + 1, checkColumns[i]->tooltip);
     }
-    
-    ItvItemRef* ref = new ItvItemRef(this);
-    item->setCustomData(0, ref);
+
+    itemTreeViewImpl->itemToItvItemMap[item] = this;
 
     isExpandedBeforeRemoving = false;
 }
@@ -200,7 +193,7 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
 
 ItvItem::~ItvItem()
 {
-    item->clearCustomData(0);
+    itemTreeViewImpl->itemToItvItemMap.erase(item);
 }
 
 
@@ -555,9 +548,9 @@ void ItemTreeViewImpl::keyPressEvent(QKeyEvent* event)
 ItvItem* ItemTreeViewImpl::getItvItem(Item* item)
 {
     ItvItem* itvItem = 0;
-    ItvItemRef* ref = dynamic_cast<ItvItemRef*>(item->customData(0));
-    if(ref){
-        itvItem = ref->itvItem;
+    auto iter = itemToItvItemMap.find(item);
+    if(iter != itemToItvItemMap.end()){
+        itvItem = iter->second;
     }
     return itvItem;
 }

@@ -193,7 +193,7 @@ public:
     }
 
     /**
-       @note obsolete.
+       @note deprecated
     */
     SignalProxy<void()> sigDetachedFromRoot() {
         return sigDetachedFromRoot_;
@@ -211,11 +211,6 @@ public:
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
-
-    Referenced* customData(int id);
-    const Referenced* customData(int id) const;
-    void setCustomData(int id, ReferencedPtr data);
-    void clearCustomData(int id);
 
     static SignalProxy<void(const char* type_info_name)> sigClassUnregistered() {
         return sigClassUnregistered_;
