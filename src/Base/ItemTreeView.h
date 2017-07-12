@@ -6,8 +6,8 @@
 #define CNOID_BASE_ITEM_TREE_VIEW_H
 
 #include "ItemList.h"
-#include <cnoid/View>
-#include <QAbstractItemModel>
+#include "View.h"
+#include <QModelIndex>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -15,11 +15,7 @@ namespace cnoid {
 class RootItem;
 class ItemTreeViewImpl;
 
-/**
-   @if jp
-   アイテムツリーを表示するウィンドウ
-   @endif
-*/
+
 class CNOID_EXPORT ItemTreeView : public View
 {
     Q_OBJECT
@@ -27,7 +23,7 @@ class CNOID_EXPORT ItemTreeView : public View
 public:
     static void initializeClass(ExtensionManager* ext);
     static ItemTreeView* instance();
-    static ItemTreeView* mainInstance(); // obsolete
+    static ItemTreeView* mainInstance(); // deprecated
 
     ItemTreeView();
     ItemTreeView(RootItem* rootItem, bool showRoot = false);
@@ -38,9 +34,7 @@ public:
     void showRoot(bool show);
 
     /**
-       @if jp
-       選択状態になっているアイテムのうち、指定した型に適合するものを取得する。
-       @endif
+       This function returns the specific type items that are selected in the ItemTreeView
     */
     template <class ItemType> inline ItemList<ItemType> selectedItems() {
         return allSelectedItems();
@@ -56,10 +50,8 @@ public:
     }
 
     /**
-       @if jp
-       topItem 以下のサブツリーにおける選択状態アイテムのリストを得る。
-       topItem は選択されていてもリストには含まれない。
-       @endif
+       This functions returns the specific type items that are selected in the sub tree of the topItem.
+       The topItem itself is not included in the return value list.
     */
     template <class ItemType> inline ItemList<ItemType> selectedSubItems(Item* topItem) {
         ItemList<> items;
@@ -90,9 +82,7 @@ public:
     void releaseCheckColumn(int id);
 
     /**
-       @if jp
-       チェック状態になっているアイテムのうち、指定した型に適合するものを取得する。
-       @endif
+       This functions returns the specific type items that are checked in the ItemTreeView
     */
     template <class ItemType> inline ItemList<ItemType> checkedItems(int id = 0) {
         return allCheckedItems(id);
@@ -102,17 +92,12 @@ public:
     bool checkItem(Item* item, bool check = true, int id = 0);
 
     /**
-       @if jp
-       アイテムの選択状態が変化したときに発行されるシグナル。
-       @endif
+       The signal that is emitted when the item selection state is changed.
     */
     SignalProxy<void(const ItemList<>&)> sigSelectionChanged();
 
     /**
-       @if jp
-       アイテムの選択状態が変化したか、ツリーの構造が変化したときに発行されるシグナル。
-       アイテム間の親子関係もみるようなハンドラはこのシグナルと接続するとよい。
-       @endif
+       The signal that is emitted when the item selection state or the tree structure is changed.
     */
     SignalProxy<void(const ItemList<>&)> sigSelectionOrTreeChanged();
     

@@ -13,7 +13,6 @@
 #include "TreeWidget.h"
 #include <cnoid/ConnectionSet>
 #include <QBoxLayout>
-#include <QApplication>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <set>
@@ -34,32 +33,17 @@ typedef std::shared_ptr<SigCheckToggled> SigCheckToggledPtr;
 class ItvItem : public QTreeWidgetItem
 {
 public:
+    Item* item;
+    ItemTreeViewImpl* itemTreeViewImpl;
+    bool isExpandedBeforeRemoving;
+    vector<SigCheckToggledPtr> sigCheckToggledList;
+
     ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl);
     virtual ~ItvItem();
     virtual QVariant data(int column, int role) const;
     virtual void setData(int column, int role, const QVariant& value);
-
-    SigCheckToggled* sigCheckToggled(int id){
-        if(id < sigCheckToggledList.size()){
-            return sigCheckToggledList[id].get();
-        }
-        return 0;
-    }
-    SigCheckToggled& getOrCreateSigCheckToggled(int id){
-        if(id >= sigCheckToggledList.size()){
-            sigCheckToggledList.resize(id + 1);
-        }
-        if(!sigCheckToggledList[id]){
-            sigCheckToggledList[id] = std::make_shared<SigCheckToggled>();
-        }
-        return *sigCheckToggledList[id];
-    }
-
-    ItemPtr item;
-    ItemTreeViewImpl* itemTreeViewImpl;
-    bool isExpandedBeforeRemoving;
-private:
-    vector<SigCheckToggledPtr> sigCheckToggledList;
+    SigCheckToggled* sigCheckToggled(int id);
+    SigCheckToggled& getOrCreateSigCheckToggled(int id);
 };
 
 class CheckColumn : public Referenced
@@ -70,9 +54,7 @@ public:
     Signal<void(Item* item, bool isChecked)> sigCheckToggled;
     QString tooltip;
 
-    CheckColumn() {
-        needToUpdateCheckedItemList = true;
-    }
+    CheckColumn() { needToUpdateCheckedItemList = true;  }
 };
 
 typedef ref_ptr<CheckColumn> CheckColumnPtr;
@@ -84,9 +66,6 @@ namespace cnoid {
 class ItemTreeViewImpl : public TreeWidget
 {
 public:
-    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
-    ~ItemTreeViewImpl();
-
     ItemTreeView* self;
     RootItemPtr rootItem;
 
@@ -112,6 +91,9 @@ public:
     bool isDropping;
     int fontPointSizeDiff;
 
+    ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool showRoot);
+    ~ItemTreeViewImpl();
+
     int addCheckColumn();
     void initializeCheckState(QTreeWidgetItem* item, int column);
     void updateCheckColumnToolTipIter(QTreeWidgetItem* item, int column, const QString& tooltip);
@@ -127,7 +109,6 @@ public:
     void onSubTreeAddedOrMoved(Item* item);
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, Item* nextItem);
     void onSubTreeRemoved(Item* item, bool isMoving);
-    void onTreeChanged();
     void onItemAssigned(Item* assigned, Item* srcItem);
 
     virtual void dropEvent(QDropEvent* event);
@@ -234,6 +215,27 @@ void ItvItem::setData(int column, int role, const QVariant& value)
 }
 
 
+SigCheckToggled* ItvItem::sigCheckToggled(int id)
+{
+    if(id < sigCheckToggledList.size()){
+        return sigCheckToggledList[id].get();
+    }
+    return 0;
+}
+
+
+SigCheckToggled& ItvItem::getOrCreateSigCheckToggled(int id)
+{
+    if(id >= sigCheckToggledList.size()){
+        sigCheckToggledList.resize(id + 1);
+    }
+    if(!sigCheckToggledList[id]){
+        sigCheckToggledList[id] = std::make_shared<SigCheckToggled>();
+    }
+    return *sigCheckToggledList[id];
+}
+
+
 void ItemTreeView::initializeClass(ExtensionManager* ext)
 {
     itemTreeView = ext->viewManager().registerClass<ItemTreeView>(
@@ -315,8 +317,6 @@ ItemTreeViewImpl::ItemTreeViewImpl(ItemTreeView* self, RootItem* rootItem, bool 
         rootItem->sigSubTreeMoved().connect([&](Item* item){ onSubTreeAddedOrMoved(item); }));
     connectionsFromRootItem.add(
         rootItem->sigSubTreeRemoved().connect([&](Item* item, bool isMoving){ onSubTreeRemoved(item, isMoving); }));
-    connectionsFromRootItem.add(
-        rootItem->sigTreeChanged().connect([&](){ onTreeChanged(); }));
     connectionsFromRootItem.add(
         rootItem->sigItemAssigned().connect([&](Item* assigned, Item* srcItem){ onItemAssigned(assigned, srcItem); }));
 
@@ -676,7 +676,7 @@ void ItemTreeViewImpl::onRowsAboutToBeRemoved(const QModelIndex& parent, int sta
         if(itvItem){
             itvItem->isExpandedBeforeRemoving = itvItem->isExpanded();
             if(!isDropping){
-                ItemPtr item = itvItem->item;
+                Item* item = itvItem->item;
                 if(!item->isSubItem()){
                     items.push_back(item);
                 }
@@ -711,9 +711,9 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     }
 
     ItvItem* parentItvItem = dynamic_cast<ItvItem*>(parentTwItem);
-    Item* parentItem = parentItvItem ? parentItvItem->item.get() : rootItem.get();
+    Item* parentItem = parentItvItem ? parentItvItem->item : rootItem.get();
 
-    ItemPtr nextItem = 0;
+    ItemPtr nextItem;
     if(end + 1 < parentTwItem->childCount()){
         ItvItem* nextItvItem = dynamic_cast<ItvItem*>(parentTwItem->child(end + 1));
         if(nextItvItem){
@@ -725,7 +725,7 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     for(int i=start; i <= end; ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(parentTwItem->child(i));
         if(itvItem){
-            ItemPtr& item = itvItem->item;
+            Item* item = itvItem->item;
             if(!item->isSubItem()){
                 items.push_back(item);
             }
@@ -741,12 +741,6 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     }
 
     itemsBeingOperated.clear();    
-}
-
-
-void ItemTreeViewImpl::onTreeChanged()
-{
-
 }
 
 
