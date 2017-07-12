@@ -25,6 +25,7 @@ public:
     void createConstraints();
     void setCollision(bool bOn);
     void setTorqueToAGX();
+    void setVelocityToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
 private:

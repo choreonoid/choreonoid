@@ -18,7 +18,7 @@ agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxC
 {
     agx::Vec3f dir = axis ^ point.normal();
     dir.normalize();
-    agx::Vec3f ret =dir * -1.0 * getSurfaceVelocity().x();
+    agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
     return ret;
 }
 
@@ -61,6 +61,7 @@ void AGXLinkBody::createGeometry(AGXGeometryDesc desc)
     if(desc.isPseudoContinuousTrack){
         AGXPseudoContinuousTrackGeometry* pg = new AGXPseudoContinuousTrackGeometry();
         pg->setAxis(desc.axis);
+        pg->setSurfaceVelocity(agx::Vec3f());
         g = pg;
     }else{
         g = new agxCollide::Geometry();

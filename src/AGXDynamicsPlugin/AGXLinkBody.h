@@ -105,13 +105,13 @@ struct AGXTrimeshDesc : public AGXShapeDesc
     AGXTrimeshDesc()
     {
         shapeType = AGXShapeType::AGXCOLLIDE_TRIMESH;
-        name = "";
+        name = "empty";
         optionsMask = 0;
         bottomMargin = 0;
     }
     agx::Vec3Vector vertices;
     agx::UInt32Vector indices;
-    char* name;
+    const char* name;
     uint32_t optionsMask;     // agxCollide::Trimesh::TrimeshOptionsFlags
     agx::Real bottomMargin;
 };

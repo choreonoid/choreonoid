@@ -71,6 +71,27 @@ void AGXLink::setTorqueToAGX()
         default :
             break;
     }
+    //setVelocityToAGX();
+}
+
+void AGXLink::setVelocityToAGX()
+{
+    switch(orgLink->jointType()){
+        case Link::ROTATIONAL_JOINT:
+        case Link::SLIDE_JOINT:{
+            agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
+            if(!joint1DOF) break;
+            joint1DOF->getMotor1D()->setSpeed(orgLink->dq());
+            break;
+        }
+        case Link::PSEUDO_CONTINUOUS_TRACK:{
+            // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
+            getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
+            break;
+        }
+        default :
+            break;
+    }
 }
 
 void AGXLink::createAGXRigidBody()
@@ -96,7 +117,7 @@ void AGXLink::createAGXRigidBody()
     desc.R.set(agx::Quat(0,0,0,1));
 
     Link::JointType jt = orgLink->jointType();
-    if(jt == Link::FIXED_JOINT){
+    if(!orgLink->parent() && jt == Link::FIXED_JOINT ){
         desc.control = agx::RigidBody::MotionControl::STATIC;
     }
 
@@ -123,6 +144,7 @@ void AGXLink::createAGXShape()
     if(extractor->extract(orgLink->collisionShape(), std::bind(&AGXLink::detectPrimitiveShape, this, extractor, std::ref(td)))){
         // if vertices have values, it will be trimesh 
         if(!td.vertices.empty()){
+            //td.name = extractor->currentMesh()->name().c_str();
             agxLinkBody->createShape(td, agx::AffineMatrix4x4());
         //    std::cout << orgLink->name() << std::endl;
         //    std::cout << td.vertices.size() << std::endl;
