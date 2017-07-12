@@ -54,7 +54,7 @@ public:
         return *sigCheckToggledList[id];
     }
 
-    Item* item;
+    ItemPtr item;
     ItemTreeViewImpl* itemTreeViewImpl;
     bool isExpandedBeforeRemoving;
 private:
@@ -66,7 +66,6 @@ class ItvItemRef : public Referenced
 {
 public:
     ItvItemRef(ItvItem* itvItem) : itvItem(itvItem) { }
-    ~ItvItemRef(){ delete itvItem; }
     ItvItem* itvItem;
 };
 
@@ -99,7 +98,9 @@ public:
     RootItemPtr rootItem;
 
     int isProceccingSlotForRootItemSignals;
-    ConnectionSet connectionsFromRootItem;
+    ScopedConnectionSet connectionsFromRootItem;
+
+    set<Item*> itemsBeingOperated;
 
     vector<CheckColumnPtr> checkColumns;
 
@@ -128,6 +129,7 @@ public:
         
     ItvItem* getItvItem(Item* item);
     ItvItem* getOrCreateItvItem(Item* item);
+    bool isItemBeingOperated(Item* item);
     void onSubTreeAddedOrMoved(Item* item);
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, Item* nextItem);
     void onSubTreeRemoved(Item* item, bool isMoving);
@@ -198,7 +200,7 @@ ItvItem::ItvItem(Item* item, ItemTreeViewImpl* itemTreeViewImpl)
 
 ItvItem::~ItvItem()
 {
-   // item->clearCustomData(0);
+    item->clearCustomData(0);
 }
 
 
@@ -571,8 +573,18 @@ ItvItem* ItemTreeViewImpl::getOrCreateItvItem(Item* item)
 }
 
 
+bool ItemTreeViewImpl::isItemBeingOperated(Item* item)
+{
+    return itemsBeingOperated.find(item) != itemsBeingOperated.end();
+}
+
+
 void ItemTreeViewImpl::onSubTreeAddedOrMoved(Item* item)
 {
+    if(isItemBeingOperated(item)){
+        return;
+    }
+    
     isProceccingSlotForRootItemSignals++;
     
     Item* parentItem = item->parentItem();
@@ -621,6 +633,10 @@ void ItemTreeViewImpl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, Ite
 
 void ItemTreeViewImpl::onSubTreeRemoved(Item* item, bool isMoving)
 {
+    if(isItemBeingOperated(item)){
+        return;
+    }
+    
     isProceccingSlotForRootItemSignals++;
     
     ItvItem* itvItem = getItvItem(item);
@@ -631,7 +647,7 @@ void ItemTreeViewImpl::onSubTreeRemoved(Item* item, bool isMoving)
         } else {
             takeTopLevelItem(indexOfTopLevelItem(itvItem));
         }
-       // delete itvItem;
+        delete itvItem;
     }
 
     isProceccingSlotForRootItemSignals--;
@@ -656,27 +672,31 @@ void ItemTreeView::onRowsAboutToBeRemoved(const QModelIndex& parent, int start, 
 
 void ItemTreeViewImpl::onRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end)
 {
-    connectionsFromRootItem.block();
-
     QTreeWidgetItem* parentTwItem = itemFromIndex(parent);
     if(!parentTwItem){
         parentTwItem = invisibleRootItem();
     }
 
+    vector<ItemPtr> items;
     for(int i=start; i <= end; ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(parentTwItem->child(i));
         if(itvItem){
             itvItem->isExpandedBeforeRemoving = itvItem->isExpanded();
             if(!isDropping){
-                Item* item = itvItem->item;
+                ItemPtr item = itvItem->item;
                 if(!item->isSubItem()){
-                    item->detachFromParentItem();
+                    items.push_back(item);
                 }
+                itemsBeingOperated.insert(item);
             }
         }
     }
-    
-    connectionsFromRootItem.unblock();
+
+    for(auto item : items){
+        item->detachFromParentItem();
+    }
+
+    itemsBeingOperated.clear();
 }
 
 
@@ -690,8 +710,6 @@ void ItemTreeView::onRowsInserted(const QModelIndex& parent, int start, int end)
 
 void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int end)
 {
-    //connectionsFromRootItem.block();
-
     QTreeWidgetItem* parentTwItem = itemFromIndex(parent);
     if(parentTwItem){
         parentTwItem->setExpanded(true);
@@ -700,7 +718,7 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
     }
 
     ItvItem* parentItvItem = dynamic_cast<ItvItem*>(parentTwItem);
-    Item* parentItem = parentItvItem ? parentItvItem->item : rootItem.get();
+    Item* parentItem = parentItvItem ? parentItvItem->item.get() : rootItem.get();
 
     ItemPtr nextItem = 0;
     if(end + 1 < parentTwItem->childCount()){
@@ -710,20 +728,26 @@ void ItemTreeViewImpl::onRowsInserted(const QModelIndex& parent, int start, int 
         }
     }
     
+    vector<ItemPtr> items;
     for(int i=start; i <= end; ++i){
         ItvItem* itvItem = dynamic_cast<ItvItem*>(parentTwItem->child(i));
         if(itvItem){
-            Item* item = itvItem->item;
+            ItemPtr& item = itvItem->item;
             if(!item->isSubItem()){
-                parentItem->insertChildItem(item, nextItem, true);
+                items.push_back(item);
             }
             if(itvItem->isExpandedBeforeRemoving){
                 itvItem->setExpanded(true);
             }
+            itemsBeingOperated.insert(item);
         }
     }
-    
-    //connectionsFromRootItem.unblock();
+
+    for(auto item : items){
+        parentItem->insertChildItem(item, nextItem, true);
+    }
+
+    itemsBeingOperated.clear();    
 }
 
 
