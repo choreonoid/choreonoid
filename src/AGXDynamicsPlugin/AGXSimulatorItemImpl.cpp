@@ -58,7 +58,20 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     AGXSimulationDesc sd;
     sd.timeStep = self->worldTimeStep();
     agxScene->createAGXSimulation(sd);
-//    agxScene->buildTestScene();
+
+    // temporary code. will read material from choreonoid
+    // Create AGX material
+    AGXMaterialDesc m_def;
+    agxScene->createAGXMaterial(m_def);
+    // Create AGX contact material
+    AGXContactMaterialDesc cm_def;
+    cm_def.nameA = m_def.name;
+    cm_def.nameB = m_def.name;
+    cm_def.friction = 1.0;
+    cm_def.frictionModelType = AGXFrictionModelType::DEFAULT;
+    cm_def.solveType = agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE;
+    agxScene->createAGXContactMaterial(cm_def);
+    // end temporary
 
     // Create AGXLink and add to AGXsimulation
     for(size_t i=0; i < simBodies.size(); ++i){
@@ -67,6 +80,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         for(int j = 0; j < body->getNumLinks(); ++j){
             agxScene->getAGXSimulation()->add(body->getAGXRigidBody(j));
             agxScene->getAGXSimulation()->add(body->getAGXConstraint(j));
+            // Set Material
+            body->setAGXMaterial(j, agxScene->getAGXMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
         }
         // Set self collision
         if(!body->bodyItem()->isSelfCollisionDetectionEnabled()){

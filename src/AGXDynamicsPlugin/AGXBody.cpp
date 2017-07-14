@@ -480,6 +480,11 @@ agx::ConstraintRef AGXBody::getAGXConstraint(int index)
     return agxLinks[index]->getAGXConstraint();
 }
 
+void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef mat)
+{
+    agxLinks[index]->getAGXLinkBody()->getGeometry()->setMaterial(mat);
+}
+
 int AGXBody::getNumLinks()
 {
     return agxLinks.size();

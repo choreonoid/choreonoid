@@ -52,6 +52,7 @@ public:
     void setLinkStateToCnoid();
     agx::RigidBodyRef getAGXRigidBody(int index);
     agx::ConstraintRef getAGXConstraint(int index);
+    void setAGXMaterial(const int& index, const agx::MaterialRef mat);
     int getNumLinks();
 private:
     std::vector<AGXLinkPtr> agxLinks;
