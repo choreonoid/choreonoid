@@ -73,11 +73,12 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     agxScene->createAGXContactMaterial(cm_def);
     // end temporary
 
-    // Create AGXLink and add to AGXsimulation
     for(size_t i=0; i < simBodies.size(); ++i){
+        // Create rigidbody, geometry, constraints
         AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
         body->createBody();
         for(int j = 0; j < body->getNumLinks(); ++j){
+            // Add AGXRigidbody and constraint to AGX simulation
             agxScene->getAGXSimulation()->add(body->getAGXRigidBody(j));
             agxScene->getAGXSimulation()->add(body->getAGXConstraint(j));
             // Set Material

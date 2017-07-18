@@ -7,6 +7,19 @@ namespace cnoid{
 ////////////////////////////////////////////////////////////
 // AGXLink
 AGXLink::AGXLink(int index, LinkPtr link) : _index(index), orgLink(link){}
+AGXLink::AGXLink(LinkPtr link) : _index(link->index()), orgLink(link){}
+
+AGXLink::AGXLink(LinkPtr const link, AGXLinkPtr parent, const Vector3& parentOrigin, AGXBodyPtr const agxBody)
+{
+    _index = link->index();
+    orgLink = link;
+    agxParentLink = parent;
+    agxBody->addAGXLink(this);
+    origin = parentOrigin + orgLink->b();
+    for(Link* child = link->child(); child; child = child->sibling()){
+        new AGXLink(child, this, origin, agxBody);
+    }
+}
 
 void AGXLink::setParentLink(AGXLinkPtr link)
 {
@@ -39,6 +52,14 @@ void AGXLink::createLinkBody()
     createAGXRigidBody();
     createAGXGeometry();
     createAGXShape();
+}
+
+void AGXLink::setOriginPosition(const Vector3 & parentOrigin)
+{
+    origin = parentOrigin + orgLink->b();
+    for(Link* child = orgLink->child(); child; child = child->sibling()){
+        
+    }
 }
 
 void AGXLink::createConstraints()
@@ -100,7 +121,7 @@ void AGXLink::createAGXRigidBody()
     const Vector3& c = orgLink->c();
     const Vector3& v = orgLink->v(); 
     const Vector3& w = orgLink->w(); 
-    const Vector3& p = orgLink->p();
+    const Vector3& p = origin;
 
     AGXRigidBodyDesc desc;
     desc.name = orgLink->name();
@@ -279,7 +300,7 @@ void AGXLink::createAGXConstraints()
         case Link::REVOLUTE_JOINT :{
             AGXHingeDesc desc;
             const Vector3& a = orgLink->a();
-            const Vector3& p = orgLink->p();
+            const Vector3& p = origin;
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
@@ -290,7 +311,7 @@ void AGXLink::createAGXConstraints()
         case Link::PRISMATIC_JOINT :{
             AGXPrismaticDesc desc;
             const Vector3& a = orgLink->a();
-            const Vector3& p = orgLink->p();
+            const Vector3& p = origin;
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
@@ -385,7 +406,7 @@ void AGXLink::setLinkStateToCnoid()
 
 ////////////////////////////////////////////////////////////
 // AGXBody
-AGXBody::AGXBody(Body & orgBody) : SimulationBody(new Body(orgBody)){}
+AGXBody::AGXBody(Body& orgBody) : SimulationBody(new Body(orgBody)){}
 
 void AGXBody::initialize()
 {
@@ -419,19 +440,31 @@ void AGXBody::createBody()
     initialize();
 
     // Create empty AGXLink
-    for(int i = 0; i < body()->numLinks(); ++i){
-        AGXLinkPtr agxLink = new AGXLink(i, body()->link(i));
-        agxLinks.push_back(agxLink);
-    }
+    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
+    //for(int i = 0; i < body()->numLinks(); ++i){
+    //    AGXLinkPtr agxLink = new AGXLink(body()->link(i));
+    //    agxLinks.push_back(agxLink);
+    //}
+
+    ////agxLinks[body()->rootLink()->index()]->setParentLink
+
+    //// Set parent link to each AGXLink
+    //for(int i = 0; i < body()->numLinks(); ++i){
+    //    LinkPtr parent = body()->link(i)->parent();
+    //    if(parent){
+    //        agxLinks[i]->setParentLink(agxLinks[parent->index()]);
+    //    }
+    //}
+
     // Create rigidbody and geometry of AGX
     for(int i = 0; i < body()->numLinks(); ++i){
         agxLinks[i]->createLinkBody();
 
-        // Set parent link to each AGXLink
-        LinkPtr parent = body()->link(i)->parent();
-        if(parent){
-            agxLinks[i]->setParentLink(agxLinks[parent->index()]);
-        }
+        //// Set parent link to each AGXLink
+        //LinkPtr parent = body()->link(i)->parent();
+        //if(parent){
+        //    agxLinks[i]->setParentLink(agxLinks[parent->index()]);
+        //}
     }
     // Create constraints
     for(int i = 0; i < body()->numLinks(); ++i){
@@ -485,9 +518,14 @@ void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef mat)
     agxLinks[index]->getAGXLinkBody()->getGeometry()->setMaterial(mat);
 }
 
-int AGXBody::getNumLinks()
+int AGXBody::getNumLinks() const
 {
     return agxLinks.size();
+}
+
+void AGXBody::addAGXLink(AGXLinkPtr const agxLink)
+{
+    agxLinks.push_back(agxLink);
 }
 
 
