@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package>
+  <name>choreonoid</name>
+  <version>1.6.0</version>
+  <description>Choreonoid is an integrated graphical robotics software framework.</description>
+
+  <maintainer email="s.nakaoka@aist.go.jp">Shin'ichiro Nakaoka</maintainer>
+
+  <license>MIT</license>
+
+  <url type="website">http://choreonoid.org/</url>
+  <url type="repository">https://github.com/s-nakaoka/choreonoid/</url>
+
+  <author email="s.nakaoka@aist.go.jp">Shin'ichiro Nakaoka</author>
+  <author>Choreonoid Development Team, AIST</author>
+
+  <buildtool_depend>cmake</buildtool_depend>
+  <buildtool_depend>pkg-config</buildtool_depend>
+
+  <!-- The *_depend tags are used to specify dependencies -->
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <!-- Examples: -->
+  <!-- Use build_depend for packages you need at compile time: -->
+  <!--   <build_depend>message_generation</build_depend> -->
+  <!-- Use buildtool_depend for build tool packages: -->
+  <!--   <buildtool_depend>catkin</buildtool_depend> -->
+  <!-- Use run_depend for packages you need at runtime: -->
+  <!--   <run_depend>message_runtime</run_depend> -->
+  <!-- Use test_depend for packages you need only for testing: -->
+  <!--   <test_depend>gtest</test_depend> -->
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+
+</package>
