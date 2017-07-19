@@ -104,7 +104,8 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 //    cout << "step" << std::endl;
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
-        agxBody->setTorqueToAGX();
+        agxBody->setControlInputToAGX();
+        //agxBody->setTorqueToAGX();
 
         //if(!agxBody->sensorHelper.forceSensors().empty()){
         //    agxBody->updateForceSensors();

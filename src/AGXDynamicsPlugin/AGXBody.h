@@ -18,33 +18,44 @@ typedef Eigen::Matrix<float, 3, 1> Vertex;
 class AGXLink : public Referenced
 {
 public:
-    AGXLink(int index, LinkPtr link);
-    AGXLink::AGXLink(LinkPtr link);
-    AGXLink::AGXLink(LinkPtr const link, AGXLinkPtr parent, const Vector3& parentOrigin, AGXBodyPtr const agxBody);
-    void setParentLink(AGXLinkPtr link);
-    int getIndex();
+    enum ControlMode{
+        NONE,
+        TORQUE,
+        VELOCITY,
+        POSITION
+    };
+    AGXLink(const LinkPtr link);
+    AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
+    void setParentLink(const AGXLinkPtr link);
+    int getIndex() const;
     AGXLinkBodyRef getAGXLinkBody();
     agx::RigidBodyRef  getAGXRigidBody();
     agx::ConstraintRef getAGXConstraint();
     void createLinkBody();
-    void setOriginPosition(const Vector3& parentOrigin);
     void createConstraints();
-    void setCollision(bool bOn);
+    void setCollision(const bool bOn);
+    void setControlInputToAGX();
     void setTorqueToAGX();
     void setVelocityToAGX();
+    void setPositionToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
+    void setJointControlMode(const ControlMode& mode);
+    AGXLink::ControlMode getJointControlMode() const;
 private:
-    int _index;
-    Vector3 origin;
-    LinkPtr orgLink;
-    AGXLinkPtr agxParentLink;
-    AGXLinkBodyRef agxLinkBody;
+    Vector3 _origin;
+    LinkPtr _orgLink;
+    AGXLinkPtr _agxParentLink;
+    AGXLinkBodyRef _agxLinkBody;
+    ControlMode _controlMode;
     void createAGXRigidBody();
     void createAGXGeometry();
     void createAGXShape();
     void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
     void createAGXConstraints();
+    Vector3 getOrigin() const;
+    LinkPtr getOrgLink() const;
+    AGXLinkPtr getAGXParentLink() const;
 };
 
 class AGXBody :  public SimulationBody
@@ -55,6 +66,7 @@ public:
     void createBody();
     void setCollision(bool bOn);
     void setTorqueToAGX();
+    void setControlInputToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     agx::RigidBodyRef getAGXRigidBody(int index);

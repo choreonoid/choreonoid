@@ -6,60 +6,52 @@ namespace cnoid{
 
 ////////////////////////////////////////////////////////////
 // AGXLink
-AGXLink::AGXLink(int index, LinkPtr link) : _index(index), orgLink(link){}
-AGXLink::AGXLink(LinkPtr link) : _index(link->index()), orgLink(link){}
+AGXLink::AGXLink(const LinkPtr link) : _orgLink(link){}
 
-AGXLink::AGXLink(LinkPtr const link, AGXLinkPtr parent, const Vector3& parentOrigin, AGXBodyPtr const agxBody)
+AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody)
 {
-    _index = link->index();
-    orgLink = link;
-    agxParentLink = parent;
+    _orgLink = link;
+    _agxParentLink = parent;
     agxBody->addAGXLink(this);
-    origin = parentOrigin + orgLink->b();
+    _origin = parentOrigin + getOrgLink()->b();
+    _controlMode = ControlMode::VELOCITY;
+    //_controlMode = ControlMode::NONE;
     for(Link* child = link->child(); child; child = child->sibling()){
-        new AGXLink(child, this, origin, agxBody);
+        new AGXLink(child, this, getOrigin(), agxBody);
     }
 }
 
-void AGXLink::setParentLink(AGXLinkPtr link)
+void AGXLink::setParentLink(const AGXLinkPtr link)
 {
-    agxParentLink = link;
+    _agxParentLink = link;
 }
 
-int AGXLink::getIndex()
+int AGXLink::getIndex() const
 {
-    return _index;
+    return getOrgLink()->index();
 }
 
 AGXLinkBodyRef AGXLink::getAGXLinkBody()
 {
-    return agxLinkBody;
+    return _agxLinkBody;
 }
 
 agx::RigidBodyRef AGXLink::getAGXRigidBody()
 {
-    return agxLinkBody->getRigidBody();
+    return getAGXLinkBody()->getRigidBody();
 }
 
 agx::ConstraintRef AGXLink::getAGXConstraint()
 {
-    return agxLinkBody->getConstraint();
+    return getAGXLinkBody()->getConstraint();
 }
 
 void AGXLink::createLinkBody()
 {
-    agxLinkBody = new AGXLinkBody();
+    _agxLinkBody = new AGXLinkBody();
     createAGXRigidBody();
     createAGXGeometry();
     createAGXShape();
-}
-
-void AGXLink::setOriginPosition(const Vector3 & parentOrigin)
-{
-    origin = parentOrigin + orgLink->b();
-    for(Link* child = orgLink->child(); child; child = child->sibling()){
-        
-    }
 }
 
 void AGXLink::createConstraints()
@@ -67,36 +59,57 @@ void AGXLink::createConstraints()
     createAGXConstraints();
 }
 
-void AGXLink::setCollision(bool bOn)
+void AGXLink::setCollision(const bool bOn)
 {
     getAGXLinkBody()->getGeometry()->setEnableCollisions(bOn);
 }
 
+void AGXLink::setControlInputToAGX()
+{
+    switch(getJointControlMode()){
+        case ControlMode::TORQUE :{
+            setTorqueToAGX();
+            break;
+        }
+        case ControlMode::VELOCITY :{
+            setVelocityToAGX();
+            break;
+        }
+        case ControlMode::POSITION :{
+            //setPositionToAGX();
+            break;
+        }
+        case ControlMode::NONE :
+        default :
+            break;
+    }
+}
+
 void AGXLink::setTorqueToAGX()
 {
-    // constraint
+    LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
         case Link::ROTATIONAL_JOINT:
         case Link::SLIDE_JOINT:{
             agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
             if(!joint1DOF) break;
+#if 0
+            joint1DOF->getElectricMotorController()->setEnable(true);
+            joint1DOF->getElectricMotorController()->setTorqueConstant(orgLink->u());
+#else
             joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? -1.0e12 : 1.0e12);
             joint1DOF->getMotor1D()->setForceRange( agx::RangeReal(orgLink->u()));
-            break;
-        }
-        case Link::PSEUDO_CONTINUOUS_TRACK:{
-            // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-            getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
+#endif
             break;
         }
         default :
             break;
     }
-    //setVelocityToAGX();
 }
 
 void AGXLink::setVelocityToAGX()
 {
+    LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
         case Link::ROTATIONAL_JOINT:
         case Link::SLIDE_JOINT:{
@@ -115,13 +128,30 @@ void AGXLink::setVelocityToAGX()
     }
 }
 
+void AGXLink::setPositionToAGX()
+{
+    LinkPtr orgLink = getOrgLink();
+    switch(orgLink->jointType()){
+        case Link::ROTATIONAL_JOINT:
+        case Link::SLIDE_JOINT:{
+            agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(getAGXConstraint());
+            if(!joint1DOF) break;
+            joint1DOF->getLock1D()->setPosition(orgLink->q());
+            break;
+        }
+        default :
+            break;
+    }
+}
+
 void AGXLink::createAGXRigidBody()
 {
+    LinkPtr orgLink = getOrgLink();
     const Matrix3& I = orgLink->I();
     const Vector3& c = orgLink->c();
     const Vector3& v = orgLink->v(); 
     const Vector3& w = orgLink->w(); 
-    const Vector3& p = origin;
+    const Vector3& p = getOrigin();
 
     AGXRigidBodyDesc desc;
     desc.name = orgLink->name();
@@ -142,11 +172,12 @@ void AGXLink::createAGXRigidBody()
         desc.control = agx::RigidBody::MotionControl::STATIC;
     }
 
-    agxLinkBody->createRigidBody(desc);
+    getAGXLinkBody()->createRigidBody(desc);
 }
 
 void AGXLink::createAGXGeometry()
 {
+    LinkPtr orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
     gdesc.selfCollsionGroupName = orgLink->body()->name();
     if(orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
@@ -154,11 +185,12 @@ void AGXLink::createAGXGeometry()
         Vector3 a = orgLink->a();
         gdesc.axis = agx::Vec3f(a(0), a(1), a(2));
     }
-    agxLinkBody->createGeometry(gdesc);
+    getAGXLinkBody()->createGeometry(gdesc);
 }
 
 void AGXLink::createAGXShape()
 {
+    LinkPtr orgLink = getOrgLink();
     if(!orgLink->collisionShape()) return;
     MeshExtractor* extractor = new MeshExtractor;
     AGXTrimeshDesc td;
@@ -166,7 +198,7 @@ void AGXLink::createAGXShape()
         // if vertices have values, it will be trimesh 
         if(!td.vertices.empty()){
             //td.name = extractor->currentMesh()->name().c_str();
-            agxLinkBody->createShape(td, agx::AffineMatrix4x4());
+            getAGXLinkBody()->createShape(td, agx::AffineMatrix4x4());
         //    std::cout << orgLink->name() << std::endl;
         //    std::cout << td.vertices.size() << std::endl;
         //    for(int i = 0; i < td.vertices.size(); ++i){
@@ -295,28 +327,30 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
 
 void AGXLink::createAGXConstraints()
 {
+    AGXLinkPtr agxParentLink = getAGXParentLink();
     if(!agxParentLink) return;
+    LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
             AGXHingeDesc desc;
             const Vector3& a = orgLink->a();
-            const Vector3& p = origin;
+            const Vector3& p = getOrigin();
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            agxLinkBody->createConstraint(desc);
+            getAGXLinkBody()->createConstraint(desc);
             break;
         }
         case Link::PRISMATIC_JOINT :{
             AGXPrismaticDesc desc;
             const Vector3& a = orgLink->a();
-            const Vector3& p = origin;
+            const Vector3& p = getOrigin();
             desc.frameAxis.set(a(0),a(1),a(2));
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            agxLinkBody->createConstraint(desc);
+            getAGXLinkBody()->createConstraint(desc);
             break;
         }
         case Link::FIXED_JOINT :
@@ -324,7 +358,7 @@ void AGXLink::createAGXConstraints()
             AGXLockJointDesc desc;
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            agxLinkBody->createConstraint(desc);
+            getAGXLinkBody()->createConstraint(desc);
             break;
         }
         case Link::FREE_JOINT :
@@ -333,12 +367,26 @@ void AGXLink::createAGXConstraints()
     }
 }
 
+Vector3 AGXLink::getOrigin() const
+{
+    return _origin;
+}
+
+LinkPtr AGXLink::getOrgLink() const
+{
+    return _orgLink;
+}
+
+AGXLinkPtr AGXLink::getAGXParentLink() const
+{
+    return _agxParentLink;
+}
+
 void AGXLink::setLinkStateToAGX()
 {
-    agx::RigidBodyRef agxRigidBody = getAGXRigidBody();    
-    if(!agxRigidBody)
-        return;
-
+    agx::RigidBodyRef agxRigidBody = getAGXRigidBody();
+    if(!agxRigidBody) return;
+    LinkPtr orgLink = getOrgLink();
     const Vector3& p = orgLink->p();
     const Matrix3& R = orgLink->R();
     agx::Vec3 translation(p(0), p(1), p(2));
@@ -360,6 +408,7 @@ void AGXLink::setLinkStateToCnoid()
     if(!agxRigidBody) return;
 
     // constraint
+    LinkPtr orgLink = getOrgLink();
     switch(orgLink->jointType()){
         case Link::ROTATIONAL_JOINT:
         case Link::SLIDE_JOINT:{
@@ -402,6 +451,16 @@ void AGXLink::setLinkStateToCnoid()
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
 
+}
+
+void AGXLink::setJointControlMode(const ControlMode& mode)
+{
+    _controlMode = mode;
+}
+
+AGXLink::ControlMode AGXLink::getJointControlMode() const
+{
+    return _controlMode;
 }
 
 ////////////////////////////////////////////////////////////
@@ -486,6 +545,14 @@ void AGXBody::setTorqueToAGX()
     // Skip the root link
     for(size_t i=1; i < agxLinks.size(); ++i){
         agxLinks[i]->setTorqueToAGX();
+    }
+}
+
+void AGXBody::setControlInputToAGX()
+{
+    // Skip the root link
+    for(size_t i=1; i < agxLinks.size(); ++i){
+        agxLinks[i]->setControlInputToAGX();
     }
 }
 
