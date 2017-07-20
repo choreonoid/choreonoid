@@ -12,6 +12,7 @@
 #include <cnoid/NullOut>
 #include <boost/format.hpp>
 #include <unordered_map>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -64,8 +65,11 @@ public:
     SgMaterialPtr defaultMaterial;
 
     map<string, ResourceInfoPtr> resourceInfoMap;
-    filesystem::path baseDirectory;
     SceneLoader sceneLoader;
+    filesystem::path baseDirectory;
+    vector<string> packagePaths;
+    std::regex uriProtocolRegex;
+    bool isUriProtocolRegexReady;
     
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
@@ -91,6 +95,7 @@ public:
     SgNode* loadResource(const string& uri);
     SgNode* loadResource(const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(NodeInfo& info);
     void makeNodeMap(ResourceInfo* info);
     void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
@@ -131,6 +136,12 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
     os_ = &nullout();
+    isUriProtocolRegexReady = false;
+
+    // temporary
+    packagePaths.push_back("/home/nakaoka/catkin_ws/src/warec_description");
+    packagePaths.push_back("/home/nakaoka/catkin_ws/src/yamabiko_description");
+    packagePaths.push_back("/opt/ros/kinetic/share");
 }
 
 
@@ -595,14 +606,15 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
 SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
 {
     SgNode* scene = 0;
-    
-    if(node.read("uri", symbol)){
+
+    string& uri = symbol;
+    if(node.read("uri", uri)){
         SgNodePtr resource;
         string nodeName;
         if(node.read("node", nodeName)){
-            resource = loadResource(symbol, nodeName);
+            resource = loadResource(uri, nodeName);
         } else {
-            resource = loadResource(symbol);
+            resource = loadResource(uri);
         }
         scene = readTransformParameters(node, resource);
         if(scene == resource){
@@ -659,14 +671,33 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
     ResourceInfo* info = 0;
     
     auto iter = resourceInfoMap.find(uri);
+
     if(iter != resourceInfoMap.end()){
         info = iter->second;
+
     } else {
-        filesystem::path filepath(uri);
-        if(!checkAbsolute(filepath)){
-            filepath = baseDirectory / filepath;
-            filepath.normalize();
+        filesystem::path filepath;
+        
+        if(!isUriProtocolRegexReady){
+            uriProtocolRegex.assign("^(.+)://(.+)$");
+            isUriProtocolRegexReady = true;
         }
+        std::smatch match;
+        
+        if(std::regex_match(uri, match, uriProtocolRegex) && match.size() == 3){
+            if(match.str(1) == "package"){
+                filepath = findFileInPackage(match.str(2));
+            }
+        }
+
+        if(filepath.empty()){
+            filepath = uri;
+            if(!checkAbsolute(filepath)){
+                filepath = baseDirectory / filepath;
+                filepath.normalize();
+            }
+        }
+
         SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
         if(rootNode){
             info = new ResourceInfo;
@@ -676,6 +707,36 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
     }
 
     return info;
+}
+
+
+filesystem::path YAMLSceneReaderImpl::findFileInPackage(const string& file)
+{
+    filesystem::path filepath(file);
+    auto iter = filepath.begin();
+    if(iter == filepath.end()){
+        return filesystem::path();
+    }
+
+    filesystem::path directory = *iter++;
+    filesystem::path relativePath;
+    while(iter != filepath.end()){
+        relativePath /= *iter++;
+    }
+
+    for(auto element : packagePaths){
+        filesystem::path packagePath(element);
+        filesystem::path combined = packagePath / filepath;
+        if(exists(combined)){
+            return combined;
+        }
+        combined = packagePath / relativePath;
+        if(exists(combined)){
+            return combined;
+        }
+    }
+
+    return filesystem::path();
 }
 
 
