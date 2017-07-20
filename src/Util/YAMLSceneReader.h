@@ -41,6 +41,10 @@ public:
     SgNode* readNode(Mapping& node);
     SgNode* readNode(Mapping& node, const std::string& type);
 
+    typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
+    
+    static void registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler);
+
 private:
     YAMLSceneReaderImpl* impl;
     friend class YAMLSceneReaderImpl;

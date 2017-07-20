@@ -12,6 +12,7 @@
 #include <cnoid/NullOut>
 #include <boost/format.hpp>
 #include <unordered_map>
+#include <mutex>
 #include <regex>
 #include "gettext.h"
 
@@ -43,6 +44,9 @@ struct ResourceInfo : public Referenced
 };
 typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
+unordered_map<string, YAMLSceneReader::UriSchemeHandler> uriSchemeHandlerMap;
+std::mutex uriSchemeHandlerMutex;
+
 }
 
 namespace cnoid {
@@ -67,9 +71,8 @@ public:
     map<string, ResourceInfoPtr> resourceInfoMap;
     SceneLoader sceneLoader;
     filesystem::path baseDirectory;
-    vector<string> packagePaths;
-    std::regex uriProtocolRegex;
-    bool isUriProtocolRegexReady;
+    std::regex uriSchemeRegex;
+    bool isUriSchemeRegexReady;
     
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
@@ -119,6 +122,13 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 }
 
 
+void YAMLSceneReader::registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler)
+{
+    std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
+    uriSchemeHandlerMap[scheme] = handler;
+}
+                                                 
+
 YAMLSceneReader::YAMLSceneReader()
 {
     impl = new YAMLSceneReaderImpl(this);
@@ -136,12 +146,7 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
     os_ = &nullout();
-    isUriProtocolRegexReady = false;
-
-    // temporary
-    packagePaths.push_back("/home/nakaoka/catkin_ws/src/warec_description");
-    packagePaths.push_back("/home/nakaoka/catkin_ws/src/yamabiko_description");
-    packagePaths.push_back("/opt/ros/kinetic/share");
+    isUriSchemeRegexReady = false;
 }
 
 
@@ -553,11 +558,14 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& node)
 SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
 {
     SgNode* resource = readResource(node);
-    SgShape* shape = dynamic_cast<SgShape*>(resource);
-    if(!shape){
-        node.throwException(_("A resouce specified as a geometry contains more than a single mesh"));
+    if(resource){
+        SgShape* shape = dynamic_cast<SgShape*>(resource);
+        if(!shape){
+            node.throwException(_("A resouce specified as a geometry must be a single mesh"));
+        }
+        return shape->mesh();
     }
-    return shape->mesh();
+    return 0;
 }
 
 
@@ -668,36 +676,54 @@ SgNode* YAMLSceneReaderImpl::loadResource(const string& uri, const string& nodeN
 
 ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
 {
-    ResourceInfo* info = 0;
-    
     auto iter = resourceInfoMap.find(uri);
 
     if(iter != resourceInfoMap.end()){
-        info = iter->second;
+        return iter->second;
+    }
 
+    filesystem::path filepath;
+        
+    if(!isUriSchemeRegexReady){
+        uriSchemeRegex.assign("^(.+)://(.+)$");
+        isUriSchemeRegexReady = true;
+    }
+    std::smatch match;
+    bool hasScheme = false;
+        
+    if(std::regex_match(uri, match, uriSchemeRegex)){
+        hasScheme = true;
+        if(match.size() == 3){
+            const string scheme = match.str(1);
+            if(scheme == "file"){
+                filepath = match.str(2);
+            } else {
+                std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
+                auto iter = uriSchemeHandlerMap.find(scheme);
+                if(iter == uriSchemeHandlerMap.end()){
+                    os() << str(format("Warning: The \"%1%\" scheme of \"%2%\" is not available.") % scheme % uri) << endl;
+                } else {
+                    auto& handler = iter->second;
+                    filepath = handler(match.str(2), os());
+                }
+            }
+        }
+    }
+
+    if(!hasScheme){
+        filepath = uri;
+        if(!checkAbsolute(filepath)){
+            filepath = baseDirectory / filepath;
+            filepath.normalize();
+        }
+    }
+    
+    ResourceInfo* info = 0;
+    
+    if(filepath.empty()){
+        resourceInfoMap[uri] = info;
+        
     } else {
-        filesystem::path filepath;
-        
-        if(!isUriProtocolRegexReady){
-            uriProtocolRegex.assign("^(.+)://(.+)$");
-            isUriProtocolRegexReady = true;
-        }
-        std::smatch match;
-        
-        if(std::regex_match(uri, match, uriProtocolRegex) && match.size() == 3){
-            if(match.str(1) == "package"){
-                filepath = findFileInPackage(match.str(2));
-            }
-        }
-
-        if(filepath.empty()){
-            filepath = uri;
-            if(!checkAbsolute(filepath)){
-                filepath = baseDirectory / filepath;
-                filepath.normalize();
-            }
-        }
-
         SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
         if(rootNode){
             info = new ResourceInfo;
@@ -707,36 +733,6 @@ ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
     }
 
     return info;
-}
-
-
-filesystem::path YAMLSceneReaderImpl::findFileInPackage(const string& file)
-{
-    filesystem::path filepath(file);
-    auto iter = filepath.begin();
-    if(iter == filepath.end()){
-        return filesystem::path();
-    }
-
-    filesystem::path directory = *iter++;
-    filesystem::path relativePath;
-    while(iter != filepath.end()){
-        relativePath /= *iter++;
-    }
-
-    for(auto element : packagePaths){
-        filesystem::path packagePath(element);
-        filesystem::path combined = packagePath / filepath;
-        if(exists(combined)){
-            return combined;
-        }
-        combined = packagePath / relativePath;
-        if(exists(combined)){
-            return combined;
-        }
-    }
-
-    return filesystem::path();
 }
 
 
