@@ -7,7 +7,6 @@ libboost-all-dev \
 libeigen3-dev \
 libeigen3-doc \
 libxfixes-dev \
-libglew-dev \
 libyaml-dev \
 gettext \
 zlib1g-dev \
