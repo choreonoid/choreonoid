@@ -449,11 +449,10 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius)
     return mesh;
 }
 
-
 SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
 {
-    const int numSpines = extrusion.spine.size();
-    const int numCrosses = extrusion.crossSection.size();
+    int numSpines = extrusion.spine.size();
+    int numCrosses = extrusion.crossSection.size();
 
     if(numSpines < 2 || numCrosses < 2){
         return 0;
@@ -464,8 +463,15 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
        extrusion.spine[0][1] == extrusion.spine[numSpines - 1][1] &&
        extrusion.spine[0][2] == extrusion.spine[numSpines - 1][2] ){
         isClosed = true;
+        numSpines --;
     }
     bool isCrossSectionClosed = (extrusion.crossSection[0] == extrusion.crossSection[numCrosses - 1]);
+    if(isCrossSectionClosed)
+        numCrosses --;
+
+    if(numSpines < 2 || numCrosses < 2){
+        return 0;
+    }
 
     SgMesh* mesh = new SgMesh;
     SgVertexArray& vertices = *mesh->setVertices(new SgVertexArray());
@@ -480,7 +486,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
             Vector3 Yaxis, Zaxis;
             if(i == 0){
                 if(isClosed){
-                    const Vector3& spine1 = extrusion.spine[numSpines - 2];
+                    const Vector3& spine1 = extrusion.spine[numSpines - 1];
                     const Vector3& spine2 = extrusion.spine[0];
                     const Vector3& spine3 = extrusion.spine[1];
                     Yaxis = spine3 - spine1;
@@ -495,8 +501,8 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
             } else if(i == numSpines - 1){
                 if(isClosed){
                     const Vector3& spine1 = extrusion.spine[numSpines - 2];
-                    const Vector3& spine2 = extrusion.spine[0];
-                    const Vector3& spine3 = extrusion.spine[1];
+                    const Vector3& spine2 = extrusion.spine[numSpines - 1];
+                    const Vector3& spine3 = extrusion.spine[0];
                     Yaxis = spine3 - spine1;
                     Zaxis = (spine3 - spine2).cross(spine1 - spine2);
                 } else {
@@ -575,18 +581,24 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
         }
     }
 
-    for(int i=0; i < numSpines - 1 ; ++i){
-        const int upper = i * numCrosses;
-        const int lower = (i + 1) * numCrosses;
-        for(int j=0; j < numCrosses - 1; ++j) {
-            mesh->addTriangle(j + upper, j + lower, (j + 1) + lower);
-            mesh->addTriangle(j + upper, (j + 1) + lower, j + 1 + upper);
-        }
-    }
+    int numSpinePoints = numSpines;
+    int numCrossPoints = numCrosses;
 
-    int j = 0;
-    if(isCrossSectionClosed){
-        j = 1;
+    if(isClosed)
+        numSpinePoints++;
+    if(isCrossSectionClosed)
+        numCrossPoints++;
+
+    for(int i=0; i < numSpinePoints - 1 ; ++i){
+        int ii = (i + 1) % numSpines;
+        int upper = i * numCrosses;
+        int lower = ii * numCrosses;
+
+        for(int j=0; j < numCrossPoints - 1; ++j) {
+            int jj = (j + 1) % numCrosses;
+            mesh->addTriangle(j + upper, j + lower, jj + lower);
+            mesh->addTriangle(j + upper, jj + lower, jj + upper);
+        }
     }
 
     Triangulator<SgVertexArray> triangulator;
@@ -595,7 +607,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
     if(extrusion.beginCap && !isClosed){
         triangulator.setVertices(vertices);
         polygon.clear();
-        for(int i=0; i < numCrosses - j; ++i){
+        for(int i=0; i < numCrosses; ++i){
             polygon.push_back(i);
         }
         triangulator.apply(polygon);
@@ -608,7 +620,7 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion)
     if(extrusion.endCap && !isClosed){
         triangulator.setVertices(vertices);
         polygon.clear();
-        for(int i=0; i < numCrosses - j; ++i){
+        for(int i=0; i < numCrosses; ++i){
             polygon.push_back(numCrosses * (numSpines - 1) + i);
         }
         triangulator.apply(polygon);
