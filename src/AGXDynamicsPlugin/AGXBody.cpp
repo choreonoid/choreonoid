@@ -339,6 +339,7 @@ void AGXLink::createAGXConstraints()
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
+            if(getJointControlMode() != ControlMode::NONE) desc.isMotorOn = true;
             getAGXLinkBody()->createConstraint(desc);
             break;
         }
@@ -350,6 +351,7 @@ void AGXLink::createAGXConstraints()
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
+            if(getJointControlMode() != ControlMode::NONE) desc.isMotorOn = true;
             getAGXLinkBody()->createConstraint(desc);
             break;
         }

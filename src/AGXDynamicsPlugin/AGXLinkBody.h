@@ -127,10 +127,6 @@ enum AGXConstraintType
 struct AGXConstraintDesc
 {
     AGXConstraintType constraintType;
-    //agx::Vec3 FramePosA;  // local
-    //agx::EulerAngles FrameRotA;  // local
-    //agx::Vec3 FramePosB;  // local
-    //agx::EulerAngles FrameRotB;  // local
     agx::RigidBodyRef rigidBodyA;
     agx::RigidBodyRef rigidBodyB;
 
@@ -140,9 +136,22 @@ struct AGXHingeDesc : public AGXConstraintDesc
 {
     AGXHingeDesc(){
         constraintType = AGXConstraintType::AGXHINGE;
+        isMotorOn = false;
     }
     agx::Vec3 frameAxis;
     agx::Vec3 frameCenter;
+    agx::Bool isMotorOn;
+};
+
+struct AGXPrismaticDesc : public AGXConstraintDesc
+{
+    AGXPrismaticDesc(){
+        constraintType = AGXConstraintType::AGXPRISMATIC;
+        isMotorOn = false;
+    }
+    agx::Vec3 frameAxis;
+    agx::Vec3 framePoint;
+    agx::Bool isMotorOn;
 };
 
 struct AGXLockJointDesc : public AGXConstraintDesc
@@ -150,15 +159,6 @@ struct AGXLockJointDesc : public AGXConstraintDesc
     AGXLockJointDesc(){
         constraintType = AGXConstraintType::AGXLOCKJOINT;
     }
-};
-
-struct AGXPrismaticDesc : public AGXConstraintDesc
-{
-    AGXPrismaticDesc(){
-        constraintType = AGXConstraintType::AGXPRISMATIC;
-    }
-    agx::Vec3 frameAxis;
-    agx::Vec3 framePoint;
 };
 
 class AGXLinkBody : public agx::Referenced
