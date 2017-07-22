@@ -1,6 +1,4 @@
-
 #set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(ImageIO.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 #set_source_files_properties(Image.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
 configure_file(Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Config.h)
@@ -57,7 +55,6 @@ set(sources
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
   VRMLSceneLoader.cpp
-  DaeParser.cpp
   STLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
@@ -132,8 +129,6 @@ set(headers
   VRMLWriter.h
   VRMLToSGConverter.h
   Parser.h
-  DaeNode.h
-  DaeParser.h
   STLSceneLoader.h
   ValueTree.h
   ValueTreeUtil.h
@@ -156,15 +151,13 @@ set(headers
   Config.h
   )
 
-include_directories(${IRRXML_INCLUDE_DIRS})
-
 set(target CnoidUtil)
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_library(${target} SHARED ${sources} ${headers} ${mofiles})
 
 if(UNIX)
   set(libraries 
-    yaml irrXML ${PNG_LIBRARY} ${JPEG_LIBRARY}
+    yaml ${PNG_LIBRARY} ${JPEG_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
     ${GETTEXT_LIBRARIES}
@@ -178,7 +171,7 @@ if(UNIX)
   
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries libpng jpeg zlib irrXML winmm ${GETTEXT_LIBRARIES} ${IRRXML_LIBRARY})
+  set(libraries libpng jpeg zlib winmm ${GETTEXT_LIBRARIES})
   if(USE_EXTERNAL_YAML)
     set(libraries ${libraries} optimized yaml debug yamld)
   else()
@@ -187,9 +180,7 @@ elseif(MSVC)
   target_link_libraries(${target} ${libraries})
 endif()
 
-
 apply_common_setting_for_library(${target} "${headers}")
-
 
 # Adding some headers with old filenames for the backward compatibility
 if(CNOID_ENABLE_BACKWARD_COMPATIBILITY)
