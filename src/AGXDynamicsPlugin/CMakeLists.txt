@@ -32,6 +32,7 @@ set(target CnoidAGXDynamicsPlugin)
 set(sources
   AGXBody.cpp
   AGXLinkBody.cpp
+  AGXObjectFactory.cpp
   AGXScene.cpp
   AGXDynamicsPlugin.cpp
   AGXSimulatorItem.cpp
@@ -42,6 +43,7 @@ set(headers
   AGXBody.h
   AGXInclude.h
   AGXLinkBody.h
+  AGXObjectFactory.h
   AGXScene.h
   AGXSimulatorItem.h
   AGXSimulatorItemImpl.h

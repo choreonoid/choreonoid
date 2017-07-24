@@ -2,25 +2,25 @@
 
 namespace cnoid{
 
-    ////////////////////////////////////////////////////////////
-// AGXPseudoContinuousTrackGeometry
-void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& a)
-{
-    axis = a;
-}
-
-agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis()
-{
-    return axis;
-}
-
-agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
-{
-    agx::Vec3f dir = axis ^ point.normal();
-    dir.normalize();
-    agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
-    return ret;
-}
+//    ////////////////////////////////////////////////////////////
+//// AGXPseudoContinuousTrackGeometry
+//void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& a)
+//{
+//    axis = a;
+//}
+//
+//agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis()
+//{
+//    return axis;
+//}
+//
+//agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
+//{
+//    agx::Vec3f dir = axis ^ point.normal();
+//    dir.normalize();
+//    agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
+//    return ret;
+//}
 
 ////////////////////////////////////////////////////////////
 // AGXLinkBody

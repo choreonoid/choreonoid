@@ -16,6 +16,7 @@ AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& par
     _origin = parentOrigin + getOrgLink()->b();
     _controlMode = ControlMode::VELOCITY;
     //_controlMode = ControlMode::NONE;
+    constructAGXLink();
     for(Link* child = link->child(); child; child = child->sibling()){
         new AGXLink(child, this, getOrigin(), agxBody);
     }
@@ -31,37 +32,45 @@ int AGXLink::getIndex() const
     return getOrgLink()->index();
 }
 
-AGXLinkBodyRef AGXLink::getAGXLinkBody()
-{
-    return _agxLinkBody;
-}
+//AGXLinkBodyRef AGXLink::getAGXLinkBody()
+//{
+//    return _agxLinkBody;
+//}
 
 agx::RigidBodyRef AGXLink::getAGXRigidBody()
 {
-    return getAGXLinkBody()->getRigidBody();
+    //return getAGXLinkBody()->getRigidBody();
+    return _rigid;
 }
 
 agx::ConstraintRef AGXLink::getAGXConstraint()
 {
-    return getAGXLinkBody()->getConstraint();
+    //return getAGXLinkBody()->getConstraint();
+    return _constraint;
 }
+//
+//void AGXLink::createLinkBody()
+//{
+//    _agxLinkBody = new AGXLinkBody();
+//    createAGXRigidBody();
+//    createAGXGeometry();
+//    createAGXShape();
+//}
 
-void AGXLink::createLinkBody()
+void AGXLink::constructAGXLink()
 {
-    _agxLinkBody = new AGXLinkBody();
-    createAGXRigidBody();
-    createAGXGeometry();
+    _rigid = createAGXRigidBody();
+    _geometry = createAGXGeometry();
+    _rigid->add(_geometry);
     createAGXShape();
+    _constraint = createAGXConstraint();
 }
 
-void AGXLink::createConstraints()
-{
-    createAGXConstraints();
-}
 
 void AGXLink::setCollision(const bool bOn)
 {
-    getAGXLinkBody()->getGeometry()->setEnableCollisions(bOn);
+    //getAGXLinkBody()->getGeometry()->setEnableCollisions(bOn);
+    getAGXGeometry()->setEnableCollisions(bOn);
 }
 
 void AGXLink::setControlInputToAGX()
@@ -120,7 +129,8 @@ void AGXLink::setVelocityToAGX()
         }
         case Link::PSEUDO_CONTINUOUS_TRACK:{
             // Set speed(scalar) to x value. Direction is automatically calculated at AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity
-            getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
+            //getAGXLinkBody()->getGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
+            getAGXGeometry()->setSurfaceVelocity(agx::Vec3f(orgLink->dq(), 0.0, 0.0));
             break;
         }
         default :
@@ -144,7 +154,7 @@ void AGXLink::setPositionToAGX()
     }
 }
 
-void AGXLink::createAGXRigidBody()
+agx::RigidBodyRef AGXLink::createAGXRigidBody()
 {
     LinkPtr orgLink = getOrgLink();
     const Matrix3& I = orgLink->I();
@@ -172,10 +182,16 @@ void AGXLink::createAGXRigidBody()
         desc.control = agx::RigidBody::MotionControl::STATIC;
     }
 
-    getAGXLinkBody()->createRigidBody(desc);
+    //getAGXLinkBody()->createRigidBody(desc);
+    return AGXObjectFactory::createRigidBody(desc);
 }
 
-void AGXLink::createAGXGeometry()
+agxCollide::GeometryRef AGXLink::getAGXGeometry()
+{
+    return _geometry;
+}
+
+agxCollide::GeometryRef AGXLink::createAGXGeometry()
 {
     LinkPtr orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
@@ -185,7 +201,8 @@ void AGXLink::createAGXGeometry()
         Vector3 a = orgLink->a();
         gdesc.axis = agx::Vec3f(a(0), a(1), a(2));
     }
-    getAGXLinkBody()->createGeometry(gdesc);
+    //getAGXLinkBody()->createGeometry(gdesc);
+    return AGXObjectFactory::createGeometry(gdesc);
 }
 
 void AGXLink::createAGXShape()
@@ -198,7 +215,9 @@ void AGXLink::createAGXShape()
         // if vertices have values, it will be trimesh 
         if(!td.vertices.empty()){
             //td.name = extractor->currentMesh()->name().c_str();
-            getAGXLinkBody()->createShape(td, agx::AffineMatrix4x4());
+            //getAGXLinkBody()->createShape(td, agx::AffineMatrix4x4());
+            agxCollide::ShapeRef trimesh = AGXObjectFactory::createShape(td);
+            getAGXGeometry()->add(trimesh, agx::AffineMatrix4x4());
         //    std::cout << orgLink->name() << std::endl;
         //    std::cout << td.vertices.size() << std::endl;
         //    for(int i = 0; i < td.vertices.size(); ++i){
@@ -262,45 +281,51 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     T_(0,3), T_(1,3), T_(2,3), 1.0);
 
             bool created = false;
+            agxCollide::ShapeRef shape = nullptr;
             switch(mesh->primitiveType()){
-            case SgMesh::BOX : {
-                const Vector3& s = mesh->primitive<SgMesh::Box>().size / 2.0;
-                AGXBoxDesc bd;
-                bd.halfExtents = agx::Vec3( s.x()*scale.x(), s.y()*scale.y(), s.z()*scale.z());
-                getAGXLinkBody()->createShape(bd, af);
-                created = true;
-                break;
+                case SgMesh::BOX : {
+                    const Vector3 s = mesh->primitive<SgMesh::Box>().size / 2.0;
+                    AGXBoxDesc bd;
+                    bd.halfExtents = agx::Vec3( s.x()*scale.x(), s.y()*scale.y(), s.z()*scale.z());
+                    //getAGXLinkBody()->createShape(bd, af);
+                    shape = AGXObjectFactory::createShape(bd);
+                    created = true;
+                    break;
+                }
+                case SgMesh::SPHERE : {
+                    SgMesh::Sphere sphere = mesh->primitive<SgMesh::Sphere>();
+                    AGXSphereDesc sd;
+                    sd.radius = sphere.radius * scale.x();
+                    //getAGXLinkBody()->createShape(sd, af);
+                    shape = AGXObjectFactory::createShape(sd);
+                    created = true;
+                    break;
+                }
+                //case SgMesh::CAPSULE : {
+                //    //SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
+                //    AGXCapsuleDesc cd;
+                //    //cd.radius = capsule.radius * scale.x();
+                //    //cd .hegiht =  capsule.height * scale.y();
+                //    //getAGXLinkBody()->createShape(cd, af);
+                //    shape = AGXObjectFactory::createShape(cd);
+                //    created = true;
+                //    break;
+                //}
+                case SgMesh::CYLINDER : {
+                    SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
+                    AGXCylinderDesc cd;
+                    cd.radius = cylinder.radius * scale.x();
+                    cd .hegiht =  cylinder.height * scale.y();
+                    //getAGXLinkBody()->createShape(cd, af);
+                    shape = AGXObjectFactory::createShape(cd);
+                    created = true;
+                    break;
+                }
+                default :
+                    break;
             }
-            case SgMesh::SPHERE : {
-                SgMesh::Sphere sphere = mesh->primitive<SgMesh::Sphere>();
-                AGXSphereDesc sd;
-                sd.radius = sphere.radius * scale.x();
-                getAGXLinkBody()->createShape(sd, af);
-                created = true;
-                break;
-            }
-            //case SgMesh::CAPSULE : {
-            //    //SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-            //    AGXCapsuleDesc cd;
-            //    //cd.radius = capsule.radius * scale.x();
-            //    //cd .hegiht =  capsule.height * scale.y();
-            //    getAGXLinkBody()->createShape(cd, af);
-            //    created = true;
-            //    break;
-            //}
-            case SgMesh::CYLINDER : {
-                SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-                AGXCylinderDesc cd;
-                cd.radius = cylinder.radius * scale.x();
-                cd .hegiht =  cylinder.height * scale.y();
-                getAGXLinkBody()->createShape(cd, af);
-                created = true;
-                break;
-            }
-            default :
-                break;
-            }
-            if(created){
+            if(shape){
+                getAGXGeometry()->add(shape, af);
                 meshAdded = true;
             }
         }
@@ -325,11 +350,12 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
     }
 }
 
-void AGXLink::createAGXConstraints()
+agx::ConstraintRef AGXLink::createAGXConstraint()
 {
     AGXLinkPtr agxParentLink = getAGXParentLink();
-    if(!agxParentLink) return;
+    if(!agxParentLink) return nullptr;
     LinkPtr orgLink = getOrgLink();
+    agx::ConstraintRef constraint;
     switch(orgLink->jointType()){
         case Link::REVOLUTE_JOINT :{
             AGXHingeDesc desc;
@@ -340,7 +366,8 @@ void AGXLink::createAGXConstraints()
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
             if(getJointControlMode() != ControlMode::NONE) desc.isMotorOn = true;
-            getAGXLinkBody()->createConstraint(desc);
+            //getAGXLinkBody()->createConstraint(desc);
+            constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
         case Link::PRISMATIC_JOINT :{
@@ -352,7 +379,8 @@ void AGXLink::createAGXConstraints()
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
             if(getJointControlMode() != ControlMode::NONE) desc.isMotorOn = true;
-            getAGXLinkBody()->createConstraint(desc);
+            //getAGXLinkBody()->createConstraint(desc);
+            constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
         case Link::FIXED_JOINT :
@@ -360,13 +388,15 @@ void AGXLink::createAGXConstraints()
             AGXLockJointDesc desc;
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            getAGXLinkBody()->createConstraint(desc);
+            //getAGXLinkBody()->createConstraint(desc);
+            constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
         case Link::FREE_JOINT :
         default:
             break;
     }
+    return constraint;
 }
 
 Vector3 AGXLink::getOrigin() const
@@ -500,39 +530,71 @@ void AGXBody::createBody()
 {
     initialize();
 
+    // Create AGXLink following child.
+    new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
+    setLinkStateToAGX();
+    setExtraJoints();
+}
+
+void AGXBody::createBodyClosedLoop()
+{
+    initialize();
+
     // Create empty AGXLink
     new AGXLink(body()->rootLink(), nullptr, Vector3::Zero(), this);
-    //for(int i = 0; i < body()->numLinks(); ++i){
-    //    AGXLinkPtr agxLink = new AGXLink(body()->link(i));
-    //    agxLinks.push_back(agxLink);
-    //}
-
-    ////agxLinks[body()->rootLink()->index()]->setParentLink
-
-    //// Set parent link to each AGXLink
-    //for(int i = 0; i < body()->numLinks(); ++i){
-    //    LinkPtr parent = body()->link(i)->parent();
-    //    if(parent){
-    //        agxLinks[i]->setParentLink(agxLinks[parent->index()]);
-    //    }
-    //}
 
     // Create rigidbody and geometry of AGX
     for(int i = 0; i < body()->numLinks(); ++i){
-        agxLinks[i]->createLinkBody();
-
-        //// Set parent link to each AGXLink
-        //LinkPtr parent = body()->link(i)->parent();
-        //if(parent){
-        //    agxLinks[i]->setParentLink(agxLinks[parent->index()]);
-        //}
+        //agxLinks[i]->createLinkBody();
+        agxLinks[i]->constructAGXLink();
     }
     // Create constraints
     for(int i = 0; i < body()->numLinks(); ++i){
-        agxLinks[i]->createConstraints();
+        agxLinks[i]->createAGXConstraint();
     }
 
     setLinkStateToAGX();
+    setExtraJoints();
+}
+
+
+void AGXBody::setExtraJoints()
+{
+    BodyPtr body = this->body();
+    const int n = body->numExtraJoints();
+    for(int j=0; j < n; ++j){
+        ExtraJoint& extraJoint = body->extraJoint(j);
+
+        AGXLinkPtr agxLinkPair[2];
+        agxLinkPair[0] = agxLinks[extraJoint.link[0]->index()];
+        agxLinkPair[1] = agxLinks[extraJoint.link[1]->index()];
+        if(!agxLinkPair[0] || !agxLinkPair[1]) continue;
+
+        Link* link = extraJoint.link[0];
+        Vector3 p = link->attitude() * extraJoint.point[0] + link->p();
+        Vector3 a = link->attitude() * extraJoint.axis;
+        agx::ConstraintRef constraint;
+        switch (extraJoint.type){
+            case ExtraJoint::EJ_PISTON :{
+                AGXHingeDesc hd;
+                hd.frameAxis   = agx::Vec3( a(0), a(1), a(2));
+                hd.frameCenter = agx::Vec3( p(0), p(1), p(2));
+                hd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
+                hd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody();
+                constraint = AGXObjectFactory::createConstraint(hd);
+            }
+            case  ExtraJoint::EJ_BALL :{
+                AGXBallJointDesc bd;
+                bd.framePoint = agx::Vec3( p(0), p(1), p(2));
+                bd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
+                bd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody(); 
+                constraint = AGXObjectFactory::createConstraint(bd);
+            }
+            default:
+                break;
+        }
+        addAGXExtraConstraint(constraint);
+    }
 }
 
 void AGXBody::setCollision(bool bOn)
@@ -582,9 +644,16 @@ agx::ConstraintRef AGXBody::getAGXConstraint(int index)
     return agxLinks[index]->getAGXConstraint();
 }
 
+
+agx::ConstraintRef AGXBody::getAGXExtraConstraint(int index)
+{
+    return _agxExtraConstraints[index];
+}
+
 void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef mat)
 {
-    agxLinks[index]->getAGXLinkBody()->getGeometry()->setMaterial(mat);
+    //agxLinks[index]->getAGXLinkBody()->getGeometry()->setMaterial(mat);
+    agxLinks[index]->getAGXGeometry()->setMaterial(mat);
 }
 
 int AGXBody::getNumLinks() const
@@ -595,6 +664,11 @@ int AGXBody::getNumLinks() const
 void AGXBody::addAGXLink(AGXLinkPtr const agxLink)
 {
     agxLinks.push_back(agxLink);
+}
+
+void AGXBody::addAGXExtraConstraint(agx::ConstraintRef constraint)
+{
+    _agxExtraConstraints.push_back(constraint);
 }
 
 

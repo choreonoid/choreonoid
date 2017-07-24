@@ -28,11 +28,13 @@ public:
     AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
     void setParentLink(const AGXLinkPtr link);
     int getIndex() const;
-    AGXLinkBodyRef getAGXLinkBody();
+    //AGXLinkBodyRef getAGXLinkBody();
     agx::RigidBodyRef  getAGXRigidBody();
+     agxCollide::GeometryRef getAGXGeometry();
     agx::ConstraintRef getAGXConstraint();
-    void createLinkBody();
-    void createConstraints();
+    //void createLinkBody();
+    void constructAGXLink();
+    agx::ConstraintRef createAGXConstraint();
     void setCollision(const bool bOn);
     void setControlInputToAGX();
     void setTorqueToAGX();
@@ -46,13 +48,16 @@ private:
     Vector3 _origin;
     LinkPtr _orgLink;
     AGXLinkPtr _agxParentLink;
-    AGXLinkBodyRef _agxLinkBody;
+    //AGXLinkBodyRef _agxLinkBody;
+    agx::RigidBodyRef _rigid;
+    agxCollide::GeometryRef _geometry;
+    agx::ConstraintRef _constraint;
     ControlMode _controlMode;
-    void createAGXRigidBody();
-    void createAGXGeometry();
+    agx::RigidBodyRef createAGXRigidBody();
+
+    agxCollide::GeometryRef createAGXGeometry();
     void createAGXShape();
     void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
-    void createAGXConstraints();
     Vector3 getOrigin() const;
     LinkPtr getOrgLink() const;
     AGXLinkPtr getAGXParentLink() const;
@@ -64,6 +69,8 @@ public:
     AGXBody(Body& orgBody);
     void initialize();
     void createBody();
+    void createBodyClosedLoop();
+    void setExtraJoints();
     void setCollision(bool bOn);
     void setTorqueToAGX();
     void setControlInputToAGX();
@@ -71,11 +78,14 @@ public:
     void setLinkStateToCnoid();
     agx::RigidBodyRef getAGXRigidBody(int index);
     agx::ConstraintRef getAGXConstraint(int index);
+    agx::ConstraintRef getAGXExtraConstraint(int index);
     void setAGXMaterial(const int& index, const agx::MaterialRef mat);
     int getNumLinks() const;
     void addAGXLink(AGXLinkPtr const agxLink);
 private:
     AGXLinkPtrs agxLinks;
+    std::vector<agx::ConstraintRef> _agxExtraConstraints;
+    void addAGXExtraConstraint(agx::ConstraintRef constraint);
 };
 
 
