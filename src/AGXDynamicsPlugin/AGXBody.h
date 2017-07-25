@@ -2,7 +2,7 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_BODY_H
 
 #include <cnoid/SimulatorItem>
-#include "AGXLinkBody.h"
+#include "AGXObjectFactory.h"
 #include <cnoid/BodyItem>
 #include <cnoid/MeshExtractor>
 
@@ -26,41 +26,38 @@ public:
     };
     AGXLink(const LinkPtr link);
     AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
-    void setParentLink(const AGXLinkPtr link);
-    int getIndex() const;
-    //AGXLinkBodyRef getAGXLinkBody();
-    agx::RigidBodyRef  getAGXRigidBody();
-     agxCollide::GeometryRef getAGXGeometry();
-    agx::ConstraintRef getAGXConstraint();
-    //void createLinkBody();
     void constructAGXLink();
-    agx::ConstraintRef createAGXConstraint();
-    void setCollision(const bool bOn);
+    void setCollision(const bool& bOn);
     void setControlInputToAGX();
-    void setTorqueToAGX();
-    void setVelocityToAGX();
-    void setPositionToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
     void setJointControlMode(const ControlMode& mode);
+    int getIndex() const;
+    agx::RigidBodyRef       getAGXRigidBody() const;
+    agxCollide::GeometryRef getAGXGeometry() const;
+    agx::ConstraintRef      getAGXConstraint() const;
     AGXLink::ControlMode getJointControlMode() const;
-private:
-    Vector3 _origin;
-    LinkPtr _orgLink;
-    AGXLinkPtr _agxParentLink;
-    //AGXLinkBodyRef _agxLinkBody;
-    agx::RigidBodyRef _rigid;
-    agxCollide::GeometryRef _geometry;
-    agx::ConstraintRef _constraint;
-    ControlMode _controlMode;
-    agx::RigidBodyRef createAGXRigidBody();
 
+private:
+    LinkPtr     _orgLink;
+    AGXLinkPtr  _agxParentLink;
+    Vector3     _origin;
+    agx::RigidBodyRef       _rigid;
+    agxCollide::GeometryRef _geometry;
+    agx::ConstraintRef      _constraint;
+    ControlMode             _controlMode;
+
+    LinkPtr    getOrgLink() const;
+    AGXLinkPtr getAGXParentLink() const;
+    Vector3    getOrigin() const;
+    agx::RigidBodyRef       createAGXRigidBody();
     agxCollide::GeometryRef createAGXGeometry();
     void createAGXShape();
     void detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td);
-    Vector3 getOrigin() const;
-    LinkPtr getOrgLink() const;
-    AGXLinkPtr getAGXParentLink() const;
+    agx::ConstraintRef createAGXConstraint();
+    void setTorqueToAGX();
+    void setVelocityToAGX();
+    void setPositionToAGX();
 };
 
 class AGXBody :  public SimulationBody
@@ -71,19 +68,20 @@ public:
     void createBody();
     void createBodyClosedLoop();
     void setExtraJoints();
-    void setCollision(bool bOn);
-    void setTorqueToAGX();
+    void setCollision(const bool& bOn);
+    void setAGXMaterial(const int& index, const agx::MaterialRef& mat);
     void setControlInputToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
-    agx::RigidBodyRef getAGXRigidBody(int index);
-    agx::ConstraintRef getAGXConstraint(int index);
-    agx::ConstraintRef getAGXExtraConstraint(int index);
-    void setAGXMaterial(const int& index, const agx::MaterialRef mat);
-    int getNumLinks() const;
+    int  numAGXLinks() const;
     void addAGXLink(AGXLinkPtr const agxLink);
+    AGXLinkPtr getAGXLink(const int& index) const;
+    agx::RigidBodyRef  getAGXRigidBody(const int& index) const;
+    agx::ConstraintRef getAGXConstraint(const int& index) const;
+    int numAGXExtraConstraints() const;
+    agx::ConstraintRef getAGXExtraConstraint(const int& index) const;
 private:
-    AGXLinkPtrs agxLinks;
+    AGXLinkPtrs _agxLinks;
     std::vector<agx::ConstraintRef> _agxExtraConstraints;
     void addAGXExtraConstraint(agx::ConstraintRef constraint);
 };

@@ -52,41 +52,38 @@ SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     cout << "initializeSimulation" << endl;
-    if(agxScene) agxScene->clearAGXScene();
-    agxScene = AGXScene::create();
-    agxScene->clearAGXScene();
-    AGXSimulationDesc sd;
-    sd.timeStep = self->worldTimeStep();
-    agxScene->createAGXSimulation(sd);
+    if(agxScene) delete agxScene;
+    AGXSceneDesc sd;
+    sd.simdesc.timeStep = self->worldTimeStep();
+    agxScene = AGXScene::create(sd);
 
-    // temporary code. will read material from choreonoid
+    /* temporary code. will read material from choreonoid */
     // Create AGX material
     AGXMaterialDesc m_def;
-    agxScene->createAGXMaterial(m_def);
+    agxScene->createMaterial(m_def);
+
     // Create AGX contact material
     AGXContactMaterialDesc cm_def;
-    cm_def.nameA = m_def.name;
-    cm_def.nameB = m_def.name;
     cm_def.friction = 1.0;
     cm_def.frictionModelType = AGXFrictionModelType::DEFAULT;
     cm_def.solveType = agx::FrictionModel::SolveType::DIRECT_AND_ITERATIVE;
-    agxScene->createAGXContactMaterial(cm_def);
-    // end temporary
+    agxScene->createContactMaterial(cm_def);
+    /* end temporary */
 
     for(size_t i=0; i < simBodies.size(); ++i){
         // Create rigidbody, geometry, constraints
         AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
         body->createBody();
-        for(int j = 0; j < body->getNumLinks(); ++j){
+        for(int j = 0; j < body->numAGXLinks(); ++j){
             // Add AGXRigidbody and constraint to AGX simulation
-            agxScene->getAGXSimulation()->add(body->getAGXRigidBody(j));
-            agxScene->getAGXSimulation()->add(body->getAGXConstraint(j));
+            agxScene->add(body->getAGXRigidBody(j));
+            agxScene->add(body->getAGXConstraint(j));
             // Set Material
-            body->setAGXMaterial(j, agxScene->getAGXMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
+            body->setAGXMaterial(j, agxScene->getMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
         }
         // Add ExtraJoints to AGX simulation
-        for(int j = 0; j < body->body()->numExtraJoints(); ++j){
-            agxScene->getAGXSimulation()->add(body->getAGXExtraConstraint(j));
+        for(int j = 0; j < body->numAGXExtraConstraints(); ++j){
+            agxScene->add(body->getAGXExtraConstraint(j));
         }
         // Set self collision
         if(!body->bodyItem()->isSelfCollisionDetectionEnabled()){
@@ -109,7 +106,6 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
         agxBody->setControlInputToAGX();
-        //agxBody->setTorqueToAGX();
 
         //if(!agxBody->sensorHelper.forceSensors().empty()){
         //    agxBody->updateForceSensors();
@@ -119,7 +115,7 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         //}
     }
 
-    agxScene->stepAGXSimulation();
+    agxScene->stepSimulation();
 
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);

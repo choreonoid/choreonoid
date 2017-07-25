@@ -1,112 +1,81 @@
 #include "AGXScene.h"
-#include <agx/Thread.h>
-#include <agxIO/ReaderWriter.h>
 
 namespace cnoid{
 
-AGXScene::AGXScene(){}
-
-AGXScene* AGXScene::create()
+AGXScene::AGXScene(const AGXSceneDesc& desc)
 {
-    return new AGXScene();
+    _agxSimulation = AGXObjectFactory::createSimulation(desc.simdesc);
 }
 
-void AGXScene::clearAGXScene()
-{ 
-    if(agxSimulation) agxSimulation->cleanup(agxSDK::Simulation::CLEANUP_ALL);
+AGXSceneRef AGXScene::create(const AGXSceneDesc& desc)
+{
+    return new AGXScene(desc);
 }
 
-void AGXScene::stepAGXSimulation()
+void AGXScene::clear(){
+    agxSDK::SimulationRef sim = getSimulation();
+    if(sim) sim->cleanup(agxSDK::Simulation::CLEANUP_ALL);
+}
+
+void AGXScene::stepSimulation()
 {
     agx::Thread::makeCurrentThreadMainThread();
-    agxSimulation->stepForward();
+    getSimulation()->stepForward();
 }
 
-agxSDK::SimulationRef AGXScene::createAGXSimulation(const AGXSimulationDesc& desc)
+agx::Bool AGXScene::add(agx::RigidBodyRef const rigid)
 {
-    if(agxSimulation) return agxSimulation;
-    agxSimulation = new agxSDK::Simulation();
-    agxSimulation->setTimeStep(desc.timeStep);
-    return agxSimulation;
+    return getSimulation()->add(rigid);
 }
 
-agxSDK::SimulationRef AGXScene::getAGXSimulation()
+agx::Bool AGXScene::add(agx::ConstraintRef const constraint)
 {
-    return agxSimulation;
+    return getSimulation()->add(constraint);
 }
 
-void AGXScene::createAGXMaterial(const AGXMaterialDesc& desc)
+agx::MaterialRef AGXScene::getMaterial(const agx::String & materialName)
 {
-    agx::MaterialRef m = new agx::Material(desc.name);
-    m->getBulkMaterial()->setDensity(desc.density);
-    m->getBulkMaterial()->setYoungsModulus(desc.youngsModulus);
-    m->getBulkMaterial()->setPoissonsRatio(desc.poissonRatio);
-
-    // Below are overried when ContactMaterials are used.
-    m->getBulkMaterial()->setViscosity(desc.viscosity);
-    m->getBulkMaterial()->setDamping(desc.damping);
-    m->getSurfaceMaterial()->setRoughness(desc.roughness);
-    m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
-    m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-
-    agxSimulation->getMaterialManager()->add(m);
+    return getSimulation()->getMaterial(materialName);
 }
 
-agx::MaterialRef AGXScene::getAGXMaterial(const agx::String& materialName)
+agx::MaterialRef AGXScene::createMaterial(const AGXMaterialDesc& desc)
 {
-    return getAGXSimulation()->getMaterialManager()->getMaterial(materialName);
+    agx::MaterialRef mat = AGXObjectFactory::createMaterial(desc);
+    getSimulation()->add(mat);
+    return mat;
 }
 
-void AGXScene::createAGXContactMaterial(const AGXContactMaterialDesc& desc)
+agx::ContactMaterialRef AGXScene::createContactmaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc & desc)
 {
-    agxSDK::MaterialManagerRef mgr = agxSimulation->getMaterialManager();
-    agx::MaterialRef mA = mgr->getMaterial(desc.nameA);
-    agx::MaterialRef mB = mgr->getMaterial(desc.nameB);
-    agx::ContactMaterialRef cm = mgr->getOrCreateContactMaterial(mA, mB);
-    cm->setYoungsModulus(desc.youngsModulus);
-    cm->setRestitution(desc.restitution);
-    cm->setDamping(desc.damping);
-    cm->setFrictionCoefficient(desc.friction);
-    cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
-    cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
-
-    // Create friction model
-    if(desc.frictionModelType == AGXFrictionModelType::DEFAULT) return;
-    agx::FrictionModelRef fm;
-    switch (desc.frictionModelType){
-        case AGXFrictionModelType::BOX :
-            fm = new agx::BoxFrictionModel();
-            break;
-        case AGXFrictionModelType::SCALE_BOX :
-            fm = new agx::ScaleBoxFrictionModel();
-            break;
-        case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
-            fm = new agx::IterativeProjectedConeFriction();
-            break;
-        case AGXFrictionModelType::DEFAULT:
-        default:
-            return;
-            break;
-    }
-    fm->setSolveType(desc.solveType);
-    cm->setFrictionModel(fm);
+    agx::ContactMaterialRef cm = AGXObjectFactory::createContactMaterial(matA, matB, desc);
+    getSimulation()->add(cm);
+    return cm;
 }
 
-
-bool AGXScene::saveSceneToAGXFile()
+agx::ContactMaterialRef AGXScene::createContactMaterial(const AGXContactMaterialDesc &desc)
 {
-    if(!agxIO::writeFile("simulation.agx", agxSimulation)) return false;
-    return true;
+    return AGXObjectFactory::createContactMaterial(desc, getSimulation()->getMaterialManager());
 }
 
 void AGXScene::setCollisionPair(const unsigned & id1, const unsigned & id2, bool bOn)
 {
-    agxSimulation->getSpace()->setEnablePair(id1, id2, bOn);
+    getSimulation()->getSpace()->setEnablePair(id1, id2, bOn);
 }
 
 void AGXScene::setCollisionPair(const agx::Name & name1, const agx::Name & name2, bool bOn)
 {
-    agxSimulation->getSpace()->setEnablePair(name1, name2, bOn);
+    getSimulation()->getSpace()->setEnablePair(name1, name2, bOn);
+}
+
+bool AGXScene::saveSceneToAGXFile()
+{
+    if(!agxIO::writeFile("simulation.agx", getSimulation())) return false;
+    return true;
+}
+
+agxSDK::SimulationRef AGXScene::getSimulation() const
+{
+    return _agxSimulation;
 }
 
 }

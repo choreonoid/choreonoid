@@ -1,6 +1,15 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_INCLUDE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_INCLUDE_H
 
+// Simulation
+#include <agxSDK/Simulation.h>
+
+// Threads
+#include <agx/Thread.h>
+
+// IO
+#include <agxIO/ReaderWriter.h>
+
 // Collide
 #include <agxCollide/Box.h>
 #include <agxCollide/Sphere.h>

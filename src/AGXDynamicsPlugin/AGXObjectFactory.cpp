@@ -4,26 +4,67 @@ namespace cnoid{
 
     ////////////////////////////////////////////////////////////
 // AGXPseudoContinuousTrackGeometry
-void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& a)
+void AGXPseudoContinuousTrackGeometry::setAxis(const agx::Vec3f& axis)
 {
-    axis = a;
+    _axis = axis;
 }
 
-agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis()
+agx::Vec3f AGXPseudoContinuousTrackGeometry::getAxis() const
 {
-    return axis;
+    return _axis;
 }
 
 agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxCollide::LocalContactPoint & point, size_t index) const
 {
-    agx::Vec3f dir = axis ^ point.normal();
+    agx::Vec3f dir = getAxis() ^ point.normal();
     dir.normalize();
-    agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
+    const agx::Vec3f ret = dir * -1.0 * getSurfaceVelocity().x();
     return ret;
 }
 
 ////////////////////////////////////////////////////////////
 // AGXObjectFactory
+
+agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc & desc)
+{
+    agxSDK::SimulationRef sim = new agxSDK::Simulation();
+    sim->setTimeStep(desc.timeStep);
+    return sim;
+}
+
+agx::MaterialRef AGXObjectFactory::createMaterial(const AGXMaterialDesc & desc)
+{
+    agx::MaterialRef m = new agx::Material(desc.name);
+    m->getBulkMaterial()->setDensity(desc.density);
+    m->getBulkMaterial()->setYoungsModulus(desc.youngsModulus);
+    m->getBulkMaterial()->setPoissonsRatio(desc.poissonRatio);
+
+    // Below are overried when ContactMaterials are used.
+    m->getBulkMaterial()->setViscosity(desc.viscosity);
+    m->getBulkMaterial()->setDamping(desc.damping);
+    m->getSurfaceMaterial()->setRoughness(desc.roughness);
+    m->getSurfaceMaterial()->setViscosity(desc.surfaceViscosity);
+    m->getSurfaceMaterial()->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
+    return m;
+}
+
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc)
+{
+    agx::ContactMaterialRef cm = new agx::ContactMaterial(matA, matB);
+    setContactMaterialParam(cm, desc);
+    return cm;
+}
+
+agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr)
+{
+    if(!mgr) return false;
+    agx::MaterialRef mA = mgr->getMaterial(desc.nameA);
+    agx::MaterialRef mB = mgr->getMaterial(desc.nameB);
+    agx::ContactMaterialRef cm = mgr->getOrCreateContactMaterial(mA, mB);
+    if(!cm) return false;
+    setContactMaterialParam(cm, desc);
+    return cm;
+}
 
 agx::RigidBodyRef AGXObjectFactory::createRigidBody(const AGXRigidBodyDesc& desc)
 {
@@ -76,20 +117,54 @@ agxCollide::ShapeRef AGXObjectFactory::createShape(const AGXShapeDesc& desc)
 
 agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& desc)
 {
+    agx::ConstraintRef constraint = nullptr;
     switch(desc.constraintType){
         case AGXConstraintType::AGXHINGE :
-            return createConstraintHinge(static_cast<const AGXHingeDesc&>(desc));
+            constraint = createConstraintHinge(static_cast<const AGXHingeDesc&>(desc));
             break;
         case AGXConstraintType::AGXLOCKJOINT :
-            return createConstraintLockJoint(static_cast<const AGXLockJointDesc&>(desc));
+            constraint = createConstraintLockJoint(static_cast<const AGXLockJointDesc&>(desc));
             break;
         case AGXConstraintType::AGXBALLJOINT :
-            return createConstraintBallJoint(static_cast<const AGXBallJointDesc&>(desc));
+            constraint = createConstraintBallJoint(static_cast<const AGXBallJointDesc&>(desc));
             break;
         default :
             break;
     }
-    return nullptr;
+    return constraint;
+}
+
+agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc & desc)
+{
+    if(!cm) return false;
+    cm->setYoungsModulus(desc.youngsModulus);
+    cm->setRestitution(desc.restitution);
+    cm->setDamping(desc.damping);
+    cm->setFrictionCoefficient(desc.friction);
+    cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
+    cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
+
+    // Create friction model
+    if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
+        agx::FrictionModelRef fm = nullptr;
+        switch (desc.frictionModelType){
+            case AGXFrictionModelType::BOX :
+                fm = new agx::BoxFrictionModel();
+                break;
+            case AGXFrictionModelType::SCALE_BOX :
+                fm = new agx::ScaleBoxFrictionModel();
+                break;
+            case AGXFrictionModelType::ITERATIVE_PROJECTED_CONE :
+                fm = new agx::IterativeProjectedConeFriction();
+                break;
+            case AGXFrictionModelType::DEFAULT:
+            default:
+                break;
+        }
+        fm->setSolveType(desc.solveType);
+        cm->setFrictionModel(fm);
+    }
+    return true;
 }
 
 agxCollide::BoxRef AGXObjectFactory::createShapeBox(const AGXBoxDesc& desc)
