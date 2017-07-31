@@ -52,7 +52,6 @@ SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     cout << "initializeSimulation" << endl;
-    if(agxScene) delete agxScene;
     AGXSceneDesc sd;
     sd.simdesc.timeStep = self->worldTimeStep();
     agxScene = AGXScene::create(sd);
@@ -87,7 +86,8 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         }
         // Set self collision
         if(!body->bodyItem()->isSelfCollisionDetectionEnabled()){
-            agxScene->setCollisionPair(body->bodyItem()->name(), body->bodyItem()->name(), false); 
+            const std::string& scgname = body->getSelfCollisionGroupName();
+            agxScene->setCollisionPair(scgname, scgname, false); 
         }
         // Set external collision
         if(!body->bodyItem()->isCollisionDetectionEnabled()){

@@ -36,7 +36,8 @@ public:
     agx::RigidBodyRef       getAGXRigidBody() const;
     agxCollide::GeometryRef getAGXGeometry() const;
     agx::ConstraintRef      getAGXConstraint() const;
-    AGXLink::ControlMode getJointControlMode() const;
+    AGXLink::ControlMode    getJointControlMode() const;
+    std::string             getSelfCollisionGroupName() const;
 
 private:
     LinkPtr     _orgLink;
@@ -46,6 +47,7 @@ private:
     agxCollide::GeometryRef _geometry;
     agx::ConstraintRef      _constraint;
     ControlMode             _controlMode;
+    std::string             _selfCollisionGroupName;
 
     LinkPtr    getOrgLink() const;
     AGXLinkPtr getAGXParentLink() const;
@@ -68,6 +70,7 @@ public:
     void createBody();
     void createBodyClosedLoop();
     void setExtraJoints();
+    std::string getSelfCollisionGroupName() const;
     void setCollision(const bool& bOn);
     void setAGXMaterial(const int& index, const agx::MaterialRef& mat);
     void setControlInputToAGX();
@@ -76,14 +79,20 @@ public:
     int  numAGXLinks() const;
     void addAGXLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getAGXLink(const int& index) const;
+    int numControllableLinks() const;
+    void addControllableLink(AGXLinkPtr const agxLink);
+    AGXLinkPtr getControllableLink(const int& index) const;
     agx::RigidBodyRef  getAGXRigidBody(const int& index) const;
     agx::ConstraintRef getAGXConstraint(const int& index) const;
     int numAGXExtraConstraints() const;
     agx::ConstraintRef getAGXExtraConstraint(const int& index) const;
 private:
+    std::string _selfCollisionGroupName;
     AGXLinkPtrs _agxLinks;
+    AGXLinkPtrs _controllableLinks;
     std::vector<agx::ConstraintRef> _agxExtraConstraints;
     void addAGXExtraConstraint(agx::ConstraintRef constraint);
+    static unsigned int generateUID();
 };
 
 

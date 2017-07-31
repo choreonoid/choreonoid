@@ -16,6 +16,8 @@ AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& par
     _origin = parentOrigin + getOrgLink()->b();
     _controlMode = ControlMode::VELOCITY;
     //_controlMode = ControlMode::NONE;
+    if(parent && _controlMode != ControlMode::NONE) agxBody->addControllableLink(this);
+    _selfCollisionGroupName = agxBody->getSelfCollisionGroupName();
     constructAGXLink();
     for(Link* child = link->child(); child; child = child->sibling()){
         new AGXLink(child, this, getOrigin(), agxBody);
@@ -158,6 +160,11 @@ AGXLink::ControlMode AGXLink::getJointControlMode() const
     return _controlMode;
 }
 
+std::string AGXLink::getSelfCollisionGroupName() const
+{
+    return _selfCollisionGroupName;
+}
+
 LinkPtr AGXLink::getOrgLink() const
 {
     return _orgLink;
@@ -208,7 +215,7 @@ agxCollide::GeometryRef AGXLink::createAGXGeometry()
 {
     LinkPtr const orgLink = getOrgLink();
     AGXGeometryDesc gdesc;
-    gdesc.selfCollsionGroupName = orgLink->body()->name();
+    gdesc.selfCollsionGroupName = getSelfCollisionGroupName();
     if(orgLink->jointType() == Link::PSEUDO_CONTINUOUS_TRACK){
         gdesc.isPseudoContinuousTrack = true;
         const Vector3& a = orgLink->a();
@@ -491,7 +498,12 @@ void AGXBody::initialize()
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
     _agxLinks.clear();
+    _controllableLinks.clear();
     _agxExtraConstraints.clear();
+    std::stringstream ss;
+    ss.str("");
+    ss << body->name() << generateUID() << std::flush;
+    _selfCollisionGroupName = ss.str();
 
     return;
 }
@@ -564,6 +576,11 @@ void AGXBody::setExtraJoints()
     }
 }
 
+std::string AGXBody::getSelfCollisionGroupName() const
+{
+    return _selfCollisionGroupName;
+}
+
 void AGXBody::setCollision(const bool& bOn)
 {
     for(int i = 0; i < numAGXLinks(); ++i){
@@ -578,10 +595,13 @@ void AGXBody::setAGXMaterial(const int & index, const agx::MaterialRef& mat)
 
 void AGXBody::setControlInputToAGX()
 {
-    // Skip the root link
-    for(int i = 1; i < numAGXLinks(); ++i){
-        getAGXLink(i)->setControlInputToAGX();
+    for(int i = 0; i < numControllableLinks(); ++i){
+        getControllableLink(i)->setControlInputToAGX();
     }
+    //// Skip the root link
+    //for(int i = 1; i < numAGXLinks(); ++i){
+    //    getAGXLink(i)->setControlInputToAGX();
+    //}
 }
 
 void AGXBody::setLinkStateToAGX()
@@ -613,6 +633,21 @@ AGXLinkPtr AGXBody::getAGXLink(const int& index) const
     return _agxLinks[index];
 }
 
+int AGXBody::numControllableLinks() const
+{
+    return _controllableLinks.size();
+}
+
+void AGXBody::addControllableLink(AGXLinkPtr const agxLink)
+{
+    _controllableLinks.push_back(agxLink);
+}
+
+AGXLinkPtr AGXBody::getControllableLink(const int & index) const
+{
+    return _controllableLinks[index];
+}
+
 agx::RigidBodyRef AGXBody::getAGXRigidBody(const int& index) const
 {
     return getAGXLink(index)->getAGXRigidBody();
@@ -638,5 +673,11 @@ void AGXBody::addAGXExtraConstraint(agx::ConstraintRef constraint)
     _agxExtraConstraints.push_back(constraint);
 }
 
+unsigned int AGXBody::generateUID()
+{
+    static unsigned int i = 0;
+    i++;
+    return i;
+}
 
 }
