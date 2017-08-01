@@ -502,7 +502,7 @@ void AGXBody::initialize()
     _agxExtraConstraints.clear();
     std::stringstream ss;
     ss.str("");
-    ss << body->name() << generateUID() << std::flush;
+    ss << "SelfCollision" << generateUID() << body->name() << std::flush;
     _selfCollisionGroupName = ss.str();
 
     return;

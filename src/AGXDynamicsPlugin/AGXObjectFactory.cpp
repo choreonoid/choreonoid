@@ -57,11 +57,11 @@ agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(agx::MaterialRef
 
 agx::ContactMaterialRef AGXObjectFactory::createContactMaterial(const AGXContactMaterialDesc& desc, agxSDK::MaterialManagerRef const mgr)
 {
-    if(!mgr) return false;
+    if(!mgr) return nullptr;
     agx::MaterialRef mA = mgr->getMaterial(desc.nameA);
     agx::MaterialRef mB = mgr->getMaterial(desc.nameB);
     agx::ContactMaterialRef cm = mgr->getOrCreateContactMaterial(mA, mB);
-    if(!cm) return false;
+    if(!cm) return nullptr;
     setContactMaterialParam(cm, desc);
     return cm;
 }
