@@ -135,6 +135,9 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
         case AGXConstraintType::AGXHINGE :
             constraint = createConstraintHinge(static_cast<const AGXHingeDesc&>(desc));
             break;
+        case AGXConstraintType::AGXPRISMATIC :
+            constraint = createConstraintPrismatic(static_cast<const AGXPrismaticDesc&>(desc));
+            break;
         case AGXConstraintType::AGXLOCKJOINT :
             constraint = createConstraintLockJoint(static_cast<const AGXLockJointDesc&>(desc));
             break;
