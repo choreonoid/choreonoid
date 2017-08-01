@@ -193,7 +193,7 @@ public:
     }
 
     /**
-       @note obsolete.
+       @note deprecated
     */
     SignalProxy<void()> sigDetachedFromRoot() {
         return sigDetachedFromRoot_;
@@ -211,11 +211,6 @@ public:
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
-
-    Referenced* customData(int id);
-    const Referenced* customData(int id) const;
-    void setCustomData(int id, ReferencedPtr data);
-    void clearCustomData(int id);
 
     static SignalProxy<void(const char* type_info_name)> sigClassUnregistered() {
         return sigClassUnregistered_;
@@ -249,9 +244,6 @@ private:
 
     std::bitset<NUM_ATTRIBUTES> attributes;
 
-    std::vector<int> extraStates;
-    std::vector<ReferencedPtr> extraData;
-
     Signal<void(const std::string& oldName)> sigNameChanged_;
     Signal<void()> sigDetachedFromRoot_;
     Signal<void()> sigUpdated_;
@@ -274,7 +266,7 @@ private:
     void callSlotsOnPositionChanged();
     void callFuncOnConnectedToRoot();
     void addToItemsToEmitSigSubTreeChanged();
-    void emitSigSubTreeChanged();
+    static void emitSigSubTreeChanged();
 
     void detachFromParentItemSub(bool isMoving);
     bool traverse(Item* item, const std::function<bool(Item*)>& function);

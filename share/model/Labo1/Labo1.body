@@ -5,24 +5,28 @@ name: Labo1
 
 links:
   -
-    name: Base
+    name: Root
+    jointType: fixed
+  -
+    name: Ground
+    parent: Floor
     jointType: fixed
     elements:
-      - type: Transform
-        rotation: [ [ 1, 0, 0, 90 ] ]
-        translation: [ -0.86, 1.5, 0 ]
-        elements:
-          - { type: Resource, uri: "wall1.wrl"  }
-          - { type: Resource, uri: "wall2.wrl"  }
-          - { type: Resource, uri: "rack1.wrl"  }
-          - { type: Resource, uri: "rack2.wrl"  }
-          - { type: Resource, uri: "rack3.wrl"  }
-          - { type: Resource, uri: "tank.wrl"   }
-          - { type: Resource, uri: "pipes.wrl"  }
-      -
-        name: Floor1
-        type: Transform
-        translation: [ 0, 0, -0.05 ]
+      Shape:
+        translation: [ 0, 0, -0.1 ]
+        geometry: { type: Box, size: [ 20, 20, 0.1 ] }
+        appearance:
+          material:
+            diffuseColor: [ 0.5, 0.5, 0.5 ]
+            specularColor: [ 0.2, 0.2, 0.2 ]
+  -
+    name: Floor
+    jointType: fixed
+    parent: Root
+    translation: [ -0.86, 1.5, 0 ]
+    elements:
+      Transform:
+        translation: [ 0.86, -1.5, -0.05 ]
         elements:
           Shape:
             geometry: { type: Box, size: [ 5.2, 3.0, 0.1 ] }
@@ -31,14 +35,59 @@ links:
                 diffuseColor: [ 1, 0.56, 0.34 ]
                 shininess: 0.05
                 specularColor: [ 0.8, 0.4, 0.25 ] 
-      -
-        name: Floor2
-        type: Transform
-        translation: [ 0, 0, -0.1 ]
-        elements:
-          Shape:
-            geometry: { type: Box, size: [ 20, 20, 0.1 ] }
-            appearance:
-              material:
-                diffuseColor: [ 0.5, 0.5, 0.5 ]
-                specularColor: [ 0.2, 0.2, 0.2 ]
+  -
+    name: Wall1
+    parent: Floor
+    jointType: fixed
+    elements: 
+      Resource: 
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "wall1.wrl"
+  -
+    name: Wall2
+    parent: Floor
+    jointType: fixed
+    elements:
+      Resource: 
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "wall2.wrl"
+  -
+    name: Rack1
+    parent: Floor
+    jointType: fixed
+    elements:
+      Resource:
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "rack1.wrl"
+  -
+    name: Rack2
+    parent: Floor
+    jointType: fixed
+    elements:
+      Resource: 
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "rack2.wrl"
+  -
+    name: Rack3
+    parent: Floor
+    jointType: fixed
+    elements:
+      Resource:
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "rack3.wrl"
+  -
+    name: Tank
+    parent: Floor
+    jointType: fixed
+    elements: 
+      Resource: 
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "tank.wrl"
+  -
+    name: Pipes
+    parent: Floor
+    jointType: fixed
+    elements: 
+      Resource: 
+        rotation: [ 1, 0, 0, 90 ]
+        uri: "pipes.wrl"

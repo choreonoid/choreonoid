@@ -8,6 +8,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/LineEdit>
+#include <cnoid/MessageView>
 #include <QBoxLayout>
 #include <QIcon>
 #include <QMimeData>
@@ -49,7 +50,7 @@ class RTSNameServerViewImpl
 public:
     RTSNameServerViewImpl(RTSNameServerView* self);
     ~RTSNameServerViewImpl();
-    void updateObjectList();
+    void updateObjectList(bool force=false);
     void updateObjectList(const NamingContextHelper::ObjectInfoList& objects, QTreeWidgetItem* parent);
     void setConnection();
     void onSelectionChanged();
@@ -120,21 +121,21 @@ RTSNameServerViewImpl::RTSNameServerViewImpl(RTSNameServerView* self)
     hostAddressBox.setText("localhost");
     hostAddressBox.sigEditingFinished().connect
         (std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
     hbox->addWidget(&hostAddressBox);
 
     portNumberSpin.setRange(0, 65535);
     portNumberSpin.setValue(2809);
     portNumberSpin.sigEditingFinished().connect
         (std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, false));
     hbox->addWidget(&portNumberSpin);
 
     auto updateButton = new ToolButton(_(" Update "));
     updateButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     updateButton->sigClicked().connect(
         std::bind(
-            static_cast<void(RTSNameServerViewImpl::*)()>(&RTSNameServerViewImpl::updateObjectList), this));
+            static_cast<void(RTSNameServerViewImpl::*)(bool)>(&RTSNameServerViewImpl::updateObjectList), this, true));
     hbox->addWidget(updateButton);
 
     vbox->addLayout(hbox, 0);
@@ -184,8 +185,11 @@ void RTSNameServerView::updateView()
 }
 
 
-void RTSNameServerViewImpl::updateObjectList()
+void RTSNameServerViewImpl::updateObjectList(bool force)
 {
+    if(ncHelper.host()==hostAddressBox.string() && ncHelper.port()==portNumberSpin.value() && !force)
+            return;
+
     try {
         treeWidget.clear();
 
@@ -202,6 +206,8 @@ void RTSNameServerViewImpl::updateObjectList()
             NamingContextHelper::ObjectInfoList objects = ncHelper.getObjectList();
             updateObjectList(objects, NULL);
             treeWidget.expandAll();
+        }else{
+            showWarningDialog(ncHelper.errorMessage());
         }
 
     } catch (...) {

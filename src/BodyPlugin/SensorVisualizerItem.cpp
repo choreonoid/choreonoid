@@ -11,12 +11,9 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
 #include <cnoid/ConnectionSet>
-#include <cnoid/ItemTreeView>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -97,7 +94,6 @@ public:
     void updateSensorState();
     void updateForceSensorState(int index);
     void onForceSensorStateChanged(int index);
-    bool onLengthRatioPropertyChanged(double ratio);
 };
 
 class PointCloudVisualizerItemImpl
@@ -198,7 +194,6 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 forceSensorVisualizerItem->setVisualRatio(forceSensor_visualRatio);
                 forceSensorVisualizerItem->setBodyItem(bodyItem);
                 self->addSubItem(forceSensorVisualizerItem);
-                ItemTreeView::instance()->checkItem(forceSensorVisualizerItem, true);
                 subItems.push_back(forceSensorVisualizerItem);
             }
 
@@ -207,7 +202,6 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 PointCloudVisualizerItemPtr pointCloudVisualizerItem = new PointCloudVisualizerItem();
                 pointCloudVisualizerItem->setBodyItem(bodyItem, rangeCameras[i]);
                 self->addSubItem(pointCloudVisualizerItem);
-                ItemTreeView::instance()->checkItem(pointCloudVisualizerItem, true);
                 subItems.push_back(pointCloudVisualizerItem);
             }
 
@@ -216,7 +210,6 @@ void SensorVisualizerItemImpl::onPositionChanged()
                 RangeSensorVisualizerItemPtr rangeSensorVisualizerItem = new RangeSensorVisualizerItem();
                 rangeSensorVisualizerItem->setBodyItem(bodyItem, rangeSensors[i]);
                 self->addSubItem(rangeSensorVisualizerItem);
-                ItemTreeView::instance()->checkItem(rangeSensorVisualizerItem, true);
                 subItems.push_back(rangeSensorVisualizerItem);
             }
         }
@@ -298,7 +291,7 @@ void ForceSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem)
     connections.disconnect();
     connections.add(
         bodyItem->sigKinematicStateChanged().connect(
-            std::bind(&ForceSensorVisualizerItemImpl::onSensorPositionsChanged, this)));
+            [&](){ onSensorPositionsChanged(); }));
 
     Body* body = bodyItem->body();
     forceSensors = body->devices<ForceSensor>();
@@ -308,8 +301,8 @@ void ForceSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem)
         forceSensorArrows.push_back(arrow);
         scene->addChild(arrow);
         connections.add(
-                forceSensors[i]->sigStateChanged().connect(
-                        std::bind(&ForceSensorVisualizerItemImpl::updateForceSensorState, this, i)));
+            forceSensors[i]->sigStateChanged().connect(
+                [this, i](){ updateForceSensorState(i); }));
     }
 
     onSensorPositionsChanged();
@@ -353,20 +346,16 @@ void ForceSensorVisualizerItemImpl::updateForceSensorState(int index)
 
 void ForceSensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty.decimals(4);
-    putProperty(_("Visual ratio"), impl->visualRatio,
-                std::bind(&ForceSensorVisualizerItemImpl::onLengthRatioPropertyChanged, impl, _1));
-}
-
-
-bool ForceSensorVisualizerItemImpl::onLengthRatioPropertyChanged(double ratio)
-{
-    if(ratio > 0.0){
-        visualRatio = ratio;
-        updateSensorState();
-        return true;
-    }
-    return false;
+    putProperty.decimals(4)(
+        _("Visual ratio"), impl->visualRatio,
+        [&](double ratio){
+            if(ratio > 0.0){
+                impl->visualRatio = ratio;
+                impl->updateSensorState();
+                return true;
+            }
+            return false;
+        });
 }
 
 
@@ -422,13 +411,13 @@ void PointCloudVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeCamera* 
     connections.disconnect();
     connections.add(
         bodyItem->sigKinematicStateChanged().connect(
-            std::bind(&PointCloudVisualizerItemImpl::onSensorPositionsChanged, this)));
+            [&](){ onSensorPositionsChanged(); }));
 
     rangeCamera = rangeCamera_;
 
     connections.add(
-            rangeCamera->sigStateChanged().connect(
-                    std::bind(&PointCloudVisualizerItemImpl::updateRangeCameraState, this)));
+        rangeCamera->sigStateChanged().connect(
+            [&](){ updateRangeCameraState(); }));
 
     onSensorPositionsChanged();
     updateRangeCameraState();
@@ -511,13 +500,13 @@ void RangeSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeSensor*
     connections.disconnect();
     connections.add(
         bodyItem->sigKinematicStateChanged().connect(
-            std::bind(&RangeSensorVisualizerItemImpl::onSensorPositionsChanged, this)));
+            [&](){ onSensorPositionsChanged(); }));
 
     rangeSensor = rangeSensor_;
 
     connections.add(
-            rangeSensor->sigStateChanged().connect(
-                    std::bind(&RangeSensorVisualizerItemImpl::updateRangeSensorState, this)));
+        rangeSensor->sigStateChanged().connect(
+            [&](){ updateRangeSensorState(); }));
 
     onSensorPositionsChanged();
     updateRangeSensorState();
@@ -526,7 +515,7 @@ void RangeSensorVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, RangeSensor*
 
 void RangeSensorVisualizerItemImpl::onSensorPositionsChanged()
 {
-    const Affine3 T =  (rangeSensor->link()->T() * rangeSensor->T_local());
+    const Affine3 T = (rangeSensor->link()->T() * rangeSensor->T_local());
     self->setOffsetTransform(T);
 }
 

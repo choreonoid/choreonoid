@@ -1165,11 +1165,6 @@ else()
   include_directories(${Choreonoid_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
 endif()
 
-# irrxml
-add_subdirectory(thirdparty/irrxml-1.2)
-set(IRRXML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/irrxml-1.2/src)
-include_directories(${IRRXML_INCLUDE_DIRS})
-
 if(UNIX)
   # png
   find_package(PNG REQUIRED)
