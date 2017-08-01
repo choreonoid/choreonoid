@@ -317,21 +317,20 @@ void AGXLink::detectPrimitiveShape(MeshExtractor* extractor, AGXTrimeshDesc& td)
                     created = true;
                     break;
                 }
-                //case SgMesh::CAPSULE : {
-                //    //SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-                //    AGXCapsuleDesc cd;
-                //    //cd.radius = capsule.radius * scale.x();
-                //    //cd .hegiht =  capsule.height * scale.y();
-                //    //getAGXLinkBody()->createShape(cd, af);
-                //    shape = AGXObjectFactory::createShape(cd);
-                //    created = true;
-                //    break;
-                //}
+                case SgMesh::CAPSULE : {
+                    SgMesh::Capsule capsule = mesh->primitive<SgMesh::Capsule>();
+                    AGXCapsuleDesc cd;
+                    cd.radius = capsule.radius * scale.x();
+                    cd .height =  capsule.height * scale.y();
+                    shape = AGXObjectFactory::createShape(cd);
+                    created = true;
+                    break;
+                }
                 case SgMesh::CYLINDER : {
                     const SgMesh::Cylinder& cylinder = mesh->primitive<SgMesh::Cylinder>();
                     AGXCylinderDesc cd;
                     cd.radius = cylinder.radius * scale.x();
-                    cd .hegiht =  cylinder.height * scale.y();
+                    cd .height =  cylinder.height * scale.y();
                     shape = AGXObjectFactory::createShape(cd);
                     created = true;
                     break;

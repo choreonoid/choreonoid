@@ -101,17 +101,30 @@ agxCollide::GeometryRef AGXObjectFactory::createGeometry(const AGXGeometryDesc& 
 agxCollide::ShapeRef AGXObjectFactory::createShape(const AGXShapeDesc& desc)
 {
     agxCollide::ShapeRef shape = nullptr;
-    if(desc.shapeType == AGXShapeType::AGXCOLLIDE_BOX){
-        shape = createShapeBox(static_cast<const AGXBoxDesc&>(desc));
-    }else if(desc.shapeType == AGXShapeType::AGXCOLLIDE_SPHERE){
-        shape = createShapeSphere(static_cast<const AGXSphereDesc&>(desc));
-    }else if(desc.shapeType == AGXShapeType::AGXCOLLIDE_CAPSULE){
-        shape = createShapeCapsule(static_cast<const AGXCapsuleDesc&>(desc));
-    }else if(desc.shapeType == AGXShapeType::AGXCOLLIDE_CYLINDER){
-        shape = createShapeCylinder(static_cast<const AGXCylinderDesc&>(desc));
-    }else if(desc.shapeType == AGXShapeType::AGXCOLLIDE_TRIMESH){
-        shape = createShapeTrimesh(static_cast<const AGXTrimeshDesc&>(desc));
-    }else{}
+    switch (desc.shapeType){
+        case AGXShapeType::AGXCOLLIDE_BOX :{
+            shape = createShapeBox(static_cast<const AGXBoxDesc&>(desc));
+            break;
+        }
+        case AGXShapeType::AGXCOLLIDE_SPHERE :{
+            shape = createShapeSphere(static_cast<const AGXSphereDesc&>(desc));
+            break;
+        }
+        case AGXShapeType::AGXCOLLIDE_CAPSULE :{
+            shape = createShapeCapsule(static_cast<const AGXCapsuleDesc&>(desc));
+            break;
+        }
+        case AGXShapeType::AGXCOLLIDE_CYLINDER :{
+           shape = createShapeCylinder(static_cast<const AGXCylinderDesc&>(desc));
+            break;
+        }
+        case AGXShapeType::AGXCOLLIDE_TRIMESH :{
+            shape = createShapeTrimesh(static_cast<const AGXTrimeshDesc&>(desc));
+            break;
+        }
+        default:
+            break;
+    }
     return shape;
 }
 
@@ -179,12 +192,12 @@ agxCollide::SphereRef AGXObjectFactory::createShapeSphere(const AGXSphereDesc & 
 
 agxCollide::CapsuleRef AGXObjectFactory::createShapeCapsule(const AGXCapsuleDesc & desc)
 {
-    return new agxCollide::Capsule(desc.radius, desc.hegiht);
+    return new agxCollide::Capsule(desc.radius, desc.height);
 }
 
 agxCollide::CylinderRef AGXObjectFactory::createShapeCylinder(const AGXCylinderDesc & desc)
 {
-    return new agxCollide::Cylinder(desc.radius, desc.hegiht);
+    return new agxCollide::Cylinder(desc.radius, desc.height);
 }
 
 agxCollide::MeshRef AGXObjectFactory::createShapeTrimesh(const AGXTrimeshDesc& desc)

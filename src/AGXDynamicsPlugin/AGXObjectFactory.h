@@ -154,14 +154,14 @@ struct AGXCapsuleDesc : public AGXShapeDesc
 {
     AGXCapsuleDesc() : AGXShapeDesc(AGXShapeType::AGXCOLLIDE_CAPSULE){}
     agx::Real radius;
-    agx::Real hegiht;
+    agx::Real height;
 };
 
 struct AGXCylinderDesc : public AGXShapeDesc
 {
     AGXCylinderDesc() : AGXShapeDesc(AGXShapeType::AGXCOLLIDE_CYLINDER){}
     agx::Real radius;
-    agx::Real hegiht;
+    agx::Real height;
 };
 
 struct AGXTrimeshDesc : public AGXShapeDesc
