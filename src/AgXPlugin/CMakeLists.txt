@@ -1,4 +1,4 @@
-﻿
+
 # @author Shizuko Hattori
 
 option(BUILD_AGX_PLUGIN "Building AgXPlugin" OFF)
