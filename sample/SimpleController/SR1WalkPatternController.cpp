@@ -44,25 +44,32 @@ class SR1WalkPatternController : public cnoid::SimpleController
     
 public:
 
-    virtual bool initialize(SimpleControllerIO* io) {
-
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        ioBody = io->body();
         string patternFile;
-
         string opt = io->optionString();
+        
         if(opt == "highgain"){
             mode = HIGHGAIN_MODE;
             patternFile = "SR1WalkPattern2.yaml";
-            io->setJointOutput(JOINT_ANGLE | JOINT_VELOCITY | JOINT_ACCELERATION);
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                ioBody->joint(i)->setActuationMode(Link::JOINT_ANGLE);
+            }
             io->os() << "SR1WalkPatternController: high gain mode." << endl;
         } else if(opt == "velocity"){
             mode = HIGHGAIN_MODE;
             patternFile = "SR1WalkPattern2.yaml";
-            io->setJointOutput(JOINT_VELOCITY);
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                ioBody->joint(i)->setActuationMode(Link::JOINT_VELOCITY);
+            }
             io->os() << "SR1WalkPatternController: velocity mode." << endl;
         } else {
             mode = TORQUE_MODE;
             patternFile = "SR1WalkPattern.yaml";
-            io->setJointOutput(JOINT_TORQUE);
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                ioBody->joint(i)->setActuationMode(Link::JOINT_TORQUE);
+            }
             io->setJointInput(JOINT_ANGLE);
             io->os() << "SR1WalkPatternController: torque mode." << endl;
         }
@@ -81,7 +88,6 @@ public:
             return false;
         }
 
-        ioBody = io->body();
         if(ioBody->numJoints() != qseq->numParts()){
             io->os() << "The number of joints must be " << qseq->numParts() << endl;
             return false;
