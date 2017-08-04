@@ -21,18 +21,18 @@ items:
           data: 
             modelFile: "${SHARE}/model/tank/tank.body"
             currentBaseLink: ""
-            rootPosition: [ -0.800000015, 2.40000002, 0.0498998071 ]
+            rootPosition: [ -2, -0.5, 0.1 ]
             rootAttitude: [ 
-              6.11733544e-08, 1, -3.52052089e-08, 
-              -1, 6.11733529e-08, -4.11120005e-08, 
-              -4.11119984e-08, 3.52052114e-08, 1 ]
-            jointPositions: [ -0.000000, -0.009360,  0.000000,  0.019610 ]
-            initialRootPosition: [ -0.8, 2.4, 0.1 ]
+              1, 1.38784268e-17, -1.0095306e-10, 
+              -1.38777878e-17, 1, 6.32984748e-12, 
+              1.0095306e-10, -6.32984748e-12, 1 ]
+            jointPositions: [  0.000000, -0.009360,  0.000000,  0.019610 ]
+            initialRootPosition: [ -2, -0.5, 0.1 ]
             initialRootAttitude: [ 
-              2.22044605e-16, 1, 0, 
-              -1, 2.22044605e-16, -0, 
-              -0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000 ]
+              1, 1.38784268e-17, -1.0095306e-10, 
+              -1.38777878e-17, 1, 6.32984748e-12, 
+              1.0095306e-10, -6.32984748e-12, 1 ]
+            initialJointPositions: [  0.000000, -0.009360,  0.000000,  0.019610 ]
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
@@ -62,16 +62,31 @@ items:
                 componentName: Tank_PointCloudIO
                 pointCloudPortNames: [ cameraRange ]
                 rangeSensorPortNames: [ RangeSensor ]
+                cameraPortNames: [ Camera_image ]
             - 
               id: 5
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
               data: 
-                renderingMode: Point
-                pointSize: 0
-                voxelSize: 0.01
-                isEditable: false
+                subItems: 
+                  - 
+                    class: PointCloudVisualizer
+                    name: Camera
+                    renderingMode: Point
+                    pointSize: 0
+                    voxelSize: 0.01
+                    isEditable: false
+                  - 
+                    class: RangeSensorVisualizer
+                    name: RangeSensor
+                    renderingMode: Point
+                    pointSize: 0
+                    voxelSize: 0.01
+                    isEditable: false
+                  - 
+                    class: CameraImageVisualizer
+                    name: Camera_Image
         - 
           id: 6
           name: "Labo1"
@@ -79,7 +94,7 @@ items:
           class: BodyItem
           data: 
             modelFile: "${SHARE}/model/Labo1/Labo1.body"
-            currentBaseLink: "Base"
+            currentBaseLink: ""
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [ 
               1, 0, 0, 
@@ -225,8 +240,11 @@ items:
                     isServicePort: false
               - 
                 name: Tank_PointCloudIO
-                pos: [ 180, 112 ]
+                pos: [ 159, 40 ]
                 InPorts: 
+                  - 
+                    name: Tank_PointCloudIO.Camera_image
+                    isServicePort: false
                   - 
                     name: Tank_PointCloudIO.RangeSensor
                     isServicePort: false
@@ -234,24 +252,6 @@ items:
                     name: Tank_PointCloudIO.cameraRange
                     isServicePort: false
             RTSConnections: 
-              - 
-                name: connector0
-                sourceRtcName: TankJoystickControllerRTC0
-                sourcePortName: TankJoystickControllerRTC0.buttons
-                targetRtcName: JoystickRTC0
-                targetPortName: JoystickRTC0.buttons
-                dataflow: Push
-                subscription: flush
-                position: [ -65, -53, -70, -53, -142, -53, -142, -79, -196, -79, -201, -79 ]
-              - 
-                name: Tank.rangeSensor_Tank_PointCloudIO.RangeSensor
-                sourceRtcName: Tank
-                sourcePortName: Tank.rangeSensor
-                targetRtcName: Tank_PointCloudIO
-                targetPortName: Tank_PointCloudIO.RangeSensor
-                dataflow: push
-                subscription: flush
-                position: [ -24, 131, -19, 131, 98, 131, 98, 131, 219, 131, 224, 131 ]
               - 
                 name: TankJoystickControllerRTC0.u_Tank.u
                 sourceRtcName: TankJoystickControllerRTC0
@@ -262,32 +262,14 @@ items:
                 subscription: flush
                 position: [ -5, -35, 63, -35, 63, 6, -246, 6, -246, 95, -84, 95 ]
               - 
-                name: connector0
-                sourceRtcName: TankJoystickControllerRTC0
-                sourcePortName: TankJoystickControllerRTC0.axes
-                targetRtcName: JoystickRTC0
-                targetPortName: JoystickRTC0.axes
-                dataflow: Push
-                subscription: flush
-                position: [ -65, -71, -70, -71, -115, -71, -115, -97, -196, -97, -201, -97 ]
-              - 
-                name: TankJoystickControllerRTC0.q_Tank.q
-                sourceRtcName: TankJoystickControllerRTC0
-                sourcePortName: TankJoystickControllerRTC0.q
-                targetRtcName: Tank
-                targetPortName: Tank.q
-                dataflow: push
-                subscription: flush
-                position: [ -65, -35, -261, -35, -261, 174, 77, 174, 77, 113, -24, 113 ]
-              - 
-                name: Tank.cameraRange_Tank_PointCloudIO.cameraRange
+                name: Tank.cameraImage_Tank_PointCloudIO.Camera_image
                 sourceRtcName: Tank
-                sourcePortName: Tank.cameraRange
+                sourcePortName: Tank.cameraImage
                 targetRtcName: Tank_PointCloudIO
-                targetPortName: Tank_PointCloudIO.cameraRange
+                targetPortName: Tank_PointCloudIO.Camera_image
                 dataflow: push
                 subscription: flush
-                position: [ -24, 77, -19, 77, 100, 77, 100, 149, 219, 149, 224, 149 ]
+                position: [ -24, 59, -19, 59, 107.5, 59, 107.5, 59, 198, 59, 203, 59 ]
               - 
                 name: TankJoystickControllerRTC0.dq_Tank.dq
                 sourceRtcName: TankJoystickControllerRTC0
@@ -297,34 +279,77 @@ items:
                 dataflow: push
                 subscription: flush
                 position: [ -5, -71, 104, -71, 104, 29, -223, 29, -223, 59, -84, 59 ]
+              - 
+                name: connector0
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.axes
+                targetRtcName: JoystickRTC0
+                targetPortName: JoystickRTC0.axes
+                dataflow: Push
+                subscription: flush
+                position: [ -65, -71, -70, -71, -115, -71, -115, -97, -196, -97, -201, -97 ]
+              - 
+                name: Tank.rangeSensor_Tank_PointCloudIO.RangeSensor
+                sourceRtcName: Tank
+                sourcePortName: Tank.rangeSensor
+                targetRtcName: Tank_PointCloudIO
+                targetPortName: Tank_PointCloudIO.RangeSensor
+                dataflow: push
+                subscription: flush
+                position: [ -24, 131, -19, 131, 98, 131, 98, 77, 198, 77, 203, 77 ]
+              - 
+                name: connector0
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.buttons
+                targetRtcName: JoystickRTC0
+                targetPortName: JoystickRTC0.buttons
+                dataflow: Push
+                subscription: flush
+                position: [ -65, -53, -70, -53, -142, -53, -142, -79, -196, -79, -201, -79 ]
+              - 
+                name: TankJoystickControllerRTC0.q_Tank.q
+                sourceRtcName: TankJoystickControllerRTC0
+                sourcePortName: TankJoystickControllerRTC0.q
+                targetRtcName: Tank
+                targetPortName: Tank.q
+                dataflow: push
+                subscription: flush
+                position: [ -65, -35, -261, -35, -261, 174, 77, 174, 77, 113, -24, 113 ]
 views: 
   - 
     id: 0
     name: "CameraImage"
     plugin: Base
     class: ImageView
-    mounted: true
   - 
     id: 1
+    name: "Camera"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state: 
+      ImageProviderItem: [ 5, "Camera_Image" ]
+  - 
+    id: 2
     plugin: Base
     class: ItemPropertyView
     mounted: true
   - 
-    id: 2
+    id: 3
     plugin: Base
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 4 ]
-      checked: [ 1, 2, [ 5, "Camera" ], [ 5, "RangeSensor" ] ]
+      selected: [ 2 ]
+      checked: [ 1, 2, [ 5, "RangeSensor" ] ]
       expanded: [ 1, 2, 5, 7, 8 ]
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 4
+    id: 5
     plugin: Base
     class: SceneView
     mounted: true
@@ -367,9 +392,9 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -2.57943812, 5.90659741, 1.16760035 ]
-          direction: [ 0.341624315, -0.927665329, -0.15076427 ]
-          up: [ 0.0521002599, -0.141475892, 0.988569742 ]
+          eye: [ -6.3304356, -1.25109453, 1.99140698 ]
+          direction: [ 0.945953516, 0.106444123, -0.306335756 ]
+          up: [ 0.304414563, 0.0342544751, 0.951923529 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
@@ -381,7 +406,7 @@ views:
       yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
       dedicatedItemTreeViewChecks: false
   - 
-    id: 5
+    id: 6
     name: "Task"
     plugin: Base
     class: TaskView
@@ -389,20 +414,20 @@ views:
       layoutMode: horizontal
       isAutoMode: false
   - 
-    id: 6
+    id: 7
     name: "Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 7
+    id: 8
     plugin: Body
     class: BodyLinkView
     mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 8
+    id: 9
     plugin: Body
     class: JointSliderView
     mounted: true
@@ -416,7 +441,7 @@ views:
       labelOnLeft: true
       currentBodyItem: 2
   - 
-    id: 9
+    id: 10
     plugin: Body
     class: LinkSelectionView
     mounted: true
@@ -428,7 +453,7 @@ views:
           id: 2
           selectedLinks: [ 0 ]
   - 
-    id: 10
+    id: 11
     name: "RTCダイアグラム"
     plugin: OpenRTM
     class: RTSDiagramView
@@ -436,12 +461,12 @@ views:
     state: 
       currentRTSItem: 10
   - 
-    id: 11
+    id: 12
     plugin: OpenRTM
     class: RTSNameServerView
     mounted: true
   - 
-    id: 12
+    id: 13
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -468,28 +493,6 @@ toolbars:
     current: 2
   "LeggedBodyBar": 
     stanceWidth: 0.15
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
 Body: 
   "BodyMotionEngine": 
     updateJointVelocities: false
@@ -515,8 +518,71 @@ Body:
     targetJoints: all
     checkSelfCollisions: true
     onlyTimeBarRange: false
-Media: 
-  "PulseAudioManager": 
-    keepStreamConnection: false
 OpenRTM: 
   "deleteUnmanagedRTCsOnStartingSimulation": false
+viewAreas: 
+  - 
+    type: embedded
+    tabs: true
+    contents: 
+      type: splitter
+      orientation: horizontal
+      sizes: [ 315, 1534 ]
+      children: 
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 539, 539 ]
+          children: 
+            - 
+              type: pane
+              views: [ 3 ]
+              current: 3
+            - 
+              type: pane
+              views: [ 2, 10, 12 ]
+              current: 2
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 770, 308 ]
+          children: 
+            - 
+              type: splitter
+              orientation: horizontal
+              sizes: [ 664, 864 ]
+              children: 
+                - 
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 382, 382 ]
+                  children: 
+                    - 
+                      type: pane
+                      views: [ 1 ]
+                      current: 1
+                    - 
+                      type: pane
+                      views: [ 8, 9, 11 ]
+                      current: 8
+                - 
+                  type: pane
+                  views: [ 5 ]
+                  current: 5
+            - 
+              type: pane
+              views: [ 4, 13, 7 ]
+              current: 4
+layoutOfToolBars: 
+  rows: 
+    - 
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "ScriptBar", x: 47, priority: 0 }
+      - { name: "TimeBar", x: 94, priority: 0 }
+      - { name: "SceneBar", x: 1022, priority: 0 }
+      - { name: "GraphBar", x: 1292, priority: 0 }
+      - { name: "SimulationBar", x: 1399, priority: 0 }
+      - { name: "BodyBar", x: 1596, priority: 0 }
+    - 
+      - { name: "KinematicsBar", x: 0, priority: 0 }
+      - { name: "ImageViewBar", x: 234, priority: 0 }
