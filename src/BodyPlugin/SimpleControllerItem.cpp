@@ -18,7 +18,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 namespace filesystem = boost::filesystem;
 
@@ -258,7 +257,7 @@ void SimpleControllerItemImpl::initializeIoBody()
     for(size_t i=0; i < ioDevices.size(); ++i){
         outputDeviceStateConnections.add(
             ioDevices[i]->sigStateChanged().connect(
-                std::bind(&SimpleControllerItemImpl::onOutputDeviceStateChanged, this, i)));
+                [this, i](){ onOutputDeviceStateChanged(i); }));
     }
 
     sharedInfo->inputEnabledDeviceFlag.resize(simulationBody->numDevices());
@@ -280,7 +279,7 @@ void SimpleControllerItemImpl::updateInputEnabledDevices()
         if(flag[i]){
             sharedInfo->inputDeviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
-                    std::bind(&SimpleControllerItemImpl::onInputDeviceStateChanged, this, i)));
+                    [this, i](){ onInputDeviceStateChanged(i); }));
         } else {
             sharedInfo->inputDeviceStateConnections.add(Connection()); // null connection
         }
@@ -792,9 +791,9 @@ void SimpleControllerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
             dir = (filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "simplecontroller").string();
     }
     putProperty(_("Controller module"), FilePath(controllerModuleName, filter, dir),
-                std::bind(&SimpleControllerItem::setController, self, _1), true);
+                [&](const string& name){ self->setController(name); return true; });
     putProperty(_("Reloading"), doReloading,
-                std::bind(&SimpleControllerItemImpl::onReloadingChanged, this, _1));
+                [&](bool on){ return onReloadingChanged(on); });
 }
 
 

@@ -44,9 +44,6 @@ Third-part libraries bundled with the Choreonoid source distribution:
     * GLEW (http://glew.sourceforge.net/)
         see thirdparty/glew-1.9.0/LICENSE.txt
 
-    * irrXML (http://www.ambiera.com/irrxml/)
-        see thirdparty/irrxml-1.2/readme.txt
-
     * OPCODE (http://www.codercorner.com/Opcode.htm)
         see src/AISTCollisionDetector/Opcode/ReadMe.txt
 

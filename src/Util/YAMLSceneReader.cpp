@@ -12,6 +12,8 @@
 #include <cnoid/NullOut>
 #include <boost/format.hpp>
 #include <unordered_map>
+#include <mutex>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -42,6 +44,9 @@ struct ResourceInfo : public Referenced
 };
 typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
+unordered_map<string, YAMLSceneReader::UriSchemeHandler> uriSchemeHandlerMap;
+std::mutex uriSchemeHandlerMutex;
+
 }
 
 namespace cnoid {
@@ -64,8 +69,10 @@ public:
     SgMaterialPtr defaultMaterial;
 
     map<string, ResourceInfoPtr> resourceInfoMap;
-    filesystem::path baseDirectory;
     SceneLoader sceneLoader;
+    filesystem::path baseDirectory;
+    std::regex uriSchemeRegex;
+    bool isUriSchemeRegexReady;
     
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
@@ -91,6 +98,7 @@ public:
     SgNode* loadResource(const string& uri);
     SgNode* loadResource(const string& uri, const string& nodeName);
     ResourceInfo* getOrCreateResourceInfo(const string& uri);
+    filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(NodeInfo& info);
     void makeNodeMap(ResourceInfo* info);
     void makeNodeMapSub(const NodeInfo& nodeInfo, NodeMap& nodeMap);
@@ -114,6 +122,13 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 }
 
 
+void YAMLSceneReader::registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler)
+{
+    std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
+    uriSchemeHandlerMap[scheme] = handler;
+}
+                                                 
+
 YAMLSceneReader::YAMLSceneReader()
 {
     impl = new YAMLSceneReaderImpl(this);
@@ -131,6 +146,7 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
     os_ = &nullout();
+    isUriSchemeRegexReady = false;
 }
 
 
@@ -542,11 +558,14 @@ SgMesh* YAMLSceneReaderImpl::readElevationGrid(Mapping& node)
 SgMesh* YAMLSceneReaderImpl::readResourceAsGeometry(Mapping& node)
 {
     SgNode* resource = readResource(node);
-    SgShape* shape = dynamic_cast<SgShape*>(resource);
-    if(!shape){
-        node.throwException(_("A resouce specified as a geometry contains more than a single mesh"));
+    if(resource){
+        SgShape* shape = dynamic_cast<SgShape*>(resource);
+        if(!shape){
+            node.throwException(_("A resouce specified as a geometry must be a single mesh"));
+        }
+        return shape->mesh();
     }
-    return shape->mesh();
+    return 0;
 }
 
 
@@ -595,14 +614,15 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
 SgNode* YAMLSceneReaderImpl::readResource(Mapping& node)
 {
     SgNode* scene = 0;
-    
-    if(node.read("uri", symbol)){
+
+    string& uri = symbol;
+    if(node.read("uri", uri)){
         SgNodePtr resource;
         string nodeName;
         if(node.read("node", nodeName)){
-            resource = loadResource(symbol, nodeName);
+            resource = loadResource(uri, nodeName);
         } else {
-            resource = loadResource(symbol);
+            resource = loadResource(uri);
         }
         scene = readTransformParameters(node, resource);
         if(scene == resource){
@@ -656,17 +676,54 @@ SgNode* YAMLSceneReaderImpl::loadResource(const string& uri, const string& nodeN
 
 ResourceInfo* YAMLSceneReaderImpl::getOrCreateResourceInfo(const string& uri)
 {
-    ResourceInfo* info = 0;
-    
     auto iter = resourceInfoMap.find(uri);
+
     if(iter != resourceInfoMap.end()){
-        info = iter->second;
-    } else {
-        filesystem::path filepath(uri);
+        return iter->second;
+    }
+
+    filesystem::path filepath;
+        
+    if(!isUriSchemeRegexReady){
+        uriSchemeRegex.assign("^(.+)://(.+)$");
+        isUriSchemeRegexReady = true;
+    }
+    std::smatch match;
+    bool hasScheme = false;
+        
+    if(std::regex_match(uri, match, uriSchemeRegex)){
+        hasScheme = true;
+        if(match.size() == 3){
+            const string scheme = match.str(1);
+            if(scheme == "file"){
+                filepath = match.str(2);
+            } else {
+                std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
+                auto iter = uriSchemeHandlerMap.find(scheme);
+                if(iter == uriSchemeHandlerMap.end()){
+                    os() << str(format("Warning: The \"%1%\" scheme of \"%2%\" is not available.") % scheme % uri) << endl;
+                } else {
+                    auto& handler = iter->second;
+                    filepath = handler(match.str(2), os());
+                }
+            }
+        }
+    }
+
+    if(!hasScheme){
+        filepath = uri;
         if(!checkAbsolute(filepath)){
             filepath = baseDirectory / filepath;
             filepath.normalize();
         }
+    }
+    
+    ResourceInfo* info = 0;
+    
+    if(filepath.empty()){
+        resourceInfoMap[uri] = info;
+        
+    } else {
         SgNodePtr rootNode = sceneLoader.load(getAbsolutePathString(filepath));
         if(rootNode){
             info = new ResourceInfo;

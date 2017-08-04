@@ -64,7 +64,7 @@ uniform float maxFogDist;
 uniform float minFogDist;
 uniform bool isFogEnabled = false;
 
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 color4;
 
 vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
 {
@@ -117,23 +117,30 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
 
 void main()
 {
+    vec3 color;
     float alpha2;
+
     if(isTextureEnabled){
-        vec4 texColor = texture(tex1, texCoord);
-        alpha2 = alpha * texColor.a;
+        vec4 texColor4 = texture(tex1, texCoord);
+        vec3 texColor = vec3(texColor4);
+        alpha2 = alpha * texColor4.a;
+        color = emissionColor * texColor;
         for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], vec3(texColor));
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], texColor);
+            color += lights[i].ambientIntensity * ambientColor * texColor;
         }
     } else {
-        vec3 color;
+        vec3 baseColor;
         if(isVertexColorEnabled){
-            color = colorV;
+            baseColor = colorV;
         } else {
-            color = diffuseColor;
+            baseColor = diffuseColor;
         }
         alpha2 = alpha;
+        color = emissionColor;
         for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], color);
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
+            color += lights[i].ambientIntensity * ambientColor;
         }
     }
         
@@ -151,17 +158,17 @@ void main()
         }
         reflectionElements[shadows[i].lightIndex] *= shadow;
     }
-    vec3 c = emissionColor;
+
     for(int i=0; i < numLights; ++i){
-        c += reflectionElements[i] + lights[i].ambientIntensity * ambientColor;
+        color += reflectionElements[i];
     }
 
     if(isFogEnabled){
         float dist = abs(position.z);
         float f = (maxFogDist - dist) / (maxFogDist - minFogDist);
         f = clamp(f, 0.0, 1.0);
-        c = mix(fogColor, c, f);
+        color = mix(fogColor, color, f);
     }
     
-    color = vec4(c, alpha2);
+    color4 = vec4(color, alpha2);
 }

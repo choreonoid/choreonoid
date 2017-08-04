@@ -1,24 +1,11 @@
 #include "AGXSimulatorItem.h"
+#include "AGXSimulatorItemImpl.h"
 #include <cnoid/ItemManager>
 #include "gettext.h"
 
-using namespace std;
-using namespace cnoid;
-
 namespace cnoid {
-
-class AGXSimulatorItemImpl
-{
-public:
-    AGXSimulatorItem* self;
-
-    AGXSimulatorItemImpl(AGXSimulatorItem* self);
-    AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org);
-    ~AGXSimulatorItemImpl();
-};
-
-}
-
+//using namespace std;
+////using namespace cnoid;
 
 void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
 {
@@ -26,66 +13,84 @@ void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().addCreationPanel<AGXSimulatorItem>();
 }
 
-
 AGXSimulatorItem::AGXSimulatorItem()
 {
     impl = new AGXSimulatorItemImpl(this);
 }
 
-
-AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self)
-    : self(self)
-{
-
-}
-
-
-AGXSimulatorItem::AGXSimulatorItem(const AGXSimulatorItem& org)
-    : SimulatorItem(org)
+AGXSimulatorItem::AGXSimulatorItem(const AGXSimulatorItem& org): SimulatorItem(org)
 {
     impl = new AGXSimulatorItemImpl(this, *org.impl);
 }
-
-
-AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItem* self, const AGXSimulatorItemImpl& org)
-    : AGXSimulatorItemImpl(self)
-{
-
-}
-
 
 AGXSimulatorItem::~AGXSimulatorItem()
 {
     delete impl;
 }
 
-
-AGXSimulatorItemImpl::~AGXSimulatorItemImpl()
+bool AGXSimulatorItem::saveSimulationToAGXFile()
 {
-
+    return impl->saveSimulationToAGXFile();
 }
-
 
 Item* AGXSimulatorItem::doDuplicate() const
 {
     return new AGXSimulatorItem(*this);
 }
 
+//void AGXSimulatorItem::doPutProperties(PutPropertyFunction & putProperty){
+//    SimulatorItem::doPutProperties(putProperty);
+//    impl->doPutProperties(putProperty);
+//}
+//
+//bool AGXSimulatorItem::store(Archive & archive){
+//    // save the common properties of SimulatorItem
+//    SimulatorItem::store(archive);
+//    //save the agx properties
+//    return impl->store(archive);
+//}
+//
+//bool AGXSimulatorItem::restore(const Archive & archive){
+//    // restore the common properties of SimulatorItem
+//    SimulatorItem::restore(archive);
+//    // restore the agx properties
+//    return impl->restore(archive);
+//}
 
 SimulationBody* AGXSimulatorItem::createSimulationBody(Body* orgBody)
 {
-    return 0;
+    return impl->createSimulationBody(orgBody);
 }
-
 
 bool AGXSimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
-    return false;
+    return impl->initializeSimulation(simBodies);
 }
-
 
 bool AGXSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
-    return false;
+    return impl->stepSimulation(activeSimBodies);
 }
 
+void AGXSimulatorItem::stopSimulation()
+{
+    impl->stopSimulation();
+    SimulatorItem::stopSimulation();
+}
+
+void AGXSimulatorItem::pauseSimulation()
+{
+    impl->pauseSimulation();
+    SimulatorItem::pauseSimulation();
+}
+
+void AGXSimulatorItem::restartSimulation()
+{
+    impl->restartSimulation();
+    SimulatorItem::restartSimulation();
+}
+
+
+
+
+}

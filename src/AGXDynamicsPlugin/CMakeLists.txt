@@ -10,10 +10,17 @@ ENDIF()
 
 SET(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AGX Dynamics library")
 
-if(UNIX)
 set(AGX_INCLUDE_DIRS ${AGX_DIR}/include)
-set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib/)
-set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel) 
+set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib)
+if(CMAKE_CL_64)
+  set(AGX_LIBRARY_DIRS ${AGX_DIR}/lib/x64)
+endif()
+
+if(WIN32)
+  set(AGX_LIBRARIES debug agxSabred agxCored agxPhysicsd agxModeld)
+  set(AGX_LIBRARIES_RELEASE optimized agxSabre agxCore agxPhysics agxModel) 
+else()
+  set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel)
 endif()
 
 #add_definitions(${AGX_CFLAGS})
@@ -23,16 +30,28 @@ link_directories(${AGX_LIBRARY_DIRS})
 set(target CnoidAGXDynamicsPlugin)
 
 set(sources
+  AGXBody.cpp
+  #AGXLinkBody.cpp
+  AGXObjectFactory.cpp
+  AGXScene.cpp
   AGXDynamicsPlugin.cpp
   AGXSimulatorItem.cpp
+  AGXSimulatorItemImpl.cpp
   )
 
 set(headers
+  AGXBody.h
+  AGXInclude.h
+  #AGXLinkBody.h
+  AGXObjectFactory.h
+  AGXScene.h
+  AGXSimulatorItem.h
+  AGXSimulatorItemImpl.h
   )
 
 make_gettext_mofiles(${target} mofiles)
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
-target_link_libraries(${target} CnoidBodyPlugin ${AGX_LIBRARIES})
+target_link_libraries(${target} CnoidBodyPlugin ${AGX_LIBRARIES} ${AGX_LIBRARIES_RELEASE})
 
 get_target_property(compile_flags ${target} COMPILE_FLAGS)
 if(NOT compile_flags)

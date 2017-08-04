@@ -15,10 +15,16 @@ ENDIF()
 
 SET(AGX_DIR $ENV{AGX_DIR} CACHE PATH "set the top directory of the AgX Dynamics library")
 
-if(UNIX)
 set(AgX_INCLUDE_DIRS ${AGX_DIR}/include)
-set(AgX_LIBRARY_DIRS ${AGX_DIR}/lib/)
-set(AgX_LIBRARIES agxSabre agxCore agxPhysics agxModel ) 
+set(AgX_LIBRARY_DIRS ${AGX_DIR}/lib)
+if(CMAKE_CL_64)
+  set(AgX_LIBRARY_DIRS ${AGX_DIR}/lib/x64)
+endif()
+
+if(WIN32)
+  set(AgX_LIBRARIES debug agxSabred agxCored agxPhysicsd agxModeld) 
+else()
+  set(AgX_LIBRARIES agxSabre agxCore agxPhysics agxModel) 
 endif()
 
 #add_definitions(${AgX_CFLAGS})
@@ -33,6 +39,7 @@ set(sources
   )
 
 set(headers
+  AgXSimulatorItem.h
   )
 
 make_gettext_mofiles(${target} mofiles)

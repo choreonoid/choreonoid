@@ -6,8 +6,8 @@
 #include "BodyLoader.h"
 #include "YAMLBodyLoader.h"
 #include "VRMLBodyLoader.h"
-#include "ColladaBodyLoader.h"
 #include "Body.h"
+#include <cnoid/SceneLoader>
 #include <cnoid/STLSceneLoader>
 #include <cnoid/Exception>
 #include <cnoid/YAMLReader>
@@ -26,22 +26,6 @@ typedef std::function<AbstractBodyLoaderPtr()> LoaderFactory;
 typedef map<string, LoaderFactory> LoaderFactoryMap;
 LoaderFactoryMap loaderFactoryMap;
 std::mutex loaderFactoryMapMutex;
-
-
-AbstractBodyLoaderPtr yamlBodyLoaderFactory()
-{
-    return std::make_shared<YAMLBodyLoader>();
-}
-
-AbstractBodyLoaderPtr vrmlBodyLoaderFactory()
-{
-    return std::make_shared<VRMLBodyLoader>();
-}
-
-AbstractBodyLoaderPtr colladaBodyLoaderFactory()
-{
-    return std::make_shared<ColladaBodyLoader>();
-}
 
 class SceneLoaderAdapter : public AbstractBodyLoader
 {
@@ -70,27 +54,25 @@ public:
     }
 };
 
-
-AbstractBodyLoaderPtr stlBodyLoaderFactory()
-{
-    return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader);
-}
-
-    
 struct FactoryRegistration
 {
     FactoryRegistration(){
-        BodyLoader::registerLoader("body", yamlBodyLoaderFactory);
-        BodyLoader::registerLoader("yaml", yamlBodyLoaderFactory);
-        BodyLoader::registerLoader("yml", yamlBodyLoaderFactory);
-        BodyLoader::registerLoader("wrl", vrmlBodyLoaderFactory);
-        BodyLoader::registerLoader("dae", colladaBodyLoaderFactory);
-        BodyLoader::registerLoader("stl", stlBodyLoaderFactory);
+        BodyLoader::registerLoader(
+            "body", [](){ return std::make_shared<YAMLBodyLoader>(); });
+        BodyLoader::registerLoader(
+            "yaml", [](){ return std::make_shared<YAMLBodyLoader>(); });
+        BodyLoader::registerLoader(
+            "yml", [](){ return std::make_shared<YAMLBodyLoader>(); });
+        BodyLoader::registerLoader(
+            "wrl", [](){ return std::make_shared<VRMLBodyLoader>(); });
+        BodyLoader::registerLoader(
+            "stl", [](){ return std::make_shared<SceneLoaderAdapter>(new STLSceneLoader); });
+        BodyLoader::registerLoader(
+            "dae", [](){ return std::make_shared<SceneLoaderAdapter>(new SceneLoader); });
     }
 } factoryRegistration;
     
 }
-
 
 bool BodyLoader::registerLoader(const std::string& extension, std::function<AbstractBodyLoaderPtr()> factory)
 {
@@ -98,7 +80,7 @@ bool BodyLoader::registerLoader(const std::string& extension, std::function<Abst
     loaderFactoryMap[extension] = factory;
     return  true;
 }
-    
+   
 
 namespace cnoid {
 

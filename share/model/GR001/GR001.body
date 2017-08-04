@@ -1,8 +1,30 @@
 format: ChoreonoidBody
 formatVersion: 1.0
-angleUnit: radian
+angleUnit: degree
 name: GR001
 rootLink: WAIST
+
+appearances:
+  - &BLUE
+    material:
+      diffuseColor: [ 0.3, 0.3, 0.8 ]
+      specularColor: [ 0.2, 0.2, 0.t ]
+      shininess: 0.2
+  - &DARKGRAY
+    material:
+      diffuseColor: [ 0.5, 0.5, 0.5 ]
+      specularColor: [ 0.3, 0.3, 0.3 ]
+      shininess: 0.2
+  - &RED
+    material:
+      diffuseColor: [ 0.6, 0.3, 0.3 ]
+      specularColor: [ 0.4, 0.2, 0.2 ]
+      shininess: 0.06
+  - &GRAY
+    material:
+      diffuseColor: [ 0.8, 0.8, 0.8 ]
+      specularColor: [ 0.1, 0.1, 0.1 ]
+      shininess: 0.3
 
 links:
   -
@@ -15,14 +37,17 @@ links:
       7.5307790665527126e-05, -1.7122423225418951e-06, -7.9600885666462265e-06,
       -1.7122423225418951e-06, 9.8462174358634891e-05, 1.6233365559722733e-06,
       -7.9600885666462265e-06, 1.6233365559722733e-06, 0.00012629712705606254 ]
-    elements: { Resource: { uri: "parts/WAIST.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/WAIST.stl" }
+        appearance: *BLUE
   -
     name: R_HIP_Y
     parent: WAIST
     translation : [ 0, -0.0221, 0 ]
     jointId: 0
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
+    jointAxis: Z
     jointRange: [ -2.618, 0.524 ]
     centerOfMass: [ 0.0098738158196746834, 0.0019351632042820921, -0.010641978258911932 ]
     mass: 0.01075
@@ -30,14 +55,17 @@ links:
       1.9516618643475393e-06, -4.4794177287632572e-07, 4.8697160385938456e-07,
       -4.4794177287632572e-07, 5.0103304284609765e-06, 1.1632114977313334e-08,
       4.8697160385938456e-07, 1.1632114977313334e-08, 5.440099096984392e-06 ]
-    elements: { Resource: { uri: "parts/R_HIP_Y.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_HIP_Y.stl" }
+        appearance: *DARKGRAY
   -
     name: R_HIP_R
     parent: R_HIP_Y
     translation : [ 0, 0.0025, -0.028 ]
     jointId: 1
     jointType: revolute
-    jointAxis: [ -1, 0, 0 ]
+    jointAxis: -X
     jointRange: [ -1.571, 1.571 ]
     centerOfMass: [ 0.013202756254495145, 5.5007249363651409e-05, -0.0093736922025596577 ]
     mass: 0.06587
@@ -45,14 +73,17 @@ links:
       1.1527391880654788e-05, 3.3279576102840693e-07, 1.8461834995431493e-06,
       3.3279576102840693e-07, 1.933034542735627e-05, -1.0226135519064636e-07,
       1.8461834995431493e-06, -1.0226135519064636e-07, 1.4225997781058221e-05 ]
-    elements: { Resource: { uri: "parts/R_HIP_R.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_HIP_R.stl" }
+        appearance: *RED
   -
     name: R_HIP_P
     parent: R_HIP_R
     translation : [ 0.029, 0, -0.005 ]
     jointId: 2
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
+    jointAxis: -Y
     jointRange: [ -0.698, 2.094 ]
     centerOfMass: [ 0.012315059064213048, -0.0026831832924373755, -0.036400277402077907 ]
     mass: 0.04249
@@ -60,14 +91,17 @@ links:
       1.082813917097787e-05, -2.7126598481517409e-07, 1.8370007325714608e-07,
       -2.7126598481517409e-07, 1.1393542083797361e-05, 8.7593994599052584e-07,
       1.8370007325714608e-07, 8.7593994599052584e-07, 8.3880053868115751e-06 ]
-    elements: { Resource: { uri: "parts/R_HIP_P.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_HIP_P.stl" }
+        appearance: *GRAY
   -
     name: R_KNEE_P
     parent: R_HIP_P
     translation : [ 0, 0, -0.048 ]
     jointId: 3
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
+    jointAxis: -Y
     jointRange: [ -2.269, 0 ]
     centerOfMass: [ 0.0054334208830912611, -0.0045557250577152588, -0.022327982304852591 ]
     mass: 0.01307
@@ -75,14 +109,17 @@ links:
       7.8215085179879079e-06, -1.9125278185636929e-07, -8.0678174194219455e-07,
       -1.9125278185636929e-07, 5.3468754380240647e-06, -3.1722504110141287e-07,
       -8.0678174194219455e-07, -3.1722504110141287e-07, 3.7864977034795684e-06 ]
-    elements: { Resource: { uri: "parts/R_KNEE_P.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_KNEE_P.stl" }
+        appearance: *DARKGRAY
   -
     name: R_ANKLE_P
     parent: R_KNEE_P
     translation : [ 0, 0, -0.059 ]
     jointId: 4
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     jointRange: [ -1.658, 1.047 ]
     centerOfMass: [ -0.010514983772173681, -0.00092494740382487032, 0.006396772110621252 ]
     mass: 0.0656
@@ -90,14 +127,17 @@ links:
       1.1506271948838844e-05, 3.6112601146108375e-07, -1.0960578172280234e-08,
       3.6112601146108375e-07, 2.1019676061582625e-05, 2.8207268765248394e-08, 
       -1.0960578172280234e-08, 2.8207268765248394e-08, 1.5933452986563463e-05 ]
-    elements: { Resource: { uri: "parts/R_ANKLE_P.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_ANKLE_P.stl" }
+        appearance: *RED
   -
     name: R_ANKLE_R
     parent: R_ANKLE_P
     translation : [ 0, 0, 0.0005 ]
     jointId: 5
     jointType: revolute
-    jointAxis: [ 1, 0, 0 ]
+    jointAxis: X
     jointRange: [ -0.785, 1.571 ]
     centerOfMass: [ -0.012299329345648103, -0.011256454634381104, -0.018194268448920348 ]
     mass: 0.01792
@@ -105,14 +145,17 @@ links:
       5.102862742548993e-06, -1.4311400561157794e-08, -1.2500454265702693e-08,
       -1.4311400561157794e-08, 1.1932351766822529e-05, -4.1556885057173572e-07,
       -1.2500454265702693e-08, -4.1556885057173572e-07, 1.5962207274521142e-05 ]
-    elements: { Resource: { uri: "parts/R_ANKLE_R.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_ANKLE_R.stl" }
+        appearance: *GRAY
   -
     name: L_HIP_Y
     parent: WAIST
     translation : [ 0, 0.0221, 0 ]
     jointId: 6
     jointType: revolute
-    jointAxis: [ 0, 0, 1 ]
+    jointAxis: Z
     jointRange: [ -0.524, 2.618 ]
     centerOfMass: [ 0.0098738158196747094, -0.0019351632042820964, -0.008641978258911916 ]
     mass: 0.01075
@@ -120,14 +163,17 @@ links:
       1.9516618643475554e-06, 4.4794177287632705e-07, 4.8697160385938657e-07,
       4.4794177287632705e-07, 5.0103304284609951e-06, -1.1632114977312446e-08,
       4.8697160385938657e-07, -1.1632114977312446e-08, 5.440099096984425e-06 ]
-    elements: { Resource: { uri: "parts/L_HIP_Y.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_HIP_Y.stl" }
+        appearance: *DARKGRAY
   -
     name: L_HIP_R
     parent: L_HIP_Y
     translation : [ 0, -0.0025, -0.028 ]
     jointId: 7
     jointType: revolute
-    jointAxis: [ -1, 0, 0 ]
+    jointAxis: -X
     jointRange: [ -1.571, 1.571 ]
     centerOfMass: [ 0.013202756254495143, -5.5007249363677958e-05, -0.0093736922025596525 ]
     mass: 0.06587
@@ -135,14 +181,17 @@ links:
       1.1527391880654793e-05, -3.3279576102840529e-07, 1.846183499543155e-06,
       -3.3279576102840529e-07, 1.9330345427356294e-05, 1.022613551906479e-07,
       1.846183499543155e-06, 1.022613551906479e-07, 1.4225997781058231e-05 ]
-    elements: { Resource: { uri: "parts/L_HIP_R.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_HIP_R.stl" }
+        appearance: *RED
   -
     name: L_HIP_P
     parent: L_HIP_R
     translation : [ 0.029, 0, -0.005 ]
     jointId: 8
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     jointRange: [ -2.094, 0.698 ]
     centerOfMass: [ 0.012315059064213051, 0.0026831832924373968, -0.036400277402077907 ]
     mass: 0.04249
@@ -150,14 +199,17 @@ links:
       1.0828139170977909e-05, 2.7126598481517499e-07, 1.8370007325714884e-07,
       2.7126598481517499e-07, 1.139354208379742e-05, -8.7593994599052404e-07,
       1.8370007325714884e-07, -8.7593994599052404e-07, 8.3880053868115531e-06 ]
-    elements: { Resource: { uri: "parts/L_HIP_P.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_HIP_P.stl" }
+        appearance: *GRAY
   -
     name: L_KNEE_P
     parent: L_HIP_P
     translation : [ 0, 0, -0.048 ]
     jointId: 9
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     jointRange: [ 0, 2.269 ]
     centerOfMass: [ 0.0050944529332231933, 0.0052148671697826937, -0.022550612186734664 ]
     mass: 0.01307
@@ -165,14 +217,17 @@ links:
       7.7867091563422099e-06, 2.6555643813326173e-07, -8.1173670094028792e-07,
       2.6555643813326173e-07, 5.2539557271461073e-06, 3.6707383373694058e-07,
       -8.1173670094028792e-07, 3.6707383373694058e-07, 3.8741968358549516e-06 ]
-    elements: { Resource: { uri: "parts/L_KNEE_P.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_KNEE_P.stl" }
+        appearance: *DARKGRAY
   -
     name: L_ANKLE_P
     parent: L_KNEE_P
     translation : [ 0, 0, -0.059 ]
     jointId: 10
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
+    jointAxis: -Y
     jointRange: [ -1.047, 1.658 ]
     centerOfMass: [ -0.010514983772173688, 0.0009249473053786659, 0.0063967712285226755 ]
     mass: 0.0656
@@ -180,14 +235,17 @@ links:
       1.1506271948838858e-05, -3.6112602191375958e-07, -1.096023377566418e-08,
       -3.6112602191375958e-07, 2.1019676007776897e-05, -2.8212119365793259e-08,
       -1.096023377566418e-08, -2.8212119365793259e-08, 1.5933453040369218e-05 ]
-    elements: { Resource: { uri: "parts/L_ANKLE_P.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_ANKLE_P.stl" }
+        appearance: *RED
   -
     name: L_ANKLE_R
     parent: L_ANKLE_P
     translation : [ 0, 0, 0.0005 ]
     jointId: 11
     jointType: revolute
-    jointAxis: [ 1, 0, 0 ]
+    jointAxis: X
     jointRange: [ -1.571, 0.785 ]
     centerOfMass: [ -0.012299329345648083, 0.011256454634381099, -0.018194268448920352 ]
     mass: 0.01792
@@ -195,14 +253,17 @@ links:
       5.102862742548993e-06, -1.4311400561157794e-08, -1.2500454265702693e-08,
       -1.4311400561157794e-08, 1.1932351766822529e-05, -4.1556885057173572e-07,
       -1.2500454265702693e-08, -4.1556885057173572e-07, 1.5962207274521142e-05 ]
-    elements: { Resource: { uri: "parts/L_ANKLE_R.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_ANKLE_R.stl" }
+        appearance: *GRAY
   -
     name: CHEST_P
     parent: WAIST
     translation : [ 0.044, 0.0, 0.02 ]
     jointId: 12
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
+    jointAxis: -Y
     jointRange: [ -1.658, 0.0 ]
     centerOfMass: [ -0.020730842888781902, 0.00025411885296551366, 0.042966477725380772 ]
     mass: 0.12824 
@@ -210,14 +271,17 @@ links:
       7.4792345496270588e-05, -2.0460700160580106e-08, 2.6612836351540438e-06,
       -2.0460700160580106e-08, 5.6631637624553763e-05, 1.5956077735064471e-08,
       2.6612836351540438e-06, 1.5956077735064471e-08, 0.0001061030019683906 ]
-    elements: { Resource: { uri: "parts/CHEST_P.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/CHEST_P.stl" }
+        appearance: *BLUE
   -
     name: NECK_Y
     parent: CHEST_P
     translation : [ -0.012, 0, 0.056 ]
     jointId: 13
     jointType: revolute
-    jointAxis: [ 0, 0, -1 ]
+    jointAxis: -Z
     jointRange: [ -0.872, 0.872 ]
     centerOfMass: [ 2.2786043818985748E-5, 5.3290705182007515E-18, 0.008215358964843369 ]
     mass: 0.00527
@@ -225,14 +289,17 @@ links:
       4.6330586214015664e-07, -1.8031706925116486e-22, -5.8734859937494843e-10,
       -1.8031706925116486e-22, 4.9575960481670661e-07, -2.7047560387674729e-22,
       -5.8734859937494843e-10, -2.7047560387674729e-22, 6.7145032800772607e-07 ]
-    elements: { Resource: { uri: "parts/NECK_Y.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/NECK_Y.stl" }
+        appearance: *GRAY
   -
     name: R_SHOULDER_P
     parent: CHEST_P
     translation : [ -0.01, -0.041, 0.042 ]
     jointId: 14
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     jointRange: [ -2.618, 2.618 ]
     centerOfMass: [ -0.0013812847067215142, -0.010516066209780376, -0.0029935461211070872 ]
     mass: 0.00975
@@ -240,14 +307,17 @@ links:
       1.3095800287113333e-06, 2.1515967001874234e-08, -3.458271618147783e-08,
       2.1515967001874234e-08, 2.6327935898039409e-06, -1.0994626230711128e-07,
       -3.458271618147783e-08, -1.0994626230711128e-07, 2.7200506260844207e-06 ]
-    elements: { Resource: { uri: "parts/R_SHOULDER_P.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_SHOULDER_P.stl" }
+        appearance: *GRAY
   -
     name: R_SHOULDER_R
     parent: R_SHOULDER_P
     translation : [ 0, -0.025, -0.008 ]
     jointId: 15
     jointType: revolute
-    jointAxis: [ 1, 0, 0 ]
+    jointAxis: X
     jointRange: [ -2.618, 0.698]
     centerOfMass: [ -0.0035468902411903828, -0.0015567363057332911, -0.014437898304582529 ]
     mass: 0.03686
@@ -255,14 +325,17 @@ links:
       4.9508840880307424e-06, 8.134138909631631e-08, -1.307404018922331e-07,
       8.134138909631631e-08, 9.9533099200177678e-06, -4.1565325421949963e-07,
       -1.307404018922331e-07, -4.1565325421949963e-07, 1.0283186264356074e-05 ]
-    elements: { Resource: { uri: "parts/R_SHOULDER_R.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/R_SHOULDER_R.stl" }
+        appearance: *DARKGRAY
   -
     name: R_ELBOW_P
     parent: R_SHOULDER_R
     translation : [ 0.009, 0, -0.047 ]
     jointId: 16
     jointType: revolute
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: Y
     jointRange: [ -2.269, 0.873 ]
     centerOfMass: [ 0.0015461746197517063, 0.00033795855263700454, -0.015625257449077206 ]
     mass: 0.02905
@@ -270,14 +343,17 @@ links:
       1.0789525167996382e-05, 3.9918558722109871e-09, 1.7978343794464902e-06,
       3.9918558722109871e-09, 1.1003152443935253e-05, -4.0046039702229187e-08,
       1.7978343794464902e-06, -4.0046039702229187e-08, 3.2591072507697875e-06 ]
-    elements: { Resource: { uri: "parts/R_ELBOW_P.wrl" } }
+    elements: 
+      Shape: 
+        geometry: { type: Resource, uri: "parts/R_ELBOW_P.stl" }
+        appearance: *GRAY
   -
     name: L_SHOULDER_P
     parent: CHEST_P
     translation : [ -0.01, 0.041, 0.042 ]
     jointId: 17
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
+    jointAxis: -Y
     jointRange: [ -2.618, 2.618 ]
     centerOfMass: [ -0.0013812821724981078, 0.010516052694166637, -0.0029935523353056348 ]
     mass: 0.00975
@@ -285,14 +361,17 @@ links:
       1.3095800142021788e-06, -2.1515553828179759e-08, -3.4582658591096929e-08,
       -2.1515553828179759e-08, 2.6327938140190386e-06, 1.0994635718211764e-07,
       -3.4582658591096929e-08, 1.0994635718211764e-07, 2.7200504163784756e-06 ]
-    elements: { Resource: { uri: "parts/L_SHOULDER_P.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_SHOULDER_P.stl" }
+        appearance: *GRAY
   -
     name: L_SHOULDER_R
     parent: L_SHOULDER_P
     translation : [ 0, 0.025, -0.008 ]
     jointId: 18
     jointType: revolute
-    jointAxis: [ 1, 0, 0 ]
+    jointAxis: X
     jointRange: [ -0.698, 2.618 ]
     centerOfMass: [ -0.0035468902411903828, 0.0015567363057332922, -0.014437898304582539 ]
     mass: 0.03686 
@@ -300,14 +379,17 @@ links:
       1.0694950140451039e-05, 1.9723127905453326e-07, -2.6065897076445542e-07,
       1.9723127905453326e-07, 1.0052420713671298e-05, 4.8438918432883336e-08,
       -2.6065897076445542e-07, 4.8438918432883336e-08, 4.8379288533730014e-06 ]
-    elements: { Resource: { uri: "parts/L_SHOULDER_R.wrl" } }
+    elements: 
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_SHOULDER_R.stl" }
+        appearance: *DARKGRAY
   -
     name: L_ELBOW_P
     parent: L_SHOULDER_R
     translation : [ 0.009, 0, -0.047 ]
     jointId: 19
     jointType: revolute
-    jointAxis: [ 0, -1, 0 ]
+    jointAxis: -Y
     jointRange: [ -0.873, 2.269 ]
     centerOfMass: [ 0.0015461746197516959, -0.00033796007273481838, -0.015625257207349728 ]
     mass: 0.02905
@@ -315,7 +397,10 @@ links:
       1.0789525167996373e-05, -3.9905699607782306e-09, 1.7978343823012256e-06,
       -3.9905699607782306e-09, 1.1003152501217637e-05, 4.0040500729103886e-08,
       1.7978343823012256e-06, 4.0040500729103886e-08, 3.259107193487409e-06 ]
-    elements: { Resource: { uri: "parts/L_ELBOW_P.wrl" } }
+    elements:
+      Shape:
+        geometry: { type: Resource, uri: "parts/L_ELBOW_P.stl" }
+        appearance: *GRAY
 
 
 standardPose: [ 

@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -54,7 +53,6 @@ set(sources
   YAMLBodyLoader.cpp
   VRMLBodyLoader.cpp
   VRMLBodyWriter.cpp
-  ColladaBodyLoader.cpp
   PoseProviderToBodyMotionConverter.cpp
   BodyMotionUtil.cpp
   SimpleController.cpp
@@ -67,7 +65,6 @@ set(headers
   BodyCustomizerInterface.h
   AbstractBodyLoader.h
   VRMLBodyLoader.h
-  ColladaBodyLoader.h
   BodyLoader.h
   VRMLBodyWriter.h
   ZMPSeq.h

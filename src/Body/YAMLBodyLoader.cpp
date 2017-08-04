@@ -23,10 +23,12 @@
 #include <boost/optional.hpp>
 #include <unordered_map>
 #include <mutex>
+#include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = boost::filesystem;
 using boost::format;
 
 namespace {
@@ -35,6 +37,69 @@ std::mutex customNodeFunctionMutex;
 typedef function<bool(YAMLBodyLoader& loader, Mapping& node)> CustomNodeFunction;
 typedef map<string, CustomNodeFunction> CustomNodeFunctionMap;
 CustomNodeFunctionMap customNodeFunctions;
+
+class ROSPackageSchemeHandler
+{
+    vector<string> packagePaths;
+    
+public:
+    ROSPackageSchemeHandler()
+    {
+        const char* str = getenv("ROS_PACKAGE_PATH");
+        if(str){
+            do {
+                const char* begin = str;
+                while(*str != ':' && *str) str++;
+                packagePaths.push_back(string(begin, str));
+            } while (0 != *str++);
+        }
+    }
+
+    string operator()(const string& path, std::ostream& os)
+    {
+        filesystem::path filepath(path);
+        auto iter = filepath.begin();
+        if(iter == filepath.end()){
+            return string();
+        }
+        
+        filesystem::path directory = *iter++;
+        filesystem::path relativePath;
+        while(iter != filepath.end()){
+            relativePath /= *iter++;
+        }
+
+        bool found = false;
+        filesystem::path combined;
+        
+        for(auto element : packagePaths){
+            filesystem::path packagePath(element);
+            combined = packagePath / filepath;
+            if(exists(combined)){
+                found = true;
+                break;
+            }
+            combined = packagePath / relativePath;
+            if(exists(combined)){
+                found = true;
+                break;
+            }
+        }
+
+        if(found){
+            return combined.string();
+        } else {
+            os << (format(_("\"%1%\" is not found in the ROS package directories.")) % path) << endl;
+            return string();
+        }
+    }
+};
+
+struct ROSPackageSchemeHandlerRegistration {
+    ROSPackageSchemeHandlerRegistration(){
+        YAMLSceneReader::registerUriSchemeHandler("package", ROSPackageSchemeHandler());
+    }
+} rosPackageSchemeHandlerRegistration;
 
 }
 
