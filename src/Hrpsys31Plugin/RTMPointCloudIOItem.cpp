@@ -13,6 +13,7 @@
 #include <cnoid/PointSetItem>
 #include <cnoid/LazyCaller>
 #include <cnoid/corba/PointCloud.hh>
+#include <cnoid/corba/CameraImage.hh>
 #include <rtm/DataFlowComponentBase.h>
 #include <rtm/idl/BasicDataTypeSkel.h>
 #include <rtm/idl/InterfaceDataTypes.hh>
@@ -21,12 +22,26 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using namespace RTC;
 
 
 namespace cnoid {
+
+class CameraInPort
+{
+public:
+    InPort<Img::TimedCameraImage> inPort;
+    Img::TimedCameraImage timedCameraImage;
+    string portName;
+    CameraPtr camera;
+
+    CameraInPort(Camera* camera, const string& name)
+        : camera(camera),
+          portName(name),
+          inPort(name.c_str(), timedCameraImage){ };
+};
+typedef std::shared_ptr<CameraInPort> CameraInPortPtr;
 
 class PointCloudInPort
 {
@@ -69,6 +84,9 @@ public:
     typedef map<string, RangeDataInPortPtr> RangeDataInPortMap;
     RangeDataInPortMap rangeDataInPorts;
 
+    typedef map<string, CameraInPortPtr> CameraInPortMap;
+    CameraInPortMap cameraInPorts;
+
     struct PointCloudField {
         unsigned long offset;
         PointCloudTypes::DataType type;
@@ -81,8 +99,9 @@ public:
     PointCloudIORTC(RTC::Manager* manager);
     ~PointCloudIORTC(){ };
 
-    bool createPort( DeviceList<RangeCamera> cameras, vector<string> pointCloudPortNames,
-            DeviceList<RangeSensor> rangeSensors, vector<string> rangeSensorPortNames );
+    bool createPort( DeviceList<RangeCamera> rangeCameras, vector<string> pointCloudPortNames,
+            DeviceList<RangeSensor> rangeSensors, vector<string> rangeSensorPortNames,
+            DeviceList<Camera> cameras, vector<string> cameraPortNames );
     float readFloatPointCloudData(unsigned char* src, PointCloudField& fe, bool is_bigendian);
 
     virtual ReturnCode_t onInitialize();
@@ -142,13 +161,14 @@ PointCloudIORTC::PointCloudIORTC(Manager* manager)
 }
 
 
-bool PointCloudIORTC::createPort(DeviceList<RangeCamera> cameras, vector<string> pointCloudPortNames,
-        DeviceList<RangeSensor> rangeSensors, vector<string> rangeSensorPortNames)
+bool PointCloudIORTC::createPort(DeviceList<RangeCamera> rangeCameras, vector<string> pointCloudPortNames,
+        DeviceList<RangeSensor> rangeSensors, vector<string> rangeSensorPortNames,
+        DeviceList<Camera> cameras, vector<string> cameraPortNames )
 {
     bool ret = true;
 
-    for(int i=0; i<cameras.size(); i++){
-        PointCloudInPort* pointCloudInPort = new PointCloudInPort(cameras[i], pointCloudPortNames[i]);
+    for(int i=0; i<rangeCameras.size(); i++){
+        PointCloudInPort* pointCloudInPort = new PointCloudInPort(rangeCameras[i], pointCloudPortNames[i]);
         if(!addInPort(pointCloudInPort->portName.c_str(), pointCloudInPort->inPort))
             ret = false;
         else
@@ -161,6 +181,14 @@ bool PointCloudIORTC::createPort(DeviceList<RangeCamera> cameras, vector<string>
             ret = false;
         else
             rangeDataInPorts.insert(make_pair(rangeDataInPort->portName, RangeDataInPortPtr(rangeDataInPort)));
+    }
+
+    for(int i=0; i<cameras.size(); i++){
+        CameraInPort* cameraInPort = new CameraInPort(cameras[i], cameraPortNames[i]);
+        if(!addInPort(cameraInPort->portName.c_str(), cameraInPort->inPort))
+            ret = false;
+        else
+            cameraInPorts.insert(make_pair(cameraInPort->portName, CameraInPortPtr(cameraInPort)));
     }
 
     return ret;
@@ -268,7 +296,7 @@ ReturnCode_t PointCloudIORTC::onExecute(UniqueId ec_id)
             if(rgb && pixels)
                 rangeCamera->setImage(tmpImage);
 
-            callLater(bind(&RangeCamera::notifyStateChange,rangeCamera));
+            callLater( [rangeCamera](){rangeCamera->notifyStateChange();} );
         }
     }
 
@@ -292,9 +320,45 @@ ReturnCode_t PointCloudIORTC::onExecute(UniqueId ec_id)
 
             rangeSensor->setRangeData(tmpRangeData);
 
-            callLater(bind(&RangeSensor::notifyStateChange,rangeSensor));
+            callLater( [rangeSensor](){rangeSensor->notifyStateChange();} );
         }
     }
+
+    for(CameraInPortMap::iterator it = cameraInPorts.begin();
+            it != cameraInPorts.end(); it++){
+        InPort<Img::TimedCameraImage>& inport_ = it->second->inPort;
+        if(inport_.isNew()){
+            do {
+                inport_.read();
+            }while(inport_.isNew());
+
+            Img::TimedCameraImage& timedCameraImage = it->second->timedCameraImage;
+            Camera* camera = it->second->camera;
+
+            int numComponents;
+            switch(timedCameraImage.data.image.format){
+            case Img::CF_GRAY :
+                numComponents = 1;
+                break;
+            case Img::CF_RGB :
+                numComponents = 3;
+                break;
+            case Img::CF_UNKNOWN :
+            default :
+                numComponents = 0;
+                break;
+            }
+
+            std::shared_ptr<Image> tmpImage = std::make_shared<Image>();
+            tmpImage->setSize(timedCameraImage.data.image.width, timedCameraImage.data.image.height, numComponents);
+            size_t length = timedCameraImage.data.image.raw_data.length();
+            memcpy(tmpImage->pixels(), timedCameraImage.data.image.raw_data.get_buffer(), length);
+            camera->setImage(tmpImage);
+
+            callLater( [camera](){camera->notifyStateChange();} );
+        }
+    }
+
     return RTC::RTC_OK;
 }
 
@@ -306,18 +370,21 @@ public:
     MessageView* mv;
 
     Body* body;
-    DeviceList<RangeCamera> cameras;
+    DeviceList<RangeCamera> rangeCameras;
+    DeviceList<Camera> cameras;
     DeviceList<RangeSensor> rangeSensors;
     PointCloudIORTC* pointCloudIORTC;
     string componentName;
     vector<string> pointCloudPortNames;
     vector<string> rangeSensorPortNames;
+    vector<string> cameraPortNames;
 
     RTMPointCloudIOItemImpl(RTMPointCloudIOItem* self);
     RTMPointCloudIOItemImpl(RTMPointCloudIOItem* self, const RTMPointCloudIOItemImpl& org);
     ~RTMPointCloudIOItemImpl();
 
     bool onComponentNamePropertyChanged(const string& name);
+    bool onCameraPortNamePropertyChanged(int i, const string& name);
     bool onPointCloudPortNamePropertyChanged(int i, const string& name);
     bool onRangeSensorPortNamePropertyChanged(int i, const string& name);
 
@@ -401,22 +468,34 @@ void RTMPointCloudIOItem::onPositionChanged()
 void RTMPointCloudIOItemImpl::changeOwnerBodyItem(BodyItem* bodyItem)
 {
     body = bodyItem->body();
-    cameras = body->devices<RangeCamera>();
+    cameras.clear();
+    DeviceList<Camera> cameras0 = body->devices<Camera>();
+    for(size_t i=0; i<cameras0.size(); i++){
+        if(cameras0[i]->imageType() != Camera::NO_IMAGE)
+            cameras.push_back(cameras0[i]);
+    }
+    rangeCameras = body->devices<RangeCamera>();
     rangeSensors = body->devices<RangeSensor>();
 
     if(componentName.empty())
         componentName = self->name();
 
-    pointCloudPortNames.resize(cameras.size());
-    for(size_t i=0; i<cameras.size(); i++){
+    pointCloudPortNames.resize(rangeCameras.size());
+    for(size_t i=0; i<rangeCameras.size(); i++){
         if(pointCloudPortNames[i].empty())
-            pointCloudPortNames[i] = cameras[i]->name();
+            pointCloudPortNames[i] = rangeCameras[i]->name();
     }
 
     rangeSensorPortNames.resize(rangeSensors.size());
     for(size_t i=0; i<rangeSensors.size(); i++){
         if(rangeSensorPortNames[i].empty())
             rangeSensorPortNames[i] = rangeSensors[i]->name();
+    }
+
+    cameraPortNames.resize(cameras.size());
+    for(size_t i=0; i<cameras.size(); i++){
+        if(cameraPortNames[i].empty())
+            cameraPortNames[i] = cameras[i]->name() + "_image";
     }
 
    //self->notifyUpdate();
@@ -447,7 +526,8 @@ bool RTMPointCloudIOItemImpl::createRTC()
     MessageView::instance()->putln(fmt(_("RTC \"%1%\" has been created.")) % componentName);
 
     pointCloudIORTC = dynamic_cast<PointCloudIORTC*>(rtc);
-    pointCloudIORTC->createPort( cameras, pointCloudPortNames, rangeSensors, rangeSensorPortNames );
+    pointCloudIORTC->createPort( rangeCameras, pointCloudPortNames,
+            rangeSensors, rangeSensorPortNames, cameras, cameraPortNames );
 
     return true;
 }
@@ -489,14 +569,19 @@ void RTMPointCloudIOItem::doPutProperties(PutPropertyFunction& putProperty)
 void RTMPointCloudIOItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("ComponentName"), componentName,
-            std::bind(&RTMPointCloudIOItemImpl::onComponentNamePropertyChanged, this, _1));
+            [this](const string& name){ return onComponentNamePropertyChanged(name); });
+
+    for(int i=0; i<cameraPortNames.size(); i++){
+        putProperty(_("CameraPortName")+to_string(i), cameraPortNames[i],
+            [this, i](const string& name){ return onCameraPortNamePropertyChanged(i, name); });
+        }
     for(int i=0; i<pointCloudPortNames.size(); i++){
         putProperty(_("PointCloudPortName")+to_string(i), pointCloudPortNames[i],
-                std::bind(&RTMPointCloudIOItemImpl::onPointCloudPortNamePropertyChanged, this, i, _1));
+            [this, i](const string& name){ return onPointCloudPortNamePropertyChanged(i, name); });
     }
     for(int i=0; i<rangeSensorPortNames.size(); i++){
         putProperty(_("rangeSensorPortName")+to_string(i), rangeSensorPortNames[i],
-                std::bind(&RTMPointCloudIOItemImpl::onRangeSensorPortNamePropertyChanged, this, i, _1));
+            [this, i](const string& name){ return onRangeSensorPortNamePropertyChanged(i, name); });
     }
 }
 
@@ -504,6 +589,15 @@ void RTMPointCloudIOItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 bool RTMPointCloudIOItemImpl::onComponentNamePropertyChanged(const string& name)
 {
     componentName = name;
+
+    recreateRTC();
+    return true;
+}
+
+
+bool RTMPointCloudIOItemImpl::onCameraPortNamePropertyChanged(int i, const string& name)
+{
+    cameraPortNames[i] = name;
 
     recreateRTC();
     return true;
@@ -550,6 +644,11 @@ void RTMPointCloudIOItemImpl::store(Archive& archive)
     for(size_t i=0; i<rangeSensorPortNames.size(); i++){
         list1.append(rangeSensorPortNames[i]);
     }
+
+    Listing& list2 = *archive.createFlowStyleListing("cameraPortNames");
+    for(size_t i=0; i<cameraPortNames.size(); i++){
+        list2.append(cameraPortNames[i]);
+    }
 }
 
 bool RTMPointCloudIOItem::restore(const Archive& archive)
@@ -575,6 +674,13 @@ void RTMPointCloudIOItemImpl::restore(const Archive& archive)
         rangeSensorPortNames.clear();
         for(size_t i=0; i<list1.size(); i++)
             rangeSensorPortNames.push_back(list1[i]);
+    }
+
+    const Listing& list2 = *archive.findListing("cameraPortNames");
+    if(list2.isValid()){
+        cameraPortNames.clear();
+        for(size_t i=0; i<list2.size(); i++)
+            cameraPortNames.push_back(list2[i]);
     }
 
 }
