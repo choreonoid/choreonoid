@@ -31,11 +31,10 @@ public:
     ForwardDynamicsCBM(DyBody* body);
     ~ForwardDynamicsCBM();
 
-    void setHighGainModeForAllJoints();
-    void setHighGainMode(int linkIndex, bool on = true);
-        
     virtual void initialize();
     virtual void calcNextState();
+
+    void complementHighGainModeCommandValues();
 
     void initializeAccelSolver();
     void sumExternalForces();
@@ -43,6 +42,11 @@ public:
     void solveUnknownAccels(const Vector3& fext, const Vector3& tauext);
     void solveUnknownAccels(DyLink* link, const Vector3& fext, const Vector3& tauext, const Vector3& rootfext, const Vector3& roottauext);
 
+    //! \deprecated Use Link::setActuationMode() instead.
+    void setHighGainModeForAllJoints();
+    //! \deprecated Use Link::setActuationMode() instead.
+    void setHighGainMode(int linkIndex, bool on = true);
+        
 private:
         
     /*
@@ -66,7 +70,6 @@ private:
     VectorXd d1;
     VectorXd c1;
 
-    boost::dynamic_bitset<> highGainModeLinkFlag;
     std::vector<DyLink*> torqueModeJoints;
     std::vector<DyLink*> highGainModeJoints;
 

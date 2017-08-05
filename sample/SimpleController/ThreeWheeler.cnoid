@@ -15,11 +15,11 @@ items:
       children: 
         - 
           id: 2
-          name: "SimpleVehicle"
+          name: "ThreeWheeler"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/simple_vehicle_P.body"
+            modelFile: "${SHARE}/model/misc/threewheeler.body"
             currentBaseLink: "BODY"
             rootPosition: [ 0, 0, 0.1 ]
             rootAttitude: [ 
@@ -40,13 +40,13 @@ items:
           children: 
             - 
               id: 3
-              name: "SimpleVehicleController"
+              name: "ThreeWheelerController"
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
                 controllerOptions: ""
-                controller: "SimpleVehicle.so"
+                controller: "ThreeWheelerController.so"
                 reloading: true
                 RelativePathBase: "Controller directory"
         - 

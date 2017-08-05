@@ -838,7 +838,7 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
             link->setJointType(Link::FIXED_JOINT);
         } else if(jointType == "pseudoContinuousTrack"){
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
-            link->setActuationMode(Link::SURFACE_VELOCITY);
+            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         } else {
             jointTypeNode->throwException("Illegal jointType value");
         }
@@ -1529,7 +1529,7 @@ void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, st
 {
     link->setName(str(format("%1%%2%") % link->name() % index));
     if(!linkMap.insert(make_pair(link->name(), link)).second){
-        node->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
+        node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
     }
     link->setInitialJointAngle(initialAngle);
 

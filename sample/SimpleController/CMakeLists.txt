@@ -1,6 +1,3 @@
-
-# @author Shin'ichiro Nakaoka
-
 if(NOT ENABLE_GUI)
   return()
 endif()
@@ -11,8 +8,6 @@ if(NOT BUILD_SIMPLE_CONTROLLER_SAMPLES)
   return()
 endif()
 
-# set(CMAKE_BUILD_TYPE Debug)
-
 add_cnoid_simple_controller(SR1MinimumController SR1MinimumController.cpp)
 configure_file(SR1Minimum.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
@@ -21,8 +16,6 @@ configure_file(SR1Walk.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(SR1WalkPush.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 configure_file(SR1WalkPush.py ${CNOID_SOURCE_SHARE_DIR}/script COPYONLY)
 configure_file(SR1Walk2D.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-
-#configure_file(SR1WalkHighGain.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SR1LiftupController SR1LiftupController.cpp)
 configure_file(SR1Liftup.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
@@ -36,7 +29,7 @@ configure_file(SampleCrawler.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(SampleCrawlerJoystickController SampleCrawlerJoystickController.cpp)
 configure_file(SampleCrawlerJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-configure_file(SampleCrawlerSlope_Joystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+configure_file(SampleCrawlerSlope.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
 add_cnoid_simple_controller(TankJoystickController TankJoystickController.cpp)
 configure_file(TankJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
@@ -49,13 +42,10 @@ configure_file(SR1WalkinHouse.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 add_cnoid_simple_controller(ConveyorController ConveyorController.cpp)
 configure_file(ConveyorSample.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
-add_cnoid_simple_controller(SampleSVController SampleSV.cpp)
-
 add_cnoid_simple_controller(CameraSampleController CameraSampleController.cpp)
 
-add_cnoid_simple_controller(SimpleVehicle SimpleVehicle.cpp)
-configure_file(SimpleVehicle.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
+add_cnoid_simple_controller(ThreeWheelerController ThreeWheelerController.cpp)
+configure_file(ThreeWheeler.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
 
-add_cnoid_simple_controller(4WheelsJoystickController 4WheelsJoystickController.cpp)
-configure_file(4WheelVehicleJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)
-
+add_cnoid_simple_controller(FourWheelCarJoystickController FourWheelCarJoystickController.cpp)
+configure_file(FourWheelCarJoystick.cnoid ${CNOID_SOURCE_SHARE_DIR}/project COPYONLY)

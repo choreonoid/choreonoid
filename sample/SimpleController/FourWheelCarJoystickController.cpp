@@ -1,5 +1,5 @@
 /**
-   4 wheels Vehicle Controller
+   Four wheel car controller
    @author Shizuko Hattori
 */
 
@@ -9,17 +9,15 @@
 using namespace std;
 using namespace cnoid;
 
-class FourWheelsController : public cnoid::SimpleController
+class FourWheelCarJoystickController : public SimpleController
 { 
     Link* steering;
     Link* drive;
     Joystick joystick;
-
     double timeStep;
     double eold;
 
 public:
-    
     virtual bool initialize(SimpleControllerIO* io)
     {
         ostream& os = io->os();
@@ -36,7 +34,6 @@ public:
             return false;
         }
         
-        io->setJointOutput(JOINT_TORQUE);
         io->setJointInput(JOINT_ANGLE | JOINT_VELOCITY);
         
         if(!joystick.isReady()){
@@ -79,4 +76,4 @@ public:
     }
 };
 
-CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(FourWheelsController)
+CNOID_IMPLEMENT_SIMPLE_CONTROLLER_FACTORY(FourWheelCarJoystickController)

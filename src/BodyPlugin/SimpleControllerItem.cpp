@@ -366,9 +366,13 @@ SimpleController* SimpleControllerItemImpl::initialize(ControllerItemIO* io, Sha
 
         // try the old API
         if(!result){
-            setJointOutput(SimpleControllerIO::JOINT_TORQUE);
             setJointInput(SimpleControllerIO::JOINT_DISPLACEMENT);
             result = controller->initialize();
+            if(result){
+                for(auto device : ioBody->devices()){
+                    enableInput(device);
+                }
+            }
         }
         
         if(!result){
@@ -682,7 +686,7 @@ void SimpleControllerItemImpl::output()
             simLink->q() = ioLink->q();
             break;
         case Link::JOINT_VELOCITY:
-        case Link::SURFACE_VELOCITY:
+        case Link::JOINT_SURFACE_VELOCITY:
             simLink->dq() = ioLink->dq();
             simLink->dq() = ioLink->dq();
             break;

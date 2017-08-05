@@ -161,7 +161,7 @@ public:
         JOINT_ANGLE = 2,
         JOINT_DISPLACEMENT = 2,
         JOINT_VELOCITY = 3,
-        SURFACE_VELOCITY = 4,
+        JOINT_SURFACE_VELOCITY = 4, // For pseudo continous tracks
         LINK_POSITION = 5,
     };
 
