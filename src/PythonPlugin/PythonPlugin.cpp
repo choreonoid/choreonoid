@@ -167,6 +167,15 @@ bool PythonPlugin::initializeInterpreter()
 {
     Py_Initialize();
 
+    /*
+      Some python module requires argv and missing argv may cause AttributeError.a
+      (Ex. AttributeError: 'module' object has no attribute 'argv')
+      To avoid this problem, set dummy argv to python interpreter by PySys_SetArgvEx.
+    */
+    char dummy_str[] = "choreonoid"; // avoid deprecated conversion from string constant
+    char* dummy_argv[] = {dummy_str};
+    PySys_SetArgvEx(1, dummy_argv, 0);
+
     mainModule = python::import("__main__");
     mainNamespace = mainModule.attr("__dict__");
 
