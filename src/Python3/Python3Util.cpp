@@ -3,7 +3,7 @@
 */
 
 #include <Python.h>
-#include "PythonUtil.h"
+#include "Python3Util.h"
 
 void cnoid::python3::handlePythonException()
 {

@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 if(NOT ENABLE_PYTHON)

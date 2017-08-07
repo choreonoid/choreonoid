@@ -1,6 +1,6 @@
-if(NOT ENABLE_PYTHON)
+if(NOT ENABLE_PYTHON3)
   return()
 endif()
 
-add_cnoid_python_module(PyBody PyBodyModule.cpp)
-target_link_libraries(PyBody CnoidBody CnoidPython)
+add_cnoid_python_module(Py3Body PyBodyModule.cpp)
+target_link_libraries(Py3Body CnoidBody CnoidPython3)

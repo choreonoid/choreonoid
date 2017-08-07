@@ -1,5 +1,6 @@
-
-# @author Hisashi Ikari
+if(NOT ENABLE_PYTHON)
+  return()
+endif()
 
 set(target PyBulletPlugin)
 add_cnoid_python_module(${target} PyBulletPlugin.cpp)

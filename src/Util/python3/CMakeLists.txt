@@ -2,7 +2,7 @@ if(NOT ENABLE_PYTHON3)
   return()
 endif()
 
-add_cnoid_python3_module(PyUtil
+add_cnoid_python3_module(Py3Util
   PyUtilModule.cpp
   PySignal.cpp
   PyValueTree.cpp
@@ -14,11 +14,11 @@ add_cnoid_python3_module(PyUtil
   PyTask.cpp
   )
 
-target_link_libraries(PyUtil CnoidUtil CnoidPython3)
+target_link_libraries(Py3Util CnoidUtil CnoidPython3)
 
 set(headers
   PyUtil.h
   PySignal.h
   )
 
-apply_common_setting_for_python_module(PyUtil "${headers}")
+apply_common_setting_for_python_module(Py3Util "${headers}")

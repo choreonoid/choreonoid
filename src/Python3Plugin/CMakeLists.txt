@@ -1,12 +1,7 @@
-if(WIN32)
-  option(BUILD_PYTHON3_PLUGIN "Building Python3Plugin" OFF)
-else()
-  option(BUILD_PYTHON3_PLUGIN "Building Python3Plugin" ON)
-endif()
-
+option(BUILD_PYTHON3_PLUGIN "Building Python3Plugin" OFF)
 if(NOT BUILD_PYTHON3_PLUGIN)
   return()
-elesif(NOT ENABLE_PYTHON3)
+elseif(NOT ENABLE_PYTHON3)
   message(FATAL_ERROR "Python3Plugin needs to ENABLE_PYTHON3")
 endif()
 

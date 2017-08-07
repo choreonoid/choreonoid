@@ -17,6 +17,7 @@ libqt4-opengl-dev \
 qt4-dev-tools \
 qt4-qtconfig \
 qt4-doc-html \
+python3-dev \
 python2.7-dev \
 python-numpy \
 libassimp-dev \

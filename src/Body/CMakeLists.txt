@@ -197,11 +197,6 @@ install(
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
-if(ENABLE_PYTHON)
-  if(USE_PYTHON3)
-    add_subdirectory(python3)
-  else()
-    add_subdirectory(python)
-  endif()
-endif()
+add_subdirectory(python)
+add_subdirectory(python3)
 add_subdirectory(lua)

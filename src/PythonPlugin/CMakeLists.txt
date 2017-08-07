@@ -6,7 +6,7 @@ endif()
 
 if(NOT BUILD_PYTHON_PLUGIN)
   return()
-elesif(NOT ENABLE_PYTHON)
+elseif(NOT ENABLE_PYTHON)
   message(FATAL_ERROR "PythonPlugin needs to ENABLE_PYTHON")
 endif()
 
