@@ -825,16 +825,20 @@ LinkPtr YAMLBodyLoaderImpl::readLinkContents(Mapping* linkNode)
         string jointType = jointTypeNode->toString();
         if(jointType == "revolute"){
             link->setJointType(Link::REVOLUTE_JOINT);
+            link->setActuationMode(Link::JOINT_TORQUE);
         } else if(jointType == "prismatic"){
             link->setJointType(Link::PRISMATIC_JOINT);
+            link->setActuationMode(Link::JOINT_FORCE);
         } else if(jointType == "slide"){
             link->setJointType(Link::PRISMATIC_JOINT);
+            link->setActuationMode(Link::JOINT_FORCE);
         } else if(jointType == "free"){
             link->setJointType(Link::FREE_JOINT);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FIXED_JOINT);
         } else if(jointType == "pseudoContinuousTrack"){
             link->setJointType(Link::PSEUDO_CONTINUOUS_TRACK);
+            link->setActuationMode(Link::JOINT_SURFACE_VELOCITY);
         } else {
             jointTypeNode->throwException("Illegal jointType value");
         }
@@ -1355,8 +1359,7 @@ bool YAMLBodyLoaderImpl::readForceSensor(Mapping& node)
     ForceSensorPtr sensor = new ForceSensor;
     if(read(node, "maxForce",  v)) sensor->F_max().head<3>() = v;
     if(read(node, "maxTorque", v)) sensor->F_max().tail<3>() = v;
-    readDevice(sensor, node);
-    return true;
+    return readDevice(sensor, node);
 }
 
 
@@ -1526,7 +1529,7 @@ void YAMLBodyLoaderImpl::addTrackLink(int index, LinkPtr link, Mapping* node, st
 {
     link->setName(str(format("%1%%2%") % link->name() % index));
     if(!linkMap.insert(make_pair(link->name(), link)).second){
-        node->throwException(str(format(_("Duplicated link name \"%1\%\"")) % link->name()));
+        node->throwException(str(format(_("Duplicated link name \"%1%\"")) % link->name()));
     }
     link->setInitialJointAngle(initialAngle);
 

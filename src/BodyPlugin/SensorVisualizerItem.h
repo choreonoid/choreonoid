@@ -12,6 +12,7 @@
 #include <cnoid/PointSetItem>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
+#include <cnoid/ImageProvider>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -30,6 +31,7 @@ public:
 protected:
     virtual Item* doDuplicate() const;
     virtual void onPositionChanged();
+    virtual void onDisconnectedFromRoot();
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
@@ -59,6 +61,7 @@ public :
 protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
+    virtual bool restore(const Archive& archive);
 
 private :
     ForceSensorVisualizerItemImpl* impl;
@@ -110,6 +113,31 @@ private :
 };
 
 typedef ref_ptr<RangeSensorVisualizerItem> RangeSensorVisualizerItemPtr;
+
+class CameraImageVisualizerItemImpl;
+
+class CNOID_EXPORT CameraImageVisualizerItem : public Item, public ImageProvider
+{
+public :
+    static void initializeClass(ExtensionManager* ext);
+
+    CameraImageVisualizerItem();
+    virtual ~CameraImageVisualizerItem();
+
+    virtual const Image* getImage();
+
+    void setBodyItem(BodyItem* bodyItem, Camera* camera);
+
+
+protected:
+    //virtual void doPutProperties(PutPropertyFunction& putProperty);
+    //virtual bool store(Archive& archive);
+
+private :
+    CameraImageVisualizerItemImpl* impl;
+};
+
+typedef ref_ptr<CameraImageVisualizerItem> CameraImageVisualizerItemPtr;
 
 }
 #endif

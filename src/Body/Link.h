@@ -152,7 +152,23 @@ public:
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }
     const Vector3& d() const { return a_; } // joint axis alias for a slide joint
-        
+
+    enum ActuationMode {
+        NO_ACTUATION = 0,
+        JOINT_TORQUE = 1,
+        JOINT_FORCE = 1,
+        JOINT_EFFORT = 1,
+        JOINT_ANGLE = 2,
+        JOINT_DISPLACEMENT = 2,
+        JOINT_VELOCITY = 3,
+        JOINT_SURFACE_VELOCITY = 4, // For pseudo continous tracks
+        LINK_POSITION = 5,
+    };
+
+    ActuationMode actuationMode() const { return actuationMode_; }
+
+    void setActuationMode(ActuationMode mode) { actuationMode_ = mode; }
+    
     double q() const { return q_; }
     double& q() { return q_; }
     double dq() const { return dq_; }
@@ -295,6 +311,7 @@ private:
     Matrix3 Rs_; // temporary variable for porting. This should be removed later.
     Vector3 a_;
     JointType jointType_;
+    ActuationMode actuationMode_;
     double q_;
     double dq_;
     double ddq_;

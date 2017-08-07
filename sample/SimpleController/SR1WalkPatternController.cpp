@@ -36,36 +36,33 @@ class SR1WalkPatternController : public cnoid::SimpleController
     MultiValueSeqPtr qseq;
     MultiValueSeq::Frame qref0;
     MultiValueSeq::Frame qref1;
-    MultiValueSeq::Frame qref2;
     vector<double> q0;
     double dt;
-    double dt2;
-    enum { TORQUE_MODE, HIGHGAIN_MODE } mode;
+    Link::ActuationMode actuationMode;
     
 public:
 
-    virtual bool initialize(SimpleControllerIO* io) {
-
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        ioBody = io->body();
         string patternFile;
-
         string opt = io->optionString();
-        if(opt == "highgain"){
-            mode = HIGHGAIN_MODE;
+        
+        if(opt == "position"){
+            actuationMode = Link::JOINT_ANGLE;
             patternFile = "SR1WalkPattern2.yaml";
-            io->setJointOutput(JOINT_ANGLE | JOINT_VELOCITY | JOINT_ACCELERATION);
-            io->os() << "SR1WalkPatternController: high gain mode." << endl;
+            io->os() << "SR1WalkPatternController: position control mode." << endl;
         } else if(opt == "velocity"){
-            mode = HIGHGAIN_MODE;
+            actuationMode = Link::JOINT_VELOCITY;
             patternFile = "SR1WalkPattern2.yaml";
-            io->setJointOutput(JOINT_VELOCITY);
-            io->os() << "SR1WalkPatternController: velocity mode." << endl;
+            io->os() << "SR1WalkPatternController: velocity control mode." << endl;
         } else {
-            mode = TORQUE_MODE;
+            actuationMode = Link::JOINT_TORQUE;
             patternFile = "SR1WalkPattern.yaml";
-            io->setJointOutput(JOINT_TORQUE);
             io->setJointInput(JOINT_ANGLE);
-            io->os() << "SR1WalkPatternController: torque mode." << endl;
+            io->os() << "SR1WalkPatternController: torque control mode." << endl;
         }
+        for(auto link : ioBody->joints()) link->setActuationMode(actuationMode);
 
         string filename = getNativePathString(
             boost::filesystem::path(shareDirectory()) / "motion" / "SR1" / patternFile);
@@ -81,14 +78,12 @@ public:
             return false;
         }
 
-        ioBody = io->body();
         if(ioBody->numJoints() != qseq->numParts()){
             io->os() << "The number of joints must be " << qseq->numParts() << endl;
             return false;
         }
 
         dt = io->timeStep();
-        dt2 = dt * dt;
         if(fabs(dt - qseq->timeStep()) > 1.0e-6){
             io->os() << "Warning: the simulation time step is different from that of the motion data " << endl;
         }
@@ -96,7 +91,6 @@ public:
         currentFrameIndex = 0;
         lastFrameIndex = std::max(0, qseq->numFrames() - 1);
         qref1 = qseq->frame(0);
-        qref2 = qseq->frame(std::min(1, lastFrameIndex));
 
         q0.resize(qseq->numParts());
         for(int i=0; i < ioBody->numJoints(); ++i){
@@ -108,9 +102,9 @@ public:
 
     virtual bool control() {
 
-        switch(mode){
+        switch(actuationMode){
 
-        case TORQUE_MODE:
+        case Link::JOINT_TORQUE:
             qref0 = qref1;
             qref1 = qseq->frame(currentFrameIndex);
             for(int i=0; i < ioBody->numJoints(); ++i){
@@ -124,15 +118,18 @@ public:
             }
             break;
 
-        case HIGHGAIN_MODE:
-            qref0 = qref1;
-            qref1 = qref2;
-            qref2 = qseq->frame(std::min(currentFrameIndex + 1, lastFrameIndex));
+        case Link::JOINT_ANGLE:
+            qref0 = qseq->frame(currentFrameIndex);
             for(int i=0; i < ioBody->numJoints(); ++i){
-                Link* joint = ioBody->joint(i);
-                joint->q() = qref1[i];
-                joint->dq() = (qref2[i] - qref1[i]) / dt;
-                joint->ddq() = (qref2[i] - 2.0 * qref1[i] + qref0[i]) / dt2;
+                ioBody->joint(i)->q() = qref0[i];
+            }
+            break;
+
+        case Link::JOINT_VELOCITY:
+            qref0 = qref1;
+            qref1 = qseq->frame(std::min(currentFrameIndex + 1, lastFrameIndex));
+            for(int i=0; i < ioBody->numJoints(); ++i){
+                ioBody->joint(i)->dq() = (qref1[i] - qref0[i]) / dt;
             }
             break;
 

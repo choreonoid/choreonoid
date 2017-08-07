@@ -30,7 +30,7 @@ const double dgain[] = {
 
 class SR1LiftupController : public cnoid::SimpleController
 {
-    enum { TORQUE_MODE, VELOCITY_MODE } mode;
+    Link::ActuationMode actuationMode;
     bool isTorqueSensorEnabled;
     Body* ioBody;
     double timeStep;
@@ -46,35 +46,40 @@ class SR1LiftupController : public cnoid::SimpleController
     
 public:
 
-    VectorXd& convertToRadian(VectorXd& q){
+    VectorXd& convertToRadian(VectorXd& q)
+    {
         for(size_t i=0; i < q.size(); ++i){
             q[i] = radian(q[i]);
         }
         return q;
     }
     
-    virtual bool initialize(SimpleControllerIO* io) {
+    virtual bool initialize(SimpleControllerIO* io)
+    {
+        ioBody = io->body();
+        ostream& os = io->os();
 
-        mode = TORQUE_MODE;
+        actuationMode = Link::JOINT_TORQUE;
         isTorqueSensorEnabled = false;
         vector<string> options = io->options();
         for(vector<string>::iterator p = options.begin(); p != options.end(); ++p){
             if(*p == "velocity"){
-                mode = VELOCITY_MODE;
+                actuationMode = Link::JOINT_VELOCITY;
             } else if(*p == "torque_sensor"){
                 isTorqueSensorEnabled = true;
             }
         }
 
-        ostream& os = io->os();
+        for(auto joint : ioBody->joints()){
+            joint->setActuationMode(actuationMode);
+        }
 
-        if(mode == TORQUE_MODE){
+        if(actuationMode == Link::JOINT_TORQUE){
             os << "SR1LiftupController: torque control mode." << endl;
-            io->setJointOutput(JOINT_TORQUE);
             io->setJointInput(JOINT_ANGLE);
-        } else if(mode == VELOCITY_MODE){
+
+        } else if(actuationMode == Link::JOINT_VELOCITY){
             os << "SR1LiftupController: velocity control mode";
-            io->setJointOutput(JOINT_VELOCITY);
             if(isTorqueSensorEnabled){
                 io->setJointInput(JOINT_ANGLE | JOINT_TORQUE);
                 os << ", torque sensors";
@@ -89,7 +94,6 @@ public:
         throwTime = std::numeric_limits<double>::max();
         isThrowing = false;
 
-        ioBody = io->body();
         int n = ioBody->numJoints();
         qref_old.resize(n);
         qold.resize(n);
@@ -134,8 +138,8 @@ public:
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         bool isActive = true;
 
         if(phase == 0){
@@ -240,7 +244,7 @@ public:
 
         }
 
-        if(mode == TORQUE_MODE || !isTorqueSensorEnabled){
+        if(actuationMode == Link::JOINT_TORQUE || !isTorqueSensorEnabled){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
                 double q = joint->q();
@@ -250,7 +254,7 @@ public:
                 qold[i] = q;
             }
         }
-        if(mode == VELOCITY_MODE){
+        if(actuationMode == Link::JOINT_VELOCITY){
             for(int i=0; i < ioBody->numJoints(); ++i){
                 Link* joint = ioBody->joint(i);
                 joint->dq() = (qref[i] - joint->q()) / timeStep;
@@ -259,7 +263,7 @@ public:
 
         if(phase == 3){
             if(time > throwTime){
-                if(mode == TORQUE_MODE){
+                if(actuationMode == Link::JOINT_TORQUE){
                     wrist[0]->u() = 0.0;
                     wrist[1]->u() = 0.0;
                 }

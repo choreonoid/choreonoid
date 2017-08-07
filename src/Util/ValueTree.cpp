@@ -83,11 +83,11 @@ std::string ValueNode::Exception::message() const
         if(line_ >= 0){
             return str(format(_("%1% at line %2%, column %3%.")) % message_ % line_ % column_);
         } else {
-            return str(format(_("%1%.")) % message_);
+            return str(format("%1%.") % message_);
         }
     } else {
         if(line_ >= 0){
-            return str(format(_("Error at line %2%, column %3%.")) % line_ % column_);
+            return str(format(_("Error at line %1%, column %2%.")) % line_ % column_);
         } else {
             return string();
         }

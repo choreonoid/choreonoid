@@ -7,7 +7,7 @@
 
 using namespace cnoid;
 
-class SampleCrawlerController : public cnoid::SimpleController
+class SampleCrawlerController : public SimpleController
 {
     Link* crawlerL;
     Link* crawlerR;
@@ -24,9 +24,6 @@ public:
             io->os() << "Crawlers are not found" << std::endl;
             return false;
         }
-
-        io->setLinkOutput(crawlerL, JOINT_VELOCITY);
-        io->setLinkOutput(crawlerR, JOINT_VELOCITY);
 
         time = 0.0;
         dt = io->timeStep();

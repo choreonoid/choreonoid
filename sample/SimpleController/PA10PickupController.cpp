@@ -41,13 +41,13 @@ class PA10PickupController : public cnoid::SimpleController
 
 public:
 
-    Vector3 toRadianVector3(double x, double y, double z){
+    Vector3 toRadianVector3(double x, double y, double z)
+    {
         return Vector3(radian(x), radian(y), radian(z));
     }
     
-    virtual bool initialize(SimpleControllerIO* io) {
-
-        io->setJointOutput(JOINT_TORQUE);
+    virtual bool initialize(SimpleControllerIO* io)
+    {
         io->setJointInput(JOINT_ANGLE);
 
         ioBody = io->body();
@@ -95,8 +95,8 @@ public:
         return true;
     }
 
-    virtual bool control() {
-
+    virtual bool control()
+    {
         bool isActive = true;
 
         VectorXd p(6);

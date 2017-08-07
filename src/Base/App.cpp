@@ -203,6 +203,7 @@ void AppImpl::initialize( const char* appName, const char* vendorName, const QIc
     TextEditView::initializeClass(ext);
     SceneBar::initialize(ext);
     SceneView::initializeClass(ext);
+    ImageViewBar::initialize(ext);
     ImageView::initializeClass(ext);
     GraphBar::initialize(ext);
     MultiValueSeqGraphView::initializeClass(ext);

@@ -26,7 +26,6 @@
 #include <cnoid/IdPair>
 #include <boost/lexical_cast.hpp>
 #include <mutex>
-#include <iostream>
 #include <iomanip>
 #include "gettext.h"
 
@@ -83,6 +82,8 @@ public:
     AISTSimulatorItem* self;
 
     World<ConstraintForceSolver> world;
+
+    vector<shared_ptr<ForwardDynamicsCBM>> highGainDynamicsList;
         
     Selection dynamicsMode;
     Selection integrationMode;
@@ -162,7 +163,6 @@ AISTSimulatorItemImpl::AISTSimulatorItemImpl(AISTSimulatorItem* self)
       integrationMode(AISTSimulatorItem::N_INTEGRATION_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     dynamicsMode.setSymbol(AISTSimulatorItem::FORWARD_DYNAMICS,  N_("Forward dynamics"));
-    dynamicsMode.setSymbol(AISTSimulatorItem::HG_DYNAMICS,       N_("High-gain dynamics"));
     dynamicsMode.setSymbol(AISTSimulatorItem::KINEMATICS,        N_("Kinematics"));
 
     integrationMode.setSymbol(AISTSimulatorItem::EULER_INTEGRATION,  N_("Euler"));
@@ -440,9 +440,14 @@ bool AISTSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBod
 
     world.clearBodies();
     bodyIndexMap.clear();
+    highGainDynamicsList.clear();
 
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<AISTSimBody*>(simBodies[i]));
+    }
+
+    if(!highGainDynamicsList.empty()){
+        mvout() << (format(_("%1% uses the ForwardDynamicsCBM module to perform the high-gain control.")) % self->name()) << endl;
     }
 
     cfs.setFriction(staticFriction, dynamicFriction);
@@ -508,21 +513,29 @@ void AISTSimulatorItemImpl::addBody(AISTSimBody* simBody)
     rootLink->vo().setZero();
     rootLink->dvo().setZero();
 
+    bool hasHighgainJoints = false;
+
     for(int i=0; i < body->numLinks(); ++i){
         Link* link = body->link(i);
         link->u() = 0.0;
         link->dq() = 0.0;
         link->ddq() = 0.0;
+        if(link->actuationMode() == Link::JOINT_DISPLACEMENT ||
+           link->actuationMode() == Link::JOINT_VELOCITY ||
+           link->actuationMode() == Link::LINK_POSITION){
+            hasHighgainJoints = true;
+        }
     }
     
     body->clearExternalForces();
     body->calcForwardKinematics(true, true);
 
     int bodyIndex;
-    if(dynamicsMode.is(AISTSimulatorItem::HG_DYNAMICS)){
-        ForwardDynamicsCBMPtr cbm = make_shared_aligned<ForwardDynamicsCBM>(body);
-        cbm->setHighGainModeForAllJoints();
-        bodyIndex = world.addBody(body, cbm);
+
+    if(hasHighgainJoints){
+        auto dynamics = make_shared_aligned<ForwardDynamicsCBM>(body);
+        highGainDynamicsList.push_back(dynamics);
+        bodyIndex = world.addBody(body, dynamics);
     } else {
         bodyIndex = world.addBody(body);
     }
@@ -539,7 +552,10 @@ void AISTSimulatorItemImpl::clearExternalForces()
 bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     if(!impl->dynamicsMode.is(KINEMATICS)){
-         impl->world.calcNextState();
+        for(auto&& dynamics : impl->highGainDynamicsList){
+            dynamics->complementHighGainModeCommandValues();
+        }
+        impl->world.calcNextState();
         return true;
     }
 
