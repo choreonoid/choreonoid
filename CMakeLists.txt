@@ -278,21 +278,26 @@ endif()
 # Python
 if(WIN32)
   option(ENABLE_PYTHON "Enable Python" OFF)
+  option(ENABLE_PYTHON3 "Enable Python" OFF)
 else()
   option(ENABLE_PYTHON "Enable Python" ON)
+  option(ENABLE_PYTHON3 "Enable Python" OFF)
 endif()
 
 if(ENABLE_PYTHON)
-  option(USE_PYTHON3 "Use Python3" OFF)
-  if(USE_PYTHON3)
-    pkg_check_modules(PYTHON REQUIRED python3)
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
-  else()    
-    find_package(PythonLibs 2.7 REQUIRED)
-    include_directories(${PYTHON_INCLUDE_PATH})
-    set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
-  endif()
+  find_package(PythonLibs 2.7 REQUIRED)
+  include_directories(${PYTHON_INCLUDE_PATH})
+  set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
+  set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
+  file(WRITE ${init_py} "")
+  install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
+    CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+endif()
+
+if(ENABLE_PYTHON3)
+  pkg_check_modules(PYTHON3 REQUIRED python3)
+  include_directories(${PYTHON3_INCLUDE_DIRS})
+  set(CNOID_PYTHON3_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
@@ -332,7 +337,7 @@ endif()
 
 set(boost_packages system filesystem program_options regex thread iostreams date_time)
 
-if(ENABLE_PYTHON AND NOT USE_PYTHON3)
+if(ENABLE_PYTHON)
   set(boost_packages ${boost_packages} python)
 endif()
 
@@ -1037,9 +1042,38 @@ if(ENABLE_PYTHON)
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
+  endfunction()
+endif()
+
+if(ENABLE_PYTHON3)
+  function(add_cnoid_python3_module)
+  
+    set(target ${ARGV0})
+    string(REGEX REPLACE "^Py(.+)$" "\\1" module ${target})
+    set(sources ${ARGV})
+    list(REMOVE_AT sources 0)
+
+    add_library(${target} SHARED ${sources})
+    
+    if(WIN32)
+      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
+    endif()
+
+    set_target_properties(${target}  PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid
+      RUNTIME_OUTPUT_NAME ${module}
+      LIBRARY_OUTPUT_NAME ${module}
+      PREFIX "")
+
+    install(TARGETS ${target}
+      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 
   endfunction()
+endif()
 
+if(ENABLE_PYTHON OR ENABLE_PYTHON3)
   function(apply_common_setting_for_python_module target)
     set(headers ${ARGV1})
     set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
@@ -1056,9 +1090,7 @@ if(ENABLE_PYTHON)
       endif()
     endif()
   endfunction()
-
 endif()
-
 
 
 if(ENABLE_LUA)

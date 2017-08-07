@@ -1,13 +1,8 @@
-
-# @author Shin'ichiro Nakaoka
-
-if(NOT ENABLE_PYTHON)
+if(NOT ENABLE_PYTHON3)
   return()
 endif()
 
-#set_source_files_properties(PyTask.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
-
-add_cnoid_python_module(PyUtil
+add_cnoid_python3_module(PyUtil
   PyUtilModule.cpp
   PySignal.cpp
   PyValueTree.cpp
@@ -19,7 +14,7 @@ add_cnoid_python_module(PyUtil
   PyTask.cpp
   )
 
-target_link_libraries(PyUtil CnoidUtil CnoidPython)
+target_link_libraries(PyUtil CnoidUtil CnoidPython3)
 
 set(headers
   PyUtil.h
