@@ -95,6 +95,18 @@ public:
         return jointIdToLinkArray[id];
     }
 
+    class JointAccessor {
+        typedef std::vector<LinkPtr> Container;
+        Container& joints;
+        size_t size;
+    public:
+        JointAccessor(std::vector<LinkPtr>& joints, size_t size) : joints(joints), size(size) { }
+        Container::iterator begin() { return joints.begin(); }
+        Container::iterator end() { return joints.begin() + size; }
+    };
+
+    JointAccessor joints() { return JointAccessor(jointIdToLinkArray, numActualJoints); }
+
     /**
        The number of all the links the body has.
        The value corresponds to the size of the sequence obtained by link() function.

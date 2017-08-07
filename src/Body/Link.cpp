@@ -22,6 +22,7 @@ Link::Link()
     Rs_.setIdentity();
     a_ = Vector3::UnitZ();
     jointType_ = FIXED_JOINT;
+    actuationMode_ = NO_ACTUATION;
     q_ = 0.0;
     dq_ = 0.0;
     ddq_ = 0.0;
@@ -60,6 +61,7 @@ Link::Link(const Link& org)
     
     a_ = org.a_;
     jointType_ = org.jointType_;
+    actuationMode_ = org.actuationMode_;
 
     q_ = org.q_;
     dq_ = org.dq_;

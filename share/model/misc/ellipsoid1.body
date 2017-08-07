@@ -7,24 +7,19 @@ links:
   -
     name: BASE
     jointType: free
-    translation: [ 0, 0, 0 ]
-    rotation: [ 0, 1, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.1, 0, 0,
+      0, 0.004, 0,
+      0, 0, 0.015 ]
     elements:
-      -
-        type: RigidBody
-        mass: 2.0
-        inertia: [
-          0.1, 0, 0,
-          0, 0.004, 0,
-          0, 0, 0.015 ]
+      Transform:
+        scale: [ 1, 0.4, 0.15 ]
         elements:
-          Transform:
-            scale: [ 1, 0.4, 0.15 ]
-            elements:
-              Shape:
-                geometry:
-                  type: Sphere
-                  radius: 0.5
-                appearance:
-                  material:
-                    diffuseColor: [ 0.6, 0.6, 0.8 ]
+          Shape:
+            geometry:
+              type: Sphere
+              radius: 0.5
+            appearance:
+              material:
+                diffuseColor: [ 0.6, 0.6, 0.8 ]

@@ -26,11 +26,11 @@ links:
               material:
                 diffuseColor: [ 0.6, 0.4, 0.2 ]
   -
-    name: BELT
+    name: TRACK
     parent: BASE
     jointId: 0
     jointType: pseudoContinuousTrack
-    jointAxis: [ 0, 1, 0 ]
+    jointAxis: -Y
     translation: [ 0.0, 0.0, 0.15 ]
     rotation: [ 0, 0, 1, 0 ]
     elements:

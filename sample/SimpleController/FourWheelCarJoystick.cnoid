@@ -17,11 +17,11 @@ items:
       children: 
         - 
           id: 2
-          name: "4wheelsVehicle"
+          name: "FourWheelCar"
           plugin: Body
           class: BodyItem
           data: 
-            modelFile: "${SHARE}/model/misc/4wheelsVehicle.body"
+            modelFile: "${SHARE}/model/misc/FourWheelCar.body"
             currentBaseLink: "BODY"
             rootPosition: [ 0, 0, 0.1 ]
             rootAttitude: [ 
@@ -42,13 +42,13 @@ items:
           children: 
             - 
               id: 3
-              name: "4WheelsController"
+              name: "FourWheelCarJoystickController"
               plugin: SimpleController
               class: SimpleControllerItem
               data: 
                 isImmediateMode: true
                 controllerOptions: ""
-                controller: "4WheelsJoystickController.so"
+                controller: "FourWheelCarJoystickController.so"
                 reloading: true
                 RelativePathBase: "Controller directory"
         - 

@@ -23,12 +23,10 @@ public:
     MultiValueSeqPtr qseqRef;
     BodyPtr body;
     int currentFrame;
-    int lastFrame;
     int numJoints;
 
     BodyMotionControllerItemImpl(BodyMotionControllerItem* self);
     bool initialize(ControllerItemIO* io);
-    void output();
 };
 
 }
@@ -96,8 +94,12 @@ bool BodyMotionControllerItemImpl::initialize(ControllerItemIO* io)
     qseqRef = motionItem->motion()->jointPosSeq();
 
     body = io->body();
+
+    for(Link* joint : body->joints()){
+        joint->setActuationMode(Link::JOINT_DISPLACEMENT);
+    }
+        
     currentFrame = 0;
-    lastFrame = std::max(0, qseqRef->numFrames() - 1);
     numJoints = std::min(body->numJoints(), qseqRef->numParts());
     if(qseqRef->numFrames() == 0){
         self->putMessage(_("Reference motion is empty()."));
@@ -144,38 +146,19 @@ void BodyMotionControllerItem::input()
 
 bool BodyMotionControllerItem::control()
 {
-    if(++impl->currentFrame > impl->lastFrame){
-        impl->currentFrame = impl->lastFrame;
-        return false;
-    }
-    return true;
+    return (impl->currentFrame < impl->qseqRef->numFrames());
 }
         
 
-void BodyMotionControllerItemImpl::output()
-{
-    int prevFrame = std::max(currentFrame - 1, 0);
-    int nextFrame = std::min(currentFrame + 1, lastFrame);
-            
-    MultiValueSeq::Frame q0 = qseqRef->frame(prevFrame);
-    MultiValueSeq::Frame q1 = qseqRef->frame(currentFrame);
-    MultiValueSeq::Frame q2 = qseqRef->frame(nextFrame);
-    
-    double dt = qseqRef->timeStep();
-    double dt2 = dt * dt;
-    
-    for(int i=0; i < numJoints; ++i){
-        Link* joint = body->joint(i);
-        joint->q() = q1[i];
-        joint->dq() = (q2[i] - q1[i]) / dt;
-        joint->ddq() = (q2[i] - 2.0 * q1[i] + q0[i]) / dt2;
-    }
-}
-
-
 void BodyMotionControllerItem::output()
 {
-    impl->output();
+    if(impl->currentFrame < impl->qseqRef->numFrames()){
+        MultiValueSeq::Frame q = impl->qseqRef->frame(impl->currentFrame);
+        for(int i=0; i < impl->numJoints; ++i){
+            impl->body->joint(i)->q() = q[i];
+        }
+        impl->currentFrame++;
+    }
 }
 
 

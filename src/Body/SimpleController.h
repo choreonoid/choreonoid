@@ -31,10 +31,14 @@ public:
     };
     
     virtual void setJointInput(int stateTypes) = 0;
-    virtual void setJointOutput(int stateTypes) = 0;
     virtual void setLinkInput(Link* link, int stateTypes) = 0;
-    virtual void setLinkOutput(Link* link, int stateTypes) = 0;
     virtual void enableInput(Device* device) = 0;
+
+    //! \deprecated Use Link::setActuationMode for all the links
+    virtual void setJointOutput(int stateTypes) = 0;
+    
+    //! \deprecated Use Link::setActuationMode for a link
+    virtual void setLinkOutput(Link* link, int stateTypes) = 0;
 };
 
 

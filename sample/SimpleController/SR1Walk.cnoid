@@ -115,7 +115,7 @@ items:
                 2Dmode: false
             - 
               id: 7
-              name: "AISTSimulator-HighGain"
+              name: "AISTSimulator-Position"
               plugin: Body
               class: AISTSimulatorItem
               data: 
@@ -127,8 +127,8 @@ items:
                 deviceStateOutput: true
                 controllerThreads: true
                 recordCollisionData: false
-                controllerOptions: highgain
-                dynamicsMode: "High-gain dynamics"
+                controllerOptions: position
+                dynamicsMode: "Forward dynamics"
                 integrationMode: "Runge Kutta"
                 gravity: [ 0, 0, -9.80665 ]
                 staticFriction: 0.5
@@ -143,6 +143,34 @@ items:
                 2Dmode: false
             - 
               id: 8
+              name: "AISTSimulator-Velocity"
+              plugin: Body
+              class: AISTSimulatorItem
+              data: 
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Active control period"
+                timeLength: 180
+                allLinkPositionOutputMode: false
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: velocity
+                dynamicsMode: "Forward dynamics"
+                integrationMode: "Runge Kutta"
+                gravity: [ 0, 0, -9.80665 ]
+                staticFriction: 0.5
+                slipFriction: 0.5
+                cullingThresh: 0.01
+                contactCullingDepth: 0.05
+                errorCriterion: 0.001
+                maxNumIterations: 1000
+                contactCorrectionDepth: 0.0001
+                contactCorrectionVelocityRatio: 30
+                kinematicWalking: false
+                2Dmode: false
+            - 
+              id: 9
               name: "ODESimulator"
               plugin: ODE
               class: ODESimulatorItem
@@ -170,7 +198,7 @@ items:
                 UseWorldItem'sCollisionDetector: false
                 velocityMode: false
             - 
-              id: 9
+              id: 10
               name: "BulletSimulator"
               plugin: Bullet
               class: BulletSimulatorItem
@@ -191,7 +219,7 @@ items:
                 ERP2: 0
                 SplitImpulsePenetrationThreshold: -0.0001
             - 
-              id: 10
+              id: 11
               name: "PhysXSimulator"
               plugin: PhysX
               class: PhysXSimulatorItem
@@ -210,7 +238,7 @@ items:
                 Restitution: 0.1
                 jointLimitMode: false
             - 
-              id: 11
+              id: 12
               name: "AgXSimulator"
               plugin: AgX
               class: AgXSimulatorItem
@@ -235,7 +263,7 @@ items:
                 contactReductionBinResolution: 2
                 contactReductionThreshold: 4
             - 
-              id: 12
+              id: 13
               name: "AgXSimulator-Velocity"
               plugin: AgX
               class: AgXSimulatorItem
@@ -249,7 +277,7 @@ items:
                 controllerThreads: true
                 recordCollisionData: false
                 controllerOptions: velocity
-                dynamicsMode: High-gain dynamics
+                dynamicsMode: "High-gain dynamics"
                 gravity: [ 0, 0, -9.80665 ]
                 friction: 0.5
                 restitution: 0.1
