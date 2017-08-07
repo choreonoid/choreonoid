@@ -1496,7 +1496,7 @@ void YAMLBodyLoaderImpl::readContinuousTrackNode(Mapping* node)
     }
 
     const int numOpenJoints = numJoints - 1;
-    vector<double> initialAngles(numOpenJoints - 1, 0.0);
+    vector<double> initialAngles(numOpenJoints, 0.0);
     ValueNodePtr initAnglesNode = info->extract("initialJointAngles");
     if(initAnglesNode){
         Listing& initAngles = *initAnglesNode->toListing();
