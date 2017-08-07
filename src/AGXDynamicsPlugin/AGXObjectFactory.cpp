@@ -150,6 +150,11 @@ agx::ConstraintRef AGXObjectFactory::createConstraint(const AGXConstraintDesc& d
     return constraint;
 }
 
+agx::FrameRef AGXObjectFactory::createFrame()
+{
+    return new agx::Frame();
+}
+
 agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc & desc)
 {
     if(!cm) return false;
@@ -233,6 +238,11 @@ agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJoint
     agx::BallJointFrame ballJointFrame;
     ballJointFrame.setCenter(desc.framePoint);
     return new agx::BallJoint(ballJointFrame, desc.rigidBodyA, desc.rigidBodyB);
+}
+
+agx::PlaneJointRef AGXObjectFactory::createConstraintPlaneJoint(const AGXPlaneJointDesc & desc)
+{
+    return new agx::PlaneJoint(desc.rigidBodyA, desc.frameA, desc.rigidBodyB, desc.frameB);
 }
 
 agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJointDesc & desc)

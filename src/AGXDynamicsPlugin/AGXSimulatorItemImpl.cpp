@@ -80,10 +80,18 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
             // Set Material
             body->setAGXMaterial(j, agxScene->getMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
         }
-        // Add ExtraJoints to AGX simulation
-        for(int j = 0; j < body->numAGXExtraConstraints(); ++j){
-            agxScene->add(body->getAGXExtraConstraint(j));
+
+        // Add bodyparts (extrajoint, continous track)
+        for(int j = 0; j < body->numAGXBodyParts(); ++j){
+            AGXBodyPartPtr bp = body->getAGXBodyPart(j);
+            for(int k = 0; k < bp->numAGXConstraints(); ++k){
+                agxScene->add(bp->getAGXConstraint(k));
+            }
+            if(!bp->hasSelfCollisionGroupName()) continue;
+            const std::string& scgname = bp->getSelfCollisionGroupName();
+            agxScene->setCollisionPair(scgname, scgname, false); 
         }
+
         // Set self collision
         if(!body->bodyItem()->isSelfCollisionDetectionEnabled()){
             const std::string& scgname = body->getSelfCollisionGroupName();

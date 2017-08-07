@@ -184,7 +184,8 @@ enum AGXConstraintType
     AGXHINGE,
     AGXLOCKJOINT,
     AGXPRISMATIC,
-    AGXBALLJOINT
+    AGXBALLJOINT,
+    AGXPLANEJOINT
 };
 
 struct AGXConstraintDesc
@@ -226,6 +227,13 @@ struct AGXBallJointDesc : public AGXConstraintDesc
     agx::Vec3 framePoint;
 };
 
+struct AGXPlaneJointDesc : public AGXConstraintDesc
+{
+    AGXPlaneJointDesc() : AGXConstraintDesc(AGXConstraintType::AGXPLANEJOINT){}
+    agx::FrameRef frameA;
+    agx::FrameRef frameB;
+};
+
 class AGXObjectFactory
 {
 public:
@@ -237,6 +245,7 @@ public:
     static agxCollide::GeometryRef createGeometry(const AGXGeometryDesc& desc);
     static agxCollide::ShapeRef createShape(const AGXShapeDesc& desc);
     static agx::ConstraintRef createConstraint(const AGXConstraintDesc& desc);
+    static agx::FrameRef createFrame();
 private:
     AGXObjectFactory();
     static agx::Bool setContactMaterialParam(agx::ContactMaterialRef const cm, const AGXContactMaterialDesc& desc);
@@ -245,10 +254,12 @@ private:
     static agxCollide::CapsuleRef createShapeCapsule(const AGXCapsuleDesc& desc);
     static agxCollide::CylinderRef createShapeCylinder(const AGXCylinderDesc& desc);
     static agxCollide::MeshRef createShapeTrimesh(const AGXTrimeshDesc& desc);
+public:
     static agx::HingeRef createConstraintHinge(const AGXHingeDesc& desc);
     static agx::LockJointRef createConstraintLockJoint(const AGXLockJointDesc& desc);
     static agx::PrismaticRef createConstraintPrismatic(const AGXPrismaticDesc& desc);
     static agx::BallJointRef createConstraintBallJoint(const AGXBallJointDesc& desc);
+    static agx::PlaneJointRef createConstraintPlaneJoint(const AGXPlaneJointDesc& desc);
 };
 
 }

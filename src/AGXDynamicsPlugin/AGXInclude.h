@@ -23,9 +23,11 @@
 #include <agxCollide/Trimesh.h>
 
 // Constraint
+#include <agx/Frame.h>
 #include <agx/Hinge.h>
 #include <agx/Prismatic.h>
 #include <agx/LockJoint.h>
 #include <agx/BallJoint.h>
+#include <agx/PlaneJoint.h>
 
 #endif
