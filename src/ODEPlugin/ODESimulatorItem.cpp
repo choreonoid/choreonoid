@@ -116,8 +116,7 @@ public:
     void createBody(ODESimulatorItemImpl* simImpl);
     void setExtraJoints(bool flipYZ);
     void setKinematicStateToODE(bool flipYZ);
-    void setTorqueToODE();
-    void setVelocityToODE();
+    void setControlValToODE();
     void getKinematicStateFromODE(bool flipYZ);
     void updateForceSensors(bool flipYZ);
     void alignToZAxisIn2Dmode();
@@ -156,7 +155,6 @@ public:
     double surfaceLayerDepth;
     bool useWorldCollision;
     CollisionDetectorPtr collisionDetector;
-    bool velocityMode;
 
     double physicsTime;
     QElapsedTimer physicsTimer;
@@ -271,7 +269,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetHingeParam(jointID, dParamLoStop, link->q_lower());
             }
         }
-        if(simImpl->velocityMode){
+        if(link->actuationMode() == Link::JOINT_VELOCITY){
         	if(!USE_AMOTOR){
 #ifdef GAZEBO_ODE
 				dJointSetHingeParam(jointID, dParamFMax, 100);   //???
@@ -308,7 +306,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
                 dJointSetSliderParam(jointID, dParamLoStop, link->q_lower());
             }
         }
-        if(simImpl->velocityMode){
+        if(link->actuationMode() == Link::JOINT_VELOCITY){
         	dJointSetSliderParam(jointID, dParamFMax, numeric_limits<dReal>::max() );
   			dJointSetSliderParam(jointID, dParamFudgeFactor, 1 );
         }
@@ -695,7 +693,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
         dJointAttach(planeJointID, rootLink->bodyID, 0);
     }
     
-    setTorqueToODE();
+    setControlValToODE();
 
     sensorHelper.initialize(body, simImpl->timeStep, simImpl->gravity);
 
@@ -774,21 +772,23 @@ void ODEBody::setKinematicStateToODE(bool flipYZ)
 }
 
 
-void ODEBody::setTorqueToODE()
+void ODEBody::setControlValToODE()
 {
     // Skip the root link
     for(size_t i=1; i < odeLinks.size(); ++i){
-        odeLinks[i]->setTorqueToODE();
-    }
-}
-
-
-void ODEBody::setVelocityToODE()
-{
-    // Skip the root link
-    for(size_t i=1; i < odeLinks.size(); ++i){
-        odeLinks[i]->setVelocityToODE();
-    }
+        switch(odeLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            odeLinks[i]->setTorqueToODE();
+            break;
+        case Link::JOINT_VELOCITY :
+            odeLinks[i]->setVelocityToODE();
+            break;
+        default :
+            break;
+        }
+     }
 }
 
 
@@ -893,7 +893,6 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     is2Dmode = false;
     flipYZ = false;
     useWorldCollision = false;
-    velocityMode = false;
 }
 
 
@@ -923,7 +922,6 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     is2Dmode = org.is2Dmode;
     flipYZ = org.flipYZ;
     useWorldCollision = org.useWorldCollision;
-    velocityMode = org.velocityMode;
 }
 
 
@@ -1244,10 +1242,7 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         ODEBody* odeBody = static_cast<ODEBody*>(activeSimBodies[i]);
         odeBody->body()->setVirtualJointForces();
         if(odeBody->worldID){
-        	if(velocityMode)
-        		odeBody->setVelocityToODE();
-        	else
-        		odeBody->setTorqueToODE();
+            odeBody->setControlValToODE();
         }
     }
 
@@ -1393,7 +1388,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
 
-    putProperty(_("Gravity"), str(gravity), std::bind(toVector3, _1, std::ref(gravity)));
+    putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
 
     putProperty.decimals(2).min(0.0)
         (_("Friction"), friction, changeProperty(friction));
@@ -1421,8 +1416,6 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Use WorldItem's Collision Detector"), useWorldCollision, changeProperty(useWorldCollision));
 
-    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
-
 }
 
 
@@ -1448,7 +1441,6 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("maxCorrectingVel", maxCorrectingVel);
     archive.write("2Dmode", is2Dmode);
     archive.write("UseWorldItem'sCollisionDetector", useWorldCollision);
-    archive.write("velocityMode", velocityMode);
 }
 
 
@@ -1477,5 +1469,4 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     maxCorrectingVel = archive.get("maxCorrectingVel", maxCorrectingVel.string());
     archive.read("2Dmode", is2Dmode);
     archive.read("UseWorldItem'sCollisionDetector", useWorldCollision);
-    archive.read("velocityMode", velocityMode);
 }

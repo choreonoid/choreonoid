@@ -128,10 +128,9 @@ public:
     void createBody(BulletSimulatorItemImpl* simImpl, short group);
     void getKinematicStateFromBullet();
     void setKinematicStateToBullet();
-    void setTorqueToBullet();
+    void setControlValToBullet();
     void setExtraJoints();
     void updateForceSensors();
-    void setVelocityToBullet();
     bool haveExtraJoints();
     bool haveCrawlerJoint();
 };
@@ -165,7 +164,6 @@ public:
     bool usefeatherstoneAlgorithm;
     CollisionDetectorPtr collisionDetector;
     vector<BulletLink*> geometryIdToLink;
-    bool velocityMode;
 
     BulletSimulatorItemImpl(BulletSimulatorItem* self);
     BulletSimulatorItemImpl(BulletSimulatorItem* self, const BulletSimulatorItemImpl& org);
@@ -676,7 +674,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
             std::cout << "currentPivotToCurrentCom= " << std::endl;
             std::cout << currentPivotToCurrentCom[0] << " " << currentPivotToCurrentCom[1] << " " << currentPivotToCurrentCom[2] << std::endl;
 #endif
-            if(simImpl->velocityMode){
+            if(link->actuationMode() == Link::JOINT_VELOCITY){
                 motor = new btMultiBodyJointMotor(multiBody, link->index()-1, 0, numeric_limits<double>::max());
                 dynamic_cast<btMultiBodyDynamicsWorld*>(dynamicsWorld)->addMultiBodyConstraint(motor);
             }
@@ -719,7 +717,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
                     parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
                     currentPivotToCurrentCom,  // vector from joint axis to my COM, in MY frame
                     isSelfCollisionDetectionEnabled);         // disableParentCollision
-            if(simImpl->velocityMode){
+            if(link->actuationMode()==Link::JOINT_VELOCITY){
                 motor = new btMultiBodyJointMotor(multiBody, link->index()-1, 0, numeric_limits<double>::max());
                 dynamic_cast<btMultiBodyDynamicsWorld*>(dynamicsWorld)->addMultiBodyConstraint(motor);
             }
@@ -1091,7 +1089,7 @@ void BulletBody::createBody(BulletSimulatorItemImpl* simImpl_, short group)
     }
 
     setExtraJoints();
-    setTorqueToBullet();
+    setControlValToBullet();
 
     sensorHelper.initialize(body, simImpl->timeStep, simImpl->gravity);
 
@@ -1248,10 +1246,21 @@ void BulletBody::getKinematicStateFromBullet()
     }
 }
 
-void BulletBody::setTorqueToBullet()
+void BulletBody::setControlValToBullet()
 {
     for(size_t i=1; i < bulletLinks.size(); ++i){
-        bulletLinks[i]->setTorqueToBullet();
+        switch(bulletLinks[i]->link->actuationMode()){
+        case Link::NO_ACTUATION :
+            break;
+        case Link::JOINT_TORQUE :
+            bulletLinks[i]->setTorqueToBullet();
+            break;
+        case Link::JOINT_VELOCITY :
+            bulletLinks[i]->setVelocityToBullet();
+            break;
+        default :
+            break;
+        }
     }
 }
 
@@ -1296,15 +1305,6 @@ void BulletBody::updateForceSensors()
 }
 
 
-void BulletBody::setVelocityToBullet()
-{
-    // Skip the root link
-    for(size_t i=1; i < bulletLinks.size(); ++i){
-        bulletLinks[i]->setVelocityToBullet();
-    }
-}
-
-
 ////////////////////////////////////SimItem imple////////////////////////////////////////
 void BulletSimulatorItem::initialize(ExtensionManager* ext)
 {
@@ -1336,7 +1336,6 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self)
     usefeatherstoneAlgorithm = true;
 
     useWorldCollision = false;
-    velocityMode = false;
 }
 
 
@@ -1363,7 +1362,6 @@ BulletSimulatorItemImpl::BulletSimulatorItemImpl(BulletSimulatorItem* self, cons
     usefeatherstoneAlgorithm = org.usefeatherstoneAlgorithm;
 
     useWorldCollision = org.useWorldCollision;
-    velocityMode = org.velocityMode;
 }
 
 void BulletSimulatorItemImpl::initialize()
@@ -1522,10 +1520,7 @@ bool BulletSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>&
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         BulletBody* bulletBody = static_cast<BulletBody*>(activeSimBodies[i]);
         bulletBody->body->setVirtualJointForces();
-        if(velocityMode)
-        	bulletBody->setVelocityToBullet();
-        else
-        	bulletBody->setTorqueToBullet();
+        bulletBody->setControlValToBullet();
     }
 
     //dynamicsWorld->stepSimulation(timeStep,2,timeStep/2.);
@@ -1589,7 +1584,6 @@ void BulletSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("SplitImpulsePenetrationThreshold"), splitImpulsePenetrationThreshold, changeProperty(splitImpulsePenetrationThreshold));
     putProperty(_("use HACD"), useHACD, changeProperty(useHACD));
     putProperty(_("Collision Margin"), collisionMargin, changeProperty(collisionMargin));
-    putProperty(_("Velocity Control Mode"), velocityMode, changeProperty(velocityMode));
     putProperty(_("use Featherstone Algorithm"), usefeatherstoneAlgorithm, changeProperty(usefeatherstoneAlgorithm));
 }
 
@@ -1612,7 +1606,6 @@ void BulletSimulatorItemImpl::store(Archive& archive)
     archive.write("SplitImpulsePenetrationThreshold", splitImpulsePenetrationThreshold);
     archive.write("useHACD", useHACD);
     archive.write("CollisionMargin", collisionMargin);
-    archive.write("velocityMode", velocityMode);
     archive.write("usefeatherstoneAlgorithm", usefeatherstoneAlgorithm);
 }
 
@@ -1635,7 +1628,6 @@ void BulletSimulatorItemImpl::restore(const Archive& archive)
     archive.read("SplitImpulsePenetrationThreshold", splitImpulsePenetrationThreshold);
     archive.read("useHACD", useHACD);
     archive.read("CollisionMargin", collisionMargin);
-    archive.read("velocityMode", velocityMode);
     archive.read("usefeatherstoneAlgorithm", usefeatherstoneAlgorithm);
 }
 
