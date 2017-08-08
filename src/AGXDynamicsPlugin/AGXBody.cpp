@@ -13,10 +13,11 @@ AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& par
     _orgLink = link;
     _agxParentLink = parent;
     agxBody->addAGXLink(this);
-    _origin = parentOrigin + getOrgLink()->b();
+    _origin = parentOrigin + link->b();
     //_controlMode = ControlMode::VELOCITY;
-    _controlMode = ControlMode::NONE;
-    if(parent && _controlMode != ControlMode::NONE) agxBody->addControllableLink(this);
+    //_controlMode = ControlMode::NONE;
+    const Link::ActuationMode& actuationMode = link->actuationMode();
+    if(parent && actuationMode != Link::ActuationMode::NO_ACTUATION) agxBody->addControllableLink(this);
     _selfCollisionGroupName = agxBody->getSelfCollisionGroupName();
     constructAGXLink();
     for(Link* child = link->child(); child; child = child->sibling()){
@@ -40,20 +41,20 @@ void AGXLink::setCollision(const bool& bOn)
 
 void AGXLink::setControlInputToAGX()
 {
-    switch(getJointControlMode()){
-        case ControlMode::TORQUE :{
+    switch(getOrgLink()->actuationMode()){
+        case Link::ActuationMode::JOINT_TORQUE :{
             setTorqueToAGX();
             break;
         }
-        case ControlMode::VELOCITY :{
+        case Link::ActuationMode::JOINT_VELOCITY :{
             setVelocityToAGX();
             break;
         }
-        case ControlMode::POSITION :{
+        case Link::ActuationMode::JOINT_DISPLACEMENT :{
             //setPositionToAGX();
             break;
         }
-        case ControlMode::NONE :
+        case Link::ActuationMode::NO_ACTUATION :
         default :
             break;
     }
@@ -127,10 +128,10 @@ void AGXLink::setLinkStateToCnoid()
 
 }
 
-void AGXLink::setJointControlMode(const ControlMode& mode)
-{
-    _controlMode = mode;
-}
+//void AGXLink::setJointControlMode(const ControlMode& mode)
+//{
+//    _controlMode = mode;
+//}
 
 int AGXLink::getIndex() const
 {
@@ -162,15 +163,20 @@ agxCollide::GeometryRef AGXLink::getAGXGeometry() const
     return _geometry;
 }
 
+void AGXLink::setAGXConstraint(agx::ConstraintRef const constraint)
+{
+    _constraint = constraint;
+}
+
 agx::ConstraintRef AGXLink::getAGXConstraint() const
 {
     return _constraint;
 }
 
-AGXLink::ControlMode AGXLink::getJointControlMode() const
-{
-    return _controlMode;
-}
+//AGXLink::ControlMode AGXLink::getJointControlMode() const
+//{
+//    return _controlMode;
+//}
 
 std::string AGXLink::getSelfCollisionGroupName() const
 {
@@ -379,7 +385,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            if(getJointControlMode() != ControlMode::NONE) desc.isMotorOn = true;
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.isMotorOn = true;
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -391,7 +397,7 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            if(getJointControlMode() != ControlMode::NONE) desc.isMotorOn = true;
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.isMotorOn = true;
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -468,6 +474,8 @@ void AGXLink::setPositionToAGX()
             break;
     }
 }
+
+
 
 ////////////////////////////////////////////////////////////
 // AGXBody
@@ -781,10 +789,10 @@ void AGXContinousTrack::createTrackConstraint()
         hd.frameCenter = agx::Vec3(p(0), p(1), p(2));
         hd.rigidBodyA = agxFootLinkStart->getAGXRigidBody();
         hd.rigidBodyB = agxFootLinkEnd->getAGXRigidBody();
-        hd.isMotorOn = true;
+        hd.isMotorOn = false;
         agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);   // needs addsimulation
-        agx::Constraint1DOF* joint1DOF = agx::Constraint1DOF::safeCast(constraint);
-        joint1DOF->getMotor1D()->setSpeed(0);
+        link->setJointType(Link::ROTATIONAL_JOINT);
+        agxFootLinkStart->setAGXConstraint(constraint);
         addAGXConstraint(constraint);
 
         // Create PlaneJoint to prvent the track falling off
@@ -820,6 +828,7 @@ void AGXContinousTrack::createTrackConstraint()
             // Enable collision between tracks and the others. Need to contact with wheels.
             agxLink->getAGXGeometry()->removeGroup(agxLink->getSelfCollisionGroupName());
             agxLink->getAGXGeometry()->addGroup(getSelfCollisionGroupName());
+            std::cout << agxLink->getOrgLink()->actuationMode() << std::endl;
         }
 }
 

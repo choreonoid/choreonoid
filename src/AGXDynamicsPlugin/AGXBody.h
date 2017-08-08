@@ -30,12 +30,12 @@ static unsigned int generateUID(){
 class AGXLink : public Referenced
 {
 public:
-    enum ControlMode{
-        NONE,
-        TORQUE,
-        VELOCITY,
-        POSITION
-    };
+//    enum ControlMode{
+//        NONE,
+//        TORQUE,
+//        VELOCITY,
+//        POSITION
+//    };
     AGXLink(const LinkPtr link);
     AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
     void constructAGXLink();
@@ -43,15 +43,16 @@ public:
     void setControlInputToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
-    void setJointControlMode(const ControlMode& mode);
+//    void setJointControlMode(const ControlMode& mode);
     int getIndex() const;
     Vector3    getOrigin() const;
     LinkPtr    getOrgLink() const;
     AGXLinkPtr getAGXParentLink() const;
     agx::RigidBodyRef       getAGXRigidBody() const;
     agxCollide::GeometryRef getAGXGeometry() const;
+    void                    setAGXConstraint(agx::ConstraintRef const constraint);
     agx::ConstraintRef      getAGXConstraint() const;
-    AGXLink::ControlMode    getJointControlMode() const;
+//    AGXLink::ControlMode    getJointControlMode() const;
     std::string             getSelfCollisionGroupName() const;
 
 private:
@@ -61,7 +62,7 @@ private:
     agx::RigidBodyRef       _rigid;
     agxCollide::GeometryRef _geometry;
     agx::ConstraintRef      _constraint;
-    ControlMode             _controlMode;
+//    ControlMode             _controlMode;
     std::string             _selfCollisionGroupName;
 
     agx::RigidBodyRef       createAGXRigidBody();
