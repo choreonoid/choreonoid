@@ -29,6 +29,7 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
 {
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
     sim->setTimeStep(desc.timeStep);
+    sim->setUniformGravity(desc.gravity);
     return sim;
 }
 

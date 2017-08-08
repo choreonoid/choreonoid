@@ -14,8 +14,6 @@ AGXLink::AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& par
     _agxParentLink = parent;
     agxBody->addAGXLink(this);
     _origin = parentOrigin + link->b();
-    //_controlMode = ControlMode::VELOCITY;
-    //_controlMode = ControlMode::NONE;
     const Link::ActuationMode& actuationMode = link->actuationMode();
     if(parent && actuationMode != Link::ActuationMode::NO_ACTUATION) agxBody->addControllableLink(this);
     _selfCollisionGroupName = agxBody->getSelfCollisionGroupName();
@@ -128,11 +126,6 @@ void AGXLink::setLinkStateToCnoid()
 
 }
 
-//void AGXLink::setJointControlMode(const ControlMode& mode)
-//{
-//    _controlMode = mode;
-//}
-
 int AGXLink::getIndex() const
 {
     return getOrgLink()->index();
@@ -172,11 +165,6 @@ agx::ConstraintRef AGXLink::getAGXConstraint() const
 {
     return _constraint;
 }
-
-//AGXLink::ControlMode AGXLink::getJointControlMode() const
-//{
-//    return _controlMode;
-//}
 
 std::string AGXLink::getSelfCollisionGroupName() const
 {
@@ -582,6 +570,51 @@ void AGXBody::setLinkStateToCnoid()
     }
 }
 
+bool AGXBody::hasForceSensors() const
+{
+    if(sensorHelper.forceSensors().empty()) return false;
+    return true;
+}
+
+bool AGXBody::hasGyroOrAccelerationSensors() const {
+    return sensorHelper.hasGyroOrAccelerationSensors();
+}
+
+void AGXBody::setSensor(const double& timeStep, const Vector3 &gravity)
+{
+    sensorHelper.initialize(body(), timeStep, gravity);
+    const DeviceList<ForceSensor> &forceSensors = sensorHelper.forceSensors();
+    for (size_t i = 0; i < forceSensors.size(); ++i) {
+        AGXLinkPtr agxLink = getAGXLink(forceSensors[i]->link()->index());
+        agxLink->getAGXConstraint()->setEnableComputeForces(true);
+    }
+}
+
+void AGXBody::updateForceSensors()
+{
+    const DeviceList<ForceSensor>& forceSensors = sensorHelper.forceSensors();
+    for(size_t i=0; i < forceSensors.size(); ++i) {
+        ForceSensor *sensor = forceSensors[i];
+        AGXLinkPtr agxLink = getAGXLink(sensor->link()->index());
+        if (agxLink && agxLink->getAGXParentLink() && agxLink->getAGXConstraint()) {
+            agx::Vec3 force, torque;
+            agxLink->getAGXConstraint()->getLastForce(agxLink->getAGXParentLink()->getAGXRigidBody(), force, torque, false);
+            Vector3 f(force[0], force[1], force[2]);
+            Vector3 tau(torque[0], torque[1], torque[2]);
+            const Matrix3 R = sensor->link()->R() * sensor->R_local();
+            const Vector3 p = sensor->link()->R() * sensor->p_local();
+            sensor->f() = R.transpose() * f;
+            sensor->tau() = R.transpose() * (tau - p.cross(f));
+            sensor->notifyStateChange();
+        }
+    }
+}
+
+void AGXBody::updateGyroAndAccelerationSensors()
+{
+    sensorHelper.updateGyroAndAccelerationSensors();
+}
+
 int AGXBody::numAGXLinks() const
 {
     return _agxLinks.size();
@@ -828,7 +861,6 @@ void AGXContinousTrack::createTrackConstraint()
             // Enable collision between tracks and the others. Need to contact with wheels.
             agxLink->getAGXGeometry()->removeGroup(agxLink->getSelfCollisionGroupName());
             agxLink->getAGXGeometry()->addGroup(getSelfCollisionGroupName());
-            std::cout << agxLink->getOrgLink()->actuationMode() << std::endl;
         }
 }
 

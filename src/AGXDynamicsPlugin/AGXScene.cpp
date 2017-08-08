@@ -23,6 +23,35 @@ void AGXScene::stepSimulation()
     getSimulation()->stepForward();
 }
 
+void AGXScene::add(AGXBodyPtr agxBody) {
+    // Add AGXRigidbody and constraint to AGX simulation
+    for(int i = 0; i < agxBody->numAGXLinks(); ++i){
+        add(agxBody->getAGXRigidBody(i));
+        add(agxBody->getAGXConstraint(i));
+    }
+
+    // Add bodyparts (extrajoint, continous track)
+    for(int i = 0; i < agxBody->numAGXBodyParts(); ++i){
+        AGXBodyPartPtr bp = agxBody->getAGXBodyPart(i);
+        for(int j = 0; j < bp->numAGXConstraints(); ++j){
+            add(bp->getAGXConstraint(j));
+        }
+        if(!bp->hasSelfCollisionGroupName()) continue;
+        const std::string& scgname = bp->getSelfCollisionGroupName();
+        setCollisionPair(scgname, scgname, false);
+    }
+
+    // Set self collision
+    if(!agxBody->bodyItem()->isSelfCollisionDetectionEnabled()){
+        const std::string& scgname = agxBody->getSelfCollisionGroupName();
+        setCollisionPair(scgname, scgname, false);
+    }
+    // Set external collision
+    if(!agxBody->bodyItem()->isCollisionDetectionEnabled()){
+        agxBody->setCollision(false);
+    }
+}
+
 agx::Bool AGXScene::add(agx::RigidBodyRef const rigid)
 {
     return getSimulation()->add(rigid);

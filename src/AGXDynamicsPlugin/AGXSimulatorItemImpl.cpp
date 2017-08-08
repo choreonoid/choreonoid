@@ -1,6 +1,7 @@
 #include "AGXSimulatorItemImpl.h"
 #include "AGXSimulatorItem.h"
 #include <assert.h>
+#include <cnoid/EigenUtil>
 
 using namespace std;
 
@@ -9,6 +10,7 @@ namespace cnoid {
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self) : self(self)
 {
     initialize();
+    _gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
 }
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self, const AGXSimulatorItemImpl& org) 
     : AGXSimulatorItemImpl(self) 
@@ -25,8 +27,9 @@ void AGXSimulatorItemImpl::initialize()
 
 void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
 {
-    //putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
-    //putProperty(("Step mode"), "hoge");
+    putProperty(("Gravity"), str(_gravity), [&](const string& value){ return toVector3(value, _gravity); });
+//    putProperty(("Step mode"), stepMode, changeProperty(stepMode));
+//    putProperty(("Step mode"), "hoge");
 }
 
 bool AGXSimulatorItemImpl::store(Archive & archive)
@@ -52,8 +55,10 @@ SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     cout << "initializeSimulation" << endl;
+    const Vector3& g = getGravity();
     AGXSceneDesc sd;
     sd.simdesc.timeStep = self->worldTimeStep();
+    sd.simdesc.gravity = agx::Vec3(g(0), g(1), g(2));
     agxScene = AGXScene::create(sd);
 
     /* temporary code. will read material from choreonoid */
@@ -70,36 +75,13 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     /* end temporary */
 
     for(size_t i=0; i < simBodies.size(); ++i){
-        // Create rigidbody, geometry, constraints
         AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
+        // Create rigidbody, geometry, constraints
         body->createBody();
+        body->setSensor(self->worldTimeStep(), _gravity);
+        agxScene->add(body);
         for(int j = 0; j < body->numAGXLinks(); ++j){
-            // Add AGXRigidbody and constraint to AGX simulation
-            agxScene->add(body->getAGXRigidBody(j));
-            agxScene->add(body->getAGXConstraint(j));
-            // Set Material
             body->setAGXMaterial(j, agxScene->getMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
-        }
-
-        // Add bodyparts (extrajoint, continous track)
-        for(int j = 0; j < body->numAGXBodyParts(); ++j){
-            AGXBodyPartPtr bp = body->getAGXBodyPart(j);
-            for(int k = 0; k < bp->numAGXConstraints(); ++k){
-                agxScene->add(bp->getAGXConstraint(k));
-            }
-            if(!bp->hasSelfCollisionGroupName()) continue;
-            const std::string& scgname = bp->getSelfCollisionGroupName();
-            agxScene->setCollisionPair(scgname, scgname, false); 
-        }
-
-        // Set self collision
-        if(!body->bodyItem()->isSelfCollisionDetectionEnabled()){
-            const std::string& scgname = body->getSelfCollisionGroupName();
-            agxScene->setCollisionPair(scgname, scgname, false); 
-        }
-        // Set external collision
-        if(!body->bodyItem()->isCollisionDetectionEnabled()){
-            body->setCollision(false);
         }
     }
 
@@ -114,13 +96,6 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
         agxBody->setControlInputToAGX();
-
-        //if(!agxBody->sensorHelper.forceSensors().empty()){
-        //    agxBody->updateForceSensors();
-        //}
-        //if(agxBody->sensorHelper.hasGyroOrAccelerationSensors()){
-        //    agxBody->sensorHelper.updateGyroAndAccelerationSensors();
-        //}
     }
 
     agxScene->stepSimulation();
@@ -129,14 +104,13 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         AGXBody* agxBody = static_cast<AGXBody*>(activeSimBodies[i]);
         agxBody->setLinkStateToCnoid();
 
-        //if(!agxBody->sensorHelper.forceSensors().empty()){
-        //    agxBody->updateForceSensors();
-        //}
-        //if(agxBody->sensorHelper.hasGyroOrAccelerationSensors()){
-        //    agxBody->sensorHelper.updateGyroAndAccelerationSensors();
-        //}
+        if(agxBody->hasForceSensors()){
+            agxBody->updateForceSensors();
+        }
+        if(agxBody->hasGyroOrAccelerationSensors()){
+            agxBody->updateGyroAndAccelerationSensors();
+        }
     }
-
     return true;
 }
 
@@ -155,7 +129,17 @@ void AGXSimulatorItemImpl::restartSimulation()
     cout << "restartSimulation" << endl;
 }
 
-bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
+void AGXSimulatorItemImpl::setGravity(const Vector3& gravity)
+{
+    _gravity = gravity;
+}
+
+Vector3 AGXSimulatorItemImpl::getGravity() const
+{
+    return _gravity;
+};
+
+    bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
 {
     return agxScene->saveSceneToAGXFile();
 }

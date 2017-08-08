@@ -8,6 +8,9 @@
 #include <iostream>
 
 namespace cnoid {
+
+const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
+
 class AGXSimulatorItem;
 typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
 
@@ -36,11 +39,14 @@ public:
     void pauseSimulation();
     void restartSimulation();
 
+    void setGravity(const Vector3& gravity);
+    Vector3 getGravity() const;
     bool saveSimulationToAGXFile();
 
 
 private:
     AGXSceneRef agxScene = nullptr;
+    Vector3 _gravity;
 };
 }
 #endif

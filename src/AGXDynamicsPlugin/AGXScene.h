@@ -2,6 +2,7 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SCENE_H
 
 #include "AGXObjectFactory.h"
+#include "AGXBody.h"
 
 namespace cnoid{
 
@@ -20,6 +21,7 @@ public:
     static AGXSceneRef create(const AGXSceneDesc& desc);
     void clear();
     void stepSimulation();
+    void add(AGXBodyPtr agxBody);
     agx::Bool add(agx::RigidBodyRef const rigid);
     agx::Bool add(agx::ConstraintRef const constraint);
     agx::MaterialRef getMaterial(const agx::String& materialName);

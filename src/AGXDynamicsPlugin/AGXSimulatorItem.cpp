@@ -38,11 +38,11 @@ Item* AGXSimulatorItem::doDuplicate() const
     return new AGXSimulatorItem(*this);
 }
 
-//void AGXSimulatorItem::doPutProperties(PutPropertyFunction & putProperty){
-//    SimulatorItem::doPutProperties(putProperty);
-//    impl->doPutProperties(putProperty);
-//}
-//
+void AGXSimulatorItem::doPutProperties(PutPropertyFunction & putProperty){
+    SimulatorItem::doPutProperties(putProperty);
+    impl->doPutProperties(putProperty);
+}
+
 //bool AGXSimulatorItem::store(Archive & archive){
 //    // save the common properties of SimulatorItem
 //    SimulatorItem::store(archive);

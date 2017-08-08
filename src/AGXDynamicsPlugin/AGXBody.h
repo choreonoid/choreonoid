@@ -2,9 +2,10 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_BODY_H
 
 #include <cnoid/SimulatorItem>
-#include "AGXObjectFactory.h"
 #include <cnoid/BodyItem>
 #include <cnoid/MeshExtractor>
+#include <cnoid/BasicSensorSimulationHelper>
+#include "AGXObjectFactory.h"
 
 namespace cnoid{
 
@@ -17,9 +18,6 @@ typedef ref_ptr<AGXBody> AGXBodyPtr;
 class AGXLink;
 typedef ref_ptr<AGXLink> AGXLinkPtr;
 typedef std::vector<AGXLinkPtr> AGXLinkPtrs;
-class AGXContinousTrack;
-typedef ref_ptr<AGXContinousTrack> AGXContinousTrackPtr;
-typedef std::vector<AGXContinousTrackPtr> AGXContinousTrackPtrs;
 
 static unsigned int generateUID(){
     static unsigned int i = 0;
@@ -30,12 +28,6 @@ static unsigned int generateUID(){
 class AGXLink : public Referenced
 {
 public:
-//    enum ControlMode{
-//        NONE,
-//        TORQUE,
-//        VELOCITY,
-//        POSITION
-//    };
     AGXLink(const LinkPtr link);
     AGXLink(const LinkPtr link, const AGXLinkPtr parent, const Vector3& parentOrigin, const AGXBodyPtr agxBody);
     void constructAGXLink();
@@ -43,7 +35,6 @@ public:
     void setControlInputToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
-//    void setJointControlMode(const ControlMode& mode);
     int getIndex() const;
     Vector3    getOrigin() const;
     LinkPtr    getOrgLink() const;
@@ -52,7 +43,6 @@ public:
     agxCollide::GeometryRef getAGXGeometry() const;
     void                    setAGXConstraint(agx::ConstraintRef const constraint);
     agx::ConstraintRef      getAGXConstraint() const;
-//    AGXLink::ControlMode    getJointControlMode() const;
     std::string             getSelfCollisionGroupName() const;
 
 private:
@@ -62,7 +52,6 @@ private:
     agx::RigidBodyRef       _rigid;
     agxCollide::GeometryRef _geometry;
     agx::ConstraintRef      _constraint;
-//    ControlMode             _controlMode;
     std::string             _selfCollisionGroupName;
 
     agx::RigidBodyRef       createAGXRigidBody();
@@ -88,6 +77,11 @@ public:
     void setControlInputToAGX();
     void setLinkStateToAGX();
     void setLinkStateToCnoid();
+    bool hasForceSensors() const;
+    bool hasGyroOrAccelerationSensors() const;
+    void setSensor(const double& timeStep, const Vector3& gravity);
+    void updateForceSensors();
+    void updateGyroAndAccelerationSensors();
     int  numAGXLinks() const;
     void addAGXLink(AGXLinkPtr const agxLink);
     AGXLinkPtr getAGXLink(const int& index) const;
@@ -104,8 +98,8 @@ private:
     AGXLinkPtrs _agxLinks;
     AGXLinkPtrs _controllableLinks;
     AGXBodyPartPtrs _agxBodyParts;
-    bool  findAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const;
-public:
+    BasicSensorSimulationHelper sensorHelper;
+    bool findAGXLinksFromInfo(const std::string& key, const bool& defaultValue, AGXLinkPtrs& agxLinks) const;
     void createExtraJoint();
     void createContinuousTrack();
 };
