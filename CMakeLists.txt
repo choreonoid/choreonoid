@@ -297,10 +297,11 @@ endif()
 if(ENABLE_PYTHON3)
   pkg_check_modules(PYTHON3 REQUIRED python3)
   include_directories(${PYTHON3_INCLUDE_DIRS})
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.1.1/include)
   set(CNOID_PYTHON3_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
-  install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
+  install(FILES ${init_py} DESTINATION ${CNOID_PYTHON3_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 endif()
 

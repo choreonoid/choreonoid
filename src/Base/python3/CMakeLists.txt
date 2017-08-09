@@ -10,7 +10,7 @@ add_cnoid_library(CnoidPy3Base SHARED PyBase.cpp)
 target_link_libraries(CnoidPy3Base CnoidBase CnoidPython)
 apply_common_setting_for_library(CnoidPy3Base)
 
-add_cnoid_python_module(Py3QtCore
+add_cnoid_python3_module(Py3QtCore
   PyQtCore.cpp
   )
 
@@ -24,7 +24,7 @@ if(QT5)
   qt5_use_modules(Py3QtCore Core)
 endif()
 
-add_cnoid_python_module(Py3QtGui
+add_cnoid_python3_module(Py3QtGui
   PyQtGui.cpp
   )
 
@@ -37,7 +37,7 @@ target_link_libraries(Py3QtGui
   ${PYTHON_LIBRARIES}
   )
 
-add_cnoid_python_module(Py3Base
+add_cnoid_python3_module(Py3Base
   PyBaseModule.cpp
   PyQtEx.cpp
   PyItems.cpp
