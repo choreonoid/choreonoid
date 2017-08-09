@@ -28,6 +28,7 @@ set(headers
   )
 
 make_gettext_mofiles(${target} mofiles)
+include_directories(${PYTHON_INCLUDE_PATH})
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBase ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
 

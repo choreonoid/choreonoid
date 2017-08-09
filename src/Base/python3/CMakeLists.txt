@@ -1,7 +1,5 @@
 # @author Shin'ichiro Nakaoka
 
-return()
-
 if(NOT ENABLE_PYTHON3)
   return()
 endif()

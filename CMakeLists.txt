@@ -286,7 +286,6 @@ endif()
 
 if(ENABLE_PYTHON)
   find_package(PythonLibs 2.7 REQUIRED)
-  include_directories(${PYTHON_INCLUDE_PATH})
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
@@ -296,7 +295,6 @@ endif()
 
 if(ENABLE_PYTHON3)
   pkg_check_modules(PYTHON3 REQUIRED python3)
-  include_directories(${PYTHON3_INCLUDE_DIRS})
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.1.1/include)
   set(CNOID_PYTHON3_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
@@ -1024,6 +1022,7 @@ if(ENABLE_PYTHON)
     set(sources ${ARGV})
     list(REMOVE_AT sources 0)
 
+    include_directories(${PYTHON_INCLUDE_PATH})
     add_library(${target} SHARED ${sources})
     
     if(NOT WIN32)
@@ -1070,6 +1069,7 @@ if(ENABLE_PYTHON3)
     set(sources ${ARGV})
     list(REMOVE_AT sources 0)
 
+    include_directories(${PYTHON3_INCLUDE_DIRS})
     add_library(${target} SHARED ${sources})
     
     if(WIN32)

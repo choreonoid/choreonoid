@@ -25,6 +25,7 @@ set(sources
   )
 
 make_gettext_mofiles(${target} mofiles)
+include_directories(${PYTHON_INCLUDE_PATH})
 add_cnoid_plugin(${target} SHARED ${sources} ${mofiles})
 target_link_libraries(${target} CnoidBodyPlugin CnoidPythonPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
