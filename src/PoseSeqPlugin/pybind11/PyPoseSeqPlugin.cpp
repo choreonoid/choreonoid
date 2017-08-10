@@ -3,7 +3,7 @@
 */
 
 #include "../PoseSeqItem.h"
-#include <cnoid/Py3Util>
+#include <cnoid/PyUtil>
 
 namespace py = pybind11;
 using namespace cnoid;

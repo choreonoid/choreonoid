@@ -4,7 +4,7 @@
 
 #include "../BodyItem.h"
 #include <cnoid/BodyState>
-#include <cnoid/Py3Base>
+#include <cnoid/PyBase>
 
 namespace py = pybind11;
 using namespace cnoid;

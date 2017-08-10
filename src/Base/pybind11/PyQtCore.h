@@ -18,9 +18,13 @@ namespace pybind11 { namespace detail {
         //Conversion part 1 (Python->C++)
         bool load(handle src, bool) {
             PyObject *source = src.ptr();
-            if (PyUnicode_Check(source)) {
+            if(PyUnicode_Check(source)){
                 Py_ssize_t len;
-                char *data = PyUnicode_AsUTF8AndSize(source, &len);
+#if PY_MAJOR_VERSION >= 3
+                char* data = PyUnicode_AsUTF8AndSize(source, &len);
+#else
+                char* data = PyString_AsString(PyUnicode_AsUTF8String(source));
+#endif
                 value = QString(data);
             }
             return !PyErr_Occurred();
@@ -29,7 +33,7 @@ namespace pybind11 { namespace detail {
         //Conversion part 2 (C++ -> Python)
         static handle cast(QString src, return_value_policy, handle ) {
             QByteArray ba = src.toUtf8();
-            return  PyUnicode_FromStringAndSize( ba.constData(), ba.size() );
+            return  PyUnicode_FromStringAndSize(ba.constData(), ba.size());
         }
     };
 }}

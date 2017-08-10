@@ -15,7 +15,6 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
-#include <boost/python.hpp>
 #include <iostream>
 #include "gettext.h"
 
@@ -23,16 +22,15 @@ using namespace std;
 namespace stdph = std::placeholders;
 using namespace cnoid;
 using boost::format;
-namespace python = boost::python;
 namespace filesystem = boost::filesystem;
 
 namespace {
-    
-python::object mainModule;
-python::object mainNamespace;
-python::object cnoidModule;
-python::object sysModule;
-python::object exitExceptionType;
+
+py::module mainModule;
+py::object mainNamespace;
+py::object cnoidModule;
+py::module sysModule;
+py::object exitExceptionType;
 MappingPtr pythonConfig;
 Action* redirectionCheck;
 Action* refreshModulesCheck;
@@ -56,26 +54,32 @@ public:
 class MessageViewIn
 {
 public:
-    python::object readline() {
-        return python::str("\n");
+    py::object readline() {
+        return py::str("\n");
     }
 };
             
-
-python::object pythonExit()
+py::object pythonExit()
 {
     PyErr_SetObject(exitExceptionType.ptr(), 0);
-    python::throw_error_already_set();
-    return python::object();
-}
 
+#ifdef CNOID_USE_PYBIND11
+    if(PyErr_Occurred()){
+        throw py::error_already_set();
+    }
+#else
+    py::throw_error_already_set();
+#endif
+    
+    return py::object();
+}
 
 class PythonPlugin : public Plugin
 {
 public:
     std::unique_ptr<PythonExecutor> executor_;
-    python::object messageViewOut;
-    python::object messageViewIn;
+    py::object messageViewOut;
+    py::object messageViewIn;
         
     PythonPlugin();
     virtual bool initialize();
@@ -155,7 +159,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
                 MessageView::instance()->putln(_("The script finished."));
             } else {
                 MessageView::instance()->putln(_("Failed to run the python script."));
-                PyGILock lock;
+                py::gil_scoped_acquire lock;
                 MessageView::instance()->put(executor().exceptionText());
             }
         }
@@ -176,7 +180,7 @@ bool PythonPlugin::initializeInterpreter()
     char* dummy_argv[] = {dummy_str};
     PySys_SetArgvEx(1, dummy_argv, 0);
 
-    mainModule = python::import("__main__");
+    mainModule = py::module::import("__main__");
     mainNamespace = mainModule.attr("__dict__");
 
 	/*
@@ -190,37 +194,55 @@ bool PythonPlugin::initializeInterpreter()
 	 set using C functions.
 	*/	
 #ifdef WIN32
-    python::object env = python::import("os").attr("environ");
-    env["PATH"] = python::str(executableDirectory() + ";") + env["PATH"];
+    py::module env = py::module::import("os").attr("environ");
+    env["PATH"] = py::str(executableDirectory() + ";") + env["PATH"];
 #endif
 
-    sysModule = python::import("sys");
+    sysModule = py::module::import("sys");
     
     // set the choreonoid default python script path
-    python::list syspath = python::extract<python::list>(sysModule.attr("path"));
-    filesystem::path scriptPath =
-        filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";
+    filesystem::path scriptPath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";
+
+#ifdef CNOID_USE_PYBIND11
+    sysModule.attr("path").attr("insert")(0, getNativePathString(scriptPath));
+#else
+    py::list syspath = py::extract<py::list>(sysModule.attr("path"));
     syspath.insert(0, getNativePathString(scriptPath));
+#endif
 
     // Redirect the stdout and stderr to the message view
-    python::object messageViewOutClass =
-        python::class_<MessageViewOut>("MessageViewOut", python::init<>())
+    py::object messageViewOutClass =
+#ifdef CNOID_USE_PYBIND11
+        py::class_<MessageViewOut>(mainModule, "MessageViewOut").def(py::init<>())
+#else
+        py::class_<MessageViewOut>("MessageViewOut", py::init<>())
+#endif
         .def("write", &MessageViewOut::write);
+    
     messageViewOut = messageViewOutClass();
     sysModule.attr("stdout") = messageViewOut;
     sysModule.attr("stderr") = messageViewOut;
 
     // Disable waiting for input
-    python::object messageViewInClass =
-        python::class_<MessageViewIn>("MessageViewIn", python::init<>())
+    py::object messageViewInClass =
+#ifdef CNOID_USE_PYBIND11
+        py::class_<MessageViewIn>(mainModule, "MessageViewIn").def(py::init<>())
+#else
+        py::class_<MessageViewIn>("MessageViewIn", py::init<>())
+#endif
         .def("readline", &MessageViewIn::readline);
     messageViewIn = messageViewInClass();
     sysModule.attr("stdin") = messageViewIn;
 
     // Override exit and quit
-    python::object builtins = mainNamespace["__builtins__"];
-    exitExceptionType = python::import("cnoid.PythonPlugin").attr("ExitException");
-    python::object exitFunc = python::make_function(pythonExit);
+    py::object builtins = mainNamespace["__builtins__"];
+    exitExceptionType = py::module::import("cnoid.PythonPlugin").attr("ExitException");
+
+#ifdef CNOID_USE_PYBIND11
+    py::object exitFunc = py::cpp_function(pythonExit);
+#else
+    py::object exitFunc = py::make_function(pythonExit);
+#endif
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
@@ -252,7 +274,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
     if(pathListing.isValid()){
         MessageView* mv = MessageView::instance();
         PyGILock lock;
-        python::list syspath = python::extract<python::list>(sysModule.attr("path"));
+        py::list syspath = py::extract<py::list>(sysModule.attr("path"));
         string newPath;
         for(int i=0; i < pathListing.size(); ++i){
             newPath = archive.resolveRelocatablePath(pathListing[i].toString());
@@ -266,7 +288,11 @@ void PythonPlugin::restoreProperties(const Archive& archive)
                     }
                 }
                 if(!isExisting){
+#ifdef CNOID_USE_PYBIND11
+                    sysModule.attr("path").attr("insert")(0, getNativePathString(filesystem::path(newPath)));
+#else
                     syspath.insert(0, getNativePathString(filesystem::path(newPath)));
+#endif
                     additionalSearchPathList.push_back(newPath);
                     mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the Python module search path list."))
                               % newPath);
@@ -288,19 +314,19 @@ bool PythonPlugin::finalize()
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonPlugin);
 
 
-boost::python::object cnoid::pythonMainModule()
+py::object cnoid::pythonMainModule()
 {
     return mainModule;
 }
 
 
-boost::python::object cnoid::pythonMainNamespace()
+py::object cnoid::pythonMainNamespace()
 {
     return mainNamespace;
 }
 
 
-boost::python::object cnoid::pythonSysModule()
+py::object cnoid::pythonSysModule()
 {
     return sysModule;
 }
@@ -311,10 +337,9 @@ bool cnoid::execPythonCode(const std::string& code)
     PythonExecutor& executor = pythonPlugin->executor();
     bool result = executor.execCode(code);
     if(executor.hasException()){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         MessageView::instance()->putln(executor.exceptionText());
         result = false;
     }
     return result;
 }
-

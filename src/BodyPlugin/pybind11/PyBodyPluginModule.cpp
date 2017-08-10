@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <cnoid/Py3Util>
+#include <cnoid/PyUtil>
 //#include <cnoid/EigenTypes>
 
 namespace py = pybind11;

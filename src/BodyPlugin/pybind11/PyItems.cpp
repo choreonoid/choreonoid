@@ -4,7 +4,7 @@
 
 #include "../BodyMotionItem.h"
 #include "../WorldItem.h"
-#include <cnoid/Py3Base>
+#include <cnoid/PyBase>
 
 namespace py = pybind11;
 using namespace cnoid;

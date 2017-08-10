@@ -1,9 +1,4 @@
-
 # @author Shin'ichiro Nakaoka
-
-if(NOT ENABLE_PYTHON)
-  return()
-endif()
 
 set(target PyBodyPlugin)
 

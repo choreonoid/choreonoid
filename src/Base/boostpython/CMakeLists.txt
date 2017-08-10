@@ -4,14 +4,8 @@ add_cnoid_library(CnoidPyBase SHARED PyBase.cpp)
 target_link_libraries(CnoidPyBase CnoidBase CnoidPython)
 apply_common_setting_for_library(CnoidPyBase)
 
-add_cnoid_python_module(PyQtCore
-  PyQtCore.cpp
-  )
-
-target_link_libraries(PyQtCore
-  ${QT_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-  )
+add_cnoid_python_module(PyQtCore PyQtCore.cpp)
+target_link_libraries(PyQtCore ${QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 if(QT5)
   qt5_use_modules(PyQtCore Core)
@@ -25,10 +19,7 @@ if(QT5)
   qt5_use_modules(PyQtGui Widgets)
 endif()
 
-target_link_libraries(PyQtGui
-  ${QT_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-  )
+target_link_libraries(PyQtGui ${QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 add_cnoid_python_module(PyBase
   PyBaseModule.cpp

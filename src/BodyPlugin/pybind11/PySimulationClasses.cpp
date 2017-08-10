@@ -9,7 +9,7 @@
 #include "../SimulationScriptItem.h"
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
-#include <cnoid/Py3Base>
+#include <cnoid/PyBase>
 #include <cnoid/EigenTypes>
 
 namespace py = pybind11;
