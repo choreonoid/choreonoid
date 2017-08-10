@@ -292,7 +292,7 @@ void Python3ConsoleViewImpl::execCommand()
 py::object Python3ConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames)
 {
     py::module parentObject = pythonMainModule();
-    return getMemberObject(moduleNames,parentObject);
+    return getMemberObject(moduleNames, parentObject);
 }
 
 py::object Python3ConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames, py::object& parentObject)
@@ -322,7 +322,9 @@ std::vector<string> Python3ConsoleViewImpl::getMemberNames(py::object& moduleObj
     py::list memberNames = h.cast<py::list>();
     std::vector<string> retNames;
     for(int i=0; i < py::len(memberNames); ++i){
-        if(!strstr(string(memberNames[i].cast<string>()).c_str(), "__" )) retNames.push_back(string(memberNames[i].cast<string>()));
+        if(!strstr(string(memberNames[i].cast<string>()).c_str(), "__" )){
+            retNames.push_back(string(memberNames[i].cast<string>()));
+        }
     }
     return retNames;
 }

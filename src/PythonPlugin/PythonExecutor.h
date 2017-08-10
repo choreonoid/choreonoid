@@ -32,15 +32,15 @@ public:
     bool execCode(const std::string& code);
     bool execFile(const std::string& filename);
     bool waitToFinish(double timeout);
-    boost::python::object resultObject();
+    py::object resultObject();
     const std::string resultString() const;
     SignalProxy<void()> sigFinished();
 
     bool hasException() const;
     const std::string exceptionTypeName() const;
     const std::string exceptionText() const;
-    boost::python::object exceptionType() const;
-    boost::python::object exceptionValue() const;
+    py::object exceptionType() const;
+    py::object exceptionValue() const;
 
     bool isTerminated() const;
         
