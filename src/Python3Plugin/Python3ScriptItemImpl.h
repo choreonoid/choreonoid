@@ -3,22 +3,22 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H
-#define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H
+#ifndef CNOID_PYTHON3_PLUGIN_PYTHON3_SCRIPT_ITEM_IMPL_H
+#define CNOID_PYTHON3_PLUGIN_PYTHON3_SCRIPT_ITEM_IMPL_H
 
-#include "PythonExecutor.h"
+#include "Python3Executor.h"
 #include <cnoid/ScriptItem>
 #include <cnoid/MessageView>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT PythonScriptItemImpl
+class CNOID_EXPORT Python3ScriptItemImpl
 {
 public:
-    PythonScriptItemImpl(ScriptItem* scriptItem);
-    PythonScriptItemImpl(ScriptItem* scriptItem, const PythonScriptItemImpl& org);
-    virtual ~PythonScriptItemImpl();
+    Python3ScriptItemImpl(ScriptItem* scriptItem);
+    Python3ScriptItemImpl(ScriptItem* scriptItem, const Python3ScriptItemImpl& org);
+    virtual ~Python3ScriptItemImpl();
     ScriptItem* scriptItem() { return scriptItem_; }
     void onDisconnectedFromRoot();
     bool setScriptFilename(const std::string& filename);
@@ -44,7 +44,7 @@ private:
     ScriptItem* scriptItem_;
     std::string scriptFilename_;
     MessageView* mv;
-    PythonExecutor executor;
+    Python3Executor executor;
     Connection sigFinishedConnection;
     Signal<void()> sigScriptFinished_;
 };

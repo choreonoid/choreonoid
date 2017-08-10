@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "PythonConsoleView.h"
-#include "PythonPlugin.h"
+#include "Python3ConsoleView.h"
+#include "Python3Plugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>
@@ -28,17 +28,17 @@ const unsigned int HISTORY_SIZE = 100;
 
 class PythonConsoleOut
 {
-    PythonConsoleViewImpl* console;
+    Python3ConsoleViewImpl* console;
 public:
-    void setConsole(PythonConsoleViewImpl* console);
+    void setConsole(Python3ConsoleViewImpl* console);
     void write(std::string const& text);
 };
 
 class PythonConsoleIn
 {
 public:
-    PythonConsoleViewImpl* console;
-    void setConsole(PythonConsoleViewImpl* console);
+    Python3ConsoleViewImpl* console;
+    void setConsole(Python3ConsoleViewImpl* console);
     py::object readline();
 };
 
@@ -47,13 +47,13 @@ public:
 
 namespace cnoid {
     
-class PythonConsoleViewImpl : public QPlainTextEdit
+class Python3ConsoleViewImpl : public QPlainTextEdit
 {
 public:
-    PythonConsoleViewImpl(PythonConsoleView* self);
-    ~PythonConsoleViewImpl();
+    Python3ConsoleViewImpl(Python3ConsoleView* self);
+    ~Python3ConsoleViewImpl();
 
-    PythonConsoleView* self;
+    Python3ConsoleView* self;
     bool isConsoleInMode;
     QEventLoop eventLoop;
     string stringFromConsoleIn;
@@ -98,7 +98,7 @@ public:
 }
 
 
-void PythonConsoleOut::setConsole(PythonConsoleViewImpl* console)
+void PythonConsoleOut::setConsole(Python3ConsoleViewImpl* console)
 {
     this->console = console;
 }
@@ -111,7 +111,7 @@ void PythonConsoleOut::write(std::string const& text)
 }
 
 
-void PythonConsoleIn::setConsole(PythonConsoleViewImpl* console)
+void PythonConsoleIn::setConsole(Python3ConsoleViewImpl* console)
 {
     this->console = console;
 }
@@ -124,21 +124,21 @@ py::object PythonConsoleIn::readline()
 }
 
 
-void PythonConsoleView::initializeClass(ExtensionManager* ext)
+void Python3ConsoleView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<PythonConsoleView>(
-        "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
+    ext->viewManager().registerClass<Python3ConsoleView>(
+        "Python3ConsoleView", N_("Python3 Console"), ViewManager::SINGLE_DEFAULT);
 }
 
 
-PythonConsoleView::PythonConsoleView()
+Python3ConsoleView::Python3ConsoleView()
 {
-    impl = new PythonConsoleViewImpl(this);
+    impl = new Python3ConsoleViewImpl(this);
     setFocusProxy(impl);
 }
 
 
-PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
+Python3ConsoleViewImpl::Python3ConsoleViewImpl(Python3ConsoleView* self)
     : self(self)
 {
     isConsoleInMode = false;
@@ -198,26 +198,26 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 }
 
 
-PythonConsoleView::~PythonConsoleView()
+Python3ConsoleView::~Python3ConsoleView()
 {
     py::gil_scoped_acquire lock;
     delete impl;
 }
 
 
-PythonConsoleViewImpl::~PythonConsoleViewImpl()
+Python3ConsoleViewImpl::~Python3ConsoleViewImpl()
 {
 
 }
 
 
-void PythonConsoleViewImpl::setPrompt(const char* newPrompt)
+void Python3ConsoleViewImpl::setPrompt(const char* newPrompt)
 {
     prompt = newPrompt;
 }
 
 
-void PythonConsoleViewImpl::put(const QString& message)
+void Python3ConsoleViewImpl::put(const QString& message)
 {
     moveCursor(QTextCursor::End);
     insertPlainText(message);
@@ -225,27 +225,27 @@ void PythonConsoleViewImpl::put(const QString& message)
 }
 
 
-void PythonConsoleViewImpl::putln(const QString& message)
+void Python3ConsoleViewImpl::putln(const QString& message)
 {
     put(message + "\n");
     MessageView::instance()->flush();
 }
 
 
-void PythonConsoleView::inputCommand(const std::string& command)
+void Python3ConsoleView::inputCommand(const std::string& command)
 {
     impl->put(command.c_str());
     impl->execCommand();
 }
 
 
-SignalProxy<void(const std::string& output)> PythonConsoleView::sigOutput()
+SignalProxy<void(const std::string& output)> Python3ConsoleView::sigOutput()
 {
     return impl->sigOutput;
 }
 
 
-void PythonConsoleViewImpl::putPrompt()
+void Python3ConsoleViewImpl::putPrompt()
 {
     put(prompt);
     sigOutput(prompt.toStdString());
@@ -253,7 +253,7 @@ void PythonConsoleViewImpl::putPrompt()
 }
 
 
-void PythonConsoleViewImpl::execCommand()
+void Python3ConsoleViewImpl::execCommand()
 {
     py::gil_scoped_acquire lock;
     
@@ -289,13 +289,13 @@ void PythonConsoleViewImpl::execCommand()
     putPrompt();
 }
 
-py::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames)
+py::object Python3ConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames)
 {
     py::module parentObject = pythonMainModule();
     return getMemberObject(moduleNames,parentObject);
 }
 
-py::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames, py::object& parentObject)
+py::object Python3ConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames, py::object& parentObject)
 {
     if(moduleNames.size() == 0){
         return parentObject;
@@ -312,7 +312,7 @@ py::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNam
     }
 }
 
-std::vector<string> PythonConsoleViewImpl::getMemberNames(py::object& moduleObject)
+std::vector<string> Python3ConsoleViewImpl::getMemberNames(py::object& moduleObject)
 {
     PyObject* pPyObject = moduleObject.ptr();
     if(pPyObject == NULL){
@@ -327,7 +327,7 @@ std::vector<string> PythonConsoleViewImpl::getMemberNames(py::object& moduleObje
     return retNames;
 }
 
-void PythonConsoleViewImpl::tabComplete()
+void Python3ConsoleViewImpl::tabComplete()
 {
     py::gil_scoped_acquire lock;
     orgStdout = sys.attr("stdout");
@@ -433,7 +433,7 @@ void PythonConsoleViewImpl::tabComplete()
     }
 }
 
-QString PythonConsoleViewImpl::getInputString()
+QString Python3ConsoleViewImpl::getInputString()
 {
     QTextDocument* doc = document();
     QString line = doc->findBlockByLineNumber(doc->lineCount() - 1).text();
@@ -442,7 +442,7 @@ QString PythonConsoleViewImpl::getInputString()
 }
 
 
-void PythonConsoleViewImpl::setInputString(const QString& command)
+void Python3ConsoleViewImpl::setInputString(const QString& command)
 {
     if(getInputString() == command){
         return;
@@ -458,7 +458,7 @@ void PythonConsoleViewImpl::setInputString(const QString& command)
 }
 
 
-void PythonConsoleViewImpl::addToHistory(const QString& command)
+void Python3ConsoleViewImpl::addToHistory(const QString& command)
 {
     if(!command.isEmpty()){
         if(history.empty() || history.back() != command){
@@ -472,7 +472,7 @@ void PythonConsoleViewImpl::addToHistory(const QString& command)
 }
 
 
-QString PythonConsoleViewImpl::getPrevHistoryEntry()
+QString Python3ConsoleViewImpl::getPrevHistoryEntry()
 {
     if(!history.empty()){
         if(histIter != history.begin()){
@@ -484,7 +484,7 @@ QString PythonConsoleViewImpl::getPrevHistoryEntry()
 }
 
 
-QString PythonConsoleViewImpl::getNextHistoryEntry()
+QString Python3ConsoleViewImpl::getNextHistoryEntry()
 {
     if(!history.empty()){
         if(histIter != history.end()){
@@ -498,7 +498,7 @@ QString PythonConsoleViewImpl::getNextHistoryEntry()
 }
 
 
-string PythonConsoleViewImpl::getInputFromConsoleIn()
+string Python3ConsoleViewImpl::getInputFromConsoleIn()
 {
     sys.attr("stdout") = orgStdout;
     sys.attr("stderr") = orgStderr;
@@ -530,7 +530,7 @@ string PythonConsoleViewImpl::getInputFromConsoleIn()
 }
 
 
-void PythonConsoleViewImpl::fixInput()
+void Python3ConsoleViewImpl::fixInput()
 {
     stringFromConsoleIn = getInputString().toStdString();
     put("\n");
@@ -538,7 +538,7 @@ void PythonConsoleViewImpl::fixInput()
 }
 
 
-void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
+void Python3ConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 {
     bool done = false;
 
@@ -644,7 +644,7 @@ void PythonConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 /**
    \todo Implement this virtual function to correctly process a pasted text block
 */
-void PythonConsoleViewImpl::insertFromMimeData(const QMimeData* source)
+void Python3ConsoleViewImpl::insertFromMimeData(const QMimeData* source)
 {
     if(!source->hasText()){
         QPlainTextEdit::insertFromMimeData(source);

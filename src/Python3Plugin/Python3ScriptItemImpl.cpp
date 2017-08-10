@@ -3,7 +3,7 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "PythonScriptItemImpl.h"
+#include "Python3ScriptItemImpl.h"
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
 #include "gettext.h"
@@ -16,7 +16,7 @@ namespace filesystem = boost::filesystem;
 namespace py = pybind11;
 
 
-PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem)
+Python3ScriptItemImpl::Python3ScriptItemImpl(ScriptItem* scriptItem)
     : scriptItem_(scriptItem),
       mv(MessageView::instance())
 {
@@ -24,7 +24,7 @@ PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem)
 }
 
 
-PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem, const PythonScriptItemImpl& org)
+Python3ScriptItemImpl::Python3ScriptItemImpl(ScriptItem* scriptItem, const Python3ScriptItemImpl& org)
     : scriptItem_(scriptItem),
       scriptFilename_(org.scriptFilename_),
       mv(MessageView::instance()),
@@ -34,19 +34,19 @@ PythonScriptItemImpl::PythonScriptItemImpl(ScriptItem* scriptItem, const PythonS
 }
 
 
-PythonScriptItemImpl::~PythonScriptItemImpl()
+Python3ScriptItemImpl::~Python3ScriptItemImpl()
 {
 
 }
 
 
-void PythonScriptItemImpl::onDisconnectedFromRoot()
+void Python3ScriptItemImpl::onDisconnectedFromRoot()
 {
     terminate();
 }
 
 
-bool PythonScriptItemImpl::setScriptFilename(const std::string& filename)
+bool Python3ScriptItemImpl::setScriptFilename(const std::string& filename)
 {
     filesystem::path scriptPath(filename);
     if(filesystem::exists(scriptPath)){
@@ -62,7 +62,7 @@ bool PythonScriptItemImpl::setScriptFilename(const std::string& filename)
 }
 
 
-void PythonScriptItemImpl::setBackgroundMode(bool on)
+void Python3ScriptItemImpl::setBackgroundMode(bool on)
 {
     if(on != executor.isBackgroundMode()){
         executor.setBackgroundMode(on);
@@ -71,29 +71,29 @@ void PythonScriptItemImpl::setBackgroundMode(bool on)
 }
 
 
-bool PythonScriptItemImpl::isBackgroundMode() const
+bool Python3ScriptItemImpl::isBackgroundMode() const
 {
     return executor.isBackgroundMode();
 }
 
 
-bool PythonScriptItemImpl::isRunning() const
+bool Python3ScriptItemImpl::isRunning() const
 {
-    return (executor.state() != PythonExecutor::NOT_RUNNING);
+    return (executor.state() != Python3Executor::NOT_RUNNING);
 }
 
 
-bool PythonScriptItemImpl::execute()
+bool Python3ScriptItemImpl::execute()
 {
     const string iname = scriptItem()->identityName();
 
-    PythonExecutor::State state = executor.state();
-    if(state == PythonExecutor::RUNNING_FOREGROUND){
+    Python3Executor::State state = executor.state();
+    if(state == Python3Executor::RUNNING_FOREGROUND){
         showWarningDialog(
             format(_("Python script \"%1%\" is now running in the foreground. "
                      "The execution of the script cannot be overlapped.")) % iname);
         return false;
-    } else if(state == PythonExecutor::RUNNING_BACKGROUND){
+    } else if(state == Python3Executor::RUNNING_BACKGROUND){
         bool doRestart = showConfirmDialog(
             _("Python Script Termination"),
             str(format(_("Python script \"%1%\" is running now. "
@@ -123,7 +123,7 @@ bool PythonScriptItemImpl::execute()
             sigFinishedConnection.disconnect();
             sigFinishedConnection =
                 executor.sigFinished().connect(
-                    std::bind(&PythonScriptItemImpl::onScriptFinished, this));
+                    std::bind(&Python3ScriptItemImpl::onScriptFinished, this));
             
             result = executor.execFile(scriptFilename_);
         }
@@ -132,9 +132,9 @@ bool PythonScriptItemImpl::execute()
 }
 
 
-bool PythonScriptItemImpl::executeCode(const char* code)
+bool Python3ScriptItemImpl::executeCode(const char* code)
 {
-    if(executor.state() != PythonExecutor::NOT_RUNNING){
+    if(executor.state() != Python3Executor::NOT_RUNNING){
         mv->putln(
             format(_("Python script \"%1%\" is now running in the foreground. "
                      "The code cannot be executed now."))
@@ -145,25 +145,25 @@ bool PythonScriptItemImpl::executeCode(const char* code)
 }
 
 
-bool PythonScriptItemImpl::waitToFinish(double timeout)
+bool Python3ScriptItemImpl::waitToFinish(double timeout)
 {
     return executor.waitToFinish(timeout);
 }
 
 
-py::object PythonScriptItemImpl::resultObject()
+py::object Python3ScriptItemImpl::resultObject()
 {
     return executor.resultObject();
 }
 
 
-const std::string PythonScriptItemImpl::resultString() const
+const std::string Python3ScriptItemImpl::resultString() const
 {
     return executor.resultString();
 }
 
 
-void PythonScriptItemImpl::onScriptFinished()
+void Python3ScriptItemImpl::onScriptFinished()
 {
     sigFinishedConnection.disconnect();
     
@@ -185,12 +185,12 @@ void PythonScriptItemImpl::onScriptFinished()
 }
 
 
-bool PythonScriptItemImpl::terminate()
+bool Python3ScriptItemImpl::terminate()
 {
     bool result = true;
     const string iname = scriptItem()->identityName();
     
-    if(executor.state() == PythonExecutor::RUNNING_BACKGROUND){
+    if(executor.state() == Python3Executor::RUNNING_BACKGROUND){
         if(executor.terminate()){
             mv->putln(format(_("Python script \"%1%\" has been terminated.")) % iname);
         } else {
@@ -203,28 +203,28 @@ bool PythonScriptItemImpl::terminate()
 }
 
 
-void PythonScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void Python3ScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Background execution"), executor.isBackgroundMode(),
-                std::bind(&PythonScriptItemImpl::onBackgroundModeChanged, this, stdph::_1));
+                std::bind(&Python3ScriptItemImpl::onBackgroundModeChanged, this, stdph::_1));
 }
 
 
-bool PythonScriptItemImpl::onBackgroundModeChanged(bool on)
+bool Python3ScriptItemImpl::onBackgroundModeChanged(bool on)
 {
     executor.setBackgroundMode(on);
     return true;
 }
 
 
-bool PythonScriptItemImpl::store(Archive& archive)
+bool Python3ScriptItemImpl::store(Archive& archive)
 {
     archive.write("backgroundExecution", executor.isBackgroundMode());
     return true;
 }
 
 
-bool PythonScriptItemImpl::restore(const Archive& archive)
+bool Python3ScriptItemImpl::restore(const Archive& archive)
 {
     bool isBackgroundMode;
     if(archive.read("backgroundExecution", isBackgroundMode)){

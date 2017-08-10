@@ -4,7 +4,7 @@
 
 #include "../LazyCaller.h"
 #include <cnoid/Py3Util>
-#include <cnoid/PythonUtil>
+#include <cnoid/Python3Util>
 
 namespace py = pybind11;
 using namespace cnoid;
@@ -25,7 +25,7 @@ struct PyFunc
         try {
             func();
         } catch(py::error_already_set const& ex) {
-            handlePythonException();
+            cnoid::python3::handlePythonException();
         }
     }
 };

@@ -5,7 +5,7 @@ if(NOT ENABLE_PYTHON3)
 endif()
 
 add_cnoid_library(CnoidPy3Base SHARED PyBase.cpp)
-target_link_libraries(CnoidPy3Base CnoidBase CnoidPython)
+target_link_libraries(CnoidPy3Base CnoidBase CnoidPython3)
 apply_common_setting_for_library(CnoidPy3Base)
 
 add_cnoid_python3_module(Py3QtCore
@@ -15,7 +15,6 @@ add_cnoid_python3_module(Py3QtCore
 target_link_libraries(Py3QtCore
   ${QT_LIBRARIES}
   ${PYTHON_LIBRARIES}
-  ${Boost_PYTHON_LIBRARY}
   )
 
 if(QT5)

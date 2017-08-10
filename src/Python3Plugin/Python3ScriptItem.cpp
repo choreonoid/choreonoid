@@ -3,8 +3,8 @@
    \author Shin'ichiro Nakaoka
 */
 
-#include "PythonScriptItem.h"
-#include "PythonScriptItemImpl.h"
+#include "Python3ScriptItem.h"
+#include "Python3ScriptItemImpl.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <cnoid/FileUtil>
@@ -16,119 +16,119 @@ namespace stdph = std::placeholders;
 using namespace cnoid;
 
 
-void PythonScriptItem::initializeClass(ExtensionManager* ext)
+void Python3ScriptItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<PythonScriptItem>(N_("PythonScriptItem"));
-    ext->itemManager().addLoader<PythonScriptItem>(
-        _("Python Script"), "PYTHON-SCRIPT-FILE", "py",
-        std::bind(&PythonScriptItem::setScriptFilename, stdph::_1, stdph::_2));
+    ext->itemManager().registerClass<Python3ScriptItem>(N_("Python3ScriptItem"));
+    ext->itemManager().addLoader<Python3ScriptItem>(
+        _("Python3 Script"), "PYTHON-SCRIPT-FILE", "py",
+        std::bind(&Python3ScriptItem::setScriptFilename, stdph::_1, stdph::_2));
 }
 
 
-PythonScriptItem::PythonScriptItem()
+Python3ScriptItem::Python3ScriptItem()
 {
-    impl = new PythonScriptItemImpl(this);
+    impl = new Python3ScriptItemImpl(this);
     doExecutionOnLoading = false;
 }
 
 
-PythonScriptItem::PythonScriptItem(const PythonScriptItem& org)
+Python3ScriptItem::Python3ScriptItem(const Python3ScriptItem& org)
     : ScriptItem(org)
 {
-    impl = new PythonScriptItemImpl(this, *org.impl);
+    impl = new Python3ScriptItemImpl(this, *org.impl);
     doExecutionOnLoading = org.doExecutionOnLoading;
 }
 
 
-PythonScriptItem::~PythonScriptItem()
+Python3ScriptItem::~Python3ScriptItem()
 {
     delete impl;
 }
 
 
-void PythonScriptItem::onDisconnectedFromRoot()
+void Python3ScriptItem::onDisconnectedFromRoot()
 {
     impl->onDisconnectedFromRoot();
 }
 
 
-bool PythonScriptItem::setScriptFilename(const std::string& filename)
+bool Python3ScriptItem::setScriptFilename(const std::string& filename)
 {
     bool result = impl->setScriptFilename(filename);
     if(result && doExecutionOnLoading){
-        callLater(std::bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
+        callLater(std::bind(&Python3ScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
     }
     return result;
 }
 
 
-const std::string& PythonScriptItem::scriptFilename() const
+const std::string& Python3ScriptItem::scriptFilename() const
 {
     return impl->scriptFilename();
 }
 
 
-void PythonScriptItem::setBackgroundMode(bool on)
+void Python3ScriptItem::setBackgroundMode(bool on)
 {
     impl->setBackgroundMode(on);
 }
 
 
-bool PythonScriptItem::isBackgroundMode() const
+bool Python3ScriptItem::isBackgroundMode() const
 {
     return impl->isBackgroundMode();
 }
 
 
-bool PythonScriptItem::isRunning() const
+bool Python3ScriptItem::isRunning() const
 {
     return impl->isRunning();
 }
 
 
-bool PythonScriptItem::execute()
+bool Python3ScriptItem::execute()
 {
     return impl->execute();
 }
 
 
-bool PythonScriptItem::executeCode(const char* code)
+bool Python3ScriptItem::executeCode(const char* code)
 {
     return impl->executeCode(code);
 }
 
 
-bool PythonScriptItem::waitToFinish(double timeout)
+bool Python3ScriptItem::waitToFinish(double timeout)
 {
     return impl->waitToFinish(timeout);
 }
     
 
-std::string PythonScriptItem::resultString() const
+std::string Python3ScriptItem::resultString() const
 {
     return impl->resultString();
 }
 
 
-SignalProxy<void()> PythonScriptItem::sigScriptFinished()
+SignalProxy<void()> Python3ScriptItem::sigScriptFinished()
 {
     return impl->sigScriptFinished();
 }
 
 
-bool PythonScriptItem::terminate()
+bool Python3ScriptItem::terminate()
 {
     return impl->terminate();
 }
 
 
-Item* PythonScriptItem::doDuplicate() const
+Item* Python3ScriptItem::doDuplicate() const
 {
-    return new PythonScriptItem(*this);
+    return new Python3ScriptItem(*this);
 }
 
 
-void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
+void Python3ScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Script"), getFilename(filePath()));
     impl->doPutProperties(putProperty);
@@ -136,7 +136,7 @@ void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-bool PythonScriptItem::store(Archive& archive)
+bool Python3ScriptItem::store(Archive& archive)
 {
     if(!filePath().empty()){
         archive.writeRelocatablePath("file", filePath());
@@ -146,7 +146,7 @@ bool PythonScriptItem::store(Archive& archive)
 }
 
 
-bool PythonScriptItem::restore(const Archive& archive)
+bool Python3ScriptItem::restore(const Archive& archive)
 {
     archive.read("executionOnLoading", doExecutionOnLoading);
     impl->restore(archive);
@@ -157,7 +157,7 @@ bool PythonScriptItem::restore(const Archive& archive)
         bool loaded = load(filename);
         doExecutionOnLoading = doExecution;
         if(loaded && doExecution){
-            archive.addPostProcess(std::bind(&PythonScriptItem::execute, this));
+            archive.addPostProcess(std::bind(&Python3ScriptItem::execute, this));
         }
         return loaded;
     }

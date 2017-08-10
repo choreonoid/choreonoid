@@ -1,15 +1,11 @@
-/*
- * @author Shin'ichiro Nakaoka
- */
-
 #include <pybind11/pybind11.h>
 #include <pybind11/eval.h>
 
 namespace py = pybind11;
 
-PYBIND11_PLUGIN(PythonPlugin)
+PYBIND11_PLUGIN(Python3Plugin)
 {
-    py::module m("PythonPlugin", "PythonPlugin Python Module");
+    py::module m("Python3Plugin", "Python3Plugin Python Module");
 
     // define the ExitException class which inherits the built-in Exception class
     py::module mainModule = py::module::import("__main__");

@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "PythonPlugin.h"
-#include "PythonScriptItem.h"
-#include "PythonConsoleView.h"
-#include "PythonExecutor.h"
+#include "Python3Plugin.h"
+#include "Python3ScriptItem.h"
+#include "Python3ConsoleView.h"
+#include "Python3Executor.h"
 #include <cnoid/PyUtil>
 #include <cnoid/Plugin>
 #include <cnoid/AppConfig>
@@ -73,14 +73,14 @@ py::object pythonExit()
 }
 
 
-class PythonPlugin : public Plugin
+class Python3Plugin : public Plugin
 {
 public:
-    std::unique_ptr<PythonExecutor> executor_;
+    std::unique_ptr<Python3Executor> executor_;
     py::object messageViewOut;
     py::object messageViewIn;
         
-    PythonPlugin();
+    Python3Plugin();
     virtual bool initialize();
     bool initializeInterpreter();
     virtual bool finalize();
@@ -89,9 +89,9 @@ public:
     bool storeProperties(Archive& archive);
     void restoreProperties(const Archive& archive);
 
-    PythonExecutor& executor() {
+    Python3Executor& executor() {
         if(!executor_){
-            executor_.reset(new PythonExecutor);
+            executor_.reset(new Python3Executor);
         }
         return *executor_;
     }
@@ -101,53 +101,53 @@ public:
 
 
 namespace {
-PythonPlugin* pythonPlugin = 0;
+Python3Plugin* pythonPlugin = 0;
 }
 
 
-PythonPlugin::PythonPlugin()
-    : Plugin("Python")
+Python3Plugin::Python3Plugin()
+    : Plugin("Python3")
 {
     pythonPlugin = this;
 }
 
 
-bool PythonPlugin::initialize()
+bool Python3Plugin::initialize()
 {
     if(!initializeInterpreter()){
         return false;
     }
 
-    pythonConfig = AppConfig::archive()->openMapping("Python");
+    pythonConfig = AppConfig::archive()->openMapping("Python3");
 
     MenuManager& mm = menuManager();
-    mm.setPath("/Options").setPath("Python");
+    mm.setPath("/Options").setPath("Python3");
     redirectionCheck = mm.addCheckItem(_("Redirectiton to MessageView"));
     redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
                                   
     refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
     refreshModulesCheck->sigToggled().connect(
-        std::bind(&PythonExecutor::setModuleRefreshEnabled, stdph::_1));
+        std::bind(&Python3Executor::setModuleRefreshEnabled, stdph::_1));
     if(pythonConfig->get("refreshModules", false)){
         refreshModulesCheck->setChecked(true);
     }
 
-    PythonScriptItem::initializeClass(this);
-    PythonConsoleView::initializeClass(this);
+    Python3ScriptItem::initializeClass(this);
+    Python3ConsoleView::initializeClass(this);
     
     OptionManager& opm = optionManager();
     opm.addOption("python,p", boost::program_options::value< vector<string> >(), "load a python script file");
-    opm.sigOptionsParsed().connect(std::bind(&PythonPlugin::onSigOptionsParsed, this, stdph::_1));
+    opm.sigOptionsParsed().connect(std::bind(&Python3Plugin::onSigOptionsParsed, this, stdph::_1));
 
     setProjectArchiver(
-        std::bind(&PythonPlugin::storeProperties, this, stdph::_1),
-        std::bind(&PythonPlugin::restoreProperties, this, stdph::_1));
+        std::bind(&Python3Plugin::storeProperties, this, stdph::_1),
+        std::bind(&Python3Plugin::restoreProperties, this, stdph::_1));
 
     return true;
 }
 
 
-void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
+void Python3Plugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if (v.count("python")) {
         vector<string> pythonScriptFileNames = v["python"].as< vector<string> >();
@@ -166,7 +166,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 }
 
 
-bool PythonPlugin::initializeInterpreter()
+bool Python3Plugin::initializeInterpreter()
 {
     Py_Initialize();
 
@@ -217,7 +217,7 @@ bool PythonPlugin::initializeInterpreter()
 
     // Override exit and quit
     py::object builtins = mainNamespace["__builtins__"];
-    exitExceptionType = py::module::import("cnoid.PythonPlugin").attr("ExitException");
+    exitExceptionType = py::module::import("cnoid.Python3Plugin").attr("ExitException");
     py::object exitFunc = py::cpp_function(pythonExit);
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
@@ -231,7 +231,7 @@ bool PythonPlugin::initializeInterpreter()
 }
 
 
-bool PythonPlugin::storeProperties(Archive& archive)
+bool Python3Plugin::storeProperties(Archive& archive)
 {
     if(!additionalSearchPathList.empty()){
         Listing& pathListing = *archive.openListing("moduleSearchPath");
@@ -245,7 +245,7 @@ bool PythonPlugin::storeProperties(Archive& archive)
 }
 
 
-void PythonPlugin::restoreProperties(const Archive& archive)
+void Python3Plugin::restoreProperties(const Archive& archive)
 {
     Listing& pathListing = *archive.findListing("moduleSearchPath");
     if(pathListing.isValid()){
@@ -268,7 +268,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
                     if(debugMode)
                         py::print(sysModule.attr("path"));
                     additionalSearchPathList.push_back(newPath);
-                    mv->putln(format(_("PythonPlugin: \"%1%\" has been added to the Python module search path list."))
+                    mv->putln(format(_("Python3Plugin: \"%1%\" has been added to the Python module search path list."))
                               % newPath);
                 }
             }
@@ -277,7 +277,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
 }
     
 
-bool PythonPlugin::finalize()
+bool Python3Plugin::finalize()
 {
     pythonConfig->write("redirectionToMessageView", redirectionCheck->isChecked());
     pythonConfig->write("refreshModules", refreshModulesCheck->isChecked());
@@ -285,7 +285,7 @@ bool PythonPlugin::finalize()
 }
 
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(Python3Plugin);
 
 
 py::object cnoid::pythonMainModule()
@@ -308,7 +308,7 @@ py::object cnoid::pythonSysModule()
 
 bool cnoid::execPythonCode(const std::string& code)
 {
-    PythonExecutor& executor = pythonPlugin->executor();
+    Python3Executor& executor = pythonPlugin->executor();
     bool result = executor.execCode(code);
     if(executor.hasException()){
         py::gil_scoped_acquire lock;
@@ -317,4 +317,3 @@ bool cnoid::execPythonCode(const std::string& code)
     }
     return result;
 }
-

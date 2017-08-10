@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_PLUGIN_H
-#define CNOID_PYTHON_PLUGIN_PYTHON_PLUGIN_H
+#ifndef CNOID_PYTHON3_PLUGIN_PYTHON3_PLUGIN_H
+#define CNOID_PYTHON3_PLUGIN_PYTHON3_PLUGIN_H
 
 #include <pybind11/pybind11.h>
 #include "exportdecl.h"

@@ -2,7 +2,7 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "PythonExecutor.h"
+#include "Python3Executor.h"
 #include <cnoid/PyUtil>
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
@@ -52,7 +52,7 @@ void initializeStaticObjects()
 
         py::gil_scoped_acquire lock;
 
-        exitExceptionType = py::module::import("cnoid.PythonPlugin").attr("ExitException");
+        exitExceptionType = py::module::import("cnoid.Python3Plugin").attr("ExitException");
         sys = py::module::import("sys");
 
         py::module m = pythonMainModule();
@@ -72,7 +72,7 @@ void initializeStaticObjects()
 
 namespace cnoid {
 
-class PythonExecutorImpl : public QThread
+class Python3ExecutorImpl : public QThread
 {
 public:
     bool isBackgroundMode;
@@ -103,11 +103,11 @@ public:
     string lastExceptionText;
     bool isTerminated;
 
-    PythonExecutorImpl();
-    PythonExecutorImpl(const PythonExecutorImpl& org);
+    Python3ExecutorImpl();
+    Python3ExecutorImpl(const Python3ExecutorImpl& org);
     void resetLastResultObjects();
-    ~PythonExecutorImpl();
-    PythonExecutor::State state() const;
+    ~Python3ExecutorImpl();
+    Python3Executor::State state() const;
     bool exec(std::function<py::object()> execScript, const string& filename);
     bool execMain(std::function<py::object()> execScript);
     virtual void run();
@@ -120,19 +120,19 @@ public:
 }
 
 
-void PythonExecutor::setModuleRefreshEnabled(bool on)
+void Python3Executor::setModuleRefreshEnabled(bool on)
 {
     isDefaultModuleRefreshEnabled = on;
 }
 
 
-PythonExecutor::PythonExecutor()
+Python3Executor::Python3Executor()
 {
-    impl = new PythonExecutorImpl();
+    impl = new Python3ExecutorImpl();
 }
 
 
-PythonExecutorImpl::PythonExecutorImpl()
+Python3ExecutorImpl::Python3ExecutorImpl()
 {
     isBackgroundMode = false;
     isRunningForeground = false;
@@ -144,13 +144,13 @@ PythonExecutorImpl::PythonExecutorImpl()
 }
 
 
-PythonExecutor::PythonExecutor(const PythonExecutor& org)
+Python3Executor::Python3Executor(const Python3Executor& org)
 {
-    impl = new PythonExecutorImpl(*org.impl);
+    impl = new Python3ExecutorImpl(*org.impl);
 }
 
 
-PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
+Python3ExecutorImpl::Python3ExecutorImpl(const Python3ExecutorImpl& org)
 {
     isBackgroundMode = org.isBackgroundMode;
     isRunningForeground = false;
@@ -162,7 +162,7 @@ PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
 }
 
 
-void PythonExecutorImpl::resetLastResultObjects()
+void Python3ExecutorImpl::resetLastResultObjects()
 {
     lastResultObject = py::object(); // null
     lastExceptionType = py::object(); // null
@@ -170,15 +170,15 @@ void PythonExecutorImpl::resetLastResultObjects()
 }
 
 
-PythonExecutor::~PythonExecutor()
+Python3Executor::~Python3Executor()
 {
     delete impl;
 }
 
 
-PythonExecutorImpl::~PythonExecutorImpl()
+Python3ExecutorImpl::~Python3ExecutorImpl()
 {
-    if(state() == PythonExecutor::RUNNING_BACKGROUND){
+    if(state() == Python3Executor::RUNNING_BACKGROUND){
         if(!terminateScript()){
             QThread::terminate();
             wait();
@@ -187,29 +187,29 @@ PythonExecutorImpl::~PythonExecutorImpl()
 }
 
 
-void PythonExecutor::setBackgroundMode(bool on)
+void Python3Executor::setBackgroundMode(bool on)
 {
     impl->isBackgroundMode = on;
 }
 
 
-bool PythonExecutor::isBackgroundMode() const
+bool Python3Executor::isBackgroundMode() const
 {
     return impl->isBackgroundMode;
 }
 
 
-PythonExecutor::State PythonExecutorImpl::state() const
+Python3Executor::State Python3ExecutorImpl::state() const
 {
-    PythonExecutor::State state;
+    Python3Executor::State state;
     if(QThread::isRunning()){
-        state = PythonExecutor::RUNNING_BACKGROUND;
+        state = Python3Executor::RUNNING_BACKGROUND;
     } else {
         stateMutex.lock();
         if(isRunningForeground){
-            state = PythonExecutor::RUNNING_FOREGROUND;
+            state = Python3Executor::RUNNING_FOREGROUND;
         } else {
-            state = PythonExecutor::NOT_RUNNING;
+            state = Python3Executor::NOT_RUNNING;
         }
         stateMutex.unlock();
     }
@@ -217,7 +217,7 @@ PythonExecutor::State PythonExecutorImpl::state() const
 }
 
 
-PythonExecutor::State PythonExecutor::state() const
+Python3Executor::State Python3Executor::state() const
 {
     return impl->state();
 }
@@ -235,21 +235,21 @@ static py::object execPythonFileSub(const std::string& filename)
 }
 
 
-bool PythonExecutor::execCode(const std::string& code)
+bool Python3Executor::execCode(const std::string& code)
 {
     return impl->exec(std::bind(execPythonCodeSub, code), "");
 }
 
 
-bool PythonExecutor::execFile(const std::string& filename)
+bool Python3Executor::execFile(const std::string& filename)
 {
     return impl->exec(std::bind(execPythonFileSub, filename), filename);
 }
 
 
-bool PythonExecutorImpl::exec(std::function<py::object()> execScript, const string& filename)
+bool Python3ExecutorImpl::exec(std::function<py::object()> execScript, const string& filename)
 {
-    if(state() != PythonExecutor::NOT_RUNNING){
+    if(state() != Python3Executor::NOT_RUNNING){
         return false;
     }
 
@@ -330,7 +330,7 @@ bool PythonExecutorImpl::exec(std::function<py::object()> execScript, const stri
 }
 
 
-bool PythonExecutorImpl::execMain(std::function<py::object()> execScript)
+bool Python3ExecutorImpl::execMain(std::function<py::object()> execScript)
 {
     bool completed = false;
     resultObject = py::object();
@@ -367,7 +367,7 @@ bool PythonExecutorImpl::execMain(std::function<py::object()> execScript)
     stateMutex.unlock();
     
     if(QThread::isRunning()){
-        callLater(std::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
+        callLater(std::bind(&Python3ExecutorImpl::onBackgroundExecutionFinished, this));
     } else {
         sigFinished();
     }
@@ -376,7 +376,7 @@ bool PythonExecutorImpl::execMain(std::function<py::object()> execScript)
 }
 
 
-void PythonExecutorImpl::run()
+void Python3ExecutorImpl::run()
 {
     stateMutex.lock();
     threadId = currentThreadId();
@@ -387,13 +387,13 @@ void PythonExecutorImpl::run()
 }
 
 
-bool PythonExecutor::waitToFinish(double timeout)
+bool Python3Executor::waitToFinish(double timeout)
 {
     return impl->waitToFinish(timeout);
 }
 
 
-bool PythonExecutorImpl::waitToFinish(double timeout)
+bool Python3ExecutorImpl::waitToFinish(double timeout)
 {
     unsigned long time = (timeout == 0.0) ? ULONG_MAX : timeout * 1000.0;
     
@@ -431,7 +431,7 @@ bool PythonExecutorImpl::waitToFinish(double timeout)
 /**
    \note GIL must be obtained when accessing this object.
 */
-py::object PythonExecutor::resultObject()
+py::object Python3Executor::resultObject()
 {
     impl->stateMutex.lock();
     py::object object = impl->lastResultObject;
@@ -440,7 +440,7 @@ py::object PythonExecutor::resultObject()
 }
 
 
-const std::string PythonExecutor::resultString() const
+const std::string Python3Executor::resultString() const
 {
     impl->stateMutex.lock();
     string result = impl->lastResultString;
@@ -449,13 +449,13 @@ const std::string PythonExecutor::resultString() const
 }
 
 
-void PythonExecutorImpl::onBackgroundExecutionFinished()
+void Python3ExecutorImpl::onBackgroundExecutionFinished()
 {
     sigFinished();
 }
 
 
-void PythonExecutorImpl::releasePythonPathRef()
+void Python3ExecutorImpl::releasePythonPathRef()
 {
     if(pathRefIter != additionalPythonPathRefMap.end()){
         if(--pathRefIter->second == 0){
@@ -469,19 +469,19 @@ void PythonExecutorImpl::releasePythonPathRef()
 }
 
 
-SignalProxy<void()> PythonExecutor::sigFinished()
+SignalProxy<void()> Python3Executor::sigFinished()
 {
     return impl->sigFinished;
 }
 
 
-bool PythonExecutor::terminate()
+bool Python3Executor::terminate()
 {
     return impl->terminateScript();
 }
 
 
-bool PythonExecutorImpl::terminateScript()
+bool Python3ExecutorImpl::terminateScript()
 {
     bool terminated = true;
 
@@ -512,7 +512,7 @@ bool PythonExecutorImpl::terminateScript()
 }
 
 
-bool PythonExecutor::hasException() const
+bool Python3Executor::hasException() const
 {
     return impl->hasException;
 }
@@ -521,7 +521,7 @@ bool PythonExecutor::hasException() const
 /**
    \note The name includes module components.
 */
-const std::string PythonExecutor::exceptionTypeName() const
+const std::string Python3Executor::exceptionTypeName() const
 {
     impl->stateMutex.lock();
     string name = impl->lastExceptionTypeName;
@@ -530,7 +530,7 @@ const std::string PythonExecutor::exceptionTypeName() const
 }
 
 
-const std::string PythonExecutor::exceptionText() const
+const std::string Python3Executor::exceptionText() const
 {
     impl->stateMutex.lock();
     string text = impl->lastExceptionText;
@@ -542,7 +542,7 @@ const std::string PythonExecutor::exceptionText() const
 /**
    \note GIL must be obtained when accessing this object.
 */
-py::object PythonExecutor::exceptionType() const
+py::object Python3Executor::exceptionType() const
 {
     impl->stateMutex.lock();
     py::object exceptionType = impl->lastExceptionType;
@@ -554,7 +554,7 @@ py::object PythonExecutor::exceptionType() const
 /**
    \note GIL must be obtained when accessing this object.
 */
-py::object PythonExecutor::exceptionValue() const
+py::object Python3Executor::exceptionValue() const
 {
     impl->stateMutex.lock();
     py::object value = impl->lastExceptionValue;
@@ -563,7 +563,7 @@ py::object PythonExecutor::exceptionValue() const
 }
 
 
-bool PythonExecutor::isTerminated() const
+bool Python3Executor::isTerminated() const
 {
     return impl->isTerminated;
 }

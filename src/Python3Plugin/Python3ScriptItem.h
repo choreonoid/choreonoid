@@ -3,23 +3,23 @@
    \author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_H
-#define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_H
+#ifndef CNOID_PYTHON3_PLUGIN_PYTHON3_SCRIPT_ITEM_H
+#define CNOID_PYTHON3_PLUGIN_PYTHON3_SCRIPT_ITEM_H
 
 #include <cnoid/ScriptItem>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class PythonScriptItemImpl;
+class Python3ScriptItemImpl;
         
-class CNOID_EXPORT PythonScriptItem : public ScriptItem
+class CNOID_EXPORT Python3ScriptItem : public ScriptItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    PythonScriptItem();
-    PythonScriptItem(const PythonScriptItem& org);
+    Python3ScriptItem();
+    Python3ScriptItem(const Python3ScriptItem& org);
 
     bool setScriptFilename(const std::string& filename);
     virtual const std::string& scriptFilename() const override;
@@ -37,7 +37,7 @@ public:
     virtual bool terminate() override;
 
 protected:
-    virtual ~PythonScriptItem();
+    virtual ~Python3ScriptItem();
     virtual void onDisconnectedFromRoot() override;
     virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
@@ -45,11 +45,11 @@ protected:
     virtual bool restore(const Archive& archive) override;
             
 private:
-    PythonScriptItemImpl* impl;
+    Python3ScriptItemImpl* impl;
     bool doExecutionOnLoading;
 };
 
-typedef ref_ptr<PythonScriptItem> PythonScriptItemPtr;
+typedef ref_ptr<Python3ScriptItem> Python3ScriptItemPtr;
 
 }
 

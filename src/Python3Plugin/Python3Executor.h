@@ -2,25 +2,25 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
-#define CNOID_PYTHON_PLUGIN_PYTHON_EXECUTOR_H
+#ifndef CNOID_PYTHON3_PLUGIN_PYTHON3_EXECUTOR_H
+#define CNOID_PYTHON3_PLUGIN_PYTHON3_EXECUTOR_H
 
-#include "PythonPlugin.h"
+#include "Python3Plugin.h"
 #include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class PythonExecutorImpl;
+class Python3ExecutorImpl;
 
-class CNOID_EXPORT PythonExecutor
+class CNOID_EXPORT Python3Executor
 {
 public:
     static void setModuleRefreshEnabled(bool on);
         
-    PythonExecutor();
-    PythonExecutor(const PythonExecutor& org);
-    ~PythonExecutor();
+    Python3Executor();
+    Python3Executor(const Python3Executor& org);
+    ~Python3Executor();
 
     void setBackgroundMode(bool on);
     bool isBackgroundMode() const;
@@ -47,7 +47,7 @@ public:
     bool terminate();
 
 private:
-    PythonExecutorImpl* impl;
+    Python3ExecutorImpl* impl;
 };
 
 }

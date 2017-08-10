@@ -297,7 +297,7 @@ if(ENABLE_PYTHON3)
   pkg_check_modules(PYTHON3 REQUIRED python3)
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.1.1/include)
   set(CNOID_PYTHON3_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
-  set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
+  set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON3_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
@@ -1088,7 +1088,9 @@ if(ENABLE_PYTHON3)
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 
   endfunction()
+endif()
 
+if(ENABLE_PYTHON OR ENABLE_PYTHON3)
   function(apply_common_setting_for_python_module target)
     set(headers ${ARGV1})
     set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
@@ -1104,7 +1106,6 @@ if(ENABLE_PYTHON3)
       endif()
     endif()
   endfunction()
-
 endif()
 
 

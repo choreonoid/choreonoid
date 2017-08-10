@@ -8,7 +8,7 @@ endif()
 set(target CnoidPython3Plugin)
 
 set(sources
-  PythonPlugin.cpp
+  Python3Plugin.cpp
   Python3Executor.cpp
   Python3ScriptItem.cpp
   Python3ScriptItemImpl.cpp
@@ -23,9 +23,9 @@ set(headers
   )
 
 make_gettext_mofiles(${target} mofiles)
+include_directories(${PYTHON3_INCLUDE_DIRS})
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBase ${PYTHON3_LIBRARIES})
-
 apply_common_setting_for_plugin(${target} "${headers}")
 
 configure_file(rbimporter.py ${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid/ COPYONLY)
