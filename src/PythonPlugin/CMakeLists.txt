@@ -28,14 +28,14 @@ set(headers
   )
 
 make_gettext_mofiles(${target} mofiles)
-include_directories(${PYTHON_INCLUDE_PATH})
 add_cnoid_plugin(${target} SHARED ${sources} ${headers} ${mofiles})
 target_link_libraries(${target} CnoidBase ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
-
 apply_common_setting_for_plugin(${target} "${headers}")
 
 configure_file(rbimporter.py ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/ COPYONLY)
 install(FILES rbimporter.py DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
   CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 
-add_subdirectory(python)
+if(USE_BOOST_PYTHON)
+  add_subdirectory(boostpython)
+endif()

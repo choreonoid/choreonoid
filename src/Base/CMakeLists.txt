@@ -294,6 +294,12 @@ endif()
 
 apply_common_setting_for_library(${target} "${headers}")
 
-add_subdirectory(python)
-add_subdirectory(python3)
+if(ENABLE_PYTHON)
+  if(USE_PYBIND11)
+    add_subdirectory(pybind11)
+  elseif(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
+  endif()
+endif()
+
 add_subdirectory(lua)

@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 option(BUILD_GRXUI_PLUGIN "Building the GrxUI plugin" OFF)
@@ -22,6 +21,6 @@ add_cnoid_plugin(${target} SHARED ${sources}  ${mofiles})
 target_link_libraries(${target} CnoidPythonPlugin)
 apply_common_setting_for_plugin(${target} "${headers}")
 
-if(ENABLE_PYTHON)
-  add_subdirectory(python)
+if(USE_BOOST_PYTHON)
+  add_subdirectory(boostpython)
 endif()

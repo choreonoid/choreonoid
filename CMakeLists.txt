@@ -278,28 +278,34 @@ endif()
 # Python
 if(WIN32)
   option(ENABLE_PYTHON "Enable Python" OFF)
-  option(ENABLE_PYTHON3 "Enable Python" OFF)
 else()
   option(ENABLE_PYTHON "Enable Python" ON)
-  option(ENABLE_PYTHON3 "Enable Python" OFF)
 endif()
 
+option(USE_PYBIND11 "Use the pybind11 library to make python bindings" OFF)
+if(USE_PYBIND11)
+  set(USE_BOOST_PYTHON OFF)
+else()
+  set(USE_BOOST_PYTHON ON)
+endif()
+message(STATUS "USE_BOOST_PYTHON: ${USE_BOOST_PYTHON}")
+
+option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
+
 if(ENABLE_PYTHON)
-  find_package(PythonLibs 2.7 REQUIRED)
+  if(NOT USE_PYBIND11 AND USE_PYTHON3)
+    message(FATAL_ERROR "USE_PYTHON2 requires to enable USE_PYBIND11.")
+  endif()
+  if(USE_PYTHON3)
+    find_package(PythonLibs 3.4 REQUIRED)
+  else()
+    find_package(PythonLibs 2.7 REQUIRED)
+  endif()
+  include_directories(${PYTHON_INCLUDE_PATH})
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
   set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/__init__.py")
   file(WRITE ${init_py} "")
   install(FILES ${init_py} DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
-    CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-endif()
-
-if(ENABLE_PYTHON3)
-  pkg_check_modules(PYTHON3 REQUIRED python3)
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/pybind11-2.1.1/include)
-  set(CNOID_PYTHON3_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python3)
-  set(init_py "${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid/__init__.py")
-  file(WRITE ${init_py} "")
-  install(FILES ${init_py} DESTINATION ${CNOID_PYTHON3_SUBDIR}/cnoid
     CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 endif()
 
@@ -336,7 +342,7 @@ endif()
 
 set(boost_packages system filesystem program_options regex thread iostreams date_time)
 
-if(ENABLE_PYTHON)
+if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
   set(boost_packages ${boost_packages} python)
 endif()
 
@@ -354,6 +360,10 @@ endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
+
+if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
+  set(PYTHON_LIBRARIES ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
+endif()
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
 
@@ -1022,12 +1032,13 @@ if(ENABLE_PYTHON)
     set(sources ${ARGV})
     list(REMOVE_AT sources 0)
 
-    include_directories(${PYTHON_INCLUDE_PATH})
     add_library(${target} SHARED ${sources})
     
     if(NOT WIN32)
-      set_target_properties(${target}  PROPERTIES
-      COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
+      if(USE_BOOST_PYTHON)
+	set_target_properties(${target}  PROPERTIES
+	  COMPILE_DEFINITIONS "BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY" )
+      endif()
     else()
       set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
     endif()
@@ -1046,54 +1057,6 @@ if(ENABLE_PYTHON)
 
   function(apply_common_setting_for_python_module target)
     set(headers ${ARGV1})
-    set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
-    apply_common_setting_for_target(${target} "${headers}")
-    if(INSTALL_SDK)
-      if(MSVC)
-	install(TARGETS ${target}
-	  ARCHIVE DESTINATION lib CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-      endif()
-      if(headers)
-	file(RELATIVE_PATH rel_src_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-	install(FILES ${headers} DESTINATION ${CNOID_HEADER_SUBDIR}/cnoid/${rel_src_dir})
-      endif()
-    endif()
-  endfunction()
-endif()
-
-if(ENABLE_PYTHON3)
-  function(add_cnoid_python3_module)
-  
-    set(target ${ARGV0})
-    string(REGEX REPLACE "^Py3(.+)$" "\\1" module ${target})
-    set(sources ${ARGV})
-    list(REMOVE_AT sources 0)
-
-    include_directories(${PYTHON3_INCLUDE_DIRS})
-    add_library(${target} SHARED ${sources})
-    
-    if(WIN32)
-      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
-    endif()
-
-    set_target_properties(${target}  PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PYTHON3_SUBDIR}/cnoid
-      RUNTIME_OUTPUT_NAME ${module}
-      LIBRARY_OUTPUT_NAME ${module}
-      PREFIX "")
-
-    install(TARGETS ${target}
-      RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
-      LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
-
-  endfunction()
-endif()
-
-if(ENABLE_PYTHON OR ENABLE_PYTHON3)
-  function(apply_common_setting_for_python_module target)
-    set(headers ${ARGV1})
-    set_target_properties(${target} PROPERTIES VERSION ${CNOID_VERSION})
     apply_common_setting_for_target(${target} "${headers}")
     if(INSTALL_SDK)
       if(MSVC)
