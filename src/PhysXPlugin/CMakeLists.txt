@@ -19,26 +19,41 @@ if(PhysX_DIR)
 
   if(UNIX)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      set(PhysX_LIBRARY_DIRS ${PhysX_DIR}/Lib/linux64)
+      set(PhysX_LIBRARY_DIRS ${PhysX_DIR}/Lib/linux64 ${PhysX_DIR}/Bin/linux64)
+      set(PhysX_LIBRARIES
+        PvdRuntime
+        PhysX3_x64
+        SimulationController
+        SceneQuery
+        LowLevel
+        LowLevelCloth
+        PhysX3Vehicle
+        PhysX3Cooking_x64
+        PhysX3Extensions
+        PhysX3CharacterKinematic_x64
+        PhysXProfileSDK
+        PxTask
+        PhysX3Common_x64
+      )
     else()
       set(PhysX_LIBRARY_DIRS ${PhysX_DIR}/Lib/linux32)
       #add_definitions(-malign-double)
+      set(PhysX_LIBRARIES
+        PvdRuntime
+        PhysX3_x86
+        SimulationController
+        SceneQuery
+        LowLevel
+        LowLevelCloth
+        PhysX3Vehicle
+        PhysX3Cooking_x86
+        PhysX3Extensions
+        PhysX3CharacterKinematic_x86
+        PhysXProfileSDK
+        PxTask
+        PhysX3Common_x86
+      )
     endif()
-    set(PhysX_LIBRARIES
-      PvdRuntime
-      PhysX3
-      SimulationController
-      SceneQuery
-      LowLevel
-      LowLevelCloth
-      PhysX3Vehicle
-      PhysX3Cooking
-      PhysX3Extensions
-      PhysX3CharacterKinematic
-      PhysXProfileSDK
-      PxTask
-      PhysX3Common
-    )
   elseif(MSVC)
     if(CMAKE_CL_64)
       set(PhysX_LIBRARY_DIRS ${PhysX_DIR}/Lib/win64)
