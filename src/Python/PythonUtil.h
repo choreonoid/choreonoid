@@ -28,7 +28,7 @@ using namespace boost::python;
 class module : public object
 {
 public:
-    module();
+    module() { }
     module(const object& obj) : object(obj) { }
     
     static object import(str name){
