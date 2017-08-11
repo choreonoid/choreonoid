@@ -7,7 +7,6 @@
 #include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
 #include "PyUtil.h"
-#include <cnoid/PythonUtil>
 #include <boost/ref.hpp>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
@@ -15,8 +14,11 @@
 #include <map>
 
 using namespace std;
-namespace py = pybind11;
 using namespace cnoid;
+
+namespace cnoid {
+namespace py = pybind11;
+}
 
 // for MSVC++2015 Update3
 CNOID_PYTHON_DEFINE_GET_POINTER(TaskProc)

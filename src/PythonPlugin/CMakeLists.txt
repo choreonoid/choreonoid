@@ -36,6 +36,4 @@ configure_file(rbimporter.py ${PROJECT_BINARY_DIR}/${CNOID_PYTHON_SUBDIR}/cnoid/
 install(FILES rbimporter.py DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid
   CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
 
-if(USE_BOOST_PYTHON)
-  add_subdirectory(boostpython)
-endif()
+add_subdirectory(python)

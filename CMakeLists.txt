@@ -288,6 +288,8 @@ if(USE_PYBIND11)
 else()
   set(USE_BOOST_PYTHON ON)
 endif()
+set(CNOID_USE_PYBIND11 ${USE_PYBIND11})
+set(CNOID_USE_BOOST_PYTHON ${USE_BOOST_PYTHON})
 
 option(USE_PYTHON3 "Use Python version 3 instead of version 2" OFF)
 

@@ -24,6 +24,10 @@ using namespace cnoid;
 using boost::format;
 namespace filesystem = boost::filesystem;
 
+#ifdef CNOID_USE_PYBIND11
+namespace py = pybind11;
+#endif
+
 namespace {
 
 py::module mainModule;
@@ -273,8 +277,10 @@ void PythonPlugin::restoreProperties(const Archive& archive)
     Listing& pathListing = *archive.findListing("moduleSearchPath");
     if(pathListing.isValid()){
         MessageView* mv = MessageView::instance();
-        PyGILock lock;
-        py::list syspath = py::extract<py::list>(sysModule.attr("path"));
+        pybind11::gil_scoped_acquire lock;
+#ifdef CNOID_USE_BOOST_PYTHON_
+        pybind11::list syspath = pybind11::extract<pybind11::list>(sysModule.attr("path"));
+#endif
         string newPath;
         for(int i=0; i < pathListing.size(); ++i){
             newPath = archive.resolveRelocatablePath(pathListing[i].toString());
@@ -314,19 +320,19 @@ bool PythonPlugin::finalize()
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonPlugin);
 
 
-py::object cnoid::pythonMainModule()
+pybind11::object cnoid::pythonMainModule()
 {
     return mainModule;
 }
 
 
-py::object cnoid::pythonMainNamespace()
+pybind11::object cnoid::pythonMainNamespace()
 {
     return mainNamespace;
 }
 
 
-py::object cnoid::pythonSysModule()
+pybind11::object cnoid::pythonSysModule()
 {
     return sysModule;
 }
@@ -337,7 +343,7 @@ bool cnoid::execPythonCode(const std::string& code)
     PythonExecutor& executor = pythonPlugin->executor();
     bool result = executor.execCode(code);
     if(executor.hasException()){
-        py::gil_scoped_acquire lock;
+        pybind11::gil_scoped_acquire lock;
         MessageView::instance()->putln(executor.exceptionText());
         result = false;
     }

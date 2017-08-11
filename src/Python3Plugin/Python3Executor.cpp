@@ -337,7 +337,7 @@ bool Python3ExecutorImpl::execMain(std::function<py::object()> execScript)
     resultString.clear();
     
     try {
-        resultObject = execScript();
+        resultObject = execScript()n;
         completed = true;
     }
     catch(py::error_already_set const & ex) {
