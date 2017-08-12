@@ -209,6 +209,6 @@ void exportSimulationClasses()
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
 
-    class_< SimpleControllerItem, SimpleControllerItemPtr, bases<Item> >("SimpleControllerItem")
+    class_<SimpleControllerItem, SimpleControllerItemPtr, bases<Item>>("SimpleControllerItem")
         .def("setController", &SimpleControllerItem::setController);
 }

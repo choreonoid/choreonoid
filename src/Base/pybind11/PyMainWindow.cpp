@@ -6,6 +6,7 @@
 #include "../ToolBar.h"
 #include "../ToolBarArea.h"
 #include "../ViewArea.h"
+#include "../View.h"
 #include <cnoid/PyUtil>
 
 namespace py = pybind11;
@@ -22,8 +23,13 @@ void exportPyMainWindow(py::module m)
         .def_static("instance", &MainWindow::instance, py::return_value_policy::reference)
         .def("setProjectTitle", &MainWindow::setProjectTitle)
         //.def("toolBarArea", &MainWindow::toolBarArea)
-        //.def("viewArea", &MainWindow::viewArea)
+        .def("viewArea", &MainWindow::viewArea, py::return_value_policy::reference)
         .def("addToolBar", &MainWindow::addToolBar);
+
+    py::class_<ViewArea>(m, "ViewArea")
+        .def("addView", &ViewArea::addView)
+        .def("removeView", &ViewArea::removeView)
+        .def("numViews", &ViewArea::numViews);
 }
 
 }

@@ -9,6 +9,7 @@
 #include "../SimulationScriptItem.h"
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
+#include "../SimpleControllerItem.h"
 #include <cnoid/PyBase>
 #include <cnoid/EigenTypes>
 
@@ -35,7 +36,7 @@ void exportSimulationClasses(py::module m)
             return SimulatorItemPtr(SimulatorItem::findActiveSimulatorItemFor(item));
         })
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
-        .def("timeStep", &SimulatorItem::timeStep)
+        .def("setTimeStep", &SimulatorItem::setTimeStep)
         .def("startSimulation", &SimulatorItem::startSimulation, py::arg("doReset")=true)
         .def("stopSimulation", &SimulatorItem::stopSimulation)
         .def("pauseSimulation", &SimulatorItem::pauseSimulation)
@@ -76,7 +77,7 @@ void exportSimulationClasses(py::module m)
         .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED) // deprecated
         .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL) // deprecated
         .value("TR_SPECIFIED", SimulatorItem::TR_SPECIFIED) // deprecated
-        .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR);  // deprecated
+        .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR)  // deprecated
         .export_values();
 
     PyItemList<SimulatorItem>(m, "SimulatorItemList", simulatorItemClass);
@@ -85,7 +86,7 @@ void exportSimulationClasses(py::module m)
     register_ptr_to_python<SimulatorItemPtr>();
 #endif
 
-    py::class_< AISTSimulatorItem, AISTSimulatorItemPtr, SimulatorItem> aistSimulatorItemClass(m, "AISTSimulatorItem");
+    py::class_<AISTSimulatorItem, AISTSimulatorItemPtr, SimulatorItem> aistSimulatorItemClass(m, "AISTSimulatorItem");
 
     aistSimulatorItemClass
         .def(py::init<>())
@@ -124,14 +125,14 @@ void exportSimulationClasses(py::module m)
 
     PyItemList<AISTSimulatorItem>(m, "AISTSimulatorItemList");
 
-    py::class_< SubSimulatorItem, SubSimulatorItemPtr, Item>(m, "SubSimulatorItem")
+    py::class_<SubSimulatorItem, SubSimulatorItemPtr, Item>(m, "SubSimulatorItem")
         .def(py::init<>())
         .def("isEnabled", &SubSimulatorItem::isEnabled)
         .def("setEnabled", &SubSimulatorItem::setEnabled);
 
     PyItemList<SubSimulatorItem>(m, "SubSimulatorItemList");
 
-    py::class_< GLVisionSimulatorItem, GLVisionSimulatorItemPtr, SubSimulatorItem>(m, "GLVisionSimulatorItem")
+    py::class_<GLVisionSimulatorItem, GLVisionSimulatorItemPtr, SubSimulatorItem>(m, "GLVisionSimulatorItem")
         .def(py::init<>())
         .def("setTargetBodies", &GLVisionSimulatorItem::setTargetBodies)
         .def("setTargetSensors", &GLVisionSimulatorItem::setTargetSensors)
@@ -150,7 +151,7 @@ void exportSimulationClasses(py::module m)
 
 #endif
     
-    py::class_< SimulationScriptItem, SimulationScriptItemPtr, ScriptItem> simulationScriptItemClass(m,"SimulationScriptItem");
+    py::class_<SimulationScriptItem, SimulationScriptItemPtr, ScriptItem> simulationScriptItemClass(m,"SimulationScriptItem");
 
     simulationScriptItemClass
         .def("executionTiming", &SimulationScriptItem::executionTiming)
@@ -177,4 +178,7 @@ void exportSimulationClasses(py::module m)
         .def("pauseSimulation", &SimulationBar::pauseSimulation)
         ;
 
+    py::class_<SimpleControllerItem, SimpleControllerItemPtr, Item>(m, "SimpleControllerItem")
+        .def(py::init<>())
+        .def("setController", &SimpleControllerItem::setController);
 }

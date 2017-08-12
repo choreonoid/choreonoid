@@ -31,7 +31,7 @@ void exportPyViews(py::module m)
 {
     PySignal<void(View*)>(m, "ViewSignal");
 
-    py::class_<View,QWidget> view(m, "View");
+    py::class_<View, QWidget> view(m, "View");
     view
         .def("setName", &View::setName)
         .def("name", &View::name)
@@ -112,6 +112,10 @@ void exportPyViews(py::module m)
         ;
 
     py::class_<ViewManager>(m, "ViewManager")
+        .def_static("getOrCreateView",
+                    [](const std::string& moduleName, const std::string& className){
+                        return ViewManager::getOrCreateView(moduleName, className);
+                    }, py::return_value_policy::reference)
         .def_static("sigViewCreated", &ViewManager::sigViewCreated)
         .def_static("sigViewActivated", &ViewManager::sigViewActivated)
         .def_static("sigViewDeactivated", &ViewManager::sigViewDeactivated)

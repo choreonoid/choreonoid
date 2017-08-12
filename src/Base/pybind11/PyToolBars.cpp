@@ -28,6 +28,8 @@ void exportPyToolBars(py::module m)
                 py::return_value_policy::reference_internal, py::arg("icon"), py::arg("tooltip")=QString())
 //       .def("addButton", (ToolButton* (ToolBar::*)(const char* const*, const QString&)) &ToolBar::addButton,
 //                py::return_value_policy::reference_internal, py::arg("xpm"), py::arg("tooltip")=QString())
+        .def("addToggleButton", [](ToolBar* self, const char* text) { return self->addToggleButton(text); },
+             py::return_value_policy::reference_internal)
         .def("addToggleButton", (ToolButton* (ToolBar::*)(const QString&, const QString&)) &ToolBar::addToggleButton,
                 py::return_value_policy::reference_internal, py::arg("text"), py::arg("tooltip")=QString())
         .def("addToggleButton", (ToolButton* (ToolBar::*)(const QIcon&, const QString&)) &ToolBar::addToggleButton,
