@@ -24,17 +24,13 @@ using namespace cnoid;
 using boost::format;
 namespace filesystem = boost::filesystem;
 
-#ifdef CNOID_USE_PYBIND11
-namespace py = pybind11;
-#endif
-
 namespace {
 
-py::module mainModule;
-py::object mainNamespace;
-py::object cnoidModule;
-py::module sysModule;
-py::object exitExceptionType;
+pybind11::module mainModule;
+pybind11::object mainNamespace;
+pybind11::object cnoidModule;
+pybind11::module sysModule;
+pybind11::object exitExceptionType;
 MappingPtr pythonConfig;
 Action* redirectionCheck;
 Action* refreshModulesCheck;
@@ -58,32 +54,32 @@ public:
 class MessageViewIn
 {
 public:
-    py::object readline() {
-        return py::str("\n");
+    pybind11::object readline() {
+        return pybind11::str("\n");
     }
 };
             
-py::object pythonExit()
+pybind11::object pythonExit()
 {
     PyErr_SetObject(exitExceptionType.ptr(), 0);
 
 #ifdef CNOID_USE_PYBIND11
     if(PyErr_Occurred()){
-        throw py::error_already_set();
+        throw pybind11::error_already_set();
     }
 #else
-    py::throw_error_already_set();
+    pybind11::throw_error_already_set();
 #endif
     
-    return py::object();
+    return pybind11::object();
 }
 
 class PythonPlugin : public Plugin
 {
 public:
     std::unique_ptr<PythonExecutor> executor_;
-    py::object messageViewOut;
-    py::object messageViewIn;
+    pybind11::object messageViewOut;
+    pybind11::object messageViewIn;
         
     PythonPlugin();
     virtual bool initialize();
@@ -163,7 +159,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
                 MessageView::instance()->putln(_("The script finished."));
             } else {
                 MessageView::instance()->putln(_("Failed to run the python script."));
-                py::gil_scoped_acquire lock;
+                pybind11::gil_scoped_acquire lock;
                 MessageView::instance()->put(executor().exceptionText());
             }
         }
@@ -184,7 +180,7 @@ bool PythonPlugin::initializeInterpreter()
     char* dummy_argv[] = {dummy_str};
     PySys_SetArgvEx(1, dummy_argv, 0);
 
-    mainModule = py::module::import("__main__");
+    mainModule = pybind11::module::import("__main__");
     mainNamespace = mainModule.attr("__dict__");
 
 	/*
@@ -198,11 +194,11 @@ bool PythonPlugin::initializeInterpreter()
 	 set using C functions.
 	*/	
 #ifdef WIN32
-    py::module env = py::module::import("os").attr("environ");
-    env["PATH"] = py::str(executableDirectory() + ";") + env["PATH"];
+    pybind11::module env = pybind11::module::import("os").attr("environ");
+    env["PATH"] = pybind11::str(executableDirectory() + ";") + env["PATH"];
 #endif
 
-    sysModule = py::module::import("sys");
+    sysModule = pybind11::module::import("sys");
     
     // set the choreonoid default python script path
     filesystem::path scriptPath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";
@@ -210,16 +206,16 @@ bool PythonPlugin::initializeInterpreter()
 #ifdef CNOID_USE_PYBIND11
     sysModule.attr("path").attr("insert")(0, getNativePathString(scriptPath));
 #else
-    py::list syspath = py::extract<py::list>(sysModule.attr("path"));
+    pybind11::list syspath = pybind11::extract<pybind11::list>(sysModule.attr("path"));
     syspath.insert(0, getNativePathString(scriptPath));
 #endif
 
     // Redirect the stdout and stderr to the message view
-    py::object messageViewOutClass =
+    pybind11::object messageViewOutClass =
 #ifdef CNOID_USE_PYBIND11
-        py::class_<MessageViewOut>(mainModule, "MessageViewOut").def(py::init<>())
+        pybind11::class_<MessageViewOut>(mainModule, "MessageViewOut").def(pybind11::init<>())
 #else
-        py::class_<MessageViewOut>("MessageViewOut", py::init<>())
+        pybind11::class_<MessageViewOut>("MessageViewOut", pybind11::init<>())
 #endif
         .def("write", &MessageViewOut::write);
     
@@ -228,24 +224,24 @@ bool PythonPlugin::initializeInterpreter()
     sysModule.attr("stderr") = messageViewOut;
 
     // Disable waiting for input
-    py::object messageViewInClass =
+    pybind11::object messageViewInClass =
 #ifdef CNOID_USE_PYBIND11
-        py::class_<MessageViewIn>(mainModule, "MessageViewIn").def(py::init<>())
+        pybind11::class_<MessageViewIn>(mainModule, "MessageViewIn").def(pybind11::init<>())
 #else
-        py::class_<MessageViewIn>("MessageViewIn", py::init<>())
+        pybind11::class_<MessageViewIn>("MessageViewIn", pybind11::init<>())
 #endif
         .def("readline", &MessageViewIn::readline);
     messageViewIn = messageViewInClass();
     sysModule.attr("stdin") = messageViewIn;
 
     // Override exit and quit
-    py::object builtins = mainNamespace["__builtins__"];
-    exitExceptionType = py::module::import("cnoid.PythonPlugin").attr("ExitException");
+    pybind11::object builtins = mainNamespace["__builtins__"];
+    exitExceptionType = pybind11::module::import("cnoid.PythonPlugin").attr("ExitException");
 
 #ifdef CNOID_USE_PYBIND11
-    py::object exitFunc = py::cpp_function(pythonExit);
+    pybind11::object exitFunc = pybind11::cpp_function(pythonExit);
 #else
-    py::object exitFunc = py::make_function(pythonExit);
+    pybind11::object exitFunc = pybind11::make_function(pythonExit);
 #endif
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
@@ -278,7 +274,7 @@ void PythonPlugin::restoreProperties(const Archive& archive)
     if(pathListing.isValid()){
         MessageView* mv = MessageView::instance();
         pybind11::gil_scoped_acquire lock;
-#ifdef CNOID_USE_BOOST_PYTHON_
+#ifdef CNOID_USE_BOOST_PYTHON
         pybind11::list syspath = pybind11::extract<pybind11::list>(sysModule.attr("path"));
 #endif
         string newPath;

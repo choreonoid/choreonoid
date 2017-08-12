@@ -8,10 +8,14 @@
 #include <cnoid/PythonPlugin>
 #include <cnoid/MenuManager>
 #include <cnoid/AppConfig>
+
+#ifdef CNOID_USE_PYBIND11
+#include <pybind11/eval.h>
+#endif
+
 #include "gettext.h"
 
 namespace stdph = std::placeholders;
-namespace python = boost::python;
 using namespace cnoid;
 
 namespace {
@@ -61,10 +65,15 @@ bool GrxUIPlugin::initialize()
 void GrxUIPlugin::onImportGrxUICheckToggled(bool on, bool doWriteConfig)
 {
     if(on){
-        PyGILock lock;
-        python::object grxuiModule = python::import("cnoid.grxui");
+        pybind11::gil_scoped_acquire lock;
+        pybind11::object grxuiModule = pybind11::module::import("cnoid.grxui");
         if(!grxuiModule.is_none()){
-            python::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
+#ifdef CNOID_USE_PYBIND11
+            pybind11::eval<pybind11::eval_single_statement>
+                ("from cnoid.grxui import *", cnoid::pythonMainNamespace());
+#else
+            pybind11::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
+#endif
         }
     }
     if(doWriteConfig){
@@ -79,6 +88,5 @@ bool GrxUIPlugin::finalize()
     isActive_ = false;
     return true;
 }
-
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(GrxUIPlugin);

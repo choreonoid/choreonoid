@@ -7,6 +7,7 @@
 
 #include "../Referenced.h"
 #include "../EigenTypes.h"
+#include <cnoid/Config>
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 

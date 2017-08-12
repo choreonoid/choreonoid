@@ -6,9 +6,22 @@
 #define CNOID_UTIL_PYUTIL_H
 
 #include "../Referenced.h"
-#include <cnoid/PythonUtil>
+#include <cnoid/Config>
+#include <boost/python.hpp>
 
 namespace cnoid {
+
+class PyGILock
+{
+    PyGILState_STATE gstate;
+public:
+    PyGILock(){
+        gstate = PyGILState_Ensure();
+    }
+    ~PyGILock() {
+        PyGILState_Release(gstate);
+    }
+};
 
 template <typename T>
 T* get_pointer(cnoid::ref_ptr<T> const& p)

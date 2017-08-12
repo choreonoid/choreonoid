@@ -3,8 +3,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_GRXUI_PLUGIN_H_INCLUDED
-#define CNOID_GRXUI_PLUGIN_H_INCLUDED
+#ifndef CNOID_GRXUI_PLUGIN_H
+#define CNOID_GRXUI_PLUGIN_H
 
 #include <cnoid/Plugin>
 #include "exportdecl.h"
@@ -20,6 +20,7 @@ public:
     void onImportGrxUICheckToggled(bool on, bool doWriteConfig);
     virtual bool finalize();
 };
+
 }
 
 #endif
