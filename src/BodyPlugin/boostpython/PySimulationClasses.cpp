@@ -61,6 +61,7 @@ void exportSimulationClasses()
     simulatorItemClass
         .def("findActiveSimulatorItemFor", SimulatorItem_findActiveSimulatorItemFor).staticmethod("findActiveSimulatorItemFor")
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
+        .def("setTimeStep", &SimulatorItem::setTimeStep)
         .def("startSimulation", &SimulatorItem::startSimulation, SimulatorItem_startSimulation_overloads())
         .def("stopSimulation", &SimulatorItem::stopSimulation)
         .def("pauseSimulation", &SimulatorItem::pauseSimulation)
@@ -93,11 +94,15 @@ void exportSimulationClasses()
             .value("N_RECORDING_MODES", SimulatorItem::N_RECORDING_MODES);
         
         enum_<SimulatorItem::TimeRangeMode>("TimeRangeMode")
-            .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED)
-            .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL)
-            .value("TR_SPECIFIED", SimulatorItem::TR_SPECIFIED)
-            .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR) 
-            .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES);
+            .value("UNLIMITED", SimulatorItem::TR_UNLIMITED)
+            .value("ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL)
+            .value("SPECIFIED", SimulatorItem::TR_SPECIFIED)
+            .value("TIMEBAR", SimulatorItem::TR_TIMEBAR) 
+            .value("N_TIME_RANGE_MODES", SimulatorItem::N_TIME_RANGE_MODES)
+            .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED) // deprecated
+            .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL) // deprecated
+            .value("TR_SPECIFIED", SimulatorItem::TR_SPECIFIED) // deprecated
+            .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR);  // deprecated
     }
 
     implicitly_convertible<SimulatorItemPtr, ItemPtr>();

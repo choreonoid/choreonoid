@@ -35,6 +35,7 @@ void exportSimulationClasses(py::module m)
             return SimulatorItemPtr(SimulatorItem::findActiveSimulatorItemFor(item));
         })
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
+        .def("timeStep", &SimulatorItem::timeStep)
         .def("startSimulation", &SimulatorItem::startSimulation, py::arg("doReset")=true)
         .def("stopSimulation", &SimulatorItem::stopSimulation)
         .def("pauseSimulation", &SimulatorItem::pauseSimulation)
@@ -67,11 +68,15 @@ void exportSimulationClasses(py::module m)
         .export_values();
         
     py::enum_<SimulatorItem::TimeRangeMode>(simulatorItemClass, "TimeRangeMode")
-        .value("TR_UNLIMITED", SimulatorItem::TimeRangeMode::TR_UNLIMITED)
-        .value("TR_ACTIVE_CONTROL", SimulatorItem::TimeRangeMode::TR_ACTIVE_CONTROL)
-        .value("TR_SPECIFIED", SimulatorItem::TimeRangeMode::TR_SPECIFIED)
-        .value("TR_TIMEBAR", SimulatorItem::TimeRangeMode::TR_TIMEBAR)
+        .value("UNLIMITED", SimulatorItem::TimeRangeMode::TR_UNLIMITED)
+        .value("ACTIVE_CONTROL", SimulatorItem::TimeRangeMode::TR_ACTIVE_CONTROL)
+        .value("SPECIFIED", SimulatorItem::TimeRangeMode::TR_SPECIFIED)
+        .value("TIMEBAR", SimulatorItem::TimeRangeMode::TR_TIMEBAR)
         .value("N_TIME_RANGE_MODES", SimulatorItem::TimeRangeMode::N_TIME_RANGE_MODES)
+        .value("TR_UNLIMITED", SimulatorItem::TR_UNLIMITED) // deprecated
+        .value("TR_ACTIVE_CONTROL", SimulatorItem::TR_ACTIVE_CONTROL) // deprecated
+        .value("TR_SPECIFIED", SimulatorItem::TR_SPECIFIED) // deprecated
+        .value("TR_TIMEBAR", SimulatorItem::TR_TIMEBAR);  // deprecated
         .export_values();
 
     PyItemList<SimulatorItem>(m, "SimulatorItemList", simulatorItemClass);

@@ -1145,6 +1145,15 @@ double SimulatorItem::worldTimeStep()
 }
 
 
+void SimulatorItem::setTimeStep(double step)
+{
+    if(step > 0.0){
+        impl->temporalResolutionType.select(RESOLUTION_TIMESTEP);
+        impl->timeStepProperty = step;
+    }
+}
+
+
 void SimulatorItem::setRecordingMode(int selection)
 {
     impl->recordingMode.select(selection);

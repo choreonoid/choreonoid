@@ -88,6 +88,7 @@ public:
     virtual ~SimulatorItem();
 
     virtual double worldTimeStep();
+    void setTimeStep(double step);
 
     virtual bool startSimulation(bool doReset = true);
     virtual void stopSimulation();

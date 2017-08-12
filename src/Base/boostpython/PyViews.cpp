@@ -26,6 +26,10 @@ void (MessageView::*MessageView_put)(const std::string& message) = &MessageView:
 void (MessageView::*MessageView_putln)(const std::string& message) = &MessageView::putln;
 void (MessageView::*MessageView_notify)(const std::string& message) = &MessageView::notify;
 
+View* ViewManager_getOrCreateView1(const std::string& moduleName, const std::string& className){
+    return ViewManager::getOrCreateView(moduleName, className);
+}
+
 }
 
 namespace cnoid {
@@ -122,6 +126,8 @@ void exportPyViews()
         ;
 
     class_<ViewManager, boost::noncopyable>("ViewManager", no_init)
+        .def("getOrCreateView", ViewManager_getOrCreateView1, return_value_policy<reference_existing_object>())
+        .staticmethod("getOrCreateView")
         .def("sigViewCreated", &ViewManager::sigViewCreated).staticmethod("sigViewCreated")
         .def("sigViewActivated", &ViewManager::sigViewActivated).staticmethod("sigViewActivated")
         .def("sigViewDeactivated", &ViewManager::sigViewDeactivated).staticmethod("sigViewDeactivated")

@@ -10,7 +10,7 @@
 #include <pybind11/eval.h>
 void throw_error_already_set(){ throw pybind11::error_already_set(); }
 #else
-void throw_error_already_set(){ throw boost::python::throw_error_already_set(); }
+void throw_error_already_set(){ boost::python::throw_error_already_set(); }
 #endif
 
 using namespace cnoid;

@@ -23,6 +23,8 @@ sceneWidget.setCameraPosition(
     [  0.412288, -0.847325, -0.334751 ],
     [  0.146464, -0.301009,  0.942307 ])
 
+MainWindow.instance().viewArea().addView(ViewManager.getOrCreateView("Base", "VirtualJoystickView"))
+
 laboItem = BodyItem()
 laboItem.load(shareDirectory() + "/model/Labo1/Labo1.body")
 worldItem.addChildItem(laboItem)
