@@ -11,11 +11,6 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(QWidget)
-CNOID_PYTHON_DEFINE_GET_POINTER(ToolButton)
-CNOID_PYTHON_DEFINE_GET_POINTER(TimeBar)
-
 namespace cnoid {
 
 void exportPyToolBars(py::module m)

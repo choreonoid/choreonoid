@@ -11,11 +11,6 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(AbstractSeq)
-CNOID_PYTHON_DEFINE_GET_POINTER(AbstractMultiSeq)
-CNOID_PYTHON_DEFINE_GET_POINTER(MultiValueSeq)
-
 namespace cnoid {
 
 void exportPySeqTypes(py::module& m)

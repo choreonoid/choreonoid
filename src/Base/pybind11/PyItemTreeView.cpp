@@ -10,9 +10,6 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(ItemTreeView)
-
 namespace cnoid {
 
 void exportPyItemTreeView(py::module m)

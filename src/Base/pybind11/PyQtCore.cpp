@@ -9,9 +9,6 @@
 
 namespace py = pybind11;
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(QObject)
-
 PYBIND11_PLUGIN(QtCore)
 {
     py::module m("QtCore", "QtCore Python Module");

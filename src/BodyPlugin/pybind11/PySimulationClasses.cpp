@@ -16,10 +16,6 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-// for MSVC++2015 Update3
-//CNOID_PYTHON_DEFINE_GET_POINTER(SimulatorItem)
-CNOID_PYTHON_DEFINE_GET_POINTER(SimulationBar)
-
 void exportSimulationClasses(py::module m)
 {
     py::class_<SimulationBody, SimulationBodyPtr, Referenced>(m, "SimulationBody")

@@ -15,10 +15,6 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(Link)
-CNOID_PYTHON_DEFINE_GET_POINTER(Body)
-
 namespace
 {
 Position Link_get_position(Link& self) { return self.position(); }

@@ -20,11 +20,6 @@ namespace cnoid {
 namespace py = pybind11;
 }
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(TaskProc)
-CNOID_PYTHON_DEFINE_GET_POINTER(TaskMenu)
-CNOID_PYTHON_DEFINE_GET_POINTER(AbstractTaskSequencer)
-        
 namespace {
 
 struct PyTaskFunc

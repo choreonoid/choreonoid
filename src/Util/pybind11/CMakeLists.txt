@@ -17,5 +17,4 @@ set(headers
   PySignal.h
   )
 
-make_headers_public(${headers})
 apply_common_setting_for_python_module(PyUtil "${headers}")

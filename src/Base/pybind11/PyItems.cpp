@@ -21,10 +21,6 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-// for MSVC++2015 Update3
-CNOID_PYTHON_DEFINE_GET_POINTER(Item)
-CNOID_PYTHON_DEFINE_GET_POINTER(RootItem)
-
 namespace cnoid {
 
 void exportPyItems(py::module m)
