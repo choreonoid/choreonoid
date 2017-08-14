@@ -176,8 +176,13 @@ bool PythonPlugin::initializeInterpreter()
       (Ex. AttributeError: 'module' object has no attribute 'argv')
       To avoid this problem, set dummy argv to python interpreter by PySys_SetArgvEx.
     */
+#ifdef CNOID_USE_PYTHON2
     char dummy_str[] = "choreonoid"; // avoid deprecated conversion from string constant
     char* dummy_argv[] = {dummy_str};
+#else
+    wchar_t dummy_str[] = L"choreonoid"; // avoid deprecated conversion from string constant
+    wchar_t* dummy_argv[] = {dummy_str};
+#endif
     PySys_SetArgvEx(1, dummy_argv, 0);
 
     mainModule = pybind11::module::import("__main__");
