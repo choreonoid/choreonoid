@@ -1,5 +1,4 @@
-
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.10)
 cmake_policy(SET CMP0003 NEW)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
@@ -381,7 +380,7 @@ if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
   set(PYTHON_LIBRARIES ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
 endif()
 
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_RELEASE BOOST_DISABLE_ASSERTS)
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Release>:BOOST_DISABLE_ASSERTS>)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
   ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_THREAD_LIBRARY} 
@@ -1051,7 +1050,7 @@ if(ENABLE_PYTHON)
     add_library(${target} SHARED ${sources})
     
     if(MSVC)
-      set_target_properties(${target}  PROPERTIES SUFFIX .pyd)
+      set_target_properties(${target} PROPERTIES SUFFIX .pyd)
     else()
       if(USE_BOOST_PYTHON)
 	set_target_properties(${target}  PROPERTIES
@@ -1069,11 +1068,18 @@ if(ENABLE_PYTHON)
 	if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
 	  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 	    target_compile_options(${target} PRIVATE "-flto;-fno-fat-lto-objects")
-	    target_link_libraries(${target} PRIVATE "-flto")
+	    set(link_lto_flags "-flto")
 	  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	    target_compile_options(${target} PRIVATE "-flto=thin")
+	    set(link_lto_flags "-flto=thin")
 	    target_link_libraries(${target} PRIVATE "-flto=thin")
 	  endif()
+	  get_target_property(existing_link_flags ${target} LINK_FLAGS)
+	  if(existing_link_flags STREQUAL existing_link_flags-NOTFOUND)
+	    set(existing_link_flags "")
+	  endif()
+	  set_target_properties(${target} PROPERTIES LINK_FLAGS "${existing_link_flags} ${link_lto_flags}")
+
           #add_custom_command(TARGET ${target} POST_BUILD COMMAND strip $<TARGET_FILE:${target}>)
 	endif()
       endif()
