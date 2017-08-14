@@ -12,7 +12,7 @@
 #endif
 #endif
 
-#include <cnoid/Py3Util>
+#include <cnoid/PyUtil>
 
 namespace py = pybind11;
 using namespace cnoid;
@@ -50,6 +50,3 @@ PYBIND11_PLUGIN(OpenRTMPlugin)
 
     return m.ptr();
 }
-
-
-
