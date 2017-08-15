@@ -29,6 +29,8 @@ libgstreamer0.10-dev \
 libgstreamer-plugins-base0.10-dev \
 libpulse-dev \
 libsndfile1-dev \
+python3-dev \
+python3-numpy \
 python2.7-dev \
 python-numpy \
 uuid-dev \
