@@ -69,7 +69,7 @@ void initializeStaticObjects()
             .def("text", &StringOut::text, pybind11::return_value_policy::copy);
 #else
         StringOutClass =
-            pybind11::class_<StringOut>("StringOut", pybind11::init<>())
+            boost::python::class_<StringOut>("StringOut", boost::python::init<>())
             .def("write", &StringOut::write)
             .def("text", &StringOut::text, boost::python::return_value_policy<boost::python::copy_const_reference>());
 #endif
@@ -240,7 +240,7 @@ static pybind11::object execPythonCodeSub(const std::string& code)
 #ifdef CNOID_USE_PYBIND11
     return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace());
 #else    
-    return pybind11::exec(code.c_str(), cnoid::pythonMainNamespace());
+    return boost::python::exec(code.c_str(), cnoid::pythonMainNamespace());
 #endif
 }
 
@@ -259,7 +259,7 @@ static pybind11::object execPythonFileSub(const std::string& filename)
     buffer << t.rdbuf();
     return execPythonCodeSub(buffer.str().c_str());
 #else // default implementation
-    return python::exec_file(filename.c_str(), cnoid::pythonMainNamespace());
+    return boost::python::exec_file(filename.c_str(), cnoid::pythonMainNamespace());
 #endif
 #endif
 }
@@ -327,7 +327,7 @@ bool PythonExecutorImpl::exec(std::function<pybind11::object()> execScript, cons
 #ifdef CNOID_USE_PYBIND11
             pythonSysModule().attr("path").attr("insert")(0, scriptDirectory);
 #else
-            pybind11::list syspath = pybind11::extract<pybind11::list>(pythonSysModule().attr("path"));
+            boost::python::list syspath = boost::python::extract<pybind11::list>(pythonSysModule().attr("path"));
             syspath.insert(0, scriptDirectory);
 #endif
         }
@@ -400,21 +400,21 @@ bool PythonExecutorImpl::execMain(std::function<pybind11::object()> execScript)
                 PyObject* ptraceback;
                 PyErr_Fetch(&ptype, &pvalue, &ptraceback);
                 if(ptype){
-                    exceptionType = pybind11::object(pybind11::handle<>(pybind11::borrowed(ptype)));
-                    exceptionTypeName = pybind11::extract<string>(pybind11::str(exceptionType));
+                    exceptionType = boost::python::object(boost::python::handle<>(boost::python::borrowed(ptype)));
+                    exceptionTypeName = boost::python::extract<string>(boost::python::str(exceptionType));
                 }
                 if(pvalue){
-                    exceptionValue = pybind11::object(pybind11::handle<>(pybind11::borrowed(pvalue)));
+                    exceptionValue = boost::python::object(boost::python::handle<>(boost::python::borrowed(pvalue)));
                 }
                 
                 // get an error message by redirecting the output of PyErr_Print()
-                pybind11::object stderr_ = sys.attr("stderr");
-                pybind11::object strout = StringOutClass();
+                boost::python::object stderr_ = sys.attr("stderr");
+                boost::python::object strout = StringOutClass();
                 sys.attr("stderr") = strout;
                 PyErr_Restore(ptype, pvalue, ptraceback);
                 PyErr_Print();
                 sys.attr("stderr") = stderr_;
-                exceptionText = pybind11::extract<string>(strout.attr("text")());
+                exceptionText = boost::python::extract<string>(strout.attr("text")());
 
                 resultObject = exceptionValue;
                 resultString = exceptionText;
@@ -534,10 +534,10 @@ void PythonExecutorImpl::releasePythonPathRef()
 #ifdef CNOID_USE_PYBIND11
             pythonSysModule().attr("path").attr("remove")(scriptDirectory);
 #else
-            pybind11::list syspath = pybind11::extract<pybind11::list>(pythonSysModule().attr("path"));
-            int n = pybind11::len(syspath);
+            boost::python::list syspath = boost::python::extract<boost::python::list>(pythonSysModule().attr("path"));
+            int n = boost::python::len(syspath);
             for(int i=0; i < n; ++i){
-                string path = pybind11::extract<string>(syspath[i]);
+                string path = boost::python::extract<string>(syspath[i]);
                 if(path == scriptDirectory){
                     syspath.pop(i);
                     break;
@@ -589,7 +589,7 @@ bool PythonExecutorImpl::terminateScript()
 #ifdef CNOID_USE_PYBIND11
         if(PyErr_Occurred()) throw pybind11::error_already_set();
 #else
-        pybind11::throw_error_already_set();
+        boost::python::throw_error_already_set();
 #endif
     }
 
