@@ -46,6 +46,7 @@ set(sources
   Image.cpp
   ImageIO.cpp
   ImageConverter.cpp
+  ImageProvider.cpp
   AbstractSceneLoader.cpp
   SceneLoader.cpp
   YAMLSceneReader.cpp
@@ -123,6 +124,7 @@ set(headers
   Image.h
   ImageIO.h
   ImageConverter.h
+  ImageProvider.h
   PointSetUtil.h
   VRML.h
   VRMLParser.h

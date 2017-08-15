@@ -717,7 +717,7 @@ void CameraImageVisualizerItemImpl::setBodyItem(BodyItem* bodyItem, Camera* came
 void CameraImageVisualizerItemImpl::updateCameraImage()
 {
     image = camera->sharedImage();
-    ((ImageProvider*)self)->notifyUpdate();
+    self->notifyImageUpdate();
 }
 
 

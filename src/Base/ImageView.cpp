@@ -14,8 +14,8 @@
 #include <QBoxLayout>
 #include "gettext.h"
 
-using namespace cnoid;
 using namespace std;
+using namespace cnoid;
 
 Q_DECLARE_METATYPE(ImageProvider *)
 
@@ -209,7 +209,7 @@ void ImageViewImpl::setImageProvider(ImageProvider* imageProvider_, Item* item)
 
     if(imageProvider){
         sigUpdatedConnection =
-            imageProvider->sigUpdated().connect( [&](){ updateImage(); } );
+            imageProvider->sigImageUpdated().connect( [&](){ updateImage(); } );
         updateImage();
     }
 

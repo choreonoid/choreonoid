@@ -2,14 +2,14 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_IMAGE_VIEW_H_INCLUDED
-#define CNOID_BASE_IMAGE_VIEW_H_INCLUDED
+#ifndef CNOID_BASE_IMAGE_VIEW_H
+#define CNOID_BASE_IMAGE_VIEW_H
 
 #include "View.h"
 #include "Item.h"
 #include "ToolBar.h"
-#include "exportdecl.h"
 #include <cnoid/ImageProvider>
+#include "exportdecl.h"
 
 class QImage;
 
