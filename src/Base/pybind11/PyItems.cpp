@@ -30,7 +30,7 @@ void exportPyItems(py::module m)
 
     itemClass
         .def_static("find", [](const string& path){ return ItemPtr(Item::find(path)); })
-        .def("name", &Item::name, py::return_value_policy::reference)
+        .def("name", &Item::name)
         .def("setName", &Item::setName)
         .def("hasAttribute", &Item::hasAttribute)
         .def("childItem", [](Item* self){ return ItemPtr(self->childItem()); })
@@ -102,12 +102,12 @@ void exportPyItems(py::module m)
     PyItemList<FolderItem>(m, "FolderItemList");
 
     py::class_<AbstractTextItem, AbstractTextItemPtr, Item>(m, "AbstractTextItem")
-        .def("textFilename", &AbstractTextItem::textFilename, py::return_value_policy::reference);
+        .def("textFilename", &AbstractTextItem::textFilename);
             
     //PyItemList<AbstractTextItem>("AbstractTextItemList");
     
     py::class_<ScriptItem, ScriptItemPtr, AbstractTextItem> (m, "ScriptItem")
-        .def("scriptFilename", &ScriptItem::scriptFilename, py::return_value_policy::reference)
+        .def("scriptFilename", &ScriptItem::scriptFilename)
         .def("identityName", &ScriptItem::identityName)
         .def("setBackgroundMode", &ScriptItem::setBackgroundMode)
         .def("isBackgroundMode", &ScriptItem::isBackgroundMode)
@@ -221,12 +221,6 @@ void exportPyItems(py::module m)
         ;
 
     PyItemList<MultiPointSetItem>(m, "MultiPointSetItemList");
-
-#ifdef _MSC_VER
-    register_ptr_to_python<ItemPtr>();
-	register_ptr_to_python<RootItemPtr>();
-#endif
-
 }
 
 } // namespace cnoid

@@ -8,7 +8,6 @@
 
 #include <cnoid/PyUtil>
 #include <QString>
-#include <iostream>
 
 namespace pybind11 { namespace detail {
     template <> struct type_caster<QString> {
@@ -38,4 +37,4 @@ namespace pybind11 { namespace detail {
     };
 }}
 
-#endif /*  CNOID_BASE_PYTHON3_PYQTCORE_H_ */
+#endif

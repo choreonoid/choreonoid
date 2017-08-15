@@ -28,6 +28,7 @@ void checkIfItemSubclass(PyObject* typeObject)
 } // namespace
 
 namespace cnoid {
+
 py::list getPyNarrowedItemList(const ItemList<>& orgItemList, py::object itemClass)
 {
     checkIfItemSubclass(itemClass.ptr());

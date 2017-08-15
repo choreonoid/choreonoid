@@ -4,6 +4,8 @@
 
 #include <boost/python.hpp>
 
+using namespace cnoid;
+
 namespace cnoid {
 
 void exportPyQtExTypes();
@@ -16,10 +18,10 @@ void exportPySceneTypes();
 void exportPyLazyCaller();
 void exportPyPluginManager();
 
+}
+
 BOOST_PYTHON_MODULE(Base)
 {
-    //! \todo check if this module is imported from the Choreonoid process with PythonPlugin
-
     boost::python::import("cnoid.Util");
     boost::python::import("cnoid.QtGui");
     
@@ -32,6 +34,4 @@ BOOST_PYTHON_MODULE(Base)
     exportPySceneTypes();
     exportPyLazyCaller();
     exportPyPluginManager();
-}
-
 }

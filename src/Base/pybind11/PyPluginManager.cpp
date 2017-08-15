@@ -5,14 +5,8 @@
 #include "../PluginManager.h"
 #include <pybind11/pybind11.h>
 
-namespace py = pybind11;
 using namespace cnoid;
-
-namespace {
-
-bool PluginManager_unloadPlugin2(PluginManager& self, const std::string& name) { return self.unloadPlugin(name); }
-
-}
+namespace py = pybind11;
 
 namespace cnoid {
 

@@ -11,6 +11,7 @@ namespace py = pybind11;
 using namespace cnoid;
 
 namespace {
+
 Matrix3 angleAxis(double angle, const Vector3& vec){
     return Matrix3(AngleAxis(angle, vec));
 }

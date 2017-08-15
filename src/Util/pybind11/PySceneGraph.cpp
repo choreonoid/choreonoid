@@ -13,9 +13,12 @@ namespace cnoid {
 
 void exportPySceneGraph(py::module& m)
 {
-    py::class_< SgUpdate > sgUpdate(m, "SgUpdate");
+    py::class_<SgUpdate> sgUpdate(m, "SgUpdate");
 
-    sgUpdate.def("action", &SgUpdate::action)
+    sgUpdate
+        .def(py::init<>())
+        .def(py::init<int>())
+        .def("action", &SgUpdate::action)
         .def("setAction", &SgUpdate::setAction)
         ;
 
@@ -27,40 +30,39 @@ void exportPySceneGraph(py::module& m)
         .value("MODIFIED", SgUpdate::Action::MODIFIED)
         .export_values();
 
-    py::class_< SgObject, SgObjectPtr, Referenced >(m, "SgObject")
-        .def("name", &SgObject::name, py::return_value_policy::reference)
+    py::class_<SgObject, SgObjectPtr, Referenced>(m, "SgObject")
+        .def("name", &SgObject::name)
         .def("setName", &SgObject::setName)
-        .def("notifyUpdate",(void (SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
-        .def("notifyUpdate",(void (SgObject::*)(int)) &SgObject::notifyUpdate, py::arg("action")=SgUpdate::MODIFIED)
+        .def("notifyUpdate",(void(SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
+        .def("notifyUpdate",[](SgObject* self){ self->notifyUpdate(); })
+        .def("notifyUpdate",[](SgObject* self, int action){ self->notifyUpdate(action); })
         ;
 
-    py::class_< SgNode, SgNodePtr, SgObject >(m, "SgNode")
+    py::class_<SgNode, SgNodePtr, SgObject>(m, "SgNode")
         .def("isGroup", &SgNode::isGroup);
     
-    py::class_< SgGroup, SgGroupPtr, SgNode >(m, "SgGroup")
+    py::class_<SgGroup, SgGroupPtr, SgNode>(m, "SgGroup")
         .def("empty", &SgGroup::empty)
         .def("numChildren", &SgGroup::numChildren)
-        .def("clearChildren", &SgGroup::clearChildren, py::arg("doNotify")=false )
-        .def("child", [](SgGroup& self, int index) {
-            return SgNodePtr(self.child(index));
-        })
-        .def("addChild", &SgGroup::addChild, py::arg("node"), py::arg("doNotify")=false);
+        .def("clearChildren", [](SgGroup* self){ self->clearChildren(); })
+        .def("clearChildren", [](SgGroup* self, bool doNotify){ self->clearChildren(doNotify); })
+        .def("child", [](SgGroup* self, int index){ return SgNodePtr(self->child(index)); })
+        .def("addChild", [](SgGroup* self, SgNodePtr node){ self->addChild(node); })
+        .def("addChild", [](SgGroup* self, SgNodePtr node, bool doNotify){ self->addChild(node, doNotify); })
+        ;
     
-    py::class_< SgTransform, SgTransformPtr, SgGroup >(m, "SgTransform");
+    py::class_<SgTransform, SgTransformPtr, SgGroup>(m, "SgTransform");
 
-    py::class_< SgPosTransform, SgPosTransformPtr, SgTransform >(m, "SgPosTransform")
-        .def("position", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position, py::return_value_policy::reference_internal)
-        .def("setPosition", [](SgPosTransform& self, const Affine3& T) { self.position() = T; } )
-        .def_property("T", (const Affine3& (SgPosTransform::*)() const ) &SgPosTransform::T,
-                [](SgPosTransform& self, const Affine3& T) { self.position() = T; } )
+    py::class_<SgPosTransform, SgPosTransformPtr, SgTransform>(m, "SgPosTransform")
+        .def("position", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)
+        .def("setPosition", [](SgPosTransform* self, const Affine3& T) { self->setPosition(T); })
         .def("translation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
-        .def("setTranslation", [](SgPosTransform& self, const Vector3& p) {
-            self.setTranslation(p);
-        })
+        .def("setTranslation", [](SgPosTransform* self, const Vector3& p){ self->setTranslation(p); })
         .def("rotation", (Affine3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
-        .def("setRotation", [](SgPosTransform& self, const Matrix3& R) {
-            self.setRotation(R);
-        })
+        .def("setRotation", [](SgPosTransform* self, const Matrix3& R) { self->setRotation(R); })
+        .def_property("T",
+                      (const Affine3& (SgPosTransform::*)() const ) &SgPosTransform::T,
+                      [](SgPosTransform* self, const Affine3& T) { self->setPosition(T); })
         ;
 
     py::class_<SceneProvider>(m, "SceneProvider");

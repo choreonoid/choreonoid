@@ -10,8 +10,8 @@
 #include <cnoid/PySignal>
 #include <QWidget>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
 namespace cnoid {
 

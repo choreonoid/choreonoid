@@ -4,26 +4,30 @@
 
 #include <pybind11/pybind11.h>
 
+namespace py = pybind11;
+
 namespace cnoid {
 
-void exportPyQtExTypes(pybind11::module m);
-void exportPyItems(pybind11::module m);
-void exportPyMainWindow(pybind11::module m);
-void exportPyToolBars(pybind11::module m);
-void exportPyViews(pybind11::module m);
-void exportPyItemTreeView(pybind11::module m);
-void exportPySceneTypes(pybind11::module m);
-void exportPyLazyCaller(pybind11::module m);
-void exportPyPluginManager(pybind11::module m);
+void exportPyQtExTypes(py::module m);
+void exportPyItems(py::module m);
+void exportPyMainWindow(py::module m);
+void exportPyToolBars(py::module m);
+void exportPyViews(py::module m);
+void exportPyItemTreeView(py::module m);
+void exportPySceneTypes(py::module m);
+void exportPyLazyCaller(py::module m);
+void exportPyPluginManager(py::module m);
+
+}
+
+using namespace cnoid;
 
 PYBIND11_PLUGIN(Base)
 {
-    //! \todo check if this module is imported from the Choreonoid process with PythonPlugin
+    py::module m("Base", "Base Python Module");
 
-    pybind11::module m("Base", "Base Python Module");
-
-    pybind11::module::import("cnoid.Util");
-    pybind11::module::import("cnoid.QtGui");
+    py::module::import("cnoid.Util");
+    py::module::import("cnoid.QtGui");
     
     exportPyQtExTypes(m);
     exportPyItems(m);
@@ -36,6 +40,4 @@ PYBIND11_PLUGIN(Base)
     exportPyPluginManager(m);
 
     return m.ptr();
-}
-
 }

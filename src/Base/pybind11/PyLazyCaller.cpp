@@ -6,8 +6,8 @@
 #include <cnoid/PyUtil>
 #include <cnoid/PythonUtil>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
 namespace {
 
@@ -30,27 +30,14 @@ struct PyFunc
     }
 };
 
-
-void cnoid_callLater(py::object func)
-{
-    cnoid::callLater(PyFunc(func));
 }
-
-
-void cnoid_callSynchronously(py::object func)
-{
-    cnoid::callSynchronously(PyFunc(func));
-}
-
-
-} // namespace
 
 namespace cnoid {
 
 void exportPyLazyCaller(py::module m)
 {
-    m.def("callLater", cnoid_callLater);
-    m.def("callSynchronously", cnoid_callSynchronously);
+    m.def("callLater", [](py::object func){ cnoid::callLater(PyFunc(func)); });
+    m.def("callSynchronously", [](py::object func){ cnoid::callSynchronously(PyFunc(func)); });
 }
 
 }

@@ -6,140 +6,30 @@
 #include "../ValueTree.h"
 
 using namespace std;
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
 namespace {
 
-MappingPtr ValueNode_toMapping(ValueNode& self){
-    return self.toMapping();
-}
-
-ListingPtr ValueNode_toListing(ValueNode& self){
-    return self.toListing();
-}
-
-py::object ValueNode_readInt(ValueNode& self){
-    int value;
+template<class ValueType>
+py::object ValueNode_read(ValueNode& self){
+    ValueType value;
     if(self.read(value)){
         return py::object(py::cast(value));
     }
     return py::object();
 }
 
-py::object ValueNode_readFloat(ValueNode& self){
-    double value;
-    if(self.read(value)){
-        return py::object(py::cast(value));
-    }
-    return py::object();
-}
-
-py::object ValueNode_readBool(ValueNode& self){
-    bool value;
-    if(self.read(value)){
-        return py::object(py::cast(value));
-    }
-    return py::object();
-}
-
-py::object ValueNode_readString(ValueNode& self){
-    string value;
-    if(self.read(value)){
-        return py::object(py::cast(value));
-    }
-    return py::object();
-}
-
-ValueNodePtr Mapping_find(Mapping& self, const std::string& key){
-    return self.find(key);
-}
-
-MappingPtr Mapping_findMapping(Mapping& self, const std::string& key){
-    return self.findMapping(key);
-}
-
-ListingPtr Mapping_findListing(Mapping& self, const std::string& key){
-    return self.findListing(key);
-}
-
-ValueNodePtr Mapping_get(Mapping& self, const std::string& key){
-    return &(self.get(key));
-}
-
-void Mapping_insert1(Mapping& self, const std::string& key, ValueNodePtr node){
-    self.insert(key, node);
-}
-
-void Mapping_insert2(Mapping& self, MappingPtr other){
-    self.insert(other);
-}
-
-MappingPtr Mapping_openMapping(Mapping& self, const std::string& key){
-    return self.openMapping(key);
-}
-
-MappingPtr Mapping_openFlowStyleMapping(Mapping& self, const std::string& key){
-    return self.openFlowStyleMapping(key);
-}
-
-MappingPtr Mapping_createMapping(Mapping& self, const std::string& key){
-    return self.createMapping(key);
-}
-
-MappingPtr Mapping_createFlowStyleMapping(Mapping& self, const std::string& key){
-    return self.createFlowStyleMapping(key);
-}
-
-ListingPtr Mapping_openListing(Mapping& self, const std::string& key){
-    return self.openListing(key);
-}
-
-ListingPtr Mapping_openFlowStyleListing(Mapping& self, const std::string& key){
-    return self.openFlowStyleListing(key);
-}
-
-ListingPtr Mapping_createListing(Mapping& self, const std::string& key){
-    return self.createListing(key);
-}
-
-ListingPtr Mapping_createFlowStyleListing(Mapping& self, const std::string& key){
-    return self.createFlowStyleListing(key);
-}
-
-py::object Mapping_readString(Mapping& self, const std::string& key){
-    string value;
+template<class ValueType>
+py::object Mapping_read(Mapping& self, const string& key){
+    ValueType value;
     if(self.read(key, value)){
         return py::object(py::cast(value));
     }
     return py::object();
 }
 
-py::object Mapping_readBool(Mapping& self, const std::string& key){
-    bool value;
-    if(self.read(key, value)){
-        return py::object(py::cast(value));
-    }
-    return py::object();
-}
-
-py::object Mapping_readInt(Mapping& self, const std::string& key){
-    int value;
-    if(self.read(key, value)){
-        return py::object(py::cast(value));
-    }
-    return py::object();
-}
-
-py::object Mapping_readFloat(Mapping& self, const std::string& key){
-    double value;
-    if(self.read(key, value)){
-        return py::object(py::cast(value));
-    }
-    return py::object();
-}
-
-py::object Mapping_get2(Mapping& self, const std::string& key, py::object defaultValue){
+py::object Mapping_get(Mapping& self, const std::string& key, py::object defaultValue){
     if(PyBool_Check(defaultValue.ptr())){
         bool value;
         if(self.read(key, value)){
@@ -166,14 +56,6 @@ py::object Mapping_get2(Mapping& self, const std::string& key, py::object defaul
     return defaultValue;
 }
 
-void Mapping_writeString1(Mapping& self, const std::string &key, const std::string& value){
-    self.write(key, value);
-}
-
-void Mapping_writeString2(Mapping& self, const std::string &key, const std::string& value, StringStyle style){
-    self.write(key, value, style);
-}
-
 void Mapping_write(Mapping& self, const std::string &key, py::object value){
     if(PyBool_Check(value.ptr())){
         self.write(key, value.cast<bool>());
@@ -186,55 +68,6 @@ void Mapping_write(Mapping& self, const std::string &key, py::object value){
         throw py::error_already_set();
     }
 }
-
-ValueNodePtr Listing_front(Listing& self){
-    return self.front();
-}
-
-ValueNodePtr Listing_back(Listing& self){
-    return self.back();
-}
-
-ValueNodePtr Listing_at(Listing& self, int i){
-    return self.at(i);
-}
-
-void Listing_write_int(Listing& self, int i, int value){
-    self.write(i, value);
-}
-
-void Listing_write_string1(Listing& self, int i, const std::string& value){
-    self.write(i, value);
-}
-
-void Listing_write_string2(Listing& self, int i, const std::string& value, StringStyle stringStyle){
-    self.write(i, value, stringStyle);
-}
-
-MappingPtr Listing_newMapping(Listing& self){
-    return self.newMapping();
-}
-
-void Listing_append_node(Listing& self, ValueNodePtr node){
-    self.append(node);
-}
-
-void Listing_append_int(Listing& self, int value){
-    self.append(value);
-}
-
-void Listing_append_double(Listing& self, double value){
-    self.append(value);
-}
-
-void Listing_append_string1(Listing& self, const std::string& value){
-    self.append(value);
-}
-
-void Listing_append_string2(Listing& self, const std::string& value, StringStyle style){
-    self.append(value, style);
-}
-
 
 }
 
@@ -259,19 +92,19 @@ void exportPyValueTree(py::module& m)
         .def("isString", &ValueNode::isString)
         .def("toString", &ValueNode::toString)
         .def("isMapping", &ValueNode::isMapping)
-        .def("toMapping", ValueNode_toMapping)
+        .def("toMapping", [](ValueNode& self){ return MappingPtr(self.toMapping()); })
         .def("isListing", &ValueNode::isListing)
-        .def("toListing", ValueNode_toListing)
-        .def("readInt", ValueNode_readInt)
-        .def("readFloat", ValueNode_readFloat)
-        .def("readBool", ValueNode_readBool)
-        .def("readString", ValueNode_readString)
+        .def("toListing", [](ValueNode& self){ return ListingPtr(self.toListing()); })
+        .def("readInt", [](ValueNode& self){ return ValueNode_read<int>(self); })
+        .def("readFloat", [](ValueNode& self){ return ValueNode_read<double>(self); })
+        .def("readBool",  [](ValueNode& self){ return ValueNode_read<bool>(self); })
+        .def("readString", [](ValueNode& self){ return ValueNode_read<string>(self); })
         .def("hasLineInfo", &ValueNode::hasLineInfo)
         .def("line", &ValueNode::line)
         .def("column", &ValueNode::column)
         ;
 
-    py::class_< Mapping, MappingPtr, ValueNode>(m, "Mapping")
+    py::class_<Mapping, MappingPtr, ValueNode>(m, "Mapping")
         .def("empty", &Mapping::empty)
         .def("size", &Mapping::size)
         .def("clear", &Mapping::clear)
@@ -280,29 +113,27 @@ void exportPyValueTree(py::module& m)
         .def("setFloatFormat", &Mapping::setDoubleFormat)
         .def("floatFormat", &Mapping::doubleFormat)
         .def("setKeyQuoteStyle", &Mapping::setKeyQuoteStyle)
-        .def("find", Mapping_find)
-        .def("findMapping", Mapping_findMapping)
-        .def("findListing", Mapping_findListing)
-        .def("get", Mapping_get)
-        .def("__getitem__", Mapping_get)
-        .def("insert", Mapping_insert1)
-        .def("insert", Mapping_insert2)
-        .def("openMapping", Mapping_openMapping)
-        .def("openFlowStyleMapping", Mapping_openFlowStyleMapping)
-        .def("createMapping", Mapping_createMapping)
-        .def("createFlowStyleMapping", Mapping_createFlowStyleMapping)
-        .def("openListing", Mapping_openListing)
-        .def("openFlowStyleListing", Mapping_openFlowStyleListing)
-        .def("createListing", Mapping_createListing)
-        .def("createFlowStyleListing", Mapping_createFlowStyleListing)
+        .def("find", [](Mapping& self, const string& key){ return ValueNodePtr(self.find(key)); })
+        .def("findMapping", [](Mapping& self, const string& key){ return MappingPtr(self.findMapping(key)); })
+        .def("findListing", [](Mapping& self, const string& key){ return ListingPtr(self.findListing(key)); })
+        .def("__getitem__", [](Mapping& self, const string& key){ return ValueNodePtr(&self.get(key)); })
+        .def("insert", [](Mapping& self, const string& key, ValueNodePtr node){ self.insert(key, node); })
+        .def("openMapping", [](Mapping& self, const string& key){ return MappingPtr(self.openMapping(key)); })
+        .def("openFlowStyleMapping", [](Mapping& self, const string& key){ return MappingPtr(self.openFlowStyleMapping(key)); })
+        .def("createMapping", [](Mapping& self, const string& key){ return MappingPtr(self.createMapping(key)); })
+        .def("createFlowStyleMapping", [](Mapping& self, const string& key){ return MappingPtr(self.createFlowStyleMapping(key)); })
+        .def("openListing", [](Mapping& self, const string& key){ return ListingPtr(self.openListing(key)); })
+        .def("openFlowStyleListing", [](Mapping& self, const string& key){ return ListingPtr(self.openFlowStyleListing(key)); })
+        .def("createListing", [](Mapping& self, const string& key){ return ListingPtr(self.createListing(key)); })
+        .def("createFlowStyleListing", [](Mapping& self, const string& key){ return ListingPtr(self.createFlowStyleListing(key)); })
         .def("remove", &Mapping::remove)
-        .def("readString", Mapping_readString)
-        .def("readBool", Mapping_readBool)
-        .def("readInt", Mapping_readInt)
-        .def("readFloat", Mapping_readFloat)
-        .def("get", Mapping_get2)
-        .def("write", Mapping_writeString1)
-        .def("write", Mapping_writeString2)
+        .def("readString", [](Mapping& self, const string& key){ return Mapping_read<string>(self, key); })
+        .def("readBool",  [](Mapping& self, const string& key){ return Mapping_read<bool>(self, key); })
+        .def("readInt", [](Mapping& self, const string& key){ return Mapping_read<int>(self, key); })
+        .def("readFloat", [](Mapping& self, const string& key){ return Mapping_read<double>(self, key); })
+        .def("get", Mapping_get)
+        .def("write", [](Mapping& self, const string &key, const string& value){ self.write(key, value); })
+        .def("write", [](Mapping& self, const string &key, const string& value, StringStyle style){ self.write(key, value, style); })
         .def("write", Mapping_write)
         ;
 
@@ -315,22 +146,21 @@ void exportPyValueTree(py::module& m)
         .def("isFlowStyle", &Listing::isFlowStyle)
         .def("setFloatFormat", &Listing::setDoubleFormat)
         .def("floatFormat", &Listing::doubleFormat)
-        .def("front", Listing_front)
-        .def("back", Listing_back)
-        .def("at", Listing_at)
-        .def("write", Listing_write_int)
-        .def("write", Listing_write_string1)
-        .def("write", Listing_write_string2)
-        .def("__getitem__", Listing_at)
-        .def("newMapping", Listing_newMapping)
-        .def("append", Listing_append_node)
-        .def("append", Listing_append_int)
-        .def("append", Listing_append_double)
-        .def("append", Listing_append_string1)
-        .def("append", Listing_append_string2)
+        .def("front", [](Listing& self){ return ValueNodePtr(self.front()); })
+        .def("back", [](Listing& self){ return ValueNodePtr(self.back()); })
+        .def("at", [](Listing& self, int i){ return ValueNodePtr(self.at(i)); })
+        .def("write", [](Listing& self, int i, int value){ self.write(i, value); })
+        .def("write", [](Listing& self, int i, const string& value){ self.write(i, value); })
+        .def("write", [](Listing& self, int i, const string& value, StringStyle style){ self.write(i, value, style); })
+        .def("__getitem__", [](Listing& self, int i){ return ValueNodePtr(self.at(i)); })
+        .def("newMapping", [](Listing& self){ return MappingPtr(self.newMapping()); })
+        .def("append", [](Listing& self, ValueNodePtr node){ self.append(node); })
+        .def("append", [](Listing& self, int value){ self.append(value); })
+        .def("append", [](Listing& self, double value){ self.append(value); })
+        .def("append", [](Listing& self, const string& value){ self.append(value); })
+        .def("append", [](Listing& self, const string& value, StringStyle style){ self.append(value, style); })
         .def("appendLF", &Listing::appendLF)
         ;
-
 }
 
 }

@@ -6,8 +6,8 @@
 #include "../PositionDragger.h"
 #include <cnoid/PyUtil>
 
-namespace py=pybind11;
 using namespace cnoid;
+namespace py=pybind11;
 
 namespace cnoid {
 

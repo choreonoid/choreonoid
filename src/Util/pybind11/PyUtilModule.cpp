@@ -5,20 +5,9 @@
 #include "PyUtil.h"
 #include "../ExecutablePath.h"
 #include "../FloatingNumberString.h"
-#include "../Deque2D.h"
 
-namespace py = pybind11;
 using namespace cnoid;
-
-namespace
-{
-
-typedef Deque2D< double, std::allocator<double> > Deque2DDouble;
-void Deque2DDouble_Row_setitem(Deque2DDouble::Row& self, const int i, const double x) { self[i] = x; }
-double& (Deque2DDouble::Row::*Row_getitem)(int) = &Deque2DDouble::Row::operator[];
-const double& (Deque2DDouble::Row::*Row_getitem_const)(int) const = &Deque2DDouble::Row::operator[];
-
-}
+namespace py = pybind11;
 
 namespace cnoid {
 
@@ -48,10 +37,10 @@ PYBIND11_PLUGIN(Util)
     exportPyGeometryTypes(m);
     exportPyTaskTypes(m);
 
-    m.def("shareDirectory", &cnoid::shareDirectory, py::return_value_policy::reference);
-    m.def("executablePath", &cnoid::executablePath, py::return_value_policy::reference);
-    m.def("executableBasename", &cnoid::executableBasename, py::return_value_policy::reference);
-    m.def("executableTopDirectory", &cnoid::executableTopDirectory, py::return_value_policy::reference);
+    m.def("shareDirectory", &cnoid::shareDirectory);
+    m.def("executablePath", &cnoid::executablePath);
+    m.def("executableBasename", &cnoid::executableBasename);
+    m.def("executableTopDirectory", &cnoid::executableTopDirectory);
 
     py::class_<FloatingNumberString>(m, "FloatingNumberString")
         .def(py::init<const std::string&>())
@@ -59,15 +48,6 @@ PYBIND11_PLUGIN(Util)
         .def("setPositiveValue", &FloatingNumberString::setPositiveValue)
         .def("setNonNegativeValue", &FloatingNumberString::setNonNegativeValue)
         .def("value", &FloatingNumberString::value);
-
-    py::class_<Deque2DDouble::Row>(m, "Row")
-        .def(py::init<>())
-        .def("size", &Deque2DDouble::Row::size)
-        .def("at", &Deque2DDouble::Row::at, py::return_value_policy::reference_internal)
-        .def("__getitem__", Row_getitem)
-        .def("__getitem__", Row_getitem_const)
-        .def("__setitem__", Deque2DDouble_Row_setitem)
-        ;
 
     return m.ptr();
 }

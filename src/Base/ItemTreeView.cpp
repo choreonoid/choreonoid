@@ -889,10 +889,10 @@ SignalProxy<void(Item* item, bool isChecked)> ItemTreeView::sigCheckToggled(int 
 }
 
 
-SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* targetItem, int id)
+SignalProxy<void(bool isChecked)> ItemTreeView::sigCheckToggled(Item* item, int id)
 {
     if(id < impl->checkColumns.size()){
-        return impl->getOrCreateItvItem(targetItem)->getOrCreateSigCheckToggled(id);
+        return impl->getOrCreateItvItem(item)->getOrCreateSigCheckToggled(id);
     }
     return impl->sigCheckToggledForInvalidItem;
 }

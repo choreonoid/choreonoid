@@ -18,7 +18,7 @@ void exportPySeqTypes(py::module& m)
     py::class_<AbstractSeq>(m, "AbstractSeq")
         .def("cloneSeq", &AbstractSeq::cloneSeq)
         .def("copySeqProperties", &AbstractSeq::copySeqProperties)
-        .def("seqType", &AbstractSeq::seqType, py::return_value_policy::reference)
+        .def("seqType", &AbstractSeq::seqType)
         .def("getFrameRate", &AbstractSeq::getFrameRate)
         .def("setFrameRate", &AbstractSeq::setFrameRate)
         .def("getTimeStep", &AbstractSeq::getTimeStep)
@@ -27,46 +27,58 @@ void exportPySeqTypes(py::module& m)
         .def("getOffsetTimeFrame", &AbstractSeq::getOffsetTimeFrame)
         .def("getOffsetTime", &AbstractSeq::getOffsetTime)
         .def("getNumFrames", &AbstractSeq::getNumFrames)
-        .def("setNumFrames", &AbstractSeq::setNumFrames,
-                py::arg("n"), py::arg("clearNewElements") = false)
-        .def("setTimeLength", &AbstractSeq::setTimeLength,
-                py::arg("length"), py::arg("clearNewElements") = false)
+        .def("setNumFrames", [](AbstractSeq& self, int n){ self.setNumFrames(n); })
+        .def("setNumFrames", [](AbstractSeq& self, int n, bool clearNewElements){ self.setNumFrames(n, clearNewElements); })
+        .def("setTimeLength",[](AbstractSeq& self, double length){ self.setTimeLength(length); })
+        .def("setTimeLength",[](AbstractSeq& self, double length, bool clearNewElements){ self.setTimeLength(length, clearNewElements); })
         .def("getTimeLength", &AbstractSeq::getTimeLength)
-        .def("seqContentName", &AbstractSeq::seqContentName, py::return_value_policy::reference)
+        .def("seqContentName", &AbstractSeq::seqContentName)
         .def("setSeqContentName", &AbstractSeq::setSeqContentName)
         .def("readSeq", &AbstractSeq::readSeq)
         .def("writeSeq", &AbstractSeq::writeSeq)
-        .def("seqMessage", &AbstractSeq::seqMessage, py::return_value_policy::reference)
-        .def("defaultFrameRate", &AbstractSeq::defaultFrameRate);
+        .def("seqMessage", &AbstractSeq::seqMessage)
+        .def("defaultFrameRate", &AbstractSeq::defaultFrameRate)
+        ;
 
     py::class_<AbstractMultiSeq, AbstractSeq>(m, "AbstractMultiSeq")
         .def("copySeqProperties", &AbstractMultiSeq::copySeqProperties)
-        .def("setDimension", &AbstractMultiSeq::setDimension,
-                py::arg("numFrames"), py::arg("numParts"), py::arg("clearNewElements") = false)
-        .def("setNumParts", &AbstractMultiSeq::setNumParts,
-                py::arg("numParts"), py::arg("clearNewElements") = false)
+        .def("setDimension", [](AbstractMultiSeq& self, int numFrames, int numParts){ self.setDimension(numFrames, numParts); })
+        .def("setDimension", [](AbstractMultiSeq& self, int numFrames, int numParts, bool clearNewElements){
+                self.setDimension(numFrames, numParts, clearNewElements); })
+        .def("setNumParts", [](AbstractMultiSeq& self, int numParts){ self.setNumParts(numParts); })
+        .def("setNumParts", [](AbstractMultiSeq& self, int numParts, bool clearNewElements){
+                self.setNumParts(numParts, clearNewElements); })
         .def("getNumParts", &AbstractMultiSeq::getNumParts)
         .def("partIndex", &AbstractMultiSeq::partIndex)
-        .def("partLabel", &AbstractMultiSeq::partLabel, py::return_value_policy::copy);
+        .def("partLabel", &AbstractMultiSeq::partLabel)
+        ;
 
-    py::class_< MultiValueSeq, AbstractMultiSeq >(m, "MultiValueSeq")
+    typedef Deque2D<double, std::allocator<double>> Deque2DDouble;
+    
+    py::class_<Deque2DDouble::Row>(m, "Deque2DDouble_Row")
+        .def("size", &Deque2DDouble::Row::size)
+        .def("at", &Deque2DDouble::Row::at, py::return_value_policy::reference_internal)
+        .def("__getitem__", [](Deque2DDouble::Row& self, int i){ return self[i]; })
+        .def("__setitem__", [](Deque2DDouble::Row& self, int i, double x){ self[i] = x; })
+        ;
+
+    py::class_<MultiValueSeq, AbstractMultiSeq>(m, "MultiValueSeq")
         .def("empty", &MultiValueSeq::empty)
         .def("resize", &MultiValueSeq::resize)
-        .def("resizeColumn", &MultiValueSeq::resizeColumn)
-        .def("rowSize", &MultiValueSeq::rowSize)
-        .def("resizeRow", &MultiValueSeq::resizeRow)
-        .def("colSize", &MultiValueSeq::colSize)
         .def("clear", &MultiValueSeq::clear)
-        .def("at", (const MultiValueSeq::Element& (MultiValueSeq::*)(int, int) const) &MultiValueSeq::at, py::return_value_policy::reference_internal)
-        .def("row", (MultiValueSeq::Row (MultiValueSeq::*)(int)) &MultiValueSeq::row)
-        .def("row", (const MultiValueSeq::Row (MultiValueSeq::*)(int) const ) &MultiValueSeq::row)
-        .def("column", (MultiValueSeq::Column (MultiValueSeq::*)(int)) &MultiValueSeq::column)
-        .def("column", (const MultiValueSeq::Column (MultiValueSeq::*)(int) const ) &MultiValueSeq::column)
+        .def("at", (MultiValueSeq::Element& (MultiValueSeq::*)(int, int)) &MultiValueSeq::at, py::return_value_policy::reference_internal)
         .def("append", &MultiValueSeq::append)
         .def("pop_back", &MultiValueSeq::pop_back)
         .def("pop_front", (void (MultiValueSeq::*)(int)) &MultiValueSeq::pop_front)
         .def("pop_front", (void (MultiValueSeq::*)()) &MultiValueSeq::pop_front)
         
+        //.def("resizeColumn", &MultiValueSeq::resizeColumn)
+        //.def("rowSize", &MultiValueSeq::rowSize)
+        //.def("resizeRow", &MultiValueSeq::resizeRow)
+        //.def("colSize", &MultiValueSeq::colSize)
+        //.def("row", (MultiValueSeq::Row (MultiValueSeq::*)(int)) &MultiValueSeq::row)
+        //.def("column", (MultiValueSeq::Column (MultiValueSeq::*)(int)) &MultiValueSeq::column)
+
         .def("copySeqProperties", &MultiValueSeq::copySeqProperties)
         .def("frameRate", &MultiValueSeq::frameRate)
         .def("timeStep", &MultiValueSeq::timeStep)
@@ -77,13 +89,10 @@ void exportPySeqTypes(py::module& m)
         .def("timeOfFrame", &MultiValueSeq::timeOfFrame)
         .def("clampFrameIndex", &MultiValueSeq::clampFrameIndex)
         .def("frame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
-        .def("frame", (const MultiValueSeq::Frame (MultiValueSeq::*)(int) const ) &MultiValueSeq::frame)
         .def("part", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
-        .def("part", (const MultiValueSeq::Part (MultiValueSeq::*)(int) const ) &MultiValueSeq::part)
 
         .def("loadPlainFormat", &MultiValueSeq::loadPlainFormat)
         .def("saveAsPlainFormat", &MultiValueSeq::saveAsPlainFormat);
-
 }
 
 }

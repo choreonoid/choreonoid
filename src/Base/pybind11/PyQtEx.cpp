@@ -16,8 +16,10 @@ namespace cnoid {
 void exportPyQtExTypes(py::module m)
 {
     py::class_<ToolButton, QToolButton>(m, "ToolButton")
-        .def(py::init<QWidget*>(), py::arg("parent")=(QWidget*)(0) )
-        .def(py::init<const QString&, QWidget*>(), py::arg("text"), py::arg("parent")=(QWidget*)(0) )
+        .def(py::init<>())
+        .def(py::init<QWidget*>())
+        .def(py::init<const QString&>())
+        .def(py::init<const QString&, QWidget*>())
         .def("sigClicked", &ToolButton::sigClicked)
         .def_property_readonly("clicked", &ToolButton::sigClicked)
         .def("sigToggled", &ToolButton::sigToggled)
