@@ -61,8 +61,8 @@ PYBIND11_PLUGIN(QtGui)
         .def("showMaximized", &QWidget::showMaximized)
         .def("showMinimized", &QWidget::showMinimized)
         .def("showNormal", &QWidget::showNormal)
-        .def("update",  (void (QWidget::*)()) &QWidget::update);
-
+        .def("update",  (void (QWidget::*)()) &QWidget::update)
+        ;
 
     py::class_<QMainWindow, QWidget>(m, "QMainWindow");
 

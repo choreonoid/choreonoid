@@ -70,7 +70,7 @@ PYBIND11_PLUGIN(Body)
 
     py::module::import("cnoid.Util");
 
-    py::class_< Link, LinkPtr, Referenced> link(m, "Link");
+    py::class_<Link, LinkPtr, Referenced> link(m, "Link");
     link
         .def("index", &Link::index)
         .def("isValid", &Link::isValid)
@@ -166,7 +166,7 @@ PYBIND11_PLUGIN(Body)
         .value("CRAWLER_JOINT", Link::JointType::CRAWLER_JOINT)
         .export_values();
 
-    py::class_< Body, BodyPtr, Referenced> body(m, "Body");
+    py::class_<Body, BodyPtr, Referenced> body(m, "Body");
     body
         .def("clone", [](Body& self) { return BodyPtr(self.clone()); })
         .def("createLink", [](Body& self, const Link* org) {
@@ -222,7 +222,7 @@ PYBIND11_PLUGIN(Body)
         .def(BodyMotion::Frame() >> py::self)
         ;
 
-    py::class_< ExtraJoint > extraJoint(m, "ExtraJoint");
+    py::class_<ExtraJoint> extraJoint(m, "ExtraJoint");
     extraJoint
         .def(py::init<>())
         .def(py::init<ExtraJoint::ExtraJointType, const Vector3&>())
@@ -249,7 +249,7 @@ PYBIND11_PLUGIN(Body)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
 
-    py::class_< JointPath, JointPathPtr>(m, "JointPath")
+    py::class_<JointPath, JointPathPtr>(m, "JointPath")
         .def(py::init<>())
         .def("numJoints", &JointPath::numJoints)
         .def("joint", [](JointPath& self, int index) { return LinkPtr(self.joint(index)); })
@@ -267,7 +267,7 @@ PYBIND11_PLUGIN(Body)
 
     m.def("getCustomJointPath", getCustomJointPath);
 
-    py::class_< BodyMotion, BodyMotionPtr> bodyMotion(m, "BodyMotion");
+    py::class_<BodyMotion, BodyMotionPtr> bodyMotion(m, "BodyMotion");
     bodyMotion
         .def("setNumParts", &BodyMotion::setNumParts)
         .def("getNumParts", &BodyMotion::getNumParts)
@@ -287,13 +287,13 @@ PYBIND11_PLUGIN(Body)
         .def("frame", (BodyMotion::Frame (BodyMotion::*)(int)) &BodyMotion::frame)
         ;
 
-    py::class_< BodyMotion::Frame >(m, "Frame")
+    py::class_<BodyMotion::Frame>(m, "Frame")
         .def("frame", &BodyMotion::Frame::frame)
         .def(py::self << Body())
         .def(Body() >> py::self)
         ;
 
-    py::class_< Device, DevicePtr>(m, "Device")
+    py::class_<Device, DevicePtr, Referenced>(m, "Device")
         .def("setIndex", &Device::setIndex)
         .def("setId", &Device::setId)
         .def("setName", &Device::setName)
@@ -307,11 +307,6 @@ PYBIND11_PLUGIN(Body)
         .def("link", [](Device& self) { return LinkPtr(self.link()); })
         .def_property("T_local", Device_get_T_local, Device_set_T_local)
         ;
-
-#ifdef _MSC_VER
-    register_ptr_to_python<BodyPtr>();
-    register_ptr_to_python<LinkPtr>();
-#endif
 
     return m.ptr();
 }

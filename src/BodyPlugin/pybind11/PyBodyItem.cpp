@@ -24,7 +24,7 @@ void exportBodyItem(py::module m)
 {
     m.def("loadBodyItem", loadBodyItem);
     
-    py::class_<BodyItem, BodyItemPtr, Item> bodyItem(m, "BodyItem");
+    py::class_<BodyItem, BodyItemPtr, Item> bodyItem(m, "BodyItem", py::multiple_inheritance());
 
     bodyItem
         .def(py::init<>())

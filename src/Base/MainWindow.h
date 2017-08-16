@@ -23,6 +23,8 @@ public:
     static MainWindow* initialize(const char* appName, ExtensionManager* ext);
     static MainWindow* instance();
 
+    ~MainWindow();
+
     void show();
     void setProjectTitle(const std::string& title);
     ToolBarArea* toolBarArea();
@@ -44,7 +46,6 @@ private:
     MainWindowImpl* impl;
 
     MainWindow(const char* appName, ExtensionManager* ext);
-    virtual ~MainWindow();
 
     void storeWindowStateConfig();
 

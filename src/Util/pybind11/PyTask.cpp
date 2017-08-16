@@ -419,7 +419,7 @@ void exportPyTaskTypes(py::module& m)
         })
         ;
 
-    py::class_<Task, TaskPtr, PyTask >(m, "Task")
+    py::class_<Task, TaskPtr, PyTask>(m, "Task")
         .def(py::init<>())
         .def(py::init<const std::string&, const std::string&>())
         .def(py::init<const Task&, bool>(), py::arg("org"), py::arg("doDeepCopy")=true)

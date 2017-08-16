@@ -11,7 +11,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 
-PYBIND11_DECLARE_HOLDER_TYPE(T, cnoid::ref_ptr<T>);
+PYBIND11_DECLARE_HOLDER_TYPE(T, cnoid::ref_ptr<T>, true);
 
 namespace pybind11 { namespace detail {
 

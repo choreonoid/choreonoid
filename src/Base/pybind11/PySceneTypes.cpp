@@ -14,7 +14,7 @@ namespace cnoid {
 void exportPySceneTypes(py::module m)
 {
     py::object sceneDraggerClass =
-        py::class_<SceneDragger, SceneDraggerPtr, SgPosTransform>(m, "SceneDragger")
+        py::class_<SceneDragger, SceneDraggerPtr, SgPosTransform>(m, "SceneDragger", py::multiple_inheritance())
         .def("isContainerMode", &SceneDragger::isContainerMode)
         .def("setContainerMode", &SceneDragger::setContainerMode)
         .def("isDragging", &SceneDragger::isDragging)
@@ -36,7 +36,6 @@ void exportPySceneTypes(py::module m)
     positionDraggerClass.attr("RZ") = (int)PositionDragger::RZ;
     positionDraggerClass.attr("ROTATION_AXES") = (int)PositionDragger::ROTATION_AXES;
     positionDraggerClass.attr("ALL_AXES") = (int)PositionDragger::ALL_AXES;
-    
 }
 
 }

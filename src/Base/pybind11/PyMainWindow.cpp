@@ -16,14 +16,14 @@ namespace cnoid {
 
 void exportPyMainWindow(py::module m)
 {
-    py::class_<MainWindow, std::unique_ptr<MainWindow, py::nodelete> >(m, "MainWindow")
+    py::class_<MainWindow, QMainWindow>(m, "MainWindow")
         .def_static("instance", &MainWindow::instance, py::return_value_policy::reference)
         .def("setProjectTitle", &MainWindow::setProjectTitle)
         .def("toolBarArea", &MainWindow::toolBarArea)
         .def("viewArea", &MainWindow::viewArea, py::return_value_policy::reference)
         .def("addToolBar", &MainWindow::addToolBar);
 
-    py::class_<ViewArea>(m, "ViewArea")
+    py::class_<ViewArea, QWidget>(m, "ViewArea")
         .def("addView", &ViewArea::addView)
         .def("removeView", &ViewArea::removeView)
         .def("numViews", &ViewArea::numViews);

@@ -9,18 +9,9 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-namespace {
-
-BodyMotionPtr BodyMotionItem_motion(BodyMotionItem& self) { return self.motion(); }
-MultiValueSeqItemPtr BodyMotionItem_jointPosSeqItem(BodyMotionItem& self) { return self.jointPosSeqItem(); }
-MultiSE3SeqItemPtr BodyMotionItem_linkPosSeqItem(BodyMotionItem& self) { return self.linkPosSeqItem(); }
-AbstractSeqItemPtr BodyMotionItem_extraSeqItem(BodyMotionItem& self, int index) { return self.extraSeqItem(index); }
-
-}
-
 void exportItems(py::module m)
 {
-    py::class_< WorldItem, WorldItemPtr, Item>(m, "WorldItem")
+    py::class_<WorldItem, WorldItemPtr, Item>(m, "WorldItem", py::multiple_inheritance())
         .def(py::init<>())
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
         .def("enableCollisionDetection", &WorldItem::enableCollisionDetection)
@@ -33,7 +24,7 @@ void exportItems(py::module m)
 
     PyItemList<WorldItem>(m, "WorldItemList");
     
-    py::class_< BodyMotionItem, BodyMotionItemPtr, AbstractMultiSeqItem>(m, "BodyMotionItem")
+    py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractMultiSeqItem>(m, "BodyMotionItem")
         .def(py::init<>())
         .def("motion", [](BodyMotionItem& self){ return BodyMotionPtr(self.motion()); })
         .def("jointPosSeqItem", [](BodyMotionItem& self){ return MultiValueSeqItemPtr(self.jointPosSeqItem()); })

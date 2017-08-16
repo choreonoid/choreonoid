@@ -22,9 +22,6 @@ void exportSimulationClasses(py::module m)
         .def("bodyItem", [](SimulationBody& self) { return BodyItemPtr(self.bodyItem()); })
         .def("body", [](SimulationBody& self) { return BodyPtr(self.body()); });
 
-    // The following code cannot be compiled with VC++2015 Update3
-#ifndef _MSC_VER
-    
     py::class_<SimulatorItem, SimulatorItemPtr, Item> simulatorItemClass(m, "SimulatorItem");
 
     simulatorItemClass
@@ -77,10 +74,6 @@ void exportSimulationClasses(py::module m)
         .export_values();
 
     PyItemList<SimulatorItem>(m, "SimulatorItemList", simulatorItemClass);
-
-#ifdef _MSC_VER
-    register_ptr_to_python<SimulatorItemPtr>();
-#endif
 
     py::class_<AISTSimulatorItem, AISTSimulatorItemPtr, SimulatorItem> aistSimulatorItemClass(m, "AISTSimulatorItem");
 
@@ -145,8 +138,6 @@ void exportSimulationClasses(py::module m)
 
     PyItemList<GLVisionSimulatorItem>(m, "GLVisionSimulatorItemList");
 
-#endif
-    
     py::class_<SimulationScriptItem, SimulationScriptItemPtr, ScriptItem> simulationScriptItemClass(m,"SimulationScriptItem");
 
     simulationScriptItemClass
@@ -166,7 +157,7 @@ void exportSimulationClasses(py::module m)
 
     //PyItemList<SimulationScriptItem>("SimulationScriptItemList");
 
-    py::class_<SimulationBar>(m, "SimulationBar")
+    py::class_<SimulationBar, ToolBar>(m, "SimulationBar")
         .def_static("instance", &SimulationBar::instance, py::return_value_policy::reference)
         .def("startSimulation", (void (SimulationBar::*)(SimulatorItem*, bool)) &SimulationBar::startSimulation)
         .def("startSimulation", (void (SimulationBar::*)(bool)) &SimulationBar::startSimulation)

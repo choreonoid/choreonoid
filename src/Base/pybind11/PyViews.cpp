@@ -63,7 +63,7 @@ void exportPyViews(py::module m)
         .def("sigFlushFinished", &MessageView::sigFlushFinished)
         ;
 
-    py::class_<SceneWidget>(m, "SceneWidget")
+    py::class_<SceneWidget, QWidget>(m, "SceneWidget")
         .def("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
         .def("setCollisionLinesVisible", &SceneWidget::setCollisionLinesVisible)

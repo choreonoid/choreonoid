@@ -13,7 +13,7 @@ PYBIND11_PLUGIN(QtCore)
 {
     py::module m("QtCore", "QtCore Python Module");
 
-    py::class_<QObject>( m,"QObject" )
+    py::class_<QObject>(m,"QObject")
         .def("blockSignals", &QObject::blockSignals)
         .def("inherits", &QObject::inherits)
         .def("isWidgetType", &QObject::isWidgetType)

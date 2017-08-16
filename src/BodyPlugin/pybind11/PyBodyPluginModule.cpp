@@ -3,7 +3,6 @@
 */
 
 #include <cnoid/PyUtil>
-//#include <cnoid/EigenTypes>
 
 namespace py = pybind11;
 using namespace cnoid;

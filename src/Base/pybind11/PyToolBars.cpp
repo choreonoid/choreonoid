@@ -25,22 +25,22 @@ void exportPyToolBars(py::module m)
              py::return_value_policy::reference)
         .def("addButton", [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addButton(icon, tooltip); },
              py::return_value_policy::reference)
-        .def("addToggleButton", [](ToolBar* self, const char* text){ return self->addToggleButton(text); },
+        .def("addToggleButton", [](ToolBar& self, const char* text){ return self.addToggleButton(text); },
              py::return_value_policy::reference_internal)
-        .def("addToggleButton", [](ToolBar* self, const char* text, const char* tooltip){ return self->addToggleButton(text, tooltip); },
+        .def("addToggleButton", [](ToolBar& self, const char* text, const char* tooltip){ return self.addToggleButton(text, tooltip); },
              py::return_value_policy::reference_internal)
-        .def("addToggleButton", [](ToolBar* self, const QIcon& icon){ return self->addToggleButton(icon); },
+        .def("addToggleButton", [](ToolBar& self, const QIcon& icon){ return self.addToggleButton(icon); },
              py::return_value_policy::reference_internal)
-        .def("addToggleButton", [](ToolBar* self, const QIcon& icon, const char* tooltip){ return self->addToggleButton(icon, tooltip); },
+        .def("addToggleButton", [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addToggleButton(icon, tooltip); },
              py::return_value_policy::reference_internal)
         .def("requestNewRadioGroup", &ToolBar::requestNewRadioGroup)
-        .def("addRadioButton", [](ToolBar* self, const char* text){ return self->addRadioButton(text); },
+        .def("addRadioButton", [](ToolBar& self, const char* text){ return self.addRadioButton(text); },
              py::return_value_policy::reference_internal)
-        .def("addRadioButton", [](ToolBar* self, const char* text, const char* tooltip){ return self->addRadioButton(text, tooltip); },
+        .def("addRadioButton", [](ToolBar& self, const char* text, const char* tooltip){ return self.addRadioButton(text, tooltip); },
              py::return_value_policy::reference_internal)
-        .def("addRadioButton", [](ToolBar* self, const QIcon& icon){ return self->addRadioButton(icon); },
+        .def("addRadioButton", [](ToolBar& self, const QIcon& icon){ return self.addRadioButton(icon); },
              py::return_value_policy::reference_internal)
-        .def("addRadioButton", [](ToolBar* self, const QIcon& icon, const char* tooltip){ return self->addRadioButton(icon, tooltip); },
+        .def("addRadioButton", [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addRadioButton(icon, tooltip); },
              py::return_value_policy::reference_internal)
         .def("addWidget", &ToolBar::addWidget)
         .def("addSeparator", &ToolBar::addSeparator, py::return_value_policy::reference_internal)
@@ -51,7 +51,7 @@ void exportPyToolBars(py::module m)
         .def("isStretchable", &ToolBar::isStretchable)
         ;
 
-    py::class_<TimeBar, std::unique_ptr<TimeBar, py::nodelete>>(m, "TimeBar")
+    py::class_<TimeBar>(m, "TimeBar")
         .def_static("instance", &TimeBar::instance, py::return_value_policy::reference)
         .def("sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)
         .def("sigPlaybackStarted", &TimeBar::sigPlaybackStarted)
