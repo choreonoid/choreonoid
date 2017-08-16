@@ -47,21 +47,27 @@ void exportPySceneGraph(py::module& m)
         ;
 
     py::class_<SgNode, SgNodePtr, SgObject>(m, "SgNode")
+        .def(py::init<>())
+        .def(py::init<const SgNode&>())
         .def("isGroup", &SgNode::isGroup);
     
     py::class_<SgGroup, SgGroupPtr, SgNode>(m, "SgGroup")
+        .def(py::init<>())
+        .def(py::init<const SgGroup&>())
         .def("empty", &SgGroup::empty)
         .def("numChildren", &SgGroup::numChildren)
         .def("clearChildren", [](SgGroup& self){ self.clearChildren(); })
         .def("clearChildren", [](SgGroup& self, bool doNotify){ self.clearChildren(doNotify); })
-        .def("child", [](SgGroup& self, int index){ return SgNodePtr(self.child(index)); })
-        .def("addChild", [](SgGroup& self, SgNodePtr node){ self.addChild(node); })
-        .def("addChild", [](SgGroup& self, SgNodePtr node, bool doNotify){ self.addChild(node, doNotify); })
+        .def("child", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
+        .def("addChild", [](SgGroup& self, SgNode* node){ self.addChild(node); })
+        .def("addChild", [](SgGroup& self, SgNode* node, bool doNotify){ self.addChild(node, doNotify); })
         ;
     
     py::class_<SgTransform, SgTransformPtr, SgGroup>(m, "SgTransform");
 
     py::class_<SgPosTransform, SgPosTransformPtr, SgTransform>(m, "SgPosTransform")
+        .def(py::init<>())
+        .def(py::init<const SgPosTransform&>())
         .def("position", (Affine3& (SgPosTransform::*)()) &SgPosTransform::position)
         .def("setPosition", [](SgPosTransform& self, const Affine3& T) { self.setPosition(T); })
         .def("translation", (Affine3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
@@ -74,8 +80,8 @@ void exportPySceneGraph(py::module& m)
         ;
 
     py::class_<SceneProvider>(m, "SceneProvider")
-        .def("getScene", [](SceneProvider& self){ return SgNodePtr(self.getScene()); })
-        .def("getScene", [](SceneProvider& self, SgCloneMap& cloneMap){ return SgNodePtr(self.getScene(cloneMap)); })
+        .def("getScene", [](SceneProvider& self){ return self.getScene(); })
+        .def("getScene", [](SceneProvider& self, SgCloneMap& cloneMap){ return self.getScene(cloneMap); })
         ;
 }
 

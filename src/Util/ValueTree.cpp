@@ -610,7 +610,7 @@ void Mapping::insert(const Mapping* other)
 }
 
 
-Mapping* Mapping::openMapping(const std::string& key, bool doOverwrite)
+Mapping* Mapping::openMapping_(const std::string& key, bool doOverwrite)
 {
     if(!isValid()){
         throwNotMappingException();
@@ -642,15 +642,15 @@ Mapping* Mapping::openMapping(const std::string& key, bool doOverwrite)
 }
 
 
-Mapping* Mapping::openFlowStyleMapping(const std::string& key, bool doOverwrite)
+Mapping* Mapping::openFlowStyleMapping_(const std::string& key, bool doOverwrite)
 {
-    Mapping* m = openMapping(key, doOverwrite);
+    Mapping* m = openMapping_(key, doOverwrite);
     m->setFlowStyle(true);
     return m;
 }
 
 
-Listing* Mapping::openListing(const std::string& key, bool doOverwrite)
+Listing* Mapping::openListing_(const std::string& key, bool doOverwrite)
 {
     if(!isValid()){
         throwNotMappingException();
@@ -682,9 +682,9 @@ Listing* Mapping::openListing(const std::string& key, bool doOverwrite)
 }
 
 
-Listing* Mapping::openFlowStyleListing(const std::string& key, bool doOverwrite)
+Listing* Mapping::openFlowStyleListing_(const std::string& key, bool doOverwrite)
 {
-    Listing* s = openListing(key, doOverwrite);
+    Listing* s = openListing_(key, doOverwrite);
     s->setFlowStyle(true);
     return s;
 }
