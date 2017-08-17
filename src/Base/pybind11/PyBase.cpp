@@ -4,8 +4,8 @@
 
 #include "PyBase.h"
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
 namespace {
 
@@ -24,8 +24,7 @@ void checkIfItemSubclass(PyObject* typeObject)
     }
 }
 
-
-} // namespace
+}
 
 namespace cnoid {
 
@@ -71,4 +70,4 @@ py::object getPyNarrowedFirstItem(const ItemList<>& orgItemList, py::object item
     return py::object();
 }
 
-} // namespace cnoid
+}

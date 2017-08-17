@@ -69,7 +69,7 @@ void Mapping_write(Mapping& self, const std::string &key, py::object value){
     }
 }
 
-}
+} // namespace
 
 namespace cnoid {
 
@@ -166,4 +166,4 @@ void exportPyValueTree(py::module& m)
         ;
 }
 
-}
+} // namespace cnoid

@@ -15,10 +15,7 @@
 
 using namespace std;
 using namespace cnoid;
-
-namespace cnoid {
 namespace py = pybind11;
-}
 
 namespace {
 
@@ -218,14 +215,7 @@ TaskPtr registerTask(AbstractTaskSequencer* sequencer, py::object& pyTask)
     return TaskPtr();
 }
     
-#if 0
-
-TaskPtr AbstractTaskSequencer_task(AbstractTaskSequencer& self, int index)
-{
-    return self.task(index);
-}
-#endif
-}
+} // namespace 
 
 namespace cnoid {
 
@@ -510,4 +500,4 @@ void exportPyTaskTypes(py::module& m)
         ;
 }
 
-}
+} // namespace cnoid

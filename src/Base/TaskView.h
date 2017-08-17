@@ -15,7 +15,15 @@ namespace cnoid {
 
 class TaskViewImpl;
 
-class CNOID_EXPORT TaskView : public View, public AbstractTaskSequencer
+/**
+   \note The AbstractTaskSequence class must be declared as base class before the View class
+   to avoid a crash when an AbstractTaskSequencer instance is passed to a Python function
+   bound by pybind11 and a function of it is called from Python. Pybind11 seems unable to handle
+   multiple inheritance C++ classes in this case due to the memory offset of the secondly delcared
+   base class members. By declaring a class as the first base class, the class members seem to be
+   handled correctly.
+*/
+class CNOID_EXPORT TaskView : public AbstractTaskSequencer, public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);

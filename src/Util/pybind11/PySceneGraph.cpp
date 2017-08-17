@@ -6,8 +6,8 @@
 #include "../SceneGraph.h"
 #include "../SceneProvider.h"
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
 namespace cnoid {
 
