@@ -28,8 +28,6 @@ Matrix3 Link_getOffsetRotation(Link& self) { return self.offsetRotation(); }
 
 }
 
-namespace cnoid 
-{
 PYBIND11_PLUGIN(Body)
 {
     py::module m("Body", "Body Python Module");
@@ -270,5 +268,3 @@ PYBIND11_PLUGIN(Body)
 
     return m.ptr();
 }
-
-}; // namespace cnoid

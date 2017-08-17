@@ -160,10 +160,6 @@ public:
     SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
         sigSimulationBodyListUpdated();
 
-    /*
-    virtual void setExternalForce(BodyItem* bodyItem, Link* link, const Vector6& f);
-    */
-
     /**
        @param point link local position to apply the force
        @param f linear force to apply in global coordinate

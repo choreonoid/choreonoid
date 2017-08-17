@@ -4,12 +4,16 @@
 
 #include <cnoid/PyUtil>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
+
+namespace cnoid {
 
 void exportBodyItem(py::module m);
 void exportItems(py::module m);
 void exportSimulationClasses(py::module m);
+
+}
 
 PYBIND11_PLUGIN(BodyPlugin)
 {

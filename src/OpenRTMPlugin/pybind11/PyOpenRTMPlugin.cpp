@@ -14,20 +14,22 @@
 
 #include <cnoid/PyUtil>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
 PYBIND11_PLUGIN(OpenRTMPlugin)
 {
     py::module m("OpenRTMPlugin", "OpenRTMPlugin Python Mpdule");
 
-    py::class_< RTCItem, RTCItemPtr, Item > rtcItemClass(m, "RTCItem");
+    py::module::import("cnoid.Base");
+
+    py::class_<RTCItem, RTCItemPtr, Item> rtcItemClass(m, "RTCItem");
     rtcItemClass
         .def("setModuleName", &RTCItem::setModuleName)
         .def("setPeriodicType", &RTCItem::setPeriodicType)
         .def("setPeriodicRate", &RTCItem::setPeriodicRate);
 
-    py::class_< BodyRTCItem, BodyRTCItemPtr, Item > bodyRTCItemClass(m, "BodyRTCItem");
+    py::class_<BodyRTCItem, BodyRTCItemPtr, Item> bodyRTCItemClass(m, "BodyRTCItem");
     bodyRTCItemClass
         .def("setControllerModule", &BodyRTCItem::setControllerModule)
         .def("setConfigMode", &BodyRTCItem::setConfigMode)

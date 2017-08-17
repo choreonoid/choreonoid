@@ -6,8 +6,10 @@
 #include "../WorldItem.h"
 #include <cnoid/PyBase>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
+
+namespace cnoid {
 
 void exportItems(py::module m)
 {
@@ -26,16 +28,18 @@ void exportItems(py::module m)
     
     py::class_<BodyMotionItem, BodyMotionItemPtr, AbstractMultiSeqItem>(m, "BodyMotionItem")
         .def(py::init<>())
-        .def("motion", [](BodyMotionItem& self){ return BodyMotionPtr(self.motion()); })
-        .def("jointPosSeqItem", [](BodyMotionItem& self){ return MultiValueSeqItemPtr(self.jointPosSeqItem()); })
+        .def("motion", (BodyMotionPtr(BodyMotionItem::*)()) &BodyMotionItem::motion)
+        .def("jointPosSeqItem", (MultiValueSeqItem*(BodyMotionItem::*)())&BodyMotionItem::jointPosSeqItem)
         .def("jointPosSeq", &BodyMotionItem::jointPosSeq)
-        .def("linkPosSeqItem", [](BodyMotionItem& self){ return MultiSE3SeqItemPtr(self.linkPosSeqItem()); })
+        .def("linkPosSeqItem", (MultiSE3SeqItem*(BodyMotionItem::*)())&BodyMotionItem::linkPosSeqItem)
         .def("linkPosSeq", &BodyMotionItem::linkPosSeq)
         .def("numExtraSeqItems", &BodyMotionItem::numExtraSeqItems)
-        .def("extraSeqKey", &BodyMotionItem::extraSeqKey, py::return_value_policy::reference)
-        .def("extraSeqItem", [](BodyMotionItem& self, int index) { return AbstractSeqItemPtr(self.extraSeqItem(index)); })
+        .def("extraSeqKey", &BodyMotionItem::extraSeqKey)
+        .def("extraSeqItem", (AbstractSeqItem*(BodyMotionItem::*)(int))&BodyMotionItem::extraSeqItem)
         .def("updateExtraSeqItems", &BodyMotionItem::updateExtraSeqItems)
         ;
 
     PyItemList<BodyMotionItem>(m, "BodyMotionItemList");
+}
+
 }

@@ -13,24 +13,21 @@
 #include <cnoid/PyBase>
 #include <cnoid/EigenTypes>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
+
+namespace cnoid {
 
 void exportSimulationClasses(py::module m)
 {
-    py::class_<SimulationBody, SimulationBodyPtr, Referenced>(m, "SimulationBody")
-        .def("bodyItem", [](SimulationBody& self) { return BodyItemPtr(self.bodyItem()); })
-        .def("body", [](SimulationBody& self) { return BodyPtr(self.body()); });
-
     py::class_<SimulatorItem, SimulatorItemPtr, Item> simulatorItemClass(m, "SimulatorItem");
 
     simulatorItemClass
-        .def_static("findActiveSimulatorItemFor", [](Item* item) {
-            return SimulatorItemPtr(SimulatorItem::findActiveSimulatorItemFor(item));
-        })
+        .def_static("findActiveSimulatorItemFor", &SimulatorItem::findActiveSimulatorItemFor)
         .def("worldTimeStep", &SimulatorItem::worldTimeStep)
         .def("setTimeStep", &SimulatorItem::setTimeStep)
-        .def("startSimulation", &SimulatorItem::startSimulation, py::arg("doReset")=true)
+        .def("startSimulation", &SimulatorItem::startSimulation)
+        .def("startSimulation", [](SimulatorItem& self){ return self.startSimulation(); })
         .def("stopSimulation", &SimulatorItem::stopSimulation)
         .def("pauseSimulation", &SimulatorItem::pauseSimulation)
         .def("restartSimulation", &SimulatorItem::restartSimulation)
@@ -47,8 +44,10 @@ void exportSimulationClasses(py::module m)
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
-        .def("setExternalForce", &SimulatorItem::setExternalForce,
-            py::arg("bodyItem"), py::arg("link"), py::arg("point"), py::arg("f"), py::arg("time")=0.0)
+        .def("setExternalForce", &SimulatorItem::setExternalForce)
+        .def("setExternalForce", [](SimulatorItem& self, BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f){
+                self.setExternalForce(bodyItem, link, point, f);
+            })
         .def("clearExternalForces", &SimulatorItem::clearExternalForces)
         .def("setForcedPosition", &SimulatorItem::setForcedPosition)
         .def("clearForcedPositions", &SimulatorItem::clearForcedPositions)
@@ -168,4 +167,6 @@ void exportSimulationClasses(py::module m)
     py::class_<SimpleControllerItem, SimpleControllerItemPtr, Item>(m, "SimpleControllerItem")
         .def(py::init<>())
         .def("setController", &SimpleControllerItem::setController);
+}
+
 }

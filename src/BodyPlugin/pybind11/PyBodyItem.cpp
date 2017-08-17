@@ -6,23 +6,19 @@
 #include <cnoid/BodyState>
 #include <cnoid/PyBase>
 
-namespace py = pybind11;
+using namespace std;
 using namespace cnoid;
+namespace py = pybind11;
 
-namespace {
-
-BodyItemPtr loadBodyItem(const std::string& filename) {
-    BodyItem* bodyItem = new BodyItem;
-    bodyItem->load(filename);
-    return bodyItem;
-}
-
-}
-
+namespace cnoid {
 
 void exportBodyItem(py::module m)
 {
-    m.def("loadBodyItem", loadBodyItem);
+    m.def("loadBodyItem", [](const string& filename) {
+            BodyItem* bodyItem = new BodyItem;
+            bodyItem->load(filename);
+            return bodyItem;
+        });
     
     py::class_<BodyItem, BodyItemPtr, Item> bodyItem(m, "BodyItem", py::multiple_inheritance());
 
@@ -30,14 +26,15 @@ void exportBodyItem(py::module m)
         .def(py::init<>())
         .def("loadModelFile", &BodyItem::loadModelFile)
         .def("setName", &BodyItem::setName)
-        .def("body", [](BodyItem& self){ return BodyPtr(self.body()); })
+        .def("body", &BodyItem::body)
         .def("isEditable", &BodyItem::isEditable)
         .def("moveToOrigin", &BodyItem::moveToOrigin)
         .def("setPresetPose", &BodyItem::setPresetPose)
-        .def("currentBaseLink", [](BodyItem& self){ return LinkPtr(self.currentBaseLink()); })
+        .def("currentBaseLink", &BodyItem::currentBaseLink)
         .def("setCurrentBaseLink", &BodyItem::setCurrentBaseLink)
-        .def("calcForwardKinematics", &BodyItem::calcForwardKinematics,
-                py::arg("calcVelocity")=false, py::arg("calcAcceleration")=false)
+        .def("calcForwardKinematics", &BodyItem::calcForwardKinematics)
+        .def("calcForwardKinematics", [](BodyItem& self, bool calcVelocity){ self.calcForwardKinematics(calcVelocity); })
+        .def("calcForwardKinematics", [](BodyItem& self){ self.calcForwardKinematics(); })
         .def("copyKinematicState", &BodyItem::copyKinematicState)
         .def("pasteKinematicState", &BodyItem::pasteKinematicState)
         .def("storeKinematicState", &BodyItem::storeKinematicState)
@@ -50,18 +47,26 @@ void exportBodyItem(py::module m)
         .def("undoKinematicState", &BodyItem::undoKinematicState)
         .def("redoKinematicState", &BodyItem::redoKinematicState)
         .def("sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
-        .def("notifyKinematicStateChange", (void (BodyItem::*)(bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
-            py::arg("requestFK")=false, py::arg("requestVelFK")=false, py::arg("requestAccFK")=false)
-        .def("notifyKinematicStateChange", (void (BodyItem::*)(Connection&, bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
-            py::arg("connectionToBlock"), py::arg("requestFK")=false, py::arg("requestVelFK")=false, py::arg("requestAccFK")=false)
+        .def("notifyKinematicStateChange", (void (BodyItem::*)(bool, bool, bool)) &BodyItem::notifyKinematicStateChange)
+        .def("notifyKinematicStateChange", [](BodyItem& self, bool requestFK, bool requestVelFK){
+                self.notifyKinematicStateChange(requestFK, requestVelFK); })
+        .def("notifyKinematicStateChange", [](BodyItem& self, bool requestFK){ self.notifyKinematicStateChange(requestFK); })
+        .def("notifyKinematicStateChange", [](BodyItem& self){ self.notifyKinematicStateChange(); })
+        .def("notifyKinematicStateChange", (void (BodyItem::*)(Connection&, bool, bool, bool)) &BodyItem::notifyKinematicStateChange)
+        .def("notifyKinematicStateChange", [](BodyItem& self, Connection& connectionToBlock, bool requestFK, bool requestVelFK){
+                self.notifyKinematicStateChange(connectionToBlock, requestFK, requestVelFK); })
+        .def("notifyKinematicStateChange", [](BodyItem& self, Connection& connectionToBlock, bool requestFK){
+                self.notifyKinematicStateChange(connectionToBlock, requestFK); })
+        .def("notifyKinematicStateChange", [](BodyItem& self, Connection& connectionToBlock){
+                self.notifyKinematicStateChange(connectionToBlock); })
         .def("enableCollisionDetection", &BodyItem::enableCollisionDetection)
         .def("isCollisionDetectionEnabled", &BodyItem::isCollisionDetectionEnabled)
         .def("enableSelfCollisionDetection", &BodyItem::enableSelfCollisionDetection)
         .def("isSelfCollisionDetectionEnabled", &BodyItem::isSelfCollisionDetectionEnabled)
         .def("clearCollisions", &BodyItem::clearCollisions)
-        .def("centerOfMass", &BodyItem::centerOfMass, py::return_value_policy::reference)
+        .def("centerOfMass", &BodyItem::centerOfMass)
         .def("doLegIkToMoveCm", &BodyItem::doLegIkToMoveCm)
-        .def("zmp", &BodyItem::zmp, py::return_value_policy::reference)
+        .def("zmp", &BodyItem::zmp)
         .def("setZmp", &BodyItem::setZmp)
         .def("setStance", &BodyItem::setStance)
         ;
@@ -80,4 +85,6 @@ void exportBodyItem(py::module m)
         .export_values();
 
     PyItemList<BodyItem>(m, "BodyItemList");
+}
+
 }
