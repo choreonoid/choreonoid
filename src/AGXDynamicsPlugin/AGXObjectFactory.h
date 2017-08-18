@@ -7,11 +7,14 @@ namespace cnoid{
 
 struct AGXSimulationDesc
 {
-    AGXSimulationDesc(){}
+    AGXSimulationDesc(){
+        enableAutoSleep = true;
+    }
     agx::UInt8 binResolution;
     agx::UInt  threshhold;
     agx::Vec3  gravity;
     agx::Real  timeStep;
+    agx::Bool  enableAutoSleep;
 };
 
 struct AGXMaterialDesc
@@ -93,6 +96,7 @@ struct AGXRigidBodyDesc
     agx::Vec3 c = agx::Vec3();            // center of mass(local)
     agx::MassProperties::AutoGenerateFlags genflags = agx::MassProperties::AutoGenerateFlags::AUTO_GENERATE_ALL;        //
     agx::String name;                    // name
+    agx::Bool   enableAutoSleep = true;
 };
 
 struct AGXGeometryDesc

@@ -30,6 +30,7 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
     sim->setTimeStep(desc.timeStep);
     sim->setUniformGravity(desc.gravity);
+    sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
 
@@ -81,6 +82,7 @@ agx::RigidBodyRef AGXObjectFactory::createRigidBody(const AGXRigidBodyDesc& desc
     rigid->getMassProperties()->setInertiaTensor(desc.I, false);
     rigid->setCmLocalTranslate(desc.c);
     rigid->setName(desc.name);
+    rigid->getAutoSleepProperties().setEnable(desc.enableAutoSleep);
     return rigid;
 }
 

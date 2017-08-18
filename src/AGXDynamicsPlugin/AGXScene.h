@@ -30,6 +30,10 @@ public:
     agx::ContactMaterialRef createContactMaterial(const AGXContactMaterialDesc& desc);
     void setCollisionPair(const unsigned& id1, const unsigned& id2, bool bOn);
     void setCollisionPair(const agx::Name& name1, const agx::Name& name2, bool bOn);
+    agx::Vec3 getGravity() const;
+    void setGravity(const agx::Vec3& g);
+    bool getEnableAutoSleep() const;
+    void setEnableAutoSleep(const bool& bOn);
     bool saveSceneToAGXFile();
 
 private:

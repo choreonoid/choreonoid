@@ -39,6 +39,7 @@ Item* AGXSimulatorItem::doDuplicate() const
 }
 
 void AGXSimulatorItem::doPutProperties(PutPropertyFunction & putProperty){
+    setAllLinkPositionOutputMode(true);
     SimulatorItem::doPutProperties(putProperty);
     impl->doPutProperties(putProperty);
 }

@@ -39,14 +39,14 @@ public:
     void pauseSimulation();
     void restartSimulation();
 
-    void setGravity(const Vector3& gravity);
+    void setGravity(const Vector3& g);
     Vector3 getGravity() const;
     bool saveSimulationToAGXFile();
 
-
 private:
     AGXSceneRef agxScene = nullptr;
-    Vector3 _gravity;
+    Vector3 _p_gravity;
+    bool    _p_isAutoSleep;
 };
 }
 #endif

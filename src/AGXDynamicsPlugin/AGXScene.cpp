@@ -96,6 +96,31 @@ void AGXScene::setCollisionPair(const agx::Name & name1, const agx::Name & name2
     getSimulation()->getSpace()->setEnablePair(name1, name2, bOn);
 }
 
+agx::Vec3 AGXScene::getGravity() const
+{
+    return getSimulation()->getUniformGravity();
+}
+
+void AGXScene::setGravity(const agx::Vec3 & g)
+{
+    getSimulation()->setUniformGravity(g);
+}
+
+bool AGXScene::getEnableAutoSleep() const
+{
+    return getSimulation()->getDynamicsSystem()->getAutoSleep()->getEnable();
+}
+
+void AGXScene::setEnableAutoSleep(const bool & bOn)
+{
+    getSimulation()->getDynamicsSystem()->getAutoSleep()->setEnable(bOn);
+    //agx::RigidBodyRefVector bodies = getSimulation()->getDynamicsSystem()->getRigidBodies();
+    //agx::RigidBodyRefVector::iterator it;
+    //for(it=bodies.begin(); it != bodies.end(); ++it){
+    //   it->get()->getAutoSleepProperties().setEnable(bOn);
+    //}
+}
+
 bool AGXScene::saveSceneToAGXFile()
 {
     if(!agxIO::writeFile("simulation.agx", getSimulation())) return false;

@@ -124,6 +124,8 @@ void AGXLink::setLinkStateToCnoid()
     const Vector3 c = orgLink->R() * orgLink->c();
     orgLink->v() = v0 - orgLink->w().cross(c);
 
+    //const agx::RigidBody::AutoSleepProperties& p = agxRigidBody->getAutoSleepProperties();
+    //std::cout << agxRigidBody->getName() << " : " << p.getEnable() << " " << p.getState() << std::endl;
 }
 
 int AGXLink::getIndex() const

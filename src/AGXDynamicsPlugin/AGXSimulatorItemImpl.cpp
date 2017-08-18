@@ -2,6 +2,7 @@
 #include "AGXSimulatorItem.h"
 #include <assert.h>
 #include <cnoid/EigenUtil>
+#include "gettext.h"
 
 using namespace std;
 
@@ -10,7 +11,8 @@ namespace cnoid {
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self) : self(self)
 {
     initialize();
-    _gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
+    _p_gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
+    _p_isAutoSleep = true;
 }
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self, const AGXSimulatorItemImpl& org) 
     : AGXSimulatorItemImpl(self) 
@@ -27,7 +29,12 @@ void AGXSimulatorItemImpl::initialize()
 
 void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
 {
-    putProperty(("Gravity"), str(_gravity), [&](const string& value){ return toVector3(value, _gravity); });
+    putProperty(_("Gravity"), str(_p_gravity), [&](const string& value){ return toVector3(value, _p_gravity); });
+    putProperty(_("AutoSleep"), _p_isAutoSleep, changeProperty(_p_isAutoSleep));
+    //putProperty(_("All link positions"), isAllLinkPositionOutputMode,
+    //        [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
+
+//     putProperty("Friction Model Type", frictionModelType, changeProperty(frictionModelType));
 //    putProperty(("Step mode"), stepMode, changeProperty(stepMode));
 //    putProperty(("Step mode"), "hoge");
 }
@@ -55,10 +62,11 @@ SimulationBody * AGXSimulatorItemImpl::createSimulationBody(Body * orgBody)
 bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     cout << "initializeSimulation" << endl;
-    const Vector3& g = getGravity();
+    const Vector3& g = _p_gravity;
     AGXSceneDesc sd;
     sd.simdesc.timeStep = self->worldTimeStep();
     sd.simdesc.gravity = agx::Vec3(g(0), g(1), g(2));
+    sd.simdesc.enableAutoSleep = _p_isAutoSleep;
     agxScene = AGXScene::create(sd);
 
     /* temporary code. will read material from choreonoid */
@@ -78,7 +86,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         AGXBody* body = static_cast<AGXBody*>(simBodies[i]);
         // Create rigidbody, geometry, constraints
         body->createBody();
-        body->setSensor(self->worldTimeStep(), _gravity);
+        body->setSensor(self->worldTimeStep(), g);
         agxScene->add(body);
         for(int j = 0; j < body->numAGXLinks(); ++j){
             body->setAGXMaterial(j, agxScene->getMaterial(m_def.name));   // will replace m_def.name to choreonoid material name
@@ -129,14 +137,15 @@ void AGXSimulatorItemImpl::restartSimulation()
     cout << "restartSimulation" << endl;
 }
 
-void AGXSimulatorItemImpl::setGravity(const Vector3& gravity)
+void AGXSimulatorItemImpl::setGravity(const Vector3& g)
 {
-    _gravity = gravity;
+    agxScene->setGravity(agx::Vec3(g(0), g(1), g(2)));
 }
 
 Vector3 AGXSimulatorItemImpl::getGravity() const
 {
-    return _gravity;
+    const agx::Vec3& g = agxScene->getGravity();
+    return Vector3(g.x(), g.y(), g.z());
 };
 
     bool AGXSimulatorItemImpl::saveSimulationToAGXFile()
