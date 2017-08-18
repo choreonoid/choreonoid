@@ -3,18 +3,17 @@
  */
 
 #include "../BulletSimulatorItem.h"
-#include <cnoid/Py3Util>
+#include <cnoid/PyUtil>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
-PYBIND11_PLUGIN(BulletPlugin)
+PYBIND11_MODULE(BulletPlugin, m)
 {
-    py::module m("BulletPlugin", "BulletPlugin Python Module");
+    m.doc() = "Choreonoid BulletPlugin module";
+
     /*!
      * @brief Provides following all item types.
      */
-    py::class_ < BulletSimulatorItem, BulletSimulatorItemPtr, SimulatorItem >(m, "BulletSimulatorItem");
-
-    return m.ptr();
+    py::class_<BulletSimulatorItem, BulletSimulatorItemPtr, SimulatorItem>(m, "BulletSimulatorItem");
 }
