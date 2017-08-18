@@ -9,17 +9,15 @@ using namespace cnoid;
 
 #ifdef CNOID_USE_PYBIND11
 
-PYBIND11_PLUGIN(PythonSimScriptPlugin)
+PYBIND11_MODULE(PythonSimScriptPlugin, m)
 {
-    pybind11::module m("PythonSimScriptPlugin", "PYthonSimScriptPlugin Python Module");
+    m.doc() = "Choreonoid PythonSimScriptPlugin module";
 
     pybind11::class_< PythonSimScriptItem, PythonSimScriptItemPtr, SimulationScriptItem >(m, "PythonSimScriptItem")
         .def(pybind11::init<>())
         .def("setScriptFilename", &PythonSimScriptItem::setScriptFilename);
 
     PyItemList<PythonSimScriptItem>(m, "PythonSimScriptItemList");
-
-    return m.ptr();
 };
 
 #else

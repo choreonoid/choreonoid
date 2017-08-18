@@ -5,14 +5,14 @@
 #include "../PoseSeqItem.h"
 #include <cnoid/PyUtil>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
-PYBIND11_PLUGIN(PoseSeqPlugin)
+PYBIND11_MODULE(PoseSeqPlugin, m)
 {
-    py::module m("PoseSeqPlugin", "PoseSeqPlugin Python Module");
+    m.doc() = "Choreonoid PoseSeqPlugin module";
+
+    py::module::import("cnoid.BodyPlugin");
 
     py::class_< PoseSeqItem, PoseSeqItemPtr, Item >(m, "PoseSeqItem");
-
-    return m.ptr();
 }

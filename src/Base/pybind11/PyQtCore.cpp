@@ -9,9 +9,9 @@
 
 namespace py = pybind11;
 
-PYBIND11_PLUGIN(QtCore)
+PYBIND11_MODULE(QtCore, m)
 {
-    py::module m("QtCore", "QtCore Python Module");
+    m.doc() = "Choreonoid QtCore module";
 
     py::class_<QObject>(m,"QObject")
         .def("blockSignals", &QObject::blockSignals)
@@ -41,6 +41,4 @@ PYBIND11_PLUGIN(QtCore)
         .def_static("singleShot", (void(*)(int, const QObject*, const char*)) &QTimer::singleShot)
 #endif
         ;
-
-    return m.ptr();
 }

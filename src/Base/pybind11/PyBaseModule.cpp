@@ -22,9 +22,9 @@ void exportPyPluginManager(py::module m);
 
 using namespace cnoid;
 
-PYBIND11_PLUGIN(Base)
+PYBIND11_MODULE(Base, m)
 {
-    py::module m("Base", "Base Python Module");
+    m.doc() = "Choreonoid Base module";
 
     py::module::import("cnoid.Util");
     py::module::import("cnoid.QtGui");
@@ -38,6 +38,4 @@ PYBIND11_PLUGIN(Base)
     exportPySceneTypes(m);
     exportPyLazyCaller(m);
     exportPyPluginManager(m);
-
-    return m.ptr();
 }

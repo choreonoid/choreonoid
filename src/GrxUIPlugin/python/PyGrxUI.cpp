@@ -118,9 +118,9 @@ namespace {
 
 #ifdef CNOID_USE_PYBIND11
 
-PYBIND11_PLUGIN(grxui)
+PYBIND11_MODULE(grxui, m)
 {
-    pybind11::module m("grxui", "grxui Python Module");
+    m.doc() = "Choreonoid GrxUI module";
 
     if(!GrxUIPlugin::isActive()){
         PyErr_SetString(PyExc_ImportError, "GrxUI Plugin is not loaded.");
@@ -143,8 +143,6 @@ PYBIND11_PLUGIN(grxui)
     cancelExceptionType = m.attr("GrxUICancelException");
     GrxUIMenuView::setCancelExceptionType(cancelExceptionType);
     mainModule.attr("__name__") = mainName;
-
-    return m.ptr();
 }
 
 #else 

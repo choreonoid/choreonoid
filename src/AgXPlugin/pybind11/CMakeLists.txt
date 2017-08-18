@@ -1,16 +1,8 @@
 
 # @author Shizuko Hattori
 
-return()
+set(target PyAgXPlugin)
 
-if(NOT ENABLE_PYTHON3)
-  return()
-endif()
+add_cnoid_python_module(${target} PyAgXPlugin.cpp)
 
-set(target Py3AgXPlugin)
-
-add_cnoid_python_module(${target}
-  PyAgXPlugin.cpp
-)
-
-target_link_libraries(${target} CnoidAgXPlugin CnoidPy3Base)
+target_link_libraries(${target} CnoidAgXPlugin CnoidPyBase)

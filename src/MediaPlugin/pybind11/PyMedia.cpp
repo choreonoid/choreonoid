@@ -6,29 +6,26 @@
 #include <cnoid/LazyCaller>
 #include <pybind11/pybind11.h>
 
-namespace py = pybind11;
+using namespace std;
 using namespace cnoid;
+namespace py = pybind11;
 
 namespace {
 
-void pyPlayAudioFileMain(const std::string& filename, double volumeRatio, bool& out_result)
+bool pyPlayAudioFile(const string& filename, double volumeRatio)
 {
 #ifndef WIN32
-    out_result = cnoid::playAudioFile(filename, volumeRatio);
+    bool result;
+    callSynchronously([&](){ result = cnoid::playAudioFile(filename, volumeRatio); });
 #endif
+    return result;
 }
     
-PYBIND11_PLUGIN(Media)
+PYBIND11_MODULE(MediaPlugin, m)
 {
-    py::module m("Media", "Media Python Module");
-
-    m.def("playAudioFile", [](const std::string& filename, double volumeRatio) {
-        bool result;
-        callSynchronously([&](){ pyPlayAudioFileMain(filename,volumeRatio, result); });
-        return result;
-    }, py::arg("filename"), py::arg("volumeRation")=-1.0 );
-
-    return m.ptr();
+    m.doc() = "Choreonoid MediaPlugin module";
+    m.def("playAudioFile", pyPlayAudioFile);
+    m.def("playAudioFile", [](const string& filename){ pyPlayAudioFile(filename, -1.0); });
 }
 
 }

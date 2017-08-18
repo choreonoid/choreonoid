@@ -1,3 +1,3 @@
 set(target PyMedia)
-add_cnoid_python_module(${target} PyMedia.cpp)
-target_link_libraries(${target} CnoidMediaPlugin CnoidPyBase)
+add_cnoid_python_module(${target} PyMediaPlugin.cpp)
+target_link_libraries(${target} CnoidMediaPlugin CnoidPython)

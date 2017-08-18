@@ -22,9 +22,9 @@ void exportPyTaskTypes(py::module& m);
 
 }
 
-PYBIND11_PLUGIN(Util)
+PYBIND11_MODULE(Util, m)
 {
-    py::module m("Util", "Python Utility Module");
+    m.doc() = "Choreonoid Util module";
 
     py::class_<Referenced, ReferencedPtr>(m, "Referenced");
 
@@ -48,6 +48,4 @@ PYBIND11_PLUGIN(Util)
         .def("setPositiveValue", &FloatingNumberString::setPositiveValue)
         .def("setNonNegativeValue", &FloatingNumberString::setNonNegativeValue)
         .def("value", &FloatingNumberString::value);
-
-    return m.ptr();
 }

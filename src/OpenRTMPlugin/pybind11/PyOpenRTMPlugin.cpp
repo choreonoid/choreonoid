@@ -17,9 +17,9 @@
 using namespace cnoid;
 namespace py = pybind11;
 
-PYBIND11_PLUGIN(OpenRTMPlugin)
+PYBIND11_MODULE(OpenRTMPlugin, m)
 {
-    py::module m("OpenRTMPlugin", "OpenRTMPlugin Python Mpdule");
+    m.doc() = "Choreonoid OpenRTMPlugin module";
 
     py::module::import("cnoid.Base");
 
@@ -49,6 +49,4 @@ PYBIND11_PLUGIN(OpenRTMPlugin)
         .value("CHOREONOID_EXECUTION_CONTEXT", RTCItem::PERIODIC_TYPE::CHOREONOID_EXECUTION_CONTEXT)
         .value("N_PERIODIC_TYPE", RTCItem::PERIODIC_TYPE::N_PERIODIC_TYPE)
         .export_values();
-
-    return m.ptr();
 }

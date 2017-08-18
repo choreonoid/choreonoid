@@ -28,9 +28,9 @@ Matrix3 Link_getOffsetRotation(Link& self) { return self.offsetRotation(); }
 
 }
 
-PYBIND11_PLUGIN(Body)
+PYBIND11_MODULE(Body, m)
 {
-    py::module m("Body", "Body Python Module");
+    m.doc() = "Choreonoid Body module";
 
     py::module::import("cnoid.Util");
 
@@ -265,6 +265,4 @@ PYBIND11_PLUGIN(Body)
         .def_property("T_local", [](Device& self) ->Position { return self.T_local(); },
                       [](Device& self, const Position& T) { self.T_local() = T.matrix(); })
         ;
-
-    return m.ptr();
 }

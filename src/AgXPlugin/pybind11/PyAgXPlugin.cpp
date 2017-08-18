@@ -4,15 +4,14 @@
 
 
 #include "../AgXSimulatorItem.h"
-#include <cnoid/Py3Base>
+#include <cnoid/PyBase>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
-namespace cnoid
+PYBIND11_MODULE(AgXPlugin, m)
 {
-PYBIND11_PLUGIN(AgXPlugin) {
-    py::module m("AgXPlugin", "AgXPlugin Python Module");
+    m.doc() = "Choreonoid AgXPlugin module";
 
     py::class_<AgXSimulatorItem, SimulatorItem, AgXSimulatorItemPtr> agxSimulatorItem(m, " AgXSimulatorItem");
 
@@ -65,10 +64,4 @@ PYBIND11_PLUGIN(AgXPlugin) {
 
     py::implicitly_convertible<AgXSimulatorItem, SimulatorItem>();
     PyItemList<AgXSimulatorItem>(m, "AgXSimulatorItemList");
-
-    return m.ptr();
-
 }
-}
-
-

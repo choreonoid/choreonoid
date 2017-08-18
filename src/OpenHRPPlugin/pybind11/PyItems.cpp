@@ -8,9 +8,9 @@
 using namespace cnoid;
 namespace py = pybind11;
 
-PYBIND11_PLUGIN(OpenHRP31Plugin)
+PYBIND11_MODULE(OpenHRP31Plugin, m)
 {
-    py::module m("OpenHRP31Plugin", "OpenHRP32Plugin Python Module");
+    m.doc() = "Choreonoid OpenHRP3Plugin module";
 
     py::module::import("cnoid.Base");
     

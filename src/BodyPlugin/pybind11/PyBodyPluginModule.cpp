@@ -15,9 +15,9 @@ void exportSimulationClasses(py::module m);
 
 }
 
-PYBIND11_PLUGIN(BodyPlugin)
+PYBIND11_MODULE(BodyPlugin, m)
 {
-    py::module m("BodyPlugin", "BodyPlugin Python Module");
+    m.doc() = "Choreonoid BodyPlugin module";
 
     py::module::import("cnoid.Base");
     py::module::import("cnoid.Body");
@@ -25,6 +25,6 @@ PYBIND11_PLUGIN(BodyPlugin)
     exportBodyItem(m);
     exportItems(m);
     exportSimulationClasses(m);
-
-    return m.ptr();
 }
+
+

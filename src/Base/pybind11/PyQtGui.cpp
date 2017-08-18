@@ -9,9 +9,9 @@
 
 namespace py = pybind11;
 
-PYBIND11_PLUGIN(QtGui)
+PYBIND11_MODULE(QtGui, m)
 {
-    py::module m("QtGui", "QtGui Python Module");
+    m.doc() = "Choreonoid QtGui module";
 
     py::module::import("cnoid.QtCore");
 
@@ -97,6 +97,4 @@ PYBIND11_PLUGIN(QtGui)
     
     py::class_<QToolButton, QAbstractButton>(m, "QToolButton")
         .def("autoRaise", &QToolButton::autoRaise);
-
-    return m.ptr();
 }

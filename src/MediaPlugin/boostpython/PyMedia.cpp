@@ -33,7 +33,7 @@ bool pyPlayAudioFile2(const std::string& filename, double volumeRatio)
 }
 
 
-BOOST_PYTHON_MODULE(Media)
+BOOST_PYTHON_MODULE(MediaPlugin)
 {
     python::def("playAudioFile", pyPlayAudioFile1);
     python::def("playAudioFile", pyPlayAudioFile2);

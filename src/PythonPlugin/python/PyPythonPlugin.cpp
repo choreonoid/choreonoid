@@ -9,9 +9,9 @@
 
 namespace py = pybind11;
 
-PYBIND11_PLUGIN(PythonPlugin)
+PYBIND11_MODULE(PythonPlugin, m)
 {
-    py::module m("PythonPlugin", "PythonPlugin Python Module");
+    m.doc() = "Choreonoid PythonPlugin module";
 
     // define the ExitException class which inherits the built-in Exception class
     py::module mainModule = py::module::import("__main__");
@@ -21,8 +21,6 @@ PYBIND11_PLUGIN(PythonPlugin)
           mainModule.attr("__dict__"), m.attr("__dict__"));
     //python object::ExitException = python::scope().attr("ExitException");
     mainModule.attr("__name__") = mainName;
-
-    return m.ptr();
 }
 
 #else
