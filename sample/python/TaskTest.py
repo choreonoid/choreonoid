@@ -19,10 +19,6 @@ class TestTask(Task):
 
     def storeState(self, sequencer, archive):
         self.mv.putln("TestTask.storeState")
-        #self.mv.putln("sequencer: {0}".format(sequencer))
-        #global seq
-        #seq = sequencer
-        self.mv.putln("Phase index is {0}".format(sequencer.currentPhaseIndex()))
         
     def restoreState(self, sequencer, archive):
         self.mv.putln("TestTask.restoreState")
