@@ -3,18 +3,16 @@
 */
 
 #include "../ODESimulatorItem.h"
-#include <cnoid/Py3Base>
+#include <cnoid/PyBase>
 
-namespace py = pybind11;
 using namespace cnoid;
+namespace py = pybind11;
 
-PYBIND11_PLUGIN(ODEPlugin)
+PYBIND11_MODULE(ODEPlugin, m)
 {
-    py::module::import("cnoid.BodyPlugin");
+    m.doc() = "Choreonoid ODEPlugin module";
 
-    py::module m("ODEPlugin", "ODEPlugin Python Module");
-
-    py::class_< ODESimulatorItem, ODESimulatorItemPtr, SimulatorItem > odeSimulatorItemScope (m,"ODESimulatorItem");
+    py::class_<ODESimulatorItem, ODESimulatorItemPtr, SimulatorItem> odeSimulatorItemScope (m,"ODESimulatorItem");
 
     odeSimulatorItemScope
         .def(py::init<>())
@@ -40,7 +38,4 @@ PYBIND11_PLUGIN(ODEPlugin)
         .export_values();
 
     PyItemList<ODESimulatorItem>(m, "ODESimulatorItemList");
-
-    return m.ptr();
 }
-
