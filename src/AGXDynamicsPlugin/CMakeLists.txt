@@ -31,7 +31,6 @@ set(target CnoidAGXDynamicsPlugin)
 
 set(sources
   AGXBody.cpp
-  #AGXLinkBody.cpp
   AGXObjectFactory.cpp
   AGXScene.cpp
   AGXDynamicsPlugin.cpp
@@ -42,7 +41,6 @@ set(sources
 set(headers
   AGXBody.h
   AGXInclude.h
-  #AGXLinkBody.h
   AGXObjectFactory.h
   AGXScene.h
   AGXSimulatorItem.h
@@ -59,3 +57,6 @@ if(NOT compile_flags)
 endif()
 set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags} -std=c++11 -msse3")
 apply_common_setting_for_plugin(${target} "${headers}")
+
+add_subdirectory(AGXSubSimulator)
+

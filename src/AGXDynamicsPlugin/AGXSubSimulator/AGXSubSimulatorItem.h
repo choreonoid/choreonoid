@@ -9,7 +9,6 @@
 namespace cnoid {
 
 class AGXSimulatorItem;
-typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
 
 //class CNOID_EXPORT AGXSubSimulatorItem : public SubSimulatorItem
 class AGXSubSimulatorItem : public SubSimulatorItem
@@ -29,7 +28,7 @@ protected:
 //
 private:
     SimulatorItem* simulatorItem;
-    AGXSimulatorItemPtr agxSimulatorItem;
+    AGXSimulatorItem* agxSimulatorItem;
    void initialize();
 };
 typedef ref_ptr<AGXSubSimulatorItem> AGXSubSimulatorItemPtr;

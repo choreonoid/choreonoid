@@ -8,7 +8,6 @@ class AGXSubSimulatorPlugin : public Plugin
 public:
 
     AGXSubSimulatorPlugin() : Plugin("AGXSubSimulator") {
-        require("Body");
         require("AGXDynamics");
     }
 
@@ -17,6 +16,5 @@ public:
         return true;
     }
 };
-
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(AGXSubSimulatorPlugin);
