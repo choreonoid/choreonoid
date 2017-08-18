@@ -4,8 +4,6 @@
 
 #include <boost/python.hpp>
 
-using namespace cnoid;
-
 namespace cnoid {
 
 void exportPyQtExTypes();
@@ -19,6 +17,8 @@ void exportPyLazyCaller();
 void exportPyPluginManager();
 
 }
+
+using namespace cnoid;
 
 BOOST_PYTHON_MODULE(Base)
 {

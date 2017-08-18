@@ -32,7 +32,6 @@ void Link_set_translation(Link& self, const Vector3& p) { self.translation() = p
 Matrix3 Link_get_rotation(Link& self) { return self.rotation(); }
 void Link_set_rotation(Link& self, const Matrix3& R) { self.rotation() = R; }
 Position Link_get_Tb(Link& self) { return self.Tb(); }
-void Link_set_Tb(Link& self, const Position& T) { self.Tb() = T; }
 Vector3 Link_get_offsetTranslation(Link& self) { return self.offsetTranslation(); }
 Matrix3 Link_get_offsetRotation(Link& self) { return self.offsetRotation(); }
 double Link_get_q(Link& self) { return self.q(); }
@@ -147,7 +146,7 @@ BOOST_PYTHON_MODULE(Body)
             .add_property("R", Link_get_rotation, Link_set_rotation)
             .def("rotation", Link_get_rotation)
             .def("setRotation", Link_set_rotation)
-            .add_property("Tb", Link_get_Tb, Link_set_Tb)
+            .add_property("Tb", Link_get_Tb)
             .def("b", Link_get_offsetTranslation)
             .def("offsetTranslation", Link_get_offsetTranslation)
             .add_property("Rb", Link_get_offsetRotation)

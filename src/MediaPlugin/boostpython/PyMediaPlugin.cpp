@@ -6,8 +6,8 @@
 #include <cnoid/LazyCaller>
 #include <boost/python.hpp>
 
-namespace python = boost::python;
 using namespace cnoid;
+namespace python = boost::python;
 
 namespace {
 
