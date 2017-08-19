@@ -13,7 +13,25 @@
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, cnoid::ref_ptr<T>, true);
 
-namespace pybind11 { namespace detail {
+namespace pybind11 {
+
+class scoped_gil_release
+{
+    PyThreadState* state;
+    scoped_gil_release(const scoped_gil_release& org){ }
+    scoped_gil_release& operator=(const scoped_gil_release& org){ }
+public:
+    scoped_gil_release(){
+        state = PyEval_SaveThread();
+    }
+    ~scoped_gil_release(){
+        PyEval_RestoreThread(state);
+    }
+};
+
+typedef call_guard<scoped_gil_release> release_gil;
+
+namespace detail {
 
     template<> struct type_caster<cnoid::Position> {
     public:
@@ -66,6 +84,6 @@ namespace pybind11 { namespace detail {
             return  pybind11::cast(&retval, pybind11::return_value_policy::reference_internal).inc_ref();
         }
     };
-}}
+}} // namespace pybind11::detail
 
 #endif
