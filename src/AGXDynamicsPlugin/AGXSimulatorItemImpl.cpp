@@ -12,7 +12,7 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self) : self(self
 {
     initialize();
     _p_gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
-    _p_isAutoSleep = true;
+    _p_isAutoSleep = false;
 }
 AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self, const AGXSimulatorItemImpl& org) 
     : AGXSimulatorItemImpl(self) 
