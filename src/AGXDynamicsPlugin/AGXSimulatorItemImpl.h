@@ -9,8 +9,6 @@
 
 namespace cnoid {
 
-const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
-
 class AGXSimulatorItem;
 typedef ref_ptr<AGXSimulatorItem> AGXSimulatorItemPtr;
 
@@ -46,7 +44,10 @@ public:
 private:
     AGXSceneRef agxScene = nullptr;
     Vector3 _p_gravity;
-    bool    _p_isAutoSleep;
+    bool    _p_enableContactReduction;
+    int     _p_contactReductionBinResolution;
+    int     _p_contactReductionThreshhold;
+    bool    _p_enableAutoSleep;
 };
 }
 #endif

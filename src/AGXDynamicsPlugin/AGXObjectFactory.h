@@ -5,15 +5,22 @@
 
 namespace cnoid{
 
+const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
+
 struct AGXSimulationDesc
 {
     AGXSimulationDesc(){
-        enableAutoSleep = true;
+        gravity = agx::Vec3(0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION);
+        enableContactReduction = true;
+        contactReductionBinResolution = 2;
+        contactReductionThreshhold = 12;
+        enableAutoSleep = false;
     }
-    agx::UInt8 binResolution;
-    agx::UInt  threshhold;
-    agx::Vec3  gravity;
     agx::Real  timeStep;
+    agx::Vec3  gravity;
+    agx::Bool  enableContactReduction;
+    agx::UInt8 contactReductionBinResolution;
+    agx::UInt  contactReductionThreshhold;
     agx::Bool  enableAutoSleep;
 };
 
@@ -68,6 +75,8 @@ struct AGXContactMaterialDesc
         frictionDirection = agx::ContactMaterial::FrictionDirection::BOTH_PRIMARY_AND_SECONDARY;
         frictionModelType = AGXFrictionModelType::DEFAULT;
         solveType =  agx::FrictionModel::SolveType::SPLIT;
+        contactReductionMode = agx::ContactMaterial::ContactReductionMode::REDUCE_GEOMETRY;
+        contactReductionBinResolution = 0;  // Use default value from space
     }
     agx::String nameA;
     agx::String nameB;
@@ -81,6 +90,8 @@ struct AGXContactMaterialDesc
     agx::ContactMaterial::FrictionDirection frictionDirection;
     AGXFrictionModelType frictionModelType;
     agx::FrictionModel::SolveType solveType;
+    agx::ContactMaterial::ContactReductionMode contactReductionMode;
+    agx::UInt8 contactReductionBinResolution;
 };
 
 struct AGXRigidBodyDesc

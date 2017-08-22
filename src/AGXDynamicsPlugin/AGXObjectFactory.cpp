@@ -30,6 +30,9 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
     sim->setTimeStep(desc.timeStep);
     sim->setUniformGravity(desc.gravity);
+    sim->getSpace()->setEnableContactReduction(desc.enableContactReduction);
+    sim->getSpace()->setContactReductionBinResolution(desc.contactReductionBinResolution);
+    sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
     return sim;
 }
@@ -167,6 +170,8 @@ agx::Bool AGXObjectFactory::setContactMaterialParam(agx::ContactMaterialRef cons
     cm->setFrictionCoefficient(desc.friction);
     cm->setAdhesion(desc.adhesionForce, desc.adhesivOverlap);
     cm->setSurfaceViscosity(desc.surfaceViscosity, desc.frictionDirection);
+    cm->setContactReductionMode(desc.contactReductionMode);
+    cm->setContactReductionBinResolution(desc.contactReductionBinResolution);
 
     // Create friction model
     if(desc.frictionModelType != AGXFrictionModelType::DEFAULT){
