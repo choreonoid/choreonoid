@@ -44,6 +44,7 @@ public:
 private:
     AGXSceneRef agxScene = nullptr;
     Vector3 _p_gravity;
+    int     _p_numThreads;
     bool    _p_enableContactReduction;
     int     _p_contactReductionBinResolution;
     int     _p_contactReductionThreshhold;

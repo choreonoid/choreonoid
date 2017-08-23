@@ -14,6 +14,7 @@ AGXSimulatorItemImpl::AGXSimulatorItemImpl(AGXSimulatorItemPtr self) : self(self
     AGXSimulationDesc simDesc;
     const agx::Vec3& g = simDesc.gravity;
     _p_gravity = Vector3(g.x(), g.y(), g.z());
+    _p_numThreads = simDesc.numThreads;
     _p_enableContactReduction = simDesc.enableContactReduction;
     _p_contactReductionBinResolution = simDesc.contactReductionBinResolution;
     _p_contactReductionThreshhold = simDesc.contactReductionThreshhold;
@@ -32,6 +33,7 @@ void AGXSimulatorItemImpl::initialize(){}
 void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
 {
     putProperty(_("Gravity"), str(_p_gravity), [&](const string& value){ return toVector3(value, _p_gravity); });
+    putProperty(_("NumThreads"), _p_numThreads, changeProperty(_p_numThreads));
     putProperty(_("ContactReduction"), _p_enableContactReduction, changeProperty(_p_enableContactReduction));
     putProperty(_("ContactReductionBinResolution"), _p_contactReductionBinResolution, changeProperty(_p_contactReductionBinResolution));
     putProperty(_("ContactReductionThreshhold"), _p_contactReductionThreshhold, changeProperty(_p_contactReductionThreshhold));
@@ -71,6 +73,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     AGXSceneDesc sd;
     sd.simdesc.timeStep = self->worldTimeStep();
     sd.simdesc.gravity = agx::Vec3(g(0), g(1), g(2));
+    sd.simdesc.numThreads = _p_numThreads;
     sd.simdesc.enableContactReduction = _p_enableContactReduction;
     sd.simdesc.contactReductionBinResolution = _p_contactReductionBinResolution;
     sd.simdesc.contactReductionThreshhold = _p_contactReductionThreshhold;

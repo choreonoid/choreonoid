@@ -28,6 +28,7 @@ agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxC
 agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc & desc)
 {
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
+    agx::setNumThreads(desc.numThreads);
     sim->setTimeStep(desc.timeStep);
     sim->setUniformGravity(desc.gravity);
     sim->getSpace()->setEnableContactReduction(desc.enableContactReduction);

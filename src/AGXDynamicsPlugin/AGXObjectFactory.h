@@ -10,12 +10,15 @@ const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 struct AGXSimulationDesc
 {
     AGXSimulationDesc(){
+        numThreads = 1;
+        timeStep = 0.0167;
         gravity = agx::Vec3(0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION);
         enableContactReduction = true;
         contactReductionBinResolution = 2;
         contactReductionThreshhold = 12;
         enableAutoSleep = false;
     }
+    agx::Int   numThreads;
     agx::Real  timeStep;
     agx::Vec3  gravity;
     agx::Bool  enableContactReduction;
