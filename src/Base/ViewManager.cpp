@@ -3,6 +3,7 @@
 */
 
 #include "ViewManager.h"
+#include "PluginManager.h"
 #include "MenuManager.h"
 #include "MainWindow.h"
 #include "ViewArea.h"
@@ -36,6 +37,8 @@ Signal<void(View* view)> sigViewRemoved_;
 
 class ViewInfo;
 typedef std::shared_ptr<ViewInfo> ViewInfoPtr;
+
+typedef map<ViewInfo*, vector<View*>> ViewInfoToViewsMap;
 
 class InstanceInfo;
 typedef std::shared_ptr<InstanceInfo> InstanceInfoPtr;
@@ -726,11 +729,13 @@ bool ViewManager::storeViewStates(ArchivePtr archive, const std::string& key)
 
 
 namespace {
+
 struct ViewState {
     View* view;
     ArchivePtr state;
     ViewState(View* view, ArchivePtr state) : view(view), state(state) { }
 };
+
 }
 
 
@@ -748,23 +753,72 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 }
 
 
+static View* restoreView(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
+{
+    View* view = 0;
+    string instanceName;
+                    
+    if(!archive->read("name", instanceName)){
+        view = ViewManager::getOrCreateView(moduleName, className);
+    } else {
+        // get one of the view instances having the instance name, or create a new instance.
+        // Different instances are assigned even if there are instances with the same name in the archive
+        ViewInfo* info = findViewInfo(moduleName, className);
+        if(info){
+            vector<View*>* remainingViews;
+
+            auto p = remainingViewsMap.find(info);
+            if(p != remainingViewsMap.end()){
+                remainingViews = &p->second;
+            } else {
+                remainingViews = &remainingViewsMap[info];
+                InstanceInfoList& instances = info->instances;
+                remainingViews->reserve(instances.size());
+                InstanceInfoList::iterator q = instances.begin();
+                if(info->hasDefaultInstance() && q != instances.end()){
+                    ++q;
+                }
+                while(q != instances.end()){
+                    remainingViews->push_back((*q++)->view);
+                }
+            }
+            for(vector<View*>::iterator q = remainingViews->begin(); q != remainingViews->end(); ++q){
+                if((*q)->name() == instanceName){
+                    view = *q;
+                    remainingViews->erase(q);
+                    break;
+                }
+            }
+            if(!view){
+                if(!info->isSingleton() || info->instances.empty()){
+                    view = info->createView(instanceName, true);
+                } else {
+                    MessageView::instance()->putln(
+                        MessageView::ERROR,
+                        boost::format(
+                            _("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
+                        % instanceName % info->className());
+                }
+            }
+        }
+    }
+
+    return view;
+}
+
+
 void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo)
 {
-    MessageView* mv = MessageView::instance();
-
-    typedef map<ViewInfo*, vector<View*> > ViewsMap;
-    ViewsMap remainingViewsMap;
-        
     Listing* viewList = archive->findListing(key);
     
     if(viewList->isValid() && !viewList->empty()){
 
+        ViewInfoToViewsMap remainingViewsMap;
         vector<ViewState>* viewsToRestoreState = new vector<ViewState>();        
         out_viewStateInfo.data = viewsToRestoreState;
         int id;
         string moduleName;
         string className;
-        string instanceName;
         
         for(int i=0; i < viewList->size(); ++i){
             Archive* viewArchive = dynamic_cast<Archive*>(viewList->at(i)->toMapping());
@@ -775,59 +829,27 @@ void ViewManager::restoreViews(ArchivePtr archive, const std::string& key, ViewM
                     viewArchive->read("class", className);
             
                 if(isHeaderValid){
-                    View* view = 0;
-                    if(!viewArchive->read("name", instanceName)){
-                        view = getOrCreateView(moduleName, className);
-                    } else {
-                        // get one of the view instances having the instance name, or create a new instance.
-                        // Different instances are assigned even if there are instances with the same name in the archive
-                        ViewInfo* info = findViewInfo(moduleName, className);
-                        if(info){
-                            vector<View*>* remainingViews;
-                            ViewsMap::iterator p = remainingViewsMap.find(info);
-                            if(p != remainingViewsMap.end()){
-                                remainingViews = &p->second;
-                            } else {
-                                remainingViews = &remainingViewsMap[info];
-                                InstanceInfoList& instances = info->instances;
-                                remainingViews->reserve(instances.size());
-                                InstanceInfoList::iterator q = instances.begin();
-                                if(info->hasDefaultInstance() && q != instances.end()){
-                                    ++q;
-                                }
-                                while(q != instances.end()){
-                                    remainingViews->push_back((*q++)->view);
-                                }
-                            }
-                            for(vector<View*>::iterator q = remainingViews->begin(); q != remainingViews->end(); ++q){
-                                if((*q)->name() == instanceName){
-                                    view = *q;
-                                    remainingViews->erase(q);
-                                    break;
-                                }
-                            }
-                            if(!view){
-                                if(!info->isSingleton() || info->instances.empty()){
-                                    view = info->createView(instanceName, true);
-                                } else {
-                                    mv->putln(MessageView::ERROR,
-                                              boost::format(_("A singleton view \"%1%\" of the %2% type cannot be created because its singleton instance has already been created."))
-                                              % instanceName % info->className());
-                                }
-                            }
-                        }
-                    }
-                    if(view){
-                        archive->registerViewId(view, id);
+                    const char* actualModuleName = PluginManager::instance()->guessActualPluginName(moduleName);
+                    if(!actualModuleName){
+                        MessageView::instance()->putln(
+                            MessageView::ERROR,
+                            boost::format(_("The \"%1%\" plugin for \"%2%\" is not found. The view cannot be restored."))
+                            % moduleName % className);
                         
-                        ArchivePtr state = viewArchive->findSubArchive("state");
-                        if(state->isValid()){
-                            state->inheritSharedInfoFrom(*archive);
-                            viewsToRestoreState->push_back(ViewState(view, state));
-                        }
+                    } else {
+                        View* view = restoreView(viewArchive, actualModuleName, className, remainingViewsMap);
+                        if(view){
+                            archive->registerViewId(view, id);
+                        
+                            ArchivePtr state = viewArchive->findSubArchive("state");
+                            if(state->isValid()){
+                                state->inheritSharedInfoFrom(*archive);
+                                viewsToRestoreState->push_back(ViewState(view, state));
+                            }
 
-                        if(viewArchive->get("mounted", false)){
-                            mainWindow->viewArea()->addView(view);
+                            if(viewArchive->get("mounted", false)){
+                                mainWindow->viewArea()->addView(view);
+                            }
                         }
                     }
                 }
