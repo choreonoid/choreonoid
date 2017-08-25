@@ -5,8 +5,8 @@
 #ifndef CNOID_UTIL_PYSIGNAL_H
 #define CNOID_UTIL_PYSIGNAL_H
 
-#include "../Signal.h"
 #include "PyUtil.h"
+#include "../Signal.h"
 #include <cnoid/PythonUtil>
 #include <boost/type_traits.hpp>
 
@@ -134,7 +134,6 @@ public:
 
 } // namespace signal_private
 
-
 template<
     typename Signature, 
     typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
@@ -146,21 +145,17 @@ class PySignal : public signal_private::py_signal_impl<
     typedef SignalProxy<Signature, Combiner> SignalProxyType;
     typedef signal_private::py_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
     
-    static Connection connect(SignalType& self, pybind11::object func){
-        return self.connect(typename base_type::caller(func));
-    }
-    static Connection connectProxy(SignalProxyType& self, pybind11::object func){
-        return self.connect(typename base_type::caller(func));
-    }
 public:
     PySignal(pybind11::module& m, const std::string& name)
     {
         pybind11::class_<SignalType>(m, name.c_str())
-            .def("connect", &PySignal::connect);
+            .def("connect", [](SignalType& self, pybind11::object func){
+                    return self.connect(typename base_type::caller(func)); });
 
         pybind11::class_<SignalProxyType>(m, (name + "Proxy").c_str())
             .def(pybind11::init<const SignalProxyType&>())
-            .def("connect", &PySignal::connectProxy);
+            .def("connect", [](SignalProxyType& self, pybind11::object func){
+                    return self.connect(typename base_type::caller(func)); });
     }
 };
 

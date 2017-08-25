@@ -3,11 +3,10 @@
   @author Shin'ichiro Nakaoka
  */
 
+#include "PyUtil.h"
 #include "../Task.h"
 #include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
-#include "PyUtil.h"
-#include <boost/ref.hpp>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include <set>
@@ -230,32 +229,17 @@ void exportPyTaskTypes(py::module& m)
         .def("setCommandLinkAutomatic", &TaskProc::setCommandLinkAutomatic)
         .def("executeCommand", &TaskProc::executeCommand)
         .def("wait", &TaskProc::wait)
-        .def("waitForCommandToFinish", [](TaskProc& self, double timeout) {
-            bool ret;
-            Py_BEGIN_ALLOW_THREADS
-            ret = self.waitForCommandToFinish(timeout);
-            Py_END_ALLOW_THREADS
-            return ret;
-        }, py::arg("timeout")=0.0)
-        .def("waitForCommandToFinish", [](TaskProc& self, Connection connectionToDisconnect, double timeout) {
-            bool ret;
-            Py_BEGIN_ALLOW_THREADS
-            ret = self.waitForCommandToFinish(connectionToDisconnect, timeout);
-            Py_END_ALLOW_THREADS
-            return ret;
-        }, py::arg("connectionToDisconnect"), py::arg("timeout")=0.0)
-        .def("notifyCommandFinish", &TaskProc:: notifyCommandFinish, py::arg("isCompleted")=true)
-        .def("notifyCommandFinish_true", &TaskProc:: notifyCommandFinish, py::arg("isCompleted")=true)
-        .def("waitForSignal", [](py::object self, py::object signalProxy, double timeout){
-            py::object notifyCommandFinish = self.attr("notifyCommandFinish")(true);
-            py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-            return self.attr("waitForCommandToFinish")(connection, timeout).cast<bool>();
-        }, py::arg("signalProxy"), py::arg("timeout")=0.0)
-        .def("waitForBooleanSignal", [](py::object self, py::object signalProxy, double timeout){
-            py::object notifyCommandFinish = self.attr("notifyCommandFinish")();
-            py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-            return self.attr("waitForCommandToFinish")(connection, timeout).cast<bool>();
-        }, py::arg("signalProxy"), py::arg("timeout")=0.0)
+        .def("waitForCommandToFinish", (bool(TaskProc::*)(double)) &TaskProc::waitForCommandToFinish, py::release_gil())
+        .def("waitForCommandToFinish", [](TaskProc& self){ return self.waitForCommandToFinish(); }, py::release_gil())
+        .def("waitForCommandToFinish", (bool(TaskProc::*)(Connection, double)) &TaskProc::waitForCommandToFinish, py::release_gil())
+        .def("notifyCommandFinish", &TaskProc:: notifyCommandFinish)
+        .def("notifyCommandFinish", [](TaskProc& self){ self.notifyCommandFinish(); })
+        .def("waitForSignal", &TaskProc::waitForSignal<void()>, py::release_gil())
+        .def("waitForSignal", [](TaskProc& self, SignalProxy<void()> signalProxy){
+                return self.waitForSignal(signalProxy); }, py::release_gil())
+        .def("waitForBooleanSignal", &TaskProc::waitForBooleanSignal<void(bool)>, py::release_gil())
+        .def("waitForBooleanSignal", [](TaskProc& self, SignalProxy<void(bool)> signalProxy){
+                return self.waitForBooleanSignal(signalProxy); }, py::release_gil())
         ;
 
     py::class_<TaskFunc>(m, "TaskFunc")
