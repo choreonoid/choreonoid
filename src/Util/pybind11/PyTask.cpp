@@ -234,10 +234,10 @@ void exportPyTaskTypes(py::module& m)
         .def("waitForCommandToFinish", (bool(TaskProc::*)(Connection, double)) &TaskProc::waitForCommandToFinish, py::release_gil())
         .def("notifyCommandFinish", &TaskProc:: notifyCommandFinish)
         .def("notifyCommandFinish", [](TaskProc& self){ self.notifyCommandFinish(); })
-        .def("waitForSignal", &TaskProc::waitForSignal<void()>, py::release_gil())
+        .def("waitForSignal", &TaskProc::waitForSignal, py::release_gil())
         .def("waitForSignal", [](TaskProc& self, SignalProxy<void()> signalProxy){
                 return self.waitForSignal(signalProxy); }, py::release_gil())
-        .def("waitForBooleanSignal", &TaskProc::waitForBooleanSignal<void(bool)>, py::release_gil())
+        .def("waitForBooleanSignal", &TaskProc::waitForBooleanSignal, py::release_gil())
         .def("waitForBooleanSignal", [](TaskProc& self, SignalProxy<void(bool)> signalProxy){
                 return self.waitForBooleanSignal(signalProxy); }, py::release_gil())
         ;
