@@ -12,10 +12,6 @@
 
 namespace cnoid {
 
-template<typename T> pybind11::object pyGetSignalArgObject(T& value){
-    return pybind11::cast(value);
-}
-
 namespace signal_private {
 
 template<typename T> struct python_function_caller0 {
@@ -27,7 +23,7 @@ template<typename T> struct python_function_caller0 {
         try {
             pybind11::object result0 = func();
             result = result0.cast<T>();
-        } catch(pybind11::error_already_set const& ex) {
+        } catch(const pybind11::error_already_set& ex) {
             cnoid::handlePythonException();
         }
         return result;
@@ -41,7 +37,7 @@ template<> struct python_function_caller0<void> {
         pybind11::gil_scoped_acquire lock;
         try {
             func();
-        } catch(pybind11::error_already_set const& ex) {
+        } catch(const pybind11::error_already_set& ex) {
             cnoid::handlePythonException();
         }
     }
@@ -54,9 +50,9 @@ template<typename T, typename ARG1> struct python_function_caller1 {
         pybind11::gil_scoped_acquire lock;
         T result;
         try {
-            pybind11::object result0 = func(pyGetSignalArgObject(arg1));
+            pybind11::object result0 = func(pybind11::cast(arg1));
             result = result0.cast<T>();
-        } catch(pybind11::error_already_set const& ex) {
+        } catch(const pybind11::error_already_set& ex) {
             cnoid::handlePythonException();
         }
         return result;
@@ -69,7 +65,7 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
     void operator()(ARG1 arg1) {
         pybind11::gil_scoped_acquire lock;
         try {
-            func(pyGetSignalArgObject(arg1));
+            func(pybind11::cast(arg1));
         } catch(pybind11::error_already_set const& ex) {
             cnoid::handlePythonException();
         }
@@ -83,9 +79,9 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
         pybind11::gil_scoped_acquire lock;
         T result;
         try {
-            pybind11::object result0 = func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
+            pybind11::object result0 = func(pybind11::cast(arg1), pybind11::cast(arg2));
             result = result0.cast<T>();
-        } catch(pybind11::error_already_set const& ex) {
+        } catch(const pybind11::error_already_set& ex) {
             cnoid::handlePythonException();
         }
         return result;
@@ -98,8 +94,8 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
     void operator()(ARG1 arg1, ARG2 arg2) {
         pybind11::gil_scoped_acquire lock;
         try {
-            func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
-        } catch(pybind11::error_already_set const& ex) {
+            func(pybind11::cast(arg1), pybind11::cast(arg2));
+        } catch(const pybind11::error_already_set& ex) {
             cnoid::handlePythonException();
         }
     }
@@ -138,25 +134,6 @@ public:
 
 } // namespace signal_private
 
-template<
-    typename Signature, 
-    typename Combiner = signal_private::last_value<typename boost::function_traits<Signature>::result_type>
-    >
-class PySignalProxy : public signal_private::py_signal_impl<
-    (boost::function_traits<Signature>::arity), Signature, Combiner>
-{
-    typedef signal_private::py_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
-    
-    static Connection connect(SignalProxy<Signature, Combiner>& self, pybind11::object func){
-        return self.connect(typename base_type::caller(func));
-    }
-public:
-    PySignalProxy(const char* name) {
-        pybind11::class_< SignalProxy<Signature, Combiner> >(name)
-            .def("connect", &PySignalProxy::connect);
-    }
-};
-
 
 template<
     typename Signature, 
@@ -165,21 +142,24 @@ template<
 class PySignal : public signal_private::py_signal_impl<
     (boost::function_traits<Signature>::arity), Signature, Combiner>
 {
+    typedef Signal<Signature, Combiner> SignalType;
+    typedef SignalProxy<Signature, Combiner> SignalProxyType;
     typedef signal_private::py_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
     
-    static Connection connect(Signal<Signature, Combiner>& self, pybind11::object func){
+    static Connection connect(SignalType& self, pybind11::object func){
         return self.connect(typename base_type::caller(func));
     }
-    static Connection connectProxy(SignalProxy<Signature, Combiner>& self, pybind11::object func){
+    static Connection connectProxy(SignalProxyType& self, pybind11::object func){
         return self.connect(typename base_type::caller(func));
     }
 public:
-    PySignal(pybind11::module& m, const char* name) {
-
-        pybind11::class_< Signal<Signature, Combiner> >(m, name)
+    PySignal(pybind11::module& m, const std::string& name)
+    {
+        pybind11::class_<SignalType>(m, name.c_str())
             .def("connect", &PySignal::connect);
 
-        pybind11::class_< SignalProxy<Signature, Combiner> >(m, (std::string(name) + "Proxy").c_str())
+        pybind11::class_<SignalProxyType>(m, (name + "Proxy").c_str())
+            .def(pybind11::init<const SignalProxyType&>())
             .def("connect", &PySignal::connectProxy);
     }
 };

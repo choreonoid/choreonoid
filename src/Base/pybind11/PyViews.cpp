@@ -15,10 +15,6 @@ namespace py = pybind11;
 
 namespace cnoid {
 
-template<> py::object pyGetSignalArgObject(View*& view){
-    return py::object(py::cast(view));
-}
-
 void exportPyViews(py::module m)
 {
     PySignal<void(View*)>(m, "ViewSignal");
