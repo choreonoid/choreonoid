@@ -1106,6 +1106,19 @@ if(ENABLE_PYTHON)
       LIBRARY_OUTPUT_NAME ${module}
       PREFIX "")
 
+    if(ENABLE_INSTALL_RPATH)
+      if(APPLE)
+	set_target_properties(${target} PROPERTIES INSTALL_NAME_DIR "@rpath")
+	set_target_properties(${target} PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path")
+      else()
+	set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+      endif()
+    else()
+      if(APPLE)
+	set_target_properties(${target} PROPERTIES INSTALL_NAME_DIR "")
+      endif()
+    endif()
+
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
       LIBRARY DESTINATION ${CNOID_PYTHON_SUBDIR}/cnoid CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel)
