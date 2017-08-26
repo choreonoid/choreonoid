@@ -17,7 +17,7 @@ void exportPySignalTypes(py::module& m)
     PySignal<void(bool)>(m,"BoolSignal");
     PySignal<void(int)>(m, "IntSignal");
     PySignal<void(double)>(m, "DoubleSignal");
-    PySignal<void(const std::string& str)>(m, "StringSignal");
+    PySignal<void(const std::string&)>(m, "StringSignal");
 
     py::class_<Connection>(m, "Connection")
         .def(py::init<>())

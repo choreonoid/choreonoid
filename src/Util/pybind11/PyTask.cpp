@@ -4,6 +4,7 @@
  */
 
 #include "PyUtil.h"
+#include "PySignal.h"
 #include "../Task.h"
 #include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
@@ -162,8 +163,6 @@ public:
     }
 
 };
-typedef ref_ptr<PyTask> PyTaskPtr;
-
 
 typedef std::set<AbstractTaskSequencer*> TaskSequencerSet;
 TaskSequencerSet taskSequencers;
@@ -236,69 +235,36 @@ void exportPyTaskTypes(py::module& m)
         ;
 
     py::class_<TaskCommand, TaskCommandPtr, Referenced>(m, "TaskCommand")
+        .def(py::init<>())
         .def(py::init<const std::string&>())
-        .def("caption", &TaskCommand::caption, py::return_value_policy::reference)
-        .def("setCaption", [](TaskCommand& self, const std::string& caption){
-            return TaskCommandPtr(self.setCaption(caption));
-        })
-        .def("description", &TaskCommand::description, py::return_value_policy::reference)
-        .def("setDescription", [](TaskCommand& self, const std::string& description){
-            return TaskCommandPtr(self.setDescription(description));
-        })
+        .def("caption", &TaskCommand::caption)
+        .def("setCaption", &TaskCommand::setCaption)
+        .def("description", &TaskCommand::description)
+        .def("setDescription", &TaskCommand::setDescription)
         .def("function", &TaskCommand::function)
-        .def("setFunction", [](TaskCommand& self, py::object func){
-            return TaskCommandPtr(self.setFunction(PyTaskFunc(func)));
-        })
-        .def("setDefault", [](TaskCommand& self){
-            return TaskCommandPtr(self.setDefault());
-        })
-        .def("setDefault", [](TaskCommand& self, bool on){
-             return TaskCommandPtr(self.setDefault(on));
-        })
+        .def("setFunction", &TaskCommand::setFunction)
+        .def("setFunction", [](TaskCommand& self, py::function func){ return self.setFunction(PyTaskFunc(func)); })
+        .def("setDefault", &TaskCommand::setDefault)
+        .def("setDefault", [](TaskCommand& self){ return self.setDefault(); })
         .def("isDefault", &TaskCommand::isDefault)
-        .def("setCheckable", [](TaskCommand& self, bool on){
-            return TaskCommandPtr(self.setCheckable());
-        }, py::arg("on")=true)
-        .def("setToggleState", [](TaskCommand& self,  TaskToggleState* state){
-            return TaskCommandPtr(self.setToggleState(state));
-        })
-        .def("toggleState",  [](TaskCommand& self){
-            return TaskToggleStatePtr(self.toggleState());
-        })
-        .def("setChecked",  [](TaskCommand& self, bool on){
-            return TaskCommandPtr(self.setChecked(on));
-        })
+        .def("setCheckable", &TaskCommand::setCheckable)
+        .def("setCheckable", [](TaskCommand& self){ return self.setCheckable(); })
+        .def("setToggleState", &TaskCommand::setToggleState)
+        .def("toggleState",  &TaskCommand::toggleState)
+        .def("setChecked",  &TaskCommand::setChecked)
         .def("isChecked", &TaskCommand::isChecked)
         .def("nextPhaseIndex", &TaskCommand::nextPhaseIndex)
-        .def("setPhaseLink", [](TaskCommand& self, int phaseIndex) {
-            return TaskCommandPtr(self.setPhaseLink(phaseIndex));
-        })
-        .def("setPhaseLinkStep", [](TaskCommand& self, int phaseIndexStep) {
-            return TaskCommandPtr(self.setPhaseLinkStep(phaseIndexStep));
-        })
-        .def("linkToNextPhase", [](TaskCommand& self) {
-            return TaskCommandPtr(self.linkToNextPhase());
-        })
+        .def("setPhaseLink", &TaskCommand::setPhaseLink)
+        .def("setPhaseLinkStep", &TaskCommand::setPhaseLinkStep)
+        .def("linkToNextPhase", &TaskCommand::linkToNextPhase)
         .def("nextCommandIndex", &TaskCommand::nextCommandIndex)
-        .def("setCommandLink", [](TaskCommand& self, int commandIndex){
-            return TaskCommandPtr(self.setCommandLink(commandIndex));
-        })
-        .def("setCommandLinkStep", [](TaskCommand& self, int commandIndexStep){
-            return TaskCommandPtr(self.setCommandLinkStep(commandIndexStep));
-        })
-        .def("linkToNextCommand", [](TaskCommand& self){
-            return TaskCommandPtr(self.linkToNextCommand());
-        })
+        .def("setCommandLink", &TaskCommand::setCommandLink)
+        .def("setCommandLinkStep", &TaskCommand::setCommandLinkStep)
+        .def("linkToNextCommand", &TaskCommand::linkToNextCommand)
         .def("isCommandLinkAutomatic", &TaskCommand::isCommandLinkAutomatic)
-        .def("setCommandLinkAutomatic", [](TaskCommand& self) {
-            return TaskCommandPtr(self.setCommandLinkAutomatic());
-        })
-        .def("setCommandLinkAutomatic", [](TaskCommand& self, bool on){
-            return TaskCommandPtr(self.setCommandLinkAutomatic(on));
-        })
-        .def("setLevel", [](TaskCommand& self, int level){
-            return TaskCommandPtr(self.setLevel(level));
-        })
+        .def("setCommandLinkAutomatic", &TaskCommand::setCommandLinkAutomatic)
+        .def("setCommandLinkAutomatic", [](TaskCommand &self){ self.setCommandLinkAutomatic(); })
+        .def("setLevel", &TaskCommand::setLevel)
         .def("level", &TaskCommand::level)
         ;
 
@@ -306,148 +272,102 @@ void exportPyTaskTypes(py::module& m)
         .def(py::init<const std::string&>())
         .def(py::init<const TaskPhase&>())
         .def(py::init<const TaskPhase&, bool>())
-        .def("clone", [](TaskPhase& self){
-            return TaskPhasePtr(self.clone());
-        })
-        .def("clone", [](TaskPhase& self, bool doDeepCopy){
-            return TaskPhasePtr(self.clone(doDeepCopy));
-        })
-        .def("caption", &TaskPhase::caption, py::return_value_policy::reference)
+        .def("clone", &TaskPhase::clone)
+        .def("clone", [](TaskPhase& self){ return self.clone(); })
+        .def("caption", &TaskPhase::caption)
         .def("setCaption", &TaskPhase::setCaption)
         .def("isSkipped", &TaskPhase::isSkipped)
         .def("setSkipped", &TaskPhase::setSkipped)
         .def("setPreCommand", &TaskPhase::setPreCommand)
-        .def("setPreCommand", [](TaskPhase& self, py::function func){
-            return self.setPreCommand(PyTaskFunc(func));
-        })
+        .def("setPreCommand", [](TaskPhase& self, py::function func){ return self.setPreCommand(PyTaskFunc(func)); })
         .def("preCommand", &TaskPhase::preCommand)
-        .def("addCommand", [](TaskPhase& self){
-            return TaskCommandPtr(self.addCommand());
-        })
-        .def("addCommand", [](TaskPhase& self, const std::string& caption) {
-            return TaskCommandPtr(self.addCommand(caption));
-        })
-        .def("addToggleCommand", [](TaskPhase& self) {
-            return TaskCommandPtr(self.addToggleCommand());
-        })
-        .def("addToggleCommand", [](TaskPhase& self, const std::string& caption){
-            return TaskCommandPtr(self.addToggleCommand(caption));
-        })
+        .def("addCommand", (TaskCommand*(TaskPhase::*)()) &TaskPhase::addCommand)
+        .def("addCommand", (TaskCommand*(TaskPhase::*)(const string&)) &TaskPhase::addCommand)
+        .def("addToggleCommand", (TaskCommand*(TaskPhase::*)()) &TaskPhase::addToggleCommand)
+        .def("addToggleCommand", (TaskCommand*(TaskPhase::*)(const string&)) &TaskPhase::addToggleCommand)
         .def("numCommands", &TaskPhase::numCommands)
-        .def("command", [](TaskPhase& self, int index) {
-            return TaskCommandPtr(self.command(index));
-        })
+        .def("command", &TaskPhase::command)
         .def("lastCommandIndex", &TaskPhase::lastCommandIndex)
-        .def("lastCommand", [](TaskPhase& self) {
-            return TaskCommandPtr(self.lastCommand());
-        })
+        .def("lastCommand", &TaskPhase::lastCommand)
         .def("commandLevel", &TaskPhase::commandLevel)
         .def("maxCommandLevel", &TaskPhase::maxCommandLevel)
         ;
 
     py::class_<TaskPhaseProxy, TaskPhaseProxyPtr, Referenced >(m, "TaskPhaseProxy")
+        .def(py::init<TaskPhase*>())
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
         .def("commandLevel", &TaskPhaseProxy::commandLevel)
-        .def("addCommand", [](TaskPhaseProxy& self) {
-            return TaskCommandPtr(self.addCommand());
-        })
-        .def("addCommand", [](TaskPhaseProxy& self, const std::string& caption) {
-            return TaskCommandPtr(self.addCommand(caption));
-        })
-        .def("addToggleCommand", [](TaskPhaseProxy& self) {
-            return TaskCommandPtr(self.addToggleCommand());
-        })
-        .def("addToggleCommand", [](TaskPhaseProxy& self, const std::string& caption) {
-            return TaskCommandPtr(self.addToggleCommand(caption));
-        })
+        .def("addCommand", (TaskCommand*(TaskPhaseProxy::*)()) &TaskPhaseProxy::addCommand)
+        .def("addCommand", (TaskCommand*(TaskPhaseProxy::*)(const string&)) &TaskPhaseProxy::addCommand)
+        .def("addToggleCommand", (TaskCommand*(TaskPhaseProxy::*)()) &TaskPhaseProxy::addToggleCommand)
+        .def("addToggleCommand", (TaskCommand*(TaskPhaseProxy::*)(const string&)) &TaskPhaseProxy::addToggleCommand)
         ;
 
     py::class_<TaskMenu>(m, "TaskMenu")
-        .def("addMenuItem", [](TaskMenu& self, const std::string& caption, py::object func) {
-            self.addMenuItem(caption, PyMenuItemFunc(func));
-        })
-        .def("addCheckMenuItem", [](TaskMenu& self, const std::string& caption,
-                bool isChecked, py::object func){
-            self.addCheckMenuItem(caption, isChecked, PyCheckMenuItemFunc(func));
-        })
-        .def("addMenuSeparator", [](TaskMenu& self) {
-            self.addMenuSeparator();
-        })
+        .def("addMenuItem", [](TaskMenu& self, const std::string& caption, py::object func){
+                self.addMenuItem(caption, PyMenuItemFunc(func)); })
+        .def("addCheckMenuItem", [](TaskMenu& self, const std::string& caption, bool isChecked, py::object func){
+                self.addCheckMenuItem(caption, isChecked, PyCheckMenuItemFunc(func)); })
+        .def("addMenuSeparator", &TaskMenu::addMenuSeparator)
         ;
 
-    py::class_<Task, TaskPtr, PyTask>(m, "Task")
+    py::class_<Task, TaskPtr, PyTask, Referenced>(m, "Task")
         .def(py::init<>())
-        .def(py::init<const std::string&, const std::string&>())
-        .def(py::init<const Task&, bool>(), py::arg("org"), py::arg("doDeepCopy")=true)
-        .def("name", &Task::name, py::return_value_policy::reference)
+        .def(py::init<const string&, const string&>())
+        .def(py::init<const Task&, bool>())
+        .def("name", &Task::name)
         .def("setName", &Task::setName)
-        .def("caption", &Task::caption, py::return_value_policy::reference)
+        .def("caption", &Task::caption)
         .def("setCaption", &Task::setCaption)
         .def("numPhases", &Task::numPhases)
-        .def("phase", [](Task& self, int index){
-            return TaskPhasePtr(self.phase(index));
-        })
-        .def("addPhase", [](Task& self, TaskPhase* phase) {
-            return TaskPhasePtr(self.addPhase(phase));
-        })
-        .def("addPhase",  [](Task& self, const std::string& caption) {
-            return TaskPhasePtr(self.addPhase(caption));
-        })
-        .def("lastPhase", [](Task& self) {
-            return TaskPhasePtr(self.lastPhase());
-        })
+        .def("phase", &Task::phase)
+        .def("addPhase", (TaskPhase*(Task::*)(TaskPhase*)) &Task::addPhase)
+        .def("addPhase", (TaskPhase*(Task::*)(const string&)) &Task::addPhase)
+        .def("lastPhase", &Task::lastPhase)
         .def("setPreCommand", &Task::setPreCommand)
-        .def("setPreCommand", [](Task& self, py::object func) {
-            return self.setPreCommand(PyTaskFunc(func));
-        })
-        .def("addCommand", [](Task& self) {
-            return TaskCommandPtr(self.addCommand());
-        })
-        .def("addCommand", [](Task& self, const std::string& caption){
-            return TaskCommandPtr(self.addCommand(caption));
-        })
-        .def("addToggleCommand", [](Task& self) {
-            return TaskCommandPtr(self.addToggleCommand());
-        })
-        .def("addToggleCommand", [](Task& self, const std::string& caption) {
-            return TaskCommandPtr(self.addToggleCommand(caption));
-        })
-        .def("lastCommand", [](Task& self) {
-            return TaskCommandPtr(self.lastCommand());
-            })
+        .def("setPreCommand", [](Task& self, py::object func){ return self.setPreCommand(PyTaskFunc(func)); })
+        .def("addCommand", (TaskCommand*(Task::*)()) &Task::addCommand)
+        .def("addCommand", (TaskCommand*(Task::*)(const string&)) &Task::addCommand)
+        .def("addToggleCommand", (TaskCommand*(Task::*)()) &Task::addToggleCommand)
+        .def("addToggleCommand", (TaskCommand*(Task::*)(const string&)) &Task::addToggleCommand)
+        .def("lastCommand", &Task::lastCommand)
         .def("lastCommandIndex", &Task::lastCommandIndex)
+        .def("commandLevel", &Task::commandLevel)
+        .def("maxCommandLevel", &Task::maxCommandLevel)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
-        .def("onMenuRequest", &Task::onMenuRequest)
         .def("onActivated", &Task::onActivated)
         .def("onDeactivated", &Task::onDeactivated)
         .def("storeState", &Task::storeState)
         .def("restoreState", &Task::restoreState)
-        .def("commandLevel", &Task::commandLevel)
-        .def("maxCommandLevel", &Task::maxCommandLevel)
+        .def("onMenuRequest", &Task::onMenuRequest)
         ;
 
+    PySignal<void(Task*)>(m, "TaskSignal");
+    
     py::class_<AbstractTaskSequencer>(m, "AbstractTaskSequencer")
         .def("activate", &AbstractTaskSequencer::activate)
+        .def("activate", [](AbstractTaskSequencer& self){ self.activate(); })
         .def("isActive", &AbstractTaskSequencer::isActive)
-        .def("addTask", [](AbstractTaskSequencer& self, py::object pyTask) {
-            if(TaskPtr task = registerTask(&self, pyTask)){
-                self.addTask(task);
-            }
-        })
-        .def("updateTask", [](AbstractTaskSequencer& self, py::object pyTask) {
-            if(TaskPtr task = registerTask(&self, pyTask)){
-                self.updateTask(task);
-            }
-            return false;
-        })
+
+        .def("addTask", [](AbstractTaskSequencer* self, py::object pyTask){
+                if(TaskPtr task = registerTask(self, pyTask)){
+                    self->addTask(task);
+                }
+            })
+        
+        .def("updateTask", [](AbstractTaskSequencer* self, py::object pyTask){
+                if(TaskPtr task = registerTask(self, pyTask)){
+                    return self->updateTask(task);
+                }
+                return false;
+            })
+        
         .def("removeTask", &AbstractTaskSequencer::removeTask)
+        .def("clearTasks", &AbstractTaskSequencer::clearTasks)
         .def("sigTaskAdded", &AbstractTaskSequencer::sigTaskAdded)
         .def("sigTaskRemoved", &AbstractTaskSequencer::sigTaskRemoved)
-        .def("clearTasks", &AbstractTaskSequencer::clearTasks)
         .def("numTasks", &AbstractTaskSequencer::numTasks)
-        .def("task",  [](AbstractTaskSequencer& self, int index) {
-            return TaskPtr(self.task(index));
-        })
+        .def("task",  &AbstractTaskSequencer::task)
         .def("currentTaskIndex", &AbstractTaskSequencer::currentTaskIndex)
         .def("setCurrentTask", &AbstractTaskSequencer::setCurrentTask)
         .def("sigCurrentTaskChanged", &AbstractTaskSequencer::sigCurrentTaskChanged)
