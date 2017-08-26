@@ -86,7 +86,7 @@ bool TaskProc_waitForCommandToFinish3(TaskProc& self, Connection connectionToDis
 /**
    \todo Currently boost::python::object is used for storing the callback function object,
    but this generates a circular reference between the task object and the function object
-   because callback functions are ususally instance methods of the task object and the reference
+   because callback functions are ususally instance functions of the task object and the reference
    to the task object (self) is contained in the function objcets. In this case, the task object
    is never released even if the task is removed from the task sequencer and there is no
    varibale that refers to the task in Python. Using the weakref module may solve this problem.

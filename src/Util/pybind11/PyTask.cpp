@@ -8,7 +8,6 @@
 #include "../AbstractTaskSequencer.h"
 #include "../ValueTree.h"
 #include <pybind11/stl.h>
-#include <pybind11/functional.h>
 #include <set>
 #include <map>
 
@@ -18,13 +17,26 @@ namespace py = pybind11;
 
 namespace {
 
+/**
+   \note The header "pybind11/functional.h" must not included in this file to use a custom
+   Python-function wrapper "PyTaskFunc" and a custom Python wrapper of "TaskFunc" defined in
+   this file instead of the automatic conversion between std::function and pybind11::function.
+
+   \note A callback function defined in Python is stored as a pybind11::function object.
+   If the function is an instance function of a Task instance, a circular reference the task object
+   and the function object is generated because a referenced-counted reference to the task object
+   is contained in the function object. In this case, the task object is never released even if the
+   task is removed from the task sequencer and there is no varibale that refers to the task in Python.
+   Using the weakref module may solve this problem.
+*/
 struct PyTaskFunc
 {
     py::function func;
-    PyTaskFunc(py::function f) : func(f) {
-    }
 
-    void operator()(TaskProc* proc) {
+    PyTaskFunc(py::function f) : func(f) { }
+
+    void operator()(TaskProc* proc)
+    {
         py::gil_scoped_acquire lock;
         try {
             int numArgs = func.attr("__code__").attr("co_argcount").cast<int>();
@@ -33,7 +45,7 @@ struct PyTaskFunc
             } else {
                 func(proc);
             }
-        }catch(py::error_already_set const& ex){
+        } catch (py::error_already_set const& ex){
             py::print(ex.what());
         }
     }
@@ -42,8 +54,11 @@ struct PyTaskFunc
 struct PyMenuItemFunc
 {
     py::object func;
+
     PyMenuItemFunc(py::object f) : func(f) { }
-    void operator()() {
+
+    void operator()()
+    {
         py::gil_scoped_acquire lock;
         try {
             func();
@@ -67,32 +82,6 @@ struct PyCheckMenuItemFunc
     }
 };
 
-
-TaskCommandPtr TaskPhase_addCommandExMain(TaskPhase* self, const std::string& caption, py::dict kw) {
-
-    TaskCommandPtr command = self->addCommand(caption);
-
-    for (auto item : kw){
-        std::string key = item.first.cast<std::string>();
-        py::handle value = item.second;
-
-        if(key == "default" && PyBool_Check(value.ptr())){
-            if(value.cast<bool>()){
-                command->setDefault();
-            }
-        } else if(key == "function"){
-            //;
-        }
-    }
-    return command;
-}
-
-
-TaskCommandPtr TaskPhase_addCommandEx(py::tuple args_, py::dict kw) {
-    TaskPhasePtr self = args_[0].cast<TaskPhasePtr>();
-    const std::string caption = args_[1].cast<std::string>();
-    return TaskPhase_addCommandExMain(self, caption, kw);
-}    
 
 class PyTask : public Task
 {
@@ -176,13 +165,6 @@ public:
 typedef ref_ptr<PyTask> PyTaskPtr;
 
 
-TaskCommandPtr Task_addCommandEx(py::tuple args_, py::dict kw){
-    PyTaskPtr self = args_[0].cast<PyTaskPtr>();
-    const std::string caption = args_[1].cast<std::string>();
-    return TaskPhase_addCommandExMain(self->lastPhase(), caption, kw);
-}
-
-
 typedef std::set<AbstractTaskSequencer*> TaskSequencerSet;
 TaskSequencerSet taskSequencers;
 
@@ -231,7 +213,8 @@ void exportPyTaskTypes(py::module& m)
         .def("wait", &TaskProc::wait)
         .def("waitForCommandToFinish", (bool(TaskProc::*)(double)) &TaskProc::waitForCommandToFinish, py::release_gil())
         .def("waitForCommandToFinish", [](TaskProc& self){ return self.waitForCommandToFinish(); }, py::release_gil())
-        .def("waitForCommandToFinish", (bool(TaskProc::*)(Connection, double)) &TaskProc::waitForCommandToFinish, py::release_gil())
+        .def("waitForCommandToFinish",
+             (bool(TaskProc::*)(Connection, double)) &TaskProc::waitForCommandToFinish, py::release_gil())
         .def("notifyCommandFinish", &TaskProc:: notifyCommandFinish)
         .def("notifyCommandFinish", [](TaskProc& self){ self.notifyCommandFinish(); })
         .def("waitForSignal", &TaskProc::waitForSignal, py::release_gil())
@@ -333,10 +316,10 @@ void exportPyTaskTypes(py::module& m)
         .def("setCaption", &TaskPhase::setCaption)
         .def("isSkipped", &TaskPhase::isSkipped)
         .def("setSkipped", &TaskPhase::setSkipped)
+        .def("setPreCommand", &TaskPhase::setPreCommand)
         .def("setPreCommand", [](TaskPhase& self, py::function func){
             return self.setPreCommand(PyTaskFunc(func));
         })
-        .def("setPreCommand", &TaskPhase::setPreCommand)
         .def("preCommand", &TaskPhase::preCommand)
         .def("addCommand", [](TaskPhase& self){
             return TaskCommandPtr(self.addCommand());
@@ -350,7 +333,6 @@ void exportPyTaskTypes(py::module& m)
         .def("addToggleCommand", [](TaskPhase& self, const std::string& caption){
             return TaskCommandPtr(self.addToggleCommand(caption));
         })
-        .def("addCommandEx", &TaskPhase_addCommandEx)
         .def("numCommands", &TaskPhase::numCommands)
         .def("command", [](TaskPhase& self, int index) {
             return TaskCommandPtr(self.command(index));
@@ -414,10 +396,10 @@ void exportPyTaskTypes(py::module& m)
         .def("lastPhase", [](Task& self) {
             return TaskPhasePtr(self.lastPhase());
         })
+        .def("setPreCommand", &Task::setPreCommand)
         .def("setPreCommand", [](Task& self, py::object func) {
             return self.setPreCommand(PyTaskFunc(func));
         })
-        .def("setPreCommand", &Task::setPreCommand)
         .def("addCommand", [](Task& self) {
             return TaskCommandPtr(self.addCommand());
         })
@@ -430,10 +412,9 @@ void exportPyTaskTypes(py::module& m)
         .def("addToggleCommand", [](Task& self, const std::string& caption) {
             return TaskCommandPtr(self.addToggleCommand(caption));
         })
-        .def("addCommandEx", &Task_addCommandEx)
         .def("lastCommand", [](Task& self) {
             return TaskCommandPtr(self.lastCommand());
-        })
+            })
         .def("lastCommandIndex", &Task::lastCommandIndex)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
         .def("onMenuRequest", &Task::onMenuRequest)
