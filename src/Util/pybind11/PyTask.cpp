@@ -43,14 +43,19 @@ struct PyTaskFunc
         py::gil_scoped_acquire lock;
         try {
             int numArgs = func.attr("__code__").attr("co_argcount").cast<int>();
+            if(py::hasattr(func, "__self__")){
+                bool isBoundMethod = !func.attr("__self__").is_none();
+                if(isBoundMethod){
+                    --numArgs; // for the first 'self' argument
+                }
+            }
             if(numArgs == 0){
                 func();
             } else {
                 func(proc);
             }
-        } catch (py::error_already_set& ex){
-            ex.restore();
-            py::print(ex.what());
+        } catch (const py::error_already_set& ex){ 
+           py::print(ex.what());
         }
     }
 };
@@ -67,7 +72,6 @@ struct PyMenuItemFunc
         try {
             func();
         } catch(py::error_already_set& ex) {
-            ex.restore();
             py::print(ex.what());
         }
     }
@@ -82,7 +86,6 @@ struct PyCheckMenuItemFunc
         try {
             func(on);
         } catch(py::error_already_set& ex) {
-            ex.restore();
             py::print(ex.what());
         }
     }
@@ -101,7 +104,6 @@ public:
             try {
                 overload(py::cast(menu, py::return_value_policy::reference));
             } catch(py::error_already_set& ex) {
-                ex.restore();
                 py::print(ex.what());
             }
         } else {
@@ -111,21 +113,29 @@ public:
 
     void onActivated(AbstractTaskSequencer* sequencer) override
     {
-        try {
-            PYBIND11_OVERLOAD(void, Task, onActivated, sequencer);
-        } catch(py::error_already_set& ex){
-            ex.restore();
-            py::print(ex.what());
+        py::gil_scoped_acquire lock;
+        if(py::function overload = py::get_overload(this, "onActivated")){
+            try {
+                overload(sequencer);
+            } catch(py::error_already_set& ex){
+                py::print(ex.what());
+            }
+        } else {
+            Task::onActivated(sequencer);
         }
     }
 
     void onDeactivated(AbstractTaskSequencer* sequencer) override
     {
-        try {
-            PYBIND11_OVERLOAD(void, Task, onDeactivated, sequencer);
-        } catch(py::error_already_set& ex){
-            ex.restore();
-            py::print(ex.what());
+        py::gil_scoped_acquire lock;
+        if(py::function overload = py::get_overload(this, "onDeactivated")){
+            try {
+                overload(sequencer);
+            } catch(py::error_already_set& ex){
+                py::print(ex.what());
+            }
+        } else {
+            Task::onDeactivated(sequencer);
         }
     }
 
@@ -136,7 +146,6 @@ public:
             try {
                 overload(sequencer, &archive);
             } catch(py::error_already_set& ex){
-                ex.restore();
                 py::print(ex.what());
             }
         } else {
@@ -151,7 +160,6 @@ public:
             try {
                 overload(sequencer, &archive);
             } catch(py::error_already_set& ex){
-                ex.restore();
                 py::print(ex.what());
             }
         } else {
