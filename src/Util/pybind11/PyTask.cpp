@@ -18,6 +18,8 @@ namespace py = pybind11;
 
 namespace {
 
+typedef py::call_guard<py::gil_scoped_release> release_gil;
+
 /**
    \note The header "pybind11/functional.h" must not included in this file to use a custom
    Python-function wrapper "PyTaskFunc" and a custom Python wrapper of "TaskFunc" defined in
@@ -46,7 +48,8 @@ struct PyTaskFunc
             } else {
                 func(proc);
             }
-        } catch (py::error_already_set const& ex){
+        } catch (py::error_already_set& ex){
+            ex.restore();
             py::print(ex.what());
         }
     }
@@ -63,7 +66,8 @@ struct PyMenuItemFunc
         py::gil_scoped_acquire lock;
         try {
             func();
-        } catch(py::error_already_set const& ex) {
+        } catch(py::error_already_set& ex) {
+            ex.restore();
             py::print(ex.what());
         }
     }
@@ -77,7 +81,8 @@ struct PyCheckMenuItemFunc
         py::gil_scoped_acquire lock;
         try {
             func(on);
-        } catch(py::error_already_set const& ex) {
+        } catch(py::error_already_set& ex) {
+            ex.restore();
             py::print(ex.what());
         }
     }
@@ -92,77 +97,69 @@ public:
 
     void onMenuRequest(TaskMenu& menu) override{
         py::gil_scoped_acquire lock;
-        py::function overload = py::get_overload(static_cast<const Task *>(this), "onMenuRequest");
-        if (overload){
+        if(py::function overload = py::get_overload(this, "onMenuRequest")){
             try {
                 overload(py::cast(menu, py::return_value_policy::reference));
-            } catch(py::error_already_set const& ex) {
+            } catch(py::error_already_set& ex) {
+                ex.restore();
                 py::print(ex.what());
             }
-        }else{
+        } else {
             Task::onMenuRequest(menu);
         }
     }
 
-    void onActivated(AbstractTaskSequencer* sequencer)  override{
-        py::gil_scoped_acquire lock;
-        py::function overload = py::get_overload(static_cast<const Task *>(this), "onActivated");
-        if (overload){
-            try {
-                overload(sequencer);
-            } catch(py::error_already_set const& ex) {
-                py::print(ex.what());
-            }
-        }else{
-            Task::onActivated(sequencer);
+    void onActivated(AbstractTaskSequencer* sequencer) override
+    {
+        try {
+            PYBIND11_OVERLOAD(void, Task, onActivated, sequencer);
+        } catch(py::error_already_set& ex){
+            ex.restore();
+            py::print(ex.what());
         }
     }
 
-    void onDeactivated(AbstractTaskSequencer* sequencer)  override{
-        py::gil_scoped_acquire lock;
-        py::function overload = py::get_overload(static_cast<const Task *>(this), "onDeactivated");
-        if (overload){
-            try {
-                overload(sequencer);
-            } catch(py::error_already_set const& ex) {
-                py::print(ex.what());
-            }
-        }else{
-            Task::onDeactivated(sequencer);
+    void onDeactivated(AbstractTaskSequencer* sequencer) override
+    {
+        try {
+            PYBIND11_OVERLOAD(void, Task, onDeactivated, sequencer);
+        } catch(py::error_already_set& ex){
+            ex.restore();
+            py::print(ex.what());
         }
     }
 
-    void storeState(AbstractTaskSequencer* sequencer, Mapping& archive)  override {
-        py::gil_scoped_acquire lock;
-        py::function overload = py::get_overload(static_cast<const Task *>(this), "storeState");
-        if (overload){
+    void storeState(AbstractTaskSequencer* sequencer, Mapping& archive) override
+    {
+        py::gil_scoped_acquire gil;
+        if(py::function overload = py::get_overload(this, "storeState")){
             try {
-                MappingPtr a = &archive;
-                overload(sequencer, a);
-            } catch(py::error_already_set const& ex) {
+                overload(sequencer, &archive);
+            } catch(py::error_already_set& ex){
+                ex.restore();
                 py::print(ex.what());
             }
-        }else{
+        } else {
             Task::storeState(sequencer, archive);
         }
     }
     
-    void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive)  override {
-        py::gil_scoped_acquire lock;
-        py::function overload = py::get_overload(static_cast<const Task *>(this), "restoreState");
-        if (overload){
+    void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive) override
+    {
+        py::gil_scoped_acquire gil;
+        if(py::function overload = py::get_overload(this, "restoreState")){
             try {
-                MappingPtr a = const_cast<Mapping*>(&archive);
-                overload(sequencer, a);
-            } catch(py::error_already_set const& ex) {
+                overload(sequencer, &archive);
+            } catch(py::error_already_set& ex){
+                ex.restore();
                 py::print(ex.what());
             }
-        }else{
+        } else {
             Task::restoreState(sequencer, archive);
         }
     }
-
 };
+
 
 typedef std::set<AbstractTaskSequencer*> TaskSequencerSet;
 TaskSequencerSet taskSequencers;
@@ -210,18 +207,18 @@ void exportPyTaskTypes(py::module& m)
         .def("setCommandLinkAutomatic", &TaskProc::setCommandLinkAutomatic)
         .def("executeCommand", &TaskProc::executeCommand)
         .def("wait", &TaskProc::wait)
-        .def("waitForCommandToFinish", (bool(TaskProc::*)(double)) &TaskProc::waitForCommandToFinish, py::release_gil())
-        .def("waitForCommandToFinish", [](TaskProc& self){ return self.waitForCommandToFinish(); }, py::release_gil())
+        .def("waitForCommandToFinish", (bool(TaskProc::*)(double)) &TaskProc::waitForCommandToFinish, release_gil())
+        .def("waitForCommandToFinish", [](TaskProc& self){ return self.waitForCommandToFinish(); }, release_gil())
         .def("waitForCommandToFinish",
-             (bool(TaskProc::*)(Connection, double)) &TaskProc::waitForCommandToFinish, py::release_gil())
+             (bool(TaskProc::*)(Connection, double)) &TaskProc::waitForCommandToFinish, release_gil())
         .def("notifyCommandFinish", &TaskProc:: notifyCommandFinish)
         .def("notifyCommandFinish", [](TaskProc& self){ self.notifyCommandFinish(); })
-        .def("waitForSignal", &TaskProc::waitForSignal, py::release_gil())
+        .def("waitForSignal", &TaskProc::waitForSignal, release_gil())
         .def("waitForSignal", [](TaskProc& self, SignalProxy<void()> signalProxy){
-                return self.waitForSignal(signalProxy); }, py::release_gil())
-        .def("waitForBooleanSignal", &TaskProc::waitForBooleanSignal, py::release_gil())
+                return self.waitForSignal(signalProxy); }, release_gil())
+        .def("waitForBooleanSignal", &TaskProc::waitForBooleanSignal, release_gil())
         .def("waitForBooleanSignal", [](TaskProc& self, SignalProxy<void(bool)> signalProxy){
-                return self.waitForBooleanSignal(signalProxy); }, py::release_gil())
+                return self.waitForBooleanSignal(signalProxy); }, release_gil())
         ;
 
     py::class_<TaskFunc>(m, "TaskFunc")
