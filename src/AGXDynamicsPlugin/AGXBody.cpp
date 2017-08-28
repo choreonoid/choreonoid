@@ -44,12 +44,13 @@ void AGXLink::setControlInputToAGX()
             setTorqueToAGX();
             break;
         }
-        case Link::ActuationMode::JOINT_VELOCITY :{
+        case Link::ActuationMode::JOINT_VELOCITY :
+        case Link::ActuationMode::JOINT_SURFACE_VELOCITY :{
             setVelocityToAGX();
             break;
         }
-        case Link::ActuationMode::JOINT_DISPLACEMENT :{
-            //setPositionToAGX();
+        case Link::ActuationMode::JOINT_ANGLE :{
+            setPositionToAGX();
             break;
         }
         case Link::ActuationMode::NO_ACTUATION :
@@ -375,7 +376,8 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.frameCenter.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.isMotorOn = true;
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
+            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -387,7 +389,8 @@ agx::ConstraintRef AGXLink::createAGXConstraint()
             desc.framePoint.set(p(0),p(1),p(2));
             desc.rigidBodyA = getAGXRigidBody();
             desc.rigidBodyB = agxParentLink->getAGXRigidBody();
-            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.isMotorOn = true;
+            if(orgLink->actuationMode() != Link::ActuationMode::NO_ACTUATION) desc.motor.enable = true;
+            if(orgLink->actuationMode() == Link::ActuationMode::JOINT_ANGLE) desc.lock.enable = true;
             constraint = AGXObjectFactory::createConstraint(desc);
             break;
         }
@@ -464,8 +467,6 @@ void AGXLink::setPositionToAGX()
             break;
     }
 }
-
-
 
 ////////////////////////////////////////////////////////////
 // AGXBody
@@ -824,8 +825,10 @@ void AGXContinousTrack::createTrackConstraint()
         hd.frameCenter = agx::Vec3(p(0), p(1), p(2));
         hd.rigidBodyA = agxFootLinkStart->getAGXRigidBody();
         hd.rigidBodyB = agxFootLinkEnd->getAGXRigidBody();
-        hd.isMotorOn = false;
-        agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);   // needs addsimulation
+        hd.motor.enable = false;
+        hd.lock.enable = false;
+        hd.range.enable = false;
+        agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);
         link->setJointType(Link::ROTATIONAL_JOINT);
         agxFootLinkStart->setAGXConstraint(constraint);
         addAGXConstraint(constraint);

@@ -227,9 +227,14 @@ agx::HingeRef AGXObjectFactory::createConstraintHinge(const AGXHingeDesc& desc)
     agx::HingeFrame hingeFrame;
     hingeFrame.setAxis(desc.frameAxis);
     hingeFrame.setCenter(desc.frameCenter);
-    agx::HingeRef hinge = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
-    hinge->getMotor1D()->setEnable(desc.isMotorOn);
-    return hinge;
+    agx::HingeRef joint = new agx::Hinge(hingeFrame, desc.rigidBodyA, desc.rigidBodyB);
+    joint->getMotor1D()->setEnable(desc.motor.enable);
+    joint->getMotor1D()->setLocked(desc.motor.enableLock);
+    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
+    joint->getLock1D()->setEnable(desc.lock.enable);
+    joint->getRange1D()->setEnable(desc.range.enable);
+    joint->getRange1D()->setRange(desc.range.range);
+    return joint;
 }
 
 agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismaticDesc & desc)
@@ -237,9 +242,14 @@ agx::PrismaticRef AGXObjectFactory::createConstraintPrismatic(const AGXPrismatic
     agx::PrismaticFrame prismaticFrame;
     prismaticFrame.setAxis(desc.frameAxis);
     prismaticFrame.setPoint(desc.framePoint);
-    agx::PrismaticRef prismatic = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
-    prismatic->getMotor1D()->setEnable(desc.isMotorOn);
-    return prismatic;
+    agx::PrismaticRef joint = new agx::Prismatic(prismaticFrame, desc.rigidBodyA, desc.rigidBodyB);
+    joint->getMotor1D()->setEnable(desc.motor.enable);
+    joint->getMotor1D()->setLocked(desc.motor.enableLock);
+    joint->getMotor1D()->setLockedAtZeroSpeed(desc.motor.enableLockAtZeroSpeed);
+    joint->getLock1D()->setEnable(desc.lock.enable);
+    joint->getRange1D()->setEnable(desc.range.enable);
+    joint->getRange1D()->setRange(desc.range.range);
+    return joint;
 }
 
 agx::BallJointRef AGXObjectFactory::createConstraintBallJoint(const AGXBallJointDesc & desc)

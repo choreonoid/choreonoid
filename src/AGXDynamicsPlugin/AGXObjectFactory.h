@@ -214,24 +214,59 @@ struct AGXConstraintDesc
     agx::RigidBodyRef rigidBodyB;
 };
 
+struct AGXElementaryConstraint {
+    AGXElementaryConstraint(){
+        enable = false;
+        compliance = 1e-08;
+        damping = 0.0333333;
+        forceRange = agx::RangeReal(agx::Infinity);
+    }
+    agx::Bool enable;
+    agx::Real compliance;
+    agx::Real damping;
+    agx::RangeReal forceRange;
+};
+
+struct AGXMotor1DDesc : public AGXElementaryConstraint{
+    AGXMotor1DDesc(){
+        enableLock = false;
+        enableLockAtZeroSpeed = false;
+    }
+    agx::Bool enableLock;
+    agx::Bool enableLockAtZeroSpeed;
+};
+
+struct AGXLock1DDesc : public AGXElementaryConstraint{
+    AGXLock1DDesc(){}
+};
+
+struct AGXRange1DDesc : public AGXElementaryConstraint{
+    AGXRange1DDesc() {
+        range = agx::RangeReal(agx::Infinity);
+    } 
+    agx::RangeReal range;
+};
+
 struct AGXHingeDesc : public AGXConstraintDesc
 {
     AGXHingeDesc(): AGXConstraintDesc(AGXConstraintType::AGXHINGE){
-        isMotorOn = false;
     }
     agx::Vec3 frameAxis;
     agx::Vec3 frameCenter;
-    agx::Bool isMotorOn;
+    AGXMotor1DDesc motor;
+    AGXLock1DDesc  lock;
+    AGXRange1DDesc range;
 };
 
 struct AGXPrismaticDesc : public AGXConstraintDesc
 {
     AGXPrismaticDesc() : AGXConstraintDesc(AGXConstraintType::AGXPRISMATIC){
-        isMotorOn = false;
     }
     agx::Vec3 frameAxis;
     agx::Vec3 framePoint;
-    agx::Bool isMotorOn;
+    AGXMotor1DDesc motor;
+    AGXLock1DDesc  lock;
+    AGXRange1DDesc range;
 };
 
 struct AGXLockJointDesc : public AGXConstraintDesc

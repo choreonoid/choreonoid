@@ -37,7 +37,7 @@ void AGXSimulatorItemImpl::doPutProperties(PutPropertyFunction & putProperty)
     putProperty(_("ContactReduction"), _p_enableContactReduction, changeProperty(_p_enableContactReduction));
     putProperty(_("ContactReductionBinResolution"), _p_contactReductionBinResolution, changeProperty(_p_contactReductionBinResolution));
     putProperty(_("ContactReductionThreshhold"), _p_contactReductionThreshhold, changeProperty(_p_contactReductionThreshhold));
-    putProperty(_("AutoSleep"), _p_enableAutoSleep, changeProperty(_p_enableAutoSleep));
+    putProperty(_("AutoSleep(experimental)"), _p_enableAutoSleep, changeProperty(_p_enableAutoSleep));
     //putProperty(_("All link positions"), isAllLinkPositionOutputMode,
     //        [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
 
