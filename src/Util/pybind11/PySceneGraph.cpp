@@ -42,8 +42,8 @@ void exportPySceneGraph(py::module& m)
         .def("name", &SgObject::name)
         .def("setName", &SgObject::setName)
         .def("notifyUpdate",(void(SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
+        .def("notifyUpdate",(void(SgObject::*)(int)) &SgObject::notifyUpdate)
         .def("notifyUpdate",[](SgObject& self){ self.notifyUpdate(); })
-        .def("notifyUpdate",[](SgObject& self, int action){ self.notifyUpdate(action); })
         ;
 
     py::class_<SgNode, SgNodePtr, SgObject>(m, "SgNode")
@@ -56,11 +56,11 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<const SgGroup&>())
         .def("empty", &SgGroup::empty)
         .def("numChildren", &SgGroup::numChildren)
+        .def("clearChildren", &SgGroup::clearChildren)
         .def("clearChildren", [](SgGroup& self){ self.clearChildren(); })
-        .def("clearChildren", [](SgGroup& self, bool doNotify){ self.clearChildren(doNotify); })
         .def("child", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
+        .def("addChild", &SgGroup::addChild)
         .def("addChild", [](SgGroup& self, SgNode* node){ self.addChild(node); })
-        .def("addChild", [](SgGroup& self, SgNode* node, bool doNotify){ self.addChild(node, doNotify); })
         ;
     
     py::class_<SgTransform, SgTransformPtr, SgGroup>(m, "SgTransform");
@@ -80,8 +80,8 @@ void exportPySceneGraph(py::module& m)
         ;
 
     py::class_<SceneProvider>(m, "SceneProvider")
-        .def("getScene", [](SceneProvider& self){ return self.getScene(); })
-        .def("getScene", [](SceneProvider& self, SgCloneMap& cloneMap){ return self.getScene(cloneMap); })
+        .def("getScene", (SgNode*(SceneProvider::*)()) &SceneProvider::getScene)
+        .def("getScene", (SgNode*(SceneProvider::*)(SgCloneMap&)) &SceneProvider::getScene)
         ;
 }
 

@@ -10,53 +10,26 @@
 namespace py = pybind11;
 using namespace cnoid;
 
-namespace {
-
-Matrix3 angleAxis(double angle, const Vector3& vec){
-    return Matrix3(AngleAxis(angle, vec));
-}
-
-Affine3 angleAxis44(double angle, const Vector3& vec){
-    return Affine3(AngleAxis(angle, vec));
-}
-
-Vector3 getNormalized(const Vector3& vec){
-    return vec.normalized();
-}
-
-Affine3 rotFromRpy44(const Vector3& vec){
-    return Affine3(rotFromRpy(vec));
-}
-
-Vector3 getUnitX(){
-    return Vector3::UnitX();
-}
-
-Vector3 getUnitY(){
-    return Vector3::UnitY();
-}
-
-Vector3 getUnitZ(){
-    return Vector3::UnitZ();
-}
-
-}
-
 namespace cnoid {
 
 void exportPyEigenTypes(py::module& m)
 {
     m.def("rpyFromRot", &cnoid::rpyFromRot);
     m.def("rotFromRpy", (Matrix3 (*)(const Vector3&)) &cnoid::rotFromRpy);
-    m.def("rotFromRpy44", &rotFromRpy44);
+    m.def("rotFromRpy", (Matrix3 (*)(double, double, double)) &cnoid::rotFromRpy);
+    m.def("rotFromRpy44", [](const Vector3& v){ return Affine3(rotFromRpy(v)); });
     m.def("omegaFromRot", &cnoid::omegaFromRot);
-    m.def("angleAxis", &angleAxis);
-    m.def("angleAxis44", &angleAxis44);
-    m.def("normalized", &getNormalized);
-    m.def("unitX", &getUnitX);
-    m.def("unitY", &getUnitY);
-    m.def("unitZ", &getUnitZ);
+    m.def("angleAxis", [](double angle, const Vector3& axis){ return Matrix3(AngleAxis(angle, axis)); });
+    m.def("angleAxis44", [](double angle, const Vector3& axis){ return Affine3(AngleAxis(angle, axis)); });
+    m.def("normalized", [](const Vector3& v){ return v.normalized(); });
+    m.def("unitX", Vector3::UnitX);
+    m.def("unitY", Vector3::UnitY);
+    m.def("unitZ", Vector3::UnitZ);
 
+    PySignal<void(const Vector3&)>(m, "Vector33Signal");
+    PySignal<void(const Vector4&)>(m, "Vector43Signal");
+    PySignal<void(const Matrix3&)>(m, "Matrix3Signal");
+    PySignal<void(const Matrix4&)>(m, "Matrix4Signal");
     PySignal<void(const Affine3&)>(m, "Affine3Signal");
 }
 

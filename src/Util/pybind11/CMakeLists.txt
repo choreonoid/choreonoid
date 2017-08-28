@@ -15,6 +15,7 @@ target_link_libraries(PyUtil CnoidUtil CnoidPython)
 set(headers
   PyUtil.h
   PySignal.h
+  PyEigenTypes.h
   )
 
 apply_common_setting_for_python_module(PyUtil "${headers}")
