@@ -1,11 +1,16 @@
 # @author Shin'ichiro Nakaoka
 
-add_cnoid_library(CnoidPyBase SHARED PyBase.cpp)
+set(headers
+  PyItemList.h
+  PyQString.h
+  exportdecl.h
+  )
+
+add_cnoid_library(CnoidPyBase SHARED PyItemList.cpp)
 target_link_libraries(CnoidPyBase CnoidBase CnoidPython)
-apply_common_setting_for_library(CnoidPyBase)
+apply_common_setting_for_library(CnoidPyBase "${headers}")
 
 add_cnoid_python_module(PyQtCore PyQtCore.cpp)
-
 target_link_libraries(PyQtCore ${QT_LIBRARIES} ${PYTHON_LIBRARIES})
 
 if(QT5)
@@ -36,10 +41,3 @@ add_cnoid_python_module(PyBase
 )
 
 target_link_libraries(PyBase CnoidPyBase)
-
-set(headers
-  PyBase.h
-  exportdecl.h
-  )
-
-apply_common_setting_for_python_module(PyBase "${headers}")

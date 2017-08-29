@@ -9,7 +9,7 @@
 #include "../JointPath.h"
 #include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
-#include <cnoid/PyUtil>
+#include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
 #include <pybind11/operators.h>
 

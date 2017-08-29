@@ -2,15 +2,16 @@
   @author Shizuko Hattori
 */
 
-#include "PyUtil.h"
 #include "../ExecutablePath.h"
 #include "../FloatingNumberString.h"
+#include <pybind11/pybind11.h>
 
 using namespace cnoid;
 namespace py = pybind11;
 
 namespace cnoid {
 
+void exportPyReferenced(py::module& m);
 void exportPySignalTypes(py::module& m);
 void exportPyValueTree(py::module& m);
 void exportPyEigenTypes(py::module& m);
@@ -26,8 +27,7 @@ PYBIND11_MODULE(Util, m)
 {
     m.doc() = "Choreonoid Util module";
 
-    py::class_<Referenced, ReferencedPtr>(m, "Referenced");
-
+    exportPyReferenced(m);
     exportPySignalTypes(m);
     exportPyValueTree(m);
     exportPyEigenTypes(m);

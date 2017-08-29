@@ -2,10 +2,10 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "PyQString.h"
 #include <QWidget>
 #include <QMainWindow>
 #include <QToolButton>
-#include <cnoid/PyUtil>
 
 namespace py = pybind11;
 

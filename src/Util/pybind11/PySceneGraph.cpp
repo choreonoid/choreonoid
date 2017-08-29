@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyUtil.h"
+#include "PyReferenced.h"
 #include "PyEigenTypes.h"
 #include "../SceneGraph.h"
 #include "../SceneProvider.h"

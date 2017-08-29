@@ -602,7 +602,12 @@ void MenuWidget::onScriptFinished()
         
     } else if(pythonExecutor.hasException()){
         pybind11::gil_scoped_acquire lock;
-        if(pythonExecutor.exceptionType() == cancelExceptionType){
+#ifdef CNOID_USE_PYBIND11
+        bool isCancelException = pythonExecutor.exceptionType().is(cancelExceptionType);
+#else
+        bool isCancelException = (pythonExecutor.exceptionType() == cancelExceptionType);
+#endif
+        if(isCancelException){
             showWarningDialog(_("The script has been cancelled."));
         } else {
             MessageView::instance()->putln(pythonExecutor.exceptionText());

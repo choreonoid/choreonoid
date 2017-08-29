@@ -7,6 +7,7 @@
 #include "../SceneView.h"
 #include "../TaskView.h"
 #include "../ViewManager.h"
+#include "PyQString.h"
 #include <cnoid/PySignal>
 #include <cnoid/PyEigenTypes>
 #include <QWidget>

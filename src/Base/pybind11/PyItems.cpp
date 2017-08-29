@@ -2,7 +2,8 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyBase.h"
+#include "PyItemList.h"
+#include "PyQString.h"
 #include "../Item.h"
 #include "../RootItem.h"
 #include "../FolderItem.h"
@@ -16,7 +17,8 @@
 #include "../SceneItem.h"
 #include "../PointSetItem.h"
 #include "../MultiPointSetItem.h"
-#include <cnoid/PyUtil>
+#include <cnoid/PyReferenced>
+#include <cnoid/PyEigenTypes>
 
 using namespace std;
 using namespace cnoid;

@@ -4,7 +4,7 @@
 
 #include "../SceneDragger.h"
 #include "../PositionDragger.h"
-#include <cnoid/PyUtil>
+#include <cnoid/PyReferenced>
 #include <cnoid/PyEigenTypes>
 
 using namespace cnoid;

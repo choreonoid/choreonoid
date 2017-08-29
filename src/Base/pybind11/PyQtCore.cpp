@@ -2,10 +2,10 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "PyQtCore.h"
-#include <cnoid/PyUtil>
+#include "PyQString.h"
 #include <QObject>
 #include <QTimer>
+#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 

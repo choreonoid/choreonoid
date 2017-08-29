@@ -2,10 +2,12 @@
  * @author Shin'ichiro Nakaoka
 */
 
-#include "PyBase.h"
+#include "PyItemList.h"
+#include "PyQString.h"
 #include "../ItemTreeView.h"
 #include "../RootItem.h"
 #include <cnoid/PySignal>
+#include <cnoid/PyReferenced>
 
 using namespace cnoid;
 namespace py = pybind11;

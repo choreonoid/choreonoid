@@ -20,7 +20,6 @@ void exportPyEigenTypes(py::module& m)
     m.def("rotFromRpy44", [](const Vector3& v){ return Affine3(rotFromRpy(v)); });
     m.def("omegaFromRot", &cnoid::omegaFromRot);
     m.def("angleAxis", [](double angle, const Vector3& axis){ return Matrix3(AngleAxis(angle, axis)); });
-    //m.def("angleAxis44", [](double angle, const Vector3& axis){ return Affine3(AngleAxis(angle, axis)).matrix(); });
     m.def("angleAxis44", [](double angle, const Vector3& axis){ return Affine3(AngleAxis(angle, axis)); });
     m.def("normalized", [](const Vector3& v){ return v.normalized(); });
     m.def("unitX", Vector3::UnitX);

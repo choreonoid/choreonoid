@@ -4,9 +4,8 @@
 
 #include "../ToolBar.h"
 #include "../TimeBar.h"
-#include "PyQtCore.h"
+#include "PyQString.h"
 #include <cnoid/PySignal>
-#include <cnoid/PyUtil>
 
 using namespace cnoid;
 namespace py = pybind11;

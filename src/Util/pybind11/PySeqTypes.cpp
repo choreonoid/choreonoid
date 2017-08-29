@@ -2,10 +2,10 @@
  * @author Shin'ichiro Nakaoka
 */
 
-#include "PyUtil.h"
 #include "../MultiValueSeq.h"
 #include "../ValueTree.h"
 #include "../YAMLWriter.h"
+#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 using namespace cnoid;

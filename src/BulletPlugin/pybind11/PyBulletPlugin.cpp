@@ -3,7 +3,7 @@
  */
 
 #include "../BulletSimulatorItem.h"
-#include <cnoid/PyUtil>
+#include <cnoid/PyBase>
 
 using namespace cnoid;
 namespace py = pybind11;

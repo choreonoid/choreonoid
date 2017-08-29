@@ -7,7 +7,7 @@
 #include "../ToolBarArea.h"
 #include "../ViewArea.h"
 #include "../View.h"
-#include <cnoid/PyUtil>
+#include "PyQString.h"
 
 using namespace cnoid;
 namespace py = pybind11;

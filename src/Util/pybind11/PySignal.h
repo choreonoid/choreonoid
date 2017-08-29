@@ -5,9 +5,8 @@
 #ifndef CNOID_UTIL_PYSIGNAL_H
 #define CNOID_UTIL_PYSIGNAL_H
 
-#include "PyUtil.h"
 #include "../Signal.h"
-#include <cnoid/PythonUtil>
+#include <pybind11/pybind11.h>
 #include <boost/type_traits.hpp>
 
 namespace cnoid {
@@ -24,7 +23,7 @@ template<typename T> struct python_function_caller0 {
             pybind11::object result0 = func();
             result = result0.cast<T>();
         } catch(const pybind11::error_already_set& ex) {
-            cnoid::handlePythonException();
+            pybind11::print(ex.what());
         }
         return result;
     }
@@ -38,7 +37,7 @@ template<> struct python_function_caller0<void> {
         try {
             func();
         } catch(const pybind11::error_already_set& ex) {
-            cnoid::handlePythonException();
+            pybind11::print(ex.what());
         }
     }
 };
@@ -53,7 +52,7 @@ template<typename T, typename ARG1> struct python_function_caller1 {
             pybind11::object result0 = func(pybind11::cast(arg1));
             result = result0.cast<T>();
         } catch(const pybind11::error_already_set& ex) {
-            cnoid::handlePythonException();
+            pybind11::print(ex.what());
         }
         return result;
     }
@@ -67,7 +66,7 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
         try {
             func(pybind11::cast(arg1));
         } catch(pybind11::error_already_set const& ex) {
-            cnoid::handlePythonException();
+            pybind11::print(ex.what());
         }
     }
 };
@@ -82,7 +81,7 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
             pybind11::object result0 = func(pybind11::cast(arg1), pybind11::cast(arg2));
             result = result0.cast<T>();
         } catch(const pybind11::error_already_set& ex) {
-            cnoid::handlePythonException();
+            pybind11::print(ex.what());
         }
         return result;
     }
@@ -96,7 +95,7 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
         try {
             func(pybind11::cast(arg1), pybind11::cast(arg2));
         } catch(const pybind11::error_already_set& ex) {
-            cnoid::handlePythonException();
+            pybind11::print(ex.what());
         }
     }
 };

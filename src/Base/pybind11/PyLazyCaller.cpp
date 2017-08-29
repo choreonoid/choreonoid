@@ -3,7 +3,7 @@
 */
 
 #include "../LazyCaller.h"
-#include <cnoid/PyUtil>
+#include <pybind11/pybind11.h>
 #include <cnoid/PythonUtil>
 
 using namespace cnoid;

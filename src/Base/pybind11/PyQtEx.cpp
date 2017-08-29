@@ -2,8 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <cnoid/PySignal>
-#include "PyQtCore.h"
+#include "PyQString.h"
 #include "../Buttons.h"
 #include "../Action.h"
 #include "../Timer.h"

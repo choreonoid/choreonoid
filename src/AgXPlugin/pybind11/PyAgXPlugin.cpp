@@ -62,6 +62,5 @@ PYBIND11_MODULE(AgXPlugin, m)
             .value("BOTH_PRIMARY_AND_SECONDARY", AgXSimulatorItem::FrictionDirection::BOTH_PRIMARY_AND_SECONDARY)
             .export_values();
 
-    py::implicitly_convertible<AgXSimulatorItem, SimulatorItem>();
     PyItemList<AgXSimulatorItem>(m, "AgXSimulatorItemList");
 }
