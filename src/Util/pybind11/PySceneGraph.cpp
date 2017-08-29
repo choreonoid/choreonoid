@@ -3,6 +3,7 @@
 */
 
 #include "PyUtil.h"
+#include "PyEigenTypes.h"
 #include "../SceneGraph.h"
 #include "../SceneProvider.h"
 

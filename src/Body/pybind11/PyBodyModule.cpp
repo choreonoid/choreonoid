@@ -10,6 +10,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
+#include <cnoid/PyEigenTypes>
 #include <pybind11/operators.h>
 
 using namespace std;

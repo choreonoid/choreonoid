@@ -3,6 +3,7 @@
 */
 
 #include "PyUtil.h"
+#include "PyEigenTypes.h"
 #include "../EigenArchive.h"
 #include "../ValueTree.h"
 

@@ -5,6 +5,7 @@
 #include "../SceneDragger.h"
 #include "../PositionDragger.h"
 #include <cnoid/PyUtil>
+#include <cnoid/PyEigenTypes>
 
 using namespace cnoid;
 namespace py=pybind11;

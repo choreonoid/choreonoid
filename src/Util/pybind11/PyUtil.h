@@ -6,7 +6,6 @@
 #define CNOID_UTIL_PYUTIL_H
 
 #include "../Referenced.h"
-#include "PyEigenTypes.h"
 #include <cnoid/Config>
 #include <pybind11/pybind11.h>
 

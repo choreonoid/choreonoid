@@ -6,54 +6,39 @@
 
 namespace pybind11 { namespace detail {
 
-    template<> struct type_caster<cnoid::Position> {
-    public:
+    template<> struct type_caster<cnoid::Position>
+    {
         PYBIND11_TYPE_CASTER(cnoid::Position, _("Position"));
 
-        //Conversion part 1 (Python->C++)
         bool load(handle src, bool) {
             try{
-                Eigen::Matrix4d mat = src.cast<Eigen::Matrix4d>();
-                value.linear() = mat.block(0, 0, 3, 3);
-                value.translation() = mat.block(0, 3, 3, 1);
-            } catch(pybind11::cast_error error) {
+                value = src.cast<cnoid::Matrix4>();
+            } catch(pybind11::cast_error error){
                 return false;
             }
             return true;
         }
 
-        //Conversion part 2 (C++ -> Python)
-        static handle cast(cnoid::Position src, return_value_policy, handle) {
-            Eigen::Matrix4d retval = Eigen::Matrix4d::Identity();
-            retval.block(0, 0, 3, 3) = src.linear();
-            retval.block(0, 3, 3, 1) = src.translation();
-            return  pybind11::cast(&retval, pybind11::return_value_policy::reference_internal).inc_ref();
+        static handle cast(cnoid::Position src, return_value_policy policy, handle) {
+            return  pybind11::cast(src.matrix(), policy).inc_ref();
         }
     };
 
-    template<> struct type_caster<cnoid::Affine3> {
-    public:
+    template<> struct type_caster<cnoid::Affine3>
+    {
         PYBIND11_TYPE_CASTER(cnoid::Affine3, _("Affine3"));
 
-        //Conversion part 1 (Python->C++)
         bool load(handle src, bool) {
             try{
-                Eigen::Matrix4d mat = src.cast<Eigen::Matrix4d>();
-                value.linear() = mat.block(0, 0, 3, 3);
-                value.translation() = mat.block(0, 3, 3, 1);
-            }catch(pybind11::cast_error error){
+                value = src.cast<cnoid::Matrix4>();
+            } catch(pybind11::cast_error error){
                 return false;
             }
-
             return true;
         }
 
-        //Conversion part 2 (C++ -> Python)
-        static handle cast(cnoid::Position src, return_value_policy, handle ) {
-            Eigen::Matrix4d retval = Eigen::Matrix4d::Identity();
-            retval.block(0, 0, 3, 3) = src.linear();
-            retval.block(0, 3, 3, 1) = src.translation();
-            return  pybind11::cast(&retval, pybind11::return_value_policy::reference_internal).inc_ref();
+        static handle cast(cnoid::Affine3 src, return_value_policy policy, handle) {
+            return  pybind11::cast(src.matrix(), policy).inc_ref();
         }
     };
 }} // namespace pybind11::detail

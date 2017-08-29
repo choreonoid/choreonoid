@@ -8,6 +8,7 @@
 #include "../TaskView.h"
 #include "../ViewManager.h"
 #include <cnoid/PySignal>
+#include <cnoid/PyEigenTypes>
 #include <QWidget>
 
 using namespace cnoid;

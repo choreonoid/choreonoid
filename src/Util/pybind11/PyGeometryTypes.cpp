@@ -3,6 +3,7 @@
 */
 
 #include "PyUtil.h"
+#include "PyEigenTypes.h"
 #include "../PolyhedralRegion.h"
 
 namespace py = pybind11;

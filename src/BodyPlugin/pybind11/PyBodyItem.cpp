@@ -5,6 +5,7 @@
 #include "../BodyItem.h"
 #include <cnoid/BodyState>
 #include <cnoid/PyBase>
+#include <cnoid/PyEigenTypes>
 
 using namespace std;
 using namespace cnoid;

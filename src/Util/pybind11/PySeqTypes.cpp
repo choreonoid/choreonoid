@@ -4,7 +4,6 @@
 
 #include "PyUtil.h"
 #include "../MultiValueSeq.h"
-#include "../Vector3Seq.h"
 #include "../ValueTree.h"
 #include "../YAMLWriter.h"
 
