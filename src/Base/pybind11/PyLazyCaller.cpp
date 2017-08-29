@@ -4,7 +4,6 @@
 
 #include "../LazyCaller.h"
 #include <pybind11/pybind11.h>
-#include <cnoid/PythonUtil>
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -13,19 +12,16 @@ namespace {
 
 struct PyFunc
 {
-    py::object func;
-    PyFunc(py::object f) : func(f) {
-        if(!PyFunction_Check(f.ptr()) && !PyMethod_Check(f.ptr())){
-            PyErr_SetString(PyExc_TypeError, "Task command must be a function type object");
-            throw py::error_already_set();
-        }
-    }
+    py::function func;
+
+    PyFunc(py::function f) : func(f) { }
+
     void operator()() {
         py::gil_scoped_acquire lock;
         try {
             func();
-        } catch(py::error_already_set const& ex) {
-            cnoid::handlePythonException();
+        } catch(const py::error_already_set& ex) {
+            py::print(ex.what());
         }
     }
 };
@@ -36,8 +32,8 @@ namespace cnoid {
 
 void exportPyLazyCaller(py::module m)
 {
-    m.def("callLater", [](py::object func){ cnoid::callLater(PyFunc(func)); });
-    m.def("callSynchronously", [](py::object func){ cnoid::callSynchronously(PyFunc(func)); });
+    m.def("callLater", [](py::function func){ cnoid::callLater(PyFunc(func)); });
+    m.def("callSynchronously", [](py::function func){ cnoid::callSynchronously(PyFunc(func)); });
 }
 
 }
