@@ -290,6 +290,7 @@ struct AGXPlaneJointDesc : public AGXConstraintDesc
 class AGXObjectFactory
 {
 public:
+    static bool checkModuleEnalbled(const char* name);
     static agxSDK::SimulationRef createSimulation(const AGXSimulationDesc& desc);
     static agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
     static agx::ContactMaterialRef createContactMaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);

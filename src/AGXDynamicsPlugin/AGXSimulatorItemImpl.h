@@ -2,7 +2,6 @@
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_SIMULATOR_ITEM_IMPL_H
 
 #include <cnoid/SimulatorItem>
-//#include "AGXInclude.h"
 #include "AGXScene.h"
 #include "AGXBody.h"
 #include <iostream>

@@ -25,6 +25,11 @@ agx::Vec3f AGXPseudoContinuousTrackGeometry::calculateSurfaceVelocity(const agxC
 ////////////////////////////////////////////////////////////
 // AGXObjectFactory
 
+bool AGXObjectFactory::checkModuleEnalbled(const char* name)
+{
+    return agx::Runtime::instance()->isModuleEnabled(name);
+}
+
 agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc & desc)
 {
     agxSDK::SimulationRef sim = new agxSDK::Simulation();
