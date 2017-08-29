@@ -1,4 +1,3 @@
-
 # @author Shin'ichiro Nakaoka
 
 #set(CMAKE_BUILD_TYPE Debug)
@@ -27,11 +26,8 @@ idl_compile_cpp(idl_cpp_files idl_h_files corba Naming)
 add_cnoid_executable(${target} NameServer.cpp CosNaming_impl.cpp ${idl_cpp_files})
 target_link_libraries(${target} ${OMNIORB_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 
-
 if(ENABLE_PYTHON)
-  if(USE_PYTHON3)
-
-  else()
-    add_subdirectory(python)
+  if(USE_BOOST_PYTHON)
+    add_subdirectory(boostpython)
   endif()
 endif()

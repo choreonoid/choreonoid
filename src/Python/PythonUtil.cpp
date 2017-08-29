@@ -2,8 +2,11 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include <Python.h>
 #include "PythonUtil.h"
+
+#ifdef CNOID_USE_BOOST_PYTHON
+
+#include <Python.h>
 
 void cnoid::handlePythonException()
 {
@@ -16,3 +19,5 @@ void cnoid::handlePythonException()
         PyErr_Print();
     }
 }
+
+#endif

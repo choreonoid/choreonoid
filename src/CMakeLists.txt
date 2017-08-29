@@ -1,6 +1,6 @@
 
-add_subdirectory(Util)
 add_subdirectory(Python)
+add_subdirectory(Util)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(Body)
 add_subdirectory(Corba)
@@ -35,15 +35,9 @@ if(ENABLE_GUI)
   add_subdirectory(OpenHRPPlugin)
   add_subdirectory(Hrpsys31Plugin)
   
-  if(USE_PYTHON3)
-    add_subdirectory(Python3Plugin)
-    add_subdirectory(GrxUIPython3Plugin)
-  else()
-    add_subdirectory(PythonPlugin)
-    add_subdirectory(GrxUIPlugin)
-  endif()
-  
+  add_subdirectory(PythonPlugin)
   add_subdirectory(PythonSimScriptPlugin)
-  
+  add_subdirectory(GrxUIPlugin)
+
   add_subdirectory(Choreonoid)
 endif()

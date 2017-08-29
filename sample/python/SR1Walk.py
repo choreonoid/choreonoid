@@ -1,4 +1,3 @@
-
 from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.Body import *
@@ -44,6 +43,8 @@ floorItem.load(shareDirectory() + "/model/misc/floor.body")
 worldItem.addChildItem(floorItem)
 
 simulatorItem = AISTSimulatorItem()
+simulatorItem.setTimeStep(0.002)
+simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.ACTIVE_CONTROL)
 worldItem.addChildItem(simulatorItem)
 ItemTreeView.instance().selectItem(simulatorItem)
 

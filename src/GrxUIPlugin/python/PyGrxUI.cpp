@@ -6,8 +6,14 @@
 #include "../GrxUIMenuView.h"
 #include <cnoid/LazyCaller>
 
+#ifdef CNOID_USE_PYBIND11
+#include <pybind11/eval.h>
+void throw_error_already_set(){ throw pybind11::error_already_set(); }
+#else
+void throw_error_already_set(){ boost::python::throw_error_already_set(); }
+#endif
+
 using namespace cnoid;
-namespace python = boost::python;
 
 namespace {
 
@@ -15,19 +21,19 @@ namespace {
     {
         if(!GrxUIPlugin::isActive()){
             PyErr_SetString(PyExc_RuntimeError, "GrxUI Plugin is inactive.");
-            python::throw_error_already_set();
+            throw_error_already_set();
         }
     }
 
-    python::object cancelExceptionType;
+    pybind11::object cancelExceptionType;
     
-    void waitInputMenu(const python::list& menu)
+    void waitInputMenu(const pybind11::list& menu)
     {
         checkGrxUIPlugin();
         callSynchronously([&](){ GrxUIMenuView::instance()->setMenu(menu, false, !isRunningInMainThread()); });
     }
 
-    void waitInputSequentialMenu(const python::list& menu)
+    void waitInputSequentialMenu(const pybind11::list& menu)
     {
         checkGrxUIPlugin();
         callSynchronously([&](){ GrxUIMenuView::instance()->setMenu(menu, true, !isRunningInMainThread()); });
@@ -51,7 +57,7 @@ namespace {
         
         if(result == QMessageBox::Cancel){
             PyErr_SetObject(cancelExceptionType.ptr(), 0);
-            python::throw_error_already_set();
+            throw_error_already_set();
         }
         return (result == QMessageBox::Yes);
     }
@@ -75,7 +81,7 @@ namespace {
             
         if(!result){
             PyErr_SetObject(cancelExceptionType.ptr(), 0);
-            python::throw_error_already_set();
+            throw_error_already_set();
         }
 
         return true;
@@ -101,7 +107,7 @@ namespace {
         /*
         if(!result){
             PyErr_SetObject(cancelExceptionType.ptr(), 0);
-            python::throw_error_already_set();
+            throw_error_already_set();
         }
         */
 
@@ -110,26 +116,60 @@ namespace {
 }
 
 
+#ifdef CNOID_USE_PYBIND11
+
+PYBIND11_MODULE(grxui, m)
+{
+    m.doc() = "Choreonoid GrxUI module";
+
+    if(!GrxUIPlugin::isActive()){
+        PyErr_SetString(PyExc_ImportError, "GrxUI Plugin is not loaded.");
+        throw_error_already_set();
+    }
+    
+    m.def("waitInputMenu", waitInputMenu);
+    m.def("waitInputSequentialMenu", waitInputSequentialMenu);
+    m.def("waitInputSelect", waitInputSelect);
+    m.def("waitInputConfirm", waitInputConfirm);
+    m.def("waitInputMessage", waitInputMessage);
+
+    // define the GrxUICancelException class which inherits the built-in Exception class
+    pybind11::object mainModule = pybind11::module::import("__main__");
+    pybind11::object mainName = mainModule.attr("__name__");
+    mainModule.attr("__name__") = m.attr("__name__");
+    pybind11::eval<pybind11::eval_single_statement>(
+        "class GrxUICancelException (RuntimeError): pass\n",
+        mainModule.attr("__dict__"), m.attr("__dict__"));
+    cancelExceptionType = m.attr("GrxUICancelException");
+    GrxUIMenuView::setCancelExceptionType(cancelExceptionType);
+    mainModule.attr("__name__") = mainName;
+}
+
+#else 
+
 BOOST_PYTHON_MODULE(grxui)
 {
     if(!GrxUIPlugin::isActive()){
         PyErr_SetString(PyExc_ImportError, "GrxUI Plugin is not loaded.");
-        python::throw_error_already_set();
+        throw_error_already_set();
     }
-    
-    python::def("waitInputMenu", waitInputMenu);
-    python::def("waitInputSequentialMenu", waitInputSequentialMenu);
-    python::def("waitInputSelect", waitInputSelect);
-    python::def("waitInputConfirm", waitInputConfirm);
-    python::def("waitInputMessage", waitInputMessage);
+
+    boost::python::def("waitInputMenu", waitInputMenu);
+    boost::python::def("waitInputSequentialMenu", waitInputSequentialMenu);
+    boost::python::def("waitInputSelect", waitInputSelect);
+    boost::python::def("waitInputConfirm", waitInputConfirm);
+    boost::python::def("waitInputMessage", waitInputMessage);
 
     // define the GrxUICancelException class which inherits the built-in Exception class
-    python::object mainModule = python::import("__main__");
-    python::object mainName = mainModule.attr("__name__");
-    mainModule.attr("__name__") = python::scope().attr("__name__");
-    python::exec("class GrxUICancelException (RuntimeError): pass\n",
-                 mainModule.attr("__dict__"), python::scope().attr("__dict__"));
-    cancelExceptionType = python::scope().attr("GrxUICancelException");
+    boost::python::object mainModule = boost::python::import("__main__");
+    boost::python::object mainName = mainModule.attr("__name__");
+    mainModule.attr("__name__") = boost::python::scope().attr("__name__");
+    boost::python::exec(
+        "class GrxUICancelException (RuntimeError): pass\n",
+        mainModule.attr("__dict__"), boost::python::scope().attr("__dict__"));
+    cancelExceptionType = boost::python::scope().attr("GrxUICancelException");
     GrxUIMenuView::setCancelExceptionType(cancelExceptionType);
     mainModule.attr("__name__") = mainName;
 }
+
+#endif

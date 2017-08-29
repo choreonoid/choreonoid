@@ -31,18 +31,10 @@ public:
     virtual bool wait(double sec) = 0;
     virtual bool waitForCommandToFinish(double timeout = 0.0) = 0;
     virtual bool waitForCommandToFinish(Connection connectionToDisconnect, double timeout) = 0;
-
-    template<class Signature> bool waitForSignal(SignalProxy<Signature> signalProxy, double timeout = 0.0){
-        return waitForCommandToFinish(signalProxy.connect(std::bind(&TaskProc::notifyCommandFinish, this, true)), timeout);
-    }
-
-    template<class Signature> bool waitForBooleanSignal(SignalProxy<Signature> signalProxy, double timeout = 0.0){
-        return waitForCommandToFinish(
-            signalProxy.connect(
-                std::bind(&TaskProc::notifyCommandFinish, this, std::placeholders::_1)), timeout);
-    }
-    
     virtual void notifyCommandFinish(bool isCompleted = true) = 0;
+
+    bool waitForSignal(SignalProxy<void()> signalProxy, double timeout = 0.0);
+    bool waitForBooleanSignal(SignalProxy<void(bool)> signalProxy, double timeout = 0.0);
 };
 
 

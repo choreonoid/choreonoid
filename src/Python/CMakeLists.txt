@@ -1,8 +1,3 @@
-
-# @author Shin'ichiro Nakaoka
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 if(NOT ENABLE_PYTHON)
   return()
 endif()
@@ -18,8 +13,5 @@ set(headers
 set(target CnoidPython)
 
 add_cnoid_library(${target} SHARED ${sources} ${headers})
-
-target_link_libraries(${target} ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
-
+target_link_libraries(${target} ${PYTHON_LIBRARIES})
 apply_common_setting_for_library(${target} "${headers}")
-

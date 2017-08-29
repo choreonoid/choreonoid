@@ -100,7 +100,6 @@ public:
     }
     
     // To, Ro?
-    Position& Tb() { return Tb_; }
     const Position& Tb() const { return Tb_; }
         
     Position::ConstTranslationPart b() const { return Tb_.translation(); }
