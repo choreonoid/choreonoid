@@ -7,9 +7,8 @@
 #include "../RootItem.h"
 #include <cnoid/PySignal>
 
-using namespace boost;
-using namespace boost::python;
 using namespace cnoid;
+namespace py = boost::python;
 
 // for MSVC++2015 Update3
 CNOID_PYTHON_DEFINE_GET_POINTER(ItemTreeView)
@@ -18,19 +17,19 @@ namespace {
 
 RootItemPtr ItemTreeView_rootItem(ItemTreeView& self) { return self.rootItem(); }
 
-python::object ItemTreeView_selectedItems(ItemTreeView& self, python::object itemClass){
+py::object ItemTreeView_selectedItems(ItemTreeView& self, py::object itemClass){
     return getPyNarrowedItemList(self.selectedItems(), itemClass);
 }
 
-python::object ItemTreeView_selectedItem(ItemTreeView& self, python::object itemClass){
+py::object ItemTreeView_selectedItem(ItemTreeView& self, py::object itemClass){
     return getPyNarrowedFirstItem(self.selectedItems(), itemClass);
 }
 
-python::object ItemTreeView_selectedSubItems(ItemTreeView& self, ItemPtr topItem, python::object itemClass){
+py::object ItemTreeView_selectedSubItems(ItemTreeView& self, ItemPtr topItem, py::object itemClass){
     return getPyNarrowedItemList(self.selectedSubItems<Item>(topItem), itemClass);
 }
 
-python::object ItemTreeView_selectedSubItem(ItemTreeView& self, ItemPtr topItem, python::object itemClass){
+py::object ItemTreeView_selectedSubItem(ItemTreeView& self, ItemPtr topItem, py::object itemClass){
     return getPyNarrowedFirstItem(self.selectedSubItems<Item>(topItem), itemClass);
 }
 
@@ -45,11 +44,11 @@ ItemList<Item> ItemTreeView_checkedItems2(ItemTreeView& self, int id) {
 }
 
 /*
-python::object ItemTreeView_checkedItems3(ItemTreeView& self, python::object itemClass) {
+py::object ItemTreeView_checkedItems3(ItemTreeView& self, py::object itemClass) {
     return getPyNarrowedItemList(self.checkedItems<Item>(), itemClass);
 }
 
-python::object ItemTreeView_checkedItems4(ItemTreeView& self, python::object itemClass, int id) {
+py::object ItemTreeView_checkedItems4(ItemTreeView& self, py::object itemClass, int id) {
     return getPyNarrowedItemList(self.checkedItems<Item>(id), itemClass);
 }
 */
@@ -92,8 +91,8 @@ void exportPyItemTreeView()
     PySignal<void(const ItemList<>&)>("ItemListSignal");
     PySignal<void(Item* item, bool isChecked)>("ItemBoolSignal");
     
-    class_<ItemTreeView, ItemTreeView*, bases<View>, boost::noncopyable>("ItemTreeView", no_init)
-        .def("instance", &ItemTreeView::instance, return_value_policy<reference_existing_object>()).staticmethod("instance")
+    py::class_<ItemTreeView, ItemTreeView*, py::bases<View>, boost::noncopyable>("ItemTreeView", py::no_init)
+        .def("instance", &ItemTreeView::instance, py::return_value_policy<py::reference_existing_object>()).staticmethod("instance")
         .def("rootItem", ItemTreeView_rootItem)
         .def("showRoot", &ItemTreeView::showRoot)
         .def("selectedItems", &ItemTreeView::selectedItems<Item>)

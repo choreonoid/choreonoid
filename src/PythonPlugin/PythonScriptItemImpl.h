@@ -29,7 +29,7 @@ public:
     bool execute();
     bool executeCode(const char* code);
     bool waitToFinish(double timeout);
-    pybind11::object resultObject();
+    python::object resultObject();
     const std::string resultString() const;
     Signal<void()>& sigScriptFinished() { return sigScriptFinished_; }
     bool terminate();

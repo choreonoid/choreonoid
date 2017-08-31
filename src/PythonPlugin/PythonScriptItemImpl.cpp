@@ -150,7 +150,7 @@ bool PythonScriptItemImpl::waitToFinish(double timeout)
 }
 
 
-pybind11::object PythonScriptItemImpl::resultObject()
+python::object PythonScriptItemImpl::resultObject()
 {
     return executor.resultObject();
 }

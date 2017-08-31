@@ -13,9 +13,8 @@
 #include <map>
 
 using namespace std;
-using namespace boost::python;
-namespace python = boost::python;
 using namespace cnoid;
+namespace py =cnoid::python;
 
 // for MSVC++2015 Update3
 CNOID_PYTHON_DEFINE_GET_POINTER(TaskProc)
@@ -28,32 +27,32 @@ void TaskProc_notifyCommandFinishTrue(TaskProc& self){
     self.notifyCommandFinish(true);
 }
 
-bool TaskPorc_waitForSignal1(python::object self, python::object signalProxy)
+bool TaskPorc_waitForSignal1(py::object self, py::object signalProxy)
 {
-    python::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
-    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, 0.0));
+    py::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
+    py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return py::extract<bool>(self.attr("waitForCommandToFinish")(connection, 0.0));
 }
 
-bool TaskPorc_waitForSignal2(python::object self, python::object signalProxy, double timeout)
+bool TaskPorc_waitForSignal2(py::object self, py::object signalProxy, double timeout)
 {
-    python::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
-    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, timeout));
+    py::object notifyCommandFinish = self.attr("notifyCommandFinish_true");
+    py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return py::extract<bool>(self.attr("waitForCommandToFinish")(connection, timeout));
 }
 
-bool TaskPorc_waitForBooleanSignal1(python::object self, python::object signalProxy)
+bool TaskPorc_waitForBooleanSignal1(py::object self, py::object signalProxy)
 {
-    python::object notifyCommandFinish = self.attr("notifyCommandFinish");
-    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, 0.0));
+    py::object notifyCommandFinish = self.attr("notifyCommandFinish");
+    py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return py::extract<bool>(self.attr("waitForCommandToFinish")(connection, 0.0));
 }
 
-bool TaskPorc_waitForBooleanSignal2(python::object self, python::object signalProxy, double timeout)
+bool TaskPorc_waitForBooleanSignal2(py::object self, py::object signalProxy, double timeout)
 {
-    python::object notifyCommandFinish = self.attr("notifyCommandFinish");
-    python::object connection = signalProxy.attr("connect")(notifyCommandFinish);
-    return python::extract<bool>(self.attr("waitForCommandToFinish")(connection, timeout));
+    py::object notifyCommandFinish = self.attr("notifyCommandFinish");
+    py::object connection = signalProxy.attr("connect")(notifyCommandFinish);
+    return py::extract<bool>(self.attr("waitForCommandToFinish")(connection, timeout));
 }
 
 bool TaskProc_waitForCommandToFinish1(TaskProc& self)
@@ -93,23 +92,23 @@ bool TaskProc_waitForCommandToFinish3(TaskProc& self, Connection connectionToDis
 */
 struct PyTaskFunc
 {
-    python::object func;
-    PyTaskFunc(python::object f) : func(f) {
+    py::object func;
+    PyTaskFunc(py::object f) : func(f) {
         if(!PyFunction_Check(f.ptr()) && !PyMethod_Check(f.ptr())){
             PyErr_SetString(PyExc_TypeError, "Task command must be a function type object");
-            python::throw_error_already_set();
+            py::throw_error_already_set();
         }
     }
     void operator()(TaskProc* proc) {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
-            int numArgs = python::extract<int>(func.attr("func_code").attr("co_argcount"));
+            int numArgs = py::extract<int>(func.attr("func_code").attr("co_argcount"));
             if(numArgs == 0){
                 func();
             } else {
                 func(boost::ref(proc));
             }
-        } catch(python::error_already_set const& ex) {
+        } catch(py::error_already_set const& ex) {
             handlePythonException();
         }
     }
@@ -117,13 +116,13 @@ struct PyTaskFunc
 
 struct PyMenuItemFunc
 {
-    python::object func;
-    PyMenuItemFunc(python::object f) : func(f) { }
+    py::object func;
+    PyMenuItemFunc(py::object f) : func(f) { }
     void operator()() {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             func();
-        } catch(python::error_already_set const& ex) {
+        } catch(py::error_already_set const& ex) {
             handlePythonException();
         }
     }
@@ -131,13 +130,13 @@ struct PyMenuItemFunc
 
 struct PyCheckMenuItemFunc
 {
-    python::object func;
-    PyCheckMenuItemFunc(python::object f) : func(f) { }
+    py::object func;
+    PyCheckMenuItemFunc(py::object f) : func(f) { }
     void operator()(bool on) {
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         try {
             func(on);
-        } catch(python::error_already_set const& ex) {
+        } catch(py::error_already_set const& ex) {
             handlePythonException();
         }
     }
@@ -152,7 +151,7 @@ TaskCommandPtr TaskCommand_setDescription(TaskCommand& self, const std::string& 
     return self.setDescription(description);
 }
 
-TaskCommandPtr TaskCommand_setFunction(TaskCommand& self, python::object func){
+TaskCommandPtr TaskCommand_setFunction(TaskCommand& self, py::object func){
     return self.setFunction(PyTaskFunc(func));
 }
 
@@ -228,7 +227,7 @@ TaskPhasePtr  TaskPhase_clone2(TaskPhase& self, bool doDeepCopy ){
     return self.clone(doDeepCopy);
 }
 
-void TaskPhase_setPreCommand(TaskPhase& self, python::object func){
+void TaskPhase_setPreCommand(TaskPhase& self, py::object func){
     return self.setPreCommand(PyTaskFunc(func));
 }
 
@@ -248,18 +247,18 @@ TaskCommandPtr TaskPhase_addToggleCommand2(TaskPhase& self, const std::string& c
     return self.addToggleCommand(caption);
 }
 
-TaskCommandPtr TaskPhase_addCommandExMain(TaskPhase* self, const std::string& caption, python::dict kw) {
+TaskCommandPtr TaskPhase_addCommandExMain(TaskPhase* self, const std::string& caption, py::dict kw) {
 
     TaskCommandPtr command = self->addCommand(caption);
 
-    python::list args = kw.items();
-    const int n = python::len(args);
+    py::list args = kw.items();
+    const int n = py::len(args);
     for(int i=0; i < n; ++i){
-        python::object arg(args[i]);
-        std::string key = python::extract<std::string>(arg[0]);
-        python::object value(arg[1]);
+        py::object arg(args[i]);
+        std::string key = py::extract<std::string>(arg[0]);
+        py::object value(arg[1]);
         if(key == "default" && PyBool_Check(value.ptr())){
-            if(python::extract<bool>(value)){
+            if(py::extract<bool>(value)){
                 command->setDefault();
             }
         } else if(key == "function"){
@@ -269,9 +268,9 @@ TaskCommandPtr TaskPhase_addCommandExMain(TaskPhase* self, const std::string& ca
     return command;
 }
 
-TaskCommandPtr TaskPhase_addCommandEx(python::tuple args_, python::dict kw) {
-    TaskPhasePtr self = python::extract<TaskPhasePtr>(args_[0]);
-    const std::string caption = python::extract<std::string>(args_[1]);
+TaskCommandPtr TaskPhase_addCommandEx(py::tuple args_, py::dict kw) {
+    TaskPhasePtr self = py::extract<TaskPhasePtr>(args_[0]);
+    const std::string caption = py::extract<std::string>(args_[1]);
     return TaskPhase_addCommandExMain(self, caption, kw);
 }    
 
@@ -301,11 +300,11 @@ TaskCommandPtr TaskPhaseProxy_addToggleCommand2(TaskPhaseProxy& self, const std:
     return self.addToggleCommand(caption);
 }
 
-void TaskMenu_addMenuItem1(TaskMenu& self, const std::string& caption, python::object func){
+void TaskMenu_addMenuItem1(TaskMenu& self, const std::string& caption, py::object func){
     self.addMenuItem(caption, PyMenuItemFunc(func));
 }
 
-void TaskMenu_addCheckMenuItem1(TaskMenu& self, const std::string& caption, bool isChecked, python::object func){
+void TaskMenu_addCheckMenuItem1(TaskMenu& self, const std::string& caption, bool isChecked, py::object func){
     self.addCheckMenuItem(caption, isChecked, PyCheckMenuItemFunc(func));
 }
 
@@ -313,7 +312,7 @@ void TaskMenu_addMenuSeparator(TaskMenu& self){
     self.addMenuSeparator();
 }
 
-class TaskWrap : public Task, public python::wrapper<Task>
+class TaskWrap : public Task, public py::wrapper<Task>
 {
 public :
     TaskWrap() { };
@@ -325,13 +324,13 @@ public :
     virtual void onMenuRequest(TaskMenu& menu){
         bool called = false;
         {
-            PyGILock lock;
+            py::gil_scoped_acquire lock;
             try {
-                if(python::override onMenuRequest = this->get_override("onMenuRequest")){
+                if(py::override onMenuRequest = this->get_override("onMenuRequest")){
                     called = true;
                     onMenuRequest(boost::ref(menu));
                 } 
-            } catch(python::error_already_set const& ex) {
+            } catch(py::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -347,13 +346,13 @@ public :
     virtual void onActivated(AbstractTaskSequencer* sequencer){
         bool isOverridden = false;
         {
-            PyGILock lock;
+            py::gil_scoped_acquire lock;
             try {
-                if(python::override func = this->get_override("onActivated")){
+                if(py::override func = this->get_override("onActivated")){
                     isOverridden = true;
                     func(boost::ref(sequencer));
                 }
-            } catch(python::error_already_set const& ex) {
+            } catch(py::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -369,13 +368,13 @@ public :
     virtual void onDeactivated(AbstractTaskSequencer* sequencer){
         bool isOverridden = false;
         {
-            PyGILock lock;
+            py::gil_scoped_acquire lock;
             try {
-                if(python::override func = this->get_override("onDeactivated")){
+                if(py::override func = this->get_override("onDeactivated")){
                     isOverridden = true;
                     func(boost::ref(sequencer));
                 }
-            } catch(python::error_already_set const& ex) {
+            } catch(py::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -391,14 +390,14 @@ public :
     virtual void storeState(AbstractTaskSequencer* sequencer, Mapping& archive){
         bool isOverridden = false;
         {
-            PyGILock lock;
+            py::gil_scoped_acquire lock;
             try {
-                if(python::override storeStateFunc = this->get_override("storeState")){
+                if(py::override storeStateFunc = this->get_override("storeState")){
                     isOverridden = true;
                     MappingPtr a = &archive;
                     storeStateFunc(boost::ref(sequencer), a);
                 }
-            } catch(python::error_already_set const& ex) {
+            } catch(py::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -414,14 +413,14 @@ public :
     virtual void restoreState(AbstractTaskSequencer* sequencer, const Mapping& archive){
         bool isOverridden = false;
         {
-            PyGILock lock;
+            py::gil_scoped_acquire lock;
             try {
-                if(python::override restoreState = this->get_override("restoreState")){
+                if(py::override restoreState = this->get_override("restoreState")){
                     isOverridden = true;
                     MappingPtr a = const_cast<Mapping*>(&archive);
                     restoreState(boost::ref(sequencer), a);
                 }
-            } catch(python::error_already_set const& ex) {
+            } catch(py::error_already_set const& ex) {
                 cnoid::handlePythonException();
             }
         }
@@ -454,7 +453,7 @@ TaskPhasePtr Task_lastPhase(Task& self){
     return self.lastPhase();
 }
 
-void Task_setPreCommand(Task& self, python::object func){
+void Task_setPreCommand(Task& self, py::object func){
     return self.setPreCommand(PyTaskFunc(func));
 }
 
@@ -478,9 +477,9 @@ TaskCommandPtr Task_lastCommand(Task& self){
     return self.lastCommand();
 }
 
-TaskCommandPtr Task_addCommandEx(python::tuple args_, python::dict kw){
-    TaskWrapPtr self = python::extract<TaskWrapPtr>(args_[0]);
-    const std::string caption = python::extract<std::string>(args_[1]);
+TaskCommandPtr Task_addCommandEx(py::tuple args_, py::dict kw){
+    TaskWrapPtr self = py::extract<TaskWrapPtr>(args_[0]);
+    const std::string caption = py::extract<std::string>(args_[1]);
     return TaskPhase_addCommandExMain(self->lastPhase(), caption, kw);
 }
 
@@ -488,23 +487,23 @@ TaskCommandPtr Task_addCommandEx(python::tuple args_, python::dict kw){
 typedef std::set<AbstractTaskSequencer*> TaskSequencerSet;
 TaskSequencerSet taskSequencers;
 
-typedef std::map<TaskPtr, object> PyTaskMap;
+typedef std::map<TaskPtr, py::object> PyTaskMap;
 PyTaskMap pyTasks;
 
 void onTaskRemoved(Task* task)
 {
-    PyTaskMap::iterator p  = pyTasks.find(task);
+    PyTaskMap::iterator p = pyTasks.find(task);
     if(p != pyTasks.end()){
-        PyGILock lock;
+        py::gil_scoped_acquire lock;
         pyTasks.erase(p);
     }
 }
 
 
-TaskPtr registerTask(AbstractTaskSequencer* sequencer, object& pyTask)
+TaskPtr registerTask(AbstractTaskSequencer* sequencer, py::object& pyTask)
 {
-    PyGILock lock;
-    TaskPtr task = extract<TaskPtr>(pyTask);
+    py::gil_scoped_acquire lock;
+    TaskPtr task = py::extract<TaskPtr>(pyTask);
     if(task){
         if(taskSequencers.find(sequencer) == taskSequencers.end()){
             sequencer->sigTaskRemoved().connect(onTaskRemoved);
@@ -517,7 +516,7 @@ TaskPtr registerTask(AbstractTaskSequencer* sequencer, object& pyTask)
 }
     
 
-void AbstractTaskSequencer_addTask(AbstractTaskSequencer& self, object pyTask)
+void AbstractTaskSequencer_addTask(AbstractTaskSequencer& self, py::object pyTask)
 {
     if(TaskPtr task = registerTask(&self, pyTask)){
         self.addTask(task);
@@ -525,7 +524,7 @@ void AbstractTaskSequencer_addTask(AbstractTaskSequencer& self, object pyTask)
 }
 
 
-bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, object pyTask)
+bool AbstractTaskSequencer_updateTask(AbstractTaskSequencer& self, py::object pyTask)
 {
     if(TaskPtr task = registerTask(&self, pyTask)){
         return self.updateTask(task);
@@ -545,7 +544,7 @@ namespace cnoid {
 
 void exportPyTaskTypes()
 {
-    class_<TaskProc, TaskProc*, boost::noncopyable>("TaskProc", no_init)
+    py::class_<TaskProc, TaskProc*, boost::noncopyable>("TaskProc", py::no_init)
         .def("currentPhaseIndex", &TaskProc::currentPhaseIndex)
         .def("isAutoMode", &TaskProc::isAutoMode)
         .def("breakSequence", &TaskProc::breakSequence)
@@ -565,22 +564,22 @@ void exportPyTaskTypes()
         .def("waitForBooleanSignal", TaskPorc_waitForBooleanSignal2)
         ;
 
-    class_<TaskFunc>("TaskFunc")
+    py::class_<TaskFunc>("TaskFunc")
         .def("__call__", &TaskFunc::operator())
         ;
 
-    class_<TaskToggleState, TaskToggleStatePtr, bases<Referenced>, boost::noncopyable >("TaskToggleState")
+    py::class_<TaskToggleState, TaskToggleStatePtr, py::bases<Referenced>, boost::noncopyable>("TaskToggleState")
         .def("isChecked", &TaskToggleState::isChecked)
         .def("setChecked", &TaskToggleState::setChecked)
         .def("sigToggled", &TaskToggleState::sigToggled)
         ;
 
-    implicitly_convertible<TaskToggleStatePtr, ReferencedPtr>();
+    py::implicitly_convertible<TaskToggleStatePtr, ReferencedPtr>();
 
-    class_<TaskCommand, TaskCommandPtr, bases<Referenced> >("TaskCommand", init<const std::string&>())
-        .def("caption", &TaskCommand::caption, return_value_policy<copy_const_reference>())
+    py::class_<TaskCommand, TaskCommandPtr, py::bases<Referenced>>("TaskCommand", py::init<const std::string&>())
+        .def("caption", &TaskCommand::caption, py::return_value_policy<py::copy_const_reference>())
         .def("setCaption", TaskCommand_setCaption)
-        .def("description", &TaskCommand::description, return_value_policy<copy_const_reference>())
+        .def("description", &TaskCommand::description, py::return_value_policy<py::copy_const_reference>())
         .def("setDescription", TaskCommand_setDescription)
         .def("function", &TaskCommand::function)
         .def("setFunction", TaskCommand_setFunction)
@@ -608,15 +607,15 @@ void exportPyTaskTypes()
         .def("level", &TaskCommand::level)
         ;
     
-    implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
+    py::implicitly_convertible<TaskCommandPtr, ReferencedPtr>();
     
-    class_<TaskPhase, TaskPhasePtr, bases<Referenced>, boost::noncopyable >
-        ("TaskPhase", init<const std::string&>())
-        .def(init<const TaskPhase&>())
-        .def(init<const TaskPhase&, bool>())
+    py::class_<TaskPhase, TaskPhasePtr, py::bases<Referenced>, boost::noncopyable >
+        ("TaskPhase", py::init<const std::string&>())
+        .def(py::init<const TaskPhase&>())
+        .def(py::init<const TaskPhase&, bool>())
         .def("clone", TaskPhase_clone1)
         .def("clone", TaskPhase_clone2)
-        .def("caption", &TaskPhase::caption, return_value_policy<copy_const_reference>())
+        .def("caption", &TaskPhase::caption, py::return_value_policy<py::copy_const_reference>())
         .def("setCaption", &TaskPhase::setCaption)
         .def("isSkipped", &TaskPhase::isSkipped)
         .def("setSkipped", &TaskPhase::setSkipped)
@@ -627,7 +626,7 @@ void exportPyTaskTypes()
         .def("addCommand", TaskPhase_addCommand2)
         .def("addToggleCommand", TaskPhase_addToggleCommand1)
         .def("addToggleCommand", TaskPhase_addToggleCommand2)
-        .def("addCommandEx", python::raw_function(TaskPhase_addCommandEx, 2))
+        .def("addCommandEx", py::raw_function(TaskPhase_addCommandEx, 2))
         .def("numCommands", &TaskPhase::numCommands)
         .def("command", TaskPhase_command)
         .def("lastCommandIndex", &TaskPhase::lastCommandIndex)
@@ -636,9 +635,9 @@ void exportPyTaskTypes()
         .def("maxCommandLevel", &TaskPhase::maxCommandLevel)
         ;
 
-    implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
+    py::implicitly_convertible<TaskPhasePtr, ReferencedPtr>();
 
-    class_<TaskPhaseProxy, TaskPhaseProxyPtr, bases<Referenced>, boost::noncopyable >("TaskPhaseProxy", no_init)
+    py::class_<TaskPhaseProxy, TaskPhaseProxyPtr, py::bases<Referenced>, boost::noncopyable>("TaskPhaseProxy", py::no_init)
         .def("setCommandLevel", &TaskPhaseProxy::setCommandLevel)
         .def("commandLevel", &TaskPhaseProxy::commandLevel)
         .def("addCommand", TaskPhaseProxy_addCommand1)
@@ -647,21 +646,21 @@ void exportPyTaskTypes()
         .def("addToggleCommand", TaskPhaseProxy_addToggleCommand2)
         ;
     
-    implicitly_convertible<TaskPhaseProxyPtr, ReferencedPtr>();
+    py::implicitly_convertible<TaskPhaseProxyPtr, ReferencedPtr>();
     
-    class_<TaskMenu, boost::noncopyable >("TaskMenu", no_init)
+    py::class_<TaskMenu, boost::noncopyable>("TaskMenu", py::no_init)
         .def("addMenuItem", TaskMenu_addMenuItem1)
         .def("addCheckMenuItem", TaskMenu_addCheckMenuItem1)
         .def("addMenuSeparator", TaskMenu_addMenuSeparator)
         ;
     
-    class_<TaskWrap, TaskWrapPtr, bases<Referenced>, boost::noncopyable >("Task", init<>())
-        .def(init<const std::string&, const std::string&>())
-        .def(init<const Task&, bool>())
-        .def(init<const Task&>())
-        .def("name", &Task::name, return_value_policy<copy_const_reference>())
+    py::class_<TaskWrap, TaskWrapPtr, py::bases<Referenced>, boost::noncopyable>("Task", py::init<>())
+        .def(py::init<const std::string&, const std::string&>())
+        .def(py::init<const Task&, bool>())
+        .def(py::init<const Task&>())
+        .def("name", &Task::name, py::return_value_policy<py::copy_const_reference>())
         .def("setName", &Task::setName)
-        .def("caption", &Task::caption, return_value_policy<copy_const_reference>())
+        .def("caption", &Task::caption, py::return_value_policy<py::copy_const_reference>())
         .def("setCaption", &Task::setCaption)
         .def("numPhases", &Task::numPhases)
         .def("phase", Task_phase)
@@ -674,7 +673,7 @@ void exportPyTaskTypes()
         .def("addCommand", Task_addCommand2)
         .def("addToggleCommand", Task_addToggleCommand1)
         .def("addToggleCommand", Task_addToggleCommand2)
-        .def("addCommandEx", python::raw_function(Task_addCommandEx, 2))
+        .def("addCommandEx", py::raw_function(Task_addCommandEx, 2))
         .def("lastCommand", Task_lastCommand)
         .def("lastCommandIndex", &Task::lastCommandIndex)
         .def("funcToSetCommandLink", &Task::funcToSetCommandLink)
@@ -687,10 +686,10 @@ void exportPyTaskTypes()
         .def("maxCommandLevel", &Task::maxCommandLevel)
         ;
 
-    implicitly_convertible<TaskPtr, ReferencedPtr>();
-    implicitly_convertible<TaskWrapPtr, TaskPtr>();
+    py::implicitly_convertible<TaskPtr, ReferencedPtr>();
+    py::implicitly_convertible<TaskWrapPtr, TaskPtr>();
 
-    class_<AbstractTaskSequencer, AbstractTaskSequencer*, boost::noncopyable>("AbstractTaskSequencer", no_init)
+    py::class_<AbstractTaskSequencer, AbstractTaskSequencer*, boost::noncopyable>("AbstractTaskSequencer", py::no_init)
         .def("activate", &AbstractTaskSequencer::activate)
         .def("isActive", &AbstractTaskSequencer::isActive)
         .def("addTask", AbstractTaskSequencer_addTask)

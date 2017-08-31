@@ -3,6 +3,7 @@
 */
 
 #include "PythonExecutor.h"
+#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
@@ -31,12 +32,12 @@ namespace {
     
 bool isInitialized = false;
 
-pybind11::object exitExceptionType;
-pybind11::object sys;
-pybind11::object StringOutClass;
+python::object exitExceptionType;
+python::object sys;
+python::object StringOutClass;
 
 bool isDefaultModuleRefreshEnabled = false;
-pybind11::object rollBackImporter;
+python::object rollBackImporter;
 
 typedef map<string, int> PathRefMap;
 PathRefMap additionalPythonPathRefMap;
@@ -55,10 +56,10 @@ void initializeStaticObjects()
 {
     if(!isInitialized){
 
-        pybind11::gil_scoped_acquire lock;
+        python::gil_scoped_acquire lock;
 
-        exitExceptionType = pybind11::module::import("cnoid.PythonPlugin").attr("ExitException");
-        sys = pybind11::module::import("sys");
+        exitExceptionType = python::module::import("cnoid.PythonPlugin").attr("ExitException");
+        sys = python::module::import("sys");
 
 #ifdef CNOID_USE_PYBIND11
         pybind11::module m = pythonMainModule();
@@ -74,11 +75,12 @@ void initializeStaticObjects()
             .def("text", &StringOut::text, boost::python::return_value_policy<boost::python::copy_const_reference>());
 #endif
 
-        rollBackImporter = pybind11::module::import("cnoid.rbimporter");
+        rollBackImporter = python::module::import("cnoid.rbimporter");
 
         isInitialized = true;
     }
 }
+
 }
 
 
@@ -90,11 +92,11 @@ public:
     bool isBackgroundMode;
     bool isRunningForeground;
     bool isModuleRefreshEnabled;
-    std::function<pybind11::object()> functionToExecScript;
+    std::function<python::object()> functionToExecScript;
     Qt::HANDLE threadId;
     mutable QMutex stateMutex;
     QWaitCondition stateCondition;
-    pybind11::object resultObject;
+    python::object resultObject;
     string resultString;
     Signal<void()> sigFinished;
 
@@ -104,13 +106,13 @@ public:
     bool hasException;
     string exceptionTypeName;
     string exceptionText;
-    pybind11::object exceptionType;
-    pybind11::object exceptionValue;
+    python::object exceptionType;
+    python::object exceptionValue;
 
-    pybind11::object lastResultObject;
+    python::object lastResultObject;
     string lastResultString;
-    pybind11::object lastExceptionType;
-    pybind11::object lastExceptionValue;
+    python::object lastExceptionType;
+    python::object lastExceptionValue;
     string lastExceptionTypeName;
     string lastExceptionText;
     bool isTerminated;
@@ -120,8 +122,8 @@ public:
     void resetLastResultObjects();
     ~PythonExecutorImpl();
     PythonExecutor::State state() const;
-    bool exec(std::function<pybind11::object()> execScript, const string& filename);
-    bool execMain(std::function<pybind11::object()> execScript);
+    bool exec(std::function<python::object()> execScript, const string& filename);
+    bool execMain(std::function<python::object()> execScript);
     virtual void run();
     bool waitToFinish(double timeout);
     void onBackgroundExecutionFinished();
@@ -176,9 +178,9 @@ PythonExecutorImpl::PythonExecutorImpl(const PythonExecutorImpl& org)
 
 void PythonExecutorImpl::resetLastResultObjects()
 {
-    lastResultObject = pybind11::object(); // null
-    lastExceptionType = pybind11::object(); // null
-    lastExceptionValue = pybind11::object(); // null
+    lastResultObject = python::object(); // null
+    lastExceptionType = python::object(); // null
+    lastExceptionValue = python::object(); // null
 }
 
 
@@ -235,7 +237,7 @@ PythonExecutor::State PythonExecutor::state() const
 }
 
 
-static pybind11::object execPythonCodeSub(const std::string& code)
+static python::object execPythonCodeSub(const std::string& code)
 {
 #ifdef CNOID_USE_PYBIND11
     return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace());
@@ -245,7 +247,7 @@ static pybind11::object execPythonCodeSub(const std::string& code)
 }
 
 
-static pybind11::object execPythonFileSub(const std::string& filename)
+static python::object execPythonFileSub(const std::string& filename)
 {
 #ifdef CNOID_USE_PYBIND11
     return pybind11::eval_file(filename.c_str(), cnoid::pythonMainNamespace());
@@ -277,7 +279,7 @@ bool PythonExecutor::execFile(const std::string& filename)
 }
 
 
-bool PythonExecutorImpl::exec(std::function<pybind11::object()> execScript, const string& filename)
+bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const string& filename)
 {
     if(state() != PythonExecutor::NOT_RUNNING){
         return false;
@@ -310,14 +312,14 @@ bool PythonExecutorImpl::exec(std::function<pybind11::object()> execScript, cons
 
     bool result = true;
     {
-        pybind11::gil_scoped_acquire lock;
+        python::gil_scoped_acquire lock;
 
         // clear exception variables
         hasException = false;
         exceptionTypeName.clear();
         exceptionText.clear();
-        exceptionType = pybind11::object();
-        exceptionValue = pybind11::object();
+        exceptionType = python::object();
+        exceptionValue = python::object();
 
         isTerminated = false;
 
@@ -327,7 +329,7 @@ bool PythonExecutorImpl::exec(std::function<pybind11::object()> execScript, cons
 #ifdef CNOID_USE_PYBIND11
             pythonSysModule().attr("path").attr("insert")(0, scriptDirectory);
 #else
-            boost::python::list syspath = boost::python::extract<pybind11::list>(pythonSysModule().attr("path"));
+            boost::python::list syspath = boost::python::extract<python::list>(pythonSysModule().attr("path"));
             syspath.insert(0, scriptDirectory);
 #endif
         }
@@ -365,10 +367,10 @@ bool PythonExecutorImpl::exec(std::function<pybind11::object()> execScript, cons
 }
 
 
-bool PythonExecutorImpl::execMain(std::function<pybind11::object()> execScript)
+bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
 {
     bool completed = false;
-    resultObject = pybind11::object();
+    resultObject = python::object();
     resultString.clear();
     
     try {
@@ -378,7 +380,7 @@ bool PythonExecutorImpl::execMain(std::function<pybind11::object()> execScript)
 #endif
         completed = true;
     }
-    catch(pybind11::error_already_set const & ex) {
+    catch(python::error_already_set const & ex) {
 #ifdef CNOID_USE_PYBIND11
         pybind11::object stdout_ = sys.attr("stdout");
         pybind11::object strout = StringOutClass();
@@ -453,7 +455,7 @@ void PythonExecutorImpl::run()
     threadId = currentThreadId();
     stateCondition.wakeAll();
     stateMutex.unlock();
-    pybind11::gil_scoped_acquire lock;
+    python::gil_scoped_acquire lock;
     execMain(functionToExecScript);
 }
 
@@ -502,10 +504,10 @@ bool PythonExecutorImpl::waitToFinish(double timeout)
 /**
    \note GIL must be obtained when accessing this object.
 */
-pybind11::object PythonExecutor::resultObject()
+python::object PythonExecutor::resultObject()
 {
     impl->stateMutex.lock();
-    pybind11::object object = impl->lastResultObject;
+    python::object object = impl->lastResultObject;
     impl->stateMutex.unlock();
     return object;
 }
@@ -530,7 +532,7 @@ void PythonExecutorImpl::releasePythonPathRef()
 {
     if(pathRefIter != additionalPythonPathRefMap.end()){
         if(--pathRefIter->second == 0){
-            pybind11::gil_scoped_acquire lock;
+            python::gil_scoped_acquire lock;
 #ifdef CNOID_USE_PYBIND11
             pythonSysModule().attr("path").attr("remove")(scriptDirectory);
 #else
@@ -572,7 +574,7 @@ bool PythonExecutorImpl::terminateScript()
 
         for(int i=0; i < 400; ++i){
             {
-                pybind11::gil_scoped_acquire lock;
+                python::gil_scoped_acquire lock;
                 PyThreadState_SetAsyncExc((long)threadId, exitExceptionType().ptr());
             }
             if(wait(20)){
@@ -583,7 +585,7 @@ bool PythonExecutorImpl::terminateScript()
         //releasePythonPathRef();
         
     } else if(isRunningForeground){
-        pybind11::gil_scoped_acquire lock;
+        python::gil_scoped_acquire lock;
         PyErr_SetObject(exitExceptionType().ptr(), 0);
         //releasePythonPathRef();
 #ifdef CNOID_USE_PYBIND11
@@ -627,10 +629,10 @@ const std::string PythonExecutor::exceptionText() const
 /**
    \note GIL must be obtained when accessing this object.
 */
-pybind11::object PythonExecutor::exceptionType() const
+python::object PythonExecutor::exceptionType() const
 {
     impl->stateMutex.lock();
-    pybind11::object exceptionType = impl->lastExceptionType;
+    python::object exceptionType = impl->lastExceptionType;
     impl->stateMutex.unlock();
     return exceptionType;
 }
@@ -639,10 +641,10 @@ pybind11::object PythonExecutor::exceptionType() const
 /**
    \note GIL must be obtained when accessing this object.
 */
-pybind11::object PythonExecutor::exceptionValue() const
+python::object PythonExecutor::exceptionValue() const
 {
     impl->stateMutex.lock();
-    pybind11::object value = impl->lastExceptionValue;
+    python::object value = impl->lastExceptionValue;
     impl->stateMutex.unlock();
     return value;
 }

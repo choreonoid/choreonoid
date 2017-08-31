@@ -25,15 +25,15 @@ namespace {
         }
     }
 
-    pybind11::object cancelExceptionType;
+    python::object cancelExceptionType;
     
-    void waitInputMenu(const pybind11::list& menu)
+    void waitInputMenu(const python::list& menu)
     {
         checkGrxUIPlugin();
         callSynchronously([&](){ GrxUIMenuView::instance()->setMenu(menu, false, !isRunningInMainThread()); });
     }
 
-    void waitInputSequentialMenu(const pybind11::list& menu)
+    void waitInputSequentialMenu(const python::list& menu)
     {
         checkGrxUIPlugin();
         callSynchronously([&](){ GrxUIMenuView::instance()->setMenu(menu, true, !isRunningInMainThread()); });

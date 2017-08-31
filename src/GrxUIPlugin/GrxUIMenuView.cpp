@@ -28,7 +28,7 @@ using namespace cnoid;
 
 namespace {
 
-pybind11::object cancelExceptionType;
+python::object cancelExceptionType;
 
 class FuncParamEntry : public LineEdit
 {
@@ -134,9 +134,9 @@ public:
     vector<vector<QWidget*> > buttonList;
     PythonExecutor pythonExecutor;
 
-    MenuWidget(const pybind11::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution, GrxUIMenuViewImpl* view);
-    void createPages(const pybind11::list& menu);
-    void addSection(const pybind11::list& section);
+    MenuWidget(const python::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution, GrxUIMenuViewImpl* view);
+    void createPages(const python::list& menu);
+    void addSection(const python::list& section);
     void onButtonClicked(int indexInPage, FuncButtonBox* box);
     void onScriptFinished();
     void moveNext();
@@ -168,7 +168,7 @@ public:
     GrxUIMenuViewImpl(GrxUIMenuView* self);
     ~GrxUIMenuViewImpl();
     void clearMenu(bool doDelete, bool showLabel);
-    void setMenu(const pybind11::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution);
+    void setMenu(const python::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution);
     void blockMenuButtons(bool on);
 };
 
@@ -202,7 +202,7 @@ GrxUIMenuView* GrxUIMenuView::instance()
 }
 
 
-void GrxUIMenuView::setCancelExceptionType(pybind11::object exceptionType)
+void GrxUIMenuView::setCancelExceptionType(python::object exceptionType)
 {
     cancelExceptionType = exceptionType;
 }
@@ -261,13 +261,13 @@ void GrxUIMenuViewImpl::clearMenu(bool doDelete, bool showLabel)
 }
 
 
-void GrxUIMenuView::setMenu(const pybind11::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution)
+void GrxUIMenuView::setMenu(const python::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution)
 {
     impl->setMenu(menu, isLocalSequentialMode, doBackgroundExecution);
 }
 
 
-void GrxUIMenuViewImpl::setMenu(const pybind11::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution)
+void GrxUIMenuViewImpl::setMenu(const python::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution)
 {
     clearMenu(true, false);
 
@@ -375,7 +375,7 @@ std::string GrxUIMenuView::waitInputMessage(const std::string& message)
 
 
 MenuWidget::MenuWidget
-(const pybind11::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution, GrxUIMenuViewImpl* view)
+(const python::list& menu, bool isLocalSequentialMode, bool doBackgroundExecution, GrxUIMenuViewImpl* view)
     : view(view)
 {
     QVBoxLayout* vbox = new QVBoxLayout();
@@ -485,26 +485,26 @@ MenuWidget::MenuWidget
 }
 
 
-void MenuWidget::createPages(const pybind11::list& menu)
+void MenuWidget::createPages(const python::list& menu)
 {
-    int numSections = pybind11::len(menu);
+    int numSections = python::len(menu);
     for(int i=0; i < numSections; ++i){
-        const pybind11::list section =
+        const python::list section =
 #ifdef CNOID_USE_PYBIND11
             menu[i].cast<pybind11::list>();
 #else
-            pybind11::extract<pybind11::list>(menu[i]);
+            python::extract<python::list>(menu[i]);
 #endif
         addSection(section);
     }
 
     while(pageStack.count() < 2){
-        addSection(pybind11::list());
+        addSection(python::list());
     }
 }
 
 
-void MenuWidget::addSection(const pybind11::list& section)
+void MenuWidget::addSection(const python::list& section)
 {                        
     QWidget* page = new QWidget();
     page->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
@@ -514,7 +514,7 @@ void MenuWidget::addSection(const pybind11::list& section)
     buttonList.push_back(vector<QWidget*>());
     vector<QWidget*>& buttons = buttonList.back();
 
-    int numItems = pybind11::len(section) / 2;
+    int numItems = python::len(section) / 2;
 
     for(int j=0; j < numItems; ++j){
         // extract a pair of elements
@@ -522,8 +522,8 @@ void MenuWidget::addSection(const pybind11::list& section)
         const string label = section[j*2].cast<string>();
         const string function = section[j*2+1].cast<string>();
 #else
-        const string label = pybind11::extract<string>(section[j*2]);
-        const string function = pybind11::extract<string>(section[j*2+1]);
+        const string label = python::extract<string>(section[j*2]);
+        const string function = python::extract<string>(section[j*2+1]);
 #endif
 
         if(function == "#label"){
@@ -601,7 +601,7 @@ void MenuWidget::onScriptFinished()
         MessageView::instance()->putln(_("The script has been terminated."));
         
     } else if(pythonExecutor.hasException()){
-        pybind11::gil_scoped_acquire lock;
+        python::gil_scoped_acquire lock;
 #ifdef CNOID_USE_PYBIND11
         bool isCancelException = pythonExecutor.exceptionType().is(cancelExceptionType);
 #else

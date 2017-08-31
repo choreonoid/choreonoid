@@ -21,7 +21,7 @@ template<typename T> struct python_function_caller0 {
     boost::python::object func;
     python_function_caller0(boost::python::object func) : func(func) { }
     T operator()() {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         T result;
         try {
             result = func();
@@ -36,7 +36,7 @@ template<> struct python_function_caller0<void> {
     boost::python::object func;
     python_function_caller0(boost::python::object func) : func(func) { }
     void operator()() {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         try {
             func();
         } catch(boost::python::error_already_set const& ex) {
@@ -49,7 +49,7 @@ template<typename T, typename ARG1> struct python_function_caller1 {
     boost::python::object func;
     python_function_caller1(boost::python::object func) : func(func) { }
     T operator()(ARG1 arg1) {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         T result;
         try {
             result = func(pyGetSignalArgObject(arg1));
@@ -64,7 +64,7 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
     boost::python::object func;
     python_function_caller1(boost::python::object func) : func(func) { }
     void operator()(ARG1 arg1) {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         try {
             func(pyGetSignalArgObject(arg1));
         } catch(boost::python::error_already_set const& ex) {
@@ -77,7 +77,7 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
     boost::python::object func;
     python_function_caller2(boost::python::object func) : func(func) { }
     T operator()(ARG1 arg1, ARG2 arg2) {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         T result;
         try {
             result = func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
@@ -92,7 +92,7 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
     boost::python::object func;
     python_function_caller2(boost::python::object func) : func(func) { }
     void operator()(ARG1 arg1, ARG2 arg2) {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         try {
             func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
         } catch(boost::python::error_already_set const& ex) {

@@ -8,47 +8,47 @@
 #include <iostream>
 
 using namespace std;
-namespace python = boost::python;
 using namespace cnoid;
+namespace py = boost::python;
 
 namespace {
 
-python::object readVector3(MappingPtr mapping, const std::string& key){
+py::object readVector3(MappingPtr mapping, const std::string& key){
     Vector3 v;
     if(cnoid::read(*mapping, key, v)){
-        return python::object(v);
+        return py::object(v);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object readVector4(MappingPtr mapping, const std::string& key){
+py::object readVector4(MappingPtr mapping, const std::string& key){
     Vector4 v;
     if(cnoid::read(*mapping, key, v)){
-        return python::object(v);
+        return py::object(v);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object readMatrix4(MappingPtr mapping, const std::string& key){
+py::object readMatrix4(MappingPtr mapping, const std::string& key){
     Matrix4 T;
     if(cnoid::read(*mapping, key, T)){
-        return python::object(T);
+        return py::object(T);
     }
-    return python::object();
+    return py::object();
 }
 
 
-python::object readAffine3(MappingPtr mapping, const std::string& key){
+py::object readAffine3(MappingPtr mapping, const std::string& key){
     Affine3 T;
     try {
         if(cnoid::read(*mapping, key, T.matrix())){
-            return python::object(T);
+            return py::object(T);
         }
     }
     catch(const ValueNode::ScalarTypeMismatchException& ex){
         cout << ex.message() << endl;
     }
-    return python::object();
+    return py::object();
 }
 
 ListingPtr writeVector3(MappingPtr mapping, const std::string& key, const Vector3& v){
@@ -69,13 +69,13 @@ namespace cnoid {
 
 void exportPyEigenArchive()
 {
-    python::def("readVector3", readVector3);
-    python::def("readVector4", readVector4);
-    python::def("readMatrix4", readMatrix4);
-    python::def("readAffine3", readAffine3);
-    python::def("writeVector3", writeVector3);
-    python::def("writeVector4", writeVector4);
-    python::def("writeAffine3", writeAffine3);
+    py::def("readVector3", readVector3);
+    py::def("readVector4", readVector4);
+    py::def("readMatrix4", readMatrix4);
+    py::def("readAffine3", readAffine3);
+    py::def("writeVector3", writeVector3);
+    py::def("writeVector4", writeVector4);
+    py::def("writeAffine3", writeAffine3);
 }
 
 }

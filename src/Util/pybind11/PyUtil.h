@@ -10,4 +10,8 @@
 #include "PySignal.h"
 #include "PyEigenTypes.h"
 
+namespace cnoid { namespace python {
+using namespace pybind11;
+}}
+
 #endif

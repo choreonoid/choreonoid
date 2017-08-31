@@ -6,9 +6,8 @@
 #include "../ValueTree.h"
 
 using namespace std;
-using namespace boost;
-using namespace boost::python;
 using namespace cnoid;
+namespace py = boost::python;
 
 namespace {
 
@@ -20,36 +19,36 @@ ListingPtr ValueNode_toListing(ValueNode& self){
     return self.toListing();
 }
 
-python::object ValueNode_readInt(ValueNode& self){
+py::object ValueNode_readInt(ValueNode& self){
     int value;
     if(self.read(value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object ValueNode_readFloat(ValueNode& self){
+py::object ValueNode_readFloat(ValueNode& self){
     double value;
     if(self.read(value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object ValueNode_readBool(ValueNode& self){
+py::object ValueNode_readBool(ValueNode& self){
     bool value;
     if(self.read(value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object ValueNode_readString(ValueNode& self){
+py::object ValueNode_readString(ValueNode& self){
     string value;
     if(self.read(value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
 ValueNodePtr Mapping_find(Mapping& self, const std::string& key){
@@ -108,61 +107,61 @@ ListingPtr Mapping_createFlowStyleListing(Mapping& self, const std::string& key)
     return self.createFlowStyleListing(key);
 }
 
-python::object Mapping_readString(Mapping& self, const std::string& key){
+py::object Mapping_readString(Mapping& self, const std::string& key){
     string value;
     if(self.read(key, value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object Mapping_readBool(Mapping& self, const std::string& key){
+py::object Mapping_readBool(Mapping& self, const std::string& key){
     bool value;
     if(self.read(key, value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object Mapping_readInt(Mapping& self, const std::string& key){
+py::object Mapping_readInt(Mapping& self, const std::string& key){
     int value;
     if(self.read(key, value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object Mapping_readFloat(Mapping& self, const std::string& key){
+py::object Mapping_readFloat(Mapping& self, const std::string& key){
     double value;
     if(self.read(key, value)){
-        return python::object(value);
+        return py::object(value);
     }
-    return python::object();
+    return py::object();
 }
 
-python::object Mapping_get2(Mapping& self, const std::string& key, python::object defaultValue){
+py::object Mapping_get2(Mapping& self, const std::string& key, py::object defaultValue){
     if(PyBool_Check(defaultValue.ptr())){
         bool value;
         if(self.read(key, value)){
-            return python::object(value);
+            return py::object(value);
         }
     } else if(PyInt_Check(defaultValue.ptr())){
         int value;
         if(self.read(key, value)){
-            return python::object(value);
+            return py::object(value);
         }
     } else if(PyFloat_Check(defaultValue.ptr())){
         double value;
         if(self.read(key, value)){
-            return python::object(value);
+            return py::object(value);
         }
     } else if(PyString_Check(defaultValue.ptr())){
         string value;
         if(self.read(key, value)){
-            return python::object(value);
+            return py::object(value);
         }
     } else {
-        return python::object();
+        return py::object();
     }
     return defaultValue;
 }
@@ -175,16 +174,16 @@ void Mapping_writeString2(Mapping& self, const std::string &key, const std::stri
     self.write(key, value, style);
 }
 
-void Mapping_write(Mapping& self, const std::string &key, python::object value){
+void Mapping_write(Mapping& self, const std::string &key, py::object value){
     if(PyBool_Check(value.ptr())){
-        self.write(key, python::extract<bool>(value));
+        self.write(key, py::extract<bool>(value));
     } else if(PyInt_Check(value.ptr())){
-        self.write(key, python::extract<int>(value));
+        self.write(key, py::extract<int>(value));
     } else if(PyFloat_Check(value.ptr())){
-        self.write(key, python::extract<double>(value));
+        self.write(key, py::extract<double>(value));
     } else {
         PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
-        python::throw_error_already_set();
+        py::throw_error_already_set();
     }
 }
 
@@ -243,21 +242,21 @@ namespace cnoid {
 
 void exportPyValueTree()
 {
-    enum_<StringStyle>("StringStyle")
+    py::enum_<StringStyle>("StringStyle")
         .value("PLAING_STRING", PLAIN_STRING)
         .value("SINGLE_QUOTED", SINGLE_QUOTED)
         .value("DOUBLE_QUOTED", DOUBLE_QUOTED)
         .value("LITERAL_STRING", LITERAL_STRING)
         .value("FOLDED_STRING", FOLDED_STRING);
 
-    class_<ValueNode, ValueNodePtr, bases<Referenced>, boost::noncopyable>("ValueNode", no_init)
+    py::class_<ValueNode, ValueNodePtr, py::bases<Referenced>, boost::noncopyable>("ValueNode", py::no_init)
         .def("isValid", &ValueNode::isValid)
         .def("toInt", &ValueNode::toInt)
         .def("toFloat", &ValueNode::toDouble)
         .def("toBool", &ValueNode::toBool)
         .def("isScalar", &ValueNode::isScalar)
         .def("isString", &ValueNode::isString)
-        .def("toString", &ValueNode::toString, return_value_policy<return_by_value>())
+        .def("toString", &ValueNode::toString, py::return_value_policy<py::return_by_value>())
         .def("isMapping", &ValueNode::isMapping)
         .def("toMapping", ValueNode_toMapping)
         .def("isListing", &ValueNode::isListing)
@@ -271,16 +270,16 @@ void exportPyValueTree()
         .def("column", &ValueNode::column)
         ;
 
-    implicitly_convertible<ValueNodePtr, ReferencedPtr>();
+    py::implicitly_convertible<ValueNodePtr, ReferencedPtr>();
 
-    class_< Mapping, MappingPtr, bases<ValueNode>, boost::noncopyable >("Mapping")
+    py::class_<Mapping, MappingPtr, py::bases<ValueNode>, boost::noncopyable>("Mapping")
         .def("empty", &Mapping::empty)
         .def("size", &Mapping::size)
         .def("clear", &Mapping::clear)
         .def("setFlowStyle", &Mapping::setFlowStyle)
         .def("isFlowStyle", &Mapping::isFlowStyle)
         .def("setFloatFormat", &Mapping::setDoubleFormat)
-        .def("floatFormat", &Mapping::doubleFormat, return_value_policy<return_by_value>())
+        .def("floatFormat", &Mapping::doubleFormat, py::return_value_policy<py::return_by_value>())
         .def("setKeyQuoteStyle", &Mapping::setKeyQuoteStyle)
         .def("find", Mapping_find)
         .def("findMapping", Mapping_findMapping)
@@ -308,9 +307,9 @@ void exportPyValueTree()
         .def("write", Mapping_write)
         ;
 
-    implicitly_convertible<MappingPtr, ReferencedPtr>();
+    py::implicitly_convertible<MappingPtr, ReferencedPtr>();
 
-    class_< Listing, ListingPtr, bases<ValueNode>, boost::noncopyable >("Listing")
+    py::class_<Listing, ListingPtr, py::bases<ValueNode>, boost::noncopyable>("Listing")
         .def("empty", &Listing::empty)
         .def("size", &Listing::size)
         .def("clear", &Listing::clear)
@@ -318,7 +317,7 @@ void exportPyValueTree()
         .def("setFlowStyle", &Listing::setFlowStyle)
         .def("isFlowStyle", &Listing::isFlowStyle)
         .def("setFloatFormat", &Listing::setDoubleFormat)
-        .def("floatFormat", &Listing::doubleFormat, return_value_policy<return_by_value>())
+        .def("floatFormat", &Listing::doubleFormat, py::return_value_policy<py::return_by_value>())
         .def("front", Listing_front)
         .def("back", Listing_back)
         .def("at", Listing_at)
@@ -335,7 +334,7 @@ void exportPyValueTree()
         .def("appendLF", &Listing::appendLF)
         ;
 
-    implicitly_convertible<ListingPtr, ReferencedPtr>();
+    py::implicitly_convertible<ListingPtr, ReferencedPtr>();
 }
 
 }

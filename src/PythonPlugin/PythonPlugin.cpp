@@ -19,18 +19,12 @@
 #include "gettext.h"
 
 using namespace std;
-namespace stdph = std::placeholders;
 using namespace cnoid;
 using boost::format;
 namespace filesystem = boost::filesystem;
 
 namespace {
 
-pybind11::module mainModule;
-pybind11::object mainNamespace;
-pybind11::object cnoidModule;
-pybind11::module sysModule;
-pybind11::object exitExceptionType;
 MappingPtr pythonConfig;
 Action* redirectionCheck;
 Action* refreshModulesCheck;
@@ -54,32 +48,23 @@ public:
 class MessageViewIn
 {
 public:
-    pybind11::object readline() {
-        return pybind11::str("\n");
+    python::object readline() {
+        return python::str("\n");
     }
 };
             
-pybind11::object pythonExit()
-{
-    PyErr_SetObject(exitExceptionType.ptr(), 0);
-
-#ifdef CNOID_USE_PYBIND11
-    if(PyErr_Occurred()){
-        throw pybind11::error_already_set();
-    }
-#else
-    pybind11::throw_error_already_set();
-#endif
-    
-    return pybind11::object();
-}
 
 class PythonPlugin : public Plugin
 {
 public:
     std::unique_ptr<PythonExecutor> executor_;
-    pybind11::object messageViewOut;
-    pybind11::object messageViewIn;
+    python::module mainModule;
+    python::object mainNamespace;
+    python::object cnoidModule;
+    python::module sysModule;
+    python::object exitExceptionType;
+    python::object messageViewOut;
+    python::object messageViewIn;
         
     PythonPlugin();
     virtual bool initialize();
@@ -102,7 +87,24 @@ public:
 
 
 namespace {
+
 PythonPlugin* pythonPlugin = 0;
+
+python::object pythonExit()
+{
+    PyErr_SetObject(pythonPlugin->exitExceptionType.ptr(), 0);
+
+#ifdef CNOID_USE_PYBIND11
+    if(PyErr_Occurred()){
+        throw pybind11::error_already_set();
+    }
+#else
+    python::throw_error_already_set();
+#endif
+    
+    return python::object();
+}
+
 }
 
 
@@ -127,8 +129,7 @@ bool PythonPlugin::initialize()
     redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
                                   
     refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
-    refreshModulesCheck->sigToggled().connect(
-        std::bind(&PythonExecutor::setModuleRefreshEnabled, stdph::_1));
+    refreshModulesCheck->sigToggled().connect(&PythonExecutor::setModuleRefreshEnabled);
     if(pythonConfig->get("refreshModules", false)){
         refreshModulesCheck->setChecked(true);
     }
@@ -138,11 +139,11 @@ bool PythonPlugin::initialize()
     
     OptionManager& opm = optionManager();
     opm.addOption("python,p", boost::program_options::value< vector<string> >(), "load a python script file");
-    opm.sigOptionsParsed().connect(std::bind(&PythonPlugin::onSigOptionsParsed, this, stdph::_1));
+    opm.sigOptionsParsed().connect([&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
     setProjectArchiver(
-        std::bind(&PythonPlugin::storeProperties, this, stdph::_1),
-        std::bind(&PythonPlugin::restoreProperties, this, stdph::_1));
+        [&](Archive& archive){ return storeProperties(archive); },
+        [&](const Archive& archive){ restoreProperties(archive); });
 
     return true;
 }
@@ -159,7 +160,7 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
                 MessageView::instance()->putln(_("The script finished."));
             } else {
                 MessageView::instance()->putln(_("Failed to run the python script."));
-                pybind11::gil_scoped_acquire lock;
+                python::gil_scoped_acquire lock;
                 MessageView::instance()->put(executor().exceptionText());
             }
         }
@@ -185,7 +186,7 @@ bool PythonPlugin::initializeInterpreter()
 #endif
     PySys_SetArgvEx(1, dummy_argv, 0);
 
-    mainModule = pybind11::module::import("__main__");
+    mainModule = python::module::import("__main__");
     mainNamespace = mainModule.attr("__dict__");
 
 	/*
@@ -199,11 +200,11 @@ bool PythonPlugin::initializeInterpreter()
 	 set using C functions.
 	*/	
 #ifdef WIN32
-    pybind11::module env = pybind11::module::import("os").attr("environ");
-    env["PATH"] = pybind11::str(executableDirectory() + ";") + env["PATH"];
+    python::module env = python::module::import("os").attr("environ");
+    env["PATH"] = python::str(executableDirectory() + ";") + env["PATH"];
 #endif
 
-    sysModule = pybind11::module::import("sys");
+    sysModule = python::module::import("sys");
     
     // set the choreonoid default python script path
     filesystem::path scriptPath = filesystem::path(executableTopDirectory()) / CNOID_PLUGIN_SUBDIR / "python";
@@ -211,16 +212,16 @@ bool PythonPlugin::initializeInterpreter()
 #ifdef CNOID_USE_PYBIND11
     sysModule.attr("path").attr("insert")(0, getNativePathString(scriptPath));
 #else
-    pybind11::list syspath = pybind11::extract<pybind11::list>(sysModule.attr("path"));
+    python::list syspath = python::extract<python::list>(sysModule.attr("path"));
     syspath.insert(0, getNativePathString(scriptPath));
 #endif
 
     // Redirect the stdout and stderr to the message view
-    pybind11::object messageViewOutClass =
+    python::object messageViewOutClass =
 #ifdef CNOID_USE_PYBIND11
         pybind11::class_<MessageViewOut>(mainModule, "MessageViewOut").def(pybind11::init<>())
 #else
-        pybind11::class_<MessageViewOut>("MessageViewOut", pybind11::init<>())
+        python::class_<MessageViewOut>("MessageViewOut", python::init<>())
 #endif
         .def("write", &MessageViewOut::write);
     
@@ -229,24 +230,24 @@ bool PythonPlugin::initializeInterpreter()
     sysModule.attr("stderr") = messageViewOut;
 
     // Disable waiting for input
-    pybind11::object messageViewInClass =
+    python::object messageViewInClass =
 #ifdef CNOID_USE_PYBIND11
         pybind11::class_<MessageViewIn>(mainModule, "MessageViewIn").def(pybind11::init<>())
 #else
-        pybind11::class_<MessageViewIn>("MessageViewIn", pybind11::init<>())
+        python::class_<MessageViewIn>("MessageViewIn", python::init<>())
 #endif
         .def("readline", &MessageViewIn::readline);
     messageViewIn = messageViewInClass();
     sysModule.attr("stdin") = messageViewIn;
 
     // Override exit and quit
-    pybind11::object builtins = mainNamespace["__builtins__"];
-    exitExceptionType = pybind11::module::import("cnoid.PythonPlugin").attr("ExitException");
+    python::object builtins = mainNamespace["__builtins__"];
+    exitExceptionType = python::module::import("cnoid.PythonPlugin").attr("ExitException");
 
 #ifdef CNOID_USE_PYBIND11
     pybind11::object exitFunc = pybind11::cpp_function(pythonExit);
 #else
-    pybind11::object exitFunc = pybind11::make_function(pythonExit);
+    python::object exitFunc = python::make_function(pythonExit);
 #endif
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
@@ -278,9 +279,9 @@ void PythonPlugin::restoreProperties(const Archive& archive)
     Listing& pathListing = *archive.findListing("moduleSearchPath");
     if(pathListing.isValid()){
         MessageView* mv = MessageView::instance();
-        pybind11::gil_scoped_acquire lock;
+        python::gil_scoped_acquire lock;
 #ifdef CNOID_USE_BOOST_PYTHON
-        pybind11::list syspath = pybind11::extract<pybind11::list>(sysModule.attr("path"));
+        python::list syspath = python::extract<python::list>(sysModule.attr("path"));
 #endif
         string newPath;
         for(int i=0; i < pathListing.size(); ++i){
@@ -321,21 +322,21 @@ bool PythonPlugin::finalize()
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonPlugin);
 
 
-pybind11::object cnoid::pythonMainModule()
+python::object cnoid::pythonMainModule()
 {
-    return mainModule;
+    return pythonPlugin->mainModule;
 }
 
 
-pybind11::object cnoid::pythonMainNamespace()
+python::object cnoid::pythonMainNamespace()
 {
-    return mainNamespace;
+    return pythonPlugin->mainNamespace;
 }
 
 
-pybind11::object cnoid::pythonSysModule()
+python::object cnoid::pythonSysModule()
 {
-    return sysModule;
+    return pythonPlugin->sysModule;
 }
 
 
@@ -344,7 +345,7 @@ bool cnoid::execPythonCode(const std::string& code)
     PythonExecutor& executor = pythonPlugin->executor();
     bool result = executor.execCode(code);
     if(executor.hasException()){
-        pybind11::gil_scoped_acquire lock;
+        python::gil_scoped_acquire lock;
         MessageView::instance()->putln(executor.exceptionText());
         result = false;
     }

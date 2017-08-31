@@ -11,9 +11,8 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/PyUtil>
 
-using namespace boost;
-using namespace boost::python;
 using namespace cnoid;
+namespace py = boost::python;
 
 // for MSVC++2015 Update3
 CNOID_PYTHON_DEFINE_GET_POINTER(Link)
@@ -61,14 +60,14 @@ void Link_set_tau_ext(Link& self, const Vector3& tau) { self.tau_ext() = tau; }
 SgNodePtr Link_visualShape(const Link& self) { return self.visualShape(); }
 SgNodePtr Link_collisionShape(const Link& self) { return self.collisionShape(); }
 MappingPtr Link_info(Link& self) { return self.info(); }
-python::object Link_info2(Link& self, const std::string& key, python::object defaultValue)
+py::object Link_info2(Link& self, const std::string& key, py::object defaultValue)
 {
     if(!PyFloat_Check(defaultValue.ptr())){
         PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
-        python::throw_error_already_set();
+        py::throw_error_already_set();
     }
-    double v = python::extract<double>(defaultValue);
-    return python::object(self.info(key, v));
+    double v = py::extract<double>(defaultValue);
+    return py::object(self.info(key, v));
 }
 double Link_floatInfo(Link& self, const std::string& key) { return self.info<double>(key); }
 
@@ -87,13 +86,13 @@ DevicePtr Body_device(Body& self, int index) { return self.device(index); }
 PyObject* Body_calcTotalMomentum(Body& self) {
     Vector3 P, L;
     self.calcTotalMomentum(P, L);
-    python::list p, l;
+    py::list p, l;
     for(int i=0; i < 3; ++i){
         p.append(P[i]);
         l.append(L[i]);
     }
-    python::tuple ret = python::make_tuple(p, l);
-    return python::incref(ret.ptr());
+    py::tuple ret = py::make_tuple(p, l);
+    return py::incref(ret.ptr());
 }
 
 
@@ -126,11 +125,11 @@ namespace cnoid
 
 BOOST_PYTHON_MODULE(Body)
 {
-    boost::python::import("cnoid.Util");
+    py::import("cnoid.Util");
 
     {
-        scope linkScope = 
-            class_<Link, LinkPtr, bases<Referenced>>("Link")
+        py::scope linkScope = 
+            py::class_<Link, LinkPtr, py::bases<Referenced>>("Link")
             .def("index", &Link::index)
             .def("isValid", &Link::isValid)
             .def("parent", Link_parent)
@@ -157,9 +156,9 @@ BOOST_PYTHON_MODULE(Body)
             .def("isFreeJoint", &Link::isFreeJoint)
             .def("isRotationalJoint", &Link::isRotationalJoint)
             .def("isSlideJoint", &Link::isSlideJoint)
-            .add_property("a", make_function(&Link::a, return_value_policy<return_by_value>()))
-            .def("jointAxis", &Link::jointAxis, return_value_policy<return_by_value>())
-            .add_property("d", make_function(&Link::d, return_value_policy<return_by_value>()))
+            .add_property("a", py::make_function(&Link::a, py::return_value_policy<py::return_by_value>()))
+            .def("jointAxis", &Link::jointAxis, py::return_value_policy<py::return_by_value>())
+            .add_property("d", py::make_function(&Link::d, py::return_value_policy<py::return_by_value>()))
             .add_property("q", Link_get_q, Link_set_q)
             .add_property("dq", Link_get_dq, Link_set_dq)
             .add_property("ddq", Link_get_ddq, Link_set_ddq)
@@ -172,18 +171,18 @@ BOOST_PYTHON_MODULE(Body)
             .add_property("w", Link_get_w, Link_set_w)
             .add_property("dv", Link_get_dv, Link_set_dv)
             .add_property("dw", Link_get_dw, Link_set_dw)
-            .add_property("c", make_function(&Link::c, return_value_policy<return_by_value>()))
-            .def("centerOfMass", &Link::centerOfMass, return_value_policy<return_by_value>())
-            .add_property("wc", make_function(Link_get_wc, return_value_policy<return_by_value>()), Link_set_wc)
-            .def("centerOfMassGlobal", &Link::centerOfMassGlobal, return_value_policy<return_by_value>())
+            .add_property("c", py::make_function(&Link::c, py::return_value_policy<py::return_by_value>()))
+            .def("centerOfMass", &Link::centerOfMass, py::return_value_policy<py::return_by_value>())
+            .add_property("wc", py::make_function(Link_get_wc, py::return_value_policy<py::return_by_value>()), Link_set_wc)
+            .def("centerOfMassGlobal", &Link::centerOfMassGlobal, py::return_value_policy<py::return_by_value>())
             .add_property("m", &Link::m)
             .def("mass", &Link::mass)
-            .add_property("I", make_function(&Link::I, return_value_policy<return_by_value>()))
+            .add_property("I", py::make_function(&Link::I, py::return_value_policy<py::return_by_value>()))
             .add_property("Jm2", &Link::Jm2)
             .add_property("F_ext", Link_get_F_ext, Link_set_F_ext)
             .add_property("f_ext", Link_get_f_ext, Link_set_f_ext)
             .add_property("tau_ext", Link_get_tau_ext, Link_set_tau_ext)
-            .def("name", &Link::name, return_value_policy<copy_const_reference>())
+            .def("name", &Link::name, py::return_value_policy<py::copy_const_reference>())
             .def("visualShape", Link_visualShape)
             .def("collisionShape", Link_collisionShape)
             .def("setIndex", &Link::setIndex)
@@ -210,7 +209,7 @@ BOOST_PYTHON_MODULE(Body)
             .def("floatInfo", Link_floatInfo)
             ;
 
-        enum_<Link::JointType>("JointType")
+        py::enum_<Link::JointType>("JointType")
             .value("REVOLUTE_JOINT", Link::REVOLUTE_JOINT)
             .value("PRISMATIC_JOINT", Link::PRISMATIC_JOINT) 
             .value("FREE_JOINT", Link::FREE_JOINT) 
@@ -218,14 +217,14 @@ BOOST_PYTHON_MODULE(Body)
     }        
     
     {
-        scope bodyScope =
-            class_<Body, BodyPtr, bases<Referenced>>("Body")
+        py::scope bodyScope =
+            py::class_<Body, BodyPtr, py::bases<Referenced>>("Body")
             .def("clone", Body_clone)
             .def("createLink", Body_createLink1)
             .def("createLink", Body_createLink2)
-            .def("name", &Body::name, return_value_policy<copy_const_reference>())
+            .def("name", &Body::name, py::return_value_policy<py::copy_const_reference>())
             .def("setName", &Body::setName)
-            .def("modelName", &Body::modelName, return_value_policy<copy_const_reference>())
+            .def("modelName", &Body::modelName, py::return_value_policy<py::copy_const_reference>())
             .def("setModelName", &Body::setModelName)
             .def("setRootLink", &Body::setRootLink)
             .def("updateLinkTree", &Body::updateLinkTree)
@@ -246,10 +245,10 @@ BOOST_PYTHON_MODULE(Body)
             .def("isStaticModel", &Body::isStaticModel)
             .def("isFixedRootModel", &Body::isFixedRootModel)
             .def("resetDefaultPosition", &Body::resetDefaultPosition)
-            .def("defaultPosition", &Body::defaultPosition, return_value_policy<return_by_value>())
+            .def("defaultPosition", &Body::defaultPosition, py::return_value_policy<py::return_by_value>())
             .def("mass", &Body::mass)
-            .def("calcCenterOfMass", &Body::calcCenterOfMass, return_value_policy<return_by_value>())
-            .def("centerOfMass", &Body::centerOfMass, return_value_policy<return_by_value>())
+            .def("calcCenterOfMass", &Body::calcCenterOfMass, py::return_value_policy<py::return_by_value>())
+            .def("centerOfMass", &Body::centerOfMass, py::return_value_policy<py::return_by_value>())
             .def("calcTotalMomentum", Body_calcTotalMomentum)
             .def("calcForwardKinematics", &Body::calcForwardKinematics, Body_calcForwardKinematics_overloads())
             .def("clearExternalForces", &Body::clearExternalForces)
@@ -261,25 +260,25 @@ BOOST_PYTHON_MODULE(Body)
             .def("hasVirtualJointForces", &Body::hasVirtualJointForces)
             .def("setVirtualJointForces", &Body::setVirtualJointForces)
             .def("addCustomizerDirectory", &Body::addCustomizerDirectory).staticmethod("addCustomizerDirectory")
-            .def(other<BodyMotion::ConstFrame>() >> self)
+            .def(py::other<BodyMotion::ConstFrame>() >> py::self)
             ;
     }
 
-    implicitly_convertible<BodyPtr, ReferencedPtr>();
+    py::implicitly_convertible<BodyPtr, ReferencedPtr>();
 
     {
-        scope ExtraJointScope = class_<ExtraJoint>("ExtraJoint", init<ExtraJoint::ExtraJointType, const Vector3&>())
+        py::scope ExtraJointScope = py::class_<ExtraJoint>("ExtraJoint", py::init<ExtraJoint::ExtraJointType, const Vector3&>())
             .def("setType", &ExtraJoint::setType)
             .def("setAxis", &ExtraJoint::setAxis)
             .def("setPoint", &ExtraJoint::setPoint)
             ;
 
-        enum_<ExtraJoint::ExtraJointType>("ExtraJointType")
+        py::enum_<ExtraJoint::ExtraJointType>("ExtraJointType")
               .value("EJ_PISTON", ExtraJoint::EJ_PISTON)
               .value("EJ_BALL", ExtraJoint::EJ_BALL);
     }
 
-    class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", no_init)
+    py::class_<AbstractBodyLoader, boost::noncopyable>("AbstractBodyLoader", py::no_init)
         .def("setVerbose", &AbstractBodyLoader::setVerbose)
         .def("setShapeLoadingEnabled", &AbstractBodyLoader::setShapeLoadingEnabled)
         .def("setDefaultDivisionNumber", &AbstractBodyLoader::setDefaultDivisionNumber)
@@ -287,14 +286,14 @@ BOOST_PYTHON_MODULE(Body)
         .def("load", &AbstractBodyLoader::load)
         ;
 
-    class_<BodyLoader, bases<AbstractBodyLoader>>("BodyLoader")
+    py::class_<BodyLoader, py::bases<AbstractBodyLoader>>("BodyLoader")
         .def("load", BodyLoader_load2)
         .def("lastActualBodyLoader", &BodyLoader::lastActualBodyLoader)
         ;
 
     {
-        scope jointPathScope =
-            class_<JointPath, JointPathPtr, boost::noncopyable>("JointPath", init<>())
+        py::scope jointPathScope =
+            py::class_<JointPath, JointPathPtr, boost::noncopyable>("JointPath", py::init<>())
             .def("numJoints", &JointPath::numJoints)
             .def("joint", JointPath_joint)
             .def("baseLink", JointPath_baseLink)
@@ -308,11 +307,11 @@ BOOST_PYTHON_MODULE(Body)
             ;
     }
 
-    def("getCustomJointPath", getCustomJointPath);
+    py::def("getCustomJointPath", getCustomJointPath);
 
     {
-        scope bodyMotionScope =
-            class_<BodyMotion, BodyMotionPtr, bases<AbstractMultiSeq>>("BodyMotion")
+        py::scope bodyMotionScope =
+            py::class_<BodyMotion, BodyMotionPtr, py::bases<AbstractMultiSeq>>("BodyMotion")
             .def("setNumParts", &BodyMotion::setNumParts)
             .def("getNumParts", &BodyMotion::getNumParts)
             .def("numJoints", &BodyMotion::numJoints)
@@ -331,31 +330,31 @@ BOOST_PYTHON_MODULE(Body)
             .def("frame", BodyMotion_frame)
             ;
 
-        class_<BodyMotion::Frame>("Frame", no_init)
+        py::class_<BodyMotion::Frame>("Frame", py::no_init)
             .def("frame", &BodyMotion::Frame::frame)
-            .def(self << other<Body>())
-            .def(other<Body>() >> self)
+            .def(py::self << py::other<Body>())
+            .def(py::other<Body>() >> py::self)
             ;
     }
 
-    implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
+    py::implicitly_convertible<BodyMotionPtr, AbstractMultiSeqPtr>();
 
     {
-      scope deviceScope =
-        class_<Device, DevicePtr, boost::noncopyable>("Device", no_init)
-        .def("setIndex", &Device::setIndex)
-        .def("setId", &Device::setId)
-        .def("setName", &Device::setName)
-        .def("setLink", &Device::setLink)
-        .def("clone", &Device_clone)
-        .def("clearState", &Device_clearState)
-        .def("hasStateOnly", &Device::hasStateOnly)
-        .def("index", &Device::index)
-        .def("id", &Device::id)
-        .def("name", &Device::name, return_value_policy<copy_const_reference>())
-        .def("link", &Device_link)
-        .add_property("T_local", Device_get_T_local, Device_set_T_local)
-        ;
+        py::scope deviceScope =
+            py::class_<Device, DevicePtr, boost::noncopyable>("Device", py::no_init)
+            .def("setIndex", &Device::setIndex)
+            .def("setId", &Device::setId)
+            .def("setName", &Device::setName)
+            .def("setLink", &Device::setLink)
+            .def("clone", &Device_clone)
+            .def("clearState", &Device_clearState)
+            .def("hasStateOnly", &Device::hasStateOnly)
+            .def("index", &Device::index)
+            .def("id", &Device::id)
+            .def("name", &Device::name, py::return_value_policy<py::copy_const_reference>())
+            .def("link", &Device_link)
+            .add_property("T_local", Device_get_T_local, Device_set_T_local)
+            ;
     }
 
 #ifdef _MSC_VER

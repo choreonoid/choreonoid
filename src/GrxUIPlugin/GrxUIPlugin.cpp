@@ -65,14 +65,14 @@ bool GrxUIPlugin::initialize()
 void GrxUIPlugin::onImportGrxUICheckToggled(bool on, bool doWriteConfig)
 {
     if(on){
-        pybind11::gil_scoped_acquire lock;
-        pybind11::object grxuiModule = pybind11::module::import("cnoid.grxui");
+        python::gil_scoped_acquire lock;
+        python::object grxuiModule = python::module::import("cnoid.grxui");
         if(!grxuiModule.is_none()){
 #ifdef CNOID_USE_PYBIND11
             pybind11::eval<pybind11::eval_single_statement>
                 ("from cnoid.grxui import *", cnoid::pythonMainNamespace());
 #else
-            pybind11::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
+            python::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
 #endif
         }
     }

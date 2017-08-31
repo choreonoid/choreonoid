@@ -6,8 +6,6 @@
 #include <cnoid/PyUtil>
 #include <cnoid/PythonUtil>
 
-using namespace boost;
-using namespace boost::python;
 using namespace cnoid;
 
 namespace {
@@ -22,7 +20,7 @@ struct PyFunc
         }
     }
     void operator()() {
-        PyGILock lock;
+        python::gil_scoped_acquire lock;
         try {
             func();
         } catch(python::error_already_set const& ex) {

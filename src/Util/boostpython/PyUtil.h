@@ -11,17 +11,34 @@
 
 namespace cnoid {
 
-class PyGILock
+namespace python {
+
+using namespace boost::python;
+
+class module : public boost::python::object
+{
+public:
+    module() { }
+    module(const boost::python::object& obj) : object(obj) { }
+    
+    static boost::python::object import(boost::python::str name){
+        return boost::python::import(name);
+    }
+};
+
+class gil_scoped_acquire
 {
     PyGILState_STATE gstate;
 public:
-    PyGILock(){
+    gil_scoped_acquire(){
         gstate = PyGILState_Ensure();
     }
-    ~PyGILock() {
+    ~gil_scoped_acquire() {
         PyGILState_Release(gstate);
     }
 };
+
+} // namespace python
 
 template <typename T>
 T* get_pointer(cnoid::ref_ptr<T> const& p)
@@ -34,12 +51,13 @@ T* get_pointer(cnoid::ref_ptr<T> const& p)
 namespace boost { namespace python {
 
 template <typename T>
-struct pointee< cnoid::ref_ptr<T> >
+struct pointee<cnoid::ref_ptr<T>>
 {
     typedef T type;
 };
 
 }} // namespace boost::python
+
 
 /**
    The following macro is used to avoid compile errors caused by a bug of VC++ 2015 Update 3
