@@ -15,6 +15,11 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
+
+#ifdef CNOID_USE_PYBIND11
+#include <pybind11/embed.h>
+#endif
+
 #include <iostream>
 #include "gettext.h"
 
@@ -57,6 +62,10 @@ public:
 class PythonPlugin : public Plugin
 {
 public:
+#ifdef CNOID_USE_PYBIND11
+    unique_ptr<pybind11::scoped_interpreter> interpreter;
+#endif
+    
     std::unique_ptr<PythonExecutor> executor_;
     python::module mainModule;
     python::object mainNamespace;
@@ -170,7 +179,11 @@ void PythonPlugin::onSigOptionsParsed(boost::program_options::variables_map& v)
 
 bool PythonPlugin::initializeInterpreter()
 {
+#ifdef CNOID_USE_PYBIND11
+    interpreter.reset(new pybind11::scoped_interpreter(false));
+#else
     Py_Initialize();
+#endif
 
     /*
       Some python module requires argv and missing argv may cause AttributeError.a
