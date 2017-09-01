@@ -20,7 +20,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -111,8 +110,8 @@ private:
         instance->iterInViewManager = instancesInViewManager.end();
         --instance->iterInViewManager;
 
-        view->sigActivated().connect(std::bind(std::ref(sigViewActivated_), view));
-        view->sigDeactivated().connect(std::bind(std::ref(sigViewDeactivated_), view));
+        view->sigActivated().connect([view](){ sigViewActivated_(view); });
+        view->sigDeactivated().connect([view](){ sigViewDeactivated_(view); });
 
         return view;
     }
@@ -359,7 +358,7 @@ void onViewMenuAboutToShow(Menu* menu)
     if(menu == deleteViewMenu){
         Action* action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
-        action->sigTriggered().connect(std::bind(deleteAllInvisibleViews));
+        action->sigTriggered().connect([](){ deleteAllInvisibleViews(); });
         menu->addAction(action);
         needSeparator = true;
     }
@@ -386,7 +385,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->setCheckable(true);
-                    action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
+                    action->sigToggled().connect([=](bool on){ onShowViewToggled(viewInfo, view, on); });
                     menu->addAction(action);
                 } else {
                     for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
@@ -396,7 +395,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
                         action->setChecked(view->viewArea());
-                        action->sigToggled().connect(std::bind(onShowViewToggled, viewInfo, view, _1));
+                        action->sigToggled().connect([=](bool on){ onShowViewToggled(viewInfo, view, on); });
                         menu->addAction(action);
                     }
                 }
@@ -405,7 +404,7 @@ void onViewMenuAboutToShow(Menu* menu)
                    (viewInfo->itype == ViewManager::MULTI_DEFAULT || viewInfo->itype == ViewManager::MULTI_OPTIONAL)){
                     Action* action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
-                    action->sigTriggered().connect(std::bind(onCreateViewTriggered, viewInfo));
+                    action->sigTriggered().connect([=](){ onCreateViewTriggered(viewInfo); });
                     menu->addAction(action);
                 }
             } else if(menu == deleteViewMenu){
@@ -417,7 +416,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     InstanceInfoPtr& instance = (*p++);
                     Action* action = new Action(menu);
                     action->setText(instance->view->windowTitle());
-                    action->sigTriggered().connect(std::bind(onDeleteViewTriggered, instance));
+                    action->sigTriggered().connect([=](){ onDeleteViewTriggered(instance); });
                     menu->addAction(action);
                 }
             }
@@ -439,17 +438,17 @@ void ViewManager::initializeClass(ExtensionManager* ext)
 
         QAction* showViewAction = mm.findItem("Show View");
         showViewMenu = new Menu(viewMenu);
-        showViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, showViewMenu));
+        showViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(showViewMenu); });
         showViewAction->setMenu(showViewMenu);
 
         QAction* createViewAction = mm.setCurrent(viewMenu).findItem("Create View");
         createViewMenu = new Menu(viewMenu);
-        createViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, createViewMenu));
+        createViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(createViewMenu); });
         createViewAction->setMenu(createViewMenu);
 
         QAction* deleteViewAction = mm.setCurrent(viewMenu).findItem("Delete View");
         deleteViewMenu = new Menu(viewMenu);
-        deleteViewMenu->sigAboutToShow().connect(std::bind(onViewMenuAboutToShow, deleteViewMenu));
+        deleteViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(deleteViewMenu); });
         deleteViewAction->setMenu(deleteViewMenu);
         
         initialized = true;
@@ -637,6 +636,17 @@ View* ViewManager::findSpecificTypeView(const std::type_info& view_type_info, co
     }
     return 0;
 }    
+
+
+void ViewManager::deleteView(View* view)
+{
+    for(auto&& info : impl->instances){
+        if(info->view == view){
+            info->remove();
+            break;
+        }
+    }
+}
 
 
 bool ViewManager::isPrimalInstance(View* view)

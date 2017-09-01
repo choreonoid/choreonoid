@@ -10,6 +10,7 @@
 #include <cnoid/Plugin>
 #include <cnoid/AppConfig>
 #include <cnoid/MenuManager>
+#include <cnoid/ViewManager>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
 #include <cnoid/MessageView>
@@ -266,8 +267,10 @@ bool PythonPlugin::initializeInterpreter()
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
 
+#ifdef CNOID_USE_BOOST_PYTHON
     PyEval_InitThreads();
     PyEval_SaveThread();
+#endif
 
     return true;
 }
@@ -328,6 +331,11 @@ bool PythonPlugin::finalize()
 {
     pythonConfig->write("redirectionToMessageView", redirectionCheck->isChecked());
     pythonConfig->write("refreshModules", refreshModulesCheck->isChecked());
+
+    // PythonConsoleView must be deleted before finalizing the Python interpreter in
+    // the destructor of PythonPlugin because PythonConsoleView has its own python objects
+    viewManager().deleteView(PythonConsoleView::instance());
+    
     return true;
 }
 

@@ -15,7 +15,6 @@
 
 #include "gettext.h"
 
-namespace stdph = std::placeholders;
 using namespace cnoid;
 
 namespace {
@@ -56,7 +55,7 @@ bool GrxUIPlugin::initialize()
         onImportGrxUICheckToggled(on, false);
     }
     importGrxUICheck->sigToggled().connect(
-        std::bind(&GrxUIPlugin::onImportGrxUICheckToggled, this, stdph::_1, true));
+        std::bind([&](bool on){ onImportGrxUICheckToggled(on, true); });
 
     return true;
 }
@@ -68,12 +67,7 @@ void GrxUIPlugin::onImportGrxUICheckToggled(bool on, bool doWriteConfig)
         python::gil_scoped_acquire lock;
         python::object grxuiModule = python::module::import("cnoid.grxui");
         if(!grxuiModule.is_none()){
-#ifdef CNOID_USE_PYBIND11
-            pybind11::eval<pybind11::eval_single_statement>
-                ("from cnoid.grxui import *", cnoid::pythonMainNamespace());
-#else
             python::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
-#endif
         }
     }
     if(doWriteConfig){

@@ -10,18 +10,18 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <boost/version.hpp>
 #include <map>
 #include <iostream>
 
 #ifdef CNOID_USE_PYBIND11
 #include <pybind11/eval.h>
 #include <pybind11/stl.h>
-#endif
-
+#else
+#include <boost/version.hpp>
 // Boost 1.58
 #if BOOST_VERSION / 100 % 1000 == 58
 #include <fstream>
+#endif
 #endif
 
 using namespace std;
@@ -237,16 +237,6 @@ PythonExecutor::State PythonExecutor::state() const
 }
 
 
-static python::object execPythonCodeSub(const std::string& code)
-{
-#ifdef CNOID_USE_PYBIND11
-    return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace());
-#else    
-    return boost::python::exec(code.c_str(), cnoid::pythonMainNamespace());
-#endif
-}
-
-
 static python::object execPythonFileSub(const std::string& filename)
 {
 #ifdef CNOID_USE_PYBIND11
@@ -259,7 +249,7 @@ static python::object execPythonFileSub(const std::string& filename)
     std::ifstream t(filename.c_str());
     std::stringstream buffer;
     buffer << t.rdbuf();
-    return execPythonCodeSub(buffer.str().c_str());
+    return python::exec(buffer.str().c_str(), cnoid::pythonMainNamespace());
 #else // default implementation
     return boost::python::exec_file(filename.c_str(), cnoid::pythonMainNamespace());
 #endif
@@ -269,13 +259,19 @@ static python::object execPythonFileSub(const std::string& filename)
 
 bool PythonExecutor::execCode(const std::string& code)
 {
-    return impl->exec(std::bind(execPythonCodeSub, code), "");
+    return impl->exec(
+#ifdef CNOID_USE_PYBIND11
+        [&](){ return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace()); },
+#else
+        [&](){ return python::exec(code.c_str(), cnoid::pythonMainNamespace()); },
+#endif
+        "");
 }
 
 
 bool PythonExecutor::execFile(const std::string& filename)
 {
-    return impl->exec(std::bind(execPythonFileSub, filename), filename);
+    return impl->exec([&](){ return execPythonFileSub(filename); }, filename);
 }
 
 
@@ -440,7 +436,7 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
     stateMutex.unlock();
     
     if(QThread::isRunning()){
-        callLater(std::bind(&PythonExecutorImpl::onBackgroundExecutionFinished, this));
+        callLater([&](){ onBackgroundExecutionFinished(); });
     } else {
         sigFinished();
     }

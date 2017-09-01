@@ -13,16 +13,16 @@
 #include <QEventLoop>
 #include <QMimeData>
 #include <boost/algorithm/string.hpp>
-#include <boost/assign.hpp>
 #include <QMimeData>
 #include <list>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using namespace boost::assign;
 
 namespace {
+
+PythonConsoleView* pythonConsoleView = 0;
 
 const unsigned int HISTORY_SIZE = 100;
 
@@ -125,8 +125,15 @@ python::object PythonConsoleIn::readline()
 
 void PythonConsoleView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<PythonConsoleView>(
-        "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
+    pythonConsoleView =
+        ext->viewManager().registerClass<PythonConsoleView>(
+            "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
+}
+
+
+PythonConsoleView* PythonConsoleView::instance()
+{
+    return pythonConsoleView;
 }
 
 
@@ -143,7 +150,9 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     isConsoleInMode = false;
     inputColumnOffset = 0;
 
-    splitStringVec += " ","{","}", "(", ")","[","]","<",">",":",";","^","@","\"",",","\\","!","#","'","=","|","*","?","\t";
+    splitStringVec = {
+        " ", "{",  "}", "(",  ")", "[", "]", "<", ">", ":", ";", "^",
+        "@", "\"", ",", "\\", "!", "#", "'", "=", "|", "*", "?", "\t" };
     
     self->setDefaultLayoutArea(View::BOTTOM);
 
@@ -157,7 +166,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
     self->setLayout(hbox);
 
     python::gil_scoped_acquire lock;
-    
+
 #ifdef _WIN32
     try { interpreter = python::module::import("code").attr("InteractiveConsole")(pythonMainNamespace());
     } catch (...) { /* ignore the exception on windows. this module is loaded already. */} 
@@ -394,7 +403,7 @@ void PythonConsoleViewImpl::tabComplete()
     string lastWord = beforeCursorString.substr(maxSplitIdx);
     beforeCursorString = beforeCursorString.substr(0,maxSplitIdx);
 
-    std::vector<string> dottedStrings;
+    std::vector<string> dottedStrings; 
     boost::split(dottedStrings, lastWord, boost::is_any_of("."));
     string lastDottedString = dottedStrings.back();// word after last dot
 
