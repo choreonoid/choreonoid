@@ -261,9 +261,9 @@ bool PythonExecutor::execCode(const std::string& code)
 {
     return impl->exec(
 #ifdef CNOID_USE_PYBIND11
-        [&](){ return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace()); },
+        [=](){ return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace()); },
 #else
-        [&](){ return python::exec(code.c_str(), cnoid::pythonMainNamespace()); },
+        [=](){ return python::exec(code.c_str(), cnoid::pythonMainNamespace()); },
 #endif
         "");
 }
@@ -271,7 +271,7 @@ bool PythonExecutor::execCode(const std::string& code)
 
 bool PythonExecutor::execFile(const std::string& filename)
 {
-    return impl->exec([&](){ return execPythonFileSub(filename); }, filename);
+    return impl->exec([=](){ return execPythonFileSub(filename); }, filename);
 }
 
 

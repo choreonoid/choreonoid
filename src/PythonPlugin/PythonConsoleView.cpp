@@ -22,7 +22,7 @@ using namespace cnoid;
 
 namespace {
 
-PythonConsoleView* pythonConsoleView = 0;
+PythonConsoleView* pythonConsoleView = nullptr;
 
 const unsigned int HISTORY_SIZE = 100;
 
@@ -403,7 +403,7 @@ void PythonConsoleViewImpl::tabComplete()
     string lastWord = beforeCursorString.substr(maxSplitIdx);
     beforeCursorString = beforeCursorString.substr(0,maxSplitIdx);
 
-    std::vector<string> dottedStrings; 
+    std::vector<string> dottedStrings;
     boost::split(dottedStrings, lastWord, boost::is_any_of("."));
     string lastDottedString = dottedStrings.back();// word after last dot
 
