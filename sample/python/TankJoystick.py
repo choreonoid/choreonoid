@@ -1,16 +1,8 @@
-
 from cnoid.Util import *
 from cnoid.Base import *
 from cnoid.Body import *
 from cnoid.BodyPlugin import *
 import math;
-
-worldItem = WorldItem()
-RootItem.instance().addChildItem(worldItem)
-
-timeBar = TimeBar.instance()
-timeBar.setFrameRate(1000)
-timeBar.setFillLevelSync(False)
 
 sceneWidget = SceneView.instance().sceneWidget()
 sceneWidget.setHeadLightEnabled(False)
@@ -23,7 +15,12 @@ sceneWidget.setCameraPosition(
     [  0.412288, -0.847325, -0.334751 ],
     [  0.146464, -0.301009,  0.942307 ])
 
-MainWindow.instance().viewArea().addView(ViewManager.getOrCreateView("Base", "VirtualJoystickView"))
+joystickView = ViewManager.getOrCreateView("Base", "VirtualJoystickView")
+MainWindow.instance().viewArea().addView(joystickView)
+joystickView.bringToFront()
+
+worldItem = WorldItem()
+RootItem.instance().addChildItem(worldItem)
 
 laboItem = BodyItem()
 laboItem.load(shareDirectory() + "/model/Labo1/Labo1.body")
@@ -45,6 +42,7 @@ controllerItem.setController("TankJoystickController")
 tankItem.addChildItem(controllerItem)
 
 simulatorItem = AISTSimulatorItem()
+simulatorItem.setTimeStep(0.001)
 simulatorItem.setRealtimeSyncMode(True)
 simulatorItem.setTimeRangeMode(SimulatorItem.TimeRangeMode.TR_UNLIMITED)
 worldItem.addChildItem(simulatorItem)

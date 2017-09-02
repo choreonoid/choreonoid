@@ -7,11 +7,6 @@ import math;
 worldItem = WorldItem()
 RootItem.instance().addChildItem(worldItem)
 
-timeBar = TimeBar.instance()
-timeBar.setFrameRate(500)
-timeBar.setTimeRange(0.0, 15.0)
-timeBar.setFillLevelSync(False)
-
 robotItem = BodyItem()
 robotItem.load(shareDirectory() + "/model/SR1/SR1.body")
 
@@ -25,7 +20,7 @@ q = [ 0.0, -2.1, 0.0,   4.5, -2.4, 0.0,
       0.0,  0.0, 0.0 ]
 
 for i in range(robot.numJoints()):
-	robot.joint(i).q = math.radians(q[i])
+    robot.joint(i).q = math.radians(q[i])
 
 robot.calcForwardKinematics()
 robotItem.storeInitialState()
