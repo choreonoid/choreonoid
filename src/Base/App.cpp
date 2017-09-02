@@ -304,11 +304,11 @@ int App::exec()
 
 int AppImpl::exec()
 {
-    processCommandLineOptions();
-
     if(!mainWindow->isVisible()){
         mainWindow->show();
     }
+
+    processCommandLineOptions();
 
     int result = 0;
     
