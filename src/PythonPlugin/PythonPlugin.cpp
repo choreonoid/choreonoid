@@ -65,6 +65,7 @@ class PythonPlugin : public Plugin
 public:
 #ifdef CNOID_USE_PYBIND11
     unique_ptr<pybind11::scoped_interpreter> interpreter;
+    unique_ptr<pybind11::gil_scoped_release> gil_scoped_release;
 #endif
     
     std::unique_ptr<PythonExecutor> executor_;
@@ -267,7 +268,9 @@ bool PythonPlugin::initializeInterpreter()
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
 
-#ifdef CNOID_USE_BOOST_PYTHON
+#ifdef CNOID_USE_PYBIND11
+    gil_scoped_release.reset(new pybind11::gil_scoped_release());
+#else
     PyEval_InitThreads();
     PyEval_SaveThread();
 #endif
