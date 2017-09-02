@@ -54,8 +54,7 @@ bool GrxUIPlugin::initialize()
         importGrxUICheck->setChecked(on);
         onImportGrxUICheckToggled(on, false);
     }
-    importGrxUICheck->sigToggled().connect(
-        std::bind([&](bool on){ onImportGrxUICheckToggled(on, true); });
+    importGrxUICheck->sigToggled().connect([&](bool on){ onImportGrxUICheckToggled(on, true); });
 
     return true;
 }
