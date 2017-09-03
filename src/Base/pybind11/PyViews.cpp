@@ -57,7 +57,7 @@ void exportPyViews(py::module m)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
         .def("endStdioRedirect", &MessageView::endStdioRedirect)
         .def_static("isFlushing", &MessageView::isFlushing)
-        .def("sigFlushFinished", &MessageView::sigFlushFinished)
+        .def_static("sigFlushFinished", &MessageView::sigFlushFinished)
         ;
 
     py::class_<SceneWidget, QWidget>(m, "SceneWidget")
