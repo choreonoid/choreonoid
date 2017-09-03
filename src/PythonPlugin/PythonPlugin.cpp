@@ -39,14 +39,24 @@ list<string> additionalSearchPathList;
 
 class MessageViewOut
 {
+    MessageView* mv;
 public:
+    MessageViewOut() : mv(MessageView::instance()) { }
+    
     void write(std::string const& text) {
         if(redirectionCheck->isChecked()){
-            MessageView* mv = MessageView::instance();
             mv->put(text);
             mv->flush();
         } else {
             cout << text; cout.flush();
+        }
+    }
+
+    void flush(){
+        if(redirectionCheck->isChecked()){
+            mv->flush();
+        } else {
+            cout.flush();
         }
     }
 };
@@ -76,6 +86,11 @@ public:
     python::object exitExceptionType;
     python::object messageViewOut;
     python::object messageViewIn;
+    python::module rollBackImporterModule;
+
+#ifdef CNOID_USE_BOOST_PYTHON
+    python::object stringOutBufClass;
+#endif
         
     PythonPlugin();
     virtual bool initialize();
@@ -104,7 +119,7 @@ PythonPlugin* pythonPlugin = 0;
 python::object pythonExit()
 {
     PyErr_SetObject(pythonPlugin->exitExceptionType.ptr(), 0);
-
+    
 #ifdef CNOID_USE_PYBIND11
     if(PyErr_Occurred()){
         throw pybind11::error_already_set();
@@ -238,7 +253,8 @@ bool PythonPlugin::initializeInterpreter()
 #else
         python::class_<MessageViewOut>("MessageViewOut", python::init<>())
 #endif
-        .def("write", &MessageViewOut::write);
+        .def("write", &MessageViewOut::write)
+        .def("flush", &MessageViewOut::flush);
     
     messageViewOut = messageViewOutClass();
     sysModule.attr("stdout") = messageViewOut;
@@ -260,7 +276,7 @@ bool PythonPlugin::initializeInterpreter()
     exitExceptionType = python::module::import("cnoid.PythonPlugin").attr("ExitException");
 
 #ifdef CNOID_USE_PYBIND11
-    pybind11::object exitFunc = pybind11::cpp_function(pythonExit);
+    pybind11::function exitFunc = pybind11::cpp_function(pythonExit);
 #else
     python::object exitFunc = python::make_function(pythonExit);
 #endif
@@ -364,6 +380,21 @@ python::object cnoid::pythonSysModule()
 }
 
 
+python::object cnoid::pythonExitExceptionType()
+{
+    return pythonPlugin->exitExceptionType;
+}
+
+
+python::object cnoid::pythonRollBackImporterModule()
+{
+    if(!pythonPlugin->rollBackImporterModule){
+        pythonPlugin->rollBackImporterModule = python::module::import("cnoid.rbimporter");
+    }
+    return pythonPlugin->rollBackImporterModule;
+}
+
+
 bool cnoid::execPythonCode(const std::string& code)
 {
     PythonExecutor& executor = pythonPlugin->executor();
@@ -375,3 +406,30 @@ bool cnoid::execPythonCode(const std::string& code)
     }
     return result;
 }
+
+
+#ifdef CNOID_USE_BOOST_PYTHON
+
+namespace {
+
+struct StringOutBuf
+{
+    string buf;
+    void write(string const& text){ buf += text; }
+    const string& text() const { return buf; }
+};
+    
+}
+    
+python::object cnoid::pythonStringOutBufClass()
+{
+    if(!pythonPlugin->stringOutBufClass){
+        pythonPlugin->stringOutBufClass =
+            python::class_<StringOutBuf>("StringOutBuf", python::init<>())
+            .def("write", &StringOutBuf::write)
+            .def("text", &StringOutBuf::text, python::return_value_policy<python::copy_const_reference>());
+    }
+    return pythonPlugin->stringOutBufClass;
+};
+    
+#endif

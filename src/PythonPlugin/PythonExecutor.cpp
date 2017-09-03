@@ -29,57 +29,11 @@ using namespace cnoid;
 namespace filesystem = boost::filesystem;
 
 namespace {
-    
-bool isInitialized = false;
-
-python::object exitExceptionType;
-python::object sys;
-python::object StringOutClass;
 
 bool isDefaultModuleRefreshEnabled = false;
-python::object rollBackImporter;
 
 typedef map<string, int> PathRefMap;
 PathRefMap additionalPythonPathRefMap;
-
-class StringOut
-{
-    string buf;
-public:
-    void write(string const& text){
-        buf += text;
-    }
-    const string& text() const { return buf; }
-};
-        
-void initializeStaticObjects()
-{
-    if(!isInitialized){
-
-        python::gil_scoped_acquire lock;
-
-        exitExceptionType = python::module::import("cnoid.PythonPlugin").attr("ExitException");
-        sys = python::module::import("sys");
-
-#ifdef CNOID_USE_PYBIND11
-        pybind11::module m = pythonMainModule();
-        StringOutClass =
-            pybind11::class_<StringOut>(m, "StringOut")
-            .def(pybind11::init<>())
-            .def("write", &StringOut::write)
-            .def("text", &StringOut::text, pybind11::return_value_policy::copy);
-#else
-        StringOutClass =
-            boost::python::class_<StringOut>("StringOut", boost::python::init<>())
-            .def("write", &StringOut::write)
-            .def("text", &StringOut::text, boost::python::return_value_policy<boost::python::copy_const_reference>());
-#endif
-
-        rollBackImporter = python::module::import("cnoid.rbimporter");
-
-        isInitialized = true;
-    }
-}
 
 }
 
@@ -281,10 +235,6 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
         return false;
     }
 
-    if(!isInitialized){
-        initializeStaticObjects();
-    }
-
     bool doAddPythonPath = false;
     pathRefIter = additionalPythonPathRefMap.end();
 
@@ -331,7 +281,7 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
         }
 
         if(isModuleRefreshEnabled){
-            rollBackImporter.attr("refresh")(scriptDirectory);
+            pythonRollBackImporterModule().attr("refresh")(scriptDirectory);
         }
 
         if(!filename.empty()){
@@ -377,19 +327,16 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
         completed = true;
     }
     catch(python::error_already_set const & ex) {
+
+        python::module sys = pythonSysModule();
+        
 #ifdef CNOID_USE_PYBIND11
-        pybind11::object stdout_ = sys.attr("stdout");
-        pybind11::object strout = StringOutClass();
-        sys.attr("stdout") = strout;
-        pybind11::print(ex.what());
-        sys.attr("stdout") = stdout_;
-        pybind11::object st = strout.attr("text")();
-        exceptionText = strout.attr("text")().cast<string>();
+        exceptionText = ex.what();
         resultString = exceptionText;
         hasException = true;
 #else        
         if(PyErr_Occurred()){
-            if(PyErr_ExceptionMatches(exitExceptionType.ptr())){
+            if(PyErr_ExceptionMatches(pythonExitExceptionType().ptr())){
                 PyErr_Clear();
                 isTerminated = true;
             } else {
@@ -407,7 +354,7 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
                 
                 // get an error message by redirecting the output of PyErr_Print()
                 boost::python::object stderr_ = sys.attr("stderr");
-                boost::python::object strout = StringOutClass();
+                boost::python::object strout = pythonStringOutBufClass()();
                 sys.attr("stderr") = strout;
                 PyErr_Restore(ptype, pvalue, ptraceback);
                 PyErr_Print();
@@ -564,6 +511,8 @@ bool PythonExecutor::terminate()
 bool PythonExecutorImpl::terminateScript()
 {
     bool terminated = true;
+
+    python::object exitExceptionType = pythonExitExceptionType();
 
     if(QThread::isRunning()){
         terminated = false;
