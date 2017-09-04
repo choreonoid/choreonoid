@@ -165,7 +165,7 @@ bool PythonPlugin::initialize()
     
     OptionManager& opm = optionManager();
     opm.addOption("python,p", boost::program_options::value< vector<string> >(), "load a python script file");
-    opm.sigOptionsParsed().connect([&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
+    opm.sigOptionsParsed(1).connect([&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
 
     setProjectArchiver(
         [&](Archive& archive){ return storeProperties(archive); },
