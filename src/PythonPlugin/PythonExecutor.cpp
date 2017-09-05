@@ -11,7 +11,6 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <map>
-#include <iostream>
 
 #ifdef CNOID_USE_PYBIND11
 #include <pybind11/eval.h>
@@ -373,7 +372,7 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
 #endif
     }
 
-    //releasePythonPathRef();
+    releasePythonPathRef();
 
     stateMutex.lock();
     isRunningForeground = false;
@@ -477,6 +476,16 @@ void PythonExecutorImpl::onBackgroundExecutionFinished()
 
 void PythonExecutorImpl::releasePythonPathRef()
 {
+    /**
+       When a number of Python scripts is proccessed, releasing the path corresponding to a certain
+       script may affect other scripts. To prevent it, set true to the following constant value.
+    */
+    static const bool DISABLE_RELEASE = true;
+
+    if(DISABLE_RELEASE){
+        return;
+    }
+    
     if(pathRefIter != additionalPythonPathRefMap.end()){
         if(--pathRefIter->second == 0){
             python::gil_scoped_acquire lock;
@@ -524,23 +533,29 @@ bool PythonExecutorImpl::terminateScript()
         for(int i=0; i < 400; ++i){
             {
                 python::gil_scoped_acquire lock;
-#ifdef CNOID_USE_PYBIND11
+
+                /**
+                   Set the exception class itself instead of an instance of the exception class
+                   because the following function only accepts a single parameter with regard to the
+                   exception object in constrast to PyErr_SetObject that takes both the type and value
+                   of the exeption, and if the instance is given to the following function, the
+                   exception type will be unknown in the exception handler, which makes it impossible
+                   for the handler to check if the termination is requested. By giving the class object,
+                   the handler can detect the exception type even in this case.
+                */
                 PyThreadState_SetAsyncExc((long)threadId, exitExceptionType.ptr());
-#else
-                PyThreadState_SetAsyncExc((long)threadId, exitExceptionType().ptr());
-#endif
             }
             if(wait(20)){
                 terminated = true;
                 break;
             }
         }
-        //releasePythonPathRef();
+        releasePythonPathRef();
         
     } else if(isRunningForeground){
         python::gil_scoped_acquire lock;
         PyErr_SetObject(exitExceptionType().ptr(), 0);
-        //releasePythonPathRef();
+        releasePythonPathRef();
 #ifdef CNOID_USE_PYBIND11
         if(PyErr_Occurred()) throw pybind11::error_already_set();
 #else
