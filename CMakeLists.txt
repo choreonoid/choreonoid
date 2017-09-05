@@ -386,10 +386,6 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-if(ENABLE_PYTHON AND USE_BOOST_PYTHON)
-  set(PYTHON_LIBRARIES ${PYTHON_LIBRARIES} ${Boost_PYTHON_LIBRARY})
-endif()
-
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Release>:BOOST_DISABLE_ASSERTS>)
 
 install_external_libraries(${Boost_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}

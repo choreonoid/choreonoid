@@ -8,10 +8,13 @@
 #include "../Referenced.h"
 #include <cnoid/Config>
 #include <boost/python.hpp>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 namespace python {
+
+CNOID_EXPORT void handleException();
 
 using namespace boost::python;
 

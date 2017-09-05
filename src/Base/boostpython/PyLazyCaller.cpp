@@ -4,7 +4,6 @@
 
 #include "../LazyCaller.h"
 #include <cnoid/PyUtil>
-#include <cnoid/PythonUtil>
 
 using namespace cnoid;
 
@@ -24,7 +23,7 @@ struct PyFunc
         try {
             func();
         } catch(python::error_already_set const& ex) {
-            handlePythonException();
+            python::handleException();
         }
     }
 };

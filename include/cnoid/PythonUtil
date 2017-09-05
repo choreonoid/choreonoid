@@ -1,4 +1,0 @@
-#include <cnoid/Config>
-#ifdef CNOID_USE_BOOST_PYTHON
-#include "src/Python/PythonUtil.h"
-#endif

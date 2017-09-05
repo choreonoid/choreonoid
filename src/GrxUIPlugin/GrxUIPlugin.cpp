@@ -5,7 +5,6 @@
 #include "GrxUIPlugin.h"
 #include "GrxUIMenuView.h"
 #include <cnoid/PyUtil>
-#include <cnoid/PythonPlugin>
 #include <cnoid/MenuManager>
 #include <cnoid/AppConfig>
 
@@ -66,7 +65,7 @@ void GrxUIPlugin::onImportGrxUICheckToggled(bool on, bool doWriteConfig)
         python::gil_scoped_acquire lock;
         python::object grxuiModule = python::module::import("cnoid.grxui");
         if(!grxuiModule.is_none()){
-            python::exec("from cnoid.grxui import *", cnoid::pythonMainNamespace());
+            python::exec("from cnoid.grxui import *", python::module::import("__main__").attr("__dict__"));
         }
     }
     if(doWriteConfig){

@@ -14,17 +14,17 @@
 
 #include <cnoid/PyUtil>
 
-using namespace boost::python;
 using namespace cnoid;
+namespace py = boost::python;
 
 BOOST_PYTHON_MODULE(OpenRTMPlugin)
 {
-    class_< RTCItem, RTCItemPtr, bases<Item> >("RTCItem")
+    py::class_<RTCItem, RTCItemPtr, py::bases<Item>>("RTCItem")
         .def("setModuleName", &RTCItem::setModuleName)
         .def("setPeriodicType", &RTCItem::setPeriodicType)
         .def("setPeriodicRate", &RTCItem::setPeriodicRate);
 
-    class_< BodyRTCItem, BodyRTCItemPtr, bases<Item> > bodyRTCItemClass("BodyRTCItem");
+    py::class_<BodyRTCItem, BodyRTCItemPtr, py::bases<Item>> bodyRTCItemClass("BodyRTCItem");
     bodyRTCItemClass
         .def("setControllerModule", &BodyRTCItem::setControllerModule)
         .def("setConfigMode", &BodyRTCItem::setConfigMode)
@@ -33,20 +33,17 @@ BOOST_PYTHON_MODULE(OpenRTMPlugin)
         .def("setPeriodicRate", &BodyRTCItem::setPeriodicRate);
 
     {
-        scope bodyRTCItemScope = bodyRTCItemClass;
-        enum_<BodyRTCItem::ConfigMode>("ConfigMode")
+        py::scope bodyRTCItemScope = bodyRTCItemClass;
+        py::enum_<BodyRTCItem::ConfigMode>("ConfigMode")
             .value("FILE", BodyRTCItem::CONF_FILE_MODE)
             .value("ALL", BodyRTCItem::CONF_ALL_MODE);
     }
              
 
-    enum_<RTCItem::PERIODIC_TYPE>("PeriodicType")
+    py::enum_<RTCItem::PERIODIC_TYPE>("PeriodicType")
         .value("PERIODIC_EXECUTION_CONTEXT", RTCItem::PERIODIC_EXECUTION_CONTEXT) 
         .value("SYNCH_EXT_TRIGGER", RTCItem::SYNCH_EXT_TRIGGER) 
         .value("EXT_TRIG_EXECUTION_CONTEXT", RTCItem::EXT_TRIG_EXECUTION_CONTEXT) 
         .value("CHOREONOID_EXECUTION_CONTEXT", RTCItem::CHOREONOID_EXECUTION_CONTEXT) 
         .value("N_PERIODIC_TYPE", RTCItem::N_PERIODIC_TYPE);
 }
-
-
-

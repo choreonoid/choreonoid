@@ -3,7 +3,6 @@
 */
 
 #include "PythonConsoleView.h"
-#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/MessageView>
 #include <cnoid/ViewManager>
@@ -45,6 +44,11 @@ public:
 }
 
 namespace cnoid {
+
+// defined in PythonPlugin.cpp
+python::module getMainModule();
+python::module getSysModule();
+python::object getGlobalNamespace();
     
 class PythonConsoleViewImpl : public QPlainTextEdit
 {
@@ -64,6 +68,8 @@ public:
     std::vector<string> keywords;
     Signal<void(const std::string& output)> sigOutput;
 
+    python::module mainModule;
+    python::object globalNamespace;
     python::object consoleOut;
     python::object consoleIn;
     python::object sys;
@@ -77,7 +83,6 @@ public:
     void putln(const QString& message);
     void putPrompt();
     void execCommand();
-    python::object getMemberObject(std::vector<string>& moduleNames);
     python::object getMemberObject(std::vector<string>& moduleNames, python::object& parentObject);
     std::vector<string> getMemberNames(python::object& moduleObject);
     void tabComplete();
@@ -167,17 +172,21 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 
     python::gil_scoped_acquire lock;
 
+    mainModule = getMainModule();
+    globalNamespace = getGlobalNamespace();
+    
 #ifdef _WIN32
-    try { interpreter = python::module::import("code").attr("InteractiveConsole")(pythonMainNamespace());
+    try { interpreter = python::module::import("code").attr("InteractiveConsole")(globalNamespace);
     } catch (...) { /* ignore the exception on windows. this module is loaded already. */} 
 #else
-    interpreter = python::module::import("code").attr("InteractiveConsole")(pythonMainNamespace());
+    interpreter = python::module::import("code").attr("InteractiveConsole")(globalNamespace);
 #endif
 
+    
 #ifdef CNOID_USE_PYBIND11
-    pybind11::module m = pythonMainModule();
     pybind11::object consoleOutClass =
-        pybind11::class_<PythonConsoleOut>(m, "PythonConsoleOut").def(pybind11::init<>())
+        pybind11::class_<PythonConsoleOut>(mainModule, "PythonConsoleOut")
+        .def(pybind11::init<>())
 #else
     python::object consoleOutClass =
         boost::python::class_<PythonConsoleOut>("PythonConsoleOut", python::init<>())
@@ -195,13 +204,15 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 
     python::object consoleInClass =
 #ifdef CNOID_USE_PYBIND11
-        pybind11::class_<PythonConsoleIn>(m, "PythonConsoleIn").def(pybind11::init<>())
+        pybind11::class_<PythonConsoleIn>(mainModule, "PythonConsoleIn")
+        .def(pybind11::init<>())
 #else
         python::class_<PythonConsoleIn>("PythonConsoleIn", python::init<>())
 #endif
         .def("readline", &PythonConsoleIn::readline);
     
     consoleIn = consoleInClass();
+    
 #ifdef CNOID_USE_PYBIND11
     PythonConsoleIn& consoleIn_ = consoleIn.cast<PythonConsoleIn&>();
 #else
@@ -209,7 +220,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 #endif
     consoleIn_.setConsole(this);
     
-    sys = pythonSysModule();
+    sys = getSysModule();
 
     python::object keyword = python::module::import("keyword");
 #ifdef CNOID_USE_PYBIND11
@@ -225,7 +236,7 @@ PythonConsoleViewImpl::PythonConsoleViewImpl(PythonConsoleView* self)
 #endif
 
     histIter = history.end();
-
+    
     putln(QString("Python %1").arg(Py_GetVersion()));
     
     prompt = ">>> ";
@@ -321,17 +332,12 @@ void PythonConsoleViewImpl::execCommand()
     sys.attr("stdout") = orgStdout;
     sys.attr("stderr") = orgStderr;
     sys.attr("stdin") = orgStdin;
-
+    
     addToHistory(command);
-
+    
     putPrompt();
 }
-
-python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames)
-{
-    python::module parentObject = pythonMainModule();
-    return getMemberObject(moduleNames, parentObject);
-}
+    
 
 python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& moduleNames, python::object& parentObject)
 {
@@ -345,10 +351,11 @@ python::object PythonConsoleViewImpl::getMemberObject(std::vector<string>& modul
             return python::object();
         }else{
             python::object childObject = parentObject.attr(moduleName.c_str());
-            return getMemberObject(moduleNames,childObject);
+            return getMemberObject(moduleNames, childObject);
         }
     }
 }
+
 
 std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& moduleObject)
 {
@@ -377,6 +384,7 @@ std::vector<string> PythonConsoleViewImpl::getMemberNames(python::object& module
     }
     return retNames;
 }
+
 
 void PythonConsoleViewImpl::tabComplete()
 {
@@ -410,12 +418,12 @@ void PythonConsoleViewImpl::tabComplete()
     std::vector<string> moduleNames = dottedStrings;// words before last dot
     moduleNames.pop_back();
 
-    python::object targetMemberObject = getMemberObject(moduleNames);//member object before last dot
+    python::object targetMemberObject = getMemberObject(moduleNames, globalNamespace); //member object before last dot
     std::vector<string> memberNames = getMemberNames(targetMemberObject);
 
     // builtin function and syntax completions
     if(dottedStrings.size() == 1){
-        python::object builtinsObject =  pythonMainModule().attr("__builtins__");
+        python::object builtinsObject =  mainModule.attr("__builtins__");
         std::vector<string> builtinMethods = getMemberNames(builtinsObject);
         memberNames.insert(memberNames.end(), builtinMethods.begin(), builtinMethods.end());
         memberNames.insert(memberNames.end(), keywords.begin(), keywords.end());

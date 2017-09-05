@@ -7,7 +7,7 @@ set(headers
   )
 
 add_cnoid_library(CnoidPyBase SHARED PyItemList.cpp)
-target_link_libraries(CnoidPyBase CnoidBase CnoidPython)
+target_link_libraries(CnoidPyBase CnoidBase CnoidPyUtil)
 apply_common_setting_for_library(CnoidPyBase "${headers}")
 
 add_cnoid_python_module(PyQtCore PyQtCore.cpp)

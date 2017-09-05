@@ -1,5 +1,4 @@
 
-add_subdirectory(Python)
 add_subdirectory(Util)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(Body)

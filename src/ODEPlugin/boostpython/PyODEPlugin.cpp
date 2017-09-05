@@ -5,16 +5,16 @@
 #include "../ODESimulatorItem.h"
 #include <cnoid/PyBase>
 
-using namespace boost::python;
 using namespace cnoid;
+namespace py = boost::python;
 
 BOOST_PYTHON_MODULE(ODEPlugin)
 {
-    boost::python::import("cnoid.BodyPlugin");
+    py::import("cnoid.BodyPlugin");
 
     {
-        scope odeSimulatorItemScope = 
-            class_< ODESimulatorItem, ODESimulatorItemPtr, bases<SimulatorItem> >("ODESimulatorItem")
+        py::scope odeSimulatorItemScope = 
+            py::class_<ODESimulatorItem, ODESimulatorItemPtr, py::bases<SimulatorItem>>("ODESimulatorItem")
             .def("setStepMode", &ODESimulatorItem::setStepMode)
             .def("setGravity", &ODESimulatorItem::setGravity)
             .def("setFriction", &ODESimulatorItem::setFriction)
@@ -30,13 +30,12 @@ BOOST_PYTHON_MODULE(ODEPlugin)
             .def("useWorldCollisionDetector", &ODESimulatorItem::useWorldCollisionDetector)
             ;
 
-        enum_<ODESimulatorItem::StepMode>("StepMode")
+        py::enum_<ODESimulatorItem::StepMode>("StepMode")
             .value("STEP_ITERATIVE", ODESimulatorItem::STEP_ITERATIVE)
             .value("STEP_BIG_MATRIX", ODESimulatorItem::STEP_BIG_MATRIX)
             .value("NUM_STEP_MODES", ODESimulatorItem::NUM_STEP_MODES);    
     }
 
-    implicitly_convertible<ODESimulatorItemPtr, SimulatorItemPtr>();
+    py::implicitly_convertible<ODESimulatorItemPtr, SimulatorItemPtr>();
     PyItemList<ODESimulatorItem>("ODESimulatorItemList");
 }
-

@@ -1,14 +1,6 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
+#include "PyUtil.h"
 
-#include "PythonUtil.h"
-
-#ifdef CNOID_USE_BOOST_PYTHON
-
-#include <Python.h>
-
-void cnoid::handlePythonException()
+void cnoid::python::handleException()
 {
     if(PyErr_Occurred()){
         PyObject* ptype;
@@ -19,5 +11,3 @@ void cnoid::handlePythonException()
         PyErr_Print();
     }
 }
-
-#endif

@@ -3,7 +3,6 @@
 */
 
 #include "PythonExecutor.h"
-#include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/FileUtil>
 #include <cnoid/LazyCaller>
@@ -36,8 +35,18 @@ PathRefMap additionalPythonPathRefMap;
 
 }
 
-
 namespace cnoid {
+
+// defined in PythonPlugin.cpp
+python::object getGlobalNamespace();
+python::module getSysModule();
+python::object getExitException();
+python::module getRollbackImporterModule();
+
+#ifdef CNOID_USE_BOOST_PYTHON
+python::object getStringOutBufClass();
+#endif
+
 
 class PythonExecutorImpl : public QThread
 {
@@ -55,7 +64,7 @@ public:
 
     string scriptDirectory;
     PathRefMap::iterator pathRefIter;
-        
+
     bool hasException;
     string exceptionTypeName;
     string exceptionText;
@@ -193,7 +202,7 @@ PythonExecutor::State PythonExecutor::state() const
 static python::object execPythonFileSub(const std::string& filename)
 {
 #ifdef CNOID_USE_PYBIND11
-    return pybind11::eval_file(filename.c_str(), cnoid::pythonMainNamespace());
+    return pybind11::eval_file(filename.c_str(), getGlobalNamespace());
 #else
 // Boost 1.58
 #if BOOST_VERSION / 100 % 1000 == 58
@@ -202,9 +211,9 @@ static python::object execPythonFileSub(const std::string& filename)
     std::ifstream t(filename.c_str());
     std::stringstream buffer;
     buffer << t.rdbuf();
-    return python::exec(buffer.str().c_str(), cnoid::pythonMainNamespace());
+    return python::exec(buffer.str().c_str(), getGlobalNamespace());
 #else // default implementation
-    return boost::python::exec_file(filename.c_str(), cnoid::pythonMainNamespace());
+    return boost::python::exec_file(filename.c_str(), getGlobalNamespace());
 #endif
 #endif
 }
@@ -214,9 +223,9 @@ bool PythonExecutor::execCode(const std::string& code)
 {
     return impl->exec(
 #ifdef CNOID_USE_PYBIND11
-        [=](){ return pybind11::eval<pybind11::eval_statements>(code.c_str(), cnoid::pythonMainNamespace()); },
+        [=](){ return pybind11::eval<pybind11::eval_statements>(code.c_str(), getGlobalNamespace()); },
 #else
-        [=](){ return python::exec(code.c_str(), cnoid::pythonMainNamespace()); },
+        [=](){ return python::exec(code.c_str(), getGlobalNamespace()); },
 #endif
         "");
 }
@@ -272,21 +281,21 @@ bool PythonExecutorImpl::exec(std::function<python::object()> execScript, const 
 
         if(doAddPythonPath){
 #ifdef CNOID_USE_PYBIND11
-            pythonSysModule().attr("path").attr("insert")(0, scriptDirectory);
+            getSysModule().attr("path").attr("insert")(0, scriptDirectory);
 #else
-            boost::python::list syspath = boost::python::extract<python::list>(pythonSysModule().attr("path"));
+            boost::python::list syspath = boost::python::extract<python::list>(getSysModule().attr("path"));
             syspath.insert(0, scriptDirectory);
 #endif
         }
 
         if(isModuleRefreshEnabled){
-            pythonRollBackImporterModule().attr("refresh")(scriptDirectory);
+            getRollbackImporterModule().attr("refresh")(scriptDirectory);
         }
 
         if(!filename.empty()){
             filesystem::path relative;
             if(findRelativePath(filesystem::current_path(), filepath, relative)){
-                pythonMainNamespace()["__file__"] = getPathString(relative);
+                getGlobalNamespace()["__file__"] = getPathString(relative);
             }
         }
 
@@ -333,12 +342,12 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
         exceptionText = ex.what();
         resultString = exceptionText;
         hasException = true;
-        if(ex.matches(pythonExitExceptionType())){
+        if(ex.matches(getExitException())){
             isTerminated = true;
         }
 #else        
         if(PyErr_Occurred()){
-            if(PyErr_ExceptionMatches(pythonExitExceptionType().ptr())){
+            if(PyErr_ExceptionMatches(getExitException().ptr())){
                 PyErr_Clear();
                 isTerminated = true;
             } else {
@@ -355,9 +364,9 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
                 }
                 
                 // get an error message by redirecting the output of PyErr_Print()
-                python::module sys = pythonSysModule();
+                python::module sys = getSysModule();
                 boost::python::object stderr_ = sys.attr("stderr");
-                boost::python::object strout = pythonStringOutBufClass()();
+                boost::python::object strout = getStringOutBufClass()();
                 sys.attr("stderr") = strout;
                 PyErr_Restore(ptype, pvalue, ptraceback);
                 PyErr_Print();
@@ -490,9 +499,9 @@ void PythonExecutorImpl::releasePythonPathRef()
         if(--pathRefIter->second == 0){
             python::gil_scoped_acquire lock;
 #ifdef CNOID_USE_PYBIND11
-            pythonSysModule().attr("path").attr("remove")(scriptDirectory);
+            getSysModule().attr("path").attr("remove")(scriptDirectory);
 #else
-            boost::python::list syspath = boost::python::extract<boost::python::list>(pythonSysModule().attr("path"));
+            boost::python::list syspath = boost::python::extract<boost::python::list>(getSysModule().attr("path"));
             int n = boost::python::len(syspath);
             for(int i=0; i < n; ++i){
                 string path = boost::python::extract<string>(syspath[i]);
@@ -525,8 +534,6 @@ bool PythonExecutorImpl::terminateScript()
 {
     bool terminated = true;
 
-    python::object exitExceptionType = pythonExitExceptionType();
-
     if(QThread::isRunning()){
         terminated = false;
 
@@ -543,7 +550,7 @@ bool PythonExecutorImpl::terminateScript()
                    for the handler to check if the termination is requested. By giving the class object,
                    the handler can detect the exception type even in this case.
                 */
-                PyThreadState_SetAsyncExc((long)threadId, exitExceptionType.ptr());
+                PyThreadState_SetAsyncExc((long)threadId, getExitException().ptr());
             }
             if(wait(20)){
                 terminated = true;
@@ -554,8 +561,9 @@ bool PythonExecutorImpl::terminateScript()
         
     } else if(isRunningForeground){
         python::gil_scoped_acquire lock;
-        PyErr_SetObject(exitExceptionType().ptr(), 0);
+        PyErr_SetObject(getExitException().ptr(), 0);
         releasePythonPathRef();
+        
 #ifdef CNOID_USE_PYBIND11
         if(PyErr_Occurred()) throw pybind11::error_already_set();
 #else

@@ -2,9 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#include "PythonPlugin.h"
-#include "PythonScriptItem.h"
 #include "PythonConsoleView.h"
+#include "PythonScriptItem.h"
 #include "PythonExecutor.h"
 #include <cnoid/PyUtil>
 #include <cnoid/Plugin>
@@ -81,13 +80,13 @@ public:
     
     std::unique_ptr<PythonExecutor> executor_;
     python::module mainModule;
-    python::object mainNamespace;
+    python::object globalNamespace;
     python::object cnoidModule;
     python::module sysModule;
     python::object exitExceptionType;
     python::object messageViewOut;
     python::object messageViewIn;
-    python::module rollBackImporterModule;
+    python::module rollbackImporterModule;
 
 #ifdef CNOID_USE_BOOST_PYTHON
     python::object stringOutBufClass;
@@ -110,10 +109,6 @@ public:
     }
 };
 
-};
-
-
-namespace {
 
 PythonPlugin* pythonPlugin = 0;
 
@@ -218,7 +213,7 @@ bool PythonPlugin::initializeInterpreter()
     PySys_SetArgvEx(1, dummy_argv, 0);
 
     mainModule = python::module::import("__main__");
-    mainNamespace = mainModule.attr("__dict__");
+    globalNamespace = mainModule.attr("__dict__");
 
 	/*
 	 In Windows, the bin directory must be added to the PATH environment variable
@@ -278,14 +273,14 @@ bool PythonPlugin::initializeInterpreter()
     pybind11::eval<pybind11::eval_single_statement>("del ExitException\n");
     pybind11::function exitFunc = pybind11::cpp_function(pythonExit);
 #else
-    python::exec("class ExitException (Exception): pass\n", mainNamespace);
+    python::exec("class ExitException (Exception): pass\n", globalNamespace);
     exitExceptionType = mainModule.attr("ExitException");
-    python::exec("del ExitException\n", mainNamespace);
+    python::exec("del ExitException\n", globalNamespace);
     python::object exitFunc = python::make_function(pythonExit);
 #endif
 
     // Override exit and quit
-    python::object builtins = mainNamespace["__builtins__"];
+    python::object builtins = globalNamespace["__builtins__"];
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
@@ -368,68 +363,47 @@ bool PythonPlugin::finalize()
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(PythonPlugin);
 
+namespace cnoid {
 
-python::object cnoid::pythonMainModule()
+python::module getMainModule()
 {
     return pythonPlugin->mainModule;
 }
 
-
-python::object cnoid::pythonMainNamespace()
+python::object getGlobalNamespace()
 {
-    return pythonPlugin->mainNamespace;
+    return pythonPlugin->globalNamespace;
 }
 
-
-python::object cnoid::pythonSysModule()
+python::object getSysModule()
 {
     return pythonPlugin->sysModule;
 }
 
-
-python::object cnoid::pythonExitExceptionType()
+python::object getExitException()
 {
     return pythonPlugin->exitExceptionType;
 }
 
-
-python::object cnoid::pythonRollBackImporterModule()
+python::module getRollbackImporterModule()
 {
-    if(!pythonPlugin->rollBackImporterModule){
-        pythonPlugin->rollBackImporterModule = python::module::import("cnoid.rbimporter");
+    if(!pythonPlugin->rollbackImporterModule){
+        pythonPlugin->rollbackImporterModule = python::module::import("cnoid.rbimporter");
     }
-    return pythonPlugin->rollBackImporterModule;
+    return pythonPlugin->rollbackImporterModule;
 }
-
-
-bool cnoid::execPythonCode(const std::string& code)
-{
-    PythonExecutor& executor = pythonPlugin->executor();
-    bool result = executor.execCode(code);
-    if(executor.hasException()){
-        python::gil_scoped_acquire lock;
-        MessageView::instance()->putln(executor.exceptionText());
-        result = false;
-    }
-    return result;
-}
-
 
 #ifdef CNOID_USE_BOOST_PYTHON
 
-namespace {
-
-struct StringOutBuf
+python::object getStringOutBufClass()
 {
-    string buf;
-    void write(string const& text){ buf += text; }
-    const string& text() const { return buf; }
-};
+    struct StringOutBuf
+    {
+        string buf;
+        void write(string const& text){ buf += text; }
+        const string& text() const { return buf; }
+    };
     
-}
-    
-python::object cnoid::pythonStringOutBufClass()
-{
     if(!pythonPlugin->stringOutBufClass){
         pythonPlugin->stringOutBufClass =
             python::class_<StringOutBuf>("StringOutBuf", python::init<>())
@@ -440,3 +414,5 @@ python::object cnoid::pythonStringOutBufClass()
 };
     
 #endif
+
+} // namespace cnoid

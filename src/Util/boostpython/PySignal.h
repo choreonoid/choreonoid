@@ -7,7 +7,6 @@
 
 #include "../Signal.h"
 #include "PyUtil.h"
-#include <cnoid/PythonUtil>
 
 namespace cnoid {
 
@@ -26,7 +25,7 @@ template<typename T> struct python_function_caller0 {
         try {
             result = func();
         } catch(boost::python::error_already_set const& ex) {
-            cnoid::handlePythonException();
+            python::handleException();
         }
         return result;
     }
@@ -40,7 +39,7 @@ template<> struct python_function_caller0<void> {
         try {
             func();
         } catch(boost::python::error_already_set const& ex) {
-            cnoid::handlePythonException();
+            python::handleException();
         }
     }
 };
@@ -54,7 +53,7 @@ template<typename T, typename ARG1> struct python_function_caller1 {
         try {
             result = func(pyGetSignalArgObject(arg1));
         } catch(boost::python::error_already_set const& ex) {
-            handlePythonException();
+            python::handleException();
         }
         return result;
     }
@@ -68,7 +67,7 @@ template<typename ARG1> struct python_function_caller1<void, ARG1> {
         try {
             func(pyGetSignalArgObject(arg1));
         } catch(boost::python::error_already_set const& ex) {
-            handlePythonException();
+            python::handleException();
         }
     }
 };
@@ -82,7 +81,7 @@ template<typename T, typename ARG1, typename ARG2> struct python_function_caller
         try {
             result = func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
         } catch(boost::python::error_already_set const& ex) {
-            handlePythonException();
+            python::handleException();
         }
         return result;
     }
@@ -96,7 +95,7 @@ template<typename ARG1, typename ARG2> struct python_function_caller2<void, ARG1
         try {
             func(pyGetSignalArgObject(arg1), pyGetSignalArgObject(arg2));
         } catch(boost::python::error_already_set const& ex) {
-            handlePythonException();
+            python::handleException();
         }
     }
 };
