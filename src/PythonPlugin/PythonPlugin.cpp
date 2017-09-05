@@ -144,21 +144,21 @@ PythonPlugin::PythonPlugin()
 
 bool PythonPlugin::initialize()
 {
-    if(!initializeInterpreter()){
-        return false;
-    }
-
     pythonConfig = AppConfig::archive()->openMapping("Python");
 
     MenuManager& mm = menuManager();
     mm.setPath("/Options").setPath("Python");
     redirectionCheck = mm.addCheckItem(_("Redirectiton to MessageView"));
     redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
-                                  
+
     refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
     refreshModulesCheck->sigToggled().connect(&PythonExecutor::setModuleRefreshEnabled);
     if(pythonConfig->get("refreshModules", false)){
         refreshModulesCheck->setChecked(true);
+    }
+
+    if(!initializeInterpreter()){
+        return false;
     }
 
     PythonScriptItem::initializeClass(this);
@@ -272,15 +272,20 @@ bool PythonPlugin::initializeInterpreter()
     messageViewIn = messageViewInClass();
     sysModule.attr("stdin") = messageViewIn;
 
-    // Override exit and quit
-    python::object builtins = mainNamespace["__builtins__"];
-    exitExceptionType = python::module::import("cnoid.PythonPlugin").attr("ExitException");
-
 #ifdef CNOID_USE_PYBIND11
+    pybind11::eval<pybind11::eval_single_statement>("class ExitException (Exception): pass\n");
+    exitExceptionType = mainModule.attr("ExitException");
+    pybind11::eval<pybind11::eval_single_statement>("del ExitException\n");
     pybind11::function exitFunc = pybind11::cpp_function(pythonExit);
 #else
+    python::exec("class ExitException (Exception): pass\n", mainNamespace);
+    exitExceptionType = mainModule.attr("ExitException");
+    python::exec("del ExitException\n", mainNamespace);
     python::object exitFunc = python::make_function(pythonExit);
 #endif
+
+    // Override exit and quit
+    python::object builtins = mainNamespace["__builtins__"];
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;

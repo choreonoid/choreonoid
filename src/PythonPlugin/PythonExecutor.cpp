@@ -321,19 +321,22 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
     
     try {
         resultObject = execScript();
-#ifdef CNOID_USE_BOOST_PYTHON
+#ifdef CNOID_USE_PYBIND11
+        resultString.clear();
+#else
         resultString =  boost::python::extract<string>(boost::python::str(resultObject));
 #endif
         completed = true;
     }
-    catch(python::error_already_set const & ex) {
+    catch(const python::error_already_set& ex) {
 
-        python::module sys = pythonSysModule();
-        
 #ifdef CNOID_USE_PYBIND11
         exceptionText = ex.what();
         resultString = exceptionText;
         hasException = true;
+        if(ex.matches(pythonExitExceptionType())){
+            isTerminated = true;
+        }
 #else        
         if(PyErr_Occurred()){
             if(PyErr_ExceptionMatches(pythonExitExceptionType().ptr())){
@@ -353,14 +356,15 @@ bool PythonExecutorImpl::execMain(std::function<python::object()> execScript)
                 }
                 
                 // get an error message by redirecting the output of PyErr_Print()
+                python::module sys = pythonSysModule();
                 boost::python::object stderr_ = sys.attr("stderr");
                 boost::python::object strout = pythonStringOutBufClass()();
                 sys.attr("stderr") = strout;
                 PyErr_Restore(ptype, pvalue, ptraceback);
                 PyErr_Print();
                 sys.attr("stderr") = stderr_;
-                exceptionText = boost::python::extract<string>(strout.attr("text")());
 
+                exceptionText = boost::python::extract<string>(strout.attr("text")());
                 resultObject = exceptionValue;
                 resultString = exceptionText;
                 hasException = true;
@@ -520,7 +524,11 @@ bool PythonExecutorImpl::terminateScript()
         for(int i=0; i < 400; ++i){
             {
                 python::gil_scoped_acquire lock;
+#ifdef CNOID_USE_PYBIND11
+                PyThreadState_SetAsyncExc((long)threadId, exitExceptionType.ptr());
+#else
                 PyThreadState_SetAsyncExc((long)threadId, exitExceptionType().ptr());
+#endif
             }
             if(wait(20)){
                 terminated = true;
