@@ -418,7 +418,7 @@ void PythonConsoleViewImpl::tabComplete()
     std::vector<string> moduleNames = dottedStrings;// words before last dot
     moduleNames.pop_back();
 
-    python::object targetMemberObject = getMemberObject(moduleNames, globalNamespace); //member object before last dot
+    python::object targetMemberObject = getMemberObject(moduleNames, mainModule); //member object before last dot
     std::vector<string> memberNames = getMemberNames(targetMemberObject);
 
     // builtin function and syntax completions
