@@ -47,16 +47,17 @@ set(sources
   ImageIO.cpp
   ImageConverter.cpp
   ImageProvider.cpp
+  PointSetUtil.cpp
   AbstractSceneLoader.cpp
   SceneLoader.cpp
+  YAMLSceneLoader.cpp
   YAMLSceneReader.cpp
-  PointSetUtil.cpp
+  STLSceneLoader.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
   VRMLToSGConverter.cpp
   VRMLSceneLoader.cpp
-  STLSceneLoader.cpp
   GettextWrapper.cpp
   GettextUtil.cpp
   ExtJoystick.cpp
@@ -126,6 +127,8 @@ set(headers
   ImageConverter.h
   ImageProvider.h
   PointSetUtil.h
+  YAMLSceneLoader.h
+  YAMLSceneReader.h
   VRML.h
   VRMLParser.h
   VRMLWriter.h

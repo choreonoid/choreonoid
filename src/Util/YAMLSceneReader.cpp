@@ -5,6 +5,7 @@
 
 #include "YAMLSceneReader.h"
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneLights>
 #include <cnoid/MeshGenerator>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
@@ -64,6 +65,7 @@ public:
     string symbol;
     Vector3f color;
     Vector3 v;
+    bool on;
     
     MeshGenerator meshGenerator;
     SgMaterialPtr defaultMaterial;
@@ -76,9 +78,13 @@ public:
     
     YAMLSceneReaderImpl(YAMLSceneReader* self);
     ~YAMLSceneReaderImpl();
+
+    bool readAngle(Mapping& node, const char* key, double& angle) { return self->readAngle(node, key, angle); }
+    
     SgNode* readNode(Mapping& node, const string& type);
     SgNode* readGroup(Mapping& node);
-    bool readElements(Mapping& node, SgGroup* group);
+    void readElements(Mapping& node, SgGroup* group);
+    void readNodeList(ValueNode& elements, SgGroup* group);
     SgNode* readTransform(Mapping& node);
     SgNode* readTransformParameters(Mapping& node, SgNode* scene);
     SgNode* readShape(Mapping& node);
@@ -94,6 +100,9 @@ public:
     void readAppearance(SgShape* shape, Mapping& node);
     void readMaterial(SgShape* shape, Mapping& node);
     void setDefaultMaterial(SgShape* shape);
+    void readLightCommon(Mapping& node, SgLight* light);
+    SgNode* readDirectionalLight(Mapping& node);
+    SgNode* readSpotLight(Mapping& node);
     SgNode* readResource(Mapping& node);
     SgNode* loadResource(const string& uri);
     SgNode* loadResource(const string& uri, const string& nodeName);
@@ -143,6 +152,8 @@ YAMLSceneReaderImpl::YAMLSceneReaderImpl(YAMLSceneReader* self)
         nodeFunctionMap["Group"] = &YAMLSceneReaderImpl::readGroup;
         nodeFunctionMap["Transform"] = &YAMLSceneReaderImpl::readTransform;
         nodeFunctionMap["Shape"] = &YAMLSceneReaderImpl::readShape;
+        nodeFunctionMap["DirectionalLight"] = &YAMLSceneReaderImpl::readDirectionalLight;
+        nodeFunctionMap["SpotLight"] = &YAMLSceneReaderImpl::readSpotLight;
         nodeFunctionMap["Resource"] = &YAMLSceneReaderImpl::readResource;
     }
     os_ = &nullout();
@@ -187,6 +198,22 @@ void YAMLSceneReader::clear()
     isDegreeMode_ = true;
     impl->defaultMaterial = 0;
     impl->resourceInfoMap.clear();
+}
+
+
+void YAMLSceneReader::readHeader(Mapping& node)
+{
+    auto angleUnitNode = node.extract("angleUnit");
+    if(angleUnitNode){
+        string unit = angleUnitNode->toString();
+        if(unit == "radian"){
+            setAngleUnit(RADIAN);
+        } else if(unit == "degree"){
+            setAngleUnit(DEGREE);
+        } else {
+            angleUnitNode->throwException(_("The \"angleUnit\" value must be either \"radian\" or \"degree\""));
+        }
+    }
 }
 
 
@@ -259,6 +286,29 @@ SgNode* YAMLSceneReader::readNode(Mapping& node, const std::string& type)
 }
 
 
+static SgNodePtr removeRedundantGroup(SgGroupPtr& group)
+{
+    SgNodePtr node;
+    if(!group->empty()){
+        if(group->numChildren() == 1 && typeid(group) == typeid(SgGroup)){
+            node = group->child(0);
+        } else {
+            node = group;
+        }
+    }
+    group.reset();
+    return node;
+}
+
+
+SgNode* YAMLSceneReader::readNodeList(ValueNode& node)
+{
+    SgGroupPtr group = new SgGroup;
+    impl->readNodeList(node, group);
+    return removeRedundantGroup(group).retn();
+}    
+
+
 SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
 {
     NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
@@ -266,81 +316,86 @@ SgNode* YAMLSceneReaderImpl::readNode(Mapping& node, const string& type)
         node.throwException(str(format(_("The node type \"%1%\" is not defined.")) % type));
     }
 
-    NodeFunction readNode = q->second;
-    SgNode* scene = (this->*readNode)(node);
-    if(node.read("name", symbol)){
-        scene->setName(symbol);
+    NodeFunction funcToReadNode = q->second;
+    SgNodePtr scene = (this->*funcToReadNode)(node);
+    if(scene){
+        if(node.read("name", symbol)){
+            scene->setName(symbol);
+        } else {
+            // remove a nameless, redundant group node
+            if(SgGroupPtr group = dynamic_pointer_cast<SgGroup>(scene)){
+                scene = removeRedundantGroup(group);
+            }
+        }
     }
-    return scene;
+    return scene.retn();
 }
 
 
 SgNode* YAMLSceneReaderImpl::readGroup(Mapping& node)
 {
     SgGroupPtr group = new SgGroup;
-    if(!readElements(node, group)){
-        group = 0; // clear group if empty
-    }
+    readElements(node, group);
     return group.retn();
 }
 
 
-bool YAMLSceneReaderImpl::readElements(Mapping& node, SgGroup* group)
+void YAMLSceneReaderImpl::readElements(Mapping& node, SgGroup* group)
 {
     ValueNode& elements = *node.find("elements");
     if(elements.isValid()){
-        if(elements.isListing()){
-            Listing& listing = *elements.toListing();
-            for(int i=0; i < listing.size(); ++i){
-                Mapping& element = *listing[i].toMapping();
-                const string type = element["type"].toString();
-                SgNodePtr scene = readNode(element, type);
-                if(scene){
-                    group->addChild(scene);
-                }
-            }
-        } else if(elements.isMapping()){
-            Mapping& mapping = *elements.toMapping();
-            Mapping::iterator p = mapping.begin();
-            while(p != mapping.end()){
-                const string& type = p->first;
-                Mapping& element = *p->second->toMapping();
-                ValueNode* typeNode = element.find("type");
-                if(typeNode->isValid()){
-                    string type2 = typeNode->toString();
-                    if(type2 != type){
-                        element.throwException(
-                            str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
-                                % type2 % type));
-                    }
-                }
-                SgNodePtr scene = readNode(element, type);
-                if(scene){
-                    group->addChild(scene);
-                }
-                ++p;
+        readNodeList(elements, group);
+    }
+}
+
+
+void YAMLSceneReaderImpl::readNodeList(ValueNode& elements, SgGroup* group)
+{
+    if(elements.isListing()){
+        Listing& listing = *elements.toListing();
+        for(int i=0; i < listing.size(); ++i){
+            Mapping& element = *listing[i].toMapping();
+            const string type = element["type"].toString();
+            SgNodePtr scene = readNode(element, type);
+            if(scene){
+                group->addChild(scene);
             }
         }
+    } else if(elements.isMapping()){
+        Mapping& mapping = *elements.toMapping();
+        Mapping::iterator p = mapping.begin();
+        while(p != mapping.end()){
+            const string& type = p->first;
+            Mapping& element = *p->second->toMapping();
+            ValueNode* typeNode = element.find("type");
+            if(typeNode->isValid()){
+                string type2 = typeNode->toString();
+                if(type2 != type){
+                    element.throwException(
+                        str(format(_("The node type \"%1%\" is different from the type \"%2%\" specified in the parent node"))
+                            % type2 % type));
+                }
+            }
+            SgNodePtr scene = readNode(element, type);
+            if(scene){
+                group->addChild(scene);
+            }
+            ++p;
+        }
     }
- 
-    return !group->empty();
 }
 
 
 SgNode* YAMLSceneReaderImpl::readTransform(Mapping& node)
 {
     SgPosTransformPtr transform = new SgPosTransform;
-
-    if(!readElements(node, transform)){
-        transform = 0; // clear group if empty
-    } else {
-        if(read(node, "translation", v)){
-            transform->setTranslation(v);
-        }
-        Matrix3 R;
-        if(self->readRotation(node, R, false)){
-            transform->setRotation(R);
-        }
+    readElements(node, transform);
+    if(read(node, "translation", v)){
+        transform->setTranslation(v);
+    }
+    Matrix3 R;
+    if(self->readRotation(node, R, false)){
+        transform->setRotation(R);
     }
     return transform.retn();
 }
@@ -608,6 +663,44 @@ void YAMLSceneReaderImpl::setDefaultMaterial(SgShape* shape)
         defaultMaterial->setShininess(0.2f);
     }
     shape->setMaterial(defaultMaterial);
+}
+
+
+void YAMLSceneReaderImpl::readLightCommon(Mapping& node, SgLight* light)
+{
+    if(node.read("on", on)) light->on(on);
+    if(read(node, "color", color)) light->setColor(color);
+    if(node.read("intensity", value)) light->setIntensity(value);
+    if(node.read("ambientIntensity", value)) light->setAmbientIntensity(value);
+}
+
+
+SgNode* YAMLSceneReaderImpl::readDirectionalLight(Mapping& node)
+{
+    SgDirectionalLightPtr light = new SgDirectionalLight;
+    readLightCommon(node, light);
+    if(read(node, "direction", v)) light->setDirection(v);
+    return light.retn();
+}
+
+
+SgNode* YAMLSceneReaderImpl::readSpotLight(Mapping& node)
+{
+    SgSpotLightPtr light = new SgSpotLight;
+
+    readLightCommon(node, light);
+
+    if(read(node, "direction", v)) light->setDirection(v);
+    if(readAngle(node, "beamWidth", value)) light->setBeamWidth(value);
+    if(readAngle(node, "cutOffAngle", value)) light->setCutOffAngle(value);
+    if(node.read("cutOffExponent", value)) light->setCutOffExponent(value);
+    if(read(node, "attenuation", color)){
+        light->setConstantAttenuation(color[0]);
+        light->setLinearAttenuation(color[1]);
+        light->setQuadraticAttenuation(color[2]);
+    }
+    
+    return light.retn();
 }
 
 
