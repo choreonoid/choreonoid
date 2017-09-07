@@ -440,7 +440,7 @@ links:
               -
                 type: Transform
                 name: LIGHT
-                translation: [ -0.045, 0, 0.045 ]
+                translation: [ -0.006, 0, 0.045 ]
                 centerofMass: [ 0, 0, 0 ]
                 mass: 1.0
                 inertia: [
