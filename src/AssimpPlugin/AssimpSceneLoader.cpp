@@ -71,7 +71,10 @@ AssimpSceneLoader::AssimpSceneLoader()
 
 AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
 {
+#ifdef AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION
     importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
+#endif
+
     imageIO.setUpsideDown(true);
     os_ = &nullout();
 }

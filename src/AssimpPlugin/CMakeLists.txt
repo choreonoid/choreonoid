@@ -1,9 +1,8 @@
-
 if(NOT UNIX)
   return()
 endif()
 
-pkg_check_modules(ASSIMP QUIET assimp>=3.2)
+pkg_check_modules(ASSIMP QUIET assimp>=3.0)
 if(ASSIMP_FOUND)
   option(BUILD_ASSIMP_PLUGIN "Building ASSIMPPlugin" ON)
 else()
@@ -14,10 +13,10 @@ if(NOT BUILD_ASSIMP_PLUGIN)
   return()
 endif()
 
-set(ASSIMP_DIR ${ASSIMP_DIR} CACHE PATH "set the top directory of the ASSIMP ")
+set(ASSIMP_DIR ${ASSIMP_DIR} CACHE PATH "set the top directory of the ASSIMP")
 if(UNIX)
   if(NOT ASSIMP_DIR)
-    pkg_check_modules(ASSIMP REQUIRED assimp>=3.2)
+    pkg_check_modules(ASSIMP REQUIRED assimp>=3.0)
   endif()
 elseif(MSVC)
   if(NOT ASSIMP_DIR)
