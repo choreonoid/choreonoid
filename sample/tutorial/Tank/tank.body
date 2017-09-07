@@ -15,9 +15,15 @@ links:
       0,   0.1, 0,
       0,   0,   0.5 ]
     elements:
-      Resource:
-        uri: "resource/tank2.dae"
-        node: CHASSIS
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.45, 0.3, 0.1 ]
+        appearance: &BodyAppearance
+          material:
+            diffuseColor: [ 0, 0.6, 0 ]
+            specularColor: [ 0.2, 0.8, 0.2 ]
+            shininess: 0.6
   -
     name: TURRET_Y
     parent: CHASSIS
@@ -34,9 +40,11 @@ links:
       0,   0.1, 0,
       0,   0,   0.1 ]
     elements:
-      Resource:
-        uri: "resource/tank2.dae"
-        node: TURRET_Y
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.2, 0.2, 0.1 ]
+        appearance: *BodyAppearance
   -
     name: TURRET_P
     parent: TURRET_Y
@@ -47,10 +55,6 @@ links:
     maxJointVelocity: 90
     jointId: 1
     elements:
-      -
-        type: Resource
-        uri: "resource/tank2.dae"
-        node: TURRET_P
       - 
         # Turret
         type: RigidBody
@@ -60,6 +64,13 @@ links:
           0.1, 0,   0,
           0,   0.1, 0,
           0,   0,   0.1 ]
+        elements:
+          Shape:
+            geometry:
+              type: Cylinder
+              height: 0.1
+              radius: 0.1
+            appearance: *BodyAppearance
       - 
         # Gun
         type: Transform
@@ -73,6 +84,13 @@ links:
               0.01, 0,   0,
               0,    0.1, 0,
               0,    0,   0.1 ]
+            elements:
+              Shape:
+                geometry:
+                  type: Cylinder
+                  height: 0.2
+                  radius: 0.02
+                appearance: *BodyAppearance
       -
         type: SpotLight
         name: Light
@@ -115,6 +133,16 @@ links:
             scanStep:  0.5
             scanRate:  10
             maxDistance: 10
+          -
+            type: Shape
+            geometry:
+              type: Box
+              size: [ 0.04, 0.015, 0.01 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.2, 0.2, 0.8 ]
+                specularColor: [ 0.6, 0.6, 1.0 ]
+                shininesss: 0.6
   -
     name: TRACK_L
     parent: CHASSIS
@@ -128,9 +156,20 @@ links:
       0,    0.02, 0,
       0,    0,    0.02 ]
     elements:
-      Resource:
-        uri: "resource/tank2.dae"
-        node: TRACK_L
+      Shape: &TRACK 
+        geometry:
+          type: Extrusion
+          crossSection: [
+            -0.22, -0.1,
+             0.22, -0.1,
+             0.34,  0.06,
+            -0.34,  0.06,
+            -0.22, -0.1
+            ]
+          spine: [ 0, -0.05, 0, 0, 0.05, 0 ]
+        appearance:
+          material:
+            diffuseColor: [ 0.2, 0.2, 0.2 ]
   -
     name: TRACK_R
     parent: CHASSIS
@@ -144,6 +183,4 @@ links:
       0,    0.02, 0,
       0,    0,    0.02 ]
     elements:
-      Resource:
-        uri: "resource/tank2.dae"
-        node: TRACK_R
+      Shape: *TRACK 

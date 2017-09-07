@@ -95,6 +95,7 @@ items:
             timeLength: 60
             allLinkPositionOutputMode: false
             deviceStateOutput: true
+            selfCollision: true
             controllerThreads: true
             recordCollisionData: false
             dynamicsMode: Forward dynamics
