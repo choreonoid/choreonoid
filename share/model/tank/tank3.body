@@ -440,7 +440,7 @@ links:
               -
                 type: Transform
                 name: LIGHT
-                translation: [ -0.045, 0, 0.045 ]
+                translation: [ -0.006, 0, 0.045 ]
                 centerofMass: [ 0, 0, 0 ]
                 mass: 1.0
                 inertia: [
@@ -450,7 +450,7 @@ links:
                 elements:
                   -
                     type: Shape
-                    translation: [ 0.013725, 0.0, 0.0 ]
+                    translation: [ -0.025275, 0.0, 0.0 ]
                     rotation: [ 0, 0, 1, 90 ]
                     geometry: { type: Cylinder, radius: 0.03, height: 0.07 }
                   -
