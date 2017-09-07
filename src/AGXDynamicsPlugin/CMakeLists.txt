@@ -17,10 +17,10 @@ if(CMAKE_CL_64)
 endif()
 
 if(WIN32)
-  set(AGX_LIBRARIES debug agxSabred agxCored agxPhysicsd agxModeld)
-  set(AGX_LIBRARIES_RELEASE optimized agxSabre agxCore agxPhysics agxModel) 
+  set(AGX_LIBRARIES debug agxSabred agxCored agxPhysicsd agxModeld agxVehicled)
+  set(AGX_LIBRARIES_RELEASE optimized agxSabre agxCore agxPhysics agxModel agxVehicle) 
 else()
-  set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel)
+  set(AGX_LIBRARIES agxSabre agxCore agxPhysics agxModel agxVehicle)
 endif()
 
 #add_definitions(${AGX_CFLAGS})
@@ -31,20 +31,26 @@ set(target CnoidAGXDynamicsPlugin)
 
 set(sources
   AGXBody.cpp
+  AGXBodyPart.cpp
   AGXObjectFactory.cpp
   AGXScene.cpp
   AGXDynamicsPlugin.cpp
   AGXSimulatorItem.cpp
   AGXSimulatorItemImpl.cpp
+  AGXVehicleContinuousTrack.cpp
+  AGXVehicleContinuousTrackDevice.cpp
   )
 
 set(headers
   AGXBody.h
+  AGXBodyPart.h
   AGXInclude.h
   AGXObjectFactory.h
   AGXScene.h
   AGXSimulatorItem.h
   AGXSimulatorItemImpl.h
+  AGXVehicleContinuousTrack.h
+  AGXVehicleContinuousTrackDevice.h
   )
 
 make_gettext_mofiles(${target} mofiles)

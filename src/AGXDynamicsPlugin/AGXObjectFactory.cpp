@@ -274,4 +274,18 @@ agx::LockJointRef AGXObjectFactory::createConstraintLockJoint(const AGXLockJoint
     return new agx::LockJoint(desc.rigidBodyA, desc.rigidBodyB);
 }
 
+agxVehicle::TrackWheelRef AGXObjectFactory::createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc)
+{
+    return new agxVehicle::TrackWheel(desc.model, desc.radius, desc.rigidbody, desc.rbRelTransform);
+}
+
+agxVehicle::TrackRef AGXObjectFactory::createVehicleTrack(const AGXVehicleTrackDesc& desc)
+{
+    agxVehicle::TrackRef track = new agxVehicle::Track(desc.numberOfNodes, desc.nodeWidth, desc.nodeThickness, desc.nodeDistanceTension);
+    for(int i = 0; i < desc.trackWheelRefs.size(); ++i){
+        track->add(desc.trackWheelRefs[i]);
+    }
+    return track;
+}
+
 }

@@ -14,7 +14,7 @@ struct AGXSimulationDesc
         timeStep = 0.0167;
         gravity = agx::Vec3(0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION);
         enableContactReduction = true;
-        contactReductionBinResolution = 2;
+        contactReductionBinResolution = 3;
         contactReductionThreshhold = 12;
         enableAutoSleep = false;
     }
@@ -287,6 +287,37 @@ struct AGXPlaneJointDesc : public AGXConstraintDesc
     agx::FrameRef frameB;
 };
 
+struct AGXVehicleTrackWheelDesc{
+    AGXVehicleTrackWheelDesc(){
+        model = agxVehicle::TrackWheel::Model::SPROCKET;
+        radius = 1.0;
+        rigidbody = nullptr;
+        rbRelTransform = agx::AffineMatrix4x4();
+    }
+    agxVehicle::TrackWheel::Model model;
+    agx::Real radius;
+    agx::RigidBody* rigidbody;
+    agx::AffineMatrix4x4 rbRelTransform;
+};
+
+struct AGXVehicleTrackDesc{
+    AGXVehicleTrackDesc() {
+        numberOfNodes = 50;
+        nodeThickness = 0.075;
+        nodeWidth = 0.6;
+        nodeDistanceTension = 5.0E-3;
+        trackWheelRefs.clear();
+    }
+
+    agx::UInt numberOfNodes;              // Total number of nodes in the track.
+    agx::Real nodeThickness;           // Thickness of each node in the track.
+    agx::Real nodeWidth;               // Width of each node in the track.
+    agx::Real nodeDistanceTension;     // The calculated node length is close to ideal, meaning close to zero tension
+                                    // in the tracks if they were simulated without gravity. This distance is an offset
+                                    // how much closer each node will be to each other, resulting in a given initial tension.
+    std::vector<agxVehicle::TrackWheelRef> trackWheelRefs;
+};
+
 class AGXObjectFactory
 {
 public:
@@ -314,6 +345,8 @@ public:
     static agx::PrismaticRef createConstraintPrismatic(const AGXPrismaticDesc& desc);
     static agx::BallJointRef createConstraintBallJoint(const AGXBallJointDesc& desc);
     static agx::PlaneJointRef createConstraintPlaneJoint(const AGXPlaneJointDesc& desc);
+    static agxVehicle::TrackWheelRef createVehicleTrackWheel(const AGXVehicleTrackWheelDesc& desc);
+    static agxVehicle::TrackRef createVehicleTrack(const AGXVehicleTrackDesc& desc);
 };
 
 }

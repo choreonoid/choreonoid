@@ -33,4 +33,8 @@
 #include <agx/BallJoint.h>
 #include <agx/PlaneJoint.h>
 
+// agxVehicle
+//#include <agxVehicle/TrackWheel.h>
+#include <agxVehicle/Track.h>
+
 #endif

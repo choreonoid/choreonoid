@@ -24,6 +24,7 @@ public:
     void add(AGXBodyPtr agxBody);
     agx::Bool add(agx::RigidBodyRef const rigid);
     agx::Bool add(agx::ConstraintRef const constraint);
+    agx::Bool add(agxSDK::AssemblyRef const assembly);
     agx::MaterialRef getMaterial(const agx::String& materialName);
     agx::MaterialRef createMaterial(const AGXMaterialDesc& desc);
     agx::ContactMaterialRef createContactmaterial(agx::MaterialRef const matA, agx::MaterialRef const matB, const AGXContactMaterialDesc& desc);
