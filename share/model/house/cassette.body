@@ -14,4 +14,4 @@ links:
       0.001, 0, 0,
       0, 0.0018, 0,
       0, 0, 0.0012 ]
-    elements: { Resource: { uri: "Cassette.wrl" } }
+    elements: { Resource: { uri: "cassette.wrl" } }
