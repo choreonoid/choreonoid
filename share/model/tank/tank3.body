@@ -450,7 +450,7 @@ links:
                 elements:
                   -
                     type: Shape
-                    translation: [ 0.013725, 0.0, 0.0 ]
+                    translation: [ -0.025275, 0.0, 0.0 ]
                     rotation: [ 0, 0, 1, 90 ]
                     geometry: { type: Cylinder, radius: 0.03, height: 0.07 }
                   -
